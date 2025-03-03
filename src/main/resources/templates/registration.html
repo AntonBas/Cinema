@@ -15,26 +15,41 @@
 			<div class="registration-container">
 				<form class="registration-form" th:action="@{/reqistration}"
 					th:object="${userForm}" method="post">
+					
 					<div class="registration-top">
 						<div class="registration-group-first">
 							<h2>Personal Information</h2>
-							<input placeholder="First Name" type="text" id="firstName" th:field="*{firstName}" class="form-control" required> 
+							<input placeholder="First Name" type="text" id="firstName" th:field="*{firstName}" class="form-control" required>
+							<span th:if="${#fields.hasErrors('firstName')}" th:errors="*{firstName}" class="error-message"></span>
+							 
 							<input placeholder="Last Name" type="text" id="lastName" th:field="*{lastName}" class="form-control" required>
+							<span th:if="${#fields.hasErrors('lastName')}" th:errors="*{lastName}" class="error-message"></span>
 						</div>
 						<div class="registration-group-second">
 							<input type="date" th:field="*{dateOfBirth}" class="form-control" required>
+							<span th:if="${#fields.hasErrors('dateOfBirth')}" th:errors="*{dateOfBirth}" class="error-message"></span>
+							
 							<input placeholder="Your City" type="text" th:field="*{city}" class="form-control" required>
+							<span th:if="${#fields.hasErrors('city')}" th:errors="*{city}" class="error-message"></span>
 						</div>
 					</div>
+					
 					<div class="registration-middle">
 						<h2>Contact Information</h2>
 						<input placeholder="E-mail" type="email" id="email" th:field="*{email}" class="form-control" required> 
+						<span th:if="${#fields.hasErrors('email')}" th:errors="*{email}" class="error-message"></span>
+						
 						<input placeholder="Phone number" type="text" id="phoneNumber" th:field="*{phoneNumber}" class="form-control">
+						<span th:if="${#fields.hasErrors('phoneNumber')}" th:errors="*{phoneNumber}" class="error-message"></span>
 					</div>
+					
 					<div class="registration-bottom">
 						<h2>Create a Password</h2>
-						<input placeholder="Enter Password" type="password" id="password" th:field="*{password}" class="form-control" required> 
+						<input placeholder="Enter Password" type="password" id="password" th:field="*{password}" class="form-control" required>
+						 <span th:if="${#fields.hasErrors('password')}" th:errors="*{password}" class="error-message"></span>
+						 
 						<input placeholder="Confirm Password" type="password" id="passwordConfirm" th:field="*{passwordConfirm}">
+						<span th:if="${#fields.hasErrors('passwordConfirm')}" th:errors="*{passwordConfirm}" class="error-message"></span>
 					</div>
 					<button type="submit">Sign Up</button>
 				</form>

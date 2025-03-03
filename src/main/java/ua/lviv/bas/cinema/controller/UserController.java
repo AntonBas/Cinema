@@ -8,7 +8,8 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
-import ua.lviv.bas.cinema.domain.User;
+import jakarta.validation.Valid;
+import ua.lviv.bas.cinema.dto.UserRegistrationDto;
 import ua.lviv.bas.cinema.service.UserService;
 
 @Controller
@@ -19,16 +20,28 @@ public class UserController {
 
 	@RequestMapping(value = "/registration", method = RequestMethod.GET)
 	public String registration(Model model) {
-		model.addAttribute("userForm", new User());
+		model.addAttribute("userForm", new UserRegistrationDto());
 		return "registration";
 	}
 
 	@RequestMapping(value = "/reqistration", method = RequestMethod.POST)
-	public String registration(@ModelAttribute("userForm") User userForm, BindingResult bindingResult, Model model) {
+	public String registration(@ModelAttribute("userForm") @Valid UserRegistrationDto userForm,
+			BindingResult bindingResult, Model model) {
 		if (bindingResult.hasErrors()) {
 			return "registration";
 		}
-		userService.save(userForm);
+
+		if (!userForm.getPassword().equals(userForm.getPasswordConfirm())) {
+			bindingResult.rejectValue("passwordConfirm", "error.userForm", "Passwords do not match");
+			return "registration";
+		}
+
+		try {
+			userService.save(userForm);
+		} catch (RuntimeException e) {
+			model.addAttribute("error", e.getMessage());
+			return "registration";
+		}
 
 		return "redirect:/home";
 	}

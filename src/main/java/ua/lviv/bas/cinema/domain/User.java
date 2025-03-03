@@ -36,7 +36,7 @@ public class User {
 	@Column(nullable = false)
 	private String city;
 
-	@Column(name = "phone_number")
+	@Column(nullable = false, name = "phone_number")
 	private String phoneNumber;
 
 	@Column(nullable = false)
