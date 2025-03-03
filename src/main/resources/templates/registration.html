@@ -1,10 +1,46 @@
 <!DOCTYPE html>
-<html>
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
 <meta charset="UTF-8">
 <title>Insert title here</title>
-</head>
-<body>
+<link rel="stylesheet" th:href="@{/css/reset.css}">
+<link rel="stylesheet" th:href="@{/css/registration.css}">
 
+</head>
+
+<body>
+	<section class="registration">
+		<div class="registration-container">
+			<h1 class="registration-title">Registration</h1>
+			<div class="registration-container">
+				<form class="registration-form" th:action="@{/reqistration}"
+					th:object="${userForm}" method="post">
+					<div class="registration-top">
+						<div class="registration-group-first">
+							<h2>Personal Information</h2>
+							<input placeholder="First Name" type="text" id="firstName" th:field="*{firstName}" class="form-control" required> 
+							<input placeholder="Last Name" type="text" id="lastName" th:field="*{lastName}" class="form-control" required>
+						</div>
+						<div class="registration-group-second">
+							<input type="date" th:field="*{dateOfBirth}" class="form-control" required>
+							<input placeholder="Your City" type="text" th:field="*{city}" class="form-control" required>
+						</div>
+					</div>
+					<div class="registration-middle">
+						<h2>Contact Information</h2>
+						<input placeholder="E-mail" type="email" id="email" th:field="*{email}" class="form-control" required> 
+						<input placeholder="Phone number" type="text" id="phoneNumber" th:field="*{phoneNumber}" class="form-control">
+					</div>
+					<div class="registration-bottom">
+						<h2>Create a Password</h2>
+						<input placeholder="Enter Password" type="password" id="password" th:field="*{password}" class="form-control" required> 
+						<input placeholder="Confirm Password" type="password" id="passwordConfirm" th:field="*{passwordConfirm}">
+					</div>
+					<button type="submit">Sign Up</button>
+				</form>
+			</div>
+		</div>
+	</section>
 </body>
+
 </html>
