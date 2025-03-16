@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 import jakarta.validation.Valid;
+import ua.lviv.bas.cinema.dto.UserLoginDto;
 import ua.lviv.bas.cinema.dto.UserRegistrationDto;
 import ua.lviv.bas.cinema.service.UserService;
 
@@ -24,7 +25,7 @@ public class UserController {
 		return "registration";
 	}
 
-	@RequestMapping(value = "/reqistration", method = RequestMethod.POST)
+	@RequestMapping(value = "/registration", method = RequestMethod.POST)
 	public String registration(@ModelAttribute("userForm") @Valid UserRegistrationDto userForm,
 			BindingResult bindingResult, Model model) {
 		if (bindingResult.hasErrors()) {
@@ -54,6 +55,7 @@ public class UserController {
 		if (logout != null)
 			model.addAttribute("message", "You have been logged out successfully.");
 
+		model.addAttribute("user", new UserLoginDto());
 		return "login";
 	}
 

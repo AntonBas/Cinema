@@ -9,28 +9,32 @@
 </head>
 
 <body>
-	<div class="login">
-		<div class="login-main">
+	<section class="login">
+		<div class="login-container">
 			<h1 class="login-title">Login into your account</h1>
 			<div class="login-top">
 				<span class="login-top-text">Don't have an account?</span> <a
 					th:href="@{/registration}">Register</a>
 			</div>
-			<form class="login-middle" action="#">
+			<form class="login-form" th:action="@{/login}" th:object="${user}"
+				method="post">
+
 				<div class="login-middle-email">
-					<input type="text" name="email" placeholder="email">
+					<input type="email" name="email" th:field="*{email}"
+						placeholder="email">
 				</div>
 				<div class="login-middle-password">
-					<input type="text" name="password" placeholder="password">
+					<input type="password" name="password" th:field="*{password}"
+						placeholder="password">
 				</div>
+				<button type="submit" class="login-bottom-button">Login</button>
 			</form>
 			<div class="login-bottom">
 				<a href="#">Forgot your password?</a>
-				<button class="login-bottom-button">Login</button>
 			</div>
 		</div>
 
-	</div>
+	</section>
 </body>
 
 </html>
