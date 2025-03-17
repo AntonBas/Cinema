@@ -1,5 +1,7 @@
 package ua.lviv.bas.cinema.service;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -12,6 +14,8 @@ import ua.lviv.bas.cinema.dto.UserRegistrationDto;
 @Service
 public class UserService {
 
+	private static final Logger logger = LogManager.getLogger(UserService.class);
+
 	@Autowired
 	private UserRepository userRepository;
 
@@ -19,7 +23,11 @@ public class UserService {
 	private PasswordEncoder bCryptPasswordEncoder;
 
 	public void save(UserRegistrationDto userDto) {
+		logger.info("Attempting to register user with email: {}", userDto.getEmail());
+
 		if (userRepository.findByEmail(userDto.getEmail()).isPresent()) {
+			logger.error("Registration failde: Email {} is already registered", userDto.getEmail());
+
 			throw new RuntimeException("Email is already registered");
 		}
 
@@ -35,5 +43,6 @@ public class UserService {
 		user.setUserRole(UserRole.ROLE_USER);
 
 		userRepository.save(user);
+		logger.info("User registered successfully with email: {}", userDto.getEmail());
 	}
 }
