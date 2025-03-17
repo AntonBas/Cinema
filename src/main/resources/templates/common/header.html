@@ -13,8 +13,14 @@
             <li><a th:href="@{/movies}">Movies</a></li>
             <li><a th:href="@{/schedule}">Schedule</a></li>
         </ul>
-        <div class="auth-buttons">
+        <div class="auth-buttons" th:if="${#authentication} == null">
             <a th:href="@{/login}" class="btn-auth">Login / Register</a>
+        </div>
+        <div class="auth-buttons" th:unless="${#authentication} == null">
+            <a th:href="@{/profile}" class="btn-auth">My Account</a>
+            <form th:action="@{/logout}" method="post" style="display: inline;">
+                <button type="submit" class="btn-logout">Logout</button>
+            </form>
         </div>
     </nav>
 </header>
