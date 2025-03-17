@@ -2,7 +2,7 @@ html, body {
 	height: 100%;
 	margin: 0;
 	padding: 0;
-/* 	background-color: #12161f; */
+ 	background-color: #12161f; 
 }
 
 .registration {
@@ -31,4 +31,13 @@ html, body {
 
 .form-control {
     margin-bottom: 10px;
+}
+
+
+.registration-text {
+	color: white;
+}
+
+.registration-confirm {
+	background-color: #fd5f00;
 }

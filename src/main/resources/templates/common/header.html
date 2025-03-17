@@ -1,10 +1,20 @@
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<title>Insert title here</title>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="header-styles">
+    <link rel="stylesheet" th:href="@{/css/header.css}">
 </head>
-<body>
 
-</body>
-</html>
+<header th:fragment="cinema-header">
+    <nav class="navbar">
+        <div class="logo">
+            <a th:href="@{/}">Cinema</a>
+        </div>
+        <ul class="nav-links">
+            <li><a th:href="@{/}">Home</a></li>
+            <li><a th:href="@{/movies}">Movies</a></li>
+            <li><a th:href="@{/schedule}">Schedule</a></li>
+        </ul>
+        <div class="auth-buttons">
+            <a th:href="@{/login}" class="btn-auth">Login / Register</a>
+        </div>
+    </nav>
+</header>
