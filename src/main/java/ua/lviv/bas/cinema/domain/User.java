@@ -1,6 +1,7 @@
 package ua.lviv.bas.cinema.domain;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Objects;
 
 import jakarta.persistence.Column;
@@ -10,7 +11,9 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import ua.lviv.bas.cinema.domain.enums.UserRole;
 
 @Entity
 @Table(name = "users")
@@ -44,6 +47,9 @@ public class User {
 
 	@Column(nullable = false, name = "password_confirm")
 	private String passwordConfirm;
+
+	@OneToMany(mappedBy = "user")
+	private List<Ticket> tickets;
 
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false)

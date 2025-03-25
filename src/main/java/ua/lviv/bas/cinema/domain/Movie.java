@@ -14,6 +14,10 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Lob;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
+import ua.lviv.bas.cinema.domain.enums.AgeRating;
+import ua.lviv.bas.cinema.domain.enums.MovieCategory;
+import ua.lviv.bas.cinema.domain.enums.MovieStatus;
 
 @Entity
 @Table(name = "movies")
@@ -41,6 +45,12 @@ public class Movie {
 	@Column(nullable = false, name = "release_date")
 	private LocalDate releaseDate;
 
+	@Column(nullable = false, name = "end_showing_date")
+	private LocalDate endShowingDate;
+
+	@Enumerated(EnumType.STRING)
+	private MovieStatus status;
+
 	@Lob
 	private String posterImage;
 
@@ -50,24 +60,40 @@ public class Movie {
 	@OneToMany(mappedBy = "movie")
 	private List<Session> sessions;
 
+	@Transient
+	public MovieCategory getCategory() {
+		LocalDate now = LocalDate.now();
+		if (now.isBefore(releaseDate)) {
+			return MovieCategory.UPCOMING;
+		} else if (now.isAfter(endShowingDate)) {
+			return MovieCategory.ARCHIVED;
+		} else {
+			return MovieCategory.CURRENT;
+		}
+	}
+
 	public Movie() {
 	}
 
 	public Movie(String title, String description, int durationMinutes, String genre, String director,
-			LocalDate releaseDate, String posterImage, AgeRating ageRating, List<Session> sessions) {
+			LocalDate releaseDate, LocalDate endShowingDate, MovieStatus status, String posterImage,
+			AgeRating ageRating, List<Session> sessions) {
 		this.title = title;
 		this.description = description;
 		this.durationMinutes = durationMinutes;
 		this.genre = genre;
 		this.director = director;
 		this.releaseDate = releaseDate;
+		this.endShowingDate = endShowingDate;
+		this.status = status;
 		this.posterImage = posterImage;
 		this.ageRating = ageRating;
 		this.sessions = sessions;
 	}
 
 	public Movie(Integer id, String title, String description, int durationMinutes, String genre, String director,
-			LocalDate releaseDate, String posterImage, AgeRating ageRating, List<Session> sessions) {
+			LocalDate releaseDate, LocalDate endShowingDate, MovieStatus status, String posterImage,
+			AgeRating ageRating, List<Session> sessions) {
 		this.id = id;
 		this.title = title;
 		this.description = description;
@@ -75,6 +101,8 @@ public class Movie {
 		this.genre = genre;
 		this.director = director;
 		this.releaseDate = releaseDate;
+		this.endShowingDate = endShowingDate;
+		this.status = status;
 		this.posterImage = posterImage;
 		this.ageRating = ageRating;
 		this.sessions = sessions;
@@ -136,6 +164,22 @@ public class Movie {
 		this.releaseDate = releaseDate;
 	}
 
+	public LocalDate getEndShowingDate() {
+		return endShowingDate;
+	}
+
+	public void setEndShowingDate(LocalDate endShowingDate) {
+		this.endShowingDate = endShowingDate;
+	}
+
+	public MovieStatus getStatus() {
+		return status;
+	}
+
+	public void setStatus(MovieStatus status) {
+		this.status = status;
+	}
+
 	public String getPosterImage() {
 		return posterImage;
 	}
@@ -162,8 +206,8 @@ public class Movie {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(ageRating, description, director, durationMinutes, genre, id, posterImage, releaseDate,
-				sessions, title);
+		return Objects.hash(ageRating, description, director, durationMinutes, endShowingDate, genre, id, posterImage,
+				releaseDate, sessions, status, title);
 	}
 
 	@Override
@@ -180,16 +224,18 @@ public class Movie {
 		Movie other = (Movie) obj;
 		return ageRating == other.ageRating && Objects.equals(description, other.description)
 				&& Objects.equals(director, other.director) && durationMinutes == other.durationMinutes
-				&& Objects.equals(genre, other.genre) && Objects.equals(id, other.id)
-				&& Objects.equals(posterImage, other.posterImage) && Objects.equals(releaseDate, other.releaseDate)
-				&& Objects.equals(sessions, other.sessions) && Objects.equals(title, other.title);
+				&& Objects.equals(endShowingDate, other.endShowingDate) && Objects.equals(genre, other.genre)
+				&& Objects.equals(id, other.id) && Objects.equals(posterImage, other.posterImage)
+				&& Objects.equals(releaseDate, other.releaseDate) && Objects.equals(sessions, other.sessions)
+				&& status == other.status && Objects.equals(title, other.title);
 	}
 
 	@Override
 	public String toString() {
 		return "Movie [id=" + id + ", title=" + title + ", description=" + description + ", durationMinutes="
 				+ durationMinutes + ", genre=" + genre + ", director=" + director + ", releaseDate=" + releaseDate
-				+ ", posterImage=" + posterImage + ", ageRating=" + ageRating + ", sessions=" + sessions + "]";
+				+ ", endShowingDate=" + endShowingDate + ", status=" + status + ", posterImage=" + posterImage
+				+ ", ageRating=" + ageRating + ", sessions=" + sessions + "]";
 	}
 
 }
