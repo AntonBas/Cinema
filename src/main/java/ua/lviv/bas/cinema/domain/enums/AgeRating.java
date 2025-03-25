@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.domain;
+package ua.lviv.bas.cinema.domain.enums;
 
 public enum AgeRating {
 	G("General Audiences - All ages admitted"),
