@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.repository;
+package ua.lviv.bas.cinema.dao;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
