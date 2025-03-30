@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 
 import ua.lviv.bas.cinema.dao.UserRepository;
 import ua.lviv.bas.cinema.domain.User;
-import ua.lviv.bas.cinema.domain.UserRole;
+import ua.lviv.bas.cinema.domain.enums.UserRole;
 import ua.lviv.bas.cinema.dto.UserRegistrationDto;
 
 @Service

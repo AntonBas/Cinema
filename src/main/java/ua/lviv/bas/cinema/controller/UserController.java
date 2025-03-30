@@ -60,7 +60,8 @@ public class UserController {
 	}
 
 	@RequestMapping(value = "/home", method = RequestMethod.GET)
-	public String welcome(Model model) {
+	public String home(Model model) {
 		return "home";
 	}
+
 }
