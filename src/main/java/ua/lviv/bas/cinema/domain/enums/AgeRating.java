@@ -1,27 +1,30 @@
 package ua.lviv.bas.cinema.domain.enums;
 
 public enum AgeRating {
-	G("General Audiences - All ages admitted"),
-	PG_13("Parents Strongly Cautioned - Some material may be inappropriate for children under 13"),
-	R("Restricted - Under 17 requires accompanying parent or adult guardian"),
-	NC_17("Adults Only - No one 17 and under admitted");
+	PEGI_3(3, "Suitable for all ages – no restrictions"),
+	PEGI_7(7, "May contain mild violence/fear scenes for young children"),
+	PEGI_12(12, "Recommended for viewers aged 12 and older"), 
+	PEGI_16(16, "Suitable only for teens aged 16+"),
+	PEGI_18(18, "Adults only (18+) – restricted content");
 
+	private final int minAge;
 	private final String description;
 
-	AgeRating(String description) {
+	AgeRating(int minAge, String description) {
+		this.minAge = minAge;
 		this.description = description;
+	}
+
+	public int getMinAge() {
+		return minAge;
 	}
 
 	public String getDescription() {
 		return description;
 	}
 
-	public int getMinAge() {
-		return switch (this) {
-		case G -> 0;
-		case PG_13 -> 13;
-		case R -> 17;
-		case NC_17 -> 18;
-		};
+	public String getDisplayName() {
+		return minAge + "+";
 	}
+
 }
