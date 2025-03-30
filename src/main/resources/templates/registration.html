@@ -3,17 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <title>Registration</title>
-<th:block th:replace="~{common/header :: header-styles}"></th:block>
+    <th:block th:insert="~{common/header :: header-styles}"/>
 <link rel="stylesheet" th:href="@{/css/reset.css}">
 <link rel="stylesheet" th:href="@{/css/registration.css}">
 
 </head>
 
 <body>
-	 <div th:replace="~{common/header :: cinema-header}"></div>
+	 <header th:replace="~{common/header :: cinema-header}"></header>
 
-	<section class="registration">
-		<div class="registration-container">
+	<section>
+		<div class="registration">
 			<h1 class="registration-title registration-text">Registration</h1>
 			<div class="registration-container">
 				<form class="registration-form" th:action="@{/registration}"
@@ -51,7 +51,7 @@
 						<input placeholder="Enter Password" type="password" id="password" th:field="*{password}" class="form-control" required>
 						 <span th:if="${#fields.hasErrors('password')}" th:errors="*{password}" class="error-message"></span>
 						 
-						<input placeholder="Confirm Password" type="password" id="passwordConfirm" th:field="*{passwordConfirm}">
+						<input placeholder="Confirm Password" type="password" id="passwordConfirm" th:field="*{passwordConfirm}" class="form-control">
 						<span th:if="${#fields.hasErrors('passwordConfirm')}" th:errors="*{passwordConfirm}" class="error-message"></span>
 					</div>
 					<button type="submit" class="registration-confirm registration-text">Sign Up</button>

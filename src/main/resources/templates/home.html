@@ -1,11 +1,19 @@
 <!DOCTYPE html>
-<html>
+<html xmlns:th="http://www.thymeleaf.org"
+	xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
 <meta charset="UTF-8">
-<title>Insert title here</title>
+<title>Home</title>
+<th:block th:replace="~{common/header :: header-styles}"></th:block>
+<link rel="stylesheet" th:href="@{/css/home.css}">
 </head>
 <body>
-	<h1>home test page</h1>
-	<h2>21</h2>
+	<div th:replace="~{common/header :: cinema-header}"></div>
+	<div class="home">
+		<h1>home test page</h1>
+		<h2>21</h2>
+		<p sec:authorize="isAuthenticated()">Користувач увійшов!</p>
+		<p sec:authorize="isAnonymous()">Користувач не увійшов!</p>
+	</div>
 </body>
 </html>
