@@ -1,6 +1,7 @@
 package ua.lviv.bas.cinema.domain;
 
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -52,7 +53,10 @@ public class Movie {
 	private MovieStatus status;
 
 	@Lob
-	private String posterImage;
+	@Column(columnDefinition = "LONGBLOB")
+	private byte[] posterImage;
+
+	private String posterImagePath;
 
 	@Enumerated(EnumType.STRING)
 	private AgeRating ageRating;
@@ -76,8 +80,8 @@ public class Movie {
 	}
 
 	public Movie(String title, String description, int durationMinutes, String genre, String director,
-			LocalDate releaseDate, LocalDate endShowingDate, MovieStatus status, String posterImage,
-			AgeRating ageRating, List<Session> sessions) {
+			LocalDate releaseDate, LocalDate endShowingDate, MovieStatus status, byte[] posterImage,
+			String posterImagePath, AgeRating ageRating, List<Session> sessions) {
 		this.title = title;
 		this.description = description;
 		this.durationMinutes = durationMinutes;
@@ -87,13 +91,14 @@ public class Movie {
 		this.endShowingDate = endShowingDate;
 		this.status = status;
 		this.posterImage = posterImage;
+		this.posterImagePath = posterImagePath;
 		this.ageRating = ageRating;
 		this.sessions = sessions;
 	}
 
 	public Movie(Integer id, String title, String description, int durationMinutes, String genre, String director,
-			LocalDate releaseDate, LocalDate endShowingDate, MovieStatus status, String posterImage,
-			AgeRating ageRating, List<Session> sessions) {
+			LocalDate releaseDate, LocalDate endShowingDate, MovieStatus status, byte[] posterImage,
+			String posterImagePath, AgeRating ageRating, List<Session> sessions) {
 		this.id = id;
 		this.title = title;
 		this.description = description;
@@ -104,6 +109,7 @@ public class Movie {
 		this.endShowingDate = endShowingDate;
 		this.status = status;
 		this.posterImage = posterImage;
+		this.posterImagePath = posterImagePath;
 		this.ageRating = ageRating;
 		this.sessions = sessions;
 	}
@@ -180,12 +186,20 @@ public class Movie {
 		this.status = status;
 	}
 
-	public String getPosterImage() {
+	public byte[] getPosterImage() {
 		return posterImage;
 	}
 
-	public void setPosterImage(String posterImage) {
+	public void setPosterImage(byte[] posterImage) {
 		this.posterImage = posterImage;
+	}
+
+	public String getPosterImagePath() {
+		return posterImagePath;
+	}
+
+	public void setPosterImagePath(String posterImagePath) {
+		this.posterImagePath = posterImagePath;
 	}
 
 	public AgeRating getAgeRating() {
@@ -206,8 +220,12 @@ public class Movie {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(ageRating, description, director, durationMinutes, endShowingDate, genre, id, posterImage,
-				releaseDate, sessions, status, title);
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + Arrays.hashCode(posterImage);
+		result = prime * result + Objects.hash(ageRating, description, director, durationMinutes, endShowingDate, genre,
+				id, posterImagePath, releaseDate, sessions, status, title);
+		return result;
 	}
 
 	@Override
@@ -225,7 +243,8 @@ public class Movie {
 		return ageRating == other.ageRating && Objects.equals(description, other.description)
 				&& Objects.equals(director, other.director) && durationMinutes == other.durationMinutes
 				&& Objects.equals(endShowingDate, other.endShowingDate) && Objects.equals(genre, other.genre)
-				&& Objects.equals(id, other.id) && Objects.equals(posterImage, other.posterImage)
+				&& Objects.equals(id, other.id) && Arrays.equals(posterImage, other.posterImage)
+				&& Objects.equals(posterImagePath, other.posterImagePath)
 				&& Objects.equals(releaseDate, other.releaseDate) && Objects.equals(sessions, other.sessions)
 				&& status == other.status && Objects.equals(title, other.title);
 	}
@@ -234,8 +253,9 @@ public class Movie {
 	public String toString() {
 		return "Movie [id=" + id + ", title=" + title + ", description=" + description + ", durationMinutes="
 				+ durationMinutes + ", genre=" + genre + ", director=" + director + ", releaseDate=" + releaseDate
-				+ ", endShowingDate=" + endShowingDate + ", status=" + status + ", posterImage=" + posterImage
-				+ ", ageRating=" + ageRating + ", sessions=" + sessions + "]";
+				+ ", endShowingDate=" + endShowingDate + ", status=" + status + ", posterImage="
+				+ Arrays.toString(posterImage) + ", posterImagePath=" + posterImagePath + ", ageRating=" + ageRating
+				+ ", sessions=" + sessions + "]";
 	}
 
 }
