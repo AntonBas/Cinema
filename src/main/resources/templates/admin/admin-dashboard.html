@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <title>Admin Dashboard</title>
 <link rel="stylesheet" th:href="@{/css/reset.css}">
-<th:block th:insert="~{common/header :: header-styles}"/>
+<th:block th:insert="~{common/header :: header-styles}" />
 <link rel="stylesheet" th:href="@{/css/admin/admin-dashboard.css}">
 </head>
 <body>
@@ -13,11 +13,11 @@
 	<div class="dashboard-container">
 		<h1 class="title">Dashboard</h1>
 		<nav>
-			<a th:href="@{/admin/create-movie}">Create Movie</a>
-			<a th:href="@{admin/movies}">List of Movies</a>
-			<a th:href="@{/admin/sessions}">Sessions</a>
-			<a th:href="@{/admin/halls}">CinemaHalls</a>
-			<a th:href="@{/admin/tickets}">Tickets</a>
+			<a th:href="@{/admin/create-movie}">Movies</a> <a
+				th:href="@{/admin/movies}">List of Movies</a> <a
+				th:href="@{/admin/sessions}">Sessions</a> <a
+				th:href="@{/admin/halls}">CinemaHalls</a> <a
+				th:href="@{/admin/tickets}">Tickets</a>
 		</nav>
 
 

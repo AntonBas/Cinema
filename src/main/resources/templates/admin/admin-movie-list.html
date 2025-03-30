@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>Movies</title>
+<link rel="stylesheet" th:href="@{/css/reset.css}">
+<th:block th:insert="~{common/header :: header-styles}" />
+<link rel="stylesheet" th:href="@{/css/admin/admin-movie-list.css}">
+</head>
+<body>
+ 	<header th:replace="~{common/header :: cinema-header}"></header>
+
+	<div class="movie-grid">
+		<div> 
+			<h1>List of movies</h1>
+			<a th:href="@{/admin/create-movie}">Create Movie</a>
+		</div>
+	
+	
+		<div th:each="movie : ${movie}" class="movie-card">
+			<a th:href="@{/admin/movie/{id}(id=${movie.id})}"> <img
+				th:src="${movie.posterImagePath != null} ? 
+                  @{${movie.posterImagePath}} : 
+                  @{/images/default-poster.jpg}"
+				alt="Movie poster" class="movie-poster">
+			</a>
+
+			<div class="movie-info">
+				<h3 th:text="${movie.title}"></h3>
+				<span class="age-rating"
+					th:text="${movie.ageRating.getDisplayName()}"
+					th:title="${movie.ageRating.getDescription()}"></span> <span
+					th:text="${movie.genre}"></span>
+			</div>
+
+			<div class="movie-actions">
+				<a th:href="@{/admin/movie/edit/{id}(id=${movie.id})}"
+					class="btn btn-edit">Edit</a>
+				<form th:action="@{/admin/movie/delete/{id}(id=${movie.id})}"
+					method="POST">
+					<button type="submit" class="btn btn-delete">Delete</button>
+				</form>
+			</div>
+		</div>
+	</div>
+</body>
+</html>

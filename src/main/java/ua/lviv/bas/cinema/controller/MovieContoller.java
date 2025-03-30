@@ -12,7 +12,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -69,8 +71,15 @@ public class MovieContoller {
 
 	@RequestMapping(value = "/admin/movies", method = RequestMethod.GET)
 	public ModelAndView showAdminMovies() {
-		ModelAndView map = new ModelAndView("admin/admin-movies");
+		ModelAndView map = new ModelAndView("admin/admin-movie-list");
 		map.addObject("movie", movieService.getAllMovies());
 		return map;
+	}
+
+	@GetMapping("/admin/movie/edit/{id}")
+	public String getMovieDetails(@PathVariable Integer id, Model model) {
+		Movie movie = movieService.findById(id);
+		model.addAttribute("movie", movie);
+		return "admin/movie-details";
 	}
 }

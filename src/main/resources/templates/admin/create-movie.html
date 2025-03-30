@@ -11,8 +11,6 @@
 	<header th:replace="~{common/header :: cinema-header}"></header>
 
 	<div class="admin-container">
-		<h2>Add New Movie</h2>
-
 		<form th:action="@{/admin/create-movie}" th:object="${movie}" method="post"
 			enctype="multipart/form-data">
 			<div class="form-section">
@@ -110,10 +108,14 @@
 						th:errors="*{posterImagePath}"></span>
 				</div>
 			</div>
+			
+			<div>
+				<a th:href="@{/admin/movies}">List of Movies</a>
+			</div>
 
 			<div class="form-actions">
 				<button type="submit" class="btn-primary">Save Movie</button>
-				<a th:href="@{/admin/movies}" class="btn-cancel">Cancel</a>
+				<a th:href="@{/admin/create-movie}" class="btn-cancel">Cancel</a>
 			</div>
 		</form>
 	</div>

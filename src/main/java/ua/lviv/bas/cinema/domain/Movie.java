@@ -59,6 +59,7 @@ public class Movie {
 	private String posterImagePath;
 
 	@Enumerated(EnumType.STRING)
+	@Column(nullable = false, name = "age_rating")
 	private AgeRating ageRating;
 
 	@OneToMany(mappedBy = "movie")
