@@ -15,8 +15,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.ModelAndView;
@@ -35,7 +34,7 @@ public class MovieContoller {
 
 	private final String UPLOAD_DIR = "src/main/resources/static/posters/";
 
-	@RequestMapping(value = "/admin/create-movie", method = RequestMethod.GET)
+	@GetMapping("/admin/create-movie")
 	public String showCreateMovie(Model model) {
 		model.addAttribute("allAgeRattings", AgeRating.values());
 		model.addAttribute("allMovieStatuses", MovieStatus.values());
@@ -43,7 +42,7 @@ public class MovieContoller {
 		return "admin/create-movie";
 	}
 
-	@RequestMapping(value = "/admin/create-movie", method = RequestMethod.POST)
+	@PostMapping("/admin/create-movie")
 	public String createMovie(@Valid @ModelAttribute("movie") Movie movie, BindingResult bindingResult,
 			@RequestParam("posterFile") MultipartFile file) throws IOException {
 		if (bindingResult.hasErrors()) {
@@ -69,7 +68,7 @@ public class MovieContoller {
 		return "redirect:/admin/create-movie";
 	}
 
-	@RequestMapping(value = "/admin/movies", method = RequestMethod.GET)
+	@GetMapping("/admin/movies")
 	public ModelAndView showAdminMovies() {
 		ModelAndView map = new ModelAndView("admin/admin-movie-list");
 		map.addObject("movie", movieService.getAllMovies());
@@ -77,9 +76,58 @@ public class MovieContoller {
 	}
 
 	@GetMapping("/admin/movie/edit/{id}")
-	public String getMovieDetails(@PathVariable Integer id, Model model) {
+	public String showEditMovieForm(@PathVariable("id") Integer id, Model model) {
 		Movie movie = movieService.findById(id);
+		model.addAttribute("allAgeRatings", AgeRating.values());
+		model.addAttribute("allMovieStatuses", MovieStatus.values());
 		model.addAttribute("movie", movie);
-		return "admin/movie-details";
+		return "admin/edit-movie";
+	}
+
+	@PostMapping("/admin/movie/edit/{id}")
+	public String updateMovie(@PathVariable("id") Integer id, @Valid @ModelAttribute("movie") Movie movie,
+			BindingResult bindingResult, @RequestParam(value = "posterFile", required = false) MultipartFile file)
+			throws IOException {
+		if (bindingResult.hasErrors()) {
+			return "/admin/edit-movie";
+		}
+
+		Movie existingMovie = movieService.findById(id);
+
+		existingMovie.setTitle(movie.getTitle());
+		existingMovie.setDescription(movie.getDescription());
+		existingMovie.setProduction(movie.getProduction());
+		existingMovie.setGenre(movie.getGenre());
+		existingMovie.setDurationMinutes(movie.getDurationMinutes());
+		existingMovie.setDirector(movie.getDirector());
+		existingMovie.setReleaseYear(movie.getReleaseYear());
+		existingMovie.setReleaseDate(movie.getReleaseDate());
+		existingMovie.setEndShowingDate(movie.getEndShowingDate());
+		existingMovie.setScreenwriter(movie.getScreenwriter());
+		existingMovie.setMainCast(movie.getMainCast());
+		existingMovie.setStatus(movie.getStatus());
+		existingMovie.setAgeRating(movie.getAgeRating());
+
+		if (file != null && !file.isEmpty()) {
+			if (existingMovie.getPosterImagePath() != null) {
+				Path oldFilePath = Paths.get("src/main/resources/static" + existingMovie.getPosterImagePath());
+				Files.deleteIfExists(oldFilePath);
+			}
+
+			String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
+			Path uploadPath = Paths.get("src/main/resources/static/posters/");
+
+			if (!Files.exists(uploadPath)) {
+				Files.createDirectories(uploadPath);
+			}
+
+			Files.copy(file.getInputStream(), uploadPath.resolve(fileName), StandardCopyOption.REPLACE_EXISTING);
+
+			existingMovie.setPosterImagePath("/posters/" + fileName);
+		}
+
+		movieService.save(existingMovie);
+
+		return "redirect:/admin/movies";
 	}
 }

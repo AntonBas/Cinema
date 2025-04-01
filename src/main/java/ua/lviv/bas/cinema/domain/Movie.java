@@ -34,20 +34,32 @@ public class Movie {
 	@Column(nullable = false)
 	private String description;
 
-	@Column(nullable = false, name = "duration_minutes")
-	private int durationMinutes;
+	@Column(nullable = false)
+	private String production;
 
 	@Column(nullable = false)
 	private String genre;
 
+	@Column(nullable = false, name = "duration_minutes")
+	private int durationMinutes;
+
 	@Column(nullable = false)
 	private String director;
+
+	@Column(nullable = false, name = "release_year")
+	private int releaseYear;
 
 	@Column(nullable = false, name = "release_date")
 	private LocalDate releaseDate;
 
 	@Column(nullable = false, name = "end_showing_date")
 	private LocalDate endShowingDate;
+
+	@Column(nullable = false)
+	private String screenwriter;
+
+	@Column(nullable = false, name = "main_cast", columnDefinition = "TEXT")
+	private String mainCast;
 
 	@Enumerated(EnumType.STRING)
 	private MovieStatus status;
@@ -80,16 +92,21 @@ public class Movie {
 	public Movie() {
 	}
 
-	public Movie(String title, String description, int durationMinutes, String genre, String director,
-			LocalDate releaseDate, LocalDate endShowingDate, MovieStatus status, byte[] posterImage,
-			String posterImagePath, AgeRating ageRating, List<Session> sessions) {
+	public Movie(String title, String description, String production, String genre, int durationMinutes,
+			String director, int releaseYear, LocalDate releaseDate, LocalDate endShowingDate, String screenwriter,
+			String mainCast, MovieStatus status, byte[] posterImage, String posterImagePath, AgeRating ageRating,
+			List<Session> sessions) {
 		this.title = title;
 		this.description = description;
-		this.durationMinutes = durationMinutes;
+		this.production = production;
 		this.genre = genre;
+		this.durationMinutes = durationMinutes;
 		this.director = director;
+		this.releaseYear = releaseYear;
 		this.releaseDate = releaseDate;
 		this.endShowingDate = endShowingDate;
+		this.screenwriter = screenwriter;
+		this.mainCast = mainCast;
 		this.status = status;
 		this.posterImage = posterImage;
 		this.posterImagePath = posterImagePath;
@@ -97,17 +114,22 @@ public class Movie {
 		this.sessions = sessions;
 	}
 
-	public Movie(Integer id, String title, String description, int durationMinutes, String genre, String director,
-			LocalDate releaseDate, LocalDate endShowingDate, MovieStatus status, byte[] posterImage,
-			String posterImagePath, AgeRating ageRating, List<Session> sessions) {
+	public Movie(Integer id, String title, String description, String production, String genre, int durationMinutes,
+			String director, int releaseYear, LocalDate releaseDate, LocalDate endShowingDate, String screenwriter,
+			String mainCast, MovieStatus status, byte[] posterImage, String posterImagePath, AgeRating ageRating,
+			List<Session> sessions) {
 		this.id = id;
 		this.title = title;
 		this.description = description;
-		this.durationMinutes = durationMinutes;
+		this.production = production;
 		this.genre = genre;
+		this.durationMinutes = durationMinutes;
 		this.director = director;
+		this.releaseYear = releaseYear;
 		this.releaseDate = releaseDate;
 		this.endShowingDate = endShowingDate;
+		this.screenwriter = screenwriter;
+		this.mainCast = mainCast;
 		this.status = status;
 		this.posterImage = posterImage;
 		this.posterImagePath = posterImagePath;
@@ -139,12 +161,12 @@ public class Movie {
 		this.description = description;
 	}
 
-	public int getDurationMinutes() {
-		return durationMinutes;
+	public String getProduction() {
+		return production;
 	}
 
-	public void setDurationMinutes(int durationMinutes) {
-		this.durationMinutes = durationMinutes;
+	public void setProduction(String production) {
+		this.production = production;
 	}
 
 	public String getGenre() {
@@ -155,12 +177,28 @@ public class Movie {
 		this.genre = genre;
 	}
 
+	public int getDurationMinutes() {
+		return durationMinutes;
+	}
+
+	public void setDurationMinutes(int durationMinutes) {
+		this.durationMinutes = durationMinutes;
+	}
+
 	public String getDirector() {
 		return director;
 	}
 
 	public void setDirector(String director) {
 		this.director = director;
+	}
+
+	public int getReleaseYear() {
+		return releaseYear;
+	}
+
+	public void setReleaseYear(int releaseYear) {
+		this.releaseYear = releaseYear;
 	}
 
 	public LocalDate getReleaseDate() {
@@ -177,6 +215,22 @@ public class Movie {
 
 	public void setEndShowingDate(LocalDate endShowingDate) {
 		this.endShowingDate = endShowingDate;
+	}
+
+	public String getScreenwriter() {
+		return screenwriter;
+	}
+
+	public void setScreenwriter(String screenwriter) {
+		this.screenwriter = screenwriter;
+	}
+
+	public String getMainCast() {
+		return mainCast;
+	}
+
+	public void setMainCast(String mainCast) {
+		this.mainCast = mainCast;
 	}
 
 	public MovieStatus getStatus() {
@@ -224,8 +278,9 @@ public class Movie {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + Arrays.hashCode(posterImage);
-		result = prime * result + Objects.hash(ageRating, description, director, durationMinutes, endShowingDate, genre,
-				id, posterImagePath, releaseDate, sessions, status, title);
+		result = prime * result
+				+ Objects.hash(ageRating, description, director, durationMinutes, endShowingDate, genre, id, mainCast,
+						posterImagePath, production, releaseDate, releaseYear, screenwriter, sessions, status, title);
 		return result;
 	}
 
@@ -244,17 +299,21 @@ public class Movie {
 		return ageRating == other.ageRating && Objects.equals(description, other.description)
 				&& Objects.equals(director, other.director) && durationMinutes == other.durationMinutes
 				&& Objects.equals(endShowingDate, other.endShowingDate) && Objects.equals(genre, other.genre)
-				&& Objects.equals(id, other.id) && Arrays.equals(posterImage, other.posterImage)
+				&& Objects.equals(id, other.id) && Objects.equals(mainCast, other.mainCast)
+				&& Arrays.equals(posterImage, other.posterImage)
 				&& Objects.equals(posterImagePath, other.posterImagePath)
-				&& Objects.equals(releaseDate, other.releaseDate) && Objects.equals(sessions, other.sessions)
-				&& status == other.status && Objects.equals(title, other.title);
+				&& Objects.equals(production, other.production) && Objects.equals(releaseDate, other.releaseDate)
+				&& releaseYear == other.releaseYear && Objects.equals(screenwriter, other.screenwriter)
+				&& Objects.equals(sessions, other.sessions) && status == other.status
+				&& Objects.equals(title, other.title);
 	}
 
 	@Override
 	public String toString() {
-		return "Movie [id=" + id + ", title=" + title + ", description=" + description + ", durationMinutes="
-				+ durationMinutes + ", genre=" + genre + ", director=" + director + ", releaseDate=" + releaseDate
-				+ ", endShowingDate=" + endShowingDate + ", status=" + status + ", posterImage="
+		return "Movie [id=" + id + ", title=" + title + ", description=" + description + ", production=" + production
+				+ ", genre=" + genre + ", durationMinutes=" + durationMinutes + ", director=" + director
+				+ ", releaseYear=" + releaseYear + ", releaseDate=" + releaseDate + ", endShowingDate=" + endShowingDate
+				+ ", screenwriter=" + screenwriter + ", mainCast=" + mainCast + ", status=" + status + ", posterImage="
 				+ Arrays.toString(posterImage) + ", posterImagePath=" + posterImagePath + ", ageRating=" + ageRating
 				+ ", sessions=" + sessions + "]";
 	}
