@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import ua.lviv.bas.cinema.dao.MovieRepository;
 import ua.lviv.bas.cinema.domain.Movie;
@@ -25,4 +26,10 @@ public class MovieService {
 	public Movie findById(Integer id) {
 		return movieRepository.findById(id).get();
 	}
+
+	@Transactional
+	public void delete(Movie movie) {
+		movieRepository.delete(movie);
+	}
+
 }

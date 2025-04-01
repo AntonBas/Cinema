@@ -1,7 +1,6 @@
 package ua.lviv.bas.cinema.controller;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -27,7 +26,7 @@ import ua.lviv.bas.cinema.domain.enums.MovieStatus;
 import ua.lviv.bas.cinema.service.MovieService;
 
 @Controller
-public class MovieContoller {
+public class MovieController {
 
 	@Autowired
 	private MovieService movieService;
@@ -46,22 +45,12 @@ public class MovieContoller {
 	public String createMovie(@Valid @ModelAttribute("movie") Movie movie, BindingResult bindingResult,
 			@RequestParam("posterFile") MultipartFile file) throws IOException {
 		if (bindingResult.hasErrors()) {
-			return "admin/movie";
+			return "/admin/create-movie";
 		}
 
-		if (!file.isEmpty()) {
-			String fileName = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
-
-			Path uploadPath = Paths.get(UPLOAD_DIR);
-			if (!Files.exists(uploadPath)) {
-				Files.createDirectories(uploadPath);
-			}
-
-			try (InputStream inputStream = file.getInputStream()) {
-				Files.copy(inputStream, Paths.get(UPLOAD_DIR + fileName), StandardCopyOption.REPLACE_EXISTING);
-			}
-
-			movie.setPosterImagePath("/posters/" + fileName);
+		String posterPath = savePoster(file);
+		if (posterPath != null) {
+			movie.setPosterImagePath(posterPath);
 		}
 
 		movieService.save(movie);
@@ -109,25 +98,63 @@ public class MovieContoller {
 		existingMovie.setAgeRating(movie.getAgeRating());
 
 		if (file != null && !file.isEmpty()) {
-			if (existingMovie.getPosterImagePath() != null) {
-				Path oldFilePath = Paths.get("src/main/resources/static" + existingMovie.getPosterImagePath());
-				Files.deleteIfExists(oldFilePath);
+			deleteOldPoster(existingMovie.getPosterImagePath());
+			String newPosterPath = savePoster(file);
+			if (newPosterPath != null) {
+				existingMovie.setPosterImagePath(newPosterPath);
 			}
-
-			String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
-			Path uploadPath = Paths.get("src/main/resources/static/posters/");
-
-			if (!Files.exists(uploadPath)) {
-				Files.createDirectories(uploadPath);
-			}
-
-			Files.copy(file.getInputStream(), uploadPath.resolve(fileName), StandardCopyOption.REPLACE_EXISTING);
-
-			existingMovie.setPosterImagePath("/posters/" + fileName);
 		}
-
 		movieService.save(existingMovie);
 
 		return "redirect:/admin/movies";
+	}
+
+	@PostMapping("/admin/movie/delete/{id}")
+	public String deleteMovie(@PathVariable("id") Integer id) throws IOException {
+		Movie movie = movieService.findById(id);
+
+		if (movie != null) {
+			System.out.println("Постер для видалення: " + movie.getPosterImagePath());
+
+			if (movie.getPosterImagePath() != null) {
+				Path posterPath = Paths.get("src/main/resources/static" + movie.getPosterImagePath());
+				System.out.println("Повний шлях до постера: " + posterPath.toAbsolutePath());
+
+				if (Files.exists(posterPath)) {
+					Files.delete(posterPath);
+					System.out.println("Постер успішно видалено!");
+				} else {
+					System.out.println("Файл постера не знайдено!");
+				}
+			}
+
+			movieService.delete(movie);
+		}
+		return "redirect:/admin/movies";
+	}
+
+	private String savePoster(MultipartFile file) throws IOException {
+		if (file.isEmpty()) {
+			return null;
+		}
+
+		String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
+		Path uploadPath = Paths.get(UPLOAD_DIR);
+
+		if (!Files.exists(uploadPath)) {
+			Files.createDirectories(uploadPath);
+		}
+
+		Files.copy(file.getInputStream(), uploadPath.resolve(fileName), StandardCopyOption.REPLACE_EXISTING);
+		return "/posters/" + fileName;
+	}
+
+	private void deleteOldPoster(String posterPath) throws IOException {
+		if (posterPath != null) {
+			Path oldFilePath = Paths.get("src/main/resources/static" + posterPath);
+			if (Files.exists(oldFilePath)) {
+				Files.delete(oldFilePath);
+			}
+		}
 	}
 }
