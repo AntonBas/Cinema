@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Account</title>
+    <link rel="stylesheet" th:href="@{/css/reset.css}">
+    <th:block th:insert="~{common/header :: header-styles}" />
+    <link rel="stylesheet" th:href="@{/css/user/account.css}">
+</head>
+<body>
+    <header th:replace="~{common/header :: cinema-header}"></header>
+    <section>
+        <div class="account-container">
+            <h1 th:if="${firstName != null and lastName != null}" 
+                th:text="'Welcome, ' + ${firstName} + ' ' + ${lastName} + '!'">
+            </h1>
+            <div class="tabs-container">
+            	<div class="tabs">
+            		<span class="tab-title">Account</span>
+            		<span class="tab-title">Tickets</span>
+            		<span class="tab-title">Bonuses</span>
+            	</div>
+            	<div class="content"></div>
+            </div>
+        </div>
+    </section>
+</body>
+</html>

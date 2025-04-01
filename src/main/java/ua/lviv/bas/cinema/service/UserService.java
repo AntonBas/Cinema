@@ -1,5 +1,7 @@
 package ua.lviv.bas.cinema.service;
 
+import java.util.Optional;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,5 +46,9 @@ public class UserService {
 
 		userRepository.save(user);
 		logger.info("User registered successfully with email: {}", userDto.getEmail());
+	}
+
+	public Optional<User> findByEmail(String email) {
+		return userRepository.findByEmail(email);
 	}
 }

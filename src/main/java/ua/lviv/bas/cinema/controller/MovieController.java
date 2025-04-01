@@ -114,22 +114,16 @@ public class MovieController {
 		Movie movie = movieService.findById(id);
 
 		if (movie != null) {
-			System.out.println("Постер для видалення: " + movie.getPosterImagePath());
-
 			if (movie.getPosterImagePath() != null) {
 				Path posterPath = Paths.get("src/main/resources/static" + movie.getPosterImagePath());
-				System.out.println("Повний шлях до постера: " + posterPath.toAbsolutePath());
-
 				if (Files.exists(posterPath)) {
 					Files.delete(posterPath);
-					System.out.println("Постер успішно видалено!");
-				} else {
-					System.out.println("Файл постера не знайдено!");
 				}
 			}
 
 			movieService.delete(movie);
 		}
+
 		return "redirect:/admin/movies";
 	}
 

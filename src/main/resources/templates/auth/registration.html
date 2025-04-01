@@ -5,7 +5,7 @@
 <title>Registration</title>
 <link rel="stylesheet" th:href="@{/css/reset.css}">
 <th:block th:insert="~{common/header :: header-styles}"/>
-<link rel="stylesheet" th:href="@{/css/registration.css}">
+<link rel="stylesheet" th:href="@{/css/auth/registration.css}">
 
 </head>
 
@@ -14,7 +14,7 @@
 
 	<section>
 		<div class="registration">
-			<h1 class="registration-title registration-text">Registration</h1>
+			<h1 class="registration-title">Registration</h1>
 			<div class="registration-container">
 				<form class="registration-form" th:action="@{/registration}"
 					th:object="${userForm}" method="post">

@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org"
 	xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head th:fragment="header-styles">
-<link rel="stylesheet" th:href="@{/css/header.css}">
+<link rel="stylesheet" th:href="@{/css/common/header.css}">
 </head>
 
 <div th:fragment="cinema-header">
@@ -16,12 +16,12 @@
 				<li><a th:href="@{/movies}">Movies</a></li>
 				<li><a th:href="@{/schedule}">Schedule</a></li>
 				<li sec:authorize="isAuthenticated()" class="dropdown">
-					<button class="dropdown-btn">My Account ▼</button>
+					<button class="dropdown-btn">My Account</button>
 					<ul class="dropdown-menu">
 						<li><a th:href="@{/account}">Profile</a></li>
 						<li><a th:href="@{/admin/dashboard}">Dashboard</a></li>
 						<li>
-							<form action="@{/logout}" method="post">
+							<form th:action="@{/logout}" method="post">
 								<button type="submit" class="logout-bth">Logout</button>
 							</form>
 						</li>
