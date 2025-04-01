@@ -15,14 +15,19 @@
                 th:text="'Welcome, ' + ${firstName} + ' ' + ${lastName} + '!'">
             </h1>
             <div class="tabs-container">
-            	<div class="tabs">
-            		<span class="tab-title">Account</span>
-            		<span class="tab-title">Tickets</span>
-            		<span class="tab-title">Bonuses</span>
-            	</div>
-            	<div class="content"></div>
+                <div class="tabs">
+                    <span class="tab-title active" data-tab="account">Account</span>
+                    <span class="tab-title" data-tab="tickets">Tickets</span>
+                    <span class="tab-title" data-tab="bonuses">Bonuses</span>
+                </div>
+                <div class="content">
+                    <div id="account" class="tab-content active">Account content goes here</div>
+                    <div id="tickets" class="tab-content">Tickets content goes here</div>
+                    <div id="bonuses" class="tab-content">Bonuses content goes here</div>
+                </div>
             </div>
         </div>
     </section>
+    <script th:src="@{/js/account.js}"></script>
 </body>
 </html>

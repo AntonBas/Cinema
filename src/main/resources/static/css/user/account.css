@@ -1,3 +1,47 @@
 .account-container {
-	margin-top: 65px;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.tabs-container {
+    margin-top: 20px;
+}
+
+.tabs {
+    display: flex;
+    border-bottom: 1px solid #ddd;
+}
+
+.tab-title {
+    padding: 10px 20px;
+    cursor: pointer;
+    background: #f1f1f1;
+    margin-right: 5px;
+    border-radius: 5px 5px 0 0;
+    transition: all 0.3s;
+}
+
+.tab-title:hover {
+    background: #ddd;
+}
+
+.tab-title.active {
+    background: #4CAF50;
+    color: white;
+}
+
+.content {
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-top: none;
+    min-height: 200px;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
 }
