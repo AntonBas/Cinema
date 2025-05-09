@@ -12,7 +12,10 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
 import jakarta.persistence.Lob;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
@@ -32,13 +35,19 @@ public class Movie {
 	private String title;
 
 	@Column(nullable = false)
+	private String slug;
+
+	@Column(nullable = false)
+	private double price;
+
+	@Column(nullable = false)
+	private String trailer;
+
+	@Column(nullable = false)
 	private String description;
 
 	@Column(nullable = false)
 	private String production;
-
-	@Column(nullable = false)
-	private String genre;
 
 	@Column(nullable = false, name = "duration_minutes")
 	private int durationMinutes;
@@ -77,6 +86,10 @@ public class Movie {
 	@OneToMany(mappedBy = "movie")
 	private List<Session> sessions;
 
+	@ManyToMany
+	@JoinTable(name = "movie-genres", joinColumns = @JoinColumn(name = "movie_id"), inverseJoinColumns = @JoinColumn(name = "genre_id"))
+	private List<Genre> genres;
+
 	@Transient
 	public MovieCategory getCategory() {
 		LocalDate now = LocalDate.now();
@@ -92,14 +105,16 @@ public class Movie {
 	public Movie() {
 	}
 
-	public Movie(String title, String description, String production, String genre, int durationMinutes,
-			String director, int releaseYear, LocalDate releaseDate, LocalDate endShowingDate, String screenwriter,
-			String mainCast, MovieStatus status, byte[] posterImage, String posterImagePath, AgeRating ageRating,
-			List<Session> sessions) {
+	public Movie(String title, String slug, double price, String trailer, String description, String production,
+			int durationMinutes, String director, int releaseYear, LocalDate releaseDate, LocalDate endShowingDate,
+			String screenwriter, String mainCast, MovieStatus status, byte[] posterImage, String posterImagePath,
+			AgeRating ageRating, List<Session> sessions, List<Genre> genres) {
 		this.title = title;
+		this.slug = slug;
+		this.price = price;
+		this.trailer = trailer;
 		this.description = description;
 		this.production = production;
-		this.genre = genre;
 		this.durationMinutes = durationMinutes;
 		this.director = director;
 		this.releaseYear = releaseYear;
@@ -112,17 +127,20 @@ public class Movie {
 		this.posterImagePath = posterImagePath;
 		this.ageRating = ageRating;
 		this.sessions = sessions;
+		this.genres = genres;
 	}
 
-	public Movie(Integer id, String title, String description, String production, String genre, int durationMinutes,
-			String director, int releaseYear, LocalDate releaseDate, LocalDate endShowingDate, String screenwriter,
-			String mainCast, MovieStatus status, byte[] posterImage, String posterImagePath, AgeRating ageRating,
-			List<Session> sessions) {
+	public Movie(Integer id, String title, String slug, double price, String trailer, String description,
+			String production, int durationMinutes, String director, int releaseYear, LocalDate releaseDate,
+			LocalDate endShowingDate, String screenwriter, String mainCast, MovieStatus status, byte[] posterImage,
+			String posterImagePath, AgeRating ageRating, List<Session> sessions, List<Genre> genres) {
 		this.id = id;
 		this.title = title;
+		this.slug = slug;
+		this.price = price;
+		this.trailer = trailer;
 		this.description = description;
 		this.production = production;
-		this.genre = genre;
 		this.durationMinutes = durationMinutes;
 		this.director = director;
 		this.releaseYear = releaseYear;
@@ -135,6 +153,7 @@ public class Movie {
 		this.posterImagePath = posterImagePath;
 		this.ageRating = ageRating;
 		this.sessions = sessions;
+		this.genres = genres;
 	}
 
 	public Integer getId() {
@@ -153,6 +172,30 @@ public class Movie {
 		this.title = title;
 	}
 
+	public String getSlug() {
+		return slug;
+	}
+
+	public void setSlug(String slug) {
+		this.slug = slug;
+	}
+
+	public double getPrice() {
+		return price;
+	}
+
+	public void setPrice(double price) {
+		this.price = price;
+	}
+
+	public String getTrailer() {
+		return trailer;
+	}
+
+	public void setTrailer(String trailer) {
+		this.trailer = trailer;
+	}
+
 	public String getDescription() {
 		return description;
 	}
@@ -167,14 +210,6 @@ public class Movie {
 
 	public void setProduction(String production) {
 		this.production = production;
-	}
-
-	public String getGenre() {
-		return genre;
-	}
-
-	public void setGenre(String genre) {
-		this.genre = genre;
 	}
 
 	public int getDurationMinutes() {
@@ -273,14 +308,22 @@ public class Movie {
 		this.sessions = sessions;
 	}
 
+	public List<Genre> getGenres() {
+		return genres;
+	}
+
+	public void setGenres(List<Genre> genres) {
+		this.genres = genres;
+	}
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + Arrays.hashCode(posterImage);
-		result = prime * result
-				+ Objects.hash(ageRating, description, director, durationMinutes, endShowingDate, genre, id, mainCast,
-						posterImagePath, production, releaseDate, releaseYear, screenwriter, sessions, status, title);
+		result = prime * result + Objects.hash(ageRating, description, director, durationMinutes, endShowingDate,
+				genres, id, mainCast, posterImagePath, price, production, releaseDate, releaseYear, screenwriter,
+				sessions, slug, status, title, trailer);
 		return result;
 	}
 
@@ -298,24 +341,26 @@ public class Movie {
 		Movie other = (Movie) obj;
 		return ageRating == other.ageRating && Objects.equals(description, other.description)
 				&& Objects.equals(director, other.director) && durationMinutes == other.durationMinutes
-				&& Objects.equals(endShowingDate, other.endShowingDate) && Objects.equals(genre, other.genre)
+				&& Objects.equals(endShowingDate, other.endShowingDate) && Objects.equals(genres, other.genres)
 				&& Objects.equals(id, other.id) && Objects.equals(mainCast, other.mainCast)
 				&& Arrays.equals(posterImage, other.posterImage)
 				&& Objects.equals(posterImagePath, other.posterImagePath)
+				&& Double.doubleToLongBits(price) == Double.doubleToLongBits(other.price)
 				&& Objects.equals(production, other.production) && Objects.equals(releaseDate, other.releaseDate)
 				&& releaseYear == other.releaseYear && Objects.equals(screenwriter, other.screenwriter)
-				&& Objects.equals(sessions, other.sessions) && status == other.status
-				&& Objects.equals(title, other.title);
+				&& Objects.equals(sessions, other.sessions) && Objects.equals(slug, other.slug)
+				&& status == other.status && Objects.equals(title, other.title)
+				&& Objects.equals(trailer, other.trailer);
 	}
 
 	@Override
 	public String toString() {
-		return "Movie [id=" + id + ", title=" + title + ", description=" + description + ", production=" + production
-				+ ", genre=" + genre + ", durationMinutes=" + durationMinutes + ", director=" + director
-				+ ", releaseYear=" + releaseYear + ", releaseDate=" + releaseDate + ", endShowingDate=" + endShowingDate
-				+ ", screenwriter=" + screenwriter + ", mainCast=" + mainCast + ", status=" + status + ", posterImage="
-				+ Arrays.toString(posterImage) + ", posterImagePath=" + posterImagePath + ", ageRating=" + ageRating
-				+ ", sessions=" + sessions + "]";
+		return "Movie [id=" + id + ", title=" + title + ", slug=" + slug + ", price=" + price + ", trailer=" + trailer
+				+ ", description=" + description + ", production=" + production + ", durationMinutes=" + durationMinutes
+				+ ", director=" + director + ", releaseYear=" + releaseYear + ", releaseDate=" + releaseDate
+				+ ", endShowingDate=" + endShowingDate + ", screenwriter=" + screenwriter + ", mainCast=" + mainCast
+				+ ", status=" + status + ", posterImage=" + Arrays.toString(posterImage) + ", posterImagePath="
+				+ posterImagePath + ", ageRating=" + ageRating + ", sessions=" + sessions + ", genres=" + genres + "]";
 	}
 
 }

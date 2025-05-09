@@ -121,6 +121,5 @@ public class Ticket {
 		return "Ticket [id=" + id + ", purchaseTime=" + purchaseTime + ", session=" + session + ", seat=" + seat
 				+ ", user=" + user + "]";
 	}
-	
-	
+
 }
