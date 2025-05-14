@@ -8,16 +8,16 @@
 <link rel="stylesheet" th:href="@{/css/admin/admin-movie-list.css}">
 </head>
 <body>
- 	<header th:replace="~{common/header :: cinema-header}"></header>
+	<header th:replace="~{common/header :: cinema-header}"></header>
 
 	<div class="movie-grid">
-		<div> 
+		<div>
 			<h1>List of movies</h1>
-			<a th:href="@{/admin/create-movie}">Create Movie</a>
+			<a th:href="@{/admin/movie/create}">Create Movie</a>
 		</div>
-	
-	
-		<div th:each="movie : ${movie}" class="movie-card">
+
+
+		<div th:each="movie : ${movies}" class="movie-card">
 			<a th:href="@{/admin/movie/{id}(id=${movie.id})}"> <img
 				th:src="${movie.posterImagePath != null} ? 
                   @{${movie.posterImagePath}} : 
@@ -29,16 +29,19 @@
 				<h3 th:text="${movie.title}"></h3>
 				<span class="age-rating"
 					th:text="${movie.ageRating.getDisplayName()}"
-					th:title="${movie.ageRating.getDescription()}"></span> <span
-					th:text="${movie.genre}"></span>
+					th:title="${movie.ageRating.getDescription()}"></span>
 			</div>
 
 			<div class="movie-actions">
-				<a th:href="@{/admin/movie/edit/{id}(id=${movie.id})}"
-					class="btn btn-edit">Edit</a>
+				<a th:href="@{/admin/movie/edit/{slug}(slug=${movie.slug})}"
+					class="edit-btn"> <i class="fas fa-edit"></i> Edit
+				</a>
 				<form th:action="@{/admin/movie/delete/{id}(id=${movie.id})}"
-					method="POST">
-					<button type="submit" class="btn btn-delete">Delete</button>
+					method="post">
+					<button type="submit" class="delete-btn"
+						onclick="return confirm('Are you sure you want to delete this movie?');">
+						<i class="fas fa-trash-alt"></i> Delete
+					</button>
 				</form>
 			</div>
 		</div>

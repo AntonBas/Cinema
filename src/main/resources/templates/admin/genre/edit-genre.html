@@ -1,36 +1,42 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8">
-    <title>Edit Genre | Cinema Admin</title>
-    <link rel="stylesheet" th:href="@{/css/reset.css}">
-    <th:block th:insert="~{common/header :: header-styles}" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" th:href="@{/css/admin/genre/genre-form.css}">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<meta charset="UTF-8">
+<title>Edit Genre | Cinema Admin</title>
+<link rel="stylesheet" th:href="@{/css/reset.css}">
+<th:block th:insert="~{common/header :: header-styles}" />
+<link rel="stylesheet"
+	href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<link rel="stylesheet" th:href="@{/css/admin/genre/genre-form.css}">
+<link
+	href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+	rel="stylesheet">
 </head>
 <body>
-    <header th:replace="~{common/header :: cinema-header}"></header>
-    
-    <div class="genre-container">
-        <form class="genre-form" th:action="@{'/admin/genre/edit/' + ${genre.id}}" th:object="${genre}" method="POST">
-            <h1>Edit Genre</h1>
-            
-            <div class="form-group">
-                <label for="name">Genre Name</label>
-                <input type="text" id="name" th:field="*{name}" placeholder="Enter genre name" required>
-                <span class="error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></span>
-            </div>
-            
-            <div class="form-actions">
-                <a th:href="@{/admin/genres}" class="back-link">
-                    <i class="fas fa-arrow-left"></i> Back to List
-                </a>
-                <button type="submit" class="submit-btn">
-                    <i class="fas fa-save"></i> Save Changes
-                </button>
-            </div>
-        </form>
-    </div>
+	<header th:replace="~{common/header :: cinema-header}"></header>
+
+	<div class="genre-container">
+		<form class="genre-form"
+			th:action="@{'/admin/genre/edit/' + ${genre.id}}"
+			th:object="${genre}" method="post">
+			<h1>Edit Genre</h1>
+
+			<div class="form-group">
+				<label for="name">Genre Name</label> <input type="text" id="name"
+					th:field="*{name}" placeholder="Enter genre name" required>
+				<span class="error" th:if="${#fields.hasErrors('name')}"
+					th:errors="*{name}"></span>
+			</div>
+
+			<div class="form-actions">
+				<a th:href="@{/admin/genre}" class="back-link"> <i
+					class="fas fa-arrow-left"></i> Back to List
+				</a>
+				<button type="submit" class="submit-btn">
+					<i class="fas fa-save"></i> Save Changes
+				</button>
+			</div>
+		</form>
+	</div>
 </body>
 </html>

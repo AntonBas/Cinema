@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>Genre | Cinema Admin</title>
+<link rel="stylesheet" th:href="@{/css/reset.css}">
+<th:block th:insert="~{common/header :: header-styles}" />
+<link rel="stylesheet"
+	href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<link rel="stylesheet" th:href="@{/css/admin/genre/genres.css}">
+<link
+	href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+	rel="stylesheet">
+</head>
+<body>
+	<header th:replace="~{common/header :: cinema-header}"></header>
+
+	<div class="genre-container">
+		<div class="genre-header">
+			<h1>Manage Genres</h1>
+			<a th:href="@{/admin/genre/create}" class="create-btn"> <i
+				class="fas fa-plus"></i> Create New Genre
+			</a>
+		</div>
+
+		<table class="genre-table">
+			<thead>
+				<tr>
+					<th>Genre Name</th>
+					<th>Actions</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr th:each="genre: ${genres}">
+					<td th:text="${genre.name}">Action</td>
+					<td class="action-cell"><a
+						th:href="@{/admin/genre/edit/{id}(id=${genre.id})}"
+						class="edit-btn"> <i class="fas fa-edit"></i> Edit
+					</a>
+						<form class="delete-form"
+							th:action="@{/admin/genre/delete/{id}(id=${genre.id})}"
+							method="post">
+							<button type="submit" class="delete-btn"
+								onclick="return confirm('Are you sure you want to delete this genre?');">
+								<i class="fas fa-trash-alt"></i> Delete
+							</button>
+						</form></td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+</body>
+</html>

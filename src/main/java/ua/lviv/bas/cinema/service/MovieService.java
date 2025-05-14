@@ -4,7 +4,6 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import ua.lviv.bas.cinema.dao.MovieRepository;
 import ua.lviv.bas.cinema.domain.Movie;
@@ -15,21 +14,28 @@ public class MovieService {
 	@Autowired
 	private MovieRepository movieRepository;
 
-	public Movie save(Movie movie) {
+	public Movie createMovie(Movie movie) {
 		return movieRepository.save(movie);
+	}
+
+	public Movie readMovie(Long id) {
+		return movieRepository.findById(id).orElse(null);
+	}
+
+	public Movie updateMovie(Movie movie) {
+		return movieRepository.save(movie);
+	}
+
+	public void deleteMovie(Long id) {
+		movieRepository.deleteById(id);
 	}
 
 	public List<Movie> getAllMovies() {
 		return movieRepository.findAll();
 	}
 
-	public Movie findById(Integer id) {
-		return movieRepository.findById(id).get();
+	public Movie readBySlug(String slug) {
+		return movieRepository.findBySlug(slug)
+				.orElseThrow(() -> new RuntimeException("Movie not found with slug: " + slug));
 	}
-
-	@Transactional
-	public void delete(Movie movie) {
-		movieRepository.delete(movie);
-	}
-
 }

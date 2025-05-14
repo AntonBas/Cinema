@@ -29,7 +29,7 @@ public class Movie {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Integer id;
+	private Long id;
 
 	@Column(nullable = false)
 	private String title;
@@ -130,7 +130,7 @@ public class Movie {
 		this.genres = genres;
 	}
 
-	public Movie(Integer id, String title, String slug, double price, String trailer, String description,
+	public Movie(Long id, String title, String slug, double price, String trailer, String description,
 			String production, int durationMinutes, String director, int releaseYear, LocalDate releaseDate,
 			LocalDate endShowingDate, String screenwriter, String mainCast, MovieStatus status, byte[] posterImage,
 			String posterImagePath, AgeRating ageRating, List<Session> sessions, List<Genre> genres) {
@@ -156,11 +156,11 @@ public class Movie {
 		this.genres = genres;
 	}
 
-	public Integer getId() {
+	public Long getId() {
 		return id;
 	}
 
-	public void setId(Integer id) {
+	public void setId(Long id) {
 		this.id = id;
 	}
 
@@ -360,7 +360,7 @@ public class Movie {
 				+ ", director=" + director + ", releaseYear=" + releaseYear + ", releaseDate=" + releaseDate
 				+ ", endShowingDate=" + endShowingDate + ", screenwriter=" + screenwriter + ", mainCast=" + mainCast
 				+ ", status=" + status + ", posterImage=" + Arrays.toString(posterImage) + ", posterImagePath="
-				+ posterImagePath + ", ageRating=" + ageRating + ", sessions=" + sessions + ", genres=" + genres + "]";
+				+ posterImagePath + ", ageRating=" + ageRating + ", sessions=" + sessions + "]";
 	}
 
 }

@@ -21,11 +21,11 @@ public class GenreController {
 	@Autowired
 	private GenreService genreService;
 
-	@GetMapping("/genres")
+	@GetMapping("/genre")
 	public String listGenres(Model model) {
 		List<Genre> genres = genreService.getAllGenres();
 		model.addAttribute("genres", genres);
-		return "admin/genre/genres";
+		return "admin/genre/genre";
 	}
 
 	@GetMapping("/genre/create")
@@ -36,28 +36,28 @@ public class GenreController {
 
 	@PostMapping("/genre/create")
 	public String addGenre(@ModelAttribute Genre genre) {
-		genreService.create(genre);
+		genreService.createGenre(genre);
 		return "admin/genre/create-genre";
 	}
 
 	@GetMapping("/genre/edit/{id}")
-	public String showEditGenreForm(@PathVariable Integer id, Model model) {
-		Genre genre = genreService.read(id);
+	public String showEditGenreForm(@PathVariable Long id, Model model) {
+		Genre genre = genreService.readGenre(id);
 		model.addAttribute("genre", genre);
 		return "admin/genre/edit-genre";
 	}
 
 	@PostMapping("/genre/edit/{id}")
-	public String updateGenre(@PathVariable Integer id, @ModelAttribute Genre genre) {
+	public String updateGenre(@PathVariable Long id, @ModelAttribute Genre genre) {
 		genre.setId(id);
-		genreService.update(genre);
-		return "redirect:/admin/genres";
+		genreService.updateGenre(genre);
+		return "redirect:/admin/genre";
 	}
 
 	@PostMapping("/genre/delete/{id}")
-	public String deleteGenre(@PathVariable Integer id) {
-		genreService.delete(id);
-		return "redirect:/admin/genres";
+	public String deleteGenre(@PathVariable Long id) {
+		genreService.deleteGenre(id);
+		return "redirect:/admin/genre";
 	}
 
 }

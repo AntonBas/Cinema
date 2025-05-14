@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>Edit Movie</title>
+<link rel="stylesheet" th:href="@{/css/reset.css}">
+<th:block th:insert="~{common/header :: header-styles}" />
+<link rel="stylesheet" th:href="@{/css/admin/create-movie.css}">
+</head>
+<body>
+	<header th:replace="~{common/header :: cinema-header}"></header>
+
+	<div class="admin-container">
+		<form
+			th:action="${#strings.isEmpty(movie.slug)} ? @{/admin/movie/create} : @{'/admin/movie/edit/' + ${movie.slug}}"
+			th:object="${movie}" method="post" enctype="multipart/form-data">
+			<div class="form-section">
+				<h3>Basic Information</h3>
+
+				<div class="form-group">
+					<label for="title" class="required">Title</label> <input
+						type="text" id="title" th:field="*{title}" required> <span
+						class="error" th:if="${#fields.hasErrors('title')}"
+						th:errors="*{title}"></span>
+				</div>
+
+				<div class="form-group">
+					<label for="slug" class="required">Slug</label> <input type="text"
+						id="slug" th:field="*{slug}" required> <span class="error"
+						th:if="${#fields.hasErrors('slug')}" th:errors="*{slug}"></span>
+				</div>
+
+				<div class="form-group">
+					<label for="price" class="required">Price</label> <input
+						type="number" id="price" th:field="*{price}" required> <span
+						class="error" th:if="${#fields.hasErrors('price')}"
+						th:errors="*{price}"></span>
+				</div>
+
+				<div class="form-group">
+					<label for="description" class="required">Description</label>
+					<textarea id="description" th:field="*{description}" required></textarea>
+					<span class="error" th:if="${#fields.hasErrors('description')}"
+						th:errors="*{description}"></span>
+				</div>
+
+				<div class="form-group">
+					<label for="production" class="required">Production</label> <input
+						type="text" id="production" th:field="*{production}" required>
+					<span class="error" th:if="${#fields.hasErrors('production')}"
+						th:errors="*{production}"></span>
+				</div>
+
+				<div class="form-row">
+					<div class="form-group">
+						<label for="director" class="required">Director</label> <input
+							type="text" id="director" th:field="*{director}" required>
+						<span class="error" th:if="${#fields.hasErrors('director')}"
+							th:errors="*{director}"></span>
+					</div>
+				</div>
+
+				<div class="form-row">
+					<div class="form-group">
+						<label for="screenwriter" class="required">Screenwriter</label> <input
+							type="text" id="screenwriter" th:field="*{screenwriter}" required>
+						<span class="error" th:if="${#fields.hasErrors('screenwriter')}"
+							th:errors="*{screenwriter}"></span>
+					</div>
+
+					<div class="form-group">
+						<label for="releaseYear" class="required">Release Year</label> <input
+							type="number" id="releaseYear" th:field="*{releaseYear}"
+							min="1900" max="2100" required> <span class="error"
+							th:if="${#fields.hasErrors('releaseYear')}"
+							th:errors="*{releaseYear}"></span>
+					</div>
+				</div>
+
+				<div class="form-group">
+					<label for="genres" class="required">Genres</label> <select
+						id="genres" name="genreIds" multiple="multiple" size="5" required
+						class="form-control" style="height: auto;">
+						<option th:each="genre : ${allGenres}" th:value="${genre.id}"
+							th:text="${genre.name}"
+							th:selected="${movie.genres != null and movie.genres.contains(genre)}"></option>
+					</select> <span class="error" th:if="${#fields.hasErrors('genres')}"
+						th:errors="*{genres}"></span> <small class="form-text text-muted">Hold
+						Ctrl/Cmd to select multiple genres</small>
+				</div>
+
+				<div class="form-group">
+					<label for="main_cast" class="required">Main Cast</label>
+					<textarea id="main_cast" th:field="*{mainCast}" required></textarea>
+					<span class="error" th:if="${#fields.hasErrors('mainCast')}"
+						th:errors="*{mainCast}"></span>
+				</div>
+
+				<div class="form-group">
+					<label for="trailer" class="required">Trailer (YouTube URL)</label>
+					<input type="url" id="trailer" th:field="*{trailer}" required>
+					<span class="error" th:if="${#fields.hasErrors('trailer')}"
+						th:errors="*{trailer}"></span>
+				</div>
+			</div>
+
+			<div class="form-section">
+				<h3>Technical Details</h3>
+
+				<div class="form-row">
+					<div class="form-group">
+						<label for="durationMinutes" class="required">Duration
+							(minutes)</label> <input type="number" id="durationMinutes"
+							th:field="*{durationMinutes}" min="1" required> <span
+							class="error" th:if="${#fields.hasErrors('durationMinutes')}"
+							th:errors="*{durationMinutes}"></span>
+					</div>
+
+					<div class="form-group">
+						<label for="ageRating" class="required">Age Rating</label> <select
+							id="ageRating" th:field="*{ageRating}" required>
+							<option value="">-- Select Age Rating --</option>
+							<option th:each="rating : ${allAgeRatings}" th:value="${rating}"
+								th:text="${rating}"></option>
+						</select> <span class="error" th:if="${#fields.hasErrors('ageRating')}"
+							th:errors="*{ageRating}"></span>
+					</div>
+				</div>
+
+				<div class="form-row">
+					<div class="form-group">
+						<label for="releaseDate" class="required">Release Date</label> <input
+							type="date" id="releaseDate" th:field="*{releaseDate}" required>
+						<span class="error" th:if="${#fields.hasErrors('releaseDate')}"
+							th:errors="*{releaseDate}"></span>
+					</div>
+
+					<div class="form-group">
+						<label for="endShowingDate" class="required">End Showing
+							Date</label> <input type="date" id="endShowingDate"
+							th:field="*{endShowingDate}" required> <span
+							class="error" th:if="${#fields.hasErrors('endShowingDate')}"
+							th:errors="*{endShowingDate}"></span>
+					</div>
+				</div>
+
+				<div class="form-group">
+					<label for="status" class="required">Status</label> <select
+						id="status" th:field="*{status}" required>
+						<option value="">-- Select Status --</option>
+						<option th:each="status : ${allMovieStatuses}"
+							th:value="${status}" th:text="${status}"></option>
+					</select> <span class="error" th:if="${#fields.hasErrors('status')}"
+						th:errors="*{status}"></span>
+				</div>
+			</div>
+
+			<div class="form-section">
+				<h3>Poster Image</h3>
+				<div class="form-group">
+					<label for="posterFile">Upload Poster</label> <input type="file"
+						id="posterFile" name="posterFile" accept="image/*">
+					<p class="hint">Recommended size: 800x1200px, JPG or PNG format</p>
+					<span class="error" th:if="${#fields.hasErrors('posterImagePath')}"
+						th:errors="*{posterImagePath}"></span>
+				</div>
+			</div>
+
+			<div>
+				<a th:href="@{/admin/movie}" class="back-link">← Back to Movies
+					List</a>
+			</div>
+
+			<div class="form-actions">
+				<button type="submit" class="btn-primary"
+					th:text="${#strings.isEmpty(movie.slug)} ? 'Create' : 'Edit'"></button>
+				<button type="reset" class="btn-cancel">Reset Form</button>
+			</div>
+		</form>
+	</div>
+</body>
+</html>
