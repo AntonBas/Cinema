@@ -3,6 +3,7 @@ package ua.lviv.bas.cinema.domain;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -17,8 +18,9 @@ public class Ticket {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Integer id;
+	private Long id;
 
+	@Column(nullable = false, name = "purchase_time")
 	private LocalDateTime purchaseTime;
 
 	@ManyToOne
@@ -45,7 +47,7 @@ public class Ticket {
 		this.user = user;
 	}
 
-	public Ticket(Integer id, LocalDateTime purchaseTime, Session session, Seat seat, User user) {
+	public Ticket(Long id, LocalDateTime purchaseTime, Session session, Seat seat, User user) {
 		super();
 		this.id = id;
 		this.purchaseTime = purchaseTime;
@@ -54,11 +56,11 @@ public class Ticket {
 		this.user = user;
 	}
 
-	public Integer getId() {
+	public Long getId() {
 		return id;
 	}
 
-	public void setId(Integer id) {
+	public void setId(Long id) {
 		this.id = id;
 	}
 

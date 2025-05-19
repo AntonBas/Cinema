@@ -3,6 +3,7 @@ package ua.lviv.bas.cinema.domain;
 import java.util.List;
 import java.util.Objects;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -16,8 +17,12 @@ public class CinemaHall {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Integer id;
+	private Long id;
+
+	@Column(nullable = false)
 	private String name;
+
+	@Column(nullable = false)
 	private int capacity;
 
 	@OneToMany(mappedBy = "hall")
@@ -36,7 +41,7 @@ public class CinemaHall {
 		this.seats = seats;
 	}
 
-	public CinemaHall(Integer id, String name, int capacity, List<Session> sessions, List<Seat> seats) {
+	public CinemaHall(Long id, String name, int capacity, List<Session> sessions, List<Seat> seats) {
 		this.id = id;
 		this.name = name;
 		this.capacity = capacity;
@@ -44,11 +49,11 @@ public class CinemaHall {
 		this.seats = seats;
 	}
 
-	public Integer getId() {
+	public Long getId() {
 		return id;
 	}
 
-	public void setId(Integer id) {
+	public void setId(Long id) {
 		this.id = id;
 	}
 

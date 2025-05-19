@@ -15,9 +15,7 @@
 			<h1>List of movies</h1>
 			<a th:href="@{/admin/movie/create}">Create Movie</a>
 		</div>
-
-
-		<div th:each="movie : ${movies}" class="movie-card">
+		<div th:each="movie : ${moviePage.content}" class="movie-card">
 			<a th:href="@{/admin/movie/{id}(id=${movie.id})}"> <img
 				th:src="${movie.posterImagePath != null} ? 
                   @{${movie.posterImagePath}} : 
@@ -44,6 +42,22 @@
 					</button>
 				</form>
 			</div>
+		</div>
+
+		<div class="pagination">
+			<a th:if="${currentPage > 0}"
+				th:href="@{/admin/movie(page=${currentPage - 1}, size=${moviePage.size})}">&laquo;
+				Prev</a>
+
+			<span th:each="i : ${#numbers.sequence(0, totalPages - 1)}"> <a
+				th:href="@{/admin/movie(page=${i}, size=${moviePage.size})}"
+				th:text="${i + 1}"
+				th:classappend="${i == currentPage} ? 'active-page' : ''"></a>
+			</span>
+
+			<a th:if="${currentPage < totalPages - 1}"
+				th:href="@{/admin/movie(page=${currentPage + 1}, size=${moviePage.size})}">Next
+				&raquo;</a>
 		</div>
 	</div>
 </body>

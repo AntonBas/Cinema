@@ -3,6 +3,9 @@ package ua.lviv.bas.cinema.service;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import ua.lviv.bas.cinema.dao.MovieRepository;
@@ -37,5 +40,10 @@ public class MovieService {
 	public Movie readBySlug(String slug) {
 		return movieRepository.findBySlug(slug)
 				.orElseThrow(() -> new RuntimeException("Movie not found with slug: " + slug));
+	}
+
+	public Page<Movie> getPaginatedMovies(int page, int size) {
+		Pageable pageable = PageRequest.of(page, size);
+		return movieRepository.findAll(pageable);
 	}
 }

@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -40,9 +41,19 @@ public class MovieController {
 
 	private final String UPLOAD_DIR = "src/main/resources/static/posters/";
 
+//	@GetMapping("/movie")
+//	public String showAdminMovies(Model model) {
+//		model.addAttribute("movies", movieService.getAllMovies());
+//		return "admin/movie/movie";
+//	}
+
 	@GetMapping("/movie")
-	public String showAdminMovies(Model model) {
-		model.addAttribute("movies", movieService.getAllMovies());
+	public String showAdminMovieList(@RequestParam(defaultValue = "0") int page,
+			@RequestParam(defaultValue = "1") int size, Model model) {
+		Page<Movie> moviePage = movieService.getPaginatedMovies(page, size);
+		model.addAttribute("moviePage", moviePage);
+		model.addAttribute("currentPage", page);
+		model.addAttribute("totalPages", moviePage.getTotalPages());
 		return "admin/movie/movie";
 	}
 
