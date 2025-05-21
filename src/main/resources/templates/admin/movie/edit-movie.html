@@ -123,16 +123,18 @@
 				<div class="form-row">
 					<div class="form-group">
 						<label for="releaseDate" class="required">Release Date</label> <input
-							type="date" id="releaseDate" th:field="*{releaseDate}" required>
+							type="date" id="releaseDate" name="releaseDate" required
+							th:value="${movie.releaseDate != null} ? ${#temporals.format(movie.releaseDate, 'yyyy-MM-dd')} : ''">
 						<span class="error" th:if="${#fields.hasErrors('releaseDate')}"
 							th:errors="*{releaseDate}"></span>
 					</div>
 
 					<div class="form-group">
 						<label for="endShowingDate" class="required">End Showing
-							Date</label> <input type="date" id="endShowingDate"
-							th:field="*{endShowingDate}" required> <span
-							class="error" th:if="${#fields.hasErrors('endShowingDate')}"
+							Date</label> <input type="date" id="endShowingDate" name="endShowingDate"
+							required
+							th:value="${movie.endShowingDate != null} ? ${#temporals.format(movie.endShowingDate, 'yyyy-MM-dd')} : ''">
+						<span class="error" th:if="${#fields.hasErrors('endShowingDate')}"
 							th:errors="*{endShowingDate}"></span>
 					</div>
 				</div>

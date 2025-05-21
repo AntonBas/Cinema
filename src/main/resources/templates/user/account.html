@@ -1,33 +1,119 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8">
-    <title>Account</title>
-    <link rel="stylesheet" th:href="@{/css/reset.css}">
-    <th:block th:insert="~{common/header :: header-styles}" />
-    <link rel="stylesheet" th:href="@{/css/user/account.css}">
+<meta charset="UTF-8">
+<title>My Account</title>
+<link rel="stylesheet" th:href="@{/css/reset.css}">
+<th:block th:insert="~{common/header :: header-styles}" />
+<link rel="stylesheet" th:href="@{/css/user/account.css}">
 </head>
 <body>
-    <header th:replace="~{common/header :: cinema-header}"></header>
-    <section>
-        <div class="account-container">
-            <h1 th:if="${firstName != null and lastName != null}" 
-                th:text="'Welcome, ' + ${firstName} + ' ' + ${lastName} + '!'">
-            </h1>
-            <div class="tabs-container">
-                <div class="tabs">
-                    <span class="tab-title active" data-tab="account">Account</span>
-                    <span class="tab-title" data-tab="tickets">Tickets</span>
-                    <span class="tab-title" data-tab="bonuses">Bonuses</span>
-                </div>
-                <div class="content">
-                    <div id="account" class="tab-content active">Account content goes here</div>
-                    <div id="tickets" class="tab-content">Tickets content goes here</div>
-                    <div id="bonuses" class="tab-content">Bonuses content goes here</div>
-                </div>
-            </div>
-        </div>
-    </section>
-    <script th:src="@{/js/account.js}"></script>
+	<header th:replace="~{common/header :: cinema-header}"></header>
+
+	<main class="account-container">
+		<section class="welcome-section">
+			<h1 th:text="'Welcome, ' + ${firstName} + ' ' + ${lastName} + '!'"></h1>
+		</section>
+
+		<nav class="account-tabs">
+			<button class="tab-btn active" data-tab="profile">Profile</button>
+			<button class="tab-btn" data-tab="tickets">My Tickets</button>
+			<button class="tab-btn" data-tab="bonuses">Bonuses</button>
+		</nav>
+
+		<div class="tab-content-wrapper">
+			<article id="profile" class="tab-content active">
+				<div class="profile-header">
+					<h2>Personal Information</h2>
+					<button id="editProfileBtn" class="btn-edit">Edit Profile</button>
+				</div>
+
+				<div th:if="${success}" class="alert alert-success"
+					th:text="${success}"></div>
+				<div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+
+				<div id="profileInfo" class="profile-info active-info">
+					<div class="info-row">
+						<label>Email:</label>
+						<div class="readonly-info" th:text="${user.email}"></div>
+					</div>
+					<div class="info-row">
+						<label>First Name:</label>
+						<div class="readonly-info" th:text="${user.firstName}"></div>
+					</div>
+					<div class="info-row">
+						<label>Last Name:</label>
+						<div class="readonly-info" th:text="${user.lastName}"></div>
+					</div>
+					<div class="info-row">
+						<label>Date of Birth:</label>
+						<div class="readonly-info" th:text="${user.dateOfBirth}"></div>
+					</div>
+					<div class="info-row">
+						<label>City:</label>
+						<div class="readonly-info" th:text="${user.city}"></div>
+					</div>
+					<div class="info-row">
+						<label>Phone Number:</label>
+						<div class="readonly-info" th:text="${user.phoneNumber}"></div>
+					</div>
+				</div>
+
+				<form id="editProfileForm" th:action="@{/account/update}"
+					th:object="${user}" method="post" class="profile-form edit-form">
+					<input type="hidden" th:field="*{id}" />
+
+					<div class="profile-info">
+						<div class="info-row">
+							<label>Email:</label> <input type="email" th:field="*{email}"
+								readonly class="readonly-field" />
+						</div>
+						<div class="info-row">
+							<label>First Name:</label> <input type="text"
+								th:field="*{firstName}" required />
+							<div th:if="${#fields.hasErrors('firstName')}"
+								th:errors="*{firstName}" class="error-message"></div>
+						</div>
+						<div class="info-row">
+							<label>Last Name:</label> <input type="text"
+								th:field="*{lastName}" required />
+							<div th:if="${#fields.hasErrors('lastName')}"
+								th:errors="*{lastName}" class="error-message"></div>
+						</div>
+						<div class="info-row">
+							<label>Date of Birth:</label> <input type="date"
+								name="dateOfBirth"
+								th:value="${user.dateOfBirth != null} ? ${#temporals.format(user.dateOfBirth, 'yyyy-MM-dd')} : ''"
+								required />
+							<div th:if="${#fields.hasErrors('dateOfBirth')}"
+								th:errors="*{dateOfBirth}" class="error-message"></div>
+						</div>
+						<div class="info-row">
+							<label>City:</label> <input type="text" th:field="*{city}"
+								required />
+							<div th:if="${#fields.hasErrors('city')}" th:errors="*{city}"
+								class="error-message"></div>
+						</div>
+						<div class="info-row">
+							<label>Phone Number:</label> <input type="tel"
+								th:field="*{phoneNumber}" required />
+							<div th:if="${#fields.hasErrors('phoneNumber')}"
+								th:errors="*{phoneNumber}" class="error-message"></div>
+						</div>
+					</div>
+
+					<div class="form-actions">
+						<button type="submit" class="btn-save">Save Changes</button>
+						<button type="button" id="cancelEditBtn" class="btn-cancel">Cancel</button>
+					</div>
+				</form>
+			</article>
+		</div>
+	</main>
+
+	<script th:src="@{/js/user/account.js}"></script>
+	<script>
+		
+	</script>
 </body>
 </html>

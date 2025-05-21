@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import jakarta.persistence.EntityNotFoundException;
 import ua.lviv.bas.cinema.dao.UserRepository;
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.enums.UserRole;
@@ -48,7 +49,15 @@ public class UserService {
 		logger.info("User registered successfully with email: {}", userDto.getEmail());
 	}
 
-	public Optional<User> findByEmail(String email) {
+	public Optional<User> findOptionalByEmail(String email) {
 		return userRepository.findByEmail(email);
+	}
+
+	public User findByEmail(String email) {
+		return userRepository.findByEmail(email).orElseThrow(() -> new EntityNotFoundException("User not found"));
+	}
+
+	public User updateUser(User user) {
+		return userRepository.save(user);
 	}
 }

@@ -54,7 +54,8 @@ public class UserController {
 			RedirectAttributes redirectAttributes) {
 
 		if (result.hasErrors()) {
-			return "user/account";
+			redirectAttributes.addFlashAttribute("error", "Data entered incorrectly");
+			return "redirect:/account";
 		}
 
 		try {
@@ -67,12 +68,12 @@ public class UserController {
 			currentUser.setPhoneNumber(user.getPhoneNumber());
 
 			userService.updateUser(currentUser);
-
-			redirectAttributes.addFlashAttribute("success", "Profile updated successfully!");
+			redirectAttributes.addFlashAttribute("success", "Profile updated successfully");
 		} catch (Exception e) {
 			redirectAttributes.addFlashAttribute("error", "Error updating profile");
 		}
 
-		return "redirect:/user/account";
+		return "redirect:/account";
 	}
+
 }

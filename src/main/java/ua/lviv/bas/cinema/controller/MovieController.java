@@ -41,12 +41,6 @@ public class MovieController {
 
 	private final String UPLOAD_DIR = "src/main/resources/static/posters/";
 
-//	@GetMapping("/movie")
-//	public String showAdminMovies(Model model) {
-//		model.addAttribute("movies", movieService.getAllMovies());
-//		return "admin/movie/movie";
-//	}
-
 	@GetMapping("/movie")
 	public String showAdminMovieList(@RequestParam(defaultValue = "0") int page,
 			@RequestParam(defaultValue = "1") int size, Model model) {
