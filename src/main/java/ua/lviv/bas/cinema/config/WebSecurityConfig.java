@@ -35,9 +35,9 @@ public class WebSecurityConfig {
 
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-		http.authorizeHttpRequests(
-				auth -> auth.requestMatchers("/", "/registration", "/login", "/css/**", "/js/**", "/images/**")
-						.permitAll().requestMatchers("/home").hasRole("USER").anyRequest().authenticated())
+		http.authorizeHttpRequests(auth -> auth
+				.requestMatchers("/", "/registration", "/login", "/verify-email", "/css/**", "/js/**", "/images/**")
+				.permitAll().requestMatchers("/home").hasRole("USER").anyRequest().authenticated())
 				.formLogin(form -> form.loginPage("/login").defaultSuccessUrl("/home", true).usernameParameter("email")
 						.passwordParameter("password").permitAll())
 				.logout(logout -> logout.logoutSuccessUrl("/login?logout").permitAll())

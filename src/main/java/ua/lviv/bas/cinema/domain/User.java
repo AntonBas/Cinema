@@ -4,10 +4,12 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -48,12 +50,15 @@ public class User {
 	@Column(nullable = false, name = "password_confirm")
 	private String passwordConfirm;
 
-	@OneToMany(mappedBy = "user")
+	@OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<Ticket> tickets;
 
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false)
-	private UserRole userRole;
+	private UserRole userRole = UserRole.ROLE_USER;
+
+	@Column(nullable = false)
+	private boolean enabled = false;
 
 	public User() {
 	}
@@ -69,6 +74,7 @@ public class User {
 		this.password = user.password;
 		this.passwordConfirm = user.passwordConfirm;
 		this.userRole = user.userRole;
+		this.enabled = user.enabled;
 	}
 
 	public User(String email, String firstName, String lastName, LocalDate dateOfBirth, String city, String phoneNumber,
@@ -82,6 +88,7 @@ public class User {
 		this.password = password;
 		this.passwordConfirm = passwordConfirm;
 		this.userRole = userRole;
+		this.enabled = false;
 	}
 
 	public User(Long id, String email, String firstName, String lastName, LocalDate dateOfBirth, String city,
@@ -96,6 +103,7 @@ public class User {
 		this.password = password;
 		this.passwordConfirm = passwordConfirm;
 		this.userRole = userRole;
+		this.enabled = false;
 	}
 
 	public Long getId() {
@@ -178,36 +186,34 @@ public class User {
 		this.userRole = userRole;
 	}
 
+	public boolean isEnabled() {
+		return enabled;
+	}
+
+	public void setEnabled(boolean enabled) {
+		this.enabled = enabled;
+	}
+
 	@Override
 	public int hashCode() {
-		return Objects.hash(city, dateOfBirth, email, firstName, id, lastName, password, passwordConfirm, phoneNumber,
-				userRole);
+		return Objects.hash(email);
 	}
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj) {
+		if (this == obj)
 			return true;
-		}
-		if (obj == null) {
+		if (obj == null)
 			return false;
-		}
-		if (getClass() != obj.getClass()) {
+		if (getClass() != obj.getClass())
 			return false;
-		}
 		User other = (User) obj;
-		return Objects.equals(city, other.city) && Objects.equals(dateOfBirth, other.dateOfBirth)
-				&& Objects.equals(email, other.email) && Objects.equals(firstName, other.firstName)
-				&& Objects.equals(id, other.id) && Objects.equals(lastName, other.lastName)
-				&& Objects.equals(password, other.password) && Objects.equals(passwordConfirm, other.passwordConfirm)
-				&& Objects.equals(phoneNumber, other.phoneNumber) && userRole == other.userRole;
+		return Objects.equals(email, other.email);
 	}
 
 	@Override
 	public String toString() {
-		return "User [id=" + id + ", email=" + email + ", firstName=" + firstName + ", lastName=" + lastName
-				+ ", dateOfBirth=" + dateOfBirth + ", city=" + city + ", phoneNumber=" + phoneNumber + ", password="
-				+ password + ", passwordConfirm=" + passwordConfirm + ", userRole=" + userRole + "]";
+		return "User [id=" + id + ", firstName=" + firstName + ", lastName=" + lastName + ", userRole=" + userRole
+				+ ", enabled=" + enabled + "]";
 	}
-
 }

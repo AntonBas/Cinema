@@ -24,19 +24,7 @@ public class UserController {
 	public UserController(UserService userService) {
 		this.userService = userService;
 	}
-
-//	@GetMapping("/account")
-//	public String myAccount(Model model, Authentication authentication) {
-//		if (authentication != null && authentication.isAuthenticated()) {
-//			String email = authentication.getName();
-//			userService.findOptionalByEmail(email).ifPresent(user -> {
-//				model.addAttribute("firstName", user.getFirstName());
-//				model.addAttribute("lastName", user.getLastName());
-//			});
-//		}
-//		return "/user/account";
-//	}
-
+	
 	@GetMapping("/account")
 	public String myAccount(Model model, Principal principal) {
 		String email = principal.getName();
@@ -61,6 +49,7 @@ public class UserController {
 		try {
 			User currentUser = userService.findByEmail(principal.getName());
 
+//			currentUser.setEmail(user.getEmail());
 			currentUser.setFirstName(user.getFirstName());
 			currentUser.setLastName(user.getLastName());
 			currentUser.setDateOfBirth(user.getDateOfBirth());

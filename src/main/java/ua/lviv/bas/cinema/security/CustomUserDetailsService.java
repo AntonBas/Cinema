@@ -1,7 +1,6 @@
 package ua.lviv.bas.cinema.security;
 
 import java.util.Collections;
-import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -20,16 +19,9 @@ public class CustomUserDetailsService implements UserDetailsService {
 
 	@Override
 	public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+		User user = userRepository.findByEmail(email)
+				.orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
 
-		Optional<User> userOptional = userRepository.findByEmail(email);
-
-		if (userOptional.isPresent()) {
-			User user = userOptional.get();
-			return new CustomUserDetails(user, Collections.singletonList(user.getUserRole().toString()));
-		}
-
-		throw new UsernameNotFoundException("No user present with useremail:" + email);
-
+		return new CustomUserDetails(user, Collections.singletonList(user.getUserRole().toString()));
 	}
-
 }
