@@ -8,7 +8,6 @@ import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.UUID;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -22,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import ua.lviv.bas.cinema.domain.Genre;
 import ua.lviv.bas.cinema.domain.Movie;
 import ua.lviv.bas.cinema.domain.enums.AgeRating;
@@ -31,14 +31,11 @@ import ua.lviv.bas.cinema.service.MovieService;
 
 @Controller
 @RequestMapping("/admin")
+@RequiredArgsConstructor
 public class MovieController {
 
-	@Autowired
-	private MovieService movieService;
-
-	@Autowired
-	private GenreService genreService;
-
+	private final MovieService movieService;
+	private final GenreService genreService;
 	private final String UPLOAD_DIR = "src/main/resources/static/posters/";
 
 	@GetMapping("/movie")

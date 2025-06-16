@@ -47,9 +47,6 @@ public class User {
 	@Column(nullable = false)
 	private String password;
 
-	@Column(nullable = false, name = "password_confirm")
-	private String passwordConfirm;
-
 	@OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<Ticket> tickets;
 
@@ -72,13 +69,12 @@ public class User {
 		this.city = user.city;
 		this.phoneNumber = user.phoneNumber;
 		this.password = user.password;
-		this.passwordConfirm = user.passwordConfirm;
 		this.userRole = user.userRole;
 		this.enabled = user.enabled;
 	}
 
 	public User(String email, String firstName, String lastName, LocalDate dateOfBirth, String city, String phoneNumber,
-			String password, String passwordConfirm, UserRole userRole) {
+			String password, UserRole userRole) {
 		this.email = email;
 		this.firstName = firstName;
 		this.lastName = lastName;
@@ -86,13 +82,12 @@ public class User {
 		this.city = city;
 		this.phoneNumber = phoneNumber;
 		this.password = password;
-		this.passwordConfirm = passwordConfirm;
 		this.userRole = userRole;
 		this.enabled = false;
 	}
 
 	public User(Long id, String email, String firstName, String lastName, LocalDate dateOfBirth, String city,
-			String phoneNumber, String password, String passwordConfirm, UserRole userRole) {
+			String phoneNumber, String password, UserRole userRole) {
 		this.id = id;
 		this.email = email;
 		this.firstName = firstName;
@@ -101,7 +96,6 @@ public class User {
 		this.city = city;
 		this.phoneNumber = phoneNumber;
 		this.password = password;
-		this.passwordConfirm = passwordConfirm;
 		this.userRole = userRole;
 		this.enabled = false;
 	}
@@ -168,14 +162,6 @@ public class User {
 
 	public void setPassword(String password) {
 		this.password = password;
-	}
-
-	public String getPasswordConfirm() {
-		return passwordConfirm;
-	}
-
-	public void setPasswordConfirm(String passwordConfirm) {
-		this.passwordConfirm = passwordConfirm;
 	}
 
 	public UserRole getUserRole() {

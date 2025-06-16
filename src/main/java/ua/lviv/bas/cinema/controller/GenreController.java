@@ -2,7 +2,6 @@ package ua.lviv.bas.cinema.controller;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -11,15 +10,16 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import lombok.RequiredArgsConstructor;
 import ua.lviv.bas.cinema.domain.Genre;
 import ua.lviv.bas.cinema.service.GenreService;
 
 @Controller
 @RequestMapping("/admin")
+@RequiredArgsConstructor
 public class GenreController {
 
-	@Autowired
-	private GenreService genreService;
+	private final GenreService genreService;
 
 	@GetMapping("/genre")
 	public String listGenres(Model model) {

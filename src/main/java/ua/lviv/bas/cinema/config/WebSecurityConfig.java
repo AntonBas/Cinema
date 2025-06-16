@@ -36,7 +36,8 @@ public class WebSecurityConfig {
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 		http.authorizeHttpRequests(auth -> auth
-				.requestMatchers("/", "/registration", "/login", "/verify-email", "/css/**", "/js/**", "/images/**")
+				.requestMatchers("/", "/registration", "/login", "/verify-email", "/forgot-password", "/reset-password",
+						"/css/**", "/js/**", "/images/**")
 				.permitAll().requestMatchers("/home").hasRole("USER").anyRequest().authenticated())
 				.formLogin(form -> form.loginPage("/login").defaultSuccessUrl("/home", true).usernameParameter("email")
 						.passwordParameter("password").permitAll())

@@ -24,8 +24,7 @@
 				method="post">
 
 				<div class="login-middle-email">
-					<input type="email" th:field="*{email}"
-						placeholder="email">
+					<input type="email" th:field="*{email}" placeholder="email">
 				</div>
 				<div class="login-middle-password">
 					<input type="password" th:field="*{password}"
@@ -34,7 +33,7 @@
 				<button type="submit" class="login-bottom-button">Login</button>
 			</form>
 			<div class="login-bottom">
-				<a href="#">Forgot your password?</a>
+				<a th:href="@{/forgot-password}">Forgot your password?</a>
 			</div>
 		</div>
 
