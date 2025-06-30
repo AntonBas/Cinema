@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cinema Halls Management</title>
+<link rel="stylesheet" th:href="@{/css/reset.css}">
+<link rel="stylesheet" th:href="@{/css/admin/cinema-hall/hall.css}">
+<th:block th:insert="~{common/header :: header-styles}" />
+</head>
+<body>
+	<header th:replace="~{common/header :: cinema-header}"></header>
+
+	<main class="cinema-hall-container">
+		<h1 class="cinema-hall-title">Cinema Halls Management</h1>
+
+		<a href="/admin/cinema-hall/create" class="add-hall-button">Add
+			New Hall</a>
+
+		<div class="table-responsive">
+			<table class="hall-table">
+				<thead>
+					<tr>
+						<th>Name</th>
+						<th>Capacity</th>
+						<th>Actions</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr th:each="hall : ${halls}">
+						<td th:text="${hall.name}">Main Hall</td>
+						<td th:text="${hall.capacity}">120</td>
+						<td><a
+							th:href="@{/admin/cinema-hall/edit/{id}(id=${hall.id})}"
+							class="action-button edit">Edit</a>
+							<form
+								th:action="@{/admin/cinema-hall/delete/{id}(id=${hall.id})}"
+								method="post" style="display: inline;">
+								<button type="submit" class="action-button delete">Delete</button>
+							</form></td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+	</main>
+
+</body>
+</html>

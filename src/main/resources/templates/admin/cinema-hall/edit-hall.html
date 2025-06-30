@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Edit Cinema Hall | Cinema Admin</title>
+<link rel="stylesheet" th:href="@{/css/reset.css}">
+<link rel="stylesheet"
+	th:href="@{/css/admin/cinema-hall/hall-form.css}">
+<th:block th:insert="~{common/header :: header-styles}" />
+</head>
+<body>
+	<header th:replace="~{common/header :: cinema-header}"></header>
+
+	<main class="cinema-hall-create-container">
+		<h1 class="page-title">Edit Cinema Hall</h1>
+
+		<form class="cinema-hall-form" th:action="@{/admin/cinema-hall/edit}"
+			th:object="${hall}" method="post">
+			<input type="hidden" th:field="*{id}" />
+
+			<div class="form-group">
+				<label for="name">Hall Name:</label> <input type="text"
+					th:field="*{name}" id="name" class="form-control" required>
+				<div class="error-message" th:if="${#fields.hasErrors('name')}"
+					th:errors="*{name}">Name Error</div>
+			</div>
+
+			<div class="form-group">
+				<label for="capacity">Capacity:</label> <input type="number"
+					th:field="*{capacity}" id="capacity" class="form-control" min="1"
+					required>
+				<div class="error-message" th:if="${#fields.hasErrors('capacity')}"
+					th:errors="*{capacity}">Capacity Error</div>
+			</div>
+
+			<div class="form-actions">
+				<button type="submit" class="submit-btn">Update Hall</button>
+				<a th:href="@{/admin/cinema-hall}" class="cancel-btn">Cancel</a>
+			</div>
+		</form>
+	</main>
+</body>
+</html>
