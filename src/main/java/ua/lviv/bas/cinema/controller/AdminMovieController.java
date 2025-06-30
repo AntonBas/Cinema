@@ -32,7 +32,7 @@ import ua.lviv.bas.cinema.service.MovieService;
 @Controller
 @RequestMapping("/admin")
 @RequiredArgsConstructor
-public class MovieController {
+public class AdminMovieController {
 
 	private final MovieService movieService;
 	private final GenreService genreService;
