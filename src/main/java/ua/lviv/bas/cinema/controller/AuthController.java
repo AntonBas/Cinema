@@ -54,7 +54,7 @@ public class AuthController {
 		}
 	}
 
-	@GetMapping("/login")
+	@GetMapping({ "/login", "/" })
 	public String login(Model model, @RequestParam(required = false) String message) {
 		if (message != null) {
 			model.addAttribute("message", message.replace("_", " "));

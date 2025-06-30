@@ -5,6 +5,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import lombok.RequiredArgsConstructor;
 import ua.lviv.bas.cinema.service.PasswordResetService;
@@ -23,23 +24,34 @@ public class PasswordResetController {
 	@PostMapping("/forgot-password")
 	public String processForgotPassword(@RequestParam String email) {
 		passwordResetService.requestPasswordReset(email);
-		return "redirect:/forgot-password?sent-true";
+		return "redirect:/forgot-password?sent=true";
 	}
 
 	@GetMapping("/reset-password")
-	public String showResetPasswordForm(@RequestParam String token, Model model) {
+	public String showResetPasswordForm(@RequestParam String token, @RequestParam(required = false) String error,
+			Model model) {
 		model.addAttribute("token", token);
+		model.addAttribute("errorMessage", error);
 		return "auth/reset-password";
 	}
 
 	@PostMapping("/reset-password")
 	public String processResetPassword(@RequestParam String token, @RequestParam String password,
-			@RequestParam String confirmPassword) {
+			@RequestParam String confirmPassword, RedirectAttributes redirectAttributes) {
 		if (!password.equals(confirmPassword)) {
-			return "redirect:/reset-password?token=" + token + "&error=Passwords don't match";
+			redirectAttributes.addAttribute("token", token);
+			redirectAttributes.addAttribute("error", "Passwords don't match");
+			return "redirect:/reset-password";
 		}
 
-		passwordResetService.resetPassword(token, password);
+		try {
+			passwordResetService.resetPassword(token, password);
+		} catch (RuntimeException e) {
+			redirectAttributes.addAttribute("token", token);
+			redirectAttributes.addAttribute("error", e.getMessage());
+			return "redirect:/reset-password";
+		}
+
 		return "redirect:/login?resetSuccess=true";
 	}
 }

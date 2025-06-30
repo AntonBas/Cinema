@@ -83,7 +83,6 @@ public class User {
 		this.phoneNumber = phoneNumber;
 		this.password = password;
 		this.userRole = userRole;
-		this.enabled = false;
 	}
 
 	public User(Long id, String email, String firstName, String lastName, LocalDate dateOfBirth, String city,
@@ -97,7 +96,6 @@ public class User {
 		this.phoneNumber = phoneNumber;
 		this.password = password;
 		this.userRole = userRole;
-		this.enabled = false;
 	}
 
 	public Long getId() {

@@ -11,8 +11,8 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import ua.lviv.bas.cinema.dao.UserRepository;
 import ua.lviv.bas.cinema.domain.User;
-import ua.lviv.bas.cinema.domain.enums.UserRole;
 import ua.lviv.bas.cinema.dto.UserRegistrationDto;
+import ua.lviv.bas.cinema.mapper.UserMapper;
 
 @Service
 @RequiredArgsConstructor
@@ -37,15 +37,7 @@ public class UserService {
 			throw new IllegalArgumentException("Passwords do not match");
 		}
 
-		User user = new User();
-		user.setEmail(userDto.getEmail());
-		user.setFirstName(userDto.getFirstName());
-		user.setLastName(userDto.getLastName());
-		user.setDateOfBirth(userDto.getDateOfBirth());
-		user.setCity(userDto.getCity());
-		user.setPhoneNumber(userDto.getPhoneNumber());
-		user.setPassword(bCryptPasswordEncoder.encode(userDto.getPassword()));
-		user.setUserRole(UserRole.ROLE_USER);
+		User user = UserMapper.toEntity(userDto, bCryptPasswordEncoder);
 
 		userRepository.save(user);
 		logger.info("User registered successfully with email: {}", userDto.getEmail());

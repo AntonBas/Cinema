@@ -26,40 +26,28 @@ public class EmailTokenGeneratorService {
 
 	@Transactional
 	public String generateVerificationToken(String email) {
-		logger.info("Generating verification token for email: {}", email);
-		User user = userService.findByEmail(email);
-
-		if (user == null) {
-			logger.error("No user found with email: {}", email);
-			throw new RuntimeException("There is no user with this email address.");
-		}
-
-		String token = UUID.randomUUID().toString();
-		EmailToken emailToken = new EmailToken();
-		emailToken.setToken(token);
-		emailToken.setUser(user);
-		emailToken.setCreatedAt(LocalDateTime.now());
-		emailToken.setExpiresAt(LocalDateTime.now().plusMinutes(10));
-		emailToken.setType(TokenType.VERIFICATION);
-
-		tokenRepository.save(emailToken);
-		logger.info("Saved new verification token for user with email: {}", email);
-
-		emailService.sendVerificationEmail(email, token);
-		logger.info("Sent verification email to {}", email);
-
-		return token;
+		return generateToken(email, TokenType.VERIFICATION);
 	}
 
 	@Transactional
 	public String generatePasswordResetToken(String email) {
-		logger.info("Generating password reset token for email: {}", email);
-		User user = userService.findByEmail(email);
+		return generateToken(email, TokenType.PASSWORD_RESET);
+	}
 
+	private String generateToken(String email, TokenType tokenType) {
+		logger.info("Generating {} token for email: {}", tokenType, email);
+		User user = userService.findByEmail(email);
 		if (user == null) {
 			logger.error("No user found with email: {}", email);
 			throw new RuntimeException("There is no user with this email address.");
 		}
+
+		tokenRepository.findByUserEmailAndType(email, tokenType).ifPresent(existingToken -> {
+			if (!existingToken.isConfirmed() && existingToken.getExpiresAt().isAfter(LocalDateTime.now())) {
+				tokenRepository.delete(existingToken);
+				logger.info("Deleted existing active {} token for user {}", tokenType, email);
+			}
+		});
 
 		String token = UUID.randomUUID().toString();
 		EmailToken emailToken = new EmailToken();
@@ -67,13 +55,19 @@ public class EmailTokenGeneratorService {
 		emailToken.setUser(user);
 		emailToken.setCreatedAt(LocalDateTime.now());
 		emailToken.setExpiresAt(LocalDateTime.now().plusMinutes(10));
-		emailToken.setType(TokenType.PASSWORD_RESET);
+		emailToken.setType(tokenType);
 
 		tokenRepository.save(emailToken);
-		logger.info("Saved new password reset token for user with email: {}", email);
+		logger.info("Saved new {} token for user with email: {}", tokenType, email);
 
-		emailService.sendPasswordResetEmail(email, token);
-		logger.info("Sent password reset email to {}", email);
+		if (tokenType == TokenType.VERIFICATION) {
+			emailService.sendVerificationEmail(email, token);
+		} else if (tokenType == TokenType.PASSWORD_RESET) {
+			emailService.sendPasswordResetEmail(email, token);
+		}
+
+		logger.info("Sent {} email to {}", tokenType, email);
+
 		return token;
 	}
 }

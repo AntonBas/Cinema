@@ -16,6 +16,8 @@
 	<section class="login">
 		<div class="login-container">
 			<h1 class="login-title">Login into your account</h1>
+			<div th:if="${param.resetSuccess}">Password has been reset
+				successfully. Please log in.</div>
 			<div class="login-top">
 				<span class="login-top-text">Don't have an account?</span> <a
 					th:href="@{/registration}">Register</a>
