@@ -15,46 +15,46 @@ import ua.lviv.bas.cinema.domain.Genre;
 import ua.lviv.bas.cinema.service.GenreService;
 
 @Controller
-@RequestMapping("/admin")
+@RequestMapping("/admin/genre")
 @RequiredArgsConstructor
 public class GenreController {
 
 	private final GenreService genreService;
 
-	@GetMapping("/genre")
+	@GetMapping
 	public String listGenres(Model model) {
 		List<Genre> genres = genreService.getAllGenres();
 		model.addAttribute("genres", genres);
 		return "admin/genre/genre";
 	}
 
-	@GetMapping("/genre/create")
+	@GetMapping("/create")
 	public String showCreateGenreForm(Model model) {
 		model.addAttribute("genre", new Genre());
 		return "admin/genre/create-genre";
 	}
 
-	@PostMapping("/genre/create")
+	@PostMapping("/create")
 	public String addGenre(@ModelAttribute Genre genre) {
 		genreService.createGenre(genre);
 		return "admin/genre/create-genre";
 	}
 
-	@GetMapping("/genre/edit/{id}")
+	@GetMapping("/edit/{id}")
 	public String showEditGenreForm(@PathVariable Long id, Model model) {
 		Genre genre = genreService.readGenre(id);
 		model.addAttribute("genre", genre);
 		return "admin/genre/edit-genre";
 	}
 
-	@PostMapping("/genre/edit/{id}")
+	@PostMapping("/edit/{id}")
 	public String updateGenre(@PathVariable Long id, @ModelAttribute Genre genre) {
 		genre.setId(id);
 		genreService.updateGenre(genre);
 		return "redirect:/admin/genre";
 	}
 
-	@PostMapping("/genre/delete/{id}")
+	@PostMapping("/delete/{id}")
 	public String deleteGenre(@PathVariable Long id) {
 		genreService.deleteGenre(id);
 		return "redirect:/admin/genre";

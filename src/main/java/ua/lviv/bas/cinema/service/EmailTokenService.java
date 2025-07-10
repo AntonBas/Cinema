@@ -16,7 +16,7 @@ import ua.lviv.bas.cinema.domain.User;
 @RequiredArgsConstructor
 public class EmailTokenService {
 
-	private static final Logger logger = LogManager.getLogger(EmailToken.class);
+	private static final Logger logger = LogManager.getLogger(EmailTokenService.class);
 
 	private final EmailTokenRepository tokenRepository;
 	private final UserService userService;
