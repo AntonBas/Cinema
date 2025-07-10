@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<title th:text="'Місця в залі: ' + ${hall.name}">Seats</title>
+<style>
+.seat {
+	display: inline-block;
+	width: 30px;
+	height: 30px;
+	margin: 5px;
+	text-align: center;
+	line-height: 30px;
+	border-radius: 5px;
+}
+
+.vip {
+	background-color: gold;
+}
+
+.regular {
+	background-color: lightgray;
+}
+</style>
+</head>
+<body>
+	<h2 th:text="'Зал: ' + ${hall.name}"></h2>
+
+	<div>
+		<div th:each="seat : ${seats}">
+			<div th:class="'seat ' + (${seat.vip} ? 'vip' : 'regular')"
+				th:text="${seat.rowNumber} + '-' + ${seat.seatNumber}"></div>
+			<br th:if="${seat.seatNumber == hall.capacity / 10}" />
+		</div>
+	</div>
+
+	<a href="/admin/halls">← Назад до залів</a>
+</body>
+</html>

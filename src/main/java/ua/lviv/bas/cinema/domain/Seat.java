@@ -19,14 +19,14 @@ public class Seat {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
-	
+
 	@Column(nullable = false, name = "row_num")
 	private int rowNumber;
-	
+
 	@Column(nullable = false, name = "seat_num")
 	private int seatNumber;
-	
-	@Column (nullable = false, name = "is_vip")
+
+	@Column(nullable = false, name = "is_vip")
 	private boolean isVip;
 
 	@ManyToOne

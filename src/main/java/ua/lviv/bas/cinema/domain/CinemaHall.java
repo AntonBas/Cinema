@@ -3,8 +3,10 @@ package ua.lviv.bas.cinema.domain;
 import java.util.List;
 import java.util.Objects;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -28,23 +30,29 @@ public class CinemaHall {
 	@OneToMany(mappedBy = "hall")
 	private List<Session> sessions;
 
-	@OneToMany(mappedBy = "hall")
+	@OneToMany(mappedBy = "hall", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
 	private List<Seat> seats;
+
+	public int getCapacity() {
+		return (seats != null) ? seats.size() : 0;
+	}
 
 	public CinemaHall() {
 	}
 
-	public CinemaHall(String name, int capacity, List<Session> sessions, List<Seat> seats) {
+	public CinemaHall(String name) {
 		this.name = name;
-		this.capacity = capacity;
+	}
+
+	public CinemaHall(String name, List<Session> sessions, List<Seat> seats) {
+		this.name = name;
 		this.sessions = sessions;
 		this.seats = seats;
 	}
 
-	public CinemaHall(Long id, String name, int capacity, List<Session> sessions, List<Seat> seats) {
+	public CinemaHall(Long id, String name, List<Session> sessions, List<Seat> seats) {
 		this.id = id;
 		this.name = name;
-		this.capacity = capacity;
 		this.sessions = sessions;
 		this.seats = seats;
 	}
@@ -63,14 +71,6 @@ public class CinemaHall {
 
 	public void setName(String name) {
 		this.name = name;
-	}
-
-	public int getCapacity() {
-		return capacity;
-	}
-
-	public void setCapacity(int capacity) {
-		this.capacity = capacity;
 	}
 
 	public List<Session> getSessions() {

@@ -14,9 +14,7 @@
 	<main class="cinema-hall-container">
 		<h1 class="cinema-hall-title">Cinema Halls Management</h1>
 
-		<a href="/admin/cinema-hall/create" class="add-hall-button">Add
-			New Hall</a>
-
+		<a href="/admin/hall/create" class="add-hall-button">Add New Hall</a>
 		<div class="table-responsive">
 			<table class="hall-table">
 				<thead>
@@ -29,12 +27,12 @@
 				<tbody>
 					<tr th:each="hall : ${halls}">
 						<td th:text="${hall.name}">Main Hall</td>
-						<td th:text="${hall.capacity}">120</td>
-						<td><a
-							th:href="@{/admin/cinema-hall/edit/{id}(id=${hall.id})}"
-							class="action-button edit">Edit</a>
-							<form
-								th:action="@{/admin/cinema-hall/delete/{id}(id=${hall.id})}"
+						<td th:text="${hall.getCapacity()}">120</td>
+						<td><a th:href="@{/admin/hall/edit/{id}(id=${hall.id})}"
+							class="action-button edit">Edit</a> <a
+							th:href="@{/admin/seat/hall/{id}(id=${hall.id})}"
+							class="action-button seats">Seats</a>
+							<form th:action="@{/admin/hall/delete/{id}(id=${hall.id})}"
 								method="post" style="display: inline;">
 								<button type="submit" class="action-button delete">Delete</button>
 							</form></td>
