@@ -14,6 +14,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 
 @Entity
 @Table(name = "sessions")
@@ -26,9 +27,9 @@ public class Session {
 	@Column(nullable = false, name = "start_time")
 	private LocalDateTime startTime;
 
-	@Column(nullable = false, name = "end_time")
+	@Transient
 	private LocalDateTime endTime;
-	
+
 	@Column(nullable = false)
 	private BigDecimal price;
 
@@ -84,7 +85,10 @@ public class Session {
 	}
 
 	public LocalDateTime getEndTime() {
-		return endTime;
+		if (startTime != null && movie != null) {
+			return startTime.plusMinutes(movie.getDurationMinutes());
+		}
+		return null;
 	}
 
 	public void setEndTime(LocalDateTime endTime) {

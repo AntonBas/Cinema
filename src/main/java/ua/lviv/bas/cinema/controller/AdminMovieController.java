@@ -30,7 +30,7 @@ import ua.lviv.bas.cinema.service.GenreService;
 import ua.lviv.bas.cinema.service.MovieService;
 
 @Controller
-@RequestMapping("/admin")
+@RequestMapping("/admin/movie")
 @RequiredArgsConstructor
 public class AdminMovieController {
 
@@ -38,8 +38,8 @@ public class AdminMovieController {
 	private final GenreService genreService;
 	private final String UPLOAD_DIR = "src/main/resources/static/posters/";
 
-	@GetMapping("/movie")
-	public String showAdminMovieList(@RequestParam(defaultValue = "0") int page,
+	@GetMapping
+	public String listMovies(@RequestParam(defaultValue = "0") int page,
 			@RequestParam(defaultValue = "1") int size, Model model) {
 		Page<Movie> moviePage = movieService.getPaginatedMovies(page, size);
 		model.addAttribute("moviePage", moviePage);
@@ -48,8 +48,8 @@ public class AdminMovieController {
 		return "admin/movie/movie";
 	}
 
-	@GetMapping("/movie/create")
-	public String showCreateMovie(Model model) {
+	@GetMapping("/create")
+	public String showCreateForm(Model model) {
 		model.addAttribute("allGenres", genreService.getAllGenres());
 		model.addAttribute("allAgeRatings", AgeRating.values());
 		model.addAttribute("allMovieStatuses", MovieStatus.values());
@@ -57,13 +57,14 @@ public class AdminMovieController {
 		return "admin/movie/create-movie";
 	}
 
-	@PostMapping("/movie/create")
+	@PostMapping("/create")
 	public String createMovie(@Valid @ModelAttribute("movie") Movie movie, BindingResult bindingResult,
 			@RequestParam("posterFile") MultipartFile file, @RequestParam("genreIds") List<Long> genreIds, Model model)
 			throws IOException {
 		if (bindingResult.hasErrors()) {
 			model.addAttribute("allAgeRatings", AgeRating.values());
 			model.addAttribute("allMovieStatuses", MovieStatus.values());
+			model.addAttribute("allGenres", genreService.getAllGenres());
 			return "admin/movie/create-movie";
 		}
 
@@ -79,8 +80,8 @@ public class AdminMovieController {
 		return "redirect:/admin/movie/create";
 	}
 
-	@GetMapping("/movie/edit/{slug}")
-	public String showEditMovieForm(@PathVariable("slug") String slug, Model model) {
+	@GetMapping("/edit/{slug}")
+	public String showEditForm(@PathVariable("slug") String slug, Model model) {
 		Movie movie = movieService.readBySlug(slug);
 		model.addAttribute("allGenres", genreService.getAllGenres());
 		model.addAttribute("allAgeRatings", AgeRating.values());
@@ -89,7 +90,7 @@ public class AdminMovieController {
 		return "admin/movie/edit-movie";
 	}
 
-	@PostMapping("/movie/edit/{slug}")
+	@PostMapping("/edit/{slug}")
 	public String updateMovie(@PathVariable("slug") String slug, @Valid @ModelAttribute("movie") Movie movie,
 			BindingResult bindingResult, @RequestParam(value = "posterFile", required = false) MultipartFile file)
 			throws IOException {
@@ -120,12 +121,12 @@ public class AdminMovieController {
 				existingMovie.setPosterImagePath(newPosterPath);
 			}
 		}
-		movieService.createMovie(existingMovie);
+		movieService.updateMovie(existingMovie);
 
 		return "redirect:/admin/movie";
 	}
 
-	@PostMapping("/movie/delete/{id}")
+	@PostMapping("/delete/{id}")
 	public String deleteMovie(@PathVariable Long id) throws IOException {
 		Movie movie = movieService.readMovie(id);
 		if (movie != null) {

@@ -29,19 +29,19 @@ public class GenreController {
 	}
 
 	@GetMapping("/create")
-	public String showCreateGenreForm(Model model) {
+	public String showCreateForm(Model model) {
 		model.addAttribute("genre", new Genre());
 		return "admin/genre/create-genre";
 	}
 
 	@PostMapping("/create")
-	public String addGenre(@ModelAttribute Genre genre) {
+	public String CreateGenre(@ModelAttribute Genre genre) {
 		genreService.createGenre(genre);
 		return "admin/genre/create-genre";
 	}
 
 	@GetMapping("/edit/{id}")
-	public String showEditGenreForm(@PathVariable Long id, Model model) {
+	public String showEditForm(@PathVariable Long id, Model model) {
 		Genre genre = genreService.readGenre(id);
 		model.addAttribute("genre", genre);
 		return "admin/genre/edit-genre";

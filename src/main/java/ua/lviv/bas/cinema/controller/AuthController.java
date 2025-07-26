@@ -26,13 +26,13 @@ public class AuthController {
 	private final EmailTokenService emailTokenService;
 
 	@GetMapping("/registration")
-	public String registration(Model model) {
+	public String showRegistrationForm(Model model) {
 		model.addAttribute("userForm", new UserRegistrationDto());
 		return "auth/registration";
 	}
 
 	@PostMapping("/registration")
-	public String registration(@ModelAttribute("userForm") @Valid UserRegistrationDto userForm,
+	public String processRegistration(@ModelAttribute("userForm") @Valid UserRegistrationDto userForm,
 			BindingResult bindingResult, Model model) {
 		if (bindingResult.hasErrors()) {
 			return "auth/registration";
@@ -55,7 +55,7 @@ public class AuthController {
 	}
 
 	@GetMapping({ "/login", "/" })
-	public String login(Model model, @RequestParam(required = false) String message) {
+	public String showLoginForm(Model model, @RequestParam(required = false) String message) {
 		if (message != null) {
 			model.addAttribute("message", message.replace("_", " "));
 		}
@@ -64,12 +64,12 @@ public class AuthController {
 	}
 
 	@GetMapping("/home")
-	public String home(Model model) {
+	public String showHomePage(Model model) {
 		return "home";
 	}
 
 	@GetMapping("/verify-email")
-	public String verifyEmail(@RequestParam("token") String token, Model model) {
+	public String confirmEmailToken(@RequestParam("token") String token, Model model) {
 		try {
 			emailTokenService.confirmEmail(token);
 			model.addAttribute("successMessage", "Email successfully verified! You can now log in.");

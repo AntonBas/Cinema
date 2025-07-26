@@ -5,10 +5,10 @@ import java.util.List;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 
 import lombok.RequiredArgsConstructor;
 import ua.lviv.bas.cinema.domain.CinemaHall;
@@ -24,7 +24,7 @@ public class AdminSeatController {
 	private final CinemaHallService hallService;
 	private final SeatService seatService;
 
-	@GetMapping("hall/{id}")
+	@GetMapping("/hall/{id}")
 	public String manageSeats(@PathVariable Long id, Model model) {
 		CinemaHall hall = hallService.readHall(id);
 		List<Seat> seats = seatService.getSeatsByHall(hall);
@@ -37,21 +37,29 @@ public class AdminSeatController {
 		return "admin/cinema-hall/seat";
 	}
 
-	@PostMapping("/hall/{id}/generate")
-	public String generateSeats(@PathVariable Long id, @RequestParam int rows, @RequestParam int seatsPerRow,
-			@RequestParam(defaultValue = "false") boolean vip) {
-		CinemaHall hall = hallService.readHall(id);
+	@GetMapping("/edit/{id}")
+	public String showEditForm(@PathVariable Long id, Model model) {
+		Seat seat = seatService.readSeat(id);
+		model.addAttribute("seat", seat);
+		return "admin/cinema-hall/edit-seat";
+	}
 
-		for (int row = 1; row <= rows; row++) {
-			for (int seat = 1; seat <= seatsPerRow; seat++) {
-				Seat newSeat = new Seat();
-				newSeat.setHall(hall);
-				newSeat.setRowNumber(row);
-				newSeat.setSeatNumber(seat);
-				newSeat.setVip(vip);
-				seatService.createSeat(newSeat);
-			}
-		}
-		return "redirect:/admin/seat/hall/" + id;
+	@PostMapping("/edit/{id}")
+	public String updateSeat(@PathVariable Long id, @ModelAttribute Seat seat) {
+		Seat existingSeat = seatService.readSeat(id);
+
+		seat.setHall(existingSeat.getHall());
+		seat.setId(id);
+		Long hallId = seat.getHall().getId();
+		seatService.updateSeat(seat);
+		return "redirect:/admin/seat/hall/" + hallId;
+	}
+
+	@PostMapping("/delete/{id}")
+	public String deleteSeat(@PathVariable Long id) {
+		Seat seat = seatService.readSeat(id);
+		Long hallId = seat.getHall().getId();
+		seatService.deleteSeat(id);
+		return "redirect:/admin/seat/hall/" + hallId;
 	}
 }

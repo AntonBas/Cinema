@@ -27,13 +27,13 @@ public class AdminCinemaHallController {
 	private final CinemaHallService hallService;
 
 	@GetMapping
-	public String showHallList(Model model) {
+	public String listHalls(Model model) {
 		model.addAttribute("halls", hallService.getAllHalls());
 		return "admin/cinema-hall/hall";
 	}
 
 	@GetMapping("/create")
-	public String showCreateHall(Model model) {
+	public String showCreateForm(Model model) {
 		model.addAttribute("hallForm", new CinemaHallDto());
 		return "admin/cinema-hall/create-hall";
 	}
@@ -51,7 +51,7 @@ public class AdminCinemaHallController {
 	}
 
 	@GetMapping("/edit/{id}")
-	public String showEditHall(@PathVariable Long id, Model model) {
+	public String showEditForm(@PathVariable Long id, Model model) {
 		CinemaHall hall = hallService.readHall(id);
 		List<Seat> seats = hall.getSeats();
 
