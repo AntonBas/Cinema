@@ -1,6 +1,7 @@
 package ua.lviv.bas.cinema.service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -9,6 +10,8 @@ import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
 import ua.lviv.bas.cinema.dao.GenreRepository;
 import ua.lviv.bas.cinema.domain.Genre;
+import ua.lviv.bas.cinema.dto.GenreDto;
+import ua.lviv.bas.cinema.mapper.GenreMapper;
 
 @Service
 @RequiredArgsConstructor
@@ -17,20 +20,30 @@ public class GenreService {
 	private static final Logger logger = LogManager.getLogger(GenreService.class);
 
 	private final GenreRepository genreRepository;
+	private final GenreMapper genreMapper;
 
-	public Genre createGenre(Genre genre) {
-		logger.info("Creating genre: {}", genre.getName());
-		return genreRepository.save(genre);
+	public GenreDto createGenre(GenreDto genreDto) {
+		logger.info("Creating genre: {}", genreDto.getName());
+		Genre genre = genreMapper.toEntity(genreDto);
+		Genre saved = genreRepository.save(genre);
+		return genreMapper.toDto(saved);
 	}
 
-	public Genre readGenre(Long id) {
+	public GenreDto readGenre(Long id) {
 		logger.info("Reading genre by id: {}", id);
-		return genreRepository.findById(id).orElse(null);
+		return genreRepository.findById(id).map(genreMapper::toDto).orElse(null);
 	}
 
-	public Genre updateGenre(Genre genre) {
-		logger.info("Updating genre with id: {}", genre.getId());
-		return genreRepository.save(genre);
+	public GenreDto updateGenre(Long id, GenreDto genreDto) {
+	    logger.info("Updating genre with id: {}", id);
+	    
+	    Genre existingGenre = genreRepository.findById(id)
+	        .orElseThrow(() -> new RuntimeException("Genre not found with id: " + id));
+	    
+	    existingGenre.setName(genreDto.getName());
+	    
+	    Genre updated = genreRepository.save(existingGenre);
+	    return genreMapper.toDto(updated);
 	}
 
 	public void deleteGenre(Long id) {
@@ -38,13 +51,13 @@ public class GenreService {
 		genreRepository.deleteById(id);
 	}
 
-	public List<Genre> getAllGenres() {
+	public List<GenreDto> getAllGenres() {
 		logger.info("Retrieving all genres");
-		return genreRepository.findAll();
+		return genreRepository.findAll().stream().map(genreMapper::toDto).collect(Collectors.toList());
 	}
 
-	public List<Genre> findAllById(List<Long> ids) {
+	public List<GenreDto> findAllById(List<Long> ids) {
 		logger.info("Finding genres by ids: {}", ids);
-		return genreRepository.findAllById(ids);
+		return genreRepository.findAllById(ids).stream().map(genreMapper::toDto).collect(Collectors.toList());
 	}
 }
