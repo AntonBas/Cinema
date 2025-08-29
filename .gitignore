@@ -72,3 +72,5 @@ yarn-error.log*
 .gitattributes
 .gitmodules
 application.properties
+settings.json
+.factorypath
