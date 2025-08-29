@@ -3,6 +3,7 @@ package ua.lviv.bas.cinema.mapper;
 import java.util.List;
 
 import org.mapstruct.Mapper;
+import org.mapstruct.MappingTarget;
 import org.mapstruct.ReportingPolicy;
 
 import ua.lviv.bas.cinema.domain.Genre;
@@ -17,5 +18,5 @@ public interface GenreMapper {
 
 	Genre toEntity(GenreDto genreDto);
 
-	void updateGenreFromDto(GenreDto genreDto, @org.mapstruct.MappingTarget Genre genre);
+	void updateGenreFromDto(GenreDto genreDto, @MappingTarget Genre genre);
 }
