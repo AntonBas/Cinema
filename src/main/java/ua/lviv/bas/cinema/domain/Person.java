@@ -7,12 +7,14 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import ua.lviv.bas.cinema.domain.enums.PersonRole;
 
 @Entity
 @Data
+@Table(name = "persons")
 public class Person {
 
 	@Id

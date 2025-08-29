@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
 import ua.lviv.bas.cinema.dao.PersonRepository;
 import ua.lviv.bas.cinema.domain.Person;
-import ua.lviv.bas.cinema.dto.PersonDTO;
+import ua.lviv.bas.cinema.dto.PersonDto;
 import ua.lviv.bas.cinema.mapper.PersonMapper;
 
 @Service
@@ -18,15 +18,15 @@ public class PersonService {
 	private final PersonRepository personRepository;
 	private final PersonMapper personMapper;
 
-	public List<PersonDTO> getAllPersons() {
+	public List<PersonDto> getAllPersons() {
 		return personMapper.toDtoList(personRepository.findAll());
 	}
 
-	public Optional<PersonDTO> getPersonById(Long id) {
+	public Optional<PersonDto> getPersonById(Long id) {
 		return personRepository.findById(id).map(personMapper::toDto);
 	}
 
-	public PersonDTO savePerson(Person person) {
+	public PersonDto savePerson(Person person) {
 		Person savedPerson = personRepository.save(person);
 		return personMapper.toDto(savedPerson);
 	}

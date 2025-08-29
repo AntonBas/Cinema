@@ -6,7 +6,7 @@ import lombok.Data;
 import ua.lviv.bas.cinema.domain.enums.PersonRole;
 
 @Data
-public class PersonDTO {
+public class PersonDto {
 
 	private Long id;
 

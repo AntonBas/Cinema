@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import ua.lviv.bas.cinema.domain.Person;
-import ua.lviv.bas.cinema.dto.PersonDTO;
+import ua.lviv.bas.cinema.dto.PersonDto;
 import ua.lviv.bas.cinema.mapper.PersonMapper;
 import ua.lviv.bas.cinema.service.PersonService;
 
@@ -32,25 +32,25 @@ public class PersonController {
 	private final PersonMapper personMapper;
 
 	@GetMapping
-	public ResponseEntity<List<PersonDTO>> getAll() {
+	public ResponseEntity<List<PersonDto>> getAll() {
 		return ResponseEntity.ok(personService.getAllPersons());
 	}
 
 	@GetMapping("/{id}")
-	public ResponseEntity<PersonDTO> getById(@PathVariable Long id) {
+	public ResponseEntity<PersonDto> getById(@PathVariable Long id) {
 		return personService.getPersonById(id).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
 	}
 
 	@PostMapping
-	public ResponseEntity<PersonDTO> create(@RequestBody @Valid PersonDTO personDTO) {
-		Person personToSave = personMapper.toEntity(personDTO);
-		PersonDTO savedPerson = personService.savePerson(personToSave);
+	public ResponseEntity<PersonDto> create(@RequestBody @Valid PersonDto personDto) {
+		Person personToSave = personMapper.toEntity(personDto);
+		PersonDto savedPerson = personService.savePerson(personToSave);
 		return ResponseEntity.status(HttpStatus.CREATED).body(savedPerson);
 	}
 
 	@PutMapping("/{id}")
-	public ResponseEntity<PersonDTO> update(@PathVariable Long id, @RequestBody @Valid PersonDTO personDTO) {
-		personDTO.setId(id);
+	public ResponseEntity<PersonDto> update(@PathVariable Long id, @RequestBody @Valid PersonDto personDto) {
+		personDto.setId(id);
 
 		Optional<Person> existingPersonOpt = personService.findEntityById(id);
 		if (existingPersonOpt.isEmpty()) {
@@ -58,9 +58,9 @@ public class PersonController {
 		}
 
 		Person existingPerson = existingPersonOpt.get();
-		personMapper.updateEntityFromDto(personDTO, existingPerson);
+		personMapper.updateEntityFromDto(personDto, existingPerson);
 
-		PersonDTO updatedPerson = personService.savePerson(existingPerson);
+		PersonDto updatedPerson = personService.savePerson(existingPerson);
 		return ResponseEntity.ok(updatedPerson);
 	}
 

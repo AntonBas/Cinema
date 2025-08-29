@@ -6,12 +6,12 @@ import org.mapstruct.Mapper;
 import org.mapstruct.MappingTarget;
 
 import ua.lviv.bas.cinema.domain.Person;
-import ua.lviv.bas.cinema.dto.PersonDTO;
+import ua.lviv.bas.cinema.dto.PersonDto;
 
 @Mapper(componentModel = "spring")
 public interface PersonMapper {
-    PersonDTO toDto(Person person);
-    List<PersonDTO> toDtoList(List<Person> persons);
-    Person toEntity(PersonDTO personDTO);
-    void updateEntityFromDto(PersonDTO personDTO, @MappingTarget Person person);
+    PersonDto toDto(Person person);
+    List<PersonDto> toDtoList(List<Person> persons);
+    Person toEntity(PersonDto personDto);
+    void updateEntityFromDto(PersonDto personDto, @MappingTarget Person person);
 }
