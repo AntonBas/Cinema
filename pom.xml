@@ -32,8 +32,8 @@
 
     <properties>
         <java.version>17</java.version>
-        <mapstruct.version>1.5.5.Final</mapstruct.version> <!-- Додаємо версію MapStruct в properties -->
-        <lombok.version>1.18.30</lombok.version> <!-- Додаємо версію Lombok -->
+        <mapstruct.version>1.5.5.Final</mapstruct.version>
+        <lombok.version>1.18.30</lombok.version>
     </properties>
 
     <dependencies>
@@ -90,7 +90,6 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>${lombok.version}</version> <!-- Використовуємо версію з properties -->
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -117,7 +116,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.11.0</version> <!-- Важливо: вкажіть версію -->
                 <configuration>
                     <source>17</source>
                     <target>17</target>

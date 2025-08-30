@@ -1,324 +1,11 @@
-//package ua.lviv.bas.cinema.domain;
-//
-//import java.time.LocalDate;
-//import java.util.List;
-//import java.util.Objects;
-//
-//import jakarta.persistence.CascadeType;
-//import jakarta.persistence.Column;
-//import jakarta.persistence.Entity;
-//import jakarta.persistence.EnumType;
-//import jakarta.persistence.Enumerated;
-//import jakarta.persistence.GeneratedValue;
-//import jakarta.persistence.GenerationType;
-//import jakarta.persistence.Id;
-//import jakarta.persistence.JoinColumn;
-//import jakarta.persistence.JoinTable;
-//import jakarta.persistence.ManyToMany;
-//import jakarta.persistence.OneToMany;
-//import jakarta.persistence.Table;
-//import jakarta.persistence.Transient;
-//import ua.lviv.bas.cinema.domain.enums.AgeRating;
-//import ua.lviv.bas.cinema.domain.enums.MovieCategory;
-//import ua.lviv.bas.cinema.domain.enums.MovieStatus;
-//
-//@Entity
-//@Table(name = "movies")
-//public class Movie {
-//
-//	@Id
-//	@GeneratedValue(strategy = GenerationType.IDENTITY)
-//	private Long id;
-//
-//	@Column(nullable = false)
-//	private String title;
-//
-//	@Column(nullable = false, unique = true)
-//	private String slug;
-//
-//	@Column(nullable = false)
-//	private String trailer;
-//
-//	@Column(nullable = false)
-//	private String description;
-//
-//	@Column(nullable = false)
-//	private String production;
-//
-//	@Column(nullable = false, name = "duration_minutes")
-//	private int durationMinutes;
-//
-//	@Column(nullable = false)
-//	private String director;
-//
-//	@Column(nullable = false, name = "release_year")
-//	private int releaseYear;
-//
-//	@Column(nullable = false, name = "release_date")
-//	private LocalDate releaseDate;
-//
-//	@Column(nullable = false, name = "end_showing_date")
-//	private LocalDate endShowingDate;
-//
-//	@Column(nullable = false)
-//	private String screenwriter;
-//
-//	@Column(nullable = false, name = "main_cast", columnDefinition = "TEXT")
-//	private String mainCast;
-//
-//	@Enumerated(EnumType.STRING)
-//	private MovieStatus status;
-//
-//	@Column(nullable = false, name = "poster_image_path")
-//	private String posterImagePath;
-//
-//	@Enumerated(EnumType.STRING)
-//	@Column(nullable = false, name = "age_rating")
-//	private AgeRating ageRating;
-//
-//	@OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
-//	private List<Session> sessions;
-//
-//	@ManyToMany
-//	@JoinTable(name = "movie_genres", joinColumns = @JoinColumn(name = "movie_id"), inverseJoinColumns = @JoinColumn(name = "genre_id"))
-//	private List<Genre> genres;
-//
-//	@Transient
-//	public MovieCategory getCategory() {
-//		LocalDate now = LocalDate.now();
-//		if (now.isBefore(releaseDate)) {
-//			return MovieCategory.UPCOMING;
-//		} else if (now.isAfter(endShowingDate)) {
-//			return MovieCategory.ARCHIVED;
-//		} else {
-//			return MovieCategory.CURRENT;
-//		}
-//	}
-//
-//	public Movie() {
-//	}
-//
-//	public Movie(String title, String slug, String trailer, String description, String production, int durationMinutes,
-//			String director, int releaseYear, LocalDate releaseDate, LocalDate endShowingDate, String screenwriter,
-//			String mainCast, MovieStatus status, String posterImagePath, AgeRating ageRating, List<Session> sessions,
-//			List<Genre> genres) {
-//		this.title = title;
-//		this.slug = slug;
-//		this.trailer = trailer;
-//		this.description = description;
-//		this.production = production;
-//		this.durationMinutes = durationMinutes;
-//		this.director = director;
-//		this.releaseYear = releaseYear;
-//		this.releaseDate = releaseDate;
-//		this.endShowingDate = endShowingDate;
-//		this.screenwriter = screenwriter;
-//		this.mainCast = mainCast;
-//		this.status = status;
-//		this.posterImagePath = posterImagePath;
-//		this.ageRating = ageRating;
-//		this.sessions = sessions;
-//		this.genres = genres;
-//	}
-//
-//	public Movie(Long id, String title, String slug, String trailer, String description, String production,
-//			int durationMinutes, String director, int releaseYear, LocalDate releaseDate, LocalDate endShowingDate,
-//			String screenwriter, String mainCast, MovieStatus status, String posterImagePath, AgeRating ageRating,
-//			List<Session> sessions, List<Genre> genres) {
-//		this.id = id;
-//		this.title = title;
-//		this.slug = slug;
-//		this.trailer = trailer;
-//		this.description = description;
-//		this.production = production;
-//		this.durationMinutes = durationMinutes;
-//		this.director = director;
-//		this.releaseYear = releaseYear;
-//		this.releaseDate = releaseDate;
-//		this.endShowingDate = endShowingDate;
-//		this.screenwriter = screenwriter;
-//		this.mainCast = mainCast;
-//		this.status = status;
-//		this.posterImagePath = posterImagePath;
-//		this.ageRating = ageRating;
-//		this.sessions = sessions;
-//		this.genres = genres;
-//	}
-//
-//	public Long getId() {
-//		return id;
-//	}
-//
-//	public void setId(Long id) {
-//		this.id = id;
-//	}
-//
-//	public String getTitle() {
-//		return title;
-//	}
-//
-//	public void setTitle(String title) {
-//		this.title = title;
-//	}
-//
-//	public String getSlug() {
-//		return slug;
-//	}
-//
-//	public void setSlug(String slug) {
-//		this.slug = slug;
-//	}
-//
-//	public String getTrailer() {
-//		return trailer;
-//	}
-//
-//	public void setTrailer(String trailer) {
-//		this.trailer = trailer;
-//	}
-//
-//	public String getDescription() {
-//		return description;
-//	}
-//
-//	public void setDescription(String description) {
-//		this.description = description;
-//	}
-//
-//	public String getProduction() {
-//		return production;
-//	}
-//
-//	public void setProduction(String production) {
-//		this.production = production;
-//	}
-//
-//	public int getDurationMinutes() {
-//		return durationMinutes;
-//	}
-//
-//	public void setDurationMinutes(int durationMinutes) {
-//		this.durationMinutes = durationMinutes;
-//	}
-//
-//	public String getDirector() {
-//		return director;
-//	}
-//
-//	public void setDirector(String director) {
-//		this.director = director;
-//	}
-//
-//	public int getReleaseYear() {
-//		return releaseYear;
-//	}
-//
-//	public void setReleaseYear(int releaseYear) {
-//		this.releaseYear = releaseYear;
-//	}
-//
-//	public LocalDate getReleaseDate() {
-//		return releaseDate;
-//	}
-//
-//	public void setReleaseDate(LocalDate releaseDate) {
-//		this.releaseDate = releaseDate;
-//	}
-//
-//	public LocalDate getEndShowingDate() {
-//		return endShowingDate;
-//	}
-//
-//	public void setEndShowingDate(LocalDate endShowingDate) {
-//		this.endShowingDate = endShowingDate;
-//	}
-//
-//	public String getScreenwriter() {
-//		return screenwriter;
-//	}
-//
-//	public void setScreenwriter(String screenwriter) {
-//		this.screenwriter = screenwriter;
-//	}
-//
-//	public String getMainCast() {
-//		return mainCast;
-//	}
-//
-//	public void setMainCast(String mainCast) {
-//		this.mainCast = mainCast;
-//	}
-//
-//	public MovieStatus getStatus() {
-//		return status;
-//	}
-//
-//	public void setStatus(MovieStatus status) {
-//		this.status = status;
-//	}
-//
-//	public String getPosterImagePath() {
-//		return posterImagePath;
-//	}
-//
-//	public void setPosterImagePath(String posterImagePath) {
-//		this.posterImagePath = posterImagePath;
-//	}
-//
-//	public AgeRating getAgeRating() {
-//		return ageRating;
-//	}
-//
-//	public void setAgeRating(AgeRating ageRating) {
-//		this.ageRating = ageRating;
-//	}
-//
-//	public List<Session> getSessions() {
-//		return sessions;
-//	}
-//
-//	public void setSessions(List<Session> sessions) {
-//		this.sessions = sessions;
-//	}
-//
-//	public List<Genre> getGenres() {
-//		return genres;
-//	}
-//
-//	public void setGenres(List<Genre> genres) {
-//		this.genres = genres;
-//	}
-//
-//	@Override
-//	public int hashCode() {
-//		return Objects.hash(id);
-//	}
-//
-//	@Override
-//	public boolean equals(Object obj) {
-//		if (this == obj)
-//			return true;
-//		if (obj == null)
-//			return false;
-//		if (getClass() != obj.getClass())
-//			return false;
-//		Movie other = (Movie) obj;
-//		return Objects.equals(id, other.id);
-//	}
-//
-//	@Override
-//	public String toString() {
-//		return "Movie [id=" + id + ", title=" + title + ", slug=" + slug + ", director=" + director + ", releaseYear="
-//				+ releaseYear + ", status=" + status + ", ageRating=" + ageRating + "]";
-//	}
-//}
-
 package ua.lviv.bas.cinema.domain;
 
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+
+import org.hibernate.validator.constraints.URL;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -328,6 +15,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
@@ -339,6 +27,8 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PastOrPresent;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -349,7 +39,12 @@ import ua.lviv.bas.cinema.domain.enums.MovieCategory;
 import ua.lviv.bas.cinema.domain.enums.MovieStatus;
 
 @Entity
-@Table(name = "movies")
+@Table(name = "movies", indexes = {
+    @Index(name = "idx_movie_title", columnList = "title"),
+    @Index(name = "idx_movie_status", columnList = "status"),
+    @Index(name = "idx_movie_release_date", columnList = "release_date"),
+    @Index(name = "idx_movie_slug", columnList = "slug")
+})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -357,114 +52,152 @@ import ua.lviv.bas.cinema.domain.enums.MovieStatus;
 @Builder
 public class Movie {
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-	@NotBlank
-	@Column(nullable = false)
-	private String title;
+    @NotBlank(message = "Movie title is required")
+    @Size(max = 255, message = "Title must be less than 255 characters")
+    @Column(nullable = false)
+    private String title;
 
-	@NotBlank
-	@Column(nullable = false, unique = true)
-	private String slug;
+    @NotBlank(message = "Slug is required")
+    @Pattern(regexp = "^[a-z0-9-]+$", message = "Slug can only contain lowercase letters, numbers and hyphens")
+    @Column(nullable = false, unique = true)
+    private String slug;
 
-	@NotBlank
-	@Column(nullable = false)
-	private String trailer;
+    @NotBlank(message = "Trailer URL is required")
+    @URL(message = "Trailer must be a valid URL")
+    @Column(nullable = false)
+    private String trailer;
 
-	@NotBlank
-	@Column(nullable = false)
-	private String description;
+    @NotBlank(message = "Description is required")
+    @Size(max = 1000, message = "Description must be less than 1000 characters")
+    @Column(nullable = false, columnDefinition = "TEXT")
+    private String description;
 
-	@NotBlank
-	@Column(nullable = false)
-	private String production;
+    @NotBlank(message = "Production company is required")
+    @Size(max = 255, message = "Production must be less than 255 characters")
+    @Column(nullable = false)
+    private String production;
 
-	@NotNull
-	@Min(1)
-	@Column(nullable = false, name = "duration_minutes")
-	private int durationMinutes;
+    @NotNull(message = "Duration is required")
+    @Min(value = 1, message = "Duration must be at least 1 minute")
+    @Column(nullable = false, name = "duration_minutes")
+    private Integer durationMinutes;
 
-	@NotNull
-	@PastOrPresent
-	@Column(nullable = false, name = "release_date")
-	private LocalDate releaseDate;
+    @NotNull(message = "Release date is required")
+    @PastOrPresent(message = "Release date cannot be in the future")
+    @Column(nullable = false, name = "release_date")
+    private LocalDate releaseDate;
 
-	@NotNull
-	@Future
-	@Column(nullable = false, name = "end_showing_date")
-	private LocalDate endShowingDate;
+    @NotNull(message = "End showing date is required")
+    @Future(message = "End showing date must be in the future")
+    @Column(nullable = false, name = "end_showing_date")
+    private LocalDate endShowingDate;
 
-	@Enumerated(EnumType.STRING)
-	private MovieStatus status;
+    @NotNull(message = "Movie status is required")
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private MovieStatus status;
 
-	@NotBlank
-	@Column(nullable = false, name = "poster_image_path")
-	private String posterImagePath;
+    @NotBlank(message = "Poster image path is required")
+    @URL(message = "Poster image must be a valid URL")
+    @Column(nullable = false, name = "poster_image_path")
+    private String posterImagePath;
 
-	@Enumerated(EnumType.STRING)
-	@Column(nullable = false, name = "age_rating")
-	private AgeRating ageRating;
+    @NotNull(message = "Age rating is required")
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, name = "age_rating")
+    private AgeRating ageRating;
 
-	@OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
-	@Builder.Default
-	private Set<Session> sessions = new HashSet<>();
+    @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private Set<Session> sessions = new HashSet<>();
 
-	@ManyToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE })
-	@JoinTable(name = "movie_cast", joinColumns = @JoinColumn(name = "movie_id"), inverseJoinColumns = @JoinColumn(name = "person_id"))
-	@Builder.Default
-	private Set<Person> cast = new HashSet<>();
+    @ManyToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH })
+    @JoinTable(
+        name = "movie_cast",
+        joinColumns = @JoinColumn(name = "movie_id"),
+        inverseJoinColumns = @JoinColumn(name = "person_id")
+    )
+    @Builder.Default
+    private Set<Person> cast = new HashSet<>();
 
-	@ManyToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE })
-	@JoinTable(name = "movie_directors", joinColumns = @JoinColumn(name = "movie_id"), inverseJoinColumns = @JoinColumn(name = "person_id"))
-	@Builder.Default
-	private Set<Person> directors = new HashSet<>();
+    @ManyToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH })
+    @JoinTable(
+        name = "movie_directors",
+        joinColumns = @JoinColumn(name = "movie_id"),
+        inverseJoinColumns = @JoinColumn(name = "person_id")
+    )
+    @Builder.Default
+    private Set<Person> directors = new HashSet<>();
 
-	@ManyToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE })
-	@JoinTable(name = "movie_screenwriters", joinColumns = @JoinColumn(name = "movie_id"), inverseJoinColumns = @JoinColumn(name = "person_id"))
-	@Builder.Default
-	private Set<Person> screenwriters = new HashSet<>();
+    @ManyToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH })
+    @JoinTable(
+        name = "movie_screenwriters",
+        joinColumns = @JoinColumn(name = "movie_id"),
+        inverseJoinColumns = @JoinColumn(name = "person_id")
+    )
+    @Builder.Default
+    private Set<Person> screenwriters = new HashSet<>();
 
-	@ManyToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE })
-	@JoinTable(name = "movie_genres", joinColumns = @JoinColumn(name = "movie_id"), inverseJoinColumns = @JoinColumn(name = "genre_id"))
-	@Builder.Default
-	private Set<Genre> genres = new HashSet<>();
+    @ManyToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH })
+    @JoinTable(
+        name = "movie_genres",
+        joinColumns = @JoinColumn(name = "movie_id"),
+        inverseJoinColumns = @JoinColumn(name = "genre_id")
+    )
+    @Builder.Default
+    private Set<Genre> genres = new HashSet<>();
 
-	@Transient
-	public MovieCategory getCategory() {
-		LocalDate now = LocalDate.now();
-		if (now.isBefore(releaseDate)) {
-			return MovieCategory.UPCOMING;
-		} else if (now.isAfter(endShowingDate)) {
-			return MovieCategory.ARCHIVED;
-		} else {
-			return MovieCategory.CURRENT;
-		}
-	}
+    @Transient
+    public MovieCategory getCategory() {
+        if (releaseDate == null) {
+            return MovieCategory.ARCHIVED;
+        }
+        
+        LocalDate now = LocalDate.now();
+        if (now.isBefore(releaseDate)) {
+            return MovieCategory.UPCOMING;
+        } else if (endShowingDate != null && now.isAfter(endShowingDate)) {
+            return MovieCategory.ARCHIVED;
+        } else {
+            return MovieCategory.CURRENT;
+        }
+    }
 
-	public int getReleaseYear() {
-		return releaseDate != null ? releaseDate.getYear() : 0;
-	}
+    @Transient
+    public Integer getReleaseYear() {
+        return releaseDate != null ? releaseDate.getYear() : null;
+    }
 
-	@Override
-	public int hashCode() {
-		return Objects.hash(id);
-	}
+    @Transient
+    public boolean isCurrentlyShowing() {
+        return getCategory() == MovieCategory.CURRENT;
+    }
 
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (!(obj instanceof Movie))
-			return false;
-		Movie other = (Movie) obj;
-		return Objects.equals(id, other.id);
-	}
+    @Transient
+    public boolean isUpcoming() {
+        return getCategory() == MovieCategory.UPCOMING;
+    }
 
-	@Override
-	public String toString() {
-		return "Movie [id=" + id + ", title=" + title + ", slug=" + slug + ", releaseDate=" + releaseDate
-				+ ", endShowingDate=" + endShowingDate + ", status=" + status + ", ageRating=" + ageRating + "]";
-	}
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (!(obj instanceof Movie)) return false;
+        Movie other = (Movie) obj;
+        return Objects.equals(id, other.id);
+    }
+
+    @Override
+    public String toString() {
+        return "Movie [id=" + id + ", title=" + title + ", slug=" + slug + ", releaseDate=" + releaseDate
+                + ", endShowingDate=" + endShowingDate + ", status=" + status + ", ageRating=" + ageRating + "]";
+    }
 }
