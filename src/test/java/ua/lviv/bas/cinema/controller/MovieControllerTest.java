@@ -15,7 +15,7 @@ import ua.lviv.bas.cinema.dto.MovieDto;
 import ua.lviv.bas.cinema.service.MovieService;
 
 @WebMvcTest(MovieController.class)
-class MovieControllerTest {
+public class MovieControllerTest {
 
 	@Autowired
 	private MockMvc mockMvc;

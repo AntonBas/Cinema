@@ -20,7 +20,7 @@ import ua.lviv.bas.cinema.dto.MovieDto;
 import ua.lviv.bas.cinema.mapper.MovieMapper;
 
 @ExtendWith(MockitoExtension.class)
-class MovieServiceTest {
+public class MovieServiceTest {
 
 	@Mock
 	private MovieRepository movieRepository;
