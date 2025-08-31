@@ -1,82 +1,91 @@
 package ua.lviv.bas.cinema.controller;
 
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import ua.lviv.bas.cinema.config.JwtTokenProvider;
 import ua.lviv.bas.cinema.dto.UserLoginDto;
 import ua.lviv.bas.cinema.dto.UserRegistrationDto;
 import ua.lviv.bas.cinema.service.EmailTokenGeneratorService;
 import ua.lviv.bas.cinema.service.EmailTokenService;
 import ua.lviv.bas.cinema.service.UserService;
 
-@Controller
+@RestController
+@RequestMapping("/api/auth")
 @RequiredArgsConstructor
-
 public class AuthController {
 
 	private final UserService userService;
 	private final EmailTokenGeneratorService tokenGeneratorService;
 	private final EmailTokenService emailTokenService;
-
-	@GetMapping("/registration")
-	public String showRegistrationForm(Model model) {
-		model.addAttribute("userForm", new UserRegistrationDto());
-		return "auth/registration";
-	}
+	private final AuthenticationManager authenticationManager;
+	private final JwtTokenProvider jwtTokenProvider;
 
 	@PostMapping("/registration")
-	public String processRegistration(@ModelAttribute("userForm") @Valid UserRegistrationDto userForm,
-			BindingResult bindingResult, Model model) {
+	public ResponseEntity<?> registerUser(@Valid @RequestBody UserRegistrationDto userDto,
+			BindingResult bindingResult) {
 		if (bindingResult.hasErrors()) {
-			return "auth/registration";
+			return ResponseEntity.badRequest().body(bindingResult.getAllErrors());
 		}
 
-		if (!userForm.getPassword().equals(userForm.getPasswordConfirm())) {
-			bindingResult.rejectValue("passwordConfirm", "error.userForm", "Passwords do not match");
-			return "auth/registration";
+		if (!userDto.getPassword().equals(userDto.getPasswordConfirm())) {
+			return ResponseEntity.badRequest().body("Password do not match");
 		}
 
 		try {
-			userService.save(userForm);
-			tokenGeneratorService.generateVerificationToken(userForm.getEmail());
-			model.addAttribute("message", "Check your email to confirm your account.");
-			return "redirect:/login?message=Check_your_email_to_confirm_your_account";
+			userService.registerUser(userDto);
+			tokenGeneratorService.generateVerificationToken(userDto.getEmail());
+			return ResponseEntity.ok().body("Check your email to confirm account");
 		} catch (RuntimeException e) {
-			model.addAttribute("error", e.getMessage());
-			return "auth/registration";
+			return ResponseEntity.badRequest().body(e.getMessage());
 		}
 	}
 
-	@GetMapping({ "/login", "/" })
-	public String showLoginForm(Model model, @RequestParam(required = false) String message) {
-		if (message != null) {
-			model.addAttribute("message", message.replace("_", " "));
-		}
-		model.addAttribute("user", new UserLoginDto());
-		return "auth/login";
-	}
+	@PostMapping("/login")
+	public ResponseEntity<?> loginUser(@Valid @RequestBody UserLoginDto loginDto) {
+		try {
+			Authentication authentication = authenticationManager
+					.authenticate(new UsernamePasswordAuthenticationToken(loginDto.getEmail(), loginDto.getPassword()));
 
-	@GetMapping("/home")
-	public String showHomePage(Model model) {
-		return "home";
+			String token = jwtTokenProvider.generateToken(authentication);
+
+			return ResponseEntity.ok().header("Authorization", "Bearer " + token).body("Login successful");
+
+		} catch (BadCredentialsException e) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid email or password");
+		} catch (DisabledException e) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+					.body("Account is not verified. Please check your email.");
+		}
 	}
 
 	@GetMapping("/verify-email")
-	public String confirmEmailToken(@RequestParam("token") String token, Model model) {
+	public ResponseEntity<?> confirmEmailToken(@RequestParam("token") String token) {
 		try {
 			emailTokenService.confirmEmail(token);
-			model.addAttribute("successMessage", "Email successfully verified! You can now log in.");
-			return "auth/email-confirmation";
+			return ResponseEntity.ok("Email successfully verified! You can now log in.");
 		} catch (RuntimeException e) {
-			model.addAttribute("errorMessage", e.getMessage());
-			return "auth/email-confirmation";
+			return ResponseEntity.badRequest().body(e.getMessage());
 		}
+	}
+
+	@GetMapping("/check-email")
+	public ResponseEntity<?> checkEmailExists(@RequestParam String email) {
+		boolean exists = userService.existsByEmail(email);
+		return ResponseEntity.ok(exists);
 	}
 }

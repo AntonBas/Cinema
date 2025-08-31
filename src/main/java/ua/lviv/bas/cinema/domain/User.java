@@ -1,8 +1,8 @@
 package ua.lviv.bas.cinema.domain;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -15,11 +15,18 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import ua.lviv.bas.cinema.domain.enums.UserRole;
 
 @Entity
 @Table(name = "users")
-
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class User {
 
 	@Id
@@ -48,156 +55,15 @@ public class User {
 	private String password;
 
 	@OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-	private List<Ticket> tickets;
+	@Builder.Default
+	private List<Ticket> tickets = new ArrayList<>();
 
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false)
+	@Builder.Default
 	private UserRole userRole = UserRole.ROLE_USER;
 
 	@Column(nullable = false)
+	@Builder.Default
 	private boolean enabled = false;
-
-	public User() {
-	}
-
-	public User(User user) {
-		this.id = user.id;
-		this.email = user.email;
-		this.firstName = user.firstName;
-		this.lastName = user.lastName;
-		this.dateOfBirth = user.dateOfBirth;
-		this.city = user.city;
-		this.phoneNumber = user.phoneNumber;
-		this.password = user.password;
-		this.userRole = user.userRole;
-		this.enabled = user.enabled;
-	}
-
-	public User(String email, String firstName, String lastName, LocalDate dateOfBirth, String city, String phoneNumber,
-			String password, UserRole userRole) {
-		this.email = email;
-		this.firstName = firstName;
-		this.lastName = lastName;
-		this.dateOfBirth = dateOfBirth;
-		this.city = city;
-		this.phoneNumber = phoneNumber;
-		this.password = password;
-		this.userRole = userRole;
-	}
-
-	public User(Long id, String email, String firstName, String lastName, LocalDate dateOfBirth, String city,
-			String phoneNumber, String password, UserRole userRole) {
-		this.id = id;
-		this.email = email;
-		this.firstName = firstName;
-		this.lastName = lastName;
-		this.dateOfBirth = dateOfBirth;
-		this.city = city;
-		this.phoneNumber = phoneNumber;
-		this.password = password;
-		this.userRole = userRole;
-	}
-
-	public Long getId() {
-		return id;
-	}
-
-	public void setId(Long id) {
-		this.id = id;
-	}
-
-	public String getEmail() {
-		return email;
-	}
-
-	public void setEmail(String email) {
-		this.email = email;
-	}
-
-	public String getFirstName() {
-		return firstName;
-	}
-
-	public void setFirstName(String firstName) {
-		this.firstName = firstName;
-	}
-
-	public String getLastName() {
-		return lastName;
-	}
-
-	public void setLastName(String lastName) {
-		this.lastName = lastName;
-	}
-
-	public LocalDate getDateOfBirth() {
-		return dateOfBirth;
-	}
-
-	public void setDateOfBirth(LocalDate dateOfBirth) {
-		this.dateOfBirth = dateOfBirth;
-	}
-
-	public String getCity() {
-		return city;
-	}
-
-	public void setCity(String city) {
-		this.city = city;
-	}
-
-	public String getPhoneNumber() {
-		return phoneNumber;
-	}
-
-	public void setPhoneNumber(String phoneNumber) {
-		this.phoneNumber = phoneNumber;
-	}
-
-	public String getPassword() {
-		return password;
-	}
-
-	public void setPassword(String password) {
-		this.password = password;
-	}
-
-	public UserRole getUserRole() {
-		return userRole;
-	}
-
-	public void setUserRole(UserRole userRole) {
-		this.userRole = userRole;
-	}
-
-	public boolean isEnabled() {
-		return enabled;
-	}
-
-	public void setEnabled(boolean enabled) {
-		this.enabled = enabled;
-	}
-
-	@Override
-	public int hashCode() {
-		return Objects.hash(email);
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		User other = (User) obj;
-		return Objects.equals(email, other.email);
-	}
-
-	@Override
-	public String toString() {
-		return "User [id=" + id + ", firstName=" + firstName + ", lastName=" + lastName + ", userRole=" + userRole
-				+ ", enabled=" + enabled + "]";
-	}
 }
