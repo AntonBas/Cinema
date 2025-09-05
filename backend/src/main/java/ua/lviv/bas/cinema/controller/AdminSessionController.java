@@ -44,27 +44,27 @@ public class AdminSessionController {
 		return "admin/session/create-session";
 	}
 
-	@PostMapping("/create")
-	public String createSession(@ModelAttribute Session session, Model model) {
-		Movie movie = movieService.readMovie(session.getMovie().getId());
-		session.setMovie(movie);
-
-		LocalDateTime endTime = session.getStartTime().plusMinutes(movie.getDurationMinutes());
-		session.setEndTime(endTime);
-
-		boolean isAvailable = sessionService.isSessionTimeAvailable(session.getStartTime(), endTime,
-				session.getHall().getId(), null);
-
-		if (!isAvailable) {
-			model.addAttribute("errorMessage", "The selected time slot is already booked in this hall.");
-			model.addAttribute("movies", movieService.getAllMovies());
-			model.addAttribute("halls", hallService.getAllHalls());
-			return "admin/session/create-session";
-		}
-
-		sessionService.createSession(session);
-		return "redirect:/admin/session";
-	}
+//	@PostMapping("/create")
+//	public String createSession(@ModelAttribute Session session, Model model) {
+//		Movie movie = movieService.readMovie(session.getMovie().getId());
+//		session.setMovie(movie);
+//
+//		LocalDateTime endTime = session.getStartTime().plusMinutes(movie.getDurationMinutes());
+//		session.setEndTime(endTime);
+//
+//		boolean isAvailable = sessionService.isSessionTimeAvailable(session.getStartTime(), endTime,
+//				session.getHall().getId(), null);
+//
+//		if (!isAvailable) {
+//			model.addAttribute("errorMessage", "The selected time slot is already booked in this hall.");
+//			model.addAttribute("movies", movieService.getAllMovies());
+//			model.addAttribute("halls", hallService.getAllHalls());
+//			return "admin/session/create-session";
+//		}
+//
+//		sessionService.createSession(session);
+//		return "redirect:/admin/session";
+//	}
 
 	@GetMapping("/edit/{id}")
 	public String showEditForm(@PathVariable Long id, Model model) {

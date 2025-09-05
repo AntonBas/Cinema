@@ -20,6 +20,7 @@ HELP.md
 .cproject
 *.launch
 *.pydevproject
+**/posters/
 
 target/
 pom.xml.tag
