@@ -42,7 +42,7 @@ public class CinemaHallController {
 		try {
 			CinemaHallResponseDto response = cinemaHallService.getHallById(id);
 			return ResponseEntity.ok(response);
-		} catch (jakarta.persistence.EntityNotFoundException e) {
+		} catch (EntityNotFoundException e) {
 			return ResponseEntity.notFound().build();
 		} catch (Exception e) {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -55,7 +55,7 @@ public class CinemaHallController {
 		try {
 			CinemaHallResponseDto response = cinemaHallService.updateHall(id, updateDto);
 			return ResponseEntity.ok(response);
-		} catch (jakarta.persistence.EntityNotFoundException e) {
+		} catch (EntityNotFoundException e) {
 			return ResponseEntity.notFound().build();
 		} catch (Exception e) {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
