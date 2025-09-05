@@ -4,8 +4,13 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import lombok.Builder;
+import lombok.Data;
+import ua.lviv.bas.cinema.domain.enums.SeatType;
 
-public class CinemaHallDto {
+@Data
+@Builder
+public class CinemaHallCreateDto {
 
 	private Long id;
 
@@ -21,35 +26,6 @@ public class CinemaHallDto {
 	@Max(value = 30, message = "Maximum 30 seat in a row")
 	private int seatsPerRow;
 
-	public Long getId() {
-		return id;
-	}
-
-	public void setId(Long id) {
-		this.id = id;
-	}
-
-	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
-	}
-
-	public int getRows() {
-		return rows;
-	}
-
-	public void setRows(int rows) {
-		this.rows = rows;
-	}
-
-	public int getSeatsPerRow() {
-		return seatsPerRow;
-	}
-
-	public void setSeatsPerRow(int seatsPerRow) {
-		this.seatsPerRow = seatsPerRow;
-	}
+	@Builder.Default
+	private SeatType defaultSeatType = SeatType.STANDARD;
 }

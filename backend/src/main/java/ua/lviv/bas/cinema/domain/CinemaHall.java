@@ -1,7 +1,6 @@
 package ua.lviv.bas.cinema.domain;
 
 import java.util.List;
-import java.util.Objects;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -12,108 +11,45 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 @Entity
 @Table(name = "cinema_halls")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class CinemaHall {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
+	@NotBlank(message = "Hall name is required")
+	@Size(min = 2, max = 25, message = "Hall name must be between 2-25 characters")
 	@Column(nullable = false)
 	private String name;
 
-	@Column(nullable = false)
-	private int capacity;
-
-	@OneToMany(mappedBy = "hall")
+	@OneToMany(mappedBy = "hall", fetch = FetchType.LAZY)
+	@ToString.Exclude
+	@EqualsAndHashCode.Exclude
 	private List<Session> sessions;
 
 	@OneToMany(mappedBy = "hall", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+	@ToString.Exclude
+	@EqualsAndHashCode.Exclude
 	private List<Seat> seats;
 
 	public int getCapacity() {
 		return (seats != null) ? seats.size() : 0;
 	}
-
-	public CinemaHall() {
-	}
-
-	public CinemaHall(String name) {
-		this.name = name;
-	}
-
-	public CinemaHall(String name, List<Session> sessions, List<Seat> seats) {
-		this.name = name;
-		this.sessions = sessions;
-		this.seats = seats;
-	}
-
-	public CinemaHall(Long id, String name, List<Session> sessions, List<Seat> seats) {
-		this.id = id;
-		this.name = name;
-		this.sessions = sessions;
-		this.seats = seats;
-	}
-
-	public Long getId() {
-		return id;
-	}
-
-	public void setId(Long id) {
-		this.id = id;
-	}
-
-	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
-	}
-
-	public List<Session> getSessions() {
-		return sessions;
-	}
-
-	public void setSessions(List<Session> sessions) {
-		this.sessions = sessions;
-	}
-
-	public List<Seat> getSeats() {
-		return seats;
-	}
-
-	public void setSeats(List<Seat> seats) {
-		this.seats = seats;
-	}
-
-	@Override
-	public int hashCode() {
-		return Objects.hash(capacity, id, name, seats, sessions);
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (obj == null) {
-			return false;
-		}
-		if (getClass() != obj.getClass()) {
-			return false;
-		}
-		CinemaHall other = (CinemaHall) obj;
-		return capacity == other.capacity && Objects.equals(id, other.id) && Objects.equals(name, other.name)
-				&& Objects.equals(seats, other.seats) && Objects.equals(sessions, other.sessions);
-	}
-
-	@Override
-	public String toString() {
-		return "CinemaHall [id=" + id + ", name=" + name + ", capacity=" + capacity + ", sessions=" + sessions
-				+ ", seats=" + seats + "]";
-	}
-
 }
