@@ -24,7 +24,7 @@ import lombok.Setter;
 import ua.lviv.bas.cinema.domain.enums.SeatType;
 
 @Entity
-@Table(name = "seats", uniqueConstraints = { @UniqueConstraint(columnNames = { "hall_id", "row", "number" }) })
+@Table(name = "seats", uniqueConstraints = { @UniqueConstraint(columnNames = { "hall_id", "seat_row", "number" }) })
 @Getter
 @Setter
 @NoArgsConstructor
@@ -36,7 +36,7 @@ public class Seat {
 	private Long id;
 
 	@Min(value = 1, message = "Row must be at least 1")
-	@Column(nullable = false)
+	@Column(name = "seat-row", nullable = false)
 	private int row;
 
 	@Min(value = 1, message = "Seat must be at least 1")
