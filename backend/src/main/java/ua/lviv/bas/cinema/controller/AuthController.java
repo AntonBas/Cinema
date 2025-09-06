@@ -15,9 +15,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import ua.lviv.bas.cinema.config.JwtTokenProvider;
+import ua.lviv.bas.cinema.domain.User;
+import ua.lviv.bas.cinema.dto.UserDto;
 import ua.lviv.bas.cinema.dto.UserLoginDto;
 import ua.lviv.bas.cinema.dto.UserRegistrationDto;
 import ua.lviv.bas.cinema.service.EmailTokenGeneratorService;
@@ -87,5 +90,25 @@ public class AuthController {
 	public ResponseEntity<?> checkEmailExists(@RequestParam String email) {
 		boolean exists = userService.existsByEmail(email);
 		return ResponseEntity.ok(exists);
+	}
+
+	@GetMapping("profile")
+	public ResponseEntity<UserDto> getProfile(Authentication authentication) {
+		try {
+			String email = authentication.getName();
+
+			User user = userService.findByEmail(email);
+
+			UserDto userDto = UserDto.builder().id(user.getId()).email(user.getEmail()).firstName(user.getFirstName())
+					.lastName(user.getLastName()).dateOfBirth(user.getDateOfBirth()).city(user.getCity())
+					.phoneNumber(user.getPhoneNumber()).userRole(user.getUserRole()).enabled(user.isEnabled()).build();
+
+			return ResponseEntity.ok(userDto);
+
+		} catch (EntityNotFoundException e) {
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+		}
 	}
 }
