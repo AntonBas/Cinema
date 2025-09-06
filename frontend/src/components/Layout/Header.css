@@ -1,0 +1,143 @@
+.header-main {
+  background-color: #1a1f2d;
+  border-bottom: 2px solid #fd5f00;
+  padding: 0;
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 1000;
+}
+
+.header-navbar {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 70px;
+}
+
+.logo a {
+  color: #fd5f00;
+  font-size: 1.8rem;
+  font-weight: bold;
+  text-decoration: none;
+}
+
+.logo a:hover {
+  color: #ff8c42;
+}
+
+.nav-links {
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  gap: 2rem;
+  align-items: center;
+}
+
+.nav-links li {
+  position: relative;
+}
+
+.nav-links a {
+  color: #a0a8c0;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.3s;
+  padding: 0.5rem 0;
+}
+
+.nav-links a:hover {
+  color: #fd5f00;
+}
+
+.dropdown {
+  position: relative;
+}
+
+.dropdown-btn {
+  background: none;
+  border: none;
+  color: #a0a8c0;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0.5rem 0;
+  font-size: 1rem;
+  transition: color 0.3s;
+}
+
+.dropdown-btn:hover {
+  color: #fd5f00;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background-color: #1e232e;
+  border: 1px solid #2a3041;
+  border-radius: 6px;
+  padding: 0.5rem 0;
+  list-style: none;
+  min-width: 150px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 1001;
+}
+
+.dropdown-menu li {
+  margin: 0;
+}
+
+.dropdown-menu a,
+.dropdown-menu button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0.75rem 1rem;
+  color: #a0a8c0;
+  text-decoration: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.dropdown-menu a:hover,
+.dropdown-menu button:hover {
+  background-color: #2a3041;
+  color: #fd5f00;
+}
+
+.logout-btn {
+  width: 100%;
+  text-align: left;
+}
+
+/* Адаптація для мобільних пристроїв */
+@media (max-width: 768px) {
+  .header-navbar {
+    padding: 0 1rem;
+  }
+  
+  .nav-links {
+    gap: 1rem;
+  }
+  
+  .dropdown-menu {
+    right: -50%;
+  }
+}
+
+/* Додаємо обробку кліку поза dropdown */
+.dropdown-menu::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: -1;
+}

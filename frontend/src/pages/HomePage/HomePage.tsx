@@ -1,37 +1,20 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Header } from '../../components/layout/Header';
+import { useAuth } from '../../context/AuthContext';
 import './HomePage.css';
 
-const HomePage: React.FC = () => {
-  const user = JSON.parse(localStorage.getItem('user') || 'null');
+export const HomePage: React.FC = () => {
+  const { user } = useAuth();
 
   return (
     <div className="home-page">
-      <h1>Ласкаво просимо!</h1>
-      
-      {user ? (
-        <div className="welcome-message">
-          <p>Ви увійшли як: <strong>{user.username}</strong></p>
-          <p>Оберіть розділ для роботи:</p>
-          <div className="admin-links">
-            <Link to="/admin/movie" className="admin-link">
-              Управління фільмами
-            </Link>
-            <Link to="/admin/person" className="admin-link">
-              Управління персонами
-            </Link>
-          </div>
-        </div>
-      ) : (
-        <div className="guest-message">
-          <p>Будь ласка, увійдіть в систему для доступу до адмін-панелі</p>
-          <Link to="/login" className="login-link">
-            Увійти
-          </Link>
-        </div>
-      )}
+      <Header />
+      <div className="home-content">
+        <h1>Welcome to Cinema System</h1>
+        {user && (
+          <p>Hello, {user.firstName} {user.lastName}!</p>
+        )}
+      </div>
     </div>
   );
 };
-
-export default HomePage;
