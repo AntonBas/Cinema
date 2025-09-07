@@ -1,5 +1,7 @@
 package ua.lviv.bas.cinema.controller;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -7,6 +9,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,6 +26,8 @@ import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.dto.UserDto;
 import ua.lviv.bas.cinema.dto.UserLoginDto;
 import ua.lviv.bas.cinema.dto.UserRegistrationDto;
+import ua.lviv.bas.cinema.security.CustomUserDetails;
+import ua.lviv.bas.cinema.service.EmailService;
 import ua.lviv.bas.cinema.service.EmailTokenGeneratorService;
 import ua.lviv.bas.cinema.service.EmailTokenService;
 import ua.lviv.bas.cinema.service.PasswordResetService;
@@ -39,6 +44,7 @@ public class AuthController {
 	private final PasswordResetService passwordResetService;
 	private final AuthenticationManager authenticationManager;
 	private final JwtTokenProvider jwtTokenProvider;
+	private static final Logger logger = LogManager.getLogger(EmailService.class);
 
 	@PostMapping("/registration")
 	public ResponseEntity<?> registerUser(@Valid @RequestBody UserRegistrationDto userDto,
@@ -69,7 +75,6 @@ public class AuthController {
 			String token = jwtTokenProvider.generateToken(authentication);
 
 			return ResponseEntity.ok().header("Authorization", "Bearer " + token).body("Login successful");
-
 		} catch (BadCredentialsException e) {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid email or password");
 		} catch (DisabledException e) {
@@ -115,11 +120,18 @@ public class AuthController {
 	}
 
 	@GetMapping("profile")
-	public ResponseEntity<UserDto> getProfile(Authentication authentication) {
+	public ResponseEntity<UserDto> getProfile(@AuthenticationPrincipal CustomUserDetails userDetails) {
 		try {
-			String email = authentication.getName();
+			if (userDetails == null) {
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+			}
 
+			String email = userDetails.getUsername();
 			User user = userService.findByEmail(email);
+
+			if (user == null) {
+				return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+			}
 
 			UserDto userDto = UserDto.builder().id(user.getId()).email(user.getEmail()).firstName(user.getFirstName())
 					.lastName(user.getLastName()).dateOfBirth(user.getDateOfBirth()).city(user.getCity())
@@ -130,6 +142,7 @@ public class AuthController {
 		} catch (EntityNotFoundException e) {
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
 		} catch (Exception e) {
+			logger.error("Internal server error in getProfile: ", e);
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
 		}
 	}

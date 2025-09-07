@@ -48,18 +48,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         loadUserData();
     }, [token]);
 
-    const login = async (email: string, password: string) => {
-        try {
-            setIsLoading(true);
-            const response = await authService.login({ email, password });
-            setToken(response.token);
-        } catch (error) {
-            console.error('Login failed:', error);
-            throw error;
-        } finally {
-            setIsLoading(false);
+   const login = async (email: string, password: string) => {
+    try {
+        setIsLoading(true);
+        const response = await authService.login({ email, password });
+        
+        console.log('Login response token:', response.token);
+        
+        if (!response.token) {
+            throw new Error('No token received from server');
         }
-    };
+        
+        setToken(response.token);
+        localStorage.setItem('token', response.token);
+        
+    } catch (error) {
+        console.error('Login failed:', error);
+        throw error;
+    } finally {
+        setIsLoading(false);
+    }
+};
 
     const register = async (userData: any) => {
         try {
