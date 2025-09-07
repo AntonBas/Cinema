@@ -22,17 +22,17 @@ public class EmailTokenService {
 	private final UserService userService;
 
 	@Transactional
-	public void confirmEmail(String token) {
+	public String confirmEmail(String token) {
 		logger.info("Attempting to confirm email with token: {}", token);
 		EmailToken emailToken = tokenRepository.findByToken(token)
 				.orElseThrow(() -> new RuntimeException("Invalid token"));
 
 		if (emailToken.isConfirmed()) {
-			throw new RuntimeException("Email already confirmed");
+			return "Email already confirmed";
 		}
 
 		if (emailToken.getExpiresAt().isBefore(LocalDateTime.now())) {
-			throw new RuntimeException("Token expired");
+			return "Token expired";
 		}
 
 		User user = emailToken.getUser();
@@ -40,6 +40,9 @@ public class EmailTokenService {
 		userService.updateUser(user);
 
 		emailToken.setConfirmed(true);
-		tokenRepository.delete(emailToken);
+		emailToken.setConfirmedAt(LocalDateTime.now());
+
+		logger.info("Email confirmed successfully for user: {}", user.getEmail());
+		return "Email successfully verified! You can now log in.";
 	}
 }

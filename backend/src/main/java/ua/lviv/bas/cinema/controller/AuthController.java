@@ -25,6 +25,7 @@ import ua.lviv.bas.cinema.dto.UserLoginDto;
 import ua.lviv.bas.cinema.dto.UserRegistrationDto;
 import ua.lviv.bas.cinema.service.EmailTokenGeneratorService;
 import ua.lviv.bas.cinema.service.EmailTokenService;
+import ua.lviv.bas.cinema.service.PasswordResetService;
 import ua.lviv.bas.cinema.service.UserService;
 
 @RestController
@@ -35,6 +36,7 @@ public class AuthController {
 	private final UserService userService;
 	private final EmailTokenGeneratorService tokenGeneratorService;
 	private final EmailTokenService emailTokenService;
+	private final PasswordResetService passwordResetService;
 	private final AuthenticationManager authenticationManager;
 	private final JwtTokenProvider jwtTokenProvider;
 
@@ -73,6 +75,26 @@ public class AuthController {
 		} catch (DisabledException e) {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
 					.body("Account is not verified. Please check your email.");
+		}
+	}
+
+	@PostMapping("/forgot-password")
+	public ResponseEntity<?> forgotPassword(@RequestParam String email) {
+		try {
+			passwordResetService.requestPasswordReset(email);
+			return ResponseEntity.ok().body("Instructions have been sent to your email address");
+		} catch (RuntimeException e) {
+			return ResponseEntity.badRequest().body(e.getMessage());
+		}
+	}
+
+	@PostMapping("/reset-password")
+	public ResponseEntity<?> resetPassword(@RequestParam String token, @RequestParam String newPassword) {
+		try {
+			passwordResetService.resetPassword(token, newPassword);
+			return ResponseEntity.ok().body("Password has been successfully changed");
+		} catch (RuntimeException e) {
+			return ResponseEntity.badRequest().body(e.getMessage());
 		}
 	}
 

@@ -1,0 +1,51 @@
+.verification-container {
+  background-color: #12161f;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+.verification-message {
+  background-color: #1e232e;
+  padding: 2rem;
+  border-radius: 10px;
+  text-align: center;
+  max-width: 500px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+.verification-message.success {
+  border-left: 4px solid #4caf50;
+}
+
+.verification-message.error {
+  border-left: 4px solid #ff4444;
+}
+
+.verification-message h2 {
+  color: #fff;
+  margin-bottom: 1rem;
+}
+
+.verification-message p {
+  color: #a0a8c0;
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
+}
+
+.login-button {
+  background-color: #fd5f00;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 5px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.login-button:hover {
+  background-color: #e05500;
+}

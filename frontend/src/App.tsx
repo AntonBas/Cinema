@@ -4,7 +4,10 @@ import { AuthProvider } from './context/AuthContext';
 import { useAuth } from './context/AuthContext';
 import { LoginPage } from './pages/auth/LoginPage';
 import { RegisterPage } from './pages/auth/RegisterPage';
+import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage';
+import { ResetPasswordPage } from './pages/auth/ResetPasswordPage';
 import { HomePage } from './pages/HomePage/HomePage';
+import { EmailVerificationPage } from './pages/auth/EmailVerificationPage';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { token, isLoading } = useAuth();
@@ -40,6 +43,18 @@ function AppContent() {
             <RegisterPage />
           </PublicRoute>
         } />
+        <Route path="/forgot-password" element={
+          <PublicRoute>
+            <ForgotPasswordPage />
+          </PublicRoute>
+        } />
+        <Route path="/reset-password/:token" element={
+          <PublicRoute>
+            <ResetPasswordPage />
+          </PublicRoute>
+        } />
+        
+        <Route path="/verify-email/:token" element={<EmailVerificationPage />} />
         
         <Route path="/" element={
           <ProtectedRoute>

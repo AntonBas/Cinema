@@ -17,7 +17,7 @@ public class EmailService {
 	private final JavaMailSender mailSender;
 
 	public void sendVerificationEmail(String toEmail, String token) {
-		String link = "http://localhost:8080/verify-email?token=" + token;
+		String link = "http://localhost:5173/verify-email/" + token;
 		SimpleMailMessage message = new SimpleMailMessage();
 		message.setTo(toEmail);
 		message.setSubject("Confirmation of registration");
@@ -29,7 +29,7 @@ public class EmailService {
 	}
 
 	public void sendPasswordResetEmail(String toEmail, String token) {
-		String link = "http://localhost:8080/reset-password?token=" + token;
+		String link = "http://localhost:5173/reset-password/" + token;
 		SimpleMailMessage message = new SimpleMailMessage();
 		message.setTo(toEmail);
 		message.setSubject("Password Reset Request");

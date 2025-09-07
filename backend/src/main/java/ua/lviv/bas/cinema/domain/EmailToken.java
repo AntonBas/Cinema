@@ -8,18 +8,26 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToOne;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import ua.lviv.bas.cinema.domain.enums.TokenType;
 
 @Entity
 @Table(name = "email_tokens")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class EmailToken {
 
 	@Id
 	private String token;
 
-	@OneToOne
+	@ManyToOne
 	@JoinColumn(name = "user_id", nullable = false)
 	private User user;
 
@@ -33,66 +41,10 @@ public class EmailToken {
 	@Column(nullable = false)
 	private TokenType type;
 
+	@Builder.Default
 	@Column(nullable = false)
 	private boolean confirmed = false;
 
-	public EmailToken() {
-	}
-
-	public EmailToken(String token, User user, LocalDateTime createdAt, LocalDateTime expiresAt, TokenType type) {
-		this.token = token;
-		this.user = user;
-		this.createdAt = createdAt;
-		this.expiresAt = expiresAt;
-		this.type = type;
-		this.confirmed = false;
-	}
-
-	public String getToken() {
-		return token;
-	}
-
-	public void setToken(String token) {
-		this.token = token;
-	}
-
-	public User getUser() {
-		return user;
-	}
-
-	public void setUser(User user) {
-		this.user = user;
-	}
-
-	public LocalDateTime getCreatedAt() {
-		return createdAt;
-	}
-
-	public void setCreatedAt(LocalDateTime createdAt) {
-		this.createdAt = createdAt;
-	}
-
-	public LocalDateTime getExpiresAt() {
-		return expiresAt;
-	}
-
-	public void setExpiresAt(LocalDateTime expiresAt) {
-		this.expiresAt = expiresAt;
-	}
-
-	public TokenType getType() {
-		return type;
-	}
-
-	public void setType(TokenType type) {
-		this.type = type;
-	}
-
-	public boolean isConfirmed() {
-		return confirmed;
-	}
-
-	public void setConfirmed(boolean confirmed) {
-		this.confirmed = confirmed;
-	}
+	@Column(name = "confirmed_at")
+	private LocalDateTime confirmedAt;
 }

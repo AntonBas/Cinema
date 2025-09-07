@@ -1,7 +1,9 @@
 package ua.lviv.bas.cinema.service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -49,6 +51,15 @@ public class EmailTokenGeneratorService {
 			}
 		});
 
+		List<EmailToken> allUserTokens = tokenRepository.findByUserEmail(email);
+		List<EmailToken> otherActiveTokens = allUserTokens.stream().filter(token -> token.getType() != tokenType)
+				.filter(token -> !token.isConfirmed())
+				.filter(token -> token.getExpiresAt().isAfter(LocalDateTime.now())).collect(Collectors.toList());
+
+		if (!otherActiveTokens.isEmpty()) {
+			logger.info("User {} has {} other active tokens of different types", email, otherActiveTokens.size());
+		}
+
 		String token = UUID.randomUUID().toString();
 		EmailToken emailToken = new EmailToken();
 		emailToken.setToken(token);
@@ -67,7 +78,6 @@ public class EmailTokenGeneratorService {
 		}
 
 		logger.info("Sent {} email to {}", tokenType, email);
-
 		return token;
 	}
 }
