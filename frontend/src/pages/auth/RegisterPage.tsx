@@ -12,16 +12,9 @@ export const RegisterPage: React.FC = () => {
     }
 
    return (
-    <div style={{ 
-      backgroundColor: '#12161f', 
-      color: '#fff', 
-      minHeight: '100vh',
-      fontFamily: 'Arial, sans-serif',
-      margin: 0,
-      padding: 0 
-    }}>
+    <div>
       <Header />
-      <div style={{ paddingTop: '80px' }}>
+      <div>
         <RegisterForm />
       </div>
     </div>

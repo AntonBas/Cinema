@@ -2,6 +2,38 @@ import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import './RegisterForm.css';
 
+interface SuccessModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  email: string;
+}
+
+const RegistrationSuccessModal: React.FC<SuccessModalProps> = ({
+  isOpen,
+  onClose,
+  email
+}) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="modal-overlay">
+      <div className="modal-content">
+        <div className="success-animation">
+          <div className="checkmark">✓</div>
+        </div>
+        <h3>Registration Successful! 🎉</h3>
+        <p>We've sent a confirmation email to <strong>{email}</strong></p>
+        <div className="modal-actions">
+          <button className="btn-primary" onClick={onClose}>
+            Continue to Login
+          </button>
+        </div>
+        <p className="help-text">Didn't receive the email? Check your spam folder</p>
+      </div>
+    </div>
+  );
+};
+
 export const RegisterForm: React.FC = () => {
   const [formData, setFormData] = useState({
     firstName: '',
@@ -15,7 +47,8 @@ export const RegisterForm: React.FC = () => {
   });
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+
   const { register } = useAuth();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -38,8 +71,7 @@ export const RegisterForm: React.FC = () => {
 
     try {
       await register(formData);
-      alert('Registration successful! Please check your email to confirm your account.');
-      window.location.href = '/login';
+      setShowSuccessModal(true);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Registration failed');
     } finally {
@@ -47,23 +79,28 @@ export const RegisterForm: React.FC = () => {
     }
   };
 
+  const handleModalClose = () => {
+    setShowSuccessModal(false);
+    window.location.href = '/login';
+  };
+
   return (
     <section className="registration">
-      <h1 className="registration-title">Registration</h1>
       <div className="registration-container">
+        <h1 className="registration-title">Registration</h1>
         <form className="registration-form" onSubmit={handleSubmit}>
           {error && <div className="error-message">{error}</div>}
-          
+
           <div className="registration-top">
+            <h2 className="registration-text">Personal Information</h2>
             <div className="registration-group-first">
-              <h2 className="registration-text">Personal Information</h2>
               <input
                 placeholder="First Name"
                 type="text"
                 name="firstName"
                 value={formData.firstName}
                 onChange={handleChange}
-                className="form-control"
+                className="form-control form-left"
                 required
               />
               <input
@@ -72,7 +109,7 @@ export const RegisterForm: React.FC = () => {
                 name="lastName"
                 value={formData.lastName}
                 onChange={handleChange}
-                className="form-control"
+                className="form-control form-right"
                 required
               />
             </div>
@@ -82,7 +119,7 @@ export const RegisterForm: React.FC = () => {
                 name="dateOfBirth"
                 value={formData.dateOfBirth}
                 onChange={handleChange}
-                className="form-control"
+                className="form-control form-left"
                 required
               />
               <input
@@ -91,12 +128,12 @@ export const RegisterForm: React.FC = () => {
                 name="city"
                 value={formData.city}
                 onChange={handleChange}
-                className="form-control"
+                className="form-control form right"
                 required
               />
             </div>
           </div>
-          
+
           <div className="registration-middle">
             <h2 className="registration-text">Contact Information</h2>
             <input
@@ -118,7 +155,7 @@ export const RegisterForm: React.FC = () => {
               required
             />
           </div>
-          
+
           <div className="registration-bottom">
             <h2 className="registration-text">Create a Password</h2>
             <input
@@ -140,9 +177,9 @@ export const RegisterForm: React.FC = () => {
               required
             />
           </div>
-          
-          <button 
-            type="submit" 
+
+          <button
+            type="submit"
             className="registration-confirm registration-text"
             disabled={isLoading}
           >
@@ -150,6 +187,12 @@ export const RegisterForm: React.FC = () => {
           </button>
         </form>
       </div>
+
+      <RegistrationSuccessModal
+        isOpen={showSuccessModal}
+        onClose={handleModalClose}
+        email={formData.email}
+      />
     </section>
   );
 };

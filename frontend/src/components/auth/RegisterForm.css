@@ -16,6 +16,7 @@
     margin-bottom: 1.5rem;
     color: #fd5f00;
     font-weight: 600;
+    text-align: center;
 }
 
 .registration-container {
@@ -27,20 +28,19 @@
     max-width: 800px;
 }
 
+
 .registration-top, .registration-middle, .registration-bottom {
     margin-bottom: 1.5rem;
 }
 
 .registration-group-first, .registration-group-second {
-    display: inline-block;
-    vertical-align: top;
-    width: 48%;
-    margin-right: 2%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
 }
 
-.registration-group-second {
-    margin-right: 0;
-    padding-top: 19px;
+.form-left {
+    width: 100%;
 }
 
 .registration-text {
@@ -51,12 +51,12 @@
 }
 
 .form-control {
-    width: 96%;
+    width: 100%;
     height: 45px;
     background-color: #2a3041;
     border: 1px solid #3d4457;
     border-radius: 5px;
-    padding: 0 15px;
+    padding-left: 15px;
     margin-bottom: 1rem;
     color: white;
     font-size: 1rem;
@@ -104,6 +104,117 @@
 .registration-confirm:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+}
+
+.modal-content {
+  background: #1e232e;
+  border-radius: 12px;
+  padding: 2rem;
+  width: 90%;
+  max-width: 450px;
+  text-align: center;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s ease;
+}
+
+.success-animation {
+  margin-bottom: 1.5rem;
+}
+
+.checkmark {
+  width: 60px;
+  height: 60px;
+  background: #4CAF50;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 24px;
+  margin: 0 auto;
+  animation: scaleUp 0.3s ease;
+}
+
+.modal-content h3 {
+  color: #fd5f00;
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+}
+
+.modal-content p {
+  color: white;
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.btn-primary {
+  background: #fd5f00;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.3s;
+}
+
+.btn-primary:hover {
+  background: #e05500;
+}
+
+.help-text {
+  font-size: 0.9rem;
+  color: #a0a8c0 !important;
+  margin-bottom: 0 !important;
+}
+
+/* Анімації */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { 
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleUp {
+  from { 
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  to { 
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 @media (max-width: 768px) {

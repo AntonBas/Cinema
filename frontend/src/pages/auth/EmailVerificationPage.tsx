@@ -23,7 +23,7 @@ export const EmailVerificationPage: React.FC = () => {
         const response = await api.get(`/auth/verify-email?token=${token}`);
         setMessage(response.data);
         setIsSuccess(true);
-        
+
         setTimeout(() => {
           navigate('/login');
         }, 3000);

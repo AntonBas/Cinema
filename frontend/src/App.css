@@ -1,7 +1,11 @@
-html, body, #root {
+html,
+body,
+#root {
   margin: 0;
   padding: 0;
   height: 100%;
+  width: 100%;
+  overflow-x: hidden;
 }
 
 body {
@@ -9,12 +13,30 @@ body {
   color: #fff;
   font-family: 'Arial', sans-serif;
   overflow-x: hidden;
+  position: relative;
 }
 
 #root {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+img,
+video,
+iframe {
+  max-width: 100%;
+  height: auto;
+}
+
+@media (max-width: 768px) {
+  body {
+    overflow-y: auto;
+  }
 }
 
 ::-webkit-scrollbar {
@@ -32,10 +54,4 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #e05500;
-}
-
-@media (max-width: 768px) {
-  body {
-    overflow-y: auto;
-  }
 }
