@@ -1,14 +1,12 @@
 .header-main {
   background-color: #1a1f2d;
   border-bottom: 1px solid #fd5f00;
-  padding: 0;
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   width: 100%;
   z-index: 1000;
-  overflow: visible !important;
 }
 
 .header-navbar {
@@ -19,8 +17,6 @@
   justify-content: space-between;
   align-items: center;
   height: 70px;
-  box-sizing: border-box;
-  position: relative;
 }
 
 .logo a {
@@ -28,7 +24,7 @@
   font-size: 1.8rem;
   font-weight: bold;
   text-decoration: none;
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   transition: color 0.3s ease;
 }
 
@@ -40,27 +36,21 @@
 .nav-links {
   display: flex;
   list-style: none;
-  margin: 0;
-  padding: 0;
   gap: 2rem;
   align-items: center;
 }
 
-.nav-links li {
-  position: relative;
-}
-
-.nav-links a {
+.nav-links li a {
   color: #a0a8c0;
-  text-decoration: none;
   font-weight: 500;
-  transition: all 0.3s ease;
+  text-decoration: none;
+  transition: color 0.3s ease;
   padding: 0.5rem 0;
   position: relative;
   font-size: 1rem;
 }
 
-.nav-links a::after {
+.nav-links li a::after {
   content: '';
   position: absolute;
   bottom: -2px;
@@ -71,16 +61,12 @@
   transition: width 0.3s ease;
 }
 
-.nav-links a:hover {
+.nav-links li a:hover {
   color: #fd5f00;
 }
 
-.nav-links a:hover::after {
+.nav-links li a:hover::after {
   width: 100%;
-}
-
-.dropdown {
-  position: relative;
 }
 
 .dropdown-btn {
@@ -91,11 +77,11 @@
   cursor: pointer;
   padding: 0.5rem 1rem;
   font-size: 1rem;
-  transition: all 0.3s ease;
   display: flex;
   align-items: center;
   gap: 0.5rem;
   border-radius: 6px;
+  transition: all 0.3s ease;
 }
 
 .dropdown-btn:hover {
@@ -140,57 +126,53 @@
   }
 }
 
-.dropdown-menu li {
-  margin: 0;
-}
-
-.dropdown-menu a,
-.dropdown-menu button {
+.dropdown-menu li a,
+.dropdown-menu li button {
   display: block;
   width: 100%;
-  text-align: left;
   padding: 0.75rem 1.5rem;
   color: #a0a8c0;
-  text-decoration: none;
+  text-align: left;
   background: none;
   border: none;
   cursor: pointer;
-  transition: all 0.3s ease;
   font-size: 0.9rem;
+  transition: all 0.3s ease;
 }
 
-.dropdown-menu a:hover,
-.dropdown-menu button:hover {
+.dropdown-menu li a:hover,
+.dropdown-menu li button:hover {
   background-color: #2a3041;
   color: #fd5f00;
 }
 
-.logout-btn {
-  color: #ff6b6b !important;
+.logout-btn,
+.mobile-logout-btn {
+  color: #ff6b6b;
 }
 
-.logout-btn:hover {
-  color: #ff5252 !important;
-  background-color: rgba(255, 107, 107, 0.1) !important;
+.logout-btn:hover,
+.mobile-logout-btn:hover {
+  color: #ff5252;
+  background: rgba(255, 107, 107, 0.1);
 }
 
-/* Mobile Menu */
 .mobile-menu-btn {
   display: none;
   flex-direction: column;
+  gap: 4px;
   background: none;
   border: none;
   cursor: pointer;
   padding: 0.5rem;
-  gap: 4px;
 }
 
 .mobile-menu-btn span {
   width: 25px;
   height: 3px;
   background: #fd5f00;
-  transition: all 0.3s ease;
   border-radius: 2px;
+  transition: all 0.3s ease;
 }
 
 .mobile-menu {
@@ -220,36 +202,20 @@
   gap: 1rem;
 }
 
-.mobile-menu-content a,
-.mobile-logout-btn {
+.mobile-menu-content a {
   color: #a0a8c0;
   text-decoration: none;
   padding: 1rem;
   border-radius: 6px;
   transition: all 0.3s ease;
-  background: none;
-  border: none;
-  text-align: left;
   font-size: 1.1rem;
-  cursor: pointer;
 }
 
-.mobile-menu-content a:hover,
-.mobile-logout-btn:hover {
+.mobile-menu-content a:hover {
   color: #fd5f00;
   background: rgba(253, 95, 0, 0.1);
 }
 
-.mobile-logout-btn {
-  color: #ff6b6b !important;
-}
-
-.mobile-logout-btn:hover {
-  color: #ff5252 !important;
-  background: rgba(255, 107, 107, 0.1) !important;
-}
-
-/* Responsive Design */
 @media (max-width: 768px) {
   .nav-links {
     display: none;
@@ -261,10 +227,6 @@
 
   .mobile-menu {
     display: block;
-  }
-
-  .header-navbar {
-    padding: 0 1rem;
   }
 }
 
@@ -280,12 +242,4 @@
   .mobile-menu {
     top: 60px;
   }
-}
-
-body {
-  overflow-x: hidden;
-}
-
-* {
-  box-sizing: border-box;
 }

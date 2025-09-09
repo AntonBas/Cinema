@@ -1,6 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import './Header.css';
+import { Link } from 'react-router-dom';
+
+interface NavLink {
+  name: string;
+  path: string;
+  adminOnly?: boolean;
+}
 
 export const Header: React.FC = () => {
   const { user, token, logout } = useAuth();
@@ -9,22 +16,27 @@ export const Header: React.FC = () => {
   const dropdownRef = useRef<HTMLLIElement>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
 
+  const links: NavLink[] = [
+    { name: 'Home', path: '/' },
+    { name: 'Movies', path: '/movies' },
+    { name: 'Schedule', path: '/schedule' },
+  ];
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsDropdownOpen(false);
       }
-      if (mobileMenuRef.current &&
+      if (
+        mobileMenuRef.current &&
         !mobileMenuRef.current.contains(event.target as Node) &&
-        !(event.target as Element).closest('.mobile-menu-btn')) {
+        !(event.target as Element).closest('.mobile-menu-btn')
+      ) {
         setIsMobileMenuOpen(false);
       }
     };
-
     document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   const handleLogout = () => {
@@ -34,37 +46,45 @@ export const Header: React.FC = () => {
     window.location.href = '/';
   };
 
-  const toggleDropdown = () => {
-    setIsDropdownOpen(!isDropdownOpen);
-  };
-
-  const toggleMobileMenu = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen);
-  };
-
   return (
     <header className="header-main">
       <nav className="header-navbar">
         <div className="logo">
-          <a href="/">Cinema</a>
+          <Link to="/">Cinema</Link>
         </div>
 
         <ul className="nav-links">
-          <li><a href="/" onClick={() => setIsDropdownOpen(false)}>Home</a></li>
-          <li><a href="/movies" onClick={() => setIsDropdownOpen(false)}>Movies</a></li>
-          <li><a href="/schedule" onClick={() => setIsDropdownOpen(false)}>Schedule</a></li>
+          {links.map((link) => (
+            <li key={link.name}>
+              <Link to={link.path} onClick={() => setIsDropdownOpen(false)}>
+                {link.name}
+              </Link>
+            </li>
+          ))}
 
           {token ? (
             <li className="dropdown" ref={dropdownRef}>
-              <button className="dropdown-btn" onClick={toggleDropdown}>
-                My Account
-                <span className={`dropdown-arrow ${isDropdownOpen ? 'open' : ''}`}>▼</span>
+              <button
+                className="dropdown-btn"
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                aria-haspopup="true"
+                aria-expanded={isDropdownOpen}
+              >
+                My Account <span className={`dropdown-arrow ${isDropdownOpen ? 'open' : ''}`}>▼</span>
               </button>
               {isDropdownOpen && (
                 <ul className="dropdown-menu">
-                  <li><a href="/account" onClick={() => setIsDropdownOpen(false)}>Profile</a></li>
+                  <li>
+                    <Link to="/account" onClick={() => setIsDropdownOpen(false)}>
+                      Profile
+                    </Link>
+                  </li>
                   {user?.userRole === 'ROLE_ADMIN' && (
-                    <li><a href="/admin/dashboard" onClick={() => setIsDropdownOpen(false)}>Dashboard</a></li>
+                    <li>
+                      <Link to="/admin/dashboard" onClick={() => setIsDropdownOpen(false)}>
+                        Dashboard
+                      </Link>
+                    </li>
                   )}
                   <li>
                     <button onClick={handleLogout} className="logout-btn">
@@ -75,11 +95,18 @@ export const Header: React.FC = () => {
               )}
             </li>
           ) : (
-            <li><a href="/login">Login/Register</a></li>
+            <li>
+              <Link to="/login">Login/Register</Link>
+            </li>
           )}
         </ul>
 
-        <button className="mobile-menu-btn" onClick={toggleMobileMenu}>
+        <button
+          className="mobile-menu-btn"
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          aria-label="Toggle navigation"
+          aria-expanded={isMobileMenuOpen}
+        >
           <span></span>
           <span></span>
           <span></span>
@@ -87,22 +114,30 @@ export const Header: React.FC = () => {
 
         <div ref={mobileMenuRef} className={`mobile-menu ${isMobileMenuOpen ? 'open' : ''}`}>
           <div className="mobile-menu-content">
-            <a href="/" onClick={() => setIsMobileMenuOpen(false)}>Home</a>
-            <a href="/movies" onClick={() => setIsMobileMenuOpen(false)}>Movies</a>
-            <a href="/schedule" onClick={() => setIsMobileMenuOpen(false)}>Schedule</a>
+            {links.map((link) => (
+              <Link key={link.name} to={link.path} onClick={() => setIsMobileMenuOpen(false)}>
+                {link.name}
+              </Link>
+            ))}
 
             {token ? (
               <div className="mobile-account-section">
-                <a href="/account" onClick={() => setIsMobileMenuOpen(false)}>Profile</a>
+                <Link to="/account" onClick={() => setIsMobileMenuOpen(false)}>
+                  Profile
+                </Link>
                 {user?.userRole === 'ROLE_ADMIN' && (
-                  <a href="/admin/dashboard" onClick={() => setIsMobileMenuOpen(false)}>Dashboard</a>
+                  <Link to="/admin/dashboard" onClick={() => setIsMobileMenuOpen(false)}>
+                    Dashboard
+                  </Link>
                 )}
                 <button onClick={handleLogout} className="mobile-logout-btn">
                   Logout
                 </button>
               </div>
             ) : (
-              <a href="/login" onClick={() => setIsMobileMenuOpen(false)}>Login/Register</a>
+              <Link to="/login" onClick={() => setIsMobileMenuOpen(false)}>
+                Login/Register
+              </Link>
             )}
           </div>
         </div>

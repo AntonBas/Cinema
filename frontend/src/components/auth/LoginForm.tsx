@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import './LoginForm.css'; 
+import './LoginForm.css';
 
 export const LoginForm: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const { login } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -29,7 +29,7 @@ export const LoginForm: React.FC = () => {
     <section className="login">
       <div className="login-container">
         <h1 className="login-title">Login into your account</h1>
-        
+
         <div className="login-top">
           <span className="login-top-text">Don't have an account?</span>
           <a href="/register">Register</a>
@@ -37,7 +37,7 @@ export const LoginForm: React.FC = () => {
 
         <form className="login-form" onSubmit={handleSubmit}>
           {error && <div className="error-message">{error}</div>}
-          
+
           <div className="login-middle-email">
             <input
               type="email"
@@ -48,7 +48,7 @@ export const LoginForm: React.FC = () => {
               disabled={isLoading}
             />
           </div>
-          
+
           <div className="login-middle-password">
             <input
               type="password"
@@ -59,9 +59,9 @@ export const LoginForm: React.FC = () => {
               disabled={isLoading}
             />
           </div>
-          
-          <button 
-            type="submit" 
+
+          <button
+            type="submit"
             className="login-bottom-button"
             disabled={isLoading}
           >
