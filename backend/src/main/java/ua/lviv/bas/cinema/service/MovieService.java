@@ -1,15 +1,25 @@
 package ua.lviv.bas.cinema.service;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import lombok.RequiredArgsConstructor;
 import ua.lviv.bas.cinema.dao.MovieRepository;
@@ -27,12 +37,20 @@ public class MovieService {
 	private final MovieRepository movieRepository;
 	private final MovieMapper movieMapper;
 
+	@Value("${app.upload.dir:uploads}")
+	private String uploadDir;
+
 	@Transactional
 	public MovieDto createMovie(MovieDto movieDto) {
 		logger.info("Creating movie: {}", movieDto.getTitle());
 
 		if (movieRepository.findBySlug(movieDto.getSlug()).isPresent()) {
 			throw new RuntimeException("Movie with slug '" + movieDto.getSlug() + "' already exists");
+		}
+
+		if (movieDto.getPosterFile() != null && !movieDto.getPosterFile().isEmpty()) {
+			String fileName = savePosterFile(movieDto.getPosterFile());
+			movieDto.setPosterFileName(fileName);
 		}
 
 		Movie movie = movieMapper.toEntity(movieDto);
@@ -59,6 +77,13 @@ public class MovieService {
 			throw new RuntimeException("Movie with slug '" + movieDto.getSlug() + "' already exists");
 		}
 
+		if (movieDto.getPosterFile() != null && !movieDto.getPosterFile().isEmpty()) {
+			deletePosterFile(existingMovie.getPosterFileName());
+
+			String fileName = savePosterFile(movieDto.getPosterFile());
+			existingMovie.setPosterFileName(fileName);
+		}
+
 		movieMapper.updateMovieFromDto(movieDto, existingMovie);
 		Movie updatedMovie = movieRepository.save(existingMovie);
 
@@ -68,9 +93,11 @@ public class MovieService {
 	@Transactional
 	public void deleteMovie(Long id) {
 		logger.info("Deleting movie by id: {}", id);
-		if (!movieRepository.existsById(id)) {
-			throw new RuntimeException("Movie not found with id: " + id);
-		}
+		Movie movie = movieRepository.findById(id)
+				.orElseThrow(() -> new RuntimeException("Movie not found with id: " + id));
+
+		deletePosterFile(movie.getPosterFileName());
+
 		movieRepository.deleteById(id);
 	}
 
@@ -118,5 +145,84 @@ public class MovieService {
 	@Transactional(readOnly = true)
 	public Movie getMovieEntityById(Long id) {
 		return movieRepository.findById(id).orElseThrow(() -> new RuntimeException("Movie not found with id: " + id));
+	}
+
+	private String savePosterFile(MultipartFile file) {
+		try {
+			String originalFileName = file.getOriginalFilename();
+			String fileExtension = originalFileName != null
+					? originalFileName.substring(originalFileName.lastIndexOf("."))
+					: ".jpg";
+			String fileName = UUID.randomUUID() + fileExtension;
+
+			Path uploadPath = Paths.get(uploadDir, "posters");
+			Files.createDirectories(uploadPath);
+
+			Path filePath = uploadPath.resolve(fileName);
+			Files.write(filePath, file.getBytes());
+
+			logger.info("Poster file saved: {}", fileName);
+			return fileName;
+
+		} catch (IOException e) {
+			logger.error("Failed to save poster file", e);
+			throw new RuntimeException("Failed to save poster file", e);
+		}
+	}
+
+	private void deletePosterFile(String fileName) {
+		if (fileName == null || fileName.isEmpty()) {
+			return;
+		}
+
+		try {
+			Path filePath = Paths.get(uploadDir, "posters", fileName);
+			if (Files.exists(filePath)) {
+				Files.delete(filePath);
+				logger.info("Poster file deleted: {}", fileName);
+			}
+		} catch (IOException e) {
+			logger.error("Failed to delete poster file: {}", fileName, e);
+		}
+	}
+
+	public ResponseEntity<byte[]> getMoviePoster(Long id) {
+		try {
+			Movie movie = getMovieEntityById(id);
+
+			if (movie.getPosterFileName() == null || movie.getPosterFileName().isEmpty()) {
+				return ResponseEntity.notFound().build();
+			}
+
+			Path filePath = Paths.get(uploadDir, "posters", movie.getPosterFileName());
+
+			if (!Files.exists(filePath)) {
+				return ResponseEntity.notFound().build();
+			}
+
+			String contentType = determineContentType(movie.getPosterFileName());
+
+			byte[] imageBytes = Files.readAllBytes(filePath);
+
+			return ResponseEntity.ok().contentType(MediaType.parseMediaType(contentType))
+					.header(HttpHeaders.CACHE_CONTROL, "max-age=3600").body(imageBytes);
+
+		} catch (Exception e) {
+			logger.error("Error loading poster for movie id: {}", id, e);
+			return ResponseEntity.notFound().build();
+		}
+	}
+
+	private String determineContentType(String fileName) {
+		if (fileName.toLowerCase().endsWith(".jpg") || fileName.toLowerCase().endsWith(".jpeg")) {
+			return "image/jpeg";
+		} else if (fileName.toLowerCase().endsWith(".png")) {
+			return "image/png";
+		} else if (fileName.toLowerCase().endsWith(".gif")) {
+			return "image/gif";
+		} else if (fileName.toLowerCase().endsWith(".webp")) {
+			return "image/webp";
+		}
+		return "application/octet-stream";
 	}
 }

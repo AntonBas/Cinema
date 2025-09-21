@@ -6,6 +6,7 @@ import java.util.Objects;
 import java.util.Set;
 
 import org.hibernate.validator.constraints.URL;
+import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -39,12 +40,10 @@ import ua.lviv.bas.cinema.domain.enums.MovieCategory;
 import ua.lviv.bas.cinema.domain.enums.MovieStatus;
 
 @Entity
-@Table(name = "movies", indexes = {
-    @Index(name = "idx_movie_title", columnList = "title"),
-    @Index(name = "idx_movie_status", columnList = "status"),
-    @Index(name = "idx_movie_release_date", columnList = "release_date"),
-    @Index(name = "idx_movie_slug", columnList = "slug")
-})
+@Table(name = "movies", indexes = { @Index(name = "idx_movie_title", columnList = "title"),
+		@Index(name = "idx_movie_status", columnList = "status"),
+		@Index(name = "idx_movie_release_date", columnList = "release_date"),
+		@Index(name = "idx_movie_slug", columnList = "slug") })
 @Getter
 @Setter
 @NoArgsConstructor
@@ -52,152 +51,145 @@ import ua.lviv.bas.cinema.domain.enums.MovieStatus;
 @Builder
 public class Movie {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
 
-    @NotBlank(message = "Movie title is required")
-    @Size(max = 255, message = "Title must be less than 255 characters")
-    @Column(nullable = false)
-    private String title;
+	@NotBlank(message = "Movie title is required")
+	@Size(max = 255, message = "Title must be less than 255 characters")
+	@Column(nullable = false)
+	private String title;
 
-    @NotBlank(message = "Slug is required")
-    @Pattern(regexp = "^[a-z0-9-]+$", message = "Slug can only contain lowercase letters, numbers and hyphens")
-    @Column(nullable = false, unique = true)
-    private String slug;
+	@NotBlank(message = "Slug is required")
+	@Pattern(regexp = "^[a-z0-9-]+$", message = "Slug can only contain lowercase letters, numbers and hyphens")
+	@Column(nullable = false, unique = true)
+	private String slug;
 
-    @NotBlank(message = "Trailer URL is required")
-    @URL(message = "Trailer must be a valid URL")
-    @Column(nullable = false)
-    private String trailer;
+	@NotBlank(message = "Trailer URL is required")
+	@URL(message = "Trailer must be a valid URL")
+	@Column(nullable = false)
+	private String trailer;
 
-    @NotBlank(message = "Description is required")
-    @Size(max = 1000, message = "Description must be less than 1000 characters")
-    @Column(nullable = false, columnDefinition = "TEXT")
-    private String description;
+	@NotBlank(message = "Description is required")
+	@Size(max = 1000, message = "Description must be less than 1000 characters")
+	@Column(nullable = false, columnDefinition = "TEXT")
+	private String description;
 
-    @NotBlank(message = "Production company is required")
-    @Size(max = 255, message = "Production must be less than 255 characters")
-    @Column(nullable = false)
-    private String production;
+	@NotBlank(message = "Production company is required")
+	@Size(max = 255, message = "Production must be less than 255 characters")
+	@Column(nullable = false)
+	private String production;
 
-    @NotNull(message = "Duration is required")
-    @Min(value = 1, message = "Duration must be at least 1 minute")
-    @Column(nullable = false, name = "duration_minutes")
-    private Integer durationMinutes;
+	@NotNull(message = "Duration is required")
+	@Min(value = 1, message = "Duration must be at least 1 minute")
+	@Column(nullable = false, name = "duration_minutes")
+	private Integer durationMinutes;
 
-    @NotNull(message = "Release date is required")
-    @PastOrPresent(message = "Release date cannot be in the future")
-    @Column(nullable = false, name = "release_date")
-    private LocalDate releaseDate;
+	@NotNull(message = "Release date is required")
+	@PastOrPresent(message = "Release date cannot be in the future")
+	@Column(nullable = false, name = "release_date")
+	private LocalDate releaseDate;
 
-    @NotNull(message = "End showing date is required")
-    @Future(message = "End showing date must be in the future")
-    @Column(nullable = false, name = "end_showing_date")
-    private LocalDate endShowingDate;
+	@NotNull(message = "End showing date is required")
+	@Future(message = "End showing date must be in the future")
+	@Column(nullable = false, name = "end_showing_date")
+	private LocalDate endShowingDate;
 
-    @NotNull(message = "Movie status is required")
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private MovieStatus status;
+	@NotNull(message = "Movie status is required")
+	@Enumerated(EnumType.STRING)
+	@Column(nullable = false)
+	private MovieStatus status;
 
-    @NotBlank(message = "Poster image path is required")
-    @URL(message = "Poster image must be a valid URL")
-    @Column(nullable = false, name = "poster_image_path")
-    private String posterImagePath;
+	@NotBlank(message = "Poster file name is required")
+	@Column(nullable = false, name = "poster_file_name")
+	private String posterFileName;
 
-    @NotNull(message = "Age rating is required")
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, name = "age_rating")
-    private AgeRating ageRating;
+	@Transient
+	private MultipartFile posterFile;
 
-    @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private Set<Session> sessions = new HashSet<>();
+	@NotNull(message = "Age rating is required")
+	@Enumerated(EnumType.STRING)
+	@Column(nullable = false, name = "age_rating")
+	private AgeRating ageRating;
 
-    @ManyToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH })
-    @JoinTable(
-        name = "movie_cast",
-        joinColumns = @JoinColumn(name = "movie_id"),
-        inverseJoinColumns = @JoinColumn(name = "person_id")
-    )
-    @Builder.Default
-    private Set<Person> cast = new HashSet<>();
+	@OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
+	@Builder.Default
+	private Set<Session> sessions = new HashSet<>();
 
-    @ManyToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH })
-    @JoinTable(
-        name = "movie_directors",
-        joinColumns = @JoinColumn(name = "movie_id"),
-        inverseJoinColumns = @JoinColumn(name = "person_id")
-    )
-    @Builder.Default
-    private Set<Person> directors = new HashSet<>();
+	@ManyToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH })
+	@JoinTable(name = "movie_cast", joinColumns = @JoinColumn(name = "movie_id"), inverseJoinColumns = @JoinColumn(name = "person_id"))
+	@Builder.Default
+	private Set<Person> cast = new HashSet<>();
 
-    @ManyToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH })
-    @JoinTable(
-        name = "movie_screenwriters",
-        joinColumns = @JoinColumn(name = "movie_id"),
-        inverseJoinColumns = @JoinColumn(name = "person_id")
-    )
-    @Builder.Default
-    private Set<Person> screenwriters = new HashSet<>();
+	@ManyToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH })
+	@JoinTable(name = "movie_directors", joinColumns = @JoinColumn(name = "movie_id"), inverseJoinColumns = @JoinColumn(name = "person_id"))
+	@Builder.Default
+	private Set<Person> directors = new HashSet<>();
 
-    @ManyToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH })
-    @JoinTable(
-        name = "movie_genres",
-        joinColumns = @JoinColumn(name = "movie_id"),
-        inverseJoinColumns = @JoinColumn(name = "genre_id")
-    )
-    @Builder.Default
-    private Set<Genre> genres = new HashSet<>();
+	@ManyToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH })
+	@JoinTable(name = "movie_screenwriters", joinColumns = @JoinColumn(name = "movie_id"), inverseJoinColumns = @JoinColumn(name = "person_id"))
+	@Builder.Default
+	private Set<Person> screenwriters = new HashSet<>();
 
-    @Transient
-    public MovieCategory getCategory() {
-        if (releaseDate == null) {
-            return MovieCategory.ARCHIVED;
-        }
-        
-        LocalDate now = LocalDate.now();
-        if (now.isBefore(releaseDate)) {
-            return MovieCategory.UPCOMING;
-        } else if (endShowingDate != null && now.isAfter(endShowingDate)) {
-            return MovieCategory.ARCHIVED;
-        } else {
-            return MovieCategory.CURRENT;
-        }
-    }
+	@ManyToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH })
+	@JoinTable(name = "movie_genres", joinColumns = @JoinColumn(name = "movie_id"), inverseJoinColumns = @JoinColumn(name = "genre_id"))
+	@Builder.Default
+	private Set<Genre> genres = new HashSet<>();
 
-    @Transient
-    public Integer getReleaseYear() {
-        return releaseDate != null ? releaseDate.getYear() : null;
-    }
+	@Transient
+	public MovieCategory getCategory() {
+		if (releaseDate == null) {
+			return MovieCategory.ARCHIVED;
+		}
 
-    @Transient
-    public boolean isCurrentlyShowing() {
-        return getCategory() == MovieCategory.CURRENT;
-    }
+		LocalDate now = LocalDate.now();
+		if (now.isBefore(releaseDate)) {
+			return MovieCategory.UPCOMING;
+		} else if (endShowingDate != null && now.isAfter(endShowingDate)) {
+			return MovieCategory.ARCHIVED;
+		} else {
+			return MovieCategory.CURRENT;
+		}
+	}
 
-    @Transient
-    public boolean isUpcoming() {
-        return getCategory() == MovieCategory.UPCOMING;
-    }
+	@Transient
+	public String getPosterUrl() {
+		return "/api/movies/" + this.id + "/poster";
+	}
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(id);
-    }
+	@Transient
+	public Integer getReleaseYear() {
+		return releaseDate != null ? releaseDate.getYear() : null;
+	}
 
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (!(obj instanceof Movie)) return false;
-        Movie other = (Movie) obj;
-        return Objects.equals(id, other.id);
-    }
+	@Transient
+	public boolean isCurrentlyShowing() {
+		return getCategory() == MovieCategory.CURRENT;
+	}
 
-    @Override
-    public String toString() {
-        return "Movie [id=" + id + ", title=" + title + ", slug=" + slug + ", releaseDate=" + releaseDate
-                + ", endShowingDate=" + endShowingDate + ", status=" + status + ", ageRating=" + ageRating + "]";
-    }
+	@Transient
+	public boolean isUpcoming() {
+		return getCategory() == MovieCategory.UPCOMING;
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(id);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (!(obj instanceof Movie))
+			return false;
+		Movie other = (Movie) obj;
+		return Objects.equals(id, other.id);
+	}
+
+	@Override
+	public String toString() {
+		return "Movie [id=" + id + ", title=" + title + ", slug=" + slug + ", releaseDate=" + releaseDate
+				+ ", endShowingDate=" + endShowingDate + ", status=" + status + ", ageRating=" + ageRating + "]";
+	}
 }
