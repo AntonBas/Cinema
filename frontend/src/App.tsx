@@ -8,6 +8,7 @@ import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage';
 import { ResetPasswordPage } from './pages/auth/ResetPasswordPage';
 import { HomePage } from './pages/HomePage/HomePage';
 import { EmailVerificationPage } from './pages/auth/EmailVerificationPage';
+import { AdminPage } from './pages/Admin/AdminPage';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { token, isLoading } = useAuth();
@@ -27,6 +28,16 @@ const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   }
   
   return !token ? <>{children}</> : <Navigate to="/" replace />;
+};
+
+const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { token, user, isLoading } = useAuth();
+  
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+  
+  return token && user?.userRole === 'ROLE_ADMIN' ? <>{children}</> : <Navigate to="/" replace />;
 };
 
 function AppContent() {
@@ -55,6 +66,13 @@ function AppContent() {
         } />
         
         <Route path="/verify-email/:token" element={<EmailVerificationPage />} />
+        
+        {/* Адмінські маршрути */}
+        <Route path="/admin/*" element={
+          <AdminRoute>
+            <AdminPage />
+          </AdminRoute>
+        } />
         
         <Route path="/" element={
           <ProtectedRoute>

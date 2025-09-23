@@ -1,0 +1,12 @@
+.admin-page {
+  display: flex;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1a1f2d 0%, #2d3447 100%);
+}
+
+.admin-content {
+  flex: 1;
+  padding: 2rem;
+  margin-left: 250px;
+  min-height: calc(100vh - 4rem);
+}
