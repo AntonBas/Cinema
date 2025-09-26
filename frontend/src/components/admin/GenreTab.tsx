@@ -92,13 +92,13 @@ export const GenreTab: React.FC = () => {
                 )}
               </div>
               <div className="genre-actions">
-                <button 
+                <button
                   className="btn-edit"
                   onClick={() => handleEdit(genre)}
                 >
                   Edit
                 </button>
-                <button 
+                <button
                   className="btn-delete"
                   onClick={() => genre.id && handleDelete(genre.id)}
                 >
@@ -126,7 +126,7 @@ export const GenreTab: React.FC = () => {
                 />
                 <small>Maximum 50 characters</small>
               </div>
-              
+
               <div className="form-actions">
                 <button type="submit" className="btn-primary">
                   {editingGenre ? 'Update' : 'Create'} Genre
