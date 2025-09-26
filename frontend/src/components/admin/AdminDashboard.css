@@ -1,5 +1,6 @@
 .admin-dashboard {
-  padding: 2rem;
+  padding: 0;
+  min-height: auto;
 }
 
 .admin-dashboard h1 {
@@ -53,6 +54,7 @@
   padding: 2rem;
   border-radius: 12px;
   border: 1px solid #3a4051;
+  margin-bottom: 2rem;
 }
 
 .recent-activity h2 {
@@ -102,4 +104,11 @@
 .activity-time {
   color: #6b7280;
   font-size: 0.8rem;
+}
+
+.admin-dashboard::after {
+  content: '';
+  display: block;
+  height: 1px;
+  margin-top: 2rem;
 }

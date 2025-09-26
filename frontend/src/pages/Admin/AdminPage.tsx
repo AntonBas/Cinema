@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { Header } from '../../components/layout/Header';
 import { Footer } from '../../components/layout/Footer';
@@ -8,11 +8,25 @@ import { MoviesSection } from '../../components/admin/MoviesSection';
 import './AdminPage.css';
 
 export const AdminPage: React.FC = () => {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
   return (
-    <>
+    <div className="admin-layout">
       <Header />
-      <div className="admin-page">
-        <AdminSidebar />
+      
+      <button 
+        className="mobile-menu-toggle"
+        onClick={() => setIsSidebarOpen(true)}
+      >
+        ☰
+      </button>
+
+      <div className="admin-container">
+        <AdminSidebar 
+          isOpen={isSidebarOpen} 
+          onClose={() => setIsSidebarOpen(false)} 
+        />
+        
         <main className="admin-content">
           <Routes>
             <Route index element={<AdminDashboard />} />
@@ -21,7 +35,8 @@ export const AdminPage: React.FC = () => {
           </Routes>
         </main>
       </div>
+      
       <Footer />
-    </>
+    </div>
   );
 };

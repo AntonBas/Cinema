@@ -27,7 +27,7 @@ export const AdminDashboard: React.FC = () => {
           <span className="stat-label">Registered</span>
         </div>
       </div>
-      
+
       <div className="recent-activity">
         <h2>Recent Activity</h2>
         <div className="activity-list">
