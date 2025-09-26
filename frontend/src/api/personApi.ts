@@ -1,15 +1,57 @@
-import axios from 'axios';
+import type { PersonDto, PersonFormData } from '../types/Person';
 
-export const API_URL = 'http://localhost:8080/api/persons';
+const API_URL = 'http://localhost:8080/api/persons';
 
-export interface Person {
-    id?: number;
-    name: string;
-    role: 'ACTOR' | 'DIRECTOR' | 'PRODUCER';
-}
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('authToken');
+  return {
+    'Content-Type': 'application/json',
+    'Authorization': token ? `Bearer ${token}` : '',
+  };
+};
 
-export const getAllPersons = () => axios.get<Person[]>(API_URL);
-export const getPersonById = (id: number) => axios.get<Person>(`${API_URL}/${id}`);
-export const createPerson = (person: Person) => axios.post<Person>(API_URL, person);
-export const updatePerson = (id: number, person: Person) => axios.put<Person>(`${API_URL}/${id}`, person);
-export const deletePerson = (id: number) => axios.delete(`${API_URL}/${id}`);
+export const personApi = {
+  getAll: async (): Promise<PersonDto[]> => {
+    const response = await fetch(API_URL, {
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to fetch persons');
+    return response.json();
+  },
+
+  getById: async (id: number): Promise<PersonDto> => {
+    const response = await fetch(`${API_URL}/${id}`, {
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to fetch person');
+    return response.json();
+  },
+
+  create: async (personData: PersonFormData): Promise<PersonDto> => {
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(personData),
+    });
+    if (!response.ok) throw new Error('Failed to create person');
+    return response.json();
+  },
+
+  update: async (id: number, personData: PersonFormData): Promise<PersonDto> => {
+    const response = await fetch(`${API_URL}/${id}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ ...personData, id }),
+    });
+    if (!response.ok) throw new Error('Failed to update person');
+    return response.json();
+  },
+
+  delete: async (id: number): Promise<void> => {
+    const response = await fetch(`${API_URL}/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to delete person');
+  }
+};
