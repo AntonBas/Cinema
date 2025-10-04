@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import './AdminSidebar.css';
+import styles from './AdminSidebar.module.css';
+import clsx from 'clsx';
 
 interface AdminSidebarProps {
   isOpen: boolean;
@@ -19,24 +20,30 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen, onClose }) =
 
   return (
     <>
-      <div className={`sidebar-overlay ${isOpen ? 'active' : ''}`} onClick={onClose} />
+      <div
+        className={clsx(styles.overlay, isOpen && styles.active)}
+        onClick={onClose}
+      />
 
-      <aside className={`admin-sidebar ${isOpen ? 'open' : ''}`}>
-        <div className="sidebar-header">
+      <aside className={clsx(styles.sidebar, isOpen && styles.open)}>
+        <div className={styles.header}>
           <h2>Admin Panel</h2>
-          <button className="sidebar-close" onClick={onClose}>×</button>
+          <button className={styles.close} onClick={onClose}>×</button>
         </div>
 
-        <nav className="sidebar-nav">
+        <nav className={styles.nav}>
           {menuItems.map(item => (
             <Link
               key={item.path}
               to={item.path}
-              className={`nav-item ${location.pathname === item.path ? 'active' : ''}`}
+              className={clsx(
+                styles.item,
+                location.pathname === item.path && styles.active
+              )}
               onClick={onClose}
             >
-              <span className="nav-icon">{item.icon}</span>
-              <span className="nav-label">{item.label}</span>
+              <span className={styles.icon}>{item.icon}</span>
+              <span className={styles.label}>{item.label}</span>
             </Link>
           ))}
         </nav>

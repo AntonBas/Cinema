@@ -16,14 +16,13 @@ export interface MovieDto {
   id?: number;
   title: string;
   slug: string;
-  trailer: string;
+  trailerUrl: string;
   description: string;
-  production: string;
   durationMinutes: number;
   releaseDate: string;
   endShowingDate: string;
   status: MovieStatus;
-  posterImagePath: string;
+  posterFileName: string;
   ageRating: AgeRating;
   sessionIds?: number[];
   castIds?: number[];
@@ -38,17 +37,15 @@ export interface MovieDto {
 export interface MovieFormData {
   title: string;
   slug: string;
-  trailer: string;
+  trailerUrl: string;
   description: string;
-  production: string;
   durationMinutes: number;
   releaseDate: string;
   endShowingDate: string;
   status: MovieStatus;
   ageRating: AgeRating;
-  posterFile?: File;
-  genreIds?: number[];
-  directorIds?: number[];
-  screenwriterIds?: number[];
-  castIds?: number[];
+  genreIds: number[];
+  directorIds: number[];
+  screenwriterIds: number[];
+  castIds: number[];
 }

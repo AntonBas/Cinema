@@ -1,0 +1,1 @@
+export { SectionMovies } from './SectionMovies';

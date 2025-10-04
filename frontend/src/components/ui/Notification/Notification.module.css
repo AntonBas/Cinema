@@ -1,0 +1,113 @@
+.notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: #2a3041;
+  border: 1px solid #3a4051;
+  border-radius: 8px;
+  padding: 1rem;
+  min-width: 300px;
+  max-width: 400px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  transform: translateX(400px) translateY(0);
+  opacity: 0;
+  transition: all 0.3s ease;
+  margin-bottom: 10px;
+}
+
+.notification.show {
+  transform: translateX(0) translateY(var(--offset, 0));
+  opacity: 1;
+}
+
+.content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.icon {
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.message {
+  color: #ffffff;
+  flex: 1;
+  font-weight: 500;
+}
+
+.close {
+  background: none;
+  border: none;
+  color: #a0a8c0;
+  font-size: 1.5rem;
+  cursor: pointer;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.3s ease;
+}
+
+.close:hover {
+  color: #ffffff;
+}
+
+.progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 0 0 8px 8px;
+  overflow: hidden;
+}
+
+.progressBar {
+  height: 100%;
+  background: currentColor;
+  animation: progress linear;
+  transform-origin: left;
+}
+
+@keyframes progress {
+  from {
+    transform: scaleX(1);
+  }
+
+  to {
+    transform: scaleX(0);
+  }
+}
+
+.success {
+  border-left: 4px solid #4CAF50;
+  color: #4CAF50;
+}
+
+.error {
+  border-left: 4px solid #ff4757;
+  color: #ff4757;
+}
+
+.warning {
+  border-left: 4px solid #ffa502;
+  color: #ffa502;
+}
+
+.info {
+  border-left: 4px solid #2e86de;
+  color: #2e86de;
+}
+
+@media (max-width: 768px) {
+  .notification {
+    right: 10px;
+    left: 10px;
+    min-width: auto;
+    max-width: none;
+  }
+}

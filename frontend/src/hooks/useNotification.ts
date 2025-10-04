@@ -1,53 +1,59 @@
 import { useState, useCallback } from 'react';
-import type { NotificationType } from '../components/ui/Notification';
 
-interface NotificationState {
+export type NotificationType = 'success' | 'error' | 'warning' | 'info';
+
+interface NotificationItem {
+  id: string;
   message: string;
   type: NotificationType;
   isVisible: boolean;
 }
 
 export const useNotification = () => {
-  const [notification, setNotification] = useState<NotificationState>({
-    message: '',
-    type: 'info',
-    isVisible: false
-  });
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
 
   const showNotification = useCallback((
-    message: string, 
-    type: NotificationType = 'info',
-    duration?: number
+    message: string,
+    type: NotificationType = 'info'
   ) => {
-    setNotification({
+    const id = Math.random().toString(36).substr(2, 9);
+    const newNotification: NotificationItem = {
+      id,
       message,
       type,
       isVisible: true
-    });
+    };
+
+    setNotifications(prev => [...prev, newNotification]);
+
+    return id;
   }, []);
 
-  const hideNotification = useCallback(() => {
-    setNotification(prev => ({ ...prev, isVisible: false }));
+  const hideNotification = useCallback((id: string) => {
+    setNotifications(prev =>
+      prev.map(notif =>
+        notif.id === id ? { ...notif, isVisible: false } : notif
+      )
+    );
+
+    setTimeout(() => {
+      setNotifications(prev => prev.filter(notif => notif.id !== id));
+    }, 300);
   }, []);
 
-  const showSuccess = useCallback((message: string, duration?: number) => {
-    showNotification(message, 'success', duration);
-  }, [showNotification]);
-
-  const showError = useCallback((message: string, duration?: number) => {
-    showNotification(message, 'error', duration);
-  }, [showNotification]);
-
-  const showWarning = useCallback((message: string, duration?: number) => {
-    showNotification(message, 'warning', duration);
-  }, [showNotification]);
+  const hideAllNotifications = useCallback(() => {
+    setNotifications(prev =>
+      prev.map(notif => ({ ...notif, isVisible: false }))
+    );
+    setTimeout(() => {
+      setNotifications([]);
+    }, 300);
+  }, []);
 
   return {
-    notification,
+    notifications,
     showNotification,
     hideNotification,
-    showSuccess,
-    showError,
-    showWarning
+    hideAllNotifications
   };
 };

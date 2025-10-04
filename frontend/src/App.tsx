@@ -67,7 +67,6 @@ function AppContent() {
         
         <Route path="/verify-email/:token" element={<EmailVerificationPage />} />
         
-        {/* Адмінські маршрути */}
         <Route path="/admin/*" element={
           <AdminRoute>
             <AdminPage />

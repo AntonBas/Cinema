@@ -1,0 +1,411 @@
+.container {
+    animation: fadeIn 0.3s ease;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #3a4051;
+}
+
+.header h2 {
+    color: #ffffff;
+    margin: 0;
+    font-size: 1.8rem;
+    font-weight: 600;
+}
+
+.primaryButton {
+    background: linear-gradient(135deg, #fd5f00, #e05500);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.primaryButton:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(253, 95, 0, 0.3);
+}
+
+.buttonIcon {
+    font-size: 1.2rem;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+}
+
+.card {
+    background: linear-gradient(135deg, #1a1f2d 0%, #2a3041 100%);
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 1px solid #3a4051;
+    transition: all 0.3s ease;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(253, 95, 0, 0.1), transparent);
+    transition: left 0.6s ease;
+}
+
+.card:hover::before {
+    left: 100%;
+}
+
+.card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+    border-color: #fd5f00;
+}
+
+.info {
+    flex: 1;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.roleIcon {
+    font-size: 1.5rem;
+}
+
+.name {
+    color: #ffffff;
+    margin: 0;
+    font-size: 1.3rem;
+    font-weight: 600;
+}
+
+.details {
+    margin-top: 0.5rem;
+}
+
+.roleBadge {
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+.actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.editButton {
+    background: rgba(76, 175, 80, 0.1);
+    color: #4CAF50;
+    border: 1px solid #4CAF50;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.editButton:hover {
+    background: #4CAF50;
+    color: white;
+    transform: translateY(-1px);
+}
+
+.deleteButton {
+    background: rgba(255, 71, 87, 0.1);
+    color: #ff4757;
+    border: 1px solid #ff4757;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.deleteButton:hover {
+    background: #ff4757;
+    color: white;
+    transform: translateY(-1px);
+}
+
+.empty {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: #a0a8c0;
+    grid-column: 1 / -1;
+}
+
+.emptyIcon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.empty h3 {
+    color: #ffffff;
+    margin: 0 0 0.5rem 0;
+    font-size: 1.5rem;
+}
+
+.empty p {
+    margin: 0 0 2rem 0;
+    font-size: 1rem;
+}
+
+.loading {
+    text-align: center;
+    padding: 3rem;
+    color: #a0a8c0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.loadingSpinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid #3a4051;
+    border-top: 3px solid #fd5f00;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+/* Modal styles */
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 1rem;
+}
+
+.modal {
+    background: #2a3041;
+    border-radius: 12px;
+    padding: 2rem;
+    border: 1px solid #3a4051;
+    width: 100%;
+    max-width: 500px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+}
+
+.modal h3 {
+    color: #ffffff;
+    margin: 0 0 1.5rem 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.formGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.formGroup label {
+    color: #ffffff;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.input,
+.select {
+    padding: 1rem;
+    border: 1px solid #3a4051;
+    border-radius: 8px;
+    background: #1a1f2d;
+    color: #ffffff;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.input:focus,
+.select:focus {
+    outline: none;
+    border-color: #fd5f00;
+    box-shadow: 0 0 0 3px rgba(253, 95, 0, 0.1);
+}
+
+.formActions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+}
+
+.cancelButton {
+    background: #6b7280;
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.cancelButton:hover {
+    background: #5a6170;
+}
+
+/* Delete confirmation modal */
+.confirmModal {
+    background: #2a3041;
+    border-radius: 12px;
+    padding: 2rem;
+    border: 1px solid #3a4051;
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+}
+
+.confirmIcon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.8;
+}
+
+.confirmTitle {
+    color: #ffffff;
+    margin: 0 0 1rem 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.confirmMessage {
+    color: #a0a8c0;
+    margin: 0 0 0.5rem 0;
+    line-height: 1.5;
+}
+
+.confirmWarning {
+    color: #ff4757 !important;
+    font-weight: 600;
+}
+
+.confirmActions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 2rem;
+}
+
+.cancelConfirmButton {
+    background: #6b7280;
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    flex: 1;
+}
+
+.cancelConfirmButton:hover {
+    background: #5a6170;
+}
+
+.deleteConfirmButton {
+    background: linear-gradient(135deg, #ff4757, #ff3742);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    flex: 1;
+}
+
+.deleteConfirmButton:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(255, 71, 87, 0.3);
+}
+
+.deleteConfirmButton:disabled {
+    background: #6b7280;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 768px) {
+    .grid {
+        grid-template-columns: 1fr;
+    }
+
+    .card {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+
+    .header {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+
+    .formActions,
+    .confirmActions {
+        flex-direction: column;
+    }
+}

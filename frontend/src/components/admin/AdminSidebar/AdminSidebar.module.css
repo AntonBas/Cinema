@@ -1,4 +1,4 @@
-.sidebar-overlay {
+.overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -11,12 +11,12 @@
   transition: all 0.3s ease;
 }
 
-.sidebar-overlay.active {
+.overlay.active {
   opacity: 1;
   visibility: visible;
 }
 
-.admin-sidebar {
+.sidebar {
   position: fixed;
   top: 0;
   left: -280px;
@@ -29,11 +29,11 @@
   overflow-y: auto;
 }
 
-.admin-sidebar.open {
+.sidebar.open {
   left: 0;
 }
 
-.sidebar-header {
+.header {
   padding: 1rem 1.5rem;
   border-bottom: 1px solid #2a3041;
   margin-bottom: 1rem;
@@ -46,13 +46,13 @@
   z-index: 1;
 }
 
-.sidebar-header h2 {
+.header h2 {
   color: #fd5f00;
   margin: 0;
   font-size: 1.5rem;
 }
 
-.sidebar-close {
+.close {
   background: none;
   border: none;
   color: #a0a8c0;
@@ -66,18 +66,18 @@
   transition: color 0.3s ease;
 }
 
-.sidebar-close:hover {
+.close:hover {
   color: #fd5f00;
 }
 
-.sidebar-nav {
+.nav {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
   padding: 0 1rem;
 }
 
-.nav-item {
+.item {
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -88,33 +88,46 @@
   transition: all 0.3s ease;
 }
 
-.nav-item:hover {
+.item:hover {
   background: #2d3447;
   color: #fd5f00;
   transform: translateX(5px);
 }
 
-.nav-item.active {
+.item.active {
   background: #fd5f00;
   color: white;
 }
 
-.nav-icon {
+.icon {
   font-size: 1.2rem;
   width: 20px;
   text-align: center;
 }
 
-.nav-label {
+.label {
   font-weight: 500;
 }
 
+.sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+  background: #1a1f2d;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background: #fd5f00;
+  border-radius: 3px;
+}
+
 @media (min-width: 769px) {
-  .sidebar-overlay {
+  .overlay {
     display: none;
   }
 
-  .admin-sidebar {
+  .sidebar {
     position: sticky;
     top: 70px;
     left: 0;
@@ -123,22 +136,22 @@
     transform: none !important;
   }
 
-  .sidebar-close {
+  .close {
     display: none;
   }
 
-  .admin-sidebar.open {
+  .sidebar.open {
     left: 0;
   }
 }
 
 @media (max-width: 768px) {
-  .admin-sidebar {
+  .sidebar {
     left: -100%;
     width: 280px;
   }
 
-  .admin-sidebar.open {
+  .sidebar.open {
     left: 0;
   }
 }

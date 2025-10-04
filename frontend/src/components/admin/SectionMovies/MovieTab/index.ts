@@ -1,0 +1,1 @@
+export { MovieTab } from './MovieTab';
