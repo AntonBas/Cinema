@@ -6,7 +6,6 @@ import java.util.Objects;
 import java.util.Set;
 
 import org.hibernate.validator.constraints.URL;
-import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -68,17 +67,12 @@ public class Movie {
 	@NotBlank(message = "Trailer URL is required")
 	@URL(message = "Trailer must be a valid URL")
 	@Column(nullable = false)
-	private String trailer;
+	private String trailerUrl;
 
 	@NotBlank(message = "Description is required")
 	@Size(max = 1000, message = "Description must be less than 1000 characters")
 	@Column(nullable = false, columnDefinition = "TEXT")
 	private String description;
-
-	@NotBlank(message = "Production company is required")
-	@Size(max = 255, message = "Production must be less than 255 characters")
-	@Column(nullable = false)
-	private String production;
 
 	@NotNull(message = "Duration is required")
 	@Min(value = 1, message = "Duration must be at least 1 minute")
@@ -103,9 +97,6 @@ public class Movie {
 	@NotBlank(message = "Poster file name is required")
 	@Column(nullable = false, name = "poster_file_name")
 	private String posterFileName;
-
-	@Transient
-	private MultipartFile posterFile;
 
 	@NotNull(message = "Age rating is required")
 	@Enumerated(EnumType.STRING)
@@ -154,7 +145,18 @@ public class Movie {
 
 	@Transient
 	public String getPosterUrl() {
+		if (this.posterFileName == null || this.posterFileName.isBlank()) {
+			return "/images/default-movie-poster.jpg";
+		}
 		return "/api/movies/" + this.id + "/poster";
+	}
+
+	@Transient
+	public String getFullPosterPath() {
+		if (this.posterFileName == null || this.posterFileName.isBlank()) {
+			return null;
+		}
+		return "/uploads/posters/" + this.posterFileName;
 	}
 
 	@Transient
@@ -170,6 +172,11 @@ public class Movie {
 	@Transient
 	public boolean isUpcoming() {
 		return getCategory() == MovieCategory.UPCOMING;
+	}
+
+	@Transient
+	public boolean isArchived() {
+		return getCategory() == MovieCategory.ARCHIVED;
 	}
 
 	@Override
@@ -189,7 +196,7 @@ public class Movie {
 
 	@Override
 	public String toString() {
-		return "Movie [id=" + id + ", title=" + title + ", slug=" + slug + ", releaseDate=" + releaseDate
-				+ ", endShowingDate=" + endShowingDate + ", status=" + status + ", ageRating=" + ageRating + "]";
+		return "Movie{" + "id=" + id + ", title='" + title + '\'' + ", slug='" + slug + '\'' + ", releaseDate="
+				+ releaseDate + ", status=" + status + ", ageRating=" + ageRating + '}';
 	}
 }

@@ -4,7 +4,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -12,7 +15,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -22,8 +24,14 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import lombok.RequiredArgsConstructor;
+import ua.lviv.bas.cinema.dao.GenreRepository;
 import ua.lviv.bas.cinema.dao.MovieRepository;
+import ua.lviv.bas.cinema.dao.PersonRepository;
+import ua.lviv.bas.cinema.domain.Genre;
 import ua.lviv.bas.cinema.domain.Movie;
+import ua.lviv.bas.cinema.domain.Person;
+import ua.lviv.bas.cinema.domain.enums.MovieStatus;
+import ua.lviv.bas.cinema.dto.MovieCreateRequest;
 import ua.lviv.bas.cinema.dto.MovieDto;
 import ua.lviv.bas.cinema.mapper.MovieMapper;
 
@@ -35,58 +43,63 @@ public class MovieService {
 	private static final Logger logger = LogManager.getLogger(MovieService.class);
 
 	private final MovieRepository movieRepository;
+	private final GenreRepository genreRepository;
+	private final PersonRepository personRepository;
 	private final MovieMapper movieMapper;
 
 	@Value("${app.upload.dir:uploads}")
 	private String uploadDir;
 
 	@Transactional
-	public MovieDto createMovie(MovieDto movieDto) {
-		logger.info("Creating movie: {}", movieDto.getTitle());
+	public MovieDto createMovie(MovieCreateRequest request) {
+		logger.info("Creating movie: {}", request.getMovie().getTitle());
+
+		MovieDto movieDto = request.getMovie();
+		validateMovieDates(movieDto.getReleaseDate(), movieDto.getEndShowingDate());
 
 		if (movieRepository.findBySlug(movieDto.getSlug()).isPresent()) {
 			throw new RuntimeException("Movie with slug '" + movieDto.getSlug() + "' already exists");
 		}
 
-		if (movieDto.getPosterFile() != null && !movieDto.getPosterFile().isEmpty()) {
-			String fileName = savePosterFile(movieDto.getPosterFile());
-			movieDto.setPosterFileName(fileName);
+		Movie movie = movieMapper.toEntity(request);
+
+		if (request.getPosterFile() != null && !request.getPosterFile().isEmpty()) {
+			String fileName = savePosterFile(request.getPosterFile());
+			movie.setPosterFileName(fileName);
 		}
 
-		Movie movie = movieMapper.toEntity(movieDto);
+		setMovieRelations(movie, movieDto);
+
 		Movie savedMovie = movieRepository.save(movie);
 		return movieMapper.toDto(savedMovie);
 	}
 
-	@Transactional(readOnly = true)
-	public MovieDto getMovieById(Long id) {
-		logger.info("Reading movie by id: {}", id);
-		return movieRepository.findById(id).map(movieMapper::toDto)
-				.orElseThrow(() -> new RuntimeException("Movie not found with id: " + id));
-	}
-
 	@Transactional
-	public MovieDto updateMovie(Long id, MovieDto movieDto) {
+	public MovieDto updateMovie(Long id, MovieCreateRequest request) {
 		logger.info("Updating movie with id: {}", id);
 
 		Movie existingMovie = movieRepository.findById(id)
 				.orElseThrow(() -> new RuntimeException("Movie not found with id: " + id));
+
+		MovieDto movieDto = request.getMovie();
+		validateMovieDates(movieDto.getReleaseDate(), movieDto.getEndShowingDate());
 
 		if (!existingMovie.getSlug().equals(movieDto.getSlug())
 				&& movieRepository.findBySlug(movieDto.getSlug()).isPresent()) {
 			throw new RuntimeException("Movie with slug '" + movieDto.getSlug() + "' already exists");
 		}
 
-		if (movieDto.getPosterFile() != null && !movieDto.getPosterFile().isEmpty()) {
+		if (request.getPosterFile() != null && !request.getPosterFile().isEmpty()) {
 			deletePosterFile(existingMovie.getPosterFileName());
-
-			String fileName = savePosterFile(movieDto.getPosterFile());
+			String fileName = savePosterFile(request.getPosterFile());
 			existingMovie.setPosterFileName(fileName);
 		}
 
-		movieMapper.updateMovieFromDto(movieDto, existingMovie);
-		Movie updatedMovie = movieRepository.save(existingMovie);
+		movieMapper.updateBasicFields(movieDto, existingMovie);
 
+		updateMovieRelations(existingMovie, movieDto);
+
+		Movie updatedMovie = movieRepository.save(existingMovie);
 		return movieMapper.toDto(updatedMovie);
 	}
 
@@ -97,14 +110,14 @@ public class MovieService {
 				.orElseThrow(() -> new RuntimeException("Movie not found with id: " + id));
 
 		deletePosterFile(movie.getPosterFileName());
-
 		movieRepository.deleteById(id);
 	}
 
 	@Transactional(readOnly = true)
-	public List<MovieDto> getAllMovies() {
-		logger.info("Retrieving all movies");
-		return movieRepository.findAll().stream().map(movieMapper::toDto).collect(Collectors.toList());
+	public MovieDto getMovieById(Long id) {
+		logger.info("Reading movie by id: {}", id);
+		return movieRepository.findById(id).map(movieMapper::toDto)
+				.orElseThrow(() -> new RuntimeException("Movie not found with id: " + id));
 	}
 
 	@Transactional(readOnly = true)
@@ -115,36 +128,127 @@ public class MovieService {
 	}
 
 	@Transactional(readOnly = true)
-	public Page<MovieDto> getPaginatedMovies(int page, int size) {
-		logger.info("Getting paginated movies - page: {}, size: {}", page, size);
-		Pageable pageable = PageRequest.of(page, size);
+	public List<MovieDto> getAllMovies() {
+		logger.info("Retrieving all movies");
+		return movieRepository.findAll().stream().map(movieMapper::toDto).collect(Collectors.toList());
+	}
+
+	@Transactional(readOnly = true)
+	public Page<MovieDto> getPaginatedMovies(Pageable pageable) {
+		logger.info("Getting paginated movies - page: {}, size: {}", pageable.getPageNumber(), pageable.getPageSize());
 		return movieRepository.findAll(pageable).map(movieMapper::toDto);
 	}
 
 	@Transactional(readOnly = true)
 	public List<MovieDto> getMoviesByStatus(String status) {
 		logger.info("Getting movies by status: {}", status);
-		return movieRepository.findAll().stream().filter(movie -> movie.getStatus().name().equalsIgnoreCase(status))
-				.map(movieMapper::toDto).collect(Collectors.toList());
+		try {
+			MovieStatus movieStatus = MovieStatus.valueOf(status.toUpperCase());
+			return movieRepository.findByStatus(movieStatus).stream().map(movieMapper::toDto)
+					.collect(Collectors.toList());
+		} catch (IllegalArgumentException e) {
+			throw new RuntimeException("Invalid movie status: " + status);
+		}
 	}
 
 	@Transactional(readOnly = true)
 	public List<MovieDto> getCurrentlyShowingMovies() {
 		logger.info("Getting currently showing movies");
-		return movieRepository.findAll().stream().filter(Movie::isCurrentlyShowing).map(movieMapper::toDto)
+		LocalDate now = LocalDate.now();
+		return movieRepository.findByReleaseDateBeforeAndEndShowingDateAfter(now, now).stream().map(movieMapper::toDto)
 				.collect(Collectors.toList());
 	}
 
 	@Transactional(readOnly = true)
 	public List<MovieDto> getUpcomingMovies() {
 		logger.info("Getting upcoming movies");
-		return movieRepository.findAll().stream().filter(Movie::isUpcoming).map(movieMapper::toDto)
+		LocalDate now = LocalDate.now();
+		return movieRepository.findByReleaseDateAfter(now).stream().map(movieMapper::toDto)
 				.collect(Collectors.toList());
 	}
 
 	@Transactional(readOnly = true)
-	public Movie getMovieEntityById(Long id) {
+	public List<MovieDto> getMoviesByGenre(Long genreId) {
+		logger.info("Getting movies by genre id: {}", genreId);
+
+		if (!genreRepository.existsById(genreId)) {
+			throw new RuntimeException("Genre not found with id: " + genreId);
+		}
+
+		return movieRepository.findByGenresContaining(genreId).stream().map(movieMapper::toDto)
+				.collect(Collectors.toList());
+	}
+
+	@Transactional(readOnly = true)
+	public ResponseEntity<byte[]> getMoviePoster(Long id) {
+		try {
+			Movie movie = getMovieEntityById(id);
+
+			if (movie.getPosterFileName() == null || movie.getPosterFileName().isEmpty()) {
+				return ResponseEntity.notFound().build();
+			}
+
+			Path filePath = Paths.get(uploadDir, "posters", movie.getPosterFileName());
+
+			if (!Files.exists(filePath)) {
+				return ResponseEntity.notFound().build();
+			}
+
+			String contentType = determineContentType(movie.getPosterFileName());
+			byte[] imageBytes = Files.readAllBytes(filePath);
+
+			return ResponseEntity.ok().contentType(MediaType.parseMediaType(contentType))
+					.header(HttpHeaders.CACHE_CONTROL, "max-age=3600").body(imageBytes);
+
+		} catch (Exception e) {
+			logger.error("Error loading poster for movie id: {}", id, e);
+			return ResponseEntity.notFound().build();
+		}
+	}
+
+	private Movie getMovieEntityById(Long id) {
 		return movieRepository.findById(id).orElseThrow(() -> new RuntimeException("Movie not found with id: " + id));
+	}
+
+	private void validateMovieDates(LocalDate releaseDate, LocalDate endShowingDate) {
+		if (endShowingDate.isBefore(releaseDate)) {
+			throw new RuntimeException("End showing date cannot be before release date");
+		}
+
+		if (releaseDate.isAfter(LocalDate.now())) {
+			throw new RuntimeException("Release date cannot be in the future");
+		}
+	}
+
+	private void setMovieRelations(Movie movie, MovieDto movieDto) {
+		if (movieDto.getGenreIds() != null && !movieDto.getGenreIds().isEmpty()) {
+			Set<Genre> genres = new HashSet<>(genreRepository.findAllById(movieDto.getGenreIds()));
+			movie.setGenres(genres);
+		}
+
+		if (movieDto.getCastIds() != null && !movieDto.getCastIds().isEmpty()) {
+			Set<Person> cast = new HashSet<>(personRepository.findAllById(movieDto.getCastIds()));
+			movie.setCast(cast);
+		}
+
+		if (movieDto.getDirectorIds() != null && !movieDto.getDirectorIds().isEmpty()) {
+			Set<Person> directors = new HashSet<>(personRepository.findAllById(movieDto.getDirectorIds()));
+			movie.setDirectors(directors);
+		}
+
+		if (movieDto.getScreenwriterIds() != null && !movieDto.getScreenwriterIds().isEmpty()) {
+			Set<Person> screenwriters = new HashSet<>(personRepository.findAllById(movieDto.getScreenwriterIds()));
+			movie.setScreenwriters(screenwriters);
+		}
+	}
+
+	private void updateMovieRelations(Movie movie, MovieDto movieDto) {
+		movie.getGenres().clear();
+		movie.getCast().clear();
+		movie.getDirectors().clear();
+		movie.getScreenwriters().clear();
+
+		setMovieRelations(movie, movieDto);
 	}
 
 	private String savePosterFile(MultipartFile file) {
@@ -183,33 +287,6 @@ public class MovieService {
 			}
 		} catch (IOException e) {
 			logger.error("Failed to delete poster file: {}", fileName, e);
-		}
-	}
-
-	public ResponseEntity<byte[]> getMoviePoster(Long id) {
-		try {
-			Movie movie = getMovieEntityById(id);
-
-			if (movie.getPosterFileName() == null || movie.getPosterFileName().isEmpty()) {
-				return ResponseEntity.notFound().build();
-			}
-
-			Path filePath = Paths.get(uploadDir, "posters", movie.getPosterFileName());
-
-			if (!Files.exists(filePath)) {
-				return ResponseEntity.notFound().build();
-			}
-
-			String contentType = determineContentType(movie.getPosterFileName());
-
-			byte[] imageBytes = Files.readAllBytes(filePath);
-
-			return ResponseEntity.ok().contentType(MediaType.parseMediaType(contentType))
-					.header(HttpHeaders.CACHE_CONTROL, "max-age=3600").body(imageBytes);
-
-		} catch (Exception e) {
-			logger.error("Error loading poster for movie id: {}", id, e);
-			return ResponseEntity.notFound().build();
 		}
 	}
 

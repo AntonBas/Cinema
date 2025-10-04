@@ -1,9 +1,7 @@
 package ua.lviv.bas.cinema.dto;
 
 import java.time.LocalDate;
-import java.util.Set;
-
-import org.springframework.web.multipart.MultipartFile;
+import java.util.List;
 
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.Min;
@@ -25,64 +23,57 @@ import ua.lviv.bas.cinema.domain.enums.MovieStatus;
 @AllArgsConstructor
 public class MovieDto {
 
-    private Long id;
+	private Long id;
 
-    @NotBlank(message = "Movie title is required")
-    @Size(max = 255, message = "Title must be less than 255 characters")
-    private String title;
+	@NotBlank(message = "Movie title is required")
+	@Size(max = 255, message = "Title must be less than 255 characters")
+	private String title;
 
-    @NotBlank(message = "Slug is required")
-    @Pattern(regexp = "^[a-z0-9-]+$", message = "Slug can only contain lowercase letters, numbers and hyphens")
-    private String slug;
+	@NotBlank(message = "Slug is required")
+	@Pattern(regexp = "^[a-z0-9-]+$", message = "Slug can only contain lowercase letters, numbers and hyphens")
+	private String slug;
 
-    @NotBlank(message = "Trailer URL is required")
-    @Pattern(regexp = "^(https?|ftp)://[^\\s/$.?#].[^\\s]*$", message = "Trailer must be a valid URL")
-    private String trailer;
+	@NotBlank(message = "Trailer URL is required")
+	@Pattern(regexp = "^(https?|ftp)://[^\\s/$.?#].[^\\s]*$", message = "Trailer must be a valid URL")
+	private String trailerUrl;
 
-    @NotBlank(message = "Description is required")
-    @Size(max = 1000, message = "Description must be less than 1000 characters")
-    private String description;
+	@NotBlank(message = "Description is required")
+	@Size(max = 1000, message = "Description must be less than 1000 characters")
+	private String description;
 
-    @NotBlank(message = "Production company is required")
-    @Size(max = 255, message = "Production must be less than 255 characters")
-    private String production;
+	@NotNull(message = "Duration is required")
+	@Min(value = 1, message = "Duration must be at least 1 minute")
+	private Integer durationMinutes;
 
-    @NotNull(message = "Duration is required")
-    @Min(value = 1, message = "Duration must be at least 1 minute")
-    private Integer durationMinutes;
+	@NotNull(message = "Release date is required")
+	@PastOrPresent(message = "Release date cannot be in the future")
+	private LocalDate releaseDate;
 
-    @NotNull(message = "Release date is required")
-    @PastOrPresent(message = "Release date cannot be in the future")
-    private LocalDate releaseDate;
+	@NotNull(message = "End showing date is required")
+	@Future(message = "End showing date must be in the future")
+	private LocalDate endShowingDate;
 
-    @NotNull(message = "End showing date is required")
-    @Future(message = "End showing date must be in the future")
-    private LocalDate endShowingDate;
+	@NotNull(message = "Movie status is required")
+	private MovieStatus status;
 
-    @NotNull(message = "Movie status is required")
-    private MovieStatus status;
+	private String posterFileName;
 
-    private String posterFileName;
+	@NotNull(message = "Age rating is required")
+	private AgeRating ageRating;
 
-    private MultipartFile posterFile;
+	@NotNull(message = "Cast is required")
+	@Size(min = 1, message = "At least one cast member is required")
+	private List<Long> castIds;
 
-    @NotNull(message = "Age rating is required")
-    private AgeRating ageRating;
+	@NotNull(message = "Directors are required")
+	@Size(min = 1, message = "At least one director is required")
+	private List<Long> directorIds;
 
-    private Set<Long> sessionIds;
-    private Set<Long> castIds;
-    private Set<Long> directorIds;
-    private Set<Long> screenwriterIds;
-    private Set<Long> genreIds;
+	@NotNull(message = "Screenwriters are required")
+	@Size(min = 1, message = "At least one screenwriter is required")
+	private List<Long> screenwriterIds;
 
-    private Integer releaseYear;
-    private Boolean isCurrentlyShowing;
-    private Boolean isUpcoming;
-
-    public String getPosterUrl() {
-        if (posterFileName == null || posterFileName.isEmpty()) {
-            return null;
-        }
-        return "/api/movies/" + (id != null ? id : "temp") + "/poster";
-    }
+	@NotNull(message = "Genres are required")
+	@Size(min = 1, message = "At least one genre is required")
+	private List<Long> genreIds;
 }

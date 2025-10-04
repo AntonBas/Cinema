@@ -3,6 +3,8 @@ package ua.lviv.bas.cinema.controller;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import ua.lviv.bas.cinema.dto.MovieCreateRequest;
 import ua.lviv.bas.cinema.dto.MovieDto;
 import ua.lviv.bas.cinema.service.MovieService;
 
@@ -44,7 +47,8 @@ public class MovieController {
 	@GetMapping("/page")
 	public ResponseEntity<Page<MovieDto>> getPaginatedMovies(@RequestParam(defaultValue = "0") int page,
 			@RequestParam(defaultValue = "10") int size) {
-		return ResponseEntity.ok(movieService.getPaginatedMovies(page, size));
+		Pageable pageable = PageRequest.of(page, size);
+		return ResponseEntity.ok(movieService.getPaginatedMovies(pageable));
 	}
 
 	@GetMapping("/status/{status}")
@@ -63,13 +67,14 @@ public class MovieController {
 	}
 
 	@PostMapping(consumes = "multipart/form-data")
-	public ResponseEntity<MovieDto> createMovie(@ModelAttribute @Valid MovieDto movieDto) {
-		return ResponseEntity.ok(movieService.createMovie(movieDto));
+	public ResponseEntity<MovieDto> createMovie(@ModelAttribute @Valid MovieCreateRequest request) {
+		return ResponseEntity.ok(movieService.createMovie(request));
 	}
 
 	@PutMapping(value = "/{id}", consumes = "multipart/form-data")
-	public ResponseEntity<MovieDto> updateMovie(@PathVariable Long id, @ModelAttribute @Valid MovieDto movieDto) {
-		return ResponseEntity.ok(movieService.updateMovie(id, movieDto));
+	public ResponseEntity<MovieDto> updateMovie(@PathVariable Long id,
+			@ModelAttribute @Valid MovieCreateRequest request) {
+		return ResponseEntity.ok(movieService.updateMovie(id, request));
 	}
 
 	@DeleteMapping("/{id}")
