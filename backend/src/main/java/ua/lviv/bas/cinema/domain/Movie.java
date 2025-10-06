@@ -22,11 +22,12 @@ import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Future;
+import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -80,7 +81,7 @@ public class Movie {
 	private Integer durationMinutes;
 
 	@NotNull(message = "Release date is required")
-	@PastOrPresent(message = "Release date cannot be in the future")
+	@FutureOrPresent(message = "Release date cannot be in the past")
 	@Column(nullable = false, name = "release_date")
 	private LocalDate releaseDate;
 
@@ -108,17 +109,17 @@ public class Movie {
 	private Set<Session> sessions = new HashSet<>();
 
 	@ManyToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH })
-	@JoinTable(name = "movie_cast", joinColumns = @JoinColumn(name = "movie_id"), inverseJoinColumns = @JoinColumn(name = "person_id"))
+	@JoinTable(name = "movie_cast", joinColumns = @JoinColumn(name = "movie_id"), inverseJoinColumns = @JoinColumn(name = "persons_id"))
 	@Builder.Default
 	private Set<Person> cast = new HashSet<>();
 
 	@ManyToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH })
-	@JoinTable(name = "movie_directors", joinColumns = @JoinColumn(name = "movie_id"), inverseJoinColumns = @JoinColumn(name = "person_id"))
+	@JoinTable(name = "movie_directors", joinColumns = @JoinColumn(name = "movie_id"), inverseJoinColumns = @JoinColumn(name = "persons_id"))
 	@Builder.Default
 	private Set<Person> directors = new HashSet<>();
 
 	@ManyToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH })
-	@JoinTable(name = "movie_screenwriters", joinColumns = @JoinColumn(name = "movie_id"), inverseJoinColumns = @JoinColumn(name = "person_id"))
+	@JoinTable(name = "movie_screenwriters", joinColumns = @JoinColumn(name = "movie_id"), inverseJoinColumns = @JoinColumn(name = "persons_id"))
 	@Builder.Default
 	private Set<Person> screenwriters = new HashSet<>();
 
@@ -129,14 +130,11 @@ public class Movie {
 
 	@Transient
 	public MovieCategory getCategory() {
-		if (releaseDate == null) {
-			return MovieCategory.ARCHIVED;
-		}
-
 		LocalDate now = LocalDate.now();
+
 		if (now.isBefore(releaseDate)) {
 			return MovieCategory.UPCOMING;
-		} else if (endShowingDate != null && now.isAfter(endShowingDate)) {
+		} else if (now.isAfter(endShowingDate)) {
 			return MovieCategory.ARCHIVED;
 		} else {
 			return MovieCategory.CURRENT;
@@ -177,6 +175,20 @@ public class Movie {
 	@Transient
 	public boolean isArchived() {
 		return getCategory() == MovieCategory.ARCHIVED;
+	}
+
+	@Transient
+	public boolean isActive() {
+		return getCategory() == MovieCategory.CURRENT || getCategory() == MovieCategory.UPCOMING;
+	}
+
+	@Transient
+	@AssertTrue(message = "End showing date must be after release date")
+	public boolean isEndDateAfterReleaseDate() {
+		if (releaseDate == null || endShowingDate == null) {
+			return true;
+		}
+		return endShowingDate.isAfter(releaseDate);
 	}
 
 	@Override

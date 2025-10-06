@@ -3,11 +3,14 @@ package ua.lviv.bas.cinema.dto;
 import java.time.LocalDate;
 import java.util.List;
 
+import org.springframework.web.multipart.MultipartFile;
+
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Future;
+import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -34,7 +37,7 @@ public class MovieDto {
 	private String slug;
 
 	@NotBlank(message = "Trailer URL is required")
-	@Pattern(regexp = "^(https?|ftp)://[^\\s/$.?#].[^\\s]*$", message = "Trailer must be a valid URL")
+	@org.hibernate.validator.constraints.URL(message = "Trailer must be a valid URL")
 	private String trailerUrl;
 
 	@NotBlank(message = "Description is required")
@@ -46,7 +49,7 @@ public class MovieDto {
 	private Integer durationMinutes;
 
 	@NotNull(message = "Release date is required")
-	@PastOrPresent(message = "Release date cannot be in the future")
+	@FutureOrPresent(message = "Release date cannot be in the past")
 	private LocalDate releaseDate;
 
 	@NotNull(message = "End showing date is required")
@@ -76,4 +79,13 @@ public class MovieDto {
 	@NotNull(message = "Genres are required")
 	@Size(min = 1, message = "At least one genre is required")
 	private List<Long> genreIds;
+
+	private MultipartFile posterFile;
+
+	@AssertTrue(message = "End showing date must be after release date")
+	public boolean isEndDateValid() {
+		if (releaseDate == null || endShowingDate == null)
+			return true;
+		return endShowingDate.isAfter(releaseDate);
+	}
 }

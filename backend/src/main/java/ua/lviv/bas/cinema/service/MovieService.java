@@ -52,13 +52,12 @@ public class MovieService {
 
 	@Transactional
 	public MovieDto createMovie(MovieCreateRequest request) {
-		logger.info("Creating movie: {}", request.getMovie().getTitle());
+		logger.info("Creating movie: {}", request.getTitle());
 
-		MovieDto movieDto = request.getMovie();
-		validateMovieDates(movieDto.getReleaseDate(), movieDto.getEndShowingDate());
+		validateMovieDates(request.getReleaseDate(), request.getEndShowingDate());
 
-		if (movieRepository.findBySlug(movieDto.getSlug()).isPresent()) {
-			throw new RuntimeException("Movie with slug '" + movieDto.getSlug() + "' already exists");
+		if (movieRepository.findBySlug(request.getSlug()).isPresent()) {
+			throw new RuntimeException("Movie with slug '" + request.getSlug() + "' already exists");
 		}
 
 		Movie movie = movieMapper.toEntity(request);
@@ -68,20 +67,17 @@ public class MovieService {
 			movie.setPosterFileName(fileName);
 		}
 
-		setMovieRelations(movie, movieDto);
+		setMovieRelations(movie, request);
 
 		Movie savedMovie = movieRepository.save(movie);
 		return movieMapper.toDto(savedMovie);
 	}
 
 	@Transactional
-	public MovieDto updateMovie(Long id, MovieCreateRequest request) {
+	public MovieDto updateMovie(Long id, MovieDto movieDto) {
 		logger.info("Updating movie with id: {}", id);
 
-		Movie existingMovie = movieRepository.findById(id)
-				.orElseThrow(() -> new RuntimeException("Movie not found with id: " + id));
-
-		MovieDto movieDto = request.getMovie();
+		Movie existingMovie = getMovieEntityById(id);
 		validateMovieDates(movieDto.getReleaseDate(), movieDto.getEndShowingDate());
 
 		if (!existingMovie.getSlug().equals(movieDto.getSlug())
@@ -89,14 +85,7 @@ public class MovieService {
 			throw new RuntimeException("Movie with slug '" + movieDto.getSlug() + "' already exists");
 		}
 
-		if (request.getPosterFile() != null && !request.getPosterFile().isEmpty()) {
-			deletePosterFile(existingMovie.getPosterFileName());
-			String fileName = savePosterFile(request.getPosterFile());
-			existingMovie.setPosterFileName(fileName);
-		}
-
-		movieMapper.updateBasicFields(movieDto, existingMovie);
-
+		movieMapper.updateMovieFromDto(movieDto, existingMovie);
 		updateMovieRelations(existingMovie, movieDto);
 
 		Movie updatedMovie = movieRepository.save(existingMovie);
@@ -104,10 +93,24 @@ public class MovieService {
 	}
 
 	@Transactional
+	public MovieDto updateMovieWithPoster(Long id, MovieDto movieDto, MultipartFile posterFile) {
+		logger.info("Updating movie with id: {} and poster", id);
+
+		Movie existingMovie = getMovieEntityById(id);
+
+		if (posterFile != null && !posterFile.isEmpty()) {
+			deletePosterFile(existingMovie.getPosterFileName());
+			String fileName = savePosterFile(posterFile);
+			existingMovie.setPosterFileName(fileName);
+		}
+
+		return updateMovie(id, movieDto);
+	}
+
+	@Transactional
 	public void deleteMovie(Long id) {
 		logger.info("Deleting movie by id: {}", id);
-		Movie movie = movieRepository.findById(id)
-				.orElseThrow(() -> new RuntimeException("Movie not found with id: " + id));
+		Movie movie = getMovieEntityById(id);
 
 		deletePosterFile(movie.getPosterFileName());
 		movieRepository.deleteById(id);
@@ -116,8 +119,7 @@ public class MovieService {
 	@Transactional(readOnly = true)
 	public MovieDto getMovieById(Long id) {
 		logger.info("Reading movie by id: {}", id);
-		return movieRepository.findById(id).map(movieMapper::toDto)
-				.orElseThrow(() -> new RuntimeException("Movie not found with id: " + id));
+		return movieMapper.toDto(getMovieEntityById(id));
 	}
 
 	@Transactional(readOnly = true)
@@ -214,45 +216,57 @@ public class MovieService {
 		if (endShowingDate.isBefore(releaseDate)) {
 			throw new RuntimeException("End showing date cannot be before release date");
 		}
+	}
 
-		if (releaseDate.isAfter(LocalDate.now())) {
-			throw new RuntimeException("Release date cannot be in the future");
-		}
+	private void setMovieRelations(Movie movie, MovieCreateRequest request) {
+		setMovieRelationsFromIds(movie, request.getGenreIds(), request.getCastIds(), request.getDirectorIds(),
+				request.getScreenwriterIds());
 	}
 
 	private void setMovieRelations(Movie movie, MovieDto movieDto) {
-		if (movieDto.getGenreIds() != null && !movieDto.getGenreIds().isEmpty()) {
-			Set<Genre> genres = new HashSet<>(genreRepository.findAllById(movieDto.getGenreIds()));
+		setMovieRelationsFromIds(movie, movieDto.getGenreIds(), movieDto.getCastIds(), movieDto.getDirectorIds(),
+				movieDto.getScreenwriterIds());
+	}
+
+	private void setMovieRelationsFromIds(Movie movie, List<Long> genreIds, List<Long> castIds, List<Long> directorIds,
+			List<Long> screenwriterIds) {
+		if (genreIds != null && !genreIds.isEmpty()) {
+			Set<Genre> genres = new HashSet<>(genreRepository.findAllById(genreIds));
 			movie.setGenres(genres);
 		}
 
-		if (movieDto.getCastIds() != null && !movieDto.getCastIds().isEmpty()) {
-			Set<Person> cast = new HashSet<>(personRepository.findAllById(movieDto.getCastIds()));
+		if (castIds != null && !castIds.isEmpty()) {
+			Set<Person> cast = new HashSet<>(personRepository.findAllById(castIds));
 			movie.setCast(cast);
 		}
 
-		if (movieDto.getDirectorIds() != null && !movieDto.getDirectorIds().isEmpty()) {
-			Set<Person> directors = new HashSet<>(personRepository.findAllById(movieDto.getDirectorIds()));
+		if (directorIds != null && !directorIds.isEmpty()) {
+			Set<Person> directors = new HashSet<>(personRepository.findAllById(directorIds));
 			movie.setDirectors(directors);
 		}
 
-		if (movieDto.getScreenwriterIds() != null && !movieDto.getScreenwriterIds().isEmpty()) {
-			Set<Person> screenwriters = new HashSet<>(personRepository.findAllById(movieDto.getScreenwriterIds()));
+		if (screenwriterIds != null && !screenwriterIds.isEmpty()) {
+			Set<Person> screenwriters = new HashSet<>(personRepository.findAllById(screenwriterIds));
 			movie.setScreenwriters(screenwriters);
 		}
 	}
 
 	private void updateMovieRelations(Movie movie, MovieDto movieDto) {
-		movie.getGenres().clear();
-		movie.getCast().clear();
-		movie.getDirectors().clear();
-		movie.getScreenwriters().clear();
+		movie.setGenres(new HashSet<>());
+		movie.setCast(new HashSet<>());
+		movie.setDirectors(new HashSet<>());
+		movie.setScreenwriters(new HashSet<>());
 
 		setMovieRelations(movie, movieDto);
 	}
 
 	private String savePosterFile(MultipartFile file) {
 		try {
+			if (uploadDir == null) {
+				logger.warn("Upload directory is not configured, using temporary directory");
+				uploadDir = System.getProperty("java.io.tmpdir");
+			}
+
 			String originalFileName = file.getOriginalFilename();
 			String fileExtension = originalFileName != null
 					? originalFileName.substring(originalFileName.lastIndexOf("."))

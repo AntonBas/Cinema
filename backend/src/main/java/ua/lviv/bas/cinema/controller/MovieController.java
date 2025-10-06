@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -66,15 +67,25 @@ public class MovieController {
 		return ResponseEntity.ok(movieService.getUpcomingMovies());
 	}
 
+	@GetMapping("/genre/{genreId}")
+	public ResponseEntity<List<MovieDto>> getMoviesByGenre(@PathVariable Long genreId) {
+		return ResponseEntity.ok(movieService.getMoviesByGenre(genreId));
+	}
+
 	@PostMapping(consumes = "multipart/form-data")
 	public ResponseEntity<MovieDto> createMovie(@ModelAttribute @Valid MovieCreateRequest request) {
 		return ResponseEntity.ok(movieService.createMovie(request));
 	}
 
-	@PutMapping(value = "/{id}", consumes = "multipart/form-data")
-	public ResponseEntity<MovieDto> updateMovie(@PathVariable Long id,
-			@ModelAttribute @Valid MovieCreateRequest request) {
-		return ResponseEntity.ok(movieService.updateMovie(id, request));
+	@PutMapping("/{id}")
+	public ResponseEntity<MovieDto> updateMovie(@PathVariable Long id, @RequestBody @Valid MovieDto movieDto) {
+		return ResponseEntity.ok(movieService.updateMovie(id, movieDto));
+	}
+
+	@PutMapping(value = "/{id}/poster", consumes = "multipart/form-data")
+	public ResponseEntity<MovieDto> updateMovieWithPoster(@PathVariable Long id,
+			@ModelAttribute @Valid MovieDto movieDto) {
+		return ResponseEntity.ok(movieService.updateMovieWithPoster(id, movieDto, movieDto.getPosterFile()));
 	}
 
 	@DeleteMapping("/{id}")
