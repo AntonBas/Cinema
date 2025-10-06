@@ -2,8 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import type { MovieDto, MovieFormData } from '@/types/Movie';
 import { MovieStatus, AgeRating } from '@/types/Movie';
 import type { GenreDto, PersonDto } from '@/types';
-import { movieApi } from '@/api/movieApi';
+import { movieApi, movieFormHelper } from '@/api/movieApi';
 import type { NotificationType } from '@/hooks/useNotification';
+import { toBackendFormat, toDisplayFormat } from '@/utils/dateUtils';
 import styles from './MovieForm.module.css';
 
 interface MovieFormProps {
@@ -34,8 +35,8 @@ export const MovieForm: React.FC<MovieFormProps> = ({
         durationMinutes: 0,
         releaseDate: '',
         endShowingDate: '',
-        status: MovieStatus.ACTIVE,
-        ageRating: AgeRating.G,
+        status: MovieStatus.UPCOMING,
+        ageRating: AgeRating.PEGI_12,
         genreIds: [],
         directorIds: [],
         screenwriterIds: [],
@@ -70,8 +71,8 @@ export const MovieForm: React.FC<MovieFormProps> = ({
                 trailerUrl: movie.trailerUrl,
                 description: movie.description,
                 durationMinutes: movie.durationMinutes,
-                releaseDate: movie.releaseDate,
-                endShowingDate: movie.endShowingDate,
+                releaseDate: toDisplayFormat(movie.releaseDate),
+                endShowingDate: toDisplayFormat(movie.endShowingDate),
                 status: movie.status,
                 ageRating: movie.ageRating,
                 genreIds: movie.genreIds || [],
@@ -96,44 +97,45 @@ export const MovieForm: React.FC<MovieFormProps> = ({
         setIsUploading(true);
 
         try {
-            const formDataToSend = new FormData();
-
-            const movieData = {
-                title: formData.title,
-                slug: formData.slug,
-                trailerUrl: formData.trailerUrl,
-                description: formData.description,
-                durationMinutes: formData.durationMinutes,
-                releaseDate: formData.releaseDate,
-                endShowingDate: formData.endShowingDate,
-                status: formData.status,
-                ageRating: formData.ageRating,
-                genreIds: formData.genreIds,
-                directorIds: formData.directorIds,
-                screenwriterIds: formData.screenwriterIds,
-                castIds: formData.castIds
-            };
-
-            formDataToSend.append('movie', new Blob([JSON.stringify(movieData)], {
-                type: 'application/json'
-            }));
-
             const posterFile = fileInputRef.current?.files?.[0];
-            if (posterFile) {
-                formDataToSend.append('posterFile', posterFile);
-            }
+            const hasNewPoster = !!posterFile;
 
             if (movie?.id) {
-                await movieApi.update(movie.id, formDataToSend);
+                if (hasNewPoster) {
+                    const movieData: MovieDto = {
+                        ...movie,
+                        ...formData,
+                        releaseDate: toBackendFormat(formData.releaseDate),
+                        endShowingDate: toBackendFormat(formData.endShowingDate),
+                        posterFile: posterFile
+                    };
+                    const formDataForUpdate = movieFormHelper.updateFormData(movieData);
+                    await movieApi.updateWithPoster(movie.id, formDataForUpdate);
+                } else {
+                    const movieData: MovieDto = {
+                        ...movie,
+                        ...formData,
+                        releaseDate: toBackendFormat(formData.releaseDate),
+                        endShowingDate: toBackendFormat(formData.endShowingDate)
+                    };
+                    await movieApi.update(movie.id, movieData);
+                }
                 showNotification('Movie updated successfully!', 'success');
             } else {
-                await movieApi.create(formDataToSend);
+                const movieCreateData = {
+                    ...formData,
+                    releaseDate: toBackendFormat(formData.releaseDate),
+                    endShowingDate: toBackendFormat(formData.endShowingDate),
+                    posterFile: posterFile
+                };
+                const formDataForCreate = movieFormHelper.createFormData(movieCreateData);
+                await movieApi.create(formDataForCreate);
                 showNotification('Movie created successfully!', 'success');
             }
 
             onSuccess();
         } catch (error) {
-            console.error('Error saving movie:', error);
+            console.error('❌ Error saving movie:', error);
             showNotification('Error saving movie. Please try again.', 'error');
         } finally {
             setIsUploading(false);
@@ -267,11 +269,11 @@ export const MovieForm: React.FC<MovieFormProps> = ({
                                 required
                                 className={styles.select}
                             >
-                                <option value={AgeRating.G}>G - General Audiences</option>
-                                <option value={AgeRating.PG}>PG - Parental Guidance</option>
-                                <option value={AgeRating.PG13}>PG-13 - Parents Strongly Cautioned</option>
-                                <option value={AgeRating.R}>R - Restricted</option>
-                                <option value={AgeRating.NC17}>NC-17 - Adults Only</option>
+                                <option value={AgeRating.PEGI_3}>PEGI 3 - Suitable for all ages</option>
+                                <option value={AgeRating.PEGI_7}>PEGI 7 - May contain mild violence</option>
+                                <option value={AgeRating.PEGI_12}>PEGI 12 - Recommended for 12+</option>
+                                <option value={AgeRating.PEGI_16}>PEGI 16 - Suitable only for 16+</option>
+                                <option value={AgeRating.PEGI_18}>PEGI 18 - Adults only (18+)</option>
                             </select>
                         </div>
                     </div>
@@ -281,8 +283,12 @@ export const MovieForm: React.FC<MovieFormProps> = ({
                             <label className={styles.label}>Release Date *</label>
                             <input
                                 type="date"
-                                value={formData.releaseDate}
-                                onChange={(e) => setFormData({ ...formData, releaseDate: e.target.value })}
+                                value={toBackendFormat(formData.releaseDate)}
+                                onChange={(e) => {
+                                    const backendDate = e.target.value;
+                                    const displayDate = toDisplayFormat(backendDate);
+                                    setFormData({ ...formData, releaseDate: displayDate });
+                                }}
                                 required
                                 className={styles.input}
                             />
@@ -291,8 +297,12 @@ export const MovieForm: React.FC<MovieFormProps> = ({
                             <label className={styles.label}>End Showing Date *</label>
                             <input
                                 type="date"
-                                value={formData.endShowingDate}
-                                onChange={(e) => setFormData({ ...formData, endShowingDate: e.target.value })}
+                                value={toBackendFormat(formData.endShowingDate)}
+                                onChange={(e) => {
+                                    const backendDate = e.target.value;
+                                    const displayDate = toDisplayFormat(backendDate);
+                                    setFormData({ ...formData, endShowingDate: displayDate });
+                                }}
                                 required
                                 className={styles.input}
                             />
@@ -307,7 +317,7 @@ export const MovieForm: React.FC<MovieFormProps> = ({
                             required
                             className={styles.select}
                         >
-                            <option value={MovieStatus.ACTIVE}>🎬 Active - Currently Showing</option>
+                            <option value={MovieStatus.CURRENT}>🎬 Current - Currently Showing</option>
                             <option value={MovieStatus.UPCOMING}>📅 Upcoming - Coming Soon</option>
                             <option value={MovieStatus.ARCHIVED}>📦 Archived - No Longer Showing</option>
                         </select>

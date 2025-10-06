@@ -1,15 +1,15 @@
 export enum MovieStatus {
-  ACTIVE = 'ACTIVE',
   UPCOMING = 'UPCOMING',
+  CURRENT = 'CURRENT',
   ARCHIVED = 'ARCHIVED'
 }
 
 export enum AgeRating {
-  G = 'G',
-  PG = 'PG',
-  PG13 = 'PG13',
-  R = 'R',
-  NC17 = 'NC17'
+  PEGI_3 = 'PEGI_3',
+  PEGI_7 = 'PEGI_7',
+  PEGI_12 = 'PEGI_12',
+  PEGI_16 = 'PEGI_16',
+  PEGI_18 = 'PEGI_18'
 }
 
 export interface MovieDto {
@@ -22,16 +22,30 @@ export interface MovieDto {
   releaseDate: string;
   endShowingDate: string;
   status: MovieStatus;
-  posterFileName: string;
+  posterFileName?: string;
   ageRating: AgeRating;
-  sessionIds?: number[];
-  castIds?: number[];
-  directorIds?: number[];
-  screenwriterIds?: number[];
-  genreIds?: number[];
-  releaseYear?: number;
-  isCurrentlyShowing?: boolean;
-  isUpcoming?: boolean;
+  castIds: number[];
+  directorIds: number[];
+  screenwriterIds: number[];
+  genreIds: number[];
+  posterFile?: File;
+}
+
+export interface MovieCreateRequest {
+  title: string;
+  slug: string;
+  trailerUrl: string;
+  description: string;
+  durationMinutes: number;
+  releaseDate: string;
+  endShowingDate: string;
+  status: MovieStatus;
+  ageRating: AgeRating;
+  genreIds: number[];
+  directorIds: number[];
+  screenwriterIds: number[];
+  castIds: number[];
+  posterFile?: File;
 }
 
 export interface MovieFormData {
@@ -48,4 +62,5 @@ export interface MovieFormData {
   directorIds: number[];
   screenwriterIds: number[];
   castIds: number[];
+  posterFile?: File;
 }
