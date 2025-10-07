@@ -80,7 +80,13 @@ export const MovieForm: React.FC<MovieFormProps> = ({
                 screenwriterIds: movie.screenwriterIds || [],
                 castIds: movie.castIds || []
             });
-            setPosterPreview(movie.posterFileName ? `${movieApi.getPoster(movie.id!)}?t=${Date.now()}` : '');
+
+            if (movie.posterFileName && movie.id) {
+                const posterUrl = `${movieApi.getPoster(movie.id)}?t=${Date.now()}`;
+                setPosterPreview(posterUrl);
+            } else {
+                setPosterPreview('');
+            }
         }
     }, [movie]);
 
@@ -187,7 +193,18 @@ export const MovieForm: React.FC<MovieFormProps> = ({
                             />
                             {posterPreview ? (
                                 <div className={styles.posterPreview}>
-                                    <img src={posterPreview} alt="Poster preview" />
+                                    <img
+                                        src={posterPreview}
+                                        alt="Poster preview"
+                                        onError={(e) => {
+                                            e.currentTarget.src = '/images/default-movie-poster.svg';
+                                        }}
+                                    />
+                                    <div className={styles.posterInfo}>
+                                        {movie?.posterFileName && (
+                                            <small>Current: {movie.posterFileName}</small>
+                                        )}
+                                    </div>
                                 </div>
                             ) : (
                                 <div className={styles.uploadPlaceholder}>
