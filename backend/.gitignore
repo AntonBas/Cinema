@@ -64,3 +64,4 @@ settings.json
 docker-compose.yml
 Dockerfile
 src/main/resources/static/posters
+uploads/posters
