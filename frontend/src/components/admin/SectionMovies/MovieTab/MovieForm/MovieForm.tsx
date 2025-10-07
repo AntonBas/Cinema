@@ -82,7 +82,8 @@ export const MovieForm: React.FC<MovieFormProps> = ({
             });
 
             if (movie.posterFileName && movie.id) {
-                const posterUrl = `${movieApi.getPoster(movie.id)}?t=${Date.now()}`;
+                const posterUrl = movieApi.getPosterUrl(movie.id);
+                console.log('🖼️ Poster URL:', posterUrl);
                 setPosterPreview(posterUrl);
             } else {
                 setPosterPreview('');

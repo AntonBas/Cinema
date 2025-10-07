@@ -22,7 +22,7 @@ export const MovieCard: React.FC<MovieCardProps> = ({
     <div className={styles.card}>
       <div className={styles.posterContainer}>
         <img
-          src={movie.posterFileName ? `${movieApi.getPoster(movie.id!)}?t=${Date.now()}` : '/images/default-poster.jpg'}
+          src={movie.posterFileName ? `${movieApi.getPosterUrl(movie.id!)}?t=${Date.now()}` : '/images/default-poster.jpg'}
           alt={movie.title}
           className={styles.poster}
           onError={handleImageError}

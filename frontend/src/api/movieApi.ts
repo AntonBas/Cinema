@@ -122,7 +122,7 @@ export const movieApi = {
     if (!response.ok) throw new Error('Failed to delete movie');
   },
 
-  getPoster: async (id: number): Promise<string> => {
+  getPosterUrl: (id: number): string => {
     return `${API_BASE_URL}/movies/${id}/poster`;
   },
 
