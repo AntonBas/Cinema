@@ -1,29 +1,35 @@
 import React, { useState, useEffect } from 'react';
-import { type PersonDto, type PersonFormData, PersonRole } from '@/types/Person';
-import { personApi } from '@/api/personApi';
-import { Notification } from '@/components/ui/Notification/Notification';
+import { PersonTabs } from './PersonTabs';
+import { PersonList } from './PersonList';
+import { PersonForm } from './PersonForm';
+import { DeleteConfirmModal } from '@/components/ui/DeleteConfirmModal';
 import { useNotification } from '@/hooks/useNotification';
+import { Notification } from '@/components/ui/Notification';
+import { personApi } from '@/api/personApi';
+import type { PersonDto, PersonFormData } from '@/types/Person';
+import { PersonRole } from '@/types/Person';
 import styles from './PersonTab.module.css';
 
 export const PersonTab: React.FC = () => {
   const [persons, setPersons] = useState<PersonDto[]>([]);
+  const [filteredPersons, setFilteredPersons] = useState<PersonDto[]>([]);
+  const [activeTab, setActiveTab] = useState<PersonRole | 'ALL'>('ALL');
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [personToDelete, setPersonToDelete] = useState<PersonDto | null>(null);
   const [editingPerson, setEditingPerson] = useState<PersonDto | null>(null);
+  const [personToDelete, setPersonToDelete] = useState<PersonDto | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const { notifications, showNotification, hideNotification } = useNotification();
 
-  const [formData, setFormData] = useState<PersonFormData>({
-    name: '',
-    role: PersonRole.ACTOR
-  });
-
   useEffect(() => {
     loadPersons();
   }, []);
+
+  useEffect(() => {
+    filterPersons();
+  }, [persons, activeTab]);
 
   const loadPersons = async () => {
     try {
@@ -38,15 +44,21 @@ export const PersonTab: React.FC = () => {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const filterPersons = () => {
+    if (activeTab === 'ALL') {
+      setFilteredPersons(persons);
+    } else {
+      setFilteredPersons(persons.filter(person => person.role === activeTab));
+    }
+  };
 
+  const handleSubmit = async (data: PersonFormData) => {
     try {
       if (editingPerson?.id) {
-        await personApi.update(editingPerson.id, formData);
+        await personApi.update(editingPerson.id, data);
         showNotification('Person updated successfully!', 'success');
       } else {
-        await personApi.create(formData);
+        await personApi.create(data);
         showNotification('Person created successfully!', 'success');
       }
       resetForm();
@@ -59,10 +71,6 @@ export const PersonTab: React.FC = () => {
 
   const handleEdit = (person: PersonDto) => {
     setEditingPerson(person);
-    setFormData({
-      name: person.name,
-      role: person.role
-    });
     setIsModalOpen(true);
   };
 
@@ -97,28 +105,20 @@ export const PersonTab: React.FC = () => {
   const resetForm = () => {
     setIsModalOpen(false);
     setEditingPerson(null);
-    setFormData({
-      name: '',
-      role: PersonRole.ACTOR
-    });
   };
 
-  const getRoleIcon = (role: PersonRole) => {
-    switch (role) {
-      case PersonRole.ACTOR: return '🎭';
-      case PersonRole.DIRECTOR: return '🎬';
-      case PersonRole.SCREENWRITER: return '✍️';
-      default: return '👤';
-    }
+  const getTabStats = () => {
+    return {
+      ALL: persons.length,
+      [PersonRole.ACTOR]: persons.filter(p => p.role === PersonRole.ACTOR).length,
+      [PersonRole.DIRECTOR]: persons.filter(p => p.role === PersonRole.DIRECTOR).length,
+      [PersonRole.SCREENWRITER]: persons.filter(p => p.role === PersonRole.SCREENWRITER).length,
+    };
   };
 
-  const getRoleColor = (role: PersonRole) => {
-    switch (role) {
-      case PersonRole.ACTOR: return '#4CAF50';
-      case PersonRole.DIRECTOR: return '#2196F3';
-      case PersonRole.SCREENWRITER: return '#FF9800';
-      default: return '#6b7280';
-    }
+  const handleAddNew = () => {
+    setEditingPerson(null);
+    setIsModalOpen(true);
   };
 
   if (isLoading) {
@@ -136,148 +136,43 @@ export const PersonTab: React.FC = () => {
         <h2>People Management</h2>
         <button
           className={styles.primaryButton}
-          onClick={() => setIsModalOpen(true)}
+          onClick={handleAddNew}
         >
           <span className={styles.buttonIcon}>+</span>
           Add Person
         </button>
       </div>
 
-      <div className={styles.grid}>
-        {persons.length === 0 ? (
-          <div className={styles.empty}>
-            <div className={styles.emptyIcon}>👥</div>
-            <h3>No people found</h3>
-            <p>Get started by adding your first person</p>
-            <button
-              className={styles.primaryButton}
-              onClick={() => setIsModalOpen(true)}
-            >
-              Add First Person
-            </button>
-          </div>
-        ) : (
-          persons.map(person => (
-            <div key={person.id} className={styles.card}>
-              <div className={styles.info}>
-                <div className={styles.header}>
-                  <span
-                    className={styles.roleIcon}
-                    style={{ color: getRoleColor(person.role) }}
-                  >
-                    {getRoleIcon(person.role)}
-                  </span>
-                  <h3 className={styles.name}>{person.name}</h3>
-                </div>
-                <div className={styles.details}>
-                  <span
-                    className={styles.roleBadge}
-                    style={{
-                      background: `${getRoleColor(person.role)}20`,
-                      color: getRoleColor(person.role),
-                      border: `1px solid ${getRoleColor(person.role)}`
-                    }}
-                  >
-                    {person.role.toLowerCase()}
-                  </span>
-                </div>
-              </div>
-              <div className={styles.actions}>
-                <button
-                  className={styles.editButton}
-                  onClick={() => handleEdit(person)}
-                >
-                  Edit
-                </button>
-                <button
-                  className={styles.deleteButton}
-                  onClick={() => handleDeleteClick(person)}
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          ))
-        )}
-      </div>
+      <PersonTabs
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        stats={getTabStats()}
+      />
+
+      <PersonList
+        persons={filteredPersons}
+        activeTab={activeTab}
+        onEdit={handleEdit}
+        onDelete={handleDeleteClick}
+        onAddPerson={handleAddNew}
+      />
 
       {isModalOpen && (
-        <div className={styles.modalOverlay}>
-          <div className={styles.modal}>
-            <h3>{editingPerson ? 'Edit Person' : 'Add New Person'}</h3>
-            <form onSubmit={handleSubmit} className={styles.form}>
-              <div className={styles.formGroup}>
-                <label>Full Name *</label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="Enter full name"
-                  required
-                  className={styles.input}
-                />
-              </div>
-
-              <div className={styles.formGroup}>
-                <label>Role *</label>
-                <select
-                  value={formData.role}
-                  onChange={(e) => setFormData({ ...formData, role: e.target.value as PersonRole })}
-                  required
-                  className={styles.select}
-                >
-                  <option value={PersonRole.ACTOR}>Actor 🎭</option>
-                  <option value={PersonRole.DIRECTOR}>Director 🎬</option>
-                  <option value={PersonRole.SCREENWRITER}>Screenwriter ✍️</option>
-                </select>
-              </div>
-
-              <div className={styles.formActions}>
-                <button type="submit" className={styles.primaryButton}>
-                  {editingPerson ? 'Update' : 'Create'} Person
-                </button>
-                <button type="button" onClick={resetForm} className={styles.cancelButton}>
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+        <PersonForm
+          person={editingPerson}
+          onSubmit={handleSubmit}
+          onCancel={resetForm}
+        />
       )}
 
-      {isDeleteModalOpen && (
-        <div className={styles.modalOverlay}>
-          <div className={styles.confirmModal}>
-            <div className={styles.confirmIcon}>🗑️</div>
-            <h3 className={styles.confirmTitle}>Delete Person</h3>
-            <p className={styles.confirmMessage}>
-              Are you sure you want to delete
-            </p>
-            <p className={styles.confirmWarning}>
-              "{personToDelete?.name}"?
-            </p>
-            <p className={styles.confirmMessage}>
-              This action cannot be undone.
-            </p>
-            <div className={styles.confirmActions}>
-              <button
-                className={styles.cancelConfirmButton}
-                onClick={handleDeleteCancel}
-                disabled={isDeleting}
-              >
-                Cancel
-              </button>
-              <button
-                className={styles.deleteConfirmButton}
-                onClick={handleDeleteConfirm}
-                disabled={isDeleting}
-              >
-                {isDeleting ? 'Deleting...' : 'Delete'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <DeleteConfirmModal
+        isOpen={isDeleteModalOpen}
+        onConfirm={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
+        itemName={personToDelete?.name}
+        itemType="person"
+        isDeleting={isDeleting}
+      />
 
       {notifications.map((notification, index) => (
         <Notification

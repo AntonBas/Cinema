@@ -31,13 +31,6 @@ export const SectionMovies: React.FC = () => {
 
   return (
     <div className={styles.container}>
-      <div className={styles.header}>
-        <div className={styles.headerContent}>
-          <h1 className={styles.title}>Content Management</h1>
-          <p className={styles.subtitle}>Manage your cinema content efficiently</p>
-        </div>
-      </div>
-
       <div className={styles.tabsContainer}>
         <div className={styles.navigation}>
           {tabs.map(tab => (

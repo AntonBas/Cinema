@@ -1,0 +1,227 @@
+.card {
+    background: linear-gradient(135deg, #1a1f2d 0%, #2a3041 100%);
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 1px solid #3a4051;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    min-height: 140px;
+}
+
+.card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(253, 95, 0, 0.1), transparent);
+    transition: left 0.6s ease;
+}
+
+.card:hover::before {
+    left: 100%;
+}
+
+.card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+    border-color: #fd5f00;
+}
+
+.cardContent {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    gap: 1rem;
+}
+
+.header {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    flex: 1;
+}
+
+.roleIcon {
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 50px;
+    border-radius: 10px;
+    background: rgba(253, 95, 0, 0.1);
+    flex-shrink: 0;
+    margin-top: 0.25rem;
+}
+
+.nameContainer {
+    flex: 1;
+    min-width: 0;
+    /* Дозволяє тексту переноситись */
+}
+
+.name {
+    color: #ffffff;
+    margin: 0 0 0.75rem 0;
+    font-size: 1.4rem;
+    font-weight: 600;
+    line-height: 1.3;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.roleBadge {
+    padding: 0.4rem 1rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-transform: capitalize;
+    display: inline-block;
+    background: rgba(253, 95, 0, 0.1);
+    color: #fd5f00;
+    border: 1px solid #fd5f00;
+    white-space: nowrap;
+}
+
+.actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+    margin-top: auto;
+    padding-top: 1rem;
+    border-top: 1px solid #3a4051;
+}
+
+.editButton {
+    background: rgba(76, 175, 80, 0.1);
+    color: #4CAF50;
+    border: 1px solid #4CAF50;
+    padding: 0.6rem 1.2rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    font-size: 0.9rem;
+    flex: 1;
+    max-width: 100px;
+}
+
+.editButton:hover {
+    background: #4CAF50;
+    color: white;
+    transform: translateY(-1px);
+}
+
+.deleteButton {
+    background: rgba(255, 71, 87, 0.1);
+    color: #ff4757;
+    border: 1px solid #ff4757;
+    padding: 0.6rem 1.2rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    font-size: 0.9rem;
+    flex: 1;
+    max-width: 100px;
+}
+
+.deleteButton:hover {
+    background: #ff4757;
+    color: white;
+    transform: translateY(-1px);
+}
+
+/* Спеціальні стилі для довгих імен */
+.longName {
+    font-size: 1.2rem;
+    line-height: 1.4;
+}
+
+.veryLongName {
+    font-size: 1.1rem;
+    line-height: 1.3;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .card {
+        padding: 1.25rem;
+        min-height: 130px;
+    }
+
+    .header {
+        gap: 0.875rem;
+    }
+
+    .roleIcon {
+        width: 45px;
+        height: 45px;
+        font-size: 1.3rem;
+    }
+
+    .name {
+        font-size: 1.3rem;
+        -webkit-line-clamp: 3;
+    }
+
+    .longName {
+        font-size: 1.1rem;
+    }
+
+    .veryLongName {
+        font-size: 1rem;
+    }
+
+    .actions {
+        gap: 0.5rem;
+    }
+
+    .editButton,
+    .deleteButton {
+        padding: 0.5rem 1rem;
+        font-size: 0.85rem;
+        max-width: 90px;
+    }
+}
+
+@media (max-width: 480px) {
+    .card {
+        padding: 1rem;
+        min-height: 120px;
+    }
+
+    .header {
+        gap: 0.75rem;
+    }
+
+    .roleIcon {
+        width: 40px;
+        height: 40px;
+        font-size: 1.2rem;
+    }
+
+    .name {
+        font-size: 1.2rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .roleBadge {
+        padding: 0.3rem 0.8rem;
+        font-size: 0.8rem;
+    }
+}

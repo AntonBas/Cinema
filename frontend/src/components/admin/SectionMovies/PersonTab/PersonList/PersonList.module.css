@@ -1,0 +1,83 @@
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+}
+
+.empty {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: #a0a8c0;
+    grid-column: 1 / -1;
+    background: linear-gradient(135deg, #1a1f2d 0%, #2a3041 100%);
+    border-radius: 12px;
+    border: 1px solid #3a4051;
+}
+
+.emptyIcon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.empty h3 {
+    color: #ffffff;
+    margin: 0 0 0.5rem 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.empty p {
+    color: #a0a8c0;
+    margin: 0 0 2rem 0;
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
+.primaryButton {
+    background: linear-gradient(135deg, #fd5f00, #e05500);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.primaryButton:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(253, 95, 0, 0.3);
+}
+
+.buttonIcon {
+    font-size: 1.25rem;
+    font-weight: bold;
+}
+
+@media (max-width: 768px) {
+    .grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .empty {
+        padding: 3rem 1rem;
+        margin: 1rem 0;
+    }
+
+    .emptyIcon {
+        font-size: 3rem;
+    }
+
+    .empty h3 {
+        font-size: 1.3rem;
+    }
+
+    .empty p {
+        font-size: 0.9rem;
+    }
+}

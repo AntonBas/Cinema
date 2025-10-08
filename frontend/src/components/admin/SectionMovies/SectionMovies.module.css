@@ -4,48 +4,6 @@
   margin: 0 auto;
 }
 
-.header {
-  background: linear-gradient(135deg, #2a3041 0%, #1a1f2d 100%);
-  padding: 2rem;
-  border-radius: 16px;
-  margin-bottom: 2rem;
-  border: 1px solid #3a4051;
-  position: relative;
-  overflow: hidden;
-}
-
-.header::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, #fd5f00, #ff8c42, #fd5f00);
-}
-
-.headerContent {
-  text-align: center;
-}
-
-.title {
-  color: #ffffff;
-  font-size: 2.5rem;
-  font-weight: 700;
-  margin: 0 0 0.5rem 0;
-  background: linear-gradient(45deg, #fd5f00, #ff8c42);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.subtitle {
-  color: #a0a8c0;
-  font-size: 1.1rem;
-  margin: 0;
-  font-weight: 400;
-}
-
 .tabsContainer {
   display: flex;
   flex-direction: column;
@@ -137,6 +95,7 @@
     opacity: 0;
     transform: translateY(10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);

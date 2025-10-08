@@ -1,0 +1,1 @@
+export { PersonTabs } from './PersonTabs';
