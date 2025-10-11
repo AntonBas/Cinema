@@ -3,6 +3,7 @@ import type { GenreDto, GenreFormData } from '@/types/Genre';
 import { genreApi } from '@/api/genreApi';
 import { useNotification } from '@/hooks/useNotification';
 import { Notification } from '@/components/ui/Notification';
+import { DeleteConfirmModal } from '@/components/ui/DeleteConfirmModal';
 import styles from './GenreTab.module.css';
 
 export const GenreTab: React.FC = () => {
@@ -190,39 +191,14 @@ export const GenreTab: React.FC = () => {
         </div>
       )}
 
-      {isDeleteModalOpen && (
-        <div className={styles.modalOverlay}>
-          <div className={styles.confirmModal}>
-            <div className={styles.confirmIcon}>🗑️</div>
-            <h3 className={styles.confirmTitle}>Delete Genre</h3>
-            <p className={styles.confirmMessage}>
-              Are you sure you want to delete the genre
-            </p>
-            <p className={styles.confirmWarning}>
-              "{deletingGenre?.name}"?
-            </p>
-            <p className={styles.confirmMessage}>
-              This action cannot be undone.
-            </p>
-            <div className={styles.confirmActions}>
-              <button
-                className={styles.cancelConfirmButton}
-                onClick={handleDeleteCancel}
-                disabled={isDeleting}
-              >
-                Cancel
-              </button>
-              <button
-                className={styles.deleteConfirmButton}
-                onClick={handleDeleteConfirm}
-                disabled={isDeleting}
-              >
-                {isDeleting ? 'Deleting...' : 'Delete'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <DeleteConfirmModal
+        isOpen={isDeleteModalOpen}
+        onConfirm={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
+        itemName={deletingGenre?.name}
+        itemType="genre"
+        isDeleting={isDeleting}
+      />
 
       {notifications.map((notification, index) => (
         <Notification

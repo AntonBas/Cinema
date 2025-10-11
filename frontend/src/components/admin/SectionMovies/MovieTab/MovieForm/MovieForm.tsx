@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import type { MovieDto, MovieFormData } from '@/types/Movie';
 import { MovieStatus, AgeRating } from '@/types/Movie';
-import type { GenreDto, PersonDto } from '@/types';
+import type { GenreDto } from '@/types';
 import { movieApi, movieFormHelper } from '@/api/movieApi';
 import type { NotificationType } from '@/hooks/useNotification';
 import { toBackendFormat, toDisplayFormat } from '@/utils/dateUtils';
+import { PersonSelect } from '@/components/common/PersonSelect/PersonSelect';
+import { PersonRole } from '@/types/Person';
 import styles from './MovieForm.module.css';
 
 interface MovieFormProps {
@@ -21,7 +23,6 @@ export const MovieForm: React.FC<MovieFormProps> = ({
     showNotification
 }) => {
     const [genres, setGenres] = useState<GenreDto[]>([]);
-    const [persons, setPersons] = useState<PersonDto[]>([]);
     const [isLoadingData, setIsLoadingData] = useState(true);
     const [isUploading, setIsUploading] = useState(false);
     const [posterPreview, setPosterPreview] = useState<string>('');
@@ -46,12 +47,8 @@ export const MovieForm: React.FC<MovieFormProps> = ({
     useEffect(() => {
         const loadFormData = async () => {
             try {
-                const [genresData, personsData] = await Promise.all([
-                    movieApi.getGenres(),
-                    movieApi.getPersons()
-                ]);
+                const genresData = await movieApi.getGenres();
                 setGenres(genresData);
-                setPersons(personsData);
             } catch (error) {
                 console.error('Error loading form data:', error);
                 showNotification('Failed to load form data', 'error');
@@ -159,19 +156,17 @@ export const MovieForm: React.FC<MovieFormProps> = ({
         });
     };
 
-    const handlePersonChange = (personId: number, field: 'castIds' | 'directorIds' | 'screenwriterIds') => {
-        setFormData(prev => {
-            const currentIds = prev[field] || [];
-            const newIds = currentIds.includes(personId)
-                ? currentIds.filter(id => id !== personId)
-                : [...currentIds, personId];
-            return { ...prev, [field]: newIds };
-        });
+    const handleCastChange = (ids: number[]) => {
+        setFormData(prev => ({ ...prev, castIds: ids }));
     };
 
-    const getActors = () => persons.filter(person => person.role === 'ACTOR');
-    const getDirectors = () => persons.filter(person => person.role === 'DIRECTOR');
-    const getScreenwriters = () => persons.filter(person => person.role === 'SCREENWRITER');
+    const handleDirectorsChange = (ids: number[]) => {
+        setFormData(prev => ({ ...prev, directorIds: ids }));
+    };
+
+    const handleScreenwritersChange = (ids: number[]) => {
+        setFormData(prev => ({ ...prev, screenwriterIds: ids }));
+    };
 
     return (
         <div className={styles.overlay}>
@@ -383,122 +378,35 @@ export const MovieForm: React.FC<MovieFormProps> = ({
 
                     <div className={styles.formGroup}>
                         <label className={styles.label}>Cast *</label>
-                        {isLoadingData ? (
-                            <div className={styles.loading}>Loading cast...</div>
-                        ) : (
-                            <div className={styles.multiSelect}>
-                                <div className={styles.selectedItems}>
-                                    {formData.castIds?.map(personId => {
-                                        const person = persons.find(p => p.id === personId);
-                                        return person ? (
-                                            <span key={personId} className={styles.selectedTag}>
-                                                {person.name}
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handlePersonChange(personId, 'castIds')}
-                                                    className={styles.removeTag}
-                                                >
-                                                    ×
-                                                </button>
-                                            </span>
-                                        ) : null;
-                                    })}
-                                </div>
-                                <div className={styles.selectOptions}>
-                                    {getActors().map(person => (
-                                        <label key={person.id} className={styles.option}>
-                                            <input
-                                                type="checkbox"
-                                                checked={formData.castIds?.includes(person.id!) || false}
-                                                onChange={() => handlePersonChange(person.id!, 'castIds')}
-                                            />
-                                            <span className={styles.checkmark}></span>
-                                            {person.name}
-                                        </label>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
+                        <PersonSelect
+                            selectedIds={formData.castIds}
+                            onChange={handleCastChange}
+                            role={PersonRole.ACTOR}
+                            placeholder="Search actors or add new..."
+                            showNotification={showNotification}
+                        />
                     </div>
 
                     <div className={styles.formGroup}>
                         <label className={styles.label}>Directors *</label>
-                        {isLoadingData ? (
-                            <div className={styles.loading}>Loading directors...</div>
-                        ) : (
-                            <div className={styles.multiSelect}>
-                                <div className={styles.selectedItems}>
-                                    {formData.directorIds?.map(personId => {
-                                        const person = persons.find(p => p.id === personId);
-                                        return person ? (
-                                            <span key={personId} className={styles.selectedTag}>
-                                                {person.name}
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handlePersonChange(personId, 'directorIds')}
-                                                    className={styles.removeTag}
-                                                >
-                                                    ×
-                                                </button>
-                                            </span>
-                                        ) : null;
-                                    })}
-                                </div>
-                                <div className={styles.selectOptions}>
-                                    {getDirectors().map(person => (
-                                        <label key={person.id} className={styles.option}>
-                                            <input
-                                                type="checkbox"
-                                                checked={formData.directorIds?.includes(person.id!) || false}
-                                                onChange={() => handlePersonChange(person.id!, 'directorIds')}
-                                            />
-                                            <span className={styles.checkmark}></span>
-                                            {person.name}
-                                        </label>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
+                        <PersonSelect
+                            selectedIds={formData.directorIds}
+                            onChange={handleDirectorsChange}
+                            role={PersonRole.DIRECTOR}
+                            placeholder="Search directors or add new..."
+                            showNotification={showNotification}
+                        />
                     </div>
 
                     <div className={styles.formGroup}>
                         <label className={styles.label}>Screenwriters *</label>
-                        {isLoadingData ? (
-                            <div className={styles.loading}>Loading screenwriters...</div>
-                        ) : (
-                            <div className={styles.multiSelect}>
-                                <div className={styles.selectedItems}>
-                                    {formData.screenwriterIds?.map(personId => {
-                                        const person = persons.find(p => p.id === personId);
-                                        return person ? (
-                                            <span key={personId} className={styles.selectedTag}>
-                                                {person.name}
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handlePersonChange(personId, 'screenwriterIds')}
-                                                    className={styles.removeTag}
-                                                >
-                                                    ×
-                                                </button>
-                                            </span>
-                                        ) : null;
-                                    })}
-                                </div>
-                                <div className={styles.selectOptions}>
-                                    {getScreenwriters().map(person => (
-                                        <label key={person.id} className={styles.option}>
-                                            <input
-                                                type="checkbox"
-                                                checked={formData.screenwriterIds?.includes(person.id!) || false}
-                                                onChange={() => handlePersonChange(person.id!, 'screenwriterIds')}
-                                            />
-                                            <span className={styles.checkmark}></span>
-                                            {person.name}
-                                        </label>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
+                        <PersonSelect
+                            selectedIds={formData.screenwriterIds}
+                            onChange={handleScreenwritersChange}
+                            role={PersonRole.SCREENWRITER}
+                            placeholder="Search screenwriters or add new..."
+                            showNotification={showNotification}
+                        />
                     </div>
 
                     <div className={styles.actions}>
