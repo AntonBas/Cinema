@@ -15,43 +15,125 @@ export const PersonTab: React.FC = () => {
   const [filteredPersons, setFilteredPersons] = useState<PersonDto[]>([]);
   const [activeTab, setActiveTab] = useState<PersonRole | 'ALL'>('ALL');
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [editingPerson, setEditingPerson] = useState<PersonDto | null>(null);
   const [personToDelete, setPersonToDelete] = useState<PersonDto | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  const [currentPage, setCurrentPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [totalCounts, setTotalCounts] = useState({
+    ALL: 0,
+    [PersonRole.ACTOR]: 0,
+    [PersonRole.DIRECTOR]: 0,
+    [PersonRole.SCREENWRITER]: 0,
+  });
+
   const { notifications, showNotification, hideNotification } = useNotification();
 
+  // --- Load persons and counts on mount and tab change ---
   useEffect(() => {
-    loadPersons();
-  }, []);
+    loadPersons(true);
+    loadCounts(); // окремо рахуємо статистику
+  }, [activeTab]);
 
   useEffect(() => {
     filterPersons();
   }, [persons, activeTab]);
 
-  const loadPersons = async () => {
+  // --- Load paginated persons ---
+  const loadPersons = async (reset: boolean = false, pageOverride?: number) => {
     try {
-      setIsLoading(true);
-      const data = await personApi.getAll();
-      setPersons(data);
+      const page = reset ? 0 : (pageOverride ?? currentPage);
+      const role = activeTab === 'ALL' ? undefined : activeTab;
+
+      if (reset) {
+        setIsLoading(true);
+        setPersons([]);
+        setHasMore(true);
+      } else {
+        setIsLoadingMore(true);
+      }
+
+      const result = await personApi.search({
+        query: '',
+        role,
+        page,
+        size: 10,
+      });
+
+      if (reset) {
+        setPersons(result.content);
+        setCurrentPage(0);
+      } else {
+        setPersons((prev) => [...prev, ...result.content]);
+        setCurrentPage(page);
+      }
+
+      setHasMore(result.currentPage < result.totalPages - 1);
+
+      if (reset) {
+        setTotalCounts((prev) => ({
+          ...prev,
+          [activeTab]: result.totalElements,
+        }));
+      }
     } catch (err) {
       showNotification('Failed to load persons', 'error');
       console.error('Error loading persons:', err);
     } finally {
       setIsLoading(false);
+      setIsLoadingMore(false);
     }
   };
 
+  // --- Load more handler ---
+  const loadMore = () => {
+    if (!isLoadingMore && hasMore) {
+      const nextPage = currentPage + 1;
+      loadPersons(false, nextPage);
+    }
+  };
+
+  // --- Load total counts for all roles ---
+  const loadCounts = async () => {
+    try {
+      const roles = [undefined, PersonRole.ACTOR, PersonRole.DIRECTOR, PersonRole.SCREENWRITER];
+      const counts: Record<string, number> = {};
+
+      for (const role of roles) {
+        const result = await personApi.search({ query: '', role, page: 0, size: 1 });
+        counts[role ?? 'ALL'] = result.totalElements;
+      }
+
+      setTotalCounts({
+        ALL: counts.ALL,
+        [PersonRole.ACTOR]: counts[PersonRole.ACTOR],
+        [PersonRole.DIRECTOR]: counts[PersonRole.DIRECTOR],
+        [PersonRole.SCREENWRITER]: counts[PersonRole.SCREENWRITER],
+      });
+    } catch (err) {
+      console.error('Error loading counts:', err);
+    }
+  };
+
+  // --- Filter persons by tab ---
   const filterPersons = () => {
     if (activeTab === 'ALL') {
       setFilteredPersons(persons);
     } else {
-      setFilteredPersons(persons.filter(person => person.role === activeTab));
+      setFilteredPersons(persons.filter((person) => person.role === activeTab));
     }
   };
 
+  // --- Tab change handler ---
+  const handleTabChange = (tab: PersonRole | 'ALL') => {
+    setActiveTab(tab);
+  };
+
+  // --- Form submission (create / update) ---
   const handleSubmit = async (data: PersonFormData) => {
     try {
       if (editingPerson?.id) {
@@ -62,18 +144,21 @@ export const PersonTab: React.FC = () => {
         showNotification('Person created successfully!', 'success');
       }
       resetForm();
-      loadPersons();
+      loadPersons(true);
+      loadCounts();
     } catch (err) {
       showNotification('Failed to save person', 'error');
       console.error('Error saving person:', err);
     }
   };
 
+  // --- Edit person ---
   const handleEdit = (person: PersonDto) => {
     setEditingPerson(person);
     setIsModalOpen(true);
   };
 
+  // --- Delete person flow ---
   const handleDeleteClick = (person: PersonDto) => {
     setPersonToDelete(person);
     setIsDeleteModalOpen(true);
@@ -86,7 +171,8 @@ export const PersonTab: React.FC = () => {
       setIsDeleting(true);
       await personApi.delete(personToDelete.id);
       showNotification('Person deleted successfully!', 'success');
-      loadPersons();
+      loadPersons(true);
+      loadCounts();
     } catch (err) {
       showNotification('Failed to delete person', 'error');
       console.error('Error deleting person:', err);
@@ -102,25 +188,25 @@ export const PersonTab: React.FC = () => {
     setPersonToDelete(null);
   };
 
+  // --- Reset form state ---
   const resetForm = () => {
     setIsModalOpen(false);
     setEditingPerson(null);
   };
 
-  const getTabStats = () => {
-    return {
-      ALL: persons.length,
-      [PersonRole.ACTOR]: persons.filter(p => p.role === PersonRole.ACTOR).length,
-      [PersonRole.DIRECTOR]: persons.filter(p => p.role === PersonRole.DIRECTOR).length,
-      [PersonRole.SCREENWRITER]: persons.filter(p => p.role === PersonRole.SCREENWRITER).length,
-    };
-  };
+  const getTabStats = () => ({
+    ALL: totalCounts.ALL,
+    [PersonRole.ACTOR]: totalCounts[PersonRole.ACTOR],
+    [PersonRole.DIRECTOR]: totalCounts[PersonRole.DIRECTOR],
+    [PersonRole.SCREENWRITER]: totalCounts[PersonRole.SCREENWRITER],
+  });
 
   const handleAddNew = () => {
     setEditingPerson(null);
     setIsModalOpen(true);
   };
 
+  // --- Loading state ---
   if (isLoading) {
     return (
       <div className={styles.loading}>
@@ -130,24 +216,18 @@ export const PersonTab: React.FC = () => {
     );
   }
 
+  // --- Render ---
   return (
     <div className={styles.container}>
       <div className={styles.header}>
         <h2>People Management</h2>
-        <button
-          className={styles.primaryButton}
-          onClick={handleAddNew}
-        >
+        <button className={styles.primaryButton} onClick={handleAddNew}>
           <span className={styles.buttonIcon}>+</span>
           Add Person
         </button>
       </div>
 
-      <PersonTabs
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-        stats={getTabStats()}
-      />
+      <PersonTabs activeTab={activeTab} onTabChange={handleTabChange} stats={getTabStats()} />
 
       <PersonList
         persons={filteredPersons}
@@ -157,12 +237,27 @@ export const PersonTab: React.FC = () => {
         onAddPerson={handleAddNew}
       />
 
+      {hasMore && (
+        <div className={styles.loadMoreContainer}>
+          <button
+            className={styles.loadMoreButton}
+            onClick={loadMore}
+            disabled={isLoadingMore}
+          >
+            {isLoadingMore ? (
+              <>
+                <div className={styles.loadingSpinnerSmall}></div>
+                Loading...
+              </>
+            ) : (
+              'Load More'
+            )}
+          </button>
+        </div>
+      )}
+
       {isModalOpen && (
-        <PersonForm
-          person={editingPerson}
-          onSubmit={handleSubmit}
-          onCancel={resetForm}
-        />
+        <PersonForm person={editingPerson} onSubmit={handleSubmit} onCancel={resetForm} />
       )}
 
       <DeleteConfirmModal
