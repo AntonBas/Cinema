@@ -337,46 +337,6 @@ export const MovieForm: React.FC<MovieFormProps> = ({
                         </select>
                     </div>
 
-                    {/* <div className={styles.formGroup}>
-                        <label className={styles.label}>Genres *</label>
-                        {isLoadingData ? (
-                            <div className={styles.loading}>Loading genres...</div>
-                        ) : (
-                            <div className={styles.multiSelect}>
-                                <div className={styles.selectedItems}>
-                                    {formData.genreIds?.map(genreId => {
-                                        const genre = genres.find(g => g.id === genreId);
-                                        return genre ? (
-                                            <span key={genreId} className={styles.selectedTag}>
-                                                {genre.name}
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleGenreChange(genreId)}
-                                                    className={styles.removeTag}
-                                                >
-                                                    ×
-                                                </button>
-                                            </span>
-                                        ) : null;
-                                    })}
-                                </div>
-                                <div className={styles.selectOptions}>
-                                    {genres.map(genre => (
-                                        <label key={genre.id} className={styles.option}>
-                                            <input
-                                                type="checkbox"
-                                                checked={formData.genreIds?.includes(genre.id!) || false}
-                                                onChange={() => handleGenreChange(genre.id!)}
-                                            />
-                                            <span className={styles.checkmark}></span>
-                                            {genre.name}
-                                        </label>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-                    </div> */}
-
                     <div className={styles.formGroup}>
                         <label className={styles.label}>Genres *</label>
                         {isLoadingData ? (
