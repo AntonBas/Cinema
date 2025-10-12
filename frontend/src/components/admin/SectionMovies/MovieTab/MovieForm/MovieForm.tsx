@@ -7,6 +7,7 @@ import type { NotificationType } from '@/hooks/useNotification';
 import { toBackendFormat, toDisplayFormat } from '@/utils/dateUtils';
 import { PersonSelect } from '@/components/common/PersonSelect/PersonSelect';
 import { PersonRole } from '@/types/Person';
+import { GenreSearchList } from './GenreSearchList';
 import styles from './MovieForm.module.css';
 
 interface MovieFormProps {
@@ -336,7 +337,7 @@ export const MovieForm: React.FC<MovieFormProps> = ({
                         </select>
                     </div>
 
-                    <div className={styles.formGroup}>
+                    {/* <div className={styles.formGroup}>
                         <label className={styles.label}>Genres *</label>
                         {isLoadingData ? (
                             <div className={styles.loading}>Loading genres...</div>
@@ -373,6 +374,19 @@ export const MovieForm: React.FC<MovieFormProps> = ({
                                     ))}
                                 </div>
                             </div>
+                        )}
+                    </div> */}
+
+                    <div className={styles.formGroup}>
+                        <label className={styles.label}>Genres *</label>
+                        {isLoadingData ? (
+                            <div className={styles.loading}>Loading genres...</div>
+                        ) : (
+                            <GenreSearchList
+                                genres={genres}
+                                selectedIds={formData.genreIds || []}
+                                onChange={handleGenreChange}
+                            />
                         )}
                     </div>
 
