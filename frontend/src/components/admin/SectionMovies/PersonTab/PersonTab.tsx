@@ -33,17 +33,15 @@ export const PersonTab: React.FC = () => {
 
   const { notifications, showNotification, hideNotification } = useNotification();
 
-  // --- Load persons and counts on mount and tab change ---
   useEffect(() => {
     loadPersons(true);
-    loadCounts(); // окремо рахуємо статистику
+    loadCounts();
   }, [activeTab]);
 
   useEffect(() => {
     filterPersons();
   }, [persons, activeTab]);
 
-  // --- Load paginated persons ---
   const loadPersons = async (reset: boolean = false, pageOverride?: number) => {
     try {
       const page = reset ? 0 : (pageOverride ?? currentPage);
@@ -89,7 +87,6 @@ export const PersonTab: React.FC = () => {
     }
   };
 
-  // --- Load more handler ---
   const loadMore = () => {
     if (!isLoadingMore && hasMore) {
       const nextPage = currentPage + 1;
@@ -97,7 +94,6 @@ export const PersonTab: React.FC = () => {
     }
   };
 
-  // --- Load total counts for all roles ---
   const loadCounts = async () => {
     try {
       const roles = [undefined, PersonRole.ACTOR, PersonRole.DIRECTOR, PersonRole.SCREENWRITER];
@@ -119,7 +115,6 @@ export const PersonTab: React.FC = () => {
     }
   };
 
-  // --- Filter persons by tab ---
   const filterPersons = () => {
     if (activeTab === 'ALL') {
       setFilteredPersons(persons);
@@ -128,12 +123,10 @@ export const PersonTab: React.FC = () => {
     }
   };
 
-  // --- Tab change handler ---
   const handleTabChange = (tab: PersonRole | 'ALL') => {
     setActiveTab(tab);
   };
 
-  // --- Form submission (create / update) ---
   const handleSubmit = async (data: PersonFormData) => {
     try {
       if (editingPerson?.id) {
@@ -152,13 +145,11 @@ export const PersonTab: React.FC = () => {
     }
   };
 
-  // --- Edit person ---
   const handleEdit = (person: PersonDto) => {
     setEditingPerson(person);
     setIsModalOpen(true);
   };
 
-  // --- Delete person flow ---
   const handleDeleteClick = (person: PersonDto) => {
     setPersonToDelete(person);
     setIsDeleteModalOpen(true);
@@ -188,7 +179,6 @@ export const PersonTab: React.FC = () => {
     setPersonToDelete(null);
   };
 
-  // --- Reset form state ---
   const resetForm = () => {
     setIsModalOpen(false);
     setEditingPerson(null);
@@ -206,7 +196,6 @@ export const PersonTab: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  // --- Loading state ---
   if (isLoading) {
     return (
       <div className={styles.loading}>
@@ -216,7 +205,6 @@ export const PersonTab: React.FC = () => {
     );
   }
 
-  // --- Render ---
   return (
     <div className={styles.container}>
       <div className={styles.header}>
