@@ -9,12 +9,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import ua.lviv.bas.cinema.dao.SeatRepository;
-import ua.lviv.bas.cinema.dao.TicketRepository;
 import ua.lviv.bas.cinema.domain.Seat;
 import ua.lviv.bas.cinema.dto.SeatCreateDto;
 import ua.lviv.bas.cinema.dto.SeatDto;
 import ua.lviv.bas.cinema.mapper.SeatMapper;
+import ua.lviv.bas.cinema.repository.SeatRepository;
+import ua.lviv.bas.cinema.repository.TicketRepository;
 
 @Service
 @RequiredArgsConstructor

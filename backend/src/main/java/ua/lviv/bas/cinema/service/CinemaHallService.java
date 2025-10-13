@@ -10,14 +10,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import ua.lviv.bas.cinema.dao.CinemaHallRepository;
-import ua.lviv.bas.cinema.dao.SeatRepository;
 import ua.lviv.bas.cinema.domain.CinemaHall;
 import ua.lviv.bas.cinema.domain.Seat;
 import ua.lviv.bas.cinema.domain.enums.SeatType;
 import ua.lviv.bas.cinema.dto.CinemaHallCreateDto;
 import ua.lviv.bas.cinema.dto.CinemaHallResponseDto;
 import ua.lviv.bas.cinema.mapper.CinemaHallMapper;
+import ua.lviv.bas.cinema.repository.CinemaHallRepository;
+import ua.lviv.bas.cinema.repository.SeatRepository;
 
 @Service
 @RequiredArgsConstructor

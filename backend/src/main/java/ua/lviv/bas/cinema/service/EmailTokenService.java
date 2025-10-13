@@ -8,9 +8,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
-import ua.lviv.bas.cinema.dao.EmailTokenRepository;
 import ua.lviv.bas.cinema.domain.EmailToken;
 import ua.lviv.bas.cinema.domain.User;
+import ua.lviv.bas.cinema.repository.EmailTokenRepository;
 
 @Service
 @RequiredArgsConstructor

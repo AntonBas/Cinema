@@ -8,8 +8,8 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import ua.lviv.bas.cinema.dao.UserRepository;
 import ua.lviv.bas.cinema.domain.User;
+import ua.lviv.bas.cinema.repository.UserRepository;
 
 @Service
 public class CustomUserDetailsService implements UserDetailsService {

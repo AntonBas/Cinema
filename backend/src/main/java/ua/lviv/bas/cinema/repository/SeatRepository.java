@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.dao;
+package ua.lviv.bas.cinema.repository;
 
 import java.util.List;
 import java.util.Optional;

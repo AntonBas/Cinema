@@ -24,9 +24,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import lombok.RequiredArgsConstructor;
-import ua.lviv.bas.cinema.dao.GenreRepository;
-import ua.lviv.bas.cinema.dao.MovieRepository;
-import ua.lviv.bas.cinema.dao.PersonRepository;
 import ua.lviv.bas.cinema.domain.Genre;
 import ua.lviv.bas.cinema.domain.Movie;
 import ua.lviv.bas.cinema.domain.Person;
@@ -34,6 +31,9 @@ import ua.lviv.bas.cinema.domain.enums.MovieStatus;
 import ua.lviv.bas.cinema.dto.MovieCreateRequest;
 import ua.lviv.bas.cinema.dto.MovieDto;
 import ua.lviv.bas.cinema.mapper.MovieMapper;
+import ua.lviv.bas.cinema.repository.GenreRepository;
+import ua.lviv.bas.cinema.repository.MovieRepository;
+import ua.lviv.bas.cinema.repository.PersonRepository;
 
 @Service
 @RequiredArgsConstructor

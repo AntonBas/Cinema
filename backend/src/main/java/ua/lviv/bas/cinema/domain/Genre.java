@@ -1,6 +1,7 @@
 package ua.lviv.bas.cinema.domain;
 
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -9,6 +10,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -26,10 +28,12 @@ public class Genre {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
-	@Column(nullable = false, unique = true)
+	@NotBlank(message = "Genre name cannot be blank")
+	@Column(nullable = false, unique = true, length = 30)
 	private String name;
 
+	@Builder.Default
 	@ManyToMany(mappedBy = "genres")
-	private List<Movie> movies;
+	private Set<Movie> movies = new HashSet<>();
 
 }

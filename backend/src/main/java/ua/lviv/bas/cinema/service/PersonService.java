@@ -8,7 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ua.lviv.bas.cinema.dao.PersonRepository;
+
 import ua.lviv.bas.cinema.domain.Person;
 import ua.lviv.bas.cinema.domain.enums.PersonRole;
 import ua.lviv.bas.cinema.dto.PageResponse;
@@ -16,6 +16,7 @@ import ua.lviv.bas.cinema.dto.PersonDto;
 import ua.lviv.bas.cinema.dto.QuickCreatePersonDto;
 import ua.lviv.bas.cinema.exception.DuplicateEntityException;
 import ua.lviv.bas.cinema.mapper.PersonMapper;
+import ua.lviv.bas.cinema.repository.PersonRepository;
 
 import java.util.List;
 import java.util.Optional;

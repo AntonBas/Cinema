@@ -8,8 +8,8 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
-import ua.lviv.bas.cinema.dao.SessionRepository;
 import ua.lviv.bas.cinema.domain.Session;
+import ua.lviv.bas.cinema.repository.SessionRepository;
 
 @Service
 @RequiredArgsConstructor

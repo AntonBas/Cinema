@@ -10,10 +10,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import ua.lviv.bas.cinema.dao.UserRepository;
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.dto.UserRegistrationDto;
 import ua.lviv.bas.cinema.mapper.UserMapper;
+import ua.lviv.bas.cinema.repository.UserRepository;
 
 @Service
 @RequiredArgsConstructor
