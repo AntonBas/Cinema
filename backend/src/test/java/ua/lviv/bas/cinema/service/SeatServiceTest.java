@@ -21,13 +21,13 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import jakarta.persistence.EntityNotFoundException;
-import ua.lviv.bas.cinema.dao.SeatRepository;
-import ua.lviv.bas.cinema.dao.TicketRepository;
 import ua.lviv.bas.cinema.domain.Seat;
 import ua.lviv.bas.cinema.domain.enums.SeatType;
 import ua.lviv.bas.cinema.dto.SeatCreateDto;
 import ua.lviv.bas.cinema.dto.SeatDto;
 import ua.lviv.bas.cinema.mapper.SeatMapper;
+import ua.lviv.bas.cinema.repository.SeatRepository;
+import ua.lviv.bas.cinema.repository.TicketRepository;
 
 @ExtendWith(MockitoExtension.class)
 class SeatServiceTest {

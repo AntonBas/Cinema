@@ -13,10 +13,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import ua.lviv.bas.cinema.dao.PersonRepository;
 import ua.lviv.bas.cinema.domain.Person;
 import ua.lviv.bas.cinema.dto.PersonDto;
 import ua.lviv.bas.cinema.mapper.PersonMapper;
+import ua.lviv.bas.cinema.repository.PersonRepository;
 
 @ExtendWith(MockitoExtension.class)
 public class PersonServiceTest {

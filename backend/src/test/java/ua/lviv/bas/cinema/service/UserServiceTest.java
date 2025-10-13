@@ -22,11 +22,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import jakarta.persistence.EntityNotFoundException;
-import ua.lviv.bas.cinema.dao.UserRepository;
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.enums.UserRole;
 import ua.lviv.bas.cinema.dto.UserRegistrationDto;
 import ua.lviv.bas.cinema.mapper.UserMapper;
+import ua.lviv.bas.cinema.repository.UserRepository;
 
 @ExtendWith(MockitoExtension.class)
 //@Import(TestSecurityConfig.class)

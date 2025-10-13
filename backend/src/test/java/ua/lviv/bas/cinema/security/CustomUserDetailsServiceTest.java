@@ -18,9 +18,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
-import ua.lviv.bas.cinema.dao.UserRepository;
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.enums.UserRole;
+import ua.lviv.bas.cinema.repository.UserRepository;
 
 @ExtendWith(MockitoExtension.class)
 public class CustomUserDetailsServiceTest {
