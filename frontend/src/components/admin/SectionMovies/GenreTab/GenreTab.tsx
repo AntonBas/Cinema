@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import type { GenreDto, GenreFormData } from '@/types/Genre';
+import type { GenreDto, GenreRequest } from '@/types/Genre';
+import type { PageResponse } from '@/types/Pagination';
 import { genreApi } from '@/api/genreApi';
 import { useNotification } from '@/hooks/useNotification';
 import { Notification } from '@/components/ui/Notification';
@@ -9,29 +10,62 @@ import styles from './GenreTab.module.css';
 export const GenreTab: React.FC = () => {
   const [genres, setGenres] = useState<GenreDto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [editingGenre, setEditingGenre] = useState<GenreDto | null>(null);
   const [deletingGenre, setDeletingGenre] = useState<GenreDto | null>(null);
-  const [formData, setFormData] = useState<GenreFormData>({ name: '' });
+  const [formData, setFormData] = useState<GenreRequest>({ name: '' });
   const [isDeleting, setIsDeleting] = useState(false);
+
+  const [currentPage, setCurrentPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
 
   const { notifications, showNotification, hideNotification } = useNotification();
 
   useEffect(() => {
-    loadGenres();
+    loadGenres(true);
   }, []);
 
-  const loadGenres = async () => {
+  const loadGenres = async (reset: boolean = false, pageOverride?: number) => {
     try {
-      setIsLoading(true);
-      const data = await genreApi.getAll();
-      setGenres(data);
+      const page = reset ? 0 : (pageOverride ?? currentPage);
+
+      if (reset) {
+        setIsLoading(true);
+        setGenres([]);
+        setHasMore(true);
+      } else {
+        setIsLoadingMore(true);
+      }
+
+      const result: PageResponse<GenreDto> = await genreApi.search({
+        page,
+        size: 10
+      });
+
+      if (reset) {
+        setGenres(result.content);
+        setCurrentPage(0);
+      } else {
+        setGenres(prev => [...prev, ...result.content]);
+        setCurrentPage(page);
+      }
+
+      setHasMore(result.currentPage < result.totalPages - 1);
     } catch (error) {
       console.error('Error loading genres:', error);
       showNotification('Failed to load genres', 'error');
     } finally {
       setIsLoading(false);
+      setIsLoadingMore(false);
+    }
+  };
+
+  const loadMore = () => {
+    if (!isLoadingMore && hasMore) {
+      const nextPage = currentPage + 1;
+      loadGenres(false, nextPage);
     }
   };
 
@@ -46,7 +80,7 @@ export const GenreTab: React.FC = () => {
         showNotification('Genre created successfully!', 'success');
       }
       resetForm();
-      loadGenres();
+      loadGenres(true);
     } catch (error) {
       console.error('Error saving genre:', error);
       showNotification('Error saving genre. Please try again.', 'error');
@@ -65,7 +99,7 @@ export const GenreTab: React.FC = () => {
       setIsDeleting(true);
       await genreApi.delete(deletingGenre.id);
       showNotification('Genre deleted successfully!', 'success');
-      loadGenres();
+      loadGenres(true);
     } catch (error) {
       console.error('Error deleting genre:', error);
       showNotification('Cannot delete genre. It might be used in movies.', 'error');
@@ -93,7 +127,7 @@ export const GenreTab: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  if (isLoading) {
+  if (isLoading && genres.length === 0) {
     return (
       <div className={styles.loading}>
         <div className={styles.loadingSpinner}></div>
@@ -156,6 +190,25 @@ export const GenreTab: React.FC = () => {
           ))
         )}
       </div>
+
+      {hasMore && (
+        <div className={styles.loadMoreContainer}>
+          <button
+            className={styles.loadMoreButton}
+            onClick={loadMore}
+            disabled={isLoadingMore}
+          >
+            {isLoadingMore ? (
+              <>
+                <div className={styles.loadingSpinnerSmall}></div>
+                Loading...
+              </>
+            ) : (
+              'Load More'
+            )}
+          </button>
+        </div>
+      )}
 
       {isModalOpen && (
         <div className={styles.modalOverlay}>

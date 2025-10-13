@@ -1,4 +1,5 @@
-import type { GenreDto, GenreFormData } from '../types/Genre';
+import type { GenreDto, GenreRequest } from '../types/Genre';
+import type { PageResponse, SearchParams } from '../types/Pagination';
 
 const API_URL = 'http://localhost:8080/api/genres';
 
@@ -11,13 +12,6 @@ const getAuthHeaders = () => {
 };
 
 export const genreApi = {
-  getAll: async (): Promise<GenreDto[]> => {
-    const response = await fetch(API_URL, {
-      headers: getAuthHeaders(),
-    });
-    if (!response.ok) throw new Error('Failed to fetch genres');
-    return response.json();
-  },
 
   getById: async (id: number): Promise<GenreDto> => {
     const response = await fetch(`${API_URL}/${id}`, {
@@ -27,7 +21,7 @@ export const genreApi = {
     return response.json();
   },
 
-  create: async (genreData: GenreFormData): Promise<GenreDto> => {
+  create: async (genreData: GenreRequest): Promise<GenreDto> => {
     const response = await fetch(API_URL, {
       method: 'POST',
       headers: getAuthHeaders(),
@@ -37,7 +31,7 @@ export const genreApi = {
     return response.json();
   },
 
-  update: async (id: number, genreData: GenreFormData): Promise<GenreDto> => {
+  update: async (id: number, genreData: GenreRequest): Promise<GenreDto> => {
     const response = await fetch(`${API_URL}/${id}`, {
       method: 'PUT',
       headers: getAuthHeaders(),
@@ -53,5 +47,21 @@ export const genreApi = {
       headers: getAuthHeaders(),
     });
     if (!response.ok) throw new Error('Failed to delete genre');
+  },
+
+  search: async (params: SearchParams): Promise<PageResponse<GenreDto>> => {
+    const { query, page = 0, size = 10 } = params;
+
+    const searchParams = new URLSearchParams();
+    if (query) searchParams.append('query', query);
+    searchParams.append('page', page.toString());
+    searchParams.append('size', size.toString());
+
+    const response = await fetch(`${API_URL}?${searchParams}`, {
+      headers: getAuthHeaders(),
+    });
+
+    if (!response.ok) throw new Error('Failed to search genres');
+    return response.json();
   }
 };

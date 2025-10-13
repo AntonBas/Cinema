@@ -4,6 +4,12 @@ export interface GenreDto {
     movies?: number[];
 }
 
-export interface GenreFormData {
+export interface GenreRequest {
     name: string;
+}
+
+export interface SearchParams {
+    query?: string;
+    page?: number;
+    size?: number;
 }
