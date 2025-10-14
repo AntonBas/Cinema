@@ -1,4 +1,7 @@
 .container {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
   animation: fadeIn 0.3s ease;
 }
 
@@ -27,11 +30,49 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .primaryButton:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(253, 95, 0, 0.3);
+}
+
+.primaryButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.primaryButton:disabled:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.buttonIcon {
+  font-size: 1.25rem;
+  font-weight: bold;
+}
+
+.loading {
+  text-align: center;
+  padding: 3rem;
+  color: #a0a8c0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.loadingSpinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #3a4051;
+  border-top: 3px solid #fd5f00;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
 }
 
 .grid {
@@ -108,12 +149,24 @@
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.3s ease;
+  font-weight: 500;
 }
 
-.editButton:hover {
+.editButton:hover:not(:disabled) {
   background: #4CAF50;
   color: white;
   transform: translateY(-1px);
+}
+
+.editButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.editButton:disabled:hover {
+  background: rgba(76, 175, 80, 0.1);
+  color: #4CAF50;
+  transform: none;
 }
 
 .deleteButton {
@@ -124,12 +177,24 @@
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.3s ease;
+  font-weight: 500;
 }
 
-.deleteButton:hover {
+.deleteButton:hover:not(:disabled) {
   background: #ff4757;
   color: white;
   transform: translateY(-1px);
+}
+
+.deleteButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.deleteButton:disabled:hover {
+  background: rgba(255, 71, 87, 0.1);
+  color: #ff4757;
+  transform: none;
 }
 
 .empty {
@@ -139,9 +204,65 @@
   grid-column: 1 / -1;
 }
 
+.emptyIcon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.empty h3 {
+  color: #ffffff;
+  margin: 0 0 0.5rem 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
 .empty p {
-  margin: 0;
-  font-size: 1.1rem;
+  margin: 0 0 2rem 0;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.loadMoreContainer {
+  display: flex;
+  justify-content: center;
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid #3a4051;
+}
+
+.loadMoreButton {
+  background: rgba(253, 95, 0, 0.1);
+  color: #fd5f00;
+  border: 1px solid rgba(253, 95, 0, 0.3);
+  padding: 0.75rem 2rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.loadMoreButton:hover:not(:disabled) {
+  background: rgba(253, 95, 0, 0.2);
+  transform: translateY(-1px);
+}
+
+.loadMoreButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.loadingSpinnerSmall {
+  width: 16px;
+  height: 16px;
+  border: 2px solid transparent;
+  border-top: 2px solid #fd5f00;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
 }
 
 .modalOverlay {
@@ -156,6 +277,7 @@
   justify-content: center;
   z-index: 1000;
   padding: 1rem;
+  animation: fadeIn 0.3s ease;
 }
 
 .modal {
@@ -166,6 +288,7 @@
   width: 100%;
   max-width: 500px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  animation: slideUp 0.3s ease;
 }
 
 .modal h3 {
@@ -214,56 +337,6 @@
   justify-content: flex-end;
 }
 
-.formActions button:last-child {
-  background: #6b7280;
-  color: white;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.formActions button:last-child:hover {
-  background: #5a6170;
-}
-
-.loading {
-  text-align: center;
-  padding: 3rem;
-  color: #a0a8c0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
-}
-
-.loadingSpinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid #3a4051;
-  border-top: 3px solid #fd5f00;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-.emptyIcon {
-  font-size: 4rem;
-  margin-bottom: 1rem;
-  opacity: 0.5;
-}
-
-.empty h3 {
-  color: #ffffff;
-  margin: 0 0 0.5rem 0;
-  font-size: 1.5rem;
-}
-
-.empty p {
-  margin: 0 0 2rem 0;
-  font-size: 1rem;
-}
-
 .cancelButton {
   background: #6b7280;
   color: white;
@@ -272,10 +345,23 @@
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.3s ease;
+  font-weight: 500;
 }
 
 .cancelButton:hover {
   background: #5a6170;
+  transform: translateY(-1px);
+}
+
+.cancelButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.cancelButton:disabled:hover {
+  background: #6b7280;
+  transform: none;
 }
 
 .confirmModal {
@@ -329,10 +415,12 @@
   cursor: pointer;
   transition: all 0.3s ease;
   flex: 1;
+  font-weight: 500;
 }
 
 .cancelConfirmButton:hover {
   background: #5a6170;
+  transform: translateY(-1px);
 }
 
 .deleteConfirmButton {
@@ -355,8 +443,30 @@
 .deleteConfirmButton:disabled {
   background: #6b7280;
   cursor: not-allowed;
-  transform: none !important;
-  box-shadow: none !important;
+  transform: none;
+  box-shadow: none;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes spin {
@@ -369,33 +479,17 @@
   }
 }
 
-.editButton:disabled,
-.deleteButton:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none !important;
-}
-
-.editButton:disabled:hover,
-.deleteButton:disabled:hover {
-  background: inherit;
-  color: inherit;
-  transform: none;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 @media (max-width: 768px) {
+  .container {
+    padding: 1rem;
+  }
+
+  .header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+
   .grid {
     grid-template-columns: 1fr;
   }
@@ -410,13 +504,16 @@
     justify-content: center;
   }
 
-  .header {
-    flex-direction: column;
-    gap: 1rem;
-    align-items: flex-start;
-  }
-
   .formActions {
     flex-direction: column;
+  }
+
+  .confirmActions {
+    flex-direction: column;
+  }
+
+  .modal {
+    padding: 1.5rem;
+    margin: 1rem;
   }
 }
