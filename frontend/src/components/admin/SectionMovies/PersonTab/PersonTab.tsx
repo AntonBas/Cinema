@@ -6,7 +6,7 @@ import { DeleteConfirmModal } from '@/components/ui/DeleteConfirmModal';
 import { useNotification } from '@/hooks/useNotification';
 import { Notification } from '@/components/ui/Notification';
 import { personApi } from '@/api/personApi';
-import type { PersonDto, PersonFormData } from '@/types/Person';
+import type { PersonDto, PersonRequest } from '@/types/Person';
 import { PersonRole } from '@/types/Person';
 import styles from './PersonTab.module.css';
 
@@ -127,7 +127,7 @@ export const PersonTab: React.FC = () => {
     setActiveTab(tab);
   };
 
-  const handleSubmit = async (data: PersonFormData) => {
+  const handleSubmit = async (data: PersonRequest) => {
     try {
       if (editingPerson?.id) {
         await personApi.update(editingPerson.id, data);
@@ -245,7 +245,11 @@ export const PersonTab: React.FC = () => {
       )}
 
       {isModalOpen && (
-        <PersonForm person={editingPerson} onSubmit={handleSubmit} onCancel={resetForm} />
+        <PersonForm
+          person={editingPerson}
+          onSubmit={handleSubmit}
+          onCancel={resetForm}
+        />
       )}
 
       <DeleteConfirmModal

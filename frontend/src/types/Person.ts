@@ -5,12 +5,17 @@ export enum PersonRole {
 }
 
 export interface PersonDto {
-    id?: number;
+    id: number;
     name: string;
     role: PersonRole;
 }
 
-export interface PersonFormData {
+export interface PersonRequest {
+    name: string;
+    role: PersonRole;
+}
+
+export interface QuickCreatePersonDto {
     name: string;
     role: PersonRole;
 }

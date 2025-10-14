@@ -1,4 +1,5 @@
-import type { PersonDto, PersonFormData, PersonRole } from '../types/Person';
+import type { PersonDto, PersonRequest, PersonRole, QuickCreatePersonDto } from '../types/Person';
+import type { PageResponse } from '../types/Pagination';
 
 const API_URL = 'http://localhost:8080/api/persons';
 
@@ -10,35 +11,7 @@ const getAuthHeaders = () => {
   };
 };
 
-export interface QuickCreatePersonDto {
-  name: string;
-  role: PersonRole;
-}
-
-export interface PageResponse<T> {
-  content: T[];
-  currentPage: number;
-  totalPages: number;
-  totalElements: number;
-  pageSize: number;
-}
-
-export interface SearchParams {
-  query?: string;
-  role?: PersonRole;
-  page?: number;
-  size?: number;
-}
-
 export const personApi = {
-  getAll: async (): Promise<PersonDto[]> => {
-    const response = await fetch(API_URL, {
-      headers: getAuthHeaders(),
-    });
-    if (!response.ok) throw new Error('Failed to fetch persons');
-    return response.json();
-  },
-
   getById: async (id: number): Promise<PersonDto> => {
     const response = await fetch(`${API_URL}/${id}`, {
       headers: getAuthHeaders(),
@@ -47,7 +20,7 @@ export const personApi = {
     return response.json();
   },
 
-  create: async (personData: PersonFormData): Promise<PersonDto> => {
+  create: async (personData: PersonRequest): Promise<PersonDto> => {
     const response = await fetch(API_URL, {
       method: 'POST',
       headers: getAuthHeaders(),
@@ -57,11 +30,11 @@ export const personApi = {
     return response.json();
   },
 
-  update: async (id: number, personData: PersonFormData): Promise<PersonDto> => {
+  update: async (id: number, personData: PersonRequest): Promise<PersonDto> => {
     const response = await fetch(`${API_URL}/${id}`, {
       method: 'PUT',
       headers: getAuthHeaders(),
-      body: JSON.stringify({ ...personData, id }),
+      body: JSON.stringify(personData),
     });
     if (!response.ok) throw new Error('Failed to update person');
     return response.json();
@@ -75,22 +48,30 @@ export const personApi = {
     if (!response.ok) throw new Error('Failed to delete person');
   },
 
+  getAll: async (): Promise<PersonDto[]> => {
+    const response = await fetch(API_URL, {
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to fetch persons');
+    return response.json();
+  },
+
   quickCreate: async (personData: QuickCreatePersonDto): Promise<PersonDto> => {
     const response = await fetch(`${API_URL}/quick-create`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(personData),
     });
-    if (!response.ok) {
-      if (response.status === 409) {
-        throw new Error('Person with this name and role already exists');
-      }
-      throw new Error('Failed to create person');
-    }
+    if (!response.ok) throw new Error('Failed to quick create person');
     return response.json();
   },
 
-  search: async (params: SearchParams): Promise<PageResponse<PersonDto>> => {
+  search: async (params: {
+    query?: string;
+    role?: PersonRole;
+    page?: number;
+    size?: number;
+  }): Promise<PageResponse<PersonDto>> => {
     const { query, role, page = 0, size = 10 } = params;
 
     const searchParams = new URLSearchParams();
