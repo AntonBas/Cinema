@@ -27,8 +27,8 @@ public class Person {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
-	@NotBlank
-	@Column(nullable = false)
+	@NotBlank(message = "Person name is required")
+	@Column(nullable = false, length = 50)
 	private String name;
 
 	@Enumerated(EnumType.STRING)

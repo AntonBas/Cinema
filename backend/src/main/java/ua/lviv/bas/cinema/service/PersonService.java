@@ -1,7 +1,7 @@
 package ua.lviv.bas.cinema.service;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -9,17 +9,18 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.Person;
 import ua.lviv.bas.cinema.domain.enums.PersonRole;
 import ua.lviv.bas.cinema.dto.PageResponse;
 import ua.lviv.bas.cinema.dto.PersonDto;
+import ua.lviv.bas.cinema.dto.PersonRequest;
 import ua.lviv.bas.cinema.dto.QuickCreatePersonDto;
 import ua.lviv.bas.cinema.exception.DuplicateEntityException;
+import ua.lviv.bas.cinema.exception.PersonNotFoundException;
 import ua.lviv.bas.cinema.mapper.PersonMapper;
 import ua.lviv.bas.cinema.repository.PersonRepository;
-
-import java.util.List;
-import java.util.Optional;
 
 @Slf4j
 @Service
@@ -29,30 +30,44 @@ public class PersonService {
 	private final PersonRepository personRepository;
 	private final PersonMapper personMapper;
 
-	public List<PersonDto> getAllPersons() {
-		log.debug("Getting all persons");
-		return personMapper.toDtoList(personRepository.findAll());
-	}
-
-	public Optional<PersonDto> getPersonById(Long id) {
-		log.debug("Getting person by id: {}", id);
-		return personRepository.findById(id).map(personMapper::toDto);
-	}
-
-	public PersonDto savePerson(Person person) {
-		log.info("Saving person: {}", person.getName());
+	public PersonDto createPerson(PersonRequest request) {
+		log.info("Saving person: {}", request.getName());
+		if (personRepository.existsByNameAndRole(request.getName(), request.getRole())) {
+			throw new DuplicateEntityException(
+					"Person with name '" + request.getName() + "' and role '" + request.getRole() + "' already exists");
+		}
+		Person person = personMapper.toEntity(request);
 		Person savedPerson = personRepository.save(person);
 		return personMapper.toDto(savedPerson);
 	}
 
+	public PersonDto getPersonById(Long id) {
+		log.debug("Getting person by id: {}", id);
+		return personRepository.findById(id).map(personMapper::toDto)
+				.orElseThrow(() -> new PersonNotFoundException("Person not found with id: " + id));
+	}
+
+	public PersonDto updatePerson(Long id, PersonRequest request) {
+		log.info("Updating person with id: {}", id);
+		Person existingPerson = personRepository.findById(id)
+				.orElseThrow(() -> new PersonNotFoundException("Person not found with id: " + id));
+		personMapper.updatePersonFromRequest(request, existingPerson);
+
+		Person updatedPerson = personRepository.save(existingPerson);
+		return personMapper.toDto(updatedPerson);
+	}
+
 	public void deletePerson(Long id) {
 		log.info("Deleting person with id: {}", id);
+		if (!personRepository.existsById(id)) {
+			throw new PersonNotFoundException("Person not found with id: " + id);
+		}
 		personRepository.deleteById(id);
 	}
 
-	public Optional<Person> findEntityById(Long id) {
-		log.debug("Finding person entity by id: {}", id);
-		return personRepository.findById(id);
+	public List<PersonDto> getAllPersons() {
+		log.debug("Getting all persons");
+		return personMapper.toDtoList(personRepository.findAll());
 	}
 
 	@Transactional

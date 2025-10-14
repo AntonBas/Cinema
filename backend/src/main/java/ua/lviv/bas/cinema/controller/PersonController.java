@@ -1,7 +1,6 @@
 package ua.lviv.bas.cinema.controller;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,12 +17,11 @@ import org.springframework.web.bind.annotation.RestController;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import ua.lviv.bas.cinema.domain.Person;
 import ua.lviv.bas.cinema.domain.enums.PersonRole;
 import ua.lviv.bas.cinema.dto.PageResponse;
 import ua.lviv.bas.cinema.dto.PersonDto;
+import ua.lviv.bas.cinema.dto.PersonRequest;
 import ua.lviv.bas.cinema.dto.QuickCreatePersonDto;
-import ua.lviv.bas.cinema.mapper.PersonMapper;
 import ua.lviv.bas.cinema.service.PersonService;
 
 @Slf4j
@@ -33,129 +31,63 @@ import ua.lviv.bas.cinema.service.PersonService;
 public class PersonController {
 
 	private final PersonService personService;
-	private final PersonMapper personMapper;
-
-	@GetMapping
-	public ResponseEntity<List<PersonDto>> getAll() {
-		log.info("GET /api/persons - Getting all persons");
-		try {
-			List<PersonDto> persons = personService.getAllPersons();
-			log.debug("Retrieved {} persons", persons.size());
-			return ResponseEntity.ok(persons);
-		} catch (Exception e) {
-			log.error("Error getting all persons: {}", e.getMessage(), e);
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-		}
-	}
+	private static final String DEFAULT_PAGE = "0";
+	private static final String DEFAULT_SIZE = "10";
+	private static final int MAX_PAGE_SIZE = 50;
 
 	@GetMapping("/{id}")
-	public ResponseEntity<PersonDto> getById(@PathVariable Long id) {
+	public ResponseEntity<PersonDto> getPersonById(@PathVariable Long id) {
 		log.info("GET /api/persons/{} - Getting person by id", id);
-		try {
-			Optional<PersonDto> person = personService.getPersonById(id);
-			if (person.isPresent()) {
-				log.debug("Found person: {}", person.get().getName());
-				return ResponseEntity.ok(person.get());
-			} else {
-				log.warn("Person with id {} not found", id);
-				return ResponseEntity.ok(person.get());
-			}
-		} catch (Exception e) {
-			log.error("Error getting person by id {}: {}", id, e.getMessage(), e);
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-		}
+		PersonDto person = personService.getPersonById(id);
+		return ResponseEntity.ok(person);
 	}
 
 	@PostMapping
-	public ResponseEntity<PersonDto> create(@RequestBody @Valid PersonDto personDto) {
-		log.info("POST /api/persons - Creating new person: {}", personDto.getName());
-		try {
-			Person personToSave = personMapper.toEntity(personDto);
-			PersonDto savedPerson = personService.savePerson(personToSave);
-			log.info("Successfully created person with id: {}", savedPerson.getId());
-			return ResponseEntity.status(HttpStatus.CREATED).body(savedPerson);
-		} catch (Exception e) {
-			log.error("Error creating person: {}", e.getMessage(), e);
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-		}
+	public ResponseEntity<PersonDto> createPerson(@RequestBody @Valid PersonRequest request) {
+		log.info("POST /api/persons - Creating new person: {}", request.getName());
+		PersonDto createdPerson = personService.createPerson(request);
+		return ResponseEntity.status(HttpStatus.CREATED).body(createdPerson);
 
 	}
 
 	@PutMapping("/{id}")
-	public ResponseEntity<PersonDto> update(@PathVariable Long id, @RequestBody @Valid PersonDto personDto) {
-		personDto.setId(id);
-
+	public ResponseEntity<PersonDto> updatePerson(@PathVariable Long id, @RequestBody @Valid PersonRequest request) {
 		log.info("PUT /api/persons/{} - Updating person", id);
-		try {
-			personDto.setId(id);
-
-			Optional<Person> existingPersonOpt = personService.findEntityById(id);
-			if (existingPersonOpt.isEmpty()) {
-				log.warn("Person with id {} not found for update", id);
-				return ResponseEntity.notFound().build();
-			}
-
-			Person existingPerson = existingPersonOpt.get();
-			personMapper.updateEntityFromDto(personDto, existingPerson);
-
-			PersonDto updatedPerson = personService.savePerson(existingPerson);
-			log.info("Successfully updated person with id: {}", id);
-			return ResponseEntity.ok(updatedPerson);
-		} catch (Exception e) {
-			log.error("Error updating person with id {}: {}", id, e.getMessage(), e);
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-		}
-
+		PersonDto updatedPerson = personService.updatePerson(id, request);
+		return ResponseEntity.ok(updatedPerson);
 	}
 
 	@DeleteMapping("/{id}")
-	public ResponseEntity<Void> delete(@PathVariable Long id) {
+	public ResponseEntity<Void> deletePerson(@PathVariable Long id) {
 		log.info("DELETE /api/persons/{} - Deleting person", id);
-		try {
-			Optional<Person> existingPerson = personService.findEntityById(id);
-			if (existingPerson.isEmpty()) {
-				log.warn("Person with id {} not found for deletion", id);
-				return ResponseEntity.notFound().build();
-			}
-
-			personService.deletePerson(id);
-			log.info("Successfully deleted person with id: {}", id);
-			return ResponseEntity.noContent().build();
-		} catch (Exception e) {
-			log.error("Error deleting person with id {}: {}", id, e.getMessage(), e);
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-		}
+		personService.deletePerson(id);
+		return ResponseEntity.noContent().build();
 	}
 
 	@PostMapping("/quick-create")
 	public ResponseEntity<PersonDto> quickCreate(@RequestBody @Valid QuickCreatePersonDto request) {
 		log.info("POST /api/persons/quick-create - Quick creating person: {} with role: {}", request.getName(),
 				request.getRole());
-		try {
-			PersonDto createdPerson = personService.quickCreate(request);
-			log.info("Successfully quick-created person with id: {} - {}", createdPerson.getId(),
-					createdPerson.getName());
-			return ResponseEntity.status(HttpStatus.CREATED).body(createdPerson);
-		} catch (Exception e) {
-			log.error("Error during quick create for {}: {}", request.getName(), e.getMessage());
-			return ResponseEntity.status(HttpStatus.CONFLICT).build();
-		}
+		PersonDto createdPerson = personService.quickCreate(request);
+		return ResponseEntity.status(HttpStatus.CREATED).body(createdPerson);
+	}
+
+	@GetMapping
+	public ResponseEntity<List<PersonDto>> getAll() {
+		log.info("GET /api/persons - Getting all persons");
+		List<PersonDto> persons = personService.getAllPersons();
+		log.debug("Retrieved {} persons", persons.size());
+		return ResponseEntity.ok(persons);
 	}
 
 	@GetMapping("/search")
 	public ResponseEntity<PageResponse<PersonDto>> searchPersons(@RequestParam(required = false) String query,
-			@RequestParam(required = false) PersonRole role, @RequestParam(defaultValue = "0") int page,
-			@RequestParam(defaultValue = "10") int size) {
-
+			@RequestParam(required = false) PersonRole role, @RequestParam(defaultValue = DEFAULT_PAGE) int page,
+			@RequestParam(defaultValue = DEFAULT_SIZE) int size) {
+		size = Math.min(size, MAX_PAGE_SIZE);
 		log.info("GET /api/persons/search - query: '{}', role: {}, page: {}, size: {}", query, role, page, size);
-		try {
-			PageResponse<PersonDto> result = personService.searchPersons(query, role, page, size);
-			log.debug("Search completed - found {} results, page {}/{}", result.getTotalElements(), page,
-					result.getTotalPages());
-			return ResponseEntity.ok(result);
-		} catch (Exception e) {
-			log.error("Search error for query '{}': {}", query, e.getMessage(), e);
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-		}
+		PageResponse<PersonDto> result = personService.searchPersons(query, role, page, size);
+		return ResponseEntity.ok(result);
+
 	}
 }

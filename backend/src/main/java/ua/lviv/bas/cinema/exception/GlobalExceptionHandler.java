@@ -18,6 +18,12 @@ public class GlobalExceptionHandler {
 		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
 	}
 
+	@ExceptionHandler(PersonNotFoundException.class)
+	public ResponseEntity<String> handlePersonNotFound(PersonNotFoundException ex) {
+		log.warn("Person not found: {}", ex.getMessage());
+		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+	}
+
 	@ExceptionHandler(Exception.class)
 	public ResponseEntity<String> handleOtherExceptions(Exception ex) {
 		log.error("Unexpected error: ", ex);
@@ -32,7 +38,5 @@ public class GlobalExceptionHandler {
 		log.warn("Validation failed: {}", errorMessage);
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage);
 	}
-	
-	
 
 }
