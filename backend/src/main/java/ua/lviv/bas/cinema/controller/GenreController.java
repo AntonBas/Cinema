@@ -19,6 +19,9 @@ import ua.lviv.bas.cinema.service.GenreService;
 public class GenreController {
 
 	private final GenreService genreService;
+	private static final String DEFAULT_PAGE = "0";
+	private static final String DEFAULT_SIZE = "10";
+	private static final int MAX_PAGE_SIZE = 50;
 
 	@GetMapping("/{id}")
 	public ResponseEntity<GenreDto> getGenreById(@PathVariable Long id) {
@@ -37,8 +40,8 @@ public class GenreController {
 	@PutMapping("/{id}")
 	public ResponseEntity<GenreDto> updateGenre(@PathVariable Long id, @RequestBody @Valid GenreRequest request) {
 		log.info("PUT /api/genres/{} - Updating genre", id);
-		GenreDto updated = genreService.updateGenre(id, request);
-		return ResponseEntity.ok(updated);
+		GenreDto updatedGenre = genreService.updateGenre(id, request);
+		return ResponseEntity.ok(updatedGenre);
 	}
 
 	@DeleteMapping("/{id}")
@@ -50,7 +53,8 @@ public class GenreController {
 
 	@GetMapping
 	public ResponseEntity<PageResponse<GenreDto>> searchGenres(@RequestParam(required = false) String query,
-			@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
+			@RequestParam(defaultValue = DEFAULT_PAGE) int page, @RequestParam(defaultValue = DEFAULT_SIZE) int size) {
+		size = Math.min(size, MAX_PAGE_SIZE);
 		log.info("GET /api/genres - query: '{}', page: {}, size: {}", query, page, size);
 		PageResponse<GenreDto> result = genreService.searchGenres(query, page, size);
 		return ResponseEntity.ok(result);

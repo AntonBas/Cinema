@@ -29,8 +29,8 @@ public class GenreService {
 	public GenreDto createGenre(GenreRequest request) {
 		log.info("Creating genre: {}", request.getName());
 		Genre genre = genreMapper.toEntity(request);
-		Genre saved = genreRepository.save(genre);
-		return genreMapper.toDto(saved);
+		Genre savedGenre = genreRepository.save(genre);
+		return genreMapper.toDto(savedGenre);
 	}
 
 	public GenreDto getGenreById(Long id) {
@@ -47,8 +47,8 @@ public class GenreService {
 
 		genreMapper.updateGenreFromRequest(request, existingGenre);
 
-		Genre updated = genreRepository.save(existingGenre);
-		return genreMapper.toDto(updated);
+		Genre updatedGenre = genreRepository.save(existingGenre);
+		return genreMapper.toDto(updatedGenre);
 	}
 
 	public void deleteGenre(Long id) {
@@ -61,7 +61,7 @@ public class GenreService {
 
 	public List<GenreDto> getAllGenres() {
 		log.info("Retrieving all genres");
-		return genreRepository.findAll().stream().map(genreMapper::toDto).toList();
+		return genreMapper.toDtoList(genreRepository.findAll());
 	}
 
 	public PageResponse<GenreDto> searchGenres(String query, int page, int size) {
@@ -76,7 +76,14 @@ public class GenreService {
 			genrePage = genreRepository.findAll(pageable);
 		}
 
-		return new PageResponse<>(genrePage.getContent().stream().map(genreMapper::toDto).toList(),
-				genrePage.getNumber(), genrePage.getTotalPages(), genrePage.getTotalElements(), genrePage.getSize());
+		log.debug("Search found {} results for query: '{}'", genrePage.getTotalElements(), query);
+		return toPageResponse(genrePage);
+	}
+
+	private PageResponse<GenreDto> toPageResponse(Page<Genre> genrePage) {
+		List<GenreDto> content = genrePage.getContent().stream().map(genreMapper::toDto).toList();
+
+		return new PageResponse<>(content, genrePage.getNumber(), genrePage.getTotalPages(),
+				genrePage.getTotalElements(), genrePage.getSize());
 	}
 }
