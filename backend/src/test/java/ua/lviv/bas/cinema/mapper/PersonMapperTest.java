@@ -10,6 +10,8 @@ import org.mapstruct.factory.Mappers;
 import ua.lviv.bas.cinema.domain.Person;
 import ua.lviv.bas.cinema.domain.enums.PersonRole;
 import ua.lviv.bas.cinema.dto.PersonDto;
+import ua.lviv.bas.cinema.dto.PersonRequest;
+import ua.lviv.bas.cinema.dto.QuickCreatePersonDto;
 
 public class PersonMapperTest {
 
@@ -27,17 +29,6 @@ public class PersonMapperTest {
 	}
 
 	@Test
-	void toEntity_ShouldMapAllFields() {
-		PersonDto dto = PersonDto.builder().id(1L).name("Anton Bas").role(PersonRole.DIRECTOR).build();
-
-		Person person = mapper.toEntity(dto);
-
-		assertThat(person.getId()).isEqualTo(1L);
-		assertThat(person.getName()).isEqualTo("Anton Bas");
-		assertThat(person.getRole()).isEqualTo(PersonRole.DIRECTOR);
-	}
-
-	@Test
 	void toDtoList_ShouldMapList() {
 		Person person1 = Person.builder().id(1L).name("Anton Bas").build();
 		Person person2 = Person.builder().id(2L).name("Bas Anton").build();
@@ -47,5 +38,52 @@ public class PersonMapperTest {
 		assertThat(dtos).hasSize(2);
 		assertThat(dtos.get(0).getName()).isEqualTo("Anton Bas");
 		assertThat(dtos.get(1).getName()).isEqualTo("Bas Anton");
+	}
+
+	@Test
+	void toEntity_FromPersonRequest_ShouldIgnoreIdAndMapFields() {
+		PersonRequest request = PersonRequest.builder().name("New Person").role(PersonRole.DIRECTOR).build();
+
+		Person person = mapper.toEntity(request);
+
+		assertThat(person.getId()).isNull();
+		assertThat(person.getName()).isEqualTo("New Person");
+		assertThat(person.getRole()).isEqualTo(PersonRole.DIRECTOR);
+	}
+
+	@Test
+	void updatePersonFromRequest_ShouldUpdateFields() {
+		Person existing = Person.builder().id(10L).name("Old Name").role(PersonRole.ACTOR).build();
+
+		PersonRequest request = PersonRequest.builder().name("Updated Name").role(PersonRole.DIRECTOR).build();
+
+		mapper.updatePersonFromRequest(request, existing);
+
+		assertThat(existing.getId()).isEqualTo(10L);
+		assertThat(existing.getName()).isEqualTo("Updated Name");
+		assertThat(existing.getRole()).isEqualTo(PersonRole.DIRECTOR);
+	}
+
+	@Test
+	void toEntity_FromQuickCreatePersonDto_ShouldMapFieldsAndIgnoreId() {
+		QuickCreatePersonDto quickDto = QuickCreatePersonDto.builder().name("Quick Person").role(PersonRole.ACTOR)
+				.build();
+
+		Person person = mapper.toEntity(quickDto);
+
+		assertThat(person.getId()).isNull();
+		assertThat(person.getName()).isEqualTo("Quick Person");
+		assertThat(person.getRole()).isEqualTo(PersonRole.ACTOR);
+	}
+
+	@Test
+	void toPersonRequest_FromQuickCreatePersonDto_ShouldMapAllFields() {
+		QuickCreatePersonDto quickDto = QuickCreatePersonDto.builder().name("Quick To Request")
+				.role(PersonRole.DIRECTOR).build();
+
+		PersonRequest request = mapper.toPersonRequest(quickDto);
+
+		assertThat(request.getName()).isEqualTo("Quick To Request");
+		assertThat(request.getRole()).isEqualTo(PersonRole.DIRECTOR);
 	}
 }
