@@ -42,14 +42,15 @@ export const AdminDashboard: React.FC = () => {
     try {
       setIsLoading(true);
 
-      const [movies, genres, persons] = await Promise.all([
+      const [movies, genresResponse, persons] = await Promise.all([
         movieApi.getAll(),
-        genreApi.getAll(),
+        genreApi.search({}),
         personApi.getAll()
       ]);
 
-      const activeScreenings = Math.floor(Math.random() * 20) + 10;
+      const genres = genresResponse.content;
 
+      const activeScreenings = Math.floor(Math.random() * 20) + 10;
       const recentActivity = generateRecentActivity(movies, genres, persons);
 
       setStats({
