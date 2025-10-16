@@ -21,10 +21,7 @@ import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
 import jakarta.validation.constraints.AssertTrue;
-import jakarta.validation.constraints.Future;
-import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -36,14 +33,14 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import ua.lviv.bas.cinema.domain.enums.AgeRating;
-import ua.lviv.bas.cinema.domain.enums.MovieCategory;
 import ua.lviv.bas.cinema.domain.enums.MovieStatus;
 
 @Entity
 @Table(name = "movies", indexes = { @Index(name = "idx_movie_title", columnList = "title"),
 		@Index(name = "idx_movie_status", columnList = "status"),
 		@Index(name = "idx_movie_release_date", columnList = "release_date"),
-		@Index(name = "idx_movie_slug", columnList = "slug") })
+		@Index(name = "idx_movie_slug", columnList = "slug"),
+		@Index(name = "idx_movie_active_dates", columnList = "release_date, end_showing_date") })
 @Getter
 @Setter
 @NoArgsConstructor
@@ -81,12 +78,10 @@ public class Movie {
 	private Integer durationMinutes;
 
 	@NotNull(message = "Release date is required")
-	@FutureOrPresent(message = "Release date cannot be in the past")
 	@Column(nullable = false, name = "release_date")
 	private LocalDate releaseDate;
 
 	@NotNull(message = "End showing date is required")
-	@Future(message = "End showing date must be in the future")
 	@Column(nullable = false, name = "end_showing_date")
 	private LocalDate endShowingDate;
 
@@ -104,7 +99,7 @@ public class Movie {
 	@Column(nullable = false, name = "age_rating")
 	private AgeRating ageRating;
 
-	@OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
+	@OneToMany(mappedBy = "movie", cascade = { CascadeType.PERSIST, CascadeType.MERGE })
 	@Builder.Default
 	private Set<Session> sessions = new HashSet<>();
 
@@ -128,61 +123,6 @@ public class Movie {
 	@Builder.Default
 	private Set<Genre> genres = new HashSet<>();
 
-	@Transient
-	public MovieCategory getCategory() {
-		LocalDate now = LocalDate.now();
-
-		if (now.isBefore(releaseDate)) {
-			return MovieCategory.UPCOMING;
-		} else if (now.isAfter(endShowingDate)) {
-			return MovieCategory.ARCHIVED;
-		} else {
-			return MovieCategory.CURRENT;
-		}
-	}
-
-	@Transient
-	public String getPosterUrl() {
-		if (this.posterFileName == null || this.posterFileName.isBlank()) {
-			return "/images/default-movie-poster.jpg";
-		}
-		return "/api/movies/" + this.id + "/poster";
-	}
-
-	@Transient
-	public String getFullPosterPath() {
-		if (this.posterFileName == null || this.posterFileName.isBlank()) {
-			return null;
-		}
-		return "/uploads/posters/" + this.posterFileName;
-	}
-
-	@Transient
-	public Integer getReleaseYear() {
-		return releaseDate != null ? releaseDate.getYear() : null;
-	}
-
-	@Transient
-	public boolean isCurrentlyShowing() {
-		return getCategory() == MovieCategory.CURRENT;
-	}
-
-	@Transient
-	public boolean isUpcoming() {
-		return getCategory() == MovieCategory.UPCOMING;
-	}
-
-	@Transient
-	public boolean isArchived() {
-		return getCategory() == MovieCategory.ARCHIVED;
-	}
-
-	@Transient
-	public boolean isActive() {
-		return getCategory() == MovieCategory.CURRENT || getCategory() == MovieCategory.UPCOMING;
-	}
-
-	@Transient
 	@AssertTrue(message = "End showing date must be after release date")
 	public boolean isEndDateAfterReleaseDate() {
 		if (releaseDate == null || endShowingDate == null) {

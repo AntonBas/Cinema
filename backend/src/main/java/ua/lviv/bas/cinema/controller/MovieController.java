@@ -4,11 +4,11 @@ import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -19,83 +19,128 @@ import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.dto.MovieCreateRequest;
 import ua.lviv.bas.cinema.dto.MovieDto;
+import ua.lviv.bas.cinema.dto.MovieResponse;
+import ua.lviv.bas.cinema.dto.MovieUpdateRequest;
+import ua.lviv.bas.cinema.dto.PageResponse;
 import ua.lviv.bas.cinema.service.MovieService;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/movies")
 @RequiredArgsConstructor
+@Validated
 public class MovieController {
 
 	private final MovieService movieService;
-
-	@GetMapping
-	public ResponseEntity<List<MovieDto>> getAllMovies() {
-		return ResponseEntity.ok(movieService.getAllMovies());
-	}
+	private static final String DEFAULT_PAGE = "0";
+	private static final String DEFAULT_SIZE = "10";
+	private static final int MAX_PAGE_SIZE = 50;
 
 	@GetMapping("/{id}")
-	public ResponseEntity<MovieDto> getMovieById(@PathVariable Long id) {
-		return ResponseEntity.ok(movieService.getMovieById(id));
+	public ResponseEntity<MovieDto> getById(@PathVariable Long id) {
+		log.info("GET /api/movies/{} - Getting movie by id", id);
+		MovieDto movie = movieService.getById(id);
+		return ResponseEntity.ok(movie);
 	}
 
 	@GetMapping("/slug/{slug}")
-	public ResponseEntity<MovieDto> getMovieBySlug(@PathVariable String slug) {
-		return ResponseEntity.ok(movieService.getMovieBySlug(slug));
+	public ResponseEntity<MovieDto> getBySlug(@PathVariable String slug) {
+		log.info("GET /api/movies/slug/{} - Getting movie by slug", slug);
+		MovieDto movie = movieService.getBySlug(slug);
+		return ResponseEntity.ok(movie);
 	}
 
-	@GetMapping("/page")
-	public ResponseEntity<Page<MovieDto>> getPaginatedMovies(@RequestParam(defaultValue = "0") int page,
-			@RequestParam(defaultValue = "10") int size) {
-		Pageable pageable = PageRequest.of(page, size);
-		return ResponseEntity.ok(movieService.getPaginatedMovies(pageable));
+	@GetMapping
+	public ResponseEntity<List<MovieResponse>> getAll() {
+		log.info("GET /api/movies - Getting all movies");
+		List<MovieResponse> movies = movieService.getAll().stream().map(this::toMovieResponse).toList();
+		log.debug("Retrieved {} movies", movies.size());
+		return ResponseEntity.ok(movies);
 	}
 
-	@GetMapping("/status/{status}")
-	public ResponseEntity<List<MovieDto>> getMoviesByStatus(@PathVariable String status) {
-		return ResponseEntity.ok(movieService.getMoviesByStatus(status));
+	@GetMapping("/paginated")
+	public ResponseEntity<PageResponse<MovieDto>> getPaginated(@RequestParam(defaultValue = DEFAULT_PAGE) int page,
+			@RequestParam(defaultValue = DEFAULT_SIZE) int size) {
+
+		size = Math.min(size, MAX_PAGE_SIZE);
+		log.info("GET /api/movies/paginated - page: {}, size: {}", page, size);
+
+		Page<MovieDto> moviePage = movieService.getPaginated(PageRequest.of(page, size));
+
+		PageResponse<MovieDto> response = new PageResponse<>(moviePage.getContent(), moviePage.getNumber(),
+				moviePage.getTotalPages(), moviePage.getTotalElements(), moviePage.getSize());
+
+		return ResponseEntity.ok(response);
 	}
 
-	@GetMapping("/current")
-	public ResponseEntity<List<MovieDto>> getCurrentlyShowingMovies() {
-		return ResponseEntity.ok(movieService.getCurrentlyShowingMovies());
-	}
-
-	@GetMapping("/upcoming")
-	public ResponseEntity<List<MovieDto>> getUpcomingMovies() {
-		return ResponseEntity.ok(movieService.getUpcomingMovies());
-	}
-
-	@GetMapping("/genre/{genreId}")
-	public ResponseEntity<List<MovieDto>> getMoviesByGenre(@PathVariable Long genreId) {
-		return ResponseEntity.ok(movieService.getMoviesByGenre(genreId));
-	}
-
-	@PostMapping(consumes = "multipart/form-data")
-	public ResponseEntity<MovieDto> createMovie(@ModelAttribute @Valid MovieCreateRequest request) {
-		return ResponseEntity.ok(movieService.createMovie(request));
+	@PostMapping
+	public ResponseEntity<MovieDto> create(@RequestBody @Valid MovieCreateRequest request) {
+		log.info("POST /api/movies - Creating new movie: {}", request.getTitle());
+		MovieDto createdMovie = movieService.create(request);
+		return ResponseEntity.status(HttpStatus.CREATED).body(createdMovie);
 	}
 
 	@PutMapping("/{id}")
-	public ResponseEntity<MovieDto> updateMovie(@PathVariable Long id, @RequestBody @Valid MovieDto movieDto) {
-		return ResponseEntity.ok(movieService.updateMovie(id, movieDto));
-	}
-
-	@PutMapping(value = "/{id}/poster", consumes = "multipart/form-data")
-	public ResponseEntity<MovieDto> updateMovieWithPoster(@PathVariable Long id,
-			@ModelAttribute @Valid MovieDto movieDto) {
-		return ResponseEntity.ok(movieService.updateMovieWithPoster(id, movieDto, movieDto.getPosterFile()));
+	public ResponseEntity<MovieDto> update(@PathVariable Long id, @RequestBody @Valid MovieUpdateRequest request) {
+		log.info("PUT /api/movies/{} - Updating movie", id);
+		MovieDto updatedMovie = movieService.update(id, request);
+		return ResponseEntity.ok(updatedMovie);
 	}
 
 	@DeleteMapping("/{id}")
-	public ResponseEntity<Void> deleteMovie(@PathVariable Long id) {
-		movieService.deleteMovie(id);
+	public ResponseEntity<Void> delete(@PathVariable Long id) {
+		log.info("DELETE /api/movies/{} - Deleting movie", id);
+		movieService.delete(id);
 		return ResponseEntity.noContent().build();
 	}
 
+	@GetMapping("/status/current")
+	public ResponseEntity<List<MovieResponse>> getCurrentlyShowing() {
+		log.info("GET /api/movies/status/current - Getting currently showing movies");
+		List<MovieResponse> movies = movieService.getCurrentlyShowing();
+		return ResponseEntity.ok(movies);
+	}
+
+	@GetMapping("/status/upcoming")
+	public ResponseEntity<List<MovieResponse>> getUpcoming() {
+		log.info("GET /api/movies/status/upcoming - Getting upcoming movies");
+		List<MovieResponse> movies = movieService.getUpcoming();
+		return ResponseEntity.ok(movies);
+	}
+
+	@GetMapping("/status/archived")
+	public ResponseEntity<List<MovieResponse>> getArchived() {
+		log.info("GET /api/movies/status/archived - Getting archived movies");
+		List<MovieResponse> movies = movieService.getArchived();
+		return ResponseEntity.ok(movies);
+	}
+
 	@GetMapping("/{id}/poster")
-	public ResponseEntity<byte[]> getMoviePoster(@PathVariable Long id) {
-		return movieService.getMoviePoster(id);
+	public ResponseEntity<byte[]> getPoster(@PathVariable Long id) {
+		log.info("GET /api/movies/{}/poster - Retrieving movie poster", id);
+		return movieService.getPoster(id);
+	}
+
+	@GetMapping("/for-sessions")
+	public ResponseEntity<List<MovieResponse>> getMoviesForSessions() {
+		log.info("GET /api/movies/for-sessions - Getting movies available for sessions");
+		List<MovieResponse> current = movieService.getCurrentlyShowing();
+		List<MovieResponse> upcoming = movieService.getUpcoming();
+
+		List<MovieResponse> result = new java.util.ArrayList<>();
+		result.addAll(current);
+		result.addAll(upcoming);
+
+		return ResponseEntity.ok(result);
+	}
+
+	private MovieResponse toMovieResponse(MovieDto dto) {
+		return MovieResponse.builder().id(dto.getId()).title(dto.getTitle()).slug(dto.getSlug())
+				.posterUrl(dto.getPosterUrl()).durationMinutes(dto.getDurationMinutes()).ageRating(dto.getAgeRating())
+				.releaseDate(dto.getReleaseDate()).status(dto.getStatus()).currentlyShowing(dto.isCurrentlyShowing())
+				.build();
 	}
 }

@@ -1,7 +1,6 @@
 package ua.lviv.bas.cinema.dto;
 
 import java.time.LocalDate;
-import java.util.List;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -14,28 +13,16 @@ import ua.lviv.bas.cinema.domain.enums.MovieStatus;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class MovieDto {
+public class MovieResponse {
 
 	private Long id;
 	private String title;
 	private String slug;
-	private String trailerUrl;
-	private String description;
-	private Integer durationMinutes;
-	private LocalDate releaseDate;
-	private LocalDate endShowingDate;
-	private AgeRating ageRating;
-	private MovieStatus status;
-	private String posterFileName;
 	private String posterUrl;
+	private Integer durationMinutes;
+	private AgeRating ageRating;
+	private LocalDate releaseDate;
+	private MovieStatus status;
 
 	private boolean currentlyShowing;
-	private boolean upcoming;
-	private boolean archived;
-	private boolean active;
-
-	private List<Long> genreIds;
-	private List<Long> castIds;
-	private List<Long> directorIds;
-	private List<Long> screenwriterIds;
 }

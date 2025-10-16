@@ -24,6 +24,12 @@ public class GlobalExceptionHandler {
 		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
 	}
 
+	@ExceptionHandler(MovieNotFoundException.class)
+	public ResponseEntity<String> handleMovieNotFound(MovieNotFoundException ex) {
+		log.warn("Movie not found: {}", ex.getMessage());
+		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+	}
+
 	@ExceptionHandler(Exception.class)
 	public ResponseEntity<String> handleOtherExceptions(Exception ex) {
 		log.error("Unexpected error: ", ex);

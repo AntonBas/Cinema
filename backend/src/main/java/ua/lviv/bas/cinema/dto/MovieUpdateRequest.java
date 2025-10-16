@@ -8,7 +8,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Future;
-import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -23,7 +22,7 @@ import ua.lviv.bas.cinema.domain.enums.AgeRating;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class MovieCreateRequest {
+public class MovieUpdateRequest {
 
 	@NotBlank(message = "Title is required")
 	@Size(max = 255, message = "Title must be less than 255 characters")
@@ -42,7 +41,6 @@ public class MovieCreateRequest {
 	private Integer durationMinutes;
 
 	@NotNull(message = "Release date is required")
-	@FutureOrPresent(message = "Release date must be today or in the future")
 	private LocalDate releaseDate;
 
 	@NotNull(message = "End showing date is required")
@@ -70,11 +68,22 @@ public class MovieCreateRequest {
 
 	private MultipartFile posterFile;
 
+	@Builder.Default
+	private Boolean removePoster = false;
+
 	@AssertTrue(message = "End showing date must be after release date")
 	public boolean isEndDateValid() {
 		if (releaseDate == null || endShowingDate == null) {
 			return true;
 		}
 		return endShowingDate.isAfter(releaseDate);
+	}
+
+	@AssertTrue(message = "Release date cannot be too far in the past")
+	public boolean isReleaseDateReasonable() {
+		if (releaseDate == null) {
+			return true;
+		}
+		return releaseDate.isAfter(LocalDate.now().minusYears(1));
 	}
 }
