@@ -68,6 +68,7 @@ public class MovieCreateRequest {
 	@Size(min = 1, message = "At least one screenwriter is required")
 	private List<Long> screenwriterIds;
 
+	@NotNull(message = "Poster file is required")
 	private MultipartFile posterFile;
 
 	@AssertTrue(message = "End showing date must be after release date")
