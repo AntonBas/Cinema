@@ -17,6 +17,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -61,7 +62,9 @@ public class MovieService {
 
 		Movie movie = movieMapper.toEntity(request);
 		movie.setSlug(slug);
-		movie.setStatus(calculateStatus(movie, LocalDate.now()));
+
+		MovieStatus calculatedStatus = calculateStatus(movie, LocalDate.now());
+		movie.setStatus(calculatedStatus);
 
 		handlePosterUpload(request.getPosterFile(), movie);
 		setMovieRelations(movie, request);
@@ -95,7 +98,9 @@ public class MovieService {
 
 		handlePosterUpdate(existing, posterFile, request.getRemovePoster());
 
-		existing.setStatus(calculateStatus(existing, LocalDate.now()));
+		MovieStatus calculatedStatus = calculateStatus(existing, LocalDate.now());
+		existing.setStatus(calculatedStatus);
+
 		updateMovieRelations(existing, request);
 
 		Movie updated = movieRepository.save(existing);
@@ -181,6 +186,29 @@ public class MovieService {
 			log.error("Error loading poster for movie id: {}", id, e);
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
 		}
+	}
+
+	@Scheduled(cron = "0 0 0 * * ?")
+	@Transactional
+	public void updateMovieStatuses() {
+		log.info("Starting automatic movie status update");
+		LocalDate today = LocalDate.now();
+		List<Movie> allMovies = movieRepository.findAll();
+		int updatedCount = 0;
+
+		for (Movie movie : allMovies) {
+			MovieStatus currentStatus = movie.getStatus();
+			MovieStatus newStatus = calculateStatus(movie, today);
+
+			if (currentStatus != newStatus) {
+				movie.setStatus(newStatus);
+				movieRepository.save(movie);
+				updatedCount++;
+				log.debug("Updated movie {} status from {} to {}", movie.getTitle(), currentStatus, newStatus);
+			}
+		}
+
+		log.info("Movie status update completed. Updated {} movies", updatedCount);
 	}
 
 	private Movie findMovieById(Long id) {
@@ -335,7 +363,7 @@ public class MovieService {
 
 	private MovieDto enrichWithComputedFields(Movie movie) {
 		MovieDto dto = movieMapper.toDto(movie);
-		MovieStatus status = calculateStatus(movie, LocalDate.now());
+		MovieStatus status = movie.getStatus();
 
 		dto.setStatus(status);
 		dto.setCurrentlyShowing(status == MovieStatus.CURRENT);
