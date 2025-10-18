@@ -13,6 +13,15 @@ const getAuthHeaders = () => {
 
 export const genreApi = {
 
+  getAll: async (): Promise<GenreDto[]> => {
+    const response = await fetch(`${API_URL}/all`, {
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to fetch all genres');
+    return response.json();
+  },
+
+
   getById: async (id: number): Promise<GenreDto> => {
     const response = await fetch(`${API_URL}/${id}`, {
       headers: getAuthHeaders(),

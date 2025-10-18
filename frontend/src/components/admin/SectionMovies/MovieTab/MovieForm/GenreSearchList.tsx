@@ -3,28 +3,38 @@ import type { GenreDto } from '@/types/Genre';
 import styles from './GenreSearchList.module.css';
 
 interface GenreSearchListProps {
-    genres: GenreDto[];
+    genres?: GenreDto[];
     selectedIds: number[];
     onChange: (genreId: number) => void;
+    onSearchChange?: (query: string) => void;
     isLoading?: boolean;
 }
 
 export const GenreSearchList: React.FC<GenreSearchListProps> = ({
-    genres,
+    genres = [],
     selectedIds,
     onChange,
+    onSearchChange,
     isLoading = false
 }) => {
-    const [searchQuery, setSearchQuery] = useState('');
+    const [localSearchQuery, setLocalSearchQuery] = useState('');
+
+    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const query = e.target.value;
+        setLocalSearchQuery(query);
+        onSearchChange?.(query);
+    };
 
     const filteredGenres = useMemo(() => {
-        if (!searchQuery.trim()) {
-            return genres;
+        const safeGenres = Array.isArray(genres) ? genres : [];
+
+        if (!localSearchQuery.trim()) {
+            return safeGenres;
         }
-        return genres.filter(genre =>
-            genre.name.toLowerCase().includes(searchQuery.toLowerCase())
+        return safeGenres.filter(genre =>
+            genre.name.toLowerCase().includes(localSearchQuery.toLowerCase())
         );
-    }, [genres, searchQuery]);
+    }, [genres, localSearchQuery]);
 
     if (isLoading) {
         return <div className={styles.loading}>Loading genres...</div>;
@@ -35,9 +45,9 @@ export const GenreSearchList: React.FC<GenreSearchListProps> = ({
             <div className={styles.searchContainer}>
                 <input
                     type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search genres..."
+                    value={localSearchQuery}
+                    onChange={handleSearchChange}
+                    placeholder="Type 'comedy' to search genres..."
                     className={styles.searchInput}
                 />
             </div>
@@ -75,9 +85,15 @@ export const GenreSearchList: React.FC<GenreSearchListProps> = ({
                     </label>
                 ))}
 
-                {filteredGenres.length === 0 && searchQuery && (
+                {filteredGenres.length === 0 && localSearchQuery && (
                     <div className={styles.noResults}>
-                        No genres found for "{searchQuery}"
+                        No genres found for "{localSearchQuery}"
+                    </div>
+                )}
+
+                {filteredGenres.length === 0 && !localSearchQuery && (
+                    <div className={styles.noResults}>
+                        No genres available
                     </div>
                 )}
             </div>

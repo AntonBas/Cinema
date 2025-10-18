@@ -1,12 +1,12 @@
 import React from 'react';
-import type { MovieDto } from '@/types/Movie';
+import type { MovieResponse } from '@/types/Movie';
 import { movieApi } from '@/api/movieApi';
 import styles from './MovieCard.module.css';
 
 interface MovieCardProps {
-  movie: MovieDto;
-  onEdit: (movie: MovieDto) => void;
-  onDelete: (movie: MovieDto) => void;
+  movie: MovieResponse;
+  onEdit: (movie: MovieResponse) => void;
+  onDelete: (movie: MovieResponse) => void;
 }
 
 export const MovieCard: React.FC<MovieCardProps> = ({
@@ -16,13 +16,26 @@ export const MovieCard: React.FC<MovieCardProps> = ({
 }) => {
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
     e.currentTarget.src = '/images/default-poster.jpg';
+    e.currentTarget.onerror = null;
+  };
+
+  const getPosterUrl = () => {
+    if (movie.posterUrl) {
+      return movie.posterUrl;
+    }
+
+    if (movie.id) {
+      return movieApi.getPosterUrl(movie.id);
+    }
+
+    return '/images/default-poster.jpg';
   };
 
   return (
     <div className={styles.card}>
       <div className={styles.posterContainer}>
         <img
-          src={movie.posterFileName ? `${movieApi.getPosterUrl(movie.id!)}?t=${Date.now()}` : '/images/default-poster.jpg'}
+          src={getPosterUrl()}
           alt={movie.title}
           className={styles.poster}
           onError={handleImageError}
@@ -36,12 +49,6 @@ export const MovieCard: React.FC<MovieCardProps> = ({
           <span className={styles.rating}>{movie.ageRating}</span>
           <span className={styles.status}>{movie.status}</span>
         </div>
-        <p className={styles.description}>
-          {movie.description && movie.description.length > 100
-            ? `${movie.description.substring(0, 100)}...`
-            : movie.description
-          }
-        </p>
       </div>
 
       <div className={styles.actions}>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import type { MovieDto } from '@/types/Movie';
+import type { MovieResponse, MovieDto } from '@/types/Movie';
+import { MovieStatus } from '@/types/Movie';
 import { movieApi } from '@/api/movieApi';
 import { MovieList } from './MovieList';
 import { MovieForm } from './MovieForm';
@@ -7,14 +8,17 @@ import { Notification } from '@/components/ui/Notification/Notification';
 import { useNotification } from '@/hooks/useNotification';
 import styles from './MovieTab.module.css';
 
+type MovieTabType = 'CURRENT' | 'UPCOMING' | 'ARCHIVED';
+
 export const MovieTab: React.FC = () => {
-  const [movies, setMovies] = useState<MovieDto[]>([]);
+  const [movies, setMovies] = useState<MovieResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [editingMovie, setEditingMovie] = useState<MovieDto | null>(null);
   const [deletingMovie, setDeletingMovie] = useState<MovieDto | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [activeTab, setActiveTab] = useState<MovieTabType>('CURRENT');
 
   const { notifications, showNotification, hideNotification } = useNotification();
 
@@ -35,13 +39,19 @@ export const MovieTab: React.FC = () => {
     }
   };
 
-  const handleEdit = (movie: MovieDto) => {
-    setEditingMovie(movie);
-    setIsModalOpen(true);
+  const handleEdit = async (movie: MovieResponse) => {
+    try {
+      const fullMovie = await movieApi.getById(movie.id);
+      setEditingMovie(fullMovie);
+      setIsModalOpen(true);
+    } catch (error) {
+      console.error('Error loading movie details:', error);
+      showNotification('Failed to load movie details', 'error');
+    }
   };
 
-  const handleDeleteClick = (movie: MovieDto) => {
-    setDeletingMovie(movie);
+  const handleDeleteClick = (movie: MovieResponse) => {
+    setDeletingMovie(movie as MovieDto);
     setIsDeleteModalOpen(true);
   };
 
@@ -78,6 +88,18 @@ export const MovieTab: React.FC = () => {
     setEditingMovie(null);
   };
 
+  const filteredMovies = movies.filter(movie => movie.status === activeTab);
+
+  const getTabStats = () => {
+    return {
+      CURRENT: movies.filter(m => m.status === MovieStatus.CURRENT).length,
+      UPCOMING: movies.filter(m => m.status === MovieStatus.UPCOMING).length,
+      ARCHIVED: movies.filter(m => m.status === MovieStatus.ARCHIVED).length
+    };
+  };
+
+  const tabStats = getTabStats();
+
   if (isLoading) return (
     <div className={styles.loading}>
       <div className={styles.loadingSpinner}></div>
@@ -97,11 +119,37 @@ export const MovieTab: React.FC = () => {
         </button>
       </div>
 
-      <MovieList
-        movies={movies}
-        onEdit={handleEdit}
-        onDelete={handleDeleteClick}
-      />
+      <div className={styles.tabs}>
+        <button
+          className={`${styles.tab} ${activeTab === 'CURRENT' ? styles.active : ''}`}
+          onClick={() => setActiveTab('CURRENT')}
+        >
+          <span className={styles.tabLabel}>Currently Showing</span>
+          <span className={styles.tabCount}>{tabStats.CURRENT}</span>
+        </button>
+        <button
+          className={`${styles.tab} ${activeTab === 'UPCOMING' ? styles.active : ''}`}
+          onClick={() => setActiveTab('UPCOMING')}
+        >
+          <span className={styles.tabLabel}>Upcoming</span>
+          <span className={styles.tabCount}>{tabStats.UPCOMING}</span>
+        </button>
+        <button
+          className={`${styles.tab} ${activeTab === 'ARCHIVED' ? styles.active : ''}`}
+          onClick={() => setActiveTab('ARCHIVED')}
+        >
+          <span className={styles.tabLabel}>Archived</span>
+          <span className={styles.tabCount}>{tabStats.ARCHIVED}</span>
+        </button>
+      </div>
+
+      <div className={styles.tabContent}>
+        <MovieList
+          movies={filteredMovies}
+          onEdit={handleEdit}
+          onDelete={handleDeleteClick}
+        />
+      </div>
 
       {isModalOpen && (
         <MovieForm

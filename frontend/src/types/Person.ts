@@ -8,6 +8,7 @@ export interface PersonDto {
     id: number;
     name: string;
     role: PersonRole;
+    type?: string;
 }
 
 export interface PersonRequest {

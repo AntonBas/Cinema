@@ -1,197 +1,148 @@
-import type { MovieDto, MovieCreateRequest } from '../types/Movie';
-import type { GenreDto } from '../types/Genre';
-import type { PersonDto } from '../types/Person';
+import type {
+  MovieCreateRequest,
+  MovieUpdateRequest,
+  MovieDto,
+  MovieResponse,
+  PageResponse
+} from '@/types/Movie';
 
 const API_BASE_URL = 'http://localhost:8080/api';
 
-const getAuthHeaders = (isFormData = false) => {
-  const token = localStorage.getItem('authToken');
-  const headers: Record<string, string> = {};
+class MovieApi {
+  private baseUrl = `${API_BASE_URL}/movies`;
 
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
+  private getAuthHeaders(isFormData: boolean = false): HeadersInit {
+    const token = localStorage.getItem('authToken');
+    const headers: HeadersInit = {};
+
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    if (!isFormData) {
+      headers['Content-Type'] = 'application/json';
+    }
+
+    return headers;
   }
 
-  if (!isFormData) {
-    headers['Content-Type'] = 'application/json';
+  async getById(id: number): Promise<MovieDto> {
+    const response = await fetch(`${this.baseUrl}/${id}`, {
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error(`Failed to fetch movie: ${response.statusText}`);
+    return response.json();
   }
 
-  return headers;
-};
-
-export const movieApi = {
-  getAll: async (): Promise<MovieDto[]> => {
-    const response = await fetch(`${API_BASE_URL}/movies`, {
-      headers: getAuthHeaders(),
+  async getBySlug(slug: string): Promise<MovieDto> {
+    const response = await fetch(`${this.baseUrl}/slug/${slug}`, {
+      headers: this.getAuthHeaders(),
     });
-    if (!response.ok) throw new Error('Failed to fetch movies');
+    if (!response.ok) throw new Error(`Failed to fetch movie by slug: ${response.statusText}`);
     return response.json();
-  },
+  }
 
-  getById: async (id: number): Promise<MovieDto> => {
-    const response = await fetch(`${API_BASE_URL}/movies/${id}`, {
-      headers: getAuthHeaders(),
+  async getAll(): Promise<MovieResponse[]> {
+    const response = await fetch(this.baseUrl, {
+      headers: this.getAuthHeaders(),
     });
-    if (!response.ok) throw new Error('Failed to fetch movie');
+    if (!response.ok) throw new Error(`Failed to fetch movies: ${response.statusText}`);
     return response.json();
-  },
+  }
 
-  getBySlug: async (slug: string): Promise<MovieDto> => {
-    const response = await fetch(`${API_BASE_URL}/movies/slug/${slug}`, {
-      headers: getAuthHeaders(),
+  async getPaginated(page: number = 0, size: number = 10): Promise<PageResponse<MovieDto>> {
+    const response = await fetch(`${this.baseUrl}/paginated?page=${page}&size=${size}`, {
+      headers: this.getAuthHeaders(),
     });
-    if (!response.ok) throw new Error('Failed to fetch movie by slug');
+    if (!response.ok) throw new Error(`Failed to fetch paginated movies: ${response.statusText}`);
     return response.json();
-  },
+  }
 
-  getPaginated: async (page: number = 0, size: number = 10): Promise<{ content: MovieDto[], totalElements: number }> => {
-    const response = await fetch(`${API_BASE_URL}/movies/page?page=${page}&size=${size}`, {
-      headers: getAuthHeaders(),
+  async getCurrentlyShowing(): Promise<MovieResponse[]> {
+    const response = await fetch(`${this.baseUrl}/status/current`, {
+      headers: this.getAuthHeaders(),
     });
-    if (!response.ok) throw new Error('Failed to fetch paginated movies');
+    if (!response.ok) throw new Error(`Failed to fetch currently showing movies: ${response.statusText}`);
     return response.json();
-  },
+  }
 
-  getByStatus: async (status: string): Promise<MovieDto[]> => {
-    const response = await fetch(`${API_BASE_URL}/movies/status/${status}`, {
-      headers: getAuthHeaders(),
+  async getUpcoming(): Promise<MovieResponse[]> {
+    const response = await fetch(`${this.baseUrl}/status/upcoming`, {
+      headers: this.getAuthHeaders(),
     });
-    if (!response.ok) throw new Error('Failed to fetch movies by status');
+    if (!response.ok) throw new Error(`Failed to fetch upcoming movies: ${response.statusText}`);
     return response.json();
-  },
+  }
 
-  getCurrentlyShowing: async (): Promise<MovieDto[]> => {
-    const response = await fetch(`${API_BASE_URL}/movies/current`, {
-      headers: getAuthHeaders(),
+  async getArchived(): Promise<MovieResponse[]> {
+    const response = await fetch(`${this.baseUrl}/status/archived`, {
+      headers: this.getAuthHeaders(),
     });
-    if (!response.ok) throw new Error('Failed to fetch currently showing movies');
+    if (!response.ok) throw new Error(`Failed to fetch archived movies: ${response.statusText}`);
     return response.json();
-  },
+  }
 
-  getUpcoming: async (): Promise<MovieDto[]> => {
-    const response = await fetch(`${API_BASE_URL}/movies/upcoming`, {
-      headers: getAuthHeaders(),
+  async getMoviesForSessions(): Promise<MovieResponse[]> {
+    const response = await fetch(`${this.baseUrl}/for-sessions`, {
+      headers: this.getAuthHeaders(),
     });
-    if (!response.ok) throw new Error('Failed to fetch upcoming movies');
+    if (!response.ok) throw new Error(`Failed to fetch movies for sessions: ${response.statusText}`);
     return response.json();
-  },
+  }
 
-  getByGenre: async (genreId: number): Promise<MovieDto[]> => {
-    const response = await fetch(`${API_BASE_URL}/movies/genre/${genreId}`, {
-      headers: getAuthHeaders(),
-    });
-    if (!response.ok) throw new Error('Failed to fetch movies by genre');
-    return response.json();
-  },
+  async create(movieData: MovieCreateRequest, posterFile: File): Promise<MovieDto> {
+    const formData = new FormData();
 
-  create: async (formData: FormData): Promise<MovieDto> => {
-    const response = await fetch(`${API_BASE_URL}/movies`, {
+    const { posterFile: _, ...requestData } = movieData;
+
+    formData.append('movieData', new Blob([JSON.stringify(requestData)], {
+      type: 'application/json'
+    }));
+
+    formData.append('posterFile', posterFile);
+
+    const response = await fetch(this.baseUrl, {
       method: 'POST',
-      headers: getAuthHeaders(true),
+      headers: this.getAuthHeaders(true),
       body: formData,
     });
-    if (!response.ok) throw new Error('Failed to create movie');
-    return response.json();
-  },
 
-  update: async (id: number, movieData: MovieDto): Promise<MovieDto> => {
-    const response = await fetch(`${API_BASE_URL}/movies/${id}`, {
-      method: 'PUT',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(movieData),
-    });
-    if (!response.ok) throw new Error('Failed to update movie');
-    return response.json();
-  },
-
-  updateWithPoster: async (id: number, formData: FormData): Promise<MovieDto> => {
-    const response = await fetch(`${API_BASE_URL}/movies/${id}/poster`, {
-      method: 'PUT',
-      headers: getAuthHeaders(true),
-      body: formData,
-    });
-    if (!response.ok) throw new Error('Failed to update movie with poster');
-    return response.json();
-  },
-
-  delete: async (id: number): Promise<void> => {
-    const response = await fetch(`${API_BASE_URL}/movies/${id}`, {
-      method: 'DELETE',
-      headers: getAuthHeaders(),
-    });
-    if (!response.ok) throw new Error('Failed to delete movie');
-  },
-
-  getPosterUrl: (id: number): string => {
-    return `${API_BASE_URL}/movies/${id}/poster`;
-  },
-
-  getGenres: async (): Promise<GenreDto[]> => {
-    const response = await fetch(`${API_BASE_URL}/genres`, {
-      headers: getAuthHeaders(),
-    });
-    if (!response.ok) throw new Error('Failed to fetch genres');
-    return response.json();
-  },
-
-  getPersons: async (): Promise<PersonDto[]> => {
-    const response = await fetch(`${API_BASE_URL}/persons`, {
-      headers: getAuthHeaders(),
-    });
-    if (!response.ok) throw new Error('Failed to fetch persons');
-    return response.json();
-  },
-};
-
-export const movieFormHelper = {
-  createFormData: (movieData: MovieCreateRequest): FormData => {
-    const formData = new FormData();
-
-    formData.append('title', movieData.title);
-    formData.append('slug', movieData.slug);
-    formData.append('trailerUrl', movieData.trailerUrl);
-    formData.append('description', movieData.description);
-    formData.append('durationMinutes', movieData.durationMinutes.toString());
-    formData.append('releaseDate', movieData.releaseDate);
-    formData.append('endShowingDate', movieData.endShowingDate);
-    formData.append('status', movieData.status);
-    formData.append('ageRating', movieData.ageRating);
-
-    movieData.genreIds.forEach(id => formData.append('genreIds', id.toString()));
-    movieData.directorIds.forEach(id => formData.append('directorIds', id.toString()));
-    movieData.screenwriterIds.forEach(id => formData.append('screenwriterIds', id.toString()));
-    movieData.castIds.forEach(id => formData.append('castIds', id.toString()));
-
-    if (movieData.posterFile) {
-      formData.append('posterFile', movieData.posterFile);
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Failed to create movie: ${response.status} - ${errorText}`);
     }
 
-    return formData;
-  },
-
-  updateFormData: (movieData: MovieDto): FormData => {
-    const formData = new FormData();
-
-    if (movieData.id) formData.append('id', movieData.id.toString());
-    formData.append('title', movieData.title);
-    formData.append('slug', movieData.slug);
-    formData.append('trailerUrl', movieData.trailerUrl);
-    formData.append('description', movieData.description);
-    formData.append('durationMinutes', movieData.durationMinutes.toString());
-    formData.append('releaseDate', movieData.releaseDate);
-    formData.append('endShowingDate', movieData.endShowingDate);
-    formData.append('status', movieData.status);
-    formData.append('ageRating', movieData.ageRating);
-
-    movieData.genreIds.forEach(id => formData.append('genreIds', id.toString()));
-    movieData.directorIds.forEach(id => formData.append('directorIds', id.toString()));
-    movieData.screenwriterIds.forEach(id => formData.append('screenwriterIds', id.toString()));
-    movieData.castIds.forEach(id => formData.append('castIds', id.toString()));
-
-    if (movieData.posterFile) {
-      formData.append('posterFile', movieData.posterFile);
-    }
-
-    return formData;
+    return response.json();
   }
-};
+
+  async update(id: number, movieData: MovieUpdateRequest): Promise<MovieDto> {
+    const { posterFile: _, ...updateData } = movieData;
+
+    const response = await fetch(`${this.baseUrl}/${id}`, {
+      method: 'PUT',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(updateData),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Failed to update movie: ${response.status} - ${errorText}`);
+    }
+
+    return response.json();
+  }
+
+  async delete(id: number): Promise<void> {
+    const response = await fetch(`${this.baseUrl}/${id}`, {
+      method: 'DELETE',
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error(`Failed to delete movie: ${response.statusText}`);
+  }
+
+  getPosterUrl(id: number): string {
+    return `${this.baseUrl}/${id}/poster`;
+  }
+}
+
+export const movieApi = new MovieApi();

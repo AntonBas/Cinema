@@ -1,12 +1,12 @@
 import React from 'react';
-import type { MovieDto } from '@/types/Movie';
+import type { MovieResponse } from '@/types/Movie';
 import { MovieCard } from '../MovieCard';
 import styles from './MovieList.module.css';
 
 interface MovieListProps {
-    movies: MovieDto[];
-    onEdit: (movie: MovieDto) => void;
-    onDelete: (movie: MovieDto) => void;
+    movies: MovieResponse[];
+    onEdit: (movie: MovieResponse) => void;
+    onDelete: (movie: MovieResponse) => void;
 }
 
 export const MovieList: React.FC<MovieListProps> = ({
