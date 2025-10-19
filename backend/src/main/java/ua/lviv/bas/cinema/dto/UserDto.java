@@ -1,6 +1,7 @@
 package ua.lviv.bas.cinema.dto;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import lombok.Builder;
 import lombok.Data;
@@ -18,5 +19,5 @@ public class UserDto {
 	private String phoneNumber;
 	private UserRole userRole;
 	private boolean enabled;
-
+	private LocalDateTime createdAt;
 }

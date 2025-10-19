@@ -8,9 +8,36 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import lombok.extern.slf4j.Slf4j;
 
-@RestControllerAdvice
 @Slf4j
+@RestControllerAdvice
 public class GlobalExceptionHandler {
+
+	@ExceptionHandler(MethodArgumentNotValidException.class)
+	public ResponseEntity<String> handleValidationExceptions(MethodArgumentNotValidException ex) {
+		String errorMessage = ex.getBindingResult().getFieldErrors().stream()
+				.map(error -> error.getField() + ": " + error.getDefaultMessage()).findFirst()
+				.orElse("Invalid request");
+		log.warn("Validation failed: {}", errorMessage);
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage);
+	}
+
+	@ExceptionHandler(Exception.class)
+	public ResponseEntity<String> handleOtherExceptions(Exception ex) {
+		log.error("Unexpected error: ", ex);
+		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred");
+	}
+
+	@ExceptionHandler(UserNotFoundException.class)
+	public ResponseEntity<String> handleUserNotFound(UserNotFoundException ex) {
+		log.warn("User not found: {}", ex.getMessage());
+		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+	}
+
+	@ExceptionHandler(EmailAlreadyExistsException.class)
+	public ResponseEntity<String> handleEmailAlreadyExists(EmailAlreadyExistsException ex) {
+		log.warn("Email already exists: {}", ex.getMessage());
+		return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
+	}
 
 	@ExceptionHandler(GenreNotFoundException.class)
 	public ResponseEntity<String> handleGenreNotFound(GenreNotFoundException ex) {
@@ -29,20 +56,4 @@ public class GlobalExceptionHandler {
 		log.warn("Movie not found: {}", ex.getMessage());
 		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
 	}
-
-	@ExceptionHandler(Exception.class)
-	public ResponseEntity<String> handleOtherExceptions(Exception ex) {
-		log.error("Unexpected error: ", ex);
-		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred");
-	}
-
-	@ExceptionHandler(MethodArgumentNotValidException.class)
-	public ResponseEntity<String> handleValidationExceptions(MethodArgumentNotValidException ex) {
-		String errorMessage = ex.getBindingResult().getFieldErrors().stream()
-				.map(error -> error.getField() + ": " + error.getDefaultMessage()).findFirst()
-				.orElse("Invalid request");
-		log.warn("Validation failed: {}", errorMessage);
-		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage);
-	}
-
 }

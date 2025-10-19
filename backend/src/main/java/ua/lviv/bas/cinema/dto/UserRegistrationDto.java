@@ -20,39 +20,42 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class UserRegistrationDto {
 
-    @NotBlank(message = "Email is required")
-    @Email(message = "Invalid email format")
-    private String email;
+	@Email(message = "Invalid email format")
+	@NotBlank(message = "Email is required")
+	private String email;
 
-    @NotBlank(message = "First name is required")
-    private String firstName;
+	@Size(min = 2, max = 50, message = "First name must be between 2 and 50 characters")
+	@NotBlank(message = "First name is required")
+	private String firstName;
 
-    @NotBlank(message = "Last name is required")
-    private String lastName;
+	@Size(min = 2, max = 50, message = "Last name must be between 2 and 50 characters")
+	@NotBlank(message = "Last name is required")
+	private String lastName;
 
-    @NotNull(message = "Date of birth is required")
-    @Past(message = "Date of birth must be in the past")
-    private LocalDate dateOfBirth;
+	@Past(message = "Date of birth must be in the past")
+	@NotNull(message = "Date of birth is required")
+	private LocalDate dateOfBirth;
 
-    @NotBlank(message = "City is required")
-    private String city;
+	@Size(min = 2, max = 50, message = "City name must be between 2 and 50 characters")
+	@NotBlank(message = "City is required")
+	private String city;
 
-    @NotBlank(message = "Phone Number is required")
-    @Pattern(regexp = "^\\+?[0-9]{10,15}$", message = "Invalid phone number format")
-    private String phoneNumber;
+	@Pattern(regexp = "^\\+?[0-9]{10,15}$", message = "Invalid phone number format")
+	@NotBlank(message = "Phone Number is required")
+	private String phoneNumber;
 
-    @NotBlank(message = "Password is required")
-    @Size(min = 8, message = "Password must be at least 8 characters long")
-    private String password;
+	@Size(min = 8, max = 72, message = "Password must be between 8 and 72 characters")
+	@NotBlank(message = "Password is required")
+	private String password;
 
-    @NotBlank(message = "Password confirmation is required")
-    private String passwordConfirm;
+	@NotBlank(message = "Password confirmation is required")
+	private String passwordConfirm;
 
-    @AssertTrue(message = "Passwords do not match")
-    public boolean isPasswordMatching() {
-        if (password == null || passwordConfirm == null) {
-            return false;
-        }
-        return password.equals(passwordConfirm);
-    }
+	@AssertTrue(message = "Passwords do not match")
+	public boolean isPasswordMatching() {
+		if (password == null || passwordConfirm == null) {
+			return false;
+		}
+		return password.equals(passwordConfirm);
+	}
 }
