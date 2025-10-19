@@ -1,8 +1,18 @@
 package ua.lviv.bas.cinema.controller;
 
+import java.util.List;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -58,5 +68,12 @@ public class GenreController {
 		log.info("GET /api/genres - query: '{}', page: {}, size: {}", query, page, size);
 		PageResponse<GenreDto> result = genreService.searchGenres(query, page, size);
 		return ResponseEntity.ok(result);
+	}
+
+	@GetMapping("/all")
+	public ResponseEntity<List<GenreDto>> getAllGenres() {
+		log.info("GET /api/genres/all - Getting all genres");
+		List<GenreDto> genres = genreService.getAllGenres();
+		return ResponseEntity.ok(genres);
 	}
 }
