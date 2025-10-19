@@ -68,6 +68,7 @@ export interface MovieUpdateRequest {
   castIds: number[];
   posterFile?: File;
   removePoster?: boolean;
+  currentPosterUrl?: string;
 }
 
 export interface MovieDto {

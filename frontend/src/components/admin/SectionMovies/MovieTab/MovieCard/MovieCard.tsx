@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import type { MovieResponse } from '@/types/Movie';
 import { movieApi } from '@/api/movieApi';
+import { getAgeRatingDisplay } from '@/types/Movie';
 import styles from './MovieCard.module.css';
 
 interface MovieCardProps {
@@ -14,40 +15,99 @@ export const MovieCard: React.FC<MovieCardProps> = ({
   onEdit,
   onDelete
 }) => {
-  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
-    e.currentTarget.src = '/images/default-poster.jpg';
-    e.currentTarget.onerror = null;
+  const [posterUrl, setPosterUrl] = useState<string>('/images/default-poster.jpg');
+  const [imageLoading, setImageLoading] = useState(true);
+  const [imageError, setImageError] = useState(false);
+
+  useEffect(() => {
+    let newPosterUrl = '/images/default-poster.jpg';
+
+    if (movie.posterUrl) {
+      newPosterUrl = movie.posterUrl;
+    } else if (movie.id) {
+      newPosterUrl = movieApi.getPosterUrlWithTimestamp?.(movie.id) || movieApi.getPosterUrl(movie.id);
+    }
+
+    setPosterUrl(newPosterUrl);
+    setImageLoading(true);
+    setImageError(false);
+  }, [movie.id, movie.posterUrl]);
+
+  const handleImageLoad = () => {
+    setImageLoading(false);
   };
 
-  const getPosterUrl = () => {
-    if (movie.posterUrl) {
-      return movie.posterUrl;
-    }
+  const handleImageError = () => {
+    setImageLoading(false);
+    setImageError(true);
+    setPosterUrl('/images/default-poster.jpg');
+  };
 
-    if (movie.id) {
-      return movieApi.getPosterUrl(movie.id);
-    }
+  const getStatusDisplay = (status: string) => {
+    const statusMap: { [key: string]: string } = {
+      'CURRENT': 'Now Showing',
+      'UPCOMING': 'Coming Soon',
+      'ARCHIVED': 'Archived'
+    };
+    return statusMap[status] || status;
+  };
 
-    return '/images/default-poster.jpg';
+  const getStatusClass = (status: string) => {
+    const classMap: { [key: string]: string } = {
+      'CURRENT': styles.statusCurrent,
+      'UPCOMING': styles.statusUpcoming,
+      'ARCHIVED': styles.statusArchived
+    };
+    return classMap[status] || styles.status;
   };
 
   return (
     <div className={styles.card}>
       <div className={styles.posterContainer}>
+        {imageLoading && (
+          <div className={styles.posterPlaceholder}>
+            <div className={styles.loadingSpinner}>Loading...</div>
+          </div>
+        )}
         <img
-          src={getPosterUrl()}
-          alt={movie.title}
-          className={styles.poster}
+          src={posterUrl}
+          alt={`Poster for ${movie.title}`}
+          className={`${styles.poster} ${imageLoading ? styles.hidden : ''}`}
+          onLoad={handleImageLoad}
           onError={handleImageError}
+          loading="lazy"
         />
+        {imageError && !imageLoading && (
+          <div className={styles.posterError}>
+            <span>No Image</span>
+          </div>
+        )}
       </div>
 
       <div className={styles.info}>
-        <h3 className={styles.title}>{movie.title}</h3>
+        <h3 className={styles.title} title={movie.title}>
+          {movie.title}
+        </h3>
+
         <div className={styles.meta}>
-          <span className={styles.duration}>{movie.durationMinutes}min</span>
-          <span className={styles.rating}>{movie.ageRating}</span>
-          <span className={styles.status}>{movie.status}</span>
+          <div className={styles.metaRow}>
+            <span className={styles.duration}>{movie.durationMinutes} min</span>
+            <span className={styles.rating}>
+              {getAgeRatingDisplay(movie.ageRating)}
+            </span>
+          </div>
+
+          <div className={styles.metaRow}>
+            <span className={`${getStatusClass(movie.status)}`}>
+              {getStatusDisplay(movie.status)}
+            </span>
+          </div>
+
+          {movie.releaseDate && (
+            <div className={styles.releaseDate}>
+              {new Date(movie.releaseDate).toLocaleDateString()}
+            </div>
+          )}
         </div>
       </div>
 
@@ -55,12 +115,14 @@ export const MovieCard: React.FC<MovieCardProps> = ({
         <button
           className={styles.editButton}
           onClick={() => onEdit(movie)}
+          title="Edit movie"
         >
           Edit
         </button>
         <button
           className={styles.deleteButton}
           onClick={() => onDelete(movie)}
+          title="Delete movie"
         >
           Delete
         </button>
