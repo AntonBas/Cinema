@@ -1,8 +1,7 @@
 package ua.lviv.bas.cinema.security;
 
 import java.util.Collection;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Collections;
 
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -11,19 +10,16 @@ import org.springframework.security.core.userdetails.UserDetails;
 import ua.lviv.bas.cinema.domain.User;
 
 public class CustomUserDetails implements UserDetails {
-
 	private static final long serialVersionUID = 1L;
 	private final User user;
-	private final List<String> userRoles;
 
-	public CustomUserDetails(User user, List<String> userRoles) {
+	public CustomUserDetails(User user) {
 		this.user = user;
-		this.userRoles = userRoles;
 	}
 
 	@Override
 	public Collection<? extends GrantedAuthority> getAuthorities() {
-		return userRoles.stream().map(role -> new SimpleGrantedAuthority(role)).collect(Collectors.toList());
+		return Collections.singletonList(new SimpleGrantedAuthority(user.getUserRole().toString()));
 	}
 
 	@Override
@@ -54,5 +50,13 @@ public class CustomUserDetails implements UserDetails {
 	@Override
 	public boolean isEnabled() {
 		return user.isEnabled();
+	}
+
+	public User getUser() {
+		return user;
+	}
+
+	public Long getUserId() {
+		return user.getId();
 	}
 }
