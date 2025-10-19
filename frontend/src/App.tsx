@@ -12,35 +12,45 @@ import { AdminPage } from './pages/Admin/AdminPage';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { token, isLoading } = useAuth();
-  
+
+  console.log('ProtectedRoute: token=', token, 'isLoading=', isLoading);
+
   if (isLoading) {
     return <div>Loading...</div>;
   }
-  
+
   return token ? <>{children}</> : <Navigate to="/login" replace />;
 };
 
 const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { token, isLoading } = useAuth();
-  
+
+  console.log('PublicRoute: token=', token, 'isLoading=', isLoading);
+
   if (isLoading) {
     return <div>Loading...</div>;
   }
-  
+
   return !token ? <>{children}</> : <Navigate to="/" replace />;
 };
 
 const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { token, user, isLoading } = useAuth();
-  
+
+  console.log('AdminRoute: token=', token, 'user=', user, 'isLoading=', isLoading);
+
   if (isLoading) {
     return <div>Loading...</div>;
   }
-  
+
   return token && user?.userRole === 'ROLE_ADMIN' ? <>{children}</> : <Navigate to="/" replace />;
 };
 
 function AppContent() {
+  const { token, isLoading } = useAuth();
+
+  console.log('AppContent: token=', token, 'isLoading=', isLoading);
+
   return (
     <Router>
       <Routes>
@@ -64,21 +74,21 @@ function AppContent() {
             <ResetPasswordPage />
           </PublicRoute>
         } />
-        
+
         <Route path="/verify-email/:token" element={<EmailVerificationPage />} />
-        
+
         <Route path="/admin/*" element={
           <AdminRoute>
             <AdminPage />
           </AdminRoute>
         } />
-        
+
         <Route path="/" element={
           <ProtectedRoute>
             <HomePage />
           </ProtectedRoute>
         } />
-        
+
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>

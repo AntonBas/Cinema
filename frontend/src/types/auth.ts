@@ -20,6 +20,13 @@ export interface LoginRequest {
 export interface LoginResponse {
     message: string;
     token: string;
+    user: {
+        id: number;
+        email: string;
+        firstName: string;
+        lastName: string;
+        userRole: UserRole;
+    };
 }
 
 export interface RegisterRequest {
@@ -34,5 +41,19 @@ export interface RegisterRequest {
 }
 
 export interface RegisterResponse {
+    success: boolean;
     message: string;
+}
+
+export interface ApiResponse {
+    success: boolean;
+    message: string;
+    data?: any;
+    errors?: any;
+}
+
+export interface ErrorResponse {
+    success: boolean;
+    message: string;
+    errors?: any;
 }

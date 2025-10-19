@@ -31,7 +31,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const loadUserData = async () => {
             if (token) {
                 try {
+                    console.log('Loading user data with token:', token);
                     const userData = await userService.getProfile();
+                    console.log('User data loaded:', userData);
                     setUser(userData);
                 } catch (error) {
                     console.error('Failed to load user data:', error);
@@ -48,27 +50,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         loadUserData();
     }, [token]);
 
-   const login = async (email: string, password: string) => {
-    try {
-        setIsLoading(true);
-        const response = await authService.login({ email, password });
-        
-        console.log('Login response token:', response.token);
-        
-        if (!response.token) {
-            throw new Error('No token received from server');
+    const login = async (email: string, password: string) => {
+        try {
+            setIsLoading(true);
+            console.log('AuthContext: Starting login process for', email);
+
+            const response = await authService.login({ email, password });
+
+            console.log('AuthContext: Login response received', response);
+
+            if (!response.token) {
+                throw new Error('No token received from server');
+            }
+
+            setToken(response.token);
+            localStorage.setItem('token', response.token);
+
+            console.log('AuthContext: Login completed successfully, token set');
+
+        } catch (error) {
+            console.error('AuthContext: Login failed:', error);
+            setToken(null);
+            setUser(null);
+            localStorage.removeItem('token');
+            throw error;
+        } finally {
+            setIsLoading(false);
         }
-        
-        setToken(response.token);
-        localStorage.setItem('token', response.token);
-        
-    } catch (error) {
-        console.error('Login failed:', error);
-        throw error;
-    } finally {
-        setIsLoading(false);
-    }
-};
+    };
 
     const register = async (userData: any) => {
         try {
@@ -83,6 +92,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setToken(null);
         setUser(null);
         localStorage.removeItem('token');
+        console.log('AuthContext: User logged out');
     };
 
     const value: AuthContextType = {

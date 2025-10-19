@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import './LoginForm.css';
 
 export const LoginForm: React.FC = () => {
@@ -8,7 +9,8 @@ export const LoginForm: React.FC = () => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const { login } = useAuth();
+  const { login, token, user } = useAuth();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -16,10 +18,15 @@ export const LoginForm: React.FC = () => {
     setError('');
 
     try {
+      console.log('LoginForm: Starting login...');
       await login(email, password);
-      window.location.href = '/';
+      console.log('LoginForm: Login successful, token:', token, 'user:', user);
+
+      navigate('/');
+
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Login failed');
+      console.error('LoginForm: Login error:', err);
+      setError(err.response?.data?.message || err.message || 'Login failed');
     } finally {
       setIsLoading(false);
     }

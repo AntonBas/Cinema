@@ -2,6 +2,8 @@ import { api } from './api';
 import type { User } from '../types/auth';
 
 export const userService = {
-  getProfile: (): Promise<User> => 
-    api.get('/auth/profile').then(response => response.data),
+  getProfile: async (): Promise<User> => {
+    const response = await api.get('/auth/profile');
+    return response.data;
+  }
 };
