@@ -20,7 +20,6 @@ tmp
 *.iws
 *.ipr
 .DS_Store
-application.properties
 *.db
 *.h2.db
 build
