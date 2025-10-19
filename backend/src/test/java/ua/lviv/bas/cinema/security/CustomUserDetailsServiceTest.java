@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.Optional;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -31,12 +32,18 @@ public class CustomUserDetailsServiceTest {
 	@InjectMocks
 	private CustomUserDetailsService userDetailsService;
 
-	@Test
-	void loadUserByUserName_ShouldReturnDetails_WhenUserExists() {
-		String email = "anton@example.com";
-		User user = User.builder().email(email).password("encodedPassword").userRole(UserRole.ROLE_USER).enabled(true)
-				.build();
+	private User user;
+	private String email;
 
+	@BeforeEach
+	void setUp() {
+		email = "anton@example.com";
+		user = User.builder().email(email).password("encodedPassword").userRole(UserRole.ROLE_USER).enabled(true)
+				.build();
+	}
+
+	@Test
+	void loadUserByUsername_ShouldReturnDetails_WhenUserExists() {
 		when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
 
 		UserDetails userDetails = userDetailsService.loadUserByUsername(email);
@@ -52,43 +59,43 @@ public class CustomUserDetailsServiceTest {
 
 	@Test
 	void loadUserByUsername_ShouldThrowException_WhenUserNotFound() {
-		String email = "noneexistent@example.com";
-		when(userRepository.findByEmail(email)).thenReturn(Optional.empty());
+		String nonExistentEmail = "nonexistent@example.com";
+		when(userRepository.findByEmail(nonExistentEmail)).thenReturn(Optional.empty());
 
-		assertThrows(UsernameNotFoundException.class, () -> userDetailsService.loadUserByUsername(email));
+		assertThrows(UsernameNotFoundException.class, () -> userDetailsService.loadUserByUsername(nonExistentEmail));
 
-		verify(userRepository).findByEmail(email);
+		verify(userRepository).findByEmail(nonExistentEmail);
 	}
 
 	@Test
 	void loadUserByUsername_ShouldHandleAdminRole() {
-		String email = "admin@example.com";
-		User user = User.builder().email(email).password("encodedPassword").userRole(UserRole.ROLE_ADMIN).enabled(true)
-				.build();
+		String adminEmail = "admin@example.com";
+		User adminUser = User.builder().email(adminEmail).password("encodedPassword").userRole(UserRole.ROLE_ADMIN)
+				.enabled(true).build();
 
-		when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
+		when(userRepository.findByEmail(adminEmail)).thenReturn(Optional.of(adminUser));
 
-		UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+		UserDetails userDetails = userDetailsService.loadUserByUsername(adminEmail);
 
 		assertNotNull(userDetails);
 		assertTrue(userDetails.getAuthorities().stream().anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN")));
 
-		verify(userRepository).findByEmail(email);
+		verify(userRepository).findByEmail(adminEmail);
 	}
 
 	@Test
 	void loadUserByUsername_ShouldHandleDisabledAccount() {
-		String email = "disabled@example.com";
-		User user = User.builder().email(email).password("encodedPassword").userRole(UserRole.ROLE_USER).enabled(false)
-				.build();
+		String disabledEmail = "disabled@example.com";
+		User disabledUser = User.builder().email(disabledEmail).password("encodedPassword").userRole(UserRole.ROLE_USER)
+				.enabled(false).build();
 
-		when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
+		when(userRepository.findByEmail(disabledEmail)).thenReturn(Optional.of(disabledUser));
 
-		UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+		UserDetails userDetails = userDetailsService.loadUserByUsername(disabledEmail);
 
 		assertNotNull(userDetails);
 		assertFalse(userDetails.isEnabled());
 
-		verify(userRepository).findByEmail(email);
+		verify(userRepository).findByEmail(disabledEmail);
 	}
 }
