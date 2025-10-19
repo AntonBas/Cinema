@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
@@ -57,9 +56,9 @@ public class MovieController {
 	}
 
 	@GetMapping
-	public ResponseEntity<List<MovieResponse>> getAll() {
+	public ResponseEntity<List<MovieDto>> getAll() {
 		log.info("GET /api/movies - Getting all movies");
-		List<MovieResponse> movies = movieService.getAll().stream().map(this::toMovieResponse).toList();
+		List<MovieDto> movies = movieService.getAll();
 		log.debug("Retrieved {} movies", movies.size());
 		return ResponseEntity.ok(movies);
 	}
@@ -89,9 +88,13 @@ public class MovieController {
 		return ResponseEntity.status(HttpStatus.CREATED).body(createdMovie);
 	}
 
-	@PutMapping("/{id}")
-	public ResponseEntity<MovieDto> update(@PathVariable Long id, @RequestBody @Valid MovieUpdateRequest request) {
-		log.info("PUT /api/movies/{} - Updating movie", id);
+	@PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	public ResponseEntity<MovieDto> update(@PathVariable Long id,
+			@RequestPart("movieData") @Valid MovieUpdateRequest request,
+			@RequestPart(value = "posterFile", required = false) MultipartFile posterFile) {
+
+		log.info("PUT /api/movies/{} - Updating movie with file", id);
+		request.setPosterFile(posterFile);
 		MovieDto updatedMovie = movieService.update(id, request);
 		return ResponseEntity.ok(updatedMovie);
 	}
@@ -133,20 +136,7 @@ public class MovieController {
 	@GetMapping("/for-sessions")
 	public ResponseEntity<List<MovieResponse>> getMoviesForSessions() {
 		log.info("GET /api/movies/for-sessions - Getting movies available for sessions");
-		List<MovieResponse> current = movieService.getCurrentlyShowing();
-		List<MovieResponse> upcoming = movieService.getUpcoming();
-
-		List<MovieResponse> result = new java.util.ArrayList<>();
-		result.addAll(current);
-		result.addAll(upcoming);
-
-		return ResponseEntity.ok(result);
-	}
-
-	private MovieResponse toMovieResponse(MovieDto dto) {
-		return MovieResponse.builder().id(dto.getId()).title(dto.getTitle()).slug(dto.getSlug())
-				.posterUrl(dto.getPosterUrl()).durationMinutes(dto.getDurationMinutes()).ageRating(dto.getAgeRating())
-				.releaseDate(dto.getReleaseDate()).status(dto.getStatus()).currentlyShowing(dto.isCurrentlyShowing())
-				.build();
+		List<MovieResponse> movies = movieService.getMoviesForSessions();
+		return ResponseEntity.ok(movies);
 	}
 }

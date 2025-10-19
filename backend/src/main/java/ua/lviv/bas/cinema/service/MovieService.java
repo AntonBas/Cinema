@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -62,25 +63,17 @@ public class MovieService {
 
 		Movie movie = movieMapper.toEntity(request);
 		movie.setSlug(slug);
-
-		MovieStatus calculatedStatus = calculateStatus(movie, LocalDate.now());
-		movie.setStatus(calculatedStatus);
+		movie.setStatus(calculateStatus(movie, LocalDate.now()));
 
 		handlePosterUpload(request.getPosterFile(), movie);
 		setMovieRelations(movie, request);
 
 		Movie saved = movieRepository.save(movie);
-		log.debug("Movie created with ID: {}", saved.getId());
 		return enrichWithComputedFields(saved);
 	}
 
 	@Transactional
 	public MovieDto update(Long id, MovieUpdateRequest request) {
-		return update(id, request, null);
-	}
-
-	@Transactional
-	public MovieDto update(Long id, MovieUpdateRequest request, MultipartFile posterFile) {
 		log.info("Updating movie with id: {}", id);
 
 		Movie existing = findMovieById(id);
@@ -96,15 +89,11 @@ public class MovieService {
 			existing.setSlug(newSlug);
 		}
 
-		handlePosterUpdate(existing, posterFile, request.getRemovePoster());
-
-		MovieStatus calculatedStatus = calculateStatus(existing, LocalDate.now());
-		existing.setStatus(calculatedStatus);
-
+		handlePosterUpdate(existing, null, request.getRemovePoster());
+		existing.setStatus(calculateStatus(existing, LocalDate.now()));
 		updateMovieRelations(existing, request);
 
 		Movie updated = movieRepository.save(existing);
-		log.debug("Movie updated with ID: {}", updated.getId());
 		return enrichWithComputedFields(updated);
 	}
 
@@ -115,20 +104,16 @@ public class MovieService {
 		Movie movie = findMovieById(id);
 		deletePosterFile(movie.getPosterFileName());
 		movieRepository.delete(movie);
-
-		log.debug("Movie deleted with ID: {}", id);
 	}
 
 	@Transactional(readOnly = true)
 	public MovieDto getById(Long id) {
-		log.debug("Retrieving movie by id: {}", id);
 		Movie movie = findMovieById(id);
 		return enrichWithComputedFields(movie);
 	}
 
 	@Transactional(readOnly = true)
 	public MovieDto getBySlug(String slug) {
-		log.debug("Retrieving movie by slug: {}", slug);
 		Movie movie = movieRepository.findBySlug(slug)
 				.orElseThrow(() -> new MovieNotFoundException("Movie not found with slug: " + slug));
 		return enrichWithComputedFields(movie);
@@ -136,32 +121,42 @@ public class MovieService {
 
 	@Transactional(readOnly = true)
 	public List<MovieDto> getAll() {
-		log.debug("Retrieving all movies");
 		return movieRepository.findAll().stream().map(this::enrichWithComputedFields).toList();
 	}
 
 	@Transactional(readOnly = true)
 	public Page<MovieDto> getPaginated(Pageable pageable) {
-		log.debug("Getting paginated movies - page: {}, size: {}", pageable.getPageNumber(), pageable.getPageSize());
 		return movieRepository.findAll(pageable).map(this::enrichWithComputedFields);
 	}
 
 	@Transactional(readOnly = true)
 	public List<MovieResponse> getCurrentlyShowing() {
-		log.debug("Retrieving currently showing movies");
-		return movieRepository.findByStatus(MovieStatus.CURRENT).stream().map(movieMapper::toResponse).toList();
+		LocalDate today = LocalDate.now();
+		return movieRepository.findAll().stream().filter(movie -> calculateStatus(movie, today) == MovieStatus.CURRENT)
+				.map(movieMapper::toResponse).toList();
 	}
 
 	@Transactional(readOnly = true)
 	public List<MovieResponse> getUpcoming() {
-		log.debug("Retrieving upcoming movies");
-		return movieRepository.findByStatus(MovieStatus.UPCOMING).stream().map(movieMapper::toResponse).toList();
+		LocalDate today = LocalDate.now();
+		return movieRepository.findAll().stream().filter(movie -> calculateStatus(movie, today) == MovieStatus.UPCOMING)
+				.map(movieMapper::toResponse).toList();
 	}
 
 	@Transactional(readOnly = true)
 	public List<MovieResponse> getArchived() {
-		log.debug("Retrieving archived movies");
-		return movieRepository.findByStatus(MovieStatus.ARCHIVED).stream().map(movieMapper::toResponse).toList();
+		LocalDate today = LocalDate.now();
+		return movieRepository.findAll().stream().filter(movie -> calculateStatus(movie, today) == MovieStatus.ARCHIVED)
+				.map(movieMapper::toResponse).toList();
+	}
+
+	@Transactional(readOnly = true)
+	public List<MovieResponse> getMoviesForSessions() {
+		LocalDate today = LocalDate.now();
+		return movieRepository.findAll().stream().filter(movie -> {
+			MovieStatus status = calculateStatus(movie, today);
+			return status == MovieStatus.CURRENT || status == MovieStatus.UPCOMING;
+		}).map(movieMapper::toResponse).toList();
 	}
 
 	@Transactional(readOnly = true)
@@ -202,10 +197,12 @@ public class MovieService {
 
 			if (currentStatus != newStatus) {
 				movie.setStatus(newStatus);
-				movieRepository.save(movie);
 				updatedCount++;
-				log.debug("Updated movie {} status from {} to {}", movie.getTitle(), currentStatus, newStatus);
 			}
+		}
+
+		if (updatedCount > 0) {
+			movieRepository.saveAll(allMovies);
 		}
 
 		log.info("Movie status update completed. Updated {} movies", updatedCount);
@@ -220,19 +217,11 @@ public class MovieService {
 		if (request.getEndShowingDate().isBefore(request.getReleaseDate())) {
 			throw new IllegalArgumentException("End showing date cannot be before release date");
 		}
-
-		if (request.getReleaseDate().isBefore(LocalDate.now())) {
-			throw new IllegalArgumentException("Release date cannot be in the past for new movies");
-		}
 	}
 
 	private void validateUpdateRequest(MovieUpdateRequest request) {
 		if (request.getEndShowingDate().isBefore(request.getReleaseDate())) {
 			throw new IllegalArgumentException("End showing date cannot be before release date");
-		}
-
-		if (request.getReleaseDate().isBefore(LocalDate.now().minusYears(1))) {
-			throw new IllegalArgumentException("Release date cannot be more than 1 year in the past");
 		}
 	}
 
@@ -318,7 +307,6 @@ public class MovieService {
 			Path filePath = uploadPath.resolve(fileName);
 			Files.write(filePath, file.getBytes());
 
-			log.debug("Poster saved: {}", fileName);
 			return fileName;
 		} catch (IOException e) {
 			log.error("Failed to save poster", e);
@@ -335,7 +323,6 @@ public class MovieService {
 			Path path = Paths.get(uploadDir, "posters", fileName);
 			if (Files.exists(path)) {
 				Files.delete(path);
-				log.debug("Poster deleted: {}", fileName);
 			}
 		} catch (IOException e) {
 			log.error("Failed to delete poster: {}", fileName, e);
@@ -363,13 +350,12 @@ public class MovieService {
 
 	private MovieDto enrichWithComputedFields(Movie movie) {
 		MovieDto dto = movieMapper.toDto(movie);
-		MovieStatus status = movie.getStatus();
 
-		dto.setStatus(status);
-		dto.setCurrentlyShowing(status == MovieStatus.CURRENT);
-		dto.setUpcoming(status == MovieStatus.UPCOMING);
-		dto.setArchived(status == MovieStatus.ARCHIVED);
-		dto.setActive(status == MovieStatus.CURRENT || status == MovieStatus.UPCOMING);
+		dto.setGenreIds(movie.getGenres().stream().map(genre -> genre.getId()).collect(Collectors.toList()));
+		dto.setCastIds(movie.getCast().stream().map(person -> person.getId()).collect(Collectors.toList()));
+		dto.setDirectorIds(movie.getDirectors().stream().map(person -> person.getId()).collect(Collectors.toList()));
+		dto.setScreenwriterIds(
+				movie.getScreenwriters().stream().map(person -> person.getId()).collect(Collectors.toList()));
 
 		return dto;
 	}

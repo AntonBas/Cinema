@@ -8,6 +8,7 @@ import org.mapstruct.MappingTarget;
 import org.mapstruct.ReportingPolicy;
 
 import ua.lviv.bas.cinema.domain.Movie;
+import ua.lviv.bas.cinema.domain.enums.MovieStatus;
 import ua.lviv.bas.cinema.dto.MovieCreateRequest;
 import ua.lviv.bas.cinema.dto.MovieDto;
 import ua.lviv.bas.cinema.dto.MovieResponse;
@@ -16,10 +17,17 @@ import ua.lviv.bas.cinema.dto.MovieUpdateRequest;
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface MovieMapper {
 
+	@Mapping(target = "posterUrl", expression = "java(getPosterUrl(movie))")
+	@Mapping(target = "currentlyShowing", expression = "java(isCurrentlyShowing(movie))")
+	@Mapping(target = "upcoming", expression = "java(isUpcoming(movie))")
+	@Mapping(target = "archived", expression = "java(isArchived(movie))")
+	@Mapping(target = "active", expression = "java(isActive(movie))")
 	MovieDto toDto(Movie movie);
 
 	List<MovieDto> toDtoList(List<Movie> movies);
 
+	@Mapping(target = "posterUrl", expression = "java(getPosterUrl(movie))")
+	@Mapping(target = "currentlyShowing", expression = "java(isCurrentlyShowing(movie))")
 	MovieResponse toResponse(Movie movie);
 
 	List<MovieResponse> toResponseList(List<Movie> movies);
@@ -45,4 +53,27 @@ public interface MovieMapper {
 	@Mapping(target = "genres", ignore = true)
 	@Mapping(target = "posterFileName", ignore = true)
 	void updateEntityFromRequest(MovieUpdateRequest request, @MappingTarget Movie movie);
+
+	default String getPosterUrl(Movie movie) {
+		if (movie.getPosterFileName() != null && !movie.getPosterFileName().isBlank()) {
+			return "/api/movies/" + movie.getId() + "/poster";
+		}
+		return "/images/default-poster.jpg";
+	}
+
+	default boolean isCurrentlyShowing(Movie movie) {
+		return movie.getStatus() == MovieStatus.CURRENT;
+	}
+
+	default boolean isUpcoming(Movie movie) {
+		return movie.getStatus() == MovieStatus.UPCOMING;
+	}
+
+	default boolean isArchived(Movie movie) {
+		return movie.getStatus() == MovieStatus.ARCHIVED;
+	}
+
+	default boolean isActive(Movie movie) {
+		return movie.getStatus() != MovieStatus.ARCHIVED;
+	}
 }
