@@ -1,5 +1,10 @@
 package ua.lviv.bas.cinema.controller;
 
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -10,10 +15,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
-import jakarta.persistence.EntityNotFoundException;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.config.JwtTokenProvider;
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.dto.UserDto;
@@ -79,14 +80,10 @@ public class AuthController {
 			String token = jwtTokenProvider.generateToken(authentication);
 			User user = userService.findByEmail(loginDto.getEmail());
 
-			Map<String, Object> response = new HashMap<>();
-			response.put("message", "Login successful");
-			response.put("token", token);
-			response.put("user", UserDto.builder().id(user.getId()).email(user.getEmail())
-					.firstName(user.getFirstName()).lastName(user.getLastName()).userRole(user.getUserRole()).build());
+			Map<String, Object> response = createLoginResponse(token, user);
 
 			log.info("Login successful for email: {}", loginDto.getEmail());
-			return ResponseEntity.ok().header("Authorization", "Bearer " + token).body(response);
+			return ResponseEntity.ok().header(HttpHeaders.AUTHORIZATION, "Bearer " + token).body(response);
 
 		} catch (BadCredentialsException e) {
 			log.warn("Invalid credentials for email: {}", loginDto.getEmail());
@@ -96,10 +93,6 @@ public class AuthController {
 			log.warn("Account not verified for email: {}", loginDto.getEmail());
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
 					.body(createErrorResponse("Account is not verified. Please check your email."));
-		} catch (Exception e) {
-			log.error("Login error for email {}: {}", loginDto.getEmail(), e.getMessage());
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-					.body(createErrorResponse("Internal server error"));
 		}
 	}
 
@@ -169,9 +162,7 @@ public class AuthController {
 
 			User user = userService.findByEmail(email);
 
-			UserDto userDto = UserDto.builder().id(user.getId()).email(user.getEmail()).firstName(user.getFirstName())
-					.lastName(user.getLastName()).dateOfBirth(user.getDateOfBirth()).city(user.getCity())
-					.phoneNumber(user.getPhoneNumber()).userRole(user.getUserRole()).enabled(user.isEnabled()).build();
+			UserDto userDto = buildUserDto(user);
 
 			log.info("Profile retrieved successfully for user: {}", email);
 			return ResponseEntity.ok(userDto);
@@ -185,6 +176,21 @@ public class AuthController {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
 					.body(createErrorResponse("Internal server error"));
 		}
+	}
+
+	private Map<String, Object> createLoginResponse(String token, User user) {
+		Map<String, Object> response = new HashMap<>();
+		response.put("message", "Login successful");
+		response.put("token", token);
+		response.put("user", UserDto.builder().id(user.getId()).email(user.getEmail()).firstName(user.getFirstName())
+				.lastName(user.getLastName()).userRole(user.getUserRole()).build());
+		return response;
+	}
+
+	private UserDto buildUserDto(User user) {
+		return UserDto.builder().id(user.getId()).email(user.getEmail()).firstName(user.getFirstName())
+				.lastName(user.getLastName()).dateOfBirth(user.getDateOfBirth()).city(user.getCity())
+				.phoneNumber(user.getPhoneNumber()).userRole(user.getUserRole()).enabled(user.isEnabled()).build();
 	}
 
 	private Map<String, Object> createSuccessResponse(String message) {

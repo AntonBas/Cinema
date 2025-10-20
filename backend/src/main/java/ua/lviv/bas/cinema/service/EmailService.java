@@ -1,40 +1,97 @@
 package ua.lviv.bas.cinema.service;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import lombok.RequiredArgsConstructor;
-
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class EmailService {
 
-	private static final Logger logger = LogManager.getLogger(EmailService.class);
-
 	private final JavaMailSender mailSender;
 
-	public void sendVerificationEmail(String toEmail, String token) {
-		String link = "http://localhost:5173/verify-email/" + token;
-		SimpleMailMessage message = new SimpleMailMessage();
-		message.setTo(toEmail);
-		message.setSubject("Confirmation of registration");
-		message.setText("Thank you for registering!\n\nTo activate your account, follow this link: " + link
-				+ "\nThis link will expire in 10 minutes.");
+	@Value("${app.frontend.url:http://localhost:5173}")
+	private String frontendUrl;
 
-		mailSender.send(message);
-		logger.info("Verification email sent to {}", toEmail);
+	@Value("${app.email.from:noreply@cinema.com}")
+	private String fromEmail;
+
+	@Async
+	public void sendVerificationEmail(String toEmail, String token) {
+		try {
+			String link = createVerificationLink(token);
+			SimpleMailMessage message = buildEmailMessage(toEmail, "Confirmation of registration",
+					createVerificationEmailText(link));
+
+			mailSender.send(message);
+			log.info("Verification email sent successfully to {}", toEmail);
+
+		} catch (MailException e) {
+			log.error("Failed to send verification email to {}: {}", toEmail, e.getMessage());
+			throw new RuntimeException("Failed to send verification email", e);
+		}
 	}
 
+	@Async
 	public void sendPasswordResetEmail(String toEmail, String token) {
-		String link = "http://localhost:5173/reset-password/" + token;
+		try {
+			String link = createPasswordResetLink(token);
+			SimpleMailMessage message = buildEmailMessage(toEmail, "Password Reset Request",
+					createPasswordResetEmailText(link));
+
+			mailSender.send(message);
+			log.info("Password reset email sent successfully to {}", toEmail);
+
+		} catch (MailException e) {
+			log.error("Failed to send password reset email to {}: {}", toEmail, e.getMessage());
+			throw new RuntimeException("Failed to send password reset email", e);
+		}
+	}
+
+	private SimpleMailMessage buildEmailMessage(String toEmail, String subject, String text) {
 		SimpleMailMessage message = new SimpleMailMessage();
+		message.setFrom(fromEmail);
 		message.setTo(toEmail);
-		message.setSubject("Password Reset Request");
-		message.setText("To reset your password, click the link: " + link + "\nThis link will expire in 10 minutes.");
-		mailSender.send(message);
-		logger.info("Password reset email sent to {}", toEmail);
+		message.setSubject(subject);
+		message.setText(text);
+		return message;
+	}
+
+	private String createVerificationLink(String token) {
+		return frontendUrl + "/verify-email/" + token;
+	}
+
+	private String createPasswordResetLink(String token) {
+		return frontendUrl + "/reset-password/" + token;
+	}
+
+	private String createVerificationEmailText(String link) {
+		return """
+				Thank you for registering!
+
+				To activate your account, follow this link: %s
+
+				This link will expire in 10 minutes.
+
+				If you didn't create an account, please ignore this email.
+				""".formatted(link);
+	}
+
+	private String createPasswordResetEmailText(String link) {
+		return """
+				You have requested to reset your password.
+
+				To reset your password, click the link: %s
+
+				This link will expire in 10 minutes.
+
+				If you didn't request a password reset, please ignore this email.
+				""".formatted(link);
 	}
 }

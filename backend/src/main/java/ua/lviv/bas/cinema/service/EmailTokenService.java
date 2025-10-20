@@ -2,28 +2,26 @@ package ua.lviv.bas.cinema.service;
 
 import java.time.LocalDateTime;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.EmailToken;
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.repository.EmailTokenRepository;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class EmailTokenService {
-
-	private static final Logger logger = LogManager.getLogger(EmailTokenService.class);
 
 	private final EmailTokenRepository tokenRepository;
 	private final UserService userService;
 
 	@Transactional
 	public String confirmEmail(String token) {
-		logger.info("Attempting to confirm email with token: {}", token);
+		log.info("Attempting to confirm email with token: {}", token);
 		EmailToken emailToken = tokenRepository.findByToken(token)
 				.orElseThrow(() -> new RuntimeException("Invalid token"));
 
@@ -42,7 +40,7 @@ public class EmailTokenService {
 		emailToken.setConfirmed(true);
 		emailToken.setConfirmedAt(LocalDateTime.now());
 
-		logger.info("Email confirmed successfully for user: {}", user.getEmail());
+		log.info("Email confirmed successfully for user: {}", user.getEmail());
 		return "Email successfully verified! You can now log in.";
 	}
 }

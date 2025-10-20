@@ -1,23 +1,19 @@
 package ua.lviv.bas.cinema.domain;
 
-import java.time.LocalDateTime;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import ua.lviv.bas.cinema.domain.enums.TokenType;
 
+import java.time.LocalDateTime;
+
 @Entity
-@Table(name = "email_tokens")
+@Table(name = "email_tokens", indexes = { @Index(name = "idx_email_token_user_id", columnList = "user_id"),
+		@Index(name = "idx_email_token_expires", columnList = "expires_at"),
+		@Index(name = "idx_email_token_type", columnList = "type") })
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -25,20 +21,25 @@ import ua.lviv.bas.cinema.domain.enums.TokenType;
 public class EmailToken {
 
 	@Id
+	@Column(length = 255)
 	private String token;
 
-	@ManyToOne
+	@NotNull
+	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "user_id", nullable = false)
 	private User user;
 
-	@Column(name = "created_at", nullable = false)
+	@NotNull
+	@Column(name = "created_at", nullable = false, updatable = false)
 	private LocalDateTime createdAt;
 
+	@NotNull
 	@Column(name = "expires_at", nullable = false)
 	private LocalDateTime expiresAt;
 
+	@NotNull
 	@Enumerated(EnumType.STRING)
-	@Column(nullable = false)
+	@Column(nullable = false, length = 20)
 	private TokenType type;
 
 	@Builder.Default
@@ -47,4 +48,12 @@ public class EmailToken {
 
 	@Column(name = "confirmed_at")
 	private LocalDateTime confirmedAt;
+
+	public boolean isExpired() {
+		return LocalDateTime.now().isAfter(expiresAt);
+	}
+
+	public boolean isValid() {
+		return !confirmed && !isExpired();
+	}
 }

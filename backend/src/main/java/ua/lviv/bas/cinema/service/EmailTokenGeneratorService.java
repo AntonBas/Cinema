@@ -1,26 +1,22 @@
 package ua.lviv.bas.cinema.service;
 
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import lombok.RequiredArgsConstructor;
 import ua.lviv.bas.cinema.domain.EmailToken;
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.enums.TokenType;
+import ua.lviv.bas.cinema.exception.UserNotFoundException;
 import ua.lviv.bas.cinema.repository.EmailTokenRepository;
 
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class EmailTokenGeneratorService {
-
-	private static final Logger logger = LogManager.getLogger(EmailTokenGeneratorService.class);
 
 	private final EmailTokenRepository tokenRepository;
 	private final UserService userService;
@@ -37,47 +33,39 @@ public class EmailTokenGeneratorService {
 	}
 
 	private String generateToken(String email, TokenType tokenType) {
-		logger.info("Generating {} token for email: {}", tokenType, email);
-		User user = userService.findByEmail(email);
-		if (user == null) {
-			logger.error("No user found with email: {}", email);
-			throw new RuntimeException("There is no user with this email address.");
+		log.info("Generating {} token for email: {}", tokenType, email);
+
+		try {
+			User user = userService.findByEmail(email);
+
+			tokenRepository.deleteByUserAndTypeAndExpiresAtBefore(user, tokenType, LocalDateTime.now());
+
+			String token = UUID.randomUUID().toString();
+			EmailToken emailToken = buildEmailToken(token, user, tokenType);
+
+			tokenRepository.save(emailToken);
+			log.info("Saved new {} token for user: {}", tokenType, email);
+
+			sendEmailByType(email, token, tokenType);
+
+			return token;
+
+		} catch (UserNotFoundException e) {
+			log.error("User not found for email: {} while generating {} token", email, tokenType);
+			throw new RuntimeException("User not found with email: " + email);
 		}
+	}
 
-		tokenRepository.findByUserEmailAndType(email, tokenType).ifPresent(existingToken -> {
-			if (!existingToken.isConfirmed() && existingToken.getExpiresAt().isAfter(LocalDateTime.now())) {
-				tokenRepository.delete(existingToken);
-				logger.info("Deleted existing active {} token for user {}", tokenType, email);
-			}
-		});
+	private EmailToken buildEmailToken(String token, User user, TokenType tokenType) {
+		return EmailToken.builder().token(token).user(user).createdAt(LocalDateTime.now())
+				.expiresAt(LocalDateTime.now().plusMinutes(10)).type(tokenType).build();
+	}
 
-		List<EmailToken> allUserTokens = tokenRepository.findByUserEmail(email);
-		List<EmailToken> otherActiveTokens = allUserTokens.stream().filter(token -> token.getType() != tokenType)
-				.filter(token -> !token.isConfirmed())
-				.filter(token -> token.getExpiresAt().isAfter(LocalDateTime.now())).collect(Collectors.toList());
-
-		if (!otherActiveTokens.isEmpty()) {
-			logger.info("User {} has {} other active tokens of different types", email, otherActiveTokens.size());
+	private void sendEmailByType(String email, String token, TokenType tokenType) {
+		switch (tokenType) {
+		case VERIFICATION -> emailService.sendVerificationEmail(email, token);
+		case PASSWORD_RESET -> emailService.sendPasswordResetEmail(email, token);
+		default -> log.warn("Unknown token type: {}", tokenType);
 		}
-
-		String token = UUID.randomUUID().toString();
-		EmailToken emailToken = new EmailToken();
-		emailToken.setToken(token);
-		emailToken.setUser(user);
-		emailToken.setCreatedAt(LocalDateTime.now());
-		emailToken.setExpiresAt(LocalDateTime.now().plusMinutes(10));
-		emailToken.setType(tokenType);
-
-		tokenRepository.save(emailToken);
-		logger.info("Saved new {} token for user with email: {}", tokenType, email);
-
-		if (tokenType == TokenType.VERIFICATION) {
-			emailService.sendVerificationEmail(email, token);
-		} else if (tokenType == TokenType.PASSWORD_RESET) {
-			emailService.sendPasswordResetEmail(email, token);
-		}
-
-		logger.info("Sent {} email to {}", tokenType, email);
-		return token;
 	}
 }
