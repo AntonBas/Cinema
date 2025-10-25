@@ -1,6 +1,7 @@
 package ua.lviv.bas.cinema.domain;
 
 import java.util.List;
+import java.util.Objects;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -15,7 +16,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -24,34 +25,59 @@ import lombok.Setter;
 import ua.lviv.bas.cinema.domain.enums.SeatType;
 
 @Entity
-@Table(name = "seats", uniqueConstraints = { @UniqueConstraint(columnNames = { "hall_id", "seat_row", "number" }) })
 @Getter
 @Setter
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@Table(name = "seats", uniqueConstraints = { @UniqueConstraint(columnNames = { "hall_id", "seat_row", "number" }) })
 public class Seat {
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
-	@Min(value = 1, message = "Row must be at least 1")
-	@Column(name = "seat-row", nullable = false)
-	private int row;
+	@NotNull
+	@Column(name = "seat_row", nullable = false)
+	private Integer row;
 
-	@Min(value = 1, message = "Seat must be at least 1")
+	@NotNull
 	@Column(nullable = false)
-	private int number;
+	private Integer number;
 
+	@NotNull
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false)
 	@Builder.Default
 	private SeatType seatType = SeatType.STANDARD;
 
-	@ManyToOne
-	@JoinColumn(name = "hall_id")
+	@NotNull
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "hall_id", nullable = false)
 	private CinemaHall hall;
 
 	@OneToMany(mappedBy = "seat", fetch = FetchType.LAZY)
 	private List<Ticket> tickets;
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(id);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (!(obj instanceof Seat)) {
+			return false;
+		}
+		Seat other = (Seat) obj;
+		return Objects.equals(id, other.id);
+	}
+
+	@Override
+	public String toString() {
+		return "Seat [id=" + id + ", row=" + row + ", number=" + number + "]";
+	}
 }
