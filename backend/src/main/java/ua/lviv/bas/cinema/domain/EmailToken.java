@@ -1,23 +1,36 @@
 package ua.lviv.bas.cinema.domain;
 
-import jakarta.persistence.*;
+import java.time.LocalDateTime;
+import java.util.Objects;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import ua.lviv.bas.cinema.domain.enums.TokenType;
 
-import java.time.LocalDateTime;
-
 @Entity
+
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Table(name = "email_tokens", indexes = { @Index(name = "idx_email_token_user_id", columnList = "user_id"),
 		@Index(name = "idx_email_token_expires", columnList = "expires_at"),
 		@Index(name = "idx_email_token_type", columnList = "type") })
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 public class EmailToken {
 
 	@Id
@@ -56,4 +69,27 @@ public class EmailToken {
 	public boolean isValid() {
 		return !confirmed && !isExpired();
 	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(token);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (!(obj instanceof EmailToken)) {
+			return false;
+		}
+		EmailToken other = (EmailToken) obj;
+		return Objects.equals(token, other.token);
+	}
+
+	@Override
+	public String toString() {
+		return "EmailToken [token=" + token + "]";
+	}
+
 }

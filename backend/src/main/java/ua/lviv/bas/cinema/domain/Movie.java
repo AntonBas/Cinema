@@ -52,49 +52,49 @@ public class Movie {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
-	@NotBlank(message = "Movie title is required")
-	@Size(max = 255, message = "Title must be less than 255 characters")
+	@NotBlank
+	@Size(max = 255)
 	@Column(nullable = false)
 	private String title;
 
-	@NotBlank(message = "Slug is required")
-	@Pattern(regexp = "^[a-z0-9-]+$", message = "Slug can only contain lowercase letters, numbers and hyphens")
+	@NotBlank
+	@Pattern(regexp = "^[a-z0-9-]+$")
 	@Column(nullable = false, unique = true)
 	private String slug;
 
-	@NotBlank(message = "Trailer URL is required")
-	@URL(message = "Trailer must be a valid URL")
+	@NotBlank
+	@URL
 	@Column(nullable = false)
 	private String trailerUrl;
 
-	@NotBlank(message = "Description is required")
-	@Size(max = 1000, message = "Description must be less than 1000 characters")
+	@NotBlank
+	@Size(max = 1000)
 	@Column(nullable = false, columnDefinition = "TEXT")
 	private String description;
 
-	@NotNull(message = "Duration is required")
-	@Min(value = 1, message = "Duration must be at least 1 minute")
+	@NotNull
+	@Min(value = 1)
 	@Column(nullable = false, name = "duration_minutes")
 	private Integer durationMinutes;
 
-	@NotNull(message = "Release date is required")
+	@NotNull
 	@Column(nullable = false, name = "release_date")
 	private LocalDate releaseDate;
 
-	@NotNull(message = "End showing date is required")
+	@NotNull
 	@Column(nullable = false, name = "end_showing_date")
 	private LocalDate endShowingDate;
 
-	@NotNull(message = "Movie status is required")
+	@NotNull
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false)
 	private MovieStatus status;
 
-	@NotBlank(message = "Poster file name is required")
+	@NotBlank
 	@Column(nullable = false, name = "poster_file_name")
 	private String posterFileName;
 
-	@NotNull(message = "Age rating is required")
+	@NotNull
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false, name = "age_rating")
 	private AgeRating ageRating;
@@ -123,7 +123,7 @@ public class Movie {
 	@Builder.Default
 	private Set<Genre> genres = new HashSet<>();
 
-	@AssertTrue(message = "End showing date must be after release date")
+	@AssertTrue
 	public boolean isEndDateAfterReleaseDate() {
 		if (releaseDate == null || endShowingDate == null) {
 			return true;
