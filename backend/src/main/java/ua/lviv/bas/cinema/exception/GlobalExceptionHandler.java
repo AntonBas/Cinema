@@ -56,4 +56,22 @@ public class GlobalExceptionHandler {
 		log.warn("Movie not found: {}", ex.getMessage());
 		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
 	}
+
+	@ExceptionHandler(CinemaHallNotFoundException.class)
+	public ResponseEntity<String> handleCinemaHallNotFound(CinemaHallNotFoundException ex) {
+		log.warn("Cinema hall not found: {}", ex.getMessage());
+		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+	}
+
+	@ExceptionHandler(SeatNotFoundException.class)
+	public ResponseEntity<String> handleSeatNotFound(SeatNotFoundException ex) {
+		log.warn("Seat not found: {}", ex.getMessage());
+		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+	}
+
+	@ExceptionHandler(DuplicateEntityException.class)
+	public ResponseEntity<String> handleDuplicateEntity(DuplicateEntityException ex) {
+		log.warn("Duplicate entity: {}", ex.getMessage());
+		return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
+	}
 }
