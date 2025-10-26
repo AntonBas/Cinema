@@ -64,7 +64,8 @@ public class WebSecurityConfig {
 		http.cors(cors -> cors.configurationSource(corsConfigurationSource())).csrf(csrf -> csrf.disable())
 				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 				.authorizeHttpRequests(auth -> auth
-						.requestMatchers("/api/auth/**", "/api/movies/public/**", "/api/cinema-halls/public/**")
+						.requestMatchers("/api/auth/**", "/api/movies/public/**", "/api/cinema-halls/public/**",
+								"/api/movies/*/poster")
 						.permitAll().requestMatchers("/api/admin/**").hasRole("ADMIN").anyRequest().authenticated())
 				.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
 				.formLogin(form -> form.disable()).httpBasic(basic -> basic.disable())

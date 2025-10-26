@@ -12,12 +12,14 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
 @Slf4j
+@Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
@@ -29,8 +31,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 			@NonNull FilterChain filterChain) throws ServletException, IOException {
 
 		String jwt = getJwtFromRequest(request);
+		log.debug("JWT token from request: {}", jwt);
 
 		if (!StringUtils.hasText(jwt)) {
+			log.debug("No JWT token found, continuing filter chain");
 			filterChain.doFilter(request, response);
 			return;
 		}
@@ -38,6 +42,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 		try {
 			if (jwtTokenProvider.validateToken(jwt)) {
 				String email = jwtTokenProvider.getEmailFromToken(jwt);
+				log.debug("Valid JWT token for email: {}", email);
+
 				UserDetails userDetails = userDetailsService.loadUserByUsername(email);
 
 				UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(

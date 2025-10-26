@@ -82,6 +82,9 @@ public class AuthController {
 
 			Map<String, Object> response = createLoginResponse(token, user);
 
+			response.put("token", token);
+			response.put("tokenType", "Bearer");
+
 			log.info("Login successful for email: {}", loginDto.getEmail());
 			return ResponseEntity.ok().header(HttpHeaders.AUTHORIZATION, "Bearer " + token).body(response);
 
