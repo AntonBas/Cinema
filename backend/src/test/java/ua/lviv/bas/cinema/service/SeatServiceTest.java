@@ -1,33 +1,27 @@
 package ua.lviv.bas.cinema.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import jakarta.persistence.EntityNotFoundException;
+import ua.lviv.bas.cinema.domain.CinemaHall;
 import ua.lviv.bas.cinema.domain.Seat;
 import ua.lviv.bas.cinema.domain.enums.SeatType;
-import ua.lviv.bas.cinema.dto.SeatCreateDto;
 import ua.lviv.bas.cinema.dto.SeatDto;
+import ua.lviv.bas.cinema.exception.SeatNotFoundException;
 import ua.lviv.bas.cinema.mapper.SeatMapper;
 import ua.lviv.bas.cinema.repository.SeatRepository;
-import ua.lviv.bas.cinema.repository.TicketRepository;
+
+import jakarta.persistence.EntityNotFoundException;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class SeatServiceTest {
@@ -36,201 +30,157 @@ class SeatServiceTest {
 	private SeatRepository seatRepository;
 
 	@Mock
-	private TicketRepository ticketRepository;
-
-	@Mock
 	private SeatMapper seatMapper;
 
 	@InjectMocks
 	private SeatService seatService;
 
-	private SeatCreateDto seatCreateDto;
-	private Seat seat;
-	private SeatDto seatDto;
+	private CinemaHall testHall;
+	private Seat standardSeat;
+	private Seat vipSeat;
+	private SeatDto standardSeatDto;
+	private SeatDto vipSeatDto;
 
 	@BeforeEach
 	void setUp() {
-		seatCreateDto = SeatCreateDto.builder().row(1).number(5).seatType(SeatType.VIP).build();
+		testHall = CinemaHall.builder().id(1L).name("Hall A").build();
 
-		seat = Seat.builder().id(1L).row(1).number(5).seatType(SeatType.VIP).build();
+		standardSeat = Seat.builder().id(1L).row(1).number(1).seatType(SeatType.STANDARD).hall(testHall).build();
+		vipSeat = Seat.builder().id(2L).row(1).number(2).seatType(SeatType.VIP).hall(testHall).build();
 
-		seatDto = SeatDto.builder().id(1L).row(1).number(5).seatType(SeatType.VIP).available(true).build();
+		standardSeatDto = SeatDto.builder().id(1L).row(1).number(1).seatType(SeatType.STANDARD).build();
+		vipSeatDto = SeatDto.builder().id(2L).row(1).number(2).seatType(SeatType.VIP).build();
 	}
 
 	@Test
-	void getSeatsByHallId_ShouldReturnSeats() {
-		List<Seat> seats = Arrays.asList(seat);
-
-		when(seatRepository.findByHallId(1L)).thenReturn(seats);
-		when(seatMapper.toDto(seat)).thenReturn(seatDto);
-
-		List<SeatDto> result = seatService.getSeatsByHallId(1L);
-
-		assertNotNull(result);
-		assertEquals(1, result.size());
-		verify(seatRepository).findByHallId(1L);
-	}
-
-	@Test
-	void createSeat_ShouldCreateAndReturnSeat() {
-		when(seatMapper.toEntity(seatCreateDto)).thenReturn(seat);
-		when(seatRepository.save(seat)).thenReturn(seat);
-		when(seatMapper.toDto(seat)).thenReturn(seatDto);
-
-		SeatDto result = seatService.createSeat(seatCreateDto);
-
-		assertNotNull(result);
-		assertEquals(seatDto, result);
-		verify(seatRepository).save(seat);
-	}
-
-	@Test
-	void getSeatById_WhenExists_ShouldReturnSeat() {
-		when(seatRepository.findById(1L)).thenReturn(Optional.of(seat));
-		when(seatMapper.toDto(seat)).thenReturn(seatDto);
+	void getSeatById_ShouldReturnSeatDto_WhenSeatExists() {
+		when(seatRepository.findById(1L)).thenReturn(Optional.of(standardSeat));
+		when(seatMapper.toDto(standardSeat)).thenReturn(standardSeatDto);
 
 		SeatDto result = seatService.getSeatById(1L);
 
 		assertNotNull(result);
-		assertEquals(seatDto, result);
+		assertEquals(1L, result.getId());
 		verify(seatRepository).findById(1L);
+		verify(seatMapper).toDto(standardSeat);
 	}
 
 	@Test
-	void getSeatById_WhenNotExists_ShouldThrowException() {
+	void getSeatById_ShouldThrowSeatNotFoundException_WhenSeatNotExists() {
 		when(seatRepository.findById(1L)).thenReturn(Optional.empty());
 
-		assertThrows(EntityNotFoundException.class, () -> {
-			seatService.getSeatById(1L);
-		});
+		assertThrows(SeatNotFoundException.class, () -> seatService.getSeatById(1L));
 		verify(seatRepository).findById(1L);
+		verify(seatMapper, never()).toDto(any());
 	}
 
 	@Test
-	void updateSeat_WhenExists_ShouldUpdateAndReturnSeat() {
-		SeatCreateDto updateDto = SeatCreateDto.builder().row(2).number(10).seatType(SeatType.STANDARD).build();
+	void updateSeatType_ShouldUpdateAndReturnSeatDto_WhenSeatExists() {
+		when(seatRepository.findById(1L)).thenReturn(Optional.of(standardSeat));
+		when(seatRepository.save(standardSeat)).thenReturn(vipSeat);
+		when(seatMapper.toDto(vipSeat)).thenReturn(vipSeatDto);
 
-		Seat updatedSeat = Seat.builder().id(1L).row(2).number(10).seatType(SeatType.STANDARD).build();
-
-		SeatDto updatedDto = SeatDto.builder().id(1L).row(2).number(10).seatType(SeatType.STANDARD).build();
-
-		when(seatRepository.findById(1L)).thenReturn(Optional.of(seat));
-		when(seatRepository.save(seat)).thenReturn(updatedSeat);
-		when(seatMapper.toDto(updatedSeat)).thenReturn(updatedDto);
-
-		SeatDto result = seatService.updateSeat(1L, updateDto);
+		SeatDto result = seatService.updateSeatType(1L, SeatType.VIP);
 
 		assertNotNull(result);
-		assertEquals(2, result.getRow());
-		assertEquals(10, result.getNumber());
-		assertEquals(SeatType.STANDARD, result.getSeatType());
+		assertEquals(SeatType.VIP, result.getSeatType());
+		assertEquals(SeatType.VIP, standardSeat.getSeatType());
 		verify(seatRepository).findById(1L);
-		verify(seatRepository).save(seat);
+		verify(seatRepository).save(standardSeat);
+		verify(seatMapper).toDto(vipSeat);
 	}
 
 	@Test
-	void updateSeat_WhenNotExists_ShouldThrowException() {
+	void updateSeatType_ShouldThrowEntityNotFoundException_WhenSeatNotExists() {
 		when(seatRepository.findById(1L)).thenReturn(Optional.empty());
 
-		assertThrows(EntityNotFoundException.class, () -> {
-			seatService.updateSeat(1L, seatCreateDto);
-		});
+		assertThrows(EntityNotFoundException.class, () -> seatService.updateSeatType(1L, SeatType.VIP));
 		verify(seatRepository).findById(1L);
+		verify(seatRepository, never()).save(any());
 	}
 
 	@Test
-	void deleteSeat_WhenExists_ShouldDeleteSeat() {
-		when(seatRepository.existsById(1L)).thenReturn(true);
-		doNothing().when(seatRepository).deleteById(1L);
+	void getSeatsByHall_ShouldReturnListOfSeatDtos() {
+		List<Seat> seats = Arrays.asList(standardSeat, vipSeat);
+		List<SeatDto> seatDtos = Arrays.asList(standardSeatDto, vipSeatDto);
 
-		seatService.deleteSeat(1L);
+		when(seatRepository.findByHallId(1L)).thenReturn(seats);
+		when(seatMapper.toDtoList(seats)).thenReturn(seatDtos);
 
-		verify(seatRepository).existsById(1L);
-		verify(seatRepository).deleteById(1L);
-	}
-
-	@Test
-	void deleteSeat_WhenNotExists_ShouldThrowException() {
-		when(seatRepository.existsById(1L)).thenReturn(false);
-
-		assertThrows(EntityNotFoundException.class, () -> {
-			seatService.deleteSeat(1L);
-		});
-		verify(seatRepository).existsById(1L);
-	}
-
-	@Test
-	void getAvailableSeatsForSession_ShouldReturnAvailableSeats() {
-		List<Seat> allSeats = Arrays.asList(seat);
-		when(seatRepository.findByHallId(1L)).thenReturn(allSeats);
-		when(ticketRepository.existsBySeatIdAndSessionId(1L, 1L)).thenReturn(false);
-		when(seatMapper.toDto(seat)).thenReturn(seatDto);
-
-		List<SeatDto> result = seatService.getAvailableSeatsForSession(1L, 1L);
+		List<SeatDto> result = seatService.getSeatsByHall(1L);
 
 		assertNotNull(result);
-		assertEquals(1, result.size());
-		assertTrue(result.get(0).isAvailable());
+		assertEquals(2, result.size());
 		verify(seatRepository).findByHallId(1L);
-		verify(ticketRepository).existsBySeatIdAndSessionId(1L, 1L);
+		verify(seatMapper).toDtoList(seats);
 	}
 
 	@Test
-	void getAllSeatsForSession_ShouldReturnAllSeatsWithAvailability() {
-		List<Seat> allSeats = Arrays.asList(seat);
-		when(seatRepository.findByHallId(1L)).thenReturn(allSeats);
-		when(ticketRepository.existsBySeatIdAndSessionId(1L, 1L)).thenReturn(true);
-		when(seatMapper.toDto(seat)).thenReturn(seatDto);
+	void getSeatByPosition_ShouldReturnSeatDto_WhenSeatExists() {
+		when(seatRepository.findByHallIdAndRowAndNumber(1L, 1, 1)).thenReturn(Optional.of(standardSeat));
+		when(seatMapper.toDto(standardSeat)).thenReturn(standardSeatDto);
 
-		List<SeatDto> result = seatService.getAllSeatsForSession(1L, 1L);
+		SeatDto result = seatService.getSeatByPosition(1L, 1, 1);
 
 		assertNotNull(result);
-		assertEquals(1, result.size());
-		assertFalse(result.get(0).isAvailable());
-		verify(seatRepository).findByHallId(1L);
-		verify(ticketRepository).existsBySeatIdAndSessionId(1L, 1L);
+		assertEquals(1L, result.getId());
+		verify(seatRepository).findByHallIdAndRowAndNumber(1L, 1, 1);
+		verify(seatMapper).toDto(standardSeat);
 	}
 
 	@Test
-	void getSeatEntityById_WhenExists_ShouldReturnEntity() {
-		when(seatRepository.findById(1L)).thenReturn(Optional.of(seat));
+	void getSeatByPosition_ShouldThrowSeatNotFoundException_WhenSeatNotExists() {
+		when(seatRepository.findByHallIdAndRowAndNumber(1L, 1, 1)).thenReturn(Optional.empty());
 
-		Seat result = seatService.getSeatEntityById(1L);
-
-		assertNotNull(result);
-		assertEquals(seat, result);
-		verify(seatRepository).findById(1L);
+		assertThrows(SeatNotFoundException.class, () -> seatService.getSeatByPosition(1L, 1, 1));
+		verify(seatRepository).findByHallIdAndRowAndNumber(1L, 1, 1);
+		verify(seatMapper, never()).toDto(any());
 	}
 
 	@Test
-	void existsById_ShouldReturnTrueWhenExists() {
-		when(seatRepository.existsById(1L)).thenReturn(true);
+	void isSeatAvailable_ShouldReturnTrue_WhenSeatExists() {
+		when(seatRepository.existsByHallIdAndRowAndNumber(1L, 1, 1)).thenReturn(true);
 
-		boolean result = seatService.existsById(1L);
+		boolean result = seatService.isSeatAvailable(1L, 1, 1);
 
 		assertTrue(result);
-		verify(seatRepository).existsById(1L);
+		verify(seatRepository).existsByHallIdAndRowAndNumber(1L, 1, 1);
 	}
 
 	@Test
-	void isSeatAvailable_WhenAvailable_ShouldReturnTrue() {
-		when(ticketRepository.existsBySeatIdAndSessionId(1L, 1L)).thenReturn(false);
+	void isSeatAvailable_ShouldReturnFalse_WhenSeatNotExists() {
+		when(seatRepository.existsByHallIdAndRowAndNumber(1L, 1, 1)).thenReturn(false);
 
-		boolean result = seatService.isSeatAvailable(1L, 1L);
+		boolean result = seatService.isSeatAvailable(1L, 1, 1);
 
-		assertTrue(result);
-		verify(ticketRepository).existsBySeatIdAndSessionId(1L, 1L);
+		assertFalse(result);
+		verify(seatRepository).existsByHallIdAndRowAndNumber(1L, 1, 1);
 	}
 
 	@Test
-	void getAvailableSeatsCountForSession_ShouldReturnCorrectCount() {
-		when(seatRepository.countByHallId(1L)).thenReturn(50L);
-		when(ticketRepository.countBySessionId(1L)).thenReturn((int) 20L);
+	void countSeatsByHall_ShouldReturnCorrectCount() {
+		when(seatRepository.countByHallId(1L)).thenReturn(5L);
 
-		int result = seatService.getAvailableSeatsCountForSession(1L, 1L);
+		long result = seatService.countSeatsByHall(1L);
 
-		assertEquals(30, result);
+		assertEquals(5L, result);
 		verify(seatRepository).countByHallId(1L);
-		verify(ticketRepository).countBySessionId(1L);
+	}
+
+	@Test
+	void getSeatsByType_ShouldReturnFilteredSeatDtos() {
+		List<Seat> vipSeats = Arrays.asList(vipSeat);
+		List<SeatDto> vipSeatDtos = Arrays.asList(vipSeatDto);
+
+		when(seatRepository.findByHallIdAndSeatType(1L, SeatType.VIP)).thenReturn(vipSeats);
+		when(seatMapper.toDtoList(vipSeats)).thenReturn(vipSeatDtos);
+
+		List<SeatDto> result = seatService.getSeatsByType(1L, SeatType.VIP);
+
+		assertNotNull(result);
+		assertEquals(1, result.size());
+		assertEquals(SeatType.VIP, result.get(0).getSeatType());
+		verify(seatRepository).findByHallIdAndSeatType(1L, SeatType.VIP);
+		verify(seatMapper).toDtoList(vipSeats);
 	}
 }
