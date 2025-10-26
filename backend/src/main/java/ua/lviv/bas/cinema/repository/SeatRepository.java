@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import ua.lviv.bas.cinema.domain.Seat;
+import ua.lviv.bas.cinema.domain.enums.SeatType;
 
 public interface SeatRepository extends JpaRepository<Seat, Long> {
 	List<Seat> findByHallId(Long hallId);
@@ -21,4 +22,7 @@ public interface SeatRepository extends JpaRepository<Seat, Long> {
 
 	long countByHallId(Long hallId);
 
+	List<Seat> findByHallIdAndSeatType(Long hallId, SeatType seatType);
+
+	void deleteByHallId(Long hallId);
 }

@@ -2,127 +2,79 @@ package ua.lviv.bas.cinema.controller;
 
 import java.util.List;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import ua.lviv.bas.cinema.dto.SeatCreateDto;
+import lombok.extern.slf4j.Slf4j;
+import ua.lviv.bas.cinema.domain.enums.SeatType;
 import ua.lviv.bas.cinema.dto.SeatDto;
 import ua.lviv.bas.cinema.service.SeatService;
 
+@Slf4j
 @RestController
-@RequestMapping("/api/seats")
+@RequestMapping("/api/cinema-halls/{hallId}/seats")
 @RequiredArgsConstructor
 public class SeatController {
 
 	private final SeatService seatService;
 
-	@GetMapping("/hall/{hallId}")
+	@GetMapping
 	public ResponseEntity<List<SeatDto>> getSeatsByHall(@PathVariable Long hallId) {
-		try {
-			List<SeatDto> seats = seatService.getSeatsByHallId(hallId);
-			return ResponseEntity.ok(seats);
-		} catch (Exception e) {
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-		}
+		log.info("GET /api/cinema-halls/{}/seats - Retrieving all seats for hall", hallId);
+		List<SeatDto> seats = seatService.getSeatsByHall(hallId);
+		return ResponseEntity.ok(seats);
 	}
 
-	@GetMapping("/{id}")
-	public ResponseEntity<SeatDto> getSeatById(@PathVariable Long id) {
-		try {
-			SeatDto seat = seatService.getSeatById(id);
-			return ResponseEntity.ok(seat);
-		} catch (jakarta.persistence.EntityNotFoundException e) {
-			return ResponseEntity.notFound().build();
-		} catch (Exception e) {
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-		}
+	@GetMapping("/{seatId}")
+	public ResponseEntity<SeatDto> getSeatById(@PathVariable Long hallId, @PathVariable Long seatId) {
+		log.info("GET /api/cinema-halls/{}/seats/{} - Retrieving seat", hallId, seatId);
+		SeatDto seat = seatService.getSeatById(seatId);
+		return ResponseEntity.ok(seat);
 	}
 
-	@PostMapping
-	public ResponseEntity<SeatDto> createSeat(@Valid @RequestBody SeatCreateDto seatCreateDto) {
-		try {
-			SeatDto createdSeat = seatService.createSeat(seatCreateDto);
-			return ResponseEntity.status(HttpStatus.CREATED).body(createdSeat);
-		} catch (Exception e) {
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-		}
+	@GetMapping("/position")
+	public ResponseEntity<SeatDto> getSeatByPosition(@PathVariable Long hallId, @RequestParam int row,
+			@RequestParam int number) {
+		log.info("GET /api/cinema-halls/{}/seats/position?row={}&number={} - Retrieving seat by position", hallId, row,
+				number);
+		SeatDto seat = seatService.getSeatByPosition(hallId, row, number);
+		return ResponseEntity.ok(seat);
 	}
 
-	@PutMapping("/{id}")
-	public ResponseEntity<SeatDto> updateSeat(@PathVariable Long id, @Valid @RequestBody SeatCreateDto seatUpdateDto) {
-		try {
-			SeatDto updatedSeat = seatService.updateSeat(id, seatUpdateDto);
-			return ResponseEntity.ok(updatedSeat);
-		} catch (jakarta.persistence.EntityNotFoundException e) {
-			return ResponseEntity.notFound().build();
-		} catch (Exception e) {
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-		}
+	@PutMapping("/{seatId}/type")
+	public ResponseEntity<SeatDto> updateSeatType(@PathVariable Long hallId, @PathVariable Long seatId,
+			@RequestParam SeatType seatType) {
+		log.info("PUT /api/cinema-halls/{}/seats/{}/type?seatType={} - Updating seat type", hallId, seatId, seatType);
+		SeatDto updated = seatService.updateSeatType(seatId, seatType);
+		return ResponseEntity.ok(updated);
 	}
 
-	@DeleteMapping("/{id}")
-	public ResponseEntity<Void> deleteSeat(@PathVariable Long id) {
-		try {
-			seatService.deleteSeat(id);
-			return ResponseEntity.noContent().build();
-		} catch (jakarta.persistence.EntityNotFoundException e) {
-			return ResponseEntity.notFound().build();
-		} catch (Exception e) {
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-		}
+	@GetMapping("/check-availability")
+	public ResponseEntity<Boolean> checkSeatAvailability(@PathVariable Long hallId, @RequestParam int row,
+			@RequestParam int number) {
+		log.info("GET /api/cinema-halls/{}/seats/check-availability?row={}&number={} - Checking seat availability",
+				hallId, row, number);
+		boolean available = seatService.isSeatAvailable(hallId, row, number);
+		return ResponseEntity.ok(available);
 	}
 
-	@GetMapping("/availability")
-	public ResponseEntity<List<SeatDto>> getAvailableSeats(@RequestParam Long hallId, @RequestParam Long sessionId) {
-		try {
-			List<SeatDto> availableSeats = seatService.getAvailableSeatsForSession(hallId, sessionId);
-			return ResponseEntity.ok(availableSeats);
-		} catch (Exception e) {
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-		}
+	@GetMapping("/count")
+	public ResponseEntity<Long> countSeatsByHall(@PathVariable Long hallId) {
+		log.info("GET /api/cinema-halls/{}/seats/count - Counting seats for hall", hallId);
+		long count = seatService.countSeatsByHall(hallId);
+		return ResponseEntity.ok(count);
 	}
 
-	@GetMapping("/hall/{hallId}/session/{sessionId}")
-	public ResponseEntity<List<SeatDto>> getAllSeatsWithAvailability(@PathVariable Long hallId,
-			@PathVariable Long sessionId) {
-		try {
-			List<SeatDto> seats = seatService.getAllSeatsForSession(hallId, sessionId);
-			return ResponseEntity.ok(seats);
-		} catch (Exception e) {
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-		}
-	}
-
-	@GetMapping("/{id}/availability")
-	public ResponseEntity<Boolean> checkSeatAvailability(@PathVariable Long id, @RequestParam Long sessionId) {
-		try {
-			boolean isAvailable = seatService.isSeatAvailable(id, sessionId);
-			return ResponseEntity.ok(isAvailable);
-		} catch (jakarta.persistence.EntityNotFoundException e) {
-			return ResponseEntity.notFound().build();
-		} catch (Exception e) {
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-		}
-	}
-
-	@GetMapping("/count/available")
-	public ResponseEntity<Integer> getAvailableSeatsCount(@RequestParam Long hallId, @RequestParam Long sessionId) {
-		try {
-			int availableCount = seatService.getAvailableSeatsCountForSession(hallId, sessionId);
-			return ResponseEntity.ok(availableCount);
-		} catch (Exception e) {
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-		}
+	@GetMapping("/by-type")
+	public ResponseEntity<List<SeatDto>> getSeatsByType(@PathVariable Long hallId, @RequestParam SeatType seatType) {
+		log.info("GET /api/cinema-halls/{}/seats/by-type?seatType={} - Retrieving seats by type", hallId, seatType);
+		List<SeatDto> seats = seatService.getSeatsByType(hallId, seatType);
+		return ResponseEntity.ok(seats);
 	}
 }

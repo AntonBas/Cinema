@@ -1,19 +1,16 @@
 package ua.lviv.bas.cinema.mapper;
 
+import java.util.List;
+
 import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
+
 import ua.lviv.bas.cinema.domain.Seat;
-import ua.lviv.bas.cinema.dto.SeatCreateDto;
 import ua.lviv.bas.cinema.dto.SeatDto;
 
 @Mapper(componentModel = "spring")
 public interface SeatMapper {
 
-	@Mapping(target = "id", ignore = true)
-	@Mapping(target = "hall", ignore = true)
-	@Mapping(target = "tickets", ignore = true)
-	Seat toEntity(SeatCreateDto dto);
+	SeatDto toDto(Seat seat);
 
-	@Mapping(target = "available", ignore = true)
-	SeatDto toDto(Seat entity);
+	List<SeatDto> toDtoList(List<Seat> seats);
 }

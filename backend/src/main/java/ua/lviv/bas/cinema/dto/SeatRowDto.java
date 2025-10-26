@@ -1,19 +1,18 @@
 package ua.lviv.bas.cinema.dto;
 
+import java.util.List;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import ua.lviv.bas.cinema.domain.enums.SeatType;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class SeatDto {
-	private Long id;
-	private int row;
-	private int number;
-	private SeatType seatType;
-
+public class SeatRowDto {
+	private Integer rowNumber;
+	private int seatsCount;
+	private List<SeatDto> seats;
 }
