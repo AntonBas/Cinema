@@ -1,160 +1,100 @@
 package ua.lviv.bas.cinema.mapper;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
-
-import java.util.List;
-
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-
+import org.mapstruct.factory.Mappers;
 import ua.lviv.bas.cinema.domain.CinemaHall;
 import ua.lviv.bas.cinema.domain.Seat;
-import ua.lviv.bas.cinema.dto.CinemaHallCreateDto;
-import ua.lviv.bas.cinema.dto.CinemaHallResponseDto;
-import ua.lviv.bas.cinema.dto.SeatDto;
+import ua.lviv.bas.cinema.dto.CinemaHallDto;
 
-@ExtendWith(MockitoExtension.class)
+import java.util.Arrays;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.*;
+
 class CinemaHallMapperTest {
 
-	@Mock
-	private SeatMapper seatMapper;
+	private CinemaHallMapper cinemaHallMapper;
+	private CinemaHall cinemaHallWithSeats;
+	private CinemaHall cinemaHallEmptySeats;
+	private CinemaHall cinemaHallNullSeats;
 
-	@InjectMocks
-	private CinemaHallMapperImpl cinemaHallMapper;
+	@BeforeEach
+	void setUp() {
+		cinemaHallMapper = Mappers.getMapper(CinemaHallMapper.class);
 
-	@Test
-	void toEntity_ShouldMapBasicFieldsAndIgnoreOthers() {
-		CinemaHallCreateDto dto = CinemaHallCreateDto.builder().name("Test Hall").rows(5).seatsPerRow(10).build();
+		cinemaHallWithSeats = CinemaHall.builder().id(1L).name("Hall A").build();
 
-		CinemaHall entity = cinemaHallMapper.toEntity(dto);
+		Seat seat1 = Seat.builder().id(1L).row(1).number(1).hall(cinemaHallWithSeats).build();
+		Seat seat2 = Seat.builder().id(2L).row(1).number(2).hall(cinemaHallWithSeats).build();
+		Seat seat3 = Seat.builder().id(3L).row(2).number(1).hall(cinemaHallWithSeats).build();
+		cinemaHallWithSeats.setSeats(Arrays.asList(seat1, seat2, seat3));
 
-		assertNotNull(entity);
-		assertEquals("Test Hall", entity.getName());
-		assertNull(entity.getId());
-		assertNull(entity.getSessions());
-		assertNull(entity.getSeats());
+		cinemaHallEmptySeats = CinemaHall.builder().id(2L).name("Hall B").build();
+		cinemaHallEmptySeats.setSeats(Arrays.asList());
 
-		verifyNoInteractions(seatMapper);
+		cinemaHallNullSeats = CinemaHall.builder().id(3L).name("Hall C").build();
+		cinemaHallNullSeats.setSeats(null);
 	}
 
 	@Test
-	void toEntity_ShouldHandleNullDto() {
-		CinemaHall entity = cinemaHallMapper.toEntity(null);
-
-		assertNull(entity);
-		verifyNoInteractions(seatMapper);
-	}
-
-	@Test
-	void toResponseDto_ShouldMapAllFieldsIncludingCapacity() {
-		CinemaHall hall = new CinemaHall();
-		hall.setId(1L);
-		hall.setName("Test Hall");
-
-		Seat seat1 = new Seat();
-		seat1.setId(1L);
-		Seat seat2 = new Seat();
-		seat2.setId(2L);
-		hall.setSeats(List.of(seat1, seat2));
-
-		SeatDto seatDto1 = SeatDto.builder().id(1L).build();
-		SeatDto seatDto2 = SeatDto.builder().id(2L).build();
-
-		when(seatMapper.toDto(seat1)).thenReturn(seatDto1);
-		when(seatMapper.toDto(seat2)).thenReturn(seatDto2);
-
-		CinemaHallResponseDto dto = cinemaHallMapper.toResponseDto(hall);
+	void testToDto_ShouldMapCinemaHallToDto() {
+		CinemaHallDto dto = cinemaHallMapper.toDto(cinemaHallWithSeats);
 
 		assertNotNull(dto);
 		assertEquals(1L, dto.getId());
-		assertEquals("Test Hall", dto.getName());
-		assertEquals(2, dto.getCapacity());
-		assertEquals(2, dto.getSeats().size());
-		assertEquals(1L, dto.getSeats().get(0).getId());
-		assertEquals(2L, dto.getSeats().get(1).getId());
-
-		verify(seatMapper, times(2)).toDto(any(Seat.class));
+		assertEquals("Hall A", dto.getName());
+		assertEquals(3, dto.getCapacity());
 	}
 
 	@Test
-	void toResponseDto_ShouldHandleNullSeats() {
-		CinemaHall hall = new CinemaHall();
-		hall.setId(1L);
-		hall.setName("Test Hall");
-		hall.setSeats(null);
-
-		CinemaHallResponseDto dto = cinemaHallMapper.toResponseDto(hall);
+	void testToDto_WithEmptySeats_ShouldReturnZeroCapacity() {
+		CinemaHallDto dto = cinemaHallMapper.toDto(cinemaHallEmptySeats);
 
 		assertNotNull(dto);
-		assertEquals(1L, dto.getId());
-		assertEquals("Test Hall", dto.getName());
+		assertEquals(2L, dto.getId());
+		assertEquals("Hall B", dto.getName());
 		assertEquals(0, dto.getCapacity());
-		assertNull(dto.getSeats());
-
-		verifyNoInteractions(seatMapper);
 	}
 
 	@Test
-	void toResponseDto_ShouldHandleEmptySeats() {
-		CinemaHall hall = new CinemaHall();
-		hall.setId(1L);
-		hall.setName("Test Hall");
-		hall.setSeats(List.of());
-
-		CinemaHallResponseDto dto = cinemaHallMapper.toResponseDto(hall);
+	void testToDto_WithNullSeats_ShouldReturnZeroCapacity() {
+		CinemaHallDto dto = cinemaHallMapper.toDto(cinemaHallNullSeats);
 
 		assertNotNull(dto);
-		assertEquals(1L, dto.getId());
-		assertEquals("Test Hall", dto.getName());
+		assertEquals(3L, dto.getId());
+		assertEquals("Hall C", dto.getName());
 		assertEquals(0, dto.getCapacity());
-		assertNotNull(dto.getSeats());
-		assertTrue(dto.getSeats().isEmpty());
-
-		verifyNoInteractions(seatMapper);
 	}
 
 	@Test
-	void toResponseDto_ShouldHandleNullEntity() {
-		CinemaHallResponseDto dto = cinemaHallMapper.toResponseDto(null);
+	void testToDtoList_ShouldMapListOfCinemaHalls() {
+		List<CinemaHall> halls = Arrays.asList(cinemaHallWithSeats, cinemaHallEmptySeats);
 
-		assertNull(dto);
-		verifyNoInteractions(seatMapper);
+		List<CinemaHallDto> dtos = cinemaHallMapper.toDtoList(halls);
+
+		assertNotNull(dtos);
+		assertEquals(2, dtos.size());
+		assertEquals(1L, dtos.get(0).getId());
+		assertEquals(2L, dtos.get(1).getId());
+		assertEquals(3, dtos.get(0).getCapacity());
+		assertEquals(0, dtos.get(1).getCapacity());
 	}
 
 	@Test
-	void calculateCapacity_ShouldReturnSeatsSize() {
-		CinemaHall hall = new CinemaHall();
-		Seat seat1 = new Seat();
-		Seat seat2 = new Seat();
-		Seat seat3 = new Seat();
-		hall.setSeats(List.of(seat1, seat2, seat3));
+	void testToDtoList_WithEmptyList_ShouldReturnEmptyList() {
+		List<CinemaHall> halls = Arrays.asList();
 
-		int capacity = cinemaHallMapper.calculateCapacity(hall);
+		List<CinemaHallDto> dtos = cinemaHallMapper.toDtoList(halls);
 
-		assertEquals(3, capacity);
+		assertNotNull(dtos);
+		assertTrue(dtos.isEmpty());
 	}
 
 	@Test
-	void calculateCapacity_ShouldReturnZeroForNullSeats() {
-		CinemaHall hall = new CinemaHall();
-		hall.setSeats(null);
+	void testToDtoList_WithNullList_ShouldReturnNull() {
+		List<CinemaHallDto> dtos = cinemaHallMapper.toDtoList(null);
 
-		int capacity = cinemaHallMapper.calculateCapacity(hall);
-
-		assertEquals(0, capacity);
-	}
-
-	@Test
-	void calculateCapacity_ShouldReturnZeroForEmptySeats() {
-		CinemaHall hall = new CinemaHall();
-		hall.setSeats(List.of());
-
-		int capacity = cinemaHallMapper.calculateCapacity(hall);
-
-		assertEquals(0, capacity);
+		assertNull(dtos);
 	}
 }
