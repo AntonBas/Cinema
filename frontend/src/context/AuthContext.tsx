@@ -16,14 +16,14 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [user, setUser] = useState<User | null>(null);
-    const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
+    const [token, setToken] = useState<string | null>(localStorage.getItem('authToken'));
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         if (token) {
-            localStorage.setItem('token', token);
+            localStorage.setItem('authToken', token);
         } else {
-            localStorage.removeItem('token');
+            localStorage.removeItem('authToken');
         }
     }, [token]);
 
@@ -39,7 +39,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     console.error('Failed to load user data:', error);
                     setToken(null);
                     setUser(null);
-                    localStorage.removeItem('token');
+                    localStorage.removeItem('authToken');
                 }
             } else {
                 setUser(null);
@@ -64,15 +64,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
 
             setToken(response.token);
-            localStorage.setItem('token', response.token);
+            localStorage.setItem('authToken', response.token);
 
             console.log('AuthContext: Login completed successfully, token set');
+
+            const userData = await userService.getProfile();
+            setUser(userData);
 
         } catch (error) {
             console.error('AuthContext: Login failed:', error);
             setToken(null);
             setUser(null);
-            localStorage.removeItem('token');
+            localStorage.removeItem('authToken');
             throw error;
         } finally {
             setIsLoading(false);
@@ -91,7 +94,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const logout = () => {
         setToken(null);
         setUser(null);
-        localStorage.removeItem('token');
+        localStorage.removeItem('authToken');
         console.log('AuthContext: User logged out');
     };
 

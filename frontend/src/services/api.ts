@@ -6,7 +6,9 @@ export const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('authToken');
+
+    console.log('Token from storage:', token);
 
     if (token) {
         if (!config.headers) {
@@ -36,7 +38,7 @@ api.interceptors.response.use(
         });
 
         if (error.response?.status === 401) {
-            localStorage.removeItem('token');
+            localStorage.removeItem('authToken');
             window.location.href = '/login';
         }
 

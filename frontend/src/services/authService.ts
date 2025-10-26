@@ -5,20 +5,33 @@ export const authService = {
     login: async (credentials: LoginRequest): Promise<LoginResponse> => {
         const response = await api.post('/auth/login', credentials);
 
+        console.log('🔐 Login response data:', response.data);
+
+        if (response.data.token) {
+            console.log('✅ Token found in response body');
+            return {
+                message: response.data.message,
+                token: response.data.token,
+                user: response.data.user
+            };
+        }
+
         const authHeader = response.headers['authorization'] || response.headers['Authorization'];
         const token = authHeader?.replace('Bearer ', '');
 
-        if (!token) {
-            console.error('Authorization header:', authHeader);
-            console.error('All response headers:', response.headers);
-            throw new Error('No authorization token received from server');
+        if (token) {
+            console.log('✅ Token found in authorization header');
+            return {
+                message: response.data.message,
+                token: token,
+                user: response.data.user
+            };
         }
 
-        return {
-            message: response.data.message,
-            token: token,
-            user: response.data.user
-        };
+        console.error('❌ No token found in response');
+        console.error('Response data:', response.data);
+        console.error('Response headers:', response.headers);
+        throw new Error('No authorization token received from server');
     },
 
     register: async (userData: RegisterRequest): Promise<ApiResponse> => {
