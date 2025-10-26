@@ -1,134 +1,147 @@
 package ua.lviv.bas.cinema.controller;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.http.MediaType;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import jakarta.persistence.EntityNotFoundException;
 import ua.lviv.bas.cinema.domain.enums.SeatType;
-import ua.lviv.bas.cinema.dto.SeatCreateDto;
 import ua.lviv.bas.cinema.dto.SeatDto;
 import ua.lviv.bas.cinema.service.SeatService;
 
-@WebMvcTest(SeatController.class)
-@AutoConfigureMockMvc(addFilters = false)
+@ExtendWith(MockitoExtension.class)
 class SeatControllerTest {
 
-	@Autowired
-	private MockMvc mockMvc;
-
-	@Autowired
-	private ObjectMapper objectMapper;
-
-	@MockitoBean
+	@Mock
 	private SeatService seatService;
 
-	@Test
-	void getSeatsByHall_ShouldReturnOk() throws Exception {
-		List<SeatDto> seats = Arrays.asList(
-				SeatDto.builder().id(1L).row(1).number(1).seatType(SeatType.STANDARD).build(),
-				SeatDto.builder().id(2L).row(1).number(2).seatType(SeatType.VIP).build());
+	@InjectMocks
+	private SeatController seatController;
 
-		when(seatService.getSeatsByHallId(1L)).thenReturn(seats);
-
-		mockMvc.perform(get("/api/seats/hall/1")).andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(2))
-				.andExpect(jsonPath("$[0].row").value(1)).andExpect(jsonPath("$[1].row").value(1));
+	private SeatDto createSeatDto(Long id, int row, int number, SeatType seatType) {
+		return SeatDto.builder().id(id).row(row).number(number).seatType(seatType).build();
 	}
 
 	@Test
-	void getSeatById_WhenExists_ShouldReturnOk() throws Exception {
-		SeatDto seatDto = SeatDto.builder().id(1L).row(2).number(3).seatType(SeatType.STANDARD).build();
+	void getSeatsByHall_ShouldReturnSeats() {
+		SeatDto seat1 = createSeatDto(1L, 1, 1, SeatType.STANDARD);
+		SeatDto seat2 = createSeatDto(2L, 1, 2, SeatType.VIP);
 
-		when(seatService.getSeatById(1L)).thenReturn(seatDto);
+		when(seatService.getSeatsByHall(1L)).thenReturn(List.of(seat1, seat2));
 
-		mockMvc.perform(get("/api/seats/1")).andExpect(status().isOk()).andExpect(jsonPath("$.id").value(1L))
-				.andExpect(jsonPath("$.row").value(2));
+		ResponseEntity<List<SeatDto>> response = seatController.getSeatsByHall(1L);
+
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+		List<SeatDto> responseBody = Objects.requireNonNull(response.getBody(), "Response body should not be null");
+		assertEquals(2, responseBody.size());
+		assertEquals(1L, responseBody.get(0).getId());
+		assertEquals(SeatType.STANDARD, responseBody.get(0).getSeatType());
+		assertEquals(2L, responseBody.get(1).getId());
+		assertEquals(SeatType.VIP, responseBody.get(1).getSeatType());
 	}
 
 	@Test
-	void getSeatById_WhenNotExists_ShouldReturnNotFound() throws Exception {
-		when(seatService.getSeatById(1L)).thenThrow(new EntityNotFoundException());
+	void getSeatById_ShouldReturnSeat() {
+		SeatDto seat = createSeatDto(1L, 1, 1, SeatType.STANDARD);
 
-		mockMvc.perform(get("/api/seats/1")).andExpect(status().isNotFound());
+		when(seatService.getSeatById(1L)).thenReturn(seat);
+
+		ResponseEntity<SeatDto> response = seatController.getSeatById(1L, 1L);
+
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+		SeatDto responseBody = Objects.requireNonNull(response.getBody(), "Response body should not be null");
+		assertEquals(1L, responseBody.getId());
+		assertEquals(1, responseBody.getRow());
+		assertEquals(1, responseBody.getNumber());
+		assertEquals(SeatType.STANDARD, responseBody.getSeatType());
 	}
 
 	@Test
-	void createSeat_ShouldReturnCreated() throws Exception {
-		SeatCreateDto createDto = SeatCreateDto.builder().row(1).number(5).seatType(SeatType.VIP).build();
+	void getSeatByPosition_ShouldReturnSeat() {
+		SeatDto seat = createSeatDto(1L, 1, 1, SeatType.STANDARD);
 
-		SeatDto responseDto = SeatDto.builder().id(1L).row(1).number(5).seatType(SeatType.VIP).build();
+		when(seatService.getSeatByPosition(1L, 1, 1)).thenReturn(seat);
 
-		when(seatService.createSeat(any())).thenReturn(responseDto);
+		ResponseEntity<SeatDto> response = seatController.getSeatByPosition(1L, 1, 1);
 
-		mockMvc.perform(post("/api/seats").contentType(MediaType.APPLICATION_JSON)
-				.content(objectMapper.writeValueAsString(createDto))).andExpect(status().isCreated())
-				.andExpect(jsonPath("$.id").value(1L)).andExpect(jsonPath("$.seatType").value("VIP"));
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+		SeatDto responseBody = Objects.requireNonNull(response.getBody(), "Response body should not be null");
+		assertEquals(1L, responseBody.getId());
+		assertEquals(1, responseBody.getRow());
+		assertEquals(1, responseBody.getNumber());
 	}
 
 	@Test
-	void updateSeat_WhenExists_ShouldReturnOk() throws Exception {
-		SeatCreateDto updateDto = SeatCreateDto.builder().row(2).number(10).seatType(SeatType.STANDARD).build();
+	void updateSeatType_ShouldReturnUpdatedSeat() {
+		SeatDto updatedSeat = createSeatDto(1L, 1, 1, SeatType.VIP);
 
-		SeatDto responseDto = SeatDto.builder().id(1L).row(2).number(10).seatType(SeatType.STANDARD).build();
+		when(seatService.updateSeatType(1L, SeatType.VIP)).thenReturn(updatedSeat);
 
-		when(seatService.updateSeat(eq(1L), any())).thenReturn(responseDto);
+		ResponseEntity<SeatDto> response = seatController.updateSeatType(1L, 1L, SeatType.VIP);
 
-		mockMvc.perform(put("/api/seats/1").contentType(MediaType.APPLICATION_JSON)
-				.content(objectMapper.writeValueAsString(updateDto))).andExpect(status().isOk())
-				.andExpect(jsonPath("$.row").value(2)).andExpect(jsonPath("$.number").value(10));
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+		SeatDto responseBody = Objects.requireNonNull(response.getBody(), "Response body should not be null");
+		assertEquals(SeatType.VIP, responseBody.getSeatType());
+		assertEquals(1L, responseBody.getId());
 	}
 
 	@Test
-	void deleteSeat_WhenExists_ShouldReturnNoContent() throws Exception {
-		doNothing().when(seatService).deleteSeat(1L);
+	void checkSeatAvailability_ShouldReturnTrue() {
+		when(seatService.isSeatAvailable(1L, 1, 1)).thenReturn(true);
 
-		mockMvc.perform(delete("/api/seats/1")).andExpect(status().isNoContent());
+		ResponseEntity<Boolean> response = seatController.checkSeatAvailability(1L, 1, 1);
+
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+		Boolean responseBody = Objects.requireNonNull(response.getBody(), "Response body should not be null");
+		assertEquals(true, responseBody);
 	}
 
 	@Test
-	void getAvailableSeats_ShouldReturnOk() throws Exception {
-		List<SeatDto> availableSeats = Arrays.asList(SeatDto.builder().id(1L).row(1).number(1).available(true).build());
+	void checkSeatAvailability_ShouldReturnFalse() {
+		when(seatService.isSeatAvailable(1L, 1, 1)).thenReturn(false);
 
-		when(seatService.getAvailableSeatsForSession(1L, 1L)).thenReturn(availableSeats);
+		ResponseEntity<Boolean> response = seatController.checkSeatAvailability(1L, 1, 1);
 
-		mockMvc.perform(get("/api/seats/availability").param("hallId", "1").param("sessionId", "1"))
-				.andExpect(status().isOk()).andExpect(jsonPath("$[0].available").value(true));
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+		Boolean responseBody = Objects.requireNonNull(response.getBody(), "Response body should not be null");
+		assertEquals(false, responseBody);
 	}
 
 	@Test
-	void checkSeatAvailability_WhenAvailable_ShouldReturnTrue() throws Exception {
-		when(seatService.isSeatAvailable(1L, 1L)).thenReturn(true);
+	void countSeatsByHall_ShouldReturnCount() {
+		when(seatService.countSeatsByHall(1L)).thenReturn(50L);
 
-		mockMvc.perform(get("/api/seats/1/availability").param("sessionId", "1")).andExpect(status().isOk())
-				.andExpect(content().string("true"));
+		ResponseEntity<Long> response = seatController.countSeatsByHall(1L);
+
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+		Long responseBody = Objects.requireNonNull(response.getBody(), "Response body should not be null");
+		assertEquals(50L, responseBody);
 	}
 
 	@Test
-	void getAvailableSeatsCount_ShouldReturnCount() throws Exception {
-		when(seatService.getAvailableSeatsCountForSession(1L, 1L)).thenReturn(25);
+	void getSeatsByType_ShouldReturnFilteredSeats() {
+		SeatDto vipSeat1 = createSeatDto(1L, 1, 1, SeatType.VIP);
+		SeatDto vipSeat2 = createSeatDto(2L, 1, 2, SeatType.VIP);
 
-		mockMvc.perform(get("/api/seats/count/available").param("hallId", "1").param("sessionId", "1"))
-				.andExpect(status().isOk()).andExpect(content().string("25"));
+		when(seatService.getSeatsByType(1L, SeatType.VIP)).thenReturn(List.of(vipSeat1, vipSeat2));
+
+		ResponseEntity<List<SeatDto>> response = seatController.getSeatsByType(1L, SeatType.VIP);
+
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+		List<SeatDto> responseBody = Objects.requireNonNull(response.getBody(), "Response body should not be null");
+		assertEquals(2, responseBody.size());
+		assertEquals(SeatType.VIP, responseBody.get(0).getSeatType());
+		assertEquals(SeatType.VIP, responseBody.get(1).getSeatType());
+		assertEquals(1L, responseBody.get(0).getId());
+		assertEquals(2L, responseBody.get(1).getId());
 	}
 }
