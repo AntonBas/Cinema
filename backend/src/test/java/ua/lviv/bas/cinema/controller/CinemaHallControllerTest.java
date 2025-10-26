@@ -1,7 +1,6 @@
 package ua.lviv.bas.cinema.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
@@ -25,7 +24,6 @@ import ua.lviv.bas.cinema.dto.CinemaHallWithSeatsDto;
 import ua.lviv.bas.cinema.dto.HallLayoutDto;
 import ua.lviv.bas.cinema.dto.SeatDto;
 import ua.lviv.bas.cinema.dto.SeatLayoutRequest;
-import ua.lviv.bas.cinema.dto.SeatRowDto;
 import ua.lviv.bas.cinema.service.CinemaHallService;
 
 @ExtendWith(MockitoExtension.class)
