@@ -25,6 +25,5 @@ public interface SeatRepository extends JpaRepository<Seat, Long> {
 	@Query("SELECT s FROM Seat s WHERE s.hall.id = :hallId AND s.row = :row AND s.number = :number")
 	Optional<Seat> findSeatByPosition(@Param("hallId") Long hallId, @Param("row") int row, @Param("number") int number);
 
-	@Query("DELETE FROM Seat s WHERE s.hall.id = :hallId")
-	void deleteByHallId(@Param("hallId") Long hallId);
+	void deleteByHallId(Long hallId);
 }

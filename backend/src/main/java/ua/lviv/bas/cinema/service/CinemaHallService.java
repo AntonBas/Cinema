@@ -24,7 +24,6 @@ import ua.lviv.bas.cinema.exception.DuplicateEntityException;
 import ua.lviv.bas.cinema.mapper.CinemaHallMapper;
 import ua.lviv.bas.cinema.mapper.SeatMapper;
 import ua.lviv.bas.cinema.repository.CinemaHallRepository;
-import ua.lviv.bas.cinema.repository.SeatRepository;
 
 @Slf4j
 @Service
@@ -32,7 +31,6 @@ import ua.lviv.bas.cinema.repository.SeatRepository;
 public class CinemaHallService {
 
 	private final CinemaHallRepository hallRepository;
-	private final SeatRepository seatRepository;
 	private final CinemaHallMapper hallMapper;
 	private final SeatMapper seatMapper;
 
@@ -98,13 +96,14 @@ public class CinemaHallService {
 		log.info("Generating seats for hall {}: {} rows, {} seats per row", hallId, request.getRows(),
 				request.getSeatsPerRow());
 
-		CinemaHall hall = hallRepository.findById(hallId)
+		CinemaHall hall = hallRepository.findByIdWithSeats(hallId)
 				.orElseThrow(() -> new EntityNotFoundException("Cinema hall not found with id: " + hallId));
 
-		seatRepository.deleteByHallId(hallId);
+		hall.getSeats().clear();
 
 		List<Seat> seats = generateSeatLayout(hall, request);
-		hall.setSeats(seats);
+
+		hall.getSeats().addAll(seats);
 
 		CinemaHall saved = hallRepository.save(hall);
 		log.debug("Generated {} seats for hall ID: {}", seats.size(), hallId);
