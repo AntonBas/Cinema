@@ -1,0 +1,1 @@
+export { EditHallModal } from './EditHallModal';

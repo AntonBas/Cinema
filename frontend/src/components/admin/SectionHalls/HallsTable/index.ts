@@ -1,0 +1,1 @@
+export { HallsTable } from './HallsTable';

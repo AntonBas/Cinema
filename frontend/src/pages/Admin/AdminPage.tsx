@@ -5,6 +5,7 @@ import { Footer } from '../../components/layout/Footer';
 import { AdminSidebar } from '../../components/admin/AdminSidebar/AdminSidebar';
 import { AdminDashboard } from '../../components/admin/AdminDashboard/AdminDashboard';
 import { SectionMovies } from '../../components/admin/SectionMovies/SectionMovies';
+import { SectionHalls } from '../../components/admin/SectionHalls/SectionHalls';
 import './AdminPage.css';
 
 export const AdminPage: React.FC = () => {
@@ -13,8 +14,8 @@ export const AdminPage: React.FC = () => {
   return (
     <div className="admin-layout">
       <Header />
-      
-      <button 
+
+      <button
         className="mobile-menu-toggle"
         onClick={() => setIsSidebarOpen(true)}
       >
@@ -22,20 +23,21 @@ export const AdminPage: React.FC = () => {
       </button>
 
       <div className="admin-container">
-        <AdminSidebar 
-          isOpen={isSidebarOpen} 
-          onClose={() => setIsSidebarOpen(false)} 
+        <AdminSidebar
+          isOpen={isSidebarOpen}
+          onClose={() => setIsSidebarOpen(false)}
         />
-        
+
         <main className="admin-content">
           <Routes>
             <Route index element={<AdminDashboard />} />
             <Route path="dashboard" element={<AdminDashboard />} />
             <Route path="movies" element={<SectionMovies />} />
+            <Route path="halls" element={<SectionHalls />} />
           </Routes>
         </main>
       </div>
-      
+
       <Footer />
     </div>
   );
