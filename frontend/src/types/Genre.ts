@@ -7,9 +7,3 @@ export interface GenreDto {
 export interface GenreRequest {
     name: string;
 }
-
-export interface SearchParams {
-    query?: string;
-    page?: number;
-    size?: number;
-}

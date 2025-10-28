@@ -23,22 +23,6 @@ export const getAgeRatingDisplay = (rating: AgeRating): string => {
   return displayMap[rating];
 };
 
-export interface PageResponse<T> {
-  content: T[];
-  currentPage: number;
-  totalPages: number;
-  totalElements: number;
-  pageSize: number;
-}
-
-export interface SearchParams {
-  query?: string;
-  page?: number;
-  size?: number;
-  genre?: string;
-  status?: MovieStatus;
-}
-
 export interface MovieCreateRequest {
   title: string;
   trailerUrl: string;
@@ -129,9 +113,4 @@ export interface MovieFilters {
   genre?: string;
   status?: MovieStatus;
   ageRating?: AgeRating;
-}
-
-export interface MovieListResponse {
-  movies: MovieResponse[];
-  pagination: PageResponse<MovieResponse>;
 }
