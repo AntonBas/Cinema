@@ -13,7 +13,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -39,11 +38,9 @@ public class CinemaHall {
 	@Column(nullable = false)
 	private String name;
 
-	@NotNull
 	@OneToMany(mappedBy = "hall", fetch = FetchType.LAZY)
 	private List<Session> sessions;
 
-	@NotNull
 	@OneToMany(mappedBy = "hall", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
 	private List<Seat> seats;
 
