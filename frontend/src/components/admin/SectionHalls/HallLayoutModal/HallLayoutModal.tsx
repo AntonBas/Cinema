@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import type { CinemaHallDto, HallLayoutDto, SeatLayoutRequest } from '@/types';
+import type { CinemaHallDto, HallLayoutDto, SeatLayoutRequest, SeatDto } from '@/types';
 import { SeatType } from '@/types';
 import { cinemaHallApi } from '@/api/cinemaHall';
+import { seatApi } from '@/api/seat';
 import { useNotification } from '@/hooks/useNotification';
 import styles from './HallLayoutModal.module.css';
 
@@ -20,6 +21,7 @@ export const HallLayoutModal: React.FC<HallLayoutModalProps> = ({
     const [loading, setLoading] = useState(true);
     const [showSeatForm, setShowSeatForm] = useState(false);
     const [generating, setGenerating] = useState(false);
+    const [updatingSeat, setUpdatingSeat] = useState<number | null>(null);
     const [seatForm, setSeatForm] = useState<SeatLayoutRequest>({
         rows: 5,
         seatsPerRow: 10,
@@ -62,47 +64,157 @@ export const HallLayoutModal: React.FC<HallLayoutModalProps> = ({
         }
     };
 
+    const handleSeatClick = async (seat: SeatDto) => {
+        if (updatingSeat === seat.id) return;
+
+        try {
+            setUpdatingSeat(seat.id);
+
+            const nextSeatType = getNextSeatType(seat.seatType);
+            const updatedSeat = await seatApi.updateSeatType(hall.id!, seat.id, nextSeatType);
+
+            setLayout(prev => {
+                if (!prev) return prev;
+
+                return {
+                    ...prev,
+                    rows: prev.rows.map(row => ({
+                        ...row,
+                        seats: row.seats.map(s =>
+                            s.id === seat.id ? updatedSeat : s
+                        )
+                    }))
+                };
+            });
+
+            showNotification(`Seat type updated to ${getSeatTypeName(nextSeatType)}`, 'success');
+        } catch (err: any) {
+            showNotification(err.message || 'Failed to update seat type', 'error');
+        } finally {
+            setUpdatingSeat(null);
+        }
+    };
+
+    const getNextSeatType = (currentType: SeatType): SeatType => {
+        const types = Object.values(SeatType);
+        const currentIndex = types.indexOf(currentType);
+        const nextIndex = (currentIndex + 1) % types.length;
+        return types[nextIndex];
+    };
+
+    const getSeatTypeName = (seatType: SeatType): string => {
+        const names = {
+            [SeatType.STANDARD]: 'Standard',
+            [SeatType.VIP]: 'VIP',
+            [SeatType.DISABLED]: 'Disabled',
+            [SeatType.COUPLE]: 'Couple'
+        };
+        return names[seatType];
+    };
+
     const renderSeats = () => {
         if (!layout || !layout.rows || layout.rows.length === 0) return null;
 
         return (
-            <div className={styles.layout}>
-                <div className={styles.screen}>Screen</div>
-                <div className={styles.seats}>
-                    {layout.rows.map(row => (
-                        <div key={row.rowNumber} className={styles.row}>
-                            <div className={styles.rowNumber}>Row {row.rowNumber}</div>
-                            <div className={styles.seatsRow}>
-                                {row.seats.map(seat => (
-                                    <div
-                                        key={seat.id}
-                                        className={`${styles.seat} ${styles[seat.seatType.toLowerCase()]}`}
-                                        title={`Row ${seat.row}, Seat ${seat.number} - ${seat.seatType}`}
-                                    >
-                                        {seat.number}
-                                    </div>
-                                ))}
+            <div className={styles.cinemaHall}>
+                <div className={styles.screenArea}>
+                    <div className={styles.screen}>SCREEN</div>
+                    <div className={styles.screenReflection}></div>
+                </div>
+
+                <div className={styles.seatsLayout}>
+                    <div className={styles.rowsContainer}>
+                        {layout.rows.map((row, index) => (
+                            <div key={row.rowNumber} className={styles.row}>
+                                <div className={styles.rowIndicator}>
+                                    <span className={styles.rowLetter}>
+                                        {String.fromCharCode(65 + index)}
+                                    </span>
+                                </div>
+                                <div className={styles.seatsRow}>
+                                    {row.seats.map(seat => (
+                                        <div
+                                            key={seat.id}
+                                            className={`${styles.seat} ${styles[seat.seatType.toLowerCase()]} ${updatingSeat === seat.id ? styles.updating : ''
+                                                }`}
+                                            onClick={() => handleSeatClick(seat)}
+                                            title={`Row ${String.fromCharCode(65 + index)}, Seat ${seat.number} - ${getSeatTypeName(seat.seatType)}`}
+                                        >
+                                            {updatingSeat === seat.id ? (
+                                                <div className={styles.loadingSpinner}></div>
+                                            ) : (
+                                                <span className={styles.seatNumber}>{seat.number}</span>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                <div className={styles.footer}>
+                    <div className={styles.legend}>
+                        <div className={styles.legendTitle}>Seat Types:</div>
+                        <div className={styles.legendItems}>
+                            <div className={styles.legendItem}>
+                                <div className={`${styles.legendColor} ${styles.standard}`}></div>
+                                <span>Standard</span>
+                            </div>
+                            <div className={styles.legendItem}>
+                                <div className={`${styles.legendColor} ${styles.vip}`}></div>
+                                <span>VIP</span>
+                            </div>
+                            <div className={styles.legendItem}>
+                                <div className={`${styles.legendColor} ${styles.disabled}`}></div>
+                                <span>Disabled</span>
+                            </div>
+                            <div className={styles.legendItem}>
+                                <div className={`${styles.legendColor} ${styles.couple}`}></div>
+                                <span>Couple</span>
                             </div>
                         </div>
-                    ))}
-                </div>
-                <div className={styles.layoutInfo}>
-                    <p>Total: {layout.totalSeats} seats in {layout.totalRows} rows</p>
+                    </div>
+
+                    <div className={styles.instructions}>
+                        <div className={styles.instructionIcon}>🎯</div>
+                        <p className={styles.instructionText}>Click on any seat to change its type</p>
+                    </div>
+
+                    <div className={styles.hallStats}>
+                        <div className={styles.stat}>
+                            <span className={styles.statNumber}>{layout.totalSeats}</span>
+                            <span className={styles.statLabel}>Total Seats</span>
+                        </div>
+                        <div className={styles.stat}>
+                            <span className={styles.statNumber}>{layout.totalRows}</span>
+                            <span className={styles.statLabel}>Rows</span>
+                        </div>
+                        <div className={styles.stat}>
+                            <span className={styles.statNumber}>{layout.maxSeatsPerRow}</span>
+                            <span className={styles.statLabel}>Seats/Row</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         );
     };
 
     return (
-        <div className={styles.overlay} onClick={onClose}>
+        <div className={styles.modalOverlay} onClick={onClose}>
             <div className={styles.modal} onClick={e => e.stopPropagation()}>
-                <div className={styles.header}>
-                    <h2>Hall Layout - {hall.name}</h2>
+                <div className={styles.modalHeader}>
+                    <h2>🎭 {hall.name} - Seat Layout</h2>
                     <button className={styles.closeButton} onClick={onClose}>×</button>
                 </div>
 
-                <div className={styles.layoutContent}>
-                    {loading && <div className={styles.loading}>Loading layout...</div>}
+                <div className={styles.modalContent}>
+                    {loading && (
+                        <div className={styles.loading}>
+                            <div className={styles.loadingSpinner}></div>
+                            Loading hall layout...
+                        </div>
+                    )}
 
                     {!loading && (!layout || layout.rows.length === 0) && (
                         <div className={styles.noLayout}>
@@ -151,7 +263,7 @@ export const HallLayoutModal: React.FC<HallLayoutModalProps> = ({
                                     >
                                         {Object.values(SeatType).map(type => (
                                             <option key={type} value={type}>
-                                                {type.charAt(0) + type.slice(1).toLowerCase()}
+                                                {getSeatTypeName(type)}
                                             </option>
                                         ))}
                                     </select>
