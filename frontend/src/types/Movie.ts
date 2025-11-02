@@ -32,9 +32,9 @@ export interface MovieCreateRequest {
   endShowingDate: string;
   ageRating: AgeRating;
   genreIds: number[];
+  actorIds: number[];
   directorIds: number[];
   screenwriterIds: number[];
-  castIds: number[];
   posterFile?: File;
 }
 
@@ -47,12 +47,11 @@ export interface MovieUpdateRequest {
   endShowingDate: string;
   ageRating: AgeRating;
   genreIds: number[];
+  actorIds: number[];
   directorIds: number[];
   screenwriterIds: number[];
-  castIds: number[];
   posterFile?: File;
   removePoster?: boolean;
-  currentPosterUrl?: string;
 }
 
 export interface MovieDto {
@@ -75,9 +74,9 @@ export interface MovieDto {
   active: boolean;
 
   genreIds: number[];
+  actorIds: number[];
   directorIds: number[];
   screenwriterIds: number[];
-  castIds: number[];
 }
 
 export interface MovieResponse {
@@ -101,16 +100,9 @@ export interface MovieFormData {
   endShowingDate: Date | null;
   ageRating: AgeRating;
   selectedGenres: number[];
+  selectedActors: number[];
   selectedDirectors: number[];
   selectedScreenwriters: number[];
-  selectedCast: number[];
   posterFile?: File;
   removePoster?: boolean;
-}
-
-export interface MovieFilters {
-  title?: string;
-  genre?: string;
-  status?: MovieStatus;
-  ageRating?: AgeRating;
 }

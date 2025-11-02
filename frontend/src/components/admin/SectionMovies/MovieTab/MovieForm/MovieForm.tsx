@@ -41,7 +41,7 @@ export const MovieForm: React.FC<MovieFormProps> = ({
         selectedGenres: [],
         selectedDirectors: [],
         selectedScreenwriters: [],
-        selectedCast: [],
+        selectedActors: [],
         posterFile: undefined,
         removePoster: false
     });
@@ -75,7 +75,7 @@ export const MovieForm: React.FC<MovieFormProps> = ({
                 selectedGenres: movie.genreIds || [],
                 selectedDirectors: movie.directorIds || [],
                 selectedScreenwriters: movie.screenwriterIds || [],
-                selectedCast: movie.castIds || [],
+                selectedActors: movie.actorIds || [],
                 posterFile: undefined,
                 removePoster: false
             });
@@ -143,15 +143,11 @@ export const MovieForm: React.FC<MovieFormProps> = ({
                     genreIds: formData.selectedGenres,
                     directorIds: formData.selectedDirectors,
                     screenwriterIds: formData.selectedScreenwriters,
-                    castIds: formData.selectedCast,
+                    actorIds: formData.selectedActors,
                     removePoster: formData.removePoster
                 };
 
-                if (hasNewPoster) {
-                    await movieApi.update(movie.id, { ...updateRequest, posterFile });
-                } else {
-                    await movieApi.update(movie.id, updateRequest);
-                }
+                await movieApi.update(movie.id, updateRequest, posterFile);
                 showNotification('Movie updated successfully!', 'success');
             } else {
                 if (!posterFile) {
@@ -170,7 +166,7 @@ export const MovieForm: React.FC<MovieFormProps> = ({
                     genreIds: formData.selectedGenres,
                     directorIds: formData.selectedDirectors,
                     screenwriterIds: formData.selectedScreenwriters,
-                    castIds: formData.selectedCast,
+                    actorIds: formData.selectedActors,
                     posterFile: posterFile
                 };
                 await movieApi.create(createRequest, posterFile);
@@ -196,8 +192,8 @@ export const MovieForm: React.FC<MovieFormProps> = ({
         });
     };
 
-    const handleCastChange = (ids: number[]) => {
-        setFormData(prev => ({ ...prev, selectedCast: ids }));
+    const handleActorsChange = (ids: number[]) => {
+        setFormData(prev => ({ ...prev, selectedActors: ids }));
     };
 
     const handleDirectorsChange = (ids: number[]) => {
@@ -365,10 +361,10 @@ export const MovieForm: React.FC<MovieFormProps> = ({
                     </div>
 
                     <div className={styles.formGroup}>
-                        <label className={styles.label}>Cast *</label>
+                        <label className={styles.label}>Actors *</label>
                         <PersonSelect
-                            selectedIds={formData.selectedCast}
-                            onChange={handleCastChange}
+                            selectedIds={formData.selectedActors}
+                            onChange={handleActorsChange}
                             role={PersonRole.ACTOR}
                             placeholder="Search actors or add new..."
                             showNotification={showNotification}

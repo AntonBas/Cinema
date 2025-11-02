@@ -2,11 +2,16 @@ import type {
   MovieCreateRequest,
   MovieUpdateRequest,
   MovieDto,
-  MovieResponse,
-  PageResponse,
-  SearchParams,
-  MovieFilters
+  MovieResponse
 } from '@/types/Movie';
+
+export interface PageResponse<T> {
+  content: T[];
+  currentPage: number;
+  totalPages: number;
+  totalElements: number;
+  pageSize: number;
+}
 
 const API_BASE_URL = 'http://localhost:8080';
 
@@ -92,35 +97,6 @@ class MovieApi {
     return this.handleResponse<MovieResponse[]>(response);
   }
 
-  async search(params: SearchParams): Promise<PageResponse<MovieDto>> {
-    const searchParams = new URLSearchParams();
-
-    if (params.query) searchParams.append('query', params.query);
-    if (params.page) searchParams.append('page', params.page.toString());
-    if (params.size) searchParams.append('size', params.size.toString());
-    if (params.genre) searchParams.append('genre', params.genre);
-    if (params.status) searchParams.append('status', params.status);
-
-    const response = await fetch(`${this.baseUrl}/search?${searchParams.toString()}`, {
-      headers: this.getAuthHeaders(),
-    });
-    return this.handleResponse<PageResponse<MovieDto>>(response);
-  }
-
-  async filter(filters: MovieFilters): Promise<MovieResponse[]> {
-    const searchParams = new URLSearchParams();
-
-    if (filters.title) searchParams.append('title', filters.title);
-    if (filters.genre) searchParams.append('genre', filters.genre);
-    if (filters.status) searchParams.append('status', filters.status);
-    if (filters.ageRating) searchParams.append('ageRating', filters.ageRating);
-
-    const response = await fetch(`${this.baseUrl}/filter?${searchParams.toString()}`, {
-      headers: this.getAuthHeaders(),
-    });
-    return this.handleResponse<MovieResponse[]>(response);
-  }
-
   async create(movieData: MovieCreateRequest, posterFile: File): Promise<MovieDto> {
     const formData = new FormData();
 
@@ -141,19 +117,7 @@ class MovieApi {
     return this.handleResponse<MovieDto>(response);
   }
 
-  async update(id: number, movieData: MovieUpdateRequest): Promise<MovieDto> {
-    const { posterFile: _, ...updateData } = movieData;
-
-    const response = await fetch(`${this.baseUrl}/${id}`, {
-      method: 'PUT',
-      headers: this.getAuthHeaders(),
-      body: JSON.stringify(updateData),
-    });
-
-    return this.handleResponse<MovieDto>(response);
-  }
-
-  async updateWithPoster(id: number, movieData: MovieUpdateRequest, posterFile?: File): Promise<MovieDto> {
+  async update(id: number, movieData: MovieUpdateRequest, posterFile?: File): Promise<MovieDto> {
     const formData = new FormData();
 
     const { posterFile: _, ...updateData } = movieData;
@@ -187,26 +151,17 @@ class MovieApi {
     }
   }
 
-  async uploadPoster(movieId: number, posterFile: File): Promise<MovieDto> {
-    const formData = new FormData();
-    formData.append('posterFile', posterFile);
-
-    const response = await fetch(`${this.baseUrl}/${movieId}/poster`, {
-      method: 'POST',
-      headers: this.getAuthHeaders(true),
-      body: formData,
-    });
-
-    return this.handleResponse<MovieDto>(response);
-  }
-
-  async removePoster(movieId: number): Promise<MovieDto> {
-    const response = await fetch(`${this.baseUrl}/${movieId}/poster`, {
-      method: 'DELETE',
+  async getPoster(id: number): Promise<Blob> {
+    const response = await fetch(`${this.baseUrl}/${id}/poster`, {
       headers: this.getAuthHeaders(),
     });
 
-    return this.handleResponse<MovieDto>(response);
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Failed to get poster: ${response.status} - ${errorText}`);
+    }
+
+    return response.blob();
   }
 
   getPosterUrl(id: number): string {
@@ -215,51 +170,6 @@ class MovieApi {
 
   getPosterUrlWithTimestamp(id: number): string {
     return `${this.baseUrl}/${id}/poster?t=${Date.now()}`;
-  }
-
-  async bulkUpdateStatus(ids: number[], status: string): Promise<void> {
-    const response = await fetch(`${this.baseUrl}/bulk/status`, {
-      method: 'PUT',
-      headers: this.getAuthHeaders(),
-      body: JSON.stringify({ ids, status }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Failed to bulk update status: ${response.status} - ${errorText}`);
-    }
-  }
-
-  async bulkDelete(ids: number[]): Promise<void> {
-    const response = await fetch(`${this.baseUrl}/bulk`, {
-      method: 'DELETE',
-      headers: this.getAuthHeaders(),
-      body: JSON.stringify({ ids }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Failed to bulk delete: ${response.status} - ${errorText}`);
-    }
-  }
-
-  async getStatistics(): Promise<{
-    total: number;
-    currentlyShowing: number;
-    upcoming: number;
-    archived: number;
-  }> {
-    const response = await fetch(`${this.baseUrl}/statistics`, {
-      headers: this.getAuthHeaders(),
-    });
-    return this.handleResponse(response);
-  }
-
-  async healthCheck(): Promise<{ status: string; timestamp: string }> {
-    const response = await fetch(`${this.baseUrl}/health`, {
-      headers: this.getAuthHeaders(),
-    });
-    return this.handleResponse(response);
   }
 }
 
