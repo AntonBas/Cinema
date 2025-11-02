@@ -35,7 +35,7 @@ public class MovieDto {
 	private boolean active;
 
 	private List<Long> genreIds;
-	private List<Long> castIds;
+	private List<Long> actorIds;
 	private List<Long> directorIds;
 	private List<Long> screenwriterIds;
 }

@@ -245,8 +245,8 @@ public class MovieService {
 		if (request.getGenreIds() != null && !request.getGenreIds().isEmpty()) {
 			movie.setGenres(new HashSet<>(genreRepository.findAllById(request.getGenreIds())));
 		}
-		if (request.getCastIds() != null && !request.getCastIds().isEmpty()) {
-			movie.setCast(new HashSet<>(personRepository.findAllById(request.getCastIds())));
+		if (request.getActorIds() != null && !request.getActorIds().isEmpty()) {
+			movie.setActors(new HashSet<>(personRepository.findAllById(request.getActorIds())));
 		}
 		if (request.getDirectorIds() != null && !request.getDirectorIds().isEmpty()) {
 			movie.setDirectors(new HashSet<>(personRepository.findAllById(request.getDirectorIds())));
@@ -258,15 +258,15 @@ public class MovieService {
 
 	private void updateMovieRelations(Movie movie, MovieUpdateRequest request) {
 		movie.getGenres().clear();
-		movie.getCast().clear();
+		movie.getActors().clear();
 		movie.getDirectors().clear();
 		movie.getScreenwriters().clear();
 
 		if (request.getGenreIds() != null && !request.getGenreIds().isEmpty()) {
 			movie.getGenres().addAll(new HashSet<>(genreRepository.findAllById(request.getGenreIds())));
 		}
-		if (request.getCastIds() != null && !request.getCastIds().isEmpty()) {
-			movie.getCast().addAll(new HashSet<>(personRepository.findAllById(request.getCastIds())));
+		if (request.getActorIds() != null && !request.getActorIds().isEmpty()) {
+			movie.getActors().addAll(new HashSet<>(personRepository.findAllById(request.getActorIds())));
 		}
 		if (request.getDirectorIds() != null && !request.getDirectorIds().isEmpty()) {
 			movie.getDirectors().addAll(new HashSet<>(personRepository.findAllById(request.getDirectorIds())));
@@ -352,7 +352,7 @@ public class MovieService {
 		MovieDto dto = movieMapper.toDto(movie);
 
 		dto.setGenreIds(movie.getGenres().stream().map(genre -> genre.getId()).collect(Collectors.toList()));
-		dto.setCastIds(movie.getCast().stream().map(person -> person.getId()).collect(Collectors.toList()));
+		dto.setActorIds(movie.getActors().stream().map(person -> person.getId()).collect(Collectors.toList()));
 		dto.setDirectorIds(movie.getDirectors().stream().map(person -> person.getId()).collect(Collectors.toList()));
 		dto.setScreenwriterIds(
 				movie.getScreenwriters().stream().map(person -> person.getId()).collect(Collectors.toList()));

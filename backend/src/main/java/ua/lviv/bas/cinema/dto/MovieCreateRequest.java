@@ -58,7 +58,7 @@ public class MovieCreateRequest {
 
 	@NotNull(message = "At least one cast member is required")
 	@Size(min = 1, message = "At least one cast member is required")
-	private List<Long> castIds;
+	private List<Long> actorIds;
 
 	@NotNull(message = "At least one director is required")
 	@Size(min = 1, message = "At least one director is required")
