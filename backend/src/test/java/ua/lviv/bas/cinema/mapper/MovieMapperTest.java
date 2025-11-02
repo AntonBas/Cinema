@@ -37,13 +37,14 @@ class MovieMapperTest {
 		createRequest = MovieCreateRequest.builder().title("New Movie").trailerUrl("https://example.com/trailer")
 				.description("Test Description").durationMinutes(120).releaseDate(LocalDate.now().plusDays(1))
 				.endShowingDate(LocalDate.now().plusDays(30)).ageRating(AgeRating.PEGI_12).genreIds(List.of(1L, 2L))
-				.castIds(List.of(1L, 2L)).directorIds(List.of(3L)).screenwriterIds(List.of(4L)).build();
+				.actorIds(List.of(1L, 2L)).directorIds(List.of(3L)).screenwriterIds(List.of(4L)).build();
 
 		updateRequest = MovieUpdateRequest.builder().title("Updated Movie")
 				.trailerUrl("https://example.com/trailer/updated").description("Updated Description")
 				.durationMinutes(130).releaseDate(LocalDate.now().plusDays(2))
 				.endShowingDate(LocalDate.now().plusDays(35)).ageRating(AgeRating.PEGI_16).genreIds(List.of(1L, 2L))
-				.castIds(List.of(1L, 2L)).directorIds(List.of(3L)).screenwriterIds(List.of(4L)).build();
+				.actorIds(List.of(1L, 2L)).directorIds(List.of(3L)).screenwriterIds(List.of(4L)).removePoster(false)
+				.build();
 	}
 
 	@Test

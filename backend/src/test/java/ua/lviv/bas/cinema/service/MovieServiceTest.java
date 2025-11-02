@@ -56,25 +56,28 @@ class MovieServiceTest {
 	private Genre genre;
 	private Person actor;
 	private Person director;
+	private Person screenwriter;
 
 	@BeforeEach
 	void setUp() {
 		genre = Genre.builder().id(1L).name("Action").build();
 		actor = Person.builder().id(1L).name("Actor One").role(PersonRole.ACTOR).build();
 		director = Person.builder().id(2L).name("Director One").role(PersonRole.DIRECTOR).build();
+		screenwriter = Person.builder().id(3L).name("Writer One").role(PersonRole.SCREENWRITER).build();
 
 		movie = Movie.builder().id(1L).title("Test Movie").slug("test-movie").trailerUrl("https://example.com/trailer")
 				.description("Test Description").durationMinutes(120).releaseDate(LocalDate.now().plusDays(1))
 				.endShowingDate(LocalDate.now().plusDays(30)).status(MovieStatus.UPCOMING).ageRating(AgeRating.PEGI_12)
-				.posterFileName("poster.jpg").cast(new HashSet<>(List.of(actor)))
-				.directors(new HashSet<>(List.of(director))).screenwriters(new HashSet<>())
+				.posterFileName("poster.jpg").actors(new HashSet<>(List.of(actor)))
+				.directors(new HashSet<>(List.of(director))).screenwriters(new HashSet<>(List.of(screenwriter)))
 				.genres(new HashSet<>(List.of(genre))).build();
 
 		movieDto = MovieDto.builder().id(1L).title("Test Movie").slug("test-movie")
 				.trailerUrl("https://example.com/trailer").description("Test Description").durationMinutes(120)
 				.releaseDate(LocalDate.now().plusDays(1)).endShowingDate(LocalDate.now().plusDays(30))
 				.status(MovieStatus.UPCOMING).ageRating(AgeRating.PEGI_12).posterFileName("poster.jpg")
-				.castIds(List.of(1L)).directorIds(List.of(2L)).screenwriterIds(List.of()).genreIds(List.of(1L)).build();
+				.actorIds(List.of(1L)).directorIds(List.of(2L)).screenwriterIds(List.of(3L)).genreIds(List.of(1L))
+				.build();
 
 		movieResponse = MovieResponse.builder().id(1L).title("Test Movie").slug("test-movie").durationMinutes(120)
 				.ageRating(AgeRating.PEGI_12).releaseDate(LocalDate.now().plusDays(1)).status(MovieStatus.UPCOMING)
@@ -83,13 +86,14 @@ class MovieServiceTest {
 		createRequest = MovieCreateRequest.builder().title("New Movie").trailerUrl("https://example.com/trailer")
 				.description("Test Description").durationMinutes(120).releaseDate(LocalDate.now().plusDays(1))
 				.endShowingDate(LocalDate.now().plusDays(30)).ageRating(AgeRating.PEGI_12).genreIds(List.of(1L))
-				.castIds(List.of(1L)).directorIds(List.of(2L)).screenwriterIds(List.of()).build();
+				.actorIds(List.of(1L)).directorIds(List.of(2L)).screenwriterIds(List.of(3L)).build();
 
 		updateRequest = MovieUpdateRequest.builder().title("Updated Movie")
 				.trailerUrl("https://example.com/updated-trailer").description("Updated Description")
 				.durationMinutes(140).releaseDate(LocalDate.now().plusDays(10))
 				.endShowingDate(LocalDate.now().plusDays(70)).ageRating(AgeRating.PEGI_16).genreIds(List.of(1L))
-				.castIds(List.of(1L)).directorIds(List.of(2L)).screenwriterIds(List.of()).removePoster(false).build();
+				.actorIds(List.of(1L)).directorIds(List.of(2L)).screenwriterIds(List.of(3L)).removePoster(false)
+				.build();
 
 		org.springframework.test.util.ReflectionTestUtils.setField(movieService, "uploadDir", "test-uploads");
 	}
@@ -102,6 +106,7 @@ class MovieServiceTest {
 		when(genreRepository.findAllById(List.of(1L))).thenReturn(List.of(genre));
 		when(personRepository.findAllById(List.of(1L))).thenReturn(List.of(actor));
 		when(personRepository.findAllById(List.of(2L))).thenReturn(List.of(director));
+		when(personRepository.findAllById(List.of(3L))).thenReturn(List.of(screenwriter));
 		when(movieRepository.save(movie)).thenReturn(movie);
 		when(movieMapper.toDto(movie)).thenReturn(movieDto);
 
@@ -150,8 +155,10 @@ class MovieServiceTest {
 
 	@Test
 	void getCurrentlyShowing_ShouldReturnCurrentMovies() {
-		movie.setStatus(MovieStatus.CURRENT);
-		when(movieRepository.findByStatus(MovieStatus.CURRENT)).thenReturn(List.of(movie));
+		movie.setReleaseDate(LocalDate.now().minusDays(1));
+		movie.setEndShowingDate(LocalDate.now().plusDays(30));
+
+		when(movieRepository.findAll()).thenReturn(List.of(movie));
 		when(movieMapper.toResponse(movie)).thenReturn(movieResponse);
 
 		List<MovieResponse> result = movieService.getCurrentlyShowing();
@@ -162,7 +169,10 @@ class MovieServiceTest {
 
 	@Test
 	void getUpcoming_ShouldReturnUpcomingMovies() {
-		when(movieRepository.findByStatus(MovieStatus.UPCOMING)).thenReturn(List.of(movie));
+		movie.setReleaseDate(LocalDate.now().plusDays(1));
+		movie.setEndShowingDate(LocalDate.now().plusDays(30));
+
+		when(movieRepository.findAll()).thenReturn(List.of(movie));
 		when(movieMapper.toResponse(movie)).thenReturn(movieResponse);
 
 		List<MovieResponse> result = movieService.getUpcoming();
@@ -173,8 +183,10 @@ class MovieServiceTest {
 
 	@Test
 	void getArchived_ShouldReturnArchivedMovies() {
-		movie.setStatus(MovieStatus.ARCHIVED);
-		when(movieRepository.findByStatus(MovieStatus.ARCHIVED)).thenReturn(List.of(movie));
+		movie.setReleaseDate(LocalDate.now().minusDays(10));
+		movie.setEndShowingDate(LocalDate.now().minusDays(1));
+
+		when(movieRepository.findAll()).thenReturn(List.of(movie));
 		when(movieMapper.toResponse(movie)).thenReturn(movieResponse);
 
 		List<MovieResponse> result = movieService.getArchived();
@@ -200,6 +212,7 @@ class MovieServiceTest {
 		when(genreRepository.findAllById(List.of(1L))).thenReturn(List.of(genre));
 		when(personRepository.findAllById(List.of(1L))).thenReturn(List.of(actor));
 		when(personRepository.findAllById(List.of(2L))).thenReturn(List.of(director));
+		when(personRepository.findAllById(List.of(3L))).thenReturn(List.of(screenwriter));
 		when(movieRepository.save(movie)).thenReturn(movie);
 		when(movieMapper.toDto(movie)).thenReturn(movieDto);
 
