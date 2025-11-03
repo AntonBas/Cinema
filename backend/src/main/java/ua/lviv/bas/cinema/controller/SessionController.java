@@ -2,8 +2,10 @@ package ua.lviv.bas.cinema.controller;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -61,52 +63,60 @@ public class SessionController {
 	}
 
 	@GetMapping
-	public ResponseEntity<List<SessionDto>> getAllSessions() {
-		log.info("GET /api/sessions - Retrieving all sessions");
-		List<SessionDto> sessions = sessionService.getAllSessions();
+	public ResponseEntity<Page<SessionDto>> getAllSessions(
+			@PageableDefault(size = 20, sort = "startTime") Pageable pageable,
+			@RequestParam(required = false) String search) {
+		log.info("GET /api/sessions - Retrieving all sessions with pagination");
+		Page<SessionDto> sessions = sessionService.getAllSessions(pageable, search);
 		return ResponseEntity.ok(sessions);
 	}
 
 	@GetMapping("/date/{date}")
-	public ResponseEntity<List<SessionDto>> getSessionsByDate(
-			@PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+	public ResponseEntity<Page<SessionDto>> getSessionsByDate(
+			@PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+			@PageableDefault(size = 20, sort = "startTime") Pageable pageable) {
 		log.info("GET /api/sessions/date/{} - Retrieving sessions by date", date);
-		List<SessionDto> sessions = sessionService.getSessionsByDate(date);
+		Page<SessionDto> sessions = sessionService.getSessionsByDate(date, pageable);
 		return ResponseEntity.ok(sessions);
 	}
 
 	@GetMapping("/hall/{hallId}")
-	public ResponseEntity<List<SessionDto>> getSessionsByHall(@PathVariable Long hallId) {
+	public ResponseEntity<Page<SessionDto>> getSessionsByHall(@PathVariable Long hallId,
+			@PageableDefault(size = 20, sort = "startTime") Pageable pageable) {
 		log.info("GET /api/sessions/hall/{} - Retrieving sessions by hall", hallId);
-		List<SessionDto> sessions = sessionService.getSessionsByHall(hallId);
+		Page<SessionDto> sessions = sessionService.getSessionsByHall(hallId, pageable);
 		return ResponseEntity.ok(sessions);
 	}
 
 	@GetMapping("/movie/{movieId}")
-	public ResponseEntity<List<SessionDto>> getSessionsByMovie(@PathVariable Long movieId) {
+	public ResponseEntity<Page<SessionDto>> getSessionsByMovie(@PathVariable Long movieId,
+			@PageableDefault(size = 20, sort = "startTime") Pageable pageable) {
 		log.info("GET /api/sessions/movie/{} - Retrieving sessions by movie", movieId);
-		List<SessionDto> sessions = sessionService.getSessionsByMovie(movieId);
+		Page<SessionDto> sessions = sessionService.getSessionsByMovie(movieId, pageable);
 		return ResponseEntity.ok(sessions);
 	}
 
 	@GetMapping("/available")
-	public ResponseEntity<List<SessionDto>> getAvailableSessions() {
+	public ResponseEntity<Page<SessionDto>> getAvailableSessions(
+			@PageableDefault(size = 20, sort = "startTime") Pageable pageable) {
 		log.info("GET /api/sessions/available - Retrieving available sessions");
-		List<SessionDto> sessions = sessionService.getAvailableSessions();
+		Page<SessionDto> sessions = sessionService.getAvailableSessions(pageable);
 		return ResponseEntity.ok(sessions);
 	}
 
 	@GetMapping("/upcoming")
-	public ResponseEntity<List<SessionDto>> getUpcomingSessions(@RequestParam(defaultValue = "7") int days) {
+	public ResponseEntity<Page<SessionDto>> getUpcomingSessions(@RequestParam(defaultValue = "7") int days,
+			@PageableDefault(size = 20, sort = "startTime") Pageable pageable) {
 		log.info("GET /api/sessions/upcoming - Retrieving upcoming sessions for {} days", days);
-		List<SessionDto> sessions = sessionService.getUpcomingSessions(days);
+		Page<SessionDto> sessions = sessionService.getUpcomingSessions(days, pageable);
 		return ResponseEntity.ok(sessions);
 	}
 
 	@GetMapping("/today")
-	public ResponseEntity<List<SessionDto>> getTodaySessions() {
+	public ResponseEntity<Page<SessionDto>> getTodaySessions(
+			@PageableDefault(size = 20, sort = "startTime") Pageable pageable) {
 		log.info("GET /api/sessions/today - Retrieving today's sessions");
-		List<SessionDto> sessions = sessionService.getTodaySessions();
+		Page<SessionDto> sessions = sessionService.getTodaySessions(pageable);
 		return ResponseEntity.ok(sessions);
 	}
 

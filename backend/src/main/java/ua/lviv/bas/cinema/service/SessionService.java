@@ -3,8 +3,9 @@ package ua.lviv.bas.cinema.service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -56,7 +57,7 @@ public class SessionService {
 		return sessionMapper.toDto(saved);
 	}
 
-	@Transactional
+	@Transactional(readOnly = true)
 	public SessionDto getSessionById(Long id) {
 		log.debug("Retrieving session by id: {}", id);
 		Session session = sessionRepository.findById(id).orElseThrow(() -> new SessionNotFoundException(id));
@@ -104,31 +105,64 @@ public class SessionService {
 	}
 
 	@Transactional(readOnly = true)
-	public List<SessionDto> getAllSessions() {
-		log.debug("Retrieving all sessions");
-		return sessionRepository.findAll().stream().map(sessionMapper::toDto).collect(Collectors.toList());
+	public Page<SessionDto> getAllSessions(Pageable pageable, String search) {
+		log.debug("Retrieving all sessions with pagination");
+		Page<Session> sessions;
+
+		if (search != null && !search.trim().isEmpty()) {
+			sessions = sessionRepository.findByMovieTitleContainingIgnoreCase(search, pageable);
+		} else {
+			sessions = sessionRepository.findAll(pageable);
+		}
+
+		return sessions.map(sessionMapper::toDto);
 	}
 
 	@Transactional(readOnly = true)
-	public List<SessionDto> getSessionsByDate(LocalDate date) {
-		log.debug("Retrieving sessions for date: {}", date);
+	public Page<SessionDto> getSessionsByDate(LocalDate date, Pageable pageable) {
+		log.debug("Retrieving sessions for date: {} with pagination", date);
 		LocalDateTime startOfDay = date.atStartOfDay();
 		LocalDateTime endOfDay = date.atTime(23, 59, 59);
 
-		return sessionRepository.findByStartTimeBetween(startOfDay, endOfDay).stream().map(sessionMapper::toDto)
-				.collect(Collectors.toList());
+		Page<Session> sessions = sessionRepository.findByStartTimeBetween(startOfDay, endOfDay, pageable);
+		return sessions.map(sessionMapper::toDto);
 	}
 
 	@Transactional(readOnly = true)
-	public List<SessionDto> getSessionsByHall(Long hallId) {
-		log.debug("Retrieving sessions for hall: {}", hallId);
-		return sessionRepository.findByHallId(hallId).stream().map(sessionMapper::toDto).collect(Collectors.toList());
+	public Page<SessionDto> getSessionsByHall(Long hallId, Pageable pageable) {
+		log.debug("Retrieving sessions for hall: {} with pagination", hallId);
+		Page<Session> sessions = sessionRepository.findByHallId(hallId, pageable);
+		return sessions.map(sessionMapper::toDto);
 	}
 
 	@Transactional(readOnly = true)
-	public List<SessionDto> getSessionsByMovie(Long movieId) {
-		log.debug("Retrieving sessions for movie: {}", movieId);
-		return sessionRepository.findByMovieId(movieId).stream().map(sessionMapper::toDto).collect(Collectors.toList());
+	public Page<SessionDto> getSessionsByMovie(Long movieId, Pageable pageable) {
+		log.debug("Retrieving sessions for movie: {} with pagination", movieId);
+		Page<Session> sessions = sessionRepository.findByMovieId(movieId, pageable);
+		return sessions.map(sessionMapper::toDto);
+	}
+
+	@Transactional(readOnly = true)
+	public Page<SessionDto> getAvailableSessions(Pageable pageable) {
+		log.debug("Retrieving available sessions with pagination");
+		Page<Session> sessions = sessionRepository.findByStartTimeAfter(LocalDateTime.now(), pageable);
+		return sessions.map(sessionMapper::toDto);
+	}
+
+	@Transactional(readOnly = true)
+	public Page<SessionDto> getUpcomingSessions(int days, Pageable pageable) {
+		log.debug("Retrieving upcoming sessions for next {} days with pagination", days);
+		LocalDateTime start = LocalDateTime.now();
+		LocalDateTime end = start.plusDays(days);
+
+		Page<Session> sessions = sessionRepository.findByStartTimeBetween(start, end, pageable);
+		return sessions.map(sessionMapper::toDto);
+	}
+
+	@Transactional(readOnly = true)
+	public Page<SessionDto> getTodaySessions(Pageable pageable) {
+		log.debug("Retrieving today's sessions with pagination");
+		return getSessionsByDate(LocalDate.now(), pageable);
 	}
 
 	@Transactional(readOnly = true)
@@ -140,28 +174,5 @@ public class SessionService {
 				excludeSessionId);
 
 		return !conflictingSessions.isEmpty();
-	}
-
-	@Transactional(readOnly = true)
-	public List<SessionDto> getAvailableSessions() {
-		log.debug("Retrieving available sessions");
-		return sessionRepository.findByStartTimeAfter(LocalDateTime.now()).stream().filter(Session::isAvailable)
-				.map(sessionMapper::toDto).collect(Collectors.toList());
-	}
-
-	@Transactional(readOnly = true)
-	public List<SessionDto> getUpcomingSessions(int days) {
-		log.debug("Retrieving upcoming sessions for next {} days", days);
-		LocalDateTime start = LocalDateTime.now();
-		LocalDateTime end = start.plusDays(days);
-
-		return sessionRepository.findByStartTimeBetween(start, end).stream().map(sessionMapper::toDto)
-				.collect(Collectors.toList());
-	}
-
-	@Transactional(readOnly = true)
-	public List<SessionDto> getTodaySessions() {
-		log.debug("Retrieving today's sessions");
-		return getSessionsByDate(LocalDate.now());
 	}
 }
