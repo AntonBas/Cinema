@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import './ForgotPasswordForm.css';
+import { useAuthMutation } from '@/hooks/features/auth';
+import styles from './ForgotPasswordForm.module.css';
 
 interface SuccessModalProps {
   isOpen: boolean;
@@ -16,19 +17,19 @@ const PasswordResetModal: React.FC<SuccessModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-content">
-        <div className="success-animation">
-          <div className="checkmark">✓</div>
+    <div className={styles.modalOverlay}>
+      <div className={styles.modalContent}>
+        <div className={styles.successAnimation}>
+          <div className={styles.checkmark}>✓</div>
         </div>
         <h3>Instructions Sent! 📧</h3>
         <p>We've sent password reset instructions to <strong>{email}</strong></p>
-        <div className="modal-actions">
-          <button className="btn-primary" onClick={onClose}>
+        <div className={styles.modalActions}>
+          <button className={styles.btnPrimary} onClick={onClose}>
             Got It
           </button>
         </div>
-        <p className="help-text">Check your spam folder if you don't see the email</p>
+        <p className={styles.helpText}>Check your spam folder if you don't see the email</p>
       </div>
     </div>
   );
@@ -36,35 +37,17 @@ const PasswordResetModal: React.FC<SuccessModalProps> = ({
 
 export const ForgotPasswordForm: React.FC = () => {
   const [email, setEmail] = useState('');
-  const [error, setError] = useState(''); // Видалили message
-  const [isLoading, setIsLoading] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const { forgotPassword, isLoading, error } = useAuthMutation();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    setError('');
 
     try {
-      const response = await fetch('http://localhost:8080/api/auth/forgot-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: `email=${encodeURIComponent(email)}`
-      });
-
-      const data = await response.text();
-
-      if (response.ok) {
-        setShowSuccessModal(true);
-      } else {
-        setError(data);
-      }
+      await forgotPassword(email);
+      setShowSuccessModal(true);
     } catch (err) {
-      setError('An error occurred while sending the request');
-    } finally {
-      setIsLoading(false);
+      // Помилка вже оброблена в хуку
     }
   };
 
@@ -73,21 +56,21 @@ export const ForgotPasswordForm: React.FC = () => {
   };
 
   return (
-    <section className='forgot-password'>
-      <div className="forgot-password-container">
-        <h2 className="forgot-password-title">
+    <section className={styles.forgotPassword}>
+      <div className={styles.forgotPasswordContainer}>
+        <h2 className={styles.forgotPasswordTitle}>
           Password Recovery
         </h2>
 
         {error && (
-          <div className="forgot-password-error">
+          <div className={styles.forgotPasswordError}>
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="forgot-password-form">
-          <div className="form-group">
-            <label htmlFor="email" className="form-label">
+        <form onSubmit={handleSubmit} className={styles.forgotPasswordForm}>
+          <div className={styles.formGroup}>
+            <label htmlFor="email" className={styles.formLabel}>
               Email
             </label>
             <input
@@ -97,7 +80,7 @@ export const ForgotPasswordForm: React.FC = () => {
               onChange={(e) => setEmail(e.target.value)}
               required
               placeholder="Enter your email"
-              className="form-input"
+              className={styles.formInput}
               disabled={isLoading}
             />
           </div>
@@ -105,13 +88,13 @@ export const ForgotPasswordForm: React.FC = () => {
           <button
             type="submit"
             disabled={isLoading}
-            className="forgot-password-button"
+            className={styles.forgotPasswordButton}
           >
             {isLoading ? 'Sending...' : 'Send Instructions'}
           </button>
 
-          <div className="forgot-password-links">
-            <Link to="/login" className="back-link">
+          <div className={styles.forgotPasswordLinks}>
+            <Link to="/login" className={styles.backLink}>
               Back to Login
             </Link>
           </div>

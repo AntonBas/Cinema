@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
-import './RegisterForm.css';
+import { useNavigate } from 'react-router-dom';
+import { useAuthMutation } from '@/hooks/features/auth';
+import styles from './RegisterForm.module.css';
 
 interface SuccessModalProps {
   isOpen: boolean;
@@ -16,19 +17,19 @@ const RegistrationSuccessModal: React.FC<SuccessModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-content">
-        <div className="success-animation">
-          <div className="checkmark">✓</div>
+    <div className={styles.modalOverlay}>
+      <div className={styles.modalContent}>
+        <div className={styles.successAnimation}>
+          <div className={styles.checkmark}>✓</div>
         </div>
         <h3>Registration Successful! 🎉</h3>
         <p>We've sent a confirmation email to <strong>{email}</strong></p>
-        <div className="modal-actions">
-          <button className="btn-primary" onClick={onClose}>
+        <div className={styles.modalActions}>
+          <button className={styles.btnPrimary} onClick={onClose}>
             Continue to Login
           </button>
         </div>
-        <p className="help-text">Didn't receive the email? Check your spam folder</p>
+        <p className={styles.helpText}>Didn't receive the email? Check your spam folder</p>
       </div>
     </div>
   );
@@ -45,11 +46,9 @@ export const RegisterForm: React.FC = () => {
     password: '',
     passwordConfirm: ''
   });
-  const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-
-  const { register } = useAuth();
+  const { register, isLoading, error } = useAuthMutation();
+  const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -60,48 +59,42 @@ export const RegisterForm: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    setError('');
 
     if (formData.password !== formData.passwordConfirm) {
-      setError('Passwords do not match');
-      setIsLoading(false);
       return;
     }
 
     try {
       await register(formData);
       setShowSuccessModal(true);
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Registration failed');
-    } finally {
-      setIsLoading(false);
+    } catch (err) {
     }
   };
 
   const handleModalClose = () => {
     setShowSuccessModal(false);
-    window.location.href = '/login';
+    navigate('/login');
   };
 
   return (
-    <section className="registration">
-      <div className="registration-container">
-        <h1 className="registration-title">Registration</h1>
-        <form className="registration-form" onSubmit={handleSubmit}>
-          {error && <div className="error-message">{error}</div>}
+    <section className={styles.registration}>
+      <div className={styles.registrationContainer}>
+        <h1 className={styles.registrationTitle}>Registration</h1>
+        <form className={styles.registrationForm} onSubmit={handleSubmit}>
+          {error && <div className={styles.errorMessage}>{error}</div>}
 
-          <div className="registration-top">
-            <h2 className="registration-text">Personal Information</h2>
-            <div className="registration-group-first">
+          <div className={styles.registrationTop}>
+            <h2 className={styles.registrationText}>Personal Information</h2>
+            <div className={styles.registrationGroupFirst}>
               <input
                 placeholder="First Name"
                 type="text"
                 name="firstName"
                 value={formData.firstName}
                 onChange={handleChange}
-                className="form-control form-left"
+                className={`${styles.formControl} ${styles.formLeft}`}
                 required
+                disabled={isLoading}
               />
               <input
                 placeholder="Last Name"
@@ -109,18 +102,20 @@ export const RegisterForm: React.FC = () => {
                 name="lastName"
                 value={formData.lastName}
                 onChange={handleChange}
-                className="form-control form-right"
+                className={`${styles.formControl} ${styles.formRight}`}
                 required
+                disabled={isLoading}
               />
             </div>
-            <div className="registration-group-second">
+            <div className={styles.registrationGroupSecond}>
               <input
                 type="date"
                 name="dateOfBirth"
                 value={formData.dateOfBirth}
                 onChange={handleChange}
-                className="form-control form-left"
+                className={`${styles.formControl} ${styles.formLeft}`}
                 required
+                disabled={isLoading}
               />
               <input
                 placeholder="Your City"
@@ -128,22 +123,24 @@ export const RegisterForm: React.FC = () => {
                 name="city"
                 value={formData.city}
                 onChange={handleChange}
-                className="form-control form right"
+                className={`${styles.formControl} ${styles.formRight}`}
                 required
+                disabled={isLoading}
               />
             </div>
           </div>
 
-          <div className="registration-middle">
-            <h2 className="registration-text">Contact Information</h2>
+          <div className={styles.registrationMiddle}>
+            <h2 className={styles.registrationText}>Contact Information</h2>
             <input
               placeholder="E-mail"
               type="email"
               name="email"
               value={formData.email}
               onChange={handleChange}
-              className="form-control"
+              className={styles.formControl}
               required
+              disabled={isLoading}
             />
             <input
               placeholder="Phone number"
@@ -151,21 +148,23 @@ export const RegisterForm: React.FC = () => {
               name="phoneNumber"
               value={formData.phoneNumber}
               onChange={handleChange}
-              className="form-control"
+              className={styles.formControl}
               required
+              disabled={isLoading}
             />
           </div>
 
-          <div className="registration-bottom">
-            <h2 className="registration-text">Create a Password</h2>
+          <div className={styles.registrationBottom}>
+            <h2 className={styles.registrationText}>Create a Password</h2>
             <input
               placeholder="Enter Password"
               type="password"
               name="password"
               value={formData.password}
               onChange={handleChange}
-              className="form-control"
+              className={styles.formControl}
               required
+              disabled={isLoading}
             />
             <input
               placeholder="Confirm Password"
@@ -173,14 +172,15 @@ export const RegisterForm: React.FC = () => {
               name="passwordConfirm"
               value={formData.passwordConfirm}
               onChange={handleChange}
-              className="form-control"
+              className={styles.formControl}
               required
+              disabled={isLoading}
             />
           </div>
 
           <button
             type="submit"
-            className="registration-confirm registration-text"
+            className={`${styles.registrationConfirm} ${styles.registrationText}`}
             disabled={isLoading}
           >
             {isLoading ? 'Creating Account...' : 'Sign Up'}

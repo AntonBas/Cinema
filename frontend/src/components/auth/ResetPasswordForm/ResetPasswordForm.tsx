@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import './ResetPasswordForm.css';
+import { useAuthMutation } from '@/hooks/features/auth';
+import styles from './ResetPasswordForm.module.css';
 
 export const ResetPasswordForm: React.FC = () => {
   const { token } = useParams<{ token: string }>();
@@ -10,46 +11,24 @@ export const ResetPasswordForm: React.FC = () => {
     confirmPassword: ''
   });
   const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const { resetPassword, isLoading, error } = useAuthMutation();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (formData.newPassword !== formData.confirmPassword) {
-      setError('Passwords do not match');
       return;
     }
 
-    if (formData.newPassword.length < 6) {
-      setError('Password must be at least 6 characters long');
+    if (!token) {
       return;
     }
-
-    setIsLoading(true);
-    setError('');
 
     try {
-      const response = await fetch('http://localhost:8080/api/auth/reset-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: `token=${token}&newPassword=${encodeURIComponent(formData.newPassword)}`
-      });
-
-      const data = await response.text();
-      
-      if (response.ok) {
-        setMessage(data);
-        setTimeout(() => navigate('/login'), 3000);
-      } else {
-        setError(data);
-      }
+      await resetPassword(token, formData.newPassword);
+      setMessage('Password has been successfully changed');
+      setTimeout(() => navigate('/login'), 3000);
     } catch (err) {
-      setError('An error occurred while resetting password');
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -61,26 +40,26 @@ export const ResetPasswordForm: React.FC = () => {
   };
 
   return (
-    <div className="reset-password-container">
-      <h2 className="reset-password-title">
+    <div className={styles.resetPasswordContainer}>
+      <h2 className={styles.resetPasswordTitle}>
         Set New Password
       </h2>
-      
+
       {message && (
-        <div className="reset-password-message">
+        <div className={styles.resetPasswordMessage}>
           {message}
         </div>
       )}
-      
+
       {error && (
-        <div className="reset-password-error">
+        <div className={styles.resetPasswordError}>
           {error}
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="reset-password-form">
-        <div className="form-group">
-          <label htmlFor="newPassword" className="form-label">
+      <form onSubmit={handleSubmit} className={styles.resetPasswordForm}>
+        <div className={styles.formGroup}>
+          <label htmlFor="newPassword" className={styles.formLabel}>
             New Password
           </label>
           <input
@@ -92,13 +71,13 @@ export const ResetPasswordForm: React.FC = () => {
             required
             minLength={6}
             placeholder="Enter new password"
-            className="form-input"
+            className={styles.formInput}
             disabled={isLoading}
           />
         </div>
 
-        <div className="form-group">
-          <label htmlFor="confirmPassword" className="form-label">
+        <div className={styles.formGroup}>
+          <label htmlFor="confirmPassword" className={styles.formLabel}>
             Confirm Password
           </label>
           <input
@@ -110,21 +89,21 @@ export const ResetPasswordForm: React.FC = () => {
             required
             minLength={6}
             placeholder="Confirm new password"
-            className="form-input"
+            className={styles.formInput}
             disabled={isLoading}
           />
         </div>
-        
+
         <button
           type="submit"
           disabled={isLoading}
-          className="reset-password-button"
+          className={styles.resetPasswordButton}
         >
           {isLoading ? 'Resetting...' : 'Reset Password'}
         </button>
-        
-        <div className="reset-password-links">
-          <Link to="/login" className="back-link">
+
+        <div className={styles.resetPasswordLinks}>
+          <Link to="/login" className={styles.backLink}>
             Back to Login
           </Link>
         </div>

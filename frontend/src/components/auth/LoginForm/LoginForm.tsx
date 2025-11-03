@@ -1,51 +1,40 @@
 import React, { useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
-import './LoginForm.css';
+import { useNavigate, Link } from 'react-router-dom';
+import { useAuth, useAuthMutation } from '@/hooks/features/auth';
+import styles from './LoginForm.module.css';
 
 export const LoginForm: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-
-  const { login, token, user } = useAuth();
+  const { login: authLogin } = useAuth();
+  const { login, isLoading, error } = useAuthMutation();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    setError('');
 
     try {
-      console.log('LoginForm: Starting login...');
-      await login(email, password);
-      console.log('LoginForm: Login successful, token:', token, 'user:', user);
-
+      const response = await login({ email, password });
+      authLogin(response.user, response.token);
       navigate('/');
-
-    } catch (err: any) {
-      console.error('LoginForm: Login error:', err);
-      setError(err.response?.data?.message || err.message || 'Login failed');
-    } finally {
-      setIsLoading(false);
+    } catch (err) {
     }
   };
 
   return (
-    <section className="login">
-      <div className="login-container">
-        <h1 className="login-title">Login into your account</h1>
+    <section className={styles.login}>
+      <div className={styles.loginContainer}>
+        <h1 className={styles.loginTitle}>Login into your account</h1>
 
-        <div className="login-top">
-          <span className="login-top-text">Don't have an account?</span>
-          <a href="/register">Register</a>
+        <div className={styles.loginTop}>
+          <span className={styles.loginTopText}>Don't have an account?</span>
+          <Link to="/register">Register</Link>
         </div>
 
-        <form className="login-form" onSubmit={handleSubmit}>
-          {error && <div className="error-message">{error}</div>}
+        <form className={styles.loginForm} onSubmit={handleSubmit}>
+          {error && <div className={styles.errorMessage}>{error}</div>}
 
-          <div className="login-middle-email">
+          <div className={styles.loginMiddleEmail}>
             <input
               type="email"
               value={email}
@@ -56,7 +45,7 @@ export const LoginForm: React.FC = () => {
             />
           </div>
 
-          <div className="login-middle-password">
+          <div className={styles.loginMiddlePassword}>
             <input
               type="password"
               value={password}
@@ -69,15 +58,15 @@ export const LoginForm: React.FC = () => {
 
           <button
             type="submit"
-            className="login-bottom-button"
+            className={styles.loginBottomButton}
             disabled={isLoading}
           >
             {isLoading ? 'Logging in...' : 'Login'}
           </button>
         </form>
 
-        <div className="login-bottom">
-          <a href="/forgot-password">Forgot your password?</a>
+        <div className={styles.loginBottom}>
+          <Link to="/forgot-password">Forgot your password?</Link>
         </div>
       </div>
     </section>

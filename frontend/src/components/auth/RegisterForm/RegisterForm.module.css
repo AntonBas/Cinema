@@ -1,112 +1,116 @@
 .registration {
-    width: 100%;
-    min-height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-    color: white;
-    padding: 2rem 0;
-    box-sizing: border-box;
-    background-color: #12161f;
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  color: white;
+  padding: 2rem 0;
+  box-sizing: border-box;
+  background-color: #12161f;
 }
 
-.registration-title {
-    font-size: 2.5rem;
-    margin-bottom: 1.5rem;
-    color: #fd5f00;
-    font-weight: 600;
-    text-align: center;
+.registrationTitle {
+  font-size: 2.5rem;
+  margin-bottom: 1.5rem;
+  color: #fd5f00;
+  font-weight: 600;
+  text-align: center;
 }
 
-.registration-container {
-    background-color: #1e232e;
-    border-radius: 10px;
-    padding: 2rem 3rem;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-    width: 100%;
-    max-width: 800px;
+.registrationContainer {
+  background-color: #1e232e;
+  border-radius: 10px;
+  padding: 2rem 3rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  width: 100%;
+  max-width: 800px;
 }
 
-
-.registration-top, .registration-middle, .registration-bottom {
-    margin-bottom: 1.5rem;
+.registrationTop,
+.registrationMiddle,
+.registrationBottom {
+  margin-bottom: 1.5rem;
 }
 
-.registration-group-first, .registration-group-second {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
+.registrationGroupFirst,
+.registrationGroupSecond {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 1rem;
 }
 
-.form-left {
-    width: 100%;
+.formLeft,
+.formRight {
+  width: 100%;
 }
 
-.registration-text {
-    color: white;
-    font-size: 1.2rem;
-    margin-bottom: 1rem;
-    font-weight: 500;
+.registrationText {
+  color: white;
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+  font-weight: 500;
 }
 
-.form-control {
-    width: 100%;
-    height: 45px;
-    background-color: #2a3041;
-    border: 1px solid #3d4457;
-    border-radius: 5px;
-    padding-left: 15px;
-    margin-bottom: 1rem;
-    color: white;
-    font-size: 1rem;
-    transition: border-color 0.3s;
+.formControl {
+  width: 100%;
+  height: 45px;
+  background-color: #2a3041;
+  border: 1px solid #3d4457;
+  border-radius: 5px;
+  padding-left: 15px;
+  margin-bottom: 1rem;
+  color: white;
+  font-size: 1rem;
+  transition: border-color 0.3s;
 }
 
-.form-control:focus {
-    outline: none;
-    border-color: #fd5f00;
-    box-shadow: 0 0 0 2px rgba(253, 95, 0, 0.2);
+.formControl:focus {
+  outline: none;
+  border-color: #fd5f00;
+  box-shadow: 0 0 0 2px rgba(253, 95, 0, 0.2);
 }
 
-.form-control:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
+.formControl:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
-.error-message {
-    background-color: #ff4444;
-    color: white;
-    padding: 10px;
-    border-radius: 5px;
-    margin-bottom: 1rem;
-    text-align: center;
+.errorMessage {
+  background-color: #ff4444;
+  color: white;
+  padding: 10px;
+  border-radius: 5px;
+  margin-bottom: 1rem;
+  text-align: center;
 }
 
-.registration-confirm {
-    width: 100%;
-    height: 50px;
-    background-color: #fd5f00;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    font-size: 1.1rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background-color 0.3s;
-    margin-top: 1rem;
+.registrationConfirm {
+  width: 100%;
+  height: 50px;
+  background-color: #fd5f00;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  margin-top: 1rem;
 }
 
-.registration-confirm:hover:not(:disabled) {
-    background-color: #e05500;
+.registrationConfirm:hover:not(:disabled) {
+  background-color: #e05500;
 }
 
-.registration-confirm:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
+.registrationConfirm:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
-.modal-overlay {
+.modalOverlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -120,7 +124,7 @@
   animation: fadeIn 0.3s ease;
 }
 
-.modal-content {
+.modalContent {
   background: #1e232e;
   border-radius: 12px;
   padding: 2rem;
@@ -131,7 +135,7 @@
   animation: slideUp 0.3s ease;
 }
 
-.success-animation {
+.successAnimation {
   margin-bottom: 1.5rem;
 }
 
@@ -149,26 +153,26 @@
   animation: scaleUp 0.3s ease;
 }
 
-.modal-content h3 {
+.modalContent h3 {
   color: #fd5f00;
   margin-bottom: 1rem;
   font-size: 1.5rem;
 }
 
-.modal-content p {
+.modalContent p {
   color: white;
   margin-bottom: 1.5rem;
   line-height: 1.5;
 }
 
-.modal-actions {
+.modalActions {
   display: flex;
   justify-content: center;
   gap: 1rem;
   margin-bottom: 1rem;
 }
 
-.btn-primary {
+.btnPrimary {
   background: #fd5f00;
   color: white;
   border: none;
@@ -179,78 +183,79 @@
   transition: background-color 0.3s;
 }
 
-.btn-primary:hover {
+.btnPrimary:hover {
   background: #e05500;
 }
 
-.help-text {
+.helpText {
   font-size: 0.9rem;
   color: #a0a8c0 !important;
   margin-bottom: 0 !important;
 }
 
-/* Анімації */
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes slideUp {
-  from { 
+  from {
     opacity: 0;
     transform: translateY(20px);
   }
-  to { 
+
+  to {
     opacity: 1;
     transform: translateY(0);
   }
 }
 
 @keyframes scaleUp {
-  from { 
+  from {
     transform: scale(0.8);
     opacity: 0;
   }
-  to { 
+
+  to {
     transform: scale(1);
     opacity: 1;
   }
 }
 
 @media (max-width: 768px) {
-    .registration-container {
-        padding: 1.5rem;
-        width: 90%;
-    }
-    .registration-group-first, .registration-group-second {
-        width: 100%;
-        margin-right: 0;
-    }
-    .registration-title {
-        font-size: 2rem;
-    }
+  .registrationContainer {
+    padding: 1.5rem;
+    width: 90%;
+  }
+
+  .registrationGroupFirst,
+  .registrationGroupSecond {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .registrationTitle {
+    font-size: 2rem;
+  }
 }
 
 input[type="date"] {
-    width: 100%;
-    position: relative;
-    padding-right: 0;
+  width: 100%;
+  position: relative;
+  padding-right: 0;
 }
 
 input[type="date"]::-webkit-calendar-picker-indicator {
-    filter: invert(1);
-    cursor: pointer;
+  filter: invert(1);
+  cursor: pointer;
 }
 
-::placeholder {
-    color: #a0a8c0;
-    opacity: 1;
-}
-
-:-ms-input-placeholder {
-    color: #a0a8c0;
-}
-
-::-ms-input-placeholder {
-    color: #a0a8c0;
+.formControl::placeholder {
+  color: #a0a8c0;
+  opacity: 1;
 }
