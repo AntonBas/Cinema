@@ -12,8 +12,8 @@ import ua.lviv.bas.cinema.domain.enums.MovieStatus;
 
 @Data
 @Builder
-@NoArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor
 public class MovieDto {
 
 	private Long id;
