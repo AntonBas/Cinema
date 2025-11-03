@@ -1,14 +1,13 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
-import { useAuth } from './context/AuthContext';
-import { LoginPage } from './pages/auth/LoginPage/LoginPage';
-import { RegisterPage } from './pages/auth/RegisterPage';
-import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage/ForgotPasswordPage';
-import { ResetPasswordPage } from './pages/auth/ResetPasswordPage';
-import { HomePage } from './pages/HomePage/HomePage';
-import { EmailVerificationPage } from './pages/auth/EmailVerificationPage/EmailVerificationPage';
-import { AdminPage } from './pages/Admin/AdminPage';
+import { useAuth } from '@/hooks/features/auth';
+import { LoginPage } from '@/pages/auth/LoginPage';
+import { RegisterPage } from '@/pages/auth/RegisterPage';
+import { ForgotPasswordPage } from '@/pages/auth/ForgotPasswordPage';
+import { ResetPasswordPage } from '@/pages/auth/ResetPasswordPage';
+import { HomePage } from '@/pages/HomePage/HomePage';
+import { EmailVerificationPage } from '@/pages/auth/EmailVerificationPage';
+import { AdminPage } from '@/pages/Admin/AdminPage';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { token, isLoading } = useAuth();
@@ -46,11 +45,7 @@ const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return token && user?.userRole === 'ROLE_ADMIN' ? <>{children}</> : <Navigate to="/" replace />;
 };
 
-function AppContent() {
-  const { token, isLoading } = useAuth();
-
-  console.log('AppContent: token=', token, 'isLoading=', isLoading);
-
+function App() {
   return (
     <Router>
       <Routes>
@@ -92,14 +87,6 @@ function AppContent() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
-  );
-}
-
-function App() {
-  return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
   );
 }
 
