@@ -1,5 +1,5 @@
 import React from 'react';
-import { type PersonDto, PersonRole } from '@/types/Person';
+import { type PersonDto, PersonRole } from '@/types/person';
 import { PersonCard } from '../PersonCard';
 import styles from './PersonList.module.css';
 

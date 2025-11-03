@@ -3,7 +3,7 @@ import type {
   MovieUpdateRequest,
   MovieDto,
   MovieResponse
-} from '@/types/Movie';
+} from '@/types/movie';
 
 export interface PageResponse<T> {
   content: T[];

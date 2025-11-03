@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import type { MovieResponse } from '@/types/Movie';
+import type { MovieResponse } from '@/types/movie';
 import { movieApi } from '@/api/movieApi';
-import { getAgeRatingDisplay } from '@/types/Movie';
+import { getAgeRatingDisplay } from '@/types/movie';
 import styles from './MovieCard.module.css';
 
 interface MovieCardProps {

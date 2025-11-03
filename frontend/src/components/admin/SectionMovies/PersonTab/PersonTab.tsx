@@ -6,8 +6,8 @@ import { DeleteConfirmModal } from '@/components/ui/DeleteConfirmModal';
 import { useNotification } from '@/hooks/useNotification';
 import { Notification } from '@/components/ui/Notification';
 import { personApi } from '@/api/personApi';
-import type { PersonDto, PersonRequest } from '@/types/Person';
-import { PersonRole } from '@/types/Person';
+import type { PersonDto, PersonRequest } from '@/types/person';
+import { PersonRole } from '@/types/person';
 import styles from './PersonTab.module.css';
 
 export const PersonTab: React.FC = () => {

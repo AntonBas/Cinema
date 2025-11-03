@@ -1,5 +1,5 @@
 import React from 'react';
-import type { MovieResponse } from '@/types/Movie';
+import type { MovieResponse } from '@/types/movie';
 import { MovieCard } from '../MovieCard';
 import styles from './MovieList.module.css';
 

@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import type { GenreDto } from '@/types/Genre';
+import type { GenreDto } from '@/types/genre';
 import styles from './GenreSearchList.module.css';
 
 interface GenreSearchListProps {

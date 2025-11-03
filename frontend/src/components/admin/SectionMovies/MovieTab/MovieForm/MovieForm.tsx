@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
-import type { MovieDto, MovieFormData, MovieCreateRequest, MovieUpdateRequest } from '@/types/Movie';
-import { AgeRating } from '@/types/Movie';
-import type { GenreDto } from '@/types/Genre';
+import type { MovieDto, MovieFormData, MovieCreateRequest, MovieUpdateRequest } from '@/types/movie';
+import { AgeRating } from '@/types/movie';
+import type { GenreDto } from '@/types/genre';
 import { movieApi } from '@/api/movieApi';
 import { genreApi } from '@/api/genreApi';
 import type { NotificationType } from '@/hooks/useNotification';
 import { toBackendFormat } from '@/utils/dateUtils';
 import { PersonSelect } from '@/components/common/PersonSelect/PersonSelect';
-import { PersonRole } from '@/types/Person';
+import { PersonRole } from '@/types/person';
 import { GenreSearchList } from './GenreSearchList';
 import styles from './MovieForm.module.css';
 

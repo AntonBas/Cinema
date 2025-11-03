@@ -1,6 +1,6 @@
 import React from 'react';
-import type { PersonDto } from '@/types/Person';
-import { PersonRole } from '@/types/Person';
+import type { PersonDto } from '@/types/person';
+import { PersonRole } from '@/types/person';
 import styles from './PersonCard.module.css';
 
 export interface PersonCardProps {

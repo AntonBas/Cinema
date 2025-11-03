@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import type { GenreDto, GenreRequest } from '@/types/Genre';
-import type { PageResponse } from '@/types/Pagination';
+import type { GenreDto, GenreRequest } from '@/types/genre';
+import type { PageResponse } from '@/types/pagination';
 import { genreApi } from '@/api/genreApi';
 import { useNotification } from '@/hooks/useNotification';
 import { Notification } from '@/components/ui/Notification';

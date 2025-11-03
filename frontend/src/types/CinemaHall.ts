@@ -1,4 +1,4 @@
-import type { SeatDto, SeatRowDto } from './Seat';
+import type { SeatDto, SeatRowDto } from './seat';
 
 export interface CinemaHall {
     id: number;

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import type { MovieResponse, MovieDto } from '@/types/Movie';
-import { MovieStatus } from '@/types/Movie';
+import type { MovieResponse, MovieDto } from '@/types/movie';
+import { MovieStatus } from '@/types/movie';
 import { movieApi } from '@/api/movieApi';
 import { MovieList } from './MovieList';
 import { MovieForm } from './MovieForm';

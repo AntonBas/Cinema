@@ -1,5 +1,5 @@
 import React from 'react';
-import { PersonRole } from '@/types/Person';
+import { PersonRole } from '@/types/person';
 import styles from './PersonTabs.module.css';
 
 interface PersonTabsProps {

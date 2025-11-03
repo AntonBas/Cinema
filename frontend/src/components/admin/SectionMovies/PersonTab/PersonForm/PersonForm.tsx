@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { PersonRole, type PersonDto, type PersonRequest } from '@/types/Person';
+import { PersonRole, type PersonDto, type PersonRequest } from '@/types/person';
 import styles from './PersonForm.module.css';
 
 export interface PersonFormProps {

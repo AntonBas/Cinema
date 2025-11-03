@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { type PersonDto, PersonRole } from '@/types/Person';
+import { type PersonDto, PersonRole } from '@/types/person';
 import { personApi } from '@/api/personApi';
 import type { NotificationType } from '@/hooks/useNotification';
 import styles from './PersonSelect.module.css';

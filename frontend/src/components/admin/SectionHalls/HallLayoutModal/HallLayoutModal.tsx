@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import type { CinemaHallDto, HallLayoutDto, SeatLayoutRequest, SeatDto } from '@/types';
 import { SeatType } from '@/types';
-import { cinemaHallApi } from '@/api/cinemaHall';
-import { seatApi } from '@/api/seat';
+import { cinemaHallApi } from '@/api/cinemaHallApi';
+import { seatApi } from '@/api/seatApi';
 import { useNotification } from '@/hooks/useNotification';
 import styles from './HallLayoutModal.module.css';
 

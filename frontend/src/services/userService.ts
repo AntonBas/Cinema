@@ -1,5 +1,5 @@
 import { api } from './api';
-import type { User } from '../types/Auth';
+import type { User } from '../types/auth';
 
 export const userService = {
   getProfile: async (): Promise<User> => {
