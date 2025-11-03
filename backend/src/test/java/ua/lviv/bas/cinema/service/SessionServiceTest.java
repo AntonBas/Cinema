@@ -3,18 +3,24 @@ package ua.lviv.bas.cinema.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import ua.lviv.bas.cinema.domain.CinemaHall;
 import ua.lviv.bas.cinema.domain.Movie;
@@ -44,24 +50,39 @@ class SessionServiceTest {
 	@InjectMocks
 	private SessionService sessionService;
 
-	@Test
-	void createSession_ShouldCreateSuccessfully() {
-		SessionRequest request = SessionRequest.builder().startTime(LocalDateTime.now().plusHours(2))
+	private SessionRequest sessionRequest;
+	private Movie movie;
+	private CinemaHall hall;
+	private Session session;
+	private SessionDto sessionDto;
+	private Pageable pageable;
+
+	@BeforeEach
+	void setUp() {
+		sessionRequest = SessionRequest.builder().startTime(LocalDateTime.now().plusHours(2))
 				.price(new BigDecimal("250.00")).movieId(1L).hallId(1L).build();
 
-		Movie movie = Movie.builder().id(1L).durationMinutes(120).build();
-		CinemaHall hall = CinemaHall.builder().id(1L).build();
-		Session session = Session.builder().id(1L).build();
-		SessionDto sessionDto = SessionDto.builder().id(1L).build();
+		movie = Movie.builder().id(1L).durationMinutes(120).build();
 
+		hall = CinemaHall.builder().id(1L).build();
+
+		session = Session.builder().id(1L).build();
+
+		sessionDto = SessionDto.builder().id(1L).build();
+
+		pageable = PageRequest.of(0, 20);
+	}
+
+	@Test
+	void createSession_ShouldCreateSuccessfully() {
 		when(movieService.getMovieEntityById(1L)).thenReturn(movie);
 		when(cinemaHallService.getHallEntityById(1L)).thenReturn(hall);
 		when(sessionRepository.findConflictingSessions(any(), any(), any(), any())).thenReturn(List.of());
-		when(sessionMapper.toEntity(request)).thenReturn(session);
+		when(sessionMapper.toEntity(sessionRequest)).thenReturn(session);
 		when(sessionRepository.save(session)).thenReturn(session);
 		when(sessionMapper.toDto(session)).thenReturn(sessionDto);
 
-		SessionDto result = sessionService.createSession(request);
+		SessionDto result = sessionService.createSession(sessionRequest);
 
 		assertThat(result).isNotNull();
 		assertThat(result.getId()).isEqualTo(1L);
@@ -70,11 +91,6 @@ class SessionServiceTest {
 
 	@Test
 	void createSession_ShouldThrowConflictException_WhenTimeConflict() {
-		SessionRequest request = SessionRequest.builder().startTime(LocalDateTime.now().plusHours(2)).movieId(1L)
-				.hallId(1L).build();
-
-		Movie movie = Movie.builder().id(1L).durationMinutes(120).build();
-		CinemaHall hall = CinemaHall.builder().id(1L).build();
 		Session conflictingSession = Session.builder().id(2L).build();
 
 		when(movieService.getMovieEntityById(1L)).thenReturn(movie);
@@ -82,15 +98,12 @@ class SessionServiceTest {
 		when(sessionRepository.findConflictingSessions(any(), any(), any(), any()))
 				.thenReturn(List.of(conflictingSession));
 
-		assertThatThrownBy(() -> sessionService.createSession(request)).isInstanceOf(ConflictException.class)
+		assertThatThrownBy(() -> sessionService.createSession(sessionRequest)).isInstanceOf(ConflictException.class)
 				.hasMessageContaining("Time conflict");
 	}
 
 	@Test
 	void getSessionById_ShouldReturnSession() {
-		Session session = Session.builder().id(1L).build();
-		SessionDto sessionDto = SessionDto.builder().id(1L).build();
-
 		when(sessionRepository.findById(1L)).thenReturn(Optional.of(session));
 		when(sessionMapper.toDto(session)).thenReturn(sessionDto);
 
@@ -109,25 +122,20 @@ class SessionServiceTest {
 
 	@Test
 	void updateSession_ShouldUpdateSuccessfully() {
-		SessionRequest request = SessionRequest.builder().startTime(LocalDateTime.now().plusHours(3))
+		SessionRequest updateRequest = SessionRequest.builder().startTime(LocalDateTime.now().plusHours(3))
 				.price(new BigDecimal("300.00")).movieId(1L).hallId(1L).build();
 
-		Session existingSession = Session.builder().id(1L).build();
-		Movie movie = Movie.builder().id(1L).durationMinutes(120).build();
-		CinemaHall hall = CinemaHall.builder().id(1L).build();
-		SessionDto sessionDto = SessionDto.builder().id(1L).build();
-
-		when(sessionRepository.findById(1L)).thenReturn(Optional.of(existingSession));
+		when(sessionRepository.findById(1L)).thenReturn(Optional.of(session));
 		when(movieService.getMovieEntityById(1L)).thenReturn(movie);
 		when(cinemaHallService.getHallEntityById(1L)).thenReturn(hall);
 		when(sessionRepository.findConflictingSessions(any(), any(), any(), any())).thenReturn(List.of());
-		when(sessionRepository.save(existingSession)).thenReturn(existingSession);
-		when(sessionMapper.toDto(existingSession)).thenReturn(sessionDto);
+		when(sessionRepository.save(session)).thenReturn(session);
+		when(sessionMapper.toDto(session)).thenReturn(sessionDto);
 
-		SessionDto result = sessionService.updateSession(1L, request);
+		SessionDto result = sessionService.updateSession(1L, updateRequest);
 
 		assertThat(result).isNotNull();
-		verify(sessionRepository).save(existingSession);
+		verify(sessionRepository).save(session);
 	}
 
 	@Test
@@ -147,16 +155,57 @@ class SessionServiceTest {
 	}
 
 	@Test
-	void getAllSessions_ShouldReturnAllSessions() {
-		Session session = Session.builder().id(1L).build();
-		SessionDto sessionDto = SessionDto.builder().id(1L).build();
+	void getAllSessions_ShouldReturnAllSessionsWithPagination() {
+		Page<Session> sessionPage = new PageImpl<>(List.of(session));
 
-		when(sessionRepository.findAll()).thenReturn(List.of(session));
+		when(sessionRepository.findAll(pageable)).thenReturn(sessionPage);
 		when(sessionMapper.toDto(session)).thenReturn(sessionDto);
 
-		List<SessionDto> result = sessionService.getAllSessions();
+		Page<SessionDto> result = sessionService.getAllSessions(pageable, null);
 
-		assertThat(result).hasSize(1);
-		assertThat(result.get(0).getId()).isEqualTo(1L);
+		assertThat(result).isNotNull();
+		assertThat(result.getContent()).hasSize(1);
+		assertThat(result.getContent().get(0).getId()).isEqualTo(1L);
+	}
+
+	@Test
+	void getAllSessions_ShouldReturnSearchedSessions() {
+		Page<Session> sessionPage = new PageImpl<>(List.of(session));
+
+		when(sessionRepository.findByMovieTitleContainingIgnoreCase("test", pageable)).thenReturn(sessionPage);
+		when(sessionMapper.toDto(session)).thenReturn(sessionDto);
+
+		Page<SessionDto> result = sessionService.getAllSessions(pageable, "test");
+
+		assertThat(result).isNotNull();
+		assertThat(result.getContent()).hasSize(1);
+		verify(sessionRepository).findByMovieTitleContainingIgnoreCase("test", pageable);
+	}
+
+	@Test
+	void hasTimeConflict_ShouldReturnTrue_WhenConflictExists() {
+		LocalDateTime fixedTime = LocalDateTime.of(2024, 1, 15, 18, 0);
+		LocalDateTime endTime = fixedTime.plusHours(2);
+
+		Session conflictingSession = Session.builder().id(2L).build();
+
+		when(sessionRepository.findConflictingSessions(1L, fixedTime, endTime, null))
+				.thenReturn(List.of(conflictingSession));
+
+		boolean result = sessionService.hasTimeConflict(1L, fixedTime, 120, null);
+
+		assertThat(result).isTrue();
+	}
+
+	@Test
+	void hasTimeConflict_ShouldReturnFalse_WhenNoConflict() {
+		LocalDateTime fixedTime = LocalDateTime.of(2024, 1, 15, 18, 0);
+		LocalDateTime endTime = fixedTime.plusHours(2);
+
+		when(sessionRepository.findConflictingSessions(1L, fixedTime, endTime, null)).thenReturn(List.of());
+
+		boolean result = sessionService.hasTimeConflict(1L, fixedTime, 120, null);
+
+		assertThat(result).isFalse();
 	}
 }
