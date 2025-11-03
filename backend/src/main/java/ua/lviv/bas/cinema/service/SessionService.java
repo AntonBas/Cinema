@@ -104,7 +104,7 @@ public class SessionService {
 	}
 
 	@Transactional(readOnly = true)
-	public List<SessionDto> getAllSession() {
+	public List<SessionDto> getAllSessions() {
 		log.debug("Retrieving all sessions");
 		return sessionRepository.findAll().stream().map(sessionMapper::toDto).collect(Collectors.toList());
 	}
