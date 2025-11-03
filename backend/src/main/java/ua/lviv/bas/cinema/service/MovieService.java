@@ -125,6 +125,12 @@ public class MovieService {
 	}
 
 	@Transactional(readOnly = true)
+	public Movie getMovieEntityById(Long id) {
+		log.debug("Retrieving movie entity by id: {}", id);
+		return findMovieById(id);
+	}
+
+	@Transactional(readOnly = true)
 	public Page<MovieDto> getPaginated(Pageable pageable) {
 		return movieRepository.findAll(pageable).map(this::enrichWithComputedFields);
 	}
@@ -309,8 +315,8 @@ public class MovieService {
 
 			return fileName;
 		} catch (IOException e) {
-			log.error("Failed to save poster", e);
-			throw new RuntimeException("Failed to save poster", e);
+			log.error("Failed to save poster for movie", e);
+			throw new RuntimeException("Failed to save poster file", e);
 		}
 	}
 

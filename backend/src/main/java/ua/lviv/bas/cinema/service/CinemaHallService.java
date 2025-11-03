@@ -61,7 +61,7 @@ public class CinemaHallService {
 		log.info("Updating cinema hall with id: {}", id);
 
 		CinemaHall existing = hallRepository.findById(id)
-				.orElseThrow(() -> new EntityNotFoundException("Cinema hall not found with id: " + id));
+				.orElseThrow(() -> new CinemaHallNotFoundException("Cinema hall not found with id: " + id));
 
 		if (!existing.getName().equals(request.getName()) && hallRepository.existsByName(request.getName())) {
 			throw new DuplicateEntityException("Cinema hall with name '" + request.getName() + "' already exists");
@@ -140,6 +140,12 @@ public class CinemaHallService {
 		}
 
 		return hallMapper.toDtoList(hallRepository.findByNameContainingIgnoreCase(name.trim()));
+	}
+
+	@Transactional(readOnly = true)
+	public CinemaHall getHallEntityById(Long id) {
+		log.debug("Retrieving cinema hall entity by id: {}", id);
+		return hallRepository.findById(id).orElseThrow(() -> new CinemaHallNotFoundException(id));
 	}
 
 	private List<Seat> generateSeatLayout(CinemaHall hall, SeatLayoutRequest request) {
