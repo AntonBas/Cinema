@@ -1,5 +1,6 @@
 package ua.lviv.bas.cinema.domain;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -39,7 +40,8 @@ public class CinemaHall {
 	private String name;
 
 	@OneToMany(mappedBy = "hall", fetch = FetchType.LAZY)
-	private List<Session> sessions;
+	@Builder.Default
+	private List<Session> sessions = new ArrayList<Session>();
 
 	@OneToMany(mappedBy = "hall", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
 	private List<Seat> seats;

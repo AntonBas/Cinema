@@ -36,16 +36,16 @@ import ua.lviv.bas.cinema.domain.enums.AgeRating;
 import ua.lviv.bas.cinema.domain.enums.MovieStatus;
 
 @Entity
-@Table(name = "movies", indexes = { @Index(name = "idx_movie_title", columnList = "title"),
-		@Index(name = "idx_movie_status", columnList = "status"),
-		@Index(name = "idx_movie_release_date", columnList = "release_date"),
-		@Index(name = "idx_movie_slug", columnList = "slug"),
-		@Index(name = "idx_movie_active_dates", columnList = "release_date, end_showing_date") })
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Table(name = "movies", indexes = { @Index(name = "idx_movie_title", columnList = "title"),
+		@Index(name = "idx_movie_status", columnList = "status"),
+		@Index(name = "idx_movie_release_date", columnList = "release_date"),
+		@Index(name = "idx_movie_slug", columnList = "slug"),
+		@Index(name = "idx_movie_active_dates", columnList = "release_date, end_showing_date") })
 public class Movie {
 
 	@Id
@@ -103,22 +103,22 @@ public class Movie {
 	@Builder.Default
 	private Set<Session> sessions = new HashSet<>();
 
-	@ManyToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH })
+	@ManyToMany
 	@JoinTable(name = "movie_cast", joinColumns = @JoinColumn(name = "movie_id"), inverseJoinColumns = @JoinColumn(name = "person_id"))
 	@Builder.Default
 	private Set<Person> actors = new HashSet<>();
 
-	@ManyToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH })
+	@ManyToMany
 	@JoinTable(name = "movie_directors", joinColumns = @JoinColumn(name = "movie_id"), inverseJoinColumns = @JoinColumn(name = "person_id"))
 	@Builder.Default
 	private Set<Person> directors = new HashSet<>();
 
-	@ManyToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH })
+	@ManyToMany
 	@JoinTable(name = "movie_screenwriters", joinColumns = @JoinColumn(name = "movie_id"), inverseJoinColumns = @JoinColumn(name = "person_id"))
 	@Builder.Default
 	private Set<Person> screenwriters = new HashSet<>();
 
-	@ManyToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH })
+	@ManyToMany
 	@JoinTable(name = "movie_genres", joinColumns = @JoinColumn(name = "movie_id"), inverseJoinColumns = @JoinColumn(name = "genre_id"))
 	@Builder.Default
 	private Set<Genre> genres = new HashSet<>();
