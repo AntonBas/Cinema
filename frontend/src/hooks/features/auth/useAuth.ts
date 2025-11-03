@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import type { User } from '@/types/auth';
+import type { User, UserSimple } from '@/types/auth';
 import { userApi } from '@/api/userApi';
 
 export const useAuth = () => {
@@ -33,8 +33,15 @@ export const useAuth = () => {
         loadUserData();
     }, [token]);
 
-    const login = (userData: User, authToken: string) => {
-        setUser(userData);
+    const login = (userData: UserSimple, authToken: string) => {
+        const tempUser: User = {
+            ...userData,
+            dateOfBirth: '',
+            city: '',
+            phoneNumber: '',
+            enabled: true
+        };
+        setUser(tempUser);
         setToken(authToken);
     };
 
