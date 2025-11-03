@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { movieApi } from '@/api/movieApi';
 import { genreApi } from '@/api/genreApi';
 import { personApi } from '@/api/personApi';
-import { useNotification } from '@/hooks/useNotification';
+import { useNotification } from '@/hooks/common/useNotification';
 import { Notification } from '@/components/ui/Notification/Notification';
 import styles from './AdminDashboard.module.css';
 

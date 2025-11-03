@@ -4,7 +4,7 @@ import { AgeRating } from '@/types/movie';
 import type { GenreDto } from '@/types/genre';
 import { movieApi } from '@/api/movieApi';
 import { genreApi } from '@/api/genreApi';
-import type { NotificationType } from '@/hooks/useNotification';
+import type { NotificationType } from '@/hooks/common/useNotification';
 import { toBackendFormat } from '@/utils/dateUtils';
 import { PersonSelect } from '@/components/common/PersonSelect/PersonSelect';
 import { PersonRole } from '@/types/person';

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import type { GenreDto, GenreRequest } from '@/types/genre';
 import type { PageResponse } from '@/types/pagination';
 import { genreApi } from '@/api/genreApi';
-import { useNotification } from '@/hooks/useNotification';
+import { useNotification } from '@/hooks/common/useNotification';
 import { Notification } from '@/components/ui/Notification';
 import { DeleteConfirmModal } from '@/components/ui/DeleteConfirmModal';
 import styles from './GenreTab.module.css';

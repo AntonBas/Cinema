@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { CinemaHallDto, CinemaHallRequest } from '@/types';
 import { cinemaHallApi } from '@/api/cinemaHallApi';
-import { useNotification } from '@/hooks/useNotification';
+import { useNotification } from '@/hooks/common/useNotification';
 import { DeleteConfirmModal } from '@/components/ui/DeleteConfirmModal';
 import { HallsTable } from './HallsTable/HallsTable';
 import { CreateHallModal } from './CreateHallModal/CreateHallModal';

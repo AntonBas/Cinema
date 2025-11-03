@@ -3,7 +3,7 @@ import { PersonTabs } from './PersonTabs';
 import { PersonList } from './PersonList';
 import { PersonForm } from './PersonForm';
 import { DeleteConfirmModal } from '@/components/ui/DeleteConfirmModal';
-import { useNotification } from '@/hooks/useNotification';
+import { useNotification } from '@/hooks/common/useNotification';
 import { Notification } from '@/components/ui/Notification';
 import { personApi } from '@/api/personApi';
 import type { PersonDto, PersonRequest } from '@/types/person';

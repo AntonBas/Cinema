@@ -3,7 +3,7 @@ import type { CinemaHallDto, HallLayoutDto, SeatLayoutRequest, SeatDto } from '@
 import { SeatType } from '@/types';
 import { cinemaHallApi } from '@/api/cinemaHallApi';
 import { seatApi } from '@/api/seatApi';
-import { useNotification } from '@/hooks/useNotification';
+import { useNotification } from '@/hooks/common/useNotification';
 import styles from './HallLayoutModal.module.css';
 
 interface HallLayoutModalProps {

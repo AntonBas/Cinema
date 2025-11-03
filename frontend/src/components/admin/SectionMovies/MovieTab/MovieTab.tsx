@@ -5,7 +5,7 @@ import { movieApi } from '@/api/movieApi';
 import { MovieList } from './MovieList';
 import { MovieForm } from './MovieForm';
 import { Notification } from '@/components/ui/Notification/Notification';
-import { useNotification } from '@/hooks/useNotification';
+import { useNotification } from '@/hooks/common/useNotification';
 import styles from './MovieTab.module.css';
 
 type MovieTabType = 'CURRENT' | 'UPCOMING' | 'ARCHIVED';
