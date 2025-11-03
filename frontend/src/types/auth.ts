@@ -12,6 +12,14 @@ export interface User {
     enabled: boolean;
 }
 
+export interface UserSimple {
+    id: number;
+    email: string;
+    firstName: string;
+    lastName: string;
+    userRole: UserRole;
+}
+
 export interface LoginRequest {
     email: string;
     password: string;
@@ -20,13 +28,7 @@ export interface LoginRequest {
 export interface LoginResponse {
     message: string;
     token: string;
-    user: {
-        id: number;
-        email: string;
-        firstName: string;
-        lastName: string;
-        userRole: UserRole;
-    };
+    user: UserSimple;
 }
 
 export interface RegisterRequest {

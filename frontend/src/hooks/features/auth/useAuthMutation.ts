@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { authApi } from '@/api/authApi';
-import type { LoginRequest, RegisterRequest, LoginResponse } from '@/types/auth';
+import type { LoginRequest, RegisterRequest, LoginResponse, ApiResponse } from '@/types/auth';
 
 export const useAuthMutation = () => {
     const [isLoading, setIsLoading] = useState(false);
@@ -21,7 +21,7 @@ export const useAuthMutation = () => {
         }
     };
 
-    const register = async (userData: RegisterRequest) => {
+    const register = async (userData: RegisterRequest): Promise<ApiResponse> => {
         setIsLoading(true);
         setError(null);
         try {
@@ -35,7 +35,7 @@ export const useAuthMutation = () => {
         }
     };
 
-    const checkEmail = async (email: string) => {
+    const checkEmail = async (email: string): Promise<{ exists: boolean }> => {
         try {
             return await authApi.checkEmail(email);
         } catch (err) {
@@ -45,11 +45,35 @@ export const useAuthMutation = () => {
         }
     };
 
-    const forgotPassword = async (email: string) => {
+    const forgotPassword = async (email: string): Promise<ApiResponse> => {
         try {
             return await authApi.forgotPassword(email);
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Password reset failed';
+            setError(message);
+            throw err;
+        }
+    };
+
+    const resetPassword = async (token: string, newPassword: string): Promise<ApiResponse> => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            return await authApi.resetPassword(token, newPassword);
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'Password reset failed';
+            setError(message);
+            throw err;
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const verifyEmail = async (token: string): Promise<ApiResponse> => {
+        try {
+            return await authApi.verifyEmail(token);
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'Email verification failed';
             setError(message);
             throw err;
         }
@@ -61,6 +85,8 @@ export const useAuthMutation = () => {
         login,
         register,
         checkEmail,
-        forgotPassword
+        forgotPassword,
+        resetPassword,
+        verifyEmail
     };
 };
