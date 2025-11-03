@@ -69,9 +69,22 @@ public class GlobalExceptionHandler {
 		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
 	}
 
+	@ExceptionHandler(SessionNotFoundException.class)
+	public ResponseEntity<String> handleSessionNotFound(SessionNotFoundException ex) {
+		log.warn("Session not found: {}", ex.getMessage());
+		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+	}
+
 	@ExceptionHandler(DuplicateEntityException.class)
 	public ResponseEntity<String> handleDuplicateEntity(DuplicateEntityException ex) {
 		log.warn("Duplicate entity: {}", ex.getMessage());
 		return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
 	}
+
+	@ExceptionHandler(ConflictException.class)
+	public ResponseEntity<String> handleConflict(ConflictException ex) {
+		log.warn("Conflict: {}", ex.getMessage());
+		return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
+	}
+
 }
