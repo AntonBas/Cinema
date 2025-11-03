@@ -1,4 +1,4 @@
-.login-page-body {
+.loginPageBody {
   margin: 0;
   padding: 0;
   min-height: 100vh;
@@ -6,7 +6,7 @@
   background: #12161f;
 }
 
-.auth-main-content {
+.authMainContent {
   flex: 1;
   display: flex;
   justify-content: center;
@@ -16,7 +16,7 @@
 }
 
 @media (max-width: 768px) {
-  .auth-main-content {
+  .authMainContent {
     min-height: calc(100vh - 70px - 250px);
     padding: 15px;
   }

@@ -1,8 +1,8 @@
 import React from 'react';
-import { ResetPasswordForm } from '../../components/auth/ResetPasswordForm';
-import { useAuth } from '../../context/AuthContext';
-import { Layout } from '../../components/layout/Layout';
-
+import { ResetPasswordForm } from '@/components/auth/ResetPasswordForm/ResetPasswordForm';
+import { useAuth } from '@/hooks/features/auth';
+import { Layout } from '@/components/layout/Layout';
+import styles from './ResetPasswordPage.module.css';
 
 export const ResetPasswordPage: React.FC = () => {
   const { token, isLoading } = useAuth();
@@ -14,7 +14,7 @@ export const ResetPasswordPage: React.FC = () => {
 
   return (
     <Layout>
-      <div>
+      <div className={styles.container}>
         <ResetPasswordForm />
       </div>
     </Layout>

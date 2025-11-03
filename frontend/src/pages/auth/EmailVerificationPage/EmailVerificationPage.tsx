@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { api } from '../../services/api';
-import './EmailVerificationPage.css';
+import { authApi } from '@/api/authApi';
+import styles from './EmailVerificationPage.module.css';
 
 export const EmailVerificationPage: React.FC = () => {
   const [message, setMessage] = useState('');
@@ -20,8 +20,8 @@ export const EmailVerificationPage: React.FC = () => {
       }
 
       try {
-        const response = await api.get(`/auth/verify-email?token=${token}`);
-        setMessage(response.data);
+        const response = await authApi.verifyEmail(token);
+        setMessage(response.message);
         setIsSuccess(true);
 
         setTimeout(() => {
@@ -39,19 +39,19 @@ export const EmailVerificationPage: React.FC = () => {
   }, [token, navigate]);
 
   if (isLoading) {
-    return <div className="verification-container">Verifying email...</div>;
+    return <div className={styles.verificationContainer}>Verifying email...</div>;
   }
 
   return (
-    <div className="verification-container">
-      <div className={`verification-message ${isSuccess ? 'success' : 'error'}`}>
+    <div className={styles.verificationContainer}>
+      <div className={`${styles.verificationMessage} ${isSuccess ? styles.success : styles.error}`}>
         <h2>{isSuccess ? 'Email Verified!' : 'Verification Failed'}</h2>
         <p>{message}</p>
         {isSuccess && (
           <p>Redirecting to login page in 3 seconds...</p>
         )}
         {!isSuccess && (
-          <button onClick={() => navigate('/login')} className="login-button">
+          <button onClick={() => navigate('/login')} className={styles.loginButton}>
             Go to Login
           </button>
         )}

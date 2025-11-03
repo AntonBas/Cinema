@@ -1,7 +1,8 @@
 import React from 'react';
-import { RegisterForm } from '../../components/auth/RegisterForm';
-import { useAuth } from '../../context/AuthContext';
-import { Layout } from '../../components/layout/Layout';
+import { RegisterForm } from '@/components/auth/RegisterForm/RegisterForm';
+import { useAuth } from '@/hooks/features/auth';
+import { Layout } from '@/components/layout/Layout';
+import styles from './RegisterPage.module.css';
 
 export const RegisterPage: React.FC = () => {
   const { token, isLoading } = useAuth();
@@ -13,7 +14,7 @@ export const RegisterPage: React.FC = () => {
 
   return (
     <Layout>
-      <div>
+      <div className={styles.container}>
         <RegisterForm />
       </div>
     </Layout>

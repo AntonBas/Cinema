@@ -1,0 +1,51 @@
+.verificationContainer {
+  background-color: #12161f;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+.verificationMessage {
+  background-color: #1e232e;
+  padding: 2rem;
+  border-radius: 10px;
+  text-align: center;
+  max-width: 500px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+.verificationMessage.success {
+  border-left: 4px solid #4caf50;
+}
+
+.verificationMessage.error {
+  border-left: 4px solid #ff4444;
+}
+
+.verificationMessage h2 {
+  color: #fff;
+  margin-bottom: 1rem;
+}
+
+.verificationMessage p {
+  color: #a0a8c0;
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
+}
+
+.loginButton {
+  background-color: #fd5f00;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 5px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.loginButton:hover {
+  background-color: #e05500;
+}
