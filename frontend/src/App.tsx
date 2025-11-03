@@ -2,12 +2,12 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { useAuth } from './context/AuthContext';
-import { LoginPage } from './pages/auth/LoginPage';
+import { LoginPage } from './pages/auth/LoginPage/LoginPage';
 import { RegisterPage } from './pages/auth/RegisterPage';
-import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage';
+import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage/ForgotPasswordPage';
 import { ResetPasswordPage } from './pages/auth/ResetPasswordPage';
 import { HomePage } from './pages/HomePage/HomePage';
-import { EmailVerificationPage } from './pages/auth/EmailVerificationPage';
+import { EmailVerificationPage } from './pages/auth/EmailVerificationPage/EmailVerificationPage';
 import { AdminPage } from './pages/Admin/AdminPage';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {

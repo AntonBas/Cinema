@@ -1,14 +1,11 @@
-import { api } from './api';
-import type { LoginRequest, RegisterRequest, LoginResponse, ApiResponse } from '../types/auth';
+import { api } from '@/services/api';
+import type { LoginRequest, RegisterRequest, LoginResponse, ApiResponse, User } from '@/types/auth';
 
-export const authService = {
+export const authApi = {
     login: async (credentials: LoginRequest): Promise<LoginResponse> => {
         const response = await api.post('/auth/login', credentials);
 
-        console.log('🔐 Login response data:', response.data);
-
         if (response.data.token) {
-            console.log('✅ Token found in response body');
             return {
                 message: response.data.message,
                 token: response.data.token,
@@ -20,7 +17,6 @@ export const authService = {
         const token = authHeader?.replace('Bearer ', '');
 
         if (token) {
-            console.log('✅ Token found in authorization header');
             return {
                 message: response.data.message,
                 token: token,
@@ -28,9 +24,6 @@ export const authService = {
             };
         }
 
-        console.error('❌ No token found in response');
-        console.error('Response data:', response.data);
-        console.error('Response headers:', response.headers);
         throw new Error('No authorization token received from server');
     },
 
