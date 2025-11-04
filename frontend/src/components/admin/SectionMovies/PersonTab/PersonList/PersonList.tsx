@@ -18,31 +18,61 @@ export const PersonList: React.FC<PersonListProps> = ({
     onDelete,
     onAddPerson,
 }) => {
+    const getEmptyStateConfig = () => {
+        switch (activeTab) {
+            case 'ALL':
+                return {
+                    icon: '👥',
+                    title: 'No people found',
+                    description: 'Get started by adding your first person',
+                    buttonText: 'Add Person'
+                };
+            case PersonRole.ACTOR:
+                return {
+                    icon: '🎭',
+                    title: 'No actors found',
+                    description: 'Add actors to appear in movie casts',
+                    buttonText: 'Add Actor'
+                };
+            case PersonRole.DIRECTOR:
+                return {
+                    icon: '🎬',
+                    title: 'No directors found',
+                    description: 'Add directors to direct movies',
+                    buttonText: 'Add Director'
+                };
+            case PersonRole.SCREENWRITER:
+                return {
+                    icon: '✍️',
+                    title: 'No screenwriters found',
+                    description: 'Add screenwriters to write movie scripts',
+                    buttonText: 'Add Screenwriter'
+                };
+            default:
+                return {
+                    icon: '👥',
+                    title: 'No people found',
+                    description: 'Get started by adding your first person',
+                    buttonText: 'Add Person'
+                };
+        }
+    };
+
     if (persons.length === 0) {
+        const emptyConfig = getEmptyStateConfig();
+
         return (
             <div className={styles.empty}>
                 <div className={styles.emptyIcon}>
-                    {activeTab === 'ALL' ? '👥' :
-                        activeTab === PersonRole.ACTOR ? '🎭' :
-                            activeTab === PersonRole.DIRECTOR ? '🎬' : '✍️'}
+                    {emptyConfig.icon}
                 </div>
-                <h3>
-                    {activeTab === 'ALL' ? 'No people found' :
-                        activeTab === PersonRole.ACTOR ? 'No actors found' :
-                            activeTab === PersonRole.DIRECTOR ? 'No directors found' : 'No screenwriters found'}
-                </h3>
-                <p>
-                    {activeTab === 'ALL' ? 'Get started by adding your first person' :
-                        activeTab === PersonRole.ACTOR ? 'Add actors to appear in movie casts' :
-                            activeTab === PersonRole.DIRECTOR ? 'Add directors to direct movies' : 'Add screenwriters to write movie scripts'}
-                </p>
+                <h3>{emptyConfig.title}</h3>
+                <p>{emptyConfig.description}</p>
                 <button
                     className={styles.primaryButton}
                     onClick={onAddPerson}
                 >
-                    Add {activeTab === 'ALL' ? 'Person' :
-                        activeTab === PersonRole.ACTOR ? 'Actor' :
-                            activeTab === PersonRole.DIRECTOR ? 'Director' : 'Screenwriter'}
+                    {emptyConfig.buttonText}
                 </button>
             </div>
         );

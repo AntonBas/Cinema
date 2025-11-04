@@ -5,25 +5,21 @@ import { PersonForm } from './PersonForm';
 import { DeleteConfirmModal } from '@/components/ui/DeleteConfirmModal';
 import { useNotification } from '@/hooks/common/useNotification';
 import { Notification } from '@/components/ui/Notification';
-import { personApi } from '@/api/personApi';
+import { usePersonSearch, usePersonMutation } from '@/hooks/features/persons';
 import type { PersonDto, PersonRequest } from '@/types/person';
 import { PersonRole } from '@/types/person';
 import styles from './PersonTab.module.css';
 
 export const PersonTab: React.FC = () => {
-  const [persons, setPersons] = useState<PersonDto[]>([]);
-  const [filteredPersons, setFilteredPersons] = useState<PersonDto[]>([]);
   const [activeTab, setActiveTab] = useState<PersonRole | 'ALL'>('ALL');
-  const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [editingPerson, setEditingPerson] = useState<PersonDto | null>(null);
   const [personToDelete, setPersonToDelete] = useState<PersonDto | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
-
   const [currentPage, setCurrentPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [totalCounts, setTotalCounts] = useState({
     ALL: 0,
     [PersonRole.ACTOR]: 0,
@@ -31,118 +27,103 @@ export const PersonTab: React.FC = () => {
     [PersonRole.SCREENWRITER]: 0,
   });
 
+  const { persons, pagination, loading, error: searchError, searchPersons } = usePersonSearch();
+  const { createPerson, updatePerson, deletePerson, loading: mutationLoading, error: mutationError } = usePersonMutation();
   const { notifications, showNotification, hideNotification } = useNotification();
 
   useEffect(() => {
-    loadPersons(true);
-    loadCounts();
-  }, [activeTab]);
+    const timer = setTimeout(() => setDebouncedSearch(searchQuery), 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   useEffect(() => {
-    filterPersons();
-  }, [persons, activeTab]);
+    loadPersons(true);
+  }, [activeTab, debouncedSearch]);
+
+  useEffect(() => {
+    if (searchError) showNotification(searchError, 'error');
+  }, [searchError, showNotification]);
+
+  useEffect(() => {
+    if (mutationError) showNotification(mutationError, 'error');
+  }, [mutationError, showNotification]);
+
+  useEffect(() => {
+    refreshAllCounts();
+  }, []);
 
   const loadPersons = async (reset: boolean = false, pageOverride?: number) => {
-    try {
-      const page = reset ? 0 : (pageOverride ?? currentPage);
-      const role = activeTab === 'ALL' ? undefined : activeTab;
+    const page = reset ? 0 : (pageOverride ?? currentPage);
+    const role = activeTab === 'ALL' ? undefined : activeTab;
 
-      if (reset) {
-        setIsLoading(true);
-        setPersons([]);
-        setHasMore(true);
-      } else {
-        setIsLoadingMore(true);
-      }
+    await searchPersons({ query: debouncedSearch, role, page, size: 10 });
 
-      const result = await personApi.search({
-        query: '',
-        role,
-        page,
-        size: 10,
-      });
-
-      if (reset) {
-        setPersons(result.content);
-        setCurrentPage(0);
-      } else {
-        setPersons((prev) => [...prev, ...result.content]);
-        setCurrentPage(page);
-      }
-
-      setHasMore(result.currentPage < result.totalPages - 1);
-
-      if (reset) {
-        setTotalCounts((prev) => ({
-          ...prev,
-          [activeTab]: result.totalElements,
-        }));
-      }
-    } catch (err) {
-      showNotification('Failed to load persons', 'error');
-      console.error('Error loading persons:', err);
-    } finally {
-      setIsLoading(false);
-      setIsLoadingMore(false);
+    if (pagination) {
+      setHasMore(!pagination.last);
+      setCurrentPage(page);
     }
   };
 
+  const refreshAllCounts = async () => {
+    const roles: (PersonRole | 'ALL')[] = ['ALL', PersonRole.ACTOR, PersonRole.DIRECTOR, PersonRole.SCREENWRITER];
+
+    const newCounts = {
+      ALL: 0,
+      [PersonRole.ACTOR]: 0,
+      [PersonRole.DIRECTOR]: 0,
+      [PersonRole.SCREENWRITER]: 0,
+    };
+
+    for (const role of roles) {
+      const roleFilter = role === 'ALL' ? undefined : role;
+      try {
+        const result = await searchPersons({ query: '', role: roleFilter, page: 0, size: 1 });
+        if (result && typeof result.totalElements === 'number') {
+          newCounts[role] = result.totalElements;
+        }
+      } catch (error) {
+        console.error(`Failed to load count for ${role}:`, error);
+      }
+    }
+
+    setTotalCounts(newCounts);
+  };
+
   const loadMore = () => {
-    if (!isLoadingMore && hasMore) {
+    if (!loading && hasMore) {
       const nextPage = currentPage + 1;
       loadPersons(false, nextPage);
     }
   };
 
-  const loadCounts = async () => {
-    try {
-      const roles = [undefined, PersonRole.ACTOR, PersonRole.DIRECTOR, PersonRole.SCREENWRITER];
-      const counts: Record<string, number> = {};
-
-      for (const role of roles) {
-        const result = await personApi.search({ query: '', role, page: 0, size: 1 });
-        counts[role ?? 'ALL'] = result.totalElements;
-      }
-
-      setTotalCounts({
-        ALL: counts.ALL,
-        [PersonRole.ACTOR]: counts[PersonRole.ACTOR],
-        [PersonRole.DIRECTOR]: counts[PersonRole.DIRECTOR],
-        [PersonRole.SCREENWRITER]: counts[PersonRole.SCREENWRITER],
-      });
-    } catch (err) {
-      console.error('Error loading counts:', err);
-    }
-  };
-
-  const filterPersons = () => {
-    if (activeTab === 'ALL') {
-      setFilteredPersons(persons);
-    } else {
-      setFilteredPersons(persons.filter((person) => person.role === activeTab));
-    }
-  };
-
   const handleTabChange = (tab: PersonRole | 'ALL') => {
     setActiveTab(tab);
+    setCurrentPage(0);
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+    setCurrentPage(0);
+  };
+
+  const clearSearch = () => {
+    setSearchQuery('');
+    setDebouncedSearch('');
   };
 
   const handleSubmit = async (data: PersonRequest) => {
     try {
       if (editingPerson?.id) {
-        await personApi.update(editingPerson.id, data);
+        await updatePerson(editingPerson.id, data);
         showNotification('Person updated successfully!', 'success');
       } else {
-        await personApi.create(data);
+        await createPerson(data);
         showNotification('Person created successfully!', 'success');
       }
       resetForm();
-      loadPersons(true);
-      loadCounts();
-    } catch (err) {
-      showNotification('Failed to save person', 'error');
-      console.error('Error saving person:', err);
-    }
+      await loadPersons(true);
+      await refreshAllCounts();
+    } catch { }
   };
 
   const handleEdit = (person: PersonDto) => {
@@ -157,18 +138,12 @@ export const PersonTab: React.FC = () => {
 
   const handleDeleteConfirm = async () => {
     if (!personToDelete?.id) return;
-
     try {
-      setIsDeleting(true);
-      await personApi.delete(personToDelete.id);
+      await deletePerson(personToDelete.id);
       showNotification('Person deleted successfully!', 'success');
-      loadPersons(true);
-      loadCounts();
-    } catch (err) {
-      showNotification('Failed to delete person', 'error');
-      console.error('Error deleting person:', err);
-    } finally {
-      setIsDeleting(false);
+      await loadPersons(true);
+      await refreshAllCounts();
+    } catch { } finally {
       setIsDeleteModalOpen(false);
       setPersonToDelete(null);
     }
@@ -184,19 +159,24 @@ export const PersonTab: React.FC = () => {
     setEditingPerson(null);
   };
 
-  const getTabStats = () => ({
-    ALL: totalCounts.ALL,
-    [PersonRole.ACTOR]: totalCounts[PersonRole.ACTOR],
-    [PersonRole.DIRECTOR]: totalCounts[PersonRole.DIRECTOR],
-    [PersonRole.SCREENWRITER]: totalCounts[PersonRole.SCREENWRITER],
-  });
-
   const handleAddNew = () => {
     setEditingPerson(null);
     setIsModalOpen(true);
   };
 
-  if (isLoading) {
+  const getDisplayedCounts = () => {
+    if (debouncedSearch) {
+      return {
+        ALL: persons.length,
+        [PersonRole.ACTOR]: persons.filter(p => p.role === PersonRole.ACTOR).length,
+        [PersonRole.DIRECTOR]: persons.filter(p => p.role === PersonRole.DIRECTOR).length,
+        [PersonRole.SCREENWRITER]: persons.filter(p => p.role === PersonRole.SCREENWRITER).length,
+      };
+    }
+    return totalCounts;
+  };
+
+  if (loading && persons.length === 0) {
     return (
       <div className={styles.loading}>
         <div className={styles.loadingSpinner}></div>
@@ -215,10 +195,35 @@ export const PersonTab: React.FC = () => {
         </button>
       </div>
 
-      <PersonTabs activeTab={activeTab} onTabChange={handleTabChange} stats={getTabStats()} />
+      <div className={styles.searchContainer}>
+        <div className={styles.searchWrapper}>
+          <input
+            type="text"
+            placeholder="Search people by name..."
+            value={searchQuery}
+            onChange={handleSearchChange}
+            className={styles.searchInput}
+          />
+          {loading && <div className={styles.searchSpinner}></div>}
+        </div>
+        {searchQuery && (
+          <button className={styles.clearSearch} onClick={clearSearch}>
+            Clear
+          </button>
+        )}
+      </div>
+
+      {pagination && (
+        <div className={styles.resultsInfo}>
+          Showing {persons.length} of {pagination.totalElements} people
+          {debouncedSearch && ` for "${debouncedSearch}"`}
+        </div>
+      )}
+
+      <PersonTabs activeTab={activeTab} onTabChange={handleTabChange} stats={getDisplayedCounts()} />
 
       <PersonList
-        persons={filteredPersons}
+        persons={persons}
         activeTab={activeTab}
         onEdit={handleEdit}
         onDelete={handleDeleteClick}
@@ -227,12 +232,8 @@ export const PersonTab: React.FC = () => {
 
       {hasMore && (
         <div className={styles.loadMoreContainer}>
-          <button
-            className={styles.loadMoreButton}
-            onClick={loadMore}
-            disabled={isLoadingMore}
-          >
-            {isLoadingMore ? (
+          <button className={styles.loadMoreButton} onClick={loadMore} disabled={loading}>
+            {loading ? (
               <>
                 <div className={styles.loadingSpinnerSmall}></div>
                 Loading...
@@ -249,6 +250,7 @@ export const PersonTab: React.FC = () => {
           person={editingPerson}
           onSubmit={handleSubmit}
           onCancel={resetForm}
+          isLoading={mutationLoading}
         />
       )}
 
@@ -258,7 +260,7 @@ export const PersonTab: React.FC = () => {
         onCancel={handleDeleteCancel}
         itemName={personToDelete?.name}
         itemType="person"
-        isDeleting={isDeleting}
+        isDeleting={mutationLoading}
       />
 
       {notifications.map((notification, index) => (

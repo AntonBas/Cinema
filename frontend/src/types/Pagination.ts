@@ -1,4 +1,5 @@
 export interface PageResponse<T> {
+    currentPage: number;
     content: T[];
     totalElements: number;
     totalPages: number;

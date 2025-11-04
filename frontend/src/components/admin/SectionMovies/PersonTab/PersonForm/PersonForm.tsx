@@ -21,6 +21,7 @@ export const PersonForm: React.FC<PersonFormProps> = ({
     });
 
     const [errors, setErrors] = useState<{ name?: string }>({});
+    const [touched, setTouched] = useState({ name: false });
 
     useEffect(() => {
         if (person) {
@@ -28,25 +29,21 @@ export const PersonForm: React.FC<PersonFormProps> = ({
                 name: person.name,
                 role: person.role
             });
-        } else {
-            setFormData({
-                name: '',
-                role: PersonRole.ACTOR
-            });
         }
         setErrors({});
+        setTouched({ name: false });
     }, [person]);
 
     useEffect(() => {
         const handleEscape = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') {
+            if (e.key === 'Escape' && !isLoading) {
                 onCancel();
             }
         };
 
         document.addEventListener('keydown', handleEscape);
         return () => document.removeEventListener('keydown', handleEscape);
-    }, [onCancel]);
+    }, [onCancel, isLoading]);
 
     const validateForm = (): boolean => {
         const newErrors: { name?: string } = {};
@@ -65,6 +62,7 @@ export const PersonForm: React.FC<PersonFormProps> = ({
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        setTouched({ name: true });
 
         if (validateForm()) {
             onSubmit({
@@ -85,18 +83,22 @@ export const PersonForm: React.FC<PersonFormProps> = ({
         }
     };
 
-    const getRoleDescription = (role: PersonRole): string => {
-        switch (role) {
-            case PersonRole.ACTOR: return 'Appears in movies as cast member';
-            case PersonRole.DIRECTOR: return 'Directs and oversees movie production';
-            case PersonRole.SCREENWRITER: return 'Writes movie scripts and screenplays';
-            default: return '';
+    const handleBlur = (field: string) => {
+        setTouched(prev => ({ ...prev, [field]: true }));
+        if (field === 'name') {
+            validateForm();
         }
     };
 
+    const shouldShowError = (field: 'name') => {
+        return touched[field] && errors[field];
+    };
+
+    const isNameInvalid = shouldShowError('name');
+
     return (
-        <div className={styles.modalOverlay}>
-            <div className={styles.modal}>
+        <div className={styles.modalOverlay} onClick={onCancel}>
+            <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
                 <div className={styles.header}>
                     <h3>{person ? 'Edit Person' : 'Add New Person'}</h3>
                     <button
@@ -104,63 +106,70 @@ export const PersonForm: React.FC<PersonFormProps> = ({
                         onClick={onCancel}
                         type="button"
                         disabled={isLoading}
+                        aria-label="Close dialog"
                     >
                         ×
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className={styles.form}>
+                <form onSubmit={handleSubmit} className={styles.form} noValidate>
                     <div className={styles.formGroup}>
-                        <label className={styles.label}>
+                        <label htmlFor="person-name" className={styles.label}>
                             Full Name *
                         </label>
                         <input
+                            id="person-name"
                             type="text"
                             value={formData.name}
                             onChange={(e) => handleInputChange('name', e.target.value)}
+                            onBlur={() => handleBlur('name')}
                             placeholder="Enter full name (e.g., Tom Hanks, Christopher Nolan)"
-                            className={`${styles.input} ${errors.name ? styles.inputError : ''}`}
-                            maxLength={100}
+                            className={`${styles.input} ${isNameInvalid ? styles.inputError : ''}`}
+                            maxLength={50}
                             autoFocus
+                            disabled={isLoading}
+                            aria-describedby={isNameInvalid ? 'name-error' : 'name-help'}
+                            aria-invalid={isNameInvalid ? "true" : "false"} required
                         />
-                        {errors.name && (
-                            <span className={styles.error}>{errors.name}</span>
+                        {isNameInvalid && (
+                            <span id="name-error" className={styles.error} role="alert">
+                                {errors.name}
+                            </span>
                         )}
-                        <div className={styles.charCount}>
+                        <div id="name-help" className={styles.charCount}>
                             {formData.name.length}/50 characters
                         </div>
                     </div>
 
                     <div className={styles.formGroup}>
-                        <label className={styles.label}>
-                            Role *
-                        </label>
-                        <div className={styles.roleOptions}>
-                            {Object.values(PersonRole).map(role => (
-                                <label key={role} className={styles.roleOption}>
-                                    <input
-                                        type="radio"
-                                        name="role"
-                                        value={role}
-                                        checked={formData.role === role}
-                                        onChange={(e) => handleInputChange('role', e.target.value)}
-                                        className={styles.radioInput}
-                                        disabled={isLoading}
-                                    />
-                                    <span className={styles.radioCustom}></span>
-                                    <div className={styles.roleContent}>
-                                        <span className={styles.roleLabel}>
-                                            {role === PersonRole.ACTOR && '🎭 Actor'}
-                                            {role === PersonRole.DIRECTOR && '🎬 Director'}
-                                            {role === PersonRole.SCREENWRITER && '✍️ Screenwriter'}
-                                        </span>
-                                        <span className={styles.roleDescription}>
-                                            {getRoleDescription(role)}
-                                        </span>
-                                    </div>
-                                </label>
-                            ))}
-                        </div>
+                        <fieldset className={styles.roleFieldset}>
+                            <legend className={styles.label}>
+                                Role *
+                            </legend>
+                            <div className={styles.roleOptions}>
+                                {Object.values(PersonRole).map(role => (
+                                    <label key={role} className={styles.roleOption}>
+                                        <input
+                                            type="radio"
+                                            name="person-role"
+                                            value={role}
+                                            checked={formData.role === role}
+                                            onChange={(e) => handleInputChange('role', e.target.value)}
+                                            className={styles.radioInput}
+                                            disabled={isLoading}
+                                        />
+                                        <span className={styles.radioCustom}></span>
+                                        <div className={styles.roleContent}>
+                                            <span className={styles.roleLabel}>
+                                                {role === PersonRole.ACTOR && '🎭 Actor'}
+                                                {role === PersonRole.DIRECTOR && '🎬 Director'}
+                                                {role === PersonRole.SCREENWRITER && '✍️ Screenwriter'}
+                                            </span>
+                                        </div>
+                                    </label>
+                                ))}
+                            </div>
+                        </fieldset>
                     </div>
 
                     <div className={styles.formActions}>
@@ -169,7 +178,14 @@ export const PersonForm: React.FC<PersonFormProps> = ({
                             className={styles.primaryButton}
                             disabled={isLoading}
                         >
-                            {isLoading ? 'Saving...' : (person ? 'Update Person' : 'Create Person')}
+                            {isLoading ? (
+                                <>
+                                    <span className={styles.loadingSpinner}></span>
+                                    Saving...
+                                </>
+                            ) : (
+                                person ? 'Update Person' : 'Create Person'
+                            )}
                         </button>
                         <button
                             type="button"

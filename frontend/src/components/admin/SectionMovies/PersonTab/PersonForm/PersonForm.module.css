@@ -22,6 +22,8 @@
     max-width: 500px;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
     animation: slideUp 0.3s ease;
+    max-height: 90vh;
+    overflow-y: auto;
 }
 
 .header {
@@ -54,9 +56,14 @@
     transition: all 0.3s ease;
 }
 
-.closeButton:hover {
+.closeButton:hover:not(:disabled) {
     color: #ffffff;
     background: rgba(255, 255, 255, 0.1);
+}
+
+.closeButton:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 .form {
@@ -93,6 +100,11 @@
     box-shadow: 0 0 0 3px rgba(253, 95, 0, 0.1);
 }
 
+.input:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
 .inputError {
     border-color: #ff4757;
     box-shadow: 0 0 0 3px rgba(255, 71, 87, 0.1);
@@ -108,6 +120,17 @@
     color: #6b7280;
     font-size: 0.8rem;
     text-align: right;
+}
+
+.roleFieldset {
+    border: none;
+    padding: 0;
+    margin: 0;
+}
+
+.roleFieldset .label {
+    margin-bottom: 0.75rem;
+    display: block;
 }
 
 .roleOptions {
@@ -129,14 +152,23 @@
     position: relative;
 }
 
-.roleOption:hover {
+.roleOption:hover:not(:has(input:disabled)) {
     border-color: #fd5f00;
     background: rgba(253, 95, 0, 0.05);
+}
+
+.roleOption:has(input:disabled) {
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 
 .radioInput {
     position: absolute;
     opacity: 0;
+}
+
+.radioInput:disabled {
+    cursor: not-allowed;
 }
 
 .radioCustom {
@@ -175,14 +207,6 @@
     color: #ffffff;
     font-weight: 600;
     display: block;
-    margin-bottom: 0.25rem;
-}
-
-.roleDescription {
-    color: #a0a8c0;
-    font-size: 0.8rem;
-    display: block;
-    line-height: 1.4;
 }
 
 .formActions {
@@ -201,11 +225,23 @@
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-width: 120px;
 }
 
-.primaryButton:hover {
+.primaryButton:hover:not(:disabled) {
     transform: translateY(-2px);
     box-shadow: 0 8px 25px rgba(253, 95, 0, 0.3);
+}
+
+.primaryButton:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
 }
 
 .cancelButton {
@@ -217,11 +253,28 @@
     cursor: pointer;
     transition: all 0.3s ease;
     font-weight: 500;
+    min-width: 100px;
 }
 
-.cancelButton:hover {
+.cancelButton:hover:not(:disabled) {
     background: #5a6170;
     transform: translateY(-1px);
+}
+
+.cancelButton:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.loadingSpinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid transparent;
+    border-top: 2px solid currentColor;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    display: inline-block;
 }
 
 @keyframes fadeIn {
@@ -243,6 +296,16 @@
     to {
         opacity: 1;
         transform: translateY(0);
+    }
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
     }
 }
 

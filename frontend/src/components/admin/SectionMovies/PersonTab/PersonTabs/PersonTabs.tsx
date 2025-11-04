@@ -13,14 +13,21 @@ interface PersonTabsProps {
     };
 }
 
+interface TabConfig {
+    id: PersonRole | 'ALL';
+    label: string;
+    icon: string;
+    count: number;
+}
+
 export const PersonTabs: React.FC<PersonTabsProps> = ({
     activeTab,
     onTabChange,
     stats,
 }) => {
-    const tabs = [
+    const tabs: TabConfig[] = [
         {
-            id: 'ALL' as const,
+            id: 'ALL',
             label: 'All People',
             icon: '👥',
             count: stats.ALL,
@@ -46,17 +53,25 @@ export const PersonTabs: React.FC<PersonTabsProps> = ({
     ];
 
     return (
-        <div className={styles.tabs}>
+        <div className={styles.tabs} role="tablist" aria-label="Person categories">
             {tabs.map((tab) => (
                 <button
                     key={tab.id}
                     className={`${styles.tab} ${activeTab === tab.id ? styles.tabActive : ''}`}
                     onClick={() => onTabChange(tab.id)}
                     type="button"
+                    role="tab"
+                    aria-selected={activeTab === tab.id}
+                    aria-controls={`${tab.id}-panel`}
+                    id={`${tab.id}-tab`}
                 >
-                    <span className={styles.tabIcon}>{tab.icon}</span>
+                    <span className={styles.tabIcon} aria-hidden="true">
+                        {tab.icon}
+                    </span>
                     <span className={styles.tabLabel}>{tab.label}</span>
-                    <span className={styles.tabCount}>{tab.count}</span>
+                    <span className={styles.tabCount} aria-label={`${tab.count} items`}>
+                        {tab.count}
+                    </span>
                 </button>
             ))}
         </div>

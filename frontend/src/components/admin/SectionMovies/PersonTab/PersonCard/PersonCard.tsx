@@ -14,36 +14,36 @@ export const PersonCard: React.FC<PersonCardProps> = ({
     onEdit,
     onDelete
 }) => {
-    const getRoleIcon = (role: PersonRole) => {
+    const getRoleConfig = (role: PersonRole) => {
         switch (role) {
-            case PersonRole.ACTOR: return '🎭';
-            case PersonRole.DIRECTOR: return '🎬';
-            case PersonRole.SCREENWRITER: return '✍️';
-            default: return '👤';
+            case PersonRole.ACTOR:
+                return {
+                    icon: '🎭',
+                    color: '#4CAF50',
+                    label: 'Actor'
+                };
+            case PersonRole.DIRECTOR:
+                return {
+                    icon: '🎬',
+                    color: '#2196F3',
+                    label: 'Director'
+                };
+            case PersonRole.SCREENWRITER:
+                return {
+                    icon: '✍️',
+                    color: '#FF9800',
+                    label: 'Screenwriter'
+                };
+            default:
+                return {
+                    icon: '👤',
+                    color: '#6b7280',
+                    label: 'Person'
+                };
         }
     };
 
-    const getRoleColor = (role: PersonRole) => {
-        switch (role) {
-            case PersonRole.ACTOR: return '#4CAF50';
-            case PersonRole.DIRECTOR: return '#2196F3';
-            case PersonRole.SCREENWRITER: return '#FF9800';
-            default: return '#6b7280';
-        }
-    };
-
-    const getRoleLabel = (role: PersonRole) => {
-        switch (role) {
-            case PersonRole.ACTOR: return 'Actor';
-            case PersonRole.DIRECTOR: return 'Director';
-            case PersonRole.SCREENWRITER: return 'Screenwriter';
-            default: return 'Person';
-        }
-    };
-
-    const roleColor = getRoleColor(person.role);
-    const roleIcon = getRoleIcon(person.role);
-    const roleLabel = getRoleLabel(person.role);
+    const roleConfig = getRoleConfig(person.role);
 
     return (
         <div className={styles.card}>
@@ -51,22 +51,27 @@ export const PersonCard: React.FC<PersonCardProps> = ({
                 <div className={styles.header}>
                     <span
                         className={styles.roleIcon}
-                        style={{ color: roleColor }}
+                        style={{ color: roleConfig.color }}
+                        aria-label={roleConfig.label}
                     >
-                        {roleIcon}
+                        {roleConfig.icon}
                     </span>
-                    <h3 className={styles.name}>{person.name}</h3>
+                    <div className={styles.nameContainer}>
+                        <h3 className={styles.name}>
+                            {person.name}
+                        </h3>
+                    </div>
                 </div>
                 <div className={styles.details}>
                     <span
                         className={styles.roleBadge}
                         style={{
-                            background: `${roleColor}20`,
-                            color: roleColor,
-                            border: `1px solid ${roleColor}`
+                            backgroundColor: `${roleConfig.color}20`,
+                            color: roleConfig.color,
+                            border: `1px solid ${roleConfig.color}40`
                         }}
                     >
-                        {roleLabel}
+                        {roleConfig.label}
                     </span>
                 </div>
                 <div className={styles.actions}>
@@ -74,6 +79,7 @@ export const PersonCard: React.FC<PersonCardProps> = ({
                         className={styles.editButton}
                         onClick={() => onEdit(person)}
                         type="button"
+                        aria-label={`Edit ${person.name}`}
                     >
                         Edit
                     </button>
@@ -81,6 +87,7 @@ export const PersonCard: React.FC<PersonCardProps> = ({
                         className={styles.deleteButton}
                         onClick={() => onDelete(person)}
                         type="button"
+                        aria-label={`Delete ${person.name}`}
                     >
                         Delete
                     </button>
