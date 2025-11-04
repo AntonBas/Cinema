@@ -1,5 +1,5 @@
-import type { GenreDto, GenreRequest } from '../types/genre';
-import type { PageResponse, SearchParams } from '../types/pagination';
+import type { GenreDto, GenreRequest } from '@/types/genre';
+import type { PageResponse, SearchParams } from '@/types/pagination';
 
 const API_URL = 'http://localhost:8080/api/genres';
 

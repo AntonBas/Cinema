@@ -1,5 +1,5 @@
-import type { PersonDto, PersonRequest, PersonRole, QuickCreatePersonDto } from '../types/person';
-import type { PageResponse } from '../types/pagination';
+import type { PersonDto, PersonRequest, PersonRole, QuickCreatePersonDto } from '@/types/person';
+import type { PageResponse } from '@/types/pagination';
 
 const API_URL = 'http://localhost:8080/api/persons';
 
