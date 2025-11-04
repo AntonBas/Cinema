@@ -129,7 +129,6 @@ export const MovieForm: React.FC<MovieFormProps> = ({
 
         try {
             const posterFile = fileInputRef.current?.files?.[0];
-            const hasNewPoster = !!posterFile;
 
             if (movie?.id) {
                 const updateRequest: MovieUpdateRequest = {
@@ -175,7 +174,7 @@ export const MovieForm: React.FC<MovieFormProps> = ({
 
             onSuccess();
         } catch (error) {
-            console.error('❌ Error saving movie:', error);
+            console.error('Error saving movie:', error);
             showNotification('Error saving movie. Please try again.', 'error');
         } finally {
             setIsUploading(false);
@@ -209,7 +208,7 @@ export const MovieForm: React.FC<MovieFormProps> = ({
             <div className={styles.modal}>
                 <div className={styles.header}>
                     <h2>{movie ? 'Edit Movie' : 'Add New Movie'}</h2>
-                    <button className={styles.closeButton} onClick={onCancel}>×</button>
+                    <button className={styles.closeButton} onClick={onCancel} type="button" aria-label="Close">×</button>
                 </div>
 
                 <form onSubmit={handleSubmit} className={styles.form}>
@@ -258,9 +257,12 @@ export const MovieForm: React.FC<MovieFormProps> = ({
                         <input
                             type="text"
                             value={formData.title}
-                            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                            onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
                             required
                             className={styles.input}
+                            placeholder="Enter movie title (e.g., The Matrix, Inception)"
+                            minLength={2}
+                            maxLength={100}
                         />
                     </div>
 
@@ -269,10 +271,11 @@ export const MovieForm: React.FC<MovieFormProps> = ({
                         <input
                             type="url"
                             value={formData.trailerUrl}
-                            onChange={(e) => setFormData({ ...formData, trailerUrl: e.target.value })}
+                            onChange={(e) => setFormData(prev => ({ ...prev, trailerUrl: e.target.value }))}
                             required
                             className={styles.input}
                             placeholder="https://www.youtube.com/watch?v=..."
+                            pattern="https://.*"
                         />
                     </div>
 
@@ -280,13 +283,20 @@ export const MovieForm: React.FC<MovieFormProps> = ({
                         <label className={styles.label}>Description *</label>
                         <textarea
                             value={formData.description}
-                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                            onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                             required
                             rows={4}
                             className={styles.textarea}
                             maxLength={1000}
+                            minLength={50}
+                            placeholder="Describe the movie plot, characters, and key elements. Minimum 50 characters."
                         />
-                        <div className={styles.charCount}>{formData.description.length}/1000</div>
+                        <div className={styles.charCount}>
+                            {formData.description.length}/1000 characters
+                            {formData.description.length < 50 && formData.description.length > 0 && (
+                                <span className={styles.charWarning}> (minimum 50 characters required)</span>
+                            )}
+                        </div>
                     </div>
 
                     <div className={styles.formRow}>
@@ -295,17 +305,19 @@ export const MovieForm: React.FC<MovieFormProps> = ({
                             <input
                                 type="number"
                                 value={formData.durationMinutes}
-                                onChange={(e) => setFormData({ ...formData, durationMinutes: parseInt(e.target.value) || 0 })}
+                                onChange={(e) => setFormData(prev => ({ ...prev, durationMinutes: parseInt(e.target.value) || 0 }))}
                                 required
                                 min="1"
+                                max="300"
                                 className={styles.input}
+                                placeholder="e.g., 120"
                             />
                         </div>
                         <div className={styles.formGroup}>
                             <label className={styles.label}>Age Rating *</label>
                             <select
                                 value={formData.ageRating}
-                                onChange={(e) => setFormData({ ...formData, ageRating: e.target.value as AgeRating })}
+                                onChange={(e) => setFormData(prev => ({ ...prev, ageRating: e.target.value as AgeRating }))}
                                 required
                                 className={styles.select}
                             >
@@ -326,10 +338,11 @@ export const MovieForm: React.FC<MovieFormProps> = ({
                                 value={formatDateForInput(formData.releaseDate)}
                                 onChange={(e) => {
                                     const date = e.target.value ? new Date(e.target.value) : null;
-                                    setFormData({ ...formData, releaseDate: date });
+                                    setFormData(prev => ({ ...prev, releaseDate: date }));
                                 }}
                                 required
                                 className={styles.input}
+                                min={new Date().toISOString().split('T')[0]}
                             />
                         </div>
                         <div className={styles.formGroup}>
@@ -339,10 +352,11 @@ export const MovieForm: React.FC<MovieFormProps> = ({
                                 value={formatDateForInput(formData.endShowingDate)}
                                 onChange={(e) => {
                                     const date = e.target.value ? new Date(e.target.value) : null;
-                                    setFormData({ ...formData, endShowingDate: date });
+                                    setFormData(prev => ({ ...prev, endShowingDate: date }));
                                 }}
                                 required
                                 className={styles.input}
+                                min={formatDateForInput(formData.releaseDate)}
                             />
                         </div>
                     </div>
@@ -395,7 +409,7 @@ export const MovieForm: React.FC<MovieFormProps> = ({
 
                     <div className={styles.actions}>
                         <button type="submit" className={styles.primaryButton} disabled={isUploading}>
-                            {isUploading ? '⏳ Saving...' : (movie ? '💾 Update Movie' : '🎬 Create Movie')}
+                            {isUploading ? 'Saving...' : (movie ? 'Update Movie' : 'Create Movie')}
                         </button>
                         <button type="button" onClick={onCancel} className={styles.secondaryButton}>
                             Cancel

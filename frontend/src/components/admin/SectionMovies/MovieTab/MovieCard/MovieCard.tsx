@@ -66,7 +66,7 @@ export const MovieCard: React.FC<MovieCardProps> = ({
       <div className={styles.posterContainer}>
         {imageLoading && (
           <div className={styles.posterPlaceholder}>
-            <div className={styles.loadingSpinner}>Loading...</div>
+            <div className={styles.loadingSpinner}></div>
           </div>
         )}
         <img
@@ -98,7 +98,7 @@ export const MovieCard: React.FC<MovieCardProps> = ({
           </div>
 
           <div className={styles.metaRow}>
-            <span className={`${getStatusClass(movie.status)}`}>
+            <span className={getStatusClass(movie.status)}>
               {getStatusDisplay(movie.status)}
             </span>
           </div>
@@ -115,14 +115,16 @@ export const MovieCard: React.FC<MovieCardProps> = ({
         <button
           className={styles.editButton}
           onClick={() => onEdit(movie)}
-          title="Edit movie"
+          type="button"
+          aria-label={`Edit ${movie.title}`}
         >
           Edit
         </button>
         <button
           className={styles.deleteButton}
           onClick={() => onDelete(movie)}
-          title="Delete movie"
+          type="button"
+          aria-label={`Delete ${movie.title}`}
         >
           Delete
         </button>

@@ -4,14 +4,7 @@ import type {
   MovieDto,
   MovieResponse
 } from '@/types/movie';
-
-export interface PageResponse<T> {
-  content: T[];
-  currentPage: number;
-  totalPages: number;
-  totalElements: number;
-  pageSize: number;
-}
+import type { PageResponse } from '@/types/pagination';
 
 const API_BASE_URL = 'http://localhost:8080';
 
@@ -36,8 +29,13 @@ class MovieApi {
   private async handleResponse<T>(response: Response): Promise<T> {
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`HTTP ${response.status}: ${errorText}`);
+      throw new Error(`HTTP ${response.status}: ${errorText || response.statusText}`);
     }
+
+    if (response.status === 204) {
+      return undefined as T;
+    }
+
     return response.json();
   }
 
@@ -120,9 +118,12 @@ class MovieApi {
   async update(id: number, movieData: MovieUpdateRequest, posterFile?: File): Promise<MovieDto> {
     const formData = new FormData();
 
-    const { posterFile: _, ...updateData } = movieData;
+    const { posterFile: _, removePoster, ...updateData } = movieData;
 
-    formData.append('movieData', new Blob([JSON.stringify(updateData)], {
+    formData.append('movieData', new Blob([JSON.stringify({
+      ...updateData,
+      removePoster: removePoster || false
+    })], {
       type: 'application/json'
     }));
 

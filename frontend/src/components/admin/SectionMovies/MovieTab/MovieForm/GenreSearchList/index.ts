@@ -1,0 +1,1 @@
+export { GenreSearchList } from './GenreSearchList';

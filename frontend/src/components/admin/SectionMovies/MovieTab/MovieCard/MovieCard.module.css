@@ -71,9 +71,12 @@
 }
 
 .loadingSpinner {
-    color: #fd5f00;
-    font-size: 0.9rem;
-    font-weight: 500;
+    width: 24px;
+    height: 24px;
+    border: 2px solid #3a4051;
+    border-top: 2px solid #fd5f00;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
 }
 
 .posterError {
@@ -128,8 +131,7 @@
 .status,
 .statusCurrent,
 .statusUpcoming,
-.statusArchived,
-.nowShowing {
+.statusArchived {
     padding: 0.25rem 0.5rem;
     border-radius: 6px;
     font-size: 0.8rem;
@@ -171,12 +173,6 @@
     background: rgba(158, 158, 158, 0.1);
     color: #9e9e9e;
     border-color: #9e9e9e;
-}
-
-.nowShowing {
-    background: rgba(253, 95, 0, 0.1);
-    color: #fd5f00;
-    border-color: #fd5f00;
 }
 
 .releaseDate {
@@ -232,6 +228,30 @@
     box-shadow: 0 4px 12px rgba(255, 71, 87, 0.3);
 }
 
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.poster:not(.hidden) {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
 @media (max-width: 768px) {
     .card {
         padding: 1rem;
@@ -262,11 +282,6 @@
         padding: 0.6rem 1rem;
         font-size: 0.85rem;
     }
-
-    .posterPlaceholder,
-    .posterError {
-        font-size: 0.8rem;
-    }
 }
 
 @media (max-width: 480px) {
@@ -289,23 +304,8 @@
     .status,
     .statusCurrent,
     .statusUpcoming,
-    .statusArchived,
-    .nowShowing {
+    .statusArchived {
         font-size: 0.75rem;
         padding: 0.2rem 0.4rem;
     }
-}
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-
-    to {
-        opacity: 1;
-    }
-}
-
-.poster:not(.hidden) {
-    animation: fadeIn 0.3s ease-in-out;
 }

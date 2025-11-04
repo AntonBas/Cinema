@@ -1,73 +1,128 @@
 import React, { useState, useEffect } from 'react';
-import type { MovieResponse, MovieDto } from '@/types/movie';
+import type { MovieDto, MovieResponse } from '@/types/movie';
 import { MovieStatus } from '@/types/movie';
-import { movieApi } from '@/api/movieApi';
+import { useMovieSearch, useMovieMutation } from '@/hooks/features/movies';
+import { useNotification } from '@/hooks/common/useNotification';
 import { MovieList } from './MovieList';
 import { MovieForm } from './MovieForm';
-import { Notification } from '@/components/ui/Notification/Notification';
-import { useNotification } from '@/hooks/common/useNotification';
+import { DeleteConfirmModal } from '@/components/ui/DeleteConfirmModal';
+import { Notification } from '@/components/ui/Notification';
 import styles from './MovieTab.module.css';
 
 type MovieTabType = 'CURRENT' | 'UPCOMING' | 'ARCHIVED';
 
 export const MovieTab: React.FC = () => {
-  const [movies, setMovies] = useState<MovieResponse[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [editingMovie, setEditingMovie] = useState<MovieDto | null>(null);
   const [deletingMovie, setDeletingMovie] = useState<MovieDto | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
   const [activeTab, setActiveTab] = useState<MovieTabType>('CURRENT');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [currentPage, setCurrentPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [allMovies, setAllMovies] = useState<MovieDto[]>([]);
 
+  const { movies, pagination, loading, error: searchError, searchMovies } = useMovieSearch();
+  const { deleteMovie, loading: mutationLoading, error: mutationError } = useMovieMutation();
   const { notifications, showNotification, hideNotification } = useNotification();
 
   useEffect(() => {
-    loadMovies();
-  }, []);
+    const timer = setTimeout(() => setDebouncedSearch(searchQuery), 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
-  const loadMovies = async () => {
-    try {
-      setIsLoading(true);
-      const data = await movieApi.getAll();
-      setMovies(data);
-    } catch (error) {
-      console.error('Error loading movies:', error);
-      showNotification('Failed to load movies', 'error');
-    } finally {
-      setIsLoading(false);
+  useEffect(() => {
+    setAllMovies(movies);
+  }, [movies]);
+
+  useEffect(() => {
+    loadMovies(true);
+  }, [activeTab, debouncedSearch]);
+
+  useEffect(() => {
+    if (searchError) showNotification(searchError, 'error');
+  }, [searchError, showNotification]);
+
+  useEffect(() => {
+    if (mutationError) showNotification(mutationError, 'error');
+  }, [mutationError, showNotification]);
+
+  const loadMovies = async (reset: boolean = false, pageOverride?: number) => {
+    const page = reset ? 0 : (pageOverride ?? currentPage);
+
+    const searchParams: any = {
+      page,
+      size: 10
+    };
+
+    if (activeTab !== 'CURRENT') {
+      searchParams.status = activeTab;
+    }
+
+    if (debouncedSearch) {
+      searchParams.search = debouncedSearch;
+    }
+
+    await searchMovies(searchParams);
+
+    if (pagination) {
+      setHasMore(!pagination.last);
+      setCurrentPage(page);
     }
   };
 
-  const handleEdit = async (movie: MovieResponse) => {
-    try {
-      const fullMovie = await movieApi.getById(movie.id);
+  const loadMore = () => {
+    if (!loading && hasMore) {
+      const nextPage = currentPage + 1;
+      loadMovies(false, nextPage);
+    }
+  };
+
+  const handleTabChange = (tab: MovieTabType) => {
+    setActiveTab(tab);
+    setCurrentPage(0);
+    setHasMore(true);
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+    setCurrentPage(0);
+    setHasMore(true);
+  };
+
+  const clearSearch = () => {
+    setSearchQuery('');
+    setDebouncedSearch('');
+    setCurrentPage(0);
+    setHasMore(true);
+  };
+
+  const handleEdit = (movie: MovieResponse) => {
+    const fullMovie = allMovies.find(m => m.id === movie.id);
+    if (fullMovie) {
       setEditingMovie(fullMovie);
       setIsModalOpen(true);
-    } catch (error) {
-      console.error('Error loading movie details:', error);
-      showNotification('Failed to load movie details', 'error');
     }
   };
 
   const handleDeleteClick = (movie: MovieResponse) => {
-    setDeletingMovie(movie as MovieDto);
-    setIsDeleteModalOpen(true);
+    const fullMovie = allMovies.find(m => m.id === movie.id);
+    if (fullMovie) {
+      setDeletingMovie(fullMovie);
+      setIsDeleteModalOpen(true);
+    }
   };
 
   const handleDeleteConfirm = async () => {
     if (!deletingMovie?.id) return;
 
     try {
-      setIsDeleting(true);
-      await movieApi.delete(deletingMovie.id);
+      await deleteMovie(deletingMovie.id);
       showNotification('Movie deleted successfully!', 'success');
-      loadMovies();
-    } catch (error) {
-      console.error('Error deleting movie:', error);
-      showNotification('Error deleting movie', 'error');
+      loadMovies(true);
+    } catch (err) {
     } finally {
-      setIsDeleting(false);
       setIsDeleteModalOpen(false);
       setDeletingMovie(null);
     }
@@ -80,7 +135,7 @@ export const MovieTab: React.FC = () => {
 
   const handleFormSuccess = () => {
     resetForm();
-    loadMovies();
+    loadMovies(true);
   };
 
   const resetForm = () => {
@@ -88,24 +143,55 @@ export const MovieTab: React.FC = () => {
     setEditingMovie(null);
   };
 
-  const filteredMovies = movies.filter(movie => movie.status === activeTab);
+  const handleAddNew = () => {
+    setEditingMovie(null);
+    setIsModalOpen(true);
+  };
+
+  const filteredMovies = allMovies.filter(movie => {
+    const matchesTab = movie.status === activeTab;
+    const matchesSearch = debouncedSearch === '' ||
+      movie.title.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+      movie.description.toLowerCase().includes(debouncedSearch.toLowerCase());
+    return matchesTab && matchesSearch;
+  });
+
+  const movieResponses: MovieResponse[] = filteredMovies.map(movie => ({
+    id: movie.id,
+    title: movie.title,
+    slug: movie.slug,
+    posterUrl: movie.posterUrl,
+    durationMinutes: movie.durationMinutes,
+    ageRating: movie.ageRating,
+    releaseDate: movie.releaseDate,
+    status: movie.status,
+    currentlyShowing: movie.currentlyShowing
+  }));
 
   const getTabStats = () => {
-    return {
-      CURRENT: movies.filter(m => m.status === MovieStatus.CURRENT).length,
-      UPCOMING: movies.filter(m => m.status === MovieStatus.UPCOMING).length,
-      ARCHIVED: movies.filter(m => m.status === MovieStatus.ARCHIVED).length
+    const stats = {
+      CURRENT: allMovies.filter(m => m.status === MovieStatus.CURRENT).length,
+      UPCOMING: allMovies.filter(m => m.status === MovieStatus.UPCOMING).length,
+      ARCHIVED: allMovies.filter(m => m.status === MovieStatus.ARCHIVED).length
     };
+    return stats;
   };
 
   const tabStats = getTabStats();
 
-  if (isLoading) return (
-    <div className={styles.loading}>
-      <div className={styles.loadingSpinner}></div>
-      <p>Loading movies...</p>
-    </div>
-  );
+  const shouldShowLoadMore = hasMore &&
+    !loading &&
+    filteredMovies.length > 0 &&
+    filteredMovies.length >= 10;
+
+  if (loading && allMovies.length === 0) {
+    return (
+      <div className={styles.loading}>
+        <div className={styles.loadingSpinner}></div>
+        <p>Loading movies...</p>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.container}>
@@ -113,30 +199,58 @@ export const MovieTab: React.FC = () => {
         <h2 className={styles.title}>Movie Management</h2>
         <button
           className={styles.addButton}
-          onClick={() => setIsModalOpen(true)}
+          onClick={handleAddNew}
         >
           Add New Movie
         </button>
       </div>
 
+      <div className={styles.searchContainer}>
+        <div className={styles.searchWrapper}>
+          <input
+            type="text"
+            placeholder="Search movies by title or description..."
+            value={searchQuery}
+            onChange={handleSearchChange}
+            className={styles.searchInput}
+          />
+          {loading && <div className={styles.searchSpinner}></div>}
+        </div>
+        {searchQuery && (
+          <button
+            className={styles.clearSearch}
+            onClick={clearSearch}
+          >
+            Clear
+          </button>
+        )}
+      </div>
+
+      {pagination && (
+        <div className={styles.resultsInfo}>
+          Showing {filteredMovies.length} of {pagination.totalElements} movies
+          {debouncedSearch && ` for "${debouncedSearch}"`}
+        </div>
+      )}
+
       <div className={styles.tabs}>
         <button
           className={`${styles.tab} ${activeTab === 'CURRENT' ? styles.active : ''}`}
-          onClick={() => setActiveTab('CURRENT')}
+          onClick={() => handleTabChange('CURRENT')}
         >
           <span className={styles.tabLabel}>Currently Showing</span>
           <span className={styles.tabCount}>{tabStats.CURRENT}</span>
         </button>
         <button
           className={`${styles.tab} ${activeTab === 'UPCOMING' ? styles.active : ''}`}
-          onClick={() => setActiveTab('UPCOMING')}
+          onClick={() => handleTabChange('UPCOMING')}
         >
           <span className={styles.tabLabel}>Upcoming</span>
           <span className={styles.tabCount}>{tabStats.UPCOMING}</span>
         </button>
         <button
           className={`${styles.tab} ${activeTab === 'ARCHIVED' ? styles.active : ''}`}
-          onClick={() => setActiveTab('ARCHIVED')}
+          onClick={() => handleTabChange('ARCHIVED')}
         >
           <span className={styles.tabLabel}>Archived</span>
           <span className={styles.tabCount}>{tabStats.ARCHIVED}</span>
@@ -145,11 +259,30 @@ export const MovieTab: React.FC = () => {
 
       <div className={styles.tabContent}>
         <MovieList
-          movies={filteredMovies}
+          movies={movieResponses}
           onEdit={handleEdit}
           onDelete={handleDeleteClick}
         />
       </div>
+
+      {shouldShowLoadMore && (
+        <div className={styles.loadMoreContainer}>
+          <button
+            className={styles.loadMoreButton}
+            onClick={loadMore}
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <div className={styles.loadingSpinnerSmall}></div>
+                Loading...
+              </>
+            ) : (
+              'Load More'
+            )}
+          </button>
+        </div>
+      )}
 
       {isModalOpen && (
         <MovieForm
@@ -160,39 +293,14 @@ export const MovieTab: React.FC = () => {
         />
       )}
 
-      {isDeleteModalOpen && (
-        <div className={styles.modalOverlay}>
-          <div className={styles.confirmModal}>
-            <div className={styles.confirmIcon}>🎬</div>
-            <h3 className={styles.confirmTitle}>Delete Movie</h3>
-            <p className={styles.confirmMessage}>
-              Are you sure you want to delete the movie
-            </p>
-            <p className={styles.confirmWarning}>
-              "{deletingMovie?.title}"?
-            </p>
-            <p className={styles.confirmMessage}>
-              This action cannot be undone.
-            </p>
-            <div className={styles.confirmActions}>
-              <button
-                className={styles.cancelConfirmButton}
-                onClick={handleDeleteCancel}
-                disabled={isDeleting}
-              >
-                Cancel
-              </button>
-              <button
-                className={styles.deleteConfirmButton}
-                onClick={handleDeleteConfirm}
-                disabled={isDeleting}
-              >
-                {isDeleting ? 'Deleting...' : 'Delete'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <DeleteConfirmModal
+        isOpen={isDeleteModalOpen}
+        onConfirm={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
+        itemName={deletingMovie?.title}
+        itemType="movie"
+        isDeleting={mutationLoading}
+      />
 
       {notifications.map((notification, index) => (
         <Notification
