@@ -1,6 +1,7 @@
 import React from 'react';
-import { Header } from './Header';
-import { Footer } from './Footer';
+import { Header } from '../Header';
+import { Footer } from '../Footer';
+import styles from './Layout.module.css';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -8,12 +9,12 @@ interface LayoutProps {
 
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
   return (
-    <>
+    <div className={styles.layout}>
       <Header />
-      <main style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px' }}>
+      <main className={styles.main}>
         {children}
       </main>
       <Footer />
-    </>
+    </div>
   );
 };

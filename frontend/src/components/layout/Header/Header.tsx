@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useAuth } from '../../context/AuthContext';
-import './Header.css';
+import { useAuth } from '@/hooks/features/auth';
 import { Link } from 'react-router-dom';
+import styles from './Header.module.css';
 
 interface NavLink {
   name: string;
@@ -30,7 +30,7 @@ export const Header: React.FC = () => {
       if (
         mobileMenuRef.current &&
         !mobileMenuRef.current.contains(event.target as Node) &&
-        !(event.target as Element).closest('.mobile-menu-btn')
+        !(event.target as Element).closest(`.${styles.mobileMenuBtn}`)
       ) {
         setIsMobileMenuOpen(false);
       }
@@ -47,13 +47,13 @@ export const Header: React.FC = () => {
   };
 
   return (
-    <header className="header-main">
-      <nav className="header-navbar">
-        <div className="logo">
+    <header className={styles.headerMain}>
+      <nav className={styles.headerNavbar}>
+        <div className={styles.logo}>
           <Link to="/">Cinema</Link>
         </div>
 
-        <ul className="nav-links">
+        <ul className={styles.navLinks}>
           {links.map((link) => (
             <li key={link.name}>
               <Link to={link.path} onClick={() => setIsDropdownOpen(false)}>
@@ -63,17 +63,17 @@ export const Header: React.FC = () => {
           ))}
 
           {token ? (
-            <li className="dropdown" ref={dropdownRef}>
+            <li className={styles.dropdown} ref={dropdownRef}>
               <button
-                className="dropdown-btn"
+                className={styles.dropdownBtn}
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                 aria-haspopup="true"
                 aria-expanded={isDropdownOpen}
               >
-                My Account <span className={`dropdown-arrow ${isDropdownOpen ? 'open' : ''}`}>▼</span>
+                My Account <span className={`${styles.dropdownArrow} ${isDropdownOpen ? styles.open : ''}`}>▼</span>
               </button>
               {isDropdownOpen && (
-                <ul className="dropdown-menu">
+                <ul className={styles.dropdownMenu}>
                   <li>
                     <Link to="/account" onClick={() => setIsDropdownOpen(false)}>
                       Profile
@@ -87,7 +87,7 @@ export const Header: React.FC = () => {
                     </li>
                   )}
                   <li>
-                    <button onClick={handleLogout} className="logout-btn">
+                    <button onClick={handleLogout} className={styles.logoutBtn}>
                       Logout
                     </button>
                   </li>
@@ -102,7 +102,7 @@ export const Header: React.FC = () => {
         </ul>
 
         <button
-          className="mobile-menu-btn"
+          className={styles.mobileMenuBtn}
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           aria-label="Toggle navigation"
           aria-expanded={isMobileMenuOpen}
@@ -112,8 +112,8 @@ export const Header: React.FC = () => {
           <span></span>
         </button>
 
-        <div ref={mobileMenuRef} className={`mobile-menu ${isMobileMenuOpen ? 'open' : ''}`}>
-          <div className="mobile-menu-content">
+        <div ref={mobileMenuRef} className={`${styles.mobileMenu} ${isMobileMenuOpen ? styles.open : ''}`}>
+          <div className={styles.mobileMenuContent}>
             {links.map((link) => (
               <Link key={link.name} to={link.path} onClick={() => setIsMobileMenuOpen(false)}>
                 {link.name}
@@ -121,7 +121,7 @@ export const Header: React.FC = () => {
             ))}
 
             {token ? (
-              <div className="mobile-account-section">
+              <div className={styles.mobileAccountSection}>
                 <Link to="/account" onClick={() => setIsMobileMenuOpen(false)}>
                   Profile
                 </Link>
@@ -130,7 +130,7 @@ export const Header: React.FC = () => {
                     Dashboard
                   </Link>
                 )}
-                <button onClick={handleLogout} className="mobile-logout-btn">
+                <button onClick={handleLogout} className={styles.mobileLogoutBtn}>
                   Logout
                 </button>
               </div>
