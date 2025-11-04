@@ -1,7 +1,7 @@
 import React from 'react';
 import { ResetPasswordForm } from '@/components/auth/ResetPasswordForm/ResetPasswordForm';
 import { useAuth } from '@/hooks/features/auth';
-import { Layout } from '@/components/layout/Layout';
+import { Layout } from '@/components/layout/Layout/Layout';
 import styles from './ResetPasswordPage.module.css';
 
 export const ResetPasswordPage: React.FC = () => {

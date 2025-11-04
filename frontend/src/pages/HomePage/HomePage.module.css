@@ -1,0 +1,21 @@
+.homePage {
+    min-height: 100vh;
+    background-color: #12161f;
+    color: white;
+}
+
+.homeContent {
+    padding: 2rem;
+    text-align: center;
+}
+
+.homeContent h1 {
+    color: #fd5f00;
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+.homeContent p {
+    font-size: 1.2rem;
+    color: #a0a8c0;
+}

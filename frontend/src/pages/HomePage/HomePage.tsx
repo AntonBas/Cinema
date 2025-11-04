@@ -1,15 +1,15 @@
 import React from 'react';
-import { useAuth } from '../../context/AuthContext';
-import './HomePage.css';
-import { Layout } from '../../components/layout/Layout';
+import { useAuth } from '@/hooks/features/auth';
+import { Layout } from '@/components/layout/Layout/Layout';
+import styles from './HomePage.module.css';
 
 export const HomePage: React.FC = () => {
   const { user } = useAuth();
 
   return (
     <Layout>
-      <div className="home-page">
-        <div className="home-content">
+      <div className={styles.homePage}>
+        <div className={styles.homeContent}>
           <h1>Welcome to Cinema System</h1>
           {user && (
             <p>Hello, {user.firstName} {user.lastName}!</p>

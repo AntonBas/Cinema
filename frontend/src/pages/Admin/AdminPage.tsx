@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Routes, Route } from 'react-router-dom';
-import { Header } from '@/components/layout/Header';
-import { Footer } from '@/components/layout/Footer';
+import { Header } from '@/components/layout/Header/Header';
+import { Footer } from '@/components/layout/Footer/Footer';
 import { AdminSidebar } from '@/components/admin/AdminSidebar/AdminSidebar';
 import { AdminDashboard } from '@/components/admin/AdminDashboard/AdminDashboard';
 import { SectionMovies } from '@/components/admin/SectionMovies/SectionMovies';
