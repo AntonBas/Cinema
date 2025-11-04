@@ -1,4 +1,5 @@
 import React from 'react';
+import { useMovies, useHalls } from '@/hooks/features';
 import type { SessionFilters as SessionFiltersType } from '@/types/session';
 import styles from './SessionFilters.module.css';
 
@@ -21,6 +22,9 @@ export const SessionFilters: React.FC<SessionFiltersProps> = ({
     onClearFilters,
     hasActiveFilters
 }) => {
+    const { movies } = useMovies();
+    const { halls } = useHalls();
+
     const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         onDateChange(e.target.value || undefined);
     };
@@ -75,9 +79,11 @@ export const SessionFilters: React.FC<SessionFiltersProps> = ({
                     className={styles.select}
                 >
                     <option value="">All halls</option>
-                    <option value="1">Hall 1</option>
-                    <option value="2">Hall 2</option>
-                    <option value="3">Hall 3</option>
+                    {halls.map(hall => (
+                        <option key={hall.id} value={hall.id}>
+                            {hall.name}
+                        </option>
+                    ))}
                 </select>
             </div>
 
@@ -90,9 +96,11 @@ export const SessionFilters: React.FC<SessionFiltersProps> = ({
                     className={styles.select}
                 >
                     <option value="">All movies</option>
-                    <option value="1">Movie 1</option>
-                    <option value="2">Movie 2</option>
-                    <option value="3">Movie 3</option>
+                    {movies.map(movie => (
+                        <option key={movie.id} value={movie.id}>
+                            {movie.title}
+                        </option>
+                    ))}
                 </select>
             </div>
 

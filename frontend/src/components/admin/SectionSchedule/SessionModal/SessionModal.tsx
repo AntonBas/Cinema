@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useMovies, useHalls } from '@/hooks/features';
 import type { SessionDto, SessionRequest } from '@/types/session';
 import styles from './SessionModal.module.css';
 
@@ -17,6 +18,9 @@ export const SessionModal: React.FC<SessionModalProps> = ({
     onClose,
     loading
 }) => {
+    const { movies, loading: moviesLoading } = useMovies();
+    const { halls, loading: hallsLoading } = useHalls();
+
     const [formData, setFormData] = useState({
         startTime: '',
         price: '',
@@ -147,11 +151,14 @@ export const SessionModal: React.FC<SessionModalProps> = ({
                             value={formData.movieId}
                             onChange={handleChange}
                             className={errors.movieId ? styles.error : ''}
+                            disabled={moviesLoading}
                         >
                             <option value="">Select a movie</option>
-                            <option value="1">Movie 1</option>
-                            <option value="2">Movie 2</option>
-                            <option value="3">Movie 3</option>
+                            {movies.map(movie => (
+                                <option key={movie.id} value={movie.id}>
+                                    {movie.title} ({movie.durationMinutes} min)
+                                </option>
+                            ))}
                         </select>
                         {errors.movieId && <span className={styles.errorText}>{errors.movieId}</span>}
                     </div>
@@ -164,11 +171,14 @@ export const SessionModal: React.FC<SessionModalProps> = ({
                             value={formData.hallId}
                             onChange={handleChange}
                             className={errors.hallId ? styles.error : ''}
+                            disabled={hallsLoading}
                         >
                             <option value="">Select a hall</option>
-                            <option value="1">Hall 1</option>
-                            <option value="2">Hall 2</option>
-                            <option value="3">Hall 3</option>
+                            {halls.map(hall => (
+                                <option key={hall.id} value={hall.id}>
+                                    {hall.name} ({hall.capacity} seats)
+                                </option>
+                            ))}
                         </select>
                         {errors.hallId && <span className={styles.errorText}>{errors.hallId}</span>}
                     </div>
@@ -185,7 +195,7 @@ export const SessionModal: React.FC<SessionModalProps> = ({
                         <button
                             type="submit"
                             className={styles.saveButton}
-                            disabled={loading}
+                            disabled={loading || moviesLoading || hallsLoading}
                         >
                             {loading ? 'Saving...' : (session ? 'Update' : 'Create')}
                         </button>
