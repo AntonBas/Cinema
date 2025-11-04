@@ -75,6 +75,79 @@
   animation: spin 1s linear infinite;
 }
 
+.searchContainer {
+  margin-bottom: 2rem;
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.searchWrapper {
+  position: relative;
+  flex: 1;
+  max-width: 400px;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 1rem 3rem 1rem 1.5rem;
+  border: 1px solid #3a4051;
+  border-radius: 8px;
+  background: #1a1f2d;
+  color: #ffffff;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: #fd5f00;
+  box-shadow: 0 0 0 3px rgba(253, 95, 0, 0.1);
+}
+
+.searchInput::placeholder {
+  color: #6b7280;
+}
+
+.searchSpinner {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  border: 2px solid #3a4051;
+  border-top: 2px solid #fd5f00;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.clearSearch {
+  background: rgba(107, 114, 128, 0.1);
+  color: #a0a8c0;
+  border: 1px solid #3a4051;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.clearSearch:hover {
+  background: rgba(107, 114, 128, 0.2);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.resultsInfo {
+  color: #a0a8c0;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #3a4051;
+}
+
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -163,12 +236,6 @@
   cursor: not-allowed;
 }
 
-.editButton:disabled:hover {
-  background: rgba(76, 175, 80, 0.1);
-  color: #4CAF50;
-  transform: none;
-}
-
 .deleteButton {
   background: rgba(255, 71, 87, 0.1);
   color: #ff4757;
@@ -189,12 +256,6 @@
 .deleteButton:disabled {
   opacity: 0.6;
   cursor: not-allowed;
-}
-
-.deleteButton:disabled:hover {
-  background: rgba(255, 71, 87, 0.1);
-  color: #ff4757;
-  transform: none;
 }
 
 .empty {
@@ -223,46 +284,69 @@
   line-height: 1.5;
 }
 
-.loadMoreContainer {
+.pagination {
   display: flex;
   justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
   margin-top: 2rem;
   padding-top: 2rem;
   border-top: 1px solid #3a4051;
+  flex-wrap: wrap;
 }
 
-.loadMoreButton {
-  background: rgba(253, 95, 0, 0.1);
-  color: #fd5f00;
-  border: 1px solid rgba(253, 95, 0, 0.3);
-  padding: 0.75rem 2rem;
+.pageButton {
+  background: rgba(58, 64, 81, 0.5);
+  color: #a0a8c0;
+  border: 1px solid #3a4051;
+  padding: 0.75rem 1rem;
   border-radius: 8px;
   cursor: pointer;
-  font-weight: 600;
   transition: all 0.3s ease;
+  font-weight: 500;
+  min-width: 44px;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  justify-content: center;
 }
 
-.loadMoreButton:hover:not(:disabled) {
-  background: rgba(253, 95, 0, 0.2);
+.pageButton:hover:not(:disabled) {
+  background: rgba(253, 95, 0, 0.1);
+  color: #fd5f00;
+  border-color: rgba(253, 95, 0, 0.3);
   transform: translateY(-1px);
 }
 
-.loadMoreButton:disabled {
-  opacity: 0.6;
+.pageButton:disabled {
+  opacity: 0.4;
   cursor: not-allowed;
   transform: none;
 }
 
-.loadingSpinnerSmall {
-  width: 16px;
-  height: 16px;
-  border: 2px solid transparent;
-  border-top: 2px solid #fd5f00;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
+.activePage {
+  background: linear-gradient(135deg, #fd5f00, #e05500);
+  color: white;
+  border-color: #fd5f00;
+  box-shadow: 0 4px 15px rgba(253, 95, 0, 0.3);
+}
+
+.activePage:hover {
+  background: linear-gradient(135deg, #e05500, #c94a00);
+  color: white;
+  border-color: #e05500;
+}
+
+.ellipsis {
+  color: #6b7280;
+  padding: 0.75rem 0.5rem;
+  font-weight: 600;
+}
+
+.pageInfo {
+  color: #a0a8c0;
+  margin-left: 1rem;
+  font-size: 0.9rem;
+  font-weight: 500;
 }
 
 .modalOverlay {
@@ -359,94 +443,6 @@
   transform: none;
 }
 
-.cancelButton:disabled:hover {
-  background: #6b7280;
-  transform: none;
-}
-
-.confirmModal {
-  background: #2a3041;
-  border-radius: 12px;
-  padding: 2rem;
-  border: 1px solid #3a4051;
-  width: 100%;
-  max-width: 400px;
-  text-align: center;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
-}
-
-.confirmIcon {
-  font-size: 3rem;
-  margin-bottom: 1rem;
-  opacity: 0.8;
-}
-
-.confirmTitle {
-  color: #ffffff;
-  margin: 0 0 1rem 0;
-  font-size: 1.5rem;
-  font-weight: 600;
-}
-
-.confirmMessage {
-  color: #a0a8c0;
-  margin: 0 0 0.5rem 0;
-  line-height: 1.5;
-}
-
-.confirmWarning {
-  color: #ff4757 !important;
-  font-weight: 600;
-}
-
-.confirmActions {
-  display: flex;
-  gap: 1rem;
-  justify-content: center;
-  margin-top: 2rem;
-}
-
-.cancelConfirmButton {
-  background: #6b7280;
-  color: white;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  flex: 1;
-  font-weight: 500;
-}
-
-.cancelConfirmButton:hover {
-  background: #5a6170;
-  transform: translateY(-1px);
-}
-
-.deleteConfirmButton {
-  background: linear-gradient(135deg, #ff4757, #ff3742);
-  color: white;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  flex: 1;
-}
-
-.deleteConfirmButton:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(255, 71, 87, 0.3);
-}
-
-.deleteConfirmButton:disabled {
-  background: #6b7280;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
-}
-
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -508,12 +504,39 @@
     flex-direction: column;
   }
 
-  .confirmActions {
+  .searchContainer {
     flex-direction: column;
+    align-items: stretch;
   }
 
-  .modal {
-    padding: 1.5rem;
-    margin: 1rem;
+  .searchWrapper {
+    max-width: none;
+  }
+
+  .pagination {
+    gap: 0.25rem;
+  }
+
+  .pageButton {
+    padding: 0.6rem 0.8rem;
+    min-width: 40px;
+    font-size: 0.9rem;
+  }
+
+  .pageInfo {
+    margin-left: 0.5rem;
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .pagination {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .pageInfo {
+    margin-left: 0;
+    margin-top: 0.5rem;
   }
 }
