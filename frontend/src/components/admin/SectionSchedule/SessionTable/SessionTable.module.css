@@ -1,0 +1,198 @@
+.tableContainer {
+    background: linear-gradient(135deg, #1a1f2d 0%, #2a3041 100%);
+    border-radius: 12px;
+    border: 1px solid #3a4051;
+    overflow: hidden;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    background: transparent;
+}
+
+.table th {
+    background: rgba(253, 95, 0, 0.1);
+    color: #fd5f00;
+    font-weight: 600;
+    padding: 1.25rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid #3a4051;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.table td {
+    padding: 1.25rem 1rem;
+    border-bottom: 1px solid #3a4051;
+    color: #a0a8c0;
+    transition: all 0.3s ease;
+}
+
+.row:hover td {
+    background: rgba(253, 95, 0, 0.05);
+    color: #ffffff;
+}
+
+.row:last-child td {
+    border-bottom: none;
+}
+
+.movieCell {
+    min-width: 200px;
+}
+
+.movieInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.movieTitle {
+    color: #ffffff;
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.duration {
+    color: #6b7280;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.status {
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.available {
+    background: rgba(76, 175, 80, 0.1);
+    color: #4CAF50;
+    border: 1px solid #4CAF50;
+}
+
+.ended {
+    background: rgba(255, 71, 87, 0.1);
+    color: #ff4757;
+    border: 1px solid #ff4757;
+}
+
+.actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.editButton,
+.deleteButton {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 6px;
+    font-weight: 500;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 60px;
+}
+
+.editButton {
+    background: rgba(76, 175, 80, 0.1);
+    color: #4CAF50;
+    border: 1px solid #4CAF50;
+}
+
+.editButton:hover {
+    background: #4CAF50;
+    color: white;
+    transform: translateY(-1px);
+}
+
+.deleteButton {
+    background: rgba(255, 71, 87, 0.1);
+    color: #ff4757;
+    border: 1px solid #ff4757;
+}
+
+.deleteButton:hover {
+    background: #ff4757;
+    color: white;
+    transform: translateY(-1px);
+}
+
+.loading,
+.empty {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: #a0a8c0;
+    background: linear-gradient(135deg, #1a1f2d 0%, #2a3041 100%);
+    border-radius: 12px;
+    border: 1px solid #3a4051;
+    margin-bottom: 2rem;
+}
+
+.loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.empty h3 {
+    color: #ffffff;
+    margin: 0 0 0.5rem 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.empty p {
+    color: #a0a8c0;
+    margin: 0;
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
+@media (max-width: 1024px) {
+    .tableContainer {
+        overflow-x: auto;
+    }
+
+    .table {
+        min-width: 800px;
+    }
+}
+
+@media (max-width: 768px) {
+
+    .table th,
+    .table td {
+        padding: 1rem 0.75rem;
+        font-size: 0.85rem;
+    }
+
+    .actions {
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .editButton,
+    .deleteButton {
+        min-width: 50px;
+        padding: 0.4rem 0.75rem;
+        font-size: 0.75rem;
+    }
+
+    .loading,
+    .empty {
+        padding: 3rem 1rem;
+    }
+
+    .empty h3 {
+        font-size: 1.3rem;
+    }
+}
