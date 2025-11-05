@@ -50,12 +50,17 @@ export const useAuth = () => {
         setUser(null);
     };
 
+    const updateUser = (userData: User) => {
+        setUser(userData);
+    };
+
     return {
         user,
         token,
         isLoading,
         isAuthenticated: !!user && !!token,
         login,
-        logout
+        logout,
+        updateUser
     };
 };
