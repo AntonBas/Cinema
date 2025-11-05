@@ -1,24 +1,6 @@
+import type { UserSimple } from "./user";
+
 export type UserRole = 'ROLE_USER' | 'ROLE_ADMIN';
-
-export interface User {
-    id: number;
-    email: string;
-    firstName: string;
-    lastName: string;
-    dateOfBirth: string;
-    city: string;
-    phoneNumber: string;
-    userRole: UserRole;
-    enabled: boolean;
-}
-
-export interface UserSimple {
-    id: number;
-    email: string;
-    firstName: string;
-    lastName: string;
-    userRole: UserRole;
-}
 
 export interface LoginRequest {
     email: string;
@@ -29,6 +11,7 @@ export interface LoginResponse {
     message: string;
     token: string;
     user: UserSimple;
+    tokenType: string;
 }
 
 export interface RegisterRequest {
@@ -40,11 +23,6 @@ export interface RegisterRequest {
     phoneNumber: string;
     password: string;
     passwordConfirm: string;
-}
-
-export interface RegisterResponse {
-    success: boolean;
-    message: string;
 }
 
 export interface ApiResponse {
