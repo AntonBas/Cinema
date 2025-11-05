@@ -32,4 +32,6 @@ public interface EmailTokenRepository extends JpaRepository<EmailToken, String> 
 
 	List<EmailToken> findByUserAndType(User user, TokenType type);
 
+	void deleteByUserAndType(User user, TokenType type);
+
 }

@@ -26,7 +26,7 @@ public class EmailService {
 	public void sendVerificationEmail(String toEmail, String token) {
 		try {
 			String link = createVerificationLink(token);
-			SimpleMailMessage message = buildEmailMessage(toEmail, "Confirmation of registration",
+			SimpleMailMessage message = buildEmailMessage(toEmail, "Confirm Your Email Address",
 					createVerificationEmailText(link));
 
 			mailSender.send(message);
@@ -54,6 +54,36 @@ public class EmailService {
 		}
 	}
 
+	@Async
+	public void sendEmailChangeConfirmation(String toEmail, String token) {
+		try {
+			String link = createEmailChangeLink(token);
+			SimpleMailMessage message = buildEmailMessage(toEmail, "Confirm Your Email Change",
+					createEmailChangeConfirmationText(link));
+
+			mailSender.send(message);
+			log.info("Email change confirmation sent successfully to {}", toEmail);
+
+		} catch (MailException e) {
+			log.error("Failed to send email change confirmation to {}: {}", toEmail, e.getMessage());
+			throw new RuntimeException("Failed to send email change confirmation", e);
+		}
+	}
+
+	@Async
+	public void sendEmailChangeNotification(String oldEmail, String newEmail) {
+		try {
+			SimpleMailMessage message = buildEmailMessage(oldEmail, "Email Address Changed",
+					createEmailChangeNotificationText(oldEmail, newEmail));
+
+			mailSender.send(message);
+			log.info("Email change notification sent successfully to {}", oldEmail);
+
+		} catch (MailException e) {
+			log.error("Failed to send email change notification to {}: {}", oldEmail, e.getMessage());
+		}
+	}
+
 	private SimpleMailMessage buildEmailMessage(String toEmail, String subject, String text) {
 		SimpleMailMessage message = new SimpleMailMessage();
 		message.setFrom(fromEmail);
@@ -64,34 +94,84 @@ public class EmailService {
 	}
 
 	private String createVerificationLink(String token) {
-		return frontendUrl + "/verify-email/" + token;
+		return frontendUrl + "/verify-email?token=" + token;
+	}
+
+	private String createEmailChangeLink(String token) {
+		return frontendUrl + "/confirm-email-change?token=" + token;
 	}
 
 	private String createPasswordResetLink(String token) {
-		return frontendUrl + "/reset-password/" + token;
+		return frontendUrl + "/reset-password?token=" + token;
 	}
 
 	private String createVerificationEmailText(String link) {
 		return """
-				Thank you for registering!
+				Confirm Your Email Address
 
-				To activate your account, follow this link: %s
+				Thank you for registering with Cinema!
+
+				To activate your account, please click the link below:
+				%s
 
 				This link will expire in 10 minutes.
 
 				If you didn't create an account, please ignore this email.
+
+				Best regards,
+				Cinema Team
 				""".formatted(link);
+	}
+
+	private String createEmailChangeConfirmationText(String link) {
+		return """
+				Confirm Your Email Change
+
+				You have requested to change your Cinema account email address.
+
+				To confirm this change, please click the link below:
+				%s
+
+				This link will expire in 24 hours.
+
+				If you didn't request this change, please ignore this email - your email address will remain unchanged.
+
+				Best regards,
+				Cinema Team
+				""".formatted(link);
+	}
+
+	private String createEmailChangeNotificationText(String oldEmail, String newEmail) {
+		return """
+				Email Address Changed
+
+				Your Cinema account email address has been successfully changed:
+
+				Old email: %s
+				New email: %s
+
+				If you didn't make this change, please contact our support team immediately.
+
+				Best regards,
+				Cinema Team
+				""".formatted(oldEmail, newEmail);
 	}
 
 	private String createPasswordResetEmailText(String link) {
 		return """
-				You have requested to reset your password.
+				Password Reset Request
 
-				To reset your password, click the link: %s
+				You have requested to reset your password for your Cinema account.
+
+				To reset your password, click the link below:
+				%s
 
 				This link will expire in 10 minutes.
 
 				If you didn't request a password reset, please ignore this email.
+
+				Best regards,
+				Cinema Team
 				""".formatted(link);
 	}
 }
