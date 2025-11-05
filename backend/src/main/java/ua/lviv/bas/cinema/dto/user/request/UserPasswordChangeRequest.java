@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.dto.user;
+package ua.lviv.bas.cinema.dto.user.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserPasswordChangeDto {
+public class UserPasswordChangeRequest {
 
 	@NotBlank(message = "Current password is required")
 	private String currentPassword;

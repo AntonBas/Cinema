@@ -11,8 +11,8 @@ import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.Genre;
-import ua.lviv.bas.cinema.dto.movie.GenreDto;
-import ua.lviv.bas.cinema.dto.movie.GenreRequest;
+import ua.lviv.bas.cinema.dto.movie.request.GenreRequest;
+import ua.lviv.bas.cinema.dto.movie.response.GenreResponse;
 import ua.lviv.bas.cinema.dto.shared.PageResponse;
 import ua.lviv.bas.cinema.exception.GenreNotFoundException;
 import ua.lviv.bas.cinema.mapper.GenreMapper;
@@ -26,20 +26,20 @@ public class GenreService {
 	private final GenreRepository genreRepository;
 	private final GenreMapper genreMapper;
 
-	public GenreDto createGenre(GenreRequest request) {
+	public GenreResponse createGenre(GenreRequest request) {
 		log.info("Creating genre: {}", request.getName());
 		Genre genre = genreMapper.toEntity(request);
 		Genre savedGenre = genreRepository.save(genre);
 		return genreMapper.toDto(savedGenre);
 	}
 
-	public GenreDto getGenreById(Long id) {
+	public GenreResponse getGenreById(Long id) {
 		log.info("Reading genre by id: {}", id);
 		return genreRepository.findById(id).map(genreMapper::toDto)
 				.orElseThrow(() -> new GenreNotFoundException("Genre not found with id: " + id));
 	}
 
-	public GenreDto updateGenre(Long id, GenreRequest request) {
+	public GenreResponse updateGenre(Long id, GenreRequest request) {
 		log.info("Updating genre with id: {}", id);
 
 		Genre existingGenre = genreRepository.findById(id)
@@ -59,12 +59,12 @@ public class GenreService {
 		genreRepository.deleteById(id);
 	}
 
-	public List<GenreDto> getAllGenres() {
+	public List<GenreResponse> getAllGenres() {
 		log.info("Retrieving all genres");
 		return genreMapper.toDtoList(genreRepository.findAll());
 	}
 
-	public PageResponse<GenreDto> searchGenres(String query, int page, int size) {
+	public PageResponse<GenreResponse> searchGenres(String query, int page, int size) {
 		log.info("Searching genres: query='{}', page={}, size={}", query, page, size);
 
 		Pageable pageable = PageRequest.of(page, size, Sort.by("name").ascending());
@@ -80,8 +80,8 @@ public class GenreService {
 		return toPageResponse(genrePage);
 	}
 
-	private PageResponse<GenreDto> toPageResponse(Page<Genre> genrePage) {
-		List<GenreDto> content = genrePage.getContent().stream().map(genreMapper::toDto).toList();
+	private PageResponse<GenreResponse> toPageResponse(Page<Genre> genrePage) {
+		List<GenreResponse> content = genrePage.getContent().stream().map(genreMapper::toDto).toList();
 
 		return new PageResponse<>(content, genrePage.getNumber(), genrePage.getTotalPages(),
 				genrePage.getTotalElements(), genrePage.getSize());

@@ -22,10 +22,10 @@ import org.springframework.web.multipart.MultipartFile;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import ua.lviv.bas.cinema.dto.movie.MovieCreateRequest;
-import ua.lviv.bas.cinema.dto.movie.MovieDto;
-import ua.lviv.bas.cinema.dto.movie.MovieResponse;
-import ua.lviv.bas.cinema.dto.movie.MovieUpdateRequest;
+import ua.lviv.bas.cinema.dto.movie.request.MovieCreateRequest;
+import ua.lviv.bas.cinema.dto.movie.request.MovieUpdateRequest;
+import ua.lviv.bas.cinema.dto.movie.response.MovieDetailResponse;
+import ua.lviv.bas.cinema.dto.movie.response.MovieCardResponse;
 import ua.lviv.bas.cinema.dto.shared.PageResponse;
 import ua.lviv.bas.cinema.service.MovieService;
 
@@ -42,60 +42,60 @@ public class MovieController {
 	private static final int MAX_PAGE_SIZE = 50;
 
 	@GetMapping("/{id}")
-	public ResponseEntity<MovieDto> getById(@PathVariable Long id) {
+	public ResponseEntity<MovieDetailResponse> getById(@PathVariable Long id) {
 		log.info("GET /api/movies/{} - Getting movie by id", id);
-		MovieDto movie = movieService.getById(id);
+		MovieDetailResponse movie = movieService.getById(id);
 		return ResponseEntity.ok(movie);
 	}
 
 	@GetMapping("/slug/{slug}")
-	public ResponseEntity<MovieDto> getBySlug(@PathVariable String slug) {
+	public ResponseEntity<MovieDetailResponse> getBySlug(@PathVariable String slug) {
 		log.info("GET /api/movies/slug/{} - Getting movie by slug", slug);
-		MovieDto movie = movieService.getBySlug(slug);
+		MovieDetailResponse movie = movieService.getBySlug(slug);
 		return ResponseEntity.ok(movie);
 	}
 
 	@GetMapping
-	public ResponseEntity<List<MovieDto>> getAll() {
+	public ResponseEntity<List<MovieDetailResponse>> getAll() {
 		log.info("GET /api/movies - Getting all movies");
-		List<MovieDto> movies = movieService.getAll();
+		List<MovieDetailResponse> movies = movieService.getAll();
 		log.debug("Retrieved {} movies", movies.size());
 		return ResponseEntity.ok(movies);
 	}
 
 	@GetMapping("/paginated")
-	public ResponseEntity<PageResponse<MovieDto>> getPaginated(@RequestParam(defaultValue = DEFAULT_PAGE) int page,
+	public ResponseEntity<PageResponse<MovieDetailResponse>> getPaginated(@RequestParam(defaultValue = DEFAULT_PAGE) int page,
 			@RequestParam(defaultValue = DEFAULT_SIZE) int size) {
 
 		size = Math.min(size, MAX_PAGE_SIZE);
 		log.info("GET /api/movies/paginated - page: {}, size: {}", page, size);
 
-		Page<MovieDto> moviePage = movieService.getPaginated(PageRequest.of(page, size));
+		Page<MovieDetailResponse> moviePage = movieService.getPaginated(PageRequest.of(page, size));
 
-		PageResponse<MovieDto> response = new PageResponse<>(moviePage.getContent(), moviePage.getNumber(),
+		PageResponse<MovieDetailResponse> response = new PageResponse<>(moviePage.getContent(), moviePage.getNumber(),
 				moviePage.getTotalPages(), moviePage.getTotalElements(), moviePage.getSize());
 
 		return ResponseEntity.ok(response);
 	}
 
 	@PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-	public ResponseEntity<MovieDto> create(@RequestPart("movieData") @Valid MovieCreateRequest request,
+	public ResponseEntity<MovieDetailResponse> create(@RequestPart("movieData") @Valid MovieCreateRequest request,
 			@RequestPart("posterFile") MultipartFile posterFile) {
 
 		request.setPosterFile(posterFile);
 		log.info("POST /api/movies - Creating new movie: {}", request.getTitle());
-		MovieDto createdMovie = movieService.create(request);
+		MovieDetailResponse createdMovie = movieService.create(request);
 		return ResponseEntity.status(HttpStatus.CREATED).body(createdMovie);
 	}
 
 	@PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-	public ResponseEntity<MovieDto> update(@PathVariable Long id,
+	public ResponseEntity<MovieDetailResponse> update(@PathVariable Long id,
 			@RequestPart("movieData") @Valid MovieUpdateRequest request,
 			@RequestPart(value = "posterFile", required = false) MultipartFile posterFile) {
 
 		log.info("PUT /api/movies/{} - Updating movie with file", id);
 		request.setPosterFile(posterFile);
-		MovieDto updatedMovie = movieService.update(id, request);
+		MovieDetailResponse updatedMovie = movieService.update(id, request);
 		return ResponseEntity.ok(updatedMovie);
 	}
 
@@ -107,23 +107,23 @@ public class MovieController {
 	}
 
 	@GetMapping("/status/current")
-	public ResponseEntity<List<MovieResponse>> getCurrentlyShowing() {
+	public ResponseEntity<List<MovieCardResponse>> getCurrentlyShowing() {
 		log.info("GET /api/movies/status/current - Getting currently showing movies");
-		List<MovieResponse> movies = movieService.getCurrentlyShowing();
+		List<MovieCardResponse> movies = movieService.getCurrentlyShowing();
 		return ResponseEntity.ok(movies);
 	}
 
 	@GetMapping("/status/upcoming")
-	public ResponseEntity<List<MovieResponse>> getUpcoming() {
+	public ResponseEntity<List<MovieCardResponse>> getUpcoming() {
 		log.info("GET /api/movies/status/upcoming - Getting upcoming movies");
-		List<MovieResponse> movies = movieService.getUpcoming();
+		List<MovieCardResponse> movies = movieService.getUpcoming();
 		return ResponseEntity.ok(movies);
 	}
 
 	@GetMapping("/status/archived")
-	public ResponseEntity<List<MovieResponse>> getArchived() {
+	public ResponseEntity<List<MovieCardResponse>> getArchived() {
 		log.info("GET /api/movies/status/archived - Getting archived movies");
-		List<MovieResponse> movies = movieService.getArchived();
+		List<MovieCardResponse> movies = movieService.getArchived();
 		return ResponseEntity.ok(movies);
 	}
 
@@ -134,9 +134,9 @@ public class MovieController {
 	}
 
 	@GetMapping("/for-sessions")
-	public ResponseEntity<List<MovieResponse>> getMoviesForSessions() {
+	public ResponseEntity<List<MovieCardResponse>> getMoviesForSessions() {
 		log.info("GET /api/movies/for-sessions - Getting movies available for sessions");
-		List<MovieResponse> movies = movieService.getMoviesForSessions();
+		List<MovieCardResponse> movies = movieService.getMoviesForSessions();
 		return ResponseEntity.ok(movies);
 	}
 }

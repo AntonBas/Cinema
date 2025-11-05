@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.dto.cinemaHall;
+package ua.lviv.bas.cinema.dto.session.response;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -7,19 +7,20 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import ua.lviv.bas.cinema.dto.movie.MovieSimpleDto;
+import ua.lviv.bas.cinema.dto.cinemaHall.response.CinemaHallResponse;
+import ua.lviv.bas.cinema.dto.movie.response.MovieShortResponse;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class SessionDto {
+public class SessionResponse {
 
 	private Long id;
 	private LocalDateTime startTime;
 	private LocalDateTime endTime;
 	private BigDecimal price;
-	private MovieSimpleDto movie;
-	private CinemaHallDto hall;
+	private MovieShortResponse movie;
+	private CinemaHallResponse hall;
 	private boolean available;
 }

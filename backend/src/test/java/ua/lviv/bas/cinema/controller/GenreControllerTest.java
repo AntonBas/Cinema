@@ -21,8 +21,8 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import ua.lviv.bas.cinema.dto.movie.GenreDto;
-import ua.lviv.bas.cinema.dto.movie.GenreRequest;
+import ua.lviv.bas.cinema.dto.movie.request.GenreRequest;
+import ua.lviv.bas.cinema.dto.movie.response.GenreResponse;
 import ua.lviv.bas.cinema.dto.shared.PageResponse;
 import ua.lviv.bas.cinema.service.GenreService;
 
@@ -41,7 +41,7 @@ public class GenreControllerTest {
 
 	@Test
 	void getGenreById_WhenExists_ShouldReturnGenre() throws Exception {
-		GenreDto dto = GenreDto.builder().id(1L).name("Action").build();
+		GenreResponse dto = GenreResponse.builder().id(1L).name("Action").build();
 		when(genreService.getGenreById(1L)).thenReturn(dto);
 
 		mockMvc.perform(get("/api/genres/1")).andExpect(status().isOk()).andExpect(jsonPath("$.id").value(1L))
@@ -51,7 +51,7 @@ public class GenreControllerTest {
 	@Test
 	void createGenre_ShouldReturnCreatedGenre() throws Exception {
 		GenreRequest request = new GenreRequest("Action");
-		GenreDto response = GenreDto.builder().id(1L).name("Action").build();
+		GenreResponse response = GenreResponse.builder().id(1L).name("Action").build();
 
 		when(genreService.createGenre(request)).thenReturn(response);
 
@@ -64,7 +64,7 @@ public class GenreControllerTest {
 	@Test
 	void updateGenre_ShouldReturnUpdatedGenre() throws Exception {
 		GenreRequest request = new GenreRequest("Updated Action");
-		GenreDto response = GenreDto.builder().id(1L).name("Updated Action").build();
+		GenreResponse response = GenreResponse.builder().id(1L).name("Updated Action").build();
 
 		when(genreService.updateGenre(1L, request)).thenReturn(response);
 
@@ -82,8 +82,8 @@ public class GenreControllerTest {
 
 	@Test
 	void searchGenres_ShouldReturnPagedResponse() throws Exception {
-		GenreDto dto = GenreDto.builder().id(1L).name("Action").build();
-		PageResponse<GenreDto> response = new PageResponse<>(List.of(dto), 0, 1, 1, 10);
+		GenreResponse dto = GenreResponse.builder().id(1L).name("Action").build();
+		PageResponse<GenreResponse> response = new PageResponse<>(List.of(dto), 0, 1, 1, 10);
 
 		when(genreService.searchGenres(null, 0, 10)).thenReturn(response);
 

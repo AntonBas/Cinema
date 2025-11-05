@@ -13,10 +13,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.Person;
 import ua.lviv.bas.cinema.domain.enums.PersonRole;
-import ua.lviv.bas.cinema.dto.movie.PersonDto;
-import ua.lviv.bas.cinema.dto.movie.PersonRequest;
+import ua.lviv.bas.cinema.dto.movie.request.PersonRequest;
+import ua.lviv.bas.cinema.dto.movie.request.QuickCreatePersonRequest;
+import ua.lviv.bas.cinema.dto.movie.response.PersonResponse;
 import ua.lviv.bas.cinema.dto.shared.PageResponse;
-import ua.lviv.bas.cinema.dto.shared.QuickCreatePersonDto;
 import ua.lviv.bas.cinema.exception.DuplicateEntityException;
 import ua.lviv.bas.cinema.exception.PersonNotFoundException;
 import ua.lviv.bas.cinema.mapper.PersonMapper;
@@ -31,7 +31,7 @@ public class PersonService {
 	private final PersonMapper personMapper;
 
 	@Transactional
-	public PersonDto createPerson(PersonRequest request) {
+	public PersonResponse createPerson(PersonRequest request) {
 		log.info("Creating person: {}", request.getName());
 		if (personRepository.existsByNameAndRole(request.getName(), request.getRole())) {
 			throw new DuplicateEntityException(
@@ -44,14 +44,14 @@ public class PersonService {
 	}
 
 	@Transactional(readOnly = true)
-	public PersonDto getPersonById(Long id) {
+	public PersonResponse getPersonById(Long id) {
 		log.debug("Retrieving person by id: {}", id);
 		return personRepository.findById(id).map(personMapper::toDto)
 				.orElseThrow(() -> new PersonNotFoundException("Person not found with id: " + id));
 	}
 
 	@Transactional
-	public PersonDto updatePerson(Long id, PersonRequest request) {
+	public PersonResponse updatePerson(Long id, PersonRequest request) {
 		log.info("Updating person with id: {}", id);
 		Person existing = personRepository.findById(id)
 				.orElseThrow(() -> new PersonNotFoundException("Person not found with id: " + id));
@@ -72,13 +72,13 @@ public class PersonService {
 	}
 
 	@Transactional(readOnly = true)
-	public List<PersonDto> getAllPersons() {
+	public List<PersonResponse> getAllPersons() {
 		log.debug("Retrieving all persons");
 		return personMapper.toDtoList(personRepository.findAll());
 	}
 
 	@Transactional
-	public PersonDto quickCreate(QuickCreatePersonDto dto) {
+	public PersonResponse quickCreate(QuickCreatePersonRequest dto) {
 		log.info("Quick creating person: {} with role: {}", dto.getName(), dto.getRole());
 		if (personRepository.existsByNameAndRole(dto.getName(), dto.getRole())) {
 			throw new DuplicateEntityException(
@@ -91,7 +91,7 @@ public class PersonService {
 	}
 
 	@Transactional(readOnly = true)
-	public PageResponse<PersonDto> searchPersons(String query, PersonRole role, int page, int size) {
+	public PageResponse<PersonResponse> searchPersons(String query, PersonRole role, int page, int size) {
 		log.info("Searching persons: query='{}', role={}, page={}, size={}", query, role, page, size);
 		Pageable pageable = PageRequest.of(page, size, Sort.by("name").ascending());
 		Page<Person> personPage = personRepository.searchPersons(query, role, pageable);
@@ -99,8 +99,8 @@ public class PersonService {
 		return toPageResponse(personPage);
 	}
 
-	private PageResponse<PersonDto> toPageResponse(Page<Person> personPage) {
-		List<PersonDto> content = personPage.getContent().stream().map(personMapper::toDto).toList();
+	private PageResponse<PersonResponse> toPageResponse(Page<Person> personPage) {
+		List<PersonResponse> content = personPage.getContent().stream().map(personMapper::toDto).toList();
 		return new PageResponse<>(content, personPage.getNumber(), personPage.getTotalPages(),
 				personPage.getTotalElements(), personPage.getSize());
 	}

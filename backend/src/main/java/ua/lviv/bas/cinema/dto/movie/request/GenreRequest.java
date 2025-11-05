@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.dto.movie;
+package ua.lviv.bas.cinema.dto.movie.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -16,5 +16,4 @@ public class GenreRequest {
 	@NotBlank(message = "Genre name is required")
 	@Size(max = 30, min = 2, message = "Name must be between 2 and 30 characters")
 	private String name;
-
 }

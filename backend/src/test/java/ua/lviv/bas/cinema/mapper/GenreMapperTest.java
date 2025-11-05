@@ -8,8 +8,8 @@ import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
 
 import ua.lviv.bas.cinema.domain.Genre;
-import ua.lviv.bas.cinema.dto.movie.GenreDto;
-import ua.lviv.bas.cinema.dto.movie.GenreRequest;
+import ua.lviv.bas.cinema.dto.movie.request.GenreRequest;
+import ua.lviv.bas.cinema.dto.movie.response.GenreResponse;
 
 public class GenreMapperTest {
 
@@ -19,7 +19,7 @@ public class GenreMapperTest {
 	void toDto_ShouldMapAllFields() {
 		Genre genre = Genre.builder().id(1L).name("Action").build();
 
-		GenreDto dto = mapper.toDto(genre);
+		GenreResponse dto = mapper.toDto(genre);
 
 		assertThat(dto).isNotNull();
 		assertThat(dto.getId()).isEqualTo(1L);
@@ -42,7 +42,7 @@ public class GenreMapperTest {
 		Genre genre1 = Genre.builder().id(1L).name("Action").build();
 		Genre genre2 = Genre.builder().id(2L).name("Comedy").build();
 
-		List<GenreDto> dtos = mapper.toDtoList(List.of(genre1, genre2));
+		List<GenreResponse> dtos = mapper.toDtoList(List.of(genre1, genre2));
 
 		assertThat(dtos).hasSize(2);
 		assertThat(dtos.get(0).getName()).isEqualTo("Action");

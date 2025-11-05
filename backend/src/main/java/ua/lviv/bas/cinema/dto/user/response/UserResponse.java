@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.dto.user;
+package ua.lviv.bas.cinema.dto.user.response;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -9,7 +9,8 @@ import ua.lviv.bas.cinema.domain.enums.UserRole;
 
 @Data
 @Builder
-public class UserDto {
+public class UserResponse {
+
 	private Long id;
 	private String email;
 	private String firstName;

@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.dto.user;
+package ua.lviv.bas.cinema.dto.user.request;
 
 import java.time.LocalDate;
 
@@ -16,7 +16,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserUpdateDto {
+public class UserUpdateRequest {
 
 	@Size(min = 2, max = 50, message = "First name must be between 2 and 50 characters")
 	@NotBlank(message = "First name is required")

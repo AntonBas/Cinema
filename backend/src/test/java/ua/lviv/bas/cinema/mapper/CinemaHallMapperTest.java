@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
 import ua.lviv.bas.cinema.domain.CinemaHall;
 import ua.lviv.bas.cinema.domain.Seat;
-import ua.lviv.bas.cinema.dto.cinemaHall.CinemaHallDto;
+import ua.lviv.bas.cinema.dto.cinemaHall.response.CinemaHallResponse;
 
 import java.util.Arrays;
 import java.util.List;
@@ -39,7 +39,7 @@ class CinemaHallMapperTest {
 
 	@Test
 	void testToDto_ShouldMapCinemaHallToDto() {
-		CinemaHallDto dto = cinemaHallMapper.toDto(cinemaHallWithSeats);
+		CinemaHallResponse dto = cinemaHallMapper.toDto(cinemaHallWithSeats);
 
 		assertNotNull(dto);
 		assertEquals(1L, dto.getId());
@@ -49,7 +49,7 @@ class CinemaHallMapperTest {
 
 	@Test
 	void testToDto_WithEmptySeats_ShouldReturnZeroCapacity() {
-		CinemaHallDto dto = cinemaHallMapper.toDto(cinemaHallEmptySeats);
+		CinemaHallResponse dto = cinemaHallMapper.toDto(cinemaHallEmptySeats);
 
 		assertNotNull(dto);
 		assertEquals(2L, dto.getId());
@@ -59,7 +59,7 @@ class CinemaHallMapperTest {
 
 	@Test
 	void testToDto_WithNullSeats_ShouldReturnZeroCapacity() {
-		CinemaHallDto dto = cinemaHallMapper.toDto(cinemaHallNullSeats);
+		CinemaHallResponse dto = cinemaHallMapper.toDto(cinemaHallNullSeats);
 
 		assertNotNull(dto);
 		assertEquals(3L, dto.getId());
@@ -71,7 +71,7 @@ class CinemaHallMapperTest {
 	void testToDtoList_ShouldMapListOfCinemaHalls() {
 		List<CinemaHall> halls = Arrays.asList(cinemaHallWithSeats, cinemaHallEmptySeats);
 
-		List<CinemaHallDto> dtos = cinemaHallMapper.toDtoList(halls);
+		List<CinemaHallResponse> dtos = cinemaHallMapper.toDtoList(halls);
 
 		assertNotNull(dtos);
 		assertEquals(2, dtos.size());
@@ -85,7 +85,7 @@ class CinemaHallMapperTest {
 	void testToDtoList_WithEmptyList_ShouldReturnEmptyList() {
 		List<CinemaHall> halls = Arrays.asList();
 
-		List<CinemaHallDto> dtos = cinemaHallMapper.toDtoList(halls);
+		List<CinemaHallResponse> dtos = cinemaHallMapper.toDtoList(halls);
 
 		assertNotNull(dtos);
 		assertTrue(dtos.isEmpty());
@@ -93,7 +93,7 @@ class CinemaHallMapperTest {
 
 	@Test
 	void testToDtoList_WithNullList_ShouldReturnNull() {
-		List<CinemaHallDto> dtos = cinemaHallMapper.toDtoList(null);
+		List<CinemaHallResponse> dtos = cinemaHallMapper.toDtoList(null);
 
 		assertNull(dtos);
 	}

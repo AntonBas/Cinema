@@ -19,10 +19,10 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.enums.PersonRole;
-import ua.lviv.bas.cinema.dto.movie.PersonDto;
-import ua.lviv.bas.cinema.dto.movie.PersonRequest;
+import ua.lviv.bas.cinema.dto.movie.request.PersonRequest;
+import ua.lviv.bas.cinema.dto.movie.request.QuickCreatePersonRequest;
+import ua.lviv.bas.cinema.dto.movie.response.PersonResponse;
 import ua.lviv.bas.cinema.dto.shared.PageResponse;
-import ua.lviv.bas.cinema.dto.shared.QuickCreatePersonDto;
 import ua.lviv.bas.cinema.service.PersonService;
 
 @Slf4j
@@ -38,24 +38,24 @@ public class PersonController {
 	private static final int MAX_PAGE_SIZE = 50;
 
 	@GetMapping("/{id}")
-	public ResponseEntity<PersonDto> getPersonById(@PathVariable Long id) {
+	public ResponseEntity<PersonResponse> getPersonById(@PathVariable Long id) {
 		log.info("GET /api/persons/{} - Getting person by id", id);
-		PersonDto person = personService.getPersonById(id);
+		PersonResponse person = personService.getPersonById(id);
 		return ResponseEntity.ok(person);
 	}
 
 	@PostMapping
-	public ResponseEntity<PersonDto> createPerson(@RequestBody @Valid PersonRequest request) {
+	public ResponseEntity<PersonResponse> createPerson(@RequestBody @Valid PersonRequest request) {
 		log.info("POST /api/persons - Creating new person: {}", request.getName());
-		PersonDto createdPerson = personService.createPerson(request);
+		PersonResponse createdPerson = personService.createPerson(request);
 		return ResponseEntity.status(HttpStatus.CREATED).body(createdPerson);
 
 	}
 
 	@PutMapping("/{id}")
-	public ResponseEntity<PersonDto> updatePerson(@PathVariable Long id, @RequestBody @Valid PersonRequest request) {
+	public ResponseEntity<PersonResponse> updatePerson(@PathVariable Long id, @RequestBody @Valid PersonRequest request) {
 		log.info("PUT /api/persons/{} - Updating person", id);
-		PersonDto updatedPerson = personService.updatePerson(id, request);
+		PersonResponse updatedPerson = personService.updatePerson(id, request);
 		return ResponseEntity.ok(updatedPerson);
 	}
 
@@ -67,28 +67,28 @@ public class PersonController {
 	}
 
 	@PostMapping("/quick-create")
-	public ResponseEntity<PersonDto> quickCreate(@RequestBody @Valid QuickCreatePersonDto request) {
+	public ResponseEntity<PersonResponse> quickCreate(@RequestBody @Valid QuickCreatePersonRequest request) {
 		log.info("POST /api/persons/quick-create - Quick creating person: {} with role: {}", request.getName(),
 				request.getRole());
-		PersonDto createdPerson = personService.quickCreate(request);
+		PersonResponse createdPerson = personService.quickCreate(request);
 		return ResponseEntity.status(HttpStatus.CREATED).body(createdPerson);
 	}
 
 	@GetMapping
-	public ResponseEntity<List<PersonDto>> getAll() {
+	public ResponseEntity<List<PersonResponse>> getAll() {
 		log.info("GET /api/persons - Getting all persons");
-		List<PersonDto> persons = personService.getAllPersons();
+		List<PersonResponse> persons = personService.getAllPersons();
 		log.debug("Retrieved {} persons", persons.size());
 		return ResponseEntity.ok(persons);
 	}
 
 	@GetMapping("/search")
-	public ResponseEntity<PageResponse<PersonDto>> searchPersons(@RequestParam(required = false) String query,
+	public ResponseEntity<PageResponse<PersonResponse>> searchPersons(@RequestParam(required = false) String query,
 			@RequestParam(required = false) PersonRole role, @RequestParam(defaultValue = DEFAULT_PAGE) int page,
 			@RequestParam(defaultValue = DEFAULT_SIZE) int size) {
 		size = Math.min(size, MAX_PAGE_SIZE);
 		log.info("GET /api/persons/search - query: '{}', role: {}, page: {}, size: {}", query, role, page, size);
-		PageResponse<PersonDto> result = personService.searchPersons(query, role, page, size);
+		PageResponse<PersonResponse> result = personService.searchPersons(query, role, page, size);
 		return ResponseEntity.ok(result);
 
 	}

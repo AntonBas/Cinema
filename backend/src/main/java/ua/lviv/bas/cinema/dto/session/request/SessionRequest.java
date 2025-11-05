@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.dto.cinemaHall;
+package ua.lviv.bas.cinema.dto.session.request;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;

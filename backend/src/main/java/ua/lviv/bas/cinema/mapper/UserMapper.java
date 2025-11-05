@@ -4,8 +4,8 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
 import ua.lviv.bas.cinema.domain.User;
-import ua.lviv.bas.cinema.dto.user.UserDto;
-import ua.lviv.bas.cinema.dto.user.UserRegistrationDto;
+import ua.lviv.bas.cinema.dto.user.request.UserRegistrationRequest;
+import ua.lviv.bas.cinema.dto.user.response.UserResponse;
 
 @Mapper(componentModel = "spring")
 public interface UserMapper {
@@ -17,11 +17,11 @@ public interface UserMapper {
 	@Mapping(target = "password", ignore = true)
 	@Mapping(target = "createdAt", ignore = true)
 	@Mapping(target = "updatedAt", ignore = true)
-	User toEntity(UserRegistrationDto dto);
+	User toEntity(UserRegistrationRequest dto);
 
-	UserDto toDto(User user);
+	UserResponse toDto(User user);
 
-	default User toEntityWithPassword(UserRegistrationDto dto, String encodedPassword) {
+	default User toEntityWithPassword(UserRegistrationRequest dto, String encodedPassword) {
 		User user = toEntity(dto);
 		user.setPassword(encodedPassword);
 		return user;

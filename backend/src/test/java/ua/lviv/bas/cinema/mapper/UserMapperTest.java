@@ -14,8 +14,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.enums.UserRole;
-import ua.lviv.bas.cinema.dto.user.UserDto;
-import ua.lviv.bas.cinema.dto.user.UserRegistrationDto;
+import ua.lviv.bas.cinema.dto.user.request.UserRegistrationRequest;
+import ua.lviv.bas.cinema.dto.user.response.UserResponse;
 
 @ExtendWith(MockitoExtension.class)
 public class UserMapperTest {
@@ -24,7 +24,7 @@ public class UserMapperTest {
 
 	@Test
 	void toEntity_ShouldMapAllFieldsCorrectly() {
-		UserRegistrationDto dto = UserRegistrationDto.builder().email("anton@example.com").firstName("Anton")
+		UserRegistrationRequest dto = UserRegistrationRequest.builder().email("anton@example.com").firstName("Anton")
 				.lastName("Bas").dateOfBirth(LocalDate.of(2001, 8, 21)).city("Lviv").phoneNumber("+380123456789")
 				.password("rawPassword").passwordConfirm("rawPassword").build();
 
@@ -57,7 +57,7 @@ public class UserMapperTest {
 				.dateOfBirth(LocalDate.of(2001, 8, 21)).city("Lviv").phoneNumber("+380123456789")
 				.userRole(UserRole.ROLE_USER).enabled(true).build();
 
-		UserDto dto = userMapper.toDto(user);
+		UserResponse dto = userMapper.toDto(user);
 
 		assertNotNull(dto);
 		assertEquals(1L, dto.getId());
@@ -73,13 +73,13 @@ public class UserMapperTest {
 
 	@Test
 	void toDto_ShouldReturnNull_WhenUserIsNull() {
-		UserDto dto = userMapper.toDto(null);
+		UserResponse dto = userMapper.toDto(null);
 		assertNull(dto);
 	}
 
 	@Test
 	void toEntityWithPassword_ShouldSetEncodedPassword() {
-		UserRegistrationDto dto = UserRegistrationDto.builder().email("anton@example.com").firstName("Anton").build();
+		UserRegistrationRequest dto = UserRegistrationRequest.builder().email("anton@example.com").firstName("Anton").build();
 
 		User user = userMapper.toEntityWithPassword(dto, "encodedPassword123");
 

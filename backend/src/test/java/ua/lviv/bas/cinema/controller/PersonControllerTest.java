@@ -24,10 +24,10 @@ import org.springframework.test.web.servlet.MockMvc;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import ua.lviv.bas.cinema.domain.enums.PersonRole;
-import ua.lviv.bas.cinema.dto.movie.PersonDto;
-import ua.lviv.bas.cinema.dto.movie.PersonRequest;
+import ua.lviv.bas.cinema.dto.movie.request.PersonRequest;
+import ua.lviv.bas.cinema.dto.movie.request.QuickCreatePersonRequest;
+import ua.lviv.bas.cinema.dto.movie.response.PersonResponse;
 import ua.lviv.bas.cinema.dto.shared.PageResponse;
-import ua.lviv.bas.cinema.dto.shared.QuickCreatePersonDto;
 import ua.lviv.bas.cinema.service.PersonService;
 
 @WebMvcTest(PersonController.class)
@@ -45,7 +45,7 @@ class PersonControllerTest {
 
 	@Test
 	void getAll_ShouldReturnPersons() throws Exception {
-		PersonDto dto = PersonDto.builder().id(1L).name("Anton Bas").build();
+		PersonResponse dto = PersonResponse.builder().id(1L).name("Anton Bas").build();
 		when(personService.getAllPersons()).thenReturn(List.of(dto));
 
 		mockMvc.perform(get("/api/persons")).andExpect(status().isOk())
@@ -54,7 +54,7 @@ class PersonControllerTest {
 
 	@Test
 	void getById_ShouldReturnPerson() throws Exception {
-		PersonDto dto = PersonDto.builder().id(1L).name("Anton Bas").build();
+		PersonResponse dto = PersonResponse.builder().id(1L).name("Anton Bas").build();
 		when(personService.getPersonById(1L)).thenReturn(dto);
 
 		mockMvc.perform(get("/api/persons/1")).andExpect(status().isOk())
@@ -65,7 +65,7 @@ class PersonControllerTest {
 	void create_ShouldReturnCreatedPerson() throws Exception {
 		PersonRequest request = PersonRequest.builder().name("Anton Bas").role(PersonRole.ACTOR).build();
 
-		PersonDto response = PersonDto.builder().id(1L).name("Anton Bas").role(PersonRole.ACTOR).build();
+		PersonResponse response = PersonResponse.builder().id(1L).name("Anton Bas").role(PersonRole.ACTOR).build();
 
 		when(personService.createPerson(any(PersonRequest.class))).thenReturn(response);
 
@@ -79,7 +79,7 @@ class PersonControllerTest {
 	void update_ShouldReturnUpdatedPerson() throws Exception {
 		PersonRequest request = PersonRequest.builder().name("Anton Bas Updated").role(PersonRole.DIRECTOR).build();
 
-		PersonDto response = PersonDto.builder().id(1L).name("Anton Bas Updated").role(PersonRole.DIRECTOR).build();
+		PersonResponse response = PersonResponse.builder().id(1L).name("Anton Bas Updated").role(PersonRole.DIRECTOR).build();
 
 		when(personService.updatePerson(eq(1L), any(PersonRequest.class))).thenReturn(response);
 
@@ -98,11 +98,11 @@ class PersonControllerTest {
 
 	@Test
 	void quickCreate_ShouldReturnCreatedPerson() throws Exception {
-		QuickCreatePersonDto request = QuickCreatePersonDto.builder().name("Anton Bas").role(PersonRole.ACTOR).build();
+		QuickCreatePersonRequest request = QuickCreatePersonRequest.builder().name("Anton Bas").role(PersonRole.ACTOR).build();
 
-		PersonDto response = PersonDto.builder().id(1L).name("Anton Bas").role(PersonRole.ACTOR).build();
+		PersonResponse response = PersonResponse.builder().id(1L).name("Anton Bas").role(PersonRole.ACTOR).build();
 
-		when(personService.quickCreate(any(QuickCreatePersonDto.class))).thenReturn(response);
+		when(personService.quickCreate(any(QuickCreatePersonRequest.class))).thenReturn(response);
 
 		mockMvc.perform(post("/api/persons/quick-create").contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request))).andExpect(status().isCreated())
@@ -112,8 +112,8 @@ class PersonControllerTest {
 
 	@Test
 	void search_ShouldReturnPagedResponse() throws Exception {
-		PersonDto dto = PersonDto.builder().id(1L).name("Anton Bas").role(PersonRole.ACTOR).build();
-		PageResponse<PersonDto> page = new PageResponse<>(List.of(dto), 0, 1, 1, 10);
+		PersonResponse dto = PersonResponse.builder().id(1L).name("Anton Bas").role(PersonRole.ACTOR).build();
+		PageResponse<PersonResponse> page = new PageResponse<>(List.of(dto), 0, 1, 1, 10);
 
 		when(personService.searchPersons(eq("Anton"), eq(PersonRole.ACTOR), eq(0), eq(10))).thenReturn(page);
 

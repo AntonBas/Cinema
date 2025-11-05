@@ -12,10 +12,10 @@ import org.mapstruct.factory.Mappers;
 import ua.lviv.bas.cinema.domain.Movie;
 import ua.lviv.bas.cinema.domain.enums.AgeRating;
 import ua.lviv.bas.cinema.domain.enums.MovieStatus;
-import ua.lviv.bas.cinema.dto.movie.MovieCreateRequest;
-import ua.lviv.bas.cinema.dto.movie.MovieDto;
-import ua.lviv.bas.cinema.dto.movie.MovieResponse;
-import ua.lviv.bas.cinema.dto.movie.MovieUpdateRequest;
+import ua.lviv.bas.cinema.dto.movie.request.MovieCreateRequest;
+import ua.lviv.bas.cinema.dto.movie.request.MovieUpdateRequest;
+import ua.lviv.bas.cinema.dto.movie.response.MovieDetailResponse;
+import ua.lviv.bas.cinema.dto.movie.response.MovieCardResponse;
 
 class MovieMapperTest {
 
@@ -49,7 +49,7 @@ class MovieMapperTest {
 
 	@Test
 	void toDto_ShouldMapAllFields() {
-		MovieDto result = movieMapper.toDto(movie);
+		MovieDetailResponse result = movieMapper.toDto(movie);
 
 		assertThat(result).isNotNull();
 		assertThat(result.getId()).isEqualTo(1L);
@@ -68,14 +68,14 @@ class MovieMapperTest {
 	@Test
 	void toDtoList_ShouldMapList() {
 		List<Movie> movies = List.of(movie);
-		List<MovieDto> result = movieMapper.toDtoList(movies);
+		List<MovieDetailResponse> result = movieMapper.toDtoList(movies);
 		assertThat(result).hasSize(1);
 		assertThat(result.get(0).getTitle()).isEqualTo("Test Movie");
 	}
 
 	@Test
 	void toResponse_ShouldMapResponseFields() {
-		MovieResponse result = movieMapper.toResponse(movie);
+		MovieCardResponse result = movieMapper.toResponse(movie);
 
 		assertThat(result).isNotNull();
 		assertThat(result.getId()).isEqualTo(1L);
@@ -90,7 +90,7 @@ class MovieMapperTest {
 	@Test
 	void toResponseList_ShouldMapList() {
 		List<Movie> movies = List.of(movie);
-		List<MovieResponse> result = movieMapper.toResponseList(movies);
+		List<MovieCardResponse> result = movieMapper.toResponseList(movies);
 		assertThat(result).hasSize(1);
 		assertThat(result.get(0).getTitle()).isEqualTo("Test Movie");
 	}
@@ -143,13 +143,13 @@ class MovieMapperTest {
 
 	@Test
 	void toDto_WithNullMovie_ShouldReturnNull() {
-		MovieDto result = movieMapper.toDto(null);
+		MovieDetailResponse result = movieMapper.toDto(null);
 		assertThat(result).isNull();
 	}
 
 	@Test
 	void toResponse_WithNullMovie_ShouldReturnNull() {
-		MovieResponse result = movieMapper.toResponse(null);
+		MovieCardResponse result = movieMapper.toResponse(null);
 		assertThat(result).isNull();
 	}
 }

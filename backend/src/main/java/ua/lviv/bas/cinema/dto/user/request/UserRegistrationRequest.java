@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.dto.user;
+package ua.lviv.bas.cinema.dto.user.request;
 
 import java.time.LocalDate;
 
@@ -18,7 +18,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserRegistrationDto {
+public class UserRegistrationRequest {
 
 	@Email(message = "Invalid email format")
 	@NotBlank(message = "Email is required")

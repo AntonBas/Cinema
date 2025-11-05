@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.dto.cinemaHall;
+package ua.lviv.bas.cinema.dto.cinemaHall.response;
 
 import java.util.List;
 
@@ -6,16 +6,15 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import ua.lviv.bas.cinema.dto.shared.SeatDto;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CinemaHallWithSeatsDto {
+public class CinemaHallWithSeatsResponse {
 
 	private Long id;
 	private String name;
 	private int capacity;
-	private List<SeatDto> seats;
+	private List<SeatResponse> seats;
 }

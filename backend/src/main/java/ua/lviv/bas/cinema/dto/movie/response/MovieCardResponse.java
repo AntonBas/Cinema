@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.dto.movie;
+package ua.lviv.bas.cinema.dto.movie.response;
 
 import java.time.LocalDate;
 
@@ -13,7 +13,7 @@ import ua.lviv.bas.cinema.domain.enums.MovieStatus;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class MovieResponse {
+public class MovieCardResponse {
 
 	private Long id;
 	private String title;

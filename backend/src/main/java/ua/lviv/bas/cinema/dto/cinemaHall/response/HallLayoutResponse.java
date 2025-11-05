@@ -1,10 +1,9 @@
-package ua.lviv.bas.cinema.dto.cinemaHall;
+package ua.lviv.bas.cinema.dto.cinemaHall.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import ua.lviv.bas.cinema.dto.shared.SeatRowDto;
 
 import java.util.List;
 
@@ -12,11 +11,12 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class HallLayoutDto {
+public class HallLayoutResponse {
+
 	private Long hallId;
 	private String hallName;
 	private int totalRows;
 	private int maxSeatsPerRow;
 	private int totalSeats;
-	private List<SeatRowDto> rows;
+	private List<SeatRowResponse> rows;
 }

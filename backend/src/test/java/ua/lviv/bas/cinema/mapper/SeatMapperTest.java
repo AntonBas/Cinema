@@ -15,7 +15,7 @@ import org.mapstruct.factory.Mappers;
 import ua.lviv.bas.cinema.domain.CinemaHall;
 import ua.lviv.bas.cinema.domain.Seat;
 import ua.lviv.bas.cinema.domain.enums.SeatType;
-import ua.lviv.bas.cinema.dto.shared.SeatDto;
+import ua.lviv.bas.cinema.dto.cinemaHall.response.SeatResponse;
 
 class SeatMapperTest {
 
@@ -36,7 +36,7 @@ class SeatMapperTest {
 
 	@Test
 	void testToDto_ShouldMapSeatToDto() {
-		SeatDto dto = seatMapper.toDto(standardSeat);
+		SeatResponse dto = seatMapper.toDto(standardSeat);
 
 		assertNotNull(dto);
 		assertEquals(1L, dto.getId());
@@ -47,7 +47,7 @@ class SeatMapperTest {
 
 	@Test
 	void testToDto_WithVipSeat_ShouldMapCorrectly() {
-		SeatDto dto = seatMapper.toDto(vipSeat);
+		SeatResponse dto = seatMapper.toDto(vipSeat);
 
 		assertNotNull(dto);
 		assertEquals(2L, dto.getId());
@@ -60,7 +60,7 @@ class SeatMapperTest {
 	void testToDtoList_ShouldMapListOfSeats() {
 		List<Seat> seats = Arrays.asList(standardSeat, vipSeat);
 
-		List<SeatDto> dtos = seatMapper.toDtoList(seats);
+		List<SeatResponse> dtos = seatMapper.toDtoList(seats);
 
 		assertNotNull(dtos);
 		assertEquals(2, dtos.size());
@@ -74,7 +74,7 @@ class SeatMapperTest {
 	void testToDtoList_WithEmptyList_ShouldReturnEmptyList() {
 		List<Seat> seats = Arrays.asList();
 
-		List<SeatDto> dtos = seatMapper.toDtoList(seats);
+		List<SeatResponse> dtos = seatMapper.toDtoList(seats);
 
 		assertNotNull(dtos);
 		assertTrue(dtos.isEmpty());
@@ -82,7 +82,7 @@ class SeatMapperTest {
 
 	@Test
 	void testToDtoList_WithNullList_ShouldReturnNull() {
-		List<SeatDto> dtos = seatMapper.toDtoList(null);
+		List<SeatResponse> dtos = seatMapper.toDtoList(null);
 
 		assertNull(dtos);
 	}

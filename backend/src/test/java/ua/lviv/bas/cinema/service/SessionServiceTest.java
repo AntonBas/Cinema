@@ -25,8 +25,8 @@ import org.springframework.data.domain.Pageable;
 import ua.lviv.bas.cinema.domain.CinemaHall;
 import ua.lviv.bas.cinema.domain.Movie;
 import ua.lviv.bas.cinema.domain.Session;
-import ua.lviv.bas.cinema.dto.cinemaHall.SessionDto;
-import ua.lviv.bas.cinema.dto.cinemaHall.SessionRequest;
+import ua.lviv.bas.cinema.dto.session.request.SessionRequest;
+import ua.lviv.bas.cinema.dto.session.response.SessionResponse;
 import ua.lviv.bas.cinema.exception.ConflictException;
 import ua.lviv.bas.cinema.exception.SessionNotFoundException;
 import ua.lviv.bas.cinema.mapper.SessionMapper;
@@ -54,7 +54,7 @@ class SessionServiceTest {
 	private Movie movie;
 	private CinemaHall hall;
 	private Session session;
-	private SessionDto sessionDto;
+	private SessionResponse sessionDto;
 	private Pageable pageable;
 
 	@BeforeEach
@@ -68,7 +68,7 @@ class SessionServiceTest {
 
 		session = Session.builder().id(1L).build();
 
-		sessionDto = SessionDto.builder().id(1L).build();
+		sessionDto = SessionResponse.builder().id(1L).build();
 
 		pageable = PageRequest.of(0, 20);
 	}
@@ -82,7 +82,7 @@ class SessionServiceTest {
 		when(sessionRepository.save(session)).thenReturn(session);
 		when(sessionMapper.toDto(session)).thenReturn(sessionDto);
 
-		SessionDto result = sessionService.createSession(sessionRequest);
+		SessionResponse result = sessionService.createSession(sessionRequest);
 
 		assertThat(result).isNotNull();
 		assertThat(result.getId()).isEqualTo(1L);
@@ -107,7 +107,7 @@ class SessionServiceTest {
 		when(sessionRepository.findById(1L)).thenReturn(Optional.of(session));
 		when(sessionMapper.toDto(session)).thenReturn(sessionDto);
 
-		SessionDto result = sessionService.getSessionById(1L);
+		SessionResponse result = sessionService.getSessionById(1L);
 
 		assertThat(result).isNotNull();
 		assertThat(result.getId()).isEqualTo(1L);
@@ -132,7 +132,7 @@ class SessionServiceTest {
 		when(sessionRepository.save(session)).thenReturn(session);
 		when(sessionMapper.toDto(session)).thenReturn(sessionDto);
 
-		SessionDto result = sessionService.updateSession(1L, updateRequest);
+		SessionResponse result = sessionService.updateSession(1L, updateRequest);
 
 		assertThat(result).isNotNull();
 		verify(sessionRepository).save(session);
@@ -161,7 +161,7 @@ class SessionServiceTest {
 		when(sessionRepository.findAll(pageable)).thenReturn(sessionPage);
 		when(sessionMapper.toDto(session)).thenReturn(sessionDto);
 
-		Page<SessionDto> result = sessionService.getAllSessions(pageable, null);
+		Page<SessionResponse> result = sessionService.getAllSessions(pageable, null);
 
 		assertThat(result).isNotNull();
 		assertThat(result.getContent()).hasSize(1);
@@ -175,7 +175,7 @@ class SessionServiceTest {
 		when(sessionRepository.findByMovieTitleContainingIgnoreCase("test", pageable)).thenReturn(sessionPage);
 		when(sessionMapper.toDto(session)).thenReturn(sessionDto);
 
-		Page<SessionDto> result = sessionService.getAllSessions(pageable, "test");
+		Page<SessionResponse> result = sessionService.getAllSessions(pageable, "test");
 
 		assertThat(result).isNotNull();
 		assertThat(result.getContent()).hasSize(1);

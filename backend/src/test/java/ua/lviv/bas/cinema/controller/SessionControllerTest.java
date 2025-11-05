@@ -23,10 +23,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import ua.lviv.bas.cinema.dto.cinemaHall.CinemaHallDto;
-import ua.lviv.bas.cinema.dto.cinemaHall.SessionDto;
-import ua.lviv.bas.cinema.dto.cinemaHall.SessionRequest;
-import ua.lviv.bas.cinema.dto.movie.MovieSimpleDto;
+import ua.lviv.bas.cinema.dto.cinemaHall.response.CinemaHallResponse;
+import ua.lviv.bas.cinema.dto.movie.response.MovieShortResponse;
+import ua.lviv.bas.cinema.dto.session.request.SessionRequest;
+import ua.lviv.bas.cinema.dto.session.response.SessionResponse;
 import ua.lviv.bas.cinema.service.SessionService;
 
 @ExtendWith(MockitoExtension.class)
@@ -38,15 +38,15 @@ class SessionControllerTest {
 	@InjectMocks
 	private SessionController sessionController;
 
-	private SessionDto createSessionDto(Long id, String movieTitle, String hallName, BigDecimal price) {
-		MovieSimpleDto movie = MovieSimpleDto.builder().id(1L).title(movieTitle).build();
+	private SessionResponse createSessionDto(Long id, String movieTitle, String hallName, BigDecimal price) {
+		MovieShortResponse movie = MovieShortResponse.builder().id(1L).title(movieTitle).build();
 
-		CinemaHallDto hall = CinemaHallDto.builder().id(1L).name(hallName).build();
+		CinemaHallResponse hall = CinemaHallResponse.builder().id(1L).name(hallName).build();
 
 		// Фіксований час для стабільності тестів
 		LocalDateTime fixedTime = LocalDateTime.of(2024, 1, 15, 18, 0);
 
-		return SessionDto.builder().id(id).startTime(fixedTime).endTime(fixedTime.plusHours(2)).price(price)
+		return SessionResponse.builder().id(id).startTime(fixedTime).endTime(fixedTime.plusHours(2)).price(price)
 				.movie(movie).hall(hall).available(true).build();
 	}
 
@@ -55,21 +55,21 @@ class SessionControllerTest {
 				.movieId(1L).hallId(1L).build();
 	}
 
-	private Page<SessionDto> createSessionPage(SessionDto sessionDto) {
+	private Page<SessionResponse> createSessionPage(SessionResponse sessionDto) {
 		return new PageImpl<>(List.of(sessionDto));
 	}
 
 	@Test
 	void createSession_ShouldCreateSuccessfully() {
 		SessionRequest request = createSessionRequest();
-		SessionDto sessionDto = createSessionDto(1L, "Test Movie", "Hall 1", new BigDecimal("250.00"));
+		SessionResponse sessionDto = createSessionDto(1L, "Test Movie", "Hall 1", new BigDecimal("250.00"));
 
 		when(sessionService.createSession(request)).thenReturn(sessionDto);
 
-		ResponseEntity<SessionDto> response = sessionController.createSession(request);
+		ResponseEntity<SessionResponse> response = sessionController.createSession(request);
 
 		assertEquals(HttpStatus.CREATED, response.getStatusCode());
-		SessionDto responseBody = Objects.requireNonNull(response.getBody(), "Response body should not be null");
+		SessionResponse responseBody = Objects.requireNonNull(response.getBody(), "Response body should not be null");
 		assertEquals(1L, responseBody.getId());
 		assertEquals("Test Movie", responseBody.getMovie().getTitle());
 		assertEquals("Hall 1", responseBody.getHall().getName());
@@ -77,14 +77,14 @@ class SessionControllerTest {
 
 	@Test
 	void getSessionById_ShouldReturnSession() {
-		SessionDto sessionDto = createSessionDto(1L, "Test Movie", "Hall 1", new BigDecimal("250.00"));
+		SessionResponse sessionDto = createSessionDto(1L, "Test Movie", "Hall 1", new BigDecimal("250.00"));
 
 		when(sessionService.getSessionById(1L)).thenReturn(sessionDto);
 
-		ResponseEntity<SessionDto> response = sessionController.getSessionById(1L);
+		ResponseEntity<SessionResponse> response = sessionController.getSessionById(1L);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
-		SessionDto responseBody = Objects.requireNonNull(response.getBody(), "Response body should not be null");
+		SessionResponse responseBody = Objects.requireNonNull(response.getBody(), "Response body should not be null");
 		assertEquals(1L, responseBody.getId());
 		assertEquals("Test Movie", responseBody.getMovie().getTitle());
 	}
@@ -92,14 +92,14 @@ class SessionControllerTest {
 	@Test
 	void updateSession_ShouldUpdateSuccessfully() {
 		SessionRequest request = createSessionRequest();
-		SessionDto sessionDto = createSessionDto(1L, "Updated Movie", "Hall 1", new BigDecimal("300.00"));
+		SessionResponse sessionDto = createSessionDto(1L, "Updated Movie", "Hall 1", new BigDecimal("300.00"));
 
 		when(sessionService.updateSession(1L, request)).thenReturn(sessionDto);
 
-		ResponseEntity<SessionDto> response = sessionController.updateSession(1L, request);
+		ResponseEntity<SessionResponse> response = sessionController.updateSession(1L, request);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
-		SessionDto responseBody = Objects.requireNonNull(response.getBody(), "Response body should not be null");
+		SessionResponse responseBody = Objects.requireNonNull(response.getBody(), "Response body should not be null");
 		assertEquals(1L, responseBody.getId());
 		assertEquals("Updated Movie", responseBody.getMovie().getTitle());
 		assertEquals(new BigDecimal("300.00"), responseBody.getPrice());
@@ -114,16 +114,16 @@ class SessionControllerTest {
 
 	@Test
 	void getAllSessions_ShouldReturnAllSessionsWithPagination() {
-		SessionDto session1 = createSessionDto(1L, "Movie 1", "Hall 1", new BigDecimal("250.00"));
-		SessionDto session2 = createSessionDto(2L, "Movie 2", "Hall 2", new BigDecimal("300.00"));
-		Page<SessionDto> sessionPage = new PageImpl<>(List.of(session1, session2));
+		SessionResponse session1 = createSessionDto(1L, "Movie 1", "Hall 1", new BigDecimal("250.00"));
+		SessionResponse session2 = createSessionDto(2L, "Movie 2", "Hall 2", new BigDecimal("300.00"));
+		Page<SessionResponse> sessionPage = new PageImpl<>(List.of(session1, session2));
 
 		when(sessionService.getAllSessions(any(Pageable.class), eq(null))).thenReturn(sessionPage);
 
-		ResponseEntity<Page<SessionDto>> response = sessionController.getAllSessions(PageRequest.of(0, 20), null);
+		ResponseEntity<Page<SessionResponse>> response = sessionController.getAllSessions(PageRequest.of(0, 20), null);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
-		Page<SessionDto> responseBody = Objects.requireNonNull(response.getBody(), "Response body should not be null");
+		Page<SessionResponse> responseBody = Objects.requireNonNull(response.getBody(), "Response body should not be null");
 		assertEquals(2, responseBody.getContent().size());
 		assertEquals(1L, responseBody.getContent().get(0).getId());
 		assertEquals(2L, responseBody.getContent().get(1).getId());
@@ -132,90 +132,90 @@ class SessionControllerTest {
 	@Test
 	void getSessionsByDate_ShouldReturnSessionsWithPagination() {
 		LocalDate date = LocalDate.of(2024, 1, 15);
-		SessionDto sessionDto = createSessionDto(1L, "Test Movie", "Hall 1", new BigDecimal("250.00"));
-		Page<SessionDto> sessionPage = createSessionPage(sessionDto);
+		SessionResponse sessionDto = createSessionDto(1L, "Test Movie", "Hall 1", new BigDecimal("250.00"));
+		Page<SessionResponse> sessionPage = createSessionPage(sessionDto);
 
 		when(sessionService.getSessionsByDate(eq(date), any(Pageable.class))).thenReturn(sessionPage);
 
-		ResponseEntity<Page<SessionDto>> response = sessionController.getSessionsByDate(date, PageRequest.of(0, 20));
+		ResponseEntity<Page<SessionResponse>> response = sessionController.getSessionsByDate(date, PageRequest.of(0, 20));
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
-		Page<SessionDto> responseBody = Objects.requireNonNull(response.getBody(), "Response body should not be null");
+		Page<SessionResponse> responseBody = Objects.requireNonNull(response.getBody(), "Response body should not be null");
 		assertEquals(1, responseBody.getContent().size());
 		assertEquals(1L, responseBody.getContent().get(0).getId());
 	}
 
 	@Test
 	void getSessionsByHall_ShouldReturnSessionsWithPagination() {
-		SessionDto sessionDto = createSessionDto(1L, "Test Movie", "Hall 1", new BigDecimal("250.00"));
-		Page<SessionDto> sessionPage = createSessionPage(sessionDto);
+		SessionResponse sessionDto = createSessionDto(1L, "Test Movie", "Hall 1", new BigDecimal("250.00"));
+		Page<SessionResponse> sessionPage = createSessionPage(sessionDto);
 
 		when(sessionService.getSessionsByHall(eq(1L), any(Pageable.class))).thenReturn(sessionPage);
 
-		ResponseEntity<Page<SessionDto>> response = sessionController.getSessionsByHall(1L, PageRequest.of(0, 20));
+		ResponseEntity<Page<SessionResponse>> response = sessionController.getSessionsByHall(1L, PageRequest.of(0, 20));
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
-		Page<SessionDto> responseBody = Objects.requireNonNull(response.getBody(), "Response body should not be null");
+		Page<SessionResponse> responseBody = Objects.requireNonNull(response.getBody(), "Response body should not be null");
 		assertEquals(1, responseBody.getContent().size());
 		assertEquals("Hall 1", responseBody.getContent().get(0).getHall().getName());
 	}
 
 	@Test
 	void getSessionsByMovie_ShouldReturnSessionsWithPagination() {
-		SessionDto sessionDto = createSessionDto(1L, "Test Movie", "Hall 1", new BigDecimal("250.00"));
-		Page<SessionDto> sessionPage = createSessionPage(sessionDto);
+		SessionResponse sessionDto = createSessionDto(1L, "Test Movie", "Hall 1", new BigDecimal("250.00"));
+		Page<SessionResponse> sessionPage = createSessionPage(sessionDto);
 
 		when(sessionService.getSessionsByMovie(eq(1L), any(Pageable.class))).thenReturn(sessionPage);
 
-		ResponseEntity<Page<SessionDto>> response = sessionController.getSessionsByMovie(1L, PageRequest.of(0, 20));
+		ResponseEntity<Page<SessionResponse>> response = sessionController.getSessionsByMovie(1L, PageRequest.of(0, 20));
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
-		Page<SessionDto> responseBody = Objects.requireNonNull(response.getBody(), "Response body should not be null");
+		Page<SessionResponse> responseBody = Objects.requireNonNull(response.getBody(), "Response body should not be null");
 		assertEquals(1, responseBody.getContent().size());
 		assertEquals("Test Movie", responseBody.getContent().get(0).getMovie().getTitle());
 	}
 
 	@Test
 	void getAvailableSessions_ShouldReturnAvailableSessionsWithPagination() {
-		SessionDto sessionDto = createSessionDto(1L, "Test Movie", "Hall 1", new BigDecimal("250.00"));
-		Page<SessionDto> sessionPage = createSessionPage(sessionDto);
+		SessionResponse sessionDto = createSessionDto(1L, "Test Movie", "Hall 1", new BigDecimal("250.00"));
+		Page<SessionResponse> sessionPage = createSessionPage(sessionDto);
 
 		when(sessionService.getAvailableSessions(any(Pageable.class))).thenReturn(sessionPage);
 
-		ResponseEntity<Page<SessionDto>> response = sessionController.getAvailableSessions(PageRequest.of(0, 20));
+		ResponseEntity<Page<SessionResponse>> response = sessionController.getAvailableSessions(PageRequest.of(0, 20));
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
-		Page<SessionDto> responseBody = Objects.requireNonNull(response.getBody(), "Response body should not be null");
+		Page<SessionResponse> responseBody = Objects.requireNonNull(response.getBody(), "Response body should not be null");
 		assertEquals(1, responseBody.getContent().size());
 		assertEquals(true, responseBody.getContent().get(0).isAvailable());
 	}
 
 	@Test
 	void getUpcomingSessions_ShouldReturnUpcomingSessionsWithPagination() {
-		SessionDto sessionDto = createSessionDto(1L, "Test Movie", "Hall 1", new BigDecimal("250.00"));
-		Page<SessionDto> sessionPage = createSessionPage(sessionDto);
+		SessionResponse sessionDto = createSessionDto(1L, "Test Movie", "Hall 1", new BigDecimal("250.00"));
+		Page<SessionResponse> sessionPage = createSessionPage(sessionDto);
 
 		when(sessionService.getUpcomingSessions(eq(7), any(Pageable.class))).thenReturn(sessionPage);
 
-		ResponseEntity<Page<SessionDto>> response = sessionController.getUpcomingSessions(7, PageRequest.of(0, 20));
+		ResponseEntity<Page<SessionResponse>> response = sessionController.getUpcomingSessions(7, PageRequest.of(0, 20));
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
-		Page<SessionDto> responseBody = Objects.requireNonNull(response.getBody(), "Response body should not be null");
+		Page<SessionResponse> responseBody = Objects.requireNonNull(response.getBody(), "Response body should not be null");
 		assertEquals(1, responseBody.getContent().size());
 		assertEquals(1L, responseBody.getContent().get(0).getId());
 	}
 
 	@Test
 	void getTodaySessions_ShouldReturnTodaySessionsWithPagination() {
-		SessionDto sessionDto = createSessionDto(1L, "Test Movie", "Hall 1", new BigDecimal("250.00"));
-		Page<SessionDto> sessionPage = createSessionPage(sessionDto);
+		SessionResponse sessionDto = createSessionDto(1L, "Test Movie", "Hall 1", new BigDecimal("250.00"));
+		Page<SessionResponse> sessionPage = createSessionPage(sessionDto);
 
 		when(sessionService.getTodaySessions(any(Pageable.class))).thenReturn(sessionPage);
 
-		ResponseEntity<Page<SessionDto>> response = sessionController.getTodaySessions(PageRequest.of(0, 20));
+		ResponseEntity<Page<SessionResponse>> response = sessionController.getTodaySessions(PageRequest.of(0, 20));
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
-		Page<SessionDto> responseBody = Objects.requireNonNull(response.getBody(), "Response body should not be null");
+		Page<SessionResponse> responseBody = Objects.requireNonNull(response.getBody(), "Response body should not be null");
 		assertEquals(1, responseBody.getContent().size());
 		assertEquals(1L, responseBody.getContent().get(0).getId());
 	}

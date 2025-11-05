@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PageResponse<T> {
+
 	private List<T> content;
 	private int currentPage;
 	private int totalPages;

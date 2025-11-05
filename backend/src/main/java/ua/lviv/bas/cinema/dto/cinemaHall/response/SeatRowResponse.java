@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.dto.shared;
+package ua.lviv.bas.cinema.dto.cinemaHall.response;
 
 import java.util.List;
 
@@ -11,8 +11,9 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class SeatRowDto {
+public class SeatRowResponse {
+
 	private Integer rowNumber;
 	private int seatsCount;
-	private List<SeatDto> seats;
+	private List<SeatResponse> seats;
 }

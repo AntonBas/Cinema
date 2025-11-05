@@ -9,8 +9,8 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.User;
-import ua.lviv.bas.cinema.dto.user.UserDto;
-import ua.lviv.bas.cinema.dto.user.UserRegistrationDto;
+import ua.lviv.bas.cinema.dto.user.request.UserRegistrationRequest;
+import ua.lviv.bas.cinema.dto.user.response.UserResponse;
 import ua.lviv.bas.cinema.exception.EmailAlreadyExistsException;
 import ua.lviv.bas.cinema.exception.UserNotFoundException;
 import ua.lviv.bas.cinema.mapper.UserMapper;
@@ -26,7 +26,7 @@ public class UserService {
 	private final UserMapper userMapper;
 
 	@Transactional
-	public UserDto registerUser(UserRegistrationDto userDto) {
+	public UserResponse registerUser(UserRegistrationRequest userDto) {
 		log.info("Attempting to register user with email: {}", userDto.getEmail());
 
 		if (existsByEmail(userDto.getEmail())) {

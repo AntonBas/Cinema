@@ -7,15 +7,15 @@ import org.mapstruct.MappingTarget;
 import org.mapstruct.ReportingPolicy;
 
 import ua.lviv.bas.cinema.domain.Genre;
-import ua.lviv.bas.cinema.dto.movie.GenreDto;
-import ua.lviv.bas.cinema.dto.movie.GenreRequest;
+import ua.lviv.bas.cinema.dto.movie.request.GenreRequest;
+import ua.lviv.bas.cinema.dto.movie.response.GenreResponse;
 
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface GenreMapper {
 
-	GenreDto toDto(Genre genre);
+	GenreResponse toDto(Genre genre);
 
-	List<GenreDto> toDtoList(List<Genre> genres);
+	List<GenreResponse> toDtoList(List<Genre> genres);
 
 	Genre toEntity(GenreRequest genreRequest);
 

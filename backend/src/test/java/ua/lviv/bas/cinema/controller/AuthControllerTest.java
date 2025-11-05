@@ -34,9 +34,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import ua.lviv.bas.cinema.config.JwtTokenProvider;
 import ua.lviv.bas.cinema.domain.User;
-import ua.lviv.bas.cinema.dto.user.UserDto;
-import ua.lviv.bas.cinema.dto.user.UserLoginDto;
-import ua.lviv.bas.cinema.dto.user.UserRegistrationDto;
+import ua.lviv.bas.cinema.dto.user.request.UserLoginRequest;
+import ua.lviv.bas.cinema.dto.user.request.UserRegistrationRequest;
+import ua.lviv.bas.cinema.dto.user.response.UserResponse;
 import ua.lviv.bas.cinema.service.EmailTokenGeneratorService;
 import ua.lviv.bas.cinema.service.EmailTokenService;
 import ua.lviv.bas.cinema.service.PasswordResetService;
@@ -70,17 +70,17 @@ public class AuthControllerTest {
 	@MockitoBean
 	private JwtTokenProvider jwtTokenProvider;
 
-	private UserRegistrationDto registrationDto;
-	private UserLoginDto loginDto;
+	private UserRegistrationRequest registrationDto;
+	private UserLoginRequest loginDto;
 	private User user;
 
 	@BeforeEach
 	void setUp() {
-		registrationDto = UserRegistrationDto.builder().email("anton@example.com").firstName("Anton").lastName("Bas")
+		registrationDto = UserRegistrationRequest.builder().email("anton@example.com").firstName("Anton").lastName("Bas")
 				.dateOfBirth(LocalDate.of(2001, 8, 21)).city("Lviv").phoneNumber("+380123456789")
 				.password("password123").passwordConfirm("password123").build();
 
-		loginDto = new UserLoginDto("anton@example.com", "password123");
+		loginDto = new UserLoginRequest("anton@example.com", "password123");
 
 		user = new User();
 		user.setId(1L);
@@ -92,7 +92,7 @@ public class AuthControllerTest {
 	@Test
 	void registerUser_ShouldReturnOk_WhenValidData() throws Exception {
 		when(userService.registerUser(any())).thenReturn(
-				UserDto.builder().id(1L).email("anton@example.com").firstName("Anton").lastName("Bas").build());
+				UserResponse.builder().id(1L).email("anton@example.com").firstName("Anton").lastName("Bas").build());
 
 		when(tokenGeneratorService.generateVerificationToken(anyString())).thenReturn(UUID.randomUUID().toString());
 

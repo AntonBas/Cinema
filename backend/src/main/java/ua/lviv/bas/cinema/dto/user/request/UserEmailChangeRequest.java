@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.dto.user;
+package ua.lviv.bas.cinema.dto.user.request;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

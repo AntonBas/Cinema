@@ -15,7 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import ua.lviv.bas.cinema.domain.enums.SeatType;
-import ua.lviv.bas.cinema.dto.shared.SeatDto;
+import ua.lviv.bas.cinema.dto.cinemaHall.response.SeatResponse;
 import ua.lviv.bas.cinema.service.SeatService;
 
 @ExtendWith(MockitoExtension.class)
@@ -27,21 +27,21 @@ class SeatControllerTest {
 	@InjectMocks
 	private SeatController seatController;
 
-	private SeatDto createSeatDto(Long id, int row, int number, SeatType seatType) {
-		return SeatDto.builder().id(id).row(row).number(number).seatType(seatType).build();
+	private SeatResponse createSeatDto(Long id, int row, int number, SeatType seatType) {
+		return SeatResponse.builder().id(id).row(row).number(number).seatType(seatType).build();
 	}
 
 	@Test
 	void getSeatsByHall_ShouldReturnSeats() {
-		SeatDto seat1 = createSeatDto(1L, 1, 1, SeatType.STANDARD);
-		SeatDto seat2 = createSeatDto(2L, 1, 2, SeatType.VIP);
+		SeatResponse seat1 = createSeatDto(1L, 1, 1, SeatType.STANDARD);
+		SeatResponse seat2 = createSeatDto(2L, 1, 2, SeatType.VIP);
 
 		when(seatService.getSeatsByHall(1L)).thenReturn(List.of(seat1, seat2));
 
-		ResponseEntity<List<SeatDto>> response = seatController.getSeatsByHall(1L);
+		ResponseEntity<List<SeatResponse>> response = seatController.getSeatsByHall(1L);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
-		List<SeatDto> responseBody = Objects.requireNonNull(response.getBody(), "Response body should not be null");
+		List<SeatResponse> responseBody = Objects.requireNonNull(response.getBody(), "Response body should not be null");
 		assertEquals(2, responseBody.size());
 		assertEquals(1L, responseBody.get(0).getId());
 		assertEquals(SeatType.STANDARD, responseBody.get(0).getSeatType());
@@ -51,14 +51,14 @@ class SeatControllerTest {
 
 	@Test
 	void getSeatById_ShouldReturnSeat() {
-		SeatDto seat = createSeatDto(1L, 1, 1, SeatType.STANDARD);
+		SeatResponse seat = createSeatDto(1L, 1, 1, SeatType.STANDARD);
 
 		when(seatService.getSeatById(1L)).thenReturn(seat);
 
-		ResponseEntity<SeatDto> response = seatController.getSeatById(1L, 1L);
+		ResponseEntity<SeatResponse> response = seatController.getSeatById(1L, 1L);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
-		SeatDto responseBody = Objects.requireNonNull(response.getBody(), "Response body should not be null");
+		SeatResponse responseBody = Objects.requireNonNull(response.getBody(), "Response body should not be null");
 		assertEquals(1L, responseBody.getId());
 		assertEquals(1, responseBody.getRow());
 		assertEquals(1, responseBody.getNumber());
@@ -67,14 +67,14 @@ class SeatControllerTest {
 
 	@Test
 	void getSeatByPosition_ShouldReturnSeat() {
-		SeatDto seat = createSeatDto(1L, 1, 1, SeatType.STANDARD);
+		SeatResponse seat = createSeatDto(1L, 1, 1, SeatType.STANDARD);
 
 		when(seatService.getSeatByPosition(1L, 1, 1)).thenReturn(seat);
 
-		ResponseEntity<SeatDto> response = seatController.getSeatByPosition(1L, 1, 1);
+		ResponseEntity<SeatResponse> response = seatController.getSeatByPosition(1L, 1, 1);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
-		SeatDto responseBody = Objects.requireNonNull(response.getBody(), "Response body should not be null");
+		SeatResponse responseBody = Objects.requireNonNull(response.getBody(), "Response body should not be null");
 		assertEquals(1L, responseBody.getId());
 		assertEquals(1, responseBody.getRow());
 		assertEquals(1, responseBody.getNumber());
@@ -82,14 +82,14 @@ class SeatControllerTest {
 
 	@Test
 	void updateSeatType_ShouldReturnUpdatedSeat() {
-		SeatDto updatedSeat = createSeatDto(1L, 1, 1, SeatType.VIP);
+		SeatResponse updatedSeat = createSeatDto(1L, 1, 1, SeatType.VIP);
 
 		when(seatService.updateSeatType(1L, SeatType.VIP)).thenReturn(updatedSeat);
 
-		ResponseEntity<SeatDto> response = seatController.updateSeatType(1L, 1L, SeatType.VIP);
+		ResponseEntity<SeatResponse> response = seatController.updateSeatType(1L, 1L, SeatType.VIP);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
-		SeatDto responseBody = Objects.requireNonNull(response.getBody(), "Response body should not be null");
+		SeatResponse responseBody = Objects.requireNonNull(response.getBody(), "Response body should not be null");
 		assertEquals(SeatType.VIP, responseBody.getSeatType());
 		assertEquals(1L, responseBody.getId());
 	}
@@ -129,15 +129,15 @@ class SeatControllerTest {
 
 	@Test
 	void getSeatsByType_ShouldReturnFilteredSeats() {
-		SeatDto vipSeat1 = createSeatDto(1L, 1, 1, SeatType.VIP);
-		SeatDto vipSeat2 = createSeatDto(2L, 1, 2, SeatType.VIP);
+		SeatResponse vipSeat1 = createSeatDto(1L, 1, 1, SeatType.VIP);
+		SeatResponse vipSeat2 = createSeatDto(2L, 1, 2, SeatType.VIP);
 
 		when(seatService.getSeatsByType(1L, SeatType.VIP)).thenReturn(List.of(vipSeat1, vipSeat2));
 
-		ResponseEntity<List<SeatDto>> response = seatController.getSeatsByType(1L, SeatType.VIP);
+		ResponseEntity<List<SeatResponse>> response = seatController.getSeatsByType(1L, SeatType.VIP);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
-		List<SeatDto> responseBody = Objects.requireNonNull(response.getBody(), "Response body should not be null");
+		List<SeatResponse> responseBody = Objects.requireNonNull(response.getBody(), "Response body should not be null");
 		assertEquals(2, responseBody.size());
 		assertEquals(SeatType.VIP, responseBody.get(0).getSeatType());
 		assertEquals(SeatType.VIP, responseBody.get(1).getSeatType());

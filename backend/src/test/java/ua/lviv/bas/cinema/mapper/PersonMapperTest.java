@@ -9,9 +9,9 @@ import org.mapstruct.factory.Mappers;
 
 import ua.lviv.bas.cinema.domain.Person;
 import ua.lviv.bas.cinema.domain.enums.PersonRole;
-import ua.lviv.bas.cinema.dto.movie.PersonDto;
-import ua.lviv.bas.cinema.dto.movie.PersonRequest;
-import ua.lviv.bas.cinema.dto.shared.QuickCreatePersonDto;
+import ua.lviv.bas.cinema.dto.movie.request.PersonRequest;
+import ua.lviv.bas.cinema.dto.movie.request.QuickCreatePersonRequest;
+import ua.lviv.bas.cinema.dto.movie.response.PersonResponse;
 
 public class PersonMapperTest {
 
@@ -21,7 +21,7 @@ public class PersonMapperTest {
 	void toDto_ShouldMapAllFields() {
 		Person person = Person.builder().id(1L).name("Anton Bas").role(PersonRole.ACTOR).build();
 
-		PersonDto dto = mapper.toDto(person);
+		PersonResponse dto = mapper.toDto(person);
 
 		assertThat(dto.getId()).isEqualTo(1L);
 		assertThat(dto.getName()).isEqualTo("Anton Bas");
@@ -33,7 +33,7 @@ public class PersonMapperTest {
 		Person person1 = Person.builder().id(1L).name("Anton Bas").build();
 		Person person2 = Person.builder().id(2L).name("Bas Anton").build();
 
-		List<PersonDto> dtos = mapper.toDtoList(List.of(person1, person2));
+		List<PersonResponse> dtos = mapper.toDtoList(List.of(person1, person2));
 
 		assertThat(dtos).hasSize(2);
 		assertThat(dtos.get(0).getName()).isEqualTo("Anton Bas");
@@ -66,7 +66,7 @@ public class PersonMapperTest {
 
 	@Test
 	void toEntity_FromQuickCreatePersonDto_ShouldMapFieldsAndIgnoreId() {
-		QuickCreatePersonDto quickDto = QuickCreatePersonDto.builder().name("Quick Person").role(PersonRole.ACTOR)
+		QuickCreatePersonRequest quickDto = QuickCreatePersonRequest.builder().name("Quick Person").role(PersonRole.ACTOR)
 				.build();
 
 		Person person = mapper.toEntity(quickDto);
@@ -78,7 +78,7 @@ public class PersonMapperTest {
 
 	@Test
 	void toPersonRequest_FromQuickCreatePersonDto_ShouldMapAllFields() {
-		QuickCreatePersonDto quickDto = QuickCreatePersonDto.builder().name("Quick To Request")
+		QuickCreatePersonRequest quickDto = QuickCreatePersonRequest.builder().name("Quick To Request")
 				.role(PersonRole.DIRECTOR).build();
 
 		PersonRequest request = mapper.toPersonRequest(quickDto);

@@ -22,8 +22,8 @@ import org.springframework.web.bind.annotation.RestController;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import ua.lviv.bas.cinema.dto.cinemaHall.SessionDto;
-import ua.lviv.bas.cinema.dto.cinemaHall.SessionRequest;
+import ua.lviv.bas.cinema.dto.session.request.SessionRequest;
+import ua.lviv.bas.cinema.dto.session.response.SessionResponse;
 import ua.lviv.bas.cinema.service.SessionService;
 
 @Slf4j
@@ -35,23 +35,23 @@ public class SessionController {
 	private final SessionService sessionService;
 
 	@PostMapping
-	public ResponseEntity<SessionDto> createSession(@Valid @RequestBody SessionRequest request) {
+	public ResponseEntity<SessionResponse> createSession(@Valid @RequestBody SessionRequest request) {
 		log.info("POST /api/sessions - Creating new session");
-		SessionDto created = sessionService.createSession(request);
+		SessionResponse created = sessionService.createSession(request);
 		return ResponseEntity.status(HttpStatus.CREATED).body(created);
 	}
 
 	@GetMapping("/{id}")
-	public ResponseEntity<SessionDto> getSessionById(@PathVariable Long id) {
+	public ResponseEntity<SessionResponse> getSessionById(@PathVariable Long id) {
 		log.info("GET /api/sessions/{} - Retrieving session", id);
-		SessionDto session = sessionService.getSessionById(id);
+		SessionResponse session = sessionService.getSessionById(id);
 		return ResponseEntity.ok(session);
 	}
 
 	@PutMapping("/{id}")
-	public ResponseEntity<SessionDto> updateSession(@PathVariable Long id, @Valid @RequestBody SessionRequest request) {
+	public ResponseEntity<SessionResponse> updateSession(@PathVariable Long id, @Valid @RequestBody SessionRequest request) {
 		log.info("PUT /api/sessions/{} - Updating session", id);
-		SessionDto updated = sessionService.updateSession(id, request);
+		SessionResponse updated = sessionService.updateSession(id, request);
 		return ResponseEntity.ok(updated);
 	}
 
@@ -63,60 +63,60 @@ public class SessionController {
 	}
 
 	@GetMapping
-	public ResponseEntity<Page<SessionDto>> getAllSessions(
+	public ResponseEntity<Page<SessionResponse>> getAllSessions(
 			@PageableDefault(size = 20, sort = "startTime") Pageable pageable,
 			@RequestParam(required = false) String search) {
 		log.info("GET /api/sessions - Retrieving all sessions with pagination");
-		Page<SessionDto> sessions = sessionService.getAllSessions(pageable, search);
+		Page<SessionResponse> sessions = sessionService.getAllSessions(pageable, search);
 		return ResponseEntity.ok(sessions);
 	}
 
 	@GetMapping("/date/{date}")
-	public ResponseEntity<Page<SessionDto>> getSessionsByDate(
+	public ResponseEntity<Page<SessionResponse>> getSessionsByDate(
 			@PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
 			@PageableDefault(size = 20, sort = "startTime") Pageable pageable) {
 		log.info("GET /api/sessions/date/{} - Retrieving sessions by date", date);
-		Page<SessionDto> sessions = sessionService.getSessionsByDate(date, pageable);
+		Page<SessionResponse> sessions = sessionService.getSessionsByDate(date, pageable);
 		return ResponseEntity.ok(sessions);
 	}
 
 	@GetMapping("/hall/{hallId}")
-	public ResponseEntity<Page<SessionDto>> getSessionsByHall(@PathVariable Long hallId,
+	public ResponseEntity<Page<SessionResponse>> getSessionsByHall(@PathVariable Long hallId,
 			@PageableDefault(size = 20, sort = "startTime") Pageable pageable) {
 		log.info("GET /api/sessions/hall/{} - Retrieving sessions by hall", hallId);
-		Page<SessionDto> sessions = sessionService.getSessionsByHall(hallId, pageable);
+		Page<SessionResponse> sessions = sessionService.getSessionsByHall(hallId, pageable);
 		return ResponseEntity.ok(sessions);
 	}
 
 	@GetMapping("/movie/{movieId}")
-	public ResponseEntity<Page<SessionDto>> getSessionsByMovie(@PathVariable Long movieId,
+	public ResponseEntity<Page<SessionResponse>> getSessionsByMovie(@PathVariable Long movieId,
 			@PageableDefault(size = 20, sort = "startTime") Pageable pageable) {
 		log.info("GET /api/sessions/movie/{} - Retrieving sessions by movie", movieId);
-		Page<SessionDto> sessions = sessionService.getSessionsByMovie(movieId, pageable);
+		Page<SessionResponse> sessions = sessionService.getSessionsByMovie(movieId, pageable);
 		return ResponseEntity.ok(sessions);
 	}
 
 	@GetMapping("/available")
-	public ResponseEntity<Page<SessionDto>> getAvailableSessions(
+	public ResponseEntity<Page<SessionResponse>> getAvailableSessions(
 			@PageableDefault(size = 20, sort = "startTime") Pageable pageable) {
 		log.info("GET /api/sessions/available - Retrieving available sessions");
-		Page<SessionDto> sessions = sessionService.getAvailableSessions(pageable);
+		Page<SessionResponse> sessions = sessionService.getAvailableSessions(pageable);
 		return ResponseEntity.ok(sessions);
 	}
 
 	@GetMapping("/upcoming")
-	public ResponseEntity<Page<SessionDto>> getUpcomingSessions(@RequestParam(defaultValue = "7") int days,
+	public ResponseEntity<Page<SessionResponse>> getUpcomingSessions(@RequestParam(defaultValue = "7") int days,
 			@PageableDefault(size = 20, sort = "startTime") Pageable pageable) {
 		log.info("GET /api/sessions/upcoming - Retrieving upcoming sessions for {} days", days);
-		Page<SessionDto> sessions = sessionService.getUpcomingSessions(days, pageable);
+		Page<SessionResponse> sessions = sessionService.getUpcomingSessions(days, pageable);
 		return ResponseEntity.ok(sessions);
 	}
 
 	@GetMapping("/today")
-	public ResponseEntity<Page<SessionDto>> getTodaySessions(
+	public ResponseEntity<Page<SessionResponse>> getTodaySessions(
 			@PageableDefault(size = 20, sort = "startTime") Pageable pageable) {
 		log.info("GET /api/sessions/today - Retrieving today's sessions");
-		Page<SessionDto> sessions = sessionService.getTodaySessions(pageable);
+		Page<SessionResponse> sessions = sessionService.getTodaySessions(pageable);
 		return ResponseEntity.ok(sessions);
 	}
 

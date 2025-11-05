@@ -9,7 +9,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import ua.lviv.bas.cinema.domain.CinemaHall;
 import ua.lviv.bas.cinema.domain.Seat;
 import ua.lviv.bas.cinema.domain.enums.SeatType;
-import ua.lviv.bas.cinema.dto.shared.SeatDto;
+import ua.lviv.bas.cinema.dto.cinemaHall.response.SeatResponse;
 import ua.lviv.bas.cinema.exception.SeatNotFoundException;
 import ua.lviv.bas.cinema.mapper.SeatMapper;
 import ua.lviv.bas.cinema.repository.SeatRepository;
@@ -38,8 +38,8 @@ class SeatServiceTest {
 	private CinemaHall testHall;
 	private Seat standardSeat;
 	private Seat vipSeat;
-	private SeatDto standardSeatDto;
-	private SeatDto vipSeatDto;
+	private SeatResponse standardSeatDto;
+	private SeatResponse vipSeatDto;
 
 	@BeforeEach
 	void setUp() {
@@ -48,8 +48,8 @@ class SeatServiceTest {
 		standardSeat = Seat.builder().id(1L).row(1).number(1).seatType(SeatType.STANDARD).hall(testHall).build();
 		vipSeat = Seat.builder().id(2L).row(1).number(2).seatType(SeatType.VIP).hall(testHall).build();
 
-		standardSeatDto = SeatDto.builder().id(1L).row(1).number(1).seatType(SeatType.STANDARD).build();
-		vipSeatDto = SeatDto.builder().id(2L).row(1).number(2).seatType(SeatType.VIP).build();
+		standardSeatDto = SeatResponse.builder().id(1L).row(1).number(1).seatType(SeatType.STANDARD).build();
+		vipSeatDto = SeatResponse.builder().id(2L).row(1).number(2).seatType(SeatType.VIP).build();
 	}
 
 	@Test
@@ -57,7 +57,7 @@ class SeatServiceTest {
 		when(seatRepository.findById(1L)).thenReturn(Optional.of(standardSeat));
 		when(seatMapper.toDto(standardSeat)).thenReturn(standardSeatDto);
 
-		SeatDto result = seatService.getSeatById(1L);
+		SeatResponse result = seatService.getSeatById(1L);
 
 		assertNotNull(result);
 		assertEquals(1L, result.getId());
@@ -80,7 +80,7 @@ class SeatServiceTest {
 		when(seatRepository.save(standardSeat)).thenReturn(vipSeat);
 		when(seatMapper.toDto(vipSeat)).thenReturn(vipSeatDto);
 
-		SeatDto result = seatService.updateSeatType(1L, SeatType.VIP);
+		SeatResponse result = seatService.updateSeatType(1L, SeatType.VIP);
 
 		assertNotNull(result);
 		assertEquals(SeatType.VIP, result.getSeatType());
@@ -102,12 +102,12 @@ class SeatServiceTest {
 	@Test
 	void getSeatsByHall_ShouldReturnListOfSeatDtos() {
 		List<Seat> seats = Arrays.asList(standardSeat, vipSeat);
-		List<SeatDto> seatDtos = Arrays.asList(standardSeatDto, vipSeatDto);
+		List<SeatResponse> seatDtos = Arrays.asList(standardSeatDto, vipSeatDto);
 
 		when(seatRepository.findByHallId(1L)).thenReturn(seats);
 		when(seatMapper.toDtoList(seats)).thenReturn(seatDtos);
 
-		List<SeatDto> result = seatService.getSeatsByHall(1L);
+		List<SeatResponse> result = seatService.getSeatsByHall(1L);
 
 		assertNotNull(result);
 		assertEquals(2, result.size());
@@ -120,7 +120,7 @@ class SeatServiceTest {
 		when(seatRepository.findByHallIdAndRowAndNumber(1L, 1, 1)).thenReturn(Optional.of(standardSeat));
 		when(seatMapper.toDto(standardSeat)).thenReturn(standardSeatDto);
 
-		SeatDto result = seatService.getSeatByPosition(1L, 1, 1);
+		SeatResponse result = seatService.getSeatByPosition(1L, 1, 1);
 
 		assertNotNull(result);
 		assertEquals(1L, result.getId());
@@ -170,12 +170,12 @@ class SeatServiceTest {
 	@Test
 	void getSeatsByType_ShouldReturnFilteredSeatDtos() {
 		List<Seat> vipSeats = Arrays.asList(vipSeat);
-		List<SeatDto> vipSeatDtos = Arrays.asList(vipSeatDto);
+		List<SeatResponse> vipSeatDtos = Arrays.asList(vipSeatDto);
 
 		when(seatRepository.findByHallIdAndSeatType(1L, SeatType.VIP)).thenReturn(vipSeats);
 		when(seatMapper.toDtoList(vipSeats)).thenReturn(vipSeatDtos);
 
-		List<SeatDto> result = seatService.getSeatsByType(1L, SeatType.VIP);
+		List<SeatResponse> result = seatService.getSeatsByType(1L, SeatType.VIP);
 
 		assertNotNull(result);
 		assertEquals(1, result.size());

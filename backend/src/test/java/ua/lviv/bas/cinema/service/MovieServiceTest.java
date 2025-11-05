@@ -23,10 +23,10 @@ import ua.lviv.bas.cinema.domain.Person;
 import ua.lviv.bas.cinema.domain.enums.AgeRating;
 import ua.lviv.bas.cinema.domain.enums.MovieStatus;
 import ua.lviv.bas.cinema.domain.enums.PersonRole;
-import ua.lviv.bas.cinema.dto.movie.MovieCreateRequest;
-import ua.lviv.bas.cinema.dto.movie.MovieDto;
-import ua.lviv.bas.cinema.dto.movie.MovieResponse;
-import ua.lviv.bas.cinema.dto.movie.MovieUpdateRequest;
+import ua.lviv.bas.cinema.dto.movie.request.MovieCreateRequest;
+import ua.lviv.bas.cinema.dto.movie.request.MovieUpdateRequest;
+import ua.lviv.bas.cinema.dto.movie.response.MovieDetailResponse;
+import ua.lviv.bas.cinema.dto.movie.response.MovieCardResponse;
 import ua.lviv.bas.cinema.mapper.MovieMapper;
 import ua.lviv.bas.cinema.repository.GenreRepository;
 import ua.lviv.bas.cinema.repository.MovieRepository;
@@ -49,8 +49,8 @@ class MovieServiceTest {
 	private MovieService movieService;
 
 	private Movie movie;
-	private MovieDto movieDto;
-	private MovieResponse movieResponse;
+	private MovieDetailResponse movieDto;
+	private MovieCardResponse movieResponse;
 	private MovieCreateRequest createRequest;
 	private MovieUpdateRequest updateRequest;
 	private Genre genre;
@@ -72,14 +72,14 @@ class MovieServiceTest {
 				.directors(new HashSet<>(List.of(director))).screenwriters(new HashSet<>(List.of(screenwriter)))
 				.genres(new HashSet<>(List.of(genre))).build();
 
-		movieDto = MovieDto.builder().id(1L).title("Test Movie").slug("test-movie")
+		movieDto = MovieDetailResponse.builder().id(1L).title("Test Movie").slug("test-movie")
 				.trailerUrl("https://example.com/trailer").description("Test Description").durationMinutes(120)
 				.releaseDate(LocalDate.now().plusDays(1)).endShowingDate(LocalDate.now().plusDays(30))
 				.status(MovieStatus.UPCOMING).ageRating(AgeRating.PEGI_12).posterFileName("poster.jpg")
 				.actorIds(List.of(1L)).directorIds(List.of(2L)).screenwriterIds(List.of(3L)).genreIds(List.of(1L))
 				.build();
 
-		movieResponse = MovieResponse.builder().id(1L).title("Test Movie").slug("test-movie").durationMinutes(120)
+		movieResponse = MovieCardResponse.builder().id(1L).title("Test Movie").slug("test-movie").durationMinutes(120)
 				.ageRating(AgeRating.PEGI_12).releaseDate(LocalDate.now().plusDays(1)).status(MovieStatus.UPCOMING)
 				.currentlyShowing(false).build();
 
@@ -110,7 +110,7 @@ class MovieServiceTest {
 		when(movieRepository.save(movie)).thenReturn(movie);
 		when(movieMapper.toDto(movie)).thenReturn(movieDto);
 
-		MovieDto result = movieService.create(createRequest);
+		MovieDetailResponse result = movieService.create(createRequest);
 
 		assertNotNull(result);
 		assertEquals(1L, result.getId());
@@ -123,7 +123,7 @@ class MovieServiceTest {
 		when(movieRepository.findById(1L)).thenReturn(Optional.of(movie));
 		when(movieMapper.toDto(movie)).thenReturn(movieDto);
 
-		MovieDto result = movieService.getById(1L);
+		MovieDetailResponse result = movieService.getById(1L);
 
 		assertNotNull(result);
 		assertEquals(1L, result.getId());
@@ -135,7 +135,7 @@ class MovieServiceTest {
 		when(movieRepository.findBySlug("test-movie")).thenReturn(Optional.of(movie));
 		when(movieMapper.toDto(movie)).thenReturn(movieDto);
 
-		MovieDto result = movieService.getBySlug("test-movie");
+		MovieDetailResponse result = movieService.getBySlug("test-movie");
 
 		assertNotNull(result);
 		assertEquals("test-movie", result.getSlug());
@@ -146,7 +146,7 @@ class MovieServiceTest {
 		when(movieRepository.findAll()).thenReturn(List.of(movie));
 		when(movieMapper.toDto(movie)).thenReturn(movieDto);
 
-		List<MovieDto> result = movieService.getAll();
+		List<MovieDetailResponse> result = movieService.getAll();
 
 		assertNotNull(result);
 		assertEquals(1, result.size());
@@ -161,7 +161,7 @@ class MovieServiceTest {
 		when(movieRepository.findAll()).thenReturn(List.of(movie));
 		when(movieMapper.toResponse(movie)).thenReturn(movieResponse);
 
-		List<MovieResponse> result = movieService.getCurrentlyShowing();
+		List<MovieCardResponse> result = movieService.getCurrentlyShowing();
 
 		assertNotNull(result);
 		assertEquals(1, result.size());
@@ -175,7 +175,7 @@ class MovieServiceTest {
 		when(movieRepository.findAll()).thenReturn(List.of(movie));
 		when(movieMapper.toResponse(movie)).thenReturn(movieResponse);
 
-		List<MovieResponse> result = movieService.getUpcoming();
+		List<MovieCardResponse> result = movieService.getUpcoming();
 
 		assertNotNull(result);
 		assertEquals(1, result.size());
@@ -189,7 +189,7 @@ class MovieServiceTest {
 		when(movieRepository.findAll()).thenReturn(List.of(movie));
 		when(movieMapper.toResponse(movie)).thenReturn(movieResponse);
 
-		List<MovieResponse> result = movieService.getArchived();
+		List<MovieCardResponse> result = movieService.getArchived();
 
 		assertNotNull(result);
 		assertEquals(1, result.size());
@@ -216,7 +216,7 @@ class MovieServiceTest {
 		when(movieRepository.save(movie)).thenReturn(movie);
 		when(movieMapper.toDto(movie)).thenReturn(movieDto);
 
-		MovieDto result = movieService.update(1L, updateRequest);
+		MovieDetailResponse result = movieService.update(1L, updateRequest);
 
 		assertNotNull(result);
 		verify(movieRepository).save(movie);

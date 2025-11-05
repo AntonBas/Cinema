@@ -16,11 +16,11 @@ import org.springframework.web.bind.annotation.RestController;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import ua.lviv.bas.cinema.dto.cinemaHall.CinemaHallDto;
-import ua.lviv.bas.cinema.dto.cinemaHall.CinemaHallRequest;
-import ua.lviv.bas.cinema.dto.cinemaHall.CinemaHallWithSeatsDto;
-import ua.lviv.bas.cinema.dto.cinemaHall.HallLayoutDto;
-import ua.lviv.bas.cinema.dto.cinemaHall.SeatLayoutRequest;
+import ua.lviv.bas.cinema.dto.cinemaHall.request.CinemaHallRequest;
+import ua.lviv.bas.cinema.dto.cinemaHall.request.SeatLayoutRequest;
+import ua.lviv.bas.cinema.dto.cinemaHall.response.CinemaHallResponse;
+import ua.lviv.bas.cinema.dto.cinemaHall.response.CinemaHallWithSeatsResponse;
+import ua.lviv.bas.cinema.dto.cinemaHall.response.HallLayoutResponse;
 import ua.lviv.bas.cinema.service.CinemaHallService;
 
 @Slf4j
@@ -32,24 +32,24 @@ public class CinemaHallController {
 	private final CinemaHallService cinemaHallService;
 
 	@PostMapping
-	public ResponseEntity<CinemaHallDto> createHall(@Valid @RequestBody CinemaHallRequest request) {
+	public ResponseEntity<CinemaHallResponse> createHall(@Valid @RequestBody CinemaHallRequest request) {
 		log.info("POST /api/cinema-halls - Creating new cinema hall: {}", request.getName());
-		CinemaHallDto created = cinemaHallService.createHall(request);
+		CinemaHallResponse created = cinemaHallService.createHall(request);
 		return ResponseEntity.status(HttpStatus.CREATED).body(created);
 	}
 
 	@GetMapping("/{id}")
-	public ResponseEntity<CinemaHallDto> getHallById(@PathVariable Long id) {
+	public ResponseEntity<CinemaHallResponse> getHallById(@PathVariable Long id) {
 		log.info("GET /api/cinema-halls/{} - Retrieving cinema hall", id);
-		CinemaHallDto hall = cinemaHallService.getHallById(id);
+		CinemaHallResponse hall = cinemaHallService.getHallById(id);
 		return ResponseEntity.ok(hall);
 	}
 
 	@PutMapping("/{id}")
-	public ResponseEntity<CinemaHallDto> updateHall(@PathVariable Long id,
+	public ResponseEntity<CinemaHallResponse> updateHall(@PathVariable Long id,
 			@Valid @RequestBody CinemaHallRequest request) {
 		log.info("PUT /api/cinema-halls/{} - Updating cinema hall", id);
-		CinemaHallDto updated = cinemaHallService.updateHall(id, request);
+		CinemaHallResponse updated = cinemaHallService.updateHall(id, request);
 		return ResponseEntity.ok(updated);
 	}
 
@@ -61,38 +61,38 @@ public class CinemaHallController {
 	}
 
 	@GetMapping
-	public ResponseEntity<List<CinemaHallDto>> getAllHalls() {
+	public ResponseEntity<List<CinemaHallResponse>> getAllHalls() {
 		log.info("GET /api/cinema-halls - Retrieving all cinema halls");
-		List<CinemaHallDto> halls = cinemaHallService.getAllHalls();
+		List<CinemaHallResponse> halls = cinemaHallService.getAllHalls();
 		return ResponseEntity.ok(halls);
 	}
 
 	@PostMapping("/{id}/seats")
-	public ResponseEntity<CinemaHallWithSeatsDto> generateSeats(@PathVariable Long id,
+	public ResponseEntity<CinemaHallWithSeatsResponse> generateSeats(@PathVariable Long id,
 			@Valid @RequestBody SeatLayoutRequest request) {
 		log.info("POST /api/cinema-halls/{}/seats - Generating seats layout", id);
-		CinemaHallWithSeatsDto hallWithSeats = cinemaHallService.generateSeats(id, request);
+		CinemaHallWithSeatsResponse hallWithSeats = cinemaHallService.generateSeats(id, request);
 		return ResponseEntity.ok(hallWithSeats);
 	}
 
 	@GetMapping("/{id}/with-seats")
-	public ResponseEntity<CinemaHallWithSeatsDto> getHallWithSeats(@PathVariable Long id) {
+	public ResponseEntity<CinemaHallWithSeatsResponse> getHallWithSeats(@PathVariable Long id) {
 		log.info("GET /api/cinema-halls/{}/with-seats - Retrieving hall with seats", id);
-		CinemaHallWithSeatsDto hallWithSeats = cinemaHallService.getHallWithSeats(id);
+		CinemaHallWithSeatsResponse hallWithSeats = cinemaHallService.getHallWithSeats(id);
 		return ResponseEntity.ok(hallWithSeats);
 	}
 
 	@GetMapping("/{id}/layout")
-	public ResponseEntity<HallLayoutDto> getHallLayout(@PathVariable Long id) {
+	public ResponseEntity<HallLayoutResponse> getHallLayout(@PathVariable Long id) {
 		log.info("GET /api/cinema-halls/{}/layout - Retrieving hall layout", id);
-		HallLayoutDto layout = cinemaHallService.getHallLayout(id);
+		HallLayoutResponse layout = cinemaHallService.getHallLayout(id);
 		return ResponseEntity.ok(layout);
 	}
 
 	@GetMapping("/search")
-	public ResponseEntity<List<CinemaHallDto>> searchHalls(@RequestParam(required = false) String name) {
+	public ResponseEntity<List<CinemaHallResponse>> searchHalls(@RequestParam(required = false) String name) {
 		log.info("GET /api/cinema-halls/search?name={} - Searching cinema halls", name);
-		List<CinemaHallDto> halls = cinemaHallService.searchHalls(name);
+		List<CinemaHallResponse> halls = cinemaHallService.searchHalls(name);
 		return ResponseEntity.ok(halls);
 	}
 }

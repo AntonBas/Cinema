@@ -22,10 +22,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import jakarta.persistence.EntityNotFoundException;
 import ua.lviv.bas.cinema.domain.CinemaHall;
 import ua.lviv.bas.cinema.domain.enums.SeatType;
-import ua.lviv.bas.cinema.dto.cinemaHall.CinemaHallDto;
-import ua.lviv.bas.cinema.dto.cinemaHall.CinemaHallRequest;
-import ua.lviv.bas.cinema.dto.cinemaHall.CinemaHallWithSeatsDto;
-import ua.lviv.bas.cinema.dto.cinemaHall.SeatLayoutRequest;
+import ua.lviv.bas.cinema.dto.cinemaHall.request.CinemaHallRequest;
+import ua.lviv.bas.cinema.dto.cinemaHall.request.SeatLayoutRequest;
+import ua.lviv.bas.cinema.dto.cinemaHall.response.CinemaHallResponse;
+import ua.lviv.bas.cinema.dto.cinemaHall.response.CinemaHallWithSeatsResponse;
 import ua.lviv.bas.cinema.exception.CinemaHallNotFoundException;
 import ua.lviv.bas.cinema.exception.DuplicateEntityException;
 import ua.lviv.bas.cinema.mapper.CinemaHallMapper;
@@ -53,7 +53,7 @@ class CinemaHallServiceTest {
 
 	private CinemaHall cinemaHall;
 	private CinemaHallRequest hallRequest;
-	private CinemaHallDto hallDto;
+	private CinemaHallResponse hallDto;
 	private SeatLayoutRequest seatLayoutRequest;
 
 	@BeforeEach
@@ -62,7 +62,7 @@ class CinemaHallServiceTest {
 
 		hallRequest = CinemaHallRequest.builder().name("Hall A").build();
 
-		hallDto = CinemaHallDto.builder().id(1L).name("Hall A").capacity(0).build();
+		hallDto = CinemaHallResponse.builder().id(1L).name("Hall A").capacity(0).build();
 
 		seatLayoutRequest = SeatLayoutRequest.builder().rows(5).seatsPerRow(10).defaultSeatType(SeatType.STANDARD)
 				.build();
@@ -74,7 +74,7 @@ class CinemaHallServiceTest {
 		when(hallRepository.save(any(CinemaHall.class))).thenReturn(cinemaHall);
 		when(hallMapper.toDto(cinemaHall)).thenReturn(hallDto);
 
-		CinemaHallDto result = cinemaHallService.createHall(hallRequest);
+		CinemaHallResponse result = cinemaHallService.createHall(hallRequest);
 
 		assertNotNull(result);
 		assertEquals(1L, result.getId());
@@ -97,7 +97,7 @@ class CinemaHallServiceTest {
 		when(hallRepository.findById(1L)).thenReturn(Optional.of(cinemaHall));
 		when(hallMapper.toDto(cinemaHall)).thenReturn(hallDto);
 
-		CinemaHallDto result = cinemaHallService.getHallById(1L);
+		CinemaHallResponse result = cinemaHallService.getHallById(1L);
 
 		assertNotNull(result);
 		assertEquals(1L, result.getId());
@@ -117,14 +117,14 @@ class CinemaHallServiceTest {
 	@Test
 	void updateHall_ShouldUpdateAndReturnHallDto_WhenHallExists() {
 		CinemaHallRequest updateRequest = CinemaHallRequest.builder().name("Updated Hall").build();
-		CinemaHallDto updatedDto = CinemaHallDto.builder().id(1L).name("Updated Hall").capacity(0).build();
+		CinemaHallResponse updatedDto = CinemaHallResponse.builder().id(1L).name("Updated Hall").capacity(0).build();
 
 		when(hallRepository.findById(1L)).thenReturn(Optional.of(cinemaHall));
 		when(hallRepository.existsByName("Updated Hall")).thenReturn(false);
 		when(hallRepository.save(cinemaHall)).thenReturn(cinemaHall);
 		when(hallMapper.toDto(cinemaHall)).thenReturn(updatedDto);
 
-		CinemaHallDto result = cinemaHallService.updateHall(1L, updateRequest);
+		CinemaHallResponse result = cinemaHallService.updateHall(1L, updateRequest);
 
 		assertNotNull(result);
 		assertEquals("Updated Hall", result.getName());
@@ -178,12 +178,12 @@ class CinemaHallServiceTest {
 	@Test
 	void getAllHalls_ShouldReturnListOfHallDtos() {
 		List<CinemaHall> halls = Arrays.asList(cinemaHall);
-		List<CinemaHallDto> hallDtos = Arrays.asList(hallDto);
+		List<CinemaHallResponse> hallDtos = Arrays.asList(hallDto);
 
 		when(hallRepository.findAll()).thenReturn(halls);
 		when(hallMapper.toDtoList(halls)).thenReturn(hallDtos);
 
-		List<CinemaHallDto> result = cinemaHallService.getAllHalls();
+		List<CinemaHallResponse> result = cinemaHallService.getAllHalls();
 
 		assertNotNull(result);
 		assertEquals(1, result.size());
@@ -196,7 +196,7 @@ class CinemaHallServiceTest {
 		when(hallRepository.findById(1L)).thenReturn(Optional.of(cinemaHall));
 		when(hallRepository.save(cinemaHall)).thenReturn(cinemaHall);
 
-		CinemaHallWithSeatsDto result = cinemaHallService.generateSeats(1L, seatLayoutRequest);
+		CinemaHallWithSeatsResponse result = cinemaHallService.generateSeats(1L, seatLayoutRequest);
 
 		assertNotNull(result);
 		verify(hallRepository).findById(1L);
@@ -208,7 +208,7 @@ class CinemaHallServiceTest {
 	void getHallWithSeats_ShouldReturnHallWithSeatsDto_WhenHallExists() {
 		when(hallRepository.findByIdWithSeats(1L)).thenReturn(Optional.of(cinemaHall));
 
-		CinemaHallWithSeatsDto result = cinemaHallService.getHallWithSeats(1L);
+		CinemaHallWithSeatsResponse result = cinemaHallService.getHallWithSeats(1L);
 
 		assertNotNull(result);
 		verify(hallRepository).findByIdWithSeats(1L);
@@ -217,12 +217,12 @@ class CinemaHallServiceTest {
 	@Test
 	void searchHalls_ShouldReturnFilteredHalls_WhenNameProvided() {
 		List<CinemaHall> halls = Arrays.asList(cinemaHall);
-		List<CinemaHallDto> hallDtos = Arrays.asList(hallDto);
+		List<CinemaHallResponse> hallDtos = Arrays.asList(hallDto);
 
 		when(hallRepository.findByNameContainingIgnoreCase("Hall")).thenReturn(halls);
 		when(hallMapper.toDtoList(halls)).thenReturn(hallDtos);
 
-		List<CinemaHallDto> result = cinemaHallService.searchHalls("Hall");
+		List<CinemaHallResponse> result = cinemaHallService.searchHalls("Hall");
 
 		assertNotNull(result);
 		assertEquals(1, result.size());
@@ -233,12 +233,12 @@ class CinemaHallServiceTest {
 	@Test
 	void searchHalls_ShouldReturnAllHalls_WhenNameIsEmpty() {
 		List<CinemaHall> halls = Arrays.asList(cinemaHall);
-		List<CinemaHallDto> hallDtos = Arrays.asList(hallDto);
+		List<CinemaHallResponse> hallDtos = Arrays.asList(hallDto);
 
 		when(hallRepository.findAll()).thenReturn(halls);
 		when(hallMapper.toDtoList(halls)).thenReturn(hallDtos);
 
-		List<CinemaHallDto> result = cinemaHallService.searchHalls("");
+		List<CinemaHallResponse> result = cinemaHallService.searchHalls("");
 
 		assertNotNull(result);
 		assertEquals(1, result.size());

@@ -22,10 +22,10 @@ import org.springframework.data.domain.Pageable;
 
 import ua.lviv.bas.cinema.domain.Person;
 import ua.lviv.bas.cinema.domain.enums.PersonRole;
-import ua.lviv.bas.cinema.dto.movie.PersonDto;
-import ua.lviv.bas.cinema.dto.movie.PersonRequest;
+import ua.lviv.bas.cinema.dto.movie.request.PersonRequest;
+import ua.lviv.bas.cinema.dto.movie.request.QuickCreatePersonRequest;
+import ua.lviv.bas.cinema.dto.movie.response.PersonResponse;
 import ua.lviv.bas.cinema.dto.shared.PageResponse;
-import ua.lviv.bas.cinema.dto.shared.QuickCreatePersonDto;
 import ua.lviv.bas.cinema.exception.DuplicateEntityException;
 import ua.lviv.bas.cinema.exception.PersonNotFoundException;
 import ua.lviv.bas.cinema.mapper.PersonMapper;
@@ -48,14 +48,14 @@ class PersonServiceTest {
 		PersonRequest request = new PersonRequest("Anton Bas", PersonRole.ACTOR);
 		Person person = Person.builder().name("Anton Bas").role(PersonRole.ACTOR).build();
 		Person savedPerson = Person.builder().id(1L).name("Anton Bas").role(PersonRole.ACTOR).build();
-		PersonDto dto = PersonDto.builder().id(1L).name("Anton Bas").role(PersonRole.ACTOR).build();
+		PersonResponse dto = PersonResponse.builder().id(1L).name("Anton Bas").role(PersonRole.ACTOR).build();
 
 		when(personRepository.existsByNameAndRole("Anton Bas", PersonRole.ACTOR)).thenReturn(false);
 		when(personMapper.toEntity(request)).thenReturn(person);
 		when(personRepository.save(person)).thenReturn(savedPerson);
 		when(personMapper.toDto(savedPerson)).thenReturn(dto);
 
-		PersonDto result = personService.createPerson(request);
+		PersonResponse result = personService.createPerson(request);
 
 		assertThat(result.getId()).isEqualTo(1L);
 		assertThat(result.getName()).isEqualTo("Anton Bas");
@@ -74,12 +74,12 @@ class PersonServiceTest {
 	@Test
 	void getPersonById_WhenExists_ShouldReturnDto() {
 		Person person = Person.builder().id(1L).name("Anton Bas").build();
-		PersonDto dto = PersonDto.builder().id(1L).name("Anton Bas").build();
+		PersonResponse dto = PersonResponse.builder().id(1L).name("Anton Bas").build();
 
 		when(personRepository.findById(1L)).thenReturn(Optional.of(person));
 		when(personMapper.toDto(person)).thenReturn(dto);
 
-		PersonDto result = personService.getPersonById(1L);
+		PersonResponse result = personService.getPersonById(1L);
 
 		assertThat(result.getId()).isEqualTo(1L);
 		assertThat(result.getName()).isEqualTo("Anton Bas");
@@ -98,7 +98,7 @@ class PersonServiceTest {
 		PersonRequest request = new PersonRequest("Updated Name", PersonRole.DIRECTOR);
 		Person existing = Person.builder().id(1L).name("Old Name").role(PersonRole.ACTOR).build();
 		Person updated = Person.builder().id(1L).name("Updated Name").role(PersonRole.DIRECTOR).build();
-		PersonDto dto = PersonDto.builder().id(1L).name("Updated Name").role(PersonRole.DIRECTOR).build();
+		PersonResponse dto = PersonResponse.builder().id(1L).name("Updated Name").role(PersonRole.DIRECTOR).build();
 
 		when(personRepository.findById(1L)).thenReturn(Optional.of(existing));
 		doAnswer(invocation -> {
@@ -111,7 +111,7 @@ class PersonServiceTest {
 		when(personRepository.save(existing)).thenReturn(updated);
 		when(personMapper.toDto(updated)).thenReturn(dto);
 
-		PersonDto result = personService.updatePerson(1L, request);
+		PersonResponse result = personService.updatePerson(1L, request);
 
 		assertThat(result.getName()).isEqualTo("Updated Name");
 		assertThat(result.getRole()).isEqualTo(PersonRole.DIRECTOR);
@@ -144,17 +144,17 @@ class PersonServiceTest {
 
 	@Test
 	void quickCreate_ShouldReturnSavedDto() {
-		QuickCreatePersonDto dto = new QuickCreatePersonDto("Anton Bas", PersonRole.ACTOR);
+		QuickCreatePersonRequest dto = new QuickCreatePersonRequest("Anton Bas", PersonRole.ACTOR);
 		Person person = Person.builder().name("Anton Bas").role(PersonRole.ACTOR).build();
 		Person saved = Person.builder().id(1L).name("Anton Bas").role(PersonRole.ACTOR).build();
-		PersonDto mappedDto = PersonDto.builder().id(1L).name("Anton Bas").role(PersonRole.ACTOR).build();
+		PersonResponse mappedDto = PersonResponse.builder().id(1L).name("Anton Bas").role(PersonRole.ACTOR).build();
 
 		when(personRepository.existsByNameAndRole("Anton Bas", PersonRole.ACTOR)).thenReturn(false);
 		when(personMapper.toEntity(dto)).thenReturn(person);
 		when(personRepository.save(person)).thenReturn(saved);
 		when(personMapper.toDto(saved)).thenReturn(mappedDto);
 
-		PersonDto result = personService.quickCreate(dto);
+		PersonResponse result = personService.quickCreate(dto);
 
 		assertThat(result.getId()).isEqualTo(1L);
 		assertThat(result.getName()).isEqualTo("Anton Bas");
@@ -162,7 +162,7 @@ class PersonServiceTest {
 
 	@Test
 	void quickCreate_WhenDuplicate_ShouldThrowException() {
-		QuickCreatePersonDto dto = new QuickCreatePersonDto("Anton Bas", PersonRole.ACTOR);
+		QuickCreatePersonRequest dto = new QuickCreatePersonRequest("Anton Bas", PersonRole.ACTOR);
 		when(personRepository.existsByNameAndRole("Anton Bas", PersonRole.ACTOR)).thenReturn(true);
 
 		assertThatThrownBy(() -> personService.quickCreate(dto)).isInstanceOf(DuplicateEntityException.class);
@@ -172,14 +172,14 @@ class PersonServiceTest {
 	void searchPersons_ShouldReturnPagedResponse() {
 		Person person = Person.builder().id(1L).name("Anton Bas").role(PersonRole.ACTOR).build();
 
-		PersonDto dto = PersonDto.builder().id(1L).name("Anton Bas").role(PersonRole.ACTOR).build();
+		PersonResponse dto = PersonResponse.builder().id(1L).name("Anton Bas").role(PersonRole.ACTOR).build();
 
 		Page<Person> page = new PageImpl<>(List.of(person));
 
 		when(personRepository.searchPersons(eq("Anton"), eq(PersonRole.ACTOR), any(Pageable.class))).thenReturn(page);
 		when(personMapper.toDto(person)).thenReturn(dto);
 
-		PageResponse<PersonDto> result = personService.searchPersons("Anton", PersonRole.ACTOR, 0, 10);
+		PageResponse<PersonResponse> result = personService.searchPersons("Anton", PersonRole.ACTOR, 0, 10);
 
 		assertThat(result.getContent()).hasSize(1);
 		assertThat(result.getContent().get(0).getName()).isEqualTo("Anton Bas");

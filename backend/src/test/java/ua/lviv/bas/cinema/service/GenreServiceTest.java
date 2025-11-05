@@ -19,8 +19,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 
 import ua.lviv.bas.cinema.domain.Genre;
-import ua.lviv.bas.cinema.dto.movie.GenreDto;
-import ua.lviv.bas.cinema.dto.movie.GenreRequest;
+import ua.lviv.bas.cinema.dto.movie.request.GenreRequest;
+import ua.lviv.bas.cinema.dto.movie.response.GenreResponse;
 import ua.lviv.bas.cinema.exception.GenreNotFoundException;
 import ua.lviv.bas.cinema.mapper.GenreMapper;
 import ua.lviv.bas.cinema.repository.GenreRepository;
@@ -42,13 +42,13 @@ class GenreServiceTest {
 		GenreRequest request = GenreRequest.builder().name("Action").build();
 		Genre genre = Genre.builder().name("Action").build();
 		Genre savedGenre = Genre.builder().id(1L).name("Action").build();
-		GenreDto responseDto = GenreDto.builder().id(1L).name("Action").build();
+		GenreResponse responseDto = GenreResponse.builder().id(1L).name("Action").build();
 
 		when(genreMapper.toEntity(request)).thenReturn(genre);
 		when(genreRepository.save(genre)).thenReturn(savedGenre);
 		when(genreMapper.toDto(savedGenre)).thenReturn(responseDto);
 
-		GenreDto result = genreService.createGenre(request);
+		GenreResponse result = genreService.createGenre(request);
 
 		assertThat(result.getId()).isEqualTo(1L);
 		assertThat(result.getName()).isEqualTo("Action");
@@ -58,12 +58,12 @@ class GenreServiceTest {
 	@Test
 	void getGenreById_WhenExists_ShouldReturnDto() {
 		Genre genre = Genre.builder().id(1L).name("Action").build();
-		GenreDto dto = GenreDto.builder().id(1L).name("Action").build();
+		GenreResponse dto = GenreResponse.builder().id(1L).name("Action").build();
 
 		when(genreRepository.findById(1L)).thenReturn(Optional.of(genre));
 		when(genreMapper.toDto(genre)).thenReturn(dto);
 
-		GenreDto result = genreService.getGenreById(1L);
+		GenreResponse result = genreService.getGenreById(1L);
 
 		assertThat(result.getId()).isEqualTo(1L);
 		assertThat(result.getName()).isEqualTo("Action");
@@ -82,13 +82,13 @@ class GenreServiceTest {
 		GenreRequest request = GenreRequest.builder().name("Updated Action").build();
 		Genre existing = Genre.builder().id(1L).name("Action").build();
 		Genre updated = Genre.builder().id(1L).name("Updated Action").build();
-		GenreDto responseDto = GenreDto.builder().id(1L).name("Updated Action").build();
+		GenreResponse responseDto = GenreResponse.builder().id(1L).name("Updated Action").build();
 
 		when(genreRepository.findById(1L)).thenReturn(Optional.of(existing));
 		when(genreRepository.save(existing)).thenReturn(updated);
 		when(genreMapper.toDto(updated)).thenReturn(responseDto);
 
-		GenreDto result = genreService.updateGenre(1L, request);
+		GenreResponse result = genreService.updateGenre(1L, request);
 
 		assertThat(result.getName()).isEqualTo("Updated Action");
 		verify(genreRepository).save(existing);
@@ -125,12 +125,12 @@ class GenreServiceTest {
 	@Test
 	void getAllGenres_ShouldReturnList() {
 		Genre genre = Genre.builder().id(1L).name("Action").build();
-		GenreDto dto = GenreDto.builder().id(1L).name("Action").build();
+		GenreResponse dto = GenreResponse.builder().id(1L).name("Action").build();
 
 		when(genreRepository.findAll()).thenReturn(List.of(genre));
 		when(genreMapper.toDto(genre)).thenReturn(dto);
 
-		List<GenreDto> result = genreService.getAllGenres();
+		List<GenreResponse> result = genreService.getAllGenres();
 
 		assertThat(result).hasSize(1);
 		assertThat(result.get(0).getName()).isEqualTo("Action");
@@ -139,7 +139,7 @@ class GenreServiceTest {
 	@Test
 	void searchGenres_WithQuery_ShouldReturnFilteredPage() {
 		Genre genre = Genre.builder().id(1L).name("Action").build();
-		GenreDto dto = GenreDto.builder().id(1L).name("Action").build();
+		GenreResponse dto = GenreResponse.builder().id(1L).name("Action").build();
 
 		Page<Genre> page = new org.springframework.data.domain.PageImpl<>(List.of(genre));
 
@@ -161,7 +161,7 @@ class GenreServiceTest {
 	@Test
 	void searchGenres_WithoutQuery_ShouldReturnAll() {
 		Genre genre = Genre.builder().id(1L).name("Comedy").build();
-		GenreDto dto = GenreDto.builder().id(1L).name("Comedy").build();
+		GenreResponse dto = GenreResponse.builder().id(1L).name("Comedy").build();
 
 		Page<Genre> page = new org.springframework.data.domain.PageImpl<>(List.of(genre));
 

@@ -14,8 +14,8 @@ import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.CinemaHall;
 import ua.lviv.bas.cinema.domain.Movie;
 import ua.lviv.bas.cinema.domain.Session;
-import ua.lviv.bas.cinema.dto.cinemaHall.SessionDto;
-import ua.lviv.bas.cinema.dto.cinemaHall.SessionRequest;
+import ua.lviv.bas.cinema.dto.session.request.SessionRequest;
+import ua.lviv.bas.cinema.dto.session.response.SessionResponse;
 import ua.lviv.bas.cinema.exception.ConflictException;
 import ua.lviv.bas.cinema.exception.SessionNotFoundException;
 import ua.lviv.bas.cinema.mapper.SessionMapper;
@@ -32,7 +32,7 @@ public class SessionService {
 	private final CinemaHallService cinemaHallService;
 
 	@Transactional
-	public SessionDto createSession(SessionRequest request) {
+	public SessionResponse createSession(SessionRequest request) {
 		log.info("Creating session: movieId={}, hallId={}, startTime={}", request.getMovieId(), request.getHallId(),
 				request.getStartTime());
 
@@ -58,14 +58,14 @@ public class SessionService {
 	}
 
 	@Transactional(readOnly = true)
-	public SessionDto getSessionById(Long id) {
+	public SessionResponse getSessionById(Long id) {
 		log.debug("Retrieving session by id: {}", id);
 		Session session = sessionRepository.findById(id).orElseThrow(() -> new SessionNotFoundException(id));
 		return sessionMapper.toDto(session);
 	}
 
 	@Transactional
-	public SessionDto updateSession(Long id, SessionRequest request) {
+	public SessionResponse updateSession(Long id, SessionRequest request) {
 		log.info("Updating session: id={}", id);
 
 		Session session = sessionRepository.findById(id).orElseThrow(() -> new SessionNotFoundException(id));
@@ -105,7 +105,7 @@ public class SessionService {
 	}
 
 	@Transactional(readOnly = true)
-	public Page<SessionDto> getAllSessions(Pageable pageable, String search) {
+	public Page<SessionResponse> getAllSessions(Pageable pageable, String search) {
 		log.debug("Retrieving all sessions with pagination");
 		Page<Session> sessions;
 
@@ -119,7 +119,7 @@ public class SessionService {
 	}
 
 	@Transactional(readOnly = true)
-	public Page<SessionDto> getSessionsByDate(LocalDate date, Pageable pageable) {
+	public Page<SessionResponse> getSessionsByDate(LocalDate date, Pageable pageable) {
 		log.debug("Retrieving sessions for date: {} with pagination", date);
 		LocalDateTime startOfDay = date.atStartOfDay();
 		LocalDateTime endOfDay = date.atTime(23, 59, 59);
@@ -129,28 +129,28 @@ public class SessionService {
 	}
 
 	@Transactional(readOnly = true)
-	public Page<SessionDto> getSessionsByHall(Long hallId, Pageable pageable) {
+	public Page<SessionResponse> getSessionsByHall(Long hallId, Pageable pageable) {
 		log.debug("Retrieving sessions for hall: {} with pagination", hallId);
 		Page<Session> sessions = sessionRepository.findByHallId(hallId, pageable);
 		return sessions.map(sessionMapper::toDto);
 	}
 
 	@Transactional(readOnly = true)
-	public Page<SessionDto> getSessionsByMovie(Long movieId, Pageable pageable) {
+	public Page<SessionResponse> getSessionsByMovie(Long movieId, Pageable pageable) {
 		log.debug("Retrieving sessions for movie: {} with pagination", movieId);
 		Page<Session> sessions = sessionRepository.findByMovieId(movieId, pageable);
 		return sessions.map(sessionMapper::toDto);
 	}
 
 	@Transactional(readOnly = true)
-	public Page<SessionDto> getAvailableSessions(Pageable pageable) {
+	public Page<SessionResponse> getAvailableSessions(Pageable pageable) {
 		log.debug("Retrieving available sessions with pagination");
 		Page<Session> sessions = sessionRepository.findByStartTimeAfter(LocalDateTime.now(), pageable);
 		return sessions.map(sessionMapper::toDto);
 	}
 
 	@Transactional(readOnly = true)
-	public Page<SessionDto> getUpcomingSessions(int days, Pageable pageable) {
+	public Page<SessionResponse> getUpcomingSessions(int days, Pageable pageable) {
 		log.debug("Retrieving upcoming sessions for next {} days with pagination", days);
 		LocalDateTime start = LocalDateTime.now();
 		LocalDateTime end = start.plusDays(days);
@@ -160,7 +160,7 @@ public class SessionService {
 	}
 
 	@Transactional(readOnly = true)
-	public Page<SessionDto> getTodaySessions(Pageable pageable) {
+	public Page<SessionResponse> getTodaySessions(Pageable pageable) {
 		log.debug("Retrieving today's sessions with pagination");
 		return getSessionsByDate(LocalDate.now(), pageable);
 	}

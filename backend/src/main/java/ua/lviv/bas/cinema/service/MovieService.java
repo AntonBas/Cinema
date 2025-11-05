@@ -27,10 +27,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.Movie;
 import ua.lviv.bas.cinema.domain.enums.MovieStatus;
-import ua.lviv.bas.cinema.dto.movie.MovieCreateRequest;
-import ua.lviv.bas.cinema.dto.movie.MovieDto;
-import ua.lviv.bas.cinema.dto.movie.MovieResponse;
-import ua.lviv.bas.cinema.dto.movie.MovieUpdateRequest;
+import ua.lviv.bas.cinema.dto.movie.request.MovieCreateRequest;
+import ua.lviv.bas.cinema.dto.movie.request.MovieUpdateRequest;
+import ua.lviv.bas.cinema.dto.movie.response.MovieDetailResponse;
+import ua.lviv.bas.cinema.dto.movie.response.MovieCardResponse;
 import ua.lviv.bas.cinema.exception.DuplicateEntityException;
 import ua.lviv.bas.cinema.exception.MovieNotFoundException;
 import ua.lviv.bas.cinema.mapper.MovieMapper;
@@ -53,7 +53,7 @@ public class MovieService {
 	private String uploadDir;
 
 	@Transactional
-	public MovieDto create(MovieCreateRequest request) {
+	public MovieDetailResponse create(MovieCreateRequest request) {
 		log.info("Creating movie: {}", request.getTitle());
 
 		validateCreateRequest(request);
@@ -73,7 +73,7 @@ public class MovieService {
 	}
 
 	@Transactional
-	public MovieDto update(Long id, MovieUpdateRequest request) {
+	public MovieDetailResponse update(Long id, MovieUpdateRequest request) {
 		log.info("Updating movie with id: {}", id);
 
 		Movie existing = findMovieById(id);
@@ -107,20 +107,20 @@ public class MovieService {
 	}
 
 	@Transactional(readOnly = true)
-	public MovieDto getById(Long id) {
+	public MovieDetailResponse getById(Long id) {
 		Movie movie = findMovieById(id);
 		return enrichWithComputedFields(movie);
 	}
 
 	@Transactional(readOnly = true)
-	public MovieDto getBySlug(String slug) {
+	public MovieDetailResponse getBySlug(String slug) {
 		Movie movie = movieRepository.findBySlug(slug)
 				.orElseThrow(() -> new MovieNotFoundException("Movie not found with slug: " + slug));
 		return enrichWithComputedFields(movie);
 	}
 
 	@Transactional(readOnly = true)
-	public List<MovieDto> getAll() {
+	public List<MovieDetailResponse> getAll() {
 		return movieRepository.findAll().stream().map(this::enrichWithComputedFields).toList();
 	}
 
@@ -131,33 +131,33 @@ public class MovieService {
 	}
 
 	@Transactional(readOnly = true)
-	public Page<MovieDto> getPaginated(Pageable pageable) {
+	public Page<MovieDetailResponse> getPaginated(Pageable pageable) {
 		return movieRepository.findAll(pageable).map(this::enrichWithComputedFields);
 	}
 
 	@Transactional(readOnly = true)
-	public List<MovieResponse> getCurrentlyShowing() {
+	public List<MovieCardResponse> getCurrentlyShowing() {
 		LocalDate today = LocalDate.now();
 		return movieRepository.findAll().stream().filter(movie -> calculateStatus(movie, today) == MovieStatus.CURRENT)
 				.map(movieMapper::toResponse).toList();
 	}
 
 	@Transactional(readOnly = true)
-	public List<MovieResponse> getUpcoming() {
+	public List<MovieCardResponse> getUpcoming() {
 		LocalDate today = LocalDate.now();
 		return movieRepository.findAll().stream().filter(movie -> calculateStatus(movie, today) == MovieStatus.UPCOMING)
 				.map(movieMapper::toResponse).toList();
 	}
 
 	@Transactional(readOnly = true)
-	public List<MovieResponse> getArchived() {
+	public List<MovieCardResponse> getArchived() {
 		LocalDate today = LocalDate.now();
 		return movieRepository.findAll().stream().filter(movie -> calculateStatus(movie, today) == MovieStatus.ARCHIVED)
 				.map(movieMapper::toResponse).toList();
 	}
 
 	@Transactional(readOnly = true)
-	public List<MovieResponse> getMoviesForSessions() {
+	public List<MovieCardResponse> getMoviesForSessions() {
 		LocalDate today = LocalDate.now();
 		return movieRepository.findAll().stream().filter(movie -> {
 			MovieStatus status = calculateStatus(movie, today);
@@ -354,8 +354,8 @@ public class MovieService {
 		}
 	}
 
-	private MovieDto enrichWithComputedFields(Movie movie) {
-		MovieDto dto = movieMapper.toDto(movie);
+	private MovieDetailResponse enrichWithComputedFields(Movie movie) {
+		MovieDetailResponse dto = movieMapper.toDto(movie);
 
 		dto.setGenreIds(movie.getGenres().stream().map(genre -> genre.getId()).collect(Collectors.toList()));
 		dto.setActorIds(movie.getActors().stream().map(person -> person.getId()).collect(Collectors.toList()));

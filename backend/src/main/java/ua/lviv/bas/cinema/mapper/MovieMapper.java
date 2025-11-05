@@ -9,10 +9,10 @@ import org.mapstruct.ReportingPolicy;
 
 import ua.lviv.bas.cinema.domain.Movie;
 import ua.lviv.bas.cinema.domain.enums.MovieStatus;
-import ua.lviv.bas.cinema.dto.movie.MovieCreateRequest;
-import ua.lviv.bas.cinema.dto.movie.MovieDto;
-import ua.lviv.bas.cinema.dto.movie.MovieResponse;
-import ua.lviv.bas.cinema.dto.movie.MovieUpdateRequest;
+import ua.lviv.bas.cinema.dto.movie.request.MovieCreateRequest;
+import ua.lviv.bas.cinema.dto.movie.request.MovieUpdateRequest;
+import ua.lviv.bas.cinema.dto.movie.response.MovieDetailResponse;
+import ua.lviv.bas.cinema.dto.movie.response.MovieCardResponse;
 
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface MovieMapper {
@@ -22,15 +22,15 @@ public interface MovieMapper {
 	@Mapping(target = "upcoming", expression = "java(isUpcoming(movie))")
 	@Mapping(target = "archived", expression = "java(isArchived(movie))")
 	@Mapping(target = "active", expression = "java(isActive(movie))")
-	MovieDto toDto(Movie movie);
+	MovieDetailResponse toDto(Movie movie);
 
-	List<MovieDto> toDtoList(List<Movie> movies);
+	List<MovieDetailResponse> toDtoList(List<Movie> movies);
 
 	@Mapping(target = "posterUrl", expression = "java(getPosterUrl(movie))")
 	@Mapping(target = "currentlyShowing", expression = "java(isCurrentlyShowing(movie))")
-	MovieResponse toResponse(Movie movie);
+	MovieCardResponse toResponse(Movie movie);
 
-	List<MovieResponse> toResponseList(List<Movie> movies);
+	List<MovieCardResponse> toResponseList(List<Movie> movies);
 
 	@Mapping(target = "id", ignore = true)
 	@Mapping(target = "slug", ignore = true)

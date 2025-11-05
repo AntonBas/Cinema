@@ -5,12 +5,12 @@ import java.util.List;
 import org.mapstruct.Mapper;
 
 import ua.lviv.bas.cinema.domain.Seat;
-import ua.lviv.bas.cinema.dto.shared.SeatDto;
+import ua.lviv.bas.cinema.dto.cinemaHall.response.SeatResponse;
 
 @Mapper(componentModel = "spring")
 public interface SeatMapper {
 
-	SeatDto toDto(Seat seat);
+	SeatResponse toDto(Seat seat);
 
-	List<SeatDto> toDtoList(List<Seat> seats);
+	List<SeatResponse> toDtoList(List<Seat> seats);
 }

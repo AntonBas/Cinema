@@ -13,12 +13,12 @@ import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.CinemaHall;
 import ua.lviv.bas.cinema.domain.Seat;
 import ua.lviv.bas.cinema.domain.enums.SeatType;
-import ua.lviv.bas.cinema.dto.cinemaHall.CinemaHallDto;
-import ua.lviv.bas.cinema.dto.cinemaHall.CinemaHallRequest;
-import ua.lviv.bas.cinema.dto.cinemaHall.CinemaHallWithSeatsDto;
-import ua.lviv.bas.cinema.dto.cinemaHall.HallLayoutDto;
-import ua.lviv.bas.cinema.dto.cinemaHall.SeatLayoutRequest;
-import ua.lviv.bas.cinema.dto.shared.SeatRowDto;
+import ua.lviv.bas.cinema.dto.cinemaHall.request.CinemaHallRequest;
+import ua.lviv.bas.cinema.dto.cinemaHall.request.SeatLayoutRequest;
+import ua.lviv.bas.cinema.dto.cinemaHall.response.CinemaHallResponse;
+import ua.lviv.bas.cinema.dto.cinemaHall.response.CinemaHallWithSeatsResponse;
+import ua.lviv.bas.cinema.dto.cinemaHall.response.HallLayoutResponse;
+import ua.lviv.bas.cinema.dto.cinemaHall.response.SeatRowResponse;
 import ua.lviv.bas.cinema.exception.CinemaHallNotFoundException;
 import ua.lviv.bas.cinema.exception.DuplicateEntityException;
 import ua.lviv.bas.cinema.mapper.CinemaHallMapper;
@@ -35,7 +35,7 @@ public class CinemaHallService {
 	private final SeatMapper seatMapper;
 
 	@Transactional
-	public CinemaHallDto createHall(CinemaHallRequest request) {
+	public CinemaHallResponse createHall(CinemaHallRequest request) {
 		log.info("Creating cinema hall: {}", request.getName());
 
 		if (hallRepository.existsByName(request.getName())) {
@@ -50,14 +50,14 @@ public class CinemaHallService {
 	}
 
 	@Transactional(readOnly = true)
-	public CinemaHallDto getHallById(long id) {
+	public CinemaHallResponse getHallById(long id) {
 		log.debug("Retrieving cinema hall by id: {}", id);
 		return hallRepository.findById(id).map(hallMapper::toDto)
 				.orElseThrow(() -> new CinemaHallNotFoundException(id));
 	}
 
 	@Transactional
-	public CinemaHallDto updateHall(Long id, CinemaHallRequest request) {
+	public CinemaHallResponse updateHall(Long id, CinemaHallRequest request) {
 		log.info("Updating cinema hall with id: {}", id);
 
 		CinemaHall existing = hallRepository.findById(id)
@@ -86,13 +86,13 @@ public class CinemaHallService {
 	}
 
 	@Transactional(readOnly = true)
-	public List<CinemaHallDto> getAllHalls() {
+	public List<CinemaHallResponse> getAllHalls() {
 		log.debug("Retrieving all cinema halls");
 		return hallMapper.toDtoList(hallRepository.findAll());
 	}
 
 	@Transactional
-	public CinemaHallWithSeatsDto generateSeats(Long hallId, SeatLayoutRequest request) {
+	public CinemaHallWithSeatsResponse generateSeats(Long hallId, SeatLayoutRequest request) {
 		log.info("Generating seats for hall {}: {} rows, {} seats per row", hallId, request.getRows(),
 				request.getSeatsPerRow());
 
@@ -112,7 +112,7 @@ public class CinemaHallService {
 	}
 
 	@Transactional(readOnly = true)
-	public CinemaHallWithSeatsDto getHallWithSeats(Long hallId) {
+	public CinemaHallWithSeatsResponse getHallWithSeats(Long hallId) {
 		log.debug("Retrieving cinema hall with seats by id: {}", hallId);
 
 		CinemaHall hall = hallRepository.findByIdWithSeats(hallId)
@@ -122,7 +122,7 @@ public class CinemaHallService {
 	}
 
 	@Transactional
-	public HallLayoutDto getHallLayout(Long hallId) {
+	public HallLayoutResponse getHallLayout(Long hallId) {
 		log.debug("Retrieving hall layout for id: {}", hallId);
 
 		CinemaHall hall = hallRepository.findByIdWithSeats(hallId)
@@ -132,7 +132,7 @@ public class CinemaHallService {
 	}
 
 	@Transactional(readOnly = true)
-	public List<CinemaHallDto> searchHalls(String name) {
+	public List<CinemaHallResponse> searchHalls(String name) {
 		log.debug("Searching cinema halls by name: {}", name);
 
 		if (name == null || name.trim().isEmpty()) {
@@ -171,22 +171,22 @@ public class CinemaHallService {
 		return request.getDefaultSeatType();
 	}
 
-	private CinemaHallWithSeatsDto buildHallWithSeatsDto(CinemaHall hall) {
-		return CinemaHallWithSeatsDto.builder().id(hall.getId()).name(hall.getName()).capacity(hall.getCapacity())
+	private CinemaHallWithSeatsResponse buildHallWithSeatsDto(CinemaHall hall) {
+		return CinemaHallWithSeatsResponse.builder().id(hall.getId()).name(hall.getName()).capacity(hall.getCapacity())
 				.seats(seatMapper.toDtoList(hall.getSeats())).build();
 	}
 
-	private HallLayoutDto buildHallLayoutDto(CinemaHall hall) {
-		List<SeatRowDto> rows = hall.getSeats().stream().collect(Collectors.groupingBy(Seat::getRow)).entrySet()
+	private HallLayoutResponse buildHallLayoutDto(CinemaHall hall) {
+		List<SeatRowResponse> rows = hall.getSeats().stream().collect(Collectors.groupingBy(Seat::getRow)).entrySet()
 				.stream()
-				.map(entry -> SeatRowDto.builder().rowNumber(entry.getKey()).seatsCount(entry.getValue().size())
+				.map(entry -> SeatRowResponse.builder().rowNumber(entry.getKey()).seatsCount(entry.getValue().size())
 						.seats(seatMapper.toDtoList(entry.getValue())).build())
-				.sorted(Comparator.comparing(SeatRowDto::getRowNumber)).collect(Collectors.toList());
+				.sorted(Comparator.comparing(SeatRowResponse::getRowNumber)).collect(Collectors.toList());
 
 		int totalRows = rows.size();
-		int maxSeatsPerRow = rows.stream().mapToInt(SeatRowDto::getSeatsCount).max().orElse(0);
+		int maxSeatsPerRow = rows.stream().mapToInt(SeatRowResponse::getSeatsCount).max().orElse(0);
 
-		return HallLayoutDto.builder().hallId(hall.getId()).hallName(hall.getName()).totalRows(totalRows)
+		return HallLayoutResponse.builder().hallId(hall.getId()).hallName(hall.getName()).totalRows(totalRows)
 				.maxSeatsPerRow(maxSeatsPerRow).totalSeats(hall.getCapacity()).rows(rows).build();
 	}
 }

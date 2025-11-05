@@ -17,9 +17,9 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import ua.lviv.bas.cinema.config.JwtTokenProvider;
 import ua.lviv.bas.cinema.domain.User;
-import ua.lviv.bas.cinema.dto.user.UserDto;
-import ua.lviv.bas.cinema.dto.user.UserLoginDto;
-import ua.lviv.bas.cinema.dto.user.UserRegistrationDto;
+import ua.lviv.bas.cinema.dto.user.request.UserLoginRequest;
+import ua.lviv.bas.cinema.dto.user.request.UserRegistrationRequest;
+import ua.lviv.bas.cinema.dto.user.response.UserResponse;
 import ua.lviv.bas.cinema.security.CustomUserDetails;
 import ua.lviv.bas.cinema.service.EmailTokenGeneratorService;
 import ua.lviv.bas.cinema.service.EmailTokenService;
@@ -43,7 +43,7 @@ public class AuthController {
 	private final JwtTokenProvider jwtTokenProvider;
 
 	@PostMapping("/registration")
-	public ResponseEntity<?> registerUser(@Valid @RequestBody UserRegistrationDto userDto,
+	public ResponseEntity<?> registerUser(@Valid @RequestBody UserRegistrationRequest userDto,
 			BindingResult bindingResult) {
 		log.info("Registration attempt for email: {}", userDto.getEmail());
 
@@ -70,7 +70,7 @@ public class AuthController {
 	}
 
 	@PostMapping("/login")
-	public ResponseEntity<?> loginUser(@Valid @RequestBody UserLoginDto loginDto) {
+	public ResponseEntity<?> loginUser(@Valid @RequestBody UserLoginRequest loginDto) {
 		log.info("Login attempt for email: {}", loginDto.getEmail());
 
 		try {
@@ -165,7 +165,7 @@ public class AuthController {
 
 			User user = userService.findByEmail(email);
 
-			UserDto userDto = buildUserDto(user);
+			UserResponse userDto = buildUserDto(user);
 
 			log.info("Profile retrieved successfully for user: {}", email);
 			return ResponseEntity.ok(userDto);
@@ -185,13 +185,13 @@ public class AuthController {
 		Map<String, Object> response = new HashMap<>();
 		response.put("message", "Login successful");
 		response.put("token", token);
-		response.put("user", UserDto.builder().id(user.getId()).email(user.getEmail()).firstName(user.getFirstName())
+		response.put("user", UserResponse.builder().id(user.getId()).email(user.getEmail()).firstName(user.getFirstName())
 				.lastName(user.getLastName()).userRole(user.getUserRole()).build());
 		return response;
 	}
 
-	private UserDto buildUserDto(User user) {
-		return UserDto.builder().id(user.getId()).email(user.getEmail()).firstName(user.getFirstName())
+	private UserResponse buildUserDto(User user) {
+		return UserResponse.builder().id(user.getId()).email(user.getEmail()).firstName(user.getFirstName())
 				.lastName(user.getLastName()).dateOfBirth(user.getDateOfBirth()).city(user.getCity())
 				.phoneNumber(user.getPhoneNumber()).userRole(user.getUserRole()).enabled(user.isEnabled()).build();
 	}

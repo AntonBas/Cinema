@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.dto.shared;
+package ua.lviv.bas.cinema.dto.cinemaHall.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -10,10 +10,10 @@ import ua.lviv.bas.cinema.domain.enums.SeatType;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class SeatDto {
+public class SeatResponse {
+
 	private Long id;
 	private int row;
 	private int number;
 	private SeatType seatType;
-
 }

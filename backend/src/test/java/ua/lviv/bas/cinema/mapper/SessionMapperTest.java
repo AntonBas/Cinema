@@ -11,8 +11,8 @@ import org.mapstruct.factory.Mappers;
 import ua.lviv.bas.cinema.domain.CinemaHall;
 import ua.lviv.bas.cinema.domain.Movie;
 import ua.lviv.bas.cinema.domain.Session;
-import ua.lviv.bas.cinema.dto.cinemaHall.SessionDto;
-import ua.lviv.bas.cinema.dto.cinemaHall.SessionRequest;
+import ua.lviv.bas.cinema.dto.session.request.SessionRequest;
+import ua.lviv.bas.cinema.dto.session.response.SessionResponse;
 
 class SessionMapperTest {
 
@@ -29,7 +29,7 @@ class SessionMapperTest {
 		Session session = Session.builder().id(1L).startTime(futureTime).price(new BigDecimal("250.00")).movie(movie)
 				.hall(hall).build();
 
-		SessionDto result = sessionMapper.toDto(session);
+		SessionResponse result = sessionMapper.toDto(session);
 
 		assertThat(result).isNotNull();
 		assertThat(result.getId()).isEqualTo(1L);
@@ -47,7 +47,7 @@ class SessionMapperTest {
 				.movie(Movie.builder().id(1L).title("Movie").durationMinutes(120).build())
 				.hall(CinemaHall.builder().id(1L).name("Hall 1").build()).build();
 
-		SessionDto result = sessionMapper.toDto(session);
+		SessionResponse result = sessionMapper.toDto(session);
 
 		assertThat(result.isAvailable()).isFalse();
 	}

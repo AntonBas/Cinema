@@ -17,8 +17,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.enums.UserRole;
-import ua.lviv.bas.cinema.dto.user.UserDto;
-import ua.lviv.bas.cinema.dto.user.UserRegistrationDto;
+import ua.lviv.bas.cinema.dto.user.request.UserRegistrationRequest;
+import ua.lviv.bas.cinema.dto.user.response.UserResponse;
 import ua.lviv.bas.cinema.exception.EmailAlreadyExistsException;
 import ua.lviv.bas.cinema.exception.UserNotFoundException;
 import ua.lviv.bas.cinema.mapper.UserMapper;
@@ -39,14 +39,14 @@ public class UserServiceTest {
 	@InjectMocks
 	private UserService userService;
 
-	private UserRegistrationDto validUserDto;
+	private UserRegistrationRequest validUserDto;
 	private User user;
 	private User savedUser;
-	private UserDto userDto;
+	private UserResponse userDto;
 
 	@BeforeEach
 	void setUp() {
-		validUserDto = UserRegistrationDto.builder().email("test@example.com").firstName("Anton").lastName("Bas")
+		validUserDto = UserRegistrationRequest.builder().email("test@example.com").firstName("Anton").lastName("Bas")
 				.dateOfBirth(LocalDate.of(2001, 8, 21)).city("Lviv").phoneNumber("+380123456789")
 				.password("password123").passwordConfirm("password123").build();
 
@@ -57,7 +57,7 @@ public class UserServiceTest {
 		savedUser = User.builder().id(1L).email("test@example.com").firstName("Anton").lastName("Bas")
 				.userRole(UserRole.ROLE_USER).enabled(false).build();
 
-		userDto = UserDto.builder().id(1L).email("test@example.com").firstName("Anton").lastName("Bas")
+		userDto = UserResponse.builder().id(1L).email("test@example.com").firstName("Anton").lastName("Bas")
 				.userRole(UserRole.ROLE_USER).enabled(false).build();
 	}
 
@@ -69,7 +69,7 @@ public class UserServiceTest {
 		when(userRepository.save(any(User.class))).thenReturn(savedUser);
 		when(userMapper.toDto(savedUser)).thenReturn(userDto);
 
-		UserDto result = userService.registerUser(validUserDto);
+		UserResponse result = userService.registerUser(validUserDto);
 
 		assertNotNull(result);
 		assertEquals(1L, result.getId());

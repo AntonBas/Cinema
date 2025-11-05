@@ -24,10 +24,10 @@ import org.springframework.mock.web.MockMultipartFile;
 
 import ua.lviv.bas.cinema.domain.enums.AgeRating;
 import ua.lviv.bas.cinema.domain.enums.MovieStatus;
-import ua.lviv.bas.cinema.dto.movie.MovieCreateRequest;
-import ua.lviv.bas.cinema.dto.movie.MovieDto;
-import ua.lviv.bas.cinema.dto.movie.MovieResponse;
-import ua.lviv.bas.cinema.dto.movie.MovieUpdateRequest;
+import ua.lviv.bas.cinema.dto.movie.request.MovieCreateRequest;
+import ua.lviv.bas.cinema.dto.movie.request.MovieUpdateRequest;
+import ua.lviv.bas.cinema.dto.movie.response.MovieDetailResponse;
+import ua.lviv.bas.cinema.dto.movie.response.MovieCardResponse;
 import ua.lviv.bas.cinema.dto.shared.PageResponse;
 import ua.lviv.bas.cinema.service.MovieService;
 
@@ -40,15 +40,15 @@ class MovieControllerTest {
 	@InjectMocks
 	private MovieController movieController;
 
-	private MovieDto createMovieDto(Long id, String title, String slug, MovieStatus status) {
-		return MovieDto.builder().id(id).title(title).slug(slug).posterUrl("/api/movies/" + id + "/poster")
+	private MovieDetailResponse createMovieDto(Long id, String title, String slug, MovieStatus status) {
+		return MovieDetailResponse.builder().id(id).title(title).slug(slug).posterUrl("/api/movies/" + id + "/poster")
 				.durationMinutes(120).ageRating(AgeRating.PEGI_12).releaseDate(LocalDate.now().plusDays(1))
 				.status(status).currentlyShowing(false).actorIds(List.of(1L)).directorIds(List.of(2L))
 				.screenwriterIds(List.of(3L)).genreIds(List.of(1L)).build();
 	}
 
-	private MovieResponse createMovieResponse(Long id, String title, String slug, MovieStatus status) {
-		return MovieResponse.builder().id(id).title(title).slug(slug).posterUrl("/api/movies/" + id + "/poster")
+	private MovieCardResponse createMovieResponse(Long id, String title, String slug, MovieStatus status) {
+		return MovieCardResponse.builder().id(id).title(title).slug(slug).posterUrl("/api/movies/" + id + "/poster")
 				.durationMinutes(120).ageRating(AgeRating.PEGI_12).releaseDate(LocalDate.now().plusDays(1))
 				.status(status).currentlyShowing(false).build();
 	}
@@ -70,14 +70,14 @@ class MovieControllerTest {
 
 	@Test
 	void getById_ShouldReturnMovie() {
-		MovieDto movieDto = createMovieDto(1L, "Test Movie", "test-movie", MovieStatus.UPCOMING);
+		MovieDetailResponse movieDto = createMovieDto(1L, "Test Movie", "test-movie", MovieStatus.UPCOMING);
 
 		when(movieService.getById(1L)).thenReturn(movieDto);
 
-		ResponseEntity<MovieDto> response = movieController.getById(1L);
+		ResponseEntity<MovieDetailResponse> response = movieController.getById(1L);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
-		MovieDto responseBody = Objects.requireNonNull(response.getBody(), "Response body should not be null");
+		MovieDetailResponse responseBody = Objects.requireNonNull(response.getBody(), "Response body should not be null");
 		assertEquals(1L, responseBody.getId());
 		assertEquals("Test Movie", responseBody.getTitle());
 		verify(movieService).getById(1L);
@@ -85,30 +85,30 @@ class MovieControllerTest {
 
 	@Test
 	void getBySlug_ShouldReturnMovie() {
-		MovieDto movieDto = createMovieDto(1L, "Test Movie", "test-movie", MovieStatus.UPCOMING);
+		MovieDetailResponse movieDto = createMovieDto(1L, "Test Movie", "test-movie", MovieStatus.UPCOMING);
 
 		when(movieService.getBySlug("test-movie")).thenReturn(movieDto);
 
-		ResponseEntity<MovieDto> response = movieController.getBySlug("test-movie");
+		ResponseEntity<MovieDetailResponse> response = movieController.getBySlug("test-movie");
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
-		MovieDto responseBody = Objects.requireNonNull(response.getBody(), "Response body should not be null");
+		MovieDetailResponse responseBody = Objects.requireNonNull(response.getBody(), "Response body should not be null");
 		assertEquals("test-movie", responseBody.getSlug());
 		verify(movieService).getBySlug("test-movie");
 	}
 
 	@Test
 	void getAll_ShouldReturnMovies() {
-		MovieDto movie1 = createMovieDto(1L, "Movie 1", "movie-1", MovieStatus.UPCOMING);
-		MovieDto movie2 = createMovieDto(2L, "Movie 2", "movie-2", MovieStatus.CURRENT);
-		List<MovieDto> movies = List.of(movie1, movie2);
+		MovieDetailResponse movie1 = createMovieDto(1L, "Movie 1", "movie-1", MovieStatus.UPCOMING);
+		MovieDetailResponse movie2 = createMovieDto(2L, "Movie 2", "movie-2", MovieStatus.CURRENT);
+		List<MovieDetailResponse> movies = List.of(movie1, movie2);
 
 		when(movieService.getAll()).thenReturn(movies);
 
-		ResponseEntity<List<MovieDto>> response = movieController.getAll();
+		ResponseEntity<List<MovieDetailResponse>> response = movieController.getAll();
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
-		List<MovieDto> responseBody = Objects.requireNonNull(response.getBody(), "Response body should not be null");
+		List<MovieDetailResponse> responseBody = Objects.requireNonNull(response.getBody(), "Response body should not be null");
 		assertEquals(2, responseBody.size());
 		assertEquals("Movie 1", responseBody.get(0).getTitle());
 		assertEquals("Movie 2", responseBody.get(1).getTitle());
@@ -117,15 +117,15 @@ class MovieControllerTest {
 
 	@Test
 	void getPaginated_ShouldReturnPage() {
-		MovieDto movie = createMovieDto(1L, "Test Movie", "test-movie", MovieStatus.UPCOMING);
-		Page<MovieDto> page = new PageImpl<>(List.of(movie), PageRequest.of(0, 10), 1);
+		MovieDetailResponse movie = createMovieDto(1L, "Test Movie", "test-movie", MovieStatus.UPCOMING);
+		Page<MovieDetailResponse> page = new PageImpl<>(List.of(movie), PageRequest.of(0, 10), 1);
 
 		when(movieService.getPaginated(any(PageRequest.class))).thenReturn(page);
 
-		ResponseEntity<PageResponse<MovieDto>> response = movieController.getPaginated(0, 10);
+		ResponseEntity<PageResponse<MovieDetailResponse>> response = movieController.getPaginated(0, 10);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
-		PageResponse<MovieDto> responseBody = Objects.requireNonNull(response.getBody(),
+		PageResponse<MovieDetailResponse> responseBody = Objects.requireNonNull(response.getBody(),
 				"Response body should not be null");
 		assertEquals(1, responseBody.getContent().size());
 		assertEquals("Test Movie", responseBody.getContent().get(0).getTitle());
@@ -139,17 +139,17 @@ class MovieControllerTest {
 	@Test
 	void create_ShouldReturnCreatedMovie() {
 		MovieCreateRequest createRequest = createMovieCreateRequest("New Movie");
-		MovieDto movieDto = createMovieDto(1L, "New Movie", "new-movie", MovieStatus.UPCOMING);
+		MovieDetailResponse movieDto = createMovieDto(1L, "New Movie", "new-movie", MovieStatus.UPCOMING);
 		MockMultipartFile posterFile = new MockMultipartFile("posterFile", "poster.jpg", "image/jpeg",
 				"content".getBytes());
 
 		createRequest.setPosterFile(posterFile);
 		when(movieService.create(any(MovieCreateRequest.class))).thenReturn(movieDto);
 
-		ResponseEntity<MovieDto> response = movieController.create(createRequest, posterFile);
+		ResponseEntity<MovieDetailResponse> response = movieController.create(createRequest, posterFile);
 
 		assertEquals(HttpStatus.CREATED, response.getStatusCode());
-		MovieDto responseBody = Objects.requireNonNull(response.getBody(), "Response body should not be null");
+		MovieDetailResponse responseBody = Objects.requireNonNull(response.getBody(), "Response body should not be null");
 		assertEquals(1L, responseBody.getId());
 		assertEquals("New Movie", responseBody.getTitle());
 		verify(movieService).create(createRequest);
@@ -158,17 +158,17 @@ class MovieControllerTest {
 	@Test
 	void update_ShouldReturnUpdatedMovie() {
 		MovieUpdateRequest updateRequest = createMovieUpdateRequest("Updated Movie");
-		MovieDto movieDto = createMovieDto(1L, "Updated Movie", "updated-movie", MovieStatus.CURRENT);
+		MovieDetailResponse movieDto = createMovieDto(1L, "Updated Movie", "updated-movie", MovieStatus.CURRENT);
 		MockMultipartFile posterFile = new MockMultipartFile("posterFile", "poster.jpg", "image/jpeg",
 				"content".getBytes());
 
 		updateRequest.setPosterFile(posterFile);
 		when(movieService.update(eq(1L), any(MovieUpdateRequest.class))).thenReturn(movieDto);
 
-		ResponseEntity<MovieDto> response = movieController.update(1L, updateRequest, posterFile);
+		ResponseEntity<MovieDetailResponse> response = movieController.update(1L, updateRequest, posterFile);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
-		MovieDto responseBody = Objects.requireNonNull(response.getBody(), "Response body should not be null");
+		MovieDetailResponse responseBody = Objects.requireNonNull(response.getBody(), "Response body should not be null");
 		assertEquals(1L, responseBody.getId());
 		assertEquals("Updated Movie", responseBody.getTitle());
 		verify(movieService).update(1L, updateRequest);
@@ -177,14 +177,14 @@ class MovieControllerTest {
 	@Test
 	void update_WithoutPosterFile_ShouldReturnUpdatedMovie() {
 		MovieUpdateRequest updateRequest = createMovieUpdateRequest("Updated Movie");
-		MovieDto movieDto = createMovieDto(1L, "Updated Movie", "updated-movie", MovieStatus.CURRENT);
+		MovieDetailResponse movieDto = createMovieDto(1L, "Updated Movie", "updated-movie", MovieStatus.CURRENT);
 
 		when(movieService.update(eq(1L), any(MovieUpdateRequest.class))).thenReturn(movieDto);
 
-		ResponseEntity<MovieDto> response = movieController.update(1L, updateRequest, null);
+		ResponseEntity<MovieDetailResponse> response = movieController.update(1L, updateRequest, null);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
-		MovieDto responseBody = Objects.requireNonNull(response.getBody(), "Response body should not be null");
+		MovieDetailResponse responseBody = Objects.requireNonNull(response.getBody(), "Response body should not be null");
 		assertEquals("Updated Movie", responseBody.getTitle());
 		verify(movieService).update(1L, updateRequest);
 	}
@@ -199,16 +199,16 @@ class MovieControllerTest {
 
 	@Test
 	void getCurrentlyShowing_ShouldReturnMovies() {
-		MovieResponse movie1 = createMovieResponse(1L, "Current Movie 1", "current-1", MovieStatus.CURRENT);
-		MovieResponse movie2 = createMovieResponse(2L, "Current Movie 2", "current-2", MovieStatus.CURRENT);
-		List<MovieResponse> movies = List.of(movie1, movie2);
+		MovieCardResponse movie1 = createMovieResponse(1L, "Current Movie 1", "current-1", MovieStatus.CURRENT);
+		MovieCardResponse movie2 = createMovieResponse(2L, "Current Movie 2", "current-2", MovieStatus.CURRENT);
+		List<MovieCardResponse> movies = List.of(movie1, movie2);
 
 		when(movieService.getCurrentlyShowing()).thenReturn(movies);
 
-		ResponseEntity<List<MovieResponse>> response = movieController.getCurrentlyShowing();
+		ResponseEntity<List<MovieCardResponse>> response = movieController.getCurrentlyShowing();
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
-		List<MovieResponse> responseBody = Objects.requireNonNull(response.getBody(),
+		List<MovieCardResponse> responseBody = Objects.requireNonNull(response.getBody(),
 				"Response body should not be null");
 		assertEquals(2, responseBody.size());
 		assertEquals("Current Movie 1", responseBody.get(0).getTitle());
@@ -218,16 +218,16 @@ class MovieControllerTest {
 
 	@Test
 	void getUpcoming_ShouldReturnMovies() {
-		MovieResponse movie1 = createMovieResponse(1L, "Upcoming Movie 1", "upcoming-1", MovieStatus.UPCOMING);
-		MovieResponse movie2 = createMovieResponse(2L, "Upcoming Movie 2", "upcoming-2", MovieStatus.UPCOMING);
-		List<MovieResponse> movies = List.of(movie1, movie2);
+		MovieCardResponse movie1 = createMovieResponse(1L, "Upcoming Movie 1", "upcoming-1", MovieStatus.UPCOMING);
+		MovieCardResponse movie2 = createMovieResponse(2L, "Upcoming Movie 2", "upcoming-2", MovieStatus.UPCOMING);
+		List<MovieCardResponse> movies = List.of(movie1, movie2);
 
 		when(movieService.getUpcoming()).thenReturn(movies);
 
-		ResponseEntity<List<MovieResponse>> response = movieController.getUpcoming();
+		ResponseEntity<List<MovieCardResponse>> response = movieController.getUpcoming();
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
-		List<MovieResponse> responseBody = Objects.requireNonNull(response.getBody(),
+		List<MovieCardResponse> responseBody = Objects.requireNonNull(response.getBody(),
 				"Response body should not be null");
 		assertEquals(2, responseBody.size());
 		assertEquals("Upcoming Movie 1", responseBody.get(0).getTitle());
@@ -237,16 +237,16 @@ class MovieControllerTest {
 
 	@Test
 	void getArchived_ShouldReturnMovies() {
-		MovieResponse movie1 = createMovieResponse(1L, "Archived Movie 1", "archived-1", MovieStatus.ARCHIVED);
-		MovieResponse movie2 = createMovieResponse(2L, "Archived Movie 2", "archived-2", MovieStatus.ARCHIVED);
-		List<MovieResponse> movies = List.of(movie1, movie2);
+		MovieCardResponse movie1 = createMovieResponse(1L, "Archived Movie 1", "archived-1", MovieStatus.ARCHIVED);
+		MovieCardResponse movie2 = createMovieResponse(2L, "Archived Movie 2", "archived-2", MovieStatus.ARCHIVED);
+		List<MovieCardResponse> movies = List.of(movie1, movie2);
 
 		when(movieService.getArchived()).thenReturn(movies);
 
-		ResponseEntity<List<MovieResponse>> response = movieController.getArchived();
+		ResponseEntity<List<MovieCardResponse>> response = movieController.getArchived();
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
-		List<MovieResponse> responseBody = Objects.requireNonNull(response.getBody(),
+		List<MovieCardResponse> responseBody = Objects.requireNonNull(response.getBody(),
 				"Response body should not be null");
 		assertEquals(2, responseBody.size());
 		assertEquals("Archived Movie 1", responseBody.get(0).getTitle());
@@ -271,16 +271,16 @@ class MovieControllerTest {
 
 	@Test
 	void getMoviesForSessions_ShouldReturnMovies() {
-		MovieResponse movie1 = createMovieResponse(1L, "Session Movie 1", "session-1", MovieStatus.CURRENT);
-		MovieResponse movie2 = createMovieResponse(2L, "Session Movie 2", "session-2", MovieStatus.UPCOMING);
-		List<MovieResponse> movies = List.of(movie1, movie2);
+		MovieCardResponse movie1 = createMovieResponse(1L, "Session Movie 1", "session-1", MovieStatus.CURRENT);
+		MovieCardResponse movie2 = createMovieResponse(2L, "Session Movie 2", "session-2", MovieStatus.UPCOMING);
+		List<MovieCardResponse> movies = List.of(movie1, movie2);
 
 		when(movieService.getMoviesForSessions()).thenReturn(movies);
 
-		ResponseEntity<List<MovieResponse>> response = movieController.getMoviesForSessions();
+		ResponseEntity<List<MovieCardResponse>> response = movieController.getMoviesForSessions();
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
-		List<MovieResponse> responseBody = Objects.requireNonNull(response.getBody(),
+		List<MovieCardResponse> responseBody = Objects.requireNonNull(response.getBody(),
 				"Response body should not be null");
 		assertEquals(2, responseBody.size());
 		assertEquals("Session Movie 1", responseBody.get(0).getTitle());
@@ -290,15 +290,15 @@ class MovieControllerTest {
 
 	@Test
 	void getPaginated_ShouldLimitSizeToMaxPageSize() {
-		MovieDto movie = createMovieDto(1L, "Test Movie", "test-movie", MovieStatus.UPCOMING);
-		Page<MovieDto> page = new PageImpl<>(List.of(movie), PageRequest.of(0, 50), 1);
+		MovieDetailResponse movie = createMovieDto(1L, "Test Movie", "test-movie", MovieStatus.UPCOMING);
+		Page<MovieDetailResponse> page = new PageImpl<>(List.of(movie), PageRequest.of(0, 50), 1);
 
 		when(movieService.getPaginated(any(PageRequest.class))).thenReturn(page);
 
-		ResponseEntity<PageResponse<MovieDto>> response = movieController.getPaginated(0, 100);
+		ResponseEntity<PageResponse<MovieDetailResponse>> response = movieController.getPaginated(0, 100);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
-		PageResponse<MovieDto> responseBody = Objects.requireNonNull(response.getBody(),
+		PageResponse<MovieDetailResponse> responseBody = Objects.requireNonNull(response.getBody(),
 				"Response body should not be null");
 		assertEquals(50, responseBody.getPageSize());
 		verify(movieService).getPaginated(PageRequest.of(0, 50));

@@ -10,7 +10,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.Seat;
 import ua.lviv.bas.cinema.domain.enums.SeatType;
-import ua.lviv.bas.cinema.dto.shared.SeatDto;
+import ua.lviv.bas.cinema.dto.cinemaHall.response.SeatResponse;
 import ua.lviv.bas.cinema.exception.SeatNotFoundException;
 import ua.lviv.bas.cinema.mapper.SeatMapper;
 import ua.lviv.bas.cinema.repository.SeatRepository;
@@ -24,13 +24,13 @@ public class SeatService {
 	private final SeatMapper seatMapper;
 
 	@Transactional(readOnly = true)
-	public SeatDto getSeatById(Long id) {
+	public SeatResponse getSeatById(Long id) {
 		log.debug("Retrieving seat by id: {}", id);
 		return seatRepository.findById(id).map(seatMapper::toDto).orElseThrow(() -> new SeatNotFoundException(id));
 	}
 
 	@Transactional
-	public SeatDto updateSeatType(Long id, SeatType seatType) {
+	public SeatResponse updateSeatType(Long id, SeatType seatType) {
 		log.info("Updating seat type for seat id: {} to {}", id, seatType);
 
 		Seat seat = seatRepository.findById(id)
@@ -43,13 +43,13 @@ public class SeatService {
 	}
 
 	@Transactional(readOnly = true)
-	public List<SeatDto> getSeatsByHall(Long hallId) {
+	public List<SeatResponse> getSeatsByHall(Long hallId) {
 		log.debug("Retrieving seats for hall id: {}", hallId);
 		return seatMapper.toDtoList(seatRepository.findByHallId(hallId));
 	}
 
 	@Transactional(readOnly = true)
-	public SeatDto getSeatByPosition(Long hallId, int row, int number) {
+	public SeatResponse getSeatByPosition(Long hallId, int row, int number) {
 		log.debug("Retrieving seat at position: hall={}, row={}, number={}", hallId, row, number);
 		return seatRepository.findByHallIdAndRowAndNumber(hallId, row, number).map(seatMapper::toDto)
 				.orElseThrow(() -> new SeatNotFoundException(hallId, row, number));
@@ -68,7 +68,7 @@ public class SeatService {
 	}
 
 	@Transactional(readOnly = true)
-	public List<SeatDto> getSeatsByType(Long hallId, SeatType seatType) {
+	public List<SeatResponse> getSeatsByType(Long hallId, SeatType seatType) {
 		log.debug("Retrieving {} seats for hall id: {}", seatType, hallId);
 		return seatMapper.toDtoList(seatRepository.findByHallIdAndSeatType(hallId, seatType));
 	}

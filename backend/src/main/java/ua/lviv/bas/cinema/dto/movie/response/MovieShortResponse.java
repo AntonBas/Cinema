@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.dto.movie;
+package ua.lviv.bas.cinema.dto.movie.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class MovieSimpleDto {
+public class MovieShortResponse {
 
 	private Long id;
 	private String title;
