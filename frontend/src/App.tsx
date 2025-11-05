@@ -5,9 +5,9 @@ import { LoginPage } from '@/pages/auth/LoginPage';
 import { RegisterPage } from '@/pages/auth/RegisterPage';
 import { ForgotPasswordPage } from '@/pages/auth/ForgotPasswordPage';
 import { ResetPasswordPage } from '@/pages/auth/ResetPasswordPage';
-import { HomePage } from '@/pages/HomePage/HomePage';
+import { HomePage } from '@/pages/home/HomePage';
 import { EmailVerificationPage } from '@/pages/auth/EmailVerificationPage';
-import { AdminPage } from '@/pages/Admin/AdminPage';
+import { AdminPage } from '@/pages/admin/AdminPage';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { token, isLoading } = useAuth();
