@@ -9,8 +9,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.EmailToken;
 import ua.lviv.bas.cinema.domain.User;
-import ua.lviv.bas.cinema.domain.enums.TokenType;
 import ua.lviv.bas.cinema.repository.EmailTokenRepository;
+import ua.lviv.bas.cinema.repository.UserRepository;
 
 @Slf4j
 @Service
@@ -18,7 +18,9 @@ import ua.lviv.bas.cinema.repository.EmailTokenRepository;
 public class EmailTokenService {
 
 	private final EmailTokenRepository tokenRepository;
+	private final EmailService emailService;
 	private final UserService userService;
+	private final UserRepository userRepository;
 
 	@Transactional
 	public String confirmEmail(String token) {
@@ -51,22 +53,6 @@ public class EmailTokenService {
 		EmailToken emailToken = tokenRepository.findByToken(token)
 				.orElseThrow(() -> new RuntimeException("Invalid token"));
 
-		if (emailToken.getType() != TokenType.EMAIL_CHANGE) {
-			throw new RuntimeException("Invalid token type");
-		}
-
-		if (emailToken.isConfirmed()) {
-			throw new RuntimeException("Token already used");
-		}
-
-		if (emailToken.getExpiresAt().isBefore(LocalDateTime.now())) {
-			throw new RuntimeException("Token expired");
-		}
-
-		if (emailToken.getNewEmail() == null) {
-			throw new RuntimeException("Invalid email change token");
-		}
-
 		User user = emailToken.getUser();
 		String oldEmail = user.getEmail();
 		String newEmail = emailToken.getNewEmail();
@@ -76,7 +62,9 @@ public class EmailTokenService {
 		}
 
 		user.setEmail(newEmail);
-		User updatedUser = userService.updateUser(user);
+		User updatedUser = userRepository.save(user);
+
+		emailService.sendEmailChangeNotification(oldEmail, newEmail);
 
 		emailToken.setConfirmed(true);
 		emailToken.setConfirmedAt(LocalDateTime.now());

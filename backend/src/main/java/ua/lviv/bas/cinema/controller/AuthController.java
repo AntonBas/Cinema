@@ -26,7 +26,9 @@ import ua.lviv.bas.cinema.config.JwtTokenProvider;
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.dto.user.request.UserLoginRequest;
 import ua.lviv.bas.cinema.dto.user.request.UserRegistrationRequest;
+import ua.lviv.bas.cinema.dto.user.response.UserProfileResponse;
 import ua.lviv.bas.cinema.dto.user.response.UserResponse;
+import ua.lviv.bas.cinema.service.EmailTokenGeneratorService;
 import ua.lviv.bas.cinema.service.EmailTokenService;
 import ua.lviv.bas.cinema.service.PasswordResetService;
 import ua.lviv.bas.cinema.service.UserService;
@@ -38,6 +40,7 @@ import ua.lviv.bas.cinema.service.UserService;
 public class AuthController {
 
 	private final UserService userService;
+	private final EmailTokenGeneratorService emailTokenGeneratorService;
 	private final EmailTokenService emailTokenService;
 	private final PasswordResetService passwordResetService;
 	private final AuthenticationManager authenticationManager;
@@ -61,6 +64,7 @@ public class AuthController {
 
 		try {
 			userService.registerUser(userDto);
+			emailTokenGeneratorService.generateVerificationToken(userDto.getEmail());
 			log.info("User registered successfully: {}", userDto.getEmail());
 			return ResponseEntity.ok().body(createSuccessResponse("Check your email to confirm account"));
 		} catch (RuntimeException e) {
@@ -147,6 +151,16 @@ public class AuthController {
 		response.put("exists", exists);
 
 		return ResponseEntity.ok(response);
+	}
+
+	@PostMapping("/email/confirm-change")
+	public ResponseEntity<UserProfileResponse> confirmEmailChange(@RequestParam String token) {
+		log.info("Confirming email change with token");
+
+		User updatedUser = emailTokenService.confirmEmailChange(token);
+		UserProfileResponse userResponse = userService.getUserProfileById(updatedUser.getId());
+
+		return ResponseEntity.ok(userResponse);
 	}
 
 	private Map<String, Object> createLoginResponse(String token, User user) {

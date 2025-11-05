@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.dto.user.request.UserUpdateRequest;
 import ua.lviv.bas.cinema.dto.user.response.UserProfileResponse;
 import ua.lviv.bas.cinema.security.CustomUserDetails;
+import ua.lviv.bas.cinema.service.EmailTokenGeneratorService;
 import ua.lviv.bas.cinema.service.UserService;
 
 @Slf4j
@@ -28,6 +29,7 @@ import ua.lviv.bas.cinema.service.UserService;
 public class UserController {
 
 	private final UserService userService;
+	private final EmailTokenGeneratorService emailTokenGeneratorService;
 
 	@GetMapping("/profile")
 	public ResponseEntity<UserProfileResponse> getProfile(@AuthenticationPrincipal CustomUserDetails userDetails) {
@@ -52,6 +54,10 @@ public class UserController {
 		log.info("Requesting email change for user ID: {} to {}", userDetails.getUserId(), newEmail);
 
 		userService.requestEmailChange(userDetails.getUserId(), newEmail);
+
+		var user = userService.findById(userDetails.getUserId());
+		emailTokenGeneratorService.generateEmailChangeToken(user.getEmail(), newEmail);
+
 		return ResponseEntity.ok(Map.of("message", "Confirmation email sent to your new email address"));
 	}
 

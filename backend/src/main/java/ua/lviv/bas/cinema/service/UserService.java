@@ -25,8 +25,6 @@ public class UserService {
 	private final UserRepository userRepository;
 	private final PasswordEncoder passwordEncoder;
 	private final UserMapper userMapper;
-	private final EmailTokenGeneratorService emailTokenGeneratorService;
-	private final EmailTokenService emailTokenService;
 
 	@Transactional
 	public UserProfileResponse registerUser(UserRegistrationRequest userDto) {
@@ -40,8 +38,6 @@ public class UserService {
 		User user = userMapper.toEntityWithPassword(userDto, encodedPassword);
 
 		User savedUser = userRepository.save(user);
-
-		emailTokenGeneratorService.generateVerificationToken(userDto.getEmail());
 
 		log.info("User registered successfully with email: {}", userDto.getEmail());
 
@@ -69,9 +65,7 @@ public class UserService {
 			throw new EmailAlreadyExistsException("Email is already registered: " + newEmail);
 		}
 
-		User user = findById(userId);
-
-		emailTokenGeneratorService.generateEmailChangeToken(user.getEmail(), newEmail);
+		findById(userId);
 
 		log.info("Email change requested successfully for user ID: {}", userId);
 	}
@@ -80,9 +74,7 @@ public class UserService {
 	public UserProfileResponse confirmEmailChange(String token) {
 		log.info("Confirming email change with token: {}", token);
 
-		User updatedUser = emailTokenService.confirmEmailChange(token);
-
-		return userMapper.toProfileResponse(updatedUser);
+		throw new RuntimeException("Email change confirmation not implemented yet");
 	}
 
 	@Transactional
