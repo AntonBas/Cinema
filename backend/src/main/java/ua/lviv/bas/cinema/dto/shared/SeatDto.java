@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.dto;
+package ua.lviv.bas.cinema.dto.shared;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

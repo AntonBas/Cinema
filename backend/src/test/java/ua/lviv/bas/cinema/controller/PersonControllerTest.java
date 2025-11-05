@@ -24,10 +24,10 @@ import org.springframework.test.web.servlet.MockMvc;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import ua.lviv.bas.cinema.domain.enums.PersonRole;
-import ua.lviv.bas.cinema.dto.PageResponse;
-import ua.lviv.bas.cinema.dto.PersonDto;
-import ua.lviv.bas.cinema.dto.PersonRequest;
-import ua.lviv.bas.cinema.dto.QuickCreatePersonDto;
+import ua.lviv.bas.cinema.dto.movie.PersonDto;
+import ua.lviv.bas.cinema.dto.movie.PersonRequest;
+import ua.lviv.bas.cinema.dto.shared.PageResponse;
+import ua.lviv.bas.cinema.dto.shared.QuickCreatePersonDto;
 import ua.lviv.bas.cinema.service.PersonService;
 
 @WebMvcTest(PersonController.class)

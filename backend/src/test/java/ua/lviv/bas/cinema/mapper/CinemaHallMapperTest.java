@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
 import ua.lviv.bas.cinema.domain.CinemaHall;
 import ua.lviv.bas.cinema.domain.Seat;
-import ua.lviv.bas.cinema.dto.CinemaHallDto;
+import ua.lviv.bas.cinema.dto.cinemaHall.CinemaHallDto;
 
 import java.util.Arrays;
 import java.util.List;

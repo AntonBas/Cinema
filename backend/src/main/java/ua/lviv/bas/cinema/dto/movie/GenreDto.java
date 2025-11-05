@@ -1,6 +1,4 @@
-package ua.lviv.bas.cinema.dto;
-
-import java.util.List;
+package ua.lviv.bas.cinema.dto.movie;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,8 +9,10 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class SeatRowDto {
-	private Integer rowNumber;
-	private int seatsCount;
-	private List<SeatDto> seats;
+public class GenreDto {
+
+	private Long id;
+
+	private String name;
+
 }

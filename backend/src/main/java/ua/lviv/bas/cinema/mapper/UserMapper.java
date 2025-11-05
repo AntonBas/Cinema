@@ -4,8 +4,8 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
 import ua.lviv.bas.cinema.domain.User;
-import ua.lviv.bas.cinema.dto.UserDto;
-import ua.lviv.bas.cinema.dto.UserRegistrationDto;
+import ua.lviv.bas.cinema.dto.user.UserDto;
+import ua.lviv.bas.cinema.dto.user.UserRegistrationDto;
 
 @Mapper(componentModel = "spring")
 public interface UserMapper {

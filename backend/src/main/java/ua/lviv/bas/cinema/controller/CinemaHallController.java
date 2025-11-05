@@ -16,11 +16,11 @@ import org.springframework.web.bind.annotation.RestController;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import ua.lviv.bas.cinema.dto.CinemaHallDto;
-import ua.lviv.bas.cinema.dto.CinemaHallRequest;
-import ua.lviv.bas.cinema.dto.CinemaHallWithSeatsDto;
-import ua.lviv.bas.cinema.dto.HallLayoutDto;
-import ua.lviv.bas.cinema.dto.SeatLayoutRequest;
+import ua.lviv.bas.cinema.dto.cinemaHall.CinemaHallDto;
+import ua.lviv.bas.cinema.dto.cinemaHall.CinemaHallRequest;
+import ua.lviv.bas.cinema.dto.cinemaHall.CinemaHallWithSeatsDto;
+import ua.lviv.bas.cinema.dto.cinemaHall.HallLayoutDto;
+import ua.lviv.bas.cinema.dto.cinemaHall.SeatLayoutRequest;
 import ua.lviv.bas.cinema.service.CinemaHallService;
 
 @Slf4j

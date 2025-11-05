@@ -1,9 +1,7 @@
-package ua.lviv.bas.cinema.dto;
+package ua.lviv.bas.cinema.dto.user;
 
 import java.time.LocalDate;
 
-import jakarta.validation.constraints.AssertTrue;
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Past;
@@ -18,11 +16,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserRegistrationDto {
-
-	@Email(message = "Invalid email format")
-	@NotBlank(message = "Email is required")
-	private String email;
+public class UserUpdateDto {
 
 	@Size(min = 2, max = 50, message = "First name must be between 2 and 50 characters")
 	@NotBlank(message = "First name is required")
@@ -43,19 +37,4 @@ public class UserRegistrationDto {
 	@Pattern(regexp = "^\\+?[0-9]{10,15}$", message = "Invalid phone number format")
 	@NotBlank(message = "Phone Number is required")
 	private String phoneNumber;
-
-	@Size(min = 8, max = 72, message = "Password must be between 8 and 72 characters")
-	@NotBlank(message = "Password is required")
-	private String password;
-
-	@NotBlank(message = "Password confirmation is required")
-	private String passwordConfirm;
-
-	@AssertTrue(message = "Passwords do not match")
-	public boolean isPasswordMatching() {
-		if (password == null || passwordConfirm == null) {
-			return false;
-		}
-		return password.equals(passwordConfirm);
-	}
 }

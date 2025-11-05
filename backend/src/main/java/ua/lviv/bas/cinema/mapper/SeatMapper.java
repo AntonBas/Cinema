@@ -5,7 +5,7 @@ import java.util.List;
 import org.mapstruct.Mapper;
 
 import ua.lviv.bas.cinema.domain.Seat;
-import ua.lviv.bas.cinema.dto.SeatDto;
+import ua.lviv.bas.cinema.dto.shared.SeatDto;
 
 @Mapper(componentModel = "spring")
 public interface SeatMapper {

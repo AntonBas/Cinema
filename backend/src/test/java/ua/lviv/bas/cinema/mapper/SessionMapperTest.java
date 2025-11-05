@@ -11,8 +11,8 @@ import org.mapstruct.factory.Mappers;
 import ua.lviv.bas.cinema.domain.CinemaHall;
 import ua.lviv.bas.cinema.domain.Movie;
 import ua.lviv.bas.cinema.domain.Session;
-import ua.lviv.bas.cinema.dto.SessionDto;
-import ua.lviv.bas.cinema.dto.SessionRequest;
+import ua.lviv.bas.cinema.dto.cinemaHall.SessionDto;
+import ua.lviv.bas.cinema.dto.cinemaHall.SessionRequest;
 
 class SessionMapperTest {
 

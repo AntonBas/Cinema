@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.dto;
+package ua.lviv.bas.cinema.dto.cinemaHall;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;

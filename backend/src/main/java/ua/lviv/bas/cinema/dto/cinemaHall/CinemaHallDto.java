@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.dto;
+package ua.lviv.bas.cinema.dto.cinemaHall;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,10 +9,8 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class GenreDto {
-
+public class CinemaHallDto {
 	private Long id;
-
 	private String name;
-
+	private int capacity;
 }

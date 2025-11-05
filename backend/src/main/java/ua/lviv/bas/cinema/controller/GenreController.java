@@ -17,9 +17,9 @@ import org.springframework.web.bind.annotation.RestController;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import ua.lviv.bas.cinema.dto.GenreDto;
-import ua.lviv.bas.cinema.dto.GenreRequest;
-import ua.lviv.bas.cinema.dto.PageResponse;
+import ua.lviv.bas.cinema.dto.movie.GenreDto;
+import ua.lviv.bas.cinema.dto.movie.GenreRequest;
+import ua.lviv.bas.cinema.dto.shared.PageResponse;
 import ua.lviv.bas.cinema.service.GenreService;
 
 @Slf4j

@@ -21,9 +21,9 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import ua.lviv.bas.cinema.dto.GenreDto;
-import ua.lviv.bas.cinema.dto.GenreRequest;
-import ua.lviv.bas.cinema.dto.PageResponse;
+import ua.lviv.bas.cinema.dto.movie.GenreDto;
+import ua.lviv.bas.cinema.dto.movie.GenreRequest;
+import ua.lviv.bas.cinema.dto.shared.PageResponse;
 import ua.lviv.bas.cinema.service.GenreService;
 
 @WebMvcTest(GenreController.class)

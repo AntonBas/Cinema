@@ -7,8 +7,8 @@ import org.mapstruct.MappingTarget;
 import org.mapstruct.ReportingPolicy;
 
 import ua.lviv.bas.cinema.domain.Genre;
-import ua.lviv.bas.cinema.dto.GenreDto;
-import ua.lviv.bas.cinema.dto.GenreRequest;
+import ua.lviv.bas.cinema.dto.movie.GenreDto;
+import ua.lviv.bas.cinema.dto.movie.GenreRequest;
 
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface GenreMapper {

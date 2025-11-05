@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.dto;
+package ua.lviv.bas.cinema.dto.shared;
 
 import java.util.List;
 
@@ -11,10 +11,8 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CinemaHallWithSeatsDto {
-
-	private Long id;
-	private String name;
-	private int capacity;
+public class SeatRowDto {
+	private Integer rowNumber;
+	private int seatsCount;
 	private List<SeatDto> seats;
 }

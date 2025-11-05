@@ -12,10 +12,10 @@ import org.mapstruct.factory.Mappers;
 import ua.lviv.bas.cinema.domain.Movie;
 import ua.lviv.bas.cinema.domain.enums.AgeRating;
 import ua.lviv.bas.cinema.domain.enums.MovieStatus;
-import ua.lviv.bas.cinema.dto.MovieCreateRequest;
-import ua.lviv.bas.cinema.dto.MovieDto;
-import ua.lviv.bas.cinema.dto.MovieResponse;
-import ua.lviv.bas.cinema.dto.MovieUpdateRequest;
+import ua.lviv.bas.cinema.dto.movie.MovieCreateRequest;
+import ua.lviv.bas.cinema.dto.movie.MovieDto;
+import ua.lviv.bas.cinema.dto.movie.MovieResponse;
+import ua.lviv.bas.cinema.dto.movie.MovieUpdateRequest;
 
 class MovieMapperTest {
 

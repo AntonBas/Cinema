@@ -1,4 +1,5 @@
-package ua.lviv.bas.cinema.dto;
+
+package ua.lviv.bas.cinema.dto.movie;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -23,7 +24,7 @@ import ua.lviv.bas.cinema.domain.enums.AgeRating;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class MovieCreateRequest {
+public class MovieUpdateRequest {
 
 	@NotBlank(message = "Title is required")
 	@Size(max = 255, message = "Title must be less than 255 characters")
@@ -69,6 +70,9 @@ public class MovieCreateRequest {
 	private List<Long> screenwriterIds;
 
 	private MultipartFile posterFile;
+
+	@Builder.Default
+	private Boolean removePoster = false;
 
 	@AssertTrue(message = "End showing date must be after release date")
 	public boolean isEndDateValid() {

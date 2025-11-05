@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.dto;
+package ua.lviv.bas.cinema.dto.shared;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -12,7 +12,7 @@ import ua.lviv.bas.cinema.domain.enums.PersonRole;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class PersonRequest {
+public class QuickCreatePersonDto {
 
 	@NotBlank(message = "Person name is required")
 	private String name;

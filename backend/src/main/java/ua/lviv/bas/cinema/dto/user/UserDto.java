@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.dto;
+package ua.lviv.bas.cinema.dto.user;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;

@@ -17,8 +17,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.enums.UserRole;
-import ua.lviv.bas.cinema.dto.UserDto;
-import ua.lviv.bas.cinema.dto.UserRegistrationDto;
+import ua.lviv.bas.cinema.dto.user.UserDto;
+import ua.lviv.bas.cinema.dto.user.UserRegistrationDto;
 import ua.lviv.bas.cinema.exception.EmailAlreadyExistsException;
 import ua.lviv.bas.cinema.exception.UserNotFoundException;
 import ua.lviv.bas.cinema.mapper.UserMapper;

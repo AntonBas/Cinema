@@ -3,8 +3,8 @@ package ua.lviv.bas.cinema.mapper;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import ua.lviv.bas.cinema.domain.Session;
-import ua.lviv.bas.cinema.dto.SessionDto;
-import ua.lviv.bas.cinema.dto.SessionRequest;
+import ua.lviv.bas.cinema.dto.cinemaHall.SessionDto;
+import ua.lviv.bas.cinema.dto.cinemaHall.SessionRequest;
 
 @Mapper(componentModel = "spring")
 public interface SessionMapper {

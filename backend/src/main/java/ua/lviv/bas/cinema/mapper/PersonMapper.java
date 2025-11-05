@@ -7,9 +7,9 @@ import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 
 import ua.lviv.bas.cinema.domain.Person;
-import ua.lviv.bas.cinema.dto.PersonDto;
-import ua.lviv.bas.cinema.dto.PersonRequest;
-import ua.lviv.bas.cinema.dto.QuickCreatePersonDto;
+import ua.lviv.bas.cinema.dto.movie.PersonDto;
+import ua.lviv.bas.cinema.dto.movie.PersonRequest;
+import ua.lviv.bas.cinema.dto.shared.QuickCreatePersonDto;
 
 @Mapper(componentModel = "spring")
 public interface PersonMapper {

@@ -15,7 +15,7 @@ import org.mapstruct.factory.Mappers;
 import ua.lviv.bas.cinema.domain.CinemaHall;
 import ua.lviv.bas.cinema.domain.Seat;
 import ua.lviv.bas.cinema.domain.enums.SeatType;
-import ua.lviv.bas.cinema.dto.SeatDto;
+import ua.lviv.bas.cinema.dto.shared.SeatDto;
 
 class SeatMapperTest {
 

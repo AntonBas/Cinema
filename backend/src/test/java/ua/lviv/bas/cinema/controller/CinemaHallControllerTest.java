@@ -18,12 +18,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import ua.lviv.bas.cinema.domain.enums.SeatType;
-import ua.lviv.bas.cinema.dto.CinemaHallDto;
-import ua.lviv.bas.cinema.dto.CinemaHallRequest;
-import ua.lviv.bas.cinema.dto.CinemaHallWithSeatsDto;
-import ua.lviv.bas.cinema.dto.HallLayoutDto;
-import ua.lviv.bas.cinema.dto.SeatDto;
-import ua.lviv.bas.cinema.dto.SeatLayoutRequest;
+import ua.lviv.bas.cinema.dto.cinemaHall.CinemaHallDto;
+import ua.lviv.bas.cinema.dto.cinemaHall.CinemaHallRequest;
+import ua.lviv.bas.cinema.dto.cinemaHall.CinemaHallWithSeatsDto;
+import ua.lviv.bas.cinema.dto.cinemaHall.HallLayoutDto;
+import ua.lviv.bas.cinema.dto.cinemaHall.SeatLayoutRequest;
+import ua.lviv.bas.cinema.dto.shared.SeatDto;
 import ua.lviv.bas.cinema.service.CinemaHallService;
 
 @ExtendWith(MockitoExtension.class)

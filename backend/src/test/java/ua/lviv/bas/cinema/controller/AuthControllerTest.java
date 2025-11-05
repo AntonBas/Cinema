@@ -34,9 +34,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import ua.lviv.bas.cinema.config.JwtTokenProvider;
 import ua.lviv.bas.cinema.domain.User;
-import ua.lviv.bas.cinema.dto.UserDto;
-import ua.lviv.bas.cinema.dto.UserLoginDto;
-import ua.lviv.bas.cinema.dto.UserRegistrationDto;
+import ua.lviv.bas.cinema.dto.user.UserDto;
+import ua.lviv.bas.cinema.dto.user.UserLoginDto;
+import ua.lviv.bas.cinema.dto.user.UserRegistrationDto;
 import ua.lviv.bas.cinema.service.EmailTokenGeneratorService;
 import ua.lviv.bas.cinema.service.EmailTokenService;
 import ua.lviv.bas.cinema.service.PasswordResetService;

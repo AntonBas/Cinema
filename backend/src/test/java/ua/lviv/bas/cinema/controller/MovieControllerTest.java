@@ -24,11 +24,11 @@ import org.springframework.mock.web.MockMultipartFile;
 
 import ua.lviv.bas.cinema.domain.enums.AgeRating;
 import ua.lviv.bas.cinema.domain.enums.MovieStatus;
-import ua.lviv.bas.cinema.dto.MovieCreateRequest;
-import ua.lviv.bas.cinema.dto.MovieDto;
-import ua.lviv.bas.cinema.dto.MovieResponse;
-import ua.lviv.bas.cinema.dto.MovieUpdateRequest;
-import ua.lviv.bas.cinema.dto.PageResponse;
+import ua.lviv.bas.cinema.dto.movie.MovieCreateRequest;
+import ua.lviv.bas.cinema.dto.movie.MovieDto;
+import ua.lviv.bas.cinema.dto.movie.MovieResponse;
+import ua.lviv.bas.cinema.dto.movie.MovieUpdateRequest;
+import ua.lviv.bas.cinema.dto.shared.PageResponse;
 import ua.lviv.bas.cinema.service.MovieService;
 
 @ExtendWith(MockitoExtension.class)

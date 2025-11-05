@@ -1,16 +1,20 @@
-package ua.lviv.bas.cinema.dto;
+package ua.lviv.bas.cinema.dto.movie;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import ua.lviv.bas.cinema.domain.enums.PersonRole;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CinemaHallDto {
+public class PersonDto {
+
 	private Long id;
+
 	private String name;
-	private int capacity;
+
+	private PersonRole role;
 }

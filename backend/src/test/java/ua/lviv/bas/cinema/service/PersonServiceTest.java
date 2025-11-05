@@ -22,10 +22,10 @@ import org.springframework.data.domain.Pageable;
 
 import ua.lviv.bas.cinema.domain.Person;
 import ua.lviv.bas.cinema.domain.enums.PersonRole;
-import ua.lviv.bas.cinema.dto.PageResponse;
-import ua.lviv.bas.cinema.dto.PersonDto;
-import ua.lviv.bas.cinema.dto.PersonRequest;
-import ua.lviv.bas.cinema.dto.QuickCreatePersonDto;
+import ua.lviv.bas.cinema.dto.movie.PersonDto;
+import ua.lviv.bas.cinema.dto.movie.PersonRequest;
+import ua.lviv.bas.cinema.dto.shared.PageResponse;
+import ua.lviv.bas.cinema.dto.shared.QuickCreatePersonDto;
 import ua.lviv.bas.cinema.exception.DuplicateEntityException;
 import ua.lviv.bas.cinema.exception.PersonNotFoundException;
 import ua.lviv.bas.cinema.mapper.PersonMapper;

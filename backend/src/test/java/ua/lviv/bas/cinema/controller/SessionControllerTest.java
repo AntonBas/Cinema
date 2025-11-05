@@ -23,10 +23,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import ua.lviv.bas.cinema.dto.CinemaHallDto;
-import ua.lviv.bas.cinema.dto.MovieSimpleDto;
-import ua.lviv.bas.cinema.dto.SessionDto;
-import ua.lviv.bas.cinema.dto.SessionRequest;
+import ua.lviv.bas.cinema.dto.cinemaHall.CinemaHallDto;
+import ua.lviv.bas.cinema.dto.cinemaHall.SessionDto;
+import ua.lviv.bas.cinema.dto.cinemaHall.SessionRequest;
+import ua.lviv.bas.cinema.dto.movie.MovieSimpleDto;
 import ua.lviv.bas.cinema.service.SessionService;
 
 @ExtendWith(MockitoExtension.class)

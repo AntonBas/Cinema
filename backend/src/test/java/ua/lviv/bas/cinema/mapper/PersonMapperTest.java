@@ -9,9 +9,9 @@ import org.mapstruct.factory.Mappers;
 
 import ua.lviv.bas.cinema.domain.Person;
 import ua.lviv.bas.cinema.domain.enums.PersonRole;
-import ua.lviv.bas.cinema.dto.PersonDto;
-import ua.lviv.bas.cinema.dto.PersonRequest;
-import ua.lviv.bas.cinema.dto.QuickCreatePersonDto;
+import ua.lviv.bas.cinema.dto.movie.PersonDto;
+import ua.lviv.bas.cinema.dto.movie.PersonRequest;
+import ua.lviv.bas.cinema.dto.shared.QuickCreatePersonDto;
 
 public class PersonMapperTest {
 

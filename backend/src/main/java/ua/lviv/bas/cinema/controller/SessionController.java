@@ -22,8 +22,8 @@ import org.springframework.web.bind.annotation.RestController;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import ua.lviv.bas.cinema.dto.SessionDto;
-import ua.lviv.bas.cinema.dto.SessionRequest;
+import ua.lviv.bas.cinema.dto.cinemaHall.SessionDto;
+import ua.lviv.bas.cinema.dto.cinemaHall.SessionRequest;
 import ua.lviv.bas.cinema.service.SessionService;
 
 @Slf4j

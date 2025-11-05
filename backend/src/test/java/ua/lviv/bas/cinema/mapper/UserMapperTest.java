@@ -14,8 +14,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.enums.UserRole;
-import ua.lviv.bas.cinema.dto.UserDto;
-import ua.lviv.bas.cinema.dto.UserRegistrationDto;
+import ua.lviv.bas.cinema.dto.user.UserDto;
+import ua.lviv.bas.cinema.dto.user.UserRegistrationDto;
 
 @ExtendWith(MockitoExtension.class)
 public class UserMapperTest {

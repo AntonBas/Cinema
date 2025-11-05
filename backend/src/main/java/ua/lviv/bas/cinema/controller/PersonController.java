@@ -19,10 +19,10 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.enums.PersonRole;
-import ua.lviv.bas.cinema.dto.PageResponse;
-import ua.lviv.bas.cinema.dto.PersonDto;
-import ua.lviv.bas.cinema.dto.PersonRequest;
-import ua.lviv.bas.cinema.dto.QuickCreatePersonDto;
+import ua.lviv.bas.cinema.dto.movie.PersonDto;
+import ua.lviv.bas.cinema.dto.movie.PersonRequest;
+import ua.lviv.bas.cinema.dto.shared.PageResponse;
+import ua.lviv.bas.cinema.dto.shared.QuickCreatePersonDto;
 import ua.lviv.bas.cinema.service.PersonService;
 
 @Slf4j
