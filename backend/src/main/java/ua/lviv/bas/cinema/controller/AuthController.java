@@ -1,9 +1,8 @@
 package ua.lviv.bas.cinema.controller;
 
-import jakarta.persistence.EntityNotFoundException;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,22 +11,25 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.config.JwtTokenProvider;
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.dto.user.request.UserLoginRequest;
 import ua.lviv.bas.cinema.dto.user.request.UserRegistrationRequest;
 import ua.lviv.bas.cinema.dto.user.response.UserResponse;
-import ua.lviv.bas.cinema.security.CustomUserDetails;
-import ua.lviv.bas.cinema.service.EmailTokenGeneratorService;
 import ua.lviv.bas.cinema.service.EmailTokenService;
 import ua.lviv.bas.cinema.service.PasswordResetService;
 import ua.lviv.bas.cinema.service.UserService;
-
-import java.util.HashMap;
-import java.util.Map;
 
 @Slf4j
 @RestController
@@ -36,7 +38,6 @@ import java.util.Map;
 public class AuthController {
 
 	private final UserService userService;
-	private final EmailTokenGeneratorService tokenGeneratorService;
 	private final EmailTokenService emailTokenService;
 	private final PasswordResetService passwordResetService;
 	private final AuthenticationManager authenticationManager;
@@ -60,7 +61,6 @@ public class AuthController {
 
 		try {
 			userService.registerUser(userDto);
-			tokenGeneratorService.generateVerificationToken(userDto.getEmail());
 			log.info("User registered successfully: {}", userDto.getEmail());
 			return ResponseEntity.ok().body(createSuccessResponse("Check your email to confirm account"));
 		} catch (RuntimeException e) {
@@ -81,9 +81,6 @@ public class AuthController {
 			User user = userService.findByEmail(loginDto.getEmail());
 
 			Map<String, Object> response = createLoginResponse(token, user);
-
-			response.put("token", token);
-			response.put("tokenType", "Bearer");
 
 			log.info("Login successful for email: {}", loginDto.getEmail());
 			return ResponseEntity.ok().header(HttpHeaders.AUTHORIZATION, "Bearer " + token).body(response);
@@ -152,48 +149,14 @@ public class AuthController {
 		return ResponseEntity.ok(response);
 	}
 
-	@GetMapping("/profile")
-	public ResponseEntity<?> getProfile(@AuthenticationPrincipal CustomUserDetails userDetails) {
-		if (userDetails == null) {
-			log.warn("Unauthorized profile access attempt");
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(createErrorResponse("User not authenticated"));
-		}
-
-		try {
-			String email = userDetails.getUsername();
-			log.info("Profile request for user: {}", email);
-
-			User user = userService.findByEmail(email);
-
-			UserResponse userDto = buildUserDto(user);
-
-			log.info("Profile retrieved successfully for user: {}", email);
-			return ResponseEntity.ok(userDto);
-
-		} catch (EntityNotFoundException e) {
-			log.warn("User profile not found: {}", userDetails.getUsername());
-			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(createErrorResponse("User not found"));
-		} catch (Exception e) {
-			log.error("Internal server error in getProfile for user {}: {}", userDetails.getUsername(), e.getMessage(),
-					e);
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-					.body(createErrorResponse("Internal server error"));
-		}
-	}
-
 	private Map<String, Object> createLoginResponse(String token, User user) {
 		Map<String, Object> response = new HashMap<>();
 		response.put("message", "Login successful");
 		response.put("token", token);
-		response.put("user", UserResponse.builder().id(user.getId()).email(user.getEmail()).firstName(user.getFirstName())
-				.lastName(user.getLastName()).userRole(user.getUserRole()).build());
+		response.put("tokenType", "Bearer");
+		response.put("user", UserResponse.builder().id(user.getId()).email(user.getEmail())
+				.firstName(user.getFirstName()).lastName(user.getLastName()).userRole(user.getUserRole()).build());
 		return response;
-	}
-
-	private UserResponse buildUserDto(User user) {
-		return UserResponse.builder().id(user.getId()).email(user.getEmail()).firstName(user.getFirstName())
-				.lastName(user.getLastName()).dateOfBirth(user.getDateOfBirth()).city(user.getCity())
-				.phoneNumber(user.getPhoneNumber()).userRole(user.getUserRole()).enabled(user.isEnabled()).build();
 	}
 
 	private Map<String, Object> createSuccessResponse(String message) {

@@ -8,6 +8,7 @@ import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.dto.user.request.UserRegistrationRequest;
 import ua.lviv.bas.cinema.dto.user.request.UserUpdateRequest;
 import ua.lviv.bas.cinema.dto.user.response.UserResponse;
+import ua.lviv.bas.cinema.dto.user.response.UserProfileResponse;
 
 @Mapper(componentModel = "spring")
 public interface UserMapper {
@@ -22,6 +23,8 @@ public interface UserMapper {
 	User toEntity(UserRegistrationRequest dto);
 
 	UserResponse toDto(User user);
+
+	UserProfileResponse toProfileResponse(User user);
 
 	@Mapping(target = "id", ignore = true)
 	@Mapping(target = "tickets", ignore = true)

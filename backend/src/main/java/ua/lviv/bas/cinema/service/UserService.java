@@ -11,7 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.dto.user.request.UserRegistrationRequest;
 import ua.lviv.bas.cinema.dto.user.request.UserUpdateRequest;
-import ua.lviv.bas.cinema.dto.user.response.UserResponse;
+import ua.lviv.bas.cinema.dto.user.response.UserProfileResponse;
 import ua.lviv.bas.cinema.exception.EmailAlreadyExistsException;
 import ua.lviv.bas.cinema.exception.UserNotFoundException;
 import ua.lviv.bas.cinema.mapper.UserMapper;
@@ -25,9 +25,11 @@ public class UserService {
 	private final UserRepository userRepository;
 	private final PasswordEncoder passwordEncoder;
 	private final UserMapper userMapper;
+	private final EmailTokenGeneratorService emailTokenGeneratorService;
+	private final EmailTokenService emailTokenService;
 
 	@Transactional
-	public UserResponse registerUser(UserRegistrationRequest userDto) {
+	public UserProfileResponse registerUser(UserRegistrationRequest userDto) {
 		log.info("Attempting to register user with email: {}", userDto.getEmail());
 
 		if (existsByEmail(userDto.getEmail())) {
@@ -38,14 +40,17 @@ public class UserService {
 		User user = userMapper.toEntityWithPassword(userDto, encodedPassword);
 
 		User savedUser = userRepository.save(user);
+
+		emailTokenGeneratorService.generateVerificationToken(userDto.getEmail());
+
 		log.info("User registered successfully with email: {}", userDto.getEmail());
 
-		return userMapper.toDto(savedUser);
+		return userMapper.toProfileResponse(savedUser);
 	}
 
 	@Transactional
-	public UserResponse updateUser(Long userId, UserUpdateRequest updateRequest) {
-		log.info("Updating user with ID: {}" + userId);
+	public UserProfileResponse updateUser(Long userId, UserUpdateRequest updateRequest) {
+		log.info("Updating user with ID: {}", userId);
 
 		User user = findById(userId);
 		userMapper.updateUserFromDto(updateRequest, user);
@@ -53,25 +58,31 @@ public class UserService {
 		User updatedUser = userRepository.save(user);
 		log.info("User with ID: {} updated successfully", userId);
 
-		return userMapper.toDto(updatedUser);
+		return userMapper.toProfileResponse(updatedUser);
 	}
 
 	@Transactional
-	public UserResponse updateUserEmail(Long userId, String newEmail) {
-		log.info("Updating email for user ID: {}", userId);
+	public void requestEmailChange(Long userId, String newEmail) {
+		log.info("Requesting email change for user ID: {} to {}", userId, newEmail);
 
 		if (existsByEmail(newEmail)) {
 			throw new EmailAlreadyExistsException("Email is already registered: " + newEmail);
 		}
 
 		User user = findById(userId);
-		user.setEmail(newEmail);
-		user.setEnabled(false);
 
-		User updateUser = userRepository.save(user);
-		log.info("Email updated for user ID: {}", userId);
+		emailTokenGeneratorService.generateEmailChangeToken(user.getEmail(), newEmail);
 
-		return userMapper.toDto(updateUser);
+		log.info("Email change requested successfully for user ID: {}", userId);
+	}
+
+	@Transactional
+	public UserProfileResponse confirmEmailChange(String token) {
+		log.info("Confirming email change with token: {}", token);
+
+		User updatedUser = emailTokenService.confirmEmailChange(token);
+
+		return userMapper.toProfileResponse(updatedUser);
 	}
 
 	@Transactional
@@ -84,6 +95,12 @@ public class UserService {
 
 		userRepository.save(user);
 		log.info("Password updated for user ID: {}", userId);
+	}
+
+	@Transactional(readOnly = true)
+	public UserProfileResponse getUserProfileById(Long id) {
+		User user = findById(id);
+		return userMapper.toProfileResponse(user);
 	}
 
 	@Transactional(readOnly = true)

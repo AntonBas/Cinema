@@ -1,20 +1,17 @@
 package ua.lviv.bas.cinema.dto.user.response;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import ua.lviv.bas.cinema.domain.enums.UserRole;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserResponse {
-
+public class UserProfileResponse {
 	private Long id;
 	private String email;
 	private String firstName;
@@ -22,7 +19,4 @@ public class UserResponse {
 	private LocalDate dateOfBirth;
 	private String city;
 	private String phoneNumber;
-	private UserRole userRole;
-	private boolean enabled;
-	private LocalDateTime createdAt;
 }

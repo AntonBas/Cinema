@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -15,10 +16,8 @@ import org.springframework.web.bind.annotation.RestController;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.dto.user.request.UserUpdateRequest;
-import ua.lviv.bas.cinema.dto.user.response.UserResponse;
-import ua.lviv.bas.cinema.mapper.UserMapper;
+import ua.lviv.bas.cinema.dto.user.response.UserProfileResponse;
 import ua.lviv.bas.cinema.security.CustomUserDetails;
 import ua.lviv.bas.cinema.service.UserService;
 
@@ -29,31 +28,38 @@ import ua.lviv.bas.cinema.service.UserService;
 public class UserController {
 
 	private final UserService userService;
-	private final UserMapper userMapper;
 
 	@GetMapping("/profile")
-	public ResponseEntity<UserResponse> getProfile(@AuthenticationPrincipal CustomUserDetails userDetails) {
+	public ResponseEntity<UserProfileResponse> getProfile(@AuthenticationPrincipal CustomUserDetails userDetails) {
 		log.info("Profile request for user: {}", userDetails.getUsername());
 
-		User user = userService.findByEmail(userDetails.getUsername());
-		UserResponse userResponse = userMapper.toDto(user);
+		UserProfileResponse userResponse = userService.getUserProfileById(userDetails.getUserId());
 		return ResponseEntity.ok(userResponse);
 	}
 
 	@PutMapping("/profile")
-	public ResponseEntity<UserResponse> updateProfile(@AuthenticationPrincipal CustomUserDetails userDetails,
+	public ResponseEntity<UserProfileResponse> updateProfile(@AuthenticationPrincipal CustomUserDetails userDetails,
 			@Valid @RequestBody UserUpdateRequest updateRequest) {
 		log.info("Updating profile for user ID: {}", userDetails.getUserId());
 
-		UserResponse updatedUser = userService.updateUser(userDetails.getUserId(), updateRequest);
+		UserProfileResponse updatedUser = userService.updateUser(userDetails.getUserId(), updateRequest);
 		return ResponseEntity.ok(updatedUser);
 	}
 
-	@PatchMapping("/email")
-	public ResponseEntity<UserResponse> updateEmail(@AuthenticationPrincipal CustomUserDetails userDetails,
+	@PostMapping("/email/change-request")
+	public ResponseEntity<?> requestEmailChange(@AuthenticationPrincipal CustomUserDetails userDetails,
 			@RequestParam String newEmail) {
-		log.info("Updating email for user ID: {}", userDetails.getUserId());
-		UserResponse updatedUser = userService.updateUserEmail(userDetails.getUserId(), newEmail);
+		log.info("Requesting email change for user ID: {} to {}", userDetails.getUserId(), newEmail);
+
+		userService.requestEmailChange(userDetails.getUserId(), newEmail);
+		return ResponseEntity.ok(Map.of("message", "Confirmation email sent to your new email address"));
+	}
+
+	@PostMapping("/email/confirm-change")
+	public ResponseEntity<UserProfileResponse> confirmEmailChange(@RequestParam String token) {
+		log.info("Confirming email change with token");
+
+		UserProfileResponse updatedUser = userService.confirmEmailChange(token);
 		return ResponseEntity.ok(updatedUser);
 	}
 
