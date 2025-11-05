@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.dto.user.request.UserRegistrationRequest;
+import ua.lviv.bas.cinema.dto.user.request.UserUpdateRequest;
 import ua.lviv.bas.cinema.dto.user.response.UserResponse;
 import ua.lviv.bas.cinema.exception.EmailAlreadyExistsException;
 import ua.lviv.bas.cinema.exception.UserNotFoundException;
@@ -42,6 +43,49 @@ public class UserService {
 		return userMapper.toDto(savedUser);
 	}
 
+	@Transactional
+	public UserResponse updateUser(Long userId, UserUpdateRequest updateRequest) {
+		log.info("Updating user with ID: {}" + userId);
+
+		User user = findById(userId);
+		userMapper.updateUserFromDto(updateRequest, user);
+
+		User updatedUser = userRepository.save(user);
+		log.info("User with ID: {} updated successfully", userId);
+
+		return userMapper.toDto(updatedUser);
+	}
+
+	@Transactional
+	public UserResponse updateUserEmail(Long userId, String newEmail) {
+		log.info("Updating email for user ID: {}", userId);
+
+		if (existsByEmail(newEmail)) {
+			throw new EmailAlreadyExistsException("Email is already registered: " + newEmail);
+		}
+
+		User user = findById(userId);
+		user.setEmail(newEmail);
+		user.setEnabled(false);
+
+		User updateUser = userRepository.save(user);
+		log.info("Email updated for user ID: {}", userId);
+
+		return userMapper.toDto(updateUser);
+	}
+
+	@Transactional
+	public void updateUserPassword(Long userId, String newPassword) {
+		log.info("Updating password for user ID: {}", userId);
+
+		User user = findById(userId);
+		String encodedPassword = passwordEncoder.encode(newPassword);
+		user.setPassword(encodedPassword);
+
+		userRepository.save(user);
+		log.info("Password updated for user ID: {}", userId);
+	}
+
 	@Transactional(readOnly = true)
 	public Optional<User> findOptionalByEmail(String email) {
 		return userRepository.findByEmail(email);
@@ -50,7 +94,7 @@ public class UserService {
 	@Transactional(readOnly = true)
 	public User findByEmail(String email) {
 		return userRepository.findByEmail(email)
-				.orElseThrow(() -> new UserNotFoundException("User not found with email: " + email)); // ✅ Змінено
+				.orElseThrow(() -> new UserNotFoundException("User not found with email: " + email));
 	}
 
 	@Transactional
