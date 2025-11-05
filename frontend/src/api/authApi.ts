@@ -1,33 +1,17 @@
 import { api } from '@/services/api';
-import type { LoginRequest, RegisterRequest, LoginResponse, User } from '@/types/auth';
+import type { LoginRequest, RegisterRequest, LoginResponse } from '@/types/auth';
 import type { ApiResponse } from '@/types/api';
 
 export const authApi = {
     login: async (credentials: LoginRequest): Promise<LoginResponse> => {
         const response = await api.post('/auth/login', credentials);
 
-        if (response.data.token) {
-            return {
-                message: response.data.message,
-                token: response.data.token,
-                user: response.data.user,
-                tokenType: response.data.tokenType || 'Bearer'
-            };
-        }
-
-        const authHeader = response.headers['authorization'] || response.headers['Authorization'];
-        const token = authHeader?.replace('Bearer ', '');
-
-        if (token) {
-            return {
-                message: response.data.message,
-                token: token,
-                user: response.data.user,
-                tokenType: 'Bearer'
-            };
-        }
-
-        throw new Error('No authorization token received from server');
+        return {
+            message: response.data.message,
+            token: response.data.token,
+            user: response.data.user,
+            tokenType: response.data.tokenType
+        };
     },
 
     register: async (userData: RegisterRequest): Promise<ApiResponse> => {
@@ -52,11 +36,6 @@ export const authApi = {
 
     verifyEmail: async (token: string): Promise<ApiResponse> => {
         const response = await api.get(`/auth/verify-email?token=${token}`);
-        return response.data;
-    },
-
-    getProfile: async (): Promise<User> => {
-        const response = await api.get('/users/profile');
         return response.data;
     }
 };

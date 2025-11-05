@@ -13,8 +13,13 @@ export const userApi = {
         return response.data;
     },
 
-    updateEmail: async (newEmail: string): Promise<User> => {
-        const response = await api.patch(`/users/email?newEmail=${encodeURIComponent(newEmail)}`);
+    requestEmailChange: async (newEmail: string): Promise<ApiResponse> => {
+        const response = await api.post(`/users/email/change-request?newEmail=${encodeURIComponent(newEmail)}`);
+        return response.data;
+    },
+
+    confirmEmailChange: async (token: string): Promise<User> => {
+        const response = await api.post(`/users/email/confirm-change?token=${encodeURIComponent(token)}`);
         return response.data;
     },
 

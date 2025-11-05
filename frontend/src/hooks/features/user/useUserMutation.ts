@@ -22,14 +22,29 @@ export const useUserMutation = () => {
         }
     };
 
-    const updateEmail = async (newEmail: string): Promise<User> => {
+    const requestEmailChange = async (newEmail: string): Promise<ApiResponse> => {
         setIsLoading(true);
         setError(null);
         try {
-            const updatedUser = await userApi.updateEmail(newEmail);
+            const response = await userApi.requestEmailChange(newEmail);
+            return response;
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'Email change request failed';
+            setError(message);
+            throw err;
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const confirmEmailChange = async (token: string): Promise<User> => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            const updatedUser = await userApi.confirmEmailChange(token);
             return updatedUser;
         } catch (err) {
-            const message = err instanceof Error ? err.message : 'Email update failed';
+            const message = err instanceof Error ? err.message : 'Email change confirmation failed';
             setError(message);
             throw err;
         } finally {
@@ -60,7 +75,8 @@ export const useUserMutation = () => {
         isLoading,
         error,
         updateProfile,
-        updateEmail,
+        requestEmailChange,
+        confirmEmailChange,
         updatePassword,
         clearError
     };
