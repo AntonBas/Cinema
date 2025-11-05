@@ -3,39 +3,38 @@ import styles from './CreateHallModal.module.css';
 
 interface CreateHallModalProps {
     onClose: () => void;
-    onCreate: (name: string) => void;
+    onCreate: (name: string) => Promise<void>;
+    loading?: boolean;
 }
 
 export const CreateHallModal: React.FC<CreateHallModalProps> = ({
     onClose,
-    onCreate
+    onCreate,
+    loading = false
 }) => {
     const [name, setName] = useState('');
-    const [loading, setLoading] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!name.trim()) return;
+        if (!name.trim() || loading) return;
 
-        setLoading(true);
         try {
             await onCreate(name.trim());
-        } finally {
-            setLoading(false);
+        } catch (err) {
         }
     };
 
     return (
-        <div className={styles.modalOverlay} onClick={onClose}>
+        <div className={styles.overlay} onClick={onClose}>
             <div className={styles.modal} onClick={e => e.stopPropagation()}>
-                <div className={styles.modalHeader}>
+                <div className={styles.header}>
                     <h2>Create New Hall</h2>
                     <button className={styles.closeButton} onClick={onClose}>×</button>
                 </div>
 
                 <form onSubmit={handleSubmit} className={styles.form}>
                     <div className={styles.field}>
-                        <label htmlFor="hallName">Hall Name</label>
+                        <label htmlFor="hallName" className={styles.label}>Hall Name</label>
                         <input
                             id="hallName"
                             type="text"
@@ -45,14 +44,17 @@ export const CreateHallModal: React.FC<CreateHallModalProps> = ({
                             required
                             minLength={2}
                             maxLength={25}
+                            className={styles.input}
+                            disabled={loading}
                         />
                     </div>
 
-                    <div className={styles.modalActions}>
+                    <div className={styles.actions}>
                         <button
                             type="button"
                             className={styles.cancelButton}
                             onClick={onClose}
+                            disabled={loading}
                         >
                             Cancel
                         </button>

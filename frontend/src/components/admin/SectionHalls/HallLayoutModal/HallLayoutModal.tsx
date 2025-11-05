@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { CinemaHallDto, HallLayoutDto, SeatLayoutRequest, SeatDto } from '@/types';
 import { SeatType } from '@/types';
-import { cinemaHallApi } from '@/api/cinemaHallApi';
-import { seatApi } from '@/api/seatApi';
+import { useCinemaHalls, useCinemaHallMutation, useSeatMutation } from '@/hooks/features/cinemaHalls';
 import { useNotification } from '@/hooks/common/useNotification';
 import styles from './HallLayoutModal.module.css';
 
@@ -17,79 +16,74 @@ export const HallLayoutModal: React.FC<HallLayoutModalProps> = ({
     onClose,
     onSeatsGenerated
 }) => {
-    const [layout, setLayout] = useState<HallLayoutDto | null>(null);
-    const [loading, setLoading] = useState(true);
     const [showSeatForm, setShowSeatForm] = useState(false);
-    const [generating, setGenerating] = useState(false);
     const [updatingSeat, setUpdatingSeat] = useState<number | null>(null);
     const [seatForm, setSeatForm] = useState<SeatLayoutRequest>({
         rows: 5,
         seatsPerRow: 10,
         defaultSeatType: SeatType.STANDARD
     });
+    const [localLayout, setLocalLayout] = useState<HallLayoutDto | null>(null);
 
+    const { hallLayout, loading, error, getHallLayout } = useCinemaHalls();
+    const { generateSeats, loading: generating } = useCinemaHallMutation();
+    const { updateSeatType, loading: updating } = useSeatMutation();
     const { showNotification } = useNotification();
 
-    const loadLayout = async () => {
-        try {
-            setLoading(true);
-            const data = await cinemaHallApi.getHallLayout(hall.id!);
-            setLayout(data);
-        } catch (err: any) {
-            if (err.message.includes('404') || err.message.includes('not found')) {
-                setLayout(null);
-            } else {
-                showNotification(err.message || 'Failed to load hall layout', 'error');
-            }
-        } finally {
-            setLoading(false);
-        }
-    };
+    useEffect(() => {
+        setLocalLayout(hallLayout);
+    }, [hallLayout]);
 
     useEffect(() => {
-        loadLayout();
-    }, [hall.id]);
+        getHallLayout(hall.id!);
+    }, [hall.id, getHallLayout]);
+
+    useEffect(() => {
+        if (error) {
+            showNotification(error, 'error');
+        }
+    }, [error, showNotification]);
 
     const handleGenerateSeats = async () => {
         try {
-            setGenerating(true);
-            await cinemaHallApi.generateSeats(hall.id!, seatForm);
-            await loadLayout();
+            await generateSeats(hall.id!, seatForm);
+            await getHallLayout(hall.id!);
             setShowSeatForm(false);
             onSeatsGenerated?.();
-        } catch (err: any) {
-            showNotification(err.message || 'Failed to generate seats', 'error');
-        } finally {
-            setGenerating(false);
+        } catch (err) {
         }
     };
 
     const handleSeatClick = async (seat: SeatDto) => {
-        if (updatingSeat === seat.id) return;
+        if (updatingSeat === seat.id || updating) return;
+
+        const nextSeatType = getNextSeatType(seat.seatType);
+        const previousLayout = localLayout;
 
         try {
             setUpdatingSeat(seat.id);
 
-            const nextSeatType = getNextSeatType(seat.seatType);
-            const updatedSeat = await seatApi.updateSeatType(hall.id!, seat.id, nextSeatType);
-
-            setLayout(prev => {
+            setLocalLayout(prev => {
                 if (!prev) return prev;
-
                 return {
                     ...prev,
                     rows: prev.rows.map(row => ({
                         ...row,
                         seats: row.seats.map(s =>
-                            s.id === seat.id ? updatedSeat : s
+                            s.id === seat.id ? { ...s, seatType: nextSeatType } : s
                         )
                     }))
                 };
             });
 
+            await updateSeatType(hall.id!, seat.id, nextSeatType);
+
+            await getHallLayout(hall.id!);
+
             showNotification(`Seat type updated to ${getSeatTypeName(nextSeatType)}`, 'success');
-        } catch (err: any) {
-            showNotification(err.message || 'Failed to update seat type', 'error');
+        } catch (err) {
+            setLocalLayout(previousLayout);
+            showNotification('Failed to update seat type', 'error');
         } finally {
             setUpdatingSeat(null);
         }
@@ -113,7 +107,7 @@ export const HallLayoutModal: React.FC<HallLayoutModalProps> = ({
     };
 
     const renderSeats = () => {
-        if (!layout || !layout.rows || layout.rows.length === 0) return null;
+        if (!localLayout || !localLayout.rows || localLayout.rows.length === 0) return null;
 
         return (
             <div className={styles.cinemaHall}>
@@ -124,7 +118,7 @@ export const HallLayoutModal: React.FC<HallLayoutModalProps> = ({
 
                 <div className={styles.seatsLayout}>
                     <div className={styles.rowsContainer}>
-                        {layout.rows.map((row, index) => (
+                        {localLayout.rows.map((row, index) => (
                             <div key={row.rowNumber} className={styles.row}>
                                 <div className={styles.rowIndicator}>
                                     <span className={styles.rowLetter}>
@@ -183,15 +177,15 @@ export const HallLayoutModal: React.FC<HallLayoutModalProps> = ({
 
                     <div className={styles.hallStats}>
                         <div className={styles.stat}>
-                            <span className={styles.statNumber}>{layout.totalSeats}</span>
+                            <span className={styles.statNumber}>{localLayout.totalSeats}</span>
                             <span className={styles.statLabel}>Total Seats</span>
                         </div>
                         <div className={styles.stat}>
-                            <span className={styles.statNumber}>{layout.totalRows}</span>
+                            <span className={styles.statNumber}>{localLayout.totalRows}</span>
                             <span className={styles.statLabel}>Rows</span>
                         </div>
                         <div className={styles.stat}>
-                            <span className={styles.statNumber}>{layout.maxSeatsPerRow}</span>
+                            <span className={styles.statNumber}>{localLayout.maxSeatsPerRow}</span>
                             <span className={styles.statLabel}>Seats/Row</span>
                         </div>
                     </div>
@@ -216,7 +210,7 @@ export const HallLayoutModal: React.FC<HallLayoutModalProps> = ({
                         </div>
                     )}
 
-                    {!loading && (!layout || layout.rows.length === 0) && (
+                    {!loading && (!localLayout || localLayout.rows.length === 0) && (
                         <div className={styles.noLayout}>
                             <div className={styles.emptyIcon}>🎭</div>
                             <h3>No Seats Configured</h3>
@@ -243,6 +237,7 @@ export const HallLayoutModal: React.FC<HallLayoutModalProps> = ({
                                         max="20"
                                         value={seatForm.rows}
                                         onChange={(e) => setSeatForm({ ...seatForm, rows: parseInt(e.target.value) || 1 })}
+                                        disabled={generating}
                                     />
                                 </label>
                                 <label>
@@ -253,6 +248,7 @@ export const HallLayoutModal: React.FC<HallLayoutModalProps> = ({
                                         max="20"
                                         value={seatForm.seatsPerRow}
                                         onChange={(e) => setSeatForm({ ...seatForm, seatsPerRow: parseInt(e.target.value) || 1 })}
+                                        disabled={generating}
                                     />
                                 </label>
                                 <label>
@@ -260,6 +256,7 @@ export const HallLayoutModal: React.FC<HallLayoutModalProps> = ({
                                     <select
                                         value={seatForm.defaultSeatType}
                                         onChange={(e) => setSeatForm({ ...seatForm, defaultSeatType: e.target.value as SeatType })}
+                                        disabled={generating}
                                     >
                                         {Object.values(SeatType).map(type => (
                                             <option key={type} value={type}>

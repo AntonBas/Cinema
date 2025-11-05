@@ -5,16 +5,17 @@ import styles from './EditHallModal.module.css';
 interface EditHallModalProps {
   hall: CinemaHallDto;
   onClose: () => void;
-  onUpdate: (id: number, request: CinemaHallRequest) => void;
+  onUpdate: (id: number, request: CinemaHallRequest) => Promise<void>;
+  loading?: boolean;
 }
 
 export const EditHallModal: React.FC<EditHallModalProps> = ({
   hall,
   onClose,
-  onUpdate
+  onUpdate,
+  loading = false
 }) => {
   const [name, setName] = useState(hall.name);
-  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     setName(hall.name);
@@ -22,13 +23,12 @@ export const EditHallModal: React.FC<EditHallModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || name === hall.name) return;
+    if (!name.trim() || name === hall.name || loading) return;
 
-    setLoading(true);
     try {
       await onUpdate(hall.id!, { name: name.trim() });
-    } finally {
-      setLoading(false);
+    } catch (err) {
+      // Error handled by parent
     }
   };
 
@@ -39,10 +39,10 @@ export const EditHallModal: React.FC<EditHallModalProps> = ({
           <h2>Edit Cinema Hall</h2>
           <button className={styles.closeButton} onClick={onClose}>×</button>
         </div>
-        
+
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.field}>
-            <label htmlFor="hallName">Hall Name</label>
+            <label htmlFor="hallName" className={styles.label}>Hall Name</label>
             <input
               id="hallName"
               type="text"
@@ -52,9 +52,11 @@ export const EditHallModal: React.FC<EditHallModalProps> = ({
               required
               minLength={2}
               maxLength={25}
+              className={styles.input}
+              disabled={loading}
             />
           </div>
-          
+
           <div className={styles.actions}>
             <button
               type="button"
