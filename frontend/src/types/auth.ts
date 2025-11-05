@@ -1,6 +1,26 @@
-import type { UserSimple } from "./user";
+import type { ApiResponse, ErrorResponse } from './api';
 
 export type UserRole = 'ROLE_USER' | 'ROLE_ADMIN';
+
+export interface User {
+    id: number;
+    email: string;
+    firstName: string;
+    lastName: string;
+    dateOfBirth: string;
+    city: string;
+    phoneNumber: string;
+    userRole: UserRole;
+    enabled: boolean;
+}
+
+export interface UserSimple {
+    id: number;
+    email: string;
+    firstName: string;
+    lastName: string;
+    userRole: UserRole;
+}
 
 export interface LoginRequest {
     email: string;
@@ -25,15 +45,12 @@ export interface RegisterRequest {
     passwordConfirm: string;
 }
 
-export interface ApiResponse {
-    success: boolean;
-    message: string;
-    data?: any;
-    errors?: any;
+export interface UserUpdateRequest {
+    firstName: string;
+    lastName: string;
+    dateOfBirth: string;
+    city: string;
+    phoneNumber: string;
 }
 
-export interface ErrorResponse {
-    success: boolean;
-    message: string;
-    errors?: any;
-}
+export type { ApiResponse, ErrorResponse };

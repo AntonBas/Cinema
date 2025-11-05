@@ -1,4 +1,5 @@
 import type { UserRole } from './auth';
+import type { ApiResponse } from './api';
 
 export interface User {
     id: number;
@@ -10,15 +11,6 @@ export interface User {
     phoneNumber: string;
     userRole: UserRole;
     enabled: boolean;
-    createdAt?: string;
-}
-
-export interface UserSimple {
-    id: number;
-    email: string;
-    firstName: string;
-    lastName: string;
-    userRole: UserRole;
 }
 
 export interface UserUpdateRequest {
@@ -39,3 +31,5 @@ export interface UserPasswordChangeRequest {
     newPassword: string;
     passwordConfirm: string;
 }
+
+export type { ApiResponse };
