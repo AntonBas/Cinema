@@ -1,5 +1,6 @@
 import { api } from '@/services/api';
-import type { LoginRequest, RegisterRequest, LoginResponse, ApiResponse } from '@/types/auth';
+import type { LoginRequest, RegisterRequest, LoginResponse, User } from '@/types/auth';
+import type { ApiResponse } from '@/types/api';
 
 export const authApi = {
     login: async (credentials: LoginRequest): Promise<LoginResponse> => {
@@ -9,7 +10,8 @@ export const authApi = {
             return {
                 message: response.data.message,
                 token: response.data.token,
-                user: response.data.user
+                user: response.data.user,
+                tokenType: response.data.tokenType || 'Bearer'
             };
         }
 
@@ -20,7 +22,8 @@ export const authApi = {
             return {
                 message: response.data.message,
                 token: token,
-                user: response.data.user
+                user: response.data.user,
+                tokenType: 'Bearer'
             };
         }
 
@@ -49,6 +52,11 @@ export const authApi = {
 
     verifyEmail: async (token: string): Promise<ApiResponse> => {
         const response = await api.get(`/auth/verify-email?token=${token}`);
+        return response.data;
+    },
+
+    getProfile: async (): Promise<User> => {
+        const response = await api.get('/users/profile');
         return response.data;
     }
 };
