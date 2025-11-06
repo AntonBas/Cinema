@@ -87,4 +87,21 @@ public class GlobalExceptionHandler {
 		return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
 	}
 
+	@ExceptionHandler(TokenExpiredException.class)
+	public ResponseEntity<String> handleTokenExpired(TokenExpiredException ex) {
+		log.warn("Token expired: {}", ex.getMessage());
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+	}
+
+	@ExceptionHandler(TokenAlreadyConfirmedException.class)
+	public ResponseEntity<String> handleTokenAlreadyConfirmed(TokenAlreadyConfirmedException ex) {
+		log.warn("Token already confirmed: {}", ex.getMessage());
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+	}
+
+	@ExceptionHandler(InvalidTokenException.class)
+	public ResponseEntity<String> handleInvalidToken(InvalidTokenException ex) {
+		log.warn("Invalid token: {}", ex.getMessage());
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+	}
 }
