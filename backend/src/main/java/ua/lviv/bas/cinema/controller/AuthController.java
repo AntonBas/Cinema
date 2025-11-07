@@ -1,10 +1,7 @@
 package ua.lviv.bas.cinema.controller;
 
-import java.util.HashMap;
 import java.util.Map;
 
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -26,10 +23,6 @@ import ua.lviv.bas.cinema.config.JwtTokenProvider;
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.dto.user.request.UserLoginRequest;
 import ua.lviv.bas.cinema.dto.user.request.UserRegistrationRequest;
-import ua.lviv.bas.cinema.dto.user.response.UserProfileResponse;
-import ua.lviv.bas.cinema.dto.user.response.UserResponse;
-import ua.lviv.bas.cinema.service.EmailTokenGeneratorService;
-import ua.lviv.bas.cinema.service.EmailTokenService;
 import ua.lviv.bas.cinema.service.PasswordResetService;
 import ua.lviv.bas.cinema.service.UserService;
 
@@ -40,156 +33,60 @@ import ua.lviv.bas.cinema.service.UserService;
 public class AuthController {
 
 	private final UserService userService;
-	private final EmailTokenGeneratorService emailTokenGeneratorService;
-	private final EmailTokenService emailTokenService;
 	private final PasswordResetService passwordResetService;
 	private final AuthenticationManager authenticationManager;
 	private final JwtTokenProvider jwtTokenProvider;
 
 	@PostMapping("/registration")
-	public ResponseEntity<?> registerUser(@Valid @RequestBody UserRegistrationRequest userDto,
+	public ResponseEntity<?> registerUser(@Valid @RequestBody UserRegistrationRequest request,
 			BindingResult bindingResult) {
-		log.info("Registration attempt for email: {}", userDto.getEmail());
-
 		if (bindingResult.hasErrors()) {
-			log.warn("Validation errors for registration: {}", bindingResult.getAllErrors());
-			return ResponseEntity.badRequest()
-					.body(createErrorResponse("Validation failed", bindingResult.getAllErrors()));
+			return ResponseEntity.badRequest().body(
+					Map.of("success", false, "message", "Validation failed", "errors", bindingResult.getAllErrors()));
 		}
 
-		if (!userDto.getPassword().equals(userDto.getPasswordConfirm())) {
-			log.warn("Password mismatch for email: {}", userDto.getEmail());
-			return ResponseEntity.badRequest().body(createErrorResponse("Passwords do not match"));
+		if (!request.getPassword().equals(request.getPasswordConfirm())) {
+			return ResponseEntity.badRequest().body(Map.of("success", false, "message", "Passwords do not match"));
 		}
 
-		try {
-			userService.registerUser(userDto);
-			emailTokenGeneratorService.generateVerificationToken(userDto.getEmail());
-			log.info("User registered successfully: {}", userDto.getEmail());
-			return ResponseEntity.ok().body(createSuccessResponse("Check your email to confirm account"));
-		} catch (RuntimeException e) {
-			log.error("Registration failed for email {}: {}", userDto.getEmail(), e.getMessage());
-			return ResponseEntity.badRequest().body(createErrorResponse(e.getMessage()));
-		}
+		userService.registerUser(request);
+		return ResponseEntity.ok(Map.of("success", true, "message",
+				"User registered successfully. Check your email to confirm account."));
 	}
 
 	@PostMapping("/login")
 	public ResponseEntity<?> loginUser(@Valid @RequestBody UserLoginRequest loginDto) {
-		log.info("Login attempt for email: {}", loginDto.getEmail());
-
 		try {
-			Authentication authentication = authenticationManager
+			Authentication auth = authenticationManager
 					.authenticate(new UsernamePasswordAuthenticationToken(loginDto.getEmail(), loginDto.getPassword()));
 
-			String token = jwtTokenProvider.generateToken(authentication);
+			String token = jwtTokenProvider.generateToken(auth);
 			User user = userService.findByEmail(loginDto.getEmail());
 
-			Map<String, Object> response = createLoginResponse(token, user);
-
-			log.info("Login successful for email: {}", loginDto.getEmail());
-			return ResponseEntity.ok().header(HttpHeaders.AUTHORIZATION, "Bearer " + token).body(response);
-
+			return ResponseEntity
+					.ok(Map.of("token", token, "tokenType", "Bearer", "user", userService.getUserById(user.getId())));
 		} catch (BadCredentialsException e) {
-			log.warn("Invalid credentials for email: {}", loginDto.getEmail());
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-					.body(createErrorResponse("Invalid email or password"));
+			return ResponseEntity.status(401).body(Map.of("message", "Invalid email or password"));
 		} catch (DisabledException e) {
-			log.warn("Account not verified for email: {}", loginDto.getEmail());
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-					.body(createErrorResponse("Account is not verified. Please check your email."));
+			return ResponseEntity.status(401).body(Map.of("message", "Account not verified. Check your email."));
 		}
 	}
 
 	@PostMapping("/forgot-password")
 	public ResponseEntity<?> forgotPassword(@RequestParam String email) {
-		log.info("Password reset request for email: {}", email);
-
-		try {
-			passwordResetService.requestPasswordReset(email);
-			log.info("Password reset instructions sent to: {}", email);
-			return ResponseEntity.ok().body(createSuccessResponse("Instructions have been sent to your email address"));
-		} catch (RuntimeException e) {
-			log.warn("Password reset request failed for {}: {}", email, e.getMessage());
-			return ResponseEntity.badRequest().body(createErrorResponse(e.getMessage()));
-		}
+		passwordResetService.requestPasswordReset(email);
+		return ResponseEntity.ok(Map.of("message", "Instructions sent to your email."));
 	}
 
 	@PostMapping("/reset-password")
 	public ResponseEntity<?> resetPassword(@RequestParam String token, @RequestParam String newPassword) {
-		log.info("Password reset attempt with token");
-
-		try {
-			passwordResetService.resetPassword(token, newPassword);
-			log.info("Password reset successful");
-			return ResponseEntity.ok().body(createSuccessResponse("Password has been successfully changed"));
-		} catch (RuntimeException e) {
-			log.warn("Password reset failed: {}", e.getMessage());
-			return ResponseEntity.badRequest().body(createErrorResponse(e.getMessage()));
-		}
+		passwordResetService.resetPassword(token, newPassword);
+		return ResponseEntity.ok(Map.of("message", "Password changed successfully."));
 	}
 
 	@GetMapping("/verify-email")
-	public ResponseEntity<?> confirmEmailToken(@RequestParam("token") String token) {
-		log.info("Email verification attempt with token");
-
-		try {
-			emailTokenService.confirmEmail(token);
-			log.info("Email verified successfully");
-			return ResponseEntity.ok(createSuccessResponse("Email successfully verified! You can now log in."));
-		} catch (RuntimeException e) {
-			log.warn("Email verification failed: {}", e.getMessage());
-			return ResponseEntity.badRequest().body(createErrorResponse(e.getMessage()));
-		}
-	}
-
-	@GetMapping("/check-email")
-	public ResponseEntity<?> checkEmailExists(@RequestParam String email) {
-		log.debug("Checking email existence: {}", email);
-
-		boolean exists = userService.existsByEmail(email);
-		Map<String, Boolean> response = new HashMap<>();
-		response.put("exists", exists);
-
-		return ResponseEntity.ok(response);
-	}
-
-	@PostMapping("/email/confirm-change")
-	public ResponseEntity<UserProfileResponse> confirmEmailChange(@RequestParam String token) {
-		log.info("Confirming email change with token");
-
-		User updatedUser = emailTokenService.confirmEmailChange(token);
-		UserProfileResponse userResponse = userService.getUserProfileById(updatedUser.getId());
-
-		return ResponseEntity.ok(userResponse);
-	}
-
-	private Map<String, Object> createLoginResponse(String token, User user) {
-		Map<String, Object> response = new HashMap<>();
-		response.put("message", "Login successful");
-		response.put("token", token);
-		response.put("tokenType", "Bearer");
-		response.put("user", UserResponse.builder().id(user.getId()).email(user.getEmail())
-				.firstName(user.getFirstName()).lastName(user.getLastName()).userRole(user.getUserRole()).build());
-		return response;
-	}
-
-	private Map<String, Object> createSuccessResponse(String message) {
-		Map<String, Object> response = new HashMap<>();
-		response.put("success", true);
-		response.put("message", message);
-		return response;
-	}
-
-	private Map<String, Object> createErrorResponse(String message) {
-		Map<String, Object> response = new HashMap<>();
-		response.put("success", false);
-		response.put("message", message);
-		return response;
-	}
-
-	private Map<String, Object> createErrorResponse(String message, Object errors) {
-		Map<String, Object> response = createErrorResponse(message);
-		response.put("errors", errors);
-		return response;
+	public ResponseEntity<?> confirmEmail(@RequestParam String token) {
+		String result = userService.confirmEmailChange(token).getEmail();
+		return ResponseEntity.ok(Map.of("message", "Email verified successfully for: " + result));
 	}
 }
