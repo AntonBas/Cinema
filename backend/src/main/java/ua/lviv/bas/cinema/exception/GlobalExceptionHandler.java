@@ -1,5 +1,7 @@
 package ua.lviv.bas.cinema.exception;
 
+import java.util.Map;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -13,95 +15,50 @@ import lombok.extern.slf4j.Slf4j;
 public class GlobalExceptionHandler {
 
 	@ExceptionHandler(MethodArgumentNotValidException.class)
-	public ResponseEntity<String> handleValidationExceptions(MethodArgumentNotValidException ex) {
+	public ResponseEntity<Map<String, Object>> handleValidationExceptions(MethodArgumentNotValidException ex) {
 		String errorMessage = ex.getBindingResult().getFieldErrors().stream()
 				.map(error -> error.getField() + ": " + error.getDefaultMessage()).findFirst()
 				.orElse("Invalid request");
 		log.warn("Validation failed: {}", errorMessage);
-		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage);
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("success", false, "message", errorMessage));
 	}
 
 	@ExceptionHandler(Exception.class)
-	public ResponseEntity<String> handleOtherExceptions(Exception ex) {
+	public ResponseEntity<Map<String, Object>> handleOtherExceptions(Exception ex) {
 		log.error("Unexpected error: ", ex);
-		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred");
+		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+				.body(Map.of("success", false, "message", "An unexpected error occurred"));
 	}
 
 	@ExceptionHandler(UserNotFoundException.class)
-	public ResponseEntity<String> handleUserNotFound(UserNotFoundException ex) {
+	public ResponseEntity<Map<String, Object>> handleUserNotFound(UserNotFoundException ex) {
 		log.warn("User not found: {}", ex.getMessage());
-		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("success", false, "message", ex.getMessage()));
 	}
 
 	@ExceptionHandler(EmailAlreadyExistsException.class)
-	public ResponseEntity<String> handleEmailAlreadyExists(EmailAlreadyExistsException ex) {
+	public ResponseEntity<Map<String, Object>> handleEmailAlreadyExists(EmailAlreadyExistsException ex) {
 		log.warn("Email already exists: {}", ex.getMessage());
-		return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
+		return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("success", false, "message", ex.getMessage()));
 	}
 
-	@ExceptionHandler(GenreNotFoundException.class)
-	public ResponseEntity<String> handleGenreNotFound(GenreNotFoundException ex) {
-		log.warn("Genre not found: {}", ex.getMessage());
-		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+	@ExceptionHandler({ GenreNotFoundException.class, PersonNotFoundException.class, MovieNotFoundException.class,
+			CinemaHallNotFoundException.class, SeatNotFoundException.class, SessionNotFoundException.class })
+	public ResponseEntity<Map<String, Object>> handleNotFound(RuntimeException ex) {
+		log.warn("{}: {}", ex.getClass().getSimpleName(), ex.getMessage());
+		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("success", false, "message", ex.getMessage()));
 	}
 
-	@ExceptionHandler(PersonNotFoundException.class)
-	public ResponseEntity<String> handlePersonNotFound(PersonNotFoundException ex) {
-		log.warn("Person not found: {}", ex.getMessage());
-		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+	@ExceptionHandler({ DuplicateEntityException.class, ConflictException.class })
+	public ResponseEntity<Map<String, Object>> handleConflictExceptions(RuntimeException ex) {
+		log.warn("{}: {}", ex.getClass().getSimpleName(), ex.getMessage());
+		return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("success", false, "message", ex.getMessage()));
 	}
 
-	@ExceptionHandler(MovieNotFoundException.class)
-	public ResponseEntity<String> handleMovieNotFound(MovieNotFoundException ex) {
-		log.warn("Movie not found: {}", ex.getMessage());
-		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
-	}
-
-	@ExceptionHandler(CinemaHallNotFoundException.class)
-	public ResponseEntity<String> handleCinemaHallNotFound(CinemaHallNotFoundException ex) {
-		log.warn("Cinema hall not found: {}", ex.getMessage());
-		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
-	}
-
-	@ExceptionHandler(SeatNotFoundException.class)
-	public ResponseEntity<String> handleSeatNotFound(SeatNotFoundException ex) {
-		log.warn("Seat not found: {}", ex.getMessage());
-		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
-	}
-
-	@ExceptionHandler(SessionNotFoundException.class)
-	public ResponseEntity<String> handleSessionNotFound(SessionNotFoundException ex) {
-		log.warn("Session not found: {}", ex.getMessage());
-		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
-	}
-
-	@ExceptionHandler(DuplicateEntityException.class)
-	public ResponseEntity<String> handleDuplicateEntity(DuplicateEntityException ex) {
-		log.warn("Duplicate entity: {}", ex.getMessage());
-		return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
-	}
-
-	@ExceptionHandler(ConflictException.class)
-	public ResponseEntity<String> handleConflict(ConflictException ex) {
-		log.warn("Conflict: {}", ex.getMessage());
-		return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
-	}
-
-	@ExceptionHandler(TokenExpiredException.class)
-	public ResponseEntity<String> handleTokenExpired(TokenExpiredException ex) {
-		log.warn("Token expired: {}", ex.getMessage());
-		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
-	}
-
-	@ExceptionHandler(TokenAlreadyConfirmedException.class)
-	public ResponseEntity<String> handleTokenAlreadyConfirmed(TokenAlreadyConfirmedException ex) {
-		log.warn("Token already confirmed: {}", ex.getMessage());
-		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
-	}
-
-	@ExceptionHandler(InvalidTokenException.class)
-	public ResponseEntity<String> handleInvalidToken(InvalidTokenException ex) {
-		log.warn("Invalid token: {}", ex.getMessage());
-		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+	@ExceptionHandler({ TokenExpiredException.class, TokenAlreadyConfirmedException.class,
+			InvalidTokenException.class })
+	public ResponseEntity<Map<String, Object>> handleTokenExceptions(RuntimeException ex) {
+		log.warn("{}: {}", ex.getClass().getSimpleName(), ex.getMessage());
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("success", false, "message", ex.getMessage()));
 	}
 }
