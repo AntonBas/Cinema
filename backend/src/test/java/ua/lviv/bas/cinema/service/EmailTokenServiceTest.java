@@ -30,9 +30,6 @@ class EmailTokenServiceTest {
 	private EmailService emailService;
 
 	@Mock
-	private UserService userService;
-
-	@Mock
 	private UserRepository userRepository;
 
 	@InjectMocks
@@ -53,6 +50,7 @@ class EmailTokenServiceTest {
 		emailToken.setUser(user);
 
 		when(tokenRepository.findByToken(token)).thenReturn(Optional.of(emailToken));
+		when(userRepository.save(user)).thenReturn(user);
 
 		String result = emailTokenService.confirmEmail(token);
 
@@ -60,18 +58,18 @@ class EmailTokenServiceTest {
 		assertTrue(user.isEnabled());
 		assertTrue(emailToken.isConfirmed());
 		assertNotNull(emailToken.getConfirmedAt());
-		verify(userService).updateUser(user);
+
+		verify(userRepository).save(user);
 		verify(tokenRepository).save(emailToken);
 	}
 
 	@Test
 	void confirmEmail_ShouldThrowInvalidTokenException_WhenTokenIsInvalid() {
 		String invalidToken = "invalid-token";
-
 		when(tokenRepository.findByToken(invalidToken)).thenReturn(Optional.empty());
 
 		assertThrows(InvalidTokenException.class, () -> emailTokenService.confirmEmail(invalidToken));
-		verify(userService, never()).updateUser(any(User.class));
+		verify(userRepository, never()).save(any(User.class));
 		verify(tokenRepository, never()).save(any(EmailToken.class));
 	}
 
@@ -91,7 +89,7 @@ class EmailTokenServiceTest {
 		when(tokenRepository.findByToken(token)).thenReturn(Optional.of(emailToken));
 
 		assertThrows(TokenAlreadyConfirmedException.class, () -> emailTokenService.confirmEmail(token));
-		verify(userService, never()).updateUser(any(User.class));
+		verify(userRepository, never()).save(any(User.class));
 		verify(tokenRepository, never()).save(any(EmailToken.class));
 	}
 
@@ -110,7 +108,7 @@ class EmailTokenServiceTest {
 		when(tokenRepository.findByToken(token)).thenReturn(Optional.of(emailToken));
 
 		assertThrows(TokenExpiredException.class, () -> emailTokenService.confirmEmail(token));
-		verify(userService, never()).updateUser(any(User.class));
+		verify(userRepository, never()).save(any(User.class));
 		verify(tokenRepository, never()).save(any(EmailToken.class));
 	}
 
@@ -132,14 +130,12 @@ class EmailTokenServiceTest {
 		emailToken.setUser(user);
 		emailToken.setNewEmail(newEmail);
 
-		User updatedUser = new User();
-		updatedUser.setId(1L);
-		updatedUser.setEmail(newEmail);
-		updatedUser.setEnabled(true);
-
 		when(tokenRepository.findByToken(token)).thenReturn(Optional.of(emailToken));
-		when(userService.existsByEmail(newEmail)).thenReturn(false);
-		when(userRepository.save(user)).thenReturn(updatedUser);
+		when(userRepository.findByEmail(newEmail)).thenReturn(Optional.empty());
+		when(userRepository.save(user)).thenAnswer(invocation -> {
+			user.setEmail(newEmail);
+			return user;
+		});
 
 		User result = emailTokenService.confirmEmailChange(token);
 
@@ -148,7 +144,7 @@ class EmailTokenServiceTest {
 		assertTrue(emailToken.isConfirmed());
 		assertNotNull(emailToken.getConfirmedAt());
 
-		verify(userService).existsByEmail(newEmail);
+		verify(userRepository).findByEmail(newEmail);
 		verify(userRepository).save(user);
 		verify(emailService).sendEmailChangeNotification(oldEmail, newEmail);
 		verify(tokenRepository).save(emailToken);
@@ -157,24 +153,21 @@ class EmailTokenServiceTest {
 	@Test
 	void confirmEmailChange_ShouldThrowInvalidTokenException_WhenTokenIsInvalid() {
 		String invalidToken = "invalid-token";
-
 		when(tokenRepository.findByToken(invalidToken)).thenReturn(Optional.empty());
 
 		assertThrows(InvalidTokenException.class, () -> emailTokenService.confirmEmailChange(invalidToken));
-		verify(userService, never()).existsByEmail(anyString());
+		verify(userRepository, never()).findByEmail(anyString());
 		verify(userRepository, never()).save(any(User.class));
 		verify(emailService, never()).sendEmailChangeNotification(anyString(), anyString());
+		verify(tokenRepository, never()).save(any(EmailToken.class));
 	}
 
 	@Test
 	void confirmEmailChange_ShouldThrowTokenAlreadyConfirmedException_WhenTokenAlreadyConfirmed() {
 		String token = "confirmed-email-change-token";
-		String oldEmail = "old@example.com";
-		String newEmail = "new@example.com";
-
 		User user = new User();
 		user.setId(1L);
-		user.setEmail(oldEmail);
+		user.setEmail("old@example.com");
 
 		EmailToken emailToken = new EmailToken();
 		emailToken.setToken(token);
@@ -182,39 +175,38 @@ class EmailTokenServiceTest {
 		emailToken.setConfirmedAt(LocalDateTime.now().minusHours(1));
 		emailToken.setExpiresAt(LocalDateTime.now().plusHours(1));
 		emailToken.setUser(user);
-		emailToken.setNewEmail(newEmail);
+		emailToken.setNewEmail("new@example.com");
 
 		when(tokenRepository.findByToken(token)).thenReturn(Optional.of(emailToken));
 
 		assertThrows(TokenAlreadyConfirmedException.class, () -> emailTokenService.confirmEmailChange(token));
-		verify(userService, never()).existsByEmail(anyString());
+		verify(userRepository, never()).findByEmail(anyString());
 		verify(userRepository, never()).save(any(User.class));
 		verify(emailService, never()).sendEmailChangeNotification(anyString(), anyString());
+		verify(tokenRepository, never()).save(any(EmailToken.class));
 	}
 
 	@Test
 	void confirmEmailChange_ShouldThrowTokenExpiredException_WhenTokenExpired() {
 		String token = "expired-email-change-token";
-		String oldEmail = "old@example.com";
-		String newEmail = "new@example.com";
-
 		User user = new User();
 		user.setId(1L);
-		user.setEmail(oldEmail);
+		user.setEmail("old@example.com");
 
 		EmailToken emailToken = new EmailToken();
 		emailToken.setToken(token);
 		emailToken.setConfirmed(false);
 		emailToken.setExpiresAt(LocalDateTime.now().minusHours(1));
 		emailToken.setUser(user);
-		emailToken.setNewEmail(newEmail);
+		emailToken.setNewEmail("new@example.com");
 
 		when(tokenRepository.findByToken(token)).thenReturn(Optional.of(emailToken));
 
 		assertThrows(TokenExpiredException.class, () -> emailTokenService.confirmEmailChange(token));
-		verify(userService, never()).existsByEmail(anyString());
+		verify(userRepository, never()).findByEmail(anyString());
 		verify(userRepository, never()).save(any(User.class));
 		verify(emailService, never()).sendEmailChangeNotification(anyString(), anyString());
+		verify(tokenRepository, never()).save(any(EmailToken.class));
 	}
 
 	@Test
@@ -235,10 +227,10 @@ class EmailTokenServiceTest {
 		emailToken.setNewEmail(newEmail);
 
 		when(tokenRepository.findByToken(token)).thenReturn(Optional.of(emailToken));
-		when(userService.existsByEmail(newEmail)).thenReturn(true);
+		when(userRepository.findByEmail(newEmail)).thenReturn(Optional.of(new User()));
 
 		assertThrows(EmailAlreadyExistsException.class, () -> emailTokenService.confirmEmailChange(token));
-		verify(userService).existsByEmail(newEmail);
+		verify(userRepository).findByEmail(newEmail);
 		verify(userRepository, never()).save(any(User.class));
 		verify(emailService, never()).sendEmailChangeNotification(anyString(), anyString());
 		verify(tokenRepository, never()).save(any(EmailToken.class));
@@ -247,11 +239,10 @@ class EmailTokenServiceTest {
 	@Test
 	void confirmEmailChange_ShouldThrowInvalidTokenException_WhenNewEmailIsNull() {
 		String token = "invalid-email-change-token";
-		String oldEmail = "old@example.com";
 
 		User user = new User();
 		user.setId(1L);
-		user.setEmail(oldEmail);
+		user.setEmail("old@example.com");
 
 		EmailToken emailToken = new EmailToken();
 		emailToken.setToken(token);
@@ -263,8 +254,9 @@ class EmailTokenServiceTest {
 		when(tokenRepository.findByToken(token)).thenReturn(Optional.of(emailToken));
 
 		assertThrows(InvalidTokenException.class, () -> emailTokenService.confirmEmailChange(token));
-		verify(userService, never()).existsByEmail(anyString());
+		verify(userRepository, never()).findByEmail(anyString());
 		verify(userRepository, never()).save(any(User.class));
 		verify(emailService, never()).sendEmailChangeNotification(anyString(), anyString());
+		verify(tokenRepository, never()).save(any(EmailToken.class));
 	}
 }
