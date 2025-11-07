@@ -23,7 +23,6 @@ public class EmailTokenService {
 
 	private final EmailTokenRepository tokenRepository;
 	private final EmailService emailService;
-	private final UserService userService;
 	private final UserRepository userRepository;
 
 	@Transactional
@@ -34,7 +33,7 @@ public class EmailTokenService {
 
 		User user = emailToken.getUser();
 		user.setEnabled(true);
-		userService.updateUser(user);
+		userRepository.save(user);
 
 		emailToken.setConfirmed(true);
 		emailToken.setConfirmedAt(LocalDateTime.now());
@@ -58,7 +57,11 @@ public class EmailTokenService {
 		String oldEmail = user.getEmail();
 		String newEmail = emailToken.getNewEmail();
 
-		if (userService.existsByEmail(newEmail)) {
+		if (oldEmail.equalsIgnoreCase(newEmail)) {
+			throw new IllegalArgumentException("New email cannot be the same as current email");
+		}
+
+		if (userRepository.findByEmail(newEmail).isPresent()) {
 			throw new EmailAlreadyExistsException("Email is already registered: " + newEmail);
 		}
 

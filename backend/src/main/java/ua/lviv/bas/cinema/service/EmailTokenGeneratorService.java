@@ -9,6 +9,7 @@ import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.enums.TokenType;
 import ua.lviv.bas.cinema.exception.UserNotFoundException;
 import ua.lviv.bas.cinema.repository.EmailTokenRepository;
+import ua.lviv.bas.cinema.repository.UserRepository;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -19,7 +20,7 @@ import java.util.UUID;
 public class EmailTokenGeneratorService {
 
 	private final EmailTokenRepository tokenRepository;
-	private final UserService userService;
+	private final UserRepository userRepository;
 	private final EmailService emailService;
 
 	@Transactional
@@ -40,25 +41,20 @@ public class EmailTokenGeneratorService {
 	private String generateToken(String email, TokenType tokenType, String newEmail) {
 		log.info("Generating {} token for email: {}", tokenType, email);
 
-		try {
-			User user = userService.findByEmail(email);
+		User user = userRepository.findByEmail(email)
+				.orElseThrow(() -> new UserNotFoundException("User not found with email: " + email));
 
-			tokenRepository.deleteByUserAndType(user, tokenType);
+		tokenRepository.deleteByUserAndType(user, tokenType);
 
-			String token = UUID.randomUUID().toString();
-			EmailToken emailToken = buildEmailToken(token, user, tokenType, newEmail);
+		String token = UUID.randomUUID().toString();
+		EmailToken emailToken = buildEmailToken(token, user, tokenType, newEmail);
 
-			tokenRepository.save(emailToken);
-			log.info("Saved new {} token for user: {}", tokenType, email);
+		tokenRepository.save(emailToken);
+		log.info("Saved new {} token for user: {}", tokenType, email);
 
-			sendEmailByType(email, token, tokenType, newEmail);
+		sendEmailByType(email, token, tokenType, newEmail);
 
-			return token;
-
-		} catch (UserNotFoundException e) {
-			log.error("User not found for email: {} while generating {} token", email, tokenType);
-			throw new RuntimeException("User not found with email: " + email);
-		}
+		return token;
 	}
 
 	private EmailToken buildEmailToken(String token, User user, TokenType tokenType, String newEmail) {
