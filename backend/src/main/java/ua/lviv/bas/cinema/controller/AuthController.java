@@ -2,9 +2,11 @@ package ua.lviv.bas.cinema.controller;
 
 import java.util.Map;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -21,6 +23,8 @@ import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.dto.user.request.UserLoginRequest;
 import ua.lviv.bas.cinema.dto.user.request.UserRegistrationRequest;
 import ua.lviv.bas.cinema.dto.user.response.UserProfileResponse;
+import ua.lviv.bas.cinema.dto.user.response.UserResponse;
+import ua.lviv.bas.cinema.security.CustomUserDetails;
 import ua.lviv.bas.cinema.service.PasswordResetService;
 import ua.lviv.bas.cinema.service.UserService;
 
@@ -62,6 +66,14 @@ public class AuthController {
 
 		return ResponseEntity.ok(Map.of("success", true, "token", token, "tokenType", "Bearer", "user",
 				userService.getUserById(user.getId())));
+	}
+
+	@GetMapping("/me")
+	public ResponseEntity<UserResponse> getCurrentUser(@AuthenticationPrincipal CustomUserDetails userDetails) {
+		if (userDetails == null) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+		}
+		return ResponseEntity.ok(userService.getUserById(userDetails.getUserId()));
 	}
 
 	@PostMapping("/forgot-password")

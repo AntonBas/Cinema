@@ -12,6 +12,8 @@ export interface User {
     phoneNumber: string;
     userRole: UserRole;
     enabled: boolean;
+    createdAt?: string;
+    updatedAt?: string;
 }
 
 export interface UserSimple {
@@ -28,10 +30,11 @@ export interface LoginRequest {
 }
 
 export interface LoginResponse {
-    message: string;
+    success: boolean;
     token: string;
-    user: UserSimple;
+    user: User;
     tokenType: string;
+    message?: string;
 }
 
 export interface RegisterRequest {
@@ -45,12 +48,30 @@ export interface RegisterRequest {
     passwordConfirm: string;
 }
 
-export interface UserUpdateRequest {
-    firstName: string;
-    lastName: string;
-    dateOfBirth: string;
-    city: string;
-    phoneNumber: string;
+export interface RegisterResponse {
+    success: boolean;
+    message: string;
+}
+
+export interface ForgotPasswordRequest {
+    email: string;
+}
+
+export interface ResetPasswordRequest {
+    token: string;
+    newPassword: string;
+}
+
+export interface EmailVerificationRequest {
+    token: string;
+}
+
+export interface CheckEmailRequest {
+    email: string;
+}
+
+export interface CheckEmailResponse {
+    exists: boolean;
 }
 
 export type { ApiResponse, ErrorResponse };

@@ -36,6 +36,7 @@ export const useAuthMutation = () => {
     };
 
     const checkEmail = async (email: string): Promise<{ exists: boolean }> => {
+        setError(null);
         try {
             return await authApi.checkEmail(email);
         } catch (err) {
@@ -46,6 +47,7 @@ export const useAuthMutation = () => {
     };
 
     const forgotPassword = async (email: string): Promise<ApiResponse> => {
+        setError(null);
         try {
             return await authApi.forgotPassword(email);
         } catch (err) {
@@ -70,6 +72,7 @@ export const useAuthMutation = () => {
     };
 
     const verifyEmail = async (token: string): Promise<ApiResponse> => {
+        setError(null);
         try {
             return await authApi.verifyEmail(token);
         } catch (err) {
@@ -77,6 +80,10 @@ export const useAuthMutation = () => {
             setError(message);
             throw err;
         }
+    };
+
+    const clearError = () => {
+        setError(null);
     };
 
     return {
@@ -87,6 +94,7 @@ export const useAuthMutation = () => {
         checkEmail,
         forgotPassword,
         resetPassword,
-        verifyEmail
+        verifyEmail,
+        clearError
     };
 };

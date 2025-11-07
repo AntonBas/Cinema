@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import type { User, UserSimple } from '@/types/auth';
-import { userApi } from '@/api/userApi';
+import type { User } from '@/types/auth';
+import { authApi } from '@/api/authApi';
 
 export const useAuth = () => {
     const [user, setUser] = useState<User | null>(null);
@@ -8,19 +8,10 @@ export const useAuth = () => {
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        if (token) {
-            localStorage.setItem('authToken', token);
-        } else {
-            localStorage.removeItem('authToken');
-            setUser(null);
-        }
-    }, [token]);
-
-    useEffect(() => {
         const loadUserData = async () => {
             if (token) {
                 try {
-                    const userData = await userApi.getProfile();
+                    const userData = await authApi.getCurrentUser();
                     setUser(userData);
                 } catch (error) {
                     console.error('Failed to load user data:', error);
@@ -33,15 +24,17 @@ export const useAuth = () => {
         loadUserData();
     }, [token]);
 
-    const login = (userData: UserSimple, authToken: string) => {
-        const tempUser: User = {
-            ...userData,
-            dateOfBirth: '',
-            city: '',
-            phoneNumber: '',
-            enabled: true
-        };
-        setUser(tempUser);
+    useEffect(() => {
+        if (token) {
+            localStorage.setItem('authToken', token);
+        } else {
+            localStorage.removeItem('authToken');
+            setUser(null);
+        }
+    }, [token]);
+
+    const login = (userData: User, authToken: string) => {
+        setUser(userData);
         setToken(authToken);
     };
 
@@ -59,6 +52,7 @@ export const useAuth = () => {
         token,
         isLoading,
         isAuthenticated: !!user && !!token,
+        isAdmin: user?.userRole === 'ROLE_ADMIN',
         login,
         logout,
         updateUser
