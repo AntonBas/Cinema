@@ -1,18 +1,16 @@
 import { useState } from 'react';
-import type { User, UserUpdateRequest } from '@/types/user';
-import type { ApiResponse } from '@/types/api';
+import type { UserProfile, UserUpdateRequest, EmailChangeResponse, PasswordUpdateResponse } from '@/types/user';
 import { userApi } from '@/api/userApi';
 
 export const useUserMutation = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const updateProfile = async (updateData: UserUpdateRequest): Promise<User> => {
+    const updateProfile = async (updateData: UserUpdateRequest): Promise<UserProfile> => {
         setIsLoading(true);
         setError(null);
         try {
-            const updatedUser = await userApi.updateProfile(updateData);
-            return updatedUser;
+            return await userApi.updateProfile(updateData);
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Profile update failed';
             setError(message);
@@ -22,12 +20,11 @@ export const useUserMutation = () => {
         }
     };
 
-    const requestEmailChange = async (newEmail: string): Promise<ApiResponse> => {
+    const requestEmailChange = async (newEmail: string): Promise<EmailChangeResponse> => {
         setIsLoading(true);
         setError(null);
         try {
-            const response = await userApi.requestEmailChange(newEmail);
-            return response;
+            return await userApi.requestEmailChange(newEmail);
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Email change request failed';
             setError(message);
@@ -37,12 +34,11 @@ export const useUserMutation = () => {
         }
     };
 
-    const confirmEmailChange = async (token: string): Promise<User> => {
+    const confirmEmailChange = async (token: string): Promise<UserProfile> => {
         setIsLoading(true);
         setError(null);
         try {
-            const updatedUser = await userApi.confirmEmailChange(token);
-            return updatedUser;
+            return await userApi.confirmEmailChange(token);
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Email change confirmation failed';
             setError(message);
@@ -52,12 +48,11 @@ export const useUserMutation = () => {
         }
     };
 
-    const updatePassword = async (newPassword: string): Promise<ApiResponse> => {
+    const updatePassword = async (newPassword: string): Promise<PasswordUpdateResponse> => {
         setIsLoading(true);
         setError(null);
         try {
-            const response = await userApi.updatePassword(newPassword);
-            return response;
+            return await userApi.updatePassword(newPassword);
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Password update failed';
             setError(message);

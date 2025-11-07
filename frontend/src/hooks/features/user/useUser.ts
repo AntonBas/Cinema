@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import type { User } from '@/types/user';
+import type { UserProfile } from '@/types/user';
 import { userApi } from '@/api/userApi';
 
 export const useUser = () => {
-    const [user, setUser] = useState<User | null>(null);
+    const [user, setUser] = useState<UserProfile | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -26,7 +26,7 @@ export const useUser = () => {
         }
     };
 
-    const updateUser = (userData: User) => {
+    const updateUser = (userData: UserProfile) => {
         setUser(userData);
     };
 

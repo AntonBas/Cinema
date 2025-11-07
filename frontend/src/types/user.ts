@@ -1,7 +1,4 @@
-import type { UserRole } from './auth';
-import type { ApiResponse } from './api';
-
-export interface User {
+export interface UserProfile {
     id: number;
     email: string;
     firstName: string;
@@ -9,8 +6,6 @@ export interface User {
     dateOfBirth: string;
     city: string;
     phoneNumber: string;
-    userRole: UserRole;
-    enabled: boolean;
 }
 
 export interface UserUpdateRequest {
@@ -32,4 +27,16 @@ export interface UserPasswordChangeRequest {
     passwordConfirm: string;
 }
 
-export type { ApiResponse };
+export interface EmailChangeResponse {
+    message: string;
+}
+
+export interface PasswordUpdateResponse {
+    message: string;
+}
+
+export interface EmailChangeConfirmationResponse {
+    success: boolean;
+    id: number;
+    email: string;
+}

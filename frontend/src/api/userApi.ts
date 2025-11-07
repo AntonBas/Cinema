@@ -1,30 +1,34 @@
 import { api } from '@/services/api';
-import type { User, UserUpdateRequest } from '@/types/user';
-import type { ApiResponse } from '@/types/api';
+import type {
+    UserProfile,
+    UserUpdateRequest,
+    EmailChangeResponse,
+    PasswordUpdateResponse
+} from '@/types/user';
 
 export const userApi = {
-    getProfile: async (): Promise<User> => {
-        const response = await api.get('/users/profile');
+    getProfile: async (): Promise<UserProfile> => {
+        const response = await api.get('/api/users/profile');
         return response.data;
     },
 
-    updateProfile: async (updateData: UserUpdateRequest): Promise<User> => {
-        const response = await api.put('/users/profile', updateData);
+    updateProfile: async (updateData: UserUpdateRequest): Promise<UserProfile> => {
+        const response = await api.put('/api/users/profile', updateData);
         return response.data;
     },
 
-    requestEmailChange: async (newEmail: string): Promise<ApiResponse> => {
-        const response = await api.post(`/users/email/change-request?newEmail=${encodeURIComponent(newEmail)}`);
+    requestEmailChange: async (newEmail: string): Promise<EmailChangeResponse> => {
+        const response = await api.post(`/api/users/email/change-request?newEmail=${encodeURIComponent(newEmail)}`);
         return response.data;
     },
 
-    confirmEmailChange: async (token: string): Promise<User> => {
-        const response = await api.post(`/users/email/confirm-change?token=${encodeURIComponent(token)}`);
+    confirmEmailChange: async (token: string): Promise<UserProfile> => {
+        const response = await api.post(`/api/users/email/confirm-change?token=${encodeURIComponent(token)}`);
         return response.data;
     },
 
-    updatePassword: async (newPassword: string): Promise<ApiResponse> => {
-        const response = await api.patch(`/users/password?newPassword=${encodeURIComponent(newPassword)}`);
+    updatePassword: async (newPassword: string): Promise<PasswordUpdateResponse> => {
+        const response = await api.patch(`/api/users/password?newPassword=${encodeURIComponent(newPassword)}`);
         return response.data;
     }
 };
