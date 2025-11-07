@@ -6,6 +6,7 @@ export const api = axios.create({
     headers: {
         'Content-Type': 'application/json',
     },
+    timeout: 10000,
 });
 
 api.interceptors.request.use((config) => {
@@ -28,6 +29,27 @@ api.interceptors.response.use(
                 window.location.href = `/login?redirect=${encodeURIComponent(currentPath)}`;
             }
         }
+
+        if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
+            console.error('Network error - please check your connection');
+        }
+
+        if (error.code === 'ECONNABORTED') {
+            console.error('Request timeout - please try again');
+        }
+
         return Promise.reject(error);
     }
 );
+
+export const setAuthToken = (token: string | null) => {
+    if (token) {
+        localStorage.setItem('authToken', token);
+    } else {
+        localStorage.removeItem('authToken');
+    }
+};
+
+export const getAuthToken = (): string | null => {
+    return localStorage.getItem('authToken');
+};

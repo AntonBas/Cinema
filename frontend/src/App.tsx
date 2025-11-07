@@ -8,6 +8,8 @@ import { ResetPasswordPage } from '@/pages/auth/ResetPasswordPage';
 import { HomePage } from '@/pages/home/HomePage';
 import { EmailVerificationPage } from '@/pages/auth/EmailVerificationPage';
 import { AdminPage } from '@/pages/admin/AdminPage';
+import { DashboardPage } from '@/pages/account/DashboardPage';
+import { SecurityPage } from '@/pages/account/SecurityPage';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { token, isLoading } = useAuth();
@@ -71,6 +73,18 @@ function App() {
         } />
 
         <Route path="/verify-email/:token" element={<EmailVerificationPage />} />
+
+        <Route path="/account" element={
+          <ProtectedRoute>
+            <DashboardPage />
+          </ProtectedRoute>
+        } />
+
+        <Route path="/account/security" element={
+          <ProtectedRoute>
+            <SecurityPage />
+          </ProtectedRoute>
+        } />
 
         <Route path="/admin/*" element={
           <AdminRoute>
