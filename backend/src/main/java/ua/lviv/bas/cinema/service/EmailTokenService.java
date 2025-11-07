@@ -10,9 +10,9 @@ import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.EmailToken;
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.exception.EmailAlreadyExistsException;
-import ua.lviv.bas.cinema.exception.TokenExpiredException;
-import ua.lviv.bas.cinema.exception.TokenAlreadyConfirmedException;
 import ua.lviv.bas.cinema.exception.InvalidTokenException;
+import ua.lviv.bas.cinema.exception.TokenAlreadyConfirmedException;
+import ua.lviv.bas.cinema.exception.TokenExpiredException;
 import ua.lviv.bas.cinema.repository.EmailTokenRepository;
 import ua.lviv.bas.cinema.repository.UserRepository;
 

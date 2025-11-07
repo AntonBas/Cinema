@@ -64,8 +64,9 @@ public class UserService {
 
 	@Transactional
 	public UserProfileResponse confirmEmailChange(String token) {
-		User updated = emailTokenService.confirmEmailChange(token);
-		return userMapper.toProfileResponse(updated);
+		User updatedUser = emailTokenService.confirmEmailChange(token);
+
+		return userMapper.toProfileResponse(updatedUser);
 	}
 
 	@Transactional

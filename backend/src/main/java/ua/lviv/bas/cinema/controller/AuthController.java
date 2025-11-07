@@ -4,10 +4,7 @@ import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,6 +20,7 @@ import ua.lviv.bas.cinema.config.JwtTokenProvider;
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.dto.user.request.UserLoginRequest;
 import ua.lviv.bas.cinema.dto.user.request.UserRegistrationRequest;
+import ua.lviv.bas.cinema.dto.user.response.UserProfileResponse;
 import ua.lviv.bas.cinema.service.PasswordResetService;
 import ua.lviv.bas.cinema.service.UserService;
 
@@ -56,37 +54,43 @@ public class AuthController {
 
 	@PostMapping("/login")
 	public ResponseEntity<?> loginUser(@Valid @RequestBody UserLoginRequest loginDto) {
-		try {
-			Authentication auth = authenticationManager
-					.authenticate(new UsernamePasswordAuthenticationToken(loginDto.getEmail(), loginDto.getPassword()));
+		var auth = authenticationManager
+				.authenticate(new UsernamePasswordAuthenticationToken(loginDto.getEmail(), loginDto.getPassword()));
 
-			String token = jwtTokenProvider.generateToken(auth);
-			User user = userService.findByEmail(loginDto.getEmail());
+		String token = jwtTokenProvider.generateToken(auth);
+		User user = userService.findByEmail(loginDto.getEmail());
 
-			return ResponseEntity
-					.ok(Map.of("token", token, "tokenType", "Bearer", "user", userService.getUserById(user.getId())));
-		} catch (BadCredentialsException e) {
-			return ResponseEntity.status(401).body(Map.of("message", "Invalid email or password"));
-		} catch (DisabledException e) {
-			return ResponseEntity.status(401).body(Map.of("message", "Account not verified. Check your email."));
-		}
+		return ResponseEntity.ok(Map.of("success", true, "token", token, "tokenType", "Bearer", "user",
+				userService.getUserById(user.getId())));
 	}
 
 	@PostMapping("/forgot-password")
 	public ResponseEntity<?> forgotPassword(@RequestParam String email) {
 		passwordResetService.requestPasswordReset(email);
-		return ResponseEntity.ok(Map.of("message", "Instructions sent to your email."));
+		return ResponseEntity.ok(Map.of("success", true, "message", "Instructions sent to your email."));
 	}
 
 	@PostMapping("/reset-password")
 	public ResponseEntity<?> resetPassword(@RequestParam String token, @RequestParam String newPassword) {
 		passwordResetService.resetPassword(token, newPassword);
-		return ResponseEntity.ok(Map.of("message", "Password changed successfully."));
+		return ResponseEntity.ok(Map.of("success", true, "message", "Password changed successfully."));
 	}
 
 	@GetMapping("/verify-email")
 	public ResponseEntity<?> confirmEmail(@RequestParam String token) {
-		String result = userService.confirmEmailChange(token).getEmail();
-		return ResponseEntity.ok(Map.of("message", "Email verified successfully for: " + result));
+		String message = userService.confirmEmailChange(token).getEmail();
+		return ResponseEntity.ok(Map.of("success", true, "message", "Email verified successfully for: " + message));
+	}
+
+	@PostMapping("/email/confirm-change")
+	public ResponseEntity<?> confirmEmailChange(@RequestParam String token) {
+		UserProfileResponse updatedUser = userService.confirmEmailChange(token);
+		return ResponseEntity.ok(Map.of("success", true, "id", updatedUser.getId(), "email", updatedUser.getEmail()));
+	}
+
+	@GetMapping("/check-email")
+	public ResponseEntity<?> checkEmailExists(@RequestParam String email) {
+		boolean exists = userService.existsByEmail(email);
+		return ResponseEntity.ok(Map.of("exists", exists));
 	}
 }
