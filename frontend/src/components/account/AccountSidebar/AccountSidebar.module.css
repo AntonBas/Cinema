@@ -1,0 +1,96 @@
+.sidebar {
+    width: 280px;
+    background: var(--bg-primary);
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 80px);
+    position: sticky;
+    top: 80px;
+}
+
+.sidebarHeader {
+    padding: 2rem 1.5rem 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.sidebarTitle {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.sidebarNav {
+    flex: 1;
+    padding: 1rem 0;
+}
+
+.sidebarList {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.sidebarItem {
+    margin: 0.25rem 0;
+}
+
+.sidebarLink {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1.5rem;
+    text-decoration: none;
+    color: var(--text-secondary);
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+}
+
+.sidebarLink:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.sidebarLink.active {
+    background: var(--bg-active);
+    color: var(--primary-color);
+    border-left-color: var(--primary-color);
+    font-weight: 500;
+}
+
+.sidebarIcon {
+    font-size: 1.1rem;
+    margin-right: 0.75rem;
+    width: 20px;
+    text-align: center;
+}
+
+.sidebarLabel {
+    font-size: 0.95rem;
+}
+
+.sidebarFooter {
+    padding: 1.5rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.userSupport {
+    text-align: center;
+}
+
+.userSupport p {
+    margin: 0 0 0.5rem 0;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.supportLink {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.supportLink:hover {
+    text-decoration: underline;
+}
