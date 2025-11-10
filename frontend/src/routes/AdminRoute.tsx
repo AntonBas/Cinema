@@ -2,7 +2,7 @@ import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/features/auth';
 import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
-import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import { LoadingSpinner } from '@/components/ui';
 
 interface AdminRouteProps {
     children: React.ReactNode;
