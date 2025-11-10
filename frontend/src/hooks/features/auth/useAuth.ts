@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { User } from '@/types/auth';
 import { authApi } from '@/api/authApi';
 
@@ -8,53 +8,68 @@ export const useAuth = () => {
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        const loadUserData = async () => {
-            if (token) {
-                try {
-                    const userData = await authApi.getCurrentUser();
+        let isMounted = true;
+
+        const loadUser = async () => {
+            if (!token) {
+                if (isMounted) {
+                    setUser(null);
+                    setIsLoading(false);
+                }
+                return;
+            }
+
+            try {
+                const userData = await authApi.getCurrentUser();
+                if (isMounted) {
                     setUser(userData);
-                } catch (error) {
-                    console.error('Failed to load user data:', error);
+                }
+            } catch (error) {
+                console.error('Failed to load user data:', error);
+                if (isMounted) {
+                    setUser(null);
                     setToken(null);
                 }
+            } finally {
+                if (isMounted) setIsLoading(false);
             }
-            setIsLoading(false);
         };
 
-        loadUserData();
+        setIsLoading(true);
+        loadUser();
+
+        return () => {
+            isMounted = false;
+        };
     }, [token]);
 
     useEffect(() => {
-        if (token) {
-            localStorage.setItem('authToken', token);
-        } else {
-            localStorage.removeItem('authToken');
-            setUser(null);
-        }
+        if (token) localStorage.setItem('authToken', token);
+        else localStorage.removeItem('authToken');
     }, [token]);
 
-    const login = (userData: User, authToken: string) => {
+    const login = useCallback((userData: User, authToken: string) => {
         setUser(userData);
         setToken(authToken);
-    };
+    }, []);
 
-    const logout = () => {
-        setToken(null);
+    const logout = useCallback(() => {
         setUser(null);
-    };
+        setToken(null);
+    }, []);
 
-    const updateUser = (userData: User) => {
+    const updateUser = useCallback((userData: User) => {
         setUser(userData);
-    };
+    }, []);
 
     return {
         user,
         token,
         isLoading,
-        isAuthenticated: !!user && !!token,
+        isAuthenticated: !!token && !!user,
         isAdmin: user?.userRole === 'ROLE_ADMIN',
         login,
         logout,
-        updateUser
+        updateUser,
     };
 };
