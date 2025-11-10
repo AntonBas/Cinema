@@ -1,7 +1,7 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.tsx'
-import "./styles/reset.css";
+import "@/components/ui/shared/styles/reset.css";
 import "./App.css";
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
