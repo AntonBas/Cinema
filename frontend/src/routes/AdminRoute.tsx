@@ -1,7 +1,6 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/features/auth';
-import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
 import { LoadingSpinner } from '@/components/ui';
 
 interface AdminRouteProps {
@@ -13,13 +12,13 @@ const centerStyle = {
     justifyContent: 'center',
     alignItems: 'center',
     height: '100vh',
+    background: 'linear-gradient(135deg, #0c0c0c, #1a1a1a)'
 };
 
 export const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
     const { token, user, isLoading } = useAuth();
-    const showLoading = useDelayedLoading(isLoading, 300);
 
-    if (isLoading || showLoading) {
+    if (isLoading) {
         return (
             <div style={centerStyle}>
                 <LoadingSpinner text="Verifying admin access..." />

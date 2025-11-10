@@ -19,7 +19,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     const { token, isLoading } = useAuth();
     const showLoading = useDelayedLoading(isLoading, 300);
 
-    if (isLoading || showLoading) {
+    if (showLoading) {
         return (
             <div style={centerStyle}>
                 <LoadingSpinner text="Loading..." />
