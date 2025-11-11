@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuthMutation } from '@/hooks/features/auth';
+import { Input, Button, Modal } from '@/components/ui';
 import styles from './ForgotPasswordForm.module.css';
 
 interface SuccessModalProps {
@@ -14,24 +15,36 @@ const PasswordResetModal: React.FC<SuccessModalProps> = ({
   onClose,
   email
 }) => {
-  if (!isOpen) return null;
-
   return (
-    <div className={styles.modalOverlay}>
-      <div className={styles.modalContent}>
+    <Modal isOpen={isOpen} onClose={onClose} size="small">
+      <div className={styles.successContent}>
         <div className={styles.successAnimation}>
-          <div className={styles.checkmark}>✓</div>
+          <div className={styles.successIcon}>📧</div>
         </div>
-        <h3>Instructions Sent! 📧</h3>
-        <p>We've sent password reset instructions to <strong>{email}</strong></p>
+
+        <div className={styles.successText}>
+          <h3 className={styles.successTitle}>Instructions Sent!</h3>
+          <p className={styles.successMessage}>
+            We've sent password reset instructions to
+          </p>
+          <p className={styles.emailHighlight}>{email}</p>
+        </div>
+
         <div className={styles.modalActions}>
-          <button className={styles.btnPrimary} onClick={onClose}>
+          <Button
+            variant="primary"
+            onClick={onClose}
+            style={{ minWidth: '120px' }}
+          >
             Got It
-          </button>
+          </Button>
         </div>
-        <p className={styles.helpText}>Check your spam folder if you don't see the email</p>
+
+        <p className={styles.helpText}>
+          Check your spam folder if you don't see the email
+        </p>
       </div>
-    </div>
+    </Modal>
   );
 };
 
@@ -47,7 +60,6 @@ export const ForgotPasswordForm: React.FC = () => {
       await forgotPassword(email);
       setShowSuccessModal(true);
     } catch (err) {
-      // Помилка вже оброблена в хуку
     }
   };
 
@@ -69,29 +81,25 @@ export const ForgotPasswordForm: React.FC = () => {
         )}
 
         <form onSubmit={handleSubmit} className={styles.forgotPasswordForm}>
-          <div className={styles.formGroup}>
-            <label htmlFor="email" className={styles.formLabel}>
-              Email
-            </label>
-            <input
-              type="email"
-              id="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              placeholder="Enter your email"
-              className={styles.formInput}
-              disabled={isLoading}
-            />
-          </div>
-
-          <button
-            type="submit"
+          <Input
+            type="email"
+            placeholder="Enter your email"
+            value={email}
+            onChange={setEmail}
             disabled={isLoading}
-            className={styles.forgotPasswordButton}
+            error={error ? '' : undefined}
+          />
+
+          <Button
+            type="submit"
+            variant="primary"
+            size="large"
+            loading={isLoading}
+            disabled={isLoading}
+            style={{ width: '100%', marginBottom: '1.5rem' }}
           >
             {isLoading ? 'Sending...' : 'Send Instructions'}
-          </button>
+          </Button>
 
           <div className={styles.forgotPasswordLinks}>
             <Link to="/login" className={styles.backLink}>
