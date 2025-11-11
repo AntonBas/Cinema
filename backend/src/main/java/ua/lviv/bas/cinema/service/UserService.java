@@ -63,6 +63,11 @@ public class UserService {
 	}
 
 	@Transactional
+	public String confirmRegistration(String token) {
+		return emailTokenService.confirmEmail(token);
+	}
+
+	@Transactional
 	public UserProfileResponse confirmEmailChange(String token) {
 		User updatedUser = emailTokenService.confirmEmailChange(token);
 
