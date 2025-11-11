@@ -5,6 +5,7 @@ import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -29,6 +30,20 @@ public class GlobalExceptionHandler {
 		log.error("Unexpected error: ", ex);
 		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
 				.body(Map.of("success", false, "message", "An unexpected error occurred"));
+	}
+
+	@ExceptionHandler(DisabledException.class)
+	public ResponseEntity<Map<String, Object>> handleDisabledException(DisabledException ex) {
+		log.warn("Account disabled: {}", ex.getMessage());
+		return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+				.body(Map.of("success", false, "message", "Please verify your email address before logging in"));
+	}
+
+	@ExceptionHandler(BadCredentialsException.class)
+	public ResponseEntity<Map<String, Object>> handleBadCredentials(BadCredentialsException ex) {
+		log.warn("Authentication failed: {}", ex.getMessage());
+		return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+				.body(Map.of("success", false, "message", "Invalid email or password"));
 	}
 
 	@ExceptionHandler(UserNotFoundException.class)
@@ -61,12 +76,5 @@ public class GlobalExceptionHandler {
 	public ResponseEntity<Map<String, Object>> handleTokenExceptions(RuntimeException ex) {
 		log.warn("{}: {}", ex.getClass().getSimpleName(), ex.getMessage());
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("success", false, "message", ex.getMessage()));
-	}
-
-	@ExceptionHandler(BadCredentialsException.class)
-	public ResponseEntity<Map<String, Object>> handleBadCredentials(BadCredentialsException ex) {
-		log.warn("Authentication failed: {}", ex.getMessage());
-		return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-				.body(Map.of("success", false, "message", "Invalid email or password"));
 	}
 }
