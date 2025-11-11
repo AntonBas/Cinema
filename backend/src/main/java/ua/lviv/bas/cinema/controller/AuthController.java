@@ -5,7 +5,6 @@ import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.BindingResult;
@@ -59,22 +58,14 @@ public class AuthController {
 
 	@PostMapping("/login")
 	public ResponseEntity<?> loginUser(@Valid @RequestBody UserLoginRequest loginDto) {
-		try {
-			var auth = authenticationManager
-					.authenticate(new UsernamePasswordAuthenticationToken(loginDto.getEmail(), loginDto.getPassword()));
+		var auth = authenticationManager
+				.authenticate(new UsernamePasswordAuthenticationToken(loginDto.getEmail(), loginDto.getPassword()));
 
-			String token = jwtTokenProvider.generateToken(auth);
-			User user = userService.findByEmail(loginDto.getEmail());
+		String token = jwtTokenProvider.generateToken(auth);
+		User user = userService.findByEmail(loginDto.getEmail());
 
-			return ResponseEntity.ok(Map.of("success", true, "token", token, "tokenType", "Bearer", "user",
-					userService.getUserById(user.getId())));
-
-		} catch (BadCredentialsException e) {
-			throw e;
-		} catch (Exception e) {
-			log.error("Login error for email: {}", loginDto.getEmail(), e);
-			throw e;
-		}
+		return ResponseEntity.ok(Map.of("success", true, "token", token, "tokenType", "Bearer", "user",
+				userService.getUserById(user.getId())));
 	}
 
 	@GetMapping("/me")
@@ -99,8 +90,8 @@ public class AuthController {
 
 	@GetMapping("/verify-email")
 	public ResponseEntity<?> confirmEmail(@RequestParam String token) {
-		String message = userService.confirmEmailChange(token).getEmail();
-		return ResponseEntity.ok(Map.of("success", true, "message", "Email verified successfully for: " + message));
+		String message = userService.confirmRegistration(token);
+		return ResponseEntity.ok(Map.of("success", true, "message", message));
 	}
 
 	@PostMapping("/email/confirm-change")
