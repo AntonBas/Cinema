@@ -77,4 +77,10 @@ public class GlobalExceptionHandler {
 		log.warn("{}: {}", ex.getClass().getSimpleName(), ex.getMessage());
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("success", false, "message", ex.getMessage()));
 	}
+
+	@ExceptionHandler(SamePasswordException.class)
+	public ResponseEntity<Map<String, Object>> handleSamePasswordException(SamePasswordException ex) {
+		log.warn("Same password error: {}", ex.getMessage());
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("success", false, "message", ex.getMessage()));
+	}
 }
