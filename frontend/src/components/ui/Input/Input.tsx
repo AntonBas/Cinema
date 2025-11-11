@@ -2,7 +2,7 @@ import React from 'react';
 import styles from './Input.module.css';
 
 export interface InputProps {
-    type?: 'text' | 'email' | 'password' | 'number';
+    type?: 'text' | 'email' | 'password' | 'number' | 'date';
     placeholder?: string;
     value?: string;
     size?: 'small' | 'medium' | 'large';
