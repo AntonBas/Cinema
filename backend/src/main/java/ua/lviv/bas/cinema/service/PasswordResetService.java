@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.EmailToken;
 import ua.lviv.bas.cinema.exception.InvalidTokenException;
+import ua.lviv.bas.cinema.exception.SamePasswordException;
 import ua.lviv.bas.cinema.exception.TokenExpiredException;
 import ua.lviv.bas.cinema.repository.EmailTokenRepository;
 import ua.lviv.bas.cinema.repository.UserRepository;
@@ -40,6 +41,11 @@ public class PasswordResetService {
 		}
 
 		var user = resetToken.getUser();
+
+		if (passwordEncoder.matches(newPassword, user.getPassword())) {
+			throw new SamePasswordException("New password cannot be the same as the current password");
+		}
+
 		user.setPassword(passwordEncoder.encode(newPassword));
 		userRepository.save(user);
 
