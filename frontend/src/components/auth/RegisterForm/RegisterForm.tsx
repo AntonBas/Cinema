@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthMutation } from '@/hooks/features/auth';
+import { Input, Button } from '@/components/ui';
 import styles from './RegisterForm.module.css';
 
 interface SuccessModalProps {
@@ -25,9 +26,13 @@ const RegistrationSuccessModal: React.FC<SuccessModalProps> = ({
         <h3>Registration Successful! 🎉</h3>
         <p>We've sent a confirmation email to <strong>{email}</strong></p>
         <div className={styles.modalActions}>
-          <button className={styles.btnPrimary} onClick={onClose}>
+          <Button
+            variant="primary"
+            onClick={onClose}
+            style={{ minWidth: '200px' }}
+          >
             Continue to Login
-          </button>
+          </Button>
         </div>
         <p className={styles.helpText}>Didn't receive the email? Check your spam folder</p>
       </div>
@@ -47,20 +52,39 @@ export const RegisterForm: React.FC = () => {
     passwordConfirm: ''
   });
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const { register, isLoading, error } = useAuthMutation();
   const navigate = useNavigate();
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+  const handleChange = (field: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+    if (formErrors[field]) {
+      setFormErrors(prev => ({ ...prev, [field]: '' }));
+    }
+  };
+
+  const validateForm = () => {
+    const errors: Record<string, string> = {};
+
+    if (formData.password !== formData.passwordConfirm) {
+      errors.passwordConfirm = 'Passwords do not match';
+    }
+
+    if (formData.password.length < 6) {
+      errors.password = 'Password must be at least 6 characters';
+    }
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (formData.password !== formData.passwordConfirm) {
+    if (!validateForm()) {
       return;
     }
 
@@ -85,106 +109,88 @@ export const RegisterForm: React.FC = () => {
 
           <div className={styles.registrationTop}>
             <h2 className={styles.registrationText}>Personal Information</h2>
-            <div className={styles.registrationGroupFirst}>
-              <input
+            <div className={styles.registrationGroup}>
+              <Input
                 placeholder="First Name"
-                type="text"
-                name="firstName"
                 value={formData.firstName}
-                onChange={handleChange}
-                className={`${styles.formControl} ${styles.formLeft}`}
-                required
+                onChange={(value) => handleChange('firstName', value)}
                 disabled={isLoading}
+                error={formErrors.firstName}
               />
-              <input
+              <Input
                 placeholder="Last Name"
-                type="text"
-                name="lastName"
                 value={formData.lastName}
-                onChange={handleChange}
-                className={`${styles.formControl} ${styles.formRight}`}
-                required
+                onChange={(value) => handleChange('lastName', value)}
                 disabled={isLoading}
+                error={formErrors.lastName}
               />
             </div>
-            <div className={styles.registrationGroupSecond}>
-              <input
+            <div className={styles.registrationGroup}>
+              <Input
                 type="date"
-                name="dateOfBirth"
                 value={formData.dateOfBirth}
-                onChange={handleChange}
-                className={`${styles.formControl} ${styles.formLeft}`}
-                required
+                onChange={(value) => handleChange('dateOfBirth', value)}
                 disabled={isLoading}
               />
-              <input
+              <Input
                 placeholder="Your City"
-                type="text"
-                name="city"
                 value={formData.city}
-                onChange={handleChange}
-                className={`${styles.formControl} ${styles.formRight}`}
-                required
+                onChange={(value) => handleChange('city', value)}
                 disabled={isLoading}
+                error={formErrors.city}
               />
             </div>
           </div>
 
           <div className={styles.registrationMiddle}>
             <h2 className={styles.registrationText}>Contact Information</h2>
-            <input
-              placeholder="E-mail"
+            <Input
               type="email"
-              name="email"
+              placeholder="E-mail"
               value={formData.email}
-              onChange={handleChange}
-              className={styles.formControl}
-              required
+              onChange={(value) => handleChange('email', value)}
               disabled={isLoading}
+              error={formErrors.email}
             />
-            <input
+            <Input
               placeholder="Phone number"
-              type="text"
-              name="phoneNumber"
               value={formData.phoneNumber}
-              onChange={handleChange}
-              className={styles.formControl}
-              required
+              onChange={(value) => handleChange('phoneNumber', value)}
               disabled={isLoading}
+              error={formErrors.phoneNumber}
             />
           </div>
 
           <div className={styles.registrationBottom}>
             <h2 className={styles.registrationText}>Create a Password</h2>
-            <input
+            <Input
+              type="password"
               placeholder="Enter Password"
-              type="password"
-              name="password"
               value={formData.password}
-              onChange={handleChange}
-              className={styles.formControl}
-              required
+              onChange={(value) => handleChange('password', value)}
               disabled={isLoading}
+              error={formErrors.password}
             />
-            <input
-              placeholder="Confirm Password"
+            <Input
               type="password"
-              name="passwordConfirm"
+              placeholder="Confirm Password"
               value={formData.passwordConfirm}
-              onChange={handleChange}
-              className={styles.formControl}
-              required
+              onChange={(value) => handleChange('passwordConfirm', value)}
               disabled={isLoading}
+              error={formErrors.passwordConfirm}
             />
           </div>
 
-          <button
+          <Button
             type="submit"
-            className={`${styles.registrationConfirm} ${styles.registrationText}`}
+            variant="primary"
+            size="large"
+            loading={isLoading}
             disabled={isLoading}
+            style={{ width: '100%', marginTop: '1rem' }}
           >
             {isLoading ? 'Creating Account...' : 'Sign Up'}
-          </button>
+          </Button>
         </form>
       </div>
 
