@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthMutation } from '@/hooks/features/auth';
-import { Input, Button } from '@/components/ui';
+import { Input, Button, Modal } from '@/components/ui';
 import styles from './RegisterForm.module.css';
 
 interface SuccessModalProps {
@@ -15,16 +15,21 @@ const RegistrationSuccessModal: React.FC<SuccessModalProps> = ({
   onClose,
   email
 }) => {
-  if (!isOpen) return null;
-
   return (
-    <div className={styles.modalOverlay}>
-      <div className={styles.modalContent}>
+    <Modal isOpen={isOpen} onClose={onClose} size="small">
+      <div className={styles.successContent}>
         <div className={styles.successAnimation}>
-          <div className={styles.checkmark}>✓</div>
+          <div className={styles.successIcon}>🎉</div>
         </div>
-        <h3>Registration Successful! 🎉</h3>
-        <p>We've sent a confirmation email to <strong>{email}</strong></p>
+
+        <div className={styles.successText}>
+          <h3 className={styles.successTitle}>Registration Successful!</h3>
+          <p className={styles.successMessage}>
+            We've sent a confirmation email to
+          </p>
+          <p className={styles.emailHighlight}>{email}</p>
+        </div>
+
         <div className={styles.modalActions}>
           <Button
             variant="primary"
@@ -34,9 +39,12 @@ const RegistrationSuccessModal: React.FC<SuccessModalProps> = ({
             Continue to Login
           </Button>
         </div>
-        <p className={styles.helpText}>Didn't receive the email? Check your spam folder</p>
+
+        <p className={styles.helpText}>
+          Didn't receive the email? Check your spam folder
+        </p>
       </div>
-    </div>
+    </Modal>
   );
 };
 
