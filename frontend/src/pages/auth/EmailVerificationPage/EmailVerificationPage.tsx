@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { authApi } from '@/api/authApi';
+import { Button, LoadingSpinner } from '@/components/ui';
 import styles from './EmailVerificationPage.module.css';
 
 export const EmailVerificationPage: React.FC = () => {
@@ -8,27 +9,36 @@ export const EmailVerificationPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSuccess, setIsSuccess] = useState(false);
   const { token } = useParams<{ token: string }>();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const hasVerified = useRef(false);
+
+  const verificationToken = token || searchParams.get('token');
 
   useEffect(() => {
+    if (hasVerified.current || !verificationToken) {
+      return;
+    }
+
     const verifyEmail = async () => {
-      if (!token) {
-        setMessage('No verification token provided');
-        setIsLoading(false);
-        setIsSuccess(false);
-        return;
-      }
+      hasVerified.current = true;
+
+      console.log('Verifying token:', verificationToken);
 
       try {
-        const response = await authApi.verifyEmail(token);
-        setMessage(response.message);
+        const response = await authApi.verifyEmail(verificationToken);
+        setMessage(response.message || 'Email verified successfully!');
         setIsSuccess(true);
 
         setTimeout(() => {
           navigate('/login');
-        }, 3000);
+        }, 5000);
       } catch (error: any) {
-        setMessage(error.response?.data || 'Verification failed');
+        console.error('Verification error:', error);
+        const errorMessage = error.response?.data?.message ||
+          error.response?.data ||
+          'Email verification failed';
+        setMessage(errorMessage);
         setIsSuccess(false);
       } finally {
         setIsLoading(false);
@@ -36,24 +46,46 @@ export const EmailVerificationPage: React.FC = () => {
     };
 
     verifyEmail();
-  }, [token, navigate]);
+  }, [verificationToken, navigate]);
 
   if (isLoading) {
-    return <div className={styles.verificationContainer}>Verifying email...</div>;
+    return (
+      <div className={styles.verificationContainer}>
+        <LoadingSpinner text="Verifying your email..." />
+      </div>
+    );
   }
 
   return (
     <div className={styles.verificationContainer}>
-      <div className={`${styles.verificationMessage} ${isSuccess ? styles.success : styles.error}`}>
-        <h2>{isSuccess ? 'Email Verified!' : 'Verification Failed'}</h2>
-        <p>{message}</p>
-        {isSuccess && (
-          <p>Redirecting to login page in 3 seconds...</p>
-        )}
-        {!isSuccess && (
-          <button onClick={() => navigate('/login')} className={styles.loginButton}>
-            Go to Login
-          </button>
+      <div className={`${styles.verificationCard} ${isSuccess ? styles.success : styles.error}`}>
+        <div className={styles.icon}>
+          {isSuccess ? '✅' : '❌'}
+        </div>
+        <h2>{isSuccess ? 'Email Verified Successfully!' : 'Verification Failed'}</h2>
+        <p className={styles.message}>{message}</p>
+
+        {isSuccess ? (
+          <div className={styles.successActions}>
+            <p className={styles.redirectText}>Redirecting to login page in 5 seconds...</p>
+            <Button
+              variant="primary"
+              onClick={() => navigate('/login')}
+              style={{ marginTop: '1rem' }}
+            >
+              Go to Login Now
+            </Button>
+          </div>
+        ) : (
+          <div className={styles.errorActions}>
+            <Button
+              variant="secondary"
+              onClick={() => navigate('/login')}
+              style={{ marginTop: '1rem' }}
+            >
+              Go to Login
+            </Button>
+          </div>
         )}
       </div>
     </div>
