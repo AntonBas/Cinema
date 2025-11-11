@@ -4,6 +4,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    min-height: 100vh;
+    padding: 20px;
 }
 
 .loginContainer {
@@ -13,6 +15,8 @@
     box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     animation: fadeIn 0.6s ease-out forwards;
+    width: 100%;
+    max-width: 450px;
 }
 
 .loginContainer:hover {
@@ -55,63 +59,11 @@
 
 .loginMiddleEmail,
 .loginMiddlePassword {
-    position: relative;
-}
-
-.loginForm input {
-    width: 100%;
-    padding: 15px 20px;
-    border: 2px solid #2a3041;
-    border-radius: 8px;
-    background-color: #2a3041;
-    color: #fff;
-    font-size: 1rem;
-    transition: all 0.3s ease;
-    box-sizing: border-box;
-}
-
-.loginForm input:focus {
-    outline: none;
-    border-color: #fd5f00;
-    box-shadow: 0 0 0 3px rgba(253, 95, 0, 0.2);
-}
-
-.loginForm input::placeholder {
-    color: #6b7280;
-}
-
-.loginForm input:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
+    display: none;
 }
 
 .loginBottomButton {
-    width: 100%;
-    padding: 15px;
-    background-color: #fd5f00;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 1.1rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    margin-top: 1rem;
-}
-
-.loginBottomButton:hover:not(:disabled) {
-    background-color: #e05500;
-    transform: translateY(-2px);
-}
-
-.loginBottomButton:active {
-    transform: translateY(0);
-}
-
-.loginBottomButton:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none;
+    display: none;
 }
 
 .loginBottom {
@@ -133,12 +85,14 @@
 }
 
 .errorMessage {
-    background-color: #ff4757;
-    color: white;
-    padding: 10px;
-    border-radius: 6px;
+    background-color: rgba(255, 71, 87, 0.1);
+    color: #ff6b6b;
+    padding: 12px 16px;
+    border-radius: 8px;
     text-align: center;
     margin-bottom: 1rem;
+    border: 1px solid rgba(255, 71, 87, 0.3);
+    font-weight: 500;
 }
 
 @keyframes fadeIn {
@@ -153,16 +107,30 @@
     }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 768px) {
+    .login {
+        padding: 15px;
+    }
+
     .loginContainer {
-        padding: 1.5rem;
+        padding: 30px 25px;
     }
 
     .loginTitle {
         font-size: 1.8rem;
     }
+}
 
-    .loginForm input {
-        padding: 12px 15px;
+@media (max-width: 480px) {
+    .loginContainer {
+        padding: 25px 20px;
+    }
+
+    .loginTitle {
+        font-size: 1.6rem;
+    }
+
+    .loginForm {
+        gap: 1.25rem;
     }
 }
