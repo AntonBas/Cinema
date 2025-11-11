@@ -5,6 +5,7 @@ import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.BindingResult;
@@ -58,14 +59,22 @@ public class AuthController {
 
 	@PostMapping("/login")
 	public ResponseEntity<?> loginUser(@Valid @RequestBody UserLoginRequest loginDto) {
-		var auth = authenticationManager
-				.authenticate(new UsernamePasswordAuthenticationToken(loginDto.getEmail(), loginDto.getPassword()));
+		try {
+			var auth = authenticationManager
+					.authenticate(new UsernamePasswordAuthenticationToken(loginDto.getEmail(), loginDto.getPassword()));
 
-		String token = jwtTokenProvider.generateToken(auth);
-		User user = userService.findByEmail(loginDto.getEmail());
+			String token = jwtTokenProvider.generateToken(auth);
+			User user = userService.findByEmail(loginDto.getEmail());
 
-		return ResponseEntity.ok(Map.of("success", true, "token", token, "tokenType", "Bearer", "user",
-				userService.getUserById(user.getId())));
+			return ResponseEntity.ok(Map.of("success", true, "token", token, "tokenType", "Bearer", "user",
+					userService.getUserById(user.getId())));
+
+		} catch (BadCredentialsException e) {
+			throw e;
+		} catch (Exception e) {
+			log.error("Login error for email: {}", loginDto.getEmail(), e);
+			throw e;
+		}
 	}
 
 	@GetMapping("/me")
