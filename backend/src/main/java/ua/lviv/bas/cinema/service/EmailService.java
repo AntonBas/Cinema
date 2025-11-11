@@ -94,15 +94,15 @@ public class EmailService {
 	}
 
 	private String createVerificationLink(String token) {
-		return frontendUrl + "/verify-email?token=" + token;
+		return frontendUrl + "/verify-email/" + token;
 	}
 
 	private String createEmailChangeLink(String token) {
-		return frontendUrl + "/confirm-email-change?token=" + token;
+		return frontendUrl + "/confirm-email-change/" + token;
 	}
 
 	private String createPasswordResetLink(String token) {
-		return frontendUrl + "/reset-password?token=" + token;
+		return frontendUrl + "/reset-password/" + token;
 	}
 
 	private String createVerificationEmailText(String link) {
