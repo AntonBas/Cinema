@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useUserMutation } from '@/hooks/features/user';
+import { Input, Button } from '@/components/ui';
 import styles from './PasswordChangeForm.module.css';
 
 export const PasswordChangeForm: React.FC = () => {
@@ -10,51 +11,71 @@ export const PasswordChangeForm: React.FC = () => {
         confirmPassword: ''
     });
     const [successMessage, setSuccessMessage] = useState('');
+    const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
+    const handleChange = (field: string, value: string) => {
         setFormData(prev => ({
             ...prev,
-            [name]: value
+            [field]: value
         }));
 
+        if (formErrors[field]) {
+            setFormErrors(prev => ({ ...prev, [field]: '' }));
+        }
         if (error) clearError();
         if (successMessage) setSuccessMessage('');
+    };
+
+    const validateForm = () => {
+        const errors: Record<string, string> = {};
+
+        if (!formData.currentPassword) {
+            errors.currentPassword = 'Current password is required';
+        }
+
+        if (!formData.newPassword) {
+            errors.newPassword = 'New password is required';
+        } else if (formData.newPassword.length < 8) {
+            errors.newPassword = 'Password must be at least 8 characters';
+        }
+
+        if (!formData.confirmPassword) {
+            errors.confirmPassword = 'Please confirm your new password';
+        } else if (formData.newPassword !== formData.confirmPassword) {
+            errors.confirmPassword = 'Passwords do not match';
+        }
+
+        setFormErrors(errors);
+        return Object.keys(errors).length === 0;
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (formData.newPassword !== formData.confirmPassword) {
-            return;
-        }
-
-        if (formData.newPassword.length < 8) {
+        if (!validateForm()) {
             return;
         }
 
         try {
-            await updatePassword(formData.newPassword);
+            await updatePassword(
+                formData.currentPassword,
+                formData.newPassword,
+                formData.confirmPassword
+            );
             setSuccessMessage('Password updated successfully!');
             setFormData({
                 currentPassword: '',
                 newPassword: '',
                 confirmPassword: ''
             });
+            setFormErrors({});
         } catch (err) {
         }
     };
 
-    const passwordsMatch = formData.newPassword === formData.confirmPassword;
-    const isFormValid = formData.currentPassword &&
-        formData.newPassword &&
-        formData.confirmPassword &&
-        passwordsMatch &&
-        formData.newPassword.length >= 8;
-
     return (
         <div className={styles.passwordForm}>
-            <h2 className={styles.title}>Change Password</h2>
+            <h1 className={styles.title}>Change Password</h1>
             <p className={styles.description}>
                 Update your password to keep your account secure.
             </p>
@@ -72,75 +93,47 @@ export const PasswordChangeForm: React.FC = () => {
                     </div>
                 )}
 
-                <div className={styles.formGroup}>
-                    <label htmlFor="currentPassword" className={styles.label}>
-                        Current Password
-                    </label>
-                    <input
+                <div className={styles.formSection}>
+                    <h2 className={styles.sectionTitle}>Password Details</h2>
+
+                    <Input
                         type="password"
-                        id="currentPassword"
-                        name="currentPassword"
-                        value={formData.currentPassword}
-                        onChange={handleChange}
-                        className={styles.input}
                         placeholder="Enter your current password"
-                        required
+                        value={formData.currentPassword}
+                        onChange={(value) => handleChange('currentPassword', value)}
                         disabled={isLoading}
+                        error={formErrors.currentPassword}
                     />
-                </div>
 
-                <div className={styles.formGroup}>
-                    <label htmlFor="newPassword" className={styles.label}>
-                        New Password
-                    </label>
-                    <input
+                    <Input
                         type="password"
-                        id="newPassword"
-                        name="newPassword"
-                        value={formData.newPassword}
-                        onChange={handleChange}
-                        className={styles.input}
                         placeholder="Enter new password (min 8 characters)"
-                        required
+                        value={formData.newPassword}
+                        onChange={(value) => handleChange('newPassword', value)}
                         disabled={isLoading}
+                        error={formErrors.newPassword}
                     />
-                    {formData.newPassword && formData.newPassword.length < 8 && (
-                        <div className={styles.validationError}>
-                            Password must be at least 8 characters long
-                        </div>
-                    )}
-                </div>
 
-                <div className={styles.formGroup}>
-                    <label htmlFor="confirmPassword" className={styles.label}>
-                        Confirm New Password
-                    </label>
-                    <input
+                    <Input
                         type="password"
-                        id="confirmPassword"
-                        name="confirmPassword"
-                        value={formData.confirmPassword}
-                        onChange={handleChange}
-                        className={`${styles.input} ${formData.confirmPassword && !passwordsMatch ? styles.inputError : ''
-                            }`}
                         placeholder="Confirm your new password"
-                        required
+                        value={formData.confirmPassword}
+                        onChange={(value) => handleChange('confirmPassword', value)}
                         disabled={isLoading}
+                        error={formErrors.confirmPassword}
                     />
-                    {formData.confirmPassword && !passwordsMatch && (
-                        <div className={styles.validationError}>
-                            Passwords do not match
-                        </div>
-                    )}
                 </div>
 
-                <button
+                <Button
                     type="submit"
-                    className={styles.submitButton}
-                    disabled={!isFormValid || isLoading}
+                    variant="primary"
+                    size="large"
+                    loading={isLoading}
+                    disabled={isLoading}
+                    style={{ width: '100%' }}
                 >
                     {isLoading ? 'Updating Password...' : 'Update Password'}
-                </button>
+                </Button>
             </form>
         </div>
     );
