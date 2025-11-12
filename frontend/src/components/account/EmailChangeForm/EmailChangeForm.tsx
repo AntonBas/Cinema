@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useUserMutation } from '@/hooks/features/user';
+import { Input, Button, Notification, Tooltip } from '@/components/ui';
 import styles from './EmailChangeForm.module.css';
 
 export const EmailChangeForm: React.FC = () => {
@@ -8,121 +9,137 @@ export const EmailChangeForm: React.FC = () => {
         newEmail: '',
         password: ''
     });
-    const [successMessage, setSuccessMessage] = useState('');
+    const [showSuccess, setShowSuccess] = useState(false);
+    const [showError, setShowError] = useState(false);
+    const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
-    const isValidEmail = (email: string) => {
-        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-    };
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
+    const handleChange = (field: string, value: string) => {
         setFormData(prev => ({
             ...prev,
-            [name]: value
+            [field]: value
         }));
 
-        if (error) clearError();
-        if (successMessage) setSuccessMessage('');
+        if (formErrors[field]) {
+            setFormErrors(prev => ({ ...prev, [field]: '' }));
+        }
+        if (error) {
+            clearError();
+            setShowError(false);
+        }
+        if (showSuccess) setShowSuccess(false);
+    };
+
+    const validateForm = () => {
+        const errors: Record<string, string> = {};
+
+        if (!formData.newEmail) {
+            errors.newEmail = 'Email is required';
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.newEmail)) {
+            errors.newEmail = 'Please enter a valid email address';
+        }
+
+        if (!formData.password) {
+            errors.password = 'Password is required';
+        }
+
+        setFormErrors(errors);
+        return Object.keys(errors).length === 0;
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
+        if (!validateForm()) {
+            return;
+        }
+
         try {
             await requestEmailChange(formData.newEmail);
-            setSuccessMessage('Confirmation email sent to your new address! Please check your inbox.');
+            setShowSuccess(true);
             setFormData({
                 newEmail: '',
                 password: ''
             });
+            setFormErrors({});
         } catch (err) {
+            setShowError(true);
         }
     };
 
-    const isFormValid = formData.newEmail &&
-        formData.password &&
-        isValidEmail(formData.newEmail);
+    const handleCloseNotification = (id: string) => {
+        if (id === 'success') setShowSuccess(false);
+        if (id === 'error') setShowError(false);
+    };
 
     return (
         <div className={styles.emailForm}>
-            <h2 className={styles.title}>Change Email Address</h2>
+            {/* Спливаючі сповіщення */}
+            <Notification
+                id="success"
+                message="Confirmation email sent to your new address! Please check your inbox."
+                type="success"
+                isVisible={showSuccess}
+                onClose={handleCloseNotification}
+                duration={5000}
+            />
+
+            <Notification
+                id="error"
+                message={error || 'Failed to send confirmation email'}
+                type="error"
+                isVisible={showError}
+                onClose={handleCloseNotification}
+                duration={5000}
+            />
+
+            <h1 className={styles.title}>Change Email Address</h1>
             <p className={styles.description}>
                 Update your email address. We'll send a confirmation link to your new email.
             </p>
 
             <form onSubmit={handleSubmit} className={styles.form}>
-                {error && (
-                    <div className={styles.errorMessage}>
-                        {error}
-                    </div>
-                )}
+                <div className={styles.formSection}>
+                    <h2 className={styles.sectionTitle}>New Email Details</h2>
 
-                {successMessage && (
-                    <div className={styles.successMessage}>
-                        {successMessage}
-                    </div>
-                )}
-
-                <div className={styles.formGroup}>
-                    <label htmlFor="newEmail" className={styles.label}>
-                        New Email Address
-                    </label>
-                    <input
+                    <Input
                         type="email"
-                        id="newEmail"
-                        name="newEmail"
-                        value={formData.newEmail}
-                        onChange={handleChange}
-                        className={`${styles.input} ${formData.newEmail && !isValidEmail(formData.newEmail) ? styles.inputError : ''
-                            }`}
                         placeholder="Enter your new email address"
-                        required
+                        value={formData.newEmail}
+                        onChange={(value) => handleChange('newEmail', value)}
                         disabled={isLoading}
+                        error={formErrors.newEmail}
                     />
-                    {formData.newEmail && !isValidEmail(formData.newEmail) && (
-                        <div className={styles.validationError}>
-                            Please enter a valid email address
-                        </div>
-                    )}
-                </div>
 
-                <div className={styles.formGroup}>
-                    <label htmlFor="password" className={styles.label}>
-                        Current Password
-                    </label>
-                    <input
+                    <Input
                         type="password"
-                        id="password"
-                        name="password"
-                        value={formData.password}
-                        onChange={handleChange}
-                        className={styles.input}
                         placeholder="Enter your current password to confirm"
-                        required
+                        value={formData.password}
+                        onChange={(value) => handleChange('password', value)}
                         disabled={isLoading}
+                        error={formErrors.password}
                     />
+
                     <div className={styles.passwordHint}>
                         For security reasons, please enter your current password to change your email.
                     </div>
                 </div>
 
-                <button
-                    type="submit"
-                    className={styles.submitButton}
-                    disabled={!isFormValid || isLoading}
+                <Tooltip
+                    content={`Important:\n• You will receive a confirmation email at your new address\n• You must click the confirmation link to complete the change\n• Your login email will be updated after confirmation`}
+                    position="top"
                 >
-                    {isLoading ? 'Sending Confirmation...' : 'Change Email Address'}
-                </button>
+                    <Button
+                        type="submit"
+                        variant="primary"
+                        size="large"
+                        loading={isLoading}
+                        disabled={isLoading}
+                        style={{ width: '100%' }}
+                    >
+                        {isLoading ? 'Sending Confirmation...' : 'Change Email Address'}
+                    </Button>
+                </Tooltip>
             </form>
-
-            <div className={styles.note}>
-                <h4>Important:</h4>
-                <ul>
-                    <li>You will receive a confirmation email at your new address</li>
-                    <li>You must click the confirmation link to complete the change</li>
-                    <li>Your login email will be updated after confirmation</li>
-                </ul>
-            </div>
         </div>
     );
 };
