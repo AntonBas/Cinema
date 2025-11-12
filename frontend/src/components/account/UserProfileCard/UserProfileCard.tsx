@@ -1,5 +1,6 @@
 import React from 'react';
 import type { UserProfile } from '@/types/user';
+import { Button } from '@/components/ui';
 import styles from './UserProfileCard.module.css';
 
 interface UserProfileCardProps {
@@ -20,9 +21,13 @@ export const UserProfileCard: React.FC<UserProfileCardProps> = ({ user, onEdit }
         <div className={styles.profileCard}>
             <div className={styles.cardHeader}>
                 <h2 className={styles.cardTitle}>Profile Information</h2>
-                <button onClick={onEdit} className={styles.editButton}>
+                <Button
+                    variant="primary"
+                    onClick={onEdit}
+                    style={{ minWidth: '120px' }}
+                >
                     Edit Profile
-                </button>
+                </Button>
             </div>
 
             <div className={styles.cardContent}>
