@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useUserMutation } from '@/hooks/features/user';
+import { Input, Button } from '@/components/ui';
 import type { UserProfile, UserUpdateRequest } from '@/types/user';
 import styles from './ProfileEditForm.module.css';
 
@@ -23,20 +24,46 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
         phoneNumber: user.phoneNumber || ''
     });
     const [successMessage, setSuccessMessage] = useState('');
+    const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
+    const handleChange = (field: string, value: string) => {
         setFormData(prev => ({
             ...prev,
-            [name]: value
+            [field]: value
         }));
 
+        if (formErrors[field]) {
+            setFormErrors(prev => ({ ...prev, [field]: '' }));
+        }
         if (error) clearError();
         if (successMessage) setSuccessMessage('');
     };
 
+    const validateForm = () => {
+        const errors: Record<string, string> = {};
+
+        if (!formData.firstName.trim()) {
+            errors.firstName = 'First name is required';
+        }
+
+        if (!formData.lastName.trim()) {
+            errors.lastName = 'Last name is required';
+        }
+
+        if (!formData.dateOfBirth) {
+            errors.dateOfBirth = 'Date of birth is required';
+        }
+
+        setFormErrors(errors);
+        return Object.keys(errors).length === 0;
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (!validateForm()) {
+            return;
+        }
 
         try {
             await updateProfile(formData);
@@ -45,128 +72,95 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
                 onSuccess();
             }, 1500);
         } catch (err) {
+            // Error handling is done through the hook
         }
     };
-
-    const isFormValid = formData.firstName &&
-        formData.lastName &&
-        formData.dateOfBirth;
 
     return (
         <div className={styles.profileForm}>
             <form onSubmit={handleSubmit} className={styles.form}>
                 {error && (
-                    <div className={styles.errorMessage}>
+                    <div className={styles.notification} data-type="error">
                         {error}
                     </div>
                 )}
 
                 {successMessage && (
-                    <div className={styles.successMessage}>
+                    <div className={styles.notification} data-type="success">
                         {successMessage}
                     </div>
                 )}
 
-                <div className={styles.formRow}>
-                    <div className={styles.formGroup}>
-                        <label htmlFor="firstName" className={styles.label}>
-                            First Name *
-                        </label>
-                        <input
+                <div className={styles.formSection}>
+                    <h2 className={styles.sectionTitle}>Personal Information</h2>
+
+                    <div className={styles.formRow}>
+                        <Input
                             type="text"
-                            id="firstName"
-                            name="firstName"
-                            value={formData.firstName}
-                            onChange={handleChange}
-                            className={styles.input}
                             placeholder="Enter your first name"
-                            required
+                            value={formData.firstName}
+                            onChange={(value) => handleChange('firstName', value)}
                             disabled={isLoading}
+                            error={formErrors.firstName}
                         />
-                    </div>
-
-                    <div className={styles.formGroup}>
-                        <label htmlFor="lastName" className={styles.label}>
-                            Last Name *
-                        </label>
-                        <input
+                        <Input
                             type="text"
-                            id="lastName"
-                            name="lastName"
-                            value={formData.lastName}
-                            onChange={handleChange}
-                            className={styles.input}
                             placeholder="Enter your last name"
-                            required
+                            value={formData.lastName}
+                            onChange={(value) => handleChange('lastName', value)}
                             disabled={isLoading}
+                            error={formErrors.lastName}
                         />
                     </div>
-                </div>
 
-                <div className={styles.formGroup}>
-                    <label htmlFor="dateOfBirth" className={styles.label}>
-                        Date of Birth *
-                    </label>
-                    <input
+                    <Input
                         type="date"
-                        id="dateOfBirth"
-                        name="dateOfBirth"
                         value={formData.dateOfBirth}
-                        onChange={handleChange}
-                        className={styles.input}
-                        required
+                        onChange={(value) => handleChange('dateOfBirth', value)}
                         disabled={isLoading}
+                        error={formErrors.dateOfBirth}
                     />
                 </div>
 
-                <div className={styles.formGroup}>
-                    <label htmlFor="phoneNumber" className={styles.label}>
-                        Phone Number
-                    </label>
-                    <input
-                        type="tel"
-                        id="phoneNumber"
-                        name="phoneNumber"
-                        value={formData.phoneNumber}
-                        onChange={handleChange}
-                        className={styles.input}
-                        placeholder="Enter your phone number"
-                        disabled={isLoading}
-                    />
-                </div>
+                <div className={styles.formSection}>
+                    <h2 className={styles.sectionTitle}>Contact Information</h2>
 
-                <div className={styles.formGroup}>
-                    <label htmlFor="city" className={styles.label}>
-                        City
-                    </label>
-                    <input
+                    <Input
                         type="text"
-                        id="city"
-                        name="city"
-                        value={formData.city}
-                        onChange={handleChange}
-                        className={styles.input}
+                        placeholder="Enter your phone number"
+                        value={formData.phoneNumber}
+                        onChange={(value) => handleChange('phoneNumber', value)}
+                        disabled={isLoading}
+                    />
+
+                    <Input
+                        type="text"
                         placeholder="Enter your city"
+                        value={formData.city}
+                        onChange={(value) => handleChange('city', value)}
                         disabled={isLoading}
                     />
                 </div>
 
                 <div className={styles.formActions}>
-                    <button
+                    <Button
                         type="button"
-                        className={styles.cancelButton}
+                        variant="secondary"
                         onClick={onCancel}
                         disabled={isLoading}
+                        style={{ minWidth: '100px' }}
                     >
                         Cancel
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                         type="submit"
-                        className={styles.submitButton}
-                        disabled={!isFormValid || isLoading}
+                        variant="primary"
+                        loading={isLoading}
+                        disabled={isLoading}
+                        style={{ minWidth: '120px' }}
                     >
                         {isLoading ? 'Updating...' : 'Save Changes'}
-                    </button>
+                    </Button>
                 </div>
             </form>
         </div>
