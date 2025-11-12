@@ -5,7 +5,7 @@ import clsx from 'clsx';
 
 export type NotificationType = 'success' | 'error' | 'warning' | 'info';
 
-interface NotificationProps {
+export interface NotificationProps {
   id: string;
   message: string;
   type: NotificationType;
@@ -13,6 +13,7 @@ interface NotificationProps {
   onClose: (id: string) => void;
   duration?: number;
   position?: number;
+  isStatic?: boolean;
 }
 
 export const Notification: React.FC<NotificationProps> = ({
@@ -22,14 +23,15 @@ export const Notification: React.FC<NotificationProps> = ({
   isVisible,
   onClose,
   duration = 3000,
-  position = 0
+  position = 0,
+  isStatic = false
 }) => {
   useEffect(() => {
-    if (isVisible) {
+    if (isVisible && !isStatic) {
       const timer = setTimeout(() => onClose(id), duration);
       return () => clearTimeout(timer);
     }
-  }, [isVisible, duration, onClose, id]);
+  }, [isVisible, duration, onClose, id, isStatic]);
 
   const getIcon = () => {
     switch (type) {
@@ -46,11 +48,13 @@ export const Notification: React.FC<NotificationProps> = ({
       className={clsx(
         styles.notification,
         styles[type],
-        isVisible && styles.show
+        isVisible && styles.show,
+        isStatic && styles.static
       )}
       style={{
-        transform: `translateY(${position * 100}%)`,
-        zIndex: 10000 + position
+        transform: isStatic ? 'none' : `translateY(${position * 100}%)`,
+        zIndex: isStatic ? 1 : 10000 + position,
+        position: isStatic ? 'static' : 'fixed'
       }}
     >
       <div className={styles.content}>
@@ -58,14 +62,16 @@ export const Notification: React.FC<NotificationProps> = ({
         <span className={styles.message}>{message}</span>
         <button className={styles.close} onClick={() => onClose(id)}>×</button>
       </div>
-      <div className={styles.progress}>
-        <div
-          className={styles.progressBar}
-          style={{ animationDuration: `${duration}ms` }}
-        ></div>
-      </div>
+      {!isStatic && (
+        <div className={styles.progress}>
+          <div
+            className={styles.progressBar}
+            style={{ animationDuration: `${duration}ms` }}
+          ></div>
+        </div>
+      )}
     </div>
   );
 
-  return createPortal(notificationContent, document.body);
+  return isStatic ? notificationContent : createPortal(notificationContent, document.body);
 };
