@@ -16,8 +16,10 @@ import org.springframework.web.bind.annotation.RestController;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import ua.lviv.bas.cinema.dto.user.request.UserPasswordUpdateRequest;
 import ua.lviv.bas.cinema.dto.user.request.UserUpdateRequest;
 import ua.lviv.bas.cinema.dto.user.response.UserProfileResponse;
+import ua.lviv.bas.cinema.exception.PasswordMismatchException;
 import ua.lviv.bas.cinema.security.CustomUserDetails;
 import ua.lviv.bas.cinema.service.UserService;
 
@@ -55,8 +57,12 @@ public class UserController {
 
 	@PatchMapping("/password")
 	public ResponseEntity<?> updatePassword(@AuthenticationPrincipal CustomUserDetails userDetails,
-			@RequestParam String newPassword) {
-		userService.updateUserPassword(userDetails.getUserId(), newPassword);
+			@Valid @RequestBody UserPasswordUpdateRequest request) {
+		if (!request.getNewPassword().equals(request.getPasswordConfirm())) {
+			throw new PasswordMismatchException("Passwords do not match");
+		}
+
+		userService.updateUserPassword(userDetails.getUserId(), request.getCurrentPassword(), request.getNewPassword());
 		return ResponseEntity.ok(Map.of("message", "Password updated successfully"));
 	}
 }
