@@ -61,8 +61,22 @@
     font-size: 0.85rem;
     color: #a0a8c0;
     font-weight: 500;
-    text-transform: uppercase;
+    text-transform: none;
     letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.tooltipIcon {
+    font-size: 0.7rem;
+    opacity: 0.7;
+    transition: opacity 0.3s ease;
+    cursor: help;
+}
+
+.tooltipIcon:hover {
+    opacity: 1;
 }
 
 .detailValue {

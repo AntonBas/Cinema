@@ -1,6 +1,6 @@
 import React from 'react';
 import type { UserProfile } from '@/types/user';
-import { Button } from '@/components/ui';
+import { Button, Tooltip } from '@/components/ui';
 import styles from './UserProfileCard.module.css';
 
 interface UserProfileCardProps {
@@ -57,7 +57,15 @@ export const UserProfileCard: React.FC<UserProfileCardProps> = ({ user, onEdit }
                     </div>
 
                     <div className={styles.detailItem}>
-                        <span className={styles.detailLabel}>Phone Number</span>
+                        <span className={styles.detailLabel}>
+                            Phone Number
+                            <Tooltip
+                                content="We'll call you if there are changes or cancellations to your movie sessions"
+                                position="top"
+                            >
+                                <span className={styles.tooltipIcon}>ℹ️</span>
+                            </Tooltip>
+                        </span>
                         <span className={styles.detailValue}>
                             {user.phoneNumber || 'Not provided'}
                         </span>
@@ -71,7 +79,15 @@ export const UserProfileCard: React.FC<UserProfileCardProps> = ({ user, onEdit }
                     </div>
 
                     <div className={styles.detailItem}>
-                        <span className={styles.detailLabel}>Date of Birth</span>
+                        <span className={styles.detailLabel}>
+                            Date of Birth
+                            <Tooltip
+                                content="Add your birthday to get special discounts! You'll need to verify your ID at the cinema to claim your birthday offer"
+                                position="top"
+                            >
+                                <span className={styles.tooltipIcon}>ℹ️</span>
+                            </Tooltip>
+                        </span>
                         <span className={styles.detailValue}>
                             {user.dateOfBirth ? formatDate(user.dateOfBirth) : 'Not provided'}
                         </span>
