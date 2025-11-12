@@ -89,4 +89,10 @@ public class GlobalExceptionHandler {
 		log.warn("Password mismatch: {}", ex.getMessage());
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("success", false, "message", ex.getMessage()));
 	}
+
+	@ExceptionHandler(InvalidCurrentPasswordException.class)
+	public ResponseEntity<Map<String, Object>> handleInvalidCurrentPassword(InvalidCurrentPasswordException ex) {
+		log.warn("Invalid current password: {}", ex.getMessage());
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("success", false, "message", ex.getMessage()));
+	}
 }
