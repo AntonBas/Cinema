@@ -187,19 +187,63 @@ public class UserServiceTest {
 	}
 
 	@Test
-	void updateUserPassword_ShouldUpdatePassword() {
+	void updateUserPassword_ShouldUpdatePassword_WhenCurrentPasswordIsCorrectAndNewIsDifferent() {
+		String currentPassword = "oldPassword123";
 		String newPassword = "newPassword123";
-		String encodedPassword = "encodedNewPassword";
+		String encodedNewPassword = "encodedNewPassword";
+
+		user.setPassword("encodedOldPassword");
 
 		when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
-		when(passwordEncoder.encode(newPassword)).thenReturn(encodedPassword);
+		when(passwordEncoder.matches(currentPassword, user.getPassword())).thenReturn(true);
+		when(passwordEncoder.matches(newPassword, user.getPassword())).thenReturn(false);
+		when(passwordEncoder.encode(newPassword)).thenReturn(encodedNewPassword);
 		when(userRepository.save(user)).thenReturn(user);
 
-		userService.updateUserPassword(user.getId(), newPassword);
+		userService.updateUserPassword(user.getId(), currentPassword, newPassword);
 
-		assertEquals(encodedPassword, user.getPassword());
-		verify(userRepository).findById(user.getId());
+		assertEquals(encodedNewPassword, user.getPassword());
+
+		verify(passwordEncoder, times(2)).matches(anyString(), anyString());
 		verify(passwordEncoder).encode(newPassword);
 		verify(userRepository).save(user);
 	}
+
+	@Test
+	void updateUserPassword_ShouldThrowException_WhenCurrentPasswordIsIncorrect() {
+		String currentPassword = "wrongPassword";
+		String newPassword = "newPassword123";
+
+		user.setPassword("encodedOldPassword");
+
+		when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
+		when(passwordEncoder.matches(currentPassword, user.getPassword())).thenReturn(false);
+
+		assertThrows(org.springframework.security.authentication.BadCredentialsException.class,
+				() -> userService.updateUserPassword(user.getId(), currentPassword, newPassword));
+
+		verify(passwordEncoder, times(1)).matches(anyString(), anyString());
+		verify(passwordEncoder, never()).encode(anyString());
+		verify(userRepository, never()).save(any());
+	}
+
+	@Test
+	void updateUserPassword_ShouldThrowException_WhenNewPasswordIsSameAsOld() {
+		String currentPassword = "oldPassword123";
+		String newPassword = "oldPassword123";
+
+		user.setPassword("encodedOldPassword");
+
+		when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
+		when(passwordEncoder.matches(currentPassword, user.getPassword())).thenReturn(true);
+		when(passwordEncoder.matches(newPassword, user.getPassword())).thenReturn(true);
+
+		assertThrows(ua.lviv.bas.cinema.exception.SamePasswordException.class,
+				() -> userService.updateUserPassword(user.getId(), currentPassword, newPassword));
+
+		verify(passwordEncoder, times(2)).matches(anyString(), anyString());
+		verify(passwordEncoder, never()).encode(anyString());
+		verify(userRepository, never()).save(any());
+	}
+
 }
