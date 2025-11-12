@@ -83,4 +83,10 @@ public class GlobalExceptionHandler {
 		log.warn("Same password error: {}", ex.getMessage());
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("success", false, "message", ex.getMessage()));
 	}
+
+	@ExceptionHandler(PasswordMismatchException.class)
+	public ResponseEntity<Map<String, Object>> handlePasswordMismatch(PasswordMismatchException ex) {
+		log.warn("Password mismatch: {}", ex.getMessage());
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("success", false, "message", ex.getMessage()));
+	}
 }
