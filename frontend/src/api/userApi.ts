@@ -6,6 +6,12 @@ import type {
     PasswordUpdateResponse
 } from '@/types/user';
 
+export interface PasswordUpdateRequest {
+    currentPassword: string;
+    newPassword: string;
+    passwordConfirm: string;
+}
+
 export const userApi = {
     getProfile: async (): Promise<UserProfile> => {
         const response = await api.get('/api/users/profile');
@@ -27,8 +33,8 @@ export const userApi = {
         return response.data;
     },
 
-    updatePassword: async (newPassword: string): Promise<PasswordUpdateResponse> => {
-        const response = await api.patch(`/api/users/password?newPassword=${encodeURIComponent(newPassword)}`);
+    updatePassword: async (passwordData: PasswordUpdateRequest): Promise<PasswordUpdateResponse> => {
+        const response = await api.patch('/api/users/password', passwordData);
         return response.data;
     }
 };

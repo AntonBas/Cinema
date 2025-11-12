@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { UserProfile, UserUpdateRequest, EmailChangeResponse, PasswordUpdateResponse } from '@/types/user';
-import { userApi } from '@/api/userApi';
+import { userApi, type PasswordUpdateRequest } from '@/api/userApi';
 
 export const useUserMutation = () => {
     const [isLoading, setIsLoading] = useState(false);
@@ -11,8 +11,8 @@ export const useUserMutation = () => {
         setError(null);
         try {
             return await userApi.updateProfile(updateData);
-        } catch (err) {
-            const message = err instanceof Error ? err.message : 'Profile update failed';
+        } catch (err: any) {
+            const message = err.response?.data?.message || err.message || 'Profile update failed';
             setError(message);
             throw err;
         } finally {
@@ -25,8 +25,8 @@ export const useUserMutation = () => {
         setError(null);
         try {
             return await userApi.requestEmailChange(newEmail);
-        } catch (err) {
-            const message = err instanceof Error ? err.message : 'Email change request failed';
+        } catch (err: any) {
+            const message = err.response?.data?.message || err.message || 'Email change request failed';
             setError(message);
             throw err;
         } finally {
@@ -39,8 +39,8 @@ export const useUserMutation = () => {
         setError(null);
         try {
             return await userApi.confirmEmailChange(token);
-        } catch (err) {
-            const message = err instanceof Error ? err.message : 'Email change confirmation failed';
+        } catch (err: any) {
+            const message = err.response?.data?.message || err.message || 'Email change confirmation failed';
             setError(message);
             throw err;
         } finally {
@@ -48,13 +48,18 @@ export const useUserMutation = () => {
         }
     };
 
-    const updatePassword = async (newPassword: string): Promise<PasswordUpdateResponse> => {
+    const updatePassword = async (currentPassword: string, newPassword: string, passwordConfirm: string): Promise<PasswordUpdateResponse> => {
         setIsLoading(true);
         setError(null);
         try {
-            return await userApi.updatePassword(newPassword);
-        } catch (err) {
-            const message = err instanceof Error ? err.message : 'Password update failed';
+            const passwordData: PasswordUpdateRequest = {
+                currentPassword,
+                newPassword,
+                passwordConfirm
+            };
+            return await userApi.updatePassword(passwordData);
+        } catch (err: any) {
+            const message = err.response?.data?.message || err.message || 'Password update failed';
             setError(message);
             throw err;
         } finally {
