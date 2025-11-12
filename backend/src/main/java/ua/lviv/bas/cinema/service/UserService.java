@@ -1,6 +1,5 @@
 package ua.lviv.bas.cinema.service;
 
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,6 +12,7 @@ import ua.lviv.bas.cinema.dto.user.request.UserUpdateRequest;
 import ua.lviv.bas.cinema.dto.user.response.UserProfileResponse;
 import ua.lviv.bas.cinema.dto.user.response.UserResponse;
 import ua.lviv.bas.cinema.exception.EmailAlreadyExistsException;
+import ua.lviv.bas.cinema.exception.InvalidCurrentPasswordException;
 import ua.lviv.bas.cinema.exception.SamePasswordException;
 import ua.lviv.bas.cinema.exception.UserNotFoundException;
 import ua.lviv.bas.cinema.mapper.UserMapper;
@@ -81,7 +81,7 @@ public class UserService {
 		User user = findById(userId);
 
 		if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
-			throw new BadCredentialsException("Current password is incorrect");
+			throw new InvalidCurrentPasswordException("Current password is incorrect");
 		}
 
 		if (passwordEncoder.matches(newPassword, user.getPassword())) {
