@@ -1,0 +1,104 @@
+.tooltipContainer {
+    position: relative;
+    display: inline-block;
+}
+
+.tooltipTrigger {
+    display: inline-block;
+}
+
+.tooltip {
+    position: absolute;
+    background: #1e232e;
+    color: white;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    white-space: pre-line;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(253, 95, 0, 0.3);
+    z-index: 1000;
+    max-width: 300px;
+    backdrop-filter: blur(10px);
+    animation: fadeIn 0.2s ease;
+}
+
+.tooltipArrow {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: #1e232e;
+    transform: rotate(45deg);
+}
+
+.tooltip.top {
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: 10px;
+}
+
+.tooltip.top .tooltipArrow {
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateY(-50%) rotate(45deg);
+    border-right: 1px solid rgba(253, 95, 0, 0.3);
+    border-bottom: 1px solid rgba(253, 95, 0, 0.3);
+}
+
+.tooltip.bottom {
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-top: 10px;
+}
+
+.tooltip.bottom .tooltipArrow {
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateY(50%) rotate(45deg);
+    border-top: 1px solid rgba(253, 95, 0, 0.3);
+    border-left: 1px solid rgba(253, 95, 0, 0.3);
+}
+
+.tooltip.left {
+    right: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    margin-right: 10px;
+}
+
+.tooltip.left .tooltipArrow {
+    left: 100%;
+    top: 50%;
+    transform: translateY(-50%) translateX(-50%) rotate(45deg);
+    border-top: 1px solid rgba(253, 95, 0, 0.3);
+    border-right: 1px solid rgba(253, 95, 0, 0.3);
+}
+
+.tooltip.right {
+    left: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    margin-left: 10px;
+}
+
+.tooltip.right .tooltipArrow {
+    right: 100%;
+    top: 50%;
+    transform: translateY(-50%) translateX(50%) rotate(45deg);
+    border-bottom: 1px solid rgba(253, 95, 0, 0.3);
+    border-left: 1px solid rgba(253, 95, 0, 0.3);
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
