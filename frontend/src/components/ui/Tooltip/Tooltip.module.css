@@ -1,12 +1,10 @@
 .tooltipContainer {
     position: relative;
     display: inline-block;
-    width: 100%;
 }
 
 .tooltipTrigger {
     display: inline-block;
-    width: 100%;
 }
 
 .tooltip {
@@ -20,11 +18,10 @@
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
     border: 1px solid rgba(253, 95, 0, 0.3);
     z-index: 1000;
-    max-width: 300px;
+    max-width: 250px;
+    width: max-content;
     backdrop-filter: blur(10px);
     animation: fadeIn 0.2s ease;
-    left: 50%;
-    transform: translateX(-50%);
 }
 
 .tooltipArrow {
@@ -37,6 +34,8 @@
 
 .tooltip.top {
     bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
     margin-bottom: 10px;
 }
 
@@ -50,6 +49,8 @@
 
 .tooltip.bottom {
     top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
     margin-top: 10px;
 }
 
@@ -102,12 +103,6 @@
         opacity: 1;
         transform: translateX(-50%) translateY(0);
     }
-}
-
-.tooltip.top,
-.tooltip.bottom {
-    left: 50%;
-    transform: translateX(-50%);
 }
 
 .tooltip.top.fadeIn,
