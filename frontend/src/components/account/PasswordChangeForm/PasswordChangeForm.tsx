@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useUserMutation } from '@/hooks/features/user';
-import { Input, Button } from '@/components/ui';
+import { Input, Button, Notification } from '@/components/ui';
 import styles from './PasswordChangeForm.module.css';
 
 export const PasswordChangeForm: React.FC = () => {
@@ -10,7 +10,8 @@ export const PasswordChangeForm: React.FC = () => {
         newPassword: '',
         confirmPassword: ''
     });
-    const [successMessage, setSuccessMessage] = useState('');
+    const [showSuccess, setShowSuccess] = useState(false);
+    const [showError, setShowError] = useState(false);
     const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
     const handleChange = (field: string, value: string) => {
@@ -22,8 +23,11 @@ export const PasswordChangeForm: React.FC = () => {
         if (formErrors[field]) {
             setFormErrors(prev => ({ ...prev, [field]: '' }));
         }
-        if (error) clearError();
-        if (successMessage) setSuccessMessage('');
+        if (error) {
+            clearError();
+            setShowError(false);
+        }
+        if (showSuccess) setShowSuccess(false);
     };
 
     const validateForm = () => {
@@ -62,7 +66,7 @@ export const PasswordChangeForm: React.FC = () => {
                 formData.newPassword,
                 formData.confirmPassword
             );
-            setSuccessMessage('Password updated successfully!');
+            setShowSuccess(true);
             setFormData({
                 currentPassword: '',
                 newPassword: '',
@@ -70,29 +74,42 @@ export const PasswordChangeForm: React.FC = () => {
             });
             setFormErrors({});
         } catch (err) {
+            setShowError(true);
         }
+    };
+
+    const handleCloseNotification = (id: string) => {
+        if (id === 'success') setShowSuccess(false);
+        if (id === 'error') setShowError(false);
     };
 
     return (
         <div className={styles.passwordForm}>
+            {/* Спливаючі сповіщення */}
+            <Notification
+                id="success"
+                message="Password updated successfully!"
+                type="success"
+                isVisible={showSuccess}
+                onClose={handleCloseNotification}
+                duration={5000}
+            />
+
+            <Notification
+                id="error"
+                message={error || 'Failed to update password'}
+                type="error"
+                isVisible={showError}
+                onClose={handleCloseNotification}
+                duration={5000}
+            />
+
             <h1 className={styles.title}>Change Password</h1>
             <p className={styles.description}>
                 Update your password to keep your account secure.
             </p>
 
             <form onSubmit={handleSubmit} className={styles.form}>
-                {error && (
-                    <div className={styles.errorMessage}>
-                        {error}
-                    </div>
-                )}
-
-                {successMessage && (
-                    <div className={styles.successMessage}>
-                        {successMessage}
-                    </div>
-                )}
-
                 <div className={styles.formSection}>
                     <h2 className={styles.sectionTitle}>Password Details</h2>
 
