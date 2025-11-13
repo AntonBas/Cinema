@@ -67,6 +67,12 @@ public class GenreService {
 	public PageResponse<GenreResponse> searchGenres(String query, int page, int size) {
 		log.info("Searching genres: query='{}', page={}, size={}", query, page, size);
 
+		if (page < 0)
+			page = 0;
+		if (size <= 0)
+			size = 12;
+		size = Math.min(size, 50);
+
 		Pageable pageable = PageRequest.of(page, size, Sort.by("name").ascending());
 		Page<Genre> genrePage;
 

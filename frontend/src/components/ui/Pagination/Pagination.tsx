@@ -1,12 +1,17 @@
 import React from 'react';
 import styles from './Pagination.module.css';
 
+export type PaginationVariant = 'pages' | 'load-more';
+
 export interface PaginationProps {
     currentPage: number;
     totalPages: number;
     totalElements: number;
     pageSize: number;
     onPageChange: (page: number) => void;
+    onLoadMore?: () => void;
+    variant?: PaginationVariant;
+    loading?: boolean;
     className?: string;
 }
 
@@ -16,6 +21,9 @@ export const Pagination: React.FC<PaginationProps> = ({
     totalElements,
     pageSize,
     onPageChange,
+    onLoadMore,
+    variant = 'pages',
+    loading = false,
     className = ''
 }) => {
     if (totalPages <= 1) return null;
@@ -41,6 +49,34 @@ export const Pagination: React.FC<PaginationProps> = ({
         return pages;
     };
 
+    if (variant === 'load-more') {
+        const hasMore = currentPage < totalPages - 1;
+
+        if (!hasMore) return null;
+
+        return (
+            <div className={`${styles.pagination} ${className}`}>
+                <div className={styles.info}>
+                    Showing {endItem} of {totalElements} items
+                </div>
+                <button
+                    className={styles.loadMoreButton}
+                    onClick={onLoadMore}
+                    disabled={loading}
+                >
+                    {loading ? (
+                        <>
+                            <span className={styles.spinner}></span>
+                            Loading...
+                        </>
+                    ) : (
+                        'Load More'
+                    )}
+                </button>
+            </div>
+        );
+    }
+
     return (
         <div className={`${styles.pagination} ${className}`}>
             <div className={styles.info}>
@@ -59,8 +95,7 @@ export const Pagination: React.FC<PaginationProps> = ({
                 {getPageNumbers().map(page => (
                     <button
                         key={page}
-                        className={`${styles.pageButton} ${page === currentPage ? styles.active : ''
-                            }`}
+                        className={`${styles.pageButton} ${page === currentPage ? styles.active : ''}`}
                         onClick={() => onPageChange(page)}
                     >
                         {page + 1}

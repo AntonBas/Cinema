@@ -1,13 +1,9 @@
 export interface PageResponse<T> {
-    currentPage: number;
     content: T[];
-    totalElements: number;
+    currentPage: number;
     totalPages: number;
-    size: number;
-    number: number;
-    first: boolean;
-    last: boolean;
-    empty?: boolean;
+    totalElements: number;
+    pageSize: number;
 }
 
 export interface SearchParams {
