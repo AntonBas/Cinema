@@ -91,3 +91,36 @@
     padding: 2rem;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
+
+@media (max-width: 968px) {
+    .securityLayout {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+
+    .sidebar {
+        order: 2;
+    }
+
+    .mainContent {
+        order: 1;
+    }
+}
+
+@media (max-width: 768px) {
+    .content {
+        padding: 1.5rem;
+    }
+
+    .title {
+        font-size: 1.75rem;
+    }
+
+    .securityLayout {
+        gap: 1rem;
+    }
+
+    .mainContent {
+        padding: 1.5rem;
+    }
+}

@@ -73,7 +73,6 @@ export const EmailChangeForm: React.FC = () => {
 
     return (
         <div className={styles.emailForm}>
-            {/* Спливаючі сповіщення */}
             <Notification
                 id="success"
                 message="Confirmation email sent to your new address! Please check your inbox."
@@ -124,21 +123,22 @@ export const EmailChangeForm: React.FC = () => {
                     </div>
                 </div>
 
-                <Tooltip
-                    content={`Important:\n• You will receive a confirmation email at your new address\n• You must click the confirmation link to complete the change\n• Your login email will be updated after confirmation`}
-                    position="top"
-                >
-                    <Button
-                        type="submit"
-                        variant="primary"
-                        size="large"
-                        loading={isLoading}
-                        disabled={isLoading}
-                        style={{ width: '100%' }}
+                <div className={styles.buttonWrapper}>
+                    <Tooltip
+                        content={`Important:\n• You will receive a confirmation email at your new address\n• You must click the confirmation link to complete the change\n• Your login email will be updated after confirmation`}
+                        position="top"
                     >
-                        {isLoading ? 'Sending Confirmation...' : 'Change Email Address'}
-                    </Button>
-                </Tooltip>
+                        <Button
+                            type="submit"
+                            variant="primary"
+                            size="large"
+                            loading={isLoading}
+                            disabled={isLoading}
+                        >
+                            {isLoading ? 'Sending Confirmation...' : 'Change Email Address'}
+                        </Button>
+                    </Tooltip>
+                </div>
             </form>
         </div>
     );

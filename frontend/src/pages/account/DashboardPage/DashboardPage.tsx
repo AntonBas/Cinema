@@ -37,7 +37,7 @@ export const DashboardPage: React.FC = () => {
         return (
             <Layout>
                 <div className={styles.dashboardPage}>
-                    <div className={styles.error}>
+                    <div className={styles.notification} data-type="error">
                         {error || 'Failed to load user data'}
                     </div>
                 </div>
