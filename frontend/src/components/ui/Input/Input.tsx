@@ -1,49 +1,50 @@
 import React from 'react';
 import styles from './Input.module.css';
+import clsx from 'clsx';
 
 export interface InputProps {
     type?: 'text' | 'email' | 'password' | 'number' | 'date';
+    value: string;
+    onChange: (value: string) => void;
     placeholder?: string;
-    value?: string;
-    size?: 'small' | 'medium' | 'large';
     disabled?: boolean;
     error?: string;
-    onChange?: (value: string) => void;
-    onBlur?: () => void;
-    onFocus?: () => void;
+    required?: boolean;
+    maxLength?: number;
+    className?: string;
 }
 
 export const Input: React.FC<InputProps> = ({
     type = 'text',
-    placeholder,
     value,
-    size = 'medium',
+    onChange,
+    placeholder,
     disabled = false,
     error,
-    onChange,
-    onBlur,
-    onFocus
+    required = false,
+    maxLength,
+    className = ''
 }) => {
-    const inputClasses = [
+    const inputClass = clsx(
         styles.input,
-        size !== 'medium' && styles[size],
         error && styles.error,
-        disabled && styles.disabled
-    ].filter(Boolean).join(' ');
+        disabled && styles.disabled,
+        className
+    );
 
     return (
         <div className={styles.container}>
             <input
                 type={type}
-                className={inputClasses}
-                placeholder={placeholder}
                 value={value}
+                onChange={(e) => onChange(e.target.value)}
+                placeholder={placeholder}
                 disabled={disabled}
-                onChange={(e) => onChange?.(e.target.value)}
-                onBlur={onBlur}
-                onFocus={onFocus}
+                required={required}
+                maxLength={maxLength}
+                className={inputClass}
             />
-            {error && <span className={styles.errorText}>{error}</span>}
+            {error && <div className={styles.errorMessage}>{error}</div>}
         </div>
     );
 };
