@@ -1,23 +1,17 @@
-.loginPageBody {
-  margin: 0;
-  padding: 0;
-  min-height: 100vh;
-  overflow-x: hidden;
-  background: #12161f;
-}
-
-.authMainContent {
+.container {
   flex: 1;
   display: flex;
   justify-content: center;
   align-items: center;
   padding: 20px;
   box-sizing: border-box;
+  min-height: calc(100vh - 70px - 250px);
+  background-color: #12161f;
 }
 
 @media (max-width: 768px) {
-  .authMainContent {
-    min-height: calc(100vh - 70px - 250px);
+  .container {
     padding: 15px;
+    min-height: calc(100vh - 70px - 200px);
   }
 }

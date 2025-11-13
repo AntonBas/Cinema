@@ -65,8 +65,8 @@ export const ResetPasswordForm: React.FC = () => {
   const validateForm = () => {
     const errors: Record<string, string> = {};
 
-    if (formData.newPassword.length < 6) {
-      errors.newPassword = 'Password must be at least 6 characters';
+    if (formData.newPassword.length < 8) {
+      errors.newPassword = 'Password must be at least 8 characters';
     }
 
     if (formData.newPassword !== formData.confirmPassword) {
@@ -91,8 +91,7 @@ export const ResetPasswordForm: React.FC = () => {
     try {
       await resetPassword(token, formData.newPassword);
       setShowSuccessModal(true);
-    } catch (err) {
-    }
+    } catch (err) { }
   };
 
   const handleModalClose = () => {
@@ -120,7 +119,7 @@ export const ResetPasswordForm: React.FC = () => {
         </h1>
 
         {errorMessage && (
-          <div className={styles.resetPasswordError}>
+          <div className={styles.notification} data-type="error">
             {errorMessage}
           </div>
         )}

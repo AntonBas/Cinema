@@ -59,8 +59,7 @@ export const ForgotPasswordForm: React.FC = () => {
     try {
       await forgotPassword(email);
       setShowSuccessModal(true);
-    } catch (err) {
-    }
+    } catch (err) { }
   };
 
   const handleModalClose = () => {
@@ -75,7 +74,7 @@ export const ForgotPasswordForm: React.FC = () => {
         </h2>
 
         {error && (
-          <div className={styles.forgotPasswordError}>
+          <div className={styles.notification} data-type="error">
             {error}
           </div>
         )}

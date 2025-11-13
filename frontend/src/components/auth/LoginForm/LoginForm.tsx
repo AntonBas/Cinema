@@ -47,7 +47,7 @@ export const LoginForm: React.FC = () => {
 
         <form className={styles.loginForm} onSubmit={handleSubmit}>
           {error && (
-            <div className={styles.errorMessage}>
+            <div className={styles.notification} data-type="error">
               {getErrorMessage(error)}
             </div>
           )}

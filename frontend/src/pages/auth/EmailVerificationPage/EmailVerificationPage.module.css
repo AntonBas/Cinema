@@ -3,28 +3,28 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  background: linear-gradient(135deg, #0c0c0c, #1a1a1a);
+  background-color: #12161f;
   padding: 2rem;
 }
 
 .verificationCard {
   background: #1e232e;
-  border-radius: 16px;
+  border-radius: 12px;
   padding: 3rem;
   text-align: center;
   max-width: 500px;
   width: 100%;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-  border: 2px solid transparent;
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   animation: slideUp 0.5s ease;
 }
 
 .verificationCard.success {
-  border-color: #4CAF50;
+  border-color: rgba(72, 187, 120, 0.3);
 }
 
 .verificationCard.error {
-  border-color: #ff4757;
+  border-color: rgba(255, 71, 87, 0.3);
 }
 
 .icon {
@@ -95,5 +95,9 @@
 
   .verificationCard h2 {
     font-size: 1.5rem;
+  }
+
+  .icon {
+    font-size: 3rem;
   }
 }

@@ -81,8 +81,8 @@ export const RegisterForm: React.FC = () => {
       errors.passwordConfirm = 'Passwords do not match';
     }
 
-    if (formData.password.length < 6) {
-      errors.password = 'Password must be at least 6 characters';
+    if (formData.password.length < 8) {
+      errors.password = 'Password must be at least 8 characters';
     }
 
     setFormErrors(errors);
@@ -99,8 +99,7 @@ export const RegisterForm: React.FC = () => {
     try {
       await register(formData);
       setShowSuccessModal(true);
-    } catch (err) {
-    }
+    } catch (err) { }
   };
 
   const handleModalClose = () => {
@@ -113,7 +112,11 @@ export const RegisterForm: React.FC = () => {
       <div className={styles.registrationContainer}>
         <h1 className={styles.registrationTitle}>Registration</h1>
         <form className={styles.registrationForm} onSubmit={handleSubmit}>
-          {error && <div className={styles.errorMessage}>{error}</div>}
+          {error && (
+            <div className={styles.notification} data-type="error">
+              {error}
+            </div>
+          )}
 
           <div className={styles.registrationTop}>
             <h2 className={styles.registrationText}>Personal Information</h2>

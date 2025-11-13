@@ -6,6 +6,7 @@
     padding: 20px;
     box-sizing: border-box;
     min-height: calc(100vh - 70px - 250px);
+    background-color: #12161f;
 }
 
 @media (max-width: 768px) {

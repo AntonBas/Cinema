@@ -23,8 +23,6 @@ export const EmailVerificationPage: React.FC = () => {
     const verifyEmail = async () => {
       hasVerified.current = true;
 
-      console.log('Verifying token:', verificationToken);
-
       try {
         const response = await authApi.verifyEmail(verificationToken);
         setMessage(response.message || 'Email verified successfully!');
@@ -34,7 +32,6 @@ export const EmailVerificationPage: React.FC = () => {
           navigate('/login');
         }, 5000);
       } catch (error: any) {
-        console.error('Verification error:', error);
         const errorMessage = error.response?.data?.message ||
           error.response?.data ||
           'Email verification failed';
