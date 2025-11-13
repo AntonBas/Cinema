@@ -1,15 +1,19 @@
 import React from 'react';
 import styles from './Button.module.css';
+import clsx from 'clsx';
+
+export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'error';
+export type ButtonSize = 'small' | 'medium' | 'large';
 
 export interface ButtonProps {
     children: React.ReactNode;
-    variant?: 'primary' | 'secondary' | 'danger';
-    size?: 'small' | 'medium' | 'large';
-    disabled?: boolean;
-    loading?: boolean;
-    onClick?: () => void;
+    variant?: ButtonVariant;
+    size?: ButtonSize;
     type?: 'button' | 'submit' | 'reset';
-    icon?: string;
+    loading?: boolean;
+    disabled?: boolean;
+    onClick?: () => void;
+    className?: string;
     style?: React.CSSProperties;
 }
 
@@ -17,31 +21,31 @@ export const Button: React.FC<ButtonProps> = ({
     children,
     variant = 'primary',
     size = 'medium',
-    disabled = false,
-    loading = false,
-    onClick,
     type = 'button',
-    icon,
+    loading = false,
+    disabled = false,
+    onClick,
+    className = '',
     style
 }) => {
-    const buttonClasses = [
+    const buttonClass = clsx(
         styles.button,
         styles[variant],
         styles[size],
-        disabled && styles.disabled,
-        loading && styles.loading
-    ].filter(Boolean).join(' ');
+        loading && styles.loading,
+        className
+    );
 
     return (
         <button
             type={type}
-            className={buttonClasses}
+            className={buttonClass}
             disabled={disabled || loading}
             onClick={onClick}
             style={style}
         >
-            {icon && <span className={styles.icon}>{icon}</span>}
-            {loading ? 'Loading...' : children}
+            {loading && <span className={styles.spinner}>⏳</span>}
+            {children}
         </button>
     );
 };

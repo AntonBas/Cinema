@@ -86,3 +86,14 @@
 .button:active:not(.disabled) {
     transform: translateY(0);
 }
+
+.error {
+    background: rgba(255, 71, 87, 0.15);
+    color: #ff6b6b;
+    border: 1px solid rgba(255, 71, 87, 0.3);
+}
+
+.error:hover:not(:disabled) {
+    background: rgba(255, 71, 87, 0.25);
+    border-color: rgba(255, 71, 87, 0.5);
+}
