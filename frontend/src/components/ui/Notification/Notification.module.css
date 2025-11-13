@@ -29,7 +29,8 @@
   transform: none !important;
   width: 100%;
   margin-bottom: 1rem;
-  border-left: 4px solid;
+  border: 1px solid;
+  max-width: none;
 }
 
 .notification.static.show {
@@ -95,27 +96,27 @@
 }
 
 .success {
-  border-left-color: #48bb78;
+  border-color: rgba(72, 187, 120, 0.3);
   color: #48bb78;
-  background: linear-gradient(135deg, rgba(72, 187, 120, 0.15) 0%, rgba(72, 187, 120, 0.1) 100%);
+  background: rgba(72, 187, 120, 0.1);
 }
 
 .error {
-  border-left-color: #ff6b6b;
+  border-color: rgba(255, 107, 107, 0.3);
   color: #ff6b6b;
-  background: linear-gradient(135deg, rgba(255, 107, 107, 0.15) 0%, rgba(255, 107, 107, 0.1) 100%);
+  background: rgba(255, 107, 107, 0.1);
 }
 
 .warning {
-  border-left-color: #ed8936;
+  border-color: rgba(237, 137, 54, 0.3);
   color: #ed8936;
-  background: linear-gradient(135deg, rgba(237, 137, 54, 0.15) 0%, rgba(237, 137, 54, 0.1) 100%);
+  background: rgba(237, 137, 54, 0.1);
 }
 
 .info {
-  border-left-color: #3b82f6;
+  border-color: rgba(59, 130, 246, 0.3);
   color: #3b82f6;
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(59, 130, 246, 0.1) 100%);
+  background: rgba(59, 130, 246, 0.1);
 }
 
 .notification.static .progress {
