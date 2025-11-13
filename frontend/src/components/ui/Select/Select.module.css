@@ -1,0 +1,121 @@
+.selectContainer {
+    position: relative;
+    width: 100%;
+}
+
+.selectTrigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: #1e232e;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    color: #ffffff;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    user-select: none;
+}
+
+.selectTrigger:hover:not(.disabled) {
+    border-color: rgba(253, 95, 0, 0.5);
+}
+
+.selectTrigger:focus {
+    outline: none;
+    border-color: #fd5f00;
+    box-shadow: 0 0 0 2px rgba(253, 95, 0, 0.2);
+}
+
+.selectTrigger.open {
+    border-color: #fd5f00;
+}
+
+.placeholder {
+    color: #a0a8c0;
+}
+
+.selectedValue {
+    color: #ffffff;
+}
+
+.arrow {
+    color: #a0a8c0;
+    transition: transform 0.3s ease;
+    font-size: 1.1rem;
+}
+
+.selectTrigger.open .arrow {
+    transform: rotate(180deg);
+    color: #fd5f00;
+}
+
+.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.disabled .selectTrigger {
+    cursor: not-allowed;
+}
+
+.dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #1e232e;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    margin-top: 4px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+.option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    color: #ffffff;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.option:last-child {
+    border-bottom: none;
+}
+
+.option:hover:not(.disabledOption) {
+    background: rgba(253, 95, 0, 0.1);
+    color: #fd5f00;
+}
+
+.option.selected {
+    background: rgba(253, 95, 0, 0.15);
+    color: #fd5f00;
+}
+
+.disabledOption {
+    opacity: 0.5;
+    cursor: not-allowed;
+    color: #a0a8c0;
+}
+
+.checkmark {
+    color: #fd5f00;
+    font-weight: bold;
+}
+
+@media (max-width: 768px) {
+    .selectTrigger {
+        padding: 10px 14px;
+    }
+
+    .option {
+        padding: 10px 14px;
+    }
+}

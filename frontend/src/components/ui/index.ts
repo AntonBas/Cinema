@@ -1,12 +1,11 @@
-export { Button } from './Button';
-export { DeleteConfirmModal } from './DeleteConfirmModal';
-export { Input } from './Input';
-export { LoadingSpinner } from './LoadingSpinner';
-export { Modal } from './Modal';
-export { Notification } from './Notification';
-export { Pagination } from './Pagination';
-export { Tooltip } from './Tooltip';
-
-export type { ButtonProps } from './Button';
-export type { InputProps } from './Input';
-export type { ModalProps } from './Modal'; 
+export * from './Badge';
+export * from './Button';
+export * from './DeleteConfirmModal';
+export * from './Input';
+export * from './LoadingSpinner';
+export * from './Modal';
+export * from './Notification';
+export * from './Pagination';
+export * from './SearchInput';
+export * from './Select';
+export * from './Tooltip';
