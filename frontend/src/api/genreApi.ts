@@ -11,23 +11,35 @@ const getAuthHeaders = () => {
   };
 };
 
-export const genreApi = {
+const handleResponse = async (response: Response) => {
+  if (!response.ok) {
+    let errorMessage = `Request failed with status ${response.status}`;
 
+    try {
+      const errorData = await response.json();
+      errorMessage = errorData.message || errorMessage;
+    } catch {
+    }
+
+    throw new Error(errorMessage);
+  }
+
+  return response.json();
+};
+
+export const genreApi = {
   getAll: async (): Promise<GenreDto[]> => {
     const response = await fetch(`${API_URL}/all`, {
       headers: getAuthHeaders(),
     });
-    if (!response.ok) throw new Error('Failed to fetch all genres');
-    return response.json();
+    return handleResponse(response);
   },
-
 
   getById: async (id: number): Promise<GenreDto> => {
     const response = await fetch(`${API_URL}/${id}`, {
       headers: getAuthHeaders(),
     });
-    if (!response.ok) throw new Error('Failed to fetch genre');
-    return response.json();
+    return handleResponse(response);
   },
 
   create: async (genreData: GenreRequest): Promise<GenreDto> => {
@@ -36,8 +48,7 @@ export const genreApi = {
       headers: getAuthHeaders(),
       body: JSON.stringify(genreData),
     });
-    if (!response.ok) throw new Error('Failed to create genre');
-    return response.json();
+    return handleResponse(response);
   },
 
   update: async (id: number, genreData: GenreRequest): Promise<GenreDto> => {
@@ -46,8 +57,7 @@ export const genreApi = {
       headers: getAuthHeaders(),
       body: JSON.stringify(genreData),
     });
-    if (!response.ok) throw new Error('Failed to update genre');
-    return response.json();
+    return handleResponse(response);
   },
 
   delete: async (id: number): Promise<void> => {
@@ -55,22 +65,32 @@ export const genreApi = {
       method: 'DELETE',
       headers: getAuthHeaders(),
     });
-    if (!response.ok) throw new Error('Failed to delete genre');
+
+    if (!response.ok) {
+      let errorMessage = `Request failed with status ${response.status}`;
+
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.message || errorMessage;
+      } catch {
+      }
+
+      throw new Error(errorMessage);
+    }
   },
 
   search: async (params: SearchParams): Promise<PageResponse<GenreDto>> => {
-    const { query, page = 0, size = 10 } = params;
+    const { query, page, size = 12 } = params;
 
     const searchParams = new URLSearchParams();
     if (query) searchParams.append('query', query);
-    searchParams.append('page', page.toString());
+    searchParams.append('page', page?.toString() ?? '0');
     searchParams.append('size', size.toString());
 
     const response = await fetch(`${API_URL}?${searchParams}`, {
       headers: getAuthHeaders(),
     });
 
-    if (!response.ok) throw new Error('Failed to search genres');
-    return response.json();
+    return handleResponse(response);
   }
 };

@@ -17,7 +17,8 @@ export const useGenreSearch = () => {
             setGenres(response.content);
             setPagination(response);
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to search genres');
+            const errorMessage = err instanceof Error ? err.message : 'Failed to search genres';
+            setError(errorMessage);
         } finally {
             setLoading(false);
         }

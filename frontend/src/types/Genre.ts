@@ -1,7 +1,6 @@
 export interface GenreDto {
-    id?: number;
+    id: number;
     name: string;
-    movies?: number[];
 }
 
 export interface GenreRequest {
