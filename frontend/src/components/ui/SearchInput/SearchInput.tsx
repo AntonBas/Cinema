@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import styles from './SearchInput.module.css';
 
 export interface SearchInputProps {
@@ -17,44 +17,49 @@ export const SearchInput: React.FC<SearchInputProps> = ({
     const [query, setQuery] = useState('');
     const [isSearching, setIsSearching] = useState(false);
 
+    const handleSearch = useCallback((searchQuery: string) => {
+        onSearch(searchQuery);
+        setIsSearching(false);
+    }, [onSearch]);
+
     useEffect(() => {
         if (query.trim() === '') {
-            onSearch('');
-            setIsSearching(false);
+            handleSearch('');
             return;
         }
 
         setIsSearching(true);
         const timeoutId = setTimeout(() => {
-            onSearch(query);
-            setIsSearching(false);
+            handleSearch(query);
         }, delay);
 
         return () => clearTimeout(timeoutId);
-    }, [query, delay, onSearch]);
+    }, [query, delay, handleSearch]);
 
     const handleClear = () => {
         setQuery('');
-        onSearch('');
+        handleSearch('');
     };
 
     return (
         <div className={`${styles.searchContainer} ${className}`}>
             <div className={styles.searchInputWrapper}>
-                <span className={styles.searchIcon}>🔍</span>
+                <span className={styles.searchIcon} aria-hidden="true">🔍</span>
                 <input
                     type="text"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     placeholder={placeholder}
                     className={styles.searchInput}
+                    aria-label="Search"
                 />
-                {isSearching && <div className={styles.spinner}>⏳</div>}
+                {isSearching && <div className={styles.spinner} aria-label="Searching">⏳</div>}
                 {query && !isSearching && (
                     <button
                         type="button"
                         onClick={handleClear}
                         className={styles.clearButton}
+                        aria-label="Clear search"
                     >
                         ×
                     </button>

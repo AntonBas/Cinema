@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import styles from './Modal.module.css';
 import clsx from 'clsx';
@@ -22,6 +22,18 @@ export const Modal: React.FC<ModalProps> = ({
     size = 'medium',
     className = ''
 }) => {
+    useEffect(() => {
+        if (isOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
+
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
+    }, [isOpen]);
+
     if (!isOpen) return null;
 
     const modalClass = clsx(
@@ -36,13 +48,30 @@ export const Modal: React.FC<ModalProps> = ({
         }
     };
 
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Escape') {
+            onClose();
+        }
+    };
+
     const modalContent = (
-        <div className={styles.overlay} onClick={handleOverlayClick}>
+        <div
+            className={styles.overlay}
+            onClick={handleOverlayClick}
+            onKeyDown={handleKeyDown}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={title ? "modal-title" : undefined}
+        >
             <div className={modalClass}>
                 {title && (
                     <div className={styles.header}>
-                        <h2 className={styles.title}>{title}</h2>
-                        <button className={styles.closeButton} onClick={onClose}>
+                        <h2 className={styles.title} id="modal-title">{title}</h2>
+                        <button
+                            className={styles.closeButton}
+                            onClick={onClose}
+                            aria-label="Close modal"
+                        >
                             ×
                         </button>
                     </div>

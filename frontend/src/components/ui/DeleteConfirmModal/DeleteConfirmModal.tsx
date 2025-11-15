@@ -33,10 +33,10 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
     const modalConfirmText = confirmText || `Delete ${itemType}`;
 
     return (
-        <div className={styles.modalOverlay}>
+        <div className={styles.modalOverlay} role="dialog" aria-labelledby="delete-modal-title" aria-modal="true">
             <div className={styles.modal}>
-                <div className={styles.icon}>🗑️</div>
-                <h3 className={styles.title}>{modalTitle}</h3>
+                <div className={styles.icon} aria-hidden="true">🗑️</div>
+                <h3 className={styles.title} id="delete-modal-title">{modalTitle}</h3>
                 <p className={styles.message}>{modalMessage}</p>
                 {itemName && (
                     <p className={styles.itemName}>"{itemName}"</p>
@@ -58,6 +58,7 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
                         onClick={onConfirm}
                         disabled={isDeleting}
                         type="button"
+                        aria-label={modalConfirmText}
                     >
                         {isDeleting ? 'Deleting...' : modalConfirmText}
                     </button>

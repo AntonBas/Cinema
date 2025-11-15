@@ -1,5 +1,6 @@
 import React from 'react';
 import styles from './Badge.module.css';
+import clsx from 'clsx';
 
 export type BadgeVariant =
     | 'primary'
@@ -16,6 +17,7 @@ export interface BadgeProps {
     size?: 'small' | 'medium' | 'large';
     className?: string;
     onClick?: () => void;
+    title?: string;
 }
 
 export const Badge: React.FC<BadgeProps> = ({
@@ -23,10 +25,16 @@ export const Badge: React.FC<BadgeProps> = ({
     variant = 'primary',
     size = 'medium',
     className = '',
-    onClick
+    onClick,
+    title
 }) => {
-    const badgeClass = `${styles.badge} ${styles[variant]} ${styles[size]} ${onClick ? styles.clickable : ''
-        } ${className}`;
+    const badgeClass = clsx(
+        styles.badge,
+        styles[variant],
+        styles[size],
+        onClick && styles.clickable,
+        className
+    );
 
     if (onClick) {
         return (
@@ -34,6 +42,8 @@ export const Badge: React.FC<BadgeProps> = ({
                 className={badgeClass}
                 onClick={onClick}
                 type="button"
+                title={title}
+                aria-label={typeof children === 'string' ? children : 'Badge'}
             >
                 {children}
             </button>
@@ -41,7 +51,7 @@ export const Badge: React.FC<BadgeProps> = ({
     }
 
     return (
-        <span className={badgeClass}>
+        <span className={badgeClass} title={title}>
             {children}
         </span>
     );

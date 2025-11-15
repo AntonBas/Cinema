@@ -14,6 +14,7 @@ export interface SelectProps {
     placeholder?: string;
     disabled?: boolean;
     className?: string;
+    required?: boolean;
 }
 
 export const Select: React.FC<SelectProps> = ({

@@ -48,18 +48,6 @@
     transform: translateY(-2px);
 }
 
-.danger {
-    background: rgba(255, 71, 87, 0.1);
-    color: #ff4757;
-    border: 1px solid #ff4757;
-}
-
-.danger:hover:not(.disabled) {
-    background: #ff4757;
-    color: white;
-    transform: translateY(-2px);
-}
-
 .error {
     background: rgba(255, 71, 87, 0.15);
     color: #ff6b6b;

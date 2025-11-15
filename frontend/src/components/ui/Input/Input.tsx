@@ -8,6 +8,7 @@ export interface InputProps {
     onChange: (value: string) => void;
     placeholder?: string;
     disabled?: boolean;
+    onBlur?: () => void;
     error?: string;
     required?: boolean;
     maxLength?: number;
