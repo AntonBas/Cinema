@@ -1,5 +1,6 @@
 .searchContainer {
     width: 100%;
+    max-width: 400px;
 }
 
 .searchInputWrapper {
@@ -68,6 +69,10 @@
 }
 
 @media (max-width: 768px) {
+    .searchContainer {
+        max-width: none;
+    }
+
     .searchInput {
         padding: 10px 36px 10px 36px;
         font-size: 0.9rem;
