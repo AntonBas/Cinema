@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import styles from './CreateHallModal.module.css';
+import { Modal } from '@/components/ui/Modal';
+import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
 
 interface CreateHallModalProps {
     onClose: () => void;
@@ -25,49 +27,52 @@ export const CreateHallModal: React.FC<CreateHallModalProps> = ({
     };
 
     return (
-        <div className={styles.overlay} onClick={onClose}>
-            <div className={styles.modal} onClick={e => e.stopPropagation()}>
-                <div className={styles.header}>
-                    <h2>Create New Hall</h2>
-                    <button className={styles.closeButton} onClick={onClose}>×</button>
+        <Modal isOpen={true} onClose={onClose} title="Create New Hall">
+            <form onSubmit={handleSubmit}>
+                <div style={{ marginBottom: '1.5rem' }}>
+                    <label htmlFor="hallName" style={{
+                        display: 'block',
+                        color: '#ffffff',
+                        fontWeight: 600,
+                        marginBottom: '0.5rem'
+                    }}>
+                        Hall Name
+                    </label>
+                    <Input
+                        type="text"
+                        value={name}
+                        onChange={setName}
+                        placeholder="Enter hall name"
+                        required={true}
+                        maxLength={25}
+                        disabled={loading}
+                    />
                 </div>
 
-                <form onSubmit={handleSubmit} className={styles.form}>
-                    <div className={styles.field}>
-                        <label htmlFor="hallName" className={styles.label}>Hall Name</label>
-                        <input
-                            id="hallName"
-                            type="text"
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                            placeholder="Enter hall name"
-                            required
-                            minLength={2}
-                            maxLength={25}
-                            className={styles.input}
-                            disabled={loading}
-                        />
-                    </div>
-
-                    <div className={styles.actions}>
-                        <button
-                            type="button"
-                            className={styles.cancelButton}
-                            onClick={onClose}
-                            disabled={loading}
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            type="submit"
-                            className={styles.createButton}
-                            disabled={!name.trim() || loading}
-                        >
-                            {loading ? 'Creating...' : 'Create Hall'}
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
+                <div style={{
+                    display: 'flex',
+                    gap: '1rem',
+                    justifyContent: 'flex-end',
+                    marginTop: '2rem',
+                    paddingTop: '1.5rem',
+                    borderTop: '1px solid #3a4051'
+                }}>
+                    <Button
+                        variant="cancel"
+                        onClick={onClose}
+                        disabled={loading}
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        type="submit"
+                        variant="primary"
+                        disabled={!name.trim() || loading}
+                    >
+                        {loading ? 'Creating...' : 'Create Hall'}
+                    </Button>
+                </div>
+            </form>
+        </Modal>
     );
 };

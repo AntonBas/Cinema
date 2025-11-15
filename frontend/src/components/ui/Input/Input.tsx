@@ -12,6 +12,8 @@ export interface InputProps {
     error?: string;
     required?: boolean;
     maxLength?: number;
+    min?: number;
+    max?: number;
     className?: string;
 }
 
@@ -24,6 +26,8 @@ export const Input: React.FC<InputProps> = ({
     error,
     required = false,
     maxLength,
+    min,
+    max,
     className = ''
 }) => {
     const inputClass = clsx(
@@ -43,6 +47,8 @@ export const Input: React.FC<InputProps> = ({
                 disabled={disabled}
                 required={required}
                 maxLength={maxLength}
+                min={min}
+                max={max}
                 className={inputClass}
             />
             {error && <div className={styles.errorMessage}>{error}</div>}

@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import type { CinemaHallDto, CinemaHallRequest } from '@/types';
+import type { CinemaHallResponse, CinemaHallRequest } from '@/types';
 import { useHalls, useCinemaHallMutation } from '@/hooks/features/cinemaHalls';
 import { useNotification } from '@/hooks/common/useNotification';
-import { DeleteConfirmModal } from '@/components/ui/DeleteConfirmModal';
-import { Notification } from '@/components/ui/Notification';
+import { DeleteConfirmModal, Notification, Button } from '@/components/ui';
 import { HallsTable } from './HallsTable/HallsTable';
 import { CreateHallModal } from './CreateHallModal/CreateHallModal';
 import { EditHallModal } from './EditHallModal/EditHallModal';
@@ -22,11 +21,11 @@ export const SectionHalls: React.FC = () => {
 
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
-    const [selectedHall, setSelectedHall] = useState<CinemaHallDto | null>(null);
+    const [selectedHall, setSelectedHall] = useState<CinemaHallResponse | null>(null);
     const [showLayoutModal, setShowLayoutModal] = useState(false);
     const [deleteModal, setDeleteModal] = useState<{
         isOpen: boolean;
-        hall: CinemaHallDto | null;
+        hall: CinemaHallResponse | null;
     }>({
         isOpen: false,
         hall: null
@@ -81,19 +80,19 @@ export const SectionHalls: React.FC = () => {
         }
     };
 
-    const confirmDelete = (hall: CinemaHallDto) => {
+    const confirmDelete = (hall: CinemaHallResponse) => {
         setDeleteModal({
             isOpen: true,
             hall
         });
     };
 
-    const handleEdit = (hall: CinemaHallDto) => {
+    const handleEdit = (hall: CinemaHallResponse) => {
         setSelectedHall(hall);
         setShowEditModal(true);
     };
 
-    const handleShowLayout = (hall: CinemaHallDto) => {
+    const handleShowLayout = (hall: CinemaHallResponse) => {
         setSelectedHall(hall);
         setShowLayoutModal(true);
     };
@@ -123,13 +122,13 @@ export const SectionHalls: React.FC = () => {
 
             <div className={styles.header}>
                 <h1>Cinema Halls Management</h1>
-                <button
-                    className={styles.createButton}
+                <Button
+                    variant="primary"
                     onClick={() => setShowCreateModal(true)}
                     disabled={mutationLoading}
                 >
-                    {mutationLoading ? 'Creating...' : '+ Create New Hall'}
-                </button>
+                    {mutationLoading ? 'Creating...' : 'Add New Hall'}
+                </Button>
             </div>
 
             <HallsTable

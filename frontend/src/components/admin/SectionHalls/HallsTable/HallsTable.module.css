@@ -74,40 +74,9 @@
 }
 
 .layoutButton,
+.editButton,
 .deleteButton {
-    padding: 0.75rem 1.5rem;
-    border: none;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    font-size: 0.9rem;
-    position: relative;
-    overflow: hidden;
-}
-
-.layoutButton {
-    background: linear-gradient(135deg, #3498db, #2980b9);
-    color: white;
-    box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
-}
-
-.layoutButton:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(52, 152, 219, 0.4);
-    background: linear-gradient(135deg, #3da8f5, #3498db);
-}
-
-.deleteButton {
-    background: linear-gradient(135deg, #e74c3c, #c0392b);
-    color: white;
-    box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
-}
-
-.deleteButton:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(231, 76, 60, 0.4);
-    background: linear-gradient(135deg, #ff6b6b, #e74c3c);
+    min-width: auto;
 }
 
 .empty {
@@ -171,6 +140,7 @@
     }
 
     .layoutButton,
+    .editButton,
     .deleteButton {
         padding: 0.6rem 1.2rem;
         font-size: 0.85rem;

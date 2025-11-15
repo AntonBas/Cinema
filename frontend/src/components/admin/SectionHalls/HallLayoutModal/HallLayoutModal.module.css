@@ -13,7 +13,7 @@
 }
 
 .modal {
-    background: linear-gradient(135deg, #1a1f2d 0%, #2a3041 50%, #1a1f2d 100%);
+    background: #1a1f2d;
     border-radius: 20px;
     border: 1px solid #3a4051;
     width: 100%;
@@ -24,24 +24,13 @@
     position: relative;
 }
 
-.modal::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, #fd5f00, #ff9d00, #fd5f00);
-    border-radius: 20px 20px 0 0;
-}
-
 .modalHeader {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 1.5rem 2rem;
     border-bottom: 1px solid #3a4051;
-    background: linear-gradient(135deg, #1a1f2d 0%, #252b3d 100%);
+    background: #1a1f2d;
     border-radius: 20px 20px 0 0;
     position: sticky;
     top: 0;
@@ -52,11 +41,7 @@
     color: #ffffff;
     margin: 0;
     font-size: 1.5rem;
-    font-weight: 700;
-    background: linear-gradient(135deg, #ffffff 0%, #fd5f00 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    font-weight: 600;
 }
 
 .closeButton {
@@ -95,7 +80,7 @@
 }
 
 .screen {
-    background: linear-gradient(135deg, #0a0e17 0%, #1a1f2d 50%, #0a0e17 100%);
+    background: #0a0e17;
     color: #fd5f00;
     padding: 2rem 4rem;
     margin: 0 auto 1rem auto;
@@ -113,17 +98,6 @@
     text-shadow: 0 0 10px rgba(253, 95, 0, 0.5);
 }
 
-.screen::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(45deg, transparent 30%, rgba(253, 95, 0, 0.1) 50%, transparent 70%);
-    animation: screenGlow 4s ease-in-out infinite;
-}
-
 .screenReflection {
     height: 20px;
     background: linear-gradient(180deg, rgba(253, 95, 0, 0.2) 0%, transparent 100%);
@@ -134,7 +108,7 @@
 }
 
 .seatsLayout {
-    background: linear-gradient(135deg, rgba(42, 48, 65, 0.6) 0%, rgba(26, 31, 45, 0.8) 100%);
+    background: rgba(42, 48, 65, 0.6);
     border-radius: 20px;
     padding: 2rem 1rem;
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -171,7 +145,7 @@
 .rowLetter {
     width: 32px;
     height: 32px;
-    background: linear-gradient(135deg, #fd5f00, #ff9d00);
+    background: #fd5f00;
     color: white;
     border-radius: 50%;
     display: flex;
@@ -215,21 +189,6 @@
     border: 2px solid transparent;
 }
 
-.seat::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-    transition: left 0.6s ease;
-}
-
-.seat:hover::before {
-    left: 100%;
-}
-
 .seat:hover {
     transform: translateY(-5px) scale(1.1);
     box-shadow:
@@ -258,19 +217,8 @@
     font-weight: 700;
 }
 
-.seat::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 8px;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.3) 0%, transparent 100%);
-    border-radius: 8px 8px 0 0;
-}
-
 .standard {
-    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    background: #3498db;
     border-color: rgba(52, 152, 219, 0.5);
 }
 
@@ -282,7 +230,7 @@
 }
 
 .vip {
-    background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+    background: #f39c12;
     border-color: rgba(243, 156, 18, 0.5);
 }
 
@@ -294,7 +242,7 @@
 }
 
 .disabled {
-    background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+    background: #95a5a6;
     border-color: rgba(149, 165, 166, 0.5);
     cursor: not-allowed;
 }
@@ -307,7 +255,7 @@
 }
 
 .couple {
-    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+    background: #e74c3c;
     border-color: rgba(231, 76, 60, 0.5);
 }
 
@@ -330,7 +278,6 @@
     border-radius: 15px;
     padding: 1.5rem 2rem;
     border: 1px solid rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
     width: 100%;
     max-width: 600px;
 }
@@ -384,7 +331,6 @@
     border: 1px solid rgba(253, 95, 0, 0.3);
     border-radius: 10px;
     padding: 1rem 1.5rem;
-    backdrop-filter: blur(10px);
 }
 
 .instructionIcon {
@@ -448,7 +394,6 @@
     background: rgba(255, 255, 255, 0.02);
     border-radius: 15px;
     border: 2px dashed rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
 }
 
 .emptyIcon {
@@ -491,99 +436,6 @@
     grid-template-columns: 1fr 1fr 1fr;
     gap: 1.5rem;
     margin-bottom: 2rem;
-}
-
-.formRow label {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    font-weight: 600;
-    color: #ffffff;
-    font-size: 0.9rem;
-}
-
-.formRow input,
-.formRow select {
-    padding: 1rem;
-    border: 1px solid #3a4051;
-    border-radius: 8px;
-    background: #2a3041;
-    color: #ffffff;
-    font-size: 1rem;
-    transition: all 0.3s ease;
-}
-
-.formRow input:focus,
-.formRow select:focus {
-    outline: none;
-    border-color: #fd5f00;
-    box-shadow: 0 0 0 3px rgba(253, 95, 0, 0.1);
-}
-
-.formActions {
-    display: flex;
-    gap: 1rem;
-    justify-content: center;
-}
-
-.cancelButton {
-    background: #6b7280;
-    color: white;
-    border: none;
-    padding: 1rem 2rem;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-size: 1rem;
-    font-weight: 600;
-    min-width: 120px;
-}
-
-.cancelButton:hover:not(:disabled) {
-    background: #5a6170;
-    transform: translateY(-1px);
-}
-
-.cancelButton:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
-
-.generateButton {
-    background: linear-gradient(135deg, #fd5f00, #e05500);
-    color: white;
-    border: none;
-    padding: 1rem 2rem;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-size: 1rem;
-    box-shadow: 0 4px 15px rgba(253, 95, 0, 0.3);
-}
-
-.generateButton:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(253, 95, 0, 0.4);
-    background: linear-gradient(135deg, #ff6b1a, #fd5f00);
-}
-
-.generateButton:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none;
-}
-
-@keyframes screenGlow {
-
-    0%,
-    100% {
-        opacity: 0.5;
-    }
-
-    50% {
-        opacity: 1;
-    }
 }
 
 @keyframes spin {
@@ -664,16 +516,6 @@
     .formRow {
         grid-template-columns: 1fr;
         gap: 1rem;
-    }
-
-    .formActions {
-        flex-direction: column;
-    }
-
-    .cancelButton,
-    .generateButton {
-        width: 100%;
-        min-width: auto;
     }
 }
 

@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import type { CinemaHallDto, CinemaHallRequest } from '@/types';
-import styles from './EditHallModal.module.css';
+import type { CinemaHallResponse, CinemaHallRequest } from '@/types';
+import { Modal, Input, Button } from '@/components/ui';
 
 interface EditHallModalProps {
-  hall: CinemaHallDto;
+  hall: CinemaHallResponse;
   onClose: () => void;
   onUpdate: (id: number, request: CinemaHallRequest) => Promise<void>;
   loading?: boolean;
@@ -28,54 +28,56 @@ export const EditHallModal: React.FC<EditHallModalProps> = ({
     try {
       await onUpdate(hall.id!, { name: name.trim() });
     } catch (err) {
-      // Error handled by parent
     }
   };
 
   return (
-    <div className={styles.overlay} onClick={onClose}>
-      <div className={styles.modal} onClick={e => e.stopPropagation()}>
-        <div className={styles.header}>
-          <h2>Edit Cinema Hall</h2>
-          <button className={styles.closeButton} onClick={onClose}>×</button>
+    <Modal isOpen={true} onClose={onClose} title="Edit Cinema Hall">
+      <form onSubmit={handleSubmit}>
+        <div style={{ marginBottom: '1.5rem' }}>
+          <label htmlFor="hallName" style={{
+            display: 'block',
+            color: '#ffffff',
+            fontWeight: 600,
+            marginBottom: '0.5rem'
+          }}>
+            Hall Name
+          </label>
+          <Input
+            type="text"
+            value={name}
+            onChange={setName}
+            placeholder="Enter hall name"
+            required={true}
+            maxLength={25}
+            disabled={loading}
+          />
         </div>
 
-        <form onSubmit={handleSubmit} className={styles.form}>
-          <div className={styles.field}>
-            <label htmlFor="hallName" className={styles.label}>Hall Name</label>
-            <input
-              id="hallName"
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Enter hall name"
-              required
-              minLength={2}
-              maxLength={25}
-              className={styles.input}
-              disabled={loading}
-            />
-          </div>
-
-          <div className={styles.actions}>
-            <button
-              type="button"
-              className={styles.cancelButton}
-              onClick={onClose}
-              disabled={loading}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className={styles.updateButton}
-              disabled={!name.trim() || name === hall.name || loading}
-            >
-              {loading ? 'Updating...' : 'Update Hall'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        <div style={{
+          display: 'flex',
+          gap: '1rem',
+          justifyContent: 'flex-end',
+          marginTop: '2rem',
+          paddingTop: '1.5rem',
+          borderTop: '1px solid #3a4051'
+        }}>
+          <Button
+            variant="cancel"
+            onClick={onClose}
+            disabled={loading}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            variant="primary"
+            disabled={!name.trim() || name === hall.name || loading}
+          >
+            {loading ? 'Updating...' : 'Update Hall'}
+          </Button>
+        </div>
+      </form>
+    </Modal>
   );
 };

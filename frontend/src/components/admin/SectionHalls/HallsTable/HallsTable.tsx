@@ -1,12 +1,13 @@
 import React from 'react';
-import type { CinemaHallDto } from '@/types';
+import type { CinemaHallResponse } from '@/types';
+import { Button } from '@/components/ui';
 import styles from './HallsTable.module.css';
 
 interface HallsTableProps {
-    halls: CinemaHallDto[];
-    onDelete: (hall: CinemaHallDto) => void;
-    onShowLayout: (hall: CinemaHallDto) => void;
-    onEdit?: (hall: CinemaHallDto) => void;
+    halls: CinemaHallResponse[];
+    onDelete: (hall: CinemaHallResponse) => void;
+    onShowLayout: (hall: CinemaHallResponse) => void;
+    onEdit?: (hall: CinemaHallResponse) => void;
 }
 
 export const HallsTable: React.FC<HallsTableProps> = ({
@@ -37,29 +38,32 @@ export const HallsTable: React.FC<HallsTableProps> = ({
                     <div className={styles.name}>{hall.name}</div>
                     <div className={styles.capacity}>{hall.capacity} seats</div>
                     <div className={styles.actions}>
-                        <button
-                            className={styles.layoutButton}
+                        <Button
+                            variant="primary"
+                            size="small"
                             onClick={() => onShowLayout(hall)}
-                            title="View Layout"
+                            className={styles.layoutButton}
                         >
-                            🎭 Layout
-                        </button>
+                            Seat Layout
+                        </Button>
                         {onEdit && (
-                            <button
-                                className={styles.editButton}
+                            <Button
+                                variant="success"
+                                size="small"
                                 onClick={() => onEdit(hall)}
-                                title="Edit Hall"
+                                className={styles.editButton}
                             >
-                                ✏️ Edit
-                            </button>
+                                Edit
+                            </Button>
                         )}
-                        <button
-                            className={styles.deleteButton}
+                        <Button
+                            variant="error"
+                            size="small"
                             onClick={() => onDelete(hall)}
-                            title="Delete Hall"
+                            className={styles.deleteButton}
                         >
-                            🗑️ Delete
-                        </button>
+                            Delete
+                        </Button>
                     </div>
                 </div>
             ))}
