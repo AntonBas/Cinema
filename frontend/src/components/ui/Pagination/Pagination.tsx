@@ -8,7 +8,6 @@ export interface PaginationProps {
     totalPages: number;
     totalElements: number;
     pageSize: number;
-    onPageChange: (page: number) => void;
     onLoadMore?: () => void;
     variant?: PaginationVariant;
     loading?: boolean;
@@ -16,26 +15,40 @@ export interface PaginationProps {
     showInfo?: boolean;
 }
 
-export const Pagination: React.FC<PaginationProps> = ({
-    currentPage,
-    totalPages,
-    totalElements,
-    pageSize,
-    onPageChange,
-    onLoadMore,
-    variant = 'pages',
-    loading = false,
-    className = '',
-    showInfo = true
-}) => {
-    if (totalPages <= 1) return null;
+interface PagesPaginationProps extends Omit<PaginationProps, 'onLoadMore' | 'variant'> {
+    variant?: 'pages';
+    onPageChange: (page: number) => void;
+}
+
+interface LoadMorePaginationProps extends Omit<PaginationProps, 'onPageChange' | 'variant'> {
+    variant: 'load-more';
+    onLoadMore: () => void;
+}
+
+type CombinedPaginationProps = PagesPaginationProps | LoadMorePaginationProps;
+
+export const Pagination: React.FC<CombinedPaginationProps> = (props) => {
+    const {
+        currentPage,
+        totalPages,
+        totalElements,
+        pageSize,
+        variant = 'pages',
+        loading = false,
+        className = '',
+        showInfo = true
+    } = props;
+
+    if (totalPages <= 0 || totalElements === 0) return null;
 
     const startItem = currentPage * pageSize + 1;
     const endItem = Math.min((currentPage + 1) * pageSize, totalElements);
 
-    const getPageNumbers = () => {
-        const pages = [];
+    const getPageNumbers = (): number[] => {
+        const pages: number[] = [];
         const maxVisiblePages = 5;
+
+        if (totalPages <= 1) return pages;
 
         let startPage = Math.max(0, currentPage - Math.floor(maxVisiblePages / 2));
         let endPage = Math.min(totalPages - 1, startPage + maxVisiblePages - 1);
@@ -52,7 +65,8 @@ export const Pagination: React.FC<PaginationProps> = ({
     };
 
     if (variant === 'load-more') {
-        const hasMore = currentPage < totalPages - 1;
+        const { onLoadMore } = props as LoadMorePaginationProps;
+        const hasMore = currentPage < totalPages - 1 && totalPages > 1;
 
         if (!hasMore) return null;
 
@@ -80,6 +94,8 @@ export const Pagination: React.FC<PaginationProps> = ({
             </div>
         );
     }
+
+    const { onPageChange } = props as PagesPaginationProps;
 
     return (
         <div className={`${styles.pagination} ${className}`}>
