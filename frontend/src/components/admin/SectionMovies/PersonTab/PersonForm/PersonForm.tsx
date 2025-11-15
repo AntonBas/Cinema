@@ -133,20 +133,20 @@ export const PersonForm: React.FC<PersonFormProps> = ({
 
                 <div className={styles.formActions}>
                     <Button
+                        type="button"
+                        variant="cancel"
+                        onClick={onCancel}
+                        disabled={isLoading}
+                    >
+                        Cancel
+                    </Button>
+                    <Button
                         type="submit"
                         variant="primary"
                         loading={isLoading}
                         disabled={isLoading}
                     >
                         {person ? 'Update Person' : 'Create Person'}
-                    </Button>
-                    <Button
-                        type="button"
-                        variant="secondary"
-                        onClick={onCancel}
-                        disabled={isLoading}
-                    >
-                        Cancel
                     </Button>
                 </div>
             </form>

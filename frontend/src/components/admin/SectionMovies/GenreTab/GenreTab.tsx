@@ -254,20 +254,20 @@ export const GenreTab: React.FC = () => {
 
           <div className={styles.formActions}>
             <Button
+              type="button"
+              variant="cancel"
+              onClick={resetForm}
+              disabled={mutationLoading}
+            >
+              Cancel
+            </Button>
+            <Button
               type="submit"
               variant="primary"
               loading={mutationLoading}
               disabled={mutationLoading}
             >
               {editingGenre ? 'Update' : 'Create'} Genre
-            </Button>
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={resetForm}
-              disabled={mutationLoading}
-            >
-              Cancel
             </Button>
           </div>
         </form>
