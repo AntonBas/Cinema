@@ -95,4 +95,10 @@ public class GlobalExceptionHandler {
 		log.warn("Invalid current password: {}", ex.getMessage());
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("success", false, "message", ex.getMessage()));
 	}
+
+	@ExceptionHandler(PersonHasMoviesException.class)
+	public ResponseEntity<Map<String, Object>> handlePersonHasMovies(PersonHasMoviesException ex) {
+		log.warn("Cannot delete person: {}", ex.getMessage());
+		return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("success", false, "message", ex.getMessage()));
+	}
 }

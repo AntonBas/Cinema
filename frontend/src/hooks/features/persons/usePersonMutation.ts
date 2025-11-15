@@ -84,6 +84,9 @@ const getUserFriendlyError = (errorMessage: string): string => {
     if (errorMessage.includes('already exists')) {
         return errorMessage;
     }
+    if (errorMessage.includes('cannot be deleted') || errorMessage.includes('associated with') || errorMessage.includes('used in')) {
+        return 'This person cannot be deleted because they are associated with existing movies.';
+    }
     if (errorMessage.includes('Failed to create person')) {
         return 'Unable to create person. Please try again.';
     }

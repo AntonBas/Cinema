@@ -25,6 +25,18 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
 
 	List<Movie> findByReleaseDateAfter(LocalDate date);
 
+	boolean existsByActorsId(Long personId);
+
+	boolean existsByDirectorsId(Long personId);
+
+	boolean existsByScreenwritersId(Long personId);
+
+	List<Movie> findByActorsId(Long personId);
+
+	List<Movie> findByDirectorsId(Long personId);
+
+	List<Movie> findByScreenwritersId(Long personId);
+
 	@Query("SELECT m FROM Movie m JOIN m.genres g WHERE g.id = :genreId")
 	List<Movie> findByGenresContaining(@Param("genreId") Long genreId);
 }

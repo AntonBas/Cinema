@@ -1,6 +1,8 @@
 package ua.lviv.bas.cinema.service;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -11,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import ua.lviv.bas.cinema.domain.Movie;
 import ua.lviv.bas.cinema.domain.Person;
 import ua.lviv.bas.cinema.domain.enums.PersonRole;
 import ua.lviv.bas.cinema.dto.movie.request.PersonRequest;
@@ -18,8 +21,10 @@ import ua.lviv.bas.cinema.dto.movie.request.QuickCreatePersonRequest;
 import ua.lviv.bas.cinema.dto.movie.response.PersonResponse;
 import ua.lviv.bas.cinema.dto.shared.PageResponse;
 import ua.lviv.bas.cinema.exception.DuplicateEntityException;
+import ua.lviv.bas.cinema.exception.PersonHasMoviesException;
 import ua.lviv.bas.cinema.exception.PersonNotFoundException;
 import ua.lviv.bas.cinema.mapper.PersonMapper;
+import ua.lviv.bas.cinema.repository.MovieRepository;
 import ua.lviv.bas.cinema.repository.PersonRepository;
 
 @Slf4j
@@ -29,6 +34,7 @@ public class PersonService {
 
 	private final PersonRepository personRepository;
 	private final PersonMapper personMapper;
+	private final MovieRepository movieRepository;
 
 	@Transactional
 	public PersonResponse createPerson(PersonRequest request) {
@@ -64,10 +70,13 @@ public class PersonService {
 	@Transactional
 	public void deletePerson(Long id) {
 		log.info("Deleting person with id: {}", id);
-		if (!personRepository.existsById(id)) {
-			throw new PersonNotFoundException("Person not found with id: " + id);
-		}
-		personRepository.deleteById(id);
+
+		Person person = personRepository.findById(id)
+				.orElseThrow(() -> new PersonNotFoundException("Person not found with id: " + id));
+
+		checkPersonUsageInMovies(person);
+
+		personRepository.delete(person);
 		log.debug("Person deleted with ID: {}", id);
 	}
 
@@ -88,6 +97,33 @@ public class PersonService {
 		Person saved = personRepository.save(person);
 		log.debug("Person quick-created with ID: {}", saved.getId());
 		return personMapper.toDto(saved);
+	}
+
+	private void checkPersonUsageInMovies(Person person) {
+		List<String> usedInMovies = new ArrayList<>();
+
+		List<Movie> actorMovies = movieRepository.findByActorsId(person.getId());
+		if (!actorMovies.isEmpty()) {
+			usedInMovies
+					.add("actor in: " + actorMovies.stream().map(Movie::getTitle).collect(Collectors.joining(", ")));
+		}
+
+		List<Movie> directorMovies = movieRepository.findByDirectorsId(person.getId());
+		if (!directorMovies.isEmpty()) {
+			usedInMovies.add(
+					"director in: " + directorMovies.stream().map(Movie::getTitle).collect(Collectors.joining(", ")));
+		}
+
+		List<Movie> screenwriterMovies = movieRepository.findByScreenwritersId(person.getId());
+		if (!screenwriterMovies.isEmpty()) {
+			usedInMovies.add("screenwriter in: "
+					+ screenwriterMovies.stream().map(Movie::getTitle).collect(Collectors.joining(", ")));
+		}
+
+		if (!usedInMovies.isEmpty()) {
+			throw new PersonHasMoviesException(String.format("Cannot delete person '%s' because they are used as %s",
+					person.getName(), String.join("; ", usedInMovies)));
+		}
 	}
 
 	@Transactional(readOnly = true)
