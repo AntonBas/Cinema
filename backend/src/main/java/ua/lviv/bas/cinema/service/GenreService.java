@@ -14,6 +14,7 @@ import ua.lviv.bas.cinema.domain.Genre;
 import ua.lviv.bas.cinema.dto.movie.request.GenreRequest;
 import ua.lviv.bas.cinema.dto.movie.response.GenreResponse;
 import ua.lviv.bas.cinema.dto.shared.PageResponse;
+import ua.lviv.bas.cinema.exception.DuplicateEntityException;
 import ua.lviv.bas.cinema.exception.GenreNotFoundException;
 import ua.lviv.bas.cinema.mapper.GenreMapper;
 import ua.lviv.bas.cinema.repository.GenreRepository;
@@ -28,6 +29,13 @@ public class GenreService {
 
 	public GenreResponse createGenre(GenreRequest request) {
 		log.info("Creating genre: {}", request.getName());
+
+		String genreName = request.getName().trim();
+
+		if (genreRepository.existsByNameIgnoreCase(genreName)) {
+			throw new DuplicateEntityException("Genre with name '" + genreName + "' already exists");
+		}
+
 		Genre genre = genreMapper.toEntity(request);
 		Genre savedGenre = genreRepository.save(genre);
 		return genreMapper.toDto(savedGenre);
@@ -44,6 +52,12 @@ public class GenreService {
 
 		Genre existingGenre = genreRepository.findById(id)
 				.orElseThrow(() -> new GenreNotFoundException("Genre not found with id: " + id));
+
+		String genreName = request.getName().trim();
+
+		if (genreRepository.existsByNameIgnoreCaseAndIdNot(genreName, id)) {
+			throw new DuplicateEntityException("Genre with name '" + genreName + "' already exists");
+		}
 
 		genreMapper.updateGenreFromRequest(request, existingGenre);
 
