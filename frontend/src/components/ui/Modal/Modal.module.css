@@ -1,4 +1,4 @@
-.modalOverlay {
+.overlay {
     position: fixed;
     top: 0;
     left: 0;
@@ -13,7 +13,7 @@
     padding: 20px;
 }
 
-.modalContent {
+.modal {
     background: #1e232e;
     border-radius: 16px;
     position: relative;
@@ -41,10 +41,23 @@
     padding: 3rem;
 }
 
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #2d3444;
+}
+
+.title {
+    margin: 0;
+    color: #ffffff;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
 .closeButton {
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
     background: none;
     border: none;
     color: #a0a8c0;
@@ -62,6 +75,10 @@
 .closeButton:hover {
     color: #fd5f00;
     background: rgba(253, 95, 0, 0.1);
+}
+
+.content {
+    color: #ffffff;
 }
 
 @keyframes fadeIn {
@@ -87,7 +104,7 @@
 }
 
 @media (max-width: 768px) {
-    .modalOverlay {
+    .overlay {
         padding: 10px;
     }
 
