@@ -1,10 +1,10 @@
 import { useState, useCallback } from 'react';
 import { seatApi } from '@/api/seatApi';
-import type { SeatDto, SeatType } from '@/types';
+import type { SeatResponse, SeatType } from '@/types';
 
 export const useSeats = () => {
-    const [seats, setSeats] = useState<SeatDto[]>([]);
-    const [seat, setSeat] = useState<SeatDto | null>(null);
+    const [seats, setSeats] = useState<SeatResponse[]>([]);
+    const [seat, setSeat] = useState<SeatResponse | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 

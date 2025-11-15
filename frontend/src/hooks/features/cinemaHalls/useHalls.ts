@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { cinemaHallApi } from '@/api/cinemaHallApi';
-import type { CinemaHallDto } from '@/types';
+import type { CinemaHallResponse } from '@/types';
 
 export const useHalls = () => {
-    const [halls, setHalls] = useState<CinemaHallDto[]>([]);
+    const [halls, setHalls] = useState<CinemaHallResponse[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 

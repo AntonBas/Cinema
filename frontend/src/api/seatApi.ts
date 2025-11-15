@@ -1,4 +1,4 @@
-import type { SeatDto, SeatType } from '@/types';
+import type { SeatResponse, SeatType } from '@/types';
 
 const getAuthHeaders = () => {
     const token = localStorage.getItem('authToken');
@@ -9,7 +9,7 @@ const getAuthHeaders = () => {
 };
 
 export const seatApi = {
-    getSeatsByHall: async (hallId: number): Promise<SeatDto[]> => {
+    getSeatsByHall: async (hallId: number): Promise<SeatResponse[]> => {
         const response = await fetch(`/api/cinema-halls/${hallId}/seats`, {
             headers: getAuthHeaders(),
         });
@@ -17,7 +17,7 @@ export const seatApi = {
         return response.json();
     },
 
-    getSeatById: async (hallId: number, seatId: number): Promise<SeatDto> => {
+    getSeatById: async (hallId: number, seatId: number): Promise<SeatResponse> => {
         const response = await fetch(`/api/cinema-halls/${hallId}/seats/${seatId}`, {
             headers: getAuthHeaders(),
         });
@@ -25,7 +25,7 @@ export const seatApi = {
         return response.json();
     },
 
-    getSeatByPosition: async (hallId: number, row: number, number: number): Promise<SeatDto> => {
+    getSeatByPosition: async (hallId: number, row: number, number: number): Promise<SeatResponse> => {
         const response = await fetch(`/api/cinema-halls/${hallId}/seats/position?row=${row}&number=${number}`, {
             headers: getAuthHeaders(),
         });
@@ -33,7 +33,7 @@ export const seatApi = {
         return response.json();
     },
 
-    updateSeatType: async (hallId: number, seatId: number, seatType: SeatType): Promise<SeatDto> => {
+    updateSeatType: async (hallId: number, seatId: number, seatType: SeatType): Promise<SeatResponse> => {
         const response = await fetch(`/api/cinema-halls/${hallId}/seats/${seatId}/type?seatType=${seatType}`, {
             method: 'PUT',
             headers: getAuthHeaders(),
@@ -58,7 +58,7 @@ export const seatApi = {
         return response.json();
     },
 
-    getSeatsByType: async (hallId: number, seatType: SeatType): Promise<SeatDto[]> => {
+    getSeatsByType: async (hallId: number, seatType: SeatType): Promise<SeatResponse[]> => {
         const response = await fetch(`/api/cinema-halls/${hallId}/seats/by-type?seatType=${seatType}`, {
             headers: getAuthHeaders(),
         });

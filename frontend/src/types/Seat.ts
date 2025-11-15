@@ -13,7 +13,7 @@ export interface Seat {
     hall?: any;
 }
 
-export interface SeatDto {
+export interface SeatResponse {
     id: number;
     row: number;
     number: number;
@@ -26,8 +26,8 @@ export interface SeatLayoutRequest {
     defaultSeatType: SeatType;
 }
 
-export interface SeatRowDto {
+export interface SeatRowResponse {
     rowNumber: number;
     seatsCount: number;
-    seats: SeatDto[];
+    seats: SeatResponse[];
 }

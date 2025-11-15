@@ -6,7 +6,7 @@ import { movieApi } from '@/api/movieApi';
 import { genreApi } from '@/api/genreApi';
 import type { NotificationType } from '@/hooks/common/useNotification';
 import { toBackendFormat } from '@/utils/dateUtils';
-import { PersonSelect } from '@/components/common/PersonSelect/PersonSelect';
+import { PersonSelect } from '@/components/features/persons/PersonSelect';
 import { PersonRole } from '@/types/person';
 import { GenreSearchList } from './GenreSearchList';
 import styles from './MovieForm.module.css';

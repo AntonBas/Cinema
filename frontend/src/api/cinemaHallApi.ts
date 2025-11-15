@@ -1,8 +1,8 @@
 import type {
-    CinemaHallDto,
+    CinemaHallResponse,
     CinemaHallRequest,
-    CinemaHallWithSeatsDto,
-    HallLayoutDto,
+    CinemaHallWithSeatsResponse,
+    HallLayoutResponse,
     SeatLayoutRequest
 } from '@/types';
 
@@ -17,7 +17,7 @@ const getAuthHeaders = () => {
 };
 
 export const cinemaHallApi = {
-    createHall: async (request: CinemaHallRequest): Promise<CinemaHallDto> => {
+    createHall: async (request: CinemaHallRequest): Promise<CinemaHallResponse> => {
         const response = await fetch(API_URL, {
             method: 'POST',
             headers: getAuthHeaders(),
@@ -27,7 +27,7 @@ export const cinemaHallApi = {
         return response.json();
     },
 
-    getHallById: async (id: number): Promise<CinemaHallDto> => {
+    getHallById: async (id: number): Promise<CinemaHallResponse> => {
         const response = await fetch(`${API_URL}/${id}`, {
             headers: getAuthHeaders(),
         });
@@ -35,7 +35,7 @@ export const cinemaHallApi = {
         return response.json();
     },
 
-    updateHall: async (id: number, request: CinemaHallRequest): Promise<CinemaHallDto> => {
+    updateHall: async (id: number, request: CinemaHallRequest): Promise<CinemaHallResponse> => {
         const response = await fetch(`${API_URL}/${id}`, {
             method: 'PUT',
             headers: getAuthHeaders(),
@@ -53,7 +53,7 @@ export const cinemaHallApi = {
         if (!response.ok) throw new Error('Failed to delete cinema hall');
     },
 
-    getAllHalls: async (): Promise<CinemaHallDto[]> => {
+    getAllHalls: async (): Promise<CinemaHallResponse[]> => {
         const response = await fetch(API_URL, {
             headers: getAuthHeaders(),
         });
@@ -61,7 +61,7 @@ export const cinemaHallApi = {
         return response.json();
     },
 
-    generateSeats: async (id: number, request: SeatLayoutRequest): Promise<CinemaHallWithSeatsDto> => {
+    generateSeats: async (id: number, request: SeatLayoutRequest): Promise<CinemaHallWithSeatsResponse> => {
         const response = await fetch(`${API_URL}/${id}/seats`, {
             method: 'POST',
             headers: getAuthHeaders(),
@@ -71,7 +71,7 @@ export const cinemaHallApi = {
         return response.json();
     },
 
-    getHallWithSeats: async (id: number): Promise<CinemaHallWithSeatsDto> => {
+    getHallWithSeats: async (id: number): Promise<CinemaHallWithSeatsResponse> => {
         const response = await fetch(`${API_URL}/${id}/with-seats`, {
             headers: getAuthHeaders(),
         });
@@ -79,7 +79,7 @@ export const cinemaHallApi = {
         return response.json();
     },
 
-    getHallLayout: async (id: number): Promise<HallLayoutDto> => {
+    getHallLayout: async (id: number): Promise<HallLayoutResponse> => {
         const response = await fetch(`${API_URL}/${id}/layout`, {
             headers: getAuthHeaders(),
         });
@@ -87,7 +87,7 @@ export const cinemaHallApi = {
         return response.json();
     },
 
-    searchHalls: async (name?: string): Promise<CinemaHallDto[]> => {
+    searchHalls: async (name?: string): Promise<CinemaHallResponse[]> => {
         const url = name
             ? `${API_URL}/search?name=${encodeURIComponent(name)}`
             : `${API_URL}/search`;

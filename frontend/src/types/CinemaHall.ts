@@ -1,4 +1,4 @@
-import type { SeatDto, SeatRowDto } from './seat';
+import type { SeatResponse, SeatRowResponse } from './seat';
 
 export interface CinemaHall {
     id: number;
@@ -7,7 +7,7 @@ export interface CinemaHall {
     capacity: number;
 }
 
-export interface CinemaHallDto {
+export interface CinemaHallResponse {
     id: number;
     name: string;
     capacity: number;
@@ -17,18 +17,18 @@ export interface CinemaHallRequest {
     name: string;
 }
 
-export interface CinemaHallWithSeatsDto {
+export interface CinemaHallWithSeatsResponse {
     id: number;
     name: string;
     capacity: number;
-    seats: SeatDto[];
+    seats: SeatResponse[];
 }
 
-export interface HallLayoutDto {
+export interface HallLayoutResponse {
     hallId: number;
     hallName: string;
     totalRows: number;
     maxSeatsPerRow: number;
     totalSeats: number;
-    rows: SeatRowDto[];
+    rows: SeatRowResponse[];
 }

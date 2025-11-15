@@ -1,10 +1,10 @@
 import { useState, useCallback } from 'react';
 import { cinemaHallApi } from '@/api/cinemaHallApi';
-import type { CinemaHallWithSeatsDto, HallLayoutDto } from '@/types';
+import type { CinemaHallWithSeatsResponse, HallLayoutResponse } from '@/types';
 
 export const useCinemaHalls = () => {
-    const [hallWithSeats, setHallWithSeats] = useState<CinemaHallWithSeatsDto | null>(null);
-    const [hallLayout, setHallLayout] = useState<HallLayoutDto | null>(null);
+    const [hallWithSeats, setHallWithSeats] = useState<CinemaHallWithSeatsResponse | null>(null);
+    const [hallLayout, setHallLayout] = useState<HallLayoutResponse | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 

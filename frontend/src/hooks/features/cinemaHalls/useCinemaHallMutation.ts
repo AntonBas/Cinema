@@ -1,12 +1,12 @@
 import { useState, useCallback } from 'react';
 import { cinemaHallApi } from '@/api/cinemaHallApi';
-import type { CinemaHallDto, CinemaHallRequest, SeatLayoutRequest } from '@/types';
+import type { CinemaHallResponse, CinemaHallRequest, SeatLayoutRequest } from '@/types';
 
 export const useCinemaHallMutation = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const createHall = useCallback(async (request: CinemaHallRequest): Promise<CinemaHallDto> => {
+    const createHall = useCallback(async (request: CinemaHallRequest): Promise<CinemaHallResponse> => {
         setLoading(true);
         setError(null);
         try {
@@ -21,7 +21,7 @@ export const useCinemaHallMutation = () => {
         }
     }, []);
 
-    const updateHall = useCallback(async (id: number, request: CinemaHallRequest): Promise<CinemaHallDto> => {
+    const updateHall = useCallback(async (id: number, request: CinemaHallRequest): Promise<CinemaHallResponse> => {
         setLoading(true);
         setError(null);
         try {
