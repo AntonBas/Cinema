@@ -2,7 +2,7 @@ import React from 'react';
 import styles from './Button.module.css';
 import clsx from 'clsx';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'error' | 'success';
+export type ButtonVariant = 'primary' | 'secondary' | 'error' | 'success' | 'cancel';
 export type ButtonSize = 'small' | 'medium' | 'large';
 
 export interface ButtonProps {
