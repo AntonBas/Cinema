@@ -1,4 +1,4 @@
-import type { GenreDto, GenreRequest } from '@/types/genre';
+import type { GenreResponse, GenreRequest } from '@/types/genre';
 import type { PageResponse, SearchParams } from '@/types/pagination';
 
 const API_URL = 'http://localhost:8080/api/genres';
@@ -28,21 +28,21 @@ const handleResponse = async (response: Response) => {
 };
 
 export const genreApi = {
-  getAll: async (): Promise<GenreDto[]> => {
+  getAll: async (): Promise<GenreResponse[]> => {
     const response = await fetch(`${API_URL}/all`, {
       headers: getAuthHeaders(),
     });
     return handleResponse(response);
   },
 
-  getById: async (id: number): Promise<GenreDto> => {
+  getById: async (id: number): Promise<GenreResponse> => {
     const response = await fetch(`${API_URL}/${id}`, {
       headers: getAuthHeaders(),
     });
     return handleResponse(response);
   },
 
-  create: async (genreData: GenreRequest): Promise<GenreDto> => {
+  create: async (genreData: GenreRequest): Promise<GenreResponse> => {
     const response = await fetch(API_URL, {
       method: 'POST',
       headers: getAuthHeaders(),
@@ -51,7 +51,7 @@ export const genreApi = {
     return handleResponse(response);
   },
 
-  update: async (id: number, genreData: GenreRequest): Promise<GenreDto> => {
+  update: async (id: number, genreData: GenreRequest): Promise<GenreResponse> => {
     const response = await fetch(`${API_URL}/${id}`, {
       method: 'PUT',
       headers: getAuthHeaders(),
@@ -79,7 +79,7 @@ export const genreApi = {
     }
   },
 
-  search: async (params: SearchParams): Promise<PageResponse<GenreDto>> => {
+  search: async (params: SearchParams): Promise<PageResponse<GenreResponse>> => {
     const { query, page, size = 12 } = params;
 
     const searchParams = new URLSearchParams();

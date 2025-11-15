@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { genreApi } from '@/api/genreApi';
-import type { GenreDto, GenreRequest } from '@/types/genre';
+import type { GenreResponse, GenreRequest } from '@/types/genre';
 
 export const useGenreMutation = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const createGenre = async (genreData: GenreRequest): Promise<GenreDto> => {
+    const createGenre = async (genreData: GenreRequest): Promise<GenreResponse> => {
         setLoading(true);
         setError(null);
         try {
@@ -21,7 +21,7 @@ export const useGenreMutation = () => {
         }
     };
 
-    const updateGenre = async (id: number, genreData: GenreRequest): Promise<GenreDto> => {
+    const updateGenre = async (id: number, genreData: GenreRequest): Promise<GenreResponse> => {
         setLoading(true);
         setError(null);
         try {

@@ -1,11 +1,11 @@
 import { useState, useCallback } from 'react';
 import { genreApi } from '@/api/genreApi';
-import type { GenreDto } from '@/types/genre';
+import type { GenreResponse } from '@/types/genre';
 import type { PageResponse, SearchParams } from '@/types/pagination';
 
 export const useGenreSearch = () => {
-    const [genres, setGenres] = useState<GenreDto[]>([]);
-    const [pagination, setPagination] = useState<PageResponse<GenreDto> | null>(null);
+    const [genres, setGenres] = useState<GenreResponse[]>([]);
+    const [pagination, setPagination] = useState<PageResponse<GenreResponse> | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 

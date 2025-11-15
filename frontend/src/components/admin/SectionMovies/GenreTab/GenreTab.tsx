@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import type { GenreDto, GenreRequest } from '@/types/genre';
+import type { GenreResponse, GenreRequest } from '@/types/genre';
 import { useGenreSearch, useGenreMutation } from '@/hooks/features/genres';
 import { useNotification } from '@/hooks/common/useNotification';
 import { usePagination } from '@/hooks/common/usePagination';
@@ -17,8 +17,8 @@ import styles from './GenreTab.module.css';
 export const GenreTab: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [editingGenre, setEditingGenre] = useState<GenreDto | null>(null);
-  const [deletingGenre, setDeletingGenre] = useState<GenreDto | null>(null);
+  const [editingGenre, setEditingGenre] = useState<GenreResponse | null>(null);
+  const [deletingGenre, setDeletingGenre] = useState<GenreResponse | null>(null);
   const [formData, setFormData] = useState<GenreRequest>({ name: '' });
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -111,7 +111,7 @@ export const GenreTab: React.FC = () => {
     setFormData({ name: '' });
   };
 
-  const handleEdit = (genre: GenreDto) => {
+  const handleEdit = (genre: GenreResponse) => {
     setEditingGenre(genre);
     setFormData({ name: genre.name });
     setIsModalOpen(true);
