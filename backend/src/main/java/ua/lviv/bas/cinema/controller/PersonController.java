@@ -34,7 +34,7 @@ public class PersonController {
 
 	private final PersonService personService;
 	private static final String DEFAULT_PAGE = "0";
-	private static final String DEFAULT_SIZE = "10";
+	private static final String DEFAULT_SIZE = "12";
 	private static final int MAX_PAGE_SIZE = 50;
 
 	@GetMapping("/{id}")
@@ -53,7 +53,8 @@ public class PersonController {
 	}
 
 	@PutMapping("/{id}")
-	public ResponseEntity<PersonResponse> updatePerson(@PathVariable Long id, @RequestBody @Valid PersonRequest request) {
+	public ResponseEntity<PersonResponse> updatePerson(@PathVariable Long id,
+			@RequestBody @Valid PersonRequest request) {
 		log.info("PUT /api/persons/{} - Updating person", id);
 		PersonResponse updatedPerson = personService.updatePerson(id, request);
 		return ResponseEntity.ok(updatedPerson);
