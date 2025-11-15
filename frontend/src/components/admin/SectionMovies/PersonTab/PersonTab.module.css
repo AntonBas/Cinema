@@ -21,17 +21,6 @@
     font-weight: 600;
 }
 
-.addButton {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.buttonIcon {
-    font-size: 1.25rem;
-    font-weight: bold;
-}
-
 .searchSection {
     margin-bottom: 1.5rem;
 }

@@ -197,7 +197,6 @@ export const PersonTab: React.FC = () => {
           onClick={handleAddNew}
           className={styles.addButton}
         >
-          <span className={styles.buttonIcon}>+</span>
           Add Person
         </Button>
       </div>
