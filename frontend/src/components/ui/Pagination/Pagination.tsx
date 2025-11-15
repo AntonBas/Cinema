@@ -13,6 +13,7 @@ export interface PaginationProps {
     variant?: PaginationVariant;
     loading?: boolean;
     className?: string;
+    showInfo?: boolean;
 }
 
 export const Pagination: React.FC<PaginationProps> = ({
@@ -24,7 +25,8 @@ export const Pagination: React.FC<PaginationProps> = ({
     onLoadMore,
     variant = 'pages',
     loading = false,
-    className = ''
+    className = '',
+    showInfo = true
 }) => {
     if (totalPages <= 1) return null;
 
@@ -56,9 +58,11 @@ export const Pagination: React.FC<PaginationProps> = ({
 
         return (
             <div className={`${styles.pagination} ${className}`}>
-                <div className={styles.info}>
-                    Showing {endItem} of {totalElements} items
-                </div>
+                {showInfo && (
+                    <div className={styles.info}>
+                        Showing {endItem} of {totalElements} items
+                    </div>
+                )}
                 <button
                     className={styles.loadMoreButton}
                     onClick={onLoadMore}
@@ -79,9 +83,11 @@ export const Pagination: React.FC<PaginationProps> = ({
 
     return (
         <div className={`${styles.pagination} ${className}`}>
-            <div className={styles.info}>
-                Showing {startItem}-{endItem} of {totalElements} items
-            </div>
+            {showInfo && (
+                <div className={styles.info}>
+                    Showing {startItem}-{endItem} of {totalElements} items
+                </div>
+            )}
 
             <div className={styles.controls}>
                 <button
