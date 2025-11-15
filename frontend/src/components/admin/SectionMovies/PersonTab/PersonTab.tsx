@@ -1,12 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { PersonTabs } from './PersonTabs';
 import { PersonList } from './PersonList';
 import { PersonForm } from './PersonForm';
 import { DeleteConfirmModal } from '@/components/ui/DeleteConfirmModal';
-import { useNotification } from '@/hooks/common/useNotification';
 import { Notification } from '@/components/ui/Notification';
+import { SearchInput } from '@/components/ui/SearchInput';
+import { Button } from '@/components/ui/Button';
+import { Pagination } from '@/components/ui/Pagination';
+import { useNotification } from '@/hooks/common/useNotification';
 import { usePersonSearch, usePersonMutation } from '@/hooks/features/persons';
-import type { PersonDto, PersonRequest } from '@/types/person';
+import type { PersonResponse, PersonRequest } from '@/types/person';
 import { PersonRole } from '@/types/person';
 import styles from './PersonTab.module.css';
 
@@ -14,31 +17,47 @@ export const PersonTab: React.FC = () => {
   const [activeTab, setActiveTab] = useState<PersonRole | 'ALL'>('ALL');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [editingPerson, setEditingPerson] = useState<PersonDto | null>(null);
-  const [personToDelete, setPersonToDelete] = useState<PersonDto | null>(null);
+  const [editingPerson, setEditingPerson] = useState<PersonResponse | null>(null);
+  const [personToDelete, setPersonToDelete] = useState<PersonResponse | null>(null);
   const [currentPage, setCurrentPage] = useState(0);
-  const [hasMore, setHasMore] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [totalCounts, setTotalCounts] = useState({
     ALL: 0,
     [PersonRole.ACTOR]: 0,
     [PersonRole.DIRECTOR]: 0,
     [PersonRole.SCREENWRITER]: 0,
   });
+  const [allPersons, setAllPersons] = useState<PersonResponse[]>([]);
+  const [currentPagination, setCurrentPagination] = useState<any>(null);
 
-  const { persons, pagination, loading, error: searchError, searchPersons } = usePersonSearch();
+  const { persons, loading, error: searchError, searchPersons } = usePersonSearch();
   const { createPerson, updatePerson, deletePerson, loading: mutationLoading, error: mutationError } = usePersonMutation();
   const { notifications, showNotification, hideNotification } = useNotification();
 
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSearch(searchQuery), 300);
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
+  const loadPersons = useCallback(async (reset: boolean = false, pageOverride?: number) => {
+    const page = reset ? 0 : (pageOverride ?? currentPage);
+    const role = activeTab === 'ALL' ? undefined : activeTab;
+
+    const result = await searchPersons({ query: searchQuery, role, page, size: 12 });
+    setCurrentPage(page);
+
+    if (result) {
+      setCurrentPagination(result);
+      if (reset) {
+        setAllPersons(result.content);
+      }
+    }
+  }, [activeTab, searchQuery, currentPage, searchPersons]);
 
   useEffect(() => {
     loadPersons(true);
-  }, [activeTab, debouncedSearch]);
+  }, [activeTab, searchQuery]);
+
+  useEffect(() => {
+    if (persons.length > 0 && currentPage > 0) {
+      setAllPersons(prev => [...prev, ...persons]);
+    }
+  }, [persons, currentPage]);
 
   useEffect(() => {
     if (searchError) showNotification(searchError, 'error');
@@ -52,21 +71,8 @@ export const PersonTab: React.FC = () => {
     refreshAllCounts();
   }, []);
 
-  const loadPersons = async (reset: boolean = false, pageOverride?: number) => {
-    const page = reset ? 0 : (pageOverride ?? currentPage);
-    const role = activeTab === 'ALL' ? undefined : activeTab;
-
-    await searchPersons({ query: debouncedSearch, role, page, size: 10 });
-
-    if (pagination) {
-      setHasMore(!pagination.last);
-      setCurrentPage(page);
-    }
-  };
-
   const refreshAllCounts = async () => {
     const roles: (PersonRole | 'ALL')[] = ['ALL', PersonRole.ACTOR, PersonRole.DIRECTOR, PersonRole.SCREENWRITER];
-
     const newCounts = {
       ALL: 0,
       [PersonRole.ACTOR]: 0,
@@ -89,10 +95,9 @@ export const PersonTab: React.FC = () => {
     setTotalCounts(newCounts);
   };
 
-  const loadMore = () => {
-    if (!loading && hasMore) {
-      const nextPage = currentPage + 1;
-      loadPersons(false, nextPage);
+  const handleLoadMore = () => {
+    if (!loading && currentPagination && currentPage < currentPagination.totalPages - 1) {
+      loadPersons(false, currentPage + 1);
     }
   };
 
@@ -101,15 +106,10 @@ export const PersonTab: React.FC = () => {
     setCurrentPage(0);
   };
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
+  const handleSearch = useCallback((query: string) => {
+    setSearchQuery(query);
     setCurrentPage(0);
-  };
-
-  const clearSearch = () => {
-    setSearchQuery('');
-    setDebouncedSearch('');
-  };
+  }, []);
 
   const handleSubmit = async (data: PersonRequest) => {
     try {
@@ -126,12 +126,12 @@ export const PersonTab: React.FC = () => {
     } catch { }
   };
 
-  const handleEdit = (person: PersonDto) => {
+  const handleEdit = (person: PersonResponse) => {
     setEditingPerson(person);
     setIsModalOpen(true);
   };
 
-  const handleDeleteClick = (person: PersonDto) => {
+  const handleDeleteClick = (person: PersonResponse) => {
     setPersonToDelete(person);
     setIsDeleteModalOpen(true);
   };
@@ -165,18 +165,21 @@ export const PersonTab: React.FC = () => {
   };
 
   const getDisplayedCounts = () => {
-    if (debouncedSearch) {
+    if (searchQuery) {
+      const filtered = allPersons.filter(person =>
+        activeTab === 'ALL' || person.role === activeTab
+      );
       return {
-        ALL: persons.length,
-        [PersonRole.ACTOR]: persons.filter(p => p.role === PersonRole.ACTOR).length,
-        [PersonRole.DIRECTOR]: persons.filter(p => p.role === PersonRole.DIRECTOR).length,
-        [PersonRole.SCREENWRITER]: persons.filter(p => p.role === PersonRole.SCREENWRITER).length,
+        ALL: activeTab === 'ALL' ? filtered.length : allPersons.length,
+        [PersonRole.ACTOR]: allPersons.filter(p => p.role === PersonRole.ACTOR).length,
+        [PersonRole.DIRECTOR]: allPersons.filter(p => p.role === PersonRole.DIRECTOR).length,
+        [PersonRole.SCREENWRITER]: allPersons.filter(p => p.role === PersonRole.SCREENWRITER).length,
       };
     }
     return totalCounts;
   };
 
-  if (loading && persons.length === 0) {
+  if (loading && allPersons.length === 0) {
     return (
       <div className={styles.loading}>
         <div className={styles.loadingSpinner}></div>
@@ -189,60 +192,58 @@ export const PersonTab: React.FC = () => {
     <div className={styles.container}>
       <div className={styles.header}>
         <h2>People Management</h2>
-        <button className={styles.primaryButton} onClick={handleAddNew}>
+        <Button
+          variant="primary"
+          onClick={handleAddNew}
+          className={styles.addButton}
+        >
           <span className={styles.buttonIcon}>+</span>
           Add Person
-        </button>
+        </Button>
       </div>
 
-      <div className={styles.searchContainer}>
-        <div className={styles.searchWrapper}>
-          <input
-            type="text"
-            placeholder="Search people by name..."
-            value={searchQuery}
-            onChange={handleSearchChange}
-            className={styles.searchInput}
-          />
-          {loading && <div className={styles.searchSpinner}></div>}
-        </div>
-        {searchQuery && (
-          <button className={styles.clearSearch} onClick={clearSearch}>
-            Clear
-          </button>
-        )}
+      <div className={styles.searchSection}>
+        <SearchInput
+          onSearch={handleSearch}
+          placeholder="Search people by name..."
+          delay={300}
+          className={styles.searchInput}
+        />
       </div>
 
-      {pagination && (
+      {currentPagination && (
         <div className={styles.resultsInfo}>
-          Showing {persons.length} of {pagination.totalElements} people
-          {debouncedSearch && ` for "${debouncedSearch}"`}
+          Showing {allPersons.length} of {currentPagination.totalElements} people
+          {searchQuery && ` for "${searchQuery}"`}
         </div>
       )}
 
-      <PersonTabs activeTab={activeTab} onTabChange={handleTabChange} stats={getDisplayedCounts()} />
+      <PersonTabs
+        activeTab={activeTab}
+        onTabChange={handleTabChange}
+        stats={getDisplayedCounts()}
+      />
 
       <PersonList
-        persons={persons}
+        persons={allPersons}
         activeTab={activeTab}
         onEdit={handleEdit}
         onDelete={handleDeleteClick}
         onAddPerson={handleAddNew}
       />
 
-      {hasMore && (
-        <div className={styles.loadMoreContainer}>
-          <button className={styles.loadMoreButton} onClick={loadMore} disabled={loading}>
-            {loading ? (
-              <>
-                <div className={styles.loadingSpinnerSmall}></div>
-                Loading...
-              </>
-            ) : (
-              'Load More'
-            )}
-          </button>
-        </div>
+      {currentPagination && currentPagination.totalPages > 1 && currentPage < currentPagination.totalPages - 1 && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={currentPagination.totalPages}
+          totalElements={currentPagination.totalElements}
+          pageSize={12}
+          onLoadMore={handleLoadMore}
+          variant="load-more"
+          loading={loading}
+          showInfo={false}
+          className={styles.pagination}
+        />
       )}
 
       {isModalOpen && (

@@ -4,7 +4,7 @@ export enum PersonRole {
     SCREENWRITER = 'SCREENWRITER'
 }
 
-export interface PersonDto {
+export interface PersonResponse {
     id: number;
     name: string;
     role: PersonRole;
@@ -16,7 +16,7 @@ export interface PersonRequest {
     role: PersonRole;
 }
 
-export interface QuickCreatePersonDto {
+export interface QuickCreatePersonRequest {
     name: string;
     role: PersonRole;
 }

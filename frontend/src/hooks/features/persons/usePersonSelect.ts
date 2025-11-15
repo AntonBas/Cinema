@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { type PersonDto, PersonRole } from '@/types/person';
+import type { PersonResponse, PersonRole } from '@/types/person';
 import { personApi } from '@/api/personApi';
 import type { NotificationType } from '@/hooks/common/useNotification';
 
@@ -15,8 +15,8 @@ export const usePersonSelect = ({
     showNotification
 }: UsePersonSelectProps) => {
     const [searchQuery, setSearchQuery] = useState('');
-    const [options, setOptions] = useState<PersonDto[]>([]);
-    const [allSelectedPersons, setAllSelectedPersons] = useState<PersonDto[]>([]);
+    const [options, setOptions] = useState<PersonResponse[]>([]);
+    const [allSelectedPersons, setAllSelectedPersons] = useState<PersonResponse[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
@@ -98,7 +98,7 @@ export const usePersonSelect = ({
             setOptions([]);
             setIsOpen(false);
 
-            showNotification(`✅ ${newPerson.name} added and selected!`, 'success');
+            showNotification(`${newPerson.name} added and selected!`, 'success');
 
             return newPerson.id;
         } catch (error) {

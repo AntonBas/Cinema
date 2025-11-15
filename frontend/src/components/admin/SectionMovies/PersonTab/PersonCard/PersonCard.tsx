@@ -1,12 +1,13 @@
 import React from 'react';
-import type { PersonDto } from '@/types/person';
+import type { PersonResponse } from '@/types/person';
 import { PersonRole } from '@/types/person';
+import { Button, Badge } from '@/components/ui';
 import styles from './PersonCard.module.css';
 
 export interface PersonCardProps {
-    person: PersonDto;
-    onEdit: (person: PersonDto) => void;
-    onDelete: (person: PersonDto) => void;
+    person: PersonResponse;
+    onEdit: (person: PersonResponse) => void;
+    onDelete: (person: PersonResponse) => void;
 }
 
 export const PersonCard: React.FC<PersonCardProps> = ({
@@ -19,25 +20,25 @@ export const PersonCard: React.FC<PersonCardProps> = ({
             case PersonRole.ACTOR:
                 return {
                     icon: '🎭',
-                    color: '#4CAF50',
+                    variant: 'success' as const,
                     label: 'Actor'
                 };
             case PersonRole.DIRECTOR:
                 return {
                     icon: '🎬',
-                    color: '#2196F3',
+                    variant: 'primary' as const,
                     label: 'Director'
                 };
             case PersonRole.SCREENWRITER:
                 return {
                     icon: '✍️',
-                    color: '#FF9800',
+                    variant: 'warning' as const,
                     label: 'Screenwriter'
                 };
             default:
                 return {
                     icon: '👤',
-                    color: '#6b7280',
+                    variant: 'secondary' as const,
                     label: 'Person'
                 };
         }
@@ -51,7 +52,6 @@ export const PersonCard: React.FC<PersonCardProps> = ({
                 <div className={styles.header}>
                     <span
                         className={styles.roleIcon}
-                        style={{ color: roleConfig.color }}
                         aria-label={roleConfig.label}
                     >
                         {roleConfig.icon}
@@ -63,34 +63,30 @@ export const PersonCard: React.FC<PersonCardProps> = ({
                     </div>
                 </div>
                 <div className={styles.details}>
-                    <span
-                        className={styles.roleBadge}
-                        style={{
-                            backgroundColor: `${roleConfig.color}20`,
-                            color: roleConfig.color,
-                            border: `1px solid ${roleConfig.color}40`
-                        }}
+                    <Badge
+                        variant={roleConfig.variant}
+                        size="small"
                     >
                         {roleConfig.label}
-                    </span>
+                    </Badge>
                 </div>
                 <div className={styles.actions}>
-                    <button
-                        className={styles.editButton}
+                    <Button
+                        variant="success"
+                        size="small"
                         onClick={() => onEdit(person)}
-                        type="button"
-                        aria-label={`Edit ${person.name}`}
+                        className={styles.editButton}
                     >
                         Edit
-                    </button>
-                    <button
-                        className={styles.deleteButton}
+                    </Button>
+                    <Button
+                        variant="error"
+                        size="small"
                         onClick={() => onDelete(person)}
-                        type="button"
-                        aria-label={`Delete ${person.name}`}
+                        className={styles.deleteButton}
                     >
                         Delete
-                    </button>
+                    </Button>
                 </div>
             </div>
         </div>

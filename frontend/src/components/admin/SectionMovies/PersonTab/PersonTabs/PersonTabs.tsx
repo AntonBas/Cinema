@@ -1,5 +1,6 @@
 import React from 'react';
 import { PersonRole } from '@/types/person';
+import { Badge } from '@/components/ui';
 import styles from './PersonTabs.module.css';
 
 interface PersonTabsProps {
@@ -18,6 +19,7 @@ interface TabConfig {
     label: string;
     icon: string;
     count: number;
+    variant: 'primary' | 'secondary' | 'success' | 'warning' | 'error';
 }
 
 export const PersonTabs: React.FC<PersonTabsProps> = ({
@@ -31,24 +33,28 @@ export const PersonTabs: React.FC<PersonTabsProps> = ({
             label: 'All People',
             icon: '👥',
             count: stats.ALL,
+            variant: 'primary'
         },
         {
             id: PersonRole.ACTOR,
             label: 'Actors',
             icon: '🎭',
             count: stats[PersonRole.ACTOR],
+            variant: 'success'
         },
         {
             id: PersonRole.DIRECTOR,
             label: 'Directors',
             icon: '🎬',
             count: stats[PersonRole.DIRECTOR],
+            variant: 'primary'
         },
         {
             id: PersonRole.SCREENWRITER,
             label: 'Screenwriters',
             icon: '✍️',
             count: stats[PersonRole.SCREENWRITER],
+            variant: 'warning'
         },
     ];
 
@@ -69,9 +75,13 @@ export const PersonTabs: React.FC<PersonTabsProps> = ({
                         {tab.icon}
                     </span>
                     <span className={styles.tabLabel}>{tab.label}</span>
-                    <span className={styles.tabCount} aria-label={`${tab.count} items`}>
+                    <Badge
+                        variant={activeTab === tab.id ? "primary" : "secondary"}
+                        size="small"
+                        className={styles.tabBadge}
+                    >
                         {tab.count}
-                    </span>
+                    </Badge>
                 </button>
             ))}
         </div>

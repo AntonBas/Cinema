@@ -1,39 +1,40 @@
 .card {
-    background: linear-gradient(135deg, #1a1f2d 0%, #2a3041 100%);
+    background: linear-gradient(145deg, #1e232e, #2a3041);
     border-radius: 12px;
-    padding: 1.5rem;
     border: 1px solid #3a4051;
-    transition: all 0.3s ease;
-    position: relative;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     overflow: hidden;
-    min-height: 140px;
+    position: relative;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 .card::before {
     content: '';
     position: absolute;
     top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(253, 95, 0, 0.1), transparent);
-    transition: left 0.6s ease;
-}
-
-.card:hover::before {
-    left: 100%;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, #fd5f00, #ff8c42);
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
 }
 
 .card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
     border-color: #fd5f00;
+    transform: translateY(-4px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+}
+
+.card:hover::before {
+    transform: scaleX(1);
 }
 
 .cardContent {
     display: flex;
     flex-direction: column;
     height: 100%;
+    padding: 1.5rem;
     gap: 1rem;
 }
 
@@ -63,11 +64,10 @@
 .name {
     color: #ffffff;
     margin: 0;
-    font-size: 1.3rem;
+    font-size: 1.25rem;
     font-weight: 600;
-    line-height: 1.3;
+    line-height: 1.4;
     word-break: break-word;
-    overflow-wrap: break-word;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
@@ -81,68 +81,22 @@
     align-items: center;
 }
 
-.roleBadge {
-    padding: 0.4rem 1rem;
-    border-radius: 20px;
-    font-size: 0.85rem;
-    font-weight: 500;
-    display: inline-block;
-    white-space: nowrap;
-}
-
 .actions {
     display: flex;
-    gap: 0.75rem;
+    gap: 0.5rem;
     justify-content: flex-end;
     margin-top: auto;
-    padding-top: 1rem;
-    border-top: 1px solid #3a4051;
 }
 
-.editButton {
-    background: rgba(76, 175, 80, 0.1);
-    color: #4CAF50;
-    border: 1px solid #4CAF50;
-    padding: 0.6rem 1.2rem;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-weight: 500;
-    font-size: 0.9rem;
-    flex: 1;
-    max-width: 100px;
-}
-
-.editButton:hover {
-    background: #4CAF50;
-    color: white;
-    transform: translateY(-1px);
-}
-
+.editButton,
 .deleteButton {
-    background: rgba(255, 71, 87, 0.1);
-    color: #ff4757;
-    border: 1px solid #ff4757;
-    padding: 0.6rem 1.2rem;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-weight: 500;
-    font-size: 0.9rem;
     flex: 1;
     max-width: 100px;
-}
-
-.deleteButton:hover {
-    background: #ff4757;
-    color: white;
-    transform: translateY(-1px);
 }
 
 @media (max-width: 768px) {
-    .card {
+    .cardContent {
         padding: 1.25rem;
-        min-height: 130px;
     }
 
     .header {
@@ -165,16 +119,13 @@
 
     .editButton,
     .deleteButton {
-        padding: 0.5rem 1rem;
-        font-size: 0.85rem;
         max-width: 90px;
     }
 }
 
 @media (max-width: 480px) {
-    .card {
+    .cardContent {
         padding: 1rem;
-        min-height: 120px;
     }
 
     .header {
@@ -189,10 +140,5 @@
 
     .name {
         font-size: 1.1rem;
-    }
-
-    .roleBadge {
-        padding: 0.3rem 0.8rem;
-        font-size: 0.8rem;
     }
 }

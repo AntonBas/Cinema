@@ -1,13 +1,14 @@
 import React from 'react';
-import { type PersonDto, PersonRole } from '@/types/person';
+import { type PersonResponse, PersonRole } from '@/types/person';
 import { PersonCard } from '../PersonCard';
+import { Button } from '@/components/ui';
 import styles from './PersonList.module.css';
 
 interface PersonListProps {
-    persons: PersonDto[];
+    persons: PersonResponse[];
     activeTab: PersonRole | 'ALL';
-    onEdit: (person: PersonDto) => void;
-    onDelete: (person: PersonDto) => void;
+    onEdit: (person: PersonResponse) => void;
+    onDelete: (person: PersonResponse) => void;
     onAddPerson: () => void;
 }
 
@@ -18,6 +19,10 @@ export const PersonList: React.FC<PersonListProps> = ({
     onDelete,
     onAddPerson,
 }) => {
+    const filteredPersons = activeTab === 'ALL'
+        ? persons
+        : persons.filter(person => person.role === activeTab);
+
     const getEmptyStateConfig = () => {
         switch (activeTab) {
             case 'ALL':
@@ -58,7 +63,7 @@ export const PersonList: React.FC<PersonListProps> = ({
         }
     };
 
-    if (persons.length === 0) {
+    if (filteredPersons.length === 0) {
         const emptyConfig = getEmptyStateConfig();
 
         return (
@@ -68,19 +73,21 @@ export const PersonList: React.FC<PersonListProps> = ({
                 </div>
                 <h3>{emptyConfig.title}</h3>
                 <p>{emptyConfig.description}</p>
-                <button
-                    className={styles.primaryButton}
+                <Button
+                    variant="primary"
                     onClick={onAddPerson}
+                    className={styles.addButton}
                 >
+                    <span className={styles.buttonIcon}>+</span>
                     {emptyConfig.buttonText}
-                </button>
+                </Button>
             </div>
         );
     }
 
     return (
         <div className={styles.grid}>
-            {persons.map(person => (
+            {filteredPersons.map(person => (
                 <PersonCard
                     key={person.id}
                     person={person}

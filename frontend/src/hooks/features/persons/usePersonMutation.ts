@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { personApi } from '@/api/personApi';
-import type { PersonDto, PersonRequest, QuickCreatePersonDto } from '@/types/person';
+import type { PersonResponse, PersonRequest, QuickCreatePersonRequest } from '@/types/person';
 
 export const usePersonMutation = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const createPerson = async (personData: PersonRequest): Promise<PersonDto> => {
+    const createPerson = async (personData: PersonRequest): Promise<PersonResponse> => {
         setLoading(true);
         setError(null);
         try {
@@ -15,13 +15,13 @@ export const usePersonMutation = () => {
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to create person';
             setError(message);
-            throw err;
+            throw new Error(getUserFriendlyError(message));
         } finally {
             setLoading(false);
         }
     };
 
-    const updatePerson = async (id: number, personData: PersonRequest): Promise<PersonDto> => {
+    const updatePerson = async (id: number, personData: PersonRequest): Promise<PersonResponse> => {
         setLoading(true);
         setError(null);
         try {
@@ -30,7 +30,7 @@ export const usePersonMutation = () => {
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to update person';
             setError(message);
-            throw err;
+            throw new Error(getUserFriendlyError(message));
         } finally {
             setLoading(false);
         }
@@ -44,13 +44,13 @@ export const usePersonMutation = () => {
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to delete person';
             setError(message);
-            throw err;
+            throw new Error(getUserFriendlyError(message));
         } finally {
             setLoading(false);
         }
     };
 
-    const quickCreatePerson = async (personData: QuickCreatePersonDto): Promise<PersonDto> => {
+    const quickCreatePerson = async (personData: QuickCreatePersonRequest): Promise<PersonResponse> => {
         setLoading(true);
         setError(null);
         try {
@@ -59,10 +59,14 @@ export const usePersonMutation = () => {
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to quick create person';
             setError(message);
-            throw err;
+            throw new Error(getUserFriendlyError(message));
         } finally {
             setLoading(false);
         }
+    };
+
+    const clearError = () => {
+        setError(null);
     };
 
     return {
@@ -71,6 +75,29 @@ export const usePersonMutation = () => {
         createPerson,
         updatePerson,
         deletePerson,
-        quickCreatePerson
+        quickCreatePerson,
+        clearError
     };
+};
+
+const getUserFriendlyError = (errorMessage: string): string => {
+    if (errorMessage.includes('already exists')) {
+        return errorMessage;
+    }
+    if (errorMessage.includes('Failed to create person')) {
+        return 'Unable to create person. Please try again.';
+    }
+    if (errorMessage.includes('Failed to update person')) {
+        return 'Unable to update person. Please try again.';
+    }
+    if (errorMessage.includes('Failed to delete person')) {
+        return 'Unable to delete person. Please try again.';
+    }
+    if (errorMessage.includes('Failed to quick create person')) {
+        return 'Unable to create person. Please try again.';
+    }
+    if (errorMessage.includes('Network Error') || errorMessage.includes('Failed to fetch')) {
+        return 'Network connection error. Please check your internet connection.';
+    }
+    return 'An unexpected error occurred. Please try again.';
 };

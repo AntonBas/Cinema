@@ -7,50 +7,41 @@
 .empty {
     text-align: center;
     padding: 4rem 2rem;
-    color: #a0a8c0;
+    color: #8f9bb3;
     grid-column: 1 / -1;
-    background: linear-gradient(135deg, #1a1f2d 0%, #2a3041 100%);
+    background: linear-gradient(145deg, #1e232e, #2a3041);
     border-radius: 12px;
-    border: 1px solid #3a4051;
+    border: 2px dashed #3a4051;
 }
 
 .emptyIcon {
     font-size: 4rem;
-    margin-bottom: 1rem;
-    opacity: 0.5;
+    margin-bottom: 1.5rem;
+    opacity: 0.7;
+    display: block;
 }
 
 .empty h3 {
     color: #ffffff;
-    margin: 0 0 0.5rem 0;
+    margin: 0 0 0.75rem 0;
     font-size: 1.5rem;
     font-weight: 600;
 }
 
 .empty p {
-    color: #a0a8c0;
+    color: #8f9bb3;
     margin: 0 0 2rem 0;
     font-size: 1rem;
     line-height: 1.5;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
-.primaryButton {
-    background: linear-gradient(135deg, #fd5f00, #e05500);
-    color: white;
-    border: none;
-    padding: 0.75rem 1.5rem;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
+.addButton {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-}
-
-.primaryButton:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(253, 95, 0, 0.3);
 }
 
 .buttonIcon {
@@ -65,7 +56,7 @@
     }
 
     .empty {
-        padding: 3rem 1rem;
+        padding: 3rem 1.5rem;
         margin: 1rem 0;
     }
 

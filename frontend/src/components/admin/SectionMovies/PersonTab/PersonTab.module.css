@@ -21,34 +21,10 @@
     font-weight: 600;
 }
 
-.primaryButton {
-    background: linear-gradient(135deg, #fd5f00, #e05500);
-    color: white;
-    border: none;
-    padding: 0.75rem 1.5rem;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
+.addButton {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-}
-
-.primaryButton:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(253, 95, 0, 0.3);
-}
-
-.primaryButton:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none;
-}
-
-.primaryButton:disabled:hover {
-    transform: none;
-    box-shadow: none;
 }
 
 .buttonIcon {
@@ -56,69 +32,12 @@
     font-weight: bold;
 }
 
-.searchContainer {
+.searchSection {
     margin-bottom: 1.5rem;
-    display: flex;
-    gap: 1rem;
-    align-items: center;
-    flex-wrap: wrap;
-}
-
-.searchWrapper {
-    position: relative;
-    flex: 1;
-    max-width: 400px;
 }
 
 .searchInput {
-    width: 100%;
-    padding: 1rem 3rem 1rem 1.5rem;
-    border: 1px solid #3a4051;
-    border-radius: 8px;
-    background: #1a1f2d;
-    color: #ffffff;
-    font-size: 1rem;
-    transition: all 0.3s ease;
-}
-
-.searchInput:focus {
-    outline: none;
-    border-color: #fd5f00;
-    box-shadow: 0 0 0 3px rgba(253, 95, 0, 0.1);
-}
-
-.searchInput::placeholder {
-    color: #6b7280;
-}
-
-.searchSpinner {
-    position: absolute;
-    right: 1rem;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 16px;
-    height: 16px;
-    border: 2px solid #3a4051;
-    border-top: 2px solid #fd5f00;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-}
-
-.clearSearch {
-    background: rgba(107, 114, 128, 0.1);
-    color: #a0a8c0;
-    border: 1px solid #3a4051;
-    padding: 0.75rem 1.5rem;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-weight: 500;
-}
-
-.clearSearch:hover {
-    background: rgba(107, 114, 128, 0.2);
-    color: #ffffff;
-    transform: translateY(-1px);
+    max-width: 400px;
 }
 
 .resultsInfo {
@@ -148,46 +67,10 @@
     animation: spin 1s linear infinite;
 }
 
-.loadMoreContainer {
-    display: flex;
-    justify-content: center;
+.pagination {
     margin-top: 2rem;
     padding-top: 2rem;
     border-top: 1px solid #3a4051;
-}
-
-.loadMoreButton {
-    background: rgba(253, 95, 0, 0.1);
-    color: #fd5f00;
-    border: 1px solid rgba(253, 95, 0, 0.3);
-    padding: 0.75rem 2rem;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.loadMoreButton:hover:not(:disabled) {
-    background: rgba(253, 95, 0, 0.2);
-    transform: translateY(-1px);
-}
-
-.loadMoreButton:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none;
-}
-
-.loadingSpinnerSmall {
-    width: 16px;
-    height: 16px;
-    border: 2px solid transparent;
-    border-top: 2px solid #fd5f00;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
 }
 
 @keyframes fadeIn {
@@ -223,12 +106,25 @@
         align-items: flex-start;
     }
 
-    .searchContainer {
-        flex-direction: column;
-        align-items: stretch;
+    .searchInput {
+        max-width: none;
     }
 
-    .searchWrapper {
-        max-width: none;
+    .header h2 {
+        font-size: 1.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        padding: 0.75rem;
+    }
+
+    .header h2 {
+        font-size: 1.3rem;
+    }
+
+    .loading {
+        padding: 2rem 1rem;
     }
 }
