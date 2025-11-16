@@ -1,23 +1,13 @@
-export interface MovieSimpleDto {
-    id: number;
-    title: string;
-    durationMinutes: number;
-    posterFileName?: string;
-}
+import type { MovieShortResponse } from '@/types/movie';
+import type { CinemaHallResponse } from '@/types/cinemaHall';
 
-export interface CinemaHallDto {
-    id: number;
-    name: string;
-    capacity: number;
-}
-
-export interface SessionDto {
+export interface SessionResponse {
     id: number;
     startTime: string;
     endTime: string;
     price: number;
-    movie: MovieSimpleDto;
-    hall: CinemaHallDto;
+    movie: MovieShortResponse;
+    hall: CinemaHallResponse;
     available: boolean;
 }
 

@@ -54,7 +54,19 @@ export interface MovieUpdateRequest {
   removePoster?: boolean;
 }
 
-export interface MovieDto {
+export interface MovieCardResponse {
+  id: number;
+  title: string;
+  slug: string;
+  posterUrl: string;
+  durationMinutes: number;
+  ageRating: AgeRating;
+  releaseDate: string;
+  status: MovieStatus;
+  currentlyShowing: boolean;
+}
+
+export interface MovieDetailResponse {
   id: number;
   title: string;
   slug: string;
@@ -67,28 +79,21 @@ export interface MovieDto {
   status: MovieStatus;
   posterFileName?: string;
   posterUrl: string;
-
   currentlyShowing: boolean;
   upcoming: boolean;
   archived: boolean;
   active: boolean;
-
   genreIds: number[];
   actorIds: number[];
   directorIds: number[];
   screenwriterIds: number[];
 }
 
-export interface MovieResponse {
+export interface MovieShortResponse {
   id: number;
   title: string;
-  slug: string;
-  posterUrl: string;
   durationMinutes: number;
-  ageRating: AgeRating;
-  releaseDate: string;
-  status: MovieStatus;
-  currentlyShowing: boolean;
+  posterFileName?: string;
 }
 
 export interface MovieFormData {
