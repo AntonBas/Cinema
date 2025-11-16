@@ -11,8 +11,8 @@ export const useUserMutation = () => {
         setError(null);
         try {
             return await userApi.updateProfile(updateData);
-        } catch (err: any) {
-            const message = err.response?.data?.message || err.message || 'Profile update failed';
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'Failed to update profile';
             setError(message);
             throw err;
         } finally {
@@ -25,8 +25,8 @@ export const useUserMutation = () => {
         setError(null);
         try {
             return await userApi.requestEmailChange(newEmail);
-        } catch (err: any) {
-            const message = err.response?.data?.message || err.message || 'Email change request failed';
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'Failed to request email change';
             setError(message);
             throw err;
         } finally {
@@ -39,8 +39,8 @@ export const useUserMutation = () => {
         setError(null);
         try {
             return await userApi.confirmEmailChange(token);
-        } catch (err: any) {
-            const message = err.response?.data?.message || err.message || 'Email change confirmation failed';
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'Failed to confirm email change';
             setError(message);
             throw err;
         } finally {
@@ -58,8 +58,8 @@ export const useUserMutation = () => {
                 passwordConfirm
             };
             return await userApi.updatePassword(passwordData);
-        } catch (err: any) {
-            const message = err.response?.data?.message || err.message || 'Password update failed';
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'Failed to update password';
             setError(message);
             throw err;
         } finally {

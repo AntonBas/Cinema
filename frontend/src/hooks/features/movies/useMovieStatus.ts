@@ -1,9 +1,9 @@
 import { useState, useCallback } from 'react';
 import { movieApi } from '@/api/movieApi';
-import type { MovieResponse } from '@/types/movie';
+import type { MovieCardResponse } from '@/types/movie';
 
 export const useMovieStatus = () => {
-    const [movies, setMovies] = useState<MovieResponse[]>([]);
+    const [movies, setMovies] = useState<MovieCardResponse[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -11,7 +11,7 @@ export const useMovieStatus = () => {
         setLoading(true);
         setError(null);
         try {
-            let response: MovieResponse[];
+            let response: MovieCardResponse[];
             switch (status) {
                 case 'current':
                     response = await movieApi.getCurrentlyShowing();

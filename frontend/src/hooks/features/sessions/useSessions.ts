@@ -1,13 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { sessionApi } from '@/api/sessionApi';
-import type { SessionDto, SessionFilters } from '@/types/session';
+import type { SessionResponse, SessionFilters } from '@/types/session';
 import type { PageResponse, SearchParams } from '@/types/pagination';
 
 interface UseSessionsReturn {
-    sessions: SessionDto[];
+    sessions: SessionResponse[];
     loading: boolean;
     error: string | null;
-    pagination: PageResponse<SessionDto> | null;
+    pagination: PageResponse<SessionResponse> | null;
     refetch: () => void;
 }
 
@@ -15,8 +15,8 @@ export const useSessions = (
     initialFilters?: SessionFilters,
     searchParams?: SearchParams
 ): UseSessionsReturn => {
-    const [sessions, setSessions] = useState<SessionDto[]>([]);
-    const [pagination, setPagination] = useState<PageResponse<SessionDto> | null>(null);
+    const [sessions, setSessions] = useState<SessionResponse[]>([]);
+    const [pagination, setPagination] = useState<PageResponse<SessionResponse> | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -25,7 +25,7 @@ export const useSessions = (
         setError(null);
 
         try {
-            let response: PageResponse<SessionDto>;
+            let response: PageResponse<SessionResponse>;
 
             if (initialFilters?.date) {
                 response = await sessionApi.getSessionsByDate(initialFilters.date, searchParams);

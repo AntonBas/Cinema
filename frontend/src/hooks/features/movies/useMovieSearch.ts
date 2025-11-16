@@ -1,11 +1,11 @@
 import { useState, useCallback } from 'react';
 import { movieApi } from '@/api/movieApi';
-import type { MovieDto } from '@/types/movie';
+import type { MovieDetailResponse } from '@/types/movie';
 import type { PageResponse } from '@/types/pagination';
 
 export const useMovieSearch = () => {
-    const [movies, setMovies] = useState<MovieDto[]>([]);
-    const [pagination, setPagination] = useState<PageResponse<MovieDto> | null>(null);
+    const [movies, setMovies] = useState<MovieDetailResponse[]>([]);
+    const [pagination, setPagination] = useState<PageResponse<MovieDetailResponse> | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 

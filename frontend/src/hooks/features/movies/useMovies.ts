@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { movieApi } from '@/api/movieApi';
-import type { MovieDto } from '@/types/movie';
+import type { MovieDetailResponse } from '@/types/movie';
 
 export const useMovies = () => {
-    const [movies, setMovies] = useState<MovieDto[]>([]);
+    const [movies, setMovies] = useState<MovieDetailResponse[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 

@@ -1,10 +1,10 @@
 import { useState, useCallback } from 'react';
 import { sessionApi } from '@/api/sessionApi';
-import type { SessionDto, SessionRequest } from '@/types/session';
+import type { SessionResponse, SessionRequest } from '@/types/session';
 
 interface UseSessionMutationReturn {
-    createSession: (request: SessionRequest) => Promise<SessionDto>;
-    updateSession: (id: number, request: SessionRequest) => Promise<SessionDto>;
+    createSession: (request: SessionRequest) => Promise<SessionResponse>;
+    updateSession: (id: number, request: SessionRequest) => Promise<SessionResponse>;
     deleteSession: (id: number) => Promise<void>;
     checkTimeConflict: (
         hallId: number,
@@ -20,7 +20,7 @@ export const useSessionMutation = (): UseSessionMutationReturn => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const createSession = useCallback(async (request: SessionRequest): Promise<SessionDto> => {
+    const createSession = useCallback(async (request: SessionRequest): Promise<SessionResponse> => {
         setLoading(true);
         setError(null);
         try {
@@ -35,7 +35,7 @@ export const useSessionMutation = (): UseSessionMutationReturn => {
         }
     }, []);
 
-    const updateSession = useCallback(async (id: number, request: SessionRequest): Promise<SessionDto> => {
+    const updateSession = useCallback(async (id: number, request: SessionRequest): Promise<SessionResponse> => {
         setLoading(true);
         setError(null);
         try {

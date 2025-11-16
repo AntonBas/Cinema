@@ -15,7 +15,7 @@ export const usePersonMutation = () => {
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to create person';
             setError(message);
-            throw new Error(getUserFriendlyError(message));
+            throw err;
         } finally {
             setLoading(false);
         }
@@ -30,7 +30,7 @@ export const usePersonMutation = () => {
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to update person';
             setError(message);
-            throw new Error(getUserFriendlyError(message));
+            throw err;
         } finally {
             setLoading(false);
         }
@@ -44,7 +44,7 @@ export const usePersonMutation = () => {
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to delete person';
             setError(message);
-            throw new Error(getUserFriendlyError(message));
+            throw err;
         } finally {
             setLoading(false);
         }
@@ -59,7 +59,7 @@ export const usePersonMutation = () => {
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to quick create person';
             setError(message);
-            throw new Error(getUserFriendlyError(message));
+            throw err;
         } finally {
             setLoading(false);
         }
@@ -78,29 +78,4 @@ export const usePersonMutation = () => {
         quickCreatePerson,
         clearError
     };
-};
-
-const getUserFriendlyError = (errorMessage: string): string => {
-    if (errorMessage.includes('already exists')) {
-        return errorMessage;
-    }
-    if (errorMessage.includes('cannot be deleted') || errorMessage.includes('associated with') || errorMessage.includes('used in')) {
-        return 'This person cannot be deleted because they are associated with existing movies.';
-    }
-    if (errorMessage.includes('Failed to create person')) {
-        return 'Unable to create person. Please try again.';
-    }
-    if (errorMessage.includes('Failed to update person')) {
-        return 'Unable to update person. Please try again.';
-    }
-    if (errorMessage.includes('Failed to delete person')) {
-        return 'Unable to delete person. Please try again.';
-    }
-    if (errorMessage.includes('Failed to quick create person')) {
-        return 'Unable to create person. Please try again.';
-    }
-    if (errorMessage.includes('Network Error') || errorMessage.includes('Failed to fetch')) {
-        return 'Network connection error. Please check your internet connection.';
-    }
-    return 'An unexpected error occurred. Please try again.';
 };

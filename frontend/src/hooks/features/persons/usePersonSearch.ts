@@ -26,7 +26,7 @@ export const usePersonSearch = () => {
             } catch (err) {
                 const message = err instanceof Error ? err.message : 'Failed to search persons';
                 setError(message);
-                throw new Error(getUserFriendlySearchError(message));
+                throw err;
             } finally {
                 setLoading(false);
             }
@@ -46,14 +46,4 @@ export const usePersonSearch = () => {
         searchPersons,
         clearError
     };
-};
-
-const getUserFriendlySearchError = (errorMessage: string): string => {
-    if (errorMessage.includes('Failed to search persons')) {
-        return 'Unable to search persons. Please try again.';
-    }
-    if (errorMessage.includes('Network Error') || errorMessage.includes('Failed to fetch')) {
-        return 'Network connection error. Please check your internet connection.';
-    }
-    return 'An unexpected error occurred. Please try again.';
 };

@@ -15,7 +15,7 @@ export const useGenreMutation = () => {
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to create genre';
             setError(message);
-            throw new Error(getUserFriendlyError(message));
+            throw err;
         } finally {
             setLoading(false);
         }
@@ -30,7 +30,7 @@ export const useGenreMutation = () => {
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to update genre';
             setError(message);
-            throw new Error(getUserFriendlyError(message));
+            throw err;
         } finally {
             setLoading(false);
         }
@@ -44,7 +44,7 @@ export const useGenreMutation = () => {
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to delete genre';
             setError(message);
-            throw new Error(getUserFriendlyError(message));
+            throw err;
         } finally {
             setLoading(false);
         }
@@ -62,23 +62,4 @@ export const useGenreMutation = () => {
         deleteGenre,
         clearError
     };
-};
-
-const getUserFriendlyError = (errorMessage: string): string => {
-    if (errorMessage.includes('already exists')) {
-        return errorMessage;
-    }
-    if (errorMessage.includes('Failed to create genre')) {
-        return 'Unable to create genre. Please try again.';
-    }
-    if (errorMessage.includes('Failed to update genre')) {
-        return 'Unable to update genre. Please try again.';
-    }
-    if (errorMessage.includes('Failed to delete genre')) {
-        return 'Unable to delete genre. Please try again.';
-    }
-    if (errorMessage.includes('Network Error') || errorMessage.includes('Failed to fetch')) {
-        return 'Network connection error. Please check your internet connection.';
-    }
-    return 'An unexpected error occurred. Please try again.';
 };

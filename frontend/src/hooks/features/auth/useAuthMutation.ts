@@ -12,22 +12,10 @@ export const useAuthMutation = () => {
         try {
             const response = await authApi.login(credentials);
             return response;
-        } catch (err: any) {
-            const backendData = err.response?.data;
-            let errorMessage = 'Login failed';
-
-            if (backendData && backendData.message) {
-                errorMessage = backendData.message;
-            } else if (err.response?.status === 401) {
-                errorMessage = 'Invalid email or password';
-            } else if (err.response?.status === 500) {
-                errorMessage = 'Server error. Please try again later.';
-            } else if (err.message) {
-                errorMessage = err.message;
-            }
-
-            setError(errorMessage);
-            throw new Error(errorMessage);
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'Failed to login';
+            setError(message);
+            throw err;
         } finally {
             setIsLoading(false);
         }
@@ -38,22 +26,10 @@ export const useAuthMutation = () => {
         setError(null);
         try {
             return await authApi.register(userData);
-        } catch (err: any) {
-            const backendData = err.response?.data;
-            let errorMessage = 'Registration failed';
-
-            if (backendData && backendData.message) {
-                errorMessage = backendData.message;
-            } else if (err.response?.status === 400) {
-                errorMessage = 'Please check your input data';
-            } else if (err.response?.status === 409) {
-                errorMessage = 'Email already exists';
-            } else if (err.message) {
-                errorMessage = err.message;
-            }
-
-            setError(errorMessage);
-            throw new Error(errorMessage);
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'Failed to register';
+            setError(message);
+            throw err;
         } finally {
             setIsLoading(false);
         }
@@ -63,18 +39,10 @@ export const useAuthMutation = () => {
         setError(null);
         try {
             return await authApi.checkEmail(email);
-        } catch (err: any) {
-            const backendData = err.response?.data;
-            let errorMessage = 'Email check failed';
-
-            if (backendData && backendData.message) {
-                errorMessage = backendData.message;
-            } else if (err.message) {
-                errorMessage = err.message;
-            }
-
-            setError(errorMessage);
-            throw new Error(errorMessage);
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'Failed to check email';
+            setError(message);
+            throw err;
         }
     };
 
@@ -82,20 +50,10 @@ export const useAuthMutation = () => {
         setError(null);
         try {
             return await authApi.forgotPassword(email);
-        } catch (err: any) {
-            const backendData = err.response?.data;
-            let errorMessage = 'Password reset failed';
-
-            if (backendData && backendData.message) {
-                errorMessage = backendData.message;
-            } else if (err.response?.status === 404) {
-                errorMessage = 'Email not found';
-            } else if (err.message) {
-                errorMessage = err.message;
-            }
-
-            setError(errorMessage);
-            throw new Error(errorMessage);
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'Failed to send password reset';
+            setError(message);
+            throw err;
         }
     };
 
@@ -104,20 +62,10 @@ export const useAuthMutation = () => {
         setError(null);
         try {
             return await authApi.resetPassword(token, newPassword);
-        } catch (err: any) {
-            const backendData = err.response?.data;
-            let errorMessage = 'Password reset failed';
-
-            if (backendData && backendData.message) {
-                errorMessage = backendData.message;
-            } else if (err.response?.status === 400) {
-                errorMessage = 'Invalid or expired token';
-            } else if (err.message) {
-                errorMessage = err.message;
-            }
-
-            setError(errorMessage);
-            throw new Error(errorMessage);
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'Failed to reset password';
+            setError(message);
+            throw err;
         } finally {
             setIsLoading(false);
         }
@@ -127,20 +75,10 @@ export const useAuthMutation = () => {
         setError(null);
         try {
             return await authApi.verifyEmail(token);
-        } catch (err: any) {
-            const backendData = err.response?.data;
-            let errorMessage = 'Email verification failed';
-
-            if (backendData && backendData.message) {
-                errorMessage = backendData.message;
-            } else if (err.response?.status === 400) {
-                errorMessage = 'Invalid or expired verification link';
-            } else if (err.message) {
-                errorMessage = err.message;
-            }
-
-            setError(errorMessage);
-            throw new Error(errorMessage);
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'Failed to verify email';
+            setError(message);
+            throw err;
         }
     };
 
