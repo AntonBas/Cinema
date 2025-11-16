@@ -53,7 +53,7 @@ public class Movie {
 	private Long id;
 
 	@NotBlank
-	@Size(max = 255)
+	@Size(max = 50)
 	@Column(nullable = false)
 	private String title;
 

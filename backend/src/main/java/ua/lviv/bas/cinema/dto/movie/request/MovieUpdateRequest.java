@@ -27,7 +27,7 @@ import ua.lviv.bas.cinema.domain.enums.AgeRating;
 public class MovieUpdateRequest {
 
 	@NotBlank(message = "Title is required")
-	@Size(max = 255, message = "Title must be less than 255 characters")
+	@Size(max = 50, message = "Title must be less than 50 characters")
 	private String title;
 
 	@NotBlank(message = "Trailer URL is required")
