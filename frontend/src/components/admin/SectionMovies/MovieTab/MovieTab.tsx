@@ -210,7 +210,7 @@ export const MovieTab: React.FC = () => {
           onClick={handleAddNew}
           variant="primary"
         >
-          Add New Movie
+          Add Movie
         </Button>
       </div>
 
