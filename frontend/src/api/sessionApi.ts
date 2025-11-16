@@ -1,5 +1,6 @@
 import type { SessionResponse, SessionRequest } from '@/types/session';
 import type { PageResponse, SearchParams } from '@/types/pagination';
+import { handleApiError } from '@/utils/apiErrorHandler';
 
 const API_URL = '/api/sessions';
 
@@ -18,7 +19,7 @@ export const sessionApi = {
             headers: getAuthHeaders(),
             body: JSON.stringify(request),
         });
-        if (!response.ok) throw new Error('Failed to create session');
+        if (!response.ok) await handleApiError(response);
         return response.json();
     },
 
@@ -26,7 +27,7 @@ export const sessionApi = {
         const response = await fetch(`${API_URL}/${id}`, {
             headers: getAuthHeaders(),
         });
-        if (!response.ok) throw new Error('Failed to fetch session');
+        if (!response.ok) await handleApiError(response);
         return response.json();
     },
 
@@ -36,7 +37,7 @@ export const sessionApi = {
             headers: getAuthHeaders(),
             body: JSON.stringify(request),
         });
-        if (!response.ok) throw new Error('Failed to update session');
+        if (!response.ok) await handleApiError(response);
         return response.json();
     },
 
@@ -45,7 +46,7 @@ export const sessionApi = {
             method: 'DELETE',
             headers: getAuthHeaders(),
         });
-        if (!response.ok) throw new Error('Failed to delete session');
+        if (!response.ok) await handleApiError(response);
     },
 
     getAllSessions: async (params?: SearchParams): Promise<PageResponse<SessionResponse>> => {
@@ -58,7 +59,7 @@ export const sessionApi = {
         const response = await fetch(url, {
             headers: getAuthHeaders(),
         });
-        if (!response.ok) throw new Error('Failed to fetch sessions');
+        if (!response.ok) await handleApiError(response);
         return response.json();
     },
 
@@ -71,7 +72,7 @@ export const sessionApi = {
         const response = await fetch(url, {
             headers: getAuthHeaders(),
         });
-        if (!response.ok) throw new Error('Failed to fetch sessions by date');
+        if (!response.ok) await handleApiError(response);
         return response.json();
     },
 
@@ -84,7 +85,7 @@ export const sessionApi = {
         const response = await fetch(url, {
             headers: getAuthHeaders(),
         });
-        if (!response.ok) throw new Error('Failed to fetch sessions by hall');
+        if (!response.ok) await handleApiError(response);
         return response.json();
     },
 
@@ -97,7 +98,7 @@ export const sessionApi = {
         const response = await fetch(url, {
             headers: getAuthHeaders(),
         });
-        if (!response.ok) throw new Error('Failed to fetch sessions by movie');
+        if (!response.ok) await handleApiError(response);
         return response.json();
     },
 
@@ -110,7 +111,7 @@ export const sessionApi = {
         const response = await fetch(url, {
             headers: getAuthHeaders(),
         });
-        if (!response.ok) throw new Error('Failed to fetch available sessions');
+        if (!response.ok) await handleApiError(response);
         return response.json();
     },
 
@@ -124,7 +125,7 @@ export const sessionApi = {
         const response = await fetch(url, {
             headers: getAuthHeaders(),
         });
-        if (!response.ok) throw new Error('Failed to fetch upcoming sessions');
+        if (!response.ok) await handleApiError(response);
         return response.json();
     },
 
@@ -137,7 +138,7 @@ export const sessionApi = {
         const response = await fetch(url, {
             headers: getAuthHeaders(),
         });
-        if (!response.ok) throw new Error('Failed to fetch today sessions');
+        if (!response.ok) await handleApiError(response);
         return response.json();
     },
 
@@ -157,7 +158,7 @@ export const sessionApi = {
         const response = await fetch(url, {
             headers: getAuthHeaders(),
         });
-        if (!response.ok) throw new Error('Failed to check time conflict');
+        if (!response.ok) await handleApiError(response);
         return response.json();
     },
 };

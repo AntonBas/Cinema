@@ -4,6 +4,7 @@ import type {
     EmailChangeResponse,
     PasswordUpdateResponse
 } from '@/types/user';
+import { handleApiError } from '@/utils/apiErrorHandler';
 
 const API_URL = '/api/users';
 
@@ -26,7 +27,7 @@ export const userApi = {
         const response = await fetch(`${API_URL}/profile`, {
             headers: getAuthHeaders(),
         });
-        if (!response.ok) throw new Error('Failed to fetch user profile');
+        if (!response.ok) await handleApiError(response);
         return response.json();
     },
 
@@ -36,7 +37,7 @@ export const userApi = {
             headers: getAuthHeaders(),
             body: JSON.stringify(updateData),
         });
-        if (!response.ok) throw new Error('Failed to update profile');
+        if (!response.ok) await handleApiError(response);
         return response.json();
     },
 
@@ -45,7 +46,7 @@ export const userApi = {
             method: 'POST',
             headers: getAuthHeaders(),
         });
-        if (!response.ok) throw new Error('Failed to request email change');
+        if (!response.ok) await handleApiError(response);
         return response.json();
     },
 
@@ -54,7 +55,7 @@ export const userApi = {
             method: 'POST',
             headers: getAuthHeaders(),
         });
-        if (!response.ok) throw new Error('Failed to confirm email change');
+        if (!response.ok) await handleApiError(response);
         return response.json();
     },
 
@@ -64,7 +65,7 @@ export const userApi = {
             headers: getAuthHeaders(),
             body: JSON.stringify(passwordData),
         });
-        if (!response.ok) throw new Error('Failed to update password');
+        if (!response.ok) await handleApiError(response);
         return response.json();
     }
 };

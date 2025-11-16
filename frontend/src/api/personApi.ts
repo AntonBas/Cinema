@@ -1,5 +1,6 @@
 import type { PersonResponse, PersonRequest, PersonRole, QuickCreatePersonRequest } from '@/types/person';
 import type { PageResponse } from '@/types/pagination';
+import { handleApiError } from '@/utils/apiErrorHandler';
 
 const API_URL = '/api/persons';
 
@@ -16,7 +17,7 @@ export const personApi = {
     const response = await fetch(`${API_URL}/${id}`, {
       headers: getAuthHeaders(),
     });
-    if (!response.ok) throw new Error('Failed to fetch person');
+    if (!response.ok) await handleApiError(response);
     return response.json();
   },
 
@@ -26,7 +27,7 @@ export const personApi = {
       headers: getAuthHeaders(),
       body: JSON.stringify(personData),
     });
-    if (!response.ok) throw new Error('Failed to create person');
+    if (!response.ok) await handleApiError(response);
     return response.json();
   },
 
@@ -36,7 +37,7 @@ export const personApi = {
       headers: getAuthHeaders(),
       body: JSON.stringify(personData),
     });
-    if (!response.ok) throw new Error('Failed to update person');
+    if (!response.ok) await handleApiError(response);
     return response.json();
   },
 
@@ -45,14 +46,14 @@ export const personApi = {
       method: 'DELETE',
       headers: getAuthHeaders(),
     });
-    if (!response.ok) throw new Error('Failed to delete person');
+    if (!response.ok) await handleApiError(response);
   },
 
   getAll: async (): Promise<PersonResponse[]> => {
     const response = await fetch(API_URL, {
       headers: getAuthHeaders(),
     });
-    if (!response.ok) throw new Error('Failed to fetch persons');
+    if (!response.ok) await handleApiError(response);
     return response.json();
   },
 
@@ -62,7 +63,7 @@ export const personApi = {
       headers: getAuthHeaders(),
       body: JSON.stringify(personData),
     });
-    if (!response.ok) throw new Error('Failed to quick create person');
+    if (!response.ok) await handleApiError(response);
     return response.json();
   },
 
@@ -84,7 +85,7 @@ export const personApi = {
       headers: getAuthHeaders(),
     });
 
-    if (!response.ok) throw new Error('Failed to search persons');
+    if (!response.ok) await handleApiError(response);
     return response.json();
   }
 };

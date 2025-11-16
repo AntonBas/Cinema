@@ -5,6 +5,7 @@ import type {
   MovieDetailResponse
 } from '@/types/movie';
 import type { PageResponse } from '@/types/pagination';
+import { handleApiError } from '@/utils/apiErrorHandler';
 
 const API_URL = '/api/movies';
 
@@ -28,7 +29,7 @@ export const movieApi = {
     const response = await fetch(`${API_URL}/${id}`, {
       headers: getAuthHeaders(),
     });
-    if (!response.ok) throw new Error('Failed to fetch movie');
+    if (!response.ok) await handleApiError(response);
     return response.json();
   },
 
@@ -36,7 +37,7 @@ export const movieApi = {
     const response = await fetch(`${API_URL}/slug/${slug}`, {
       headers: getAuthHeaders(),
     });
-    if (!response.ok) throw new Error('Failed to fetch movie');
+    if (!response.ok) await handleApiError(response);
     return response.json();
   },
 
@@ -44,7 +45,7 @@ export const movieApi = {
     const response = await fetch(API_URL, {
       headers: getAuthHeaders(),
     });
-    if (!response.ok) throw new Error('Failed to fetch movies');
+    if (!response.ok) await handleApiError(response);
     return response.json();
   },
 
@@ -52,7 +53,7 @@ export const movieApi = {
     const response = await fetch(`${API_URL}/paginated?page=${page}&size=${size}`, {
       headers: getAuthHeaders(),
     });
-    if (!response.ok) throw new Error('Failed to fetch movies');
+    if (!response.ok) await handleApiError(response);
     return response.json();
   },
 
@@ -60,7 +61,7 @@ export const movieApi = {
     const response = await fetch(`${API_URL}/status/current`, {
       headers: getAuthHeaders(),
     });
-    if (!response.ok) throw new Error('Failed to fetch currently showing movies');
+    if (!response.ok) await handleApiError(response);
     return response.json();
   },
 
@@ -68,7 +69,7 @@ export const movieApi = {
     const response = await fetch(`${API_URL}/status/upcoming`, {
       headers: getAuthHeaders(),
     });
-    if (!response.ok) throw new Error('Failed to fetch upcoming movies');
+    if (!response.ok) await handleApiError(response);
     return response.json();
   },
 
@@ -76,7 +77,7 @@ export const movieApi = {
     const response = await fetch(`${API_URL}/status/archived`, {
       headers: getAuthHeaders(),
     });
-    if (!response.ok) throw new Error('Failed to fetch archived movies');
+    if (!response.ok) await handleApiError(response);
     return response.json();
   },
 
@@ -84,7 +85,7 @@ export const movieApi = {
     const response = await fetch(`${API_URL}/for-sessions`, {
       headers: getAuthHeaders(),
     });
-    if (!response.ok) throw new Error('Failed to fetch movies for sessions');
+    if (!response.ok) await handleApiError(response);
     return response.json();
   },
 
@@ -105,7 +106,7 @@ export const movieApi = {
       body: formData,
     });
 
-    if (!response.ok) throw new Error('Failed to create movie');
+    if (!response.ok) await handleApiError(response);
     return response.json();
   },
 
@@ -131,7 +132,7 @@ export const movieApi = {
       body: formData,
     });
 
-    if (!response.ok) throw new Error('Failed to update movie');
+    if (!response.ok) await handleApiError(response);
     return response.json();
   },
 
@@ -140,14 +141,14 @@ export const movieApi = {
       method: 'DELETE',
       headers: getAuthHeaders(),
     });
-    if (!response.ok) throw new Error('Failed to delete movie');
+    if (!response.ok) await handleApiError(response);
   },
 
   getPoster: async (id: number): Promise<Blob> => {
     const response = await fetch(`${API_URL}/${id}/poster`, {
       headers: getAuthHeaders(),
     });
-    if (!response.ok) throw new Error('Failed to fetch poster');
+    if (!response.ok) await handleApiError(response);
     return response.blob();
   },
 

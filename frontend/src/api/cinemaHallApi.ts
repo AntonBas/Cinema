@@ -5,6 +5,7 @@ import type {
     HallLayoutResponse,
     SeatLayoutRequest
 } from '@/types';
+import { handleApiError } from '@/utils/apiErrorHandler';
 
 const API_URL = '/api/cinema-halls';
 
@@ -23,7 +24,7 @@ export const cinemaHallApi = {
             headers: getAuthHeaders(),
             body: JSON.stringify(request),
         });
-        if (!response.ok) throw new Error('Failed to create cinema hall');
+        if (!response.ok) await handleApiError(response);
         return response.json();
     },
 
@@ -31,7 +32,7 @@ export const cinemaHallApi = {
         const response = await fetch(`${API_URL}/${id}`, {
             headers: getAuthHeaders(),
         });
-        if (!response.ok) throw new Error('Failed to fetch cinema hall');
+        if (!response.ok) await handleApiError(response);
         return response.json();
     },
 
@@ -41,7 +42,7 @@ export const cinemaHallApi = {
             headers: getAuthHeaders(),
             body: JSON.stringify(request),
         });
-        if (!response.ok) throw new Error('Failed to update cinema hall');
+        if (!response.ok) await handleApiError(response);
         return response.json();
     },
 
@@ -50,14 +51,14 @@ export const cinemaHallApi = {
             method: 'DELETE',
             headers: getAuthHeaders(),
         });
-        if (!response.ok) throw new Error('Failed to delete cinema hall');
+        if (!response.ok) await handleApiError(response);
     },
 
     getAllHalls: async (): Promise<CinemaHallResponse[]> => {
         const response = await fetch(API_URL, {
             headers: getAuthHeaders(),
         });
-        if (!response.ok) throw new Error('Failed to fetch cinema halls');
+        if (!response.ok) await handleApiError(response);
         return response.json();
     },
 
@@ -67,7 +68,7 @@ export const cinemaHallApi = {
             headers: getAuthHeaders(),
             body: JSON.stringify(request),
         });
-        if (!response.ok) throw new Error('Failed to generate seats');
+        if (!response.ok) await handleApiError(response);
         return response.json();
     },
 
@@ -75,7 +76,7 @@ export const cinemaHallApi = {
         const response = await fetch(`${API_URL}/${id}/with-seats`, {
             headers: getAuthHeaders(),
         });
-        if (!response.ok) throw new Error('Failed to fetch hall with seats');
+        if (!response.ok) await handleApiError(response);
         return response.json();
     },
 
@@ -83,7 +84,7 @@ export const cinemaHallApi = {
         const response = await fetch(`${API_URL}/${id}/layout`, {
             headers: getAuthHeaders(),
         });
-        if (!response.ok) throw new Error('Failed to fetch hall layout');
+        if (!response.ok) await handleApiError(response);
         return response.json();
     },
 
@@ -95,7 +96,7 @@ export const cinemaHallApi = {
         const response = await fetch(url, {
             headers: getAuthHeaders(),
         });
-        if (!response.ok) throw new Error('Failed to search cinema halls');
+        if (!response.ok) await handleApiError(response);
         return response.json();
     },
 };

@@ -1,4 +1,5 @@
 import type { SeatResponse, SeatType } from '@/types';
+import { handleApiError } from '@/utils/apiErrorHandler';
 
 const getAuthHeaders = () => {
     const token = localStorage.getItem('authToken');
@@ -13,7 +14,7 @@ export const seatApi = {
         const response = await fetch(`/api/cinema-halls/${hallId}/seats`, {
             headers: getAuthHeaders(),
         });
-        if (!response.ok) throw new Error('Failed to fetch seats');
+        if (!response.ok) await handleApiError(response);
         return response.json();
     },
 
@@ -21,7 +22,7 @@ export const seatApi = {
         const response = await fetch(`/api/cinema-halls/${hallId}/seats/${seatId}`, {
             headers: getAuthHeaders(),
         });
-        if (!response.ok) throw new Error('Failed to fetch seat');
+        if (!response.ok) await handleApiError(response);
         return response.json();
     },
 
@@ -29,7 +30,7 @@ export const seatApi = {
         const response = await fetch(`/api/cinema-halls/${hallId}/seats/position?row=${row}&number=${number}`, {
             headers: getAuthHeaders(),
         });
-        if (!response.ok) throw new Error('Failed to fetch seat by position');
+        if (!response.ok) await handleApiError(response);
         return response.json();
     },
 
@@ -38,7 +39,7 @@ export const seatApi = {
             method: 'PUT',
             headers: getAuthHeaders(),
         });
-        if (!response.ok) throw new Error('Failed to update seat type');
+        if (!response.ok) await handleApiError(response);
         return response.json();
     },
 
@@ -46,7 +47,7 @@ export const seatApi = {
         const response = await fetch(`/api/cinema-halls/${hallId}/seats/check-availability?row=${row}&number=${number}`, {
             headers: getAuthHeaders(),
         });
-        if (!response.ok) throw new Error('Failed to check seat availability');
+        if (!response.ok) await handleApiError(response);
         return response.json();
     },
 
@@ -54,7 +55,7 @@ export const seatApi = {
         const response = await fetch(`/api/cinema-halls/${hallId}/seats/count`, {
             headers: getAuthHeaders(),
         });
-        if (!response.ok) throw new Error('Failed to count seats');
+        if (!response.ok) await handleApiError(response);
         return response.json();
     },
 
@@ -62,7 +63,7 @@ export const seatApi = {
         const response = await fetch(`/api/cinema-halls/${hallId}/seats/by-type?seatType=${seatType}`, {
             headers: getAuthHeaders(),
         });
-        if (!response.ok) throw new Error('Failed to fetch seats by type');
+        if (!response.ok) await handleApiError(response);
         return response.json();
     },
 };

@@ -7,6 +7,7 @@ import type {
     ApiResponse,
     User
 } from '@/types/auth';
+import { handleApiError } from '@/utils/apiErrorHandler';
 
 const API_URL = '/api/auth';
 
@@ -21,7 +22,7 @@ export const authApi = {
             headers: getHeaders(),
             body: JSON.stringify(credentials),
         });
-        if (!response.ok) throw new Error('Failed to login');
+        if (!response.ok) await handleApiError(response);
         return response.json();
     },
 
@@ -31,7 +32,7 @@ export const authApi = {
             headers: getHeaders(),
             body: JSON.stringify(userData),
         });
-        if (!response.ok) throw new Error('Failed to register');
+        if (!response.ok) await handleApiError(response);
         return response.json();
     },
 
@@ -48,7 +49,7 @@ export const authApi = {
         const response = await fetch(`${API_URL}/me`, {
             headers,
         });
-        if (!response.ok) throw new Error('Failed to get current user');
+        if (!response.ok) await handleApiError(response);
         return response.json();
     },
 
@@ -56,7 +57,7 @@ export const authApi = {
         const response = await fetch(`${API_URL}/check-email?email=${encodeURIComponent(email)}`, {
             headers: getHeaders(),
         });
-        if (!response.ok) throw new Error('Failed to check email');
+        if (!response.ok) await handleApiError(response);
         return response.json();
     },
 
@@ -65,7 +66,7 @@ export const authApi = {
             method: 'POST',
             headers: getHeaders(),
         });
-        if (!response.ok) throw new Error('Failed to send password reset');
+        if (!response.ok) await handleApiError(response);
         return response.json();
     },
 
@@ -74,7 +75,7 @@ export const authApi = {
             method: 'POST',
             headers: getHeaders(),
         });
-        if (!response.ok) throw new Error('Failed to reset password');
+        if (!response.ok) await handleApiError(response);
         return response.json();
     },
 
@@ -82,7 +83,7 @@ export const authApi = {
         const response = await fetch(`${API_URL}/verify-email?token=${encodeURIComponent(token)}`, {
             headers: getHeaders(),
         });
-        if (!response.ok) throw new Error('Failed to verify email');
+        if (!response.ok) await handleApiError(response);
         return response.json();
     },
 
@@ -91,7 +92,7 @@ export const authApi = {
             method: 'POST',
             headers: getHeaders(),
         });
-        if (!response.ok) throw new Error('Failed to confirm email change');
+        if (!response.ok) await handleApiError(response);
         return response.json();
     }
 };
