@@ -107,7 +107,6 @@
     font-weight: 600;
     line-height: 1.3;
     display: -webkit-box;
-    -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
     min-height: 2.6em;
@@ -126,55 +125,6 @@
     flex-wrap: wrap;
 }
 
-.duration,
-.rating,
-.status,
-.statusCurrent,
-.statusUpcoming,
-.statusArchived {
-    padding: 0.25rem 0.5rem;
-    border-radius: 6px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    border: 1px solid transparent;
-}
-
-.duration {
-    background: rgba(76, 175, 80, 0.1);
-    color: #4CAF50;
-    border-color: #4CAF50;
-}
-
-.rating {
-    background: rgba(255, 152, 0, 0.1);
-    color: #ff9800;
-    border-color: #ff9800;
-}
-
-.status {
-    background: rgba(33, 150, 243, 0.1);
-    color: #2196f3;
-    border-color: #2196f3;
-}
-
-.statusCurrent {
-    background: rgba(76, 175, 80, 0.1);
-    color: #4CAF50;
-    border-color: #4CAF50;
-}
-
-.statusUpcoming {
-    background: rgba(255, 152, 0, 0.1);
-    color: #ff9800;
-    border-color: #ff9800;
-}
-
-.statusArchived {
-    background: rgba(158, 158, 158, 0.1);
-    color: #9e9e9e;
-    border-color: #9e9e9e;
-}
-
 .releaseDate {
     color: #a0a0a0;
     font-size: 0.8rem;
@@ -188,44 +138,9 @@
     margin-top: auto;
 }
 
-.editButton {
-    background: rgba(76, 175, 80, 0.1);
-    color: #4CAF50;
-    border: 1px solid #4CAF50;
-    padding: 0.5rem 1rem;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    flex: 1;
-    font-weight: 500;
-    font-size: 0.9rem;
-}
-
-.editButton:hover {
-    background: #4CAF50;
-    color: white;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
-}
-
+.editButton,
 .deleteButton {
-    background: rgba(255, 71, 87, 0.1);
-    color: #ff4757;
-    border: 1px solid #ff4757;
-    padding: 0.5rem 1rem;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.3s ease;
     flex: 1;
-    font-weight: 500;
-    font-size: 0.9rem;
-}
-
-.deleteButton:hover {
-    background: #ff4757;
-    color: white;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(255, 71, 87, 0.3);
 }
 
 @keyframes spin {
@@ -297,15 +212,5 @@
     .title {
         font-size: 1rem;
         min-height: 2em;
-    }
-
-    .duration,
-    .rating,
-    .status,
-    .statusCurrent,
-    .statusUpcoming,
-    .statusArchived {
-        font-size: 0.75rem;
-        padding: 0.2rem 0.4rem;
     }
 }

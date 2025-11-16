@@ -1,18 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
-import type { MovieDto, MovieFormData, MovieCreateRequest, MovieUpdateRequest } from '@/types/movie';
+import type { MovieDetailResponse, MovieFormData, MovieCreateRequest, MovieUpdateRequest } from '@/types/movie';
 import { AgeRating } from '@/types/movie';
-import type { GenreDto } from '@/types/genre';
+import type { GenreResponse } from '@/types/genre';
 import { movieApi } from '@/api/movieApi';
 import { genreApi } from '@/api/genreApi';
 import type { NotificationType } from '@/hooks/common/useNotification';
 import { toBackendFormat } from '@/utils/dateUtils';
-import { PersonSelect } from '@/components/features/persons/PersonSelect';
+import { PersonSelect } from '@/components/admin/SectionMovies/MovieTab/MovieForm/PersonSelect/PersonSelect';
 import { PersonRole } from '@/types/person';
 import { GenreSearchList } from './GenreSearchList';
+import { Button, Modal, LoadingSpinner } from '@/components/ui';
 import styles from './MovieForm.module.css';
 
 interface MovieFormProps {
-    movie?: MovieDto | null;
+    movie?: MovieDetailResponse | null;
     onSuccess: () => void;
     onCancel: () => void;
     showNotification: (message: string, type?: NotificationType) => void;
@@ -24,7 +25,7 @@ export const MovieForm: React.FC<MovieFormProps> = ({
     onCancel,
     showNotification
 }) => {
-    const [genres, setGenres] = useState<GenreDto[]>([]);
+    const [genres, setGenres] = useState<GenreResponse[]>([]);
     const [isLoadingData, setIsLoadingData] = useState(true);
     const [isUploading, setIsUploading] = useState(false);
     const [posterPreview, setPosterPreview] = useState<string>('');
@@ -203,220 +204,236 @@ export const MovieForm: React.FC<MovieFormProps> = ({
         setFormData(prev => ({ ...prev, selectedScreenwriters: ids }));
     };
 
+    const ageRatingOptions = [
+        { value: AgeRating.PEGI_3, label: 'PEGI 3' },
+        { value: AgeRating.PEGI_7, label: 'PEGI 7' },
+        { value: AgeRating.PEGI_12, label: 'PEGI 12' },
+        { value: AgeRating.PEGI_16, label: 'PEGI 16' },
+        { value: AgeRating.PEGI_18, label: 'PEGI 18' }
+    ];
+
     return (
-        <div className={styles.overlay}>
-            <div className={styles.modal}>
-                <div className={styles.header}>
-                    <h2>{movie ? 'Edit Movie' : 'Add New Movie'}</h2>
-                    <button className={styles.closeButton} onClick={onCancel} type="button" aria-label="Close">×</button>
-                </div>
-
-                <form onSubmit={handleSubmit} className={styles.form}>
-                    <div className={styles.formGroup}>
-                        <label className={styles.label}>Movie Poster {!movie && '*'}</label>
-                        <div className={styles.fileUpload}>
-                            <input
-                                type="file"
-                                ref={fileInputRef}
-                                onChange={handlePosterSelect}
-                                accept="image/*"
-                                className={styles.fileInput}
-                                required={!movie}
-                            />
-                            {posterPreview ? (
-                                <div className={styles.posterPreview}>
-                                    <img
-                                        src={posterPreview}
-                                        alt="Poster preview"
-                                        onError={(e) => {
-                                            e.currentTarget.src = '/images/default-movie-poster.svg';
-                                        }}
-                                    />
-                                    <div className={styles.posterActions}>
-                                        <button
-                                            type="button"
-                                            onClick={handleRemovePoster}
-                                            className={styles.removePosterButton}
-                                        >
-                                            Remove Poster
-                                        </button>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className={styles.uploadPlaceholder}>
-                                    <span>📷</span>
-                                    <p>Click to upload poster</p>
-                                    <small>Recommended: 800x1200px, JPG/PNG</small>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
-                    <div className={styles.formGroup}>
-                        <label className={styles.label}>Title *</label>
+        <Modal
+            isOpen={true}
+            onClose={onCancel}
+            title={movie ? 'Edit Movie' : 'Add New Movie'}
+            size="large"
+        >
+            <form onSubmit={handleSubmit} className={styles.form}>
+                <div className={styles.formGroup}>
+                    <label className={styles.label}>Movie Poster {!movie && '*'}</label>
+                    <div className={styles.fileUpload}>
                         <input
-                            type="text"
-                            value={formData.title}
-                            onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                            required
-                            className={styles.input}
-                            placeholder="Enter movie title (e.g., The Matrix, Inception)"
-                            minLength={2}
-                            maxLength={100}
+                            type="file"
+                            ref={fileInputRef}
+                            onChange={handlePosterSelect}
+                            accept="image/*"
+                            className={styles.fileInput}
+                            required={!movie}
                         />
-                    </div>
-
-                    <div className={styles.formGroup}>
-                        <label className={styles.label}>Trailer URL *</label>
-                        <input
-                            type="url"
-                            value={formData.trailerUrl}
-                            onChange={(e) => setFormData(prev => ({ ...prev, trailerUrl: e.target.value }))}
-                            required
-                            className={styles.input}
-                            placeholder="https://www.youtube.com/watch?v=..."
-                            pattern="https://.*"
-                        />
-                    </div>
-
-                    <div className={styles.formGroup}>
-                        <label className={styles.label}>Description *</label>
-                        <textarea
-                            value={formData.description}
-                            onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                            required
-                            rows={4}
-                            className={styles.textarea}
-                            maxLength={1000}
-                            minLength={50}
-                            placeholder="Describe the movie plot, characters, and key elements. Minimum 50 characters."
-                        />
-                        <div className={styles.charCount}>
-                            {formData.description.length}/1000 characters
-                            {formData.description.length < 50 && formData.description.length > 0 && (
-                                <span className={styles.charWarning}> (minimum 50 characters required)</span>
-                            )}
-                        </div>
-                    </div>
-
-                    <div className={styles.formRow}>
-                        <div className={styles.formGroup}>
-                            <label className={styles.label}>Duration (minutes) *</label>
-                            <input
-                                type="number"
-                                value={formData.durationMinutes}
-                                onChange={(e) => setFormData(prev => ({ ...prev, durationMinutes: parseInt(e.target.value) || 0 }))}
-                                required
-                                min="1"
-                                max="300"
-                                className={styles.input}
-                                placeholder="e.g., 120"
-                            />
-                        </div>
-                        <div className={styles.formGroup}>
-                            <label className={styles.label}>Age Rating *</label>
-                            <select
-                                value={formData.ageRating}
-                                onChange={(e) => setFormData(prev => ({ ...prev, ageRating: e.target.value as AgeRating }))}
-                                required
-                                className={styles.select}
-                            >
-                                <option value={AgeRating.PEGI_3}>PEGI 3 - Suitable for all ages</option>
-                                <option value={AgeRating.PEGI_7}>PEGI 7 - May contain mild violence</option>
-                                <option value={AgeRating.PEGI_12}>PEGI 12 - Recommended for 12+</option>
-                                <option value={AgeRating.PEGI_16}>PEGI 16 - Suitable only for 16+</option>
-                                <option value={AgeRating.PEGI_18}>PEGI 18 - Adults only (18+)</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div className={styles.formRow}>
-                        <div className={styles.formGroup}>
-                            <label className={styles.label}>Release Date *</label>
-                            <input
-                                type="date"
-                                value={formatDateForInput(formData.releaseDate)}
-                                onChange={(e) => {
-                                    const date = e.target.value ? new Date(e.target.value) : null;
-                                    setFormData(prev => ({ ...prev, releaseDate: date }));
-                                }}
-                                required
-                                className={styles.input}
-                                min={new Date().toISOString().split('T')[0]}
-                            />
-                        </div>
-                        <div className={styles.formGroup}>
-                            <label className={styles.label}>End Showing Date *</label>
-                            <input
-                                type="date"
-                                value={formatDateForInput(formData.endShowingDate)}
-                                onChange={(e) => {
-                                    const date = e.target.value ? new Date(e.target.value) : null;
-                                    setFormData(prev => ({ ...prev, endShowingDate: date }));
-                                }}
-                                required
-                                className={styles.input}
-                                min={formatDateForInput(formData.releaseDate)}
-                            />
-                        </div>
-                    </div>
-
-                    <div className={styles.formGroup}>
-                        <label className={styles.label}>Genres *</label>
-                        {isLoadingData ? (
-                            <div className={styles.loading}>Loading genres...</div>
+                        {posterPreview ? (
+                            <div className={styles.posterPreview}>
+                                <img
+                                    src={posterPreview}
+                                    alt="Poster preview"
+                                    onError={(e) => {
+                                        e.currentTarget.src = '/images/default-movie-poster.svg';
+                                    }}
+                                />
+                                <div className={styles.posterActions}>
+                                    <Button
+                                        type="button"
+                                        variant="error"
+                                        size="small"
+                                        onClick={handleRemovePoster}
+                                    >
+                                        Remove Poster
+                                    </Button>
+                                </div>
+                            </div>
                         ) : (
-                            <GenreSearchList
-                                genres={genres}
-                                selectedIds={formData.selectedGenres}
-                                onChange={handleGenreChange}
-                            />
+                            <div className={styles.uploadPlaceholder}>
+                                <span>📷</span>
+                                <p>Click to upload poster</p>
+                                <small>Recommended: 800x1200px, JPG/PNG</small>
+                            </div>
                         )}
                     </div>
+                </div>
 
+                <div className={styles.formGroup}>
+                    <label className={styles.label}>Title *</label>
+                    <input
+                        type="text"
+                        value={formData.title}
+                        onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                        required
+                        className={styles.input}
+                        placeholder="Enter movie title"
+                        maxLength={50}
+                    />
+                    <div className={styles.charCount}>
+                        {formData.title.length}/50 characters
+                    </div>
+                </div>
+
+                <div className={styles.formGroup}>
+                    <label className={styles.label}>Trailer URL *</label>
+                    <input
+                        type="url"
+                        value={formData.trailerUrl}
+                        onChange={(e) => setFormData(prev => ({ ...prev, trailerUrl: e.target.value }))}
+                        required
+                        className={styles.input}
+                        placeholder="https://www.youtube.com/watch?v=..."
+                        pattern="https://.*"
+                    />
+                </div>
+
+                <div className={styles.formGroup}>
+                    <label className={styles.label}>Description *</label>
+                    <textarea
+                        value={formData.description}
+                        onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                        required
+                        rows={4}
+                        className={styles.textarea}
+                        maxLength={1000}
+                        placeholder="Describe the movie plot, characters, and key elements"
+                    />
+                    <div className={styles.charCount}>
+                        {formData.description.length}/1000 characters
+                    </div>
+                </div>
+
+                <div className={styles.formRow}>
                     <div className={styles.formGroup}>
-                        <label className={styles.label}>Actors *</label>
-                        <PersonSelect
-                            selectedIds={formData.selectedActors}
-                            onChange={handleActorsChange}
-                            role={PersonRole.ACTOR}
-                            placeholder="Search actors or add new..."
-                            showNotification={showNotification}
+                        <label className={styles.label}>Duration (minutes) *</label>
+                        <input
+                            type="number"
+                            value={formData.durationMinutes}
+                            onChange={(e) => setFormData(prev => ({ ...prev, durationMinutes: parseInt(e.target.value) || 0 }))}
+                            required
+                            min="1"
+                            max="300"
+                            className={styles.input}
+                            placeholder="e.g., 120"
                         />
                     </div>
-
                     <div className={styles.formGroup}>
-                        <label className={styles.label}>Directors *</label>
-                        <PersonSelect
-                            selectedIds={formData.selectedDirectors}
-                            onChange={handleDirectorsChange}
-                            role={PersonRole.DIRECTOR}
-                            placeholder="Search directors or add new..."
-                            showNotification={showNotification}
+                        <label className={styles.label}>Age Rating *</label>
+                        <select
+                            value={formData.ageRating}
+                            onChange={(e) => setFormData(prev => ({ ...prev, ageRating: e.target.value as AgeRating }))}
+                            required
+                            className={styles.select}
+                        >
+                            {ageRatingOptions.map(option => (
+                                <option key={option.value} value={option.value}>
+                                    {option.label}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                </div>
+
+                <div className={styles.formRow}>
+                    <div className={styles.formGroup}>
+                        <label className={styles.label}>Release Date *</label>
+                        <input
+                            type="date"
+                            value={formatDateForInput(formData.releaseDate)}
+                            onChange={(e) => {
+                                const date = e.target.value ? new Date(e.target.value) : null;
+                                setFormData(prev => ({ ...prev, releaseDate: date }));
+                            }}
+                            required
+                            className={styles.input}
+                            min={new Date().toISOString().split('T')[0]}
                         />
                     </div>
-
                     <div className={styles.formGroup}>
-                        <label className={styles.label}>Screenwriters *</label>
-                        <PersonSelect
-                            selectedIds={formData.selectedScreenwriters}
-                            onChange={handleScreenwritersChange}
-                            role={PersonRole.SCREENWRITER}
-                            placeholder="Search screenwriters or add new..."
-                            showNotification={showNotification}
+                        <label className={styles.label}>End Showing Date *</label>
+                        <input
+                            type="date"
+                            value={formatDateForInput(formData.endShowingDate)}
+                            onChange={(e) => {
+                                const date = e.target.value ? new Date(e.target.value) : null;
+                                setFormData(prev => ({ ...prev, endShowingDate: date }));
+                            }}
+                            required
+                            className={styles.input}
+                            min={formatDateForInput(formData.releaseDate)}
                         />
                     </div>
+                </div>
 
-                    <div className={styles.actions}>
-                        <button type="submit" className={styles.primaryButton} disabled={isUploading}>
-                            {isUploading ? 'Saving...' : (movie ? 'Update Movie' : 'Create Movie')}
-                        </button>
-                        <button type="button" onClick={onCancel} className={styles.secondaryButton}>
-                            Cancel
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
+                <div className={styles.formGroup}>
+                    <label className={styles.label}>Genres *</label>
+                    {isLoadingData ? (
+                        <div className={styles.loading}>
+                            <LoadingSpinner text="Loading genres..." />
+                        </div>
+                    ) : (
+                        <GenreSearchList
+                            genres={genres}
+                            selectedIds={formData.selectedGenres}
+                            onChange={handleGenreChange}
+                        />
+                    )}
+                </div>
+
+                <div className={styles.formGroup}>
+                    <label className={styles.label}>Actors *</label>
+                    <PersonSelect
+                        selectedIds={formData.selectedActors}
+                        onChange={handleActorsChange}
+                        role={PersonRole.ACTOR}
+                        placeholder="Search actors or add new..."
+                        showNotification={showNotification}
+                    />
+                </div>
+
+                <div className={styles.formGroup}>
+                    <label className={styles.label}>Directors *</label>
+                    <PersonSelect
+                        selectedIds={formData.selectedDirectors}
+                        onChange={handleDirectorsChange}
+                        role={PersonRole.DIRECTOR}
+                        placeholder="Search directors or add new..."
+                        showNotification={showNotification}
+                    />
+                </div>
+
+                <div className={styles.formGroup}>
+                    <label className={styles.label}>Screenwriters *</label>
+                    <PersonSelect
+                        selectedIds={formData.selectedScreenwriters}
+                        onChange={handleScreenwritersChange}
+                        role={PersonRole.SCREENWRITER}
+                        placeholder="Search screenwriters or add new..."
+                        showNotification={showNotification}
+                    />
+                </div>
+
+                <div className={styles.actions}>
+                    <Button
+                        type="submit"
+                        variant="primary"
+                        loading={isUploading}
+                        disabled={isUploading}
+                    >
+                        {movie ? 'Update Movie' : 'Create Movie'}
+                    </Button>
+                    <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={onCancel}
+                    >
+                        Cancel
+                    </Button>
+                </div>
+            </form>
+        </Modal>
     );
 };

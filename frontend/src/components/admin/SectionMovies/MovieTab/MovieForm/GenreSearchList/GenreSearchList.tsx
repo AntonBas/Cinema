@@ -1,9 +1,10 @@
 import React, { useState, useMemo } from 'react';
-import type { GenreDto } from '@/types/genre';
+import type { GenreResponse } from '@/types/genre';
+import { Input, Badge, LoadingSpinner } from '@/components/ui';
 import styles from './GenreSearchList.module.css';
 
 interface GenreSearchListProps {
-    genres?: GenreDto[];
+    genres?: GenreResponse[];
     selectedIds: number[];
     onChange: (genreId: number) => void;
     onSearchChange?: (query: string) => void;
@@ -19,10 +20,9 @@ export const GenreSearchList: React.FC<GenreSearchListProps> = ({
 }) => {
     const [localSearchQuery, setLocalSearchQuery] = useState('');
 
-    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const query = e.target.value;
-        setLocalSearchQuery(query);
-        onSearchChange?.(query);
+    const handleSearchChange = (value: string) => {
+        setLocalSearchQuery(value);
+        onSearchChange?.(value);
     };
 
     const filteredGenres = useMemo(() => {
@@ -37,13 +37,17 @@ export const GenreSearchList: React.FC<GenreSearchListProps> = ({
     }, [genres, localSearchQuery]);
 
     if (isLoading) {
-        return <div className={styles.loading}>Loading genres...</div>;
+        return (
+            <div className={styles.loading}>
+                <LoadingSpinner text="Loading genres..." />
+            </div>
+        );
     }
 
     return (
         <div className={styles.container}>
             <div className={styles.searchContainer}>
-                <input
+                <Input
                     type="text"
                     value={localSearchQuery}
                     onChange={handleSearchChange}
@@ -57,16 +61,15 @@ export const GenreSearchList: React.FC<GenreSearchListProps> = ({
                     {selectedIds.map(genreId => {
                         const genre = genres.find(g => g.id === genreId);
                         return genre ? (
-                            <span key={genreId} className={styles.selectedTag}>
-                                {genre.name}
-                                <button
-                                    type="button"
-                                    onClick={() => onChange(genreId)}
-                                    className={styles.removeTag}
-                                >
-                                    ×
-                                </button>
-                            </span>
+                            <Badge
+                                key={genreId}
+                                variant="primary"
+                                onClick={() => onChange(genreId)}
+                                className={styles.selectedTag}
+                                title={`Remove ${genre.name}`}
+                            >
+                                {genre.name} ×
+                            </Badge>
                         ) : null;
                     })}
                 </div>
@@ -77,8 +80,8 @@ export const GenreSearchList: React.FC<GenreSearchListProps> = ({
                     <label key={genre.id} className={styles.option}>
                         <input
                             type="checkbox"
-                            checked={selectedIds.includes(genre.id!)}
-                            onChange={() => onChange(genre.id!)}
+                            checked={selectedIds.includes(genre.id)}
+                            onChange={() => onChange(genre.id)}
                         />
                         <span className={styles.checkmark}></span>
                         {genre.name}

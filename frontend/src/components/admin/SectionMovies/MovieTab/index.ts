@@ -1,1 +1,0 @@
-export { MovieTab } from './MovieTab';

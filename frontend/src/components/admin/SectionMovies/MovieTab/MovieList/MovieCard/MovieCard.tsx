@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import type { MovieResponse } from '@/types/movie';
+import type { MovieCardResponse } from '@/types/movie';
 import { movieApi } from '@/api/movieApi';
 import { getAgeRatingDisplay } from '@/types/movie';
+import { Button, Badge } from '@/components/ui';
 import styles from './MovieCard.module.css';
 
 interface MovieCardProps {
-  movie: MovieResponse;
-  onEdit: (movie: MovieResponse) => void;
-  onDelete: (movie: MovieResponse) => void;
+  movie: MovieCardResponse;
+  onEdit: (movie: MovieCardResponse) => void;
+  onDelete: (movie: MovieCardResponse) => void;
 }
 
 export const MovieCard: React.FC<MovieCardProps> = ({
@@ -43,6 +44,15 @@ export const MovieCard: React.FC<MovieCardProps> = ({
     setPosterUrl('/images/default-poster.jpg');
   };
 
+  const getStatusVariant = (status: string) => {
+    const variantMap: { [key: string]: 'success' | 'warning' | 'secondary' } = {
+      'CURRENT': 'success',
+      'UPCOMING': 'warning',
+      'ARCHIVED': 'secondary'
+    };
+    return variantMap[status] || 'secondary';
+  };
+
   const getStatusDisplay = (status: string) => {
     const statusMap: { [key: string]: string } = {
       'CURRENT': 'Now Showing',
@@ -50,15 +60,6 @@ export const MovieCard: React.FC<MovieCardProps> = ({
       'ARCHIVED': 'Archived'
     };
     return statusMap[status] || status;
-  };
-
-  const getStatusClass = (status: string) => {
-    const classMap: { [key: string]: string } = {
-      'CURRENT': styles.statusCurrent,
-      'UPCOMING': styles.statusUpcoming,
-      'ARCHIVED': styles.statusArchived
-    };
-    return classMap[status] || styles.status;
   };
 
   return (
@@ -91,16 +92,18 @@ export const MovieCard: React.FC<MovieCardProps> = ({
 
         <div className={styles.meta}>
           <div className={styles.metaRow}>
-            <span className={styles.duration}>{movie.durationMinutes} min</span>
-            <span className={styles.rating}>
+            <Badge variant="success">
+              {movie.durationMinutes} min
+            </Badge>
+            <Badge variant="warning">
               {getAgeRatingDisplay(movie.ageRating)}
-            </span>
+            </Badge>
           </div>
 
           <div className={styles.metaRow}>
-            <span className={getStatusClass(movie.status)}>
+            <Badge variant={getStatusVariant(movie.status)}>
               {getStatusDisplay(movie.status)}
-            </span>
+            </Badge>
           </div>
 
           {movie.releaseDate && (
@@ -112,22 +115,22 @@ export const MovieCard: React.FC<MovieCardProps> = ({
       </div>
 
       <div className={styles.actions}>
-        <button
-          className={styles.editButton}
+        <Button
+          variant="success"
+          size="small"
           onClick={() => onEdit(movie)}
-          type="button"
-          aria-label={`Edit ${movie.title}`}
+          className={styles.editButton}
         >
           Edit
-        </button>
-        <button
-          className={styles.deleteButton}
+        </Button>
+        <Button
+          variant="error"
+          size="small"
           onClick={() => onDelete(movie)}
-          type="button"
-          aria-label={`Delete ${movie.title}`}
+          className={styles.deleteButton}
         >
           Delete
-        </button>
+        </Button>
       </div>
     </div>
   );
