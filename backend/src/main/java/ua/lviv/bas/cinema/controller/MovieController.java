@@ -38,7 +38,7 @@ public class MovieController {
 
 	private final MovieService movieService;
 	private static final String DEFAULT_PAGE = "0";
-	private static final String DEFAULT_SIZE = "10";
+	private static final String DEFAULT_SIZE = "12";
 	private static final int MAX_PAGE_SIZE = 50;
 
 	@GetMapping("/{id}")
@@ -64,8 +64,8 @@ public class MovieController {
 	}
 
 	@GetMapping("/paginated")
-	public ResponseEntity<PageResponse<MovieDetailResponse>> getPaginated(@RequestParam(defaultValue = DEFAULT_PAGE) int page,
-			@RequestParam(defaultValue = DEFAULT_SIZE) int size) {
+	public ResponseEntity<PageResponse<MovieDetailResponse>> getPaginated(
+			@RequestParam(defaultValue = DEFAULT_PAGE) int page, @RequestParam(defaultValue = DEFAULT_SIZE) int size) {
 
 		size = Math.min(size, MAX_PAGE_SIZE);
 		log.info("GET /api/movies/paginated - page: {}, size: {}", page, size);
