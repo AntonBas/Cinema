@@ -1,101 +1,94 @@
 import type {
   MovieCreateRequest,
   MovieUpdateRequest,
-  MovieDto,
-  MovieResponse
+  MovieCardResponse,
+  MovieDetailResponse
 } from '@/types/movie';
 import type { PageResponse } from '@/types/pagination';
 
-const API_BASE_URL = 'http://localhost:8080';
+const API_URL = '/api/movies';
 
-class MovieApi {
-  private baseUrl = `${API_BASE_URL}/api/movies`;
+const getAuthHeaders = (isFormData: boolean = false): HeadersInit => {
+  const token = localStorage.getItem('authToken');
+  const headers: HeadersInit = {};
 
-  private getAuthHeaders(isFormData: boolean = false): HeadersInit {
-    const token = localStorage.getItem('authToken');
-    const headers: HeadersInit = {};
-
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-
-    if (!isFormData) {
-      headers['Content-Type'] = 'application/json';
-    }
-
-    return headers;
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
   }
 
-  private async handleResponse<T>(response: Response): Promise<T> {
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`HTTP ${response.status}: ${errorText || response.statusText}`);
-    }
+  if (!isFormData) {
+    headers['Content-Type'] = 'application/json';
+  }
 
-    if (response.status === 204) {
-      return undefined as T;
-    }
+  return headers;
+};
 
+export const movieApi = {
+  getById: async (id: number): Promise<MovieDetailResponse> => {
+    const response = await fetch(`${API_URL}/${id}`, {
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to fetch movie');
     return response.json();
-  }
+  },
 
-  async getById(id: number): Promise<MovieDto> {
-    const response = await fetch(`${this.baseUrl}/${id}`, {
-      headers: this.getAuthHeaders(),
+  getBySlug: async (slug: string): Promise<MovieDetailResponse> => {
+    const response = await fetch(`${API_URL}/slug/${slug}`, {
+      headers: getAuthHeaders(),
     });
-    return this.handleResponse<MovieDto>(response);
-  }
+    if (!response.ok) throw new Error('Failed to fetch movie');
+    return response.json();
+  },
 
-  async getBySlug(slug: string): Promise<MovieDto> {
-    const response = await fetch(`${this.baseUrl}/slug/${slug}`, {
-      headers: this.getAuthHeaders(),
+  getAll: async (): Promise<MovieDetailResponse[]> => {
+    const response = await fetch(API_URL, {
+      headers: getAuthHeaders(),
     });
-    return this.handleResponse<MovieDto>(response);
-  }
+    if (!response.ok) throw new Error('Failed to fetch movies');
+    return response.json();
+  },
 
-  async getAll(): Promise<MovieDto[]> {
-    const response = await fetch(this.baseUrl, {
-      headers: this.getAuthHeaders(),
+  getPaginated: async (page: number = 0, size: number = 10): Promise<PageResponse<MovieDetailResponse>> => {
+    const response = await fetch(`${API_URL}/paginated?page=${page}&size=${size}`, {
+      headers: getAuthHeaders(),
     });
-    return this.handleResponse<MovieDto[]>(response);
-  }
+    if (!response.ok) throw new Error('Failed to fetch movies');
+    return response.json();
+  },
 
-  async getPaginated(page: number = 0, size: number = 10): Promise<PageResponse<MovieDto>> {
-    const response = await fetch(`${this.baseUrl}/paginated?page=${page}&size=${size}`, {
-      headers: this.getAuthHeaders(),
+  getCurrentlyShowing: async (): Promise<MovieCardResponse[]> => {
+    const response = await fetch(`${API_URL}/status/current`, {
+      headers: getAuthHeaders(),
     });
-    return this.handleResponse<PageResponse<MovieDto>>(response);
-  }
+    if (!response.ok) throw new Error('Failed to fetch currently showing movies');
+    return response.json();
+  },
 
-  async getCurrentlyShowing(): Promise<MovieResponse[]> {
-    const response = await fetch(`${this.baseUrl}/status/current`, {
-      headers: this.getAuthHeaders(),
+  getUpcoming: async (): Promise<MovieCardResponse[]> => {
+    const response = await fetch(`${API_URL}/status/upcoming`, {
+      headers: getAuthHeaders(),
     });
-    return this.handleResponse<MovieResponse[]>(response);
-  }
+    if (!response.ok) throw new Error('Failed to fetch upcoming movies');
+    return response.json();
+  },
 
-  async getUpcoming(): Promise<MovieResponse[]> {
-    const response = await fetch(`${this.baseUrl}/status/upcoming`, {
-      headers: this.getAuthHeaders(),
+  getArchived: async (): Promise<MovieCardResponse[]> => {
+    const response = await fetch(`${API_URL}/status/archived`, {
+      headers: getAuthHeaders(),
     });
-    return this.handleResponse<MovieResponse[]>(response);
-  }
+    if (!response.ok) throw new Error('Failed to fetch archived movies');
+    return response.json();
+  },
 
-  async getArchived(): Promise<MovieResponse[]> {
-    const response = await fetch(`${this.baseUrl}/status/archived`, {
-      headers: this.getAuthHeaders(),
+  getMoviesForSessions: async (): Promise<MovieCardResponse[]> => {
+    const response = await fetch(`${API_URL}/for-sessions`, {
+      headers: getAuthHeaders(),
     });
-    return this.handleResponse<MovieResponse[]>(response);
-  }
+    if (!response.ok) throw new Error('Failed to fetch movies for sessions');
+    return response.json();
+  },
 
-  async getMoviesForSessions(): Promise<MovieResponse[]> {
-    const response = await fetch(`${this.baseUrl}/for-sessions`, {
-      headers: this.getAuthHeaders(),
-    });
-    return this.handleResponse<MovieResponse[]>(response);
-  }
-
-  async create(movieData: MovieCreateRequest, posterFile: File): Promise<MovieDto> {
+  create: async (movieData: MovieCreateRequest, posterFile: File): Promise<MovieDetailResponse> => {
     const formData = new FormData();
 
     const { posterFile: _, ...requestData } = movieData;
@@ -106,16 +99,17 @@ class MovieApi {
 
     formData.append('posterFile', posterFile);
 
-    const response = await fetch(this.baseUrl, {
+    const response = await fetch(API_URL, {
       method: 'POST',
-      headers: this.getAuthHeaders(true),
+      headers: getAuthHeaders(true),
       body: formData,
     });
 
-    return this.handleResponse<MovieDto>(response);
-  }
+    if (!response.ok) throw new Error('Failed to create movie');
+    return response.json();
+  },
 
-  async update(id: number, movieData: MovieUpdateRequest, posterFile?: File): Promise<MovieDto> {
+  update: async (id: number, movieData: MovieUpdateRequest, posterFile?: File): Promise<MovieDetailResponse> => {
     const formData = new FormData();
 
     const { posterFile: _, removePoster, ...updateData } = movieData;
@@ -131,47 +125,37 @@ class MovieApi {
       formData.append('posterFile', posterFile);
     }
 
-    const response = await fetch(`${this.baseUrl}/${id}`, {
+    const response = await fetch(`${API_URL}/${id}`, {
       method: 'PUT',
-      headers: this.getAuthHeaders(true),
+      headers: getAuthHeaders(true),
       body: formData,
     });
 
-    return this.handleResponse<MovieDto>(response);
-  }
+    if (!response.ok) throw new Error('Failed to update movie');
+    return response.json();
+  },
 
-  async delete(id: number): Promise<void> {
-    const response = await fetch(`${this.baseUrl}/${id}`, {
+  delete: async (id: number): Promise<void> => {
+    const response = await fetch(`${API_URL}/${id}`, {
       method: 'DELETE',
-      headers: this.getAuthHeaders(),
+      headers: getAuthHeaders(),
     });
+    if (!response.ok) throw new Error('Failed to delete movie');
+  },
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Failed to delete movie: ${response.status} - ${errorText}`);
-    }
-  }
-
-  async getPoster(id: number): Promise<Blob> {
-    const response = await fetch(`${this.baseUrl}/${id}/poster`, {
-      headers: this.getAuthHeaders(),
+  getPoster: async (id: number): Promise<Blob> => {
+    const response = await fetch(`${API_URL}/${id}/poster`, {
+      headers: getAuthHeaders(),
     });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Failed to get poster: ${response.status} - ${errorText}`);
-    }
-
+    if (!response.ok) throw new Error('Failed to fetch poster');
     return response.blob();
-  }
+  },
 
-  getPosterUrl(id: number): string {
-    return `${this.baseUrl}/${id}/poster`;
-  }
+  getPosterUrl: (id: number): string => {
+    return `${API_URL}/${id}/poster`;
+  },
 
-  getPosterUrlWithTimestamp(id: number): string {
-    return `${this.baseUrl}/${id}/poster?t=${Date.now()}`;
+  getPosterUrlWithTimestamp: (id: number): string => {
+    return `${API_URL}/${id}/poster?t=${Date.now()}`;
   }
-}
-
-export const movieApi = new MovieApi();
+};

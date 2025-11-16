@@ -1,7 +1,7 @@
 import type { GenreResponse, GenreRequest } from '@/types/genre';
 import type { PageResponse, SearchParams } from '@/types/pagination';
 
-const API_URL = 'http://localhost:8080/api/genres';
+const API_URL = '/api/genres';
 
 const getAuthHeaders = () => {
   const token = localStorage.getItem('authToken');
@@ -11,35 +11,21 @@ const getAuthHeaders = () => {
   };
 };
 
-const handleResponse = async (response: Response) => {
-  if (!response.ok) {
-    let errorMessage = `Request failed with status ${response.status}`;
-
-    try {
-      const errorData = await response.json();
-      errorMessage = errorData.message || errorMessage;
-    } catch {
-    }
-
-    throw new Error(errorMessage);
-  }
-
-  return response.json();
-};
-
 export const genreApi = {
   getAll: async (): Promise<GenreResponse[]> => {
     const response = await fetch(`${API_URL}/all`, {
       headers: getAuthHeaders(),
     });
-    return handleResponse(response);
+    if (!response.ok) throw new Error('Failed to fetch genres');
+    return response.json();
   },
 
   getById: async (id: number): Promise<GenreResponse> => {
     const response = await fetch(`${API_URL}/${id}`, {
       headers: getAuthHeaders(),
     });
-    return handleResponse(response);
+    if (!response.ok) throw new Error('Failed to fetch genre');
+    return response.json();
   },
 
   create: async (genreData: GenreRequest): Promise<GenreResponse> => {
@@ -48,7 +34,8 @@ export const genreApi = {
       headers: getAuthHeaders(),
       body: JSON.stringify(genreData),
     });
-    return handleResponse(response);
+    if (!response.ok) throw new Error('Failed to create genre');
+    return response.json();
   },
 
   update: async (id: number, genreData: GenreRequest): Promise<GenreResponse> => {
@@ -57,7 +44,8 @@ export const genreApi = {
       headers: getAuthHeaders(),
       body: JSON.stringify(genreData),
     });
-    return handleResponse(response);
+    if (!response.ok) throw new Error('Failed to update genre');
+    return response.json();
   },
 
   delete: async (id: number): Promise<void> => {
@@ -65,18 +53,7 @@ export const genreApi = {
       method: 'DELETE',
       headers: getAuthHeaders(),
     });
-
-    if (!response.ok) {
-      let errorMessage = `Request failed with status ${response.status}`;
-
-      try {
-        const errorData = await response.json();
-        errorMessage = errorData.message || errorMessage;
-      } catch {
-      }
-
-      throw new Error(errorMessage);
-    }
+    if (!response.ok) throw new Error('Failed to delete genre');
   },
 
   search: async (params: SearchParams): Promise<PageResponse<GenreResponse>> => {
@@ -91,6 +68,7 @@ export const genreApi = {
       headers: getAuthHeaders(),
     });
 
-    return handleResponse(response);
+    if (!response.ok) throw new Error('Failed to search genres');
+    return response.json();
   }
 };

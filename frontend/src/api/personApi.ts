@@ -1,7 +1,7 @@
 import type { PersonResponse, PersonRequest, PersonRole, QuickCreatePersonRequest } from '@/types/person';
 import type { PageResponse } from '@/types/pagination';
 
-const API_URL = 'http://localhost:8080/api/persons';
+const API_URL = '/api/persons';
 
 const getAuthHeaders = () => {
   const token = localStorage.getItem('authToken');
@@ -11,28 +11,13 @@ const getAuthHeaders = () => {
   };
 };
 
-const handleResponse = async (response: Response) => {
-  if (!response.ok) {
-    let errorMessage = `Request failed with status ${response.status}`;
-
-    try {
-      const errorData = await response.json();
-      errorMessage = errorData.message || errorMessage;
-    } catch {
-    }
-
-    throw new Error(errorMessage);
-  }
-
-  return response.json();
-};
-
 export const personApi = {
   getById: async (id: number): Promise<PersonResponse> => {
     const response = await fetch(`${API_URL}/${id}`, {
       headers: getAuthHeaders(),
     });
-    return handleResponse(response);
+    if (!response.ok) throw new Error('Failed to fetch person');
+    return response.json();
   },
 
   create: async (personData: PersonRequest): Promise<PersonResponse> => {
@@ -41,7 +26,8 @@ export const personApi = {
       headers: getAuthHeaders(),
       body: JSON.stringify(personData),
     });
-    return handleResponse(response);
+    if (!response.ok) throw new Error('Failed to create person');
+    return response.json();
   },
 
   update: async (id: number, personData: PersonRequest): Promise<PersonResponse> => {
@@ -50,7 +36,8 @@ export const personApi = {
       headers: getAuthHeaders(),
       body: JSON.stringify(personData),
     });
-    return handleResponse(response);
+    if (!response.ok) throw new Error('Failed to update person');
+    return response.json();
   },
 
   delete: async (id: number): Promise<void> => {
@@ -58,25 +45,15 @@ export const personApi = {
       method: 'DELETE',
       headers: getAuthHeaders(),
     });
-
-    if (!response.ok) {
-      let errorMessage = `Request failed with status ${response.status}`;
-
-      try {
-        const errorData = await response.json();
-        errorMessage = errorData.message || errorMessage;
-      } catch {
-      }
-
-      throw new Error(errorMessage);
-    }
+    if (!response.ok) throw new Error('Failed to delete person');
   },
 
   getAll: async (): Promise<PersonResponse[]> => {
     const response = await fetch(API_URL, {
       headers: getAuthHeaders(),
     });
-    return handleResponse(response);
+    if (!response.ok) throw new Error('Failed to fetch persons');
+    return response.json();
   },
 
   quickCreate: async (personData: QuickCreatePersonRequest): Promise<PersonResponse> => {
@@ -85,7 +62,8 @@ export const personApi = {
       headers: getAuthHeaders(),
       body: JSON.stringify(personData),
     });
-    return handleResponse(response);
+    if (!response.ok) throw new Error('Failed to quick create person');
+    return response.json();
   },
 
   search: async (params: {
@@ -106,6 +84,7 @@ export const personApi = {
       headers: getAuthHeaders(),
     });
 
-    return handleResponse(response);
+    if (!response.ok) throw new Error('Failed to search persons');
+    return response.json();
   }
 };

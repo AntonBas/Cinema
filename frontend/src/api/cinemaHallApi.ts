@@ -16,31 +16,6 @@ const getAuthHeaders = () => {
     };
 };
 
-const handleResponseError = async (response: Response): Promise<never> => {
-    let errorMessage = 'Failed to process request';
-
-    try {
-        const errorData = await response.json();
-        errorMessage = errorData.message || errorMessage;
-    } catch {
-        if (response.status === 409) {
-            errorMessage = 'Cinema hall with this name already exists';
-        } else if (response.status === 400) {
-            errorMessage = 'Invalid request data';
-        } else if (response.status === 401) {
-            errorMessage = 'Unauthorized access';
-        } else if (response.status === 403) {
-            errorMessage = 'Access forbidden';
-        } else if (response.status === 404) {
-            errorMessage = 'Cinema hall not found';
-        } else if (response.status >= 500) {
-            errorMessage = 'Server error occurred';
-        }
-    }
-
-    throw new Error(errorMessage);
-};
-
 export const cinemaHallApi = {
     createHall: async (request: CinemaHallRequest): Promise<CinemaHallResponse> => {
         const response = await fetch(API_URL, {
@@ -48,7 +23,7 @@ export const cinemaHallApi = {
             headers: getAuthHeaders(),
             body: JSON.stringify(request),
         });
-        if (!response.ok) await handleResponseError(response);
+        if (!response.ok) throw new Error('Failed to create cinema hall');
         return response.json();
     },
 
@@ -56,7 +31,7 @@ export const cinemaHallApi = {
         const response = await fetch(`${API_URL}/${id}`, {
             headers: getAuthHeaders(),
         });
-        if (!response.ok) await handleResponseError(response);
+        if (!response.ok) throw new Error('Failed to fetch cinema hall');
         return response.json();
     },
 
@@ -66,7 +41,7 @@ export const cinemaHallApi = {
             headers: getAuthHeaders(),
             body: JSON.stringify(request),
         });
-        if (!response.ok) await handleResponseError(response);
+        if (!response.ok) throw new Error('Failed to update cinema hall');
         return response.json();
     },
 
@@ -75,14 +50,14 @@ export const cinemaHallApi = {
             method: 'DELETE',
             headers: getAuthHeaders(),
         });
-        if (!response.ok) await handleResponseError(response);
+        if (!response.ok) throw new Error('Failed to delete cinema hall');
     },
 
     getAllHalls: async (): Promise<CinemaHallResponse[]> => {
         const response = await fetch(API_URL, {
             headers: getAuthHeaders(),
         });
-        if (!response.ok) await handleResponseError(response);
+        if (!response.ok) throw new Error('Failed to fetch cinema halls');
         return response.json();
     },
 
@@ -92,7 +67,7 @@ export const cinemaHallApi = {
             headers: getAuthHeaders(),
             body: JSON.stringify(request),
         });
-        if (!response.ok) await handleResponseError(response);
+        if (!response.ok) throw new Error('Failed to generate seats');
         return response.json();
     },
 
@@ -100,7 +75,7 @@ export const cinemaHallApi = {
         const response = await fetch(`${API_URL}/${id}/with-seats`, {
             headers: getAuthHeaders(),
         });
-        if (!response.ok) await handleResponseError(response);
+        if (!response.ok) throw new Error('Failed to fetch hall with seats');
         return response.json();
     },
 
@@ -108,7 +83,7 @@ export const cinemaHallApi = {
         const response = await fetch(`${API_URL}/${id}/layout`, {
             headers: getAuthHeaders(),
         });
-        if (!response.ok) await handleResponseError(response);
+        if (!response.ok) throw new Error('Failed to fetch hall layout');
         return response.json();
     },
 
@@ -120,7 +95,7 @@ export const cinemaHallApi = {
         const response = await fetch(url, {
             headers: getAuthHeaders(),
         });
-        if (!response.ok) await handleResponseError(response);
+        if (!response.ok) throw new Error('Failed to search cinema halls');
         return response.json();
     },
 };

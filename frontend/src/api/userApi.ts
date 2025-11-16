@@ -1,10 +1,19 @@
-import { api } from '@/services/api';
 import type {
     UserProfile,
     UserUpdateRequest,
     EmailChangeResponse,
     PasswordUpdateResponse
 } from '@/types/user';
+
+const API_URL = '/api/users';
+
+const getAuthHeaders = () => {
+    const token = localStorage.getItem('authToken');
+    return {
+        'Content-Type': 'application/json',
+        'Authorization': token ? `Bearer ${token}` : '',
+    };
+};
 
 export interface PasswordUpdateRequest {
     currentPassword: string;
@@ -14,27 +23,48 @@ export interface PasswordUpdateRequest {
 
 export const userApi = {
     getProfile: async (): Promise<UserProfile> => {
-        const response = await api.get('/api/users/profile');
-        return response.data;
+        const response = await fetch(`${API_URL}/profile`, {
+            headers: getAuthHeaders(),
+        });
+        if (!response.ok) throw new Error('Failed to fetch user profile');
+        return response.json();
     },
 
     updateProfile: async (updateData: UserUpdateRequest): Promise<UserProfile> => {
-        const response = await api.put('/api/users/profile', updateData);
-        return response.data;
+        const response = await fetch(`${API_URL}/profile`, {
+            method: 'PUT',
+            headers: getAuthHeaders(),
+            body: JSON.stringify(updateData),
+        });
+        if (!response.ok) throw new Error('Failed to update profile');
+        return response.json();
     },
 
     requestEmailChange: async (newEmail: string): Promise<EmailChangeResponse> => {
-        const response = await api.post(`/api/users/email/change-request?newEmail=${encodeURIComponent(newEmail)}`);
-        return response.data;
+        const response = await fetch(`${API_URL}/email/change-request?newEmail=${encodeURIComponent(newEmail)}`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+        });
+        if (!response.ok) throw new Error('Failed to request email change');
+        return response.json();
     },
 
     confirmEmailChange: async (token: string): Promise<UserProfile> => {
-        const response = await api.post(`/api/users/email/confirm-change?token=${encodeURIComponent(token)}`);
-        return response.data;
+        const response = await fetch(`${API_URL}/email/confirm-change?token=${encodeURIComponent(token)}`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+        });
+        if (!response.ok) throw new Error('Failed to confirm email change');
+        return response.json();
     },
 
     updatePassword: async (passwordData: PasswordUpdateRequest): Promise<PasswordUpdateResponse> => {
-        const response = await api.patch('/api/users/password', passwordData);
-        return response.data;
+        const response = await fetch(`${API_URL}/password`, {
+            method: 'PATCH',
+            headers: getAuthHeaders(),
+            body: JSON.stringify(passwordData),
+        });
+        if (!response.ok) throw new Error('Failed to update password');
+        return response.json();
     }
 };
