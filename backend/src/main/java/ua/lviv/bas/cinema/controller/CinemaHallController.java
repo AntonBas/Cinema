@@ -1,6 +1,7 @@
 package ua.lviv.bas.cinema.controller;
 
 import java.util.List;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -17,7 +18,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.dto.cinemaHall.request.CinemaHallRequest;
-import ua.lviv.bas.cinema.dto.cinemaHall.request.SeatLayoutRequest;
 import ua.lviv.bas.cinema.dto.cinemaHall.response.CinemaHallResponse;
 import ua.lviv.bas.cinema.dto.cinemaHall.response.CinemaHallWithSeatsResponse;
 import ua.lviv.bas.cinema.dto.cinemaHall.response.HallLayoutResponse;
@@ -65,14 +65,6 @@ public class CinemaHallController {
 		log.info("GET /api/cinema-halls - Retrieving all cinema halls");
 		List<CinemaHallResponse> halls = cinemaHallService.getAllHalls();
 		return ResponseEntity.ok(halls);
-	}
-
-	@PostMapping("/{id}/seats")
-	public ResponseEntity<CinemaHallWithSeatsResponse> generateSeats(@PathVariable Long id,
-			@Valid @RequestBody SeatLayoutRequest request) {
-		log.info("POST /api/cinema-halls/{}/seats - Generating seats layout", id);
-		CinemaHallWithSeatsResponse hallWithSeats = cinemaHallService.generateSeats(id, request);
-		return ResponseEntity.ok(hallWithSeats);
 	}
 
 	@GetMapping("/{id}/with-seats")

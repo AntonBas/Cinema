@@ -44,7 +44,8 @@ public class CinemaHall {
 	private List<Session> sessions = new ArrayList<Session>();
 
 	@OneToMany(mappedBy = "hall", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-	private List<Seat> seats;
+	@Builder.Default
+	private List<Seat> seats = new ArrayList<Seat>();
 
 	public int getCapacity() {
 		return (seats != null) ? seats.size() : 0;
