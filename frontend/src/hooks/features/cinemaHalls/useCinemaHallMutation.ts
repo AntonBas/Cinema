@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { cinemaHallApi } from '@/api/cinemaHallApi';
-import type { CinemaHallResponse, CinemaHallRequest, SeatLayoutRequest } from '@/types';
+import type { CinemaHallResponse, CinemaHallRequest } from '@/types';
 
 export const useCinemaHallMutation = () => {
     const [loading, setLoading] = useState(false);
@@ -50,26 +50,11 @@ export const useCinemaHallMutation = () => {
         }
     }, []);
 
-    const generateSeats = useCallback(async (id: number, request: SeatLayoutRequest): Promise<any> => {
-        setLoading(true);
-        setError(null);
-        try {
-            return await cinemaHallApi.generateSeats(id, request);
-        } catch (err) {
-            const message = err instanceof Error ? err.message : 'Failed to generate seats';
-            setError(message);
-            throw err;
-        } finally {
-            setLoading(false);
-        }
-    }, []);
-
     return {
         loading,
         error,
         createHall,
         updateHall,
-        deleteHall,
-        generateSeats
+        deleteHall
     };
 };

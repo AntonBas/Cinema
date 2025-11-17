@@ -1,4 +1,4 @@
-import type { SeatResponse, SeatRowResponse } from './seat';
+import type { SeatResponse, SeatRowResponse, SeatType } from './seat';
 
 export interface CinemaHall {
     id: number;
@@ -15,6 +15,9 @@ export interface CinemaHallResponse {
 
 export interface CinemaHallRequest {
     name: string;
+    rows?: number;
+    seatsPerRow?: number;
+    defaultSeatType?: SeatType;
 }
 
 export interface CinemaHallWithSeatsResponse {

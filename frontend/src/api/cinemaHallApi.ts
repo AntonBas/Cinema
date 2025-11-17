@@ -2,8 +2,7 @@ import type {
     CinemaHallResponse,
     CinemaHallRequest,
     CinemaHallWithSeatsResponse,
-    HallLayoutResponse,
-    SeatLayoutRequest
+    HallLayoutResponse
 } from '@/types';
 import { handleApiError } from '@/utils/apiErrorHandler';
 
@@ -57,16 +56,6 @@ export const cinemaHallApi = {
     getAllHalls: async (): Promise<CinemaHallResponse[]> => {
         const response = await fetch(API_URL, {
             headers: getAuthHeaders(),
-        });
-        if (!response.ok) await handleApiError(response);
-        return response.json();
-    },
-
-    generateSeats: async (id: number, request: SeatLayoutRequest): Promise<CinemaHallWithSeatsResponse> => {
-        const response = await fetch(`${API_URL}/${id}/seats`, {
-            method: 'POST',
-            headers: getAuthHeaders(),
-            body: JSON.stringify(request),
         });
         if (!response.ok) await handleApiError(response);
         return response.json();

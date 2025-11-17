@@ -20,12 +20,6 @@ export interface SeatResponse {
     seatType: SeatType;
 }
 
-export interface SeatLayoutRequest {
-    rows: number;
-    seatsPerRow: number;
-    defaultSeatType: SeatType;
-}
-
 export interface SeatRowResponse {
     rowNumber: number;
     seatsCount: number;
