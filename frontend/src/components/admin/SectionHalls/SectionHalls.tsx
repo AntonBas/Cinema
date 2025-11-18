@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import type { CinemaHallResponse, CinemaHallRequest } from '@/types';
-import { useHalls, useCinemaHallMutation } from '@/hooks/features/cinemaHalls';
+import { useHalls, useCinemaHallMutation, useCinemaHalls } from '@/hooks/features/cinemaHalls';
 import { useNotification } from '@/hooks/common/useNotification';
-import { DeleteConfirmModal, Notification, Button } from '@/components/ui';
+import { DeleteConfirmModal, Notification, Button, LoadingSpinner } from '@/components/ui';
 import { HallsTable } from './HallsTable/HallsTable';
 import { CreateHallModal } from './CreateHallModal/CreateHallModal';
 import { EditHallModal } from './EditHallModal/EditHallModal';
@@ -18,11 +18,13 @@ export const SectionHalls: React.FC = () => {
         loading: mutationLoading,
         error: mutationError
     } = useCinemaHallMutation();
+    const { getHallLayout } = useCinemaHalls();
 
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
     const [selectedHall, setSelectedHall] = useState<CinemaHallResponse | null>(null);
     const [showLayoutModal, setShowLayoutModal] = useState(false);
+    const [hallLayouts, setHallLayouts] = useState<{ [key: number]: { rows: number, seatsPerRow: number } }>({});
     const [deleteModal, setDeleteModal] = useState<{
         isOpen: boolean;
         hall: CinemaHallResponse | null;
@@ -45,9 +47,24 @@ export const SectionHalls: React.FC = () => {
         }
     }, [mutationError, showNotification]);
 
-    const handleCreateHall = async (name: string) => {
+    const loadHallLayout = async (hallId: number) => {
         try {
-            await createHall({ name });
+            const layout = await getHallLayout(hallId);
+            setHallLayouts(prev => ({
+                ...prev,
+                [hallId]: {
+                    rows: layout.totalRows,
+                    seatsPerRow: layout.maxSeatsPerRow
+                }
+            }));
+        } catch (err) {
+            console.error('Failed to load hall layout:', err);
+        }
+    };
+
+    const handleCreateHall = async (request: CinemaHallRequest) => {
+        try {
+            await createHall(request);
             setShowCreateModal(false);
             showNotification('Cinema hall created successfully', 'success');
             await refetch();
@@ -87,8 +104,9 @@ export const SectionHalls: React.FC = () => {
         });
     };
 
-    const handleEdit = (hall: CinemaHallResponse) => {
+    const handleEdit = async (hall: CinemaHallResponse) => {
         setSelectedHall(hall);
+        await loadHallLayout(hall.id);
         setShowEditModal(true);
     };
 
@@ -100,7 +118,8 @@ export const SectionHalls: React.FC = () => {
     if (loading) {
         return (
             <div className={styles.loading}>
-                Loading cinema halls...
+                <LoadingSpinner />
+                <p>Loading cinema halls...</p>
             </div>
         );
     }
@@ -121,22 +140,31 @@ export const SectionHalls: React.FC = () => {
             ))}
 
             <div className={styles.header}>
-                <h1>Cinema Halls Management</h1>
+                <div className={styles.headerContent}>
+                    <h1>Cinema Halls Management</h1>
+                    <p className={styles.subtitle}>
+                        Manage your cinema halls, seating layouts and configurations
+                    </p>
+                </div>
                 <Button
                     variant="primary"
                     onClick={() => setShowCreateModal(true)}
                     disabled={mutationLoading}
+                    loading={mutationLoading}
                 >
-                    {mutationLoading ? 'Creating...' : 'Add New Hall'}
+                    Add Hall
                 </Button>
             </div>
 
-            <HallsTable
-                halls={halls}
-                onDelete={confirmDelete}
-                onShowLayout={handleShowLayout}
-                onEdit={handleEdit}
-            />
+            <div className={styles.content}>
+                <HallsTable
+                    halls={halls}
+                    onDelete={confirmDelete}
+                    onShowLayout={handleShowLayout}
+                    onEdit={handleEdit}
+                    loading={loading}
+                />
+            </div>
 
             {showCreateModal && (
                 <CreateHallModal
@@ -149,6 +177,7 @@ export const SectionHalls: React.FC = () => {
             {showEditModal && selectedHall && (
                 <EditHallModal
                     hall={selectedHall}
+                    currentLayout={hallLayouts[selectedHall.id]}
                     onClose={() => {
                         setShowEditModal(false);
                         setSelectedHall(null);
@@ -161,6 +190,7 @@ export const SectionHalls: React.FC = () => {
             {showLayoutModal && selectedHall && (
                 <HallLayoutModal
                     hall={selectedHall}
+                    isOpen={showLayoutModal}
                     onClose={() => {
                         setShowLayoutModal(false);
                         setSelectedHall(null);
@@ -174,7 +204,7 @@ export const SectionHalls: React.FC = () => {
 
             <DeleteConfirmModal
                 isOpen={deleteModal.isOpen}
-                onConfirm={() => deleteModal.hall && handleDeleteHall(deleteModal.hall.id!)}
+                onConfirm={() => deleteModal.hall && handleDeleteHall(deleteModal.hall.id)}
                 onCancel={() => setDeleteModal({ isOpen: false, hall: null })}
                 itemName={deleteModal.hall?.name}
                 itemType="cinema hall"

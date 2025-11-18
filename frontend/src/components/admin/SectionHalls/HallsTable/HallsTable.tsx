@@ -1,6 +1,6 @@
 import React from 'react';
 import type { CinemaHallResponse } from '@/types';
-import { Button } from '@/components/ui';
+import { Button, Badge, LoadingSpinner } from '@/components/ui';
 import styles from './HallsTable.module.css';
 
 interface HallsTableProps {
@@ -8,14 +8,25 @@ interface HallsTableProps {
     onDelete: (hall: CinemaHallResponse) => void;
     onShowLayout: (hall: CinemaHallResponse) => void;
     onEdit?: (hall: CinemaHallResponse) => void;
+    loading?: boolean;
 }
 
 export const HallsTable: React.FC<HallsTableProps> = ({
     halls,
     onDelete,
     onShowLayout,
-    onEdit
+    onEdit,
+    loading = false
 }) => {
+    if (loading) {
+        return (
+            <div className={styles.loading}>
+                <LoadingSpinner />
+                <p>Loading cinema halls...</p>
+            </div>
+        );
+    }
+
     if (halls.length === 0) {
         return (
             <div className={styles.empty}>
@@ -35,8 +46,14 @@ export const HallsTable: React.FC<HallsTableProps> = ({
             </div>
             {halls.map(hall => (
                 <div key={hall.id} className={styles.tableRow}>
-                    <div className={styles.name}>{hall.name}</div>
-                    <div className={styles.capacity}>{hall.capacity} seats</div>
+                    <div className={styles.name}>
+                        <span>{hall.name}</span>
+                    </div>
+                    <div className={styles.capacity}>
+                        <Badge variant="primary">
+                            {hall.capacity} seats
+                        </Badge>
+                    </div>
                     <div className={styles.actions}>
                         <Button
                             variant="primary"
@@ -44,7 +61,7 @@ export const HallsTable: React.FC<HallsTableProps> = ({
                             onClick={() => onShowLayout(hall)}
                             className={styles.layoutButton}
                         >
-                            Seat Layout
+                            Layout
                         </Button>
                         {onEdit && (
                             <Button
