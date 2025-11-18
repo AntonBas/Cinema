@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import styles from './Modal.module.css';
 import clsx from 'clsx';
 
-export type ModalSize = 'small' | 'medium' | 'large';
+export type ModalSize = 'small' | 'medium' | 'large' | 'fullscreen';
 
 export interface ModalProps {
     isOpen: boolean;
