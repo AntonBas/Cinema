@@ -1,70 +1,3 @@
-.modalOverlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.9);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 10000;
-    padding: 2rem;
-}
-
-.modal {
-    background: #1a1f2d;
-    border-radius: 20px;
-    border: 1px solid #3a4051;
-    width: 100%;
-    max-width: 1000px;
-    max-height: 90vh;
-    overflow-y: auto;
-    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.7);
-    position: relative;
-}
-
-.modalHeader {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1.5rem 2rem;
-    border-bottom: 1px solid #3a4051;
-    background: #1a1f2d;
-    border-radius: 20px 20px 0 0;
-    position: sticky;
-    top: 0;
-    z-index: 10;
-}
-
-.modalHeader h2 {
-    color: #ffffff;
-    margin: 0;
-    font-size: 1.5rem;
-    font-weight: 600;
-}
-
-.closeButton {
-    background: rgba(253, 95, 0, 0.1);
-    border: 1px solid rgba(253, 95, 0, 0.3);
-    color: #fd5f00;
-    font-size: 1.5rem;
-    cursor: pointer;
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 10px;
-    transition: all 0.3s ease;
-}
-
-.closeButton:hover {
-    background: #fd5f00;
-    color: white;
-    transform: rotate(90deg);
-}
-
 .modalContent {
     padding: 2rem;
 }
@@ -134,38 +67,12 @@
     align-items: center;
     gap: 1rem;
     width: 100%;
-}
-
-.rowIndicator {
-    width: 60px;
-    display: flex;
-    justify-content: flex-end;
-}
-
-.rowLetter {
-    width: 32px;
-    height: 32px;
-    background: #fd5f00;
-    color: white;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
     justify-content: center;
-    font-size: 0.9rem;
-    font-weight: 700;
-    box-shadow: 0 4px 8px rgba(253, 95, 0, 0.3);
-    transition: all 0.3s ease;
-}
-
-.row:hover .rowLetter {
-    transform: scale(1.1);
-    box-shadow: 0 6px 12px rgba(253, 95, 0, 0.4);
 }
 
 .seatsRow {
     display: flex;
     gap: 0.5rem;
-    flex: 1;
     justify-content: center;
 }
 
@@ -415,29 +322,6 @@
     font-size: 1.1rem;
 }
 
-.seatForm {
-    background: #1a1f2d;
-    padding: 2rem;
-    border-radius: 12px;
-    border: 1px solid #3a4051;
-    margin-bottom: 2rem;
-}
-
-.seatForm h3 {
-    margin: 0 0 1.5rem 0;
-    color: #ffffff;
-    font-size: 1.3rem;
-    font-weight: 600;
-    text-align: center;
-}
-
-.formRow {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 1.5rem;
-    margin-bottom: 2rem;
-}
-
 @keyframes spin {
     0% {
         transform: rotate(0deg);
@@ -449,24 +333,6 @@
 }
 
 @media (max-width: 768px) {
-    .modalOverlay {
-        padding: 1rem;
-    }
-
-    .modal {
-        margin: 0;
-        border-radius: 15px;
-        max-height: 95vh;
-    }
-
-    .modalHeader {
-        padding: 1rem 1.5rem;
-    }
-
-    .modalHeader h2 {
-        font-size: 1.25rem;
-    }
-
     .modalContent {
         padding: 1.5rem;
     }
@@ -493,16 +359,6 @@
         gap: 0.5rem;
     }
 
-    .rowIndicator {
-        width: 50px;
-    }
-
-    .rowLetter {
-        width: 28px;
-        height: 28px;
-        font-size: 0.8rem;
-    }
-
     .seat {
         width: 35px;
         height: 35px;
@@ -511,11 +367,6 @@
     .hallStats {
         grid-template-columns: 1fr;
         max-width: 200px;
-    }
-
-    .formRow {
-        grid-template-columns: 1fr;
-        gap: 1rem;
     }
 }
 

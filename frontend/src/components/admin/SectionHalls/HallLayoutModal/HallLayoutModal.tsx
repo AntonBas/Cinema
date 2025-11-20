@@ -1,34 +1,27 @@
 import React, { useState, useEffect } from 'react';
-import type { CinemaHallResponse, HallLayoutResponse, SeatLayoutRequest, SeatResponse } from '@/types';
+import type { CinemaHallResponse, HallLayoutResponse, SeatResponse } from '@/types';
 import { SeatType } from '@/types';
-import { useCinemaHalls, useCinemaHallMutation, useSeatMutation } from '@/hooks/features/cinemaHalls';
+import { useCinemaHalls, useSeatMutation } from '@/hooks/features/cinemaHalls';
 import { useNotification } from '@/hooks/common/useNotification';
-import { Button, Input, Select } from '@/components/ui';
+import { Modal } from '@/components/ui';
 import styles from './HallLayoutModal.module.css';
 
 interface HallLayoutModalProps {
     hall: CinemaHallResponse;
+    isOpen: boolean;
     onClose: () => void;
-    onSeatsGenerated?: () => void;
 }
 
 export const HallLayoutModal: React.FC<HallLayoutModalProps> = ({
     hall,
-    onClose,
-    onSeatsGenerated
+    isOpen,
+    onClose
 }) => {
-    const [showSeatForm, setShowSeatForm] = useState(false);
     const [updatingSeat, setUpdatingSeat] = useState<number | null>(null);
-    const [seatForm, setSeatForm] = useState<SeatLayoutRequest>({
-        rows: 5,
-        seatsPerRow: 10,
-        defaultSeatType: SeatType.STANDARD
-    });
     const [localLayout, setLocalLayout] = useState<HallLayoutResponse | null>(null);
 
     const { hallLayout, loading, error, getHallLayout } = useCinemaHalls();
-    const { generateSeats, loading: generating } = useCinemaHallMutation();
-    const { updateSeatType, loading: updating } = useSeatMutation();
+    const { updateSeatType, loading: updatingSeatType } = useSeatMutation();
     const { showNotification } = useNotification();
 
     useEffect(() => {
@@ -36,8 +29,10 @@ export const HallLayoutModal: React.FC<HallLayoutModalProps> = ({
     }, [hallLayout]);
 
     useEffect(() => {
-        getHallLayout(hall.id!);
-    }, [hall.id, getHallLayout]);
+        if (isOpen && hall.id) {
+            getHallLayout(hall.id);
+        }
+    }, [hall.id, getHallLayout, isOpen]);
 
     useEffect(() => {
         if (error) {
@@ -45,18 +40,8 @@ export const HallLayoutModal: React.FC<HallLayoutModalProps> = ({
         }
     }, [error, showNotification]);
 
-    const handleGenerateSeats = async () => {
-        try {
-            await generateSeats(hall.id!, seatForm);
-            await getHallLayout(hall.id!);
-            setShowSeatForm(false);
-            onSeatsGenerated?.();
-        } catch (err) {
-        }
-    };
-
     const handleSeatClick = async (seat: SeatResponse) => {
-        if (updatingSeat === seat.id || updating) return;
+        if (updatingSeat === seat.id || updatingSeatType) return;
 
         const nextSeatType = getNextSeatType(seat.seatType);
 
@@ -78,11 +63,11 @@ export const HallLayoutModal: React.FC<HallLayoutModalProps> = ({
                 };
             });
 
-            await updateSeatType(hall.id!, seat.id, nextSeatType);
+            await updateSeatType(hall.id, seat.id, nextSeatType);
 
             showNotification(`Seat type updated to ${getSeatTypeName(nextSeatType)}`, 'success');
         } catch (err) {
-            await getHallLayout(hall.id!);
+            await getHallLayout(hall.id);
             showNotification('Failed to update seat type', 'error');
         } finally {
             setUpdatingSeat(null);
@@ -110,7 +95,7 @@ export const HallLayoutModal: React.FC<HallLayoutModalProps> = ({
         <div
             className={`${styles.seat} ${styles[seat.seatType.toLowerCase()]} ${updatingSeat === seat.id ? styles.updating : ''}`}
             onClick={() => handleSeatClick(seat)}
-            title={`Row ${String.fromCharCode(65 + rowIndex)}, Seat ${seat.number} - ${getSeatTypeName(seat.seatType)}`}
+            title={`Row ${rowIndex + 1}, Seat ${seat.number} - ${getSeatTypeName(seat.seatType)}`}
         >
             {updatingSeat === seat.id ? (
                 <div className={styles.loadingSpinner}></div>
@@ -134,11 +119,6 @@ export const HallLayoutModal: React.FC<HallLayoutModalProps> = ({
                     <div className={styles.rowsContainer}>
                         {localLayout.rows.map((row, index) => (
                             <div key={`row-${row.rowNumber}`} className={styles.row}>
-                                <div className={styles.rowIndicator}>
-                                    <span className={styles.rowLetter}>
-                                        {String.fromCharCode(65 + index)}
-                                    </span>
-                                </div>
                                 <div className={styles.seatsRow}>
                                     {row.seats.map(seat => (
                                         <SeatComponent
@@ -200,118 +180,31 @@ export const HallLayoutModal: React.FC<HallLayoutModalProps> = ({
         );
     };
 
-    const seatTypeOptions = Object.values(SeatType).map(type => ({
-        value: type,
-        label: getSeatTypeName(type)
-    }));
-
     return (
-        <div className={styles.modalOverlay} onClick={onClose}>
-            <div className={styles.modal} onClick={e => e.stopPropagation()}>
-                <div className={styles.modalHeader}>
-                    <h2>{hall.name} - Seat Layout</h2>
-                    <button className={styles.closeButton} onClick={onClose}>×</button>
-                </div>
+        <Modal
+            isOpen={isOpen}
+            onClose={onClose}
+            title={`${hall.name} - Seat Layout`}
+            size="fullscreen"
+        >
+            <div className={styles.modalContent}>
+                {loading && (
+                    <div className={styles.loading}>
+                        <div className={styles.loadingSpinner}></div>
+                        Loading hall layout...
+                    </div>
+                )}
 
-                <div className={styles.modalContent}>
-                    {loading && (
-                        <div className={styles.loading}>
-                            <div className={styles.loadingSpinner}></div>
-                            Loading hall layout...
-                        </div>
-                    )}
+                {!loading && (!localLayout || localLayout.rows.length === 0) && (
+                    <div className={styles.noLayout}>
+                        <div className={styles.emptyIcon}>🎭</div>
+                        <h3>No Seats Configured</h3>
+                        <p>Please configure seats layout in hall settings.</p>
+                    </div>
+                )}
 
-                    {!loading && (!localLayout || localLayout.rows.length === 0) && (
-                        <div className={styles.noLayout}>
-                            <div className={styles.emptyIcon}>🎭</div>
-                            <h3>No Seats Configured</h3>
-                            <p>This hall doesn't have any seats yet.</p>
-                            <Button
-                                variant="primary"
-                                onClick={() => setShowSeatForm(true)}
-                                disabled={generating}
-                                className={styles.generateButton}
-                            >
-                                {generating ? 'Generating...' : 'Generate Seats Layout'}
-                            </Button>
-                        </div>
-                    )}
-
-                    {showSeatForm && (
-                        <div className={styles.seatForm}>
-                            <h3>Generate Seats Layout</h3>
-                            <div className={styles.formRow}>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                    <label style={{ color: '#ffffff', fontWeight: 600, fontSize: '0.9rem' }}>
-                                        Number of Rows:
-                                    </label>
-                                    <Input
-                                        type="number"
-                                        value={seatForm.rows.toString()}
-                                        onChange={(value) => {
-                                            const numValue = parseInt(value) || 1;
-                                            if (numValue >= 1 && numValue <= 20) {
-                                                setSeatForm({ ...seatForm, rows: numValue });
-                                            }
-                                        }}
-                                        disabled={generating}
-                                    />
-                                </div>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                    <label style={{ color: '#ffffff', fontWeight: 600, fontSize: '0.9rem' }}>
-                                        Seats per Row:
-                                    </label>
-                                    <Input
-                                        type="number"
-                                        value={seatForm.seatsPerRow.toString()}
-                                        onChange={(value) => {
-                                            const numValue = parseInt(value) || 1;
-                                            if (numValue >= 1 && numValue <= 20) {
-                                                setSeatForm({ ...seatForm, seatsPerRow: numValue });
-                                            }
-                                        }}
-                                        disabled={generating}
-                                    />
-                                </div>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                    <label style={{ color: '#ffffff', fontWeight: 600, fontSize: '0.9rem' }}>
-                                        Default Seat Type:
-                                    </label>
-                                    <Select
-                                        value={seatForm.defaultSeatType}
-                                        onChange={(value) => setSeatForm({ ...seatForm, defaultSeatType: value as SeatType })}
-                                        options={seatTypeOptions}
-                                        disabled={generating}
-                                    />
-                                </div>
-                            </div>
-                            <div style={{
-                                display: 'flex',
-                                gap: '1rem',
-                                justifyContent: 'center',
-                                marginTop: '1.5rem'
-                            }}>
-                                <Button
-                                    variant="cancel"
-                                    onClick={() => setShowSeatForm(false)}
-                                    disabled={generating}
-                                >
-                                    Cancel
-                                </Button>
-                                <Button
-                                    variant="primary"
-                                    onClick={handleGenerateSeats}
-                                    disabled={generating}
-                                >
-                                    {generating ? 'Generating...' : 'Generate Seats'}
-                                </Button>
-                            </div>
-                        </div>
-                    )}
-
-                    {renderSeats()}
-                </div>
+                {renderSeats()}
             </div>
-        </div>
+        </Modal>
     );
 };
