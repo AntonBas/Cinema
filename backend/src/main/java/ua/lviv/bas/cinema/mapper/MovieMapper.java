@@ -22,15 +22,15 @@ public interface MovieMapper {
 	@Mapping(target = "upcoming", expression = "java(isUpcoming(movie))")
 	@Mapping(target = "archived", expression = "java(isArchived(movie))")
 	@Mapping(target = "active", expression = "java(isActive(movie))")
-	MovieDetailResponse toDto(Movie movie);
+	MovieDetailResponse toDetailResponse(Movie movie);
 
-	List<MovieDetailResponse> toDtoList(List<Movie> movies);
+	List<MovieDetailResponse> toDetailResponseList(List<Movie> movies);
 
 	@Mapping(target = "posterUrl", expression = "java(getPosterUrl(movie))")
 	@Mapping(target = "currentlyShowing", expression = "java(isCurrentlyShowing(movie))")
-	MovieCardResponse toResponse(Movie movie);
+	MovieCardResponse toCardResponse(Movie movie);
 
-	List<MovieCardResponse> toResponseList(List<Movie> movies);
+	List<MovieCardResponse> toCardResponseList(List<Movie> movies);
 
 	@Mapping(target = "id", ignore = true)
 	@Mapping(target = "slug", ignore = true)

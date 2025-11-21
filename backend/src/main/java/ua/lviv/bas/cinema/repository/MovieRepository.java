@@ -25,6 +25,8 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
 
 	List<Movie> findByReleaseDateAfter(LocalDate date);
 
+	Page<Movie> findByTitleContainingIgnoreCase(String title, Pageable pageable);
+
 	boolean existsByActorsId(Long personId);
 
 	boolean existsByDirectorsId(Long personId);

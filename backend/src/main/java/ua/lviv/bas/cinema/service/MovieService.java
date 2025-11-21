@@ -13,7 +13,9 @@ import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -29,8 +31,9 @@ import ua.lviv.bas.cinema.domain.Movie;
 import ua.lviv.bas.cinema.domain.enums.MovieStatus;
 import ua.lviv.bas.cinema.dto.movie.request.MovieCreateRequest;
 import ua.lviv.bas.cinema.dto.movie.request.MovieUpdateRequest;
-import ua.lviv.bas.cinema.dto.movie.response.MovieDetailResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieCardResponse;
+import ua.lviv.bas.cinema.dto.movie.response.MovieDetailResponse;
+import ua.lviv.bas.cinema.dto.movie.response.MovieSessionSearchResponse;
 import ua.lviv.bas.cinema.exception.DuplicateEntityException;
 import ua.lviv.bas.cinema.exception.MovieNotFoundException;
 import ua.lviv.bas.cinema.mapper.MovieMapper;
@@ -53,7 +56,7 @@ public class MovieService {
 	private String uploadDir;
 
 	@Transactional
-	public MovieDetailResponse create(MovieCreateRequest request) {
+	public MovieDetailResponse createMovie(MovieCreateRequest request) {
 		log.info("Creating movie: {}", request.getTitle());
 
 		validateCreateRequest(request);
@@ -73,7 +76,7 @@ public class MovieService {
 	}
 
 	@Transactional
-	public MovieDetailResponse update(Long id, MovieUpdateRequest request) {
+	public MovieDetailResponse updateMovie(Long id, MovieUpdateRequest request) {
 		log.info("Updating movie with id: {}", id);
 
 		Movie existing = findMovieById(id);
@@ -98,7 +101,7 @@ public class MovieService {
 	}
 
 	@Transactional
-	public void delete(Long id) {
+	public void deleteMovie(Long id) {
 		log.info("Deleting movie with id: {}", id);
 
 		Movie movie = findMovieById(id);
@@ -107,66 +110,84 @@ public class MovieService {
 	}
 
 	@Transactional(readOnly = true)
-	public MovieDetailResponse getById(Long id) {
+	public MovieDetailResponse getMovieById(Long id) {
 		Movie movie = findMovieById(id);
 		return enrichWithComputedFields(movie);
 	}
 
 	@Transactional(readOnly = true)
-	public MovieDetailResponse getBySlug(String slug) {
+	public MovieDetailResponse getMovieBySlug(String slug) {
 		Movie movie = movieRepository.findBySlug(slug)
 				.orElseThrow(() -> new MovieNotFoundException("Movie not found with slug: " + slug));
 		return enrichWithComputedFields(movie);
 	}
 
 	@Transactional(readOnly = true)
-	public List<MovieDetailResponse> getAll() {
+	public List<MovieDetailResponse> getAllMovies() {
 		return movieRepository.findAll().stream().map(this::enrichWithComputedFields).toList();
 	}
 
 	@Transactional(readOnly = true)
 	public Movie getMovieEntityById(Long id) {
-		log.debug("Retrieving movie entity by id: {}", id);
 		return findMovieById(id);
 	}
 
 	@Transactional(readOnly = true)
-	public Page<MovieDetailResponse> getPaginated(Pageable pageable) {
+	public Page<MovieDetailResponse> getMoviesPaginated(Pageable pageable) {
 		return movieRepository.findAll(pageable).map(this::enrichWithComputedFields);
 	}
 
 	@Transactional(readOnly = true)
-	public List<MovieCardResponse> getCurrentlyShowing() {
+	public List<MovieCardResponse> getCurrentlyShowingMovies() {
 		LocalDate today = LocalDate.now();
 		return movieRepository.findAll().stream().filter(movie -> calculateStatus(movie, today) == MovieStatus.CURRENT)
-				.map(movieMapper::toResponse).toList();
+				.map(movieMapper::toCardResponse).toList();
 	}
 
 	@Transactional(readOnly = true)
-	public List<MovieCardResponse> getUpcoming() {
+	public List<MovieCardResponse> getUpcomingMovies() {
 		LocalDate today = LocalDate.now();
 		return movieRepository.findAll().stream().filter(movie -> calculateStatus(movie, today) == MovieStatus.UPCOMING)
-				.map(movieMapper::toResponse).toList();
+				.map(movieMapper::toCardResponse).toList();
 	}
 
 	@Transactional(readOnly = true)
-	public List<MovieCardResponse> getArchived() {
+	public List<MovieCardResponse> getArchivedMovies() {
 		LocalDate today = LocalDate.now();
 		return movieRepository.findAll().stream().filter(movie -> calculateStatus(movie, today) == MovieStatus.ARCHIVED)
-				.map(movieMapper::toResponse).toList();
+				.map(movieMapper::toCardResponse).toList();
 	}
 
 	@Transactional(readOnly = true)
-	public List<MovieCardResponse> getMoviesForSessions() {
-		LocalDate today = LocalDate.now();
-		return movieRepository.findAll().stream().filter(movie -> {
-			MovieStatus status = calculateStatus(movie, today);
-			return status == MovieStatus.CURRENT || status == MovieStatus.UPCOMING;
-		}).map(movieMapper::toResponse).toList();
+	public List<MovieSessionSearchResponse> searchMoviesForSessionCreation(String searchTerm, LocalDate sessionDate) {
+		Page<Movie> movies;
+
+		if (searchTerm != null && !searchTerm.trim().isEmpty()) {
+			movies = movieRepository.findByTitleContainingIgnoreCase(searchTerm.trim(),
+					PageRequest.of(0, 20, Sort.by("title")));
+		} else {
+			movies = movieRepository.findAll(PageRequest.of(0, 20, Sort.by("title")));
+		}
+
+		return movies.getContent().stream().filter(movie -> isMovieAvailableForDate(movie, sessionDate))
+				.map(this::toSessionSearchResponse).collect(Collectors.toList());
 	}
 
 	@Transactional(readOnly = true)
-	public ResponseEntity<byte[]> getPoster(Long id) {
+	public Page<MovieCardResponse> searchMovies(String searchTerm, Pageable pageable) {
+		Page<Movie> movies;
+
+		if (searchTerm != null && !searchTerm.trim().isEmpty()) {
+			movies = movieRepository.findByTitleContainingIgnoreCase(searchTerm.trim(), pageable);
+		} else {
+			movies = movieRepository.findAll(pageable);
+		}
+
+		return movies.map(movieMapper::toCardResponse);
+	}
+
+	@Transactional(readOnly = true)
+	public ResponseEntity<byte[]> getMoviePoster(Long id) {
 		try {
 			Movie movie = findMovieById(id);
 			if (movie.getPosterFileName() == null || movie.getPosterFileName().isBlank()) {
@@ -192,7 +213,6 @@ public class MovieService {
 	@Scheduled(cron = "0 0 0 * * ?")
 	@Transactional
 	public void updateMovieStatuses() {
-		log.info("Starting automatic movie status update");
 		LocalDate today = LocalDate.now();
 		List<Movie> allMovies = movieRepository.findAll();
 		int updatedCount = 0;
@@ -355,7 +375,7 @@ public class MovieService {
 	}
 
 	private MovieDetailResponse enrichWithComputedFields(Movie movie) {
-		MovieDetailResponse dto = movieMapper.toDto(movie);
+		MovieDetailResponse dto = movieMapper.toDetailResponse(movie);
 
 		dto.setGenreIds(movie.getGenres().stream().map(genre -> genre.getId()).collect(Collectors.toList()));
 		dto.setActorIds(movie.getActors().stream().map(person -> person.getId()).collect(Collectors.toList()));
@@ -364,5 +384,15 @@ public class MovieService {
 				movie.getScreenwriters().stream().map(person -> person.getId()).collect(Collectors.toList()));
 
 		return dto;
+	}
+
+	private boolean isMovieAvailableForDate(Movie movie, LocalDate sessionDate) {
+		return !sessionDate.isBefore(movie.getReleaseDate())
+				&& (movie.getEndShowingDate() == null || !sessionDate.isAfter(movie.getEndShowingDate()));
+	}
+
+	private MovieSessionSearchResponse toSessionSearchResponse(Movie movie) {
+		return MovieSessionSearchResponse.builder().id(movie.getId()).title(movie.getTitle())
+				.releaseYear(movie.getReleaseDate().getYear()).durationMinutes(movie.getDurationMinutes()).build();
 	}
 }
