@@ -2,7 +2,8 @@ import type {
   MovieCreateRequest,
   MovieUpdateRequest,
   MovieCardResponse,
-  MovieDetailResponse
+  MovieDetailResponse,
+  MovieSessionSearchResponse
 } from '@/types/movie';
 import type { PageResponse } from '@/types/pagination';
 import { handleApiError } from '@/utils/apiErrorHandler';
@@ -25,7 +26,7 @@ const getAuthHeaders = (isFormData: boolean = false): HeadersInit => {
 };
 
 export const movieApi = {
-  getById: async (id: number): Promise<MovieDetailResponse> => {
+  getMovieById: async (id: number): Promise<MovieDetailResponse> => {
     const response = await fetch(`${API_URL}/${id}`, {
       headers: getAuthHeaders(),
     });
@@ -33,7 +34,7 @@ export const movieApi = {
     return response.json();
   },
 
-  getBySlug: async (slug: string): Promise<MovieDetailResponse> => {
+  getMovieBySlug: async (slug: string): Promise<MovieDetailResponse> => {
     const response = await fetch(`${API_URL}/slug/${slug}`, {
       headers: getAuthHeaders(),
     });
@@ -41,7 +42,7 @@ export const movieApi = {
     return response.json();
   },
 
-  getAll: async (): Promise<MovieDetailResponse[]> => {
+  getAllMovies: async (): Promise<MovieDetailResponse[]> => {
     const response = await fetch(API_URL, {
       headers: getAuthHeaders(),
     });
@@ -49,7 +50,7 @@ export const movieApi = {
     return response.json();
   },
 
-  getPaginated: async (page: number = 0, size: number = 10): Promise<PageResponse<MovieDetailResponse>> => {
+  getMoviesPaginated: async (page: number = 0, size: number = 10): Promise<PageResponse<MovieDetailResponse>> => {
     const response = await fetch(`${API_URL}/paginated?page=${page}&size=${size}`, {
       headers: getAuthHeaders(),
     });
@@ -57,7 +58,7 @@ export const movieApi = {
     return response.json();
   },
 
-  getCurrentlyShowing: async (): Promise<MovieCardResponse[]> => {
+  getCurrentlyShowingMovies: async (): Promise<MovieCardResponse[]> => {
     const response = await fetch(`${API_URL}/status/current`, {
       headers: getAuthHeaders(),
     });
@@ -65,7 +66,7 @@ export const movieApi = {
     return response.json();
   },
 
-  getUpcoming: async (): Promise<MovieCardResponse[]> => {
+  getUpcomingMovies: async (): Promise<MovieCardResponse[]> => {
     const response = await fetch(`${API_URL}/status/upcoming`, {
       headers: getAuthHeaders(),
     });
@@ -73,7 +74,7 @@ export const movieApi = {
     return response.json();
   },
 
-  getArchived: async (): Promise<MovieCardResponse[]> => {
+  getArchivedMovies: async (): Promise<MovieCardResponse[]> => {
     const response = await fetch(`${API_URL}/status/archived`, {
       headers: getAuthHeaders(),
     });
@@ -81,15 +82,40 @@ export const movieApi = {
     return response.json();
   },
 
-  getMoviesForSessions: async (): Promise<MovieCardResponse[]> => {
-    const response = await fetch(`${API_URL}/for-sessions`, {
+  searchMovies: async (search: string, page: number = 0, size: number = 10): Promise<PageResponse<MovieCardResponse>> => {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      size: size.toString()
+    });
+
+    if (search) {
+      params.append('search', search);
+    }
+
+    const response = await fetch(`${API_URL}/search?${params}`, {
       headers: getAuthHeaders(),
     });
     if (!response.ok) await handleApiError(response);
     return response.json();
   },
 
-  create: async (movieData: MovieCreateRequest, posterFile: File): Promise<MovieDetailResponse> => {
+  searchMoviesForSessionCreation: async (sessionDate: string, search?: string): Promise<MovieSessionSearchResponse[]> => {
+    const params = new URLSearchParams({
+      sessionDate: sessionDate
+    });
+
+    if (search) {
+      params.append('search', search);
+    }
+
+    const response = await fetch(`${API_URL}/search/for-session?${params}`, {
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) await handleApiError(response);
+    return response.json();
+  },
+
+  createMovie: async (movieData: MovieCreateRequest, posterFile: File): Promise<MovieDetailResponse> => {
     const formData = new FormData();
 
     const { posterFile: _, ...requestData } = movieData;
@@ -110,7 +136,7 @@ export const movieApi = {
     return response.json();
   },
 
-  update: async (id: number, movieData: MovieUpdateRequest, posterFile?: File): Promise<MovieDetailResponse> => {
+  updateMovie: async (id: number, movieData: MovieUpdateRequest, posterFile?: File): Promise<MovieDetailResponse> => {
     const formData = new FormData();
 
     const { posterFile: _, removePoster, ...updateData } = movieData;
@@ -136,7 +162,7 @@ export const movieApi = {
     return response.json();
   },
 
-  delete: async (id: number): Promise<void> => {
+  deleteMovie: async (id: number): Promise<void> => {
     const response = await fetch(`${API_URL}/${id}`, {
       method: 'DELETE',
       headers: getAuthHeaders(),
@@ -144,7 +170,7 @@ export const movieApi = {
     if (!response.ok) await handleApiError(response);
   },
 
-  getPoster: async (id: number): Promise<Blob> => {
+  getMoviePoster: async (id: number): Promise<Blob> => {
     const response = await fetch(`${API_URL}/${id}/poster`, {
       headers: getAuthHeaders(),
     });
@@ -152,11 +178,11 @@ export const movieApi = {
     return response.blob();
   },
 
-  getPosterUrl: (id: number): string => {
+  getMoviePosterUrl: (id: number): string => {
     return `${API_URL}/${id}/poster`;
   },
 
-  getPosterUrlWithTimestamp: (id: number): string => {
+  getMoviePosterUrlWithTimestamp: (id: number): string => {
     return `${API_URL}/${id}/poster?t=${Date.now()}`;
   }
 };

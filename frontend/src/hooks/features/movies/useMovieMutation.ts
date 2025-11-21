@@ -10,7 +10,7 @@ export const useMovieMutation = () => {
         setLoading(true);
         setError(null);
         try {
-            const movie = await movieApi.create(movieData, posterFile);
+            const movie = await movieApi.createMovie(movieData, posterFile);
             return movie;
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to create movie';
@@ -25,7 +25,7 @@ export const useMovieMutation = () => {
         setLoading(true);
         setError(null);
         try {
-            const movie = await movieApi.update(id, movieData, posterFile);
+            const movie = await movieApi.updateMovie(id, movieData, posterFile);
             return movie;
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to update movie';
@@ -40,7 +40,7 @@ export const useMovieMutation = () => {
         setLoading(true);
         setError(null);
         try {
-            await movieApi.delete(id);
+            await movieApi.deleteMovie(id);
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to delete movie';
             setError(message);

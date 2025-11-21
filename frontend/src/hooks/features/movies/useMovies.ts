@@ -11,7 +11,7 @@ export const useMovies = () => {
         setLoading(true);
         setError(null);
         try {
-            const data = await movieApi.getAll();
+            const data = await movieApi.getAllMovies();
             setMovies(data);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to load movies');

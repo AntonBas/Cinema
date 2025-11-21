@@ -96,6 +96,13 @@ export interface MovieShortResponse {
   posterFileName?: string;
 }
 
+export interface MovieSessionSearchResponse {
+  id: number;
+  title: string;
+  releaseYear: number;
+  durationMinutes: number;
+}
+
 export interface MovieFormData {
   title: string;
   trailerUrl: string;

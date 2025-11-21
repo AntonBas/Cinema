@@ -38,9 +38,9 @@ export const MovieTab: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await movieApi.getCurrentlyShowing();
-      const upcoming = await movieApi.getUpcoming();
-      const archived = await movieApi.getArchived();
+      const response = await movieApi.getCurrentlyShowingMovies();
+      const upcoming = await movieApi.getUpcomingMovies();
+      const archived = await movieApi.getArchivedMovies();
 
       const all = [...response, ...upcoming, ...archived];
       setAllMovies(all);
@@ -61,13 +61,13 @@ export const MovieTab: React.FC = () => {
       let response: MovieCardResponse[];
       switch (activeTab) {
         case 'CURRENT':
-          response = await movieApi.getCurrentlyShowing();
+          response = await movieApi.getCurrentlyShowingMovies();
           break;
         case 'UPCOMING':
-          response = await movieApi.getUpcoming();
+          response = await movieApi.getUpcomingMovies();
           break;
         case 'ARCHIVED':
-          response = await movieApi.getArchived();
+          response = await movieApi.getArchivedMovies();
           break;
         default:
           response = [];
@@ -136,7 +136,7 @@ export const MovieTab: React.FC = () => {
 
   const handleEdit = async (movie: MovieCardResponse) => {
     try {
-      const fullMovie = await movieApi.getById(movie.id);
+      const fullMovie = await movieApi.getMovieById(movie.id);
       setEditingMovie(fullMovie);
       setIsModalOpen(true);
     } catch (error) {

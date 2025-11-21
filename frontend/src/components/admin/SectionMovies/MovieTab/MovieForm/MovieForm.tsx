@@ -147,7 +147,7 @@ export const MovieForm: React.FC<MovieFormProps> = ({
                     removePoster: formData.removePoster
                 };
 
-                await movieApi.update(movie.id, updateRequest, posterFile);
+                await movieApi.updateMovie(movie.id, updateRequest, posterFile);
                 showNotification('Movie updated successfully!', 'success');
             } else {
                 if (!posterFile) {
@@ -169,7 +169,7 @@ export const MovieForm: React.FC<MovieFormProps> = ({
                     actorIds: formData.selectedActors,
                     posterFile: posterFile
                 };
-                await movieApi.create(createRequest, posterFile);
+                await movieApi.createMovie(createRequest, posterFile);
                 showNotification('Movie created successfully!', 'success');
             }
 

@@ -7,23 +7,20 @@ export const useMovieStatus = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const fetchMoviesByStatus = useCallback(async (status: 'current' | 'upcoming' | 'archived' | 'for-sessions') => {
+    const fetchMoviesByStatus = useCallback(async (status: 'current' | 'upcoming' | 'archived') => {
         setLoading(true);
         setError(null);
         try {
             let response: MovieCardResponse[];
             switch (status) {
                 case 'current':
-                    response = await movieApi.getCurrentlyShowing();
+                    response = await movieApi.getCurrentlyShowingMovies();
                     break;
                 case 'upcoming':
-                    response = await movieApi.getUpcoming();
+                    response = await movieApi.getUpcomingMovies();
                     break;
                 case 'archived':
-                    response = await movieApi.getArchived();
-                    break;
-                case 'for-sessions':
-                    response = await movieApi.getMoviesForSessions();
+                    response = await movieApi.getArchivedMovies();
                     break;
                 default:
                     response = [];
