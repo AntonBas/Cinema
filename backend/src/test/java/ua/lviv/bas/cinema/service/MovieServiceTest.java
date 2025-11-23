@@ -49,8 +49,8 @@ class MovieServiceTest {
 	private MovieService movieService;
 
 	private Movie movie;
-	private MovieDetailResponse movieDto;
-	private MovieCardResponse movieResponse;
+	private MovieDetailResponse movieDetailResponse;
+	private MovieCardResponse movieCardResponse;
 	private MovieCreateRequest createRequest;
 	private MovieUpdateRequest updateRequest;
 	private Genre genre;
@@ -72,16 +72,16 @@ class MovieServiceTest {
 				.directors(new HashSet<>(List.of(director))).screenwriters(new HashSet<>(List.of(screenwriter)))
 				.genres(new HashSet<>(List.of(genre))).build();
 
-		movieDto = MovieDetailResponse.builder().id(1L).title("Test Movie").slug("test-movie")
+		movieDetailResponse = MovieDetailResponse.builder().id(1L).title("Test Movie").slug("test-movie")
 				.trailerUrl("https://example.com/trailer").description("Test Description").durationMinutes(120)
 				.releaseDate(LocalDate.now().plusDays(1)).endShowingDate(LocalDate.now().plusDays(30))
 				.status(MovieStatus.UPCOMING).ageRating(AgeRating.PEGI_12).posterFileName("poster.jpg")
 				.actorIds(List.of(1L)).directorIds(List.of(2L)).screenwriterIds(List.of(3L)).genreIds(List.of(1L))
 				.build();
 
-		movieResponse = MovieCardResponse.builder().id(1L).title("Test Movie").slug("test-movie").durationMinutes(120)
-				.ageRating(AgeRating.PEGI_12).releaseDate(LocalDate.now().plusDays(1)).status(MovieStatus.UPCOMING)
-				.currentlyShowing(false).build();
+		movieCardResponse = MovieCardResponse.builder().id(1L).title("Test Movie").slug("test-movie")
+				.durationMinutes(120).ageRating(AgeRating.PEGI_12).releaseDate(LocalDate.now().plusDays(1))
+				.status(MovieStatus.UPCOMING).currentlyShowing(false).build();
 
 		createRequest = MovieCreateRequest.builder().title("New Movie").trailerUrl("https://example.com/trailer")
 				.description("Test Description").durationMinutes(120).releaseDate(LocalDate.now().plusDays(1))
@@ -99,7 +99,7 @@ class MovieServiceTest {
 	}
 
 	@Test
-	void create_ShouldCreateMovieSuccessfully() {
+	void createMovie_ShouldCreateMovieSuccessfully() {
 		when(slugService.generateUniqueSlug("New Movie")).thenReturn("new-movie");
 		when(movieRepository.findBySlug("new-movie")).thenReturn(Optional.empty());
 		when(movieMapper.toEntity(createRequest)).thenReturn(movie);
@@ -108,9 +108,9 @@ class MovieServiceTest {
 		when(personRepository.findAllById(List.of(2L))).thenReturn(List.of(director));
 		when(personRepository.findAllById(List.of(3L))).thenReturn(List.of(screenwriter));
 		when(movieRepository.save(movie)).thenReturn(movie);
-		when(movieMapper.toDto(movie)).thenReturn(movieDto);
+		when(movieMapper.toDetailResponse(movie)).thenReturn(movieDetailResponse);
 
-		MovieDetailResponse result = movieService.create(createRequest);
+		MovieDetailResponse result = movieService.createMovie(createRequest);
 
 		assertNotNull(result);
 		assertEquals(1L, result.getId());
@@ -119,11 +119,11 @@ class MovieServiceTest {
 	}
 
 	@Test
-	void getById_ShouldReturnMovie() {
+	void getMovieById_ShouldReturnMovie() {
 		when(movieRepository.findById(1L)).thenReturn(Optional.of(movie));
-		when(movieMapper.toDto(movie)).thenReturn(movieDto);
+		when(movieMapper.toDetailResponse(movie)).thenReturn(movieDetailResponse);
 
-		MovieDetailResponse result = movieService.getById(1L);
+		MovieDetailResponse result = movieService.getMovieById(1L);
 
 		assertNotNull(result);
 		assertEquals(1L, result.getId());
@@ -131,22 +131,22 @@ class MovieServiceTest {
 	}
 
 	@Test
-	void getBySlug_ShouldReturnMovie() {
+	void getMovieBySlug_ShouldReturnMovie() {
 		when(movieRepository.findBySlug("test-movie")).thenReturn(Optional.of(movie));
-		when(movieMapper.toDto(movie)).thenReturn(movieDto);
+		when(movieMapper.toDetailResponse(movie)).thenReturn(movieDetailResponse);
 
-		MovieDetailResponse result = movieService.getBySlug("test-movie");
+		MovieDetailResponse result = movieService.getMovieBySlug("test-movie");
 
 		assertNotNull(result);
 		assertEquals("test-movie", result.getSlug());
 	}
 
 	@Test
-	void getAll_ShouldReturnAllMovies() {
+	void getAllMovies_ShouldReturnAllMovies() {
 		when(movieRepository.findAll()).thenReturn(List.of(movie));
-		when(movieMapper.toDto(movie)).thenReturn(movieDto);
+		when(movieMapper.toDetailResponse(movie)).thenReturn(movieDetailResponse);
 
-		List<MovieDetailResponse> result = movieService.getAll();
+		List<MovieDetailResponse> result = movieService.getAllMovies();
 
 		assertNotNull(result);
 		assertEquals(1, result.size());
@@ -154,58 +154,58 @@ class MovieServiceTest {
 	}
 
 	@Test
-	void getCurrentlyShowing_ShouldReturnCurrentMovies() {
+	void getCurrentlyShowingMovies_ShouldReturnCurrentMovies() {
 		movie.setReleaseDate(LocalDate.now().minusDays(1));
 		movie.setEndShowingDate(LocalDate.now().plusDays(30));
 
 		when(movieRepository.findAll()).thenReturn(List.of(movie));
-		when(movieMapper.toResponse(movie)).thenReturn(movieResponse);
+		when(movieMapper.toCardResponse(movie)).thenReturn(movieCardResponse);
 
-		List<MovieCardResponse> result = movieService.getCurrentlyShowing();
+		List<MovieCardResponse> result = movieService.getCurrentlyShowingMovies();
 
 		assertNotNull(result);
 		assertEquals(1, result.size());
 	}
 
 	@Test
-	void getUpcoming_ShouldReturnUpcomingMovies() {
+	void getUpcomingMovies_ShouldReturnUpcomingMovies() {
 		movie.setReleaseDate(LocalDate.now().plusDays(1));
 		movie.setEndShowingDate(LocalDate.now().plusDays(30));
 
 		when(movieRepository.findAll()).thenReturn(List.of(movie));
-		when(movieMapper.toResponse(movie)).thenReturn(movieResponse);
+		when(movieMapper.toCardResponse(movie)).thenReturn(movieCardResponse);
 
-		List<MovieCardResponse> result = movieService.getUpcoming();
+		List<MovieCardResponse> result = movieService.getUpcomingMovies();
 
 		assertNotNull(result);
 		assertEquals(1, result.size());
 	}
 
 	@Test
-	void getArchived_ShouldReturnArchivedMovies() {
+	void getArchivedMovies_ShouldReturnArchivedMovies() {
 		movie.setReleaseDate(LocalDate.now().minusDays(10));
 		movie.setEndShowingDate(LocalDate.now().minusDays(1));
 
 		when(movieRepository.findAll()).thenReturn(List.of(movie));
-		when(movieMapper.toResponse(movie)).thenReturn(movieResponse);
+		when(movieMapper.toCardResponse(movie)).thenReturn(movieCardResponse);
 
-		List<MovieCardResponse> result = movieService.getArchived();
+		List<MovieCardResponse> result = movieService.getArchivedMovies();
 
 		assertNotNull(result);
 		assertEquals(1, result.size());
 	}
 
 	@Test
-	void delete_ShouldDeleteMovieSuccessfully() {
+	void deleteMovie_ShouldDeleteMovieSuccessfully() {
 		when(movieRepository.findById(1L)).thenReturn(Optional.of(movie));
 
-		movieService.delete(1L);
+		movieService.deleteMovie(1L);
 
 		verify(movieRepository).delete(movie);
 	}
 
 	@Test
-	void update_ShouldUpdateMovieSuccessfully() {
+	void updateMovie_ShouldUpdateMovieSuccessfully() {
 		when(movieRepository.findById(1L)).thenReturn(Optional.of(movie));
 		when(slugService.generateUniqueSlug("Updated Movie")).thenReturn("updated-movie");
 		when(slugService.isSlugAvailableForMovie("updated-movie", 1L)).thenReturn(true);
@@ -214,11 +214,22 @@ class MovieServiceTest {
 		when(personRepository.findAllById(List.of(2L))).thenReturn(List.of(director));
 		when(personRepository.findAllById(List.of(3L))).thenReturn(List.of(screenwriter));
 		when(movieRepository.save(movie)).thenReturn(movie);
-		when(movieMapper.toDto(movie)).thenReturn(movieDto);
+		when(movieMapper.toDetailResponse(movie)).thenReturn(movieDetailResponse);
 
-		MovieDetailResponse result = movieService.update(1L, updateRequest);
+		MovieDetailResponse result = movieService.updateMovie(1L, updateRequest);
 
 		assertNotNull(result);
 		verify(movieRepository).save(movie);
+	}
+
+	@Test
+	void getMovieEntityById_ShouldReturnMovieEntity() {
+		when(movieRepository.findById(1L)).thenReturn(Optional.of(movie));
+
+		Movie result = movieService.getMovieEntityById(1L);
+
+		assertNotNull(result);
+		assertEquals(1L, result.getId());
+		assertEquals("Test Movie", result.getTitle());
 	}
 }

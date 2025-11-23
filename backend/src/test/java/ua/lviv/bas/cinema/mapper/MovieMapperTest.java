@@ -48,8 +48,8 @@ class MovieMapperTest {
 	}
 
 	@Test
-	void toDto_ShouldMapAllFields() {
-		MovieDetailResponse result = movieMapper.toDto(movie);
+	void toDetailResponse_ShouldMapAllFields() {
+		MovieDetailResponse result = movieMapper.toDetailResponse(movie);
 
 		assertThat(result).isNotNull();
 		assertThat(result.getId()).isEqualTo(1L);
@@ -63,19 +63,24 @@ class MovieMapperTest {
 		assertThat(result.getStatus()).isEqualTo(MovieStatus.UPCOMING);
 		assertThat(result.getAgeRating()).isEqualTo(AgeRating.PEGI_12);
 		assertThat(result.getPosterFileName()).isEqualTo("poster.jpg");
+		assertThat(result.getPosterUrl()).isEqualTo("/api/movies/1/poster");
+		assertThat(result.isCurrentlyShowing()).isFalse();
+		assertThat(result.isUpcoming()).isTrue();
+		assertThat(result.isArchived()).isFalse();
+		assertThat(result.isActive()).isTrue();
 	}
 
 	@Test
-	void toDtoList_ShouldMapList() {
+	void toDetailResponseList_ShouldMapList() {
 		List<Movie> movies = List.of(movie);
-		List<MovieDetailResponse> result = movieMapper.toDtoList(movies);
+		List<MovieDetailResponse> result = movieMapper.toDetailResponseList(movies);
 		assertThat(result).hasSize(1);
 		assertThat(result.get(0).getTitle()).isEqualTo("Test Movie");
 	}
 
 	@Test
-	void toResponse_ShouldMapResponseFields() {
-		MovieCardResponse result = movieMapper.toResponse(movie);
+	void toCardResponse_ShouldMapResponseFields() {
+		MovieCardResponse result = movieMapper.toCardResponse(movie);
 
 		assertThat(result).isNotNull();
 		assertThat(result.getId()).isEqualTo(1L);
@@ -85,12 +90,14 @@ class MovieMapperTest {
 		assertThat(result.getAgeRating()).isEqualTo(AgeRating.PEGI_12);
 		assertThat(result.getReleaseDate()).isEqualTo(movie.getReleaseDate());
 		assertThat(result.getStatus()).isEqualTo(MovieStatus.UPCOMING);
+		assertThat(result.getPosterUrl()).isEqualTo("/api/movies/1/poster");
+		assertThat(result.isCurrentlyShowing()).isFalse();
 	}
 
 	@Test
-	void toResponseList_ShouldMapList() {
+	void toCardResponseList_ShouldMapList() {
 		List<Movie> movies = List.of(movie);
-		List<MovieCardResponse> result = movieMapper.toResponseList(movies);
+		List<MovieCardResponse> result = movieMapper.toCardResponseList(movies);
 		assertThat(result).hasSize(1);
 		assertThat(result.get(0).getTitle()).isEqualTo("Test Movie");
 	}
@@ -142,14 +149,28 @@ class MovieMapperTest {
 	}
 
 	@Test
-	void toDto_WithNullMovie_ShouldReturnNull() {
-		MovieDetailResponse result = movieMapper.toDto(null);
+	void toDetailResponse_WithNullMovie_ShouldReturnNull() {
+		MovieDetailResponse result = movieMapper.toDetailResponse(null);
 		assertThat(result).isNull();
 	}
 
 	@Test
-	void toResponse_WithNullMovie_ShouldReturnNull() {
-		MovieCardResponse result = movieMapper.toResponse(null);
+	void toCardResponse_WithNullMovie_ShouldReturnNull() {
+		MovieCardResponse result = movieMapper.toCardResponse(null);
 		assertThat(result).isNull();
+	}
+
+	@Test
+	void getPosterUrl_WithNullPoster_ShouldReturnDefault() {
+		Movie movieWithoutPoster = Movie.builder().id(1L).posterFileName(null).build();
+		String result = movieMapper.getPosterUrl(movieWithoutPoster);
+		assertThat(result).isEqualTo("/images/default-poster.jpg");
+	}
+
+	@Test
+	void getPosterUrl_WithBlankPoster_ShouldReturnDefault() {
+		Movie movieWithBlankPoster = Movie.builder().id(1L).posterFileName("").build();
+		String result = movieMapper.getPosterUrl(movieWithBlankPoster);
+		assertThat(result).isEqualTo("/images/default-poster.jpg");
 	}
 }
