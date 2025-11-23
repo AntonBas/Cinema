@@ -7,23 +7,7 @@
     background: linear-gradient(135deg, #1a1f2d 0%, #2a3041 100%);
     border-radius: 12px;
     border: 1px solid #3a4051;
-    position: relative;
-    overflow: hidden;
-}
-
-.filters::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(253, 95, 0, 0.1), transparent);
-    transition: left 0.6s ease;
-}
-
-.filters:hover::before {
-    left: 100%;
+    align-items: end;
 }
 
 .filterGroup {
@@ -39,47 +23,91 @@
     margin-bottom: 0.25rem;
 }
 
-.input,
-.select {
-    padding: 0.875rem;
-    border: 1px solid #3a4051;
-    border-radius: 8px;
-    background: #12161f;
-    color: #ffffff;
-    font-size: 0.9rem;
-    transition: all 0.3s ease;
+.inputContainer,
+.selectContainer {
     width: 100%;
 }
 
-.input:focus,
-.select:focus {
-    outline: none;
-    border-color: #fd5f00;
-    box-shadow: 0 0 0 3px rgba(253, 95, 0, 0.1);
+.movieSearch {
+    position: relative;
 }
 
-.input:hover,
-.select:hover {
-    border-color: #4a5568;
+.movieInputWrapper {
+    position: relative;
+    width: 100%;
+}
+
+.movieInput {
+    width: 100%;
+    cursor: pointer;
+}
+
+.clearMovieButton {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    z-index: 10;
+}
+
+.movieResults {
+    position: absolute;
+    top: calc(100% + 2px);
+    left: 0;
+    right: 0;
+    background: #1a1f2d;
+    border: 1px solid #3a4051;
+    border-radius: 8px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.movieOption {
+    padding: 0.75rem;
+    cursor: pointer;
+    border-bottom: 1px solid #2a3041;
+    transition: background-color 0.2s ease;
+}
+
+.movieOption:hover {
+    background: #2a3041;
+}
+
+.movieOption:last-child {
+    border-bottom: none;
+}
+
+.movieTitle {
+    color: #ffffff;
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+}
+
+.movieDetails {
+    color: #a0a8c0;
+    font-size: 0.8rem;
+}
+
+.noResults {
+    padding: 0.75rem;
+    color: #a0a8c0;
+    font-style: italic;
+    text-align: center;
 }
 
 .clearButton {
-    background: rgba(255, 71, 87, 0.1);
-    color: #ff4757;
-    border: 1px solid rgba(255, 71, 87, 0.3);
-    padding: 0.875rem 1.5rem;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 500;
-    transition: all 0.3s ease;
-    align-self: end;
-    margin-top: 1.5rem;
-}
-
-.clearButton:hover {
-    background: rgba(255, 71, 87, 0.2);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(255, 71, 87, 0.2);
+    grid-column: 1 / -1;
+    justify-self: start;
+    margin-top: 0.5rem;
 }
 
 @media (max-width: 768px) {
@@ -90,7 +118,8 @@
     }
 
     .clearButton {
-        align-self: stretch;
-        margin-top: 1rem;
+        grid-column: 1;
+        justify-self: stretch;
+        margin-top: 0.5rem;
     }
 }

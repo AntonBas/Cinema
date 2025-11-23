@@ -3,7 +3,10 @@
     max-width: 1400px;
     margin: 0 auto;
     animation: fadeIn 0.3s ease;
-    background-color: #12161f;
+    background-color: #2a3041;
+    border-radius: 16px;
+    border: 1px solid #3a4051;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
     min-height: 100vh;
 }
 
@@ -28,30 +31,12 @@
 }
 
 .createButton {
-    background: linear-gradient(135deg, #fd5f00, #e05500);
-    color: white;
-    border: none;
-    padding: 0.875rem 1.75rem;
-    border-radius: 10px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 1rem;
     box-shadow: 0 4px 15px rgba(253, 95, 0, 0.3);
 }
 
 .createButton:hover:not(:disabled) {
     transform: translateY(-3px);
     box-shadow: 0 8px 25px rgba(253, 95, 0, 0.4);
-}
-
-.createButton:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none;
 }
 
 .error {
@@ -65,22 +50,6 @@
     align-items: center;
     border: 1px solid rgba(255, 71, 87, 0.3);
     box-shadow: 0 4px 15px rgba(255, 71, 87, 0.2);
-}
-
-.error button {
-    background: rgba(255, 255, 255, 0.2);
-    color: white;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    padding: 0.5rem 1rem;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: 500;
-    transition: all 0.3s ease;
-}
-
-.error button:hover {
-    background: rgba(255, 255, 255, 0.3);
-    transform: translateY(-1px);
 }
 
 @keyframes fadeIn {
@@ -114,20 +83,16 @@
         width: 100%;
         justify-content: center;
     }
-}
-
-@media (max-width: 480px) {
-    .header h1 {
-        font-size: 1.6rem;
-    }
 
     .error {
         flex-direction: column;
         gap: 1rem;
         text-align: center;
     }
+}
 
-    .error button {
-        width: 100%;
+@media (max-width: 480px) {
+    .header h1 {
+        font-size: 1.6rem;
     }
 }

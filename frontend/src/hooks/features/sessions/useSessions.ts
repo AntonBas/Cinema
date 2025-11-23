@@ -25,19 +25,13 @@ export const useSessions = (
         setError(null);
 
         try {
-            let response: PageResponse<SessionResponse>;
-
-            if (initialFilters?.date) {
-                response = await sessionApi.getSessionsByDate(initialFilters.date, searchParams);
-            } else if (initialFilters?.hallId) {
-                response = await sessionApi.getSessionsByHall(initialFilters.hallId, searchParams);
-            } else if (initialFilters?.movieId) {
-                response = await sessionApi.getSessionsByMovie(initialFilters.movieId, searchParams);
-            } else if (initialFilters?.days) {
-                response = await sessionApi.getUpcomingSessions(initialFilters.days, searchParams);
-            } else {
-                response = await sessionApi.getAllSessions(searchParams);
-            }
+            const response = await sessionApi.getFilteredSessions(
+                initialFilters?.date,
+                initialFilters?.hallId,
+                initialFilters?.movieId,
+                initialFilters?.days,
+                searchParams
+            );
 
             setSessions(response.content);
             setPagination(response);

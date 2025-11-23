@@ -3,17 +3,16 @@ import { useSessions, useSessionMutation, useSessionFilters, useNotification } f
 import { SessionFilters } from './SessionFilters';
 import { SessionTable } from './SessionTable';
 import { SessionModal } from './SessionModal';
-import { DeleteConfirmModal } from '@/components/ui/DeleteConfirmModal';
-import { Pagination } from '@/components/ui/Pagination';
-import type { SessionDto, SessionRequest } from '@/types/session';
+import { DeleteConfirmModal, Pagination, Button } from '@/components/ui';
+import type { SessionResponse, SessionRequest } from '@/types/session';
 import styles from './SectionSchedule.module.css';
 
 export const SectionSchedule: React.FC = () => {
     const { showNotification } = useNotification();
-    const [selectedSession, setSelectedSession] = useState<SessionDto | null>(null);
+    const [selectedSession, setSelectedSession] = useState<SessionResponse | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-    const [sessionToDelete, setSessionToDelete] = useState<SessionDto | null>(null);
+    const [sessionToDelete, setSessionToDelete] = useState<SessionResponse | null>(null);
 
     const [pagination, setPagination] = useState({
         page: 0,
@@ -29,12 +28,12 @@ export const SectionSchedule: React.FC = () => {
         setIsModalOpen(true);
     };
 
-    const handleEditSession = (session: SessionDto) => {
+    const handleEditSession = (session: SessionResponse) => {
         setSelectedSession(session);
         setIsModalOpen(true);
     };
 
-    const handleDeleteSession = (session: SessionDto) => {
+    const handleDeleteSession = (session: SessionResponse) => {
         setSessionToDelete(session);
         setDeleteModalOpen(true);
     };
@@ -66,7 +65,9 @@ export const SectionSchedule: React.FC = () => {
             setIsModalOpen(false);
             setSelectedSession(null);
             refetch();
-        } catch (error) { }
+        } catch (error) {
+            throw error;
+        }
     };
 
     const handlePageChange = (page: number) => {
@@ -77,13 +78,15 @@ export const SectionSchedule: React.FC = () => {
         <div className={styles.container}>
             <div className={styles.header}>
                 <h1>Session Schedule</h1>
-                <button
-                    className={styles.createButton}
+                <Button
+                    variant="primary"
+                    size="large"
                     onClick={handleCreateSession}
                     disabled={mutationLoading}
+                    className={styles.createButton}
                 >
-                    + Create Session
-                </button>
+                    Add Session
+                </Button>
             </div>
 
             <SessionFilters
@@ -99,7 +102,13 @@ export const SectionSchedule: React.FC = () => {
             {error && (
                 <div className={styles.error}>
                     {error}
-                    <button onClick={refetch}>Retry</button>
+                    <Button
+                        variant="secondary"
+                        size="small"
+                        onClick={refetch}
+                    >
+                        Retry
+                    </Button>
                 </div>
             )}
 

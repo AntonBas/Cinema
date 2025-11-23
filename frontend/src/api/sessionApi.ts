@@ -142,6 +142,30 @@ export const sessionApi = {
         return response.json();
     },
 
+    getFilteredSessions: async (
+        date?: string,
+        hallId?: number,
+        movieId?: number,
+        days?: number,
+        params?: SearchParams
+    ): Promise<PageResponse<SessionResponse>> => {
+        const searchParams = new URLSearchParams();
+
+        if (date) searchParams.append('date', date);
+        if (hallId) searchParams.append('hallId', hallId.toString());
+        if (movieId) searchParams.append('movieId', movieId.toString());
+        if (days) searchParams.append('days', days.toString());
+        if (params?.page) searchParams.append('page', params.page.toString());
+        if (params?.size) searchParams.append('size', params.size.toString());
+
+        const url = `${API_URL}/filter?${searchParams}`;
+        const response = await fetch(url, {
+            headers: getAuthHeaders(),
+        });
+        if (!response.ok) await handleApiError(response);
+        return response.json();
+    },
+
     checkTimeConflict: async (
         hallId: number,
         startTime: string,

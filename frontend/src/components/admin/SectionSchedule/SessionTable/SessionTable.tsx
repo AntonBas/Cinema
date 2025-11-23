@@ -1,12 +1,13 @@
 import React from 'react';
-import type { SessionDto } from '@/types/session';
+import type { SessionResponse } from '@/types/session';
+import { Button, Badge } from '@/components/ui';
 import styles from './SessionTable.module.css';
 
 interface SessionTableProps {
-    sessions: SessionDto[];
+    sessions: SessionResponse[];
     loading: boolean;
-    onEdit: (session: SessionDto) => void;
-    onDelete: (session: SessionDto) => void;
+    onEdit: (session: SessionResponse) => void;
+    onDelete: (session: SessionResponse) => void;
 }
 
 export const SessionTable: React.FC<SessionTableProps> = ({
@@ -28,7 +29,7 @@ export const SessionTable: React.FC<SessionTableProps> = ({
     };
 
     const formatPrice = (price: number) => {
-        return `$${price.toFixed(2)}`;
+        return `${price.toFixed(2)} UAH`;
     };
 
     return (
@@ -63,24 +64,28 @@ export const SessionTable: React.FC<SessionTableProps> = ({
                             <td>{formatDateTime(session.endTime)}</td>
                             <td>{formatPrice(session.price)}</td>
                             <td>
-                                <span className={`${styles.status} ${session.available ? styles.available : styles.ended}`}>
+                                <Badge
+                                    variant={session.available ? 'success' : 'error'}
+                                >
                                     {session.available ? 'Available' : 'Ended'}
-                                </span>
+                                </Badge>
                             </td>
                             <td>
                                 <div className={styles.actions}>
-                                    <button
+                                    <Button
+                                        variant="success"
+                                        size="small"
                                         onClick={() => onEdit(session)}
-                                        className={styles.editButton}
                                     >
                                         Edit
-                                    </button>
-                                    <button
+                                    </Button>
+                                    <Button
+                                        variant="error"
+                                        size="small"
                                         onClick={() => onDelete(session)}
-                                        className={styles.deleteButton}
                                     >
                                         Delete
-                                    </button>
+                                    </Button>
                                 </div>
                             </td>
                         </tr>

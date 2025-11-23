@@ -1,12 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { useMovies, useHalls } from '@/hooks/features';
-import type { SessionDto, SessionRequest } from '@/types/session';
+import React, { useState, useEffect, useRef } from 'react';
+import { useHalls, useMovieSessionSearch } from '@/hooks/features';
+import { Input, Select, Button, Modal, Notification } from '@/components/ui';
+import type { SessionResponse, SessionRequest } from '@/types/session';
+import type { MovieSessionSearchResponse } from '@/types/movie';
 import styles from './SessionModal.module.css';
 
 interface SessionModalProps {
     isOpen: boolean;
-    session: SessionDto | null;
-    onSave: (data: SessionRequest) => void;
+    session: SessionResponse | null;
+    onSave: (data: SessionRequest) => Promise<void>;
     onClose: () => void;
     loading: boolean;
 }
@@ -18,8 +20,8 @@ export const SessionModal: React.FC<SessionModalProps> = ({
     onClose,
     loading
 }) => {
-    const { movies, loading: moviesLoading } = useMovies();
     const { halls, loading: hallsLoading } = useHalls();
+    const { movies, searchMoviesForSession } = useMovieSessionSearch();
 
     const [formData, setFormData] = useState({
         startTime: '',
@@ -28,7 +30,23 @@ export const SessionModal: React.FC<SessionModalProps> = ({
         hallId: ''
     });
 
+    const [selectedMovie, setSelectedMovie] = useState<MovieSessionSearchResponse | null>(null);
     const [errors, setErrors] = useState<Record<string, string>>({});
+    const [showMovieResults, setShowMovieResults] = useState(false);
+    const [movieSearchTerm, setMovieSearchTerm] = useState('');
+    const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+    const movieSearchRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (movieSearchRef.current && !movieSearchRef.current.contains(event.target as Node)) {
+                setShowMovieResults(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     useEffect(() => {
         if (session) {
@@ -38,6 +56,13 @@ export const SessionModal: React.FC<SessionModalProps> = ({
                 movieId: session.movie.id.toString(),
                 hallId: session.hall.id.toString()
             });
+            setSelectedMovie({
+                id: session.movie.id,
+                title: session.movie.title,
+                releaseYear: new Date(session.startTime).getFullYear(),
+                durationMinutes: session.movie.durationMinutes
+            });
+            setMovieSearchTerm(session.movie.title);
         } else {
             setFormData({
                 startTime: '',
@@ -45,16 +70,61 @@ export const SessionModal: React.FC<SessionModalProps> = ({
                 movieId: '',
                 hallId: ''
             });
+            setSelectedMovie(null);
+            setMovieSearchTerm('');
         }
         setErrors({});
+        setNotification(null);
+        setShowMovieResults(false);
     }, [session, isOpen]);
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+    const showNotification = (message: string, type: 'success' | 'error') => {
+        setNotification({ message, type });
+    };
 
-        if (errors[name]) {
-            setErrors(prev => ({ ...prev, [name]: '' }));
+    const handleStartTimeChange = (value: string) => {
+        setFormData(prev => ({ ...prev, startTime: value }));
+        if (errors.startTime) {
+            setErrors(prev => ({ ...prev, startTime: '' }));
+        }
+    };
+
+    const handlePriceChange = (value: string) => {
+        setFormData(prev => ({ ...prev, price: value }));
+        if (errors.price) {
+            setErrors(prev => ({ ...prev, price: '' }));
+        }
+    };
+
+    const handleMovieInputClick = async () => {
+        if (formData.startTime) {
+            await searchMoviesForSession(formData.startTime.split('T')[0], '');
+            setShowMovieResults(true);
+        }
+    };
+
+    const handleMovieInputChange = async (value: string) => {
+        setMovieSearchTerm(value);
+        if (formData.startTime) {
+            await searchMoviesForSession(formData.startTime.split('T')[0], value);
+            setShowMovieResults(true);
+        }
+    };
+
+    const handleMovieSelect = (movie: MovieSessionSearchResponse) => {
+        setSelectedMovie(movie);
+        setFormData(prev => ({ ...prev, movieId: movie.id.toString() }));
+        setMovieSearchTerm(movie.title);
+        setShowMovieResults(false);
+        if (errors.movieId) {
+            setErrors(prev => ({ ...prev, movieId: '' }));
+        }
+    };
+
+    const handleHallChange = (value: string | number) => {
+        setFormData(prev => ({ ...prev, hallId: value.toString() }));
+        if (errors.hallId) {
+            setErrors(prev => ({ ...prev, hallId: '' }));
         }
     };
 
@@ -74,7 +144,7 @@ export const SessionModal: React.FC<SessionModalProps> = ({
         }
 
         if (!formData.price || Number(formData.price) < 10) {
-            newErrors.price = 'Price must be at least $10';
+            newErrors.price = 'Price must be at least 10 UAH';
         }
 
         if (!formData.movieId) {
@@ -89,7 +159,7 @@ export const SessionModal: React.FC<SessionModalProps> = ({
         return Object.keys(newErrors).length === 0;
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
         if (!validateForm()) return;
@@ -101,107 +171,133 @@ export const SessionModal: React.FC<SessionModalProps> = ({
             hallId: Number(formData.hallId)
         };
 
-        onSave(sessionData);
+        try {
+            await onSave(sessionData);
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Failed to save session';
+            showNotification(errorMessage, 'error');
+        }
     };
 
-    if (!isOpen) return null;
+    const hallOptions = halls.map(hall => ({
+        value: hall.id.toString(),
+        label: `${hall.name} (${hall.capacity} seats)`
+    }));
 
     return (
-        <div className={styles.modalOverlay}>
-            <div className={styles.modal}>
-                <div className={styles.header}>
-                    <h2>{session ? 'Edit Session' : 'Create Session'}</h2>
-                    <button className={styles.closeButton} onClick={onClose}>×</button>
-                </div>
-
+        <>
+            <Modal
+                isOpen={isOpen}
+                onClose={onClose}
+                title={session ? 'Edit Session' : 'Create Session'}
+                size="medium"
+            >
                 <form onSubmit={handleSubmit} className={styles.form}>
                     <div className={styles.formGroup}>
-                        <label htmlFor="startTime">Start Time *</label>
-                        <input
-                            id="startTime"
-                            name="startTime"
+                        <label>Start Time *</label>
+                        <Input
                             type="datetime-local"
                             value={formData.startTime}
-                            onChange={handleChange}
-                            className={errors.startTime ? styles.error : ''}
+                            onChange={handleStartTimeChange}
+                            error={errors.startTime}
                         />
-                        {errors.startTime && <span className={styles.errorText}>{errors.startTime}</span>}
                     </div>
 
                     <div className={styles.formGroup}>
-                        <label htmlFor="price">Price ($) *</label>
-                        <input
-                            id="price"
-                            name="price"
+                        <label>Price (UAH) *</label>
+                        <Input
                             type="number"
                             step="0.01"
                             min="10"
                             value={formData.price}
-                            onChange={handleChange}
-                            className={errors.price ? styles.error : ''}
+                            onChange={handlePriceChange}
+                            error={errors.price}
                         />
-                        {errors.price && <span className={styles.errorText}>{errors.price}</span>}
                     </div>
 
                     <div className={styles.formGroup}>
-                        <label htmlFor="movieId">Movie *</label>
-                        <select
-                            id="movieId"
-                            name="movieId"
-                            value={formData.movieId}
-                            onChange={handleChange}
-                            className={errors.movieId ? styles.error : ''}
-                            disabled={moviesLoading}
-                        >
-                            <option value="">Select a movie</option>
-                            {movies.map(movie => (
-                                <option key={movie.id} value={movie.id}>
-                                    {movie.title} ({movie.durationMinutes} min)
-                                </option>
-                            ))}
-                        </select>
+                        <label>Movie *</label>
+                        <div className={styles.movieSearch} ref={movieSearchRef}>
+                            <Input
+                                type="text"
+                                value={movieSearchTerm}
+                                onChange={handleMovieInputChange}
+                                onClick={handleMovieInputClick}
+                                placeholder="Click to see available movies or search..."
+                                disabled={!formData.startTime}
+                            />
+                            {!formData.startTime && (
+                                <div className={styles.hint}>Select start time first to see available movies</div>
+                            )}
+
+                            {showMovieResults && movies.length > 0 && (
+                                <div className={styles.movieResults}>
+                                    {movies.map(movie => (
+                                        <div
+                                            key={movie.id}
+                                            className={`${styles.movieOption} ${selectedMovie?.id === movie.id ? styles.selected : ''}`}
+                                            onClick={() => handleMovieSelect(movie)}
+                                        >
+                                            <div className={styles.movieTitle}>{movie.title}</div>
+                                            <div className={styles.movieDetails}>
+                                                {movie.releaseYear} • {movie.durationMinutes} min
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            {showMovieResults && movies.length === 0 && (
+                                <div className={styles.noResults}>No movies available for selected date</div>
+                            )}
+                        </div>
                         {errors.movieId && <span className={styles.errorText}>{errors.movieId}</span>}
                     </div>
 
                     <div className={styles.formGroup}>
-                        <label htmlFor="hallId">Hall *</label>
-                        <select
-                            id="hallId"
-                            name="hallId"
+                        <label>Hall *</label>
+                        <Select
                             value={formData.hallId}
-                            onChange={handleChange}
-                            className={errors.hallId ? styles.error : ''}
+                            onChange={handleHallChange}
+                            options={hallOptions}
                             disabled={hallsLoading}
-                        >
-                            <option value="">Select a hall</option>
-                            {halls.map(hall => (
-                                <option key={hall.id} value={hall.id}>
-                                    {hall.name} ({hall.capacity} seats)
-                                </option>
-                            ))}
-                        </select>
+                            placeholder="Select hall"
+                        />
                         {errors.hallId && <span className={styles.errorText}>{errors.hallId}</span>}
                     </div>
 
                     <div className={styles.actions}>
-                        <button
+                        <Button
                             type="button"
+                            variant="secondary"
                             onClick={onClose}
-                            className={styles.cancelButton}
                             disabled={loading}
                         >
                             Cancel
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                             type="submit"
-                            className={styles.saveButton}
-                            disabled={loading || moviesLoading || hallsLoading}
+                            variant="success"
+                            disabled={loading || hallsLoading}
+                            loading={loading}
                         >
-                            {loading ? 'Saving...' : (session ? 'Update' : 'Create')}
-                        </button>
+                            {session ? 'Update' : 'Create'}
+                        </Button>
                     </div>
                 </form>
-            </div>
-        </div>
+            </Modal>
+
+            {notification && (
+                <Notification
+                    id="session-modal-notification"
+                    message={notification.message}
+                    type={notification.type}
+                    isVisible={true}
+                    onClose={() => setNotification(null)}
+                    duration={5000}
+                    isStatic={false}
+                />
+            )}
+        </>
     );
 };
