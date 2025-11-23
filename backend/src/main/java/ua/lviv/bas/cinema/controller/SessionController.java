@@ -49,7 +49,8 @@ public class SessionController {
 	}
 
 	@PutMapping("/{id}")
-	public ResponseEntity<SessionResponse> updateSession(@PathVariable Long id, @Valid @RequestBody SessionRequest request) {
+	public ResponseEntity<SessionResponse> updateSession(@PathVariable Long id,
+			@Valid @RequestBody SessionRequest request) {
 		log.info("PUT /api/sessions/{} - Updating session", id);
 		SessionResponse updated = sessionService.updateSession(id, request);
 		return ResponseEntity.ok(updated);
@@ -117,6 +118,18 @@ public class SessionController {
 			@PageableDefault(size = 20, sort = "startTime") Pageable pageable) {
 		log.info("GET /api/sessions/today - Retrieving today's sessions");
 		Page<SessionResponse> sessions = sessionService.getTodaySessions(pageable);
+		return ResponseEntity.ok(sessions);
+	}
+
+	@GetMapping("/filter")
+	public ResponseEntity<Page<SessionResponse>> getFilteredSessions(
+			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+			@RequestParam(required = false) Long hallId, @RequestParam(required = false) Long movieId,
+			@RequestParam(required = false) Integer days,
+			@PageableDefault(size = 20, sort = "startTime") Pageable pageable) {
+		log.info("GET /api/sessions/filter - Retrieving filtered sessions: date={}, hallId={}, movieId={}, days={}",
+				date, hallId, movieId, days);
+		Page<SessionResponse> sessions = sessionService.getFilteredSessions(date, hallId, movieId, days, pageable);
 		return ResponseEntity.ok(sessions);
 	}
 

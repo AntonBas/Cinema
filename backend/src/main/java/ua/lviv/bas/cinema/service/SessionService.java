@@ -43,6 +43,8 @@ public class SessionService {
 		Movie movie = movieService.getMovieEntityById(request.getMovieId());
 		CinemaHall hall = cinemaHallService.getHallEntityById(request.getHallId());
 
+		validateMovieAvailability(movie, request.getStartTime());
+
 		if (hasTimeConflict(hall.getId(), request.getStartTime(), movie.getDurationMinutes(), null)) {
 			throw new ConflictException("Time conflict: there is already a session in this hall at the selected time");
 		}
@@ -76,6 +78,8 @@ public class SessionService {
 
 		Movie movie = movieService.getMovieEntityById(request.getMovieId());
 		CinemaHall hall = cinemaHallService.getHallEntityById(request.getHallId());
+
+		validateMovieAvailability(movie, request.getStartTime());
 
 		if (hasTimeConflict(hall.getId(), request.getStartTime(), movie.getDurationMinutes(), id)) {
 			throw new ConflictException("Time conflict: there is already a session in this hall at the selected time");
@@ -174,5 +178,39 @@ public class SessionService {
 				excludeSessionId);
 
 		return !conflictingSessions.isEmpty();
+	}
+
+	@Transactional(readOnly = true)
+	public Page<SessionResponse> getFilteredSessions(LocalDate date, Long hallId, Long movieId, Integer days,
+			Pageable pageable) {
+		log.debug("Retrieving filtered sessions: date={}, hallId={}, movieId={}, days={}", date, hallId, movieId, days);
+
+		LocalDateTime startTime = null;
+		LocalDateTime endTime = null;
+
+		if (date != null) {
+			startTime = date.atStartOfDay();
+			endTime = date.atTime(23, 59, 59);
+		} else if (days != null) {
+			startTime = LocalDateTime.now();
+			endTime = startTime.plusDays(days);
+		}
+
+		Page<Session> sessions = sessionRepository.findFilteredSessions(startTime, endTime, hallId, movieId, pageable);
+		return sessions.map(sessionMapper::toDto);
+	}
+
+	private void validateMovieAvailability(Movie movie, LocalDateTime sessionStartTime) {
+		LocalDate sessionDate = sessionStartTime.toLocalDate();
+
+		if (sessionDate.isBefore(movie.getReleaseDate())) {
+			throw new IllegalArgumentException("Movie '" + movie.getTitle() + "' releases on " + movie.getReleaseDate()
+					+ " - cannot create session for " + sessionDate);
+		}
+
+		if (movie.getEndShowingDate() != null && sessionDate.isAfter(movie.getEndShowingDate())) {
+			throw new IllegalArgumentException("Movie '" + movie.getTitle() + "' ended showing on "
+					+ movie.getEndShowingDate() + " - cannot create session for " + sessionDate);
+		}
 	}
 }
