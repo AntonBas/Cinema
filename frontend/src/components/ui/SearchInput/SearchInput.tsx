@@ -6,13 +6,14 @@ export interface SearchInputProps {
     placeholder?: string;
     delay?: number;
     className?: string;
+    disabled?: boolean;
 }
-
 export const SearchInput: React.FC<SearchInputProps> = ({
     onSearch,
     placeholder = "Search...",
     delay = 300,
-    className = ''
+    className = '',
+    disabled = false
 }) => {
     const [query, setQuery] = useState('');
     const [isSearching, setIsSearching] = useState(false);
@@ -52,6 +53,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
                     placeholder={placeholder}
                     className={styles.searchInput}
                     aria-label="Search"
+                    disabled={disabled}
                 />
                 {isSearching && <div className={styles.spinner} aria-label="Searching">⏳</div>}
                 {query && !isSearching && (
@@ -60,6 +62,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
                         onClick={handleClear}
                         className={styles.clearButton}
                         aria-label="Clear search"
+                        disabled={disabled}
                     >
                         ×
                     </button>

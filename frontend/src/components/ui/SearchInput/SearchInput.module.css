@@ -68,6 +68,16 @@
     background: rgba(255, 255, 255, 0.1);
 }
 
+.searchInput:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.clearButton:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
 @media (max-width: 768px) {
     .searchContainer {
         max-width: none;
