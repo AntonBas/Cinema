@@ -7,6 +7,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -62,7 +63,8 @@ class SessionServiceTest {
 		sessionRequest = SessionRequest.builder().startTime(LocalDateTime.now().plusHours(2))
 				.price(new BigDecimal("250.00")).movieId(1L).hallId(1L).build();
 
-		movie = Movie.builder().id(1L).durationMinutes(120).build();
+		movie = Movie.builder().id(1L).durationMinutes(120).title("Test Movie")
+				.releaseDate(LocalDate.now().minusDays(1)).endShowingDate(LocalDate.now().plusDays(30)).build();
 
 		hall = CinemaHall.builder().id(1L).build();
 
@@ -207,5 +209,147 @@ class SessionServiceTest {
 		boolean result = sessionService.hasTimeConflict(1L, fixedTime, 120, null);
 
 		assertThat(result).isFalse();
+	}
+
+	@Test
+	void getFilteredSessions_ShouldReturnFilteredSessionsByDate() {
+		LocalDate date = LocalDate.of(2024, 1, 15);
+		Page<Session> sessionPage = new PageImpl<>(List.of(session));
+
+		when(sessionRepository.findFilteredSessions(any(), any(), any(), any(), any())).thenReturn(sessionPage);
+		when(sessionMapper.toDto(session)).thenReturn(sessionDto);
+
+		Page<SessionResponse> result = sessionService.getFilteredSessions(date, null, null, null, pageable);
+
+		assertThat(result).isNotNull();
+		assertThat(result.getContent()).hasSize(1);
+		verify(sessionRepository).findFilteredSessions(any(), any(), any(), any(), any());
+	}
+
+	@Test
+	void getFilteredSessions_ShouldReturnFilteredSessionsByHallAndMovie() {
+		Page<Session> sessionPage = new PageImpl<>(List.of(session));
+
+		when(sessionRepository.findFilteredSessions(any(), any(), any(), any(), any())).thenReturn(sessionPage);
+		when(sessionMapper.toDto(session)).thenReturn(sessionDto);
+
+		Page<SessionResponse> result = sessionService.getFilteredSessions(null, 1L, 1L, null, pageable);
+
+		assertThat(result).isNotNull();
+		assertThat(result.getContent()).hasSize(1);
+		verify(sessionRepository).findFilteredSessions(any(), any(), any(), any(), any());
+	}
+
+	@Test
+	void getFilteredSessions_ShouldReturnFilteredSessionsByDays() {
+		Page<Session> sessionPage = new PageImpl<>(List.of(session));
+
+		when(sessionRepository.findFilteredSessions(any(), any(), any(), any(), any())).thenReturn(sessionPage);
+		when(sessionMapper.toDto(session)).thenReturn(sessionDto);
+
+		Page<SessionResponse> result = sessionService.getFilteredSessions(null, null, null, 7, pageable);
+
+		assertThat(result).isNotNull();
+		assertThat(result.getContent()).hasSize(1);
+		verify(sessionRepository).findFilteredSessions(any(), any(), any(), any(), any());
+	}
+
+	@Test
+	void getFilteredSessions_ShouldReturnAllSessions_WhenNoFilters() {
+		Page<Session> sessionPage = new PageImpl<>(List.of(session));
+
+		when(sessionRepository.findFilteredSessions(any(), any(), any(), any(), any())).thenReturn(sessionPage);
+		when(sessionMapper.toDto(session)).thenReturn(sessionDto);
+
+		Page<SessionResponse> result = sessionService.getFilteredSessions(null, null, null, null, pageable);
+
+		assertThat(result).isNotNull();
+		assertThat(result.getContent()).hasSize(1);
+		verify(sessionRepository).findFilteredSessions(any(), any(), any(), any(), any());
+	}
+
+	@Test
+	void getSessionsByDate_ShouldReturnSessionsForDate() {
+		LocalDate date = LocalDate.of(2024, 1, 15);
+		Page<Session> sessionPage = new PageImpl<>(List.of(session));
+
+		when(sessionRepository.findByStartTimeBetween(any(), any(), any())).thenReturn(sessionPage);
+		when(sessionMapper.toDto(session)).thenReturn(sessionDto);
+
+		Page<SessionResponse> result = sessionService.getSessionsByDate(date, pageable);
+
+		assertThat(result).isNotNull();
+		assertThat(result.getContent()).hasSize(1);
+		verify(sessionRepository).findByStartTimeBetween(any(), any(), any());
+	}
+
+	@Test
+	void getSessionsByHall_ShouldReturnSessionsForHall() {
+		Page<Session> sessionPage = new PageImpl<>(List.of(session));
+
+		when(sessionRepository.findByHallId(1L, pageable)).thenReturn(sessionPage);
+		when(sessionMapper.toDto(session)).thenReturn(sessionDto);
+
+		Page<SessionResponse> result = sessionService.getSessionsByHall(1L, pageable);
+
+		assertThat(result).isNotNull();
+		assertThat(result.getContent()).hasSize(1);
+		verify(sessionRepository).findByHallId(1L, pageable);
+	}
+
+	@Test
+	void getSessionsByMovie_ShouldReturnSessionsForMovie() {
+		Page<Session> sessionPage = new PageImpl<>(List.of(session));
+
+		when(sessionRepository.findByMovieId(1L, pageable)).thenReturn(sessionPage);
+		when(sessionMapper.toDto(session)).thenReturn(sessionDto);
+
+		Page<SessionResponse> result = sessionService.getSessionsByMovie(1L, pageable);
+
+		assertThat(result).isNotNull();
+		assertThat(result.getContent()).hasSize(1);
+		verify(sessionRepository).findByMovieId(1L, pageable);
+	}
+
+	@Test
+	void getAvailableSessions_ShouldReturnAvailableSessions() {
+		Page<Session> sessionPage = new PageImpl<>(List.of(session));
+
+		when(sessionRepository.findByStartTimeAfter(any(), any())).thenReturn(sessionPage);
+		when(sessionMapper.toDto(session)).thenReturn(sessionDto);
+
+		Page<SessionResponse> result = sessionService.getAvailableSessions(pageable);
+
+		assertThat(result).isNotNull();
+		assertThat(result.getContent()).hasSize(1);
+		verify(sessionRepository).findByStartTimeAfter(any(), any());
+	}
+
+	@Test
+	void getUpcomingSessions_ShouldReturnUpcomingSessions() {
+		Page<Session> sessionPage = new PageImpl<>(List.of(session));
+
+		when(sessionRepository.findByStartTimeBetween(any(), any(), any())).thenReturn(sessionPage);
+		when(sessionMapper.toDto(session)).thenReturn(sessionDto);
+
+		Page<SessionResponse> result = sessionService.getUpcomingSessions(7, pageable);
+
+		assertThat(result).isNotNull();
+		assertThat(result.getContent()).hasSize(1);
+		verify(sessionRepository).findByStartTimeBetween(any(), any(), any());
+	}
+
+	@Test
+	void getTodaySessions_ShouldReturnTodaySessions() {
+		Page<Session> sessionPage = new PageImpl<>(List.of(session));
+
+		when(sessionRepository.findByStartTimeBetween(any(), any(), any())).thenReturn(sessionPage);
+		when(sessionMapper.toDto(session)).thenReturn(sessionDto);
+
+		Page<SessionResponse> result = sessionService.getTodaySessions(pageable);
+
+		assertThat(result).isNotNull();
+		assertThat(result.getContent()).hasSize(1);
+		verify(sessionRepository).findByStartTimeBetween(any(), any(), any());
 	}
 }
