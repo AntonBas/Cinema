@@ -98,4 +98,26 @@ public class CustomUserDetailsServiceTest {
 
 		verify(userRepository).findByEmail(disabledEmail);
 	}
+
+	@Test
+	void loadUserById_ShouldReturnDetails_WhenUserExists() {
+		Long userId = 1L;
+		when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+
+		UserDetails userDetails = userDetailsService.loadUserById(userId);
+
+		assertNotNull(userDetails);
+		assertEquals(email, userDetails.getUsername());
+		verify(userRepository).findById(userId);
+	}
+
+	@Test
+	void loadUserById_ShouldThrowException_WhenUserNotFound() {
+		Long userId = 999L;
+		when(userRepository.findById(userId)).thenReturn(Optional.empty());
+
+		assertThrows(UsernameNotFoundException.class, () -> userDetailsService.loadUserById(userId));
+
+		verify(userRepository).findById(userId);
+	}
 }

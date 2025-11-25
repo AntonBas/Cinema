@@ -19,9 +19,8 @@ public class CustomUserDetailsTest {
 
 	@BeforeEach
 	void setUp() {
-		user = User.builder().id(1L).email("anton@example.com").password("encodedPassword123")
-				.userRole(UserRole.ROLE_USER).enabled(true).build();
-
+		user = User.builder().id(1L).email("anton@example.com").password("encodedPassword123").firstName("Anton")
+				.lastName("Shevchenko").userRole(UserRole.ROLE_USER).enabled(true).build();
 		userDetails = new CustomUserDetails(user);
 	}
 
@@ -38,7 +37,6 @@ public class CustomUserDetailsTest {
 	void getAuthorities_ShouldReturnAdminRole() {
 		User adminUser = User.builder().email("admin@example.com").password("encodedPassword")
 				.userRole(UserRole.ROLE_ADMIN).enabled(true).build();
-
 		CustomUserDetails adminDetails = new CustomUserDetails(adminUser);
 
 		GrantedAuthority authority = adminDetails.getAuthorities().iterator().next();
@@ -61,15 +59,23 @@ public class CustomUserDetailsTest {
 
 		User disabledUser = User.builder().email("disabled@example.com").password("encodedPassword")
 				.userRole(UserRole.ROLE_USER).enabled(false).build();
-
 		CustomUserDetails disabledDetails = new CustomUserDetails(disabledUser);
 		assertFalse(disabledDetails.isEnabled());
 	}
 
 	@Test
-	void accountStatusMethods_ShouldAlwaysReturnTrue() {
-		assertTrue(userDetails.isAccountNonExpired());
+	void isAccountNonLocked_ShouldReturnEnabledStatus() {
 		assertTrue(userDetails.isAccountNonLocked());
+
+		User disabledUser = User.builder().email("disabled@example.com").password("encodedPassword")
+				.userRole(UserRole.ROLE_USER).enabled(false).build();
+		CustomUserDetails disabledDetails = new CustomUserDetails(disabledUser);
+		assertFalse(disabledDetails.isAccountNonLocked());
+	}
+
+	@Test
+	void accountStatusMethods_ShouldReturnCorrectValues() {
+		assertTrue(userDetails.isAccountNonExpired());
 		assertTrue(userDetails.isCredentialsNonExpired());
 	}
 
@@ -81,5 +87,30 @@ public class CustomUserDetailsTest {
 	@Test
 	void getUserId_ShouldReturnUserId() {
 		assertEquals(1L, userDetails.getUserId());
+	}
+
+	@Test
+	void getFullName_ShouldReturnConcatenatedName() {
+		assertEquals("Anton Shevchenko", userDetails.getFullName());
+	}
+
+	@Test
+	void isAdmin_ShouldReturnTrueForAdminUser() {
+		User adminUser = User.builder().email("admin@example.com").password("encodedPassword")
+				.userRole(UserRole.ROLE_ADMIN).enabled(true).build();
+		CustomUserDetails adminDetails = new CustomUserDetails(adminUser);
+
+		assertTrue(adminDetails.isAdmin());
+		assertFalse(userDetails.isAdmin());
+	}
+
+	@Test
+	void isCashier_ShouldReturnTrueForCashierUser() {
+		User cashierUser = User.builder().email("cashier@example.com").password("encodedPassword")
+				.userRole(UserRole.ROLE_CASHIER).enabled(true).build();
+		CustomUserDetails cashierDetails = new CustomUserDetails(cashierUser);
+
+		assertTrue(cashierDetails.isCashier());
+		assertFalse(userDetails.isCashier());
 	}
 }
