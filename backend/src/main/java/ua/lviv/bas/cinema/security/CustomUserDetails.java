@@ -39,7 +39,7 @@ public class CustomUserDetails implements UserDetails {
 
 	@Override
 	public boolean isAccountNonLocked() {
-		return true;
+		return user.isEnabled();
 	}
 
 	@Override
@@ -58,5 +58,17 @@ public class CustomUserDetails implements UserDetails {
 
 	public Long getUserId() {
 		return user.getId();
+	}
+
+	public String getFullName() {
+		return user.getFirstName() + " " + user.getLastName();
+	}
+
+	public boolean isAdmin() {
+		return user.getUserRole().isAdmin();
+	}
+
+	public boolean isCashier() {
+		return user.getUserRole().isCashier();
 	}
 }
