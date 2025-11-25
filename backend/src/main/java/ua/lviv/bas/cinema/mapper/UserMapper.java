@@ -9,6 +9,7 @@ import ua.lviv.bas.cinema.dto.user.request.UserRegistrationRequest;
 import ua.lviv.bas.cinema.dto.user.request.UserUpdateRequest;
 import ua.lviv.bas.cinema.dto.user.response.UserResponse;
 import ua.lviv.bas.cinema.dto.user.response.UserProfileResponse;
+import ua.lviv.bas.cinema.dto.user.response.AdminUserListResponse;
 
 @Mapper(componentModel = "spring")
 public interface UserMapper {
@@ -35,6 +36,10 @@ public interface UserMapper {
 	@Mapping(target = "updatedAt", ignore = true)
 	@Mapping(target = "email", ignore = true)
 	void updateUserFromDto(UserUpdateRequest dto, @MappingTarget User user);
+
+	@Mapping(target = "ticketsCount", expression = "java(user.getTickets().size())")
+	@Mapping(target = "lastActivity", source = "updatedAt")
+	AdminUserListResponse toAdminListDto(User user);
 
 	default User toEntityWithPassword(UserRegistrationRequest dto, String encodedPassword) {
 		User user = toEntity(dto);
