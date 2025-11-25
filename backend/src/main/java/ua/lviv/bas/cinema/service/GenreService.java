@@ -14,8 +14,8 @@ import ua.lviv.bas.cinema.domain.Genre;
 import ua.lviv.bas.cinema.dto.movie.request.GenreRequest;
 import ua.lviv.bas.cinema.dto.movie.response.GenreResponse;
 import ua.lviv.bas.cinema.dto.shared.PageResponse;
-import ua.lviv.bas.cinema.exception.DuplicateEntityException;
-import ua.lviv.bas.cinema.exception.GenreNotFoundException;
+import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
+import ua.lviv.bas.cinema.exception.domain.cinema.GenreNotFoundException;
 import ua.lviv.bas.cinema.mapper.GenreMapper;
 import ua.lviv.bas.cinema.repository.GenreRepository;
 
@@ -33,7 +33,7 @@ public class GenreService {
 		String genreName = request.getName().trim();
 
 		if (genreRepository.existsByNameIgnoreCase(genreName)) {
-			throw new DuplicateEntityException("Genre with name '" + genreName + "' already exists");
+			throw new DuplicateEntityException("Genre", genreName);
 		}
 
 		Genre genre = genreMapper.toEntity(request);
@@ -43,20 +43,18 @@ public class GenreService {
 
 	public GenreResponse getGenreById(Long id) {
 		log.info("Reading genre by id: {}", id);
-		return genreRepository.findById(id).map(genreMapper::toDto)
-				.orElseThrow(() -> new GenreNotFoundException("Genre not found with id: " + id));
+		return genreRepository.findById(id).map(genreMapper::toDto).orElseThrow(() -> new GenreNotFoundException(id));
 	}
 
 	public GenreResponse updateGenre(Long id, GenreRequest request) {
 		log.info("Updating genre with id: {}", id);
 
-		Genre existingGenre = genreRepository.findById(id)
-				.orElseThrow(() -> new GenreNotFoundException("Genre not found with id: " + id));
+		Genre existingGenre = genreRepository.findById(id).orElseThrow(() -> new GenreNotFoundException(id));
 
 		String genreName = request.getName().trim();
 
 		if (genreRepository.existsByNameIgnoreCaseAndIdNot(genreName, id)) {
-			throw new DuplicateEntityException("Genre with name '" + genreName + "' already exists");
+			throw new DuplicateEntityException("Genre", genreName);
 		}
 
 		genreMapper.updateGenreFromRequest(request, existingGenre);
@@ -68,7 +66,7 @@ public class GenreService {
 	public void deleteGenre(Long id) {
 		log.info("Deleting genre by id: {}", id);
 		if (!genreRepository.existsById(id)) {
-			throw new GenreNotFoundException("Genre not found with id: " + id);
+			throw new GenreNotFoundException(id);
 		}
 		genreRepository.deleteById(id);
 	}

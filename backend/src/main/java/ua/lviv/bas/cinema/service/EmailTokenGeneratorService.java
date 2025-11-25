@@ -7,7 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ua.lviv.bas.cinema.domain.EmailToken;
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.enums.TokenType;
-import ua.lviv.bas.cinema.exception.UserNotFoundException;
+import ua.lviv.bas.cinema.exception.domain.user.UserNotFoundException;
 import ua.lviv.bas.cinema.repository.EmailTokenRepository;
 import ua.lviv.bas.cinema.repository.UserRepository;
 
@@ -41,8 +41,7 @@ public class EmailTokenGeneratorService {
 	private String generateToken(String email, TokenType tokenType, String newEmail) {
 		log.info("Generating {} token for email: {}", tokenType, email);
 
-		User user = userRepository.findByEmail(email)
-				.orElseThrow(() -> new UserNotFoundException("User not found with email: " + email));
+		User user = userRepository.findByEmail(email).orElseThrow(() -> new UserNotFoundException(email));
 
 		tokenRepository.deleteByUserAndType(user, tokenType);
 

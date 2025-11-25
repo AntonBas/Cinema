@@ -21,7 +21,7 @@ import org.springframework.data.domain.Sort;
 import ua.lviv.bas.cinema.domain.Genre;
 import ua.lviv.bas.cinema.dto.movie.request.GenreRequest;
 import ua.lviv.bas.cinema.dto.movie.response.GenreResponse;
-import ua.lviv.bas.cinema.exception.GenreNotFoundException;
+import ua.lviv.bas.cinema.exception.domain.cinema.GenreNotFoundException;
 import ua.lviv.bas.cinema.mapper.GenreMapper;
 import ua.lviv.bas.cinema.repository.GenreRepository;
 

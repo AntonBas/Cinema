@@ -34,8 +34,9 @@ import ua.lviv.bas.cinema.dto.movie.request.MovieUpdateRequest;
 import ua.lviv.bas.cinema.dto.movie.response.MovieCardResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieDetailResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieSessionSearchResponse;
-import ua.lviv.bas.cinema.exception.DuplicateEntityException;
-import ua.lviv.bas.cinema.exception.MovieNotFoundException;
+import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
+import ua.lviv.bas.cinema.exception.domain.cinema.MovieNotFoundException;
+import ua.lviv.bas.cinema.exception.infrastructure.ExternalServiceException;
 import ua.lviv.bas.cinema.mapper.MovieMapper;
 import ua.lviv.bas.cinema.repository.GenreRepository;
 import ua.lviv.bas.cinema.repository.MovieRepository;
@@ -87,7 +88,7 @@ public class MovieService {
 		if (!existing.getTitle().equals(request.getTitle())) {
 			String newSlug = slugService.generateUniqueSlug(request.getTitle());
 			if (!slugService.isSlugAvailableForMovie(newSlug, id)) {
-				throw new DuplicateEntityException("Slug '" + newSlug + "' already exists");
+				throw new DuplicateEntityException("Movie", "slug " + newSlug);
 			}
 			existing.setSlug(newSlug);
 		}
@@ -117,8 +118,7 @@ public class MovieService {
 
 	@Transactional(readOnly = true)
 	public MovieDetailResponse getMovieBySlug(String slug) {
-		Movie movie = movieRepository.findBySlug(slug)
-				.orElseThrow(() -> new MovieNotFoundException("Movie not found with slug: " + slug));
+		Movie movie = movieRepository.findBySlug(slug).orElseThrow(() -> new MovieNotFoundException(slug));
 		return enrichWithComputedFields(movie);
 	}
 
@@ -235,8 +235,7 @@ public class MovieService {
 	}
 
 	private Movie findMovieById(Long id) {
-		return movieRepository.findById(id)
-				.orElseThrow(() -> new MovieNotFoundException("Movie not found with id: " + id));
+		return movieRepository.findById(id).orElseThrow(() -> new MovieNotFoundException(id));
 	}
 
 	private void validateCreateRequest(MovieCreateRequest request) {
@@ -253,7 +252,7 @@ public class MovieService {
 
 	private void validateSlugUniqueness(String slug) {
 		if (movieRepository.findBySlug(slug).isPresent()) {
-			throw new DuplicateEntityException("Movie with slug '" + slug + "' already exists");
+			throw new DuplicateEntityException("Movie", "slug " + slug);
 		}
 	}
 
@@ -336,7 +335,7 @@ public class MovieService {
 			return fileName;
 		} catch (IOException e) {
 			log.error("Failed to save poster for movie", e);
-			throw new RuntimeException("Failed to save poster file", e);
+			throw new ExternalServiceException("File Storage", e);
 		}
 	}
 

@@ -9,10 +9,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.EmailToken;
 import ua.lviv.bas.cinema.domain.User;
-import ua.lviv.bas.cinema.exception.EmailAlreadyExistsException;
-import ua.lviv.bas.cinema.exception.InvalidTokenException;
-import ua.lviv.bas.cinema.exception.TokenAlreadyConfirmedException;
-import ua.lviv.bas.cinema.exception.TokenExpiredException;
+import ua.lviv.bas.cinema.exception.domain.auth.EmailAlreadyExistsException;
+import ua.lviv.bas.cinema.exception.domain.auth.InvalidTokenException;
+import ua.lviv.bas.cinema.exception.domain.auth.TokenAlreadyConfirmedException;
+import ua.lviv.bas.cinema.exception.domain.auth.TokenExpiredException;
 import ua.lviv.bas.cinema.repository.EmailTokenRepository;
 import ua.lviv.bas.cinema.repository.UserRepository;
 
@@ -50,7 +50,7 @@ public class EmailTokenService {
 		EmailToken emailToken = validateToken(token);
 
 		if (emailToken.getNewEmail() == null) {
-			throw new InvalidTokenException("Email change token is missing new email");
+			throw new InvalidTokenException("email-change");
 		}
 
 		User user = emailToken.getUser();
@@ -62,7 +62,7 @@ public class EmailTokenService {
 		}
 
 		if (userRepository.findByEmail(newEmail).isPresent()) {
-			throw new EmailAlreadyExistsException("Email is already registered: " + newEmail);
+			throw new EmailAlreadyExistsException(newEmail);
 		}
 
 		user.setEmail(newEmail);
@@ -81,14 +81,14 @@ public class EmailTokenService {
 
 	private EmailToken validateToken(String token) {
 		EmailToken emailToken = tokenRepository.findByToken(token)
-				.orElseThrow(() -> new InvalidTokenException("Invalid token"));
+				.orElseThrow(() -> new InvalidTokenException("email-verification"));
 
 		if (emailToken.isConfirmed()) {
-			throw new TokenAlreadyConfirmedException("Token already confirmed");
+			throw new TokenAlreadyConfirmedException("email-verification");
 		}
 
 		if (emailToken.getExpiresAt().isBefore(LocalDateTime.now())) {
-			throw new TokenExpiredException("Token expired");
+			throw new TokenExpiredException("email-verification");
 		}
 
 		return emailToken;

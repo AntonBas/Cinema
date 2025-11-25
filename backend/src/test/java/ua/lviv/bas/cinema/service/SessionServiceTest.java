@@ -28,8 +28,8 @@ import ua.lviv.bas.cinema.domain.Movie;
 import ua.lviv.bas.cinema.domain.Session;
 import ua.lviv.bas.cinema.dto.session.request.SessionRequest;
 import ua.lviv.bas.cinema.dto.session.response.SessionResponse;
-import ua.lviv.bas.cinema.exception.ConflictException;
-import ua.lviv.bas.cinema.exception.SessionNotFoundException;
+import ua.lviv.bas.cinema.exception.core.ConflictException;
+import ua.lviv.bas.cinema.exception.domain.cinema.SessionNotFoundException;
 import ua.lviv.bas.cinema.mapper.SessionMapper;
 import ua.lviv.bas.cinema.repository.SessionRepository;
 

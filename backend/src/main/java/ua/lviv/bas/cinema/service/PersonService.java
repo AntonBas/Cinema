@@ -20,9 +20,9 @@ import ua.lviv.bas.cinema.dto.movie.request.PersonRequest;
 import ua.lviv.bas.cinema.dto.movie.request.QuickCreatePersonRequest;
 import ua.lviv.bas.cinema.dto.movie.response.PersonResponse;
 import ua.lviv.bas.cinema.dto.shared.PageResponse;
-import ua.lviv.bas.cinema.exception.DuplicateEntityException;
-import ua.lviv.bas.cinema.exception.PersonHasMoviesException;
-import ua.lviv.bas.cinema.exception.PersonNotFoundException;
+import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
+import ua.lviv.bas.cinema.exception.domain.cinema.PersonHasMoviesException;
+import ua.lviv.bas.cinema.exception.domain.cinema.PersonNotFoundException;
 import ua.lviv.bas.cinema.mapper.PersonMapper;
 import ua.lviv.bas.cinema.repository.MovieRepository;
 import ua.lviv.bas.cinema.repository.PersonRepository;
@@ -40,8 +40,7 @@ public class PersonService {
 	public PersonResponse createPerson(PersonRequest request) {
 		log.info("Creating person: {}", request.getName());
 		if (personRepository.existsByNameAndRole(request.getName(), request.getRole())) {
-			throw new DuplicateEntityException(
-					"Person with name '" + request.getName() + "' and role '" + request.getRole() + "' already exists");
+			throw new DuplicateEntityException("Person", request.getName() + " (" + request.getRole() + ")");
 		}
 		Person person = personMapper.toEntity(request);
 		Person saved = personRepository.save(person);
@@ -53,14 +52,13 @@ public class PersonService {
 	public PersonResponse getPersonById(Long id) {
 		log.debug("Retrieving person by id: {}", id);
 		return personRepository.findById(id).map(personMapper::toDto)
-				.orElseThrow(() -> new PersonNotFoundException("Person not found with id: " + id));
+				.orElseThrow(() -> new PersonNotFoundException(id));
 	}
 
 	@Transactional
 	public PersonResponse updatePerson(Long id, PersonRequest request) {
 		log.info("Updating person with id: {}", id);
-		Person existing = personRepository.findById(id)
-				.orElseThrow(() -> new PersonNotFoundException("Person not found with id: " + id));
+		Person existing = personRepository.findById(id).orElseThrow(() -> new PersonNotFoundException(id));
 		personMapper.updatePersonFromRequest(request, existing);
 		Person updated = personRepository.save(existing);
 		log.debug("Person updated with ID: {}", updated.getId());
@@ -71,8 +69,7 @@ public class PersonService {
 	public void deletePerson(Long id) {
 		log.info("Deleting person with id: {}", id);
 
-		Person person = personRepository.findById(id)
-				.orElseThrow(() -> new PersonNotFoundException("Person not found with id: " + id));
+		Person person = personRepository.findById(id).orElseThrow(() -> new PersonNotFoundException(id));
 
 		checkPersonUsageInMovies(person);
 
@@ -90,8 +87,7 @@ public class PersonService {
 	public PersonResponse quickCreate(QuickCreatePersonRequest dto) {
 		log.info("Quick creating person: {} with role: {}", dto.getName(), dto.getRole());
 		if (personRepository.existsByNameAndRole(dto.getName(), dto.getRole())) {
-			throw new DuplicateEntityException(
-					"Person with name '" + dto.getName() + "' and role '" + dto.getRole() + "' already exists");
+			throw new DuplicateEntityException("Person", dto.getName() + " (" + dto.getRole() + ")");
 		}
 		Person person = personMapper.toEntity(dto);
 		Person saved = personRepository.save(person);
@@ -121,8 +117,7 @@ public class PersonService {
 		}
 
 		if (!usedInMovies.isEmpty()) {
-			throw new PersonHasMoviesException(String.format("Cannot delete person '%s' because they are used as %s",
-					person.getName(), String.join("; ", usedInMovies)));
+			throw new PersonHasMoviesException(person.getId());
 		}
 	}
 

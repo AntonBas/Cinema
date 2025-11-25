@@ -5,13 +5,12 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.Seat;
 import ua.lviv.bas.cinema.domain.enums.SeatType;
 import ua.lviv.bas.cinema.dto.cinemaHall.response.SeatResponse;
-import ua.lviv.bas.cinema.exception.SeatNotFoundException;
+import ua.lviv.bas.cinema.exception.domain.cinema.SeatNotFoundException;
 import ua.lviv.bas.cinema.mapper.SeatMapper;
 import ua.lviv.bas.cinema.repository.SeatRepository;
 
@@ -33,8 +32,7 @@ public class SeatService {
 	public SeatResponse updateSeatType(Long id, SeatType seatType) {
 		log.info("Updating seat type for seat id: {} to {}", id, seatType);
 
-		Seat seat = seatRepository.findById(id)
-				.orElseThrow(() -> new EntityNotFoundException("Seat not found with id: " + id));
+		Seat seat = seatRepository.findById(id).orElseThrow(() -> new SeatNotFoundException(id));
 
 		seat.setSeatType(seatType);
 		Seat updated = seatRepository.save(seat);
@@ -72,5 +70,4 @@ public class SeatService {
 		log.debug("Retrieving {} seats for hall id: {}", seatType, hallId);
 		return seatMapper.toDtoList(seatRepository.findByHallIdAndSeatType(hallId, seatType));
 	}
-
 }

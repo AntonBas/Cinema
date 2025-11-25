@@ -8,6 +8,7 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import ua.lviv.bas.cinema.exception.infrastructure.ExternalServiceException;
 
 @Slf4j
 @Service
@@ -34,7 +35,7 @@ public class EmailService {
 
 		} catch (MailException e) {
 			log.error("Failed to send verification email to {}: {}", toEmail, e.getMessage());
-			throw new RuntimeException("Failed to send verification email", e);
+			throw new ExternalServiceException("Email Service", e);
 		}
 	}
 
@@ -50,7 +51,7 @@ public class EmailService {
 
 		} catch (MailException e) {
 			log.error("Failed to send password reset email to {}: {}", toEmail, e.getMessage());
-			throw new RuntimeException("Failed to send password reset email", e);
+			throw new ExternalServiceException("Email Service", e);
 		}
 	}
 
@@ -66,7 +67,7 @@ public class EmailService {
 
 		} catch (MailException e) {
 			log.error("Failed to send email change confirmation to {}: {}", toEmail, e.getMessage());
-			throw new RuntimeException("Failed to send email change confirmation", e);
+			throw new ExternalServiceException("Email Service", e);
 		}
 	}
 
@@ -81,6 +82,7 @@ public class EmailService {
 
 		} catch (MailException e) {
 			log.error("Failed to send email change notification to {}: {}", oldEmail, e.getMessage());
+			// Не кидаємо exception для notification, щоб не блокувати основний потік
 		}
 	}
 

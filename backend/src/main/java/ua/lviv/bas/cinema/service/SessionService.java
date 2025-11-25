@@ -16,8 +16,8 @@ import ua.lviv.bas.cinema.domain.Movie;
 import ua.lviv.bas.cinema.domain.Session;
 import ua.lviv.bas.cinema.dto.session.request.SessionRequest;
 import ua.lviv.bas.cinema.dto.session.response.SessionResponse;
-import ua.lviv.bas.cinema.exception.ConflictException;
-import ua.lviv.bas.cinema.exception.SessionNotFoundException;
+import ua.lviv.bas.cinema.exception.domain.cinema.SessionNotFoundException;
+import ua.lviv.bas.cinema.exception.domain.cinema.SessionTimeConflictException;
 import ua.lviv.bas.cinema.mapper.SessionMapper;
 import ua.lviv.bas.cinema.repository.SessionRepository;
 
@@ -46,7 +46,7 @@ public class SessionService {
 		validateMovieAvailability(movie, request.getStartTime());
 
 		if (hasTimeConflict(hall.getId(), request.getStartTime(), movie.getDurationMinutes(), null)) {
-			throw new ConflictException("Time conflict: there is already a session in this hall at the selected time");
+			throw new SessionTimeConflictException(hall.getId(), request.getStartTime());
 		}
 
 		Session session = sessionMapper.toEntity(request);
@@ -82,7 +82,7 @@ public class SessionService {
 		validateMovieAvailability(movie, request.getStartTime());
 
 		if (hasTimeConflict(hall.getId(), request.getStartTime(), movie.getDurationMinutes(), id)) {
-			throw new ConflictException("Time conflict: there is already a session in this hall at the selected time");
+			throw new SessionTimeConflictException(hall.getId(), request.getStartTime());
 		}
 
 		session.setStartTime(request.getStartTime());

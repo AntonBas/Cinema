@@ -11,10 +11,10 @@ import ua.lviv.bas.cinema.dto.user.request.UserRegistrationRequest;
 import ua.lviv.bas.cinema.dto.user.request.UserUpdateRequest;
 import ua.lviv.bas.cinema.dto.user.response.UserProfileResponse;
 import ua.lviv.bas.cinema.dto.user.response.UserResponse;
-import ua.lviv.bas.cinema.exception.EmailAlreadyExistsException;
-import ua.lviv.bas.cinema.exception.InvalidCurrentPasswordException;
-import ua.lviv.bas.cinema.exception.SamePasswordException;
-import ua.lviv.bas.cinema.exception.UserNotFoundException;
+import ua.lviv.bas.cinema.exception.domain.auth.EmailAlreadyExistsException;
+import ua.lviv.bas.cinema.exception.domain.auth.InvalidCurrentPasswordException;
+import ua.lviv.bas.cinema.exception.domain.auth.SamePasswordException;
+import ua.lviv.bas.cinema.exception.domain.user.UserNotFoundException;
 import ua.lviv.bas.cinema.mapper.UserMapper;
 import ua.lviv.bas.cinema.repository.UserRepository;
 
@@ -34,7 +34,7 @@ public class UserService {
 		log.info("Registering user with email: {}", request.getEmail());
 
 		if (existsByEmail(request.getEmail())) {
-			throw new EmailAlreadyExistsException("Email is already registered: " + request.getEmail());
+			throw new EmailAlreadyExistsException(request.getEmail());
 		}
 
 		User user = userMapper.toEntity(request);
@@ -58,7 +58,7 @@ public class UserService {
 	public void requestEmailChange(Long userId, String newEmail) {
 		User user = findById(userId);
 		if (existsByEmail(newEmail)) {
-			throw new EmailAlreadyExistsException("Email is already registered: " + newEmail);
+			throw new EmailAlreadyExistsException(newEmail);
 		}
 		emailTokenGeneratorService.generateEmailChangeToken(user.getEmail(), newEmail);
 		log.info("Email change token generated for user {}", userId);
@@ -72,7 +72,6 @@ public class UserService {
 	@Transactional
 	public UserProfileResponse confirmEmailChange(String token) {
 		User updatedUser = emailTokenService.confirmEmailChange(token);
-
 		return userMapper.toProfileResponse(updatedUser);
 	}
 
@@ -81,11 +80,11 @@ public class UserService {
 		User user = findById(userId);
 
 		if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
-			throw new InvalidCurrentPasswordException("Current password is incorrect");
+			throw new InvalidCurrentPasswordException();
 		}
 
 		if (passwordEncoder.matches(newPassword, user.getPassword())) {
-			throw new SamePasswordException("New password cannot be the same as current password");
+			throw new SamePasswordException();
 		}
 
 		user.setPassword(passwordEncoder.encode(newPassword));
@@ -105,14 +104,12 @@ public class UserService {
 
 	@Transactional(readOnly = true)
 	public User findByEmail(String email) {
-		return userRepository.findByEmail(email)
-				.orElseThrow(() -> new UserNotFoundException("User not found with email: " + email));
+		return userRepository.findByEmail(email).orElseThrow(() -> new UserNotFoundException(email));
 	}
 
 	@Transactional(readOnly = true)
 	public User findById(Long id) {
-		return userRepository.findById(id)
-				.orElseThrow(() -> new UserNotFoundException("User not found with ID: " + id));
+		return userRepository.findById(id).orElseThrow(() -> new UserNotFoundException(id));
 	}
 
 	@Transactional(readOnly = true)

@@ -7,10 +7,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import ua.lviv.bas.cinema.domain.EmailToken;
 import ua.lviv.bas.cinema.domain.User;
-import ua.lviv.bas.cinema.exception.EmailAlreadyExistsException;
-import ua.lviv.bas.cinema.exception.InvalidTokenException;
-import ua.lviv.bas.cinema.exception.TokenAlreadyConfirmedException;
-import ua.lviv.bas.cinema.exception.TokenExpiredException;
+import ua.lviv.bas.cinema.exception.domain.auth.EmailAlreadyExistsException;
+import ua.lviv.bas.cinema.exception.domain.auth.InvalidTokenException;
+import ua.lviv.bas.cinema.exception.domain.auth.TokenAlreadyConfirmedException;
+import ua.lviv.bas.cinema.exception.domain.auth.TokenExpiredException;
 import ua.lviv.bas.cinema.repository.EmailTokenRepository;
 import ua.lviv.bas.cinema.repository.UserRepository;
 

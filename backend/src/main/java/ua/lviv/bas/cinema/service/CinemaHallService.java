@@ -7,7 +7,6 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.CinemaHall;
@@ -18,8 +17,8 @@ import ua.lviv.bas.cinema.dto.cinemaHall.response.CinemaHallResponse;
 import ua.lviv.bas.cinema.dto.cinemaHall.response.CinemaHallWithSeatsResponse;
 import ua.lviv.bas.cinema.dto.cinemaHall.response.HallLayoutResponse;
 import ua.lviv.bas.cinema.dto.cinemaHall.response.SeatRowResponse;
-import ua.lviv.bas.cinema.exception.CinemaHallNotFoundException;
-import ua.lviv.bas.cinema.exception.DuplicateEntityException;
+import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
+import ua.lviv.bas.cinema.exception.domain.cinema.CinemaHallNotFoundException;
 import ua.lviv.bas.cinema.mapper.CinemaHallMapper;
 import ua.lviv.bas.cinema.mapper.SeatMapper;
 import ua.lviv.bas.cinema.repository.CinemaHallRepository;
@@ -38,7 +37,7 @@ public class CinemaHallService {
 		log.info("Creating cinema hall: {}", request.getName());
 
 		if (hallRepository.existsByName(request.getName())) {
-			throw new DuplicateEntityException("Cinema hall with name '" + request.getName() + "' already exists");
+			throw new DuplicateEntityException("CinemaHall", request.getName());
 		}
 
 		CinemaHall hall = CinemaHall.builder().name(request.getName()).build();
@@ -66,10 +65,10 @@ public class CinemaHallService {
 		log.info("Updating cinema hall with id: {}", id);
 
 		CinemaHall existing = hallRepository.findByIdWithSeats(id)
-				.orElseThrow(() -> new CinemaHallNotFoundException("Cinema hall not found with id: " + id));
+				.orElseThrow(() -> new CinemaHallNotFoundException(id));
 
 		if (!existing.getName().equals(request.getName()) && hallRepository.existsByName(request.getName())) {
-			throw new DuplicateEntityException("Cinema hall with name '" + request.getName() + "' already exists");
+			throw new DuplicateEntityException("CinemaHall", request.getName());
 		}
 
 		existing.setName(request.getName());
@@ -110,7 +109,7 @@ public class CinemaHallService {
 		log.debug("Retrieving cinema hall with seats by id: {}", hallId);
 
 		CinemaHall hall = hallRepository.findByIdWithSeats(hallId)
-				.orElseThrow(() -> new EntityNotFoundException("Cinema hall not found with id: " + hallId));
+				.orElseThrow(() -> new CinemaHallNotFoundException(hallId));
 
 		return buildHallWithSeatsDto(hall);
 	}
@@ -120,7 +119,7 @@ public class CinemaHallService {
 		log.debug("Retrieving hall layout for id: {}", hallId);
 
 		CinemaHall hall = hallRepository.findByIdWithSeats(hallId)
-				.orElseThrow(() -> new EntityNotFoundException("Cinema hall not found with id: " + hallId));
+				.orElseThrow(() -> new CinemaHallNotFoundException(hallId));
 
 		return buildHallLayoutDto(hall);
 	}

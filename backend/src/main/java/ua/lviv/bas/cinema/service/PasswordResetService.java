@@ -7,9 +7,9 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.EmailToken;
-import ua.lviv.bas.cinema.exception.InvalidTokenException;
-import ua.lviv.bas.cinema.exception.SamePasswordException;
-import ua.lviv.bas.cinema.exception.TokenExpiredException;
+import ua.lviv.bas.cinema.exception.domain.auth.InvalidTokenException;
+import ua.lviv.bas.cinema.exception.domain.auth.SamePasswordException;
+import ua.lviv.bas.cinema.exception.domain.auth.TokenExpiredException;
 import ua.lviv.bas.cinema.repository.EmailTokenRepository;
 import ua.lviv.bas.cinema.repository.UserRepository;
 
@@ -34,16 +34,16 @@ public class PasswordResetService {
 	@Transactional
 	public void resetPassword(String token, String newPassword) {
 		EmailToken resetToken = tokenRepository.findByToken(token)
-				.orElseThrow(() -> new InvalidTokenException("Invalid token"));
+				.orElseThrow(() -> new InvalidTokenException("password-reset"));
 
 		if (resetToken.isExpired()) {
-			throw new TokenExpiredException("Token expired");
+			throw new TokenExpiredException("password-reset");
 		}
 
 		var user = resetToken.getUser();
 
 		if (passwordEncoder.matches(newPassword, user.getPassword())) {
-			throw new SamePasswordException("New password cannot be the same as the current password");
+			throw new SamePasswordException();
 		}
 
 		user.setPassword(passwordEncoder.encode(newPassword));
@@ -52,5 +52,4 @@ public class PasswordResetService {
 		tokenRepository.delete(resetToken);
 		log.info("Password updated successfully for user: {}", user.getEmail());
 	}
-
 }

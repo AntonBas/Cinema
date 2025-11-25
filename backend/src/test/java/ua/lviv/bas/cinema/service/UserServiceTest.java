@@ -21,8 +21,8 @@ import ua.lviv.bas.cinema.dto.user.request.UserRegistrationRequest;
 import ua.lviv.bas.cinema.dto.user.request.UserUpdateRequest;
 import ua.lviv.bas.cinema.dto.user.response.UserProfileResponse;
 import ua.lviv.bas.cinema.dto.user.response.UserResponse;
-import ua.lviv.bas.cinema.exception.EmailAlreadyExistsException;
-import ua.lviv.bas.cinema.exception.UserNotFoundException;
+import ua.lviv.bas.cinema.exception.domain.auth.EmailAlreadyExistsException;
+import ua.lviv.bas.cinema.exception.domain.user.UserNotFoundException;
 import ua.lviv.bas.cinema.mapper.UserMapper;
 import ua.lviv.bas.cinema.repository.UserRepository;
 
@@ -238,7 +238,7 @@ public class UserServiceTest {
 		when(passwordEncoder.matches(currentPassword, user.getPassword())).thenReturn(true);
 		when(passwordEncoder.matches(newPassword, user.getPassword())).thenReturn(true);
 
-		assertThrows(ua.lviv.bas.cinema.exception.SamePasswordException.class,
+		assertThrows(ua.lviv.bas.cinema.exception.domain.auth.SamePasswordException.class,
 				() -> userService.updateUserPassword(user.getId(), currentPassword, newPassword));
 
 		verify(passwordEncoder, times(2)).matches(anyString(), anyString());
