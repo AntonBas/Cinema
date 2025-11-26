@@ -1,5 +1,7 @@
 package ua.lviv.bas.cinema.controller;
 
+import java.util.Map;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -80,10 +82,10 @@ public class AuthController {
 	}
 
 	@PostMapping("/email/verify")
-	public ResponseEntity<String> verifyEmail(@RequestParam @NotBlank String token) {
+	public ResponseEntity<Map<String, String>> verifyEmail(@RequestParam @NotBlank String token) {
 		log.info("Email verification attempt");
 		String message = userService.confirmRegistration(token);
-		return ResponseEntity.ok(message);
+		return ResponseEntity.ok(Map.of("message", message));
 	}
 
 	@PostMapping("/email/change/confirm")

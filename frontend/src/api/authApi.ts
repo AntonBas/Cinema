@@ -77,7 +77,8 @@ export const authApi = {
             headers: getHeaders(),
         });
         if (!response.ok) throw await handleApiError(response);
-        return response.json();
+        const data = await response.json();
+        return data.message;
     },
 
     confirmEmailChange: async (token: string): Promise<User> => {

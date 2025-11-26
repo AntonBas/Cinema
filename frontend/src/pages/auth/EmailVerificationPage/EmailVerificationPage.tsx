@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { authApi } from '@/api/authApi';
 import { Button, LoadingSpinner } from '@/components/ui';
+import { isApiErrorException } from '@/utils/apiErrorHandler';
 import styles from './EmailVerificationPage.module.css';
 
 export const EmailVerificationPage: React.FC = () => {
@@ -25,17 +26,18 @@ export const EmailVerificationPage: React.FC = () => {
 
       try {
         const response = await authApi.verifyEmail(verificationToken);
-        setMessage(response.message || 'Email verified successfully!');
+        setMessage(response || 'Email verified successfully!');
         setIsSuccess(true);
 
         setTimeout(() => {
           navigate('/login');
         }, 5000);
       } catch (error: any) {
-        const errorMessage = error.response?.data?.message ||
-          error.response?.data ||
-          'Email verification failed';
-        setMessage(errorMessage);
+        if (isApiErrorException(error)) {
+          setMessage(error.message);
+        } else {
+          setMessage('Email verification failed');
+        }
         setIsSuccess(false);
       } finally {
         setIsLoading(false);
