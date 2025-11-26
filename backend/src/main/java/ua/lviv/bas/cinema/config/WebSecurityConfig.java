@@ -70,16 +70,7 @@ public class WebSecurityConfig {
 						.hasRole("ADMIN").anyRequest().authenticated())
 				.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
 				.formLogin(form -> form.disable()).httpBasic(basic -> basic.disable())
-				.logout(logout -> logout.disable())
-				.exceptionHandling(ex -> ex.authenticationEntryPoint((request, response, authException) -> {
-					response.setStatus(401);
-					response.setContentType("application/json");
-					response.getWriter().write("{\"error\": \"Unauthorized\"}");
-				}).accessDeniedHandler((request, response, accessDeniedException) -> {
-					response.setStatus(403);
-					response.setContentType("application/json");
-					response.getWriter().write("{\"error\": \"Access Denied\"}");
-				}));
+				.logout(logout -> logout.disable());
 
 		return http.build();
 	}
