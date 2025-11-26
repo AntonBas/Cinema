@@ -2,9 +2,10 @@ package ua.lviv.bas.cinema.exception.api;
 
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.CONFLICT;
+import static org.springframework.http.HttpStatus.FORBIDDEN;
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
-import static org.springframework.http.HttpStatus.UNSUPPORTED_MEDIA_TYPE;
+import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 
 import java.util.Optional;
 
@@ -15,11 +16,12 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
-import org.springframework.http.converter.HttpMessageNotWritableException;
 import org.springframework.lang.NonNull;
-import org.springframework.web.HttpMediaTypeNotSupportedException;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.ServletWebRequest;
@@ -50,15 +52,6 @@ public class ApiErrorHandler extends ResponseEntityExceptionHandler {
 
 	@Override
 	@NonNull
-	protected ResponseEntity<Object> handleHttpMessageNotWritable(@NonNull HttpMessageNotWritableException ex,
-			@NonNull HttpHeaders headers, @NonNull HttpStatusCode status, @NonNull WebRequest request) {
-		String error = "Error writing JSON output";
-		log.error("JSON writing error: {}", ex.getMessage());
-		return buildResponseEntity(new ApiError(INTERNAL_SERVER_ERROR, error, ex), request);
-	}
-
-	@Override
-	@NonNull
 	protected ResponseEntity<Object> handleMethodArgumentNotValid(@NonNull MethodArgumentNotValidException ex,
 			@NonNull HttpHeaders headers, @NonNull HttpStatusCode status, @NonNull WebRequest request) {
 		ApiError apiError = new ApiError(BAD_REQUEST);
@@ -69,31 +62,6 @@ public class ApiErrorHandler extends ResponseEntityExceptionHandler {
 		log.warn("Validation error: {} errors detected", ex.getBindingResult().getFieldErrors().size());
 
 		return buildResponseEntity(apiError, request);
-	}
-
-	@Override
-	@NonNull
-	protected ResponseEntity<Object> handleMissingServletRequestParameter(
-			@NonNull MissingServletRequestParameterException ex, @NonNull HttpHeaders headers,
-			@NonNull HttpStatusCode status, @NonNull WebRequest request) {
-		String error = ex.getParameterName() + " parameter is missing";
-		log.warn("Missing parameter: {}", error);
-		return buildResponseEntity(new ApiError(BAD_REQUEST, error, ex), request);
-	}
-
-	@Override
-	@NonNull
-	protected ResponseEntity<Object> handleHttpMediaTypeNotSupported(@NonNull HttpMediaTypeNotSupportedException ex,
-			@NonNull HttpHeaders headers, @NonNull HttpStatusCode status, @NonNull WebRequest request) {
-		StringBuilder builder = new StringBuilder();
-		builder.append(ex.getContentType());
-		builder.append(" media type is not supported. Supported media types are ");
-		ex.getSupportedMediaTypes().forEach(t -> builder.append(t).append(", "));
-
-		String error = builder.substring(0, builder.length() - 2);
-		log.warn("Unsupported media type: {}", error);
-
-		return buildResponseEntity(new ApiError(UNSUPPORTED_MEDIA_TYPE, error, ex), request);
 	}
 
 	@Override
@@ -186,6 +154,36 @@ public class ApiErrorHandler extends ResponseEntityExceptionHandler {
 
 		log.warn("Constraint violation: {} violations", ex.getConstraintViolations().size());
 
+		return buildResponseEntity(apiError, request);
+	}
+
+	@ExceptionHandler(BadCredentialsException.class)
+	protected ResponseEntity<Object> handleBadCredentials(@NonNull BadCredentialsException ex,
+			@NonNull WebRequest request) {
+		ApiError apiError = new ApiError(UNAUTHORIZED, "Invalid email or password");
+		log.warn("Authentication failed: {}", ex.getMessage());
+		return buildResponseEntity(apiError, request);
+	}
+
+	@ExceptionHandler(DisabledException.class)
+	protected ResponseEntity<Object> handleDisabled(@NonNull DisabledException ex, @NonNull WebRequest request) {
+		ApiError apiError = new ApiError(UNAUTHORIZED, "Account is disabled");
+		log.warn("Disabled account attempt: {}", ex.getMessage());
+		return buildResponseEntity(apiError, request);
+	}
+
+	@ExceptionHandler(LockedException.class)
+	protected ResponseEntity<Object> handleLocked(@NonNull LockedException ex, @NonNull WebRequest request) {
+		ApiError apiError = new ApiError(UNAUTHORIZED, "Account is locked");
+		log.warn("Locked account attempt: {}", ex.getMessage());
+		return buildResponseEntity(apiError, request);
+	}
+
+	@ExceptionHandler(AccessDeniedException.class)
+	protected ResponseEntity<Object> handleAccessDenied(@NonNull AccessDeniedException ex,
+			@NonNull WebRequest request) {
+		ApiError apiError = new ApiError(FORBIDDEN, "Access denied");
+		log.warn("Access denied: {}", ex.getMessage());
 		return buildResponseEntity(apiError, request);
 	}
 

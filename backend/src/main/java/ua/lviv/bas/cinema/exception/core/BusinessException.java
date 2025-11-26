@@ -11,12 +11,16 @@ public abstract class BusinessException extends RuntimeException {
 	private final HttpStatus status;
 	private final String debugMessage;
 
-	public BusinessException(String message, String errorCode, HttpStatus status) {
-		this(message, errorCode, status, null);
-	}
-
 	public BusinessException(String message, String errorCode, HttpStatus status, @Nullable String debugMessage) {
 		super(message);
+		this.errorCode = errorCode;
+		this.status = status;
+		this.debugMessage = debugMessage;
+	}
+
+	public BusinessException(String message, String errorCode, HttpStatus status, @Nullable String debugMessage,
+			@Nullable Throwable cause) {
+		super(message, cause);
 		this.errorCode = errorCode;
 		this.status = status;
 		this.debugMessage = debugMessage;
