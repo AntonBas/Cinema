@@ -1,5 +1,6 @@
 package ua.lviv.bas.cinema.service;
 
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,6 +14,7 @@ import ua.lviv.bas.cinema.dto.user.response.UserProfileResponse;
 import ua.lviv.bas.cinema.dto.user.response.UserResponse;
 import ua.lviv.bas.cinema.exception.domain.auth.EmailAlreadyExistsException;
 import ua.lviv.bas.cinema.exception.domain.auth.InvalidCurrentPasswordException;
+import ua.lviv.bas.cinema.exception.domain.auth.PasswordMismatchException;
 import ua.lviv.bas.cinema.exception.domain.auth.SamePasswordException;
 import ua.lviv.bas.cinema.exception.domain.user.UserNotFoundException;
 import ua.lviv.bas.cinema.mapper.UserMapper;
@@ -57,9 +59,15 @@ public class UserService {
 	@Transactional
 	public void requestEmailChange(Long userId, String newEmail) {
 		User user = findById(userId);
+
+		if (user.getEmail().equals(newEmail)) {
+			throw new IllegalArgumentException("New email must be different from current email");
+		}
+
 		if (existsByEmail(newEmail)) {
 			throw new EmailAlreadyExistsException(newEmail);
 		}
+
 		emailTokenGeneratorService.generateEmailChangeToken(user.getEmail(), newEmail);
 		log.info("Email change token generated for user {}", userId);
 	}
@@ -76,8 +84,12 @@ public class UserService {
 	}
 
 	@Transactional
-	public void updateUserPassword(Long userId, String currentPassword, String newPassword) {
+	public void updateUserPassword(Long userId, String currentPassword, String newPassword, String passwordConfirm) {
 		User user = findById(userId);
+
+		if (!newPassword.equals(passwordConfirm)) {
+			throw new PasswordMismatchException();
+		}
 
 		if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
 			throw new InvalidCurrentPasswordException();
@@ -85,6 +97,10 @@ public class UserService {
 
 		if (passwordEncoder.matches(newPassword, user.getPassword())) {
 			throw new SamePasswordException();
+		}
+
+		if (newPassword.length() < 6) {
+			throw new IllegalArgumentException("Password must be at least 6 characters long");
 		}
 
 		user.setPassword(passwordEncoder.encode(newPassword));
@@ -103,17 +119,24 @@ public class UserService {
 	}
 
 	@Transactional(readOnly = true)
-	public User findByEmail(String email) {
-		return userRepository.findByEmail(email).orElseThrow(() -> new UserNotFoundException(email));
-	}
-
-	@Transactional(readOnly = true)
+	@Cacheable(value = "users", key = "#id")
 	public User findById(Long id) {
 		return userRepository.findById(id).orElseThrow(() -> new UserNotFoundException(id));
 	}
 
 	@Transactional(readOnly = true)
+	@Cacheable(value = "users", key = "#email")
+	public User findByEmail(String email) {
+		return userRepository.findByEmail(email).orElseThrow(() -> new UserNotFoundException(email));
+	}
+
+	@Transactional(readOnly = true)
 	public boolean existsByEmail(String email) {
 		return userRepository.existsByEmail(email);
+	}
+
+	@Transactional(readOnly = true)
+	public boolean existsById(Long id) {
+		return userRepository.existsById(id);
 	}
 }
