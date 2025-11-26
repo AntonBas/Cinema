@@ -19,7 +19,6 @@ import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.dto.user.request.UserPasswordUpdateRequest;
 import ua.lviv.bas.cinema.dto.user.request.UserUpdateRequest;
 import ua.lviv.bas.cinema.dto.user.response.UserProfileResponse;
-import ua.lviv.bas.cinema.exception.PasswordMismatchException;
 import ua.lviv.bas.cinema.security.CustomUserDetails;
 import ua.lviv.bas.cinema.service.UserService;
 
@@ -58,11 +57,8 @@ public class UserController {
 	@PatchMapping("/password")
 	public ResponseEntity<?> updatePassword(@AuthenticationPrincipal CustomUserDetails userDetails,
 			@Valid @RequestBody UserPasswordUpdateRequest request) {
-		if (!request.getNewPassword().equals(request.getPasswordConfirm())) {
-			throw new PasswordMismatchException("Passwords do not match");
-		}
-
-		userService.updateUserPassword(userDetails.getUserId(), request.getCurrentPassword(), request.getNewPassword());
+		userService.updateUserPassword(userDetails.getUserId(), request.getCurrentPassword(), request.getNewPassword(),
+				request.getPasswordConfirm());
 		return ResponseEntity.ok(Map.of("message", "Password updated successfully"));
 	}
 }

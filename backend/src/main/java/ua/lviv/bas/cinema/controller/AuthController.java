@@ -1,13 +1,10 @@
 package ua.lviv.bas.cinema.controller;
 
-import java.util.Map;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -16,6 +13,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.config.JwtTokenProvider;
@@ -39,70 +38,67 @@ public class AuthController {
 	private final AuthenticationManager authenticationManager;
 	private final JwtTokenProvider jwtTokenProvider;
 
-	@PostMapping("/registration")
-	public ResponseEntity<?> registerUser(@Valid @RequestBody UserRegistrationRequest request,
-			BindingResult bindingResult) {
-		if (bindingResult.hasErrors()) {
-			return ResponseEntity.badRequest().body(
-					Map.of("success", false, "message", "Validation failed", "errors", bindingResult.getAllErrors()));
-		}
-
-		if (!request.getPassword().equals(request.getPasswordConfirm())) {
-			return ResponseEntity.badRequest().body(Map.of("success", false, "message", "Passwords do not match"));
-		}
-
-		userService.registerUser(request);
-		return ResponseEntity.ok(Map.of("success", true, "message",
-				"User registered successfully. Check your email to confirm account."));
+	@PostMapping("/register")
+	public ResponseEntity<UserResponse> register(@Valid @RequestBody UserRegistrationRequest request) {
+		log.info("Registration request for email: {}", request.getEmail());
+		UserResponse userResponse = userService.registerUser(request);
+		return ResponseEntity.status(HttpStatus.CREATED).body(userResponse);
 	}
 
 	@PostMapping("/login")
-	public ResponseEntity<?> loginUser(@Valid @RequestBody UserLoginRequest loginDto) {
-		var auth = authenticationManager
-				.authenticate(new UsernamePasswordAuthenticationToken(loginDto.getEmail(), loginDto.getPassword()));
+	public ResponseEntity<LoginResponse> login(@Valid @RequestBody UserLoginRequest request) {
+		log.info("Login attempt for email: {}", request.getEmail());
 
-		String token = jwtTokenProvider.generateToken(auth);
-		User user = userService.findByEmail(loginDto.getEmail());
+		var authentication = authenticationManager
+				.authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
 
-		return ResponseEntity.ok(Map.of("success", true, "token", token, "tokenType", "Bearer", "user",
-				userService.getUserById(user.getId())));
+		String token = jwtTokenProvider.generateToken(authentication);
+		User user = userService.findByEmail(request.getEmail());
+		UserResponse userResponse = userService.getUserById(user.getId());
+
+		return ResponseEntity.ok(new LoginResponse(token, "Bearer", userResponse));
 	}
 
 	@GetMapping("/me")
 	public ResponseEntity<UserResponse> getCurrentUser(@AuthenticationPrincipal CustomUserDetails userDetails) {
-		if (userDetails == null) {
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-		}
 		return ResponseEntity.ok(userService.getUserById(userDetails.getUserId()));
 	}
 
-	@PostMapping("/forgot-password")
-	public ResponseEntity<?> forgotPassword(@RequestParam String email) {
+	@PostMapping("/password/forgot")
+	public ResponseEntity<Void> forgotPassword(@RequestParam @Email @NotBlank String email) {
+		log.info("Password reset request for email: {}", email);
 		passwordResetService.requestPasswordReset(email);
-		return ResponseEntity.ok(Map.of("success", true, "message", "Instructions sent to your email."));
+		return ResponseEntity.ok().build();
 	}
 
-	@PostMapping("/reset-password")
-	public ResponseEntity<?> resetPassword(@RequestParam String token, @RequestParam String newPassword) {
+	@PostMapping("/password/reset")
+	public ResponseEntity<Void> resetPassword(@RequestParam @NotBlank String token,
+			@RequestParam @NotBlank String newPassword) {
+		log.info("Password reset attempt");
 		passwordResetService.resetPassword(token, newPassword);
-		return ResponseEntity.ok(Map.of("success", true, "message", "Password changed successfully."));
+		return ResponseEntity.ok().build();
 	}
 
-	@GetMapping("/verify-email")
-	public ResponseEntity<?> confirmEmail(@RequestParam String token) {
+	@PostMapping("/email/verify")
+	public ResponseEntity<String> verifyEmail(@RequestParam @NotBlank String token) {
+		log.info("Email verification attempt");
 		String message = userService.confirmRegistration(token);
-		return ResponseEntity.ok(Map.of("success", true, "message", message));
+		return ResponseEntity.ok(message);
 	}
 
-	@PostMapping("/email/confirm-change")
-	public ResponseEntity<?> confirmEmailChange(@RequestParam String token) {
+	@PostMapping("/email/change/confirm")
+	public ResponseEntity<UserProfileResponse> confirmEmailChange(@RequestParam @NotBlank String token) {
+		log.info("Email change confirmation attempt");
 		UserProfileResponse updatedUser = userService.confirmEmailChange(token);
-		return ResponseEntity.ok(Map.of("success", true, "id", updatedUser.getId(), "email", updatedUser.getEmail()));
+		return ResponseEntity.ok(updatedUser);
 	}
 
-	@GetMapping("/check-email")
-	public ResponseEntity<?> checkEmailExists(@RequestParam String email) {
+	@GetMapping("/email/check")
+	public ResponseEntity<Boolean> checkEmailExists(@RequestParam @Email @NotBlank String email) {
 		boolean exists = userService.existsByEmail(email);
-		return ResponseEntity.ok(Map.of("exists", exists));
+		return ResponseEntity.ok(exists);
+	}
+
+	public record LoginResponse(String token, String tokenType, UserResponse user) {
 	}
 }

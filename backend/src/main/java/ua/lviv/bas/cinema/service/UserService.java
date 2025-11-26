@@ -15,6 +15,7 @@ import ua.lviv.bas.cinema.dto.user.response.UserResponse;
 import ua.lviv.bas.cinema.exception.domain.auth.EmailAlreadyExistsException;
 import ua.lviv.bas.cinema.exception.domain.auth.InvalidCurrentPasswordException;
 import ua.lviv.bas.cinema.exception.domain.auth.PasswordMismatchException;
+import ua.lviv.bas.cinema.exception.domain.auth.SameEmailException;
 import ua.lviv.bas.cinema.exception.domain.auth.SamePasswordException;
 import ua.lviv.bas.cinema.exception.domain.user.UserNotFoundException;
 import ua.lviv.bas.cinema.mapper.UserMapper;
@@ -61,7 +62,7 @@ public class UserService {
 		User user = findById(userId);
 
 		if (user.getEmail().equals(newEmail)) {
-			throw new IllegalArgumentException("New email must be different from current email");
+			throw new SameEmailException();
 		}
 
 		if (existsByEmail(newEmail)) {
