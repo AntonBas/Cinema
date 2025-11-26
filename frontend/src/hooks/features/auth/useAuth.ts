@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
-import type { User } from '@/types/auth';
+import type { User, LoginResponse } from '@/types/auth';
 import { authApi } from '@/api/authApi';
 
 export const useAuth = () => {
     const [user, setUser] = useState<User | null>(null);
     const [token, setToken] = useState<string | null>(localStorage.getItem('authToken'));
     const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         let isMounted = true;
@@ -20,6 +21,7 @@ export const useAuth = () => {
             }
 
             try {
+                setError(null);
                 const userData = await authApi.getCurrentUser();
                 if (isMounted) {
                     setUser(userData);
@@ -29,6 +31,7 @@ export const useAuth = () => {
                 if (isMounted) {
                     setUser(null);
                     setToken(null);
+                    setError('Failed to load user data');
                 }
             } finally {
                 if (isMounted) setIsLoading(false);
@@ -44,32 +47,43 @@ export const useAuth = () => {
     }, [token]);
 
     useEffect(() => {
-        if (token) localStorage.setItem('authToken', token);
-        else localStorage.removeItem('authToken');
+        if (token) {
+            localStorage.setItem('authToken', token);
+        } else {
+            localStorage.removeItem('authToken');
+        }
     }, [token]);
 
-    const login = useCallback((userData: User, authToken: string) => {
-        setUser(userData);
-        setToken(authToken);
+    const login = useCallback((loginResponse: LoginResponse) => {
+        setUser(loginResponse.user);
+        setToken(loginResponse.token);
+        setError(null);
     }, []);
 
     const logout = useCallback(() => {
         setUser(null);
         setToken(null);
+        setError(null);
     }, []);
 
     const updateUser = useCallback((userData: User) => {
         setUser(userData);
     }, []);
 
+    const clearError = useCallback(() => {
+        setError(null);
+    }, []);
+
     return {
         user,
         token,
         isLoading,
+        error,
         isAuthenticated: !!token && !!user,
         isAdmin: user?.userRole === 'ROLE_ADMIN',
         login,
         logout,
         updateUser,
+        clearError,
     };
 };

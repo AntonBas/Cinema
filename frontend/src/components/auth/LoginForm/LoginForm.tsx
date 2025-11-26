@@ -16,23 +16,10 @@ export const LoginForm: React.FC = () => {
 
     try {
       const response = await login({ email, password });
-      authLogin(response.user, response.token);
+      authLogin(response);
       navigate('/');
     } catch (err) {
     }
-  };
-
-  const getErrorMessage = (error: string) => {
-    if (error.includes('500') || error.includes('Network Error')) {
-      return 'Server error. Please try again later.';
-    }
-    if (error.includes('401') || error.includes('Invalid credentials')) {
-      return 'Invalid email or password. Please try again.';
-    }
-    if (error.includes('400')) {
-      return 'Please check your email and password format.';
-    }
-    return error;
   };
 
   return (
@@ -48,7 +35,7 @@ export const LoginForm: React.FC = () => {
         <form className={styles.loginForm} onSubmit={handleSubmit}>
           {error && (
             <div className={styles.notification} data-type="error">
-              {getErrorMessage(error)}
+              {error}
             </div>
           )}
 
@@ -58,7 +45,6 @@ export const LoginForm: React.FC = () => {
             onChange={setEmail}
             placeholder="Email address"
             disabled={isLoading}
-            error={error ? '' : undefined}
           />
 
           <Input
@@ -67,7 +53,6 @@ export const LoginForm: React.FC = () => {
             onChange={setPassword}
             placeholder="Password"
             disabled={isLoading}
-            error={error ? '' : undefined}
           />
 
           <Button

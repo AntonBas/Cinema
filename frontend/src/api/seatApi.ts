@@ -14,7 +14,7 @@ export const seatApi = {
         const response = await fetch(`/api/cinema-halls/${hallId}/seats`, {
             headers: getAuthHeaders(),
         });
-        if (!response.ok) await handleApiError(response);
+        if (!response.ok) throw await handleApiError(response);
         return response.json();
     },
 
@@ -22,7 +22,7 @@ export const seatApi = {
         const response = await fetch(`/api/cinema-halls/${hallId}/seats/${seatId}`, {
             headers: getAuthHeaders(),
         });
-        if (!response.ok) await handleApiError(response);
+        if (!response.ok) throw await handleApiError(response);
         return response.json();
     },
 
@@ -30,7 +30,7 @@ export const seatApi = {
         const response = await fetch(`/api/cinema-halls/${hallId}/seats/position?row=${row}&number=${number}`, {
             headers: getAuthHeaders(),
         });
-        if (!response.ok) await handleApiError(response);
+        if (!response.ok) throw await handleApiError(response);
         return response.json();
     },
 
@@ -39,7 +39,7 @@ export const seatApi = {
             method: 'PUT',
             headers: getAuthHeaders(),
         });
-        if (!response.ok) await handleApiError(response);
+        if (!response.ok) throw await handleApiError(response);
         return response.json();
     },
 
@@ -47,7 +47,7 @@ export const seatApi = {
         const response = await fetch(`/api/cinema-halls/${hallId}/seats/check-availability?row=${row}&number=${number}`, {
             headers: getAuthHeaders(),
         });
-        if (!response.ok) await handleApiError(response);
+        if (!response.ok) throw await handleApiError(response);
         return response.json();
     },
 
@@ -55,7 +55,7 @@ export const seatApi = {
         const response = await fetch(`/api/cinema-halls/${hallId}/seats/count`, {
             headers: getAuthHeaders(),
         });
-        if (!response.ok) await handleApiError(response);
+        if (!response.ok) throw await handleApiError(response);
         return response.json();
     },
 
@@ -63,7 +63,7 @@ export const seatApi = {
         const response = await fetch(`/api/cinema-halls/${hallId}/seats/by-type?seatType=${seatType}`, {
             headers: getAuthHeaders(),
         });
-        if (!response.ok) await handleApiError(response);
+        if (!response.ok) throw await handleApiError(response);
         return response.json();
     },
 };

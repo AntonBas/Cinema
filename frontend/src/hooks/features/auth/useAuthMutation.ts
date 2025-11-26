@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { authApi } from '@/api/authApi';
-import type { LoginRequest, RegisterRequest, LoginResponse, ApiResponse } from '@/types/auth';
+import type { LoginRequest, RegisterRequest, LoginResponse, User } from '@/types/auth';
 
 export const useAuthMutation = () => {
     const [isLoading, setIsLoading] = useState(false);
@@ -21,7 +21,7 @@ export const useAuthMutation = () => {
         }
     };
 
-    const register = async (userData: RegisterRequest): Promise<ApiResponse> => {
+    const register = async (userData: RegisterRequest): Promise<User> => {
         setIsLoading(true);
         setError(null);
         try {
@@ -35,7 +35,7 @@ export const useAuthMutation = () => {
         }
     };
 
-    const checkEmail = async (email: string): Promise<{ exists: boolean }> => {
+    const checkEmail = async (email: string): Promise<boolean> => {
         setError(null);
         try {
             return await authApi.checkEmail(email);
@@ -46,22 +46,25 @@ export const useAuthMutation = () => {
         }
     };
 
-    const forgotPassword = async (email: string): Promise<ApiResponse> => {
+    const forgotPassword = async (email: string): Promise<void> => {
+        setIsLoading(true);
         setError(null);
         try {
-            return await authApi.forgotPassword(email);
+            await authApi.forgotPassword(email);
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to send password reset';
             setError(message);
             throw err;
+        } finally {
+            setIsLoading(false);
         }
     };
 
-    const resetPassword = async (token: string, newPassword: string): Promise<ApiResponse> => {
+    const resetPassword = async (token: string, newPassword: string): Promise<void> => {
         setIsLoading(true);
         setError(null);
         try {
-            return await authApi.resetPassword(token, newPassword);
+            await authApi.resetPassword(token, newPassword);
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to reset password';
             setError(message);
@@ -71,7 +74,8 @@ export const useAuthMutation = () => {
         }
     };
 
-    const verifyEmail = async (token: string): Promise<ApiResponse> => {
+    const verifyEmail = async (token: string): Promise<string> => {
+        setIsLoading(true);
         setError(null);
         try {
             return await authApi.verifyEmail(token);
@@ -79,6 +83,22 @@ export const useAuthMutation = () => {
             const message = err instanceof Error ? err.message : 'Failed to verify email';
             setError(message);
             throw err;
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const confirmEmailChange = async (token: string): Promise<User> => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            return await authApi.confirmEmailChange(token);
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'Failed to confirm email change';
+            setError(message);
+            throw err;
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -95,6 +115,7 @@ export const useAuthMutation = () => {
         forgotPassword,
         resetPassword,
         verifyEmail,
+        confirmEmailChange,
         clearError
     };
 };

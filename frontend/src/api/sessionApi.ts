@@ -19,7 +19,7 @@ export const sessionApi = {
             headers: getAuthHeaders(),
             body: JSON.stringify(request),
         });
-        if (!response.ok) await handleApiError(response);
+        if (!response.ok) throw await handleApiError(response);
         return response.json();
     },
 
@@ -27,7 +27,7 @@ export const sessionApi = {
         const response = await fetch(`${API_URL}/${id}`, {
             headers: getAuthHeaders(),
         });
-        if (!response.ok) await handleApiError(response);
+        if (!response.ok) throw await handleApiError(response);
         return response.json();
     },
 
@@ -37,7 +37,7 @@ export const sessionApi = {
             headers: getAuthHeaders(),
             body: JSON.stringify(request),
         });
-        if (!response.ok) await handleApiError(response);
+        if (!response.ok) throw await handleApiError(response);
         return response.json();
     },
 
@@ -46,7 +46,7 @@ export const sessionApi = {
             method: 'DELETE',
             headers: getAuthHeaders(),
         });
-        if (!response.ok) await handleApiError(response);
+        if (!response.ok) throw await handleApiError(response);
     },
 
     getAllSessions: async (params?: SearchParams): Promise<PageResponse<SessionResponse>> => {
@@ -59,7 +59,7 @@ export const sessionApi = {
         const response = await fetch(url, {
             headers: getAuthHeaders(),
         });
-        if (!response.ok) await handleApiError(response);
+        if (!response.ok) throw await handleApiError(response);
         return response.json();
     },
 
@@ -72,7 +72,7 @@ export const sessionApi = {
         const response = await fetch(url, {
             headers: getAuthHeaders(),
         });
-        if (!response.ok) await handleApiError(response);
+        if (!response.ok) throw await handleApiError(response);
         return response.json();
     },
 
@@ -85,7 +85,7 @@ export const sessionApi = {
         const response = await fetch(url, {
             headers: getAuthHeaders(),
         });
-        if (!response.ok) await handleApiError(response);
+        if (!response.ok) throw await handleApiError(response);
         return response.json();
     },
 
@@ -98,7 +98,7 @@ export const sessionApi = {
         const response = await fetch(url, {
             headers: getAuthHeaders(),
         });
-        if (!response.ok) await handleApiError(response);
+        if (!response.ok) throw await handleApiError(response);
         return response.json();
     },
 
@@ -111,7 +111,7 @@ export const sessionApi = {
         const response = await fetch(url, {
             headers: getAuthHeaders(),
         });
-        if (!response.ok) await handleApiError(response);
+        if (!response.ok) throw await handleApiError(response);
         return response.json();
     },
 
@@ -125,7 +125,7 @@ export const sessionApi = {
         const response = await fetch(url, {
             headers: getAuthHeaders(),
         });
-        if (!response.ok) await handleApiError(response);
+        if (!response.ok) throw await handleApiError(response);
         return response.json();
     },
 
@@ -138,7 +138,7 @@ export const sessionApi = {
         const response = await fetch(url, {
             headers: getAuthHeaders(),
         });
-        if (!response.ok) await handleApiError(response);
+        if (!response.ok) throw await handleApiError(response);
         return response.json();
     },
 
@@ -162,7 +162,7 @@ export const sessionApi = {
         const response = await fetch(url, {
             headers: getAuthHeaders(),
         });
-        if (!response.ok) await handleApiError(response);
+        if (!response.ok) throw await handleApiError(response);
         return response.json();
     },
 
@@ -182,7 +182,7 @@ export const sessionApi = {
         const response = await fetch(url, {
             headers: getAuthHeaders(),
         });
-        if (!response.ok) await handleApiError(response);
+        if (!response.ok) throw await handleApiError(response);
         return response.json();
     },
 };

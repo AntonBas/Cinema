@@ -27,7 +27,7 @@ export const userApi = {
         const response = await fetch(`${API_URL}/profile`, {
             headers: getAuthHeaders(),
         });
-        if (!response.ok) await handleApiError(response);
+        if (!response.ok) throw await handleApiError(response);
         return response.json();
     },
 
@@ -37,7 +37,7 @@ export const userApi = {
             headers: getAuthHeaders(),
             body: JSON.stringify(updateData),
         });
-        if (!response.ok) await handleApiError(response);
+        if (!response.ok) throw await handleApiError(response);
         return response.json();
     },
 
@@ -46,7 +46,7 @@ export const userApi = {
             method: 'POST',
             headers: getAuthHeaders(),
         });
-        if (!response.ok) await handleApiError(response);
+        if (!response.ok) throw await handleApiError(response);
         return response.json();
     },
 
@@ -55,7 +55,7 @@ export const userApi = {
             method: 'POST',
             headers: getAuthHeaders(),
         });
-        if (!response.ok) await handleApiError(response);
+        if (!response.ok) throw await handleApiError(response);
         return response.json();
     },
 
@@ -65,7 +65,7 @@ export const userApi = {
             headers: getAuthHeaders(),
             body: JSON.stringify(passwordData),
         });
-        if (!response.ok) await handleApiError(response);
+        if (!response.ok) throw await handleApiError(response);
         return response.json();
     }
 };

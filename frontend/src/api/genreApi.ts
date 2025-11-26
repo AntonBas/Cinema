@@ -17,7 +17,7 @@ export const genreApi = {
     const response = await fetch(`${API_URL}/all`, {
       headers: getAuthHeaders(),
     });
-    if (!response.ok) await handleApiError(response);
+    if (!response.ok) throw await handleApiError(response);
     return response.json();
   },
 
@@ -25,7 +25,7 @@ export const genreApi = {
     const response = await fetch(`${API_URL}/${id}`, {
       headers: getAuthHeaders(),
     });
-    if (!response.ok) await handleApiError(response);
+    if (!response.ok) throw await handleApiError(response);
     return response.json();
   },
 
@@ -35,7 +35,7 @@ export const genreApi = {
       headers: getAuthHeaders(),
       body: JSON.stringify(genreData),
     });
-    if (!response.ok) await handleApiError(response);
+    if (!response.ok) throw await handleApiError(response);
     return response.json();
   },
 
@@ -45,7 +45,7 @@ export const genreApi = {
       headers: getAuthHeaders(),
       body: JSON.stringify(genreData),
     });
-    if (!response.ok) await handleApiError(response);
+    if (!response.ok) throw await handleApiError(response);
     return response.json();
   },
 
@@ -54,7 +54,7 @@ export const genreApi = {
       method: 'DELETE',
       headers: getAuthHeaders(),
     });
-    if (!response.ok) await handleApiError(response);
+    if (!response.ok) throw await handleApiError(response);
   },
 
   search: async (params: SearchParams): Promise<PageResponse<GenreResponse>> => {
@@ -69,7 +69,7 @@ export const genreApi = {
       headers: getAuthHeaders(),
     });
 
-    if (!response.ok) await handleApiError(response);
+    if (!response.ok) throw await handleApiError(response);
     return response.json();
   }
 };

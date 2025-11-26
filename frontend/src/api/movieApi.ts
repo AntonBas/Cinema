@@ -30,7 +30,7 @@ export const movieApi = {
     const response = await fetch(`${API_URL}/${id}`, {
       headers: getAuthHeaders(),
     });
-    if (!response.ok) await handleApiError(response);
+    if (!response.ok) throw await handleApiError(response);
     return response.json();
   },
 
@@ -38,7 +38,7 @@ export const movieApi = {
     const response = await fetch(`${API_URL}/slug/${slug}`, {
       headers: getAuthHeaders(),
     });
-    if (!response.ok) await handleApiError(response);
+    if (!response.ok) throw await handleApiError(response);
     return response.json();
   },
 
@@ -46,7 +46,7 @@ export const movieApi = {
     const response = await fetch(API_URL, {
       headers: getAuthHeaders(),
     });
-    if (!response.ok) await handleApiError(response);
+    if (!response.ok) throw await handleApiError(response);
     return response.json();
   },
 
@@ -54,7 +54,7 @@ export const movieApi = {
     const response = await fetch(`${API_URL}/paginated?page=${page}&size=${size}`, {
       headers: getAuthHeaders(),
     });
-    if (!response.ok) await handleApiError(response);
+    if (!response.ok) throw await handleApiError(response);
     return response.json();
   },
 
@@ -62,7 +62,7 @@ export const movieApi = {
     const response = await fetch(`${API_URL}/status/current`, {
       headers: getAuthHeaders(),
     });
-    if (!response.ok) await handleApiError(response);
+    if (!response.ok) throw await handleApiError(response);
     return response.json();
   },
 
@@ -70,7 +70,7 @@ export const movieApi = {
     const response = await fetch(`${API_URL}/status/upcoming`, {
       headers: getAuthHeaders(),
     });
-    if (!response.ok) await handleApiError(response);
+    if (!response.ok) throw await handleApiError(response);
     return response.json();
   },
 
@@ -78,7 +78,7 @@ export const movieApi = {
     const response = await fetch(`${API_URL}/status/archived`, {
       headers: getAuthHeaders(),
     });
-    if (!response.ok) await handleApiError(response);
+    if (!response.ok) throw await handleApiError(response);
     return response.json();
   },
 
@@ -95,7 +95,7 @@ export const movieApi = {
     const response = await fetch(`${API_URL}/search?${params}`, {
       headers: getAuthHeaders(),
     });
-    if (!response.ok) await handleApiError(response);
+    if (!response.ok) throw await handleApiError(response);
     return response.json();
   },
 
@@ -111,7 +111,7 @@ export const movieApi = {
     const response = await fetch(`${API_URL}/search/for-session?${params}`, {
       headers: getAuthHeaders(),
     });
-    if (!response.ok) await handleApiError(response);
+    if (!response.ok) throw await handleApiError(response);
     return response.json();
   },
 
@@ -132,7 +132,7 @@ export const movieApi = {
       body: formData,
     });
 
-    if (!response.ok) await handleApiError(response);
+    if (!response.ok) throw await handleApiError(response);
     return response.json();
   },
 
@@ -158,7 +158,7 @@ export const movieApi = {
       body: formData,
     });
 
-    if (!response.ok) await handleApiError(response);
+    if (!response.ok) throw await handleApiError(response);
     return response.json();
   },
 
@@ -167,14 +167,14 @@ export const movieApi = {
       method: 'DELETE',
       headers: getAuthHeaders(),
     });
-    if (!response.ok) await handleApiError(response);
+    if (!response.ok) throw await handleApiError(response);
   },
 
   getMoviePoster: async (id: number): Promise<Blob> => {
     const response = await fetch(`${API_URL}/${id}/poster`, {
       headers: getAuthHeaders(),
     });
-    if (!response.ok) await handleApiError(response);
+    if (!response.ok) throw await handleApiError(response);
     return response.blob();
   },
 

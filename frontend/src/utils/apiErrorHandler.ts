@@ -1,32 +1,87 @@
-export const handleApiError = async (response: Response): Promise<never> => {
-    let errorMessage = 'Request failed';
+import type { ApiError, ApiSubError } from '@/types/api';
 
-    try {
-        const errorData = await response.json();
+export class ApiErrorException extends Error {
+    public readonly timestamp: string;
+    public readonly status: string;
+    public readonly statusCode: number;
+    public readonly errorCode?: string;
+    public readonly debugMessage?: string;
+    public readonly path?: string;
+    public readonly subErrors?: ApiSubError[];
 
-        if (errorData.message) {
-            errorMessage = errorData.message;
-        }
-        else if (response.status === 409) {
-            errorMessage = 'Resource already exists';
-        } else if (response.status === 400) {
-            errorMessage = 'Invalid request data';
-        } else if (response.status === 401) {
-            errorMessage = 'Unauthorized access';
-        } else if (response.status === 403) {
-            errorMessage = 'Access forbidden';
-        } else if (response.status === 404) {
-            errorMessage = 'Resource not found';
-        } else {
-            errorMessage = `Request failed with status ${response.status}`;
-        }
-    } catch {
-        if (response.status === 409) {
-            errorMessage = 'Resource already exists';
-        } else {
-            errorMessage = `Request failed with status ${response.status}`;
-        }
+    constructor(apiError: ApiError) {
+        super(apiError.message);
+        this.name = 'ApiErrorException';
+        this.timestamp = apiError.timestamp;
+        this.status = apiError.status;
+        this.statusCode = apiError.statusCode;
+        this.errorCode = apiError.errorCode;
+        this.debugMessage = apiError.debugMessage;
+        this.path = apiError.path;
+        this.subErrors = apiError.subErrors;
     }
 
-    throw new Error(errorMessage);
+    isNotFound(): boolean {
+        return this.statusCode === 404;
+    }
+
+    isConflict(): boolean {
+        return this.statusCode === 409;
+    }
+
+    isValidationError(): boolean {
+        return this.statusCode === 400 && !!this.subErrors && this.subErrors.length > 0;
+    }
+
+    isUnauthorized(): boolean {
+        return this.statusCode === 401;
+    }
+
+    isForbidden(): boolean {
+        return this.statusCode === 403;
+    }
+
+    isServerError(): boolean {
+        return this.statusCode >= 500;
+    }
+
+    isClientError(): boolean {
+        return this.statusCode >= 400 && this.statusCode < 500;
+    }
+
+    getValidationErrors(): Record<string, string> {
+        if (!this.subErrors) return {};
+
+        const errors: Record<string, string> = {};
+        this.subErrors.forEach(error => {
+            if (error.field && error.message) {
+                const fieldName = this.normalizeFieldName(error.field);
+                errors[fieldName] = error.message;
+            }
+        });
+        return errors;
+    }
+
+    private normalizeFieldName(field: string): string {
+        return field.replace(/\[(\w+)\]/g, '.$1');
+    }
+
+    getFirstValidationError(): string | null {
+        const errors = this.getValidationErrors();
+        const firstError = Object.values(errors)[0];
+        return firstError || null;
+    }
+
+    toString(): string {
+        return `[${this.statusCode}] ${this.message}${this.errorCode ? ` (${this.errorCode})` : ''}`;
+    }
+}
+
+export const handleApiError = async (response: Response): Promise<never> => {
+    const errorData: ApiError = await response.json();
+    throw new ApiErrorException(errorData);
+};
+
+export const isApiErrorException = (error: unknown): error is ApiErrorException => {
+    return error instanceof ApiErrorException;
 };

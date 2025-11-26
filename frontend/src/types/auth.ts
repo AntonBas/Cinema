@@ -1,5 +1,3 @@
-import type { ApiResponse, ErrorResponse } from './api';
-
 export type UserRole = 'ROLE_USER' | 'ROLE_ADMIN';
 
 export interface User {
@@ -30,11 +28,9 @@ export interface LoginRequest {
 }
 
 export interface LoginResponse {
-    success: boolean;
     token: string;
-    user: User;
     tokenType: string;
-    message?: string;
+    user: User;
 }
 
 export interface RegisterRequest {
@@ -48,24 +44,6 @@ export interface RegisterRequest {
     passwordConfirm: string;
 }
 
-export interface RegisterResponse {
-    success: boolean;
-    message: string;
-}
-
-export interface ForgotPasswordRequest {
-    email: string;
-}
-
-export interface ResetPasswordRequest {
-    token: string;
-    newPassword: string;
-}
-
-export interface EmailVerificationRequest {
-    token: string;
-}
-
 export interface CheckEmailRequest {
     email: string;
 }
@@ -73,5 +51,3 @@ export interface CheckEmailRequest {
 export interface CheckEmailResponse {
     exists: boolean;
 }
-
-export type { ApiResponse, ErrorResponse };

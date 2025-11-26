@@ -2,21 +2,20 @@ import { useState, useCallback } from 'react';
 import { cinemaHallApi } from '@/api/cinemaHallApi';
 import type { CinemaHallWithSeatsResponse, HallLayoutResponse } from '@/types';
 
-export const useCinemaHalls = () => {
-    const [hallWithSeats, setHallWithSeats] = useState<CinemaHallWithSeatsResponse | null>(null);
-    const [hallLayout, setHallLayout] = useState<HallLayoutResponse | null>(null);
+const useQuery = <T>() => {
+    const [data, setData] = useState<T | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const getHallWithSeats = useCallback(async (id: number) => {
+    const execute = useCallback(async (operation: () => Promise<T>): Promise<T> => {
         setLoading(true);
         setError(null);
         try {
-            const data = await cinemaHallApi.getHallWithSeats(id);
-            setHallWithSeats(data);
-            return data;
+            const result = await operation();
+            setData(result);
+            return result;
         } catch (err) {
-            const message = err instanceof Error ? err.message : 'Failed to fetch hall with seats';
+            const message = err instanceof Error ? err.message : 'Operation failed';
             setError(message);
             throw err;
         } finally {
@@ -24,41 +23,28 @@ export const useCinemaHalls = () => {
         }
     }, []);
 
-    const getHallLayout = useCallback(async (id: number) => {
-        setLoading(true);
-        setError(null);
-        try {
-            const data = await cinemaHallApi.getHallLayout(id);
-            setHallLayout(data);
-            return data;
-        } catch (err) {
-            const message = err instanceof Error ? err.message : 'Failed to fetch hall layout';
-            setError(message);
-            throw err;
-        } finally {
-            setLoading(false);
-        }
-    }, []);
+    return { data, loading, error, execute };
+};
+
+export const useCinemaHalls = () => {
+    const hallWithSeatsQuery = useQuery<CinemaHallWithSeatsResponse>();
+    const hallLayoutQuery = useQuery<HallLayoutResponse>();
+
+    const getHallWithSeats = useCallback((id: number) =>
+        hallWithSeatsQuery.execute(() => cinemaHallApi.getHallWithSeats(id)), [hallWithSeatsQuery]);
+
+    const getHallLayout = useCallback((id: number) =>
+        hallLayoutQuery.execute(() => cinemaHallApi.getHallLayout(id)), [hallLayoutQuery]);
 
     const searchHalls = useCallback(async (name?: string) => {
-        setLoading(true);
-        setError(null);
-        try {
-            return await cinemaHallApi.searchHalls(name);
-        } catch (err) {
-            const message = err instanceof Error ? err.message : 'Failed to search halls';
-            setError(message);
-            throw err;
-        } finally {
-            setLoading(false);
-        }
+        return await cinemaHallApi.searchHalls(name);
     }, []);
 
     return {
-        hallWithSeats,
-        hallLayout,
-        loading,
-        error,
+        hallWithSeats: hallWithSeatsQuery.data,
+        hallLayout: hallLayoutQuery.data,
+        loading: hallWithSeatsQuery.loading || hallLayoutQuery.loading,
+        error: hallWithSeatsQuery.error || hallLayoutQuery.error,
         getHallWithSeats,
         getHallLayout,
         searchHalls

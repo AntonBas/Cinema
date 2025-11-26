@@ -1,13 +1,17 @@
-export interface ApiResponse {
-    success: boolean;
+export interface ApiError {
+    timestamp: string;
+    status: string;
+    statusCode: number;
     message: string;
+    errorCode?: string;
+    debugMessage?: string;
+    path?: string;
+    subErrors?: ApiSubError[];
 }
 
-export interface ErrorResponse {
-    success: boolean;
-    message: string;
-    errors?: Array<{
-        field: string;
-        message: string;
-    }>;
+export interface ApiSubError {
+    object?: string;
+    field?: string;
+    rejectedValue?: any;
+    message?: string;
 }
