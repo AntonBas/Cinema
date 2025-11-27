@@ -1,125 +1,244 @@
 package ua.lviv.bas.cinema.controller;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.List;
+import java.util.Objects;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.http.MediaType;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
 import ua.lviv.bas.cinema.domain.enums.PersonRole;
 import ua.lviv.bas.cinema.dto.movie.request.PersonRequest;
 import ua.lviv.bas.cinema.dto.movie.request.QuickCreatePersonRequest;
 import ua.lviv.bas.cinema.dto.movie.response.PersonResponse;
 import ua.lviv.bas.cinema.dto.shared.PageResponse;
+import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
+import ua.lviv.bas.cinema.exception.domain.cinema.PersonNotFoundException;
 import ua.lviv.bas.cinema.service.PersonService;
 
-@WebMvcTest(PersonController.class)
-@AutoConfigureMockMvc(addFilters = false)
+@ExtendWith(MockitoExtension.class)
 class PersonControllerTest {
 
-	@Autowired
-	private MockMvc mockMvc;
-
-	@Autowired
-	private ObjectMapper objectMapper;
-
-	@MockitoBean
+	@Mock
 	private PersonService personService;
 
-	@Test
-	void getAll_ShouldReturnPersons() throws Exception {
-		PersonResponse dto = PersonResponse.builder().id(1L).name("Anton Bas").build();
-		when(personService.getAllPersons()).thenReturn(List.of(dto));
+	@InjectMocks
+	private PersonController personController;
 
-		mockMvc.perform(get("/api/persons")).andExpect(status().isOk())
-				.andExpect(jsonPath("$[0].name").value("Anton Bas"));
+	private static final Long PERSON_ID = 1L;
+	private static final String PERSON_NAME = "Anton Bas";
+
+	private PersonResponse createPersonResponse(Long id, String name, PersonRole role) {
+		return PersonResponse.builder().id(id).name(name).role(role).build();
+	}
+
+	private PersonRequest createPersonRequest(String name, PersonRole role) {
+		return PersonRequest.builder().name(name).role(role).build();
+	}
+
+	private QuickCreatePersonRequest createQuickCreatePersonRequest(String name, PersonRole role) {
+		return QuickCreatePersonRequest.builder().name(name).role(role).build();
+	}
+
+	private PageResponse<PersonResponse> createPageResponse(List<PersonResponse> content, int currentPage,
+			int totalPages, long totalElements, int pageSize) {
+		return new PageResponse<>(content, currentPage, totalPages, totalElements, pageSize);
 	}
 
 	@Test
-	void getById_ShouldReturnPerson() throws Exception {
-		PersonResponse dto = PersonResponse.builder().id(1L).name("Anton Bas").build();
-		when(personService.getPersonById(1L)).thenReturn(dto);
+	void getPersonById_ShouldReturnPerson() {
+		PersonResponse personResponse = createPersonResponse(PERSON_ID, PERSON_NAME, PersonRole.ACTOR);
 
-		mockMvc.perform(get("/api/persons/1")).andExpect(status().isOk())
-				.andExpect(jsonPath("$.name").value("Anton Bas"));
+		when(personService.getPersonById(PERSON_ID)).thenReturn(personResponse);
+
+		ResponseEntity<PersonResponse> response = personController.getPersonById(PERSON_ID);
+
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+		PersonResponse responseBody = Objects.requireNonNull(response.getBody());
+		assertEquals(PERSON_ID, responseBody.getId());
+		assertEquals(PERSON_NAME, responseBody.getName());
+		assertEquals(PersonRole.ACTOR, responseBody.getRole());
+		verify(personService).getPersonById(PERSON_ID);
 	}
 
 	@Test
-	void create_ShouldReturnCreatedPerson() throws Exception {
-		PersonRequest request = PersonRequest.builder().name("Anton Bas").role(PersonRole.ACTOR).build();
+	void getPersonById_WhenNotFound_ShouldThrowException() {
+		when(personService.getPersonById(999L)).thenThrow(new PersonNotFoundException(999L));
 
-		PersonResponse response = PersonResponse.builder().id(1L).name("Anton Bas").role(PersonRole.ACTOR).build();
-
-		when(personService.createPerson(any(PersonRequest.class))).thenReturn(response);
-
-		mockMvc.perform(post("/api/persons").contentType(MediaType.APPLICATION_JSON)
-				.content(objectMapper.writeValueAsString(request))).andExpect(status().isCreated())
-				.andExpect(jsonPath("$.id").value(1L)).andExpect(jsonPath("$.name").value("Anton Bas"))
-				.andExpect(jsonPath("$.role").value("ACTOR"));
+		assertThrows(PersonNotFoundException.class, () -> personController.getPersonById(999L));
 	}
 
 	@Test
-	void update_ShouldReturnUpdatedPerson() throws Exception {
-		PersonRequest request = PersonRequest.builder().name("Anton Bas Updated").role(PersonRole.DIRECTOR).build();
+	void createPerson_ShouldReturnCreatedPerson() {
+		PersonRequest request = createPersonRequest(PERSON_NAME, PersonRole.ACTOR);
+		PersonResponse responseDto = createPersonResponse(PERSON_ID, PERSON_NAME, PersonRole.ACTOR);
 
-		PersonResponse response = PersonResponse.builder().id(1L).name("Anton Bas Updated").role(PersonRole.DIRECTOR).build();
+		when(personService.createPerson(any(PersonRequest.class))).thenReturn(responseDto);
 
-		when(personService.updatePerson(eq(1L), any(PersonRequest.class))).thenReturn(response);
+		ResponseEntity<PersonResponse> response = personController.createPerson(request);
 
-		mockMvc.perform(put("/api/persons/1").contentType(MediaType.APPLICATION_JSON)
-				.content(objectMapper.writeValueAsString(request))).andExpect(status().isOk())
-				.andExpect(jsonPath("$.name").value("Anton Bas Updated"))
-				.andExpect(jsonPath("$.role").value("DIRECTOR"));
+		assertEquals(HttpStatus.CREATED, response.getStatusCode());
+		PersonResponse responseBody = Objects.requireNonNull(response.getBody());
+		assertEquals(PERSON_ID, responseBody.getId());
+		assertEquals(PERSON_NAME, responseBody.getName());
+		assertEquals(PersonRole.ACTOR, responseBody.getRole());
+		verify(personService).createPerson(request);
 	}
 
 	@Test
-	void delete_ShouldReturnNoContent() throws Exception {
-		doNothing().when(personService).deletePerson(1L);
+	void createPerson_WhenDuplicateName_ShouldThrowException() {
+		PersonRequest request = createPersonRequest("Existing Person", PersonRole.ACTOR);
 
-		mockMvc.perform(delete("/api/persons/1")).andExpect(status().isNoContent());
+		when(personService.createPerson(any(PersonRequest.class)))
+				.thenThrow(new DuplicateEntityException("Person", "Existing Person"));
+
+		assertThrows(DuplicateEntityException.class, () -> personController.createPerson(request));
 	}
 
 	@Test
-	void quickCreate_ShouldReturnCreatedPerson() throws Exception {
-		QuickCreatePersonRequest request = QuickCreatePersonRequest.builder().name("Anton Bas").role(PersonRole.ACTOR).build();
+	void updatePerson_ShouldReturnUpdatedPerson() {
+		PersonRequest request = createPersonRequest("Updated Name", PersonRole.DIRECTOR);
+		PersonResponse updatedDto = createPersonResponse(PERSON_ID, "Updated Name", PersonRole.DIRECTOR);
 
-		PersonResponse response = PersonResponse.builder().id(1L).name("Anton Bas").role(PersonRole.ACTOR).build();
+		when(personService.updatePerson(eq(PERSON_ID), any(PersonRequest.class))).thenReturn(updatedDto);
 
-		when(personService.quickCreate(any(QuickCreatePersonRequest.class))).thenReturn(response);
+		ResponseEntity<PersonResponse> response = personController.updatePerson(PERSON_ID, request);
 
-		mockMvc.perform(post("/api/persons/quick-create").contentType(MediaType.APPLICATION_JSON)
-				.content(objectMapper.writeValueAsString(request))).andExpect(status().isCreated())
-				.andExpect(jsonPath("$.id").value(1L)).andExpect(jsonPath("$.name").value("Anton Bas"))
-				.andExpect(jsonPath("$.role").value("ACTOR"));
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+		PersonResponse responseBody = Objects.requireNonNull(response.getBody());
+		assertEquals(PERSON_ID, responseBody.getId());
+		assertEquals("Updated Name", responseBody.getName());
+		assertEquals(PersonRole.DIRECTOR, responseBody.getRole());
+		verify(personService).updatePerson(PERSON_ID, request);
 	}
 
 	@Test
-	void search_ShouldReturnPagedResponse() throws Exception {
-		PersonResponse dto = PersonResponse.builder().id(1L).name("Anton Bas").role(PersonRole.ACTOR).build();
-		PageResponse<PersonResponse> page = new PageResponse<>(List.of(dto), 0, 1, 1, 10);
+	void updatePerson_WhenNotFound_ShouldThrowException() {
+		PersonRequest request = createPersonRequest("Updated Person", PersonRole.ACTOR);
 
-		when(personService.searchPersons(eq("Anton"), eq(PersonRole.ACTOR), eq(0), eq(10))).thenReturn(page);
+		when(personService.updatePerson(eq(999L), any(PersonRequest.class)))
+				.thenThrow(new PersonNotFoundException(999L));
 
-		mockMvc.perform(get("/api/persons/search").param("query", "Anton").param("role", "ACTOR").param("page", "0")
-				.param("size", "10")).andExpect(status().isOk())
-				.andExpect(jsonPath("$.content[0].name").value("Anton Bas"))
-				.andExpect(jsonPath("$.totalElements").value(1));
+		assertThrows(PersonNotFoundException.class, () -> personController.updatePerson(999L, request));
+	}
+
+	@Test
+	void deletePerson_ShouldReturnNoContent() {
+		ResponseEntity<Void> response = personController.deletePerson(PERSON_ID);
+
+		assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
+		verify(personService).deletePerson(PERSON_ID);
+	}
+
+	@Test
+	void deletePerson_WhenNotFound_ShouldThrowException() {
+		Long nonExistentId = 999L;
+
+		doThrow(new PersonNotFoundException(nonExistentId)).when(personService).deletePerson(nonExistentId);
+
+		assertThrows(PersonNotFoundException.class, () -> personController.deletePerson(nonExistentId));
+	}
+
+	@Test
+	void quickCreate_ShouldReturnCreatedPerson() {
+		QuickCreatePersonRequest request = createQuickCreatePersonRequest(PERSON_NAME, PersonRole.ACTOR);
+		PersonResponse responseDto = createPersonResponse(PERSON_ID, PERSON_NAME, PersonRole.ACTOR);
+
+		when(personService.quickCreate(any(QuickCreatePersonRequest.class))).thenReturn(responseDto);
+
+		ResponseEntity<PersonResponse> response = personController.quickCreate(request);
+
+		assertEquals(HttpStatus.CREATED, response.getStatusCode());
+		PersonResponse responseBody = Objects.requireNonNull(response.getBody());
+		assertEquals(PERSON_ID, responseBody.getId());
+		assertEquals(PERSON_NAME, responseBody.getName());
+		assertEquals(PersonRole.ACTOR, responseBody.getRole());
+		verify(personService).quickCreate(request);
+	}
+
+	@Test
+	void getAll_ShouldReturnListOfPersons() {
+		PersonResponse person1 = createPersonResponse(1L, "Person 1", PersonRole.ACTOR);
+		PersonResponse person2 = createPersonResponse(2L, "Person 2", PersonRole.DIRECTOR);
+		List<PersonResponse> persons = List.of(person1, person2);
+
+		when(personService.getAllPersons()).thenReturn(persons);
+
+		ResponseEntity<List<PersonResponse>> response = personController.getAll();
+
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+		List<PersonResponse> responseBody = Objects.requireNonNull(response.getBody());
+		assertEquals(2, responseBody.size());
+		assertEquals("Person 1", responseBody.get(0).getName());
+		assertEquals("Person 2", responseBody.get(1).getName());
+		verify(personService).getAllPersons();
+	}
+
+	@Test
+	void searchPersons_ShouldReturnPagedResponse() {
+		PersonResponse person1 = createPersonResponse(1L, "Anton Bas", PersonRole.ACTOR);
+		List<PersonResponse> content = List.of(person1);
+		PageResponse<PersonResponse> pageResponse = createPageResponse(content, 0, 1, 1, 10);
+
+		when(personService.searchPersons(eq("Anton"), eq(PersonRole.ACTOR), eq(0), eq(10))).thenReturn(pageResponse);
+
+		ResponseEntity<PageResponse<PersonResponse>> response = personController.searchPersons("Anton",
+				PersonRole.ACTOR, 0, 10);
+
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+		PageResponse<PersonResponse> responseBody = Objects.requireNonNull(response.getBody());
+		assertEquals(1, responseBody.getContent().size());
+		assertEquals("Anton Bas", responseBody.getContent().get(0).getName());
+		assertEquals(0, responseBody.getCurrentPage());
+		assertEquals(1, responseBody.getTotalPages());
+		assertEquals(1, responseBody.getTotalElements());
+		assertEquals(10, responseBody.getPageSize());
+		verify(personService).searchPersons("Anton", PersonRole.ACTOR, 0, 10);
+	}
+
+	@Test
+	void searchPersons_WithNullQueryAndRole_ShouldReturnPagedResponse() {
+		PersonResponse person1 = createPersonResponse(1L, "Person 1", PersonRole.ACTOR);
+		PersonResponse person2 = createPersonResponse(2L, "Person 2", PersonRole.DIRECTOR);
+		List<PersonResponse> content = List.of(person1, person2);
+		PageResponse<PersonResponse> pageResponse = createPageResponse(content, 0, 1, 2, 10);
+
+		when(personService.searchPersons(isNull(), isNull(), eq(0), eq(10))).thenReturn(pageResponse);
+
+		ResponseEntity<PageResponse<PersonResponse>> response = personController.searchPersons(null, null, 0, 10);
+
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+		PageResponse<PersonResponse> responseBody = Objects.requireNonNull(response.getBody());
+		assertEquals(2, responseBody.getContent().size());
+		verify(personService).searchPersons(null, null, 0, 10);
+	}
+
+	@Test
+	void searchPersons_WithLargeSize_ShouldLimitToMaxPageSize() {
+		PersonResponse person1 = createPersonResponse(1L, "Person 1", PersonRole.ACTOR);
+		List<PersonResponse> content = List.of(person1);
+		PageResponse<PersonResponse> pageResponse = createPageResponse(content, 0, 1, 1, 50);
+
+		when(personService.searchPersons(isNull(), isNull(), eq(0), eq(50))).thenReturn(pageResponse);
+
+		ResponseEntity<PageResponse<PersonResponse>> response = personController.searchPersons(null, null, 0, 100);
+
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+		PageResponse<PersonResponse> responseBody = Objects.requireNonNull(response.getBody());
+		assertEquals(50, responseBody.getPageSize());
+		verify(personService).searchPersons(null, null, 0, 50);
 	}
 }

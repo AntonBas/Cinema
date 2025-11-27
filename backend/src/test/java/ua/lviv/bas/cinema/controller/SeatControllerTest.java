@@ -1,6 +1,8 @@
 package ua.lviv.bas.cinema.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
@@ -16,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 
 import ua.lviv.bas.cinema.domain.enums.SeatType;
 import ua.lviv.bas.cinema.dto.cinemaHall.response.SeatResponse;
+import ua.lviv.bas.cinema.exception.domain.cinema.SeatNotFoundException;
 import ua.lviv.bas.cinema.service.SeatService;
 
 @ExtendWith(MockitoExtension.class)
@@ -41,12 +44,29 @@ class SeatControllerTest {
 		ResponseEntity<List<SeatResponse>> response = seatController.getSeatsByHall(1L);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
-		List<SeatResponse> responseBody = Objects.requireNonNull(response.getBody(), "Response body should not be null");
+		List<SeatResponse> responseBody = Objects.requireNonNull(response.getBody(),
+				"Response body should not be null");
 		assertEquals(2, responseBody.size());
 		assertEquals(1L, responseBody.get(0).getId());
 		assertEquals(SeatType.STANDARD, responseBody.get(0).getSeatType());
 		assertEquals(2L, responseBody.get(1).getId());
 		assertEquals(SeatType.VIP, responseBody.get(1).getSeatType());
+
+		verify(seatService).getSeatsByHall(1L);
+	}
+
+	@Test
+	void getSeatsByHall_WhenNoSeats_ShouldReturnEmptyList() {
+		when(seatService.getSeatsByHall(1L)).thenReturn(List.of());
+
+		ResponseEntity<List<SeatResponse>> response = seatController.getSeatsByHall(1L);
+
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+		List<SeatResponse> responseBody = Objects.requireNonNull(response.getBody(),
+				"Response body should not be null");
+		assertEquals(0, responseBody.size());
+
+		verify(seatService).getSeatsByHall(1L);
 	}
 
 	@Test
@@ -63,6 +83,17 @@ class SeatControllerTest {
 		assertEquals(1, responseBody.getRow());
 		assertEquals(1, responseBody.getNumber());
 		assertEquals(SeatType.STANDARD, responseBody.getSeatType());
+
+		verify(seatService).getSeatById(1L);
+	}
+
+	@Test
+	void getSeatById_WhenNotFound_ShouldThrowException() {
+		when(seatService.getSeatById(999L)).thenThrow(new SeatNotFoundException(999L));
+
+		assertThrows(SeatNotFoundException.class, () -> seatController.getSeatById(1L, 999L));
+
+		verify(seatService).getSeatById(999L);
 	}
 
 	@Test
@@ -78,6 +109,17 @@ class SeatControllerTest {
 		assertEquals(1L, responseBody.getId());
 		assertEquals(1, responseBody.getRow());
 		assertEquals(1, responseBody.getNumber());
+
+		verify(seatService).getSeatByPosition(1L, 1, 1);
+	}
+
+	@Test
+	void getSeatByPosition_WhenNotFound_ShouldThrowException() {
+		when(seatService.getSeatByPosition(1L, 1, 1)).thenThrow(new SeatNotFoundException(1L));
+
+		assertThrows(SeatNotFoundException.class, () -> seatController.getSeatByPosition(1L, 1, 1));
+
+		verify(seatService).getSeatByPosition(1L, 1, 1);
 	}
 
 	@Test
@@ -92,6 +134,17 @@ class SeatControllerTest {
 		SeatResponse responseBody = Objects.requireNonNull(response.getBody(), "Response body should not be null");
 		assertEquals(SeatType.VIP, responseBody.getSeatType());
 		assertEquals(1L, responseBody.getId());
+
+		verify(seatService).updateSeatType(1L, SeatType.VIP);
+	}
+
+	@Test
+	void updateSeatType_WhenNotFound_ShouldThrowException() {
+		when(seatService.updateSeatType(999L, SeatType.VIP)).thenThrow(new SeatNotFoundException(999L));
+
+		assertThrows(SeatNotFoundException.class, () -> seatController.updateSeatType(1L, 999L, SeatType.VIP));
+
+		verify(seatService).updateSeatType(999L, SeatType.VIP);
 	}
 
 	@Test
@@ -103,6 +156,8 @@ class SeatControllerTest {
 		assertEquals(HttpStatus.OK, response.getStatusCode());
 		Boolean responseBody = Objects.requireNonNull(response.getBody(), "Response body should not be null");
 		assertEquals(true, responseBody);
+
+		verify(seatService).isSeatAvailable(1L, 1, 1);
 	}
 
 	@Test
@@ -114,6 +169,8 @@ class SeatControllerTest {
 		assertEquals(HttpStatus.OK, response.getStatusCode());
 		Boolean responseBody = Objects.requireNonNull(response.getBody(), "Response body should not be null");
 		assertEquals(false, responseBody);
+
+		verify(seatService).isSeatAvailable(1L, 1, 1);
 	}
 
 	@Test
@@ -125,6 +182,21 @@ class SeatControllerTest {
 		assertEquals(HttpStatus.OK, response.getStatusCode());
 		Long responseBody = Objects.requireNonNull(response.getBody(), "Response body should not be null");
 		assertEquals(50L, responseBody);
+
+		verify(seatService).countSeatsByHall(1L);
+	}
+
+	@Test
+	void countSeatsByHall_WhenNoSeats_ShouldReturnZero() {
+		when(seatService.countSeatsByHall(1L)).thenReturn(0L);
+
+		ResponseEntity<Long> response = seatController.countSeatsByHall(1L);
+
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+		Long responseBody = Objects.requireNonNull(response.getBody(), "Response body should not be null");
+		assertEquals(0L, responseBody);
+
+		verify(seatService).countSeatsByHall(1L);
 	}
 
 	@Test
@@ -137,11 +209,28 @@ class SeatControllerTest {
 		ResponseEntity<List<SeatResponse>> response = seatController.getSeatsByType(1L, SeatType.VIP);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
-		List<SeatResponse> responseBody = Objects.requireNonNull(response.getBody(), "Response body should not be null");
+		List<SeatResponse> responseBody = Objects.requireNonNull(response.getBody(),
+				"Response body should not be null");
 		assertEquals(2, responseBody.size());
 		assertEquals(SeatType.VIP, responseBody.get(0).getSeatType());
 		assertEquals(SeatType.VIP, responseBody.get(1).getSeatType());
 		assertEquals(1L, responseBody.get(0).getId());
 		assertEquals(2L, responseBody.get(1).getId());
+
+		verify(seatService).getSeatsByType(1L, SeatType.VIP);
+	}
+
+	@Test
+	void getSeatsByType_WhenNoSeatsOfType_ShouldReturnEmptyList() {
+		when(seatService.getSeatsByType(1L, SeatType.VIP)).thenReturn(List.of());
+
+		ResponseEntity<List<SeatResponse>> response = seatController.getSeatsByType(1L, SeatType.VIP);
+
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+		List<SeatResponse> responseBody = Objects.requireNonNull(response.getBody(),
+				"Response body should not be null");
+		assertEquals(0, responseBody.size());
+
+		verify(seatService).getSeatsByType(1L, SeatType.VIP);
 	}
 }

@@ -1,8 +1,11 @@
 package ua.lviv.bas.cinema.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -26,10 +29,12 @@ import ua.lviv.bas.cinema.domain.enums.AgeRating;
 import ua.lviv.bas.cinema.domain.enums.MovieStatus;
 import ua.lviv.bas.cinema.dto.movie.request.MovieCreateRequest;
 import ua.lviv.bas.cinema.dto.movie.request.MovieUpdateRequest;
-import ua.lviv.bas.cinema.dto.movie.response.MovieDetailResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieCardResponse;
+import ua.lviv.bas.cinema.dto.movie.response.MovieDetailResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieSessionSearchResponse;
 import ua.lviv.bas.cinema.dto.shared.PageResponse;
+import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
+import ua.lviv.bas.cinema.exception.domain.cinema.MovieNotFoundException;
 import ua.lviv.bas.cinema.service.MovieService;
 
 @ExtendWith(MockitoExtension.class)
@@ -86,6 +91,14 @@ class MovieControllerTest {
 	}
 
 	@Test
+	void getMovieById_WhenNotFound_ShouldThrowException() {
+		when(movieService.getMovieById(999L)).thenThrow(new MovieNotFoundException(999L));
+
+		assertThrows(MovieNotFoundException.class, () -> movieController.getMovieById(999L));
+		verify(movieService).getMovieById(999L);
+	}
+
+	@Test
 	void getMovieBySlug_ShouldReturnMovie() {
 		MovieDetailResponse movieDto = createMovieDto(1L, "Test Movie", "test-movie", MovieStatus.UPCOMING);
 
@@ -98,6 +111,14 @@ class MovieControllerTest {
 				"Response body should not be null");
 		assertEquals("test-movie", responseBody.getSlug());
 		verify(movieService).getMovieBySlug("test-movie");
+	}
+
+	@Test
+	void getMovieBySlug_WhenNotFound_ShouldThrowException() {
+		when(movieService.getMovieBySlug("non-existent")).thenThrow(new MovieNotFoundException("Movie not found"));
+
+		assertThrows(MovieNotFoundException.class, () -> movieController.getMovieBySlug("non-existent"));
+		verify(movieService).getMovieBySlug("non-existent");
 	}
 
 	@Test
@@ -116,6 +137,19 @@ class MovieControllerTest {
 		assertEquals(2, responseBody.size());
 		assertEquals("Movie 1", responseBody.get(0).getTitle());
 		assertEquals("Movie 2", responseBody.get(1).getTitle());
+		verify(movieService).getAllMovies();
+	}
+
+	@Test
+	void getAllMovies_WhenNoMovies_ShouldReturnEmptyList() {
+		when(movieService.getAllMovies()).thenReturn(List.of());
+
+		ResponseEntity<List<MovieDetailResponse>> response = movieController.getAllMovies();
+
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+		List<MovieDetailResponse> responseBody = Objects.requireNonNull(response.getBody(),
+				"Response body should not be null");
+		assertEquals(0, responseBody.size());
 		verify(movieService).getAllMovies();
 	}
 
@@ -141,6 +175,22 @@ class MovieControllerTest {
 	}
 
 	@Test
+	void getMoviesPaginated_ShouldLimitSizeToMaxPageSize() {
+		MovieDetailResponse movie = createMovieDto(1L, "Test Movie", "test-movie", MovieStatus.UPCOMING);
+		Page<MovieDetailResponse> page = new PageImpl<>(List.of(movie), PageRequest.of(0, 50), 1);
+
+		when(movieService.getMoviesPaginated(any(PageRequest.class))).thenReturn(page);
+
+		ResponseEntity<PageResponse<MovieDetailResponse>> response = movieController.getMoviesPaginated(0, 100);
+
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+		PageResponse<MovieDetailResponse> responseBody = Objects.requireNonNull(response.getBody(),
+				"Response body should not be null");
+		assertEquals(50, responseBody.getPageSize());
+		verify(movieService).getMoviesPaginated(PageRequest.of(0, 50));
+	}
+
+	@Test
 	void createMovie_ShouldReturnCreatedMovie() {
 		MovieCreateRequest createRequest = createMovieCreateRequest("New Movie");
 		MovieDetailResponse movieDto = createMovieDto(1L, "New Movie", "new-movie", MovieStatus.UPCOMING);
@@ -157,6 +207,19 @@ class MovieControllerTest {
 				"Response body should not be null");
 		assertEquals(1L, responseBody.getId());
 		assertEquals("New Movie", responseBody.getTitle());
+		verify(movieService).createMovie(createRequest);
+	}
+
+	@Test
+	void createMovie_WhenDuplicateTitle_ShouldThrowException() {
+		MovieCreateRequest createRequest = createMovieCreateRequest("Existing Movie");
+		MockMultipartFile posterFile = new MockMultipartFile("posterFile", "poster.jpg", "image/jpeg",
+				"content".getBytes());
+
+		when(movieService.createMovie(any(MovieCreateRequest.class)))
+				.thenThrow(new DuplicateEntityException("Movie", "Existing Movie"));
+
+		assertThrows(DuplicateEntityException.class, () -> movieController.createMovie(createRequest, posterFile));
 		verify(movieService).createMovie(createRequest);
 	}
 
@@ -178,6 +241,19 @@ class MovieControllerTest {
 		assertEquals(1L, responseBody.getId());
 		assertEquals("Updated Movie", responseBody.getTitle());
 		verify(movieService).updateMovie(1L, updateRequest);
+	}
+
+	@Test
+	void updateMovie_WhenNotFound_ShouldThrowException() {
+		MovieUpdateRequest updateRequest = createMovieUpdateRequest("Updated Movie");
+		MockMultipartFile posterFile = new MockMultipartFile("posterFile", "poster.jpg", "image/jpeg",
+				"content".getBytes());
+
+		when(movieService.updateMovie(eq(999L), any(MovieUpdateRequest.class)))
+				.thenThrow(new MovieNotFoundException(999L));
+
+		assertThrows(MovieNotFoundException.class, () -> movieController.updateMovie(999L, updateRequest, posterFile));
+		verify(movieService).updateMovie(999L, updateRequest);
 	}
 
 	@Test
@@ -205,6 +281,14 @@ class MovieControllerTest {
 	}
 
 	@Test
+	void deleteMovie_WhenNotFound_ShouldThrowException() {
+		doThrow(new MovieNotFoundException(999L)).when(movieService).deleteMovie(999L);
+
+		assertThrows(MovieNotFoundException.class, () -> movieController.deleteMovie(999L));
+		verify(movieService).deleteMovie(999L);
+	}
+
+	@Test
 	void getCurrentlyShowingMovies_ShouldReturnMovies() {
 		MovieCardResponse movie1 = createMovieResponse(1L, "Current Movie 1", "current-1", MovieStatus.CURRENT);
 		MovieCardResponse movie2 = createMovieResponse(2L, "Current Movie 2", "current-2", MovieStatus.CURRENT);
@@ -220,6 +304,19 @@ class MovieControllerTest {
 		assertEquals(2, responseBody.size());
 		assertEquals("Current Movie 1", responseBody.get(0).getTitle());
 		assertEquals("Current Movie 2", responseBody.get(1).getTitle());
+		verify(movieService).getCurrentlyShowingMovies();
+	}
+
+	@Test
+	void getCurrentlyShowingMovies_WhenNoMovies_ShouldReturnEmptyList() {
+		when(movieService.getCurrentlyShowingMovies()).thenReturn(List.of());
+
+		ResponseEntity<List<MovieCardResponse>> response = movieController.getCurrentlyShowingMovies();
+
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+		List<MovieCardResponse> responseBody = Objects.requireNonNull(response.getBody(),
+				"Response body should not be null");
+		assertEquals(0, responseBody.size());
 		verify(movieService).getCurrentlyShowingMovies();
 	}
 
@@ -277,6 +374,14 @@ class MovieControllerTest {
 	}
 
 	@Test
+	void getMoviePoster_WhenNotFound_ShouldThrowException() {
+		when(movieService.getMoviePoster(999L)).thenThrow(new MovieNotFoundException(999L));
+
+		assertThrows(MovieNotFoundException.class, () -> movieController.getMoviePoster(999L));
+		verify(movieService).getMoviePoster(999L);
+	}
+
+	@Test
 	void searchMovies_ShouldReturnMovies() {
 		MovieCardResponse movie1 = createMovieResponse(1L, "Search Movie 1", "search-1", MovieStatus.CURRENT);
 		MovieCardResponse movie2 = createMovieResponse(2L, "Search Movie 2", "search-2", MovieStatus.UPCOMING);
@@ -292,6 +397,22 @@ class MovieControllerTest {
 		assertEquals(2, responseBody.getContent().size());
 		assertEquals("Search Movie 1", responseBody.getContent().get(0).getTitle());
 		verify(movieService).searchMovies("test", PageRequest.of(0, 10));
+	}
+
+	@Test
+	void searchMovies_WithNullQuery_ShouldReturnMovies() {
+		MovieCardResponse movie1 = createMovieResponse(1L, "Movie 1", "movie-1", MovieStatus.CURRENT);
+		Page<MovieCardResponse> page = new PageImpl<>(List.of(movie1), PageRequest.of(0, 10), 1);
+
+		when(movieService.searchMovies(isNull(), any(PageRequest.class))).thenReturn(page);
+
+		ResponseEntity<PageResponse<MovieCardResponse>> response = movieController.searchMovies(null, 0, 10);
+
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+		PageResponse<MovieCardResponse> responseBody = Objects.requireNonNull(response.getBody(),
+				"Response body should not be null");
+		assertEquals(1, responseBody.getContent().size());
+		verify(movieService).searchMovies(null, PageRequest.of(0, 10));
 	}
 
 	@Test
@@ -316,18 +437,20 @@ class MovieControllerTest {
 	}
 
 	@Test
-	void getMoviesPaginated_ShouldLimitSizeToMaxPageSize() {
-		MovieDetailResponse movie = createMovieDto(1L, "Test Movie", "test-movie", MovieStatus.UPCOMING);
-		Page<MovieDetailResponse> page = new PageImpl<>(List.of(movie), PageRequest.of(0, 50), 1);
+	void searchMoviesForSessionCreation_WithNullSearch_ShouldReturnMovies() {
+		MovieSessionSearchResponse movie1 = MovieSessionSearchResponse.builder().id(1L).title("Movie 1")
+				.releaseYear(2024).durationMinutes(120).build();
+		List<MovieSessionSearchResponse> movies = List.of(movie1);
 
-		when(movieService.getMoviesPaginated(any(PageRequest.class))).thenReturn(page);
+		when(movieService.searchMoviesForSessionCreation(isNull(), eq(LocalDate.now()))).thenReturn(movies);
 
-		ResponseEntity<PageResponse<MovieDetailResponse>> response = movieController.getMoviesPaginated(0, 100);
+		ResponseEntity<List<MovieSessionSearchResponse>> response = movieController
+				.searchMoviesForSessionCreation(LocalDate.now(), null);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
-		PageResponse<MovieDetailResponse> responseBody = Objects.requireNonNull(response.getBody(),
+		List<MovieSessionSearchResponse> responseBody = Objects.requireNonNull(response.getBody(),
 				"Response body should not be null");
-		assertEquals(50, responseBody.getPageSize());
-		verify(movieService).getMoviesPaginated(PageRequest.of(0, 50));
+		assertEquals(1, responseBody.size());
+		verify(movieService).searchMoviesForSessionCreation(null, LocalDate.now());
 	}
 }

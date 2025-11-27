@@ -1,8 +1,12 @@
 package ua.lviv.bas.cinema.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
@@ -27,6 +31,9 @@ import ua.lviv.bas.cinema.dto.cinemaHall.response.CinemaHallResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieShortResponse;
 import ua.lviv.bas.cinema.dto.session.request.SessionRequest;
 import ua.lviv.bas.cinema.dto.session.response.SessionResponse;
+import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
+import ua.lviv.bas.cinema.exception.domain.cinema.SessionNotFoundException;
+import ua.lviv.bas.cinema.exception.domain.cinema.SessionTimeConflictException;
 import ua.lviv.bas.cinema.service.SessionService;
 
 @ExtendWith(MockitoExtension.class)
@@ -72,6 +79,30 @@ class SessionControllerTest {
 		assertEquals(1L, responseBody.getId());
 		assertEquals("Test Movie", responseBody.getMovie().getTitle());
 		assertEquals("Hall 1", responseBody.getHall().getName());
+
+		verify(sessionService).createSession(request);
+	}
+
+	@Test
+	void createSession_WhenTimeConflict_ShouldThrowException() {
+		SessionRequest request = createSessionRequest();
+
+		when(sessionService.createSession(request))
+				.thenThrow(new SessionTimeConflictException(1L, LocalDateTime.now()));
+
+		assertThrows(SessionTimeConflictException.class, () -> sessionController.createSession(request));
+		verify(sessionService).createSession(request);
+	}
+
+	@Test
+	void createSession_WhenDuplicate_ShouldThrowException() {
+		SessionRequest request = createSessionRequest();
+
+		when(sessionService.createSession(request))
+				.thenThrow(new DuplicateEntityException("Session", "Duplicate session"));
+
+		assertThrows(DuplicateEntityException.class, () -> sessionController.createSession(request));
+		verify(sessionService).createSession(request);
 	}
 
 	@Test
@@ -86,6 +117,16 @@ class SessionControllerTest {
 		SessionResponse responseBody = Objects.requireNonNull(response.getBody(), "Response body should not be null");
 		assertEquals(1L, responseBody.getId());
 		assertEquals("Test Movie", responseBody.getMovie().getTitle());
+
+		verify(sessionService).getSessionById(1L);
+	}
+
+	@Test
+	void getSessionById_WhenNotFound_ShouldThrowException() {
+		when(sessionService.getSessionById(999L)).thenThrow(new SessionNotFoundException(999L));
+
+		assertThrows(SessionNotFoundException.class, () -> sessionController.getSessionById(999L));
+		verify(sessionService).getSessionById(999L);
 	}
 
 	@Test
@@ -102,6 +143,29 @@ class SessionControllerTest {
 		assertEquals(1L, responseBody.getId());
 		assertEquals("Updated Movie", responseBody.getMovie().getTitle());
 		assertEquals(new BigDecimal("300.00"), responseBody.getPrice());
+
+		verify(sessionService).updateSession(1L, request);
+	}
+
+	@Test
+	void updateSession_WhenNotFound_ShouldThrowException() {
+		SessionRequest request = createSessionRequest();
+
+		when(sessionService.updateSession(999L, request)).thenThrow(new SessionNotFoundException(999L));
+
+		assertThrows(SessionNotFoundException.class, () -> sessionController.updateSession(999L, request));
+		verify(sessionService).updateSession(999L, request);
+	}
+
+	@Test
+	void updateSession_WhenTimeConflict_ShouldThrowException() {
+		SessionRequest request = createSessionRequest();
+
+		when(sessionService.updateSession(1L, request))
+				.thenThrow(new SessionTimeConflictException(1L, LocalDateTime.now()));
+
+		assertThrows(SessionTimeConflictException.class, () -> sessionController.updateSession(1L, request));
+		verify(sessionService).updateSession(1L, request);
 	}
 
 	@Test
@@ -109,6 +173,15 @@ class SessionControllerTest {
 		ResponseEntity<Void> response = sessionController.deleteSession(1L);
 
 		assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
+		verify(sessionService).deleteSession(1L);
+	}
+
+	@Test
+	void deleteSession_WhenNotFound_ShouldThrowException() {
+		doThrow(new SessionNotFoundException(999L)).when(sessionService).deleteSession(999L);
+
+		assertThrows(SessionNotFoundException.class, () -> sessionController.deleteSession(999L));
+		verify(sessionService).deleteSession(999L);
 	}
 
 	@Test
@@ -127,6 +200,29 @@ class SessionControllerTest {
 		assertEquals(2, responseBody.getContent().size());
 		assertEquals(1L, responseBody.getContent().get(0).getId());
 		assertEquals(2L, responseBody.getContent().get(1).getId());
+
+		verify(sessionService).getAllSessions(PageRequest.of(0, 20), null);
+	}
+
+	@Test
+	void getAllSessions_ShouldReturnSearchedSessions() {
+		SessionResponse session1 = createSessionDto(1L, "Movie 1", "Hall 1", new BigDecimal("250.00"));
+		SessionResponse session2 = createSessionDto(2L, "Movie 2", "Hall 2", new BigDecimal("300.00"));
+		Page<SessionResponse> sessionPage = new PageImpl<>(List.of(session1, session2));
+
+		when(sessionService.getAllSessions(any(Pageable.class), eq("test"))).thenReturn(sessionPage);
+
+		ResponseEntity<Page<SessionResponse>> response = sessionController.getAllSessions(PageRequest.of(0, 20),
+				"test");
+
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+		Page<SessionResponse> responseBody = Objects.requireNonNull(response.getBody(),
+				"Response body should not be null");
+		assertEquals(2, responseBody.getContent().size());
+		assertEquals(1L, responseBody.getContent().get(0).getId());
+		assertEquals(2L, responseBody.getContent().get(1).getId());
+
+		verify(sessionService).getAllSessions(PageRequest.of(0, 20), "test");
 	}
 
 	@Test
@@ -145,6 +241,8 @@ class SessionControllerTest {
 				"Response body should not be null");
 		assertEquals(1, responseBody.getContent().size());
 		assertEquals(1L, responseBody.getContent().get(0).getId());
+
+		verify(sessionService).getSessionsByDate(date, PageRequest.of(0, 20));
 	}
 
 	@Test
@@ -161,6 +259,8 @@ class SessionControllerTest {
 				"Response body should not be null");
 		assertEquals(1, responseBody.getContent().size());
 		assertEquals("Hall 1", responseBody.getContent().get(0).getHall().getName());
+
+		verify(sessionService).getSessionsByHall(1L, PageRequest.of(0, 20));
 	}
 
 	@Test
@@ -178,6 +278,8 @@ class SessionControllerTest {
 				"Response body should not be null");
 		assertEquals(1, responseBody.getContent().size());
 		assertEquals("Test Movie", responseBody.getContent().get(0).getMovie().getTitle());
+
+		verify(sessionService).getSessionsByMovie(1L, PageRequest.of(0, 20));
 	}
 
 	@Test
@@ -194,6 +296,8 @@ class SessionControllerTest {
 				"Response body should not be null");
 		assertEquals(1, responseBody.getContent().size());
 		assertEquals(true, responseBody.getContent().get(0).isAvailable());
+
+		verify(sessionService).getAvailableSessions(PageRequest.of(0, 20));
 	}
 
 	@Test
@@ -211,6 +315,8 @@ class SessionControllerTest {
 				"Response body should not be null");
 		assertEquals(1, responseBody.getContent().size());
 		assertEquals(1L, responseBody.getContent().get(0).getId());
+
+		verify(sessionService).getUpcomingSessions(7, PageRequest.of(0, 20));
 	}
 
 	@Test
@@ -227,6 +333,8 @@ class SessionControllerTest {
 				"Response body should not be null");
 		assertEquals(1, responseBody.getContent().size());
 		assertEquals(1L, responseBody.getContent().get(0).getId());
+
+		verify(sessionService).getTodaySessions(PageRequest.of(0, 20));
 	}
 
 	@Test
@@ -240,6 +348,8 @@ class SessionControllerTest {
 		assertEquals(HttpStatus.OK, response.getStatusCode());
 		Boolean responseBody = Objects.requireNonNull(response.getBody(), "Response body should not be null");
 		assertEquals(true, responseBody);
+
+		verify(sessionService).hasTimeConflict(1L, fixedTime, 120, null);
 	}
 
 	@Test
@@ -253,6 +363,23 @@ class SessionControllerTest {
 		assertEquals(HttpStatus.OK, response.getStatusCode());
 		Boolean responseBody = Objects.requireNonNull(response.getBody(), "Response body should not be null");
 		assertEquals(false, responseBody);
+
+		verify(sessionService).hasTimeConflict(1L, fixedTime, 120, null);
+	}
+
+	@Test
+	void checkTimeConflict_WithExcludeSessionId_ShouldReturnResult() {
+		LocalDateTime fixedTime = LocalDateTime.of(2024, 1, 15, 18, 0);
+
+		when(sessionService.hasTimeConflict(eq(1L), eq(fixedTime), eq(120), eq(5L))).thenReturn(false);
+
+		ResponseEntity<Boolean> response = sessionController.checkTimeConflict(1L, fixedTime, 120, 5L);
+
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+		Boolean responseBody = Objects.requireNonNull(response.getBody(), "Response body should not be null");
+		assertEquals(false, responseBody);
+
+		verify(sessionService).hasTimeConflict(1L, fixedTime, 120, 5L);
 	}
 
 	@Test
@@ -276,6 +403,8 @@ class SessionControllerTest {
 				"Response body should not be null");
 		assertEquals(1, responseBody.getContent().size());
 		assertEquals(1L, responseBody.getContent().get(0).getId());
+
+		verify(sessionService).getFilteredSessions(date, hallId, movieId, days, PageRequest.of(0, 20));
 	}
 
 	@Test
@@ -294,6 +423,8 @@ class SessionControllerTest {
 				"Response body should not be null");
 		assertEquals(1, responseBody.getContent().size());
 		assertEquals(1L, responseBody.getContent().get(0).getId());
+
+		verify(sessionService).getFilteredSessions(null, null, null, null, PageRequest.of(0, 20));
 	}
 
 	@Test
@@ -314,6 +445,8 @@ class SessionControllerTest {
 				"Response body should not be null");
 		assertEquals(1, responseBody.getContent().size());
 		assertEquals(1L, responseBody.getContent().get(0).getId());
+
+		verify(sessionService).getFilteredSessions(date, null, null, null, PageRequest.of(0, 20));
 	}
 
 	@Test
@@ -335,6 +468,8 @@ class SessionControllerTest {
 				"Response body should not be null");
 		assertEquals(1, responseBody.getContent().size());
 		assertEquals(1L, responseBody.getContent().get(0).getId());
+
+		verify(sessionService).getFilteredSessions(null, hallId, movieId, null, PageRequest.of(0, 20));
 	}
 
 	@Test
@@ -355,24 +490,23 @@ class SessionControllerTest {
 				"Response body should not be null");
 		assertEquals(1, responseBody.getContent().size());
 		assertEquals(1L, responseBody.getContent().get(0).getId());
+
+		verify(sessionService).getFilteredSessions(null, null, null, days, PageRequest.of(0, 20));
 	}
 
 	@Test
-	void getAllSessions_ShouldReturnSearchedSessions() {
-		SessionResponse session1 = createSessionDto(1L, "Movie 1", "Hall 1", new BigDecimal("250.00"));
-		SessionResponse session2 = createSessionDto(2L, "Movie 2", "Hall 2", new BigDecimal("300.00"));
-		Page<SessionResponse> sessionPage = new PageImpl<>(List.of(session1, session2));
+	void getAllSessions_WhenNoSessions_ShouldReturnEmptyPage() {
+		Page<SessionResponse> emptyPage = new PageImpl<>(List.of());
 
-		when(sessionService.getAllSessions(any(Pageable.class), eq("test"))).thenReturn(sessionPage);
+		when(sessionService.getAllSessions(any(Pageable.class), isNull())).thenReturn(emptyPage);
 
-		ResponseEntity<Page<SessionResponse>> response = sessionController.getAllSessions(PageRequest.of(0, 20),
-				"test");
+		ResponseEntity<Page<SessionResponse>> response = sessionController.getAllSessions(PageRequest.of(0, 20), null);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
 		Page<SessionResponse> responseBody = Objects.requireNonNull(response.getBody(),
 				"Response body should not be null");
-		assertEquals(2, responseBody.getContent().size());
-		assertEquals(1L, responseBody.getContent().get(0).getId());
-		assertEquals(2L, responseBody.getContent().get(1).getId());
+		assertEquals(0, responseBody.getContent().size());
+
+		verify(sessionService).getAllSessions(PageRequest.of(0, 20), null);
 	}
 }

@@ -1,7 +1,10 @@
 package ua.lviv.bas.cinema.controller;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -22,6 +25,8 @@ import ua.lviv.bas.cinema.dto.cinemaHall.response.CinemaHallResponse;
 import ua.lviv.bas.cinema.dto.cinemaHall.response.CinemaHallWithSeatsResponse;
 import ua.lviv.bas.cinema.dto.cinemaHall.response.HallLayoutResponse;
 import ua.lviv.bas.cinema.dto.cinemaHall.response.SeatResponse;
+import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
+import ua.lviv.bas.cinema.exception.domain.cinema.CinemaHallNotFoundException;
 import ua.lviv.bas.cinema.service.CinemaHallService;
 
 @ExtendWith(MockitoExtension.class)
@@ -32,6 +37,10 @@ class CinemaHallControllerTest {
 
 	@InjectMocks
 	private CinemaHallController cinemaHallController;
+
+	private static final Long HALL_ID = 1L;
+	private static final String HALL_NAME = "Test Hall";
+	private static final int CAPACITY = 50;
 
 	private CinemaHallResponse createCinemaHallDto(Long id, String name, int capacity) {
 		return CinemaHallResponse.builder().id(id).name(name).capacity(capacity).build();
@@ -64,96 +73,127 @@ class CinemaHallControllerTest {
 
 	@Test
 	void createHall_ShouldReturnCreatedHall() {
-		CinemaHallRequest request = createCinemaHallRequest("Hall A");
-		CinemaHallResponse responseDto = createCinemaHallDto(1L, "Hall A", 0);
+		CinemaHallRequest request = createCinemaHallRequest(HALL_NAME);
+		CinemaHallResponse responseDto = createCinemaHallDto(HALL_ID, HALL_NAME, CAPACITY);
 
 		when(cinemaHallService.createHall(any(CinemaHallRequest.class))).thenReturn(responseDto);
 
 		ResponseEntity<CinemaHallResponse> response = cinemaHallController.createHall(request);
 
 		assertEquals(HttpStatus.CREATED, response.getStatusCode());
-		CinemaHallResponse responseBody = Objects.requireNonNull(response.getBody(),
-				"Response body should not be null");
-		assertEquals(1L, responseBody.getId());
-		assertEquals("Hall A", responseBody.getName());
+		CinemaHallResponse responseBody = Objects.requireNonNull(response.getBody());
+		assertEquals(HALL_ID, responseBody.getId());
+		assertEquals(HALL_NAME, responseBody.getName());
 		verify(cinemaHallService).createHall(request);
 	}
 
 	@Test
 	void createHall_WithSeats_ShouldReturnCreatedHallWithSeats() {
 		CinemaHallRequest request = createCinemaHallRequestWithSeats("Hall With Seats", 5, 10, SeatType.STANDARD);
-		CinemaHallResponse responseDto = createCinemaHallDto(1L, "Hall With Seats", 50);
+		CinemaHallResponse responseDto = createCinemaHallDto(HALL_ID, "Hall With Seats", 50);
 
 		when(cinemaHallService.createHall(any(CinemaHallRequest.class))).thenReturn(responseDto);
 
 		ResponseEntity<CinemaHallResponse> response = cinemaHallController.createHall(request);
 
 		assertEquals(HttpStatus.CREATED, response.getStatusCode());
-		CinemaHallResponse responseBody = Objects.requireNonNull(response.getBody(),
-				"Response body should not be null");
-		assertEquals(1L, responseBody.getId());
+		CinemaHallResponse responseBody = Objects.requireNonNull(response.getBody());
+		assertEquals(HALL_ID, responseBody.getId());
 		assertEquals("Hall With Seats", responseBody.getName());
 		verify(cinemaHallService).createHall(request);
 	}
 
 	@Test
+	void createHall_WhenDuplicateName_ShouldThrowException() {
+		CinemaHallRequest request = createCinemaHallRequest("Existing Hall");
+
+		when(cinemaHallService.createHall(any(CinemaHallRequest.class)))
+				.thenThrow(new DuplicateEntityException("CinemaHall", "Existing Hall"));
+
+		assertThrows(DuplicateEntityException.class, () -> cinemaHallController.createHall(request));
+	}
+
+	@Test
 	void getHallById_ShouldReturnHall() {
-		CinemaHallResponse hallDto = createCinemaHallDto(1L, "Hall A", 50);
+		CinemaHallResponse hallDto = createCinemaHallDto(HALL_ID, HALL_NAME, CAPACITY);
 
-		when(cinemaHallService.getHallById(1L)).thenReturn(hallDto);
+		when(cinemaHallService.getHallById(HALL_ID)).thenReturn(hallDto);
 
-		ResponseEntity<CinemaHallResponse> response = cinemaHallController.getHallById(1L);
+		ResponseEntity<CinemaHallResponse> response = cinemaHallController.getHallById(HALL_ID);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
-		CinemaHallResponse responseBody = Objects.requireNonNull(response.getBody(),
-				"Response body should not be null");
-		assertEquals(1L, responseBody.getId());
-		assertEquals("Hall A", responseBody.getName());
-		assertEquals(50, responseBody.getCapacity());
-		verify(cinemaHallService).getHallById(1L);
+		CinemaHallResponse responseBody = Objects.requireNonNull(response.getBody());
+		assertEquals(HALL_ID, responseBody.getId());
+		assertEquals(HALL_NAME, responseBody.getName());
+		assertEquals(CAPACITY, responseBody.getCapacity());
+		verify(cinemaHallService).getHallById(HALL_ID);
+	}
+
+	@Test
+	void getHallById_WhenNotFound_ShouldThrowException() {
+		when(cinemaHallService.getHallById(999L)).thenThrow(new CinemaHallNotFoundException(999L));
+
+		assertThrows(CinemaHallNotFoundException.class, () -> cinemaHallController.getHallById(999L));
 	}
 
 	@Test
 	void updateHall_ShouldReturnUpdatedHall() {
 		CinemaHallRequest request = createCinemaHallRequest("Updated Hall");
-		CinemaHallResponse updatedDto = createCinemaHallDto(1L, "Updated Hall", 60);
+		CinemaHallResponse updatedDto = createCinemaHallDto(HALL_ID, "Updated Hall", 60);
 
-		when(cinemaHallService.updateHall(eq(1L), any(CinemaHallRequest.class))).thenReturn(updatedDto);
+		when(cinemaHallService.updateHall(eq(HALL_ID), any(CinemaHallRequest.class))).thenReturn(updatedDto);
 
-		ResponseEntity<CinemaHallResponse> response = cinemaHallController.updateHall(1L, request);
+		ResponseEntity<CinemaHallResponse> response = cinemaHallController.updateHall(HALL_ID, request);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
-		CinemaHallResponse responseBody = Objects.requireNonNull(response.getBody(),
-				"Response body should not be null");
-		assertEquals(1L, responseBody.getId());
+		CinemaHallResponse responseBody = Objects.requireNonNull(response.getBody());
+		assertEquals(HALL_ID, responseBody.getId());
 		assertEquals("Updated Hall", responseBody.getName());
-		verify(cinemaHallService).updateHall(1L, request);
+		verify(cinemaHallService).updateHall(HALL_ID, request);
 	}
 
 	@Test
 	void updateHall_WithSeats_ShouldReturnUpdatedHallWithNewSeats() {
 		CinemaHallRequest request = createCinemaHallRequestWithSeats("Updated Hall", 6, 8, SeatType.VIP);
-		CinemaHallResponse updatedDto = createCinemaHallDto(1L, "Updated Hall", 48);
+		CinemaHallResponse updatedDto = createCinemaHallDto(HALL_ID, "Updated Hall", 48);
 
-		when(cinemaHallService.updateHall(eq(1L), any(CinemaHallRequest.class))).thenReturn(updatedDto);
+		when(cinemaHallService.updateHall(eq(HALL_ID), any(CinemaHallRequest.class))).thenReturn(updatedDto);
 
-		ResponseEntity<CinemaHallResponse> response = cinemaHallController.updateHall(1L, request);
+		ResponseEntity<CinemaHallResponse> response = cinemaHallController.updateHall(HALL_ID, request);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
-		CinemaHallResponse responseBody = Objects.requireNonNull(response.getBody(),
-				"Response body should not be null");
-		assertEquals(1L, responseBody.getId());
+		CinemaHallResponse responseBody = Objects.requireNonNull(response.getBody());
+		assertEquals(HALL_ID, responseBody.getId());
 		assertEquals("Updated Hall", responseBody.getName());
 		assertEquals(48, responseBody.getCapacity());
-		verify(cinemaHallService).updateHall(1L, request);
+		verify(cinemaHallService).updateHall(HALL_ID, request);
+	}
+
+	@Test
+	void updateHall_WhenNotFound_ShouldThrowException() {
+		CinemaHallRequest request = createCinemaHallRequest("Updated Hall");
+
+		when(cinemaHallService.updateHall(eq(999L), any(CinemaHallRequest.class)))
+				.thenThrow(new CinemaHallNotFoundException(999L));
+
+		assertThrows(CinemaHallNotFoundException.class, () -> cinemaHallController.updateHall(999L, request));
 	}
 
 	@Test
 	void deleteHall_ShouldReturnNoContent() {
-		ResponseEntity<Void> response = cinemaHallController.deleteHall(1L);
+		ResponseEntity<Void> response = cinemaHallController.deleteHall(HALL_ID);
 
 		assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
-		verify(cinemaHallService).deleteHall(1L);
+		verify(cinemaHallService).deleteHall(HALL_ID);
+	}
+
+	@Test
+	void deleteHall_WhenNotFound_ShouldThrowException() {
+		Long nonExistentId = 999L;
+
+		doThrow(new CinemaHallNotFoundException(nonExistentId)).when(cinemaHallService).deleteHall(nonExistentId);
+
+		assertThrows(CinemaHallNotFoundException.class, () -> cinemaHallController.deleteHall(nonExistentId));
 	}
 
 	@Test
@@ -167,8 +207,7 @@ class CinemaHallControllerTest {
 		ResponseEntity<List<CinemaHallResponse>> response = cinemaHallController.getAllHalls();
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
-		List<CinemaHallResponse> responseBody = Objects.requireNonNull(response.getBody(),
-				"Response body should not be null");
+		List<CinemaHallResponse> responseBody = Objects.requireNonNull(response.getBody());
 		assertEquals(2, responseBody.size());
 		assertEquals(1L, responseBody.get(0).getId());
 		assertEquals(2L, responseBody.get(1).getId());
@@ -180,37 +219,35 @@ class CinemaHallControllerTest {
 		SeatResponse seat1 = createSeatDto(1L, 1, 1, SeatType.STANDARD);
 		SeatResponse seat2 = createSeatDto(2L, 1, 2, SeatType.VIP);
 		List<SeatResponse> seats = List.of(seat1, seat2);
-		CinemaHallWithSeatsResponse hallWithSeats = createCinemaHallWithSeatsDto(1L, "Hall A", 50, seats);
+		CinemaHallWithSeatsResponse hallWithSeats = createCinemaHallWithSeatsDto(HALL_ID, HALL_NAME, CAPACITY, seats);
 
-		when(cinemaHallService.getHallWithSeats(1L)).thenReturn(hallWithSeats);
+		when(cinemaHallService.getHallWithSeats(HALL_ID)).thenReturn(hallWithSeats);
 
-		ResponseEntity<CinemaHallWithSeatsResponse> response = cinemaHallController.getHallWithSeats(1L);
+		ResponseEntity<CinemaHallWithSeatsResponse> response = cinemaHallController.getHallWithSeats(HALL_ID);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
-		CinemaHallWithSeatsResponse responseBody = Objects.requireNonNull(response.getBody(),
-				"Response body should not be null");
-		assertEquals(1L, responseBody.getId());
+		CinemaHallWithSeatsResponse responseBody = Objects.requireNonNull(response.getBody());
+		assertEquals(HALL_ID, responseBody.getId());
 		assertEquals(2, responseBody.getSeats().size());
-		verify(cinemaHallService).getHallWithSeats(1L);
+		verify(cinemaHallService).getHallWithSeats(HALL_ID);
 	}
 
 	@Test
 	void getHallLayout_ShouldReturnHallLayout() {
-		HallLayoutResponse layoutDto = createHallLayoutDto(1L, "Hall A", 5, 10, 50);
+		HallLayoutResponse layoutDto = createHallLayoutDto(HALL_ID, HALL_NAME, 5, 10, CAPACITY);
 
-		when(cinemaHallService.getHallLayout(1L)).thenReturn(layoutDto);
+		when(cinemaHallService.getHallLayout(HALL_ID)).thenReturn(layoutDto);
 
-		ResponseEntity<HallLayoutResponse> response = cinemaHallController.getHallLayout(1L);
+		ResponseEntity<HallLayoutResponse> response = cinemaHallController.getHallLayout(HALL_ID);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
-		HallLayoutResponse responseBody = Objects.requireNonNull(response.getBody(),
-				"Response body should not be null");
-		assertEquals(1L, responseBody.getHallId());
-		assertEquals("Hall A", responseBody.getHallName());
+		HallLayoutResponse responseBody = Objects.requireNonNull(response.getBody());
+		assertEquals(HALL_ID, responseBody.getHallId());
+		assertEquals(HALL_NAME, responseBody.getHallName());
 		assertEquals(5, responseBody.getTotalRows());
 		assertEquals(10, responseBody.getMaxSeatsPerRow());
-		assertEquals(50, responseBody.getTotalSeats());
-		verify(cinemaHallService).getHallLayout(1L);
+		assertEquals(CAPACITY, responseBody.getTotalSeats());
+		verify(cinemaHallService).getHallLayout(HALL_ID);
 	}
 
 	@Test
@@ -223,8 +260,7 @@ class CinemaHallControllerTest {
 		ResponseEntity<List<CinemaHallResponse>> response = cinemaHallController.searchHalls("Main");
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
-		List<CinemaHallResponse> responseBody = Objects.requireNonNull(response.getBody(),
-				"Response body should not be null");
+		List<CinemaHallResponse> responseBody = Objects.requireNonNull(response.getBody());
 		assertEquals(1, responseBody.size());
 		assertEquals("Main Hall", responseBody.get(0).getName());
 		verify(cinemaHallService).searchHalls("Main");
@@ -241,8 +277,7 @@ class CinemaHallControllerTest {
 		ResponseEntity<List<CinemaHallResponse>> response = cinemaHallController.searchHalls(null);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
-		List<CinemaHallResponse> responseBody = Objects.requireNonNull(response.getBody(),
-				"Response body should not be null");
+		List<CinemaHallResponse> responseBody = Objects.requireNonNull(response.getBody());
 		assertEquals(2, responseBody.size());
 		verify(cinemaHallService).searchHalls(null);
 	}
@@ -258,8 +293,7 @@ class CinemaHallControllerTest {
 		ResponseEntity<List<CinemaHallResponse>> response = cinemaHallController.searchHalls("");
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
-		List<CinemaHallResponse> responseBody = Objects.requireNonNull(response.getBody(),
-				"Response body should not be null");
+		List<CinemaHallResponse> responseBody = Objects.requireNonNull(response.getBody());
 		assertEquals(2, responseBody.size());
 		verify(cinemaHallService).searchHalls("");
 	}

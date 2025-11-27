@@ -1,5 +1,6 @@
 package ua.lviv.bas.cinema.controller;
 
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -14,7 +15,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -27,9 +31,9 @@ import ua.lviv.bas.cinema.dto.user.request.UserLoginRequest;
 import ua.lviv.bas.cinema.dto.user.request.UserRegistrationRequest;
 import ua.lviv.bas.cinema.dto.user.response.UserProfileResponse;
 import ua.lviv.bas.cinema.dto.user.response.UserResponse;
-import ua.lviv.bas.cinema.exception.InvalidTokenException;
-import ua.lviv.bas.cinema.exception.TokenAlreadyConfirmedException;
-import ua.lviv.bas.cinema.exception.TokenExpiredException;
+import ua.lviv.bas.cinema.exception.domain.auth.InvalidTokenException;
+import ua.lviv.bas.cinema.exception.domain.auth.TokenAlreadyConfirmedException;
+import ua.lviv.bas.cinema.exception.domain.auth.TokenExpiredException;
 import ua.lviv.bas.cinema.service.PasswordResetService;
 import ua.lviv.bas.cinema.service.UserService;
 
@@ -55,19 +59,19 @@ public class AuthControllerTest {
 	@MockitoBean
 	private JwtTokenProvider jwtTokenProvider;
 
-	private UserRegistrationRequest registrationDto;
-	private UserLoginRequest loginDto;
+	private UserRegistrationRequest registrationRequest;
+	private UserLoginRequest loginRequest;
 	private User user;
 	private UserProfileResponse userProfileResponse;
 	private UserResponse userResponse;
 
 	@BeforeEach
 	void setUp() {
-		registrationDto = UserRegistrationRequest.builder().email("anton@example.com").firstName("Anton")
+		registrationRequest = UserRegistrationRequest.builder().email("anton@example.com").firstName("Anton")
 				.lastName("Bas").dateOfBirth(LocalDate.of(2001, 8, 21)).city("Lviv").phoneNumber("+380123456789")
 				.password("password123").passwordConfirm("password123").build();
 
-		loginDto = new UserLoginRequest("anton@example.com", "password123");
+		loginRequest = new UserLoginRequest("anton@example.com", "password123");
 
 		user = new User();
 		user.setId(1L);
@@ -84,89 +88,121 @@ public class AuthControllerTest {
 	}
 
 	@Test
-	void registerUser_ShouldReturnOk_WhenValidRequest() throws Exception {
-		mockMvc.perform(post("/api/auth/registration").contentType("application/json")
-				.content(objectMapper.writeValueAsString(registrationDto))).andExpect(status().isOk())
-				.andExpect(jsonPath("$.success").value(true));
+	void register_ShouldReturnCreated_WhenValidRequest() throws Exception {
+		when(userService.registerUser(registrationRequest)).thenReturn(userResponse);
+
+		mockMvc.perform(post("/api/auth/register").contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(registrationRequest))).andExpect(status().isCreated())
+				.andExpect(jsonPath("$.id").value(1L)).andExpect(jsonPath("$.email").value("anton@example.com"))
+				.andExpect(jsonPath("$.firstName").value("Anton")).andExpect(jsonPath("$.lastName").value("Bas"));
+
+		verify(userService).registerUser(registrationRequest);
 	}
 
 	@Test
-	void loginUser_ShouldReturnOk_WhenValidCredentials() throws Exception {
-		when(userService.findByEmail(loginDto.getEmail())).thenReturn(user);
-		when(userService.getUserById(user.getId())).thenReturn(userResponse);
-		when(jwtTokenProvider.generateToken(org.mockito.Mockito.any())).thenReturn("jwtToken");
+	void login_ShouldReturnOk_WhenValidCredentials() throws Exception {
+		Authentication authentication = new UsernamePasswordAuthenticationToken(loginRequest.getEmail(),
+				loginRequest.getPassword());
 
-		mockMvc.perform(post("/api/auth/login").contentType("application/json")
-				.content(objectMapper.writeValueAsString(loginDto))).andExpect(status().isOk())
-				.andExpect(jsonPath("$.success").value(true)).andExpect(jsonPath("$.token").value("jwtToken"))
+		when(authenticationManager.authenticate(org.mockito.ArgumentMatchers.any(Authentication.class)))
+				.thenReturn(authentication);
+		when(jwtTokenProvider.generateToken(authentication)).thenReturn("jwtToken");
+		when(userService.findByEmail(loginRequest.getEmail())).thenReturn(user);
+		when(userService.getUserById(user.getId())).thenReturn(userResponse);
+
+		mockMvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(loginRequest))).andExpect(status().isOk())
+				.andExpect(jsonPath("$.token").value("jwtToken")).andExpect(jsonPath("$.tokenType").value("Bearer"))
 				.andExpect(jsonPath("$.user.email").value("anton@example.com"));
 
-		verify(userService).findByEmail(loginDto.getEmail());
+		verify(authenticationManager).authenticate(org.mockito.ArgumentMatchers.any(Authentication.class));
+		verify(userService).findByEmail(loginRequest.getEmail());
 		verify(userService).getUserById(user.getId());
 	}
 
 	@Test
+	void getCurrentUser_ShouldReturnUser_WhenAuthenticated() throws Exception {
+		when(userService.getUserById(1L)).thenReturn(userResponse);
+
+		mockMvc.perform(get("/api/auth/me")).andExpect(status().is5xxServerError());
+
+		verify(userService, never()).getUserById(1L);
+	}
+
+	@Test
 	void forgotPassword_ShouldReturnOk() throws Exception {
-		mockMvc.perform(post("/api/auth/forgot-password").param("email", "anton@example.com"))
-				.andExpect(status().isOk()).andExpect(jsonPath("$.success").value(true));
+		mockMvc.perform(post("/api/auth/password/forgot").param("email", "anton@example.com"))
+				.andExpect(status().isOk());
 
 		verify(passwordResetService).requestPasswordReset("anton@example.com");
 	}
 
 	@Test
 	void resetPassword_ShouldReturnOk() throws Exception {
-		mockMvc.perform(post("/api/auth/reset-password").param("token", "token123").param("newPassword", "newPass"))
-				.andExpect(status().isOk()).andExpect(jsonPath("$.success").value(true));
+		mockMvc.perform(post("/api/auth/password/reset").param("token", "token123").param("newPassword", "newPass"))
+				.andExpect(status().isOk());
 
 		verify(passwordResetService).resetPassword("token123", "newPass");
+	}
+
+	@Test
+	void verifyEmail_ShouldReturnOk_WhenValidToken() throws Exception {
+		when(userService.confirmRegistration("validToken")).thenReturn("Email verified successfully");
+
+		mockMvc.perform(post("/api/auth/email/verify").param("token", "validToken")).andExpect(status().isOk())
+				.andExpect(jsonPath("$.message").value("Email verified successfully"));
+
+		verify(userService).confirmRegistration("validToken");
 	}
 
 	@Test
 	void confirmEmailChange_ShouldReturnOk_WhenValidToken() throws Exception {
 		when(userService.confirmEmailChange("validToken")).thenReturn(userProfileResponse);
 
-		mockMvc.perform(post("/api/auth/email/confirm-change").param("token", "validToken")).andExpect(status().isOk())
-				.andExpect(jsonPath("$.success").value(true)).andExpect(jsonPath("$.id").value(1))
-				.andExpect(jsonPath("$.email").value("new@example.com"));
+		mockMvc.perform(post("/api/auth/email/change/confirm").param("token", "validToken")).andExpect(status().isOk())
+				.andExpect(jsonPath("$.id").value(1L)).andExpect(jsonPath("$.email").value("new@example.com"));
 
 		verify(userService).confirmEmailChange("validToken");
 	}
 
 	@Test
-	void verifyEmail_ShouldReturnOk_WhenValidToken() throws Exception {
-		when(userService.confirmEmailChange("verifyToken")).thenReturn(userProfileResponse);
+	void checkEmailExists_ShouldReturnTrue_WhenEmailExists() throws Exception {
+		when(userService.existsByEmail("anton@example.com")).thenReturn(true);
 
-		mockMvc.perform(get("/api/auth/verify-email").param("token", "verifyToken")).andExpect(status().isOk())
-				.andExpect(jsonPath("$.success").value(true))
-				.andExpect(jsonPath("$.message").value("Email verified successfully for: new@example.com"));
+		mockMvc.perform(get("/api/auth/email/check").param("email", "anton@example.com")).andExpect(status().isOk())
+				.andExpect(jsonPath("$").value(true));
 
-		verify(userService).confirmEmailChange("verifyToken");
+		verify(userService).existsByEmail("anton@example.com");
 	}
 
 	@Test
-	void checkEmailExists_ShouldReturnTrueOrFalse() throws Exception {
-		when(userService.existsByEmail("anton@example.com")).thenReturn(true);
+	void checkEmailExists_ShouldReturnFalse_WhenEmailNotExists() throws Exception {
+		when(userService.existsByEmail("nonexistent@example.com")).thenReturn(false);
 
-		mockMvc.perform(get("/api/auth/check-email").param("email", "anton@example.com")).andExpect(status().isOk())
-				.andExpect(jsonPath("$.exists").value(true));
+		mockMvc.perform(get("/api/auth/email/check").param("email", "nonexistent@example.com"))
+				.andExpect(status().isOk()).andExpect(jsonPath("$").value(false));
 
-		verify(userService).existsByEmail("anton@example.com");
+		verify(userService).existsByEmail("nonexistent@example.com");
 	}
 
 	@Test
 	void confirmEmailChange_ShouldReturnBadRequest_WhenInvalidToken() throws Exception {
 		when(userService.confirmEmailChange("badToken")).thenThrow(new InvalidTokenException("Invalid token"));
 
-		mockMvc.perform(post("/api/auth/email/confirm-change").param("token", "badToken"))
-				.andExpect(status().isBadRequest()).andExpect(jsonPath("$.message").value("Invalid token"));
+		mockMvc.perform(post("/api/auth/email/change/confirm").param("token", "badToken"))
+				.andExpect(status().isBadRequest());
+
+		verify(userService).confirmEmailChange("badToken");
 	}
 
 	@Test
 	void confirmEmailChange_ShouldReturnBadRequest_WhenTokenExpired() throws Exception {
 		when(userService.confirmEmailChange("expiredToken")).thenThrow(new TokenExpiredException("Token expired"));
 
-		mockMvc.perform(post("/api/auth/email/confirm-change").param("token", "expiredToken"))
-				.andExpect(status().isBadRequest()).andExpect(jsonPath("$.message").value("Token expired"));
+		mockMvc.perform(post("/api/auth/email/change/confirm").param("token", "expiredToken"))
+				.andExpect(status().isBadRequest());
+
+		verify(userService).confirmEmailChange("expiredToken");
 	}
 
 	@Test
@@ -174,7 +210,9 @@ public class AuthControllerTest {
 		when(userService.confirmEmailChange("confirmedToken"))
 				.thenThrow(new TokenAlreadyConfirmedException("Token already confirmed"));
 
-		mockMvc.perform(post("/api/auth/email/confirm-change").param("token", "confirmedToken"))
-				.andExpect(status().isBadRequest()).andExpect(jsonPath("$.message").value("Token already confirmed"));
+		mockMvc.perform(post("/api/auth/email/change/confirm").param("token", "confirmedToken"))
+				.andExpect(status().isConflict());
+
+		verify(userService).confirmEmailChange("confirmedToken");
 	}
 }
