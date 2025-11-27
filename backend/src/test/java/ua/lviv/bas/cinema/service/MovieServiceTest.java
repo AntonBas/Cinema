@@ -2,6 +2,9 @@ package ua.lviv.bas.cinema.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -16,6 +19,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import ua.lviv.bas.cinema.domain.Genre;
 import ua.lviv.bas.cinema.domain.Movie;
@@ -25,8 +32,11 @@ import ua.lviv.bas.cinema.domain.enums.MovieStatus;
 import ua.lviv.bas.cinema.domain.enums.PersonRole;
 import ua.lviv.bas.cinema.dto.movie.request.MovieCreateRequest;
 import ua.lviv.bas.cinema.dto.movie.request.MovieUpdateRequest;
-import ua.lviv.bas.cinema.dto.movie.response.MovieDetailResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieCardResponse;
+import ua.lviv.bas.cinema.dto.movie.response.MovieDetailResponse;
+import ua.lviv.bas.cinema.dto.movie.response.MovieSessionSearchResponse;
+import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
+import ua.lviv.bas.cinema.exception.domain.cinema.MovieNotFoundException;
 import ua.lviv.bas.cinema.mapper.MovieMapper;
 import ua.lviv.bas.cinema.repository.GenreRepository;
 import ua.lviv.bas.cinema.repository.MovieRepository;
@@ -95,7 +105,7 @@ class MovieServiceTest {
 				.actorIds(List.of(1L)).directorIds(List.of(2L)).screenwriterIds(List.of(3L)).removePoster(false)
 				.build();
 
-		org.springframework.test.util.ReflectionTestUtils.setField(movieService, "uploadDir", "test-uploads");
+		ReflectionTestUtils.setField(movieService, "uploadDir", "test-uploads");
 	}
 
 	@Test
@@ -119,6 +129,22 @@ class MovieServiceTest {
 	}
 
 	@Test
+	void createMovie_ShouldThrowException_WhenEndDateBeforeReleaseDate() {
+		MovieCreateRequest invalidRequest = MovieCreateRequest.builder().title("Invalid Movie")
+				.releaseDate(LocalDate.now().plusDays(10)).endShowingDate(LocalDate.now().plusDays(5)).build();
+
+		assertThrows(IllegalArgumentException.class, () -> movieService.createMovie(invalidRequest));
+	}
+
+	@Test
+	void createMovie_ShouldThrowDuplicateEntityException_WhenSlugExists() {
+		when(slugService.generateUniqueSlug("New Movie")).thenReturn("existing-movie");
+		when(movieRepository.findBySlug("existing-movie")).thenReturn(Optional.of(movie));
+
+		assertThrows(DuplicateEntityException.class, () -> movieService.createMovie(createRequest));
+	}
+
+	@Test
 	void getMovieById_ShouldReturnMovie() {
 		when(movieRepository.findById(1L)).thenReturn(Optional.of(movie));
 		when(movieMapper.toDetailResponse(movie)).thenReturn(movieDetailResponse);
@@ -131,6 +157,13 @@ class MovieServiceTest {
 	}
 
 	@Test
+	void getMovieById_ShouldThrowMovieNotFoundException_WhenMovieNotExists() {
+		when(movieRepository.findById(999L)).thenReturn(Optional.empty());
+
+		assertThrows(MovieNotFoundException.class, () -> movieService.getMovieById(999L));
+	}
+
+	@Test
 	void getMovieBySlug_ShouldReturnMovie() {
 		when(movieRepository.findBySlug("test-movie")).thenReturn(Optional.of(movie));
 		when(movieMapper.toDetailResponse(movie)).thenReturn(movieDetailResponse);
@@ -139,6 +172,13 @@ class MovieServiceTest {
 
 		assertNotNull(result);
 		assertEquals("test-movie", result.getSlug());
+	}
+
+	@Test
+	void getMovieBySlug_ShouldThrowMovieNotFoundException_WhenMovieNotExists() {
+		when(movieRepository.findBySlug("nonexistent")).thenReturn(Optional.empty());
+
+		assertThrows(MovieNotFoundException.class, () -> movieService.getMovieBySlug("nonexistent"));
 	}
 
 	@Test
@@ -205,6 +245,13 @@ class MovieServiceTest {
 	}
 
 	@Test
+	void deleteMovie_ShouldThrowMovieNotFoundException_WhenMovieNotExists() {
+		when(movieRepository.findById(999L)).thenReturn(Optional.empty());
+
+		assertThrows(MovieNotFoundException.class, () -> movieService.deleteMovie(999L));
+	}
+
+	@Test
 	void updateMovie_ShouldUpdateMovieSuccessfully() {
 		when(movieRepository.findById(1L)).thenReturn(Optional.of(movie));
 		when(slugService.generateUniqueSlug("Updated Movie")).thenReturn("updated-movie");
@@ -223,6 +270,25 @@ class MovieServiceTest {
 	}
 
 	@Test
+	void updateMovie_ShouldThrowException_WhenEndDateBeforeReleaseDate() {
+		when(movieRepository.findById(1L)).thenReturn(Optional.of(movie));
+
+		MovieUpdateRequest invalidRequest = MovieUpdateRequest.builder().title("Updated Movie")
+				.releaseDate(LocalDate.now().plusDays(10)).endShowingDate(LocalDate.now().plusDays(5)).build();
+
+		assertThrows(IllegalArgumentException.class, () -> movieService.updateMovie(1L, invalidRequest));
+	}
+
+	@Test
+	void updateMovie_ShouldThrowDuplicateEntityException_WhenNewSlugExists() {
+		when(movieRepository.findById(1L)).thenReturn(Optional.of(movie));
+		when(slugService.generateUniqueSlug("Updated Movie")).thenReturn("existing-slug");
+		when(slugService.isSlugAvailableForMovie("existing-slug", 1L)).thenReturn(false);
+
+		assertThrows(DuplicateEntityException.class, () -> movieService.updateMovie(1L, updateRequest));
+	}
+
+	@Test
 	void getMovieEntityById_ShouldReturnMovieEntity() {
 		when(movieRepository.findById(1L)).thenReturn(Optional.of(movie));
 
@@ -231,5 +297,66 @@ class MovieServiceTest {
 		assertNotNull(result);
 		assertEquals(1L, result.getId());
 		assertEquals("Test Movie", result.getTitle());
+	}
+
+	@Test
+	void getMovieEntityById_ShouldThrowMovieNotFoundException_WhenMovieNotExists() {
+		when(movieRepository.findById(999L)).thenReturn(Optional.empty());
+
+		assertThrows(MovieNotFoundException.class, () -> movieService.getMovieEntityById(999L));
+	}
+
+	@Test
+	void searchMoviesForSessionCreation_ShouldReturnAvailableMovies() {
+		when(movieRepository.findByTitleContainingIgnoreCase(eq("test"), any(Pageable.class)))
+				.thenReturn(new PageImpl<>(List.of(movie)));
+
+		List<MovieSessionSearchResponse> result = movieService.searchMoviesForSessionCreation("test",
+				LocalDate.now().plusDays(5));
+
+		assertNotNull(result);
+	}
+
+	@Test
+	void searchMoviesForSessionCreation_ShouldReturnAllMovies_WhenSearchTermEmpty() {
+		when(movieRepository.findAll(any(Pageable.class))).thenReturn(new PageImpl<>(List.of(movie)));
+
+		List<MovieSessionSearchResponse> result = movieService.searchMoviesForSessionCreation("",
+				LocalDate.now().plusDays(5));
+
+		assertNotNull(result);
+	}
+
+	@Test
+	void searchMovies_ShouldReturnPaginatedResults() {
+		Page<Movie> moviePage = new PageImpl<>(List.of(movie));
+		when(movieRepository.findByTitleContainingIgnoreCase(eq("test"), any(Pageable.class))).thenReturn(moviePage);
+		when(movieMapper.toCardResponse(movie)).thenReturn(movieCardResponse);
+
+		Page<MovieCardResponse> result = movieService.searchMovies("test", Pageable.unpaged());
+
+		assertNotNull(result);
+		assertEquals(1, result.getContent().size());
+	}
+
+	@Test
+	void searchMovies_ShouldReturnAllMovies_WhenSearchTermNull() {
+		Page<Movie> moviePage = new PageImpl<>(List.of(movie));
+		when(movieRepository.findAll(any(Pageable.class))).thenReturn(moviePage);
+		when(movieMapper.toCardResponse(movie)).thenReturn(movieCardResponse);
+
+		Page<MovieCardResponse> result = movieService.searchMovies(null, Pageable.unpaged());
+
+		assertNotNull(result);
+		assertEquals(1, result.getContent().size());
+	}
+
+	@Test
+	void updateMovieStatuses_ShouldUpdateStatuses() {
+		when(movieRepository.findAll()).thenReturn(List.of(movie));
+
+		movieService.updateMovieStatuses();
+
+		verify(movieRepository).findAll();
 	}
 }

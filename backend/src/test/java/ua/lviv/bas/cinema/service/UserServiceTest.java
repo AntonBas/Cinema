@@ -1,8 +1,19 @@
 package ua.lviv.bas.cinema.service;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
 import java.util.Optional;
@@ -22,6 +33,10 @@ import ua.lviv.bas.cinema.dto.user.request.UserUpdateRequest;
 import ua.lviv.bas.cinema.dto.user.response.UserProfileResponse;
 import ua.lviv.bas.cinema.dto.user.response.UserResponse;
 import ua.lviv.bas.cinema.exception.domain.auth.EmailAlreadyExistsException;
+import ua.lviv.bas.cinema.exception.domain.auth.InvalidCurrentPasswordException;
+import ua.lviv.bas.cinema.exception.domain.auth.PasswordMismatchException;
+import ua.lviv.bas.cinema.exception.domain.auth.SameEmailException;
+import ua.lviv.bas.cinema.exception.domain.auth.SamePasswordException;
 import ua.lviv.bas.cinema.exception.domain.user.UserNotFoundException;
 import ua.lviv.bas.cinema.mapper.UserMapper;
 import ua.lviv.bas.cinema.repository.UserRepository;
@@ -171,6 +186,20 @@ public class UserServiceTest {
 	}
 
 	@Test
+	void requestEmailChange_ShouldThrowException_WhenSameEmail() {
+		Long userId = 1L;
+		String sameEmail = "test@example.com";
+
+		when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+
+		assertThrows(SameEmailException.class, () -> userService.requestEmailChange(userId, sameEmail));
+
+		verify(userRepository).findById(userId);
+		verify(userRepository, never()).existsByEmail(anyString());
+		verify(emailTokenGeneratorService, never()).generateEmailChangeToken(anyString(), anyString());
+	}
+
+	@Test
 	void confirmEmailChange_ShouldReturnUpdatedProfile() {
 		String token = "token";
 		User updatedUser = User.builder().id(1L).email("new@example.com").build();
@@ -190,6 +219,7 @@ public class UserServiceTest {
 	void updateUserPassword_ShouldUpdatePassword_WhenCurrentPasswordIsCorrectAndNewIsDifferent() {
 		String currentPassword = "oldPassword123";
 		String newPassword = "newPassword123";
+		String passwordConfirm = "newPassword123";
 		String encodedNewPassword = "encodedNewPassword";
 
 		user.setPassword("encodedOldPassword");
@@ -200,7 +230,8 @@ public class UserServiceTest {
 		when(passwordEncoder.encode(newPassword)).thenReturn(encodedNewPassword);
 		when(userRepository.save(user)).thenReturn(user);
 
-		userService.updateUserPassword(user.getId(), currentPassword, newPassword);
+		assertDoesNotThrow(
+				() -> userService.updateUserPassword(user.getId(), currentPassword, newPassword, passwordConfirm));
 
 		assertEquals(encodedNewPassword, user.getPassword());
 
@@ -213,14 +244,15 @@ public class UserServiceTest {
 	void updateUserPassword_ShouldThrowException_WhenCurrentPasswordIsIncorrect() {
 		String currentPassword = "wrongPassword";
 		String newPassword = "newPassword123";
+		String passwordConfirm = "newPassword123";
 
 		user.setPassword("encodedOldPassword");
 
 		when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
 		when(passwordEncoder.matches(currentPassword, user.getPassword())).thenReturn(false);
 
-		assertThrows(org.springframework.security.authentication.BadCredentialsException.class,
-				() -> userService.updateUserPassword(user.getId(), currentPassword, newPassword));
+		assertThrows(InvalidCurrentPasswordException.class,
+				() -> userService.updateUserPassword(user.getId(), currentPassword, newPassword, passwordConfirm));
 
 		verify(passwordEncoder, times(1)).matches(anyString(), anyString());
 		verify(passwordEncoder, never()).encode(anyString());
@@ -231,6 +263,7 @@ public class UserServiceTest {
 	void updateUserPassword_ShouldThrowException_WhenNewPasswordIsSameAsOld() {
 		String currentPassword = "oldPassword123";
 		String newPassword = "oldPassword123";
+		String passwordConfirm = "oldPassword123";
 
 		user.setPassword("encodedOldPassword");
 
@@ -238,12 +271,153 @@ public class UserServiceTest {
 		when(passwordEncoder.matches(currentPassword, user.getPassword())).thenReturn(true);
 		when(passwordEncoder.matches(newPassword, user.getPassword())).thenReturn(true);
 
-		assertThrows(ua.lviv.bas.cinema.exception.domain.auth.SamePasswordException.class,
-				() -> userService.updateUserPassword(user.getId(), currentPassword, newPassword));
+		assertThrows(SamePasswordException.class,
+				() -> userService.updateUserPassword(user.getId(), currentPassword, newPassword, passwordConfirm));
 
 		verify(passwordEncoder, times(2)).matches(anyString(), anyString());
 		verify(passwordEncoder, never()).encode(anyString());
 		verify(userRepository, never()).save(any());
 	}
 
+	@Test
+	void updateUserPassword_ShouldThrowException_WhenPasswordsDoNotMatch() {
+		String currentPassword = "oldPassword123";
+		String newPassword = "newPassword123";
+		String passwordConfirm = "differentPassword";
+
+		user.setPassword("encodedOldPassword");
+
+		when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
+
+		assertThrows(PasswordMismatchException.class,
+				() -> userService.updateUserPassword(user.getId(), currentPassword, newPassword, passwordConfirm));
+
+		verify(passwordEncoder, never()).matches(anyString(), anyString());
+		verify(passwordEncoder, never()).encode(anyString());
+		verify(userRepository, never()).save(any());
+	}
+
+	@Test
+	void updateUserPassword_ShouldThrowException_WhenPasswordTooShort() {
+		String currentPassword = "oldPassword123";
+		String newPassword = "short";
+		String passwordConfirm = "short";
+
+		user.setPassword("encodedOldPassword");
+
+		when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
+		when(passwordEncoder.matches(currentPassword, user.getPassword())).thenReturn(true);
+		when(passwordEncoder.matches(newPassword, user.getPassword())).thenReturn(false);
+
+		assertThrows(IllegalArgumentException.class,
+				() -> userService.updateUserPassword(user.getId(), currentPassword, newPassword, passwordConfirm));
+
+		verify(passwordEncoder, times(2)).matches(anyString(), anyString());
+		verify(passwordEncoder, never()).encode(anyString());
+		verify(userRepository, never()).save(any());
+	}
+
+	@Test
+	void getUserProfile_ShouldReturnUserProfile() {
+		Long userId = 1L;
+		when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+		when(userMapper.toProfileResponse(user)).thenReturn(userProfileResponse);
+
+		UserProfileResponse result = userService.getUserProfile(userId);
+
+		assertNotNull(result);
+		assertEquals("test@example.com", result.getEmail());
+		verify(userRepository).findById(userId);
+		verify(userMapper).toProfileResponse(user);
+	}
+
+	@Test
+	void getUserById_ShouldReturnUser() {
+		Long userId = 1L;
+		when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+		when(userMapper.toDto(user)).thenReturn(userResponse);
+
+		UserResponse result = userService.getUserById(userId);
+
+		assertNotNull(result);
+		assertEquals("test@example.com", result.getEmail());
+		verify(userRepository).findById(userId);
+		verify(userMapper).toDto(user);
+	}
+
+	@Test
+	void findByEmail_ShouldReturnUser() {
+		String email = "test@example.com";
+		when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
+
+		User result = userService.findByEmail(email);
+
+		assertNotNull(result);
+		assertEquals(email, result.getEmail());
+		verify(userRepository).findByEmail(email);
+	}
+
+	@Test
+	void findByEmail_ShouldThrowException_WhenUserNotFound() {
+		String email = "nonexistent@example.com";
+		when(userRepository.findByEmail(email)).thenReturn(Optional.empty());
+
+		assertThrows(UserNotFoundException.class, () -> userService.findByEmail(email));
+		verify(userRepository).findByEmail(email);
+	}
+
+	@Test
+	void existsByEmail_ShouldReturnTrue_WhenEmailExists() {
+		String email = "existing@example.com";
+		when(userRepository.existsByEmail(email)).thenReturn(true);
+
+		boolean result = userService.existsByEmail(email);
+
+		assertTrue(result);
+		verify(userRepository).existsByEmail(email);
+	}
+
+	@Test
+	void existsByEmail_ShouldReturnFalse_WhenEmailNotExists() {
+		String email = "nonexistent@example.com";
+		when(userRepository.existsByEmail(email)).thenReturn(false);
+
+		boolean result = userService.existsByEmail(email);
+
+		assertFalse(result);
+		verify(userRepository).existsByEmail(email);
+	}
+
+	@Test
+	void existsById_ShouldReturnTrue_WhenIdExists() {
+		Long userId = 1L;
+		when(userRepository.existsById(userId)).thenReturn(true);
+
+		boolean result = userService.existsById(userId);
+
+		assertTrue(result);
+		verify(userRepository).existsById(userId);
+	}
+
+	@Test
+	void existsById_ShouldReturnFalse_WhenIdNotExists() {
+		Long userId = 999L;
+		when(userRepository.existsById(userId)).thenReturn(false);
+
+		boolean result = userService.existsById(userId);
+
+		assertFalse(result);
+		verify(userRepository).existsById(userId);
+	}
+
+	@Test
+	void confirmRegistration_ShouldCallEmailTokenService() {
+		String token = "verification-token";
+		when(emailTokenService.confirmEmail(token)).thenReturn("Email verified successfully");
+
+		String result = userService.confirmRegistration(token);
+
+		assertNotNull(result);
+		verify(emailTokenService).confirmEmail(token);
+	}
 }

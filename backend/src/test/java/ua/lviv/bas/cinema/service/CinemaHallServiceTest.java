@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -20,13 +21,13 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import jakarta.persistence.EntityNotFoundException;
 import ua.lviv.bas.cinema.domain.CinemaHall;
 import ua.lviv.bas.cinema.domain.Seat;
 import ua.lviv.bas.cinema.domain.enums.SeatType;
 import ua.lviv.bas.cinema.dto.cinemaHall.request.CinemaHallRequest;
 import ua.lviv.bas.cinema.dto.cinemaHall.response.CinemaHallResponse;
 import ua.lviv.bas.cinema.dto.cinemaHall.response.CinemaHallWithSeatsResponse;
+import ua.lviv.bas.cinema.dto.cinemaHall.response.HallLayoutResponse;
 import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
 import ua.lviv.bas.cinema.exception.domain.cinema.CinemaHallNotFoundException;
 import ua.lviv.bas.cinema.mapper.CinemaHallMapper;
@@ -51,12 +52,22 @@ class CinemaHallServiceTest {
 	private CinemaHall cinemaHall;
 	private CinemaHallRequest hallRequest;
 	private CinemaHallResponse hallDto;
+	private List<Seat> seats;
 
 	@BeforeEach
 	void setUp() {
-		cinemaHall = CinemaHall.builder().id(1L).name("Hall A").build();
+		cinemaHall = CinemaHall.builder().id(1L).name("Hall A").seats(new ArrayList<>()).build();
+
 		hallRequest = CinemaHallRequest.builder().name("Hall A").build();
+
 		hallDto = CinemaHallResponse.builder().id(1L).name("Hall A").capacity(0).build();
+
+		seats = new ArrayList<>();
+		for (int i = 1; i <= 3; i++) {
+			seats.add(
+					Seat.builder().id((long) i).row(1).number(i).seatType(SeatType.STANDARD).hall(cinemaHall).build());
+		}
+		cinemaHall.setSeats(seats);
 	}
 
 	@Test
@@ -147,7 +158,7 @@ class CinemaHallServiceTest {
 	void updateHall_ShouldUpdateSeats_WhenSeatConfigProvided() {
 		CinemaHall hallWithSeats = CinemaHall.builder().id(1L).name("Hall A").seats(new ArrayList<>()).build();
 
-		hallWithSeats.getSeats().add(new Seat());
+		hallWithSeats.getSeats().add(Seat.builder().id(1L).build());
 
 		CinemaHallRequest updateRequest = CinemaHallRequest.builder().name("Updated Hall").rows(6).seatsPerRow(8)
 				.defaultSeatType(SeatType.VIP).build();
@@ -223,27 +234,42 @@ class CinemaHallServiceTest {
 
 	@Test
 	void getHallWithSeats_ShouldReturnHallWithSeatsDto_WhenHallExists() {
+
 		when(hallRepository.findByIdWithSeats(1L)).thenReturn(Optional.of(cinemaHall));
 
 		CinemaHallWithSeatsResponse result = cinemaHallService.getHallWithSeats(1L);
 
 		assertNotNull(result);
+		assertEquals(1L, result.getId());
+		assertEquals("Hall A", result.getName());
 		verify(hallRepository).findByIdWithSeats(1L);
 	}
 
 	@Test
-	void getHallWithSeats_ShouldThrowEntityNotFoundException_WhenHallNotExists() {
+	void getHallWithSeats_ShouldThrowCinemaHallNotFoundException_WhenHallNotExists() {
 		when(hallRepository.findByIdWithSeats(1L)).thenReturn(Optional.empty());
 
-		assertThrows(EntityNotFoundException.class, () -> cinemaHallService.getHallWithSeats(1L));
+		assertThrows(CinemaHallNotFoundException.class, () -> cinemaHallService.getHallWithSeats(1L));
 		verify(hallRepository).findByIdWithSeats(1L);
 	}
 
 	@Test
-	void getHallLayout_ShouldThrowEntityNotFoundException_WhenHallNotExists() {
+	void getHallLayout_ShouldReturnHallLayout_WhenHallExists() {
+		when(hallRepository.findByIdWithSeats(1L)).thenReturn(Optional.of(cinemaHall));
+
+		HallLayoutResponse result = cinemaHallService.getHallLayout(1L);
+
+		assertNotNull(result);
+		assertEquals(1L, result.getHallId());
+		assertEquals("Hall A", result.getHallName());
+		verify(hallRepository).findByIdWithSeats(1L);
+	}
+
+	@Test
+	void getHallLayout_ShouldThrowCinemaHallNotFoundException_WhenHallNotExists() {
 		when(hallRepository.findByIdWithSeats(1L)).thenReturn(Optional.empty());
 
-		assertThrows(EntityNotFoundException.class, () -> cinemaHallService.getHallLayout(1L));
+		assertThrows(CinemaHallNotFoundException.class, () -> cinemaHallService.getHallLayout(1L));
 		verify(hallRepository).findByIdWithSeats(1L);
 	}
 
@@ -312,5 +338,31 @@ class CinemaHallServiceTest {
 
 		assertThrows(CinemaHallNotFoundException.class, () -> cinemaHallService.getHallEntityById(1L));
 		verify(hallRepository).findById(1L);
+	}
+
+	@Test
+	void getAllHalls_WhenNoHalls_ShouldReturnEmptyList() {
+		when(hallRepository.findAll()).thenReturn(new ArrayList<>());
+		when(hallMapper.toDtoList(anyList())).thenReturn(new ArrayList<>());
+
+		List<CinemaHallResponse> result = cinemaHallService.getAllHalls();
+
+		assertNotNull(result);
+		assertEquals(0, result.size());
+		verify(hallRepository).findAll();
+		verify(hallMapper).toDtoList(anyList());
+	}
+
+	@Test
+	void searchHalls_WhenNoMatchingHalls_ShouldReturnEmptyList() {
+		when(hallRepository.findByNameContainingIgnoreCase("Nonexistent")).thenReturn(new ArrayList<>());
+		when(hallMapper.toDtoList(anyList())).thenReturn(new ArrayList<>());
+
+		List<CinemaHallResponse> result = cinemaHallService.searchHalls("Nonexistent");
+
+		assertNotNull(result);
+		assertEquals(0, result.size());
+		verify(hallRepository).findByNameContainingIgnoreCase("Nonexistent");
+		verify(hallMapper).toDtoList(anyList());
 	}
 }

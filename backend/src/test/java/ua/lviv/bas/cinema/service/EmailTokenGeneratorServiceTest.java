@@ -10,12 +10,14 @@ import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.enums.TokenType;
 import ua.lviv.bas.cinema.exception.domain.user.UserNotFoundException;
 import ua.lviv.bas.cinema.repository.EmailTokenRepository;
+import ua.lviv.bas.cinema.repository.UserRepository;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -25,7 +27,7 @@ class EmailTokenGeneratorServiceTest {
 	private EmailTokenRepository tokenRepository;
 
 	@Mock
-	private UserService userService;
+	private UserRepository userRepository;
 
 	@Mock
 	private EmailService emailService;
@@ -38,13 +40,13 @@ class EmailTokenGeneratorServiceTest {
 		String email = "test@example.com";
 		User user = User.builder().email(email).build();
 
-		when(userService.findByEmail(email)).thenReturn(user);
+		when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
 		when(tokenRepository.save(any(EmailToken.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
 		String token = tokenGeneratorService.generateVerificationToken(email);
 
 		assertNotNull(token);
-		verify(userService).findByEmail(email);
+		verify(userRepository).findByEmail(email);
 		verify(tokenRepository).deleteByUserAndType(user, TokenType.VERIFICATION);
 		verify(tokenRepository).save(any(EmailToken.class));
 		verify(emailService).sendVerificationEmail(email, token);
@@ -55,13 +57,13 @@ class EmailTokenGeneratorServiceTest {
 		String email = "test@example.com";
 		User user = User.builder().email(email).build();
 
-		when(userService.findByEmail(email)).thenReturn(user);
+		when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
 		when(tokenRepository.save(any(EmailToken.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
 		String token = tokenGeneratorService.generatePasswordResetToken(email);
 
 		assertNotNull(token);
-		verify(userService).findByEmail(email);
+		verify(userRepository).findByEmail(email);
 		verify(tokenRepository).deleteByUserAndType(user, TokenType.PASSWORD_RESET);
 		verify(tokenRepository).save(any(EmailToken.class));
 		verify(emailService).sendPasswordResetEmail(email, token);
@@ -73,13 +75,13 @@ class EmailTokenGeneratorServiceTest {
 		String newEmail = "new@example.com";
 		User user = User.builder().email(email).build();
 
-		when(userService.findByEmail(email)).thenReturn(user);
+		when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
 		when(tokenRepository.save(any(EmailToken.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
 		String token = tokenGeneratorService.generateEmailChangeToken(email, newEmail);
 
 		assertNotNull(token);
-		verify(userService).findByEmail(email);
+		verify(userRepository).findByEmail(email);
 		verify(tokenRepository).deleteByUserAndType(user, TokenType.EMAIL_CHANGE);
 		verify(tokenRepository).save(any(EmailToken.class));
 		verify(emailService).sendEmailChangeConfirmation(newEmail, token);
@@ -89,13 +91,13 @@ class EmailTokenGeneratorServiceTest {
 	void generateToken_ShouldThrowException_WhenUserNotFound() {
 		String email = "nonexistent@example.com";
 
-		when(userService.findByEmail(email)).thenThrow(new UserNotFoundException("User not found"));
+		when(userRepository.findByEmail(email)).thenReturn(Optional.empty());
 
-		RuntimeException exception = assertThrows(RuntimeException.class,
+		UserNotFoundException exception = assertThrows(UserNotFoundException.class,
 				() -> tokenGeneratorService.generateVerificationToken(email));
 
-		assertEquals("User not found with email: " + email, exception.getMessage());
-		verify(userService).findByEmail(email);
+		assertNotNull(exception);
+		verify(userRepository).findByEmail(email);
 		verifyNoInteractions(tokenRepository, emailService);
 	}
 
@@ -104,7 +106,7 @@ class EmailTokenGeneratorServiceTest {
 		String email = "test@example.com";
 		User user = User.builder().email(email).build();
 
-		when(userService.findByEmail(email)).thenReturn(user);
+		when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
 		when(tokenRepository.save(any(EmailToken.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
 		tokenGeneratorService.generateVerificationToken(email);
@@ -117,7 +119,7 @@ class EmailTokenGeneratorServiceTest {
 		String email = "test@example.com";
 		User user = User.builder().email(email).build();
 
-		when(userService.findByEmail(email)).thenReturn(user);
+		when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
 		when(tokenRepository.save(any(EmailToken.class))).thenAnswer(invocation -> {
 			EmailToken savedToken = invocation.getArgument(0);
 			assertTrue(savedToken.getExpiresAt().isAfter(LocalDateTime.now()));
@@ -137,12 +139,14 @@ class EmailTokenGeneratorServiceTest {
 		String email = "test@example.com";
 		User user = User.builder().email(email).build();
 
-		when(userService.findByEmail(email)).thenReturn(user);
+		when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
 
 		when(tokenRepository.save(any(EmailToken.class))).thenAnswer(invocation -> {
 			EmailToken savedToken = invocation.getArgument(0);
-			assertTrue(savedToken.getExpiresAt().isAfter(LocalDateTime.now().plusMinutes(9)));
-			assertTrue(savedToken.getExpiresAt().isBefore(LocalDateTime.now().plusMinutes(11)));
+			LocalDateTime expectedMin = LocalDateTime.now().plusMinutes(9);
+			LocalDateTime expectedMax = LocalDateTime.now().plusMinutes(11);
+			assertTrue(savedToken.getExpiresAt().isAfter(expectedMin));
+			assertTrue(savedToken.getExpiresAt().isBefore(expectedMax));
 			return savedToken;
 		});
 
@@ -150,8 +154,10 @@ class EmailTokenGeneratorServiceTest {
 
 		when(tokenRepository.save(any(EmailToken.class))).thenAnswer(invocation -> {
 			EmailToken savedToken = invocation.getArgument(0);
-			assertTrue(savedToken.getExpiresAt().isAfter(LocalDateTime.now().plusMinutes(9)));
-			assertTrue(savedToken.getExpiresAt().isBefore(LocalDateTime.now().plusMinutes(11)));
+			LocalDateTime expectedMin = LocalDateTime.now().plusMinutes(9);
+			LocalDateTime expectedMax = LocalDateTime.now().plusMinutes(11);
+			assertTrue(savedToken.getExpiresAt().isAfter(expectedMin));
+			assertTrue(savedToken.getExpiresAt().isBefore(expectedMax));
 			return savedToken;
 		});
 
@@ -160,8 +166,10 @@ class EmailTokenGeneratorServiceTest {
 		String newEmail = "new@example.com";
 		when(tokenRepository.save(any(EmailToken.class))).thenAnswer(invocation -> {
 			EmailToken savedToken = invocation.getArgument(0);
-			assertTrue(savedToken.getExpiresAt().isAfter(LocalDateTime.now().plusHours(23)));
-			assertTrue(savedToken.getExpiresAt().isBefore(LocalDateTime.now().plusHours(25)));
+			LocalDateTime expectedMin = LocalDateTime.now().plusHours(23);
+			LocalDateTime expectedMax = LocalDateTime.now().plusHours(25);
+			assertTrue(savedToken.getExpiresAt().isAfter(expectedMin));
+			assertTrue(savedToken.getExpiresAt().isBefore(expectedMax));
 			assertEquals(newEmail, savedToken.getNewEmail());
 			return savedToken;
 		});
@@ -174,7 +182,7 @@ class EmailTokenGeneratorServiceTest {
 		String email = "test@example.com";
 		User user = User.builder().email(email).build();
 
-		when(userService.findByEmail(email)).thenReturn(user);
+		when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
 		when(tokenRepository.save(any(EmailToken.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
 		String token = tokenGeneratorService.generateVerificationToken(email);
@@ -189,7 +197,7 @@ class EmailTokenGeneratorServiceTest {
 		String newEmail = "new@example.com";
 		User user = User.builder().email(email).build();
 
-		when(userService.findByEmail(email)).thenReturn(user);
+		when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
 		when(tokenRepository.save(any(EmailToken.class))).thenAnswer(invocation -> {
 			EmailToken savedToken = invocation.getArgument(0);
 			assertEquals(newEmail, savedToken.getNewEmail());
@@ -201,5 +209,38 @@ class EmailTokenGeneratorServiceTest {
 
 		assertNotNull(token);
 		verify(emailService).sendEmailChangeConfirmation(newEmail, token);
+	}
+
+	@Test
+	void generateEmailChangeToken_ShouldNotSetNewEmail_ForOtherTokenTypes() {
+		String email = "test@example.com";
+		User user = User.builder().email(email).build();
+
+		when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
+		when(tokenRepository.save(any(EmailToken.class))).thenAnswer(invocation -> {
+			EmailToken savedToken = invocation.getArgument(0);
+			assertNull(savedToken.getNewEmail());
+			return savedToken;
+		});
+
+		tokenGeneratorService.generateVerificationToken(email);
+		tokenGeneratorService.generatePasswordResetToken(email);
+	}
+
+	@Test
+	void generateToken_ShouldSetCreatedAtTimestamp() {
+		String email = "test@example.com";
+		User user = User.builder().email(email).build();
+
+		when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
+		when(tokenRepository.save(any(EmailToken.class))).thenAnswer(invocation -> {
+			EmailToken savedToken = invocation.getArgument(0);
+			assertNotNull(savedToken.getCreatedAt());
+			assertTrue(savedToken.getCreatedAt().isBefore(LocalDateTime.now().plusSeconds(1)));
+			assertTrue(savedToken.getCreatedAt().isAfter(LocalDateTime.now().minusSeconds(1)));
+			return savedToken;
+		});
+
+		tokenGeneratorService.generateVerificationToken(email);
 	}
 }

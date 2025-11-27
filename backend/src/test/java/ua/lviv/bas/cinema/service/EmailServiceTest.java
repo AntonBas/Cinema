@@ -1,5 +1,14 @@
 package ua.lviv.bas.cinema.service;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,8 +22,7 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import ua.lviv.bas.cinema.exception.infrastructure.ExternalServiceException;
 
 @ExtendWith(MockitoExtension.class)
 class EmailServiceTest {
@@ -53,7 +61,7 @@ class EmailServiceTest {
 		assertEquals("Confirm Your Email Address", sentMessage.getSubject());
 		String messageText = sentMessage.getText();
 		assertNotNull(messageText);
-		assertTrue(messageText.contains(frontendUrl + "/verify-email?token=" + token));
+		assertTrue(messageText.contains(frontendUrl + "/verify-email/" + token));
 		assertTrue(messageText.contains("This link will expire in 10 minutes"));
 	}
 
@@ -73,7 +81,7 @@ class EmailServiceTest {
 		assertEquals("Password Reset Request", sentMessage.getSubject());
 		String messageText = sentMessage.getText();
 		assertNotNull(messageText);
-		assertTrue(messageText.contains(frontendUrl + "/reset-password?token=" + token));
+		assertTrue(messageText.contains(frontendUrl + "/reset-password/" + token));
 		assertTrue(messageText.contains("This link will expire in 10 minutes"));
 	}
 
@@ -93,7 +101,7 @@ class EmailServiceTest {
 		assertEquals("Confirm Your Email Change", sentMessage.getSubject());
 		String messageText = sentMessage.getText();
 		assertNotNull(messageText);
-		assertTrue(messageText.contains(frontendUrl + "/confirm-email-change?token=" + token));
+		assertTrue(messageText.contains(frontendUrl + "/confirm-email-change/" + token));
 		assertTrue(messageText.contains("This link will expire in 24 hours"));
 	}
 
@@ -144,11 +152,11 @@ class EmailServiceTest {
 
 		doThrow(mailException).when(mailSender).send(any(SimpleMailMessage.class));
 
-		RuntimeException exception = assertThrows(RuntimeException.class,
+		ExternalServiceException exception = assertThrows(ExternalServiceException.class,
 				() -> emailService.sendVerificationEmail(toEmail, token));
 
-		assertEquals("Failed to send verification email", exception.getMessage());
-		assertNotNull(exception.getCause());
+		assertNotNull(exception);
+		assertTrue(exception.getMessage().contains("Email Service"));
 	}
 
 	@Test
@@ -162,11 +170,11 @@ class EmailServiceTest {
 
 		doThrow(mailException).when(mailSender).send(any(SimpleMailMessage.class));
 
-		RuntimeException exception = assertThrows(RuntimeException.class,
+		ExternalServiceException exception = assertThrows(ExternalServiceException.class,
 				() -> emailService.sendPasswordResetEmail(toEmail, token));
 
-		assertEquals("Failed to send password reset email", exception.getMessage());
-		assertNotNull(exception.getCause());
+		assertNotNull(exception);
+		assertTrue(exception.getMessage().contains("Email Service"));
 	}
 
 	@Test
@@ -180,11 +188,11 @@ class EmailServiceTest {
 
 		doThrow(mailException).when(mailSender).send(any(SimpleMailMessage.class));
 
-		RuntimeException exception = assertThrows(RuntimeException.class,
+		ExternalServiceException exception = assertThrows(ExternalServiceException.class,
 				() -> emailService.sendEmailChangeConfirmation(toEmail, token));
 
-		assertEquals("Failed to send email change confirmation", exception.getMessage());
-		assertNotNull(exception.getCause());
+		assertNotNull(exception);
+		assertTrue(exception.getMessage().contains("Email Service"));
 	}
 
 	@Test
@@ -195,9 +203,9 @@ class EmailServiceTest {
 		String passwordResetLink = ReflectionTestUtils.invokeMethod(emailService, "createPasswordResetLink", token);
 		String emailChangeLink = ReflectionTestUtils.invokeMethod(emailService, "createEmailChangeLink", token);
 
-		assertEquals(frontendUrl + "/verify-email?token=" + token, verificationLink);
-		assertEquals(frontendUrl + "/reset-password?token=" + token, passwordResetLink);
-		assertEquals(frontendUrl + "/confirm-email-change?token=" + token, emailChangeLink);
+		assertEquals(frontendUrl + "/verify-email/" + token, verificationLink);
+		assertEquals(frontendUrl + "/reset-password/" + token, passwordResetLink);
+		assertEquals(frontendUrl + "/confirm-email-change/" + token, emailChangeLink);
 	}
 
 	@Test
@@ -242,5 +250,12 @@ class EmailServiceTest {
 		assertArrayEquals(new String[] { toEmail }, message.getTo());
 		assertEquals(subject, message.getSubject());
 		assertEquals(text, message.getText());
+	}
+
+	private void assertArrayEquals(String[] expected, String[] actual) {
+		assertEquals(expected.length, actual.length);
+		for (int i = 0; i < expected.length; i++) {
+			assertEquals(expected[i], actual[i]);
+		}
 	}
 }

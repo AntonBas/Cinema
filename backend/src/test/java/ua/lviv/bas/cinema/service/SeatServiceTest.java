@@ -1,11 +1,26 @@
 package ua.lviv.bas.cinema.service;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
 import ua.lviv.bas.cinema.domain.CinemaHall;
 import ua.lviv.bas.cinema.domain.Seat;
 import ua.lviv.bas.cinema.domain.enums.SeatType;
@@ -13,15 +28,6 @@ import ua.lviv.bas.cinema.dto.cinemaHall.response.SeatResponse;
 import ua.lviv.bas.cinema.exception.domain.cinema.SeatNotFoundException;
 import ua.lviv.bas.cinema.mapper.SeatMapper;
 import ua.lviv.bas.cinema.repository.SeatRepository;
-
-import jakarta.persistence.EntityNotFoundException;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class SeatServiceTest {
@@ -91,10 +97,10 @@ class SeatServiceTest {
 	}
 
 	@Test
-	void updateSeatType_ShouldThrowEntityNotFoundException_WhenSeatNotExists() {
+	void updateSeatType_ShouldThrowSeatNotFoundException_WhenSeatNotExists() {
 		when(seatRepository.findById(1L)).thenReturn(Optional.empty());
 
-		assertThrows(EntityNotFoundException.class, () -> seatService.updateSeatType(1L, SeatType.VIP));
+		assertThrows(SeatNotFoundException.class, () -> seatService.updateSeatType(1L, SeatType.VIP));
 		verify(seatRepository).findById(1L);
 		verify(seatRepository, never()).save(any());
 	}
