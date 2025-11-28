@@ -9,9 +9,11 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import lombok.RequiredArgsConstructor;
+import ua.lviv.bas.cinema.domain.enums.UserRole;
 import ua.lviv.bas.cinema.dto.user.request.UserRoleUpdateRequest;
 import ua.lviv.bas.cinema.dto.user.request.UserStatusUpdateRequest;
 import ua.lviv.bas.cinema.dto.user.response.AdminUserListResponse;
@@ -26,8 +28,10 @@ public class AdminUserController {
 	private final UserService userService;
 
 	@GetMapping
-	public Page<AdminUserListResponse> getAllUsers(Pageable pageable) {
-		return userService.findAllForAdmin(pageable);
+	public Page<AdminUserListResponse> getAllUsers(@RequestParam(required = false) String search,
+			@RequestParam(required = false) UserRole role, @RequestParam(required = false) Boolean enabled,
+			Pageable pageable) {
+		return userService.findAllForAdmin(search, role, enabled, pageable);
 	}
 
 	@PatchMapping("/{userId}/role")
