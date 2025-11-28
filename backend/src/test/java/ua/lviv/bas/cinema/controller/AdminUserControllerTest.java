@@ -1,6 +1,8 @@
 package ua.lviv.bas.cinema.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -40,14 +42,80 @@ class AdminUserControllerTest {
 		AdminUserListResponse user2 = AdminUserListResponse.builder().id(2L).email("user2@example.com").build();
 		Page<AdminUserListResponse> userPage = new PageImpl<>(List.of(user1, user2));
 
-		when(userService.findAllForAdmin(pageable)).thenReturn(userPage);
+		when(userService.findAllForAdmin(isNull(), isNull(), isNull(), eq(pageable))).thenReturn(userPage);
 
-		Page<AdminUserListResponse> result = adminUserController.getAllUsers(pageable);
+		Page<AdminUserListResponse> result = adminUserController.getAllUsers(null, null, null, pageable);
 
 		assertEquals(2, result.getContent().size());
 		assertEquals("user1@example.com", result.getContent().get(0).getEmail());
 		assertEquals("user2@example.com", result.getContent().get(1).getEmail());
-		verify(userService).findAllForAdmin(pageable);
+		verify(userService).findAllForAdmin(null, null, null, pageable);
+	}
+
+	@Test
+	void getAllUsers_WithSearch_ShouldReturnFilteredUsers() {
+		String search = "john";
+		Pageable pageable = PageRequest.of(0, 10);
+		AdminUserListResponse user = AdminUserListResponse.builder().id(1L).email("john@example.com").build();
+		Page<AdminUserListResponse> userPage = new PageImpl<>(List.of(user));
+
+		when(userService.findAllForAdmin(eq(search), isNull(), isNull(), eq(pageable))).thenReturn(userPage);
+
+		Page<AdminUserListResponse> result = adminUserController.getAllUsers(search, null, null, pageable);
+
+		assertEquals(1, result.getContent().size());
+		assertEquals("john@example.com", result.getContent().get(0).getEmail());
+		verify(userService).findAllForAdmin(search, null, null, pageable);
+	}
+
+	@Test
+	void getAllUsers_WithRole_ShouldReturnFilteredUsers() {
+		UserRole role = UserRole.ROLE_ADMIN;
+		Pageable pageable = PageRequest.of(0, 10);
+		AdminUserListResponse user = AdminUserListResponse.builder().id(1L).email("admin@example.com").build();
+		Page<AdminUserListResponse> userPage = new PageImpl<>(List.of(user));
+
+		when(userService.findAllForAdmin(isNull(), eq(role), isNull(), eq(pageable))).thenReturn(userPage);
+
+		Page<AdminUserListResponse> result = adminUserController.getAllUsers(null, role, null, pageable);
+
+		assertEquals(1, result.getContent().size());
+		assertEquals("admin@example.com", result.getContent().get(0).getEmail());
+		verify(userService).findAllForAdmin(null, role, null, pageable);
+	}
+
+	@Test
+	void getAllUsers_WithEnabled_ShouldReturnFilteredUsers() {
+		Boolean enabled = true;
+		Pageable pageable = PageRequest.of(0, 10);
+		AdminUserListResponse user = AdminUserListResponse.builder().id(1L).email("active@example.com").build();
+		Page<AdminUserListResponse> userPage = new PageImpl<>(List.of(user));
+
+		when(userService.findAllForAdmin(isNull(), isNull(), eq(enabled), eq(pageable))).thenReturn(userPage);
+
+		Page<AdminUserListResponse> result = adminUserController.getAllUsers(null, null, enabled, pageable);
+
+		assertEquals(1, result.getContent().size());
+		assertEquals("active@example.com", result.getContent().get(0).getEmail());
+		verify(userService).findAllForAdmin(null, null, enabled, pageable);
+	}
+
+	@Test
+	void getAllUsers_WithAllFilters_ShouldReturnFilteredUsers() {
+		String search = "admin";
+		UserRole role = UserRole.ROLE_ADMIN;
+		Boolean enabled = true;
+		Pageable pageable = PageRequest.of(0, 10);
+		AdminUserListResponse user = AdminUserListResponse.builder().id(1L).email("admin@example.com").build();
+		Page<AdminUserListResponse> userPage = new PageImpl<>(List.of(user));
+
+		when(userService.findAllForAdmin(eq(search), eq(role), eq(enabled), eq(pageable))).thenReturn(userPage);
+
+		Page<AdminUserListResponse> result = adminUserController.getAllUsers(search, role, enabled, pageable);
+
+		assertEquals(1, result.getContent().size());
+		assertEquals("admin@example.com", result.getContent().get(0).getEmail());
+		verify(userService).findAllForAdmin(search, role, enabled, pageable);
 	}
 
 	@Test
