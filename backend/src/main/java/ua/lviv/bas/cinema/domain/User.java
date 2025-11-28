@@ -83,7 +83,7 @@ public class User {
 	private List<Ticket> tickets = new ArrayList<>();
 
 	@Enumerated(EnumType.STRING)
-	@Column(nullable = false)
+	@Column(nullable = false, name = "user_role", length = 50)
 	@Builder.Default
 	private UserRole userRole = UserRole.ROLE_USER;
 
