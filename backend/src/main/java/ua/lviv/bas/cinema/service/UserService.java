@@ -1,6 +1,9 @@
 package ua.lviv.bas.cinema.service;
 
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -8,8 +11,10 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.User;
+import ua.lviv.bas.cinema.domain.enums.UserRole;
 import ua.lviv.bas.cinema.dto.user.request.UserRegistrationRequest;
 import ua.lviv.bas.cinema.dto.user.request.UserUpdateRequest;
+import ua.lviv.bas.cinema.dto.user.response.AdminUserListResponse;
 import ua.lviv.bas.cinema.dto.user.response.UserProfileResponse;
 import ua.lviv.bas.cinema.dto.user.response.UserResponse;
 import ua.lviv.bas.cinema.exception.domain.auth.EmailAlreadyExistsException;
@@ -17,6 +22,8 @@ import ua.lviv.bas.cinema.exception.domain.auth.InvalidCurrentPasswordException;
 import ua.lviv.bas.cinema.exception.domain.auth.PasswordMismatchException;
 import ua.lviv.bas.cinema.exception.domain.auth.SameEmailException;
 import ua.lviv.bas.cinema.exception.domain.auth.SamePasswordException;
+import ua.lviv.bas.cinema.exception.domain.user.LastAdminException;
+import ua.lviv.bas.cinema.exception.domain.user.SelfBlockException;
 import ua.lviv.bas.cinema.exception.domain.user.UserNotFoundException;
 import ua.lviv.bas.cinema.mapper.UserMapper;
 import ua.lviv.bas.cinema.repository.UserRepository;
@@ -107,6 +114,41 @@ public class UserService {
 		user.setPassword(passwordEncoder.encode(newPassword));
 		userRepository.save(user);
 		log.info("Password updated for user {}", userId);
+	}
+
+	@Transactional
+	public void updateUserRole(Long userId, UserRole newRole) {
+		User user = findById(userId);
+
+		if (user.getUserRole() == UserRole.ROLE_ADMIN && newRole != UserRole.ROLE_ADMIN) {
+			long adminCount = userRepository.countByUserRole(UserRole.ROLE_ADMIN);
+			if (adminCount <= 1) {
+				throw new LastAdminException();
+			}
+		}
+
+		user.setUserRole(newRole);
+		userRepository.save(user);
+		log.info("User role updated for user {}: {} -> {}", userId, user.getUserRole(), newRole);
+	}
+
+	@Transactional
+	public void updateUserStatus(Long userId, boolean enabled) {
+		User user = findById(userId);
+
+		String currentUserEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+		if (user.getEmail().equals(currentUserEmail) && !enabled) {
+			throw new SelfBlockException();
+		}
+
+		user.setEnabled(enabled);
+		userRepository.save(user);
+		log.info("User status updated for user {}: enabled = {}", userId, enabled);
+	}
+
+	@Transactional(readOnly = true)
+	public Page<AdminUserListResponse> findAllForAdmin(Pageable pageable) {
+		return userRepository.findAll(pageable).map(userMapper::toAdminListDto);
 	}
 
 	@Transactional(readOnly = true)

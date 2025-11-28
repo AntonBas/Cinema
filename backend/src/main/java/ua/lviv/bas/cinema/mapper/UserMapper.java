@@ -7,9 +7,9 @@ import org.mapstruct.MappingTarget;
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.dto.user.request.UserRegistrationRequest;
 import ua.lviv.bas.cinema.dto.user.request.UserUpdateRequest;
-import ua.lviv.bas.cinema.dto.user.response.UserResponse;
-import ua.lviv.bas.cinema.dto.user.response.UserProfileResponse;
 import ua.lviv.bas.cinema.dto.user.response.AdminUserListResponse;
+import ua.lviv.bas.cinema.dto.user.response.UserProfileResponse;
+import ua.lviv.bas.cinema.dto.user.response.UserResponse;
 
 @Mapper(componentModel = "spring")
 public interface UserMapper {
@@ -38,7 +38,9 @@ public interface UserMapper {
 	void updateUserFromDto(UserUpdateRequest dto, @MappingTarget User user);
 
 	@Mapping(target = "ticketsCount", expression = "java(user.getTickets().size())")
-	@Mapping(target = "lastActivity", source = "updatedAt")
+	@Mapping(target = "createdAt", source = "createdAt", dateFormat = "yyyy-MM-dd")
+	@Mapping(target = "updatedAt", source = "updatedAt", dateFormat = "yyyy-MM-dd")
+	@Mapping(target = "lastActivity", source = "updatedAt", dateFormat = "yyyy-MM-dd")
 	AdminUserListResponse toAdminListDto(User user);
 
 	default User toEntityWithPassword(UserRegistrationRequest dto, String encodedPassword) {
