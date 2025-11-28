@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -16,6 +17,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -24,12 +26,20 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.enums.UserRole;
 import ua.lviv.bas.cinema.dto.user.request.UserRegistrationRequest;
 import ua.lviv.bas.cinema.dto.user.request.UserUpdateRequest;
+import ua.lviv.bas.cinema.dto.user.response.AdminUserListResponse;
 import ua.lviv.bas.cinema.dto.user.response.UserProfileResponse;
 import ua.lviv.bas.cinema.dto.user.response.UserResponse;
 import ua.lviv.bas.cinema.exception.domain.auth.EmailAlreadyExistsException;
@@ -37,6 +47,8 @@ import ua.lviv.bas.cinema.exception.domain.auth.InvalidCurrentPasswordException;
 import ua.lviv.bas.cinema.exception.domain.auth.PasswordMismatchException;
 import ua.lviv.bas.cinema.exception.domain.auth.SameEmailException;
 import ua.lviv.bas.cinema.exception.domain.auth.SamePasswordException;
+import ua.lviv.bas.cinema.exception.domain.user.LastAdminException;
+import ua.lviv.bas.cinema.exception.domain.user.SelfBlockException;
 import ua.lviv.bas.cinema.exception.domain.user.UserNotFoundException;
 import ua.lviv.bas.cinema.mapper.UserMapper;
 import ua.lviv.bas.cinema.repository.UserRepository;
@@ -419,5 +431,121 @@ public class UserServiceTest {
 
 		assertNotNull(result);
 		verify(emailTokenService).confirmEmail(token);
+	}
+
+	@Test
+	void updateUserRole_ShouldUpdateRole_WhenValidChange() {
+		Long userId = 1L;
+		User adminUser = User.builder().id(1L).userRole(UserRole.ROLE_ADMIN).build();
+
+		when(userRepository.findById(userId)).thenReturn(Optional.of(adminUser));
+		when(userRepository.countByUserRole(UserRole.ROLE_ADMIN)).thenReturn(2L);
+		when(userRepository.save(adminUser)).thenReturn(adminUser);
+
+		userService.updateUserRole(userId, UserRole.ROLE_USER);
+
+		verify(userRepository).findById(userId);
+		verify(userRepository).countByUserRole(UserRole.ROLE_ADMIN);
+		verify(userRepository).save(adminUser);
+	}
+
+	@Test
+	void updateUserRole_ShouldThrowLastAdminException_WhenRemovingLastAdmin() {
+		Long userId = 1L;
+		UserRole newRole = UserRole.ROLE_USER;
+		User adminUser = User.builder().id(1L).userRole(UserRole.ROLE_ADMIN).build();
+
+		when(userRepository.findById(userId)).thenReturn(Optional.of(adminUser));
+		when(userRepository.countByUserRole(UserRole.ROLE_ADMIN)).thenReturn(1L);
+
+		assertThrows(LastAdminException.class, () -> userService.updateUserRole(userId, newRole));
+
+		verify(userRepository).findById(userId);
+		verify(userRepository).countByUserRole(UserRole.ROLE_ADMIN);
+		verify(userRepository, never()).save(any());
+	}
+
+	@Test
+	void updateUserStatus_ShouldUpdateStatus_WhenValidUser() {
+		Long userId = 1L;
+		boolean enabled = true;
+
+		Authentication authentication = mock(Authentication.class);
+		SecurityContext securityContext = mock(SecurityContext.class);
+		when(securityContext.getAuthentication()).thenReturn(authentication);
+		when(authentication.getName()).thenReturn("different@example.com");
+		SecurityContextHolder.setContext(securityContext);
+
+		when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+		when(userRepository.save(user)).thenReturn(user);
+
+		assertDoesNotThrow(() -> userService.updateUserStatus(userId, enabled));
+
+		assertEquals(enabled, user.isEnabled());
+		verify(userRepository).findById(userId);
+		verify(userRepository).save(user);
+
+		SecurityContextHolder.clearContext();
+	}
+
+	@Test
+	void updateUserStatus_ShouldThrowSelfBlockException_WhenBlockingSelf() {
+		Long userId = 1L;
+		boolean enabled = false;
+
+		Authentication authentication = mock(Authentication.class);
+		SecurityContext securityContext = mock(SecurityContext.class);
+		when(securityContext.getAuthentication()).thenReturn(authentication);
+		when(authentication.getName()).thenReturn("test@example.com");
+		SecurityContextHolder.setContext(securityContext);
+
+		when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+
+		assertThrows(SelfBlockException.class, () -> userService.updateUserStatus(userId, enabled));
+
+		verify(userRepository).findById(userId);
+		verify(userRepository, never()).save(any());
+
+		SecurityContextHolder.clearContext();
+	}
+
+	@Test
+	void updateUserStatus_ShouldHandleNullAuthentication() {
+		Long userId = 1L;
+		boolean enabled = true;
+
+		Authentication authentication = mock(Authentication.class);
+		SecurityContext securityContext = mock(SecurityContext.class);
+		when(securityContext.getAuthentication()).thenReturn(authentication);
+		when(authentication.getName()).thenReturn("different@example.com");
+		SecurityContextHolder.setContext(securityContext);
+
+		when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+		when(userRepository.save(user)).thenReturn(user);
+
+		userService.updateUserStatus(userId, enabled);
+
+		assertEquals(enabled, user.isEnabled());
+		verify(userRepository).findById(userId);
+		verify(userRepository).save(user);
+
+		SecurityContextHolder.clearContext();
+	}
+
+	@Test
+	void findAllForAdmin_ShouldReturnPageOfUsers() {
+		Pageable pageable = PageRequest.of(0, 10);
+		Page<User> userPage = new PageImpl<>(List.of(user));
+		AdminUserListResponse adminResponse = AdminUserListResponse.builder().id(1L).email("test@example.com").build();
+
+		when(userRepository.findAll(pageable)).thenReturn(userPage);
+		when(userMapper.toAdminListDto(user)).thenReturn(adminResponse);
+
+		Page<AdminUserListResponse> result = userService.findAllForAdmin(pageable);
+
+		assertNotNull(result);
+		assertEquals(1, result.getContent().size());
+		verify(userRepository).findAll(pageable);
+		verify(userMapper).toAdminListDto(user);
 	}
 }
