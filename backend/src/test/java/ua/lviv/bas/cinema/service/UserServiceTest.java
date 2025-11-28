@@ -533,19 +533,72 @@ public class UserServiceTest {
 	}
 
 	@Test
-	void findAllForAdmin_ShouldReturnPageOfUsers() {
+	void findAllForAdmin_ShouldReturnFilteredUsers() {
+		String search = "test";
+		UserRole role = UserRole.ROLE_USER;
+		Boolean enabled = true;
 		Pageable pageable = PageRequest.of(0, 10);
 		Page<User> userPage = new PageImpl<>(List.of(user));
 		AdminUserListResponse adminResponse = AdminUserListResponse.builder().id(1L).email("test@example.com").build();
 
-		when(userRepository.findAll(pageable)).thenReturn(userPage);
+		when(userRepository.findByFilters(search, role, enabled, pageable)).thenReturn(userPage);
 		when(userMapper.toAdminListDto(user)).thenReturn(adminResponse);
 
-		Page<AdminUserListResponse> result = userService.findAllForAdmin(pageable);
+		Page<AdminUserListResponse> result = userService.findAllForAdmin(search, role, enabled, pageable);
 
 		assertNotNull(result);
 		assertEquals(1, result.getContent().size());
-		verify(userRepository).findAll(pageable);
+		verify(userRepository).findByFilters(search, role, enabled, pageable);
 		verify(userMapper).toAdminListDto(user);
+	}
+
+	@Test
+	void findAllForAdmin_ShouldReturnAllUsers_WhenNoFilters() {
+		Pageable pageable = PageRequest.of(0, 10);
+		Page<User> userPage = new PageImpl<>(List.of(user));
+		AdminUserListResponse adminResponse = AdminUserListResponse.builder().id(1L).email("test@example.com").build();
+
+		when(userRepository.findByFilters(null, null, null, pageable)).thenReturn(userPage);
+		when(userMapper.toAdminListDto(user)).thenReturn(adminResponse);
+
+		Page<AdminUserListResponse> result = userService.findAllForAdmin(null, null, null, pageable);
+
+		assertNotNull(result);
+		assertEquals(1, result.getContent().size());
+		verify(userRepository).findByFilters(null, null, null, pageable);
+	}
+
+	@Test
+	void findAllForAdmin_ShouldReturnDisabledUsers_WhenEnabledFalse() {
+		Boolean enabled = false;
+		Pageable pageable = PageRequest.of(0, 10);
+		Page<User> userPage = new PageImpl<>(List.of(user));
+		AdminUserListResponse adminResponse = AdminUserListResponse.builder().id(1L).email("test@example.com").build();
+
+		when(userRepository.findByFilters(null, null, enabled, pageable)).thenReturn(userPage);
+		when(userMapper.toAdminListDto(user)).thenReturn(adminResponse);
+
+		Page<AdminUserListResponse> result = userService.findAllForAdmin(null, null, enabled, pageable);
+
+		assertNotNull(result);
+		assertEquals(1, result.getContent().size());
+		verify(userRepository).findByFilters(null, null, enabled, pageable);
+	}
+
+	@Test
+	void findAllForAdmin_ShouldReturnAdmins_WhenRoleAdmin() {
+		UserRole role = UserRole.ROLE_ADMIN;
+		Pageable pageable = PageRequest.of(0, 10);
+		Page<User> userPage = new PageImpl<>(List.of(user));
+		AdminUserListResponse adminResponse = AdminUserListResponse.builder().id(1L).email("test@example.com").build();
+
+		when(userRepository.findByFilters(null, role, null, pageable)).thenReturn(userPage);
+		when(userMapper.toAdminListDto(user)).thenReturn(adminResponse);
+
+		Page<AdminUserListResponse> result = userService.findAllForAdmin(null, role, null, pageable);
+
+		assertNotNull(result);
+		assertEquals(1, result.getContent().size());
+		verify(userRepository).findByFilters(null, role, null, pageable);
 	}
 }
