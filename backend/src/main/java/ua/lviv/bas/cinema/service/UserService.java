@@ -147,8 +147,9 @@ public class UserService {
 	}
 
 	@Transactional(readOnly = true)
-	public Page<AdminUserListResponse> findAllForAdmin(Pageable pageable) {
-		return userRepository.findAll(pageable).map(userMapper::toAdminListDto);
+	public Page<AdminUserListResponse> findAllForAdmin(String search, UserRole role, Boolean enabled,
+			Pageable pageable) {
+		return userRepository.findByFilters(search, role, enabled, pageable).map(userMapper::toAdminListDto);
 	}
 
 	@Transactional(readOnly = true)
