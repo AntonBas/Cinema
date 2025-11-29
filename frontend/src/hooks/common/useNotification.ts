@@ -7,6 +7,7 @@ interface NotificationItem {
   message: string;
   type: NotificationType;
   isVisible: boolean;
+  duration?: number;
 }
 
 export const useNotification = () => {
@@ -14,18 +15,19 @@ export const useNotification = () => {
 
   const showNotification = useCallback((
     message: string,
-    type: NotificationType = 'info'
+    type: NotificationType = 'info',
+    duration?: number
   ) => {
     const id = Math.random().toString(36).substr(2, 9);
     const newNotification: NotificationItem = {
       id,
       message,
       type,
-      isVisible: true
+      isVisible: true,
+      duration
     };
 
     setNotifications(prev => [...prev, newNotification]);
-
     return id;
   }, []);
 
