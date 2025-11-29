@@ -1,5 +1,6 @@
 package ua.lviv.bas.cinema.service;
 
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -117,10 +118,12 @@ public class UserService {
 	}
 
 	@Transactional
+	@CacheEvict(value = "users", key = "#userId")
 	public void updateUserRole(Long userId, UserRole newRole) {
 		User user = findById(userId);
+		UserRole oldRole = user.getUserRole();
 
-		if (user.getUserRole() == UserRole.ROLE_ADMIN && newRole != UserRole.ROLE_ADMIN) {
+		if (oldRole == UserRole.ROLE_ADMIN && newRole != UserRole.ROLE_ADMIN) {
 			long adminCount = userRepository.countByUserRole(UserRole.ROLE_ADMIN);
 			if (adminCount <= 1) {
 				throw new LastAdminException();
@@ -129,12 +132,14 @@ public class UserService {
 
 		user.setUserRole(newRole);
 		userRepository.save(user);
-		log.info("User role updated for user {}: {} -> {}", userId, user.getUserRole(), newRole);
+		log.info("User role updated for user {}: {} -> {}", userId, oldRole, newRole);
 	}
 
 	@Transactional
+	@CacheEvict(value = "users", key = "#userId")
 	public void updateUserStatus(Long userId, boolean enabled) {
 		User user = findById(userId);
+		boolean oldStatus = user.isEnabled();
 
 		String currentUserEmail = SecurityContextHolder.getContext().getAuthentication().getName();
 		if (user.getEmail().equals(currentUserEmail) && !enabled) {
@@ -143,7 +148,7 @@ public class UserService {
 
 		user.setEnabled(enabled);
 		userRepository.save(user);
-		log.info("User status updated for user {}: enabled = {}", userId, enabled);
+		log.info("User status updated for user {}: enabled = {} -> {}", userId, oldStatus, enabled);
 	}
 
 	@Transactional(readOnly = true)
