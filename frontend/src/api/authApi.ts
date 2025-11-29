@@ -17,11 +17,17 @@ const getHeaders = (): HeadersInit => {
     };
 };
 
+const getPublicHeaders = (): HeadersInit => {
+    return {
+        'Content-Type': 'application/json'
+    };
+};
+
 export const authApi = {
     login: async (credentials: LoginRequest): Promise<LoginResponse> => {
         const response = await fetch(`${API_URL}/login`, {
             method: 'POST',
-            headers: getHeaders(),
+            headers: getPublicHeaders(),
             body: JSON.stringify(credentials),
         });
         if (!response.ok) throw await handleApiError(response);
@@ -31,7 +37,7 @@ export const authApi = {
     register: async (userData: RegisterRequest): Promise<User> => {
         const response = await fetch(`${API_URL}/register`, {
             method: 'POST',
-            headers: getHeaders(),
+            headers: getPublicHeaders(),
             body: JSON.stringify(userData),
         });
         if (!response.ok) throw await handleApiError(response);
@@ -48,7 +54,7 @@ export const authApi = {
 
     checkEmail: async (email: string): Promise<boolean> => {
         const response = await fetch(`${API_URL}/email/check?email=${encodeURIComponent(email)}`, {
-            headers: getHeaders(),
+            headers: getPublicHeaders(),
         });
         if (!response.ok) throw await handleApiError(response);
         const data: CheckEmailResponse = await response.json();
@@ -58,7 +64,7 @@ export const authApi = {
     forgotPassword: async (email: string): Promise<void> => {
         const response = await fetch(`${API_URL}/password/forgot?email=${encodeURIComponent(email)}`, {
             method: 'POST',
-            headers: getHeaders(),
+            headers: getPublicHeaders(),
         });
         if (!response.ok) throw await handleApiError(response);
     },
@@ -66,7 +72,7 @@ export const authApi = {
     resetPassword: async (token: string, newPassword: string): Promise<void> => {
         const response = await fetch(`${API_URL}/password/reset?token=${encodeURIComponent(token)}&newPassword=${encodeURIComponent(newPassword)}`, {
             method: 'POST',
-            headers: getHeaders(),
+            headers: getPublicHeaders(),
         });
         if (!response.ok) throw await handleApiError(response);
     },
@@ -74,7 +80,7 @@ export const authApi = {
     verifyEmail: async (token: string): Promise<string> => {
         const response = await fetch(`${API_URL}/email/verify?token=${encodeURIComponent(token)}`, {
             method: 'POST',
-            headers: getHeaders(),
+            headers: getPublicHeaders(),
         });
         if (!response.ok) throw await handleApiError(response);
         const data = await response.json();
@@ -84,7 +90,7 @@ export const authApi = {
     confirmEmailChange: async (token: string): Promise<User> => {
         const response = await fetch(`${API_URL}/email/change/confirm?token=${encodeURIComponent(token)}`, {
             method: 'POST',
-            headers: getHeaders(),
+            headers: getPublicHeaders(),
         });
         if (!response.ok) throw await handleApiError(response);
         return response.json();
