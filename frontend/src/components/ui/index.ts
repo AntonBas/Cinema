@@ -1,5 +1,6 @@
 export * from './Badge';
 export * from './Button';
+export * from './ConfirmModal';
 export * from './DeleteConfirmModal';
 export * from './Input';
 export * from './LoadingSpinner';
