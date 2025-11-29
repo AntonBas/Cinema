@@ -7,6 +7,7 @@ import { AdminDashboard } from '@/components/admin/AdminDashboard/AdminDashboard
 import { SectionMovies } from '@/components/admin/SectionMovies/SectionMovies';
 import { SectionHalls } from '@/components/admin/SectionHalls/SectionHalls';
 import { SectionSchedule } from '@/components/admin/SectionSchedule';
+import { SectionUsers } from '@/components/admin/SectionUsers/SectionUsers';
 import './AdminPage.css';
 
 export const AdminPage: React.FC = () => {
@@ -36,6 +37,7 @@ export const AdminPage: React.FC = () => {
             <Route path="movies" element={<SectionMovies />} />
             <Route path="halls" element={<SectionHalls />} />
             <Route path="schedule" element={<SectionSchedule />} />
+            <Route path="users" element={<SectionUsers />} />
           </Routes>
         </main>
       </div>
