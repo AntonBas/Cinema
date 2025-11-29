@@ -1,4 +1,4 @@
-export type UserRole = 'ROLE_USER' | 'ROLE_ADMIN';
+import type { UserRole } from './user';
 
 export interface User {
     id: number;
