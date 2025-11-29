@@ -11,6 +11,9 @@ export const useAuthMutation = () => {
         setError(null);
         try {
             const response = await authApi.login(credentials);
+
+            localStorage.setItem('authToken', response.token);
+
             return response;
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to login';

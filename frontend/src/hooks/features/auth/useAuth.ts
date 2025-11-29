@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { User, LoginResponse } from '@/types/auth';
 import { authApi } from '@/api/authApi';
+import { ApiErrorException } from '@/utils/apiErrorHandler';
 
 export const useAuth = () => {
     const [user, setUser] = useState<User | null>(null);
@@ -29,8 +30,11 @@ export const useAuth = () => {
             } catch (error) {
                 console.error('Failed to load user data:', error);
                 if (isMounted) {
-                    setUser(null);
-                    setToken(null);
+                    if (error instanceof ApiErrorException && error.statusCode === 401) {
+                        setUser(null);
+                        setToken(null);
+                        localStorage.removeItem('authToken');
+                    }
                     setError('Failed to load user data');
                 }
             } finally {
@@ -64,6 +68,7 @@ export const useAuth = () => {
         setUser(null);
         setToken(null);
         setError(null);
+        localStorage.removeItem('authToken');
     }, []);
 
     const updateUser = useCallback((userData: User) => {
