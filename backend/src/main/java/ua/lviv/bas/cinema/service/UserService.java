@@ -25,6 +25,7 @@ import ua.lviv.bas.cinema.exception.domain.auth.SameEmailException;
 import ua.lviv.bas.cinema.exception.domain.auth.SamePasswordException;
 import ua.lviv.bas.cinema.exception.domain.user.LastAdminException;
 import ua.lviv.bas.cinema.exception.domain.user.SelfBlockException;
+import ua.lviv.bas.cinema.exception.domain.user.SelfRoleChangeException;
 import ua.lviv.bas.cinema.exception.domain.user.UserNotFoundException;
 import ua.lviv.bas.cinema.mapper.UserMapper;
 import ua.lviv.bas.cinema.repository.UserRepository;
@@ -122,6 +123,11 @@ public class UserService {
 	public void updateUserRole(Long userId, UserRole newRole) {
 		User user = findById(userId);
 		UserRole oldRole = user.getUserRole();
+
+		String currentUserEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+		if (user.getEmail().equals(currentUserEmail)) {
+			throw new SelfRoleChangeException(userId);
+		}
 
 		if (oldRole == UserRole.ROLE_ADMIN && newRole != UserRole.ROLE_ADMIN) {
 			long adminCount = userRepository.countByUserRole(UserRole.ROLE_ADMIN);
