@@ -195,10 +195,6 @@ export const SectionHalls: React.FC = () => {
                         setShowLayoutModal(false);
                         setSelectedHall(null);
                     }}
-                    onSeatsGenerated={() => {
-                        showNotification('Seats generated successfully', 'success');
-                        refetch();
-                    }}
                 />
             )}
 
