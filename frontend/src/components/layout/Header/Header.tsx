@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/features/auth';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import styles from './Header.module.css';
 
 interface NavLink {
@@ -11,6 +11,7 @@ interface NavLink {
 
 export const Header: React.FC = () => {
   const { user, token, logout } = useAuth();
+  const location = useLocation();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const dropdownRef = useRef<HTMLLIElement>(null);
@@ -21,6 +22,10 @@ export const Header: React.FC = () => {
     { name: 'Movies', path: '/movies' },
     { name: 'Schedule', path: '/schedule' },
   ];
+
+  const isActiveLink = (path: string) => {
+    return location.pathname === path;
+  };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -46,18 +51,30 @@ export const Header: React.FC = () => {
     window.location.href = '/';
   };
 
+  const closeMobileMenu = () => {
+    setIsMobileMenuOpen(false);
+  };
+
   return (
     <header className={styles.headerMain}>
       <nav className={styles.headerNavbar}>
         <div className={styles.logo}>
-          <Link to="/">Cinema</Link>
+          <Link to="/" onClick={closeMobileMenu}>
+            <span className={styles.logoIcon}>🎬</span>
+            Cinema
+          </Link>
         </div>
 
         <ul className={styles.navLinks}>
           {links.map((link) => (
             <li key={link.name}>
-              <Link to={link.path} onClick={() => setIsDropdownOpen(false)}>
+              <Link
+                to={link.path}
+                className={`${isActiveLink(link.path) ? styles.active : ''}`}
+                onClick={() => setIsDropdownOpen(false)}
+              >
                 {link.name}
+                {isActiveLink(link.path) && <span className={styles.activeIndicator}></span>}
               </Link>
             </li>
           ))}
@@ -70,10 +87,20 @@ export const Header: React.FC = () => {
                 aria-haspopup="true"
                 aria-expanded={isDropdownOpen}
               >
-                My Account <span className={`${styles.dropdownArrow} ${isDropdownOpen ? styles.open : ''}`}>▼</span>
+                <span className={styles.userName}>
+                  {user?.firstName || 'User'}
+                </span>
+                <span className={`${styles.dropdownArrow} ${isDropdownOpen ? styles.open : ''}`}>▼</span>
               </button>
               {isDropdownOpen && (
                 <ul className={styles.dropdownMenu}>
+                  <li className={styles.userInfoItem}>
+                    <div className={styles.userInfo}>
+                      <strong>{user?.firstName} {user?.lastName}</strong>
+                      <span className={styles.userEmail}>{user?.email}</span>
+                    </div>
+                  </li>
+                  <li className={styles.dropdownDivider}></li>
                   <li>
                     <Link to="/account" onClick={() => setIsDropdownOpen(false)}>
                       Profile
@@ -86,6 +113,7 @@ export const Header: React.FC = () => {
                       </Link>
                     </li>
                   )}
+                  <li className={styles.dropdownDivider}></li>
                   <li>
                     <button onClick={handleLogout} className={styles.logoutBtn}>
                       Logout
@@ -96,13 +124,19 @@ export const Header: React.FC = () => {
             </li>
           ) : (
             <li>
-              <Link to="/login">Login/Register</Link>
+              <Link
+                to="/login"
+                className={`${isActiveLink('/login') ? styles.active : ''}`}
+              >
+                Login
+                {isActiveLink('/login') && <span className={styles.activeIndicator}></span>}
+              </Link>
             </li>
           )}
         </ul>
 
         <button
-          className={styles.mobileMenuBtn}
+          className={`${styles.mobileMenuBtn} ${isMobileMenuOpen ? styles.open : ''}`}
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           aria-label="Toggle navigation"
           aria-expanded={isMobileMenuOpen}
@@ -115,18 +149,29 @@ export const Header: React.FC = () => {
         <div ref={mobileMenuRef} className={`${styles.mobileMenu} ${isMobileMenuOpen ? styles.open : ''}`}>
           <div className={styles.mobileMenuContent}>
             {links.map((link) => (
-              <Link key={link.name} to={link.path} onClick={() => setIsMobileMenuOpen(false)}>
+              <Link
+                key={link.name}
+                to={link.path}
+                className={`${isActiveLink(link.path) ? styles.active : ''}`}
+                onClick={closeMobileMenu}
+              >
                 {link.name}
               </Link>
             ))}
 
             {token ? (
               <div className={styles.mobileAccountSection}>
-                <Link to="/account" onClick={() => setIsMobileMenuOpen(false)}>
+                <div className={styles.mobileUserInfo}>
+                  <div>
+                    <strong>{user?.firstName} {user?.lastName}</strong>
+                    <span className={styles.userEmail}>{user?.email}</span>
+                  </div>
+                </div>
+                <Link to="/account" onClick={closeMobileMenu}>
                   Profile
                 </Link>
                 {user?.userRole === 'ROLE_ADMIN' && (
-                  <Link to="/admin/dashboard" onClick={() => setIsMobileMenuOpen(false)}>
+                  <Link to="/admin/dashboard" onClick={closeMobileMenu}>
                     Dashboard
                   </Link>
                 )}
@@ -135,8 +180,12 @@ export const Header: React.FC = () => {
                 </button>
               </div>
             ) : (
-              <Link to="/login" onClick={() => setIsMobileMenuOpen(false)}>
-                Login/Register
+              <Link
+                to="/login"
+                className={`${isActiveLink('/login') ? styles.active : ''}`}
+                onClick={closeMobileMenu}
+              >
+                Login
               </Link>
             )}
           </div>
