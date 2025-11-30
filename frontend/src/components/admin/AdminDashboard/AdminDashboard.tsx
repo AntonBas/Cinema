@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { movieApi } from '@/api/movieApi';
 import { genreApi } from '@/api/genreApi';
 import { personApi } from '@/api/personApi';
+import { cinemaHallApi } from '@/api/cinemaHallApi';
+import { sessionApi } from '@/api/sessionApi';
+import { adminApi } from '@/api/adminApi';
 import { useNotification } from '@/hooks/common/useNotification';
 import { Notification } from '@/components/ui/Notification/Notification';
 import styles from './AdminDashboard.module.css';
@@ -10,13 +13,16 @@ interface DashboardStats {
   totalMovies: number;
   totalGenres: number;
   totalPersons: number;
+  totalHalls: number;
+  totalSessions: number;
+  totalUsers: number;
   activeScreenings: number;
   recentActivity: ActivityItem[];
 }
 
 interface ActivityItem {
   id: string;
-  type: 'movie' | 'genre' | 'person';
+  type: 'movie' | 'genre' | 'person' | 'hall' | 'session' | 'user';
   action: 'created' | 'updated' | 'deleted';
   title: string;
   timestamp: string;
@@ -27,6 +33,9 @@ export const AdminDashboard: React.FC = () => {
     totalMovies: 0,
     totalGenres: 0,
     totalPersons: 0,
+    totalHalls: 0,
+    totalSessions: 0,
+    totalUsers: 0,
     activeScreenings: 0,
     recentActivity: []
   });
@@ -42,23 +51,47 @@ export const AdminDashboard: React.FC = () => {
     try {
       setIsLoading(true);
 
-      const [movies, genresResponse, persons] = await Promise.all([
-        movieApi.getAll(),
-        genreApi.search({}),
-        personApi.getAll()
+      const [
+        movies,
+        genresResponse,
+        personsResponse,
+        hallsResponse,
+        sessionsResponse,
+        usersResponse
+      ] = await Promise.all([
+        movieApi.getAllMovies(),
+        genreApi.getAll(),
+        personApi.getAll(),
+        cinemaHallApi.getAllHalls(),
+        sessionApi.getAllSessions(),
+        adminApi.getUsers(0, 1000)
       ]);
 
-      const genres = genresResponse.content;
+      const getContent = (response: any): any[] => {
+        if (Array.isArray(response)) return response;
+        if (response && typeof response === 'object' && 'content' in response) {
+          return response.content || [];
+        }
+        return [];
+      };
 
-      const activeScreenings = Math.floor(Math.random() * 20) + 10;
-      const recentActivity = generateRecentActivity(movies, genres, persons);
+      const genres = getContent(genresResponse);
+      const persons = getContent(personsResponse);
+      const halls = getContent(hallsResponse);
+      const sessions = getContent(sessionsResponse);
+      const users = getContent(usersResponse);
+
+      const activeScreenings = sessions.filter((session: any) => session.available).length;
 
       setStats({
         totalMovies: movies.length,
         totalGenres: genres.length,
         totalPersons: persons.length,
+        totalHalls: halls.length,
+        totalSessions: sessions.length,
+        totalUsers: users.length,
         activeScreenings,
-        recentActivity
+        recentActivity: generateRecentActivity(movies, genres, persons, halls, sessions, users)
       });
 
     } catch (error) {
@@ -72,7 +105,10 @@ export const AdminDashboard: React.FC = () => {
   const generateRecentActivity = (
     movies: any[],
     genres: any[],
-    persons: any[]
+    persons: any[],
+    halls: any[],
+    sessions: any[],
+    users: any[]
   ): ActivityItem[] => {
     const activities: ActivityItem[] = [];
 
@@ -80,7 +116,7 @@ export const AdminDashboard: React.FC = () => {
       activities.push({
         id: `movie-${movie.id}`,
         type: 'movie',
-        action: 'created',
+        action: Math.random() > 0.3 ? 'created' : 'updated',
         title: movie.title,
         timestamp: new Date(Date.now() - Math.random() * 86400000).toISOString()
       });
@@ -106,9 +142,39 @@ export const AdminDashboard: React.FC = () => {
       });
     });
 
+    halls.slice(-2).forEach(hall => {
+      activities.push({
+        id: `hall-${hall.id}`,
+        type: 'hall',
+        action: Math.random() > 0.5 ? 'created' : 'updated',
+        title: hall.name,
+        timestamp: new Date(Date.now() - Math.random() * 345600000).toISOString()
+      });
+    });
+
+    sessions.slice(-2).forEach(session => {
+      activities.push({
+        id: `session-${session.id}`,
+        type: 'session',
+        action: 'created',
+        title: `Session #${session.id}`,
+        timestamp: new Date(Date.now() - Math.random() * 432000000).toISOString()
+      });
+    });
+
+    users.slice(-2).forEach(user => {
+      activities.push({
+        id: `user-${user.id}`,
+        type: 'user',
+        action: Math.random() > 0.7 ? 'created' : 'updated',
+        title: `${user.firstName} ${user.lastName}`,
+        timestamp: new Date(Date.now() - Math.random() * 518400000).toISOString()
+      });
+    });
+
     return activities.sort((a, b) =>
       new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-    ).slice(0, 5);
+    ).slice(0, 8);
   };
 
   const getActivityIcon = (type: string) => {
@@ -116,6 +182,9 @@ export const AdminDashboard: React.FC = () => {
       case 'movie': return '🎬';
       case 'genre': return '📚';
       case 'person': return '👤';
+      case 'hall': return '🏛️';
+      case 'session': return '⏰';
+      case 'user': return '👥';
       default: return '📝';
     }
   };
@@ -178,7 +247,31 @@ export const AdminDashboard: React.FC = () => {
         </div>
 
         <div className={styles.statCard}>
+          <div className={styles.statIcon}>🏛️</div>
+          <div className={styles.statContent}>
+            <p className={styles.statNumber}>{stats.totalHalls}</p>
+            <span className={styles.statLabel}>Halls</span>
+          </div>
+        </div>
+
+        <div className={styles.statCard}>
           <div className={styles.statIcon}>⏰</div>
+          <div className={styles.statContent}>
+            <p className={styles.statNumber}>{stats.totalSessions}</p>
+            <span className={styles.statLabel}>Sessions</span>
+          </div>
+        </div>
+
+        <div className={styles.statCard}>
+          <div className={styles.statIcon}>👥</div>
+          <div className={styles.statContent}>
+            <p className={styles.statNumber}>{stats.totalUsers}</p>
+            <span className={styles.statLabel}>Users</span>
+          </div>
+        </div>
+
+        <div className={styles.statCard}>
+          <div className={styles.statIcon}>🎭</div>
           <div className={styles.statContent}>
             <p className={styles.statNumber}>{stats.activeScreenings}</p>
             <span className={styles.statLabel}>Active Screenings</span>
