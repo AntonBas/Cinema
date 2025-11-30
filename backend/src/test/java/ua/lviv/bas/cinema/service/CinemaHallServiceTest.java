@@ -33,12 +33,16 @@ import ua.lviv.bas.cinema.exception.domain.cinema.CinemaHallNotFoundException;
 import ua.lviv.bas.cinema.mapper.CinemaHallMapper;
 import ua.lviv.bas.cinema.mapper.SeatMapper;
 import ua.lviv.bas.cinema.repository.CinemaHallRepository;
+import ua.lviv.bas.cinema.repository.SeatRepository;
 
 @ExtendWith(MockitoExtension.class)
 class CinemaHallServiceTest {
 
 	@Mock
 	private CinemaHallRepository hallRepository;
+
+	@Mock
+	private SeatRepository seatRepository;
 
 	@Mock
 	private CinemaHallMapper hallMapper;
@@ -139,7 +143,7 @@ class CinemaHallServiceTest {
 		CinemaHallRequest updateRequest = CinemaHallRequest.builder().name("Updated Hall").build();
 		CinemaHallResponse updatedDto = CinemaHallResponse.builder().id(1L).name("Updated Hall").capacity(0).build();
 
-		when(hallRepository.findByIdWithSeats(1L)).thenReturn(Optional.of(cinemaHall));
+		when(hallRepository.findById(1L)).thenReturn(Optional.of(cinemaHall));
 		when(hallRepository.existsByName("Updated Hall")).thenReturn(false);
 		when(hallRepository.save(cinemaHall)).thenReturn(cinemaHall);
 		when(hallMapper.toDto(cinemaHall)).thenReturn(updatedDto);
@@ -148,7 +152,7 @@ class CinemaHallServiceTest {
 
 		assertNotNull(result);
 		assertEquals("Updated Hall", result.getName());
-		verify(hallRepository).findByIdWithSeats(1L);
+		verify(hallRepository).findById(1L);
 		verify(hallRepository).existsByName("Updated Hall");
 		verify(hallRepository).save(cinemaHall);
 		verify(hallMapper).toDto(cinemaHall);
@@ -163,24 +167,52 @@ class CinemaHallServiceTest {
 		CinemaHallRequest updateRequest = CinemaHallRequest.builder().name("Updated Hall").rows(6).seatsPerRow(8)
 				.defaultSeatType(SeatType.VIP).build();
 
-		when(hallRepository.findByIdWithSeats(1L)).thenReturn(Optional.of(hallWithSeats));
+		List<Seat> newSeats = new ArrayList<>();
+		for (int row = 1; row <= 6; row++) {
+			for (int number = 1; number <= 8; number++) {
+				newSeats.add(Seat.builder().row(row).number(number).seatType(SeatType.VIP).hall(hallWithSeats).build());
+			}
+		}
+
+		when(hallRepository.findById(1L)).thenReturn(Optional.of(hallWithSeats));
 		when(hallRepository.existsByName("Updated Hall")).thenReturn(false);
+		when(seatRepository.saveAll(anyList())).thenReturn(newSeats);
 		when(hallRepository.save(hallWithSeats)).thenReturn(hallWithSeats);
 		when(hallMapper.toDto(hallWithSeats)).thenReturn(hallDto);
 
 		CinemaHallResponse result = cinemaHallService.updateHall(1L, updateRequest);
 
 		assertNotNull(result);
-		verify(hallRepository).findByIdWithSeats(1L);
+		verify(hallRepository).findById(1L);
+		verify(seatRepository).deleteByHallId(1L);
+		verify(seatRepository).saveAll(anyList());
 		verify(hallRepository).save(hallWithSeats);
 	}
 
 	@Test
+	void updateHall_ShouldNotUpdateSeats_WhenSeatConfigNotProvided() {
+		CinemaHallRequest updateRequest = CinemaHallRequest.builder().name("Updated Hall").build();
+
+		when(hallRepository.findById(1L)).thenReturn(Optional.of(cinemaHall));
+		when(hallRepository.existsByName("Updated Hall")).thenReturn(false);
+		when(hallRepository.save(cinemaHall)).thenReturn(cinemaHall);
+		when(hallMapper.toDto(cinemaHall)).thenReturn(hallDto);
+
+		CinemaHallResponse result = cinemaHallService.updateHall(1L, updateRequest);
+
+		assertNotNull(result);
+		verify(hallRepository).findById(1L);
+		verify(seatRepository, never()).deleteByHallId(any());
+		verify(seatRepository, never()).saveAll(anyList());
+		verify(hallRepository).save(cinemaHall);
+	}
+
+	@Test
 	void updateHall_ShouldThrowCinemaHallNotFoundException_WhenHallNotExists() {
-		when(hallRepository.findByIdWithSeats(1L)).thenReturn(Optional.empty());
+		when(hallRepository.findById(1L)).thenReturn(Optional.empty());
 
 		assertThrows(CinemaHallNotFoundException.class, () -> cinemaHallService.updateHall(1L, hallRequest));
-		verify(hallRepository).findByIdWithSeats(1L);
+		verify(hallRepository).findById(1L);
 		verify(hallRepository, never()).save(any());
 	}
 
@@ -188,13 +220,15 @@ class CinemaHallServiceTest {
 	void updateHall_ShouldThrowDuplicateEntityException_WhenNewNameExists() {
 		CinemaHallRequest updateRequest = CinemaHallRequest.builder().name("Existing Hall").build();
 
-		when(hallRepository.findByIdWithSeats(1L)).thenReturn(Optional.of(cinemaHall));
+		when(hallRepository.findById(1L)).thenReturn(Optional.of(cinemaHall));
 		when(hallRepository.existsByName("Existing Hall")).thenReturn(true);
 
 		assertThrows(DuplicateEntityException.class, () -> cinemaHallService.updateHall(1L, updateRequest));
-		verify(hallRepository).findByIdWithSeats(1L);
+		verify(hallRepository).findById(1L);
 		verify(hallRepository).existsByName("Existing Hall");
 		verify(hallRepository, never()).save(any());
+		verify(seatRepository, never()).deleteByHallId(any());
+		verify(seatRepository, never()).saveAll(anyList());
 	}
 
 	@Test
@@ -234,7 +268,6 @@ class CinemaHallServiceTest {
 
 	@Test
 	void getHallWithSeats_ShouldReturnHallWithSeatsDto_WhenHallExists() {
-
 		when(hallRepository.findByIdWithSeats(1L)).thenReturn(Optional.of(cinemaHall));
 
 		CinemaHallWithSeatsResponse result = cinemaHallService.getHallWithSeats(1L);
