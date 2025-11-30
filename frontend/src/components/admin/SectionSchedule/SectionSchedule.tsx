@@ -77,7 +77,10 @@ export const SectionSchedule: React.FC = () => {
     return (
         <div className={styles.container}>
             <div className={styles.header}>
-                <h1>Session Schedule</h1>
+                <div className={styles.headerContent}>
+                    <h1>Session Schedule</h1>
+                    <p className={styles.subtitle}>Manage movie sessions and showtimes</p>
+                </div>
                 <Button
                     variant="primary"
                     size="large"

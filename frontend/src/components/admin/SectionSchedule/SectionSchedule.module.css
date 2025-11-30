@@ -13,21 +13,30 @@
 .header {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
     margin-bottom: 2rem;
     padding-bottom: 1.5rem;
     border-bottom: 1px solid #3a4051;
 }
 
+.headerContent {
+    flex: 1;
+}
+
 .header h1 {
     color: #ffffff;
-    margin: 0;
+    margin: 0 0 0.5rem 0;
     font-size: 2.2rem;
     font-weight: 600;
-    background: linear-gradient(135deg, #fd5f00, #ff8c42);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
     background-clip: text;
+}
+
+.subtitle {
+    color: #a0a7c2;
+    margin: 0;
+    font-size: 1.1rem;
+    line-height: 1.5;
+    font-weight: 400;
 }
 
 .createButton {
@@ -79,6 +88,10 @@
         font-size: 1.8rem;
     }
 
+    .subtitle {
+        font-size: 1rem;
+    }
+
     .createButton {
         width: 100%;
         justify-content: center;
@@ -94,5 +107,9 @@
 @media (max-width: 480px) {
     .header h1 {
         font-size: 1.6rem;
+    }
+
+    .subtitle {
+        font-size: 0.95rem;
     }
 }
