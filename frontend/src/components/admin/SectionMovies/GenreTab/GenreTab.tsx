@@ -58,6 +58,17 @@ export const GenreTab: React.FC = () => {
     }
   }, [mutationError, showNotification]);
 
+  const getDisplayRange = () => {
+    if (!pagination) return { start: 0, end: 0 };
+
+    const startItem = currentPage * pagination.pageSize + 1;
+    const endItem = Math.min((currentPage + 1) * pagination.pageSize, pagination.totalElements);
+
+    return { start: startItem, end: endItem };
+  };
+
+  const { start, end } = getDisplayRange();
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -161,7 +172,7 @@ export const GenreTab: React.FC = () => {
         {pagination && (
           <div className={styles.resultsInfo}>
             <span>
-              Showing {genres.length} of {pagination.totalElements} genres
+              Showing {start}-{end} of {pagination.totalElements} genres
               {searchQuery && ` for "${searchQuery}"`}
             </span>
           </div>

@@ -202,6 +202,21 @@ export const MovieTab: React.FC = () => {
 
   const tabStats = getTabStats();
 
+  const getTotalCount = () => {
+    switch (activeTab) {
+      case 'CURRENT':
+        return tabStats.CURRENT;
+      case 'UPCOMING':
+        return tabStats.UPCOMING;
+      case 'ARCHIVED':
+        return tabStats.ARCHIVED;
+      default:
+        return 0;
+    }
+  };
+
+  const totalCount = getTotalCount();
+
   return (
     <div className={styles.container}>
       <div className={styles.header}>
@@ -251,6 +266,13 @@ export const MovieTab: React.FC = () => {
           </Badge>
         </button>
       </div>
+
+      {movies.length > 0 && (
+        <div className={styles.resultsInfo}>
+          Showing {movies.length} of {totalCount} movies
+          {searchQuery && ` for "${searchQuery}"`}
+        </div>
+      )}
 
       <div className={styles.content}>
         <MovieList

@@ -74,6 +74,17 @@ export const SectionUsers: React.FC = () => {
         showNotification(message, 'success');
     };
 
+    const getDisplayRange = () => {
+        if (!pagination) return { start: 0, end: 0 };
+
+        const startItem = currentPage * pagination.pageSize + 1;
+        const endItem = Math.min((currentPage + 1) * pagination.pageSize, pagination.totalElements);
+
+        return { start: startItem, end: endItem };
+    };
+
+    const { start, end } = getDisplayRange();
+
     if (loading && users.length === 0) {
         return (
             <div className={styles.loading}>
@@ -114,7 +125,7 @@ export const SectionUsers: React.FC = () => {
                     {pagination && (
                         <div className={styles.resultsInfo}>
                             <span>
-                                Showing {users.length} of {pagination.totalElements} users
+                                Showing {start}-{end} of {pagination.totalElements} users
                                 {searchQuery && ` for "${searchQuery}"`}
                             </span>
                         </div>

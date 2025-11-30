@@ -34,6 +34,17 @@ export const PersonTab: React.FC = () => {
   const { createPerson, updatePerson, deletePerson, loading: mutationLoading, error: mutationError } = usePersonMutation();
   const { notifications, showNotification, hideNotification } = useNotification();
 
+  const getDisplayRange = () => {
+    if (!currentPagination || allPersons.length === 0) return { start: 0, end: 0 };
+
+    const startItem = currentPage * 12 + 1;
+    const endItem = Math.min((currentPage + 1) * 12, currentPagination.totalElements);
+
+    return { start: startItem, end: endItem };
+  };
+
+  const { start, end } = getDisplayRange();
+
   const loadPersons = useCallback(async (reset: boolean = false, pageOverride?: number) => {
     const page = reset ? 0 : (pageOverride ?? currentPage);
     const role = activeTab === 'ALL' ? undefined : activeTab;
@@ -196,7 +207,7 @@ export const PersonTab: React.FC = () => {
           variant="primary"
           onClick={handleAddNew}
           className={styles.addButton}
-          >
+        >
           Add Person
         </Button>
       </div>
@@ -212,7 +223,7 @@ export const PersonTab: React.FC = () => {
 
       {currentPagination && (
         <div className={styles.resultsInfo}>
-          Showing {allPersons.length} of {currentPagination.totalElements} people
+          Showing {start}-{end} of {currentPagination.totalElements} people
           {searchQuery && ` for "${searchQuery}"`}
         </div>
       )}

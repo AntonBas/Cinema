@@ -19,6 +19,7 @@ export const HallLayoutModal: React.FC<HallLayoutModalProps> = ({
 }) => {
     const [updatingSeat, setUpdatingSeat] = useState<number | null>(null);
     const [localLayout, setLocalLayout] = useState<HallLayoutResponse | null>(null);
+    const [hasLoaded, setHasLoaded] = useState(false);
 
     const { hallLayout, loading, error, getHallLayout } = useCinemaHalls();
     const { updateSeatType, loading: updatingSeatType } = useSeatMutation();
@@ -29,10 +30,18 @@ export const HallLayoutModal: React.FC<HallLayoutModalProps> = ({
     }, [hallLayout]);
 
     useEffect(() => {
-        if (isOpen && hall.id) {
+        if (isOpen && hall.id && !hasLoaded) {
             getHallLayout(hall.id);
+            setHasLoaded(true);
         }
-    }, [hall.id, getHallLayout, isOpen]);
+    }, [hall.id, getHallLayout, isOpen, hasLoaded]);
+
+    useEffect(() => {
+        if (!isOpen) {
+            setHasLoaded(false);
+            setLocalLayout(null);
+        }
+    }, [isOpen]);
 
     useEffect(() => {
         if (error) {
