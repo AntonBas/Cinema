@@ -17,10 +17,4 @@ public interface CinemaHallRepository extends JpaRepository<CinemaHall, Long> {
 
 	@Query("SELECT DISTINCT h FROM CinemaHall h LEFT JOIN FETCH h.seats WHERE h.id = :id")
 	Optional<CinemaHall> findByIdWithSeats(@Param("id") Long id);
-
-	@Query("SELECT DISTINCT h FROM CinemaHall h LEFT JOIN FETCH h.seats")
-	List<CinemaHall> findAllWithSeats();
-
-	@Query("SELECT COUNT(s) FROM CinemaHall h JOIN h.seats s WHERE h.id = :hallId")
-	Long countSeatsByHallId(@Param("hallId") Long hallId);
 }

@@ -22,6 +22,7 @@ import ua.lviv.bas.cinema.exception.domain.cinema.CinemaHallNotFoundException;
 import ua.lviv.bas.cinema.mapper.CinemaHallMapper;
 import ua.lviv.bas.cinema.mapper.SeatMapper;
 import ua.lviv.bas.cinema.repository.CinemaHallRepository;
+import ua.lviv.bas.cinema.repository.SeatRepository;
 
 @Slf4j
 @Service
@@ -29,6 +30,7 @@ import ua.lviv.bas.cinema.repository.CinemaHallRepository;
 public class CinemaHallService {
 
 	private final CinemaHallRepository hallRepository;
+	private final SeatRepository seatRepository;
 	private final CinemaHallMapper hallMapper;
 	private final SeatMapper seatMapper;
 
@@ -64,8 +66,7 @@ public class CinemaHallService {
 	public CinemaHallResponse updateHall(Long id, CinemaHallRequest request) {
 		log.info("Updating cinema hall with id: {}", id);
 
-		CinemaHall existing = hallRepository.findByIdWithSeats(id)
-				.orElseThrow(() -> new CinemaHallNotFoundException(id));
+		CinemaHall existing = hallRepository.findById(id).orElseThrow(() -> new CinemaHallNotFoundException(id));
 
 		if (!existing.getName().equals(request.getName()) && hallRepository.existsByName(request.getName())) {
 			throw new DuplicateEntityException("CinemaHall", request.getName());
@@ -76,9 +77,11 @@ public class CinemaHallService {
 		if (request.getRows() != null && request.getSeatsPerRow() != null) {
 			log.info("Updating seat layout: {} rows, {} seats per row", request.getRows(), request.getSeatsPerRow());
 
-			existing.getSeats().clear();
+			seatRepository.deleteByHallId(id);
+
 			List<Seat> newSeats = generateSeatLayout(existing, request);
-			existing.getSeats().addAll(newSeats);
+
+			seatRepository.saveAll(newSeats);
 		}
 
 		CinemaHall updated = hallRepository.save(existing);
