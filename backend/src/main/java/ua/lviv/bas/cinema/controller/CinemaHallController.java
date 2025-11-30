@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -32,6 +33,7 @@ public class CinemaHallController {
 	private final CinemaHallService cinemaHallService;
 
 	@PostMapping
+	@PreAuthorize("hasAnyRole('ADMIN', 'CONTENT_MANAGER')")
 	public ResponseEntity<CinemaHallResponse> createHall(@Valid @RequestBody CinemaHallRequest request) {
 		log.info("POST /api/cinema-halls - Creating new cinema hall: {}", request.getName());
 		CinemaHallResponse created = cinemaHallService.createHall(request);
@@ -46,6 +48,7 @@ public class CinemaHallController {
 	}
 
 	@PutMapping("/{id}")
+	@PreAuthorize("hasAnyRole('ADMIN', 'CONTENT_MANAGER')")
 	public ResponseEntity<CinemaHallResponse> updateHall(@PathVariable Long id,
 			@Valid @RequestBody CinemaHallRequest request) {
 		log.info("PUT /api/cinema-halls/{} - Updating cinema hall", id);
@@ -54,6 +57,7 @@ public class CinemaHallController {
 	}
 
 	@DeleteMapping("/{id}")
+	@PreAuthorize("hasAnyRole('ADMIN', 'CONTENT_MANAGER')")
 	public ResponseEntity<Void> deleteHall(@PathVariable Long id) {
 		log.info("DELETE /api/cinema-halls/{} - Deleting cinema hall", id);
 		cinemaHallService.deleteHall(id);

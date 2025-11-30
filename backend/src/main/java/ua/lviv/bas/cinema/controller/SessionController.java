@@ -9,6 +9,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -35,6 +36,7 @@ public class SessionController {
 	private final SessionService sessionService;
 
 	@PostMapping
+	@PreAuthorize("hasAnyRole('ADMIN', 'CONTENT_MANAGER')")
 	public ResponseEntity<SessionResponse> createSession(@Valid @RequestBody SessionRequest request) {
 		log.info("POST /api/sessions - Creating new session");
 		SessionResponse created = sessionService.createSession(request);
@@ -49,6 +51,7 @@ public class SessionController {
 	}
 
 	@PutMapping("/{id}")
+	@PreAuthorize("hasAnyRole('ADMIN', 'CONTENT_MANAGER')")
 	public ResponseEntity<SessionResponse> updateSession(@PathVariable Long id,
 			@Valid @RequestBody SessionRequest request) {
 		log.info("PUT /api/sessions/{} - Updating session", id);
@@ -57,6 +60,7 @@ public class SessionController {
 	}
 
 	@DeleteMapping("/{id}")
+	@PreAuthorize("hasAnyRole('ADMIN', 'CONTENT_MANAGER')")
 	public ResponseEntity<Void> deleteSession(@PathVariable Long id) {
 		log.info("DELETE /api/sessions/{} - Deleting session", id);
 		sessionService.deleteSession(id);

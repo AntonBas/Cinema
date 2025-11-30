@@ -3,6 +3,7 @@ package ua.lviv.bas.cinema.controller;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -48,6 +49,7 @@ public class SeatController {
 	}
 
 	@PutMapping("/{seatId}/type")
+	@PreAuthorize("hasAnyRole('ADMIN', 'CONTENT_MANAGER')")
 	public ResponseEntity<SeatResponse> updateSeatType(@PathVariable Long hallId, @PathVariable Long seatId,
 			@RequestParam SeatType seatType) {
 		log.info("PUT /api/cinema-halls/{}/seats/{}/type?seatType={} - Updating seat type", hallId, seatId, seatType);
@@ -72,7 +74,8 @@ public class SeatController {
 	}
 
 	@GetMapping("/by-type")
-	public ResponseEntity<List<SeatResponse>> getSeatsByType(@PathVariable Long hallId, @RequestParam SeatType seatType) {
+	public ResponseEntity<List<SeatResponse>> getSeatsByType(@PathVariable Long hallId,
+			@RequestParam SeatType seatType) {
 		log.info("GET /api/cinema-halls/{}/seats/by-type?seatType={} - Retrieving seats by type", hallId, seatType);
 		List<SeatResponse> seats = seatService.getSeatsByType(hallId, seatType);
 		return ResponseEntity.ok(seats);

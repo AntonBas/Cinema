@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -45,6 +46,7 @@ public class PersonController {
 	}
 
 	@PostMapping
+	@PreAuthorize("hasAnyRole('ADMIN', 'CONTENT_MANAGER')")
 	public ResponseEntity<PersonResponse> createPerson(@RequestBody @Valid PersonRequest request) {
 		log.info("POST /api/persons - Creating new person: {}", request.getName());
 		PersonResponse createdPerson = personService.createPerson(request);
@@ -53,6 +55,7 @@ public class PersonController {
 	}
 
 	@PutMapping("/{id}")
+	@PreAuthorize("hasAnyRole('ADMIN', 'CONTENT_MANAGER')")
 	public ResponseEntity<PersonResponse> updatePerson(@PathVariable Long id,
 			@RequestBody @Valid PersonRequest request) {
 		log.info("PUT /api/persons/{} - Updating person", id);
@@ -61,6 +64,7 @@ public class PersonController {
 	}
 
 	@DeleteMapping("/{id}")
+	@PreAuthorize("hasAnyRole('ADMIN', 'CONTENT_MANAGER')")
 	public ResponseEntity<Void> deletePerson(@PathVariable Long id) {
 		log.info("DELETE /api/persons/{} - Deleting person", id);
 		personService.deletePerson(id);
@@ -68,6 +72,7 @@ public class PersonController {
 	}
 
 	@PostMapping("/quick-create")
+	@PreAuthorize("hasAnyRole('ADMIN', 'CONTENT_MANAGER')")
 	public ResponseEntity<PersonResponse> quickCreate(@RequestBody @Valid QuickCreatePersonRequest request) {
 		log.info("POST /api/persons/quick-create - Quick creating person: {} with role: {}", request.getName(),
 				request.getRole());

@@ -9,6 +9,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,8 +27,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.dto.movie.request.MovieCreateRequest;
 import ua.lviv.bas.cinema.dto.movie.request.MovieUpdateRequest;
-import ua.lviv.bas.cinema.dto.movie.response.MovieDetailResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieCardResponse;
+import ua.lviv.bas.cinema.dto.movie.response.MovieDetailResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieSessionSearchResponse;
 import ua.lviv.bas.cinema.dto.shared.PageResponse;
 import ua.lviv.bas.cinema.service.MovieService;
@@ -82,6 +83,7 @@ public class MovieController {
 	}
 
 	@PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	@PreAuthorize("hasAnyRole('ADMIN', 'CONTENT_MANAGER')")
 	public ResponseEntity<MovieDetailResponse> createMovie(@RequestPart("movieData") @Valid MovieCreateRequest request,
 			@RequestPart("posterFile") MultipartFile posterFile) {
 
@@ -92,6 +94,7 @@ public class MovieController {
 	}
 
 	@PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	@PreAuthorize("hasAnyRole('ADMIN', 'CONTENT_MANAGER')")
 	public ResponseEntity<MovieDetailResponse> updateMovie(@PathVariable Long id,
 			@RequestPart("movieData") @Valid MovieUpdateRequest request,
 			@RequestPart(value = "posterFile", required = false) MultipartFile posterFile) {
@@ -103,6 +106,7 @@ public class MovieController {
 	}
 
 	@DeleteMapping("/{id}")
+	@PreAuthorize("hasAnyRole('ADMIN', 'CONTENT_MANAGER')")
 	public ResponseEntity<Void> deleteMovie(@PathVariable Long id) {
 		log.info("DELETE /api/movies/{} - Deleting movie", id);
 		movieService.deleteMovie(id);

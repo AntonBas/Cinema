@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -39,6 +40,7 @@ public class GenreController {
 	}
 
 	@PostMapping
+	@PreAuthorize("hasAnyRole('ADMIN', 'CONTENT_MANAGER')")
 	public ResponseEntity<GenreResponse> createGenre(@RequestBody @Valid GenreRequest request) {
 		log.info("POST /api/genres - Creating new genre: {}", request.getName());
 		GenreResponse createdGenre = genreService.createGenre(request);
@@ -46,6 +48,7 @@ public class GenreController {
 	}
 
 	@PutMapping("/{id}")
+	@PreAuthorize("hasAnyRole('ADMIN', 'CONTENT_MANAGER')")
 	public ResponseEntity<GenreResponse> updateGenre(@PathVariable Long id, @RequestBody @Valid GenreRequest request) {
 		log.info("PUT /api/genres/{} - Updating genre", id);
 		GenreResponse updatedGenre = genreService.updateGenre(id, request);
@@ -53,6 +56,7 @@ public class GenreController {
 	}
 
 	@DeleteMapping("/{id}")
+	@PreAuthorize("hasAnyRole('ADMIN', 'CONTENT_MANAGER')")
 	public ResponseEntity<Void> deleteGenre(@PathVariable Long id) {
 		log.info("DELETE /api/genres/{} - Deleting genre", id);
 		genreService.deleteGenre(id);
