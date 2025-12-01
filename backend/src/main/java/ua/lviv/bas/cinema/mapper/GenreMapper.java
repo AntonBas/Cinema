@@ -1,6 +1,7 @@
 package ua.lviv.bas.cinema.mapper;
 
 import java.util.List;
+import java.util.Set;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingTarget;
@@ -14,6 +15,8 @@ import ua.lviv.bas.cinema.dto.movie.response.GenreResponse;
 public interface GenreMapper {
 
 	GenreResponse toDto(Genre genre);
+
+	List<GenreResponse> toDtoList(Set<Genre> genres);
 
 	List<GenreResponse> toDtoList(List<Genre> genres);
 
