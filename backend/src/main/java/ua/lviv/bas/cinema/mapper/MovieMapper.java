@@ -8,29 +8,22 @@ import org.mapstruct.MappingTarget;
 import org.mapstruct.ReportingPolicy;
 
 import ua.lviv.bas.cinema.domain.Movie;
-import ua.lviv.bas.cinema.domain.enums.MovieStatus;
 import ua.lviv.bas.cinema.dto.movie.request.MovieCreateRequest;
 import ua.lviv.bas.cinema.dto.movie.request.MovieUpdateRequest;
-import ua.lviv.bas.cinema.dto.movie.response.MovieDetailResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieCardResponse;
+import ua.lviv.bas.cinema.dto.movie.response.MovieDetailResponse;
 
-@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
+@Mapper(componentModel = "spring", uses = { GenreMapper.class,
+		PersonMapper.class }, unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface MovieMapper {
 
-	@Mapping(target = "posterUrl", expression = "java(getPosterUrl(movie))")
-	@Mapping(target = "currentlyShowing", expression = "java(isCurrentlyShowing(movie))")
-	@Mapping(target = "upcoming", expression = "java(isUpcoming(movie))")
-	@Mapping(target = "archived", expression = "java(isArchived(movie))")
-	@Mapping(target = "active", expression = "java(isActive(movie))")
+	@Mapping(target = "genres", source = "genres")
+	@Mapping(target = "actors", source = "actors")
+	@Mapping(target = "directors", source = "directors")
+	@Mapping(target = "screenwriters", source = "screenwriters")
 	MovieDetailResponse toDetailResponse(Movie movie);
 
-	List<MovieDetailResponse> toDetailResponseList(List<Movie> movies);
-
-	@Mapping(target = "posterUrl", expression = "java(getPosterUrl(movie))")
-	@Mapping(target = "currentlyShowing", expression = "java(isCurrentlyShowing(movie))")
 	MovieCardResponse toCardResponse(Movie movie);
-
-	List<MovieCardResponse> toCardResponseList(List<Movie> movies);
 
 	@Mapping(target = "id", ignore = true)
 	@Mapping(target = "slug", ignore = true)
@@ -54,26 +47,7 @@ public interface MovieMapper {
 	@Mapping(target = "posterFileName", ignore = true)
 	void updateEntityFromRequest(MovieUpdateRequest request, @MappingTarget Movie movie);
 
-	default String getPosterUrl(Movie movie) {
-		if (movie.getPosterFileName() != null && !movie.getPosterFileName().isBlank()) {
-			return "/api/movies/" + movie.getId() + "/poster";
-		}
-		return "/images/default-poster.jpg";
-	}
+	List<MovieDetailResponse> toDetailResponseList(List<Movie> movies);
 
-	default boolean isCurrentlyShowing(Movie movie) {
-		return movie.getStatus() == MovieStatus.CURRENT;
-	}
-
-	default boolean isUpcoming(Movie movie) {
-		return movie.getStatus() == MovieStatus.UPCOMING;
-	}
-
-	default boolean isArchived(Movie movie) {
-		return movie.getStatus() == MovieStatus.ARCHIVED;
-	}
-
-	default boolean isActive(Movie movie) {
-		return movie.getStatus() != MovieStatus.ARCHIVED;
-	}
+	List<MovieCardResponse> toCardResponseList(List<Movie> movies);
 }
