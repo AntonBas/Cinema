@@ -73,7 +73,10 @@ public class MovieService {
 		setMovieRelations(movie, request);
 
 		Movie saved = movieRepository.save(movie);
-		return enrichWithComputedFields(saved);
+
+		MovieDetailResponse response = movieMapper.toDetailResponse(saved);
+		enrichResponse(response, saved);
+		return response;
 	}
 
 	@Transactional
@@ -98,7 +101,10 @@ public class MovieService {
 		updateMovieRelations(existing, request);
 
 		Movie updated = movieRepository.save(existing);
-		return enrichWithComputedFields(updated);
+
+		MovieDetailResponse response = movieMapper.toDetailResponse(updated);
+		enrichResponse(response, updated);
+		return response;
 	}
 
 	@Transactional
@@ -113,18 +119,29 @@ public class MovieService {
 	@Transactional(readOnly = true)
 	public MovieDetailResponse getMovieById(Long id) {
 		Movie movie = findMovieById(id);
-		return enrichWithComputedFields(movie);
+
+		MovieDetailResponse response = movieMapper.toDetailResponse(movie);
+		enrichResponse(response, movie);
+		return response;
 	}
 
 	@Transactional(readOnly = true)
 	public MovieDetailResponse getMovieBySlug(String slug) {
 		Movie movie = movieRepository.findBySlug(slug).orElseThrow(() -> new MovieNotFoundException(slug));
-		return enrichWithComputedFields(movie);
+
+		MovieDetailResponse response = movieMapper.toDetailResponse(movie);
+		enrichResponse(response, movie);
+		return response;
 	}
 
 	@Transactional(readOnly = true)
 	public List<MovieDetailResponse> getAllMovies() {
-		return movieRepository.findAll().stream().map(this::enrichWithComputedFields).toList();
+
+		return movieRepository.findAll().stream().map(movie -> {
+			MovieDetailResponse response = movieMapper.toDetailResponse(movie);
+			enrichResponse(response, movie);
+			return response;
+		}).toList();
 	}
 
 	@Transactional(readOnly = true)
@@ -134,7 +151,12 @@ public class MovieService {
 
 	@Transactional(readOnly = true)
 	public Page<MovieDetailResponse> getMoviesPaginated(Pageable pageable) {
-		return movieRepository.findAll(pageable).map(this::enrichWithComputedFields);
+
+		return movieRepository.findAll(pageable).map(movie -> {
+			MovieDetailResponse response = movieMapper.toDetailResponse(movie);
+			enrichResponse(response, movie);
+			return response;
+		});
 	}
 
 	@Transactional(readOnly = true)
@@ -373,16 +395,18 @@ public class MovieService {
 		}
 	}
 
-	private MovieDetailResponse enrichWithComputedFields(Movie movie) {
-		MovieDetailResponse dto = movieMapper.toDetailResponse(movie);
+	private void enrichResponse(MovieDetailResponse response, Movie movie) {
 
-		dto.setGenreIds(movie.getGenres().stream().map(genre -> genre.getId()).collect(Collectors.toList()));
-		dto.setActorIds(movie.getActors().stream().map(person -> person.getId()).collect(Collectors.toList()));
-		dto.setDirectorIds(movie.getDirectors().stream().map(person -> person.getId()).collect(Collectors.toList()));
-		dto.setScreenwriterIds(
-				movie.getScreenwriters().stream().map(person -> person.getId()).collect(Collectors.toList()));
+		response.setCurrentlyShowing(movie.getStatus() == MovieStatus.CURRENT);
+		response.setUpcoming(movie.getStatus() == MovieStatus.UPCOMING);
+		response.setArchived(movie.getStatus() == MovieStatus.ARCHIVED);
+		response.setActive(movie.getStatus() != MovieStatus.ARCHIVED);
 
-		return dto;
+		if (movie.getPosterFileName() != null && !movie.getPosterFileName().isBlank()) {
+			response.setPosterUrl("/api/movies/" + movie.getId() + "/poster");
+		} else {
+			response.setPosterUrl("/images/default-poster.jpg");
+		}
 	}
 
 	private boolean isMovieAvailableForDate(Movie movie, LocalDate sessionDate) {
