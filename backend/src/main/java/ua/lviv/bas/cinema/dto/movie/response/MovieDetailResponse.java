@@ -34,8 +34,8 @@ public class MovieDetailResponse {
 	private boolean archived;
 	private boolean active;
 
-	private List<Long> genreIds;
-	private List<Long> actorIds;
-	private List<Long> directorIds;
-	private List<Long> screenwriterIds;
+	private List<GenreResponse> genres;
+	private List<PersonResponse> actors;
+	private List<PersonResponse> directors;
+	private List<PersonResponse> screenwriters;
 }
