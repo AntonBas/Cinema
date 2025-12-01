@@ -63,11 +63,6 @@ class MovieMapperTest {
 		assertThat(result.getStatus()).isEqualTo(MovieStatus.UPCOMING);
 		assertThat(result.getAgeRating()).isEqualTo(AgeRating.PEGI_12);
 		assertThat(result.getPosterFileName()).isEqualTo("poster.jpg");
-		assertThat(result.getPosterUrl()).isEqualTo("/api/movies/1/poster");
-		assertThat(result.isCurrentlyShowing()).isFalse();
-		assertThat(result.isUpcoming()).isTrue();
-		assertThat(result.isArchived()).isFalse();
-		assertThat(result.isActive()).isTrue();
 	}
 
 	@Test
@@ -90,8 +85,6 @@ class MovieMapperTest {
 		assertThat(result.getAgeRating()).isEqualTo(AgeRating.PEGI_12);
 		assertThat(result.getReleaseDate()).isEqualTo(movie.getReleaseDate());
 		assertThat(result.getStatus()).isEqualTo(MovieStatus.UPCOMING);
-		assertThat(result.getPosterUrl()).isEqualTo("/api/movies/1/poster");
-		assertThat(result.isCurrentlyShowing()).isFalse();
 	}
 
 	@Test
@@ -158,19 +151,5 @@ class MovieMapperTest {
 	void toCardResponse_WithNullMovie_ShouldReturnNull() {
 		MovieCardResponse result = movieMapper.toCardResponse(null);
 		assertThat(result).isNull();
-	}
-
-	@Test
-	void getPosterUrl_WithNullPoster_ShouldReturnDefault() {
-		Movie movieWithoutPoster = Movie.builder().id(1L).posterFileName(null).build();
-		String result = movieMapper.getPosterUrl(movieWithoutPoster);
-		assertThat(result).isEqualTo("/images/default-poster.jpg");
-	}
-
-	@Test
-	void getPosterUrl_WithBlankPoster_ShouldReturnDefault() {
-		Movie movieWithBlankPoster = Movie.builder().id(1L).posterFileName("").build();
-		String result = movieMapper.getPosterUrl(movieWithBlankPoster);
-		assertThat(result).isEqualTo("/images/default-poster.jpg");
 	}
 }

@@ -34,6 +34,8 @@ import ua.lviv.bas.cinema.dto.movie.request.MovieCreateRequest;
 import ua.lviv.bas.cinema.dto.movie.request.MovieUpdateRequest;
 import ua.lviv.bas.cinema.dto.movie.response.MovieCardResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieDetailResponse;
+import ua.lviv.bas.cinema.dto.movie.response.GenreResponse;
+import ua.lviv.bas.cinema.dto.movie.response.PersonResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieSessionSearchResponse;
 import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
 import ua.lviv.bas.cinema.exception.domain.cinema.MovieNotFoundException;
@@ -82,12 +84,19 @@ class MovieServiceTest {
 				.directors(new HashSet<>(List.of(director))).screenwriters(new HashSet<>(List.of(screenwriter)))
 				.genres(new HashSet<>(List.of(genre))).build();
 
+		GenreResponse genreResponse = GenreResponse.builder().id(1L).name("Action").build();
+		PersonResponse actorResponse = PersonResponse.builder().id(1L).name("Actor One").role(PersonRole.ACTOR).build();
+		PersonResponse directorResponse = PersonResponse.builder().id(2L).name("Director One").role(PersonRole.DIRECTOR)
+				.build();
+		PersonResponse screenwriterResponse = PersonResponse.builder().id(3L).name("Writer One")
+				.role(PersonRole.SCREENWRITER).build();
+
 		movieDetailResponse = MovieDetailResponse.builder().id(1L).title("Test Movie").slug("test-movie")
 				.trailerUrl("https://example.com/trailer").description("Test Description").durationMinutes(120)
 				.releaseDate(LocalDate.now().plusDays(1)).endShowingDate(LocalDate.now().plusDays(30))
 				.status(MovieStatus.UPCOMING).ageRating(AgeRating.PEGI_12).posterFileName("poster.jpg")
-				.actorIds(List.of(1L)).directorIds(List.of(2L)).screenwriterIds(List.of(3L)).genreIds(List.of(1L))
-				.build();
+				.posterUrl("/api/movies/1/poster").genres(List.of(genreResponse)).actors(List.of(actorResponse))
+				.directors(List.of(directorResponse)).screenwriters(List.of(screenwriterResponse)).build();
 
 		movieCardResponse = MovieCardResponse.builder().id(1L).title("Test Movie").slug("test-movie")
 				.durationMinutes(120).ageRating(AgeRating.PEGI_12).releaseDate(LocalDate.now().plusDays(1))
@@ -358,5 +367,17 @@ class MovieServiceTest {
 		movieService.updateMovieStatuses();
 
 		verify(movieRepository).findAll();
+	}
+
+	@Test
+	void getMoviesPaginated_ShouldReturnPaginatedMovies() {
+		Page<Movie> moviePage = new PageImpl<>(List.of(movie));
+		when(movieRepository.findAll(any(Pageable.class))).thenReturn(moviePage);
+		when(movieMapper.toDetailResponse(movie)).thenReturn(movieDetailResponse);
+
+		Page<MovieDetailResponse> result = movieService.getMoviesPaginated(Pageable.unpaged());
+
+		assertNotNull(result);
+		assertEquals(1, result.getContent().size());
 	}
 }

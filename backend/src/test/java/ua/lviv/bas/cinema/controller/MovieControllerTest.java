@@ -27,11 +27,14 @@ import org.springframework.mock.web.MockMultipartFile;
 
 import ua.lviv.bas.cinema.domain.enums.AgeRating;
 import ua.lviv.bas.cinema.domain.enums.MovieStatus;
+import ua.lviv.bas.cinema.domain.enums.PersonRole;
 import ua.lviv.bas.cinema.dto.movie.request.MovieCreateRequest;
 import ua.lviv.bas.cinema.dto.movie.request.MovieUpdateRequest;
+import ua.lviv.bas.cinema.dto.movie.response.GenreResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieCardResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieDetailResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieSessionSearchResponse;
+import ua.lviv.bas.cinema.dto.movie.response.PersonResponse;
 import ua.lviv.bas.cinema.dto.shared.PageResponse;
 import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
 import ua.lviv.bas.cinema.exception.domain.cinema.MovieNotFoundException;
@@ -47,10 +50,20 @@ class MovieControllerTest {
 	private MovieController movieController;
 
 	private MovieDetailResponse createMovieDto(Long id, String title, String slug, MovieStatus status) {
+		GenreResponse genreResponse = GenreResponse.builder().id(1L).name("Action").build();
+		PersonResponse actorResponse = PersonResponse.builder().id(1L).name("Actor One").role(PersonRole.ACTOR).build();
+		PersonResponse directorResponse = PersonResponse.builder().id(2L).name("Director One").role(PersonRole.DIRECTOR)
+				.build();
+		PersonResponse screenwriterResponse = PersonResponse.builder().id(3L).name("Writer One")
+				.role(PersonRole.SCREENWRITER).build();
+
 		return MovieDetailResponse.builder().id(id).title(title).slug(slug).posterUrl("/api/movies/" + id + "/poster")
-				.durationMinutes(120).ageRating(AgeRating.PEGI_12).releaseDate(LocalDate.now().plusDays(1))
-				.status(status).currentlyShowing(false).actorIds(List.of(1L)).directorIds(List.of(2L))
-				.screenwriterIds(List.of(3L)).genreIds(List.of(1L)).build();
+				.trailerUrl("https://example.com/trailer").description("Description").durationMinutes(120)
+				.ageRating(AgeRating.PEGI_12).releaseDate(LocalDate.now().plusDays(1))
+				.endShowingDate(LocalDate.now().plusDays(30)).status(status).currentlyShowing(false)
+				.upcoming(status == MovieStatus.UPCOMING).archived(status == MovieStatus.ARCHIVED)
+				.genres(List.of(genreResponse)).actors(List.of(actorResponse)).directors(List.of(directorResponse))
+				.screenwriters(List.of(screenwriterResponse)).build();
 	}
 
 	private MovieCardResponse createMovieResponse(Long id, String title, String slug, MovieStatus status) {
