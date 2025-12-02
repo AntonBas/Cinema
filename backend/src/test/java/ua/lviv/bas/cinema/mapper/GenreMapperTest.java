@@ -27,6 +27,39 @@ public class GenreMapperTest {
 	}
 
 	@Test
+	void toDto_WithNull_ShouldReturnNull() {
+		assertThat(mapper.toDto(null)).isNull();
+	}
+
+	@Test
+	void toDtoList_ShouldMapListOfGenres() {
+		List<Genre> genres = List.of(Genre.builder().id(1L).name("Action").build(),
+				Genre.builder().id(2L).name("Comedy").build());
+
+		List<GenreResponse> dtos = mapper.toDtoList(genres);
+
+		assertThat(dtos).isNotNull();
+		assertThat(dtos).hasSize(2);
+		assertThat(dtos.get(0).getId()).isEqualTo(1L);
+		assertThat(dtos.get(0).getName()).isEqualTo("Action");
+		assertThat(dtos.get(1).getId()).isEqualTo(2L);
+		assertThat(dtos.get(1).getName()).isEqualTo("Comedy");
+	}
+
+	@Test
+	void toDtoList_WithEmptyList_ShouldReturnEmptyList() {
+		List<GenreResponse> dtos = mapper.toDtoList(List.of());
+
+		assertThat(dtos).isNotNull();
+		assertThat(dtos).isEmpty();
+	}
+
+	@Test
+	void toDtoList_WithNull_ShouldReturnNull() {
+		assertThat(mapper.toDtoList(null)).isNull();
+	}
+
+	@Test
 	void toEntity_ShouldMapAllFields_FromRequest() {
 		GenreRequest request = GenreRequest.builder().name("Thriller").build();
 
@@ -38,15 +71,8 @@ public class GenreMapperTest {
 	}
 
 	@Test
-	void toDtoList_ShouldMapList() {
-		Genre genre1 = Genre.builder().id(1L).name("Action").build();
-		Genre genre2 = Genre.builder().id(2L).name("Comedy").build();
-
-		List<GenreResponse> dtos = mapper.toDtoList(List.of(genre1, genre2));
-
-		assertThat(dtos).hasSize(2);
-		assertThat(dtos.get(0).getName()).isEqualTo("Action");
-		assertThat(dtos.get(1).getName()).isEqualTo("Comedy");
+	void toEntity_WithNull_ShouldReturnNull() {
+		assertThat(mapper.toEntity(null)).isNull();
 	}
 
 	@Test
@@ -59,5 +85,15 @@ public class GenreMapperTest {
 
 		assertThat(existing.getId()).isEqualTo(1L);
 		assertThat(existing.getName()).isEqualTo("NewName");
+	}
+
+	@Test
+	void updateGenreFromRequest_WithNullRequest_ShouldNotUpdate() {
+		Genre existing = Genre.builder().id(1L).name("Original").build();
+
+		mapper.updateGenreFromRequest(null, existing);
+
+		assertThat(existing.getId()).isEqualTo(1L);
+		assertThat(existing.getName()).isEqualTo("Original");
 	}
 }
