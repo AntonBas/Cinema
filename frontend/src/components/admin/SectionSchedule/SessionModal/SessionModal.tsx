@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useHalls, useMovieSessionSearch } from '@/hooks/features';
 import { Input, Select, Button, Modal, Notification } from '@/components/ui';
-import type { SessionResponse, SessionRequest } from '@/types/session';
+import type { SessionAdminResponse, SessionRequest } from '@/types/session';
 import type { MovieSessionSearchResponse } from '@/types/movie';
 import styles from './SessionModal.module.css';
 
 interface SessionModalProps {
     isOpen: boolean;
-    session: SessionResponse | null;
+    session: SessionAdminResponse | null;
     onSave: (data: SessionRequest) => Promise<void>;
     onClose: () => void;
     loading: boolean;
@@ -53,16 +53,16 @@ export const SessionModal: React.FC<SessionModalProps> = ({
             setFormData({
                 startTime: session.startTime.slice(0, 16),
                 price: session.price.toString(),
-                movieId: session.movie.id.toString(),
-                hallId: session.hall.id.toString()
+                movieId: session.movieId.toString(),
+                hallId: session.hallId.toString()
             });
             setSelectedMovie({
-                id: session.movie.id,
-                title: session.movie.title,
+                id: session.movieId,
+                title: session.movieTitle,
                 releaseYear: new Date(session.startTime).getFullYear(),
-                durationMinutes: session.movie.durationMinutes
+                durationMinutes: session.movieDuration
             });
-            setMovieSearchTerm(session.movie.title);
+            setMovieSearchTerm(session.movieTitle);
         } else {
             setFormData({
                 startTime: '',
