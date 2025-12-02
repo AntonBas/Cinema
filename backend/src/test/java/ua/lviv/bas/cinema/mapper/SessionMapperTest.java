@@ -12,14 +12,15 @@ import ua.lviv.bas.cinema.domain.CinemaHall;
 import ua.lviv.bas.cinema.domain.Movie;
 import ua.lviv.bas.cinema.domain.Session;
 import ua.lviv.bas.cinema.dto.session.request.SessionRequest;
-import ua.lviv.bas.cinema.dto.session.response.SessionResponse;
+import ua.lviv.bas.cinema.dto.session.response.SessionAdminResponse;
+import ua.lviv.bas.cinema.dto.session.response.SessionScheduleResponse;
 
 class SessionMapperTest {
 
 	private SessionMapper sessionMapper = Mappers.getMapper(SessionMapper.class);
 
 	@Test
-	void toDto_ShouldMapSessionToDto() {
+	void toAdminDto_ShouldMapSessionToAdminDto() {
 		LocalDateTime futureTime = LocalDateTime.now().plusHours(2);
 
 		Movie movie = Movie.builder().id(1L).title("Test Movie").durationMinutes(120).build();
@@ -29,27 +30,52 @@ class SessionMapperTest {
 		Session session = Session.builder().id(1L).startTime(futureTime).price(new BigDecimal("250.00")).movie(movie)
 				.hall(hall).build();
 
-		SessionResponse result = sessionMapper.toDto(session);
+		SessionAdminResponse result = sessionMapper.toAdminDto(session);
 
 		assertThat(result).isNotNull();
 		assertThat(result.getId()).isEqualTo(1L);
 		assertThat(result.getStartTime()).isEqualTo(futureTime);
-		assertThat(result.getEndTime()).isEqualTo(futureTime.plusMinutes(120));
 		assertThat(result.getPrice()).isEqualTo(new BigDecimal("250.00"));
-		assertThat(result.isAvailable()).isTrue();
+		assertThat(result.getMovieId()).isEqualTo(1L);
+		assertThat(result.getMovieTitle()).isEqualTo("Test Movie");
+		assertThat(result.getMovieDuration()).isEqualTo(120);
+		assertThat(result.getHallId()).isEqualTo(1L);
+		assertThat(result.getHallName()).isEqualTo("Hall 1");
+		assertThat(result.getHallCapacity()).isEqualTo(0);
+		assertThat(result.getEndTime()).isNull();
+		assertThat(result.isAvailable()).isFalse();
+		assertThat(result.getTicketsSold()).isNull();
+		assertThat(result.getTotalRevenue()).isNull();
 	}
 
 	@Test
-	void toDto_ShouldSetAvailableFalseForPastSession() {
-		LocalDateTime pastTime = LocalDateTime.now().minusHours(2);
+	void toScheduleDto_ShouldMapSessionToScheduleDto() {
+		LocalDateTime futureTime = LocalDateTime.now().plusHours(2);
 
-		Session session = Session.builder().id(2L).startTime(pastTime).price(new BigDecimal("200.00"))
-				.movie(Movie.builder().id(1L).title("Movie").durationMinutes(120).build())
-				.hall(CinemaHall.builder().id(1L).name("Hall 1").build()).build();
+		Movie movie = Movie.builder().id(1L).title("Test Movie").durationMinutes(120).posterFileName("poster.jpg")
+				.build();
 
-		SessionResponse result = sessionMapper.toDto(session);
+		CinemaHall hall = CinemaHall.builder().id(1L).name("Hall 1").build();
 
-		assertThat(result.isAvailable()).isFalse();
+		Session session = Session.builder().id(1L).startTime(futureTime).price(new BigDecimal("250.00")).movie(movie)
+				.hall(hall).build();
+
+		SessionScheduleResponse result = sessionMapper.toScheduleDto(session);
+
+		assertThat(result).isNotNull();
+		assertThat(result.getId()).isEqualTo(1L);
+		assertThat(result.getStartTime()).isEqualTo(futureTime);
+		assertThat(result.getPrice()).isEqualTo(new BigDecimal("250.00"));
+		assertThat(result.getMovieId()).isEqualTo(1L);
+		assertThat(result.getMovieTitle()).isEqualTo("Test Movie");
+		assertThat(result.getMoviePosterFileName()).isEqualTo("poster.jpg");
+		assertThat(result.getMovieAgeRating()).isNull();
+		assertThat(result.getMovieDuration()).isEqualTo(120);
+		assertThat(result.getHallId()).isEqualTo(1L);
+		assertThat(result.getHallName()).isEqualTo("Hall 1");
+		assertThat(result.getEndTime()).isNull();
+		assertThat(result.getAvailableSeats()).isNull();
+		assertThat(result.getHallCapacity()).isNull();
 	}
 
 	@Test
@@ -60,15 +86,23 @@ class SessionMapperTest {
 		Session result = sessionMapper.toEntity(request);
 
 		assertThat(result).isNotNull();
+		assertThat(result.getStartTime()).isEqualTo(request.getStartTime());
 		assertThat(result.getPrice()).isEqualTo(new BigDecimal("300.00"));
 		assertThat(result.getId()).isNull();
 		assertThat(result.getMovie()).isNull();
 		assertThat(result.getHall()).isNull();
+		assertThat(result.getTickets()).isNotNull();
+		assertThat(result.getTickets()).isEmpty();
 	}
 
 	@Test
-	void toDto_WithNull_ShouldReturnNull() {
-		assertThat(sessionMapper.toDto(null)).isNull();
+	void toAdminDto_WithNull_ShouldReturnNull() {
+		assertThat(sessionMapper.toAdminDto(null)).isNull();
+	}
+
+	@Test
+	void toScheduleDto_WithNull_ShouldReturnNull() {
+		assertThat(sessionMapper.toScheduleDto(null)).isNull();
 	}
 
 	@Test
