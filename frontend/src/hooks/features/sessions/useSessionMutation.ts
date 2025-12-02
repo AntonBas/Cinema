@@ -1,10 +1,10 @@
 import { useState, useCallback } from 'react';
 import { sessionApi } from '@/api/sessionApi';
-import type { SessionResponse, SessionRequest } from '@/types/session';
+import type { SessionAdminResponse, SessionRequest } from '@/types/session';
 
 interface UseSessionMutationReturn {
-    createSession: (request: SessionRequest) => Promise<SessionResponse>;
-    updateSession: (id: number, request: SessionRequest) => Promise<SessionResponse>;
+    createSession: (request: SessionRequest) => Promise<SessionAdminResponse>;
+    updateSession: (id: number, request: SessionRequest) => Promise<SessionAdminResponse>;
     deleteSession: (id: number) => Promise<void>;
     checkTimeConflict: (
         hallId: number,
@@ -20,12 +20,11 @@ export const useSessionMutation = (): UseSessionMutationReturn => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const createSession = useCallback(async (request: SessionRequest): Promise<SessionResponse> => {
+    const createSession = useCallback(async (request: SessionRequest): Promise<SessionAdminResponse> => {
         setLoading(true);
         setError(null);
         try {
-            const session = await sessionApi.createSession(request);
-            return session;
+            return await sessionApi.createSession(request);
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to create session';
             setError(message);
@@ -35,12 +34,11 @@ export const useSessionMutation = (): UseSessionMutationReturn => {
         }
     }, []);
 
-    const updateSession = useCallback(async (id: number, request: SessionRequest): Promise<SessionResponse> => {
+    const updateSession = useCallback(async (id: number, request: SessionRequest): Promise<SessionAdminResponse> => {
         setLoading(true);
         setError(null);
         try {
-            const session = await sessionApi.updateSession(id, request);
-            return session;
+            return await sessionApi.updateSession(id, request);
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to update session';
             setError(message);
