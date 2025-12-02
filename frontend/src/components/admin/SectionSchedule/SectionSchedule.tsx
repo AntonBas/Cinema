@@ -4,15 +4,15 @@ import { SessionFilters } from './SessionFilters';
 import { SessionTable } from './SessionTable';
 import { SessionModal } from './SessionModal';
 import { DeleteConfirmModal, Pagination, Button } from '@/components/ui';
-import type { SessionResponse, SessionRequest } from '@/types/session';
+import type { SessionAdminResponse, SessionRequest } from '@/types/session';
 import styles from './SectionSchedule.module.css';
 
 export const SectionSchedule: React.FC = () => {
     const { showNotification } = useNotification();
-    const [selectedSession, setSelectedSession] = useState<SessionResponse | null>(null);
+    const [selectedSession, setSelectedSession] = useState<SessionAdminResponse | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-    const [sessionToDelete, setSessionToDelete] = useState<SessionResponse | null>(null);
+    const [sessionToDelete, setSessionToDelete] = useState<SessionAdminResponse | null>(null);
 
     const [pagination, setPagination] = useState({
         page: 0,
@@ -28,12 +28,12 @@ export const SectionSchedule: React.FC = () => {
         setIsModalOpen(true);
     };
 
-    const handleEditSession = (session: SessionResponse) => {
+    const handleEditSession = (session: SessionAdminResponse) => {
         setSelectedSession(session);
         setIsModalOpen(true);
     };
 
-    const handleDeleteSession = (session: SessionResponse) => {
+    const handleDeleteSession = (session: SessionAdminResponse) => {
         setSessionToDelete(session);
         setDeleteModalOpen(true);
     };
@@ -150,7 +150,7 @@ export const SectionSchedule: React.FC = () => {
                     setDeleteModalOpen(false);
                     setSessionToDelete(null);
                 }}
-                itemName={sessionToDelete?.movie.title}
+                itemName={sessionToDelete?.movieTitle}
                 itemType="session"
                 isDeleting={mutationLoading}
             />
