@@ -7,20 +7,27 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import ua.lviv.bas.cinema.dto.cinemaHall.response.CinemaHallResponse;
-import ua.lviv.bas.cinema.dto.movie.response.MovieShortResponse;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class SessionResponse {
+public class SessionAdminResponse {
 
 	private Long id;
 	private LocalDateTime startTime;
 	private LocalDateTime endTime;
 	private BigDecimal price;
-	private MovieShortResponse movie;
-	private CinemaHallResponse hall;
 	private boolean available;
+
+	private Long movieId;
+	private String movieTitle;
+	private Integer movieDuration;
+
+	private Long hallId;
+	private String hallName;
+	private Integer hallCapacity;
+
+	private Integer ticketsSold;
+	private BigDecimal totalRevenue;
 }
