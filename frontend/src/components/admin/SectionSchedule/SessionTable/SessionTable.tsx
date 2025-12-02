@@ -1,13 +1,13 @@
 import React from 'react';
-import type { SessionResponse } from '@/types/session';
+import type { SessionAdminResponse } from '@/types/session';
 import { Button, Badge } from '@/components/ui';
 import styles from './SessionTable.module.css';
 
 interface SessionTableProps {
-    sessions: SessionResponse[];
+    sessions: SessionAdminResponse[];
     loading: boolean;
-    onEdit: (session: SessionResponse) => void;
-    onDelete: (session: SessionResponse) => void;
+    onEdit: (session: SessionAdminResponse) => void;
+    onDelete: (session: SessionAdminResponse) => void;
 }
 
 export const SessionTable: React.FC<SessionTableProps> = ({
@@ -42,6 +42,8 @@ export const SessionTable: React.FC<SessionTableProps> = ({
                         <th>Start Time</th>
                         <th>End Time</th>
                         <th>Price</th>
+                        <th>Tickets</th>
+                        <th>Revenue</th>
                         <th>Status</th>
                         <th>Actions</th>
                     </tr>
@@ -52,17 +54,34 @@ export const SessionTable: React.FC<SessionTableProps> = ({
                             <td className={styles.movieCell}>
                                 <div className={styles.movieInfo}>
                                     <span className={styles.movieTitle}>
-                                        {session.movie.title}
+                                        {session.movieTitle}
                                     </span>
                                     <span className={styles.duration}>
-                                        {session.movie.durationMinutes} min
+                                        {session.movieDuration} min
                                     </span>
                                 </div>
                             </td>
-                            <td>{session.hall.name}</td>
+                            <td>
+                                <div>
+                                    <div>{session.hallName}</div>
+                                    <div className={styles.capacity}>
+                                        {session.hallCapacity} seats
+                                    </div>
+                                </div>
+                            </td>
                             <td>{formatDateTime(session.startTime)}</td>
-                            <td>{formatDateTime(session.endTime)}</td>
+                            <td>{session.endTime ? formatDateTime(session.endTime) : 'N/A'}</td>
                             <td>{formatPrice(session.price)}</td>
+                            <td>
+                                <div className={styles.ticketInfo}>
+                                    {session.ticketsSold || 0} / {session.hallCapacity}
+                                </div>
+                            </td>
+                            <td>
+                                <div className={styles.revenue}>
+                                    {session.totalRevenue ? `${session.totalRevenue.toFixed(2)} UAH` : '0.00 UAH'}
+                                </div>
+                            </td>
                             <td>
                                 <Badge
                                     variant={session.available ? 'success' : 'error'}
