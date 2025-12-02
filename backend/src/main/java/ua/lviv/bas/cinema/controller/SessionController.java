@@ -24,7 +24,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.dto.session.request.SessionRequest;
-import ua.lviv.bas.cinema.dto.session.response.SessionResponse;
+import ua.lviv.bas.cinema.dto.session.response.SessionAdminResponse;
+import ua.lviv.bas.cinema.dto.session.response.SessionScheduleResponse;
 import ua.lviv.bas.cinema.service.SessionService;
 
 @Slf4j
@@ -37,25 +38,25 @@ public class SessionController {
 
 	@PostMapping
 	@PreAuthorize("hasAnyRole('ADMIN', 'CONTENT_MANAGER')")
-	public ResponseEntity<SessionResponse> createSession(@Valid @RequestBody SessionRequest request) {
+	public ResponseEntity<SessionAdminResponse> createSession(@Valid @RequestBody SessionRequest request) {
 		log.info("POST /api/sessions - Creating new session");
-		SessionResponse created = sessionService.createSession(request);
+		SessionAdminResponse created = sessionService.createSession(request);
 		return ResponseEntity.status(HttpStatus.CREATED).body(created);
 	}
 
 	@GetMapping("/{id}")
-	public ResponseEntity<SessionResponse> getSessionById(@PathVariable Long id) {
+	public ResponseEntity<SessionAdminResponse> getSessionById(@PathVariable Long id) {
 		log.info("GET /api/sessions/{} - Retrieving session", id);
-		SessionResponse session = sessionService.getSessionById(id);
+		SessionAdminResponse session = sessionService.getSessionById(id);
 		return ResponseEntity.ok(session);
 	}
 
 	@PutMapping("/{id}")
 	@PreAuthorize("hasAnyRole('ADMIN', 'CONTENT_MANAGER')")
-	public ResponseEntity<SessionResponse> updateSession(@PathVariable Long id,
+	public ResponseEntity<SessionAdminResponse> updateSession(@PathVariable Long id,
 			@Valid @RequestBody SessionRequest request) {
 		log.info("PUT /api/sessions/{} - Updating session", id);
-		SessionResponse updated = sessionService.updateSession(id, request);
+		SessionAdminResponse updated = sessionService.updateSession(id, request);
 		return ResponseEntity.ok(updated);
 	}
 
@@ -68,72 +69,123 @@ public class SessionController {
 	}
 
 	@GetMapping
-	public ResponseEntity<Page<SessionResponse>> getAllSessions(
+	public ResponseEntity<Page<SessionAdminResponse>> getAllSessions(
 			@PageableDefault(size = 20, sort = "startTime") Pageable pageable,
 			@RequestParam(required = false) String search) {
 		log.info("GET /api/sessions - Retrieving all sessions with pagination");
-		Page<SessionResponse> sessions = sessionService.getAllSessions(pageable, search);
+		Page<SessionAdminResponse> sessions = sessionService.getAllSessions(pageable, search);
 		return ResponseEntity.ok(sessions);
 	}
 
 	@GetMapping("/date/{date}")
-	public ResponseEntity<Page<SessionResponse>> getSessionsByDate(
+	public ResponseEntity<Page<SessionAdminResponse>> getSessionsByDate(
 			@PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
 			@PageableDefault(size = 20, sort = "startTime") Pageable pageable) {
 		log.info("GET /api/sessions/date/{} - Retrieving sessions by date", date);
-		Page<SessionResponse> sessions = sessionService.getSessionsByDate(date, pageable);
+		Page<SessionAdminResponse> sessions = sessionService.getSessionsByDate(date, pageable);
 		return ResponseEntity.ok(sessions);
 	}
 
 	@GetMapping("/hall/{hallId}")
-	public ResponseEntity<Page<SessionResponse>> getSessionsByHall(@PathVariable Long hallId,
+	public ResponseEntity<Page<SessionAdminResponse>> getSessionsByHall(@PathVariable Long hallId,
 			@PageableDefault(size = 20, sort = "startTime") Pageable pageable) {
 		log.info("GET /api/sessions/hall/{} - Retrieving sessions by hall", hallId);
-		Page<SessionResponse> sessions = sessionService.getSessionsByHall(hallId, pageable);
+		Page<SessionAdminResponse> sessions = sessionService.getSessionsByHall(hallId, pageable);
 		return ResponseEntity.ok(sessions);
 	}
 
 	@GetMapping("/movie/{movieId}")
-	public ResponseEntity<Page<SessionResponse>> getSessionsByMovie(@PathVariable Long movieId,
+	public ResponseEntity<Page<SessionAdminResponse>> getSessionsByMovie(@PathVariable Long movieId,
 			@PageableDefault(size = 20, sort = "startTime") Pageable pageable) {
 		log.info("GET /api/sessions/movie/{} - Retrieving sessions by movie", movieId);
-		Page<SessionResponse> sessions = sessionService.getSessionsByMovie(movieId, pageable);
+		Page<SessionAdminResponse> sessions = sessionService.getSessionsByMovie(movieId, pageable);
 		return ResponseEntity.ok(sessions);
 	}
 
 	@GetMapping("/available")
-	public ResponseEntity<Page<SessionResponse>> getAvailableSessions(
+	public ResponseEntity<Page<SessionAdminResponse>> getAvailableSessions(
 			@PageableDefault(size = 20, sort = "startTime") Pageable pageable) {
 		log.info("GET /api/sessions/available - Retrieving available sessions");
-		Page<SessionResponse> sessions = sessionService.getAvailableSessions(pageable);
+		Page<SessionAdminResponse> sessions = sessionService.getAvailableSessions(pageable);
 		return ResponseEntity.ok(sessions);
 	}
 
 	@GetMapping("/upcoming")
-	public ResponseEntity<Page<SessionResponse>> getUpcomingSessions(@RequestParam(defaultValue = "7") int days,
+	public ResponseEntity<Page<SessionAdminResponse>> getUpcomingSessions(@RequestParam(defaultValue = "7") int days,
 			@PageableDefault(size = 20, sort = "startTime") Pageable pageable) {
 		log.info("GET /api/sessions/upcoming - Retrieving upcoming sessions for {} days", days);
-		Page<SessionResponse> sessions = sessionService.getUpcomingSessions(days, pageable);
+		Page<SessionAdminResponse> sessions = sessionService.getUpcomingSessions(days, pageable);
 		return ResponseEntity.ok(sessions);
 	}
 
 	@GetMapping("/today")
-	public ResponseEntity<Page<SessionResponse>> getTodaySessions(
+	public ResponseEntity<Page<SessionAdminResponse>> getTodaySessions(
 			@PageableDefault(size = 20, sort = "startTime") Pageable pageable) {
 		log.info("GET /api/sessions/today - Retrieving today's sessions");
-		Page<SessionResponse> sessions = sessionService.getTodaySessions(pageable);
+		Page<SessionAdminResponse> sessions = sessionService.getTodaySessions(pageable);
 		return ResponseEntity.ok(sessions);
 	}
 
 	@GetMapping("/filter")
-	public ResponseEntity<Page<SessionResponse>> getFilteredSessions(
+	public ResponseEntity<Page<SessionAdminResponse>> getFilteredSessions(
 			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
 			@RequestParam(required = false) Long hallId, @RequestParam(required = false) Long movieId,
 			@RequestParam(required = false) Integer days,
 			@PageableDefault(size = 20, sort = "startTime") Pageable pageable) {
 		log.info("GET /api/sessions/filter - Retrieving filtered sessions: date={}, hallId={}, movieId={}, days={}",
 				date, hallId, movieId, days);
-		Page<SessionResponse> sessions = sessionService.getFilteredSessions(date, hallId, movieId, days, pageable);
+		Page<SessionAdminResponse> sessions = sessionService.getFilteredSessions(date, hallId, movieId, days, pageable);
+		return ResponseEntity.ok(sessions);
+	}
+
+	@GetMapping("/schedule")
+	public ResponseEntity<Page<SessionScheduleResponse>> getScheduleSessions(
+			@PageableDefault(size = 20, sort = "startTime") Pageable pageable) {
+		log.info("GET /api/sessions/schedule - Retrieving schedule sessions");
+		Page<SessionScheduleResponse> sessions = sessionService.getScheduleSessions(pageable);
+		return ResponseEntity.ok(sessions);
+	}
+
+	@GetMapping("/schedule/date/{date}")
+	public ResponseEntity<Page<SessionScheduleResponse>> getScheduleSessionsByDate(
+			@PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+			@PageableDefault(size = 20, sort = "startTime") Pageable pageable) {
+		log.info("GET /api/sessions/schedule/date/{} - Retrieving schedule sessions by date", date);
+		Page<SessionScheduleResponse> sessions = sessionService.getScheduleSessionsByDate(date, pageable);
+		return ResponseEntity.ok(sessions);
+	}
+
+	@GetMapping("/schedule/movie/{movieId}")
+	public ResponseEntity<Page<SessionScheduleResponse>> getScheduleSessionsByMovie(@PathVariable Long movieId,
+			@PageableDefault(size = 20, sort = "startTime") Pageable pageable) {
+		log.info("GET /api/sessions/schedule/movie/{} - Retrieving schedule sessions by movie", movieId);
+		Page<SessionScheduleResponse> sessions = sessionService.getScheduleSessionsByMovie(movieId, pageable);
+		return ResponseEntity.ok(sessions);
+	}
+
+	@GetMapping("/schedule/available")
+	public ResponseEntity<Page<SessionScheduleResponse>> getAvailableScheduleSessions(
+			@PageableDefault(size = 20, sort = "startTime") Pageable pageable) {
+		log.info("GET /api/sessions/schedule/available - Retrieving available schedule sessions");
+		Page<SessionScheduleResponse> sessions = sessionService.getScheduleSessions(pageable);
+		return ResponseEntity.ok(sessions);
+	}
+
+	@GetMapping("/schedule/upcoming")
+	public ResponseEntity<Page<SessionScheduleResponse>> getUpcomingScheduleSessions(
+			@RequestParam(defaultValue = "7") int days,
+			@PageableDefault(size = 20, sort = "startTime") Pageable pageable) {
+		log.info("GET /api/sessions/schedule/upcoming - Retrieving upcoming schedule sessions for {} days", days);
+		Page<SessionScheduleResponse> sessions = sessionService
+				.getScheduleSessionsByDate(LocalDate.now().plusDays(days), pageable);
+		return ResponseEntity.ok(sessions);
+	}
+
+	@GetMapping("/schedule/today")
+	public ResponseEntity<Page<SessionScheduleResponse>> getTodayScheduleSessions(
+			@PageableDefault(size = 20, sort = "startTime") Pageable pageable) {
+		log.info("GET /api/sessions/schedule/today - Retrieving today's schedule sessions");
+		Page<SessionScheduleResponse> sessions = sessionService.getScheduleSessionsByDate(LocalDate.now(), pageable);
 		return ResponseEntity.ok(sessions);
 	}
 
