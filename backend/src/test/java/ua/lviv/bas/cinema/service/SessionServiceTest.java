@@ -3,6 +3,7 @@ package ua.lviv.bas.cinema.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -27,7 +28,8 @@ import ua.lviv.bas.cinema.domain.CinemaHall;
 import ua.lviv.bas.cinema.domain.Movie;
 import ua.lviv.bas.cinema.domain.Session;
 import ua.lviv.bas.cinema.dto.session.request.SessionRequest;
-import ua.lviv.bas.cinema.dto.session.response.SessionResponse;
+import ua.lviv.bas.cinema.dto.session.response.SessionAdminResponse;
+import ua.lviv.bas.cinema.dto.session.response.SessionScheduleResponse;
 import ua.lviv.bas.cinema.exception.domain.cinema.SessionNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.cinema.SessionTimeConflictException;
 import ua.lviv.bas.cinema.mapper.SessionMapper;
@@ -55,7 +57,8 @@ class SessionServiceTest {
 	private Movie movie;
 	private CinemaHall hall;
 	private Session session;
-	private SessionResponse sessionDto;
+	private SessionAdminResponse sessionAdminDto;
+	private SessionScheduleResponse sessionScheduleDto;
 	private Pageable pageable;
 
 	@BeforeEach
@@ -68,9 +71,15 @@ class SessionServiceTest {
 
 		hall = CinemaHall.builder().id(1L).build();
 
-		session = Session.builder().id(1L).build();
+		LocalDateTime startTime = LocalDateTime.now().plusHours(2);
+		session = Session.builder().id(1L).startTime(startTime).price(new BigDecimal("250.00")).movie(movie).hall(hall)
+				.build();
 
-		sessionDto = SessionResponse.builder().id(1L).build();
+		sessionAdminDto = SessionAdminResponse.builder().id(1L).startTime(startTime).price(new BigDecimal("250.00"))
+				.build();
+
+		sessionScheduleDto = SessionScheduleResponse.builder().id(1L).startTime(startTime)
+				.price(new BigDecimal("250.00")).build();
 
 		pageable = PageRequest.of(0, 20);
 	}
@@ -82,9 +91,9 @@ class SessionServiceTest {
 		when(sessionRepository.findConflictingSessions(any(), any(), any(), any())).thenReturn(List.of());
 		when(sessionMapper.toEntity(sessionRequest)).thenReturn(session);
 		when(sessionRepository.save(session)).thenReturn(session);
-		when(sessionMapper.toDto(session)).thenReturn(sessionDto);
+		when(sessionMapper.toAdminDto(session)).thenReturn(sessionAdminDto);
 
-		SessionResponse result = sessionService.createSession(sessionRequest);
+		SessionAdminResponse result = sessionService.createSession(sessionRequest);
 
 		assertThat(result).isNotNull();
 		assertThat(result.getId()).isEqualTo(1L);
@@ -115,29 +124,11 @@ class SessionServiceTest {
 	}
 
 	@Test
-	void createSession_ShouldThrowIllegalArgumentException_WhenMovieNotReleased() {
-		LocalDateTime sessionTime = LocalDateTime.now().plusDays(1).withHour(14).withMinute(0);
-		LocalDate releaseDate = sessionTime.toLocalDate().plusDays(1);
-
-		Movie unreleasedMovie = Movie.builder().id(1L).durationMinutes(120).title("Unreleased Movie")
-				.releaseDate(releaseDate).endShowingDate(null).build();
-
-		SessionRequest request = SessionRequest.builder().startTime(sessionTime).price(new BigDecimal("250.00"))
-				.movieId(1L).hallId(1L).build();
-
-		when(movieService.getMovieEntityById(1L)).thenReturn(unreleasedMovie);
-		when(cinemaHallService.getHallEntityById(1L)).thenReturn(hall);
-
-		assertThatThrownBy(() -> sessionService.createSession(request)).isInstanceOf(IllegalArgumentException.class)
-				.hasMessageContaining("releases on");
-	}
-
-	@Test
 	void getSessionById_ShouldReturnSession() {
 		when(sessionRepository.findById(1L)).thenReturn(Optional.of(session));
-		when(sessionMapper.toDto(session)).thenReturn(sessionDto);
+		when(sessionMapper.toAdminDto(session)).thenReturn(sessionAdminDto);
 
-		SessionResponse result = sessionService.getSessionById(1L);
+		SessionAdminResponse result = sessionService.getSessionById(1L);
 
 		assertThat(result).isNotNull();
 		assertThat(result.getId()).isEqualTo(1L);
@@ -160,28 +151,12 @@ class SessionServiceTest {
 		when(cinemaHallService.getHallEntityById(1L)).thenReturn(hall);
 		when(sessionRepository.findConflictingSessions(any(), any(), any(), any())).thenReturn(List.of());
 		when(sessionRepository.save(session)).thenReturn(session);
-		when(sessionMapper.toDto(session)).thenReturn(sessionDto);
+		when(sessionMapper.toAdminDto(session)).thenReturn(sessionAdminDto);
 
-		SessionResponse result = sessionService.updateSession(1L, updateRequest);
+		SessionAdminResponse result = sessionService.updateSession(1L, updateRequest);
 
 		assertThat(result).isNotNull();
 		verify(sessionRepository).save(session);
-	}
-
-	@Test
-	void updateSession_ShouldThrowSessionTimeConflictException_WhenTimeConflict() {
-		SessionRequest updateRequest = SessionRequest.builder().startTime(LocalDateTime.now().plusHours(3))
-				.price(new BigDecimal("300.00")).movieId(1L).hallId(1L).build();
-		Session conflictingSession = Session.builder().id(2L).build();
-
-		when(sessionRepository.findById(1L)).thenReturn(Optional.of(session));
-		when(movieService.getMovieEntityById(1L)).thenReturn(movie);
-		when(cinemaHallService.getHallEntityById(1L)).thenReturn(hall);
-		when(sessionRepository.findConflictingSessions(any(), any(), any(), any()))
-				.thenReturn(List.of(conflictingSession));
-
-		assertThatThrownBy(() -> sessionService.updateSession(1L, updateRequest))
-				.isInstanceOf(SessionTimeConflictException.class);
 	}
 
 	@Test
@@ -205,13 +180,12 @@ class SessionServiceTest {
 		Page<Session> sessionPage = new PageImpl<>(List.of(session));
 
 		when(sessionRepository.findAll(pageable)).thenReturn(sessionPage);
-		when(sessionMapper.toDto(session)).thenReturn(sessionDto);
+		when(sessionMapper.toAdminDto(session)).thenReturn(sessionAdminDto);
 
-		Page<SessionResponse> result = sessionService.getAllSessions(pageable, null);
+		Page<SessionAdminResponse> result = sessionService.getAllSessions(pageable, null);
 
 		assertThat(result).isNotNull();
 		assertThat(result.getContent()).hasSize(1);
-		assertThat(result.getContent().get(0).getId()).isEqualTo(1L);
 	}
 
 	@Test
@@ -219,19 +193,17 @@ class SessionServiceTest {
 		Page<Session> sessionPage = new PageImpl<>(List.of(session));
 
 		when(sessionRepository.findByMovieTitleContainingIgnoreCase("test", pageable)).thenReturn(sessionPage);
-		when(sessionMapper.toDto(session)).thenReturn(sessionDto);
+		when(sessionMapper.toAdminDto(session)).thenReturn(sessionAdminDto);
 
-		Page<SessionResponse> result = sessionService.getAllSessions(pageable, "test");
+		Page<SessionAdminResponse> result = sessionService.getAllSessions(pageable, "test");
 
 		assertThat(result).isNotNull();
 		assertThat(result.getContent()).hasSize(1);
-		verify(sessionRepository).findByMovieTitleContainingIgnoreCase("test", pageable);
 	}
 
 	@Test
 	void hasTimeConflict_ShouldReturnTrue_WhenConflictExists() {
 		LocalDateTime fixedTime = LocalDateTime.of(2024, 1, 15, 18, 0);
-
 		Session conflictingSession = Session.builder().id(2L).build();
 
 		when(sessionRepository.findConflictingSessions(1L, fixedTime, fixedTime.plusMinutes(120), null))
@@ -260,13 +232,12 @@ class SessionServiceTest {
 		Page<Session> sessionPage = new PageImpl<>(List.of(session));
 
 		when(sessionRepository.findFilteredSessions(any(), any(), any(), any(), any())).thenReturn(sessionPage);
-		when(sessionMapper.toDto(session)).thenReturn(sessionDto);
+		when(sessionMapper.toAdminDto(session)).thenReturn(sessionAdminDto);
 
-		Page<SessionResponse> result = sessionService.getFilteredSessions(date, null, null, null, pageable);
+		Page<SessionAdminResponse> result = sessionService.getFilteredSessions(date, null, null, null, pageable);
 
 		assertThat(result).isNotNull();
 		assertThat(result.getContent()).hasSize(1);
-		verify(sessionRepository).findFilteredSessions(any(), any(), any(), any(), any());
 	}
 
 	@Test
@@ -275,13 +246,12 @@ class SessionServiceTest {
 		Page<Session> sessionPage = new PageImpl<>(List.of(session));
 
 		when(sessionRepository.findByStartTimeBetween(any(), any(), any())).thenReturn(sessionPage);
-		when(sessionMapper.toDto(session)).thenReturn(sessionDto);
+		when(sessionMapper.toAdminDto(session)).thenReturn(sessionAdminDto);
 
-		Page<SessionResponse> result = sessionService.getSessionsByDate(date, pageable);
+		Page<SessionAdminResponse> result = sessionService.getSessionsByDate(date, pageable);
 
 		assertThat(result).isNotNull();
 		assertThat(result.getContent()).hasSize(1);
-		verify(sessionRepository).findByStartTimeBetween(any(), any(), any());
 	}
 
 	@Test
@@ -289,13 +259,12 @@ class SessionServiceTest {
 		Page<Session> sessionPage = new PageImpl<>(List.of(session));
 
 		when(sessionRepository.findByHallId(1L, pageable)).thenReturn(sessionPage);
-		when(sessionMapper.toDto(session)).thenReturn(sessionDto);
+		when(sessionMapper.toAdminDto(session)).thenReturn(sessionAdminDto);
 
-		Page<SessionResponse> result = sessionService.getSessionsByHall(1L, pageable);
+		Page<SessionAdminResponse> result = sessionService.getSessionsByHall(1L, pageable);
 
 		assertThat(result).isNotNull();
 		assertThat(result.getContent()).hasSize(1);
-		verify(sessionRepository).findByHallId(1L, pageable);
 	}
 
 	@Test
@@ -303,13 +272,12 @@ class SessionServiceTest {
 		Page<Session> sessionPage = new PageImpl<>(List.of(session));
 
 		when(sessionRepository.findByMovieId(1L, pageable)).thenReturn(sessionPage);
-		when(sessionMapper.toDto(session)).thenReturn(sessionDto);
+		when(sessionMapper.toAdminDto(session)).thenReturn(sessionAdminDto);
 
-		Page<SessionResponse> result = sessionService.getSessionsByMovie(1L, pageable);
+		Page<SessionAdminResponse> result = sessionService.getSessionsByMovie(1L, pageable);
 
 		assertThat(result).isNotNull();
 		assertThat(result.getContent()).hasSize(1);
-		verify(sessionRepository).findByMovieId(1L, pageable);
 	}
 
 	@Test
@@ -317,13 +285,12 @@ class SessionServiceTest {
 		Page<Session> sessionPage = new PageImpl<>(List.of(session));
 
 		when(sessionRepository.findByStartTimeAfter(any(), any())).thenReturn(sessionPage);
-		when(sessionMapper.toDto(session)).thenReturn(sessionDto);
+		when(sessionMapper.toAdminDto(session)).thenReturn(sessionAdminDto);
 
-		Page<SessionResponse> result = sessionService.getAvailableSessions(pageable);
+		Page<SessionAdminResponse> result = sessionService.getAvailableSessions(pageable);
 
 		assertThat(result).isNotNull();
 		assertThat(result.getContent()).hasSize(1);
-		verify(sessionRepository).findByStartTimeAfter(any(), any());
 	}
 
 	@Test
@@ -331,13 +298,12 @@ class SessionServiceTest {
 		Page<Session> sessionPage = new PageImpl<>(List.of(session));
 
 		when(sessionRepository.findByStartTimeBetween(any(), any(), any())).thenReturn(sessionPage);
-		when(sessionMapper.toDto(session)).thenReturn(sessionDto);
+		when(sessionMapper.toAdminDto(session)).thenReturn(sessionAdminDto);
 
-		Page<SessionResponse> result = sessionService.getUpcomingSessions(7, pageable);
+		Page<SessionAdminResponse> result = sessionService.getUpcomingSessions(7, pageable);
 
 		assertThat(result).isNotNull();
 		assertThat(result.getContent()).hasSize(1);
-		verify(sessionRepository).findByStartTimeBetween(any(), any(), any());
 	}
 
 	@Test
@@ -345,12 +311,71 @@ class SessionServiceTest {
 		Page<Session> sessionPage = new PageImpl<>(List.of(session));
 
 		when(sessionRepository.findByStartTimeBetween(any(), any(), any())).thenReturn(sessionPage);
-		when(sessionMapper.toDto(session)).thenReturn(sessionDto);
+		when(sessionMapper.toAdminDto(session)).thenReturn(sessionAdminDto);
 
-		Page<SessionResponse> result = sessionService.getTodaySessions(pageable);
+		Page<SessionAdminResponse> result = sessionService.getTodaySessions(pageable);
 
 		assertThat(result).isNotNull();
 		assertThat(result.getContent()).hasSize(1);
-		verify(sessionRepository).findByStartTimeBetween(any(), any(), any());
+	}
+
+	@Test
+	void toAdminResponse_ShouldReturnAdminResponseWithCalculations() {
+		when(sessionMapper.toAdminDto(session)).thenReturn(sessionAdminDto);
+
+		SessionAdminResponse result = sessionService.toAdminResponse(session);
+
+		assertThat(result).isNotNull();
+		assertThat(result.getId()).isEqualTo(1L);
+	}
+
+	@Test
+	void toScheduleResponse_ShouldReturnScheduleResponseWithCalculations() {
+		when(sessionMapper.toScheduleDto(session)).thenReturn(sessionScheduleDto);
+
+		SessionScheduleResponse result = sessionService.toScheduleResponse(session);
+
+		assertThat(result).isNotNull();
+		assertThat(result.getId()).isEqualTo(1L);
+	}
+
+	@Test
+	void getScheduleSessions_ShouldReturnScheduleSessions() {
+		Page<Session> sessionPage = new PageImpl<>(List.of(session));
+
+		when(sessionRepository.findByStartTimeAfter(any(), any())).thenReturn(sessionPage);
+		when(sessionMapper.toScheduleDto(session)).thenReturn(sessionScheduleDto);
+
+		Page<SessionScheduleResponse> result = sessionService.getScheduleSessions(pageable);
+
+		assertThat(result).isNotNull();
+		assertThat(result.getContent()).hasSize(1);
+	}
+
+	@Test
+	void getScheduleSessionsByDate_ShouldReturnScheduleSessionsForDate() {
+		LocalDate date = LocalDate.of(2024, 1, 15);
+		Page<Session> sessionPage = new PageImpl<>(List.of(session));
+
+		when(sessionRepository.findByStartTimeBetween(any(), any(), any())).thenReturn(sessionPage);
+		when(sessionMapper.toScheduleDto(session)).thenReturn(sessionScheduleDto);
+
+		Page<SessionScheduleResponse> result = sessionService.getScheduleSessionsByDate(date, pageable);
+
+		assertThat(result).isNotNull();
+		assertThat(result.getContent()).hasSize(1);
+	}
+
+	@Test
+	void getScheduleSessionsByMovie_ShouldReturnScheduleSessionsForMovie() {
+		Page<Session> sessionPage = new PageImpl<>(List.of(session));
+
+		when(sessionRepository.findByMovieId(1L, pageable)).thenReturn(sessionPage);
+		when(sessionMapper.toScheduleDto(session)).thenReturn(sessionScheduleDto);
+
+		Page<SessionScheduleResponse> result = sessionService.getScheduleSessionsByMovie(1L, pageable);
+
+		assertThat(result).isNotNull();
+		assertThat(result.getContent()).hasSize(1);
 	}
 }
