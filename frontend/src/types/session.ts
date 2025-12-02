@@ -1,14 +1,33 @@
-import type { MovieShortResponse } from '@/types/movie';
-import type { CinemaHallResponse } from '@/types/cinemaHall';
-
-export interface SessionResponse {
+export interface SessionAdminResponse {
     id: number;
     startTime: string;
-    endTime: string;
+    endTime: string | null;
     price: number;
-    movie: MovieShortResponse;
-    hall: CinemaHallResponse;
     available: boolean;
+    movieId: number;
+    movieTitle: string;
+    movieDuration: number;
+    hallId: number;
+    hallName: string;
+    hallCapacity: number;
+    ticketsSold: number | null;
+    totalRevenue: number | null;
+}
+
+export interface SessionScheduleResponse {
+    id: number;
+    startTime: string;
+    endTime: string | null;
+    price: number;
+    availableSeats: number | null;
+    movieId: number;
+    movieTitle: string;
+    moviePosterFileName: string | null;
+    movieAgeRating: string | null;
+    movieDuration: number;
+    hallId: number;
+    hallName: string;
+    hallCapacity: string | null;
 }
 
 export interface SessionRequest {
@@ -23,4 +42,16 @@ export interface SessionFilters {
     hallId?: number;
     movieId?: number;
     days?: number;
+}
+
+export interface ScheduleDay {
+    date: string;
+    sessions: SessionScheduleResponse[];
+}
+
+export interface ScheduleMovie {
+    movieId: number;
+    movieTitle: string;
+    moviePosterFileName: string | null;
+    sessions: SessionScheduleResponse[];
 }
