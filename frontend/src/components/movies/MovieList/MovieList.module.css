@@ -1,0 +1,35 @@
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 2rem;
+}
+
+.loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 4rem;
+    color: #8f9bb3;
+}
+
+.empty {
+    text-align: center;
+    padding: 4rem;
+    color: #8f9bb3;
+}
+
+.emptyIcon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+}
+
+.empty h3 {
+    color: #ffffff;
+    margin-bottom: 0.5rem;
+    font-size: 1.5rem;
+}
+
+.empty p {
+    color: #8f9bb3;
+    font-size: 1rem;
+}

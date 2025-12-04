@@ -1,0 +1,45 @@
+.filters {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: #1a1f2e;
+    border-radius: 12px;
+    border: 1px solid #2d3444;
+}
+
+.searchSection {
+    display: flex;
+    justify-content: center;
+}
+
+.searchInput {
+    width: 100%;
+    max-width: 400px;
+}
+
+.filterSection {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.filterSelect {
+    min-width: 150px;
+}
+
+@media (max-width: 768px) {
+    .filters {
+        padding: 1rem;
+    }
+
+    .filterSection {
+        flex-direction: column;
+    }
+
+    .filterSelect {
+        min-width: 100%;
+    }
+}
