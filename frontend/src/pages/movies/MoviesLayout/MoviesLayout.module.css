@@ -1,0 +1,38 @@
+.layout {
+    min-height: 100vh;
+    background: #0f131a;
+}
+
+.nav {
+    display: flex;
+    justify-content: center;
+    padding: 2rem;
+    background: #1a1f2e;
+    border-bottom: 1px solid #2d3444;
+}
+
+.navLink {
+    padding: 1rem 2rem;
+    color: #8f9bb3;
+    text-decoration: none;
+    font-weight: 500;
+    border-radius: 8px;
+    margin: 0 0.5rem;
+    transition: all 0.2s ease;
+}
+
+.navLink:hover {
+    color: #ffffff;
+    background: rgba(253, 95, 0, 0.1);
+}
+
+.navLink.active {
+    color: #fd5f00;
+    background: rgba(253, 95, 0, 0.05);
+}
+
+.content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
