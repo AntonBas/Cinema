@@ -1,5 +1,5 @@
 package ua.lviv.bas.cinema.domain.enums;
 
 public enum TicketStatus {
-	ACTIVE, CANCELLED, USED
+	PENDING, ACTIVE, CANCELLED, USED, EXPIRED, REFUNDED
 }
