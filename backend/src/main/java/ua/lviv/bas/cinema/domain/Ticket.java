@@ -1,8 +1,9 @@
 package ua.lviv.bas.cinema.domain;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Objects;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -13,21 +14,14 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import ua.lviv.bas.cinema.domain.enums.BookingType;
 import ua.lviv.bas.cinema.domain.enums.TicketStatus;
 
 @Entity
-@Getter
-@Setter
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 @Table(name = "tickets")
 public class Ticket {
 
@@ -55,30 +49,45 @@ public class Ticket {
 	private User user;
 
 	@NotNull
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "ticket_type_id", nullable = false)
+	private TicketType ticketType;
+
+	@Column(name = "calculated_price", precision = 10, scale = 2)
+	private BigDecimal calculatedPrice;
+
+	@Column(name = "base_price_at_purchase", precision = 10, scale = 2)
+	private BigDecimal basePriceAtPurchase;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "promotion_id")
+	private Promotion promotion;
+
+	@Column(name = "unique_code", unique = true, length = 20)
+	private String uniqueCode;
+
+	@Enumerated(EnumType.STRING)
+	@Column(name = "booking_type")
+	private BookingType bookingType;
+
+	@NotNull
 	@Column(nullable = false, name = "status")
 	@Enumerated(EnumType.STRING)
 	private TicketStatus ticketStatus;
 
-	@Override
-	public int hashCode() {
-		return Objects.hash(id);
-	}
+	@OneToOne(mappedBy = "ticket", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+	private Payment payment;
 
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
-			return true;
+	@PrePersist
+	protected void onCreate() {
+		if (purchaseTime == null) {
+			purchaseTime = LocalDateTime.now();
 		}
-		if (!(obj instanceof Ticket)) {
-			return false;
+		if (uniqueCode == null) {
+			uniqueCode = "TKT" + (System.currentTimeMillis() % 1000000000L);
 		}
-		Ticket other = (Ticket) obj;
-		return Objects.equals(id, other.id);
+		if (session != null) {
+			basePriceAtPurchase = session.getBasePrice();
+		}
 	}
-
-	@Override
-	public String toString() {
-		return "Ticket [id=" + id + ", purchaseTime=" + purchaseTime + "]";
-	}
-
 }

@@ -1,0 +1,64 @@
+package ua.lviv.bas.cinema.domain;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Entity
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@Table(name = "promotions")
+public class Promotion {
+
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
+
+	@Column(nullable = false, length = 100)
+	private String title;
+
+	@Column(length = 500)
+	private String description;
+
+	@Column(name = "promo_code", unique = true, length = 50)
+	private String promoCode;
+
+	@Column(name = "discount_percentage")
+	private Integer discountPercentage;
+
+	@Column(name = "discount_amount", precision = 10, scale = 2)
+	private BigDecimal discountAmount;
+
+	@Column(name = "start_date")
+	private LocalDateTime startDate;
+
+	@Column(name = "end_date")
+	private LocalDateTime endDate;
+
+	@Column(name = "is_active")
+	@Builder.Default
+	private Boolean isActive = true;
+
+	@Column(name = "created_at")
+	private LocalDateTime createdAt;
+
+	@PrePersist
+	protected void onCreate() {
+		createdAt = LocalDateTime.now();
+	}
+}
