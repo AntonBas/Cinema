@@ -45,21 +45,21 @@ class SessionControllerTest {
 
 	private SessionAdminResponse createSessionAdminDto(Long id) {
 		return SessionAdminResponse.builder().id(id).startTime(LocalDateTime.of(2024, 1, 15, 18, 0))
-				.endTime(LocalDateTime.of(2024, 1, 15, 20, 0)).price(new BigDecimal("250.00")).movieId(1L)
+				.endTime(LocalDateTime.of(2024, 1, 15, 20, 0)).basePrice(new BigDecimal("250.00")).movieId(1L)
 				.movieTitle("Test Movie").movieDuration(120).hallId(1L).hallName("Hall 1").hallCapacity(100)
 				.available(true).ticketsSold(50).totalRevenue(new BigDecimal("12500.00")).build();
 	}
 
 	private SessionScheduleResponse createSessionScheduleDto(Long id) {
 		return SessionScheduleResponse.builder().id(id).startTime(LocalDateTime.of(2024, 1, 15, 18, 0))
-				.endTime(LocalDateTime.of(2024, 1, 15, 20, 0)).price(new BigDecimal("250.00")).availableSeats(100)
+				.endTime(LocalDateTime.of(2024, 1, 15, 20, 0)).basePrice(new BigDecimal("250.00")).availableSeats(100)
 				.movieId(1L).movieTitle("Test Movie").moviePosterFileName("poster.jpg").movieAgeRating("PG-13")
 				.movieDuration(120).hallId(1L).hallName("Hall 1").hallCapacity("100/100").build();
 	}
 
 	private SessionRequest createSessionRequest() {
-		return SessionRequest.builder().startTime(LocalDateTime.of(2024, 1, 15, 18, 0)).price(new BigDecimal("250.00"))
-				.movieId(1L).hallId(1L).build();
+		return SessionRequest.builder().startTime(LocalDateTime.of(2024, 1, 15, 18, 0))
+				.basePrice(new BigDecimal("250.00")).movieId(1L).hallId(1L).build();
 	}
 
 	@Test

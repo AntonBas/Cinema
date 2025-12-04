@@ -27,15 +27,15 @@ class SessionMapperTest {
 
 		CinemaHall hall = CinemaHall.builder().id(1L).name("Hall 1").build();
 
-		Session session = Session.builder().id(1L).startTime(futureTime).price(new BigDecimal("250.00")).movie(movie)
-				.hall(hall).build();
+		Session session = Session.builder().id(1L).startTime(futureTime).basePrice(new BigDecimal("250.00"))
+				.movie(movie).hall(hall).build();
 
 		SessionAdminResponse result = sessionMapper.toAdminDto(session);
 
 		assertThat(result).isNotNull();
 		assertThat(result.getId()).isEqualTo(1L);
 		assertThat(result.getStartTime()).isEqualTo(futureTime);
-		assertThat(result.getPrice()).isEqualTo(new BigDecimal("250.00"));
+		assertThat(result.getBasePrice()).isEqualTo(new BigDecimal("250.00"));
 		assertThat(result.getMovieId()).isEqualTo(1L);
 		assertThat(result.getMovieTitle()).isEqualTo("Test Movie");
 		assertThat(result.getMovieDuration()).isEqualTo(120);
@@ -57,15 +57,15 @@ class SessionMapperTest {
 
 		CinemaHall hall = CinemaHall.builder().id(1L).name("Hall 1").build();
 
-		Session session = Session.builder().id(1L).startTime(futureTime).price(new BigDecimal("250.00")).movie(movie)
-				.hall(hall).build();
+		Session session = Session.builder().id(1L).startTime(futureTime).basePrice(new BigDecimal("250.00"))
+				.movie(movie).hall(hall).build();
 
 		SessionScheduleResponse result = sessionMapper.toScheduleDto(session);
 
 		assertThat(result).isNotNull();
 		assertThat(result.getId()).isEqualTo(1L);
 		assertThat(result.getStartTime()).isEqualTo(futureTime);
-		assertThat(result.getPrice()).isEqualTo(new BigDecimal("250.00"));
+		assertThat(result.getBasePrice()).isEqualTo(new BigDecimal("250.00"));
 		assertThat(result.getMovieId()).isEqualTo(1L);
 		assertThat(result.getMovieTitle()).isEqualTo("Test Movie");
 		assertThat(result.getMoviePosterFileName()).isEqualTo("poster.jpg");
@@ -81,13 +81,13 @@ class SessionMapperTest {
 	@Test
 	void toEntity_ShouldMapRequestToEntity() {
 		SessionRequest request = SessionRequest.builder().startTime(LocalDateTime.now().plusHours(3))
-				.price(new BigDecimal("300.00")).movieId(2L).hallId(3L).build();
+				.basePrice(new BigDecimal("300.00")).movieId(2L).hallId(3L).build();
 
 		Session result = sessionMapper.toEntity(request);
 
 		assertThat(result).isNotNull();
 		assertThat(result.getStartTime()).isEqualTo(request.getStartTime());
-		assertThat(result.getPrice()).isEqualTo(new BigDecimal("300.00"));
+		assertThat(result.getBasePrice()).isEqualTo(new BigDecimal("300.00"));
 		assertThat(result.getId()).isNull();
 		assertThat(result.getMovie()).isNull();
 		assertThat(result.getHall()).isNull();

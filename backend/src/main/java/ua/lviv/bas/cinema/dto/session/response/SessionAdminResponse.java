@@ -17,7 +17,7 @@ public class SessionAdminResponse {
 	private Long id;
 	private LocalDateTime startTime;
 	private LocalDateTime endTime;
-	private BigDecimal price;
+	private BigDecimal basePrice;
 	private boolean available;
 
 	private Long movieId;

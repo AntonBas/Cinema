@@ -22,10 +22,10 @@ public class SessionRequest {
 	@NotNull(message = "Start time is required")
 	private LocalDateTime startTime;
 
-	@Positive(message = "Price must be positive")
-	@DecimalMin(value = "10.0", message = "Price must be at least 10 UAH")
-	@NotNull(message = "Price is required")
-	private BigDecimal price;
+	@Positive(message = "Base price must be positive")
+	@DecimalMin(value = "10.0", message = "Base price must be at least 10 UAH")
+	@NotNull(message = "Base price is required")
+	private BigDecimal basePrice;
 
 	@NotNull(message = "Movie ID is required")
 	private Long movieId;

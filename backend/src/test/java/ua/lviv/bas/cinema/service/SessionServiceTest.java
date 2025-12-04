@@ -63,7 +63,7 @@ class SessionServiceTest {
 	@BeforeEach
 	void setUp() {
 		sessionRequest = SessionRequest.builder().startTime(LocalDateTime.now().plusHours(2))
-				.price(new BigDecimal("250.00")).movieId(1L).hallId(1L).build();
+				.basePrice(new BigDecimal("250.00")).movieId(1L).hallId(1L).build();
 
 		movie = Movie.builder().id(1L).durationMinutes(120).title("Test Movie")
 				.releaseDate(LocalDate.now().minusDays(1)).endShowingDate(LocalDate.now().plusDays(30)).build();
@@ -71,14 +71,14 @@ class SessionServiceTest {
 		hall = CinemaHall.builder().id(1L).build();
 
 		LocalDateTime startTime = LocalDateTime.now().plusHours(2);
-		session = Session.builder().id(1L).startTime(startTime).price(new BigDecimal("250.00")).movie(movie).hall(hall)
-				.build();
+		session = Session.builder().id(1L).startTime(startTime).basePrice(new BigDecimal("250.00")).movie(movie)
+				.hall(hall).build();
 
-		sessionAdminDto = SessionAdminResponse.builder().id(1L).startTime(startTime).price(new BigDecimal("250.00"))
+		sessionAdminDto = SessionAdminResponse.builder().id(1L).startTime(startTime).basePrice(new BigDecimal("250.00"))
 				.build();
 
 		sessionScheduleDto = SessionScheduleResponse.builder().id(1L).startTime(startTime)
-				.price(new BigDecimal("250.00")).build();
+				.basePrice(new BigDecimal("250.00")).build();
 
 		pageable = PageRequest.of(0, 20);
 	}
@@ -115,7 +115,7 @@ class SessionServiceTest {
 	@Test
 	void createSession_ShouldThrowIllegalArgumentException_WhenStartTimeTooSoon() {
 		SessionRequest invalidRequest = SessionRequest.builder().startTime(LocalDateTime.now().plusMinutes(15))
-				.price(new BigDecimal("250.00")).movieId(1L).hallId(1L).build();
+				.basePrice(new BigDecimal("250.00")).movieId(1L).hallId(1L).build();
 
 		assertThatThrownBy(() -> sessionService.createSession(invalidRequest))
 				.isInstanceOf(IllegalArgumentException.class)
@@ -143,7 +143,7 @@ class SessionServiceTest {
 	@Test
 	void updateSession_ShouldUpdateSuccessfully() {
 		SessionRequest updateRequest = SessionRequest.builder().startTime(LocalDateTime.now().plusHours(3))
-				.price(new BigDecimal("300.00")).movieId(1L).hallId(1L).build();
+				.basePrice(new BigDecimal("300.00")).movieId(1L).hallId(1L).build();
 
 		when(sessionRepository.findById(1L)).thenReturn(Optional.of(session));
 		when(movieService.getMovieEntityById(1L)).thenReturn(movie);

@@ -45,8 +45,8 @@ public class Session {
 
 	@NotNull
 	@Positive
-	@Column(nullable = false)
-	private BigDecimal price;
+	@Column(nullable = false, name = "base_price")
+	private BigDecimal basePrice;
 
 	@NotNull
 	@ManyToOne(fetch = FetchType.LAZY)
@@ -92,7 +92,7 @@ public class Session {
 
 	@Override
 	public String toString() {
-		return "Session [id=" + id + ", startTime=" + startTime + ", price=" + price + "]";
+		return "Session [id=" + id + ", startTime=" + startTime + ", price=" + basePrice + "]";
 	}
 
 }

@@ -17,7 +17,7 @@ public class SessionScheduleResponse {
 	private Long id;
 	private LocalDateTime startTime;
 	private LocalDateTime endTime;
-	private BigDecimal price;
+	private BigDecimal basePrice;
 	private Integer availableSeats;
 
 	private Long movieId;

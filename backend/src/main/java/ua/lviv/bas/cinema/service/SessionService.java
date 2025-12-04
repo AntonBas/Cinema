@@ -88,7 +88,7 @@ public class SessionService {
 		}
 
 		session.setStartTime(request.getStartTime());
-		session.setPrice(request.getPrice());
+		session.setBasePrice(request.getBasePrice());
 		session.setMovie(movie);
 		session.setHall(hall);
 
@@ -212,7 +212,7 @@ public class SessionService {
 		response.setTicketsSold(ticketsSold);
 
 		if (ticketsSold > 0) {
-			response.setTotalRevenue(session.getPrice().multiply(BigDecimal.valueOf(ticketsSold)));
+			response.setTotalRevenue(session.getBasePrice().multiply(BigDecimal.valueOf(ticketsSold)));
 		} else {
 			response.setTotalRevenue(BigDecimal.ZERO);
 		}
