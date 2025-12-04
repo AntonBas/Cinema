@@ -13,6 +13,7 @@ import { HomePage } from '@/pages/home/HomePage';
 import { AdminPage } from '@/pages/admin/AdminPage';
 import { DashboardPage } from '@/pages/account/DashboardPage';
 import { SecurityPage } from '@/pages/account/SecurityPage';
+import { MoviesLayout, CurrentMoviesPage, UpcomingMoviesPage, MovieDetailPage } from '@/pages/movies';
 
 function App() {
   return (
@@ -28,6 +29,14 @@ function App() {
         <Route path="/account/security" element={<ProtectedRoute><SecurityPage /></ProtectedRoute>} />
 
         <Route path="/admin/*" element={<AdminRoute><AdminPage /></AdminRoute>} />
+
+        <Route path="/movies" element={<MoviesLayout />}>
+          <Route path="current" element={<CurrentMoviesPage />} />
+          <Route path="upcoming" element={<UpcomingMoviesPage />} />
+          <Route index element={<CurrentMoviesPage />} />
+        </Route>
+
+        <Route path="/movies/:slug" element={<MovieDetailPage />} />
 
         <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
 
