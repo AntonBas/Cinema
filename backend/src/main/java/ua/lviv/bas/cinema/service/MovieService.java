@@ -34,6 +34,7 @@ import ua.lviv.bas.cinema.dto.movie.request.MovieUpdateRequest;
 import ua.lviv.bas.cinema.dto.movie.response.MovieCardResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieDetailResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieSessionSearchResponse;
+import ua.lviv.bas.cinema.dto.shared.PageResponse;
 import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
 import ua.lviv.bas.cinema.exception.domain.cinema.MovieNotFoundException;
 import ua.lviv.bas.cinema.exception.infrastructure.ExternalServiceException;
@@ -417,5 +418,31 @@ public class MovieService {
 	private MovieSessionSearchResponse toSessionSearchResponse(Movie movie) {
 		return MovieSessionSearchResponse.builder().id(movie.getId()).title(movie.getTitle())
 				.releaseYear(movie.getReleaseDate().getYear()).durationMinutes(movie.getDurationMinutes()).build();
+	}
+
+	@Transactional(readOnly = true)
+	public PageResponse<MovieDetailResponse> getMoviesPaginatedResponse(int page, int size) {
+		log.debug("Getting paginated movies: page={}, size={}", page, size);
+
+		page = Math.max(page, 0);
+		size = Math.min(Math.max(size, 1), 50);
+
+		Pageable pageable = PageRequest.of(page, size);
+		Page<MovieDetailResponse> pageResult = getMoviesPaginated(pageable);
+
+		return PageResponse.of(pageResult);
+	}
+
+	@Transactional(readOnly = true)
+	public PageResponse<MovieCardResponse> searchMoviesResponse(String searchTerm, int page, int size) {
+		log.debug("Searching movies: term='{}', page={}, size={}", searchTerm, page, size);
+
+		page = Math.max(page, 0);
+		size = Math.min(Math.max(size, 1), 50);
+
+		Pageable pageable = PageRequest.of(page, size, Sort.by("title").ascending());
+		Page<MovieCardResponse> pageResult = searchMovies(searchTerm, pageable);
+
+		return PageResponse.of(pageResult);
 	}
 }
