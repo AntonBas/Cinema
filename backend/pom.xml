@@ -18,15 +18,13 @@
       <mapstruct.version>1.5.5.Final</mapstruct.version>
       <lombok.version>1.18.30</lombok.version>
       <flyway.version>11.3.0</flyway.version>
-      <querydsl.version>5.1.0</querydsl.version>  <!-- Оновити до 5.1.0 -->
+      <querydsl.version>5.1.0</querydsl.version>
    </properties>
    
    <dependencies>
-      <!-- Додати цю залежність ОБОВ'ЯЗКОВО -->
       <dependency>
          <groupId>jakarta.persistence</groupId>
          <artifactId>jakarta.persistence-api</artifactId>
-         <version>3.1.0</version>
          <scope>provided</scope>
       </dependency>
       
@@ -128,7 +126,6 @@
          <scope>runtime</scope>
       </dependency>
       
-      <!-- QueryDSL -->
       <dependency>
         <groupId>com.querydsl</groupId>
         <artifactId>querydsl-jpa</artifactId>
@@ -161,12 +158,10 @@
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-compiler-plugin</artifactId>
-            <version>3.13.0</version>
             <configuration>
                <source>${java.version}</source>
                <target>${java.version}</target>
                <annotationProcessorPaths>
-                  <!-- Важливо: Jakarta persistence має бути першим -->
                   <path>
                      <groupId>jakarta.persistence</groupId>
                      <artifactId>jakarta.persistence-api</artifactId>
