@@ -131,8 +131,6 @@ public class PersonService {
 	}
 
 	private PageResponse<PersonResponse> toPageResponse(Page<Person> personPage) {
-		List<PersonResponse> content = personPage.getContent().stream().map(personMapper::toDto).toList();
-		return new PageResponse<>(content, personPage.getNumber(), personPage.getTotalPages(),
-				personPage.getTotalElements(), personPage.getSize());
+		return PageResponse.of(personPage, personMapper::toDto);
 	}
 }

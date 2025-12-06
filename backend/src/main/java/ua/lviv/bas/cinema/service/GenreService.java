@@ -99,9 +99,6 @@ public class GenreService {
 	}
 
 	private PageResponse<GenreResponse> toPageResponse(Page<Genre> genrePage) {
-		List<GenreResponse> content = genrePage.getContent().stream().map(genreMapper::toDto).toList();
-
-		return new PageResponse<>(content, genrePage.getNumber(), genrePage.getTotalPages(),
-				genrePage.getTotalElements(), genrePage.getSize());
+		return PageResponse.of(genrePage, genreMapper::toDto);
 	}
 }
