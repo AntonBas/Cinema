@@ -1,4 +1,3 @@
-
 package ua.lviv.bas.cinema.dto.movie.request;
 
 import java.time.LocalDate;
