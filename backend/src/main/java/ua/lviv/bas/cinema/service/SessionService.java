@@ -22,6 +22,7 @@ import ua.lviv.bas.cinema.exception.domain.cinema.SessionNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.cinema.SessionTimeConflictException;
 import ua.lviv.bas.cinema.mapper.SessionMapper;
 import ua.lviv.bas.cinema.repository.SessionRepository;
+import ua.lviv.bas.cinema.service.query.SessionQueryService;
 
 @Slf4j
 @Service
@@ -29,6 +30,7 @@ import ua.lviv.bas.cinema.repository.SessionRepository;
 public class SessionService {
 
 	private final SessionRepository sessionRepository;
+	private final SessionQueryService sessionQueryService;
 	private final SessionMapper sessionMapper;
 	private final MovieService movieService;
 	private final CinemaHallService cinemaHallService;
@@ -113,14 +115,7 @@ public class SessionService {
 	@Transactional(readOnly = true)
 	public Page<SessionAdminResponse> getAllSessions(Pageable pageable, String search) {
 		log.debug("Retrieving all sessions with pagination");
-		Page<Session> sessions;
-
-		if (search != null && !search.trim().isEmpty()) {
-			sessions = sessionRepository.findByMovieTitleContainingIgnoreCase(search, pageable);
-		} else {
-			sessions = sessionRepository.findAll(pageable);
-		}
-
+		Page<Session> sessions = sessionQueryService.findByMovieTitle(search, pageable);
 		return sessions.map(this::toAdminResponse);
 	}
 
@@ -130,28 +125,28 @@ public class SessionService {
 		LocalDateTime startOfDay = date.atStartOfDay();
 		LocalDateTime endOfDay = date.atTime(23, 59, 59);
 
-		Page<Session> sessions = sessionRepository.findByStartTimeBetween(startOfDay, endOfDay, pageable);
+		Page<Session> sessions = sessionQueryService.findByStartTimeBetween(startOfDay, endOfDay, pageable);
 		return sessions.map(this::toAdminResponse);
 	}
 
 	@Transactional(readOnly = true)
 	public Page<SessionAdminResponse> getSessionsByHall(Long hallId, Pageable pageable) {
 		log.debug("Retrieving sessions for hall: {} with pagination", hallId);
-		Page<Session> sessions = sessionRepository.findByHallId(hallId, pageable);
+		Page<Session> sessions = sessionQueryService.findByHallId(hallId, pageable);
 		return sessions.map(this::toAdminResponse);
 	}
 
 	@Transactional(readOnly = true)
 	public Page<SessionAdminResponse> getSessionsByMovie(Long movieId, Pageable pageable) {
 		log.debug("Retrieving sessions for movie: {} with pagination", movieId);
-		Page<Session> sessions = sessionRepository.findByMovieId(movieId, pageable);
+		Page<Session> sessions = sessionQueryService.findByMovieId(movieId, pageable);
 		return sessions.map(this::toAdminResponse);
 	}
 
 	@Transactional(readOnly = true)
 	public Page<SessionAdminResponse> getAvailableSessions(Pageable pageable) {
 		log.debug("Retrieving available sessions with pagination");
-		Page<Session> sessions = sessionRepository.findByStartTimeAfter(LocalDateTime.now(), pageable);
+		Page<Session> sessions = sessionQueryService.findAvailableSessions(pageable);
 		return sessions.map(this::toAdminResponse);
 	}
 
@@ -161,7 +156,7 @@ public class SessionService {
 		LocalDateTime start = LocalDateTime.now();
 		LocalDateTime end = start.plusDays(days);
 
-		Page<Session> sessions = sessionRepository.findByStartTimeBetween(start, end, pageable);
+		Page<Session> sessions = sessionQueryService.findByStartTimeBetween(start, end, pageable);
 		return sessions.map(this::toAdminResponse);
 	}
 
@@ -175,10 +170,8 @@ public class SessionService {
 	public boolean hasTimeConflict(Long hallId, LocalDateTime startTime, Integer durationMinutes,
 			Long excludeSessionId) {
 		LocalDateTime endTime = startTime.plusMinutes(durationMinutes);
-
-		List<Session> conflictingSessions = sessionRepository.findConflictingSessions(hallId, startTime, endTime,
+		List<Session> conflictingSessions = sessionQueryService.findConflictingSessions(hallId, startTime, endTime,
 				excludeSessionId);
-
 		return !conflictingSessions.isEmpty();
 	}
 
@@ -198,7 +191,7 @@ public class SessionService {
 			endTime = startTime.plusDays(days);
 		}
 
-		Page<Session> sessions = sessionRepository.findFilteredSessions(startTime, endTime, hallId, movieId, pageable);
+		Page<Session> sessions = sessionQueryService.findFiltered(startTime, endTime, hallId, movieId, pageable);
 		return sessions.map(this::toAdminResponse);
 	}
 
@@ -244,7 +237,7 @@ public class SessionService {
 	@Transactional(readOnly = true)
 	public Page<SessionScheduleResponse> getScheduleSessions(Pageable pageable) {
 		log.debug("Retrieving schedule sessions with pagination");
-		Page<Session> sessions = sessionRepository.findByStartTimeAfter(LocalDateTime.now(), pageable);
+		Page<Session> sessions = sessionQueryService.findAvailableSessions(pageable);
 		return sessions.map(this::toScheduleResponse);
 	}
 
@@ -254,14 +247,14 @@ public class SessionService {
 		LocalDateTime startOfDay = date.atStartOfDay();
 		LocalDateTime endOfDay = date.atTime(23, 59, 59);
 
-		Page<Session> sessions = sessionRepository.findByStartTimeBetween(startOfDay, endOfDay, pageable);
+		Page<Session> sessions = sessionQueryService.findByStartTimeBetween(startOfDay, endOfDay, pageable);
 		return sessions.map(this::toScheduleResponse);
 	}
 
 	@Transactional(readOnly = true)
 	public Page<SessionScheduleResponse> getScheduleSessionsByMovie(Long movieId, Pageable pageable) {
 		log.debug("Retrieving schedule sessions for movie: {} with pagination", movieId);
-		Page<Session> sessions = sessionRepository.findByMovieId(movieId, pageable);
+		Page<Session> sessions = sessionQueryService.findByMovieId(movieId, pageable);
 		return sessions.map(this::toScheduleResponse);
 	}
 
