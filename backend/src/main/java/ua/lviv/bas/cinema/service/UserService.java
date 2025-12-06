@@ -1,5 +1,7 @@
 package ua.lviv.bas.cinema.service;
 
+import java.util.List;
+
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
@@ -29,6 +31,7 @@ import ua.lviv.bas.cinema.exception.domain.user.SelfRoleChangeException;
 import ua.lviv.bas.cinema.exception.domain.user.UserNotFoundException;
 import ua.lviv.bas.cinema.mapper.UserMapper;
 import ua.lviv.bas.cinema.repository.UserRepository;
+import ua.lviv.bas.cinema.service.query.UserQueryService;
 
 @Slf4j
 @Service
@@ -36,6 +39,7 @@ import ua.lviv.bas.cinema.repository.UserRepository;
 public class UserService {
 
 	private final UserRepository userRepository;
+	private final UserQueryService userQueryService;
 	private final PasswordEncoder passwordEncoder;
 	private final UserMapper userMapper;
 	private final EmailTokenService emailTokenService;
@@ -160,7 +164,7 @@ public class UserService {
 	@Transactional(readOnly = true)
 	public Page<AdminUserListResponse> findAllForAdmin(String search, UserRole role, Boolean enabled,
 			Pageable pageable) {
-		return userRepository.findByFilters(search, role, enabled, pageable).map(userMapper::toAdminListDto);
+		return userQueryService.findFilteredUsers(search, role, enabled, pageable).map(userMapper::toAdminListDto);
 	}
 
 	@Transactional(readOnly = true)
@@ -182,16 +186,26 @@ public class UserService {
 	@Transactional(readOnly = true)
 	@Cacheable(value = "users", key = "#email")
 	public User findByEmail(String email) {
-		return userRepository.findByEmail(email).orElseThrow(() -> new UserNotFoundException(email));
+		return userQueryService.findByEmail(email).orElseThrow(() -> new UserNotFoundException(email));
 	}
 
 	@Transactional(readOnly = true)
 	public boolean existsByEmail(String email) {
-		return userRepository.existsByEmail(email);
+		return userQueryService.existsByEmail(email);
 	}
 
 	@Transactional(readOnly = true)
 	public boolean existsById(Long id) {
 		return userRepository.existsById(id);
+	}
+
+	@Transactional(readOnly = true)
+	public List<User> findAllActiveAdmins() {
+		return userQueryService.findAllActiveByRole(UserRole.ROLE_ADMIN);
+	}
+
+	@Transactional(readOnly = true)
+	public List<User> findAllActiveUsers() {
+		return userQueryService.findAllActiveUsers();
 	}
 }
