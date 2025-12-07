@@ -55,7 +55,10 @@ class PersonControllerTest {
 
 	private PageResponse<PersonResponse> createPageResponse(List<PersonResponse> content, int currentPage,
 			int totalPages, long totalElements, int pageSize) {
-		return new PageResponse<>(content, currentPage, totalPages, totalElements, pageSize);
+		return PageResponse.<PersonResponse>builder().content(content).currentPage(currentPage).totalPages(totalPages)
+				.totalElements(totalElements).pageSize(pageSize).first(currentPage == 0)
+				.last(currentPage == totalPages - 1 || totalPages == 0).empty(content == null || content.isEmpty())
+				.build();
 	}
 
 	@Test
@@ -79,6 +82,13 @@ class PersonControllerTest {
 		when(personService.getPersonById(999L)).thenThrow(new PersonNotFoundException(999L));
 
 		assertThrows(PersonNotFoundException.class, () -> personController.getPersonById(999L));
+	}
+
+	@Test
+	void getPersonById_WhenIdIsZero_ShouldThrowException() {
+		when(personService.getPersonById(0L)).thenThrow(new PersonNotFoundException(0L));
+
+		assertThrows(PersonNotFoundException.class, () -> personController.getPersonById(0L));
 	}
 
 	@Test
@@ -170,6 +180,16 @@ class PersonControllerTest {
 	}
 
 	@Test
+	void quickCreate_WhenDuplicateName_ShouldThrowException() {
+		QuickCreatePersonRequest request = createQuickCreatePersonRequest("Existing Person", PersonRole.DIRECTOR);
+
+		when(personService.quickCreate(any(QuickCreatePersonRequest.class)))
+				.thenThrow(new DuplicateEntityException("Person", "Existing Person"));
+
+		assertThrows(DuplicateEntityException.class, () -> personController.quickCreate(request));
+	}
+
+	@Test
 	void getAll_ShouldReturnListOfPersons() {
 		PersonResponse person1 = createPersonResponse(1L, "Person 1", PersonRole.ACTOR);
 		PersonResponse person2 = createPersonResponse(2L, "Person 2", PersonRole.DIRECTOR);
@@ -183,7 +203,23 @@ class PersonControllerTest {
 		List<PersonResponse> responseBody = Objects.requireNonNull(response.getBody());
 		assertEquals(2, responseBody.size());
 		assertEquals("Person 1", responseBody.get(0).getName());
+		assertEquals(PersonRole.ACTOR, responseBody.get(0).getRole());
 		assertEquals("Person 2", responseBody.get(1).getName());
+		assertEquals(PersonRole.DIRECTOR, responseBody.get(1).getRole());
+		verify(personService).getAllPersons();
+	}
+
+	@Test
+	void getAll_WhenNoPersons_ShouldReturnEmptyList() {
+		List<PersonResponse> emptyList = List.of();
+
+		when(personService.getAllPersons()).thenReturn(emptyList);
+
+		ResponseEntity<List<PersonResponse>> response = personController.getAll();
+
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+		List<PersonResponse> responseBody = Objects.requireNonNull(response.getBody());
+		assertEquals(0, responseBody.size());
 		verify(personService).getAllPersons();
 	}
 
@@ -202,6 +238,7 @@ class PersonControllerTest {
 		PageResponse<PersonResponse> responseBody = Objects.requireNonNull(response.getBody());
 		assertEquals(1, responseBody.getContent().size());
 		assertEquals("Anton Bas", responseBody.getContent().get(0).getName());
+		assertEquals(PersonRole.ACTOR, responseBody.getContent().get(0).getRole());
 		assertEquals(0, responseBody.getCurrentPage());
 		assertEquals(1, responseBody.getTotalPages());
 		assertEquals(1, responseBody.getTotalElements());
@@ -227,6 +264,22 @@ class PersonControllerTest {
 	}
 
 	@Test
+	void searchPersons_WithEmptyStringQuery_ShouldReturnPagedResponse() {
+		PersonResponse person1 = createPersonResponse(1L, "Person 1", PersonRole.ACTOR);
+		List<PersonResponse> content = List.of(person1);
+		PageResponse<PersonResponse> pageResponse = createPageResponse(content, 0, 1, 1, 10);
+
+		when(personService.searchPersons(eq(""), isNull(), eq(0), eq(10))).thenReturn(pageResponse);
+
+		ResponseEntity<PageResponse<PersonResponse>> response = personController.searchPersons("", null, 0, 10);
+
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+		PageResponse<PersonResponse> responseBody = Objects.requireNonNull(response.getBody());
+		assertEquals(1, responseBody.getContent().size());
+		verify(personService).searchPersons("", null, 0, 10);
+	}
+
+	@Test
 	void searchPersons_WithLargeSize_ShouldLimitToMaxPageSize() {
 		PersonResponse person1 = createPersonResponse(1L, "Person 1", PersonRole.ACTOR);
 		List<PersonResponse> content = List.of(person1);
@@ -240,5 +293,87 @@ class PersonControllerTest {
 		PageResponse<PersonResponse> responseBody = Objects.requireNonNull(response.getBody());
 		assertEquals(50, responseBody.getPageSize());
 		verify(personService).searchPersons(null, null, 0, 50);
+	}
+
+	@Test
+	void searchPersons_WithMaxPageSize_ShouldReturnPagedResponse() {
+		PersonResponse person1 = createPersonResponse(1L, "Person 1", PersonRole.ACTOR);
+		List<PersonResponse> content = List.of(person1);
+		PageResponse<PersonResponse> pageResponse = createPageResponse(content, 0, 1, 1, 50);
+
+		when(personService.searchPersons(isNull(), isNull(), eq(0), eq(50))).thenReturn(pageResponse);
+
+		ResponseEntity<PageResponse<PersonResponse>> response = personController.searchPersons(null, null, 0, 50);
+
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+		PageResponse<PersonResponse> responseBody = Objects.requireNonNull(response.getBody());
+		assertEquals(50, responseBody.getPageSize());
+		verify(personService).searchPersons(null, null, 0, 50);
+	}
+
+	@Test
+	void searchPersons_WithNegativePage_ShouldReturnPagedResponse() {
+		PersonResponse person1 = createPersonResponse(1L, "Person 1", PersonRole.ACTOR);
+		List<PersonResponse> content = List.of(person1);
+		PageResponse<PersonResponse> pageResponse = createPageResponse(content, -1, 1, 1, 10);
+
+		when(personService.searchPersons(isNull(), isNull(), eq(-1), eq(10))).thenReturn(pageResponse);
+
+		ResponseEntity<PageResponse<PersonResponse>> response = personController.searchPersons(null, null, -1, 10);
+
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+		PageResponse<PersonResponse> responseBody = Objects.requireNonNull(response.getBody());
+		assertEquals(-1, responseBody.getCurrentPage());
+		verify(personService).searchPersons(null, null, -1, 10);
+	}
+
+	@Test
+	void searchPersons_WithZeroSize_ShouldReturnPagedResponse() {
+		PersonResponse person1 = createPersonResponse(1L, "Person 1", PersonRole.ACTOR);
+		List<PersonResponse> content = List.of(person1);
+		PageResponse<PersonResponse> pageResponse = createPageResponse(content, 0, 1, 1, 0);
+
+		when(personService.searchPersons(isNull(), isNull(), eq(0), eq(0))).thenReturn(pageResponse);
+
+		ResponseEntity<PageResponse<PersonResponse>> response = personController.searchPersons(null, null, 0, 0);
+
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+		PageResponse<PersonResponse> responseBody = Objects.requireNonNull(response.getBody());
+		assertEquals(0, responseBody.getPageSize());
+		verify(personService).searchPersons(null, null, 0, 0);
+	}
+
+	@Test
+	void searchPersons_DefaultParameters_ShouldWork() {
+		PersonResponse person1 = createPersonResponse(1L, "Person 1", PersonRole.ACTOR);
+		List<PersonResponse> content = List.of(person1);
+		PageResponse<PersonResponse> pageResponse = createPageResponse(content, 0, 1, 1, 12);
+
+		when(personService.searchPersons(isNull(), isNull(), eq(0), eq(12))).thenReturn(pageResponse);
+
+		ResponseEntity<PageResponse<PersonResponse>> response = personController.searchPersons(null, null, 0, 12);
+
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+		PageResponse<PersonResponse> responseBody = Objects.requireNonNull(response.getBody());
+		assertEquals(12, responseBody.getPageSize());
+		verify(personService).searchPersons(null, null, 0, 12);
+	}
+
+	@Test
+	void searchPersons_WithSpecificRole_ShouldReturnPagedResponse() {
+		PersonResponse person1 = createPersonResponse(1L, "Director 1", PersonRole.DIRECTOR);
+		List<PersonResponse> content = List.of(person1);
+		PageResponse<PersonResponse> pageResponse = createPageResponse(content, 0, 1, 1, 10);
+
+		when(personService.searchPersons(isNull(), eq(PersonRole.DIRECTOR), eq(0), eq(10))).thenReturn(pageResponse);
+
+		ResponseEntity<PageResponse<PersonResponse>> response = personController.searchPersons(null,
+				PersonRole.DIRECTOR, 0, 10);
+
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+		PageResponse<PersonResponse> responseBody = Objects.requireNonNull(response.getBody());
+		assertEquals(1, responseBody.getContent().size());
+		assertEquals(PersonRole.DIRECTOR, responseBody.getContent().get(0).getRole());
+		verify(personService).searchPersons(null, PersonRole.DIRECTOR, 0, 10);
 	}
 }

@@ -1,7 +1,9 @@
 package ua.lviv.bas.cinema.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
@@ -35,6 +37,7 @@ import ua.lviv.bas.cinema.dto.movie.response.MovieCardResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieDetailResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieSessionSearchResponse;
 import ua.lviv.bas.cinema.dto.movie.response.PersonResponse;
+import ua.lviv.bas.cinema.dto.shared.ApiResponse;
 import ua.lviv.bas.cinema.dto.shared.PageResponse;
 import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
 import ua.lviv.bas.cinema.exception.domain.cinema.MovieNotFoundException;
@@ -66,7 +69,7 @@ class MovieControllerTest {
 				.screenwriters(List.of(screenwriterResponse)).build();
 	}
 
-	private MovieCardResponse createMovieResponse(Long id, String title, String slug, MovieStatus status) {
+	private MovieCardResponse createMovieCardResponse(Long id, String title, String slug, MovieStatus status) {
 		return MovieCardResponse.builder().id(id).title(title).slug(slug).posterUrl("/api/movies/" + id + "/poster")
 				.durationMinutes(120).ageRating(AgeRating.PEGI_12).releaseDate(LocalDate.now().plusDays(1))
 				.status(status).currentlyShowing(false).build();
@@ -93,11 +96,13 @@ class MovieControllerTest {
 
 		when(movieService.getMovieById(1L)).thenReturn(movieDto);
 
-		ResponseEntity<MovieDetailResponse> response = movieController.getMovieById(1L);
+		ResponseEntity<ApiResponse<MovieDetailResponse>> response = movieController.getMovieById(1L);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
-		MovieDetailResponse responseBody = Objects.requireNonNull(response.getBody(),
-				"Response body should not be null");
+		ApiResponse<MovieDetailResponse> apiResponse = Objects.requireNonNull(response.getBody());
+		assertTrue(apiResponse.isSuccess());
+		MovieDetailResponse responseBody = apiResponse.getData();
+		assertNotNull(responseBody);
 		assertEquals(1L, responseBody.getId());
 		assertEquals("Test Movie", responseBody.getTitle());
 		verify(movieService).getMovieById(1L);
@@ -117,11 +122,13 @@ class MovieControllerTest {
 
 		when(movieService.getMovieBySlug("test-movie")).thenReturn(movieDto);
 
-		ResponseEntity<MovieDetailResponse> response = movieController.getMovieBySlug("test-movie");
+		ResponseEntity<ApiResponse<MovieDetailResponse>> response = movieController.getMovieBySlug("test-movie");
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
-		MovieDetailResponse responseBody = Objects.requireNonNull(response.getBody(),
-				"Response body should not be null");
+		ApiResponse<MovieDetailResponse> apiResponse = Objects.requireNonNull(response.getBody());
+		assertTrue(apiResponse.isSuccess());
+		MovieDetailResponse responseBody = apiResponse.getData();
+		assertNotNull(responseBody);
 		assertEquals("test-movie", responseBody.getSlug());
 		verify(movieService).getMovieBySlug("test-movie");
 	}
@@ -142,11 +149,13 @@ class MovieControllerTest {
 
 		when(movieService.getAllMovies()).thenReturn(movies);
 
-		ResponseEntity<List<MovieDetailResponse>> response = movieController.getAllMovies();
+		ResponseEntity<ApiResponse<List<MovieDetailResponse>>> response = movieController.getAllMovies();
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
-		List<MovieDetailResponse> responseBody = Objects.requireNonNull(response.getBody(),
-				"Response body should not be null");
+		ApiResponse<List<MovieDetailResponse>> apiResponse = Objects.requireNonNull(response.getBody());
+		assertTrue(apiResponse.isSuccess());
+		List<MovieDetailResponse> responseBody = apiResponse.getData();
+		assertNotNull(responseBody);
 		assertEquals(2, responseBody.size());
 		assertEquals("Movie 1", responseBody.get(0).getTitle());
 		assertEquals("Movie 2", responseBody.get(1).getTitle());
@@ -157,11 +166,13 @@ class MovieControllerTest {
 	void getAllMovies_WhenNoMovies_ShouldReturnEmptyList() {
 		when(movieService.getAllMovies()).thenReturn(List.of());
 
-		ResponseEntity<List<MovieDetailResponse>> response = movieController.getAllMovies();
+		ResponseEntity<ApiResponse<List<MovieDetailResponse>>> response = movieController.getAllMovies();
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
-		List<MovieDetailResponse> responseBody = Objects.requireNonNull(response.getBody(),
-				"Response body should not be null");
+		ApiResponse<List<MovieDetailResponse>> apiResponse = Objects.requireNonNull(response.getBody());
+		assertTrue(apiResponse.isSuccess());
+		List<MovieDetailResponse> responseBody = apiResponse.getData();
+		assertNotNull(responseBody);
 		assertEquals(0, responseBody.size());
 		verify(movieService).getAllMovies();
 	}
@@ -170,37 +181,45 @@ class MovieControllerTest {
 	void getMoviesPaginated_ShouldReturnPage() {
 		MovieDetailResponse movie = createMovieDto(1L, "Test Movie", "test-movie", MovieStatus.UPCOMING);
 		Page<MovieDetailResponse> page = new PageImpl<>(List.of(movie), PageRequest.of(0, 10), 1);
+		PageResponse<MovieDetailResponse> pageResponse = PageResponse.of(page);
 
-		when(movieService.getMoviesPaginated(any(PageRequest.class))).thenReturn(page);
+		when(movieService.getMoviesPaginatedResponse(0, 10)).thenReturn(pageResponse);
 
-		ResponseEntity<PageResponse<MovieDetailResponse>> response = movieController.getMoviesPaginated(0, 10);
+		ResponseEntity<ApiResponse<PageResponse<MovieDetailResponse>>> response = movieController.getMoviesPaginated(0,
+				10);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
-		PageResponse<MovieDetailResponse> responseBody = Objects.requireNonNull(response.getBody(),
-				"Response body should not be null");
+		ApiResponse<PageResponse<MovieDetailResponse>> apiResponse = Objects.requireNonNull(response.getBody());
+		assertTrue(apiResponse.isSuccess());
+		PageResponse<MovieDetailResponse> responseBody = apiResponse.getData();
+		assertNotNull(responseBody);
 		assertEquals(1, responseBody.getContent().size());
 		assertEquals("Test Movie", responseBody.getContent().get(0).getTitle());
 		assertEquals(1, responseBody.getTotalElements());
 		assertEquals(0, responseBody.getCurrentPage());
 		assertEquals(1, responseBody.getTotalPages());
 		assertEquals(10, responseBody.getPageSize());
-		verify(movieService).getMoviesPaginated(PageRequest.of(0, 10));
+		verify(movieService).getMoviesPaginatedResponse(0, 10);
 	}
 
 	@Test
 	void getMoviesPaginated_ShouldLimitSizeToMaxPageSize() {
 		MovieDetailResponse movie = createMovieDto(1L, "Test Movie", "test-movie", MovieStatus.UPCOMING);
 		Page<MovieDetailResponse> page = new PageImpl<>(List.of(movie), PageRequest.of(0, 50), 1);
+		PageResponse<MovieDetailResponse> pageResponse = PageResponse.of(page);
 
-		when(movieService.getMoviesPaginated(any(PageRequest.class))).thenReturn(page);
+		when(movieService.getMoviesPaginatedResponse(0, 50)).thenReturn(pageResponse);
 
-		ResponseEntity<PageResponse<MovieDetailResponse>> response = movieController.getMoviesPaginated(0, 100);
+		ResponseEntity<ApiResponse<PageResponse<MovieDetailResponse>>> response = movieController.getMoviesPaginated(0,
+				100);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
-		PageResponse<MovieDetailResponse> responseBody = Objects.requireNonNull(response.getBody(),
-				"Response body should not be null");
+		ApiResponse<PageResponse<MovieDetailResponse>> apiResponse = Objects.requireNonNull(response.getBody());
+		assertTrue(apiResponse.isSuccess());
+		PageResponse<MovieDetailResponse> responseBody = apiResponse.getData();
+		assertNotNull(responseBody);
 		assertEquals(50, responseBody.getPageSize());
-		verify(movieService).getMoviesPaginated(PageRequest.of(0, 50));
+		verify(movieService).getMoviesPaginatedResponse(0, 50);
 	}
 
 	@Test
@@ -213,11 +232,15 @@ class MovieControllerTest {
 		createRequest.setPosterFile(posterFile);
 		when(movieService.createMovie(any(MovieCreateRequest.class))).thenReturn(movieDto);
 
-		ResponseEntity<MovieDetailResponse> response = movieController.createMovie(createRequest, posterFile);
+		ResponseEntity<ApiResponse<MovieDetailResponse>> response = movieController.createMovie(createRequest,
+				posterFile);
 
 		assertEquals(HttpStatus.CREATED, response.getStatusCode());
-		MovieDetailResponse responseBody = Objects.requireNonNull(response.getBody(),
-				"Response body should not be null");
+		ApiResponse<MovieDetailResponse> apiResponse = Objects.requireNonNull(response.getBody());
+		assertTrue(apiResponse.isSuccess());
+		assertEquals("Movie created successfully", apiResponse.getMessage());
+		MovieDetailResponse responseBody = apiResponse.getData();
+		assertNotNull(responseBody);
 		assertEquals(1L, responseBody.getId());
 		assertEquals("New Movie", responseBody.getTitle());
 		verify(movieService).createMovie(createRequest);
@@ -246,11 +269,15 @@ class MovieControllerTest {
 		updateRequest.setPosterFile(posterFile);
 		when(movieService.updateMovie(eq(1L), any(MovieUpdateRequest.class))).thenReturn(movieDto);
 
-		ResponseEntity<MovieDetailResponse> response = movieController.updateMovie(1L, updateRequest, posterFile);
+		ResponseEntity<ApiResponse<MovieDetailResponse>> response = movieController.updateMovie(1L, updateRequest,
+				posterFile);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
-		MovieDetailResponse responseBody = Objects.requireNonNull(response.getBody(),
-				"Response body should not be null");
+		ApiResponse<MovieDetailResponse> apiResponse = Objects.requireNonNull(response.getBody());
+		assertTrue(apiResponse.isSuccess());
+		assertEquals("Movie updated successfully", apiResponse.getMessage());
+		MovieDetailResponse responseBody = apiResponse.getData();
+		assertNotNull(responseBody);
 		assertEquals(1L, responseBody.getId());
 		assertEquals("Updated Movie", responseBody.getTitle());
 		verify(movieService).updateMovie(1L, updateRequest);
@@ -276,20 +303,27 @@ class MovieControllerTest {
 
 		when(movieService.updateMovie(eq(1L), any(MovieUpdateRequest.class))).thenReturn(movieDto);
 
-		ResponseEntity<MovieDetailResponse> response = movieController.updateMovie(1L, updateRequest, null);
+		ResponseEntity<ApiResponse<MovieDetailResponse>> response = movieController.updateMovie(1L, updateRequest,
+				null);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
-		MovieDetailResponse responseBody = Objects.requireNonNull(response.getBody(),
-				"Response body should not be null");
+		ApiResponse<MovieDetailResponse> apiResponse = Objects.requireNonNull(response.getBody());
+		assertTrue(apiResponse.isSuccess());
+		assertEquals("Movie updated successfully", apiResponse.getMessage());
+		MovieDetailResponse responseBody = apiResponse.getData();
+		assertNotNull(responseBody);
 		assertEquals("Updated Movie", responseBody.getTitle());
 		verify(movieService).updateMovie(1L, updateRequest);
 	}
 
 	@Test
-	void deleteMovie_ShouldReturnNoContent() {
-		ResponseEntity<Void> response = movieController.deleteMovie(1L);
+	void deleteMovie_ShouldReturnSuccess() {
+		ResponseEntity<ApiResponse<Void>> response = movieController.deleteMovie(1L);
 
-		assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+		ApiResponse<Void> apiResponse = Objects.requireNonNull(response.getBody());
+		assertTrue(apiResponse.isSuccess());
+		assertEquals("Movie deleted successfully", apiResponse.getMessage());
 		verify(movieService).deleteMovie(1L);
 	}
 
@@ -302,130 +336,45 @@ class MovieControllerTest {
 	}
 
 	@Test
-	void getCurrentlyShowingMovies_ShouldReturnMovies() {
-		MovieCardResponse movie1 = createMovieResponse(1L, "Current Movie 1", "current-1", MovieStatus.CURRENT);
-		MovieCardResponse movie2 = createMovieResponse(2L, "Current Movie 2", "current-2", MovieStatus.CURRENT);
-		List<MovieCardResponse> movies = List.of(movie1, movie2);
-
-		when(movieService.getCurrentlyShowingMovies()).thenReturn(movies);
-
-		ResponseEntity<List<MovieCardResponse>> response = movieController.getCurrentlyShowingMovies();
-
-		assertEquals(HttpStatus.OK, response.getStatusCode());
-		List<MovieCardResponse> responseBody = Objects.requireNonNull(response.getBody(),
-				"Response body should not be null");
-		assertEquals(2, responseBody.size());
-		assertEquals("Current Movie 1", responseBody.get(0).getTitle());
-		assertEquals("Current Movie 2", responseBody.get(1).getTitle());
-		verify(movieService).getCurrentlyShowingMovies();
-	}
-
-	@Test
-	void getCurrentlyShowingMovies_WhenNoMovies_ShouldReturnEmptyList() {
-		when(movieService.getCurrentlyShowingMovies()).thenReturn(List.of());
-
-		ResponseEntity<List<MovieCardResponse>> response = movieController.getCurrentlyShowingMovies();
-
-		assertEquals(HttpStatus.OK, response.getStatusCode());
-		List<MovieCardResponse> responseBody = Objects.requireNonNull(response.getBody(),
-				"Response body should not be null");
-		assertEquals(0, responseBody.size());
-		verify(movieService).getCurrentlyShowingMovies();
-	}
-
-	@Test
-	void getUpcomingMovies_ShouldReturnMovies() {
-		MovieCardResponse movie1 = createMovieResponse(1L, "Upcoming Movie 1", "upcoming-1", MovieStatus.UPCOMING);
-		MovieCardResponse movie2 = createMovieResponse(2L, "Upcoming Movie 2", "upcoming-2", MovieStatus.UPCOMING);
-		List<MovieCardResponse> movies = List.of(movie1, movie2);
-
-		when(movieService.getUpcomingMovies()).thenReturn(movies);
-
-		ResponseEntity<List<MovieCardResponse>> response = movieController.getUpcomingMovies();
-
-		assertEquals(HttpStatus.OK, response.getStatusCode());
-		List<MovieCardResponse> responseBody = Objects.requireNonNull(response.getBody(),
-				"Response body should not be null");
-		assertEquals(2, responseBody.size());
-		assertEquals("Upcoming Movie 1", responseBody.get(0).getTitle());
-		assertEquals("Upcoming Movie 2", responseBody.get(1).getTitle());
-		verify(movieService).getUpcomingMovies();
-	}
-
-	@Test
-	void getArchivedMovies_ShouldReturnMovies() {
-		MovieCardResponse movie1 = createMovieResponse(1L, "Archived Movie 1", "archived-1", MovieStatus.ARCHIVED);
-		MovieCardResponse movie2 = createMovieResponse(2L, "Archived Movie 2", "archived-2", MovieStatus.ARCHIVED);
-		List<MovieCardResponse> movies = List.of(movie1, movie2);
-
-		when(movieService.getArchivedMovies()).thenReturn(movies);
-
-		ResponseEntity<List<MovieCardResponse>> response = movieController.getArchivedMovies();
-
-		assertEquals(HttpStatus.OK, response.getStatusCode());
-		List<MovieCardResponse> responseBody = Objects.requireNonNull(response.getBody(),
-				"Response body should not be null");
-		assertEquals(2, responseBody.size());
-		assertEquals("Archived Movie 1", responseBody.get(0).getTitle());
-		assertEquals("Archived Movie 2", responseBody.get(1).getTitle());
-		verify(movieService).getArchivedMovies();
-	}
-
-	@Test
-	void getMoviePoster_ShouldReturnImageBytes() {
-		byte[] imageBytes = "fake image content".getBytes();
-		ResponseEntity<byte[]> expectedResponse = ResponseEntity.ok()
-				.contentType(org.springframework.http.MediaType.IMAGE_JPEG).body(imageBytes);
-
-		when(movieService.getMoviePoster(1L)).thenReturn(expectedResponse);
-
-		ResponseEntity<byte[]> response = movieController.getMoviePoster(1L);
-
-		assertEquals(HttpStatus.OK, response.getStatusCode());
-		assertEquals(imageBytes, response.getBody());
-		verify(movieService).getMoviePoster(1L);
-	}
-
-	@Test
-	void getMoviePoster_WhenNotFound_ShouldThrowException() {
-		when(movieService.getMoviePoster(999L)).thenThrow(new MovieNotFoundException(999L));
-
-		assertThrows(MovieNotFoundException.class, () -> movieController.getMoviePoster(999L));
-		verify(movieService).getMoviePoster(999L);
-	}
-
-	@Test
 	void searchMovies_ShouldReturnMovies() {
-		MovieCardResponse movie1 = createMovieResponse(1L, "Search Movie 1", "search-1", MovieStatus.CURRENT);
-		MovieCardResponse movie2 = createMovieResponse(2L, "Search Movie 2", "search-2", MovieStatus.UPCOMING);
+		MovieCardResponse movie1 = createMovieCardResponse(1L, "Search Movie 1", "search-1", MovieStatus.CURRENT);
+		MovieCardResponse movie2 = createMovieCardResponse(2L, "Search Movie 2", "search-2", MovieStatus.UPCOMING);
 		Page<MovieCardResponse> page = new PageImpl<>(List.of(movie1, movie2), PageRequest.of(0, 10), 2);
+		PageResponse<MovieCardResponse> pageResponse = PageResponse.of(page);
 
-		when(movieService.searchMovies(eq("test"), any(PageRequest.class))).thenReturn(page);
+		when(movieService.searchMoviesResponse("test", 0, 10)).thenReturn(pageResponse);
 
-		ResponseEntity<PageResponse<MovieCardResponse>> response = movieController.searchMovies("test", 0, 10);
+		ResponseEntity<ApiResponse<PageResponse<MovieCardResponse>>> response = movieController.searchMovies("test", 0,
+				10);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
-		PageResponse<MovieCardResponse> responseBody = Objects.requireNonNull(response.getBody(),
-				"Response body should not be null");
+		ApiResponse<PageResponse<MovieCardResponse>> apiResponse = Objects.requireNonNull(response.getBody());
+		assertTrue(apiResponse.isSuccess());
+		PageResponse<MovieCardResponse> responseBody = apiResponse.getData();
+		assertNotNull(responseBody);
 		assertEquals(2, responseBody.getContent().size());
 		assertEquals("Search Movie 1", responseBody.getContent().get(0).getTitle());
-		verify(movieService).searchMovies("test", PageRequest.of(0, 10));
+		verify(movieService).searchMoviesResponse("test", 0, 10);
 	}
 
 	@Test
 	void searchMovies_WithNullQuery_ShouldReturnMovies() {
-		MovieCardResponse movie1 = createMovieResponse(1L, "Movie 1", "movie-1", MovieStatus.CURRENT);
+		MovieCardResponse movie1 = createMovieCardResponse(1L, "Movie 1", "movie-1", MovieStatus.CURRENT);
 		Page<MovieCardResponse> page = new PageImpl<>(List.of(movie1), PageRequest.of(0, 10), 1);
+		PageResponse<MovieCardResponse> pageResponse = PageResponse.of(page);
 
-		when(movieService.searchMovies(isNull(), any(PageRequest.class))).thenReturn(page);
+		when(movieService.searchMoviesResponse(isNull(), eq(0), eq(10))).thenReturn(pageResponse);
 
-		ResponseEntity<PageResponse<MovieCardResponse>> response = movieController.searchMovies(null, 0, 10);
+		ResponseEntity<ApiResponse<PageResponse<MovieCardResponse>>> response = movieController.searchMovies(null, 0,
+				10);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
-		PageResponse<MovieCardResponse> responseBody = Objects.requireNonNull(response.getBody(),
-				"Response body should not be null");
+		ApiResponse<PageResponse<MovieCardResponse>> apiResponse = Objects.requireNonNull(response.getBody());
+		assertTrue(apiResponse.isSuccess());
+		PageResponse<MovieCardResponse> responseBody = apiResponse.getData();
+		assertNotNull(responseBody);
 		assertEquals(1, responseBody.getContent().size());
-		verify(movieService).searchMovies(null, PageRequest.of(0, 10));
+		verify(movieService).searchMoviesResponse(null, 0, 10);
 	}
 
 	@Test
@@ -438,12 +387,14 @@ class MovieControllerTest {
 
 		when(movieService.searchMoviesForSessionCreation("test", LocalDate.now())).thenReturn(movies);
 
-		ResponseEntity<List<MovieSessionSearchResponse>> response = movieController
+		ResponseEntity<ApiResponse<List<MovieSessionSearchResponse>>> response = movieController
 				.searchMoviesForSessionCreation(LocalDate.now(), "test");
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
-		List<MovieSessionSearchResponse> responseBody = Objects.requireNonNull(response.getBody(),
-				"Response body should not be null");
+		ApiResponse<List<MovieSessionSearchResponse>> apiResponse = Objects.requireNonNull(response.getBody());
+		assertTrue(apiResponse.isSuccess());
+		List<MovieSessionSearchResponse> responseBody = apiResponse.getData();
+		assertNotNull(responseBody);
 		assertEquals(2, responseBody.size());
 		assertEquals("Session Movie 1", responseBody.get(0).getTitle());
 		verify(movieService).searchMoviesForSessionCreation("test", LocalDate.now());
@@ -457,12 +408,14 @@ class MovieControllerTest {
 
 		when(movieService.searchMoviesForSessionCreation(isNull(), eq(LocalDate.now()))).thenReturn(movies);
 
-		ResponseEntity<List<MovieSessionSearchResponse>> response = movieController
+		ResponseEntity<ApiResponse<List<MovieSessionSearchResponse>>> response = movieController
 				.searchMoviesForSessionCreation(LocalDate.now(), null);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
-		List<MovieSessionSearchResponse> responseBody = Objects.requireNonNull(response.getBody(),
-				"Response body should not be null");
+		ApiResponse<List<MovieSessionSearchResponse>> apiResponse = Objects.requireNonNull(response.getBody());
+		assertTrue(apiResponse.isSuccess());
+		List<MovieSessionSearchResponse> responseBody = apiResponse.getData();
+		assertNotNull(responseBody);
 		assertEquals(1, responseBody.size());
 		verify(movieService).searchMoviesForSessionCreation(null, LocalDate.now());
 	}

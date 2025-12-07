@@ -121,10 +121,8 @@ public class AuthControllerTest {
 	}
 
 	@Test
-	void getCurrentUser_ShouldReturnUser_WhenAuthenticated() throws Exception {
-		when(userService.getUserById(1L)).thenReturn(userResponse);
-
-		mockMvc.perform(get("/api/auth/me")).andExpect(status().is5xxServerError());
+	void getCurrentUser_ShouldReturnUnauthorized_WhenNotAuthenticated() throws Exception {
+		mockMvc.perform(get("/api/auth/me")).andExpect(status().isUnauthorized());
 
 		verify(userService, never()).getUserById(1L);
 	}
