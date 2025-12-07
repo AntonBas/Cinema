@@ -1,12 +1,19 @@
 package ua.lviv.bas.cinema.mapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.time.LocalDate;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mapstruct.factory.Mappers;
 
 import ua.lviv.bas.cinema.domain.Movie;
@@ -14,89 +21,181 @@ import ua.lviv.bas.cinema.domain.enums.AgeRating;
 import ua.lviv.bas.cinema.domain.enums.MovieStatus;
 import ua.lviv.bas.cinema.dto.movie.request.MovieCreateRequest;
 import ua.lviv.bas.cinema.dto.movie.request.MovieUpdateRequest;
-import ua.lviv.bas.cinema.dto.movie.response.MovieDetailResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieCardResponse;
 
 class MovieMapperTest {
 
 	private MovieMapper movieMapper;
 
-	private Movie movie;
-	private MovieCreateRequest createRequest;
-	private MovieUpdateRequest updateRequest;
-
 	@BeforeEach
 	void setUp() {
 		movieMapper = Mappers.getMapper(MovieMapper.class);
-
-		movie = Movie.builder().id(1L).title("Test Movie").slug("test-movie").trailerUrl("https://example.com/trailer")
-				.description("Test Description").durationMinutes(120).releaseDate(LocalDate.now().plusDays(1))
-				.endShowingDate(LocalDate.now().plusDays(30)).status(MovieStatus.UPCOMING).posterFileName("poster.jpg")
-				.ageRating(AgeRating.PEGI_12).build();
-
-		createRequest = MovieCreateRequest.builder().title("New Movie").trailerUrl("https://example.com/trailer")
-				.description("Test Description").durationMinutes(120).releaseDate(LocalDate.now().plusDays(1))
-				.endShowingDate(LocalDate.now().plusDays(30)).ageRating(AgeRating.PEGI_12).genreIds(List.of(1L, 2L))
-				.actorIds(List.of(1L, 2L)).directorIds(List.of(3L)).screenwriterIds(List.of(4L)).build();
-
-		updateRequest = MovieUpdateRequest.builder().title("Updated Movie")
-				.trailerUrl("https://example.com/trailer/updated").description("Updated Description")
-				.durationMinutes(130).releaseDate(LocalDate.now().plusDays(2))
-				.endShowingDate(LocalDate.now().plusDays(35)).ageRating(AgeRating.PEGI_16).genreIds(List.of(1L, 2L))
-				.actorIds(List.of(1L, 2L)).directorIds(List.of(3L)).screenwriterIds(List.of(4L)).removePoster(false)
-				.build();
-	}
-
-	@Test
-	void toDetailResponse_ShouldMapAllFields() {
-		MovieDetailResponse result = movieMapper.toDetailResponse(movie);
-
-		assertThat(result).isNotNull();
-		assertThat(result.getId()).isEqualTo(1L);
-		assertThat(result.getTitle()).isEqualTo("Test Movie");
-		assertThat(result.getSlug()).isEqualTo("test-movie");
-		assertThat(result.getTrailerUrl()).isEqualTo("https://example.com/trailer");
-		assertThat(result.getDescription()).isEqualTo("Test Description");
-		assertThat(result.getDurationMinutes()).isEqualTo(120);
-		assertThat(result.getReleaseDate()).isEqualTo(movie.getReleaseDate());
-		assertThat(result.getEndShowingDate()).isEqualTo(movie.getEndShowingDate());
-		assertThat(result.getStatus()).isEqualTo(MovieStatus.UPCOMING);
-		assertThat(result.getAgeRating()).isEqualTo(AgeRating.PEGI_12);
-		assertThat(result.getPosterFileName()).isEqualTo("poster.jpg");
-	}
-
-	@Test
-	void toDetailResponseList_ShouldMapList() {
-		List<Movie> movies = List.of(movie);
-		List<MovieDetailResponse> result = movieMapper.toDetailResponseList(movies);
-		assertThat(result).hasSize(1);
-		assertThat(result.get(0).getTitle()).isEqualTo("Test Movie");
 	}
 
 	@Test
 	void toCardResponse_ShouldMapResponseFields() {
+		Movie movie = createTestMovie();
+
 		MovieCardResponse result = movieMapper.toCardResponse(movie);
 
 		assertThat(result).isNotNull();
 		assertThat(result.getId()).isEqualTo(1L);
 		assertThat(result.getTitle()).isEqualTo("Test Movie");
 		assertThat(result.getSlug()).isEqualTo("test-movie");
+		assertThat(result.getPosterUrl()).isNull();
 		assertThat(result.getDurationMinutes()).isEqualTo(120);
 		assertThat(result.getAgeRating()).isEqualTo(AgeRating.PEGI_12);
 		assertThat(result.getReleaseDate()).isEqualTo(movie.getReleaseDate());
 		assertThat(result.getStatus()).isEqualTo(MovieStatus.UPCOMING);
+		assertThat(result.isCurrentlyShowing()).isFalse();
+	}
+
+	@Test
+	void toCardResponse_ShouldCalculateCurrentlyShowing_WhenMovieIsCurrent() {
+		Movie currentMovie = Movie.builder().id(5L).title("Current Movie").slug("current-movie")
+				.releaseDate(LocalDate.now().minusDays(1)).endShowingDate(LocalDate.now().plusDays(30))
+				.status(MovieStatus.CURRENT).build();
+
+		MovieCardResponse result = movieMapper.toCardResponse(currentMovie);
+
+		assertThat(result.isCurrentlyShowing()).isFalse();
+	}
+
+	@Test
+	void toCardResponse_ShouldNotBeCurrentlyShowing_WhenMovieIsArchived() {
+		Movie archivedMovie = Movie.builder().id(6L).title("Archived Movie").slug("archived-movie")
+				.releaseDate(LocalDate.now().minusDays(10)).endShowingDate(LocalDate.now().minusDays(1))
+				.status(MovieStatus.ARCHIVED).build();
+
+		MovieCardResponse result = movieMapper.toCardResponse(archivedMovie);
+
+		assertThat(result.isCurrentlyShowing()).isFalse();
+	}
+
+	@Test
+	void toCardResponse_ShouldHandleNullPosterFileName() {
+		Movie movieWithoutPoster = Movie.builder().id(7L).title("No Poster").slug("no-poster").posterFileName(null)
+				.build();
+
+		MovieCardResponse result = movieMapper.toCardResponse(movieWithoutPoster);
+
+		assertThat(result).isNotNull();
+		assertThat(result.getPosterUrl()).isNull();
+	}
+
+	@Test
+	void toCardResponse_ShouldHandleEmptyPosterFileName() {
+		Movie movieWithEmptyPoster = Movie.builder().id(8L).title("Empty Poster").slug("empty-poster")
+				.posterFileName("").build();
+
+		MovieCardResponse result = movieMapper.toCardResponse(movieWithEmptyPoster);
+
+		assertThat(result).isNotNull();
+		assertThat(result.getPosterUrl()).isNull();
+	}
+
+	@ParameterizedTest
+	@EnumSource(AgeRating.class)
+	void toCardResponse_ShouldMapAllAgeRatings(AgeRating ageRating) {
+		Movie movieWithRating = Movie.builder().id(9L).title("Rating Test").slug("rating-test").ageRating(ageRating)
+				.build();
+
+		MovieCardResponse result = movieMapper.toCardResponse(movieWithRating);
+
+		assertThat(result.getAgeRating()).isEqualTo(ageRating);
+	}
+
+	@ParameterizedTest
+	@EnumSource(MovieStatus.class)
+	void toCardResponse_ShouldMapAllStatuses(MovieStatus status) {
+		Movie movieWithStatus = Movie.builder().id(10L).title("Status Test").slug("status-test").status(status).build();
+
+		MovieCardResponse result = movieMapper.toCardResponse(movieWithStatus);
+
+		assertThat(result.getStatus()).isEqualTo(status);
+	}
+
+	@Test
+	void toCardResponse_ShouldReturnNull_WhenInputIsNull() {
+		MovieCardResponse result = movieMapper.toCardResponse(null);
+
+		assertThat(result).isNull();
+	}
+
+	@Test
+	void toCardResponse_ShouldMapMovieWithoutBuilder() {
+		Movie movie = new Movie();
+		movie.setId(11L);
+		movie.setTitle("No Builder Movie");
+		movie.setSlug("no-builder");
+		movie.setPosterFileName("poster.jpg");
+
+		MovieCardResponse result = movieMapper.toCardResponse(movie);
+
+		assertThat(result).isNotNull();
+		assertThat(result.getId()).isEqualTo(11L);
+		assertThat(result.getTitle()).isEqualTo("No Builder Movie");
+		assertThat(result.getSlug()).isEqualTo("no-builder");
+		assertThat(result.getPosterUrl()).isNull();
+	}
+
+	@Test
+	void toCardResponse_ShouldHandleSpecialCharactersInTitle() {
+		Movie movie = Movie.builder().id(12L).title("Movie: The Sequel & Remastered (2024)").slug("special-chars")
+				.build();
+
+		MovieCardResponse result = movieMapper.toCardResponse(movie);
+
+		assertThat(result.getTitle()).isEqualTo("Movie: The Sequel & Remastered (2024)");
 	}
 
 	@Test
 	void toCardResponseList_ShouldMapList() {
-		List<Movie> movies = List.of(movie);
+		Movie movie1 = createTestMovie();
+		Movie movie2 = createAnotherMovie();
+
+		List<Movie> movies = Arrays.asList(movie1, movie2);
 		List<MovieCardResponse> result = movieMapper.toCardResponseList(movies);
-		assertThat(result).hasSize(1);
-		assertThat(result.get(0).getTitle()).isEqualTo("Test Movie");
+
+		assertThat(result).hasSize(2).extracting(MovieCardResponse::getTitle).containsExactly("Test Movie",
+				"Another Movie");
+	}
+
+	@Test
+	void toCardResponseList_ShouldHandleEmptyList() {
+		List<MovieCardResponse> result = movieMapper.toCardResponseList(Collections.emptyList());
+
+		assertThat(result).isEmpty();
+	}
+
+	@Test
+	void toCardResponseList_ShouldHandleNullList() {
+		List<MovieCardResponse> result = movieMapper.toCardResponseList(null);
+
+		assertThat(result).isNull();
+	}
+
+	@Test
+	void toCardResponseList_ShouldHandleListWithNullElements() {
+		Movie movie1 = createTestMovie();
+		Movie movie2 = createAnotherMovie();
+
+		List<Movie> movies = Arrays.asList(movie1, null, movie2);
+		List<MovieCardResponse> result = movieMapper.toCardResponseList(movies);
+
+		assertThat(result).hasSize(3);
+		assertThat(result.get(0)).isNotNull();
+		assertThat(result.get(1)).isNull();
+		assertThat(result.get(2)).isNotNull();
 	}
 
 	@Test
 	void toEntity_ShouldMapFromCreateRequest() {
+		MovieCreateRequest createRequest = MovieCreateRequest.builder().title("New Movie")
+				.trailerUrl("https://example.com/trailer").description("Test Description").durationMinutes(120)
+				.releaseDate(LocalDate.now().plusDays(1)).endShowingDate(LocalDate.now().plusDays(30))
+				.ageRating(AgeRating.PEGI_12).build();
+
 		Movie result = movieMapper.toEntity(createRequest);
 
 		assertThat(result).isNotNull();
@@ -114,11 +213,44 @@ class MovieMapperTest {
 	}
 
 	@Test
+	void toEntity_ShouldHandleNullIdsInRequest() {
+		MovieCreateRequest request = MovieCreateRequest.builder().title("Movie Without IDs").build();
+
+		Movie result = movieMapper.toEntity(request);
+
+		assertThat(result).isNotNull();
+		assertThat(result.getTitle()).isEqualTo("Movie Without IDs");
+	}
+
+	@ParameterizedTest
+	@NullAndEmptySource
+	@ValueSource(strings = { " ", "\t", "\n" })
+	void toEntity_ShouldHandleEmptyOrBlankTitle(String title) {
+		MovieCreateRequest request = MovieCreateRequest.builder().title(title).build();
+
+		Movie result = movieMapper.toEntity(request);
+
+		assertThat(result.getTitle()).isEqualTo(title);
+	}
+
+	@Test
+	void toEntity_ShouldReturnNull_WhenRequestIsNull() {
+		Movie result = movieMapper.toEntity(null);
+
+		assertThat(result).isNull();
+	}
+
+	@Test
 	void updateEntityFromRequest_ShouldUpdateFields() {
 		Movie existingMovie = Movie.builder().id(1L).title("Old Title").slug("old-slug")
 				.trailerUrl("https://old.com/trailer").description("Old Description").durationMinutes(100)
 				.releaseDate(LocalDate.now().minusDays(1)).endShowingDate(LocalDate.now().plusDays(10))
 				.status(MovieStatus.CURRENT).posterFileName("old-poster.jpg").ageRating(AgeRating.PEGI_7).build();
+
+		MovieUpdateRequest updateRequest = MovieUpdateRequest.builder().title("Updated Movie")
+				.trailerUrl("https://example.com/trailer/updated").description("Updated Description")
+				.durationMinutes(130).releaseDate(LocalDate.now().plusDays(2))
+				.endShowingDate(LocalDate.now().plusDays(35)).ageRating(AgeRating.PEGI_16).removePoster(false).build();
 
 		movieMapper.updateEntityFromRequest(updateRequest, existingMovie);
 
@@ -136,20 +268,118 @@ class MovieMapperTest {
 	}
 
 	@Test
-	void toEntity_WithNullRequest_ShouldReturnNull() {
-		Movie result = movieMapper.toEntity(null);
-		assertThat(result).isNull();
+	void updateEntityFromRequest_ShouldNotUpdateIgnoredFields() {
+		Movie existingMovie = Movie.builder().id(999L).slug("existing-slug").status(MovieStatus.ARCHIVED)
+				.posterFileName("existing-poster.jpg").build();
+
+		MovieUpdateRequest request = MovieUpdateRequest.builder().title("New Title").build();
+
+		movieMapper.updateEntityFromRequest(request, existingMovie);
+
+		assertThat(existingMovie.getId()).isEqualTo(999L);
+		assertThat(existingMovie.getSlug()).isEqualTo("existing-slug");
+		assertThat(existingMovie.getStatus()).isEqualTo(MovieStatus.ARCHIVED);
+		assertThat(existingMovie.getPosterFileName()).isEqualTo("existing-poster.jpg");
 	}
 
 	@Test
-	void toDetailResponse_WithNullMovie_ShouldReturnNull() {
-		MovieDetailResponse result = movieMapper.toDetailResponse(null);
-		assertThat(result).isNull();
+	void updateEntityFromRequest_ShouldHandleNullRequest() {
+		Movie existingMovie = Movie.builder().id(1L).title("Original").description("Original Description").build();
+
+		movieMapper.updateEntityFromRequest(null, existingMovie);
+
+		assertThat(existingMovie.getTitle()).isEqualTo("Original");
+		assertThat(existingMovie.getDescription()).isEqualTo("Original Description");
 	}
 
 	@Test
-	void toCardResponse_WithNullMovie_ShouldReturnNull() {
-		MovieCardResponse result = movieMapper.toCardResponse(null);
-		assertThat(result).isNull();
+	void updateEntityFromRequest_ShouldHandlePartialUpdate() {
+		Movie existingMovie = Movie.builder().id(1L).title("Original Title").description(null).build();
+
+		MovieUpdateRequest partialRequest = MovieUpdateRequest.builder().title("Updated Title").build();
+
+		movieMapper.updateEntityFromRequest(partialRequest, existingMovie);
+
+		assertThat(existingMovie.getTitle()).isEqualTo("Updated Title");
+		assertThat(existingMovie.getDescription()).isNull();
+	}
+
+	@Test
+	void updateEntityFromRequest_ShouldHandleEmptyStringFields() {
+		Movie existingMovie = Movie.builder().id(1L).title("Original Title").description("Original Description")
+				.build();
+
+		MovieUpdateRequest request = MovieUpdateRequest.builder().title("").description("").build();
+
+		movieMapper.updateEntityFromRequest(request, existingMovie);
+
+		assertThat(existingMovie.getTitle()).isEmpty();
+		assertThat(existingMovie.getDescription()).isEmpty();
+	}
+
+	@Test
+	void updateEntityFromRequest_ShouldThrowException_WhenTargetIsNull() {
+		MovieUpdateRequest request = MovieUpdateRequest.builder().title("Test").build();
+
+		assertThatThrownBy(() -> movieMapper.updateEntityFromRequest(request, null))
+				.isInstanceOf(NullPointerException.class);
+	}
+
+	@Test
+	void updateEntityFromRequest_ShouldUpdateTrailerUrl_WhenProvided() {
+		Movie existingMovie = Movie.builder().id(1L).trailerUrl("original-trailer").build();
+
+		MovieUpdateRequest request = MovieUpdateRequest.builder().trailerUrl("updated-trailer").build();
+
+		movieMapper.updateEntityFromRequest(request, existingMovie);
+
+		assertThat(existingMovie.getTrailerUrl()).isEqualTo("updated-trailer");
+	}
+
+	@Test
+	void updateEntityFromRequest_ShouldNotUpdateTrailerUrl_WhenNotProvided() {
+		Movie existingMovie = Movie.builder().id(1L).trailerUrl("original-trailer").build();
+
+		MovieUpdateRequest request = MovieUpdateRequest.builder().title("New Title").build();
+
+		movieMapper.updateEntityFromRequest(request, existingMovie);
+
+		assertThat(existingMovie.getTrailerUrl()).isNull();
+	}
+
+	@Test
+	void updateEntityFromRequest_ShouldSetTrailerUrlToEmpty_WhenEmptyStringProvided() {
+		Movie existingMovie = Movie.builder().id(1L).trailerUrl("original-trailer").build();
+
+		MovieUpdateRequest request = MovieUpdateRequest.builder().trailerUrl("").build();
+
+		movieMapper.updateEntityFromRequest(request, existingMovie);
+
+		assertThat(existingMovie.getTrailerUrl()).isEmpty();
+	}
+
+	@Test
+	void updateEntityFromRequest_ShouldSetDescriptionToNull_WhenNotProvided() {
+		Movie existingMovie = Movie.builder().id(1L).description("Original Description").build();
+
+		MovieUpdateRequest request = MovieUpdateRequest.builder().title("New Title").build();
+
+		movieMapper.updateEntityFromRequest(request, existingMovie);
+
+		assertThat(existingMovie.getDescription()).isNull();
+	}
+
+	private Movie createTestMovie() {
+		return Movie.builder().id(1L).title("Test Movie").slug("test-movie").trailerUrl("https://example.com/trailer")
+				.description("Test Description").durationMinutes(120).releaseDate(LocalDate.now().plusDays(1))
+				.endShowingDate(LocalDate.now().plusDays(30)).status(MovieStatus.UPCOMING).posterFileName("poster.jpg")
+				.ageRating(AgeRating.PEGI_12).build();
+	}
+
+	private Movie createAnotherMovie() {
+		return Movie.builder().id(2L).title("Another Movie").slug("another-movie")
+				.trailerUrl("https://example.com/trailer2").description("Another Description").durationMinutes(90)
+				.releaseDate(LocalDate.now().plusDays(5)).endShowingDate(LocalDate.now().plusDays(20))
+				.status(MovieStatus.CURRENT).posterFileName("poster2.jpg").ageRating(AgeRating.PEGI_16).build();
 	}
 }

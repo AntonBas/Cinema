@@ -17,9 +17,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.enums.UserRole;
 import ua.lviv.bas.cinema.dto.user.request.UserRegistrationRequest;
-import ua.lviv.bas.cinema.dto.user.response.UserResponse;
-import ua.lviv.bas.cinema.dto.user.response.UserProfileResponse;
+import ua.lviv.bas.cinema.dto.user.request.UserUpdateRequest;
 import ua.lviv.bas.cinema.dto.user.response.AdminUserListResponse;
+import ua.lviv.bas.cinema.dto.user.response.UserProfileResponse;
+import ua.lviv.bas.cinema.dto.user.response.UserResponse;
 
 @ExtendWith(MockitoExtension.class)
 public class UserMapperTest {
@@ -192,5 +193,65 @@ public class UserMapperTest {
 		assertNotNull(dto);
 		assertEquals(UserRole.ROLE_CASHIER, dto.getUserRole());
 		assertEquals("Cashier", dto.getFirstName());
+	}
+
+	@Test
+	void updateUserFromDto_ShouldUpdateAllowedFieldsAndIgnoreEmail() {
+		User existingUser = User.builder().id(1L).email("old@example.com").firstName("OldFirstName")
+				.lastName("OldLastName").dateOfBirth(LocalDate.of(1990, 1, 1)).city("OldCity")
+				.phoneNumber("+380000000000").password("oldPassword").userRole(UserRole.ROLE_ADMIN).enabled(true)
+				.createdAt(LocalDateTime.of(2023, 1, 1, 10, 0)).updatedAt(LocalDateTime.of(2023, 1, 1, 10, 0))
+				.tickets(new ArrayList<>()).build();
+
+		UserUpdateRequest updateDto = UserUpdateRequest.builder().firstName("NewFirstName").lastName("NewLastName")
+				.dateOfBirth(LocalDate.of(2001, 8, 21)).city("NewCity").phoneNumber("+380123456789").build();
+
+		userMapper.updateUserFromDto(updateDto, existingUser);
+
+		assertEquals("NewFirstName", existingUser.getFirstName());
+		assertEquals("NewLastName", existingUser.getLastName());
+		assertEquals(LocalDate.of(2001, 8, 21), existingUser.getDateOfBirth());
+		assertEquals("NewCity", existingUser.getCity());
+		assertEquals("+380123456789", existingUser.getPhoneNumber());
+		assertEquals("old@example.com", existingUser.getEmail());
+		assertEquals("oldPassword", existingUser.getPassword());
+		assertEquals(UserRole.ROLE_ADMIN, existingUser.getUserRole());
+		assertTrue(existingUser.isEnabled());
+		assertEquals(1L, existingUser.getId());
+		assertNotNull(existingUser.getTickets());
+		assertEquals(LocalDateTime.of(2023, 1, 1, 10, 0), existingUser.getCreatedAt());
+		assertEquals(LocalDateTime.of(2023, 1, 1, 10, 0), existingUser.getUpdatedAt());
+	}
+
+	@Test
+	void updateUserFromDto_ShouldHandleNullDto() {
+		User existingUser = User.builder().id(1L).email("test@example.com").firstName("Test").lastName("User")
+				.city("City").phoneNumber("+380000000000").build();
+
+		userMapper.updateUserFromDto(null, existingUser);
+
+		assertEquals("test@example.com", existingUser.getEmail());
+		assertEquals("Test", existingUser.getFirstName());
+		assertEquals("User", existingUser.getLastName());
+		assertEquals("City", existingUser.getCity());
+		assertEquals("+380000000000", existingUser.getPhoneNumber());
+	}
+
+	@Test
+	void updateUserFromDto_ShouldHandlePartialUpdate() {
+		User existingUser = User.builder().id(1L).email("test@example.com").firstName("OldFirstName")
+				.lastName("OldLastName").city("OldCity").phoneNumber("+380000000000")
+				.dateOfBirth(LocalDate.of(1990, 1, 1)).build();
+
+		UserUpdateRequest updateDto = UserUpdateRequest.builder().firstName("NewFirstName").city("NewCity").build();
+
+		userMapper.updateUserFromDto(updateDto, existingUser);
+
+		assertEquals("NewFirstName", existingUser.getFirstName());
+		assertEquals("NewCity", existingUser.getCity());
+		assertNull(existingUser.getLastName());
+		assertNull(existingUser.getPhoneNumber());
+		assertNull(existingUser.getDateOfBirth());
+		assertEquals("test@example.com", existingUser.getEmail());
 	}
 }
