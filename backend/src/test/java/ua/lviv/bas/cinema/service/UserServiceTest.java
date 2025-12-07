@@ -49,15 +49,20 @@ import ua.lviv.bas.cinema.exception.domain.auth.SameEmailException;
 import ua.lviv.bas.cinema.exception.domain.auth.SamePasswordException;
 import ua.lviv.bas.cinema.exception.domain.user.LastAdminException;
 import ua.lviv.bas.cinema.exception.domain.user.SelfBlockException;
+import ua.lviv.bas.cinema.exception.domain.user.SelfRoleChangeException;
 import ua.lviv.bas.cinema.exception.domain.user.UserNotFoundException;
 import ua.lviv.bas.cinema.mapper.UserMapper;
 import ua.lviv.bas.cinema.repository.UserRepository;
+import ua.lviv.bas.cinema.service.query.UserQueryService;
 
 @ExtendWith(MockitoExtension.class)
 public class UserServiceTest {
 
 	@Mock
 	private UserRepository userRepository;
+
+	@Mock
+	private UserQueryService userQueryService;
 
 	@Mock
 	private PasswordEncoder passwordEncoder;
@@ -88,7 +93,7 @@ public class UserServiceTest {
 
 		user = User.builder().id(1L).email("test@example.com").firstName("Anton").lastName("Bas")
 				.dateOfBirth(LocalDate.of(2001, 8, 21)).city("Lviv").phoneNumber("+380123456789")
-				.userRole(UserRole.ROLE_USER).enabled(false).build();
+				.userRole(UserRole.ROLE_USER).enabled(false).password("encodedPassword").build();
 
 		savedUser = User.builder().id(1L).email("test@example.com").firstName("Anton").lastName("Bas")
 				.userRole(UserRole.ROLE_USER).enabled(false).build();
@@ -102,7 +107,7 @@ public class UserServiceTest {
 
 	@Test
 	void registerUser_ShouldSaveUser_WhenValidData() {
-		when(userRepository.existsByEmail(validUserDto.getEmail())).thenReturn(false);
+		when(userQueryService.existsByEmail(validUserDto.getEmail())).thenReturn(false);
 		when(passwordEncoder.encode(validUserDto.getPassword())).thenReturn("encodedPassword");
 		when(userMapper.toEntity(validUserDto)).thenReturn(user);
 		when(userRepository.save(any(User.class))).thenReturn(savedUser);
@@ -113,7 +118,7 @@ public class UserServiceTest {
 		assertNotNull(result);
 		assertEquals("test@example.com", result.getEmail());
 
-		verify(userRepository).existsByEmail(validUserDto.getEmail());
+		verify(userQueryService).existsByEmail(validUserDto.getEmail());
 		verify(passwordEncoder).encode(validUserDto.getPassword());
 		verify(userMapper).toEntity(validUserDto);
 		verify(userRepository).save(user);
@@ -123,11 +128,11 @@ public class UserServiceTest {
 
 	@Test
 	void registerUser_ShouldThrowException_WhenEmailExists() {
-		when(userRepository.existsByEmail(validUserDto.getEmail())).thenReturn(true);
+		when(userQueryService.existsByEmail(validUserDto.getEmail())).thenReturn(true);
 
 		assertThrows(EmailAlreadyExistsException.class, () -> userService.registerUser(validUserDto));
 
-		verify(userRepository).existsByEmail(validUserDto.getEmail());
+		verify(userQueryService).existsByEmail(validUserDto.getEmail());
 		verifyNoInteractions(passwordEncoder, userMapper, emailTokenGeneratorService);
 	}
 
@@ -173,12 +178,12 @@ public class UserServiceTest {
 		String newEmail = "new@example.com";
 
 		when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-		when(userRepository.existsByEmail(newEmail)).thenReturn(false);
+		when(userQueryService.existsByEmail(newEmail)).thenReturn(false);
 
 		assertDoesNotThrow(() -> userService.requestEmailChange(userId, newEmail));
 
 		verify(userRepository).findById(userId);
-		verify(userRepository).existsByEmail(newEmail);
+		verify(userQueryService).existsByEmail(newEmail);
 		verify(emailTokenGeneratorService).generateEmailChangeToken(user.getEmail(), newEmail);
 	}
 
@@ -188,12 +193,12 @@ public class UserServiceTest {
 		String newEmail = "existing@example.com";
 
 		when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-		when(userRepository.existsByEmail(newEmail)).thenReturn(true);
+		when(userQueryService.existsByEmail(newEmail)).thenReturn(true);
 
 		assertThrows(EmailAlreadyExistsException.class, () -> userService.requestEmailChange(userId, newEmail));
 
 		verify(userRepository).findById(userId);
-		verify(userRepository).existsByEmail(newEmail);
+		verify(userQueryService).existsByEmail(newEmail);
 		verify(emailTokenGeneratorService, never()).generateEmailChangeToken(anyString(), anyString());
 	}
 
@@ -207,7 +212,7 @@ public class UserServiceTest {
 		assertThrows(SameEmailException.class, () -> userService.requestEmailChange(userId, sameEmail));
 
 		verify(userRepository).findById(userId);
-		verify(userRepository, never()).existsByEmail(anyString());
+		verify(userQueryService, never()).existsByEmail(anyString());
 		verify(emailTokenGeneratorService, never()).generateEmailChangeToken(anyString(), anyString());
 	}
 
@@ -360,44 +365,44 @@ public class UserServiceTest {
 	@Test
 	void findByEmail_ShouldReturnUser() {
 		String email = "test@example.com";
-		when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
+		when(userQueryService.findByEmail(email)).thenReturn(Optional.of(user));
 
 		User result = userService.findByEmail(email);
 
 		assertNotNull(result);
 		assertEquals(email, result.getEmail());
-		verify(userRepository).findByEmail(email);
+		verify(userQueryService).findByEmail(email);
 	}
 
 	@Test
 	void findByEmail_ShouldThrowException_WhenUserNotFound() {
 		String email = "nonexistent@example.com";
-		when(userRepository.findByEmail(email)).thenReturn(Optional.empty());
+		when(userQueryService.findByEmail(email)).thenReturn(Optional.empty());
 
 		assertThrows(UserNotFoundException.class, () -> userService.findByEmail(email));
-		verify(userRepository).findByEmail(email);
+		verify(userQueryService).findByEmail(email);
 	}
 
 	@Test
 	void existsByEmail_ShouldReturnTrue_WhenEmailExists() {
 		String email = "existing@example.com";
-		when(userRepository.existsByEmail(email)).thenReturn(true);
+		when(userQueryService.existsByEmail(email)).thenReturn(true);
 
 		boolean result = userService.existsByEmail(email);
 
 		assertTrue(result);
-		verify(userRepository).existsByEmail(email);
+		verify(userQueryService).existsByEmail(email);
 	}
 
 	@Test
 	void existsByEmail_ShouldReturnFalse_WhenEmailNotExists() {
 		String email = "nonexistent@example.com";
-		when(userRepository.existsByEmail(email)).thenReturn(false);
+		when(userQueryService.existsByEmail(email)).thenReturn(false);
 
 		boolean result = userService.existsByEmail(email);
 
 		assertFalse(result);
-		verify(userRepository).existsByEmail(email);
+		verify(userQueryService).existsByEmail(email);
 	}
 
 	@Test
@@ -436,7 +441,13 @@ public class UserServiceTest {
 	@Test
 	void updateUserRole_ShouldUpdateRole_WhenValidChange() {
 		Long userId = 1L;
-		User adminUser = User.builder().id(1L).userRole(UserRole.ROLE_ADMIN).build();
+		User adminUser = User.builder().id(1L).email("admin@example.com").userRole(UserRole.ROLE_ADMIN).build();
+
+		Authentication authentication = mock(Authentication.class);
+		SecurityContext securityContext = mock(SecurityContext.class);
+		when(securityContext.getAuthentication()).thenReturn(authentication);
+		when(authentication.getName()).thenReturn("different@example.com");
+		SecurityContextHolder.setContext(securityContext);
 
 		when(userRepository.findById(userId)).thenReturn(Optional.of(adminUser));
 		when(userRepository.countByUserRole(UserRole.ROLE_ADMIN)).thenReturn(2L);
@@ -447,13 +458,43 @@ public class UserServiceTest {
 		verify(userRepository).findById(userId);
 		verify(userRepository).countByUserRole(UserRole.ROLE_ADMIN);
 		verify(userRepository).save(adminUser);
+
+		SecurityContextHolder.clearContext();
+	}
+
+	@Test
+	void updateUserRole_ShouldThrowSelfRoleChangeException_WhenChangingSelfRole() {
+		Long userId = 1L;
+		User currentUser = User.builder().id(1L).email("current@example.com").userRole(UserRole.ROLE_ADMIN).build();
+
+		Authentication authentication = mock(Authentication.class);
+		SecurityContext securityContext = mock(SecurityContext.class);
+		when(securityContext.getAuthentication()).thenReturn(authentication);
+		when(authentication.getName()).thenReturn("current@example.com");
+		SecurityContextHolder.setContext(securityContext);
+
+		when(userRepository.findById(userId)).thenReturn(Optional.of(currentUser));
+
+		assertThrows(SelfRoleChangeException.class, () -> userService.updateUserRole(userId, UserRole.ROLE_USER));
+
+		verify(userRepository).findById(userId);
+		verify(userRepository, never()).countByUserRole(any());
+		verify(userRepository, never()).save(any());
+
+		SecurityContextHolder.clearContext();
 	}
 
 	@Test
 	void updateUserRole_ShouldThrowLastAdminException_WhenRemovingLastAdmin() {
 		Long userId = 1L;
 		UserRole newRole = UserRole.ROLE_USER;
-		User adminUser = User.builder().id(1L).userRole(UserRole.ROLE_ADMIN).build();
+		User adminUser = User.builder().id(1L).email("admin@example.com").userRole(UserRole.ROLE_ADMIN).build();
+
+		Authentication authentication = mock(Authentication.class);
+		SecurityContext securityContext = mock(SecurityContext.class);
+		when(securityContext.getAuthentication()).thenReturn(authentication);
+		when(authentication.getName()).thenReturn("different@example.com");
+		SecurityContextHolder.setContext(securityContext);
 
 		when(userRepository.findById(userId)).thenReturn(Optional.of(adminUser));
 		when(userRepository.countByUserRole(UserRole.ROLE_ADMIN)).thenReturn(1L);
@@ -463,6 +504,8 @@ public class UserServiceTest {
 		verify(userRepository).findById(userId);
 		verify(userRepository).countByUserRole(UserRole.ROLE_ADMIN);
 		verify(userRepository, never()).save(any());
+
+		SecurityContextHolder.clearContext();
 	}
 
 	@Test
@@ -541,14 +584,14 @@ public class UserServiceTest {
 		Page<User> userPage = new PageImpl<>(List.of(user));
 		AdminUserListResponse adminResponse = AdminUserListResponse.builder().id(1L).email("test@example.com").build();
 
-		when(userRepository.findByFilters(search, role, enabled, pageable)).thenReturn(userPage);
+		when(userQueryService.findFilteredUsers(search, role, enabled, pageable)).thenReturn(userPage);
 		when(userMapper.toAdminListDto(user)).thenReturn(adminResponse);
 
 		Page<AdminUserListResponse> result = userService.findAllForAdmin(search, role, enabled, pageable);
 
 		assertNotNull(result);
 		assertEquals(1, result.getContent().size());
-		verify(userRepository).findByFilters(search, role, enabled, pageable);
+		verify(userQueryService).findFilteredUsers(search, role, enabled, pageable);
 		verify(userMapper).toAdminListDto(user);
 	}
 
@@ -558,47 +601,58 @@ public class UserServiceTest {
 		Page<User> userPage = new PageImpl<>(List.of(user));
 		AdminUserListResponse adminResponse = AdminUserListResponse.builder().id(1L).email("test@example.com").build();
 
-		when(userRepository.findByFilters(null, null, null, pageable)).thenReturn(userPage);
+		when(userQueryService.findFilteredUsers(null, null, null, pageable)).thenReturn(userPage);
 		when(userMapper.toAdminListDto(user)).thenReturn(adminResponse);
 
 		Page<AdminUserListResponse> result = userService.findAllForAdmin(null, null, null, pageable);
 
 		assertNotNull(result);
 		assertEquals(1, result.getContent().size());
-		verify(userRepository).findByFilters(null, null, null, pageable);
+		verify(userQueryService).findFilteredUsers(null, null, null, pageable);
 	}
 
 	@Test
-	void findAllForAdmin_ShouldReturnDisabledUsers_WhenEnabledFalse() {
-		Boolean enabled = false;
-		Pageable pageable = PageRequest.of(0, 10);
-		Page<User> userPage = new PageImpl<>(List.of(user));
-		AdminUserListResponse adminResponse = AdminUserListResponse.builder().id(1L).email("test@example.com").build();
+	void findAllActiveAdmins_ShouldReturnActiveAdmins() {
+		List<User> admins = List.of(user);
+		when(userQueryService.findAllActiveByRole(UserRole.ROLE_ADMIN)).thenReturn(admins);
 
-		when(userRepository.findByFilters(null, null, enabled, pageable)).thenReturn(userPage);
-		when(userMapper.toAdminListDto(user)).thenReturn(adminResponse);
-
-		Page<AdminUserListResponse> result = userService.findAllForAdmin(null, null, enabled, pageable);
+		List<User> result = userService.findAllActiveAdmins();
 
 		assertNotNull(result);
-		assertEquals(1, result.getContent().size());
-		verify(userRepository).findByFilters(null, null, enabled, pageable);
+		assertEquals(1, result.size());
+		verify(userQueryService).findAllActiveByRole(UserRole.ROLE_ADMIN);
 	}
 
 	@Test
-	void findAllForAdmin_ShouldReturnAdmins_WhenRoleAdmin() {
-		UserRole role = UserRole.ROLE_ADMIN;
-		Pageable pageable = PageRequest.of(0, 10);
-		Page<User> userPage = new PageImpl<>(List.of(user));
-		AdminUserListResponse adminResponse = AdminUserListResponse.builder().id(1L).email("test@example.com").build();
+	void findAllActiveUsers_ShouldReturnActiveUsers() {
+		List<User> users = List.of(user);
+		when(userQueryService.findAllActiveUsers()).thenReturn(users);
 
-		when(userRepository.findByFilters(null, role, null, pageable)).thenReturn(userPage);
-		when(userMapper.toAdminListDto(user)).thenReturn(adminResponse);
-
-		Page<AdminUserListResponse> result = userService.findAllForAdmin(null, role, null, pageable);
+		List<User> result = userService.findAllActiveUsers();
 
 		assertNotNull(result);
-		assertEquals(1, result.getContent().size());
-		verify(userRepository).findByFilters(null, role, null, pageable);
+		assertEquals(1, result.size());
+		verify(userQueryService).findAllActiveUsers();
+	}
+
+	@Test
+	void findById_ShouldReturnUser_WhenExists() {
+		Long userId = 1L;
+		when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+
+		User result = userService.findById(userId);
+
+		assertNotNull(result);
+		assertEquals(userId, result.getId());
+		verify(userRepository).findById(userId);
+	}
+
+	@Test
+	void findById_ShouldThrowException_WhenNotExists() {
+		Long userId = 999L;
+		when(userRepository.findById(userId)).thenReturn(Optional.empty());
+
+		assertThrows(UserNotFoundException.class, () -> userService.findById(userId));
+		verify(userRepository).findById(userId);
 	}
 }

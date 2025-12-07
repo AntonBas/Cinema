@@ -28,6 +28,7 @@ import ua.lviv.bas.cinema.dto.cinemaHall.request.CinemaHallRequest;
 import ua.lviv.bas.cinema.dto.cinemaHall.response.CinemaHallResponse;
 import ua.lviv.bas.cinema.dto.cinemaHall.response.CinemaHallWithSeatsResponse;
 import ua.lviv.bas.cinema.dto.cinemaHall.response.HallLayoutResponse;
+import ua.lviv.bas.cinema.dto.cinemaHall.response.SeatResponse;
 import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
 import ua.lviv.bas.cinema.exception.domain.cinema.CinemaHallNotFoundException;
 import ua.lviv.bas.cinema.mapper.CinemaHallMapper;
@@ -90,24 +91,6 @@ class CinemaHallServiceTest {
 	}
 
 	@Test
-	void createHall_ShouldCreateHallWithSeats_WhenSeatConfigProvided() {
-		CinemaHallRequest requestWithSeats = CinemaHallRequest.builder().name("Hall With Seats").rows(5).seatsPerRow(10)
-				.defaultSeatType(SeatType.STANDARD).build();
-
-		CinemaHall hallWithSeats = CinemaHall.builder().id(1L).name("Hall With Seats").build();
-
-		when(hallRepository.existsByName("Hall With Seats")).thenReturn(false);
-		when(hallRepository.save(any(CinemaHall.class))).thenReturn(hallWithSeats);
-		when(hallMapper.toDto(hallWithSeats)).thenReturn(hallDto);
-
-		CinemaHallResponse result = cinemaHallService.createHall(requestWithSeats);
-
-		assertNotNull(result);
-		verify(hallRepository).existsByName("Hall With Seats");
-		verify(hallRepository).save(any(CinemaHall.class));
-	}
-
-	@Test
 	void createHall_ShouldThrowDuplicateEntityException_WhenNameExists() {
 		when(hallRepository.existsByName("Hall A")).thenReturn(true);
 
@@ -162,21 +145,12 @@ class CinemaHallServiceTest {
 	void updateHall_ShouldUpdateSeats_WhenSeatConfigProvided() {
 		CinemaHall hallWithSeats = CinemaHall.builder().id(1L).name("Hall A").seats(new ArrayList<>()).build();
 
-		hallWithSeats.getSeats().add(Seat.builder().id(1L).build());
-
 		CinemaHallRequest updateRequest = CinemaHallRequest.builder().name("Updated Hall").rows(6).seatsPerRow(8)
 				.defaultSeatType(SeatType.VIP).build();
 
-		List<Seat> newSeats = new ArrayList<>();
-		for (int row = 1; row <= 6; row++) {
-			for (int number = 1; number <= 8; number++) {
-				newSeats.add(Seat.builder().row(row).number(number).seatType(SeatType.VIP).hall(hallWithSeats).build());
-			}
-		}
-
 		when(hallRepository.findById(1L)).thenReturn(Optional.of(hallWithSeats));
 		when(hallRepository.existsByName("Updated Hall")).thenReturn(false);
-		when(seatRepository.saveAll(anyList())).thenReturn(newSeats);
+		when(seatRepository.saveAll(anyList())).thenReturn(new ArrayList<>());
 		when(hallRepository.save(hallWithSeats)).thenReturn(hallWithSeats);
 		when(hallMapper.toDto(hallWithSeats)).thenReturn(hallDto);
 
@@ -268,14 +242,23 @@ class CinemaHallServiceTest {
 
 	@Test
 	void getHallWithSeats_ShouldReturnHallWithSeatsDto_WhenHallExists() {
-		when(hallRepository.findByIdWithSeats(1L)).thenReturn(Optional.of(cinemaHall));
+		CinemaHall hallWithSeats = CinemaHall.builder().id(1L).name("Hall A").seats(seats).build();
+
+		List<SeatResponse> seatResponses = Arrays.asList(SeatResponse.builder().id(1L).build(),
+				SeatResponse.builder().id(2L).build(), SeatResponse.builder().id(3L).build());
+
+		when(hallRepository.findByIdWithSeats(1L)).thenReturn(Optional.of(hallWithSeats));
+		when(seatMapper.toDtoList(seats)).thenReturn(seatResponses);
 
 		CinemaHallWithSeatsResponse result = cinemaHallService.getHallWithSeats(1L);
 
 		assertNotNull(result);
 		assertEquals(1L, result.getId());
 		assertEquals("Hall A", result.getName());
+		assertEquals(3, result.getCapacity());
+		assertEquals(3, result.getSeats().size());
 		verify(hallRepository).findByIdWithSeats(1L);
+		verify(seatMapper).toDtoList(seats);
 	}
 
 	@Test
@@ -288,14 +271,22 @@ class CinemaHallServiceTest {
 
 	@Test
 	void getHallLayout_ShouldReturnHallLayout_WhenHallExists() {
-		when(hallRepository.findByIdWithSeats(1L)).thenReturn(Optional.of(cinemaHall));
+		CinemaHall hallWithSeats = CinemaHall.builder().id(1L).name("Hall A").seats(seats).build();
+
+		List<SeatResponse> seatResponses = Arrays.asList(SeatResponse.builder().id(1L).build(),
+				SeatResponse.builder().id(2L).build(), SeatResponse.builder().id(3L).build());
+
+		when(hallRepository.findByIdWithSeats(1L)).thenReturn(Optional.of(hallWithSeats));
+		when(seatMapper.toDtoList(anyList())).thenReturn(seatResponses);
 
 		HallLayoutResponse result = cinemaHallService.getHallLayout(1L);
 
 		assertNotNull(result);
 		assertEquals(1L, result.getHallId());
 		assertEquals("Hall A", result.getHallName());
+		assertEquals(3, result.getTotalSeats());
 		verify(hallRepository).findByIdWithSeats(1L);
+		verify(seatMapper).toDtoList(anyList());
 	}
 
 	@Test

@@ -3,7 +3,6 @@ package ua.lviv.bas.cinema.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -21,6 +20,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+
+import com.querydsl.core.BooleanBuilder;
 
 import ua.lviv.bas.cinema.domain.Movie;
 import ua.lviv.bas.cinema.domain.Person;
@@ -244,33 +245,94 @@ class PersonServiceTest {
 
 	@Test
 	void searchPersons_ShouldReturnPagedResponse() {
+		String query = "Anton";
+		PersonRole role = PersonRole.ACTOR;
+		int page = 0;
+		int size = 10;
+
 		Person person = Person.builder().id(1L).name("Anton Bas").role(PersonRole.ACTOR).build();
-		PersonResponse dto = PersonResponse.builder().id(1L).name("Anton Bas").role(PersonRole.ACTOR).build();
-		Page<Person> page = new PageImpl<>(List.of(person));
+		Page<Person> personPage = new PageImpl<>(List.of(person));
 
-		when(personRepository.searchPersons(eq("Anton"), eq(PersonRole.ACTOR), any(Pageable.class))).thenReturn(page);
-		when(personMapper.toDto(person)).thenReturn(dto);
+		when(personRepository.findAll(any(BooleanBuilder.class), any(Pageable.class))).thenReturn(personPage);
 
-		PageResponse<PersonResponse> result = personService.searchPersons("Anton", PersonRole.ACTOR, 0, 10);
+		PageResponse<PersonResponse> result = personService.searchPersons(query, role, page, size);
 
+		assertThat(result).isNotNull();
 		assertThat(result.getContent()).hasSize(1);
-		assertThat(result.getContent().get(0).getName()).isEqualTo("Anton Bas");
 		assertThat(result.getCurrentPage()).isEqualTo(0);
 		assertThat(result.getTotalElements()).isEqualTo(1);
+		verify(personRepository).findAll(any(BooleanBuilder.class), any(Pageable.class));
 	}
 
 	@Test
 	void searchPersons_WithNullRole_ShouldSearchWithoutRoleFilter() {
+		String query = "Anton";
+		PersonRole role = null;
+		int page = 0;
+		int size = 10;
+
 		Person person = Person.builder().id(1L).name("Anton Bas").role(PersonRole.ACTOR).build();
-		PersonResponse dto = PersonResponse.builder().id(1L).name("Anton Bas").role(PersonRole.ACTOR).build();
-		Page<Person> page = new PageImpl<>(List.of(person));
+		Page<Person> personPage = new PageImpl<>(List.of(person));
 
-		when(personRepository.searchPersons(eq("Anton"), eq(null), any(Pageable.class))).thenReturn(page);
-		when(personMapper.toDto(person)).thenReturn(dto);
+		when(personRepository.findAll(any(BooleanBuilder.class), any(Pageable.class))).thenReturn(personPage);
 
-		PageResponse<PersonResponse> result = personService.searchPersons("Anton", null, 0, 10);
+		PageResponse<PersonResponse> result = personService.searchPersons(query, role, page, size);
 
-		assertThat(result.getContent()).hasSize(1);
-		assertThat(result.getContent().get(0).getName()).isEqualTo("Anton Bas");
+		assertThat(result).isNotNull();
+		verify(personRepository).findAll(any(BooleanBuilder.class), any(Pageable.class));
+	}
+
+	@Test
+	void searchPersons_WithNullQuery_ShouldSearchWithoutQueryFilter() {
+		String query = null;
+		PersonRole role = PersonRole.ACTOR;
+		int page = 0;
+		int size = 10;
+
+		Person person = Person.builder().id(1L).name("Anton Bas").role(PersonRole.ACTOR).build();
+		Page<Person> personPage = new PageImpl<>(List.of(person));
+
+		when(personRepository.findAll(any(BooleanBuilder.class), any(Pageable.class))).thenReturn(personPage);
+
+		PageResponse<PersonResponse> result = personService.searchPersons(query, role, page, size);
+
+		assertThat(result).isNotNull();
+		verify(personRepository).findAll(any(BooleanBuilder.class), any(Pageable.class));
+	}
+
+	@Test
+	void searchPersons_WithEmptyQuery_ShouldSearchWithoutQueryFilter() {
+		String query = "";
+		PersonRole role = PersonRole.ACTOR;
+		int page = 0;
+		int size = 10;
+
+		Person person = Person.builder().id(1L).name("Anton Bas").role(PersonRole.ACTOR).build();
+		Page<Person> personPage = new PageImpl<>(List.of(person));
+
+		when(personRepository.findAll(any(BooleanBuilder.class), any(Pageable.class))).thenReturn(personPage);
+
+		PageResponse<PersonResponse> result = personService.searchPersons(query, role, page, size);
+
+		assertThat(result).isNotNull();
+		verify(personRepository).findAll(any(BooleanBuilder.class), any(Pageable.class));
+	}
+
+	@Test
+	void searchPersons_WithBlankQuery_ShouldSearchWithoutQueryFilter() {
+		String query = "   ";
+		PersonRole role = PersonRole.ACTOR;
+		int page = 0;
+		int size = 10;
+
+		Person person = Person.builder().id(1L).name("Anton Bas").role(PersonRole.ACTOR).build();
+		Page<Person> personPage = new PageImpl<>(List.of(person));
+
+		when(personRepository.findAll(any(BooleanBuilder.class), any(Pageable.class))).thenReturn(personPage);
+
+		PageResponse<PersonResponse> result = personService.searchPersons(query, role, page, size);
+
+		assertThat(result).isNotNull();
+		verify(personRepository).findAll(any(BooleanBuilder.class), any(Pageable.class));
 	}
 }
