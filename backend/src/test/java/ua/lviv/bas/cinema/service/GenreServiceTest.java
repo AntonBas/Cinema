@@ -49,9 +49,16 @@ class GenreServiceTest {
 	@Test
 	void createGenre_ShouldReturnGenreDto_WhenValidRequest() {
 		GenreRequest request = new GenreRequest("Action");
-		Genre genre = Genre.builder().name("Action").build();
-		Genre savedGenre = Genre.builder().id(1L).name("Action").build();
-		GenreResponse responseDto = GenreResponse.builder().id(1L).name("Action").build();
+		Genre genre = new Genre();
+		genre.setName("Action");
+
+		Genre savedGenre = new Genre();
+		savedGenre.setId(1L);
+		savedGenre.setName("Action");
+
+		GenreResponse responseDto = new GenreResponse();
+		responseDto.setId(1L);
+		responseDto.setName("Action");
 
 		when(genreRepository.existsByNameIgnoreCase("Action")).thenReturn(false);
 		when(genreMapper.toEntity(request)).thenReturn(genre);
@@ -86,9 +93,16 @@ class GenreServiceTest {
 	@Test
 	void createGenre_ShouldTrimName_WhenRequestHasSpaces() {
 		GenreRequest request = new GenreRequest("  Action  ");
-		Genre genre = Genre.builder().name("Action").build();
-		Genre savedGenre = Genre.builder().id(1L).name("Action").build();
-		GenreResponse responseDto = GenreResponse.builder().id(1L).name("Action").build();
+		Genre genre = new Genre();
+		genre.setName("Action");
+
+		Genre savedGenre = new Genre();
+		savedGenre.setId(1L);
+		savedGenre.setName("Action");
+
+		GenreResponse responseDto = new GenreResponse();
+		responseDto.setId(1L);
+		responseDto.setName("Action");
 
 		when(genreRepository.existsByNameIgnoreCase("Action")).thenReturn(false);
 		when(genreMapper.toEntity(any(GenreRequest.class))).thenReturn(genre);
@@ -103,8 +117,13 @@ class GenreServiceTest {
 
 	@Test
 	void getGenreById_ShouldReturnGenreDto_WhenGenreExists() {
-		Genre genre = Genre.builder().id(1L).name("Action").build();
-		GenreResponse dto = GenreResponse.builder().id(1L).name("Action").build();
+		Genre genre = new Genre();
+		genre.setId(1L);
+		genre.setName("Action");
+
+		GenreResponse dto = new GenreResponse();
+		dto.setId(1L);
+		dto.setName("Action");
 
 		when(genreRepository.findById(1L)).thenReturn(Optional.of(genre));
 		when(genreMapper.toDto(genre)).thenReturn(dto);
@@ -133,9 +152,17 @@ class GenreServiceTest {
 	@Test
 	void updateGenre_ShouldUpdateAndReturnDto_WhenValidRequest() {
 		GenreRequest request = new GenreRequest("Updated Action");
-		Genre existing = Genre.builder().id(1L).name("Action").build();
-		Genre updated = Genre.builder().id(1L).name("Updated Action").build();
-		GenreResponse responseDto = GenreResponse.builder().id(1L).name("Updated Action").build();
+		Genre existing = new Genre();
+		existing.setId(1L);
+		existing.setName("Action");
+
+		Genre updated = new Genre();
+		updated.setId(1L);
+		updated.setName("Updated Action");
+
+		GenreResponse responseDto = new GenreResponse();
+		responseDto.setId(1L);
+		responseDto.setName("Updated Action");
 
 		when(genreRepository.findById(1L)).thenReturn(Optional.of(existing));
 		when(genreRepository.existsByNameIgnoreCaseAndIdNot("Updated Action", 1L)).thenReturn(false);
@@ -169,7 +196,9 @@ class GenreServiceTest {
 	@Test
 	void updateGenre_ShouldThrowDuplicateEntityException_WhenNewNameExists() {
 		GenreRequest request = new GenreRequest("Existing Genre");
-		Genre existing = Genre.builder().id(1L).name("Action").build();
+		Genre existing = new Genre();
+		existing.setId(1L);
+		existing.setName("Action");
 
 		when(genreRepository.findById(1L)).thenReturn(Optional.of(existing));
 		when(genreRepository.existsByNameIgnoreCaseAndIdNot("Existing Genre", 1L)).thenReturn(true);
@@ -186,9 +215,17 @@ class GenreServiceTest {
 	@Test
 	void updateGenre_ShouldTrimName_WhenRequestHasSpaces() {
 		GenreRequest request = new GenreRequest("  Updated Action  ");
-		Genre existing = Genre.builder().id(1L).name("Action").build();
-		Genre updated = Genre.builder().id(1L).name("Updated Action").build();
-		GenreResponse responseDto = GenreResponse.builder().id(1L).name("Updated Action").build();
+		Genre existing = new Genre();
+		existing.setId(1L);
+		existing.setName("Action");
+
+		Genre updated = new Genre();
+		updated.setId(1L);
+		updated.setName("Updated Action");
+
+		GenreResponse responseDto = new GenreResponse();
+		responseDto.setId(1L);
+		responseDto.setName("Updated Action");
 
 		when(genreRepository.findById(1L)).thenReturn(Optional.of(existing));
 		when(genreRepository.existsByNameIgnoreCaseAndIdNot("Updated Action", 1L)).thenReturn(false);
@@ -225,11 +262,24 @@ class GenreServiceTest {
 
 	@Test
 	void getAllGenres_ShouldReturnListOfGenres() {
-		Genre genre1 = Genre.builder().id(1L).name("Action").build();
-		Genre genre2 = Genre.builder().id(2L).name("Comedy").build();
+		Genre genre1 = new Genre();
+		genre1.setId(1L);
+		genre1.setName("Action");
+
+		Genre genre2 = new Genre();
+		genre2.setId(2L);
+		genre2.setName("Comedy");
+
 		List<Genre> genres = List.of(genre1, genre2);
-		GenreResponse dto1 = GenreResponse.builder().id(1L).name("Action").build();
-		GenreResponse dto2 = GenreResponse.builder().id(2L).name("Comedy").build();
+
+		GenreResponse dto1 = new GenreResponse();
+		dto1.setId(1L);
+		dto1.setName("Action");
+
+		GenreResponse dto2 = new GenreResponse();
+		dto2.setId(2L);
+		dto2.setName("Comedy");
+
 		List<GenreResponse> dtos = List.of(dto1, dto2);
 
 		when(genreRepository.findAll()).thenReturn(genres);
@@ -260,8 +310,14 @@ class GenreServiceTest {
 
 	@Test
 	void searchGenres_WithQuery_ShouldReturnFilteredPage() {
-		Genre genre = Genre.builder().id(1L).name("Action").build();
-		GenreResponse dto = GenreResponse.builder().id(1L).name("Action").build();
+		Genre genre = new Genre();
+		genre.setId(1L);
+		genre.setName("Action");
+
+		GenreResponse dto = new GenreResponse();
+		dto.setId(1L);
+		dto.setName("Action");
+
 		Page<Genre> page = new PageImpl<>(List.of(genre), PageRequest.of(0, 10), 1);
 
 		when(genreRepository.findByNameContainingIgnoreCase(eq("Act"), any(Pageable.class))).thenReturn(page);
@@ -281,8 +337,14 @@ class GenreServiceTest {
 
 	@Test
 	void searchGenres_WithoutQuery_ShouldReturnAllGenres() {
-		Genre genre = Genre.builder().id(1L).name("Comedy").build();
-		GenreResponse dto = GenreResponse.builder().id(1L).name("Comedy").build();
+		Genre genre = new Genre();
+		genre.setId(1L);
+		genre.setName("Comedy");
+
+		GenreResponse dto = new GenreResponse();
+		dto.setId(1L);
+		dto.setName("Comedy");
+
 		Page<Genre> page = new PageImpl<>(List.of(genre), PageRequest.of(0, 10), 1);
 
 		when(genreRepository.findAll(any(Pageable.class))).thenReturn(page);
@@ -298,8 +360,14 @@ class GenreServiceTest {
 
 	@Test
 	void searchGenres_WithEmptyQuery_ShouldReturnAllGenres() {
-		Genre genre = Genre.builder().id(1L).name("Drama").build();
-		GenreResponse dto = GenreResponse.builder().id(1L).name("Drama").build();
+		Genre genre = new Genre();
+		genre.setId(1L);
+		genre.setName("Drama");
+
+		GenreResponse dto = new GenreResponse();
+		dto.setId(1L);
+		dto.setName("Drama");
+
 		Page<Genre> page = new PageImpl<>(List.of(genre), PageRequest.of(0, 10), 1);
 
 		when(genreRepository.findAll(any(Pageable.class))).thenReturn(page);
@@ -314,8 +382,14 @@ class GenreServiceTest {
 
 	@Test
 	void searchGenres_ShouldLimitPageSizeToMax() {
-		Genre genre = Genre.builder().id(1L).name("Action").build();
-		GenreResponse dto = GenreResponse.builder().id(1L).name("Action").build();
+		Genre genre = new Genre();
+		genre.setId(1L);
+		genre.setName("Action");
+
+		GenreResponse dto = new GenreResponse();
+		dto.setId(1L);
+		dto.setName("Action");
+
 		Page<Genre> page = new PageImpl<>(List.of(genre), PageRequest.of(0, 50), 1);
 
 		when(genreRepository.findAll(any(Pageable.class))).thenReturn(page);
@@ -330,8 +404,14 @@ class GenreServiceTest {
 
 	@Test
 	void searchGenres_ShouldHandleNegativePage() {
-		Genre genre = Genre.builder().id(1L).name("Action").build();
-		GenreResponse dto = GenreResponse.builder().id(1L).name("Action").build();
+		Genre genre = new Genre();
+		genre.setId(1L);
+		genre.setName("Action");
+
+		GenreResponse dto = new GenreResponse();
+		dto.setId(1L);
+		dto.setName("Action");
+
 		Page<Genre> page = new PageImpl<>(List.of(genre), PageRequest.of(0, 10), 1);
 
 		when(genreRepository.findAll(any(Pageable.class))).thenReturn(page);
@@ -346,8 +426,14 @@ class GenreServiceTest {
 
 	@Test
 	void searchGenres_ShouldHandleZeroSize() {
-		Genre genre = Genre.builder().id(1L).name("Action").build();
-		GenreResponse dto = GenreResponse.builder().id(1L).name("Action").build();
+		Genre genre = new Genre();
+		genre.setId(1L);
+		genre.setName("Action");
+
+		GenreResponse dto = new GenreResponse();
+		dto.setId(1L);
+		dto.setName("Action");
+
 		Page<Genre> page = new PageImpl<>(List.of(genre), PageRequest.of(0, 12), 1);
 
 		when(genreRepository.findAll(any(Pageable.class))).thenReturn(page);

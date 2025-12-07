@@ -101,7 +101,10 @@ class SlugServiceTest {
 	@Test
 	void generateUniqueSlug_ShouldAddCounter_WhenSlugExists() {
 		String title = "Existing Movie";
-		Movie existingMovie = Movie.builder().id(1L).title("Existing Movie").build();
+
+		Movie existingMovie = new Movie();
+		existingMovie.setId(1L);
+		existingMovie.setTitle("Existing Movie");
 
 		when(movieRepository.findBySlug("existing-movie")).thenReturn(Optional.of(existingMovie));
 		when(movieRepository.findBySlug("existing-movie-1")).thenReturn(Optional.empty());
@@ -114,8 +117,14 @@ class SlugServiceTest {
 	@Test
 	void generateUniqueSlug_ShouldIncrementCounter_WhenMultipleConflicts() {
 		String title = "Popular Movie";
-		Movie existingMovie1 = Movie.builder().id(1L).title("Popular Movie").build();
-		Movie existingMovie2 = Movie.builder().id(2L).title("Popular Movie 1").build();
+
+		Movie existingMovie1 = new Movie();
+		existingMovie1.setId(1L);
+		existingMovie1.setTitle("Popular Movie");
+
+		Movie existingMovie2 = new Movie();
+		existingMovie2.setId(2L);
+		existingMovie2.setTitle("Popular Movie 1");
 
 		when(movieRepository.findBySlug("popular-movie")).thenReturn(Optional.of(existingMovie1));
 		when(movieRepository.findBySlug("popular-movie-1")).thenReturn(Optional.of(existingMovie2));
@@ -137,7 +146,10 @@ class SlugServiceTest {
 
 	@Test
 	void isSlugAvailable_ShouldReturnFalse_WhenSlugExists() {
-		Movie existingMovie = Movie.builder().id(1L).title("Existing Movie").build();
+		Movie existingMovie = new Movie();
+		existingMovie.setId(1L);
+		existingMovie.setTitle("Existing Movie");
+
 		when(movieRepository.findBySlug("existing-slug")).thenReturn(Optional.of(existingMovie));
 
 		boolean result = slugService.isSlugAvailable("existing-slug");
@@ -156,7 +168,10 @@ class SlugServiceTest {
 
 	@Test
 	void isSlugAvailableForMovie_ShouldReturnTrue_WhenSlugBelongsToSameMovie() {
-		Movie existingMovie = Movie.builder().id(1L).title("Existing Movie").build();
+		Movie existingMovie = new Movie();
+		existingMovie.setId(1L);
+		existingMovie.setTitle("Existing Movie");
+
 		when(movieRepository.findBySlug("existing-slug")).thenReturn(Optional.of(existingMovie));
 
 		boolean result = slugService.isSlugAvailableForMovie("existing-slug", 1L);
@@ -166,7 +181,10 @@ class SlugServiceTest {
 
 	@Test
 	void isSlugAvailableForMovie_ShouldReturnFalse_WhenSlugBelongsToDifferentMovie() {
-		Movie existingMovie = Movie.builder().id(2L).title("Existing Movie").build();
+		Movie existingMovie = new Movie();
+		existingMovie.setId(2L);
+		existingMovie.setTitle("Existing Movie");
+
 		when(movieRepository.findBySlug("existing-slug")).thenReturn(Optional.of(existingMovie));
 
 		boolean result = slugService.isSlugAvailableForMovie("existing-slug", 1L);

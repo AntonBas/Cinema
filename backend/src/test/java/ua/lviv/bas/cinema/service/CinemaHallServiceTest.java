@@ -20,6 +20,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import ua.lviv.bas.cinema.domain.CinemaHall;
 import ua.lviv.bas.cinema.domain.Seat;
@@ -88,6 +89,31 @@ class CinemaHallServiceTest {
 		verify(hallRepository).existsByName("Hall A");
 		verify(hallRepository).save(any(CinemaHall.class));
 		verify(hallMapper).toDto(cinemaHall);
+	}
+
+	@Test
+	void createHall_ShouldCreateHallWithSeats_WhenSeatConfigProvided() {
+		CinemaHallRequest requestWithSeats = CinemaHallRequest.builder().name("Hall B").rows(5).seatsPerRow(10)
+				.defaultSeatType(SeatType.STANDARD).build();
+
+		CinemaHall hallWithSeats = CinemaHall.builder().id(2L).name("Hall B").seats(new ArrayList<>()).build();
+
+		CinemaHallResponse hallDtoWithCapacity = CinemaHallResponse.builder().id(2L).name("Hall B").capacity(50)
+				.build();
+
+		when(hallRepository.existsByName("Hall B")).thenReturn(false);
+		when(hallRepository.save(any(CinemaHall.class))).thenReturn(hallWithSeats);
+		when(hallMapper.toDto(hallWithSeats)).thenReturn(hallDtoWithCapacity);
+
+		CinemaHallResponse result = cinemaHallService.createHall(requestWithSeats);
+
+		assertNotNull(result);
+		assertEquals(2L, result.getId());
+		assertEquals("Hall B", result.getName());
+		assertEquals(50, result.getCapacity());
+		verify(hallRepository).existsByName("Hall B");
+		verify(hallRepository).save(any(CinemaHall.class));
+		verify(hallMapper).toDto(hallWithSeats);
 	}
 
 	@Test
@@ -388,5 +414,35 @@ class CinemaHallServiceTest {
 		assertEquals(0, result.size());
 		verify(hallRepository).findByNameContainingIgnoreCase("Nonexistent");
 		verify(hallMapper).toDtoList(anyList());
+	}
+
+	@Test
+	void determineSeatType_ShouldReturnVIP_ForLastTwoRows() {
+		CinemaHallRequest request = CinemaHallRequest.builder().rows(10).defaultSeatType(SeatType.STANDARD).build();
+
+		assertEquals(SeatType.VIP,
+				ReflectionTestUtils.invokeMethod(cinemaHallService, "determineSeatType", request, 9, 1));
+		assertEquals(SeatType.VIP,
+				ReflectionTestUtils.invokeMethod(cinemaHallService, "determineSeatType", request, 10, 5));
+	}
+
+	@Test
+	void determineSeatType_ShouldReturnDefault_ForOtherRows() {
+		CinemaHallRequest request = CinemaHallRequest.builder().rows(10).defaultSeatType(SeatType.STANDARD).build();
+
+		assertEquals(SeatType.STANDARD,
+				ReflectionTestUtils.invokeMethod(cinemaHallService, "determineSeatType", request, 1, 1));
+		assertEquals(SeatType.STANDARD,
+				ReflectionTestUtils.invokeMethod(cinemaHallService, "determineSeatType", request, 8, 3));
+	}
+
+	@Test
+	void determineSeatType_ShouldReturnDefault_WhenVIPTypes() {
+		CinemaHallRequest request = CinemaHallRequest.builder().rows(10).defaultSeatType(SeatType.STANDARD).build();
+
+		assertEquals(SeatType.STANDARD,
+				ReflectionTestUtils.invokeMethod(cinemaHallService, "determineSeatType", request, 1, 1));
+		assertEquals(SeatType.VIP,
+				ReflectionTestUtils.invokeMethod(cinemaHallService, "determineSeatType", request, 10, 1));
 	}
 }

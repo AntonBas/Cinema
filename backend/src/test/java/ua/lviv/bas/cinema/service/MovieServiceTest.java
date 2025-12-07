@@ -34,8 +34,6 @@ import ua.lviv.bas.cinema.dto.movie.request.MovieCreateRequest;
 import ua.lviv.bas.cinema.dto.movie.request.MovieUpdateRequest;
 import ua.lviv.bas.cinema.dto.movie.response.MovieCardResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieDetailResponse;
-import ua.lviv.bas.cinema.dto.movie.response.GenreResponse;
-import ua.lviv.bas.cinema.dto.movie.response.PersonResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieSessionSearchResponse;
 import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
 import ua.lviv.bas.cinema.exception.domain.cinema.MovieNotFoundException;
@@ -72,47 +70,92 @@ class MovieServiceTest {
 
 	@BeforeEach
 	void setUp() {
-		genre = Genre.builder().id(1L).name("Action").build();
-		actor = Person.builder().id(1L).name("Actor One").role(PersonRole.ACTOR).build();
-		director = Person.builder().id(2L).name("Director One").role(PersonRole.DIRECTOR).build();
-		screenwriter = Person.builder().id(3L).name("Writer One").role(PersonRole.SCREENWRITER).build();
+		genre = new Genre();
+		genre.setId(1L);
+		genre.setName("Action");
 
-		movie = Movie.builder().id(1L).title("Test Movie").slug("test-movie").trailerUrl("https://example.com/trailer")
-				.description("Test Description").durationMinutes(120).releaseDate(LocalDate.now().plusDays(1))
-				.endShowingDate(LocalDate.now().plusDays(30)).status(MovieStatus.UPCOMING).ageRating(AgeRating.PEGI_12)
-				.posterFileName("poster.jpg").actors(new HashSet<>(List.of(actor)))
-				.directors(new HashSet<>(List.of(director))).screenwriters(new HashSet<>(List.of(screenwriter)))
-				.genres(new HashSet<>(List.of(genre))).build();
+		actor = new Person();
+		actor.setId(1L);
+		actor.setName("Actor One");
+		actor.setRole(PersonRole.ACTOR);
 
-		GenreResponse genreResponse = GenreResponse.builder().id(1L).name("Action").build();
-		PersonResponse actorResponse = PersonResponse.builder().id(1L).name("Actor One").role(PersonRole.ACTOR).build();
-		PersonResponse directorResponse = PersonResponse.builder().id(2L).name("Director One").role(PersonRole.DIRECTOR)
-				.build();
-		PersonResponse screenwriterResponse = PersonResponse.builder().id(3L).name("Writer One")
-				.role(PersonRole.SCREENWRITER).build();
+		director = new Person();
+		director.setId(2L);
+		director.setName("Director One");
+		director.setRole(PersonRole.DIRECTOR);
 
-		movieDetailResponse = MovieDetailResponse.builder().id(1L).title("Test Movie").slug("test-movie")
-				.trailerUrl("https://example.com/trailer").description("Test Description").durationMinutes(120)
-				.releaseDate(LocalDate.now().plusDays(1)).endShowingDate(LocalDate.now().plusDays(30))
-				.status(MovieStatus.UPCOMING).ageRating(AgeRating.PEGI_12).posterFileName("poster.jpg")
-				.posterUrl("/api/movies/1/poster").genres(List.of(genreResponse)).actors(List.of(actorResponse))
-				.directors(List.of(directorResponse)).screenwriters(List.of(screenwriterResponse)).build();
+		screenwriter = new Person();
+		screenwriter.setId(3L);
+		screenwriter.setName("Writer One");
+		screenwriter.setRole(PersonRole.SCREENWRITER);
 
-		movieCardResponse = MovieCardResponse.builder().id(1L).title("Test Movie").slug("test-movie")
-				.durationMinutes(120).ageRating(AgeRating.PEGI_12).releaseDate(LocalDate.now().plusDays(1))
-				.status(MovieStatus.UPCOMING).currentlyShowing(false).build();
+		movie = new Movie();
+		movie.setId(1L);
+		movie.setTitle("Test Movie");
+		movie.setSlug("test-movie");
+		movie.setTrailerUrl("https://example.com/trailer");
+		movie.setDescription("Test Description");
+		movie.setDurationMinutes(120);
+		movie.setReleaseDate(LocalDate.now().plusDays(1));
+		movie.setEndShowingDate(LocalDate.now().plusDays(30));
+		movie.setStatus(MovieStatus.UPCOMING);
+		movie.setAgeRating(AgeRating.PEGI_12);
+		movie.setPosterFileName("poster.jpg");
+		movie.setActors(new HashSet<>(List.of(actor)));
+		movie.setDirectors(new HashSet<>(List.of(director)));
+		movie.setScreenwriters(new HashSet<>(List.of(screenwriter)));
+		movie.setGenres(new HashSet<>(List.of(genre)));
 
-		createRequest = MovieCreateRequest.builder().title("New Movie").trailerUrl("https://example.com/trailer")
-				.description("Test Description").durationMinutes(120).releaseDate(LocalDate.now().plusDays(1))
-				.endShowingDate(LocalDate.now().plusDays(30)).ageRating(AgeRating.PEGI_12).genreIds(List.of(1L))
-				.actorIds(List.of(1L)).directorIds(List.of(2L)).screenwriterIds(List.of(3L)).build();
+		movieDetailResponse = new MovieDetailResponse();
+		movieDetailResponse.setId(1L);
+		movieDetailResponse.setTitle("Test Movie");
+		movieDetailResponse.setSlug("test-movie");
+		movieDetailResponse.setTrailerUrl("https://example.com/trailer");
+		movieDetailResponse.setDescription("Test Description");
+		movieDetailResponse.setDurationMinutes(120);
+		movieDetailResponse.setReleaseDate(LocalDate.now().plusDays(1));
+		movieDetailResponse.setEndShowingDate(LocalDate.now().plusDays(30));
+		movieDetailResponse.setStatus(MovieStatus.UPCOMING);
+		movieDetailResponse.setAgeRating(AgeRating.PEGI_12);
+		movieDetailResponse.setPosterFileName("poster.jpg");
+		movieDetailResponse.setPosterUrl("/api/movies/1/poster");
 
-		updateRequest = MovieUpdateRequest.builder().title("Updated Movie")
-				.trailerUrl("https://example.com/updated-trailer").description("Updated Description")
-				.durationMinutes(140).releaseDate(LocalDate.now().plusDays(10))
-				.endShowingDate(LocalDate.now().plusDays(70)).ageRating(AgeRating.PEGI_16).genreIds(List.of(1L))
-				.actorIds(List.of(1L)).directorIds(List.of(2L)).screenwriterIds(List.of(3L)).removePoster(false)
-				.build();
+		movieCardResponse = new MovieCardResponse();
+		movieCardResponse.setId(1L);
+		movieCardResponse.setTitle("Test Movie");
+		movieCardResponse.setSlug("test-movie");
+		movieCardResponse.setDurationMinutes(120);
+		movieCardResponse.setAgeRating(AgeRating.PEGI_12);
+		movieCardResponse.setReleaseDate(LocalDate.now().plusDays(1));
+		movieCardResponse.setStatus(MovieStatus.UPCOMING);
+		movieCardResponse.setCurrentlyShowing(false);
+
+		createRequest = new MovieCreateRequest();
+		createRequest.setTitle("New Movie");
+		createRequest.setTrailerUrl("https://example.com/trailer");
+		createRequest.setDescription("Test Description");
+		createRequest.setDurationMinutes(120);
+		createRequest.setReleaseDate(LocalDate.now().plusDays(1));
+		createRequest.setEndShowingDate(LocalDate.now().plusDays(30));
+		createRequest.setAgeRating(AgeRating.PEGI_12);
+		createRequest.setGenreIds(List.of(1L));
+		createRequest.setActorIds(List.of(1L));
+		createRequest.setDirectorIds(List.of(2L));
+		createRequest.setScreenwriterIds(List.of(3L));
+
+		updateRequest = new MovieUpdateRequest();
+		updateRequest.setTitle("Updated Movie");
+		updateRequest.setTrailerUrl("https://example.com/updated-trailer");
+		updateRequest.setDescription("Updated Description");
+		updateRequest.setDurationMinutes(140);
+		updateRequest.setReleaseDate(LocalDate.now().plusDays(10));
+		updateRequest.setEndShowingDate(LocalDate.now().plusDays(70));
+		updateRequest.setAgeRating(AgeRating.PEGI_16);
+		updateRequest.setGenreIds(List.of(1L));
+		updateRequest.setActorIds(List.of(1L));
+		updateRequest.setDirectorIds(List.of(2L));
+		updateRequest.setScreenwriterIds(List.of(3L));
+		updateRequest.setRemovePoster(false);
 
 		ReflectionTestUtils.setField(movieService, "uploadDir", "test-uploads");
 	}
@@ -139,8 +182,10 @@ class MovieServiceTest {
 
 	@Test
 	void createMovie_ShouldThrowException_WhenEndDateBeforeReleaseDate() {
-		MovieCreateRequest invalidRequest = MovieCreateRequest.builder().title("Invalid Movie")
-				.releaseDate(LocalDate.now().plusDays(10)).endShowingDate(LocalDate.now().plusDays(5)).build();
+		MovieCreateRequest invalidRequest = new MovieCreateRequest();
+		invalidRequest.setTitle("Invalid Movie");
+		invalidRequest.setReleaseDate(LocalDate.now().plusDays(10));
+		invalidRequest.setEndShowingDate(LocalDate.now().plusDays(5));
 
 		assertThrows(IllegalArgumentException.class, () -> movieService.createMovie(invalidRequest));
 	}
@@ -208,7 +253,11 @@ class MovieServiceTest {
 		movie.setEndShowingDate(LocalDate.now().plusDays(30));
 
 		when(movieRepository.findAll()).thenReturn(List.of(movie));
-		when(movieMapper.toCardResponse(movie)).thenReturn(movieCardResponse);
+
+		MovieCardResponse cardResponse = new MovieCardResponse();
+		cardResponse.setId(1L);
+		cardResponse.setTitle("Test Movie");
+		when(movieMapper.toCardResponse(movie)).thenReturn(cardResponse);
 
 		List<MovieCardResponse> result = movieService.getCurrentlyShowingMovies();
 
@@ -222,7 +271,11 @@ class MovieServiceTest {
 		movie.setEndShowingDate(LocalDate.now().plusDays(30));
 
 		when(movieRepository.findAll()).thenReturn(List.of(movie));
-		when(movieMapper.toCardResponse(movie)).thenReturn(movieCardResponse);
+
+		MovieCardResponse cardResponse = new MovieCardResponse();
+		cardResponse.setId(1L);
+		cardResponse.setTitle("Test Movie");
+		when(movieMapper.toCardResponse(movie)).thenReturn(cardResponse);
 
 		List<MovieCardResponse> result = movieService.getUpcomingMovies();
 
@@ -236,7 +289,11 @@ class MovieServiceTest {
 		movie.setEndShowingDate(LocalDate.now().minusDays(1));
 
 		when(movieRepository.findAll()).thenReturn(List.of(movie));
-		when(movieMapper.toCardResponse(movie)).thenReturn(movieCardResponse);
+
+		MovieCardResponse cardResponse = new MovieCardResponse();
+		cardResponse.setId(1L);
+		cardResponse.setTitle("Test Movie");
+		when(movieMapper.toCardResponse(movie)).thenReturn(cardResponse);
 
 		List<MovieCardResponse> result = movieService.getArchivedMovies();
 
@@ -282,8 +339,10 @@ class MovieServiceTest {
 	void updateMovie_ShouldThrowException_WhenEndDateBeforeReleaseDate() {
 		when(movieRepository.findById(1L)).thenReturn(Optional.of(movie));
 
-		MovieUpdateRequest invalidRequest = MovieUpdateRequest.builder().title("Updated Movie")
-				.releaseDate(LocalDate.now().plusDays(10)).endShowingDate(LocalDate.now().plusDays(5)).build();
+		MovieUpdateRequest invalidRequest = new MovieUpdateRequest();
+		invalidRequest.setTitle("Updated Movie");
+		invalidRequest.setReleaseDate(LocalDate.now().plusDays(10));
+		invalidRequest.setEndShowingDate(LocalDate.now().plusDays(5));
 
 		assertThrows(IllegalArgumentException.class, () -> movieService.updateMovie(1L, invalidRequest));
 	}
@@ -340,7 +399,11 @@ class MovieServiceTest {
 	void searchMovies_ShouldReturnPaginatedResults() {
 		Page<Movie> moviePage = new PageImpl<>(List.of(movie));
 		when(movieRepository.findByTitleContainingIgnoreCase(eq("test"), any(Pageable.class))).thenReturn(moviePage);
-		when(movieMapper.toCardResponse(movie)).thenReturn(movieCardResponse);
+
+		MovieCardResponse cardResponse = new MovieCardResponse();
+		cardResponse.setId(1L);
+		cardResponse.setTitle("Test Movie");
+		when(movieMapper.toCardResponse(movie)).thenReturn(cardResponse);
 
 		Page<MovieCardResponse> result = movieService.searchMovies("test", Pageable.unpaged());
 
@@ -352,7 +415,11 @@ class MovieServiceTest {
 	void searchMovies_ShouldReturnAllMovies_WhenSearchTermNull() {
 		Page<Movie> moviePage = new PageImpl<>(List.of(movie));
 		when(movieRepository.findAll(any(Pageable.class))).thenReturn(moviePage);
-		when(movieMapper.toCardResponse(movie)).thenReturn(movieCardResponse);
+
+		MovieCardResponse cardResponse = new MovieCardResponse();
+		cardResponse.setId(1L);
+		cardResponse.setTitle("Test Movie");
+		when(movieMapper.toCardResponse(movie)).thenReturn(cardResponse);
 
 		Page<MovieCardResponse> result = movieService.searchMovies(null, Pageable.unpaged());
 

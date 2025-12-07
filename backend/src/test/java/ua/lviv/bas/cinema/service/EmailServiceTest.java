@@ -1,5 +1,6 @@
 package ua.lviv.bas.cinema.service;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -250,12 +251,5 @@ class EmailServiceTest {
 		assertArrayEquals(new String[] { toEmail }, message.getTo());
 		assertEquals(subject, message.getSubject());
 		assertEquals(text, message.getText());
-	}
-
-	private void assertArrayEquals(String[] expected, String[] actual) {
-		assertEquals(expected.length, actual.length);
-		for (int i = 0; i < expected.length; i++) {
-			assertEquals(expected[i], actual[i]);
-		}
 	}
 }

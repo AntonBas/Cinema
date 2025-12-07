@@ -71,10 +71,17 @@ class SessionServiceTest {
 		sessionRequest = SessionRequest.builder().startTime(LocalDateTime.now().plusHours(2))
 				.basePrice(new BigDecimal("250.00")).movieId(1L).hallId(1L).build();
 
-		movie = Movie.builder().id(1L).durationMinutes(120).title("Test Movie")
-				.releaseDate(LocalDate.now().minusDays(1)).endShowingDate(LocalDate.now().plusDays(30)).build();
+		movie = new Movie();
+		movie.setId(1L);
+		movie.setDurationMinutes(120);
+		movie.setTitle("Test Movie");
+		movie.setReleaseDate(LocalDate.now().minusDays(1));
+		movie.setEndShowingDate(LocalDate.now().plusDays(30));
 
-		hall = CinemaHall.builder().id(1L).name("Hall 1").seats(new ArrayList<>()).build();
+		hall = new CinemaHall();
+		hall.setId(1L);
+		hall.setName("Hall 1");
+		hall.setSeats(new ArrayList<>());
 
 		for (int i = 1; i <= 100; i++) {
 			Seat seat = new Seat();
@@ -84,14 +91,22 @@ class SessionServiceTest {
 		}
 
 		LocalDateTime startTime = LocalDateTime.now().plusHours(2);
-		session = Session.builder().id(1L).startTime(startTime).basePrice(new BigDecimal("250.00")).movie(movie)
-				.hall(hall).build();
+		session = new Session();
+		session.setId(1L);
+		session.setStartTime(startTime);
+		session.setBasePrice(new BigDecimal("250.00"));
+		session.setMovie(movie);
+		session.setHall(hall);
 
-		sessionAdminDto = SessionAdminResponse.builder().id(1L).startTime(startTime).basePrice(new BigDecimal("250.00"))
-				.build();
+		sessionAdminDto = new SessionAdminResponse();
+		sessionAdminDto.setId(1L);
+		sessionAdminDto.setStartTime(startTime);
+		sessionAdminDto.setBasePrice(new BigDecimal("250.00"));
 
-		sessionScheduleDto = SessionScheduleResponse.builder().id(1L).startTime(startTime)
-				.basePrice(new BigDecimal("250.00")).build();
+		sessionScheduleDto = new SessionScheduleResponse();
+		sessionScheduleDto.setId(1L);
+		sessionScheduleDto.setStartTime(startTime);
+		sessionScheduleDto.setBasePrice(new BigDecimal("250.00"));
 
 		pageable = PageRequest.of(0, 20);
 	}
@@ -114,7 +129,8 @@ class SessionServiceTest {
 
 	@Test
 	void createSession_ShouldThrowSessionTimeConflictException_WhenTimeConflict() {
-		Session conflictingSession = Session.builder().id(2L).build();
+		Session conflictingSession = new Session();
+		conflictingSession.setId(2L);
 
 		when(movieService.getMovieEntityById(1L)).thenReturn(movie);
 		when(cinemaHallService.getHallEntityById(1L)).thenReturn(hall);
@@ -216,7 +232,8 @@ class SessionServiceTest {
 	@Test
 	void hasTimeConflict_ShouldReturnTrue_WhenConflictExists() {
 		LocalDateTime fixedTime = LocalDateTime.of(2024, 1, 15, 18, 0);
-		Session conflictingSession = Session.builder().id(2L).build();
+		Session conflictingSession = new Session();
+		conflictingSession.setId(2L);
 
 		when(sessionQueryService.findConflictingSessions(1L, fixedTime, fixedTime.plusMinutes(120), null))
 				.thenReturn(List.of(conflictingSession));
@@ -347,34 +364,6 @@ class SessionServiceTest {
 		assertThat(result.getHallCapacity()).isEqualTo(100);
 		assertThat(result.getTicketsSold()).isZero();
 		assertThat(result.getTotalRevenue()).isEqualTo(BigDecimal.ZERO);
-	}
-
-	@Test
-	void toAdminResponse_ShouldCalculateRevenue() {
-		CinemaHall hallWithSeats = CinemaHall.builder().id(1L).name("Hall 1").seats(new ArrayList<>()).build();
-
-		for (int i = 1; i <= 50; i++) {
-			Seat seat = new Seat();
-			seat.setId((long) i);
-			seat.setHall(hallWithSeats);
-			hallWithSeats.getSeats().add(seat);
-		}
-
-		Session sessionWithHall = Session.builder().id(1L).startTime(LocalDateTime.now().plusHours(2))
-				.basePrice(new BigDecimal("250.00")).movie(movie).hall(hallWithSeats).build();
-
-		SessionAdminResponse adminResponse = new SessionAdminResponse();
-		adminResponse.setId(1L);
-		adminResponse.setStartTime(sessionWithHall.getStartTime());
-		adminResponse.setBasePrice(new BigDecimal("250.00"));
-
-		when(sessionMapper.toAdminDto(sessionWithHall)).thenReturn(adminResponse);
-
-		SessionAdminResponse result = sessionService.toAdminResponse(sessionWithHall);
-
-		assertThat(result).isNotNull();
-		assertThat(result.getId()).isEqualTo(1L);
-		assertThat(result.getHallCapacity()).isEqualTo(50);
 	}
 
 	@Test

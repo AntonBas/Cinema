@@ -59,7 +59,10 @@ class PasswordResetServiceTest {
 	void resetPassword_ShouldResetPassword_WhenTokenIsValid() {
 		String token = "valid-token";
 		String newPassword = "newPassword123";
-		User user = User.builder().email("test@example.com").password("oldEncodedPassword").build();
+
+		User user = new User();
+		user.setEmail("test@example.com");
+		user.setPassword("oldEncodedPassword");
 
 		EmailToken resetToken = EmailToken.builder().token(token).expiresAt(LocalDateTime.now().plusHours(1)).user(user)
 				.build();
@@ -92,7 +95,9 @@ class PasswordResetServiceTest {
 	void resetPassword_ShouldThrowTokenExpiredException_WhenTokenExpired() {
 		String token = "expired-token";
 		String newPassword = "newPassword123";
-		User user = User.builder().email("test@example.com").build();
+
+		User user = new User();
+		user.setEmail("test@example.com");
 
 		EmailToken resetToken = EmailToken.builder().token(token).expiresAt(LocalDateTime.now().minusHours(1))
 				.user(user).build();
@@ -110,7 +115,10 @@ class PasswordResetServiceTest {
 	void resetPassword_ShouldThrowSamePasswordException_WhenNewPasswordMatchesOld() {
 		String token = "valid-token";
 		String newPassword = "samePassword";
-		User user = User.builder().email("test@example.com").password("oldEncodedPassword").build();
+
+		User user = new User();
+		user.setEmail("test@example.com");
+		user.setPassword("oldEncodedPassword");
 
 		EmailToken resetToken = EmailToken.builder().token(token).expiresAt(LocalDateTime.now().plusHours(1)).user(user)
 				.build();
@@ -129,7 +137,10 @@ class PasswordResetServiceTest {
 	void resetPassword_ShouldEncodePassword_WhenSuccessfulReset() {
 		String token = "valid-token";
 		String newPassword = "validPassword";
-		User user = User.builder().email("test@example.com").password("oldEncodedPassword").build();
+
+		User user = new User();
+		user.setEmail("test@example.com");
+		user.setPassword("oldEncodedPassword");
 
 		EmailToken resetToken = EmailToken.builder().token(token).expiresAt(LocalDateTime.now().plusMinutes(30))
 				.user(user).build();

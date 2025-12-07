@@ -49,13 +49,35 @@ class SeatServiceTest {
 
 	@BeforeEach
 	void setUp() {
-		testHall = CinemaHall.builder().id(1L).name("Hall A").build();
+		testHall = new CinemaHall();
+		testHall.setId(1L);
+		testHall.setName("Hall A");
 
-		standardSeat = Seat.builder().id(1L).row(1).number(1).seatType(SeatType.STANDARD).hall(testHall).build();
-		vipSeat = Seat.builder().id(2L).row(1).number(2).seatType(SeatType.VIP).hall(testHall).build();
+		standardSeat = new Seat();
+		standardSeat.setId(1L);
+		standardSeat.setRow(1);
+		standardSeat.setNumber(1);
+		standardSeat.setSeatType(SeatType.STANDARD);
+		standardSeat.setHall(testHall);
 
-		standardSeatDto = SeatResponse.builder().id(1L).row(1).number(1).seatType(SeatType.STANDARD).build();
-		vipSeatDto = SeatResponse.builder().id(2L).row(1).number(2).seatType(SeatType.VIP).build();
+		vipSeat = new Seat();
+		vipSeat.setId(2L);
+		vipSeat.setRow(1);
+		vipSeat.setNumber(2);
+		vipSeat.setSeatType(SeatType.VIP);
+		vipSeat.setHall(testHall);
+
+		standardSeatDto = new SeatResponse();
+		standardSeatDto.setId(1L);
+		standardSeatDto.setRow(1);
+		standardSeatDto.setNumber(1);
+		standardSeatDto.setSeatType(SeatType.STANDARD);
+
+		vipSeatDto = new SeatResponse();
+		vipSeatDto.setId(2L);
+		vipSeatDto.setRow(1);
+		vipSeatDto.setNumber(2);
+		vipSeatDto.setSeatType(SeatType.VIP);
 	}
 
 	@Test
