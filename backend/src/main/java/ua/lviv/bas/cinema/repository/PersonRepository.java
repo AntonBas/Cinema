@@ -1,7 +1,5 @@
 package ua.lviv.bas.cinema.repository;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.querydsl.QuerydslPredicateExecutor;
 import org.springframework.stereotype.Repository;
@@ -14,5 +12,4 @@ public interface PersonRepository extends JpaRepository<Person, Long>, QuerydslP
 
 	boolean existsByNameAndRole(String name, PersonRole role);
 
-	Page<Person> searchPersons(String query, PersonRole role, Pageable pageable);
 }
