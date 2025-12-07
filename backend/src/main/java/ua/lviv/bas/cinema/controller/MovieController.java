@@ -1,14 +1,27 @@
 package ua.lviv.bas.cinema.controller;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.time.LocalDate;
+import java.util.List;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.dto.movie.request.MovieCreateRequest;
 import ua.lviv.bas.cinema.dto.movie.request.MovieUpdateRequest;
 import ua.lviv.bas.cinema.dto.movie.response.MovieCardResponse;
@@ -17,10 +30,6 @@ import ua.lviv.bas.cinema.dto.movie.response.MovieSessionSearchResponse;
 import ua.lviv.bas.cinema.dto.shared.ApiResponse;
 import ua.lviv.bas.cinema.dto.shared.PageResponse;
 import ua.lviv.bas.cinema.service.MovieService;
-
-import jakarta.validation.Valid;
-import java.time.LocalDate;
-import java.util.List;
 
 @Slf4j
 @RestController
@@ -56,6 +65,7 @@ public class MovieController {
 	public ResponseEntity<ApiResponse<PageResponse<MovieDetailResponse>>> getMoviesPaginated(
 			@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "12") int size) {
 
+		size = Math.min(size, 50);
 		log.info("GET /api/movies/paginated - page: {}, size: {}", page, size);
 		PageResponse<MovieDetailResponse> response = movieService.getMoviesPaginatedResponse(page, size);
 		return ResponseEntity.ok(ApiResponse.success(response));
@@ -99,6 +109,7 @@ public class MovieController {
 			@RequestParam(required = false) String search, @RequestParam(defaultValue = "0") int page,
 			@RequestParam(defaultValue = "12") int size) {
 
+		size = Math.min(size, 50);
 		log.info("GET /api/movies/search - search: {}, page: {}, size: {}", search, page, size);
 		PageResponse<MovieCardResponse> response = movieService.searchMoviesResponse(search, page, size);
 		return ResponseEntity.ok(ApiResponse.success(response));
