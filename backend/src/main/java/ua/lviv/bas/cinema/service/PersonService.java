@@ -11,10 +11,13 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.querydsl.core.BooleanBuilder;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.Movie;
 import ua.lviv.bas.cinema.domain.Person;
+import ua.lviv.bas.cinema.domain.QPerson;
 import ua.lviv.bas.cinema.domain.enums.PersonRole;
 import ua.lviv.bas.cinema.dto.movie.request.PersonRequest;
 import ua.lviv.bas.cinema.dto.movie.request.QuickCreatePersonRequest;
@@ -124,13 +127,29 @@ public class PersonService {
 	@Transactional(readOnly = true)
 	public PageResponse<PersonResponse> searchPersons(String query, PersonRole role, int page, int size) {
 		log.info("Searching persons: query='{}', role={}, page={}, size={}", query, role, page, size);
+
 		Pageable pageable = PageRequest.of(page, size, Sort.by("name").ascending());
-		Page<Person> personPage = personRepository.searchPersons(query, role, pageable);
+
+		BooleanBuilder predicate = new BooleanBuilder();
+		QPerson person = QPerson.person;
+
+		if (query != null && !query.trim().isEmpty()) {
+			String searchQuery = query.trim().toLowerCase();
+			predicate.and(person.name.toLowerCase().contains(searchQuery));
+		}
+
+		if (role != null) {
+			predicate.and(person.role.eq(role));
+		}
+
+		Page<Person> personPage = personRepository.findAll(predicate, pageable);
+
 		log.debug("Found {} persons for query '{}'", personPage.getTotalElements(), query);
-		return toPageResponse(personPage);
+
+		return PageResponse.of(personPage, this::toPersonResponse);
 	}
 
-	private PageResponse<PersonResponse> toPageResponse(Page<Person> personPage) {
-		return PageResponse.of(personPage, personMapper::toDto);
+	private PersonResponse toPersonResponse(Person person) {
+		return PersonResponse.builder().id(person.getId()).name(person.getName()).role(person.getRole()).build();
 	}
 }
