@@ -63,11 +63,17 @@ public class WebSecurityConfig {
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 		http.cors(cors -> cors.configurationSource(corsConfigurationSource())).csrf(csrf -> csrf.disable())
 				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-				.authorizeHttpRequests(auth -> auth
-						.requestMatchers("/api/auth/**", "/api/movies/public/**", "/api/cinema-halls/public/**",
-								"/api/movies/*/poster")
-						.permitAll().requestMatchers("/api/users/**").authenticated().requestMatchers("/api/admin/**")
-						.hasRole("ADMIN").anyRequest().authenticated())
+				.authorizeHttpRequests(
+						auth -> auth
+								.requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/api-docs/**",
+										"/v3/api-docs/**", "/swagger-resources/**", "/swagger-resources",
+										"/configuration/ui", "/configuration/security", "/webjars/**", "/error")
+								.permitAll()
+
+								.requestMatchers("/api/auth/**", "/api/movies/public/**", "/api/cinema-halls/public/**",
+										"/api/movies/*/poster")
+								.permitAll().requestMatchers("/api/users/**").authenticated()
+								.requestMatchers("/api/admin/**").hasRole("ADMIN").anyRequest().authenticated())
 				.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
 				.formLogin(form -> form.disable()).httpBasic(basic -> basic.disable())
 				.logout(logout -> logout.disable());
