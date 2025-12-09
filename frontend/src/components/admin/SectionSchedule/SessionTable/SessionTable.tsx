@@ -41,7 +41,7 @@ export const SessionTable: React.FC<SessionTableProps> = ({
                         <th>Hall</th>
                         <th>Start Time</th>
                         <th>End Time</th>
-                        <th>Price</th>
+                        <th>Base Price</th>
                         <th>Tickets</th>
                         <th>Revenue</th>
                         <th>Status</th>
@@ -71,7 +71,7 @@ export const SessionTable: React.FC<SessionTableProps> = ({
                             </td>
                             <td>{formatDateTime(session.startTime)}</td>
                             <td>{session.endTime ? formatDateTime(session.endTime) : 'N/A'}</td>
-                            <td>{formatPrice(session.price)}</td>
+                            <td>{formatPrice(session.basePrice)}</td>
                             <td>
                                 <div className={styles.ticketInfo}>
                                     {session.ticketsSold || 0} / {session.hallCapacity}

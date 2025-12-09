@@ -25,7 +25,7 @@ export const SessionModal: React.FC<SessionModalProps> = ({
 
     const [formData, setFormData] = useState({
         startTime: '',
-        price: '',
+        basePrice: '',
         movieId: '',
         hallId: ''
     });
@@ -52,7 +52,7 @@ export const SessionModal: React.FC<SessionModalProps> = ({
         if (session) {
             setFormData({
                 startTime: session.startTime.slice(0, 16),
-                price: session.price.toString(),
+                basePrice: session.basePrice.toString(),
                 movieId: session.movieId.toString(),
                 hallId: session.hallId.toString()
             });
@@ -66,7 +66,7 @@ export const SessionModal: React.FC<SessionModalProps> = ({
         } else {
             setFormData({
                 startTime: '',
-                price: '',
+                basePrice: '',
                 movieId: '',
                 hallId: ''
             });
@@ -89,10 +89,10 @@ export const SessionModal: React.FC<SessionModalProps> = ({
         }
     };
 
-    const handlePriceChange = (value: string) => {
-        setFormData(prev => ({ ...prev, price: value }));
-        if (errors.price) {
-            setErrors(prev => ({ ...prev, price: '' }));
+    const handleBasePriceChange = (value: string) => {
+        setFormData(prev => ({ ...prev, basePrice: value }));
+        if (errors.basePrice) {
+            setErrors(prev => ({ ...prev, basePrice: '' }));
         }
     };
 
@@ -143,8 +143,8 @@ export const SessionModal: React.FC<SessionModalProps> = ({
             }
         }
 
-        if (!formData.price || Number(formData.price) < 10) {
-            newErrors.price = 'Price must be at least 10 UAH';
+        if (!formData.basePrice || Number(formData.basePrice) < 10) {
+            newErrors.basePrice = 'Price must be at least 10 UAH';
         }
 
         if (!formData.movieId) {
@@ -166,7 +166,7 @@ export const SessionModal: React.FC<SessionModalProps> = ({
 
         const sessionData: SessionRequest = {
             startTime: formData.startTime + ':00',
-            price: Number(formData.price),
+            basePrice: Number(formData.basePrice),
             movieId: Number(formData.movieId),
             hallId: Number(formData.hallId)
         };
@@ -204,14 +204,14 @@ export const SessionModal: React.FC<SessionModalProps> = ({
                     </div>
 
                     <div className={styles.formGroup}>
-                        <label>Price (UAH) *</label>
+                        <label>Base Price (UAH) *</label>
                         <Input
                             type="number"
                             step="0.01"
                             min="10"
-                            value={formData.price}
-                            onChange={handlePriceChange}
-                            error={errors.price}
+                            value={formData.basePrice}
+                            onChange={handleBasePriceChange}
+                            error={errors.basePrice}
                         />
                     </div>
 

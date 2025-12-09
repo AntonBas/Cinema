@@ -2,7 +2,7 @@ export interface SessionAdminResponse {
     id: number;
     startTime: string;
     endTime: string | null;
-    price: number;
+    basePrice: number;
     available: boolean;
     movieId: number;
     movieTitle: string;
@@ -18,7 +18,7 @@ export interface SessionScheduleResponse {
     id: number;
     startTime: string;
     endTime: string | null;
-    price: number;
+    basePrice: number;
     availableSeats: number | null;
     movieId: number;
     movieTitle: string;
@@ -32,7 +32,7 @@ export interface SessionScheduleResponse {
 
 export interface SessionRequest {
     startTime: string;
-    price: number;
+    basePrice: number;
     movieId: number;
     hallId: number;
 }
