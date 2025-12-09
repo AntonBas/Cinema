@@ -96,6 +96,43 @@ public class MovieController {
 		return ResponseEntity.ok(response);
 	}
 
+	@GetMapping("/{id}/poster")
+	@Operation(summary = "Get movie poster", description = "Retrieve movie poster image by movie ID")
+	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Poster retrieved successfully"),
+			@ApiResponse(responseCode = "404", description = "Poster not found") })
+	public ResponseEntity<byte[]> getMoviePoster(
+			@Parameter(description = "ID of the movie", example = "1") @PathVariable Long id) {
+		log.info("GET /api/movies/{}/poster - Getting movie poster", id);
+		return movieService.getMoviePoster(id);
+	}
+
+	@GetMapping("/status/current")
+	@Operation(summary = "Get currently showing movies", description = "Retrieve movies that are currently showing")
+	@ApiResponse(responseCode = "200", description = "Movies retrieved successfully")
+	public ResponseEntity<List<MovieCardResponse>> getCurrentlyShowingMovies() {
+		log.info("GET /api/movies/status/current - Getting currently showing movies");
+		List<MovieCardResponse> movies = movieService.getCurrentlyShowingMovies();
+		return ResponseEntity.ok(movies);
+	}
+
+	@GetMapping("/status/upcoming")
+	@Operation(summary = "Get upcoming movies", description = "Retrieve movies that are upcoming")
+	@ApiResponse(responseCode = "200", description = "Movies retrieved successfully")
+	public ResponseEntity<List<MovieCardResponse>> getUpcomingMovies() {
+		log.info("GET /api/movies/status/upcoming - Getting upcoming movies");
+		List<MovieCardResponse> movies = movieService.getUpcomingMovies();
+		return ResponseEntity.ok(movies);
+	}
+
+	@GetMapping("/status/archived")
+	@Operation(summary = "Get archived movies", description = "Retrieve movies that are archived")
+	@ApiResponse(responseCode = "200", description = "Movies retrieved successfully")
+	public ResponseEntity<List<MovieCardResponse>> getArchivedMovies() {
+		log.info("GET /api/movies/status/archived - Getting archived movies");
+		List<MovieCardResponse> movies = movieService.getArchivedMovies();
+		return ResponseEntity.ok(movies);
+	}
+
 	@PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@PreAuthorize("hasAnyRole('ADMIN', 'CONTENT_MANAGER')")
 	@Operation(summary = "Create new movie", description = "Create a new movie with poster image. Requires ADMIN or CONTENT_MANAGER role")
