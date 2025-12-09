@@ -13,6 +13,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,37 +34,81 @@ import ua.lviv.bas.cinema.service.UserService;
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
+@Tag(name = "User Profile Management", description = "Endpoints for managing user profiles")
+@SecurityRequirement(name = "bearerAuth")
 public class UserController {
 
 	private final UserService userService;
 
 	@GetMapping("/profile")
-	public ResponseEntity<UserProfileResponse> getProfile(@AuthenticationPrincipal CustomUserDetails userDetails) {
+	@Operation(summary = "Get user profile", description = "Retrieve the authenticated user's profile information.")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Profile retrieved successfully", content = @Content(schema = @Schema(implementation = UserProfileResponse.class))),
+			@ApiResponse(responseCode = "401", description = "User not authenticated"),
+			@ApiResponse(responseCode = "404", description = "User not found") })
+	public ResponseEntity<UserProfileResponse> getProfile(
+			@Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+		log.info("GET /api/users/profile - Retrieving profile for user ID: {}", userDetails.getUserId());
 		return ResponseEntity.ok(userService.getUserProfile(userDetails.getUserId()));
 	}
 
 	@PutMapping("/profile")
-	public ResponseEntity<UserProfileResponse> updateProfile(@AuthenticationPrincipal CustomUserDetails userDetails,
-			@Valid @RequestBody UserUpdateRequest request) {
+	@Operation(summary = "Update user profile", description = "Update the authenticated user's profile information.")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Profile updated successfully", content = @Content(schema = @Schema(implementation = UserProfileResponse.class))),
+			@ApiResponse(responseCode = "400", description = "Invalid request data"),
+			@ApiResponse(responseCode = "401", description = "User not authenticated"),
+			@ApiResponse(responseCode = "404", description = "User not found") })
+	public ResponseEntity<UserProfileResponse> updateProfile(
+			@Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
+
+			@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Updated profile data", required = true, content = @Content(schema = @Schema(implementation = UserUpdateRequest.class))) @Valid @RequestBody UserUpdateRequest request) {
+		log.info("PUT /api/users/profile - Updating profile for user ID: {}", userDetails.getUserId());
 		return ResponseEntity.ok(userService.updateUser(userDetails.getUserId(), request));
 	}
 
 	@PostMapping("/email/change-request")
-	public ResponseEntity<?> requestEmailChange(@AuthenticationPrincipal CustomUserDetails userDetails,
-			@RequestParam String newEmail) {
+	@Operation(summary = "Request email change", description = "Initiate email change process. Sends confirmation email to the new address.")
+	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Email change request sent successfully"),
+			@ApiResponse(responseCode = "400", description = "Invalid email format or email already in use"),
+			@ApiResponse(responseCode = "401", description = "User not authenticated"),
+			@ApiResponse(responseCode = "404", description = "User not found") })
+	public ResponseEntity<Map<String, String>> requestEmailChange(
+			@Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
 
+			@Parameter(description = "New email address", required = true, example = "new.email@example.com") @RequestParam String newEmail) {
+
+		log.info("POST /api/users/email/change-request - Requesting email change for user ID: {}",
+				userDetails.getUserId());
 		userService.requestEmailChange(userDetails.getUserId(), newEmail);
 		return ResponseEntity.ok(Map.of("message", "Confirmation email sent to your new address"));
 	}
 
 	@PostMapping("/email/confirm-change")
-	public ResponseEntity<UserProfileResponse> confirmEmailChange(@RequestParam String token) {
+	@Operation(summary = "Confirm email change", description = "Confirm email change using the token sent to the new email address.")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Email changed successfully", content = @Content(schema = @Schema(implementation = UserProfileResponse.class))),
+			@ApiResponse(responseCode = "400", description = "Invalid or expired token"),
+			@ApiResponse(responseCode = "404", description = "Token not found") })
+	public ResponseEntity<UserProfileResponse> confirmEmailChange(
+			@Parameter(description = "Email change confirmation token", required = true, example = "abc123def456") @RequestParam String token) {
+
+		log.info("POST /api/users/email/confirm-change - Confirming email change with token");
 		return ResponseEntity.ok(userService.confirmEmailChange(token));
 	}
 
 	@PatchMapping("/password")
-	public ResponseEntity<?> updatePassword(@AuthenticationPrincipal CustomUserDetails userDetails,
-			@Valid @RequestBody UserPasswordUpdateRequest request) {
+	@Operation(summary = "Update password", description = "Change the authenticated user's password.")
+	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Password updated successfully"),
+			@ApiResponse(responseCode = "400", description = "Invalid request data or passwords do not match"),
+			@ApiResponse(responseCode = "401", description = "User not authenticated or current password is incorrect"),
+			@ApiResponse(responseCode = "404", description = "User not found") })
+	public ResponseEntity<Map<String, String>> updatePassword(
+			@Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
+
+			@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Password update request", required = true, content = @Content(schema = @Schema(implementation = UserPasswordUpdateRequest.class))) @Valid @RequestBody UserPasswordUpdateRequest request) {
+
+		log.info("PATCH /api/users/password - Updating password for user ID: {}", userDetails.getUserId());
 		userService.updateUserPassword(userDetails.getUserId(), request.getCurrentPassword(), request.getNewPassword(),
 				request.getPasswordConfirm());
 		return ResponseEntity.ok(Map.of("message", "Password updated successfully"));
