@@ -1,14 +1,15 @@
 package ua.lviv.bas.cinema.dto.user.response;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import ua.lviv.bas.cinema.domain.enums.UserRole;
-
-import java.time.LocalDate;
-import java.time.LocalDateTime;
+import ua.lviv.bas.cinema.domain.enums.VerificationStatus;
 
 @Data
 @Builder
@@ -43,6 +44,10 @@ public class UserResponse {
 
 	@Schema(description = "Account enabled status", example = "true")
 	private boolean enabled;
+
+	@Schema(description = "Birth date verification status", example = "VERIFIED", allowableValues = { "VERIFIED",
+			"NOT_VERIFIED" })
+	private VerificationStatus verificationStatus;
 
 	@Schema(description = "Date and time when the account was created", example = "2024-01-15T10:30:00", type = "string", format = "date-time")
 	private LocalDateTime createdAt;

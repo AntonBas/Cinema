@@ -1,12 +1,13 @@
 package ua.lviv.bas.cinema.dto.user.response;
 
+import java.time.LocalDate;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDate;
+import ua.lviv.bas.cinema.domain.enums.VerificationStatus;
 
 @Data
 @Builder
@@ -35,4 +36,8 @@ public class UserProfileResponse {
 
 	@Schema(description = "User's phone number", example = "+380501234567")
 	private String phoneNumber;
+
+	@Schema(description = "Birth date verification status", example = "VERIFIED", allowableValues = { "VERIFIED",
+			"NOT_VERIFIED" })
+	private VerificationStatus verificationStatus;
 }

@@ -1,13 +1,15 @@
 package ua.lviv.bas.cinema.dto.user.response;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import ua.lviv.bas.cinema.domain.enums.UserRole;
-
-import java.time.LocalDate;
+import ua.lviv.bas.cinema.domain.enums.VerificationStatus;
 
 @Data
 @Builder
@@ -33,6 +35,12 @@ public class AdminUserListResponse {
 
 	@Schema(description = "Account enabled status", example = "true")
 	private boolean enabled;
+
+	@Schema(description = "Birth date verification status", example = "VERIFIED")
+	private VerificationStatus verificationStatus;
+
+	@Schema(description = "Date and time when birth date was verified")
+	private LocalDateTime verifiedAt;
 
 	@Schema(description = "Date when the account was created", example = "2024-01-10", type = "string", format = "date")
 	private LocalDate createdAt;
