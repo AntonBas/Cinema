@@ -18,6 +18,8 @@ public interface UserMapper {
 	@Mapping(target = "tickets", ignore = true)
 	@Mapping(target = "enabled", constant = "false")
 	@Mapping(target = "userRole", constant = "ROLE_USER")
+	@Mapping(target = "verificationStatus", constant = "NOT_VERIFIED")
+	@Mapping(target = "verifiedAt", ignore = true)
 	@Mapping(target = "password", ignore = true)
 	@Mapping(target = "createdAt", ignore = true)
 	@Mapping(target = "updatedAt", ignore = true)
@@ -31,6 +33,8 @@ public interface UserMapper {
 	@Mapping(target = "tickets", ignore = true)
 	@Mapping(target = "enabled", ignore = true)
 	@Mapping(target = "userRole", ignore = true)
+	@Mapping(target = "verificationStatus", ignore = true)
+	@Mapping(target = "verifiedAt", ignore = true)
 	@Mapping(target = "password", ignore = true)
 	@Mapping(target = "createdAt", ignore = true)
 	@Mapping(target = "updatedAt", ignore = true)
@@ -42,10 +46,4 @@ public interface UserMapper {
 	@Mapping(target = "updatedAt", source = "updatedAt", dateFormat = "yyyy-MM-dd")
 	@Mapping(target = "lastActivity", source = "updatedAt", dateFormat = "yyyy-MM-dd")
 	AdminUserListResponse toAdminListDto(User user);
-
-	default User toEntityWithPassword(UserRegistrationRequest dto, String encodedPassword) {
-		User user = toEntity(dto);
-		user.setPassword(encodedPassword);
-		return user;
-	}
 }

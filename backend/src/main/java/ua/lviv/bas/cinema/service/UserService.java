@@ -1,5 +1,7 @@
 package ua.lviv.bas.cinema.service;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.cache.annotation.CacheEvict;
@@ -15,8 +17,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.enums.UserRole;
+import ua.lviv.bas.cinema.domain.enums.VerificationStatus;
 import ua.lviv.bas.cinema.dto.user.request.UserRegistrationRequest;
 import ua.lviv.bas.cinema.dto.user.request.UserUpdateRequest;
+import ua.lviv.bas.cinema.dto.user.request.VerificationBirthDateRequest;
 import ua.lviv.bas.cinema.dto.user.response.AdminUserListResponse;
 import ua.lviv.bas.cinema.dto.user.response.UserProfileResponse;
 import ua.lviv.bas.cinema.dto.user.response.UserResponse;
@@ -66,7 +70,19 @@ public class UserService {
 	@Transactional
 	public UserProfileResponse updateUser(Long userId, UserUpdateRequest request) {
 		User user = findById(userId);
+		LocalDate oldDateOfBirth = user.getDateOfBirth();
+
 		userMapper.updateUserFromDto(request, user);
+
+		if (request.getDateOfBirth() != null && !request.getDateOfBirth().equals(oldDateOfBirth)) {
+			if (user.getVerificationStatus() == VerificationStatus.VERIFIED) {
+				user.setVerificationStatus(VerificationStatus.NOT_VERIFIED);
+				user.setVerifiedAt(null);
+				log.info("Birth date verification revoked for user {} (date changed from {} to {})", userId,
+						oldDateOfBirth, request.getDateOfBirth());
+			}
+		}
+
 		return userMapper.toProfileResponse(userRepository.save(user));
 	}
 
@@ -159,6 +175,28 @@ public class UserService {
 		user.setEnabled(enabled);
 		userRepository.save(user);
 		log.info("User status updated for user {}: enabled = {} -> {}", userId, oldStatus, enabled);
+	}
+
+	public UserResponse updateBirthDateVerification(Long userId, VerificationBirthDateRequest request) {
+		User user = findById(userId);
+
+		VerificationStatus oldStatus = user.getVerificationStatus();
+		VerificationStatus newStatus = request.getVerificationStatus();
+
+		user.setVerificationStatus(newStatus);
+
+		if (newStatus == VerificationStatus.VERIFIED) {
+			if (user.getVerifiedAt() == null) {
+				user.setVerifiedAt(LocalDateTime.now());
+			}
+		} else {
+			user.setVerifiedAt(null);
+		}
+		User saved = userRepository.save(user);
+		log.info("Birth date verification updated for user {}: {} -> {}", userId, oldStatus, newStatus);
+
+		return userMapper.toDto(saved);
+
 	}
 
 	@Transactional(readOnly = true)

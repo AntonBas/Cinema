@@ -20,11 +20,14 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import ua.lviv.bas.cinema.domain.enums.UserRole;
 import ua.lviv.bas.cinema.dto.user.request.UserRoleUpdateRequest;
 import ua.lviv.bas.cinema.dto.user.request.UserStatusUpdateRequest;
+import ua.lviv.bas.cinema.dto.user.request.VerificationBirthDateRequest;
 import ua.lviv.bas.cinema.dto.user.response.AdminUserListResponse;
+import ua.lviv.bas.cinema.dto.user.response.UserResponse;
 import ua.lviv.bas.cinema.service.UserService;
 
 @RestController
@@ -81,5 +84,20 @@ public class AdminUserController {
 			@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Status update request", required = true, content = @Content(schema = @Schema(implementation = UserStatusUpdateRequest.class))) @RequestBody UserStatusUpdateRequest request) {
 		userService.updateUserStatus(userId, request.isEnabled());
 		return ResponseEntity.ok().build();
+	}
+
+	@PatchMapping("/{userId}/birthdate-verification")
+	@Operation(summary = "Update birth date verification", description = "Update user's birth date verification status. VERIFIED = confirm, NOT_VERIFIED = revoke.")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Verification status updated successfully"),
+			@ApiResponse(responseCode = "400", description = "Invalid request data"),
+			@ApiResponse(responseCode = "404", description = "User not found") })
+	public ResponseEntity<UserResponse> updateBirthDateVerification(
+			@Parameter(description = "ID of the user to update", required = true) @PathVariable Long userId,
+
+			@Valid @RequestBody VerificationBirthDateRequest request) {
+
+		UserResponse response = userService.updateBirthDateVerification(userId, request);
+		return ResponseEntity.ok(response);
 	}
 }

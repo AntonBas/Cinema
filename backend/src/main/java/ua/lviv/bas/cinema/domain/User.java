@@ -30,6 +30,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import ua.lviv.bas.cinema.domain.enums.UserRole;
+import ua.lviv.bas.cinema.domain.enums.VerificationStatus;
 
 @Entity
 @Getter
@@ -60,6 +61,14 @@ public class User {
 	@Past
 	@Column(nullable = false, name = "date_of_birth")
 	private LocalDate dateOfBirth;
+
+	@Enumerated(EnumType.STRING)
+	@Column(name = "verification_status", nullable = false)
+	@Builder.Default
+	private VerificationStatus verificationStatus = VerificationStatus.NOT_VERIFIED;
+
+	@Column(name = "verified_at")
+	private LocalDateTime verifiedAt;
 
 	@Column(nullable = false, length = 50)
 	private String city;
