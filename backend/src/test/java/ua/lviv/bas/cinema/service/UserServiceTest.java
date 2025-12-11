@@ -11,6 +11,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -33,8 +34,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.enums.UserRole;
+import ua.lviv.bas.cinema.domain.enums.VerificationStatus;
 import ua.lviv.bas.cinema.dto.user.request.UserRegistrationRequest;
 import ua.lviv.bas.cinema.dto.user.request.UserUpdateRequest;
+import ua.lviv.bas.cinema.dto.user.request.VerificationBirthDateRequest;
 import ua.lviv.bas.cinema.dto.user.response.AdminUserListResponse;
 import ua.lviv.bas.cinema.dto.user.response.UserProfileResponse;
 import ua.lviv.bas.cinema.dto.user.response.UserResponse;
@@ -89,16 +92,19 @@ public class UserServiceTest {
 
 		user = User.builder().id(1L).email("test@example.com").firstName("Anton").lastName("Bas")
 				.dateOfBirth(LocalDate.of(2001, 8, 21)).city("Lviv").phoneNumber("+380123456789")
-				.userRole(UserRole.ROLE_USER).enabled(false).password("encodedPassword").build();
+				.userRole(UserRole.ROLE_USER).verificationStatus(VerificationStatus.NOT_VERIFIED).verifiedAt(null)
+				.enabled(false).password("encodedPassword").build();
 
 		savedUser = User.builder().id(1L).email("test@example.com").firstName("Anton").lastName("Bas")
-				.userRole(UserRole.ROLE_USER).enabled(false).build();
+				.userRole(UserRole.ROLE_USER).verificationStatus(VerificationStatus.NOT_VERIFIED).verifiedAt(null)
+				.enabled(false).build();
 
 		userProfileResponse = UserProfileResponse.builder().id(1L).email("test@example.com").firstName("Anton")
-				.lastName("Bas").build();
+				.lastName("Bas").verificationStatus(VerificationStatus.NOT_VERIFIED).build();
 
 		userResponse = UserResponse.builder().id(1L).email("test@example.com").firstName("Anton").lastName("Bas")
-				.userRole(UserRole.ROLE_USER).enabled(false).build();
+				.userRole(UserRole.ROLE_USER).verificationStatus(VerificationStatus.NOT_VERIFIED).enabled(false)
+				.build();
 	}
 
 	@AfterEach
@@ -184,6 +190,76 @@ public class UserServiceTest {
 		verify(userRepository).findById(userId);
 		verify(userMapper, never()).updateUserFromDto(any(), any());
 		verify(userRepository, never()).save(any());
+	}
+
+	@Test
+	void updateUser_ShouldRevokeVerification_WhenDateOfBirthChanged() {
+		Long userId = 1L;
+		LocalDate oldDate = LocalDate.of(2001, 8, 21);
+		LocalDate newDate = LocalDate.of(1990, 1, 1);
+
+		User verifiedUser = User.builder().id(userId).email("test@example.com").dateOfBirth(oldDate)
+				.verificationStatus(VerificationStatus.VERIFIED).verifiedAt(LocalDateTime.now()).build();
+
+		UserUpdateRequest updateRequest = UserUpdateRequest.builder().dateOfBirth(newDate).firstName("Anton")
+				.lastName("Bas").city("Lviv").phoneNumber("+380123456789").build();
+
+		when(userRepository.findById(userId)).thenReturn(Optional.of(verifiedUser));
+
+		doAnswer(invocation -> {
+			UserUpdateRequest request = invocation.getArgument(0);
+			User userToUpdate = invocation.getArgument(1);
+			userToUpdate.setDateOfBirth(request.getDateOfBirth());
+			userToUpdate.setFirstName(request.getFirstName());
+			userToUpdate.setLastName(request.getLastName());
+			userToUpdate.setCity(request.getCity());
+			userToUpdate.setPhoneNumber(request.getPhoneNumber());
+			return null;
+		}).when(userMapper).updateUserFromDto(updateRequest, verifiedUser);
+
+		when(userRepository.save(verifiedUser)).thenReturn(verifiedUser);
+		when(userMapper.toProfileResponse(verifiedUser)).thenReturn(userProfileResponse);
+
+		UserProfileResponse result = userService.updateUser(userId, updateRequest);
+
+		assertThat(result).isNotNull();
+		assertThat(verifiedUser.getVerificationStatus()).isEqualTo(VerificationStatus.NOT_VERIFIED);
+		assertThat(verifiedUser.getVerifiedAt()).isNull();
+		verify(userRepository).findById(userId);
+		verify(userRepository).save(verifiedUser);
+	}
+
+	@Test
+	void updateUser_ShouldNotRevokeVerification_WhenDateOfBirthNotChanged() {
+		Long userId = 1L;
+		LocalDate sameDate = LocalDate.of(2001, 8, 21);
+
+		User verifiedUser = User.builder().id(userId).email("test@example.com").dateOfBirth(sameDate)
+				.verificationStatus(VerificationStatus.VERIFIED).verifiedAt(LocalDateTime.now()).build();
+
+		UserUpdateRequest updateRequest = UserUpdateRequest.builder().dateOfBirth(sameDate) // Same date
+				.firstName("NewName").build();
+
+		when(userRepository.findById(userId)).thenReturn(Optional.of(verifiedUser));
+
+		doAnswer(invocation -> {
+			UserUpdateRequest request = invocation.getArgument(0);
+			User userToUpdate = invocation.getArgument(1);
+			userToUpdate.setDateOfBirth(request.getDateOfBirth());
+			userToUpdate.setFirstName(request.getFirstName());
+			return null;
+		}).when(userMapper).updateUserFromDto(updateRequest, verifiedUser);
+
+		when(userRepository.save(verifiedUser)).thenReturn(verifiedUser);
+		when(userMapper.toProfileResponse(verifiedUser)).thenReturn(userProfileResponse);
+
+		UserProfileResponse result = userService.updateUser(userId, updateRequest);
+
+		assertThat(result).isNotNull();
+		assertThat(verifiedUser.getVerificationStatus()).isEqualTo(VerificationStatus.VERIFIED);
+		assertThat(verifiedUser.getVerifiedAt()).isNotNull();
+		verify(userRepository).findById(userId);
+		verify(userRepository).save(verifiedUser);
 	}
 
 	@Test
@@ -521,7 +597,8 @@ public class UserServiceTest {
 		Boolean enabled = true;
 		Pageable pageable = PageRequest.of(0, 10);
 		Page<User> userPage = new PageImpl<>(List.of(user));
-		AdminUserListResponse adminResponse = AdminUserListResponse.builder().id(1L).email("test@example.com").build();
+		AdminUserListResponse adminResponse = AdminUserListResponse.builder().id(1L).email("test@example.com")
+				.verificationStatus(VerificationStatus.NOT_VERIFIED).build();
 
 		when(userQueryService.findFilteredUsers(search, role, enabled, pageable)).thenReturn(userPage);
 		when(userMapper.toAdminListDto(user)).thenReturn(adminResponse);
@@ -605,6 +682,115 @@ public class UserServiceTest {
 
 		assertThat(result).isFalse();
 		verify(userRepository).existsById(userId);
+	}
+
+	@Test
+	void updateBirthDateVerification_ShouldVerifyBirthDate_WhenStatusIsVERIFIED() {
+		Long userId = 1L;
+		VerificationBirthDateRequest request = VerificationBirthDateRequest.builder()
+				.verificationStatus(VerificationStatus.VERIFIED).build();
+
+		User unverifiedUser = User.builder().id(userId).email("test@example.com")
+				.verificationStatus(VerificationStatus.NOT_VERIFIED).verifiedAt(null).build();
+
+		User verifiedUser = User.builder().id(userId).email("test@example.com")
+				.verificationStatus(VerificationStatus.VERIFIED).verifiedAt(LocalDateTime.now()).build();
+
+		UserResponse expectedResponse = UserResponse.builder().id(userId).email("test@example.com")
+				.verificationStatus(VerificationStatus.VERIFIED).build();
+
+		when(userRepository.findById(userId)).thenReturn(Optional.of(unverifiedUser));
+		when(userRepository.save(any(User.class))).thenReturn(verifiedUser);
+		when(userMapper.toDto(verifiedUser)).thenReturn(expectedResponse);
+
+		UserResponse result = userService.updateBirthDateVerification(userId, request);
+
+		assertThat(result).isNotNull();
+		assertThat(result.getVerificationStatus()).isEqualTo(VerificationStatus.VERIFIED);
+		verify(userRepository).findById(userId);
+		verify(userRepository).save(unverifiedUser);
+		verify(userMapper).toDto(verifiedUser);
+
+		assertThat(unverifiedUser.getVerificationStatus()).isEqualTo(VerificationStatus.VERIFIED);
+		assertThat(unverifiedUser.getVerifiedAt()).isNotNull();
+	}
+
+	@Test
+	void updateBirthDateVerification_ShouldUnverifyBirthDate_WhenStatusIsNOT_VERIFIED() {
+		Long userId = 1L;
+		LocalDateTime oldVerifiedAt = LocalDateTime.of(2024, 1, 1, 10, 0);
+
+		VerificationBirthDateRequest request = VerificationBirthDateRequest.builder()
+				.verificationStatus(VerificationStatus.NOT_VERIFIED).build();
+
+		User verifiedUser = User.builder().id(userId).email("test@example.com")
+				.verificationStatus(VerificationStatus.VERIFIED).verifiedAt(oldVerifiedAt).build();
+
+		User unverifiedUser = User.builder().id(userId).email("test@example.com")
+				.verificationStatus(VerificationStatus.NOT_VERIFIED).verifiedAt(null).build();
+
+		UserResponse expectedResponse = UserResponse.builder().id(userId).email("test@example.com")
+				.verificationStatus(VerificationStatus.NOT_VERIFIED).build();
+
+		when(userRepository.findById(userId)).thenReturn(Optional.of(verifiedUser));
+		when(userRepository.save(any(User.class))).thenReturn(unverifiedUser);
+		when(userMapper.toDto(unverifiedUser)).thenReturn(expectedResponse);
+
+		UserResponse result = userService.updateBirthDateVerification(userId, request);
+
+		assertThat(result).isNotNull();
+		assertThat(result.getVerificationStatus()).isEqualTo(VerificationStatus.NOT_VERIFIED);
+		verify(userRepository).findById(userId);
+		verify(userRepository).save(verifiedUser);
+		verify(userMapper).toDto(unverifiedUser);
+
+		assertThat(verifiedUser.getVerificationStatus()).isEqualTo(VerificationStatus.NOT_VERIFIED);
+		assertThat(verifiedUser.getVerifiedAt()).isNull();
+	}
+
+	@Test
+	void updateBirthDateVerification_ShouldKeepVerifiedAt_WhenAlreadyVerified() {
+		Long userId = 1L;
+		LocalDateTime existingVerifiedAt = LocalDateTime.of(2024, 1, 1, 10, 0);
+
+		VerificationBirthDateRequest request = VerificationBirthDateRequest.builder()
+				.verificationStatus(VerificationStatus.VERIFIED).build();
+
+		User alreadyVerifiedUser = User.builder().id(userId).email("test@example.com")
+				.verificationStatus(VerificationStatus.VERIFIED).verifiedAt(existingVerifiedAt).build();
+
+		UserResponse expectedResponse = UserResponse.builder().id(userId).email("test@example.com")
+				.verificationStatus(VerificationStatus.VERIFIED).build();
+
+		when(userRepository.findById(userId)).thenReturn(Optional.of(alreadyVerifiedUser));
+		when(userRepository.save(any(User.class))).thenReturn(alreadyVerifiedUser);
+		when(userMapper.toDto(alreadyVerifiedUser)).thenReturn(expectedResponse);
+
+		UserResponse result = userService.updateBirthDateVerification(userId, request);
+
+		assertThat(result).isNotNull();
+		assertThat(result.getVerificationStatus()).isEqualTo(VerificationStatus.VERIFIED);
+		verify(userRepository).findById(userId);
+		verify(userRepository).save(alreadyVerifiedUser);
+		verify(userMapper).toDto(alreadyVerifiedUser);
+
+		assertThat(alreadyVerifiedUser.getVerifiedAt()).isEqualTo(existingVerifiedAt);
+	}
+
+	@Test
+	void updateBirthDateVerification_ShouldThrowUserNotFoundException_WhenUserNotFound() {
+		Long userId = 999L;
+		VerificationBirthDateRequest request = VerificationBirthDateRequest.builder()
+				.verificationStatus(VerificationStatus.VERIFIED).build();
+
+		when(userRepository.findById(userId)).thenReturn(Optional.empty());
+
+		assertThatThrownBy(() -> userService.updateBirthDateVerification(userId, request))
+				.isInstanceOf(UserNotFoundException.class).hasMessageContaining(String.valueOf(userId));
+
+		verify(userRepository).findById(userId);
+		verify(userRepository, never()).save(any());
+		verify(userMapper, never()).toDto(any());
 	}
 
 	private void setupSecurityContext(String email) {
