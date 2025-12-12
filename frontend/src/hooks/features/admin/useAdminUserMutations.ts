@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { UserRole } from '@/types/user';
+import type { UserRole, VerificationStatus } from '@/types/user';
 import { adminApi } from '@/api/adminApi';
 
 export const useAdminUserMutations = () => {
@@ -34,6 +34,20 @@ export const useAdminUserMutations = () => {
         }
     };
 
+    const updateBirthDateVerification = async (userId: number, verificationStatus: VerificationStatus): Promise<void> => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            await adminApi.updateBirthDateVerification(userId, { verificationStatus });
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'Failed to update verification status';
+            setError(message);
+            throw err;
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     const clearError = () => {
         setError(null);
     };
@@ -43,6 +57,7 @@ export const useAdminUserMutations = () => {
         error,
         updateUserRole,
         updateUserStatus,
+        updateBirthDateVerification,
         clearError
     };
 };

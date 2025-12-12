@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { AdminUser, AdminUsersResponse, UserRole } from '@/types/user';
+import type { AdminUser, AdminUsersResponse, UserRole, VerificationStatus } from '@/types/user';
 import { adminApi } from '@/api/adminApi';
 
 interface PaginationInfo {
@@ -18,6 +18,7 @@ interface UseAdminUsersReturn {
     refreshUsers: () => void;
     updateUserRoleLocal: (userId: number, userRole: UserRole) => void;
     updateUserStatusLocal: (userId: number, enabled: boolean) => void;
+    updateVerificationStatusLocal: (userId: number, verificationStatus: VerificationStatus, verifiedAt: string | null) => void;
 }
 
 export const useAdminUsers = (): UseAdminUsersReturn => {
@@ -73,6 +74,18 @@ export const useAdminUsers = (): UseAdminUsersReturn => {
         );
     };
 
+    const updateVerificationStatusLocal = (userId: number, verificationStatus: VerificationStatus, verifiedAt: string | null) => {
+        setUsers(prevUsers =>
+            prevUsers.map(user =>
+                user.id === userId ? {
+                    ...user,
+                    verificationStatus,
+                    verifiedAt
+                } : user
+            )
+        );
+    };
+
     return {
         users,
         pagination,
@@ -81,6 +94,7 @@ export const useAdminUsers = (): UseAdminUsersReturn => {
         searchUsers,
         refreshUsers,
         updateUserRoleLocal,
-        updateUserStatusLocal
+        updateUserStatusLocal,
+        updateVerificationStatusLocal
     };
 };
