@@ -1,5 +1,7 @@
 export type UserRole = 'ROLE_USER' | 'ROLE_CASHIER' | 'ROLE_CONTENT_MANAGER' | 'ROLE_ADMIN';
 
+export type VerificationStatus = 'VERIFIED' | 'NOT_VERIFIED';
+
 export interface UserProfile {
     id: number;
     email: string;
@@ -8,6 +10,7 @@ export interface UserProfile {
     dateOfBirth: string;
     city: string;
     phoneNumber: string;
+    verificationStatus: VerificationStatus;
 }
 
 export interface UserUpdateRequest {
@@ -50,10 +53,26 @@ export interface AdminUser {
     lastName: string;
     userRole: UserRole;
     enabled: boolean;
+    verificationStatus: VerificationStatus;
+    verifiedAt: string | null;
     createdAt: string;
     updatedAt: string;
     ticketsCount: number;
     lastActivity: string;
+}
+
+export interface UserResponse {
+    id: number;
+    email: string;
+    firstName: string;
+    lastName: string;
+    dateOfBirth: string;
+    city: string;
+    phoneNumber: string;
+    userRole: UserRole;
+    enabled: boolean;
+    verificationStatus: VerificationStatus;
+    createdAt: string;
 }
 
 export interface UserRoleUpdateRequest {
@@ -62,6 +81,10 @@ export interface UserRoleUpdateRequest {
 
 export interface UserStatusUpdateRequest {
     enabled: boolean;
+}
+
+export interface VerificationBirthDateRequest {
+    verificationStatus: VerificationStatus;
 }
 
 export interface AdminUsersResponse {
@@ -82,4 +105,14 @@ export const UserRoleDisplay: Record<UserRole, string> = {
 export const UserStatusDisplay: Record<string, string> = {
     'true': 'Active',
     'false': 'Blocked'
+};
+
+export const VerificationStatusDisplay: Record<VerificationStatus, string> = {
+    VERIFIED: 'Verified',
+    NOT_VERIFIED: 'Not Verified'
+};
+
+export const VerificationStatusColors: Record<VerificationStatus, string> = {
+    VERIFIED: 'success',
+    NOT_VERIFIED: 'warning'
 };
