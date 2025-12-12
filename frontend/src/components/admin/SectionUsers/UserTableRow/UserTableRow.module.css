@@ -37,6 +37,31 @@
     width: 100%;
 }
 
+.verificationCell {
+    min-width: 180px;
+}
+
+.verificationInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.verificationBadge {
+    width: fit-content;
+}
+
+.verificationDate {
+    color: #a0a8c0;
+    font-size: 0.8rem;
+    font-style: italic;
+}
+
+.verificationButton {
+    width: 100%;
+    margin-top: 0.25rem;
+}
+
 .statusCell {
     min-width: 100px;
 }
@@ -57,6 +82,17 @@
     padding: 0.25rem 0.5rem;
 }
 
+.activityCell {
+    min-width: 120px;
+    color: #a0a8c0;
+}
+
+.activityInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
 .actionsCell {
     min-width: 120px;
 }
@@ -69,19 +105,30 @@
 
     .userCell,
     .roleCell,
+    .verificationCell,
     .statusCell,
     .dateCell,
     .ticketsCell,
+    .activityCell,
     .actionsCell {
         min-width: auto;
     }
 
-    .actionButton {
+    .actionButton,
+    .verificationButton {
         min-width: 80px;
     }
 
     .ticketsCount {
         padding: 0.2rem 0.4rem;
         font-size: 0.8rem;
+    }
+
+    .verificationInfo {
+        gap: 0.25rem;
+    }
+
+    .verificationDate {
+        font-size: 0.75rem;
     }
 }

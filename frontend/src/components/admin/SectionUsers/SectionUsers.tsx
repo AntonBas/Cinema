@@ -98,7 +98,7 @@ export const SectionUsers: React.FC = () => {
         <div className={styles.container}>
             <header className={styles.header}>
                 <h1>User Management</h1>
-                <p>Manage user roles and statuses</p>
+                <p>Manage user roles, verification status and account settings</p>
             </header>
 
             <div className={styles.searchSection}>

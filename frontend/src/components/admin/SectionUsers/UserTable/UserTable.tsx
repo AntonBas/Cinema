@@ -33,9 +33,11 @@ export const UserTable: React.FC<UserTableProps> = ({
                     <tr>
                         <th>User</th>
                         <th>Role</th>
+                        <th>Verification</th>
                         <th>Status</th>
                         <th>Registration</th>
                         <th>Tickets</th>
+                        <th>Last Activity</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
