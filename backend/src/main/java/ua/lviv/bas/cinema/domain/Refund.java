@@ -38,8 +38,8 @@ import ua.lviv.bas.cinema.domain.enums.RefundStatus;
 public class Refund {
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@EqualsAndHashCode.Include
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
 	@ManyToOne(fetch = FetchType.LAZY)

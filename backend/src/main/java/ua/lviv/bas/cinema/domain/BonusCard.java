@@ -37,6 +37,7 @@ import lombok.ToString;
 public class BonusCard {
 
 	@Id
+	@EqualsAndHashCode.Include
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 

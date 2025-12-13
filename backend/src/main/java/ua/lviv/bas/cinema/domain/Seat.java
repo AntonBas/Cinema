@@ -1,7 +1,7 @@
 package ua.lviv.bas.cinema.domain;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -19,9 +19,11 @@ import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 import ua.lviv.bas.cinema.domain.enums.SeatType;
 
 @Entity
@@ -30,11 +32,14 @@ import ua.lviv.bas.cinema.domain.enums.SeatType;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "seats", uniqueConstraints = { @UniqueConstraint(columnNames = { "hall_id", "seat_row", "number" }) })
+@ToString(exclude = { "hall", "tickets" })
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@Table(name = "seat", uniqueConstraints = { @UniqueConstraint(columnNames = { "hall_id", "seat_row", "number" }) })
 public class Seat {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@EqualsAndHashCode.Include
 	private Long id;
 
 	@NotNull
@@ -57,27 +62,6 @@ public class Seat {
 	private CinemaHall hall;
 
 	@OneToMany(mappedBy = "seat", fetch = FetchType.LAZY)
-	private List<Ticket> tickets;
-
-	@Override
-	public int hashCode() {
-		return Objects.hash(id);
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (!(obj instanceof Seat)) {
-			return false;
-		}
-		Seat other = (Seat) obj;
-		return Objects.equals(id, other.id);
-	}
-
-	@Override
-	public String toString() {
-		return "Seat [id=" + id + ", row=" + row + ", number=" + number + "]";
-	}
+	@Builder.Default
+	private List<Ticket> tickets = new ArrayList<>();
 }

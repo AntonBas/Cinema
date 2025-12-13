@@ -28,8 +28,8 @@ import lombok.ToString;
 public class TicketType {
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@EqualsAndHashCode.Include
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
 	@Column(nullable = false, unique = true, length = 20)

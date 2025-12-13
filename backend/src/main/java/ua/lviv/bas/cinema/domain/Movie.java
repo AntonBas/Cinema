@@ -2,7 +2,6 @@ package ua.lviv.bas.cinema.domain;
 
 import java.time.LocalDate;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 
 import org.hibernate.validator.constraints.URL;
@@ -29,9 +28,11 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 import ua.lviv.bas.cinema.domain.enums.AgeRating;
 import ua.lviv.bas.cinema.domain.enums.MovieStatus;
 
@@ -41,7 +42,9 @@ import ua.lviv.bas.cinema.domain.enums.MovieStatus;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Table(name = "movies", indexes = { @Index(name = "idx_movie_title", columnList = "title"),
+@ToString(exclude = { "sessions", "actors", "directors", "screenwriters", "genres" })
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@Table(name = "movie", indexes = { @Index(name = "idx_movie_title", columnList = "title"),
 		@Index(name = "idx_movie_status", columnList = "status"),
 		@Index(name = "idx_movie_release_date", columnList = "release_date"),
 		@Index(name = "idx_movie_slug", columnList = "slug"),
@@ -49,6 +52,7 @@ import ua.lviv.bas.cinema.domain.enums.MovieStatus;
 public class Movie {
 
 	@Id
+	@EqualsAndHashCode.Include
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
@@ -129,26 +133,5 @@ public class Movie {
 			return true;
 		}
 		return endShowingDate.isAfter(releaseDate);
-	}
-
-	@Override
-	public int hashCode() {
-		return Objects.hash(id);
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (!(obj instanceof Movie))
-			return false;
-		Movie other = (Movie) obj;
-		return Objects.equals(id, other.id);
-	}
-
-	@Override
-	public String toString() {
-		return "Movie{" + "id=" + id + ", title='" + title + '\'' + ", slug='" + slug + '\'' + ", releaseDate="
-				+ releaseDate + ", status=" + status + ", ageRating=" + ageRating + '}';
 	}
 }

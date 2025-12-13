@@ -1,7 +1,6 @@
 package ua.lviv.bas.cinema.domain;
 
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 
 import jakarta.persistence.Column;
@@ -15,9 +14,11 @@ import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 
 @Entity
 @Getter
@@ -25,10 +26,13 @@ import lombok.Setter;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "genres", indexes = @Index(name = "idx_genre_name", columnList = "name"))
+@ToString(exclude = { "movies" })
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@Table(name = "genre", indexes = @Index(name = "idx_genre_name", columnList = "name"))
 public class Genre {
 
 	@Id
+	@EqualsAndHashCode.Include
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
@@ -39,27 +43,4 @@ public class Genre {
 	@Builder.Default
 	@ManyToMany(mappedBy = "genres")
 	private Set<Movie> movies = new HashSet<>();
-
-	@Override
-	public int hashCode() {
-		return Objects.hash(id);
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (!(obj instanceof Genre)) {
-			return false;
-		}
-		Genre other = (Genre) obj;
-		return Objects.equals(id, other.id);
-	}
-
-	@Override
-	public String toString() {
-		return "Genre [id=" + id + ", name=" + name + "]";
-	}
-
 }

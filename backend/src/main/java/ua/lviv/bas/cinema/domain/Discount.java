@@ -35,8 +35,8 @@ import ua.lviv.bas.cinema.domain.enums.DiscountType;
 public class Discount {
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@EqualsAndHashCode.Include
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
 	@ManyToOne(fetch = FetchType.LAZY)

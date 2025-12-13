@@ -39,8 +39,8 @@ import ua.lviv.bas.cinema.domain.enums.TicketStatus;
 public class Ticket {
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@EqualsAndHashCode.Include
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
 	@Column(nullable = false, name = "purchase_time")

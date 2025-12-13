@@ -4,7 +4,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -26,9 +25,11 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Past;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 import ua.lviv.bas.cinema.domain.enums.UserRole;
 import ua.lviv.bas.cinema.domain.enums.VerificationStatus;
 
@@ -38,11 +39,14 @@ import ua.lviv.bas.cinema.domain.enums.VerificationStatus;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "users", indexes = { @Index(name = "idx_user_email", columnList = "email"),
+@ToString(exclude = { "tickets", "password" })
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@Table(name = "user", indexes = { @Index(name = "idx_user_email", columnList = "email"),
 		@Index(name = "idx_user_name", columnList = "firstName,lastName") })
 public class User {
 
 	@Id
+	@EqualsAndHashCode.Include
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
@@ -99,26 +103,4 @@ public class User {
 	@Column(nullable = false)
 	@Builder.Default
 	private boolean enabled = false;
-
-	@Override
-	public int hashCode() {
-		return Objects.hash(id);
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (!(obj instanceof User))
-			return false;
-		User other = (User) obj;
-		return Objects.equals(id, other.id);
-	}
-
-	@Override
-	public String toString() {
-		return "User [id=" + id + ", email=" + email + ", firstName=" + firstName + ", lastName=" + lastName
-				+ ", userRole=" + userRole + ", enabled=" + enabled + "]";
-	}
-
 }

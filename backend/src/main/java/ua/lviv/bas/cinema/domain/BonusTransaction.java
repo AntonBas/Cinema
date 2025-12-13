@@ -34,8 +34,8 @@ import ua.lviv.bas.cinema.domain.enums.BonusTransactionType;
 public class BonusTransaction {
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@EqualsAndHashCode.Include
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
 	@ManyToOne(fetch = FetchType.LAZY)

@@ -2,7 +2,6 @@ package ua.lviv.bas.cinema.domain;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -17,9 +16,11 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 
 @Entity
 @Getter
@@ -27,10 +28,13 @@ import lombok.Setter;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "cinema_halls")
+@ToString(exclude = { "sessions", "seats" })
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@Table(name = "cinema_hall")
 public class CinemaHall {
 
 	@Id
+	@EqualsAndHashCode.Include
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
@@ -50,27 +54,4 @@ public class CinemaHall {
 	public int getCapacity() {
 		return (seats != null) ? seats.size() : 0;
 	}
-
-	@Override
-	public int hashCode() {
-		return Objects.hash(id);
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (!(obj instanceof CinemaHall)) {
-			return false;
-		}
-		CinemaHall other = (CinemaHall) obj;
-		return Objects.equals(id, other.id);
-	}
-
-	@Override
-	public String toString() {
-		return "CinemaHall [id=" + id + ", name=" + name + "]";
-	}
-
 }

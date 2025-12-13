@@ -42,8 +42,8 @@ import ua.lviv.bas.cinema.domain.enums.PaymentStatus;
 public class Payment {
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@EqualsAndHashCode.Include
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
 	@Column(nullable = false, precision = 10, scale = 2)

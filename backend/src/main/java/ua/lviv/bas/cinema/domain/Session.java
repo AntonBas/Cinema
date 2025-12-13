@@ -4,7 +4,6 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -21,9 +20,11 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 
 @Entity
 @Getter
@@ -31,10 +32,13 @@ import lombok.Setter;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "sessions")
+@ToString(exclude = { "movie", "hall", "tickets" })
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@Table(name = "session")
 public class Session {
 
 	@Id
+	@EqualsAndHashCode.Include
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
@@ -60,7 +64,7 @@ public class Session {
 
 	@OneToMany(mappedBy = "session", fetch = FetchType.LAZY)
 	@Builder.Default
-	private List<Ticket> tickets = new ArrayList<Ticket>();
+	private List<Ticket> tickets = new ArrayList<>();
 
 	public LocalDateTime getEndTime() {
 		if (movie == null || movie.getDurationMinutes() == null || startTime == null) {
@@ -72,27 +76,4 @@ public class Session {
 	public boolean isAvailable() {
 		return startTime != null && startTime.isAfter(LocalDateTime.now());
 	}
-
-	@Override
-	public int hashCode() {
-		return Objects.hash(id);
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (!(obj instanceof Session)) {
-			return false;
-		}
-		Session other = (Session) obj;
-		return Objects.equals(id, other.id);
-	}
-
-	@Override
-	public String toString() {
-		return "Session [id=" + id + ", startTime=" + startTime + ", price=" + basePrice + "]";
-	}
-
 }
