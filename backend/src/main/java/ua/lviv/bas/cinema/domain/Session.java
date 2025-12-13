@@ -64,7 +64,7 @@ public class Session {
 
 	public LocalDateTime getEndTime() {
 		if (movie == null || movie.getDurationMinutes() == null || startTime == null) {
-			return null;
+			throw new IllegalStateException("Cannot calculate end time: missing data");
 		}
 		return startTime.plusMinutes(movie.getDurationMinutes());
 	}
