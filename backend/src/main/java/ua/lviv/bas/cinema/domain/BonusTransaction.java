@@ -28,7 +28,7 @@ import ua.lviv.bas.cinema.domain.enums.BonusTransactionType;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString(exclude = { "bonusCard", "payment" })
+@ToString(exclude = { "bonusCard", "payment", "refund" })
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Table(name = "bonus_transaction")
 public class BonusTransaction {
@@ -45,6 +45,10 @@ public class BonusTransaction {
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "payment_id")
 	private Payment payment;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "refund_id")
+	private Refund refund;
 
 	@Enumerated(EnumType.STRING)
 	@Column(name = "type", nullable = false, length = 30)
@@ -73,5 +77,13 @@ public class BonusTransaction {
 
 	public Integer getAbsolutePoints() {
 		return Math.abs(pointsChange);
+	}
+
+	public boolean isRefundRelated() {
+		return refund != null;
+	}
+
+	public boolean isPurchaseRelated() {
+		return payment != null;
 	}
 }

@@ -3,7 +3,6 @@ package ua.lviv.bas.cinema.domain;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -17,47 +16,74 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 import ua.lviv.bas.cinema.domain.enums.BookingType;
+import ua.lviv.bas.cinema.domain.enums.RefundStatus;
 import ua.lviv.bas.cinema.domain.enums.TicketStatus;
 
 @Entity
-@Table(name = "tickets")
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@ToString(exclude = { "session", "seat", "user", "ticketType", "promotion", "payment", "appliedDiscount", "refund" })
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@Table(name = "ticket")
 public class Ticket {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@EqualsAndHashCode.Include
 	private Long id;
 
-	@NotNull
 	@Column(nullable = false, name = "purchase_time")
 	private LocalDateTime purchaseTime;
 
-	@NotNull
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "session_id", nullable = false)
 	private Session session;
 
-	@NotNull
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "seat_id", nullable = false)
 	private Seat seat;
 
-	@NotNull
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "user_id", nullable = false)
 	private User user;
 
-	@NotNull
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "ticket_type_id", nullable = false)
 	private TicketType ticketType;
 
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "payment_id", nullable = false)
+	private Payment payment;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "discount_id")
+	private Discount appliedDiscount;
+
+	@OneToOne(mappedBy = "ticket", fetch = FetchType.LAZY)
+	private Refund refund;
+
 	@Column(name = "calculated_price", precision = 10, scale = 2)
 	private BigDecimal calculatedPrice;
 
+	@Column(name = "final_price", precision = 10, scale = 2)
+	private BigDecimal finalPrice;
+
 	@Column(name = "base_price_at_purchase", precision = 10, scale = 2)
 	private BigDecimal basePriceAtPurchase;
+
+	@Column(name = "discount_amount", precision = 10, scale = 2)
+	private BigDecimal discountAmount;
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "promotion_id")
@@ -70,13 +96,10 @@ public class Ticket {
 	@Column(name = "booking_type")
 	private BookingType bookingType;
 
-	@NotNull
 	@Column(nullable = false, name = "status")
 	@Enumerated(EnumType.STRING)
-	private TicketStatus ticketStatus;
-
-	@OneToOne(mappedBy = "ticket", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-	private Payment payment;
+	@Builder.Default
+	private TicketStatus ticketStatus = TicketStatus.ACTIVE;
 
 	@PrePersist
 	protected void onCreate() {
@@ -86,8 +109,16 @@ public class Ticket {
 		if (uniqueCode == null) {
 			uniqueCode = "TKT" + (System.currentTimeMillis() % 1000000000L);
 		}
-		if (session != null) {
+		if (session != null && basePriceAtPurchase == null) {
 			basePriceAtPurchase = session.getBasePrice();
 		}
+	}
+
+	public boolean isRefunded() {
+		return refund != null && refund.getStatus() == RefundStatus.PROCESSED;
+	}
+
+	public boolean isRefundable() {
+		return ticketStatus == TicketStatus.ACTIVE && session.getStartTime().isAfter(LocalDateTime.now().plusHours(2));
 	}
 }
