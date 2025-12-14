@@ -34,7 +34,7 @@ import ua.lviv.bas.cinema.domain.enums.RefundStatus;
 @AllArgsConstructor
 @ToString(exclude = { "payment", "ticket" })
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@Table(name = "refund")
+@Table(name = "refunds")
 public class Refund {
 
 	@Id

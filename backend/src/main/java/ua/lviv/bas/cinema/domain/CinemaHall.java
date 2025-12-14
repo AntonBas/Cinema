@@ -30,7 +30,7 @@ import lombok.ToString;
 @AllArgsConstructor
 @ToString(exclude = { "sessions", "seats" })
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@Table(name = "cinema_hall")
+@Table(name = "cinema_halls")
 public class CinemaHall {
 
 	@Id

@@ -30,7 +30,7 @@ import ua.lviv.bas.cinema.domain.enums.BonusTransactionType;
 @AllArgsConstructor
 @ToString(exclude = { "bonusCard", "payment", "refund" })
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@Table(name = "bonus_transaction")
+@Table(name = "bonus_transactions")
 public class BonusTransaction {
 
 	@Id

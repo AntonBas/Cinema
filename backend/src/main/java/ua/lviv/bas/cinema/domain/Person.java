@@ -26,7 +26,7 @@ import ua.lviv.bas.cinema.domain.enums.PersonRole;
 @AllArgsConstructor
 @ToString
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@Table(name = "person")
+@Table(name = "persons")
 public class Person {
 
 	@Id

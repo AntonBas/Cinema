@@ -34,7 +34,7 @@ import ua.lviv.bas.cinema.domain.enums.SeatType;
 @AllArgsConstructor
 @ToString(exclude = { "hall", "tickets" })
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@Table(name = "seat", uniqueConstraints = { @UniqueConstraint(columnNames = { "hall_id", "seat_row", "number" }) })
+@Table(name = "seats", uniqueConstraints = { @UniqueConstraint(columnNames = { "hall_id", "seat_row", "number" }) })
 public class Seat {
 
 	@Id

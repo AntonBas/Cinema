@@ -44,7 +44,7 @@ import ua.lviv.bas.cinema.domain.enums.MovieStatus;
 @Builder
 @ToString(exclude = { "sessions", "actors", "directors", "screenwriters", "genres" })
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@Table(name = "movie", indexes = { @Index(name = "idx_movie_title", columnList = "title"),
+@Table(name = "movies", indexes = { @Index(name = "idx_movie_title", columnList = "title"),
 		@Index(name = "idx_movie_status", columnList = "status"),
 		@Index(name = "idx_movie_release_date", columnList = "release_date"),
 		@Index(name = "idx_movie_slug", columnList = "slug"),

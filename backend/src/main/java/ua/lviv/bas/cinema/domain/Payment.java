@@ -38,7 +38,7 @@ import ua.lviv.bas.cinema.domain.enums.PaymentStatus;
 @AllArgsConstructor
 @ToString(exclude = { "user", "tickets", "bonusTransactions", "refunds" })
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@Table(name = "payment")
+@Table(name = "payments")
 public class Payment {
 
 	@Id

@@ -24,7 +24,7 @@ import lombok.ToString;
 @AllArgsConstructor
 @ToString
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@Table(name = "ticket_type")
+@Table(name = "ticket_types")
 public class TicketType {
 
 	@Id

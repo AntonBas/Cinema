@@ -35,7 +35,7 @@ import ua.lviv.bas.cinema.domain.enums.TicketStatus;
 @AllArgsConstructor
 @ToString(exclude = { "session", "seat", "user", "ticketType", "promotion", "payment", "appliedDiscount", "refund" })
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@Table(name = "ticket")
+@Table(name = "tickets")
 public class Ticket {
 
 	@Id

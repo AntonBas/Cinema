@@ -28,7 +28,7 @@ import lombok.ToString;
 @AllArgsConstructor
 @ToString(exclude = { "movies" })
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@Table(name = "genre", indexes = @Index(name = "idx_genre_name", columnList = "name"))
+@Table(name = "genres", indexes = @Index(name = "idx_genre_name", columnList = "name"))
 public class Genre {
 
 	@Id

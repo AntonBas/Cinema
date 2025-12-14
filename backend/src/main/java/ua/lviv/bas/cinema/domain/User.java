@@ -41,7 +41,7 @@ import ua.lviv.bas.cinema.domain.enums.VerificationStatus;
 @AllArgsConstructor
 @ToString(exclude = { "tickets", "password" })
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@Table(name = "user", indexes = { @Index(name = "idx_user_email", columnList = "email"),
+@Table(name = "users", indexes = { @Index(name = "idx_user_email", columnList = "email"),
 		@Index(name = "idx_user_name", columnList = "firstName,lastName") })
 public class User {
 

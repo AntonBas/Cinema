@@ -30,7 +30,7 @@ import ua.lviv.bas.cinema.domain.enums.TokenType;
 @AllArgsConstructor
 @ToString(exclude = { "user" })
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@Table(name = "email_token", indexes = { @Index(name = "idx_email_token_user_id", columnList = "user_id"),
+@Table(name = "email_tokens", indexes = { @Index(name = "idx_email_token_user_id", columnList = "user_id"),
 		@Index(name = "idx_email_token_expires", columnList = "expires_at"),
 		@Index(name = "idx_email_token_type", columnList = "type") })
 public class EmailToken {

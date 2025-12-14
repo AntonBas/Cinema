@@ -31,7 +31,7 @@ import ua.lviv.bas.cinema.domain.enums.DiscountType;
 @AllArgsConstructor
 @ToString(exclude = { "user" })
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@Table(name = "discount")
+@Table(name = "discounts")
 public class Discount {
 
 	@Id
