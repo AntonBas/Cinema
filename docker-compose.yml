@@ -1,0 +1,89 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    platform: linux/arm64
+    container_name: cinema_postgres
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: cinema
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: cinema_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - cinema-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cinema"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: cinema_backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: cinema_db
+      DB_USER: cinema
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      EMAIL_USERNAME: ${EMAIL_USERNAME}
+      EMAIL_PASSWORD: ${EMAIL_PASSWORD}
+      SERVER_PORT: 8080
+      SPRING_PROFILES_ACTIVE: docker
+    ports:
+      - "8080:8080"
+    networks:
+      - cinema-net
+    volumes:
+      - ./backend/logs:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/actuator/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: cinema_frontend
+    depends_on:
+      - backend
+    env_file:
+      - .env
+    ports:
+      - "5173:5173"
+    networks:
+      - cinema-net
+    environment:
+      VITE_API_URL: http://backend:8080/api
+      CHOKIDAR_USEPOLLING: "true"
+      DOCKER_ENV: "true"
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+      - /app/node_modules
+    stdin_open: true
+    tty: true
+
+networks:
+  cinema-net:
+    driver: bridge
+
+volumes:
+  pgdata:
