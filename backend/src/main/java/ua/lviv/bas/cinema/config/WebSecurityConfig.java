@@ -1,6 +1,8 @@
 package ua.lviv.bas.cinema.config;
 
-import lombok.RequiredArgsConstructor;
+import java.util.Arrays;
+import java.util.List;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -17,8 +19,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.util.Arrays;
-import java.util.List;
+import lombok.RequiredArgsConstructor;
 
 @Configuration
 @EnableWebSecurity
@@ -64,12 +65,11 @@ public class WebSecurityConfig {
 		http.cors(cors -> cors.configurationSource(corsConfigurationSource())).csrf(csrf -> csrf.disable())
 				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 				.authorizeHttpRequests(
-						auth -> auth
+						auth -> auth.requestMatchers("/actuator/health", "/actuator/info").permitAll()
 								.requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/api-docs/**",
 										"/v3/api-docs/**", "/swagger-resources/**", "/swagger-resources",
 										"/configuration/ui", "/configuration/security", "/webjars/**", "/error")
 								.permitAll()
-
 								.requestMatchers("/api/auth/**", "/api/movies/public/**", "/api/cinema-halls/public/**",
 										"/api/movies/*/poster")
 								.permitAll().requestMatchers("/api/users/**").authenticated()
