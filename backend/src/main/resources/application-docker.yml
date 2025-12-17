@@ -2,18 +2,14 @@ spring:
   config:
     activate:
       on-profile: docker
-  
+
   datasource:
     url: jdbc:postgresql://${DB_HOST:postgres}:${DB_PORT:5433}/${DB_NAME:cinema_db}
     username: ${DB_USER:cinema}
     password: ${DB_PASSWORD}
-    driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 10
-      connection-timeout: 30000
-      idle-timeout: 600000
-      max-lifetime: 1800000
-  
+
   jpa:
     show-sql: ${SHOW_SQL:false}
     properties:
@@ -23,59 +19,3 @@ spring:
           fetch_size: 50
         order_inserts: true
         order_updates: true
-  
-  mail:
-    host: smtp.gmail.com
-    port: 587
-    username: ${EMAIL_USERNAME}
-    password: ${EMAIL_PASSWORD}
-    properties:
-      mail:
-        smtp:
-          auth: true
-          starttls:
-            enable: true
-          connectiontimeout: 5000
-          timeout: 5000
-          writetimeout: 5000
-          ssl:
-            trust: smtp.gmail.com
-
-app:
-  jwt:
-    secret: ${JWT_SECRET}
-
-logging:
-  level:
-    ua.lviv.bas.cinema: INFO
-    org.springframework.web: WARN
-    org.springframework.security: INFO
-    org.springdoc: INFO
-    org.hibernate.SQL: WARN
-    org.hibernate.type: WARN
-  pattern:
-    console: '%d{ISO8601} [%thread] %-5level %logger{36} - %msg%n'
-  file:
-    name: /app/logs/cinema-app.log
-
-server:
-  servlet:
-    context-path: /api
-  forward-headers-strategy: framework
-  compression:
-    enabled: true
-    mime-types: text/html,text/xml,text/plain,text/css,application/json,application/javascript
-
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info,metrics,prometheus
-  metrics:
-    export:
-      prometheus:
-        enabled: true
-  endpoint:
-    health:
-      probes:
-        enabled: true

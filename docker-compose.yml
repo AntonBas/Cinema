@@ -1,43 +1,44 @@
-version: '3.8'
-
 services:
   postgres:
-    image: postgres:15
-    platform: linux/arm64
+    image: postgres:15-alpine
     container_name: cinema_postgres
     env_file:
-      - .env
+      - .env.docker
     environment:
-      POSTGRES_USER: cinema
+      POSTGRES_USER: ${DB_USER:-cinema}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: cinema_db
+      POSTGRES_DB: ${DB_NAME:-cinema_db}
     ports:
-      - "5433:5432"
+      - "${DB_HOST_PORT:-5433}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - cinema-net
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U cinema"]
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER:-cinema} -d ${POSTGRES_DB:-cinema_db}" ]
       interval: 10s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
 
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
+      args:
+        BUILD_PROFILE: docker
     container_name: cinema_backend
     depends_on:
       postgres:
         condition: service_healthy
     env_file:
-      - .env
+      - .env.docker
     environment:
       DB_HOST: postgres
       DB_PORT: 5432
-      DB_NAME: cinema_db
-      DB_USER: cinema
+      DB_NAME: ${DB_NAME:-cinema_db}
+      DB_USER: ${DB_USER:-cinema}
       DB_PASSWORD: ${DB_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
       EMAIL_USERNAME: ${EMAIL_USERNAME}
@@ -45,17 +46,18 @@ services:
       SERVER_PORT: 8080
       SPRING_PROFILES_ACTIVE: docker
     ports:
-      - "8080:8080"
+      - "${BACKEND_HOST_PORT:-8080}:8080"
     networks:
       - cinema-net
     volumes:
-      - ./backend/logs:/app/logs
+      - ./backend/logs:/app/logs:z
     restart: unless-stopped
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8080/actuator/health" ]
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 40s
 
   frontend:
     build:
@@ -63,27 +65,30 @@ services:
       dockerfile: Dockerfile
     container_name: cinema_frontend
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     env_file:
-      - .env
+      - .env.docker
     ports:
-      - "5173:5173"
+      - "${FRONTEND_HOST_PORT:-5173}:5173"
     networks:
       - cinema-net
     environment:
-      VITE_API_URL: http://backend:8080/api
+      VITE_API_URL: http://backend:8080
       CHOKIDAR_USEPOLLING: "true"
-      DOCKER_ENV: "true"
     volumes:
-      - ./frontend/src:/app/src
-      - ./frontend/public:/app/public
+      - ./frontend/src:/app/src:delegated
+      - ./frontend/public:/app/public:delegated
       - /app/node_modules
+      - ./frontend/index.html:/app/index.html:delegated
     stdin_open: true
     tty: true
 
 networks:
   cinema-net:
     driver: bridge
+    name: cinema-network
 
 volumes:
   pgdata:
+    name: cinema-pgdata
