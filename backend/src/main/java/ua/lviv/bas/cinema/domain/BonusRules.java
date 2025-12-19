@@ -43,8 +43,17 @@ public class BonusRules {
 	@Column(name = "money_ratio", precision = 10, scale = 4)
 	private BigDecimal moneyRatio;
 
-	@Column(name = "point_value", precision = 10, scale = 4)
-	private BigDecimal pointValue;
+	@Column(name = "point_value", precision = 10, scale = 2)
+	@Builder.Default
+	private BigDecimal pointValue = BigDecimal.ONE;
+
+	@Column(name = "min_points_per_transaction")
+	@Builder.Default
+	private Integer minPointsPerTransaction = 50;
+
+	@Column(name = "max_points_per_transaction")
+	@Builder.Default
+	private Integer maxPointsPerTransaction = 1000;
 
 	@Column(name = "is_active", nullable = false)
 	@Builder.Default
@@ -59,17 +68,24 @@ public class BonusRules {
 	}
 
 	@Transient
-	public boolean isValid() {
-		switch (bonusType) {
-		case WELCOME_BONUS:
-		case BIRTHDAY_BONUS:
-			return points != null && points > 0;
-		case PURCHASE_BONUS:
-			return moneyRatio != null && moneyRatio.compareTo(BigDecimal.ZERO) > 0;
-		case PURCHASE_WRITE_OFF:
-			return pointValue != null && pointValue.compareTo(BigDecimal.ZERO) > 0;
-		default:
+	public BigDecimal calculateMoneyValue(Integer points) {
+		if (points == null || pointValue == null) {
+			return BigDecimal.ZERO;
+		}
+		return pointValue.multiply(BigDecimal.valueOf(points));
+	}
+
+	@Transient
+	public boolean isValidForWriteOff(Integer pointsToUse) {
+		if (!isActive || pointValue == null || bonusType != BonusTransactionType.PURCHASE_WRITE_OFF) {
 			return false;
 		}
+
+		return pointsToUse != null && pointsToUse >= minPointsPerTransaction && pointsToUse <= maxPointsPerTransaction;
+	}
+
+	@Transient
+	public boolean isValidForPurchaseBonus() {
+		return isActive && moneyRatio != null && bonusType == BonusTransactionType.PURCHASE_BONUS;
 	}
 }
