@@ -1,6 +1,5 @@
 package ua.lviv.bas.cinema.domain;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -49,10 +48,6 @@ public class BonusCard {
 	@Builder.Default
 	private Integer pointsBalance = 0;
 
-	@Column(name = "total_spent", precision = 10, scale = 2, nullable = false)
-	@Builder.Default
-	private BigDecimal totalSpent = BigDecimal.ZERO;
-
 	@Column(name = "last_birthday_bonus_date")
 	private LocalDate lastBirthdayBonusDate;
 
@@ -64,4 +59,8 @@ public class BonusCard {
 	@OrderBy("createdAt DESC")
 	@Builder.Default
 	private List<BonusTransaction> transactions = new ArrayList<>();
+
+	public boolean hasEnoughPoints(Integer points) {
+		return points != null && pointsBalance >= points;
+	}
 }

@@ -57,33 +57,10 @@ public class BonusTransaction {
 	@Column(name = "points_change", nullable = false)
 	private Integer pointsChange;
 
-	@Column(name = "description", length = 300)
-	private String description;
-
 	@Column(name = "reference_id", length = 50)
 	private String referenceId;
 
 	@Column(name = "created_at", nullable = false, updatable = false)
 	@Builder.Default
 	private LocalDateTime createdAt = LocalDateTime.now();
-
-	public boolean isCredit() {
-		return pointsChange > 0;
-	}
-
-	public boolean isDebit() {
-		return pointsChange < 0;
-	}
-
-	public Integer getAbsolutePoints() {
-		return Math.abs(pointsChange);
-	}
-
-	public boolean isRefundRelated() {
-		return refund != null;
-	}
-
-	public boolean isPurchaseRelated() {
-		return payment != null;
-	}
 }
