@@ -53,7 +53,7 @@ public class BonusRules {
 
 	@Column(name = "max_points_per_transaction")
 	@Builder.Default
-	private Integer maxPointsPerTransaction = 1000;
+	private Integer maxPointsPerTransaction = 300;
 
 	@Column(name = "is_active", nullable = false)
 	@Builder.Default
