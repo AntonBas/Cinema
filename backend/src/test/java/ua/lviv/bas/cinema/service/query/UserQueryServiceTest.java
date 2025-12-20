@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -22,6 +23,7 @@ import com.querydsl.core.types.Predicate;
 
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.enums.UserRole;
+import ua.lviv.bas.cinema.domain.enums.VerificationStatus;
 import ua.lviv.bas.cinema.repository.UserRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -168,5 +170,66 @@ class UserQueryServiceTest {
 
 		assertThat(result).hasSize(1);
 		assertThat(result.get(0).isEnabled()).isTrue();
+	}
+
+	@Test
+	void findVerifiedUsersWithBirthdayToday_ShouldReturnUsers() {
+		User user1 = User.builder().id(1L).email("user1@test.com").dateOfBirth(LocalDate.of(1990, 5, 15))
+				.verificationStatus(VerificationStatus.VERIFIED).enabled(true).build();
+
+		User user2 = User.builder().id(2L).email("user2@test.com").dateOfBirth(LocalDate.of(1985, 5, 15))
+				.verificationStatus(VerificationStatus.VERIFIED).enabled(true).build();
+
+		when(userRepository.findAll(any(Predicate.class))).thenReturn(List.of(user1, user2));
+
+		List<User> result = userQueryService.findVerifiedUsersWithBirthdayToday(15, 5);
+
+		assertThat(result).hasSize(2);
+		assertThat(result.get(0).getVerificationStatus()).isEqualTo(VerificationStatus.VERIFIED);
+		assertThat(result.get(0).isEnabled()).isTrue();
+	}
+
+	@Test
+	void findVerifiedUsersWithBirthdayToday_ShouldReturnEmpty_WhenNoMatches() {
+		when(userRepository.findAll(any(Predicate.class))).thenReturn(List.of());
+
+		List<User> result = userQueryService.findVerifiedUsersWithBirthdayToday(15, 5);
+
+		assertThat(result).isEmpty();
+	}
+
+	@Test
+	void findVerifiedUsersWithBirthdayToday_ShouldFilterOutNotVerified() {
+		User verifiedUser = User.builder().id(1L).email("verified@test.com").dateOfBirth(LocalDate.of(1990, 5, 15))
+				.verificationStatus(VerificationStatus.VERIFIED).enabled(true).build();
+
+		when(userRepository.findAll(any(Predicate.class))).thenReturn(List.of(verifiedUser));
+
+		List<User> result = userQueryService.findVerifiedUsersWithBirthdayToday(15, 5);
+
+		assertThat(result).hasSize(1);
+		assertThat(result.get(0).getVerificationStatus()).isEqualTo(VerificationStatus.VERIFIED);
+	}
+
+	@Test
+	void findVerifiedUsersWithBirthdayToday_ShouldFilterOutDisabled() {
+		User enabledUser = User.builder().id(1L).email("enabled@test.com").dateOfBirth(LocalDate.of(1990, 5, 15))
+				.verificationStatus(VerificationStatus.VERIFIED).enabled(true).build();
+
+		when(userRepository.findAll(any(Predicate.class))).thenReturn(List.of(enabledUser));
+
+		List<User> result = userQueryService.findVerifiedUsersWithBirthdayToday(15, 5);
+
+		assertThat(result).hasSize(1);
+		assertThat(result.get(0).isEnabled()).isTrue();
+	}
+
+	@Test
+	void findVerifiedUsersWithBirthdayToday_ShouldReturnEmpty_ForNonExistingDate() {
+		when(userRepository.findAll(any(Predicate.class))).thenReturn(List.of());
+
+		List<User> result = userQueryService.findVerifiedUsersWithBirthdayToday(31, 2);
+
+		assertThat(result).isEmpty();
 	}
 }
