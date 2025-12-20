@@ -5,9 +5,15 @@ import java.math.BigDecimal;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Schema(description = "Request to update bonus rules (admin only)")
 public class BonusRulesRequest {
 
@@ -24,13 +30,13 @@ public class BonusRulesRequest {
 	private BigDecimal pointValue;
 
 	@Min(value = 1, message = "Minimum points must be at least 1")
-	@Schema(description = "Minimum points that can be used in one transaction", example = "50", defaultValue = "50")
-	private Integer minPointsPerTransaction = 50;
+	@Schema(description = "Minimum points that can be used in one transaction", example = "50", nullable = true)
+	private Integer minPointsPerTransaction;
 
 	@Min(value = 1, message = "Maximum points must be at least 1")
-	@Schema(description = "Maximum points that can be used in one transaction", example = "300", defaultValue = "300")
-	private Integer maxPointsPerTransaction = 300;
+	@Schema(description = "Maximum points that can be used in one transaction", example = "300", nullable = true)
+	private Integer maxPointsPerTransaction;
 
-	@Schema(description = "Whether this bonus rule is active", example = "true")
-	private Boolean isActive = true;
+	@Schema(description = "Whether this bonus rule is active", example = "true", nullable = true)
+	private Boolean isActive;
 }

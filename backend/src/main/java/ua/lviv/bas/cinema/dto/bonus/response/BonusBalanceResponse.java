@@ -3,9 +3,15 @@ package ua.lviv.bas.cinema.dto.bonus.response;
 import java.math.BigDecimal;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Schema(description = "User's bonus points balance with limits")
 public class BonusBalanceResponse {
 
