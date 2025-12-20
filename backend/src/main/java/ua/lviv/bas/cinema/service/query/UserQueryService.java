@@ -17,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.QUser;
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.enums.UserRole;
+import ua.lviv.bas.cinema.domain.enums.VerificationStatus;
 import ua.lviv.bas.cinema.repository.UserRepository;
 
 @Slf4j
@@ -98,6 +99,22 @@ public class UserQueryService {
 		predicate.and(user.enabled.isTrue());
 
 		return (List<User>) userRepository.findAll(predicate, Sort.by(Sort.Direction.ASC, "email"));
+	}
+
+	public List<User> findVerifiedUsersWithBirthdayToday(int dayOfMonth, int month) {
+		log.debug("Finding verified users with birthday on day {}, month {}", dayOfMonth, month);
+
+		QUser user = QUser.user;
+		BooleanBuilder predicate = new BooleanBuilder();
+
+		predicate.and(user.dateOfBirth.dayOfMonth().eq(dayOfMonth));
+		predicate.and(user.dateOfBirth.month().eq(month));
+
+		predicate.and(user.verificationStatus.eq(VerificationStatus.VERIFIED));
+
+		predicate.and(user.enabled.isTrue());
+
+		return (List<User>) userRepository.findAll(predicate);
 	}
 
 }
