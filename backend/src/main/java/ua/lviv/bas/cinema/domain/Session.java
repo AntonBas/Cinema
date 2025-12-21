@@ -32,7 +32,7 @@ import lombok.ToString;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString(exclude = { "movie", "hall", "tickets" })
+@ToString(exclude = { "movie", "hall", "tickets", "bookings", "bookedSeats" })
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Table(name = "sessions")
 public class Session {
@@ -66,14 +66,11 @@ public class Session {
 	@Builder.Default
 	private List<Ticket> tickets = new ArrayList<>();
 
-	public LocalDateTime getEndTime() {
-		if (movie == null || movie.getDurationMinutes() == null || startTime == null) {
-			throw new IllegalStateException("Cannot calculate end time: missing data");
-		}
-		return startTime.plusMinutes(movie.getDurationMinutes());
-	}
+	@OneToMany(mappedBy = "session", fetch = FetchType.LAZY)
+	@Builder.Default
+	private List<Booking> bookings = new ArrayList<>();
 
-	public boolean isAvailable() {
-		return startTime != null && startTime.isAfter(LocalDateTime.now());
-	}
+	@OneToMany(mappedBy = "session", fetch = FetchType.LAZY)
+	@Builder.Default
+	private List<BookedSeat> bookedSeats = new ArrayList<>();
 }
