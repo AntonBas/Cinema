@@ -61,7 +61,15 @@ public class Seat {
 	@JoinColumn(name = "hall_id", nullable = false)
 	private CinemaHall hall;
 
+	@Column(name = "is_active", nullable = false)
+	@Builder.Default
+	private Boolean isActive = true;
+
 	@OneToMany(mappedBy = "seat", fetch = FetchType.LAZY)
 	@Builder.Default
 	private List<Ticket> tickets = new ArrayList<>();
+
+	@OneToMany(mappedBy = "seat", fetch = FetchType.LAZY)
+	@Builder.Default
+	private List<BookedSeat> bookedSeats = new ArrayList<>();
 }
