@@ -59,8 +59,4 @@ public class BonusCard {
 	@OrderBy("createdAt DESC")
 	@Builder.Default
 	private List<BonusTransaction> transactions = new ArrayList<>();
-
-	public boolean hasEnoughPoints(Integer points) {
-		return points != null && pointsBalance >= points;
-	}
 }

@@ -10,7 +10,6 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -65,27 +64,5 @@ public class BonusRules {
 	@PreUpdate
 	protected void onUpdate() {
 		updatedAt = LocalDateTime.now();
-	}
-
-	@Transient
-	public BigDecimal calculateMoneyValue(Integer points) {
-		if (points == null || pointValue == null) {
-			return BigDecimal.ZERO;
-		}
-		return pointValue.multiply(BigDecimal.valueOf(points));
-	}
-
-	@Transient
-	public boolean isValidForWriteOff(Integer pointsToUse) {
-		if (!isActive || pointValue == null || bonusType != BonusTransactionType.PURCHASE_WRITE_OFF) {
-			return false;
-		}
-
-		return pointsToUse != null && pointsToUse >= minPointsPerTransaction && pointsToUse <= maxPointsPerTransaction;
-	}
-
-	@Transient
-	public boolean isValidForPurchaseBonus() {
-		return isActive && moneyRatio != null && bonusType == BonusTransactionType.PURCHASE_BONUS;
 	}
 }
