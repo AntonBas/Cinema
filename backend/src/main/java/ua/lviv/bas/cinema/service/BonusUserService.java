@@ -41,6 +41,32 @@ public class BonusUserService {
 	private final BonusTransactionRepository bonusTransactionRepository;
 	private final BonusMapper bonusMapper;
 
+	public boolean hasEnoughPoints(BonusCard card, Integer points) {
+		return card != null && card.getPointsBalance() != null && points != null && card.getPointsBalance() >= points;
+	}
+
+	public BigDecimal calculateMoneyValue(BonusRules rule, Integer points) {
+		if (points == null || rule == null || rule.getPointValue() == null) {
+			return BigDecimal.ZERO;
+		}
+		return rule.getPointValue().multiply(BigDecimal.valueOf(points));
+	}
+
+	public boolean isValidForWriteOff(BonusRules rule, Integer pointsToUse) {
+		if (rule == null || !rule.getIsActive() || rule.getPointValue() == null
+				|| rule.getBonusType() != BonusTransactionType.PURCHASE_WRITE_OFF) {
+			return false;
+		}
+
+		return pointsToUse != null && pointsToUse >= rule.getMinPointsPerTransaction()
+				&& pointsToUse <= rule.getMaxPointsPerTransaction();
+	}
+
+	public boolean isValidForPurchaseBonus(BonusRules rule) {
+		return rule != null && rule.getIsActive() && rule.getMoneyRatio() != null
+				&& rule.getBonusType() == BonusTransactionType.PURCHASE_BONUS;
+	}
+
 	public BonusCardResponse getBonusCard(Long userId) {
 		log.debug("Getting bonus card for user: {}", userId);
 		BonusCard card = findBonusCardByUserId(userId);
@@ -120,13 +146,13 @@ public class BonusUserService {
 		BonusCard card = findBonusCardByUserId(userId);
 		BonusRules writeOffRule = findActiveRule(BonusTransactionType.PURCHASE_WRITE_OFF);
 
-		if (!card.hasEnoughPoints(pointsToUse)) {
+		if (!hasEnoughPoints(card, pointsToUse)) {
 			log.warn("User {} has insufficient points: available {}, required {}", userId, card.getPointsBalance(),
 					pointsToUse);
 			throw new InsufficientPointsException(card.getPointsBalance(), pointsToUse);
 		}
 
-		if (!isWithinRange(pointsToUse, writeOffRule)) {
+		if (!isValidForWriteOff(writeOffRule, pointsToUse)) {
 			log.warn("User {} attempted invalid redemption: {} points, range {}-{}", userId, pointsToUse,
 					writeOffRule.getMinPointsPerTransaction(), writeOffRule.getMaxPointsPerTransaction());
 			throw new InsufficientPointsException(card.getPointsBalance(), pointsToUse);
@@ -139,10 +165,11 @@ public class BonusUserService {
 		log.debug("Calculating earned points for purchase amount: {}", purchaseAmount);
 		BonusRules purchaseRule = findActiveRule(BonusTransactionType.PURCHASE_BONUS);
 
-		if (purchaseRule.getMoneyRatio() == null) {
-			log.warn("Purchase bonus rule has no money ratio configured");
+		if (!isValidForPurchaseBonus(purchaseRule)) {
+			log.warn("Purchase bonus rule is not valid for awarding points");
 			return 0;
 		}
+
 		Integer points = purchaseAmount.multiply(purchaseRule.getMoneyRatio()).intValue();
 		log.debug("Calculated {} points for {} UAH purchase", points, purchaseAmount);
 		return points;
@@ -210,13 +237,13 @@ public class BonusUserService {
 
 	private BonusBalanceResponse buildBalanceResponse(BonusCard card, BonusRules writeOffRule) {
 		BigDecimal pointValue = writeOffRule.getPointValue();
-		BigDecimal balanceValue = pointValue.multiply(BigDecimal.valueOf(card.getPointsBalance()));
+		BigDecimal balanceValue = calculateMoneyValue(writeOffRule, card.getPointsBalance());
 
 		return BonusBalanceResponse.builder().pointsBalance(card.getPointsBalance()).pointValue(pointValue)
 				.balanceValue(balanceValue).minUsablePoints(writeOffRule.getMinPointsPerTransaction())
 				.maxUsablePoints(writeOffRule.getMaxPointsPerTransaction())
-				.minRedemptionValue(pointValue.multiply(BigDecimal.valueOf(writeOffRule.getMinPointsPerTransaction())))
-				.maxRedemptionValue(pointValue.multiply(BigDecimal.valueOf(writeOffRule.getMaxPointsPerTransaction())))
+				.minRedemptionValue(calculateMoneyValue(writeOffRule, writeOffRule.getMinPointsPerTransaction()))
+				.maxRedemptionValue(calculateMoneyValue(writeOffRule, writeOffRule.getMaxPointsPerTransaction()))
 				.build();
 	}
 
@@ -227,9 +254,4 @@ public class BonusUserService {
 	private boolean alreadyReceivedThisYear(BonusCard card, LocalDate today) {
 		return card.getLastBirthdayBonusDate() != null && card.getLastBirthdayBonusDate().getYear() == today.getYear();
 	}
-
-	private boolean isWithinRange(Integer points, BonusRules rule) {
-		return points >= rule.getMinPointsPerTransaction() && points <= rule.getMaxPointsPerTransaction();
-	}
-
 }
