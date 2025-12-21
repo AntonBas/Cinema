@@ -198,8 +198,8 @@ public class SessionService {
 	public SessionAdminResponse toAdminResponse(Session session) {
 		SessionAdminResponse response = sessionMapper.toAdminDto(session);
 
-		response.setEndTime(session.getEndTime());
-		response.setAvailable(session.isAvailable());
+		response.setEndTime(getEndTime(session));
+		response.setAvailable(isAvailable(session));
 
 		int ticketsSold = session.getTickets() != null ? session.getTickets().size() : 0;
 		response.setTicketsSold(ticketsSold);
@@ -218,7 +218,7 @@ public class SessionService {
 	public SessionScheduleResponse toScheduleResponse(Session session) {
 		SessionScheduleResponse response = sessionMapper.toScheduleDto(session);
 
-		response.setEndTime(session.getEndTime());
+		response.setEndTime(getEndTime(session));
 
 		int hallCapacity = 0;
 		if (session.getHall() != null) {
@@ -270,5 +270,17 @@ public class SessionService {
 			throw new IllegalArgumentException("Movie '" + movie.getTitle() + "' ended showing on "
 					+ movie.getEndShowingDate() + " - cannot create session for " + sessionDate);
 		}
+	}
+
+	public LocalDateTime getEndTime(Session session) {
+		if (session == null || session.getMovie() == null || session.getMovie().getDurationMinutes() == null
+				|| session.getStartTime() == null) {
+			throw new IllegalStateException("Cannot calculate end time: missing data");
+		}
+		return session.getStartTime().plusMinutes(session.getMovie().getDurationMinutes());
+	}
+
+	public boolean isAvailable(Session session) {
+		return session != null && session.getStartTime() != null && session.getStartTime().isAfter(LocalDateTime.now());
 	}
 }
