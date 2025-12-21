@@ -1,6 +1,5 @@
 package ua.lviv.bas.cinema.domain;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
@@ -40,14 +39,8 @@ public class Promotion {
 	@Column(length = 500)
 	private String description;
 
-	@Column(name = "promo_code", unique = true, length = 50)
-	private String promoCode;
-
-	@Column(name = "discount_percentage")
-	private Integer discountPercentage;
-
-	@Column(name = "discount_amount", precision = 10, scale = 2)
-	private BigDecimal discountAmount;
+	@Column(name = "bonus_points", nullable = false)
+	private Integer bonusPoints;
 
 	@Column(name = "start_date")
 	private LocalDateTime startDate;
@@ -55,7 +48,7 @@ public class Promotion {
 	@Column(name = "end_date")
 	private LocalDateTime endDate;
 
-	@Column(name = "is_active")
+	@Column(name = "is_active", nullable = false)
 	@Builder.Default
 	private Boolean isActive = true;
 

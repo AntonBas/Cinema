@@ -15,8 +15,8 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
@@ -36,7 +36,7 @@ import ua.lviv.bas.cinema.domain.enums.PaymentStatus;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString(exclude = { "user", "tickets", "bonusTransactions", "refunds" })
+@ToString(exclude = { "booking", "bonusTransactions", "refunds" })
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Table(name = "payments")
 public class Payment {
@@ -46,27 +46,20 @@ public class Payment {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
-	@Column(nullable = false, precision = 10, scale = 2)
+	@Column(name = "amount", nullable = false, precision = 10, scale = 2)
 	private BigDecimal amount;
 
-	@Column(name = "original_amount", precision = 10, scale = 2)
-	private BigDecimal originalAmount;
-
-	@Column(name = "discount_amount", precision = 10, scale = 2)
-	private BigDecimal discountAmount;
-
-	@Column(name = "total_refunded_amount", precision = 10, scale = 2)
-	@Builder.Default
-	private BigDecimal totalRefundedAmount = BigDecimal.ZERO;
+	@Column(name = "bonus_points_used")
+	private Integer bonusPointsUsed;
 
 	@Enumerated(EnumType.STRING)
 	@Column(name = "payment_method", nullable = false, length = 20)
 	private PaymentMethod paymentMethod;
 
 	@Enumerated(EnumType.STRING)
-	@Column(name = "payment_status", nullable = false, length = 20)
+	@Column(name = "status", nullable = false, length = 20)
 	@Builder.Default
-	private PaymentStatus paymentStatus = PaymentStatus.PENDING;
+	private PaymentStatus status = PaymentStatus.PENDING;
 
 	@Column(name = "transaction_id", unique = true, length = 100)
 	private String transactionId;
@@ -80,17 +73,9 @@ public class Payment {
 	@Column(name = "updated_at")
 	private LocalDateTime updatedAt;
 
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "user_id", nullable = false)
-	private User user;
-
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "discount_id")
-	private Discount appliedDiscount;
-
-	@OneToMany(mappedBy = "payment", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-	@Builder.Default
-	private List<Ticket> tickets = new ArrayList<>();
+	@OneToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "booking_id", nullable = false)
+	private Booking booking;
 
 	@OneToMany(mappedBy = "payment", fetch = FetchType.LAZY)
 	@Builder.Default
@@ -109,17 +94,5 @@ public class Payment {
 	@PreUpdate
 	protected void onUpdate() {
 		updatedAt = LocalDateTime.now();
-	}
-
-	public boolean isFullyRefunded() {
-		if (amount == null || totalRefundedAmount == null)
-			return false;
-		return totalRefundedAmount.compareTo(amount) >= 0;
-	}
-
-	public boolean isPartiallyRefunded() {
-		if (amount == null || totalRefundedAmount == null)
-			return false;
-		return totalRefundedAmount.compareTo(BigDecimal.ZERO) > 0 && totalRefundedAmount.compareTo(amount) < 0;
 	}
 }
