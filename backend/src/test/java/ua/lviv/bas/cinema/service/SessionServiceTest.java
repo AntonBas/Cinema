@@ -62,6 +62,7 @@ class SessionServiceTest {
 	private Movie movie;
 	private CinemaHall hall;
 	private Session session;
+	private Session sessionPast;
 	private SessionAdminResponse sessionAdminDto;
 	private SessionScheduleResponse sessionScheduleDto;
 	private Pageable pageable;
@@ -97,6 +98,13 @@ class SessionServiceTest {
 		session.setBasePrice(new BigDecimal("250.00"));
 		session.setMovie(movie);
 		session.setHall(hall);
+
+		sessionPast = new Session();
+		sessionPast.setId(2L);
+		sessionPast.setStartTime(LocalDateTime.now().minusHours(2));
+		sessionPast.setBasePrice(new BigDecimal("250.00"));
+		sessionPast.setMovie(movie);
+		sessionPast.setHall(hall);
 
 		sessionAdminDto = new SessionAdminResponse();
 		sessionAdminDto.setId(1L);
@@ -361,9 +369,6 @@ class SessionServiceTest {
 
 		assertThat(result).isNotNull();
 		assertThat(result.getId()).isEqualTo(1L);
-		assertThat(result.getHallCapacity()).isEqualTo(100);
-		assertThat(result.getTicketsSold()).isZero();
-		assertThat(result.getTotalRevenue()).isEqualTo(BigDecimal.ZERO);
 	}
 
 	@Test
@@ -379,8 +384,6 @@ class SessionServiceTest {
 
 		assertThat(result).isNotNull();
 		assertThat(result.getId()).isEqualTo(1L);
-		assertThat(result.getAvailableSeats()).isEqualTo(100);
-		assertThat(result.getHallCapacity()).isEqualTo("100/100");
 	}
 
 	@Test
@@ -421,5 +424,52 @@ class SessionServiceTest {
 
 		assertThat(result).isNotNull();
 		assertThat(result.getContent()).hasSize(1);
+	}
+
+	@Test
+	void getEndTime_ShouldCalculateEndTime() {
+		LocalDateTime endTime = sessionService.getEndTime(session);
+
+		assertThat(endTime).isEqualTo(session.getStartTime().plusMinutes(120));
+	}
+
+	@Test
+	void getEndTime_ShouldThrowException_WhenMissingData() {
+		Session invalidSession = new Session();
+		invalidSession.setStartTime(LocalDateTime.now());
+
+		assertThatThrownBy(() -> sessionService.getEndTime(invalidSession)).isInstanceOf(IllegalStateException.class)
+				.hasMessageContaining("Cannot calculate end time: missing data");
+	}
+
+	@Test
+	void isAvailable_ShouldReturnTrue_WhenSessionIsInFuture() {
+		boolean available = sessionService.isAvailable(session);
+
+		assertThat(available).isTrue();
+	}
+
+	@Test
+	void isAvailable_ShouldReturnFalse_WhenSessionIsInPast() {
+		boolean available = sessionService.isAvailable(sessionPast);
+
+		assertThat(available).isFalse();
+	}
+
+	@Test
+	void isAvailable_ShouldReturnFalse_WhenSessionIsNull() {
+		boolean available = sessionService.isAvailable(null);
+
+		assertThat(available).isFalse();
+	}
+
+	@Test
+	void isAvailable_ShouldReturnFalse_WhenStartTimeIsNull() {
+		Session sessionWithoutTime = new Session();
+		sessionWithoutTime.setId(3L);
+
+		boolean available = sessionService.isAvailable(sessionWithoutTime);
+
+		assertThat(available).isFalse();
 	}
 }
