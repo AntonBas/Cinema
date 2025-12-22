@@ -1,8 +1,8 @@
 package ua.lviv.bas.cinema.service.query;
 
-import com.querydsl.core.BooleanBuilder;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.time.LocalDateTime;
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -10,13 +10,16 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+
+import com.querydsl.core.BooleanBuilder;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.QSession;
 import ua.lviv.bas.cinema.domain.Session;
 import ua.lviv.bas.cinema.dto.filter.SessionFilter;
 import ua.lviv.bas.cinema.repository.SessionRepository;
-
-import java.time.LocalDateTime;
-import java.util.List;
+import ua.lviv.bas.cinema.service.SessionService;
 
 @Slf4j
 @Service
@@ -25,6 +28,7 @@ import java.util.List;
 public class SessionQueryService {
 
 	private final SessionRepository sessionRepository;
+	private final SessionService sessionService;
 
 	public Page<Session> findFilteredSessions(SessionFilter filter) {
 		log.debug("Finding filtered sessions with filter: {}", filter);
@@ -72,7 +76,7 @@ public class SessionQueryService {
 		List<Session> allSessions = (List<Session>) sessionRepository.findAll(predicate);
 
 		return allSessions.stream().filter(session -> {
-			LocalDateTime sessionEnd = session.getEndTime();
+			LocalDateTime sessionEnd = sessionService.getEndTime(session);
 			return sessionEnd != null && sessionEnd.isAfter(startTime);
 		}).toList();
 	}
