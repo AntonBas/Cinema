@@ -25,12 +25,16 @@ import ua.lviv.bas.cinema.domain.Movie;
 import ua.lviv.bas.cinema.domain.Session;
 import ua.lviv.bas.cinema.dto.filter.SessionFilter;
 import ua.lviv.bas.cinema.repository.SessionRepository;
+import ua.lviv.bas.cinema.service.SessionService;
 
 @ExtendWith(MockitoExtension.class)
 class SessionQueryServiceTest {
 
 	@Mock
 	private SessionRepository sessionRepository;
+
+	@Mock
+	private SessionService sessionService;
 
 	@InjectMocks
 	private SessionQueryService sessionQueryService;
@@ -92,11 +96,40 @@ class SessionQueryServiceTest {
 		List<Session> allSessions = List.of(conflictingSession);
 
 		when(sessionRepository.findAll(any(Predicate.class))).thenReturn(allSessions);
+		when(sessionService.getEndTime(conflictingSession)).thenReturn(startTime.plusMinutes(120));
 
 		List<Session> result = sessionQueryService.findConflictingSessions(1L, startTime, endTime, null);
 
 		assertThat(result).hasSize(1);
 		assertThat(result.get(0).getId()).isEqualTo(2L);
+	}
+
+	@Test
+	void findConflictingSessions_ShouldReturnEmpty_WhenNoConflict() {
+		LocalDateTime startTime = LocalDateTime.of(2024, 1, 15, 18, 0);
+		LocalDateTime endTime = startTime.plusHours(2);
+
+		Session nonConflictingSession = new Session();
+		nonConflictingSession.setId(2L);
+		nonConflictingSession.setStartTime(startTime.minusHours(2));
+
+		CinemaHall hall = new CinemaHall();
+		hall.setId(1L);
+		nonConflictingSession.setHall(hall);
+
+		Movie movie = new Movie();
+		movie.setId(1L);
+		movie.setDurationMinutes(90);
+		nonConflictingSession.setMovie(movie);
+
+		List<Session> allSessions = List.of(nonConflictingSession);
+
+		when(sessionRepository.findAll(any(Predicate.class))).thenReturn(allSessions);
+		when(sessionService.getEndTime(nonConflictingSession)).thenReturn(startTime.minusMinutes(30));
+
+		List<Session> result = sessionQueryService.findConflictingSessions(1L, startTime, endTime, null);
+
+		assertThat(result).isEmpty();
 	}
 
 	@Test

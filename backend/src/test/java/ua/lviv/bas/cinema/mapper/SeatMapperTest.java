@@ -23,8 +23,7 @@ class SeatMapperTest {
 	private SeatMapper seatMapper;
 	private Seat standardSeat;
 	private Seat vipSeat;
-	private Seat disabledSeat;
-	private Seat loveSeat;
+	private Seat coupleSeat;
 
 	@BeforeEach
 	void setUp() {
@@ -36,9 +35,7 @@ class SeatMapperTest {
 
 		vipSeat = Seat.builder().id(2L).row(1).number(2).seatType(SeatType.VIP).hall(hall).build();
 
-		disabledSeat = Seat.builder().id(3L).row(2).number(1).seatType(SeatType.DISABLED).hall(hall).build();
-
-		loveSeat = Seat.builder().id(4L).row(2).number(2).seatType(SeatType.COUPLE).hall(hall).build();
+		coupleSeat = Seat.builder().id(3L).row(2).number(1).seatType(SeatType.COUPLE).hall(hall).build();
 	}
 
 	@Test
@@ -57,18 +54,10 @@ class SeatMapperTest {
 	}
 
 	@Test
-	void toDto_ShouldMapDisabledSeat() {
-		SeatResponse dto = seatMapper.toDto(disabledSeat);
+	void toDto_ShouldMapCoupleSeat() {
+		SeatResponse dto = seatMapper.toDto(coupleSeat);
 
-		assertThat(dto).extracting(SeatResponse::getId, SeatResponse::getSeatType).containsExactly(3L,
-				SeatType.DISABLED);
-	}
-
-	@Test
-	void toDto_ShouldMapLoveSeat() {
-		SeatResponse dto = seatMapper.toDto(loveSeat);
-
-		assertThat(dto).extracting(SeatResponse::getId, SeatResponse::getSeatType).containsExactly(4L, SeatType.COUPLE);
+		assertThat(dto).extracting(SeatResponse::getId, SeatResponse::getSeatType).containsExactly(3L, SeatType.COUPLE);
 	}
 
 	@ParameterizedTest
@@ -134,18 +123,18 @@ class SeatMapperTest {
 
 	@Test
 	void toDtoList_ShouldMapListOfSeats() {
-		List<Seat> seats = Arrays.asList(standardSeat, vipSeat, disabledSeat, loveSeat);
+		List<Seat> seats = Arrays.asList(standardSeat, vipSeat, coupleSeat);
 
 		List<SeatResponse> dtos = seatMapper.toDtoList(seats);
 
-		assertThat(dtos).isNotNull().hasSize(4).extracting(SeatResponse::getId).containsExactly(1L, 2L, 3L, 4L);
+		assertThat(dtos).isNotNull().hasSize(3).extracting(SeatResponse::getId).containsExactly(1L, 2L, 3L);
 	}
 
 	@Test
 	void toDtoList_ShouldMapSeatsInCorrectOrder() {
 		List<Seat> seats = Arrays.asList(Seat.builder().id(1L).row(1).number(1).seatType(SeatType.STANDARD).build(),
 				Seat.builder().id(2L).row(1).number(2).seatType(SeatType.VIP).build(),
-				Seat.builder().id(3L).row(2).number(1).seatType(SeatType.DISABLED).build());
+				Seat.builder().id(3L).row(2).number(1).seatType(SeatType.COUPLE).build());
 
 		List<SeatResponse> dtos = seatMapper.toDtoList(seats);
 
@@ -169,7 +158,7 @@ class SeatMapperTest {
 
 	@Test
 	void toDtoList_ShouldHandleListWithNullElements() {
-		List<Seat> seats = Arrays.asList(standardSeat, null, vipSeat, null, disabledSeat);
+		List<Seat> seats = Arrays.asList(standardSeat, null, vipSeat, null, coupleSeat);
 
 		List<SeatResponse> dtos = seatMapper.toDtoList(seats);
 
@@ -222,11 +211,46 @@ class SeatMapperTest {
 
 	@Test
 	void toDtoList_ShouldPreserveSeatTypeDistribution() {
-		List<Seat> seats = Arrays.asList(standardSeat, vipSeat, disabledSeat, loveSeat);
+		List<Seat> seats = Arrays.asList(standardSeat, vipSeat, coupleSeat);
 
 		List<SeatResponse> dtos = seatMapper.toDtoList(seats);
 
 		assertThat(dtos).extracting(SeatResponse::getSeatType).containsExactly(SeatType.STANDARD, SeatType.VIP,
-				SeatType.DISABLED, SeatType.COUPLE);
+				SeatType.COUPLE);
+	}
+
+	@Test
+	void seatType_ShouldHaveCorrectDisplayNames() {
+		assertThat(SeatType.STANDARD.getDisplayName()).isEqualTo("Standard");
+		assertThat(SeatType.VIP.getDisplayName()).isEqualTo("VIP");
+		assertThat(SeatType.COUPLE.getDisplayName()).isEqualTo("Couple");
+	}
+
+	@Test
+	void seatType_ShouldHaveCorrectPriceMultipliers() {
+		assertThat(SeatType.STANDARD.getPriceMultiplier()).isEqualByComparingTo("1.00");
+		assertThat(SeatType.VIP.getPriceMultiplier()).isEqualByComparingTo("1.50");
+		assertThat(SeatType.COUPLE.getPriceMultiplier()).isEqualByComparingTo("1.80");
+	}
+
+	@Test
+	void seatType_ShouldIdentifyPremiumSeats() {
+		assertThat(SeatType.STANDARD.isPremium()).isFalse();
+		assertThat(SeatType.VIP.isPremium()).isTrue();
+		assertThat(SeatType.COUPLE.isPremium()).isTrue();
+	}
+
+	@Test
+	void seatType_ShouldIdentifySpecialHandlingRequirements() {
+		assertThat(SeatType.STANDARD.requiresSpecialHandling()).isFalse();
+		assertThat(SeatType.VIP.requiresSpecialHandling()).isFalse();
+		assertThat(SeatType.COUPLE.requiresSpecialHandling()).isTrue();
+	}
+
+	@Test
+	void seatType_ShouldHaveThreeValues() {
+		SeatType[] values = SeatType.values();
+		assertThat(values).hasSize(3);
+		assertThat(values).containsExactly(SeatType.STANDARD, SeatType.VIP, SeatType.COUPLE);
 	}
 }
