@@ -61,9 +61,9 @@ public class Seat {
 	@JoinColumn(name = "hall_id", nullable = false)
 	private CinemaHall hall;
 
-	@Column(name = "is_active", nullable = false)
+	@Column(name = "active", nullable = false)
 	@Builder.Default
-	private Boolean isActive = true;
+	private Boolean active = true;
 
 	@OneToMany(mappedBy = "seat", fetch = FetchType.LAZY)
 	@Builder.Default

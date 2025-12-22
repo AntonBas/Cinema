@@ -4,6 +4,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.hibernate.annotations.CreationTimestamp;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -17,7 +19,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
-import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -64,17 +65,10 @@ public class Booking {
 	@Column(name = "expires_at", nullable = false)
 	private LocalDateTime expiresAt;
 
+	@CreationTimestamp
 	@Column(name = "created_at", updatable = false)
 	private LocalDateTime createdAt;
 
 	@OneToOne(mappedBy = "booking", fetch = FetchType.LAZY)
 	private Payment payment;
-
-	@PrePersist
-	protected void onCreate() {
-		createdAt = LocalDateTime.now();
-		if (expiresAt == null) {
-			expiresAt = createdAt.plusMinutes(15);
-		}
-	}
 }

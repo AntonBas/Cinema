@@ -56,9 +56,9 @@ public class Discount {
 	@Column(name = "expiry_date")
 	private LocalDate expiryDate;
 
-	@Column(name = "is_active", nullable = false)
+	@Column(name = "active", nullable = false)
 	@Builder.Default
-	private Boolean isActive = true;
+	private Boolean active = true;
 
 	@Column(name = "verified_at")
 	private LocalDate verifiedAt;

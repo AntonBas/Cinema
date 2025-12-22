@@ -2,12 +2,13 @@ package ua.lviv.bas.cinema.domain;
 
 import java.time.LocalDateTime;
 
+import org.hibernate.annotations.CreationTimestamp;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -48,15 +49,11 @@ public class Promotion {
 	@Column(name = "end_date")
 	private LocalDateTime endDate;
 
-	@Column(name = "is_active", nullable = false)
+	@Column(name = "active", nullable = false)
 	@Builder.Default
-	private Boolean isActive = true;
+	private Boolean active = true;
 
+	@CreationTimestamp
 	@Column(name = "created_at")
 	private LocalDateTime createdAt;
-
-	@PrePersist
-	protected void onCreate() {
-		createdAt = LocalDateTime.now();
-	}
 }

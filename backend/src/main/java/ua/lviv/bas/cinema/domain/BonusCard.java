@@ -55,7 +55,7 @@ public class BonusCard {
 	@Builder.Default
 	private Boolean welcomeBonusReceived = false;
 
-	@OneToMany(mappedBy = "bonusCard", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+	@OneToMany(mappedBy = "bonusCard", cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
 	@OrderBy("createdAt DESC")
 	@Builder.Default
 	private List<BonusTransaction> transactions = new ArrayList<>();

@@ -55,7 +55,7 @@ public class TicketType {
 	@Column(name = "description")
 	private String description;
 
-	@Column(name = "is_active")
+	@Column(name = "active")
 	@Builder.Default
-	private Boolean isActive = true;
+	private Boolean active = true;
 }
