@@ -67,12 +67,4 @@ public class EmailToken {
 
 	@Column(name = "new_email")
 	private String newEmail;
-
-	public boolean isExpired() {
-		return LocalDateTime.now().isAfter(expiresAt);
-	}
-
-	public boolean isValid() {
-		return !confirmed && !isExpired();
-	}
 }

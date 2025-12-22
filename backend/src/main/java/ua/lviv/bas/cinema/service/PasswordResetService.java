@@ -1,5 +1,7 @@
 package ua.lviv.bas.cinema.service;
 
+import java.time.LocalDateTime;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,8 +38,12 @@ public class PasswordResetService {
 		EmailToken resetToken = tokenRepository.findByToken(token)
 				.orElseThrow(() -> new InvalidTokenException("password-reset"));
 
-		if (resetToken.isExpired()) {
+		if (LocalDateTime.now().isAfter(resetToken.getExpiresAt())) {
 			throw new TokenExpiredException("password-reset");
+		}
+
+		if (resetToken.isConfirmed()) {
+			throw new InvalidTokenException("password-reset");
 		}
 
 		var user = resetToken.getUser();
@@ -49,7 +55,10 @@ public class PasswordResetService {
 		user.setPassword(passwordEncoder.encode(newPassword));
 		userRepository.save(user);
 
-		tokenRepository.delete(resetToken);
+		resetToken.setConfirmed(true);
+		resetToken.setConfirmedAt(LocalDateTime.now());
+		tokenRepository.save(resetToken);
+
 		log.info("Password updated successfully for user: {}", user.getEmail());
 	}
 }
