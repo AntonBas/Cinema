@@ -1,7 +1,7 @@
 package ua.lviv.bas.cinema.domain;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -54,14 +54,14 @@ public class Discount {
 	private String documentNumber;
 
 	@Column(name = "expiry_date")
-	private LocalDate expiryDate;
+	private LocalDateTime expiryDate;
 
 	@Column(name = "active", nullable = false)
 	@Builder.Default
 	private Boolean active = true;
 
 	@Column(name = "verified_at")
-	private LocalDate verifiedAt;
+	private LocalDateTime verifiedAt;
 
 	@Column(name = "verified_by", length = 100)
 	private String verifiedBy;

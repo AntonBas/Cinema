@@ -1,6 +1,6 @@
 package ua.lviv.bas.cinema.domain;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -49,7 +49,7 @@ public class BonusCard {
 	private Integer pointsBalance = 0;
 
 	@Column(name = "last_birthday_bonus_date")
-	private LocalDate lastBirthdayBonusDate;
+	private LocalDateTime lastBirthdayBonusDate;
 
 	@Column(name = "welcome_bonus_received", nullable = false)
 	@Builder.Default
