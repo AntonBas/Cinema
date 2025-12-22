@@ -41,6 +41,7 @@ import ua.lviv.bas.cinema.mapper.MovieMapper;
 import ua.lviv.bas.cinema.repository.GenreRepository;
 import ua.lviv.bas.cinema.repository.MovieRepository;
 import ua.lviv.bas.cinema.repository.PersonRepository;
+import ua.lviv.bas.cinema.scheduler.MovieSchedule;
 
 @ExtendWith(MockitoExtension.class)
 class MovieServiceTest {
@@ -55,6 +56,8 @@ class MovieServiceTest {
 	private MovieMapper movieMapper;
 	@Mock
 	private SlugService slugService;
+	@Mock
+	private MovieSchedule movieSchedule;
 	@InjectMocks
 	private MovieService movieService;
 
@@ -165,6 +168,7 @@ class MovieServiceTest {
 		when(slugService.generateUniqueSlug("New Movie")).thenReturn("new-movie");
 		when(movieRepository.findBySlug("new-movie")).thenReturn(Optional.empty());
 		when(movieMapper.toEntity(createRequest)).thenReturn(movie);
+		when(movieSchedule.calculateMovieStatus(movie, LocalDate.now())).thenReturn(MovieStatus.UPCOMING);
 		when(genreRepository.findAllById(List.of(1L))).thenReturn(List.of(genre));
 		when(personRepository.findAllById(List.of(1L))).thenReturn(List.of(actor));
 		when(personRepository.findAllById(List.of(2L))).thenReturn(List.of(director));
@@ -178,6 +182,7 @@ class MovieServiceTest {
 		assertEquals(1L, result.getId());
 		assertEquals("Test Movie", result.getTitle());
 		verify(movieRepository).save(movie);
+		verify(movieSchedule).calculateMovieStatus(movie, LocalDate.now());
 	}
 
 	@Test
@@ -249,10 +254,12 @@ class MovieServiceTest {
 
 	@Test
 	void getCurrentlyShowingMovies_ShouldReturnCurrentMovies() {
-		movie.setReleaseDate(LocalDate.now().minusDays(1));
-		movie.setEndShowingDate(LocalDate.now().plusDays(30));
+		LocalDate today = LocalDate.now();
+		movie.setReleaseDate(today.minusDays(1));
+		movie.setEndShowingDate(today.plusDays(30));
 
 		when(movieRepository.findAll()).thenReturn(List.of(movie));
+		when(movieSchedule.calculateMovieStatus(movie, today)).thenReturn(MovieStatus.CURRENT);
 
 		MovieCardResponse cardResponse = new MovieCardResponse();
 		cardResponse.setId(1L);
@@ -263,14 +270,17 @@ class MovieServiceTest {
 
 		assertNotNull(result);
 		assertEquals(1, result.size());
+		verify(movieSchedule).calculateMovieStatus(movie, today);
 	}
 
 	@Test
 	void getUpcomingMovies_ShouldReturnUpcomingMovies() {
-		movie.setReleaseDate(LocalDate.now().plusDays(1));
-		movie.setEndShowingDate(LocalDate.now().plusDays(30));
+		LocalDate today = LocalDate.now();
+		movie.setReleaseDate(today.plusDays(1));
+		movie.setEndShowingDate(today.plusDays(30));
 
 		when(movieRepository.findAll()).thenReturn(List.of(movie));
+		when(movieSchedule.calculateMovieStatus(movie, today)).thenReturn(MovieStatus.UPCOMING);
 
 		MovieCardResponse cardResponse = new MovieCardResponse();
 		cardResponse.setId(1L);
@@ -281,14 +291,17 @@ class MovieServiceTest {
 
 		assertNotNull(result);
 		assertEquals(1, result.size());
+		verify(movieSchedule).calculateMovieStatus(movie, today);
 	}
 
 	@Test
 	void getArchivedMovies_ShouldReturnArchivedMovies() {
-		movie.setReleaseDate(LocalDate.now().minusDays(10));
-		movie.setEndShowingDate(LocalDate.now().minusDays(1));
+		LocalDate today = LocalDate.now();
+		movie.setReleaseDate(today.minusDays(10));
+		movie.setEndShowingDate(today.minusDays(1));
 
 		when(movieRepository.findAll()).thenReturn(List.of(movie));
+		when(movieSchedule.calculateMovieStatus(movie, today)).thenReturn(MovieStatus.ARCHIVED);
 
 		MovieCardResponse cardResponse = new MovieCardResponse();
 		cardResponse.setId(1L);
@@ -299,6 +312,7 @@ class MovieServiceTest {
 
 		assertNotNull(result);
 		assertEquals(1, result.size());
+		verify(movieSchedule).calculateMovieStatus(movie, today);
 	}
 
 	@Test
@@ -322,6 +336,7 @@ class MovieServiceTest {
 		when(movieRepository.findById(1L)).thenReturn(Optional.of(movie));
 		when(slugService.generateUniqueSlug("Updated Movie")).thenReturn("updated-movie");
 		when(slugService.isSlugAvailableForMovie("updated-movie", 1L)).thenReturn(true);
+		when(movieSchedule.calculateMovieStatus(movie, LocalDate.now())).thenReturn(MovieStatus.UPCOMING);
 		when(genreRepository.findAllById(List.of(1L))).thenReturn(List.of(genre));
 		when(personRepository.findAllById(List.of(1L))).thenReturn(List.of(actor));
 		when(personRepository.findAllById(List.of(2L))).thenReturn(List.of(director));
@@ -333,6 +348,7 @@ class MovieServiceTest {
 
 		assertNotNull(result);
 		verify(movieRepository).save(movie);
+		verify(movieSchedule).calculateMovieStatus(movie, LocalDate.now());
 	}
 
 	@Test
@@ -376,21 +392,21 @@ class MovieServiceTest {
 
 	@Test
 	void searchMoviesForSessionCreation_ShouldReturnAvailableMovies() {
+		LocalDate sessionDate = LocalDate.now().plusDays(5);
 		when(movieRepository.findByTitleContainingIgnoreCase(eq("test"), any(Pageable.class)))
 				.thenReturn(new PageImpl<>(List.of(movie)));
 
-		List<MovieSessionSearchResponse> result = movieService.searchMoviesForSessionCreation("test",
-				LocalDate.now().plusDays(5));
+		List<MovieSessionSearchResponse> result = movieService.searchMoviesForSessionCreation("test", sessionDate);
 
 		assertNotNull(result);
 	}
 
 	@Test
 	void searchMoviesForSessionCreation_ShouldReturnAllMovies_WhenSearchTermEmpty() {
+		LocalDate sessionDate = LocalDate.now().plusDays(5);
 		when(movieRepository.findAll(any(Pageable.class))).thenReturn(new PageImpl<>(List.of(movie)));
 
-		List<MovieSessionSearchResponse> result = movieService.searchMoviesForSessionCreation("",
-				LocalDate.now().plusDays(5));
+		List<MovieSessionSearchResponse> result = movieService.searchMoviesForSessionCreation("", sessionDate);
 
 		assertNotNull(result);
 	}
@@ -425,15 +441,6 @@ class MovieServiceTest {
 
 		assertNotNull(result);
 		assertEquals(1, result.getContent().size());
-	}
-
-	@Test
-	void updateMovieStatuses_ShouldUpdateStatuses() {
-		when(movieRepository.findAll()).thenReturn(List.of(movie));
-
-		movieService.updateMovieStatuses();
-
-		verify(movieRepository).findAll();
 	}
 
 	@Test
