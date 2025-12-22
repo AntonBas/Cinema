@@ -20,7 +20,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -42,6 +41,7 @@ import ua.lviv.bas.cinema.mapper.MovieMapper;
 import ua.lviv.bas.cinema.repository.GenreRepository;
 import ua.lviv.bas.cinema.repository.MovieRepository;
 import ua.lviv.bas.cinema.repository.PersonRepository;
+import ua.lviv.bas.cinema.scheduler.MovieSchedule;
 
 @Slf4j
 @Service
@@ -53,6 +53,7 @@ public class MovieService {
 	private final PersonRepository personRepository;
 	private final MovieMapper movieMapper;
 	private final SlugService slugService;
+	private final MovieSchedule movieSchedule;
 
 	@Value("${app.upload.dir:uploads}")
 	private String uploadDir;
@@ -68,7 +69,7 @@ public class MovieService {
 
 		Movie movie = movieMapper.toEntity(request);
 		movie.setSlug(slug);
-		movie.setStatus(calculateStatus(movie, LocalDate.now()));
+		movie.setStatus(movieSchedule.calculateMovieStatus(movie, LocalDate.now()));
 
 		handlePosterUpload(request.getPosterFile(), movie);
 		setMovieRelations(movie, request);
@@ -98,7 +99,7 @@ public class MovieService {
 		}
 
 		handlePosterUpdate(existing, null, request.getRemovePoster());
-		existing.setStatus(calculateStatus(existing, LocalDate.now()));
+		existing.setStatus(movieSchedule.calculateMovieStatus(existing, LocalDate.now()));
 		updateMovieRelations(existing, request);
 
 		Movie updated = movieRepository.save(existing);
@@ -137,7 +138,6 @@ public class MovieService {
 
 	@Transactional(readOnly = true)
 	public List<MovieDetailResponse> getAllMovies() {
-
 		return movieRepository.findAll().stream().map(movie -> {
 			MovieDetailResponse response = movieMapper.toDetailResponse(movie);
 			enrichResponse(response, movie);
@@ -152,7 +152,6 @@ public class MovieService {
 
 	@Transactional(readOnly = true)
 	public Page<MovieDetailResponse> getMoviesPaginated(Pageable pageable) {
-
 		return movieRepository.findAll(pageable).map(movie -> {
 			MovieDetailResponse response = movieMapper.toDetailResponse(movie);
 			enrichResponse(response, movie);
@@ -163,21 +162,24 @@ public class MovieService {
 	@Transactional(readOnly = true)
 	public List<MovieCardResponse> getCurrentlyShowingMovies() {
 		LocalDate today = LocalDate.now();
-		return movieRepository.findAll().stream().filter(movie -> calculateStatus(movie, today) == MovieStatus.CURRENT)
+		return movieRepository.findAll().stream()
+				.filter(movie -> movieSchedule.calculateMovieStatus(movie, today) == MovieStatus.CURRENT)
 				.map(movieMapper::toCardResponse).toList();
 	}
 
 	@Transactional(readOnly = true)
 	public List<MovieCardResponse> getUpcomingMovies() {
 		LocalDate today = LocalDate.now();
-		return movieRepository.findAll().stream().filter(movie -> calculateStatus(movie, today) == MovieStatus.UPCOMING)
+		return movieRepository.findAll().stream()
+				.filter(movie -> movieSchedule.calculateMovieStatus(movie, today) == MovieStatus.UPCOMING)
 				.map(movieMapper::toCardResponse).toList();
 	}
 
 	@Transactional(readOnly = true)
 	public List<MovieCardResponse> getArchivedMovies() {
 		LocalDate today = LocalDate.now();
-		return movieRepository.findAll().stream().filter(movie -> calculateStatus(movie, today) == MovieStatus.ARCHIVED)
+		return movieRepository.findAll().stream()
+				.filter(movie -> movieSchedule.calculateMovieStatus(movie, today) == MovieStatus.ARCHIVED)
 				.map(movieMapper::toCardResponse).toList();
 	}
 
@@ -233,30 +235,6 @@ public class MovieService {
 		}
 	}
 
-	@Scheduled(cron = "0 0 0 * * ?")
-	@Transactional
-	public void updateMovieStatuses() {
-		LocalDate today = LocalDate.now();
-		List<Movie> allMovies = movieRepository.findAll();
-		int updatedCount = 0;
-
-		for (Movie movie : allMovies) {
-			MovieStatus currentStatus = movie.getStatus();
-			MovieStatus newStatus = calculateStatus(movie, today);
-
-			if (currentStatus != newStatus) {
-				movie.setStatus(newStatus);
-				updatedCount++;
-			}
-		}
-
-		if (updatedCount > 0) {
-			movieRepository.saveAll(allMovies);
-		}
-
-		log.info("Movie status update completed. Updated {} movies", updatedCount);
-	}
-
 	private Movie findMovieById(Long id) {
 		return movieRepository.findById(id).orElseThrow(() -> new MovieNotFoundException(id));
 	}
@@ -276,16 +254,6 @@ public class MovieService {
 	private void validateSlugUniqueness(String slug) {
 		if (movieRepository.findBySlug(slug).isPresent()) {
 			throw new DuplicateEntityException("Movie", "slug " + slug);
-		}
-	}
-
-	private MovieStatus calculateStatus(Movie movie, LocalDate referenceDate) {
-		if (referenceDate.isBefore(movie.getReleaseDate())) {
-			return MovieStatus.UPCOMING;
-		} else if (movie.getEndShowingDate() != null && referenceDate.isAfter(movie.getEndShowingDate())) {
-			return MovieStatus.ARCHIVED;
-		} else {
-			return MovieStatus.CURRENT;
 		}
 	}
 
@@ -397,7 +365,6 @@ public class MovieService {
 	}
 
 	private void enrichResponse(MovieDetailResponse response, Movie movie) {
-
 		response.setCurrentlyShowing(movie.getStatus() == MovieStatus.CURRENT);
 		response.setUpcoming(movie.getStatus() == MovieStatus.UPCOMING);
 		response.setArchived(movie.getStatus() == MovieStatus.ARCHIVED);
