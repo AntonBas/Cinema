@@ -210,7 +210,9 @@ public class SessionService {
 			response.setTotalRevenue(BigDecimal.ZERO);
 		}
 
-		response.setHallCapacity(session.getHall() != null ? session.getHall().getCapacity() : 0);
+		response.setHallCapacity(
+				session.getHall() != null && session.getHall().getSeats() != null ? session.getHall().getSeats().size()
+						: 0);
 
 		return response;
 	}
@@ -221,8 +223,8 @@ public class SessionService {
 		response.setEndTime(getEndTime(session));
 
 		int hallCapacity = 0;
-		if (session.getHall() != null) {
-			hallCapacity = session.getHall().getCapacity();
+		if (session.getHall() != null && session.getHall().getSeats() != null) {
+			hallCapacity = session.getHall().getSeats().size();
 		}
 
 		int ticketsSold = session.getTickets() != null ? session.getTickets().size() : 0;

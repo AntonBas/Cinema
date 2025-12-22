@@ -168,7 +168,8 @@ public class CinemaHallService {
 	}
 
 	private CinemaHallWithSeatsResponse buildHallWithSeatsDto(CinemaHall hall) {
-		return CinemaHallWithSeatsResponse.builder().id(hall.getId()).name(hall.getName()).capacity(hall.getCapacity())
+		return CinemaHallWithSeatsResponse.builder().id(hall.getId()).name(hall.getName())
+				.capacity(hall.getSeats() != null ? hall.getSeats().size() : 0)
 				.seats(seatMapper.toDtoList(hall.getSeats())).build();
 	}
 
@@ -183,6 +184,7 @@ public class CinemaHallService {
 		int maxSeatsPerRow = rows.stream().mapToInt(SeatRowResponse::getSeatsCount).max().orElse(0);
 
 		return HallLayoutResponse.builder().hallId(hall.getId()).hallName(hall.getName()).totalRows(totalRows)
-				.maxSeatsPerRow(maxSeatsPerRow).totalSeats(hall.getCapacity()).rows(rows).build();
+				.maxSeatsPerRow(maxSeatsPerRow).totalSeats(hall.getSeats() != null ? hall.getSeats().size() : 0)
+				.rows(rows).build();
 	}
 }

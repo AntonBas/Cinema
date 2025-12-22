@@ -3,6 +3,8 @@ package ua.lviv.bas.cinema.domain;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.hibernate.annotations.BatchSize;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -44,14 +46,12 @@ public class CinemaHall {
 	private String name;
 
 	@OneToMany(mappedBy = "hall", fetch = FetchType.LAZY)
+	@BatchSize(size = 20)
 	@Builder.Default
 	private List<Session> sessions = new ArrayList<Session>();
 
 	@OneToMany(mappedBy = "hall", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+	@BatchSize(size = 20)
 	@Builder.Default
 	private List<Seat> seats = new ArrayList<Seat>();
-
-	public int getCapacity() {
-		return (seats != null) ? seats.size() : 0;
-	}
 }
