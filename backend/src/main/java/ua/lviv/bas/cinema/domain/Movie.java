@@ -20,7 +20,6 @@ import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -126,12 +125,4 @@ public class Movie {
 	@JoinTable(name = "movie_genres", joinColumns = @JoinColumn(name = "movie_id"), inverseJoinColumns = @JoinColumn(name = "genre_id"))
 	@Builder.Default
 	private Set<Genre> genres = new HashSet<>();
-
-	@AssertTrue
-	public boolean isEndDateAfterReleaseDate() {
-		if (releaseDate == null || endShowingDate == null) {
-			return true;
-		}
-		return endShowingDate.isAfter(releaseDate);
-	}
 }
