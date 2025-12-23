@@ -54,13 +54,4 @@ public class UserRegistrationRequest {
 	@Schema(description = "Password confirmation", example = "SecurePassword123!", requiredMode = Schema.RequiredMode.REQUIRED)
 	@NotBlank(message = "Password confirmation is required")
 	private String passwordConfirm;
-
-	@AssertTrue(message = "Passwords do not match")
-	@Schema(description = "Validation: passwords must match", hidden = true)
-	public boolean isPasswordMatching() {
-		if (password == null || passwordConfirm == null) {
-			return false;
-		}
-		return password.equals(passwordConfirm);
-	}
 }

@@ -42,8 +42,6 @@ public interface UserMapper {
 	void updateUserFromDto(UserUpdateRequest dto, @MappingTarget User user);
 
 	@Mapping(target = "ticketsCount", expression = "java(user.getTickets().size())")
-	@Mapping(target = "createdAt", source = "createdAt", dateFormat = "yyyy-MM-dd")
-	@Mapping(target = "updatedAt", source = "updatedAt", dateFormat = "yyyy-MM-dd")
-	@Mapping(target = "lastActivity", source = "updatedAt", dateFormat = "yyyy-MM-dd")
+	@Mapping(target = "lastActivity", source = "updatedAt")
 	AdminUserListResponse toAdminListDto(User user);
 }

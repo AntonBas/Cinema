@@ -18,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.enums.UserRole;
 import ua.lviv.bas.cinema.domain.enums.VerificationStatus;
+import ua.lviv.bas.cinema.dto.user.request.UserPasswordUpdateRequest;
 import ua.lviv.bas.cinema.dto.user.request.UserRegistrationRequest;
 import ua.lviv.bas.cinema.dto.user.request.UserUpdateRequest;
 import ua.lviv.bas.cinema.dto.user.request.VerificationBirthDateRequest;
@@ -52,6 +53,10 @@ public class UserService {
 	@Transactional
 	public UserResponse registerUser(UserRegistrationRequest request) {
 		log.info("Registering user with email: {}", request.getEmail());
+
+		if (!request.getPassword().equals(request.getPasswordConfirm())) {
+			throw new PasswordMismatchException();
+		}
 
 		if (existsByEmail(request.getEmail())) {
 			throw new EmailAlreadyExistsException(request.getEmail());
@@ -114,26 +119,26 @@ public class UserService {
 	}
 
 	@Transactional
-	public void updateUserPassword(Long userId, String currentPassword, String newPassword, String passwordConfirm) {
+	public void updateUserPassword(Long userId, UserPasswordUpdateRequest request) {
 		User user = findById(userId);
 
-		if (!newPassword.equals(passwordConfirm)) {
+		if (!request.getNewPassword().equals(request.getPasswordConfirm())) {
 			throw new PasswordMismatchException();
 		}
 
-		if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+		if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
 			throw new InvalidCurrentPasswordException();
 		}
 
-		if (passwordEncoder.matches(newPassword, user.getPassword())) {
+		if (passwordEncoder.matches(request.getNewPassword(), user.getPassword())) {
 			throw new SamePasswordException();
 		}
 
-		if (newPassword.length() < 6) {
-			throw new IllegalArgumentException("Password must be at least 6 characters long");
+		if (request.getNewPassword().length() < 8) {
+			throw new IllegalArgumentException("Password must be at least 8 characters long");
 		}
 
-		user.setPassword(passwordEncoder.encode(newPassword));
+		user.setPassword(passwordEncoder.encode(request.getNewPassword()));
 		userRepository.save(user);
 		log.info("Password updated for user {}", userId);
 	}

@@ -1,6 +1,5 @@
 package ua.lviv.bas.cinema.dto.user.response;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -43,14 +42,14 @@ public class AdminUserListResponse {
 	private LocalDateTime verifiedAt;
 
 	@Schema(description = "Date when the account was created", example = "2024-01-10", type = "string", format = "date")
-	private LocalDate createdAt;
+	private LocalDateTime createdAt;
 
 	@Schema(description = "Date when the account was last updated", example = "2024-01-15", type = "string", format = "date")
-	private LocalDate updatedAt;
+	private LocalDateTime updatedAt;
 
 	@Schema(description = "Number of tickets purchased by the user", example = "15")
 	private int ticketsCount;
 
 	@Schema(description = "Date of user's last activity", example = "2024-01-15", type = "string", format = "date")
-	private LocalDate lastActivity;
+	private LocalDateTime lastActivity;
 }
