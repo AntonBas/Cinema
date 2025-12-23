@@ -11,12 +11,14 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -32,9 +34,11 @@ import ua.lviv.bas.cinema.domain.enums.SeatType;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString(exclude = { "hall", "tickets" })
+@ToString(exclude = { "hall", "tickets", "bookedSeats" })
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@Table(name = "seats", uniqueConstraints = { @UniqueConstraint(columnNames = { "hall_id", "seat_row", "number" }) })
+@Table(name = "seats", indexes = { @Index(name = "idx_seat_hall", columnList = "hall_id"),
+		@Index(name = "idx_seat_active", columnList = "active") }, uniqueConstraints = {
+				@UniqueConstraint(columnNames = { "hall_id", "seat_row", "number" }) })
 public class Seat {
 
 	@Id
@@ -42,10 +46,12 @@ public class Seat {
 	@EqualsAndHashCode.Include
 	private Long id;
 
+	@Positive
 	@NotNull
 	@Column(name = "seat_row", nullable = false)
 	private Integer row;
 
+	@Positive
 	@NotNull
 	@Column(nullable = false)
 	private Integer number;
@@ -63,7 +69,7 @@ public class Seat {
 
 	@Column(name = "active", nullable = false)
 	@Builder.Default
-	private Boolean active = true;
+	private boolean active = true;
 
 	@OneToMany(mappedBy = "seat", fetch = FetchType.LAZY)
 	@Builder.Default
