@@ -12,8 +12,10 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -32,7 +34,7 @@ import lombok.ToString;
 @AllArgsConstructor
 @ToString(exclude = { "sessions", "seats" })
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@Table(name = "cinema_halls")
+@Table(name = "cinema_halls", indexes = @Index(name = "idx_hall_name", columnList = "name"), uniqueConstraints = @UniqueConstraint(columnNames = "name"))
 public class CinemaHall {
 
 	@Id
@@ -48,10 +50,10 @@ public class CinemaHall {
 	@OneToMany(mappedBy = "hall", fetch = FetchType.LAZY)
 	@BatchSize(size = 20)
 	@Builder.Default
-	private List<Session> sessions = new ArrayList<Session>();
+	private List<Session> sessions = new ArrayList<>();
 
 	@OneToMany(mappedBy = "hall", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
 	@BatchSize(size = 20)
 	@Builder.Default
-	private List<Seat> seats = new ArrayList<Seat>();
+	private List<Seat> seats = new ArrayList<>();
 }
