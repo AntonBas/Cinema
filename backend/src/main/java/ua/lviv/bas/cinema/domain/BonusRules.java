@@ -72,7 +72,7 @@ public class BonusRules {
 
 	@Column(name = "is_active", nullable = false)
 	@Builder.Default
-	private boolean isActive = true;
+	private boolean active = true;
 
 	@UpdateTimestamp
 	@Column(name = "updated_at")
