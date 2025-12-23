@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.CreationTimestamp;
 
 import jakarta.persistence.CascadeType;
@@ -15,6 +16,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
@@ -37,7 +39,10 @@ import ua.lviv.bas.cinema.domain.enums.BookingStatus;
 @AllArgsConstructor
 @ToString(exclude = { "user", "session", "bookedSeats", "payment" })
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@Table(name = "bookings")
+@Table(name = "bookings", indexes = { @Index(name = "idx_booking_user", columnList = "user_id"),
+		@Index(name = "idx_booking_session", columnList = "session_id"),
+		@Index(name = "idx_booking_status", columnList = "status"),
+		@Index(name = "idx_booking_expires", columnList = "expires_at") })
 public class Booking {
 
 	@Id
@@ -53,7 +58,9 @@ public class Booking {
 	@JoinColumn(name = "session_id", nullable = false)
 	private Session session;
 
-	@OneToMany(mappedBy = "booking", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+	@OneToMany(mappedBy = "booking", cascade = { CascadeType.PERSIST, CascadeType.MERGE,
+			CascadeType.REMOVE }, fetch = FetchType.LAZY, orphanRemoval = true)
+	@BatchSize(size = 20)
 	@Builder.Default
 	private List<BookedSeat> bookedSeats = new ArrayList<>();
 
