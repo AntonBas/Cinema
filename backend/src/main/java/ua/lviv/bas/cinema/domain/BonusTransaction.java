@@ -36,6 +36,7 @@ import ua.lviv.bas.cinema.domain.enums.BonusTransactionType;
 @ToString(exclude = { "bonusCard", "payment", "refund" })
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Table(name = "bonus_transactions", indexes = { @Index(name = "idx_bonus_trans_card", columnList = "bonus_card_id"),
+		@Index(name = "idx_bonus_trans_card_created", columnList = "bonus_card_id, created_at"),
 		@Index(name = "idx_bonus_trans_created", columnList = "created_at"),
 		@Index(name = "idx_bonus_trans_type", columnList = "type"),
 		@Index(name = "idx_bonus_trans_payment", columnList = "payment_id"),

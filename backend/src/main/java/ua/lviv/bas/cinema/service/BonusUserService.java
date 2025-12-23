@@ -7,8 +7,8 @@ import java.time.LocalDateTime;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.BonusCard;
@@ -42,18 +42,18 @@ public class BonusUserService {
 	private final BonusMapper bonusMapper;
 
 	public boolean hasEnoughPoints(BonusCard card, Integer points) {
-		return card != null && card.getPointsBalance() != null && points != null && card.getPointsBalance() >= points;
+		return card != null && points != null && card.getPointsBalance() >= points;
 	}
 
 	public BigDecimal calculateMoneyValue(BonusRules rule, Integer points) {
-		if (points == null || rule == null || rule.getPointValue() == null) {
+		if (points == null || rule == null || rule.getPointValue() == null || points <= 0) {
 			return BigDecimal.ZERO;
 		}
 		return rule.getPointValue().multiply(BigDecimal.valueOf(points));
 	}
 
 	public boolean isValidForWriteOff(BonusRules rule, Integer pointsToUse) {
-		if (rule == null || !rule.getIsActive() || rule.getPointValue() == null
+		if (rule == null || !rule.isActive() || rule.getPointValue() == null
 				|| rule.getBonusType() != BonusTransactionType.PURCHASE_WRITE_OFF) {
 			return false;
 		}
@@ -63,16 +63,19 @@ public class BonusUserService {
 	}
 
 	public boolean isValidForPurchaseBonus(BonusRules rule) {
-		return rule != null && rule.getIsActive() && rule.getMoneyRatio() != null
+		return rule != null && rule.isActive() && rule.getMoneyRatio() != null
+				&& rule.getMoneyRatio().compareTo(BigDecimal.ZERO) > 0
 				&& rule.getBonusType() == BonusTransactionType.PURCHASE_BONUS;
 	}
 
+	@Transactional(readOnly = true)
 	public BonusCardResponse getBonusCard(Long userId) {
 		log.debug("Getting bonus card for user: {}", userId);
 		BonusCard card = findBonusCardByUserId(userId);
 		return bonusMapper.toBonusCardResponse(card);
 	}
 
+	@Transactional(readOnly = true)
 	public BonusBalanceResponse getBalance(Long userId) {
 		log.debug("Getting balance for user: {}", userId);
 		BonusCard card = findBonusCardByUserId(userId);
@@ -80,6 +83,7 @@ public class BonusUserService {
 		return buildBalanceResponse(card, writeOffRule);
 	}
 
+	@Transactional(readOnly = true)
 	public PageResponse<BonusTransactionResponse> getUserTransactions(Long userId, Pageable pageable) {
 		int pageNumber = pageable.getPageNumber();
 		int pageSize = pageable.getPageSize();
@@ -94,7 +98,7 @@ public class BonusUserService {
 		log.debug("Processing welcome bonus for user: {}", user.getId());
 		BonusCard card = findOrCreateBonusCard(user);
 
-		if (card.getWelcomeBonusReceived()) {
+		if (card.isWelcomeBonusReceived()) {
 			log.debug("User {} already received welcome bonus", user.getId());
 			return;
 		}
@@ -141,6 +145,7 @@ public class BonusUserService {
 		log.info("Awarded birthday bonus ({} points) to user {}", rule.getPoints(), user.getId());
 	}
 
+	@Transactional(readOnly = true)
 	public void validatePointsRedemption(Long userId, Integer pointsToUse) {
 		log.debug("Validating {} points redemption for user: {}", pointsToUse, userId);
 		BonusCard card = findBonusCardByUserId(userId);
@@ -161,8 +166,13 @@ public class BonusUserService {
 		log.debug("Points redemption validation passed for user: {}", userId);
 	}
 
+	@Transactional(readOnly = true)
 	public Integer calculateEarnedPoints(BigDecimal purchaseAmount) {
 		log.debug("Calculating earned points for purchase amount: {}", purchaseAmount);
+		if (purchaseAmount == null || purchaseAmount.compareTo(BigDecimal.ZERO) <= 0) {
+			return 0;
+		}
+
 		BonusRules purchaseRule = findActiveRule(BonusTransactionType.PURCHASE_BONUS);
 
 		if (!isValidForPurchaseBonus(purchaseRule)) {
@@ -197,6 +207,7 @@ public class BonusUserService {
 		return writeOff;
 	}
 
+	@Transactional(readOnly = true)
 	private BonusCard findBonusCardByUserId(Long userId) {
 		return bonusCardRepository.findByUserId(userId).orElseThrow(() -> {
 			log.error("Bonus card not found for user: {}", userId);
@@ -204,6 +215,7 @@ public class BonusUserService {
 		});
 	}
 
+	@Transactional
 	private BonusCard findOrCreateBonusCard(User user) {
 		return bonusCardRepository.findByUserId(user.getId()).orElseGet(() -> {
 			log.debug("Creating new bonus card for user: {}", user.getId());
@@ -212,6 +224,7 @@ public class BonusUserService {
 		});
 	}
 
+	@Transactional(readOnly = true)
 	private BonusRules findActiveRule(BonusTransactionType type) {
 		return bonusRulesRepository.findByBonusTypeAndIsActiveTrue(type).orElseThrow(() -> {
 			log.error("Active bonus rule not found for type: {}", type);

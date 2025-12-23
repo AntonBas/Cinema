@@ -16,6 +16,9 @@ import lombok.NoArgsConstructor;
 @Schema(description = "Bonus rules configuration (admin only)")
 public class BonusRulesResponse {
 
+	@Schema(description = "Rule ID", example = "1")
+	private Long id;
+
 	@Schema(description = "Bonus type", example = "PURCHASE_WRITE_OFF", allowableValues = { "WELCOME_BONUS",
 			"BIRTHDAY_BONUS", "PURCHASE_BONUS", "PURCHASE_WRITE_OFF" })
 	private String bonusType;
@@ -36,7 +39,7 @@ public class BonusRulesResponse {
 	private Integer maxPointsPerTransaction;
 
 	@Schema(description = "Whether this bonus rule is active", example = "true")
-	private Boolean isActive;
+	private Boolean active;
 
 	@Schema(description = "Last update timestamp", example = "2024-01-15T10:30:00")
 	private LocalDateTime updatedAt;

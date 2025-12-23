@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import ua.lviv.bas.cinema.domain.BonusRules;
 import ua.lviv.bas.cinema.domain.enums.BonusTransactionType;
 
-public interface BonusRulesRepository extends JpaRepository<BonusRules, BonusTransactionType> {
+public interface BonusRulesRepository extends JpaRepository<BonusRules, Long> {
 
 	Optional<BonusRules> findByBonusType(BonusTransactionType bonusType);
 

@@ -38,5 +38,5 @@ public class BonusRulesRequest {
 	private Integer maxPointsPerTransaction;
 
 	@Schema(description = "Whether this bonus rule is active", example = "true", nullable = true)
-	private Boolean isActive;
+	private boolean active;
 }
