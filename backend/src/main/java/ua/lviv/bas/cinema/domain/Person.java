@@ -7,8 +7,10 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -26,11 +28,11 @@ import ua.lviv.bas.cinema.domain.enums.PersonRole;
 @AllArgsConstructor
 @ToString
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@Table(name = "persons")
+@Table(name = "persons", indexes = { @Index(name = "idx_person_name", columnList = "name"),
+		@Index(name = "idx_person_role", columnList = "role") })
 public class Person {
 
 	@Id
-	@EqualsAndHashCode.Include
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
@@ -38,6 +40,7 @@ public class Person {
 	@Column(nullable = false, length = 50)
 	private String name;
 
+	@NotNull
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false)
 	private PersonRole role;
