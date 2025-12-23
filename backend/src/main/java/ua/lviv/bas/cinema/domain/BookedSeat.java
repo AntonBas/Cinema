@@ -5,11 +5,11 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -26,11 +26,13 @@ import lombok.ToString;
 @AllArgsConstructor
 @ToString(exclude = { "booking", "session", "seat", "ticketType", "ticket" })
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@Table(name = "booked_seats", uniqueConstraints = @UniqueConstraint(columnNames = { "session_id", "seat_id" }))
+@Table(name = "booked_seats", indexes = { @Index(name = "idx_booked_seat_booking", columnList = "booking_id"),
+		@Index(name = "idx_booked_seat_session", columnList = "session_id"),
+		@Index(name = "idx_booked_seat_seat", columnList = "seat_id"),
+		@Index(name = "idx_booked_seat_session_seat", columnList = "session_id, seat_id") })
 public class BookedSeat {
 
 	@Id
-	@EqualsAndHashCode.Include
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
@@ -52,5 +54,4 @@ public class BookedSeat {
 
 	@OneToOne(mappedBy = "bookedSeat", fetch = FetchType.LAZY)
 	private Ticket ticket;
-
 }
