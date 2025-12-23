@@ -33,6 +33,7 @@ import lombok.ToString;
 public class BookedSeat {
 
 	@Id
+	@EqualsAndHashCode.Include
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 

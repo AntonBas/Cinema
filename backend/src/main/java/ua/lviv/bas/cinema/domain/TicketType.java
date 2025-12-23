@@ -35,6 +35,7 @@ import lombok.ToString;
 public class TicketType {
 
 	@Id
+	@EqualsAndHashCode.Include
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 

@@ -46,6 +46,7 @@ import ua.lviv.bas.cinema.domain.enums.RefundStatus;
 public class Refund {
 
 	@Id
+	@EqualsAndHashCode.Include
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 

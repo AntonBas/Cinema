@@ -33,6 +33,7 @@ import ua.lviv.bas.cinema.domain.enums.PersonRole;
 public class Person {
 
 	@Id
+	@EqualsAndHashCode.Include
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 

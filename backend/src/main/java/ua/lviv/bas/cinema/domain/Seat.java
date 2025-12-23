@@ -42,8 +42,8 @@ import ua.lviv.bas.cinema.domain.enums.SeatType;
 public class Seat {
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@EqualsAndHashCode.Include
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
 	@Positive

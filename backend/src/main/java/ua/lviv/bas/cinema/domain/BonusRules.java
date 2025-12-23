@@ -39,6 +39,7 @@ import ua.lviv.bas.cinema.domain.enums.BonusTransactionType;
 public class BonusRules {
 
 	@Id
+	@EqualsAndHashCode.Include
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 

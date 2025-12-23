@@ -37,6 +37,7 @@ import lombok.ToString;
 public class Promotion {
 
 	@Id
+	@EqualsAndHashCode.Include
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 

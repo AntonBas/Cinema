@@ -43,6 +43,7 @@ import ua.lviv.bas.cinema.domain.enums.TicketStatus;
 public class Ticket {
 
 	@Id
+	@EqualsAndHashCode.Include
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
