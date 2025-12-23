@@ -105,12 +105,12 @@ public class UserController {
 			@ApiResponse(responseCode = "404", description = "User not found") })
 	public ResponseEntity<Map<String, String>> updatePassword(
 			@Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
-
 			@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Password update request", required = true, content = @Content(schema = @Schema(implementation = UserPasswordUpdateRequest.class))) @Valid @RequestBody UserPasswordUpdateRequest request) {
 
 		log.info("PATCH /api/users/password - Updating password for user ID: {}", userDetails.getUserId());
-		userService.updateUserPassword(userDetails.getUserId(), request.getCurrentPassword(), request.getNewPassword(),
-				request.getPasswordConfirm());
+
+		userService.updateUserPassword(userDetails.getUserId(), request);
+
 		return ResponseEntity.ok(Map.of("message", "Password updated successfully"));
 	}
 }
