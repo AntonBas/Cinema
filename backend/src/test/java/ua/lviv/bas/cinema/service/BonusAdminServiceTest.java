@@ -51,9 +51,8 @@ class BonusAdminServiceTest {
 
 	@Test
 	void getAllBonusRules_ShouldReturnAllRules() {
-		BonusRules rule1 = BonusRules.builder().bonusType(BonusTransactionType.WELCOME_BONUS).points(100).build();
-
-		BonusRules rule2 = BonusRules.builder().bonusType(BonusTransactionType.BIRTHDAY_BONUS).points(200).build();
+		BonusRules rule1 = createBonusRules(1L, BonusTransactionType.WELCOME_BONUS, 100);
+		BonusRules rule2 = createBonusRules(2L, BonusTransactionType.BIRTHDAY_BONUS, 200);
 
 		when(bonusRulesRepository.findAll()).thenReturn(List.of(rule1, rule2));
 		when(bonusMapper.toBonusRulesResponse(rule1)).thenReturn(new BonusRulesResponse());
@@ -79,16 +78,16 @@ class BonusAdminServiceTest {
 	@Test
 	void getBonusRule_ShouldReturnRule() {
 		BonusTransactionType type = BonusTransactionType.WELCOME_BONUS;
-		BonusRules rule = BonusRules.builder().bonusType(type).points(100).build();
+		BonusRules rule = createBonusRules(1L, type, 100);
 		BonusRulesResponse expectedResponse = new BonusRulesResponse();
 
-		when(bonusRulesRepository.findById(type)).thenReturn(Optional.of(rule));
+		when(bonusRulesRepository.findByBonusType(type)).thenReturn(Optional.of(rule));
 		when(bonusMapper.toBonusRulesResponse(rule)).thenReturn(expectedResponse);
 
 		BonusRulesResponse result = bonusAdminService.getBonusRule(type);
 
 		assertThat(result).isSameAs(expectedResponse);
-		verify(bonusRulesRepository).findById(type);
+		verify(bonusRulesRepository).findByBonusType(type);
 		verify(bonusMapper).toBonusRulesResponse(rule);
 	}
 
@@ -96,38 +95,34 @@ class BonusAdminServiceTest {
 	void getBonusRule_ShouldThrowWhenNotFound() {
 		BonusTransactionType type = BonusTransactionType.WELCOME_BONUS;
 
-		when(bonusRulesRepository.findById(type)).thenReturn(Optional.empty());
+		when(bonusRulesRepository.findByBonusType(type)).thenReturn(Optional.empty());
 
 		assertThatThrownBy(() -> bonusAdminService.getBonusRule(type)).isInstanceOf(BonusRuleNotFoundException.class);
 
-		verify(bonusRulesRepository).findById(type);
+		verify(bonusRulesRepository).findByBonusType(type);
 	}
 
 	@Test
 	void updateBonusRule_ShouldUpdateAndReturnUpdated() {
 		BonusTransactionType type = BonusTransactionType.PURCHASE_BONUS;
-		BonusRules existing = BonusRules.builder().bonusType(type).moneyRatio(new BigDecimal("0.05")).build();
+		BonusRules existing = createBonusRules(1L, type, null);
+		existing.setMoneyRatio(new BigDecimal("0.05"));
 
-		BonusRulesRequest request = new BonusRulesRequest();
-		request.setMoneyRatio(new BigDecimal("0.1"));
-		request.setIsActive(false);
-
-		BonusRules updated = BonusRules.builder().bonusType(type).moneyRatio(new BigDecimal("0.1")).isActive(false)
-				.build();
+		BonusRulesRequest request = BonusRulesRequest.builder().moneyRatio(new BigDecimal("0.1")).active(false).build();
 
 		BonusRulesResponse expectedResponse = new BonusRulesResponse();
 
-		when(bonusRulesRepository.findById(type)).thenReturn(Optional.of(existing));
-		when(bonusRulesRepository.save(existing)).thenReturn(updated);
-		when(bonusMapper.toBonusRulesResponse(updated)).thenReturn(expectedResponse);
+		when(bonusRulesRepository.findByBonusType(type)).thenReturn(Optional.of(existing));
+		when(bonusRulesRepository.save(existing)).thenReturn(existing);
+		when(bonusMapper.toBonusRulesResponse(existing)).thenReturn(expectedResponse);
 
 		BonusRulesResponse result = bonusAdminService.updateBonusRule(type, request);
 
 		assertThat(result).isSameAs(expectedResponse);
-		verify(bonusRulesRepository).findById(type);
+		verify(bonusRulesRepository).findByBonusType(type);
 		verify(bonusMapper).updateBonusRulesFromRequest(request, existing);
 		verify(bonusRulesRepository).save(existing);
-		verify(bonusMapper).toBonusRulesResponse(updated);
+		verify(bonusMapper).toBonusRulesResponse(existing);
 	}
 
 	@Test
@@ -135,12 +130,12 @@ class BonusAdminServiceTest {
 		BonusTransactionType type = BonusTransactionType.PURCHASE_BONUS;
 		BonusRulesRequest request = new BonusRulesRequest();
 
-		when(bonusRulesRepository.findById(type)).thenReturn(Optional.empty());
+		when(bonusRulesRepository.findByBonusType(type)).thenReturn(Optional.empty());
 
 		assertThatThrownBy(() -> bonusAdminService.updateBonusRule(type, request))
 				.isInstanceOf(BonusRuleNotFoundException.class);
 
-		verify(bonusRulesRepository).findById(type);
+		verify(bonusRulesRepository).findByBonusType(type);
 		verify(bonusMapper, never()).updateBonusRulesFromRequest(any(), any());
 		verify(bonusRulesRepository, never()).save(any());
 	}
@@ -209,5 +204,62 @@ class BonusAdminServiceTest {
 		assertThat(result.getTotalElements()).isEqualTo(2);
 		verify(bonusTransactionRepository).findAll(pageable);
 		verify(bonusMapper, times(2)).toBonusTransactionResponse(any());
+	}
+
+	@Test
+	void createBonusRule_ShouldCreateAndReturnRule() {
+		BonusTransactionType type = BonusTransactionType.WELCOME_BONUS;
+		BonusRulesRequest request = BonusRulesRequest.builder().points(100).active(true).build();
+
+		BonusRules rules = new BonusRules();
+		rules.setBonusType(type);
+		rules.setPoints(100);
+		rules.setActive(true);
+
+		BonusRules savedRules = new BonusRules();
+		savedRules.setId(1L);
+		savedRules.setBonusType(type);
+		savedRules.setPoints(100);
+		savedRules.setActive(true);
+
+		BonusRulesResponse expectedResponse = new BonusRulesResponse();
+
+		when(bonusRulesRepository.findByBonusType(type)).thenReturn(Optional.empty());
+		when(bonusMapper.toBonusRules(request, type)).thenReturn(rules);
+		when(bonusRulesRepository.save(rules)).thenReturn(savedRules);
+		when(bonusMapper.toBonusRulesResponse(savedRules)).thenReturn(expectedResponse);
+
+		BonusRulesResponse result = bonusAdminService.createBonusRule(type, request);
+
+		assertThat(result).isSameAs(expectedResponse);
+		verify(bonusRulesRepository).findByBonusType(type);
+		verify(bonusMapper).toBonusRules(request, type);
+		verify(bonusRulesRepository).save(rules);
+		verify(bonusMapper).toBonusRulesResponse(savedRules);
+	}
+
+	@Test
+	void createBonusRule_ShouldThrowWhenAlreadyExists() {
+		BonusTransactionType type = BonusTransactionType.WELCOME_BONUS;
+		BonusRulesRequest request = new BonusRulesRequest();
+		BonusRules existing = new BonusRules();
+
+		when(bonusRulesRepository.findByBonusType(type)).thenReturn(Optional.of(existing));
+
+		assertThatThrownBy(() -> bonusAdminService.createBonusRule(type, request))
+				.isInstanceOf(IllegalArgumentException.class).hasMessage("Bonus rule already exists for type: " + type);
+
+		verify(bonusRulesRepository).findByBonusType(type);
+		verify(bonusMapper, never()).toBonusRules(any(), any());
+		verify(bonusRulesRepository, never()).save(any());
+	}
+
+	private BonusRules createBonusRules(Long id, BonusTransactionType type, Integer points) {
+		BonusRules rules = new BonusRules();
+		rules.setId(id);
+		rules.setBonusType(type);
+		rules.setPoints(points);
+		rules.setActive(true);
+		return rules;
 	}
 }
