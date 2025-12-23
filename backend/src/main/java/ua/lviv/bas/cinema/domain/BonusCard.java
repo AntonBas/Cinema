@@ -1,16 +1,16 @@
 package ua.lviv.bas.cinema.domain;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
@@ -32,11 +32,10 @@ import lombok.ToString;
 @AllArgsConstructor
 @ToString(exclude = { "user", "transactions" })
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@Table(name = "bonus_cards")
+@Table(name = "bonus_cards", indexes = @Index(name = "idx_bonus_card_user", columnList = "user_id"))
 public class BonusCard {
 
 	@Id
-	@EqualsAndHashCode.Include
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
@@ -46,16 +45,16 @@ public class BonusCard {
 
 	@Column(name = "points_balance", nullable = false)
 	@Builder.Default
-	private Integer pointsBalance = 0;
+	private int pointsBalance = 0;
 
 	@Column(name = "last_birthday_bonus_date")
-	private LocalDateTime lastBirthdayBonusDate;
+	private LocalDate lastBirthdayBonusDate;
 
 	@Column(name = "welcome_bonus_received", nullable = false)
 	@Builder.Default
-	private Boolean welcomeBonusReceived = false;
+	private boolean welcomeBonusReceived = false;
 
-	@OneToMany(mappedBy = "bonusCard", cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
+	@OneToMany(mappedBy = "bonusCard", fetch = FetchType.LAZY)
 	@OrderBy("createdAt DESC")
 	@Builder.Default
 	private List<BonusTransaction> transactions = new ArrayList<>();
