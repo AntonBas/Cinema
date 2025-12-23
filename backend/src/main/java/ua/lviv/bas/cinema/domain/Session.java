@@ -11,6 +11,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
@@ -34,7 +35,10 @@ import lombok.ToString;
 @AllArgsConstructor
 @ToString(exclude = { "movie", "hall", "tickets", "bookings", "bookedSeats" })
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@Table(name = "sessions")
+@Table(name = "sessions", indexes = { @Index(name = "idx_session_movie", columnList = "movie_id"),
+		@Index(name = "idx_session_hall", columnList = "hall_id"),
+		@Index(name = "idx_session_time", columnList = "start_time"),
+		@Index(name = "idx_session_hall_time", columnList = "hall_id, start_time") })
 public class Session {
 
 	@Id
