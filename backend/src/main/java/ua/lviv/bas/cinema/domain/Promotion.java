@@ -9,7 +9,12 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -26,20 +31,26 @@ import lombok.ToString;
 @AllArgsConstructor
 @ToString
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@Table(name = "promotions")
+@Table(name = "promotions", indexes = { @Index(name = "idx_promotion_active", columnList = "active"),
+		@Index(name = "idx_promotion_dates", columnList = "start_date, end_date"),
+		@Index(name = "idx_promotion_created", columnList = "created_at") })
 public class Promotion {
 
 	@Id
-	@EqualsAndHashCode.Include
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
+	@NotBlank
+	@Size(max = 100)
 	@Column(nullable = false, length = 100)
 	private String title;
 
+	@Size(max = 500)
 	@Column(length = 500)
 	private String description;
 
+	@NotNull
+	@Positive
 	@Column(name = "bonus_points", nullable = false)
 	private Integer bonusPoints;
 
@@ -51,7 +62,7 @@ public class Promotion {
 
 	@Column(name = "active", nullable = false)
 	@Builder.Default
-	private Boolean active = true;
+	private boolean active = true;
 
 	@CreationTimestamp
 	@Column(name = "created_at")
