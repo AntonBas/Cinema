@@ -8,7 +8,6 @@ import java.util.List;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -42,7 +41,8 @@ import ua.lviv.bas.cinema.domain.enums.VerificationStatus;
 @ToString(exclude = { "tickets", "password" })
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Table(name = "users", indexes = { @Index(name = "idx_user_email", columnList = "email"),
-		@Index(name = "idx_user_name", columnList = "firstName,lastName") })
+		@Index(name = "idx_user_name", columnList = "first_name,last_name"),
+		@Index(name = "idx_user_status", columnList = "verification_status") })
 public class User {
 
 	@Id
@@ -50,6 +50,7 @@ public class User {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
+	@NotBlank
 	@Email
 	@Column(nullable = false, unique = true, length = 100)
 	private String email;
@@ -74,12 +75,15 @@ public class User {
 	@Column(name = "verified_at")
 	private LocalDateTime verifiedAt;
 
+	@NotBlank
 	@Column(nullable = false, length = 50)
 	private String city;
 
+	@NotBlank
 	@Column(nullable = false, name = "phone_number", length = 20)
 	private String phoneNumber;
 
+	@NotBlank
 	@Column(nullable = false, length = 60)
 	private String password;
 
@@ -91,7 +95,7 @@ public class User {
 	@Column(name = "updated_at")
 	private LocalDateTime updatedAt;
 
-	@OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+	@OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
 	@Builder.Default
 	private List<Ticket> tickets = new ArrayList<>();
 
