@@ -11,9 +11,12 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -31,11 +34,13 @@ import ua.lviv.bas.cinema.domain.enums.DiscountType;
 @AllArgsConstructor
 @ToString(exclude = { "user" })
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@Table(name = "discounts")
+@Table(name = "discounts", indexes = { @Index(name = "idx_discount_user", columnList = "user_id"),
+		@Index(name = "idx_discount_active", columnList = "active"),
+		@Index(name = "idx_discount_expiry", columnList = "expiry_date"),
+		@Index(name = "idx_discount_type", columnList = "type") })
 public class Discount {
 
 	@Id
-	@EqualsAndHashCode.Include
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
@@ -43,13 +48,18 @@ public class Discount {
 	@JoinColumn(name = "user_id", nullable = false)
 	private User user;
 
+	@NotNull
 	@Enumerated(EnumType.STRING)
 	@Column(name = "type", nullable = false, length = 30)
 	private DiscountType type;
 
+	@NotNull
+	@jakarta.validation.constraints.DecimalMin(value = "0.01", inclusive = true)
+	@jakarta.validation.constraints.DecimalMax(value = "100.00", inclusive = true)
 	@Column(name = "percent", precision = 5, scale = 2, nullable = false)
 	private BigDecimal percent;
 
+	@Size(max = 50)
 	@Column(name = "document_number", length = 50)
 	private String documentNumber;
 
@@ -58,11 +68,12 @@ public class Discount {
 
 	@Column(name = "active", nullable = false)
 	@Builder.Default
-	private Boolean active = true;
+	private boolean active = true;
 
 	@Column(name = "verified_at")
 	private LocalDateTime verifiedAt;
 
+	@Size(max = 100)
 	@Column(name = "verified_by", length = 100)
 	private String verifiedBy;
 }
