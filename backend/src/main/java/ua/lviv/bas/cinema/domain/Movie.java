@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.validator.constraints.URL;
 
 import jakarta.persistence.CascadeType;
@@ -103,26 +104,31 @@ public class Movie {
 	private AgeRating ageRating;
 
 	@OneToMany(mappedBy = "movie", cascade = { CascadeType.PERSIST, CascadeType.MERGE })
+	@BatchSize(size = 20)
 	@Builder.Default
 	private Set<Session> sessions = new HashSet<>();
 
 	@ManyToMany
 	@JoinTable(name = "movie_cast", joinColumns = @JoinColumn(name = "movie_id"), inverseJoinColumns = @JoinColumn(name = "person_id"))
+	@BatchSize(size = 20)
 	@Builder.Default
 	private Set<Person> actors = new HashSet<>();
 
 	@ManyToMany
 	@JoinTable(name = "movie_directors", joinColumns = @JoinColumn(name = "movie_id"), inverseJoinColumns = @JoinColumn(name = "person_id"))
+	@BatchSize(size = 20)
 	@Builder.Default
 	private Set<Person> directors = new HashSet<>();
 
 	@ManyToMany
 	@JoinTable(name = "movie_screenwriters", joinColumns = @JoinColumn(name = "movie_id"), inverseJoinColumns = @JoinColumn(name = "person_id"))
+	@BatchSize(size = 20)
 	@Builder.Default
 	private Set<Person> screenwriters = new HashSet<>();
 
 	@ManyToMany
 	@JoinTable(name = "movie_genres", joinColumns = @JoinColumn(name = "movie_id"), inverseJoinColumns = @JoinColumn(name = "genre_id"))
+	@BatchSize(size = 20)
 	@Builder.Default
 	private Set<Genre> genres = new HashSet<>();
 }
