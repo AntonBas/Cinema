@@ -1,5 +1,6 @@
 package ua.lviv.bas.cinema.domain;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -24,12 +25,11 @@ import lombok.ToString;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString(exclude = { "booking", "session", "seat", "ticketType", "ticket" })
+@ToString(exclude = { "booking", "ticket" })
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Table(name = "booked_seats", indexes = { @Index(name = "idx_booked_seat_booking", columnList = "booking_id"),
-		@Index(name = "idx_booked_seat_session", columnList = "session_id"),
-		@Index(name = "idx_booked_seat_seat", columnList = "seat_id"),
-		@Index(name = "idx_booked_seat_session_seat", columnList = "session_id, seat_id") })
+		@Index(name = "idx_booked_seat_seat_session", columnList = "seat_id, session_id"),
+		@Index(name = "idx_booked_seat_status", columnList = "status") })
 public class BookedSeat {
 
 	@Id
@@ -41,10 +41,6 @@ public class BookedSeat {
 	private Booking booking;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "session_id", nullable = false)
-	private Session session;
-
-	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "seat_id", nullable = false)
 	private Seat seat;
 
@@ -52,6 +48,7 @@ public class BookedSeat {
 	@JoinColumn(name = "ticket_type_id", nullable = false)
 	private TicketType ticketType;
 
-	@OneToOne(mappedBy = "bookedSeat", fetch = FetchType.LAZY)
+	@OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+	@JoinColumn(name = "ticket_id")
 	private Ticket ticket;
 }
