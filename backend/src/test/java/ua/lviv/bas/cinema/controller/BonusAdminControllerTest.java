@@ -39,10 +39,10 @@ class BonusAdminControllerTest {
 	@Test
 	void getAllBonusRules_ShouldReturnRulesList() {
 		BonusRulesResponse rule1 = BonusRulesResponse.builder().bonusType("WELCOME_BONUS").points(100)
-				.moneyRatio(BigDecimal.valueOf(0.1)).isActive(true).build();
+				.moneyRatio(BigDecimal.valueOf(0.1)).active(true).build();
 
 		BonusRulesResponse rule2 = BonusRulesResponse.builder().bonusType("BIRTHDAY_BONUS").points(200)
-				.moneyRatio(BigDecimal.valueOf(0.2)).isActive(true).build();
+				.moneyRatio(BigDecimal.valueOf(0.2)).active(true).build();
 
 		when(bonusAdminService.getAllBonusRules()).thenReturn(List.of(rule1, rule2));
 
@@ -69,7 +69,7 @@ class BonusAdminControllerTest {
 	@Test
 	void getBonusRule_ShouldReturnRule() {
 		BonusRulesResponse expectedResponse = BonusRulesResponse.builder().bonusType("WELCOME_BONUS").points(100)
-				.moneyRatio(BigDecimal.valueOf(0.1)).isActive(true).build();
+				.moneyRatio(BigDecimal.valueOf(0.1)).active(true).build();
 
 		when(bonusAdminService.getBonusRule(BonusTransactionType.WELCOME_BONUS)).thenReturn(expectedResponse);
 
@@ -79,7 +79,7 @@ class BonusAdminControllerTest {
 		assertEquals("WELCOME_BONUS", result.getBonusType());
 		assertEquals(100, result.getPoints());
 		assertEquals(BigDecimal.valueOf(0.1), result.getMoneyRatio());
-		assertEquals(true, result.getIsActive());
+		assertEquals(true, result.getActive());
 		verify(bonusAdminService).getBonusRule(BonusTransactionType.WELCOME_BONUS);
 	}
 
@@ -100,10 +100,10 @@ class BonusAdminControllerTest {
 	@Test
 	void updateBonusRule_ShouldUpdateAndReturnUpdated() {
 		BonusRulesRequest request = BonusRulesRequest.builder().points(150).moneyRatio(BigDecimal.valueOf(0.15))
-				.isActive(true).build();
+				.active(true).build();
 
 		BonusRulesResponse expectedResponse = BonusRulesResponse.builder().bonusType("WELCOME_BONUS").points(150)
-				.moneyRatio(BigDecimal.valueOf(0.15)).isActive(true).build();
+				.moneyRatio(BigDecimal.valueOf(0.15)).active(true).build();
 
 		when(bonusAdminService.updateBonusRule(eq(BonusTransactionType.WELCOME_BONUS), any(BonusRulesRequest.class)))
 				.thenReturn(expectedResponse);
@@ -114,7 +114,7 @@ class BonusAdminControllerTest {
 		assertEquals("WELCOME_BONUS", result.getBonusType());
 		assertEquals(150, result.getPoints());
 		assertEquals(BigDecimal.valueOf(0.15), result.getMoneyRatio());
-		assertEquals(true, result.getIsActive());
+		assertEquals(true, result.getActive());
 		verify(bonusAdminService).updateBonusRule(eq(BonusTransactionType.WELCOME_BONUS), any(BonusRulesRequest.class));
 	}
 
