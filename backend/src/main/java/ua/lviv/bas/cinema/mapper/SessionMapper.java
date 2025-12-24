@@ -1,10 +1,14 @@
 package ua.lviv.bas.cinema.mapper;
 
+import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
+import org.mapstruct.NullValuePropertyMappingStrategy;
 
 import ua.lviv.bas.cinema.domain.Session;
-import ua.lviv.bas.cinema.dto.session.request.SessionRequest;
+import ua.lviv.bas.cinema.dto.session.request.SessionCreateRequest;
+import ua.lviv.bas.cinema.dto.session.request.SessionUpdateRequest;
 import ua.lviv.bas.cinema.dto.session.response.SessionAdminResponse;
 import ua.lviv.bas.cinema.dto.session.response.SessionScheduleResponse;
 
@@ -16,9 +20,9 @@ public interface SessionMapper {
 	@Mapping(target = "movieDuration", source = "movie.durationMinutes")
 	@Mapping(target = "hallId", source = "hall.id")
 	@Mapping(target = "hallName", source = "hall.name")
-	@Mapping(target = "hallCapacity", source = "hall.capacity")
+	@Mapping(target = "status", source = "status")
 	@Mapping(target = "endTime", ignore = true)
-	@Mapping(target = "available", ignore = true)
+	@Mapping(target = "hallCapacity", ignore = true)
 	@Mapping(target = "ticketsSold", ignore = true)
 	@Mapping(target = "totalRevenue", ignore = true)
 	SessionAdminResponse toAdminDto(Session session);
@@ -30,6 +34,7 @@ public interface SessionMapper {
 	@Mapping(target = "movieDuration", source = "movie.durationMinutes")
 	@Mapping(target = "hallId", source = "hall.id")
 	@Mapping(target = "hallName", source = "hall.name")
+	@Mapping(target = "status", source = "status")
 	@Mapping(target = "endTime", ignore = true)
 	@Mapping(target = "availableSeats", ignore = true)
 	@Mapping(target = "hallCapacity", ignore = true)
@@ -38,6 +43,18 @@ public interface SessionMapper {
 	@Mapping(target = "id", ignore = true)
 	@Mapping(target = "movie", ignore = true)
 	@Mapping(target = "hall", ignore = true)
+	@Mapping(target = "status", constant = "SCHEDULED")
 	@Mapping(target = "tickets", ignore = true)
-	Session toEntity(SessionRequest request);
+	@Mapping(target = "bookings", ignore = true)
+	@Mapping(target = "bookedSeats", ignore = true)
+	Session toEntity(SessionCreateRequest request);
+
+	@BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+	@Mapping(target = "id", ignore = true)
+	@Mapping(target = "movie", ignore = true)
+	@Mapping(target = "hall", ignore = true)
+	@Mapping(target = "tickets", ignore = true)
+	@Mapping(target = "bookings", ignore = true)
+	@Mapping(target = "bookedSeats", ignore = true)
+	void updateEntityFromDto(SessionUpdateRequest request, @MappingTarget Session session);
 }

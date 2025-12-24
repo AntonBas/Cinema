@@ -1,13 +1,14 @@
 package ua.lviv.bas.cinema.dto.session.response;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import ua.lviv.bas.cinema.domain.enums.CinemaSessionStatus;
 
 @Data
 @Builder
@@ -22,14 +23,14 @@ public class SessionAdminResponse {
 	@Schema(description = "Start time of the session", example = "2024-01-15T18:30:00", type = "string", format = "date-time")
 	private LocalDateTime startTime;
 
-	@Schema(description = "End time of the session (calculated based on movie duration)", example = "2024-01-15T21:00:00", type = "string", format = "date-time")
+	@Schema(description = "End time of the session", example = "2024-01-15T21:00:00", type = "string", format = "date-time")
 	private LocalDateTime endTime;
 
 	@Schema(description = "Base price for a standard seat", example = "150.00")
 	private BigDecimal basePrice;
 
-	@Schema(description = "Indicates if the session is available for booking", example = "true")
-	private boolean available;
+	@Schema(description = "Current status of the session", example = "SCHEDULED")
+	private CinemaSessionStatus status;
 
 	@Schema(description = "ID of the movie being shown", example = "5")
 	private Long movieId;

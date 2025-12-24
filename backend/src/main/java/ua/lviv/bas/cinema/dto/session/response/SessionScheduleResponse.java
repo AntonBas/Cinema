@@ -1,13 +1,14 @@
 package ua.lviv.bas.cinema.dto.session.response;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import ua.lviv.bas.cinema.domain.enums.CinemaSessionStatus;
 
 @Data
 @Builder
@@ -27,6 +28,9 @@ public class SessionScheduleResponse {
 
 	@Schema(description = "Base price for a standard seat", example = "150.00")
 	private BigDecimal basePrice;
+
+	@Schema(description = "Current status of the session", example = "SCHEDULED")
+	private CinemaSessionStatus status;
 
 	@Schema(description = "Number of available seats for this session", example = "105")
 	private Integer availableSeats;

@@ -1,5 +1,11 @@
 package ua.lviv.bas.cinema.dto.filter;
 
+import java.time.LocalDateTime;
+
+import org.springframework.format.annotation.DateTimeFormat;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -7,10 +13,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.format.annotation.DateTimeFormat;
-import com.fasterxml.jackson.annotation.JsonFormat;
-
-import java.time.LocalDateTime;
+import ua.lviv.bas.cinema.domain.enums.CinemaSessionStatus;
 
 @Data
 @Builder
@@ -35,6 +38,14 @@ public class SessionFilter {
 	@Schema(description = "Filter sessions by movie ID", example = "5")
 	private Long movieId;
 
+	@Schema(description = "Filter sessions by status", example = "SCHEDULED", allowableValues = { "SCHEDULED",
+			"CANCELLED", "COMPLETED" })
+	private CinemaSessionStatus status;
+
+	@Schema(description = "Whether to include all sessions (admin view) or only available for users", example = "false", defaultValue = "false")
+	@Builder.Default
+	private boolean adminView = false;
+
 	@Schema(description = "Page number for pagination (0-based)", example = "0", defaultValue = "0", minimum = "0")
 	@Builder.Default
 	@Min(value = 0, message = "Page must be greater than or equal to 0")
@@ -47,7 +58,7 @@ public class SessionFilter {
 	private int size = 20;
 
 	@Schema(description = "Field to sort by", example = "startTime", defaultValue = "startTime", allowableValues = {
-			"startTime", "endTime", "hallId", "movieId" })
+			"startTime", "endTime", "hallId", "movieId", "status" })
 	@Builder.Default
 	private String sortBy = "startTime";
 
@@ -62,11 +73,5 @@ public class SessionFilter {
 
 		@Schema(description = "Descending order")
 		DESC
-	}
-
-	public void validate() {
-		if (startTime != null && endTime != null && startTime.isAfter(endTime)) {
-			throw new IllegalArgumentException("startTime cannot be after endTime");
-		}
 	}
 }

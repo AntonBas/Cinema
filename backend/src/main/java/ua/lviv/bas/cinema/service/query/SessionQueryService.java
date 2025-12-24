@@ -17,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.QSession;
 import ua.lviv.bas.cinema.domain.Session;
+import ua.lviv.bas.cinema.domain.enums.CinemaSessionStatus;
 import ua.lviv.bas.cinema.dto.filter.SessionFilter;
 import ua.lviv.bas.cinema.repository.SessionRepository;
 import ua.lviv.bas.cinema.service.SessionService;
@@ -32,6 +33,8 @@ public class SessionQueryService {
 
 	public Page<Session> findFilteredSessions(SessionFilter filter) {
 		log.debug("Finding filtered sessions with filter: {}", filter);
+
+		validateFilter(filter);
 
 		QSession qSession = QSession.session;
 		BooleanBuilder predicate = new BooleanBuilder();
@@ -52,7 +55,14 @@ public class SessionQueryService {
 			predicate.and(qSession.movie.id.eq(filter.getMovieId()));
 		}
 
-		predicate.and(qSession.startTime.after(LocalDateTime.now().minusMinutes(30)));
+		if (filter.getStatus() != null) {
+			predicate.and(qSession.status.eq(filter.getStatus()));
+		}
+
+		if (!filter.isAdminView()) {
+			predicate.and(qSession.startTime.after(LocalDateTime.now()));
+			predicate.and(qSession.status.eq(CinemaSessionStatus.SCHEDULED));
+		}
 
 		Sort sort = Sort.by(filter.getSortDirection() == SessionFilter.SortDirection.DESC ? Sort.Direction.DESC
 				: Sort.Direction.ASC, filter.getSortBy());
@@ -81,7 +91,7 @@ public class SessionQueryService {
 		}).toList();
 	}
 
-	public Page<Session> findByMovieTitle(String search, Pageable pageable) {
+	public Page<Session> findByMovieTitle(String search, Pageable pageable, boolean adminView) {
 		QSession qSession = QSession.session;
 		BooleanBuilder predicate = new BooleanBuilder();
 
@@ -90,40 +100,53 @@ public class SessionQueryService {
 			predicate.and(qSession.movie.title.lower().like(searchTerm));
 		}
 
-		predicate.and(qSession.startTime.after(LocalDateTime.now()));
-
-		return sessionRepository.findAll(predicate, pageable);
-	}
-
-	public Page<Session> findByStartTimeBetween(LocalDateTime start, LocalDateTime end, Pageable pageable) {
-		QSession qSession = QSession.session;
-		BooleanBuilder predicate = new BooleanBuilder();
-
-		predicate.and(qSession.startTime.between(start, end));
-
-		if (end.isAfter(LocalDateTime.now())) {
+		if (!adminView) {
 			predicate.and(qSession.startTime.after(LocalDateTime.now()));
+			predicate.and(qSession.status.eq(CinemaSessionStatus.SCHEDULED));
 		}
 
 		return sessionRepository.findAll(predicate, pageable);
 	}
 
-	public Page<Session> findByHallId(Long hallId, Pageable pageable) {
+	public Page<Session> findByStartTimeBetween(LocalDateTime start, LocalDateTime end, Pageable pageable,
+			boolean adminView) {
 		QSession qSession = QSession.session;
 		BooleanBuilder predicate = new BooleanBuilder();
 
-		predicate.and(qSession.hall.id.eq(hallId));
-		predicate.and(qSession.startTime.after(LocalDateTime.now()));
+		predicate.and(qSession.startTime.between(start, end));
+
+		if (!adminView) {
+			predicate.and(qSession.startTime.after(LocalDateTime.now()));
+			predicate.and(qSession.status.eq(CinemaSessionStatus.SCHEDULED));
+		}
 
 		return sessionRepository.findAll(predicate, pageable);
 	}
 
-	public Page<Session> findByMovieId(Long movieId, Pageable pageable) {
+	public Page<Session> findByHallId(Long hallId, Pageable pageable, boolean adminView) {
+		QSession qSession = QSession.session;
+		BooleanBuilder predicate = new BooleanBuilder();
+
+		predicate.and(qSession.hall.id.eq(hallId));
+
+		if (!adminView) {
+			predicate.and(qSession.startTime.after(LocalDateTime.now()));
+			predicate.and(qSession.status.eq(CinemaSessionStatus.SCHEDULED));
+		}
+
+		return sessionRepository.findAll(predicate, pageable);
+	}
+
+	public Page<Session> findByMovieId(Long movieId, Pageable pageable, boolean adminView) {
 		QSession qSession = QSession.session;
 		BooleanBuilder predicate = new BooleanBuilder();
 
 		predicate.and(qSession.movie.id.eq(movieId));
-		predicate.and(qSession.startTime.after(LocalDateTime.now()));
+
+		if (!adminView) {
+			predicate.and(qSession.startTime.after(LocalDateTime.now()));
+			predicate.and(qSession.status.eq(CinemaSessionStatus.SCHEDULED));
+		}
 
 		return sessionRepository.findAll(predicate, pageable);
 	}
@@ -133,12 +156,13 @@ public class SessionQueryService {
 		BooleanBuilder predicate = new BooleanBuilder();
 
 		predicate.and(qSession.startTime.after(LocalDateTime.now()));
+		predicate.and(qSession.status.eq(CinemaSessionStatus.SCHEDULED));
 
 		return sessionRepository.findAll(predicate, pageable);
 	}
 
 	public Page<Session> findFiltered(LocalDateTime startTime, LocalDateTime endTime, Long hallId, Long movieId,
-			Pageable pageable) {
+			CinemaSessionStatus status, Pageable pageable, boolean adminView) {
 		QSession qSession = QSession.session;
 		BooleanBuilder predicate = new BooleanBuilder();
 
@@ -158,8 +182,44 @@ public class SessionQueryService {
 			predicate.and(qSession.movie.id.eq(movieId));
 		}
 
-		predicate.and(qSession.startTime.after(LocalDateTime.now()));
+		if (status != null) {
+			predicate.and(qSession.status.eq(status));
+		}
+
+		if (!adminView) {
+			predicate.and(qSession.startTime.after(LocalDateTime.now()));
+			predicate.and(qSession.status.eq(CinemaSessionStatus.SCHEDULED));
+		}
 
 		return sessionRepository.findAll(predicate, pageable);
+	}
+
+	public Page<Session> findByStatus(CinemaSessionStatus status, Pageable pageable) {
+		QSession qSession = QSession.session;
+		BooleanBuilder predicate = new BooleanBuilder();
+
+		predicate.and(qSession.status.eq(status));
+
+		if (status == CinemaSessionStatus.SCHEDULED) {
+			predicate.and(qSession.startTime.after(LocalDateTime.now()));
+		}
+
+		return sessionRepository.findAll(predicate, pageable);
+	}
+
+	private void validateFilter(SessionFilter filter) {
+		if (filter.getStartTime() != null && filter.getEndTime() != null
+				&& filter.getStartTime().isAfter(filter.getEndTime())) {
+			throw new IllegalArgumentException("startTime cannot be after endTime");
+		}
+
+		if (!filter.isAdminView() && filter.getStatus() != null
+				&& filter.getStatus() != CinemaSessionStatus.SCHEDULED) {
+			throw new IllegalArgumentException("Users can only view SCHEDULED sessions");
+		}
+
+		if (filter.getSize() > 100) {
+			throw new IllegalArgumentException("Page size cannot exceed 100");
+		}
 	}
 }

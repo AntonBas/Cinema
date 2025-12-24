@@ -1,5 +1,8 @@
 package ua.lviv.bas.cinema.dto.session.request;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.FutureOrPresent;
@@ -10,15 +13,12 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Schema(description = "Request DTO for creating or updating a movie session")
-public class SessionRequest {
+public class SessionCreateRequest {
 
 	@Schema(description = "Start time of the movie session", example = "2024-01-15T18:30:00", requiredMode = Schema.RequiredMode.REQUIRED, type = "string", format = "date-time")
 	@FutureOrPresent
@@ -38,9 +38,4 @@ public class SessionRequest {
 	@Schema(description = "ID of the cinema hall where the session takes place", example = "2", requiredMode = Schema.RequiredMode.REQUIRED)
 	@NotNull(message = "Hall ID is required")
 	private Long hallId;
-
-	@Schema(description = "Validation: start time must be at least 30 minutes from now", hidden = true)
-	public boolean isStartTimeValid() {
-		return startTime == null || startTime.isAfter(LocalDateTime.now().plusMinutes(30));
-	}
 }
