@@ -41,7 +41,7 @@ import ua.lviv.bas.cinema.mapper.MovieMapper;
 import ua.lviv.bas.cinema.repository.GenreRepository;
 import ua.lviv.bas.cinema.repository.MovieRepository;
 import ua.lviv.bas.cinema.repository.PersonRepository;
-import ua.lviv.bas.cinema.scheduler.MovieSchedule;
+import ua.lviv.bas.cinema.scheduler.MovieScheduler;
 
 @ExtendWith(MockitoExtension.class)
 class MovieServiceTest {
@@ -57,7 +57,7 @@ class MovieServiceTest {
 	@Mock
 	private SlugService slugService;
 	@Mock
-	private MovieSchedule movieSchedule;
+	private MovieScheduler movieSchedule;
 	@InjectMocks
 	private MovieService movieService;
 
