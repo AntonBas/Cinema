@@ -20,7 +20,7 @@ public class UserPasswordUpdateRequest {
 	private String currentPassword;
 
 	@Schema(description = "New password", example = "NewSecurePassword123!", requiredMode = Schema.RequiredMode.REQUIRED, minLength = 8, maxLength = 72)
-	@Size(min = 8, max = 72, message = "New password must be between 8 and 72 characters")
+	@Size(min = 8, max = 32, message = "New password must be between 8 and 32 characters")
 	@NotBlank(message = "New password is required")
 	private String newPassword;
 

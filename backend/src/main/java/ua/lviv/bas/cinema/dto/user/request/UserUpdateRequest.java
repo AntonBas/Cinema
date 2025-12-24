@@ -31,12 +31,12 @@ public class UserUpdateRequest {
 	@NotNull(message = "Date of birth is required")
 	private LocalDate dateOfBirth;
 
-	@Schema(description = "User's city of residence", example = "Kyiv", requiredMode = Schema.RequiredMode.REQUIRED, minLength = 2, maxLength = 50)
+	@Schema(description = "User's city of residence", example = "Lviv", requiredMode = Schema.RequiredMode.REQUIRED, minLength = 2, maxLength = 50)
 	@Size(min = 2, max = 50, message = "City name must be between 2 and 50 characters")
 	@NotBlank(message = "City is required")
 	private String city;
 
-	@Schema(description = "User's phone number", example = "+380501234567", requiredMode = Schema.RequiredMode.REQUIRED, pattern = "^\\+?[0-9]{10,15}$")
+	@Schema(description = "User's phone number", example = "+380234567891", requiredMode = Schema.RequiredMode.REQUIRED, pattern = "^\\+?[0-9]{10,15}$")
 	@Pattern(regexp = "^\\+?[0-9]{10,15}$", message = "Invalid phone number format")
 	@NotBlank(message = "Phone Number is required")
 	private String phoneNumber;

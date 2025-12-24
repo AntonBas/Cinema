@@ -84,7 +84,7 @@ public class User {
 	private String phoneNumber;
 
 	@NotBlank
-	@Column(nullable = false, length = 60)
+	@Column(nullable = false, length = 72)
 	private String password;
 
 	@CreationTimestamp
