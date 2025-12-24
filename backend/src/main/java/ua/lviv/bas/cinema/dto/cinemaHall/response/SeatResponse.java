@@ -18,12 +18,15 @@ public class SeatResponse {
 	private Long id;
 
 	@Schema(description = "Row number where the seat is located (starting from 1)", example = "5")
-	private int row;
+	private Integer row;
 
 	@Schema(description = "Seat number within the row (starting from 1)", example = "12")
-	private int number;
+	private Integer number;
 
 	@Schema(description = "Type of the seat", example = "VIP", allowableValues = { "STANDARD", "VIP", "COUPLE",
 			"DISABLED" })
 	private SeatType seatType;
+
+	@Schema(description = "Whether the seat is currently available for booking", example = "true")
+	private boolean available;
 }

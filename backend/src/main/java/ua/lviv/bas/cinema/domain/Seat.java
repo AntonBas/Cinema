@@ -34,7 +34,7 @@ import ua.lviv.bas.cinema.domain.enums.SeatType;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString(exclude = { "hall", "tickets", "bookedSeats" })
+@ToString(exclude = { "hall", "bookedSeats" })
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Table(name = "seats", indexes = { @Index(name = "idx_seat_hall", columnList = "hall_id"),
 		@Index(name = "idx_seat_active", columnList = "active") }, uniqueConstraints = {
@@ -70,10 +70,6 @@ public class Seat {
 	@Column(name = "active", nullable = false)
 	@Builder.Default
 	private boolean active = true;
-
-	@OneToMany(mappedBy = "seat", fetch = FetchType.LAZY)
-	@Builder.Default
-	private List<Ticket> tickets = new ArrayList<>();
 
 	@OneToMany(mappedBy = "seat", fetch = FetchType.LAZY)
 	@Builder.Default
