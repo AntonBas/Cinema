@@ -14,7 +14,7 @@ import ua.lviv.bas.cinema.repository.MovieRepository;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class MovieSchedule {
+public class MovieScheduler {
 
 	private final MovieRepository movieRepository;
 

@@ -41,7 +41,7 @@ import ua.lviv.bas.cinema.mapper.MovieMapper;
 import ua.lviv.bas.cinema.repository.GenreRepository;
 import ua.lviv.bas.cinema.repository.MovieRepository;
 import ua.lviv.bas.cinema.repository.PersonRepository;
-import ua.lviv.bas.cinema.scheduler.MovieSchedule;
+import ua.lviv.bas.cinema.scheduler.MovieScheduler;
 
 @Slf4j
 @Service
@@ -53,7 +53,7 @@ public class MovieService {
 	private final PersonRepository personRepository;
 	private final MovieMapper movieMapper;
 	private final SlugService slugService;
-	private final MovieSchedule movieSchedule;
+	private final MovieScheduler movieSchedule;
 
 	@Value("${app.upload.dir:uploads}")
 	private String uploadDir;
