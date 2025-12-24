@@ -37,6 +37,7 @@ import ua.lviv.bas.cinema.dto.session.request.SessionUpdateRequest;
 import ua.lviv.bas.cinema.dto.session.response.SessionAdminResponse;
 import ua.lviv.bas.cinema.dto.session.response.SessionScheduleResponse;
 import ua.lviv.bas.cinema.exception.domain.cinema.SessionNotFoundException;
+import ua.lviv.bas.cinema.exception.domain.cinema.SessionTimeConflictException;
 import ua.lviv.bas.cinema.mapper.SessionMapper;
 import ua.lviv.bas.cinema.repository.SessionRepository;
 import ua.lviv.bas.cinema.service.query.SessionQueryService;
@@ -144,6 +145,27 @@ class SessionServiceTest {
 	}
 
 	@Test
+	void createSession_ShouldThrowException_WhenTimeConflict() {
+		when(movieService.getMovieEntityById(1L)).thenReturn(movie);
+		when(cinemaHallService.getHallEntityById(1L)).thenReturn(hall);
+		when(sessionQueryService.findConflictingSessions(anyLong(), any(), any(), any()))
+				.thenReturn(List.of(new Session()));
+
+		assertThatThrownBy(() -> sessionService.createSession(sessionRequest))
+				.isInstanceOf(SessionTimeConflictException.class);
+	}
+
+	@Test
+	void createSession_ShouldThrowException_WhenStartTimeTooSoon() {
+		SessionCreateRequest invalidRequest = SessionCreateRequest.builder()
+				.startTime(LocalDateTime.now().plusMinutes(20)).basePrice(new BigDecimal("250.00")).movieId(1L)
+				.hallId(1L).build();
+
+		assertThatThrownBy(() -> sessionService.createSession(invalidRequest))
+				.isInstanceOf(IllegalArgumentException.class).hasMessageContaining("at least 30 minutes");
+	}
+
+	@Test
 	void getSessionById_ShouldReturnSession() {
 		when(sessionRepository.findById(1L)).thenReturn(Optional.of(session));
 		when(sessionMapper.toAdminDto(session)).thenReturn(sessionAdminDto);
@@ -152,6 +174,13 @@ class SessionServiceTest {
 
 		assertThat(result).isNotNull();
 		assertThat(result.getId()).isEqualTo(1L);
+	}
+
+	@Test
+	void getSessionById_ShouldThrowException_WhenNotFound() {
+		when(sessionRepository.findById(99L)).thenReturn(Optional.empty());
+
+		assertThatThrownBy(() -> sessionService.getSessionById(99L)).isInstanceOf(SessionNotFoundException.class);
 	}
 
 	@Test
@@ -175,6 +204,23 @@ class SessionServiceTest {
 	}
 
 	@Test
+	void getSessionByIdForPublic_ShouldThrowException_WhenSessionPast() {
+		session.setStartTime(LocalDateTime.now().minusHours(1));
+		when(sessionRepository.findById(1L)).thenReturn(Optional.of(session));
+
+		assertThatThrownBy(() -> sessionService.getSessionByIdForPublic(1L))
+				.isInstanceOf(SessionNotFoundException.class);
+	}
+
+	@Test
+	void getSessionByIdForPublic_ShouldThrowException_WhenNotFound() {
+		when(sessionRepository.findById(99L)).thenReturn(Optional.empty());
+
+		assertThatThrownBy(() -> sessionService.getSessionByIdForPublic(99L))
+				.isInstanceOf(SessionNotFoundException.class);
+	}
+
+	@Test
 	void updateSession_ShouldUpdateSuccessfully() {
 		when(sessionRepository.findById(1L)).thenReturn(Optional.of(session));
 		when(sessionRepository.save(any(Session.class))).thenReturn(session);
@@ -184,6 +230,43 @@ class SessionServiceTest {
 
 		assertThat(result).isNotNull();
 		verify(sessionMapper).updateEntityFromDto(sessionUpdateRequest, session);
+	}
+
+	@Test
+	void updateSession_ShouldValidateTimeConflict_WhenStartTimeChanged() {
+		SessionUpdateRequest updateRequest = SessionUpdateRequest.builder().startTime(LocalDateTime.now().plusHours(3))
+				.build();
+
+		when(sessionRepository.findById(1L)).thenReturn(Optional.of(session));
+		when(sessionQueryService.findConflictingSessions(anyLong(), any(), any(), any())).thenReturn(List.of());
+		when(sessionRepository.save(any(Session.class))).thenReturn(session);
+		when(sessionMapper.toAdminDto(session)).thenReturn(sessionAdminDto);
+
+		SessionAdminResponse result = sessionService.updateSession(1L, updateRequest);
+
+		assertThat(result).isNotNull();
+		verify(sessionQueryService).findConflictingSessions(anyLong(), any(), any(), any());
+	}
+
+	@Test
+	void updateSession_ShouldThrowException_WhenTimeConflict() {
+		SessionUpdateRequest updateRequest = SessionUpdateRequest.builder().startTime(LocalDateTime.now().plusHours(3))
+				.build();
+
+		when(sessionRepository.findById(1L)).thenReturn(Optional.of(session));
+		when(sessionQueryService.findConflictingSessions(anyLong(), any(), any(), any()))
+				.thenReturn(List.of(new Session()));
+
+		assertThatThrownBy(() -> sessionService.updateSession(1L, updateRequest))
+				.isInstanceOf(SessionTimeConflictException.class);
+	}
+
+	@Test
+	void updateSession_ShouldThrowException_WhenNotFound() {
+		when(sessionRepository.findById(99L)).thenReturn(Optional.empty());
+
+		assertThatThrownBy(() -> sessionService.updateSession(99L, sessionUpdateRequest))
+				.isInstanceOf(SessionNotFoundException.class);
 	}
 
 	@Test
@@ -210,6 +293,57 @@ class SessionServiceTest {
 		assertThat(result).isNotNull();
 		assertThat(result.getStatus()).isEqualTo(CinemaSessionStatus.COMPLETED);
 		verify(sessionRepository).save(pastSession);
+	}
+
+	@Test
+	void updateSessionStatus_ShouldThrowException_WhenSessionCompleted() {
+		session.setStatus(CinemaSessionStatus.COMPLETED);
+		when(sessionRepository.findById(1L)).thenReturn(Optional.of(session));
+
+		assertThatThrownBy(() -> sessionService.updateSessionStatus(1L, CinemaSessionStatus.SCHEDULED))
+				.isInstanceOf(IllegalStateException.class).hasMessageContaining("completed session");
+	}
+
+	@Test
+	void updateSessionStatus_ShouldThrowException_WhenCancellingTooLate() {
+		session.setStartTime(LocalDateTime.now().plusMinutes(30));
+		when(sessionRepository.findById(1L)).thenReturn(Optional.of(session));
+
+		assertThatThrownBy(() -> sessionService.updateSessionStatus(1L, CinemaSessionStatus.CANCELLED))
+				.isInstanceOf(IllegalArgumentException.class).hasMessageContaining("less than 1 hour");
+	}
+
+	@Test
+	void updateSessionStatus_ShouldThrowException_WhenCompletingFutureSession() {
+		session.setStartTime(LocalDateTime.now().plusHours(2));
+		when(sessionRepository.findById(1L)).thenReturn(Optional.of(session));
+
+		assertThatThrownBy(() -> sessionService.updateSessionStatus(1L, CinemaSessionStatus.COMPLETED))
+				.isInstanceOf(IllegalArgumentException.class).hasMessageContaining("future session");
+	}
+
+	@Test
+	void updateSessionStatus_ShouldThrowException_WhenNotFound() {
+		when(sessionRepository.findById(99L)).thenReturn(Optional.empty());
+
+		assertThatThrownBy(() -> sessionService.updateSessionStatus(99L, CinemaSessionStatus.COMPLETED))
+				.isInstanceOf(SessionNotFoundException.class);
+	}
+
+	@Test
+	void deleteSession_ShouldDeleteSuccessfully() {
+		when(sessionRepository.existsById(1L)).thenReturn(true);
+
+		sessionService.deleteSession(1L);
+
+		verify(sessionRepository).deleteById(1L);
+	}
+
+	@Test
+	void deleteSession_ShouldThrowException_WhenNotFound() {
+		when(sessionRepository.existsById(99L)).thenReturn(false);
+
+		assertThatThrownBy(() -> sessionService.deleteSession(99L)).isInstanceOf(SessionNotFoundException.class);
 	}
 
 	@Test
@@ -373,10 +507,30 @@ class SessionServiceTest {
 	}
 
 	@Test
+	void hasTimeConflict_ShouldReturnFalse_WhenNoConflict() {
+		LocalDateTime fixedTime = LocalDateTime.of(2024, 1, 15, 18, 0);
+
+		when(sessionQueryService.findConflictingSessions(1L, fixedTime, fixedTime.plusMinutes(120), null))
+				.thenReturn(List.of());
+
+		boolean result = sessionService.hasTimeConflict(1L, fixedTime, 120, null);
+
+		assertThat(result).isFalse();
+	}
+
+	@Test
 	void getEndTime_ShouldCalculateEndTime() {
 		LocalDateTime endTime = sessionService.getEndTime(session);
 
 		assertThat(endTime).isEqualTo(session.getStartTime().plusMinutes(120));
+	}
+
+	@Test
+	void getEndTime_ShouldThrowException_WhenMissingData() {
+		session.setStartTime(null);
+
+		assertThatThrownBy(() -> sessionService.getEndTime(session)).isInstanceOf(IllegalStateException.class)
+				.hasMessageContaining("missing data");
 	}
 
 	@Test
@@ -392,5 +546,51 @@ class SessionServiceTest {
 		boolean available = sessionService.isAvailable(session);
 
 		assertThat(available).isFalse();
+	}
+
+	@Test
+	void isAvailable_ShouldReturnFalse_WhenSessionIsPast() {
+		session.setStartTime(LocalDateTime.now().minusHours(1));
+		boolean available = sessionService.isAvailable(session);
+
+		assertThat(available).isFalse();
+	}
+
+	@Test
+	void isAvailable_ShouldReturnFalse_WhenSessionIsCancelled() {
+		session.setStatus(CinemaSessionStatus.CANCELLED);
+		boolean available = sessionService.isAvailable(session);
+
+		assertThat(available).isFalse();
+	}
+
+	@Test
+	void isAvailable_ShouldReturnFalse_WhenSessionIsNull() {
+		boolean available = sessionService.isAvailable(null);
+
+		assertThat(available).isFalse();
+	}
+
+	@Test
+	void toAdminResponse_ShouldMapWithCalculatedValues() {
+		when(sessionMapper.toAdminDto(session)).thenReturn(sessionAdminDto);
+
+		SessionAdminResponse result = sessionService.toAdminResponse(session);
+
+		assertThat(result).isNotNull();
+		assertThat(result.getEndTime()).isEqualTo(session.getStartTime().plusMinutes(120));
+		assertThat(result.getHallCapacity()).isEqualTo(100);
+		assertThat(result.getTotalRevenue()).isNotNull();
+	}
+
+	@Test
+	void toScheduleResponse_ShouldMapWithCalculatedValues() {
+		when(sessionMapper.toScheduleDto(session)).thenReturn(sessionScheduleDto);
+
+		SessionScheduleResponse result = sessionService.toScheduleResponse(session);
+
+		assertThat(result).isNotNull();
+		assertThat(result.getEndTime()).isEqualTo(session.getStartTime().plusMinutes(120));
+		assertThat(result.getHallCapacity()).contains("100");
 	}
 }

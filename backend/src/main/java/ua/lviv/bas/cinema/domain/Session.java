@@ -36,7 +36,7 @@ import ua.lviv.bas.cinema.domain.enums.CinemaSessionStatus;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString(exclude = { "movie", "hall", "tickets", "bookings", "bookedSeats" })
+@ToString(exclude = { "movie", "hall", "bookings", "bookedSeats" })
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Table(name = "sessions", indexes = { @Index(name = "idx_session_movie", columnList = "movie_id"),
 		@Index(name = "idx_session_hall", columnList = "hall_id"),
@@ -74,10 +74,6 @@ public class Session {
 	@Column(name = "status", nullable = false, length = 20)
 	@Builder.Default
 	private CinemaSessionStatus status = CinemaSessionStatus.SCHEDULED;
-
-	@OneToMany(mappedBy = "session", fetch = FetchType.LAZY)
-	@Builder.Default
-	private List<Ticket> tickets = new ArrayList<>();
 
 	@OneToMany(mappedBy = "session", fetch = FetchType.LAZY)
 	@Builder.Default

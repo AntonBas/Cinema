@@ -247,11 +247,14 @@ public class SessionService {
 
 		response.setEndTime(getEndTime(session));
 
-		int ticketsSold = session.getTickets() != null ? session.getTickets().size() : 0;
-		response.setTicketsSold(ticketsSold);
+		// Замість session.getTickets() - використовуємо кількість заброньованих місць
+		int bookedSeatsCount = session.getBookedSeats() != null
+				? (int) session.getBookedSeats().stream().filter(bs -> bs.getTicket() != null).count()
+				: 0;
+		response.setTicketsSold(bookedSeatsCount);
 
-		if (ticketsSold > 0) {
-			response.setTotalRevenue(session.getBasePrice().multiply(BigDecimal.valueOf(ticketsSold)));
+		if (bookedSeatsCount > 0) {
+			response.setTotalRevenue(session.getBasePrice().multiply(BigDecimal.valueOf(bookedSeatsCount)));
 		} else {
 			response.setTotalRevenue(BigDecimal.ZERO);
 		}
@@ -273,8 +276,12 @@ public class SessionService {
 			hallCapacity = session.getHall().getSeats().size();
 		}
 
-		int ticketsSold = session.getTickets() != null ? session.getTickets().size() : 0;
-		int availableSeats = Math.max(0, hallCapacity - ticketsSold);
+		// Замість session.getTickets() - використовуємо кількість заброньованих місць з
+		// квитками
+		int bookedSeatsCount = session.getBookedSeats() != null
+				? (int) session.getBookedSeats().stream().filter(bs -> bs.getTicket() != null).count()
+				: 0;
+		int availableSeats = Math.max(0, hallCapacity - bookedSeatsCount);
 
 		response.setAvailableSeats(availableSeats);
 		response.setHallCapacity(availableSeats + "/" + hallCapacity);
