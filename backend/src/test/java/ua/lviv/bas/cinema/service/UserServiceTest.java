@@ -35,6 +35,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.enums.UserRole;
 import ua.lviv.bas.cinema.domain.enums.VerificationStatus;
+import ua.lviv.bas.cinema.dto.user.request.UserPasswordUpdateRequest;
 import ua.lviv.bas.cinema.dto.user.request.UserRegistrationRequest;
 import ua.lviv.bas.cinema.dto.user.request.UserUpdateRequest;
 import ua.lviv.bas.cinema.dto.user.request.VerificationBirthDateRequest;
@@ -119,7 +120,9 @@ public class UserServiceTest {
 		when(userMapper.toEntity(validUserDto)).thenReturn(user);
 		when(userRepository.save(any(User.class))).thenReturn(savedUser);
 		when(userMapper.toDto(savedUser)).thenReturn(userResponse);
-		when(emailTokenGeneratorService.generateVerificationToken(savedUser.getEmail())).thenReturn("token");
+		doAnswer(invocation -> {
+			return null;
+		}).when(emailTokenGeneratorService).generateVerificationToken(anyString());
 
 		UserResponse result = userService.registerUser(validUserDto);
 
@@ -144,6 +147,21 @@ public class UserServiceTest {
 				.hasMessageContaining(validUserDto.getEmail());
 
 		verify(userQueryService).existsByEmail(validUserDto.getEmail());
+		verify(passwordEncoder, never()).encode(anyString());
+		verify(userMapper, never()).toEntity(any());
+		verify(userRepository, never()).save(any());
+		verify(emailTokenGeneratorService, never()).generateVerificationToken(anyString());
+	}
+
+	@Test
+	void registerUser_ShouldThrowPasswordMismatchException_WhenPasswordsDoNotMatch() {
+		UserRegistrationRequest requestWithMismatch = UserRegistrationRequest.builder().email("test@example.com")
+				.password("password123").passwordConfirm("differentPassword").build();
+
+		assertThatThrownBy(() -> userService.registerUser(requestWithMismatch))
+				.isInstanceOf(PasswordMismatchException.class);
+
+		verify(userQueryService, never()).existsByEmail(anyString());
 		verify(passwordEncoder, never()).encode(anyString());
 		verify(userMapper, never()).toEntity(any());
 		verify(userRepository, never()).save(any());
@@ -182,9 +200,10 @@ public class UserServiceTest {
 	@Test
 	void updateUser_ShouldThrowUserNotFoundException_WhenUserNotFound() {
 		Long userId = 999L;
+		UserUpdateRequest updateRequest = UserUpdateRequest.builder().build();
 		when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
-		assertThatThrownBy(() -> userService.updateUser(userId, new UserUpdateRequest()))
+		assertThatThrownBy(() -> userService.updateUser(userId, updateRequest))
 				.isInstanceOf(UserNotFoundException.class).hasMessageContaining(String.valueOf(userId));
 
 		verify(userRepository).findById(userId);
@@ -237,8 +256,8 @@ public class UserServiceTest {
 		User verifiedUser = User.builder().id(userId).email("test@example.com").dateOfBirth(sameDate)
 				.verificationStatus(VerificationStatus.VERIFIED).verifiedAt(LocalDateTime.now()).build();
 
-		UserUpdateRequest updateRequest = UserUpdateRequest.builder().dateOfBirth(sameDate) // Same date
-				.firstName("NewName").build();
+		UserUpdateRequest updateRequest = UserUpdateRequest.builder().dateOfBirth(sameDate).firstName("NewName")
+				.build();
 
 		when(userRepository.findById(userId)).thenReturn(Optional.of(verifiedUser));
 
@@ -269,7 +288,9 @@ public class UserServiceTest {
 
 		when(userRepository.findById(userId)).thenReturn(Optional.of(user));
 		when(userQueryService.existsByEmail(newEmail)).thenReturn(false);
-		when(emailTokenGeneratorService.generateEmailChangeToken(user.getEmail(), newEmail)).thenReturn("token");
+		doAnswer(invocation -> {
+			return null;
+		}).when(emailTokenGeneratorService).generateEmailChangeToken(anyString(), anyString());
 
 		userService.requestEmailChange(userId, newEmail);
 
@@ -312,36 +333,33 @@ public class UserServiceTest {
 	@Test
 	void updateUserPassword_ShouldUpdatePassword_WhenAllValidationsPass() {
 		Long userId = 1L;
-		String currentPassword = "oldPassword123";
-		String newPassword = "newPassword123";
-		String passwordConfirm = "newPassword123";
-		String encodedNewPassword = "encodedNewPassword123";
+		UserPasswordUpdateRequest request = UserPasswordUpdateRequest.builder().currentPassword("oldPassword123")
+				.newPassword("newPassword123").passwordConfirm("newPassword123").build();
 
 		user.setPassword("encodedOldPassword");
 		when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-		when(passwordEncoder.matches(currentPassword, user.getPassword())).thenReturn(true);
-		when(passwordEncoder.matches(newPassword, user.getPassword())).thenReturn(false);
-		when(passwordEncoder.encode(newPassword)).thenReturn(encodedNewPassword);
+		when(passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())).thenReturn(true);
+		when(passwordEncoder.matches(request.getNewPassword(), user.getPassword())).thenReturn(false);
+		when(passwordEncoder.encode(request.getNewPassword())).thenReturn("encodedNewPassword123");
 		when(userRepository.save(user)).thenReturn(user);
 
-		userService.updateUserPassword(userId, currentPassword, newPassword, passwordConfirm);
+		userService.updateUserPassword(userId, request);
 
-		assertThat(user.getPassword()).isEqualTo(encodedNewPassword);
+		assertThat(user.getPassword()).isEqualTo("encodedNewPassword123");
 		verify(passwordEncoder, times(2)).matches(anyString(), anyString());
-		verify(passwordEncoder).encode(newPassword);
+		verify(passwordEncoder).encode(request.getNewPassword());
 		verify(userRepository).save(user);
 	}
 
 	@Test
 	void updateUserPassword_ShouldThrowPasswordMismatchException_WhenPasswordsDoNotMatch() {
 		Long userId = 1L;
-		String currentPassword = "oldPassword123";
-		String newPassword = "newPassword123";
-		String passwordConfirm = "differentPassword";
+		UserPasswordUpdateRequest request = UserPasswordUpdateRequest.builder().currentPassword("oldPassword123")
+				.newPassword("newPassword123").passwordConfirm("differentPassword").build();
 
 		when(userRepository.findById(userId)).thenReturn(Optional.of(user));
 
-		assertThatThrownBy(() -> userService.updateUserPassword(userId, currentPassword, newPassword, passwordConfirm))
+		assertThatThrownBy(() -> userService.updateUserPassword(userId, request))
 				.isInstanceOf(PasswordMismatchException.class);
 
 		verify(userRepository).findById(userId);
@@ -352,19 +370,18 @@ public class UserServiceTest {
 	@Test
 	void updateUserPassword_ShouldThrowInvalidCurrentPasswordException_WhenCurrentPasswordIsWrong() {
 		Long userId = 1L;
-		String currentPassword = "wrongPassword";
-		String newPassword = "newPassword123";
-		String passwordConfirm = "newPassword123";
+		UserPasswordUpdateRequest request = UserPasswordUpdateRequest.builder().currentPassword("wrongPassword")
+				.newPassword("newPassword123").passwordConfirm("newPassword123").build();
 
 		user.setPassword("encodedOldPassword");
 		when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-		when(passwordEncoder.matches(currentPassword, user.getPassword())).thenReturn(false);
+		when(passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())).thenReturn(false);
 
-		assertThatThrownBy(() -> userService.updateUserPassword(userId, currentPassword, newPassword, passwordConfirm))
+		assertThatThrownBy(() -> userService.updateUserPassword(userId, request))
 				.isInstanceOf(InvalidCurrentPasswordException.class);
 
-		verify(passwordEncoder).matches(currentPassword, user.getPassword());
-		verify(passwordEncoder, never()).matches(newPassword, user.getPassword());
+		verify(passwordEncoder).matches(request.getCurrentPassword(), user.getPassword());
+		verify(passwordEncoder, never()).matches(request.getNewPassword(), user.getPassword());
 		verify(passwordEncoder, never()).encode(anyString());
 		verify(userRepository, never()).save(any());
 	}
@@ -372,16 +389,15 @@ public class UserServiceTest {
 	@Test
 	void updateUserPassword_ShouldThrowSamePasswordException_WhenNewPasswordSameAsOld() {
 		Long userId = 1L;
-		String currentPassword = "oldPassword123";
-		String newPassword = "oldPassword123";
-		String passwordConfirm = "oldPassword123";
+		UserPasswordUpdateRequest request = UserPasswordUpdateRequest.builder().currentPassword("oldPassword123")
+				.newPassword("oldPassword123").passwordConfirm("oldPassword123").build();
 
 		user.setPassword("encodedOldPassword");
 		when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-		when(passwordEncoder.matches(currentPassword, user.getPassword())).thenReturn(true);
-		when(passwordEncoder.matches(newPassword, user.getPassword())).thenReturn(true);
+		when(passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())).thenReturn(true);
+		when(passwordEncoder.matches(request.getNewPassword(), user.getPassword())).thenReturn(true);
 
-		assertThatThrownBy(() -> userService.updateUserPassword(userId, currentPassword, newPassword, passwordConfirm))
+		assertThatThrownBy(() -> userService.updateUserPassword(userId, request))
 				.isInstanceOf(SamePasswordException.class);
 
 		verify(passwordEncoder, times(2)).matches(anyString(), anyString());
@@ -392,17 +408,16 @@ public class UserServiceTest {
 	@Test
 	void updateUserPassword_ShouldThrowIllegalArgumentException_WhenPasswordTooShort() {
 		Long userId = 1L;
-		String currentPassword = "oldPassword123";
-		String newPassword = "short";
-		String passwordConfirm = "short";
+		UserPasswordUpdateRequest request = UserPasswordUpdateRequest.builder().currentPassword("oldPassword123")
+				.newPassword("short").passwordConfirm("short").build();
 
 		user.setPassword("encodedOldPassword");
 		when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-		when(passwordEncoder.matches(currentPassword, user.getPassword())).thenReturn(true);
-		when(passwordEncoder.matches(newPassword, user.getPassword())).thenReturn(false);
+		when(passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())).thenReturn(true);
+		when(passwordEncoder.matches(request.getNewPassword(), user.getPassword())).thenReturn(false);
 
-		assertThatThrownBy(() -> userService.updateUserPassword(userId, currentPassword, newPassword, passwordConfirm))
-				.isInstanceOf(IllegalArgumentException.class).hasMessageContaining("at least 6 characters");
+		assertThatThrownBy(() -> userService.updateUserPassword(userId, request))
+				.isInstanceOf(IllegalArgumentException.class).hasMessageContaining("at least 8 characters");
 
 		verify(passwordEncoder, times(2)).matches(anyString(), anyString());
 		verify(passwordEncoder, never()).encode(anyString());
