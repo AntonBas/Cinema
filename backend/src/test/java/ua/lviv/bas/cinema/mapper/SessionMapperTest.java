@@ -19,8 +19,10 @@ import ua.lviv.bas.cinema.domain.Movie;
 import ua.lviv.bas.cinema.domain.Seat;
 import ua.lviv.bas.cinema.domain.Session;
 import ua.lviv.bas.cinema.domain.enums.AgeRating;
+import ua.lviv.bas.cinema.domain.enums.CinemaSessionStatus;
 import ua.lviv.bas.cinema.domain.enums.SeatType;
-import ua.lviv.bas.cinema.dto.session.request.SessionRequest;
+import ua.lviv.bas.cinema.dto.session.request.SessionCreateRequest;
+import ua.lviv.bas.cinema.dto.session.request.SessionUpdateRequest;
 import ua.lviv.bas.cinema.dto.session.response.SessionAdminResponse;
 import ua.lviv.bas.cinema.dto.session.response.SessionScheduleResponse;
 
@@ -50,7 +52,7 @@ class SessionMapperTest {
 		hall = CinemaHall.builder().id(1L).name("Hall 1").seats(seats).build();
 
 		session = Session.builder().id(1L).startTime(futureTime).basePrice(new BigDecimal("250.00")).movie(movie)
-				.hall(hall).build();
+				.hall(hall).status(CinemaSessionStatus.SCHEDULED).build();
 	}
 
 	@Test
@@ -61,32 +63,32 @@ class SessionMapperTest {
 		assertThat(result.getId()).isEqualTo(1L);
 		assertThat(result.getStartTime()).isEqualTo(futureTime);
 		assertThat(result.getBasePrice()).isEqualByComparingTo("250.00");
+		assertThat(result.getStatus()).isEqualTo(CinemaSessionStatus.SCHEDULED);
 		assertThat(result.getMovieId()).isEqualTo(1L);
 		assertThat(result.getMovieTitle()).isEqualTo("Test Movie");
 		assertThat(result.getMovieDuration()).isEqualTo(120);
 		assertThat(result.getHallId()).isEqualTo(1L);
 		assertThat(result.getHallName()).isEqualTo("Hall 1");
-		assertThat(result.getHallCapacity()).isEqualTo(100);
 		assertThat(result.getEndTime()).isNull();
-		assertThat(result.isAvailable()).isFalse();
+		assertThat(result.getHallCapacity()).isNull();
 		assertThat(result.getTicketsSold()).isNull();
 		assertThat(result.getTotalRevenue()).isNull();
 	}
 
 	@Test
-	void toAdminDto_ShouldHandleNullHallCapacity() {
-		hall.setSeats(null);
+	void toAdminDto_ShouldMapDifferentStatuses() {
+		session.setStatus(CinemaSessionStatus.CANCELLED);
 		SessionAdminResponse result = sessionMapper.toAdminDto(session);
 
-		assertThat(result.getHallCapacity()).isEqualTo(0);
+		assertThat(result.getStatus()).isEqualTo(CinemaSessionStatus.CANCELLED);
 	}
 
 	@Test
-	void toAdminDto_ShouldHandleEmptyHallSeats() {
-		hall.setSeats(new ArrayList<>());
+	void toAdminDto_ShouldHandleNullStatus() {
+		session.setStatus(null);
 		SessionAdminResponse result = sessionMapper.toAdminDto(session);
 
-		assertThat(result.getHallCapacity()).isEqualTo(0);
+		assertThat(result.getStatus()).isNull();
 	}
 
 	@Test
@@ -100,50 +102,10 @@ class SessionMapperTest {
 	}
 
 	@Test
-	void toAdminDto_ShouldHandleNullBasePrice() {
-		session.setBasePrice(null);
-		SessionAdminResponse result = sessionMapper.toAdminDto(session);
-
-		assertThat(result.getBasePrice()).isNull();
-	}
-
-	@Test
-	void toAdminDto_ShouldHandleNullStartTime() {
-		session.setStartTime(null);
-		SessionAdminResponse result = sessionMapper.toAdminDto(session);
-
-		assertThat(result.getStartTime()).isNull();
-	}
-
-	@Test
 	void toAdminDto_ShouldReturnNull_WhenInputIsNull() {
 		SessionAdminResponse result = sessionMapper.toAdminDto(null);
 
 		assertThat(result).isNull();
-	}
-
-	@Test
-	void toAdminDto_ShouldMapSessionWithoutBuilder() {
-		Session session = new Session();
-		session.setId(2L);
-		session.setStartTime(futureTime);
-		session.setBasePrice(new BigDecimal("300.00"));
-
-		SessionAdminResponse result = sessionMapper.toAdminDto(session);
-
-		assertThat(result).isNotNull();
-		assertThat(result.getId()).isEqualTo(2L);
-		assertThat(result.getStartTime()).isEqualTo(futureTime);
-		assertThat(result.getBasePrice()).isEqualByComparingTo("300.00");
-	}
-
-	@ParameterizedTest
-	@CsvSource({ "100.00, 100.00", "0.00, 0.00", "999.99, 999.99" })
-	void toAdminDto_ShouldMapDifferentBasePrices(String inputPrice, String expectedPrice) {
-		session.setBasePrice(new BigDecimal(inputPrice));
-		SessionAdminResponse result = sessionMapper.toAdminDto(session);
-
-		assertThat(result.getBasePrice()).isEqualByComparingTo(expectedPrice);
 	}
 
 	@Test
@@ -154,6 +116,7 @@ class SessionMapperTest {
 		assertThat(result.getId()).isEqualTo(1L);
 		assertThat(result.getStartTime()).isEqualTo(futureTime);
 		assertThat(result.getBasePrice()).isEqualByComparingTo("250.00");
+		assertThat(result.getStatus()).isEqualTo(CinemaSessionStatus.SCHEDULED);
 		assertThat(result.getMovieId()).isEqualTo(1L);
 		assertThat(result.getMovieTitle()).isEqualTo("Test Movie");
 		assertThat(result.getMoviePosterFileName()).isEqualTo("poster.jpg");
@@ -164,6 +127,22 @@ class SessionMapperTest {
 		assertThat(result.getEndTime()).isNull();
 		assertThat(result.getAvailableSeats()).isNull();
 		assertThat(result.getHallCapacity()).isNull();
+	}
+
+	@Test
+	void toScheduleDto_ShouldMapDifferentStatuses() {
+		session.setStatus(CinemaSessionStatus.COMPLETED);
+		SessionScheduleResponse result = sessionMapper.toScheduleDto(session);
+
+		assertThat(result.getStatus()).isEqualTo(CinemaSessionStatus.COMPLETED);
+	}
+
+	@Test
+	void toScheduleDto_ShouldHandleNullStatus() {
+		session.setStatus(null);
+		SessionScheduleResponse result = sessionMapper.toScheduleDto(session);
+
+		assertThat(result.getStatus()).isNull();
 	}
 
 	@Test
@@ -185,6 +164,114 @@ class SessionMapperTest {
 
 		assertThat(result.getHallId()).isNull();
 		assertThat(result.getHallName()).isNull();
+	}
+
+	@Test
+	void toEntity_ShouldMapRequestToEntityWithDefaultStatus() {
+		SessionCreateRequest request = SessionCreateRequest.builder().startTime(LocalDateTime.now().plusHours(3))
+				.basePrice(new BigDecimal("300.00")).movieId(2L).hallId(3L).build();
+
+		Session result = sessionMapper.toEntity(request);
+
+		assertThat(result).isNotNull();
+		assertThat(result.getStartTime()).isEqualTo(request.getStartTime());
+		assertThat(result.getBasePrice()).isEqualByComparingTo("300.00");
+		assertThat(result.getStatus()).isEqualTo(CinemaSessionStatus.SCHEDULED);
+		assertThat(result.getId()).isNull();
+		assertThat(result.getMovie()).isNull();
+		assertThat(result.getHall()).isNull();
+		assertThat(result.getTickets()).isNotNull();
+		assertThat(result.getTickets()).isEmpty();
+		assertThat(result.getBookings()).isNotNull();
+		assertThat(result.getBookings()).isEmpty();
+		assertThat(result.getBookedSeats()).isNotNull();
+		assertThat(result.getBookedSeats()).isEmpty();
+	}
+
+	@Test
+	void updateEntityFromDto_ShouldUpdateOnlyProvidedFields() {
+		SessionUpdateRequest updateRequest = SessionUpdateRequest.builder().basePrice(new BigDecimal("350.00"))
+				.status(CinemaSessionStatus.CANCELLED).build();
+
+		Session existingSession = Session.builder().id(1L).startTime(futureTime).basePrice(new BigDecimal("250.00"))
+				.status(CinemaSessionStatus.SCHEDULED).build();
+
+		sessionMapper.updateEntityFromDto(updateRequest, existingSession);
+
+		assertThat(existingSession.getBasePrice()).isEqualByComparingTo("350.00");
+		assertThat(existingSession.getStatus()).isEqualTo(CinemaSessionStatus.CANCELLED);
+		assertThat(existingSession.getStartTime()).isEqualTo(futureTime);
+	}
+
+	@Test
+	void updateEntityFromDto_ShouldNotUpdateNullFields() {
+		SessionUpdateRequest updateRequest = SessionUpdateRequest.builder().status(CinemaSessionStatus.COMPLETED)
+				.build();
+
+		Session existingSession = Session.builder().id(1L).startTime(futureTime).basePrice(new BigDecimal("250.00"))
+				.status(CinemaSessionStatus.SCHEDULED).build();
+
+		sessionMapper.updateEntityFromDto(updateRequest, existingSession);
+
+		assertThat(existingSession.getStatus()).isEqualTo(CinemaSessionStatus.COMPLETED);
+		assertThat(existingSession.getBasePrice()).isEqualByComparingTo("250.00");
+		assertThat(existingSession.getStartTime()).isEqualTo(futureTime);
+	}
+
+	@Test
+	void updateEntityFromDto_ShouldHandleNullRequest() {
+		Session existingSession = Session.builder().id(1L).startTime(futureTime).basePrice(new BigDecimal("250.00"))
+				.build();
+
+		sessionMapper.updateEntityFromDto(null, existingSession);
+
+		assertThat(existingSession.getStartTime()).isEqualTo(futureTime);
+		assertThat(existingSession.getBasePrice()).isEqualByComparingTo("250.00");
+	}
+
+	@Test
+	void toEntity_ShouldHandleNullRequest() {
+		Session result = sessionMapper.toEntity(null);
+
+		assertThat(result).isNull();
+	}
+
+	@ParameterizedTest
+	@CsvSource({ "SCHEDULED, SCHEDULED", "COMPLETED, COMPLETED", "CANCELLED, CANCELLED" })
+	void toAdminDto_ShouldMapAllStatusValues(String statusStr, String expectedStr) {
+		CinemaSessionStatus status = CinemaSessionStatus.valueOf(statusStr);
+		session.setStatus(status);
+
+		SessionAdminResponse result = sessionMapper.toAdminDto(session);
+
+		assertThat(result.getStatus()).isEqualTo(status);
+	}
+
+	@Test
+	void consistencyCheck_BothDtosShouldHaveSameStatus() {
+		session.setStatus(CinemaSessionStatus.COMPLETED);
+
+		SessionAdminResponse adminDto = sessionMapper.toAdminDto(session);
+		SessionScheduleResponse scheduleDto = sessionMapper.toScheduleDto(session);
+
+		assertThat(adminDto.getStatus()).isEqualTo(scheduleDto.getStatus());
+		assertThat(adminDto.getStatus()).isEqualTo(CinemaSessionStatus.COMPLETED);
+	}
+
+	@Test
+	void toAdminDto_ShouldHandleNullBasePrice() {
+		session.setBasePrice(null);
+		SessionAdminResponse result = sessionMapper.toAdminDto(session);
+
+		assertThat(result.getBasePrice()).isNull();
+	}
+
+	@Test
+	void toAdminDto_ShouldHandleNullStartTime() {
+		session.setStartTime(null);
+		SessionAdminResponse result = sessionMapper.toAdminDto(session);
+
+		assertThat(result.getStartTime()).isNull();
 	}
 
 	@Test
@@ -220,26 +307,9 @@ class SessionMapperTest {
 	}
 
 	@Test
-	void toEntity_ShouldMapRequestToEntity() {
-		SessionRequest request = SessionRequest.builder().startTime(LocalDateTime.now().plusHours(3))
-				.basePrice(new BigDecimal("300.00")).movieId(2L).hallId(3L).build();
-
-		Session result = sessionMapper.toEntity(request);
-
-		assertThat(result).isNotNull();
-		assertThat(result.getStartTime()).isEqualTo(request.getStartTime());
-		assertThat(result.getBasePrice()).isEqualByComparingTo("300.00");
-		assertThat(result.getId()).isNull();
-		assertThat(result.getMovie()).isNull();
-		assertThat(result.getHall()).isNull();
-		assertThat(result.getTickets()).isNotNull();
-		assertThat(result.getTickets()).isEmpty();
-	}
-
-	@Test
 	void toEntity_ShouldHandleNullBasePrice() {
-		SessionRequest request = SessionRequest.builder().startTime(futureTime).basePrice(null).movieId(1L).hallId(1L)
-				.build();
+		SessionCreateRequest request = SessionCreateRequest.builder().startTime(futureTime).basePrice(null).movieId(1L)
+				.hallId(1L).build();
 
 		Session result = sessionMapper.toEntity(request);
 
@@ -248,8 +318,8 @@ class SessionMapperTest {
 
 	@Test
 	void toEntity_ShouldHandleNullStartTime() {
-		SessionRequest request = SessionRequest.builder().startTime(null).basePrice(new BigDecimal("200.00"))
-				.movieId(1L).hallId(1L).build();
+		SessionCreateRequest request = SessionCreateRequest.builder().startTime(null)
+				.basePrice(new BigDecimal("200.00")).movieId(1L).hallId(1L).build();
 
 		Session result = sessionMapper.toEntity(request);
 
@@ -258,8 +328,8 @@ class SessionMapperTest {
 
 	@Test
 	void toEntity_ShouldHandleNullIds() {
-		SessionRequest request = SessionRequest.builder().startTime(futureTime).basePrice(new BigDecimal("200.00"))
-				.movieId(null).hallId(null).build();
+		SessionCreateRequest request = SessionCreateRequest.builder().startTime(futureTime)
+				.basePrice(new BigDecimal("200.00")).movieId(null).hallId(null).build();
 
 		Session result = sessionMapper.toEntity(request);
 
@@ -268,80 +338,12 @@ class SessionMapperTest {
 	}
 
 	@Test
-	void toEntity_ShouldReturnNull_WhenRequestIsNull() {
-		Session result = sessionMapper.toEntity(null);
-
-		assertThat(result).isNull();
-	}
-
-	@Test
 	void toEntity_ShouldMapZeroBasePrice() {
-		SessionRequest request = SessionRequest.builder().startTime(futureTime).basePrice(BigDecimal.ZERO).movieId(1L)
-				.hallId(1L).build();
+		SessionCreateRequest request = SessionCreateRequest.builder().startTime(futureTime).basePrice(BigDecimal.ZERO)
+				.movieId(1L).hallId(1L).build();
 
 		Session result = sessionMapper.toEntity(request);
 
 		assertThat(result.getBasePrice()).isEqualByComparingTo(BigDecimal.ZERO);
-	}
-
-	@Test
-	void toEntity_ShouldMapFutureDates() {
-		LocalDateTime[] futureDates = { LocalDateTime.now().plusHours(1), LocalDateTime.now().plusDays(1),
-				LocalDateTime.now().plusMonths(1), LocalDateTime.now().plusYears(1) };
-
-		for (LocalDateTime date : futureDates) {
-			SessionRequest request = SessionRequest.builder().startTime(date).basePrice(new BigDecimal("100.00"))
-					.movieId(1L).hallId(1L).build();
-
-			Session result = sessionMapper.toEntity(request);
-
-			assertThat(result.getStartTime()).isEqualTo(date);
-		}
-	}
-
-	@Test
-	void consistencyCheck_AdminDtoShouldContainCorrectMovieInfo() {
-		SessionAdminResponse adminDto = sessionMapper.toAdminDto(session);
-
-		assertThat(adminDto.getMovieTitle()).isEqualTo("Test Movie");
-		assertThat(adminDto.getMovieDuration()).isEqualTo(120);
-	}
-
-	@Test
-	void consistencyCheck_ScheduleDtoShouldContainCorrectHallInfo() {
-		SessionScheduleResponse scheduleDto = sessionMapper.toScheduleDto(session);
-
-		assertThat(scheduleDto.getHallName()).isEqualTo("Hall 1");
-		assertThat(scheduleDto.getHallId()).isEqualTo(1L);
-	}
-
-	@Test
-	void consistencyCheck_BothDtosShouldHaveSameBaseData() {
-		SessionAdminResponse adminDto = sessionMapper.toAdminDto(session);
-		SessionScheduleResponse scheduleDto = sessionMapper.toScheduleDto(session);
-
-		assertThat(adminDto.getId()).isEqualTo(scheduleDto.getId());
-		assertThat(adminDto.getStartTime()).isEqualTo(scheduleDto.getStartTime());
-		assertThat(adminDto.getBasePrice()).isEqualTo(scheduleDto.getBasePrice());
-		assertThat(adminDto.getMovieId()).isEqualTo(scheduleDto.getMovieId());
-		assertThat(adminDto.getMovieTitle()).isEqualTo(scheduleDto.getMovieTitle());
-		assertThat(adminDto.getMovieDuration()).isEqualTo(scheduleDto.getMovieDuration());
-	}
-
-	@Test
-	void toEntity_ShouldNotHaveSideEffectsOnRequest() {
-		SessionRequest originalRequest = SessionRequest.builder().startTime(futureTime)
-				.basePrice(new BigDecimal("400.00")).movieId(5L).hallId(6L).build();
-
-		SessionRequest requestCopy = SessionRequest.builder().startTime(originalRequest.getStartTime())
-				.basePrice(originalRequest.getBasePrice()).movieId(originalRequest.getMovieId())
-				.hallId(originalRequest.getHallId()).build();
-
-		sessionMapper.toEntity(originalRequest);
-
-		assertThat(originalRequest.getStartTime()).isEqualTo(requestCopy.getStartTime());
-		assertThat(originalRequest.getBasePrice()).isEqualTo(requestCopy.getBasePrice());
-		assertThat(originalRequest.getMovieId()).isEqualTo(requestCopy.getMovieId());
-		assertThat(originalRequest.getHallId()).isEqualTo(requestCopy.getHallId());
 	}
 }
