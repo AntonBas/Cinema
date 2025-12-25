@@ -226,7 +226,7 @@ public class BonusUserService {
 
 	@Transactional(readOnly = true)
 	private BonusRules findActiveRule(BonusTransactionType type) {
-		return bonusRulesRepository.findByBonusTypeAndIsActiveTrue(type).orElseThrow(() -> {
+		return bonusRulesRepository.findByBonusTypeAndActiveTrue(type).orElseThrow(() -> {
 			log.error("Active bonus rule not found for type: {}", type);
 			return new BonusRuleNotFoundException(type);
 		});

@@ -11,5 +11,5 @@ public interface BonusRulesRepository extends JpaRepository<BonusRules, Long> {
 
 	Optional<BonusRules> findByBonusType(BonusTransactionType bonusType);
 
-	Optional<BonusRules> findByBonusTypeAndIsActiveTrue(BonusTransactionType bonusType);
+	Optional<BonusRules> findByBonusTypeAndActiveTrue(BonusTransactionType bonusType);
 }

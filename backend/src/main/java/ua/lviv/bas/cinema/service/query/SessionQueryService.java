@@ -20,7 +20,6 @@ import ua.lviv.bas.cinema.domain.Session;
 import ua.lviv.bas.cinema.domain.enums.CinemaSessionStatus;
 import ua.lviv.bas.cinema.dto.filter.SessionFilter;
 import ua.lviv.bas.cinema.repository.SessionRepository;
-import ua.lviv.bas.cinema.service.SessionService;
 
 @Slf4j
 @Service
@@ -29,7 +28,6 @@ import ua.lviv.bas.cinema.service.SessionService;
 public class SessionQueryService {
 
 	private final SessionRepository sessionRepository;
-	private final SessionService sessionService;
 
 	public Page<Session> findFilteredSessions(SessionFilter filter) {
 		log.debug("Finding filtered sessions with filter: {}", filter);
@@ -86,7 +84,7 @@ public class SessionQueryService {
 		List<Session> allSessions = (List<Session>) sessionRepository.findAll(predicate);
 
 		return allSessions.stream().filter(session -> {
-			LocalDateTime sessionEnd = sessionService.getEndTime(session);
+			LocalDateTime sessionEnd = calculateEndTime(session);
 			return sessionEnd != null && sessionEnd.isAfter(startTime);
 		}).toList();
 	}
@@ -221,5 +219,13 @@ public class SessionQueryService {
 		if (filter.getSize() > 100) {
 			throw new IllegalArgumentException("Page size cannot exceed 100");
 		}
+	}
+
+	private LocalDateTime calculateEndTime(Session session) {
+		if (session == null || session.getMovie() == null || session.getMovie().getDurationMinutes() == null
+				|| session.getStartTime() == null) {
+			return null;
+		}
+		return session.getStartTime().plusMinutes(session.getMovie().getDurationMinutes());
 	}
 }

@@ -247,7 +247,6 @@ public class SessionService {
 
 		response.setEndTime(getEndTime(session));
 
-		// Замість session.getTickets() - використовуємо кількість заброньованих місць
 		int bookedSeatsCount = session.getBookedSeats() != null
 				? (int) session.getBookedSeats().stream().filter(bs -> bs.getTicket() != null).count()
 				: 0;
@@ -276,8 +275,6 @@ public class SessionService {
 			hallCapacity = session.getHall().getSeats().size();
 		}
 
-		// Замість session.getTickets() - використовуємо кількість заброньованих місць з
-		// квитками
 		int bookedSeatsCount = session.getBookedSeats() != null
 				? (int) session.getBookedSeats().stream().filter(bs -> bs.getTicket() != null).count()
 				: 0;

@@ -19,8 +19,6 @@ public interface SessionRepository
 
 	List<Session> findByStatusAndStartTimeBefore(CinemaSessionStatus status, LocalDateTime time);
 
-	@Query("SELECT s FROM Session s WHERE s.status = :status AND "
-			+ "(s.startTime + FUNCTION('MINUTE', s.movie.durationMinutes)) < :endTime")
-	List<Session> findByStatusAndEndTimeBefore(@Param("status") CinemaSessionStatus status,
-			@Param("endTime") LocalDateTime endTime);
+	@Query(value = "SELECT s.* FROM sessions s JOIN movies m ON s.movie_id = m.id WHERE s.status = CAST(:status AS text) AND (s.start_time + (m.duration_minutes * interval '1 minute')) < :endTime", nativeQuery = true)
+	List<Session> findByStatusAndEndTimeBefore(@Param("status") String status, @Param("endTime") LocalDateTime endTime);
 }

@@ -49,8 +49,8 @@ public class SessionStatusScheduler {
 	}
 
 	private void updateToCompleted(LocalDateTime now) {
-		List<Session> sessionsToComplete = sessionRepository.findByStatusAndEndTimeBefore(CinemaSessionStatus.ONGOING,
-				now);
+		List<Session> sessionsToComplete = sessionRepository
+				.findByStatusAndEndTimeBefore(CinemaSessionStatus.ONGOING.toString(), now);
 
 		if (!sessionsToComplete.isEmpty()) {
 			log.info("Found {} sessions to mark as COMPLETED", sessionsToComplete.size());

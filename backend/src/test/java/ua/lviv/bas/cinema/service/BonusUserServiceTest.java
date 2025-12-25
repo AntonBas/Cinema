@@ -115,7 +115,7 @@ class BonusUserServiceTest {
 		writeOffRule.setActive(true);
 
 		when(bonusCardRepository.findByUserId(userId)).thenReturn(Optional.of(card));
-		when(bonusRulesRepository.findByBonusTypeAndIsActiveTrue(BonusTransactionType.PURCHASE_WRITE_OFF))
+		when(bonusRulesRepository.findByBonusTypeAndActiveTrue(BonusTransactionType.PURCHASE_WRITE_OFF))
 				.thenReturn(Optional.of(writeOffRule));
 
 		BonusBalanceResponse result = bonusUserService.getBalance(userId);
@@ -136,7 +136,7 @@ class BonusUserServiceTest {
 		card.setId(1L);
 
 		when(bonusCardRepository.findByUserId(userId)).thenReturn(Optional.of(card));
-		when(bonusRulesRepository.findByBonusTypeAndIsActiveTrue(BonusTransactionType.PURCHASE_WRITE_OFF))
+		when(bonusRulesRepository.findByBonusTypeAndActiveTrue(BonusTransactionType.PURCHASE_WRITE_OFF))
 				.thenReturn(Optional.empty());
 
 		assertThatThrownBy(() -> bonusUserService.getBalance(userId)).isInstanceOf(BonusRuleNotFoundException.class);
@@ -186,7 +186,7 @@ class BonusUserServiceTest {
 		rule.setActive(true);
 
 		when(bonusCardRepository.findByUserId(user.getId())).thenReturn(Optional.of(card));
-		when(bonusRulesRepository.findByBonusTypeAndIsActiveTrue(BonusTransactionType.WELCOME_BONUS))
+		when(bonusRulesRepository.findByBonusTypeAndActiveTrue(BonusTransactionType.WELCOME_BONUS))
 				.thenReturn(Optional.of(rule));
 		when(bonusCardRepository.save(any(BonusCard.class))).thenAnswer(invocation -> invocation.getArgument(0));
 		when(bonusTransactionRepository.save(any(BonusTransaction.class)))
@@ -214,7 +214,7 @@ class BonusUserServiceTest {
 
 		bonusUserService.awardWelcomeBonus(user);
 
-		verify(bonusRulesRepository, never()).findByBonusTypeAndIsActiveTrue(any());
+		verify(bonusRulesRepository, never()).findByBonusTypeAndActiveTrue(any());
 		verify(bonusCardRepository, never()).save(any());
 		verify(bonusTransactionRepository, never()).save(any());
 	}
@@ -229,7 +229,7 @@ class BonusUserServiceTest {
 		bonusUserService.awardBirthdayBonus(user);
 
 		verify(bonusCardRepository, never()).findByUserId(any());
-		verify(bonusRulesRepository, never()).findByBonusTypeAndIsActiveTrue(any());
+		verify(bonusRulesRepository, never()).findByBonusTypeAndActiveTrue(any());
 	}
 
 	@Test
@@ -242,7 +242,7 @@ class BonusUserServiceTest {
 		bonusUserService.awardBirthdayBonus(user);
 
 		verify(bonusCardRepository, never()).findByUserId(any());
-		verify(bonusRulesRepository, never()).findByBonusTypeAndIsActiveTrue(any());
+		verify(bonusRulesRepository, never()).findByBonusTypeAndActiveTrue(any());
 	}
 
 	@Test
@@ -262,13 +262,13 @@ class BonusUserServiceTest {
 		rule.setPointValue(BigDecimal.ONE);
 
 		when(bonusCardRepository.findByUserId(userId)).thenReturn(Optional.of(card));
-		when(bonusRulesRepository.findByBonusTypeAndIsActiveTrue(BonusTransactionType.PURCHASE_WRITE_OFF))
+		when(bonusRulesRepository.findByBonusTypeAndActiveTrue(BonusTransactionType.PURCHASE_WRITE_OFF))
 				.thenReturn(Optional.of(rule));
 
 		bonusUserService.validatePointsRedemption(userId, pointsToUse);
 
 		verify(bonusCardRepository).findByUserId(userId);
-		verify(bonusRulesRepository).findByBonusTypeAndIsActiveTrue(BonusTransactionType.PURCHASE_WRITE_OFF);
+		verify(bonusRulesRepository).findByBonusTypeAndActiveTrue(BonusTransactionType.PURCHASE_WRITE_OFF);
 	}
 
 	@Test
@@ -288,7 +288,7 @@ class BonusUserServiceTest {
 		rule.setPointValue(BigDecimal.ONE);
 
 		when(bonusCardRepository.findByUserId(userId)).thenReturn(Optional.of(card));
-		when(bonusRulesRepository.findByBonusTypeAndIsActiveTrue(BonusTransactionType.PURCHASE_WRITE_OFF))
+		when(bonusRulesRepository.findByBonusTypeAndActiveTrue(BonusTransactionType.PURCHASE_WRITE_OFF))
 				.thenReturn(Optional.of(rule));
 
 		assertThatThrownBy(() -> bonusUserService.validatePointsRedemption(userId, pointsToUse))
@@ -312,7 +312,7 @@ class BonusUserServiceTest {
 		rule.setPointValue(BigDecimal.ONE);
 
 		when(bonusCardRepository.findByUserId(userId)).thenReturn(Optional.of(card));
-		when(bonusRulesRepository.findByBonusTypeAndIsActiveTrue(BonusTransactionType.PURCHASE_WRITE_OFF))
+		when(bonusRulesRepository.findByBonusTypeAndActiveTrue(BonusTransactionType.PURCHASE_WRITE_OFF))
 				.thenReturn(Optional.of(rule));
 
 		assertThatThrownBy(() -> bonusUserService.validatePointsRedemption(userId, pointsToUse))
@@ -329,7 +329,7 @@ class BonusUserServiceTest {
 		rule.setMoneyRatio(moneyRatio);
 		rule.setActive(true);
 
-		when(bonusRulesRepository.findByBonusTypeAndIsActiveTrue(BonusTransactionType.PURCHASE_BONUS))
+		when(bonusRulesRepository.findByBonusTypeAndActiveTrue(BonusTransactionType.PURCHASE_BONUS))
 				.thenReturn(Optional.of(rule));
 
 		Integer result = bonusUserService.calculateEarnedPoints(purchaseAmount);
@@ -346,7 +346,7 @@ class BonusUserServiceTest {
 		rule.setMoneyRatio(null);
 		rule.setActive(true);
 
-		when(bonusRulesRepository.findByBonusTypeAndIsActiveTrue(BonusTransactionType.PURCHASE_BONUS))
+		when(bonusRulesRepository.findByBonusTypeAndActiveTrue(BonusTransactionType.PURCHASE_BONUS))
 				.thenReturn(Optional.of(rule));
 
 		Integer result = bonusUserService.calculateEarnedPoints(purchaseAmount);
@@ -363,7 +363,7 @@ class BonusUserServiceTest {
 		rule.setMoneyRatio(new BigDecimal("0.1"));
 		rule.setActive(false);
 
-		when(bonusRulesRepository.findByBonusTypeAndIsActiveTrue(BonusTransactionType.PURCHASE_BONUS))
+		when(bonusRulesRepository.findByBonusTypeAndActiveTrue(BonusTransactionType.PURCHASE_BONUS))
 				.thenReturn(Optional.of(rule));
 
 		Integer result = bonusUserService.calculateEarnedPoints(purchaseAmount);
@@ -375,7 +375,7 @@ class BonusUserServiceTest {
 	void calculateEarnedPoints_ShouldThrowWhenRuleNotFound() {
 		BigDecimal purchaseAmount = new BigDecimal("1000");
 
-		when(bonusRulesRepository.findByBonusTypeAndIsActiveTrue(BonusTransactionType.PURCHASE_BONUS))
+		when(bonusRulesRepository.findByBonusTypeAndActiveTrue(BonusTransactionType.PURCHASE_BONUS))
 				.thenReturn(Optional.empty());
 
 		assertThatThrownBy(() -> bonusUserService.calculateEarnedPoints(purchaseAmount))
@@ -408,9 +408,9 @@ class BonusUserServiceTest {
 		purchaseRule.setActive(true);
 
 		when(bonusCardRepository.findByUserId(userId)).thenReturn(Optional.of(card));
-		when(bonusRulesRepository.findByBonusTypeAndIsActiveTrue(BonusTransactionType.PURCHASE_WRITE_OFF))
+		when(bonusRulesRepository.findByBonusTypeAndActiveTrue(BonusTransactionType.PURCHASE_WRITE_OFF))
 				.thenReturn(Optional.of(writeOffRule));
-		when(bonusRulesRepository.findByBonusTypeAndIsActiveTrue(BonusTransactionType.PURCHASE_BONUS))
+		when(bonusRulesRepository.findByBonusTypeAndActiveTrue(BonusTransactionType.PURCHASE_BONUS))
 				.thenReturn(Optional.of(purchaseRule));
 		when(bonusCardRepository.save(any(BonusCard.class))).thenAnswer(invocation -> invocation.getArgument(0));
 		when(bonusTransactionRepository.save(any(BonusTransaction.class)))
@@ -454,9 +454,9 @@ class BonusUserServiceTest {
 		purchaseRule.setActive(true);
 
 		when(bonusCardRepository.findByUserId(userId)).thenReturn(Optional.of(card));
-		when(bonusRulesRepository.findByBonusTypeAndIsActiveTrue(BonusTransactionType.PURCHASE_WRITE_OFF))
+		when(bonusRulesRepository.findByBonusTypeAndActiveTrue(BonusTransactionType.PURCHASE_WRITE_OFF))
 				.thenReturn(Optional.of(writeOffRule));
-		when(bonusRulesRepository.findByBonusTypeAndIsActiveTrue(BonusTransactionType.PURCHASE_BONUS))
+		when(bonusRulesRepository.findByBonusTypeAndActiveTrue(BonusTransactionType.PURCHASE_BONUS))
 				.thenReturn(Optional.of(purchaseRule));
 		when(bonusCardRepository.save(any(BonusCard.class))).thenAnswer(invocation -> invocation.getArgument(0));
 		when(bonusTransactionRepository.save(any(BonusTransaction.class)))
