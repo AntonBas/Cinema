@@ -19,6 +19,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -34,12 +35,13 @@ import ua.lviv.bas.cinema.domain.enums.TicketStatus;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString(exclude = { "bookedSeat", "payment", "refund" })
+@ToString(exclude = { "bookedSeat", "payment", "refund", "user" })
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Table(name = "tickets", indexes = { @Index(name = "idx_ticket_payment", columnList = "payment_id"),
 		@Index(name = "idx_ticket_status", columnList = "status"),
 		@Index(name = "idx_ticket_purchase_time", columnList = "purchase_time"),
-		@Index(name = "idx_ticket_booked_seat", columnList = "booked_seat_id") })
+		@Index(name = "idx_ticket_booked_seat", columnList = "booked_seat_id"),
+		@Index(name = "idx_ticket_user", columnList = "user_id") })
 public class Ticket {
 
 	@Id
@@ -56,11 +58,15 @@ public class Ticket {
 	private BookedSeat bookedSeat;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "payment_id", nullable = false)
+	@JoinColumn(name = "payment_id")
 	private Payment payment;
 
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "user_id", nullable = false)
+	private User user;
+
 	@NotNull
-	@jakarta.validation.constraints.Positive
+	@Positive
 	@Column(name = "final_price", precision = 10, scale = 2, nullable = false)
 	private BigDecimal finalPrice;
 

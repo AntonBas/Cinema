@@ -2,6 +2,8 @@ package ua.lviv.bas.cinema.domain;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -17,6 +19,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
@@ -59,6 +62,10 @@ public class Refund {
 	@OneToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "ticket_id", nullable = false)
 	private Ticket ticket;
+
+	@OneToMany(mappedBy = "refund", fetch = FetchType.LAZY)
+	@Builder.Default
+	private List<BonusTransaction> bonusTransactions = new ArrayList<>();
 
 	@NotNull
 	@Positive

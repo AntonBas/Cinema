@@ -8,6 +8,7 @@ import java.util.List;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -18,6 +19,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -38,7 +40,7 @@ import ua.lviv.bas.cinema.domain.enums.VerificationStatus;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString(exclude = { "tickets", "password" })
+@ToString(exclude = { "tickets", "password", "bonusCard", "discounts", "bookings" })
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Table(name = "users", indexes = { @Index(name = "idx_user_email", columnList = "email"),
 		@Index(name = "idx_user_name", columnList = "first_name,last_name"),
@@ -107,4 +109,15 @@ public class User {
 	@Column(nullable = false)
 	@Builder.Default
 	private boolean enabled = false;
+
+	@OneToOne(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+	private BonusCard bonusCard;
+
+	@OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+	@Builder.Default
+	private List<Discount> discounts = new ArrayList<>();
+
+	@OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+	@Builder.Default
+	private List<Booking> bookings = new ArrayList<>();
 }
