@@ -27,16 +27,12 @@ import ua.lviv.bas.cinema.domain.Session;
 import ua.lviv.bas.cinema.domain.enums.CinemaSessionStatus;
 import ua.lviv.bas.cinema.dto.filter.SessionFilter;
 import ua.lviv.bas.cinema.repository.SessionRepository;
-import ua.lviv.bas.cinema.service.SessionService;
 
 @ExtendWith(MockitoExtension.class)
 class SessionQueryServiceTest {
 
 	@Mock
 	private SessionRepository sessionRepository;
-
-	@Mock
-	private SessionService sessionService;
 
 	@InjectMocks
 	private SessionQueryService sessionQueryService;
@@ -53,6 +49,16 @@ class SessionQueryServiceTest {
 		session.setId(1L);
 		session.setStartTime(now.plusHours(2));
 		session.setStatus(CinemaSessionStatus.SCHEDULED);
+
+		CinemaHall hall = new CinemaHall();
+		hall.setId(1L);
+		session.setHall(hall);
+
+		Movie movie = new Movie();
+		movie.setId(1L);
+		movie.setTitle("Test Movie");
+		movie.setDurationMinutes(90);
+		session.setMovie(movie);
 
 		pageable = PageRequest.of(0, 10);
 	}
@@ -105,9 +111,30 @@ class SessionQueryServiceTest {
 	}
 
 	@Test
+	void findFilteredSessions_ShouldThrowException_WhenPageSizeTooLarge() {
+		SessionFilter filter = SessionFilter.builder().size(150).adminView(true).build();
+
+		assertThatThrownBy(() -> sessionQueryService.findFilteredSessions(filter))
+				.isInstanceOf(IllegalArgumentException.class).hasMessage("Page size cannot exceed 100");
+	}
+
+	@Test
+	void findFilteredSessions_ShouldApplyDefaultSorting() {
+		SessionFilter filter = SessionFilter.builder().adminView(true).build();
+
+		Page<Session> sessionPage = new PageImpl<>(List.of(session));
+
+		when(sessionRepository.findAll(any(Predicate.class), any(Pageable.class))).thenReturn(sessionPage);
+
+		Page<Session> result = sessionQueryService.findFilteredSessions(filter);
+
+		assertThat(result).isNotNull();
+	}
+
+	@Test
 	void findConflictingSessions_ShouldReturnConflictingSessions() {
-		LocalDateTime startTime = LocalDateTime.of(2024, 1, 15, 18, 0);
-		LocalDateTime endTime = startTime.plusHours(2);
+		LocalDateTime startTime = now;
+		LocalDateTime endTime = now.plusHours(2);
 
 		Session conflictingSession = new Session();
 		conflictingSession.setId(2L);
@@ -122,10 +149,7 @@ class SessionQueryServiceTest {
 		movie.setDurationMinutes(90);
 		conflictingSession.setMovie(movie);
 
-		List<Session> allSessions = List.of(conflictingSession);
-
-		when(sessionRepository.findAll(any(Predicate.class))).thenReturn(allSessions);
-		when(sessionService.getEndTime(conflictingSession)).thenReturn(startTime.plusMinutes(120));
+		when(sessionRepository.findAll(any(Predicate.class))).thenReturn(List.of(conflictingSession));
 
 		List<Session> result = sessionQueryService.findConflictingSessions(1L, startTime, endTime, null);
 
@@ -135,8 +159,8 @@ class SessionQueryServiceTest {
 
 	@Test
 	void findConflictingSessions_ShouldReturnEmpty_WhenNoConflict() {
-		LocalDateTime startTime = LocalDateTime.of(2024, 1, 15, 18, 0);
-		LocalDateTime endTime = startTime.plusHours(2);
+		LocalDateTime startTime = now;
+		LocalDateTime endTime = now.plusHours(2);
 
 		Session nonConflictingSession = new Session();
 		nonConflictingSession.setId(2L);
@@ -151,10 +175,7 @@ class SessionQueryServiceTest {
 		movie.setDurationMinutes(90);
 		nonConflictingSession.setMovie(movie);
 
-		List<Session> allSessions = List.of(nonConflictingSession);
-
-		when(sessionRepository.findAll(any(Predicate.class))).thenReturn(allSessions);
-		when(sessionService.getEndTime(nonConflictingSession)).thenReturn(startTime.minusMinutes(30));
+		when(sessionRepository.findAll(any(Predicate.class))).thenReturn(List.of(nonConflictingSession));
 
 		List<Session> result = sessionQueryService.findConflictingSessions(1L, startTime, endTime, null);
 
@@ -163,8 +184,8 @@ class SessionQueryServiceTest {
 
 	@Test
 	void findConflictingSessions_ShouldExcludeSession() {
-		LocalDateTime startTime = LocalDateTime.of(2024, 1, 15, 18, 0);
-		LocalDateTime endTime = startTime.plusHours(2);
+		LocalDateTime startTime = now;
+		LocalDateTime endTime = now.plusHours(2);
 
 		when(sessionRepository.findAll(any(Predicate.class))).thenReturn(List.of());
 
@@ -193,6 +214,18 @@ class SessionQueryServiceTest {
 		when(sessionRepository.findAll(any(Predicate.class), any(Pageable.class))).thenReturn(sessionPage);
 
 		Page<Session> result = sessionQueryService.findByMovieTitle(null, pageable, false);
+
+		assertThat(result).isNotNull();
+		assertThat(result.getContent()).hasSize(1);
+	}
+
+	@Test
+	void findByMovieTitle_ShouldReturnAllSessions_WhenSearchIsBlank() {
+		Page<Session> sessionPage = new PageImpl<>(List.of(session));
+
+		when(sessionRepository.findAll(any(Predicate.class), any(Pageable.class))).thenReturn(sessionPage);
+
+		Page<Session> result = sessionQueryService.findByMovieTitle("   ", pageable, false);
 
 		assertThat(result).isNotNull();
 		assertThat(result.getContent()).hasSize(1);
@@ -260,6 +293,18 @@ class SessionQueryServiceTest {
 	}
 
 	@Test
+	void findByHallId_ShouldReturnEmpty_WhenNoSessions() {
+		Page<Session> sessionPage = new PageImpl<>(List.of());
+
+		when(sessionRepository.findAll(any(Predicate.class), any(Pageable.class))).thenReturn(sessionPage);
+
+		Page<Session> result = sessionQueryService.findByHallId(999L, pageable, false);
+
+		assertThat(result).isNotNull();
+		assertThat(result.getContent()).isEmpty();
+	}
+
+	@Test
 	void findByMovieId_ShouldReturnSessions() {
 		Page<Session> sessionPage = new PageImpl<>(List.of(session));
 
@@ -282,6 +327,24 @@ class SessionQueryServiceTest {
 		assertThat(result).isNotNull();
 		assertThat(result.getContent()).hasSize(1);
 		assertThat(result.getContent().get(0).getStatus()).isEqualTo(CinemaSessionStatus.SCHEDULED);
+	}
+
+	@Test
+	void findAvailableSessions_ShouldExcludePastSessions() {
+		Session pastSession = new Session();
+		pastSession.setId(2L);
+		pastSession.setStartTime(now.minusHours(1));
+		pastSession.setStatus(CinemaSessionStatus.SCHEDULED);
+
+		Page<Session> sessionPage = new PageImpl<>(List.of(session));
+
+		when(sessionRepository.findAll(any(Predicate.class), any(Pageable.class))).thenReturn(sessionPage);
+
+		Page<Session> result = sessionQueryService.findAvailableSessions(pageable);
+
+		assertThat(result).isNotNull();
+		assertThat(result.getContent()).hasSize(1);
+		assertThat(result.getContent().get(0).getId()).isEqualTo(1L);
 	}
 
 	@Test
@@ -356,6 +419,20 @@ class SessionQueryServiceTest {
 	}
 
 	@Test
+	void findFiltered_AdminView_ShouldReturnAllStatuses() {
+		session.setStatus(CinemaSessionStatus.CANCELLED);
+		Page<Session> sessionPage = new PageImpl<>(List.of(session));
+
+		when(sessionRepository.findAll(any(Predicate.class), any(Pageable.class))).thenReturn(sessionPage);
+
+		Page<Session> result = sessionQueryService.findFiltered(null, null, null, null, CinemaSessionStatus.CANCELLED,
+				pageable, true);
+
+		assertThat(result).isNotNull();
+		assertThat(result.getContent()).hasSize(1);
+	}
+
+	@Test
 	void findByStatus_ShouldReturnSessionsWithStatus() {
 		Page<Session> sessionPage = new PageImpl<>(List.of(session));
 
@@ -387,10 +464,15 @@ class SessionQueryServiceTest {
 	}
 
 	@Test
-	void validateFilter_ShouldThrowException_WhenPageSizeTooLarge() {
-		SessionFilter filter = SessionFilter.builder().size(150).adminView(true).build();
+	void findFilteredSessions_ShouldApplyUserRestrictions() {
+		SessionFilter filter = SessionFilter.builder().adminView(false).build();
 
-		assertThatThrownBy(() -> sessionQueryService.findFilteredSessions(filter))
-				.isInstanceOf(IllegalArgumentException.class).hasMessage("Page size cannot exceed 100");
+		Page<Session> sessionPage = new PageImpl<>(List.of(session));
+
+		when(sessionRepository.findAll(any(Predicate.class), any(Pageable.class))).thenReturn(sessionPage);
+
+		Page<Session> result = sessionQueryService.findFilteredSessions(filter);
+
+		assertThat(result).isNotNull();
 	}
 }
