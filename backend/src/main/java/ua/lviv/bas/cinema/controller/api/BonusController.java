@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.controller;
+package ua.lviv.bas.cinema.controller.api;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -26,7 +26,7 @@ import ua.lviv.bas.cinema.service.user.BonusUserService;
 @RequiredArgsConstructor
 @Tag(name = "Bonus", description = "API for user bonus system operations")
 @SecurityRequirement(name = "bearerAuth")
-public class BonusUserController {
+public class BonusController {
 
 	private final BonusUserService bonusUserService;
 

@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.service;
+package ua.lviv.bas.cinema.service.common;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -42,7 +42,6 @@ import ua.lviv.bas.cinema.repository.GenreRepository;
 import ua.lviv.bas.cinema.repository.MovieRepository;
 import ua.lviv.bas.cinema.repository.PersonRepository;
 import ua.lviv.bas.cinema.scheduler.MovieScheduler;
-import ua.lviv.bas.cinema.service.common.SlugService;
 
 @Slf4j
 @Service

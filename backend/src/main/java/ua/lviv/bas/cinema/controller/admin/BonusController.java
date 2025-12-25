@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.controller;
+package ua.lviv.bas.cinema.controller.admin;
 
 import java.util.List;
 
@@ -33,7 +33,7 @@ import ua.lviv.bas.cinema.service.admin.BonusAdminService;
 @Tag(name = "Bonus Admin", description = "API for administrative management of the bonus system")
 @PreAuthorize("hasRole('ADMIN')")
 @SecurityRequirement(name = "bearerAuth")
-public class BonusAdminController {
+public class BonusController {
 
 	private final BonusAdminService bonusAdminService;
 

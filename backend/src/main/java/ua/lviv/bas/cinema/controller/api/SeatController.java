@@ -1,36 +1,30 @@
-package ua.lviv.bas.cinema.controller;
+package ua.lviv.bas.cinema.controller.api;
 
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.enums.SeatType;
 import ua.lviv.bas.cinema.dto.cinemaHall.response.SeatResponse;
-import ua.lviv.bas.cinema.service.SeatService;
+import ua.lviv.bas.cinema.service.common.SeatService;
 
 @Slf4j
 @RestController
 @RequestMapping("/api/cinema-halls/{hallId}/seats")
 @RequiredArgsConstructor
-@Tag(name = "Seat Management", description = "Endpoints for managing seats within cinema halls")
-@SecurityRequirement(name = "bearerAuth")
+@Tag(name = "Seat API", description = "Public endpoints for viewing seats")
 public class SeatController {
 
 	private final SeatService seatService;
@@ -48,8 +42,7 @@ public class SeatController {
 
 	@GetMapping("/{seatId}")
 	@Operation(summary = "Get seat by ID", description = "Retrieve specific seat information by its ID within a cinema hall.")
-	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Seat found", content = @Content(schema = @Schema(implementation = SeatResponse.class))),
+	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Seat found"),
 			@ApiResponse(responseCode = "404", description = "Seat or cinema hall not found") })
 	public ResponseEntity<SeatResponse> getSeatById(
 			@Parameter(description = "ID of the cinema hall", required = true, example = "1") @PathVariable Long hallId,
@@ -62,8 +55,7 @@ public class SeatController {
 
 	@GetMapping("/position")
 	@Operation(summary = "Get seat by position", description = "Retrieve seat information by its row and number position within a cinema hall.")
-	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Seat found", content = @Content(schema = @Schema(implementation = SeatResponse.class))),
+	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Seat found"),
 			@ApiResponse(responseCode = "404", description = "Seat not found at specified position") })
 	public ResponseEntity<SeatResponse> getSeatByPosition(
 			@Parameter(description = "ID of the cinema hall", required = true, example = "1") @PathVariable Long hallId,
@@ -77,30 +69,9 @@ public class SeatController {
 		return ResponseEntity.ok(seat);
 	}
 
-	@PutMapping("/{seatId}/type")
-	@PreAuthorize("hasAnyRole('ADMIN', 'CONTENT_MANAGER')")
-	@Operation(summary = "Update seat type", description = "Change the type of a specific seat (e.g., STANDARD to VIP). Requires ADMIN or CONTENT_MANAGER role.")
-	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Seat type updated successfully", content = @Content(schema = @Schema(implementation = SeatResponse.class))),
-			@ApiResponse(responseCode = "400", description = "Invalid seat type"),
-			@ApiResponse(responseCode = "404", description = "Seat not found"),
-			@ApiResponse(responseCode = "401", description = "User not authenticated"),
-			@ApiResponse(responseCode = "403", description = "User does not have required role") })
-	public ResponseEntity<SeatResponse> updateSeatType(
-			@Parameter(description = "ID of the cinema hall", required = true, example = "1") @PathVariable Long hallId,
-
-			@Parameter(description = "ID of the seat to update", required = true, example = "5") @PathVariable Long seatId,
-
-			@Parameter(description = "New seat type", required = true, example = "VIP") @RequestParam SeatType seatType) {
-		log.info("PUT /api/cinema-halls/{}/seats/{}/type?seatType={} - Updating seat type", hallId, seatId, seatType);
-		SeatResponse updated = seatService.updateSeatType(seatId, seatType);
-		return ResponseEntity.ok(updated);
-	}
-
 	@GetMapping("/check-availability")
 	@Operation(summary = "Check seat availability", description = "Check if a specific seat is available (not blocked or reserved).")
-	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Availability status retrieved", content = @Content(schema = @Schema(implementation = Boolean.class))),
+	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Availability status retrieved"),
 			@ApiResponse(responseCode = "400", description = "Invalid seat position") })
 	public ResponseEntity<Boolean> checkSeatAvailability(
 			@Parameter(description = "ID of the cinema hall", required = true, example = "1") @PathVariable Long hallId,
@@ -116,8 +87,7 @@ public class SeatController {
 
 	@GetMapping("/count")
 	@Operation(summary = "Count seats in hall", description = "Get total number of seats in a cinema hall.")
-	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Seat count retrieved", content = @Content(schema = @Schema(implementation = Long.class))),
+	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Seat count retrieved"),
 			@ApiResponse(responseCode = "404", description = "Cinema hall not found") })
 	public ResponseEntity<Long> countSeatsByHall(
 			@Parameter(description = "ID of the cinema hall", required = true, example = "1") @PathVariable Long hallId) {

@@ -36,7 +36,7 @@ import ua.lviv.bas.cinema.service.admin.AdminUserService;
 @PreAuthorize("hasRole('ADMIN')")
 @Tag(name = "Admin User Management", description = "Endpoints for managing users (Admin only)")
 @SecurityRequirement(name = "bearerAuth")
-public class AdminUserController {
+public class UserController {
 
 	private final AdminUserService adminUserService;
 

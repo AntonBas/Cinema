@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.controller;
+package ua.lviv.bas.cinema.controller.api;
 
 import java.time.LocalDate;
 
@@ -21,14 +21,14 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.dto.session.response.SessionScheduleResponse;
-import ua.lviv.bas.cinema.service.SessionService;
+import ua.lviv.bas.cinema.service.common.SessionService;
 
 @Slf4j
 @RestController
 @RequestMapping("/api/sessions")
 @RequiredArgsConstructor
 @Tag(name = "Public Session API", description = "Public endpoints for viewing movie sessions")
-public class SessionPublicController {
+public class SessionController {
 
 	private final SessionService sessionService;
 

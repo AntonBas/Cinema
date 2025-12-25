@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.controller;
+package ua.lviv.bas.cinema.controller.admin;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -36,7 +36,7 @@ import ua.lviv.bas.cinema.dto.filter.SessionFilter;
 import ua.lviv.bas.cinema.dto.session.request.SessionCreateRequest;
 import ua.lviv.bas.cinema.dto.session.request.SessionUpdateRequest;
 import ua.lviv.bas.cinema.dto.session.response.SessionAdminResponse;
-import ua.lviv.bas.cinema.service.SessionService;
+import ua.lviv.bas.cinema.service.common.SessionService;
 
 @Slf4j
 @RestController
@@ -45,7 +45,7 @@ import ua.lviv.bas.cinema.service.SessionService;
 @Tag(name = "Admin Session Management", description = "Admin endpoints for managing movie sessions")
 @SecurityRequirement(name = "bearerAuth")
 @PreAuthorize("hasAnyRole('ADMIN', 'CONTENT_MANAGER')")
-public class SessionAdminController {
+public class SessionController {
 
 	private final SessionService sessionService;
 

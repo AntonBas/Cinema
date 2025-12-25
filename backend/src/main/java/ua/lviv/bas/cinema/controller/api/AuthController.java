@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.controller.common;
+package ua.lviv.bas.cinema.controller.api;
 
 import java.util.Map;
 
