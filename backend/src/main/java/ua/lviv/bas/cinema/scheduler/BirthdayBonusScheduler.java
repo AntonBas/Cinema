@@ -9,8 +9,8 @@ import org.springframework.stereotype.Component;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.User;
-import ua.lviv.bas.cinema.service.BonusUserService;
 import ua.lviv.bas.cinema.service.query.UserQueryService;
+import ua.lviv.bas.cinema.service.user.BonusUserService;
 
 @Slf4j
 @Component

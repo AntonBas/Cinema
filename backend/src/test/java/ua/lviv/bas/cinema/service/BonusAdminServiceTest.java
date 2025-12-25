@@ -33,6 +33,7 @@ import ua.lviv.bas.cinema.exception.domain.bonus.BonusRuleNotFoundException;
 import ua.lviv.bas.cinema.mapper.BonusMapper;
 import ua.lviv.bas.cinema.repository.BonusRulesRepository;
 import ua.lviv.bas.cinema.repository.BonusTransactionRepository;
+import ua.lviv.bas.cinema.service.admin.BonusAdminService;
 
 @ExtendWith(MockitoExtension.class)
 class BonusAdminServiceTest {

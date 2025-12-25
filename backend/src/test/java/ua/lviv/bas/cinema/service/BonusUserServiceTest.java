@@ -41,6 +41,7 @@ import ua.lviv.bas.cinema.mapper.BonusMapper;
 import ua.lviv.bas.cinema.repository.BonusCardRepository;
 import ua.lviv.bas.cinema.repository.BonusRulesRepository;
 import ua.lviv.bas.cinema.repository.BonusTransactionRepository;
+import ua.lviv.bas.cinema.service.user.BonusUserService;
 
 @ExtendWith(MockitoExtension.class)
 class BonusUserServiceTest {

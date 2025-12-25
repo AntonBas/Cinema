@@ -27,6 +27,8 @@ import ua.lviv.bas.cinema.exception.domain.auth.TokenAlreadyConfirmedException;
 import ua.lviv.bas.cinema.exception.domain.auth.TokenExpiredException;
 import ua.lviv.bas.cinema.repository.EmailTokenRepository;
 import ua.lviv.bas.cinema.repository.UserRepository;
+import ua.lviv.bas.cinema.service.common.EmailService;
+import ua.lviv.bas.cinema.service.common.EmailTokenService;
 
 @ExtendWith(MockitoExtension.class)
 class EmailTokenServiceTest {

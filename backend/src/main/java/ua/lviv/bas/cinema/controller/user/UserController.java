@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.controller;
+package ua.lviv.bas.cinema.controller.user;
 
 import java.util.Map;
 
@@ -28,7 +28,7 @@ import ua.lviv.bas.cinema.dto.user.request.UserPasswordUpdateRequest;
 import ua.lviv.bas.cinema.dto.user.request.UserUpdateRequest;
 import ua.lviv.bas.cinema.dto.user.response.UserProfileResponse;
 import ua.lviv.bas.cinema.security.CustomUserDetails;
-import ua.lviv.bas.cinema.service.UserService;
+import ua.lviv.bas.cinema.service.user.UserService;
 
 @Slf4j
 @RestController
@@ -42,8 +42,7 @@ public class UserController {
 
 	@GetMapping("/profile")
 	@Operation(summary = "Get user profile", description = "Retrieve the authenticated user's profile information.")
-	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Profile retrieved successfully", content = @Content(schema = @Schema(implementation = UserProfileResponse.class))),
+	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Profile retrieved successfully"),
 			@ApiResponse(responseCode = "401", description = "User not authenticated"),
 			@ApiResponse(responseCode = "404", description = "User not found") })
 	public ResponseEntity<UserProfileResponse> getProfile(
@@ -54,8 +53,7 @@ public class UserController {
 
 	@PutMapping("/profile")
 	@Operation(summary = "Update user profile", description = "Update the authenticated user's profile information.")
-	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Profile updated successfully", content = @Content(schema = @Schema(implementation = UserProfileResponse.class))),
+	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Profile updated successfully"),
 			@ApiResponse(responseCode = "400", description = "Invalid request data"),
 			@ApiResponse(responseCode = "401", description = "User not authenticated"),
 			@ApiResponse(responseCode = "404", description = "User not found") })
@@ -77,7 +75,6 @@ public class UserController {
 			@Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
 
 			@Parameter(description = "New email address", required = true, example = "new.email@example.com") @RequestParam String newEmail) {
-
 		log.info("POST /api/users/email/change-request - Requesting email change for user ID: {}",
 				userDetails.getUserId());
 		userService.requestEmailChange(userDetails.getUserId(), newEmail);
@@ -86,13 +83,11 @@ public class UserController {
 
 	@PostMapping("/email/confirm-change")
 	@Operation(summary = "Confirm email change", description = "Confirm email change using the token sent to the new email address.")
-	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Email changed successfully", content = @Content(schema = @Schema(implementation = UserProfileResponse.class))),
+	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Email changed successfully"),
 			@ApiResponse(responseCode = "400", description = "Invalid or expired token"),
 			@ApiResponse(responseCode = "404", description = "Token not found") })
 	public ResponseEntity<UserProfileResponse> confirmEmailChange(
 			@Parameter(description = "Email change confirmation token", required = true, example = "abc123def456") @RequestParam String token) {
-
 		log.info("POST /api/users/email/confirm-change - Confirming email change with token");
 		return ResponseEntity.ok(userService.confirmEmailChange(token));
 	}
@@ -105,12 +100,10 @@ public class UserController {
 			@ApiResponse(responseCode = "404", description = "User not found") })
 	public ResponseEntity<Map<String, String>> updatePassword(
 			@Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
+
 			@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Password update request", required = true, content = @Content(schema = @Schema(implementation = UserPasswordUpdateRequest.class))) @Valid @RequestBody UserPasswordUpdateRequest request) {
-
 		log.info("PATCH /api/users/password - Updating password for user ID: {}", userDetails.getUserId());
-
 		userService.updateUserPassword(userDetails.getUserId(), request);
-
 		return ResponseEntity.ok(Map.of("message", "Password updated successfully"));
 	}
 }

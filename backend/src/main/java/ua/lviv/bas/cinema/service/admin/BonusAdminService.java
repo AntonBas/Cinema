@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.service;
+package ua.lviv.bas.cinema.service.admin;
 
 import java.util.List;
 

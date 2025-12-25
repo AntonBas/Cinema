@@ -25,6 +25,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import ua.lviv.bas.cinema.config.JwtTokenProvider;
+import ua.lviv.bas.cinema.controller.common.AuthController;
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.enums.UserRole;
 import ua.lviv.bas.cinema.dto.user.request.UserLoginRequest;
@@ -34,8 +35,8 @@ import ua.lviv.bas.cinema.dto.user.response.UserResponse;
 import ua.lviv.bas.cinema.exception.domain.auth.InvalidTokenException;
 import ua.lviv.bas.cinema.exception.domain.auth.TokenAlreadyConfirmedException;
 import ua.lviv.bas.cinema.exception.domain.auth.TokenExpiredException;
-import ua.lviv.bas.cinema.service.PasswordResetService;
 import ua.lviv.bas.cinema.service.UserService;
+import ua.lviv.bas.cinema.service.user.UserPasswordResetService;
 
 @WebMvcTest(AuthController.class)
 @AutoConfigureMockMvc(addFilters = false)
@@ -51,7 +52,7 @@ public class AuthControllerTest {
 	private UserService userService;
 
 	@MockitoBean
-	private PasswordResetService passwordResetService;
+	private UserPasswordResetService passwordResetService;
 
 	@MockitoBean
 	private AuthenticationManager authenticationManager;

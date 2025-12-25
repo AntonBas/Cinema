@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.controller;
+package ua.lviv.bas.cinema.controller.common;
 
 import java.util.Map;
 
@@ -34,8 +34,8 @@ import ua.lviv.bas.cinema.dto.user.request.UserRegistrationRequest;
 import ua.lviv.bas.cinema.dto.user.response.UserProfileResponse;
 import ua.lviv.bas.cinema.dto.user.response.UserResponse;
 import ua.lviv.bas.cinema.security.CustomUserDetails;
-import ua.lviv.bas.cinema.service.PasswordResetService;
-import ua.lviv.bas.cinema.service.UserService;
+import ua.lviv.bas.cinema.service.user.UserPasswordResetService;
+import ua.lviv.bas.cinema.service.user.UserService;
 
 @Slf4j
 @RestController
@@ -45,7 +45,7 @@ import ua.lviv.bas.cinema.service.UserService;
 public class AuthController {
 
 	private final UserService userService;
-	private final PasswordResetService passwordResetService;
+	private final UserPasswordResetService passwordResetService;
 	private final AuthenticationManager authenticationManager;
 	private final JwtTokenProvider jwtTokenProvider;
 
@@ -97,8 +97,10 @@ public class AuthController {
 
 	@PostMapping("/password/forgot")
 	@Operation(summary = "Request password reset", description = "Initiate password reset process. Sends reset link to user's email.")
-	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Reset email sent if account exists"),
-			@ApiResponse(responseCode = "400", description = "Invalid email format") })
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Reset email sent if account exists and email is verified"),
+			@ApiResponse(responseCode = "400", description = "Invalid email format"),
+			@ApiResponse(responseCode = "403", description = "Email not verified") })
 	@SecurityRequirements()
 	public ResponseEntity<Void> forgotPassword(
 			@Parameter(description = "User's email address", required = true, example = "user@example.com") @RequestParam @Email @NotBlank String email) {

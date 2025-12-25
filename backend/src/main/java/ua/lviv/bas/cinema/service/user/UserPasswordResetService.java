@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.service;
+package ua.lviv.bas.cinema.service.user;
 
 import java.time.LocalDateTime;
 
@@ -9,16 +9,20 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.EmailToken;
+import ua.lviv.bas.cinema.domain.User;
+import ua.lviv.bas.cinema.domain.enums.VerificationStatus;
 import ua.lviv.bas.cinema.exception.domain.auth.InvalidTokenException;
 import ua.lviv.bas.cinema.exception.domain.auth.SamePasswordException;
 import ua.lviv.bas.cinema.exception.domain.auth.TokenExpiredException;
+import ua.lviv.bas.cinema.exception.domain.user.EmailNotVerifiedException;
 import ua.lviv.bas.cinema.repository.EmailTokenRepository;
 import ua.lviv.bas.cinema.repository.UserRepository;
+import ua.lviv.bas.cinema.service.common.EmailTokenGeneratorService;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class PasswordResetService {
+public class UserPasswordResetService {
 
 	private final EmailTokenGeneratorService tokenGeneratorService;
 	private final UserService userService;
@@ -28,7 +32,12 @@ public class PasswordResetService {
 
 	public void requestPasswordReset(String email) {
 		log.info("Password reset requested for email: {}", email);
-		userService.findByEmail(email);
+		User user = userService.findByEmail(email);
+
+		if (user.getVerificationStatus() != VerificationStatus.VERIFIED) {
+			throw new EmailNotVerifiedException("Cannot reset password for unverified email");
+		}
+
 		tokenGeneratorService.generatePasswordResetToken(email);
 		log.info("Password reset token generated for: {}", email);
 	}

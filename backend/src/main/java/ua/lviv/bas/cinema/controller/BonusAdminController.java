@@ -25,7 +25,7 @@ import ua.lviv.bas.cinema.dto.bonus.request.BonusRulesRequest;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusRulesResponse;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusTransactionResponse;
 import ua.lviv.bas.cinema.dto.shared.PageResponse;
-import ua.lviv.bas.cinema.service.BonusAdminService;
+import ua.lviv.bas.cinema.service.admin.BonusAdminService;
 
 @RestController
 @RequestMapping("/api/admin/bonus")

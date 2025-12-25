@@ -16,8 +16,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import ua.lviv.bas.cinema.domain.User;
-import ua.lviv.bas.cinema.service.BonusUserService;
 import ua.lviv.bas.cinema.service.query.UserQueryService;
+import ua.lviv.bas.cinema.service.user.BonusUserService;
 
 @ExtendWith(MockitoExtension.class)
 class BirthdayBonusSchedulerTest {

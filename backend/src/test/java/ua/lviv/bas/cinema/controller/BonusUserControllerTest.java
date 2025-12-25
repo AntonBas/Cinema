@@ -23,7 +23,7 @@ import ua.lviv.bas.cinema.dto.bonus.response.BonusBalanceResponse;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusCardResponse;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusTransactionResponse;
 import ua.lviv.bas.cinema.dto.shared.PageResponse;
-import ua.lviv.bas.cinema.service.BonusUserService;
+import ua.lviv.bas.cinema.service.user.BonusUserService;
 
 @ExtendWith(MockitoExtension.class)
 class BonusUserControllerTest {

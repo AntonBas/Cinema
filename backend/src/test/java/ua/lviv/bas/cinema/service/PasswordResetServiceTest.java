@@ -23,6 +23,8 @@ import ua.lviv.bas.cinema.exception.domain.auth.SamePasswordException;
 import ua.lviv.bas.cinema.exception.domain.auth.TokenExpiredException;
 import ua.lviv.bas.cinema.repository.EmailTokenRepository;
 import ua.lviv.bas.cinema.repository.UserRepository;
+import ua.lviv.bas.cinema.service.common.EmailTokenGeneratorService;
+import ua.lviv.bas.cinema.service.user.UserPasswordResetService;
 
 @ExtendWith(MockitoExtension.class)
 class PasswordResetServiceTest {
@@ -43,7 +45,7 @@ class PasswordResetServiceTest {
 	private EmailTokenRepository tokenRepository;
 
 	@InjectMocks
-	private PasswordResetService passwordResetService;
+	private UserPasswordResetService passwordResetService;
 
 	@Test
 	void requestPasswordReset_ShouldGenerateToken_WhenUserExists() {

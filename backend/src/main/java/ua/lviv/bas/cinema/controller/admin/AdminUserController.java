@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.controller;
+package ua.lviv.bas.cinema.controller.admin;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -28,7 +28,7 @@ import ua.lviv.bas.cinema.dto.user.request.UserStatusUpdateRequest;
 import ua.lviv.bas.cinema.dto.user.request.VerificationBirthDateRequest;
 import ua.lviv.bas.cinema.dto.user.response.AdminUserListResponse;
 import ua.lviv.bas.cinema.dto.user.response.UserResponse;
-import ua.lviv.bas.cinema.service.UserService;
+import ua.lviv.bas.cinema.service.admin.AdminUserService;
 
 @RestController
 @RequestMapping("/api/admin/users")
@@ -38,7 +38,7 @@ import ua.lviv.bas.cinema.service.UserService;
 @SecurityRequirement(name = "bearerAuth")
 public class AdminUserController {
 
-	private final UserService userService;
+	private final AdminUserService adminUserService;
 
 	@GetMapping
 	@Operation(summary = "Get all users (paginated)", description = "Retrieve paginated list of all users with filtering options. Admin only.")
@@ -53,7 +53,7 @@ public class AdminUserController {
 			@Parameter(description = "Filter by account status") @RequestParam(required = false) Boolean enabled,
 
 			@Parameter(description = "Pagination parameters") Pageable pageable) {
-		return userService.findAllForAdmin(search, role, enabled, pageable);
+		return adminUserService.findAllForAdmin(search, role, enabled, pageable);
 	}
 
 	@PatchMapping("/{userId}/role")
@@ -66,8 +66,8 @@ public class AdminUserController {
 	public ResponseEntity<Void> updateUserRole(
 			@Parameter(description = "ID of the user to update", required = true, example = "1") @PathVariable Long userId,
 
-			@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Role update request", required = true, content = @Content(schema = @Schema(implementation = UserRoleUpdateRequest.class))) @RequestBody UserRoleUpdateRequest request) {
-		userService.updateUserRole(userId, request.getUserRole());
+			@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Role update request", required = true, content = @Content(schema = @Schema(implementation = UserRoleUpdateRequest.class))) @Valid @RequestBody UserRoleUpdateRequest request) {
+		adminUserService.updateUserRole(userId, request.getUserRole());
 		return ResponseEntity.ok().build();
 	}
 
@@ -81,8 +81,8 @@ public class AdminUserController {
 	public ResponseEntity<Void> updateUserStatus(
 			@Parameter(description = "ID of the user to update", required = true, example = "1") @PathVariable Long userId,
 
-			@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Status update request", required = true, content = @Content(schema = @Schema(implementation = UserStatusUpdateRequest.class))) @RequestBody UserStatusUpdateRequest request) {
-		userService.updateUserStatus(userId, request.isEnabled());
+			@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Status update request", required = true, content = @Content(schema = @Schema(implementation = UserStatusUpdateRequest.class))) @Valid @RequestBody UserStatusUpdateRequest request) {
+		adminUserService.updateUserStatus(userId, request.isEnabled());
 		return ResponseEntity.ok().build();
 	}
 
@@ -96,8 +96,7 @@ public class AdminUserController {
 			@Parameter(description = "ID of the user to update", required = true) @PathVariable Long userId,
 
 			@Valid @RequestBody VerificationBirthDateRequest request) {
-
-		UserResponse response = userService.updateBirthDateVerification(userId, request);
+		UserResponse response = adminUserService.updateBirthDateVerification(userId, request);
 		return ResponseEntity.ok(response);
 	}
 }
