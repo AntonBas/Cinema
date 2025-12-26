@@ -1,14 +1,27 @@
 package ua.lviv.bas.cinema.exception.domain.user;
 
-public class EmailNotVerifiedException extends RuntimeException {
+import org.springframework.http.HttpStatus;
+
+import ua.lviv.bas.cinema.exception.core.BusinessException;
+
+public class EmailNotVerifiedException extends BusinessException {
 
 	private static final long serialVersionUID = 1L;
+	private static final String ERROR_CODE = "EMAIL_NOT_VERIFIED";
+	private static final HttpStatus STATUS = HttpStatus.BAD_REQUEST;
 
 	public EmailNotVerifiedException() {
-		super("Email not verified");
+		super("Email is not verified", ERROR_CODE, STATUS,
+				"Cannot perform this action. Please verify your email first.");
 	}
 
-	public EmailNotVerifiedException(String message) {
-		super(message);
+	public EmailNotVerifiedException(String email) {
+		super(String.format("Email '%s' is not verified", email), ERROR_CODE, STATUS,
+				String.format("Email %s must be verified before performing this action", email));
+	}
+
+	public EmailNotVerifiedException(String action, String email) {
+		super(String.format("Cannot %s: email '%s' is not verified", action, email), ERROR_CODE, STATUS,
+				String.format("Email verification required for %s action", action));
 	}
 }

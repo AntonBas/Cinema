@@ -10,7 +10,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.EmailToken;
 import ua.lviv.bas.cinema.domain.User;
-import ua.lviv.bas.cinema.domain.enums.VerificationStatus;
 import ua.lviv.bas.cinema.exception.domain.auth.InvalidTokenException;
 import ua.lviv.bas.cinema.exception.domain.auth.SamePasswordException;
 import ua.lviv.bas.cinema.exception.domain.auth.TokenExpiredException;
@@ -34,8 +33,8 @@ public class UserPasswordResetService {
 		log.info("Password reset requested for email: {}", email);
 		User user = userService.findByEmail(email);
 
-		if (user.getVerificationStatus() != VerificationStatus.VERIFIED) {
-			throw new EmailNotVerifiedException("Cannot reset password for unverified email");
+		if (!user.isEnabled()) {
+			throw new EmailNotVerifiedException("reset password", email);
 		}
 
 		tokenGeneratorService.generatePasswordResetToken(email);
