@@ -26,13 +26,13 @@ import ua.lviv.bas.cinema.exception.domain.cinema.PersonNotFoundException;
 import ua.lviv.bas.cinema.service.common.PersonService;
 
 @ExtendWith(MockitoExtension.class)
-class PersonControllerTest {
+class AdminPersonControllerTest {
 
 	@Mock
 	private PersonService personService;
 
 	@InjectMocks
-	private PersonController personController;
+	private AdminPersonController personController;
 
 	private static final Long PERSON_ID = 1L;
 	private static final String PERSON_NAME = "Anton Bas";

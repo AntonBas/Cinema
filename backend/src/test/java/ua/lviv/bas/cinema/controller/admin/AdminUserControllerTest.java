@@ -30,13 +30,13 @@ import ua.lviv.bas.cinema.dto.user.response.UserResponse;
 import ua.lviv.bas.cinema.service.admin.AdminUserService;
 
 @ExtendWith(MockitoExtension.class)
-class UserControllerTest {
+class AdminUserControllerTest {
 
 	@Mock
 	private AdminUserService adminUserService;
 
 	@InjectMocks
-	private UserController userController;
+	private AdminUserController userController;
 
 	@Test
 	void getAllUsers_ShouldReturnPageOfUsers() {

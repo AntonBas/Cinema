@@ -33,7 +33,7 @@ import ua.lviv.bas.cinema.service.admin.BonusAdminService;
 @Tag(name = "Bonus Admin", description = "API for administrative management of the bonus system")
 @PreAuthorize("hasRole('ADMIN')")
 @SecurityRequirement(name = "bearerAuth")
-public class BonusController {
+public class AdminBonusController {
 
 	private final BonusAdminService bonusAdminService;
 

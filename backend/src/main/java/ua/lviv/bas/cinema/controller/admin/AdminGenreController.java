@@ -33,7 +33,7 @@ import ua.lviv.bas.cinema.service.common.GenreService;
 @Tag(name = "Admin Genre Management", description = "Admin endpoints for managing movie genres")
 @SecurityRequirement(name = "bearerAuth")
 @PreAuthorize("hasAnyRole('ADMIN', 'CONTENT_MANAGER')")
-public class GenreController {
+public class AdminGenreController {
 
 	private final GenreService genreService;
 

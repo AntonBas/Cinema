@@ -45,7 +45,7 @@ import ua.lviv.bas.cinema.service.common.SessionService;
 @Tag(name = "Admin Session Management", description = "Admin endpoints for managing movie sessions")
 @SecurityRequirement(name = "bearerAuth")
 @PreAuthorize("hasAnyRole('ADMIN', 'CONTENT_MANAGER')")
-public class SessionController {
+public class AdminSessionController {
 
 	private final SessionService sessionService;
 

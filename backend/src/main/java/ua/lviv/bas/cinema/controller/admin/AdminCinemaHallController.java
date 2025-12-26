@@ -33,7 +33,7 @@ import ua.lviv.bas.cinema.service.common.CinemaHallService;
 @Tag(name = "Admin Cinema Hall Management", description = "Admin endpoints for managing cinema halls")
 @SecurityRequirement(name = "bearerAuth")
 @PreAuthorize("hasAnyRole('ADMIN', 'CONTENT_MANAGER')")
-public class CinemaHallController {
+public class AdminCinemaHallController {
 
 	private final CinemaHallService cinemaHallService;
 

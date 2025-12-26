@@ -27,7 +27,7 @@ import ua.lviv.bas.cinema.service.common.SeatService;
 @Tag(name = "Admin Seat Management", description = "Admin endpoints for managing seats")
 @SecurityRequirement(name = "bearerAuth")
 @PreAuthorize("hasAnyRole('ADMIN', 'CONTENT_MANAGER')")
-public class SeatController {
+public class AdminSeatController {
 
 	private final SeatService seatService;
 

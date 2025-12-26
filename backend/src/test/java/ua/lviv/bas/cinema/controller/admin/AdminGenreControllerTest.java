@@ -24,13 +24,13 @@ import ua.lviv.bas.cinema.exception.domain.cinema.GenreNotFoundException;
 import ua.lviv.bas.cinema.service.common.GenreService;
 
 @ExtendWith(MockitoExtension.class)
-class GenreControllerTest {
+class AdminGenreControllerTest {
 
 	@Mock
 	private GenreService genreService;
 
 	@InjectMocks
-	private GenreController genreController;
+	private AdminGenreController genreController;
 
 	private static final Long GENRE_ID = 1L;
 	private static final String GENRE_NAME = "Action";

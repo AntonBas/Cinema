@@ -37,13 +37,13 @@ import ua.lviv.bas.cinema.exception.domain.cinema.MovieNotFoundException;
 import ua.lviv.bas.cinema.service.common.MovieService;
 
 @ExtendWith(MockitoExtension.class)
-class MovieControllerTest {
+class AdminMovieControllerTest {
 
 	@Mock
 	private MovieService movieService;
 
 	@InjectMocks
-	private MovieController movieController;
+	private AdminMovieController movieController;
 
 	private MovieDetailResponse createMovieDto(Long id, String title, String slug, MovieStatus status) {
 		GenreResponse genreResponse = GenreResponse.builder().id(1L).name("Action").build();

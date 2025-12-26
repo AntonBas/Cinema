@@ -25,13 +25,13 @@ import ua.lviv.bas.cinema.exception.domain.cinema.CinemaHallNotFoundException;
 import ua.lviv.bas.cinema.service.common.CinemaHallService;
 
 @ExtendWith(MockitoExtension.class)
-class CinemaHallControllerTest {
+class AdminCinemaHallControllerTest {
 
 	@Mock
 	private CinemaHallService cinemaHallService;
 
 	@InjectMocks
-	private CinemaHallController cinemaHallController;
+	private AdminCinemaHallController cinemaHallController;
 
 	private static final Long HALL_ID = 1L;
 	private static final String HALL_NAME = "Test Hall";

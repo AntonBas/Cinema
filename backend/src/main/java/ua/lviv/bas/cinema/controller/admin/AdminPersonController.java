@@ -34,7 +34,7 @@ import ua.lviv.bas.cinema.service.common.PersonService;
 @Tag(name = "Admin Person Management", description = "Admin endpoints for managing movie persons")
 @SecurityRequirement(name = "bearerAuth")
 @PreAuthorize("hasAnyRole('ADMIN', 'CONTENT_MANAGER')")
-public class PersonController {
+public class AdminPersonController {
 
 	private final PersonService personService;
 

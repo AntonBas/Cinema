@@ -42,7 +42,7 @@ import ua.lviv.bas.cinema.service.common.MovieService;
 @Tag(name = "Admin Movie Management", description = "Admin endpoints for managing movies")
 @SecurityRequirement(name = "bearerAuth")
 @PreAuthorize("hasAnyRole('ADMIN', 'CONTENT_MANAGER')")
-public class MovieController {
+public class AdminMovieController {
 
 	private final MovieService movieService;
 

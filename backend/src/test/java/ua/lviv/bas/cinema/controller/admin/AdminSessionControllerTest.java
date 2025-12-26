@@ -37,13 +37,13 @@ import ua.lviv.bas.cinema.exception.domain.cinema.SessionTimeConflictException;
 import ua.lviv.bas.cinema.service.common.SessionService;
 
 @ExtendWith(MockitoExtension.class)
-class SessionControllerTest {
+class AdminSessionControllerTest {
 
 	@Mock
 	private SessionService sessionService;
 
 	@InjectMocks
-	private SessionController sessionController;
+	private AdminSessionController sessionController;
 
 	private SessionAdminResponse createSessionAdminDto(Long id) {
 		return SessionAdminResponse.builder().id(id).startTime(LocalDateTime.of(2024, 1, 15, 18, 0))

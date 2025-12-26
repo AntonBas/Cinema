@@ -20,13 +20,13 @@ import ua.lviv.bas.cinema.exception.domain.cinema.SeatNotFoundException;
 import ua.lviv.bas.cinema.service.common.SeatService;
 
 @ExtendWith(MockitoExtension.class)
-class SeatControllerTest {
+class AdminSeatControllerTest {
 
 	@Mock
 	private SeatService seatService;
 
 	@InjectMocks
-	private SeatController seatController;
+	private AdminSeatController seatController;
 
 	private SeatResponse createSeatDto(Long id, int row, int number, SeatType seatType) {
 		return SeatResponse.builder().id(id).row(row).number(number).seatType(seatType).build();
