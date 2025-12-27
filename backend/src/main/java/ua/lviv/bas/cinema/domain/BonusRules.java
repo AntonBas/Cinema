@@ -56,20 +56,13 @@ public class BonusRules {
 	@DecimalMin(value = "0.00", inclusive = true)
 	private BigDecimal moneyRatio;
 
-	@Column(name = "point_value", precision = 10, scale = 2)
-	@Builder.Default
-	@DecimalMin(value = "0.01", inclusive = true)
-	private BigDecimal pointValue = BigDecimal.ONE;
-
 	@Column(name = "min_points_per_transaction")
-	@Builder.Default
 	@Min(1)
-	private Integer minPointsPerTransaction = 50;
+	private Integer minPointsPerTransaction;
 
 	@Column(name = "max_points_per_transaction")
-	@Builder.Default
 	@Min(1)
-	private Integer maxPointsPerTransaction = 300;
+	private Integer maxPointsPerTransaction;
 
 	@Column(name = "active", nullable = false)
 	@Builder.Default

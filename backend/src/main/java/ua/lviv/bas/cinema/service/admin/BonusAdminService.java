@@ -1,5 +1,6 @@
 package ua.lviv.bas.cinema.service.admin;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
@@ -7,10 +8,13 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.querydsl.core.BooleanBuilder;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.BonusRules;
 import ua.lviv.bas.cinema.domain.BonusTransaction;
+import ua.lviv.bas.cinema.domain.QBonusTransaction;
 import ua.lviv.bas.cinema.domain.enums.BonusTransactionType;
 import ua.lviv.bas.cinema.dto.bonus.request.BonusRulesRequest;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusRulesResponse;
@@ -53,8 +57,12 @@ public class BonusAdminService {
 				.orElseThrow(() -> new BonusRuleNotFoundException(type));
 
 		bonusMapper.updateBonusRulesFromRequest(request, rules);
-		BonusRules updated = bonusRulesRepository.save(rules);
 
+		if (type == BonusTransactionType.PURCHASE_WRITE_OFF) {
+			validateMinMaxPoints(rules.getMinPointsPerTransaction(), rules.getMaxPointsPerTransaction());
+		}
+
+		BonusRules updated = bonusRulesRepository.save(rules);
 		log.info("Admin: successfully updated bonus rule for type: {}", type);
 		return bonusMapper.toBonusRulesResponse(updated);
 	}
@@ -80,19 +88,78 @@ public class BonusAdminService {
 		return PageResponse.of(page, bonusMapper::toBonusTransactionResponse);
 	}
 
-	@Transactional
-	public BonusRulesResponse createBonusRule(BonusTransactionType type, BonusRulesRequest request) {
-		log.info("Admin: creating bonus rule for type: {}, data: {}", type, request);
+	@Transactional(readOnly = true)
+	public PageResponse<BonusTransactionResponse> getTransactionsByType(BonusTransactionType type, Pageable pageable) {
+		log.debug("Admin: getting transactions by type: {}, page: {}, size: {}", type, pageable.getPageNumber(),
+				pageable.getPageSize());
 
-		if (bonusRulesRepository.findByBonusType(type).isPresent()) {
-			log.error("Admin: bonus rule already exists for type: {}", type);
-			throw new IllegalArgumentException("Bonus rule already exists for type: " + type);
+		BooleanBuilder predicate = new BooleanBuilder();
+		predicate.and(QBonusTransaction.bonusTransaction.type.eq(type));
+
+		Page<BonusTransaction> page = bonusTransactionRepository.findAll(predicate, pageable);
+		return PageResponse.of(page, bonusMapper::toBonusTransactionResponse);
+	}
+
+	@Transactional
+	public BonusRulesResponse resetBonusRuleToDefaults(BonusTransactionType type) {
+		log.info("Admin: resetting bonus rule to defaults for type: {}", type);
+
+		BonusRules rules = bonusRulesRepository.findByBonusType(type)
+				.orElseThrow(() -> new BonusRuleNotFoundException(type));
+
+		switch (type) {
+		case WELCOME_BONUS:
+			rules.setPoints(150);
+			rules.setMoneyRatio(null);
+			rules.setMinPointsPerTransaction(null);
+			rules.setMaxPointsPerTransaction(null);
+			break;
+
+		case BIRTHDAY_BONUS:
+			rules.setPoints(300);
+			rules.setMoneyRatio(null);
+			rules.setMinPointsPerTransaction(null);
+			rules.setMaxPointsPerTransaction(null);
+			break;
+
+		case PURCHASE_BONUS:
+			rules.setPoints(null);
+			rules.setMoneyRatio(new BigDecimal("0.05"));
+			rules.setMinPointsPerTransaction(null);
+			rules.setMaxPointsPerTransaction(null);
+			break;
+
+		case PURCHASE_WRITE_OFF:
+			rules.setPoints(null);
+			rules.setMoneyRatio(null);
+			rules.setMinPointsPerTransaction(20);
+			rules.setMaxPointsPerTransaction(500);
+			validateMinMaxPoints(20, 500);
+			break;
+
+		case REFUND_DEDUCTION:
+			rules.setPoints(null);
+			rules.setMoneyRatio(new BigDecimal("0.05"));
+			rules.setMinPointsPerTransaction(null);
+			rules.setMaxPointsPerTransaction(null);
+			break;
+
+		case PROMOTION_BONUS:
+			rules.setPoints(100);
+			rules.setMoneyRatio(null);
+			rules.setMinPointsPerTransaction(null);
+			rules.setMaxPointsPerTransaction(null);
+			break;
 		}
 
-		BonusRules rules = bonusMapper.toBonusRules(request, type);
-		BonusRules saved = bonusRulesRepository.save(rules);
+		BonusRules updated = bonusRulesRepository.save(rules);
+		log.info("Admin: successfully reset bonus rule for type: {} to defaults", type);
+		return bonusMapper.toBonusRulesResponse(updated);
+	}
 
-		log.info("Admin: successfully created bonus rule for type: {}", type);
-		return bonusMapper.toBonusRulesResponse(saved);
+	private void validateMinMaxPoints(Integer min, Integer max) {
+		if (min != null && max != null && min > max) {
+			throw new IllegalArgumentException("Min points cannot be greater than max points");
+		}
 	}
 }

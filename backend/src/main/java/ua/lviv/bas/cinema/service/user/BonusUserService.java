@@ -36,37 +36,12 @@ import ua.lviv.bas.cinema.repository.BonusTransactionRepository;
 @RequiredArgsConstructor
 public class BonusUserService {
 
+	private static final BigDecimal POINT_VALUE = new BigDecimal("1.00");
+
 	private final BonusCardRepository bonusCardRepository;
 	private final BonusRulesRepository bonusRulesRepository;
 	private final BonusTransactionRepository bonusTransactionRepository;
 	private final BonusMapper bonusMapper;
-
-	public boolean hasEnoughPoints(BonusCard card, Integer points) {
-		return card != null && points != null && card.getPointsBalance() >= points;
-	}
-
-	public BigDecimal calculateMoneyValue(BonusRules rule, Integer points) {
-		if (points == null || rule == null || rule.getPointValue() == null || points <= 0) {
-			return BigDecimal.ZERO;
-		}
-		return rule.getPointValue().multiply(BigDecimal.valueOf(points));
-	}
-
-	public boolean isValidForWriteOff(BonusRules rule, Integer pointsToUse) {
-		if (rule == null || !rule.isActive() || rule.getPointValue() == null
-				|| rule.getBonusType() != BonusTransactionType.PURCHASE_WRITE_OFF) {
-			return false;
-		}
-
-		return pointsToUse != null && pointsToUse >= rule.getMinPointsPerTransaction()
-				&& pointsToUse <= rule.getMaxPointsPerTransaction();
-	}
-
-	public boolean isValidForPurchaseBonus(BonusRules rule) {
-		return rule != null && rule.isActive() && rule.getMoneyRatio() != null
-				&& rule.getMoneyRatio().compareTo(BigDecimal.ZERO) > 0
-				&& rule.getBonusType() == BonusTransactionType.PURCHASE_BONUS;
-	}
 
 	@Transactional(readOnly = true)
 	public BonusCardResponse getBonusCard(Long userId) {
@@ -96,16 +71,17 @@ public class BonusUserService {
 	@Transactional
 	public void awardWelcomeBonus(User user) {
 		log.debug("Processing welcome bonus for user: {}", user.getId());
-		BonusCard card = findOrCreateBonusCard(user);
-
-		if (card.isWelcomeBonusReceived()) {
-			log.debug("User {} already received welcome bonus", user.getId());
-			return;
-		}
 
 		if (user.getVerificationStatus() != VerificationStatus.VERIFIED) {
 			log.debug("User {} is not verified. Status: {}. Skipping welcome bonus.", user.getId(),
 					user.getVerificationStatus());
+			return;
+		}
+
+		BonusCard card = findOrCreateBonusCard(user);
+
+		if (card.isWelcomeBonusReceived()) {
+			log.debug("User {} already received welcome bonus", user.getId());
 			return;
 		}
 
@@ -121,24 +97,27 @@ public class BonusUserService {
 	@Transactional
 	public void awardBirthdayBonus(User user) {
 		log.debug("Checking birthday bonus for user: {}", user.getId());
+
+		if (user.getVerificationStatus() != VerificationStatus.VERIFIED) {
+			log.debug("User {} is not verified. Status: {}. Skipping birthday bonus.", user.getId(),
+					user.getVerificationStatus());
+			return;
+		}
+
 		if (user.getDateOfBirth() == null) {
 			log.debug("User {} has no birth date set", user.getId());
 			return;
 		}
 
-		if (user.getVerificationStatus() != VerificationStatus.VERIFIED) {
-			log.debug("User {} is not verified. Status: {}", user.getId(), user.getVerificationStatus());
-			return;
-		}
-
 		LocalDate today = LocalDate.now();
-		if (!isBirthdayToday(user.getDateOfBirth(), today)) {
+		if (user.getDateOfBirth().getMonth() != today.getMonth()
+				|| user.getDateOfBirth().getDayOfMonth() != today.getDayOfMonth()) {
 			log.debug("Today is not birthday for user {}", user.getId());
 			return;
 		}
 
 		BonusCard card = findOrCreateBonusCard(user);
-		if (alreadyReceivedThisYear(card, today)) {
+		if (card.getLastBirthdayBonusDate() != null && card.getLastBirthdayBonusDate().getYear() == today.getYear()) {
 			log.debug("User {} already received birthday bonus this year", user.getId());
 			return;
 		}
@@ -158,16 +137,18 @@ public class BonusUserService {
 		BonusCard card = findBonusCardByUserId(userId);
 		BonusRules writeOffRule = findActiveRule(BonusTransactionType.PURCHASE_WRITE_OFF);
 
-		if (!hasEnoughPoints(card, pointsToUse)) {
+		if (card.getPointsBalance() < pointsToUse) {
 			log.warn("User {} has insufficient points: available {}, required {}", userId, card.getPointsBalance(),
 					pointsToUse);
 			throw new InsufficientPointsException(card.getPointsBalance(), pointsToUse);
 		}
 
-		if (!isValidForWriteOff(writeOffRule, pointsToUse)) {
-			log.warn("User {} attempted invalid redemption: {} points, range {}-{}", userId, pointsToUse,
-					writeOffRule.getMinPointsPerTransaction(), writeOffRule.getMaxPointsPerTransaction());
-			throw new InsufficientPointsException(card.getPointsBalance(), pointsToUse);
+		Integer min = writeOffRule.getMinPointsPerTransaction();
+		Integer max = writeOffRule.getMaxPointsPerTransaction();
+
+		if (min == null || max == null || pointsToUse < min || pointsToUse > max) {
+			log.warn("User {} attempted invalid redemption: {} points, range {}-{}", userId, pointsToUse, min, max);
+			throw new IllegalArgumentException(String.format("Points must be between %d and %d", min, max));
 		}
 
 		log.debug("Points redemption validation passed for user: {}", userId);
@@ -182,7 +163,8 @@ public class BonusUserService {
 
 		BonusRules purchaseRule = findActiveRule(BonusTransactionType.PURCHASE_BONUS);
 
-		if (!isValidForPurchaseBonus(purchaseRule)) {
+		if (purchaseRule == null || !purchaseRule.isActive() || purchaseRule.getMoneyRatio() == null
+				|| purchaseRule.getMoneyRatio().compareTo(BigDecimal.ZERO) <= 0) {
 			log.warn("Purchase bonus rule is not valid for awarding points");
 			return 0;
 		}
@@ -212,14 +194,6 @@ public class BonusUserService {
 		}
 		log.info("Successfully processed {} points redemption for user {}", pointsToUse, userId);
 		return writeOff;
-	}
-
-	@Transactional(readOnly = true)
-	private BonusCard findBonusCardByUserId(Long userId) {
-		return bonusCardRepository.findByUserId(userId).orElseThrow(() -> {
-			log.error("Bonus card not found for user: {}", userId);
-			return new BonusCardNotFoundException(userId);
-		});
 	}
 
 	@Transactional
@@ -255,32 +229,27 @@ public class BonusUserService {
 		return saved;
 	}
 
+	@Transactional(readOnly = true)
+	private BonusCard findBonusCardByUserId(Long userId) {
+		return bonusCardRepository.findByUserId(userId).orElseThrow(() -> {
+			log.error("Bonus card not found for user: {}", userId);
+			return new BonusCardNotFoundException(userId);
+		});
+	}
+
 	private BonusBalanceResponse buildBalanceResponse(BonusCard card, BonusRules writeOffRule) {
-		BigDecimal pointValue = writeOffRule.getPointValue();
-		BigDecimal balanceValue = calculateMoneyValue(writeOffRule, card.getPointsBalance());
+		BigDecimal balanceValue = POINT_VALUE.multiply(BigDecimal.valueOf(card.getPointsBalance()));
 
-		return BonusBalanceResponse.builder().pointsBalance(card.getPointsBalance()).pointValue(pointValue)
-				.balanceValue(balanceValue).minUsablePoints(writeOffRule.getMinPointsPerTransaction())
-				.maxUsablePoints(writeOffRule.getMaxPointsPerTransaction())
-				.minRedemptionValue(calculateMoneyValue(writeOffRule, writeOffRule.getMinPointsPerTransaction()))
-				.maxRedemptionValue(calculateMoneyValue(writeOffRule, writeOffRule.getMaxPointsPerTransaction()))
-				.build();
-	}
+		Integer minUsablePoints = writeOffRule.getMinPointsPerTransaction() != null
+				? writeOffRule.getMinPointsPerTransaction()
+				: 0;
+		Integer maxUsablePoints = writeOffRule.getMaxPointsPerTransaction() != null
+				? writeOffRule.getMaxPointsPerTransaction()
+				: 0;
 
-	private boolean isBirthdayToday(LocalDate birthDate, LocalDate today) {
-		return birthDate.getMonth() == today.getMonth() && birthDate.getDayOfMonth() == today.getDayOfMonth();
-	}
-
-	private boolean alreadyReceivedThisYear(BonusCard card, LocalDate today) {
-		return card.getLastBirthdayBonusDate() != null && card.getLastBirthdayBonusDate().getYear() == today.getYear();
-	}
-
-	@Transactional
-	public void awardBonusesAfterVerification(User user) {
-		log.info("Awarding bonuses after verification for user: {}", user.getId());
-
-		awardWelcomeBonus(user);
-
-		awardBirthdayBonus(user);
+		return BonusBalanceResponse.builder().pointsBalance(card.getPointsBalance()).pointValue(POINT_VALUE)
+				.balanceValue(balanceValue).minUsablePoints(minUsablePoints).maxUsablePoints(maxUsablePoints)
+				.minRedemptionValue(POINT_VALUE.multiply(BigDecimal.valueOf(minUsablePoints)))
+				.maxRedemptionValue(POINT_VALUE.multiply(BigDecimal.valueOf(maxUsablePoints))).build();
 	}
 }

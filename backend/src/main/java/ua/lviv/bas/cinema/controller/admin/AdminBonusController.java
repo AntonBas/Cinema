@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -64,6 +65,15 @@ public class AdminBonusController {
 		return bonusAdminService.updateBonusRule(type, request);
 	}
 
+	@Operation(summary = "Reset bonus rule to defaults", description = "Resets a bonus rule to its default values")
+	@ApiResponse(responseCode = "200", description = "Bonus rule reset successfully")
+	@ApiResponse(responseCode = "404", description = "Bonus rule not found")
+	@PostMapping("/rules/{type}/reset")
+	@ResponseStatus(HttpStatus.OK)
+	public BonusRulesResponse resetBonusRule(@PathVariable BonusTransactionType type) {
+		return bonusAdminService.resetBonusRuleToDefaults(type);
+	}
+
 	@Operation(summary = "Get user transactions", description = "Returns bonus transaction history for a specific user")
 	@ApiResponse(responseCode = "200", description = "User transactions retrieved successfully")
 	@GetMapping("/users/{userId}/transactions")
@@ -79,5 +89,14 @@ public class AdminBonusController {
 	@ResponseStatus(HttpStatus.OK)
 	public PageResponse<BonusTransactionResponse> getAllTransactions(@PageableDefault(size = 20) Pageable pageable) {
 		return bonusAdminService.getAllTransactions(pageable);
+	}
+
+	@Operation(summary = "Get transactions by type", description = "Returns bonus transactions filtered by type")
+	@ApiResponse(responseCode = "200", description = "Transactions retrieved successfully")
+	@GetMapping("/transactions/type/{type}")
+	@ResponseStatus(HttpStatus.OK)
+	public PageResponse<BonusTransactionResponse> getTransactionsByType(@PathVariable BonusTransactionType type,
+			@PageableDefault(size = 20) Pageable pageable) {
+		return bonusAdminService.getTransactionsByType(type, pageable);
 	}
 }

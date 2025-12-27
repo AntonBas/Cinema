@@ -50,6 +50,11 @@ public class BonusController {
 		return bonusUserService.getBalance(userId);
 	}
 
+	@Operation(summary = "Get user bonus transactions", description = "Returns the current user's bonus transaction history")
+	@ApiResponse(responseCode = "200", description = "Transactions retrieved successfully")
+	@GetMapping("/my-transactions")
+	@ResponseStatus(HttpStatus.OK)
+	@PreAuthorize("isAuthenticated()")
 	public PageResponse<BonusTransactionResponse> getMyTransactions(@RequestAttribute("userId") Long userId,
 			@PageableDefault(size = 20) Pageable pageable) {
 		return bonusUserService.getUserTransactions(userId, pageable);
