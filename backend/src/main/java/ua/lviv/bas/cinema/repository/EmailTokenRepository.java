@@ -36,10 +36,9 @@ public interface EmailTokenRepository extends JpaRepository<EmailToken, String> 
 
 	@Modifying
 	@Query("DELETE FROM EmailToken t WHERE t.expiresAt < :now")
-	long deleteByExpiresAtBefore(@Param("now") LocalDateTime now);
+	int deleteByExpiresAtBefore(@Param("now") LocalDateTime now);
 
 	@Modifying
 	@Query("DELETE FROM EmailToken t WHERE t.confirmed = true AND t.confirmedAt < :date")
-	long deleteByConfirmedTrueAndConfirmedAtBefore(@Param("date") LocalDateTime date);
-
+	int deleteByConfirmedTrueAndConfirmedAtBefore(@Param("date") LocalDateTime date);
 }

@@ -21,7 +21,7 @@ public class EmailTokenCleanupScheduler {
 	@Transactional
 	public void cleanupExpiredTokens() {
 		LocalDateTime now = LocalDateTime.now();
-		long deletedCount = tokenRepository.deleteByExpiresAtBefore(now);
+		int deletedCount = tokenRepository.deleteByExpiresAtBefore(now);
 
 		if (deletedCount > 0) {
 			log.info("Cleaned up {} expired email tokens", deletedCount);
@@ -32,7 +32,7 @@ public class EmailTokenCleanupScheduler {
 	@Transactional
 	public void cleanupOldConfirmedTokens() {
 		LocalDateTime weekAgo = LocalDateTime.now().minusDays(7);
-		long deletedCount = tokenRepository.deleteByConfirmedTrueAndConfirmedAtBefore(weekAgo);
+		int deletedCount = tokenRepository.deleteByConfirmedTrueAndConfirmedAtBefore(weekAgo);
 
 		if (deletedCount > 0) {
 			log.info("Cleaned up {} old confirmed email tokens", deletedCount);
