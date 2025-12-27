@@ -72,12 +72,6 @@ public class BonusUserService {
 	public void awardWelcomeBonus(User user) {
 		log.debug("Processing welcome bonus for user: {}", user.getId());
 
-		if (user.getVerificationStatus() != VerificationStatus.VERIFIED) {
-			log.debug("User {} is not verified. Status: {}. Skipping welcome bonus.", user.getId(),
-					user.getVerificationStatus());
-			return;
-		}
-
 		BonusCard card = findOrCreateBonusCard(user);
 
 		if (card.isWelcomeBonusReceived()) {
