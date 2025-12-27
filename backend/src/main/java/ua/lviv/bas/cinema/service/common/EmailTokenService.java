@@ -9,12 +9,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.EmailToken;
 import ua.lviv.bas.cinema.domain.User;
+import ua.lviv.bas.cinema.domain.enums.TokenType;
 import ua.lviv.bas.cinema.exception.domain.auth.EmailAlreadyExistsException;
 import ua.lviv.bas.cinema.exception.domain.auth.InvalidTokenException;
 import ua.lviv.bas.cinema.exception.domain.auth.TokenAlreadyConfirmedException;
 import ua.lviv.bas.cinema.exception.domain.auth.TokenExpiredException;
 import ua.lviv.bas.cinema.repository.EmailTokenRepository;
 import ua.lviv.bas.cinema.repository.UserRepository;
+import ua.lviv.bas.cinema.service.user.BonusUserService;
 
 @Slf4j
 @Service
@@ -24,6 +26,7 @@ public class EmailTokenService {
 	private final EmailTokenRepository tokenRepository;
 	private final EmailService emailService;
 	private final UserRepository userRepository;
+	private final BonusUserService bonusUserService;
 
 	@Transactional
 	public String confirmEmail(String token) {
@@ -31,9 +34,17 @@ public class EmailTokenService {
 
 		EmailToken emailToken = validateToken(token);
 
+		if (emailToken.getType() != TokenType.VERIFICATION) {
+			throw new InvalidTokenException("email-verification");
+		}
+
 		User user = emailToken.getUser();
 		user.setEnabled(true);
-		userRepository.save(user);
+		User updatedUser = userRepository.save(user);
+
+		bonusUserService.findOrCreateBonusCard(updatedUser);
+
+		bonusUserService.awardWelcomeBonus(updatedUser);
 
 		emailToken.setConfirmed(true);
 		emailToken.setConfirmedAt(LocalDateTime.now());
@@ -48,6 +59,10 @@ public class EmailTokenService {
 		log.info("Attempting to confirm email change with token: {}", token);
 
 		EmailToken emailToken = validateToken(token);
+
+		if (emailToken.getType() != TokenType.VERIFICATION) {
+			throw new InvalidTokenException("email-change");
+		}
 
 		if (emailToken.getNewEmail() == null) {
 			throw new InvalidTokenException("email-change");

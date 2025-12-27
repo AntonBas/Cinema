@@ -102,6 +102,13 @@ public class BonusUserService {
 			log.debug("User {} already received welcome bonus", user.getId());
 			return;
 		}
+
+		if (user.getVerificationStatus() != VerificationStatus.VERIFIED) {
+			log.debug("User {} is not verified. Status: {}. Skipping welcome bonus.", user.getId(),
+					user.getVerificationStatus());
+			return;
+		}
+
 		BonusRules rule = findActiveRule(BonusTransactionType.WELCOME_BONUS);
 		createBonusTransaction(card, rule.getPoints(), BonusTransactionType.WELCOME_BONUS, "USER_" + user.getId(), null,
 				null);
@@ -216,7 +223,7 @@ public class BonusUserService {
 	}
 
 	@Transactional
-	private BonusCard findOrCreateBonusCard(User user) {
+	public BonusCard findOrCreateBonusCard(User user) {
 		return bonusCardRepository.findByUserId(user.getId()).orElseGet(() -> {
 			log.debug("Creating new bonus card for user: {}", user.getId());
 			return bonusCardRepository
@@ -225,7 +232,7 @@ public class BonusUserService {
 	}
 
 	@Transactional(readOnly = true)
-	private BonusRules findActiveRule(BonusTransactionType type) {
+	public BonusRules findActiveRule(BonusTransactionType type) {
 		return bonusRulesRepository.findByBonusTypeAndActiveTrue(type).orElseThrow(() -> {
 			log.error("Active bonus rule not found for type: {}", type);
 			return new BonusRuleNotFoundException(type);
@@ -266,5 +273,14 @@ public class BonusUserService {
 
 	private boolean alreadyReceivedThisYear(BonusCard card, LocalDate today) {
 		return card.getLastBirthdayBonusDate() != null && card.getLastBirthdayBonusDate().getYear() == today.getYear();
+	}
+
+	@Transactional
+	public void awardBonusesAfterVerification(User user) {
+		log.info("Awarding bonuses after verification for user: {}", user.getId());
+
+		awardWelcomeBonus(user);
+
+		awardBirthdayBonus(user);
 	}
 }
