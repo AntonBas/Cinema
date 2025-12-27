@@ -3,6 +3,7 @@ package ua.lviv.bas.cinema.service.admin;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -21,6 +22,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+
+import com.querydsl.core.BooleanBuilder;
 
 import ua.lviv.bas.cinema.domain.BonusRules;
 import ua.lviv.bas.cinema.domain.BonusTransaction;
@@ -116,6 +119,7 @@ class BonusAdminServiceTest {
 		when(bonusRulesRepository.save(existing)).thenReturn(existing);
 		when(bonusMapper.toBonusRulesResponse(existing)).thenReturn(expectedResponse);
 
+		// Не використовуємо when() для void методу, а перевіряємо що він викликався
 		BonusRulesResponse result = bonusAdminService.updateBonusRule(type, request);
 
 		assertThat(result).isSameAs(expectedResponse);
@@ -123,6 +127,57 @@ class BonusAdminServiceTest {
 		verify(bonusMapper).updateBonusRulesFromRequest(request, existing);
 		verify(bonusRulesRepository).save(existing);
 		verify(bonusMapper).toBonusRulesResponse(existing);
+	}
+
+	@Test
+	void updateBonusRule_ShouldValidateMinMaxForWriteOff() {
+		BonusTransactionType type = BonusTransactionType.PURCHASE_WRITE_OFF;
+		BonusRules existing = createBonusRules(1L, type, null);
+		existing.setMinPointsPerTransaction(50);
+		existing.setMaxPointsPerTransaction(300);
+
+		BonusRulesRequest request = BonusRulesRequest.builder().minPointsPerTransaction(100)
+				.maxPointsPerTransaction(200).build();
+
+		BonusRulesResponse expectedResponse = new BonusRulesResponse();
+
+		when(bonusRulesRepository.findByBonusType(type)).thenReturn(Optional.of(existing));
+		when(bonusRulesRepository.save(existing)).thenReturn(existing);
+		when(bonusMapper.toBonusRulesResponse(existing)).thenReturn(expectedResponse);
+
+		bonusAdminService.updateBonusRule(type, request);
+
+		verify(bonusRulesRepository).findByBonusType(type);
+		verify(bonusMapper).updateBonusRulesFromRequest(request, existing);
+		verify(bonusRulesRepository).save(existing);
+	}
+
+	@Test
+	void updateBonusRule_ShouldThrowWhenMinGreaterThanMax() {
+		BonusTransactionType type = BonusTransactionType.PURCHASE_WRITE_OFF;
+		BonusRules existing = createBonusRules(1L, type, null);
+		existing.setMinPointsPerTransaction(50);
+		existing.setMaxPointsPerTransaction(300);
+
+		BonusRulesRequest request = BonusRulesRequest.builder().minPointsPerTransaction(400)
+				.maxPointsPerTransaction(200).build();
+
+		when(bonusRulesRepository.findByBonusType(type)).thenReturn(Optional.of(existing));
+
+		doAnswer(invocation -> {
+			BonusRules rules = invocation.getArgument(1);
+			rules.setMinPointsPerTransaction(400);
+			rules.setMaxPointsPerTransaction(200);
+			return null;
+		}).when(bonusMapper).updateBonusRulesFromRequest(request, existing);
+
+		assertThatThrownBy(() -> bonusAdminService.updateBonusRule(type, request))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("Min points cannot be greater than max points");
+
+		verify(bonusRulesRepository).findByBonusType(type);
+		verify(bonusMapper).updateBonusRulesFromRequest(request, existing);
+		verify(bonusRulesRepository, never()).save(any());
 	}
 
 	@Test
@@ -207,50 +262,139 @@ class BonusAdminServiceTest {
 	}
 
 	@Test
-	void createBonusRule_ShouldCreateAndReturnRule() {
+	void getTransactionsByType_ShouldReturnFilteredTransactions() {
 		BonusTransactionType type = BonusTransactionType.WELCOME_BONUS;
-		BonusRulesRequest request = BonusRulesRequest.builder().points(100).active(true).build();
+		Pageable pageable = PageRequest.of(0, 20);
+		BonusTransaction transaction = BonusTransaction.builder().id(1L).type(type).pointsChange(100).build();
 
-		BonusRules rules = new BonusRules();
-		rules.setBonusType(type);
-		rules.setPoints(100);
-		rules.setActive(true);
+		Page<BonusTransaction> page = new PageImpl<>(List.of(transaction), pageable, 1);
+		BonusTransactionResponse response = new BonusTransactionResponse();
 
-		BonusRules savedRules = new BonusRules();
-		savedRules.setId(1L);
-		savedRules.setBonusType(type);
-		savedRules.setPoints(100);
-		savedRules.setActive(true);
+		when(bonusTransactionRepository.findAll(any(BooleanBuilder.class), any(Pageable.class))).thenReturn(page);
+		when(bonusMapper.toBonusTransactionResponse(transaction)).thenReturn(response);
 
-		BonusRulesResponse expectedResponse = new BonusRulesResponse();
+		PageResponse<BonusTransactionResponse> result = bonusAdminService.getTransactionsByType(type, pageable);
 
-		when(bonusRulesRepository.findByBonusType(type)).thenReturn(Optional.empty());
-		when(bonusMapper.toBonusRules(request, type)).thenReturn(rules);
-		when(bonusRulesRepository.save(rules)).thenReturn(savedRules);
-		when(bonusMapper.toBonusRulesResponse(savedRules)).thenReturn(expectedResponse);
-
-		BonusRulesResponse result = bonusAdminService.createBonusRule(type, request);
-
-		assertThat(result).isSameAs(expectedResponse);
-		verify(bonusRulesRepository).findByBonusType(type);
-		verify(bonusMapper).toBonusRules(request, type);
-		verify(bonusRulesRepository).save(rules);
-		verify(bonusMapper).toBonusRulesResponse(savedRules);
+		assertThat(result.getContent()).hasSize(1);
+		assertThat(result.getContent().get(0)).isSameAs(response);
+		verify(bonusTransactionRepository).findAll(any(BooleanBuilder.class), any(Pageable.class));
+		verify(bonusMapper).toBonusTransactionResponse(transaction);
 	}
 
 	@Test
-	void createBonusRule_ShouldThrowWhenAlreadyExists() {
+	void resetBonusRuleToDefaults_ShouldResetWelcomeBonus() {
 		BonusTransactionType type = BonusTransactionType.WELCOME_BONUS;
-		BonusRulesRequest request = new BonusRulesRequest();
-		BonusRules existing = new BonusRules();
+		BonusRules existing = createBonusRules(1L, type, 50);
+		existing.setMoneyRatio(new BigDecimal("0.1"));
+		existing.setMinPointsPerTransaction(10);
+		existing.setMaxPointsPerTransaction(100);
+
+		BonusRulesResponse expectedResponse = new BonusRulesResponse();
 
 		when(bonusRulesRepository.findByBonusType(type)).thenReturn(Optional.of(existing));
+		when(bonusRulesRepository.save(any(BonusRules.class))).thenReturn(existing);
+		when(bonusMapper.toBonusRulesResponse(existing)).thenReturn(expectedResponse);
 
-		assertThatThrownBy(() -> bonusAdminService.createBonusRule(type, request))
-				.isInstanceOf(IllegalArgumentException.class).hasMessage("Bonus rule already exists for type: " + type);
+		BonusRulesResponse result = bonusAdminService.resetBonusRuleToDefaults(type);
+
+		assertThat(result).isSameAs(expectedResponse);
+		verify(bonusRulesRepository).findByBonusType(type);
+		verify(bonusRulesRepository).save(existing);
+		verify(bonusMapper).toBonusRulesResponse(existing);
+		assertThat(existing.getPoints()).isEqualTo(150);
+		assertThat(existing.getMoneyRatio()).isNull();
+		assertThat(existing.getMinPointsPerTransaction()).isNull();
+		assertThat(existing.getMaxPointsPerTransaction()).isNull();
+	}
+
+	@Test
+	void resetBonusRuleToDefaults_ShouldResetBirthdayBonus() {
+		BonusTransactionType type = BonusTransactionType.BIRTHDAY_BONUS;
+		BonusRules existing = createBonusRules(1L, type, 100);
+
+		when(bonusRulesRepository.findByBonusType(type)).thenReturn(Optional.of(existing));
+		when(bonusRulesRepository.save(any(BonusRules.class))).thenReturn(existing);
+		when(bonusMapper.toBonusRulesResponse(existing)).thenReturn(new BonusRulesResponse());
+
+		bonusAdminService.resetBonusRuleToDefaults(type);
+
+		assertThat(existing.getPoints()).isEqualTo(300);
+		verify(bonusRulesRepository).save(existing);
+	}
+
+	@Test
+	void resetBonusRuleToDefaults_ShouldResetPurchaseBonus() {
+		BonusTransactionType type = BonusTransactionType.PURCHASE_BONUS;
+		BonusRules existing = createBonusRules(1L, type, 100);
+		existing.setPoints(50);
+
+		when(bonusRulesRepository.findByBonusType(type)).thenReturn(Optional.of(existing));
+		when(bonusRulesRepository.save(any(BonusRules.class))).thenReturn(existing);
+		when(bonusMapper.toBonusRulesResponse(existing)).thenReturn(new BonusRulesResponse());
+
+		bonusAdminService.resetBonusRuleToDefaults(type);
+
+		assertThat(existing.getPoints()).isNull();
+		assertThat(existing.getMoneyRatio()).isEqualTo(new BigDecimal("0.05"));
+		verify(bonusRulesRepository).save(existing);
+	}
+
+	@Test
+	void resetBonusRuleToDefaults_ShouldResetWriteOffRule() {
+		BonusTransactionType type = BonusTransactionType.PURCHASE_WRITE_OFF;
+		BonusRules existing = createBonusRules(1L, type, null);
+
+		when(bonusRulesRepository.findByBonusType(type)).thenReturn(Optional.of(existing));
+		when(bonusRulesRepository.save(any(BonusRules.class))).thenReturn(existing);
+		when(bonusMapper.toBonusRulesResponse(existing)).thenReturn(new BonusRulesResponse());
+
+		bonusAdminService.resetBonusRuleToDefaults(type);
+
+		assertThat(existing.getMinPointsPerTransaction()).isEqualTo(20);
+		assertThat(existing.getMaxPointsPerTransaction()).isEqualTo(500);
+		verify(bonusRulesRepository).save(existing);
+	}
+
+	@Test
+	void resetBonusRuleToDefaults_ShouldResetRefundDeduction() {
+		BonusTransactionType type = BonusTransactionType.REFUND_DEDUCTION;
+		BonusRules existing = createBonusRules(1L, type, null);
+
+		when(bonusRulesRepository.findByBonusType(type)).thenReturn(Optional.of(existing));
+		when(bonusRulesRepository.save(any(BonusRules.class))).thenReturn(existing);
+		when(bonusMapper.toBonusRulesResponse(existing)).thenReturn(new BonusRulesResponse());
+
+		bonusAdminService.resetBonusRuleToDefaults(type);
+
+		assertThat(existing.getMoneyRatio()).isEqualTo(new BigDecimal("0.05"));
+		verify(bonusRulesRepository).save(existing);
+	}
+
+	@Test
+	void resetBonusRuleToDefaults_ShouldResetPromotionBonus() {
+		BonusTransactionType type = BonusTransactionType.PROMOTION_BONUS;
+		BonusRules existing = createBonusRules(1L, type, 50);
+
+		when(bonusRulesRepository.findByBonusType(type)).thenReturn(Optional.of(existing));
+		when(bonusRulesRepository.save(any(BonusRules.class))).thenReturn(existing);
+		when(bonusMapper.toBonusRulesResponse(existing)).thenReturn(new BonusRulesResponse());
+
+		bonusAdminService.resetBonusRuleToDefaults(type);
+
+		assertThat(existing.getPoints()).isEqualTo(100);
+		verify(bonusRulesRepository).save(existing);
+	}
+
+	@Test
+	void resetBonusRuleToDefaults_ShouldThrowWhenNotFound() {
+		BonusTransactionType type = BonusTransactionType.WELCOME_BONUS;
+
+		when(bonusRulesRepository.findByBonusType(type)).thenReturn(Optional.empty());
+
+		assertThatThrownBy(() -> bonusAdminService.resetBonusRuleToDefaults(type))
+				.isInstanceOf(BonusRuleNotFoundException.class);
 
 		verify(bonusRulesRepository).findByBonusType(type);
-		verify(bonusMapper, never()).toBonusRules(any(), any());
 		verify(bonusRulesRepository, never()).save(any());
 	}
 
