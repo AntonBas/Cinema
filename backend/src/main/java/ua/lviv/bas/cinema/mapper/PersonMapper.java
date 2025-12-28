@@ -8,11 +8,11 @@ import org.mapstruct.MappingTarget;
 
 import ua.lviv.bas.cinema.domain.Person;
 import ua.lviv.bas.cinema.dto.movie.request.PersonRequest;
-import ua.lviv.bas.cinema.dto.movie.request.QuickCreatePersonRequest;
 import ua.lviv.bas.cinema.dto.movie.response.PersonResponse;
 
 @Mapper(componentModel = "spring")
 public interface PersonMapper {
+
 	PersonResponse toDto(Person person);
 
 	List<PersonResponse> toDtoList(List<Person> persons);
@@ -22,9 +22,4 @@ public interface PersonMapper {
 
 	@Mapping(target = "id", ignore = true)
 	void updatePersonFromRequest(PersonRequest personRequest, @MappingTarget Person person);
-
-	@Mapping(target = "id", ignore = true)
-	Person toEntity(QuickCreatePersonRequest quickCreateDto);
-
-	PersonRequest toPersonRequest(QuickCreatePersonRequest quickCreateDto);
 }

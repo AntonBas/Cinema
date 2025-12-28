@@ -127,13 +127,13 @@ class AdminPersonControllerTest {
 	}
 
 	@Test
-	void quickCreate_ShouldReturnCreatedPerson() {
+	void quickCreatePerson_ShouldReturnCreatedPerson() {
 		QuickCreatePersonRequest request = createQuickCreatePersonRequest(PERSON_NAME, PersonRole.ACTOR);
 		PersonResponse responseDto = createPersonResponse(PERSON_ID, PERSON_NAME, PersonRole.ACTOR);
 
-		when(personService.quickCreate(any(QuickCreatePersonRequest.class))).thenReturn(responseDto);
+		when(personService.quickCreatePerson(any(QuickCreatePersonRequest.class))).thenReturn(responseDto);
 
-		ResponseEntity<PersonResponse> response = personController.quickCreate(request);
+		ResponseEntity<PersonResponse> response = personController.quickCreatePerson(request);
 
 		assertEquals(HttpStatus.CREATED, response.getStatusCode());
 
@@ -143,16 +143,16 @@ class AdminPersonControllerTest {
 		assertEquals(PERSON_ID, responseBody.getId());
 		assertEquals(PERSON_NAME, responseBody.getName());
 		assertEquals(PersonRole.ACTOR, responseBody.getRole());
-		verify(personService).quickCreate(request);
+		verify(personService).quickCreatePerson(request);
 	}
 
 	@Test
-	void quickCreate_WhenDuplicateName_ShouldThrowException() {
+	void quickCreatePerson_WhenDuplicateName_ShouldThrowException() {
 		QuickCreatePersonRequest request = createQuickCreatePersonRequest("Existing Person", PersonRole.DIRECTOR);
 
-		when(personService.quickCreate(any(QuickCreatePersonRequest.class)))
+		when(personService.quickCreatePerson(any(QuickCreatePersonRequest.class)))
 				.thenThrow(new DuplicateEntityException("Person", "Existing Person"));
 
-		assertThrows(DuplicateEntityException.class, () -> personController.quickCreate(request));
+		assertThrows(DuplicateEntityException.class, () -> personController.quickCreatePerson(request));
 	}
 }

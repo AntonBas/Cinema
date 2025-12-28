@@ -1,13 +1,9 @@
 package ua.lviv.bas.cinema.service.common;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,8 +11,8 @@ import com.querydsl.core.BooleanBuilder;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import ua.lviv.bas.cinema.domain.Movie;
 import ua.lviv.bas.cinema.domain.Person;
+import ua.lviv.bas.cinema.domain.QMovie;
 import ua.lviv.bas.cinema.domain.QPerson;
 import ua.lviv.bas.cinema.domain.enums.PersonRole;
 import ua.lviv.bas.cinema.dto.movie.request.PersonRequest;
@@ -42,28 +38,50 @@ public class PersonService {
 	@Transactional
 	public PersonResponse createPerson(PersonRequest request) {
 		log.info("Creating person: {}", request.getName());
-		if (personRepository.existsByNameAndRole(request.getName(), request.getRole())) {
-			throw new DuplicateEntityException("Person", request.getName() + " (" + request.getRole() + ")");
-		}
+
+		validatePersonUniqueness(request.getName(), request.getRole(), null);
+
 		Person person = personMapper.toEntity(request);
 		Person saved = personRepository.save(person);
+
 		log.debug("Person created with ID: {}", saved.getId());
+		return personMapper.toDto(saved);
+	}
+
+	@Transactional
+	public PersonResponse quickCreatePerson(QuickCreatePersonRequest request) {
+		log.info("Quick creating person: {} with role: {}", request.getName(), request.getRole());
+
+		validatePersonUniqueness(request.getName(), request.getRole(), null);
+
+		Person person = Person.builder().name(request.getName()).role(request.getRole()).build();
+
+		Person saved = personRepository.save(person);
+
+		log.debug("Person quick-created with ID: {}", saved.getId());
 		return personMapper.toDto(saved);
 	}
 
 	@Transactional(readOnly = true)
 	public PersonResponse getPersonById(Long id) {
 		log.debug("Retrieving person by id: {}", id);
-		return personRepository.findById(id).map(personMapper::toDto)
-				.orElseThrow(() -> new PersonNotFoundException(id));
+
+		Person person = personRepository.findById(id).orElseThrow(() -> new PersonNotFoundException(id));
+
+		return personMapper.toDto(person);
 	}
 
 	@Transactional
 	public PersonResponse updatePerson(Long id, PersonRequest request) {
 		log.info("Updating person with id: {}", id);
+
 		Person existing = personRepository.findById(id).orElseThrow(() -> new PersonNotFoundException(id));
+
+		validatePersonUniqueness(request.getName(), request.getRole(), id);
+
 		personMapper.updatePersonFromRequest(request, existing);
 		Person updated = personRepository.save(existing);
+
 		log.debug("Person updated with ID: {}", updated.getId());
 		return personMapper.toDto(updated);
 	}
@@ -75,81 +93,80 @@ public class PersonService {
 		Person person = personRepository.findById(id).orElseThrow(() -> new PersonNotFoundException(id));
 
 		checkPersonUsageInMovies(person);
-
 		personRepository.delete(person);
+
 		log.debug("Person deleted with ID: {}", id);
 	}
 
 	@Transactional(readOnly = true)
-	public List<PersonResponse> getAllPersons() {
-		log.debug("Retrieving all persons");
-		return personMapper.toDtoList(personRepository.findAll());
-	}
+	public PageResponse<PersonResponse> getPersonsByRole(PersonRole role, Pageable pageable) {
+		log.info("Getting persons by role: {}", role);
 
-	@Transactional
-	public PersonResponse quickCreate(QuickCreatePersonRequest dto) {
-		log.info("Quick creating person: {} with role: {}", dto.getName(), dto.getRole());
-		if (personRepository.existsByNameAndRole(dto.getName(), dto.getRole())) {
-			throw new DuplicateEntityException("Person", dto.getName() + " (" + dto.getRole() + ")");
-		}
-		Person person = personMapper.toEntity(dto);
-		Person saved = personRepository.save(person);
-		log.debug("Person quick-created with ID: {}", saved.getId());
-		return personMapper.toDto(saved);
-	}
-
-	private void checkPersonUsageInMovies(Person person) {
-		List<String> usedInMovies = new ArrayList<>();
-
-		List<Movie> actorMovies = movieRepository.findByActorsId(person.getId());
-		if (!actorMovies.isEmpty()) {
-			usedInMovies
-					.add("actor in: " + actorMovies.stream().map(Movie::getTitle).collect(Collectors.joining(", ")));
-		}
-
-		List<Movie> directorMovies = movieRepository.findByDirectorsId(person.getId());
-		if (!directorMovies.isEmpty()) {
-			usedInMovies.add(
-					"director in: " + directorMovies.stream().map(Movie::getTitle).collect(Collectors.joining(", ")));
-		}
-
-		List<Movie> screenwriterMovies = movieRepository.findByScreenwritersId(person.getId());
-		if (!screenwriterMovies.isEmpty()) {
-			usedInMovies.add("screenwriter in: "
-					+ screenwriterMovies.stream().map(Movie::getTitle).collect(Collectors.joining(", ")));
-		}
-
-		if (!usedInMovies.isEmpty()) {
-			throw new PersonHasMoviesException(person.getId());
-		}
+		Page<Person> persons = personRepository.findByRole(role, pageable);
+		return PageResponse.of(persons, personMapper::toDto);
 	}
 
 	@Transactional(readOnly = true)
-	public PageResponse<PersonResponse> searchPersons(String query, PersonRole role, int page, int size) {
-		log.info("Searching persons: query='{}', role={}, page={}, size={}", query, role, page, size);
+	public PageResponse<PersonResponse> searchPersons(String query, PersonRole role, Pageable pageable) {
+		log.info("Searching persons: query='{}', role={}", query, role);
 
-		Pageable pageable = PageRequest.of(page, size, Sort.by("name").ascending());
-
+		QPerson qPerson = QPerson.person;
 		BooleanBuilder predicate = new BooleanBuilder();
-		QPerson person = QPerson.person;
 
 		if (query != null && !query.trim().isEmpty()) {
 			String searchQuery = query.trim().toLowerCase();
-			predicate.and(person.name.toLowerCase().contains(searchQuery));
+			predicate.and(qPerson.name.toLowerCase().contains(searchQuery));
 		}
 
 		if (role != null) {
-			predicate.and(person.role.eq(role));
+			predicate.and(qPerson.role.eq(role));
 		}
 
 		Page<Person> personPage = personRepository.findAll(predicate, pageable);
 
-		log.debug("Found {} persons for query '{}'", personPage.getTotalElements(), query);
+		log.debug("Found {} persons", personPage.getTotalElements());
 
-		return PageResponse.of(personPage, this::toPersonResponse);
+		return PageResponse.of(personPage, personMapper::toDto);
 	}
 
-	private PersonResponse toPersonResponse(Person person) {
-		return PersonResponse.builder().id(person.getId()).name(person.getName()).role(person.getRole()).build();
+	@Transactional(readOnly = true)
+	public List<PersonResponse> getPersonsByIds(List<Long> ids) {
+		List<Person> persons = personRepository.findAllById(ids);
+		return personMapper.toDtoList(persons);
+	}
+
+	@Transactional(readOnly = true)
+	public boolean existsById(Long id) {
+		return personRepository.existsById(id);
+	}
+
+	@Transactional(readOnly = true)
+	public long countByRole(PersonRole role) {
+		return personRepository.countByRole(role);
+	}
+
+	private void validatePersonUniqueness(String name, PersonRole role, Long excludeId) {
+		boolean exists;
+
+		if (excludeId != null) {
+			exists = personRepository.existsByNameAndRoleAndIdNot(name, role, excludeId);
+		} else {
+			exists = personRepository.existsByNameAndRole(name, role);
+		}
+
+		if (exists) {
+			throw new DuplicateEntityException("Person", name + " (" + role + ")");
+		}
+	}
+
+	private void checkPersonUsageInMovies(Person person) {
+		QMovie qMovie = QMovie.movie;
+		BooleanBuilder predicate = new BooleanBuilder();
+		predicate.or(qMovie.actors.any().id.eq(person.getId())).or(qMovie.directors.any().id.eq(person.getId()))
+				.or(qMovie.screenwriters.any().id.eq(person.getId()));
+
+		if (movieRepository.exists(predicate)) {
+			throw new PersonHasMoviesException(person.getId(), person.getName());
+		}
 	}
 }

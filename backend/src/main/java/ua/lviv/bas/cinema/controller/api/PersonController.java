@@ -1,7 +1,8 @@
 package ua.lviv.bas.cinema.controller.api;
 
-import java.util.List;
-
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -31,9 +32,6 @@ import ua.lviv.bas.cinema.service.common.PersonService;
 public class PersonController {
 
 	private final PersonService personService;
-	private static final String DEFAULT_PAGE = "0";
-	private static final String DEFAULT_SIZE = "12";
-	private static final int MAX_PAGE_SIZE = 50;
 
 	@GetMapping("/{id}")
 	@Operation(summary = "Get person by ID", description = "Retrieve detailed information about a person (actor, director, screenwriter) by ID.")
@@ -46,31 +44,28 @@ public class PersonController {
 		return ResponseEntity.ok(person);
 	}
 
-	@GetMapping
-	@Operation(summary = "Get all persons", description = "Retrieve complete list of all persons (actors, directors, screenwriters).")
-	@ApiResponse(responseCode = "200", description = "All persons retrieved successfully")
-	public ResponseEntity<List<PersonResponse>> getAll() {
-		log.info("GET /api/persons - Getting all persons");
-		List<PersonResponse> persons = personService.getAllPersons();
-		log.debug("Retrieved {} persons", persons.size());
-		return ResponseEntity.ok(persons);
-	}
-
 	@GetMapping("/search")
 	@Operation(summary = "Search persons with pagination", description = "Search persons by name and/or role with pagination support.")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Persons retrieved successfully") })
 	public ResponseEntity<PageResponse<PersonResponse>> searchPersons(
 			@Parameter(description = "Search query for person name (case-insensitive)", example = "Leonardo") @RequestParam(required = false) String query,
-
 			@Parameter(description = "Filter by person role", example = "ACTOR") @RequestParam(required = false) PersonRole role,
+			@Parameter(hidden = true) @PageableDefault(size = 12, sort = "name", direction = Sort.Direction.ASC) Pageable pageable) {
 
-			@Parameter(description = "Page number (0-based)", example = "0") @RequestParam(defaultValue = DEFAULT_PAGE) int page,
+		log.info("GET /api/persons/search - query: '{}', role: {}, pageable: {}", query, role, pageable);
+		PageResponse<PersonResponse> result = personService.searchPersons(query, role, pageable);
+		return ResponseEntity.ok(result);
+	}
 
-			@Parameter(description = "Number of items per page (max 50)", example = "12") @RequestParam(defaultValue = DEFAULT_SIZE) int size) {
+	@GetMapping("/role/{role}")
+	@Operation(summary = "Get persons by role", description = "Get paginated list of persons filtered by role.")
+	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Persons retrieved successfully") })
+	public ResponseEntity<PageResponse<PersonResponse>> getPersonsByRole(
+			@Parameter(description = "Role to filter by", required = true, example = "ACTOR") @PathVariable PersonRole role,
+			@Parameter(hidden = true) @PageableDefault(size = 12, sort = "name", direction = Sort.Direction.ASC) Pageable pageable) {
 
-		size = Math.min(size, MAX_PAGE_SIZE);
-		log.info("GET /api/persons/search - query: '{}', role: {}, page: {}, size: {}", query, role, page, size);
-		PageResponse<PersonResponse> result = personService.searchPersons(query, role, page, size);
+		log.info("GET /api/persons/role/{} - Getting persons by role", role);
+		PageResponse<PersonResponse> result = personService.getPersonsByRole(role, pageable);
 		return ResponseEntity.ok(result);
 	}
 }
