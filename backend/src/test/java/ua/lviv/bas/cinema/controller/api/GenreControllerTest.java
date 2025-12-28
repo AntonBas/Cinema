@@ -3,6 +3,7 @@ package ua.lviv.bas.cinema.controller.api;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
@@ -15,6 +16,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
@@ -34,6 +38,7 @@ class GenreControllerTest {
 
 	private static final Long GENRE_ID = 1L;
 	private static final String GENRE_NAME = "Action";
+	private static final Pageable DEFAULT_PAGEABLE = PageRequest.of(0, 12, Sort.by("name").ascending());
 
 	private GenreResponse createGenreResponse(Long id, String name) {
 		return GenreResponse.builder().id(id).name(name).build();
@@ -80,15 +85,15 @@ class GenreControllerTest {
 	}
 
 	@Test
-	void searchGenres_ShouldReturnPagedResponse() {
+	void getAllGenres_ShouldReturnPagedResponse() {
 		GenreResponse genre1 = createGenreResponse(1L, "Action");
 		GenreResponse genre2 = createGenreResponse(2L, "Adventure");
 		List<GenreResponse> content = List.of(genre1, genre2);
-		PageResponse<GenreResponse> pageResponse = createPageResponse(content, 0, 1, 2, 10);
+		PageResponse<GenreResponse> pageResponse = createPageResponse(content, 0, 1, 2, 12);
 
-		when(genreService.searchGenres(eq("act"), eq(0), eq(10))).thenReturn(pageResponse);
+		when(genreService.getAllGenresPaginated(any(Pageable.class))).thenReturn(pageResponse);
 
-		ResponseEntity<PageResponse<GenreResponse>> response = genreController.searchGenres("act", 0, 10);
+		ResponseEntity<PageResponse<GenreResponse>> response = genreController.getAllGenres(DEFAULT_PAGEABLE);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
 
@@ -99,19 +104,43 @@ class GenreControllerTest {
 		assertEquals(0, responseBody.getCurrentPage());
 		assertEquals(1, responseBody.getTotalPages());
 		assertEquals(2, responseBody.getTotalElements());
-		assertEquals(10, responseBody.getPageSize());
-		verify(genreService).searchGenres("act", 0, 10);
+		assertEquals(12, responseBody.getPageSize());
+		verify(genreService).getAllGenresPaginated(DEFAULT_PAGEABLE);
+	}
+
+	@Test
+	void searchGenres_ShouldReturnPagedResponse() {
+		GenreResponse genre1 = createGenreResponse(1L, "Action");
+		GenreResponse genre2 = createGenreResponse(2L, "Adventure");
+		List<GenreResponse> content = List.of(genre1, genre2);
+		PageResponse<GenreResponse> pageResponse = createPageResponse(content, 0, 1, 2, 12);
+
+		when(genreService.searchGenres(eq("act"), any(Pageable.class))).thenReturn(pageResponse);
+
+		ResponseEntity<PageResponse<GenreResponse>> response = genreController.searchGenres("act", DEFAULT_PAGEABLE);
+
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+
+		PageResponse<GenreResponse> responseBody = response.getBody();
+		assertNotNull(responseBody);
+
+		assertEquals(2, responseBody.getContent().size());
+		assertEquals(0, responseBody.getCurrentPage());
+		assertEquals(1, responseBody.getTotalPages());
+		assertEquals(2, responseBody.getTotalElements());
+		assertEquals(12, responseBody.getPageSize());
+		verify(genreService).searchGenres(eq("act"), any(Pageable.class));
 	}
 
 	@Test
 	void searchGenres_WithNullQuery_ShouldReturnPagedResponse() {
 		GenreResponse genre1 = createGenreResponse(1L, "Action");
 		List<GenreResponse> content = List.of(genre1);
-		PageResponse<GenreResponse> pageResponse = createPageResponse(content, 0, 1, 1, 10);
+		PageResponse<GenreResponse> pageResponse = createPageResponse(content, 0, 1, 1, 12);
 
-		when(genreService.searchGenres(isNull(), eq(0), eq(10))).thenReturn(pageResponse);
+		when(genreService.searchGenres(isNull(), any(Pageable.class))).thenReturn(pageResponse);
 
-		ResponseEntity<PageResponse<GenreResponse>> response = genreController.searchGenres(null, 0, 10);
+		ResponseEntity<PageResponse<GenreResponse>> response = genreController.searchGenres(null, DEFAULT_PAGEABLE);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
 
@@ -119,68 +148,30 @@ class GenreControllerTest {
 		assertNotNull(responseBody);
 
 		assertEquals(1, responseBody.getContent().size());
-		verify(genreService).searchGenres(null, 0, 10);
+		verify(genreService).searchGenres(isNull(), any(Pageable.class));
 	}
 
 	@Test
-	void searchGenres_WithNegativePage_ShouldReturnPagedResponse() {
+	void searchGenres_WithEmptyQuery_ShouldReturnPagedResponse() {
 		GenreResponse genre1 = createGenreResponse(1L, "Action");
 		List<GenreResponse> content = List.of(genre1);
-		PageResponse<GenreResponse> pageResponse = createPageResponse(content, -1, 1, 1, 10);
+		PageResponse<GenreResponse> pageResponse = createPageResponse(content, 0, 1, 1, 12);
 
-		when(genreService.searchGenres(isNull(), eq(-1), eq(10))).thenReturn(pageResponse);
+		when(genreService.searchGenres(eq(""), any(Pageable.class))).thenReturn(pageResponse);
 
-		ResponseEntity<PageResponse<GenreResponse>> response = genreController.searchGenres(null, -1, 10);
+		ResponseEntity<PageResponse<GenreResponse>> response = genreController.searchGenres("", DEFAULT_PAGEABLE);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
 
 		PageResponse<GenreResponse> responseBody = response.getBody();
 		assertNotNull(responseBody);
 
-		assertEquals(-1, responseBody.getCurrentPage());
-		verify(genreService).searchGenres(null, -1, 10);
+		assertEquals(1, responseBody.getContent().size());
+		verify(genreService).searchGenres(eq(""), any(Pageable.class));
 	}
 
 	@Test
-	void searchGenres_WithZeroSize_ShouldReturnPagedResponse() {
-		GenreResponse genre1 = createGenreResponse(1L, "Action");
-		List<GenreResponse> content = List.of(genre1);
-		PageResponse<GenreResponse> pageResponse = createPageResponse(content, 0, 1, 1, 0);
-
-		when(genreService.searchGenres(isNull(), eq(0), eq(0))).thenReturn(pageResponse);
-
-		ResponseEntity<PageResponse<GenreResponse>> response = genreController.searchGenres(null, 0, 0);
-
-		assertEquals(HttpStatus.OK, response.getStatusCode());
-
-		PageResponse<GenreResponse> responseBody = response.getBody();
-		assertNotNull(responseBody);
-
-		assertEquals(0, responseBody.getPageSize());
-		verify(genreService).searchGenres(null, 0, 0);
-	}
-
-	@Test
-	void searchGenres_WithLargeSize_ShouldLimitToMaxPageSize() {
-		GenreResponse genre1 = createGenreResponse(1L, "Action");
-		List<GenreResponse> content = List.of(genre1);
-		PageResponse<GenreResponse> pageResponse = createPageResponse(content, 0, 1, 1, 50);
-
-		when(genreService.searchGenres(isNull(), eq(0), eq(50))).thenReturn(pageResponse);
-
-		ResponseEntity<PageResponse<GenreResponse>> response = genreController.searchGenres(null, 0, 100);
-
-		assertEquals(HttpStatus.OK, response.getStatusCode());
-
-		PageResponse<GenreResponse> responseBody = response.getBody();
-		assertNotNull(responseBody);
-
-		assertEquals(50, responseBody.getPageSize());
-		verify(genreService).searchGenres(null, 0, 50);
-	}
-
-	@Test
-	void getAllGenres_ShouldReturnListOfGenres() {
+	void getAllGenresWithoutPagination_ShouldReturnListOfGenres() {
 		GenreResponse genre1 = createGenreResponse(1L, "Action");
 		GenreResponse genre2 = createGenreResponse(2L, "Drama");
 		GenreResponse genre3 = createGenreResponse(3L, "Comedy");
@@ -188,7 +179,7 @@ class GenreControllerTest {
 
 		when(genreService.getAllGenres()).thenReturn(genres);
 
-		ResponseEntity<List<GenreResponse>> response = genreController.getAllGenres();
+		ResponseEntity<List<GenreResponse>> response = genreController.getAllGenresWithoutPagination();
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
 
@@ -203,12 +194,12 @@ class GenreControllerTest {
 	}
 
 	@Test
-	void getAllGenres_WhenNoGenres_ShouldReturnEmptyList() {
+	void getAllGenresWithoutPagination_WhenNoGenres_ShouldReturnEmptyList() {
 		List<GenreResponse> emptyList = List.of();
 
 		when(genreService.getAllGenres()).thenReturn(emptyList);
 
-		ResponseEntity<List<GenreResponse>> response = genreController.getAllGenres();
+		ResponseEntity<List<GenreResponse>> response = genreController.getAllGenresWithoutPagination();
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
 
@@ -220,59 +211,23 @@ class GenreControllerTest {
 	}
 
 	@Test
-	void searchGenres_WithEmptyStringQuery_ShouldReturnPagedResponse() {
+	void searchGenres_WithDifferentPageable_ShouldWork() {
+		Pageable customPageable = PageRequest.of(2, 20, Sort.by("name").descending());
 		GenreResponse genre1 = createGenreResponse(1L, "Action");
 		List<GenreResponse> content = List.of(genre1);
-		PageResponse<GenreResponse> pageResponse = createPageResponse(content, 0, 1, 1, 10);
+		PageResponse<GenreResponse> pageResponse = createPageResponse(content, 2, 5, 100, 20);
 
-		when(genreService.searchGenres(eq(""), eq(0), eq(10))).thenReturn(pageResponse);
+		when(genreService.searchGenres(eq("test"), eq(customPageable))).thenReturn(pageResponse);
 
-		ResponseEntity<PageResponse<GenreResponse>> response = genreController.searchGenres("", 0, 10);
+		ResponseEntity<PageResponse<GenreResponse>> response = genreController.searchGenres("test", customPageable);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
 
 		PageResponse<GenreResponse> responseBody = response.getBody();
 		assertNotNull(responseBody);
 
-		assertEquals(1, responseBody.getContent().size());
-		verify(genreService).searchGenres("", 0, 10);
-	}
-
-	@Test
-	void searchGenres_WithMaxPageSize_ShouldReturnPagedResponse() {
-		GenreResponse genre1 = createGenreResponse(1L, "Action");
-		List<GenreResponse> content = List.of(genre1);
-		PageResponse<GenreResponse> pageResponse = createPageResponse(content, 0, 1, 1, 50);
-
-		when(genreService.searchGenres(isNull(), eq(0), eq(50))).thenReturn(pageResponse);
-
-		ResponseEntity<PageResponse<GenreResponse>> response = genreController.searchGenres(null, 0, 50);
-
-		assertEquals(HttpStatus.OK, response.getStatusCode());
-
-		PageResponse<GenreResponse> responseBody = response.getBody();
-		assertNotNull(responseBody);
-
-		assertEquals(50, responseBody.getPageSize());
-		verify(genreService).searchGenres(null, 0, 50);
-	}
-
-	@Test
-	void searchGenres_DefaultParameters_ShouldWork() {
-		GenreResponse genre1 = createGenreResponse(1L, "Action");
-		List<GenreResponse> content = List.of(genre1);
-		PageResponse<GenreResponse> pageResponse = createPageResponse(content, 0, 1, 1, 12);
-
-		when(genreService.searchGenres(isNull(), eq(0), eq(12))).thenReturn(pageResponse);
-
-		ResponseEntity<PageResponse<GenreResponse>> response = genreController.searchGenres(null, 0, 12);
-
-		assertEquals(HttpStatus.OK, response.getStatusCode());
-
-		PageResponse<GenreResponse> responseBody = response.getBody();
-		assertNotNull(responseBody);
-
-		assertEquals(12, responseBody.getPageSize());
-		verify(genreService).searchGenres(null, 0, 12);
+		assertEquals(2, responseBody.getCurrentPage());
+		assertEquals(20, responseBody.getPageSize());
+		verify(genreService).searchGenres(eq("test"), eq(customPageable));
 	}
 }
