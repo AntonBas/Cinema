@@ -1,17 +1,23 @@
 package ua.lviv.bas.cinema.dto.movie.request;
 
+import java.time.LocalDate;
+import java.util.List;
+
+import org.hibernate.validator.constraints.URL;
+import org.springframework.web.multipart.MultipartFile;
+
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.Future;
+import jakarta.validation.constraints.FutureOrPresent;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.validator.constraints.URL;
-import org.springframework.web.multipart.MultipartFile;
 import ua.lviv.bas.cinema.domain.enums.AgeRating;
-
-import java.time.LocalDate;
-import java.util.List;
 
 @Data
 @Builder
@@ -78,12 +84,4 @@ public class MovieCreateRequest {
 	@Schema(description = "Movie poster image file (JPG, PNG)", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
 	private MultipartFile posterFile;
 
-	@AssertTrue(message = "End showing date must be after release date")
-	@Schema(description = "Validation: end showing date must be after release date", hidden = true)
-	public boolean isEndDateValid() {
-		if (releaseDate == null || endShowingDate == null) {
-			return true;
-		}
-		return endShowingDate.isAfter(releaseDate);
-	}
 }
