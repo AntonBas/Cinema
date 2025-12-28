@@ -27,6 +27,6 @@ public class SeatResponse {
 			"DISABLED" })
 	private SeatType seatType;
 
-	@Schema(description = "Whether the seat is currently available for booking", example = "true")
-	private boolean available;
+	@Schema(description = "Whether the seat is active (not broken/disabled)", example = "true")
+	private boolean active;
 }
