@@ -60,7 +60,6 @@ public class AdminPersonController {
 			@ApiResponse(responseCode = "403", description = "User does not have required role") })
 	public ResponseEntity<PersonResponse> updatePerson(
 			@Parameter(description = "ID of the person to update", required = true, example = "1") @PathVariable Long id,
-
 			@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Updated person data", required = true, content = @Content(schema = @Schema(implementation = PersonRequest.class))) @RequestBody @Valid PersonRequest request) {
 		log.info("PUT /api/admin/persons/{} - Updating person", id);
 		PersonResponse updatedPerson = personService.updatePerson(id, request);
@@ -87,11 +86,11 @@ public class AdminPersonController {
 			@ApiResponse(responseCode = "400", description = "Invalid request data"),
 			@ApiResponse(responseCode = "401", description = "User not authenticated"),
 			@ApiResponse(responseCode = "403", description = "User does not have required role") })
-	public ResponseEntity<PersonResponse> quickCreate(
+	public ResponseEntity<PersonResponse> quickCreatePerson(
 			@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Quick person creation request", required = true, content = @Content(schema = @Schema(implementation = QuickCreatePersonRequest.class))) @RequestBody @Valid QuickCreatePersonRequest request) {
 		log.info("POST /api/admin/persons/quick-create - Quick creating person: {} with role: {}", request.getName(),
 				request.getRole());
-		PersonResponse createdPerson = personService.quickCreate(request);
+		PersonResponse createdPerson = personService.quickCreatePerson(request);
 		return ResponseEntity.status(HttpStatus.CREATED).body(createdPerson);
 	}
 }
