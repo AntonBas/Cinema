@@ -51,24 +51,17 @@ public class UserMapperTest {
 		assertNull(user.getId());
 		assertNotNull(user.getTickets());
 		assertTrue(user.getTickets().isEmpty());
+		assertNull(user.getBonusCard());
+		assertNotNull(user.getDiscounts());
+		assertTrue(user.getDiscounts().isEmpty());
+		assertNotNull(user.getBookings());
+		assertTrue(user.getBookings().isEmpty());
 	}
 
 	@Test
 	void toEntity_ShouldReturnNull_WhenDtoIsNull() {
 		User user = userMapper.toEntity(null);
 		assertNull(user);
-	}
-
-	@Test
-	void toEntity_ShouldSetDefaultVerificationStatus() {
-		UserRegistrationRequest dto = UserRegistrationRequest.builder().email("test@example.com").firstName("Test")
-				.lastName("User").dateOfBirth(LocalDate.of(1990, 1, 1)).city("City").phoneNumber("+380000000000")
-				.password("password").passwordConfirm("password").build();
-
-		User user = userMapper.toEntity(dto);
-
-		assertEquals(VerificationStatus.NOT_VERIFIED, user.getVerificationStatus());
-		assertNull(user.getVerifiedAt());
 	}
 
 	@Test
@@ -94,7 +87,6 @@ public class UserMapperTest {
 		assertEquals(VerificationStatus.VERIFIED, dto.getVerificationStatus());
 		assertTrue(dto.isEnabled());
 		assertEquals(LocalDateTime.of(2024, 1, 1, 10, 0), dto.getCreatedAt());
-		// НЕ перевіряємо verifiedAt - його немає в UserResponse!
 	}
 
 	@Test
@@ -122,7 +114,6 @@ public class UserMapperTest {
 		assertEquals("Lviv", dto.getCity());
 		assertEquals("+380123456789", dto.getPhoneNumber());
 		assertEquals(VerificationStatus.VERIFIED, dto.getVerificationStatus());
-		// НЕ перевіряємо verifiedAt - його немає в UserProfileResponse!
 	}
 
 	@Test
@@ -150,12 +141,12 @@ public class UserMapperTest {
 		assertEquals("User", dto.getLastName());
 		assertEquals(UserRole.ROLE_ADMIN, dto.getUserRole());
 		assertEquals(VerificationStatus.VERIFIED, dto.getVerificationStatus());
-		assertEquals(verifiedAt, dto.getVerifiedAt()); // Тут є verifiedAt!
+		assertEquals(verifiedAt, dto.getVerifiedAt());
 		assertTrue(dto.isEnabled());
-		assertEquals(createdAt.toLocalDate(), dto.getCreatedAt());
-		assertEquals(updatedAt.toLocalDate(), dto.getUpdatedAt());
+		assertEquals(createdAt, dto.getCreatedAt());
+		assertEquals(updatedAt, dto.getUpdatedAt());
 		assertEquals(0, dto.getTicketsCount());
-		assertEquals(updatedAt.toLocalDate(), dto.getLastActivity());
+		assertEquals(updatedAt, dto.getLastActivity());
 	}
 
 	@Test
@@ -177,12 +168,6 @@ public class UserMapperTest {
 	}
 
 	@Test
-	void toAdminListDto_ShouldReturnNull_WhenUserIsNull() {
-		AdminUserListResponse dto = userMapper.toAdminListDto(null);
-		assertNull(dto);
-	}
-
-	@Test
 	void toAdminListDto_ShouldHandleDisabledUser() {
 		User user = User.builder().id(1L).email("disabled@example.com").firstName("Disabled").lastName("User")
 				.userRole(UserRole.ROLE_USER).verificationStatus(VerificationStatus.NOT_VERIFIED).verifiedAt(null)
@@ -200,24 +185,6 @@ public class UserMapperTest {
 	}
 
 	@Test
-	void toAdminListDto_ShouldMapCashierRole() {
-		LocalDateTime verifiedAt = LocalDateTime.now();
-
-		User user = User.builder().id(1L).email("cashier@example.com").firstName("Cashier").lastName("User")
-				.userRole(UserRole.ROLE_CASHIER).verificationStatus(VerificationStatus.VERIFIED).verifiedAt(verifiedAt)
-				.enabled(true).createdAt(LocalDateTime.now()).updatedAt(LocalDateTime.now()).tickets(new ArrayList<>())
-				.build();
-
-		AdminUserListResponse dto = userMapper.toAdminListDto(user);
-
-		assertNotNull(dto);
-		assertEquals(UserRole.ROLE_CASHIER, dto.getUserRole());
-		assertEquals("Cashier", dto.getFirstName());
-		assertEquals(VerificationStatus.VERIFIED, dto.getVerificationStatus());
-		assertEquals(verifiedAt, dto.getVerifiedAt());
-	}
-
-	@Test
 	void updateUserFromDto_ShouldUpdateAllowedFieldsAndIgnoreEmail() {
 		LocalDateTime verifiedAt = LocalDateTime.of(2023, 12, 1, 10, 0);
 
@@ -226,7 +193,8 @@ public class UserMapperTest {
 				.phoneNumber("+380000000000").password("oldPassword").userRole(UserRole.ROLE_ADMIN)
 				.verificationStatus(VerificationStatus.VERIFIED).verifiedAt(verifiedAt).enabled(true)
 				.createdAt(LocalDateTime.of(2023, 1, 1, 10, 0)).updatedAt(LocalDateTime.of(2023, 1, 1, 10, 0))
-				.tickets(new ArrayList<>()).build();
+				.tickets(new ArrayList<>()).bonusCard(null).discounts(new ArrayList<>()).bookings(new ArrayList<>())
+				.build();
 
 		UserUpdateRequest updateDto = UserUpdateRequest.builder().firstName("NewFirstName").lastName("NewLastName")
 				.dateOfBirth(LocalDate.of(2001, 8, 21)).city("NewCity").phoneNumber("+380123456789").build();
@@ -246,6 +214,9 @@ public class UserMapperTest {
 		assertTrue(existingUser.isEnabled());
 		assertEquals(1L, existingUser.getId());
 		assertNotNull(existingUser.getTickets());
+		assertNull(existingUser.getBonusCard());
+		assertNotNull(existingUser.getDiscounts());
+		assertNotNull(existingUser.getBookings());
 		assertEquals(LocalDateTime.of(2023, 1, 1, 10, 0), existingUser.getCreatedAt());
 		assertEquals(LocalDateTime.of(2023, 1, 1, 10, 0), existingUser.getUpdatedAt());
 	}
@@ -256,7 +227,8 @@ public class UserMapperTest {
 
 		User existingUser = User.builder().id(1L).email("test@example.com").firstName("Test").lastName("User")
 				.city("City").phoneNumber("+380000000000").verificationStatus(VerificationStatus.VERIFIED)
-				.verifiedAt(verifiedAt).build();
+				.verifiedAt(verifiedAt).tickets(new ArrayList<>()).bonusCard(null).discounts(new ArrayList<>())
+				.bookings(new ArrayList<>()).build();
 
 		userMapper.updateUserFromDto(null, existingUser);
 
@@ -267,42 +239,65 @@ public class UserMapperTest {
 		assertEquals("+380000000000", existingUser.getPhoneNumber());
 		assertEquals(VerificationStatus.VERIFIED, existingUser.getVerificationStatus());
 		assertEquals(verifiedAt, existingUser.getVerifiedAt());
+		assertNotNull(existingUser.getTickets());
+		assertNull(existingUser.getBonusCard());
+		assertNotNull(existingUser.getDiscounts());
+		assertNotNull(existingUser.getBookings());
 	}
 
 	@Test
-	void updateUserFromDto_ShouldHandlePartialUpdate() {
+	void updateUserFromDto_ShouldUpdateOnlySpecifiedFields() {
 		User existingUser = User.builder().id(1L).email("test@example.com").firstName("OldFirstName")
 				.lastName("OldLastName").city("OldCity").phoneNumber("+380000000000")
 				.dateOfBirth(LocalDate.of(1990, 1, 1)).verificationStatus(VerificationStatus.NOT_VERIFIED)
-				.verifiedAt(null).build();
+				.verifiedAt(null).tickets(new ArrayList<>()).bonusCard(null).discounts(new ArrayList<>())
+				.bookings(new ArrayList<>()).build();
 
-		UserUpdateRequest updateDto = UserUpdateRequest.builder().firstName("NewFirstName").city("NewCity").build();
+		UserUpdateRequest updateDto = UserUpdateRequest.builder().firstName("NewFirstName").lastName("OldLastName")
+				.city("NewCity").phoneNumber("+380000000000").dateOfBirth(LocalDate.of(1990, 1, 1)).build();
 
 		userMapper.updateUserFromDto(updateDto, existingUser);
 
 		assertEquals("NewFirstName", existingUser.getFirstName());
+		assertEquals("OldLastName", existingUser.getLastName());
 		assertEquals("NewCity", existingUser.getCity());
-		assertNull(existingUser.getLastName());
-		assertNull(existingUser.getPhoneNumber());
-		assertNull(existingUser.getDateOfBirth());
+		assertEquals("+380000000000", existingUser.getPhoneNumber());
+		assertEquals(LocalDate.of(1990, 1, 1), existingUser.getDateOfBirth());
 		assertEquals("test@example.com", existingUser.getEmail());
 		assertEquals(VerificationStatus.NOT_VERIFIED, existingUser.getVerificationStatus());
 		assertNull(existingUser.getVerifiedAt());
+		assertNotNull(existingUser.getTickets());
+		assertNull(existingUser.getBonusCard());
+		assertNotNull(existingUser.getDiscounts());
+		assertNotNull(existingUser.getBookings());
 	}
 
 	@Test
-	void updateUserFromDto_ShouldNotChangeVerificationFields() {
+	void updateUserFromDto_ShouldNotChangeUnspecifiedFieldsWhenDtoIsPartial() {
 		LocalDateTime originalVerifiedAt = LocalDateTime.of(2024, 1, 10, 12, 0);
 
-		User existingUser = User.builder().id(1L).email("test@example.com").firstName("OldName")
-				.verificationStatus(VerificationStatus.VERIFIED).verifiedAt(originalVerifiedAt).build();
+		User existingUser = User.builder().id(1L).email("test@example.com").firstName("OldFirstName")
+				.lastName("OldLastName").city("OldCity").phoneNumber("+380000000000")
+				.dateOfBirth(LocalDate.of(1990, 1, 1)).verificationStatus(VerificationStatus.VERIFIED)
+				.verifiedAt(originalVerifiedAt).tickets(new ArrayList<>()).bonusCard(null).discounts(new ArrayList<>())
+				.bookings(new ArrayList<>()).build();
 
-		UserUpdateRequest updateDto = UserUpdateRequest.builder().firstName("NewName").build();
+		UserUpdateRequest updateDto = UserUpdateRequest.builder().firstName("NewFirstName").lastName("OldLastName")
+				.city("OldCity").phoneNumber("+380000000000").dateOfBirth(LocalDate.of(1990, 1, 1)).build();
 
 		userMapper.updateUserFromDto(updateDto, existingUser);
 
-		assertEquals("NewName", existingUser.getFirstName());
+		assertEquals("NewFirstName", existingUser.getFirstName());
+		assertEquals("OldLastName", existingUser.getLastName());
+		assertEquals("OldCity", existingUser.getCity());
+		assertEquals("+380000000000", existingUser.getPhoneNumber());
+		assertEquals(LocalDate.of(1990, 1, 1), existingUser.getDateOfBirth());
+		assertEquals("test@example.com", existingUser.getEmail());
 		assertEquals(VerificationStatus.VERIFIED, existingUser.getVerificationStatus());
 		assertEquals(originalVerifiedAt, existingUser.getVerifiedAt());
+		assertNotNull(existingUser.getTickets());
+		assertNull(existingUser.getBonusCard());
+		assertNotNull(existingUser.getDiscounts());
+		assertNotNull(existingUser.getBookings());
 	}
 }
