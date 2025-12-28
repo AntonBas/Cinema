@@ -2,7 +2,8 @@ import type { PersonResponse, PersonRequest, PersonRole, QuickCreatePersonReques
 import type { PageResponse } from '@/types/pagination';
 import { handleApiError } from '@/utils/apiErrorHandler';
 
-const API_URL = '/api/persons';
+const PUBLIC_API_URL = '/api/persons';
+const ADMIN_API_URL = '/api/admin/persons';
 
 const getAuthHeaders = () => {
   const token = localStorage.getItem('authToken');
@@ -14,7 +15,7 @@ const getAuthHeaders = () => {
 
 export const personApi = {
   getById: async (id: number): Promise<PersonResponse> => {
-    const response = await fetch(`${API_URL}/${id}`, {
+    const response = await fetch(`${PUBLIC_API_URL}/${id}`, {
       headers: getAuthHeaders(),
     });
     if (!response.ok) throw await handleApiError(response);
@@ -22,7 +23,7 @@ export const personApi = {
   },
 
   create: async (personData: PersonRequest): Promise<PersonResponse> => {
-    const response = await fetch(API_URL, {
+    const response = await fetch(ADMIN_API_URL, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(personData),
@@ -32,7 +33,7 @@ export const personApi = {
   },
 
   update: async (id: number, personData: PersonRequest): Promise<PersonResponse> => {
-    const response = await fetch(`${API_URL}/${id}`, {
+    const response = await fetch(`${ADMIN_API_URL}/${id}`, {
       method: 'PUT',
       headers: getAuthHeaders(),
       body: JSON.stringify(personData),
@@ -42,7 +43,7 @@ export const personApi = {
   },
 
   delete: async (id: number): Promise<void> => {
-    const response = await fetch(`${API_URL}/${id}`, {
+    const response = await fetch(`${ADMIN_API_URL}/${id}`, {
       method: 'DELETE',
       headers: getAuthHeaders(),
     });
@@ -50,7 +51,7 @@ export const personApi = {
   },
 
   getAll: async (): Promise<PersonResponse[]> => {
-    const response = await fetch(API_URL, {
+    const response = await fetch(PUBLIC_API_URL, {
       headers: getAuthHeaders(),
     });
     if (!response.ok) throw await handleApiError(response);
@@ -58,7 +59,7 @@ export const personApi = {
   },
 
   quickCreate: async (personData: QuickCreatePersonRequest): Promise<PersonResponse> => {
-    const response = await fetch(`${API_URL}/quick-create`, {
+    const response = await fetch(`${ADMIN_API_URL}/quick-create`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(personData),
@@ -81,7 +82,7 @@ export const personApi = {
     searchParams.append('page', page.toString());
     searchParams.append('size', size.toString());
 
-    const response = await fetch(`${API_URL}/search?${searchParams}`, {
+    const response = await fetch(`${PUBLIC_API_URL}/search?${searchParams}`, {
       headers: getAuthHeaders(),
     });
 
