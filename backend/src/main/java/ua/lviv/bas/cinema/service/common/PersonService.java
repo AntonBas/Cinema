@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import com.querydsl.core.BooleanBuilder;
 
@@ -29,6 +30,7 @@ import ua.lviv.bas.cinema.repository.PersonRepository;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class PersonService {
 
 	private final PersonRepository personRepository;
@@ -39,9 +41,11 @@ public class PersonService {
 	public PersonResponse createPerson(PersonRequest request) {
 		log.info("Creating person: {}", request.getName());
 
-		validatePersonUniqueness(request.getName(), request.getRole(), null);
+		String personName = request.getName().trim();
+		validatePersonUniqueness(personName, request.getRole(), null);
 
 		Person person = personMapper.toEntity(request);
+		person.setName(personName);
 		Person saved = personRepository.save(person);
 
 		log.debug("Person created with ID: {}", saved.getId());
@@ -52,9 +56,10 @@ public class PersonService {
 	public PersonResponse quickCreatePerson(QuickCreatePersonRequest request) {
 		log.info("Quick creating person: {} with role: {}", request.getName(), request.getRole());
 
-		validatePersonUniqueness(request.getName(), request.getRole(), null);
+		String personName = request.getName().trim();
+		validatePersonUniqueness(personName, request.getRole(), null);
 
-		Person person = Person.builder().name(request.getName()).role(request.getRole()).build();
+		Person person = Person.builder().name(personName).role(request.getRole()).build();
 
 		Person saved = personRepository.save(person);
 
@@ -62,7 +67,6 @@ public class PersonService {
 		return personMapper.toDto(saved);
 	}
 
-	@Transactional(readOnly = true)
 	public PersonResponse getPersonById(Long id) {
 		log.debug("Retrieving person by id: {}", id);
 
@@ -77,9 +81,11 @@ public class PersonService {
 
 		Person existing = personRepository.findById(id).orElseThrow(() -> new PersonNotFoundException(id));
 
-		validatePersonUniqueness(request.getName(), request.getRole(), id);
+		String personName = request.getName().trim();
+		validatePersonUniqueness(personName, request.getRole(), id);
 
 		personMapper.updatePersonFromRequest(request, existing);
+		existing.setName(personName);
 		Person updated = personRepository.save(existing);
 
 		log.debug("Person updated with ID: {}", updated.getId());
@@ -98,7 +104,6 @@ public class PersonService {
 		log.debug("Person deleted with ID: {}", id);
 	}
 
-	@Transactional(readOnly = true)
 	public PageResponse<PersonResponse> getPersonsByRole(PersonRole role, Pageable pageable) {
 		log.info("Getting persons by role: {}", role);
 
@@ -106,14 +111,13 @@ public class PersonService {
 		return PageResponse.of(persons, personMapper::toDto);
 	}
 
-	@Transactional(readOnly = true)
 	public PageResponse<PersonResponse> searchPersons(String query, PersonRole role, Pageable pageable) {
 		log.info("Searching persons: query='{}', role={}", query, role);
 
 		QPerson qPerson = QPerson.person;
 		BooleanBuilder predicate = new BooleanBuilder();
 
-		if (query != null && !query.trim().isEmpty()) {
+		if (StringUtils.hasText(query)) {
 			String searchQuery = query.trim().toLowerCase();
 			predicate.and(qPerson.name.toLowerCase().contains(searchQuery));
 		}
@@ -123,24 +127,29 @@ public class PersonService {
 		}
 
 		Page<Person> personPage = personRepository.findAll(predicate, pageable);
-
 		log.debug("Found {} persons", personPage.getTotalElements());
-
 		return PageResponse.of(personPage, personMapper::toDto);
 	}
 
-	@Transactional(readOnly = true)
 	public List<PersonResponse> getPersonsByIds(List<Long> ids) {
+		log.debug("Retrieving persons by ids: {}", ids);
+
+		if (ids == null || ids.isEmpty()) {
+			return List.of();
+		}
+
 		List<Person> persons = personRepository.findAllById(ids);
 		return personMapper.toDtoList(persons);
 	}
 
-	@Transactional(readOnly = true)
 	public boolean existsById(Long id) {
 		return personRepository.existsById(id);
 	}
 
-	@Transactional(readOnly = true)
+	public boolean existsByNameAndRole(String name, PersonRole role) {
+		return personRepository.existsByNameAndRole(name.trim(), role);
+	}
+
 	public long countByRole(PersonRole role) {
 		return personRepository.countByRole(role);
 	}
