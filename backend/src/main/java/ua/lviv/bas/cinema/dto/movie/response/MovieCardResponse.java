@@ -1,5 +1,7 @@
 package ua.lviv.bas.cinema.dto.movie.response;
 
+import java.time.LocalDate;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -7,8 +9,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import ua.lviv.bas.cinema.domain.enums.AgeRating;
 import ua.lviv.bas.cinema.domain.enums.MovieStatus;
-
-import java.time.LocalDate;
 
 @Data
 @Builder

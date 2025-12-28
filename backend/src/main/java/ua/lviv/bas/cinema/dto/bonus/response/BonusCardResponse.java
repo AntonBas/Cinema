@@ -29,5 +29,4 @@ public class BonusCardResponse {
 
 	@Schema(description = "User ID associated with this bonus card", example = "21")
 	private Long userId;
-
 }
