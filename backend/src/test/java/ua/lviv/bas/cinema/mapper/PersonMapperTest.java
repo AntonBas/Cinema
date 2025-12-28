@@ -18,7 +18,6 @@ import org.mapstruct.factory.Mappers;
 import ua.lviv.bas.cinema.domain.Person;
 import ua.lviv.bas.cinema.domain.enums.PersonRole;
 import ua.lviv.bas.cinema.dto.movie.request.PersonRequest;
-import ua.lviv.bas.cinema.dto.movie.request.QuickCreatePersonRequest;
 import ua.lviv.bas.cinema.dto.movie.response.PersonResponse;
 
 public class PersonMapperTest {
@@ -113,14 +112,13 @@ public class PersonMapperTest {
 		List<PersonResponse> dtos = mapper.toDtoList(persons);
 
 		assertThat(dtos).hasSize(3);
-
 		assertThat(dtos.get(0)).isNotNull();
 		assertThat(dtos.get(1)).isNull();
 		assertThat(dtos.get(2)).isNotNull();
 	}
 
 	@Test
-	void toEntity_FromPersonRequest_ShouldIgnoreIdAndMapFields() {
+	void toEntity_ShouldIgnoreIdAndMapFields() {
 		PersonRequest request = PersonRequest.builder().name("New Person").role(PersonRole.DIRECTOR).build();
 
 		Person person = mapper.toEntity(request);
@@ -130,8 +128,8 @@ public class PersonMapperTest {
 	}
 
 	@Test
-	void toEntity_FromPersonRequest_ShouldReturnNull_WhenInputIsNull() {
-		Person person = mapper.toEntity((PersonRequest) null);
+	void toEntity_ShouldReturnNull_WhenInputIsNull() {
+		Person person = mapper.toEntity(null);
 
 		assertThat(person).isNull();
 	}
@@ -139,7 +137,7 @@ public class PersonMapperTest {
 	@ParameterizedTest
 	@NullAndEmptySource
 	@ValueSource(strings = { " ", "\t", "\n" })
-	void toEntity_FromPersonRequest_ShouldHandleEmptyOrBlankName(String name) {
+	void toEntity_ShouldHandleEmptyOrBlankName(String name) {
 		PersonRequest request = PersonRequest.builder().name(name).role(PersonRole.ACTOR).build();
 
 		Person person = mapper.toEntity(request);
@@ -201,56 +199,6 @@ public class PersonMapperTest {
 	}
 
 	@Test
-	void toEntity_FromQuickCreatePersonRequest_ShouldMapFieldsAndIgnoreId() {
-		QuickCreatePersonRequest quickDto = QuickCreatePersonRequest.builder().name("Quick Person")
-				.role(PersonRole.ACTOR).build();
-
-		Person person = mapper.toEntity(quickDto);
-
-		assertThat(person).isNotNull().extracting(Person::getId, Person::getName, Person::getRole).containsExactly(null,
-				"Quick Person", PersonRole.ACTOR);
-	}
-
-	@Test
-	void toEntity_FromQuickCreatePersonRequest_ShouldReturnNull_WhenInputIsNull() {
-		Person person = mapper.toEntity((QuickCreatePersonRequest) null);
-
-		assertThat(person).isNull();
-	}
-
-	@Test
-	void toEntity_FromQuickCreatePersonRequest_ShouldHandleSameValuesAsPersonRequest() {
-		QuickCreatePersonRequest quickDto = QuickCreatePersonRequest.builder().name("Same Person")
-				.role(PersonRole.DIRECTOR).build();
-
-		PersonRequest regularRequest = PersonRequest.builder().name("Same Person").role(PersonRole.DIRECTOR).build();
-
-		Person fromQuick = mapper.toEntity(quickDto);
-		Person fromRegular = mapper.toEntity(regularRequest);
-
-		assertThat(fromQuick.getName()).isEqualTo(fromRegular.getName());
-		assertThat(fromQuick.getRole()).isEqualTo(fromRegular.getRole());
-	}
-
-	@Test
-	void toPersonRequest_FromQuickCreatePersonRequest_ShouldMapAllFields() {
-		QuickCreatePersonRequest quickDto = QuickCreatePersonRequest.builder().name("Quick To Request")
-				.role(PersonRole.DIRECTOR).build();
-
-		PersonRequest request = mapper.toPersonRequest(quickDto);
-
-		assertThat(request).isNotNull().extracting(PersonRequest::getName, PersonRequest::getRole)
-				.containsExactly("Quick To Request", PersonRole.DIRECTOR);
-	}
-
-	@Test
-	void toPersonRequest_FromQuickCreatePersonRequest_ShouldReturnNull_WhenInputIsNull() {
-		PersonRequest request = mapper.toPersonRequest(null);
-
-		assertThat(request).isNull();
-	}
-
-	@Test
 	void consistencyCheck_ToEntityAndToDto_ShouldReturnSameValues() {
 		PersonRequest request = PersonRequest.builder().name("Consistency Test").role(PersonRole.SCREENWRITER).build();
 
@@ -259,18 +207,6 @@ public class PersonMapperTest {
 
 		assertThat(dto.getName()).isEqualTo("Consistency Test");
 		assertThat(dto.getRole()).isEqualTo(PersonRole.SCREENWRITER);
-	}
-
-	@Test
-	void consistencyCheck_QuickCreateToEntityToDto() {
-		QuickCreatePersonRequest quickDto = QuickCreatePersonRequest.builder().name("Quick Test").role(PersonRole.ACTOR)
-				.build();
-
-		Person entity = mapper.toEntity(quickDto);
-		PersonResponse dto = mapper.toDto(entity);
-
-		assertThat(dto.getName()).isEqualTo("Quick Test");
-		assertThat(dto.getRole()).isEqualTo(PersonRole.ACTOR);
 	}
 
 	@Test
@@ -284,5 +220,24 @@ public class PersonMapperTest {
 
 		assertThat(dto.getName()).isEqualTo("After");
 		assertThat(dto.getRole()).isEqualTo(PersonRole.DIRECTOR);
+	}
+
+	@Test
+	void shouldMapMaxLengthName() {
+		String longName = "A".repeat(50);
+		Person person = Person.builder().id(1L).name(longName).role(PersonRole.ACTOR).build();
+
+		PersonResponse dto = mapper.toDto(person);
+
+		assertThat(dto.getName()).hasSize(50);
+	}
+
+	@Test
+	void shouldHandlePersonWithNullRole() {
+		Person person = Person.builder().id(1L).name("Test Person").role(null).build();
+
+		PersonResponse dto = mapper.toDto(person);
+
+		assertThat(dto.getRole()).isNull();
 	}
 }

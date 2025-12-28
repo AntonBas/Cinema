@@ -3,6 +3,7 @@ package ua.lviv.bas.cinema.controller.api;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
@@ -15,6 +16,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
@@ -35,6 +39,7 @@ class PersonControllerTest {
 
 	private static final Long PERSON_ID = 1L;
 	private static final String PERSON_NAME = "Anton Bas";
+	private static final Pageable DEFAULT_PAGEABLE = PageRequest.of(0, 12, Sort.by("name").ascending());
 
 	private PersonResponse createPersonResponse(Long id, String name, PersonRole role) {
 		return PersonResponse.builder().id(id).name(name).role(role).build();
@@ -82,55 +87,16 @@ class PersonControllerTest {
 	}
 
 	@Test
-	void getAll_ShouldReturnListOfPersons() {
-		PersonResponse person1 = createPersonResponse(1L, "Person 1", PersonRole.ACTOR);
-		PersonResponse person2 = createPersonResponse(2L, "Person 2", PersonRole.DIRECTOR);
-		List<PersonResponse> persons = List.of(person1, person2);
-
-		when(personService.getAllPersons()).thenReturn(persons);
-
-		ResponseEntity<List<PersonResponse>> response = personController.getAll();
-
-		assertEquals(HttpStatus.OK, response.getStatusCode());
-
-		List<PersonResponse> responseBody = response.getBody();
-		assertNotNull(responseBody);
-
-		assertEquals(2, responseBody.size());
-		assertEquals("Person 1", responseBody.get(0).getName());
-		assertEquals(PersonRole.ACTOR, responseBody.get(0).getRole());
-		assertEquals("Person 2", responseBody.get(1).getName());
-		assertEquals(PersonRole.DIRECTOR, responseBody.get(1).getRole());
-		verify(personService).getAllPersons();
-	}
-
-	@Test
-	void getAll_WhenNoPersons_ShouldReturnEmptyList() {
-		List<PersonResponse> emptyList = List.of();
-
-		when(personService.getAllPersons()).thenReturn(emptyList);
-
-		ResponseEntity<List<PersonResponse>> response = personController.getAll();
-
-		assertEquals(HttpStatus.OK, response.getStatusCode());
-
-		List<PersonResponse> responseBody = response.getBody();
-		assertNotNull(responseBody);
-
-		assertEquals(0, responseBody.size());
-		verify(personService).getAllPersons();
-	}
-
-	@Test
 	void searchPersons_ShouldReturnPagedResponse() {
 		PersonResponse person1 = createPersonResponse(1L, "Anton Bas", PersonRole.ACTOR);
 		List<PersonResponse> content = List.of(person1);
 		PageResponse<PersonResponse> pageResponse = createPageResponse(content, 0, 1, 1, 10);
 
-		when(personService.searchPersons(eq("Anton"), eq(PersonRole.ACTOR), eq(0), eq(10))).thenReturn(pageResponse);
+		when(personService.searchPersons(eq("Anton"), eq(PersonRole.ACTOR), any(Pageable.class)))
+				.thenReturn(pageResponse);
 
 		ResponseEntity<PageResponse<PersonResponse>> response = personController.searchPersons("Anton",
-				PersonRole.ACTOR, 0, 10);
+				PersonRole.ACTOR, DEFAULT_PAGEABLE);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
 
@@ -140,11 +106,7 @@ class PersonControllerTest {
 		assertEquals(1, responseBody.getContent().size());
 		assertEquals("Anton Bas", responseBody.getContent().get(0).getName());
 		assertEquals(PersonRole.ACTOR, responseBody.getContent().get(0).getRole());
-		assertEquals(0, responseBody.getCurrentPage());
-		assertEquals(1, responseBody.getTotalPages());
-		assertEquals(1, responseBody.getTotalElements());
-		assertEquals(10, responseBody.getPageSize());
-		verify(personService).searchPersons("Anton", PersonRole.ACTOR, 0, 10);
+		verify(personService).searchPersons(eq("Anton"), eq(PersonRole.ACTOR), any(Pageable.class));
 	}
 
 	@Test
@@ -154,9 +116,10 @@ class PersonControllerTest {
 		List<PersonResponse> content = List.of(person1, person2);
 		PageResponse<PersonResponse> pageResponse = createPageResponse(content, 0, 1, 2, 10);
 
-		when(personService.searchPersons(isNull(), isNull(), eq(0), eq(10))).thenReturn(pageResponse);
+		when(personService.searchPersons(isNull(), isNull(), any(Pageable.class))).thenReturn(pageResponse);
 
-		ResponseEntity<PageResponse<PersonResponse>> response = personController.searchPersons(null, null, 0, 10);
+		ResponseEntity<PageResponse<PersonResponse>> response = personController.searchPersons(null, null,
+				DEFAULT_PAGEABLE);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
 
@@ -164,121 +127,7 @@ class PersonControllerTest {
 		assertNotNull(responseBody);
 
 		assertEquals(2, responseBody.getContent().size());
-		verify(personService).searchPersons(null, null, 0, 10);
-	}
-
-	@Test
-	void searchPersons_WithEmptyStringQuery_ShouldReturnPagedResponse() {
-		PersonResponse person1 = createPersonResponse(1L, "Person 1", PersonRole.ACTOR);
-		List<PersonResponse> content = List.of(person1);
-		PageResponse<PersonResponse> pageResponse = createPageResponse(content, 0, 1, 1, 10);
-
-		when(personService.searchPersons(eq(""), isNull(), eq(0), eq(10))).thenReturn(pageResponse);
-
-		ResponseEntity<PageResponse<PersonResponse>> response = personController.searchPersons("", null, 0, 10);
-
-		assertEquals(HttpStatus.OK, response.getStatusCode());
-
-		PageResponse<PersonResponse> responseBody = response.getBody();
-		assertNotNull(responseBody);
-
-		assertEquals(1, responseBody.getContent().size());
-		verify(personService).searchPersons("", null, 0, 10);
-	}
-
-	@Test
-	void searchPersons_WithLargeSize_ShouldLimitToMaxPageSize() {
-		PersonResponse person1 = createPersonResponse(1L, "Person 1", PersonRole.ACTOR);
-		List<PersonResponse> content = List.of(person1);
-		PageResponse<PersonResponse> pageResponse = createPageResponse(content, 0, 1, 1, 50);
-
-		when(personService.searchPersons(isNull(), isNull(), eq(0), eq(50))).thenReturn(pageResponse);
-
-		ResponseEntity<PageResponse<PersonResponse>> response = personController.searchPersons(null, null, 0, 100);
-
-		assertEquals(HttpStatus.OK, response.getStatusCode());
-
-		PageResponse<PersonResponse> responseBody = response.getBody();
-		assertNotNull(responseBody);
-
-		assertEquals(50, responseBody.getPageSize());
-		verify(personService).searchPersons(null, null, 0, 50);
-	}
-
-	@Test
-	void searchPersons_WithMaxPageSize_ShouldReturnPagedResponse() {
-		PersonResponse person1 = createPersonResponse(1L, "Person 1", PersonRole.ACTOR);
-		List<PersonResponse> content = List.of(person1);
-		PageResponse<PersonResponse> pageResponse = createPageResponse(content, 0, 1, 1, 50);
-
-		when(personService.searchPersons(isNull(), isNull(), eq(0), eq(50))).thenReturn(pageResponse);
-
-		ResponseEntity<PageResponse<PersonResponse>> response = personController.searchPersons(null, null, 0, 50);
-
-		assertEquals(HttpStatus.OK, response.getStatusCode());
-
-		PageResponse<PersonResponse> responseBody = response.getBody();
-		assertNotNull(responseBody);
-
-		assertEquals(50, responseBody.getPageSize());
-		verify(personService).searchPersons(null, null, 0, 50);
-	}
-
-	@Test
-	void searchPersons_WithNegativePage_ShouldReturnPagedResponse() {
-		PersonResponse person1 = createPersonResponse(1L, "Person 1", PersonRole.ACTOR);
-		List<PersonResponse> content = List.of(person1);
-		PageResponse<PersonResponse> pageResponse = createPageResponse(content, -1, 1, 1, 10);
-
-		when(personService.searchPersons(isNull(), isNull(), eq(-1), eq(10))).thenReturn(pageResponse);
-
-		ResponseEntity<PageResponse<PersonResponse>> response = personController.searchPersons(null, null, -1, 10);
-
-		assertEquals(HttpStatus.OK, response.getStatusCode());
-
-		PageResponse<PersonResponse> responseBody = response.getBody();
-		assertNotNull(responseBody);
-
-		assertEquals(-1, responseBody.getCurrentPage());
-		verify(personService).searchPersons(null, null, -1, 10);
-	}
-
-	@Test
-	void searchPersons_WithZeroSize_ShouldReturnPagedResponse() {
-		PersonResponse person1 = createPersonResponse(1L, "Person 1", PersonRole.ACTOR);
-		List<PersonResponse> content = List.of(person1);
-		PageResponse<PersonResponse> pageResponse = createPageResponse(content, 0, 1, 1, 0);
-
-		when(personService.searchPersons(isNull(), isNull(), eq(0), eq(0))).thenReturn(pageResponse);
-
-		ResponseEntity<PageResponse<PersonResponse>> response = personController.searchPersons(null, null, 0, 0);
-
-		assertEquals(HttpStatus.OK, response.getStatusCode());
-
-		PageResponse<PersonResponse> responseBody = response.getBody();
-		assertNotNull(responseBody);
-
-		assertEquals(0, responseBody.getPageSize());
-		verify(personService).searchPersons(null, null, 0, 0);
-	}
-
-	@Test
-	void searchPersons_DefaultParameters_ShouldWork() {
-		PersonResponse person1 = createPersonResponse(1L, "Person 1", PersonRole.ACTOR);
-		List<PersonResponse> content = List.of(person1);
-		PageResponse<PersonResponse> pageResponse = createPageResponse(content, 0, 1, 1, 12);
-
-		when(personService.searchPersons(isNull(), isNull(), eq(0), eq(12))).thenReturn(pageResponse);
-
-		ResponseEntity<PageResponse<PersonResponse>> response = personController.searchPersons(null, null, 0, 12);
-
-		assertEquals(HttpStatus.OK, response.getStatusCode());
-
-		PageResponse<PersonResponse> responseBody = response.getBody();
-		assertNotNull(responseBody);
-
-		assertEquals(12, responseBody.getPageSize());
-		verify(personService).searchPersons(null, null, 0, 12);
+		verify(personService).searchPersons(isNull(), isNull(), any(Pageable.class));
 	}
 
 	@Test
@@ -287,10 +136,11 @@ class PersonControllerTest {
 		List<PersonResponse> content = List.of(person1);
 		PageResponse<PersonResponse> pageResponse = createPageResponse(content, 0, 1, 1, 10);
 
-		when(personService.searchPersons(isNull(), eq(PersonRole.DIRECTOR), eq(0), eq(10))).thenReturn(pageResponse);
+		when(personService.searchPersons(isNull(), eq(PersonRole.DIRECTOR), any(Pageable.class)))
+				.thenReturn(pageResponse);
 
 		ResponseEntity<PageResponse<PersonResponse>> response = personController.searchPersons(null,
-				PersonRole.DIRECTOR, 0, 10);
+				PersonRole.DIRECTOR, DEFAULT_PAGEABLE);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
 
@@ -299,6 +149,29 @@ class PersonControllerTest {
 
 		assertEquals(1, responseBody.getContent().size());
 		assertEquals(PersonRole.DIRECTOR, responseBody.getContent().get(0).getRole());
-		verify(personService).searchPersons(null, PersonRole.DIRECTOR, 0, 10);
+		verify(personService).searchPersons(isNull(), eq(PersonRole.DIRECTOR), any(Pageable.class));
+	}
+
+	@Test
+	void getPersonsByRole_ShouldReturnPagedResponse() {
+		PersonResponse person1 = createPersonResponse(1L, "Actor 1", PersonRole.ACTOR);
+		PersonResponse person2 = createPersonResponse(2L, "Actor 2", PersonRole.ACTOR);
+		List<PersonResponse> content = List.of(person1, person2);
+		PageResponse<PersonResponse> pageResponse = createPageResponse(content, 0, 1, 2, 10);
+
+		when(personService.getPersonsByRole(eq(PersonRole.ACTOR), any(Pageable.class))).thenReturn(pageResponse);
+
+		ResponseEntity<PageResponse<PersonResponse>> response = personController.getPersonsByRole(PersonRole.ACTOR,
+				DEFAULT_PAGEABLE);
+
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+
+		PageResponse<PersonResponse> responseBody = response.getBody();
+		assertNotNull(responseBody);
+
+		assertEquals(2, responseBody.getContent().size());
+		assertEquals(PersonRole.ACTOR, responseBody.getContent().get(0).getRole());
+		assertEquals(PersonRole.ACTOR, responseBody.getContent().get(1).getRole());
+		verify(personService).getPersonsByRole(eq(PersonRole.ACTOR), any(Pageable.class));
 	}
 }
