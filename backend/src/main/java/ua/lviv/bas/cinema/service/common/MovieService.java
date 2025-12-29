@@ -6,7 +6,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -137,6 +139,13 @@ public class MovieService {
 	}
 
 	@Transactional(readOnly = true)
+	public PageResponse<MovieCardResponse> findArchivedPaginated(Pageable pageable) {
+		log.info("Getting archived movies with pagination");
+		Page<Movie> movies = movieQueryService.findArchived(pageable);
+		return PageResponse.of(movies, movieMapper::toCardResponse);
+	}
+
+	@Transactional(readOnly = true)
 	public List<MovieCardResponse> getCurrentlyShowingMovies() {
 		List<Movie> movies = movieQueryService.findCurrentlyShowingList();
 		return movieMapper.toCardResponseList(movies);
@@ -146,6 +155,14 @@ public class MovieService {
 	public List<MovieCardResponse> getUpcomingMovies() {
 		List<Movie> movies = movieQueryService.findUpcomingList();
 		return movieMapper.toCardResponseList(movies);
+	}
+
+	@Transactional(readOnly = true)
+	public List<MovieCardResponse> getArchivedMovies() {
+		log.info("Getting archived movies");
+		Pageable pageable = PageRequest.of(0, 50, Sort.by("releaseDate").descending());
+		Page<Movie> movies = movieQueryService.findArchived(pageable);
+		return movieMapper.toCardResponseList(movies.getContent());
 	}
 
 	@Transactional(readOnly = true)

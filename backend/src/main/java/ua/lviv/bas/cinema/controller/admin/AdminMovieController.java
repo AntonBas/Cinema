@@ -36,6 +36,7 @@ import ua.lviv.bas.cinema.domain.enums.PersonRole;
 import ua.lviv.bas.cinema.dto.movie.request.MovieCreateRequest;
 import ua.lviv.bas.cinema.dto.movie.request.MovieUpdateRequest;
 import ua.lviv.bas.cinema.dto.movie.request.QuickCreatePersonRequest;
+import ua.lviv.bas.cinema.dto.movie.response.MovieCardResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieDetailResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieSessionSearchResponse;
 import ua.lviv.bas.cinema.dto.movie.response.PersonResponse;
@@ -101,6 +102,29 @@ public class AdminMovieController {
 		log.info("DELETE /api/admin/movies/{} - Deleting movie", id);
 		movieService.deleteMovie(id);
 		return ResponseEntity.noContent().build();
+	}
+
+	@GetMapping("/status/archived")
+	@Operation(summary = "Get archived movies", description = "Retrieve movies that are archived (admin only)")
+	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Archived movies retrieved successfully"),
+			@ApiResponse(responseCode = "401", description = "User not authenticated"),
+			@ApiResponse(responseCode = "403", description = "User does not have required role") })
+	public ResponseEntity<List<MovieCardResponse>> getArchivedMovies() {
+		log.info("GET /api/admin/movies/status/archived - Getting archived movies");
+		List<MovieCardResponse> movies = movieService.getArchivedMovies();
+		return ResponseEntity.ok(movies);
+	}
+
+	@GetMapping("/status/archived/paginated")
+	@Operation(summary = "Get archived movies with pagination", description = "Retrieve paginated list of archived movies (admin only)")
+	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Archived movies retrieved successfully"),
+			@ApiResponse(responseCode = "401", description = "User not authenticated"),
+			@ApiResponse(responseCode = "403", description = "User does not have required role") })
+	public ResponseEntity<PageResponse<MovieCardResponse>> getArchivedMoviesPaginated(
+			@PageableDefault(size = 12, sort = "title") Pageable pageable) {
+		log.info("GET /api/admin/movies/status/archived/paginated - Getting archived movies with pagination");
+		PageResponse<MovieCardResponse> response = movieService.findArchivedPaginated(pageable);
+		return ResponseEntity.ok(response);
 	}
 
 	@GetMapping("/search/for-session")
