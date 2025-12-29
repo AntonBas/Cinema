@@ -1,44 +1,19 @@
 package ua.lviv.bas.cinema.repository;
 
-import java.time.LocalDate;
-import java.util.List;
 import java.util.Optional;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
+import org.springframework.data.querydsl.QuerydslPredicateExecutor;
+import org.springframework.stereotype.Repository;
 
 import ua.lviv.bas.cinema.domain.Movie;
-import ua.lviv.bas.cinema.domain.enums.MovieStatus;
 
-public interface MovieRepository extends JpaRepository<Movie, Long> {
+@Repository
+public interface MovieRepository extends JpaRepository<Movie, Long>, QuerydslPredicateExecutor<Movie> {
 
 	Optional<Movie> findBySlug(String slug);
 
-	List<Movie> findByStatus(MovieStatus status);
+	boolean existsBySlug(String slug);
 
-	Page<Movie> findByStatus(MovieStatus status, Pageable pageable);
-
-	List<Movie> findByReleaseDateBeforeAndEndShowingDateAfter(LocalDate date1, LocalDate date2);
-
-	List<Movie> findByReleaseDateAfter(LocalDate date);
-
-	Page<Movie> findByTitleContainingIgnoreCase(String title, Pageable pageable);
-
-	boolean existsByActorsId(Long personId);
-
-	boolean existsByDirectorsId(Long personId);
-
-	boolean existsByScreenwritersId(Long personId);
-
-	List<Movie> findByActorsId(Long personId);
-
-	List<Movie> findByDirectorsId(Long personId);
-
-	List<Movie> findByScreenwritersId(Long personId);
-
-	@Query("SELECT m FROM Movie m JOIN m.genres g WHERE g.id = :genreId")
-	List<Movie> findByGenresContaining(@Param("genreId") Long genreId);
+	boolean existsBySlugAndIdNot(String slug, Long id);
 }

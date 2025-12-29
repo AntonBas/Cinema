@@ -1,24 +1,12 @@
 package ua.lviv.bas.cinema.service.common;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.Movie;
 import ua.lviv.bas.cinema.domain.enums.MovieStatus;
+import ua.lviv.bas.cinema.dto.filter.MovieFilter;
 import ua.lviv.bas.cinema.dto.movie.request.MovieCreateRequest;
 import ua.lviv.bas.cinema.dto.movie.request.MovieUpdateRequest;
 import ua.lviv.bas.cinema.dto.movie.response.MovieCardResponse;
@@ -36,12 +25,12 @@ import ua.lviv.bas.cinema.dto.movie.response.MovieSessionSearchResponse;
 import ua.lviv.bas.cinema.dto.shared.PageResponse;
 import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
 import ua.lviv.bas.cinema.exception.domain.cinema.MovieNotFoundException;
-import ua.lviv.bas.cinema.exception.infrastructure.ExternalServiceException;
 import ua.lviv.bas.cinema.mapper.MovieMapper;
 import ua.lviv.bas.cinema.repository.GenreRepository;
 import ua.lviv.bas.cinema.repository.MovieRepository;
 import ua.lviv.bas.cinema.repository.PersonRepository;
 import ua.lviv.bas.cinema.scheduler.MovieScheduler;
+import ua.lviv.bas.cinema.service.query.MovieQueryService;
 
 @Slf4j
 @Service
@@ -54,9 +43,8 @@ public class MovieService {
 	private final MovieMapper movieMapper;
 	private final SlugService slugService;
 	private final MovieScheduler movieSchedule;
-
-	@Value("${app.upload.dir:uploads}")
-	private String uploadDir;
+	private final MovieQueryService movieQueryService;
+	private final PosterService posterService;
 
 	@Transactional
 	public MovieDetailResponse createMovie(MovieCreateRequest request) {
@@ -75,10 +63,7 @@ public class MovieService {
 		setMovieRelations(movie, request);
 
 		Movie saved = movieRepository.save(movie);
-
-		MovieDetailResponse response = movieMapper.toDetailResponse(saved);
-		enrichResponse(response, saved);
-		return response;
+		return buildDetailResponse(saved);
 	}
 
 	@Transactional
@@ -98,15 +83,12 @@ public class MovieService {
 			existing.setSlug(newSlug);
 		}
 
-		handlePosterUpdate(existing, null, request.getRemovePoster());
+		handlePosterUpdate(existing, request.getPosterFile(), request.getRemovePoster());
 		existing.setStatus(movieSchedule.calculateMovieStatus(existing, LocalDate.now()));
 		updateMovieRelations(existing, request);
 
 		Movie updated = movieRepository.save(existing);
-
-		MovieDetailResponse response = movieMapper.toDetailResponse(updated);
-		enrichResponse(response, updated);
-		return response;
+		return buildDetailResponse(updated);
 	}
 
 	@Transactional
@@ -114,125 +96,86 @@ public class MovieService {
 		log.info("Deleting movie with id: {}", id);
 
 		Movie movie = findMovieById(id);
-		deletePosterFile(movie.getPosterFileName());
+		posterService.deletePoster(movie.getPosterFileName());
 		movieRepository.delete(movie);
 	}
 
 	@Transactional(readOnly = true)
 	public MovieDetailResponse getMovieById(Long id) {
 		Movie movie = findMovieById(id);
-
-		MovieDetailResponse response = movieMapper.toDetailResponse(movie);
-		enrichResponse(response, movie);
-		return response;
+		return buildDetailResponse(movie);
 	}
 
 	@Transactional(readOnly = true)
 	public MovieDetailResponse getMovieBySlug(String slug) {
 		Movie movie = movieRepository.findBySlug(slug).orElseThrow(() -> new MovieNotFoundException(slug));
-
-		MovieDetailResponse response = movieMapper.toDetailResponse(movie);
-		enrichResponse(response, movie);
-		return response;
+		return buildDetailResponse(movie);
 	}
 
 	@Transactional(readOnly = true)
-	public List<MovieDetailResponse> getAllMovies() {
-		return movieRepository.findAll().stream().map(movie -> {
-			MovieDetailResponse response = movieMapper.toDetailResponse(movie);
-			enrichResponse(response, movie);
-			return response;
-		}).toList();
+	public PageResponse<MovieDetailResponse> getMoviesPaginated(Pageable pageable) {
+		Page<Movie> movies = movieRepository.findAll(pageable);
+		return PageResponse.of(movies, this::buildDetailResponse);
 	}
 
 	@Transactional(readOnly = true)
-	public Movie getMovieEntityById(Long id) {
-		return findMovieById(id);
+	public PageResponse<MovieCardResponse> findFilteredMovies(MovieFilter filter) {
+		Page<Movie> movies = movieQueryService.findFilteredMovies(filter);
+		return PageResponse.of(movies, movieMapper::toCardResponse);
 	}
 
 	@Transactional(readOnly = true)
-	public Page<MovieDetailResponse> getMoviesPaginated(Pageable pageable) {
-		return movieRepository.findAll(pageable).map(movie -> {
-			MovieDetailResponse response = movieMapper.toDetailResponse(movie);
-			enrichResponse(response, movie);
-			return response;
-		});
+	public PageResponse<MovieCardResponse> findCurrentlyShowingPaginated(Pageable pageable, boolean adminView) {
+		Page<Movie> movies = movieQueryService.findCurrentlyShowing(pageable, adminView);
+		return PageResponse.of(movies, movieMapper::toCardResponse);
+	}
+
+	@Transactional(readOnly = true)
+	public PageResponse<MovieCardResponse> findUpcomingPaginated(Pageable pageable, boolean adminView) {
+		Page<Movie> movies = movieQueryService.findUpcoming(pageable, adminView);
+		return PageResponse.of(movies, movieMapper::toCardResponse);
 	}
 
 	@Transactional(readOnly = true)
 	public List<MovieCardResponse> getCurrentlyShowingMovies() {
-		LocalDate today = LocalDate.now();
-		return movieRepository.findAll().stream()
-				.filter(movie -> movieSchedule.calculateMovieStatus(movie, today) == MovieStatus.CURRENT)
-				.map(movieMapper::toCardResponse).toList();
+		List<Movie> movies = movieQueryService.findCurrentlyShowingList();
+		return movieMapper.toCardResponseList(movies);
 	}
 
 	@Transactional(readOnly = true)
 	public List<MovieCardResponse> getUpcomingMovies() {
-		LocalDate today = LocalDate.now();
-		return movieRepository.findAll().stream()
-				.filter(movie -> movieSchedule.calculateMovieStatus(movie, today) == MovieStatus.UPCOMING)
-				.map(movieMapper::toCardResponse).toList();
+		List<Movie> movies = movieQueryService.findUpcomingList();
+		return movieMapper.toCardResponseList(movies);
 	}
 
 	@Transactional(readOnly = true)
-	public List<MovieCardResponse> getArchivedMovies() {
-		LocalDate today = LocalDate.now();
-		return movieRepository.findAll().stream()
-				.filter(movie -> movieSchedule.calculateMovieStatus(movie, today) == MovieStatus.ARCHIVED)
-				.map(movieMapper::toCardResponse).toList();
+	public List<MovieCardResponse> getNewReleases(int limit) {
+		List<Movie> movies = movieQueryService.findNewReleases(limit);
+		return movieMapper.toCardResponseList(movies);
+	}
+
+	@Transactional(readOnly = true)
+	public List<MovieCardResponse> getEndingSoon(int limit) {
+		List<Movie> movies = movieQueryService.findEndingSoon(limit);
+		return movieMapper.toCardResponseList(movies);
 	}
 
 	@Transactional(readOnly = true)
 	public List<MovieSessionSearchResponse> searchMoviesForSessionCreation(String searchTerm, LocalDate sessionDate) {
-		Page<Movie> movies;
-
-		if (searchTerm != null && !searchTerm.trim().isEmpty()) {
-			movies = movieRepository.findByTitleContainingIgnoreCase(searchTerm.trim(),
-					PageRequest.of(0, 20, Sort.by("title")));
-		} else {
-			movies = movieRepository.findAll(PageRequest.of(0, 20, Sort.by("title")));
-		}
-
-		return movies.getContent().stream().filter(movie -> isMovieAvailableForDate(movie, sessionDate))
-				.map(this::toSessionSearchResponse).collect(Collectors.toList());
-	}
-
-	@Transactional(readOnly = true)
-	public Page<MovieCardResponse> searchMovies(String searchTerm, Pageable pageable) {
-		Page<Movie> movies;
-
-		if (searchTerm != null && !searchTerm.trim().isEmpty()) {
-			movies = movieRepository.findByTitleContainingIgnoreCase(searchTerm.trim(), pageable);
-		} else {
-			movies = movieRepository.findAll(pageable);
-		}
-
-		return movies.map(movieMapper::toCardResponse);
+		List<Movie> movies = movieQueryService.findMoviesForSessionCreation(searchTerm, sessionDate);
+		return movies.stream().map(this::toSessionSearchResponse).collect(Collectors.toList());
 	}
 
 	@Transactional(readOnly = true)
 	public ResponseEntity<byte[]> getMoviePoster(Long id) {
-		try {
-			Movie movie = findMovieById(id);
-			if (movie.getPosterFileName() == null || movie.getPosterFileName().isBlank()) {
-				return ResponseEntity.notFound().build();
-			}
+		Movie movie = findMovieById(id);
+		return posterService.getPosterResponse(movie.getPosterFileName());
+	}
 
-			Path path = Paths.get(uploadDir, "posters", movie.getPosterFileName());
-			if (!Files.exists(path)) {
-				return ResponseEntity.notFound().build();
-			}
-
-			byte[] data = Files.readAllBytes(path);
-			String contentType = determineContentType(movie.getPosterFileName());
-
-			return ResponseEntity.ok().contentType(MediaType.parseMediaType(contentType))
-					.header(HttpHeaders.CACHE_CONTROL, "max-age=3600").body(data);
-		} catch (IOException e) {
-			log.error("Error loading poster for movie id: {}", id, e);
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-		}
+	private MovieDetailResponse buildDetailResponse(Movie movie) {
+		MovieDetailResponse response = movieMapper.toDetailResponse(movie);
+		enrichResponse(response, movie);
+		return response;
 	}
 
 	private Movie findMovieById(Long id) {
@@ -294,73 +237,19 @@ public class MovieService {
 
 	private void handlePosterUpload(MultipartFile posterFile, Movie movie) {
 		if (posterFile != null && !posterFile.isEmpty()) {
-			String posterFileName = savePosterFile(posterFile);
+			String posterFileName = posterService.uploadPoster(posterFile);
 			movie.setPosterFileName(posterFileName);
 		}
 	}
 
 	private void handlePosterUpdate(Movie movie, MultipartFile posterFile, Boolean removePoster) {
 		if (posterFile != null && !posterFile.isEmpty()) {
-			deletePosterFile(movie.getPosterFileName());
-			String newPosterFileName = savePosterFile(posterFile);
+			posterService.deletePoster(movie.getPosterFileName());
+			String newPosterFileName = posterService.uploadPoster(posterFile);
 			movie.setPosterFileName(newPosterFileName);
 		} else if (Boolean.TRUE.equals(removePoster)) {
-			deletePosterFile(movie.getPosterFileName());
+			posterService.deletePoster(movie.getPosterFileName());
 			movie.setPosterFileName(null);
-		}
-	}
-
-	private String savePosterFile(MultipartFile file) {
-		try {
-			String originalFileName = file.getOriginalFilename();
-			String extension = Optional.ofNullable(originalFileName).filter(name -> name.contains("."))
-					.map(name -> name.substring(name.lastIndexOf("."))).orElse(".jpg");
-
-			String fileName = UUID.randomUUID() + extension;
-			Path uploadPath = Paths.get(uploadDir, "posters");
-			Files.createDirectories(uploadPath);
-
-			Path filePath = uploadPath.resolve(fileName);
-			Files.write(filePath, file.getBytes());
-
-			return fileName;
-		} catch (IOException e) {
-			log.error("Failed to save poster for movie", e);
-			throw new ExternalServiceException("File Storage", e);
-		}
-	}
-
-	private void deletePosterFile(String fileName) {
-		if (fileName == null || fileName.isBlank()) {
-			return;
-		}
-
-		try {
-			Path path = Paths.get(uploadDir, "posters", fileName);
-			if (Files.exists(path)) {
-				Files.delete(path);
-			}
-		} catch (IOException e) {
-			log.error("Failed to delete poster: {}", fileName, e);
-		}
-	}
-
-	private String determineContentType(String fileName) {
-		if (fileName == null) {
-			return MediaType.APPLICATION_OCTET_STREAM_VALUE;
-		}
-
-		String lower = fileName.toLowerCase();
-		if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) {
-			return "image/jpeg";
-		} else if (lower.endsWith(".png")) {
-			return "image/png";
-		} else if (lower.endsWith(".gif")) {
-			return "image/gif";
-		} else if (lower.endsWith(".webp")) {
-			return "image/webp";
-		} else {
-			return MediaType.APPLICATION_OCTET_STREAM_VALUE;
 		}
 	}
 
@@ -370,46 +259,12 @@ public class MovieService {
 		response.setArchived(movie.getStatus() == MovieStatus.ARCHIVED);
 		response.setActive(movie.getStatus() != MovieStatus.ARCHIVED);
 
-		if (movie.getPosterFileName() != null && !movie.getPosterFileName().isBlank()) {
-			response.setPosterUrl("/api/movies/" + movie.getId() + "/poster");
-		} else {
-			response.setPosterUrl("/images/default-poster.jpg");
-		}
-	}
-
-	private boolean isMovieAvailableForDate(Movie movie, LocalDate sessionDate) {
-		return !sessionDate.isBefore(movie.getReleaseDate())
-				&& (movie.getEndShowingDate() == null || !sessionDate.isAfter(movie.getEndShowingDate()));
+		String posterUrl = posterService.getPosterUrl(movie.getId(), movie.getPosterFileName());
+		response.setPosterUrl(posterUrl);
 	}
 
 	private MovieSessionSearchResponse toSessionSearchResponse(Movie movie) {
 		return MovieSessionSearchResponse.builder().id(movie.getId()).title(movie.getTitle())
 				.releaseYear(movie.getReleaseDate().getYear()).durationMinutes(movie.getDurationMinutes()).build();
-	}
-
-	@Transactional(readOnly = true)
-	public PageResponse<MovieDetailResponse> getMoviesPaginatedResponse(int page, int size) {
-		log.debug("Getting paginated movies: page={}, size={}", page, size);
-
-		page = Math.max(page, 0);
-		size = Math.min(Math.max(size, 1), 50);
-
-		Pageable pageable = PageRequest.of(page, size);
-		Page<MovieDetailResponse> pageResult = getMoviesPaginated(pageable);
-
-		return PageResponse.of(pageResult);
-	}
-
-	@Transactional(readOnly = true)
-	public PageResponse<MovieCardResponse> searchMoviesResponse(String searchTerm, int page, int size) {
-		log.debug("Searching movies: term='{}', page={}, size={}", searchTerm, page, size);
-
-		page = Math.max(page, 0);
-		size = Math.min(Math.max(size, 1), 50);
-
-		Pageable pageable = PageRequest.of(page, size, Sort.by("title").ascending());
-		Page<MovieCardResponse> pageResult = searchMovies(searchTerm, pageable);
-
-		return PageResponse.of(pageResult);
 	}
 }

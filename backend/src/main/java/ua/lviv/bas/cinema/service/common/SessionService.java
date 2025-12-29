@@ -21,9 +21,11 @@ import ua.lviv.bas.cinema.dto.session.request.SessionCreateRequest;
 import ua.lviv.bas.cinema.dto.session.request.SessionUpdateRequest;
 import ua.lviv.bas.cinema.dto.session.response.SessionAdminResponse;
 import ua.lviv.bas.cinema.dto.session.response.SessionScheduleResponse;
+import ua.lviv.bas.cinema.exception.domain.cinema.MovieNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.cinema.SessionNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.cinema.SessionTimeConflictException;
 import ua.lviv.bas.cinema.mapper.SessionMapper;
+import ua.lviv.bas.cinema.repository.MovieRepository;
 import ua.lviv.bas.cinema.repository.SessionRepository;
 import ua.lviv.bas.cinema.service.query.SessionQueryService;
 
@@ -35,7 +37,7 @@ public class SessionService {
 	private final SessionRepository sessionRepository;
 	private final SessionQueryService sessionQueryService;
 	private final SessionMapper sessionMapper;
-	private final MovieService movieService;
+	private final MovieRepository movieRepository;
 	private final CinemaHallService cinemaHallService;
 
 	@Transactional
@@ -45,7 +47,8 @@ public class SessionService {
 
 		validateStartTime(request.getStartTime());
 
-		Movie movie = movieService.getMovieEntityById(request.getMovieId());
+		Movie movie = movieRepository.findById(request.getMovieId())
+				.orElseThrow(() -> new MovieNotFoundException(request.getMovieId()));
 		CinemaHall hall = cinemaHallService.getHallEntityById(request.getHallId());
 
 		validateMovieAvailability(movie, request.getStartTime());
@@ -95,7 +98,8 @@ public class SessionService {
 
 			Movie movie = session.getMovie();
 			if (movie == null && request.getMovieId() != null) {
-				movie = movieService.getMovieEntityById(request.getMovieId());
+				movie = movieRepository.findById(request.getMovieId())
+						.orElseThrow(() -> new MovieNotFoundException(request.getMovieId()));
 			}
 
 			CinemaHall hall = session.getHall();
@@ -113,6 +117,17 @@ public class SessionService {
 		}
 
 		sessionMapper.updateEntityFromDto(request, session);
+
+		if (request.getMovieId() != null && !request.getMovieId().equals(session.getMovie().getId())) {
+			Movie newMovie = movieRepository.findById(request.getMovieId())
+					.orElseThrow(() -> new MovieNotFoundException(request.getMovieId()));
+			session.setMovie(newMovie);
+		}
+
+		if (request.getHallId() != null && !request.getHallId().equals(session.getHall().getId())) {
+			CinemaHall newHall = cinemaHallService.getHallEntityById(request.getHallId());
+			session.setHall(newHall);
+		}
 
 		Session updated = sessionRepository.save(session);
 		log.info("Session updated successfully: id={}", id);

@@ -3,6 +3,8 @@ package ua.lviv.bas.cinema.controller.admin;
 import java.time.LocalDate;
 import java.util.List;
 
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +24,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -29,11 +32,16 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import ua.lviv.bas.cinema.domain.enums.PersonRole;
 import ua.lviv.bas.cinema.dto.movie.request.MovieCreateRequest;
 import ua.lviv.bas.cinema.dto.movie.request.MovieUpdateRequest;
+import ua.lviv.bas.cinema.dto.movie.request.QuickCreatePersonRequest;
 import ua.lviv.bas.cinema.dto.movie.response.MovieDetailResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieSessionSearchResponse;
+import ua.lviv.bas.cinema.dto.movie.response.PersonResponse;
+import ua.lviv.bas.cinema.dto.shared.PageResponse;
 import ua.lviv.bas.cinema.service.common.MovieService;
+import ua.lviv.bas.cinema.service.common.PersonService;
 
 @Slf4j
 @RestController
@@ -45,6 +53,7 @@ import ua.lviv.bas.cinema.service.common.MovieService;
 public class AdminMovieController {
 
 	private final MovieService movieService;
+	private final PersonService personService;
 
 	@PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@Operation(summary = "Create new movie", description = "Create a new movie with poster image.")
@@ -54,8 +63,7 @@ public class AdminMovieController {
 			@ApiResponse(responseCode = "403", description = "User does not have required role") })
 	public ResponseEntity<MovieDetailResponse> createMovie(
 			@Parameter(description = "Movie creation data as JSON", content = @Content(schema = @Schema(implementation = MovieCreateRequest.class))) @RequestPart("movieData") @Valid MovieCreateRequest request,
-
-			@Parameter(description = "Movie poster image file (JPG, PNG, max 5MB)") @RequestPart("posterFile") MultipartFile posterFile) {
+			@Parameter(description = "Movie poster image file (JPG, PNG, max 5MB)") @RequestPart(value = "posterFile", required = false) MultipartFile posterFile) {
 
 		request.setPosterFile(posterFile);
 		log.info("POST /api/admin/movies - Creating new movie: {}", request.getTitle());
@@ -72,9 +80,7 @@ public class AdminMovieController {
 			@ApiResponse(responseCode = "403", description = "User does not have required role") })
 	public ResponseEntity<MovieDetailResponse> updateMovie(
 			@Parameter(description = "ID of the movie to update", example = "1") @PathVariable Long id,
-
 			@Parameter(description = "Updated movie data as JSON", content = @Content(schema = @Schema(implementation = MovieUpdateRequest.class))) @RequestPart("movieData") @Valid MovieUpdateRequest request,
-
 			@Parameter(description = "New poster image file (optional, JPG, PNG, max 5MB)") @RequestPart(value = "posterFile", required = false) MultipartFile posterFile) {
 
 		log.info("PUT /api/admin/movies/{} - Updating movie with file", id);
@@ -103,11 +109,29 @@ public class AdminMovieController {
 			@ApiResponse(responseCode = "400", description = "Invalid date format") })
 	public ResponseEntity<List<MovieSessionSearchResponse>> searchMoviesForSessionCreation(
 			@Parameter(description = "Date for which to check movie availability", example = "2024-01-15") @RequestParam LocalDate sessionDate,
-
 			@Parameter(description = "Search query for movie title (optional)", example = "action") @RequestParam(required = false) String search) {
 
 		log.info("GET /api/admin/movies/search/for-session - sessionDate: {}, search: {}", sessionDate, search);
 		List<MovieSessionSearchResponse> movies = movieService.searchMoviesForSessionCreation(search, sessionDate);
 		return ResponseEntity.ok(movies);
+	}
+
+	@PostMapping("/quick-add-person")
+	@Operation(summary = "Quick add person while creating movie", description = "Quickly add a person when creating or editing a movie.")
+	public ResponseEntity<PersonResponse> quickAddPerson(@RequestBody @Valid QuickCreatePersonRequest request) {
+		log.info("Quick adding person: {} as {}", request.getName(), request.getRole());
+		PersonResponse createdPerson = personService.quickCreatePerson(request);
+		return ResponseEntity.status(HttpStatus.CREATED).body(createdPerson);
+	}
+
+	@GetMapping("/persons/search")
+	@Operation(summary = "Search persons for movie", description = "Search persons to add to movie cast.")
+	public ResponseEntity<PageResponse<PersonResponse>> searchPersonsForMovie(
+			@RequestParam(required = false) String query, @RequestParam(required = false) PersonRole role,
+			@PageableDefault(size = 10, sort = "name") Pageable pageable) {
+
+		log.info("Searching persons for movie: query='{}', role={}", query, role);
+		PageResponse<PersonResponse> result = personService.searchPersons(query, role, pageable);
+		return ResponseEntity.ok(result);
 	}
 }
