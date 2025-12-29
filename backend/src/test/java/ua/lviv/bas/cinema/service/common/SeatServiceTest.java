@@ -44,8 +44,10 @@ class SeatServiceTest {
 	private CinemaHall testHall;
 	private Seat standardSeat;
 	private Seat vipSeat;
+	private Seat inactiveSeat;
 	private SeatResponse standardSeatDto;
 	private SeatResponse vipSeatDto;
+	private SeatResponse inactiveSeatDto;
 
 	@BeforeEach
 	void setUp() {
@@ -53,31 +55,21 @@ class SeatServiceTest {
 		testHall.setId(1L);
 		testHall.setName("Hall A");
 
-		standardSeat = new Seat();
-		standardSeat.setId(1L);
-		standardSeat.setRow(1);
-		standardSeat.setNumber(1);
-		standardSeat.setSeatType(SeatType.STANDARD);
-		standardSeat.setHall(testHall);
+		standardSeat = Seat.builder().id(1L).row(1).number(1).seatType(SeatType.STANDARD).hall(testHall).active(true)
+				.build();
 
-		vipSeat = new Seat();
-		vipSeat.setId(2L);
-		vipSeat.setRow(1);
-		vipSeat.setNumber(2);
-		vipSeat.setSeatType(SeatType.VIP);
-		vipSeat.setHall(testHall);
+		vipSeat = Seat.builder().id(2L).row(1).number(2).seatType(SeatType.VIP).hall(testHall).active(true).build();
 
-		standardSeatDto = new SeatResponse();
-		standardSeatDto.setId(1L);
-		standardSeatDto.setRow(1);
-		standardSeatDto.setNumber(1);
-		standardSeatDto.setSeatType(SeatType.STANDARD);
+		inactiveSeat = Seat.builder().id(3L).row(2).number(1).seatType(SeatType.STANDARD).hall(testHall).active(false)
+				.build();
 
-		vipSeatDto = new SeatResponse();
-		vipSeatDto.setId(2L);
-		vipSeatDto.setRow(1);
-		vipSeatDto.setNumber(2);
-		vipSeatDto.setSeatType(SeatType.VIP);
+		standardSeatDto = SeatResponse.builder().id(1L).row(1).number(1).seatType(SeatType.STANDARD).active(true)
+				.build();
+
+		vipSeatDto = SeatResponse.builder().id(2L).row(1).number(2).seatType(SeatType.VIP).active(true).build();
+
+		inactiveSeatDto = SeatResponse.builder().id(3L).row(2).number(1).seatType(SeatType.STANDARD).active(false)
+				.build();
 	}
 
 	@Test
@@ -89,6 +81,7 @@ class SeatServiceTest {
 
 		assertNotNull(result);
 		assertEquals(1L, result.getId());
+		assertTrue(result.isActive());
 		verify(seatRepository).findById(1L);
 		verify(seatMapper).toDto(standardSeat);
 	}
@@ -129,8 +122,8 @@ class SeatServiceTest {
 
 	@Test
 	void getSeatsByHall_ShouldReturnListOfSeatDtos() {
-		List<Seat> seats = Arrays.asList(standardSeat, vipSeat);
-		List<SeatResponse> seatDtos = Arrays.asList(standardSeatDto, vipSeatDto);
+		List<Seat> seats = Arrays.asList(standardSeat, vipSeat, inactiveSeat);
+		List<SeatResponse> seatDtos = Arrays.asList(standardSeatDto, vipSeatDto, inactiveSeatDto);
 
 		when(seatRepository.findByHallId(1L)).thenReturn(seats);
 		when(seatMapper.toDtoList(seats)).thenReturn(seatDtos);
@@ -138,7 +131,7 @@ class SeatServiceTest {
 		List<SeatResponse> result = seatService.getSeatsByHall(1L);
 
 		assertNotNull(result);
-		assertEquals(2, result.size());
+		assertEquals(3, result.size());
 		verify(seatRepository).findByHallId(1L);
 		verify(seatMapper).toDtoList(seats);
 	}
@@ -166,23 +159,23 @@ class SeatServiceTest {
 	}
 
 	@Test
-	void isSeatAvailable_ShouldReturnTrue_WhenSeatExists() {
-		when(seatRepository.existsByHallIdAndRowAndNumber(1L, 1, 1)).thenReturn(true);
+	void isSeatAvailable_ShouldReturnTrue_WhenSeatActiveAndExists() {
+		when(seatRepository.existsByHallIdAndRowAndNumberAndActiveTrue(1L, 1, 1)).thenReturn(true);
 
 		boolean result = seatService.isSeatAvailable(1L, 1, 1);
 
 		assertTrue(result);
-		verify(seatRepository).existsByHallIdAndRowAndNumber(1L, 1, 1);
+		verify(seatRepository).existsByHallIdAndRowAndNumberAndActiveTrue(1L, 1, 1);
 	}
 
 	@Test
-	void isSeatAvailable_ShouldReturnFalse_WhenSeatNotExists() {
-		when(seatRepository.existsByHallIdAndRowAndNumber(1L, 1, 1)).thenReturn(false);
+	void isSeatAvailable_ShouldReturnFalse_WhenSeatNotActiveOrNotExists() {
+		when(seatRepository.existsByHallIdAndRowAndNumberAndActiveTrue(1L, 2, 1)).thenReturn(false);
 
-		boolean result = seatService.isSeatAvailable(1L, 1, 1);
+		boolean result = seatService.isSeatAvailable(1L, 2, 1);
 
 		assertFalse(result);
-		verify(seatRepository).existsByHallIdAndRowAndNumber(1L, 1, 1);
+		verify(seatRepository).existsByHallIdAndRowAndNumberAndActiveTrue(1L, 2, 1);
 	}
 
 	@Test
@@ -210,5 +203,71 @@ class SeatServiceTest {
 		assertEquals(SeatType.VIP, result.get(0).getSeatType());
 		verify(seatRepository).findByHallIdAndSeatType(1L, SeatType.VIP);
 		verify(seatMapper).toDtoList(vipSeats);
+	}
+
+	@Test
+	void activateSeat_ShouldActivateSeatAndReturnDto_WhenSeatExists() {
+		when(seatRepository.findById(3L)).thenReturn(Optional.of(inactiveSeat));
+		when(seatRepository.save(inactiveSeat)).thenReturn(inactiveSeat);
+		when(seatMapper.toDto(inactiveSeat)).thenReturn(inactiveSeatDto);
+
+		SeatResponse result = seatService.activateSeat(3L);
+
+		assertNotNull(result);
+		assertTrue(inactiveSeat.isActive());
+		verify(seatRepository).findById(3L);
+		verify(seatRepository).save(inactiveSeat);
+		verify(seatMapper).toDto(inactiveSeat);
+	}
+
+	@Test
+	void activateSeat_ShouldThrowSeatNotFoundException_WhenSeatNotExists() {
+		when(seatRepository.findById(3L)).thenReturn(Optional.empty());
+
+		assertThrows(SeatNotFoundException.class, () -> seatService.activateSeat(3L));
+		verify(seatRepository).findById(3L);
+		verify(seatRepository, never()).save(any());
+	}
+
+	@Test
+	void deactivateSeat_ShouldDeactivateSeatAndReturnDto_WhenSeatExists() {
+		when(seatRepository.findById(1L)).thenReturn(Optional.of(standardSeat));
+		when(seatRepository.save(standardSeat)).thenReturn(standardSeat);
+		when(seatMapper.toDto(standardSeat)).thenReturn(standardSeatDto);
+
+		SeatResponse result = seatService.deactivateSeat(1L);
+
+		assertNotNull(result);
+		assertFalse(standardSeat.isActive());
+		verify(seatRepository).findById(1L);
+		verify(seatRepository).save(standardSeat);
+		verify(seatMapper).toDto(standardSeat);
+	}
+
+	@Test
+	void deactivateSeat_ShouldThrowSeatNotFoundException_WhenSeatNotExists() {
+		when(seatRepository.findById(1L)).thenReturn(Optional.empty());
+
+		assertThrows(SeatNotFoundException.class, () -> seatService.deactivateSeat(1L));
+		verify(seatRepository).findById(1L);
+		verify(seatRepository, never()).save(any());
+	}
+
+	@Test
+	void getActiveSeatsByHall_ShouldReturnOnlyActiveSeats() {
+		List<Seat> activeSeats = Arrays.asList(standardSeat, vipSeat);
+		List<SeatResponse> activeSeatDtos = Arrays.asList(standardSeatDto, vipSeatDto);
+
+		when(seatRepository.findByHallIdAndActiveTrue(1L)).thenReturn(activeSeats);
+		when(seatMapper.toDtoList(activeSeats)).thenReturn(activeSeatDtos);
+
+		List<SeatResponse> result = seatService.getActiveSeatsByHall(1L);
+
+		assertNotNull(result);
+		assertEquals(2, result.size());
+		assertTrue(result.get(0).isActive());
+		assertTrue(result.get(1).isActive());
+		verify(seatRepository).findByHallIdAndActiveTrue(1L);
+		verify(seatMapper).toDtoList(activeSeats);
 	}
 }
