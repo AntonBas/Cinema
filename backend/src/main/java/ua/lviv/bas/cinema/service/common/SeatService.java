@@ -31,9 +31,7 @@ public class SeatService {
 	@Transactional
 	public SeatResponse updateSeatType(Long id, SeatType seatType) {
 		log.info("Updating seat type for seat id: {} to {}", id, seatType);
-
 		Seat seat = seatRepository.findById(id).orElseThrow(() -> new SeatNotFoundException(id));
-
 		seat.setSeatType(seatType);
 		Seat updated = seatRepository.save(seat);
 		log.debug("Seat type updated for seat ID: {}", id);
@@ -56,7 +54,7 @@ public class SeatService {
 	@Transactional(readOnly = true)
 	public boolean isSeatAvailable(Long hallId, int row, int number) {
 		log.debug("Checking seat availability: hall={}, row={}, number={}", hallId, row, number);
-		return seatRepository.existsByHallIdAndRowAndNumber(hallId, row, number);
+		return seatRepository.existsByHallIdAndRowAndNumberAndActiveTrue(hallId, row, number);
 	}
 
 	@Transactional(readOnly = true)
@@ -69,5 +67,29 @@ public class SeatService {
 	public List<SeatResponse> getSeatsByType(Long hallId, SeatType seatType) {
 		log.debug("Retrieving {} seats for hall id: {}", seatType, hallId);
 		return seatMapper.toDtoList(seatRepository.findByHallIdAndSeatType(hallId, seatType));
+	}
+
+	@Transactional
+	public SeatResponse activateSeat(Long id) {
+		log.info("Activating seat with id: {}", id);
+		Seat seat = seatRepository.findById(id).orElseThrow(() -> new SeatNotFoundException(id));
+		seat.setActive(true);
+		Seat updated = seatRepository.save(seat);
+		return seatMapper.toDto(updated);
+	}
+
+	@Transactional
+	public SeatResponse deactivateSeat(Long id) {
+		log.info("Deactivating seat with id: {}", id);
+		Seat seat = seatRepository.findById(id).orElseThrow(() -> new SeatNotFoundException(id));
+		seat.setActive(false);
+		Seat updated = seatRepository.save(seat);
+		return seatMapper.toDto(updated);
+	}
+
+	@Transactional(readOnly = true)
+	public List<SeatResponse> getActiveSeatsByHall(Long hallId) {
+		log.debug("Retrieving active seats for hall id: {}", hallId);
+		return seatMapper.toDtoList(seatRepository.findByHallIdAndActiveTrue(hallId));
 	}
 }

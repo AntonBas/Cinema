@@ -26,4 +26,10 @@ public interface SeatRepository extends JpaRepository<Seat, Long> {
 	@Modifying
 	@Query("DELETE FROM Seat s WHERE s.hall.id = :hallId")
 	void deleteByHallId(@Param("hallId") Long hallId);
+
+	boolean existsByHallIdAndRowAndNumberAndActiveTrue(Long hallId, int row, int number);
+
+	List<Seat> findByHallIdAndActiveTrue(Long hallId);
+
+	List<Seat> findByHallIdAndActiveFalse(Long hallId);
 }
