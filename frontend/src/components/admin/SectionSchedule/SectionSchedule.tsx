@@ -124,10 +124,10 @@ export const SectionSchedule: React.FC = () => {
 
             {apiPagination && apiPagination.totalPages > 1 && (
                 <Pagination
-                    currentPage={apiPagination.number}
+                    currentPage={apiPagination.currentPage}
                     totalPages={apiPagination.totalPages}
                     totalElements={apiPagination.totalElements}
-                    pageSize={apiPagination.size}
+                    pageSize={apiPagination.pageSize}
                     onPageChange={handlePageChange}
                 />
             )}

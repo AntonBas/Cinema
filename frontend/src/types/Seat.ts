@@ -10,6 +10,7 @@ export interface Seat {
     row: number;
     number: number;
     seatType: SeatType;
+    active: boolean;
     hall?: any;
 }
 
@@ -18,6 +19,7 @@ export interface SeatResponse {
     row: number;
     number: number;
     seatType: SeatType;
+    active: boolean;
 }
 
 export interface SeatRowResponse {

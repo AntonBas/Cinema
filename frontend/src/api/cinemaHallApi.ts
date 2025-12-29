@@ -6,7 +6,8 @@ import type {
 } from '@/types';
 import { handleApiError } from '@/utils/apiErrorHandler';
 
-const BASE_URL = '/api/cinema-halls';
+const PUBLIC_API_URL = '/api/cinema-halls';
+const ADMIN_API_URL = '/api/admin/cinema-halls';
 
 const getAuthHeaders = (): HeadersInit => {
     const token = localStorage.getItem('authToken');
@@ -29,35 +30,35 @@ const fetchApi = async <T>(url: string, options: RequestInit = {}): Promise<T> =
 };
 
 export const cinemaHallApi = {
+    getHallById: (id: number) =>
+        fetchApi<CinemaHallResponse>(`${PUBLIC_API_URL}/${id}`),
+
+    getAllHalls: () =>
+        fetchApi<CinemaHallResponse[]>(PUBLIC_API_URL),
+
+    getHallWithSeats: (id: number) =>
+        fetchApi<CinemaHallWithSeatsResponse>(`${PUBLIC_API_URL}/${id}/with-seats`),
+
+    getHallLayout: (id: number) =>
+        fetchApi<HallLayoutResponse>(`${PUBLIC_API_URL}/${id}/layout`),
+
+    searchHalls: (name?: string) => {
+        const url = name ? `${PUBLIC_API_URL}/search?name=${encodeURIComponent(name)}` : `${PUBLIC_API_URL}/search`;
+        return fetchApi<CinemaHallResponse[]>(url);
+    },
+
     createHall: (request: CinemaHallRequest) =>
-        fetchApi<CinemaHallResponse>(BASE_URL, {
+        fetchApi<CinemaHallResponse>(ADMIN_API_URL, {
             method: 'POST',
             body: JSON.stringify(request),
         }),
 
-    getHallById: (id: number) =>
-        fetchApi<CinemaHallResponse>(`${BASE_URL}/${id}`),
-
     updateHall: (id: number, request: CinemaHallRequest) =>
-        fetchApi<CinemaHallResponse>(`${BASE_URL}/${id}`, {
+        fetchApi<CinemaHallResponse>(`${ADMIN_API_URL}/${id}`, {
             method: 'PUT',
             body: JSON.stringify(request),
         }),
 
     deleteHall: (id: number) =>
-        fetchApi<void>(`${BASE_URL}/${id}`, { method: 'DELETE' }),
-
-    getAllHalls: () =>
-        fetchApi<CinemaHallResponse[]>(BASE_URL),
-
-    getHallWithSeats: (id: number) =>
-        fetchApi<CinemaHallWithSeatsResponse>(`${BASE_URL}/${id}/with-seats`),
-
-    getHallLayout: (id: number) =>
-        fetchApi<HallLayoutResponse>(`${BASE_URL}/${id}/layout`),
-
-    searchHalls: (name?: string) => {
-        const url = name ? `${BASE_URL}/search?name=${encodeURIComponent(name)}` : `${BASE_URL}/search`;
-        return fetchApi<CinemaHallResponse[]>(url);
-    },
+        fetchApi<void>(`${ADMIN_API_URL}/${id}`, { method: 'DELETE' }),
 };

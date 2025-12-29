@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { cinemaHallApi } from '@/api/cinemaHallApi';
-import type { CinemaHallResponse, CinemaHallRequest } from '@/types';
+import type { CinemaHallRequest } from '@/types';
 
 const useMutation = <T>() => {
     const [loading, setLoading] = useState(false);
@@ -20,7 +20,9 @@ const useMutation = <T>() => {
         }
     }, []);
 
-    return { loading, error, execute };
+    const clearError = () => setError(null);
+
+    return { loading, error, execute, clearError };
 };
 
 export const useCinemaHallMutation = () => {
@@ -35,11 +37,14 @@ export const useCinemaHallMutation = () => {
     const deleteHall = useCallback((id: number) =>
         mutation.execute(() => cinemaHallApi.deleteHall(id)), [mutation]);
 
+    const clearError = () => mutation.clearError();
+
     return {
         loading: mutation.loading,
         error: mutation.error,
         createHall,
         updateHall,
-        deleteHall
+        deleteHall,
+        clearError
     };
 };

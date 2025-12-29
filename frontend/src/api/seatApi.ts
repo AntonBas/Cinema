@@ -1,11 +1,11 @@
 import type { SeatResponse, SeatType } from '@/types';
 import { handleApiError } from '@/utils/apiErrorHandler';
 
-const getAuthHeaders = () => {
+const getAuthHeaders = (): HeadersInit => {
     const token = localStorage.getItem('authToken');
     return {
         'Content-Type': 'application/json',
-        'Authorization': token ? `Bearer ${token}` : '',
+        ...(token && { 'Authorization': `Bearer ${token}` }),
     };
 };
 
@@ -34,15 +34,6 @@ export const seatApi = {
         return response.json();
     },
 
-    updateSeatType: async (hallId: number, seatId: number, seatType: SeatType): Promise<SeatResponse> => {
-        const response = await fetch(`/api/cinema-halls/${hallId}/seats/${seatId}/type?seatType=${seatType}`, {
-            method: 'PUT',
-            headers: getAuthHeaders(),
-        });
-        if (!response.ok) throw await handleApiError(response);
-        return response.json();
-    },
-
     checkSeatAvailability: async (hallId: number, row: number, number: number): Promise<boolean> => {
         const response = await fetch(`/api/cinema-halls/${hallId}/seats/check-availability?row=${row}&number=${number}`, {
             headers: getAuthHeaders(),
@@ -61,6 +52,41 @@ export const seatApi = {
 
     getSeatsByType: async (hallId: number, seatType: SeatType): Promise<SeatResponse[]> => {
         const response = await fetch(`/api/cinema-halls/${hallId}/seats/by-type?seatType=${seatType}`, {
+            headers: getAuthHeaders(),
+        });
+        if (!response.ok) throw await handleApiError(response);
+        return response.json();
+    },
+
+    updateSeatType: async (hallId: number, seatId: number, seatType: SeatType): Promise<SeatResponse> => {
+        const response = await fetch(`/api/admin/cinema-halls/${hallId}/seats/${seatId}/type?seatType=${seatType}`, {
+            method: 'PUT',
+            headers: getAuthHeaders(),
+        });
+        if (!response.ok) throw await handleApiError(response);
+        return response.json();
+    },
+
+    getActiveSeatsByHall: async (hallId: number): Promise<SeatResponse[]> => {
+        const response = await fetch(`/api/cinema-halls/${hallId}/seats/active`, {
+            headers: getAuthHeaders(),
+        });
+        if (!response.ok) throw await handleApiError(response);
+        return response.json();
+    },
+
+    activateSeat: async (hallId: number, seatId: number): Promise<SeatResponse> => {
+        const response = await fetch(`/api/admin/cinema-halls/${hallId}/seats/${seatId}/activate`, {
+            method: 'PUT',
+            headers: getAuthHeaders(),
+        });
+        if (!response.ok) throw await handleApiError(response);
+        return response.json();
+    },
+
+    deactivateSeat: async (hallId: number, seatId: number): Promise<SeatResponse> => {
+        const response = await fetch(`/api/admin/cinema-halls/${hallId}/seats/${seatId}/deactivate`, {
+            method: 'PUT',
             headers: getAuthHeaders(),
         });
         if (!response.ok) throw await handleApiError(response);

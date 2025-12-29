@@ -6,13 +6,13 @@ export const useSeatMutation = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const updateSeatType = useCallback(async (hallId: number, seatId: number, seatType: SeatType) => {
+    const executeMutation = useCallback(async <T>(operation: () => Promise<T>): Promise<T> => {
         setLoading(true);
         setError(null);
         try {
-            return await seatApi.updateSeatType(hallId, seatId, seatType);
+            return await operation();
         } catch (err) {
-            const message = err instanceof Error ? err.message : 'Failed to update seat type';
+            const message = err instanceof Error ? err.message : 'Operation failed';
             setError(message);
             throw err;
         } finally {
@@ -20,9 +20,23 @@ export const useSeatMutation = () => {
         }
     }, []);
 
+    const updateSeatType = useCallback((hallId: number, seatId: number, seatType: SeatType) =>
+        executeMutation(() => seatApi.updateSeatType(hallId, seatId, seatType)), [executeMutation]);
+
+    const activateSeat = useCallback((hallId: number, seatId: number) =>
+        executeMutation(() => seatApi.activateSeat(hallId, seatId)), [executeMutation]);
+
+    const deactivateSeat = useCallback((hallId: number, seatId: number) =>
+        executeMutation(() => seatApi.deactivateSeat(hallId, seatId)), [executeMutation]);
+
+    const clearError = () => setError(null);
+
     return {
         loading,
         error,
-        updateSeatType
+        updateSeatType,
+        activateSeat,
+        deactivateSeat,
+        clearError
     };
 };

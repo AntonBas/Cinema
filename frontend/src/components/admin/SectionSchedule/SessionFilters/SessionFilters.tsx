@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useMovieSearch, useHalls } from '@/hooks/features';
+import { useMovieSearch, useCinemaHalls } from '@/hooks/features';
 import { Input, Select, Button } from '@/components/ui';
 import type { SessionFilters as SessionFiltersType } from '@/types/session';
 import styles from './SessionFilters.module.css';
@@ -23,14 +23,18 @@ export const SessionFilters: React.FC<SessionFiltersProps> = ({
     onClearFilters,
     hasActiveFilters
 }) => {
-    const { halls } = useHalls();
+    const { allHalls: halls } = useCinemaHalls();
     const { movies, searchMovies } = useMovieSearch();
     const [movieSearchTerm, setMovieSearchTerm] = useState('');
     const [showMovieResults, setShowMovieResults] = useState(false);
     const movieSearchRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        searchMovies('', 0, 50);
+        searchMovies({
+            searchTerm: '',
+            page: 0,
+            size: 50
+        });
     }, [searchMovies]);
 
     useEffect(() => {
@@ -45,7 +49,11 @@ export const SessionFilters: React.FC<SessionFiltersProps> = ({
     }, []);
 
     useEffect(() => {
-        searchMovies(movieSearchTerm, 0, 50);
+        searchMovies({
+            searchTerm: movieSearchTerm,
+            page: 0,
+            size: 50
+        });
     }, [movieSearchTerm, searchMovies]);
 
     const handleDateChange = (value: string) => {

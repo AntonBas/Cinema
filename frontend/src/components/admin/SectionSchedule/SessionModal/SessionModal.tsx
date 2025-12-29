@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useHalls, useMovieSessionSearch } from '@/hooks/features';
+import { useCinemaHalls, useMovieSessionSearch } from '@/hooks/features';
 import { Input, Select, Button, Modal, Notification } from '@/components/ui';
 import type { SessionAdminResponse, SessionRequest } from '@/types/session';
 import type { MovieSessionSearchResponse } from '@/types/movie';
@@ -20,7 +20,7 @@ export const SessionModal: React.FC<SessionModalProps> = ({
     onClose,
     loading
 }) => {
-    const { halls, loading: hallsLoading } = useHalls();
+    const { allHalls: halls, loading: hallsLoading } = useCinemaHalls();
     const { movies, searchMoviesForSession } = useMovieSessionSearch();
 
     const [formData, setFormData] = useState({

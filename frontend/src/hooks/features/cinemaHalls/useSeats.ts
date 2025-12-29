@@ -8,97 +8,67 @@ export const useSeats = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const getSeatsByHall = useCallback(async (hallId: number) => {
+    const executeQuery = useCallback(async <T>(operation: () => Promise<T>): Promise<T> => {
         setLoading(true);
         setError(null);
         try {
+            return await operation();
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'Operation failed';
+            setError(message);
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    const getSeatsByHall = useCallback((hallId: number) =>
+        executeQuery(async () => {
             const data = await seatApi.getSeatsByHall(hallId);
             setSeats(data);
             return data;
-        } catch (err) {
-            const message = err instanceof Error ? err.message : 'Failed to fetch seats';
-            setError(message);
-            throw err;
-        } finally {
-            setLoading(false);
-        }
-    }, []);
+        }), [executeQuery]);
 
-    const getSeatById = useCallback(async (hallId: number, seatId: number) => {
-        setLoading(true);
-        setError(null);
-        try {
+    const getSeatById = useCallback((hallId: number, seatId: number) =>
+        executeQuery(async () => {
             const data = await seatApi.getSeatById(hallId, seatId);
             setSeat(data);
             return data;
-        } catch (err) {
-            const message = err instanceof Error ? err.message : 'Failed to fetch seat';
-            setError(message);
-            throw err;
-        } finally {
-            setLoading(false);
-        }
-    }, []);
+        }), [executeQuery]);
 
-    const getSeatByPosition = useCallback(async (hallId: number, row: number, number: number) => {
-        setLoading(true);
-        setError(null);
-        try {
+    const getSeatByPosition = useCallback((hallId: number, row: number, number: number) =>
+        executeQuery(async () => {
             const data = await seatApi.getSeatByPosition(hallId, row, number);
             setSeat(data);
             return data;
-        } catch (err) {
-            const message = err instanceof Error ? err.message : 'Failed to fetch seat by position';
-            setError(message);
-            throw err;
-        } finally {
-            setLoading(false);
-        }
-    }, []);
+        }), [executeQuery]);
 
-    const checkSeatAvailability = useCallback(async (hallId: number, row: number, number: number) => {
-        setLoading(true);
-        setError(null);
-        try {
-            return await seatApi.checkSeatAvailability(hallId, row, number);
-        } catch (err) {
-            const message = err instanceof Error ? err.message : 'Failed to check seat availability';
-            setError(message);
-            throw err;
-        } finally {
-            setLoading(false);
-        }
-    }, []);
+    const checkSeatAvailability = useCallback((hallId: number, row: number, number: number) =>
+        executeQuery(() => seatApi.checkSeatAvailability(hallId, row, number)), [executeQuery]);
 
-    const countSeatsByHall = useCallback(async (hallId: number) => {
-        setLoading(true);
-        setError(null);
-        try {
-            return await seatApi.countSeatsByHall(hallId);
-        } catch (err) {
-            const message = err instanceof Error ? err.message : 'Failed to count seats';
-            setError(message);
-            throw err;
-        } finally {
-            setLoading(false);
-        }
-    }, []);
+    const countSeatsByHall = useCallback((hallId: number) =>
+        executeQuery(() => seatApi.countSeatsByHall(hallId)), [executeQuery]);
 
-    const getSeatsByType = useCallback(async (hallId: number, seatType: SeatType) => {
-        setLoading(true);
-        setError(null);
-        try {
+    const getSeatsByType = useCallback((hallId: number, seatType: SeatType) =>
+        executeQuery(async () => {
             const data = await seatApi.getSeatsByType(hallId, seatType);
             setSeats(data);
             return data;
-        } catch (err) {
-            const message = err instanceof Error ? err.message : 'Failed to fetch seats by type';
-            setError(message);
-            throw err;
-        } finally {
-            setLoading(false);
-        }
-    }, []);
+        }), [executeQuery]);
+
+    const getActiveSeatsByHall = useCallback((hallId: number) =>
+        executeQuery(async () => {
+            const data = await seatApi.getActiveSeatsByHall(hallId);
+            setSeats(data);
+            return data;
+        }), [executeQuery]);
+
+    const clearSeats = () => {
+        setSeats([]);
+        setSeat(null);
+    };
+
+    const clearError = () => setError(null);
 
     return {
         seats,
@@ -110,6 +80,9 @@ export const useSeats = () => {
         getSeatByPosition,
         checkSeatAvailability,
         countSeatsByHall,
-        getSeatsByType
+        getSeatsByType,
+        getActiveSeatsByHall,
+        clearSeats,
+        clearError
     };
 };

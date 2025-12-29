@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import type { CinemaHallResponse, CinemaHallRequest } from '@/types';
-import { useHalls, useCinemaHallMutation, useCinemaHalls } from '@/hooks/features/cinemaHalls';
+import { useCinemaHalls, useCinemaHallMutation } from '@/hooks/features/cinemaHalls';
 import { useNotification } from '@/hooks/common/useNotification';
 import { DeleteConfirmModal, Notification, Button, LoadingSpinner } from '@/components/ui';
 import { HallsTable } from './HallsTable/HallsTable';
@@ -10,7 +10,7 @@ import { HallLayoutModal } from './HallLayoutModal/HallLayoutModal';
 import styles from './SectionHalls.module.css';
 
 export const SectionHalls: React.FC = () => {
-    const { halls, loading, error, refetch } = useHalls();
+    const { allHalls: halls, loading, error, getAllHalls, getHallLayout } = useCinemaHalls();
     const {
         createHall,
         updateHall,
@@ -18,7 +18,6 @@ export const SectionHalls: React.FC = () => {
         loading: mutationLoading,
         error: mutationError
     } = useCinemaHallMutation();
-    const { getHallLayout } = useCinemaHalls();
 
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
@@ -67,7 +66,7 @@ export const SectionHalls: React.FC = () => {
             await createHall(request);
             setShowCreateModal(false);
             showNotification('Cinema hall created successfully', 'success');
-            await refetch();
+            await getAllHalls();
         } catch (err) {
             console.error('Failed to create hall:', err);
         }
@@ -79,7 +78,7 @@ export const SectionHalls: React.FC = () => {
             setShowEditModal(false);
             setSelectedHall(null);
             showNotification('Cinema hall updated successfully', 'success');
-            await refetch();
+            await getAllHalls();
         } catch (err) {
             console.error('Failed to update hall:', err);
         }
@@ -89,7 +88,7 @@ export const SectionHalls: React.FC = () => {
         try {
             await deleteHall(id);
             showNotification('Cinema hall deleted successfully', 'success');
-            await refetch();
+            await getAllHalls();
         } catch (err) {
             console.error('Failed to delete hall:', err);
         } finally {
