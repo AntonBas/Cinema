@@ -13,8 +13,11 @@ export const useGenres = () => {
         try {
             const data = await genreApi.getAll();
             setGenres(data);
+            return data;
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to load genres');
+            const errorMessage = err instanceof Error ? err.message : 'Failed to load genres';
+            setError(errorMessage);
+            throw err;
         } finally {
             setLoading(false);
         }
@@ -24,5 +27,15 @@ export const useGenres = () => {
         loadGenres();
     }, []);
 
-    return { genres, loading, error, refetch: loadGenres };
+    const clearError = () => {
+        setError(null);
+    };
+
+    return {
+        genres,
+        loading,
+        error,
+        refetch: loadGenres,
+        clearError
+    };
 };

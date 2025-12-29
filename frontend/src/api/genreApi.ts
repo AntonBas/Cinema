@@ -30,15 +30,29 @@ export const genreApi = {
     return response.json();
   },
 
+  getAllPaginated: async (page: number = 0, size: number = 12): Promise<PageResponse<GenreResponse>> => {
+    const searchParams = new URLSearchParams({
+      page: page.toString(),
+      size: size.toString(),
+    });
+
+    const response = await fetch(`${PUBLIC_API_URL}?${searchParams}`, {
+      headers: getAuthHeaders(),
+    });
+
+    if (!response.ok) throw await handleApiError(response);
+    return response.json();
+  },
+
   search: async (params: SearchParams): Promise<PageResponse<GenreResponse>> => {
-    const { query, page, size = 12 } = params;
+    const { query, page = 0, size = 12 } = params;
 
     const searchParams = new URLSearchParams();
     if (query) searchParams.append('query', query);
-    searchParams.append('page', page?.toString() ?? '0');
+    searchParams.append('page', page.toString());
     searchParams.append('size', size.toString());
 
-    const response = await fetch(`${PUBLIC_API_URL}?${searchParams}`, {
+    const response = await fetch(`${PUBLIC_API_URL}/search?${searchParams}`, {
       headers: getAuthHeaders(),
     });
 
@@ -72,5 +86,13 @@ export const genreApi = {
       headers: getAuthHeaders(),
     });
     if (!response.ok) throw await handleApiError(response);
+  },
+
+  getByIdAdmin: async (id: number): Promise<GenreResponse> => {
+    const response = await fetch(`${ADMIN_API_URL}/${id}`, {
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) throw await handleApiError(response);
+    return response.json();
   },
 };

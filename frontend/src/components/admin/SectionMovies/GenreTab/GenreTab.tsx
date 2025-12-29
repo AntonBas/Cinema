@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import type { GenreResponse, GenreRequest } from '@/types/genre';
 import { useGenreSearch, useGenreMutation } from '@/hooks/features/genres';
 import { useNotification } from '@/hooks/common/useNotification';
@@ -29,7 +29,9 @@ export const GenreTab: React.FC = () => {
     pagination,
     loading,
     error: searchError,
-    searchGenres
+    searchGenres,
+    getAllGenresPaginated,
+    clearError: clearSearchError
   } = useGenreSearch();
 
   const {
@@ -37,37 +39,41 @@ export const GenreTab: React.FC = () => {
     updateGenre,
     deleteGenre,
     loading: mutationLoading,
-    error: mutationError
+    error: mutationError,
+    clearError: clearMutationError
   } = useGenreMutation();
 
   const { notifications, showNotification, hideNotification } = useNotification();
 
+  const loadGenres = useCallback(async () => {
+    try {
+      if (searchQuery.trim()) {
+        await searchGenres({ query: searchQuery, page: currentPage, size: 12 });
+      } else {
+        await getAllGenresPaginated(currentPage, 12);
+      }
+    } catch (error) {
+      console.error('Failed to load genres:', error);
+    }
+  }, [searchQuery, currentPage, searchGenres, getAllGenresPaginated]);
+
   useEffect(() => {
-    searchGenres({ query: searchQuery, page: currentPage, size: 12 });
-  }, [searchQuery, currentPage]);
+    loadGenres();
+  }, [loadGenres]);
 
   useEffect(() => {
     if (searchError) {
       showNotification(searchError, 'error');
+      clearSearchError();
     }
-  }, [searchError, showNotification]);
+  }, [searchError, showNotification, clearSearchError]);
 
   useEffect(() => {
     if (mutationError) {
       showNotification(mutationError, 'error');
+      clearMutationError();
     }
-  }, [mutationError, showNotification]);
-
-  const getDisplayRange = () => {
-    if (!pagination) return { start: 0, end: 0 };
-
-    const startItem = currentPage * pagination.pageSize + 1;
-    const endItem = Math.min((currentPage + 1) * pagination.pageSize, pagination.totalElements);
-
-    return { start: startItem, end: endItem };
-  };
-
-  const { start, end } = getDisplayRange();
+  }, [mutationError, showNotification, clearMutationError]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -87,8 +93,9 @@ export const GenreTab: React.FC = () => {
       }
 
       resetForm();
-      await searchGenres({ query: searchQuery, page: currentPage, size: 12 });
+      await loadGenres();
     } catch (err) {
+      console.error('Failed to save genre:', err);
     }
   };
 
@@ -102,9 +109,10 @@ export const GenreTab: React.FC = () => {
       if (genres.length === 1 && currentPage > 0) {
         setCurrentPage(currentPage - 1);
       } else {
-        await searchGenres({ query: searchQuery, page: currentPage, size: 12 });
+        await loadGenres();
       }
     } catch (err) {
+      console.error('Failed to delete genre:', err);
     } finally {
       setIsDeleteModalOpen(false);
       setDeletingGenre(null);
@@ -128,12 +136,12 @@ export const GenreTab: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const handleSearch = (query: string) => {
+  const handleSearch = useCallback((query: string) => {
     if (query !== searchQuery) {
       setSearchQuery(query);
       setCurrentPage(0);
     }
-  };
+  }, [searchQuery, setCurrentPage]);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -147,6 +155,17 @@ export const GenreTab: React.FC = () => {
       </div>
     );
   }
+
+  const getDisplayRange = () => {
+    if (!pagination) return { start: 0, end: 0 };
+
+    const startItem = currentPage * 12 + 1;
+    const endItem = Math.min((currentPage + 1) * 12, pagination.totalElements);
+
+    return { start: startItem, end: endItem };
+  };
+
+  const { start, end } = getDisplayRange();
 
   return (
     <div className={styles.container}>
@@ -233,11 +252,13 @@ export const GenreTab: React.FC = () => {
       {pagination && pagination.totalPages > 1 && (
         <div className={styles.paginationWrapper}>
           <Pagination
-            currentPage={pagination.currentPage}
+            currentPage={currentPage}
             totalPages={pagination.totalPages}
             totalElements={pagination.totalElements}
-            pageSize={pagination.pageSize}
+            pageSize={12}
             onPageChange={handlePageChange}
+            variant="pages"
+            loading={loading}
             className={styles.pagination}
             showInfo={false}
           />

@@ -16,19 +16,44 @@ export const useGenreSearch = () => {
             const response = await genreApi.search(params);
             setGenres(response.content);
             setPagination(response);
+            return response;
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Failed to search genres';
             setError(errorMessage);
+            throw err;
         } finally {
             setLoading(false);
         }
     }, []);
+
+    const getAllGenresPaginated = useCallback(async (page: number = 0, size: number = 12) => {
+        setLoading(true);
+        setError(null);
+        try {
+            const response = await genreApi.getAllPaginated(page, size);
+            setGenres(response.content);
+            setPagination(response);
+            return response;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Failed to load genres';
+            setError(errorMessage);
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    const clearError = () => {
+        setError(null);
+    };
 
     return {
         genres,
         pagination,
         loading,
         error,
-        searchGenres
+        searchGenres,
+        getAllGenresPaginated,
+        clearError
     };
 };
