@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import type { PersonResponse, PersonRole } from '@/types/person';
 import { personApi } from '@/api/personApi';
 import type { NotificationType } from '@/hooks/common/useNotification';
@@ -20,29 +20,34 @@ export const usePersonSelect = ({
     const [isLoading, setIsLoading] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
+    const abortControllerRef = useRef<AbortController | null>(null);
 
-    useEffect(() => {
-        const loadSelectedPersons = async () => {
-            if (selectedIds.length === 0) {
-                setAllSelectedPersons([]);
-                return;
-            }
+    const loadSelectedPersons = useCallback(async () => {
+        if (selectedIds.length === 0) {
+            setAllSelectedPersons([]);
+            return;
+        }
 
-            try {
-                const personsData = await Promise.all(
-                    selectedIds.map(id => personApi.getById(id))
-                );
-                setAllSelectedPersons(personsData);
-            } catch (error) {
-                console.error('Failed to load selected persons:', error);
-                showNotification('Failed to load selected persons', 'error');
-            }
-        };
-
-        loadSelectedPersons();
+        try {
+            const personsData = await Promise.all(
+                selectedIds.map(id => personApi.getById(id))
+            );
+            setAllSelectedPersons(personsData);
+        } catch (error) {
+            console.error('Failed to load selected persons:', error);
+            showNotification('Failed to load selected persons', 'error');
+        }
     }, [selectedIds, showNotification]);
 
     useEffect(() => {
+        loadSelectedPersons();
+    }, [loadSelectedPersons]);
+
+    useEffect(() => {
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
+
         const searchPersons = async () => {
             if (searchQuery.length < 2) {
                 setOptions([]);
@@ -52,15 +57,22 @@ export const usePersonSelect = ({
 
             setIsLoading(true);
             try {
+                abortControllerRef.current = new AbortController();
                 const result = await personApi.search({
                     query: searchQuery,
                     role,
                     page: 0,
                     size: 10
                 });
-                setOptions(result.content);
-                setIsOpen(true);
+
+                if (!abortControllerRef.current.signal.aborted) {
+                    setOptions(result.content);
+                    setIsOpen(true);
+                }
             } catch (error) {
+                if (error instanceof DOMException && error.name === 'AbortError') {
+                    return;
+                }
                 console.error('Search failed:', error);
                 showNotification('Failed to search persons', 'error');
             } finally {
@@ -69,7 +81,12 @@ export const usePersonSelect = ({
         };
 
         const timeoutId = setTimeout(searchPersons, 300);
-        return () => clearTimeout(timeoutId);
+        return () => {
+            clearTimeout(timeoutId);
+            if (abortControllerRef.current) {
+                abortControllerRef.current.abort();
+            }
+        };
     }, [searchQuery, role, showNotification]);
 
     useEffect(() => {
@@ -110,6 +127,10 @@ export const usePersonSelect = ({
         }
     };
 
+    const refreshSelected = () => {
+        loadSelectedPersons();
+    };
+
     const exactMatch = options.some(option =>
         option.name.toLowerCase() === searchQuery.toLowerCase()
     );
@@ -126,6 +147,7 @@ export const usePersonSelect = ({
         setIsOpen,
         dropdownRef,
         showAddOption,
-        handleAddNew
+        handleAddNew,
+        refreshSelected
     };
 };

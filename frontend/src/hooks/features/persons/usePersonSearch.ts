@@ -34,6 +34,46 @@ export const usePersonSearch = () => {
         []
     );
 
+    const getAllPersonsPaginated = useCallback(
+        async (page: number = 0, size: number = 12): Promise<PageResponse<PersonResponse>> => {
+            setLoading(true);
+            setError(null);
+            try {
+                const response = await personApi.getAllPaginated(page, size);
+                setPersons(response.content);
+                setPagination(response);
+                return response;
+            } catch (err) {
+                const message = err instanceof Error ? err.message : 'Failed to get persons';
+                setError(message);
+                throw err;
+            } finally {
+                setLoading(false);
+            }
+        },
+        []
+    );
+
+    const getByRole = useCallback(
+        async (role: PersonRole, page: number = 0, size: number = 12): Promise<PageResponse<PersonResponse>> => {
+            setLoading(true);
+            setError(null);
+            try {
+                const response = await personApi.getByRole(role, page, size);
+                setPersons(response.content);
+                setPagination(response);
+                return response;
+            } catch (err) {
+                const message = err instanceof Error ? err.message : 'Failed to get persons by role';
+                setError(message);
+                throw err;
+            } finally {
+                setLoading(false);
+            }
+        },
+        []
+    );
+
     const clearError = () => {
         setError(null);
     };
@@ -44,6 +84,8 @@ export const usePersonSearch = () => {
         loading,
         error,
         searchPersons,
+        getAllPersonsPaginated,
+        getByRole,
         clearError
     };
 };

@@ -27,100 +27,108 @@ export const PersonTab: React.FC = () => {
     [PersonRole.DIRECTOR]: 0,
     [PersonRole.SCREENWRITER]: 0,
   });
-  const [allPersons, setAllPersons] = useState<PersonResponse[]>([]);
-  const [currentPagination, setCurrentPagination] = useState<any>(null);
 
-  const { persons, loading, error: searchError, searchPersons } = usePersonSearch();
-  const { createPerson, updatePerson, deletePerson, loading: mutationLoading, error: mutationError } = usePersonMutation();
+  const {
+    persons,
+    pagination,
+    loading,
+    error: searchError,
+    searchPersons,
+    getAllPersonsPaginated,
+    getByRole,
+    clearError: clearSearchError
+  } = usePersonSearch();
+
+  const {
+    createPerson,
+    updatePerson,
+    deletePerson,
+    loading: mutationLoading,
+    error: mutationError,
+    clearError: clearMutationError
+  } = usePersonMutation();
+
   const { notifications, showNotification, hideNotification } = useNotification();
 
-  const getDisplayRange = () => {
-    if (!currentPagination || allPersons.length === 0) return { start: 0, end: 0 };
-
-    const startItem = currentPage * 12 + 1;
-    const endItem = Math.min((currentPage + 1) * 12, currentPagination.totalElements);
-
-    return { start: startItem, end: endItem };
-  };
-
-  const { start, end } = getDisplayRange();
-
-  const loadPersons = useCallback(async (reset: boolean = false, pageOverride?: number) => {
-    const page = reset ? 0 : (pageOverride ?? currentPage);
-    const role = activeTab === 'ALL' ? undefined : activeTab;
-
-    const result = await searchPersons({ query: searchQuery, role, page, size: 12 });
-    setCurrentPage(page);
-
-    if (result) {
-      setCurrentPagination(result);
-      if (reset) {
-        setAllPersons(result.content);
+  const loadPersons = useCallback(async () => {
+    try {
+      if (searchQuery.trim()) {
+        await searchPersons({
+          query: searchQuery,
+          role: activeTab === 'ALL' ? undefined : activeTab,
+          page: currentPage,
+          size: 12
+        });
+      } else if (activeTab === 'ALL') {
+        await getAllPersonsPaginated(currentPage, 12);
+      } else {
+        await getByRole(activeTab, currentPage, 12);
       }
+    } catch (error) {
+      console.error('Failed to load persons:', error);
     }
-  }, [activeTab, searchQuery, currentPage, searchPersons]);
+  }, [activeTab, currentPage, searchQuery, searchPersons, getAllPersonsPaginated, getByRole]);
 
-  useEffect(() => {
-    loadPersons(true);
-  }, [activeTab, searchQuery]);
+  const refreshAllCounts = useCallback(async () => {
+    if (searchQuery.trim()) return;
 
-  useEffect(() => {
-    if (persons.length > 0 && currentPage > 0) {
-      setAllPersons(prev => [...prev, ...persons]);
+    try {
+      const [allResult, actorsResult, directorsResult, screenwritersResult] = await Promise.all([
+        getAllPersonsPaginated(0, 1),
+        getByRole(PersonRole.ACTOR, 0, 1),
+        getByRole(PersonRole.DIRECTOR, 0, 1),
+        getByRole(PersonRole.SCREENWRITER, 0, 1),
+      ]);
+
+      setTotalCounts({
+        ALL: allResult.totalElements,
+        [PersonRole.ACTOR]: actorsResult.totalElements,
+        [PersonRole.DIRECTOR]: directorsResult.totalElements,
+        [PersonRole.SCREENWRITER]: screenwritersResult.totalElements,
+      });
+    } catch (error) {
+      console.error('Failed to refresh counts:', error);
     }
-  }, [persons, currentPage]);
+  }, [getAllPersonsPaginated, getByRole, searchQuery]);
 
   useEffect(() => {
-    if (searchError) showNotification(searchError, 'error');
-  }, [searchError, showNotification]);
+    loadPersons();
+  }, [loadPersons]);
 
   useEffect(() => {
-    if (mutationError) showNotification(mutationError, 'error');
-  }, [mutationError, showNotification]);
-
-  useEffect(() => {
-    refreshAllCounts();
-  }, []);
-
-  const refreshAllCounts = async () => {
-    const roles: (PersonRole | 'ALL')[] = ['ALL', PersonRole.ACTOR, PersonRole.DIRECTOR, PersonRole.SCREENWRITER];
-    const newCounts = {
-      ALL: 0,
-      [PersonRole.ACTOR]: 0,
-      [PersonRole.DIRECTOR]: 0,
-      [PersonRole.SCREENWRITER]: 0,
-    };
-
-    for (const role of roles) {
-      const roleFilter = role === 'ALL' ? undefined : role;
-      try {
-        const result = await searchPersons({ query: '', role: roleFilter, page: 0, size: 1 });
-        if (result && typeof result.totalElements === 'number') {
-          newCounts[role] = result.totalElements;
-        }
-      } catch (error) {
-        console.error(`Failed to load count for ${role}:`, error);
-      }
+    if (!searchQuery.trim()) {
+      refreshAllCounts();
     }
+  }, [searchQuery, refreshAllCounts]);
 
-    setTotalCounts(newCounts);
-  };
-
-  const handleLoadMore = () => {
-    if (!loading && currentPagination && currentPage < currentPagination.totalPages - 1) {
-      loadPersons(false, currentPage + 1);
+  useEffect(() => {
+    if (searchError) {
+      showNotification(searchError, 'error');
+      clearSearchError();
     }
-  };
+  }, [searchError, showNotification, clearSearchError]);
 
-  const handleTabChange = (tab: PersonRole | 'ALL') => {
-    setActiveTab(tab);
-    setCurrentPage(0);
-  };
+  useEffect(() => {
+    if (mutationError) {
+      showNotification(mutationError, 'error');
+      clearMutationError();
+    }
+  }, [mutationError, showNotification, clearMutationError]);
 
   const handleSearch = useCallback((query: string) => {
     setSearchQuery(query);
     setCurrentPage(0);
   }, []);
+
+  const handleTabChange = (tab: PersonRole | 'ALL') => {
+    setActiveTab(tab);
+    setCurrentPage(0);
+    setSearchQuery('');
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
 
   const handleSubmit = async (data: PersonRequest) => {
     try {
@@ -131,10 +139,13 @@ export const PersonTab: React.FC = () => {
         await createPerson(data);
         showNotification('Person created successfully!', 'success');
       }
+
       resetForm();
-      await loadPersons(true);
+      await loadPersons();
       await refreshAllCounts();
-    } catch { }
+    } catch (error) {
+      console.error('Failed to save person:', error);
+    }
   };
 
   const handleEdit = (person: PersonResponse) => {
@@ -152,9 +163,11 @@ export const PersonTab: React.FC = () => {
     try {
       await deletePerson(personToDelete.id);
       showNotification('Person deleted successfully!', 'success');
-      await loadPersons(true);
+      await loadPersons();
       await refreshAllCounts();
-    } catch { } finally {
+    } catch (error) {
+      console.error('Failed to delete person:', error);
+    } finally {
       setIsDeleteModalOpen(false);
       setPersonToDelete(null);
     }
@@ -175,22 +188,30 @@ export const PersonTab: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const getDisplayedCounts = () => {
-    if (searchQuery) {
-      const filtered = allPersons.filter(person =>
+  const getTabStats = () => {
+    if (searchQuery.trim()) {
+      const filtered = persons.filter(person =>
         activeTab === 'ALL' || person.role === activeTab
       );
+
+      const actors = persons.filter(p => p.role === PersonRole.ACTOR);
+      const directors = persons.filter(p => p.role === PersonRole.DIRECTOR);
+      const screenwriters = persons.filter(p => p.role === PersonRole.SCREENWRITER);
+
       return {
-        ALL: activeTab === 'ALL' ? filtered.length : allPersons.length,
-        [PersonRole.ACTOR]: allPersons.filter(p => p.role === PersonRole.ACTOR).length,
-        [PersonRole.DIRECTOR]: allPersons.filter(p => p.role === PersonRole.DIRECTOR).length,
-        [PersonRole.SCREENWRITER]: allPersons.filter(p => p.role === PersonRole.SCREENWRITER).length,
+        ALL: activeTab === 'ALL' ? filtered.length : persons.length,
+        [PersonRole.ACTOR]: actors.length,
+        [PersonRole.DIRECTOR]: directors.length,
+        [PersonRole.SCREENWRITER]: screenwriters.length,
       };
     }
+
     return totalCounts;
   };
 
-  if (loading && allPersons.length === 0) {
+  const tabStats = getTabStats();
+
+  if (loading && !persons.length) {
     return (
       <div className={styles.loading}>
         <div className={styles.loadingSpinner}></div>
@@ -221,9 +242,10 @@ export const PersonTab: React.FC = () => {
         />
       </div>
 
-      {currentPagination && (
+      {pagination && (
         <div className={styles.resultsInfo}>
-          Showing {start}-{end} of {currentPagination.totalElements} people
+          Showing {(currentPage * 12) + 1}-
+          {Math.min((currentPage + 1) * 12, pagination.totalElements)} of {pagination.totalElements} people
           {searchQuery && ` for "${searchQuery}"`}
         </div>
       )}
@@ -231,29 +253,30 @@ export const PersonTab: React.FC = () => {
       <PersonTabs
         activeTab={activeTab}
         onTabChange={handleTabChange}
-        stats={getDisplayedCounts()}
+        stats={tabStats}
       />
 
       <PersonList
-        persons={allPersons}
+        persons={persons}
         activeTab={activeTab}
         onEdit={handleEdit}
         onDelete={handleDeleteClick}
         onAddPerson={handleAddNew}
       />
 
-      {currentPagination && currentPagination.totalPages > 1 && currentPage < currentPagination.totalPages - 1 && (
-        <Pagination
-          currentPage={currentPage}
-          totalPages={currentPagination.totalPages}
-          totalElements={currentPagination.totalElements}
-          pageSize={12}
-          onLoadMore={handleLoadMore}
-          variant="load-more"
-          loading={loading}
-          showInfo={false}
-          className={styles.pagination}
-        />
+      {pagination && pagination.totalPages > 1 && (
+        <div className={styles.paginationContainer}>
+          <Pagination
+            currentPage={currentPage}
+            totalPages={pagination.totalPages}
+            totalElements={pagination.totalElements}
+            pageSize={pagination.pageSize}
+            onPageChange={handlePageChange}
+            variant="pages"
+            loading={loading}
+            className={styles.pagination}
+          />
+        </div>
       )}
 
       {isModalOpen && (
