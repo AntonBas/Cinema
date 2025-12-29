@@ -6,11 +6,11 @@ export const useMovieMutation = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const createMovie = async (movieData: MovieCreateRequest, posterFile: File): Promise<MovieDetailResponse> => {
+    const createMovie = async (movieData: MovieCreateRequest): Promise<MovieDetailResponse> => {
         setLoading(true);
         setError(null);
         try {
-            const movie = await movieApi.createMovie(movieData, posterFile);
+            const movie = await movieApi.createMovie(movieData);
             return movie;
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to create movie';
@@ -21,11 +21,11 @@ export const useMovieMutation = () => {
         }
     };
 
-    const updateMovie = async (id: number, movieData: MovieUpdateRequest, posterFile?: File): Promise<MovieDetailResponse> => {
+    const updateMovie = async (id: number, movieData: MovieUpdateRequest): Promise<MovieDetailResponse> => {
         setLoading(true);
         setError(null);
         try {
-            const movie = await movieApi.updateMovie(id, movieData, posterFile);
+            const movie = await movieApi.updateMovie(id, movieData);
             return movie;
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to update movie';
@@ -50,11 +50,16 @@ export const useMovieMutation = () => {
         }
     };
 
+    const clearError = () => {
+        setError(null);
+    };
+
     return {
         loading,
         error,
         createMovie,
         updateMovie,
-        deleteMovie
+        deleteMovie,
+        clearError
     };
 };

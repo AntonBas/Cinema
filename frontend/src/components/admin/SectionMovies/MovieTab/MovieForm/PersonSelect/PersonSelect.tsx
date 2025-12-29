@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useMemo } from 'react';
+import type { PersonResponse } from '@/types/person';
 import { PersonRole } from '@/types/person';
 import type { NotificationType } from '@/hooks/common/useNotification';
 import { usePersonSelect } from '@/hooks/features/persons/usePersonSelect';
@@ -6,6 +7,7 @@ import styles from './PersonSelect.module.css';
 
 interface PersonSelectProps {
     selectedIds: number[];
+    selectedPersons?: PersonResponse[];
     onChange: (ids: number[]) => void;
     role: PersonRole;
     placeholder?: string;
@@ -14,6 +16,7 @@ interface PersonSelectProps {
 
 export const PersonSelect: React.FC<PersonSelectProps> = ({
     selectedIds,
+    selectedPersons = [],
     onChange,
     role,
     placeholder = "Search or add new...",
@@ -31,6 +34,10 @@ export const PersonSelect: React.FC<PersonSelectProps> = ({
         showAddOption,
         handleAddNew
     } = usePersonSelect({ selectedIds, role, showNotification });
+
+    const displayPersons = useMemo(() => {
+        return selectedPersons.length > 0 ? selectedPersons : allSelectedPersons;
+    }, [selectedPersons, allSelectedPersons]);
 
     const handleSelectPerson = (personId: number) => {
         const newSelectedIds = selectedIds.includes(personId)
@@ -66,9 +73,9 @@ export const PersonSelect: React.FC<PersonSelectProps> = ({
                 {isLoading && <div className={styles.spinner}>⏳</div>}
             </div>
 
-            {allSelectedPersons.length > 0 && (
+            {displayPersons.length > 0 && (
                 <div className={styles.selectedItems}>
-                    {allSelectedPersons.map(person => (
+                    {displayPersons.map(person => (
                         <span key={person.id} className={styles.selectedTag}>
                             {person.name}
                             <button

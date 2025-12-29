@@ -1,3 +1,6 @@
+import type { GenreResponse } from "./genre";
+import type { PersonResponse } from "./person";
+
 export enum MovieStatus {
   UPCOMING = 'UPCOMING',
   CURRENT = 'CURRENT',
@@ -83,10 +86,10 @@ export interface MovieDetailResponse {
   upcoming: boolean;
   archived: boolean;
   active: boolean;
-  genreIds: number[];
-  actorIds: number[];
-  directorIds: number[];
-  screenwriterIds: number[];
+  genres?: GenreResponse[];
+  actors?: PersonResponse[];
+  directors?: PersonResponse[];
+  screenwriters?: PersonResponse[];
 }
 
 export interface MovieShortResponse {
@@ -117,4 +120,18 @@ export interface MovieFormData {
   selectedScreenwriters: number[];
   posterFile?: File;
   removePoster?: boolean;
+}
+
+export interface MovieFilter {
+  searchTerm?: string;
+  status?: string;
+  ageRating?: string;
+  minDuration?: number;
+  maxDuration?: number;
+  releaseDateFrom?: string;
+  releaseDateTo?: string;
+  sortBy?: string;
+  sortDirection?: 'ASC' | 'DESC';
+  page?: number;
+  size?: number;
 }

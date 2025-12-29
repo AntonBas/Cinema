@@ -6,6 +6,7 @@ import styles from './GenreSearchList.module.css';
 interface GenreSearchListProps {
     genres?: GenreResponse[];
     selectedIds: number[];
+    selectedGenres?: GenreResponse[];
     onChange: (genreId: number) => void;
     onSearchChange?: (query: string) => void;
     isLoading?: boolean;
@@ -14,6 +15,7 @@ interface GenreSearchListProps {
 export const GenreSearchList: React.FC<GenreSearchListProps> = ({
     genres = [],
     selectedIds,
+    selectedGenres = [],
     onChange,
     onSearchChange,
     isLoading = false
@@ -27,14 +29,15 @@ export const GenreSearchList: React.FC<GenreSearchListProps> = ({
 
     const filteredGenres = useMemo(() => {
         const safeGenres = Array.isArray(genres) ? genres : [];
-
-        if (!localSearchQuery.trim()) {
-            return safeGenres;
-        }
+        if (!localSearchQuery.trim()) return safeGenres;
         return safeGenres.filter(genre =>
             genre.name.toLowerCase().includes(localSearchQuery.toLowerCase())
         );
     }, [genres, localSearchQuery]);
+
+    const displayGenres = useMemo(() => {
+        return selectedGenres.length > 0 ? selectedGenres : genres;
+    }, [selectedGenres, genres]);
 
     if (isLoading) {
         return (
@@ -59,7 +62,7 @@ export const GenreSearchList: React.FC<GenreSearchListProps> = ({
             {selectedIds.length > 0 && (
                 <div className={styles.selectedItems}>
                     {selectedIds.map(genreId => {
-                        const genre = genres.find(g => g.id === genreId);
+                        const genre = displayGenres.find(g => g.id === genreId);
                         return genre ? (
                             <Badge
                                 key={genreId}

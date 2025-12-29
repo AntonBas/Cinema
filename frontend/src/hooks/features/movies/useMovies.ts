@@ -11,10 +11,13 @@ export const useMovies = () => {
         setLoading(true);
         setError(null);
         try {
-            const data = await movieApi.getAllMovies();
-            setMovies(data);
+            const response = await movieApi.getMoviesPaginated(0, 100);
+            setMovies(response.content);
+            return response.content;
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to load movies');
+            const errorMessage = err instanceof Error ? err.message : 'Failed to load movies';
+            setError(errorMessage);
+            throw err;
         } finally {
             setLoading(false);
         }
@@ -24,5 +27,15 @@ export const useMovies = () => {
         loadMovies();
     }, []);
 
-    return { movies, loading, error, refetch: loadMovies };
+    const clearError = () => {
+        setError(null);
+    };
+
+    return {
+        movies,
+        loading,
+        error,
+        refetch: loadMovies,
+        clearError
+    };
 };

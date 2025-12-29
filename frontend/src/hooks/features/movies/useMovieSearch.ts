@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { movieApi } from '@/api/movieApi';
-import type { MovieCardResponse, MovieSessionSearchResponse } from '@/types/movie';
+import type { MovieCardResponse, MovieSessionSearchResponse, MovieFilter } from '@/types/movie';
 import type { PageResponse } from '@/types/pagination';
 
 export const useMovieSearch = () => {
@@ -10,11 +10,11 @@ export const useMovieSearch = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const searchMovies = useCallback(async (search: string = '', page: number = 0, size: number = 10) => {
+    const searchMovies = useCallback(async (filter: Partial<MovieFilter> = {}) => {
         setLoading(true);
         setError(null);
         try {
-            const response = await movieApi.searchMovies(search, page, size);
+            const response = await movieApi.getFilteredMovies(filter);
             setMovies(response.content);
             setPagination(response);
             return response;
@@ -43,6 +43,44 @@ export const useMovieSearch = () => {
         }
     }, []);
 
+    const getCurrentlyShowingPaginated = useCallback(async (page: number = 0, size: number = 12) => {
+        setLoading(true);
+        setError(null);
+        try {
+            const response = await movieApi.getCurrentlyShowingMoviesPaginated(page, size);
+            setMovies(response.content);
+            setPagination(response);
+            return response;
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'Failed to fetch currently showing movies';
+            setError(message);
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    const getUpcomingPaginated = useCallback(async (page: number = 0, size: number = 12) => {
+        setLoading(true);
+        setError(null);
+        try {
+            const response = await movieApi.getUpcomingMoviesPaginated(page, size);
+            setMovies(response.content);
+            setPagination(response);
+            return response;
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'Failed to fetch upcoming movies';
+            setError(message);
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    const clearError = () => {
+        setError(null);
+    };
+
     return {
         movies,
         sessionMovies,
@@ -50,6 +88,9 @@ export const useMovieSearch = () => {
         loading,
         error,
         searchMovies,
-        searchMoviesForSession
+        searchMoviesForSession,
+        getCurrentlyShowingPaginated,
+        getUpcomingPaginated,
+        clearError
     };
 };

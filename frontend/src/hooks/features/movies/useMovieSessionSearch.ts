@@ -28,11 +28,16 @@ export const useMovieSessionSearch = () => {
         setError(null);
     }, []);
 
+    const clearError = () => {
+        setError(null);
+    };
+
     return {
         movies,
         loading,
         error,
         searchMoviesForSession,
-        clearResults
+        clearResults,
+        clearError
     };
 };
