@@ -75,7 +75,7 @@ public class AdminSessionController {
 	}
 
 	@PutMapping("/{id}")
-	@Operation(summary = "Update session", description = "Update existing session information")
+	@Operation(summary = "Update session", description = "Update existing session information including status")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Session updated successfully", content = @Content(schema = @Schema(implementation = SessionAdminResponse.class))),
 			@ApiResponse(responseCode = "400", description = "Invalid request data or time conflict"),
@@ -88,25 +88,10 @@ public class AdminSessionController {
 		return ResponseEntity.ok(updated);
 	}
 
-	@PutMapping("/{id}/status")
-	@Operation(summary = "Update session status", description = "Update only the status of a session")
-	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Session status updated successfully", content = @Content(schema = @Schema(implementation = SessionAdminResponse.class))),
-			@ApiResponse(responseCode = "400", description = "Invalid status or business rule violation"),
-			@ApiResponse(responseCode = "404", description = "Session not found") })
-	public ResponseEntity<SessionAdminResponse> updateSessionStatus(
-			@Parameter(description = "ID of the session", required = true, example = "1") @PathVariable Long id,
-			@Parameter(description = "New status for the session", required = true, example = "CANCELLED") @RequestParam CinemaSessionStatus status) {
-		log.info("PUT /api/admin/sessions/{}/status - Updating session status to {}", id, status);
-		SessionAdminResponse updated = sessionService.updateSessionStatus(id, status);
-		return ResponseEntity.ok(updated);
-	}
-
 	@DeleteMapping("/{id}")
 	@Operation(summary = "Delete session", description = "Delete a session by its ID")
 	@ApiResponses(value = { @ApiResponse(responseCode = "204", description = "Session deleted successfully"),
-			@ApiResponse(responseCode = "404", description = "Session not found"),
-			@ApiResponse(responseCode = "409", description = "Cannot delete session with tickets sold") })
+			@ApiResponse(responseCode = "404", description = "Session not found") })
 	public ResponseEntity<Void> deleteSession(
 			@Parameter(description = "ID of the session to delete", required = true, example = "1") @PathVariable Long id) {
 		log.info("DELETE /api/admin/sessions/{} - Deleting session", id);
@@ -128,8 +113,8 @@ public class AdminSessionController {
 	@GetMapping("/filter")
 	@Operation(summary = "Filter sessions", description = "Filter sessions with advanced options")
 	@ApiResponse(responseCode = "200", description = "Filtered sessions retrieved successfully")
-	public ResponseEntity<Page<SessionAdminResponse>> getFilteredSessions(@Valid SessionFilter filter,
-			@Parameter(description = "Pagination parameters") @PageableDefault(size = 20, sort = "startTime") Pageable pageable) {
+	public ResponseEntity<Page<SessionAdminResponse>> getFilteredSessions(
+			@Parameter(description = "Session filter") @Valid SessionFilter filter) {
 		log.info("GET /api/admin/sessions/filter - Retrieving filtered sessions: {}", filter);
 		Page<SessionAdminResponse> sessions = sessionService.getFilteredSessions(filter);
 		return ResponseEntity.ok(sessions);
@@ -178,6 +163,17 @@ public class AdminSessionController {
 			@Parameter(description = "Pagination parameters") @PageableDefault(size = 20, sort = "startTime") Pageable pageable) {
 		log.info("GET /api/admin/sessions/status/{} - Retrieving sessions by status", status);
 		Page<SessionAdminResponse> sessions = sessionService.getSessionsByStatus(status, pageable);
+		return ResponseEntity.ok(sessions);
+	}
+
+	@GetMapping("/available")
+	@Operation(summary = "Get available sessions", description = "Retrieve available (not completed) sessions")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Available sessions retrieved successfully") })
+	public ResponseEntity<Page<SessionAdminResponse>> getAvailableSessions(
+			@Parameter(description = "Pagination parameters") @PageableDefault(size = 20, sort = "startTime") Pageable pageable) {
+		log.info("GET /api/admin/sessions/available - Retrieving available sessions");
+		Page<SessionAdminResponse> sessions = sessionService.getAvailableSessionsForAdmin(pageable);
 		return ResponseEntity.ok(sessions);
 	}
 

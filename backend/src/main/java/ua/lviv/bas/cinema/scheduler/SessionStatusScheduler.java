@@ -1,6 +1,5 @@
 package ua.lviv.bas.cinema.scheduler;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.scheduling.annotation.Scheduled;
@@ -11,56 +10,40 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.Session;
 import ua.lviv.bas.cinema.domain.enums.CinemaSessionStatus;
-import ua.lviv.bas.cinema.repository.SessionRepository;
+import ua.lviv.bas.cinema.service.query.SessionQueryService;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class SessionStatusScheduler {
 
-	private final SessionRepository sessionRepository;
+	private final SessionQueryService sessionQueryService;
+	private final ua.lviv.bas.cinema.repository.SessionRepository sessionRepository;
 
 	@Scheduled(cron = "0 */5 * * * *")
 	@Transactional
 	public void updateSessionStatuses() {
-		log.debug("Starting scheduled session status update");
-		LocalDateTime now = LocalDateTime.now();
+		log.info("Starting scheduled session status update");
 
-		updateToOngoing(now);
-		updateToCompleted(now);
-
-		log.debug("Completed scheduled session status update");
-	}
-
-	private void updateToOngoing(LocalDateTime now) {
-		List<Session> sessionsToStart = sessionRepository.findByStatusAndStartTimeBefore(CinemaSessionStatus.SCHEDULED,
-				now);
-
+		List<Session> sessionsToStart = sessionQueryService.findSessionsToStart();
 		if (!sessionsToStart.isEmpty()) {
-			log.info("Found {} sessions to mark as ONGOING", sessionsToStart.size());
-
 			sessionsToStart.forEach(session -> {
 				session.setStatus(CinemaSessionStatus.ONGOING);
-				log.debug("Marked session {} as ONGOING", session.getId());
+				log.info("Marked session {} as ONGOING (start time: {})", session.getId(), session.getStartTime());
 			});
-
 			sessionRepository.saveAll(sessionsToStart);
 		}
-	}
 
-	private void updateToCompleted(LocalDateTime now) {
-		List<Session> sessionsToComplete = sessionRepository
-				.findByStatusAndEndTimeBefore(CinemaSessionStatus.ONGOING.toString(), now);
-
+		List<Session> sessionsToComplete = sessionQueryService.findSessionsToComplete();
 		if (!sessionsToComplete.isEmpty()) {
-			log.info("Found {} sessions to mark as COMPLETED", sessionsToComplete.size());
-
 			sessionsToComplete.forEach(session -> {
 				session.setStatus(CinemaSessionStatus.COMPLETED);
-				log.debug("Marked session {} as COMPLETED", session.getId());
+				log.info("Marked session {} as COMPLETED", session.getId());
 			});
-
 			sessionRepository.saveAll(sessionsToComplete);
 		}
+
+		log.info("Session status update completed: {} started, {} completed", sessionsToStart.size(),
+				sessionsToComplete.size());
 	}
 }
