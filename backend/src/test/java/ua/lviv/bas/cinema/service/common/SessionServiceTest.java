@@ -3,8 +3,10 @@ package ua.lviv.bas.cinema.service.common;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -12,6 +14,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,20 +28,25 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
+import ua.lviv.bas.cinema.domain.BookedSeat;
 import ua.lviv.bas.cinema.domain.CinemaHall;
 import ua.lviv.bas.cinema.domain.Movie;
 import ua.lviv.bas.cinema.domain.Seat;
 import ua.lviv.bas.cinema.domain.Session;
+import ua.lviv.bas.cinema.domain.Ticket;
 import ua.lviv.bas.cinema.domain.enums.CinemaSessionStatus;
 import ua.lviv.bas.cinema.dto.filter.SessionFilter;
 import ua.lviv.bas.cinema.dto.session.request.SessionCreateRequest;
 import ua.lviv.bas.cinema.dto.session.request.SessionUpdateRequest;
 import ua.lviv.bas.cinema.dto.session.response.SessionAdminResponse;
 import ua.lviv.bas.cinema.dto.session.response.SessionScheduleResponse;
+import ua.lviv.bas.cinema.exception.domain.cinema.MovieNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.cinema.SessionNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.cinema.SessionTimeConflictException;
 import ua.lviv.bas.cinema.mapper.SessionMapper;
+import ua.lviv.bas.cinema.repository.MovieRepository;
 import ua.lviv.bas.cinema.repository.SessionRepository;
 import ua.lviv.bas.cinema.service.query.SessionQueryService;
 
@@ -47,106 +55,101 @@ class SessionServiceTest {
 
 	@Mock
 	private SessionRepository sessionRepository;
+
 	@Mock
 	private SessionQueryService sessionQueryService;
+
 	@Mock
 	private SessionMapper sessionMapper;
+
 	@Mock
-	private MovieService movieService;
+	private MovieRepository movieRepository;
+
 	@Mock
 	private CinemaHallService cinemaHallService;
+
 	@InjectMocks
 	private SessionService sessionService;
 
 	private SessionCreateRequest sessionRequest;
-	private SessionUpdateRequest sessionUpdateRequest;
 	private Movie movie;
 	private CinemaHall hall;
 	private Session session;
-	private Session sessionPast;
 	private SessionAdminResponse sessionAdminDto;
 	private SessionScheduleResponse sessionScheduleDto;
 	private Pageable pageable;
 
 	@BeforeEach
 	void setUp() {
-		sessionRequest = SessionCreateRequest.builder().startTime(LocalDateTime.now().plusHours(2))
-				.basePrice(new BigDecimal("250.00")).movieId(1L).hallId(1L).build();
+		pageable = PageRequest.of(0, 20, Sort.by("startTime").ascending());
 
-		sessionUpdateRequest = SessionUpdateRequest.builder().basePrice(new BigDecimal("300.00"))
-				.status(CinemaSessionStatus.COMPLETED).build();
+		movie = Movie.builder().id(1L).durationMinutes(120).title("Test Movie")
+				.releaseDate(LocalDate.now().minusDays(1)).endShowingDate(LocalDate.now().plusDays(30)).build();
 
-		movie = new Movie();
-		movie.setId(1L);
-		movie.setDurationMinutes(120);
-		movie.setTitle("Test Movie");
-		movie.setReleaseDate(LocalDate.now().minusDays(1));
-		movie.setEndShowingDate(LocalDate.now().plusDays(30));
+		hall = CinemaHall.builder().id(1L).name("Hall 1").seats(new ArrayList<>()).build();
 
-		hall = new CinemaHall();
-		hall.setId(1L);
-		hall.setName("Hall 1");
-		hall.setSeats(new ArrayList<>());
-		for (int i = 1; i <= 100; i++) {
-			Seat seat = new Seat();
-			seat.setId((long) i);
-			seat.setHall(hall);
+		for (int i = 1; i <= 80; i++) {
+			Seat seat = Seat.builder().id((long) i).row((i - 1) / 10 + 1).number((i - 1) % 10 + 1).active(true)
+					.hall(hall).build();
+			hall.getSeats().add(seat);
+		}
+
+		for (int i = 81; i <= 100; i++) {
+			Seat seat = Seat.builder().id((long) i).row((i - 1) / 10 + 1).number((i - 1) % 10 + 1).active(false)
+					.hall(hall).build();
 			hall.getSeats().add(seat);
 		}
 
 		LocalDateTime startTime = LocalDateTime.now().plusHours(2);
-		session = new Session();
-		session.setId(1L);
-		session.setStartTime(startTime);
-		session.setBasePrice(new BigDecimal("250.00"));
-		session.setMovie(movie);
-		session.setHall(hall);
-		session.setStatus(CinemaSessionStatus.SCHEDULED);
+		session = Session.builder().id(1L).startTime(startTime).basePrice(new BigDecimal("250.00")).movie(movie)
+				.hall(hall).status(CinemaSessionStatus.SCHEDULED).bookedSeats(new ArrayList<>()).build();
 
-		sessionPast = new Session();
-		sessionPast.setId(2L);
-		sessionPast.setStartTime(LocalDateTime.now().minusHours(2));
-		sessionPast.setBasePrice(new BigDecimal("250.00"));
-		sessionPast.setMovie(movie);
-		sessionPast.setHall(hall);
-		sessionPast.setStatus(CinemaSessionStatus.SCHEDULED);
+		sessionRequest = SessionCreateRequest.builder().startTime(startTime).basePrice(new BigDecimal("250.00"))
+				.movieId(1L).hallId(1L).build();
 
-		sessionAdminDto = new SessionAdminResponse();
-		sessionAdminDto.setId(1L);
-		sessionAdminDto.setStartTime(startTime);
-		sessionAdminDto.setBasePrice(new BigDecimal("250.00"));
-		sessionAdminDto.setStatus(CinemaSessionStatus.SCHEDULED);
-		sessionAdminDto.setEndTime(startTime.plusMinutes(120));
-		sessionAdminDto.setHallCapacity(100);
+		sessionAdminDto = SessionAdminResponse.builder().id(1L).startTime(startTime).basePrice(new BigDecimal("250.00"))
+				.status(CinemaSessionStatus.SCHEDULED).endTime(startTime.plusMinutes(120)).hallCapacity(80)
+				.ticketsSold(0).totalRevenue(BigDecimal.ZERO).build();
 
-		sessionScheduleDto = new SessionScheduleResponse();
-		sessionScheduleDto.setId(1L);
-		sessionScheduleDto.setStartTime(startTime);
-		sessionScheduleDto.setBasePrice(new BigDecimal("250.00"));
-		sessionScheduleDto.setStatus(CinemaSessionStatus.SCHEDULED);
-
-		pageable = PageRequest.of(0, 20);
+		sessionScheduleDto = SessionScheduleResponse.builder().id(1L).startTime(startTime)
+				.basePrice(new BigDecimal("250.00")).status(CinemaSessionStatus.SCHEDULED).availableSeats(80)
+				.hallCapacity("80/80").endTime(startTime.plusMinutes(120)).build();
 	}
 
 	@Test
 	void createSession_ShouldCreateSuccessfully() {
-		when(movieService.getMovieEntityById(1L)).thenReturn(movie);
+		when(movieRepository.findById(1L)).thenReturn(Optional.of(movie));
 		when(cinemaHallService.getHallEntityById(1L)).thenReturn(hall);
-		when(sessionQueryService.findConflictingSessions(anyLong(), any(), any(), any())).thenReturn(List.of());
+		when(sessionQueryService.findConflictingSessions(anyLong(), any(), any(), any()))
+				.thenReturn(Collections.emptyList());
 		when(sessionMapper.toEntity(sessionRequest)).thenReturn(session);
 		when(sessionRepository.save(session)).thenReturn(session);
-		when(sessionMapper.toAdminDto(session)).thenReturn(sessionAdminDto);
+
+		SessionAdminResponse adminResponseWithAllSeats = SessionAdminResponse.builder().id(1L)
+				.startTime(session.getStartTime()).basePrice(new BigDecimal("250.00"))
+				.status(CinemaSessionStatus.SCHEDULED).endTime(session.getStartTime().plusMinutes(120))
+				.hallCapacity(100).ticketsSold(0).totalRevenue(BigDecimal.ZERO).build();
+		when(sessionMapper.toAdminDto(session)).thenReturn(adminResponseWithAllSeats);
 
 		SessionAdminResponse result = sessionService.createSession(sessionRequest);
 
 		assertThat(result).isNotNull();
 		assertThat(result.getId()).isEqualTo(1L);
+		assertThat(result.getHallCapacity()).isEqualTo(100);
 		verify(sessionRepository).save(session);
 	}
 
 	@Test
+	void createSession_ShouldThrowException_WhenMovieNotFound() {
+		when(movieRepository.findById(1L)).thenReturn(Optional.empty());
+
+		assertThatThrownBy(() -> sessionService.createSession(sessionRequest))
+				.isInstanceOf(MovieNotFoundException.class);
+	}
+
+	@Test
 	void createSession_ShouldThrowException_WhenTimeConflict() {
-		when(movieService.getMovieEntityById(1L)).thenReturn(movie);
+		when(movieRepository.findById(1L)).thenReturn(Optional.of(movie));
 		when(cinemaHallService.getHallEntityById(1L)).thenReturn(hall);
 		when(sessionQueryService.findConflictingSessions(anyLong(), any(), any(), any()))
 				.thenReturn(List.of(new Session()));
@@ -167,13 +170,20 @@ class SessionServiceTest {
 
 	@Test
 	void getSessionById_ShouldReturnSession() {
+		SessionAdminResponse adminResponseWithAllSeats = SessionAdminResponse.builder().id(1L)
+				.startTime(session.getStartTime()).basePrice(new BigDecimal("250.00"))
+				.status(CinemaSessionStatus.SCHEDULED).endTime(session.getStartTime().plusMinutes(120))
+				.hallCapacity(100).ticketsSold(0).totalRevenue(BigDecimal.ZERO).build();
+
 		when(sessionRepository.findById(1L)).thenReturn(Optional.of(session));
-		when(sessionMapper.toAdminDto(session)).thenReturn(sessionAdminDto);
+		when(sessionMapper.toAdminDto(session)).thenReturn(adminResponseWithAllSeats);
 
 		SessionAdminResponse result = sessionService.getSessionById(1L);
 
 		assertThat(result).isNotNull();
 		assertThat(result.getId()).isEqualTo(1L);
+		assertThat(result.getHallCapacity()).isEqualTo(100);
+		verify(sessionRepository).findById(1L);
 	}
 
 	@Test
@@ -192,6 +202,7 @@ class SessionServiceTest {
 
 		assertThat(result).isNotNull();
 		assertThat(result.getId()).isEqualTo(1L);
+		assertThat(result.getAvailableSeats()).isEqualTo(80);
 	}
 
 	@Test
@@ -213,23 +224,86 @@ class SessionServiceTest {
 	}
 
 	@Test
-	void getSessionByIdForPublic_ShouldThrowException_WhenNotFound() {
-		when(sessionRepository.findById(99L)).thenReturn(Optional.empty());
+	void updateSession_ShouldUpdateSuccessfully() {
+		LocalDateTime pastTime = LocalDateTime.now().minusHours(2);
+		Session pastSession = Session.builder().id(1L).startTime(pastTime).basePrice(new BigDecimal("250.00"))
+				.movie(movie).hall(hall).status(CinemaSessionStatus.ONGOING).bookedSeats(new ArrayList<>()).build();
 
-		assertThatThrownBy(() -> sessionService.getSessionByIdForPublic(99L))
-				.isInstanceOf(SessionNotFoundException.class);
+		SessionUpdateRequest updateRequest = SessionUpdateRequest.builder().basePrice(new BigDecimal("300.00")).build();
+
+		SessionAdminResponse adminDto = SessionAdminResponse.builder().id(1L).startTime(pastTime)
+				.basePrice(new BigDecimal("300.00")).status(CinemaSessionStatus.ONGOING)
+				.endTime(pastTime.plusMinutes(120)).hallCapacity(80).ticketsSold(0).totalRevenue(BigDecimal.ZERO)
+				.build();
+
+		when(sessionRepository.findById(1L)).thenReturn(Optional.of(pastSession));
+		when(sessionRepository.save(any(Session.class))).thenReturn(pastSession);
+		when(sessionMapper.toAdminDto(pastSession)).thenReturn(adminDto);
+
+		SessionAdminResponse result = sessionService.updateSession(1L, updateRequest);
+
+		assertThat(result).isNotNull();
+		assertThat(result.getBasePrice()).isEqualByComparingTo(new BigDecimal("300.00"));
+		assertThat(result.getStatus()).isEqualTo(CinemaSessionStatus.ONGOING);
+		verify(sessionMapper).updateEntityFromDto(updateRequest, pastSession);
 	}
 
 	@Test
-	void updateSession_ShouldUpdateSuccessfully() {
-		when(sessionRepository.findById(1L)).thenReturn(Optional.of(session));
-		when(sessionRepository.save(any(Session.class))).thenReturn(session);
-		when(sessionMapper.toAdminDto(session)).thenReturn(sessionAdminDto);
+	void updateSession_ShouldUpdateStatusSuccessfully_WhenChangingToCompleted() {
+		Session pastSession = Session.builder().id(3L).startTime(LocalDateTime.now().minusHours(2)).movie(movie)
+				.hall(hall).status(CinemaSessionStatus.SCHEDULED).build();
 
-		SessionAdminResponse result = sessionService.updateSession(1L, sessionUpdateRequest);
+		SessionUpdateRequest updateRequest = SessionUpdateRequest.builder().status(CinemaSessionStatus.COMPLETED)
+				.build();
+
+		SessionAdminResponse pastAdminDto = SessionAdminResponse.builder().id(3L).startTime(pastSession.getStartTime())
+				.endTime(pastSession.getStartTime().plusMinutes(120)).status(CinemaSessionStatus.COMPLETED)
+				.hallCapacity(80).build();
+
+		when(sessionRepository.findById(3L)).thenReturn(Optional.of(pastSession));
+		when(sessionRepository.save(any(Session.class))).thenReturn(pastSession);
+		when(sessionMapper.toAdminDto(pastSession)).thenReturn(pastAdminDto);
+
+		SessionAdminResponse result = sessionService.updateSession(3L, updateRequest);
 
 		assertThat(result).isNotNull();
-		verify(sessionMapper).updateEntityFromDto(sessionUpdateRequest, session);
+		assertThat(result.getStatus()).isEqualTo(CinemaSessionStatus.COMPLETED);
+		verify(sessionRepository).save(pastSession);
+	}
+
+	@Test
+	void updateSession_ShouldThrowException_WhenChangingCompletedSession() {
+		session.setStatus(CinemaSessionStatus.COMPLETED);
+		SessionUpdateRequest updateRequest = SessionUpdateRequest.builder().status(CinemaSessionStatus.SCHEDULED)
+				.build();
+
+		when(sessionRepository.findById(1L)).thenReturn(Optional.of(session));
+
+		assertThatThrownBy(() -> sessionService.updateSession(1L, updateRequest))
+				.isInstanceOf(IllegalStateException.class).hasMessageContaining("completed session");
+	}
+
+	@Test
+	void updateSession_ShouldThrowException_WhenCancellingTooLate() {
+		session.setStartTime(LocalDateTime.now().plusMinutes(30));
+		SessionUpdateRequest updateRequest = SessionUpdateRequest.builder().status(CinemaSessionStatus.CANCELLED)
+				.build();
+
+		when(sessionRepository.findById(1L)).thenReturn(Optional.of(session));
+
+		assertThatThrownBy(() -> sessionService.updateSession(1L, updateRequest))
+				.isInstanceOf(IllegalArgumentException.class).hasMessageContaining("less than 1 hour");
+	}
+
+	@Test
+	void updateSession_ShouldThrowException_WhenCompletingFutureSession() {
+		SessionUpdateRequest updateRequest = SessionUpdateRequest.builder().status(CinemaSessionStatus.COMPLETED)
+				.build();
+
+		when(sessionRepository.findById(1L)).thenReturn(Optional.of(session));
+
+		assertThatThrownBy(() -> sessionService.updateSession(1L, updateRequest))
+				.isInstanceOf(IllegalArgumentException.class).hasMessageContaining("future session");
 	}
 
 	@Test
@@ -238,7 +312,8 @@ class SessionServiceTest {
 				.build();
 
 		when(sessionRepository.findById(1L)).thenReturn(Optional.of(session));
-		when(sessionQueryService.findConflictingSessions(anyLong(), any(), any(), any())).thenReturn(List.of());
+		when(sessionQueryService.findConflictingSessions(anyLong(), any(), any(), any()))
+				.thenReturn(Collections.emptyList());
 		when(sessionRepository.save(any(Session.class))).thenReturn(session);
 		when(sessionMapper.toAdminDto(session)).thenReturn(sessionAdminDto);
 
@@ -262,77 +337,102 @@ class SessionServiceTest {
 	}
 
 	@Test
-	void updateSession_ShouldThrowException_WhenNotFound() {
-		when(sessionRepository.findById(99L)).thenReturn(Optional.empty());
+	void updateSession_ShouldThrowException_WhenMovieNotFound() {
+		SessionUpdateRequest updateRequest = SessionUpdateRequest.builder().movieId(99L).build();
 
-		assertThatThrownBy(() -> sessionService.updateSession(99L, sessionUpdateRequest))
-				.isInstanceOf(SessionNotFoundException.class);
+		when(sessionRepository.findById(1L)).thenReturn(Optional.of(session));
+		when(movieRepository.findById(99L)).thenReturn(Optional.empty());
+
+		assertThatThrownBy(() -> sessionService.updateSession(1L, updateRequest))
+				.isInstanceOf(MovieNotFoundException.class);
 	}
 
 	@Test
-	void updateSessionStatus_ShouldUpdateStatusSuccessfully() {
-		Session pastSession = new Session();
-		pastSession.setId(3L);
-		pastSession.setStartTime(LocalDateTime.now().minusHours(2));
-		pastSession.setMovie(movie);
-		pastSession.setHall(hall);
-		pastSession.setStatus(CinemaSessionStatus.SCHEDULED);
+	void updateSession_ShouldChangeMovie_WhenMovieIdProvided() {
+		Movie newMovie = Movie.builder().id(2L).durationMinutes(150).title("New Movie")
+				.releaseDate(LocalDate.now().minusDays(1)).build();
 
-		SessionAdminResponse pastAdminDto = new SessionAdminResponse();
-		pastAdminDto.setId(3L);
-		pastAdminDto.setStartTime(pastSession.getStartTime());
-		pastAdminDto.setEndTime(pastSession.getStartTime().plusMinutes(120));
-		pastAdminDto.setStatus(CinemaSessionStatus.COMPLETED);
+		SessionUpdateRequest updateRequest = SessionUpdateRequest.builder().movieId(2L).build();
 
-		when(sessionRepository.findById(3L)).thenReturn(Optional.of(pastSession));
-		when(sessionRepository.save(any(Session.class))).thenReturn(pastSession);
-		when(sessionMapper.toAdminDto(pastSession)).thenReturn(pastAdminDto);
+		when(sessionRepository.findById(1L)).thenReturn(Optional.of(session));
+		when(movieRepository.findById(2L)).thenReturn(Optional.of(newMovie));
+		when(sessionRepository.save(any(Session.class))).thenReturn(session);
+		when(sessionMapper.toAdminDto(session)).thenReturn(sessionAdminDto);
 
-		SessionAdminResponse result = sessionService.updateSessionStatus(3L, CinemaSessionStatus.COMPLETED);
+		SessionAdminResponse result = sessionService.updateSession(1L, updateRequest);
 
 		assertThat(result).isNotNull();
-		assertThat(result.getStatus()).isEqualTo(CinemaSessionStatus.COMPLETED);
-		verify(sessionRepository).save(pastSession);
+		verify(sessionRepository).save(session);
+		assertThat(session.getMovie().getId()).isEqualTo(2L);
 	}
 
 	@Test
-	void updateSessionStatus_ShouldThrowException_WhenSessionCompleted() {
-		session.setStatus(CinemaSessionStatus.COMPLETED);
+	void updateSession_ShouldChangeHall_WhenHallIdProvided() {
+		CinemaHall newHall = CinemaHall.builder().id(2L).name("Hall 2").build();
+
+		SessionUpdateRequest updateRequest = SessionUpdateRequest.builder().hallId(2L).build();
+
 		when(sessionRepository.findById(1L)).thenReturn(Optional.of(session));
+		when(cinemaHallService.getHallEntityById(2L)).thenReturn(newHall);
+		when(sessionRepository.save(any(Session.class))).thenReturn(session);
+		when(sessionMapper.toAdminDto(session)).thenReturn(sessionAdminDto);
 
-		assertThatThrownBy(() -> sessionService.updateSessionStatus(1L, CinemaSessionStatus.SCHEDULED))
-				.isInstanceOf(IllegalStateException.class).hasMessageContaining("completed session");
+		SessionAdminResponse result = sessionService.updateSession(1L, updateRequest);
+
+		assertThat(result).isNotNull();
+		verify(sessionRepository).save(session);
+		assertThat(session.getHall().getId()).isEqualTo(2L);
 	}
 
 	@Test
-	void updateSessionStatus_ShouldThrowException_WhenCancellingTooLate() {
-		session.setStartTime(LocalDateTime.now().plusMinutes(30));
+	void updateSession_ShouldNotChangeMovie_WhenSameMovieId() {
+		SessionUpdateRequest updateRequest = SessionUpdateRequest.builder().movieId(1L).build();
+
 		when(sessionRepository.findById(1L)).thenReturn(Optional.of(session));
+		when(sessionRepository.save(any(Session.class))).thenReturn(session);
+		when(sessionMapper.toAdminDto(session)).thenReturn(sessionAdminDto);
 
-		assertThatThrownBy(() -> sessionService.updateSessionStatus(1L, CinemaSessionStatus.CANCELLED))
-				.isInstanceOf(IllegalArgumentException.class).hasMessageContaining("less than 1 hour");
+		SessionAdminResponse result = sessionService.updateSession(1L, updateRequest);
+
+		assertThat(result).isNotNull();
+		verify(movieRepository, times(0)).findById(anyLong());
 	}
 
 	@Test
-	void updateSessionStatus_ShouldThrowException_WhenCompletingFutureSession() {
-		session.setStartTime(LocalDateTime.now().plusHours(2));
+	void updateSession_ShouldNotChangeHall_WhenSameHallId() {
+		SessionUpdateRequest updateRequest = SessionUpdateRequest.builder().hallId(1L).build();
+
 		when(sessionRepository.findById(1L)).thenReturn(Optional.of(session));
+		when(sessionRepository.save(any(Session.class))).thenReturn(session);
+		when(sessionMapper.toAdminDto(session)).thenReturn(sessionAdminDto);
 
-		assertThatThrownBy(() -> sessionService.updateSessionStatus(1L, CinemaSessionStatus.COMPLETED))
-				.isInstanceOf(IllegalArgumentException.class).hasMessageContaining("future session");
+		SessionAdminResponse result = sessionService.updateSession(1L, updateRequest);
+
+		assertThat(result).isNotNull();
+		verify(cinemaHallService, times(0)).getHallEntityById(anyLong());
 	}
 
 	@Test
-	void updateSessionStatus_ShouldThrowException_WhenNotFound() {
-		when(sessionRepository.findById(99L)).thenReturn(Optional.empty());
+	void updateSession_ShouldValidateMovieAvailability_WhenStartTimeChanged() {
+		Movie movieWithFutureRelease = Movie.builder().id(1L).durationMinutes(120)
+				.releaseDate(LocalDate.now().plusDays(5)).build();
 
-		assertThatThrownBy(() -> sessionService.updateSessionStatus(99L, CinemaSessionStatus.COMPLETED))
-				.isInstanceOf(SessionNotFoundException.class);
+		Session sessionWithFutureMovie = Session.builder().id(2L).startTime(LocalDateTime.now().plusHours(2))
+				.movie(movieWithFutureRelease).hall(hall).status(CinemaSessionStatus.SCHEDULED).build();
+
+		SessionUpdateRequest updateRequest = SessionUpdateRequest.builder().startTime(LocalDateTime.now().plusDays(1))
+				.build();
+
+		when(sessionRepository.findById(2L)).thenReturn(Optional.of(sessionWithFutureMovie));
+
+		assertThatThrownBy(() -> sessionService.updateSession(2L, updateRequest))
+				.isInstanceOf(IllegalArgumentException.class).hasMessageContaining("releases on");
 	}
 
 	@Test
 	void deleteSession_ShouldDeleteSuccessfully() {
 		when(sessionRepository.existsById(1L)).thenReturn(true);
+		doNothing().when(sessionRepository).deleteById(1L);
 
 		sessionService.deleteSession(1L);
 
@@ -364,7 +464,7 @@ class SessionServiceTest {
 		LocalDate date = LocalDate.of(2024, 1, 15);
 		Page<Session> sessionPage = new PageImpl<>(List.of(session));
 
-		when(sessionQueryService.findByStartTimeBetween(any(), any(), any(), anyBoolean())).thenReturn(sessionPage);
+		when(sessionQueryService.findByStartTimeBetween(any(), any(), any(), eq(true))).thenReturn(sessionPage);
 		when(sessionMapper.toAdminDto(session)).thenReturn(sessionAdminDto);
 
 		Page<SessionAdminResponse> result = sessionService.getSessionsByDateForAdmin(date, pageable);
@@ -457,7 +557,7 @@ class SessionServiceTest {
 		LocalDate date = LocalDate.of(2024, 1, 15);
 		Page<Session> sessionPage = new PageImpl<>(List.of(session));
 
-		when(sessionQueryService.findByStartTimeBetween(any(), any(), any(), anyBoolean())).thenReturn(sessionPage);
+		when(sessionQueryService.findByStartTimeBetween(any(), any(), any(), eq(false))).thenReturn(sessionPage);
 		when(sessionMapper.toScheduleDto(session)).thenReturn(sessionScheduleDto);
 
 		Page<SessionScheduleResponse> result = sessionService.getScheduleSessionsByDate(date, pageable);
@@ -483,7 +583,7 @@ class SessionServiceTest {
 	void getUpcomingScheduleSessions_ShouldReturnSessions() {
 		Page<Session> sessionPage = new PageImpl<>(List.of(session));
 
-		when(sessionQueryService.findByStartTimeBetween(any(), any(), any(), anyBoolean())).thenReturn(sessionPage);
+		when(sessionQueryService.findByStartTimeBetween(any(), any(), any(), eq(false))).thenReturn(sessionPage);
 		when(sessionMapper.toScheduleDto(session)).thenReturn(sessionScheduleDto);
 
 		Page<SessionScheduleResponse> result = sessionService.getUpcomingScheduleSessions(7, pageable);
@@ -495,8 +595,7 @@ class SessionServiceTest {
 	@Test
 	void hasTimeConflict_ShouldReturnTrue_WhenConflictExists() {
 		LocalDateTime fixedTime = LocalDateTime.of(2024, 1, 15, 18, 0);
-		Session conflictingSession = new Session();
-		conflictingSession.setId(2L);
+		Session conflictingSession = Session.builder().id(2L).build();
 
 		when(sessionQueryService.findConflictingSessions(1L, fixedTime, fixedTime.plusMinutes(120), null))
 				.thenReturn(List.of(conflictingSession));
@@ -511,7 +610,7 @@ class SessionServiceTest {
 		LocalDateTime fixedTime = LocalDateTime.of(2024, 1, 15, 18, 0);
 
 		when(sessionQueryService.findConflictingSessions(1L, fixedTime, fixedTime.plusMinutes(120), null))
-				.thenReturn(List.of());
+				.thenReturn(Collections.emptyList());
 
 		boolean result = sessionService.hasTimeConflict(1L, fixedTime, 120, null);
 
@@ -565,13 +664,6 @@ class SessionServiceTest {
 	}
 
 	@Test
-	void isAvailable_ShouldReturnFalse_WhenSessionIsNull() {
-		boolean available = sessionService.isAvailable(null);
-
-		assertThat(available).isFalse();
-	}
-
-	@Test
 	void toAdminResponse_ShouldMapWithCalculatedValues() {
 		when(sessionMapper.toAdminDto(session)).thenReturn(sessionAdminDto);
 
@@ -580,7 +672,27 @@ class SessionServiceTest {
 		assertThat(result).isNotNull();
 		assertThat(result.getEndTime()).isEqualTo(session.getStartTime().plusMinutes(120));
 		assertThat(result.getHallCapacity()).isEqualTo(100);
-		assertThat(result.getTotalRevenue()).isNotNull();
+		assertThat(result.getTicketsSold()).isEqualTo(0);
+		assertThat(result.getTotalRevenue()).isEqualTo(BigDecimal.ZERO);
+	}
+
+	@Test
+	void toAdminResponse_ShouldCalculateRevenue_WhenTicketsSold() {
+		Session sessionWithTickets = Session.builder().id(2L).startTime(LocalDateTime.now().plusHours(2))
+				.basePrice(new BigDecimal("300.00")).movie(movie).hall(hall).status(CinemaSessionStatus.SCHEDULED)
+				.bookedSeats(createBookedSeats(5)).build();
+
+		SessionAdminResponse adminDto = SessionAdminResponse.builder().id(2L)
+				.startTime(sessionWithTickets.getStartTime()).basePrice(new BigDecimal("300.00"))
+				.status(CinemaSessionStatus.SCHEDULED).build();
+
+		when(sessionMapper.toAdminDto(sessionWithTickets)).thenReturn(adminDto);
+
+		SessionAdminResponse result = sessionService.toAdminResponse(sessionWithTickets);
+
+		assertThat(result).isNotNull();
+		assertThat(result.getTicketsSold()).isEqualTo(5);
+		assertThat(result.getTotalRevenue()).isEqualByComparingTo(new BigDecimal("1500.00"));
 	}
 
 	@Test
@@ -591,6 +703,34 @@ class SessionServiceTest {
 
 		assertThat(result).isNotNull();
 		assertThat(result.getEndTime()).isEqualTo(session.getStartTime().plusMinutes(120));
-		assertThat(result.getHallCapacity()).contains("100");
+		assertThat(result.getAvailableSeats()).isEqualTo(80);
+	}
+
+	@Test
+	void toScheduleResponse_ShouldCalculateAvailableSeats_WhenSomeSeatsBooked() {
+		Session sessionWithBookedSeats = Session.builder().id(3L).startTime(LocalDateTime.now().plusHours(2))
+				.movie(movie).hall(hall).status(CinemaSessionStatus.SCHEDULED).bookedSeats(createBookedSeats(10))
+				.build();
+
+		SessionScheduleResponse scheduleDto = SessionScheduleResponse.builder().id(3L)
+				.startTime(sessionWithBookedSeats.getStartTime()).status(CinemaSessionStatus.SCHEDULED).build();
+
+		when(sessionMapper.toScheduleDto(sessionWithBookedSeats)).thenReturn(scheduleDto);
+
+		SessionScheduleResponse result = sessionService.toScheduleResponse(sessionWithBookedSeats);
+
+		assertThat(result).isNotNull();
+		assertThat(result.getAvailableSeats()).isEqualTo(70);
+		assertThat(result.getHallCapacity()).isEqualTo("70/80");
+	}
+
+	private List<BookedSeat> createBookedSeats(int count) {
+		List<BookedSeat> bookedSeats = new ArrayList<>();
+		for (int i = 1; i <= count; i++) {
+			Ticket ticket = Ticket.builder().id((long) i).build();
+			BookedSeat bookedSeat = BookedSeat.builder().id((long) i).ticket(ticket).build();
+			bookedSeats.add(bookedSeat);
+		}
+		return bookedSeats;
 	}
 }

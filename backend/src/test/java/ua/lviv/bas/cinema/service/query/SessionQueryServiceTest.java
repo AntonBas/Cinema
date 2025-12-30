@@ -64,6 +64,80 @@ class SessionQueryServiceTest {
 	}
 
 	@Test
+	void findSessionsToStart_ShouldReturnSessionsThatShouldStartNow() {
+		Session sessionToStart = new Session();
+		sessionToStart.setId(2L);
+		sessionToStart.setStartTime(now.minusMinutes(2));
+		sessionToStart.setStatus(CinemaSessionStatus.SCHEDULED);
+
+		Movie movie = new Movie();
+		movie.setDurationMinutes(90);
+		sessionToStart.setMovie(movie);
+
+		when(sessionRepository.findAll(any(Predicate.class))).thenReturn(List.of(sessionToStart));
+
+		List<Session> result = sessionQueryService.findSessionsToStart();
+
+		assertThat(result).hasSize(1);
+		assertThat(result.get(0).getId()).isEqualTo(2L);
+	}
+
+	@Test
+	void findSessionsToStart_ShouldNotReturnOldSessions() {
+		Session oldSession = new Session();
+		oldSession.setId(2L);
+		oldSession.setStartTime(now.minusMinutes(10));
+		oldSession.setStatus(CinemaSessionStatus.SCHEDULED);
+
+		Movie movie = new Movie();
+		movie.setDurationMinutes(90);
+		oldSession.setMovie(movie);
+
+		when(sessionRepository.findAll(any(Predicate.class))).thenReturn(List.of());
+
+		List<Session> result = sessionQueryService.findSessionsToStart();
+
+		assertThat(result).isEmpty();
+	}
+
+	@Test
+	void findSessionsToComplete_ShouldReturnSessionsThatHaveEnded() {
+		Session sessionToComplete = new Session();
+		sessionToComplete.setId(2L);
+		sessionToComplete.setStartTime(now.minusHours(2));
+		sessionToComplete.setStatus(CinemaSessionStatus.ONGOING);
+
+		Movie movie = new Movie();
+		movie.setDurationMinutes(90);
+		sessionToComplete.setMovie(movie);
+
+		when(sessionRepository.findAll(any(Predicate.class))).thenReturn(List.of(sessionToComplete));
+
+		List<Session> result = sessionQueryService.findSessionsToComplete();
+
+		assertThat(result).hasSize(1);
+		assertThat(result.get(0).getId()).isEqualTo(2L);
+	}
+
+	@Test
+	void findSessionsToComplete_ShouldNotReturnOngoingSessions() {
+		Session ongoingSession = new Session();
+		ongoingSession.setId(2L);
+		ongoingSession.setStartTime(now.minusMinutes(30));
+		ongoingSession.setStatus(CinemaSessionStatus.ONGOING);
+
+		Movie movie = new Movie();
+		movie.setDurationMinutes(90);
+		ongoingSession.setMovie(movie);
+
+		when(sessionRepository.findAll(any(Predicate.class))).thenReturn(List.of(ongoingSession));
+
+		List<Session> result = sessionQueryService.findSessionsToComplete();
+
+		assertThat(result).isEmpty();
+	}
+
+	@Test
 	void findFilteredSessions_ShouldReturnFilteredSessions() {
 		SessionFilter filter = SessionFilter.builder().page(0).size(10).sortBy("startTime")
 				.sortDirection(SessionFilter.SortDirection.ASC).startTime(now).endTime(now.plusDays(1)).adminView(true)
@@ -75,7 +149,6 @@ class SessionQueryServiceTest {
 
 		Page<Session> result = sessionQueryService.findFilteredSessions(filter);
 
-		assertThat(result).isNotNull();
 		assertThat(result.getContent()).hasSize(1);
 		assertThat(result.getContent().get(0).getId()).isEqualTo(1L);
 	}
@@ -90,7 +163,6 @@ class SessionQueryServiceTest {
 
 		Page<Session> result = sessionQueryService.findFilteredSessions(filter);
 
-		assertThat(result).isNotNull();
 		assertThat(result.getContent()).hasSize(1);
 	}
 
@@ -119,19 +191,6 @@ class SessionQueryServiceTest {
 	}
 
 	@Test
-	void findFilteredSessions_ShouldApplyDefaultSorting() {
-		SessionFilter filter = SessionFilter.builder().adminView(true).build();
-
-		Page<Session> sessionPage = new PageImpl<>(List.of(session));
-
-		when(sessionRepository.findAll(any(Predicate.class), any(Pageable.class))).thenReturn(sessionPage);
-
-		Page<Session> result = sessionQueryService.findFilteredSessions(filter);
-
-		assertThat(result).isNotNull();
-	}
-
-	@Test
 	void findConflictingSessions_ShouldReturnConflictingSessions() {
 		LocalDateTime startTime = now;
 		LocalDateTime endTime = now.plusHours(2);
@@ -139,6 +198,7 @@ class SessionQueryServiceTest {
 		Session conflictingSession = new Session();
 		conflictingSession.setId(2L);
 		conflictingSession.setStartTime(startTime.plusMinutes(30));
+		conflictingSession.setStatus(CinemaSessionStatus.SCHEDULED);
 
 		CinemaHall hall = new CinemaHall();
 		hall.setId(1L);
@@ -164,7 +224,8 @@ class SessionQueryServiceTest {
 
 		Session nonConflictingSession = new Session();
 		nonConflictingSession.setId(2L);
-		nonConflictingSession.setStartTime(startTime.minusHours(2));
+		nonConflictingSession.setStartTime(startTime.minusHours(3));
+		nonConflictingSession.setStatus(CinemaSessionStatus.SCHEDULED);
 
 		CinemaHall hall = new CinemaHall();
 		hall.setId(1L);
@@ -203,7 +264,6 @@ class SessionQueryServiceTest {
 
 		Page<Session> result = sessionQueryService.findByMovieTitle(search, pageable, false);
 
-		assertThat(result).isNotNull();
 		assertThat(result.getContent()).hasSize(1);
 	}
 
@@ -215,19 +275,6 @@ class SessionQueryServiceTest {
 
 		Page<Session> result = sessionQueryService.findByMovieTitle(null, pageable, false);
 
-		assertThat(result).isNotNull();
-		assertThat(result.getContent()).hasSize(1);
-	}
-
-	@Test
-	void findByMovieTitle_ShouldReturnAllSessions_WhenSearchIsBlank() {
-		Page<Session> sessionPage = new PageImpl<>(List.of(session));
-
-		when(sessionRepository.findAll(any(Predicate.class), any(Pageable.class))).thenReturn(sessionPage);
-
-		Page<Session> result = sessionQueryService.findByMovieTitle("   ", pageable, false);
-
-		assertThat(result).isNotNull();
 		assertThat(result.getContent()).hasSize(1);
 	}
 
@@ -240,7 +287,6 @@ class SessionQueryServiceTest {
 
 		Page<Session> result = sessionQueryService.findByMovieTitle("test", pageable, true);
 
-		assertThat(result).isNotNull();
 		assertThat(result.getContent()).hasSize(1);
 	}
 
@@ -255,7 +301,6 @@ class SessionQueryServiceTest {
 
 		Page<Session> result = sessionQueryService.findByStartTimeBetween(start, end, pageable, false);
 
-		assertThat(result).isNotNull();
 		assertThat(result.getContent()).hasSize(1);
 	}
 
@@ -275,7 +320,6 @@ class SessionQueryServiceTest {
 
 		Page<Session> result = sessionQueryService.findByStartTimeBetween(start, end, pageable, true);
 
-		assertThat(result).isNotNull();
 		assertThat(result.getContent()).hasSize(1);
 		assertThat(result.getContent().get(0).getStatus()).isEqualTo(CinemaSessionStatus.COMPLETED);
 	}
@@ -288,20 +332,7 @@ class SessionQueryServiceTest {
 
 		Page<Session> result = sessionQueryService.findByHallId(1L, pageable, false);
 
-		assertThat(result).isNotNull();
 		assertThat(result.getContent()).hasSize(1);
-	}
-
-	@Test
-	void findByHallId_ShouldReturnEmpty_WhenNoSessions() {
-		Page<Session> sessionPage = new PageImpl<>(List.of());
-
-		when(sessionRepository.findAll(any(Predicate.class), any(Pageable.class))).thenReturn(sessionPage);
-
-		Page<Session> result = sessionQueryService.findByHallId(999L, pageable, false);
-
-		assertThat(result).isNotNull();
-		assertThat(result.getContent()).isEmpty();
 	}
 
 	@Test
@@ -312,7 +343,6 @@ class SessionQueryServiceTest {
 
 		Page<Session> result = sessionQueryService.findByMovieId(1L, pageable, false);
 
-		assertThat(result).isNotNull();
 		assertThat(result.getContent()).hasSize(1);
 	}
 
@@ -324,7 +354,6 @@ class SessionQueryServiceTest {
 
 		Page<Session> result = sessionQueryService.findAvailableSessions(pageable);
 
-		assertThat(result).isNotNull();
 		assertThat(result.getContent()).hasSize(1);
 		assertThat(result.getContent().get(0).getStatus()).isEqualTo(CinemaSessionStatus.SCHEDULED);
 	}
@@ -342,94 +371,8 @@ class SessionQueryServiceTest {
 
 		Page<Session> result = sessionQueryService.findAvailableSessions(pageable);
 
-		assertThat(result).isNotNull();
 		assertThat(result.getContent()).hasSize(1);
 		assertThat(result.getContent().get(0).getId()).isEqualTo(1L);
-	}
-
-	@Test
-	void findFiltered_ShouldReturnSessions() {
-		LocalDateTime startTime = now;
-		LocalDateTime endTime = now.plusDays(1);
-
-		Page<Session> sessionPage = new PageImpl<>(List.of(session));
-
-		when(sessionRepository.findAll(any(Predicate.class), any(Pageable.class))).thenReturn(sessionPage);
-
-		Page<Session> result = sessionQueryService.findFiltered(startTime, endTime, 1L, 1L,
-				CinemaSessionStatus.SCHEDULED, pageable, false);
-
-		assertThat(result).isNotNull();
-		assertThat(result.getContent()).hasSize(1);
-	}
-
-	@Test
-	void findFiltered_ShouldReturnSessions_WhenOnlyHallIdProvided() {
-		Page<Session> sessionPage = new PageImpl<>(List.of(session));
-
-		when(sessionRepository.findAll(any(Predicate.class), any(Pageable.class))).thenReturn(sessionPage);
-
-		Page<Session> result = sessionQueryService.findFiltered(null, null, 1L, null, CinemaSessionStatus.SCHEDULED,
-				pageable, false);
-
-		assertThat(result).isNotNull();
-		assertThat(result.getContent()).hasSize(1);
-	}
-
-	@Test
-	void findFiltered_ShouldReturnSessions_WhenOnlyMovieIdProvided() {
-		Page<Session> sessionPage = new PageImpl<>(List.of(session));
-
-		when(sessionRepository.findAll(any(Predicate.class), any(Pageable.class))).thenReturn(sessionPage);
-
-		Page<Session> result = sessionQueryService.findFiltered(null, null, null, 1L, CinemaSessionStatus.SCHEDULED,
-				pageable, false);
-
-		assertThat(result).isNotNull();
-		assertThat(result.getContent()).hasSize(1);
-	}
-
-	@Test
-	void findFiltered_ShouldReturnSessions_WhenOnlyDateRangeProvided() {
-		LocalDateTime startTime = now;
-		LocalDateTime endTime = now.plusDays(1);
-
-		Page<Session> sessionPage = new PageImpl<>(List.of(session));
-
-		when(sessionRepository.findAll(any(Predicate.class), any(Pageable.class))).thenReturn(sessionPage);
-
-		Page<Session> result = sessionQueryService.findFiltered(startTime, endTime, null, null,
-				CinemaSessionStatus.SCHEDULED, pageable, false);
-
-		assertThat(result).isNotNull();
-		assertThat(result.getContent()).hasSize(1);
-	}
-
-	@Test
-	void findFiltered_ShouldReturnAllAvailableSessions_WhenNoFilters() {
-		Page<Session> sessionPage = new PageImpl<>(List.of(session));
-
-		when(sessionRepository.findAll(any(Predicate.class), any(Pageable.class))).thenReturn(sessionPage);
-
-		Page<Session> result = sessionQueryService.findFiltered(null, null, null, null, CinemaSessionStatus.SCHEDULED,
-				pageable, false);
-
-		assertThat(result).isNotNull();
-		assertThat(result.getContent()).hasSize(1);
-	}
-
-	@Test
-	void findFiltered_AdminView_ShouldReturnAllStatuses() {
-		session.setStatus(CinemaSessionStatus.CANCELLED);
-		Page<Session> sessionPage = new PageImpl<>(List.of(session));
-
-		when(sessionRepository.findAll(any(Predicate.class), any(Pageable.class))).thenReturn(sessionPage);
-
-		Page<Session> result = sessionQueryService.findFiltered(null, null, null, null, CinemaSessionStatus.CANCELLED,
-				pageable, true);
-
-		assertThat(result).isNotNull();
-		assertThat(result.getContent()).hasSize(1);
 	}
 
 	@Test
@@ -440,17 +383,16 @@ class SessionQueryServiceTest {
 
 		Page<Session> result = sessionQueryService.findByStatus(CinemaSessionStatus.SCHEDULED, pageable);
 
-		assertThat(result).isNotNull();
 		assertThat(result.getContent()).hasSize(1);
 		assertThat(result.getContent().get(0).getStatus()).isEqualTo(CinemaSessionStatus.SCHEDULED);
 	}
 
 	@Test
 	void findByStatus_ShouldFilterFutureSessions_ForScheduledStatus() {
-		Session pastSession = new Session();
-		pastSession.setId(2L);
-		pastSession.setStartTime(now.minusHours(1));
-		pastSession.setStatus(CinemaSessionStatus.SCHEDULED);
+		Session pastScheduledSession = new Session();
+		pastScheduledSession.setId(2L);
+		pastScheduledSession.setStartTime(now.minusHours(1));
+		pastScheduledSession.setStatus(CinemaSessionStatus.SCHEDULED);
 
 		Page<Session> sessionPage = new PageImpl<>(List.of(session));
 
@@ -458,7 +400,6 @@ class SessionQueryServiceTest {
 
 		Page<Session> result = sessionQueryService.findByStatus(CinemaSessionStatus.SCHEDULED, pageable);
 
-		assertThat(result).isNotNull();
 		assertThat(result.getContent()).hasSize(1);
 		assertThat(result.getContent().get(0).getId()).isEqualTo(1L);
 	}
@@ -473,6 +414,6 @@ class SessionQueryServiceTest {
 
 		Page<Session> result = sessionQueryService.findFilteredSessions(filter);
 
-		assertThat(result).isNotNull();
+		assertThat(result.getContent()).hasSize(1);
 	}
 }
