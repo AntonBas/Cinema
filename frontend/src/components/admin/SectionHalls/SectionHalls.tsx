@@ -35,6 +35,10 @@ export const SectionHalls: React.FC = () => {
     const { notifications, showNotification, hideNotification } = useNotification();
 
     useEffect(() => {
+        getAllHalls();
+    }, []);
+
+    useEffect(() => {
         if (error) {
             showNotification(error, 'error');
         }
