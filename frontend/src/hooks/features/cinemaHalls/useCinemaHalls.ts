@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { cinemaHallApi } from '@/api/cinemaHallApi';
 import type { CinemaHallResponse, CinemaHallWithSeatsResponse, HallLayoutResponse } from '@/types';
 
@@ -34,7 +34,11 @@ export const useCinemaHalls = () => {
     const hallLayoutQuery = useQuery<HallLayoutResponse>();
 
     const getAllHalls = useCallback(() =>
-        allHallsQuery.execute(() => cinemaHallApi.getAllHalls()), [allHallsQuery]);
+        allHallsQuery.execute(() => cinemaHallApi.getAllHalls()), [allHallsQuery.execute]);
+
+    useEffect(() => {
+        getAllHalls();
+    }, []);
 
     const getHallWithSeats = useCallback((id: number) =>
         hallWithSeatsQuery.execute(() => cinemaHallApi.getHallWithSeats(id)), [hallWithSeatsQuery]);
