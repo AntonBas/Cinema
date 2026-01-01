@@ -288,7 +288,7 @@ class SessionMapperTest {
 	@Test
 	void updateEntityFromDto_ShouldUpdateNonNullFields() {
 		SessionUpdateRequest updateRequest = SessionUpdateRequest.builder().startTime(futureTime.plusHours(1))
-				.basePrice(new BigDecimal("350.00")).status(CinemaSessionStatus.CANCELLED).build();
+				.basePrice(new BigDecimal("350.00")).build();
 
 		Session existingSession = Session.builder().id(1L).startTime(futureTime).basePrice(new BigDecimal("250.00"))
 				.status(CinemaSessionStatus.SCHEDULED).bookings(new ArrayList<>()).bookedSeats(new ArrayList<>())
@@ -299,24 +299,35 @@ class SessionMapperTest {
 		assertAll(() -> assertThat(existingSession.getId()).isEqualTo(1L),
 				() -> assertThat(existingSession.getStartTime()).isEqualTo(futureTime.plusHours(1)),
 				() -> assertThat(existingSession.getBasePrice()).isEqualByComparingTo("350.00"),
-				() -> assertThat(existingSession.getStatus()).isEqualTo(CinemaSessionStatus.CANCELLED),
 				() -> assertThat(existingSession.getMovie()).isNull(),
 				() -> assertThat(existingSession.getHall()).isNull());
 	}
 
 	@Test
-	void updateEntityFromDto_ShouldIgnoreNullFields() {
-		SessionUpdateRequest updateRequest = SessionUpdateRequest.builder().status(CinemaSessionStatus.COMPLETED)
-				.startTime(null).basePrice(null).build();
+	void updateEntityFromDto_ShouldNotUpdateStatus() {
+		SessionUpdateRequest updateRequest = SessionUpdateRequest.builder().build();
 
 		Session existingSession = Session.builder().id(1L).startTime(futureTime).basePrice(new BigDecimal("250.00"))
 				.status(CinemaSessionStatus.SCHEDULED).build();
 
 		sessionMapper.updateEntityFromDto(updateRequest, existingSession);
 
-		assertAll(() -> assertThat(existingSession.getStatus()).isEqualTo(CinemaSessionStatus.COMPLETED),
-				() -> assertThat(existingSession.getStartTime()).isEqualTo(futureTime),
-				() -> assertThat(existingSession.getBasePrice()).isEqualByComparingTo("250.00"));
+		assertThat(existingSession.getStatus()).isEqualTo(CinemaSessionStatus.SCHEDULED);
+	}
+
+	@Test
+	void updateEntityFromDto_ShouldIgnoreNullFields() {
+		SessionUpdateRequest updateRequest = SessionUpdateRequest.builder().basePrice(new BigDecimal("400.00"))
+				.startTime(null).build();
+
+		Session existingSession = Session.builder().id(1L).startTime(futureTime).basePrice(new BigDecimal("250.00"))
+				.status(CinemaSessionStatus.SCHEDULED).build();
+
+		sessionMapper.updateEntityFromDto(updateRequest, existingSession);
+
+		assertAll(() -> assertThat(existingSession.getStartTime()).isEqualTo(futureTime),
+				() -> assertThat(existingSession.getBasePrice()).isEqualByComparingTo("400.00"),
+				() -> assertThat(existingSession.getStatus()).isEqualTo(CinemaSessionStatus.SCHEDULED));
 	}
 
 	@Test
