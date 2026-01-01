@@ -11,7 +11,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import ua.lviv.bas.cinema.domain.enums.CinemaSessionStatus;
 
 @Data
 @Builder
@@ -34,8 +33,4 @@ public class SessionUpdateRequest {
 
 	@Schema(description = "ID of the cinema hall", example = "2")
 	private Long hallId;
-
-	@Schema(description = "Status of the session", example = "ONGOING", allowableValues = { "SCHEDULED", "ONGOING",
-			"COMPLETED", "CANCELLED" })
-	private CinemaSessionStatus status;
 }

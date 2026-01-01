@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -75,7 +76,7 @@ public class AdminSessionController {
 	}
 
 	@PutMapping("/{id}")
-	@Operation(summary = "Update session", description = "Update existing session information including status")
+	@Operation(summary = "Update session", description = "Update existing session information")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Session updated successfully", content = @Content(schema = @Schema(implementation = SessionAdminResponse.class))),
 			@ApiResponse(responseCode = "400", description = "Invalid request data or time conflict"),
@@ -86,6 +87,30 @@ public class AdminSessionController {
 		log.info("PUT /api/admin/sessions/{} - Updating session", id);
 		SessionAdminResponse updated = sessionService.updateSession(id, request);
 		return ResponseEntity.ok(updated);
+	}
+
+	@PatchMapping("/{id}/cancel")
+	@Operation(summary = "Cancel session", description = "Cancel a scheduled session")
+	@ApiResponses(value = { @ApiResponse(responseCode = "204", description = "Session cancelled successfully"),
+			@ApiResponse(responseCode = "400", description = "Cannot cancel session"),
+			@ApiResponse(responseCode = "404", description = "Session not found") })
+	public ResponseEntity<Void> cancelSession(
+			@Parameter(description = "ID of the session to cancel", required = true, example = "1") @PathVariable Long id) {
+		log.info("PATCH /api/admin/sessions/{}/cancel - Cancelling session", id);
+		sessionService.cancelSession(id);
+		return ResponseEntity.noContent().build();
+	}
+
+	@PatchMapping("/{id}/reactivate")
+	@Operation(summary = "Reactivate session", description = "Reactivate a cancelled session")
+	@ApiResponses(value = { @ApiResponse(responseCode = "204", description = "Session reactivated successfully"),
+			@ApiResponse(responseCode = "400", description = "Cannot reactivate session"),
+			@ApiResponse(responseCode = "404", description = "Session not found") })
+	public ResponseEntity<Void> reactivateSession(
+			@Parameter(description = "ID of the session to reactivate", required = true, example = "1") @PathVariable Long id) {
+		log.info("PATCH /api/admin/sessions/{}/reactivate - Reactivating session", id);
+		sessionService.reactivateSession(id);
+		return ResponseEntity.noContent().build();
 	}
 
 	@DeleteMapping("/{id}")
