@@ -56,7 +56,7 @@ public class UserPasswordResetService {
 
 		var user = resetToken.getUser();
 
-		if (passwordEncoder.matches(newPassword, user.getPassword())) {
+		if (user.getPassword() != null && passwordEncoder.matches(newPassword, user.getPassword())) {
 			throw new SamePasswordException();
 		}
 
