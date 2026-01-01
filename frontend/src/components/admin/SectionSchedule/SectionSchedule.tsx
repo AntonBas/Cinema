@@ -1,41 +1,93 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSessions, useSessionMutation, useSessionFilters, useNotification } from '@/hooks';
 import { SessionFilters } from './SessionFilters';
 import { SessionTable } from './SessionTable';
-import { SessionModal } from './SessionModal';
+import { SessionCreateModal } from './SessionCreateModal';
+import { SessionUpdateModal } from './SessionUpdateModal';
 import { DeleteConfirmModal, Pagination, Button } from '@/components/ui';
-import type { SessionAdminResponse, SessionRequest } from '@/types/session';
+import type { SessionAdminResponse, SessionCreateRequest, SessionUpdateRequest } from '@/types/session';
 import styles from './SectionSchedule.module.css';
 
 export const SectionSchedule: React.FC = () => {
     const { showNotification } = useNotification();
+
     const [selectedSession, setSelectedSession] = useState<SessionAdminResponse | null>(null);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [sessionToDelete, setSessionToDelete] = useState<SessionAdminResponse | null>(null);
+    const [sessionToCancel, setSessionToCancel] = useState<SessionAdminResponse | null>(null);
+    const [sessionToReactivate, setSessionToReactivate] = useState<SessionAdminResponse | null>(null);
+
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+    const [isReactivateModalOpen, setIsReactivateModalOpen] = useState(false);
 
     const [pagination, setPagination] = useState({
         page: 0,
         size: 20
     });
 
-    const { filters, setDateFilter, setHallFilter, setMovieFilter, setUpcomingDaysFilter, clearFilters, hasActiveFilters } = useSessionFilters();
-    const { sessions, loading, error, pagination: apiPagination, refetch } = useSessions(filters, pagination);
-    const { createSession, updateSession, deleteSession, loading: mutationLoading } = useSessionMutation();
+    const {
+        filters,
+        setDateFilter,
+        setHallFilter,
+        setMovieFilter,
+        setUpcomingDaysFilter,
+        clearFilters,
+        hasActiveFilters,
+        activeFilterCount
+    } = useSessionFilters();
+
+    const {
+        sessions,
+        loading,
+        error,
+        pagination: apiPagination,
+        refetch
+    } = useSessions(filters, pagination);
+
+    const {
+        createSession,
+        updateSession,
+        deleteSession,
+        cancelSession,
+        reactivateSession,
+        loading: mutationLoading
+    } = useSessionMutation();
+
+    useEffect(() => {
+        console.log('Current sessions:', sessions);
+        console.log('Loading:', loading);
+        console.log('Error:', error);
+    }, [sessions, loading, error]);
 
     const handleCreateSession = () => {
         setSelectedSession(null);
-        setIsModalOpen(true);
+        setIsCreateModalOpen(true);
     };
 
     const handleEditSession = (session: SessionAdminResponse) => {
         setSelectedSession(session);
-        setIsModalOpen(true);
+        setIsUpdateModalOpen(true);
     };
 
     const handleDeleteSession = (session: SessionAdminResponse) => {
         setSessionToDelete(session);
-        setDeleteModalOpen(true);
+        setIsDeleteModalOpen(true);
+    };
+
+    const handleCancelSession = (session: SessionAdminResponse) => {
+        setSessionToCancel(session);
+        setIsCancelModalOpen(true);
+    };
+
+    const handleReactivateSession = (session: SessionAdminResponse) => {
+        setSessionToReactivate(session);
+        setIsReactivateModalOpen(true);
+    };
+
+    const handleViewDetails = (session: SessionAdminResponse) => {
+        console.log('View session details:', session);
     };
 
     const handleConfirmDelete = async () => {
@@ -45,24 +97,58 @@ export const SectionSchedule: React.FC = () => {
             await deleteSession(sessionToDelete.id);
             showNotification('Session deleted successfully', 'success');
             refetch();
-            setDeleteModalOpen(false);
+            setIsDeleteModalOpen(false);
             setSessionToDelete(null);
         } catch (error) {
             showNotification('Failed to delete session', 'error');
         }
     };
 
-    const handleSaveSession = async (data: SessionRequest) => {
-        try {
-            if (selectedSession) {
-                await updateSession(selectedSession.id, data);
-                showNotification('Session updated successfully', 'success');
-            } else {
-                await createSession(data);
-                showNotification('Session created successfully', 'success');
-            }
+    const handleConfirmCancel = async () => {
+        if (!sessionToCancel) return;
 
-            setIsModalOpen(false);
+        try {
+            await cancelSession(sessionToCancel.id);
+            showNotification('Session cancelled successfully', 'success');
+            refetch();
+            setIsCancelModalOpen(false);
+            setSessionToCancel(null);
+        } catch (error) {
+            showNotification('Failed to cancel session', 'error');
+        }
+    };
+
+    const handleConfirmReactivate = async () => {
+        if (!sessionToReactivate) return;
+
+        try {
+            await reactivateSession(sessionToReactivate.id);
+            showNotification('Session reactivated successfully', 'success');
+            refetch();
+            setIsReactivateModalOpen(false);
+            setSessionToReactivate(null);
+        } catch (error) {
+            showNotification('Failed to reactivate session', 'error');
+        }
+    };
+
+    const handleSaveNewSession = async (data: SessionCreateRequest) => {
+        try {
+            await createSession(data);
+            showNotification('Session created successfully', 'success');
+            setIsCreateModalOpen(false);
+            setSelectedSession(null);
+            refetch();
+        } catch (error) {
+            throw error;
+        }
+    };
+
+    const handleSaveUpdatedSession = async (id: number, data: SessionUpdateRequest) => {
+        try {
+            await updateSession(id, data);
+            showNotification('Session updated successfully', 'success');
+            setIsUpdateModalOpen(false);
             setSelectedSession(null);
             refetch();
         } catch (error) {
@@ -74,12 +160,46 @@ export const SectionSchedule: React.FC = () => {
         setPagination(prev => ({ ...prev, page }));
     };
 
+    const handleRetry = () => {
+        refetch();
+    };
+
+    const handleClearFilters = () => {
+        clearFilters();
+        showNotification('Filters cleared', 'info');
+    };
+
+    const totalSessions = apiPagination?.totalElements || 0;
+    const filteredCount = hasActiveFilters ? sessions.length : totalSessions;
+
     return (
         <div className={styles.container}>
             <div className={styles.header}>
                 <div className={styles.headerContent}>
-                    <h1>Session Schedule</h1>
-                    <p className={styles.subtitle}>Manage movie sessions and showtimes</p>
+                    <div className={styles.titleContainer}>
+                        <h1 className={styles.title}>Session Schedule</h1>
+                        {hasActiveFilters && (
+                            <div className={styles.filterIndicator}>
+                                <span className={styles.filterDot}></span>
+                                Filters Active ({activeFilterCount})
+                            </div>
+                        )}
+                    </div>
+                    <p className={styles.subtitle}>
+                        Manage movie sessions, showtimes, and schedules
+                    </p>
+                    <div className={styles.stats}>
+                        <div className={styles.statItem}>
+                            <span className={styles.statValue}>{totalSessions}</span>
+                            <span className={styles.statLabel}>Total Sessions</span>
+                        </div>
+                        {hasActiveFilters && (
+                            <div className={styles.statItem}>
+                                <span className={styles.statValue}>{filteredCount}</span>
+                                <span className={styles.statLabel}>Filtered</span>
+                            </div>
+                        )}
+                    </div>
                 </div>
                 <Button
                     variant="primary"
@@ -88,7 +208,7 @@ export const SectionSchedule: React.FC = () => {
                     disabled={mutationLoading}
                     className={styles.createButton}
                 >
-                    Add Session
+                    + Add Session
                 </Button>
             </div>
 
@@ -98,62 +218,122 @@ export const SectionSchedule: React.FC = () => {
                 onHallChange={setHallFilter}
                 onMovieChange={setMovieFilter}
                 onUpcomingDaysChange={setUpcomingDaysFilter}
-                onClearFilters={clearFilters}
+                onClearFilters={handleClearFilters}
                 hasActiveFilters={hasActiveFilters}
+                activeFilterCount={activeFilterCount}
             />
 
             {error && (
                 <div className={styles.error}>
-                    {error}
+                    <div className={styles.errorContent}>
+                        <span className={styles.errorIcon}>⚠️</span>
+                        <span className={styles.errorMessage}>{error}</span>
+                    </div>
                     <Button
                         variant="secondary"
                         size="small"
-                        onClick={refetch}
+                        onClick={handleRetry}
+                        className={styles.retryButton}
                     >
                         Retry
                     </Button>
                 </div>
             )}
 
-            <SessionTable
-                sessions={sessions}
-                loading={loading}
-                onEdit={handleEditSession}
-                onDelete={handleDeleteSession}
-            />
+            <div className={styles.tableSection}>
+                <SessionTable
+                    sessions={sessions}
+                    loading={loading}
+                    error={error || undefined}
+                    onEdit={handleEditSession}
+                    onDelete={handleDeleteSession}
+                    onCancel={handleCancelSession}
+                    onReactivate={handleReactivateSession}
+                    onViewDetails={handleViewDetails}
+                />
+            </div>
 
             {apiPagination && apiPagination.totalPages > 1 && (
-                <Pagination
-                    currentPage={apiPagination.currentPage}
-                    totalPages={apiPagination.totalPages}
-                    totalElements={apiPagination.totalElements}
-                    pageSize={apiPagination.pageSize}
-                    onPageChange={handlePageChange}
-                />
+                <div className={styles.paginationSection}>
+                    <Pagination
+                        currentPage={apiPagination.currentPage}
+                        totalPages={apiPagination.totalPages}
+                        totalElements={apiPagination.totalElements}
+                        pageSize={apiPagination.pageSize}
+                        onPageChange={handlePageChange}
+                    />
+                </div>
             )}
 
-            <SessionModal
-                isOpen={isModalOpen}
-                session={selectedSession}
-                onSave={handleSaveSession}
+            <SessionCreateModal
+                isOpen={isCreateModalOpen}
+                session={null}
+                onSave={handleSaveNewSession}
                 onClose={() => {
-                    setIsModalOpen(false);
+                    setIsCreateModalOpen(false);
                     setSelectedSession(null);
                 }}
                 loading={mutationLoading}
             />
 
+            {selectedSession && (
+                <SessionUpdateModal
+                    isOpen={isUpdateModalOpen}
+                    session={selectedSession}
+                    onSave={handleSaveUpdatedSession}
+                    onClose={() => {
+                        setIsUpdateModalOpen(false);
+                        setSelectedSession(null);
+                    }}
+                    loading={mutationLoading}
+                />
+            )}
+
             <DeleteConfirmModal
-                isOpen={deleteModalOpen}
+                isOpen={isDeleteModalOpen}
                 onConfirm={handleConfirmDelete}
                 onCancel={() => {
-                    setDeleteModalOpen(false);
+                    setIsDeleteModalOpen(false);
                     setSessionToDelete(null);
                 }}
                 itemName={sessionToDelete?.movieTitle}
                 itemType="session"
                 isDeleting={mutationLoading}
             />
+
+            {sessionToCancel && (
+                <DeleteConfirmModal
+                    isOpen={isCancelModalOpen}
+                    onConfirm={handleConfirmCancel}
+                    onCancel={() => {
+                        setIsCancelModalOpen(false);
+                        setSessionToCancel(null);
+                    }}
+                    itemName={sessionToCancel.movieTitle}
+                    itemType="session"
+                    isDeleting={mutationLoading}
+                    confirmText="Cancel Session"
+                    cancelText="Keep Session"
+                    message={`Are you sure you want to cancel the session "${sessionToCancel.movieTitle}" on ${new Date(sessionToCancel.startTime).toLocaleString()}?`}
+                />
+            )}
+
+            {sessionToReactivate && (
+                <DeleteConfirmModal
+                    isOpen={isReactivateModalOpen}
+                    onConfirm={handleConfirmReactivate}
+                    onCancel={() => {
+                        setIsReactivateModalOpen(false);
+                        setSessionToReactivate(null);
+                    }}
+                    itemName={sessionToReactivate.movieTitle}
+                    itemType="session"
+                    isDeleting={mutationLoading}
+                    confirmText="Reactivate Session"
+                    cancelText="Cancel"
+                    message={`Are you sure you want to reactivate the session "${sessionToReactivate.movieTitle}" on ${new Date(sessionToReactivate.startTime).toLocaleString()}?`}
+                />
+            )}
         </div>
     );
 };

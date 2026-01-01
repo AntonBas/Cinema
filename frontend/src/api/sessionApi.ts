@@ -1,160 +1,284 @@
 import type {
     SessionAdminResponse,
     SessionScheduleResponse,
-    SessionRequest,
-    SessionFilters
+    SessionCreateRequest,
+    SessionUpdateRequest,
+    SessionFilter
 } from '@/types/session';
-import type { PageResponse, SearchParams } from '@/types/pagination';
+import type { PageResponse } from '@/types/pagination';
 import { handleApiError } from '@/utils/apiErrorHandler';
 
-const API_URL = '/api/sessions';
+const ADMIN_API_URL = '/api/admin/sessions';
+const PUBLIC_API_URL = '/api/sessions';
 
-const getAuthHeaders = () => {
+const getAuthHeaders = (): HeadersInit => {
     const token = localStorage.getItem('authToken');
     return {
         'Content-Type': 'application/json',
-        'Authorization': token ? `Bearer ${token}` : '',
+        ...(token && { 'Authorization': `Bearer ${token}` }),
     };
 };
 
-const createSearchParams = (filters?: Record<string, any>, params?: SearchParams): URLSearchParams => {
-    const searchParams = new URLSearchParams();
-
-    if (filters) {
-        Object.entries(filters).forEach(([key, value]) => {
-            if (value !== undefined && value !== null && value !== '') {
-                searchParams.append(key, value.toString());
-            }
-        });
-    }
-
-    if (params?.page) searchParams.append('page', params.page.toString());
-    if (params?.size) searchParams.append('size', params.size.toString());
-    if (params?.sort) searchParams.append('sort', params.sort);
-
-    return searchParams;
+const getPublicHeaders = (): HeadersInit => {
+    return {
+        'Content-Type': 'application/json',
+    };
 };
 
-const handleResponse = async <T>(response: Response): Promise<T> => {
+const fetchApi = async <T>(
+    url: string,
+    options: RequestInit = {},
+    isPublic: boolean = false
+): Promise<T> => {
+    const headers = isPublic ? getPublicHeaders() : getAuthHeaders();
+
+    const response = await fetch(url, {
+        headers,
+        ...options,
+    });
+
     if (!response.ok) throw await handleApiError(response);
+    if (response.status === 204) return undefined as T;
+
     return response.json();
 };
 
-const createFetchOptions = (method: string = 'GET', body?: any) => ({
-    method,
-    headers: getAuthHeaders(),
-    ...(body && { body: JSON.stringify(body) }),
-});
-
 export const sessionApi = {
-    createSession: async (request: SessionRequest): Promise<SessionAdminResponse> => {
-        const response = await fetch(API_URL, createFetchOptions('POST', request));
-        return handleResponse(response);
-    },
+    createSession: (request: SessionCreateRequest): Promise<SessionAdminResponse> =>
+        fetchApi<SessionAdminResponse>(ADMIN_API_URL, {
+            method: 'POST',
+            body: JSON.stringify(request),
+        }),
 
-    getSessionById: async (id: number): Promise<SessionAdminResponse> => {
-        const response = await fetch(`${API_URL}/${id}`, createFetchOptions());
-        return handleResponse(response);
-    },
+    getSessionByIdAdmin: (id: number): Promise<SessionAdminResponse> =>
+        fetchApi<SessionAdminResponse>(`${ADMIN_API_URL}/${id}`),
 
-    updateSession: async (id: number, request: SessionRequest): Promise<SessionAdminResponse> => {
-        const response = await fetch(`${API_URL}/${id}`, createFetchOptions('PUT', request));
-        return handleResponse(response);
-    },
+    updateSession: (id: number, request: SessionUpdateRequest): Promise<SessionAdminResponse> =>
+        fetchApi<SessionAdminResponse>(`${ADMIN_API_URL}/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(request),
+        }),
 
-    deleteSession: async (id: number): Promise<void> => {
-        const response = await fetch(`${API_URL}/${id}`, createFetchOptions('DELETE'));
-        await handleResponse(response);
-    },
+    cancelSession: (id: number): Promise<void> =>
+        fetchApi<void>(`${ADMIN_API_URL}/${id}/cancel`, {
+            method: 'PATCH',
+        }),
 
-    getAllSessions: async (params?: SearchParams): Promise<PageResponse<SessionAdminResponse>> => {
-        const searchParams = createSearchParams({ search: params?.query }, params);
-        const response = await fetch(`${API_URL}?${searchParams}`, createFetchOptions());
-        return handleResponse(response);
-    },
+    reactivateSession: (id: number): Promise<void> =>
+        fetchApi<void>(`${ADMIN_API_URL}/${id}/reactivate`, {
+            method: 'PATCH',
+        }),
 
-    getSessionsByDate: async (date: string, params?: SearchParams): Promise<PageResponse<SessionAdminResponse>> => {
-        const response = await fetch(`${API_URL}/date/${date}?${createSearchParams({}, params)}`, createFetchOptions());
-        return handleResponse(response);
-    },
+    deleteSession: (id: number): Promise<void> =>
+        fetchApi<void>(`${ADMIN_API_URL}/${id}`, {
+            method: 'DELETE',
+        }),
 
-    getSessionsByHall: async (hallId: number, params?: SearchParams): Promise<PageResponse<SessionAdminResponse>> => {
-        const response = await fetch(`${API_URL}/hall/${hallId}?${createSearchParams({}, params)}`, createFetchOptions());
-        return handleResponse(response);
-    },
-
-    getSessionsByMovie: async (movieId: number, params?: SearchParams): Promise<PageResponse<SessionAdminResponse>> => {
-        const response = await fetch(`${API_URL}/movie/${movieId}?${createSearchParams({}, params)}`, createFetchOptions());
-        return handleResponse(response);
-    },
-
-    getAvailableSessions: async (params?: SearchParams): Promise<PageResponse<SessionAdminResponse>> => {
-        const response = await fetch(`${API_URL}/available?${createSearchParams({}, params)}`, createFetchOptions());
-        return handleResponse(response);
-    },
-
-    getUpcomingSessions: async (days: number = 7, params?: SearchParams): Promise<PageResponse<SessionAdminResponse>> => {
-        const searchParams = createSearchParams({ days }, params);
-        const response = await fetch(`${API_URL}/upcoming?${searchParams}`, createFetchOptions());
-        return handleResponse(response);
-    },
-
-    getTodaySessions: async (params?: SearchParams): Promise<PageResponse<SessionAdminResponse>> => {
-        const response = await fetch(`${API_URL}/today?${createSearchParams({}, params)}`, createFetchOptions());
-        return handleResponse(response);
-    },
-
-    getFilteredSessions: async (
-        filters: SessionFilters,
-        params?: SearchParams
+    getAllSessions: (
+        page: number = 0,
+        size: number = 20,
+        sort: string = 'startTime',
+        search?: string
     ): Promise<PageResponse<SessionAdminResponse>> => {
-        const searchParams = createSearchParams(filters, params);
-        const response = await fetch(`${API_URL}/filter?${searchParams}`, createFetchOptions());
-        return handleResponse(response);
+        const params = new URLSearchParams({
+            page: page.toString(),
+            size: size.toString(),
+            sort,
+        });
+        if (search) params.append('search', search);
+
+        return fetchApi<PageResponse<SessionAdminResponse>>(`${ADMIN_API_URL}?${params}`);
     },
 
-    checkTimeConflict: async (
+    getFilteredSessions: (filter: SessionFilter): Promise<PageResponse<SessionAdminResponse>> => {
+        const params = new URLSearchParams();
+
+        if (filter.search) params.append('search', filter.search);
+        if (filter.movieId !== undefined && filter.movieId !== null) params.append('movieId', filter.movieId.toString());
+        if (filter.hallId !== undefined && filter.hallId !== null) params.append('hallId', filter.hallId.toString());
+        if (filter.status) params.append('status', filter.status);
+        if (filter.startDate) params.append('startDate', filter.startDate);
+        if (filter.endDate) params.append('endDate', filter.endDate);
+
+        const page = filter.page !== undefined ? filter.page : 0;
+        const size = filter.size !== undefined ? filter.size : 20;
+
+        params.append('page', page.toString());
+        params.append('size', size.toString());
+        params.append('sort', 'startTime');
+
+        return fetchApi<PageResponse<SessionAdminResponse>>(`${ADMIN_API_URL}/filter?${params}`);
+    },
+
+    getSessionsByDate: (
+        date: string,
+        page: number = 0,
+        size: number = 20,
+        sort: string = 'startTime'
+    ): Promise<PageResponse<SessionAdminResponse>> => {
+        const params = new URLSearchParams({
+            page: page.toString(),
+            size: size.toString(),
+            sort,
+        });
+
+        return fetchApi<PageResponse<SessionAdminResponse>>(`${ADMIN_API_URL}/date/${date}?${params}`);
+    },
+
+    getSessionsByHall: (
+        hallId: number,
+        page: number = 0,
+        size: number = 20,
+        sort: string = 'startTime'
+    ): Promise<PageResponse<SessionAdminResponse>> => {
+        const params = new URLSearchParams({
+            page: page.toString(),
+            size: size.toString(),
+            sort,
+        });
+
+        return fetchApi<PageResponse<SessionAdminResponse>>(`${ADMIN_API_URL}/hall/${hallId}?${params}`);
+    },
+
+    getSessionsByMovie: (
+        movieId: number,
+        page: number = 0,
+        size: number = 20,
+        sort: string = 'startTime'
+    ): Promise<PageResponse<SessionAdminResponse>> => {
+        const params = new URLSearchParams({
+            page: page.toString(),
+            size: size.toString(),
+            sort,
+        });
+
+        return fetchApi<PageResponse<SessionAdminResponse>>(`${ADMIN_API_URL}/movie/${movieId}?${params}`);
+    },
+
+    getSessionsByStatus: (
+        status: string,
+        page: number = 0,
+        size: number = 20,
+        sort: string = 'startTime'
+    ): Promise<PageResponse<SessionAdminResponse>> => {
+        const params = new URLSearchParams({
+            page: page.toString(),
+            size: size.toString(),
+            sort,
+        });
+
+        return fetchApi<PageResponse<SessionAdminResponse>>(`${ADMIN_API_URL}/status/${status}?${params}`);
+    },
+
+    getAvailableSessions: (
+        page: number = 0,
+        size: number = 20,
+        sort: string = 'startTime'
+    ): Promise<PageResponse<SessionAdminResponse>> => {
+        const params = new URLSearchParams({
+            page: page.toString(),
+            size: size.toString(),
+            sort,
+        });
+
+        return fetchApi<PageResponse<SessionAdminResponse>>(`${ADMIN_API_URL}/available?${params}`);
+    },
+
+    checkTimeConflict: (
         hallId: number,
         startTime: string,
         durationMinutes: number,
         excludeSessionId?: number
     ): Promise<boolean> => {
-        const filters: Record<string, any> = { hallId, startTime, durationMinutes };
-        if (excludeSessionId) filters.excludeSessionId = excludeSessionId;
+        const params = new URLSearchParams({
+            hallId: hallId.toString(),
+            startTime: startTime,
+            durationMinutes: durationMinutes.toString(),
+        });
 
-        const searchParams = createSearchParams(filters);
-        const response = await fetch(`${API_URL}/check-conflict?${searchParams}`, createFetchOptions());
-        return handleResponse(response);
+        if (excludeSessionId !== undefined) {
+            params.append('excludeSessionId', excludeSessionId.toString());
+        }
+
+        return fetchApi<boolean>(`${ADMIN_API_URL}/check-conflict?${params}`);
     },
 
-    getScheduleSessions: async (params?: SearchParams): Promise<PageResponse<SessionScheduleResponse>> => {
-        const response = await fetch(`${API_URL}/schedule?${createSearchParams({}, params)}`, createFetchOptions());
-        return handleResponse(response);
+    getScheduleSessions: (
+        page: number = 0,
+        size: number = 20,
+        sort: string = 'startTime'
+    ): Promise<PageResponse<SessionScheduleResponse>> => {
+        const params = new URLSearchParams({
+            page: page.toString(),
+            size: size.toString(),
+            sort,
+        });
+
+        return fetchApi<PageResponse<SessionScheduleResponse>>(
+            `${PUBLIC_API_URL}/schedule?${params}`,
+            {},
+            true
+        );
     },
 
-    getScheduleSessionsByDate: async (date: string, params?: SearchParams): Promise<PageResponse<SessionScheduleResponse>> => {
-        const response = await fetch(`${API_URL}/schedule/date/${date}?${createSearchParams({}, params)}`, createFetchOptions());
-        return handleResponse(response);
+    getScheduleSessionsByDate: (
+        date: string,
+        page: number = 0,
+        size: number = 20,
+        sort: string = 'startTime'
+    ): Promise<PageResponse<SessionScheduleResponse>> => {
+        const params = new URLSearchParams({
+            page: page.toString(),
+            size: size.toString(),
+            sort,
+        });
+
+        return fetchApi<PageResponse<SessionScheduleResponse>>(
+            `${PUBLIC_API_URL}/schedule/date/${date}?${params}`,
+            {},
+            true
+        );
     },
 
-    getScheduleSessionsByMovie: async (movieId: number, params?: SearchParams): Promise<PageResponse<SessionScheduleResponse>> => {
-        const response = await fetch(`${API_URL}/schedule/movie/${movieId}?${createSearchParams({}, params)}`, createFetchOptions());
-        return handleResponse(response);
+    getScheduleSessionsByMovie: (
+        movieId: number,
+        page: number = 0,
+        size: number = 20,
+        sort: string = 'startTime'
+    ): Promise<PageResponse<SessionScheduleResponse>> => {
+        const params = new URLSearchParams({
+            page: page.toString(),
+            size: size.toString(),
+            sort,
+        });
+
+        return fetchApi<PageResponse<SessionScheduleResponse>>(
+            `${PUBLIC_API_URL}/schedule/movie/${movieId}?${params}`,
+            {},
+            true
+        );
     },
 
-    getAvailableScheduleSessions: async (params?: SearchParams): Promise<PageResponse<SessionScheduleResponse>> => {
-        const response = await fetch(`${API_URL}/schedule/available?${createSearchParams({}, params)}`, createFetchOptions());
-        return handleResponse(response);
+    getUpcomingScheduleSessions: (
+        days: number = 7,
+        page: number = 0,
+        size: number = 20,
+        sort: string = 'startTime'
+    ): Promise<PageResponse<SessionScheduleResponse>> => {
+        const params = new URLSearchParams({
+            days: days.toString(),
+            page: page.toString(),
+            size: size.toString(),
+            sort,
+        });
+
+        return fetchApi<PageResponse<SessionScheduleResponse>>(
+            `${PUBLIC_API_URL}/upcoming?${params}`,
+            {},
+            true
+        );
     },
 
-    getUpcomingScheduleSessions: async (days: number = 7, params?: SearchParams): Promise<PageResponse<SessionScheduleResponse>> => {
-        const searchParams = createSearchParams({ days }, params);
-        const response = await fetch(`${API_URL}/schedule/upcoming?${searchParams}`, createFetchOptions());
-        return handleResponse(response);
-    },
-
-    getTodayScheduleSessions: async (params?: SearchParams): Promise<PageResponse<SessionScheduleResponse>> => {
-        const response = await fetch(`${API_URL}/schedule/today?${createSearchParams({}, params)}`, createFetchOptions());
-        return handleResponse(response);
-    },
+    getSessionById: (id: number): Promise<SessionScheduleResponse> =>
+        fetchApi<SessionScheduleResponse>(`${PUBLIC_API_URL}/${id}`, {}, true),
 };
