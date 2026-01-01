@@ -3,6 +3,7 @@ package ua.lviv.bas.cinema.controller.api;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -24,7 +25,6 @@ import org.springframework.data.domain.Pageable;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusBalanceResponse;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusCardResponse;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusTransactionResponse;
-import ua.lviv.bas.cinema.dto.shared.PageResponse;
 import ua.lviv.bas.cinema.exception.domain.bonus.BonusCardNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.bonus.BonusRuleNotFoundException;
 import ua.lviv.bas.cinema.service.user.BonusUserService;
@@ -56,7 +56,7 @@ class BonusControllerTest {
 		assertEquals(1L, response.getId());
 		assertEquals(userId, response.getUserId());
 		assertEquals(250, response.getPointsBalance());
-		assertEquals(true, response.getWelcomeBonusReceived());
+		assertTrue(response.getWelcomeBonusReceived());
 	}
 
 	@Test
@@ -136,11 +136,10 @@ class BonusControllerTest {
 		transaction2.setNewBalance(175);
 
 		Page<BonusTransactionResponse> page = new PageImpl<>(List.of(transaction1, transaction2), pageable, 2);
-		PageResponse<BonusTransactionResponse> pageResponse = PageResponse.of(page);
 
-		when(bonusUserService.getUserTransactions(eq(userId), any(Pageable.class))).thenReturn(pageResponse);
+		when(bonusUserService.getUserTransactions(eq(userId), any(Pageable.class))).thenReturn(page);
 
-		PageResponse<BonusTransactionResponse> response = bonusController.getMyTransactions(userId, pageable);
+		Page<BonusTransactionResponse> response = bonusController.getMyTransactions(userId, pageable);
 
 		assertNotNull(response);
 		assertEquals(2, response.getContent().size());
@@ -159,15 +158,14 @@ class BonusControllerTest {
 		Pageable pageable = PageRequest.of(0, 20);
 
 		Page<BonusTransactionResponse> emptyPage = new PageImpl<>(List.of(), pageable, 0);
-		PageResponse<BonusTransactionResponse> pageResponse = PageResponse.of(emptyPage);
 
-		when(bonusUserService.getUserTransactions(eq(userId), any(Pageable.class))).thenReturn(pageResponse);
+		when(bonusUserService.getUserTransactions(eq(userId), any(Pageable.class))).thenReturn(emptyPage);
 
-		PageResponse<BonusTransactionResponse> response = bonusController.getMyTransactions(userId, pageable);
+		Page<BonusTransactionResponse> response = bonusController.getMyTransactions(userId, pageable);
 
 		assertNotNull(response);
 		assertEquals(0, response.getContent().size());
 		assertEquals(0, response.getTotalElements());
-		assertEquals(0, response.getTotalPages());
+		assertTrue(response.isEmpty());
 	}
 }

@@ -23,15 +23,12 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
-import com.querydsl.core.BooleanBuilder;
-
 import ua.lviv.bas.cinema.domain.BonusRules;
 import ua.lviv.bas.cinema.domain.BonusTransaction;
 import ua.lviv.bas.cinema.domain.enums.BonusTransactionType;
 import ua.lviv.bas.cinema.dto.bonus.request.BonusRulesRequest;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusRulesResponse;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusTransactionResponse;
-import ua.lviv.bas.cinema.dto.shared.PageResponse;
 import ua.lviv.bas.cinema.exception.domain.bonus.BonusRuleNotFoundException;
 import ua.lviv.bas.cinema.mapper.BonusMapper;
 import ua.lviv.bas.cinema.repository.BonusRulesRepository;
@@ -119,7 +116,6 @@ class BonusAdminServiceTest {
 		when(bonusRulesRepository.save(existing)).thenReturn(existing);
 		when(bonusMapper.toBonusRulesResponse(existing)).thenReturn(expectedResponse);
 
-		// Не використовуємо when() для void методу, а перевіряємо що він викликався
 		BonusRulesResponse result = bonusAdminService.updateBonusRule(type, request);
 
 		assertThat(result).isSameAs(expectedResponse);
@@ -208,11 +204,11 @@ class BonusAdminServiceTest {
 		when(bonusTransactionRepository.findByBonusCardUserIdOrderByCreatedAtDesc(userId, pageable)).thenReturn(page);
 		when(bonusMapper.toBonusTransactionResponse(transaction)).thenReturn(response);
 
-		PageResponse<BonusTransactionResponse> result = bonusAdminService.getUserTransactions(userId, pageable);
+		Page<BonusTransactionResponse> result = bonusAdminService.getUserTransactions(userId, pageable);
 
 		assertThat(result.getContent()).hasSize(1);
 		assertThat(result.getContent().get(0)).isSameAs(response);
-		assertThat(result.getCurrentPage()).isZero();
+		assertThat(result.getNumber()).isZero();
 		assertThat(result.getTotalPages()).isOne();
 		verify(bonusTransactionRepository).findByBonusCardUserIdOrderByCreatedAtDesc(userId, pageable);
 		verify(bonusMapper).toBonusTransactionResponse(transaction);
@@ -227,7 +223,7 @@ class BonusAdminServiceTest {
 		when(bonusTransactionRepository.findByBonusCardUserIdOrderByCreatedAtDesc(userId, pageable))
 				.thenReturn(emptyPage);
 
-		PageResponse<BonusTransactionResponse> result = bonusAdminService.getUserTransactions(userId, pageable);
+		Page<BonusTransactionResponse> result = bonusAdminService.getUserTransactions(userId, pageable);
 
 		assertThat(result.getContent()).isEmpty();
 		assertThat(result.isEmpty()).isTrue();
@@ -252,7 +248,7 @@ class BonusAdminServiceTest {
 		when(bonusMapper.toBonusTransactionResponse(transaction1)).thenReturn(response1);
 		when(bonusMapper.toBonusTransactionResponse(transaction2)).thenReturn(response2);
 
-		PageResponse<BonusTransactionResponse> result = bonusAdminService.getAllTransactions(pageable);
+		Page<BonusTransactionResponse> result = bonusAdminService.getAllTransactions(pageable);
 
 		assertThat(result.getContent()).hasSize(2);
 		assertThat(result.getContent()).containsExactly(response1, response2);
@@ -270,14 +266,14 @@ class BonusAdminServiceTest {
 		Page<BonusTransaction> page = new PageImpl<>(List.of(transaction), pageable, 1);
 		BonusTransactionResponse response = new BonusTransactionResponse();
 
-		when(bonusTransactionRepository.findAll(any(BooleanBuilder.class), any(Pageable.class))).thenReturn(page);
+		when(bonusTransactionRepository.findByTypeOrderByCreatedAtDesc(type, pageable)).thenReturn(page);
 		when(bonusMapper.toBonusTransactionResponse(transaction)).thenReturn(response);
 
-		PageResponse<BonusTransactionResponse> result = bonusAdminService.getTransactionsByType(type, pageable);
+		Page<BonusTransactionResponse> result = bonusAdminService.getTransactionsByType(type, pageable);
 
 		assertThat(result.getContent()).hasSize(1);
 		assertThat(result.getContent().get(0)).isSameAs(response);
-		verify(bonusTransactionRepository).findAll(any(BooleanBuilder.class), any(Pageable.class));
+		verify(bonusTransactionRepository).findByTypeOrderByCreatedAtDesc(type, pageable);
 		verify(bonusMapper).toBonusTransactionResponse(transaction);
 	}
 

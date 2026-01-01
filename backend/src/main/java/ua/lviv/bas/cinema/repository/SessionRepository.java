@@ -19,7 +19,7 @@ public interface SessionRepository extends JpaRepository<Session, Long> {
 	List<Session> findByStatusAndStartTimeBefore(CinemaSessionStatus status, LocalDateTime time);
 
 	@Query("SELECT s FROM Session s WHERE " + "s.status = :status AND "
-			+ "(s.startTime + FUNCTION('NUMTODSINTERVAL', s.movie.durationMinutes, 'MINUTE')) < :endTime")
+			+ "FUNCTION('TIMESTAMPADD', MINUTE, s.movie.durationMinutes, s.startTime) < :endTime")
 	List<Session> findByStatusAndEndTimeBefore(@Param("status") CinemaSessionStatus status,
 			@Param("endTime") LocalDateTime endTime);
 
@@ -51,9 +51,8 @@ public interface SessionRepository extends JpaRepository<Session, Long> {
 	Page<Session> findAvailableSessions(Pageable pageable);
 
 	@Query("SELECT s FROM Session s WHERE " + "s.hall.id = :hallId AND "
-			+ "s.id != COALESCE(:excludeSessionId, -1) AND "
-			+ "((s.startTime < :endTime AND s.startTime + FUNCTION('NUMTODSINTERVAL', s.movie.durationMinutes, 'MINUTE') > :startTime) OR "
-			+ "(s.startTime >= :startTime AND s.startTime < :endTime))")
+			+ "(:excludeSessionId IS NULL OR s.id != :excludeSessionId) AND " + "(s.startTime < :endTime AND "
+			+ "FUNCTION('TIMESTAMPADD', MINUTE, s.movie.durationMinutes, s.startTime) > :startTime)")
 	List<Session> findConflictingSessions(@Param("hallId") Long hallId, @Param("startTime") LocalDateTime startTime,
 			@Param("endTime") LocalDateTime endTime, @Param("excludeSessionId") Long excludeSessionId);
 }

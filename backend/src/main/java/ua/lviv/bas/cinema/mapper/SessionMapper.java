@@ -52,6 +52,7 @@ public interface SessionMapper {
 	@Mapping(target = "id", ignore = true)
 	@Mapping(target = "movie", ignore = true)
 	@Mapping(target = "hall", ignore = true)
+	@Mapping(target = "status", ignore = true)
 	@Mapping(target = "bookings", ignore = true)
 	@Mapping(target = "bookedSeats", ignore = true)
 	void updateEntityFromDto(SessionUpdateRequest request, @MappingTarget Session session);

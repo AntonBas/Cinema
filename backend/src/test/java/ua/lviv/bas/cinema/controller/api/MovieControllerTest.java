@@ -3,8 +3,6 @@ package ua.lviv.bas.cinema.controller.api;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -25,11 +23,8 @@ import org.springframework.http.ResponseEntity;
 
 import ua.lviv.bas.cinema.domain.enums.AgeRating;
 import ua.lviv.bas.cinema.domain.enums.MovieStatus;
-import ua.lviv.bas.cinema.dto.filter.MovieFilter;
-import ua.lviv.bas.cinema.dto.filter.MovieFilter.SortDirection;
 import ua.lviv.bas.cinema.dto.movie.response.MovieCardResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieDetailResponse;
-import ua.lviv.bas.cinema.dto.shared.PageResponse;
 import ua.lviv.bas.cinema.exception.domain.cinema.MovieNotFoundException;
 import ua.lviv.bas.cinema.service.common.MovieService;
 
@@ -42,7 +37,7 @@ class MovieControllerTest {
 	@InjectMocks
 	private MovieController movieController;
 
-	private MovieDetailResponse createMovieDto(Long id, String title, String slug, MovieStatus status) {
+	private MovieDetailResponse createMovieDetailResponse(Long id, String title, String slug, MovieStatus status) {
 		return MovieDetailResponse.builder().id(id).title(title).slug(slug).posterUrl("/api/movies/" + id + "/poster")
 				.trailerUrl("https://example.com/trailer").description("Description").durationMinutes(120)
 				.ageRating(AgeRating.PEGI_12).releaseDate(LocalDate.now().plusDays(1))
@@ -58,19 +53,17 @@ class MovieControllerTest {
 
 	@Test
 	void getMovieById_ShouldReturnMovie() {
-		MovieDetailResponse movieDto = createMovieDto(1L, "Test Movie", "test-movie", MovieStatus.UPCOMING);
+		MovieDetailResponse movieDto = createMovieDetailResponse(1L, "Test Movie", "test-movie", MovieStatus.UPCOMING);
 
 		when(movieService.getMovieById(1L)).thenReturn(movieDto);
 
 		ResponseEntity<MovieDetailResponse> response = movieController.getMovieById(1L);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
-
-		MovieDetailResponse responseBody = response.getBody();
-		assertNotNull(responseBody);
-
-		assertEquals(1L, responseBody.getId());
-		assertEquals("Test Movie", responseBody.getTitle());
+		MovieDetailResponse body = response.getBody();
+		assertNotNull(body);
+		assertEquals(1L, body.getId());
+		assertEquals("Test Movie", body.getTitle());
 		verify(movieService).getMovieById(1L);
 	}
 
@@ -84,18 +77,16 @@ class MovieControllerTest {
 
 	@Test
 	void getMovieBySlug_ShouldReturnMovie() {
-		MovieDetailResponse movieDto = createMovieDto(1L, "Test Movie", "test-movie", MovieStatus.UPCOMING);
+		MovieDetailResponse movieDto = createMovieDetailResponse(1L, "Test Movie", "test-movie", MovieStatus.UPCOMING);
 
 		when(movieService.getMovieBySlug("test-movie")).thenReturn(movieDto);
 
 		ResponseEntity<MovieDetailResponse> response = movieController.getMovieBySlug("test-movie");
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
-
-		MovieDetailResponse responseBody = response.getBody();
-		assertNotNull(responseBody);
-
-		assertEquals("test-movie", responseBody.getSlug());
+		MovieDetailResponse body = response.getBody();
+		assertNotNull(body);
+		assertEquals("test-movie", body.getSlug());
 		verify(movieService).getMovieBySlug("test-movie");
 	}
 
@@ -109,27 +100,20 @@ class MovieControllerTest {
 
 	@Test
 	void getMoviesPaginated_ShouldReturnPage() {
-		MovieDetailResponse movie = createMovieDto(1L, "Test Movie", "test-movie", MovieStatus.UPCOMING);
-		Page<MovieDetailResponse> page = new PageImpl<>(List.of(movie), PageRequest.of(0, 12), 1);
-		PageResponse<MovieDetailResponse> pageResponse = PageResponse.of(page, movieDto -> movieDto);
+		Pageable pageable = PageRequest.of(0, 12);
+		MovieCardResponse movie = createMovieCardResponse(1L, "Test Movie", "test-movie", MovieStatus.CURRENT);
+		Page<MovieCardResponse> page = new PageImpl<>(List.of(movie), pageable, 1);
 
-		when(movieService.getMoviesPaginated(any(Pageable.class))).thenReturn(pageResponse);
+		when(movieService.getCurrentlyShowingPage(pageable)).thenReturn(page);
 
-		ResponseEntity<PageResponse<MovieDetailResponse>> response = movieController
-				.getMoviesPaginated(PageRequest.of(0, 12));
+		ResponseEntity<Page<MovieCardResponse>> response = movieController.getMoviesPaginated(pageable);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
-
-		PageResponse<MovieDetailResponse> responseBody = response.getBody();
-		assertNotNull(responseBody);
-
-		assertEquals(1, responseBody.getContent().size());
-		assertEquals("Test Movie", responseBody.getContent().get(0).getTitle());
-		assertEquals(1, responseBody.getTotalElements());
-		assertEquals(0, responseBody.getCurrentPage());
-		assertEquals(1, responseBody.getTotalPages());
-		assertEquals(12, responseBody.getPageSize());
-		verify(movieService).getMoviesPaginated(any(Pageable.class));
+		Page<MovieCardResponse> body = response.getBody();
+		assertNotNull(body);
+		assertEquals(1, body.getContent().size());
+		assertEquals("Test Movie", body.getContent().get(0).getTitle());
+		verify(movieService).getCurrentlyShowingPage(pageable);
 	}
 
 	@Test
@@ -138,18 +122,16 @@ class MovieControllerTest {
 		MovieCardResponse movie2 = createMovieCardResponse(2L, "Current Movie 2", "current-2", MovieStatus.CURRENT);
 		List<MovieCardResponse> movies = List.of(movie1, movie2);
 
-		when(movieService.getCurrentlyShowingMovies()).thenReturn(movies);
+		when(movieService.getCurrentlyShowing(10)).thenReturn(movies);
 
 		ResponseEntity<List<MovieCardResponse>> response = movieController.getCurrentlyShowingMovies();
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
-
-		List<MovieCardResponse> responseBody = response.getBody();
-		assertNotNull(responseBody);
-
-		assertEquals(2, responseBody.size());
-		assertEquals("Current Movie 1", responseBody.get(0).getTitle());
-		verify(movieService).getCurrentlyShowingMovies();
+		List<MovieCardResponse> body = response.getBody();
+		assertNotNull(body);
+		assertEquals(2, body.size());
+		assertEquals("Current Movie 1", body.get(0).getTitle());
+		verify(movieService).getCurrentlyShowing(10);
 	}
 
 	@Test
@@ -158,119 +140,104 @@ class MovieControllerTest {
 		MovieCardResponse movie2 = createMovieCardResponse(2L, "Upcoming Movie 2", "upcoming-2", MovieStatus.UPCOMING);
 		List<MovieCardResponse> movies = List.of(movie1, movie2);
 
-		when(movieService.getUpcomingMovies()).thenReturn(movies);
+		when(movieService.getUpcoming(10)).thenReturn(movies);
 
 		ResponseEntity<List<MovieCardResponse>> response = movieController.getUpcomingMovies();
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
-
-		List<MovieCardResponse> responseBody = response.getBody();
-		assertNotNull(responseBody);
-
-		assertEquals(2, responseBody.size());
-		assertEquals("Upcoming Movie 1", responseBody.get(0).getTitle());
-		verify(movieService).getUpcomingMovies();
+		List<MovieCardResponse> body = response.getBody();
+		assertNotNull(body);
+		assertEquals(2, body.size());
+		assertEquals("Upcoming Movie 1", body.get(0).getTitle());
+		verify(movieService).getUpcoming(10);
 	}
 
 	@Test
-	void findCurrentlyShowingPaginated_ShouldReturnPage() {
+	void getCurrentlyShowingPage_ShouldReturnPage() {
+		Pageable pageable = PageRequest.of(0, 12);
 		MovieCardResponse movie = createMovieCardResponse(1L, "Current Movie", "current-1", MovieStatus.CURRENT);
-		Page<MovieCardResponse> page = new PageImpl<>(List.of(movie), PageRequest.of(0, 12), 1);
-		PageResponse<MovieCardResponse> pageResponse = PageResponse.of(page, movieCard -> movieCard);
+		Page<MovieCardResponse> page = new PageImpl<>(List.of(movie), pageable, 1);
 
-		when(movieService.findCurrentlyShowingPaginated(any(Pageable.class), eq(false))).thenReturn(pageResponse);
+		when(movieService.getCurrentlyShowingPage(pageable)).thenReturn(page);
 
-		ResponseEntity<PageResponse<MovieCardResponse>> response = movieController
-				.findCurrentlyShowingPaginated(PageRequest.of(0, 12));
+		ResponseEntity<Page<MovieCardResponse>> response = movieController.getCurrentlyShowingPage(pageable);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
-
-		PageResponse<MovieCardResponse> responseBody = response.getBody();
-		assertNotNull(responseBody);
-
-		assertEquals(1, responseBody.getContent().size());
-		assertEquals("Current Movie", responseBody.getContent().get(0).getTitle());
-		verify(movieService).findCurrentlyShowingPaginated(any(Pageable.class), eq(false));
+		Page<MovieCardResponse> body = response.getBody();
+		assertNotNull(body);
+		assertEquals(1, body.getContent().size());
+		assertEquals("Current Movie", body.getContent().get(0).getTitle());
+		verify(movieService).getCurrentlyShowingPage(pageable);
 	}
 
 	@Test
-	void findUpcomingPaginated_ShouldReturnPage() {
+	void getUpcomingPage_ShouldReturnPage() {
+		Pageable pageable = PageRequest.of(0, 12);
 		MovieCardResponse movie = createMovieCardResponse(1L, "Upcoming Movie", "upcoming-1", MovieStatus.UPCOMING);
-		Page<MovieCardResponse> page = new PageImpl<>(List.of(movie), PageRequest.of(0, 12), 1);
-		PageResponse<MovieCardResponse> pageResponse = PageResponse.of(page, movieCard -> movieCard);
+		Page<MovieCardResponse> page = new PageImpl<>(List.of(movie), pageable, 1);
 
-		when(movieService.findUpcomingPaginated(any(Pageable.class), eq(false))).thenReturn(pageResponse);
+		when(movieService.getUpcomingPage(pageable)).thenReturn(page);
 
-		ResponseEntity<PageResponse<MovieCardResponse>> response = movieController
-				.findUpcomingPaginated(PageRequest.of(0, 12));
+		ResponseEntity<Page<MovieCardResponse>> response = movieController.getUpcomingPage(pageable);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
-
-		PageResponse<MovieCardResponse> responseBody = response.getBody();
-		assertNotNull(responseBody);
-
-		assertEquals(1, responseBody.getContent().size());
-		assertEquals("Upcoming Movie", responseBody.getContent().get(0).getTitle());
-		verify(movieService).findUpcomingPaginated(any(Pageable.class), eq(false));
+		Page<MovieCardResponse> body = response.getBody();
+		assertNotNull(body);
+		assertEquals(1, body.getContent().size());
+		assertEquals("Upcoming Movie", body.getContent().get(0).getTitle());
+		verify(movieService).getUpcomingPage(pageable);
 	}
 
 	@Test
-	void getNewReleases_ShouldReturnMovies() {
-		MovieCardResponse movie = createMovieCardResponse(1L, "New Release", "new-release", MovieStatus.CURRENT);
-		List<MovieCardResponse> movies = List.of(movie);
+	void findFilteredMovies_ShouldSearchByTitle_WhenSearchProvided() {
+		Pageable pageable = PageRequest.of(0, 20);
+		String search = "Test";
+		MovieCardResponse movie = createMovieCardResponse(1L, "Test Movie", "test-movie", MovieStatus.CURRENT);
+		Page<MovieCardResponse> page = new PageImpl<>(List.of(movie), pageable, 1);
 
-		when(movieService.getNewReleases(5)).thenReturn(movies);
+		when(movieService.searchMoviesByTitle(search, null, pageable)).thenReturn(page);
 
-		ResponseEntity<List<MovieCardResponse>> response = movieController.getNewReleases(5);
+		ResponseEntity<Page<MovieCardResponse>> response = movieController.findFilteredMovies(search, null, pageable);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
-
-		List<MovieCardResponse> responseBody = response.getBody();
-		assertNotNull(responseBody);
-
-		assertEquals(1, responseBody.size());
-		assertEquals("New Release", responseBody.get(0).getTitle());
-		verify(movieService).getNewReleases(5);
+		Page<MovieCardResponse> body = response.getBody();
+		assertNotNull(body);
+		assertEquals(1, body.getContent().size());
+		verify(movieService).searchMoviesByTitle(search, null, pageable);
 	}
 
 	@Test
-	void getEndingSoon_ShouldReturnMovies() {
-		MovieCardResponse movie = createMovieCardResponse(1L, "Ending Soon", "ending-soon", MovieStatus.CURRENT);
-		List<MovieCardResponse> movies = List.of(movie);
+	void findFilteredMovies_ShouldFilterByStatus_WhenStatusProvided() {
+		Pageable pageable = PageRequest.of(0, 20);
+		MovieStatus status = MovieStatus.CURRENT;
+		MovieCardResponse movie = createMovieCardResponse(1L, "Current Movie", "current-1", status);
+		Page<MovieCardResponse> page = new PageImpl<>(List.of(movie), pageable, 1);
 
-		when(movieService.getEndingSoon(5)).thenReturn(movies);
+		when(movieService.getMoviesByStatus(status, pageable)).thenReturn(page);
 
-		ResponseEntity<List<MovieCardResponse>> response = movieController.getEndingSoon(5);
+		ResponseEntity<Page<MovieCardResponse>> response = movieController.findFilteredMovies(null, status, pageable);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
-
-		List<MovieCardResponse> responseBody = response.getBody();
-		assertNotNull(responseBody);
-
-		assertEquals(1, responseBody.size());
-		assertEquals("Ending Soon", responseBody.get(0).getTitle());
-		verify(movieService).getEndingSoon(5);
+		Page<MovieCardResponse> body = response.getBody();
+		assertNotNull(body);
+		assertEquals(1, body.getContent().size());
+		verify(movieService).getMoviesByStatus(status, pageable);
 	}
 
 	@Test
-	void findFilteredMovies_ShouldReturnFilteredMovies() {
-		MovieCardResponse movie = createMovieCardResponse(1L, "Filtered Movie", "filtered-1", MovieStatus.CURRENT);
-		Page<MovieCardResponse> page = new PageImpl<>(List.of(movie), PageRequest.of(0, 20), 1);
-		PageResponse<MovieCardResponse> pageResponse = PageResponse.of(page, movieCard -> movieCard);
+	void findFilteredMovies_ShouldReturnCurrentlyShowing_WhenNoFilters() {
+		Pageable pageable = PageRequest.of(0, 20);
+		MovieCardResponse movie = createMovieCardResponse(1L, "Current Movie", "current-1", MovieStatus.CURRENT);
+		Page<MovieCardResponse> page = new PageImpl<>(List.of(movie), pageable, 1);
 
-		when(movieService.findFilteredMovies(any(MovieFilter.class))).thenReturn(pageResponse);
+		when(movieService.getCurrentlyShowingPage(pageable)).thenReturn(page);
 
-		ResponseEntity<PageResponse<MovieCardResponse>> response = movieController.findFilteredMovies("test",
-				MovieStatus.CURRENT, AgeRating.PEGI_12, 90, 180, LocalDate.now().minusMonths(1), LocalDate.now(),
-				"title", SortDirection.ASC, 0, 20);
+		ResponseEntity<Page<MovieCardResponse>> response = movieController.findFilteredMovies(null, null, pageable);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
-
-		PageResponse<MovieCardResponse> responseBody = response.getBody();
-		assertNotNull(responseBody);
-
-		assertEquals(1, responseBody.getContent().size());
-		assertEquals("Filtered Movie", responseBody.getContent().get(0).getTitle());
-		verify(movieService).findFilteredMovies(any(MovieFilter.class));
+		Page<MovieCardResponse> body = response.getBody();
+		assertNotNull(body);
+		assertEquals(1, body.getContent().size());
+		verify(movieService).getCurrentlyShowingPage(pageable);
 	}
 }

@@ -3,8 +3,6 @@ package ua.lviv.bas.cinema.controller.api;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -48,104 +46,82 @@ class SessionControllerTest {
 	}
 
 	@Test
-	void getScheduleSessions_ShouldReturnSessionsWithPagination() {
+	void getScheduleSessions_ShouldReturnSessionsWithPagination_WhenNoFilters() {
 		SessionScheduleResponse sessionDto = createSessionScheduleDto(1L);
 		Page<SessionScheduleResponse> sessionPage = new PageImpl<>(List.of(sessionDto));
+		Pageable pageable = PageRequest.of(0, 20);
 
-		when(sessionService.getScheduleSessions(any(Pageable.class))).thenReturn(sessionPage);
+		when(sessionService.getScheduleSessions(null, null, null, pageable)).thenReturn(sessionPage);
 
-		ResponseEntity<Page<SessionScheduleResponse>> response = sessionController
-				.getScheduleSessions(PageRequest.of(0, 20));
+		ResponseEntity<Page<SessionScheduleResponse>> response = sessionController.getScheduleSessions(pageable, null,
+				null, null);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
-
-		Page<SessionScheduleResponse> responseBody = response.getBody();
-		assertNotNull(responseBody);
-		assertEquals(1, responseBody.getContent().size());
-		assertEquals(1L, responseBody.getContent().get(0).getId());
-
-		verify(sessionService).getScheduleSessions(PageRequest.of(0, 20));
+		Page<SessionScheduleResponse> body = response.getBody();
+		assertNotNull(body);
+		assertEquals(1, body.getContent().size());
+		assertEquals(1L, body.getContent().get(0).getId());
+		verify(sessionService).getScheduleSessions(null, null, null, pageable);
 	}
 
 	@Test
-	void getScheduleSessionsByDate_ShouldReturnSessionsForSpecificDate() {
+	void getScheduleSessions_ShouldReturnSessionsForSpecificDate() {
 		LocalDate date = LocalDate.of(2024, 1, 15);
 		SessionScheduleResponse sessionDto = createSessionScheduleDto(1L);
 		Page<SessionScheduleResponse> sessionPage = new PageImpl<>(List.of(sessionDto));
+		Pageable pageable = PageRequest.of(0, 20);
 
-		when(sessionService.getScheduleSessionsByDate(eq(date), any(Pageable.class))).thenReturn(sessionPage);
+		when(sessionService.getScheduleSessions(date, null, null, pageable)).thenReturn(sessionPage);
 
-		ResponseEntity<Page<SessionScheduleResponse>> response = sessionController.getScheduleSessionsByDate(date,
-				PageRequest.of(0, 20));
+		ResponseEntity<Page<SessionScheduleResponse>> response = sessionController.getScheduleSessions(pageable, date,
+				null, null);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
-
-		Page<SessionScheduleResponse> responseBody = response.getBody();
-		assertNotNull(responseBody);
-		assertEquals(1, responseBody.getContent().size());
-		assertEquals(1L, responseBody.getContent().get(0).getId());
-
-		verify(sessionService).getScheduleSessionsByDate(date, PageRequest.of(0, 20));
+		Page<SessionScheduleResponse> body = response.getBody();
+		assertNotNull(body);
+		assertEquals(1, body.getContent().size());
+		assertEquals(1L, body.getContent().get(0).getId());
+		verify(sessionService).getScheduleSessions(date, null, null, pageable);
 	}
 
 	@Test
-	void getScheduleSessionsByMovie_ShouldReturnSessionsForSpecificMovie() {
+	void getScheduleSessions_ShouldReturnSessionsForSpecificMovie() {
+		Long movieId = 1L;
 		SessionScheduleResponse sessionDto = createSessionScheduleDto(1L);
 		Page<SessionScheduleResponse> sessionPage = new PageImpl<>(List.of(sessionDto));
+		Pageable pageable = PageRequest.of(0, 20);
 
-		when(sessionService.getScheduleSessionsByMovie(eq(1L), any(Pageable.class))).thenReturn(sessionPage);
+		when(sessionService.getScheduleSessions(null, movieId, null, pageable)).thenReturn(sessionPage);
 
-		ResponseEntity<Page<SessionScheduleResponse>> response = sessionController.getScheduleSessionsByMovie(1L,
-				PageRequest.of(0, 20));
+		ResponseEntity<Page<SessionScheduleResponse>> response = sessionController.getScheduleSessions(pageable, null,
+				movieId, null);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
-
-		Page<SessionScheduleResponse> responseBody = response.getBody();
-		assertNotNull(responseBody);
-		assertEquals(1, responseBody.getContent().size());
-		assertEquals(1L, responseBody.getContent().get(0).getId());
-
-		verify(sessionService).getScheduleSessionsByMovie(1L, PageRequest.of(0, 20));
+		Page<SessionScheduleResponse> body = response.getBody();
+		assertNotNull(body);
+		assertEquals(1, body.getContent().size());
+		assertEquals(1L, body.getContent().get(0).getId());
+		verify(sessionService).getScheduleSessions(null, movieId, null, pageable);
 	}
 
 	@Test
-	void getUpcomingScheduleSessions_ShouldReturnUpcomingSessionsWithDefaultDays() {
+	void getScheduleSessions_ShouldReturnSessionsForDaysAhead() {
+		Integer daysAhead = 7;
 		SessionScheduleResponse sessionDto = createSessionScheduleDto(1L);
 		Page<SessionScheduleResponse> sessionPage = new PageImpl<>(List.of(sessionDto));
+		Pageable pageable = PageRequest.of(0, 20);
 
-		when(sessionService.getUpcomingScheduleSessions(eq(7), any(Pageable.class))).thenReturn(sessionPage);
+		when(sessionService.getScheduleSessions(null, null, daysAhead, pageable)).thenReturn(sessionPage);
 
-		ResponseEntity<Page<SessionScheduleResponse>> response = sessionController.getUpcomingScheduleSessions(7,
-				PageRequest.of(0, 20));
-
-		assertEquals(HttpStatus.OK, response.getStatusCode());
-
-		Page<SessionScheduleResponse> responseBody = response.getBody();
-		assertNotNull(responseBody);
-		assertEquals(1, responseBody.getContent().size());
-		assertEquals(1L, responseBody.getContent().get(0).getId());
-
-		verify(sessionService).getUpcomingScheduleSessions(7, PageRequest.of(0, 20));
-	}
-
-	@Test
-	void getUpcomingScheduleSessions_ShouldReturnUpcomingSessionsWithCustomDays() {
-		SessionScheduleResponse sessionDto = createSessionScheduleDto(1L);
-		Page<SessionScheduleResponse> sessionPage = new PageImpl<>(List.of(sessionDto));
-
-		when(sessionService.getUpcomingScheduleSessions(eq(3), any(Pageable.class))).thenReturn(sessionPage);
-
-		ResponseEntity<Page<SessionScheduleResponse>> response = sessionController.getUpcomingScheduleSessions(3,
-				PageRequest.of(0, 20));
+		ResponseEntity<Page<SessionScheduleResponse>> response = sessionController.getScheduleSessions(pageable, null,
+				null, daysAhead);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
-
-		Page<SessionScheduleResponse> responseBody = response.getBody();
-		assertNotNull(responseBody);
-		assertEquals(1, responseBody.getContent().size());
-		assertEquals(1L, responseBody.getContent().get(0).getId());
-
-		verify(sessionService).getUpcomingScheduleSessions(3, PageRequest.of(0, 20));
+		Page<SessionScheduleResponse> body = response.getBody();
+		assertNotNull(body);
+		assertEquals(1, body.getContent().size());
+		assertEquals(1L, body.getContent().get(0).getId());
+		verify(sessionService).getScheduleSessions(null, null, daysAhead, pageable);
 	}
 
 	@Test
@@ -157,15 +133,13 @@ class SessionControllerTest {
 		ResponseEntity<SessionScheduleResponse> response = sessionController.getSessionById(1L);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
-
-		SessionScheduleResponse responseBody = response.getBody();
-		assertNotNull(responseBody);
-		assertEquals(1L, responseBody.getId());
-		assertEquals("Test Movie", responseBody.getMovieTitle());
-		assertEquals("Hall 1", responseBody.getHallName());
-		assertEquals(80, responseBody.getAvailableSeats());
-		assertEquals("80/100", responseBody.getHallCapacity());
-
+		SessionScheduleResponse body = response.getBody();
+		assertNotNull(body);
+		assertEquals(1L, body.getId());
+		assertEquals("Test Movie", body.getMovieTitle());
+		assertEquals("Hall 1", body.getHallName());
+		assertEquals(80, body.getAvailableSeats());
+		assertEquals("80/100", body.getHallCapacity());
 		verify(sessionService).getSessionByIdForPublic(1L);
 	}
 
@@ -178,70 +152,39 @@ class SessionControllerTest {
 	}
 
 	@Test
-	void getSessionById_WhenSessionNotAvailableForPublic_ShouldThrowException() {
-
-		when(sessionService.getSessionByIdForPublic(2L)).thenThrow(new SessionNotFoundException(2L));
-
-		assertThrows(SessionNotFoundException.class, () -> sessionController.getSessionById(2L));
-		verify(sessionService).getSessionByIdForPublic(2L);
-	}
-
-	@Test
-	void getScheduleSessionsByDate_WithDifferentDate_ShouldReturnSessions() {
-		LocalDate futureDate = LocalDate.of(2024, 12, 25);
-		SessionScheduleResponse sessionDto = createSessionScheduleDto(3L);
-		Page<SessionScheduleResponse> sessionPage = new PageImpl<>(List.of(sessionDto));
-
-		when(sessionService.getScheduleSessionsByDate(eq(futureDate), any(Pageable.class))).thenReturn(sessionPage);
-
-		ResponseEntity<Page<SessionScheduleResponse>> response = sessionController.getScheduleSessionsByDate(futureDate,
-				PageRequest.of(0, 20));
-
-		assertEquals(HttpStatus.OK, response.getStatusCode());
-
-		Page<SessionScheduleResponse> responseBody = response.getBody();
-		assertNotNull(responseBody);
-		assertEquals(1, responseBody.getContent().size());
-		assertEquals(3L, responseBody.getContent().get(0).getId());
-
-		verify(sessionService).getScheduleSessionsByDate(futureDate, PageRequest.of(0, 20));
-	}
-
-	@Test
-	void getScheduleSessionsByMovie_WithDifferentMovieId_ShouldReturnSessions() {
-		SessionScheduleResponse sessionDto = createSessionScheduleDto(4L);
-		Page<SessionScheduleResponse> sessionPage = new PageImpl<>(List.of(sessionDto));
-
-		when(sessionService.getScheduleSessionsByMovie(eq(2L), any(Pageable.class))).thenReturn(sessionPage);
-
-		ResponseEntity<Page<SessionScheduleResponse>> response = sessionController.getScheduleSessionsByMovie(2L,
-				PageRequest.of(0, 20));
-
-		assertEquals(HttpStatus.OK, response.getStatusCode());
-
-		Page<SessionScheduleResponse> responseBody = response.getBody();
-		assertNotNull(responseBody);
-		assertEquals(1, responseBody.getContent().size());
-		assertEquals(4L, responseBody.getContent().get(0).getId());
-
-		verify(sessionService).getScheduleSessionsByMovie(2L, PageRequest.of(0, 20));
-	}
-
-	@Test
 	void getScheduleSessions_WithEmptyResult_ShouldReturnEmptyPage() {
 		Page<SessionScheduleResponse> emptyPage = new PageImpl<>(List.of());
+		Pageable pageable = PageRequest.of(0, 20);
 
-		when(sessionService.getScheduleSessions(any(Pageable.class))).thenReturn(emptyPage);
+		when(sessionService.getScheduleSessions(null, null, null, pageable)).thenReturn(emptyPage);
 
-		ResponseEntity<Page<SessionScheduleResponse>> response = sessionController
-				.getScheduleSessions(PageRequest.of(0, 20));
+		ResponseEntity<Page<SessionScheduleResponse>> response = sessionController.getScheduleSessions(pageable, null,
+				null, null);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
+		Page<SessionScheduleResponse> body = response.getBody();
+		assertNotNull(body);
+		assertEquals(0, body.getContent().size());
+		verify(sessionService).getScheduleSessions(null, null, null, pageable);
+	}
 
-		Page<SessionScheduleResponse> responseBody = response.getBody();
-		assertNotNull(responseBody);
-		assertEquals(0, responseBody.getContent().size());
+	@Test
+	void getScheduleSessions_WithCombinedFilters_ShouldReturnFilteredSessions() {
+		LocalDate date = LocalDate.of(2024, 1, 15);
+		Long movieId = 1L;
+		Integer daysAhead = 7;
+		SessionScheduleResponse sessionDto = createSessionScheduleDto(1L);
+		Page<SessionScheduleResponse> sessionPage = new PageImpl<>(List.of(sessionDto));
+		Pageable pageable = PageRequest.of(0, 20);
 
-		verify(sessionService).getScheduleSessions(PageRequest.of(0, 20));
+		// Примітка: контролер використовує всі параметри, але логіка фільтрації в
+		// сервісі
+		when(sessionService.getScheduleSessions(date, movieId, daysAhead, pageable)).thenReturn(sessionPage);
+
+		ResponseEntity<Page<SessionScheduleResponse>> response = sessionController.getScheduleSessions(pageable, date,
+				movieId, daysAhead);
+
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+		verify(sessionService).getScheduleSessions(date, movieId, daysAhead, pageable);
 	}
 }

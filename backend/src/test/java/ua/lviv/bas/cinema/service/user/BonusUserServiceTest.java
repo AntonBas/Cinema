@@ -33,7 +33,6 @@ import ua.lviv.bas.cinema.domain.enums.VerificationStatus;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusBalanceResponse;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusCardResponse;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusTransactionResponse;
-import ua.lviv.bas.cinema.dto.shared.PageResponse;
 import ua.lviv.bas.cinema.exception.domain.bonus.BonusCardNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.bonus.BonusRuleNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.bonus.InsufficientPointsException;
@@ -189,7 +188,7 @@ class BonusUserServiceTest {
 		when(bonusTransactionRepository.findByBonusCardOrderByCreatedAtDesc(card, pageable)).thenReturn(page);
 		when(bonusMapper.toBonusTransactionResponse(transaction)).thenReturn(response);
 
-		PageResponse<BonusTransactionResponse> result = bonusUserService.getUserTransactions(userId, pageable);
+		Page<BonusTransactionResponse> result = bonusUserService.getUserTransactions(userId, pageable);
 
 		assertThat(result.getContent()).hasSize(1);
 		assertThat(result.getContent().get(0)).isSameAs(response);

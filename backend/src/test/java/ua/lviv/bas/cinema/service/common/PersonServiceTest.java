@@ -20,14 +20,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 
-import com.querydsl.core.types.Predicate;
-
 import ua.lviv.bas.cinema.domain.Person;
 import ua.lviv.bas.cinema.domain.enums.PersonRole;
 import ua.lviv.bas.cinema.dto.movie.request.PersonRequest;
 import ua.lviv.bas.cinema.dto.movie.request.QuickCreatePersonRequest;
 import ua.lviv.bas.cinema.dto.movie.response.PersonResponse;
-import ua.lviv.bas.cinema.dto.shared.PageResponse;
 import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
 import ua.lviv.bas.cinema.exception.domain.cinema.PersonHasMoviesException;
 import ua.lviv.bas.cinema.exception.domain.cinema.PersonNotFoundException;
@@ -197,7 +194,9 @@ class PersonServiceTest {
 		person.setId(1L);
 
 		when(personRepository.findById(1L)).thenReturn(Optional.of(person));
-		when(movieRepository.exists(any(Predicate.class))).thenReturn(false);
+		when(movieRepository.countByActorsId(1L)).thenReturn(0L);
+		when(movieRepository.countByDirectorsId(1L)).thenReturn(0L);
+		when(movieRepository.countByScreenwritersId(1L)).thenReturn(0L);
 
 		personService.deletePerson(1L);
 		verify(personRepository).delete(person);
@@ -214,15 +213,19 @@ class PersonServiceTest {
 	void deletePerson_WhenUsedInMovies_ShouldThrowException() {
 		Person person = new Person();
 		person.setId(1L);
+		person.setName("Test Person");
 
 		when(personRepository.findById(1L)).thenReturn(Optional.of(person));
-		when(movieRepository.exists(any(Predicate.class))).thenReturn(true);
+		when(movieRepository.countByActorsId(1L)).thenReturn(1L);
+		when(movieRepository.countByDirectorsId(1L)).thenReturn(0L);
+		when(movieRepository.countByScreenwritersId(1L)).thenReturn(0L);
+
 		assertThatThrownBy(() -> personService.deletePerson(1L)).isInstanceOf(PersonHasMoviesException.class);
 		verify(personRepository, never()).delete(any());
 	}
 
 	@Test
-	void getPersonsByRole_ShouldReturnPageResponse() {
+	void getPersonsByRole_ShouldReturnPage() {
 		PersonRole role = PersonRole.ACTOR;
 		Pageable pageable = Pageable.ofSize(10);
 		Person person = new Person();
@@ -234,7 +237,7 @@ class PersonServiceTest {
 		when(personRepository.findByRole(role, pageable)).thenReturn(personPage);
 		when(personMapper.toDto(person)).thenReturn(dto);
 
-		PageResponse<PersonResponse> result = personService.getPersonsByRole(role, pageable);
+		Page<PersonResponse> result = personService.getPersonsByRole(role, pageable);
 		assertThat(result).isNotNull();
 		assertThat(result.getContent()).hasSize(1);
 	}
@@ -250,10 +253,10 @@ class PersonServiceTest {
 		PersonResponse dto = new PersonResponse();
 		dto.setId(1L);
 
-		when(personRepository.findAll(any(Predicate.class), any(Pageable.class))).thenReturn(personPage);
+		when(personRepository.searchByNameAndRole(query, role, pageable)).thenReturn(personPage);
 		when(personMapper.toDto(person)).thenReturn(dto);
 
-		PageResponse<PersonResponse> result = personService.searchPersons(query, role, pageable);
+		Page<PersonResponse> result = personService.searchPersons(query, role, pageable);
 		assertThat(result).isNotNull();
 		assertThat(result.getContent()).hasSize(1);
 	}
@@ -264,9 +267,9 @@ class PersonServiceTest {
 		Pageable pageable = Pageable.ofSize(10);
 		Page<Person> personPage = new PageImpl<>(List.of(new Person()));
 
-		when(personRepository.findAll(any(Predicate.class), any(Pageable.class))).thenReturn(personPage);
+		when(personRepository.searchByNameAndRole(null, role, pageable)).thenReturn(personPage);
 		personService.searchPersons(null, role, pageable);
-		verify(personRepository).findAll(any(Predicate.class), any(Pageable.class));
+		verify(personRepository).searchByNameAndRole(null, role, pageable);
 	}
 
 	@Test
@@ -275,9 +278,9 @@ class PersonServiceTest {
 		Pageable pageable = Pageable.ofSize(10);
 		Page<Person> personPage = new PageImpl<>(List.of(new Person()));
 
-		when(personRepository.findAll(any(Predicate.class), any(Pageable.class))).thenReturn(personPage);
+		when(personRepository.searchByNameAndRole(null, role, pageable)).thenReturn(personPage);
 		personService.searchPersons("", role, pageable);
-		verify(personRepository).findAll(any(Predicate.class), any(Pageable.class));
+		verify(personRepository).searchByNameAndRole(null, role, pageable);
 	}
 
 	@Test
@@ -315,6 +318,27 @@ class PersonServiceTest {
 	}
 
 	@Test
+	void getPersons_ShouldReturnAllPersons() {
+		Person person1 = new Person();
+		person1.setId(1L);
+		Person person2 = new Person();
+		person2.setId(2L);
+		List<Person> persons = List.of(person1, person2);
+
+		PersonResponse dto1 = new PersonResponse();
+		dto1.setId(1L);
+		PersonResponse dto2 = new PersonResponse();
+		dto2.setId(2L);
+		List<PersonResponse> dtos = List.of(dto1, dto2);
+
+		when(personRepository.findAll()).thenReturn(persons);
+		when(personMapper.toDtoList(persons)).thenReturn(dtos);
+
+		List<PersonResponse> result = personService.getPersons();
+		assertThat(result).hasSize(2);
+	}
+
+	@Test
 	void existsById_ShouldReturnTrueWhenExists() {
 		when(personRepository.existsById(1L)).thenReturn(true);
 		boolean result = personService.existsById(1L);
@@ -349,5 +373,32 @@ class PersonServiceTest {
 		when(personRepository.countByRole(role)).thenReturn(5L);
 		long result = personService.countByRole(role);
 		assertThat(result).isEqualTo(5L);
+	}
+
+	@Test
+	void deletePerson_WhenUsedAsActorDirectorAndScreenwriter_ShouldThrowException() {
+		Person person = new Person();
+		person.setId(1L);
+		person.setName("Test Person");
+
+		when(personRepository.findById(1L)).thenReturn(Optional.of(person));
+		when(movieRepository.countByActorsId(1L)).thenReturn(2L);
+		when(movieRepository.countByDirectorsId(1L)).thenReturn(1L);
+		when(movieRepository.countByScreenwritersId(1L)).thenReturn(3L);
+
+		assertThatThrownBy(() -> personService.deletePerson(1L)).isInstanceOf(PersonHasMoviesException.class);
+		verify(personRepository, never()).delete(any());
+	}
+
+	@Test
+	void searchPersons_WithSpacesInQuery_ShouldTrim() {
+		String query = "  Anton  ";
+		PersonRole role = PersonRole.ACTOR;
+		Pageable pageable = Pageable.ofSize(10);
+		Page<Person> personPage = new PageImpl<>(List.of(new Person()));
+
+		when(personRepository.searchByNameAndRole("Anton", role, pageable)).thenReturn(personPage);
+		personService.searchPersons(query, role, pageable);
+		verify(personRepository).searchByNameAndRole("Anton", role, pageable);
 	}
 }

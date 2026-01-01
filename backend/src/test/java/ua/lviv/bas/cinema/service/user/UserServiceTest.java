@@ -39,16 +39,12 @@ import ua.lviv.bas.cinema.mapper.UserMapper;
 import ua.lviv.bas.cinema.repository.UserRepository;
 import ua.lviv.bas.cinema.service.common.EmailTokenGeneratorService;
 import ua.lviv.bas.cinema.service.common.EmailTokenService;
-import ua.lviv.bas.cinema.service.query.UserQueryService;
 
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
 
 	@Mock
 	private UserRepository userRepository;
-
-	@Mock
-	private UserQueryService userQueryService;
 
 	@Mock
 	private PasswordEncoder passwordEncoder;
@@ -98,7 +94,7 @@ class UserServiceTest {
 				.firstName(request.getFirstName()).lastName(request.getLastName()).city(request.getCity())
 				.dateOfBirth(request.getDateOfBirth()).password(ENCODED_PASSWORD).build();
 
-		when(userQueryService.existsByEmail(request.getEmail())).thenReturn(false);
+		when(userRepository.existsByEmail(request.getEmail())).thenReturn(false);
 		when(userMapper.toEntity(request)).thenReturn(newUser);
 		when(passwordEncoder.encode(request.getPassword())).thenReturn(ENCODED_PASSWORD);
 		when(userRepository.save(any(User.class))).thenReturn(savedUser);
@@ -129,7 +125,7 @@ class UserServiceTest {
 		request.setPassword("password123");
 		request.setPasswordConfirm("password123");
 
-		when(userQueryService.existsByEmail(request.getEmail())).thenReturn(true);
+		when(userRepository.existsByEmail(request.getEmail())).thenReturn(true);
 
 		assertThrows(EmailAlreadyExistsException.class, () -> userService.registerUser(request));
 	}
@@ -172,7 +168,7 @@ class UserServiceTest {
 		String newEmail = "anton.new@example.com";
 
 		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(testUser));
-		when(userQueryService.existsByEmail(newEmail)).thenReturn(false);
+		when(userRepository.existsByEmail(newEmail)).thenReturn(false);
 
 		userService.requestEmailChange(USER_ID, newEmail);
 
@@ -191,7 +187,7 @@ class UserServiceTest {
 		String newEmail = "existing@example.com";
 
 		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(testUser));
-		when(userQueryService.existsByEmail(newEmail)).thenReturn(true);
+		when(userRepository.existsByEmail(newEmail)).thenReturn(true);
 
 		assertThrows(EmailAlreadyExistsException.class, () -> userService.requestEmailChange(USER_ID, newEmail));
 	}
@@ -323,42 +319,42 @@ class UserServiceTest {
 	}
 
 	@Test
-	void findById_Success() {
+	void getById_Success() {
 		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(testUser));
 
-		User result = userService.findById(USER_ID);
+		User result = userService.getById(USER_ID);
 
 		assertEquals(testUser, result);
 	}
 
 	@Test
-	void findById_UserNotFound() {
+	void getById_UserNotFound() {
 		Long nonExistentId = 999L;
 		when(userRepository.findById(nonExistentId)).thenReturn(Optional.empty());
 
-		assertThrows(UserNotFoundException.class, () -> userService.findById(nonExistentId));
+		assertThrows(UserNotFoundException.class, () -> userService.getById(nonExistentId));
 	}
 
 	@Test
-	void findByEmail_Success() {
-		when(userQueryService.findByEmail(USER_EMAIL)).thenReturn(Optional.of(testUser));
+	void getByEmail_Success() {
+		when(userRepository.findByEmail(USER_EMAIL)).thenReturn(Optional.of(testUser));
 
-		User result = userService.findByEmail(USER_EMAIL);
+		User result = userService.getByEmail(USER_EMAIL);
 
 		assertEquals(testUser, result);
 	}
 
 	@Test
-	void findByEmail_UserNotFound() {
+	void getByEmail_UserNotFound() {
 		String nonExistentEmail = "nonexistent@example.com";
-		when(userQueryService.findByEmail(nonExistentEmail)).thenReturn(Optional.empty());
+		when(userRepository.findByEmail(nonExistentEmail)).thenReturn(Optional.empty());
 
-		assertThrows(UserNotFoundException.class, () -> userService.findByEmail(nonExistentEmail));
+		assertThrows(UserNotFoundException.class, () -> userService.getByEmail(nonExistentEmail));
 	}
 
 	@Test
 	void existsByEmail_True() {
-		when(userQueryService.existsByEmail(USER_EMAIL)).thenReturn(true);
+		when(userRepository.existsByEmail(USER_EMAIL)).thenReturn(true);
 
 		boolean result = userService.existsByEmail(USER_EMAIL);
 
@@ -368,7 +364,7 @@ class UserServiceTest {
 	@Test
 	void existsByEmail_False() {
 		String nonExistentEmail = "nonexistent@example.com";
-		when(userQueryService.existsByEmail(nonExistentEmail)).thenReturn(false);
+		when(userRepository.existsByEmail(nonExistentEmail)).thenReturn(false);
 
 		boolean result = userService.existsByEmail(nonExistentEmail);
 
@@ -392,5 +388,37 @@ class UserServiceTest {
 		boolean result = userService.existsById(nonExistentId);
 
 		assertFalse(result);
+	}
+
+	@Test
+	void updateUser_BirthDateNotChanged_VerificationNotRevoked() {
+		UserUpdateRequest request = new UserUpdateRequest();
+		request.setFirstName("Updated");
+		request.setDateOfBirth(LocalDate.of(1990, 1, 1));
+
+		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(testUser));
+		when(userRepository.save(any(User.class))).thenReturn(testUser);
+		when(userMapper.toProfileResponse(testUser)).thenReturn(new UserProfileResponse());
+
+		userService.updateUser(USER_ID, request);
+
+		assertEquals(VerificationStatus.VERIFIED, testUser.getVerificationStatus());
+		assertNotNull(testUser.getVerifiedAt());
+	}
+
+	@Test
+	void updateUser_NoBirthDateChange() {
+		UserUpdateRequest request = new UserUpdateRequest();
+		request.setFirstName("Updated");
+		request.setDateOfBirth(null);
+
+		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(testUser));
+		when(userRepository.save(any(User.class))).thenReturn(testUser);
+		when(userMapper.toProfileResponse(testUser)).thenReturn(new UserProfileResponse());
+
+		userService.updateUser(USER_ID, request);
+
+		assertEquals(VerificationStatus.VERIFIED, testUser.getVerificationStatus());
+		assertNotNull(testUser.getVerifiedAt());
 	}
 }

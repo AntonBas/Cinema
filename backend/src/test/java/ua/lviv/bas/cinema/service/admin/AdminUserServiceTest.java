@@ -41,16 +41,12 @@ import ua.lviv.bas.cinema.exception.domain.user.SelfRoleChangeException;
 import ua.lviv.bas.cinema.exception.domain.user.UserNotFoundException;
 import ua.lviv.bas.cinema.mapper.UserMapper;
 import ua.lviv.bas.cinema.repository.UserRepository;
-import ua.lviv.bas.cinema.service.query.UserQueryService;
 
 @ExtendWith(MockitoExtension.class)
 class AdminUserServiceTest {
 
 	@Mock
 	private UserRepository userRepository;
-
-	@Mock
-	private UserQueryService userQueryService;
 
 	@Mock
 	private UserMapper userMapper;
@@ -102,14 +98,14 @@ class AdminUserServiceTest {
 		when(securityContext.getAuthentication()).thenReturn(authentication);
 		when(authentication.getName()).thenReturn(ADMIN_EMAIL);
 		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(testUser));
-		when(userRepository.countByUserRole(UserRole.ROLE_ADMIN)).thenReturn(2L);
+		when(userRepository.countByUserRoleAndEnabledTrue(UserRole.ROLE_ADMIN)).thenReturn(2L);
 		when(userRepository.save(testUser)).thenReturn(testUser);
 
 		adminUserService.updateUserRole(USER_ID, UserRole.ROLE_USER);
 
 		assertEquals(UserRole.ROLE_USER, testUser.getUserRole());
 		verify(userRepository).save(testUser);
-		verify(userRepository).countByUserRole(UserRole.ROLE_ADMIN);
+		verify(userRepository).countByUserRoleAndEnabledTrue(UserRole.ROLE_ADMIN);
 	}
 
 	@Test
@@ -121,21 +117,22 @@ class AdminUserServiceTest {
 		assertThrows(SelfRoleChangeException.class,
 				() -> adminUserService.updateUserRole(USER_ID, UserRole.ROLE_ADMIN));
 		verify(userRepository, never()).save(any());
-		verify(userRepository, never()).countByUserRole(any());
+		verify(userRepository, never()).countByUserRoleAndEnabledTrue(any());
 	}
 
 	@Test
 	void updateUserRole_LastAdmin_Demotion() {
-		User lastAdmin = User.builder().id(3L).email("last.admin@example.com").userRole(UserRole.ROLE_ADMIN).build();
+		User lastAdmin = User.builder().id(3L).email("last.admin@example.com").userRole(UserRole.ROLE_ADMIN)
+				.enabled(true).build();
 
 		when(securityContext.getAuthentication()).thenReturn(authentication);
 		when(authentication.getName()).thenReturn(ADMIN_EMAIL);
 		when(userRepository.findById(3L)).thenReturn(Optional.of(lastAdmin));
-		when(userRepository.countByUserRole(UserRole.ROLE_ADMIN)).thenReturn(1L);
+		when(userRepository.countByUserRoleAndEnabledTrue(UserRole.ROLE_ADMIN)).thenReturn(1L);
 
 		assertThrows(LastAdminException.class, () -> adminUserService.updateUserRole(3L, UserRole.ROLE_USER));
 		verify(userRepository, never()).save(any());
-		verify(userRepository).countByUserRole(UserRole.ROLE_ADMIN);
+		verify(userRepository).countByUserRoleAndEnabledTrue(UserRole.ROLE_ADMIN);
 	}
 
 	@Test
@@ -143,14 +140,14 @@ class AdminUserServiceTest {
 		when(securityContext.getAuthentication()).thenReturn(authentication);
 		when(authentication.getName()).thenReturn(ADMIN_EMAIL);
 		when(userRepository.findById(ANOTHER_ADMIN_ID)).thenReturn(Optional.of(anotherAdmin));
-		when(userRepository.countByUserRole(UserRole.ROLE_ADMIN)).thenReturn(3L);
+		when(userRepository.countByUserRoleAndEnabledTrue(UserRole.ROLE_ADMIN)).thenReturn(3L);
 		when(userRepository.save(anotherAdmin)).thenReturn(anotherAdmin);
 
 		adminUserService.updateUserRole(ANOTHER_ADMIN_ID, UserRole.ROLE_USER);
 
 		assertEquals(UserRole.ROLE_USER, anotherAdmin.getUserRole());
 		verify(userRepository).save(anotherAdmin);
-		verify(userRepository).countByUserRole(UserRole.ROLE_ADMIN);
+		verify(userRepository).countByUserRoleAndEnabledTrue(UserRole.ROLE_ADMIN);
 	}
 
 	@Test
@@ -221,40 +218,40 @@ class AdminUserServiceTest {
 		Pageable pageable = Pageable.unpaged();
 		Page<User> userPage = new PageImpl<>(Arrays.asList(testUser));
 
-		when(userQueryService.findFilteredUsers(search, role, enabled, pageable)).thenReturn(userPage);
+		when(userRepository.findFilteredUsers(search, role, enabled, pageable)).thenReturn(userPage);
 		when(userMapper.toAdminListDto(testUser)).thenReturn(new AdminUserListResponse());
 
 		Page<AdminUserListResponse> result = adminUserService.findAllForAdmin(search, role, enabled, pageable);
 
 		assertNotNull(result);
 		assertEquals(1, result.getTotalElements());
-		verify(userQueryService).findFilteredUsers(search, role, enabled, pageable);
+		verify(userRepository).findFilteredUsers(search, role, enabled, pageable);
 		verify(userMapper).toAdminListDto(testUser);
 	}
 
 	@Test
 	void findAllActiveAdmins_Success() {
 		List<User> admins = Arrays.asList(adminUser, anotherAdmin);
-		when(userQueryService.findAllActiveByRole(UserRole.ROLE_ADMIN)).thenReturn(admins);
+		when(userRepository.findByUserRoleAndEnabledTrue(UserRole.ROLE_ADMIN)).thenReturn(admins);
 
 		List<User> result = adminUserService.findAllActiveAdmins();
 
 		assertNotNull(result);
 		assertEquals(2, result.size());
 		assertEquals(UserRole.ROLE_ADMIN, result.get(0).getUserRole());
-		verify(userQueryService).findAllActiveByRole(UserRole.ROLE_ADMIN);
+		verify(userRepository).findByUserRoleAndEnabledTrue(UserRole.ROLE_ADMIN);
 	}
 
 	@Test
 	void findAllActiveUsers_Success() {
 		List<User> users = Arrays.asList(testUser, adminUser, anotherAdmin);
-		when(userQueryService.findAllActiveUsers()).thenReturn(users);
+		when(userRepository.findByEnabledTrue()).thenReturn(users);
 
 		List<User> result = adminUserService.findAllActiveUsers();
 
 		assertNotNull(result);
 		assertEquals(3, result.size());
-		verify(userQueryService).findAllActiveUsers();
+		verify(userRepository).findByEnabledTrue();
 	}
 
 	@Test
@@ -322,5 +319,46 @@ class AdminUserServiceTest {
 
 		assertFalse(adminUser.isEnabled());
 		verify(userRepository).save(adminUser);
+	}
+
+	@Test
+	void countAdmins_Success() {
+		when(userRepository.countByUserRoleAndEnabledTrue(UserRole.ROLE_ADMIN)).thenReturn(3L);
+
+		long result = adminUserService.countAdmins();
+
+		assertEquals(3L, result);
+		verify(userRepository).countByUserRoleAndEnabledTrue(UserRole.ROLE_ADMIN);
+	}
+
+	@Test
+	void findBirthdayUsersToday_Success() {
+		int day = LocalDateTime.now().getDayOfMonth();
+		int month = LocalDateTime.now().getMonthValue();
+		List<User> birthdayUsers = Arrays.asList(testUser);
+
+		when(userRepository.findVerifiedUsersWithBirthday(VerificationStatus.VERIFIED, day, month))
+				.thenReturn(birthdayUsers);
+
+		List<User> result = adminUserService.findBirthdayUsersToday();
+
+		assertNotNull(result);
+		assertEquals(1, result.size());
+		assertEquals(testUser, result.get(0));
+		verify(userRepository).findVerifiedUsersWithBirthday(VerificationStatus.VERIFIED, day, month);
+	}
+
+	@Test
+	void updateUserRole_WhenUserIsNotAdmin() {
+		when(securityContext.getAuthentication()).thenReturn(authentication);
+		when(authentication.getName()).thenReturn(ADMIN_EMAIL);
+		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(testUser));
+		when(userRepository.save(testUser)).thenReturn(testUser);
+
+		adminUserService.updateUserRole(USER_ID, UserRole.ROLE_ADMIN);
+
+		assertEquals(UserRole.ROLE_ADMIN, testUser.getUserRole());
+		verify(userRepository).save(testUser);
+		verify(userRepository, never()).countByUserRoleAndEnabledTrue(any());
 	}
 }

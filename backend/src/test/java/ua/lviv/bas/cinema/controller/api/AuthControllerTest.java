@@ -104,10 +104,11 @@ public class AuthControllerTest {
 		Authentication authentication = new UsernamePasswordAuthenticationToken(loginRequest.getEmail(),
 				loginRequest.getPassword());
 
-		when(authenticationManager.authenticate(org.mockito.ArgumentMatchers.any(Authentication.class)))
+		when(authenticationManager
+				.authenticate(org.mockito.ArgumentMatchers.any(UsernamePasswordAuthenticationToken.class)))
 				.thenReturn(authentication);
 		when(jwtTokenProvider.generateToken(authentication)).thenReturn("jwtToken");
-		when(userService.findByEmail(loginRequest.getEmail())).thenReturn(user);
+		when(userService.getByEmail(loginRequest.getEmail())).thenReturn(user);
 		when(userService.getUserById(user.getId())).thenReturn(userResponse);
 
 		mockMvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
@@ -115,8 +116,9 @@ public class AuthControllerTest {
 				.andExpect(jsonPath("$.token").value("jwtToken")).andExpect(jsonPath("$.tokenType").value("Bearer"))
 				.andExpect(jsonPath("$.user.email").value("anton@example.com"));
 
-		verify(authenticationManager).authenticate(org.mockito.ArgumentMatchers.any(Authentication.class));
-		verify(userService).findByEmail(loginRequest.getEmail());
+		verify(authenticationManager)
+				.authenticate(org.mockito.ArgumentMatchers.any(UsernamePasswordAuthenticationToken.class));
+		verify(userService).getByEmail(loginRequest.getEmail());
 		verify(userService).getUserById(user.getId());
 	}
 
@@ -204,7 +206,7 @@ public class AuthControllerTest {
 	}
 
 	@Test
-	void confirmEmailChange_ShouldReturnBadRequest_WhenTokenAlreadyConfirmed() throws Exception {
+	void confirmEmailChange_ShouldReturnConflict_WhenTokenAlreadyConfirmed() throws Exception {
 		when(userService.confirmEmailChange("confirmedToken"))
 				.thenThrow(new TokenAlreadyConfirmedException("Token already confirmed"));
 

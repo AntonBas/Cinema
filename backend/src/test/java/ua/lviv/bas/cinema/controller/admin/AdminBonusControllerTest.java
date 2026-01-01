@@ -3,6 +3,7 @@ package ua.lviv.bas.cinema.controller.admin;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -25,7 +26,6 @@ import ua.lviv.bas.cinema.domain.enums.BonusTransactionType;
 import ua.lviv.bas.cinema.dto.bonus.request.BonusRulesRequest;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusRulesResponse;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusTransactionResponse;
-import ua.lviv.bas.cinema.dto.shared.PageResponse;
 import ua.lviv.bas.cinema.exception.domain.bonus.BonusRuleNotFoundException;
 import ua.lviv.bas.cinema.service.admin.BonusAdminService;
 
@@ -74,7 +74,7 @@ class AdminBonusControllerTest {
 		List<BonusRulesResponse> response = adminBonusController.getAllBonusRules();
 
 		assertNotNull(response);
-		assertEquals(0, response.size());
+		assertTrue(response.isEmpty());
 	}
 
 	@Test
@@ -94,7 +94,7 @@ class AdminBonusControllerTest {
 		assertEquals(1L, response.getId());
 		assertEquals("WELCOME_BONUS", response.getBonusType());
 		assertEquals(150, response.getPoints());
-		assertEquals(true, response.getActive());
+		assertTrue(response.getActive());
 	}
 
 	@Test
@@ -126,6 +126,7 @@ class AdminBonusControllerTest {
 		assertEquals(1L, result.getId());
 		assertEquals("WELCOME_BONUS", result.getBonusType());
 		assertEquals(200, result.getPoints());
+		assertTrue(result.getActive());
 	}
 
 	@Test
@@ -148,6 +149,7 @@ class AdminBonusControllerTest {
 		assertEquals(1L, result.getId());
 		assertEquals("PURCHASE_BONUS", result.getBonusType());
 		assertEquals(new BigDecimal("0.1"), result.getMoneyRatio());
+		assertTrue(result.getActive());
 	}
 
 	@Test
@@ -178,6 +180,7 @@ class AdminBonusControllerTest {
 		assertEquals(1L, result.getId());
 		assertEquals("WELCOME_BONUS", result.getBonusType());
 		assertEquals(150, result.getPoints());
+		assertTrue(result.getActive());
 	}
 
 	@Test
@@ -203,11 +206,10 @@ class AdminBonusControllerTest {
 		transaction.setNewBalance(125);
 
 		Page<BonusTransactionResponse> page = new PageImpl<>(List.of(transaction), pageable, 1);
-		PageResponse<BonusTransactionResponse> pageResponse = PageResponse.of(page);
 
-		when(bonusAdminService.getUserTransactions(eq(userId), any(Pageable.class))).thenReturn(pageResponse);
+		when(bonusAdminService.getUserTransactions(eq(userId), any(Pageable.class))).thenReturn(page);
 
-		PageResponse<BonusTransactionResponse> result = adminBonusController.getUserTransactions(userId, pageable);
+		Page<BonusTransactionResponse> result = adminBonusController.getUserTransactions(userId, pageable);
 
 		assertNotNull(result);
 		assertEquals(1, result.getContent().size());
@@ -238,11 +240,10 @@ class AdminBonusControllerTest {
 		transaction2.setNewBalance(175);
 
 		Page<BonusTransactionResponse> page = new PageImpl<>(List.of(transaction1, transaction2), pageable, 2);
-		PageResponse<BonusTransactionResponse> pageResponse = PageResponse.of(page);
 
-		when(bonusAdminService.getAllTransactions(any(Pageable.class))).thenReturn(pageResponse);
+		when(bonusAdminService.getAllTransactions(any(Pageable.class))).thenReturn(page);
 
-		PageResponse<BonusTransactionResponse> result = adminBonusController.getAllTransactions(pageable);
+		Page<BonusTransactionResponse> result = adminBonusController.getAllTransactions(pageable);
 
 		assertNotNull(result);
 		assertEquals(2, result.getContent().size());
@@ -264,12 +265,11 @@ class AdminBonusControllerTest {
 		transaction.setNewBalance(150);
 
 		Page<BonusTransactionResponse> page = new PageImpl<>(List.of(transaction), pageable, 1);
-		PageResponse<BonusTransactionResponse> pageResponse = PageResponse.of(page);
 
 		when(bonusAdminService.getTransactionsByType(eq(BonusTransactionType.WELCOME_BONUS), any(Pageable.class)))
-				.thenReturn(pageResponse);
+				.thenReturn(page);
 
-		PageResponse<BonusTransactionResponse> result = adminBonusController
+		Page<BonusTransactionResponse> result = adminBonusController
 				.getTransactionsByType(BonusTransactionType.WELCOME_BONUS, pageable);
 
 		assertNotNull(result);

@@ -8,7 +8,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -26,13 +25,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-
-import com.querydsl.core.types.Predicate;
+import org.springframework.data.domain.Sort;
 
 import ua.lviv.bas.cinema.domain.Genre;
 import ua.lviv.bas.cinema.dto.movie.request.GenreRequest;
 import ua.lviv.bas.cinema.dto.movie.response.GenreResponse;
-import ua.lviv.bas.cinema.dto.shared.PageResponse;
 import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
 import ua.lviv.bas.cinema.exception.domain.cinema.GenreNotFoundException;
 import ua.lviv.bas.cinema.mapper.GenreMapper;
@@ -238,7 +235,7 @@ class GenreServiceTest {
 	}
 
 	@Test
-	void getAllGenres_ShouldReturnListOfGenres() {
+	void getGenres_ShouldReturnListOfGenres() {
 		Genre genre1 = new Genre();
 		genre1.setId(1L);
 		genre1.setName("Action");
@@ -262,7 +259,7 @@ class GenreServiceTest {
 		when(genreRepository.findAll()).thenReturn(genres);
 		when(genreMapper.toDtoList(genres)).thenReturn(dtos);
 
-		List<GenreResponse> result = genreService.getAllGenres();
+		List<GenreResponse> result = genreService.getGenres();
 
 		assertNotNull(result);
 		assertEquals(2, result.size());
@@ -273,16 +270,51 @@ class GenreServiceTest {
 	}
 
 	@Test
-	void getAllGenres_WhenNoGenres_ShouldReturnEmptyList() {
+	void getGenres_WhenNoGenres_ShouldReturnEmptyList() {
 		when(genreRepository.findAll()).thenReturn(List.of());
 		when(genreMapper.toDtoList(List.of())).thenReturn(List.of());
 
-		List<GenreResponse> result = genreService.getAllGenres();
+		List<GenreResponse> result = genreService.getGenres();
 
 		assertNotNull(result);
 		assertTrue(result.isEmpty());
 		verify(genreRepository).findAll();
 		verify(genreMapper).toDtoList(List.of());
+	}
+
+	@Test
+	void getGenresSorted_ShouldReturnSortedListOfGenres() {
+		Genre genre1 = new Genre();
+		genre1.setId(1L);
+		genre1.setName("Action");
+
+		Genre genre2 = new Genre();
+		genre2.setId(2L);
+		genre2.setName("Comedy");
+
+		List<Genre> genres = List.of(genre1, genre2);
+
+		GenreResponse dto1 = new GenreResponse();
+		dto1.setId(1L);
+		dto1.setName("Action");
+
+		GenreResponse dto2 = new GenreResponse();
+		dto2.setId(2L);
+		dto2.setName("Comedy");
+
+		List<GenreResponse> dtos = List.of(dto1, dto2);
+
+		when(genreRepository.findAll(Sort.by("name").ascending())).thenReturn(genres);
+		when(genreMapper.toDtoList(genres)).thenReturn(dtos);
+
+		List<GenreResponse> result = genreService.getGenresSorted();
+
+		assertNotNull(result);
+		assertEquals(2, result.size());
+		assertEquals("Action", result.get(0).getName());
+		assertEquals("Comedy", result.get(1).getName());
+		verify(genreRepository).findAll(Sort.by("name").ascending());
+		verify(genreMapper).toDtoList(genres);
 	}
 
 	@Test
@@ -332,6 +364,16 @@ class GenreServiceTest {
 	}
 
 	@Test
+	void getGenresByIds_WithNullList_ShouldReturnEmptyList() {
+		List<GenreResponse> result = genreService.getGenresByIds(null);
+
+		assertNotNull(result);
+		assertTrue(result.isEmpty());
+		verify(genreRepository, never()).findAllById(anyList());
+		verify(genreMapper, never()).toDtoList(anyList());
+	}
+
+	@Test
 	void searchGenres_WithQuery_ShouldReturnFilteredPage() {
 		Genre genre = new Genre();
 		genre.setId(1L);
@@ -344,18 +386,18 @@ class GenreServiceTest {
 		Pageable pageable = PageRequest.of(0, 10);
 		Page<Genre> page = new PageImpl<>(List.of(genre), pageable, 1);
 
-		when(genreRepository.findAll(any(Predicate.class), eq(pageable))).thenReturn(page);
+		when(genreRepository.findByNameContainingIgnoreCase("Act", pageable)).thenReturn(page);
 		when(genreMapper.toDto(genre)).thenReturn(dto);
 
-		PageResponse<GenreResponse> result = genreService.searchGenres("Act", pageable);
+		Page<GenreResponse> result = genreService.searchGenres("Act", pageable);
 
 		assertNotNull(result);
 		assertEquals(1, result.getContent().size());
 		assertEquals("Action", result.getContent().get(0).getName());
-		assertEquals(0, result.getCurrentPage());
+		assertEquals(0, result.getNumber());
 		assertEquals(1, result.getTotalElements());
-		assertEquals(10, result.getPageSize());
-		verify(genreRepository).findAll(any(Predicate.class), eq(pageable));
+		assertEquals(10, result.getSize());
+		verify(genreRepository).findByNameContainingIgnoreCase("Act", pageable);
 	}
 
 	@Test
@@ -371,15 +413,15 @@ class GenreServiceTest {
 		Pageable pageable = PageRequest.of(0, 10);
 		Page<Genre> page = new PageImpl<>(List.of(genre), pageable, 1);
 
-		when(genreRepository.findAll(any(Predicate.class), eq(pageable))).thenReturn(page);
+		when(genreRepository.findAll(pageable)).thenReturn(page);
 		when(genreMapper.toDto(genre)).thenReturn(dto);
 
-		PageResponse<GenreResponse> result = genreService.searchGenres("", pageable);
+		Page<GenreResponse> result = genreService.searchGenres("", pageable);
 
 		assertNotNull(result);
 		assertEquals(1, result.getContent().size());
 		assertEquals("Comedy", result.getContent().get(0).getName());
-		verify(genreRepository).findAll(any(Predicate.class), eq(pageable));
+		verify(genreRepository).findAll(pageable);
 	}
 
 	@Test
@@ -395,15 +437,15 @@ class GenreServiceTest {
 		Pageable pageable = PageRequest.of(0, 10);
 		Page<Genre> page = new PageImpl<>(List.of(genre), pageable, 1);
 
-		when(genreRepository.findAll(any(Predicate.class), eq(pageable))).thenReturn(page);
+		when(genreRepository.findAll(pageable)).thenReturn(page);
 		when(genreMapper.toDto(genre)).thenReturn(dto);
 
-		PageResponse<GenreResponse> result = genreService.searchGenres(null, pageable);
+		Page<GenreResponse> result = genreService.searchGenres(null, pageable);
 
 		assertNotNull(result);
 		assertEquals(1, result.getContent().size());
 		assertEquals("Drama", result.getContent().get(0).getName());
-		verify(genreRepository).findAll(any(Predicate.class), eq(pageable));
+		verify(genreRepository).findAll(pageable);
 	}
 
 	@Test
@@ -419,18 +461,18 @@ class GenreServiceTest {
 		Pageable pageable = PageRequest.of(0, 10);
 		Page<Genre> page = new PageImpl<>(List.of(genre), pageable, 1);
 
-		when(genreRepository.findAll(any(Predicate.class), eq(pageable))).thenReturn(page);
+		when(genreRepository.findByNameContainingIgnoreCase("science", pageable)).thenReturn(page);
 		when(genreMapper.toDto(genre)).thenReturn(dto);
 
-		PageResponse<GenreResponse> result = genreService.searchGenres("  science  ", pageable);
+		Page<GenreResponse> result = genreService.searchGenres("  science  ", pageable);
 
 		assertNotNull(result);
 		assertEquals(1, result.getContent().size());
-		verify(genreRepository).findAll(any(Predicate.class), eq(pageable));
+		verify(genreRepository).findByNameContainingIgnoreCase("science", pageable);
 	}
 
 	@Test
-	void getAllGenresPaginated_ShouldReturnPagedGenres() {
+	void getGenresPage_ShouldReturnPagedGenres() {
 		Genre genre1 = new Genre();
 		genre1.setId(1L);
 		genre1.setName("Action");
@@ -454,14 +496,14 @@ class GenreServiceTest {
 		when(genreMapper.toDto(genre1)).thenReturn(dto1);
 		when(genreMapper.toDto(genre2)).thenReturn(dto2);
 
-		PageResponse<GenreResponse> result = genreService.getAllGenresPaginated(pageable);
+		Page<GenreResponse> result = genreService.getGenresPage(pageable);
 
 		assertNotNull(result);
 		assertEquals(2, result.getContent().size());
 		assertEquals("Action", result.getContent().get(0).getName());
 		assertEquals("Comedy", result.getContent().get(1).getName());
-		assertEquals(0, result.getCurrentPage());
-		assertEquals(10, result.getPageSize());
+		assertEquals(0, result.getNumber());
+		assertEquals(10, result.getSize());
 		assertEquals(2, result.getTotalElements());
 		verify(genreRepository).findAll(pageable);
 	}
