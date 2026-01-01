@@ -10,22 +10,23 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.Session;
 import ua.lviv.bas.cinema.domain.enums.CinemaSessionStatus;
-import ua.lviv.bas.cinema.service.query.SessionQueryService;
+import ua.lviv.bas.cinema.repository.SessionRepository;
+import ua.lviv.bas.cinema.service.common.SessionService;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class SessionStatusScheduler {
 
-	private final SessionQueryService sessionQueryService;
-	private final ua.lviv.bas.cinema.repository.SessionRepository sessionRepository;
+	private final SessionService sessionService;
+	private final SessionRepository sessionRepository;
 
 	@Scheduled(cron = "0 */5 * * * *")
 	@Transactional
 	public void updateSessionStatuses() {
 		log.info("Starting scheduled session status update");
 
-		List<Session> sessionsToStart = sessionQueryService.findSessionsToStart();
+		List<Session> sessionsToStart = sessionService.findSessionsToStart();
 		if (!sessionsToStart.isEmpty()) {
 			sessionsToStart.forEach(session -> {
 				session.setStatus(CinemaSessionStatus.ONGOING);
@@ -34,7 +35,7 @@ public class SessionStatusScheduler {
 			sessionRepository.saveAll(sessionsToStart);
 		}
 
-		List<Session> sessionsToComplete = sessionQueryService.findSessionsToComplete();
+		List<Session> sessionsToComplete = sessionService.findSessionsToComplete();
 		if (!sessionsToComplete.isEmpty()) {
 			sessionsToComplete.forEach(session -> {
 				session.setStatus(CinemaSessionStatus.COMPLETED);
