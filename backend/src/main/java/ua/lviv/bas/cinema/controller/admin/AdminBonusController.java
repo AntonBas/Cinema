@@ -2,6 +2,7 @@ package ua.lviv.bas.cinema.controller.admin;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
@@ -25,7 +26,6 @@ import ua.lviv.bas.cinema.domain.enums.BonusTransactionType;
 import ua.lviv.bas.cinema.dto.bonus.request.BonusRulesRequest;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusRulesResponse;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusTransactionResponse;
-import ua.lviv.bas.cinema.dto.shared.PageResponse;
 import ua.lviv.bas.cinema.service.admin.BonusAdminService;
 
 @RestController
@@ -78,7 +78,7 @@ public class AdminBonusController {
 	@ApiResponse(responseCode = "200", description = "User transactions retrieved successfully")
 	@GetMapping("/users/{userId}/transactions")
 	@ResponseStatus(HttpStatus.OK)
-	public PageResponse<BonusTransactionResponse> getUserTransactions(@PathVariable Long userId,
+	public Page<BonusTransactionResponse> getUserTransactions(@PathVariable Long userId,
 			@PageableDefault(size = 20) Pageable pageable) {
 		return bonusAdminService.getUserTransactions(userId, pageable);
 	}
@@ -87,7 +87,7 @@ public class AdminBonusController {
 	@ApiResponse(responseCode = "200", description = "All transactions retrieved successfully")
 	@GetMapping("/transactions")
 	@ResponseStatus(HttpStatus.OK)
-	public PageResponse<BonusTransactionResponse> getAllTransactions(@PageableDefault(size = 20) Pageable pageable) {
+	public Page<BonusTransactionResponse> getAllTransactions(@PageableDefault(size = 20) Pageable pageable) {
 		return bonusAdminService.getAllTransactions(pageable);
 	}
 
@@ -95,7 +95,7 @@ public class AdminBonusController {
 	@ApiResponse(responseCode = "200", description = "Transactions retrieved successfully")
 	@GetMapping("/transactions/type/{type}")
 	@ResponseStatus(HttpStatus.OK)
-	public PageResponse<BonusTransactionResponse> getTransactionsByType(@PathVariable BonusTransactionType type,
+	public Page<BonusTransactionResponse> getTransactionsByType(@PathVariable BonusTransactionType type,
 			@PageableDefault(size = 20) Pageable pageable) {
 		return bonusAdminService.getTransactionsByType(type, pageable);
 	}

@@ -22,7 +22,6 @@ import ua.lviv.bas.cinema.domain.enums.VerificationStatus;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusBalanceResponse;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusCardResponse;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusTransactionResponse;
-import ua.lviv.bas.cinema.dto.shared.PageResponse;
 import ua.lviv.bas.cinema.exception.domain.bonus.BonusCardNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.bonus.BonusRuleNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.bonus.InsufficientPointsException;
@@ -59,13 +58,14 @@ public class BonusUserService {
 	}
 
 	@Transactional(readOnly = true)
-	public PageResponse<BonusTransactionResponse> getUserTransactions(Long userId, Pageable pageable) {
-		int pageNumber = pageable.getPageNumber();
-		int pageSize = pageable.getPageSize();
-		log.debug("Getting transactions for user: {}, page: {}, size: {}", userId, pageNumber, pageSize);
+	public Page<BonusTransactionResponse> getUserTransactions(Long userId, Pageable pageable) {
+		log.debug("Getting transactions for user: {}, page: {}, size: {}", userId, pageable.getPageNumber(),
+				pageable.getPageSize());
+
 		BonusCard card = findBonusCardByUserId(userId);
 		Page<BonusTransaction> page = bonusTransactionRepository.findByBonusCardOrderByCreatedAtDesc(card, pageable);
-		return PageResponse.of(page, bonusMapper::toBonusTransactionResponse);
+
+		return page.map(bonusMapper::toBonusTransactionResponse);
 	}
 
 	@Transactional

@@ -8,18 +8,14 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.querydsl.core.BooleanBuilder;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.BonusRules;
 import ua.lviv.bas.cinema.domain.BonusTransaction;
-import ua.lviv.bas.cinema.domain.QBonusTransaction;
 import ua.lviv.bas.cinema.domain.enums.BonusTransactionType;
 import ua.lviv.bas.cinema.dto.bonus.request.BonusRulesRequest;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusRulesResponse;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusTransactionResponse;
-import ua.lviv.bas.cinema.dto.shared.PageResponse;
 import ua.lviv.bas.cinema.exception.domain.bonus.BonusRuleNotFoundException;
 import ua.lviv.bas.cinema.mapper.BonusMapper;
 import ua.lviv.bas.cinema.repository.BonusRulesRepository;
@@ -68,36 +64,33 @@ public class BonusAdminService {
 	}
 
 	@Transactional(readOnly = true)
-	public PageResponse<BonusTransactionResponse> getUserTransactions(Long userId, Pageable pageable) {
-		int pageNumber = pageable.getPageNumber();
-		int pageSize = pageable.getPageSize();
-		log.debug("Admin: getting transactions for user: {}, page: {}, size: {}", userId, pageNumber, pageSize);
+	public Page<BonusTransactionResponse> getUserTransactions(Long userId, Pageable pageable) {
+		log.debug("Admin: getting transactions for user: {}, page: {}, size: {}", userId, pageable.getPageNumber(),
+				pageable.getPageSize());
 
 		Page<BonusTransaction> page = bonusTransactionRepository.findByBonusCardUserIdOrderByCreatedAtDesc(userId,
 				pageable);
-		return PageResponse.of(page, bonusMapper::toBonusTransactionResponse);
+
+		return page.map(bonusMapper::toBonusTransactionResponse);
 	}
 
 	@Transactional(readOnly = true)
-	public PageResponse<BonusTransactionResponse> getAllTransactions(Pageable pageable) {
-		int pageNumber = pageable.getPageNumber();
-		int pageSize = pageable.getPageSize();
-		log.debug("Admin: getting all transactions, page: {}, size: {}", pageNumber, pageSize);
+	public Page<BonusTransactionResponse> getAllTransactions(Pageable pageable) {
+		log.debug("Admin: getting all transactions, page: {}, size: {}", pageable.getPageNumber(),
+				pageable.getPageSize());
 
 		Page<BonusTransaction> page = bonusTransactionRepository.findAll(pageable);
-		return PageResponse.of(page, bonusMapper::toBonusTransactionResponse);
+		return page.map(bonusMapper::toBonusTransactionResponse);
 	}
 
 	@Transactional(readOnly = true)
-	public PageResponse<BonusTransactionResponse> getTransactionsByType(BonusTransactionType type, Pageable pageable) {
+	public Page<BonusTransactionResponse> getTransactionsByType(BonusTransactionType type, Pageable pageable) {
 		log.debug("Admin: getting transactions by type: {}, page: {}, size: {}", type, pageable.getPageNumber(),
 				pageable.getPageSize());
 
-		BooleanBuilder predicate = new BooleanBuilder();
-		predicate.and(QBonusTransaction.bonusTransaction.type.eq(type));
+		Page<BonusTransaction> page = bonusTransactionRepository.findByTypeOrderByCreatedAtDesc(type, pageable);
 
-		Page<BonusTransaction> page = bonusTransactionRepository.findAll(predicate, pageable);
-		return PageResponse.of(page, bonusMapper::toBonusTransactionResponse);
+		return page.map(bonusMapper::toBonusTransactionResponse);
 	}
 
 	@Transactional

@@ -1,5 +1,6 @@
 package ua.lviv.bas.cinema.controller.api;
 
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
@@ -18,7 +19,6 @@ import lombok.RequiredArgsConstructor;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusBalanceResponse;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusCardResponse;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusTransactionResponse;
-import ua.lviv.bas.cinema.dto.shared.PageResponse;
 import ua.lviv.bas.cinema.service.user.BonusUserService;
 
 @RestController
@@ -55,7 +55,7 @@ public class BonusController {
 	@GetMapping("/my-transactions")
 	@ResponseStatus(HttpStatus.OK)
 	@PreAuthorize("isAuthenticated()")
-	public PageResponse<BonusTransactionResponse> getMyTransactions(@RequestAttribute("userId") Long userId,
+	public Page<BonusTransactionResponse> getMyTransactions(@RequestAttribute("userId") Long userId,
 			@PageableDefault(size = 20) Pageable pageable) {
 		return bonusUserService.getUserTransactions(userId, pageable);
 	}
