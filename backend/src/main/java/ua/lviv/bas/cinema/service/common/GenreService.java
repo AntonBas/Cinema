@@ -4,19 +4,16 @@ import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import com.querydsl.core.BooleanBuilder;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.Genre;
-import ua.lviv.bas.cinema.domain.QGenre;
 import ua.lviv.bas.cinema.dto.movie.request.GenreRequest;
 import ua.lviv.bas.cinema.dto.movie.response.GenreResponse;
-import ua.lviv.bas.cinema.dto.shared.PageResponse;
 import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
 import ua.lviv.bas.cinema.exception.domain.cinema.GenreNotFoundException;
 import ua.lviv.bas.cinema.mapper.GenreMapper;
@@ -82,9 +79,14 @@ public class GenreService {
 		log.debug("Genre deleted with ID: {}", id);
 	}
 
-	public List<GenreResponse> getAllGenres() {
+	public List<GenreResponse> getGenres() {
 		log.debug("Retrieving all genres");
 		return genreMapper.toDtoList(genreRepository.findAll());
+	}
+
+	public List<GenreResponse> getGenresSorted() {
+		log.debug("Retrieving all genres sorted by name");
+		return genreMapper.toDtoList(genreRepository.findAll(Sort.by("name").ascending()));
 	}
 
 	public List<GenreResponse> getGenresByIds(List<Long> ids) {
@@ -98,27 +100,22 @@ public class GenreService {
 		return genreMapper.toDtoList(genres);
 	}
 
-	public PageResponse<GenreResponse> searchGenres(String query, Pageable pageable) {
-		log.info("Searching genres: query='{}', pageable={}", query, pageable);
-
-		QGenre qGenre = QGenre.genre;
-		BooleanBuilder predicate = new BooleanBuilder();
-
-		if (StringUtils.hasText(query)) {
-			String searchQuery = query.trim().toLowerCase();
-			predicate.and(qGenre.name.toLowerCase().contains(searchQuery));
-		}
-
-		Page<Genre> genrePage = genreRepository.findAll(predicate, pageable);
-
-		log.debug("Found {} genres for query: '{}'", genrePage.getTotalElements(), query);
-		return PageResponse.of(genrePage, genreMapper::toDto);
+	public Page<GenreResponse> getGenresPage(Pageable pageable) {
+		log.debug("Retrieving genres with pagination");
+		Page<Genre> genrePage = genreRepository.findAll(pageable);
+		return genrePage.map(genreMapper::toDto);
 	}
 
-	public PageResponse<GenreResponse> getAllGenresPaginated(Pageable pageable) {
-		log.debug("Retrieving all genres with pagination");
-		Page<Genre> genrePage = genreRepository.findAll(pageable);
-		return PageResponse.of(genrePage, genreMapper::toDto);
+	public Page<GenreResponse> searchGenres(String query, Pageable pageable) {
+		log.info("Searching genres: query='{}'", query);
+
+		if (StringUtils.hasText(query)) {
+			String searchQuery = query.trim();
+			Page<Genre> genrePage = genreRepository.findByNameContainingIgnoreCase(searchQuery, pageable);
+			return genrePage.map(genreMapper::toDto);
+		}
+
+		return getGenresPage(pageable);
 	}
 
 	public boolean existsById(Long id) {
