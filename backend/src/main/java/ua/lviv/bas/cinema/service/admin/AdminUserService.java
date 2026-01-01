@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -24,7 +25,6 @@ import ua.lviv.bas.cinema.exception.domain.user.SelfRoleChangeException;
 import ua.lviv.bas.cinema.exception.domain.user.UserNotFoundException;
 import ua.lviv.bas.cinema.mapper.UserMapper;
 import ua.lviv.bas.cinema.repository.UserRepository;
-import ua.lviv.bas.cinema.service.query.UserQueryService;
 
 @Slf4j
 @Service
@@ -32,40 +32,35 @@ import ua.lviv.bas.cinema.service.query.UserQueryService;
 public class AdminUserService {
 
 	private final UserRepository userRepository;
-	private final UserQueryService userQueryService;
 	private final UserMapper userMapper;
 
 	@Transactional
-	@CacheEvict(value = "users", key = "#userId")
+	@CacheEvict(value = "users", allEntries = true)
 	public void updateUserRole(Long userId, UserRole newRole) {
 		User user = findById(userId);
 		UserRole oldRole = user.getUserRole();
 
-		String currentUserEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+		String currentUserEmail = getCurrentUserEmail();
 
-		if (user.getEmail().equals(currentUserEmail)) {
-			throw new SelfRoleChangeException(userId);
-		}
+		validateSelfOperation(user.getEmail(), currentUserEmail, () -> new SelfRoleChangeException(userId));
 
 		if (oldRole == UserRole.ROLE_ADMIN && newRole != UserRole.ROLE_ADMIN) {
-			long adminCount = userRepository.countByUserRole(UserRole.ROLE_ADMIN);
-			if (adminCount <= 1) {
-				throw new LastAdminException();
-			}
+			validateLastAdmin();
 		}
 
 		user.setUserRole(newRole);
 		userRepository.save(user);
+
 		log.info("User role updated for user {}: {} -> {}", userId, oldRole, newRole);
 	}
 
 	@Transactional
-	@CacheEvict(value = "users", key = "#userId")
+	@CacheEvict(value = "users", allEntries = true)
 	public void updateUserStatus(Long userId, boolean enabled) {
 		User user = findById(userId);
 		boolean oldStatus = user.isEnabled();
 
-		String currentUserEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+		String currentUserEmail = getCurrentUserEmail();
 
 		if (user.getEmail().equals(currentUserEmail) && !enabled) {
 			throw new SelfBlockException();
@@ -73,10 +68,12 @@ public class AdminUserService {
 
 		user.setEnabled(enabled);
 		userRepository.save(user);
+
 		log.info("User status updated for user {}: enabled = {} -> {}", userId, oldStatus, enabled);
 	}
 
 	@Transactional
+	@CacheEvict(value = { "users", "verifications" }, allEntries = true)
 	public UserResponse updateBirthDateVerification(Long userId, VerificationBirthDateRequest request) {
 		User user = findById(userId);
 		VerificationStatus oldStatus = user.getVerificationStatus();
@@ -93,29 +90,71 @@ public class AdminUserService {
 		}
 
 		User saved = userRepository.save(user);
+
 		log.info("Birth date verification updated for user {}: {} -> {}", userId, oldStatus, newStatus);
 
 		return userMapper.toDto(saved);
 	}
 
 	@Transactional(readOnly = true)
+	@Cacheable(value = "users", key = "#search + '-' + #role + '-' + #enabled + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
 	public Page<AdminUserListResponse> findAllForAdmin(String search, UserRole role, Boolean enabled,
 			Pageable pageable) {
-		return userQueryService.findFilteredUsers(search, role, enabled, pageable).map(userMapper::toAdminListDto);
+		return userRepository.findFilteredUsers(search, role, enabled, pageable).map(userMapper::toAdminListDto);
 	}
 
 	@Transactional(readOnly = true)
+	@Cacheable(value = "admins", key = "'active'")
 	public List<User> findAllActiveAdmins() {
-		return userQueryService.findAllActiveByRole(UserRole.ROLE_ADMIN);
+		return userRepository.findByUserRoleAndEnabledTrue(UserRole.ROLE_ADMIN);
 	}
 
 	@Transactional(readOnly = true)
+	@Cacheable(value = "users", key = "'active'")
 	public List<User> findAllActiveUsers() {
-		return userQueryService.findAllActiveUsers();
+		return userRepository.findByEnabledTrue();
 	}
 
 	@Transactional(readOnly = true)
+	@Cacheable(value = "users", key = "#id")
 	public User findById(Long id) {
 		return userRepository.findById(id).orElseThrow(() -> new UserNotFoundException(id));
+	}
+
+	@Transactional(readOnly = true)
+	public long countAdmins() {
+		return userRepository.countByUserRoleAndEnabledTrue(UserRole.ROLE_ADMIN);
+	}
+
+	@Transactional(readOnly = true)
+	public List<User> findBirthdayUsersToday() {
+		LocalDateTime today = LocalDateTime.now();
+		int day = today.getDayOfMonth();
+		int month = today.getMonthValue();
+
+		return userRepository.findVerifiedUsersWithBirthday(VerificationStatus.VERIFIED, day, month);
+	}
+
+	private String getCurrentUserEmail() {
+		return SecurityContextHolder.getContext().getAuthentication().getName();
+	}
+
+	private void validateSelfOperation(String userEmail, String currentUserEmail,
+			RuntimeExceptionSupplier exceptionSupplier) {
+		if (userEmail.equals(currentUserEmail)) {
+			throw exceptionSupplier.get();
+		}
+	}
+
+	private void validateLastAdmin() {
+		long adminCount = countAdmins();
+		if (adminCount <= 1) {
+			throw new LastAdminException();
+		}
+	}
+
+	@FunctionalInterface
+	private interface RuntimeExceptionSupplier {
+		RuntimeException get();
 	}
 }

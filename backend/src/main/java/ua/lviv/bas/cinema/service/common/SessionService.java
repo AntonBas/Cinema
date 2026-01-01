@@ -42,51 +42,6 @@ public class SessionService {
 	private final CinemaHallService cinemaHallService;
 
 	@Transactional
-	public void cancelSession(Long sessionId) {
-		Session session = sessionRepository.findById(sessionId)
-				.orElseThrow(() -> new SessionNotFoundException(sessionId));
-
-		if (session.getStatus() == CinemaSessionStatus.CANCELLED) {
-			return;
-		}
-
-		if (!CinemaSessionStatus.isActive(session.getStatus())) {
-			throw new IllegalStateException("Cannot cancel inactive session");
-		}
-
-		if (session.getStartTime().minusHours(1).isBefore(LocalDateTime.now())) {
-			throw new IllegalStateException("Cannot cancel session less than 1 hour before start");
-		}
-
-		session.setStatus(CinemaSessionStatus.CANCELLED);
-		sessionRepository.save(session);
-	}
-
-	@Transactional
-	public void reactivateSession(Long sessionId) {
-		Session session = sessionRepository.findById(sessionId)
-				.orElseThrow(() -> new SessionNotFoundException(sessionId));
-
-		if (session.getStatus() != CinemaSessionStatus.CANCELLED) {
-			throw new IllegalStateException("Only cancelled sessions can be reactivated");
-		}
-
-		if (session.getStartTime().isBefore(LocalDateTime.now())) {
-			throw new IllegalStateException("Cannot reactivate past session");
-		}
-
-		Movie movie = session.getMovie();
-		CinemaHall hall = session.getHall();
-
-		if (hasTimeConflict(hall.getId(), session.getStartTime(), movie.getDurationMinutes(), sessionId)) {
-			throw new SessionTimeConflictException(hall.getId(), session.getStartTime());
-		}
-
-		session.setStatus(CinemaSessionStatus.SCHEDULED);
-		sessionRepository.save(session);
-	}
-
-	@Transactional
 	public SessionAdminResponse createSession(SessionCreateRequest request) {
 		validateStartTime(request.getStartTime());
 		Movie movie = movieRepository.findById(request.getMovieId())
@@ -165,6 +120,51 @@ public class SessionService {
 			throw new SessionNotFoundException(id);
 		}
 		sessionRepository.deleteById(id);
+	}
+
+	@Transactional
+	public void cancelSession(Long sessionId) {
+		Session session = sessionRepository.findById(sessionId)
+				.orElseThrow(() -> new SessionNotFoundException(sessionId));
+
+		if (session.getStatus() == CinemaSessionStatus.CANCELLED) {
+			return;
+		}
+
+		if (!CinemaSessionStatus.isActive(session.getStatus())) {
+			throw new IllegalStateException("Cannot cancel inactive session");
+		}
+
+		if (session.getStartTime().minusHours(1).isBefore(LocalDateTime.now())) {
+			throw new IllegalStateException("Cannot cancel session less than 1 hour before start");
+		}
+
+		session.setStatus(CinemaSessionStatus.CANCELLED);
+		sessionRepository.save(session);
+	}
+
+	@Transactional
+	public void reactivateSession(Long sessionId) {
+		Session session = sessionRepository.findById(sessionId)
+				.orElseThrow(() -> new SessionNotFoundException(sessionId));
+
+		if (session.getStatus() != CinemaSessionStatus.CANCELLED) {
+			throw new IllegalStateException("Only cancelled sessions can be reactivated");
+		}
+
+		if (session.getStartTime().isBefore(LocalDateTime.now())) {
+			throw new IllegalStateException("Cannot reactivate past session");
+		}
+
+		Movie movie = session.getMovie();
+		CinemaHall hall = session.getHall();
+
+		if (hasTimeConflict(hall.getId(), session.getStartTime(), movie.getDurationMinutes(), sessionId)) {
+			throw new SessionTimeConflictException(hall.getId(), session.getStartTime());
+		}
+
+		session.setStatus(CinemaSessionStatus.SCHEDULED);
+		sessionRepository.save(session);
 	}
 
 	@Transactional(readOnly = true)

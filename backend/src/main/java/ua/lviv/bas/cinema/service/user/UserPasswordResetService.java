@@ -31,7 +31,7 @@ public class UserPasswordResetService {
 
 	public void requestPasswordReset(String email) {
 		log.info("Password reset requested for email: {}", email);
-		User user = userService.findByEmail(email);
+		User user = userService.getByEmail(email);
 
 		if (!user.isEnabled()) {
 			throw new EmailNotVerifiedException("reset password", email);

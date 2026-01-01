@@ -2,6 +2,7 @@ package ua.lviv.bas.cinema.service.user;
 
 import java.time.LocalDate;
 
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -26,7 +27,6 @@ import ua.lviv.bas.cinema.mapper.UserMapper;
 import ua.lviv.bas.cinema.repository.UserRepository;
 import ua.lviv.bas.cinema.service.common.EmailTokenGeneratorService;
 import ua.lviv.bas.cinema.service.common.EmailTokenService;
-import ua.lviv.bas.cinema.service.query.UserQueryService;
 
 @Slf4j
 @Service
@@ -34,13 +34,13 @@ import ua.lviv.bas.cinema.service.query.UserQueryService;
 public class UserService {
 
 	private final UserRepository userRepository;
-	private final UserQueryService userQueryService;
 	private final PasswordEncoder passwordEncoder;
 	private final UserMapper userMapper;
 	private final EmailTokenService emailTokenService;
 	private final EmailTokenGeneratorService emailTokenGeneratorService;
 
 	@Transactional
+	@CacheEvict(value = "users", allEntries = true)
 	public UserResponse registerUser(UserRegistrationRequest request) {
 		log.info("Registering user with email: {}", request.getEmail());
 
@@ -48,7 +48,7 @@ public class UserService {
 			throw new PasswordMismatchException();
 		}
 
-		if (existsByEmail(request.getEmail())) {
+		if (userRepository.existsByEmail(request.getEmail())) {
 			throw new EmailAlreadyExistsException(request.getEmail());
 		}
 
@@ -63,8 +63,9 @@ public class UserService {
 	}
 
 	@Transactional
+	@CacheEvict(value = "users", key = "#userId")
 	public UserProfileResponse updateUser(Long userId, UserUpdateRequest request) {
-		User user = findById(userId);
+		User user = getById(userId);
 		LocalDate oldDateOfBirth = user.getDateOfBirth();
 
 		userMapper.updateUserFromDto(request, user);
@@ -83,13 +84,13 @@ public class UserService {
 
 	@Transactional
 	public void requestEmailChange(Long userId, String newEmail) {
-		User user = findById(userId);
+		User user = getById(userId);
 
 		if (user.getEmail().equals(newEmail)) {
 			throw new SameEmailException();
 		}
 
-		if (existsByEmail(newEmail)) {
+		if (userRepository.existsByEmail(newEmail)) {
 			throw new EmailAlreadyExistsException(newEmail);
 		}
 
@@ -98,8 +99,9 @@ public class UserService {
 	}
 
 	@Transactional
+	@CacheEvict(value = "users", key = "#userId")
 	public void updateUserPassword(Long userId, UserPasswordUpdateRequest request) {
-		User user = findById(userId);
+		User user = getById(userId);
 
 		if (!request.getNewPassword().equals(request.getPasswordConfirm())) {
 			throw new PasswordMismatchException();
@@ -135,29 +137,29 @@ public class UserService {
 
 	@Transactional(readOnly = true)
 	public UserProfileResponse getUserProfile(Long id) {
-		return userMapper.toProfileResponse(findById(id));
+		return userMapper.toProfileResponse(getById(id));
 	}
 
 	@Transactional(readOnly = true)
 	public UserResponse getUserById(Long id) {
-		return userMapper.toDto(findById(id));
+		return userMapper.toDto(getById(id));
 	}
 
 	@Transactional(readOnly = true)
 	@Cacheable(value = "users", key = "#id")
-	public User findById(Long id) {
+	public User getById(Long id) {
 		return userRepository.findById(id).orElseThrow(() -> new UserNotFoundException(id));
 	}
 
 	@Transactional(readOnly = true)
 	@Cacheable(value = "users", key = "#email")
-	public User findByEmail(String email) {
-		return userQueryService.findByEmail(email).orElseThrow(() -> new UserNotFoundException(email));
+	public User getByEmail(String email) {
+		return userRepository.findByEmail(email).orElseThrow(() -> new UserNotFoundException(email));
 	}
 
 	@Transactional(readOnly = true)
 	public boolean existsByEmail(String email) {
-		return userQueryService.existsByEmail(email);
+		return userRepository.existsByEmail(email);
 	}
 
 	@Transactional(readOnly = true)
