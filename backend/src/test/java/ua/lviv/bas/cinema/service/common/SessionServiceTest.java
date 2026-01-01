@@ -117,6 +117,101 @@ class SessionServiceTest {
 	}
 
 	@Test
+	void cancelSession_ShouldCancelSuccessfully() {
+		when(sessionRepository.findById(1L)).thenReturn(Optional.of(session));
+		when(sessionRepository.save(any(Session.class))).thenReturn(session);
+
+		sessionService.cancelSession(1L);
+
+		assertThat(session.getStatus()).isEqualTo(CinemaSessionStatus.CANCELLED);
+		verify(sessionRepository).save(session);
+	}
+
+	@Test
+	void cancelSession_ShouldDoNothing_WhenAlreadyCancelled() {
+		session.setStatus(CinemaSessionStatus.CANCELLED);
+		when(sessionRepository.findById(1L)).thenReturn(Optional.of(session));
+
+		sessionService.cancelSession(1L);
+
+		verify(sessionRepository, times(0)).save(any(Session.class));
+	}
+
+	@Test
+	void cancelSession_ShouldThrowException_WhenCannotCancelInactive() {
+		session.setStatus(CinemaSessionStatus.COMPLETED);
+		when(sessionRepository.findById(1L)).thenReturn(Optional.of(session));
+
+		assertThatThrownBy(() -> sessionService.cancelSession(1L)).isInstanceOf(IllegalStateException.class)
+				.hasMessageContaining("Cannot cancel inactive session");
+	}
+
+	@Test
+	void cancelSession_ShouldThrowException_WhenLessThanHourBeforeStart() {
+		session.setStartTime(LocalDateTime.now().plusMinutes(30));
+		when(sessionRepository.findById(1L)).thenReturn(Optional.of(session));
+
+		assertThatThrownBy(() -> sessionService.cancelSession(1L)).isInstanceOf(IllegalStateException.class)
+				.hasMessageContaining("less than 1 hour before start");
+	}
+
+	@Test
+	void cancelSession_ShouldThrowException_WhenSessionNotFound() {
+		when(sessionRepository.findById(99L)).thenReturn(Optional.empty());
+
+		assertThatThrownBy(() -> sessionService.cancelSession(99L)).isInstanceOf(SessionNotFoundException.class);
+	}
+
+	@Test
+	void reactivateSession_ShouldReactivateSuccessfully() {
+		session.setStatus(CinemaSessionStatus.CANCELLED);
+		when(sessionRepository.findById(1L)).thenReturn(Optional.of(session));
+		when(sessionQueryService.findConflictingSessions(anyLong(), any(), any(), any()))
+				.thenReturn(Collections.emptyList());
+		when(sessionRepository.save(any(Session.class))).thenReturn(session);
+
+		sessionService.reactivateSession(1L);
+
+		assertThat(session.getStatus()).isEqualTo(CinemaSessionStatus.SCHEDULED);
+		verify(sessionRepository).save(session);
+	}
+
+	@Test
+	void reactivateSession_ShouldThrowException_WhenNotCancelled() {
+		when(sessionRepository.findById(1L)).thenReturn(Optional.of(session));
+
+		assertThatThrownBy(() -> sessionService.reactivateSession(1L)).isInstanceOf(IllegalStateException.class)
+				.hasMessageContaining("Only cancelled sessions can be reactivated");
+	}
+
+	@Test
+	void reactivateSession_ShouldThrowException_WhenPastSession() {
+		session.setStatus(CinemaSessionStatus.CANCELLED);
+		session.setStartTime(LocalDateTime.now().minusHours(1));
+		when(sessionRepository.findById(1L)).thenReturn(Optional.of(session));
+
+		assertThatThrownBy(() -> sessionService.reactivateSession(1L)).isInstanceOf(IllegalStateException.class)
+				.hasMessageContaining("Cannot reactivate past session");
+	}
+
+	@Test
+	void reactivateSession_ShouldThrowException_WhenTimeConflict() {
+		session.setStatus(CinemaSessionStatus.CANCELLED);
+		when(sessionRepository.findById(1L)).thenReturn(Optional.of(session));
+		when(sessionQueryService.findConflictingSessions(anyLong(), any(), any(), any()))
+				.thenReturn(List.of(new Session()));
+
+		assertThatThrownBy(() -> sessionService.reactivateSession(1L)).isInstanceOf(SessionTimeConflictException.class);
+	}
+
+	@Test
+	void reactivateSession_ShouldThrowException_WhenSessionNotFound() {
+		when(sessionRepository.findById(99L)).thenReturn(Optional.empty());
+
+		assertThatThrownBy(() -> sessionService.reactivateSession(99L)).isInstanceOf(SessionNotFoundException.class);
+	}
+
+	@Test
 	void createSession_ShouldCreateSuccessfully() {
 		when(movieRepository.findById(1L)).thenReturn(Optional.of(movie));
 		when(cinemaHallService.getHallEntityById(1L)).thenReturn(hall);
@@ -224,7 +319,7 @@ class SessionServiceTest {
 	}
 
 	@Test
-	void updateSession_ShouldUpdateSuccessfully() {
+	void updateSession_ShouldUpdateSuccessfully_WithoutStatus() {
 		LocalDateTime pastTime = LocalDateTime.now().minusHours(2);
 		Session pastSession = Session.builder().id(1L).startTime(pastTime).basePrice(new BigDecimal("250.00"))
 				.movie(movie).hall(hall).status(CinemaSessionStatus.ONGOING).bookedSeats(new ArrayList<>()).build();
@@ -244,71 +339,12 @@ class SessionServiceTest {
 
 		assertThat(result).isNotNull();
 		assertThat(result.getBasePrice()).isEqualByComparingTo(new BigDecimal("300.00"));
-		assertThat(result.getStatus()).isEqualTo(CinemaSessionStatus.ONGOING);
 		verify(sessionMapper).updateEntityFromDto(updateRequest, pastSession);
 	}
 
 	@Test
-	void updateSession_ShouldUpdateStatusSuccessfully_WhenChangingToCompleted() {
-		Session pastSession = Session.builder().id(3L).startTime(LocalDateTime.now().minusHours(2)).movie(movie)
-				.hall(hall).status(CinemaSessionStatus.SCHEDULED).build();
-
-		SessionUpdateRequest updateRequest = SessionUpdateRequest.builder().status(CinemaSessionStatus.COMPLETED)
-				.build();
-
-		SessionAdminResponse pastAdminDto = SessionAdminResponse.builder().id(3L).startTime(pastSession.getStartTime())
-				.endTime(pastSession.getStartTime().plusMinutes(120)).status(CinemaSessionStatus.COMPLETED)
-				.hallCapacity(80).build();
-
-		when(sessionRepository.findById(3L)).thenReturn(Optional.of(pastSession));
-		when(sessionRepository.save(any(Session.class))).thenReturn(pastSession);
-		when(sessionMapper.toAdminDto(pastSession)).thenReturn(pastAdminDto);
-
-		SessionAdminResponse result = sessionService.updateSession(3L, updateRequest);
-
-		assertThat(result).isNotNull();
-		assertThat(result.getStatus()).isEqualTo(CinemaSessionStatus.COMPLETED);
-		verify(sessionRepository).save(pastSession);
-	}
-
-	@Test
-	void updateSession_ShouldThrowException_WhenChangingCompletedSession() {
-		session.setStatus(CinemaSessionStatus.COMPLETED);
-		SessionUpdateRequest updateRequest = SessionUpdateRequest.builder().status(CinemaSessionStatus.SCHEDULED)
-				.build();
-
-		when(sessionRepository.findById(1L)).thenReturn(Optional.of(session));
-
-		assertThatThrownBy(() -> sessionService.updateSession(1L, updateRequest))
-				.isInstanceOf(IllegalStateException.class).hasMessageContaining("completed session");
-	}
-
-	@Test
-	void updateSession_ShouldThrowException_WhenCancellingTooLate() {
-		session.setStartTime(LocalDateTime.now().plusMinutes(30));
-		SessionUpdateRequest updateRequest = SessionUpdateRequest.builder().status(CinemaSessionStatus.CANCELLED)
-				.build();
-
-		when(sessionRepository.findById(1L)).thenReturn(Optional.of(session));
-
-		assertThatThrownBy(() -> sessionService.updateSession(1L, updateRequest))
-				.isInstanceOf(IllegalArgumentException.class).hasMessageContaining("less than 1 hour");
-	}
-
-	@Test
-	void updateSession_ShouldThrowException_WhenCompletingFutureSession() {
-		SessionUpdateRequest updateRequest = SessionUpdateRequest.builder().status(CinemaSessionStatus.COMPLETED)
-				.build();
-
-		when(sessionRepository.findById(1L)).thenReturn(Optional.of(session));
-
-		assertThatThrownBy(() -> sessionService.updateSession(1L, updateRequest))
-				.isInstanceOf(IllegalArgumentException.class).hasMessageContaining("future session");
-	}
-
-	@Test
-	void updateSession_ShouldValidateTimeConflict_WhenStartTimeChanged() {
-		SessionUpdateRequest updateRequest = SessionUpdateRequest.builder().startTime(LocalDateTime.now().plusHours(3))
+	void updateSession_ShouldUpdateSuccessfully_WhenOnlyChangingStartTime() {
+		SessionUpdateRequest updateRequest = SessionUpdateRequest.builder().startTime(LocalDateTime.now().plusHours(5))
 				.build();
 
 		when(sessionRepository.findById(1L)).thenReturn(Optional.of(session));

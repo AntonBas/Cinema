@@ -58,8 +58,7 @@ class AdminSessionControllerTest {
 	}
 
 	private SessionUpdateRequest createSessionUpdateRequest() {
-		return SessionUpdateRequest.builder().basePrice(new BigDecimal("300.00")).status(CinemaSessionStatus.COMPLETED)
-				.build();
+		return SessionUpdateRequest.builder().basePrice(new BigDecimal("300.00")).build();
 	}
 
 	@Test
@@ -113,6 +112,62 @@ class AdminSessionControllerTest {
 		assertEquals(1L, responseBody.getId());
 
 		verify(sessionService).updateSession(1L, request);
+	}
+
+	@Test
+	void cancelSession_ShouldCancelSuccessfully() {
+		ResponseEntity<Void> response = sessionController.cancelSession(1L);
+
+		assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
+		verify(sessionService).cancelSession(1L);
+	}
+
+	@Test
+	void cancelSession_WhenNotFound_ShouldThrowException() {
+		doThrow(new SessionNotFoundException(999L)).when(sessionService).cancelSession(999L);
+
+		assertThrows(SessionNotFoundException.class, () -> sessionController.cancelSession(999L));
+		verify(sessionService).cancelSession(999L);
+	}
+
+	@Test
+	void cancelSession_WhenCannotCancel_ShouldThrowException() {
+		doThrow(new IllegalStateException("Cannot cancel session")).when(sessionService).cancelSession(1L);
+
+		assertThrows(IllegalStateException.class, () -> sessionController.cancelSession(1L));
+		verify(sessionService).cancelSession(1L);
+	}
+
+	@Test
+	void reactivateSession_ShouldReactivateSuccessfully() {
+		ResponseEntity<Void> response = sessionController.reactivateSession(1L);
+
+		assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
+		verify(sessionService).reactivateSession(1L);
+	}
+
+	@Test
+	void reactivateSession_WhenNotFound_ShouldThrowException() {
+		doThrow(new SessionNotFoundException(999L)).when(sessionService).reactivateSession(999L);
+
+		assertThrows(SessionNotFoundException.class, () -> sessionController.reactivateSession(999L));
+		verify(sessionService).reactivateSession(999L);
+	}
+
+	@Test
+	void reactivateSession_WhenCannotReactivate_ShouldThrowException() {
+		doThrow(new IllegalStateException("Cannot reactivate session")).when(sessionService).reactivateSession(1L);
+
+		assertThrows(IllegalStateException.class, () -> sessionController.reactivateSession(1L));
+		verify(sessionService).reactivateSession(1L);
+	}
+
+	@Test
+	void reactivateSession_WhenTimeConflict_ShouldThrowException() {
+		doThrow(new SessionTimeConflictException(1L, LocalDateTime.now())).when(sessionService).reactivateSession(1L);
+
+		assertThrows(SessionTimeConflictException.class, () -> sessionController.reactivateSession(1L));
+		verify(sessionService).reactivateSession(1L);
 	}
 
 	@Test
@@ -360,25 +415,6 @@ class AdminSessionControllerTest {
 		assertEquals(1, responseBody.getContent().size());
 
 		verify(sessionService).getAllSessionsForAdmin(PageRequest.of(0, 20), searchTerm);
-	}
-
-	@Test
-	void updateSession_ShouldUpdateStatus_WhenStatusProvided() {
-		SessionUpdateRequest request = SessionUpdateRequest.builder().status(CinemaSessionStatus.CANCELLED).build();
-
-		SessionAdminResponse sessionDto = createSessionAdminDto(1L);
-
-		when(sessionService.updateSession(1L, request)).thenReturn(sessionDto);
-
-		ResponseEntity<SessionAdminResponse> response = sessionController.updateSession(1L, request);
-
-		assertEquals(HttpStatus.OK, response.getStatusCode());
-
-		SessionAdminResponse responseBody = response.getBody();
-		assertNotNull(responseBody);
-		assertEquals(1L, responseBody.getId());
-
-		verify(sessionService).updateSession(1L, request);
 	}
 
 	@Test
