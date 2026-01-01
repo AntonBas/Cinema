@@ -3,7 +3,6 @@ package ua.lviv.bas.cinema.service.common;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -18,13 +17,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.Movie;
 import ua.lviv.bas.cinema.domain.enums.MovieStatus;
-import ua.lviv.bas.cinema.dto.filter.MovieFilter;
 import ua.lviv.bas.cinema.dto.movie.request.MovieCreateRequest;
 import ua.lviv.bas.cinema.dto.movie.request.MovieUpdateRequest;
 import ua.lviv.bas.cinema.dto.movie.response.MovieCardResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieDetailResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieSessionSearchResponse;
-import ua.lviv.bas.cinema.dto.shared.PageResponse;
 import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
 import ua.lviv.bas.cinema.exception.domain.cinema.MovieNotFoundException;
 import ua.lviv.bas.cinema.mapper.MovieMapper;
@@ -32,7 +29,6 @@ import ua.lviv.bas.cinema.repository.GenreRepository;
 import ua.lviv.bas.cinema.repository.MovieRepository;
 import ua.lviv.bas.cinema.repository.PersonRepository;
 import ua.lviv.bas.cinema.scheduler.MovieScheduler;
-import ua.lviv.bas.cinema.service.query.MovieQueryService;
 
 @Slf4j
 @Service
@@ -44,8 +40,7 @@ public class MovieService {
 	private final PersonRepository personRepository;
 	private final MovieMapper movieMapper;
 	private final SlugService slugService;
-	private final MovieScheduler movieSchedule;
-	private final MovieQueryService movieQueryService;
+	private final MovieScheduler movieScheduler;
 	private final PosterService posterService;
 
 	@Transactional
@@ -59,7 +54,7 @@ public class MovieService {
 
 		Movie movie = movieMapper.toEntity(request);
 		movie.setSlug(slug);
-		movie.setStatus(movieSchedule.calculateMovieStatus(movie, LocalDate.now()));
+		movie.setStatus(movieScheduler.calculateMovieStatus(movie, LocalDate.now()));
 
 		handlePosterUpload(request.getPosterFile(), movie);
 		setMovieRelations(movie, request);
@@ -86,7 +81,7 @@ public class MovieService {
 		}
 
 		handlePosterUpdate(existing, request.getPosterFile(), request.getRemovePoster());
-		existing.setStatus(movieSchedule.calculateMovieStatus(existing, LocalDate.now()));
+		existing.setStatus(movieScheduler.calculateMovieStatus(existing, LocalDate.now()));
 		updateMovieRelations(existing, request);
 
 		Movie updated = movieRepository.save(existing);
@@ -115,72 +110,53 @@ public class MovieService {
 	}
 
 	@Transactional(readOnly = true)
-	public PageResponse<MovieDetailResponse> getMoviesPaginated(Pageable pageable) {
-		Page<Movie> movies = movieRepository.findAll(pageable);
-		return PageResponse.of(movies, this::buildDetailResponse);
+	public Page<MovieCardResponse> getMoviesByStatus(MovieStatus status, Pageable pageable) {
+		Page<Movie> movies = movieRepository.findByStatusWithSearch(status, null, pageable);
+		return movies.map(movieMapper::toCardResponse);
 	}
 
 	@Transactional(readOnly = true)
-	public PageResponse<MovieCardResponse> findFilteredMovies(MovieFilter filter) {
-		Page<Movie> movies = movieQueryService.findFilteredMovies(filter);
-		return PageResponse.of(movies, movieMapper::toCardResponse);
+	public Page<MovieCardResponse> searchMoviesByTitle(String search, MovieStatus status, Pageable pageable) {
+		Page<Movie> movies = movieRepository.findByStatusWithSearch(status, search, pageable);
+		return movies.map(movieMapper::toCardResponse);
 	}
 
 	@Transactional(readOnly = true)
-	public PageResponse<MovieCardResponse> findCurrentlyShowingPaginated(Pageable pageable, boolean adminView) {
-		Page<Movie> movies = movieQueryService.findCurrentlyShowing(pageable, adminView);
-		return PageResponse.of(movies, movieMapper::toCardResponse);
-	}
-
-	@Transactional(readOnly = true)
-	public PageResponse<MovieCardResponse> findUpcomingPaginated(Pageable pageable, boolean adminView) {
-		Page<Movie> movies = movieQueryService.findUpcoming(pageable, adminView);
-		return PageResponse.of(movies, movieMapper::toCardResponse);
-	}
-
-	@Transactional(readOnly = true)
-	public PageResponse<MovieCardResponse> findArchivedPaginated(Pageable pageable) {
-		log.info("Getting archived movies with pagination");
-		Page<Movie> movies = movieQueryService.findArchived(pageable);
-		return PageResponse.of(movies, movieMapper::toCardResponse);
-	}
-
-	@Transactional(readOnly = true)
-	public List<MovieCardResponse> getCurrentlyShowingMovies() {
-		List<Movie> movies = movieQueryService.findCurrentlyShowingList();
+	public List<MovieCardResponse> getCurrentlyShowing(int limit) {
+		Pageable pageable = PageRequest.of(0, limit, Sort.by("releaseDate").descending());
+		List<Movie> movies = movieRepository.findCurrentlyShowing(pageable);
 		return movieMapper.toCardResponseList(movies);
 	}
 
 	@Transactional(readOnly = true)
-	public List<MovieCardResponse> getUpcomingMovies() {
-		List<Movie> movies = movieQueryService.findUpcomingList();
+	public Page<MovieCardResponse> getCurrentlyShowingPage(Pageable pageable) {
+		Page<Movie> movies = movieRepository.findCurrentlyShowingPage(pageable);
+		return movies.map(movieMapper::toCardResponse);
+	}
+
+	@Transactional(readOnly = true)
+	public List<MovieCardResponse> getUpcoming(int limit) {
+		Pageable pageable = PageRequest.of(0, limit, Sort.by("releaseDate"));
+		List<Movie> movies = movieRepository.findUpcoming(pageable);
 		return movieMapper.toCardResponseList(movies);
 	}
 
 	@Transactional(readOnly = true)
-	public List<MovieCardResponse> getArchivedMovies() {
-		log.info("Getting archived movies");
-		Pageable pageable = PageRequest.of(0, 50, Sort.by("releaseDate").descending());
-		Page<Movie> movies = movieQueryService.findArchived(pageable);
-		return movieMapper.toCardResponseList(movies.getContent());
+	public Page<MovieCardResponse> getUpcomingPage(Pageable pageable) {
+		Page<Movie> movies = movieRepository.findUpcomingPage(pageable);
+		return movies.map(movieMapper::toCardResponse);
 	}
 
 	@Transactional(readOnly = true)
-	public List<MovieCardResponse> getNewReleases(int limit) {
-		List<Movie> movies = movieQueryService.findNewReleases(limit);
-		return movieMapper.toCardResponseList(movies);
-	}
-
-	@Transactional(readOnly = true)
-	public List<MovieCardResponse> getEndingSoon(int limit) {
-		List<Movie> movies = movieQueryService.findEndingSoon(limit);
-		return movieMapper.toCardResponseList(movies);
+	public Page<MovieCardResponse> getArchivedMovies(Pageable pageable) {
+		Page<Movie> movies = movieRepository.findArchived(pageable);
+		return movies.map(movieMapper::toCardResponse);
 	}
 
 	@Transactional(readOnly = true)
 	public List<MovieSessionSearchResponse> searchMoviesForSessionCreation(String searchTerm, LocalDate sessionDate) {
-		List<Movie> movies = movieQueryService.findMoviesForSessionCreation(searchTerm, sessionDate);
-		return movies.stream().map(this::toSessionSearchResponse).collect(Collectors.toList());
+		List<Movie> movies = movieRepository.findMoviesForSessionCreation(searchTerm, sessionDate);
+		return movies.stream().map(this::toSessionSearchResponse).toList();
 	}
 
 	@Transactional(readOnly = true)
@@ -274,7 +250,6 @@ public class MovieService {
 		response.setCurrentlyShowing(movie.getStatus() == MovieStatus.CURRENT);
 		response.setUpcoming(movie.getStatus() == MovieStatus.UPCOMING);
 		response.setArchived(movie.getStatus() == MovieStatus.ARCHIVED);
-		response.setActive(movie.getStatus() != MovieStatus.ARCHIVED);
 
 		String posterUrl = posterService.getPosterUrl(movie.getId(), movie.getPosterFileName());
 		response.setPosterUrl(posterUrl);
