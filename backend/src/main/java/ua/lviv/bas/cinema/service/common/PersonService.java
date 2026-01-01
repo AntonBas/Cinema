@@ -8,18 +8,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import com.querydsl.core.BooleanBuilder;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.Person;
-import ua.lviv.bas.cinema.domain.QMovie;
-import ua.lviv.bas.cinema.domain.QPerson;
 import ua.lviv.bas.cinema.domain.enums.PersonRole;
 import ua.lviv.bas.cinema.dto.movie.request.PersonRequest;
 import ua.lviv.bas.cinema.dto.movie.request.QuickCreatePersonRequest;
 import ua.lviv.bas.cinema.dto.movie.response.PersonResponse;
-import ua.lviv.bas.cinema.dto.shared.PageResponse;
 import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
 import ua.lviv.bas.cinema.exception.domain.cinema.PersonHasMoviesException;
 import ua.lviv.bas.cinema.exception.domain.cinema.PersonNotFoundException;
@@ -104,31 +99,21 @@ public class PersonService {
 		log.debug("Person deleted with ID: {}", id);
 	}
 
-	public PageResponse<PersonResponse> getPersonsByRole(PersonRole role, Pageable pageable) {
+	public Page<PersonResponse> getPersonsByRole(PersonRole role, Pageable pageable) {
 		log.info("Getting persons by role: {}", role);
 
 		Page<Person> persons = personRepository.findByRole(role, pageable);
-		return PageResponse.of(persons, personMapper::toDto);
+		return persons.map(personMapper::toDto);
 	}
 
-	public PageResponse<PersonResponse> searchPersons(String query, PersonRole role, Pageable pageable) {
+	public Page<PersonResponse> searchPersons(String query, PersonRole role, Pageable pageable) {
 		log.info("Searching persons: query='{}', role={}", query, role);
 
-		QPerson qPerson = QPerson.person;
-		BooleanBuilder predicate = new BooleanBuilder();
+		Page<Person> personPage = personRepository.searchByNameAndRole(StringUtils.hasText(query) ? query.trim() : null,
+				role, pageable);
 
-		if (StringUtils.hasText(query)) {
-			String searchQuery = query.trim().toLowerCase();
-			predicate.and(qPerson.name.toLowerCase().contains(searchQuery));
-		}
-
-		if (role != null) {
-			predicate.and(qPerson.role.eq(role));
-		}
-
-		Page<Person> personPage = personRepository.findAll(predicate, pageable);
 		log.debug("Found {} persons", personPage.getTotalElements());
-		return PageResponse.of(personPage, personMapper::toDto);
+		return personPage.map(personMapper::toDto);
 	}
 
 	public List<PersonResponse> getPersonsByIds(List<Long> ids) {
@@ -140,6 +125,11 @@ public class PersonService {
 
 		List<Person> persons = personRepository.findAllById(ids);
 		return personMapper.toDtoList(persons);
+	}
+
+	public List<PersonResponse> getPersons() {
+		log.debug("Retrieving all persons");
+		return personMapper.toDtoList(personRepository.findAll());
 	}
 
 	public boolean existsById(Long id) {
@@ -169,13 +159,15 @@ public class PersonService {
 	}
 
 	private void checkPersonUsageInMovies(Person person) {
-		QMovie qMovie = QMovie.movie;
-		BooleanBuilder predicate = new BooleanBuilder();
-		predicate.or(qMovie.actors.any().id.eq(person.getId())).or(qMovie.directors.any().id.eq(person.getId()))
-				.or(qMovie.screenwriters.any().id.eq(person.getId()));
+		long actorCount = movieRepository.countByActorsId(person.getId());
+		long directorCount = movieRepository.countByDirectorsId(person.getId());
+		long screenwriterCount = movieRepository.countByScreenwritersId(person.getId());
 
-		if (movieRepository.exists(predicate)) {
-			throw new PersonHasMoviesException(person.getId(), person.getName());
+		long totalUsage = actorCount + directorCount + screenwriterCount;
+
+		if (totalUsage > 0) {
+			throw new PersonHasMoviesException(person.getId(), person.getName(), actorCount, directorCount,
+					screenwriterCount);
 		}
 	}
 }
