@@ -36,7 +36,7 @@ public class BonusController {
 	@GetMapping("/my-card")
 	@ResponseStatus(HttpStatus.OK)
 	@PreAuthorize("isAuthenticated()")
-	public BonusCardResponse getMyBonusCard(@RequestAttribute("userId") Long userId) {
+	public BonusCardResponse getMyBonusCard(@RequestAttribute Long userId) {
 		return bonusUserService.getBonusCard(userId);
 	}
 
@@ -46,7 +46,7 @@ public class BonusController {
 	@GetMapping("/my-balance")
 	@ResponseStatus(HttpStatus.OK)
 	@PreAuthorize("isAuthenticated()")
-	public BonusBalanceResponse getMyBalance(@RequestAttribute("userId") Long userId) {
+	public BonusBalanceResponse getMyBalance(@RequestAttribute Long userId) {
 		return bonusUserService.getBalance(userId);
 	}
 
@@ -55,7 +55,7 @@ public class BonusController {
 	@GetMapping("/my-transactions")
 	@ResponseStatus(HttpStatus.OK)
 	@PreAuthorize("isAuthenticated()")
-	public Page<BonusTransactionResponse> getMyTransactions(@RequestAttribute("userId") Long userId,
+	public Page<BonusTransactionResponse> getMyTransactions(@RequestAttribute Long userId,
 			@PageableDefault(size = 20) Pageable pageable) {
 		return bonusUserService.getUserTransactions(userId, pageable);
 	}

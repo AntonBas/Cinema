@@ -19,6 +19,17 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: ${SHOW_SQL:true}
         enable_lazy_load_no_trans: true
+        jpa:
+          query:
+            dsl:
+              enabled: false
+      javax:
+        persistence:
+          schema-generation:
+            scripts:
+              action: none
+              create-target: none
+              drop-target: none
     show-sql: ${SHOW_SQL:true}
   flyway:
     enabled: true
@@ -40,6 +51,9 @@ spring:
           connectiontimeout: 5000
           timeout: 5000
           writetimeout: 5000
+
+querydsl:
+  enabled: false
 
 app:
   jwt:
