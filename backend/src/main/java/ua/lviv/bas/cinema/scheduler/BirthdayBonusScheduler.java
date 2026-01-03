@@ -3,8 +3,10 @@ package ua.lviv.bas.cinema.scheduler;
 import java.time.LocalDate;
 import java.util.List;
 
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +23,9 @@ public class BirthdayBonusScheduler {
 	private final UserRepository userRepository;
 	private final BonusUserService bonusUserService;
 
-	@Scheduled(cron = "0 0 9 * * *")
+	@Scheduled(cron = "${scheduler.birthday-bonus.cron:0 0 9 * * *}")
+	@Async("taskExecutor")
+	@Transactional
 	public void awardBirthdayBonuses() {
 		log.info("Starting automatic birthday bonus distribution");
 
@@ -32,6 +36,11 @@ public class BirthdayBonusScheduler {
 		List<User> birthdayUsers = userRepository.findVerifiedUsersWithBirthday(VerificationStatus.VERIFIED, dayOfMonth,
 				month);
 
+		if (birthdayUsers.isEmpty()) {
+			log.info("No verified users with birthday today");
+			return;
+		}
+
 		log.info("Found {} verified users with birthday today", birthdayUsers.size());
 
 		int awardedCount = 0;
@@ -41,12 +50,13 @@ public class BirthdayBonusScheduler {
 			try {
 				bonusUserService.awardBirthdayBonus(user);
 				awardedCount++;
+				log.debug("Processed birthday bonus for user {}", user.getId());
 			} catch (Exception e) {
-				log.error("Failed to award birthday bonus to user {}: {}", user.getId(), e.getMessage(), e);
+				log.error("Failed to process birthday bonus for user {}: {}", user.getId(), e.getMessage(), e);
 				failedCount++;
 			}
 		}
 
-		log.info("Birthday bonus distribution completed. Awarded: {}, Failed: {}", awardedCount, failedCount);
+		log.info("Birthday bonus distribution completed. Processed: {}, Failed: {}", awardedCount, failedCount);
 	}
 }
