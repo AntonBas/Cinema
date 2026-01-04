@@ -117,6 +117,10 @@ public class User {
 	@Builder.Default
 	private List<Discount> discounts = new ArrayList<>();
 
+	@OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+	@Builder.Default
+	private List<UserPromotion> redeemedPromotions = new ArrayList<>();
+
 	@OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
 	@Builder.Default
 	private List<Booking> bookings = new ArrayList<>();
