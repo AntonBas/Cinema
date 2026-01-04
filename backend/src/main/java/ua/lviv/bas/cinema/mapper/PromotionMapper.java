@@ -1,0 +1,41 @@
+package ua.lviv.bas.cinema.mapper;
+
+import java.util.List;
+
+import org.mapstruct.BeanMapping;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
+import org.mapstruct.NullValuePropertyMappingStrategy;
+import org.mapstruct.ReportingPolicy;
+
+import ua.lviv.bas.cinema.domain.Promotion;
+import ua.lviv.bas.cinema.domain.UserPromotion;
+import ua.lviv.bas.cinema.dto.promotion.request.PromotionCreateRequest;
+import ua.lviv.bas.cinema.dto.promotion.request.PromotionUpdateRequest;
+import ua.lviv.bas.cinema.dto.promotion.response.PromotionResponse;
+import ua.lviv.bas.cinema.dto.promotion.response.UserPromotionResponse;
+
+@Mapper(componentModel = "spring", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE, unmappedTargetPolicy = ReportingPolicy.IGNORE)
+public interface PromotionMapper {
+
+	@Mapping(target = "id", ignore = true)
+	@Mapping(target = "createdAt", ignore = true)
+	@Mapping(target = "userRedemptions", ignore = true)
+	Promotion toEntity(PromotionCreateRequest request);
+
+	@BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+	void updateEntity(@MappingTarget Promotion promotion, PromotionUpdateRequest request);
+
+	PromotionResponse toResponse(Promotion promotion);
+
+	List<PromotionResponse> toResponseList(List<Promotion> promotions);
+
+	@Mapping(target = "promotionId", source = "promotion.id")
+	@Mapping(target = "promotionTitle", source = "promotion.title")
+	@Mapping(target = "claimedAt", source = "redeemedAt")
+	@Mapping(target = "newBalance", ignore = true)
+	UserPromotionResponse toUserPromotionResponse(UserPromotion promotion);
+
+	List<UserPromotionResponse> toUserPromotionResponseList(List<UserPromotion> userPromotions);
+}
