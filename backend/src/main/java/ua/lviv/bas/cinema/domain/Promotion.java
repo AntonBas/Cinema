@@ -46,7 +46,7 @@ public class Promotion {
 	private Long id;
 
 	@NotBlank
-	@Size(max = 100)
+	@Size(max = 60)
 	@Column(nullable = false, length = 100)
 	private String title;
 
@@ -64,10 +64,6 @@ public class Promotion {
 
 	@Column(name = "end_date")
 	private LocalDateTime endDate;
-
-	@Column(name = "active", nullable = false)
-	@Builder.Default
-	private boolean active = true;
 
 	@CreationTimestamp
 	@Column(name = "created_at")
