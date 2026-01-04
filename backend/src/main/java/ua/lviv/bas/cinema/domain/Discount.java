@@ -1,6 +1,5 @@
 package ua.lviv.bas.cinema.domain;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
@@ -16,7 +15,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -54,16 +52,6 @@ public class Discount {
 	@Column(name = "type", nullable = false, length = 30)
 	private DiscountType type;
 
-	@NotNull
-	@jakarta.validation.constraints.DecimalMin(value = "0.01", inclusive = true)
-	@jakarta.validation.constraints.DecimalMax(value = "100.00", inclusive = true)
-	@Column(name = "percent", precision = 5, scale = 2, nullable = false)
-	private BigDecimal percent;
-
-	@Size(max = 50)
-	@Column(name = "document_number", length = 50)
-	private String documentNumber;
-
 	@Column(name = "expiry_date")
 	private LocalDateTime expiryDate;
 
@@ -73,8 +61,4 @@ public class Discount {
 
 	@Column(name = "verified_at")
 	private LocalDateTime verifiedAt;
-
-	@Size(max = 100)
-	@Column(name = "verified_by", length = 100)
-	private String verifiedBy;
 }
