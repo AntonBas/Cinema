@@ -12,6 +12,9 @@ import ua.lviv.bas.cinema.domain.Promotion;
 import ua.lviv.bas.cinema.dto.promotion.request.PromotionCreateRequest;
 import ua.lviv.bas.cinema.dto.promotion.request.PromotionUpdateRequest;
 import ua.lviv.bas.cinema.dto.promotion.response.PromotionResponse;
+import ua.lviv.bas.cinema.exception.domain.promotion.PromotionAlreadyExistsException;
+import ua.lviv.bas.cinema.exception.domain.promotion.PromotionHasRedemptionsException;
+import ua.lviv.bas.cinema.exception.domain.promotion.PromotionNotFoundException;
 import ua.lviv.bas.cinema.mapper.PromotionMapper;
 import ua.lviv.bas.cinema.repository.PromotionRepository;
 
@@ -29,7 +32,7 @@ public class PromotionService {
 		log.info("Creating new promotion: {}", request.getTitle());
 
 		if (promotionRepository.existsByTitle(request.getTitle())) {
-			throw new IllegalArgumentException("Promotion with title '" + request.getTitle() + "' already exists.");
+			throw PromotionAlreadyExistsException.forTitle(request.getTitle());
 		}
 
 		Promotion promotion = promotionMapper.toEntity(request);
@@ -50,17 +53,18 @@ public class PromotionService {
 		return promotionMapper.toResponse(promotion);
 	}
 
+	@Transactional
 	public void deletePromotion(Long promotionId) {
 		log.info("Deleting promotion with ID: {}", promotionId);
 
 		Promotion promotion = findByIdOrThrow(promotionId);
 
 		if (!promotion.getUserRedemptions().isEmpty()) {
-			throw new IllegalStateException("Cannot delete promotion with existing user redemptions.");
+			int redemptionCount = promotion.getUserRedemptions().size();
+			throw new PromotionHasRedemptionsException(promotionId, redemptionCount);
 		}
 
 		promotionRepository.delete(promotion);
-
 		log.info("Promotion with ID: {} has been deleted", promotionId);
 	}
 
@@ -80,8 +84,7 @@ public class PromotionService {
 	}
 
 	public Promotion findByIdOrThrow(Long promotionId) {
-		return promotionRepository.findById(promotionId)
-				.orElseThrow(() -> new IllegalArgumentException("Promotion not found with id: " + promotionId));
+		return promotionRepository.findById(promotionId).orElseThrow(() -> new PromotionNotFoundException(promotionId));
 	}
 
 	public boolean isPromotionActive(Promotion promotion) {

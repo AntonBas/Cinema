@@ -25,6 +25,9 @@ import ua.lviv.bas.cinema.domain.UserPromotion;
 import ua.lviv.bas.cinema.dto.promotion.request.PromotionCreateRequest;
 import ua.lviv.bas.cinema.dto.promotion.request.PromotionUpdateRequest;
 import ua.lviv.bas.cinema.dto.promotion.response.PromotionResponse;
+import ua.lviv.bas.cinema.exception.domain.promotion.PromotionAlreadyExistsException;
+import ua.lviv.bas.cinema.exception.domain.promotion.PromotionHasRedemptionsException;
+import ua.lviv.bas.cinema.exception.domain.promotion.PromotionNotFoundException;
 import ua.lviv.bas.cinema.mapper.PromotionMapper;
 import ua.lviv.bas.cinema.repository.PromotionRepository;
 
@@ -78,7 +81,8 @@ class PromotionServiceTest {
 
 		when(promotionRepository.existsByTitle("Existing Promotion")).thenReturn(true);
 
-		assertThatThrownBy(() -> promotionService.createPromotion(request)).isInstanceOf(IllegalArgumentException.class)
+		assertThatThrownBy(() -> promotionService.createPromotion(request))
+				.isInstanceOf(PromotionAlreadyExistsException.class)
 				.hasMessageContaining("Promotion with title 'Existing Promotion' already exists");
 
 		verify(promotionRepository).existsByTitle("Existing Promotion");
@@ -128,7 +132,7 @@ class PromotionServiceTest {
 		when(promotionRepository.findById(promotionId)).thenReturn(Optional.empty());
 
 		assertThatThrownBy(() -> promotionService.updatePromotion(promotionId, request))
-				.isInstanceOf(IllegalArgumentException.class)
+				.isInstanceOf(PromotionNotFoundException.class)
 				.hasMessageContaining("Promotion not found with id: " + promotionId);
 
 		verify(promotionRepository).findById(promotionId);
@@ -156,7 +160,7 @@ class PromotionServiceTest {
 		when(promotionRepository.findById(promotionId)).thenReturn(Optional.empty());
 
 		assertThatThrownBy(() -> promotionService.deletePromotion(promotionId))
-				.isInstanceOf(IllegalArgumentException.class)
+				.isInstanceOf(PromotionNotFoundException.class)
 				.hasMessageContaining("Promotion not found with id: " + promotionId);
 
 		verify(promotionRepository).findById(promotionId);
@@ -166,6 +170,7 @@ class PromotionServiceTest {
 	@Test
 	void deletePromotion_ShouldThrowWhenHasRedemptions() {
 		Long promotionId = 1L;
+		int redemptionCount = 2;
 		Promotion promotion = Promotion.builder().id(promotionId)
 				.userRedemptions(
 						Arrays.asList(UserPromotion.builder().id(1L).build(), UserPromotion.builder().id(2L).build()))
@@ -174,8 +179,9 @@ class PromotionServiceTest {
 		when(promotionRepository.findById(promotionId)).thenReturn(Optional.of(promotion));
 
 		assertThatThrownBy(() -> promotionService.deletePromotion(promotionId))
-				.isInstanceOf(IllegalStateException.class)
-				.hasMessageContaining("Cannot delete promotion with existing user redemptions");
+				.isInstanceOf(PromotionHasRedemptionsException.class)
+				.hasMessageContaining("Cannot delete promotion with ID: " + promotionId)
+				.hasMessageContaining("because it has " + redemptionCount + " user redemption(s)");
 
 		verify(promotionRepository).findById(promotionId);
 		verify(promotionRepository, never()).delete(any());
@@ -208,7 +214,7 @@ class PromotionServiceTest {
 		when(promotionRepository.findById(promotionId)).thenReturn(Optional.empty());
 
 		assertThatThrownBy(() -> promotionService.getPromotionById(promotionId))
-				.isInstanceOf(IllegalArgumentException.class)
+				.isInstanceOf(PromotionNotFoundException.class)
 				.hasMessageContaining("Promotion not found with id: " + promotionId);
 
 		verify(promotionRepository).findById(promotionId);
@@ -272,7 +278,7 @@ class PromotionServiceTest {
 		when(promotionRepository.findById(promotionId)).thenReturn(Optional.empty());
 
 		assertThatThrownBy(() -> promotionService.findByIdOrThrow(promotionId))
-				.isInstanceOf(IllegalArgumentException.class)
+				.isInstanceOf(PromotionNotFoundException.class)
 				.hasMessageContaining("Promotion not found with id: " + promotionId);
 
 		verify(promotionRepository).findById(promotionId);

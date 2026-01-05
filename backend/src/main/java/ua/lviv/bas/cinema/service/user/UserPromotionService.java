@@ -14,6 +14,8 @@ import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.UserPromotion;
 import ua.lviv.bas.cinema.dto.promotion.request.UserPromotionCreateRequest;
 import ua.lviv.bas.cinema.dto.promotion.response.UserPromotionResponse;
+import ua.lviv.bas.cinema.exception.domain.promotion.AlreadyClaimedException;
+import ua.lviv.bas.cinema.exception.domain.promotion.PromotionNotActiveException;
 import ua.lviv.bas.cinema.mapper.PromotionMapper;
 import ua.lviv.bas.cinema.repository.UserPromotionRepository;
 import ua.lviv.bas.cinema.service.common.PromotionService;
@@ -36,11 +38,11 @@ public class UserPromotionService {
 		Promotion promotion = promotionService.findByIdOrThrow(request.getPromotionId());
 
 		if (!promotionService.isPromotionActive(promotion)) {
-			throw new IllegalArgumentException("Promotion is not active or has expired");
+			throw new PromotionNotActiveException(promotion.getTitle());
 		}
 
 		if (userPromotionRepository.existsByUserAndPromotion(user, promotion)) {
-			throw new IllegalArgumentException("User has already claimed this promotion");
+			throw new AlreadyClaimedException(user.getEmail(), promotion.getTitle());
 		}
 
 		UserPromotion userPromotion = UserPromotion.builder().user(user).promotion(promotion)

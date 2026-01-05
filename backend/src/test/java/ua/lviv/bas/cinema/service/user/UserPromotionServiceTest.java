@@ -24,6 +24,9 @@ import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.UserPromotion;
 import ua.lviv.bas.cinema.dto.promotion.request.UserPromotionCreateRequest;
 import ua.lviv.bas.cinema.dto.promotion.response.UserPromotionResponse;
+import ua.lviv.bas.cinema.exception.domain.promotion.AlreadyClaimedException;
+import ua.lviv.bas.cinema.exception.domain.promotion.PromotionNotActiveException;
+import ua.lviv.bas.cinema.exception.domain.promotion.PromotionNotFoundException;
 import ua.lviv.bas.cinema.mapper.PromotionMapper;
 import ua.lviv.bas.cinema.repository.UserPromotionRepository;
 import ua.lviv.bas.cinema.service.common.PromotionService;
@@ -90,9 +93,7 @@ class UserPromotionServiceTest {
 	@Test
 	void claimPromotion_ShouldThrowWhenPromotionNotActive() {
 		Long promotionId = 1L;
-		User user = new User();
-		user.setId(1L);
-		user.setEmail("test@example.com");
+		User user = User.builder().id(1L).email("test@example.com").build();
 
 		UserPromotionCreateRequest request = new UserPromotionCreateRequest();
 		request.setPromotionId(promotionId);
@@ -104,8 +105,8 @@ class UserPromotionServiceTest {
 		when(promotionService.isPromotionActive(promotion)).thenReturn(false);
 
 		assertThatThrownBy(() -> userPromotionService.claimPromotion(request, user))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessageContaining("Promotion is not active or has expired");
+				.isInstanceOf(PromotionNotActiveException.class)
+				.hasMessageContaining("Promotion 'Expired Promotion' is not active or has expired");
 
 		verify(promotionService).findByIdOrThrow(promotionId);
 		verify(promotionService).isPromotionActive(promotion);
@@ -116,22 +117,21 @@ class UserPromotionServiceTest {
 	@Test
 	void claimPromotion_ShouldThrowWhenUserAlreadyClaimed() {
 		Long promotionId = 1L;
-		User user = new User();
-		user.setId(1L);
+		User user = User.builder().id(1L).email("test@example.com").build();
 
 		UserPromotionCreateRequest request = new UserPromotionCreateRequest();
 		request.setPromotionId(promotionId);
 
-		Promotion promotion = Promotion.builder().id(promotionId).startDate(LocalDateTime.now().minusDays(1))
-				.endDate(LocalDateTime.now().plusDays(1)).build();
+		Promotion promotion = Promotion.builder().id(promotionId).title("Test Promotion")
+				.startDate(LocalDateTime.now().minusDays(1)).endDate(LocalDateTime.now().plusDays(1)).build();
 
 		when(promotionService.findByIdOrThrow(promotionId)).thenReturn(promotion);
 		when(promotionService.isPromotionActive(promotion)).thenReturn(true);
 		when(userPromotionRepository.existsByUserAndPromotion(user, promotion)).thenReturn(true);
 
 		assertThatThrownBy(() -> userPromotionService.claimPromotion(request, user))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessageContaining("User has already claimed this promotion");
+				.isInstanceOf(AlreadyClaimedException.class)
+				.hasMessageContaining("User 'test@example.com' has already claimed promotion 'Test Promotion'");
 
 		verify(userPromotionRepository).existsByUserAndPromotion(user, promotion);
 		verify(userPromotionRepository, never()).save(any());
@@ -140,8 +140,7 @@ class UserPromotionServiceTest {
 
 	@Test
 	void getUserPromotions_ShouldReturnListWithBalances() {
-		User user = new User();
-		user.setId(1L);
+		User user = User.builder().id(1L).build();
 
 		BonusCard bonusCard = BonusCard.builder().id(1L).user(user).pointsBalance(350).build();
 		user.setBonusCard(bonusCard);
@@ -183,9 +182,7 @@ class UserPromotionServiceTest {
 
 	@Test
 	void getUserPromotions_ShouldHandleNullBonusCard() {
-		User user = new User();
-		user.setId(1L);
-		user.setBonusCard(null);
+		User user = User.builder().id(1L).bonusCard(null).build();
 
 		when(userPromotionRepository.findByUserWithPromotion(user)).thenReturn(Collections.emptyList());
 		when(promotionMapper.toUserPromotionResponseList(Collections.emptyList())).thenReturn(Collections.emptyList());
@@ -197,9 +194,7 @@ class UserPromotionServiceTest {
 
 	@Test
 	void getUserPromotions_ShouldReturnEmptyListForNoPromotions() {
-		User user = new User();
-		user.setId(1L);
-		user.setBonusCard(new BonusCard());
+		User user = User.builder().id(1L).bonusCard(BonusCard.builder().build()).build();
 
 		when(userPromotionRepository.findByUserWithPromotion(user)).thenReturn(Collections.emptyList());
 		when(promotionMapper.toUserPromotionResponseList(Collections.emptyList())).thenReturn(Collections.emptyList());
@@ -212,8 +207,7 @@ class UserPromotionServiceTest {
 	@Test
 	void hasUserClaimedPromotion_ShouldReturnTrueWhenClaimed() {
 		Long promotionId = 1L;
-		User user = new User();
-		user.setId(1L);
+		User user = User.builder().id(1L).build();
 
 		Promotion promotion = Promotion.builder().id(promotionId).build();
 
@@ -230,8 +224,7 @@ class UserPromotionServiceTest {
 	@Test
 	void hasUserClaimedPromotion_ShouldReturnFalseWhenNotClaimed() {
 		Long promotionId = 1L;
-		User user = new User();
-		user.setId(1L);
+		User user = User.builder().id(1L).build();
 
 		Promotion promotion = Promotion.builder().id(promotionId).build();
 
@@ -281,8 +274,7 @@ class UserPromotionServiceTest {
 	@Test
 	void isPromotionAvailableForUser_ShouldReturnTrueWhenAvailable() {
 		Long promotionId = 1L;
-		User user = new User();
-		user.setId(1L);
+		User user = User.builder().id(1L).build();
 
 		Promotion promotion = Promotion.builder().id(promotionId).startDate(LocalDateTime.now().minusDays(1))
 				.endDate(LocalDateTime.now().plusDays(1)).build();
@@ -302,7 +294,7 @@ class UserPromotionServiceTest {
 	@Test
 	void isPromotionAvailableForUser_ShouldReturnFalseWhenNotActive() {
 		Long promotionId = 1L;
-		User user = new User();
+		User user = User.builder().build();
 
 		Promotion promotion = Promotion.builder().id(promotionId).build();
 
@@ -320,7 +312,7 @@ class UserPromotionServiceTest {
 	@Test
 	void isPromotionAvailableForUser_ShouldReturnFalseWhenAlreadyClaimed() {
 		Long promotionId = 1L;
-		User user = new User();
+		User user = User.builder().build();
 
 		Promotion promotion = Promotion.builder().id(promotionId).startDate(LocalDateTime.now().minusDays(1))
 				.endDate(LocalDateTime.now().plusDays(1)).build();
@@ -340,10 +332,9 @@ class UserPromotionServiceTest {
 	@Test
 	void isPromotionAvailableForUser_ShouldReturnFalseWhenPromotionNotFound() {
 		Long promotionId = 999L;
-		User user = new User();
+		User user = User.builder().build();
 
-		when(promotionService.findByIdOrThrow(promotionId))
-				.thenThrow(new IllegalArgumentException("Promotion not found"));
+		when(promotionService.findByIdOrThrow(promotionId)).thenThrow(new PromotionNotFoundException(promotionId));
 
 		boolean result = userPromotionService.isPromotionAvailableForUser(user, promotionId);
 
