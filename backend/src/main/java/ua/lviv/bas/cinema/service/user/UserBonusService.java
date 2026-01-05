@@ -33,7 +33,7 @@ import ua.lviv.bas.cinema.repository.BonusTransactionRepository;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class BonusUserService {
+public class UserBonusService {
 
 	private static final BigDecimal POINT_VALUE = new BigDecimal("1.00");
 

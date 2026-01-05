@@ -26,7 +26,7 @@ public class UserPromotionService {
 
 	private final UserPromotionRepository userPromotionRepository;
 	private final PromotionService promotionService;
-	private final BonusUserService bonusUserService;
+	private final UserBonusService bonusUserService;
 	private final PromotionMapper promotionMapper;
 
 	@Transactional
