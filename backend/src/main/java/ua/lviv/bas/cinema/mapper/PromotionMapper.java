@@ -35,7 +35,7 @@ public interface PromotionMapper {
 	@Mapping(target = "promotionTitle", source = "promotion.title")
 	@Mapping(target = "claimedAt", source = "redeemedAt")
 	@Mapping(target = "newBalance", ignore = true)
-	UserPromotionResponse toUserPromotionResponse(UserPromotion promotion);
+	UserPromotionResponse toUserPromotionResponse(UserPromotion userPromotion);
 
 	List<UserPromotionResponse> toUserPromotionResponseList(List<UserPromotion> userPromotions);
 }
