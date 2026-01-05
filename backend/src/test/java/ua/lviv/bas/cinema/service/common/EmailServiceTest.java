@@ -1,14 +1,13 @@
 package ua.lviv.bas.cinema.service.common;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
+
+import java.math.BigDecimal;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -39,11 +38,13 @@ class EmailServiceTest {
 
 	private final String frontendUrl = "http://localhost:5173";
 	private final String fromEmail = "noreply@cinema.com";
+	private final String companyName = "Cinema";
 
 	@BeforeEach
 	void setUp() {
 		ReflectionTestUtils.setField(emailService, "frontendUrl", frontendUrl);
 		ReflectionTestUtils.setField(emailService, "fromEmail", fromEmail);
+		ReflectionTestUtils.setField(emailService, "companyName", companyName);
 	}
 
 	@Test
@@ -56,14 +57,13 @@ class EmailServiceTest {
 		verify(mailSender).send(messageCaptor.capture());
 		SimpleMailMessage sentMessage = messageCaptor.getValue();
 
-		assertNotNull(sentMessage);
-		assertEquals(fromEmail, sentMessage.getFrom());
-		assertArrayEquals(new String[] { toEmail }, sentMessage.getTo());
-		assertEquals("Confirm Your Email Address", sentMessage.getSubject());
-		String messageText = sentMessage.getText();
-		assertNotNull(messageText);
-		assertTrue(messageText.contains(frontendUrl + "/verify-email/" + token));
-		assertTrue(messageText.contains("This link will expire in 10 minutes"));
+		assertThat(sentMessage).isNotNull();
+		assertThat(sentMessage.getFrom()).isEqualTo(fromEmail);
+		assertThat(sentMessage.getTo()).containsExactly(toEmail);
+		assertThat(sentMessage.getSubject()).isEqualTo("Confirm Your Email Address");
+		assertThat(sentMessage.getText()).contains(frontendUrl + "/verify-email/" + token);
+		assertThat(sentMessage.getText()).contains("10 minutes");
+		assertThat(sentMessage.getText()).contains(companyName);
 	}
 
 	@Test
@@ -76,14 +76,13 @@ class EmailServiceTest {
 		verify(mailSender).send(messageCaptor.capture());
 		SimpleMailMessage sentMessage = messageCaptor.getValue();
 
-		assertNotNull(sentMessage);
-		assertEquals(fromEmail, sentMessage.getFrom());
-		assertArrayEquals(new String[] { toEmail }, sentMessage.getTo());
-		assertEquals("Password Reset Request", sentMessage.getSubject());
-		String messageText = sentMessage.getText();
-		assertNotNull(messageText);
-		assertTrue(messageText.contains(frontendUrl + "/reset-password/" + token));
-		assertTrue(messageText.contains("This link will expire in 10 minutes"));
+		assertThat(sentMessage).isNotNull();
+		assertThat(sentMessage.getFrom()).isEqualTo(fromEmail);
+		assertThat(sentMessage.getTo()).containsExactly(toEmail);
+		assertThat(sentMessage.getSubject()).isEqualTo("Password Reset Request");
+		assertThat(sentMessage.getText()).contains(frontendUrl + "/reset-password/" + token);
+		assertThat(sentMessage.getText()).contains("10 minutes");
+		assertThat(sentMessage.getText()).contains(companyName);
 	}
 
 	@Test
@@ -96,14 +95,13 @@ class EmailServiceTest {
 		verify(mailSender).send(messageCaptor.capture());
 		SimpleMailMessage sentMessage = messageCaptor.getValue();
 
-		assertNotNull(sentMessage);
-		assertEquals(fromEmail, sentMessage.getFrom());
-		assertArrayEquals(new String[] { toEmail }, sentMessage.getTo());
-		assertEquals("Confirm Your Email Change", sentMessage.getSubject());
-		String messageText = sentMessage.getText();
-		assertNotNull(messageText);
-		assertTrue(messageText.contains(frontendUrl + "/confirm-email-change/" + token));
-		assertTrue(messageText.contains("This link will expire in 24 hours"));
+		assertThat(sentMessage).isNotNull();
+		assertThat(sentMessage.getFrom()).isEqualTo(fromEmail);
+		assertThat(sentMessage.getTo()).containsExactly(toEmail);
+		assertThat(sentMessage.getSubject()).isEqualTo("Confirm Your Email Change");
+		assertThat(sentMessage.getText()).contains(frontendUrl + "/confirm-email-change/" + token);
+		assertThat(sentMessage.getText()).contains("24 hours");
+		assertThat(sentMessage.getText()).contains(companyName);
 	}
 
 	@Test
@@ -116,14 +114,69 @@ class EmailServiceTest {
 		verify(mailSender).send(messageCaptor.capture());
 		SimpleMailMessage sentMessage = messageCaptor.getValue();
 
-		assertNotNull(sentMessage);
-		assertEquals(fromEmail, sentMessage.getFrom());
-		assertArrayEquals(new String[] { oldEmail }, sentMessage.getTo());
-		assertEquals("Email Address Changed", sentMessage.getSubject());
-		String messageText = sentMessage.getText();
-		assertNotNull(messageText);
-		assertTrue(messageText.contains(oldEmail));
-		assertTrue(messageText.contains(newEmail));
+		assertThat(sentMessage).isNotNull();
+		assertThat(sentMessage.getFrom()).isEqualTo(fromEmail);
+		assertThat(sentMessage.getTo()).containsExactly(oldEmail);
+		assertThat(sentMessage.getSubject()).isEqualTo("Email Address Changed");
+		assertThat(sentMessage.getText()).contains(oldEmail);
+		assertThat(sentMessage.getText()).contains(newEmail);
+		assertThat(sentMessage.getText()).contains(companyName);
+	}
+
+	@Test
+	void sendTicketsEmail_ShouldSendEmail_WhenValidParameters() {
+		String toEmail = "customer@example.com";
+		String bookingNumber = "BK-2024-001";
+		String movieTitle = "Inception";
+		String sessionTime = "2024-01-15 18:30";
+		String hallName = "Hall A";
+		BigDecimal amountPaid = new BigDecimal("450.00");
+		String paymentMethod = "Credit Card";
+		String seatInfo = "Row 5, Seats 12-13";
+
+		emailService.sendTicketsEmail(toEmail, bookingNumber, movieTitle, sessionTime, hallName, amountPaid,
+				paymentMethod, seatInfo);
+
+		verify(mailSender).send(messageCaptor.capture());
+		SimpleMailMessage sentMessage = messageCaptor.getValue();
+
+		assertThat(sentMessage).isNotNull();
+		assertThat(sentMessage.getFrom()).isEqualTo(fromEmail);
+		assertThat(sentMessage.getTo()).containsExactly(toEmail);
+		assertThat(sentMessage.getSubject()).isEqualTo("Your Tickets: " + movieTitle);
+		assertThat(sentMessage.getText()).contains(bookingNumber);
+		assertThat(sentMessage.getText()).contains(movieTitle);
+		assertThat(sentMessage.getText()).contains(sessionTime);
+		assertThat(sentMessage.getText()).contains(hallName);
+		assertThat(sentMessage.getText()).contains("450.00");
+		assertThat(sentMessage.getText()).contains(paymentMethod);
+		assertThat(sentMessage.getText()).contains(seatInfo);
+		assertThat(sentMessage.getText()).contains(companyName);
+		assertThat(sentMessage.getText()).contains("10-15 minutes");
+	}
+
+	@Test
+	void sendPaymentFailedEmail_ShouldSendEmail_WhenValidParameters() {
+		String toEmail = "customer@example.com";
+		String bookingNumber = "BK-2024-002";
+		String movieTitle = "Interstellar";
+		String sessionTime = "2024-01-16 20:00";
+		String errorMessage = "Insufficient funds";
+
+		emailService.sendPaymentFailedEmail(toEmail, bookingNumber, movieTitle, sessionTime, errorMessage);
+
+		verify(mailSender).send(messageCaptor.capture());
+		SimpleMailMessage sentMessage = messageCaptor.getValue();
+
+		assertThat(sentMessage).isNotNull();
+		assertThat(sentMessage.getFrom()).isEqualTo(fromEmail);
+		assertThat(sentMessage.getTo()).containsExactly(toEmail);
+		assertThat(sentMessage.getSubject()).isEqualTo("Payment Failed: " + movieTitle);
+		assertThat(sentMessage.getText()).contains(bookingNumber);
+		assertThat(sentMessage.getText()).contains(movieTitle);
+		assertThat(sentMessage.getText()).contains(sessionTime);
+		assertThat(sentMessage.getText()).contains(errorMessage);
+		assertThat(sentMessage.getText()).contains(companyName);
 	}
 
 	@Test
@@ -137,7 +190,7 @@ class EmailServiceTest {
 
 		doThrow(mailException).when(mailSender).send(any(SimpleMailMessage.class));
 
-		assertDoesNotThrow(() -> emailService.sendEmailChangeNotification(oldEmail, newEmail));
+		assertThatCode(() -> emailService.sendEmailChangeNotification(oldEmail, newEmail)).doesNotThrowAnyException();
 
 		verify(mailSender).send(any(SimpleMailMessage.class));
 	}
@@ -153,11 +206,8 @@ class EmailServiceTest {
 
 		doThrow(mailException).when(mailSender).send(any(SimpleMailMessage.class));
 
-		ExternalServiceException exception = assertThrows(ExternalServiceException.class,
-				() -> emailService.sendVerificationEmail(toEmail, token));
-
-		assertNotNull(exception);
-		assertTrue(exception.getMessage().contains("Email Service"));
+		assertThatThrownBy(() -> emailService.sendVerificationEmail(toEmail, token))
+				.isInstanceOf(ExternalServiceException.class).hasMessageContaining("Email Service");
 	}
 
 	@Test
@@ -171,11 +221,8 @@ class EmailServiceTest {
 
 		doThrow(mailException).when(mailSender).send(any(SimpleMailMessage.class));
 
-		ExternalServiceException exception = assertThrows(ExternalServiceException.class,
-				() -> emailService.sendPasswordResetEmail(toEmail, token));
-
-		assertNotNull(exception);
-		assertTrue(exception.getMessage().contains("Email Service"));
+		assertThatThrownBy(() -> emailService.sendPasswordResetEmail(toEmail, token))
+				.isInstanceOf(ExternalServiceException.class).hasMessageContaining("Email Service");
 	}
 
 	@Test
@@ -189,67 +236,7 @@ class EmailServiceTest {
 
 		doThrow(mailException).when(mailSender).send(any(SimpleMailMessage.class));
 
-		ExternalServiceException exception = assertThrows(ExternalServiceException.class,
-				() -> emailService.sendEmailChangeConfirmation(toEmail, token));
-
-		assertNotNull(exception);
-		assertTrue(exception.getMessage().contains("Email Service"));
-	}
-
-	@Test
-	void createLinks_ShouldGenerateCorrectUrls() {
-		String token = "test-token-123";
-
-		String verificationLink = ReflectionTestUtils.invokeMethod(emailService, "createVerificationLink", token);
-		String passwordResetLink = ReflectionTestUtils.invokeMethod(emailService, "createPasswordResetLink", token);
-		String emailChangeLink = ReflectionTestUtils.invokeMethod(emailService, "createEmailChangeLink", token);
-
-		assertEquals(frontendUrl + "/verify-email/" + token, verificationLink);
-		assertEquals(frontendUrl + "/reset-password/" + token, passwordResetLink);
-		assertEquals(frontendUrl + "/confirm-email-change/" + token, emailChangeLink);
-	}
-
-	@Test
-	void emailContent_ShouldContainCorrectInformation() {
-		String link = "http://test.com/confirm";
-
-		String verificationText = ReflectionTestUtils.invokeMethod(emailService, "createVerificationEmailText", link);
-		String passwordResetText = ReflectionTestUtils.invokeMethod(emailService, "createPasswordResetEmailText", link);
-		String emailChangeText = ReflectionTestUtils.invokeMethod(emailService, "createEmailChangeConfirmationText",
-				link);
-		String emailNotificationText = ReflectionTestUtils.invokeMethod(emailService,
-				"createEmailChangeNotificationText", "old@test.com", "new@test.com");
-
-		assertNotNull(verificationText);
-		assertTrue(verificationText.contains(link));
-		assertTrue(verificationText.contains("10 minutes"));
-
-		assertNotNull(passwordResetText);
-		assertTrue(passwordResetText.contains(link));
-		assertTrue(passwordResetText.contains("10 minutes"));
-
-		assertNotNull(emailChangeText);
-		assertTrue(emailChangeText.contains(link));
-		assertTrue(emailChangeText.contains("24 hours"));
-
-		assertNotNull(emailNotificationText);
-		assertTrue(emailNotificationText.contains("old@test.com"));
-		assertTrue(emailNotificationText.contains("new@test.com"));
-	}
-
-	@Test
-	void buildEmailMessage_ShouldBuildCorrectMessage() {
-		String toEmail = "recipient@example.com";
-		String subject = "Test Subject";
-		String text = "Test email content";
-
-		SimpleMailMessage message = ReflectionTestUtils.invokeMethod(emailService, "buildEmailMessage", toEmail,
-				subject, text);
-
-		assertNotNull(message);
-		assertEquals(fromEmail, message.getFrom());
-		assertArrayEquals(new String[] { toEmail }, message.getTo());
-		assertEquals(subject, message.getSubject());
-		assertEquals(text, message.getText());
+		assertThatThrownBy(() -> emailService.sendEmailChangeConfirmation(toEmail, token))
+				.isInstanceOf(ExternalServiceException.class).hasMessageContaining("Email Service");
 	}
 }
