@@ -27,13 +27,13 @@ import ua.lviv.bas.cinema.dto.bonus.response.BonusCardResponse;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusTransactionResponse;
 import ua.lviv.bas.cinema.exception.domain.bonus.BonusCardNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.bonus.BonusRuleNotFoundException;
-import ua.lviv.bas.cinema.service.user.BonusUserService;
+import ua.lviv.bas.cinema.service.user.UserBonusService;
 
 @ExtendWith(MockitoExtension.class)
 class BonusControllerTest {
 
 	@Mock
-	private BonusUserService bonusUserService;
+	private UserBonusService bonusUserService;
 
 	@InjectMocks
 	private BonusController bonusController;
