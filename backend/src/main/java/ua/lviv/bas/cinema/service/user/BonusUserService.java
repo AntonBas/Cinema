@@ -125,6 +125,24 @@ public class BonusUserService {
 		log.info("Awarded birthday bonus ({} points) to user {}", rule.getPoints(), user.getId());
 	}
 
+	@Transactional
+	public Integer addPoints(User user, Integer points) {
+		log.info("Adding {} points to user {} from promotion", points, user.getId());
+
+		if (points == null || points <= 0) {
+			throw new IllegalArgumentException("Points must be a positive number");
+		}
+
+		BonusCard card = findOrCreateBonusCard(user);
+
+		createBonusTransaction(card, points, BonusTransactionType.PROMOTION_BONUS,
+				"PROMOTION_" + System.currentTimeMillis(), null, null);
+
+		log.info("Added {} points to user {}. New balance: {}", points, user.getId(), card.getPointsBalance());
+
+		return card.getPointsBalance();
+	}
+
 	@Transactional(readOnly = true)
 	public void validatePointsRedemption(Long userId, Integer pointsToUse) {
 		log.debug("Validating {} points redemption for user: {}", pointsToUse, userId);
