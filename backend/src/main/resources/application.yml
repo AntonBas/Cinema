@@ -1,61 +1,80 @@
 spring:
-  application:
-    name: cinema
-  config:
-    import: optional:file:.env.local[.properties]
-  datasource:
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:cinema_db}
-    username: ${DB_USER:cinema}
-    password: ${DB_PASSWORD:}
-    driver-class-name: org.postgresql.Driver
-    hikari:
-      maximum-pool-size: 5
-      connection-timeout: 30000
-  jpa:
-    hibernate:
-      ddl-auto: validate
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
-        format_sql: ${SHOW_SQL:true}
-        enable_lazy_load_no_trans: true
-        jpa:
-          query:
-            dsl:
-              enabled: false
-      javax:
-        persistence:
-          schema-generation:
-            scripts:
-              action: none
-              create-target: none
-              drop-target: none
-    show-sql: ${SHOW_SQL:true}
-  flyway:
-    enabled: true
-    baseline-on-migrate: true
-    locations: classpath:/db/migration
-    validate-on-migrate: true
-    validate-migration-naming: true
-  mail:
-    host: smtp.gmail.com
-    port: 587
-    username: ${EMAIL_USERNAME:}
-    password: ${EMAIL_PASSWORD:}
-    properties:
-      mail:
-        smtp:
-          auth: true
-          starttls:
-            enable: true
-          connectiontimeout: 5000
-          timeout: 5000
-          writetimeout: 5000
-
-querydsl:
-  enabled: false
+    application:
+        name: cinema
+    config:
+        import: optional:file:.env.local[.properties]
+    datasource:
+        url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:cinema_db}
+        username: ${DB_USER:cinema}
+        password: ${DB_PASSWORD:}
+        driver-class-name: org.postgresql.Driver
+        hikari:
+            maximum-pool-size: 5
+            connection-timeout: 30000
+    jpa:
+        hibernate:
+            ddl-auto: validate
+        properties:
+            hibernate:
+                '[format_sql]': ${SHOW_SQL:true}
+                '[enable_lazy_load_no_trans]': true
+                dialect: org.hibernate.dialect.PostgreSQLDialect
+            jpa:
+                query:
+                    dsl:
+                        enabled: false
+            javax:
+                persistence:
+                    schema-generation:
+                        scripts:
+                            action: none
+                            create-target: none
+                            drop-target: none
+        show-sql: ${SHOW_SQL:true}
+    flyway:
+        enabled: true
+        baseline-on-migrate: true
+        locations: classpath:/db/migration
+        validate-on-migrate: true
+        validate-migration-naming: true
+    mail:
+        host: smtp.gmail.com
+        port: 587
+        username: ${EMAIL_USERNAME:}
+        password: ${EMAIL_PASSWORD:}
+        properties:
+            mail:
+                smtp:
+                    auth: true
+                    starttls:
+                        enable: true
+                    connectiontimeout: 5000
+                    timeout: 5000
+                    writetimeout: 5000
+    task:
+        execution:
+            pool:
+                core-size: 3
+                max-size: 5
+                queue-capacity: 50
+            thread-name-prefix: "scheduler-"
 
 app:
-  jwt:
-    secret: ${JWT_SECRET:local_fallback_secret_key_for_dev_only}
-    expiration: 86400000
+    jwt:
+        secret: ${JWT_SECRET:local_fallback_secret_key_for_dev_only}
+        expiration: 86400000
+    ticket:
+        qr:
+            size: 200
+        base-url: ${APP_BASE_URL:http://localhost:8080}
+    company:
+        name: "Bas Cinema"
+    frontend:
+        url: ${FRONTEND_URL:http://localhost:5173}
+    email:
+        from: ${EMAIL_FROM:noreply@bascinema.com}
+    qr:
+        code:
+            size: 200
+            margin: 1
+            format: PNG

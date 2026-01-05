@@ -1,21 +1,34 @@
 spring:
-  config:
-    activate:
-      on-profile: docker
+    config:
+        activate:
+            on-profile: docker
 
-  datasource:
-    url: jdbc:postgresql://${DB_HOST:postgres}:${DB_PORT:5433}/${DB_NAME:cinema_db}
-    username: ${DB_USER:cinema}
-    password: ${DB_PASSWORD}
-    hikari:
-      maximum-pool-size: 10
+    datasource:
+        url: jdbc:postgresql://${DB_HOST:postgres}:${DB_PORT:5432}/${DB_NAME:cinema_db}
+        hikari:
+            maximum-pool-size: 10
 
-  jpa:
-    show-sql: ${SHOW_SQL:false}
-    properties:
-      hibernate:
-        jdbc:
-          batch_size: 20
-          fetch_size: 50
-        order_inserts: true
-        order_updates: true
+    jpa:
+        show-sql: false
+        properties:
+            hibernate:
+                "[jdbc.batch_size]": 20
+                "[jdbc.fetch_size]": 50
+                "[order_inserts]": true
+                "[order_updates]": true
+
+    task:
+        execution:
+            pool:
+                core-size: 5
+                max-size: 10
+                queue-capacity: 100
+
+scheduler:
+    booking:
+        expiration-interval: 30000
+
+logging:
+    level:
+        "[ua.lviv.bas.cinema]": INFO
+        "[org.springframework]": WARN
