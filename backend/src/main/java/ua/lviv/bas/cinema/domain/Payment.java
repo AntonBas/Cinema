@@ -32,7 +32,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-import ua.lviv.bas.cinema.domain.enums.PaymentMethod;
 import ua.lviv.bas.cinema.domain.enums.PaymentStatus;
 
 @Entity
@@ -46,7 +45,8 @@ import ua.lviv.bas.cinema.domain.enums.PaymentStatus;
 @Table(name = "payments", indexes = { @Index(name = "idx_payment_booking", columnList = "booking_id"),
 		@Index(name = "idx_payment_status", columnList = "status"),
 		@Index(name = "idx_payment_created", columnList = "created_at"),
-		@Index(name = "idx_payment_transaction", columnList = "transaction_id") })
+		@Index(name = "idx_payment_transaction", columnList = "transaction_id"),
+		@Index(name = "idx_payment_liqpay_order", columnList = "liqpay_order_id") })
 public class Payment {
 
 	@Id
@@ -59,21 +59,19 @@ public class Payment {
 	@Column(name = "amount", nullable = false, precision = 10, scale = 2)
 	private BigDecimal amount;
 
-	@NotNull
-	@Enumerated(EnumType.STRING)
-	@Column(name = "payment_method", nullable = false, length = 20)
-	private PaymentMethod paymentMethod;
-
 	@Enumerated(EnumType.STRING)
 	@Column(name = "status", nullable = false, length = 20)
 	@Builder.Default
 	private PaymentStatus status = PaymentStatus.PENDING;
 
-	@Column(name = "transaction_id", unique = true, length = 100)
-	private String transactionId;
-
 	@Column(name = "liqpay_order_id", unique = true, length = 50)
 	private String liqpayOrderId;
+
+	@Column(name = "liqpay_payment_id", length = 50)
+	private String liqpayPaymentId;
+
+	@Column(name = "liqpay_transaction_id", length = 100)
+	private String liqpayTransactionId;
 
 	@Column(name = "payment_time")
 	private LocalDateTime paymentTime;
@@ -99,4 +97,13 @@ public class Payment {
 	@BatchSize(size = 20)
 	@Builder.Default
 	private List<Refund> refunds = new ArrayList<>();
+
+	@Column(name = "liqpay_error_code", length = 50)
+	private String liqpayErrorCode;
+
+	@Column(name = "liqpay_error_description", length = 500)
+	private String liqpayErrorDescription;
+
+	@Column(name = "liqpay_sender_card_mask", length = 20)
+	private String liqpaySenderCardMask;
 }

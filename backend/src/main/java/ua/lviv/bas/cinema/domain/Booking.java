@@ -8,7 +8,6 @@ import java.util.List;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.CreationTimestamp;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -40,13 +39,14 @@ import ua.lviv.bas.cinema.domain.enums.BookingStatus;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString(exclude = { "user", "session", "bookedSeats", "payment", "tickets" })
+@ToString(exclude = { "user", "session", "bookedSeats", "payment", "tickets", "bonusTransactions" })
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Table(name = "bookings", indexes = { @Index(name = "idx_booking_user", columnList = "user_id"),
 		@Index(name = "idx_booking_session", columnList = "session_id"),
 		@Index(name = "idx_booking_status", columnList = "status"),
 		@Index(name = "idx_booking_expires", columnList = "expires_at"),
-		@Index(name = "idx_booking_created", columnList = "created_at") })
+		@Index(name = "idx_booking_created", columnList = "created_at"),
+		@Index(name = "idx_booking_final_price", columnList = "final_price") })
 public class Booking {
 
 	@Id
@@ -64,8 +64,7 @@ public class Booking {
 	@JoinColumn(name = "session_id", nullable = false)
 	private Session session;
 
-	@OneToMany(mappedBy = "booking", cascade = { CascadeType.PERSIST, CascadeType.MERGE,
-			CascadeType.REMOVE }, fetch = FetchType.LAZY, orphanRemoval = true)
+	@OneToMany(mappedBy = "booking", fetch = FetchType.LAZY)
 	@BatchSize(size = 20)
 	@Builder.Default
 	private List<BookedSeat> bookedSeats = new ArrayList<>();
@@ -74,6 +73,11 @@ public class Booking {
 	@BatchSize(size = 10)
 	@Builder.Default
 	private List<Ticket> tickets = new ArrayList<>();
+
+	@OneToMany(mappedBy = "booking", fetch = FetchType.LAZY)
+	@BatchSize(size = 10)
+	@Builder.Default
+	private List<BonusTransaction> bonusTransactions = new ArrayList<>();
 
 	@Enumerated(EnumType.STRING)
 	@Column(name = "status", nullable = false, length = 20)
@@ -85,19 +89,20 @@ public class Booking {
 	@Column(name = "total_price", nullable = false, precision = 10, scale = 2)
 	private BigDecimal totalPrice;
 
-	@Column(name = "discount_amount", precision = 10, scale = 2)
-	@Builder.Default
-	private BigDecimal discountAmount = BigDecimal.ZERO;
-
 	@Column(name = "bonus_points_used")
 	@Builder.Default
 	private Integer bonusPointsUsed = 0;
+
+	@Column(name = "bonus_discount_amount", precision = 10, scale = 2)
+	@Builder.Default
+	private BigDecimal bonusDiscountAmount = BigDecimal.ZERO;
 
 	@NotNull
 	@DecimalMin("0.00")
 	@Column(name = "final_price", nullable = false, precision = 10, scale = 2)
 	private BigDecimal finalPrice;
 
+	@NotNull
 	@Column(name = "expires_at", nullable = false)
 	private LocalDateTime expiresAt;
 

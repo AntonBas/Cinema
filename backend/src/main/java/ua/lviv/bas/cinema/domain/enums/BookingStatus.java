@@ -1,5 +1,5 @@
 package ua.lviv.bas.cinema.domain.enums;
 
 public enum BookingStatus {
-	PENDING, CONFIRMED, EXPIRED, CANCELLED, FAILED
+	DRAFT, PENDING, CONFIRMED, CANCELLED, EXPIRED, FAILED, REFUNDED
 }

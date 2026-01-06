@@ -33,14 +33,18 @@ import ua.lviv.bas.cinema.domain.enums.BookedSeatStatus;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString(exclude = { "booking", "seat", "session", "ticketType" })
+@ToString(exclude = { "booking", "seat", "session", "ticketType", "reservedByUser" })
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@Table(name = "booked_seats", indexes = { @Index(name = "idx_booked_seat_booking", columnList = "booking_id"),
-		@Index(name = "idx_booked_seat_seat_session", columnList = "seat_id, session_id"),
-		@Index(name = "idx_booked_seat_booking_session", columnList = "booking_id, session_id"),
-		@Index(name = "idx_booked_seat_status", columnList = "status"),
-		@Index(name = "idx_booked_seat_ticket_type", columnList = "ticket_type_id") }, uniqueConstraints = @UniqueConstraint(columnNames = {
-				"session_id", "seat_id" }))
+@Table(name = "booked_seats", uniqueConstraints = @UniqueConstraint(columnNames = { "session_id",
+		"seat_id" }, name = "uk_booked_seat_session_seat"), indexes = {
+				@Index(name = "idx_booked_seat_booking", columnList = "booking_id"),
+				@Index(name = "idx_booked_seat_session", columnList = "session_id"),
+				@Index(name = "idx_booked_seat_seat", columnList = "seat_id"),
+				@Index(name = "idx_booked_seat_status", columnList = "status"),
+				@Index(name = "idx_booked_seat_reserved_until", columnList = "reserved_until"),
+				@Index(name = "idx_booked_seat_composite_status", columnList = "session_id, seat_id, status"),
+				@Index(name = "idx_booked_seat_created", columnList = "booked_at"),
+				@Index(name = "idx_booked_seat_user", columnList = "user_id") })
 public class BookedSeat {
 
 	@Id
@@ -48,9 +52,8 @@ public class BookedSeat {
 	@EqualsAndHashCode.Include
 	private Long id;
 
-	@NotNull
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "booking_id", nullable = false)
+	@JoinColumn(name = "booking_id")
 	private Booking booking;
 
 	@NotNull
@@ -73,6 +76,7 @@ public class BookedSeat {
 	@Column(name = "seat_price", nullable = false, precision = 10, scale = 2)
 	private BigDecimal seatPrice;
 
+	@NotNull
 	@Enumerated(EnumType.STRING)
 	@Column(name = "status", nullable = false, length = 20)
 	@Builder.Default
@@ -81,4 +85,12 @@ public class BookedSeat {
 	@Column(name = "booked_at", nullable = false)
 	@Builder.Default
 	private LocalDateTime bookedAt = LocalDateTime.now();
+
+	@NotNull
+	@Column(name = "reserved_until", nullable = false)
+	private LocalDateTime reservedUntil;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "user_id")
+	private User reservedByUser;
 }
