@@ -40,7 +40,7 @@ import ua.lviv.bas.cinema.domain.enums.VerificationStatus;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString(exclude = { "tickets", "password", "bonusCard", "discounts", "bookings" })
+@ToString(exclude = { "tickets", "password", "bonusCard", "bookings" })
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Table(name = "users", indexes = { @Index(name = "idx_user_email", columnList = "email"),
 		@Index(name = "idx_user_name", columnList = "first_name,last_name"),
@@ -112,10 +112,6 @@ public class User {
 
 	@OneToOne(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
 	private BonusCard bonusCard;
-
-	@OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-	@Builder.Default
-	private List<Discount> discounts = new ArrayList<>();
 
 	@OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
 	@Builder.Default
