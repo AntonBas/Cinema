@@ -16,6 +16,7 @@ import ua.lviv.bas.cinema.domain.CinemaHall;
 import ua.lviv.bas.cinema.domain.Movie;
 import ua.lviv.bas.cinema.domain.Seat;
 import ua.lviv.bas.cinema.domain.Session;
+import ua.lviv.bas.cinema.domain.enums.BookedSeatStatus;
 import ua.lviv.bas.cinema.domain.enums.CinemaSessionStatus;
 import ua.lviv.bas.cinema.dto.session.request.SessionCreateRequest;
 import ua.lviv.bas.cinema.dto.session.request.SessionUpdateRequest;
@@ -238,34 +239,45 @@ public class SessionService {
 	public SessionAdminResponse toAdminResponse(Session session) {
 		SessionAdminResponse response = sessionMapper.toAdminDto(session);
 		response.setEndTime(getEndTime(session));
-		int bookedSeatsCount = session.getBookedSeats() != null
-				? (int) session.getBookedSeats().stream().filter(bs -> bs.getTicket() != null).count()
+
+		int confirmedSeatsCount = session.getBookedSeats() != null
+				? (int) session.getBookedSeats().stream().filter(bs -> bs.getStatus() == BookedSeatStatus.CONFIRMED)
+						.count()
 				: 0;
-		response.setTicketsSold(bookedSeatsCount);
-		if (bookedSeatsCount > 0) {
-			response.setTotalRevenue(session.getBasePrice().multiply(BigDecimal.valueOf(bookedSeatsCount)));
+
+		response.setTicketsSold(confirmedSeatsCount);
+
+		if (confirmedSeatsCount > 0) {
+			response.setTotalRevenue(session.getBasePrice().multiply(BigDecimal.valueOf(confirmedSeatsCount)));
 		} else {
 			response.setTotalRevenue(BigDecimal.ZERO);
 		}
+
 		response.setHallCapacity(
 				session.getHall() != null && session.getHall().getSeats() != null ? session.getHall().getSeats().size()
 						: 0);
+
 		return response;
 	}
 
 	public SessionScheduleResponse toScheduleResponse(Session session) {
 		SessionScheduleResponse response = sessionMapper.toScheduleDto(session);
 		response.setEndTime(getEndTime(session));
+
 		int hallCapacity = 0;
 		if (session.getHall() != null && session.getHall().getSeats() != null) {
 			hallCapacity = (int) session.getHall().getSeats().stream().filter(Seat::isActive).count();
 		}
-		int bookedSeatsCount = session.getBookedSeats() != null
-				? (int) session.getBookedSeats().stream().filter(bs -> bs.getTicket() != null).count()
+
+		int confirmedSeatsCount = session.getBookedSeats() != null
+				? (int) session.getBookedSeats().stream().filter(bs -> bs.getStatus() == BookedSeatStatus.CONFIRMED)
+						.count()
 				: 0;
-		int availableSeats = Math.max(0, hallCapacity - bookedSeatsCount);
+
+		int availableSeats = Math.max(0, hallCapacity - confirmedSeatsCount);
 		response.setAvailableSeats(availableSeats);
 		response.setHallCapacity(availableSeats + "/" + hallCapacity);
+
 		return response;
 	}
 
