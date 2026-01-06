@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.service.common;
+package ua.lviv.bas.cinema.service.infrastructure;
 
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -8,7 +8,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import ua.lviv.bas.cinema.service.infrastructure.FileStorageService;
 
 @Slf4j
 @Service

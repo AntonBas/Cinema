@@ -21,8 +21,8 @@ import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.dto.promotion.request.UserPromotionCreateRequest;
 import ua.lviv.bas.cinema.dto.promotion.response.PromotionResponse;
 import ua.lviv.bas.cinema.dto.promotion.response.UserPromotionResponse;
-import ua.lviv.bas.cinema.service.common.PromotionService;
-import ua.lviv.bas.cinema.service.user.UserPromotionService;
+import ua.lviv.bas.cinema.service.admin.AdminPromotionService;
+import ua.lviv.bas.cinema.service.user.PromotionService;
 
 @RestController
 @RequestMapping("/api/promotions")
@@ -30,8 +30,8 @@ import ua.lviv.bas.cinema.service.user.UserPromotionService;
 @Tag(name = "Promotion", description = "Promotion management APIs for users")
 public class PromotionController {
 
-	private final PromotionService promotionService;
-	private final UserPromotionService userPromotionService;
+	private final AdminPromotionService promotionService;
+	private final AdminPromotionService userPromotionService;
 
 	@GetMapping
 	@Operation(summary = "Get available promotions", description = "Get list of promotions available for the current user")

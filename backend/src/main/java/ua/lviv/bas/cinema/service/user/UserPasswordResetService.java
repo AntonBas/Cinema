@@ -16,7 +16,7 @@ import ua.lviv.bas.cinema.exception.domain.auth.TokenExpiredException;
 import ua.lviv.bas.cinema.exception.domain.user.EmailNotVerifiedException;
 import ua.lviv.bas.cinema.repository.EmailTokenRepository;
 import ua.lviv.bas.cinema.repository.UserRepository;
-import ua.lviv.bas.cinema.service.common.EmailTokenGeneratorService;
+import ua.lviv.bas.cinema.service.notification.EmailTokenGeneratorService;
 
 @Slf4j
 @Service

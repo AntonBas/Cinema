@@ -27,7 +27,7 @@ import ua.lviv.bas.cinema.domain.enums.CinemaSessionStatus;
 import ua.lviv.bas.cinema.dto.session.request.SessionCreateRequest;
 import ua.lviv.bas.cinema.dto.session.request.SessionUpdateRequest;
 import ua.lviv.bas.cinema.dto.session.response.SessionAdminResponse;
-import ua.lviv.bas.cinema.service.common.SessionService;
+import ua.lviv.bas.cinema.service.cinema.SessionService;
 
 @Slf4j
 @RestController

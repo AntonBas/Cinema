@@ -28,6 +28,7 @@ import ua.lviv.bas.cinema.dto.cinemaHall.response.SeatResponse;
 import ua.lviv.bas.cinema.exception.domain.cinema.SeatNotFoundException;
 import ua.lviv.bas.cinema.mapper.SeatMapper;
 import ua.lviv.bas.cinema.repository.SeatRepository;
+import ua.lviv.bas.cinema.service.cinema.SeatService;
 
 @ExtendWith(MockitoExtension.class)
 class SeatServiceTest {

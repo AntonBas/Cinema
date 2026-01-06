@@ -29,25 +29,25 @@ import ua.lviv.bas.cinema.exception.domain.promotion.PromotionNotActiveException
 import ua.lviv.bas.cinema.exception.domain.promotion.PromotionNotFoundException;
 import ua.lviv.bas.cinema.mapper.PromotionMapper;
 import ua.lviv.bas.cinema.repository.UserPromotionRepository;
-import ua.lviv.bas.cinema.service.common.PromotionService;
+import ua.lviv.bas.cinema.service.admin.AdminPromotionService;
 
 @ExtendWith(MockitoExtension.class)
-class UserPromotionServiceTest {
+class PromotionServiceTest {
 
 	@Mock
 	private UserPromotionRepository userPromotionRepository;
 
 	@Mock
-	private PromotionService promotionService;
+	private AdminPromotionService promotionService;
 
 	@Mock
-	private UserBonusService bonusUserService;
+	private BonusService bonusUserService;
 
 	@Mock
 	private PromotionMapper promotionMapper;
 
 	@InjectMocks
-	private UserPromotionService userPromotionService;
+	private AdminPromotionService userPromotionService;
 
 	@Test
 	void claimPromotion_ShouldSuccessfullyClaimPromotion() {

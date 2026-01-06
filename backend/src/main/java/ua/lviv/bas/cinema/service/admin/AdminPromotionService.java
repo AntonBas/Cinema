@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.service.common;
+package ua.lviv.bas.cinema.service.admin;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -22,7 +22,7 @@ import ua.lviv.bas.cinema.repository.PromotionRepository;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class PromotionService {
+public class AdminPromotionService {
 
 	private final PromotionRepository promotionRepository;
 	private final PromotionMapper promotionMapper;

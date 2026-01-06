@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.service.common;
+package ua.lviv.bas.cinema.service.notification;
 
 import java.math.BigDecimal;
 

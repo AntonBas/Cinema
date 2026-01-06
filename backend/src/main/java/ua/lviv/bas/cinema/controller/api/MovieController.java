@@ -17,7 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.enums.MovieStatus;
 import ua.lviv.bas.cinema.dto.movie.response.MovieCardResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieDetailResponse;
-import ua.lviv.bas.cinema.service.common.MovieService;
+import ua.lviv.bas.cinema.service.cinema.MovieService;
 
 @Slf4j
 @RestController

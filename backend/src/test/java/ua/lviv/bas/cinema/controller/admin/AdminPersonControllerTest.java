@@ -23,7 +23,7 @@ import ua.lviv.bas.cinema.dto.movie.request.QuickCreatePersonRequest;
 import ua.lviv.bas.cinema.dto.movie.response.PersonResponse;
 import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
 import ua.lviv.bas.cinema.exception.domain.cinema.PersonNotFoundException;
-import ua.lviv.bas.cinema.service.common.PersonService;
+import ua.lviv.bas.cinema.service.cinema.PersonService;
 
 @ExtendWith(MockitoExtension.class)
 class AdminPersonControllerTest {

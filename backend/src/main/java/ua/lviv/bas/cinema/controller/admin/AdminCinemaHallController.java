@@ -24,7 +24,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.dto.cinemaHall.request.CinemaHallRequest;
 import ua.lviv.bas.cinema.dto.cinemaHall.response.CinemaHallResponse;
-import ua.lviv.bas.cinema.service.common.CinemaHallService;
+import ua.lviv.bas.cinema.service.cinema.CinemaHallService;
 
 @Slf4j
 @RestController

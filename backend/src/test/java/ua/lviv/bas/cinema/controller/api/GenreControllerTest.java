@@ -26,7 +26,7 @@ import org.springframework.http.ResponseEntity;
 
 import ua.lviv.bas.cinema.dto.movie.response.GenreResponse;
 import ua.lviv.bas.cinema.exception.domain.cinema.GenreNotFoundException;
-import ua.lviv.bas.cinema.service.common.GenreService;
+import ua.lviv.bas.cinema.service.cinema.GenreService;
 
 @ExtendWith(MockitoExtension.class)
 class GenreControllerTest {

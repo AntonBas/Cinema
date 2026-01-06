@@ -25,8 +25,8 @@ import ua.lviv.bas.cinema.exception.domain.auth.SamePasswordException;
 import ua.lviv.bas.cinema.exception.domain.user.UserNotFoundException;
 import ua.lviv.bas.cinema.mapper.UserMapper;
 import ua.lviv.bas.cinema.repository.UserRepository;
-import ua.lviv.bas.cinema.service.common.EmailTokenGeneratorService;
-import ua.lviv.bas.cinema.service.common.EmailTokenService;
+import ua.lviv.bas.cinema.service.notification.EmailTokenGeneratorService;
+import ua.lviv.bas.cinema.service.notification.EmailTokenService;
 
 @Slf4j
 @Service

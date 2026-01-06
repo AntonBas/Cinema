@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.service.common;
+package ua.lviv.bas.cinema.service.infrastructure;
 
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;

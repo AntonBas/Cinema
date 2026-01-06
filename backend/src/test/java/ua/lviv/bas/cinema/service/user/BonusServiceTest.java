@@ -42,7 +42,7 @@ import ua.lviv.bas.cinema.repository.BonusRulesRepository;
 import ua.lviv.bas.cinema.repository.BonusTransactionRepository;
 
 @ExtendWith(MockitoExtension.class)
-class UserBonusServiceTest {
+class BonusServiceTest {
 
 	@Mock
 	private BonusCardRepository bonusCardRepository;
@@ -57,7 +57,7 @@ class UserBonusServiceTest {
 	private BonusMapper bonusMapper;
 
 	@InjectMocks
-	private UserBonusService bonusUserService;
+	private BonusService bonusUserService;
 
 	@Test
 	void getBonusCard_ShouldReturnCardResponse() {

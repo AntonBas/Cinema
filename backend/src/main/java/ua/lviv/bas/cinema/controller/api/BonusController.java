@@ -19,7 +19,7 @@ import lombok.RequiredArgsConstructor;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusBalanceResponse;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusCardResponse;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusTransactionResponse;
-import ua.lviv.bas.cinema.service.user.UserBonusService;
+import ua.lviv.bas.cinema.service.user.BonusService;
 
 @RestController
 @RequestMapping("/api/bonus")
@@ -28,7 +28,7 @@ import ua.lviv.bas.cinema.service.user.UserBonusService;
 @SecurityRequirement(name = "bearerAuth")
 public class BonusController {
 
-	private final UserBonusService bonusUserService;
+	private final BonusService bonusUserService;
 
 	@Operation(summary = "Get user bonus card", description = "Returns the current user's bonus card information")
 	@ApiResponse(responseCode = "200", description = "Bonus card retrieved successfully")

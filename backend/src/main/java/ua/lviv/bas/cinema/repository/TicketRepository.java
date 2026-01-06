@@ -41,4 +41,20 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
 			+ "LEFT JOIN FETCH bs.session s " + "LEFT JOIN FETCH s.movie " + "LEFT JOIN FETCH s.hall "
 			+ "WHERE t.user.id = :userId")
 	List<Ticket> findByUserIdWithDetails(@Param("userId") Long userId);
+
+	@Query("SELECT t FROM Ticket t WHERE t.payment.booking.id = :bookingId")
+	List<Ticket> findByPaymentBookingId(@Param("bookingId") Long bookingId);
+
+	@Query("SELECT COUNT(t) > 0 FROM Ticket t WHERE t.ticketType.id = :ticketTypeId")
+	boolean existsByTicketTypeId(@Param("ticketTypeId") Long ticketTypeId);
+
+	@Query("SELECT COUNT(t) > 0 FROM Ticket t WHERE t.ticketType.id = :ticketTypeId AND t.status IN :statuses")
+	boolean existsByTicketTypeIdAndStatusIn(@Param("ticketTypeId") Long ticketTypeId,
+			@Param("statuses") List<TicketStatus> statuses);
+
+	long countByTicketTypeId(Long ticketTypeId);
+
+	@Query("SELECT COUNT(t) FROM Ticket t WHERE t.ticketType.id = :ticketTypeId AND t.status IN :statuses")
+	long countByTicketTypeIdAndStatusIn(@Param("ticketTypeId") Long ticketTypeId,
+			@Param("statuses") List<TicketStatus> statuses);
 }

@@ -26,7 +26,7 @@ import ua.lviv.bas.cinema.domain.enums.MovieStatus;
 import ua.lviv.bas.cinema.dto.movie.response.MovieCardResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieDetailResponse;
 import ua.lviv.bas.cinema.exception.domain.cinema.MovieNotFoundException;
-import ua.lviv.bas.cinema.service.common.MovieService;
+import ua.lviv.bas.cinema.service.cinema.MovieService;
 
 @ExtendWith(MockitoExtension.class)
 class MovieControllerTest {

@@ -12,7 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.Session;
 import ua.lviv.bas.cinema.domain.enums.CinemaSessionStatus;
 import ua.lviv.bas.cinema.repository.SessionRepository;
-import ua.lviv.bas.cinema.service.common.SessionService;
+import ua.lviv.bas.cinema.service.cinema.SessionService;
 
 @Slf4j
 @Component

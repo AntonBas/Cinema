@@ -18,17 +18,17 @@ import ua.lviv.bas.cinema.exception.domain.promotion.AlreadyClaimedException;
 import ua.lviv.bas.cinema.exception.domain.promotion.PromotionNotActiveException;
 import ua.lviv.bas.cinema.mapper.PromotionMapper;
 import ua.lviv.bas.cinema.repository.UserPromotionRepository;
-import ua.lviv.bas.cinema.service.common.PromotionService;
+import ua.lviv.bas.cinema.service.admin.AdminPromotionService;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class UserPromotionService {
+public class PromotionService {
 
 	private final UserPromotionRepository userPromotionRepository;
-	private final PromotionService promotionService;
-	private final UserBonusService bonusUserService;
+	private final AdminPromotionService promotionService;
+	private final BonusService bonusUserService;
 	private final PromotionMapper promotionMapper;
 
 	@Transactional

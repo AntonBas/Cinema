@@ -23,6 +23,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import ua.lviv.bas.cinema.exception.infrastructure.ExternalServiceException;
+import ua.lviv.bas.cinema.service.notification.EmailService;
 
 @ExtendWith(MockitoExtension.class)
 class EmailServiceTest {

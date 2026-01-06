@@ -29,17 +29,17 @@ import ua.lviv.bas.cinema.dto.promotion.response.UserPromotionResponse;
 import ua.lviv.bas.cinema.exception.domain.promotion.AlreadyClaimedException;
 import ua.lviv.bas.cinema.exception.domain.promotion.PromotionNotActiveException;
 import ua.lviv.bas.cinema.exception.domain.promotion.PromotionNotFoundException;
-import ua.lviv.bas.cinema.service.common.PromotionService;
-import ua.lviv.bas.cinema.service.user.UserPromotionService;
+import ua.lviv.bas.cinema.service.admin.AdminPromotionService;
+import ua.lviv.bas.cinema.service.user.PromotionService;
 
 @ExtendWith(MockitoExtension.class)
 class PromotionControllerTest {
 
 	@Mock
-	private PromotionService promotionService;
+	private AdminPromotionService promotionService;
 
 	@Mock
-	private UserPromotionService userPromotionService;
+	private AdminPromotionService userPromotionService;
 
 	@InjectMocks
 	private PromotionController promotionController;

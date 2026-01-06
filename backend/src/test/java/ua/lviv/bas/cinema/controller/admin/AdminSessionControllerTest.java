@@ -34,7 +34,7 @@ import ua.lviv.bas.cinema.dto.session.request.SessionUpdateRequest;
 import ua.lviv.bas.cinema.dto.session.response.SessionAdminResponse;
 import ua.lviv.bas.cinema.exception.domain.cinema.SessionNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.cinema.SessionTimeConflictException;
-import ua.lviv.bas.cinema.service.common.SessionService;
+import ua.lviv.bas.cinema.service.cinema.SessionService;
 
 @ExtendWith(MockitoExtension.class)
 class AdminSessionControllerTest {

@@ -14,6 +14,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import ua.lviv.bas.cinema.domain.Movie;
 import ua.lviv.bas.cinema.repository.MovieRepository;
+import ua.lviv.bas.cinema.service.infrastructure.SlugService;
 
 @ExtendWith(MockitoExtension.class)
 class SlugServiceTest {

@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.dto.session.response.SessionScheduleResponse;
-import ua.lviv.bas.cinema.service.common.SessionService;
+import ua.lviv.bas.cinema.service.cinema.SessionService;
 
 @Slf4j
 @RestController

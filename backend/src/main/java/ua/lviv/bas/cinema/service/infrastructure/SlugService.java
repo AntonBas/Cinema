@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.service.common;
+package ua.lviv.bas.cinema.service.infrastructure;
 
 import java.text.Normalizer;
 import java.util.Optional;

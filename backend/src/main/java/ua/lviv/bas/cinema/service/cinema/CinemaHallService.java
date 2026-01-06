@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.service.common;
+package ua.lviv.bas.cinema.service.cinema;
 
 import java.util.Comparator;
 import java.util.List;

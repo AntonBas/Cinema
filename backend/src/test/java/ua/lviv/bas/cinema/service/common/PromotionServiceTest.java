@@ -30,6 +30,7 @@ import ua.lviv.bas.cinema.exception.domain.promotion.PromotionHasRedemptionsExce
 import ua.lviv.bas.cinema.exception.domain.promotion.PromotionNotFoundException;
 import ua.lviv.bas.cinema.mapper.PromotionMapper;
 import ua.lviv.bas.cinema.repository.PromotionRepository;
+import ua.lviv.bas.cinema.service.admin.AdminPromotionService;
 
 @ExtendWith(MockitoExtension.class)
 class PromotionServiceTest {
@@ -41,7 +42,7 @@ class PromotionServiceTest {
 	private PromotionMapper promotionMapper;
 
 	@InjectMocks
-	private PromotionService promotionService;
+	private AdminPromotionService promotionService;
 
 	@Test
 	void createPromotion_ShouldCreateSuccessfully() {

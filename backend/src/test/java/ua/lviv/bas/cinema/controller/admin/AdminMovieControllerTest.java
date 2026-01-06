@@ -34,7 +34,7 @@ import ua.lviv.bas.cinema.dto.movie.response.MovieSessionSearchResponse;
 import ua.lviv.bas.cinema.dto.movie.response.PersonResponse;
 import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
 import ua.lviv.bas.cinema.exception.domain.cinema.MovieNotFoundException;
-import ua.lviv.bas.cinema.service.common.MovieService;
+import ua.lviv.bas.cinema.service.cinema.MovieService;
 
 @ExtendWith(MockitoExtension.class)
 class AdminMovieControllerTest {

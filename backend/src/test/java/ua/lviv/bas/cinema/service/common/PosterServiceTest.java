@@ -16,6 +16,7 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 
 import ua.lviv.bas.cinema.service.infrastructure.FileStorageService;
+import ua.lviv.bas.cinema.service.infrastructure.PosterService;
 
 @ExtendWith(MockitoExtension.class)
 class PosterServiceTest {

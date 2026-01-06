@@ -12,6 +12,8 @@ import org.mockito.InjectMocks;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import ua.lviv.bas.cinema.service.infrastructure.QRCodeService;
+
 @ExtendWith(MockitoExtension.class)
 class QRCodeServiceTest {
 

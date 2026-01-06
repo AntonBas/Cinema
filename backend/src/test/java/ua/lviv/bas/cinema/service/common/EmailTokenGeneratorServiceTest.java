@@ -21,6 +21,8 @@ import ua.lviv.bas.cinema.domain.enums.TokenType;
 import ua.lviv.bas.cinema.exception.domain.user.UserNotFoundException;
 import ua.lviv.bas.cinema.repository.EmailTokenRepository;
 import ua.lviv.bas.cinema.repository.UserRepository;
+import ua.lviv.bas.cinema.service.notification.EmailService;
+import ua.lviv.bas.cinema.service.notification.EmailTokenGeneratorService;
 
 @ExtendWith(MockitoExtension.class)
 class EmailTokenGeneratorServiceTest {

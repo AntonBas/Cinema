@@ -31,6 +31,7 @@ import ua.lviv.bas.cinema.exception.domain.cinema.PersonNotFoundException;
 import ua.lviv.bas.cinema.mapper.PersonMapper;
 import ua.lviv.bas.cinema.repository.MovieRepository;
 import ua.lviv.bas.cinema.repository.PersonRepository;
+import ua.lviv.bas.cinema.service.cinema.PersonService;
 
 @ExtendWith(MockitoExtension.class)
 class PersonServiceTest {

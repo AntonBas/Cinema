@@ -26,7 +26,7 @@ import org.springframework.http.ResponseEntity;
 import ua.lviv.bas.cinema.domain.enums.CinemaSessionStatus;
 import ua.lviv.bas.cinema.dto.session.response.SessionScheduleResponse;
 import ua.lviv.bas.cinema.exception.domain.cinema.SessionNotFoundException;
-import ua.lviv.bas.cinema.service.common.SessionService;
+import ua.lviv.bas.cinema.service.cinema.SessionService;
 
 @ExtendWith(MockitoExtension.class)
 class SessionControllerTest {

@@ -18,7 +18,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.enums.SeatType;
 import ua.lviv.bas.cinema.dto.cinemaHall.response.SeatResponse;
-import ua.lviv.bas.cinema.service.common.SeatService;
+import ua.lviv.bas.cinema.service.cinema.SeatService;
 
 @Slf4j
 @RestController

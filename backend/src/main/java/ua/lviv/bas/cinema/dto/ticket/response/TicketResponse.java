@@ -20,7 +20,7 @@ public class TicketResponse {
 	@Schema(description = "Ticket ID", example = "999")
 	private Long id;
 
-	@Schema(description = "Unique ticket code", example = "TKT-20240115-ABC123")
+	@Schema(description = "Ticket code", example = "TKT-20240115-ABC123")
 	private String ticketCode;
 
 	@Schema(description = "QR code URL", example = "/api/tickets/999/qr")
@@ -41,10 +41,10 @@ public class TicketResponse {
 	@Schema(description = "Movie title", example = "Inception")
 	private String movieTitle;
 
-	@Schema(description = "Session start time", example = "2024-01-15T18:30:00")
+	@Schema(description = "Session time", example = "2024-01-15T18:30:00")
 	private LocalDateTime sessionTime;
 
-	@Schema(description = "Hall name", example = "Hall A - Dolby Atmos")
+	@Schema(description = "Hall name", example = "Hall A")
 	private String hallName;
 
 	@Schema(description = "Row number", example = "5")
@@ -52,7 +52,4 @@ public class TicketResponse {
 
 	@Schema(description = "Seat number", example = "12")
 	private Integer seatNumber;
-
-	@Schema(description = "User full name", example = "John Doe")
-	private String userName;
 }

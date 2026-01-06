@@ -23,7 +23,7 @@ import lombok.RequiredArgsConstructor;
 import ua.lviv.bas.cinema.dto.promotion.request.PromotionCreateRequest;
 import ua.lviv.bas.cinema.dto.promotion.request.PromotionUpdateRequest;
 import ua.lviv.bas.cinema.dto.promotion.response.PromotionResponse;
-import ua.lviv.bas.cinema.service.common.PromotionService;
+import ua.lviv.bas.cinema.service.admin.AdminPromotionService;
 
 @RestController
 @RequestMapping("/api/admin/promotions")
@@ -32,7 +32,7 @@ import ua.lviv.bas.cinema.service.common.PromotionService;
 @PreAuthorize("hasRole('ADMIN')")
 public class AdminPromotionController {
 
-	private final PromotionService promotionService;
+	private final AdminPromotionService promotionService;
 
 	@PostMapping
 	@Operation(summary = "Create a new promotion", description = "Creates a new promotion in the system")
