@@ -1,5 +1,6 @@
 package ua.lviv.bas.cinema.domain;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +23,8 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -37,23 +40,26 @@ import ua.lviv.bas.cinema.domain.enums.BookingStatus;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString(exclude = { "user", "session", "bookedSeats", "payment" })
+@ToString(exclude = { "user", "session", "bookedSeats", "payment", "tickets" })
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Table(name = "bookings", indexes = { @Index(name = "idx_booking_user", columnList = "user_id"),
 		@Index(name = "idx_booking_session", columnList = "session_id"),
 		@Index(name = "idx_booking_status", columnList = "status"),
-		@Index(name = "idx_booking_expires", columnList = "expires_at") })
+		@Index(name = "idx_booking_expires", columnList = "expires_at"),
+		@Index(name = "idx_booking_created", columnList = "created_at") })
 public class Booking {
 
 	@Id
-	@EqualsAndHashCode.Include
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@EqualsAndHashCode.Include
 	private Long id;
 
+	@NotNull
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "user_id", nullable = false)
 	private User user;
 
+	@NotNull
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "session_id", nullable = false)
 	private Session session;
@@ -64,10 +70,33 @@ public class Booking {
 	@Builder.Default
 	private List<BookedSeat> bookedSeats = new ArrayList<>();
 
+	@OneToMany(mappedBy = "booking", fetch = FetchType.LAZY)
+	@BatchSize(size = 10)
+	@Builder.Default
+	private List<Ticket> tickets = new ArrayList<>();
+
 	@Enumerated(EnumType.STRING)
 	@Column(name = "status", nullable = false, length = 20)
 	@Builder.Default
 	private BookingStatus status = BookingStatus.PENDING;
+
+	@NotNull
+	@DecimalMin("0.01")
+	@Column(name = "total_price", nullable = false, precision = 10, scale = 2)
+	private BigDecimal totalPrice;
+
+	@Column(name = "discount_amount", precision = 10, scale = 2)
+	@Builder.Default
+	private BigDecimal discountAmount = BigDecimal.ZERO;
+
+	@Column(name = "bonus_points_used")
+	@Builder.Default
+	private Integer bonusPointsUsed = 0;
+
+	@NotNull
+	@DecimalMin("0.00")
+	@Column(name = "final_price", nullable = false, precision = 10, scale = 2)
+	private BigDecimal finalPrice;
 
 	@Column(name = "expires_at", nullable = false)
 	private LocalDateTime expiresAt;

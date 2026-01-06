@@ -23,7 +23,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
@@ -60,10 +59,6 @@ public class Payment {
 	@Column(name = "amount", nullable = false, precision = 10, scale = 2)
 	private BigDecimal amount;
 
-	@Column(name = "bonus_points_used")
-	@Min(0)
-	private Integer bonusPointsUsed;
-
 	@NotNull
 	@Enumerated(EnumType.STRING)
 	@Column(name = "payment_method", nullable = false, length = 20)
@@ -76,6 +71,9 @@ public class Payment {
 
 	@Column(name = "transaction_id", unique = true, length = 100)
 	private String transactionId;
+
+	@Column(name = "liqpay_order_id", unique = true, length = 50)
+	private String liqpayOrderId;
 
 	@Column(name = "payment_time")
 	private LocalDateTime paymentTime;

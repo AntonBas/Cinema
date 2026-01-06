@@ -18,8 +18,8 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -35,41 +35,55 @@ import ua.lviv.bas.cinema.domain.enums.TicketStatus;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString(exclude = { "bookedSeat", "payment", "refund", "user" })
+@ToString(exclude = { "booking", "ticketType", "payment", "refund" })
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@Table(name = "tickets", indexes = { @Index(name = "idx_ticket_payment", columnList = "payment_id"),
+@Table(name = "tickets", indexes = { @Index(name = "idx_ticket_booking", columnList = "booking_id"),
+		@Index(name = "idx_ticket_payment", columnList = "payment_id"),
 		@Index(name = "idx_ticket_status", columnList = "status"),
 		@Index(name = "idx_ticket_purchase_time", columnList = "purchase_time"),
-		@Index(name = "idx_ticket_booked_seat", columnList = "booked_seat_id"),
-		@Index(name = "idx_ticket_user", columnList = "user_id") })
+		@Index(name = "idx_ticket_ticket_type", columnList = "ticket_type_id"),
+		@Index(name = "idx_ticket_unique_code", columnList = "unique_code", unique = true) })
 public class Ticket {
 
 	@Id
-	@EqualsAndHashCode.Include
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@EqualsAndHashCode.Include
 	private Long id;
 
 	@NotNull
-	@Column(name = "purchase_time", nullable = false)
-	private LocalDateTime purchaseTime;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "booking_id", nullable = false)
+	private Booking booking;
 
-	@OneToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "booked_seat_id", nullable = false, unique = true)
-	private BookedSeat bookedSeat;
+	@NotNull
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "ticket_type_id", nullable = false)
+	private TicketType ticketType;
+
+	@NotNull
+	@Column(name = "purchase_time", nullable = false)
+	@Builder.Default
+	private LocalDateTime purchaseTime = LocalDateTime.now();
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "payment_id")
 	private Payment payment;
 
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "user_id", nullable = false)
-	private User user;
+	@NotNull
+	@DecimalMin("0.01")
+	@Column(name = "original_price", nullable = false, precision = 10, scale = 2)
+	private BigDecimal originalPrice;
 
 	@NotNull
-	@Positive
-	@Column(name = "final_price", precision = 10, scale = 2, nullable = false)
+	@DecimalMin("0.00")
+	@Column(name = "final_price", nullable = false, precision = 10, scale = 2)
 	private BigDecimal finalPrice;
 
+	@Column(name = "discount_amount", precision = 10, scale = 2)
+	@Builder.Default
+	private BigDecimal discountAmount = BigDecimal.ZERO;
+
+	@NotNull
 	@Column(name = "unique_code", unique = true, nullable = false, length = 20)
 	private String uniqueCode;
 
