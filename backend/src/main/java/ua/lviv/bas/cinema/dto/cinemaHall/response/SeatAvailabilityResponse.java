@@ -8,55 +8,39 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import ua.lviv.bas.cinema.domain.enums.SeatType;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "Seat availability for a session")
+@Schema(description = "Seat availability for session")
 public class SeatAvailabilityResponse {
 
-	@Schema(description = "Session information")
-	private SessionInfo session;
+	@Schema(description = "Session ID", example = "1")
+	private Long sessionId;
 
-	@Schema(description = "Available seats with prices")
+	@Schema(description = "Movie title", example = "Inception")
+	private String movieTitle;
+
+	@Schema(description = "Base price", example = "250.00")
+	private BigDecimal basePrice;
+
+	@Schema(description = "Hall name", example = "Hall A")
+	private String hallName;
+
+	@Schema(description = "Available seats count", example = "105")
+	private Integer availableSeats;
+
+	@Schema(description = "List of seats")
 	private List<SeatInfo> seats;
 
-	@Schema(description = "Available ticket types")
-	private List<TicketTypeInfo> ticketTypes;
-
 	@Data
 	@Builder
 	@NoArgsConstructor
 	@AllArgsConstructor
-	@Schema(description = "Session information")
-	public static class SessionInfo {
-		@Schema(description = "Session ID", example = "1")
-		private Long id;
-
-		@Schema(description = "Movie title", example = "Inception")
-		private String movieTitle;
-
-		@Schema(description = "Base price", example = "150.00")
-		private BigDecimal basePrice;
-
-		@Schema(description = "Hall name", example = "Hall A - Dolby Atmos")
-		private String hallName;
-
-		@Schema(description = "Total seats", example = "150")
-		private Integer totalSeats;
-
-		@Schema(description = "Available seats", example = "105")
-		private Integer availableSeats;
-	}
-
-	@Data
-	@Builder
-	@NoArgsConstructor
-	@AllArgsConstructor
-	@Schema(description = "Seat information with availability")
+	@Schema(description = "Seat information")
 	public static class SeatInfo {
+
 		@Schema(description = "Seat ID", example = "45")
 		private Long id;
 
@@ -67,34 +51,32 @@ public class SeatAvailabilityResponse {
 		private Integer seatNumber;
 
 		@Schema(description = "Seat type", example = "VIP")
-		private SeatType seatType;
+		private String seatType;
 
-		@Schema(description = "Is seat available", example = "true")
+		@Schema(description = "Is available", example = "true")
 		private Boolean available;
 
-		@Schema(description = "Is seat active", example = "true")
-		private Boolean active;
+		@Schema(description = "Is temporarily reserved", example = "false")
+		private Boolean temporarilyReserved;
 
-		@Schema(description = "Price for this seat", example = "225.00")
-		private BigDecimal price;
+		@Schema(description = "Calculated prices for ticket types")
+		private List<TicketPriceInfo> ticketPrices;
 	}
 
 	@Data
 	@Builder
 	@NoArgsConstructor
 	@AllArgsConstructor
-	@Schema(description = "Available ticket type")
-	public static class TicketTypeInfo {
-		@Schema(description = "Ticket type ID", example = "2")
-		private Long id;
+	@Schema(description = "Ticket price information")
+	public static class TicketPriceInfo {
 
-		@Schema(description = "Display name", example = "Adult")
-		private String name;
+		@Schema(description = "Ticket type ID", example = "1")
+		private Long ticketTypeId;
 
-		@Schema(description = "Price multiplier", example = "1.5")
-		private BigDecimal multiplier;
+		@Schema(description = "Ticket type name", example = "Adult")
+		private String ticketTypeName;
 
-		@Schema(description = "Description", example = "Standard adult ticket")
-		private String description;
+		@Schema(description = "Final price", example = "250.00")
+		private BigDecimal finalPrice;
 	}
 }

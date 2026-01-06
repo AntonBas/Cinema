@@ -10,59 +10,59 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import ua.lviv.bas.cinema.domain.enums.BookingStatus;
+import ua.lviv.bas.cinema.domain.enums.PaymentStatus;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "Detailed booking information")
+@Schema(description = "Booking information")
 public class BookingResponse {
 
 	@Schema(description = "Booking ID", example = "123")
 	private Long id;
 
-	@Schema(description = "Booking reference number", example = "BK-20240115-00123")
+	@Schema(description = "Booking number", example = "BK-20240115-00123")
 	private String bookingNumber;
 
 	@Schema(description = "Booking status", example = "PENDING")
 	private BookingStatus status;
 
-	@Schema(description = "Total price", example = "450.00")
+	@Schema(description = "Session start time", example = "2024-01-15T18:30:00")
+	private LocalDateTime sessionTime;
+
+	@Schema(description = "Movie title", example = "Inception")
+	private String movieTitle;
+
+	@Schema(description = "Hall name", example = "Hall A")
+	private String hallName;
+
+	@Schema(description = "Total price", example = "1000.00")
 	private BigDecimal totalPrice;
 
-	@Schema(description = "Booking creation time", example = "2024-01-15T14:30:00")
-	private LocalDateTime createdAt;
+	@Schema(description = "Bonus points used", example = "100")
+	private Integer bonusPointsUsed;
 
-	@Schema(description = "Booking expiration time", example = "2024-01-15T14:45:00")
+	@Schema(description = "Bonus discount amount", example = "50.00")
+	private BigDecimal bonusDiscountAmount;
+
+	@Schema(description = "Final price", example = "950.00")
+	private BigDecimal finalPrice;
+
+	@Schema(description = "Payment status", example = "PENDING")
+	private PaymentStatus paymentStatus;
+
+	@Schema(description = "LiqPay order ID", example = "ORDER_ABC123")
+	private String liqpayOrderId;
+
+	@Schema(description = "Booking expires at", example = "2024-01-15T14:50:00")
 	private LocalDateTime expiresAt;
 
-	@Schema(description = "Session information")
-	private SessionInfo session;
+	@Schema(description = "Created at", example = "2024-01-15T14:30:00")
+	private LocalDateTime createdAt;
 
-	@Schema(description = "Booked seats")
+	@Schema(description = "List of booked seats")
 	private List<BookedSeatInfo> bookedSeats;
-
-	@Schema(description = "Payment information (if exists)")
-	private PaymentInfo payment;
-
-	@Data
-	@Builder
-	@NoArgsConstructor
-	@AllArgsConstructor
-	@Schema(description = "Session information for booking")
-	public static class SessionInfo {
-		@Schema(description = "Session ID", example = "1")
-		private Long id;
-
-		@Schema(description = "Movie title", example = "Inception")
-		private String movieTitle;
-
-		@Schema(description = "Session start time", example = "2024-01-15T18:30:00")
-		private LocalDateTime startTime;
-
-		@Schema(description = "Hall name", example = "Hall A - Dolby Atmos")
-		private String hallName;
-	}
 
 	@Data
 	@Builder
@@ -70,6 +70,7 @@ public class BookingResponse {
 	@AllArgsConstructor
 	@Schema(description = "Booked seat information")
 	public static class BookedSeatInfo {
+
 		@Schema(description = "Booked seat ID", example = "456")
 		private Long id;
 
@@ -83,25 +84,9 @@ public class BookingResponse {
 		private Integer seatNumber;
 
 		@Schema(description = "Ticket type name", example = "Adult")
-		private String ticketType;
+		private String ticketTypeName;
 
-		@Schema(description = "Price for this seat", example = "225.00")
-		private BigDecimal price;
-	}
-
-	@Data
-	@Builder
-	@NoArgsConstructor
-	@AllArgsConstructor
-	@Schema(description = "Payment information")
-	public static class PaymentInfo {
-		@Schema(description = "Payment ID", example = "789")
-		private Long id;
-
-		@Schema(description = "Payment status", example = "COMPLETED")
-		private String status;
-
-		@Schema(description = "Amount paid", example = "450.00")
-		private BigDecimal amount;
+		@Schema(description = "Seat price", example = "250.00")
+		private BigDecimal seatPrice;
 	}
 }
