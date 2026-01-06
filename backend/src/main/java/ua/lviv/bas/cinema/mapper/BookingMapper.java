@@ -8,7 +8,6 @@ import org.mapstruct.Mapping;
 import ua.lviv.bas.cinema.domain.BookedSeat;
 import ua.lviv.bas.cinema.domain.Booking;
 import ua.lviv.bas.cinema.dto.booking.response.BookingResponse;
-import ua.lviv.bas.cinema.dto.booking.response.BookingSummaryResponse;
 
 @Mapper(componentModel = "spring")
 public interface BookingMapper {
@@ -16,39 +15,29 @@ public interface BookingMapper {
 	@Mapping(target = "id", source = "id")
 	@Mapping(target = "bookingNumber", ignore = true)
 	@Mapping(target = "status", source = "status")
-	@Mapping(target = "totalPrice", ignore = true)
-	@Mapping(target = "createdAt", source = "createdAt")
+	@Mapping(target = "sessionTime", source = "session.startTime")
+	@Mapping(target = "movieTitle", source = "session.movie.title")
+	@Mapping(target = "hallName", source = "session.hall.name")
+	@Mapping(target = "totalPrice", source = "totalPrice")
+	@Mapping(target = "bonusPointsUsed", source = "bonusPointsUsed")
+	@Mapping(target = "bonusDiscountAmount", source = "bonusDiscountAmount")
+	@Mapping(target = "finalPrice", source = "finalPrice")
+	@Mapping(target = "paymentStatus", source = "payment.status")
+	@Mapping(target = "liqpayOrderId", source = "payment.liqpayOrderId")
 	@Mapping(target = "expiresAt", source = "expiresAt")
-	@Mapping(target = "session", source = "session")
+	@Mapping(target = "createdAt", source = "createdAt")
 	@Mapping(target = "bookedSeats", source = "bookedSeats")
-	@Mapping(target = "payment", source = "payment")
 	BookingResponse toBookingResponse(Booking booking);
 
 	@Mapping(target = "id", source = "id")
-	@Mapping(target = "movieTitle", source = "movie.title")
-	@Mapping(target = "startTime", source = "startTime")
-	@Mapping(target = "hallName", source = "hall.name")
-	BookingResponse.SessionInfo toSessionInfo(ua.lviv.bas.cinema.domain.Session session);
-
 	@Mapping(target = "seatId", source = "seat.id")
 	@Mapping(target = "row", source = "seat.row")
 	@Mapping(target = "seatNumber", source = "seat.number")
-	@Mapping(target = "ticketType", source = "ticketType.displayName")
-	@Mapping(target = "price", ignore = true)
+	@Mapping(target = "ticketTypeName", source = "ticketType.displayName")
+	@Mapping(target = "seatPrice", source = "seatPrice")
 	BookingResponse.BookedSeatInfo toBookedSeatInfo(BookedSeat bookedSeat);
 
-	@Mapping(target = "id", source = "id")
-	@Mapping(target = "bookingNumber", ignore = true)
-	@Mapping(target = "status", source = "status")
-	@Mapping(target = "movieTitle", source = "session.movie.title")
-	@Mapping(target = "sessionTime", source = "session.startTime")
-	@Mapping(target = "hallName", source = "session.hall.name")
-	@Mapping(target = "seatsCount", expression = "java(booking.getBookedSeats().size())")
-	@Mapping(target = "totalPrice", ignore = true)
-	@Mapping(target = "canCancel", ignore = true)
-	BookingSummaryResponse toBookingSummaryResponse(Booking booking);
+	List<BookingResponse.BookedSeatInfo> toBookedSeatInfoList(List<BookedSeat> bookedSeats);
 
 	List<BookingResponse> toBookingResponseList(List<Booking> bookings);
-
-	List<BookingSummaryResponse> toBookingSummaryResponseList(List<Booking> bookings);
 }

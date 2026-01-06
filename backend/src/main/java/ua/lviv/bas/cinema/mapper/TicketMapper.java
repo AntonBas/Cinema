@@ -17,13 +17,12 @@ public interface TicketMapper {
 	@Mapping(target = "status", source = "status")
 	@Mapping(target = "purchaseTime", source = "purchaseTime")
 	@Mapping(target = "price", source = "finalPrice")
-	@Mapping(target = "ticketType", source = "bookedSeat.ticketType.displayName")
-	@Mapping(target = "movieTitle", source = "bookedSeat.session.movie.title")
-	@Mapping(target = "sessionTime", source = "bookedSeat.session.startTime")
-	@Mapping(target = "hallName", source = "bookedSeat.session.hall.name")
-	@Mapping(target = "row", source = "bookedSeat.seat.row")
-	@Mapping(target = "seatNumber", source = "bookedSeat.seat.number")
-	@Mapping(target = "userName", ignore = true)
+	@Mapping(target = "ticketType", source = "ticketType.displayName")
+	@Mapping(target = "movieTitle", source = "booking.session.movie.title")
+	@Mapping(target = "sessionTime", source = "booking.session.startTime")
+	@Mapping(target = "hallName", source = "booking.session.hall.name")
+	@Mapping(target = "row", ignore = true)
+	@Mapping(target = "seatNumber", ignore = true)
 	TicketResponse toTicketResponse(Ticket ticket);
 
 	List<TicketResponse> toTicketResponseList(List<Ticket> tickets);
