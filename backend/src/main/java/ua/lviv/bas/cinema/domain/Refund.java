@@ -8,6 +8,7 @@ import java.util.List;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -20,7 +21,6 @@ import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -40,17 +40,17 @@ import ua.lviv.bas.cinema.domain.enums.RefundStatus;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString(exclude = { "payment", "ticket" })
+@ToString(exclude = { "payment", "items", "bonusTransactions" })
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Table(name = "refunds", indexes = { @Index(name = "idx_refund_payment", columnList = "payment_id"),
-		@Index(name = "idx_refund_ticket", columnList = "ticket_id"),
 		@Index(name = "idx_refund_status", columnList = "status"),
-		@Index(name = "idx_refund_created", columnList = "created_at") })
+		@Index(name = "idx_refund_created", columnList = "created_at"),
+		@Index(name = "idx_refund_user", columnList = "user_id") })
 public class Refund {
 
 	@Id
-	@EqualsAndHashCode.Include
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@EqualsAndHashCode.Include
 	private Long id;
 
 	@NotNull
@@ -59,9 +59,13 @@ public class Refund {
 	private Payment payment;
 
 	@NotNull
-	@OneToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "ticket_id", nullable = false)
-	private Ticket ticket;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "user_id", nullable = false)
+	private User user;
+
+	@OneToMany(mappedBy = "refund", cascade = CascadeType.ALL, orphanRemoval = true)
+	@Builder.Default
+	private List<RefundItem> items = new ArrayList<>();
 
 	@OneToMany(mappedBy = "refund", fetch = FetchType.LAZY)
 	@Builder.Default
@@ -69,8 +73,12 @@ public class Refund {
 
 	@NotNull
 	@Positive
-	@Column(name = "amount", nullable = false, precision = 10, scale = 2)
-	private BigDecimal amount;
+	@Column(name = "total_amount", nullable = false, precision = 10, scale = 2)
+	private BigDecimal totalAmount;
+
+	@Column(name = "total_bonus_points_to_deduct")
+	@Builder.Default
+	private Integer totalBonusPointsToDeduct = 0;
 
 	@Size(max = 500)
 	@Column(name = "reason", length = 500)
