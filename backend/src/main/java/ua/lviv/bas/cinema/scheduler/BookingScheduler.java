@@ -11,9 +11,12 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.Booking;
+import ua.lviv.bas.cinema.domain.Payment;
 import ua.lviv.bas.cinema.domain.enums.BookedSeatStatus;
 import ua.lviv.bas.cinema.domain.enums.BookingStatus;
+import ua.lviv.bas.cinema.domain.enums.PaymentStatus;
 import ua.lviv.bas.cinema.repository.BookingRepository;
+import ua.lviv.bas.cinema.repository.PaymentRepository;
 
 @Slf4j
 @Component
@@ -21,6 +24,7 @@ import ua.lviv.bas.cinema.repository.BookingRepository;
 public class BookingScheduler {
 
 	private final BookingRepository bookingRepository;
+	private final PaymentRepository paymentRepository;
 
 	@Scheduled(fixedDelayString = "${scheduler.booking.expiration-interval:60000}")
 	@Async("taskExecutor")
@@ -47,6 +51,37 @@ public class BookingScheduler {
 		log.info("Successfully expired {} bookings", expiredBookings.size());
 	}
 
+	@Scheduled(fixedDelayString = "${scheduler.payment.expiration-interval:300000}")
+	@Async("taskExecutor")
+	@Transactional
+	public void processExpiredPayments() {
+		log.debug("Starting expired payments processing");
+
+		LocalDateTime cutoffTime = LocalDateTime.now().minusMinutes(30);
+		List<Payment> expiredPayments = paymentRepository.findByStatusAndCreatedAtBefore(PaymentStatus.PENDING,
+				cutoffTime);
+
+		if (expiredPayments.isEmpty()) {
+			log.debug("No expired payments found");
+			return;
+		}
+
+		log.info("Found {} expired payments to process", expiredPayments.size());
+
+		expiredPayments.forEach(payment -> {
+			payment.setStatus(PaymentStatus.EXPIRED);
+			payment.setUpdatedAt(LocalDateTime.now());
+
+			if (payment.getBooking().getStatus() == BookingStatus.PENDING) {
+				payment.getBooking().setStatus(BookingStatus.EXPIRED);
+				payment.getBooking().getBookedSeats().forEach(seat -> seat.setStatus(BookedSeatStatus.EXPIRED));
+			}
+		});
+
+		paymentRepository.saveAll(expiredPayments);
+		log.info("Successfully expired {} payments", expiredPayments.size());
+	}
+
 	@Scheduled(cron = "${scheduler.booking.cleanup-cron:0 0 4 * * *}")
 	@Async("taskExecutor")
 	@Transactional
@@ -64,6 +99,25 @@ public class BookingScheduler {
 		}
 	}
 
+	@Scheduled(cron = "${scheduler.payment.cleanup-cron:0 0 5 * * *}")
+	@Async("taskExecutor")
+	@Transactional
+	public void cleanupOldPayments() {
+		log.debug("Starting old payments cleanup");
+
+		LocalDateTime ninetyDaysAgo = LocalDateTime.now().minusDays(90);
+
+		List<Payment> oldPayments = paymentRepository
+				.findByStatusInAndCreatedAtBefore(List.of(PaymentStatus.FAILED, PaymentStatus.EXPIRED), ninetyDaysAgo);
+
+		if (!oldPayments.isEmpty()) {
+			paymentRepository.deleteAll(oldPayments);
+			log.info("Cleaned up {} old payments", oldPayments.size());
+		} else {
+			log.debug("No old payments to clean up");
+		}
+	}
+
 	@Scheduled(cron = "${scheduler.booking.reminder-cron:0 */10 * * * *}")
 	@Async("taskExecutor")
 	@Transactional(readOnly = true)
@@ -77,5 +131,24 @@ public class BookingScheduler {
 		if (!soonToExpire.isEmpty()) {
 			log.info("Found {} bookings expiring soon", soonToExpire.size());
 		}
+	}
+
+	@Scheduled(cron = "${scheduler.payment.daily-stats:0 0 23 * * *}")
+	@Async("taskExecutor")
+	@Transactional(readOnly = true)
+	public void generateDailyPaymentStatistics() {
+		LocalDateTime startOfDay = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0);
+		LocalDateTime endOfDay = LocalDateTime.now().withHour(23).withMinute(59).withSecond(59);
+
+		long totalPayments = paymentRepository.countByCreatedAtBetween(startOfDay, endOfDay);
+		long completedPayments = paymentRepository.countByStatus(PaymentStatus.SUCCESS);
+		long pendingPayments = paymentRepository.countByStatus(PaymentStatus.PENDING);
+		long failedPayments = paymentRepository.countByStatus(PaymentStatus.FAILED);
+
+		log.info("Daily payment statistics:");
+		log.info("  Total payments: {}", totalPayments);
+		log.info("  Completed: {}", completedPayments);
+		log.info("  Pending: {}", pendingPayments);
+		log.info("  Failed: {}", failedPayments);
 	}
 }
