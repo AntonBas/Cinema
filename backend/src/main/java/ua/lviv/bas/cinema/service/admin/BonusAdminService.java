@@ -143,6 +143,17 @@ public class BonusAdminService {
 			rules.setMinPointsPerTransaction(null);
 			rules.setMaxPointsPerTransaction(null);
 			break;
+
+		case EXPIRATION_DEDUCTION:
+			rules.setPoints(null);
+			rules.setMoneyRatio(new BigDecimal("0.02"));
+			rules.setMinPointsPerTransaction(null);
+			rules.setMaxPointsPerTransaction(null);
+			break;
+
+		default:
+			log.warn("Unknown bonus transaction type: {}", type);
+			throw new IllegalArgumentException("Unknown bonus transaction type: " + type);
 		}
 
 		BonusRules updated = bonusRulesRepository.save(rules);

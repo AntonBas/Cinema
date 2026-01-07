@@ -29,6 +29,7 @@ public class BonusRulesInitializer implements ApplicationRunner {
 		initializeWriteOffRule();
 		initializeRefundDeductionRule();
 		initializePromotionBonusRule();
+		initializeExpirationDeductionRule();
 
 		log.info("Bonus rules initialization completed");
 	}
@@ -85,6 +86,15 @@ public class BonusRulesInitializer implements ApplicationRunner {
 					.active(true).build();
 			bonusRulesRepository.save(rule);
 			log.info("Created default PROMOTION_BONUS rule: {} points", rule.getPoints());
+		}
+	}
+
+	private void initializeExpirationDeductionRule() {
+		if (!bonusRulesRepository.findByBonusType(BonusTransactionType.EXPIRATION_DEDUCTION).isPresent()) {
+			BonusRules rule = BonusRules.builder().bonusType(BonusTransactionType.EXPIRATION_DEDUCTION)
+					.moneyRatio(new BigDecimal("0.02")).active(true).build();
+			bonusRulesRepository.save(rule);
+			log.info("Created default EXPIRATION_DEDUCTION rule: {} money ratio", rule.getMoneyRatio());
 		}
 	}
 }
