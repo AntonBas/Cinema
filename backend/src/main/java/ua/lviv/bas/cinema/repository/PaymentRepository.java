@@ -18,23 +18,28 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
 
 	Optional<Payment> findByBookingId(Long bookingId);
 
-	@Query("SELECT p FROM Payment p JOIN p.booking b WHERE b.user.id = :userId ORDER BY p.createdAt DESC")
-	List<Payment> findByUserId(@Param("userId") Long userId);
+	Optional<Payment> findByLiqpayOrderId(String liqpayOrderId);
 
 	List<Payment> findByStatus(PaymentStatus status);
 
 	List<Payment> findByStatusAndCreatedAtBefore(PaymentStatus status, LocalDateTime createdAt);
 
-	Optional<Payment> findByTransactionId(String transactionId);
-
 	List<Payment> findByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
+
+	List<Payment> findByStatusInAndCreatedAtBefore(List<PaymentStatus> statuses, LocalDateTime createdAt);
 
 	long countByStatus(PaymentStatus status);
 
-	@Query("SELECT COALESCE(SUM(p.amount), 0) FROM Payment p WHERE p.status = 'COMPLETED' AND p.createdAt BETWEEN :start AND :end")
-	BigDecimal sumCompletedAmountBetween(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+	long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
 
 	@Query("SELECT p FROM Payment p " + "LEFT JOIN FETCH p.booking b " + "LEFT JOIN FETCH b.session s "
-			+ "LEFT JOIN FETCH s.movie " + "WHERE p.id = :id")
+			+ "LEFT JOIN FETCH s.movie m " + "LEFT JOIN FETCH b.user u " + "WHERE p.id = :id")
 	Optional<Payment> findByIdWithDetails(@Param("id") Long id);
+
+	@Query("SELECT COALESCE(SUM(p.amount), 0) FROM Payment p "
+			+ "WHERE p.status = 'SUCCESS' AND p.createdAt BETWEEN :start AND :end")
+	BigDecimal sumSuccessfulAmountBetween(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+
+	@Query("SELECT p FROM Payment p JOIN p.booking b WHERE b.user.id = :userId ORDER BY p.createdAt DESC")
+	List<Payment> findByUserId(@Param("userId") Long userId);
 }
