@@ -18,7 +18,6 @@ import ua.lviv.bas.cinema.repository.SeatRepository;
 @Service
 @RequiredArgsConstructor
 public class SeatService {
-
 	private final SeatRepository seatRepository;
 	private final SeatMapper seatMapper;
 
@@ -91,5 +90,17 @@ public class SeatService {
 	public List<SeatResponse> getActiveSeatsByHall(Long hallId) {
 		log.debug("Retrieving active seats for hall id: {}", hallId);
 		return seatMapper.toDtoList(seatRepository.findByHallIdAndActiveTrue(hallId));
+	}
+
+	@Transactional(readOnly = true)
+	public List<Integer> getDistinctRowsByHall(Long hallId) {
+		log.debug("Retrieving distinct rows for hall id: {}", hallId);
+		return seatRepository.findDistinctRowsByHallId(hallId);
+	}
+
+	@Transactional(readOnly = true)
+	public List<Seat> getSeatsByIds(List<Long> seatIds) {
+		log.debug("Retrieving seats by ids: {}", seatIds);
+		return seatRepository.findAllById(seatIds);
 	}
 }

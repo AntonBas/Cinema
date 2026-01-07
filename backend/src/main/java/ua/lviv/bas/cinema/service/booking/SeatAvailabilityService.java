@@ -26,7 +26,6 @@ import ua.lviv.bas.cinema.repository.TicketTypeRepository;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class SeatAvailabilityService {
-
 	private final SessionRepository sessionRepository;
 	private final SeatRepository seatRepository;
 	private final BookedSeatRepository bookedSeatRepository;
@@ -41,30 +40,23 @@ public class SeatAvailabilityService {
 				List.of(BookedSeatStatus.PENDING, BookedSeatStatus.CONFIRMED));
 
 		List<SeatAvailabilityResponse.SeatInfo> seatInfos = allSeats.stream().map(seat -> {
-			boolean isAvailable = isSeatAvailable(seat.getId(), bookedSeats);
-			BigDecimal price = calculateSeatPrice(session, seat, null);
+			boolean isBooked = bookedSeats.stream().anyMatch(bs -> bs.getSeat().getId().equals(seat.getId()));
+			boolean isTemporary = bookedSeats.stream().anyMatch(
+					bs -> bs.getSeat().getId().equals(seat.getId()) && bs.getStatus() == BookedSeatStatus.PENDING);
+
+			List<SeatAvailabilityResponse.TicketPriceInfo> ticketPrices = calculateTicketPrices(seat, session);
 
 			return SeatAvailabilityResponse.SeatInfo.builder().id(seat.getId()).row(seat.getRow())
-					.seatNumber(seat.getNumber()).seatType(seat.getSeatType()).available(isAvailable)
-					.active(seat.isActive()).price(price).build();
+					.seatNumber(seat.getNumber()).seatType(seat.getSeatType().name())
+					.available(!isBooked && seat.isActive()).temporarilyReserved(isTemporary).ticketPrices(ticketPrices)
+					.build();
 		}).collect(Collectors.toList());
 
-		List<TicketType> allTicketTypes = ticketTypeRepository.findByActiveTrue();
-		List<SeatAvailabilityResponse.TicketTypeInfo> ticketTypeInfos = allTicketTypes.stream()
-				.map(ticketType -> SeatAvailabilityResponse.TicketTypeInfo.builder().id(ticketType.getId())
-						.name(ticketType.getDisplayName()).multiplier(ticketType.getPriceMultiplier())
-						.description(ticketType.getDescription()).build())
-				.collect(Collectors.toList());
+		int availableSeatsCount = (int) seatInfos.stream().filter(seat -> seat.getAvailable()).count();
 
-		SeatAvailabilityResponse.SessionInfo sessionInfo = SeatAvailabilityResponse.SessionInfo.builder()
-				.id(session.getId()).movieTitle(session.getMovie().getTitle()).basePrice(session.getBasePrice())
-				.hallName(session.getHall().getName()).totalSeats(allSeats.size())
-				.availableSeats(
-						(int) seatInfos.stream().filter(SeatAvailabilityResponse.SeatInfo::getAvailable).count())
-				.build();
-
-		return SeatAvailabilityResponse.builder().session(sessionInfo).seats(seatInfos).ticketTypes(ticketTypeInfos)
-				.build();
+		return SeatAvailabilityResponse.builder().sessionId(session.getId()).movieTitle(session.getMovie().getTitle())
+				.basePrice(session.getBasePrice()).hallName(session.getHall().getName())
+				.availableSeats(availableSeatsCount).seats(seatInfos).build();
 	}
 
 	public void validateSeatAvailability(Long sessionId, Long seatId) {
@@ -87,7 +79,6 @@ public class SeatAvailabilityService {
 		BigDecimal basePrice = session.getBasePrice();
 		BigDecimal seatMultiplier = seat.getSeatType().getPriceMultiplier();
 		BigDecimal ticketMultiplier = ticketType != null ? ticketType.getPriceMultiplier() : BigDecimal.ONE;
-
 		return basePrice.multiply(seatMultiplier).multiply(ticketMultiplier);
 	}
 
@@ -108,7 +99,13 @@ public class SeatAvailabilityService {
 		return (int) (totalSeats - bookedSeats);
 	}
 
-	private boolean isSeatAvailable(Long seatId, List<BookedSeat> bookedSeats) {
-		return bookedSeats.stream().noneMatch(bookedSeat -> bookedSeat.getSeat().getId().equals(seatId));
+	private List<SeatAvailabilityResponse.TicketPriceInfo> calculateTicketPrices(Seat seat, Session session) {
+		List<TicketType> activeTicketTypes = ticketTypeRepository.findByActiveTrue();
+
+		return activeTicketTypes.stream().map(ticketType -> {
+			BigDecimal price = calculateSeatPrice(session, seat, ticketType);
+			return SeatAvailabilityResponse.TicketPriceInfo.builder().ticketTypeId(ticketType.getId())
+					.ticketTypeName(ticketType.getDisplayName()).finalPrice(price).build();
+		}).collect(Collectors.toList());
 	}
 }
