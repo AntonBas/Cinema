@@ -35,14 +35,15 @@ import ua.lviv.bas.cinema.domain.enums.TicketStatus;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString(exclude = { "booking", "ticketType", "payment", "refund" })
+@ToString(exclude = { "booking", "ticketType", "payment", "refund", "user" })
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Table(name = "tickets", indexes = { @Index(name = "idx_ticket_booking", columnList = "booking_id"),
 		@Index(name = "idx_ticket_payment", columnList = "payment_id"),
 		@Index(name = "idx_ticket_status", columnList = "status"),
 		@Index(name = "idx_ticket_purchase_time", columnList = "purchase_time"),
 		@Index(name = "idx_ticket_ticket_type", columnList = "ticket_type_id"),
-		@Index(name = "idx_ticket_unique_code", columnList = "unique_code", unique = true) })
+		@Index(name = "idx_ticket_unique_code", columnList = "unique_code", unique = true),
+		@Index(name = "idx_ticket_user", columnList = "user_id") })
 public class Ticket {
 
 	@Id
@@ -54,6 +55,11 @@ public class Ticket {
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "booking_id", nullable = false)
 	private Booking booking;
+
+	@NotNull
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "user_id", nullable = false)
+	private User user;
 
 	@NotNull
 	@ManyToOne(fetch = FetchType.LAZY)
