@@ -31,7 +31,7 @@ import ua.lviv.bas.cinema.service.user.PromotionService;
 public class PromotionController {
 
 	private final AdminPromotionService promotionService;
-	private final AdminPromotionService userPromotionService;
+	private final PromotionService userPromotionService;
 
 	@GetMapping
 	@Operation(summary = "Get available promotions", description = "Get list of promotions available for the current user")
