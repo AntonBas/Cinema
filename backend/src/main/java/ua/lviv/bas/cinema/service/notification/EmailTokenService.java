@@ -60,7 +60,7 @@ public class EmailTokenService {
 
 		EmailToken emailToken = validateToken(token);
 
-		if (emailToken.getType() != TokenType.VERIFICATION) {
+		if (emailToken.getType() != TokenType.EMAIL_CHANGE) {
 			throw new InvalidTokenException("email-change");
 		}
 
