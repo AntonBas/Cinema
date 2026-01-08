@@ -52,8 +52,6 @@ public class UserMapperTest {
 		assertNotNull(user.getTickets());
 		assertTrue(user.getTickets().isEmpty());
 		assertNull(user.getBonusCard());
-		assertNotNull(user.getDiscounts());
-		assertTrue(user.getDiscounts().isEmpty());
 		assertNotNull(user.getBookings());
 		assertTrue(user.getBookings().isEmpty());
 	}
@@ -193,8 +191,7 @@ public class UserMapperTest {
 				.phoneNumber("+380000000000").password("oldPassword").userRole(UserRole.ROLE_ADMIN)
 				.verificationStatus(VerificationStatus.VERIFIED).verifiedAt(verifiedAt).enabled(true)
 				.createdAt(LocalDateTime.of(2023, 1, 1, 10, 0)).updatedAt(LocalDateTime.of(2023, 1, 1, 10, 0))
-				.tickets(new ArrayList<>()).bonusCard(null).discounts(new ArrayList<>()).bookings(new ArrayList<>())
-				.build();
+				.tickets(new ArrayList<>()).bonusCard(null).bookings(new ArrayList<>()).build();
 
 		UserUpdateRequest updateDto = UserUpdateRequest.builder().firstName("NewFirstName").lastName("NewLastName")
 				.dateOfBirth(LocalDate.of(2001, 8, 21)).city("NewCity").phoneNumber("+380123456789").build();
@@ -215,7 +212,6 @@ public class UserMapperTest {
 		assertEquals(1L, existingUser.getId());
 		assertNotNull(existingUser.getTickets());
 		assertNull(existingUser.getBonusCard());
-		assertNotNull(existingUser.getDiscounts());
 		assertNotNull(existingUser.getBookings());
 		assertEquals(LocalDateTime.of(2023, 1, 1, 10, 0), existingUser.getCreatedAt());
 		assertEquals(LocalDateTime.of(2023, 1, 1, 10, 0), existingUser.getUpdatedAt());
@@ -227,8 +223,7 @@ public class UserMapperTest {
 
 		User existingUser = User.builder().id(1L).email("test@example.com").firstName("Test").lastName("User")
 				.city("City").phoneNumber("+380000000000").verificationStatus(VerificationStatus.VERIFIED)
-				.verifiedAt(verifiedAt).tickets(new ArrayList<>()).bonusCard(null).discounts(new ArrayList<>())
-				.bookings(new ArrayList<>()).build();
+				.verifiedAt(verifiedAt).tickets(new ArrayList<>()).bonusCard(null).bookings(new ArrayList<>()).build();
 
 		userMapper.updateUserFromDto(null, existingUser);
 
@@ -241,7 +236,6 @@ public class UserMapperTest {
 		assertEquals(verifiedAt, existingUser.getVerifiedAt());
 		assertNotNull(existingUser.getTickets());
 		assertNull(existingUser.getBonusCard());
-		assertNotNull(existingUser.getDiscounts());
 		assertNotNull(existingUser.getBookings());
 	}
 
@@ -250,8 +244,7 @@ public class UserMapperTest {
 		User existingUser = User.builder().id(1L).email("test@example.com").firstName("OldFirstName")
 				.lastName("OldLastName").city("OldCity").phoneNumber("+380000000000")
 				.dateOfBirth(LocalDate.of(1990, 1, 1)).verificationStatus(VerificationStatus.NOT_VERIFIED)
-				.verifiedAt(null).tickets(new ArrayList<>()).bonusCard(null).discounts(new ArrayList<>())
-				.bookings(new ArrayList<>()).build();
+				.verifiedAt(null).tickets(new ArrayList<>()).bonusCard(null).bookings(new ArrayList<>()).build();
 
 		UserUpdateRequest updateDto = UserUpdateRequest.builder().firstName("NewFirstName").lastName("OldLastName")
 				.city("NewCity").phoneNumber("+380000000000").dateOfBirth(LocalDate.of(1990, 1, 1)).build();
@@ -268,7 +261,6 @@ public class UserMapperTest {
 		assertNull(existingUser.getVerifiedAt());
 		assertNotNull(existingUser.getTickets());
 		assertNull(existingUser.getBonusCard());
-		assertNotNull(existingUser.getDiscounts());
 		assertNotNull(existingUser.getBookings());
 	}
 
@@ -279,8 +271,8 @@ public class UserMapperTest {
 		User existingUser = User.builder().id(1L).email("test@example.com").firstName("OldFirstName")
 				.lastName("OldLastName").city("OldCity").phoneNumber("+380000000000")
 				.dateOfBirth(LocalDate.of(1990, 1, 1)).verificationStatus(VerificationStatus.VERIFIED)
-				.verifiedAt(originalVerifiedAt).tickets(new ArrayList<>()).bonusCard(null).discounts(new ArrayList<>())
-				.bookings(new ArrayList<>()).build();
+				.verifiedAt(originalVerifiedAt).tickets(new ArrayList<>()).bonusCard(null).bookings(new ArrayList<>())
+				.build();
 
 		UserUpdateRequest updateDto = UserUpdateRequest.builder().firstName("NewFirstName").lastName("OldLastName")
 				.city("OldCity").phoneNumber("+380000000000").dateOfBirth(LocalDate.of(1990, 1, 1)).build();
@@ -297,7 +289,6 @@ public class UserMapperTest {
 		assertEquals(originalVerifiedAt, existingUser.getVerifiedAt());
 		assertNotNull(existingUser.getTickets());
 		assertNull(existingUser.getBonusCard());
-		assertNotNull(existingUser.getDiscounts());
 		assertNotNull(existingUser.getBookings());
 	}
 }
