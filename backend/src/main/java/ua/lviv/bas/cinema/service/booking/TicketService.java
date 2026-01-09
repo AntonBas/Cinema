@@ -27,6 +27,7 @@ import ua.lviv.bas.cinema.dto.ticket.response.TicketResponse;
 import ua.lviv.bas.cinema.exception.domain.booking.BookingNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.booking.TicketValidationException;
 import ua.lviv.bas.cinema.mapper.TicketMapper;
+import ua.lviv.bas.cinema.repository.BookingRepository;
 import ua.lviv.bas.cinema.repository.TicketRepository;
 import ua.lviv.bas.cinema.service.infrastructure.QRCodeService;
 import ua.lviv.bas.cinema.service.notification.EmailService;
@@ -42,7 +43,7 @@ public class TicketService {
 	private final EmailService emailService;
 	private final QRCodeService qrCodeService;
 	private final BookingService bookingService;
-	private final ua.lviv.bas.cinema.repository.BookingRepository bookingRepository;
+	private final BookingRepository bookingRepository;
 
 	@Value("${app.ticket.qr.size:200}")
 	private int qrCodeSize;
