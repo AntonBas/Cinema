@@ -29,8 +29,6 @@ import ua.lviv.bas.cinema.exception.domain.auth.TokenAlreadyConfirmedException;
 import ua.lviv.bas.cinema.exception.domain.auth.TokenExpiredException;
 import ua.lviv.bas.cinema.repository.EmailTokenRepository;
 import ua.lviv.bas.cinema.repository.UserRepository;
-import ua.lviv.bas.cinema.service.notification.EmailService;
-import ua.lviv.bas.cinema.service.notification.EmailTokenService;
 import ua.lviv.bas.cinema.service.user.BonusService;
 
 @ExtendWith(MockitoExtension.class)
@@ -183,7 +181,7 @@ class EmailTokenServiceTest {
 		user.setEmail(oldEmail);
 		user.setEnabled(true);
 
-		EmailToken emailToken = EmailToken.builder().token(token).type(TokenType.VERIFICATION).confirmed(false)
+		EmailToken emailToken = EmailToken.builder().token(token).type(TokenType.EMAIL_CHANGE).confirmed(false)
 				.expiresAt(LocalDateTime.now().plusHours(1)).user(user).newEmail(newEmail).build();
 
 		when(tokenRepository.findByToken(token)).thenReturn(Optional.of(emailToken));
@@ -226,7 +224,7 @@ class EmailTokenServiceTest {
 		user.setId(1L);
 		user.setEmail("old@example.com");
 
-		EmailToken emailToken = EmailToken.builder().token(token).type(TokenType.VERIFICATION).confirmed(true)
+		EmailToken emailToken = EmailToken.builder().token(token).type(TokenType.EMAIL_CHANGE).confirmed(true)
 				.confirmedAt(LocalDateTime.now().minusHours(1)).expiresAt(LocalDateTime.now().plusHours(1)).user(user)
 				.newEmail("new@example.com").build();
 
@@ -243,13 +241,13 @@ class EmailTokenServiceTest {
 	}
 
 	@Test
-	void confirmEmailChange_ShouldThrowInvalidTokenException_WhenTokenIsNotVerificationType() {
+	void confirmEmailChange_ShouldThrowInvalidTokenException_WhenTokenIsNotEmailChangeType() {
 		String token = "wrong-type-token";
 		User user = new User();
 		user.setId(1L);
 		user.setEmail("old@example.com");
 
-		EmailToken emailToken = EmailToken.builder().token(token).type(TokenType.PASSWORD_RESET).confirmed(false)
+		EmailToken emailToken = EmailToken.builder().token(token).type(TokenType.VERIFICATION).confirmed(false)
 				.expiresAt(LocalDateTime.now().plusHours(1)).user(user).newEmail("new@example.com").build();
 
 		when(tokenRepository.findByToken(token)).thenReturn(Optional.of(emailToken));
@@ -272,7 +270,7 @@ class EmailTokenServiceTest {
 		user.setId(1L);
 		user.setEmail("old@example.com");
 
-		EmailToken emailToken = EmailToken.builder().token(token).type(TokenType.VERIFICATION).confirmed(false)
+		EmailToken emailToken = EmailToken.builder().token(token).type(TokenType.EMAIL_CHANGE).confirmed(false)
 				.expiresAt(LocalDateTime.now().plusHours(1)).user(user).build();
 
 		when(tokenRepository.findByToken(token)).thenReturn(Optional.of(emailToken));
@@ -298,7 +296,7 @@ class EmailTokenServiceTest {
 		user.setId(1L);
 		user.setEmail(oldEmail);
 
-		EmailToken emailToken = EmailToken.builder().token(token).type(TokenType.VERIFICATION).confirmed(false)
+		EmailToken emailToken = EmailToken.builder().token(token).type(TokenType.EMAIL_CHANGE).confirmed(false)
 				.expiresAt(LocalDateTime.now().plusHours(1)).user(user).newEmail(newEmail).build();
 
 		when(tokenRepository.findByToken(token)).thenReturn(Optional.of(emailToken));
@@ -323,7 +321,7 @@ class EmailTokenServiceTest {
 		user.setId(1L);
 		user.setEmail(email);
 
-		EmailToken emailToken = EmailToken.builder().token(token).type(TokenType.VERIFICATION).confirmed(false)
+		EmailToken emailToken = EmailToken.builder().token(token).type(TokenType.EMAIL_CHANGE).confirmed(false)
 				.expiresAt(LocalDateTime.now().plusHours(1)).user(user).newEmail(email).build();
 
 		when(tokenRepository.findByToken(token)).thenReturn(Optional.of(emailToken));
@@ -348,7 +346,7 @@ class EmailTokenServiceTest {
 		user.setId(1L);
 		user.setEmail(oldEmail);
 
-		EmailToken emailToken = EmailToken.builder().token(token).type(TokenType.VERIFICATION).confirmed(false)
+		EmailToken emailToken = EmailToken.builder().token(token).type(TokenType.EMAIL_CHANGE).confirmed(false)
 				.expiresAt(LocalDateTime.now().plusHours(1)).user(user).newEmail(newEmail).build();
 
 		when(tokenRepository.findByToken(token)).thenReturn(Optional.of(emailToken));

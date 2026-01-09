@@ -46,7 +46,6 @@ import ua.lviv.bas.cinema.repository.GenreRepository;
 import ua.lviv.bas.cinema.repository.MovieRepository;
 import ua.lviv.bas.cinema.repository.PersonRepository;
 import ua.lviv.bas.cinema.scheduler.MovieScheduler;
-import ua.lviv.bas.cinema.service.cinema.MovieService;
 import ua.lviv.bas.cinema.service.infrastructure.PosterService;
 import ua.lviv.bas.cinema.service.infrastructure.SlugService;
 

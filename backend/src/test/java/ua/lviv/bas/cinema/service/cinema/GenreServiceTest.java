@@ -34,7 +34,6 @@ import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
 import ua.lviv.bas.cinema.exception.domain.cinema.GenreNotFoundException;
 import ua.lviv.bas.cinema.mapper.GenreMapper;
 import ua.lviv.bas.cinema.repository.GenreRepository;
-import ua.lviv.bas.cinema.service.cinema.GenreService;
 
 @ExtendWith(MockitoExtension.class)
 class GenreServiceTest {

@@ -36,7 +36,6 @@ import ua.lviv.bas.cinema.mapper.CinemaHallMapper;
 import ua.lviv.bas.cinema.mapper.SeatMapper;
 import ua.lviv.bas.cinema.repository.CinemaHallRepository;
 import ua.lviv.bas.cinema.repository.SeatRepository;
-import ua.lviv.bas.cinema.service.cinema.CinemaHallService;
 
 @ExtendWith(MockitoExtension.class)
 class CinemaHallServiceTest {

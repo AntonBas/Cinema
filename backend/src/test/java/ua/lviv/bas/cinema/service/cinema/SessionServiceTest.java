@@ -38,8 +38,6 @@ import ua.lviv.bas.cinema.exception.domain.cinema.SessionTimeConflictException;
 import ua.lviv.bas.cinema.mapper.SessionMapper;
 import ua.lviv.bas.cinema.repository.MovieRepository;
 import ua.lviv.bas.cinema.repository.SessionRepository;
-import ua.lviv.bas.cinema.service.cinema.CinemaHallService;
-import ua.lviv.bas.cinema.service.cinema.SessionService;
 
 @ExtendWith(MockitoExtension.class)
 class SessionServiceTest {
