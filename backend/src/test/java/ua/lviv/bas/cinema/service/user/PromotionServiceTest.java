@@ -47,7 +47,7 @@ class PromotionServiceTest {
 	private PromotionMapper promotionMapper;
 
 	@InjectMocks
-	private AdminPromotionService userPromotionService;
+	private PromotionService userPromotionService; // Змінено на PromotionService
 
 	@Test
 	void claimPromotion_ShouldSuccessfullyClaimPromotion() {
