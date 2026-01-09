@@ -167,14 +167,21 @@ public class TicketService {
 		List<Ticket> tickets = ticketRepository.findByPaymentBookingId(booking.getId());
 
 		if (!tickets.isEmpty()) {
-			tickets.forEach(ticket -> {
+			boolean anyChanged = false;
+
+			for (Ticket ticket : tickets) {
 				if (ticket.getStatus() == TicketStatus.ACTIVE) {
 					ticket.setStatus(TicketStatus.CANCELLED);
+					anyChanged = true;
 				}
-			});
+			}
 
-			ticketRepository.saveAll(tickets);
-			log.info("Cancelled {} tickets for booking {}", tickets.size(), booking.getId());
+			if (anyChanged) {
+				ticketRepository.saveAll(tickets);
+				log.info("Cancelled some tickets for booking {}", booking.getId());
+			} else {
+				log.debug("No active tickets to cancel for booking {}", booking.getId());
+			}
 		}
 	}
 
