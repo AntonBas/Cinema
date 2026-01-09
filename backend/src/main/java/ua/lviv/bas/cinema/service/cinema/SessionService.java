@@ -193,6 +193,16 @@ public class SessionService {
 	}
 
 	@Transactional(readOnly = true)
+	public Page<SessionAdminResponse> getTodaySessions(Pageable pageable) {
+		LocalDate today = LocalDate.now();
+		LocalDateTime startOfDay = today.atStartOfDay();
+		LocalDateTime endOfDay = today.atTime(23, 59, 59);
+
+		Page<Session> sessions = sessionRepository.findByStartTimeBetween(startOfDay, endOfDay, true, pageable);
+		return sessions.map(this::toAdminResponse);
+	}
+
+	@Transactional(readOnly = true)
 	public Page<SessionScheduleResponse> getScheduleSessions(LocalDate date, Long movieId, Integer daysAhead,
 			Pageable pageable) {
 
@@ -212,6 +222,16 @@ public class SessionService {
 			sessions = sessionRepository.findAvailableSessions(pageable);
 		}
 
+		return sessions.map(this::toScheduleResponse);
+	}
+
+	@Transactional(readOnly = true)
+	public Page<SessionScheduleResponse> getTodayPublicSessions(Pageable pageable) {
+		LocalDate today = LocalDate.now();
+		LocalDateTime startOfDay = today.atStartOfDay();
+		LocalDateTime endOfDay = today.atTime(23, 59, 59);
+
+		Page<Session> sessions = sessionRepository.findByStartTimeBetween(startOfDay, endOfDay, false, pageable);
 		return sessions.map(this::toScheduleResponse);
 	}
 

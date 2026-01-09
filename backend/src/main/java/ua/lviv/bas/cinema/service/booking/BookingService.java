@@ -4,7 +4,10 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -103,12 +106,43 @@ public class BookingService {
 	}
 
 	@Transactional(readOnly = true)
-	public List<Booking> getUserBookings(Long userId, BookingStatus status) {
+	public BookingResponse getBookingById(Long bookingId) {
+		Booking booking = bookingRepository.findById(bookingId)
+				.orElseThrow(() -> new BookingNotFoundException(bookingId));
+		return buildBookingResponse(booking);
+	}
+
+	@Transactional(readOnly = true)
+	public List<BookingResponse> getAllBookings() {
+		return bookingRepository.findAll().stream().map(this::buildBookingResponse).collect(Collectors.toList());
+	}
+
+	@Transactional(readOnly = true)
+	public Page<BookingResponse> getAllBookings(Pageable pageable, BookingStatus status) {
+		Page<Booking> bookings;
 		if (status != null) {
-			return bookingRepository.findByUserIdAndStatusOrderByCreatedAtDesc(userId, status);
+			bookings = bookingRepository.findByStatus(status, pageable);
 		} else {
-			return bookingRepository.findByUserIdOrderByCreatedAtDesc(userId);
+			bookings = bookingRepository.findAll(pageable);
 		}
+		return bookings.map(this::buildBookingResponse);
+	}
+
+	@Transactional(readOnly = true)
+	public List<BookingResponse> getSessionBookings(Long sessionId) {
+		return bookingRepository.findBySessionId(sessionId).stream().map(this::buildBookingResponse)
+				.collect(Collectors.toList());
+	}
+
+	@Transactional(readOnly = true)
+	public List<BookingResponse> getUserBookings(Long userId, BookingStatus status) {
+		List<Booking> bookings;
+		if (status != null) {
+			bookings = bookingRepository.findByUserIdAndStatusOrderByCreatedAtDesc(userId, status);
+		} else {
+			bookings = bookingRepository.findByUserIdOrderByCreatedAtDesc(userId);
+		}
+		return bookings.stream().map(this::buildBookingResponse).collect(Collectors.toList());
 	}
 
 	public void cancelBooking(Long bookingId, User user) {
@@ -121,7 +155,19 @@ public class BookingService {
 
 		booking.setStatus(BookingStatus.CANCELLED);
 		booking.getBookedSeats().forEach(bs -> bs.setStatus(BookedSeatStatus.CANCELLED));
+		bookingRepository.save(booking);
+	}
 
+	public void cancelBooking(Long bookingId) {
+		Booking booking = bookingRepository.findById(bookingId)
+				.orElseThrow(() -> new BookingNotFoundException(bookingId));
+
+		if (!canBookingBeCancelled(booking)) {
+			throw BookingValidationException.cannotCancel();
+		}
+
+		booking.setStatus(BookingStatus.CANCELLED);
+		booking.getBookedSeats().forEach(bs -> bs.setStatus(BookedSeatStatus.CANCELLED));
 		bookingRepository.save(booking);
 	}
 
@@ -135,7 +181,6 @@ public class BookingService {
 
 		booking.setStatus(BookingStatus.CONFIRMED);
 		booking.getBookedSeats().forEach(bs -> bs.setStatus(BookedSeatStatus.CONFIRMED));
-
 		bookingRepository.save(booking);
 	}
 
@@ -150,7 +195,9 @@ public class BookingService {
 		}
 	}
 
-	public BigDecimal calculateTotalPrice(Booking booking) {
+	public BigDecimal calculateTotalPrice(Long bookingId, User user) {
+		Booking booking = bookingRepository.findByIdAndUserId(bookingId, user.getId())
+				.orElseThrow(() -> new BookingNotFoundException(bookingId));
 		return booking.getTotalPrice();
 	}
 

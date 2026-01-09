@@ -1,6 +1,7 @@
 package ua.lviv.bas.cinema.service.booking;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,6 +12,8 @@ import ua.lviv.bas.cinema.domain.TicketType;
 import ua.lviv.bas.cinema.domain.enums.TicketStatus;
 import ua.lviv.bas.cinema.dto.ticket.request.TicketTypeCreateRequest;
 import ua.lviv.bas.cinema.dto.ticket.request.TicketTypeUpdateRequest;
+import ua.lviv.bas.cinema.dto.ticket.response.TicketTypeResponse;
+import ua.lviv.bas.cinema.dto.ticket.response.TicketTypeSimpleResponse;
 import ua.lviv.bas.cinema.exception.domain.tickettype.TicketTypeDuplicateException;
 import ua.lviv.bas.cinema.exception.domain.tickettype.TicketTypeInUseException;
 import ua.lviv.bas.cinema.exception.domain.tickettype.TicketTypeNotFoundException;
@@ -30,7 +33,7 @@ public class TicketTypeService {
 	private final TicketTypeMapper ticketTypeMapper;
 
 	@Transactional
-	public TicketType createTicketType(TicketTypeCreateRequest createRequest) {
+	public TicketTypeResponse createTicketType(TicketTypeCreateRequest createRequest) {
 		log.debug("Creating ticket type: {}", createRequest.getCode());
 
 		validateAgeRange(createRequest.getMinAge(), createRequest.getMaxAge());
@@ -40,30 +43,54 @@ public class TicketTypeService {
 		}
 
 		TicketType ticketType = ticketTypeMapper.toEntity(createRequest);
-		return ticketTypeRepository.save(ticketType);
+		TicketType saved = ticketTypeRepository.save(ticketType);
+		return ticketTypeMapper.toResponseDto(saved);
 	}
 
-	public TicketType getTicketTypeById(Long id) {
-		return ticketTypeRepository.findById(id).orElseThrow(() -> new TicketTypeNotFoundException(id));
+	public TicketTypeResponse getTicketTypeById(Long id) {
+		TicketType ticketType = ticketTypeRepository.findById(id)
+				.orElseThrow(() -> new TicketTypeNotFoundException(id));
+		return ticketTypeMapper.toResponseDto(ticketType);
 	}
 
-	public TicketType getTicketTypeByCode(String code) {
-		return ticketTypeRepository.findByCode(code).orElseThrow(() -> new TicketTypeNotFoundException(code));
+	public TicketTypeResponse getTicketTypeByCode(String code) {
+		TicketType ticketType = ticketTypeRepository.findByCode(code)
+				.orElseThrow(() -> new TicketTypeNotFoundException(code));
+		return ticketTypeMapper.toResponseDto(ticketType);
 	}
 
-	public List<TicketType> getAllTicketTypes() {
-		return ticketTypeRepository.findAll();
+	public List<TicketTypeResponse> getAllTicketTypes(Boolean active) {
+		List<TicketType> ticketTypes;
+
+		if (active == null) {
+			ticketTypes = ticketTypeRepository.findAll();
+		} else if (active) {
+			ticketTypes = ticketTypeRepository.findByActiveTrue();
+		} else {
+			ticketTypes = ticketTypeRepository.findByActiveFalse();
+		}
+
+		return ticketTypes.stream().map(ticketTypeMapper::toResponseDto).collect(Collectors.toList());
 	}
 
-	public List<TicketType> getAllActiveTicketTypes() {
-		return ticketTypeRepository.findByActiveTrue();
+	public List<TicketTypeSimpleResponse> getSimpleTicketTypes(Boolean active) {
+		List<TicketType> ticketTypes;
+
+		if (active == null || active) {
+			ticketTypes = ticketTypeRepository.findByActiveTrue();
+		} else {
+			ticketTypes = ticketTypeRepository.findByActiveFalse();
+		}
+
+		return ticketTypes.stream().map(ticketTypeMapper::toSimpleDto).collect(Collectors.toList());
 	}
 
 	@Transactional
-	public TicketType updateTicketType(Long id, TicketTypeUpdateRequest updateRequest) {
+	public TicketTypeResponse updateTicketType(Long id, TicketTypeUpdateRequest updateRequest) {
 		log.debug("Updating ticket type: {}", id);
 
-		TicketType ticketType = getTicketTypeById(id);
+		TicketType ticketType = ticketTypeRepository.findById(id)
+				.orElseThrow(() -> new TicketTypeNotFoundException(id));
 
 		if (updateRequest.getMinAge() != null || updateRequest.getMaxAge() != null) {
 			Integer minAge = updateRequest.getMinAge() != null ? updateRequest.getMinAge() : ticketType.getMinAge();
@@ -72,12 +99,14 @@ public class TicketTypeService {
 		}
 
 		ticketTypeMapper.updateEntity(ticketType, updateRequest);
-		return ticketTypeRepository.save(ticketType);
+		TicketType updated = ticketTypeRepository.save(ticketType);
+		return ticketTypeMapper.toResponseDto(updated);
 	}
 
 	@Transactional
 	public void deleteTicketType(Long id) {
-		TicketType ticketType = getTicketTypeById(id);
+		TicketType ticketType = ticketTypeRepository.findById(id)
+				.orElseThrow(() -> new TicketTypeNotFoundException(id));
 
 		if (isTicketTypeInUse(id)) {
 			long ticketCount = ticketRepository.countByTicketTypeId(id);
@@ -90,8 +119,9 @@ public class TicketTypeService {
 	}
 
 	@Transactional
-	public TicketType toggleTicketTypeActiveStatus(Long id) {
-		TicketType ticketType = getTicketTypeById(id);
+	public TicketTypeResponse toggleTicketTypeActiveStatus(Long id) {
+		TicketType ticketType = ticketTypeRepository.findById(id)
+				.orElseThrow(() -> new TicketTypeNotFoundException(id));
 
 		if (ticketType.isActive() && hasActiveTicketsWithType(id)) {
 			List<TicketStatus> activeStatuses = List.of(TicketStatus.ACTIVE, TicketStatus.PENDING);
@@ -101,11 +131,13 @@ public class TicketTypeService {
 		}
 
 		ticketType.setActive(!ticketType.isActive());
-		return ticketTypeRepository.save(ticketType);
+		TicketType updated = ticketTypeRepository.save(ticketType);
+		return ticketTypeMapper.toResponseDto(updated);
 	}
 
 	public boolean validateAgeForTicketType(Long ticketTypeId, Integer age) {
-		TicketType ticketType = getTicketTypeById(ticketTypeId);
+		TicketType ticketType = ticketTypeRepository.findById(ticketTypeId)
+				.orElseThrow(() -> new TicketTypeNotFoundException(ticketTypeId));
 		return isAgeValidForTicketType(ticketType, age);
 	}
 
@@ -125,7 +157,8 @@ public class TicketTypeService {
 	}
 
 	public String getFormattedAgeRange(Long ticketTypeId) {
-		TicketType ticketType = getTicketTypeById(ticketTypeId);
+		TicketType ticketType = ticketTypeRepository.findById(ticketTypeId)
+				.orElseThrow(() -> new TicketTypeNotFoundException(ticketTypeId));
 		return formatAgeRange(ticketType.getMinAge(), ticketType.getMaxAge());
 	}
 

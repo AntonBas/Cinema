@@ -3,6 +3,7 @@ package ua.lviv.bas.cinema.service.booking;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.security.MessageDigest;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Base64;
@@ -14,6 +15,8 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -91,8 +94,7 @@ public class PaymentService {
 		Payment savedPayment = paymentRepository.save(payment);
 		log.info("Created payment {} for booking {}", savedPayment.getId(), booking.getId());
 
-		PaymentResponse response = buildPaymentResponse(savedPayment);
-		return response;
+		return buildPaymentResponse(savedPayment);
 	}
 
 	public PaymentLiqPayDataResponse preparePaymentData(Long paymentId, User user) {
@@ -157,6 +159,13 @@ public class PaymentService {
 		return buildPaymentResponse(payment);
 	}
 
+	@Transactional(readOnly = true)
+	public PaymentResponse getPaymentById(Long paymentId) {
+		Payment payment = paymentRepository.findByIdWithDetails(paymentId)
+				.orElseThrow(() -> new PaymentProcessingException("Payment not found"));
+		return buildPaymentResponse(payment);
+	}
+
 	public PaymentResponse retryPayment(Long paymentId, User user) {
 		Payment payment = paymentRepository.findById(paymentId)
 				.orElseThrow(() -> new PaymentProcessingException("Payment not found"));
@@ -186,9 +195,36 @@ public class PaymentService {
 	}
 
 	@Transactional(readOnly = true)
+	public List<PaymentResponse> getAllPayments() {
+		return paymentRepository.findAll().stream().map(this::buildPaymentResponse).collect(Collectors.toList());
+	}
+
+	@Transactional(readOnly = true)
+	public Page<PaymentResponse> getAllPayments(Pageable pageable, PaymentStatus status, LocalDate dateFrom,
+			LocalDate dateTo) {
+		Page<Payment> payments;
+
+		if (status != null || dateFrom != null || dateTo != null) {
+			payments = paymentRepository.findWithFilters(status, dateFrom, dateTo, pageable);
+		} else {
+			payments = paymentRepository.findAll(pageable);
+		}
+
+		return payments.map(this::buildPaymentResponse);
+	}
+
+	@Transactional(readOnly = true)
 	public List<PaymentResponse> getUserPayments(Long userId) {
 		List<Payment> payments = paymentRepository.findByUserId(userId);
 		return payments.stream().map(this::buildPaymentResponse).collect(Collectors.toList());
+	}
+
+	@Transactional(readOnly = true)
+	public Map<LocalDate, BigDecimal> getDailyPaymentStatistics(LocalDate startDate, LocalDate endDate) {
+		List<Object[]> results = paymentRepository.findDailyPaymentStatistics(startDate, endDate);
+
+		return results.stream()
+				.collect(Collectors.toMap(row -> ((java.sql.Date) row[0]).toLocalDate(), row -> (BigDecimal) row[1]));
 	}
 
 	private void validateBookingForPayment(Booking booking) {
@@ -263,7 +299,6 @@ public class PaymentService {
 		payment.setLiqpaySenderCardMask(callbackRequest.getSenderCardMask());
 
 		booking.setStatus(BookingStatus.CONFIRMED);
-
 		booking.getBookedSeats().forEach(seat -> seat.setStatus(BookedSeatStatus.CONFIRMED));
 
 		List<Ticket> tickets = ticketService.createTicketsForBooking(booking, payment);
@@ -274,7 +309,6 @@ public class PaymentService {
 		}
 
 		ticketService.sendTicketsToUser(booking);
-
 		sendPaymentSuccessEmail(payment, booking, tickets);
 
 		log.info("Payment {} completed successfully for booking {}", payment.getId(), booking.getId());

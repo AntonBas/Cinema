@@ -112,6 +112,19 @@ public class MovieService {
 	}
 
 	@Transactional(readOnly = true)
+	public Page<MovieCardResponse> findFilteredMovies(String search, MovieStatus status, Pageable pageable) {
+		log.debug("Finding filtered movies: search='{}', status={}", search, status);
+
+		if (search != null && !search.isBlank()) {
+			return searchMoviesByTitle(search, status, pageable);
+		} else if (status != null) {
+			return getMoviesByStatus(status, pageable);
+		} else {
+			return getCurrentlyShowingPage(pageable);
+		}
+	}
+
+	@Transactional(readOnly = true)
 	public Page<MovieCardResponse> getMoviesByStatus(MovieStatus status, Pageable pageable) {
 		Page<Movie> movies = movieRepository.findByStatusWithSearch(status, null, pageable);
 		return movies.map(movieMapper::toCardResponse);

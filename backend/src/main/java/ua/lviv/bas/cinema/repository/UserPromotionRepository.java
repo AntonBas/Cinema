@@ -17,14 +17,16 @@ public interface UserPromotionRepository extends JpaRepository<UserPromotion, Lo
 
 	boolean existsByUserAndPromotion(User user, Promotion promotion);
 
-	List<UserPromotion> findByUser(User user);
+	@Query("SELECT CASE WHEN COUNT(up) > 0 THEN true ELSE false END "
+			+ "FROM UserPromotion up WHERE up.user = :user AND up.promotion.id = :promotionId")
+	boolean existsByUserAndPromotionId(@Param("user") User user, @Param("promotionId") Long promotionId);
 
 	@Query("SELECT up FROM UserPromotion up JOIN FETCH up.promotion WHERE up.user = :user")
 	List<UserPromotion> findByUserWithPromotion(@Param("user") User user);
 
+	long countByPromotion(Promotion promotion);
+
+	List<UserPromotion> findByPromotion(Promotion promotion);
+
 	Optional<UserPromotion> findByUserAndPromotion(User user, Promotion promotion);
-
-	Long countByPromotion(Promotion promotion);
-
-	Long countByUser(User user);
 }

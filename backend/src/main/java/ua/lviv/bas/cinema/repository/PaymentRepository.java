@@ -1,10 +1,13 @@
 package ua.lviv.bas.cinema.repository;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -32,9 +35,20 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
 
 	long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
 
-	@Query("SELECT p FROM Payment p " + "LEFT JOIN FETCH p.booking b " + "LEFT JOIN FETCH b.session s "
-			+ "LEFT JOIN FETCH s.movie m " + "LEFT JOIN FETCH b.user u " + "WHERE p.id = :id")
-	Optional<Payment> findByIdWithDetails(@Param("id") Long id);
+	@Query("SELECT p FROM Payment p JOIN FETCH p.booking b JOIN FETCH b.user JOIN FETCH b.session s JOIN FETCH s.movie WHERE p.id = :paymentId")
+	Optional<Payment> findByIdWithDetails(@Param("paymentId") Long paymentId);
+
+	@Query("SELECT p FROM Payment p WHERE " + "(:status IS NULL OR p.status = :status) AND "
+			+ "(:dateFrom IS NULL OR DATE(p.createdAt) >= :dateFrom) AND "
+			+ "(:dateTo IS NULL OR DATE(p.createdAt) <= :dateTo)")
+	Page<Payment> findWithFilters(@Param("status") PaymentStatus status, @Param("dateFrom") LocalDate dateFrom,
+			@Param("dateTo") LocalDate dateTo, Pageable pageable);
+
+	@Query("SELECT DATE(p.createdAt) as paymentDate, SUM(p.amount) as totalAmount " + "FROM Payment p "
+			+ "WHERE DATE(p.createdAt) BETWEEN :startDate AND :endDate " + "AND p.status = 'SUCCESS' "
+			+ "GROUP BY DATE(p.createdAt) " + "ORDER BY DATE(p.createdAt)")
+	List<Object[]> findDailyPaymentStatistics(@Param("startDate") LocalDate startDate,
+			@Param("endDate") LocalDate endDate);
 
 	@Query("SELECT COALESCE(SUM(p.amount), 0) FROM Payment p "
 			+ "WHERE p.status = 'SUCCESS' AND p.createdAt BETWEEN :start AND :end")

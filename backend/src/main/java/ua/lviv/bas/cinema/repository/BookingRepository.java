@@ -5,6 +5,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
@@ -34,6 +36,8 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 	List<Booking> findByExpiresAtBeforeAndStatus(LocalDateTime expiresAt, BookingStatus status);
 
 	Optional<Booking> findByIdAndUserId(Long id, Long userId);
+
+	Page<Booking> findByStatus(BookingStatus status, Pageable pageable);
 
 	boolean existsByUserIdAndSessionIdAndStatusIn(Long userId, Long sessionId, List<BookingStatus> statuses);
 

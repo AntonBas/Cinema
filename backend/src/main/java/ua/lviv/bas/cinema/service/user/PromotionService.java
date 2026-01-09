@@ -2,6 +2,7 @@ package ua.lviv.bas.cinema.service.user;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,6 +14,7 @@ import ua.lviv.bas.cinema.domain.Promotion;
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.UserPromotion;
 import ua.lviv.bas.cinema.dto.promotion.request.UserPromotionCreateRequest;
+import ua.lviv.bas.cinema.dto.promotion.response.PromotionResponse;
 import ua.lviv.bas.cinema.dto.promotion.response.UserPromotionResponse;
 import ua.lviv.bas.cinema.exception.domain.promotion.AlreadyClaimedException;
 import ua.lviv.bas.cinema.exception.domain.promotion.PromotionNotActiveException;
@@ -56,6 +58,23 @@ public class PromotionService {
 		UserPromotionResponse response = promotionMapper.toUserPromotionResponse(userPromotion);
 		response.setNewBalance(newBalance);
 		return response;
+	}
+
+	public List<PromotionResponse> getAvailablePromotions(User user) {
+		log.debug("Getting available promotions for user: {}", user.getEmail());
+		List<PromotionResponse> allPromotions = promotionService.getAllPromotions();
+
+		return allPromotions.stream().filter(promotion -> {
+			try {
+				boolean isActive = promotionService
+						.isPromotionActive(promotionService.findByIdOrThrow(promotion.getId()));
+				boolean isClaimed = userPromotionRepository.existsByUserAndPromotionId(user, promotion.getId());
+				return isActive && !isClaimed;
+			} catch (Exception e) {
+				log.debug("Promotion {} not available: {}", promotion.getId(), e.getMessage());
+				return false;
+			}
+		}).collect(Collectors.toList());
 	}
 
 	public List<UserPromotionResponse> getUserPromotions(User user) {
