@@ -26,14 +26,6 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
 	List<Ticket> findByUserIdAndStatusOrderByPurchaseTimeDesc(@Param("userId") Long userId,
 			@Param("status") TicketStatus status);
 
-	@Query("SELECT t FROM Ticket t WHERE t.payment.booking.id = :bookingId")
-	List<Ticket> findByPaymentBookingId(@Param("bookingId") Long bookingId);
-
-	@Query("SELECT t FROM Ticket t " + "LEFT JOIN FETCH t.booking b " + "LEFT JOIN FETCH b.session s "
-			+ "LEFT JOIN FETCH s.movie " + "LEFT JOIN FETCH s.hall " + "LEFT JOIN FETCH t.ticketType "
-			+ "WHERE b.user.id = :userId")
-	List<Ticket> findByUserIdWithDetails(@Param("userId") Long userId);
-
 	@Query("SELECT COUNT(t) > 0 FROM Ticket t WHERE t.ticketType.id = :ticketTypeId")
 	boolean existsByTicketTypeId(@Param("ticketTypeId") Long ticketTypeId);
 

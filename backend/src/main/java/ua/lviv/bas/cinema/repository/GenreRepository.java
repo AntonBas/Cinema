@@ -1,7 +1,5 @@
 package ua.lviv.bas.cinema.repository;
 
-import java.util.List;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -22,6 +20,4 @@ public interface GenreRepository extends JpaRepository<Genre, Long> {
 
 	@Query("SELECT g FROM Genre g WHERE " + "(:query IS NULL OR LOWER(g.name) LIKE LOWER(CONCAT('%', :query, '%')))")
 	Page<Genre> searchByName(@Param("query") String query, Pageable pageable);
-
-	List<Genre> findAllByOrderByNameAsc();
 }

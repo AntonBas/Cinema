@@ -1,7 +1,6 @@
 package ua.lviv.bas.cinema.repository;
 
 import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,44 +24,11 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
 	Optional<Booking> findByIdAndUserId(Long id, Long userId);
 
-	@Query("SELECT b FROM Booking b LEFT JOIN FETCH b.session s LEFT JOIN FETCH s.movie LEFT JOIN FETCH s.hall WHERE b.id = :id")
-	Optional<Booking> findByIdWithDetails(@Param("id") Long id);
-
-	Page<Booking> findByStatus(BookingStatus status, Pageable pageable);
-
 	List<Booking> findByExpiresAtBeforeAndStatus(LocalDateTime expiresAt, BookingStatus status);
-
-	long countBySessionIdAndStatusIn(Long sessionId, List<BookingStatus> statuses);
-
-	@Query("SELECT COUNT(b) > 0 FROM Booking b JOIN b.bookedSeats bs WHERE b.session.id = :sessionId AND bs.seat.id = :seatId AND b.status IN :statuses")
-	boolean existsBySessionIdAndSeatIdAndStatusIn(@Param("sessionId") Long sessionId, @Param("seatId") Long seatId,
-			@Param("statuses") List<BookingStatus> statuses);
-
-	@Query("SELECT COUNT(b) FROM Booking b WHERE b.session.id = :sessionId AND b.status = :status")
-	long countActiveBookingsForSession(@Param("sessionId") Long sessionId, @Param("status") BookingStatus status);
-
-	Page<Booking> findAll(Pageable pageable);
 
 	@Query("SELECT b FROM Booking b WHERE b.expiresAt BETWEEN :start AND :end AND b.status = :status")
 	List<Booking> findByExpiresAtBetweenAndStatus(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end,
 			@Param("status") BookingStatus status);
-
-	default boolean hasUserActiveBookingForSession(Long userId, Long sessionId) {
-		List<BookingStatus> activeStatuses = Arrays.asList(BookingStatus.PENDING, BookingStatus.CONFIRMED);
-		return !findUserActiveBookingsForSession(userId, sessionId, activeStatuses).isEmpty();
-	}
-
-	default List<Booking> findOldBookingsForCleanup(LocalDateTime cutoffDate) {
-		return findOldBookingsForCleanup(cutoffDate, Arrays.asList(BookingStatus.EXPIRED, BookingStatus.CANCELLED));
-	}
-
-	@Query("SELECT b FROM Booking b WHERE b.user.id = :userId AND b.session.id = :sessionId AND b.status IN :statuses")
-	List<Booking> findUserActiveBookingsForSession(@Param("userId") Long userId, @Param("sessionId") Long sessionId,
-			@Param("statuses") List<BookingStatus> statuses);
-
-	@Query("SELECT b FROM Booking b WHERE b.createdAt < :cutoffDate AND b.status IN :statuses")
-	List<Booking> findOldBookingsForCleanup(@Param("cutoffDate") LocalDateTime cutoffDate,
-			@Param("statuses") List<BookingStatus> statuses);
 
 	@Modifying
 	@Query("DELETE FROM Booking b WHERE b.status IN :statuses AND b.createdAt < :cutoffDate")

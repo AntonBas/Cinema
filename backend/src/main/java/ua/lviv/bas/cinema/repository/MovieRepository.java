@@ -19,10 +19,6 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
 
 	Optional<Movie> findBySlug(String slug);
 
-	boolean existsBySlug(String slug);
-
-	boolean existsBySlugAndIdNot(String slug, Long id);
-
 	@Query("SELECT COUNT(m) FROM Movie m JOIN m.actors a WHERE a.id = :personId")
 	long countByActorsId(@Param("personId") Long personId);
 

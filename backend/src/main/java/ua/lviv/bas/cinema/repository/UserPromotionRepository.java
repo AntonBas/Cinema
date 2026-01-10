@@ -1,7 +1,6 @@
 package ua.lviv.bas.cinema.repository;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -25,8 +24,4 @@ public interface UserPromotionRepository extends JpaRepository<UserPromotion, Lo
 	List<UserPromotion> findByUserWithPromotion(@Param("user") User user);
 
 	long countByPromotion(Promotion promotion);
-
-	List<UserPromotion> findByPromotion(Promotion promotion);
-
-	Optional<UserPromotion> findByUserAndPromotion(User user, Promotion promotion);
 }

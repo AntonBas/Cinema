@@ -1,7 +1,5 @@
 package ua.lviv.bas.cinema.repository;
 
-import java.util.List;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -17,8 +15,5 @@ public interface BonusTransactionRepository extends JpaRepository<BonusTransacti
 
 	Page<BonusTransaction> findByBonusCardUserIdOrderByCreatedAtDesc(Long userId, Pageable pageable);
 
-	List<BonusTransaction> findByBonusCard(BonusCard bonusCard);
-
 	Page<BonusTransaction> findByTypeOrderByCreatedAtDesc(@Param("type") BonusTransactionType type, Pageable pageable);
-
 }
