@@ -1,8 +1,10 @@
 package ua.lviv.bas.cinema.controller.api;
 
 import java.math.BigDecimal;
-import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -46,10 +48,9 @@ public class BookingController {
 			@ApiResponse(responseCode = "400", description = "Invalid request data or seat not available"),
 			@ApiResponse(responseCode = "404", description = "Session or seat not found"),
 			@ApiResponse(responseCode = "409", description = "Booking conflict or session not available") })
-	@PreAuthorize("hasRole('USER') or hasRole('PREMIUM_USER')")
+	@PreAuthorize("hasRole('USER')")
 	public ResponseEntity<BookingResponse> createBooking(@Valid @RequestBody BookingCreateRequest request,
 			@AuthenticationPrincipal User user) {
-
 		log.info("Creating new booking for user ID: {}, session ID: {}", user.getId(), request.getSessionId());
 		BookingResponse response = bookingService.createBooking(request, user);
 		return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -60,10 +61,9 @@ public class BookingController {
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Booking details retrieved successfully"),
 			@ApiResponse(responseCode = "404", description = "Booking not found"),
 			@ApiResponse(responseCode = "403", description = "Access denied to booking") })
-	@PreAuthorize("hasRole('USER') or hasRole('PREMIUM_USER')")
+	@PreAuthorize("hasRole('USER')")
 	public ResponseEntity<BookingResponse> getBooking(@PathVariable Long bookingId,
 			@AuthenticationPrincipal User user) {
-
 		log.info("Fetching booking ID: {} for user ID: {}", bookingId, user.getId());
 		BookingResponse response = bookingService.getBookingById(bookingId, user);
 		return ResponseEntity.ok(response);
@@ -73,12 +73,11 @@ public class BookingController {
 	@Operation(summary = "Get user bookings", description = "Retrieves a list of bookings for the authenticated user, optionally filtered by status")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Bookings retrieved successfully"),
 			@ApiResponse(responseCode = "400", description = "Invalid status parameter") })
-	@PreAuthorize("hasRole('USER') or hasRole('PREMIUM_USER')")
-	public ResponseEntity<List<BookingResponse>> getUserBookings(@RequestParam(required = false) BookingStatus status,
-			@AuthenticationPrincipal User user) {
-
+	@PreAuthorize("hasRole('USER')")
+	public ResponseEntity<Page<BookingResponse>> getUserBookings(@PageableDefault(size = 20) Pageable pageable,
+			@RequestParam(required = false) BookingStatus status, @AuthenticationPrincipal User user) {
 		log.info("Fetching bookings for user ID: {} with status filter: {}", user.getId(), status);
-		List<BookingResponse> bookings = bookingService.getUserBookings(user.getId(), status);
+		Page<BookingResponse> bookings = bookingService.getUserBookings(user.getId(), status, pageable);
 		return ResponseEntity.ok(bookings);
 	}
 
@@ -88,25 +87,22 @@ public class BookingController {
 			@ApiResponse(responseCode = "400", description = "Booking cannot be cancelled"),
 			@ApiResponse(responseCode = "404", description = "Booking not found"),
 			@ApiResponse(responseCode = "403", description = "Access denied to booking") })
-	@PreAuthorize("hasRole('USER') or hasRole('PREMIUM_USER')")
+	@PreAuthorize("hasRole('USER')")
 	public ResponseEntity<Void> cancelBooking(@PathVariable Long bookingId, @AuthenticationPrincipal User user) {
-
 		log.info("Cancelling booking ID: {} for user ID: {}", bookingId, user.getId());
 		bookingService.cancelBooking(bookingId, user);
 		return ResponseEntity.noContent().build();
 	}
 
-	@GetMapping("/{bookingId}/calculate-price")
-	@Operation(summary = "Calculate booking price", description = "Calculates the total price for a booking")
-	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Price calculated successfully"),
-			@ApiResponse(responseCode = "404", description = "Booking not found"),
-			@ApiResponse(responseCode = "403", description = "Access denied to booking") })
-	@PreAuthorize("hasRole('USER') or hasRole('PREMIUM_USER')")
-	public ResponseEntity<Double> calculateBookingPrice(@PathVariable Long bookingId,
+	@GetMapping("/available-bonus-points")
+	@Operation(summary = "Get available bonus points for booking", description = "Calculates available bonus points that can be used for a booking based on total price")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Available points calculated successfully") })
+	@PreAuthorize("hasRole('USER')")
+	public ResponseEntity<Integer> getAvailableBonusPoints(@RequestParam BigDecimal totalPrice,
 			@AuthenticationPrincipal User user) {
-
-		log.info("Calculating price for booking ID: {}", bookingId);
-		BigDecimal price = bookingService.calculateTotalPrice(bookingId, user);
-		return ResponseEntity.ok(price.doubleValue());
+		log.info("Calculating available bonus points for user ID: {} with total price: {}", user.getId(), totalPrice);
+		Integer availablePoints = bookingService.getAvailableBonusPointsForBooking(user.getId(), totalPrice);
+		return ResponseEntity.ok(availablePoints);
 	}
 }

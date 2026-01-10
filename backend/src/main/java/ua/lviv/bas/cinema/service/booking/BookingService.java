@@ -4,7 +4,6 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -78,22 +77,33 @@ public class BookingService {
 			bookedSeats.add(bookedSeat);
 		}
 
-		if (request.getBonusPointsToUse() > 0) {
-			bonusService.validatePointsRedemption(user.getId(), request.getBonusPointsToUse());
+		BigDecimal bonusDiscount = BigDecimal.ZERO;
+		Integer bonusPointsUsed = 0;
+
+		if (request.getBonusPointsToUse() != null && request.getBonusPointsToUse() > 0) {
+			bonusService.validateBonusPointsForBooking(user.getId(), request.getBonusPointsToUse(), totalPrice);
+			bonusDiscount = calculateBonusDiscount(request.getBonusPointsToUse());
+			bonusPointsUsed = request.getBonusPointsToUse();
 		}
 
-		BigDecimal bonusDiscount = calculateBonusDiscount(request.getBonusPointsToUse());
 		BigDecimal finalPrice = totalPrice.subtract(bonusDiscount).max(BigDecimal.ZERO);
 
 		LocalDateTime expiresAt = LocalDateTime.now().plusMinutes(20);
 		Booking booking = Booking.builder().user(user).session(session).status(BookingStatus.PENDING)
-				.totalPrice(totalPrice).bonusPointsUsed(request.getBonusPointsToUse())
-				.bonusDiscountAmount(bonusDiscount).finalPrice(finalPrice).expiresAt(expiresAt).bookedSeats(bookedSeats)
-				.build();
+				.totalPrice(totalPrice).bonusPointsUsed(bonusPointsUsed).bonusDiscountAmount(bonusDiscount)
+				.finalPrice(finalPrice).expiresAt(expiresAt).bookedSeats(bookedSeats).build();
 
 		bookedSeats.forEach(bs -> bs.setBooking(booking));
 		Booking savedBooking = bookingRepository.save(booking);
 		bookedSeatRepository.saveAll(bookedSeats);
+
+		if (bonusPointsUsed > 0) {
+			bonusService.spendBonusPointsForBooking(user.getId(), bonusPointsUsed, savedBooking,
+					"BOOKING_" + savedBooking.getId());
+		}
+
+		log.info("Created booking {} for user {} with {} bonus points used", savedBooking.getId(), user.getId(),
+				bonusPointsUsed);
 
 		return buildBookingResponse(savedBooking);
 	}
@@ -106,43 +116,14 @@ public class BookingService {
 	}
 
 	@Transactional(readOnly = true)
-	public BookingResponse getBookingById(Long bookingId) {
-		Booking booking = bookingRepository.findById(bookingId)
-				.orElseThrow(() -> new BookingNotFoundException(bookingId));
-		return buildBookingResponse(booking);
-	}
-
-	@Transactional(readOnly = true)
-	public List<BookingResponse> getAllBookings() {
-		return bookingRepository.findAll().stream().map(this::buildBookingResponse).collect(Collectors.toList());
-	}
-
-	@Transactional(readOnly = true)
-	public Page<BookingResponse> getAllBookings(Pageable pageable, BookingStatus status) {
+	public Page<BookingResponse> getUserBookings(Long userId, BookingStatus status, Pageable pageable) {
 		Page<Booking> bookings;
 		if (status != null) {
-			bookings = bookingRepository.findByStatus(status, pageable);
+			bookings = bookingRepository.findByUserIdAndStatusOrderByCreatedAtDesc(userId, status, pageable);
 		} else {
-			bookings = bookingRepository.findAll(pageable);
+			bookings = bookingRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable);
 		}
 		return bookings.map(this::buildBookingResponse);
-	}
-
-	@Transactional(readOnly = true)
-	public List<BookingResponse> getSessionBookings(Long sessionId) {
-		return bookingRepository.findBySessionId(sessionId).stream().map(this::buildBookingResponse)
-				.collect(Collectors.toList());
-	}
-
-	@Transactional(readOnly = true)
-	public List<BookingResponse> getUserBookings(Long userId, BookingStatus status) {
-		List<Booking> bookings;
-		if (status != null) {
-			bookings = bookingRepository.findByUserIdAndStatusOrderByCreatedAtDesc(userId, status);
-		} else {
-			bookings = bookingRepository.findByUserIdOrderByCreatedAtDesc(userId);
-		}
-		return bookings.stream().map(this::buildBookingResponse).collect(Collectors.toList());
 	}
 
 	public void cancelBooking(Long bookingId, User user) {
@@ -155,20 +136,19 @@ public class BookingService {
 
 		booking.setStatus(BookingStatus.CANCELLED);
 		booking.getBookedSeats().forEach(bs -> bs.setStatus(BookedSeatStatus.CANCELLED));
-		bookingRepository.save(booking);
-	}
 
-	public void cancelBooking(Long bookingId) {
-		Booking booking = bookingRepository.findById(bookingId)
-				.orElseThrow(() -> new BookingNotFoundException(bookingId));
-
-		if (!canBookingBeCancelled(booking)) {
-			throw BookingValidationException.cannotCancel();
+		if (booking.getBonusPointsUsed() != null && booking.getBonusPointsUsed() > 0) {
+			bonusService.refundBonusPointsForCancellation(booking);
 		}
 
-		booking.setStatus(BookingStatus.CANCELLED);
-		booking.getBookedSeats().forEach(bs -> bs.setStatus(BookedSeatStatus.CANCELLED));
 		bookingRepository.save(booking);
+		log.info("Cancelled booking {} for user {}. Bonus points refunded: {}", bookingId, user.getId(),
+				booking.getBonusPointsUsed());
+	}
+
+	@Transactional(readOnly = true)
+	public Integer getAvailableBonusPointsForBooking(Long userId, BigDecimal bookingTotalPrice) {
+		return bonusService.getAvailablePointsForRedemption(userId, bookingTotalPrice);
 	}
 
 	public void confirmBooking(Long bookingId) {
@@ -193,16 +173,6 @@ public class BookingService {
 			booking.getBookedSeats().forEach(bs -> bs.setStatus(BookedSeatStatus.EXPIRED));
 			bookingRepository.save(booking);
 		}
-	}
-
-	public BigDecimal calculateTotalPrice(Long bookingId, User user) {
-		Booking booking = bookingRepository.findByIdAndUserId(bookingId, user.getId())
-				.orElseThrow(() -> new BookingNotFoundException(bookingId));
-		return booking.getTotalPrice();
-	}
-
-	public String generateBookingNumber(Booking booking) {
-		return String.format("BK-%d-%05d", booking.getCreatedAt().getYear(), booking.getId());
 	}
 
 	private void validateSessionForBooking(Session session) {
@@ -234,5 +204,9 @@ public class BookingService {
 			return BigDecimal.ZERO;
 		}
 		return new BigDecimal("1.00").multiply(BigDecimal.valueOf(bonusPoints));
+	}
+
+	private String generateBookingNumber(Booking booking) {
+		return String.format("BK-%d-%05d", booking.getCreatedAt().getYear(), booking.getId());
 	}
 }
