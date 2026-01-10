@@ -18,17 +18,19 @@ public interface RefundRepository extends JpaRepository<Refund, Long> {
 
 	List<Refund> findByPaymentId(Long paymentId);
 
-	Optional<Refund> findByTicketId(Long ticketId);
+	@Query("SELECT r FROM Refund r JOIN r.items ri WHERE ri.ticket.id = :ticketId")
+	Optional<Refund> findByTicketId(@Param("ticketId") Long ticketId);
 
 	List<Refund> findByStatus(RefundStatus status);
 
 	List<Refund> findByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
 
-	@Query("SELECT r FROM Refund r " + "JOIN r.ticket t " + "WHERE t.user.id = :userId " + "ORDER BY r.createdAt DESC")
+	@Query("SELECT DISTINCT r FROM Refund r " + "JOIN r.items ri " + "JOIN ri.ticket t " + "WHERE t.user.id = :userId "
+			+ "ORDER BY r.createdAt DESC")
 	List<Refund> findByUserId(@Param("userId") Long userId);
 
 	long countByStatus(RefundStatus status);
 
-	@Query("SELECT COALESCE(SUM(r.amount), 0) FROM Refund r WHERE r.status = 'COMPLETED' AND r.createdAt BETWEEN :start AND :end")
+	@Query("SELECT COALESCE(SUM(r.totalAmount), 0) FROM Refund r WHERE r.status = 'COMPLETED' AND r.createdAt BETWEEN :start AND :end")
 	BigDecimal sumCompletedAmountBetween(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 }

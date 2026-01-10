@@ -16,8 +16,8 @@ spring:
             ddl-auto: validate
         properties:
             hibernate:
-                '[format_sql]': ${SHOW_SQL:true}
-                '[enable_lazy_load_no_trans]': true
+                "[format_sql]": ${SHOW_SQL:true}
+                "[enable_lazy_load_no_trans]": true
                 dialect: org.hibernate.dialect.PostgreSQLDialect
             jpa:
                 query:
@@ -78,3 +78,14 @@ app:
             size: 200
             margin: 1
             format: PNG
+
+payment:
+    liqpay:
+        public_key: ${LIQPAY_PUBLIC_KEY}
+        private_key: ${LIQPAY_PRIVATE_KEY}
+        sandbox_mode: ${LIQPAY_SANDBOX_MODE:true}
+        currency: ${LIQPAY_CURRENCY:UAH}
+        language: ${LIQPAY_LANGUAGE:uk}
+        server_url: ${PAYMENT_LIQPAY_SERVER_URL:https://www.liqpay.ua/api/3/checkout}
+        callback_url: ${PAYMENT_LIQPAY_CALLBACK_URL:http://localhost:8080/api/payments/callback}
+        result_url: ${PAYMENT_LIQPAY_RESULT_URL:http://localhost:3000/payment/result}

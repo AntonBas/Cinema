@@ -37,4 +37,9 @@ public interface SeatRepository extends JpaRepository<Seat, Long> {
 
 	@Query("SELECT s FROM Seat s WHERE s.hall.id = :hallId AND s.id IN :seatIds")
 	List<Seat> findByHallIdAndIdIn(@Param("hallId") Long hallId, @Param("seatIds") List<Long> seatIds);
+
+	long countByHallIdAndActiveTrue(Long hallId);
+
+	@Query("SELECT s FROM Seat s WHERE s.hall.id = :hallId AND s.row = :row ORDER BY s.number")
+	List<Seat> findByHallIdAndRow(@Param("hallId") Long hallId, @Param("row") Integer row);
 }

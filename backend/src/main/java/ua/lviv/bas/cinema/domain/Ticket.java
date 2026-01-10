@@ -16,7 +16,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
@@ -102,6 +101,7 @@ public class Ticket {
 	@Column(name = "created_at", updatable = false)
 	private LocalDateTime createdAt;
 
-	@OneToOne(mappedBy = "ticket", fetch = FetchType.LAZY)
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "refund_id")
 	private Refund refund;
 }

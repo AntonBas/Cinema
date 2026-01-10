@@ -34,7 +34,9 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
 	long countBySessionIdAndStatusIn(Long sessionId, List<BookingStatus> statuses);
 
-	boolean existsBySessionIdAndSeatIdAndStatusIn(Long sessionId, Long seatId, List<BookingStatus> statuses);
+	@Query("SELECT COUNT(b) > 0 FROM Booking b JOIN b.bookedSeats bs WHERE b.session.id = :sessionId AND bs.seat.id = :seatId AND b.status IN :statuses")
+	boolean existsBySessionIdAndSeatIdAndStatusIn(@Param("sessionId") Long sessionId, @Param("seatId") Long seatId,
+			@Param("statuses") List<BookingStatus> statuses);
 
 	@Query("SELECT COUNT(b) FROM Booking b WHERE b.session.id = :sessionId AND b.status = :status")
 	long countActiveBookingsForSession(@Param("sessionId") Long sessionId, @Param("status") BookingStatus status);
@@ -44,9 +46,6 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 	@Query("SELECT b FROM Booking b WHERE b.expiresAt BETWEEN :start AND :end AND b.status = :status")
 	List<Booking> findByExpiresAtBetweenAndStatus(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end,
 			@Param("status") BookingStatus status);
-
-	@Query("SELECT b FROM Booking b WHERE b.bookingNumber = :bookingNumber")
-	Optional<Booking> findByBookingNumber(@Param("bookingNumber") String bookingNumber);
 
 	default boolean hasUserActiveBookingForSession(Long userId, Long sessionId) {
 		List<BookingStatus> activeStatuses = Arrays.asList(BookingStatus.PENDING, BookingStatus.CONFIRMED);

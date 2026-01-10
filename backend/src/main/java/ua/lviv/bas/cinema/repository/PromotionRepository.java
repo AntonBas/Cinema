@@ -21,7 +21,7 @@ public interface PromotionRepository extends JpaRepository<Promotion, Long> {
 
 	boolean existsByTitle(String title);
 
-	List<Promotion> findUpcomingPromotions(@Param("currentTime") LocalDateTime currentTime);
+	List<Promotion> findByStartDateAfter(@Param("currentTime") LocalDateTime currentTime);
 
 	@Query("SELECT p FROM Promotion p WHERE p.endDate < :currentTime")
 	List<Promotion> findExpiredPromotions(@Param("currentTime") LocalDateTime currentTime);

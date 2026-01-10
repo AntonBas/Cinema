@@ -31,8 +31,6 @@ public interface TicketTypeRepository extends JpaRepository<TicketType, Long> {
 
 	List<TicketType> findByMinAgeIsNullAndMaxAgeIsNull();
 
-	List<TicketType> findByMinAgeLessThanEqualAndMaxAgeGreaterThanEqual(Integer age);
-
 	@Query("SELECT tt FROM TicketType tt WHERE " + "(:age IS NULL AND tt.minAge IS NULL AND tt.maxAge IS NULL) OR "
 			+ "(:age >= tt.minAge OR tt.minAge IS NULL) AND " + "(:age <= tt.maxAge OR tt.maxAge IS NULL)")
 	List<TicketType> findAvailableForAge(@Param("age") Integer age);
