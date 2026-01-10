@@ -1,6 +1,5 @@
 package ua.lviv.bas.cinema.service.booking;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -20,8 +19,8 @@ import ua.lviv.bas.cinema.domain.Payment;
 import ua.lviv.bas.cinema.domain.Seat;
 import ua.lviv.bas.cinema.domain.Session;
 import ua.lviv.bas.cinema.domain.Ticket;
-import ua.lviv.bas.cinema.domain.TicketType;
 import ua.lviv.bas.cinema.domain.User;
+import ua.lviv.bas.cinema.domain.enums.CinemaSessionStatus;
 import ua.lviv.bas.cinema.domain.enums.TicketStatus;
 import ua.lviv.bas.cinema.dto.ticket.response.TicketResponse;
 import ua.lviv.bas.cinema.exception.domain.booking.BookingNotFoundException;
@@ -42,7 +41,6 @@ public class TicketService {
 	private final TicketMapper ticketMapper;
 	private final EmailService emailService;
 	private final QRCodeService qrCodeService;
-	private final BookingService bookingService;
 	private final BookingRepository bookingRepository;
 
 	@Value("${app.ticket.qr.size:200}")
@@ -57,11 +55,9 @@ public class TicketService {
 		List<Ticket> tickets = new ArrayList<>();
 
 		for (BookedSeat bookedSeat : booking.getBookedSeats()) {
-			BigDecimal ticketPrice = calculateTicketPrice(bookedSeat);
-
 			Ticket ticket = Ticket.builder().booking(booking).user(booking.getUser())
-					.ticketType(bookedSeat.getTicketType()).payment(payment).originalPrice(ticketPrice)
-					.finalPrice(ticketPrice).uniqueCode(generateTicketCode()).status(TicketStatus.ACTIVE)
+					.ticketType(bookedSeat.getTicketType()).payment(payment).originalPrice(bookedSeat.getSeatPrice())
+					.finalPrice(bookedSeat.getSeatPrice()).uniqueCode(generateTicketCode()).status(TicketStatus.ACTIVE)
 					.purchaseTime(LocalDateTime.now()).build();
 
 			tickets.add(ticket);
@@ -108,7 +104,7 @@ public class TicketService {
 		bookingRepository.findByIdAndUserId(bookingId, user.getId())
 				.orElseThrow(() -> new BookingNotFoundException(bookingId));
 
-		List<Ticket> tickets = ticketRepository.findByPaymentBookingId(bookingId);
+		List<Ticket> tickets = ticketRepository.findByBookingId(bookingId);
 
 		return tickets.stream().map(ticket -> {
 			TicketResponse response = ticketMapper.toTicketResponse(ticket);
@@ -129,11 +125,12 @@ public class TicketService {
 	}
 
 	public byte[] generateTicketQRCode(String ticketCode) {
-		return qrCodeService.generateQRCode(ticketBaseUrl + "/api/tickets/validate/" + ticketCode, qrCodeSize);
+		String qrContent = ticketBaseUrl + "/api/tickets/validate/" + ticketCode;
+		return qrCodeService.generateQRCode(qrContent, qrCodeSize);
 	}
 
 	public void sendTicketsToUser(Booking booking) {
-		List<Ticket> tickets = ticketRepository.findByPaymentBookingId(booking.getId());
+		List<Ticket> tickets = ticketRepository.findByBookingId(booking.getId());
 
 		if (tickets.isEmpty()) {
 			log.warn("No tickets found for booking {}", booking.getId());
@@ -141,7 +138,7 @@ public class TicketService {
 		}
 
 		User user = booking.getUser();
-		String bookingNumber = bookingService.generateBookingNumber(booking);
+		String bookingNumber = generateBookingNumber(booking);
 		String movieTitle = booking.getSession().getMovie().getTitle();
 		String sessionTime = booking.getSession().getStartTime().format(DATE_FORMATTER);
 		String hallName = booking.getSession().getHall().getName();
@@ -152,11 +149,9 @@ public class TicketService {
 					bookedSeat.getTicketType().getDisplayName());
 		}).collect(Collectors.joining(", "));
 
-		BigDecimal totalAmount = booking.getFinalPrice();
-
 		try {
 			emailService.sendTicketsEmail(user.getEmail(), bookingNumber, movieTitle, sessionTime, hallName,
-					totalAmount, "Bank Card", seatInfo);
+					booking.getFinalPrice(), "Credit Card", seatInfo);
 
 			log.info("Tickets email sent to {} for booking {}", user.getEmail(), booking.getId());
 		} catch (Exception e) {
@@ -165,7 +160,7 @@ public class TicketService {
 	}
 
 	public void cancelTicketsForBooking(Booking booking) {
-		List<Ticket> tickets = ticketRepository.findByPaymentBookingId(booking.getId());
+		List<Ticket> tickets = ticketRepository.findByBookingId(booking.getId());
 
 		if (!tickets.isEmpty()) {
 			boolean anyChanged = false;
@@ -218,18 +213,6 @@ public class TicketService {
 		return ticketRepository.findByUniqueCode(ticketCode).map(Ticket::getStatus).orElse(null);
 	}
 
-	private BigDecimal calculateTicketPrice(BookedSeat bookedSeat) {
-		Session session = bookedSeat.getSession();
-		Seat seat = bookedSeat.getSeat();
-		TicketType ticketType = bookedSeat.getTicketType();
-
-		BigDecimal basePrice = session.getBasePrice();
-		BigDecimal seatMultiplier = seat.getSeatType().getPriceMultiplier();
-		BigDecimal ticketMultiplier = ticketType.getPriceMultiplier();
-
-		return basePrice.multiply(seatMultiplier).multiply(ticketMultiplier);
-	}
-
 	private String generateTicketCode() {
 		String uuid = UUID.randomUUID().toString().replace("-", "").substring(0, 12).toUpperCase();
 		return "TKT-" + uuid;
@@ -261,7 +244,7 @@ public class TicketService {
 			throw new TicketValidationException("Session ended more than 2 hours ago");
 		}
 
-		if (session.getStatus() == ua.lviv.bas.cinema.domain.enums.CinemaSessionStatus.CANCELLED) {
+		if (session.getStatus() == CinemaSessionStatus.CANCELLED) {
 			throw new TicketValidationException("Session has been cancelled");
 		}
 	}
@@ -273,5 +256,9 @@ public class TicketService {
 		} catch (TicketValidationException e) {
 			return false;
 		}
+	}
+
+	private String generateBookingNumber(Booking booking) {
+		return String.format("BK-%d-%05d", booking.getCreatedAt().getYear(), booking.getId());
 	}
 }
