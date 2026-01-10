@@ -54,7 +54,7 @@ public class BonusAdminService {
 
 		bonusMapper.updateBonusRulesFromRequest(request, rules);
 
-		if (type == BonusTransactionType.PURCHASE_WRITE_OFF) {
+		if (type == BonusTransactionType.BOOKING_SPEND) {
 			validateMinMaxPoints(rules.getMinPointsPerTransaction(), rules.getMaxPointsPerTransaction());
 		}
 
@@ -109,36 +109,50 @@ public class BonusAdminService {
 			break;
 
 		case BIRTHDAY_BONUS:
-			rules.setPoints(300);
+			rules.setPoints(200);
 			rules.setMoneyRatio(null);
-			rules.setMinPointsPerTransaction(null);
-			rules.setMaxPointsPerTransaction(null);
-			break;
-
-		case PURCHASE_BONUS:
-			rules.setPoints(null);
-			rules.setMoneyRatio(new BigDecimal("0.05"));
-			rules.setMinPointsPerTransaction(null);
-			rules.setMaxPointsPerTransaction(null);
-			break;
-
-		case PURCHASE_WRITE_OFF:
-			rules.setPoints(null);
-			rules.setMoneyRatio(null);
-			rules.setMinPointsPerTransaction(20);
-			rules.setMaxPointsPerTransaction(500);
-			validateMinMaxPoints(20, 500);
-			break;
-
-		case REFUND_DEDUCTION:
-			rules.setPoints(null);
-			rules.setMoneyRatio(new BigDecimal("0.05"));
 			rules.setMinPointsPerTransaction(null);
 			rules.setMaxPointsPerTransaction(null);
 			break;
 
 		case PROMOTION_BONUS:
 			rules.setPoints(100);
+			rules.setMoneyRatio(null);
+			rules.setMinPointsPerTransaction(null);
+			rules.setMaxPointsPerTransaction(null);
+			break;
+
+		case BOOKING_SPEND:
+			rules.setPoints(null);
+			rules.setMoneyRatio(null);
+			rules.setMinPointsPerTransaction(100);
+			rules.setMaxPointsPerTransaction(1000);
+			validateMinMaxPoints(100, 1000);
+			break;
+
+		case PAYMENT_ACCRUAL:
+			rules.setPoints(null);
+			rules.setMoneyRatio(new BigDecimal("0.05")); // 5% від суми
+			rules.setMinPointsPerTransaction(10);
+			rules.setMaxPointsPerTransaction(null);
+			break;
+
+		case REFUND_RETURN:
+			rules.setPoints(null);
+			rules.setMoneyRatio(null);
+			rules.setMinPointsPerTransaction(null);
+			rules.setMaxPointsPerTransaction(null);
+			break;
+
+		case BOOKING_CANCEL:
+			rules.setPoints(null);
+			rules.setMoneyRatio(null);
+			rules.setMinPointsPerTransaction(null);
+			rules.setMaxPointsPerTransaction(null);
+			break;
+
+		case MANUAL_CORRECTION:
+			rules.setPoints(null);
 			rules.setMoneyRatio(null);
 			rules.setMinPointsPerTransaction(null);
 			rules.setMaxPointsPerTransaction(null);

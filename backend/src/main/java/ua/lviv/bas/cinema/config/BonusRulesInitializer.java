@@ -25,11 +25,10 @@ public class BonusRulesInitializer implements ApplicationRunner {
 	public void run(ApplicationArguments args) {
 		initializeWelcomeBonusRule();
 		initializeBirthdayBonusRule();
-		initializePurchaseBonusRule();
-		initializeWriteOffRule();
-		initializeRefundDeductionRule();
 		initializePromotionBonusRule();
-		initializeExpirationDeductionRule();
+		initializeBookingSpendRule();
+		initializePaymentAccrualRule();
+		initializeRefundReturnRule();
 
 		log.info("Bonus rules initialization completed");
 	}
@@ -52,34 +51,6 @@ public class BonusRulesInitializer implements ApplicationRunner {
 		}
 	}
 
-	private void initializePurchaseBonusRule() {
-		if (!bonusRulesRepository.findByBonusType(BonusTransactionType.PURCHASE_BONUS).isPresent()) {
-			BonusRules rule = BonusRules.builder().bonusType(BonusTransactionType.PURCHASE_BONUS)
-					.moneyRatio(new BigDecimal("0.05")).active(true).build();
-			bonusRulesRepository.save(rule);
-			log.info("Created default PURCHASE_BONUS rule: {} money ratio", rule.getMoneyRatio());
-		}
-	}
-
-	private void initializeWriteOffRule() {
-		if (!bonusRulesRepository.findByBonusType(BonusTransactionType.PURCHASE_WRITE_OFF).isPresent()) {
-			BonusRules rule = BonusRules.builder().bonusType(BonusTransactionType.PURCHASE_WRITE_OFF)
-					.minPointsPerTransaction(200).maxPointsPerTransaction(500).active(true).build();
-			bonusRulesRepository.save(rule);
-			log.info("Created default PURCHASE_WRITE_OFF rule: min={}, max={}", rule.getMinPointsPerTransaction(),
-					rule.getMaxPointsPerTransaction());
-		}
-	}
-
-	private void initializeRefundDeductionRule() {
-		if (!bonusRulesRepository.findByBonusType(BonusTransactionType.REFUND_DEDUCTION).isPresent()) {
-			BonusRules rule = BonusRules.builder().bonusType(BonusTransactionType.REFUND_DEDUCTION)
-					.moneyRatio(new BigDecimal("0.05")).active(true).build();
-			bonusRulesRepository.save(rule);
-			log.info("Created default REFUND_DEDUCTION rule: {} money ratio", rule.getMoneyRatio());
-		}
-	}
-
 	private void initializePromotionBonusRule() {
 		if (!bonusRulesRepository.findByBonusType(BonusTransactionType.PROMOTION_BONUS).isPresent()) {
 			BonusRules rule = BonusRules.builder().bonusType(BonusTransactionType.PROMOTION_BONUS).points(100)
@@ -89,12 +60,30 @@ public class BonusRulesInitializer implements ApplicationRunner {
 		}
 	}
 
-	private void initializeExpirationDeductionRule() {
-		if (!bonusRulesRepository.findByBonusType(BonusTransactionType.EXPIRATION_DEDUCTION).isPresent()) {
-			BonusRules rule = BonusRules.builder().bonusType(BonusTransactionType.EXPIRATION_DEDUCTION)
-					.moneyRatio(new BigDecimal("0.02")).active(true).build();
+	private void initializeBookingSpendRule() {
+		if (!bonusRulesRepository.findByBonusType(BonusTransactionType.BOOKING_SPEND).isPresent()) {
+			BonusRules rule = BonusRules.builder().bonusType(BonusTransactionType.BOOKING_SPEND)
+					.minPointsPerTransaction(100).maxPointsPerTransaction(1000).active(true).build();
 			bonusRulesRepository.save(rule);
-			log.info("Created default EXPIRATION_DEDUCTION rule: {} money ratio", rule.getMoneyRatio());
+			log.info("Created default BOOKING_SPEND rule: min={}, max={}", rule.getMinPointsPerTransaction(),
+					rule.getMaxPointsPerTransaction());
+		}
+	}
+
+	private void initializePaymentAccrualRule() {
+		if (!bonusRulesRepository.findByBonusType(BonusTransactionType.PAYMENT_ACCRUAL).isPresent()) {
+			BonusRules rule = BonusRules.builder().bonusType(BonusTransactionType.PAYMENT_ACCRUAL)
+					.moneyRatio(new BigDecimal("0.05")).minPointsPerTransaction(10).active(true).build();
+			bonusRulesRepository.save(rule);
+			log.info("Created default PAYMENT_ACCRUAL rule: {} money ratio", rule.getMoneyRatio());
+		}
+	}
+
+	private void initializeRefundReturnRule() {
+		if (!bonusRulesRepository.findByBonusType(BonusTransactionType.REFUND_RETURN).isPresent()) {
+			BonusRules rule = BonusRules.builder().bonusType(BonusTransactionType.REFUND_RETURN).active(true).build();
+			bonusRulesRepository.save(rule);
+			log.info("Created default REFUND_RETURN rule");
 		}
 	}
 }

@@ -33,7 +33,7 @@ import ua.lviv.bas.cinema.domain.enums.BonusTransactionType;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString(exclude = { "bonusCard", "payment", "refund" })
+@ToString(exclude = { "bonusCard", "booking", "refund" })
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Table(name = "bonus_transactions", indexes = { @Index(name = "idx_bonus_trans_card", columnList = "bonus_card_id"),
 		@Index(name = "idx_bonus_trans_card_created", columnList = "bonus_card_id, created_at"),
@@ -54,8 +54,8 @@ public class BonusTransaction {
 	private BonusCard bonusCard;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "payment_id")
-	private Payment payment;
+	@JoinColumn(name = "booking_id")
+	private Booking booking;
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "refund_id")
