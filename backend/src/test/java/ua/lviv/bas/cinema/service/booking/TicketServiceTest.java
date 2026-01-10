@@ -42,7 +42,7 @@ import ua.lviv.bas.cinema.domain.enums.SeatType;
 import ua.lviv.bas.cinema.domain.enums.TicketStatus;
 import ua.lviv.bas.cinema.dto.ticket.response.TicketResponse;
 import ua.lviv.bas.cinema.exception.domain.booking.BookingNotFoundException;
-import ua.lviv.bas.cinema.exception.domain.booking.TicketValidationException;
+import ua.lviv.bas.cinema.exception.domain.ticket.TicketValidationException;
 import ua.lviv.bas.cinema.mapper.TicketMapper;
 import ua.lviv.bas.cinema.repository.BookingRepository;
 import ua.lviv.bas.cinema.repository.TicketRepository;

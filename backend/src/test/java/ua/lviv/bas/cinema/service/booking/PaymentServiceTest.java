@@ -41,7 +41,7 @@ import ua.lviv.bas.cinema.dto.payment.request.PaymentCreateRequest;
 import ua.lviv.bas.cinema.dto.payment.response.PaymentLiqPayDataResponse;
 import ua.lviv.bas.cinema.dto.payment.response.PaymentResponse;
 import ua.lviv.bas.cinema.exception.domain.booking.BookingNotFoundException;
-import ua.lviv.bas.cinema.exception.domain.booking.PaymentProcessingException;
+import ua.lviv.bas.cinema.exception.domain.payment.PaymentProcessingException;
 import ua.lviv.bas.cinema.repository.BookingRepository;
 import ua.lviv.bas.cinema.repository.PaymentRepository;
 import ua.lviv.bas.cinema.service.notification.EmailService;

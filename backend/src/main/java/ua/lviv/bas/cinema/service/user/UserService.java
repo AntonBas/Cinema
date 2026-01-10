@@ -20,6 +20,7 @@ import ua.lviv.bas.cinema.dto.user.response.UserResponse;
 import ua.lviv.bas.cinema.exception.domain.auth.EmailAlreadyExistsException;
 import ua.lviv.bas.cinema.exception.domain.auth.InvalidCurrentPasswordException;
 import ua.lviv.bas.cinema.exception.domain.auth.PasswordMismatchException;
+import ua.lviv.bas.cinema.exception.domain.auth.PasswordValidationException;
 import ua.lviv.bas.cinema.exception.domain.auth.SameEmailException;
 import ua.lviv.bas.cinema.exception.domain.auth.SamePasswordException;
 import ua.lviv.bas.cinema.exception.domain.user.UserNotFoundException;
@@ -116,7 +117,7 @@ public class UserService {
 		}
 
 		if (request.getNewPassword().length() < 8) {
-			throw new IllegalArgumentException("Password must be at least 8 characters long");
+			throw PasswordValidationException.tooShort(8);
 		}
 
 		user.setPassword(passwordEncoder.encode(request.getNewPassword()));

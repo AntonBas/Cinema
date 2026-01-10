@@ -11,6 +11,7 @@ import ua.lviv.bas.cinema.domain.EmailToken;
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.enums.TokenType;
 import ua.lviv.bas.cinema.exception.domain.auth.EmailAlreadyExistsException;
+import ua.lviv.bas.cinema.exception.domain.auth.EmailValidationException;
 import ua.lviv.bas.cinema.exception.domain.auth.InvalidTokenException;
 import ua.lviv.bas.cinema.exception.domain.auth.TokenAlreadyConfirmedException;
 import ua.lviv.bas.cinema.exception.domain.auth.TokenExpiredException;
@@ -73,7 +74,7 @@ public class EmailTokenService {
 		String newEmail = emailToken.getNewEmail();
 
 		if (oldEmail.equalsIgnoreCase(newEmail)) {
-			throw new IllegalArgumentException("New email cannot be the same as current email");
+			throw EmailValidationException.sameEmail();
 		}
 
 		if (userRepository.findByEmail(newEmail).isPresent()) {

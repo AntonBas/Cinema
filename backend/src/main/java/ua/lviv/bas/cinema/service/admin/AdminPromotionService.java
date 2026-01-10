@@ -13,6 +13,7 @@ import ua.lviv.bas.cinema.dto.promotion.request.PromotionCreateRequest;
 import ua.lviv.bas.cinema.dto.promotion.request.PromotionUpdateRequest;
 import ua.lviv.bas.cinema.dto.promotion.response.PromotionResponse;
 import ua.lviv.bas.cinema.exception.domain.promotion.PromotionAlreadyExistsException;
+import ua.lviv.bas.cinema.exception.domain.promotion.PromotionDatesInvalidException;
 import ua.lviv.bas.cinema.exception.domain.promotion.PromotionHasRedemptionsException;
 import ua.lviv.bas.cinema.exception.domain.promotion.PromotionNotFoundException;
 import ua.lviv.bas.cinema.mapper.PromotionMapper;
@@ -33,6 +34,11 @@ public class AdminPromotionService {
 
 		if (promotionRepository.existsByTitle(request.getTitle())) {
 			throw PromotionAlreadyExistsException.forTitle(request.getTitle());
+		}
+
+		if (request.getStartDate() != null && request.getEndDate() != null
+				&& request.getEndDate().isBefore(request.getStartDate())) {
+			throw new PromotionDatesInvalidException(request.getStartDate(), request.getEndDate()); // ✅ НОВИЙ КАСТОМНИЙ
 		}
 
 		Promotion promotion = promotionMapper.toEntity(request);

@@ -16,6 +16,8 @@ import ua.lviv.bas.cinema.domain.TicketType;
 import ua.lviv.bas.cinema.domain.enums.BookedSeatStatus;
 import ua.lviv.bas.cinema.dto.cinemaHall.response.SeatAvailabilityResponse;
 import ua.lviv.bas.cinema.exception.domain.booking.SeatNotAvailableException;
+import ua.lviv.bas.cinema.exception.domain.cinema.SeatNotFoundException;
+import ua.lviv.bas.cinema.exception.domain.cinema.SessionNotFoundException;
 import ua.lviv.bas.cinema.repository.BookedSeatRepository;
 import ua.lviv.bas.cinema.repository.SeatRepository;
 import ua.lviv.bas.cinema.repository.SessionRepository;
@@ -33,7 +35,7 @@ public class SeatAvailabilityService {
 
 	public SeatAvailabilityResponse getSeatAvailability(Long sessionId) {
 		Session session = sessionRepository.findById(sessionId)
-				.orElseThrow(() -> new IllegalArgumentException("Session not found: " + sessionId));
+				.orElseThrow(() -> new SessionNotFoundException(sessionId));
 
 		List<Seat> allSeats = seatRepository.findByHallId(session.getHall().getId());
 		List<BookedSeat> bookedSeats = bookedSeatRepository.findBySessionIdAndStatusIn(sessionId,
@@ -67,8 +69,7 @@ public class SeatAvailabilityService {
 			throw SeatNotAvailableException.forSeatAndSession(seatId, sessionId);
 		}
 
-		Seat seat = seatRepository.findById(seatId)
-				.orElseThrow(() -> new IllegalArgumentException("Seat not found: " + seatId));
+		Seat seat = seatRepository.findById(seatId).orElseThrow(() -> new SeatNotFoundException(seatId));
 
 		if (!seat.isActive()) {
 			throw SeatNotAvailableException.seatInactive(seatId);
@@ -89,7 +90,7 @@ public class SeatAvailabilityService {
 
 	public int getAvailableSeatsCount(Long sessionId) {
 		Session session = sessionRepository.findById(sessionId)
-				.orElseThrow(() -> new IllegalArgumentException("Session not found: " + sessionId));
+				.orElseThrow(() -> new SessionNotFoundException(sessionId));
 
 		Long hallId = session.getHall().getId();
 		long totalSeats = seatRepository.countByHallId(hallId);

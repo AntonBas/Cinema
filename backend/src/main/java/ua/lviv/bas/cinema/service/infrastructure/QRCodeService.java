@@ -17,6 +17,7 @@ import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 
 import lombok.extern.slf4j.Slf4j;
+import ua.lviv.bas.cinema.exception.domain.infrastructure.QRCodeGenerationException;
 
 @Slf4j
 @Service
@@ -51,7 +52,7 @@ public class QRCodeService {
 
 		} catch (Exception e) {
 			log.error("Failed to generate QR code: {}", e.getMessage());
-			throw new RuntimeException("Failed to generate QR code", e);
+			throw new QRCodeGenerationException("Failed to generate QR code", e);
 		}
 	}
 
@@ -75,7 +76,7 @@ public class QRCodeService {
 
 		} catch (Exception e) {
 			log.error("Failed to generate QR code with custom size: {}", e.getMessage());
-			throw new RuntimeException("Failed to generate QR code", e);
+			throw new QRCodeGenerationException("Failed to generate QR code", e);
 		}
 	}
 

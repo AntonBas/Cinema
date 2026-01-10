@@ -17,6 +17,8 @@ import ua.lviv.bas.cinema.dto.bonus.request.BonusRulesRequest;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusRulesResponse;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusTransactionResponse;
 import ua.lviv.bas.cinema.exception.domain.bonus.BonusRuleNotFoundException;
+import ua.lviv.bas.cinema.exception.domain.bonus.InvalidBonusTransactionTypeException;
+import ua.lviv.bas.cinema.exception.domain.bonus.InvalidMinMaxPointsException;
 import ua.lviv.bas.cinema.mapper.BonusMapper;
 import ua.lviv.bas.cinema.repository.BonusRulesRepository;
 import ua.lviv.bas.cinema.repository.BonusTransactionRepository;
@@ -167,7 +169,7 @@ public class BonusAdminService {
 
 		default:
 			log.warn("Unknown bonus transaction type: {}", type);
-			throw new IllegalArgumentException("Unknown bonus transaction type: " + type);
+			throw new InvalidBonusTransactionTypeException(type.name());
 		}
 
 		BonusRules updated = bonusRulesRepository.save(rules);
@@ -177,7 +179,7 @@ public class BonusAdminService {
 
 	private void validateMinMaxPoints(Integer min, Integer max) {
 		if (min != null && max != null && min > max) {
-			throw new IllegalArgumentException("Min points cannot be greater than max points");
+			throw new InvalidMinMaxPointsException(min, max);
 		}
 	}
 }

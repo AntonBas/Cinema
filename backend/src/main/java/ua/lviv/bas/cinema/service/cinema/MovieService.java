@@ -24,6 +24,7 @@ import ua.lviv.bas.cinema.dto.movie.response.MovieDetailResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieSessionSearchResponse;
 import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
 import ua.lviv.bas.cinema.exception.domain.cinema.MovieNotFoundException;
+import ua.lviv.bas.cinema.exception.domain.cinema.MovieValidationException;
 import ua.lviv.bas.cinema.mapper.MovieMapper;
 import ua.lviv.bas.cinema.repository.GenreRepository;
 import ua.lviv.bas.cinema.repository.MovieRepository;
@@ -192,13 +193,13 @@ public class MovieService {
 
 	private void validateCreateRequest(MovieCreateRequest request) {
 		if (request.getEndShowingDate().isBefore(request.getReleaseDate())) {
-			throw new IllegalArgumentException("End showing date cannot be before release date");
+			throw MovieValidationException.invalidDates(request.getReleaseDate(), request.getEndShowingDate());
 		}
 	}
 
 	private void validateUpdateRequest(MovieUpdateRequest request) {
 		if (request.getEndShowingDate().isBefore(request.getReleaseDate())) {
-			throw new IllegalArgumentException("End showing date cannot be before release date");
+			throw MovieValidationException.invalidDates(request.getReleaseDate(), request.getEndShowingDate());
 		}
 	}
 

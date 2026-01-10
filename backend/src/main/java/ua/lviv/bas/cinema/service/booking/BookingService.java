@@ -24,8 +24,10 @@ import ua.lviv.bas.cinema.domain.enums.CinemaSessionStatus;
 import ua.lviv.bas.cinema.dto.booking.request.BookingCreateRequest;
 import ua.lviv.bas.cinema.dto.booking.response.BookingResponse;
 import ua.lviv.bas.cinema.exception.domain.booking.BookingNotFoundException;
+import ua.lviv.bas.cinema.exception.domain.booking.BookingOperationException;
 import ua.lviv.bas.cinema.exception.domain.booking.BookingValidationException;
 import ua.lviv.bas.cinema.exception.domain.cinema.SessionNotFoundException;
+import ua.lviv.bas.cinema.exception.domain.tickettype.TicketTypeNotFoundException;
 import ua.lviv.bas.cinema.mapper.BookingMapper;
 import ua.lviv.bas.cinema.repository.BookedSeatRepository;
 import ua.lviv.bas.cinema.repository.BookingRepository;
@@ -63,7 +65,7 @@ public class BookingService {
 							seatSelection.getSeatId()));
 
 			TicketType ticketType = ticketTypeRepository.findById(seatSelection.getTicketTypeId())
-					.orElseThrow(() -> new IllegalArgumentException("Ticket type not found"));
+					.orElseThrow(() -> new TicketTypeNotFoundException(seatSelection.getTicketTypeId()));
 
 			seatAvailabilityService.validateSeatAvailability(session.getId(), seat.getId());
 
@@ -156,7 +158,7 @@ public class BookingService {
 				.orElseThrow(() -> new BookingNotFoundException(bookingId));
 
 		if (booking.getStatus() != BookingStatus.PENDING) {
-			throw new IllegalStateException("Only pending bookings can be confirmed");
+			throw BookingOperationException.onlyPendingCanBeConfirmed();
 		}
 
 		booking.setStatus(BookingStatus.CONFIRMED);
@@ -172,6 +174,8 @@ public class BookingService {
 			booking.setStatus(BookingStatus.EXPIRED);
 			booking.getBookedSeats().forEach(bs -> bs.setStatus(BookedSeatStatus.EXPIRED));
 			bookingRepository.save(booking);
+		} else {
+			throw BookingOperationException.cannotExpireNonPending();
 		}
 	}
 

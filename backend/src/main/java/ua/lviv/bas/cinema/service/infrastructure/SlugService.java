@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
 import ua.lviv.bas.cinema.domain.Movie;
+import ua.lviv.bas.cinema.exception.domain.infrastructure.SlugGenerationException;
 import ua.lviv.bas.cinema.repository.MovieRepository;
 
 @Service
@@ -17,7 +18,7 @@ public class SlugService {
 
 	public String generateSlug(String title) {
 		if (title == null || title.isBlank()) {
-			throw new IllegalArgumentException("Title cannot be null or empty");
+			throw SlugGenerationException.titleRequired();
 		}
 
 		String slug = Normalizer.normalize(title, Normalizer.Form.NFD).replaceAll("[^\\p{ASCII}]", "")

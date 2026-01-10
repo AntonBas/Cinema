@@ -33,7 +33,11 @@ import ua.lviv.bas.cinema.dto.payment.request.PaymentCreateRequest;
 import ua.lviv.bas.cinema.dto.payment.response.PaymentLiqPayDataResponse;
 import ua.lviv.bas.cinema.dto.payment.response.PaymentResponse;
 import ua.lviv.bas.cinema.exception.domain.booking.BookingNotFoundException;
-import ua.lviv.bas.cinema.exception.domain.booking.PaymentProcessingException;
+import ua.lviv.bas.cinema.exception.domain.booking.SessionTooCloseException;
+import ua.lviv.bas.cinema.exception.domain.payment.InvalidPaymentStatusException;
+import ua.lviv.bas.cinema.exception.domain.payment.PaymentAccessDeniedException;
+import ua.lviv.bas.cinema.exception.domain.payment.PaymentNotFoundException;
+import ua.lviv.bas.cinema.exception.domain.payment.PaymentProcessingException;
 import ua.lviv.bas.cinema.repository.BookingRepository;
 import ua.lviv.bas.cinema.repository.PaymentRepository;
 import ua.lviv.bas.cinema.service.notification.EmailService;
@@ -96,14 +100,14 @@ public class PaymentService {
 
 	public PaymentLiqPayDataResponse preparePaymentData(Long paymentId, User user) {
 		Payment payment = paymentRepository.findById(paymentId)
-				.orElseThrow(() -> new PaymentProcessingException("Payment not found"));
+				.orElseThrow(() -> new PaymentNotFoundException(paymentId));
 
 		if (!payment.getBooking().getUser().getId().equals(user.getId())) {
-			throw new PaymentProcessingException("Access denied to payment");
+			throw new PaymentAccessDeniedException(paymentId, user.getId());
 		}
 
 		if (payment.getStatus() != PaymentStatus.PENDING) {
-			throw new PaymentProcessingException("Payment is not pending");
+			throw InvalidPaymentStatusException.notPending(payment.getStatus());
 		}
 
 		return prepareLiqPayPaymentData(payment);
@@ -113,8 +117,8 @@ public class PaymentService {
 		log.info("Processing LiqPay callback: orderId={}, status={}", callbackRequest.getOrderId(),
 				callbackRequest.getStatus());
 
-		Payment payment = paymentRepository.findByLiqpayOrderId(callbackRequest.getOrderId()).orElseThrow(
-				() -> new PaymentProcessingException("Payment not found for order: " + callbackRequest.getOrderId()));
+		Payment payment = paymentRepository.findByLiqpayOrderId(callbackRequest.getOrderId())
+				.orElseThrow(() -> new PaymentNotFoundException(callbackRequest.getOrderId()));
 
 		Booking booking = payment.getBooking();
 		String status = callbackRequest.getStatus().toLowerCase();
@@ -146,10 +150,10 @@ public class PaymentService {
 	@Transactional(readOnly = true)
 	public PaymentResponse getPaymentStatus(Long paymentId, User user) {
 		Payment payment = paymentRepository.findByIdWithDetails(paymentId)
-				.orElseThrow(() -> new PaymentProcessingException("Payment not found"));
+				.orElseThrow(() -> new PaymentNotFoundException(paymentId));
 
 		if (!payment.getBooking().getUser().getId().equals(user.getId())) {
-			throw new PaymentProcessingException("Access denied to payment");
+			throw new PaymentAccessDeniedException(paymentId, user.getId());
 		}
 
 		return buildPaymentResponse(payment);
@@ -157,14 +161,14 @@ public class PaymentService {
 
 	public PaymentResponse retryPayment(Long paymentId, User user) {
 		Payment payment = paymentRepository.findById(paymentId)
-				.orElseThrow(() -> new PaymentProcessingException("Payment not found"));
+				.orElseThrow(() -> new PaymentNotFoundException(paymentId));
 
 		if (!payment.getBooking().getUser().getId().equals(user.getId())) {
-			throw new PaymentProcessingException("Access denied to payment");
+			throw new PaymentAccessDeniedException(paymentId, user.getId());
 		}
 
 		if (payment.getStatus() != PaymentStatus.FAILED) {
-			throw new PaymentProcessingException("Only failed payments can be retried");
+			throw InvalidPaymentStatusException.notFailed(payment.getStatus());
 		}
 
 		payment.setStatus(PaymentStatus.PENDING);
@@ -185,8 +189,8 @@ public class PaymentService {
 
 	@Transactional(readOnly = true)
 	public PaymentResponse getUserPaymentByBookingId(Long bookingId, User user) {
-		Payment payment = paymentRepository.findByBookingIdAndUserId(bookingId, user.getId())
-				.orElseThrow(() -> new PaymentProcessingException("Payment not found"));
+		Payment payment = paymentRepository.findByBookingIdAndUserId(bookingId, user.getId()).orElseThrow(
+				() -> new PaymentNotFoundException(String.format("Payment for booking %d not found", bookingId)));
 		return buildPaymentResponse(payment);
 	}
 
@@ -202,14 +206,14 @@ public class PaymentService {
 		}
 
 		if (booking.getSession().getStartTime().isBefore(LocalDateTime.now().plusMinutes(30))) {
-			throw new PaymentProcessingException("Cannot pay for session starting in less than 30 minutes");
+			throw new SessionTooCloseException(booking.getSession().getStartTime());
 		}
 
 		boolean allSeatsAvailable = booking.getBookedSeats().stream()
 				.allMatch(seat -> seat.getStatus() == BookedSeatStatus.PENDING);
 
 		if (!allSeatsAvailable) {
-			throw new PaymentProcessingException("Some seats are no longer available");
+			throw PaymentProcessingException.seatsNoLongerAvailable();
 		}
 
 		log.debug("Booking {} validated successfully for payment", booking.getId());

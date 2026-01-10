@@ -24,7 +24,9 @@ import ua.lviv.bas.cinema.dto.session.response.SessionAdminResponse;
 import ua.lviv.bas.cinema.dto.session.response.SessionScheduleResponse;
 import ua.lviv.bas.cinema.exception.domain.cinema.MovieNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.cinema.SessionNotFoundException;
+import ua.lviv.bas.cinema.exception.domain.cinema.SessionOperationException;
 import ua.lviv.bas.cinema.exception.domain.cinema.SessionTimeConflictException;
+import ua.lviv.bas.cinema.exception.domain.cinema.SessionValidationException;
 import ua.lviv.bas.cinema.mapper.SessionMapper;
 import ua.lviv.bas.cinema.repository.MovieRepository;
 import ua.lviv.bas.cinema.repository.SessionRepository;
@@ -132,11 +134,11 @@ public class SessionService {
 		}
 
 		if (!CinemaSessionStatus.isActive(session.getStatus())) {
-			throw new IllegalStateException("Cannot cancel inactive session");
+			throw SessionOperationException.cannotCancelInactive();
 		}
 
 		if (session.getStartTime().minusHours(1).isBefore(LocalDateTime.now())) {
-			throw new IllegalStateException("Cannot cancel session less than 1 hour before start");
+			throw SessionOperationException.cannotCancelTooLate();
 		}
 
 		session.setStatus(CinemaSessionStatus.CANCELLED);
@@ -149,11 +151,11 @@ public class SessionService {
 				.orElseThrow(() -> new SessionNotFoundException(sessionId));
 
 		if (session.getStatus() != CinemaSessionStatus.CANCELLED) {
-			throw new IllegalStateException("Only cancelled sessions can be reactivated");
+			throw SessionOperationException.onlyCancelledCanBeReactivated();
 		}
 
 		if (session.getStartTime().isBefore(LocalDateTime.now())) {
-			throw new IllegalStateException("Cannot reactivate past session");
+			throw SessionOperationException.cannotReactivatePast();
 		}
 
 		Movie movie = session.getMovie();
@@ -304,29 +306,28 @@ public class SessionService {
 	public LocalDateTime getEndTime(Session session) {
 		if (session == null || session.getMovie() == null || session.getMovie().getDurationMinutes() == null
 				|| session.getStartTime() == null) {
-			throw new IllegalStateException("Cannot calculate end time: missing data");
+			throw SessionOperationException.invalidStatusTransition(session != null ? session.getStatus() : null,
+					CinemaSessionStatus.CANCELLED);
 		}
 		return session.getStartTime().plusMinutes(session.getMovie().getDurationMinutes());
 	}
 
 	private void validateStartTime(LocalDateTime startTime) {
 		if (startTime == null) {
-			throw new IllegalArgumentException("Start time is required");
+			throw SessionValidationException.startTimeRequired();
 		}
 		if (startTime.isBefore(LocalDateTime.now().plusMinutes(30))) {
-			throw new IllegalArgumentException("Session must start at least 30 minutes from now");
+			throw SessionValidationException.tooCloseToStart(startTime);
 		}
 	}
 
 	private void validateMovieAvailability(Movie movie, LocalDateTime sessionStartTime) {
 		LocalDate sessionDate = sessionStartTime.toLocalDate();
 		if (sessionDate.isBefore(movie.getReleaseDate())) {
-			throw new IllegalArgumentException("Movie '" + movie.getTitle() + "' releases on " + movie.getReleaseDate()
-					+ " - cannot create session for " + sessionDate);
+			throw SessionValidationException.movieNotReleased(movie, sessionDate);
 		}
 		if (movie.getEndShowingDate() != null && sessionDate.isAfter(movie.getEndShowingDate())) {
-			throw new IllegalArgumentException("Movie '" + movie.getTitle() + "' ended showing on "
-					+ movie.getEndShowingDate() + " - cannot create session for " + sessionDate);
+			throw SessionValidationException.movieEndedShowing(movie, sessionDate);
 		}
 	}
 }

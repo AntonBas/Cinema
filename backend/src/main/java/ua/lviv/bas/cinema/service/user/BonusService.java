@@ -26,6 +26,7 @@ import ua.lviv.bas.cinema.dto.bonus.response.BonusCardResponse;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusTransactionResponse;
 import ua.lviv.bas.cinema.exception.domain.bonus.BonusCardNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.bonus.BonusRuleNotFoundException;
+import ua.lviv.bas.cinema.exception.domain.bonus.BonusValidationException;
 import ua.lviv.bas.cinema.exception.domain.bonus.InsufficientPointsException;
 import ua.lviv.bas.cinema.mapper.BonusMapper;
 import ua.lviv.bas.cinema.repository.BonusCardRepository;
@@ -133,7 +134,7 @@ public class BonusService {
 		log.info("Adding {} points to user {} from promotion", points, user.getId());
 
 		if (points == null || points <= 0) {
-			throw new IllegalArgumentException("Points must be a positive number");
+			throw BonusValidationException.invalidPoints(points);
 		}
 
 		BonusCard card = findOrCreateBonusCard(user);
@@ -164,7 +165,7 @@ public class BonusService {
 
 		if (pointsToUse <= 0) {
 			log.warn("User {} attempted invalid redemption: {} points", userId, pointsToUse);
-			throw new IllegalArgumentException("Points must be positive");
+			throw BonusValidationException.invalidPoints(pointsToUse);
 		}
 
 		log.debug("Points redemption validation passed for user: {}", userId);
@@ -263,8 +264,7 @@ public class BonusService {
 		BigDecimal maxAllowedDiscount = bookingTotalPrice.multiply(MAX_DISCOUNT_PERCENTAGE);
 
 		if (discountAmount.compareTo(maxAllowedDiscount) > 0) {
-			throw new IllegalArgumentException(String.format("Bonus discount %.2f exceeds maximum allowed %.2f",
-					discountAmount, maxAllowedDiscount));
+			throw BonusValidationException.discountExceedsMax(discountAmount, maxAllowedDiscount);
 		}
 	}
 

@@ -24,7 +24,8 @@ import ua.lviv.bas.cinema.domain.enums.CinemaSessionStatus;
 import ua.lviv.bas.cinema.domain.enums.TicketStatus;
 import ua.lviv.bas.cinema.dto.ticket.response.TicketResponse;
 import ua.lviv.bas.cinema.exception.domain.booking.BookingNotFoundException;
-import ua.lviv.bas.cinema.exception.domain.booking.TicketValidationException;
+import ua.lviv.bas.cinema.exception.domain.ticket.TicketOperationException;
+import ua.lviv.bas.cinema.exception.domain.ticket.TicketValidationException;
 import ua.lviv.bas.cinema.mapper.TicketMapper;
 import ua.lviv.bas.cinema.repository.BookingRepository;
 import ua.lviv.bas.cinema.repository.TicketRepository;
@@ -189,7 +190,7 @@ public class TicketService {
 		}
 
 		if (ticket.getStatus() == TicketStatus.USED) {
-			throw new IllegalStateException("Cannot void an already used ticket");
+			throw TicketOperationException.cannotVoidUsed();
 		}
 
 		if (ticket.getStatus() == TicketStatus.CANCELLED) {
