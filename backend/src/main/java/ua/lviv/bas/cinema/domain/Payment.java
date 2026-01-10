@@ -40,7 +40,7 @@ import ua.lviv.bas.cinema.domain.enums.PaymentStatus;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString(exclude = { "booking", "bonusTransactions", "refunds" })
+@ToString(exclude = { "booking", "refunds" })
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Table(name = "payments", indexes = { @Index(name = "idx_payment_booking", columnList = "booking_id"),
 		@Index(name = "idx_payment_status", columnList = "status"),
@@ -87,11 +87,6 @@ public class Payment {
 	@OneToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "booking_id", nullable = false)
 	private Booking booking;
-
-	@OneToMany(mappedBy = "payment", fetch = FetchType.LAZY)
-	@BatchSize(size = 20)
-	@Builder.Default
-	private List<BonusTransaction> bonusTransactions = new ArrayList<>();
 
 	@OneToMany(mappedBy = "payment", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
 	@BatchSize(size = 20)

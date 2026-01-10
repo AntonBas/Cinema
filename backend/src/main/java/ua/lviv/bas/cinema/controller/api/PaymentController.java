@@ -1,7 +1,5 @@
 package ua.lviv.bas.cinema.controller.api;
 
-import java.util.List;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -40,89 +38,84 @@ public class PaymentController {
 	private final PaymentService paymentService;
 
 	@PostMapping
-	@Operation(summary = "Create a payment for a booking", description = "Creates a payment record for a booking and prepares it for processing")
+	@Operation(summary = "Create payment", description = "Creates a payment for a booking")
 	@ApiResponses(value = { @ApiResponse(responseCode = "201", description = "Payment created successfully"),
-			@ApiResponse(responseCode = "400", description = "Invalid request or booking not eligible for payment"),
+			@ApiResponse(responseCode = "400", description = "Invalid request"),
 			@ApiResponse(responseCode = "404", description = "Booking not found"),
 			@ApiResponse(responseCode = "409", description = "Payment already in progress") })
-	@PreAuthorize("hasRole('USER') or hasRole('PREMIUM_USER')")
+	@PreAuthorize("hasRole('USER')")
 	public ResponseEntity<PaymentResponse> createPayment(@Valid @RequestBody PaymentCreateRequest request,
 			@AuthenticationPrincipal User user) {
-
 		log.info("Creating payment for booking ID: {} by user ID: {}", request.getBookingId(), user.getId());
 		PaymentResponse response = paymentService.createPayment(request, user);
 		return ResponseEntity.status(HttpStatus.CREATED).body(response);
 	}
 
 	@PostMapping("/liqpay/callback")
-	@Operation(summary = "LiqPay payment callback", description = "Endpoint for LiqPay payment gateway callbacks (used internally by payment system)")
-	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Callback processed successfully"),
+	@Operation(summary = "LiqPay callback", description = "Endpoint for LiqPay payment gateway callbacks")
+	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Callback processed"),
 			@ApiResponse(responseCode = "400", description = "Invalid callback data") })
 	public ResponseEntity<String> processLiqPayCallback(@Valid @RequestBody LiqPayCallbackRequest callbackRequest) {
-
 		log.info("Received LiqPay callback for order ID: {}", callbackRequest.getOrderId());
 		paymentService.processLiqPayCallback(callbackRequest);
 		return ResponseEntity.ok("OK");
 	}
 
 	@GetMapping("/{paymentId}/liqpay-data")
-	@Operation(summary = "Get LiqPay payment data", description = "Returns prepared data for LiqPay payment gateway integration")
-	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Payment data retrieved successfully"),
+	@Operation(summary = "Get LiqPay data", description = "Returns prepared data for LiqPay payment gateway")
+	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Payment data retrieved"),
 			@ApiResponse(responseCode = "404", description = "Payment not found"),
-			@ApiResponse(responseCode = "403", description = "Access denied to payment"),
-			@ApiResponse(responseCode = "400", description = "Payment is not in pending state") })
-	@PreAuthorize("hasRole('USER') or hasRole('PREMIUM_USER')")
+			@ApiResponse(responseCode = "403", description = "Access denied"),
+			@ApiResponse(responseCode = "400", description = "Payment is not pending") })
+	@PreAuthorize("hasRole('USER')")
 	public ResponseEntity<PaymentLiqPayDataResponse> getLiqPayPaymentData(
-			@Parameter(description = "ID of the payment", required = true, example = "1") @PathVariable Long paymentId,
-
+			@Parameter(description = "Payment ID", required = true) @PathVariable Long paymentId,
 			@AuthenticationPrincipal User user) {
-
 		log.info("Fetching LiqPay data for payment ID: {} for user ID: {}", paymentId, user.getId());
 		PaymentLiqPayDataResponse response = paymentService.preparePaymentData(paymentId, user);
 		return ResponseEntity.ok(response);
 	}
 
 	@GetMapping("/{paymentId}/status")
-	@Operation(summary = "Get payment status", description = "Retrieves the current status and details of a payment")
-	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Payment status retrieved successfully"),
+	@Operation(summary = "Get payment status", description = "Retrieves the current status of a payment")
+	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Payment status retrieved"),
 			@ApiResponse(responseCode = "404", description = "Payment not found"),
-			@ApiResponse(responseCode = "403", description = "Access denied to payment") })
-	@PreAuthorize("hasRole('USER') or hasRole('PREMIUM_USER')")
+			@ApiResponse(responseCode = "403", description = "Access denied") })
+	@PreAuthorize("hasRole('USER')")
 	public ResponseEntity<PaymentResponse> getPaymentStatus(
-			@Parameter(description = "ID of the payment", required = true, example = "1") @PathVariable Long paymentId,
-
+			@Parameter(description = "Payment ID", required = true) @PathVariable Long paymentId,
 			@AuthenticationPrincipal User user) {
-
 		log.info("Fetching status for payment ID: {} for user ID: {}", paymentId, user.getId());
 		PaymentResponse response = paymentService.getPaymentStatus(paymentId, user);
 		return ResponseEntity.ok(response);
 	}
 
 	@PostMapping("/{paymentId}/retry")
-	@Operation(summary = "Retry a failed payment", description = "Retries a previously failed payment with a new payment request")
-	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Payment retry initiated successfully"),
+	@Operation(summary = "Retry payment", description = "Retries a previously failed payment")
+	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Payment retry initiated"),
 			@ApiResponse(responseCode = "404", description = "Payment not found"),
-			@ApiResponse(responseCode = "403", description = "Access denied to payment"),
+			@ApiResponse(responseCode = "403", description = "Access denied"),
 			@ApiResponse(responseCode = "400", description = "Payment cannot be retried") })
-	@PreAuthorize("hasRole('USER') or hasRole('PREMIUM_USER')")
+	@PreAuthorize("hasRole('USER')")
 	public ResponseEntity<PaymentResponse> retryPayment(
-			@Parameter(description = "ID of the payment to retry", required = true, example = "1") @PathVariable Long paymentId,
-
+			@Parameter(description = "Payment ID", required = true) @PathVariable Long paymentId,
 			@AuthenticationPrincipal User user) {
-
 		log.info("Retrying payment ID: {} for user ID: {}", paymentId, user.getId());
 		PaymentResponse response = paymentService.retryPayment(paymentId, user);
 		return ResponseEntity.ok(response);
 	}
 
-	@GetMapping("/user")
-	@Operation(summary = "Get user payments", description = "Retrieves a list of all payments for the authenticated user")
-	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Payments retrieved successfully") })
-	@PreAuthorize("hasRole('USER') or hasRole('PREMIUM_USER')")
-	public ResponseEntity<List<PaymentResponse>> getUserPayments(@AuthenticationPrincipal User user) {
-
-		log.info("Fetching all payments for user ID: {}", user.getId());
-		List<PaymentResponse> payments = paymentService.getUserPayments(user.getId());
-		return ResponseEntity.ok(payments);
+	@GetMapping("/booking/{bookingId}")
+	@Operation(summary = "Get payment by booking", description = "Retrieves payment information for a specific booking")
+	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Payment retrieved"),
+			@ApiResponse(responseCode = "404", description = "Payment not found"),
+			@ApiResponse(responseCode = "403", description = "Access denied") })
+	@PreAuthorize("hasRole('USER')")
+	public ResponseEntity<PaymentResponse> getPaymentByBookingId(
+			@Parameter(description = "Booking ID", required = true) @PathVariable Long bookingId,
+			@AuthenticationPrincipal User user) {
+		log.info("Fetching payment for booking ID: {} for user ID: {}", bookingId, user.getId());
+		PaymentResponse response = paymentService.getUserPaymentByBookingId(bookingId, user);
+		return ResponseEntity.ok(response);
 	}
 }

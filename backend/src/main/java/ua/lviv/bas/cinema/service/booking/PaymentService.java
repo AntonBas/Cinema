@@ -3,7 +3,6 @@ package ua.lviv.bas.cinema.service.booking;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.security.MessageDigest;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Base64;
@@ -12,11 +11,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -54,6 +50,7 @@ public class PaymentService {
 	private final EmailService emailService;
 	private final TicketService ticketService;
 	private final BonusService bonusService;
+	private final BookingService bookingService;
 
 	@Value("${payment.liqpay.public_key}")
 	private String liqpayPublicKey;
@@ -144,7 +141,6 @@ public class PaymentService {
 
 		updatePaymentWithCallbackData(payment, callbackRequest);
 		paymentRepository.save(payment);
-		bookingRepository.save(booking);
 	}
 
 	@Transactional(readOnly = true)
@@ -156,13 +152,6 @@ public class PaymentService {
 			throw new PaymentProcessingException("Access denied to payment");
 		}
 
-		return buildPaymentResponse(payment);
-	}
-
-	@Transactional(readOnly = true)
-	public PaymentResponse getPaymentById(Long paymentId) {
-		Payment payment = paymentRepository.findByIdWithDetails(paymentId)
-				.orElseThrow(() -> new PaymentProcessingException("Payment not found"));
 		return buildPaymentResponse(payment);
 	}
 
@@ -195,36 +184,10 @@ public class PaymentService {
 	}
 
 	@Transactional(readOnly = true)
-	public List<PaymentResponse> getAllPayments() {
-		return paymentRepository.findAll().stream().map(this::buildPaymentResponse).collect(Collectors.toList());
-	}
-
-	@Transactional(readOnly = true)
-	public Page<PaymentResponse> getAllPayments(Pageable pageable, PaymentStatus status, LocalDate dateFrom,
-			LocalDate dateTo) {
-		Page<Payment> payments;
-
-		if (status != null || dateFrom != null || dateTo != null) {
-			payments = paymentRepository.findWithFilters(status, dateFrom, dateTo, pageable);
-		} else {
-			payments = paymentRepository.findAll(pageable);
-		}
-
-		return payments.map(this::buildPaymentResponse);
-	}
-
-	@Transactional(readOnly = true)
-	public List<PaymentResponse> getUserPayments(Long userId) {
-		List<Payment> payments = paymentRepository.findByUserId(userId);
-		return payments.stream().map(this::buildPaymentResponse).collect(Collectors.toList());
-	}
-
-	@Transactional(readOnly = true)
-	public Map<LocalDate, BigDecimal> getDailyPaymentStatistics(LocalDate startDate, LocalDate endDate) {
-		List<Object[]> results = paymentRepository.findDailyPaymentStatistics(startDate, endDate);
-
-		return results.stream()
-				.collect(Collectors.toMap(row -> ((java.sql.Date) row[0]).toLocalDate(), row -> (BigDecimal) row[1]));
+	public PaymentResponse getUserPaymentByBookingId(Long bookingId, User user) {
+		Payment payment = paymentRepository.findByBookingIdAndUserId(bookingId, user.getId())
+				.orElseThrow(() -> new PaymentProcessingException("Payment not found"));
+		return buildPaymentResponse(payment);
 	}
 
 	private void validateBookingForPayment(Booking booking) {
@@ -263,7 +226,7 @@ public class PaymentService {
 			params.put("action", "pay");
 			params.put("amount", payment.getAmount().setScale(2, RoundingMode.HALF_UP).toString());
 			params.put("currency", "UAH");
-			params.put("description", String.format("Квитки на %s, зал %s, %s", session.getMovie().getTitle(),
+			params.put("description", String.format("Tickets for %s, hall %s, %s", session.getMovie().getTitle(),
 					session.getHall().getName(), session.getStartTime().format(DATE_FORMATTER)));
 			params.put("order_id", payment.getLiqpayOrderId());
 			params.put("result_url", frontendUrl + "/booking/" + booking.getId() + "/success");
@@ -298,14 +261,13 @@ public class PaymentService {
 		payment.setLiqpayTransactionId(callbackRequest.getTransactionId());
 		payment.setLiqpaySenderCardMask(callbackRequest.getSenderCardMask());
 
-		booking.setStatus(BookingStatus.CONFIRMED);
-		booking.getBookedSeats().forEach(seat -> seat.setStatus(BookedSeatStatus.CONFIRMED));
+		bookingService.confirmBooking(booking.getId());
 
 		List<Ticket> tickets = ticketService.createTicketsForBooking(booking, payment);
 
-		if (booking.getBonusPointsUsed() > 0) {
-			bonusService.redeemPointsForPurchase(booking.getUser().getId(), booking.getBonusPointsUsed(), payment,
-					booking.getFinalPrice());
+		Integer pointsToAccrue = bonusService.calculateAccruedPointsForAmount(booking.getFinalPrice());
+		if (pointsToAccrue != null && pointsToAccrue > 0) {
+			bonusService.accrueBonusPointsForPayment(booking.getUser().getId(), pointsToAccrue, booking, payment);
 		}
 
 		ticketService.sendTicketsToUser(booking);
@@ -362,12 +324,12 @@ public class PaymentService {
 			Session session = booking.getSession();
 
 			String seatsInfo = booking.getBookedSeats().stream()
-					.map(seat -> String.format("Ряд %d, Місце %d", seat.getSeat().getRow(), seat.getSeat().getNumber()))
-					.collect(Collectors.joining(", "));
+					.map(seat -> String.format("Row %d, Seat %d", seat.getSeat().getRow(), seat.getSeat().getNumber()))
+					.collect(java.util.stream.Collectors.joining(", "));
 
 			emailService.sendTicketsEmail(user.getEmail(), booking.getId().toString(), session.getMovie().getTitle(),
 					session.getStartTime().format(DATE_FORMATTER), session.getHall().getName(), payment.getAmount(),
-					"Банківська карта", seatsInfo);
+					"Credit card", seatsInfo);
 
 			log.debug("Sent payment success email to {}", user.getEmail());
 		} catch (Exception e) {
@@ -381,7 +343,7 @@ public class PaymentService {
 			Session session = booking.getSession();
 
 			String errorDescription = payment.getLiqpayErrorDescription() != null ? payment.getLiqpayErrorDescription()
-					: "Помилка оплати";
+					: "Payment error";
 
 			emailService.sendPaymentFailedEmail(user.getEmail(), booking.getId().toString(),
 					session.getMovie().getTitle(), session.getStartTime().format(DATE_FORMATTER), errorDescription);

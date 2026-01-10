@@ -1,7 +1,5 @@
 package ua.lviv.bas.cinema.repository;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -21,39 +19,26 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
 
 	Optional<Payment> findByBookingId(Long bookingId);
 
+	@Query("SELECT p FROM Payment p WHERE p.booking.id = :bookingId AND p.booking.user.id = :userId")
+	Optional<Payment> findByBookingIdAndUserId(@Param("bookingId") Long bookingId, @Param("userId") Long userId);
+
 	Optional<Payment> findByLiqpayOrderId(String liqpayOrderId);
-
-	List<Payment> findByStatus(PaymentStatus status);
-
-	List<Payment> findByStatusAndCreatedAtBefore(PaymentStatus status, LocalDateTime createdAt);
-
-	List<Payment> findByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
-
-	List<Payment> findByStatusInAndCreatedAtBefore(List<PaymentStatus> statuses, LocalDateTime createdAt);
-
-	long countByStatus(PaymentStatus status);
-
-	long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
 
 	@Query("SELECT p FROM Payment p JOIN FETCH p.booking b JOIN FETCH b.user JOIN FETCH b.session s JOIN FETCH s.movie WHERE p.id = :paymentId")
 	Optional<Payment> findByIdWithDetails(@Param("paymentId") Long paymentId);
 
-	@Query("SELECT p FROM Payment p WHERE " + "(:status IS NULL OR p.status = :status) AND "
-			+ "(:dateFrom IS NULL OR DATE(p.createdAt) >= :dateFrom) AND "
-			+ "(:dateTo IS NULL OR DATE(p.createdAt) <= :dateTo)")
-	Page<Payment> findWithFilters(@Param("status") PaymentStatus status, @Param("dateFrom") LocalDate dateFrom,
-			@Param("dateTo") LocalDate dateTo, Pageable pageable);
-
-	@Query("SELECT DATE(p.createdAt) as paymentDate, SUM(p.amount) as totalAmount " + "FROM Payment p "
-			+ "WHERE DATE(p.createdAt) BETWEEN :startDate AND :endDate " + "AND p.status = 'SUCCESS' "
-			+ "GROUP BY DATE(p.createdAt) " + "ORDER BY DATE(p.createdAt)")
-	List<Object[]> findDailyPaymentStatistics(@Param("startDate") LocalDate startDate,
-			@Param("endDate") LocalDate endDate);
-
-	@Query("SELECT COALESCE(SUM(p.amount), 0) FROM Payment p "
-			+ "WHERE p.status = 'SUCCESS' AND p.createdAt BETWEEN :start AND :end")
-	BigDecimal sumSuccessfulAmountBetween(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
-
 	@Query("SELECT p FROM Payment p JOIN p.booking b WHERE b.user.id = :userId ORDER BY p.createdAt DESC")
-	List<Payment> findByUserId(@Param("userId") Long userId);
+	Page<Payment> findByUserId(@Param("userId") Long userId, Pageable pageable);
+
+	Page<Payment> findByStatus(PaymentStatus status, Pageable pageable);
+
+	List<Payment> findByStatusAndCreatedAtBefore(PaymentStatus status, LocalDateTime createdAt);
+
+	List<Payment> findByStatusInAndCreatedAtBefore(List<PaymentStatus> statuses, LocalDateTime createdAt);
+
+	List<Payment> findByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
+
+	long countByStatus(PaymentStatus status);
+
+	long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
 }
