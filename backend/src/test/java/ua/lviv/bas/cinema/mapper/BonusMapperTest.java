@@ -20,7 +20,7 @@ import ua.lviv.bas.cinema.dto.bonus.response.BonusCardResponse;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusRulesResponse;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusTransactionResponse;
 
-class BonusMapperTest {
+public class BonusMapperTest {
 
 	private final BonusMapper mapper = Mappers.getMapper(BonusMapper.class);
 

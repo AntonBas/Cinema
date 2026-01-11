@@ -21,7 +21,7 @@ import ua.lviv.bas.cinema.dto.ticket.request.TicketTypeUpdateRequest;
 import ua.lviv.bas.cinema.dto.ticket.response.TicketTypeResponse;
 import ua.lviv.bas.cinema.dto.ticket.response.TicketTypeSimpleResponse;
 
-class TicketTypeMapperTest {
+public class TicketTypeMapperTest {
 
 	private TicketTypeMapper mapper;
 

@@ -10,7 +10,7 @@ import org.mapstruct.factory.Mappers;
 import ua.lviv.bas.cinema.domain.Payment;
 import ua.lviv.bas.cinema.dto.payment.response.PaymentLiqPayDataResponse;
 
-class PaymentMapperTest {
+public class PaymentMapperTest {
 
 	private PaymentMapper mapper = Mappers.getMapper(PaymentMapper.class);
 

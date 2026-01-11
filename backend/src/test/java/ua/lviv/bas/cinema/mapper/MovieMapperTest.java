@@ -23,7 +23,7 @@ import ua.lviv.bas.cinema.dto.movie.request.MovieCreateRequest;
 import ua.lviv.bas.cinema.dto.movie.request.MovieUpdateRequest;
 import ua.lviv.bas.cinema.dto.movie.response.MovieCardResponse;
 
-class MovieMapperTest {
+public class MovieMapperTest {
 
 	private MovieMapper movieMapper;
 

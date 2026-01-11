@@ -18,7 +18,7 @@ import ua.lviv.bas.cinema.domain.enums.RefundStatus;
 import ua.lviv.bas.cinema.dto.refund.response.RefundResponse;
 
 @ExtendWith(MockitoExtension.class)
-class RefundMapperTest {
+public class RefundMapperTest {
 
 	@Mock
 	private RefundItemMapper refundItemMapper;

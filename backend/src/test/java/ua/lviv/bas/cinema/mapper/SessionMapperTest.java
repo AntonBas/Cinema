@@ -28,7 +28,7 @@ import ua.lviv.bas.cinema.dto.session.request.SessionUpdateRequest;
 import ua.lviv.bas.cinema.dto.session.response.SessionAdminResponse;
 import ua.lviv.bas.cinema.dto.session.response.SessionScheduleResponse;
 
-class SessionMapperTest {
+public class SessionMapperTest {
 
 	private SessionMapper sessionMapper;
 	private LocalDateTime futureTime;

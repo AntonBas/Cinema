@@ -15,7 +15,7 @@ import ua.lviv.bas.cinema.domain.Seat;
 import ua.lviv.bas.cinema.domain.enums.SeatType;
 import ua.lviv.bas.cinema.dto.cinemaHall.response.CinemaHallResponse;
 
-class CinemaHallMapperTest {
+public class CinemaHallMapperTest {
 
 	private CinemaHallMapper cinemaHallMapper;
 	private CinemaHall cinemaHallWithSeats;

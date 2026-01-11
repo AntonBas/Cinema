@@ -14,7 +14,7 @@ import ua.lviv.bas.cinema.domain.Ticket;
 import ua.lviv.bas.cinema.domain.enums.RefundItemStatus;
 import ua.lviv.bas.cinema.dto.refund.response.RefundItemResponse;
 
-class RefundItemMapperTest {
+public class RefundItemMapperTest {
 
 	private RefundItemMapper refundItemMapper;
 
