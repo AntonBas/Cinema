@@ -11,19 +11,18 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import lombok.ToString;
 import ua.lviv.bas.cinema.domain.enums.RefundItemStatus;
 
 @Entity
@@ -32,16 +31,10 @@ import ua.lviv.bas.cinema.domain.enums.RefundItemStatus;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString(exclude = { "refund", "ticket" })
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@Table(name = "refund_items", indexes = { @Index(name = "idx_refund_item_refund", columnList = "refund_id"),
-		@Index(name = "idx_refund_item_ticket", columnList = "ticket_id"),
-		@Index(name = "idx_refund_item_status", columnList = "status") })
+@Table(name = "refund_items")
 public class RefundItem {
-
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	@EqualsAndHashCode.Include
 	private Long id;
 
 	@NotNull
@@ -58,6 +51,11 @@ public class RefundItem {
 	@Positive
 	@Column(name = "ticket_price", nullable = false, precision = 10, scale = 2)
 	private BigDecimal ticketPrice;
+
+	@DecimalMin("0.00")
+	@DecimalMax("100.00")
+	@Column(name = "refund_percentage", precision = 5, scale = 2)
+	private BigDecimal refundPercentage;
 
 	@Column(name = "refund_amount", precision = 10, scale = 2)
 	private BigDecimal refundAmount;

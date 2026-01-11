@@ -14,6 +14,14 @@ public class PaymentProcessingException extends ValidationException {
 		super(message, errorCode);
 	}
 
+	public PaymentProcessingException(String message, Throwable cause) {
+		super(message, "PAYMENT_PROCESSING_ERROR", message, cause);
+	}
+
+	public PaymentProcessingException(String message, String errorCode, Throwable cause) {
+		super(message, errorCode, message, cause);
+	}
+
 	public static PaymentProcessingException paymentInProgress() {
 		return new PaymentProcessingException("Payment is already in progress for this booking", "PAYMENT_IN_PROGRESS");
 	}
@@ -28,5 +36,9 @@ public class PaymentProcessingException extends ValidationException {
 
 	public static PaymentProcessingException seatsNoLongerAvailable() {
 		return new PaymentProcessingException("Some seats are no longer available", "SEATS_NO_LONGER_AVAILABLE");
+	}
+
+	public static PaymentProcessingException refundFailed(String error) {
+		return new PaymentProcessingException("Refund failed: " + error, "REFUND_FAILED");
 	}
 }

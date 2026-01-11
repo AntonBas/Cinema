@@ -92,6 +92,14 @@ public class Ticket {
 	@Column(name = "unique_code", unique = true, nullable = false, length = 20)
 	private String uniqueCode;
 
+	@Column(name = "bonus_points_used")
+	@Builder.Default
+	private Integer bonusPointsUsed = 0;
+
+	@Column(name = "bonus_points_earned")
+	@Builder.Default
+	private Integer bonusPointsEarned = 0;
+
 	@Enumerated(EnumType.STRING)
 	@Column(name = "status", nullable = false, length = 20)
 	@Builder.Default

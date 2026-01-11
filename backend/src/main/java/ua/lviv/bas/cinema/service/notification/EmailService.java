@@ -1,6 +1,8 @@
 package ua.lviv.bas.cinema.service.notification;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.MailException;
@@ -147,6 +149,48 @@ public class EmailService {
 
 		} catch (Exception e) {
 			log.error("Failed to send payment failed email to {}: {}", toEmail, e.getMessage());
+		}
+	}
+
+	@Async
+	public void sendRefundEmail(String toEmail, String bookingNumber, String movieTitle, String sessionTime,
+			String hallName, BigDecimal refundAmount, String seatInfo, String refundReason) {
+		try {
+			String text = """
+					Refund Confirmation - %s
+
+					Your refund request has been successfully processed.
+
+					Booking Number: %s
+					Movie: %s
+					Time: %s
+					Hall: %s
+					Seats: %s
+					Refund Amount: %s UAH
+					Reason: %s
+
+					The refunded amount will be returned to your original
+					payment method within 3-5 business days.
+
+					Refund Summary:
+					• Ticket price refunded: %s UAH
+					• Refund processed at: %s
+
+					If you have any questions about your refund,
+					please contact our support team.
+
+					Thank you for choosing %s!
+
+					This is an automated email. Please do not reply.
+					""".formatted(movieTitle, bookingNumber, movieTitle, sessionTime, hallName, seatInfo, refundAmount,
+					refundReason, refundAmount,
+					LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")), companyName);
+
+			sendSimpleEmail(toEmail, "Refund Confirmation: " + movieTitle, text);
+			log.info("Refund email sent to {}", toEmail);
+
+		} catch (Exception e) {
+			log.error("Failed to send refund email to {}: {}", toEmail, e.getMessage());
 		}
 	}
 

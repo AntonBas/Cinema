@@ -39,4 +39,6 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
 	@Query("SELECT COUNT(t) > 0 FROM Ticket t WHERE t.ticketType.id = :ticketTypeId AND t.status IN :statuses")
 	boolean existsByTicketTypeIdAndStatusIn(@Param("ticketTypeId") Long ticketTypeId,
 			@Param("statuses") List<TicketStatus> statuses);
+
+	Optional<Ticket> findByIdAndUserIdAndStatus(Long ticketId, Long userId, TicketStatus active);
 }

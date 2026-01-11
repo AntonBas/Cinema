@@ -67,10 +67,6 @@ public class Refund {
 	@Builder.Default
 	private List<RefundItem> items = new ArrayList<>();
 
-	@OneToMany(mappedBy = "refund", cascade = CascadeType.ALL)
-	@Builder.Default
-	private List<Ticket> tickets = new ArrayList<>();
-
 	@OneToMany(mappedBy = "refund", fetch = FetchType.LAZY)
 	@Builder.Default
 	private List<BonusTransaction> bonusTransactions = new ArrayList<>();

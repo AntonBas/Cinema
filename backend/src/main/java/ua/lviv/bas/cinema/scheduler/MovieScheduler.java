@@ -55,35 +55,6 @@ public class MovieScheduler {
 		log.info("Movie status update completed. Updated {} movies out of {}", updatedCount, allMovies.size());
 	}
 
-//	@Transactional
-//	public int updateMovieStatusesManually() {
-//		return updateMovieStatusesForDate(LocalDate.now());
-//	}
-
-//	@Transactional
-//	public int updateMovieStatusesForDate(LocalDate referenceDate) {
-//		log.info("Updating movie statuses for date: {}", referenceDate);
-//
-//		List<Movie> allMovies = movieRepository.findAll();
-//		int updatedCount = 0;
-//
-//		for (Movie movie : allMovies) {
-//			MovieStatus currentStatus = movie.getStatus();
-//			MovieStatus newStatus = calculateMovieStatus(movie, referenceDate);
-//
-//			if (currentStatus != newStatus) {
-//				movie.setStatus(newStatus);
-//				updatedCount++;
-//			}
-//		}
-//
-//		if (updatedCount > 0) {
-//			movieRepository.saveAll(allMovies);
-//		}
-//
-//		return updatedCount;
-//	}
-
 	public MovieStatus calculateMovieStatus(Movie movie, LocalDate referenceDate) {
 		if (movie == null || movie.getReleaseDate() == null) {
 			return MovieStatus.UNKNOWN;

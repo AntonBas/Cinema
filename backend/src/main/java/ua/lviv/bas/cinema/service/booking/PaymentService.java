@@ -187,6 +187,64 @@ public class PaymentService {
 		return buildPaymentResponse(savedPayment);
 	}
 
+	@Transactional
+	public void refundPayment(Payment payment, BigDecimal amount, String description) {
+		log.info("Processing refund for payment {}: amount={}, description={}", payment.getId(), amount, description);
+
+		if (payment.getStatus() != PaymentStatus.SUCCESS) {
+			throw PaymentProcessingException
+					.refundFailed(String.format("Cannot refund payment with status: %s", payment.getStatus()));
+		}
+
+		if (amount.compareTo(BigDecimal.ZERO) <= 0) {
+			throw PaymentProcessingException.refundFailed("Refund amount must be positive");
+		}
+
+		if (amount.compareTo(payment.getAmount()) > 0) {
+			throw PaymentProcessingException.refundFailed(
+					String.format("Refund amount %s exceeds payment amount %s", amount, payment.getAmount()));
+		}
+
+		try {
+			String refundOrderId = "REF_" + UUID.randomUUID().toString().substring(0, 16).toUpperCase() + "_"
+					+ System.currentTimeMillis() % 10000;
+
+			Map<String, Object> refundParams = new LinkedHashMap<>();
+			refundParams.put("public_key", liqpayPublicKey);
+			refundParams.put("version", "3");
+			refundParams.put("action", "refund");
+			refundParams.put("amount", amount.setScale(2, RoundingMode.HALF_UP).toString());
+			refundParams.put("currency", "UAH");
+			refundParams.put("description", description);
+			refundParams.put("order_id", refundOrderId);
+
+			if (payment.getLiqpayPaymentId() != null) {
+				refundParams.put("payment_id", payment.getLiqpayPaymentId());
+			}
+
+			String jsonData = gson.toJson(refundParams);
+			String data = Base64.getEncoder().encodeToString(jsonData.getBytes());
+			String signature = generateLiqPaySignature(data);
+
+			log.info("Refund request prepared for LiqPay: orderId={}, amount={}, paymentId={}", refundOrderId, amount,
+					payment.getLiqpayPaymentId());
+			log.info("LiqPay refund data: {}", data);
+			log.info("LiqPay refund signature: {}", signature);
+
+			payment.setUpdatedAt(LocalDateTime.now());
+			paymentRepository.save(payment);
+
+			sendRefundEmail(payment, amount, description);
+
+			log.info("Refund processed successfully: paymentId={}, refundOrderId={}, amount={}", payment.getId(),
+					refundOrderId, amount);
+
+		} catch (Exception e) {
+			log.error("Refund processing failed for payment {}", payment.getId(), e);
+			throw new PaymentProcessingException("Failed to process refund", e);
+		}
+	}
+
 	@Transactional(readOnly = true)
 	public PaymentResponse getUserPaymentByBookingId(Long bookingId, User user) {
 		Payment payment = paymentRepository.findByBookingIdAndUserId(bookingId, user.getId()).orElseThrow(
@@ -355,6 +413,26 @@ public class PaymentService {
 			log.debug("Sent payment failed email to {}", user.getEmail());
 		} catch (Exception e) {
 			log.error("Failed to send payment failed email for booking {}", booking.getId(), e);
+		}
+	}
+
+	private void sendRefundEmail(Payment payment, BigDecimal amount, String description) {
+		try {
+			Booking booking = payment.getBooking();
+			User user = booking.getUser();
+			Session session = booking.getSession();
+
+			String seatsInfo = booking.getBookedSeats().stream()
+					.map(seat -> String.format("Row %d, Seat %d", seat.getSeat().getRow(), seat.getSeat().getNumber()))
+					.collect(java.util.stream.Collectors.joining(", "));
+
+			emailService.sendRefundEmail(user.getEmail(), booking.getId().toString(), session.getMovie().getTitle(),
+					session.getStartTime().format(DATE_FORMATTER), session.getHall().getName(), amount, seatsInfo,
+					description);
+
+			log.debug("Sent refund email to {}", user.getEmail());
+		} catch (Exception e) {
+			log.error("Failed to send refund email for payment {}", payment.getId(), e);
 		}
 	}
 
