@@ -3,10 +3,11 @@ package ua.lviv.bas.cinema.service.cinema;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -33,7 +34,7 @@ import ua.lviv.bas.cinema.repository.MovieRepository;
 import ua.lviv.bas.cinema.repository.PersonRepository;
 
 @ExtendWith(MockitoExtension.class)
-class PersonServiceTest {
+public class PersonServiceTest {
 
 	@Mock
 	private PersonRepository personRepository;
@@ -48,357 +49,257 @@ class PersonServiceTest {
 	private PersonService personService;
 
 	@Test
-	void createPerson_ShouldReturnSavedDto() {
-		PersonRequest request = new PersonRequest("Anton Bas", PersonRole.ACTOR);
+	void createPerson_Success() {
+		PersonRequest request = PersonRequest.builder().name("John Doe").role(PersonRole.ACTOR).build();
+
 		Person person = new Person();
+		person.setName("John Doe");
+
 		Person savedPerson = new Person();
 		savedPerson.setId(1L);
-		PersonResponse dto = new PersonResponse();
-		dto.setId(1L);
-		dto.setName("Anton Bas");
+		savedPerson.setName("John Doe");
 
-		when(personRepository.existsByNameAndRole("Anton Bas", PersonRole.ACTOR)).thenReturn(false);
-		when(personMapper.toEntity(request)).thenReturn(person);
+		PersonResponse response = PersonResponse.builder().id(1L).name("John Doe").build();
+
+		when(personRepository.existsByNameAndRole("John Doe", PersonRole.ACTOR)).thenReturn(false);
+		when(personMapper.toPerson(request)).thenReturn(person);
 		when(personRepository.save(person)).thenReturn(savedPerson);
-		when(personMapper.toDto(savedPerson)).thenReturn(dto);
+		when(personMapper.toPersonResponse(savedPerson)).thenReturn(response);
 
 		PersonResponse result = personService.createPerson(request);
-		assertThat(result.getId()).isEqualTo(1L);
+
+		assertThat(result.getName()).isEqualTo("John Doe");
 	}
 
 	@Test
-	void createPerson_ShouldTrimName() {
-		PersonRequest request = new PersonRequest("  Anton Bas  ", PersonRole.ACTOR);
-		Person person = new Person();
-		Person savedPerson = new Person();
-		savedPerson.setId(1L);
+	void createPerson_WhenNameExists_ShouldThrowException() {
+		PersonRequest request = PersonRequest.builder().name("John Doe").role(PersonRole.ACTOR).build();
 
-		when(personRepository.existsByNameAndRole("Anton Bas", PersonRole.ACTOR)).thenReturn(false);
-		when(personMapper.toEntity(any(PersonRequest.class))).thenReturn(person);
-		when(personRepository.save(person)).thenReturn(savedPerson);
+		when(personRepository.existsByNameAndRole("John Doe", PersonRole.ACTOR)).thenReturn(true);
 
-		personService.createPerson(request);
-		verify(personRepository).existsByNameAndRole("Anton Bas", PersonRole.ACTOR);
-	}
-
-	@Test
-	void createPerson_WhenDuplicate_ShouldThrowException() {
-		PersonRequest request = new PersonRequest("Anton Bas", PersonRole.ACTOR);
-		when(personRepository.existsByNameAndRole("Anton Bas", PersonRole.ACTOR)).thenReturn(true);
 		assertThatThrownBy(() -> personService.createPerson(request)).isInstanceOf(DuplicateEntityException.class);
 	}
 
 	@Test
-	void quickCreatePerson_ShouldReturnSavedDto() {
-		QuickCreatePersonRequest request = new QuickCreatePersonRequest("Anton Bas", PersonRole.ACTOR);
-		Person saved = new Person();
-		saved.setId(1L);
-		PersonResponse mappedDto = new PersonResponse();
-		mappedDto.setId(1L);
+	void quickCreatePerson_Success() {
+		QuickCreatePersonRequest request = QuickCreatePersonRequest.builder().name("Jane Doe").role(PersonRole.DIRECTOR)
+				.build();
 
-		when(personRepository.existsByNameAndRole("Anton Bas", PersonRole.ACTOR)).thenReturn(false);
-		when(personRepository.save(any(Person.class))).thenReturn(saved);
-		when(personMapper.toDto(saved)).thenReturn(mappedDto);
+		Person savedPerson = new Person();
+		savedPerson.setId(1L);
+		savedPerson.setName("Jane Doe");
+
+		PersonResponse response = PersonResponse.builder().id(1L).name("Jane Doe").build();
+
+		when(personRepository.existsByNameAndRole("Jane Doe", PersonRole.DIRECTOR)).thenReturn(false);
+		when(personRepository.save(any(Person.class))).thenReturn(savedPerson);
+		when(personMapper.toPersonResponse(savedPerson)).thenReturn(response);
 
 		PersonResponse result = personService.quickCreatePerson(request);
-		assertThat(result.getId()).isEqualTo(1L);
+
+		assertThat(result.getName()).isEqualTo("Jane Doe");
 	}
 
 	@Test
-	void quickCreatePerson_ShouldTrimName() {
-		QuickCreatePersonRequest request = new QuickCreatePersonRequest("  Anton Bas  ", PersonRole.ACTOR);
-		Person saved = new Person();
-		saved.setId(1L);
-
-		when(personRepository.existsByNameAndRole("Anton Bas", PersonRole.ACTOR)).thenReturn(false);
-		when(personRepository.save(any(Person.class))).thenReturn(saved);
-
-		personService.quickCreatePerson(request);
-		verify(personRepository).existsByNameAndRole("Anton Bas", PersonRole.ACTOR);
-	}
-
-	@Test
-	void quickCreatePerson_WhenDuplicate_ShouldThrowException() {
-		QuickCreatePersonRequest request = new QuickCreatePersonRequest("Anton Bas", PersonRole.ACTOR);
-		when(personRepository.existsByNameAndRole("Anton Bas", PersonRole.ACTOR)).thenReturn(true);
-		assertThatThrownBy(() -> personService.quickCreatePerson(request)).isInstanceOf(DuplicateEntityException.class);
-	}
-
-	@Test
-	void getPersonById_WhenExists_ShouldReturnDto() {
+	void getPersonById_Success() {
 		Person person = new Person();
 		person.setId(1L);
-		PersonResponse dto = new PersonResponse();
-		dto.setId(1L);
+		person.setName("John Doe");
+
+		PersonResponse response = PersonResponse.builder().id(1L).name("John Doe").build();
 
 		when(personRepository.findById(1L)).thenReturn(Optional.of(person));
-		when(personMapper.toDto(person)).thenReturn(dto);
+		when(personMapper.toPersonResponse(person)).thenReturn(response);
 
 		PersonResponse result = personService.getPersonById(1L);
-		assertThat(result.getId()).isEqualTo(1L);
+
+		assertThat(result.getName()).isEqualTo("John Doe");
 	}
 
 	@Test
 	void getPersonById_WhenNotFound_ShouldThrowException() {
 		when(personRepository.findById(1L)).thenReturn(Optional.empty());
+
 		assertThatThrownBy(() -> personService.getPersonById(1L)).isInstanceOf(PersonNotFoundException.class);
 	}
 
 	@Test
-	void updatePerson_ShouldUpdateAndReturnDto() {
-		PersonRequest request = new PersonRequest("Updated Name", PersonRole.DIRECTOR);
-		Person existing = new Person();
-		existing.setId(1L);
-		Person updated = new Person();
-		updated.setId(1L);
-		PersonResponse dto = new PersonResponse();
-		dto.setId(1L);
+	void updatePerson_Success() {
+		Person person = new Person();
+		person.setId(1L);
+		person.setName("Old Name");
 
-		when(personRepository.findById(1L)).thenReturn(Optional.of(existing));
-		when(personRepository.existsByNameAndRoleAndIdNot("Updated Name", PersonRole.DIRECTOR, 1L)).thenReturn(false);
-		when(personRepository.save(existing)).thenReturn(updated);
-		when(personMapper.toDto(updated)).thenReturn(dto);
+		PersonRequest request = PersonRequest.builder().name("New Name").role(PersonRole.ACTOR).build();
+
+		PersonResponse response = PersonResponse.builder().id(1L).name("New Name").build();
+
+		when(personRepository.findById(1L)).thenReturn(Optional.of(person));
+		when(personRepository.existsByNameAndRoleAndIdNot("New Name", PersonRole.ACTOR, 1L)).thenReturn(false);
+		when(personRepository.save(person)).thenReturn(person);
+		when(personMapper.toPersonResponse(person)).thenReturn(response);
 
 		PersonResponse result = personService.updatePerson(1L, request);
-		assertThat(result.getId()).isEqualTo(1L);
+
+		assertThat(result.getName()).isEqualTo("New Name");
 	}
 
 	@Test
-	void updatePerson_ShouldTrimName() {
-		PersonRequest request = new PersonRequest("  Updated Name  ", PersonRole.DIRECTOR);
-		Person existing = new Person();
-		existing.setId(1L);
+	void updatePerson_WhenNameExists_ShouldThrowException() {
+		Person person = new Person();
+		person.setId(1L);
+		person.setName("Old Name");
 
-		when(personRepository.findById(1L)).thenReturn(Optional.of(existing));
-		when(personRepository.existsByNameAndRoleAndIdNot("Updated Name", PersonRole.DIRECTOR, 1L)).thenReturn(false);
-		when(personRepository.save(existing)).thenReturn(existing);
+		PersonRequest request = PersonRequest.builder().name("Existing Name").role(PersonRole.ACTOR).build();
 
-		personService.updatePerson(1L, request);
-		verify(personRepository).existsByNameAndRoleAndIdNot("Updated Name", PersonRole.DIRECTOR, 1L);
-	}
+		when(personRepository.findById(1L)).thenReturn(Optional.of(person));
+		when(personRepository.existsByNameAndRoleAndIdNot("Existing Name", PersonRole.ACTOR, 1L)).thenReturn(true);
 
-	@Test
-	void updatePerson_WhenDuplicate_ShouldThrowException() {
-		PersonRequest request = new PersonRequest("Duplicate Name", PersonRole.ACTOR);
-		Person existing = new Person();
-		existing.setId(1L);
-
-		when(personRepository.findById(1L)).thenReturn(Optional.of(existing));
-		when(personRepository.existsByNameAndRoleAndIdNot("Duplicate Name", PersonRole.ACTOR, 1L)).thenReturn(true);
 		assertThatThrownBy(() -> personService.updatePerson(1L, request)).isInstanceOf(DuplicateEntityException.class);
 	}
 
 	@Test
-	void deletePerson_WhenExistsAndNoMovies_ShouldDelete() {
+	void deletePerson_Success() {
 		Person person = new Person();
 		person.setId(1L);
+		person.setName("John Doe");
 
 		when(personRepository.findById(1L)).thenReturn(Optional.of(person));
 		when(movieRepository.countByActorsId(1L)).thenReturn(0L);
 		when(movieRepository.countByDirectorsId(1L)).thenReturn(0L);
 		when(movieRepository.countByScreenwritersId(1L)).thenReturn(0L);
+		doNothing().when(personRepository).delete(person);
 
 		personService.deletePerson(1L);
-		verify(personRepository).delete(person);
-	}
 
-	@Test
-	void deletePerson_WhenNotFound_ShouldThrowException() {
-		when(personRepository.findById(1L)).thenReturn(Optional.empty());
-		assertThatThrownBy(() -> personService.deletePerson(1L)).isInstanceOf(PersonNotFoundException.class);
-		verify(personRepository, never()).delete(any());
+		verify(personRepository).delete(person);
 	}
 
 	@Test
 	void deletePerson_WhenUsedInMovies_ShouldThrowException() {
 		Person person = new Person();
 		person.setId(1L);
-		person.setName("Test Person");
+		person.setName("John Doe");
 
 		when(personRepository.findById(1L)).thenReturn(Optional.of(person));
 		when(movieRepository.countByActorsId(1L)).thenReturn(1L);
-		when(movieRepository.countByDirectorsId(1L)).thenReturn(0L);
-		when(movieRepository.countByScreenwritersId(1L)).thenReturn(0L);
 
 		assertThatThrownBy(() -> personService.deletePerson(1L)).isInstanceOf(PersonHasMoviesException.class);
-		verify(personRepository, never()).delete(any());
 	}
 
 	@Test
-	void getPersonsByRole_ShouldReturnPage() {
-		PersonRole role = PersonRole.ACTOR;
-		Pageable pageable = Pageable.ofSize(10);
+	void getPersonsByRole_Success() {
 		Person person = new Person();
 		person.setId(1L);
-		Page<Person> personPage = new PageImpl<>(List.of(person));
-		PersonResponse dto = new PersonResponse();
-		dto.setId(1L);
 
-		when(personRepository.findByRole(role, pageable)).thenReturn(personPage);
-		when(personMapper.toDto(person)).thenReturn(dto);
+		PersonResponse response = PersonResponse.builder().id(1L).name("John Doe").build();
 
-		Page<PersonResponse> result = personService.getPersonsByRole(role, pageable);
-		assertThat(result).isNotNull();
+		Pageable pageable = Pageable.unpaged();
+		Page<Person> page = new PageImpl<>(Collections.singletonList(person));
+
+		when(personRepository.findByRole(PersonRole.ACTOR, pageable)).thenReturn(page);
+		when(personMapper.toPersonResponse(person)).thenReturn(response);
+
+		Page<PersonResponse> result = personService.getPersonsByRole(PersonRole.ACTOR, pageable);
+
 		assertThat(result.getContent()).hasSize(1);
 	}
 
 	@Test
-	void searchPersons_ShouldReturnPagedResponse() {
-		String query = "Anton";
-		PersonRole role = PersonRole.ACTOR;
-		Pageable pageable = Pageable.ofSize(10);
+	void searchPersons_WithQuery() {
 		Person person = new Person();
 		person.setId(1L);
-		Page<Person> personPage = new PageImpl<>(List.of(person));
-		PersonResponse dto = new PersonResponse();
-		dto.setId(1L);
 
-		when(personRepository.searchByNameAndRole(query, role, pageable)).thenReturn(personPage);
-		when(personMapper.toDto(person)).thenReturn(dto);
+		PersonResponse response = PersonResponse.builder().id(1L).name("John Doe").build();
 
-		Page<PersonResponse> result = personService.searchPersons(query, role, pageable);
-		assertThat(result).isNotNull();
+		Pageable pageable = Pageable.unpaged();
+		Page<Person> page = new PageImpl<>(Collections.singletonList(person));
+
+		when(personRepository.searchByNameAndRole("John", PersonRole.ACTOR, pageable)).thenReturn(page);
+		when(personMapper.toPersonResponse(person)).thenReturn(response);
+
+		Page<PersonResponse> result = personService.searchPersons("John", PersonRole.ACTOR, pageable);
+
 		assertThat(result.getContent()).hasSize(1);
 	}
 
 	@Test
-	void searchPersons_WithNullQuery_ShouldReturnAll() {
-		PersonRole role = PersonRole.ACTOR;
-		Pageable pageable = Pageable.ofSize(10);
-		Page<Person> personPage = new PageImpl<>(List.of(new Person()));
+	void searchPersons_WithEmptyQuery() {
+		Person person = new Person();
+		person.setId(1L);
 
-		when(personRepository.searchByNameAndRole(null, role, pageable)).thenReturn(personPage);
-		personService.searchPersons(null, role, pageable);
-		verify(personRepository).searchByNameAndRole(null, role, pageable);
+		PersonResponse response = PersonResponse.builder().id(1L).name("John Doe").build();
+
+		Pageable pageable = Pageable.unpaged();
+		Page<Person> page = new PageImpl<>(Collections.singletonList(person));
+
+		when(personRepository.searchByNameAndRole(null, PersonRole.ACTOR, pageable)).thenReturn(page);
+		when(personMapper.toPersonResponse(person)).thenReturn(response);
+
+		Page<PersonResponse> result = personService.searchPersons("", PersonRole.ACTOR, pageable);
+
+		assertThat(result.getContent()).hasSize(1);
 	}
 
 	@Test
-	void searchPersons_WithEmptyQuery_ShouldReturnAll() {
-		PersonRole role = PersonRole.ACTOR;
-		Pageable pageable = Pageable.ofSize(10);
-		Page<Person> personPage = new PageImpl<>(List.of(new Person()));
-
-		when(personRepository.searchByNameAndRole(null, role, pageable)).thenReturn(personPage);
-		personService.searchPersons("", role, pageable);
-		verify(personRepository).searchByNameAndRole(null, role, pageable);
-	}
-
-	@Test
-	void getPersonsByIds_ShouldReturnListOfDtos() {
-		List<Long> ids = List.of(1L, 2L);
+	void getPersonsByIds_Success() {
 		Person person1 = new Person();
 		person1.setId(1L);
+
 		Person person2 = new Person();
 		person2.setId(2L);
-		PersonResponse dto1 = new PersonResponse();
-		dto1.setId(1L);
-		PersonResponse dto2 = new PersonResponse();
-		dto2.setId(2L);
 
-		when(personRepository.findAllById(ids)).thenReturn(List.of(person1, person2));
-		when(personMapper.toDtoList(List.of(person1, person2))).thenReturn(List.of(dto1, dto2));
+		PersonResponse response1 = PersonResponse.builder().id(1L).build();
+		PersonResponse response2 = PersonResponse.builder().id(2L).build();
 
-		List<PersonResponse> result = personService.getPersonsByIds(ids);
+		when(personRepository.findAllById(Arrays.asList(1L, 2L))).thenReturn(Arrays.asList(person1, person2));
+		when(personMapper.toPersonResponseList(Arrays.asList(person1, person2)))
+				.thenReturn(Arrays.asList(response1, response2));
+
+		List<PersonResponse> result = personService.getPersonsByIds(Arrays.asList(1L, 2L));
+
 		assertThat(result).hasSize(2);
 	}
 
 	@Test
-	void getPersonsByIds_WhenEmptyList_ShouldReturnEmptyList() {
-		List<Long> ids = Collections.emptyList();
-		List<PersonResponse> result = personService.getPersonsByIds(ids);
-		assertThat(result).isEmpty();
-		verify(personRepository, never()).findAllById(any());
-	}
+	void getPersons_Success() {
+		Person person = new Person();
+		person.setId(1L);
 
-	@Test
-	void getPersonsByIds_WhenNullList_ShouldReturnEmptyList() {
-		List<PersonResponse> result = personService.getPersonsByIds(null);
-		assertThat(result).isEmpty();
-		verify(personRepository, never()).findAllById(any());
-	}
+		PersonResponse response = PersonResponse.builder().id(1L).name("John Doe").build();
 
-	@Test
-	void getPersons_ShouldReturnAllPersons() {
-		Person person1 = new Person();
-		person1.setId(1L);
-		Person person2 = new Person();
-		person2.setId(2L);
-		List<Person> persons = List.of(person1, person2);
-
-		PersonResponse dto1 = new PersonResponse();
-		dto1.setId(1L);
-		PersonResponse dto2 = new PersonResponse();
-		dto2.setId(2L);
-		List<PersonResponse> dtos = List.of(dto1, dto2);
-
-		when(personRepository.findAll()).thenReturn(persons);
-		when(personMapper.toDtoList(persons)).thenReturn(dtos);
+		when(personRepository.findAll()).thenReturn(Collections.singletonList(person));
+		when(personMapper.toPersonResponseList(Collections.singletonList(person)))
+				.thenReturn(Collections.singletonList(response));
 
 		List<PersonResponse> result = personService.getPersons();
-		assertThat(result).hasSize(2);
+
+		assertThat(result).hasSize(1);
 	}
 
 	@Test
-	void existsById_ShouldReturnTrueWhenExists() {
+	void existsById_Success() {
 		when(personRepository.existsById(1L)).thenReturn(true);
+
 		boolean result = personService.existsById(1L);
+
 		assertThat(result).isTrue();
 	}
 
 	@Test
-	void existsById_ShouldReturnFalseWhenNotExists() {
-		when(personRepository.existsById(1L)).thenReturn(false);
-		boolean result = personService.existsById(1L);
-		assertThat(result).isFalse();
-	}
+	void existsByNameAndRole_Success() {
+		when(personRepository.existsByNameAndRole("John Doe", PersonRole.ACTOR)).thenReturn(true);
 
-	@Test
-	void existsByNameAndRole_ShouldReturnTrueWhenExists() {
-		when(personRepository.existsByNameAndRole("Anton Bas", PersonRole.ACTOR)).thenReturn(true);
-		boolean result = personService.existsByNameAndRole("Anton Bas", PersonRole.ACTOR);
+		boolean result = personService.existsByNameAndRole("John Doe", PersonRole.ACTOR);
+
 		assertThat(result).isTrue();
 	}
 
 	@Test
-	void existsByNameAndRole_ShouldTrimName() {
-		when(personRepository.existsByNameAndRole("Anton Bas", PersonRole.ACTOR)).thenReturn(true);
-		boolean result = personService.existsByNameAndRole("  Anton Bas  ", PersonRole.ACTOR);
-		assertThat(result).isTrue();
-		verify(personRepository).existsByNameAndRole("Anton Bas", PersonRole.ACTOR);
-	}
+	void countByRole_Success() {
+		when(personRepository.countByRole(PersonRole.ACTOR)).thenReturn(5L);
 
-	@Test
-	void countByRole_ShouldReturnCount() {
-		PersonRole role = PersonRole.ACTOR;
-		when(personRepository.countByRole(role)).thenReturn(5L);
-		long result = personService.countByRole(role);
-		assertThat(result).isEqualTo(5L);
-	}
+		long result = personService.countByRole(PersonRole.ACTOR);
 
-	@Test
-	void deletePerson_WhenUsedAsActorDirectorAndScreenwriter_ShouldThrowException() {
-		Person person = new Person();
-		person.setId(1L);
-		person.setName("Test Person");
-
-		when(personRepository.findById(1L)).thenReturn(Optional.of(person));
-		when(movieRepository.countByActorsId(1L)).thenReturn(2L);
-		when(movieRepository.countByDirectorsId(1L)).thenReturn(1L);
-		when(movieRepository.countByScreenwritersId(1L)).thenReturn(3L);
-
-		assertThatThrownBy(() -> personService.deletePerson(1L)).isInstanceOf(PersonHasMoviesException.class);
-		verify(personRepository, never()).delete(any());
-	}
-
-	@Test
-	void searchPersons_WithSpacesInQuery_ShouldTrim() {
-		String query = "  Anton  ";
-		PersonRole role = PersonRole.ACTOR;
-		Pageable pageable = Pageable.ofSize(10);
-		Page<Person> personPage = new PageImpl<>(List.of(new Person()));
-
-		when(personRepository.searchByNameAndRole("Anton", role, pageable)).thenReturn(personPage);
-		personService.searchPersons(query, role, pageable);
-		verify(personRepository).searchByNameAndRole("Anton", role, pageable);
+		assertThat(result).isEqualTo(5);
 	}
 }

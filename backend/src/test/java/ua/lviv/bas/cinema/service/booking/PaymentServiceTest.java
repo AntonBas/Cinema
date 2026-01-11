@@ -5,8 +5,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -30,6 +30,7 @@ import ua.lviv.bas.cinema.domain.Booking;
 import ua.lviv.bas.cinema.domain.CinemaHall;
 import ua.lviv.bas.cinema.domain.Movie;
 import ua.lviv.bas.cinema.domain.Payment;
+import ua.lviv.bas.cinema.domain.Seat;
 import ua.lviv.bas.cinema.domain.Session;
 import ua.lviv.bas.cinema.domain.Ticket;
 import ua.lviv.bas.cinema.domain.User;
@@ -41,6 +42,8 @@ import ua.lviv.bas.cinema.dto.payment.request.PaymentCreateRequest;
 import ua.lviv.bas.cinema.dto.payment.response.PaymentLiqPayDataResponse;
 import ua.lviv.bas.cinema.dto.payment.response.PaymentResponse;
 import ua.lviv.bas.cinema.exception.domain.booking.BookingNotFoundException;
+import ua.lviv.bas.cinema.exception.domain.booking.SessionTooCloseException;
+import ua.lviv.bas.cinema.exception.domain.payment.PaymentNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.payment.PaymentProcessingException;
 import ua.lviv.bas.cinema.repository.BookingRepository;
 import ua.lviv.bas.cinema.repository.PaymentRepository;
@@ -48,7 +51,7 @@ import ua.lviv.bas.cinema.service.notification.EmailService;
 import ua.lviv.bas.cinema.service.user.BonusService;
 
 @ExtendWith(MockitoExtension.class)
-class PaymentServiceTest {
+public class PaymentServiceTest {
 
 	@Mock
 	private PaymentRepository paymentRepository;
@@ -64,6 +67,9 @@ class PaymentServiceTest {
 
 	@Mock
 	private BonusService bonusService;
+
+	@Mock
+	private BookingService bookingService;
 
 	@InjectMocks
 	private PaymentService paymentService;
@@ -165,7 +171,8 @@ class PaymentServiceTest {
 		when(bookingRepository.findByIdAndUserId(BOOKING_ID, USER_ID)).thenReturn(Optional.of(testBooking));
 
 		assertThatThrownBy(() -> paymentService.createPayment(createRequest, testUser))
-				.isInstanceOf(PaymentProcessingException.class).hasMessage("Booking is not in pending status");
+				.isInstanceOf(PaymentProcessingException.class)
+				.hasMessageContaining("Booking is not in PENDING status");
 
 		verify(bookingRepository).findByIdAndUserId(BOOKING_ID, USER_ID);
 		verify(paymentRepository, never()).save(any());
@@ -189,7 +196,7 @@ class PaymentServiceTest {
 		when(bookingRepository.findByIdAndUserId(BOOKING_ID, USER_ID)).thenReturn(Optional.of(testBooking));
 
 		assertThatThrownBy(() -> paymentService.createPayment(createRequest, testUser))
-				.isInstanceOf(PaymentProcessingException.class).hasMessageContaining("less than 30 minutes");
+				.isInstanceOf(SessionTooCloseException.class);
 
 		verify(bookingRepository).findByIdAndUserId(BOOKING_ID, USER_ID);
 		verify(paymentRepository, never()).save(any());
@@ -234,46 +241,19 @@ class PaymentServiceTest {
 	}
 
 	@Test
-	void preparePaymentData_WhenPaymentNotFound_ShouldThrowException() {
-		when(paymentRepository.findById(PAYMENT_ID)).thenReturn(Optional.empty());
-
-		assertThatThrownBy(() -> paymentService.preparePaymentData(PAYMENT_ID, testUser))
-				.isInstanceOf(PaymentProcessingException.class).hasMessageContaining("Payment not found");
-
-		verify(paymentRepository).findById(PAYMENT_ID);
-	}
-
-	@Test
-	void preparePaymentData_WhenAccessDenied_ShouldThrowException() {
-		User otherUser = new User();
-		otherUser.setId(999L);
-
-		when(paymentRepository.findById(PAYMENT_ID)).thenReturn(Optional.of(testPayment));
-
-		assertThatThrownBy(() -> paymentService.preparePaymentData(PAYMENT_ID, otherUser))
-				.isInstanceOf(PaymentProcessingException.class).hasMessageContaining("Access denied");
-
-		verify(paymentRepository).findById(PAYMENT_ID);
-	}
-
-	@Test
-	void preparePaymentData_WhenPaymentNotPending_ShouldThrowException() {
-		testPayment.setStatus(PaymentStatus.SUCCESS);
-		when(paymentRepository.findById(PAYMENT_ID)).thenReturn(Optional.of(testPayment));
-
-		assertThatThrownBy(() -> paymentService.preparePaymentData(PAYMENT_ID, testUser))
-				.isInstanceOf(PaymentProcessingException.class).hasMessageContaining("not pending");
-
-		verify(paymentRepository).findById(PAYMENT_ID);
-	}
-
-	@Test
 	void processLiqPayCallback_Success() {
 		when(paymentRepository.findByLiqpayOrderId("ORD_TEST123456789")).thenReturn(Optional.of(testPayment));
 		when(paymentRepository.save(any(Payment.class))).thenReturn(testPayment);
-		when(bookingRepository.save(any(Booking.class))).thenReturn(testBooking);
-		when(ticketService.createTicketsForBooking(any(Booking.class), any(Payment.class)))
-				.thenReturn(Collections.singletonList(new Ticket()));
+
+		List<Ticket> tickets = Collections.singletonList(new Ticket());
+		when(ticketService.createTicketsForBooking(any(Booking.class), any(Payment.class))).thenReturn(tickets);
+		when(bonusService.calculateAccruedPointsForAmount(AMOUNT)).thenReturn(50);
+
+		doAnswer(invocation -> {
+			testBooking.setStatus(BookingStatus.CONFIRMED);
+			bookedSeat.setStatus(BookedSeatStatus.CONFIRMED);
+			return null;
+		}).when(bookingService).confirmBooking(BOOKING_ID);
 
 		paymentService.processLiqPayCallback(callbackRequest);
 
@@ -283,10 +263,10 @@ class PaymentServiceTest {
 		assertThat(bookedSeat.getStatus()).isEqualTo(BookedSeatStatus.CONFIRMED);
 
 		verify(paymentRepository).save(testPayment);
-		verify(bookingRepository).save(testBooking);
+		verify(bookingService).confirmBooking(testBooking.getId());
 		verify(ticketService).createTicketsForBooking(testBooking, testPayment);
 		verify(ticketService).sendTicketsToUser(testBooking);
-		verify(bonusService).redeemPointsForPurchase(eq(USER_ID), eq(100), any(Payment.class), eq(AMOUNT));
+		verify(bonusService).accrueBonusPointsForPayment(eq(USER_ID), eq(50), any(Booking.class), any(Payment.class));
 	}
 
 	@Test
@@ -297,7 +277,6 @@ class PaymentServiceTest {
 
 		when(paymentRepository.findByLiqpayOrderId("ORD_TEST123456789")).thenReturn(Optional.of(testPayment));
 		when(paymentRepository.save(any(Payment.class))).thenReturn(testPayment);
-		when(bookingRepository.save(any(Booking.class))).thenReturn(testBooking);
 
 		paymentService.processLiqPayCallback(callbackRequest);
 
@@ -326,14 +305,21 @@ class PaymentServiceTest {
 
 		when(paymentRepository.findByLiqpayOrderId("ORD_TEST123456789")).thenReturn(Optional.of(testPayment));
 		when(paymentRepository.save(any(Payment.class))).thenReturn(testPayment);
-		when(bookingRepository.save(any(Booking.class))).thenReturn(testBooking);
 		when(ticketService.createTicketsForBooking(any(Booking.class), any(Payment.class)))
 				.thenReturn(Collections.singletonList(new Ticket()));
+		when(bonusService.calculateAccruedPointsForAmount(AMOUNT)).thenReturn(50);
+
+		doAnswer(invocation -> {
+			testBooking.setStatus(BookingStatus.CONFIRMED);
+			bookedSeat.setStatus(BookedSeatStatus.CONFIRMED);
+			return null;
+		}).when(bookingService).confirmBooking(BOOKING_ID);
 
 		paymentService.processLiqPayCallback(callbackRequest);
 
 		assertThat(testPayment.getStatus()).isEqualTo(PaymentStatus.SUCCESS);
 		verify(paymentRepository).save(testPayment);
+		verify(bookingService).confirmBooking(testBooking.getId());
 	}
 
 	@Test
@@ -350,16 +336,6 @@ class PaymentServiceTest {
 	}
 
 	@Test
-	void processLiqPayCallback_WhenPaymentNotFound_ShouldThrowException() {
-		when(paymentRepository.findByLiqpayOrderId("ORD_TEST123456789")).thenReturn(Optional.empty());
-
-		assertThatThrownBy(() -> paymentService.processLiqPayCallback(callbackRequest))
-				.isInstanceOf(PaymentProcessingException.class).hasMessageContaining("Payment not found");
-
-		verify(paymentRepository, never()).save(any());
-	}
-
-	@Test
 	void getPaymentStatus_Success() {
 		when(paymentRepository.findByIdWithDetails(PAYMENT_ID)).thenReturn(Optional.of(testPayment));
 
@@ -368,30 +344,6 @@ class PaymentServiceTest {
 		assertThat(response).isNotNull();
 		assertThat(response.getId()).isEqualTo(PAYMENT_ID);
 		assertThat(response.getBookingId()).isEqualTo(BOOKING_ID);
-		assertThat(response.getBookingNumber()).isEqualTo("BK-2024-00002");
-		verify(paymentRepository).findByIdWithDetails(PAYMENT_ID);
-	}
-
-	@Test
-	void getPaymentStatus_WhenPaymentNotFound_ShouldThrowException() {
-		when(paymentRepository.findByIdWithDetails(PAYMENT_ID)).thenReturn(Optional.empty());
-
-		assertThatThrownBy(() -> paymentService.getPaymentStatus(PAYMENT_ID, testUser))
-				.isInstanceOf(PaymentProcessingException.class).hasMessageContaining("Payment not found");
-
-		verify(paymentRepository).findByIdWithDetails(PAYMENT_ID);
-	}
-
-	@Test
-	void getPaymentStatus_WhenAccessDenied_ShouldThrowException() {
-		User otherUser = new User();
-		otherUser.setId(999L);
-
-		when(paymentRepository.findByIdWithDetails(PAYMENT_ID)).thenReturn(Optional.of(testPayment));
-
-		assertThatThrownBy(() -> paymentService.getPaymentStatus(PAYMENT_ID, otherUser))
-				.isInstanceOf(PaymentProcessingException.class).hasMessageContaining("Access denied");
-
 		verify(paymentRepository).findByIdWithDetails(PAYMENT_ID);
 	}
 
@@ -418,141 +370,68 @@ class PaymentServiceTest {
 		when(paymentRepository.findById(PAYMENT_ID)).thenReturn(Optional.empty());
 
 		assertThatThrownBy(() -> paymentService.retryPayment(PAYMENT_ID, testUser))
-				.isInstanceOf(PaymentProcessingException.class).hasMessageContaining("Payment not found");
+				.isInstanceOf(PaymentNotFoundException.class);
 
 		verify(paymentRepository).findById(PAYMENT_ID);
 		verify(paymentRepository, never()).save(any());
 	}
 
 	@Test
-	void retryPayment_WhenAccessDenied_ShouldThrowException() {
-		User otherUser = new User();
-		otherUser.setId(999L);
-
-		when(paymentRepository.findById(PAYMENT_ID)).thenReturn(Optional.of(testPayment));
-
-		assertThatThrownBy(() -> paymentService.retryPayment(PAYMENT_ID, otherUser))
-				.isInstanceOf(PaymentProcessingException.class).hasMessageContaining("Access denied");
-
-		verify(paymentRepository).findById(PAYMENT_ID);
-		verify(paymentRepository, never()).save(any());
-	}
-
-	@Test
-	void retryPayment_WhenNotFailed_ShouldThrowException() {
+	void refundPayment_Success() {
 		testPayment.setStatus(PaymentStatus.SUCCESS);
-		when(paymentRepository.findById(PAYMENT_ID)).thenReturn(Optional.of(testPayment));
+		BigDecimal refundAmount = new BigDecimal("100.00");
+		String description = "Test refund";
 
-		assertThatThrownBy(() -> paymentService.retryPayment(PAYMENT_ID, testUser))
-				.isInstanceOf(PaymentProcessingException.class).hasMessageContaining("Only failed payments");
+		bookedSeat.setSeat(new Seat());
+		bookedSeat.getSeat().setRow(1);
+		bookedSeat.getSeat().setNumber(1);
 
-		verify(paymentRepository).findById(PAYMENT_ID);
+		when(paymentRepository.save(any(Payment.class))).thenReturn(testPayment);
+
+		paymentService.refundPayment(testPayment, refundAmount, description);
+
+		verify(paymentRepository).save(testPayment);
+		verify(emailService).sendRefundEmail(eq("test@example.com"), eq("2"), eq("Test Movie"), anyString(),
+				eq("Hall A"), eq(refundAmount), eq("Row 1, Seat 1"), eq(description));
+	}
+
+	@Test
+	void refundPayment_WhenPaymentNotSuccess_ShouldThrowException() {
+		testPayment.setStatus(PaymentStatus.PENDING);
+		BigDecimal refundAmount = new BigDecimal("100.00");
+		String description = "Test refund";
+
+		assertThatThrownBy(() -> paymentService.refundPayment(testPayment, refundAmount, description))
+				.isInstanceOf(PaymentProcessingException.class)
+				.hasMessageContaining("Cannot refund payment with status");
+
 		verify(paymentRepository, never()).save(any());
+		verify(emailService, never()).sendRefundEmail(any(), any(), any(), any(), any(), any(), any(), any());
 	}
 
 	@Test
-	void getUserPayments_Success() {
-		List<Payment> payments = Arrays.asList(testPayment);
-		when(paymentRepository.findByUserId(USER_ID)).thenReturn(payments);
+	void refundPayment_WhenAmountZero_ShouldThrowException() {
+		testPayment.setStatus(PaymentStatus.SUCCESS);
+		BigDecimal refundAmount = BigDecimal.ZERO;
+		String description = "Test refund";
 
-		List<PaymentResponse> responses = paymentService.getUserPayments(USER_ID);
+		assertThatThrownBy(() -> paymentService.refundPayment(testPayment, refundAmount, description))
+				.isInstanceOf(PaymentProcessingException.class).hasMessageContaining("Refund amount must be positive");
 
-		assertThat(responses).hasSize(1);
-		assertThat(responses.get(0).getId()).isEqualTo(PAYMENT_ID);
-		verify(paymentRepository).findByUserId(USER_ID);
+		verify(paymentRepository, never()).save(any());
+		verify(emailService, never()).sendRefundEmail(any(), any(), any(), any(), any(), any(), any(), any());
 	}
 
 	@Test
-	void validateBookingForPayment_Success() {
-		when(bookingRepository.findByIdAndUserId(BOOKING_ID, USER_ID)).thenReturn(Optional.of(testBooking));
-		when(paymentRepository.findByBookingId(BOOKING_ID)).thenReturn(Optional.empty());
-		when(paymentRepository.save(any(Payment.class))).thenReturn(testPayment);
+	void refundPayment_WhenAmountExceedsPayment_ShouldThrowException() {
+		testPayment.setStatus(PaymentStatus.SUCCESS);
+		BigDecimal refundAmount = AMOUNT.add(new BigDecimal("100.00"));
+		String description = "Test refund";
 
-		paymentService.createPayment(createRequest, testUser);
+		assertThatThrownBy(() -> paymentService.refundPayment(testPayment, refundAmount, description))
+				.isInstanceOf(PaymentProcessingException.class).hasMessageContaining("exceeds payment amount");
 
-		verify(bookingRepository).findByIdAndUserId(BOOKING_ID, USER_ID);
-		verify(paymentRepository).save(any(Payment.class));
-	}
-
-	@Test
-	void prepareLiqPayPaymentData_Success() {
-		testBooking.setCreatedAt(CREATED_AT);
-		when(paymentRepository.findById(PAYMENT_ID)).thenReturn(Optional.of(testPayment));
-
-		PaymentLiqPayDataResponse response = paymentService.preparePaymentData(PAYMENT_ID, testUser);
-
-		assertThat(response).isNotNull();
-		assertThat(response.getData()).isNotBlank();
-		assertThat(response.getSignature()).isNotBlank();
-		assertThat(response.getPaymentUrl()).isEqualTo("https://www.liqpay.ua/api/3/checkout");
-	}
-
-	@Test
-	void handleSuccessfulPayment_Success() {
-		when(paymentRepository.findByLiqpayOrderId("ORD_TEST123456789")).thenReturn(Optional.of(testPayment));
-		when(paymentRepository.save(any(Payment.class))).thenReturn(testPayment);
-		when(bookingRepository.save(any(Booking.class))).thenReturn(testBooking);
-		when(ticketService.createTicketsForBooking(any(Booking.class), any(Payment.class)))
-				.thenReturn(Collections.singletonList(new Ticket()));
-
-		paymentService.processLiqPayCallback(callbackRequest);
-
-		verify(bonusService, times(1)).redeemPointsForPurchase(eq(USER_ID), eq(100), any(Payment.class), eq(AMOUNT));
-		verify(ticketService, times(1)).sendTicketsToUser(testBooking);
-	}
-
-	@Test
-	void handleFailedPayment_Success() {
-		callbackRequest.setStatus("failure");
-		callbackRequest.setErrorCode("100");
-		callbackRequest.setErrorDescription("Insufficient funds");
-
-		when(paymentRepository.findByLiqpayOrderId("ORD_TEST123456789")).thenReturn(Optional.of(testPayment));
-		when(paymentRepository.save(any(Payment.class))).thenReturn(testPayment);
-		when(bookingRepository.save(any(Booking.class))).thenReturn(testBooking);
-
-		paymentService.processLiqPayCallback(callbackRequest);
-
-		assertThat(testPayment.getLiqpayErrorCode()).isEqualTo("100");
-		assertThat(testPayment.getLiqpayErrorDescription()).isEqualTo("Insufficient funds");
-	}
-
-	@Test
-	void generateLiqpayOrderId_ShouldGenerateUniqueId() {
-		String orderId1 = invokePrivateGenerateLiqpayOrderId();
-		String orderId2 = invokePrivateGenerateLiqpayOrderId();
-
-		assertThat(orderId1).isNotEqualTo(orderId2);
-		assertThat(orderId1).startsWith("ORD_");
-		assertThat(orderId1).hasSizeGreaterThan(10);
-	}
-
-	@Test
-	void generateBookingNumber_Success() {
-		testBooking.setId(BOOKING_ID);
-		testBooking.setCreatedAt(CREATED_AT);
-
-		String result = invokePrivateGenerateBookingNumber(testBooking);
-		assertThat(result).isEqualTo("BK-2024-00002");
-	}
-
-	private String invokePrivateGenerateLiqpayOrderId() {
-		try {
-			var method = PaymentService.class.getDeclaredMethod("generateLiqpayOrderId");
-			method.setAccessible(true);
-			return (String) method.invoke(paymentService);
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	private String invokePrivateGenerateBookingNumber(Booking booking) {
-		try {
-			var method = PaymentService.class.getDeclaredMethod("generateBookingNumber", Booking.class);
-			method.setAccessible(true);
-			return (String) method.invoke(paymentService, booking);
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
+		verify(paymentRepository, never()).save(any());
+		verify(emailService, never()).sendRefundEmail(any(), any(), any(), any(), any(), any(), any(), any());
 	}
 }

@@ -11,6 +11,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
@@ -74,17 +75,17 @@ class AdminUserServiceTest {
 	@BeforeEach
 	void setUp() {
 		testUser = User.builder().id(USER_ID).email(USER_EMAIL).firstName("Anton").lastName("Bas")
-				.phoneNumber(USER_PHONE).dateOfBirth(java.time.LocalDate.of(1990, 1, 1)).password("encodedPassword")
+				.phoneNumber(USER_PHONE).dateOfBirth(LocalDate.of(1990, 1, 1)).password("encodedPassword")
 				.verificationStatus(VerificationStatus.NOT_VERIFIED).city("Kyiv").userRole(UserRole.ROLE_USER)
 				.enabled(true).build();
 
 		adminUser = User.builder().id(ADMIN_ID).email(ADMIN_EMAIL).firstName("Admin").lastName("User")
-				.phoneNumber("+3809876543").dateOfBirth(java.time.LocalDate.of(1985, 5, 15)).password("adminPassword")
+				.phoneNumber("+3809876543").dateOfBirth(LocalDate.of(1985, 5, 15)).password("adminPassword")
 				.verificationStatus(VerificationStatus.VERIFIED).city("Lviv").userRole(UserRole.ROLE_ADMIN)
 				.enabled(true).build();
 
 		anotherAdmin = User.builder().id(ANOTHER_ADMIN_ID).email(ANOTHER_ADMIN_EMAIL).firstName("Another")
-				.lastName("Admin").phoneNumber("+3805555555").dateOfBirth(java.time.LocalDate.of(1980, 3, 10))
+				.lastName("Admin").phoneNumber("+3805555555").dateOfBirth(LocalDate.of(1980, 3, 10))
 				.password("anotherPassword").verificationStatus(VerificationStatus.VERIFIED).city("Odessa")
 				.userRole(UserRole.ROLE_ADMIN).enabled(true).build();
 
@@ -178,16 +179,21 @@ class AdminUserServiceTest {
 		VerificationBirthDateRequest request = new VerificationBirthDateRequest();
 		request.setVerificationStatus(VerificationStatus.VERIFIED);
 
+		UserResponse userResponse = UserResponse.builder().id(USER_ID).email(USER_EMAIL).build();
+
 		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(testUser));
 		when(userRepository.save(testUser)).thenReturn(testUser);
-		when(userMapper.toDto(testUser)).thenReturn(new UserResponse());
+		when(userMapper.toUserResponse(testUser)).thenReturn(userResponse);
 
 		UserResponse result = adminUserService.updateBirthDateVerification(USER_ID, request);
 
 		assertNotNull(result);
+		assertEquals(USER_ID, result.getId());
+		assertEquals(USER_EMAIL, result.getEmail());
 		assertEquals(VerificationStatus.VERIFIED, testUser.getVerificationStatus());
 		assertNotNull(testUser.getVerifiedAt());
 		verify(userRepository).save(testUser);
+		verify(userMapper).toUserResponse(testUser);
 	}
 
 	@Test
@@ -198,16 +204,21 @@ class AdminUserServiceTest {
 		VerificationBirthDateRequest request = new VerificationBirthDateRequest();
 		request.setVerificationStatus(VerificationStatus.NOT_VERIFIED);
 
+		UserResponse userResponse = UserResponse.builder().id(USER_ID).email(USER_EMAIL).build();
+
 		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(testUser));
 		when(userRepository.save(testUser)).thenReturn(testUser);
-		when(userMapper.toDto(testUser)).thenReturn(new UserResponse());
+		when(userMapper.toUserResponse(testUser)).thenReturn(userResponse);
 
 		UserResponse result = adminUserService.updateBirthDateVerification(USER_ID, request);
 
 		assertNotNull(result);
+		assertEquals(USER_ID, result.getId());
+		assertEquals(USER_EMAIL, result.getEmail());
 		assertEquals(VerificationStatus.NOT_VERIFIED, testUser.getVerificationStatus());
 		assertNull(testUser.getVerifiedAt());
 		verify(userRepository).save(testUser);
+		verify(userMapper).toUserResponse(testUser);
 	}
 
 	@Test
@@ -218,15 +229,19 @@ class AdminUserServiceTest {
 		Pageable pageable = Pageable.unpaged();
 		Page<User> userPage = new PageImpl<>(Arrays.asList(testUser));
 
+		AdminUserListResponse adminResponse = AdminUserListResponse.builder().id(USER_ID).email(USER_EMAIL)
+				.firstName("Anton").lastName("Bas").build();
+
 		when(userRepository.findFilteredUsers(search, role, enabled, pageable)).thenReturn(userPage);
-		when(userMapper.toAdminListDto(testUser)).thenReturn(new AdminUserListResponse());
+		when(userMapper.toAdminUserListResponse(testUser)).thenReturn(adminResponse);
 
 		Page<AdminUserListResponse> result = adminUserService.findAllForAdmin(search, role, enabled, pageable);
 
 		assertNotNull(result);
 		assertEquals(1, result.getTotalElements());
+		assertEquals(USER_ID, result.getContent().get(0).getId());
 		verify(userRepository).findFilteredUsers(search, role, enabled, pageable);
-		verify(userMapper).toAdminListDto(testUser);
+		verify(userMapper).toAdminUserListResponse(testUser);
 	}
 
 	@Test
@@ -282,15 +297,19 @@ class AdminUserServiceTest {
 		VerificationBirthDateRequest request = new VerificationBirthDateRequest();
 		request.setVerificationStatus(VerificationStatus.VERIFIED);
 
+		UserResponse userResponse = UserResponse.builder().id(USER_ID).email(USER_EMAIL).build();
+
 		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(testUser));
 		when(userRepository.save(testUser)).thenReturn(testUser);
-		when(userMapper.toDto(testUser)).thenReturn(new UserResponse());
+		when(userMapper.toUserResponse(testUser)).thenReturn(userResponse);
 
 		UserResponse result = adminUserService.updateBirthDateVerification(USER_ID, request);
 
 		assertNotNull(result);
+		assertEquals(USER_ID, result.getId());
 		assertEquals(existingVerifiedAt, testUser.getVerifiedAt());
 		verify(userRepository).save(testUser);
+		verify(userMapper).toUserResponse(testUser);
 	}
 
 	@Test
@@ -360,5 +379,35 @@ class AdminUserServiceTest {
 		assertEquals(UserRole.ROLE_ADMIN, testUser.getUserRole());
 		verify(userRepository).save(testUser);
 		verify(userRepository, never()).countByUserRoleAndEnabledTrue(any());
+	}
+
+	@Test
+	void updateUserRole_WhenPromotingUserToAdmin() {
+		when(securityContext.getAuthentication()).thenReturn(authentication);
+		when(authentication.getName()).thenReturn(ADMIN_EMAIL);
+		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(testUser));
+		when(userRepository.save(testUser)).thenReturn(testUser);
+
+		adminUserService.updateUserRole(USER_ID, UserRole.ROLE_ADMIN);
+
+		assertEquals(UserRole.ROLE_ADMIN, testUser.getUserRole());
+		verify(userRepository).save(testUser);
+		verify(userRepository, never()).countByUserRoleAndEnabledTrue(any());
+	}
+
+	@Test
+	void updateBirthDateVerification_WhenUserNotFound() {
+		Long nonExistentId = 999L;
+		VerificationBirthDateRequest request = new VerificationBirthDateRequest();
+		request.setVerificationStatus(VerificationStatus.VERIFIED);
+
+		when(userRepository.findById(nonExistentId)).thenReturn(Optional.empty());
+
+		assertThrows(UserNotFoundException.class,
+				() -> adminUserService.updateBirthDateVerification(nonExistentId, request));
+
+		verify(userRepository).findById(nonExistentId);
+		verify(userRepository, never()).save(any());
+		verify(userMapper, never()).toUserResponse(any());
 	}
 }

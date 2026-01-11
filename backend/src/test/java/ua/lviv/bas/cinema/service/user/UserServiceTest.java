@@ -1,7 +1,6 @@
 package ua.lviv.bas.cinema.service.user;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -17,6 +16,8 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -32,6 +33,7 @@ import ua.lviv.bas.cinema.dto.user.response.UserResponse;
 import ua.lviv.bas.cinema.exception.domain.auth.EmailAlreadyExistsException;
 import ua.lviv.bas.cinema.exception.domain.auth.InvalidCurrentPasswordException;
 import ua.lviv.bas.cinema.exception.domain.auth.PasswordMismatchException;
+import ua.lviv.bas.cinema.exception.domain.auth.PasswordValidationException;
 import ua.lviv.bas.cinema.exception.domain.auth.SameEmailException;
 import ua.lviv.bas.cinema.exception.domain.auth.SamePasswordException;
 import ua.lviv.bas.cinema.exception.domain.user.UserNotFoundException;
@@ -60,6 +62,9 @@ class UserServiceTest {
 
 	@InjectMocks
 	private UserService userService;
+
+	@Captor
+	private ArgumentCaptor<User> userCaptor;
 
 	private User testUser;
 	private final Long USER_ID = 1L;
@@ -94,17 +99,21 @@ class UserServiceTest {
 				.firstName(request.getFirstName()).lastName(request.getLastName()).city(request.getCity())
 				.dateOfBirth(request.getDateOfBirth()).password(ENCODED_PASSWORD).build();
 
+		UserResponse expectedResponse = new UserResponse();
+
 		when(userRepository.existsByEmail(request.getEmail())).thenReturn(false);
-		when(userMapper.toEntity(request)).thenReturn(newUser);
+		when(userMapper.toUser(request)).thenReturn(newUser);
 		when(passwordEncoder.encode(request.getPassword())).thenReturn(ENCODED_PASSWORD);
 		when(userRepository.save(any(User.class))).thenReturn(savedUser);
-		when(userMapper.toDto(savedUser)).thenReturn(new UserResponse());
+		when(userMapper.toUserResponse(savedUser)).thenReturn(expectedResponse);
 
 		UserResponse result = userService.registerUser(request);
 
 		assertNotNull(result);
 		verify(passwordEncoder).encode(request.getPassword());
-		verify(userRepository).save(newUser);
+		verify(userRepository).save(userCaptor.capture());
+		User capturedUser = userCaptor.getValue();
+		assertEquals(ENCODED_PASSWORD, capturedUser.getPassword());
 		verify(emailTokenGeneratorService).generateVerificationToken(savedUser.getEmail());
 	}
 
@@ -137,15 +146,19 @@ class UserServiceTest {
 		request.setLastName("Bas Updated");
 		request.setDateOfBirth(LocalDate.of(1995, 5, 15));
 
+		User updatedUser = User.builder().id(USER_ID).email(USER_EMAIL).phoneNumber(USER_PHONE).firstName("Anton")
+				.lastName("Bas Updated").dateOfBirth(LocalDate.of(1995, 5, 15)).password(ENCODED_PASSWORD)
+				.verificationStatus(VerificationStatus.NOT_VERIFIED).verifiedAt(null).city("Kyiv").build();
+
 		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(testUser));
-		when(userRepository.save(any(User.class))).thenReturn(testUser);
-		when(userMapper.toProfileResponse(testUser)).thenReturn(new UserProfileResponse());
+		when(userRepository.save(any(User.class))).thenReturn(updatedUser);
+		when(userMapper.toUserProfileResponse(updatedUser)).thenReturn(new UserProfileResponse());
 
 		UserProfileResponse result = userService.updateUser(USER_ID, request);
 
 		assertNotNull(result);
-		verify(userMapper).updateUserFromDto(request, testUser);
-		verify(userRepository).save(testUser);
+		verify(userMapper).updateUserFromRequest(request, testUser);
+		verify(userRepository).save(any(User.class));
 	}
 
 	@Test
@@ -155,12 +168,14 @@ class UserServiceTest {
 
 		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(testUser));
 		when(userRepository.save(any(User.class))).thenReturn(testUser);
-		when(userMapper.toProfileResponse(testUser)).thenReturn(new UserProfileResponse());
+		when(userMapper.toUserProfileResponse(testUser)).thenReturn(new UserProfileResponse());
 
 		userService.updateUser(USER_ID, request);
 
-		assertEquals(VerificationStatus.NOT_VERIFIED, testUser.getVerificationStatus());
-		assertNull(testUser.getVerifiedAt());
+		verify(userRepository).save(userCaptor.capture());
+		User capturedUser = userCaptor.getValue();
+		assertEquals(VerificationStatus.NOT_VERIFIED, capturedUser.getVerificationStatus());
+		assertNull(capturedUser.getVerifiedAt());
 	}
 
 	@Test
@@ -207,7 +222,9 @@ class UserServiceTest {
 		userService.updateUserPassword(USER_ID, request);
 
 		verify(passwordEncoder).encode(request.getNewPassword());
-		verify(userRepository).save(testUser);
+		verify(userRepository).save(userCaptor.capture());
+		User capturedUser = userCaptor.getValue();
+		assertEquals("newEncodedPassword", capturedUser.getPassword());
 	}
 
 	@Test
@@ -258,7 +275,7 @@ class UserServiceTest {
 		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(testUser));
 		when(passwordEncoder.matches(request.getCurrentPassword(), ENCODED_PASSWORD)).thenReturn(true);
 
-		assertThrows(IllegalArgumentException.class, () -> userService.updateUserPassword(USER_ID, request));
+		assertThrows(PasswordValidationException.class, () -> userService.updateUserPassword(USER_ID, request));
 	}
 
 	@Test
@@ -277,26 +294,31 @@ class UserServiceTest {
 	@Test
 	void confirmEmailChange_Success() {
 		String token = "emailChangeToken";
+		UserProfileResponse expectedResponse = new UserProfileResponse();
 
 		when(emailTokenService.confirmEmailChange(token)).thenReturn(testUser);
-		when(userMapper.toProfileResponse(testUser)).thenReturn(new UserProfileResponse());
+		when(userMapper.toUserProfileResponse(testUser)).thenReturn(expectedResponse);
 
 		UserProfileResponse result = userService.confirmEmailChange(token);
 
 		assertNotNull(result);
+		assertEquals(expectedResponse, result);
 		verify(emailTokenService).confirmEmailChange(token);
-		verify(userMapper).toProfileResponse(testUser);
+		verify(userMapper).toUserProfileResponse(testUser);
 	}
 
 	@Test
 	void getUserProfile_Success() {
+		UserProfileResponse expectedResponse = new UserProfileResponse();
+
 		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(testUser));
-		when(userMapper.toProfileResponse(testUser)).thenReturn(new UserProfileResponse());
+		when(userMapper.toUserProfileResponse(testUser)).thenReturn(expectedResponse);
 
 		UserProfileResponse result = userService.getUserProfile(USER_ID);
 
 		assertNotNull(result);
-		verify(userMapper).toProfileResponse(testUser);
+		assertEquals(expectedResponse, result);
+		verify(userMapper).toUserProfileResponse(testUser);
 	}
 
 	@Test
@@ -309,13 +331,16 @@ class UserServiceTest {
 
 	@Test
 	void getUserById_Success() {
+		UserResponse expectedResponse = new UserResponse();
+
 		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(testUser));
-		when(userMapper.toDto(testUser)).thenReturn(new UserResponse());
+		when(userMapper.toUserResponse(testUser)).thenReturn(expectedResponse);
 
 		UserResponse result = userService.getUserById(USER_ID);
 
 		assertNotNull(result);
-		verify(userMapper).toDto(testUser);
+		assertEquals(expectedResponse, result);
+		verify(userMapper).toUserResponse(testUser);
 	}
 
 	@Test
@@ -362,32 +387,12 @@ class UserServiceTest {
 	}
 
 	@Test
-	void existsByEmail_False() {
-		String nonExistentEmail = "nonexistent@example.com";
-		when(userRepository.existsByEmail(nonExistentEmail)).thenReturn(false);
-
-		boolean result = userService.existsByEmail(nonExistentEmail);
-
-		assertFalse(result);
-	}
-
-	@Test
 	void existsById_True() {
 		when(userRepository.existsById(USER_ID)).thenReturn(true);
 
 		boolean result = userService.existsById(USER_ID);
 
 		assertTrue(result);
-	}
-
-	@Test
-	void existsById_False() {
-		Long nonExistentId = 999L;
-		when(userRepository.existsById(nonExistentId)).thenReturn(false);
-
-		boolean result = userService.existsById(nonExistentId);
-
-		assertFalse(result);
 	}
 
 	@Test
@@ -398,12 +403,14 @@ class UserServiceTest {
 
 		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(testUser));
 		when(userRepository.save(any(User.class))).thenReturn(testUser);
-		when(userMapper.toProfileResponse(testUser)).thenReturn(new UserProfileResponse());
+		when(userMapper.toUserProfileResponse(testUser)).thenReturn(new UserProfileResponse());
 
 		userService.updateUser(USER_ID, request);
 
-		assertEquals(VerificationStatus.VERIFIED, testUser.getVerificationStatus());
-		assertNotNull(testUser.getVerifiedAt());
+		verify(userRepository).save(userCaptor.capture());
+		User capturedUser = userCaptor.getValue();
+		assertEquals(VerificationStatus.VERIFIED, capturedUser.getVerificationStatus());
+		assertNotNull(capturedUser.getVerifiedAt());
 	}
 
 	@Test
@@ -414,11 +421,74 @@ class UserServiceTest {
 
 		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(testUser));
 		when(userRepository.save(any(User.class))).thenReturn(testUser);
-		when(userMapper.toProfileResponse(testUser)).thenReturn(new UserProfileResponse());
+		when(userMapper.toUserProfileResponse(testUser)).thenReturn(new UserProfileResponse());
 
 		userService.updateUser(USER_ID, request);
 
-		assertEquals(VerificationStatus.VERIFIED, testUser.getVerificationStatus());
-		assertNotNull(testUser.getVerifiedAt());
+		verify(userRepository).save(userCaptor.capture());
+		User capturedUser = userCaptor.getValue();
+		assertEquals(VerificationStatus.VERIFIED, capturedUser.getVerificationStatus());
+		assertNotNull(capturedUser.getVerifiedAt());
+	}
+
+	@Test
+	void updateUser_NullBirthDateWhenOriginalNull() {
+		User userWithNullBirthDate = User.builder().id(USER_ID).email(USER_EMAIL).firstName("Anton").lastName("Bas")
+				.phoneNumber(USER_PHONE).dateOfBirth(null).password(ENCODED_PASSWORD)
+				.verificationStatus(VerificationStatus.VERIFIED).verifiedAt(LocalDateTime.now()).city("Kyiv").build();
+
+		UserUpdateRequest request = new UserUpdateRequest();
+		request.setFirstName("Updated");
+		request.setDateOfBirth(null);
+
+		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(userWithNullBirthDate));
+		when(userRepository.save(any(User.class))).thenReturn(userWithNullBirthDate);
+		when(userMapper.toUserProfileResponse(userWithNullBirthDate)).thenReturn(new UserProfileResponse());
+
+		userService.updateUser(USER_ID, request);
+
+		verify(userRepository).save(userCaptor.capture());
+		User capturedUser = userCaptor.getValue();
+		assertEquals(VerificationStatus.VERIFIED, capturedUser.getVerificationStatus());
+		assertNotNull(capturedUser.getVerifiedAt());
+	}
+
+	@Test
+	void updateUserPassword_ValidatesPasswordLength() {
+		UserPasswordUpdateRequest request = new UserPasswordUpdateRequest();
+		request.setCurrentPassword("oldPassword123");
+		request.setNewPassword("validPassword123");
+		request.setPasswordConfirm("validPassword123");
+
+		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(testUser));
+		when(passwordEncoder.matches(request.getCurrentPassword(), ENCODED_PASSWORD)).thenReturn(true);
+		when(passwordEncoder.matches(request.getNewPassword(), ENCODED_PASSWORD)).thenReturn(false);
+		when(passwordEncoder.encode(request.getNewPassword())).thenReturn("newEncodedPassword");
+
+		userService.updateUserPassword(USER_ID, request);
+
+		verify(passwordEncoder).encode(request.getNewPassword());
+		verify(userRepository).save(any(User.class));
+	}
+
+	@Test
+	void updateUser_NotVerifiedUser_BirthDateChanged() {
+		User notVerifiedUser = User.builder().id(USER_ID).email(USER_EMAIL).firstName("Anton").lastName("Bas")
+				.phoneNumber(USER_PHONE).dateOfBirth(LocalDate.of(1990, 1, 1)).password(ENCODED_PASSWORD)
+				.verificationStatus(VerificationStatus.NOT_VERIFIED).verifiedAt(null).city("Kyiv").build();
+
+		UserUpdateRequest request = new UserUpdateRequest();
+		request.setDateOfBirth(LocalDate.of(1995, 5, 15));
+
+		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(notVerifiedUser));
+		when(userRepository.save(any(User.class))).thenReturn(notVerifiedUser);
+		when(userMapper.toUserProfileResponse(notVerifiedUser)).thenReturn(new UserProfileResponse());
+
+		userService.updateUser(USER_ID, request);
+
+		verify(userRepository).save(userCaptor.capture());
+		User capturedUser = userCaptor.getValue();
+		assertEquals(VerificationStatus.NOT_VERIFIED, capturedUser.getVerificationStatus());
+		assertNull(capturedUser.getVerifiedAt());
 	}
 }

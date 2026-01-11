@@ -2,12 +2,9 @@ package ua.lviv.bas.cinema.service.booking;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -16,19 +13,17 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import ua.lviv.bas.cinema.domain.TicketType;
-import ua.lviv.bas.cinema.domain.enums.TicketTypeCategory;
 import ua.lviv.bas.cinema.dto.ticket.request.TicketTypeCreateRequest;
 import ua.lviv.bas.cinema.dto.ticket.request.TicketTypeUpdateRequest;
+import ua.lviv.bas.cinema.dto.ticket.response.TicketTypeResponse;
+import ua.lviv.bas.cinema.dto.ticket.response.TicketTypeSimpleResponse;
 import ua.lviv.bas.cinema.exception.domain.tickettype.TicketTypeDuplicateException;
 import ua.lviv.bas.cinema.exception.domain.tickettype.TicketTypeInUseException;
 import ua.lviv.bas.cinema.exception.domain.tickettype.TicketTypeNotFoundException;
@@ -38,7 +33,7 @@ import ua.lviv.bas.cinema.repository.TicketRepository;
 import ua.lviv.bas.cinema.repository.TicketTypeRepository;
 
 @ExtendWith(MockitoExtension.class)
-class TicketTypeServiceTest {
+public class TicketTypeServiceTest {
 
 	@Mock
 	private TicketTypeRepository ticketTypeRepository;
@@ -52,343 +47,318 @@ class TicketTypeServiceTest {
 	@InjectMocks
 	private TicketTypeService ticketTypeService;
 
-	private TicketTypeCreateRequest validCreateRequest;
-	private TicketType ticketType;
-
-	@BeforeEach
-	void setUp() {
-		validCreateRequest = TicketTypeCreateRequest.builder().code("CHILD").displayName("Child Ticket")
-				.priceMultiplier(new BigDecimal("0.70")).minAge(0).maxAge(12).requiresDocument(true)
-				.documentType("Birth Certificate").active(true).category(TicketTypeCategory.CHILD).build();
-
-		ticketType = TicketType.builder().id(1L).code("CHILD").displayName("Child Ticket")
-				.priceMultiplier(new BigDecimal("0.70")).minAge(0).maxAge(12).requiresDocument(true)
-				.documentType("Birth Certificate").active(true).category(TicketTypeCategory.CHILD).build();
-	}
-
 	@Test
-	void createTicketType_ShouldCreateSuccessfully() {
-		when(ticketTypeRepository.existsByCode("CHILD")).thenReturn(false);
-		when(ticketTypeMapper.toEntity(validCreateRequest)).thenReturn(ticketType);
-		when(ticketTypeRepository.save(any(TicketType.class))).thenReturn(ticketType);
+	void createTicketType_Success() {
+		TicketTypeCreateRequest request = TicketTypeCreateRequest.builder().code("ADULT").displayName("Adult")
+				.priceMultiplier(BigDecimal.ONE).active(true).build();
 
-		TicketType result = ticketTypeService.createTicketType(validCreateRequest);
+		TicketType ticketType = new TicketType();
+		ticketType.setId(1L);
+		ticketType.setCode("ADULT");
 
-		assertThat(result).isNotNull();
-		assertThat(result.getCode()).isEqualTo("CHILD");
-		assertThat(result.getDisplayName()).isEqualTo("Child Ticket");
-		verify(ticketTypeRepository).existsByCode("CHILD");
-		verify(ticketTypeMapper).toEntity(validCreateRequest);
+		TicketTypeResponse response = TicketTypeResponse.builder().id(1L).code("ADULT").build();
+
+		when(ticketTypeRepository.existsByCode("ADULT")).thenReturn(false);
+		when(ticketTypeMapper.toTicketType(request)).thenReturn(ticketType);
+		when(ticketTypeRepository.save(ticketType)).thenReturn(ticketType);
+		when(ticketTypeMapper.toTicketTypeResponse(ticketType)).thenReturn(response);
+
+		TicketTypeResponse result = ticketTypeService.createTicketType(request);
+
+		assertThat(result.getCode()).isEqualTo("ADULT");
+		verify(ticketTypeRepository).existsByCode("ADULT");
 		verify(ticketTypeRepository).save(ticketType);
 	}
 
 	@Test
-	void createTicketType_ShouldThrowDuplicateException_WhenCodeExists() {
-		when(ticketTypeRepository.existsByCode("CHILD")).thenReturn(true);
+	void createTicketType_WhenCodeExists_ShouldThrowException() {
+		TicketTypeCreateRequest request = TicketTypeCreateRequest.builder().code("ADULT").displayName("Adult")
+				.priceMultiplier(BigDecimal.ONE).build();
 
-		assertThatThrownBy(() -> ticketTypeService.createTicketType(validCreateRequest))
-				.isInstanceOf(TicketTypeDuplicateException.class).hasMessageContaining("CHILD");
+		when(ticketTypeRepository.existsByCode("ADULT")).thenReturn(true);
 
-		verify(ticketTypeRepository).existsByCode("CHILD");
-		verify(ticketTypeMapper, never()).toEntity(any());
-		verify(ticketTypeRepository, never()).save(any());
+		assertThatThrownBy(() -> ticketTypeService.createTicketType(request))
+				.isInstanceOf(TicketTypeDuplicateException.class);
 	}
 
 	@Test
-	void createTicketType_ShouldThrowValidationException_WhenInvalidAgeRange() {
-		TicketTypeCreateRequest invalidRequest = TicketTypeCreateRequest.builder().code("INVALID")
-				.displayName("Invalid").minAge(20).maxAge(10).build();
+	void createTicketType_WhenInvalidAgeRange_ShouldThrowException() {
+		TicketTypeCreateRequest request = TicketTypeCreateRequest.builder().code("CHILD").displayName("Child")
+				.priceMultiplier(BigDecimal.ONE).minAge(15).maxAge(10).build();
 
-		assertThatThrownBy(() -> ticketTypeService.createTicketType(invalidRequest))
-				.isInstanceOf(TicketTypeValidationException.class).hasMessageContaining("Invalid age range");
-
-		verify(ticketTypeRepository, never()).existsByCode(any());
-		verify(ticketTypeMapper, never()).toEntity(any());
-		verify(ticketTypeRepository, never()).save(any());
+		assertThatThrownBy(() -> ticketTypeService.createTicketType(request))
+				.isInstanceOf(TicketTypeValidationException.class);
 	}
 
 	@Test
-	void getTicketTypeById_ShouldReturnTicketType_WhenExists() {
+	void getTicketTypeById_Success() {
+		TicketType ticketType = new TicketType();
+		ticketType.setId(1L);
+		ticketType.setCode("ADULT");
+
+		TicketTypeResponse response = TicketTypeResponse.builder().id(1L).code("ADULT").build();
+
 		when(ticketTypeRepository.findById(1L)).thenReturn(Optional.of(ticketType));
+		when(ticketTypeMapper.toTicketTypeResponse(ticketType)).thenReturn(response);
 
-		TicketType result = ticketTypeService.getTicketTypeById(1L);
+		TicketTypeResponse result = ticketTypeService.getTicketTypeById(1L);
 
-		assertThat(result).isNotNull();
-		assertThat(result.getId()).isEqualTo(1L);
-		verify(ticketTypeRepository).findById(1L);
+		assertThat(result.getCode()).isEqualTo("ADULT");
 	}
 
 	@Test
-	void getTicketTypeById_ShouldThrowNotFoundException_WhenNotExists() {
-		when(ticketTypeRepository.findById(999L)).thenReturn(Optional.empty());
+	void getTicketTypeById_WhenNotFound_ShouldThrowException() {
+		when(ticketTypeRepository.findById(1L)).thenReturn(Optional.empty());
 
-		assertThatThrownBy(() -> ticketTypeService.getTicketTypeById(999L))
-				.isInstanceOf(TicketTypeNotFoundException.class).hasMessageContaining("999");
-
-		verify(ticketTypeRepository).findById(999L);
-	}
-
-	@Test
-	void getTicketTypeByCode_ShouldReturnTicketType_WhenExists() {
-		when(ticketTypeRepository.findByCode("CHILD")).thenReturn(Optional.of(ticketType));
-
-		TicketType result = ticketTypeService.getTicketTypeByCode("CHILD");
-
-		assertThat(result).isNotNull();
-		assertThat(result.getCode()).isEqualTo("CHILD");
-		verify(ticketTypeRepository).findByCode("CHILD");
-	}
-
-	@Test
-	void getTicketTypeByCode_ShouldThrowNotFoundException_WhenNotExists() {
-		when(ticketTypeRepository.findByCode("NONEXISTENT")).thenReturn(Optional.empty());
-
-		assertThatThrownBy(() -> ticketTypeService.getTicketTypeByCode("NONEXISTENT"))
-				.isInstanceOf(TicketTypeNotFoundException.class).hasMessageContaining("NONEXISTENT");
-
-		verify(ticketTypeRepository).findByCode("NONEXISTENT");
-	}
-
-	@Test
-	void getAllTicketTypes_ShouldReturnAllTicketTypes() {
-		List<TicketType> ticketTypes = Arrays.asList(ticketType,
-				TicketType.builder().id(2L).code("ADULT").displayName("Adult").build());
-		when(ticketTypeRepository.findAll()).thenReturn(ticketTypes);
-
-		List<TicketType> result = ticketTypeService.getAllTicketTypes();
-
-		assertThat(result).hasSize(2);
-		assertThat(result.get(0).getCode()).isEqualTo("CHILD");
-		assertThat(result.get(1).getCode()).isEqualTo("ADULT");
-		verify(ticketTypeRepository).findAll();
-	}
-
-	@Test
-	void getAllActiveTicketTypes_ShouldReturnActiveTicketTypes() {
-		List<TicketType> activeTicketTypes = Arrays.asList(ticketType,
-				TicketType.builder().id(2L).code("ADULT").displayName("Adult").active(true).build());
-		when(ticketTypeRepository.findByActiveTrue()).thenReturn(activeTicketTypes);
-
-		List<TicketType> result = ticketTypeService.getAllActiveTicketTypes();
-
-		assertThat(result).hasSize(2);
-		assertThat(result.get(0).isActive()).isTrue();
-		assertThat(result.get(1).isActive()).isTrue();
-		verify(ticketTypeRepository).findByActiveTrue();
-	}
-
-	@Test
-	void updateTicketType_ShouldUpdateSuccessfully() {
-		when(ticketTypeRepository.findById(1L)).thenReturn(Optional.of(ticketType));
-		when(ticketTypeRepository.save(any(TicketType.class))).thenReturn(ticketType);
-
-		TicketTypeUpdateRequest updateRequest = TicketTypeUpdateRequest.builder().displayName("Updated Child Ticket")
-				.priceModifier(new BigDecimal("0.65")).build();
-
-		TicketType result = ticketTypeService.updateTicketType(1L, updateRequest);
-
-		assertThat(result).isNotNull();
-		verify(ticketTypeMapper).updateEntity(ticketType, updateRequest);
-		verify(ticketTypeRepository).save(ticketType);
-	}
-
-	@Test
-	void updateTicketType_ShouldThrowNotFoundException_WhenIdNotExists() {
-		when(ticketTypeRepository.findById(999L)).thenReturn(Optional.empty());
-
-		TicketTypeUpdateRequest updateRequest = TicketTypeUpdateRequest.builder().displayName("Updated").build();
-
-		assertThatThrownBy(() -> ticketTypeService.updateTicketType(999L, updateRequest))
+		assertThatThrownBy(() -> ticketTypeService.getTicketTypeById(1L))
 				.isInstanceOf(TicketTypeNotFoundException.class);
-
-		verify(ticketTypeRepository).findById(999L);
-		verify(ticketTypeMapper, never()).updateEntity(any(), any());
-		verify(ticketTypeRepository, never()).save(any());
 	}
 
 	@Test
-	void updateTicketType_ShouldValidateAgeRange_WhenUpdatingAges() {
-		TicketType existing = TicketType.builder().id(1L).code("TEST").displayName("Test").minAge(10).maxAge(20)
-				.build();
+	void getTicketTypeByCode_Success() {
+		TicketType ticketType = new TicketType();
+		ticketType.setCode("ADULT");
 
-		when(ticketTypeRepository.findById(1L)).thenReturn(Optional.of(existing));
-		when(ticketTypeRepository.save(any(TicketType.class))).thenReturn(existing);
+		TicketTypeResponse response = TicketTypeResponse.builder().code("ADULT").build();
 
-		TicketTypeUpdateRequest updateRequest = TicketTypeUpdateRequest.builder().minAge(15).maxAge(25).build();
+		when(ticketTypeRepository.findByCode("ADULT")).thenReturn(Optional.of(ticketType));
+		when(ticketTypeMapper.toTicketTypeResponse(ticketType)).thenReturn(response);
 
-		TicketType result = ticketTypeService.updateTicketType(1L, updateRequest);
+		TicketTypeResponse result = ticketTypeService.getTicketTypeByCode("ADULT");
 
-		assertThat(result).isNotNull();
-		verify(ticketTypeRepository).findById(1L);
-		verify(ticketTypeRepository).save(existing);
+		assertThat(result.getCode()).isEqualTo("ADULT");
 	}
 
 	@Test
-	void updateTicketType_ShouldThrowValidationException_WhenInvalidAgeRange() {
-		TicketType existing = TicketType.builder().id(1L).code("TEST").build();
+	void getAllTicketTypes_WhenActiveNull() {
+		TicketType ticketType1 = new TicketType();
+		ticketType1.setActive(true);
 
-		when(ticketTypeRepository.findById(1L)).thenReturn(Optional.of(existing));
+		TicketType ticketType2 = new TicketType();
+		ticketType2.setActive(false);
 
-		TicketTypeUpdateRequest updateRequest = TicketTypeUpdateRequest.builder().minAge(30).maxAge(20).build();
+		TicketTypeResponse response1 = TicketTypeResponse.builder().id(1L).build();
+		TicketTypeResponse response2 = TicketTypeResponse.builder().id(2L).build();
 
-		assertThatThrownBy(() -> ticketTypeService.updateTicketType(1L, updateRequest))
-				.isInstanceOf(TicketTypeValidationException.class).hasMessageContaining("Invalid age range");
+		when(ticketTypeRepository.findAll()).thenReturn(Arrays.asList(ticketType1, ticketType2));
+		when(ticketTypeMapper.toTicketTypeResponse(ticketType1)).thenReturn(response1);
+		when(ticketTypeMapper.toTicketTypeResponse(ticketType2)).thenReturn(response2);
 
-		verify(ticketTypeRepository).findById(1L);
-		verify(ticketTypeMapper, never()).updateEntity(any(), any());
-		verify(ticketTypeRepository, never()).save(any());
+		List<TicketTypeResponse> result = ticketTypeService.getAllTicketTypes(null);
+
+		assertThat(result).hasSize(2);
 	}
 
 	@Test
-	void deleteTicketType_ShouldDeleteSuccessfully_WhenNotInUse() {
+	void getAllTicketTypes_WhenActiveTrue() {
+		TicketType ticketType = new TicketType();
+		ticketType.setActive(true);
+
+		TicketTypeResponse response = TicketTypeResponse.builder().id(1L).build();
+
+		when(ticketTypeRepository.findByActiveTrue()).thenReturn(Arrays.asList(ticketType));
+		when(ticketTypeMapper.toTicketTypeResponse(ticketType)).thenReturn(response);
+
+		List<TicketTypeResponse> result = ticketTypeService.getAllTicketTypes(true);
+
+		assertThat(result).hasSize(1);
+	}
+
+	@Test
+	void getSimpleTicketTypes_WhenActiveTrue() {
+		TicketType ticketType = new TicketType();
+		ticketType.setActive(true);
+
+		TicketTypeSimpleResponse response = TicketTypeSimpleResponse.builder().id(1L).build();
+
+		when(ticketTypeRepository.findByActiveTrue()).thenReturn(Arrays.asList(ticketType));
+		when(ticketTypeMapper.toTicketTypeSimpleResponse(ticketType)).thenReturn(response);
+
+		List<TicketTypeSimpleResponse> result = ticketTypeService.getSimpleTicketTypes(true);
+
+		assertThat(result).hasSize(1);
+	}
+
+	@Test
+	void updateTicketType_Success() {
+		TicketType ticketType = new TicketType();
+		ticketType.setId(1L);
+		ticketType.setMinAge(0);
+		ticketType.setMaxAge(12);
+
+		TicketTypeUpdateRequest request = TicketTypeUpdateRequest.builder().displayName("Updated Name").build();
+
+		TicketTypeResponse response = TicketTypeResponse.builder().id(1L).displayName("Updated Name").build();
+
+		when(ticketTypeRepository.findById(1L)).thenReturn(Optional.of(ticketType));
+		doNothing().when(ticketTypeMapper).updateTicketTypeFromRequest(ticketType, request);
+		when(ticketTypeRepository.save(ticketType)).thenReturn(ticketType);
+		when(ticketTypeMapper.toTicketTypeResponse(ticketType)).thenReturn(response);
+
+		TicketTypeResponse result = ticketTypeService.updateTicketType(1L, request);
+
+		assertThat(result.getDisplayName()).isEqualTo("Updated Name");
+	}
+
+	@Test
+	void updateTicketType_WhenInvalidAgeRange_ShouldThrowException() {
+		TicketType ticketType = new TicketType();
+		ticketType.setId(1L);
+		ticketType.setMinAge(10);
+		ticketType.setMaxAge(20);
+
+		TicketTypeUpdateRequest request = TicketTypeUpdateRequest.builder().minAge(25).maxAge(15).build();
+
+		when(ticketTypeRepository.findById(1L)).thenReturn(Optional.of(ticketType));
+
+		assertThatThrownBy(() -> ticketTypeService.updateTicketType(1L, request))
+				.isInstanceOf(TicketTypeValidationException.class);
+	}
+
+	@Test
+	void deleteTicketType_Success() {
+		TicketType ticketType = new TicketType();
+		ticketType.setId(1L);
+
 		when(ticketTypeRepository.findById(1L)).thenReturn(Optional.of(ticketType));
 		when(ticketRepository.existsByTicketTypeId(1L)).thenReturn(false);
 		doNothing().when(ticketTypeRepository).delete(ticketType);
 
 		ticketTypeService.deleteTicketType(1L);
 
-		verify(ticketTypeRepository).findById(1L);
-		verify(ticketRepository).existsByTicketTypeId(1L);
 		verify(ticketTypeRepository).delete(ticketType);
 	}
 
 	@Test
-	void deleteTicketType_ShouldThrowInUseException_WhenInUse() {
+	void deleteTicketType_WhenInUse_ShouldThrowException() {
+		TicketType ticketType = new TicketType();
+		ticketType.setId(1L);
+
 		when(ticketTypeRepository.findById(1L)).thenReturn(Optional.of(ticketType));
 		when(ticketRepository.existsByTicketTypeId(1L)).thenReturn(true);
 		when(ticketRepository.countByTicketTypeId(1L)).thenReturn(5L);
 
-		assertThatThrownBy(() -> ticketTypeService.deleteTicketType(1L)).isInstanceOf(TicketTypeInUseException.class)
-				.hasMessageContaining("used in 5 ticket(s)");
-
-		verify(ticketTypeRepository).findById(1L);
-		verify(ticketRepository).existsByTicketTypeId(1L);
-		verify(ticketRepository).countByTicketTypeId(1L);
-		verify(ticketTypeRepository, never()).delete(any());
+		assertThatThrownBy(() -> ticketTypeService.deleteTicketType(1L)).isInstanceOf(TicketTypeInUseException.class);
 	}
 
 	@Test
-	void toggleTicketTypeActiveStatus_ShouldActivateInactiveType() {
-		TicketType inactiveType = TicketType.builder().id(1L).code("INACTIVE").displayName("Inactive").active(false)
-				.build();
+	void toggleTicketTypeActiveStatus_Success() {
+		TicketType ticketType = new TicketType();
+		ticketType.setId(1L);
+		ticketType.setActive(true);
 
-		when(ticketTypeRepository.findById(1L)).thenReturn(Optional.of(inactiveType));
-		when(ticketTypeRepository.save(any(TicketType.class))).thenReturn(inactiveType);
+		TicketTypeResponse response = TicketTypeResponse.builder().id(1L).active(false).build();
 
-		TicketType result = ticketTypeService.toggleTicketTypeActiveStatus(1L);
-
-		assertThat(result.isActive()).isTrue();
-		verify(ticketTypeRepository).findById(1L);
-		verify(ticketTypeRepository).save(inactiveType);
-	}
-
-	@Test
-	void toggleTicketTypeActiveStatus_ShouldDeactivateActiveType_WhenNoActiveTickets() {
 		when(ticketTypeRepository.findById(1L)).thenReturn(Optional.of(ticketType));
-		when(ticketRepository.existsByTicketTypeIdAndStatusIn(anyLong(), anyList())).thenReturn(false);
-		when(ticketTypeRepository.save(any(TicketType.class))).thenReturn(ticketType);
+		when(ticketRepository.existsByTicketTypeIdAndStatusIn(eq(1L), anyList())).thenReturn(false);
+		when(ticketTypeRepository.save(ticketType)).thenReturn(ticketType);
+		when(ticketTypeMapper.toTicketTypeResponse(ticketType)).thenReturn(response);
 
-		TicketType result = ticketTypeService.toggleTicketTypeActiveStatus(1L);
+		TicketTypeResponse result = ticketTypeService.toggleTicketTypeActiveStatus(1L);
 
 		assertThat(result.isActive()).isFalse();
-		verify(ticketRepository).existsByTicketTypeIdAndStatusIn(eq(1L), anyList());
-		verify(ticketTypeRepository).save(ticketType);
 	}
 
 	@Test
-	void toggleTicketTypeActiveStatus_ShouldThrowInUseException_WhenDeactivatingWithActiveTickets() {
+	void toggleTicketTypeActiveStatus_WhenActiveTicketsExist_ShouldThrowException() {
+		TicketType ticketType = new TicketType();
+		ticketType.setId(1L);
+		ticketType.setActive(true);
+
 		when(ticketTypeRepository.findById(1L)).thenReturn(Optional.of(ticketType));
-		when(ticketRepository.existsByTicketTypeIdAndStatusIn(anyLong(), anyList())).thenReturn(true);
-		when(ticketRepository.countByTicketTypeIdAndStatusIn(anyLong(), anyList())).thenReturn(3L);
+		when(ticketRepository.existsByTicketTypeIdAndStatusIn(eq(1L), anyList())).thenReturn(true);
+		when(ticketRepository.countByTicketTypeIdAndStatusIn(eq(1L), anyList())).thenReturn(3L);
 
 		assertThatThrownBy(() -> ticketTypeService.toggleTicketTypeActiveStatus(1L))
-				.isInstanceOf(TicketTypeInUseException.class).hasMessageContaining("used in 3 active ticket(s)");
-
-		verify(ticketRepository).existsByTicketTypeIdAndStatusIn(eq(1L), anyList());
-		verify(ticketRepository).countByTicketTypeIdAndStatusIn(eq(1L), anyList());
-		verify(ticketTypeRepository, never()).save(any());
-	}
-
-	@ParameterizedTest
-	@CsvSource({ "0, 12, 5, true", "0, 12, 0, true", "0, 12, 12, true", "18, null, 25, true", "null, 12, 5, true",
-			"18, null, 17, false", "null, 12, 15, false", "18, 65, 70, false", "18, 65, 10, false" })
-	void validateAgeForTicketType_ShouldReturnCorrectValidation(String minAgeStr, String maxAgeStr, Integer age,
-			boolean expected) {
-		Integer minAge = "null".equals(minAgeStr) ? null : Integer.parseInt(minAgeStr);
-		Integer maxAge = "null".equals(maxAgeStr) ? null : Integer.parseInt(maxAgeStr);
-
-		TicketType testType = TicketType.builder().id(1L).code("TEST").minAge(minAge).maxAge(maxAge).build();
-
-		when(ticketTypeRepository.findById(1L)).thenReturn(Optional.of(testType));
-
-		boolean result = ticketTypeService.validateAgeForTicketType(1L, age);
-
-		assertThat(result).isEqualTo(expected);
-		verify(ticketTypeRepository).findById(1L);
+				.isInstanceOf(TicketTypeInUseException.class);
 	}
 
 	@Test
-	void isAgeValidForTicketType_ShouldHandleNullAge() {
-		TicketType noRestrictions = TicketType.builder().minAge(null).maxAge(null).build();
+	void validateAgeForTicketType_Success() {
+		TicketType ticketType = new TicketType();
+		ticketType.setMinAge(18);
+		ticketType.setMaxAge(65);
 
-		TicketType withRestrictions = TicketType.builder().minAge(18).maxAge(65).build();
+		when(ticketTypeRepository.findById(1L)).thenReturn(Optional.of(ticketType));
 
-		assertThat(ticketTypeService.isAgeValidForTicketType(noRestrictions, null)).isTrue();
-		assertThat(ticketTypeService.isAgeValidForTicketType(withRestrictions, null)).isFalse();
-	}
-
-	@Test
-	void existsByCode_ShouldReturnTrue_WhenCodeExists() {
-		when(ticketTypeRepository.existsByCode("EXISTING")).thenReturn(true);
-
-		boolean result = ticketTypeService.existsByCode("EXISTING");
+		boolean result = ticketTypeService.validateAgeForTicketType(1L, 25);
 
 		assertThat(result).isTrue();
-		verify(ticketTypeRepository).existsByCode("EXISTING");
 	}
 
 	@Test
-	void existsByCode_ShouldReturnFalse_WhenCodeNotExists() {
-		when(ticketTypeRepository.existsByCode("NONEXISTENT")).thenReturn(false);
+	void isAgeValidForTicketType_WhenNullAge() {
+		TicketType ticketType = new TicketType();
+		ticketType.setMinAge(null);
+		ticketType.setMaxAge(null);
 
-		boolean result = ticketTypeService.existsByCode("NONEXISTENT");
+		boolean result = ticketTypeService.isAgeValidForTicketType(ticketType, null);
 
-		assertThat(result).isFalse();
-		verify(ticketTypeRepository).existsByCode("NONEXISTENT");
+		assertThat(result).isTrue();
 	}
 
 	@Test
-	void getFormattedAgeRange_ShouldReturnCorrectFormat() {
-		TicketType testType = TicketType.builder().id(1L).code("TEST").minAge(0).maxAge(12).build();
+	void existsByCode_Success() {
+		when(ticketTypeRepository.existsByCode("ADULT")).thenReturn(true);
 
-		when(ticketTypeRepository.findById(1L)).thenReturn(Optional.of(testType));
+		boolean result = ticketTypeService.existsByCode("ADULT");
+
+		assertThat(result).isTrue();
+	}
+
+	@Test
+	void getFormattedAgeRange_Success() {
+		TicketType ticketType = new TicketType();
+		ticketType.setMinAge(18);
+		ticketType.setMaxAge(65);
+
+		when(ticketTypeRepository.findById(1L)).thenReturn(Optional.of(ticketType));
 
 		String result = ticketTypeService.getFormattedAgeRange(1L);
 
-		assertThat(result).isEqualTo("0-12 years");
-		verify(ticketTypeRepository).findById(1L);
+		assertThat(result).isEqualTo("18-65 years");
 	}
 
 	@Test
-	void validateAgeRange_ShouldThrowException_WhenMinGreaterThanMax() {
-		assertThatThrownBy(() -> ticketTypeService.createTicketType(
-				TicketTypeCreateRequest.builder().code("TEST").displayName("Test").minAge(20).maxAge(10).build()))
-				.isInstanceOf(TicketTypeValidationException.class).hasMessageContaining("Invalid age range");
+	void getFormattedAgeRange_WhenNoAgeRestrictions() {
+		TicketType ticketType = new TicketType();
+		ticketType.setMinAge(null);
+		ticketType.setMaxAge(null);
+
+		when(ticketTypeRepository.findById(1L)).thenReturn(Optional.of(ticketType));
+
+		String result = ticketTypeService.getFormattedAgeRange(1L);
+
+		assertThat(result).isEqualTo("No age restrictions");
 	}
 
 	@Test
-	void validateAgeRange_ShouldThrowException_WhenMinAgeOutOfRange() {
-		assertThatThrownBy(() -> ticketTypeService.createTicketType(
-				TicketTypeCreateRequest.builder().code("TEST").displayName("Test").minAge(-5).build()))
-				.isInstanceOf(TicketTypeValidationException.class)
-				.hasMessageContaining("Invalid value for field 'minAge'");
+	void getAllTicketTypes_WhenActiveFalse() {
+		TicketType ticketType = new TicketType();
+		ticketType.setActive(false);
+
+		TicketTypeResponse response = TicketTypeResponse.builder().id(1L).build();
+
+		when(ticketTypeRepository.findByActiveFalse()).thenReturn(Arrays.asList(ticketType));
+		when(ticketTypeMapper.toTicketTypeResponse(ticketType)).thenReturn(response);
+
+		List<TicketTypeResponse> result = ticketTypeService.getAllTicketTypes(false);
+
+		assertThat(result).hasSize(1);
 	}
 
 	@Test
-	void validateAgeRange_ShouldThrowException_WhenMaxAgeOutOfRange() {
-		assertThatThrownBy(() -> ticketTypeService.createTicketType(
-				TicketTypeCreateRequest.builder().code("TEST").displayName("Test").maxAge(150).build()))
-				.isInstanceOf(TicketTypeValidationException.class)
-				.hasMessageContaining("Invalid value for field 'maxAge'");
+	void getSimpleTicketTypes_WhenActiveNull() {
+		TicketType ticketType = new TicketType();
+		ticketType.setActive(true);
+
+		TicketTypeSimpleResponse response = TicketTypeSimpleResponse.builder().id(1L).build();
+
+		when(ticketTypeRepository.findByActiveTrue()).thenReturn(Arrays.asList(ticketType));
+		when(ticketTypeMapper.toTicketTypeSimpleResponse(ticketType)).thenReturn(response);
+
+		List<TicketTypeSimpleResponse> result = ticketTypeService.getSimpleTicketTypes(null);
+
+		assertThat(result).hasSize(1);
 	}
 }

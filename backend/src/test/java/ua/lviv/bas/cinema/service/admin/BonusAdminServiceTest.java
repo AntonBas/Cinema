@@ -30,6 +30,7 @@ import ua.lviv.bas.cinema.dto.bonus.request.BonusRulesRequest;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusRulesResponse;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusTransactionResponse;
 import ua.lviv.bas.cinema.exception.domain.bonus.BonusRuleNotFoundException;
+import ua.lviv.bas.cinema.exception.domain.bonus.InvalidMinMaxPointsException;
 import ua.lviv.bas.cinema.mapper.BonusMapper;
 import ua.lviv.bas.cinema.repository.BonusRulesRepository;
 import ua.lviv.bas.cinema.repository.BonusTransactionRepository;
@@ -51,7 +52,7 @@ class BonusAdminServiceTest {
 
 	@Test
 	void getAllBonusRules_ShouldReturnAllRules() {
-		BonusRules rule1 = createBonusRules(1L, BonusTransactionType.WELCOME_BONUS, 100);
+		BonusRules rule1 = createBonusRules(1L, BonusTransactionType.WELCOME_BONUS, 150);
 		BonusRules rule2 = createBonusRules(2L, BonusTransactionType.BIRTHDAY_BONUS, 200);
 
 		when(bonusRulesRepository.findAll()).thenReturn(List.of(rule1, rule2));
@@ -78,7 +79,7 @@ class BonusAdminServiceTest {
 	@Test
 	void getBonusRule_ShouldReturnRule() {
 		BonusTransactionType type = BonusTransactionType.WELCOME_BONUS;
-		BonusRules rule = createBonusRules(1L, type, 100);
+		BonusRules rule = createBonusRules(1L, type, 150);
 		BonusRulesResponse expectedResponse = new BonusRulesResponse();
 
 		when(bonusRulesRepository.findByBonusType(type)).thenReturn(Optional.of(rule));
@@ -104,7 +105,7 @@ class BonusAdminServiceTest {
 
 	@Test
 	void updateBonusRule_ShouldUpdateAndReturnUpdated() {
-		BonusTransactionType type = BonusTransactionType.PURCHASE_BONUS;
+		BonusTransactionType type = BonusTransactionType.PAYMENT_ACCRUAL;
 		BonusRules existing = createBonusRules(1L, type, null);
 		existing.setMoneyRatio(new BigDecimal("0.05"));
 
@@ -126,8 +127,8 @@ class BonusAdminServiceTest {
 	}
 
 	@Test
-	void updateBonusRule_ShouldValidateMinMaxForWriteOff() {
-		BonusTransactionType type = BonusTransactionType.PURCHASE_WRITE_OFF;
+	void updateBonusRule_ShouldValidateMinMaxForBookingSpend() {
+		BonusTransactionType type = BonusTransactionType.BOOKING_SPEND;
 		BonusRules existing = createBonusRules(1L, type, null);
 		existing.setMinPointsPerTransaction(50);
 		existing.setMaxPointsPerTransaction(300);
@@ -150,10 +151,8 @@ class BonusAdminServiceTest {
 
 	@Test
 	void updateBonusRule_ShouldThrowWhenMinGreaterThanMax() {
-		BonusTransactionType type = BonusTransactionType.PURCHASE_WRITE_OFF;
+		BonusTransactionType type = BonusTransactionType.BOOKING_SPEND;
 		BonusRules existing = createBonusRules(1L, type, null);
-		existing.setMinPointsPerTransaction(50);
-		existing.setMaxPointsPerTransaction(300);
 
 		BonusRulesRequest request = BonusRulesRequest.builder().minPointsPerTransaction(400)
 				.maxPointsPerTransaction(200).build();
@@ -168,8 +167,7 @@ class BonusAdminServiceTest {
 		}).when(bonusMapper).updateBonusRulesFromRequest(request, existing);
 
 		assertThatThrownBy(() -> bonusAdminService.updateBonusRule(type, request))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("Min points cannot be greater than max points");
+				.isInstanceOf(InvalidMinMaxPointsException.class);
 
 		verify(bonusRulesRepository).findByBonusType(type);
 		verify(bonusMapper).updateBonusRulesFromRequest(request, existing);
@@ -178,7 +176,7 @@ class BonusAdminServiceTest {
 
 	@Test
 	void updateBonusRule_ShouldThrowWhenNotFound() {
-		BonusTransactionType type = BonusTransactionType.PURCHASE_BONUS;
+		BonusTransactionType type = BonusTransactionType.PAYMENT_ACCRUAL;
 		BonusRulesRequest request = new BonusRulesRequest();
 
 		when(bonusRulesRepository.findByBonusType(type)).thenReturn(Optional.empty());
@@ -195,7 +193,7 @@ class BonusAdminServiceTest {
 	void getUserTransactions_ShouldReturnPagedTransactions() {
 		Long userId = 1L;
 		Pageable pageable = PageRequest.of(0, 20);
-		BonusTransaction transaction = BonusTransaction.builder().id(1L).type(BonusTransactionType.PURCHASE_BONUS)
+		BonusTransaction transaction = BonusTransaction.builder().id(1L).type(BonusTransactionType.PAYMENT_ACCRUAL)
 				.pointsChange(25).build();
 
 		Page<BonusTransaction> page = new PageImpl<>(List.of(transaction), pageable, 1);
@@ -237,7 +235,7 @@ class BonusAdminServiceTest {
 		BonusTransaction transaction1 = BonusTransaction.builder().id(1L).type(BonusTransactionType.WELCOME_BONUS)
 				.pointsChange(100).build();
 
-		BonusTransaction transaction2 = BonusTransaction.builder().id(2L).type(BonusTransactionType.PURCHASE_BONUS)
+		BonusTransaction transaction2 = BonusTransaction.builder().id(2L).type(BonusTransactionType.PAYMENT_ACCRUAL)
 				.pointsChange(25).build();
 
 		Page<BonusTransaction> page = new PageImpl<>(List.of(transaction1, transaction2), pageable, 2);
@@ -314,15 +312,14 @@ class BonusAdminServiceTest {
 
 		bonusAdminService.resetBonusRuleToDefaults(type);
 
-		assertThat(existing.getPoints()).isEqualTo(300);
+		assertThat(existing.getPoints()).isEqualTo(200);
 		verify(bonusRulesRepository).save(existing);
 	}
 
 	@Test
-	void resetBonusRuleToDefaults_ShouldResetPurchaseBonus() {
-		BonusTransactionType type = BonusTransactionType.PURCHASE_BONUS;
-		BonusRules existing = createBonusRules(1L, type, 100);
-		existing.setPoints(50);
+	void resetBonusRuleToDefaults_ShouldResetPaymentAccrual() {
+		BonusTransactionType type = BonusTransactionType.PAYMENT_ACCRUAL;
+		BonusRules existing = createBonusRules(1L, type, null);
 
 		when(bonusRulesRepository.findByBonusType(type)).thenReturn(Optional.of(existing));
 		when(bonusRulesRepository.save(any(BonusRules.class))).thenReturn(existing);
@@ -331,13 +328,15 @@ class BonusAdminServiceTest {
 		bonusAdminService.resetBonusRuleToDefaults(type);
 
 		assertThat(existing.getPoints()).isNull();
-		assertThat(existing.getMoneyRatio()).isEqualTo(new BigDecimal("0.05"));
+		assertThat(existing.getMoneyRatio()).isEqualByComparingTo(new BigDecimal("0.05"));
+		assertThat(existing.getMinPointsPerTransaction()).isEqualTo(10);
+		assertThat(existing.getMaxPointsPerTransaction()).isNull();
 		verify(bonusRulesRepository).save(existing);
 	}
 
 	@Test
-	void resetBonusRuleToDefaults_ShouldResetWriteOffRule() {
-		BonusTransactionType type = BonusTransactionType.PURCHASE_WRITE_OFF;
+	void resetBonusRuleToDefaults_ShouldResetBookingSpend() {
+		BonusTransactionType type = BonusTransactionType.BOOKING_SPEND;
 		BonusRules existing = createBonusRules(1L, type, null);
 
 		when(bonusRulesRepository.findByBonusType(type)).thenReturn(Optional.of(existing));
@@ -346,14 +345,14 @@ class BonusAdminServiceTest {
 
 		bonusAdminService.resetBonusRuleToDefaults(type);
 
-		assertThat(existing.getMinPointsPerTransaction()).isEqualTo(20);
-		assertThat(existing.getMaxPointsPerTransaction()).isEqualTo(500);
+		assertThat(existing.getMinPointsPerTransaction()).isEqualTo(100);
+		assertThat(existing.getMaxPointsPerTransaction()).isEqualTo(1000);
 		verify(bonusRulesRepository).save(existing);
 	}
 
 	@Test
-	void resetBonusRuleToDefaults_ShouldResetRefundDeduction() {
-		BonusTransactionType type = BonusTransactionType.REFUND_DEDUCTION;
+	void resetBonusRuleToDefaults_ShouldResetRefundReturn() {
+		BonusTransactionType type = BonusTransactionType.REFUND_RETURN;
 		BonusRules existing = createBonusRules(1L, type, null);
 
 		when(bonusRulesRepository.findByBonusType(type)).thenReturn(Optional.of(existing));
@@ -362,7 +361,10 @@ class BonusAdminServiceTest {
 
 		bonusAdminService.resetBonusRuleToDefaults(type);
 
-		assertThat(existing.getMoneyRatio()).isEqualTo(new BigDecimal("0.05"));
+		assertThat(existing.getPoints()).isNull();
+		assertThat(existing.getMoneyRatio()).isNull();
+		assertThat(existing.getMinPointsPerTransaction()).isNull();
+		assertThat(existing.getMaxPointsPerTransaction()).isNull();
 		verify(bonusRulesRepository).save(existing);
 	}
 

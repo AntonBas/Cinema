@@ -14,6 +14,8 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -23,6 +25,7 @@ import ua.lviv.bas.cinema.domain.Promotion;
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.UserPromotion;
 import ua.lviv.bas.cinema.dto.promotion.request.UserPromotionCreateRequest;
+import ua.lviv.bas.cinema.dto.promotion.response.PromotionResponse;
 import ua.lviv.bas.cinema.dto.promotion.response.UserPromotionResponse;
 import ua.lviv.bas.cinema.exception.domain.promotion.AlreadyClaimedException;
 import ua.lviv.bas.cinema.exception.domain.promotion.PromotionNotActiveException;
@@ -32,7 +35,7 @@ import ua.lviv.bas.cinema.repository.UserPromotionRepository;
 import ua.lviv.bas.cinema.service.admin.AdminPromotionService;
 
 @ExtendWith(MockitoExtension.class)
-class PromotionServiceTest {
+public class PromotionServiceTest {
 
 	@Mock
 	private UserPromotionRepository userPromotionRepository;
@@ -47,7 +50,10 @@ class PromotionServiceTest {
 	private PromotionMapper promotionMapper;
 
 	@InjectMocks
-	private PromotionService userPromotionService; // Змінено на PromotionService
+	private PromotionService promotionServiceInstance;
+
+	@Captor
+	private ArgumentCaptor<UserPromotion> userPromotionCaptor;
 
 	@Test
 	void claimPromotion_ShouldSuccessfullyClaimPromotion() {
@@ -77,7 +83,7 @@ class PromotionServiceTest {
 		when(bonusUserService.addPoints(user, bonusPoints)).thenReturn(250);
 		when(promotionMapper.toUserPromotionResponse(userPromotion)).thenReturn(expectedResponse);
 
-		UserPromotionResponse result = userPromotionService.claimPromotion(request, user);
+		UserPromotionResponse result = promotionServiceInstance.claimPromotion(request, user);
 
 		assertThat(result).isSameAs(expectedResponse);
 		assertThat(result.getNewBalance()).isEqualTo(250);
@@ -85,7 +91,8 @@ class PromotionServiceTest {
 		verify(promotionService).findByIdOrThrow(promotionId);
 		verify(promotionService).isPromotionActive(promotion);
 		verify(userPromotionRepository).existsByUserAndPromotion(user, promotion);
-		verify(userPromotionRepository).save(any(UserPromotion.class));
+		verify(userPromotionRepository).save(userPromotionCaptor.capture());
+		assertThat(userPromotionCaptor.getValue().getPointsAwarded()).isEqualTo(bonusPoints);
 		verify(bonusUserService).addPoints(user, bonusPoints);
 		verify(promotionMapper).toUserPromotionResponse(userPromotion);
 	}
@@ -104,7 +111,7 @@ class PromotionServiceTest {
 		when(promotionService.findByIdOrThrow(promotionId)).thenReturn(promotion);
 		when(promotionService.isPromotionActive(promotion)).thenReturn(false);
 
-		assertThatThrownBy(() -> userPromotionService.claimPromotion(request, user))
+		assertThatThrownBy(() -> promotionServiceInstance.claimPromotion(request, user))
 				.isInstanceOf(PromotionNotActiveException.class)
 				.hasMessageContaining("Promotion 'Expired Promotion' is not active or has expired");
 
@@ -129,7 +136,7 @@ class PromotionServiceTest {
 		when(promotionService.isPromotionActive(promotion)).thenReturn(true);
 		when(userPromotionRepository.existsByUserAndPromotion(user, promotion)).thenReturn(true);
 
-		assertThatThrownBy(() -> userPromotionService.claimPromotion(request, user))
+		assertThatThrownBy(() -> promotionServiceInstance.claimPromotion(request, user))
 				.isInstanceOf(AlreadyClaimedException.class)
 				.hasMessageContaining("User 'test@example.com' has already claimed promotion 'Test Promotion'");
 
@@ -146,7 +153,6 @@ class PromotionServiceTest {
 		user.setBonusCard(bonusCard);
 
 		Promotion promotion1 = Promotion.builder().id(1L).title("Promo 1").build();
-
 		Promotion promotion2 = Promotion.builder().id(2L).title("Promo 2").build();
 
 		List<UserPromotion> userPromotions = Arrays.asList(
@@ -167,11 +173,12 @@ class PromotionServiceTest {
 		response2.setPromotionTitle("Promo 2");
 		response2.setPointsAwarded(250);
 
-		when(userPromotionRepository.findByUserWithPromotion(user)).thenReturn(userPromotions);
-		when(promotionMapper.toUserPromotionResponseList(userPromotions))
-				.thenReturn(Arrays.asList(response1, response2));
+		List<UserPromotionResponse> responses = Arrays.asList(response1, response2);
 
-		List<UserPromotionResponse> result = userPromotionService.getUserPromotions(user);
+		when(userPromotionRepository.findByUserWithPromotion(user)).thenReturn(userPromotions);
+		when(promotionMapper.toUserPromotionResponseList(userPromotions)).thenReturn(responses);
+
+		List<UserPromotionResponse> result = promotionServiceInstance.getUserPromotions(user);
 
 		assertThat(result).hasSize(2);
 		assertThat(result.get(0).getNewBalance()).isEqualTo(350);
@@ -187,7 +194,7 @@ class PromotionServiceTest {
 		when(userPromotionRepository.findByUserWithPromotion(user)).thenReturn(Collections.emptyList());
 		when(promotionMapper.toUserPromotionResponseList(Collections.emptyList())).thenReturn(Collections.emptyList());
 
-		List<UserPromotionResponse> result = userPromotionService.getUserPromotions(user);
+		List<UserPromotionResponse> result = promotionServiceInstance.getUserPromotions(user);
 
 		assertThat(result).isEmpty();
 	}
@@ -199,7 +206,7 @@ class PromotionServiceTest {
 		when(userPromotionRepository.findByUserWithPromotion(user)).thenReturn(Collections.emptyList());
 		when(promotionMapper.toUserPromotionResponseList(Collections.emptyList())).thenReturn(Collections.emptyList());
 
-		List<UserPromotionResponse> result = userPromotionService.getUserPromotions(user);
+		List<UserPromotionResponse> result = promotionServiceInstance.getUserPromotions(user);
 
 		assertThat(result).isEmpty();
 	}
@@ -214,7 +221,7 @@ class PromotionServiceTest {
 		when(promotionService.findByIdOrThrow(promotionId)).thenReturn(promotion);
 		when(userPromotionRepository.existsByUserAndPromotion(user, promotion)).thenReturn(true);
 
-		boolean result = userPromotionService.hasUserClaimedPromotion(user, promotionId);
+		boolean result = promotionServiceInstance.hasUserClaimedPromotion(user, promotionId);
 
 		assertThat(result).isTrue();
 		verify(promotionService).findByIdOrThrow(promotionId);
@@ -231,7 +238,7 @@ class PromotionServiceTest {
 		when(promotionService.findByIdOrThrow(promotionId)).thenReturn(promotion);
 		when(userPromotionRepository.existsByUserAndPromotion(user, promotion)).thenReturn(false);
 
-		boolean result = userPromotionService.hasUserClaimedPromotion(user, promotionId);
+		boolean result = promotionServiceInstance.hasUserClaimedPromotion(user, promotionId);
 
 		assertThat(result).isFalse();
 		verify(promotionService).findByIdOrThrow(promotionId);
@@ -247,7 +254,7 @@ class PromotionServiceTest {
 		when(promotionService.findByIdOrThrow(promotionId)).thenReturn(promotion);
 		when(userPromotionRepository.countByPromotion(promotion)).thenReturn(expectedCount);
 
-		Long result = userPromotionService.getPromotionRedemptionCount(promotionId);
+		Long result = promotionServiceInstance.getPromotionRedemptionCount(promotionId);
 
 		assertThat(result).isEqualTo(expectedCount);
 		verify(promotionService).findByIdOrThrow(promotionId);
@@ -265,7 +272,7 @@ class PromotionServiceTest {
 
 		when(promotionService.findByIdOrThrow(promotionId)).thenReturn(promotion);
 
-		List<UserPromotion> result = userPromotionService.getPromotionRedemptions(promotionId);
+		List<UserPromotion> result = promotionServiceInstance.getPromotionRedemptions(promotionId);
 
 		assertThat(result).isSameAs(expectedRedemptions);
 		verify(promotionService).findByIdOrThrow(promotionId);
@@ -283,7 +290,7 @@ class PromotionServiceTest {
 		when(promotionService.isPromotionActive(promotion)).thenReturn(true);
 		when(userPromotionRepository.existsByUserAndPromotion(user, promotion)).thenReturn(false);
 
-		boolean result = userPromotionService.isPromotionAvailableForUser(user, promotionId);
+		boolean result = promotionServiceInstance.isPromotionAvailableForUser(user, promotionId);
 
 		assertThat(result).isTrue();
 		verify(promotionService).findByIdOrThrow(promotionId);
@@ -301,7 +308,7 @@ class PromotionServiceTest {
 		when(promotionService.findByIdOrThrow(promotionId)).thenReturn(promotion);
 		when(promotionService.isPromotionActive(promotion)).thenReturn(false);
 
-		boolean result = userPromotionService.isPromotionAvailableForUser(user, promotionId);
+		boolean result = promotionServiceInstance.isPromotionAvailableForUser(user, promotionId);
 
 		assertThat(result).isFalse();
 		verify(promotionService).findByIdOrThrow(promotionId);
@@ -321,7 +328,7 @@ class PromotionServiceTest {
 		when(promotionService.isPromotionActive(promotion)).thenReturn(true);
 		when(userPromotionRepository.existsByUserAndPromotion(user, promotion)).thenReturn(true);
 
-		boolean result = userPromotionService.isPromotionAvailableForUser(user, promotionId);
+		boolean result = promotionServiceInstance.isPromotionAvailableForUser(user, promotionId);
 
 		assertThat(result).isFalse();
 		verify(promotionService).findByIdOrThrow(promotionId);
@@ -336,11 +343,59 @@ class PromotionServiceTest {
 
 		when(promotionService.findByIdOrThrow(promotionId)).thenThrow(new PromotionNotFoundException(promotionId));
 
-		boolean result = userPromotionService.isPromotionAvailableForUser(user, promotionId);
+		boolean result = promotionServiceInstance.isPromotionAvailableForUser(user, promotionId);
 
 		assertThat(result).isFalse();
 		verify(promotionService).findByIdOrThrow(promotionId);
 		verify(promotionService, never()).isPromotionActive(any());
 		verify(userPromotionRepository, never()).existsByUserAndPromotion(any(), any());
+	}
+
+	@Test
+	void getAvailablePromotions_ShouldReturnOnlyAvailablePromotions() {
+		User user = User.builder().id(1L).email("test@example.com").build();
+
+		PromotionResponse promo1 = new PromotionResponse();
+		promo1.setId(1L);
+		promo1.setTitle("Active Promotion 1");
+
+		PromotionResponse promo2 = new PromotionResponse();
+		promo2.setId(2L);
+		promo2.setTitle("Active Promotion 2");
+
+		PromotionResponse promo3 = new PromotionResponse();
+		promo3.setId(3L);
+		promo3.setTitle("Inactive Promotion");
+
+		List<PromotionResponse> allPromotions = Arrays.asList(promo1, promo2, promo3);
+
+		when(promotionService.getAllPromotions()).thenReturn(allPromotions);
+		when(promotionService.isPromotionActive(any())).thenAnswer(invocation -> {
+			Long promotionId = ((Promotion) invocation.getArgument(0)).getId();
+			return !promotionId.equals(3L);
+		});
+		when(promotionService.findByIdOrThrow(1L)).thenReturn(Promotion.builder().id(1L).build());
+		when(promotionService.findByIdOrThrow(2L)).thenReturn(Promotion.builder().id(2L).build());
+		when(promotionService.findByIdOrThrow(3L)).thenReturn(Promotion.builder().id(3L).build());
+		when(userPromotionRepository.existsByUserAndPromotionId(user, 1L)).thenReturn(false);
+		when(userPromotionRepository.existsByUserAndPromotionId(user, 2L)).thenReturn(true);
+		when(userPromotionRepository.existsByUserAndPromotionId(user, 3L)).thenReturn(false);
+
+		List<PromotionResponse> result = promotionServiceInstance.getAvailablePromotions(user);
+
+		assertThat(result).hasSize(1);
+		assertThat(result.get(0).getId()).isEqualTo(1L);
+		assertThat(result.get(0).getTitle()).isEqualTo("Active Promotion 1");
+	}
+
+	@Test
+	void getAvailablePromotions_ShouldReturnEmptyListWhenNoPromotions() {
+		User user = User.builder().id(1L).email("test@example.com").build();
+
+		when(promotionService.getAllPromotions()).thenReturn(Collections.emptyList());
+
+		List<PromotionResponse> result = promotionServiceInstance.getAvailablePromotions(user);
+
+		assertThat(result).isEmpty();
 	}
 }

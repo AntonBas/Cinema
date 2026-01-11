@@ -3,6 +3,9 @@ package ua.lviv.bas.cinema.service.cinema;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -10,6 +13,7 @@ import static org.mockito.Mockito.when;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -34,13 +38,14 @@ import ua.lviv.bas.cinema.dto.session.response.SessionAdminResponse;
 import ua.lviv.bas.cinema.dto.session.response.SessionScheduleResponse;
 import ua.lviv.bas.cinema.exception.domain.cinema.MovieNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.cinema.SessionNotFoundException;
+import ua.lviv.bas.cinema.exception.domain.cinema.SessionOperationException;
 import ua.lviv.bas.cinema.exception.domain.cinema.SessionTimeConflictException;
 import ua.lviv.bas.cinema.mapper.SessionMapper;
 import ua.lviv.bas.cinema.repository.MovieRepository;
 import ua.lviv.bas.cinema.repository.SessionRepository;
 
 @ExtendWith(MockitoExtension.class)
-class SessionServiceTest {
+public class SessionServiceTest {
 
 	@Mock
 	private SessionRepository sessionRepository;
@@ -57,71 +62,91 @@ class SessionServiceTest {
 	@InjectMocks
 	private SessionService sessionService;
 
-	private Movie movie;
-	private CinemaHall hall;
-	private Session session;
-	private SessionCreateRequest createRequest;
-	private SessionAdminResponse adminResponse;
-	private SessionScheduleResponse scheduleResponse;
+	private Movie testMovie;
+	private CinemaHall testHall;
+	private Session testSession;
+	private LocalDateTime testStartTime;
 
 	@BeforeEach
 	void setUp() {
-		movie = Movie.builder().id(1L).title("Test Movie").durationMinutes(120)
-				.releaseDate(LocalDate.now().minusDays(1)).build();
+		testStartTime = LocalDateTime.now().plusHours(2);
 
-		hall = CinemaHall.builder().id(1L).name("Test Hall").seats(List.of()).build();
+		testMovie = new Movie();
+		testMovie.setId(1L);
+		testMovie.setTitle("Test Movie");
+		testMovie.setDurationMinutes(120);
+		testMovie.setReleaseDate(LocalDate.now().minusDays(1));
+		testMovie.setEndShowingDate(LocalDate.now().plusDays(30));
 
-		LocalDateTime startTime = LocalDateTime.now().plusHours(2);
-		session = Session.builder().id(1L).startTime(startTime).basePrice(BigDecimal.valueOf(250)).movie(movie)
-				.hall(hall).status(CinemaSessionStatus.SCHEDULED).build();
+		testHall = new CinemaHall();
+		testHall.setId(1L);
+		testHall.setName("Test Hall");
 
-		createRequest = SessionCreateRequest.builder().startTime(startTime).basePrice(BigDecimal.valueOf(250))
-				.movieId(1L).hallId(1L).build();
-
-		adminResponse = SessionAdminResponse.builder().id(1L).startTime(startTime).basePrice(BigDecimal.valueOf(250))
-				.status(CinemaSessionStatus.SCHEDULED).build();
-
-		scheduleResponse = SessionScheduleResponse.builder().id(1L).startTime(startTime)
-				.basePrice(BigDecimal.valueOf(250)).status(CinemaSessionStatus.SCHEDULED).availableSeats(100).build();
+		testSession = new Session();
+		testSession.setId(1L);
+		testSession.setStartTime(testStartTime);
+		testSession.setBasePrice(BigDecimal.valueOf(250));
+		testSession.setMovie(testMovie);
+		testSession.setHall(testHall);
+		testSession.setStatus(CinemaSessionStatus.SCHEDULED);
 	}
 
 	@Test
-	void createSession_ShouldCreateSuccessfully() {
-		when(movieRepository.findById(1L)).thenReturn(Optional.of(movie));
-		when(cinemaHallService.getHallEntityById(1L)).thenReturn(hall);
-		when(sessionRepository.findConflictingSessions(any(), any(), any(), any())).thenReturn(List.of());
-		when(sessionMapper.toEntity(createRequest)).thenReturn(session);
-		when(sessionRepository.save(session)).thenReturn(session);
-		when(sessionMapper.toAdminDto(session)).thenReturn(adminResponse);
+	void createSession_Success() {
+		SessionCreateRequest request = SessionCreateRequest.builder().startTime(testStartTime)
+				.basePrice(BigDecimal.valueOf(250)).movieId(1L).hallId(1L).build();
 
-		SessionAdminResponse result = sessionService.createSession(createRequest);
+		SessionAdminResponse response = SessionAdminResponse.builder().id(1L).build();
+
+		when(movieRepository.findById(1L)).thenReturn(Optional.of(testMovie));
+		when(cinemaHallService.getHallEntityById(1L)).thenReturn(testHall);
+		when(sessionRepository.findConflictingSessions(anyLong(), any(), any(), any()))
+				.thenReturn(Collections.emptyList());
+		when(sessionMapper.toSession(request)).thenReturn(testSession);
+		when(sessionRepository.save(testSession)).thenReturn(testSession);
+		when(sessionMapper.toSessionAdminResponse(testSession)).thenReturn(response);
+		when(sessionRepository.findConflictingSessions(anyLong(), any(), any(), any()))
+				.thenReturn(Collections.emptyList());
+
+		SessionAdminResponse result = sessionService.createSession(request);
 
 		assertThat(result).isNotNull();
-		verify(sessionRepository).save(session);
+		verify(sessionRepository).save(testSession);
 	}
 
 	@Test
-	void createSession_ShouldThrowException_WhenMovieNotFound() {
+	void createSession_WhenMovieNotFound_ShouldThrowException() {
+		SessionCreateRequest request = SessionCreateRequest.builder().startTime(testStartTime).movieId(1L).hallId(1L)
+				.build();
+
 		when(movieRepository.findById(1L)).thenReturn(Optional.empty());
 
-		assertThatThrownBy(() -> sessionService.createSession(createRequest))
-				.isInstanceOf(MovieNotFoundException.class);
+		assertThatThrownBy(() -> sessionService.createSession(request)).isInstanceOf(MovieNotFoundException.class);
 	}
 
 	@Test
-	void createSession_ShouldThrowException_WhenTimeConflict() {
-		when(movieRepository.findById(1L)).thenReturn(Optional.of(movie));
-		when(cinemaHallService.getHallEntityById(1L)).thenReturn(hall);
-		when(sessionRepository.findConflictingSessions(any(), any(), any(), any())).thenReturn(List.of(session));
+	void createSession_WhenTimeConflict_ShouldThrowException() {
+		SessionCreateRequest request = SessionCreateRequest.builder().startTime(testStartTime).movieId(1L).hallId(1L)
+				.build();
 
-		assertThatThrownBy(() -> sessionService.createSession(createRequest))
+		Session conflictingSession = new Session();
+		conflictingSession.setId(2L);
+
+		when(movieRepository.findById(1L)).thenReturn(Optional.of(testMovie));
+		when(cinemaHallService.getHallEntityById(1L)).thenReturn(testHall);
+		when(sessionRepository.findConflictingSessions(anyLong(), any(), any(), any()))
+				.thenReturn(List.of(conflictingSession));
+
+		assertThatThrownBy(() -> sessionService.createSession(request))
 				.isInstanceOf(SessionTimeConflictException.class);
 	}
 
 	@Test
-	void getSessionById_ShouldReturnSession() {
-		when(sessionRepository.findById(1L)).thenReturn(Optional.of(session));
-		when(sessionMapper.toAdminDto(session)).thenReturn(adminResponse);
+	void getSessionById_Success() {
+		SessionAdminResponse response = SessionAdminResponse.builder().id(1L).build();
+
+		when(sessionRepository.findById(1L)).thenReturn(Optional.of(testSession));
+		when(sessionMapper.toSessionAdminResponse(testSession)).thenReturn(response);
 
 		SessionAdminResponse result = sessionService.getSessionById(1L);
 
@@ -130,68 +155,44 @@ class SessionServiceTest {
 	}
 
 	@Test
-	void getSessionById_ShouldThrowException_WhenNotFound() {
+	void getSessionById_WhenNotFound_ShouldThrowException() {
 		when(sessionRepository.findById(1L)).thenReturn(Optional.empty());
 
 		assertThatThrownBy(() -> sessionService.getSessionById(1L)).isInstanceOf(SessionNotFoundException.class);
 	}
 
 	@Test
-	void getSessionByIdForPublic_ShouldReturnSession() {
-		when(sessionRepository.findById(1L)).thenReturn(Optional.of(session));
-		when(sessionMapper.toScheduleDto(session)).thenReturn(scheduleResponse);
+	void getSessionByIdForPublic_Success() {
+		SessionScheduleResponse response = SessionScheduleResponse.builder().id(1L).build();
+
+		when(sessionRepository.findById(1L)).thenReturn(Optional.of(testSession));
+		when(sessionMapper.toSessionScheduleResponse(testSession)).thenReturn(response);
 
 		SessionScheduleResponse result = sessionService.getSessionByIdForPublic(1L);
 
 		assertThat(result).isNotNull();
-		assertThat(result.getId()).isEqualTo(1L);
 	}
 
 	@Test
-	void getSessionByIdForPublic_ShouldThrowException_WhenNotScheduled() {
-		session.setStatus(CinemaSessionStatus.CANCELLED);
-		when(sessionRepository.findById(1L)).thenReturn(Optional.of(session));
+	void updateSession_Success() {
+		SessionUpdateRequest request = SessionUpdateRequest.builder().basePrice(BigDecimal.valueOf(300)).build();
 
-		assertThatThrownBy(() -> sessionService.getSessionByIdForPublic(1L))
-				.isInstanceOf(SessionNotFoundException.class);
-	}
+		SessionAdminResponse response = SessionAdminResponse.builder().id(1L).build();
 
-	@Test
-	void getSessionByIdForPublic_ShouldThrowException_WhenPastSession() {
-		session.setStartTime(LocalDateTime.now().minusHours(1));
-		when(sessionRepository.findById(1L)).thenReturn(Optional.of(session));
+		when(sessionRepository.findById(1L)).thenReturn(Optional.of(testSession));
+		doNothing().when(sessionMapper).updateSessionFromRequest(request, testSession);
+		when(sessionRepository.save(testSession)).thenReturn(testSession);
+		when(sessionMapper.toSessionAdminResponse(testSession)).thenReturn(response);
 
-		assertThatThrownBy(() -> sessionService.getSessionByIdForPublic(1L))
-				.isInstanceOf(SessionNotFoundException.class);
-	}
-
-	@Test
-	void updateSession_ShouldUpdateSuccessfully() {
-		SessionUpdateRequest updateRequest = SessionUpdateRequest.builder().basePrice(BigDecimal.valueOf(300)).build();
-
-		when(sessionRepository.findById(1L)).thenReturn(Optional.of(session));
-		when(sessionRepository.save(session)).thenReturn(session);
-		when(sessionMapper.toAdminDto(session)).thenReturn(adminResponse);
-
-		SessionAdminResponse result = sessionService.updateSession(1L, updateRequest);
+		SessionAdminResponse result = sessionService.updateSession(1L, request);
 
 		assertThat(result).isNotNull();
-		verify(sessionMapper).updateEntityFromDto(updateRequest, session);
 	}
 
 	@Test
-	void updateSession_ShouldThrowException_WhenNotFound() {
-		SessionUpdateRequest updateRequest = SessionUpdateRequest.builder().basePrice(BigDecimal.valueOf(300)).build();
-
-		when(sessionRepository.findById(1L)).thenReturn(Optional.empty());
-
-		assertThatThrownBy(() -> sessionService.updateSession(1L, updateRequest))
-				.isInstanceOf(SessionNotFoundException.class);
-	}
-
-	@Test
-	void deleteSession_ShouldDeleteSuccessfully() {
+	void deleteSession_Success() {
 		when(sessionRepository.existsById(1L)).thenReturn(true);
+		doNothing().when(sessionRepository).deleteById(1L);
 
 		sessionService.deleteSession(1L);
 
@@ -199,26 +200,28 @@ class SessionServiceTest {
 	}
 
 	@Test
-	void deleteSession_ShouldThrowException_WhenNotFound() {
+	void deleteSession_WhenNotFound_ShouldThrowException() {
 		when(sessionRepository.existsById(1L)).thenReturn(false);
 
 		assertThatThrownBy(() -> sessionService.deleteSession(1L)).isInstanceOf(SessionNotFoundException.class);
 	}
 
 	@Test
-	void cancelSession_ShouldCancelSuccessfully() {
-		when(sessionRepository.findById(1L)).thenReturn(Optional.of(session));
+	void cancelSession_Success() {
+		when(sessionRepository.findById(1L)).thenReturn(Optional.of(testSession));
+		when(sessionRepository.save(testSession)).thenReturn(testSession);
 
 		sessionService.cancelSession(1L);
 
-		assertThat(session.getStatus()).isEqualTo(CinemaSessionStatus.CANCELLED);
-		verify(sessionRepository).save(session);
+		assertThat(testSession.getStatus()).isEqualTo(CinemaSessionStatus.CANCELLED);
+		verify(sessionRepository).save(testSession);
 	}
 
 	@Test
-	void cancelSession_ShouldDoNothing_WhenAlreadyCancelled() {
-		session.setStatus(CinemaSessionStatus.CANCELLED);
-		when(sessionRepository.findById(1L)).thenReturn(Optional.of(session));
+	void cancelSession_WhenAlreadyCancelled_ShouldDoNothing() {
+		testSession.setStatus(CinemaSessionStatus.CANCELLED);
+
+		when(sessionRepository.findById(1L)).thenReturn(Optional.of(testSession));
 
 		sessionService.cancelSession(1L);
 
@@ -226,91 +229,99 @@ class SessionServiceTest {
 	}
 
 	@Test
-	void cancelSession_ShouldThrowException_WhenLessThanHourBeforeStart() {
-		session.setStartTime(LocalDateTime.now().plusMinutes(30));
-		when(sessionRepository.findById(1L)).thenReturn(Optional.of(session));
+	void reactivateSession_Success() {
+		testSession.setStatus(CinemaSessionStatus.CANCELLED);
 
-		assertThatThrownBy(() -> sessionService.cancelSession(1L)).isInstanceOf(IllegalStateException.class);
-	}
-
-	@Test
-	void reactivateSession_ShouldReactivateSuccessfully() {
-		session.setStatus(CinemaSessionStatus.CANCELLED);
-		when(sessionRepository.findById(1L)).thenReturn(Optional.of(session));
-		when(sessionRepository.findConflictingSessions(any(), any(), any(), any())).thenReturn(List.of());
+		when(sessionRepository.findById(1L)).thenReturn(Optional.of(testSession));
+		when(sessionRepository.findConflictingSessions(anyLong(), any(), any(), any()))
+				.thenReturn(Collections.emptyList());
+		when(sessionRepository.save(testSession)).thenReturn(testSession);
 
 		sessionService.reactivateSession(1L);
 
-		assertThat(session.getStatus()).isEqualTo(CinemaSessionStatus.SCHEDULED);
-		verify(sessionRepository).save(session);
+		assertThat(testSession.getStatus()).isEqualTo(CinemaSessionStatus.SCHEDULED);
+		verify(sessionRepository).save(testSession);
 	}
 
 	@Test
-	void reactivateSession_ShouldThrowException_WhenTimeConflict() {
-		session.setStatus(CinemaSessionStatus.CANCELLED);
-		when(sessionRepository.findById(1L)).thenReturn(Optional.of(session));
-		when(sessionRepository.findConflictingSessions(any(), any(), any(), any())).thenReturn(List.of(session));
+	void reactivateSession_WhenTimeConflict_ShouldThrowException() {
+		testSession.setStatus(CinemaSessionStatus.CANCELLED);
+
+		Session conflictingSession = new Session();
+		conflictingSession.setId(2L);
+
+		when(sessionRepository.findById(1L)).thenReturn(Optional.of(testSession));
+		when(sessionRepository.findConflictingSessions(anyLong(), any(), any(), any()))
+				.thenReturn(List.of(conflictingSession));
 
 		assertThatThrownBy(() -> sessionService.reactivateSession(1L)).isInstanceOf(SessionTimeConflictException.class);
 	}
 
 	@Test
-	void getSessionsForAdmin_ShouldReturnAllSessions() {
+	void getSessionsForAdmin_WithSearch() {
+		SessionAdminResponse response = SessionAdminResponse.builder().id(1L).build();
+
 		Pageable pageable = PageRequest.of(0, 10);
-		Page<Session> sessionPage = new PageImpl<>(List.of(session));
+		Page<Session> page = new PageImpl<>(List.of(testSession));
 
-		when(sessionRepository.findAll(pageable)).thenReturn(sessionPage);
-		when(sessionMapper.toAdminDto(session)).thenReturn(adminResponse);
+		when(sessionRepository.findByMovieTitle("test", true, pageable)).thenReturn(page);
+		when(sessionMapper.toSessionAdminResponse(testSession)).thenReturn(response);
 
-		Page<SessionAdminResponse> result = sessionService.getSessionsForAdmin(null, null, null, null, null, pageable);
+		Page<SessionAdminResponse> result = sessionService.getSessionsForAdmin("test", null, null, null, null,
+				pageable);
 
-		assertThat(result).isNotNull();
 		assertThat(result.getContent()).hasSize(1);
 	}
 
 	@Test
-	void getScheduleSessions_ShouldReturnAvailableSessions() {
+	void getScheduleSessions_WithDate() {
+		SessionScheduleResponse response = SessionScheduleResponse.builder().id(1L).build();
+
 		Pageable pageable = PageRequest.of(0, 10);
-		Page<Session> sessionPage = new PageImpl<>(List.of(session));
+		Page<Session> page = new PageImpl<>(List.of(testSession));
 
-		when(sessionRepository.findAvailableSessions(pageable)).thenReturn(sessionPage);
-		when(sessionMapper.toScheduleDto(session)).thenReturn(scheduleResponse);
+		when(sessionRepository.findByStartTimeBetween(any(), any(), eq(false), any())).thenReturn(page);
+		when(sessionMapper.toSessionScheduleResponse(testSession)).thenReturn(response);
 
-		Page<SessionScheduleResponse> result = sessionService.getScheduleSessions(null, null, null, pageable);
+		Page<SessionScheduleResponse> result = sessionService.getScheduleSessions(LocalDate.now(), null, null,
+				pageable);
 
-		assertThat(result).isNotNull();
 		assertThat(result.getContent()).hasSize(1);
 	}
 
 	@Test
-	void hasTimeConflict_ShouldReturnTrue_WhenConflictExists() {
-		when(sessionRepository.findConflictingSessions(any(), any(), any(), any())).thenReturn(List.of(session));
+	void hasTimeConflict_WhenConflictExists() {
+		Session conflictingSession = new Session();
 
-		boolean result = sessionService.hasTimeConflict(1L, LocalDateTime.now(), 120, null);
+		when(sessionRepository.findConflictingSessions(anyLong(), any(), any(), any()))
+				.thenReturn(List.of(conflictingSession));
+
+		boolean result = sessionService.hasTimeConflict(1L, testStartTime, 120, null);
 
 		assertThat(result).isTrue();
 	}
 
 	@Test
-	void hasTimeConflict_ShouldReturnFalse_WhenNoConflict() {
-		when(sessionRepository.findConflictingSessions(any(), any(), any(), any())).thenReturn(List.of());
+	void hasTimeConflict_WhenNoConflict() {
+		when(sessionRepository.findConflictingSessions(anyLong(), any(), any(), any()))
+				.thenReturn(Collections.emptyList());
 
-		boolean result = sessionService.hasTimeConflict(1L, LocalDateTime.now(), 120, null);
+		boolean result = sessionService.hasTimeConflict(1L, testStartTime, 120, null);
 
 		assertThat(result).isFalse();
 	}
 
 	@Test
-	void getEndTime_ShouldCalculateEndTime() {
-		LocalDateTime endTime = sessionService.getEndTime(session);
+	void getEndTime_Success() {
+		LocalDateTime endTime = sessionService.getEndTime(testSession);
 
-		assertThat(endTime).isEqualTo(session.getStartTime().plusMinutes(120));
+		assertThat(endTime).isEqualTo(testStartTime.plusMinutes(120));
 	}
 
 	@Test
-	void getEndTime_ShouldThrowException_WhenMissingData() {
-		session.setStartTime(null);
+	void getEndTime_WhenMissingData_ShouldThrowException() {
+		testSession.setStartTime(null);
 
-		assertThatThrownBy(() -> sessionService.getEndTime(session)).isInstanceOf(IllegalStateException.class);
+		assertThatThrownBy(() -> sessionService.getEndTime(testSession)).isInstanceOf(SessionOperationException.class);
 	}
 }

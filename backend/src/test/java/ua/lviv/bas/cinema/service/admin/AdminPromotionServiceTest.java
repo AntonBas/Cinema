@@ -26,6 +26,7 @@ import ua.lviv.bas.cinema.dto.promotion.request.PromotionCreateRequest;
 import ua.lviv.bas.cinema.dto.promotion.request.PromotionUpdateRequest;
 import ua.lviv.bas.cinema.dto.promotion.response.PromotionResponse;
 import ua.lviv.bas.cinema.exception.domain.promotion.PromotionAlreadyExistsException;
+import ua.lviv.bas.cinema.exception.domain.promotion.PromotionDatesInvalidException;
 import ua.lviv.bas.cinema.exception.domain.promotion.PromotionHasRedemptionsException;
 import ua.lviv.bas.cinema.exception.domain.promotion.PromotionNotFoundException;
 import ua.lviv.bas.cinema.mapper.PromotionMapper;
@@ -92,9 +93,9 @@ class AdminPromotionServiceTest {
 	@Test
 	void createPromotion_Success() {
 		when(promotionRepository.existsByTitle(PROMOTION_TITLE)).thenReturn(false);
-		when(promotionMapper.toEntity(createRequest)).thenReturn(testPromotion);
+		when(promotionMapper.toPromotion(createRequest)).thenReturn(testPromotion);
 		when(promotionRepository.save(testPromotion)).thenReturn(testPromotion);
-		when(promotionMapper.toResponse(testPromotion)).thenReturn(promotionResponse);
+		when(promotionMapper.toPromotionResponse(testPromotion)).thenReturn(promotionResponse);
 
 		PromotionResponse result = adminPromotionService.createPromotion(createRequest);
 
@@ -103,9 +104,9 @@ class AdminPromotionServiceTest {
 		assertThat(result.getTitle()).isEqualTo(PROMOTION_TITLE);
 		assertThat(result.getBonusPoints()).isEqualTo(BONUS_POINTS);
 		verify(promotionRepository).existsByTitle(PROMOTION_TITLE);
-		verify(promotionMapper).toEntity(createRequest);
+		verify(promotionMapper).toPromotion(createRequest);
 		verify(promotionRepository).save(testPromotion);
-		verify(promotionMapper).toResponse(testPromotion);
+		verify(promotionMapper).toPromotionResponse(testPromotion);
 	}
 
 	@Test
@@ -116,7 +117,22 @@ class AdminPromotionServiceTest {
 				.isInstanceOf(PromotionAlreadyExistsException.class).hasMessageContaining(PROMOTION_TITLE);
 
 		verify(promotionRepository).existsByTitle(PROMOTION_TITLE);
-		verify(promotionMapper, never()).toEntity(any());
+		verify(promotionMapper, never()).toPromotion(any());
+		verify(promotionRepository, never()).save(any());
+	}
+
+	@Test
+	void createPromotion_WhenEndDateBeforeStartDate_ShouldThrowException() {
+		createRequest.setStartDate(LocalDateTime.now().plusDays(10));
+		createRequest.setEndDate(LocalDateTime.now().plusDays(5));
+
+		when(promotionRepository.existsByTitle(PROMOTION_TITLE)).thenReturn(false);
+
+		assertThatThrownBy(() -> adminPromotionService.createPromotion(createRequest))
+				.isInstanceOf(PromotionDatesInvalidException.class);
+
+		verify(promotionRepository).existsByTitle(PROMOTION_TITLE);
+		verify(promotionMapper, never()).toPromotion(any());
 		verify(promotionRepository, never()).save(any());
 	}
 
@@ -124,15 +140,15 @@ class AdminPromotionServiceTest {
 	void updatePromotion_Success() {
 		when(promotionRepository.findById(PROMOTION_ID)).thenReturn(Optional.of(testPromotion));
 		when(promotionRepository.save(testPromotion)).thenReturn(testPromotion);
-		when(promotionMapper.toResponse(testPromotion)).thenReturn(promotionResponse);
+		when(promotionMapper.toPromotionResponse(testPromotion)).thenReturn(promotionResponse);
 
 		PromotionResponse result = adminPromotionService.updatePromotion(PROMOTION_ID, updateRequest);
 
 		assertThat(result).isNotNull();
 		verify(promotionRepository).findById(PROMOTION_ID);
-		verify(promotionMapper).updateEntity(testPromotion, updateRequest);
+		verify(promotionMapper).updatePromotionFromRequest(testPromotion, updateRequest);
 		verify(promotionRepository).save(testPromotion);
-		verify(promotionMapper).toResponse(testPromotion);
+		verify(promotionMapper).toPromotionResponse(testPromotion);
 	}
 
 	@Test
@@ -143,7 +159,7 @@ class AdminPromotionServiceTest {
 				.isInstanceOf(PromotionNotFoundException.class);
 
 		verify(promotionRepository).findById(PROMOTION_ID);
-		verify(promotionMapper, never()).updateEntity(any(), any());
+		verify(promotionMapper, never()).updatePromotionFromRequest(any(), any());
 		verify(promotionRepository, never()).save(any());
 	}
 
@@ -170,9 +186,7 @@ class AdminPromotionServiceTest {
 
 	@Test
 	void deletePromotion_WhenHasRedemptions_ShouldThrowException() {
-		UserPromotion userPromotion = new UserPromotion();
-		userPromotion.setId(1L);
-		userPromotion.setPromotion(testPromotion);
+		UserPromotion userPromotion = UserPromotion.builder().id(1L).promotion(testPromotion).build();
 
 		testPromotion.setUserRedemptions(Arrays.asList(userPromotion));
 
@@ -188,7 +202,7 @@ class AdminPromotionServiceTest {
 	@Test
 	void getPromotionById_Success() {
 		when(promotionRepository.findById(PROMOTION_ID)).thenReturn(Optional.of(testPromotion));
-		when(promotionMapper.toResponse(testPromotion)).thenReturn(promotionResponse);
+		when(promotionMapper.toPromotionResponse(testPromotion)).thenReturn(promotionResponse);
 
 		PromotionResponse result = adminPromotionService.getPromotionById(PROMOTION_ID);
 
@@ -196,7 +210,7 @@ class AdminPromotionServiceTest {
 		assertThat(result.getId()).isEqualTo(PROMOTION_ID);
 		assertThat(result.getBonusPoints()).isEqualTo(BONUS_POINTS);
 		verify(promotionRepository).findById(PROMOTION_ID);
-		verify(promotionMapper).toResponse(testPromotion);
+		verify(promotionMapper).toPromotionResponse(testPromotion);
 	}
 
 	@Test
@@ -207,7 +221,7 @@ class AdminPromotionServiceTest {
 				.isInstanceOf(PromotionNotFoundException.class);
 
 		verify(promotionRepository).findById(PROMOTION_ID);
-		verify(promotionMapper, never()).toResponse(any());
+		verify(promotionMapper, never()).toPromotionResponse(any());
 	}
 
 	@Test
@@ -216,27 +230,27 @@ class AdminPromotionServiceTest {
 		List<PromotionResponse> responses = Arrays.asList(promotionResponse, promotionResponse);
 
 		when(promotionRepository.findAll()).thenReturn(promotions);
-		when(promotionMapper.toResponseList(promotions)).thenReturn(responses);
+		when(promotionMapper.toPromotionResponseList(promotions)).thenReturn(responses);
 
 		List<PromotionResponse> result = adminPromotionService.getAllPromotions();
 
 		assertThat(result).isNotNull();
 		assertThat(result).hasSize(2);
 		verify(promotionRepository).findAll();
-		verify(promotionMapper).toResponseList(promotions);
+		verify(promotionMapper).toPromotionResponseList(promotions);
 	}
 
 	@Test
 	void getAllPromotions_WhenNoPromotions_ShouldReturnEmptyList() {
 		when(promotionRepository.findAll()).thenReturn(Collections.emptyList());
-		when(promotionMapper.toResponseList(Collections.emptyList())).thenReturn(Collections.emptyList());
+		when(promotionMapper.toPromotionResponseList(Collections.emptyList())).thenReturn(Collections.emptyList());
 
 		List<PromotionResponse> result = adminPromotionService.getAllPromotions();
 
 		assertThat(result).isNotNull();
 		assertThat(result).isEmpty();
 		verify(promotionRepository).findAll();
-		verify(promotionMapper).toResponseList(Collections.emptyList());
+		verify(promotionMapper).toPromotionResponseList(Collections.emptyList());
 	}
 
 	@Test
@@ -245,14 +259,14 @@ class AdminPromotionServiceTest {
 		List<PromotionResponse> responses = Arrays.asList(promotionResponse, promotionResponse);
 
 		when(promotionRepository.findAll()).thenReturn(promotions);
-		when(promotionMapper.toResponseList(promotions)).thenReturn(responses);
+		when(promotionMapper.toPromotionResponseList(promotions)).thenReturn(responses);
 
 		List<PromotionResponse> result = adminPromotionService.getActivePromotions();
 
 		assertThat(result).isNotNull();
 		assertThat(result).hasSize(2);
 		verify(promotionRepository).findAll();
-		verify(promotionMapper).toResponseList(promotions);
+		verify(promotionMapper).toPromotionResponseList(promotions);
 	}
 
 	@Test
@@ -355,9 +369,9 @@ class AdminPromotionServiceTest {
 	@Test
 	void createPromotion_ShouldBeTransactional() {
 		when(promotionRepository.existsByTitle(PROMOTION_TITLE)).thenReturn(false);
-		when(promotionMapper.toEntity(createRequest)).thenReturn(testPromotion);
+		when(promotionMapper.toPromotion(createRequest)).thenReturn(testPromotion);
 		when(promotionRepository.save(testPromotion)).thenReturn(testPromotion);
-		when(promotionMapper.toResponse(testPromotion)).thenReturn(promotionResponse);
+		when(promotionMapper.toPromotionResponse(testPromotion)).thenReturn(promotionResponse);
 
 		PromotionResponse result = adminPromotionService.createPromotion(createRequest);
 
@@ -369,7 +383,7 @@ class AdminPromotionServiceTest {
 	void updatePromotion_ShouldBeTransactional() {
 		when(promotionRepository.findById(PROMOTION_ID)).thenReturn(Optional.of(testPromotion));
 		when(promotionRepository.save(testPromotion)).thenReturn(testPromotion);
-		when(promotionMapper.toResponse(testPromotion)).thenReturn(promotionResponse);
+		when(promotionMapper.toPromotionResponse(testPromotion)).thenReturn(promotionResponse);
 
 		PromotionResponse result = adminPromotionService.updatePromotion(PROMOTION_ID, updateRequest);
 
@@ -389,7 +403,7 @@ class AdminPromotionServiceTest {
 	@Test
 	void getAllPromotions_ShouldReturnEmptyListWhenRepositoryEmpty() {
 		when(promotionRepository.findAll()).thenReturn(Collections.emptyList());
-		when(promotionMapper.toResponseList(Collections.emptyList())).thenReturn(Collections.emptyList());
+		when(promotionMapper.toPromotionResponseList(Collections.emptyList())).thenReturn(Collections.emptyList());
 
 		List<PromotionResponse> result = adminPromotionService.getAllPromotions();
 
@@ -403,7 +417,7 @@ class AdminPromotionServiceTest {
 		List<PromotionResponse> responses = Arrays.asList(promotionResponse, promotionResponse);
 
 		when(promotionRepository.findAll()).thenReturn(promotions);
-		when(promotionMapper.toResponseList(promotions)).thenReturn(responses);
+		when(promotionMapper.toPromotionResponseList(promotions)).thenReturn(responses);
 
 		List<PromotionResponse> result = adminPromotionService.getActivePromotions();
 

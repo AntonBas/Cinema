@@ -1,7 +1,7 @@
 package ua.lviv.bas.cinema.service.user;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -12,6 +12,8 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -49,6 +51,12 @@ class UserPasswordResetServiceTest {
 	@InjectMocks
 	private UserPasswordResetService passwordResetService;
 
+	@Captor
+	private ArgumentCaptor<User> userCaptor;
+
+	@Captor
+	private ArgumentCaptor<EmailToken> tokenCaptor;
+
 	@Test
 	void requestPasswordReset_ShouldGenerateToken_WhenUserExistsAndEnabled() {
 		String email = "test@example.com";
@@ -75,7 +83,25 @@ class UserPasswordResetServiceTest {
 
 		when(userService.getByEmail(email)).thenReturn(user);
 
-		assertThrows(EmailNotVerifiedException.class, () -> passwordResetService.requestPasswordReset(email));
+		assertThatThrownBy(() -> passwordResetService.requestPasswordReset(email))
+				.isInstanceOf(EmailNotVerifiedException.class).hasMessageContaining("Cannot reset password: email");
+
+		verify(userService).getByEmail(email);
+		verify(tokenGeneratorService, never()).generatePasswordResetToken(any());
+	}
+
+	@Test
+	void requestPasswordReset_ShouldThrowException_WhenUserNotVerified() {
+		String email = "test@example.com";
+		User user = new User();
+		user.setEmail(email);
+		user.setEnabled(false);
+		user.setVerificationStatus(VerificationStatus.NOT_VERIFIED);
+
+		when(userService.getByEmail(email)).thenReturn(user);
+
+		assertThatThrownBy(() -> passwordResetService.requestPasswordReset(email))
+				.isInstanceOf(EmailNotVerifiedException.class);
 
 		verify(userService).getByEmail(email);
 		verify(tokenGeneratorService, never()).generatePasswordResetToken(any());
@@ -85,8 +111,10 @@ class UserPasswordResetServiceTest {
 	void resetPassword_ShouldResetPassword_WhenTokenIsValid() {
 		String token = "valid-token";
 		String newPassword = "newPassword123";
+		String encodedPassword = "encodedNewPassword";
 
 		User user = new User();
+		user.setId(1L);
 		user.setEmail("test@example.com");
 		user.setPassword("oldEncodedPassword");
 		user.setEnabled(true);
@@ -95,17 +123,23 @@ class UserPasswordResetServiceTest {
 				.confirmed(false).build();
 
 		when(tokenRepository.findByToken(token)).thenReturn(Optional.of(resetToken));
-		when(passwordEncoder.matches(newPassword, user.getPassword())).thenReturn(false);
-		when(passwordEncoder.encode(newPassword)).thenReturn("newEncodedPassword");
+		when(passwordEncoder.matches(newPassword, "oldEncodedPassword")).thenReturn(false);
+		when(passwordEncoder.encode(newPassword)).thenReturn(encodedPassword);
 
 		passwordResetService.resetPassword(token, newPassword);
 
-		verify(passwordEncoder).encode(newPassword);
-		verify(userRepository).save(user);
-		verify(tokenRepository).save(resetToken);
 		verify(tokenRepository).findByToken(token);
-		assertThat(resetToken.isConfirmed()).isTrue();
-		assertThat(resetToken.getConfirmedAt()).isNotNull();
+		verify(passwordEncoder).matches(newPassword, "oldEncodedPassword");
+		verify(passwordEncoder).encode(newPassword);
+		verify(userRepository).save(userCaptor.capture());
+		verify(tokenRepository).save(tokenCaptor.capture());
+
+		User savedUser = userCaptor.getValue();
+		EmailToken savedToken = tokenCaptor.getValue();
+
+		assertThat(savedUser.getPassword()).isEqualTo(encodedPassword);
+		assertThat(savedToken.isConfirmed()).isTrue();
+		assertThat(savedToken.getConfirmedAt()).isNotNull();
 	}
 
 	@Test
@@ -115,9 +149,11 @@ class UserPasswordResetServiceTest {
 
 		when(tokenRepository.findByToken(token)).thenReturn(Optional.empty());
 
-		assertThrows(InvalidTokenException.class, () -> passwordResetService.resetPassword(token, newPassword));
+		assertThatThrownBy(() -> passwordResetService.resetPassword(token, newPassword))
+				.isInstanceOf(InvalidTokenException.class).hasMessageContaining("Invalid password-reset token");
 
 		verify(tokenRepository).findByToken(token);
+		verify(passwordEncoder, never()).matches(any(), any());
 		verify(passwordEncoder, never()).encode(any());
 		verify(userRepository, never()).save(any());
 		verify(tokenRepository, never()).save(any());
@@ -132,13 +168,15 @@ class UserPasswordResetServiceTest {
 		user.setEmail("test@example.com");
 
 		EmailToken resetToken = EmailToken.builder().token(token).expiresAt(LocalDateTime.now().minusHours(1))
-				.user(user).build();
+				.user(user).confirmed(false).build();
 
 		when(tokenRepository.findByToken(token)).thenReturn(Optional.of(resetToken));
 
-		assertThrows(TokenExpiredException.class, () -> passwordResetService.resetPassword(token, newPassword));
+		assertThatThrownBy(() -> passwordResetService.resetPassword(token, newPassword))
+				.isInstanceOf(TokenExpiredException.class).hasMessageContaining("password-reset token has expired");
 
 		verify(tokenRepository).findByToken(token);
+		verify(passwordEncoder, never()).matches(any(), any());
 		verify(passwordEncoder, never()).encode(any());
 		verify(userRepository, never()).save(any());
 		verify(tokenRepository, never()).save(any());
@@ -157,12 +195,14 @@ class UserPasswordResetServiceTest {
 				.confirmed(false).build();
 
 		when(tokenRepository.findByToken(token)).thenReturn(Optional.of(resetToken));
-		when(passwordEncoder.matches(newPassword, user.getPassword())).thenReturn(true);
+		when(passwordEncoder.matches(newPassword, "oldEncodedPassword")).thenReturn(true);
 
-		assertThrows(SamePasswordException.class, () -> passwordResetService.resetPassword(token, newPassword));
+		assertThatThrownBy(() -> passwordResetService.resetPassword(token, newPassword))
+				.isInstanceOf(SamePasswordException.class)
+				.hasMessageContaining("New password cannot be the same as current password");
 
 		verify(tokenRepository).findByToken(token);
-		verify(passwordEncoder).matches(newPassword, user.getPassword());
+		verify(passwordEncoder).matches(newPassword, "oldEncodedPassword");
 		verify(passwordEncoder, never()).encode(any());
 		verify(userRepository, never()).save(any());
 		verify(tokenRepository, never()).save(any());
@@ -181,7 +221,8 @@ class UserPasswordResetServiceTest {
 
 		when(tokenRepository.findByToken(token)).thenReturn(Optional.of(resetToken));
 
-		assertThrows(InvalidTokenException.class, () -> passwordResetService.resetPassword(token, newPassword));
+		assertThatThrownBy(() -> passwordResetService.resetPassword(token, newPassword))
+				.isInstanceOf(InvalidTokenException.class).hasMessageContaining("Invalid password-reset token");
 
 		verify(tokenRepository).findByToken(token);
 		verify(passwordEncoder, never()).matches(any(), any());
@@ -194,35 +235,86 @@ class UserPasswordResetServiceTest {
 	void resetPassword_ShouldNotCheckPasswordMatch_WhenOldPasswordIsNull() {
 		String token = "valid-token";
 		String newPassword = "newPassword123";
+		String encodedPassword = "encodedNewPassword";
 
 		User user = new User();
+		user.setId(1L);
 		user.setEmail("test@example.com");
 		user.setPassword(null);
+		user.setEnabled(true);
 
 		EmailToken resetToken = EmailToken.builder().token(token).expiresAt(LocalDateTime.now().plusHours(1)).user(user)
 				.confirmed(false).build();
 
 		when(tokenRepository.findByToken(token)).thenReturn(Optional.of(resetToken));
-		when(passwordEncoder.encode(newPassword)).thenReturn("newEncodedPassword");
+		when(passwordEncoder.encode(newPassword)).thenReturn(encodedPassword);
 
 		passwordResetService.resetPassword(token, newPassword);
 
 		verify(tokenRepository).findByToken(token);
-		verify(passwordEncoder).encode(newPassword);
-		verify(userRepository).save(user);
-		verify(tokenRepository).save(resetToken);
 		verify(passwordEncoder, never()).matches(any(), any());
+		verify(passwordEncoder).encode(newPassword);
+		verify(userRepository).save(userCaptor.capture());
+		verify(tokenRepository).save(tokenCaptor.capture());
+
+		User savedUser = userCaptor.getValue();
+		EmailToken savedToken = tokenCaptor.getValue();
+
+		assertThat(savedUser.getPassword()).isEqualTo(encodedPassword);
+		assertThat(savedToken.isConfirmed()).isTrue();
+		assertThat(savedToken.getConfirmedAt()).isNotNull();
 	}
 
 	@Test
-	void requestPasswordReset_ShouldThrowException_WhenUserNotFound() {
-		String email = "nonexistent@example.com";
+	void resetPassword_ShouldHandleTokenExpirationExactlyNow() {
+		String token = "expiring-now-token";
+		String newPassword = "newPassword123";
 
-		when(userService.getByEmail(email)).thenThrow(new RuntimeException("User not found"));
+		User user = new User();
+		user.setEmail("test@example.com");
 
-		assertThrows(RuntimeException.class, () -> passwordResetService.requestPasswordReset(email));
+		EmailToken resetToken = EmailToken.builder().token(token).expiresAt(LocalDateTime.now()).user(user)
+				.confirmed(false).build();
 
-		verify(userService).getByEmail(email);
-		verify(tokenGeneratorService, never()).generatePasswordResetToken(any());
+		when(tokenRepository.findByToken(token)).thenReturn(Optional.of(resetToken));
+
+		assertThatThrownBy(() -> passwordResetService.resetPassword(token, newPassword))
+				.isInstanceOf(TokenExpiredException.class).hasMessageContaining("password-reset token has expired");
+
+		verify(tokenRepository).findByToken(token);
+		verify(passwordEncoder, never()).matches(any(), any());
+		verify(passwordEncoder, never()).encode(any());
+		verify(userRepository, never()).save(any());
+		verify(tokenRepository, never()).save(any());
+	}
+
+	@Test
+	void resetPassword_ShouldEncodePasswordEvenWhenOldPasswordIsBlank() {
+		String token = "valid-token";
+		String newPassword = "newPassword123";
+		String encodedPassword = "encodedNewPassword";
+
+		User user = new User();
+		user.setId(1L);
+		user.setEmail("test@example.com");
+		user.setPassword("");
+		user.setEnabled(true);
+
+		EmailToken resetToken = EmailToken.builder().token(token).expiresAt(LocalDateTime.now().plusHours(1)).user(user)
+				.confirmed(false).build();
+
+		when(tokenRepository.findByToken(token)).thenReturn(Optional.of(resetToken));
+		when(passwordEncoder.matches(newPassword, "")).thenReturn(false);
+		when(passwordEncoder.encode(newPassword)).thenReturn(encodedPassword);
+
+		passwordResetService.resetPassword(token, newPassword);
+
+		verify(tokenRepository).findByToken(token);
+		verify(passwordEncoder).matches(newPassword, "");
+		verify(passwordEncoder).encode(newPassword);
+		verify(userRepository).save(userCaptor.capture());
+
+		User savedUser = userCaptor.getValue();
+		assertThat(savedUser.getPassword()).isEqualTo(encodedPassword);
 	}
 }

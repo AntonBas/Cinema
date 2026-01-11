@@ -24,6 +24,7 @@ import ua.lviv.bas.cinema.domain.EmailToken;
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.enums.TokenType;
 import ua.lviv.bas.cinema.exception.domain.auth.EmailAlreadyExistsException;
+import ua.lviv.bas.cinema.exception.domain.auth.EmailValidationException;
 import ua.lviv.bas.cinema.exception.domain.auth.InvalidTokenException;
 import ua.lviv.bas.cinema.exception.domain.auth.TokenAlreadyConfirmedException;
 import ua.lviv.bas.cinema.exception.domain.auth.TokenExpiredException;
@@ -32,7 +33,7 @@ import ua.lviv.bas.cinema.repository.UserRepository;
 import ua.lviv.bas.cinema.service.user.BonusService;
 
 @ExtendWith(MockitoExtension.class)
-class EmailTokenServiceTest {
+public class EmailTokenServiceTest {
 
 	@Mock
 	private EmailTokenRepository tokenRepository;
@@ -313,7 +314,7 @@ class EmailTokenServiceTest {
 	}
 
 	@Test
-	void confirmEmailChange_ShouldThrowIllegalArgumentException_WhenEmailsAreSame() {
+	void confirmEmailChange_ShouldThrowEmailValidationException_WhenEmailsAreSame() {
 		String token = "same-email-token";
 		String email = "same@example.com";
 
@@ -326,9 +327,10 @@ class EmailTokenServiceTest {
 
 		when(tokenRepository.findByToken(token)).thenReturn(Optional.of(emailToken));
 
-		IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+		EmailValidationException exception = assertThrows(EmailValidationException.class,
 				() -> emailTokenService.confirmEmailChange(token));
 
+		assertNotNull(exception);
 		assertEquals("New email cannot be the same as current email", exception.getMessage());
 		verify(userRepository, never()).findByEmail(anyString());
 		verify(userRepository, never()).save(any(User.class));
@@ -351,13 +353,60 @@ class EmailTokenServiceTest {
 
 		when(tokenRepository.findByToken(token)).thenReturn(Optional.of(emailToken));
 
-		IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+		EmailValidationException exception = assertThrows(EmailValidationException.class,
 				() -> emailTokenService.confirmEmailChange(token));
 
+		assertNotNull(exception);
 		assertEquals("New email cannot be the same as current email", exception.getMessage());
 		verify(userRepository, never()).findByEmail(anyString());
 		verify(userRepository, never()).save(any(User.class));
 		verify(emailService, never()).sendEmailChangeNotification(anyString(), anyString());
 		verify(tokenRepository, never()).save(any(EmailToken.class));
+	}
+
+	@Test
+	void validateToken_ShouldReturnToken_WhenTokenIsValid() {
+		String token = "valid-token";
+		User user = new User();
+		user.setId(1L);
+		user.setEnabled(false);
+		user.setEmail("test@example.com");
+
+		EmailToken emailToken = EmailToken.builder().token(token).type(TokenType.VERIFICATION).confirmed(false)
+				.expiresAt(LocalDateTime.now().plusHours(1)).user(user).build();
+
+		when(tokenRepository.findByToken(token)).thenReturn(Optional.of(emailToken));
+		when(userRepository.save(user)).thenReturn(user);
+		when(tokenRepository.save(emailToken)).thenReturn(emailToken);
+		when(bonusUserService.findOrCreateBonusCard(user)).thenReturn(new BonusCard());
+
+		String result = emailTokenService.confirmEmail(token);
+
+		assertNotNull(result);
+		assertEquals("Email successfully verified! You can now log in.", result);
+		verify(tokenRepository).findByToken(token);
+	}
+
+	@Test
+	void confirmEmail_ShouldHandleTokenExpirationExactlyNow() {
+		String token = "expiring-now-token";
+		User user = new User();
+		user.setId(1L);
+		user.setEnabled(false);
+		user.setEmail("test@example.com");
+
+		EmailToken emailToken = EmailToken.builder().token(token).type(TokenType.VERIFICATION).confirmed(false)
+				.expiresAt(LocalDateTime.now()).user(user).build();
+
+		when(tokenRepository.findByToken(token)).thenReturn(Optional.of(emailToken));
+
+		TokenExpiredException exception = assertThrows(TokenExpiredException.class,
+				() -> emailTokenService.confirmEmail(token));
+
+		assertNotNull(exception);
+		verify(userRepository, never()).save(any(User.class));
+		verify(tokenRepository, never()).save(any(EmailToken.class));
+		verify(bonusUserService, never()).findOrCreateBonusCard(any());
+		verify(bonusUserService, never()).awardWelcomeBonus(any());
 	}
 }

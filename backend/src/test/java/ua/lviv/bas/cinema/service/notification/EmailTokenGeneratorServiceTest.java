@@ -7,10 +7,13 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -23,7 +26,7 @@ import ua.lviv.bas.cinema.repository.EmailTokenRepository;
 import ua.lviv.bas.cinema.repository.UserRepository;
 
 @ExtendWith(MockitoExtension.class)
-class EmailTokenGeneratorServiceTest {
+public class EmailTokenGeneratorServiceTest {
 
 	@Mock
 	private EmailTokenRepository tokenRepository;
@@ -36,6 +39,9 @@ class EmailTokenGeneratorServiceTest {
 
 	@InjectMocks
 	private EmailTokenGeneratorService tokenGeneratorService;
+
+	@Captor
+	private ArgumentCaptor<EmailToken> tokenCaptor;
 
 	@Test
 	void generateVerificationToken_ShouldGenerateToken_WhenUserExists() {
@@ -121,6 +127,70 @@ class EmailTokenGeneratorServiceTest {
 	}
 
 	@Test
+	void generateVerificationToken_ShouldSetCorrectExpirationTime() {
+		String email = "test@example.com";
+		User user = new User();
+		user.setEmail(email);
+
+		when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
+		when(tokenRepository.save(any(EmailToken.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+		tokenGeneratorService.generateVerificationToken(email);
+
+		verify(tokenRepository).save(tokenCaptor.capture());
+		EmailToken savedToken = tokenCaptor.getValue();
+
+		assertNotNull(savedToken);
+		assertNotNull(savedToken.getExpiresAt());
+		assert savedToken.getExpiresAt().isAfter(LocalDateTime.now());
+		assert savedToken.getExpiresAt().isBefore(LocalDateTime.now().plusMinutes(11));
+		assert savedToken.getType() == TokenType.VERIFICATION;
+	}
+
+	@Test
+	void generatePasswordResetToken_ShouldSetCorrectExpirationTime() {
+		String email = "test@example.com";
+		User user = new User();
+		user.setEmail(email);
+
+		when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
+		when(tokenRepository.save(any(EmailToken.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+		tokenGeneratorService.generatePasswordResetToken(email);
+
+		verify(tokenRepository).save(tokenCaptor.capture());
+		EmailToken savedToken = tokenCaptor.getValue();
+
+		assertNotNull(savedToken);
+		assertNotNull(savedToken.getExpiresAt());
+		assert savedToken.getExpiresAt().isAfter(LocalDateTime.now());
+		assert savedToken.getExpiresAt().isBefore(LocalDateTime.now().plusMinutes(11));
+		assert savedToken.getType() == TokenType.PASSWORD_RESET;
+	}
+
+	@Test
+	void generateEmailChangeToken_ShouldSetCorrectExpirationTime() {
+		String email = "old@example.com";
+		String newEmail = "new@example.com";
+		User user = new User();
+		user.setEmail(email);
+
+		when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
+		when(tokenRepository.save(any(EmailToken.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+		tokenGeneratorService.generateEmailChangeToken(email, newEmail);
+
+		verify(tokenRepository).save(tokenCaptor.capture());
+		EmailToken savedToken = tokenCaptor.getValue();
+
+		assertNotNull(savedToken);
+		assertNotNull(savedToken.getExpiresAt());
+		assert savedToken.getExpiresAt().isAfter(LocalDateTime.now());
+		assert savedToken.getExpiresAt().isBefore(LocalDateTime.now().plusHours(25));
+		assert savedToken.getType() == TokenType.EMAIL_CHANGE;
+	}
+
+	@Test
 	void generateEmailChangeToken_ShouldIncludeNewEmailInToken() {
 		String email = "old@example.com";
 		String newEmail = "new@example.com";
@@ -130,10 +200,15 @@ class EmailTokenGeneratorServiceTest {
 		when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
 		when(tokenRepository.save(any(EmailToken.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-		String token = tokenGeneratorService.generateEmailChangeToken(email, newEmail);
+		tokenGeneratorService.generateEmailChangeToken(email, newEmail);
 
-		assertNotNull(token);
-		verify(emailService).sendEmailChangeConfirmation(newEmail, token);
+		verify(tokenRepository).save(tokenCaptor.capture());
+		EmailToken savedToken = tokenCaptor.getValue();
+
+		assertNotNull(savedToken);
+		assertNotNull(savedToken.getNewEmail());
+		assert savedToken.getNewEmail().equals(newEmail);
+		verify(emailService).sendEmailChangeConfirmation(newEmail, savedToken.getToken());
 	}
 
 	@Test
@@ -147,6 +222,46 @@ class EmailTokenGeneratorServiceTest {
 
 		tokenGeneratorService.generateVerificationToken(email);
 
-		verify(tokenRepository).save(any(EmailToken.class));
+		verify(tokenRepository).save(tokenCaptor.capture());
+		EmailToken savedToken = tokenCaptor.getValue();
+
+		assertNotNull(savedToken);
+		assertNotNull(savedToken.getCreatedAt());
+		assert savedToken.getCreatedAt().isBefore(LocalDateTime.now().plusSeconds(1));
+		assert savedToken.getCreatedAt().isAfter(LocalDateTime.now().minusSeconds(1));
+	}
+
+	@Test
+	void generateToken_ShouldGenerateUUIDToken() {
+		String email = "test@example.com";
+		User user = new User();
+		user.setEmail(email);
+
+		when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
+		when(tokenRepository.save(any(EmailToken.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+		String token = tokenGeneratorService.generateVerificationToken(email);
+
+		assertNotNull(token);
+		assert token.matches("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}");
+	}
+
+	@Test
+	void generateEmailChangeToken_ShouldNotSendEmail_WhenNewEmailIsNull() {
+		String email = "test@example.com";
+		User user = new User();
+		user.setEmail(email);
+
+		when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
+		when(tokenRepository.save(any(EmailToken.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+		tokenGeneratorService.generateEmailChangeToken(email, null);
+
+		verify(tokenRepository).save(tokenCaptor.capture());
+		EmailToken savedToken = tokenCaptor.getValue();
+
+		assertNotNull(savedToken);
+		assert savedToken.getNewEmail() == null;
+		verify(emailService).sendEmailChangeConfirmation(null, savedToken.getToken());
 	}
 }

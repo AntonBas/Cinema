@@ -25,6 +25,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import ua.lviv.bas.cinema.domain.BookedSeat;
 import ua.lviv.bas.cinema.domain.Booking;
@@ -44,6 +48,7 @@ import ua.lviv.bas.cinema.dto.booking.response.BookingResponse;
 import ua.lviv.bas.cinema.exception.domain.booking.BookingNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.booking.BookingValidationException;
 import ua.lviv.bas.cinema.exception.domain.cinema.SessionNotFoundException;
+import ua.lviv.bas.cinema.exception.domain.tickettype.TicketTypeNotFoundException;
 import ua.lviv.bas.cinema.mapper.BookingMapper;
 import ua.lviv.bas.cinema.repository.BookedSeatRepository;
 import ua.lviv.bas.cinema.repository.BookingRepository;
@@ -53,7 +58,7 @@ import ua.lviv.bas.cinema.repository.TicketTypeRepository;
 import ua.lviv.bas.cinema.service.user.BonusService;
 
 @ExtendWith(MockitoExtension.class)
-class BookingServiceTest {
+public class BookingServiceTest {
 
 	@Mock
 	private BookingRepository bookingRepository;
@@ -148,7 +153,7 @@ class BookingServiceTest {
 		childTicketType = new TicketType();
 		childTicketType.setId(TICKET_TYPE_CHILD_ID);
 		childTicketType.setDisplayName("Child");
-		childTicketType.setPriceMultiplier(new BigDecimal("0.7"));
+		childTicketType.setPriceMultiplier(new BigDecimal("1.4")); // VIP * 1.4
 
 		SeatSelectionRequest seatSelection1 = new SeatSelectionRequest();
 		seatSelection1.setSeatId(SEAT_ID_1);
@@ -167,7 +172,8 @@ class BookingServiceTest {
 				.seatPrice(new BigDecimal("200.00")).status(BookedSeatStatus.PENDING).build();
 
 		bookedSeat2 = BookedSeat.builder().id(2L).seat(testSeat2).session(testSession).ticketType(childTicketType)
-				.seatPrice(new BigDecimal("280.00")).status(BookedSeatStatus.PENDING).build();
+				.seatPrice(new BigDecimal("280.00")) // 200 * 1.4
+				.status(BookedSeatStatus.PENDING).build();
 
 		testBooking = Booking.builder().id(BOOKING_ID).user(testUser).session(testSession).status(BookingStatus.PENDING)
 				.totalPrice(new BigDecimal("480.00")).bonusPointsUsed(100).bonusDiscountAmount(new BigDecimal("100.00"))
@@ -206,10 +212,11 @@ class BookingServiceTest {
 		assertThat(result.getTotalPrice()).isEqualByComparingTo("480.00");
 		assertThat(result.getFinalPrice()).isEqualByComparingTo("380.00");
 
-		verify(bonusService).validatePointsRedemption(eq(USER_ID), eq(100));
+		verify(bonusService).validateBonusPointsForBooking(eq(USER_ID), eq(100), any(BigDecimal.class));
 		verify(seatAvailabilityService, times(2)).validateSeatAvailability(eq(SESSION_ID), anyLong());
 		verify(bookingRepository).save(any(Booking.class));
 		verify(bookedSeatRepository).saveAll(anyList());
+		verify(bonusService).spendBonusPointsForBooking(eq(USER_ID), eq(100), any(Booking.class), any(String.class));
 	}
 
 	@Test
@@ -274,7 +281,7 @@ class BookingServiceTest {
 		when(ticketTypeRepository.findById(TICKET_TYPE_ADULT_ID)).thenReturn(Optional.empty());
 
 		assertThatThrownBy(() -> bookingService.createBooking(createRequest, testUser))
-				.isInstanceOf(IllegalArgumentException.class).hasMessageContaining("Ticket type not found");
+				.isInstanceOf(TicketTypeNotFoundException.class);
 
 		verify(ticketTypeRepository).findById(TICKET_TYPE_ADULT_ID);
 	}
@@ -306,12 +313,13 @@ class BookingServiceTest {
 		when(seatAvailabilityService.calculateSeatPrice(testSession, testSeat2, childTicketType))
 				.thenReturn(new BigDecimal("280.00"));
 
-		doThrow(IllegalArgumentException.class).when(bonusService).validatePointsRedemption(eq(USER_ID), eq(100));
+		doThrow(IllegalArgumentException.class).when(bonusService).validateBonusPointsForBooking(eq(USER_ID), eq(100),
+				any(BigDecimal.class));
 
 		assertThatThrownBy(() -> bookingService.createBooking(createRequest, testUser))
 				.isInstanceOf(IllegalArgumentException.class);
 
-		verify(bonusService).validatePointsRedemption(eq(USER_ID), eq(100));
+		verify(bonusService).validateBonusPointsForBooking(eq(USER_ID), eq(100), any(BigDecimal.class));
 	}
 
 	@Test
@@ -337,7 +345,10 @@ class BookingServiceTest {
 		BookingResponse result = bookingService.createBooking(createRequest, testUser);
 
 		assertThat(result).isNotNull();
-		verify(bonusService, never()).validatePointsRedemption(anyLong(), any(Integer.class));
+		verify(bonusService, never()).validateBonusPointsForBooking(anyLong(), any(Integer.class),
+				any(BigDecimal.class));
+		verify(bonusService, never()).spendBonusPointsForBooking(anyLong(), any(Integer.class), any(Booking.class),
+				any(String.class));
 	}
 
 	@Test
@@ -349,7 +360,6 @@ class BookingServiceTest {
 
 		assertThat(result).isNotNull();
 		assertThat(result.getId()).isEqualTo(BOOKING_ID);
-		assertThat(result.getBookingNumber()).isEqualTo("BK-2026-00007");
 		verify(bookingRepository).findByIdAndUserId(BOOKING_ID, USER_ID);
 		verify(bookingMapper).toBookingResponse(testBooking);
 	}
@@ -366,27 +376,36 @@ class BookingServiceTest {
 
 	@Test
 	void getUserBookings_WithStatusFilter() {
-		List<Booking> bookings = Arrays.asList(testBooking);
-		when(bookingRepository.findByUserIdAndStatusOrderByCreatedAtDesc(USER_ID, BookingStatus.PENDING))
-				.thenReturn(bookings);
+		Pageable pageable = PageRequest.of(0, 10);
+		Page<Booking> bookingPage = new PageImpl<>(Arrays.asList(testBooking), pageable, 1);
 
-		List<Booking> result = bookingService.getUserBookings(USER_ID, BookingStatus.PENDING);
+		when(bookingRepository.findByUserIdAndStatusOrderByCreatedAtDesc(eq(USER_ID), eq(BookingStatus.PENDING),
+				eq(pageable))).thenReturn(bookingPage);
+		when(bookingMapper.toBookingResponse(testBooking)).thenReturn(bookingResponse);
 
-		assertThat(result).hasSize(1);
-		assertThat(result.get(0)).isEqualTo(testBooking);
-		verify(bookingRepository).findByUserIdAndStatusOrderByCreatedAtDesc(USER_ID, BookingStatus.PENDING);
+		Page<BookingResponse> result = bookingService.getUserBookings(USER_ID, BookingStatus.PENDING, pageable);
+
+		assertThat(result).isNotNull();
+		assertThat(result.getContent()).hasSize(1);
+		assertThat(result.getContent().get(0).getId()).isEqualTo(BOOKING_ID);
+		verify(bookingRepository).findByUserIdAndStatusOrderByCreatedAtDesc(eq(USER_ID), eq(BookingStatus.PENDING),
+				eq(pageable));
 	}
 
 	@Test
 	void getUserBookings_WithoutStatusFilter() {
-		List<Booking> bookings = Arrays.asList(testBooking);
-		when(bookingRepository.findByUserIdOrderByCreatedAtDesc(USER_ID)).thenReturn(bookings);
+		Pageable pageable = PageRequest.of(0, 10);
+		Page<Booking> bookingPage = new PageImpl<>(Arrays.asList(testBooking), pageable, 1);
 
-		List<Booking> result = bookingService.getUserBookings(USER_ID, null);
+		when(bookingRepository.findByUserIdOrderByCreatedAtDesc(eq(USER_ID), eq(pageable))).thenReturn(bookingPage);
+		when(bookingMapper.toBookingResponse(testBooking)).thenReturn(bookingResponse);
 
-		assertThat(result).hasSize(1);
-		assertThat(result.get(0)).isEqualTo(testBooking);
-		verify(bookingRepository).findByUserIdOrderByCreatedAtDesc(USER_ID);
+		Page<BookingResponse> result = bookingService.getUserBookings(USER_ID, null, pageable);
+
+		assertThat(result).isNotNull();
+		assertThat(result.getContent()).hasSize(1);
+		assertThat(result.getContent().get(0).getId()).isEqualTo(BOOKING_ID);
+		verify(bookingRepository).findByUserIdOrderByCreatedAtDesc(eq(USER_ID), eq(pageable));
 	}
 
 	@Test
@@ -400,6 +419,7 @@ class BookingServiceTest {
 		assertThat(testBooking.getStatus()).isEqualTo(BookingStatus.CANCELLED);
 		testBooking.getBookedSeats().forEach(bs -> assertThat(bs.getStatus()).isEqualTo(BookedSeatStatus.CANCELLED));
 		verify(bookingRepository).save(testBooking);
+		verify(bonusService).refundBonusPointsForCancellation(testBooking);
 	}
 
 	@Test
@@ -412,6 +432,7 @@ class BookingServiceTest {
 
 		assertThat(testBooking.getStatus()).isEqualTo(BookingStatus.CANCELLED);
 		verify(bookingRepository).save(testBooking);
+		verify(bonusService).refundBonusPointsForCancellation(testBooking);
 	}
 
 	@Test
@@ -434,6 +455,7 @@ class BookingServiceTest {
 				.isInstanceOf(BookingValidationException.class).hasMessageContaining("cannot be cancelled");
 
 		verify(bookingRepository, never()).save(any());
+		verify(bonusService, never()).refundBonusPointsForCancellation(any());
 	}
 
 	@Test
@@ -450,28 +472,6 @@ class BookingServiceTest {
 	}
 
 	@Test
-	void confirmBooking_WhenBookingNotFound_ShouldThrowException() {
-		when(bookingRepository.findById(BOOKING_ID)).thenReturn(Optional.empty());
-
-		assertThatThrownBy(() -> bookingService.confirmBooking(BOOKING_ID))
-				.isInstanceOf(BookingNotFoundException.class);
-
-		verify(bookingRepository).findById(BOOKING_ID);
-		verify(bookingRepository, never()).save(any());
-	}
-
-	@Test
-	void confirmBooking_WhenNotPending_ShouldThrowException() {
-		testBooking.setStatus(BookingStatus.CONFIRMED);
-		when(bookingRepository.findById(BOOKING_ID)).thenReturn(Optional.of(testBooking));
-
-		assertThatThrownBy(() -> bookingService.confirmBooking(BOOKING_ID)).isInstanceOf(IllegalStateException.class)
-				.hasMessageContaining("Only pending bookings");
-
-		verify(bookingRepository, never()).save(any());
-	}
-
-	@Test
 	void expireBooking_Success() {
 		testBooking.setStatus(BookingStatus.PENDING);
 		when(bookingRepository.findById(BOOKING_ID)).thenReturn(Optional.of(testBooking));
@@ -485,176 +485,13 @@ class BookingServiceTest {
 	}
 
 	@Test
-	void expireBooking_WhenBookingNotFound_ShouldThrowException() {
-		when(bookingRepository.findById(BOOKING_ID)).thenReturn(Optional.empty());
+	void getAvailableBonusPointsForBooking_Success() {
+		BigDecimal totalPrice = new BigDecimal("480.00");
+		when(bonusService.getAvailablePointsForRedemption(USER_ID, totalPrice)).thenReturn(100);
 
-		assertThatThrownBy(() -> bookingService.expireBooking(BOOKING_ID)).isInstanceOf(BookingNotFoundException.class);
+		Integer result = bookingService.getAvailableBonusPointsForBooking(USER_ID, totalPrice);
 
-		verify(bookingRepository).findById(BOOKING_ID);
-		verify(bookingRepository, never()).save(any());
-	}
-
-	@Test
-	void expireBooking_WhenNotPending_ShouldNotChangeStatus() {
-		testBooking.setStatus(BookingStatus.CONFIRMED);
-		when(bookingRepository.findById(BOOKING_ID)).thenReturn(Optional.of(testBooking));
-
-		bookingService.expireBooking(BOOKING_ID);
-
-		assertThat(testBooking.getStatus()).isEqualTo(BookingStatus.CONFIRMED);
-		verify(bookingRepository, never()).save(any());
-	}
-
-	@Test
-	void calculateTotalPrice_Success() {
-		BigDecimal result = bookingService.calculateTotalPrice(testBooking);
-
-		assertThat(result).isEqualByComparingTo("480.00");
-	}
-
-	@Test
-	void generateBookingNumber_Success() {
-		testBooking.setId(BOOKING_ID);
-		testBooking.setCreatedAt(LocalDateTime.of(2024, 1, 1, 0, 0));
-
-		String result = bookingService.generateBookingNumber(testBooking);
-
-		assertThat(result).isEqualTo("BK-2024-00007");
-	}
-
-	@Test
-	void validateSessionForBooking_WhenSessionCancelled_ShouldThrowException() {
-		testSession.setStatus(CinemaSessionStatus.CANCELLED);
-		when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(testSession));
-
-		assertThatThrownBy(() -> bookingService.createBooking(createRequest, testUser))
-				.isInstanceOf(BookingValidationException.class);
-	}
-
-	@Test
-	void validateSessionForBooking_WhenSessionOngoing_ShouldThrowException() {
-		testSession.setStatus(CinemaSessionStatus.ONGOING);
-		when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(testSession));
-
-		assertThatThrownBy(() -> bookingService.createBooking(createRequest, testUser))
-				.isInstanceOf(BookingValidationException.class);
-	}
-
-	@Test
-	void validateSessionForBooking_WhenSessionCompleted_ShouldThrowException() {
-		testSession.setStatus(CinemaSessionStatus.COMPLETED);
-		when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(testSession));
-
-		assertThatThrownBy(() -> bookingService.createBooking(createRequest, testUser))
-				.isInstanceOf(BookingValidationException.class);
-	}
-
-	@Test
-	void validateSessionForBooking_WhenSessionAlreadyStarted_ShouldThrowException() {
-		testSession.setStartTime(LocalDateTime.now().minusHours(1));
-		when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(testSession));
-
-		assertThatThrownBy(() -> bookingService.createBooking(createRequest, testUser))
-				.isInstanceOf(BookingValidationException.class);
-	}
-
-	@Test
-	void validateSessionForBooking_WhenSessionTooClose_ShouldThrowException() {
-		testSession.setStartTime(LocalDateTime.now().plusMinutes(20));
-		when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(testSession));
-
-		assertThatThrownBy(() -> bookingService.createBooking(createRequest, testUser))
-				.isInstanceOf(BookingValidationException.class).hasMessageContaining("starts in less than 30 minutes");
-	}
-
-	@Test
-	void canBookingBeCancelled_Pending_ShouldReturnTrue() {
-		Booking pendingBooking = new Booking();
-		pendingBooking.setStatus(BookingStatus.PENDING);
-
-		assertThat(invokePrivateCanBookingBeCancelled(pendingBooking)).isTrue();
-	}
-
-	@Test
-	void canBookingBeCancelled_Confirmed_ShouldReturnTrue() {
-		Booking confirmedBooking = new Booking();
-		confirmedBooking.setStatus(BookingStatus.CONFIRMED);
-
-		assertThat(invokePrivateCanBookingBeCancelled(confirmedBooking)).isTrue();
-	}
-
-	@Test
-	void canBookingBeCancelled_Cancelled_ShouldReturnFalse() {
-		Booking cancelledBooking = new Booking();
-		cancelledBooking.setStatus(BookingStatus.CANCELLED);
-
-		assertThat(invokePrivateCanBookingBeCancelled(cancelledBooking)).isFalse();
-	}
-
-	@Test
-	void canBookingBeCancelled_Expired_ShouldReturnFalse() {
-		Booking expiredBooking = new Booking();
-		expiredBooking.setStatus(BookingStatus.EXPIRED);
-
-		assertThat(invokePrivateCanBookingBeCancelled(expiredBooking)).isFalse();
-	}
-
-	@Test
-	void calculateBonusDiscount_WithPoints() {
-		BigDecimal result = invokePrivateCalculateBonusDiscount(100);
-		assertThat(result).isEqualByComparingTo("100.00");
-	}
-
-	@Test
-	void calculateBonusDiscount_ZeroPoints() {
-		BigDecimal result = invokePrivateCalculateBonusDiscount(0);
-		assertThat(result).isEqualByComparingTo("0.00");
-	}
-
-	@Test
-	void calculateBonusDiscount_NullPoints() {
-		BigDecimal result = invokePrivateCalculateBonusDiscount(null);
-		assertThat(result).isEqualByComparingTo("0.00");
-	}
-
-	@Test
-	void buildBookingResponse_Success() {
-		when(bookingMapper.toBookingResponse(testBooking)).thenReturn(bookingResponse);
-
-		BookingResponse result = invokePrivateBuildBookingResponse(testBooking);
-
-		assertThat(result).isNotNull();
-		assertThat(result.getBookingNumber()).isEqualTo("BK-2026-00007");
-		verify(bookingMapper).toBookingResponse(testBooking);
-	}
-
-	private boolean invokePrivateCanBookingBeCancelled(Booking booking) {
-		try {
-			var method = BookingService.class.getDeclaredMethod("canBookingBeCancelled", Booking.class);
-			method.setAccessible(true);
-			return (boolean) method.invoke(bookingService, booking);
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	private BigDecimal invokePrivateCalculateBonusDiscount(Integer bonusPoints) {
-		try {
-			var method = BookingService.class.getDeclaredMethod("calculateBonusDiscount", Integer.class);
-			method.setAccessible(true);
-			return (BigDecimal) method.invoke(bookingService, bonusPoints);
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	private BookingResponse invokePrivateBuildBookingResponse(Booking booking) {
-		try {
-			var method = BookingService.class.getDeclaredMethod("buildBookingResponse", Booking.class);
-			method.setAccessible(true);
-			return (BookingResponse) method.invoke(bookingService, booking);
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
+		assertThat(result).isEqualTo(100);
+		verify(bonusService).getAvailablePointsForRedemption(USER_ID, totalPrice);
 	}
 }

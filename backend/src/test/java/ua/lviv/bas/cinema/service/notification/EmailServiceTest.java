@@ -8,6 +8,8 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,7 +27,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import ua.lviv.bas.cinema.exception.infrastructure.ExternalServiceException;
 
 @ExtendWith(MockitoExtension.class)
-class EmailServiceTest {
+public class EmailServiceTest {
 
 	@Mock
 	private JavaMailSender mailSender;
@@ -177,6 +179,106 @@ class EmailServiceTest {
 		assertThat(sentMessage.getText()).contains(sessionTime);
 		assertThat(sentMessage.getText()).contains(errorMessage);
 		assertThat(sentMessage.getText()).contains(companyName);
+	}
+
+	@Test
+	void sendRefundEmail_ShouldSendEmail_WhenValidParameters() {
+		String toEmail = "customer@example.com";
+		String bookingNumber = "BK-2024-003";
+		String movieTitle = "The Dark Knight";
+		String sessionTime = "2024-01-17 19:00";
+		String hallName = "Hall B";
+		BigDecimal refundAmount = new BigDecimal("300.00");
+		String seatInfo = "Row 6, Seat 8";
+		String refundReason = "Customer request";
+		String expectedDate = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm"));
+
+		emailService.sendRefundEmail(toEmail, bookingNumber, movieTitle, sessionTime, hallName, refundAmount, seatInfo,
+				refundReason);
+
+		verify(mailSender).send(messageCaptor.capture());
+		SimpleMailMessage sentMessage = messageCaptor.getValue();
+
+		assertThat(sentMessage).isNotNull();
+		assertThat(sentMessage.getFrom()).isEqualTo(fromEmail);
+		assertThat(sentMessage.getTo()).containsExactly(toEmail);
+		assertThat(sentMessage.getSubject()).isEqualTo("Refund Confirmation: " + movieTitle);
+		assertThat(sentMessage.getText()).contains(bookingNumber);
+		assertThat(sentMessage.getText()).contains(movieTitle);
+		assertThat(sentMessage.getText()).contains(sessionTime);
+		assertThat(sentMessage.getText()).contains(hallName);
+		assertThat(sentMessage.getText()).contains("300.00");
+		assertThat(sentMessage.getText()).contains(seatInfo);
+		assertThat(sentMessage.getText()).contains(refundReason);
+		assertThat(sentMessage.getText()).contains(expectedDate);
+		assertThat(sentMessage.getText()).contains("3-5 business days");
+		assertThat(sentMessage.getText()).contains(companyName);
+	}
+
+	@Test
+	void sendTicketsEmail_ShouldNotThrow_WhenMailSendingFails() {
+		String toEmail = "customer@example.com";
+		String bookingNumber = "BK-2024-001";
+		String movieTitle = "Inception";
+		String sessionTime = "2024-01-15 18:30";
+		String hallName = "Hall A";
+		BigDecimal amountPaid = new BigDecimal("450.00");
+		String paymentMethod = "Credit Card";
+		String seatInfo = "Row 5, Seats 12-13";
+
+		MailException mailException = new MailException("SMTP error") {
+			private static final long serialVersionUID = 1L;
+		};
+
+		doThrow(mailException).when(mailSender).send(any(SimpleMailMessage.class));
+
+		assertThatCode(() -> emailService.sendTicketsEmail(toEmail, bookingNumber, movieTitle, sessionTime, hallName,
+				amountPaid, paymentMethod, seatInfo)).doesNotThrowAnyException();
+
+		verify(mailSender).send(any(SimpleMailMessage.class));
+	}
+
+	@Test
+	void sendPaymentFailedEmail_ShouldNotThrow_WhenMailSendingFails() {
+		String toEmail = "customer@example.com";
+		String bookingNumber = "BK-2024-002";
+		String movieTitle = "Interstellar";
+		String sessionTime = "2024-01-16 20:00";
+		String errorMessage = "Insufficient funds";
+
+		MailException mailException = new MailException("SMTP error") {
+			private static final long serialVersionUID = 1L;
+		};
+
+		doThrow(mailException).when(mailSender).send(any(SimpleMailMessage.class));
+
+		assertThatCode(() -> emailService.sendPaymentFailedEmail(toEmail, bookingNumber, movieTitle, sessionTime,
+				errorMessage)).doesNotThrowAnyException();
+
+		verify(mailSender).send(any(SimpleMailMessage.class));
+	}
+
+	@Test
+	void sendRefundEmail_ShouldNotThrow_WhenMailSendingFails() {
+		String toEmail = "customer@example.com";
+		String bookingNumber = "BK-2024-003";
+		String movieTitle = "The Dark Knight";
+		String sessionTime = "2024-01-17 19:00";
+		String hallName = "Hall B";
+		BigDecimal refundAmount = new BigDecimal("300.00");
+		String seatInfo = "Row 6, Seat 8";
+		String refundReason = "Customer request";
+
+		MailException mailException = new MailException("SMTP error") {
+			private static final long serialVersionUID = 1L;
+		};
+
+		doThrow(mailException).when(mailSender).send(any(SimpleMailMessage.class));
+
+		assertThatCode(() -> emailService.sendRefundEmail(toEmail, bookingNumber, movieTitle, sessionTime, hallName,
+				refundAmount, seatInfo, refundReason)).doesNotThrowAnyException();
+
+		verify(mailSender).send(any(SimpleMailMessage.class));
 	}
 
 	@Test

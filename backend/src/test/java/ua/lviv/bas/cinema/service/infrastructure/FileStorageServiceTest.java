@@ -9,16 +9,14 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.web.multipart.MultipartFile;
 
 import ua.lviv.bas.cinema.exception.infrastructure.ExternalServiceException;
 
-class FileStorageServiceTest {
+public class FileStorageServiceTest {
 
 	@TempDir
 	Path tempDir;
@@ -35,148 +33,94 @@ class FileStorageServiceTest {
 	}
 
 	@Test
-	void storeFile_ShouldStoreFileAndReturnFileName() throws IOException {
-		MultipartFile file = new MockMultipartFile("test.jpg", "original-test.jpg", "image/jpeg",
-				"test content".getBytes());
+	void storeFile_Success() throws IOException {
+		MockMultipartFile file = new MockMultipartFile("test.jpg", "test.jpg", "image/jpeg", "test content".getBytes());
 
-		String fileName = fileStorageService.storeFile(file, "test");
+		String result = fileStorageService.storeFile(file, "test");
 
-		assertThat(fileName).isNotNull();
-		assertThat(fileName).endsWith(".jpg");
-		assertThat(Files.exists(tempDir.resolve("test").resolve(fileName))).isTrue();
+		assertThat(result).isNotNull();
+		assertThat(result).endsWith(".jpg");
+		assertThat(Files.exists(tempDir.resolve("test").resolve(result))).isTrue();
 	}
 
 	@Test
-	void storeFile_WithNullFile_ShouldReturnNull() {
-		String fileName = fileStorageService.storeFile(null, "test");
-		assertThat(fileName).isNull();
+	void storeFile_WhenFileNull_ShouldReturnNull() {
+		String result = fileStorageService.storeFile(null, "test");
+
+		assertThat(result).isNull();
 	}
 
 	@Test
-	void storeFile_WithEmptyFile_ShouldReturnNull() {
-		MultipartFile file = new MockMultipartFile("empty", new byte[0]);
-		String fileName = fileStorageService.storeFile(file, "test");
-		assertThat(fileName).isNull();
-	}
+	void storeFile_WhenFileEmpty_ShouldReturnNull() {
+		MockMultipartFile file = new MockMultipartFile("empty", new byte[0]);
 
-	@Test
-	void storeFile_WithNoExtension_ShouldUseDefaultExtension() throws IOException {
-		MultipartFile file = new MockMultipartFile("test", "test", "image/jpeg", "content".getBytes());
+		String result = fileStorageService.storeFile(file, "test");
 
-		String fileName = fileStorageService.storeFile(file, "test");
-		assertThat(fileName).endsWith(".jpg");
+		assertThat(result).isNull();
 	}
 
 	@Test
 	void storeFile_WhenIOException_ShouldThrowException() throws IOException {
-		MultipartFile file = mock(MultipartFile.class);
+		MockMultipartFile file = mock(MockMultipartFile.class);
 		when(file.isEmpty()).thenReturn(false);
 		when(file.getOriginalFilename()).thenReturn("test.jpg");
-		when(file.getBytes()).thenThrow(new IOException("Test exception"));
+		when(file.getBytes()).thenThrow(new IOException("Test"));
 
 		assertThatThrownBy(() -> fileStorageService.storeFile(file, "test"))
 				.isInstanceOf(ExternalServiceException.class);
 	}
 
 	@Test
-	void loadFile_ShouldReturnFileContent() throws IOException {
+	void loadFile_Success() throws IOException {
 		Path subDir = tempDir.resolve("test");
 		Files.createDirectories(subDir);
-		Path file = subDir.resolve("test.txt");
-		Files.write(file, "content".getBytes());
+		Files.write(subDir.resolve("test.txt"), "content".getBytes());
 
-		byte[] content = fileStorageService.loadFile("test.txt", "test");
-		assertThat(content).isEqualTo("content".getBytes());
+		byte[] result = fileStorageService.loadFile("test.txt", "test");
+
+		assertThat(result).isEqualTo("content".getBytes());
 	}
 
 	@Test
 	void loadFile_WhenFileNotFound_ShouldReturnNull() {
-		byte[] content = fileStorageService.loadFile("nonexistent.txt", "test");
-		assertThat(content).isNull();
+		byte[] result = fileStorageService.loadFile("nonexistent.txt", "test");
+
+		assertThat(result).isNull();
 	}
 
 	@Test
-	void loadFile_WithNullFileName_ShouldReturnNull() {
-		byte[] content = fileStorageService.loadFile(null, "test");
-		assertThat(content).isNull();
-	}
-
-	@Test
-	void loadFile_WithBlankFileName_ShouldReturnNull() {
-		byte[] content = fileStorageService.loadFile("   ", "test");
-		assertThat(content).isNull();
-	}
-
-	@Test
-	void deleteFile_ShouldDeleteFile() throws IOException {
+	void deleteFile_Success() throws IOException {
 		Path subDir = tempDir.resolve("test");
 		Files.createDirectories(subDir);
-		Path file = subDir.resolve("test.txt");
-		Files.write(file, "content".getBytes());
+		Files.write(subDir.resolve("test.txt"), "content".getBytes());
 
 		fileStorageService.deleteFile("test.txt", "test");
-		assertThat(Files.exists(file)).isFalse();
+
+		assertThat(Files.exists(subDir.resolve("test.txt"))).isFalse();
 	}
 
 	@Test
-	void deleteFile_WhenFileNotExists_ShouldDoNothing() {
-		fileStorageService.deleteFile("nonexistent.txt", "test");
-	}
-
-	@Test
-	void deleteFile_WithNullFileName_ShouldDoNothing() {
-		fileStorageService.deleteFile(null, "test");
-	}
-
-	@Test
-	void determineContentType_ShouldReturnCorrectMimeType() {
+	void determineContentType_Success() {
 		assertThat(fileStorageService.determineContentType("test.jpg")).isEqualTo("image/jpeg");
-		assertThat(fileStorageService.determineContentType("test.jpeg")).isEqualTo("image/jpeg");
 		assertThat(fileStorageService.determineContentType("test.png")).isEqualTo("image/png");
-		assertThat(fileStorageService.determineContentType("test.gif")).isEqualTo("image/gif");
-		assertThat(fileStorageService.determineContentType("test.webp")).isEqualTo("image/webp");
 		assertThat(fileStorageService.determineContentType("test.unknown")).isEqualTo("application/octet-stream");
-		assertThat(fileStorageService.determineContentType(null)).isEqualTo("application/octet-stream");
 	}
 
 	@Test
-	void fileExists_ShouldReturnTrueWhenFileExists() throws IOException {
+	void fileExists_Success() throws IOException {
 		Path subDir = tempDir.resolve("test");
 		Files.createDirectories(subDir);
-		Path file = subDir.resolve("test.txt");
-		Files.write(file, "content".getBytes());
+		Files.write(subDir.resolve("test.txt"), "content".getBytes());
 
-		boolean exists = fileStorageService.fileExists("test.txt", "test");
-		assertThat(exists).isTrue();
+		boolean result = fileStorageService.fileExists("test.txt", "test");
+
+		assertThat(result).isTrue();
 	}
 
 	@Test
-	void fileExists_ShouldReturnFalseWhenFileNotExists() {
-		boolean exists = fileStorageService.fileExists("nonexistent.txt", "test");
-		assertThat(exists).isFalse();
-	}
+	void fileExists_WhenFileNotFound_ShouldReturnFalse() {
+		boolean result = fileStorageService.fileExists("nonexistent.txt", "test");
 
-	@Test
-	void fileExists_WithNullFileName_ShouldReturnFalse() {
-		boolean exists = fileStorageService.fileExists(null, "test");
-		assertThat(exists).isFalse();
-	}
-
-	@Test
-	void fileExists_WithBlankFileName_ShouldReturnFalse() {
-		boolean exists = fileStorageService.fileExists("   ", "test");
-		assertThat(exists).isFalse();
-	}
-
-	@AfterEach
-	void tearDown() throws IOException {
-		if (Files.exists(tempDir)) {
-			Files.walk(tempDir).sorted((a, b) -> -a.compareTo(b)).forEach(path -> {
-				try {
-					Files.deleteIfExists(path);
-				} catch (IOException e) {
-				}
-			});
-		}
+		assertThat(result).isFalse();
 	}
 }

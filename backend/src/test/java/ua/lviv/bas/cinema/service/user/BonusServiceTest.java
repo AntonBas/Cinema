@@ -15,6 +15,8 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -26,7 +28,6 @@ import org.springframework.data.domain.Pageable;
 import ua.lviv.bas.cinema.domain.BonusCard;
 import ua.lviv.bas.cinema.domain.BonusRules;
 import ua.lviv.bas.cinema.domain.BonusTransaction;
-import ua.lviv.bas.cinema.domain.Payment;
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.enums.BonusTransactionType;
 import ua.lviv.bas.cinema.domain.enums.VerificationStatus;
@@ -35,6 +36,7 @@ import ua.lviv.bas.cinema.dto.bonus.response.BonusCardResponse;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusTransactionResponse;
 import ua.lviv.bas.cinema.exception.domain.bonus.BonusCardNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.bonus.BonusRuleNotFoundException;
+import ua.lviv.bas.cinema.exception.domain.bonus.BonusValidationException;
 import ua.lviv.bas.cinema.exception.domain.bonus.InsufficientPointsException;
 import ua.lviv.bas.cinema.mapper.BonusMapper;
 import ua.lviv.bas.cinema.repository.BonusCardRepository;
@@ -42,7 +44,7 @@ import ua.lviv.bas.cinema.repository.BonusRulesRepository;
 import ua.lviv.bas.cinema.repository.BonusTransactionRepository;
 
 @ExtendWith(MockitoExtension.class)
-class BonusServiceTest {
+public class BonusServiceTest {
 
 	@Mock
 	private BonusCardRepository bonusCardRepository;
@@ -58,6 +60,12 @@ class BonusServiceTest {
 
 	@InjectMocks
 	private BonusService bonusUserService;
+
+	@Captor
+	private ArgumentCaptor<BonusTransaction> transactionCaptor;
+
+	@Captor
+	private ArgumentCaptor<BonusCard> cardCaptor;
 
 	@Test
 	void getBonusCard_ShouldReturnCardResponse() {
@@ -106,67 +114,22 @@ class BonusServiceTest {
 		card.setUser(user);
 		card.setPointsBalance(250);
 
-		BonusRules writeOffRule = new BonusRules();
-		writeOffRule.setBonusType(BonusTransactionType.PURCHASE_WRITE_OFF);
-		writeOffRule.setMinPointsPerTransaction(50);
-		writeOffRule.setMaxPointsPerTransaction(300);
-		writeOffRule.setActive(true);
-
 		when(bonusCardRepository.findByUserId(userId)).thenReturn(Optional.of(card));
-		when(bonusRulesRepository.findByBonusTypeAndActiveTrue(BonusTransactionType.PURCHASE_WRITE_OFF))
-				.thenReturn(Optional.of(writeOffRule));
 
 		BonusBalanceResponse result = bonusUserService.getBalance(userId);
 
 		assertThat(result.getPointsBalance()).isEqualTo(250);
 		assertThat(result.getPointValue()).isEqualByComparingTo("1.00");
 		assertThat(result.getBalanceValue()).isEqualByComparingTo("250.00");
-		assertThat(result.getMinUsablePoints()).isEqualTo(50);
-		assertThat(result.getMaxUsablePoints()).isEqualTo(300);
-		assertThat(result.getMinRedemptionValue()).isEqualByComparingTo("50.00");
-		assertThat(result.getMaxRedemptionValue()).isEqualByComparingTo("300.00");
 	}
 
 	@Test
-	void getBalance_ShouldHandleNullMinMaxValues() {
+	void getBalance_ShouldThrowWhenCardNotFound() {
 		Long userId = 1L;
-		User user = new User();
-		user.setId(userId);
 
-		BonusCard card = new BonusCard();
-		card.setId(1L);
-		card.setUser(user);
-		card.setPointsBalance(250);
+		when(bonusCardRepository.findByUserId(userId)).thenReturn(Optional.empty());
 
-		BonusRules writeOffRule = new BonusRules();
-		writeOffRule.setBonusType(BonusTransactionType.PURCHASE_WRITE_OFF);
-		writeOffRule.setMinPointsPerTransaction(null);
-		writeOffRule.setMaxPointsPerTransaction(null);
-		writeOffRule.setActive(true);
-
-		when(bonusCardRepository.findByUserId(userId)).thenReturn(Optional.of(card));
-		when(bonusRulesRepository.findByBonusTypeAndActiveTrue(BonusTransactionType.PURCHASE_WRITE_OFF))
-				.thenReturn(Optional.of(writeOffRule));
-
-		BonusBalanceResponse result = bonusUserService.getBalance(userId);
-
-		assertThat(result.getMinUsablePoints()).isEqualTo(0);
-		assertThat(result.getMaxUsablePoints()).isEqualTo(0);
-		assertThat(result.getMinRedemptionValue()).isEqualByComparingTo("0.00");
-		assertThat(result.getMaxRedemptionValue()).isEqualByComparingTo("0.00");
-	}
-
-	@Test
-	void getBalance_ShouldThrowWhenRuleNotFound() {
-		Long userId = 1L;
-		BonusCard card = new BonusCard();
-		card.setId(1L);
-
-		when(bonusCardRepository.findByUserId(userId)).thenReturn(Optional.of(card));
-		when(bonusRulesRepository.findByBonusTypeAndActiveTrue(BonusTransactionType.PURCHASE_WRITE_OFF))
-				.thenReturn(Optional.empty());
-
-		assertThatThrownBy(() -> bonusUserService.getBalance(userId)).isInstanceOf(BonusRuleNotFoundException.class);
+		assertThatThrownBy(() -> bonusUserService.getBalance(userId)).isInstanceOf(BonusCardNotFoundException.class);
 	}
 
 	@Test
@@ -178,7 +141,7 @@ class BonusServiceTest {
 		card.setId(1L);
 
 		BonusTransaction transaction = BonusTransaction.builder().id(1L).bonusCard(card)
-				.type(BonusTransactionType.PURCHASE_BONUS).pointsChange(25).build();
+				.type(BonusTransactionType.PAYMENT_ACCRUAL).pointsChange(25).build();
 
 		Page<BonusTransaction> page = new PageImpl<>(List.of(transaction), pageable, 1);
 		BonusTransactionResponse response = BonusTransactionResponse.builder().id(1L).type("PURCHASE_BONUS")
@@ -221,10 +184,13 @@ class BonusServiceTest {
 
 		bonusUserService.awardWelcomeBonus(user);
 
-		verify(bonusCardRepository, times(2)).save(card);
-		assertThat(card.isWelcomeBonusReceived()).isTrue();
-		assertThat(card.getPointsBalance()).isEqualTo(100);
-		verify(bonusTransactionRepository).save(any(BonusTransaction.class));
+		verify(bonusCardRepository, times(2)).save(cardCaptor.capture());
+		List<BonusCard> savedCards = cardCaptor.getAllValues();
+		assertThat(savedCards.get(1).isWelcomeBonusReceived()).isTrue();
+		assertThat(savedCards.get(1).getPointsBalance()).isEqualTo(100);
+		verify(bonusTransactionRepository).save(transactionCaptor.capture());
+		assertThat(transactionCaptor.getValue().getPointsChange()).isEqualTo(100);
+		assertThat(transactionCaptor.getValue().getType()).isEqualTo(BonusTransactionType.WELCOME_BONUS);
 	}
 
 	@Test
@@ -273,10 +239,13 @@ class BonusServiceTest {
 
 		bonusUserService.awardBirthdayBonus(user);
 
-		verify(bonusCardRepository, times(2)).save(card);
-		assertThat(card.getPointsBalance()).isEqualTo(200);
-		assertThat(card.getLastBirthdayBonusDate()).isEqualTo(LocalDate.now());
-		verify(bonusTransactionRepository).save(any(BonusTransaction.class));
+		verify(bonusCardRepository, times(2)).save(cardCaptor.capture());
+		List<BonusCard> savedCards = cardCaptor.getAllValues();
+		assertThat(savedCards.get(1).getPointsBalance()).isEqualTo(200);
+		assertThat(savedCards.get(1).getLastBirthdayBonusDate()).isEqualTo(LocalDate.now());
+		verify(bonusTransactionRepository).save(transactionCaptor.capture());
+		assertThat(transactionCaptor.getValue().getPointsChange()).isEqualTo(200);
+		assertThat(transactionCaptor.getValue().getType()).isEqualTo(BonusTransactionType.BIRTHDAY_BONUS);
 	}
 
 	@Test
@@ -348,20 +317,11 @@ class BonusServiceTest {
 		card.setId(1L);
 		card.setPointsBalance(250);
 
-		BonusRules rule = new BonusRules();
-		rule.setBonusType(BonusTransactionType.PURCHASE_WRITE_OFF);
-		rule.setMinPointsPerTransaction(50);
-		rule.setMaxPointsPerTransaction(300);
-		rule.setActive(true);
-
 		when(bonusCardRepository.findByUserId(userId)).thenReturn(Optional.of(card));
-		when(bonusRulesRepository.findByBonusTypeAndActiveTrue(BonusTransactionType.PURCHASE_WRITE_OFF))
-				.thenReturn(Optional.of(rule));
 
 		bonusUserService.validatePointsRedemption(userId, pointsToUse);
 
 		verify(bonusCardRepository).findByUserId(userId);
-		verify(bonusRulesRepository).findByBonusTypeAndActiveTrue(BonusTransactionType.PURCHASE_WRITE_OFF);
 	}
 
 	@Test
@@ -373,15 +333,7 @@ class BonusServiceTest {
 		card.setId(1L);
 		card.setPointsBalance(250);
 
-		BonusRules rule = new BonusRules();
-		rule.setBonusType(BonusTransactionType.PURCHASE_WRITE_OFF);
-		rule.setMinPointsPerTransaction(50);
-		rule.setMaxPointsPerTransaction(500);
-		rule.setActive(true);
-
 		when(bonusCardRepository.findByUserId(userId)).thenReturn(Optional.of(card));
-		when(bonusRulesRepository.findByBonusTypeAndActiveTrue(BonusTransactionType.PURCHASE_WRITE_OFF))
-				.thenReturn(Optional.of(rule));
 
 		assertThatThrownBy(() -> bonusUserService.validatePointsRedemption(userId, pointsToUse))
 				.isInstanceOf(InsufficientPointsException.class);
@@ -390,24 +342,16 @@ class BonusServiceTest {
 	@Test
 	void validatePointsRedemption_ShouldThrowWhenPointsOutsideRange() {
 		Long userId = 1L;
-		Integer pointsToUse = 400;
+		Integer pointsToUse = 0;
 
 		BonusCard card = new BonusCard();
 		card.setId(1L);
 		card.setPointsBalance(500);
 
-		BonusRules rule = new BonusRules();
-		rule.setBonusType(BonusTransactionType.PURCHASE_WRITE_OFF);
-		rule.setMinPointsPerTransaction(50);
-		rule.setMaxPointsPerTransaction(300);
-		rule.setActive(true);
-
 		when(bonusCardRepository.findByUserId(userId)).thenReturn(Optional.of(card));
-		when(bonusRulesRepository.findByBonusTypeAndActiveTrue(BonusTransactionType.PURCHASE_WRITE_OFF))
-				.thenReturn(Optional.of(rule));
 
 		assertThatThrownBy(() -> bonusUserService.validatePointsRedemption(userId, pointsToUse))
-				.isInstanceOf(IllegalArgumentException.class).hasMessageContaining("Points must be between");
+				.isInstanceOf(BonusValidationException.class);
 	}
 
 	@Test
@@ -422,169 +366,74 @@ class BonusServiceTest {
 	}
 
 	@Test
-	void validatePointsRedemption_ShouldThrowWhenRuleNotFound() {
-		Long userId = 1L;
-		Integer pointsToUse = 100;
+	void addPoints_ShouldAddPointsToUser() {
+		User user = new User();
+		user.setId(1L);
 
 		BonusCard card = new BonusCard();
 		card.setId(1L);
-		card.setPointsBalance(200);
+		card.setUser(user);
+		card.setPointsBalance(100);
 
-		when(bonusCardRepository.findByUserId(userId)).thenReturn(Optional.of(card));
-		when(bonusRulesRepository.findByBonusTypeAndActiveTrue(BonusTransactionType.PURCHASE_WRITE_OFF))
-				.thenReturn(Optional.empty());
-
-		assertThatThrownBy(() -> bonusUserService.validatePointsRedemption(userId, pointsToUse))
-				.isInstanceOf(BonusRuleNotFoundException.class);
-	}
-
-	@Test
-	void calculateEarnedPoints_ShouldCalculateCorrectly() {
-		BigDecimal purchaseAmount = new BigDecimal("1000");
-		BigDecimal moneyRatio = new BigDecimal("0.1");
-
-		BonusRules rule = new BonusRules();
-		rule.setBonusType(BonusTransactionType.PURCHASE_BONUS);
-		rule.setMoneyRatio(moneyRatio);
-		rule.setActive(true);
-
-		when(bonusRulesRepository.findByBonusTypeAndActiveTrue(BonusTransactionType.PURCHASE_BONUS))
-				.thenReturn(Optional.of(rule));
-
-		Integer result = bonusUserService.calculateEarnedPoints(purchaseAmount);
-
-		assertThat(result).isEqualTo(100);
-	}
-
-	@Test
-	void calculateEarnedPoints_ShouldReturnZeroWhenPurchaseAmountIsNull() {
-		Integer result = bonusUserService.calculateEarnedPoints(null);
-
-		assertThat(result).isZero();
-		verify(bonusRulesRepository, never()).findByBonusTypeAndActiveTrue(any());
-	}
-
-	@Test
-	void calculateEarnedPoints_ShouldReturnZeroWhenPurchaseAmountIsZero() {
-		Integer result = bonusUserService.calculateEarnedPoints(BigDecimal.ZERO);
-
-		assertThat(result).isZero();
-		verify(bonusRulesRepository, never()).findByBonusTypeAndActiveTrue(any());
-	}
-
-	@Test
-	void calculateEarnedPoints_ShouldReturnZeroWhenPurchaseAmountIsNegative() {
-		Integer result = bonusUserService.calculateEarnedPoints(new BigDecimal("-100"));
-
-		assertThat(result).isZero();
-		verify(bonusRulesRepository, never()).findByBonusTypeAndActiveTrue(any());
-	}
-
-	@Test
-	void calculateEarnedPoints_ShouldReturnZeroWhenNoRatio() {
-		BigDecimal purchaseAmount = new BigDecimal("1000");
-
-		BonusRules rule = new BonusRules();
-		rule.setBonusType(BonusTransactionType.PURCHASE_BONUS);
-		rule.setMoneyRatio(null);
-		rule.setActive(true);
-
-		when(bonusRulesRepository.findByBonusTypeAndActiveTrue(BonusTransactionType.PURCHASE_BONUS))
-				.thenReturn(Optional.of(rule));
-
-		Integer result = bonusUserService.calculateEarnedPoints(purchaseAmount);
-
-		assertThat(result).isZero();
-	}
-
-	@Test
-	void calculateEarnedPoints_ShouldReturnZeroWhenRatioIsZero() {
-		BigDecimal purchaseAmount = new BigDecimal("1000");
-
-		BonusRules rule = new BonusRules();
-		rule.setBonusType(BonusTransactionType.PURCHASE_BONUS);
-		rule.setMoneyRatio(BigDecimal.ZERO);
-		rule.setActive(true);
-
-		when(bonusRulesRepository.findByBonusTypeAndActiveTrue(BonusTransactionType.PURCHASE_BONUS))
-				.thenReturn(Optional.of(rule));
-
-		Integer result = bonusUserService.calculateEarnedPoints(purchaseAmount);
-
-		assertThat(result).isZero();
-	}
-
-	@Test
-	void calculateEarnedPoints_ShouldReturnZeroWhenRuleNotActive() {
-		BigDecimal purchaseAmount = new BigDecimal("1000");
-
-		BonusRules rule = new BonusRules();
-		rule.setBonusType(BonusTransactionType.PURCHASE_BONUS);
-		rule.setMoneyRatio(new BigDecimal("0.1"));
-		rule.setActive(false);
-
-		when(bonusRulesRepository.findByBonusTypeAndActiveTrue(BonusTransactionType.PURCHASE_BONUS))
-				.thenReturn(Optional.of(rule));
-
-		Integer result = bonusUserService.calculateEarnedPoints(purchaseAmount);
-
-		assertThat(result).isZero();
-	}
-
-	@Test
-	void calculateEarnedPoints_ShouldThrowWhenRuleNotFound() {
-		BigDecimal purchaseAmount = new BigDecimal("1000");
-
-		when(bonusRulesRepository.findByBonusTypeAndActiveTrue(BonusTransactionType.PURCHASE_BONUS))
-				.thenReturn(Optional.empty());
-
-		assertThatThrownBy(() -> bonusUserService.calculateEarnedPoints(purchaseAmount))
-				.isInstanceOf(BonusRuleNotFoundException.class);
-	}
-
-	@Test
-	void redeemPointsForPurchase_ShouldProcessRedemptionAndAwardPoints() {
-		Long userId = 1L;
-		Integer pointsToUse = 150;
-		BigDecimal purchaseAmount = new BigDecimal("2000");
-
-		Payment payment = new Payment();
-		payment.setId(1L);
-
-		BonusCard card = new BonusCard();
-		card.setId(1L);
-		card.setPointsBalance(250);
-
-		BonusRules writeOffRule = new BonusRules();
-		writeOffRule.setBonusType(BonusTransactionType.PURCHASE_WRITE_OFF);
-		writeOffRule.setMinPointsPerTransaction(50);
-		writeOffRule.setMaxPointsPerTransaction(300);
-		writeOffRule.setActive(true);
-
-		BonusRules purchaseRule = new BonusRules();
-		purchaseRule.setBonusType(BonusTransactionType.PURCHASE_BONUS);
-		purchaseRule.setMoneyRatio(new BigDecimal("0.05"));
-		purchaseRule.setActive(true);
-
-		when(bonusCardRepository.findByUserId(userId)).thenReturn(Optional.of(card));
-		when(bonusRulesRepository.findByBonusTypeAndActiveTrue(BonusTransactionType.PURCHASE_WRITE_OFF))
-				.thenReturn(Optional.of(writeOffRule));
-		when(bonusRulesRepository.findByBonusTypeAndActiveTrue(BonusTransactionType.PURCHASE_BONUS))
-				.thenReturn(Optional.of(purchaseRule));
-
+		when(bonusCardRepository.findByUserId(user.getId())).thenReturn(Optional.of(card));
 		when(bonusCardRepository.save(any(BonusCard.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
 		when(bonusTransactionRepository.save(any(BonusTransaction.class)))
 				.thenAnswer(invocation -> invocation.getArgument(0));
 
-		BonusTransaction result = bonusUserService.redeemPointsForPurchase(userId, pointsToUse, payment,
-				purchaseAmount);
+		Integer result = bonusUserService.addPoints(user, 50);
 
-		assertThat(result).isNotNull();
-		assertThat(result.getType()).isEqualTo(BonusTransactionType.PURCHASE_WRITE_OFF);
-		assertThat(result.getPointsChange()).isEqualTo(-150);
+		assertThat(result).isEqualTo(150);
+		assertThat(card.getPointsBalance()).isEqualTo(150);
 
-		assertThat(card.getPointsBalance()).isEqualTo(200);
+		verify(bonusCardRepository).save(card);
+		verify(bonusTransactionRepository).save(transactionCaptor.capture());
+		assertThat(transactionCaptor.getValue().getType()).isEqualTo(BonusTransactionType.PROMOTION_BONUS);
+		assertThat(transactionCaptor.getValue().getPointsChange()).isEqualTo(50);
+	}
+
+	@Test
+	void addPoints_ShouldCreateNewCardIfNotExists() {
+		User user = new User();
+		user.setId(1L);
+
+		BonusCard newCard = BonusCard.builder().user(user).pointsBalance(0).welcomeBonusReceived(false).build();
+
+		when(bonusCardRepository.findByUserId(user.getId())).thenReturn(Optional.empty());
+		when(bonusCardRepository.save(any(BonusCard.class))).thenReturn(newCard);
+		when(bonusTransactionRepository.save(any(BonusTransaction.class)))
+				.thenAnswer(invocation -> invocation.getArgument(0));
+
+		Integer result = bonusUserService.addPoints(user, 100);
+
+		assertThat(result).isEqualTo(100);
+		assertThat(newCard.getPointsBalance()).isEqualTo(100);
+
+		verify(bonusCardRepository, times(2)).save(any(BonusCard.class));
+		verify(bonusTransactionRepository).save(any(BonusTransaction.class));
+	}
+
+	@Test
+	void addPoints_ShouldThrowWhenPointsIsNull() {
+		User user = new User();
+		user.setId(1L);
+
+		assertThatThrownBy(() -> bonusUserService.addPoints(user, null)).isInstanceOf(BonusValidationException.class);
+	}
+
+	@Test
+	void addPoints_ShouldThrowWhenPointsIsZero() {
+		User user = new User();
+		user.setId(1L);
+
+		assertThatThrownBy(() -> bonusUserService.addPoints(user, 0)).isInstanceOf(BonusValidationException.class);
+	}
+
+	@Test
+	void addPoints_ShouldThrowWhenPointsIsNegative() {
+		User user = new User();
+		user.setId(1L);
+
+		assertThatThrownBy(() -> bonusUserService.addPoints(user, -50)).isInstanceOf(BonusValidationException.class);
 	}
 
 	@Test
@@ -631,7 +480,7 @@ class BonusServiceTest {
 		card.setPointsBalance(100);
 
 		Integer pointsChange = 25;
-		BonusTransactionType type = BonusTransactionType.PURCHASE_BONUS;
+		BonusTransactionType type = BonusTransactionType.PAYMENT_ACCRUAL;
 		String referenceId = "PAYMENT_123";
 
 		when(bonusTransactionRepository.save(any(BonusTransaction.class)))
@@ -639,7 +488,7 @@ class BonusServiceTest {
 		when(bonusCardRepository.save(any(BonusCard.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
 		BonusTransaction result = bonusUserService.createBonusTransaction(card, pointsChange, type, referenceId, null,
-				null);
+				null, null);
 
 		assertThat(result).isNotNull();
 		assertThat(result.getType()).isEqualTo(type);
@@ -661,8 +510,8 @@ class BonusServiceTest {
 				.thenAnswer(invocation -> invocation.getArgument(0));
 		when(bonusCardRepository.save(any(BonusCard.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-		BonusTransaction result = bonusUserService.createBonusTransaction(card, -50,
-				BonusTransactionType.PURCHASE_WRITE_OFF, "PAYMENT_1", null, null);
+		BonusTransaction result = bonusUserService.createBonusTransaction(card, -50, BonusTransactionType.BOOKING_SPEND,
+				"PAYMENT_1", null, null, null);
 
 		assertThat(result).isNotNull();
 		assertThat(result.getPointsChange()).isEqualTo(-50);
@@ -670,99 +519,113 @@ class BonusServiceTest {
 	}
 
 	@Test
-	void addPoints_ShouldAddPointsToUser() {
-		User user = new User();
-		user.setId(1L);
-
-		BonusCard card = new BonusCard();
-		card.setId(1L);
-		card.setUser(user);
-		card.setPointsBalance(100);
-
-		when(bonusCardRepository.findByUserId(user.getId())).thenReturn(Optional.of(card));
-		when(bonusCardRepository.save(any(BonusCard.class))).thenAnswer(invocation -> invocation.getArgument(0));
-		when(bonusTransactionRepository.save(any(BonusTransaction.class)))
-				.thenAnswer(invocation -> invocation.getArgument(0));
-
-		Integer result = bonusUserService.addPoints(user, 50);
-
-		assertThat(result).isEqualTo(150);
-		assertThat(card.getPointsBalance()).isEqualTo(150);
-
-		verify(bonusCardRepository).save(card);
-		verify(bonusTransactionRepository).save(any(BonusTransaction.class));
+	void calculateAccruedPointsForAmount_ShouldCalculateCorrectly() {
+		BigDecimal purchaseAmount = new BigDecimal("1000");
+		Integer result = bonusUserService.calculateAccruedPointsForAmount(purchaseAmount);
+		assertThat(result).isEqualTo(50);
 	}
 
 	@Test
-	void addPoints_ShouldCreateNewCardIfNotExists() {
-		User user = new User();
-		user.setId(1L);
+	void calculateAccruedPointsForAmount_ShouldReturnZeroWhenAmountIsNull() {
+		Integer result = bonusUserService.calculateAccruedPointsForAmount(null);
+		assertThat(result).isEqualTo(0);
+	}
 
-		BonusCard newCard = BonusCard.builder().user(user).pointsBalance(0).welcomeBonusReceived(false).build();
+	@Test
+	void calculateAccruedPointsForAmount_ShouldReturnZeroWhenAmountIsZero() {
+		Integer result = bonusUserService.calculateAccruedPointsForAmount(BigDecimal.ZERO);
+		assertThat(result).isEqualTo(0);
+	}
 
-		when(bonusCardRepository.findByUserId(user.getId())).thenReturn(Optional.empty());
-		when(bonusCardRepository.save(any(BonusCard.class))).thenReturn(newCard);
-		when(bonusTransactionRepository.save(any(BonusTransaction.class)))
-				.thenAnswer(invocation -> invocation.getArgument(0));
+	@Test
+	void calculateAccruedPointsForAmount_ShouldReturnZeroWhenAmountIsNegative() {
+		Integer result = bonusUserService.calculateAccruedPointsForAmount(new BigDecimal("-100"));
+		assertThat(result).isEqualTo(0);
+	}
 
-		Integer result = bonusUserService.addPoints(user, 100);
+	@Test
+	void validateBonusPointsForBooking_ShouldPassWhenValid() {
+		Long userId = 1L;
+		Integer pointsToUse = 50;
+		BigDecimal bookingTotalPrice = new BigDecimal("200");
+
+		BonusCard card = new BonusCard();
+		card.setId(1L);
+		card.setPointsBalance(100);
+
+		when(bonusCardRepository.findByUserId(userId)).thenReturn(Optional.of(card));
+
+		bonusUserService.validateBonusPointsForBooking(userId, pointsToUse, bookingTotalPrice);
+	}
+
+	@Test
+	void validateBonusPointsForBooking_ShouldThrowWhenDiscountExceedsMax() {
+		Long userId = 1L;
+		Integer pointsToUse = 150;
+		BigDecimal bookingTotalPrice = new BigDecimal("200");
+
+		BonusCard card = new BonusCard();
+		card.setId(1L);
+		card.setPointsBalance(200);
+
+		when(bonusCardRepository.findByUserId(userId)).thenReturn(Optional.of(card));
+
+		assertThatThrownBy(() -> bonusUserService.validateBonusPointsForBooking(userId, pointsToUse, bookingTotalPrice))
+				.isInstanceOf(BonusValidationException.class);
+	}
+
+	@Test
+	void getAvailablePointsForRedemption_ShouldReturnCorrectValue() {
+		Long userId = 1L;
+		BigDecimal bookingTotalPrice = new BigDecimal("200");
+
+		BonusCard card = new BonusCard();
+		card.setId(1L);
+		card.setPointsBalance(150);
+
+		when(bonusCardRepository.findByUserId(userId)).thenReturn(Optional.of(card));
+
+		Integer result = bonusUserService.getAvailablePointsForRedemption(userId, bookingTotalPrice);
 
 		assertThat(result).isEqualTo(100);
-		assertThat(newCard.getPointsBalance()).isEqualTo(100);
-
-		verify(bonusCardRepository, times(2)).save(any(BonusCard.class));
-		verify(bonusTransactionRepository).save(any(BonusTransaction.class));
 	}
 
 	@Test
-	void addPoints_ShouldThrowWhenPointsIsNull() {
-		User user = new User();
-		user.setId(1L);
-
-		assertThatThrownBy(() -> bonusUserService.addPoints(user, null)).isInstanceOf(IllegalArgumentException.class)
-				.hasMessageContaining("Points must be a positive number");
-	}
-
-	@Test
-	void addPoints_ShouldThrowWhenPointsIsZero() {
-		User user = new User();
-		user.setId(1L);
-
-		assertThatThrownBy(() -> bonusUserService.addPoints(user, 0)).isInstanceOf(IllegalArgumentException.class)
-				.hasMessageContaining("Points must be a positive number");
-	}
-
-	@Test
-	void addPoints_ShouldThrowWhenPointsIsNegative() {
-		User user = new User();
-		user.setId(1L);
-
-		assertThatThrownBy(() -> bonusUserService.addPoints(user, -50)).isInstanceOf(IllegalArgumentException.class)
-				.hasMessageContaining("Points must be a positive number");
-	}
-
-	@Test
-	void addPoints_ShouldCreatePromotionBonusTransaction() {
-		User user = new User();
-		user.setId(1L);
+	void getAvailablePointsForRedemption_ShouldReturnZeroWhenNoBalance() {
+		Long userId = 1L;
+		BigDecimal bookingTotalPrice = new BigDecimal("200");
 
 		BonusCard card = new BonusCard();
 		card.setId(1L);
-		card.setUser(user);
-		card.setPointsBalance(100);
+		card.setPointsBalance(0);
 
-		when(bonusCardRepository.findByUserId(user.getId())).thenReturn(Optional.of(card));
-		when(bonusCardRepository.save(any(BonusCard.class))).thenAnswer(invocation -> invocation.getArgument(0));
-		when(bonusTransactionRepository.save(any(BonusTransaction.class))).thenAnswer(invocation -> {
-			BonusTransaction transaction = invocation.getArgument(0);
-			assertThat(transaction.getType()).isEqualTo(BonusTransactionType.PROMOTION_BONUS);
-			assertThat(transaction.getPointsChange()).isEqualTo(50);
-			assertThat(transaction.getReferenceId()).startsWith("PROMOTION_");
-			return transaction;
-		});
+		when(bonusCardRepository.findByUserId(userId)).thenReturn(Optional.of(card));
 
-		bonusUserService.addPoints(user, 50);
+		Integer result = bonusUserService.getAvailablePointsForRedemption(userId, bookingTotalPrice);
 
-		verify(bonusTransactionRepository).save(any(BonusTransaction.class));
+		assertThat(result).isEqualTo(0);
+	}
+
+	@Test
+	void findActiveRule_ShouldReturnRule() {
+		BonusTransactionType type = BonusTransactionType.WELCOME_BONUS;
+		BonusRules rule = new BonusRules();
+		rule.setBonusType(type);
+		rule.setActive(true);
+
+		when(bonusRulesRepository.findByBonusTypeAndActiveTrue(type)).thenReturn(Optional.of(rule));
+
+		BonusRules result = bonusUserService.findActiveRule(type);
+
+		assertThat(result).isSameAs(rule);
+	}
+
+	@Test
+	void findActiveRule_ShouldThrowWhenNotFound() {
+		BonusTransactionType type = BonusTransactionType.WELCOME_BONUS;
+
+		when(bonusRulesRepository.findByBonusTypeAndActiveTrue(type)).thenReturn(Optional.empty());
+
+		assertThatThrownBy(() -> bonusUserService.findActiveRule(type)).isInstanceOf(BonusRuleNotFoundException.class);
 	}
 }
