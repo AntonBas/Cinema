@@ -2,9 +2,11 @@ package ua.lviv.bas.cinema.mapper;
 
 import java.util.List;
 
+import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
+import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.mapstruct.ReportingPolicy;
 
 import ua.lviv.bas.cinema.domain.Movie;
@@ -21,20 +23,9 @@ public interface MovieMapper {
 	@Mapping(target = "actors", source = "actors")
 	@Mapping(target = "directors", source = "directors")
 	@Mapping(target = "screenwriters", source = "screenwriters")
-	MovieDetailResponse toDetailResponse(Movie movie);
+	MovieDetailResponse toMovieDetailResponse(Movie movie);
 
-	MovieCardResponse toCardResponse(Movie movie);
-
-	@Mapping(target = "id", ignore = true)
-	@Mapping(target = "slug", ignore = true)
-	@Mapping(target = "status", ignore = true)
-	@Mapping(target = "sessions", ignore = true)
-	@Mapping(target = "actors", ignore = true)
-	@Mapping(target = "directors", ignore = true)
-	@Mapping(target = "screenwriters", ignore = true)
-	@Mapping(target = "genres", ignore = true)
-	@Mapping(target = "posterFileName", ignore = true)
-	Movie toEntity(MovieCreateRequest request);
+	MovieCardResponse toMovieCardResponse(Movie movie);
 
 	@Mapping(target = "id", ignore = true)
 	@Mapping(target = "slug", ignore = true)
@@ -45,9 +36,19 @@ public interface MovieMapper {
 	@Mapping(target = "screenwriters", ignore = true)
 	@Mapping(target = "genres", ignore = true)
 	@Mapping(target = "posterFileName", ignore = true)
-	void updateEntityFromRequest(MovieUpdateRequest request, @MappingTarget Movie movie);
+	Movie toMovie(MovieCreateRequest request);
 
-	List<MovieDetailResponse> toDetailResponseList(List<Movie> movies);
+	@BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+	@Mapping(target = "id", ignore = true)
+	@Mapping(target = "slug", ignore = true)
+	@Mapping(target = "status", ignore = true)
+	@Mapping(target = "sessions", ignore = true)
+	@Mapping(target = "actors", ignore = true)
+	@Mapping(target = "directors", ignore = true)
+	@Mapping(target = "screenwriters", ignore = true)
+	@Mapping(target = "genres", ignore = true)
+	@Mapping(target = "posterFileName", ignore = true)
+	void updateMovieFromRequest(MovieUpdateRequest request, @MappingTarget Movie movie);
 
-	List<MovieCardResponse> toCardResponseList(List<Movie> movies);
+	List<MovieCardResponse> toMovieCardResponseList(List<Movie> movies);
 }

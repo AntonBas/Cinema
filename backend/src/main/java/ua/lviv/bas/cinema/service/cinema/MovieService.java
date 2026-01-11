@@ -55,7 +55,7 @@ public class MovieService {
 		String slug = slugService.generateUniqueSlug(request.getTitle());
 		validateSlugUniqueness(slug);
 
-		Movie movie = movieMapper.toEntity(request);
+		Movie movie = movieMapper.toMovie(request);
 		movie.setSlug(slug);
 		movie.setStatus(movieScheduler.calculateMovieStatus(movie, LocalDate.now()));
 
@@ -73,7 +73,7 @@ public class MovieService {
 		Movie existing = findMovieById(id);
 		validateUpdateRequest(request);
 
-		movieMapper.updateEntityFromRequest(request, existing);
+		movieMapper.updateMovieFromRequest(request, existing);
 
 		if (!existing.getTitle().equals(request.getTitle())) {
 			String newSlug = slugService.generateUniqueSlug(request.getTitle());
@@ -128,45 +128,45 @@ public class MovieService {
 	@Transactional(readOnly = true)
 	public Page<MovieCardResponse> getMoviesByStatus(MovieStatus status, Pageable pageable) {
 		Page<Movie> movies = movieRepository.findByStatusWithSearch(status, null, pageable);
-		return movies.map(movieMapper::toCardResponse);
+		return movies.map(movieMapper::toMovieCardResponse);
 	}
 
 	@Transactional(readOnly = true)
 	public Page<MovieCardResponse> searchMoviesByTitle(String search, MovieStatus status, Pageable pageable) {
 		Page<Movie> movies = movieRepository.findByStatusWithSearch(status, search, pageable);
-		return movies.map(movieMapper::toCardResponse);
+		return movies.map(movieMapper::toMovieCardResponse);
 	}
 
 	@Transactional(readOnly = true)
 	public List<MovieCardResponse> getCurrentlyShowing(int limit) {
 		Pageable pageable = PageRequest.of(0, limit, Sort.by("releaseDate").descending());
 		List<Movie> movies = movieRepository.findCurrentlyShowing(pageable);
-		return movieMapper.toCardResponseList(movies);
+		return movieMapper.toMovieCardResponseList(movies);
 	}
 
 	@Transactional(readOnly = true)
 	public Page<MovieCardResponse> getCurrentlyShowingPage(Pageable pageable) {
 		Page<Movie> movies = movieRepository.findCurrentlyShowingPage(pageable);
-		return movies.map(movieMapper::toCardResponse);
+		return movies.map(movieMapper::toMovieCardResponse);
 	}
 
 	@Transactional(readOnly = true)
 	public List<MovieCardResponse> getUpcoming(int limit) {
 		Pageable pageable = PageRequest.of(0, limit, Sort.by("releaseDate"));
 		List<Movie> movies = movieRepository.findUpcoming(pageable);
-		return movieMapper.toCardResponseList(movies);
+		return movieMapper.toMovieCardResponseList(movies);
 	}
 
 	@Transactional(readOnly = true)
 	public Page<MovieCardResponse> getUpcomingPage(Pageable pageable) {
 		Page<Movie> movies = movieRepository.findUpcomingPage(pageable);
-		return movies.map(movieMapper::toCardResponse);
+		return movies.map(movieMapper::toMovieCardResponse);
 	}
 
 	@Transactional(readOnly = true)
 	public Page<MovieCardResponse> getArchivedMovies(Pageable pageable) {
 		Page<Movie> movies = movieRepository.findArchived(pageable);
-		return movies.map(movieMapper::toCardResponse);
+		return movies.map(movieMapper::toMovieCardResponse);
 	}
 
 	@Transactional(readOnly = true)
@@ -182,7 +182,7 @@ public class MovieService {
 	}
 
 	private MovieDetailResponse buildDetailResponse(Movie movie) {
-		MovieDetailResponse response = movieMapper.toDetailResponse(movie);
+		MovieDetailResponse response = movieMapper.toMovieDetailResponse(movie);
 		enrichResponse(response, movie);
 		return response;
 	}

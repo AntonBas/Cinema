@@ -53,14 +53,14 @@ public class UserService {
 			throw new EmailAlreadyExistsException(request.getEmail());
 		}
 
-		User user = userMapper.toEntity(request);
+		User user = userMapper.toUser(request);
 		user.setPassword(passwordEncoder.encode(request.getPassword()));
 
 		User saved = userRepository.save(user);
 		log.info("User registered successfully: {}", saved.getEmail());
 
 		emailTokenGeneratorService.generateVerificationToken(saved.getEmail());
-		return userMapper.toDto(saved);
+		return userMapper.toUserResponse(saved);
 	}
 
 	@Transactional
@@ -69,7 +69,7 @@ public class UserService {
 		User user = getById(userId);
 		LocalDate oldDateOfBirth = user.getDateOfBirth();
 
-		userMapper.updateUserFromDto(request, user);
+		userMapper.updateUserFromRequest(request, user);
 
 		if (request.getDateOfBirth() != null && !request.getDateOfBirth().equals(oldDateOfBirth)) {
 			if (user.getVerificationStatus() == VerificationStatus.VERIFIED) {
@@ -80,7 +80,7 @@ public class UserService {
 			}
 		}
 
-		return userMapper.toProfileResponse(userRepository.save(user));
+		return userMapper.toUserProfileResponse(userRepository.save(user));
 	}
 
 	@Transactional
@@ -133,17 +133,17 @@ public class UserService {
 	@Transactional
 	public UserProfileResponse confirmEmailChange(String token) {
 		User updatedUser = emailTokenService.confirmEmailChange(token);
-		return userMapper.toProfileResponse(updatedUser);
+		return userMapper.toUserProfileResponse(updatedUser);
 	}
 
 	@Transactional(readOnly = true)
 	public UserProfileResponse getUserProfile(Long id) {
-		return userMapper.toProfileResponse(getById(id));
+		return userMapper.toUserProfileResponse(getById(id));
 	}
 
 	@Transactional(readOnly = true)
 	public UserResponse getUserById(Long id) {
-		return userMapper.toDto(getById(id));
+		return userMapper.toUserResponse(getById(id));
 	}
 
 	@Transactional(readOnly = true)

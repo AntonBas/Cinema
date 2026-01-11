@@ -53,7 +53,7 @@ public class SessionService {
 			throw new SessionTimeConflictException(hall.getId(), request.getStartTime());
 		}
 
-		Session session = sessionMapper.toEntity(request);
+		Session session = sessionMapper.toSession(request);
 		session.setMovie(movie);
 		session.setHall(hall);
 		Session saved = sessionRepository.save(session);
@@ -99,7 +99,7 @@ public class SessionService {
 			}
 		}
 
-		sessionMapper.updateEntityFromDto(request, session);
+		sessionMapper.updateSessionFromRequest(request, session);
 
 		if (request.getMovieId() != null && !request.getMovieId().equals(session.getMovie().getId())) {
 			Movie newMovie = movieRepository.findById(request.getMovieId())
@@ -259,7 +259,7 @@ public class SessionService {
 	}
 
 	public SessionAdminResponse toAdminResponse(Session session) {
-		SessionAdminResponse response = sessionMapper.toAdminDto(session);
+		SessionAdminResponse response = sessionMapper.toSessionAdminResponse(session);
 		response.setEndTime(getEndTime(session));
 
 		int confirmedSeatsCount = session.getBookedSeats() != null
@@ -283,7 +283,7 @@ public class SessionService {
 	}
 
 	public SessionScheduleResponse toScheduleResponse(Session session) {
-		SessionScheduleResponse response = sessionMapper.toScheduleDto(session);
+		SessionScheduleResponse response = sessionMapper.toSessionScheduleResponse(session);
 		response.setEndTime(getEndTime(session));
 
 		int hallCapacity = 0;

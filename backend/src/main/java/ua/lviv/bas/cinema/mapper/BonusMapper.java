@@ -22,10 +22,9 @@ public interface BonusMapper {
 	@Mapping(target = "userId", source = "user.id")
 	BonusCardResponse toBonusCardResponse(BonusCard bonusCard);
 
-	@Mapping(target = "newBalance", expression = "java(transaction.getBonusCard().getPointsBalance())")
+	@Mapping(target = "newBalance", expression = "java(transaction.getBonusCard() != null ? transaction.getBonusCard().getPointsBalance() : null)")
 	BonusTransactionResponse toBonusTransactionResponse(BonusTransaction transaction);
 
-	@Mapping(target = "active", source = "active")
 	BonusRulesResponse toBonusRulesResponse(BonusRules rules);
 
 	@BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)

@@ -4,17 +4,16 @@ import java.util.List;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.ReportingPolicy;
 
 import ua.lviv.bas.cinema.domain.Ticket;
 import ua.lviv.bas.cinema.dto.ticket.response.TicketResponse;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface TicketMapper {
 
-	@Mapping(target = "id", source = "id")
 	@Mapping(target = "ticketCode", source = "uniqueCode")
 	@Mapping(target = "qrCodeUrl", ignore = true)
-	@Mapping(target = "status", source = "status")
 	@Mapping(target = "purchaseTime", source = "purchaseTime")
 	@Mapping(target = "price", source = "finalPrice")
 	@Mapping(target = "ticketType", source = "ticketType.displayName")

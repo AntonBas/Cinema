@@ -7,6 +7,7 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
+import org.mapstruct.ReportingPolicy;
 
 import ua.lviv.bas.cinema.domain.TicketType;
 import ua.lviv.bas.cinema.dto.ticket.request.TicketTypeCreateRequest;
@@ -14,27 +15,27 @@ import ua.lviv.bas.cinema.dto.ticket.request.TicketTypeUpdateRequest;
 import ua.lviv.bas.cinema.dto.ticket.response.TicketTypeResponse;
 import ua.lviv.bas.cinema.dto.ticket.response.TicketTypeSimpleResponse;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface TicketTypeMapper {
 
 	@Mapping(target = "id", ignore = true)
 	@Mapping(target = "createdAt", ignore = true)
 	@Mapping(target = "updatedAt", ignore = true)
-	TicketType toEntity(TicketTypeCreateRequest dto);
+	TicketType toTicketType(TicketTypeCreateRequest dto);
 
+	@BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 	@Mapping(target = "id", ignore = true)
 	@Mapping(target = "code", ignore = true)
 	@Mapping(target = "createdAt", ignore = true)
 	@Mapping(target = "updatedAt", ignore = true)
-	@Mapping(target = "priceMultiplier", source = "priceModifier") // Головне - цей мапінг
-	@BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-	void updateEntity(@MappingTarget TicketType entity, TicketTypeUpdateRequest dto);
+	@Mapping(target = "priceMultiplier", source = "priceModifier")
+	void updateTicketTypeFromRequest(@MappingTarget TicketType entity, TicketTypeUpdateRequest dto);
 
-	TicketTypeResponse toResponseDto(TicketType entity);
+	TicketTypeResponse toTicketTypeResponse(TicketType entity);
 
-	TicketTypeSimpleResponse toSimpleDto(TicketType entity);
+	TicketTypeSimpleResponse toTicketTypeSimpleResponse(TicketType entity);
 
-	List<TicketTypeResponse> toResponseDtoList(List<TicketType> entities);
+	List<TicketTypeResponse> toTicketTypeResponseList(List<TicketType> entities);
 
-	List<TicketTypeSimpleResponse> toSimpleDtoList(List<TicketType> entities);
+	List<TicketTypeSimpleResponse> toTicketTypeSimpleResponseList(List<TicketType> entities);
 }

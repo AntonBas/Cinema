@@ -22,19 +22,18 @@ public interface PromotionMapper {
 	@Mapping(target = "id", ignore = true)
 	@Mapping(target = "createdAt", ignore = true)
 	@Mapping(target = "userRedemptions", ignore = true)
-	Promotion toEntity(PromotionCreateRequest request);
+	Promotion toPromotion(PromotionCreateRequest request);
 
 	@BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-	void updateEntity(@MappingTarget Promotion promotion, PromotionUpdateRequest request);
+	void updatePromotionFromRequest(@MappingTarget Promotion promotion, PromotionUpdateRequest request);
 
-	PromotionResponse toResponse(Promotion promotion);
+	PromotionResponse toPromotionResponse(Promotion promotion);
 
-	List<PromotionResponse> toResponseList(List<Promotion> promotions);
+	List<PromotionResponse> toPromotionResponseList(List<Promotion> promotions);
 
 	@Mapping(target = "promotionId", source = "promotion.id")
 	@Mapping(target = "promotionTitle", source = "promotion.title")
 	@Mapping(target = "claimedAt", source = "redeemedAt")
-	@Mapping(target = "newBalance", ignore = true)
 	UserPromotionResponse toUserPromotionResponse(UserPromotion userPromotion);
 
 	List<UserPromotionResponse> toUserPromotionResponseList(List<UserPromotion> userPromotions);

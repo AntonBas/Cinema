@@ -5,6 +5,7 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
+import org.mapstruct.ReportingPolicy;
 
 import ua.lviv.bas.cinema.domain.Session;
 import ua.lviv.bas.cinema.dto.session.request.SessionCreateRequest;
@@ -12,7 +13,7 @@ import ua.lviv.bas.cinema.dto.session.request.SessionUpdateRequest;
 import ua.lviv.bas.cinema.dto.session.response.SessionAdminResponse;
 import ua.lviv.bas.cinema.dto.session.response.SessionScheduleResponse;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface SessionMapper {
 
 	@Mapping(target = "movieId", source = "movie.id")
@@ -25,7 +26,7 @@ public interface SessionMapper {
 	@Mapping(target = "hallCapacity", ignore = true)
 	@Mapping(target = "ticketsSold", ignore = true)
 	@Mapping(target = "totalRevenue", ignore = true)
-	SessionAdminResponse toAdminDto(Session session);
+	SessionAdminResponse toSessionAdminResponse(Session session);
 
 	@Mapping(target = "movieId", source = "movie.id")
 	@Mapping(target = "movieTitle", source = "movie.title")
@@ -38,7 +39,7 @@ public interface SessionMapper {
 	@Mapping(target = "endTime", ignore = true)
 	@Mapping(target = "availableSeats", ignore = true)
 	@Mapping(target = "hallCapacity", ignore = true)
-	SessionScheduleResponse toScheduleDto(Session session);
+	SessionScheduleResponse toSessionScheduleResponse(Session session);
 
 	@Mapping(target = "id", ignore = true)
 	@Mapping(target = "movie", ignore = true)
@@ -46,7 +47,7 @@ public interface SessionMapper {
 	@Mapping(target = "status", constant = "SCHEDULED")
 	@Mapping(target = "bookings", ignore = true)
 	@Mapping(target = "bookedSeats", ignore = true)
-	Session toEntity(SessionCreateRequest request);
+	Session toSession(SessionCreateRequest request);
 
 	@BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 	@Mapping(target = "id", ignore = true)
@@ -55,5 +56,5 @@ public interface SessionMapper {
 	@Mapping(target = "status", ignore = true)
 	@Mapping(target = "bookings", ignore = true)
 	@Mapping(target = "bookedSeats", ignore = true)
-	void updateEntityFromDto(SessionUpdateRequest request, @MappingTarget Session session);
+	void updateSessionFromRequest(SessionUpdateRequest request, @MappingTarget Session session);
 }

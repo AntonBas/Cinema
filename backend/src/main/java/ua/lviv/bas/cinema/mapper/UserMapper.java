@@ -1,9 +1,11 @@
 package ua.lviv.bas.cinema.mapper;
 
+import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
+import org.mapstruct.ReportingPolicy;
 
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.dto.user.request.UserRegistrationRequest;
@@ -12,7 +14,7 @@ import ua.lviv.bas.cinema.dto.user.response.AdminUserListResponse;
 import ua.lviv.bas.cinema.dto.user.response.UserProfileResponse;
 import ua.lviv.bas.cinema.dto.user.response.UserResponse;
 
-@Mapper(componentModel = "spring", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+@Mapper(componentModel = "spring", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE, unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface UserMapper {
 
 	@Mapping(target = "id", ignore = true)
@@ -27,15 +29,13 @@ public interface UserMapper {
 	@Mapping(target = "password", ignore = true)
 	@Mapping(target = "createdAt", ignore = true)
 	@Mapping(target = "updatedAt", ignore = true)
-	User toEntity(UserRegistrationRequest dto);
+	User toUser(UserRegistrationRequest dto);
 
-	@Mapping(target = "verificationStatus", source = "verificationStatus")
-	@Mapping(target = "userRole", source = "userRole")
-	UserResponse toDto(User user);
+	UserResponse toUserResponse(User user);
 
-	@Mapping(target = "verificationStatus", source = "verificationStatus")
-	UserProfileResponse toProfileResponse(User user);
+	UserProfileResponse toUserProfileResponse(User user);
 
+	@BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 	@Mapping(target = "id", ignore = true)
 	@Mapping(target = "tickets", ignore = true)
 	@Mapping(target = "bonusCard", ignore = true)
@@ -49,9 +49,9 @@ public interface UserMapper {
 	@Mapping(target = "createdAt", ignore = true)
 	@Mapping(target = "updatedAt", ignore = true)
 	@Mapping(target = "email", ignore = true)
-	void updateUserFromDto(UserUpdateRequest dto, @MappingTarget User user);
+	void updateUserFromRequest(UserUpdateRequest dto, @MappingTarget User user);
 
-	@Mapping(target = "ticketsCount", expression = "java(user.getTickets().size())")
+	@Mapping(target = "ticketsCount", expression = "java(user.getTickets() != null ? user.getTickets().size() : 0)")
 	@Mapping(target = "lastActivity", source = "updatedAt")
-	AdminUserListResponse toAdminListDto(User user);
+	AdminUserListResponse toAdminUserListResponse(User user);
 }

@@ -39,12 +39,12 @@ public class PersonService {
 		String personName = request.getName().trim();
 		validatePersonUniqueness(personName, request.getRole(), null);
 
-		Person person = personMapper.toEntity(request);
+		Person person = personMapper.toPerson(request);
 		person.setName(personName);
 		Person saved = personRepository.save(person);
 
 		log.debug("Person created with ID: {}", saved.getId());
-		return personMapper.toDto(saved);
+		return personMapper.toPersonResponse(saved);
 	}
 
 	@Transactional
@@ -59,7 +59,7 @@ public class PersonService {
 		Person saved = personRepository.save(person);
 
 		log.debug("Person quick-created with ID: {}", saved.getId());
-		return personMapper.toDto(saved);
+		return personMapper.toPersonResponse(saved);
 	}
 
 	public PersonResponse getPersonById(Long id) {
@@ -67,7 +67,7 @@ public class PersonService {
 
 		Person person = personRepository.findById(id).orElseThrow(() -> new PersonNotFoundException(id));
 
-		return personMapper.toDto(person);
+		return personMapper.toPersonResponse(person);
 	}
 
 	@Transactional
@@ -84,7 +84,7 @@ public class PersonService {
 		Person updated = personRepository.save(existing);
 
 		log.debug("Person updated with ID: {}", updated.getId());
-		return personMapper.toDto(updated);
+		return personMapper.toPersonResponse(updated);
 	}
 
 	@Transactional
@@ -103,7 +103,7 @@ public class PersonService {
 		log.info("Getting persons by role: {}", role);
 
 		Page<Person> persons = personRepository.findByRole(role, pageable);
-		return persons.map(personMapper::toDto);
+		return persons.map(personMapper::toPersonResponse);
 	}
 
 	public Page<PersonResponse> searchPersons(String query, PersonRole role, Pageable pageable) {
@@ -113,7 +113,7 @@ public class PersonService {
 				role, pageable);
 
 		log.debug("Found {} persons", personPage.getTotalElements());
-		return personPage.map(personMapper::toDto);
+		return personPage.map(personMapper::toPersonResponse);
 	}
 
 	public List<PersonResponse> getPersonsByIds(List<Long> ids) {
@@ -124,12 +124,12 @@ public class PersonService {
 		}
 
 		List<Person> persons = personRepository.findAllById(ids);
-		return personMapper.toDtoList(persons);
+		return personMapper.toPersonResponseList(persons);
 	}
 
 	public List<PersonResponse> getPersons() {
 		log.debug("Retrieving all persons");
-		return personMapper.toDtoList(personRepository.findAll());
+		return personMapper.toPersonResponseList(personRepository.findAll());
 	}
 
 	public boolean existsById(Long id) {

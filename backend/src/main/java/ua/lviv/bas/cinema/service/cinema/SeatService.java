@@ -24,7 +24,8 @@ public class SeatService {
 	@Transactional(readOnly = true)
 	public SeatResponse getSeatById(Long id) {
 		log.debug("Retrieving seat by id: {}", id);
-		return seatRepository.findById(id).map(seatMapper::toDto).orElseThrow(() -> new SeatNotFoundException(id));
+		return seatRepository.findById(id).map(seatMapper::toSeatResponse)
+				.orElseThrow(() -> new SeatNotFoundException(id));
 	}
 
 	@Transactional
@@ -34,19 +35,19 @@ public class SeatService {
 		seat.setSeatType(seatType);
 		Seat updated = seatRepository.save(seat);
 		log.debug("Seat type updated for seat ID: {}", id);
-		return seatMapper.toDto(updated);
+		return seatMapper.toSeatResponse(updated);
 	}
 
 	@Transactional(readOnly = true)
 	public List<SeatResponse> getSeatsByHall(Long hallId) {
 		log.debug("Retrieving seats for hall id: {}", hallId);
-		return seatMapper.toDtoList(seatRepository.findByHallId(hallId));
+		return seatMapper.toSeatResponseList(seatRepository.findByHallId(hallId));
 	}
 
 	@Transactional(readOnly = true)
 	public SeatResponse getSeatByPosition(Long hallId, int row, int number) {
 		log.debug("Retrieving seat at position: hall={}, row={}, number={}", hallId, row, number);
-		return seatRepository.findByHallIdAndRowAndNumber(hallId, row, number).map(seatMapper::toDto)
+		return seatRepository.findByHallIdAndRowAndNumber(hallId, row, number).map(seatMapper::toSeatResponse)
 				.orElseThrow(() -> new SeatNotFoundException(hallId, row, number));
 	}
 
@@ -65,7 +66,7 @@ public class SeatService {
 	@Transactional(readOnly = true)
 	public List<SeatResponse> getSeatsByType(Long hallId, SeatType seatType) {
 		log.debug("Retrieving {} seats for hall id: {}", seatType, hallId);
-		return seatMapper.toDtoList(seatRepository.findByHallIdAndSeatType(hallId, seatType));
+		return seatMapper.toSeatResponseList(seatRepository.findByHallIdAndSeatType(hallId, seatType));
 	}
 
 	@Transactional
@@ -74,7 +75,7 @@ public class SeatService {
 		Seat seat = seatRepository.findById(id).orElseThrow(() -> new SeatNotFoundException(id));
 		seat.setActive(true);
 		Seat updated = seatRepository.save(seat);
-		return seatMapper.toDto(updated);
+		return seatMapper.toSeatResponse(updated);
 	}
 
 	@Transactional
@@ -83,13 +84,13 @@ public class SeatService {
 		Seat seat = seatRepository.findById(id).orElseThrow(() -> new SeatNotFoundException(id));
 		seat.setActive(false);
 		Seat updated = seatRepository.save(seat);
-		return seatMapper.toDto(updated);
+		return seatMapper.toSeatResponse(updated);
 	}
 
 	@Transactional(readOnly = true)
 	public List<SeatResponse> getActiveSeatsByHall(Long hallId) {
 		log.debug("Retrieving active seats for hall id: {}", hallId);
-		return seatMapper.toDtoList(seatRepository.findByHallIdAndActiveTrue(hallId));
+		return seatMapper.toSeatResponseList(seatRepository.findByHallIdAndActiveTrue(hallId));
 	}
 
 	@Transactional(readOnly = true)

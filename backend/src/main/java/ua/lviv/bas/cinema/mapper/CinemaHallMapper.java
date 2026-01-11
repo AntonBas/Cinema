@@ -4,15 +4,16 @@ import java.util.List;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.ReportingPolicy;
 
 import ua.lviv.bas.cinema.domain.CinemaHall;
 import ua.lviv.bas.cinema.dto.cinemaHall.response.CinemaHallResponse;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface CinemaHallMapper {
 
 	@Mapping(target = "capacity", expression = "java(hall.getSeats() != null ? hall.getSeats().size() : 0)")
-	CinemaHallResponse toDto(CinemaHall hall);
+	CinemaHallResponse toCinemaHallResponse(CinemaHall hall);
 
-	List<CinemaHallResponse> toDtoList(List<CinemaHall> halls);
+	List<CinemaHallResponse> toCinemaHallResponseList(List<CinemaHall> halls);
 }

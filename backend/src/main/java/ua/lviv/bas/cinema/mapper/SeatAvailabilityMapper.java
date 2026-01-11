@@ -2,11 +2,12 @@ package ua.lviv.bas.cinema.mapper;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.ReportingPolicy;
 
 import ua.lviv.bas.cinema.domain.Seat;
 import ua.lviv.bas.cinema.dto.cinemaHall.response.SeatAvailabilityResponse;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface SeatAvailabilityMapper {
 
 	@Mapping(target = "id", source = "id")

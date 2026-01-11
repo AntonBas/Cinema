@@ -42,21 +42,21 @@ public class TicketTypeService {
 			throw new TicketTypeDuplicateException(createRequest.getCode());
 		}
 
-		TicketType ticketType = ticketTypeMapper.toEntity(createRequest);
+		TicketType ticketType = ticketTypeMapper.toTicketType(createRequest);
 		TicketType saved = ticketTypeRepository.save(ticketType);
-		return ticketTypeMapper.toResponseDto(saved);
+		return ticketTypeMapper.toTicketTypeResponse(saved);
 	}
 
 	public TicketTypeResponse getTicketTypeById(Long id) {
 		TicketType ticketType = ticketTypeRepository.findById(id)
 				.orElseThrow(() -> new TicketTypeNotFoundException(id));
-		return ticketTypeMapper.toResponseDto(ticketType);
+		return ticketTypeMapper.toTicketTypeResponse(ticketType);
 	}
 
 	public TicketTypeResponse getTicketTypeByCode(String code) {
 		TicketType ticketType = ticketTypeRepository.findByCode(code)
 				.orElseThrow(() -> new TicketTypeNotFoundException(code));
-		return ticketTypeMapper.toResponseDto(ticketType);
+		return ticketTypeMapper.toTicketTypeResponse(ticketType);
 	}
 
 	public List<TicketTypeResponse> getAllTicketTypes(Boolean active) {
@@ -70,7 +70,7 @@ public class TicketTypeService {
 			ticketTypes = ticketTypeRepository.findByActiveFalse();
 		}
 
-		return ticketTypes.stream().map(ticketTypeMapper::toResponseDto).collect(Collectors.toList());
+		return ticketTypes.stream().map(ticketTypeMapper::toTicketTypeResponse).collect(Collectors.toList());
 	}
 
 	public List<TicketTypeSimpleResponse> getSimpleTicketTypes(Boolean active) {
@@ -82,7 +82,7 @@ public class TicketTypeService {
 			ticketTypes = ticketTypeRepository.findByActiveFalse();
 		}
 
-		return ticketTypes.stream().map(ticketTypeMapper::toSimpleDto).collect(Collectors.toList());
+		return ticketTypes.stream().map(ticketTypeMapper::toTicketTypeSimpleResponse).collect(Collectors.toList());
 	}
 
 	@Transactional
@@ -98,9 +98,9 @@ public class TicketTypeService {
 			validateAgeRange(minAge, maxAge);
 		}
 
-		ticketTypeMapper.updateEntity(ticketType, updateRequest);
+		ticketTypeMapper.updateTicketTypeFromRequest(ticketType, updateRequest);
 		TicketType updated = ticketTypeRepository.save(ticketType);
-		return ticketTypeMapper.toResponseDto(updated);
+		return ticketTypeMapper.toTicketTypeResponse(updated);
 	}
 
 	@Transactional
@@ -132,7 +132,7 @@ public class TicketTypeService {
 
 		ticketType.setActive(!ticketType.isActive());
 		TicketType updated = ticketTypeRepository.save(ticketType);
-		return ticketTypeMapper.toResponseDto(updated);
+		return ticketTypeMapper.toTicketTypeResponse(updated);
 	}
 
 	public boolean validateAgeForTicketType(Long ticketTypeId, Integer age) {

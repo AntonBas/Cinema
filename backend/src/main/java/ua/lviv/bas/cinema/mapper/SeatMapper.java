@@ -3,14 +3,15 @@ package ua.lviv.bas.cinema.mapper;
 import java.util.List;
 
 import org.mapstruct.Mapper;
+import org.mapstruct.ReportingPolicy;
 
 import ua.lviv.bas.cinema.domain.Seat;
 import ua.lviv.bas.cinema.dto.cinemaHall.response.SeatResponse;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface SeatMapper {
 
-	SeatResponse toDto(Seat seat);
+	SeatResponse toSeatResponse(Seat seat);
 
-	List<SeatResponse> toDtoList(List<Seat> seats);
+	List<SeatResponse> toSeatResponseList(List<Seat> seats);
 }

@@ -93,14 +93,15 @@ public class AdminUserService {
 
 		log.info("Birth date verification updated for user {}: {} -> {}", userId, oldStatus, newStatus);
 
-		return userMapper.toDto(saved);
+		return userMapper.toUserResponse(saved);
 	}
 
 	@Transactional(readOnly = true)
 	@Cacheable(value = "users", key = "#search + '-' + #role + '-' + #enabled + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
 	public Page<AdminUserListResponse> findAllForAdmin(String search, UserRole role, Boolean enabled,
 			Pageable pageable) {
-		return userRepository.findFilteredUsers(search, role, enabled, pageable).map(userMapper::toAdminListDto);
+		return userRepository.findFilteredUsers(search, role, enabled, pageable)
+				.map(userMapper::toAdminUserListResponse);
 	}
 
 	@Transactional(readOnly = true)

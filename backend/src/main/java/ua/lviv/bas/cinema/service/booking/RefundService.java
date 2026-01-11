@@ -180,14 +180,14 @@ public class RefundService {
 	}
 
 	private RefundResponse createSuccessResponse(Refund refund) {
-		RefundResponse response = refundMapper.toResponse(refund);
+		RefundResponse response = refundMapper.toRefundResponse(refund);
 		response.setRefundNumber(generateRefundNumber(refund.getId()));
 		response.setPaymentMethod("CARD");
 		response.setMessage("Refund processed successfully");
 		response.setEstimatedRefundTime("3-5 business days");
 
 		if (refund.getItems() != null) {
-			response.setItems(refund.getItems().stream().map(refundItemMapper::toResponse).toList());
+			response.setItems(refund.getItems().stream().map(refundItemMapper::toRefundItemResponse).toList());
 		}
 
 		return response;

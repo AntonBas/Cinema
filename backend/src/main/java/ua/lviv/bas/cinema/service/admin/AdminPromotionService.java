@@ -41,11 +41,11 @@ public class AdminPromotionService {
 			throw new PromotionDatesInvalidException(request.getStartDate(), request.getEndDate()); // ✅ НОВИЙ КАСТОМНИЙ
 		}
 
-		Promotion promotion = promotionMapper.toEntity(request);
+		Promotion promotion = promotionMapper.toPromotion(request);
 		promotion = promotionRepository.save(promotion);
 
 		log.info("Promotion created with ID: {}", promotion.getId());
-		return promotionMapper.toResponse(promotion);
+		return promotionMapper.toPromotionResponse(promotion);
 	}
 
 	@Transactional
@@ -53,10 +53,10 @@ public class AdminPromotionService {
 		log.info("Updating promotion with ID: {}", promotionId);
 
 		Promotion promotion = findByIdOrThrow(promotionId);
-		promotionMapper.updateEntity(promotion, request);
+		promotionMapper.updatePromotionFromRequest(promotion, request);
 
 		promotion = promotionRepository.save(promotion);
-		return promotionMapper.toResponse(promotion);
+		return promotionMapper.toPromotionResponse(promotion);
 	}
 
 	@Transactional
@@ -76,17 +76,17 @@ public class AdminPromotionService {
 
 	public PromotionResponse getPromotionById(Long promotionId) {
 		Promotion promotion = findByIdOrThrow(promotionId);
-		return promotionMapper.toResponse(promotion);
+		return promotionMapper.toPromotionResponse(promotion);
 	}
 
 	public List<PromotionResponse> getAllPromotions() {
 		List<Promotion> promotions = promotionRepository.findAll();
-		return promotionMapper.toResponseList(promotions);
+		return promotionMapper.toPromotionResponseList(promotions);
 	}
 
 	public List<PromotionResponse> getActivePromotions() {
 		List<Promotion> promotions = promotionRepository.findAll();
-		return promotionMapper.toResponseList(promotions);
+		return promotionMapper.toPromotionResponseList(promotions);
 	}
 
 	public Promotion findByIdOrThrow(Long promotionId) {

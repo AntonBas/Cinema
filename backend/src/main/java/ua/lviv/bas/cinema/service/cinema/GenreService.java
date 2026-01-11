@@ -35,18 +35,19 @@ public class GenreService {
 		String genreName = request.getName().trim();
 		validateGenreUniqueness(genreName, null);
 
-		Genre genre = genreMapper.toEntity(request);
+		Genre genre = genreMapper.toGenre(request);
 		genre.setName(genreName);
 		Genre savedGenre = genreRepository.save(genre);
 
 		log.debug("Genre created with ID: {}", savedGenre.getId());
-		return genreMapper.toDto(savedGenre);
+		return genreMapper.toGenreResponse(savedGenre);
 	}
 
 	public GenreResponse getGenreById(Long id) {
 		log.debug("Retrieving genre by id: {}", id);
 
-		return genreRepository.findById(id).map(genreMapper::toDto).orElseThrow(() -> new GenreNotFoundException(id));
+		return genreRepository.findById(id).map(genreMapper::toGenreResponse)
+				.orElseThrow(() -> new GenreNotFoundException(id));
 	}
 
 	@Transactional
@@ -64,7 +65,7 @@ public class GenreService {
 		Genre updatedGenre = genreRepository.save(existingGenre);
 
 		log.debug("Genre updated with ID: {}", updatedGenre.getId());
-		return genreMapper.toDto(updatedGenre);
+		return genreMapper.toGenreResponse(updatedGenre);
 	}
 
 	@Transactional
@@ -81,12 +82,12 @@ public class GenreService {
 
 	public List<GenreResponse> getGenres() {
 		log.debug("Retrieving all genres");
-		return genreMapper.toDtoList(genreRepository.findAll());
+		return genreMapper.toGenreResponseList(genreRepository.findAll());
 	}
 
 	public List<GenreResponse> getGenresSorted() {
 		log.debug("Retrieving all genres sorted by name");
-		return genreMapper.toDtoList(genreRepository.findAll(Sort.by("name").ascending()));
+		return genreMapper.toGenreResponseList(genreRepository.findAll(Sort.by("name").ascending()));
 	}
 
 	public List<GenreResponse> getGenresByIds(List<Long> ids) {
@@ -97,13 +98,13 @@ public class GenreService {
 		}
 
 		List<Genre> genres = genreRepository.findAllById(ids);
-		return genreMapper.toDtoList(genres);
+		return genreMapper.toGenreResponseList(genres);
 	}
 
 	public Page<GenreResponse> getGenresPage(Pageable pageable) {
 		log.debug("Retrieving genres with pagination");
 		Page<Genre> genrePage = genreRepository.findAll(pageable);
-		return genrePage.map(genreMapper::toDto);
+		return genrePage.map(genreMapper::toGenreResponse);
 	}
 
 	public Page<GenreResponse> searchGenres(String query, Pageable pageable) {
@@ -112,7 +113,7 @@ public class GenreService {
 		if (StringUtils.hasText(query)) {
 			String searchQuery = query.trim();
 			Page<Genre> genrePage = genreRepository.findByNameContainingIgnoreCase(searchQuery, pageable);
-			return genrePage.map(genreMapper::toDto);
+			return genrePage.map(genreMapper::toGenreResponse);
 		}
 
 		return getGenresPage(pageable);
