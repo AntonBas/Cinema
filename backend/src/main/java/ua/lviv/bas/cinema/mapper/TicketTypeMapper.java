@@ -1,7 +1,5 @@
 package ua.lviv.bas.cinema.mapper;
 
-import java.util.List;
-
 import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -34,8 +32,4 @@ public interface TicketTypeMapper {
 	TicketTypeResponse toTicketTypeResponse(TicketType entity);
 
 	TicketTypeSimpleResponse toTicketTypeSimpleResponse(TicketType entity);
-
-	List<TicketTypeResponse> toTicketTypeResponseList(List<TicketType> entities);
-
-	List<TicketTypeSimpleResponse> toTicketTypeSimpleResponseList(List<TicketType> entities);
 }

@@ -30,106 +30,107 @@ public class PersonMapperTest {
 	}
 
 	@Test
-	void toDto_ShouldMapAllFields() {
+	void toPersonResponse_ShouldMapAllFields() {
 		Person person = Person.builder().id(1L).name("Anton Bas").role(PersonRole.ACTOR).build();
 
-		PersonResponse dto = mapper.toDto(person);
+		PersonResponse response = mapper.toPersonResponse(person);
 
-		assertThat(dto).isNotNull().extracting(PersonResponse::getId, PersonResponse::getName, PersonResponse::getRole)
+		assertThat(response).isNotNull()
+				.extracting(PersonResponse::getId, PersonResponse::getName, PersonResponse::getRole)
 				.containsExactly(1L, "Anton Bas", PersonRole.ACTOR);
 	}
 
 	@Test
-	void toDto_ShouldReturnNull_WhenInputIsNull() {
-		PersonResponse dto = mapper.toDto(null);
+	void toPersonResponse_ShouldReturnNull_WhenInputIsNull() {
+		PersonResponse response = mapper.toPersonResponse(null);
 
-		assertThat(dto).isNull();
+		assertThat(response).isNull();
 	}
 
 	@Test
-	void toDto_ShouldMapPersonWithoutBuilder() {
+	void toPersonResponse_ShouldMapPersonWithoutBuilder() {
 		Person person = new Person();
 		person.setId(2L);
 		person.setName("John Doe");
 		person.setRole(PersonRole.DIRECTOR);
 
-		PersonResponse dto = mapper.toDto(person);
+		PersonResponse response = mapper.toPersonResponse(person);
 
-		assertThat(dto).extracting(PersonResponse::getId, PersonResponse::getName, PersonResponse::getRole)
+		assertThat(response).extracting(PersonResponse::getId, PersonResponse::getName, PersonResponse::getRole)
 				.containsExactly(2L, "John Doe", PersonRole.DIRECTOR);
 	}
 
 	@Test
-	void toDto_ShouldHandleSpecialCharactersInName() {
+	void toPersonResponse_ShouldHandleSpecialCharactersInName() {
 		Person person = Person.builder().id(3L).name("O'Connor, John Jr.").role(PersonRole.SCREENWRITER).build();
 
-		PersonResponse dto = mapper.toDto(person);
+		PersonResponse response = mapper.toPersonResponse(person);
 
-		assertThat(dto.getName()).isEqualTo("O'Connor, John Jr.");
+		assertThat(response.getName()).isEqualTo("O'Connor, John Jr.");
 	}
 
 	@ParameterizedTest
 	@EnumSource(PersonRole.class)
-	void toDto_ShouldMapAllPersonRoles(PersonRole role) {
+	void toPersonResponse_ShouldMapAllPersonRoles(PersonRole role) {
 		Person person = Person.builder().id(4L).name("Test Person").role(role).build();
 
-		PersonResponse dto = mapper.toDto(person);
+		PersonResponse response = mapper.toPersonResponse(person);
 
-		assertThat(dto.getRole()).isEqualTo(role);
+		assertThat(response.getRole()).isEqualTo(role);
 	}
 
 	@Test
-	void toDtoList_ShouldMapListOfPersons() {
+	void toPersonResponseList_ShouldMapListOfPersons() {
 		List<Person> persons = Arrays.asList(Person.builder().id(1L).name("Person 1").role(PersonRole.ACTOR).build(),
 				Person.builder().id(2L).name("Person 2").role(PersonRole.DIRECTOR).build(),
 				Person.builder().id(3L).name("Person 3").role(PersonRole.SCREENWRITER).build());
 
-		List<PersonResponse> dtos = mapper.toDtoList(persons);
+		List<PersonResponse> responses = mapper.toPersonResponseList(persons);
 
-		assertThat(dtos).isNotNull().hasSize(3).extracting(PersonResponse::getName).containsExactly("Person 1",
+		assertThat(responses).isNotNull().hasSize(3).extracting(PersonResponse::getName).containsExactly("Person 1",
 				"Person 2", "Person 3");
 	}
 
 	@Test
-	void toDtoList_ShouldReturnEmptyList_WhenInputIsEmpty() {
-		List<PersonResponse> dtos = mapper.toDtoList(Collections.emptyList());
+	void toPersonResponseList_ShouldReturnEmptyList_WhenInputIsEmpty() {
+		List<PersonResponse> responses = mapper.toPersonResponseList(Collections.emptyList());
 
-		assertThat(dtos).isNotNull().isEmpty();
+		assertThat(responses).isNotNull().isEmpty();
 	}
 
 	@Test
-	void toDtoList_ShouldReturnNull_WhenInputIsNull() {
-		List<PersonResponse> dtos = mapper.toDtoList(null);
+	void toPersonResponseList_ShouldReturnNull_WhenInputIsNull() {
+		List<PersonResponse> responses = mapper.toPersonResponseList(null);
 
-		assertThat(dtos).isNull();
+		assertThat(responses).isNull();
 	}
 
 	@Test
-	void toDtoList_ShouldHandleListWithNullElements() {
+	void toPersonResponseList_ShouldHandleListWithNullElements() {
 		List<Person> persons = Arrays.asList(Person.builder().id(1L).name("Person 1").build(), null,
 				Person.builder().id(2L).name("Person 2").build());
 
-		List<PersonResponse> dtos = mapper.toDtoList(persons);
+		List<PersonResponse> responses = mapper.toPersonResponseList(persons);
 
-		assertThat(dtos).hasSize(3);
-		assertThat(dtos.get(0)).isNotNull();
-		assertThat(dtos.get(1)).isNull();
-		assertThat(dtos.get(2)).isNotNull();
+		assertThat(responses).hasSize(3);
+		assertThat(responses.get(0)).isNotNull();
+		assertThat(responses.get(1)).isNull();
+		assertThat(responses.get(2)).isNotNull();
 	}
 
 	@Test
-	void toEntity_ShouldIgnoreIdAndMapFields() {
+	void toPerson_ShouldIgnoreIdAndMapFields() {
 		PersonRequest request = PersonRequest.builder().name("New Person").role(PersonRole.DIRECTOR).build();
 
-		Person person = mapper.toEntity(request);
+		Person person = mapper.toPerson(request);
 
 		assertThat(person).isNotNull().extracting(Person::getId, Person::getName, Person::getRole).containsExactly(null,
 				"New Person", PersonRole.DIRECTOR);
 	}
 
 	@Test
-	void toEntity_ShouldReturnNull_WhenInputIsNull() {
-		Person person = mapper.toEntity(null);
+	void toPerson_ShouldReturnNull_WhenInputIsNull() {
+		Person person = mapper.toPerson(null);
 
 		assertThat(person).isNull();
 	}
@@ -137,10 +138,10 @@ public class PersonMapperTest {
 	@ParameterizedTest
 	@NullAndEmptySource
 	@ValueSource(strings = { " ", "\t", "\n" })
-	void toEntity_ShouldHandleEmptyOrBlankName(String name) {
+	void toPerson_ShouldHandleEmptyOrBlankName(String name) {
 		PersonRequest request = PersonRequest.builder().name(name).role(PersonRole.ACTOR).build();
 
-		Person person = mapper.toEntity(request);
+		Person person = mapper.toPerson(request);
 
 		assertThat(person.getName()).isEqualTo(name);
 	}
@@ -199,45 +200,45 @@ public class PersonMapperTest {
 	}
 
 	@Test
-	void consistencyCheck_ToEntityAndToDto_ShouldReturnSameValues() {
+	void consistencyCheck_ToPersonAndToPersonResponse_ShouldReturnSameValues() {
 		PersonRequest request = PersonRequest.builder().name("Consistency Test").role(PersonRole.SCREENWRITER).build();
 
-		Person entity = mapper.toEntity(request);
-		PersonResponse dto = mapper.toDto(entity);
+		Person entity = mapper.toPerson(request);
+		PersonResponse response = mapper.toPersonResponse(entity);
 
-		assertThat(dto.getName()).isEqualTo("Consistency Test");
-		assertThat(dto.getRole()).isEqualTo(PersonRole.SCREENWRITER);
+		assertThat(response.getName()).isEqualTo("Consistency Test");
+		assertThat(response.getRole()).isEqualTo(PersonRole.SCREENWRITER);
 	}
 
 	@Test
-	void updateThenToDto_ShouldReflectChanges() {
+	void updatePersonFromRequestThenToPersonResponse_ShouldReflectChanges() {
 		Person person = Person.builder().id(1L).name("Before").role(PersonRole.ACTOR).build();
 
 		PersonRequest update = PersonRequest.builder().name("After").role(PersonRole.DIRECTOR).build();
 
 		mapper.updatePersonFromRequest(update, person);
-		PersonResponse dto = mapper.toDto(person);
+		PersonResponse response = mapper.toPersonResponse(person);
 
-		assertThat(dto.getName()).isEqualTo("After");
-		assertThat(dto.getRole()).isEqualTo(PersonRole.DIRECTOR);
+		assertThat(response.getName()).isEqualTo("After");
+		assertThat(response.getRole()).isEqualTo(PersonRole.DIRECTOR);
 	}
 
 	@Test
-	void shouldMapMaxLengthName() {
+	void toPersonResponse_ShouldMapMaxLengthName() {
 		String longName = "A".repeat(50);
 		Person person = Person.builder().id(1L).name(longName).role(PersonRole.ACTOR).build();
 
-		PersonResponse dto = mapper.toDto(person);
+		PersonResponse response = mapper.toPersonResponse(person);
 
-		assertThat(dto.getName()).hasSize(50);
+		assertThat(response.getName()).hasSize(50);
 	}
 
 	@Test
-	void shouldHandlePersonWithNullRole() {
+	void toPersonResponse_ShouldHandlePersonWithNullRole() {
 		Person person = Person.builder().id(1L).name("Test Person").role(null).build();
 
-		PersonResponse dto = mapper.toDto(person);
+		PersonResponse response = mapper.toPersonResponse(person);
 
-		assertThat(dto.getRole()).isNull();
+		assertThat(response.getRole()).isNull();
 	}
 }

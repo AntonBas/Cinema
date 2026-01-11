@@ -49,142 +49,142 @@ class CinemaHallMapperTest {
 	}
 
 	@Test
-	void toDto_ShouldMapAllFieldsCorrectly_WhenHallHasSeats() {
-		CinemaHallResponse dto = cinemaHallMapper.toDto(cinemaHallWithSeats);
+	void toCinemaHallResponse_ShouldMapAllFieldsCorrectly_WhenHallHasSeats() {
+		CinemaHallResponse response = cinemaHallMapper.toCinemaHallResponse(cinemaHallWithSeats);
 
-		assertThat(dto).isNotNull();
-		assertThat(dto.getId()).isEqualTo(1L);
-		assertThat(dto.getName()).isEqualTo("Hall A");
-		assertThat(dto.getCapacity()).isEqualTo(3);
+		assertThat(response).isNotNull();
+		assertThat(response.getId()).isEqualTo(1L);
+		assertThat(response.getName()).isEqualTo("Hall A");
+		assertThat(response.getCapacity()).isEqualTo(3);
 	}
 
 	@Test
-	void toDto_ShouldCountAllSeatsForCapacity_RegardlessOfActiveStatus() {
-		CinemaHallResponse dto = cinemaHallMapper.toDto(cinemaHallWithMixedSeats);
+	void toCinemaHallResponse_ShouldCountAllSeatsForCapacity_RegardlessOfActiveStatus() {
+		CinemaHallResponse response = cinemaHallMapper.toCinemaHallResponse(cinemaHallWithMixedSeats);
 
-		assertThat(dto).isNotNull();
-		assertThat(dto.getId()).isEqualTo(2L);
-		assertThat(dto.getName()).isEqualTo("Hall B");
-		assertThat(dto.getCapacity()).isEqualTo(3);
+		assertThat(response).isNotNull();
+		assertThat(response.getId()).isEqualTo(2L);
+		assertThat(response.getName()).isEqualTo("Hall B");
+		assertThat(response.getCapacity()).isEqualTo(3);
 	}
 
 	@Test
-	void toDto_ShouldReturnZeroCapacity_WhenSeatsListIsEmpty() {
-		CinemaHallResponse dto = cinemaHallMapper.toDto(cinemaHallEmptySeats);
+	void toCinemaHallResponse_ShouldReturnZeroCapacity_WhenSeatsListIsEmpty() {
+		CinemaHallResponse response = cinemaHallMapper.toCinemaHallResponse(cinemaHallEmptySeats);
 
-		assertThat(dto).isNotNull();
-		assertThat(dto.getId()).isEqualTo(3L);
-		assertThat(dto.getName()).isEqualTo("Hall C");
-		assertThat(dto.getCapacity()).isZero();
+		assertThat(response).isNotNull();
+		assertThat(response.getId()).isEqualTo(3L);
+		assertThat(response.getName()).isEqualTo("Hall C");
+		assertThat(response.getCapacity()).isZero();
 	}
 
 	@Test
-	void toDto_ShouldReturnZeroCapacity_WhenSeatsListIsNull() {
-		CinemaHallResponse dto = cinemaHallMapper.toDto(cinemaHallNullSeats);
+	void toCinemaHallResponse_ShouldReturnZeroCapacity_WhenSeatsListIsNull() {
+		CinemaHallResponse response = cinemaHallMapper.toCinemaHallResponse(cinemaHallNullSeats);
 
-		assertThat(dto).isNotNull();
-		assertThat(dto.getId()).isEqualTo(4L);
-		assertThat(dto.getName()).isEqualTo("Hall D");
-		assertThat(dto.getCapacity()).isZero();
+		assertThat(response).isNotNull();
+		assertThat(response.getId()).isEqualTo(4L);
+		assertThat(response.getName()).isEqualTo("Hall D");
+		assertThat(response.getCapacity()).isZero();
 	}
 
 	@Test
-	void toDto_ShouldHandleNullInput() {
-		CinemaHallResponse dto = cinemaHallMapper.toDto(null);
+	void toCinemaHallResponse_ShouldHandleNullInput() {
+		CinemaHallResponse response = cinemaHallMapper.toCinemaHallResponse(null);
 
-		assertThat(dto).isNull();
+		assertThat(response).isNull();
 	}
 
 	@Test
-	void toDto_ShouldMapHallWithoutBuilder() {
+	void toCinemaHallResponse_ShouldMapHallWithoutBuilder() {
 		CinemaHall hall = new CinemaHall();
 		hall.setId(5L);
 		hall.setName("Hall E");
 		hall.setSeats(Collections.emptyList());
 
-		CinemaHallResponse dto = cinemaHallMapper.toDto(hall);
+		CinemaHallResponse response = cinemaHallMapper.toCinemaHallResponse(hall);
 
-		assertThat(dto).isNotNull();
-		assertThat(dto.getId()).isEqualTo(5L);
-		assertThat(dto.getName()).isEqualTo("Hall E");
-		assertThat(dto.getCapacity()).isZero();
+		assertThat(response).isNotNull();
+		assertThat(response.getId()).isEqualTo(5L);
+		assertThat(response.getName()).isEqualTo("Hall E");
+		assertThat(response.getCapacity()).isZero();
 	}
 
 	@Test
-	void toDto_ShouldCountAllSeats_EvenWhenInactive() {
+	void toCinemaHallResponse_ShouldCountAllSeats_EvenWhenInactive() {
 		CinemaHall hall = CinemaHall.builder().id(6L).name("Hall F").build();
 
 		Seat seat1 = Seat.builder().id(10L).row(1).number(1).active(false).hall(hall).build();
 		Seat seat2 = Seat.builder().id(11L).row(1).number(2).active(false).hall(hall).build();
 		hall.setSeats(Arrays.asList(seat1, seat2));
 
-		CinemaHallResponse dto = cinemaHallMapper.toDto(hall);
+		CinemaHallResponse response = cinemaHallMapper.toCinemaHallResponse(hall);
 
-		assertThat(dto).isNotNull();
-		assertThat(dto.getId()).isEqualTo(6L);
-		assertThat(dto.getName()).isEqualTo("Hall F");
-		assertThat(dto.getCapacity()).isEqualTo(2);
+		assertThat(response).isNotNull();
+		assertThat(response.getId()).isEqualTo(6L);
+		assertThat(response.getName()).isEqualTo("Hall F");
+		assertThat(response.getCapacity()).isEqualTo(2);
 	}
 
 	@Test
-	void toDtoList_ShouldMapListOfHalls() {
+	void toCinemaHallResponseList_ShouldMapListOfHalls() {
 		List<CinemaHall> halls = Arrays.asList(cinemaHallWithSeats, cinemaHallWithMixedSeats);
 
-		List<CinemaHallResponse> dtos = cinemaHallMapper.toDtoList(halls);
+		List<CinemaHallResponse> responses = cinemaHallMapper.toCinemaHallResponseList(halls);
 
-		assertThat(dtos).isNotNull().hasSize(2);
+		assertThat(responses).isNotNull().hasSize(2);
 
-		assertThat(dtos.get(0))
+		assertThat(responses.get(0))
 				.extracting(CinemaHallResponse::getId, CinemaHallResponse::getName, CinemaHallResponse::getCapacity)
 				.containsExactly(1L, "Hall A", 3);
 
-		assertThat(dtos.get(1))
+		assertThat(responses.get(1))
 				.extracting(CinemaHallResponse::getId, CinemaHallResponse::getName, CinemaHallResponse::getCapacity)
 				.containsExactly(2L, "Hall B", 3);
 	}
 
 	@Test
-	void toDtoList_ShouldReturnEmptyList_WhenInputIsEmpty() {
+	void toCinemaHallResponseList_ShouldReturnEmptyList_WhenInputIsEmpty() {
 		List<CinemaHall> halls = Collections.emptyList();
 
-		List<CinemaHallResponse> dtos = cinemaHallMapper.toDtoList(halls);
+		List<CinemaHallResponse> responses = cinemaHallMapper.toCinemaHallResponseList(halls);
 
-		assertThat(dtos).isNotNull().isEmpty();
+		assertThat(responses).isNotNull().isEmpty();
 	}
 
 	@Test
-	void toDtoList_ShouldReturnNull_WhenInputIsNull() {
-		List<CinemaHallResponse> dtos = cinemaHallMapper.toDtoList(null);
+	void toCinemaHallResponseList_ShouldReturnNull_WhenInputIsNull() {
+		List<CinemaHallResponse> responses = cinemaHallMapper.toCinemaHallResponseList(null);
 
-		assertThat(dtos).isNull();
+		assertThat(responses).isNull();
 	}
 
 	@Test
-	void toDtoList_ShouldHandleListWithNullElements() {
+	void toCinemaHallResponseList_ShouldHandleListWithNullElements() {
 		List<CinemaHall> halls = Arrays.asList(cinemaHallWithSeats, null, cinemaHallEmptySeats);
 
-		List<CinemaHallResponse> dtos = cinemaHallMapper.toDtoList(halls);
+		List<CinemaHallResponse> responses = cinemaHallMapper.toCinemaHallResponseList(halls);
 
-		assertThat(dtos).isNotNull().hasSize(3);
+		assertThat(responses).isNotNull().hasSize(3);
 
-		assertThat(dtos.get(0)).isNotNull();
-		assertThat(dtos.get(1)).isNull();
-		assertThat(dtos.get(2)).isNotNull();
+		assertThat(responses.get(0)).isNotNull();
+		assertThat(responses.get(1)).isNull();
+		assertThat(responses.get(2)).isNotNull();
 	}
 
 	@Test
-	void toDto_ShouldMapHallWithSpecialCharactersInName() {
+	void toCinemaHallResponse_ShouldMapHallWithSpecialCharactersInName() {
 		CinemaHall hall = CinemaHall.builder().id(7L).name("Hall & Center (VIP)").build();
 		hall.setSeats(Collections.emptyList());
 
-		CinemaHallResponse dto = cinemaHallMapper.toDto(hall);
+		CinemaHallResponse response = cinemaHallMapper.toCinemaHallResponse(hall);
 
-		assertThat(dto).isNotNull();
-		assertThat(dto.getName()).isEqualTo("Hall & Center (VIP)");
+		assertThat(response).isNotNull();
+		assertThat(response.getName()).isEqualTo("Hall & Center (VIP)");
 	}
 
 	@Test
-	void toDto_ShouldCalculateCapacityCorrectlyForComplexCase() {
+	void toCinemaHallResponse_ShouldCalculateCapacityCorrectlyForComplexCase() {
 		CinemaHall hall = CinemaHall.builder().id(8L).name("Complex Hall").build();
 
 		List<Seat> seats = Arrays.asList(Seat.builder().id(20L).row(1).number(1).active(true).hall(hall).build(),
@@ -194,13 +194,13 @@ class CinemaHallMapperTest {
 				Seat.builder().id(24L).row(3).number(1).active(false).hall(hall).build());
 		hall.setSeats(seats);
 
-		CinemaHallResponse dto = cinemaHallMapper.toDto(hall);
+		CinemaHallResponse response = cinemaHallMapper.toCinemaHallResponse(hall);
 
-		assertThat(dto.getCapacity()).isEqualTo(5);
+		assertThat(response.getCapacity()).isEqualTo(5);
 	}
 
 	@Test
-	void toDto_ShouldHandleSeatWithDifferentTypes() {
+	void toCinemaHallResponse_ShouldHandleSeatWithDifferentTypes() {
 		CinemaHall hall = CinemaHall.builder().id(9L).name("Mixed Types Hall").build();
 
 		List<Seat> seats = Arrays.asList(
@@ -209,8 +209,8 @@ class CinemaHallMapperTest {
 				Seat.builder().id(32L).row(2).number(1).seatType(SeatType.COUPLE).active(false).hall(hall).build());
 		hall.setSeats(seats);
 
-		CinemaHallResponse dto = cinemaHallMapper.toDto(hall);
+		CinemaHallResponse response = cinemaHallMapper.toCinemaHallResponse(hall);
 
-		assertThat(dto.getCapacity()).isEqualTo(3);
+		assertThat(response.getCapacity()).isEqualTo(3);
 	}
 }

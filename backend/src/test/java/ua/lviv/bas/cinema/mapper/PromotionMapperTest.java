@@ -33,7 +33,7 @@ public class PromotionMapperTest {
 	}
 
 	@Test
-	void toResponse_ShouldMapAllFieldsFromPromotion() {
+	void toPromotionResponse_ShouldMapAllFieldsFromPromotion() {
 		LocalDateTime startDate = LocalDateTime.of(2024, 1, 1, 10, 0);
 		LocalDateTime endDate = LocalDateTime.of(2024, 12, 31, 23, 59);
 
@@ -41,7 +41,7 @@ public class PromotionMapperTest {
 				.description("Get bonus points for summer purchases").bonusPoints(500).startDate(startDate)
 				.endDate(endDate).createdAt(LocalDateTime.now()).build();
 
-		PromotionResponse response = mapper.toResponse(promotion);
+		PromotionResponse response = mapper.toPromotionResponse(promotion);
 
 		assertThat(response).isNotNull()
 				.extracting(PromotionResponse::getId, PromotionResponse::getTitle, PromotionResponse::getDescription,
@@ -51,18 +51,18 @@ public class PromotionMapperTest {
 	}
 
 	@Test
-	void toResponse_ShouldReturnNull_WhenInputIsNull() {
-		PromotionResponse response = mapper.toResponse(null);
+	void toPromotionResponse_ShouldReturnNull_WhenInputIsNull() {
+		PromotionResponse response = mapper.toPromotionResponse(null);
 
 		assertThat(response).isNull();
 	}
 
 	@Test
-	void toResponse_ShouldHandlePromotionWithoutDates() {
+	void toPromotionResponse_ShouldHandlePromotionWithoutDates() {
 		Promotion promotion = Promotion.builder().id(2L).title("No Date Promotion")
 				.description("Promotion without dates").bonusPoints(100).startDate(null).endDate(null).build();
 
-		PromotionResponse response = mapper.toResponse(promotion);
+		PromotionResponse response = mapper.toPromotionResponse(promotion);
 
 		assertThat(response).isNotNull();
 		assertThat(response.getStartDate()).isNull();
@@ -71,16 +71,16 @@ public class PromotionMapperTest {
 	}
 
 	@Test
-	void toResponse_ShouldHandlePromotionWithZeroBonusPoints() {
+	void toPromotionResponse_ShouldHandlePromotionWithZeroBonusPoints() {
 		Promotion promotion = Promotion.builder().id(3L).title("Zero Points").bonusPoints(0).build();
 
-		PromotionResponse response = mapper.toResponse(promotion);
+		PromotionResponse response = mapper.toPromotionResponse(promotion);
 
 		assertThat(response.getBonusPoints()).isZero();
 	}
 
 	@Test
-	void toEntity_ShouldMapAllFieldsFromCreateRequest() {
+	void toPromotion_ShouldMapAllFieldsFromCreateRequest() {
 		LocalDateTime startDate = LocalDateTime.of(2024, 6, 1, 0, 0);
 		LocalDateTime endDate = LocalDateTime.of(2024, 6, 30, 23, 59);
 
@@ -91,7 +91,7 @@ public class PromotionMapperTest {
 		request.setStartDate(startDate);
 		request.setEndDate(endDate);
 
-		Promotion promotion = mapper.toEntity(request);
+		Promotion promotion = mapper.toPromotion(request);
 
 		assertThat(promotion).isNotNull()
 				.extracting(Promotion::getId, Promotion::getTitle, Promotion::getDescription, Promotion::getBonusPoints,
@@ -100,19 +100,19 @@ public class PromotionMapperTest {
 	}
 
 	@Test
-	void toEntity_ShouldReturnNull_WhenRequestIsNull() {
-		Promotion promotion = mapper.toEntity(null);
+	void toPromotion_ShouldReturnNull_WhenRequestIsNull() {
+		Promotion promotion = mapper.toPromotion(null);
 
 		assertThat(promotion).isNull();
 	}
 
 	@Test
-	void toEntity_ShouldIgnoreIdAndCreatedAt() {
+	void toPromotion_ShouldIgnoreIdAndCreatedAt() {
 		PromotionCreateRequest request = new PromotionCreateRequest();
 		request.setTitle("Test");
 		request.setBonusPoints(100);
 
-		Promotion promotion = mapper.toEntity(request);
+		Promotion promotion = mapper.toPromotion(request);
 
 		assertThat(promotion.getId()).isNull();
 		assertThat(promotion.getCreatedAt()).isNull();
@@ -121,18 +121,18 @@ public class PromotionMapperTest {
 	@ParameterizedTest
 	@NullAndEmptySource
 	@ValueSource(strings = { " ", "  ", "\t", "\n" })
-	void toEntity_ShouldHandleEmptyOrBlankTitle(String title) {
+	void toPromotion_ShouldHandleEmptyOrBlankTitle(String title) {
 		PromotionCreateRequest request = new PromotionCreateRequest();
 		request.setTitle(title);
 		request.setBonusPoints(100);
 
-		Promotion promotion = mapper.toEntity(request);
+		Promotion promotion = mapper.toPromotion(request);
 
 		assertThat(promotion.getTitle()).isEqualTo(title);
 	}
 
 	@Test
-	void updateEntity_ShouldUpdateOnlyNonNullFields() {
+	void updatePromotionFromRequest_ShouldUpdateOnlyNonNullFields() {
 		Promotion existing = Promotion.builder().id(1L).title("Old Title").description("Old Description")
 				.bonusPoints(100).startDate(LocalDateTime.of(2024, 1, 1, 0, 0))
 				.endDate(LocalDateTime.of(2024, 1, 31, 23, 59)).createdAt(LocalDateTime.now()).build();
@@ -141,7 +141,7 @@ public class PromotionMapperTest {
 		update.setTitle("New Title");
 		update.setBonusPoints(200);
 
-		mapper.updateEntity(existing, update);
+		mapper.updatePromotionFromRequest(existing, update);
 
 		assertThat(existing)
 				.extracting(Promotion::getId, Promotion::getTitle, Promotion::getDescription, Promotion::getBonusPoints,
@@ -150,33 +150,34 @@ public class PromotionMapperTest {
 	}
 
 	@Test
-	void updateEntity_ShouldNotUpdate_WhenRequestIsNull() {
+	void updatePromotionFromRequest_ShouldNotUpdate_WhenRequestIsNull() {
 		Promotion existing = Promotion.builder().id(1L).title("Original").bonusPoints(100).build();
 
-		mapper.updateEntity(existing, null);
+		mapper.updatePromotionFromRequest(existing, null);
 
 		assertThat(existing.getTitle()).isEqualTo("Original");
 		assertThat(existing.getBonusPoints()).isEqualTo(100);
 	}
 
 	@Test
-	void updateEntity_ShouldNotUpdateId() {
+	void updatePromotionFromRequest_ShouldNotUpdateId() {
 		Promotion existing = Promotion.builder().id(999L).title("Original").build();
 
 		PromotionUpdateRequest update = new PromotionUpdateRequest();
 		update.setTitle("Updated");
 
-		mapper.updateEntity(existing, update);
+		mapper.updatePromotionFromRequest(existing, update);
 
 		assertThat(existing.getId()).isEqualTo(999L);
 	}
 
 	@Test
-	void updateEntity_ShouldHandleNullTarget() {
+	void updatePromotionFromRequest_ShouldHandleNullTarget() {
 		PromotionUpdateRequest update = new PromotionUpdateRequest();
 		update.setTitle("Test");
 
-		assertThatThrownBy(() -> mapper.updateEntity(null, update)).isInstanceOf(NullPointerException.class);
+		assertThatThrownBy(() -> mapper.updatePromotionFromRequest(null, update))
+				.isInstanceOf(NullPointerException.class);
 	}
 
 	@Test
@@ -207,27 +208,27 @@ public class PromotionMapperTest {
 	}
 
 	@Test
-	void toResponseList_ShouldMapListOfPromotions() {
+	void toPromotionResponseList_ShouldMapListOfPromotions() {
 		List<Promotion> promotions = Arrays.asList(Promotion.builder().id(1L).title("Promo 1").bonusPoints(100).build(),
 				Promotion.builder().id(2L).title("Promo 2").bonusPoints(200).build(),
 				Promotion.builder().id(3L).title("Promo 3").bonusPoints(300).build());
 
-		List<PromotionResponse> responses = mapper.toResponseList(promotions);
+		List<PromotionResponse> responses = mapper.toPromotionResponseList(promotions);
 
 		assertThat(responses).isNotNull().hasSize(3).extracting(PromotionResponse::getTitle).containsExactly("Promo 1",
 				"Promo 2", "Promo 3");
 	}
 
 	@Test
-	void toResponseList_ShouldReturnEmptyList_WhenInputIsEmpty() {
-		List<PromotionResponse> responses = mapper.toResponseList(Collections.emptyList());
+	void toPromotionResponseList_ShouldReturnEmptyList_WhenInputIsEmpty() {
+		List<PromotionResponse> responses = mapper.toPromotionResponseList(Collections.emptyList());
 
 		assertThat(responses).isNotNull().isEmpty();
 	}
 
 	@Test
-	void toResponseList_ShouldReturnNull_WhenInputIsNull() {
-		List<PromotionResponse> responses = mapper.toResponseList(null);
+	void toPromotionResponseList_ShouldReturnNull_WhenInputIsNull() {
+		List<PromotionResponse> responses = mapper.toPromotionResponseList(null);
 
 		assertThat(responses).isNull();
 	}
@@ -249,7 +250,7 @@ public class PromotionMapperTest {
 	}
 
 	@Test
-	void consistency_ToEntityThenToResponse_ShouldReturnSameValues() {
+	void consistency_ToPromotionThenToPromotionResponse_ShouldReturnSameValues() {
 		PromotionCreateRequest request = new PromotionCreateRequest();
 		request.setTitle("Consistency Test");
 		request.setDescription("Test description");
@@ -257,8 +258,8 @@ public class PromotionMapperTest {
 		request.setStartDate(LocalDateTime.of(2024, 7, 1, 0, 0));
 		request.setEndDate(LocalDateTime.of(2024, 7, 31, 23, 59));
 
-		Promotion entity = mapper.toEntity(request);
-		PromotionResponse response = mapper.toResponse(entity);
+		Promotion entity = mapper.toPromotion(request);
+		PromotionResponse response = mapper.toPromotionResponse(entity);
 
 		assertThat(response.getTitle()).isEqualTo("Consistency Test");
 		assertThat(response.getDescription()).isEqualTo("Test description");
@@ -268,15 +269,15 @@ public class PromotionMapperTest {
 	}
 
 	@Test
-	void updateThenToResponse_ShouldReflectChanges() {
+	void updatePromotionFromRequestThenToPromotionResponse_ShouldReflectChanges() {
 		Promotion promotion = Promotion.builder().id(1L).title("Before").bonusPoints(100).build();
 
 		PromotionUpdateRequest update = new PromotionUpdateRequest();
 		update.setTitle("After");
 		update.setBonusPoints(200);
 
-		mapper.updateEntity(promotion, update);
-		PromotionResponse response = mapper.toResponse(promotion);
+		mapper.updatePromotionFromRequest(promotion, update);
+		PromotionResponse response = mapper.toPromotionResponse(promotion);
 
 		assertThat(response.getTitle()).isEqualTo("After");
 		assertThat(response.getBonusPoints()).isEqualTo(200);

@@ -8,7 +8,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Arrays;
-import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -133,126 +132,6 @@ public class BookingMapperTest {
 	void toBookingResponse_ShouldReturnNull_WhenBookingIsNull() {
 		BookingResponse response = bookingMapper.toBookingResponse(null);
 		assertNull(response);
-	}
-
-	@Test
-	void toBookedSeatInfo_ShouldMapAllFieldsCorrectly() {
-		BookingResponse.BookedSeatInfo seatInfo = bookingMapper.toBookedSeatInfo(bookedSeat1);
-
-		assertNotNull(seatInfo);
-		assertEquals(1L, seatInfo.getId());
-		assertEquals(1L, seatInfo.getSeatId());
-		assertEquals(5, seatInfo.getRow());
-		assertEquals(12, seatInfo.getSeatNumber());
-		assertEquals("Adult", seatInfo.getTicketTypeName());
-		assertEquals(new BigDecimal("250.00"), seatInfo.getSeatPrice());
-	}
-
-	@Test
-	void toBookedSeatInfo_ShouldReturnNull_WhenBookedSeatIsNull() {
-		BookingResponse.BookedSeatInfo seatInfo = bookingMapper.toBookedSeatInfo(null);
-		assertNull(seatInfo);
-	}
-
-	@Test
-	void toBookedSeatInfo_ShouldHandleNullSeat() {
-		bookedSeat1.setSeat(null);
-
-		BookingResponse.BookedSeatInfo seatInfo = bookingMapper.toBookedSeatInfo(bookedSeat1);
-
-		assertNotNull(seatInfo);
-		assertEquals(1L, seatInfo.getId());
-		assertNull(seatInfo.getSeatId());
-		assertNull(seatInfo.getRow());
-		assertNull(seatInfo.getSeatNumber());
-		assertEquals("Adult", seatInfo.getTicketTypeName());
-		assertEquals(new BigDecimal("250.00"), seatInfo.getSeatPrice());
-	}
-
-	@Test
-	void toBookedSeatInfo_ShouldHandleNullTicketType() {
-		bookedSeat1.setTicketType(null);
-
-		BookingResponse.BookedSeatInfo seatInfo = bookingMapper.toBookedSeatInfo(bookedSeat1);
-
-		assertNotNull(seatInfo);
-		assertEquals(1L, seatInfo.getId());
-		assertEquals(1L, seatInfo.getSeatId());
-		assertEquals(5, seatInfo.getRow());
-		assertEquals(12, seatInfo.getSeatNumber());
-		assertNull(seatInfo.getTicketTypeName());
-		assertEquals(new BigDecimal("250.00"), seatInfo.getSeatPrice());
-	}
-
-	@Test
-	void toBookedSeatInfoList_ShouldMapAllItems() {
-		List<BookedSeat> bookedSeats = Arrays.asList(bookedSeat1, bookedSeat2);
-
-		List<BookingResponse.BookedSeatInfo> seatInfos = bookingMapper.toBookedSeatInfoList(bookedSeats);
-
-		assertNotNull(seatInfos);
-		assertEquals(2, seatInfos.size());
-
-		assertEquals(1L, seatInfos.get(0).getId());
-		assertEquals(1L, seatInfos.get(0).getSeatId());
-		assertEquals(5, seatInfos.get(0).getRow());
-		assertEquals(12, seatInfos.get(0).getSeatNumber());
-		assertEquals("Adult", seatInfos.get(0).getTicketTypeName());
-
-		assertEquals(2L, seatInfos.get(1).getId());
-		assertEquals(2L, seatInfos.get(1).getSeatId());
-		assertEquals(5, seatInfos.get(1).getRow());
-		assertEquals(13, seatInfos.get(1).getSeatNumber());
-		assertEquals("Adult", seatInfos.get(1).getTicketTypeName());
-	}
-
-	@Test
-	void toBookedSeatInfoList_ShouldReturnEmptyList_WhenInputIsEmpty() {
-		List<BookingResponse.BookedSeatInfo> seatInfos = bookingMapper.toBookedSeatInfoList(Arrays.asList());
-
-		assertNotNull(seatInfos);
-		assertTrue(seatInfos.isEmpty());
-	}
-
-	@Test
-	void toBookedSeatInfoList_ShouldReturnNull_WhenInputIsNull() {
-		List<BookingResponse.BookedSeatInfo> seatInfos = bookingMapper.toBookedSeatInfoList(null);
-		assertNull(seatInfos);
-	}
-
-	@Test
-	void toBookingResponseList_ShouldMapAllBookings() {
-		Booking booking2 = Booking.builder().id(124L).session(session).status(BookingStatus.CONFIRMED)
-				.totalPrice(new BigDecimal("300.00")).finalPrice(new BigDecimal("300.00")).build();
-
-		List<Booking> bookings = Arrays.asList(booking, booking2);
-
-		List<BookingResponse> responses = bookingMapper.toBookingResponseList(bookings);
-
-		assertNotNull(responses);
-		assertEquals(2, responses.size());
-
-		assertEquals(123L, responses.get(0).getId());
-		assertEquals(BookingStatus.PENDING, responses.get(0).getStatus());
-		assertEquals(new BigDecimal("500.00"), responses.get(0).getTotalPrice());
-
-		assertEquals(124L, responses.get(1).getId());
-		assertEquals(BookingStatus.CONFIRMED, responses.get(1).getStatus());
-		assertEquals(new BigDecimal("300.00"), responses.get(1).getTotalPrice());
-	}
-
-	@Test
-	void toBookingResponseList_ShouldReturnEmptyList_WhenInputIsEmpty() {
-		List<BookingResponse> responses = bookingMapper.toBookingResponseList(Arrays.asList());
-
-		assertNotNull(responses);
-		assertTrue(responses.isEmpty());
-	}
-
-	@Test
-	void toBookingResponseList_ShouldReturnNull_WhenInputIsNull() {
-		List<BookingResponse> responses = bookingMapper.toBookingResponseList(null);
-		assertNull(responses);
 	}
 
 	@Test

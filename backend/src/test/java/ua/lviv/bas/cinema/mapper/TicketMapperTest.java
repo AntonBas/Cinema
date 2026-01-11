@@ -3,17 +3,14 @@ package ua.lviv.bas.cinema.mapper;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.mapstruct.factory.Mappers;
 
 import ua.lviv.bas.cinema.domain.Booking;
 import ua.lviv.bas.cinema.domain.CinemaHall;
@@ -26,10 +23,10 @@ import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.enums.TicketStatus;
 import ua.lviv.bas.cinema.dto.ticket.response.TicketResponse;
 
-@ExtendWith(MockitoExtension.class)
+@ExtendWith(org.mockito.junit.jupiter.MockitoExtension.class)
 public class TicketMapperTest {
 
-	private TicketMapper ticketMapper = new TicketMapperImpl();
+	private TicketMapper ticketMapper;
 
 	private Ticket ticket;
 	private Booking booking;
@@ -37,6 +34,8 @@ public class TicketMapperTest {
 
 	@BeforeEach
 	void setUp() {
+		ticketMapper = Mappers.getMapper(TicketMapper.class);
+
 		User user = User.builder().id(1L).email("user@example.com").firstName("John").lastName("Doe").build();
 
 		Movie movie = Movie.builder().id(1L).title("Inception").build();
@@ -253,56 +252,6 @@ public class TicketMapperTest {
 	}
 
 	@Test
-	void toTicketResponseList_ShouldMapAllTickets() {
-		Ticket ticket2 = Ticket.builder().id(457L).booking(booking).user(booking.getUser())
-				.ticketType(TicketType.builder().id(2L).displayName("Child Ticket")
-						.priceMultiplier(new BigDecimal("0.5")).build())
-				.uniqueCode("TKT-DEF456GHI789").status(TicketStatus.USED).originalPrice(new BigDecimal("125.00"))
-				.finalPrice(new BigDecimal("125.00")).purchaseTime(LocalDateTime.of(2024, 1, 15, 14, 36))
-				.createdAt(LocalDateTime.of(2024, 1, 15, 14, 36)).build();
-
-		List<Ticket> tickets = Arrays.asList(ticket, ticket2);
-
-		List<TicketResponse> responses = ticketMapper.toTicketResponseList(tickets);
-
-		assertNotNull(responses);
-		assertEquals(2, responses.size());
-
-		assertEquals(456L, responses.get(0).getId());
-		assertEquals("TKT-ABC123DEF456", responses.get(0).getTicketCode());
-		assertEquals(TicketStatus.ACTIVE, responses.get(0).getStatus());
-		assertEquals("Adult Ticket", responses.get(0).getTicketType());
-		assertEquals(new BigDecimal("250.00"), responses.get(0).getPrice());
-
-		assertEquals(457L, responses.get(1).getId());
-		assertEquals("TKT-DEF456GHI789", responses.get(1).getTicketCode());
-		assertEquals(TicketStatus.USED, responses.get(1).getStatus());
-		assertEquals("Child Ticket", responses.get(1).getTicketType());
-		assertEquals(new BigDecimal("125.00"), responses.get(1).getPrice());
-
-		assertNull(responses.get(0).getQrCodeUrl());
-		assertNull(responses.get(0).getRow());
-		assertNull(responses.get(0).getSeatNumber());
-		assertNull(responses.get(1).getQrCodeUrl());
-		assertNull(responses.get(1).getRow());
-		assertNull(responses.get(1).getSeatNumber());
-	}
-
-	@Test
-	void toTicketResponseList_ShouldReturnEmptyList_WhenInputIsEmpty() {
-		List<TicketResponse> responses = ticketMapper.toTicketResponseList(Arrays.asList());
-
-		assertNotNull(responses);
-		assertTrue(responses.isEmpty());
-	}
-
-	@Test
-	void toTicketResponseList_ShouldReturnNull_WhenInputIsNull() {
-		List<TicketResponse> responses = ticketMapper.toTicketResponseList(null);
-		assertNull(responses);
-	}
-
-	@Test
 	void toTicketResponse_ShouldIgnoreIgnoredFields() {
 		TicketResponse response = ticketMapper.toTicketResponse(ticket);
 
@@ -318,5 +267,57 @@ public class TicketMapperTest {
 		assertEquals("Inception", response.getMovieTitle());
 		assertEquals("Hall A", response.getHallName());
 		assertEquals(new BigDecimal("250.00"), response.getPrice());
+	}
+
+	@Test
+	void toTicketResponse_ShouldMapTicketWithoutBuilder() {
+		User user = new User();
+		user.setId(2L);
+		user.setEmail("test@example.com");
+
+		Movie movie = new Movie();
+		movie.setId(2L);
+		movie.setTitle("Test Movie");
+
+		CinemaHall hall = new CinemaHall();
+		hall.setId(2L);
+		hall.setName("Hall B");
+
+		Session session = new Session();
+		session.setId(2L);
+		session.setMovie(movie);
+		session.setHall(hall);
+		session.setStartTime(LocalDateTime.of(2024, 1, 16, 20, 0));
+
+		Booking booking = new Booking();
+		booking.setId(124L);
+		booking.setUser(user);
+		booking.setSession(session);
+
+		TicketType ticketType = new TicketType();
+		ticketType.setId(4L);
+		ticketType.setDisplayName("Senior Ticket");
+
+		Ticket ticket = new Ticket();
+		ticket.setId(789L);
+		ticket.setBooking(booking);
+		ticket.setUser(user);
+		ticket.setTicketType(ticketType);
+		ticket.setUniqueCode("TKT-XYZ789ABC123");
+		ticket.setStatus(TicketStatus.ACTIVE);
+		ticket.setFinalPrice(new BigDecimal("200.00"));
+		ticket.setPurchaseTime(LocalDateTime.of(2024, 1, 16, 15, 0));
+
+		TicketResponse response = ticketMapper.toTicketResponse(ticket);
+
+		assertNotNull(response);
+		assertEquals(789L, response.getId());
+		assertEquals("TKT-XYZ789ABC123", response.getTicketCode());
+		assertEquals(TicketStatus.ACTIVE, response.getStatus());
+		assertEquals("Senior Ticket", response.getTicketType());
+		assertEquals(new BigDecimal("200.00"), response.getPrice());
+		assertEquals("Test Movie", response.getMovieTitle());
+		assertEquals(LocalDateTime.of(2024, 1, 16, 20, 0), response.getSessionTime());
+		assertEquals("Hall B", response.getHallName());
 	}
 }

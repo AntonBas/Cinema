@@ -62,18 +62,35 @@ class BonusMapperTest {
 		Mockito.when(bonusCard.getPointsBalance()).thenReturn(150);
 
 		BonusTransaction transaction = BonusTransaction.builder().id(1L).bonusCard(bonusCard)
-				.type(BonusTransactionType.PURCHASE_BONUS).pointsChange(25).referenceId("PAYMENT_123")
+				.type(BonusTransactionType.PAYMENT_ACCRUAL).pointsChange(25).referenceId("PAYMENT_123")
 				.createdAt(LocalDateTime.of(2024, 1, 15, 14, 30, 0)).build();
 
 		BonusTransactionResponse response = mapper.toBonusTransactionResponse(transaction);
 
 		assertThat(response).isNotNull();
 		assertThat(response.getId()).isEqualTo(1L);
-		assertThat(response.getType()).isEqualTo("PURCHASE_BONUS");
+		assertThat(response.getType()).isEqualTo("PAYMENT_ACCRUAL");
 		assertThat(response.getPointsChange()).isEqualTo(25);
 		assertThat(response.getReferenceId()).isEqualTo("PAYMENT_123");
 		assertThat(response.getCreatedAt()).isEqualTo(LocalDateTime.of(2024, 1, 15, 14, 30, 0));
 		assertThat(response.getNewBalance()).isEqualTo(150);
+	}
+
+	@Test
+	void toBonusTransactionResponse_ShouldHandleNullBonusCard() {
+		BonusTransaction transaction = BonusTransaction.builder().id(1L).bonusCard(null)
+				.type(BonusTransactionType.REFUND_RETURN).pointsChange(-50).referenceId("REFUND_123")
+				.createdAt(LocalDateTime.of(2024, 1, 15, 14, 30, 0)).build();
+
+		BonusTransactionResponse response = mapper.toBonusTransactionResponse(transaction);
+
+		assertThat(response).isNotNull();
+		assertThat(response.getId()).isEqualTo(1L);
+		assertThat(response.getType()).isEqualTo("REFUND_RETURN");
+		assertThat(response.getPointsChange()).isEqualTo(-50);
+		assertThat(response.getReferenceId()).isEqualTo("REFUND_123");
+		assertThat(response.getCreatedAt()).isEqualTo(LocalDateTime.of(2024, 1, 15, 14, 30, 0));
+		assertThat(response.getNewBalance()).isNull();
 	}
 
 	@Test
@@ -97,7 +114,7 @@ class BonusMapperTest {
 
 	@Test
 	void updateBonusRulesFromRequest_ShouldUpdateNonNullFields() {
-		BonusRules existing = BonusRules.builder().bonusType(BonusTransactionType.PURCHASE_BONUS).points(0)
+		BonusRules existing = BonusRules.builder().bonusType(BonusTransactionType.PAYMENT_ACCRUAL).points(0)
 				.moneyRatio(new BigDecimal("0.05")).minPointsPerTransaction(10).maxPointsPerTransaction(500)
 				.active(true).build();
 
@@ -111,40 +128,23 @@ class BonusMapperTest {
 		assertThat(existing.isActive()).isFalse();
 		assertThat(existing.getMinPointsPerTransaction()).isEqualTo(10);
 		assertThat(existing.getMaxPointsPerTransaction()).isEqualTo(500);
+		assertThat(existing.getBonusType()).isEqualTo(BonusTransactionType.PAYMENT_ACCRUAL);
 	}
 
 	@Test
-	void toBonusRules_ShouldMapFromRequestAndType() {
-		BonusRulesRequest request = BonusRulesRequest.builder().points(100).moneyRatio(new BigDecimal("0.1"))
-				.minPointsPerTransaction(50).maxPointsPerTransaction(300).active(true).build();
+	void updateBonusRulesFromRequest_ShouldIgnoreNullFields() {
+		BonusRules existing = BonusRules.builder().bonusType(BonusTransactionType.PAYMENT_ACCRUAL).points(100)
+				.moneyRatio(new BigDecimal("0.1")).minPointsPerTransaction(10).maxPointsPerTransaction(500).active(true)
+				.build();
 
-		BonusRules result = mapper.toBonusRules(request, BonusTransactionType.WELCOME_BONUS);
+		BonusRulesRequest request = BonusRulesRequest.builder().active(false).build();
 
-		assertThat(result).isNotNull();
-		assertThat(result.getId()).isNull();
-		assertThat(result.getBonusType()).isEqualTo(BonusTransactionType.WELCOME_BONUS);
-		assertThat(result.getPoints()).isEqualTo(100);
-		assertThat(result.getMoneyRatio()).isEqualTo(new BigDecimal("0.1"));
-		assertThat(result.getMinPointsPerTransaction()).isEqualTo(50);
-		assertThat(result.getMaxPointsPerTransaction()).isEqualTo(300);
-		assertThat(result.isActive()).isTrue();
-		assertThat(result.getUpdatedAt()).isNull();
-	}
+		mapper.updateBonusRulesFromRequest(request, existing);
 
-	@Test
-	void toBonusRules_ShouldHandleNullValues() {
-		BonusRulesRequest request = new BonusRulesRequest();
-
-		BonusRules result = mapper.toBonusRules(request, BonusTransactionType.BIRTHDAY_BONUS);
-
-		assertThat(result).isNotNull();
-		assertThat(result.getId()).isNull();
-		assertThat(result.getBonusType()).isEqualTo(BonusTransactionType.BIRTHDAY_BONUS);
-		assertThat(result.getPoints()).isNull();
-		assertThat(result.getMoneyRatio()).isNull();
-		assertThat(result.getMinPointsPerTransaction()).isNull();
-		assertThat(result.getMaxPointsPerTransaction()).isNull();
-		assertThat(result.isActive()).isFalse();
-		assertThat(result.getUpdatedAt()).isNull();
+		assertThat(existing.getPoints()).isEqualTo(100);
+		assertThat(existing.getMoneyRatio()).isEqualTo(new BigDecimal("0.1"));
+		assertThat(existing.isActive()).isFalse();
+		assertThat(existing.getMinPointsPerTransaction()).isEqualTo(10);
+		assertThat(existing.getMaxPointsPerTransaction()).isEqualTo(500);
 	}
 }

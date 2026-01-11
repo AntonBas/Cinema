@@ -153,13 +153,6 @@ public class BonusAdminService {
 			rules.setMaxPointsPerTransaction(null);
 			break;
 
-		case MANUAL_CORRECTION:
-			rules.setPoints(null);
-			rules.setMoneyRatio(null);
-			rules.setMinPointsPerTransaction(null);
-			rules.setMaxPointsPerTransaction(null);
-			break;
-
 		case EXPIRATION_DEDUCTION:
 			rules.setPoints(null);
 			rules.setMoneyRatio(new BigDecimal("0.02"));

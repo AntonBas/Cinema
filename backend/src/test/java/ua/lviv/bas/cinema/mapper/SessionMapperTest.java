@@ -59,8 +59,8 @@ class SessionMapperTest {
 	}
 
 	@Test
-	void toAdminDto_ShouldMapAllFields() {
-		SessionAdminResponse result = sessionMapper.toAdminDto(session);
+	void toSessionAdminResponse_ShouldMapAllFields() {
+		SessionAdminResponse result = sessionMapper.toSessionAdminResponse(session);
 
 		assertAll(() -> assertThat(result).isNotNull(), () -> assertThat(result.getId()).isEqualTo(1L),
 				() -> assertThat(result.getStartTime()).isEqualTo(futureTime),
@@ -78,59 +78,59 @@ class SessionMapperTest {
 
 	@ParameterizedTest
 	@EnumSource(CinemaSessionStatus.class)
-	void toAdminDto_ShouldMapAllStatusValues(CinemaSessionStatus status) {
+	void toSessionAdminResponse_ShouldMapAllStatusValues(CinemaSessionStatus status) {
 		session.setStatus(status);
-		SessionAdminResponse result = sessionMapper.toAdminDto(session);
+		SessionAdminResponse result = sessionMapper.toSessionAdminResponse(session);
 		assertThat(result.getStatus()).isEqualTo(status);
 	}
 
 	@Test
-	void toAdminDto_ShouldHandleNullEntity() {
-		SessionAdminResponse result = sessionMapper.toAdminDto(null);
+	void toSessionAdminResponse_ShouldHandleNullEntity() {
+		SessionAdminResponse result = sessionMapper.toSessionAdminResponse(null);
 		assertThat(result).isNull();
 	}
 
 	@Test
-	void toAdminDto_ShouldHandleNullMovie() {
+	void toSessionAdminResponse_ShouldHandleNullMovie() {
 		session.setMovie(null);
-		SessionAdminResponse result = sessionMapper.toAdminDto(session);
+		SessionAdminResponse result = sessionMapper.toSessionAdminResponse(session);
 
 		assertAll(() -> assertThat(result.getMovieId()).isNull(), () -> assertThat(result.getMovieTitle()).isNull(),
 				() -> assertThat(result.getMovieDuration()).isNull());
 	}
 
 	@Test
-	void toAdminDto_ShouldHandleNullHall() {
+	void toSessionAdminResponse_ShouldHandleNullHall() {
 		session.setHall(null);
-		SessionAdminResponse result = sessionMapper.toAdminDto(session);
+		SessionAdminResponse result = sessionMapper.toSessionAdminResponse(session);
 
 		assertAll(() -> assertThat(result.getHallId()).isNull(), () -> assertThat(result.getHallName()).isNull());
 	}
 
 	@Test
-	void toAdminDto_ShouldHandleNullBasePrice() {
+	void toSessionAdminResponse_ShouldHandleNullBasePrice() {
 		session.setBasePrice(null);
-		SessionAdminResponse result = sessionMapper.toAdminDto(session);
+		SessionAdminResponse result = sessionMapper.toSessionAdminResponse(session);
 		assertThat(result.getBasePrice()).isNull();
 	}
 
 	@Test
-	void toAdminDto_ShouldHandleNullStartTime() {
+	void toSessionAdminResponse_ShouldHandleNullStartTime() {
 		session.setStartTime(null);
-		SessionAdminResponse result = sessionMapper.toAdminDto(session);
+		SessionAdminResponse result = sessionMapper.toSessionAdminResponse(session);
 		assertThat(result.getStartTime()).isNull();
 	}
 
 	@Test
-	void toAdminDto_ShouldHandleNullStatus() {
+	void toSessionAdminResponse_ShouldHandleNullStatus() {
 		session.setStatus(null);
-		SessionAdminResponse result = sessionMapper.toAdminDto(session);
+		SessionAdminResponse result = sessionMapper.toSessionAdminResponse(session);
 		assertThat(result.getStatus()).isNull();
 	}
 
 	@Test
-	void toScheduleDto_ShouldMapAllFields() {
-		SessionScheduleResponse result = sessionMapper.toScheduleDto(session);
+	void toSessionScheduleResponse_ShouldMapAllFields() {
+		SessionScheduleResponse result = sessionMapper.toSessionScheduleResponse(session);
 
 		assertAll(() -> assertThat(result).isNotNull(), () -> assertThat(result.getId()).isEqualTo(1L),
 				() -> assertThat(result.getStartTime()).isEqualTo(futureTime),
@@ -149,22 +149,22 @@ class SessionMapperTest {
 
 	@ParameterizedTest
 	@EnumSource(CinemaSessionStatus.class)
-	void toScheduleDto_ShouldMapAllStatusValues(CinemaSessionStatus status) {
+	void toSessionScheduleResponse_ShouldMapAllStatusValues(CinemaSessionStatus status) {
 		session.setStatus(status);
-		SessionScheduleResponse result = sessionMapper.toScheduleDto(session);
+		SessionScheduleResponse result = sessionMapper.toSessionScheduleResponse(session);
 		assertThat(result.getStatus()).isEqualTo(status);
 	}
 
 	@Test
-	void toScheduleDto_ShouldHandleNullEntity() {
-		SessionScheduleResponse result = sessionMapper.toScheduleDto(null);
+	void toSessionScheduleResponse_ShouldHandleNullEntity() {
+		SessionScheduleResponse result = sessionMapper.toSessionScheduleResponse(null);
 		assertThat(result).isNull();
 	}
 
 	@Test
-	void toScheduleDto_ShouldHandleNullMovie() {
+	void toSessionScheduleResponse_ShouldHandleNullMovie() {
 		session.setMovie(null);
-		SessionScheduleResponse result = sessionMapper.toScheduleDto(session);
+		SessionScheduleResponse result = sessionMapper.toSessionScheduleResponse(session);
 
 		assertAll(() -> assertThat(result.getMovieId()).isNull(), () -> assertThat(result.getMovieTitle()).isNull(),
 				() -> assertThat(result.getMoviePosterFileName()).isNull(),
@@ -173,62 +173,62 @@ class SessionMapperTest {
 	}
 
 	@Test
-	void toScheduleDto_ShouldHandleMovieWithoutPoster() {
+	void toSessionScheduleResponse_ShouldHandleMovieWithoutPoster() {
 		movie.setPosterFileName(null);
-		SessionScheduleResponse result = sessionMapper.toScheduleDto(session);
+		SessionScheduleResponse result = sessionMapper.toSessionScheduleResponse(session);
 		assertThat(result.getMoviePosterFileName()).isNull();
 	}
 
 	@Test
-	void toScheduleDto_ShouldHandleMovieWithoutAgeRating() {
+	void toSessionScheduleResponse_ShouldHandleMovieWithoutAgeRating() {
 		movie.setAgeRating(null);
-		SessionScheduleResponse result = sessionMapper.toScheduleDto(session);
+		SessionScheduleResponse result = sessionMapper.toSessionScheduleResponse(session);
 		assertThat(result.getMovieAgeRating()).isNull();
 	}
 
 	@ParameterizedTest
 	@ValueSource(ints = { 60, 90, 120, 150, 180 })
-	void toScheduleDto_ShouldMapDifferentMovieDurations(int duration) {
+	void toSessionScheduleResponse_ShouldMapDifferentMovieDurations(int duration) {
 		movie.setDurationMinutes(duration);
-		SessionScheduleResponse result = sessionMapper.toScheduleDto(session);
+		SessionScheduleResponse result = sessionMapper.toSessionScheduleResponse(session);
 		assertThat(result.getMovieDuration()).isEqualTo(duration);
 	}
 
 	@Test
-	void toScheduleDto_ShouldHandleNullHall() {
+	void toSessionScheduleResponse_ShouldHandleNullHall() {
 		session.setHall(null);
-		SessionScheduleResponse result = sessionMapper.toScheduleDto(session);
+		SessionScheduleResponse result = sessionMapper.toSessionScheduleResponse(session);
 
 		assertAll(() -> assertThat(result.getHallId()).isNull(), () -> assertThat(result.getHallName()).isNull());
 	}
 
 	@Test
-	void toScheduleDto_ShouldHandleNullBasePrice() {
+	void toSessionScheduleResponse_ShouldHandleNullBasePrice() {
 		session.setBasePrice(null);
-		SessionScheduleResponse result = sessionMapper.toScheduleDto(session);
+		SessionScheduleResponse result = sessionMapper.toSessionScheduleResponse(session);
 		assertThat(result.getBasePrice()).isNull();
 	}
 
 	@Test
-	void toScheduleDto_ShouldHandleNullStartTime() {
+	void toSessionScheduleResponse_ShouldHandleNullStartTime() {
 		session.setStartTime(null);
-		SessionScheduleResponse result = sessionMapper.toScheduleDto(session);
+		SessionScheduleResponse result = sessionMapper.toSessionScheduleResponse(session);
 		assertThat(result.getStartTime()).isNull();
 	}
 
 	@Test
-	void toScheduleDto_ShouldHandleNullStatus() {
+	void toSessionScheduleResponse_ShouldHandleNullStatus() {
 		session.setStatus(null);
-		SessionScheduleResponse result = sessionMapper.toScheduleDto(session);
+		SessionScheduleResponse result = sessionMapper.toSessionScheduleResponse(session);
 		assertThat(result.getStatus()).isNull();
 	}
 
 	@Test
-	void toEntity_ShouldMapRequestToEntityWithDefaultValues() {
+	void toSession_ShouldMapRequestToEntityWithDefaultValues() {
 		SessionCreateRequest request = SessionCreateRequest.builder().startTime(futureTime)
 				.basePrice(new BigDecimal("300.00")).movieId(2L).hallId(3L).build();
 
-		Session result = sessionMapper.toEntity(request);
+		Session result = sessionMapper.toSession(request);
 
 		assertAll(() -> assertThat(result).isNotNull(), () -> assertThat(result.getId()).isNull(),
 				() -> assertThat(result.getStartTime()).isEqualTo(request.getStartTime()),
@@ -241,35 +241,35 @@ class SessionMapperTest {
 	}
 
 	@Test
-	void toEntity_ShouldHandleNullRequest() {
-		Session result = sessionMapper.toEntity(null);
+	void toSession_ShouldHandleNullRequest() {
+		Session result = sessionMapper.toSession(null);
 		assertThat(result).isNull();
 	}
 
 	@Test
-	void toEntity_ShouldHandleNullBasePrice() {
+	void toSession_ShouldHandleNullBasePrice() {
 		SessionCreateRequest request = SessionCreateRequest.builder().startTime(futureTime).basePrice(null).movieId(1L)
 				.hallId(1L).build();
 
-		Session result = sessionMapper.toEntity(request);
+		Session result = sessionMapper.toSession(request);
 		assertThat(result.getBasePrice()).isNull();
 	}
 
 	@Test
-	void toEntity_ShouldHandleNullStartTime() {
+	void toSession_ShouldHandleNullStartTime() {
 		SessionCreateRequest request = SessionCreateRequest.builder().startTime(null)
 				.basePrice(new BigDecimal("200.00")).movieId(1L).hallId(1L).build();
 
-		Session result = sessionMapper.toEntity(request);
+		Session result = sessionMapper.toSession(request);
 		assertThat(result.getStartTime()).isNull();
 	}
 
 	@Test
-	void toEntity_ShouldHandleNullIds() {
+	void toSession_ShouldHandleNullIds() {
 		SessionCreateRequest request = SessionCreateRequest.builder().startTime(futureTime)
 				.basePrice(new BigDecimal("200.00")).movieId(null).hallId(null).build();
 
-		Session result = sessionMapper.toEntity(request);
+		Session result = sessionMapper.toSession(request);
 
 		assertAll(() -> assertThat(result.getStartTime()).isEqualTo(futureTime),
 				() -> assertThat(result.getBasePrice()).isEqualByComparingTo("200.00"),
@@ -277,16 +277,16 @@ class SessionMapperTest {
 	}
 
 	@Test
-	void toEntity_ShouldMapZeroBasePrice() {
+	void toSession_ShouldMapZeroBasePrice() {
 		SessionCreateRequest request = SessionCreateRequest.builder().startTime(futureTime).basePrice(BigDecimal.ZERO)
 				.movieId(1L).hallId(1L).build();
 
-		Session result = sessionMapper.toEntity(request);
+		Session result = sessionMapper.toSession(request);
 		assertThat(result.getBasePrice()).isEqualByComparingTo(BigDecimal.ZERO);
 	}
 
 	@Test
-	void updateEntityFromDto_ShouldUpdateNonNullFields() {
+	void updateSessionFromRequest_ShouldUpdateNonNullFields() {
 		SessionUpdateRequest updateRequest = SessionUpdateRequest.builder().startTime(futureTime.plusHours(1))
 				.basePrice(new BigDecimal("350.00")).build();
 
@@ -294,7 +294,7 @@ class SessionMapperTest {
 				.status(CinemaSessionStatus.SCHEDULED).bookings(new ArrayList<>()).bookedSeats(new ArrayList<>())
 				.build();
 
-		sessionMapper.updateEntityFromDto(updateRequest, existingSession);
+		sessionMapper.updateSessionFromRequest(updateRequest, existingSession);
 
 		assertAll(() -> assertThat(existingSession.getId()).isEqualTo(1L),
 				() -> assertThat(existingSession.getStartTime()).isEqualTo(futureTime.plusHours(1)),
@@ -304,26 +304,26 @@ class SessionMapperTest {
 	}
 
 	@Test
-	void updateEntityFromDto_ShouldNotUpdateStatus() {
+	void updateSessionFromRequest_ShouldNotUpdateStatus() {
 		SessionUpdateRequest updateRequest = SessionUpdateRequest.builder().build();
 
 		Session existingSession = Session.builder().id(1L).startTime(futureTime).basePrice(new BigDecimal("250.00"))
 				.status(CinemaSessionStatus.SCHEDULED).build();
 
-		sessionMapper.updateEntityFromDto(updateRequest, existingSession);
+		sessionMapper.updateSessionFromRequest(updateRequest, existingSession);
 
 		assertThat(existingSession.getStatus()).isEqualTo(CinemaSessionStatus.SCHEDULED);
 	}
 
 	@Test
-	void updateEntityFromDto_ShouldIgnoreNullFields() {
+	void updateSessionFromRequest_ShouldIgnoreNullFields() {
 		SessionUpdateRequest updateRequest = SessionUpdateRequest.builder().basePrice(new BigDecimal("400.00"))
 				.startTime(null).build();
 
 		Session existingSession = Session.builder().id(1L).startTime(futureTime).basePrice(new BigDecimal("250.00"))
 				.status(CinemaSessionStatus.SCHEDULED).build();
 
-		sessionMapper.updateEntityFromDto(updateRequest, existingSession);
+		sessionMapper.updateSessionFromRequest(updateRequest, existingSession);
 
 		assertAll(() -> assertThat(existingSession.getStartTime()).isEqualTo(futureTime),
 				() -> assertThat(existingSession.getBasePrice()).isEqualByComparingTo("400.00"),
@@ -331,24 +331,24 @@ class SessionMapperTest {
 	}
 
 	@Test
-	void updateEntityFromDto_ShouldHandleNullRequest() {
+	void updateSessionFromRequest_ShouldHandleNullRequest() {
 		Session existingSession = Session.builder().id(1L).startTime(futureTime).basePrice(new BigDecimal("250.00"))
 				.build();
 
-		sessionMapper.updateEntityFromDto(null, existingSession);
+		sessionMapper.updateSessionFromRequest(null, existingSession);
 
 		assertAll(() -> assertThat(existingSession.getStartTime()).isEqualTo(futureTime),
 				() -> assertThat(existingSession.getBasePrice()).isEqualByComparingTo("250.00"));
 	}
 
 	@Test
-	void updateEntityFromDto_ShouldPreserveIdAndRelations() {
+	void updateSessionFromRequest_ShouldPreserveIdAndRelations() {
 		SessionUpdateRequest updateRequest = SessionUpdateRequest.builder().basePrice(new BigDecimal("500.00")).build();
 
 		Session existingSession = Session.builder().id(99L).movie(movie).hall(hall).bookings(new ArrayList<>())
 				.bookedSeats(new ArrayList<>()).build();
 
-		sessionMapper.updateEntityFromDto(updateRequest, existingSession);
+		sessionMapper.updateSessionFromRequest(updateRequest, existingSession);
 
 		assertAll(() -> assertThat(existingSession.getId()).isEqualTo(99L),
 				() -> assertThat(existingSession.getMovie()).isEqualTo(movie),
@@ -359,33 +359,33 @@ class SessionMapperTest {
 
 	@ParameterizedTest
 	@CsvSource({ "SCHEDULED, true", "COMPLETED, true", "CANCELLED, true" })
-	void consistencyCheck_BothDtosShouldHaveSameStatus(String statusStr, boolean expected) {
+	void consistencyCheck_BothResponsesShouldHaveSameStatus(String statusStr, boolean expected) {
 		CinemaSessionStatus status = CinemaSessionStatus.valueOf(statusStr);
 		session.setStatus(status);
 
-		SessionAdminResponse adminDto = sessionMapper.toAdminDto(session);
-		SessionScheduleResponse scheduleDto = sessionMapper.toScheduleDto(session);
+		SessionAdminResponse adminResponse = sessionMapper.toSessionAdminResponse(session);
+		SessionScheduleResponse scheduleResponse = sessionMapper.toSessionScheduleResponse(session);
 
-		assertThat(adminDto.getStatus()).isEqualTo(scheduleDto.getStatus());
-		assertThat(adminDto.getStatus()).isEqualTo(status);
+		assertThat(adminResponse.getStatus()).isEqualTo(scheduleResponse.getStatus());
+		assertThat(adminResponse.getStatus()).isEqualTo(status);
 	}
 
 	@Test
-	void consistencyCheck_BothDtosShouldHaveSameMovieInfo() {
-		SessionAdminResponse adminDto = sessionMapper.toAdminDto(session);
-		SessionScheduleResponse scheduleDto = sessionMapper.toScheduleDto(session);
+	void consistencyCheck_BothResponsesShouldHaveSameMovieInfo() {
+		SessionAdminResponse adminResponse = sessionMapper.toSessionAdminResponse(session);
+		SessionScheduleResponse scheduleResponse = sessionMapper.toSessionScheduleResponse(session);
 
-		assertAll(() -> assertThat(adminDto.getMovieId()).isEqualTo(scheduleDto.getMovieId()),
-				() -> assertThat(adminDto.getMovieTitle()).isEqualTo(scheduleDto.getMovieTitle()),
-				() -> assertThat(adminDto.getMovieDuration()).isEqualTo(scheduleDto.getMovieDuration()));
+		assertAll(() -> assertThat(adminResponse.getMovieId()).isEqualTo(scheduleResponse.getMovieId()),
+				() -> assertThat(adminResponse.getMovieTitle()).isEqualTo(scheduleResponse.getMovieTitle()),
+				() -> assertThat(adminResponse.getMovieDuration()).isEqualTo(scheduleResponse.getMovieDuration()));
 	}
 
 	@Test
-	void consistencyCheck_BothDtosShouldHaveSameHallInfo() {
-		SessionAdminResponse adminDto = sessionMapper.toAdminDto(session);
-		SessionScheduleResponse scheduleDto = sessionMapper.toScheduleDto(session);
+	void consistencyCheck_BothResponsesShouldHaveSameHallInfo() {
+		SessionAdminResponse adminResponse = sessionMapper.toSessionAdminResponse(session);
+		SessionScheduleResponse scheduleResponse = sessionMapper.toSessionScheduleResponse(session);
 
-		assertAll(() -> assertThat(adminDto.getHallId()).isEqualTo(scheduleDto.getHallId()),
-				() -> assertThat(adminDto.getHallName()).isEqualTo(scheduleDto.getHallName()));
+		assertAll(() -> assertThat(adminResponse.getHallId()).isEqualTo(scheduleResponse.getHallId()),
+				() -> assertThat(adminResponse.getHallName()).isEqualTo(scheduleResponse.getHallName()));
 	}
 }

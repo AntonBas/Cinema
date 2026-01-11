@@ -1,7 +1,5 @@
 package ua.lviv.bas.cinema.mapper;
 
-import java.util.List;
-
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.ReportingPolicy;
@@ -23,6 +21,4 @@ public interface TicketMapper {
 	@Mapping(target = "row", ignore = true)
 	@Mapping(target = "seatNumber", ignore = true)
 	TicketResponse toTicketResponse(Ticket ticket);
-
-	List<TicketResponse> toTicketResponseList(List<Ticket> tickets);
 }
