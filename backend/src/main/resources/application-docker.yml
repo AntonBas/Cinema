@@ -23,12 +23,34 @@ spring:
                 core-size: 5
                 max-size: 10
                 queue-capacity: 100
+            thread-name-prefix: "scheduler-"
 
 scheduler:
+    birthday-bonus:
+        cron: "0 0 9 * * *"
+
+    email-token:
+        cleanup-expired-cron: "0 */30 * * * *"
+        cleanup-confirmed-cron: "0 0 3 * * *"
+
+    movie-status:
+        cron: "0 0 2 * * *"
+
+    session-status:
+        cron: "0 */5 * * * *"
+
     booking:
         expiration-interval: 30000
+        cleanup-cron: "0 0 4 * * *"
+        reminder-cron: "0 */10 * * * *"
+
+    payment:
+        expiration-interval: 300000
+        cleanup-cron: "0 0 5 * * *"
+        daily-stats: "0 0 23 * * *"
 
 logging:
     level:
         "[ua.lviv.bas.cinema]": INFO
         "[org.springframework]": WARN
+        "[ua.lviv.bas.cinema.scheduler]": INFO

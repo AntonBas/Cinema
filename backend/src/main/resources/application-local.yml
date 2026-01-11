@@ -28,17 +28,26 @@ spring:
 scheduler:
     birthday-bonus:
         cron: "0 */30 * * * *"
+
     email-token:
         cleanup-expired-cron: "0 */5 * * * *"
         cleanup-confirmed-cron: "0 0 * * * *"
+
     movie-status:
         cron: "0 */10 * * * *"
+
     session-status:
         cron: "0 */1 * * * *"
+
     booking:
         expiration-interval: 30000
         cleanup-cron: "0 */30 * * * *"
         reminder-cron: "0 */5 * * * *"
+
+    payment:
+        expiration-interval: 30000
+        cleanup-cron: "0 */30 * * * *"
+        daily-stats: "0 0 23 * * *"
 
 logging:
     level:
