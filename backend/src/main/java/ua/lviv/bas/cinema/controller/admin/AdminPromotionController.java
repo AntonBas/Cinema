@@ -133,20 +133,4 @@ public class AdminPromotionController {
 		promotionService.deletePromotion(promotionId);
 		return ResponseEntity.noContent().build();
 	}
-
-	@GetMapping("/statistics/{promotionId}")
-	@Operation(summary = "Get promotion statistics", description = "Retrieves statistics for a specific promotion (total redemptions, etc.)")
-	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Statistics retrieved successfully"),
-			@ApiResponse(responseCode = "404", description = "Promotion not found", content = @Content(schema = @Schema(implementation = String.class))),
-			@ApiResponse(responseCode = "401", description = "Unauthorized - authentication required", content = @Content(schema = @Schema(implementation = String.class))),
-			@ApiResponse(responseCode = "403", description = "Forbidden - admin access required", content = @Content(schema = @Schema(implementation = String.class))) })
-	@PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
-	public ResponseEntity<?> getPromotionStatistics(
-			@Parameter(description = "ID of the promotion to get statistics for", required = true, example = "1") @PathVariable Long promotionId) {
-
-		log.info("Admin retrieving statistics for promotion ID: {}", promotionId);
-		// Note: Implement this method in AdminPromotionService if needed
-		// For example: return promotionService.getPromotionStatistics(promotionId);
-		return ResponseEntity.ok().build();
-	}
 }
