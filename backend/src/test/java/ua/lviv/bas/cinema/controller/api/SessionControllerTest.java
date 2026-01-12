@@ -41,7 +41,7 @@ public class SessionControllerTest {
 		return SessionScheduleResponse.builder().id(id).startTime(LocalDateTime.of(2024, 1, 15, 18, 0))
 				.endTime(LocalDateTime.of(2024, 1, 15, 20, 0)).basePrice(new BigDecimal("250.00")).movieId(1L)
 				.movieTitle("Test Movie").moviePosterFileName("poster.jpg").movieAgeRating("PG-13").movieDuration(120)
-				.hallId(1L).hallName("Hall 1").availableSeats(80).hallCapacity("80/100")
+				.hallId(1L).hallName("Hall 1").availableSeats(80).hallCapacity(100)
 				.status(CinemaSessionStatus.SCHEDULED).build();
 	}
 
@@ -139,7 +139,7 @@ public class SessionControllerTest {
 		assertEquals("Test Movie", body.getMovieTitle());
 		assertEquals("Hall 1", body.getHallName());
 		assertEquals(80, body.getAvailableSeats());
-		assertEquals("80/100", body.getHallCapacity());
+		assertEquals(100, body.getHallCapacity());
 		verify(sessionService).getSessionByIdForPublic(1L);
 	}
 
@@ -177,8 +177,6 @@ public class SessionControllerTest {
 		Page<SessionScheduleResponse> sessionPage = new PageImpl<>(List.of(sessionDto));
 		Pageable pageable = PageRequest.of(0, 20);
 
-		// Примітка: контролер використовує всі параметри, але логіка фільтрації в
-		// сервісі
 		when(sessionService.getScheduleSessions(date, movieId, daysAhead, pageable)).thenReturn(sessionPage);
 
 		ResponseEntity<Page<SessionScheduleResponse>> response = sessionController.getScheduleSessions(pageable, date,

@@ -13,7 +13,6 @@ import static org.mockito.Mockito.when;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -100,18 +99,16 @@ public class SessionServiceTest {
 
 		when(movieRepository.findById(1L)).thenReturn(Optional.of(testMovie));
 		when(cinemaHallService.getHallEntityById(1L)).thenReturn(testHall);
-		when(sessionRepository.findConflictingSessions(anyLong(), any(), any(), any()))
-				.thenReturn(Collections.emptyList());
+		when(sessionRepository.existsConflictingSession(anyLong(), any(), any(), any())).thenReturn(false);
 		when(sessionMapper.toSession(request)).thenReturn(testSession);
 		when(sessionRepository.save(testSession)).thenReturn(testSession);
 		when(sessionMapper.toSessionAdminResponse(testSession)).thenReturn(response);
-		when(sessionRepository.findConflictingSessions(anyLong(), any(), any(), any()))
-				.thenReturn(Collections.emptyList());
 
 		SessionAdminResponse result = sessionService.createSession(request);
 
 		assertThat(result).isNotNull();
 		verify(sessionRepository).save(testSession);
+		verify(sessionRepository).existsConflictingSession(anyLong(), any(), any(), any());
 	}
 
 	@Test
@@ -129,13 +126,9 @@ public class SessionServiceTest {
 		SessionCreateRequest request = SessionCreateRequest.builder().startTime(testStartTime).movieId(1L).hallId(1L)
 				.build();
 
-		Session conflictingSession = new Session();
-		conflictingSession.setId(2L);
-
 		when(movieRepository.findById(1L)).thenReturn(Optional.of(testMovie));
 		when(cinemaHallService.getHallEntityById(1L)).thenReturn(testHall);
-		when(sessionRepository.findConflictingSessions(anyLong(), any(), any(), any()))
-				.thenReturn(List.of(conflictingSession));
+		when(sessionRepository.existsConflictingSession(anyLong(), any(), any(), any())).thenReturn(true);
 
 		assertThatThrownBy(() -> sessionService.createSession(request))
 				.isInstanceOf(SessionTimeConflictException.class);
@@ -174,12 +167,32 @@ public class SessionServiceTest {
 	}
 
 	@Test
+	void getSessionByIdForPublic_WhenInactiveStatus_ShouldThrowException() {
+		testSession.setStatus(CinemaSessionStatus.CANCELLED);
+
+		when(sessionRepository.findById(1L)).thenReturn(Optional.of(testSession));
+
+		assertThatThrownBy(() -> sessionService.getSessionByIdForPublic(1L))
+				.isInstanceOf(SessionNotFoundException.class);
+	}
+
+	@Test
+	void getSessionByIdForPublic_WhenPastSession_ShouldThrowException() {
+		testSession.setStartTime(LocalDateTime.now().minusHours(1));
+
+		when(sessionRepository.findById(1L)).thenReturn(Optional.of(testSession));
+
+		assertThatThrownBy(() -> sessionService.getSessionByIdForPublic(1L))
+				.isInstanceOf(SessionNotFoundException.class);
+	}
+
+	@Test
 	void updateSession_Success() {
 		SessionUpdateRequest request = SessionUpdateRequest.builder().basePrice(BigDecimal.valueOf(300)).build();
 
 		SessionAdminResponse response = SessionAdminResponse.builder().id(1L).build();
 
-		when(sessionRepository.findById(1L)).thenReturn(Optional.of(testSession));
+		when(sessionRepository.findByIdWithLock(1L)).thenReturn(Optional.of(testSession));
 		doNothing().when(sessionMapper).updateSessionFromRequest(request, testSession);
 		when(sessionRepository.save(testSession)).thenReturn(testSession);
 		when(sessionMapper.toSessionAdminResponse(testSession)).thenReturn(response);
@@ -187,6 +200,19 @@ public class SessionServiceTest {
 		SessionAdminResponse result = sessionService.updateSession(1L, request);
 
 		assertThat(result).isNotNull();
+		verify(sessionRepository).findByIdWithLock(1L);
+	}
+
+	@Test
+	void updateSession_WhenTimeConflict_ShouldThrowException() {
+		LocalDateTime newStartTime = testStartTime.plusHours(3);
+		SessionUpdateRequest request = SessionUpdateRequest.builder().startTime(newStartTime).build();
+
+		when(sessionRepository.findByIdWithLock(1L)).thenReturn(Optional.of(testSession));
+		when(sessionRepository.existsConflictingSession(anyLong(), any(), any(), any())).thenReturn(true);
+
+		assertThatThrownBy(() -> sessionService.updateSession(1L, request))
+				.isInstanceOf(SessionTimeConflictException.class);
 	}
 
 	@Test
@@ -208,20 +234,21 @@ public class SessionServiceTest {
 
 	@Test
 	void cancelSession_Success() {
-		when(sessionRepository.findById(1L)).thenReturn(Optional.of(testSession));
+		when(sessionRepository.findByIdWithLock(1L)).thenReturn(Optional.of(testSession));
 		when(sessionRepository.save(testSession)).thenReturn(testSession);
 
 		sessionService.cancelSession(1L);
 
 		assertThat(testSession.getStatus()).isEqualTo(CinemaSessionStatus.CANCELLED);
 		verify(sessionRepository).save(testSession);
+		verify(sessionRepository).findByIdWithLock(1L);
 	}
 
 	@Test
 	void cancelSession_WhenAlreadyCancelled_ShouldDoNothing() {
 		testSession.setStatus(CinemaSessionStatus.CANCELLED);
 
-		when(sessionRepository.findById(1L)).thenReturn(Optional.of(testSession));
+		when(sessionRepository.findByIdWithLock(1L)).thenReturn(Optional.of(testSession));
 
 		sessionService.cancelSession(1L);
 
@@ -229,30 +256,36 @@ public class SessionServiceTest {
 	}
 
 	@Test
+	void cancelSession_WhenInactiveStatus_ShouldThrowException() {
+		testSession.setStatus(CinemaSessionStatus.COMPLETED);
+
+		when(sessionRepository.findByIdWithLock(1L)).thenReturn(Optional.of(testSession));
+
+		assertThatThrownBy(() -> sessionService.cancelSession(1L)).isInstanceOf(SessionOperationException.class)
+				.hasMessageContaining("Cannot cancel inactive session");
+	}
+
+	@Test
 	void reactivateSession_Success() {
 		testSession.setStatus(CinemaSessionStatus.CANCELLED);
 
-		when(sessionRepository.findById(1L)).thenReturn(Optional.of(testSession));
-		when(sessionRepository.findConflictingSessions(anyLong(), any(), any(), any()))
-				.thenReturn(Collections.emptyList());
+		when(sessionRepository.findByIdWithLock(1L)).thenReturn(Optional.of(testSession));
+		when(sessionRepository.existsConflictingSession(anyLong(), any(), any(), any())).thenReturn(false);
 		when(sessionRepository.save(testSession)).thenReturn(testSession);
 
 		sessionService.reactivateSession(1L);
 
 		assertThat(testSession.getStatus()).isEqualTo(CinemaSessionStatus.SCHEDULED);
 		verify(sessionRepository).save(testSession);
+		verify(sessionRepository).findByIdWithLock(1L);
 	}
 
 	@Test
 	void reactivateSession_WhenTimeConflict_ShouldThrowException() {
 		testSession.setStatus(CinemaSessionStatus.CANCELLED);
 
-		Session conflictingSession = new Session();
-		conflictingSession.setId(2L);
-
-		when(sessionRepository.findById(1L)).thenReturn(Optional.of(testSession));
-		when(sessionRepository.findConflictingSessions(anyLong(), any(), any(), any()))
-				.thenReturn(List.of(conflictingSession));
+		when(sessionRepository.findByIdWithLock(1L)).thenReturn(Optional.of(testSession));
+		when(sessionRepository.existsConflictingSession(anyLong(), any(), any(), any())).thenReturn(true);
 
 		assertThatThrownBy(() -> sessionService.reactivateSession(1L)).isInstanceOf(SessionTimeConflictException.class);
 	}
@@ -291,10 +324,7 @@ public class SessionServiceTest {
 
 	@Test
 	void hasTimeConflict_WhenConflictExists() {
-		Session conflictingSession = new Session();
-
-		when(sessionRepository.findConflictingSessions(anyLong(), any(), any(), any()))
-				.thenReturn(List.of(conflictingSession));
+		when(sessionRepository.existsConflictingSession(anyLong(), any(), any(), any())).thenReturn(true);
 
 		boolean result = sessionService.hasTimeConflict(1L, testStartTime, 120, null);
 
@@ -303,8 +333,7 @@ public class SessionServiceTest {
 
 	@Test
 	void hasTimeConflict_WhenNoConflict() {
-		when(sessionRepository.findConflictingSessions(anyLong(), any(), any(), any()))
-				.thenReturn(Collections.emptyList());
+		when(sessionRepository.existsConflictingSession(anyLong(), any(), any(), any())).thenReturn(false);
 
 		boolean result = sessionService.hasTimeConflict(1L, testStartTime, 120, null);
 
@@ -312,16 +341,41 @@ public class SessionServiceTest {
 	}
 
 	@Test
-	void getEndTime_Success() {
-		LocalDateTime endTime = sessionService.getEndTime(testSession);
+	void findSessionsToStart_ShouldUseCurrentTime() {
+		List<Session> sessions = List.of(testSession);
 
-		assertThat(endTime).isEqualTo(testStartTime.plusMinutes(120));
+		when(sessionRepository.findSessionsToStart(any(LocalDateTime.class))).thenReturn(sessions);
+
+		List<Session> result = sessionService.findSessionsToStart();
+
+		assertThat(result).hasSize(1);
+		verify(sessionRepository).findSessionsToStart(any(LocalDateTime.class));
 	}
 
 	@Test
-	void getEndTime_WhenMissingData_ShouldThrowException() {
-		testSession.setStartTime(null);
+	void findSessionsToComplete_ShouldUseCurrentTime() {
+		List<Session> sessions = List.of(testSession);
 
-		assertThatThrownBy(() -> sessionService.getEndTime(testSession)).isInstanceOf(SessionOperationException.class);
+		when(sessionRepository.findSessionsToComplete(any(LocalDateTime.class))).thenReturn(sessions);
+
+		List<Session> result = sessionService.findSessionsToComplete();
+
+		assertThat(result).hasSize(1);
+		verify(sessionRepository).findSessionsToComplete(any(LocalDateTime.class));
+	}
+
+	@Test
+	void calculateEndTime_PrivateMethod_ShouldReturnNullForInvalidData() throws Exception {
+		SessionService service = new SessionService(sessionRepository, sessionMapper, movieRepository,
+				cinemaHallService);
+
+		Session invalidSession = new Session();
+		invalidSession.setStartTime(null);
+
+		java.lang.reflect.Method method = SessionService.class.getDeclaredMethod("calculateEndTime", Session.class);
+		method.setAccessible(true);
+		LocalDateTime result = (LocalDateTime) method.invoke(service, invalidSession);
+
+		assertThat(result).isNull();
 	}
 }
