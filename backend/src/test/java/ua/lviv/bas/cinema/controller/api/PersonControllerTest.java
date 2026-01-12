@@ -29,7 +29,7 @@ import ua.lviv.bas.cinema.exception.domain.cinema.PersonNotFoundException;
 import ua.lviv.bas.cinema.service.cinema.PersonService;
 
 @ExtendWith(MockitoExtension.class)
-class PersonControllerTest {
+public class PersonControllerTest {
 
 	@Mock
 	private PersonService personService;

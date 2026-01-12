@@ -29,7 +29,7 @@ import ua.lviv.bas.cinema.exception.domain.cinema.SessionNotFoundException;
 import ua.lviv.bas.cinema.service.cinema.SessionService;
 
 @ExtendWith(MockitoExtension.class)
-class SessionControllerTest {
+public class SessionControllerTest {
 
 	@Mock
 	private SessionService sessionService;

@@ -3,7 +3,6 @@ package ua.lviv.bas.cinema.controller.api;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -22,6 +21,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
+import ua.lviv.bas.cinema.domain.enums.BonusTransactionType;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusBalanceResponse;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusCardResponse;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusTransactionResponse;
@@ -30,7 +30,7 @@ import ua.lviv.bas.cinema.exception.domain.bonus.BonusRuleNotFoundException;
 import ua.lviv.bas.cinema.service.user.BonusService;
 
 @ExtendWith(MockitoExtension.class)
-class BonusControllerTest {
+public class BonusControllerTest {
 
 	@Mock
 	private BonusService bonusUserService;
@@ -42,11 +42,8 @@ class BonusControllerTest {
 	void getMyBonusCard_ShouldReturnBonusCard() {
 		Long userId = 1L;
 
-		BonusCardResponse cardResponse = new BonusCardResponse();
-		cardResponse.setId(1L);
-		cardResponse.setUserId(userId);
-		cardResponse.setPointsBalance(250);
-		cardResponse.setWelcomeBonusReceived(true);
+		BonusCardResponse cardResponse = BonusCardResponse.builder().id(1L).userId(userId).pointsBalance(250)
+				.welcomeBonusReceived(true).build();
 
 		when(bonusUserService.getBonusCard(userId)).thenReturn(cardResponse);
 
@@ -56,7 +53,7 @@ class BonusControllerTest {
 		assertEquals(1L, response.getId());
 		assertEquals(userId, response.getUserId());
 		assertEquals(250, response.getPointsBalance());
-		assertTrue(response.getWelcomeBonusReceived());
+		assertEquals(true, response.getWelcomeBonusReceived());
 	}
 
 	@Test
@@ -72,14 +69,8 @@ class BonusControllerTest {
 	void getMyBalance_ShouldReturnBalance() {
 		Long userId = 1L;
 
-		BonusBalanceResponse balanceResponse = new BonusBalanceResponse();
-		balanceResponse.setPointsBalance(250);
-		balanceResponse.setPointValue(new BigDecimal("1.00"));
-		balanceResponse.setBalanceValue(new BigDecimal("250.00"));
-		balanceResponse.setMinUsablePoints(50);
-		balanceResponse.setMaxUsablePoints(300);
-		balanceResponse.setMinRedemptionValue(new BigDecimal("50.00"));
-		balanceResponse.setMaxRedemptionValue(new BigDecimal("300.00"));
+		BonusBalanceResponse balanceResponse = BonusBalanceResponse.builder().pointsBalance(250)
+				.pointValue(new BigDecimal("1.00")).balanceValue(new BigDecimal("250.00")).build();
 
 		when(bonusUserService.getBalance(userId)).thenReturn(balanceResponse);
 
@@ -89,10 +80,6 @@ class BonusControllerTest {
 		assertEquals(250, response.getPointsBalance());
 		assertEquals(new BigDecimal("1.00"), response.getPointValue());
 		assertEquals(new BigDecimal("250.00"), response.getBalanceValue());
-		assertEquals(50, response.getMinUsablePoints());
-		assertEquals(300, response.getMaxUsablePoints());
-		assertEquals(new BigDecimal("50.00"), response.getMinRedemptionValue());
-		assertEquals(new BigDecimal("300.00"), response.getMaxRedemptionValue());
 	}
 
 	@Test
@@ -108,8 +95,8 @@ class BonusControllerTest {
 	void getMyBalance_ShouldThrowWhenRuleNotFound() {
 		Long userId = 1L;
 
-		when(bonusUserService.getBalance(userId)).thenThrow(new BonusRuleNotFoundException(
-				ua.lviv.bas.cinema.domain.enums.BonusTransactionType.PURCHASE_WRITE_OFF));
+		when(bonusUserService.getBalance(userId))
+				.thenThrow(new BonusRuleNotFoundException(BonusTransactionType.WELCOME_BONUS));
 
 		assertThrows(BonusRuleNotFoundException.class, () -> bonusController.getMyBalance(userId));
 	}
@@ -119,21 +106,11 @@ class BonusControllerTest {
 		Long userId = 1L;
 		Pageable pageable = PageRequest.of(0, 20);
 
-		BonusTransactionResponse transaction1 = new BonusTransactionResponse();
-		transaction1.setId(1L);
-		transaction1.setType("WELCOME_BONUS");
-		transaction1.setPointsChange(150);
-		transaction1.setReferenceId("USER_1");
-		transaction1.setCreatedAt(LocalDateTime.now());
-		transaction1.setNewBalance(150);
+		BonusTransactionResponse transaction1 = BonusTransactionResponse.builder().id(1L).type("WELCOME_BONUS")
+				.pointsChange(150).referenceId("USER_1").createdAt(LocalDateTime.now()).newBalance(150).build();
 
-		BonusTransactionResponse transaction2 = new BonusTransactionResponse();
-		transaction2.setId(2L);
-		transaction2.setType("PURCHASE_BONUS");
-		transaction2.setPointsChange(25);
-		transaction2.setReferenceId("PAYMENT_123");
-		transaction2.setCreatedAt(LocalDateTime.now());
-		transaction2.setNewBalance(175);
+		BonusTransactionResponse transaction2 = BonusTransactionResponse.builder().id(2L).type("PURCHASE_BONUS")
+				.pointsChange(25).referenceId("PAYMENT_123").createdAt(LocalDateTime.now()).newBalance(175).build();
 
 		Page<BonusTransactionResponse> page = new PageImpl<>(List.of(transaction1, transaction2), pageable, 2);
 
@@ -166,6 +143,6 @@ class BonusControllerTest {
 		assertNotNull(response);
 		assertEquals(0, response.getContent().size());
 		assertEquals(0, response.getTotalElements());
-		assertTrue(response.isEmpty());
+		assertEquals(true, response.isEmpty());
 	}
 }

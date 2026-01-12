@@ -29,7 +29,7 @@ import ua.lviv.bas.cinema.exception.domain.cinema.GenreNotFoundException;
 import ua.lviv.bas.cinema.service.cinema.GenreService;
 
 @ExtendWith(MockitoExtension.class)
-class GenreControllerTest {
+public class GenreControllerTest {
 
 	@Mock
 	private GenreService genreService;

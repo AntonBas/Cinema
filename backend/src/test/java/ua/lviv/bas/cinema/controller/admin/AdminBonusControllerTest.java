@@ -30,7 +30,7 @@ import ua.lviv.bas.cinema.exception.domain.bonus.BonusRuleNotFoundException;
 import ua.lviv.bas.cinema.service.admin.BonusAdminService;
 
 @ExtendWith(MockitoExtension.class)
-class AdminBonusControllerTest {
+public class AdminBonusControllerTest {
 
 	@Mock
 	private BonusAdminService bonusAdminService;
@@ -40,19 +40,11 @@ class AdminBonusControllerTest {
 
 	@Test
 	void getAllBonusRules_ShouldReturnAllRules() {
-		BonusRulesResponse rule1 = new BonusRulesResponse();
-		rule1.setId(1L);
-		rule1.setBonusType("WELCOME_BONUS");
-		rule1.setPoints(150);
-		rule1.setActive(true);
-		rule1.setUpdatedAt(LocalDateTime.now());
+		BonusRulesResponse rule1 = BonusRulesResponse.builder().id(1L).bonusType("WELCOME_BONUS").points(150)
+				.active(true).updatedAt(LocalDateTime.now()).build();
 
-		BonusRulesResponse rule2 = new BonusRulesResponse();
-		rule2.setId(2L);
-		rule2.setBonusType("BIRTHDAY_BONUS");
-		rule2.setPoints(200);
-		rule2.setActive(true);
-		rule2.setUpdatedAt(LocalDateTime.now());
+		BonusRulesResponse rule2 = BonusRulesResponse.builder().id(2L).bonusType("BIRTHDAY_BONUS").points(200)
+				.active(true).updatedAt(LocalDateTime.now()).build();
 
 		when(bonusAdminService.getAllBonusRules()).thenReturn(List.of(rule1, rule2));
 
@@ -79,12 +71,8 @@ class AdminBonusControllerTest {
 
 	@Test
 	void getBonusRule_ShouldReturnRule() {
-		BonusRulesResponse rule = new BonusRulesResponse();
-		rule.setId(1L);
-		rule.setBonusType("WELCOME_BONUS");
-		rule.setPoints(150);
-		rule.setActive(true);
-		rule.setUpdatedAt(LocalDateTime.now());
+		BonusRulesResponse rule = BonusRulesResponse.builder().id(1L).bonusType("WELCOME_BONUS").points(150)
+				.active(true).updatedAt(LocalDateTime.now()).build();
 
 		when(bonusAdminService.getBonusRule(BonusTransactionType.WELCOME_BONUS)).thenReturn(rule);
 
@@ -110,12 +98,8 @@ class AdminBonusControllerTest {
 	void updateBonusRule_ShouldUpdateRule() {
 		BonusRulesRequest request = BonusRulesRequest.builder().points(200).active(true).build();
 
-		BonusRulesResponse response = new BonusRulesResponse();
-		response.setId(1L);
-		response.setBonusType("WELCOME_BONUS");
-		response.setPoints(200);
-		response.setActive(true);
-		response.setUpdatedAt(LocalDateTime.now());
+		BonusRulesResponse response = BonusRulesResponse.builder().id(1L).bonusType("WELCOME_BONUS").points(200)
+				.active(true).updatedAt(LocalDateTime.now()).build();
 
 		when(bonusAdminService.updateBonusRule(eq(BonusTransactionType.WELCOME_BONUS), any(BonusRulesRequest.class)))
 				.thenReturn(response);
@@ -133,17 +117,13 @@ class AdminBonusControllerTest {
 	void updateBonusRule_ShouldUpdatePurchaseBonusRule() {
 		BonusRulesRequest request = BonusRulesRequest.builder().moneyRatio(new BigDecimal("0.1")).active(true).build();
 
-		BonusRulesResponse response = new BonusRulesResponse();
-		response.setId(1L);
-		response.setBonusType("PURCHASE_BONUS");
-		response.setMoneyRatio(new BigDecimal("0.1"));
-		response.setActive(true);
-		response.setUpdatedAt(LocalDateTime.now());
+		BonusRulesResponse response = BonusRulesResponse.builder().id(1L).bonusType("PURCHASE_BONUS")
+				.moneyRatio(new BigDecimal("0.1")).active(true).updatedAt(LocalDateTime.now()).build();
 
-		when(bonusAdminService.updateBonusRule(eq(BonusTransactionType.PURCHASE_BONUS), any(BonusRulesRequest.class)))
+		when(bonusAdminService.updateBonusRule(eq(BonusTransactionType.PAYMENT_ACCRUAL), any(BonusRulesRequest.class)))
 				.thenReturn(response);
 
-		BonusRulesResponse result = adminBonusController.updateBonusRule(BonusTransactionType.PURCHASE_BONUS, request);
+		BonusRulesResponse result = adminBonusController.updateBonusRule(BonusTransactionType.PAYMENT_ACCRUAL, request);
 
 		assertNotNull(result);
 		assertEquals(1L, result.getId());
@@ -165,12 +145,8 @@ class AdminBonusControllerTest {
 
 	@Test
 	void resetBonusRule_ShouldResetRule() {
-		BonusRulesResponse response = new BonusRulesResponse();
-		response.setId(1L);
-		response.setBonusType("WELCOME_BONUS");
-		response.setPoints(150);
-		response.setActive(true);
-		response.setUpdatedAt(LocalDateTime.now());
+		BonusRulesResponse response = BonusRulesResponse.builder().id(1L).bonusType("WELCOME_BONUS").points(150)
+				.active(true).updatedAt(LocalDateTime.now()).build();
 
 		when(bonusAdminService.resetBonusRuleToDefaults(BonusTransactionType.WELCOME_BONUS)).thenReturn(response);
 
@@ -197,13 +173,8 @@ class AdminBonusControllerTest {
 		Long userId = 1L;
 		Pageable pageable = PageRequest.of(0, 20);
 
-		BonusTransactionResponse transaction = new BonusTransactionResponse();
-		transaction.setId(1L);
-		transaction.setType("PURCHASE_BONUS");
-		transaction.setPointsChange(25);
-		transaction.setReferenceId("PAYMENT_123");
-		transaction.setCreatedAt(LocalDateTime.now());
-		transaction.setNewBalance(125);
+		BonusTransactionResponse transaction = BonusTransactionResponse.builder().id(1L).type("PURCHASE_BONUS")
+				.pointsChange(25).referenceId("PAYMENT_123").createdAt(LocalDateTime.now()).newBalance(125).build();
 
 		Page<BonusTransactionResponse> page = new PageImpl<>(List.of(transaction), pageable, 1);
 
@@ -223,21 +194,11 @@ class AdminBonusControllerTest {
 	void getAllTransactions_ShouldReturnPagedTransactions() {
 		Pageable pageable = PageRequest.of(0, 20);
 
-		BonusTransactionResponse transaction1 = new BonusTransactionResponse();
-		transaction1.setId(1L);
-		transaction1.setType("WELCOME_BONUS");
-		transaction1.setPointsChange(150);
-		transaction1.setReferenceId("USER_1");
-		transaction1.setCreatedAt(LocalDateTime.now());
-		transaction1.setNewBalance(150);
+		BonusTransactionResponse transaction1 = BonusTransactionResponse.builder().id(1L).type("WELCOME_BONUS")
+				.pointsChange(150).referenceId("USER_1").createdAt(LocalDateTime.now()).newBalance(150).build();
 
-		BonusTransactionResponse transaction2 = new BonusTransactionResponse();
-		transaction2.setId(2L);
-		transaction2.setType("PURCHASE_BONUS");
-		transaction2.setPointsChange(25);
-		transaction2.setReferenceId("PAYMENT_123");
-		transaction2.setCreatedAt(LocalDateTime.now());
-		transaction2.setNewBalance(175);
+		BonusTransactionResponse transaction2 = BonusTransactionResponse.builder().id(2L).type("PURCHASE_BONUS")
+				.pointsChange(25).referenceId("PAYMENT_123").createdAt(LocalDateTime.now()).newBalance(175).build();
 
 		Page<BonusTransactionResponse> page = new PageImpl<>(List.of(transaction1, transaction2), pageable, 2);
 
@@ -256,13 +217,8 @@ class AdminBonusControllerTest {
 	void getTransactionsByType_ShouldReturnFilteredTransactions() {
 		Pageable pageable = PageRequest.of(0, 20);
 
-		BonusTransactionResponse transaction = new BonusTransactionResponse();
-		transaction.setId(1L);
-		transaction.setType("WELCOME_BONUS");
-		transaction.setPointsChange(150);
-		transaction.setReferenceId("USER_1");
-		transaction.setCreatedAt(LocalDateTime.now());
-		transaction.setNewBalance(150);
+		BonusTransactionResponse transaction = BonusTransactionResponse.builder().id(1L).type("WELCOME_BONUS")
+				.pointsChange(150).referenceId("USER_1").createdAt(LocalDateTime.now()).newBalance(150).build();
 
 		Page<BonusTransactionResponse> page = new PageImpl<>(List.of(transaction), pageable, 1);
 
@@ -277,5 +233,53 @@ class AdminBonusControllerTest {
 		assertEquals(1, result.getTotalElements());
 		assertEquals("WELCOME_BONUS", result.getContent().get(0).getType());
 		assertEquals(150, result.getContent().get(0).getPointsChange());
+	}
+
+	@Test
+	void getUserTransactions_ShouldHandleEmptyResult() {
+		Long userId = 1L;
+		Pageable pageable = PageRequest.of(0, 20);
+
+		Page<BonusTransactionResponse> emptyPage = new PageImpl<>(List.of(), pageable, 0);
+
+		when(bonusAdminService.getUserTransactions(eq(userId), any(Pageable.class))).thenReturn(emptyPage);
+
+		Page<BonusTransactionResponse> result = adminBonusController.getUserTransactions(userId, pageable);
+
+		assertNotNull(result);
+		assertTrue(result.getContent().isEmpty());
+		assertEquals(0, result.getTotalElements());
+	}
+
+	@Test
+	void getAllTransactions_ShouldHandleEmptyResult() {
+		Pageable pageable = PageRequest.of(0, 20);
+
+		Page<BonusTransactionResponse> emptyPage = new PageImpl<>(List.of(), pageable, 0);
+
+		when(bonusAdminService.getAllTransactions(any(Pageable.class))).thenReturn(emptyPage);
+
+		Page<BonusTransactionResponse> result = adminBonusController.getAllTransactions(pageable);
+
+		assertNotNull(result);
+		assertTrue(result.getContent().isEmpty());
+		assertEquals(0, result.getTotalElements());
+	}
+
+	@Test
+	void getTransactionsByType_ShouldHandleEmptyResult() {
+		Pageable pageable = PageRequest.of(0, 20);
+
+		Page<BonusTransactionResponse> emptyPage = new PageImpl<>(List.of(), pageable, 0);
+
+		when(bonusAdminService.getTransactionsByType(eq(BonusTransactionType.WELCOME_BONUS), any(Pageable.class)))
+				.thenReturn(emptyPage);
+
+		Page<BonusTransactionResponse> result = adminBonusController
+				.getTransactionsByType(BonusTransactionType.WELCOME_BONUS, pageable);
+
+		assertNotNull(result);
+		assertTrue(result.getContent().isEmpty());
+		assertEquals(0, result.getTotalElements());
 	}
 }

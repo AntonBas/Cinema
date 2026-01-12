@@ -25,7 +25,7 @@ import ua.lviv.bas.cinema.exception.domain.cinema.CinemaHallNotFoundException;
 import ua.lviv.bas.cinema.service.cinema.CinemaHallService;
 
 @ExtendWith(MockitoExtension.class)
-class AdminCinemaHallControllerTest {
+public class AdminCinemaHallControllerTest {
 
 	@Mock
 	private CinemaHallService cinemaHallService;

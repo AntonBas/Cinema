@@ -30,7 +30,7 @@ import ua.lviv.bas.cinema.dto.user.response.UserResponse;
 import ua.lviv.bas.cinema.service.admin.AdminUserService;
 
 @ExtendWith(MockitoExtension.class)
-class AdminUserControllerTest {
+public class AdminUserControllerTest {
 
 	@Mock
 	private AdminUserService adminUserService;

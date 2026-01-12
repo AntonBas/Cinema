@@ -1,158 +1,246 @@
 package ua.lviv.bas.cinema.controller.api;
 
-import static org.mockito.ArgumentMatchers.anyList;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
-import ua.lviv.bas.cinema.domain.TicketType;
 import ua.lviv.bas.cinema.domain.enums.TicketTypeCategory;
 import ua.lviv.bas.cinema.dto.ticket.response.TicketTypeResponse;
 import ua.lviv.bas.cinema.dto.ticket.response.TicketTypeSimpleResponse;
-import ua.lviv.bas.cinema.exception.api.ApiErrorHandler;
 import ua.lviv.bas.cinema.exception.domain.tickettype.TicketTypeNotFoundException;
-import ua.lviv.bas.cinema.mapper.TicketTypeMapper;
 import ua.lviv.bas.cinema.service.booking.TicketTypeService;
 
 @ExtendWith(MockitoExtension.class)
-class TicketTypeControllerTest {
-
-	private MockMvc mockMvc;
+public class TicketTypeControllerTest {
 
 	@Mock
 	private TicketTypeService ticketTypeService;
 
-	@Mock
-	private TicketTypeMapper ticketTypeMapper;
-
 	@InjectMocks
 	private TicketTypeController ticketTypeController;
 
-	private TicketType ticketType;
-	private TicketTypeResponse ticketTypeResponse;
-	private TicketTypeSimpleResponse ticketTypeSimpleResponse;
+	private TicketTypeResponse createTicketTypeResponse(Long id, String code, String displayName, Integer minAge,
+			Integer maxAge, boolean active) {
+		return TicketTypeResponse.builder().id(id).code(code).displayName(displayName)
+				.priceMultiplier(new BigDecimal("0.70")).minAge(minAge).maxAge(maxAge).requiresDocument(false)
+				.documentType(null).active(active).category(TicketTypeCategory.CHILD).build();
+	}
 
-	@BeforeEach
-	void setUp() {
-		mockMvc = MockMvcBuilders.standaloneSetup(ticketTypeController).setControllerAdvice(new ApiErrorHandler())
-				.build();
-
-		ticketType = TicketType.builder().id(1L).code("CHILD").displayName("Child Ticket")
-				.priceMultiplier(new BigDecimal("0.70")).minAge(0).maxAge(12).requiresDocument(true)
-				.documentType("Birth Certificate").active(true).category(TicketTypeCategory.CHILD).build();
-
-		ticketTypeResponse = TicketTypeResponse.builder().id(1L).code("CHILD").displayName("Child Ticket")
-				.priceMultiplier(new BigDecimal("0.70")).minAge(0).maxAge(12).requiresDocument(true)
-				.documentType("Birth Certificate").active(true).category(TicketTypeCategory.CHILD).build();
-
-		ticketTypeSimpleResponse = TicketTypeSimpleResponse.builder().id(1L).code("CHILD").displayName("Child Ticket")
-				.priceMultiplier(new BigDecimal("0.70")).active(true).build();
+	private TicketTypeSimpleResponse createTicketTypeSimpleResponse(Long id, String code, String displayName,
+			boolean active) {
+		return TicketTypeSimpleResponse.builder().id(id).code(code).displayName(displayName)
+				.priceMultiplier(new BigDecimal("0.70")).active(active).build();
 	}
 
 	@Test
-	void getAllActiveTicketTypes_ShouldReturnActiveTicketTypes() throws Exception {
-		List<TicketType> activeTicketTypes = Arrays.asList(ticketType);
-		List<TicketTypeResponse> responses = Arrays.asList(ticketTypeResponse);
+	void getAllActiveTicketTypes_ShouldReturnActiveTicketTypes() {
+		TicketTypeResponse ticket1 = createTicketTypeResponse(1L, "CHILD", "Child Ticket", 0, 12, true);
+		TicketTypeResponse ticket2 = createTicketTypeResponse(2L, "ADULT", "Adult Ticket", 18, null, true);
+		List<TicketTypeResponse> activeTicketTypes = Arrays.asList(ticket1, ticket2);
 
-		when(ticketTypeService.getAllActiveTicketTypes()).thenReturn(activeTicketTypes);
-		when(ticketTypeMapper.toResponseDtoList(activeTicketTypes)).thenReturn(responses);
+		when(ticketTypeService.getAllTicketTypes(true)).thenReturn(activeTicketTypes);
 
-		mockMvc.perform(get("/api/ticket-types")).andExpect(status().isOk()).andExpect(jsonPath("$[0].id").value(1))
-				.andExpect(jsonPath("$[0].active").value(true));
+		ResponseEntity<List<TicketTypeResponse>> response = ticketTypeController.getAllActiveTicketTypes();
 
-		verify(ticketTypeService).getAllActiveTicketTypes();
-		verify(ticketTypeMapper).toResponseDtoList(activeTicketTypes);
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+		assertNotNull(response.getBody());
+		assertEquals(2, response.getBody().size());
+		assertEquals("CHILD", response.getBody().get(0).getCode());
+		assertEquals("ADULT", response.getBody().get(1).getCode());
+		verify(ticketTypeService).getAllTicketTypes(true);
 	}
 
 	@Test
-	void getTicketTypeById_ShouldReturnTicketType_WhenExists() throws Exception {
-		when(ticketTypeService.getTicketTypeById(1L)).thenReturn(ticketType);
-		when(ticketTypeMapper.toResponseDto(ticketType)).thenReturn(ticketTypeResponse);
+	void getTicketTypeById_ShouldReturnTicketType_WhenExists() {
+		TicketTypeResponse ticket = createTicketTypeResponse(1L, "CHILD", "Child Ticket", 0, 12, true);
 
-		mockMvc.perform(get("/api/ticket-types/1")).andExpect(status().isOk()).andExpect(jsonPath("$.id").value(1));
+		when(ticketTypeService.getTicketTypeById(1L)).thenReturn(ticket);
 
+		ResponseEntity<TicketTypeResponse> response = ticketTypeController.getTicketTypeById(1L);
+
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+		assertNotNull(response.getBody());
+		assertEquals(1L, response.getBody().getId());
+		assertEquals("CHILD", response.getBody().getCode());
 		verify(ticketTypeService).getTicketTypeById(1L);
-		verify(ticketTypeMapper).toResponseDto(ticketType);
 	}
 
 	@Test
-	void getTicketTypeById_ShouldReturnNotFound_WhenNotExists() throws Exception {
-		when(ticketTypeService.getTicketTypeById(999L)).thenThrow(new TicketTypeNotFoundException(999L));
+	void getTicketTypeById_ShouldThrowException_WhenNotExists() {
+		TicketTypeNotFoundException exception = new TicketTypeNotFoundException(999L);
 
-		mockMvc.perform(get("/api/ticket-types/999")).andExpect(status().isNotFound());
+		when(ticketTypeService.getTicketTypeById(999L)).thenThrow(exception);
 
+		TicketTypeNotFoundException thrown = assertThrows(TicketTypeNotFoundException.class,
+				() -> ticketTypeController.getTicketTypeById(999L));
+
+		assertEquals(exception.getMessage(), thrown.getMessage());
 		verify(ticketTypeService).getTicketTypeById(999L);
 	}
 
 	@Test
-	void getSimpleActiveTicketTypes_ShouldReturnSimpleList() throws Exception {
-		List<TicketType> activeTicketTypes = Arrays.asList(ticketType);
-		List<TicketTypeSimpleResponse> simpleResponses = Arrays.asList(ticketTypeSimpleResponse);
+	void getTicketTypeByCode_ShouldReturnTicketType() {
+		TicketTypeResponse ticket = createTicketTypeResponse(1L, "CHILD", "Child Ticket", 0, 12, true);
 
-		when(ticketTypeService.getAllActiveTicketTypes()).thenReturn(activeTicketTypes);
-		when(ticketTypeMapper.toSimpleDtoList(activeTicketTypes)).thenReturn(simpleResponses);
+		when(ticketTypeService.getTicketTypeByCode("CHILD")).thenReturn(ticket);
 
-		mockMvc.perform(get("/api/ticket-types/simple")).andExpect(status().isOk())
-				.andExpect(jsonPath("$[0].code").value("CHILD"));
+		ResponseEntity<TicketTypeResponse> response = ticketTypeController.getTicketTypeByCode("CHILD");
 
-		verify(ticketTypeService).getAllActiveTicketTypes();
-		verify(ticketTypeMapper).toSimpleDtoList(activeTicketTypes);
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+		assertNotNull(response.getBody());
+		assertEquals("CHILD", response.getBody().getCode());
+		verify(ticketTypeService).getTicketTypeByCode("CHILD");
 	}
 
 	@Test
-	void validateAgeForTicketType_ShouldReturnTrue_WhenValidAge() throws Exception {
+	void getSimpleActiveTicketTypes_ShouldReturnSimpleList() {
+		TicketTypeSimpleResponse simple1 = createTicketTypeSimpleResponse(1L, "CHILD", "Child Ticket", true);
+		TicketTypeSimpleResponse simple2 = createTicketTypeSimpleResponse(2L, "ADULT", "Adult Ticket", true);
+		List<TicketTypeSimpleResponse> simpleResponses = Arrays.asList(simple1, simple2);
+
+		when(ticketTypeService.getSimpleTicketTypes(true)).thenReturn(simpleResponses);
+
+		ResponseEntity<List<TicketTypeSimpleResponse>> response = ticketTypeController.getSimpleActiveTicketTypes();
+
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+		assertNotNull(response.getBody());
+		assertEquals(2, response.getBody().size());
+		assertEquals("CHILD", response.getBody().get(0).getCode());
+		verify(ticketTypeService).getSimpleTicketTypes(true);
+	}
+
+	@Test
+	void validateAgeForTicketType_ShouldReturnTrue_WhenValidAge() {
 		when(ticketTypeService.validateAgeForTicketType(1L, 10)).thenReturn(true);
 
-		mockMvc.perform(get("/api/ticket-types/age-validation").param("ticketTypeId", "1").param("age", "10"))
-				.andExpect(status().isOk()).andExpect(content().string("true"));
+		ResponseEntity<Boolean> response = ticketTypeController.validateAgeForTicketType(1L, 10);
 
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+		assertNotNull(response.getBody());
+		assertEquals(true, response.getBody());
 		verify(ticketTypeService).validateAgeForTicketType(1L, 10);
 	}
 
 	@Test
-	void getFormattedAgeRange_ShouldReturnAgeRange() throws Exception {
+	void validateAgeForTicketType_ShouldReturnFalse_WhenInvalidAge() {
+		when(ticketTypeService.validateAgeForTicketType(1L, 20)).thenReturn(false);
+
+		ResponseEntity<Boolean> response = ticketTypeController.validateAgeForTicketType(1L, 20);
+
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+		assertNotNull(response.getBody());
+		assertEquals(false, response.getBody());
+		verify(ticketTypeService).validateAgeForTicketType(1L, 20);
+	}
+
+	@Test
+	void getFormattedAgeRange_ShouldReturnAgeRange() {
 		when(ticketTypeService.getFormattedAgeRange(1L)).thenReturn("0-12 years");
 
-		mockMvc.perform(get("/api/ticket-types/1/age-range")).andExpect(status().isOk())
-				.andExpect(content().string("0-12 years"));
+		ResponseEntity<String> response = ticketTypeController.getFormattedAgeRange(1L);
 
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+		assertNotNull(response.getBody());
+		assertEquals("0-12 years", response.getBody());
 		verify(ticketTypeService).getFormattedAgeRange(1L);
 	}
 
 	@Test
-	void getTicketTypesForAge_ShouldReturnAvailableTicketTypes() throws Exception {
-		TicketType adultType = TicketType.builder().id(2L).code("ADULT").displayName("Adult Ticket").minAge(18)
-				.maxAge(null).priceMultiplier(new BigDecimal("1.00")).active(true).build();
+	void getTicketTypesForAge_ShouldReturnAvailableTicketTypes() {
+		TicketTypeSimpleResponse simple1 = createTicketTypeSimpleResponse(1L, "CHILD", "Child Ticket", true);
+		TicketTypeSimpleResponse simple2 = createTicketTypeSimpleResponse(2L, "ADULT", "Adult Ticket", true);
+		List<TicketTypeSimpleResponse> allActive = Arrays.asList(simple1, simple2);
 
-		TicketTypeSimpleResponse adultSimpleResponse = TicketTypeSimpleResponse.builder().id(2L).code("ADULT")
-				.displayName("Adult Ticket").priceMultiplier(new BigDecimal("1.00")).active(true).build();
+		when(ticketTypeService.getSimpleTicketTypes(true)).thenReturn(allActive);
+		when(ticketTypeService.validateAgeForTicketType(1L, 10)).thenReturn(true);
+		when(ticketTypeService.validateAgeForTicketType(2L, 10)).thenReturn(false);
 
-		List<TicketType> allActive = Arrays.asList(ticketType, adultType);
-		List<TicketTypeSimpleResponse> allSimpleResponses = Arrays.asList(ticketTypeSimpleResponse,
-				adultSimpleResponse);
+		ResponseEntity<List<TicketTypeSimpleResponse>> response = ticketTypeController.getTicketTypesForAge(10);
 
-		when(ticketTypeService.getAllActiveTicketTypes()).thenReturn(allActive);
-		when(ticketTypeMapper.toSimpleDtoList(anyList())).thenReturn(allSimpleResponses);
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+		assertNotNull(response.getBody());
+		assertEquals(1, response.getBody().size());
+		assertEquals("CHILD", response.getBody().get(0).getCode());
+		verify(ticketTypeService).getSimpleTicketTypes(true);
+		verify(ticketTypeService).validateAgeForTicketType(1L, 10);
+		verify(ticketTypeService).validateAgeForTicketType(2L, 10);
+	}
 
-		mockMvc.perform(get("/api/ticket-types/available-for-age").param("age", "10")).andExpect(status().isOk());
+	@Test
+	void getTicketTypesForAge_ShouldReturnEmptyList_WhenNoSuitableTicketTypes() {
+		TicketTypeSimpleResponse simple1 = createTicketTypeSimpleResponse(1L, "ADULT", "Adult Ticket", true);
+		List<TicketTypeSimpleResponse> allActive = Arrays.asList(simple1);
 
-		verify(ticketTypeService).getAllActiveTicketTypes();
-		verify(ticketTypeMapper).toSimpleDtoList(anyList());
+		when(ticketTypeService.getSimpleTicketTypes(true)).thenReturn(allActive);
+		when(ticketTypeService.validateAgeForTicketType(1L, 10)).thenReturn(false);
+
+		ResponseEntity<List<TicketTypeSimpleResponse>> response = ticketTypeController.getTicketTypesForAge(10);
+
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+		assertNotNull(response.getBody());
+		assertEquals(0, response.getBody().size());
+		verify(ticketTypeService).getSimpleTicketTypes(true);
+		verify(ticketTypeService).validateAgeForTicketType(1L, 10);
+	}
+
+	@Test
+	void getTicketTypesForAge_ShouldHandleAllTypesValid() {
+		TicketTypeSimpleResponse simple1 = createTicketTypeSimpleResponse(1L, "CHILD", "Child Ticket", true);
+		TicketTypeSimpleResponse simple2 = createTicketTypeSimpleResponse(2L, "ADULT", "Adult Ticket", true);
+		List<TicketTypeSimpleResponse> allActive = Arrays.asList(simple1, simple2);
+
+		when(ticketTypeService.getSimpleTicketTypes(true)).thenReturn(allActive);
+		when(ticketTypeService.validateAgeForTicketType(1L, 25)).thenReturn(true);
+		when(ticketTypeService.validateAgeForTicketType(2L, 25)).thenReturn(true);
+
+		ResponseEntity<List<TicketTypeSimpleResponse>> response = ticketTypeController.getTicketTypesForAge(25);
+
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+		assertNotNull(response.getBody());
+		assertEquals(2, response.getBody().size());
+		verify(ticketTypeService).getSimpleTicketTypes(true);
+		verify(ticketTypeService).validateAgeForTicketType(1L, 25);
+		verify(ticketTypeService).validateAgeForTicketType(2L, 25);
+	}
+
+	@Test
+	void getTicketTypesForAge_ShouldHandleEmptyActiveList() {
+		List<TicketTypeSimpleResponse> allActive = Arrays.asList();
+
+		when(ticketTypeService.getSimpleTicketTypes(true)).thenReturn(allActive);
+
+		ResponseEntity<List<TicketTypeSimpleResponse>> response = ticketTypeController.getTicketTypesForAge(10);
+
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+		assertNotNull(response.getBody());
+		assertEquals(0, response.getBody().size());
+		verify(ticketTypeService).getSimpleTicketTypes(true);
+	}
+
+	@Test
+	void getTicketTypeByCode_ShouldThrowException_WhenCodeNotFound() {
+		TicketTypeNotFoundException exception = new TicketTypeNotFoundException("INVALID");
+
+		when(ticketTypeService.getTicketTypeByCode("INVALID")).thenThrow(exception);
+
+		TicketTypeNotFoundException thrown = assertThrows(TicketTypeNotFoundException.class,
+				() -> ticketTypeController.getTicketTypeByCode("INVALID"));
+
+		assertEquals(exception.getMessage(), thrown.getMessage());
+		verify(ticketTypeService).getTicketTypeByCode("INVALID");
 	}
 }

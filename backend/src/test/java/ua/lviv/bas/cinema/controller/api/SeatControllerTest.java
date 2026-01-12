@@ -22,7 +22,7 @@ import ua.lviv.bas.cinema.exception.domain.cinema.SeatNotFoundException;
 import ua.lviv.bas.cinema.service.cinema.SeatService;
 
 @ExtendWith(MockitoExtension.class)
-class SeatControllerTest {
+public class SeatControllerTest {
 
 	@Mock
 	private SeatService seatService;

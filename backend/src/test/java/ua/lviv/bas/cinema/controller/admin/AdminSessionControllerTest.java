@@ -37,7 +37,7 @@ import ua.lviv.bas.cinema.exception.domain.cinema.SessionTimeConflictException;
 import ua.lviv.bas.cinema.service.cinema.SessionService;
 
 @ExtendWith(MockitoExtension.class)
-class AdminSessionControllerTest {
+public class AdminSessionControllerTest {
 
 	@Mock
 	private SessionService sessionService;
