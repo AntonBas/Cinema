@@ -49,7 +49,10 @@ public class SessionService {
 		CinemaHall hall = cinemaHallService.getHallEntityById(request.getHallId());
 		validateMovieAvailability(movie, request.getStartTime());
 
-		if (hasTimeConflict(hall.getId(), request.getStartTime(), movie.getDurationMinutes(), null)) {
+		LocalDateTime endTime = request.getStartTime().plusMinutes(movie.getDurationMinutes());
+		boolean hasConflict = sessionRepository.existsConflictingSession(hall.getId(), request.getStartTime(), endTime,
+				null);
+		if (hasConflict) {
 			throw new SessionTimeConflictException(hall.getId(), request.getStartTime());
 		}
 
@@ -69,8 +72,7 @@ public class SessionService {
 	@Transactional(readOnly = true)
 	public SessionScheduleResponse getSessionByIdForPublic(Long id) {
 		Session session = sessionRepository.findById(id).orElseThrow(() -> new SessionNotFoundException(id));
-		if (session.getStatus() != CinemaSessionStatus.SCHEDULED
-				|| session.getStartTime().isBefore(LocalDateTime.now())) {
+		if (!session.getStatus().isActive() || session.getStartTime().isBefore(LocalDateTime.now())) {
 			throw new SessionNotFoundException(id);
 		}
 		return toScheduleResponse(session);
@@ -78,22 +80,28 @@ public class SessionService {
 
 	@Transactional
 	public SessionAdminResponse updateSession(Long id, SessionUpdateRequest request) {
-		Session session = sessionRepository.findById(id).orElseThrow(() -> new SessionNotFoundException(id));
+		Session session = sessionRepository.findByIdWithLock(id).orElseThrow(() -> new SessionNotFoundException(id));
 
 		if (request.getStartTime() != null) {
 			validateStartTime(request.getStartTime());
 			Movie movie = session.getMovie();
-			if (movie == null && request.getMovieId() != null) {
+			CinemaHall hall = session.getHall();
+
+			if (request.getMovieId() != null) {
 				movie = movieRepository.findById(request.getMovieId())
 						.orElseThrow(() -> new MovieNotFoundException(request.getMovieId()));
 			}
-			CinemaHall hall = session.getHall();
-			if (hall == null && request.getHallId() != null) {
+
+			if (request.getHallId() != null) {
 				hall = cinemaHallService.getHallEntityById(request.getHallId());
 			}
+
 			if (movie != null && hall != null) {
 				validateMovieAvailability(movie, request.getStartTime());
-				if (hasTimeConflict(hall.getId(), request.getStartTime(), movie.getDurationMinutes(), id)) {
+				LocalDateTime endTime = request.getStartTime().plusMinutes(movie.getDurationMinutes());
+				boolean hasConflict = sessionRepository.existsConflictingSession(hall.getId(), request.getStartTime(),
+						endTime, id);
+				if (hasConflict) {
 					throw new SessionTimeConflictException(hall.getId(), request.getStartTime());
 				}
 			}
@@ -126,14 +134,14 @@ public class SessionService {
 
 	@Transactional
 	public void cancelSession(Long sessionId) {
-		Session session = sessionRepository.findById(sessionId)
+		Session session = sessionRepository.findByIdWithLock(sessionId)
 				.orElseThrow(() -> new SessionNotFoundException(sessionId));
 
 		if (session.getStatus() == CinemaSessionStatus.CANCELLED) {
 			return;
 		}
 
-		if (!CinemaSessionStatus.isActive(session.getStatus())) {
+		if (!session.getStatus().isActive()) {
 			throw SessionOperationException.cannotCancelInactive();
 		}
 
@@ -147,7 +155,7 @@ public class SessionService {
 
 	@Transactional
 	public void reactivateSession(Long sessionId) {
-		Session session = sessionRepository.findById(sessionId)
+		Session session = sessionRepository.findByIdWithLock(sessionId)
 				.orElseThrow(() -> new SessionNotFoundException(sessionId));
 
 		if (session.getStatus() != CinemaSessionStatus.CANCELLED) {
@@ -161,7 +169,10 @@ public class SessionService {
 		Movie movie = session.getMovie();
 		CinemaHall hall = session.getHall();
 
-		if (hasTimeConflict(hall.getId(), session.getStartTime(), movie.getDurationMinutes(), sessionId)) {
+		LocalDateTime endTime = session.getStartTime().plusMinutes(movie.getDurationMinutes());
+		boolean hasConflict = sessionRepository.existsConflictingSession(hall.getId(), session.getStartTime(), endTime,
+				sessionId);
+		if (hasConflict) {
 			throw new SessionTimeConflictException(hall.getId(), session.getStartTime());
 		}
 
@@ -241,26 +252,24 @@ public class SessionService {
 	public boolean hasTimeConflict(Long hallId, LocalDateTime startTime, Integer durationMinutes,
 			Long excludeSessionId) {
 		LocalDateTime endTime = startTime.plusMinutes(durationMinutes);
-		List<Session> conflictingSessions = sessionRepository.findConflictingSessions(hallId, startTime, endTime,
-				excludeSessionId);
-		return !conflictingSessions.isEmpty();
+		return sessionRepository.existsConflictingSession(hallId, startTime, endTime, excludeSessionId);
 	}
 
 	@Transactional(readOnly = true)
 	public List<Session> findSessionsToStart() {
 		LocalDateTime now = LocalDateTime.now();
-		return sessionRepository.findByStatusAndStartTimeBefore(CinemaSessionStatus.SCHEDULED, now);
+		return sessionRepository.findSessionsToStart(now);
 	}
 
 	@Transactional(readOnly = true)
 	public List<Session> findSessionsToComplete() {
 		LocalDateTime now = LocalDateTime.now();
-		return sessionRepository.findByStatusAndEndTimeBefore(CinemaSessionStatus.ONGOING, now);
+		return sessionRepository.findSessionsToComplete(now);
 	}
 
 	public SessionAdminResponse toAdminResponse(Session session) {
 		SessionAdminResponse response = sessionMapper.toSessionAdminResponse(session);
-		response.setEndTime(getEndTime(session));
+		response.setEndTime(calculateEndTime(session));
 
 		int confirmedSeatsCount = session.getBookedSeats() != null
 				? (int) session.getBookedSeats().stream().filter(bs -> bs.getStatus() == BookedSeatStatus.CONFIRMED)
@@ -284,7 +293,7 @@ public class SessionService {
 
 	public SessionScheduleResponse toScheduleResponse(Session session) {
 		SessionScheduleResponse response = sessionMapper.toSessionScheduleResponse(session);
-		response.setEndTime(getEndTime(session));
+		response.setEndTime(calculateEndTime(session));
 
 		int hallCapacity = 0;
 		if (session.getHall() != null && session.getHall().getSeats() != null) {
@@ -298,16 +307,15 @@ public class SessionService {
 
 		int availableSeats = Math.max(0, hallCapacity - confirmedSeatsCount);
 		response.setAvailableSeats(availableSeats);
-		response.setHallCapacity(availableSeats + "/" + hallCapacity);
+		response.setHallCapacity(hallCapacity);
 
 		return response;
 	}
 
-	public LocalDateTime getEndTime(Session session) {
+	private LocalDateTime calculateEndTime(Session session) {
 		if (session == null || session.getMovie() == null || session.getMovie().getDurationMinutes() == null
 				|| session.getStartTime() == null) {
-			throw SessionOperationException.invalidStatusTransition(session != null ? session.getStatus() : null,
-					CinemaSessionStatus.CANCELLED);
+			return null;
 		}
 		return session.getStartTime().plusMinutes(session.getMovie().getDurationMinutes());
 	}
