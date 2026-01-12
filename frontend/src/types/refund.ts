@@ -82,7 +82,7 @@ export interface RefundDetailsResponse {
     createdAt: string;
     updatedAt: string;
     items: RefundItemDetails[];
-    bonusTransactions: BonusTransactionResponse[];
+    bonusTransactions: RefundBonusTransactionResponse[];
     paymentStatus: string;
     bonusStatus: string;
 }
@@ -104,7 +104,7 @@ export interface RefundItemDetails {
     createdAt: string;
 }
 
-export interface BonusTransactionResponse {
+export interface RefundBonusTransactionResponse {
     id: number;
     points: number;
     type: string;
