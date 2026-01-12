@@ -1,8 +1,8 @@
 package ua.lviv.bas.cinema.scheduler;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,41 +12,35 @@ import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.Session;
 import ua.lviv.bas.cinema.domain.enums.CinemaSessionStatus;
 import ua.lviv.bas.cinema.repository.SessionRepository;
-import ua.lviv.bas.cinema.service.cinema.SessionService;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class SessionStatusScheduler {
 
-	private final SessionService sessionService;
 	private final SessionRepository sessionRepository;
 
 	@Scheduled(cron = "${scheduler.session-status.cron:0 */5 * * * *}")
-	@Async("taskExecutor")
 	@Transactional
 	public void updateSessionStatuses() {
 		log.debug("Starting scheduled session status update");
+		LocalDateTime now = LocalDateTime.now();
 
-		List<Session> sessionsToStart = sessionService.findSessionsToStart();
+		List<Session> sessionsToStart = sessionRepository.findSessionsToStart(now);
 		if (!sessionsToStart.isEmpty()) {
 			sessionsToStart.forEach(session -> {
-				if (session.getStatus() != CinemaSessionStatus.ONGOING) {
-					session.setStatus(CinemaSessionStatus.ONGOING);
-					log.info("Marked session {} as ONGOING (start time: {})", session.getId(), session.getStartTime());
-				}
+				session.setStatus(CinemaSessionStatus.ONGOING);
+				log.info("Session {} started", session.getId());
 			});
 			sessionRepository.saveAll(sessionsToStart);
 			log.debug("Updated {} sessions to ONGOING status", sessionsToStart.size());
 		}
 
-		List<Session> sessionsToComplete = sessionService.findSessionsToComplete();
+		List<Session> sessionsToComplete = sessionRepository.findSessionsToComplete(now);
 		if (!sessionsToComplete.isEmpty()) {
 			sessionsToComplete.forEach(session -> {
-				if (session.getStatus() != CinemaSessionStatus.COMPLETED) {
-					session.setStatus(CinemaSessionStatus.COMPLETED);
-					log.info("Marked session {} as COMPLETED", session.getId());
-				}
+				session.setStatus(CinemaSessionStatus.COMPLETED);
+				log.info("Session {} completed", session.getId());
 			});
 			sessionRepository.saveAll(sessionsToComplete);
 			log.debug("Updated {} sessions to COMPLETED status", sessionsToComplete.size());
