@@ -57,5 +57,5 @@ public class SessionScheduleResponse {
 	private String hallName;
 
 	@Schema(description = "Capacity of the cinema hall", example = "150")
-	private String hallCapacity;
+	private int hallCapacity;
 }
