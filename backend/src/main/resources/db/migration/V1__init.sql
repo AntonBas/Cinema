@@ -1,4 +1,3 @@
--- Users table
 CREATE TABLE IF NOT EXISTS users (
     id BIGSERIAL PRIMARY KEY,
     email VARCHAR(100) NOT NULL UNIQUE,
@@ -20,7 +19,6 @@ CREATE INDEX IF NOT EXISTS idx_user_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_user_name ON users(first_name, last_name);
 CREATE INDEX IF NOT EXISTS idx_user_status ON users(verification_status);
 
--- Persons table
 CREATE TABLE IF NOT EXISTS persons (
     id BIGSERIAL PRIMARY KEY,
     name VARCHAR(50) NOT NULL,
@@ -30,7 +28,6 @@ CREATE TABLE IF NOT EXISTS persons (
 CREATE INDEX IF NOT EXISTS idx_person_name ON persons(name);
 CREATE INDEX IF NOT EXISTS idx_person_role ON persons(role);
 
--- Genres table
 CREATE TABLE IF NOT EXISTS genres (
     id BIGSERIAL PRIMARY KEY,
     name VARCHAR(30) NOT NULL UNIQUE
@@ -38,7 +35,6 @@ CREATE TABLE IF NOT EXISTS genres (
 
 CREATE INDEX IF NOT EXISTS idx_genre_name ON genres(name);
 
--- Movies table
 CREATE TABLE IF NOT EXISTS movies (
     id BIGSERIAL PRIMARY KEY,
     title VARCHAR(50) NOT NULL,
@@ -59,7 +55,6 @@ CREATE INDEX IF NOT EXISTS idx_movie_release_date ON movies(release_date);
 CREATE INDEX IF NOT EXISTS idx_movie_slug ON movies(slug);
 CREATE INDEX IF NOT EXISTS idx_movie_active_dates ON movies(release_date, end_showing_date);
 
--- Cinema Halls
 CREATE TABLE IF NOT EXISTS cinema_halls (
     id BIGSERIAL PRIMARY KEY,
     name VARCHAR(25) NOT NULL UNIQUE
@@ -67,7 +62,6 @@ CREATE TABLE IF NOT EXISTS cinema_halls (
 
 CREATE INDEX IF NOT EXISTS idx_hall_name ON cinema_halls(name);
 
--- Seats
 CREATE TABLE IF NOT EXISTS seats (
     id BIGSERIAL PRIMARY KEY,
     seat_row INTEGER NOT NULL,
@@ -81,7 +75,6 @@ CREATE TABLE IF NOT EXISTS seats (
 CREATE INDEX IF NOT EXISTS idx_seat_hall ON seats(hall_id);
 CREATE INDEX IF NOT EXISTS idx_seat_active ON seats(active);
 
--- Ticket Types
 CREATE TABLE IF NOT EXISTS ticket_types (
     id BIGSERIAL PRIMARY KEY,
     code VARCHAR(20) NOT NULL UNIQUE,
@@ -101,7 +94,6 @@ CREATE INDEX IF NOT EXISTS idx_ticket_type_active ON ticket_types(active);
 CREATE INDEX IF NOT EXISTS idx_ticket_type_category ON ticket_types(category);
 CREATE INDEX IF NOT EXISTS idx_ticket_type_code ON ticket_types(code);
 
--- Sessions
 CREATE TABLE IF NOT EXISTS sessions (
     id BIGSERIAL PRIMARY KEY,
     start_time TIMESTAMP NOT NULL,
@@ -117,7 +109,6 @@ CREATE INDEX IF NOT EXISTS idx_session_time ON sessions(start_time);
 CREATE INDEX IF NOT EXISTS idx_session_hall_time ON sessions(hall_id, start_time);
 CREATE INDEX IF NOT EXISTS idx_session_status ON sessions(status);
 
--- Bookings (ТЕПЕР перед payments)
 CREATE TABLE IF NOT EXISTS bookings (
     id BIGSERIAL PRIMARY KEY,
     user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -138,7 +129,6 @@ CREATE INDEX IF NOT EXISTS idx_booking_expires ON bookings(expires_at);
 CREATE INDEX IF NOT EXISTS idx_booking_created ON bookings(created_at);
 CREATE INDEX IF NOT EXISTS idx_booking_final_price ON bookings(final_price);
 
--- Payments (тепер після bookings)
 CREATE TABLE IF NOT EXISTS payments (
     id BIGSERIAL PRIMARY KEY,
     amount DECIMAL(10, 2) NOT NULL,
@@ -160,7 +150,6 @@ CREATE INDEX IF NOT EXISTS idx_payment_status ON payments(status);
 CREATE INDEX IF NOT EXISTS idx_payment_created ON payments(created_at);
 CREATE INDEX IF NOT EXISTS idx_payment_transaction ON payments(liqpay_order_id);
 
--- Refunds (після payments)
 CREATE TABLE IF NOT EXISTS refunds (
     id BIGSERIAL PRIMARY KEY,
     payment_id BIGINT NOT NULL REFERENCES payments(id) ON DELETE CASCADE,
@@ -180,7 +169,6 @@ CREATE INDEX IF NOT EXISTS idx_refund_status ON refunds(status);
 CREATE INDEX IF NOT EXISTS idx_refund_created ON refunds(created_at);
 CREATE INDEX IF NOT EXISTS idx_refund_user ON refunds(user_id);
 
--- Tickets (після payments і refunds)
 CREATE TABLE IF NOT EXISTS tickets (
     id BIGSERIAL PRIMARY KEY,
     booking_id BIGINT NOT NULL REFERENCES bookings(id) ON DELETE CASCADE,
@@ -192,6 +180,8 @@ CREATE TABLE IF NOT EXISTS tickets (
     final_price DECIMAL(10, 2) NOT NULL,
     discount_amount DECIMAL(10, 2) DEFAULT 0.00,
     unique_code VARCHAR(20) NOT NULL UNIQUE,
+    bonus_points_used INTEGER DEFAULT 0,
+    bonus_points_earned INTEGER DEFAULT 0,
     status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     refund_id BIGINT REFERENCES refunds(id) ON DELETE SET NULL
@@ -205,7 +195,6 @@ CREATE INDEX IF NOT EXISTS idx_ticket_ticket_type ON tickets(ticket_type_id);
 CREATE INDEX IF NOT EXISTS idx_ticket_unique_code ON tickets(unique_code);
 CREATE INDEX IF NOT EXISTS idx_ticket_user ON tickets(user_id);
 
--- Booked Seats (після bookings)
 CREATE TABLE IF NOT EXISTS booked_seats (
     id BIGSERIAL PRIMARY KEY,
     booking_id BIGINT REFERENCES bookings(id) ON DELETE CASCADE,
@@ -229,12 +218,12 @@ CREATE INDEX IF NOT EXISTS idx_booked_seat_composite_status ON booked_seats(sess
 CREATE INDEX IF NOT EXISTS idx_booked_seat_created ON booked_seats(booked_at);
 CREATE INDEX IF NOT EXISTS idx_booked_seat_user ON booked_seats(user_id);
 
--- Refund Items (після refunds і tickets)
 CREATE TABLE IF NOT EXISTS refund_items (
     id BIGSERIAL PRIMARY KEY,
     refund_id BIGINT NOT NULL REFERENCES refunds(id) ON DELETE CASCADE,
     ticket_id BIGINT NOT NULL REFERENCES tickets(id) ON DELETE CASCADE,
     ticket_price DECIMAL(10, 2) NOT NULL,
+    refund_percentage DECIMAL(5, 2),
     refund_amount DECIMAL(10, 2),
     bonus_points_to_deduct INTEGER NOT NULL DEFAULT 0,
     status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
@@ -245,35 +234,30 @@ CREATE INDEX IF NOT EXISTS idx_refund_item_refund ON refund_items(refund_id);
 CREATE INDEX IF NOT EXISTS idx_refund_item_ticket ON refund_items(ticket_id);
 CREATE INDEX IF NOT EXISTS idx_refund_item_status ON refund_items(status);
 
--- Movie-Genres many-to-many
 CREATE TABLE IF NOT EXISTS movie_genres (
     movie_id BIGINT NOT NULL REFERENCES movies(id) ON DELETE CASCADE,
     genre_id BIGINT NOT NULL REFERENCES genres(id) ON DELETE CASCADE,
     PRIMARY KEY (movie_id, genre_id)
 );
 
--- Movie-Cast many-to-many
 CREATE TABLE IF NOT EXISTS movie_cast (
     movie_id BIGINT NOT NULL REFERENCES movies(id) ON DELETE CASCADE,
     person_id BIGINT NOT NULL REFERENCES persons(id) ON DELETE CASCADE,
     PRIMARY KEY (movie_id, person_id)
 );
 
--- Movie-Directors many-to-many
 CREATE TABLE IF NOT EXISTS movie_directors (
     movie_id BIGINT NOT NULL REFERENCES movies(id) ON DELETE CASCADE,
     person_id BIGINT NOT NULL REFERENCES persons(id) ON DELETE CASCADE,
     PRIMARY KEY (movie_id, person_id)
 );
 
--- Movie-Screenwriters many-to-many
 CREATE TABLE IF NOT EXISTS movie_screenwriters (
     movie_id BIGINT NOT NULL REFERENCES movies(id) ON DELETE CASCADE,
     person_id BIGINT NOT NULL REFERENCES persons(id) ON DELETE CASCADE,
     PRIMARY KEY (movie_id, person_id)
 );
 
--- Bonus Cards (після users)
 CREATE TABLE IF NOT EXISTS bonus_cards (
     id BIGSERIAL PRIMARY KEY,
     user_id BIGINT NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
@@ -284,7 +268,6 @@ CREATE TABLE IF NOT EXISTS bonus_cards (
 
 CREATE INDEX IF NOT EXISTS idx_bonus_card_user ON bonus_cards(user_id);
 
--- Bonus Rules
 CREATE TABLE IF NOT EXISTS bonus_rules (
     id BIGSERIAL PRIMARY KEY,
     bonus_type VARCHAR(50) NOT NULL UNIQUE,
@@ -300,7 +283,6 @@ CREATE TABLE IF NOT EXISTS bonus_rules (
 CREATE INDEX IF NOT EXISTS idx_bonus_rules_active ON bonus_rules(active);
 CREATE INDEX IF NOT EXISTS idx_bonus_rules_type ON bonus_rules(bonus_type);
 
--- Bonus Transactions (після bonus_cards, bookings, refunds)
 CREATE TABLE IF NOT EXISTS bonus_transactions (
     id BIGSERIAL PRIMARY KEY,
     bonus_card_id BIGINT NOT NULL REFERENCES bonus_cards(id) ON DELETE CASCADE,
@@ -319,7 +301,6 @@ CREATE INDEX IF NOT EXISTS idx_bonus_trans_type ON bonus_transactions(type);
 CREATE INDEX IF NOT EXISTS idx_bonus_trans_booking ON bonus_transactions(booking_id);
 CREATE INDEX IF NOT EXISTS idx_bonus_trans_refund ON bonus_transactions(refund_id);
 
--- Promotions
 CREATE TABLE IF NOT EXISTS promotions (
     id BIGSERIAL PRIMARY KEY,
     title VARCHAR(100) NOT NULL,
@@ -335,7 +316,6 @@ CREATE INDEX IF NOT EXISTS idx_promotion_active ON promotions(active);
 CREATE INDEX IF NOT EXISTS idx_promotion_dates ON promotions(start_date, end_date);
 CREATE INDEX IF NOT EXISTS idx_promotion_created ON promotions(created_at);
 
--- User Promotions
 CREATE TABLE IF NOT EXISTS user_promotions (
     id BIGSERIAL PRIMARY KEY,
     user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -349,7 +329,6 @@ CREATE INDEX IF NOT EXISTS idx_user_promotion_user ON user_promotions(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_promotion_promotion ON user_promotions(promotion_id);
 CREATE INDEX IF NOT EXISTS idx_user_promotion_redeemed ON user_promotions(redeemed_at);
 
--- Email Tokens
 CREATE TABLE IF NOT EXISTS email_tokens (
     token VARCHAR(255) PRIMARY KEY,
     user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
