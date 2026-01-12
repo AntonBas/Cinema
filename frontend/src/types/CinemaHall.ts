@@ -15,8 +15,8 @@ export interface CinemaHallResponse {
 
 export interface CinemaHallRequest {
     name: string;
-    rows?: number;
-    seatsPerRow?: number;
+    rows: number;
+    seatsPerRow: number;
     defaultSeatType?: SeatType;
 }
 
@@ -34,4 +34,31 @@ export interface HallLayoutResponse {
     maxSeatsPerRow: number;
     totalSeats: number;
     rows: SeatRowResponse[];
+}
+
+export interface CinemaHallUpdateRequest {
+    name?: string;
+}
+
+export interface CinemaHallStatsResponse extends CinemaHallResponse {
+    sessionsCount?: number;
+    occupancyRate?: number;
+    averageRevenue?: string;
+    lastSessionDate?: string;
+}
+
+export interface CinemaHallsListResponse {
+    content: CinemaHallResponse[];
+    totalElements: number;
+    totalPages: number;
+    size: number;
+    number: number;
+}
+
+export interface HallSearchRequest {
+    name?: string;
+    minCapacity?: number;
+    maxCapacity?: number;
+    page?: number;
+    size?: number;
 }

@@ -1,0 +1,59 @@
+export interface PromotionCreateRequest {
+    title: string;
+    description?: string;
+    bonusPoints: number;
+    startDate?: string;
+    endDate?: string;
+}
+
+export interface PromotionUpdateRequest {
+    title: string;
+    description?: string;
+    bonusPoints: number;
+    startDate?: string;
+    endDate?: string;
+}
+
+export interface UserPromotionCreateRequest {
+    promotionId: number;
+}
+
+export interface PromotionResponse {
+    id: number;
+    title: string;
+    description?: string;
+    bonusPoints: number;
+    startDate?: string;
+    endDate?: string;
+}
+
+export interface UserPromotionResponse {
+    id: number;
+    promotionId: number;
+    promotionTitle: string;
+    claimedAt: string;
+    pointsAwarded: number;
+    newBalance: number;
+}
+
+export const PromotionStatusDisplay: Record<string, string> = {
+    'active': 'Active',
+    'upcoming': 'Upcoming',
+    'expired': 'Expired'
+};
+
+export interface PromotionsListResponse {
+    content: PromotionResponse[];
+    totalElements: number;
+    totalPages: number;
+    size: number;
+    number: number;
+}
+
+export interface UserPromotionsListResponse {
+    content: UserPromotionResponse[];
+    totalElements: number;
+    totalPages: number;
+    size: number;
+    number: number;
+}

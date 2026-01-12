@@ -1,5 +1,4 @@
 export type UserRole = 'ROLE_USER' | 'ROLE_CASHIER' | 'ROLE_CONTENT_MANAGER' | 'ROLE_ADMIN';
-
 export type VerificationStatus = 'VERIFIED' | 'NOT_VERIFIED';
 
 export interface UserProfile {
@@ -26,7 +25,7 @@ export interface UserEmailChangeRequest {
     password: string;
 }
 
-export interface UserPasswordChangeRequest {
+export interface UserPasswordUpdateRequest {
     currentPassword: string;
     newPassword: string;
     passwordConfirm: string;
@@ -46,7 +45,7 @@ export interface EmailChangeConfirmationResponse {
     email: string;
 }
 
-export interface AdminUser {
+export interface AdminUserListResponse {
     id: number;
     email: string;
     firstName: string;
@@ -59,6 +58,17 @@ export interface AdminUser {
     updatedAt: string;
     ticketsCount: number;
     lastActivity: string;
+}
+
+export interface UserProfileResponse {
+    id: number;
+    email: string;
+    firstName: string;
+    lastName: string;
+    dateOfBirth: string;
+    city: string;
+    phoneNumber: string;
+    verificationStatus: VerificationStatus;
 }
 
 export interface UserResponse {
@@ -88,7 +98,7 @@ export interface VerificationBirthDateRequest {
 }
 
 export interface AdminUsersResponse {
-    content: AdminUser[];
+    content: AdminUserListResponse[];
     totalElements: number;
     totalPages: number;
     size: number;

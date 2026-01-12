@@ -1,4 +1,4 @@
-import type { UserRole } from './user';
+import type { UserRole, UserResponse } from './user';
 
 export interface User {
     id: number;
@@ -22,15 +22,15 @@ export interface UserSimple {
     userRole: UserRole;
 }
 
-export interface LoginRequest {
-    email: string;
-    password: string;
-}
-
 export interface LoginResponse {
     token: string;
     tokenType: string;
-    user: User;
+    user: UserResponse;
+}
+
+export interface LoginRequest {
+    email: string;
+    password: string;
 }
 
 export interface RegisterRequest {

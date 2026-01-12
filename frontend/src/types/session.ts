@@ -1,16 +1,39 @@
-export enum SessionStatus {
-    SCHEDULED = 'SCHEDULED',
-    ONGOING = 'ONGOING',
-    COMPLETED = 'COMPLETED',
-    CANCELLED = 'CANCELLED'
+export type CinemaSessionStatus = 'SCHEDULED' | 'ONGOING' | 'COMPLETED' | 'CANCELLED';
+
+export const SessionStatusDisplay: Record<CinemaSessionStatus, string> = {
+    SCHEDULED: 'Scheduled',
+    ONGOING: 'Ongoing',
+    COMPLETED: 'Completed',
+    CANCELLED: 'Cancelled'
+};
+
+export const SessionStatusColors: Record<CinemaSessionStatus, string> = {
+    SCHEDULED: 'info',
+    ONGOING: 'success',
+    COMPLETED: 'default',
+    CANCELLED: 'error'
+};
+
+export interface SessionCreateRequest {
+    startTime: string;
+    basePrice: string;
+    movieId: number;
+    hallId: number;
+}
+
+export interface SessionUpdateRequest {
+    startTime?: string;
+    basePrice?: string;
+    movieId?: number;
+    hallId?: number;
 }
 
 export interface SessionAdminResponse {
     id: number;
     startTime: string;
     endTime: string;
-    basePrice: number;
-    status: SessionStatus;
+    basePrice: string;
+    status: CinemaSessionStatus;
     movieId: number;
     movieTitle: string;
     movieDuration: number;
@@ -18,15 +41,15 @@ export interface SessionAdminResponse {
     hallName: string;
     hallCapacity: number;
     ticketsSold: number;
-    totalRevenue: number;
+    totalRevenue: string;
 }
 
 export interface SessionScheduleResponse {
     id: number;
     startTime: string;
     endTime: string;
-    basePrice: number;
-    status: SessionStatus;
+    basePrice: string;
+    status: CinemaSessionStatus;
     availableSeats: number;
     movieId: number;
     movieTitle: string;
@@ -35,21 +58,28 @@ export interface SessionScheduleResponse {
     movieDuration: number;
     hallId: number;
     hallName: string;
-    hallCapacity: string;
+    hallCapacity: number;
 }
 
-export interface SessionCreateRequest {
+export interface SessionDetailResponse {
+    id: number;
     startTime: string;
-    basePrice: number;
+    basePrice: string;
+    status: CinemaSessionStatus;
     movieId: number;
+    movieTitle: string;
+    movieDescription: string;
+    movieDuration: number;
+    movieAgeRating: string;
+    movieTrailerUrl: string;
     hallId: number;
-}
-
-export interface SessionUpdateRequest {
-    startTime?: string;
-    basePrice?: number;
-    movieId?: number;
-    hallId?: number;
+    hallName: string;
+    hallCapacity: number;
+    availableSeats: number;
+    bookedSeats: number;
+    occupancyRate: number;
+    timeUntilStart: string;
+    isAvailableForBooking: boolean;
 }
 
 export interface SessionFilters {
@@ -63,7 +93,7 @@ export interface SessionFilter {
     search?: string;
     movieId?: number;
     hallId?: number;
-    status?: SessionStatus;
+    status?: CinemaSessionStatus;
     startDate?: string;
     endDate?: string;
     page?: number;
@@ -80,4 +110,30 @@ export interface ScheduleMovie {
     movieTitle: string;
     moviePosterFileName: string | null;
     sessions: SessionScheduleResponse[];
+}
+
+export interface SessionsListResponse {
+    content: SessionAdminResponse[];
+    totalElements: number;
+    totalPages: number;
+    size: number;
+    number: number;
+}
+
+export interface ScheduleListResponse {
+    content: SessionScheduleResponse[];
+    totalElements: number;
+    totalPages: number;
+    size: number;
+    number: number;
+}
+
+export interface SessionStats {
+    totalSessions: number;
+    upcomingSessions: number;
+    ongoingSessions: number;
+    completedSessions: number;
+    cancelledSessions: number;
+    totalRevenue: string;
+    averageOccupancy: number;
 }

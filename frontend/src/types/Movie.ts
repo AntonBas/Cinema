@@ -1,29 +1,55 @@
-import type { GenreResponse } from "./genre";
-import type { PersonResponse } from "./person";
+import type { GenreResponse } from './genre';
+import type { PersonResponse } from './person';
 
-export enum MovieStatus {
-  UPCOMING = 'UPCOMING',
-  CURRENT = 'CURRENT',
-  ARCHIVED = 'ARCHIVED'
-}
+export type MovieStatus = 'UPCOMING' | 'CURRENT' | 'ARCHIVED';
+export type AgeRating = 'PEGI_3' | 'PEGI_7' | 'PEGI_12' | 'PEGI_16' | 'PEGI_18';
 
-export enum AgeRating {
-  PEGI_3 = 'PEGI_3',
-  PEGI_7 = 'PEGI_7',
-  PEGI_12 = 'PEGI_12',
-  PEGI_16 = 'PEGI_16',
-  PEGI_18 = 'PEGI_18'
-}
+export const AgeRatingDisplay: Record<AgeRating, string> = {
+  PEGI_3: '3+',
+  PEGI_7: '7+',
+  PEGI_12: '12+',
+  PEGI_16: '16+',
+  PEGI_18: '18+'
+};
+
+export const AgeRatingDescription: Record<AgeRating, string> = {
+  PEGI_3: 'Suitable for all ages – no restrictions',
+  PEGI_7: 'May contain mild violence/fear scenes for young children',
+  PEGI_12: 'Recommended for viewers aged 12 and older',
+  PEGI_16: 'Suitable only for teens aged 16+',
+  PEGI_18: 'Adults only (18+) – restricted content'
+};
+
+export const AgeRatingMinAge: Record<AgeRating, number> = {
+  PEGI_3: 3,
+  PEGI_7: 7,
+  PEGI_12: 12,
+  PEGI_16: 16,
+  PEGI_18: 18
+};
+
+export const MovieStatusDisplay: Record<MovieStatus, string> = {
+  UPCOMING: 'Upcoming',
+  CURRENT: 'Now Showing',
+  ARCHIVED: 'Archived'
+};
+
+export const MovieStatusColors: Record<MovieStatus, string> = {
+  UPCOMING: 'info',
+  CURRENT: 'success',
+  ARCHIVED: 'default'
+};
 
 export const getAgeRatingDisplay = (rating: AgeRating): string => {
-  const displayMap = {
-    [AgeRating.PEGI_3]: '3+',
-    [AgeRating.PEGI_7]: '7+',
-    [AgeRating.PEGI_12]: '12+',
-    [AgeRating.PEGI_16]: '16+',
-    [AgeRating.PEGI_18]: '18+'
-  };
-  return displayMap[rating];
+  return AgeRatingDisplay[rating];
+};
+
+export const getAgeRatingDescription = (rating: AgeRating): string => {
+  return AgeRatingDescription[rating];
+};
+
+export const getMinAge = (rating: AgeRating): number => {
+  return AgeRatingMinAge[rating];
 };
 
 export interface MovieCreateRequest {
@@ -92,13 +118,6 @@ export interface MovieDetailResponse {
   screenwriters?: PersonResponse[];
 }
 
-export interface MovieShortResponse {
-  id: number;
-  title: string;
-  durationMinutes: number;
-  posterFileName?: string;
-}
-
 export interface MovieSessionSearchResponse {
   id: number;
   title: string;
@@ -106,32 +125,34 @@ export interface MovieSessionSearchResponse {
   durationMinutes: number;
 }
 
-export interface MovieFormData {
-  title: string;
-  trailerUrl: string;
-  description: string;
-  durationMinutes: number;
-  releaseDate: Date | null;
-  endShowingDate: Date | null;
-  ageRating: AgeRating;
-  selectedGenres: number[];
-  selectedActors: number[];
-  selectedDirectors: number[];
-  selectedScreenwriters: number[];
-  posterFile?: File;
-  removePoster?: boolean;
+export interface MoviesListResponse {
+  content: MovieCardResponse[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
 }
 
 export interface MovieFilter {
   searchTerm?: string;
-  status?: string;
-  ageRating?: string;
+  status?: MovieStatus;
+  ageRating?: AgeRating;
   minDuration?: number;
   maxDuration?: number;
   releaseDateFrom?: string;
   releaseDateTo?: string;
-  sortBy?: string;
+  genreIds?: number[];
+  sortBy?: 'title' | 'releaseDate' | 'duration' | 'status';
   sortDirection?: 'ASC' | 'DESC';
   page?: number;
   size?: number;
+}
+
+export interface MovieStatsResponse {
+  movieId: number;
+  title: string;
+  totalSessions: number;
+  totalTicketsSold: number;
+  totalRevenue: string;
+  averageOccupancy: number;
 }
