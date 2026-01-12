@@ -1,5 +1,10 @@
 package ua.lviv.bas.cinema.domain.enums;
 
+import java.util.Arrays;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -9,6 +14,9 @@ public enum UserRole {
 	ROLE_USER("User"), ROLE_CASHIER("Cashier"), ROLE_CONTENT_MANAGER("Content Manager"), ROLE_ADMIN("Administrator");
 
 	private final String displayName;
+
+	private static final Map<String, UserRole> BY_NAME = Arrays.stream(values())
+			.collect(Collectors.toMap(Enum::name, Function.identity()));
 
 	public boolean isAdmin() {
 		return this == ROLE_ADMIN;
@@ -23,13 +31,14 @@ public enum UserRole {
 	}
 
 	public static UserRole fromString(String role) {
-		if (role == null) {
-			return ROLE_USER;
+		if (role == null || role.isBlank()) {
+			throw new IllegalArgumentException("Role cannot be null or empty");
 		}
-		try {
-			return UserRole.valueOf(role.toUpperCase());
-		} catch (IllegalArgumentException e) {
-			return ROLE_USER;
+
+		UserRole userRole = BY_NAME.get(role.toUpperCase());
+		if (userRole == null) {
+			throw new IllegalArgumentException("Unknown user role: " + role);
 		}
+		return userRole;
 	}
 }
