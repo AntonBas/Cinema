@@ -2,20 +2,12 @@ import type {
     LoginRequest,
     RegisterRequest,
     LoginResponse,
-    User,
-    CheckEmailResponse
+    CheckEmailResponse,
+    User
 } from '@/types/auth';
 import { handleApiError } from '@/utils/apiErrorHandler';
 
 const API_URL = '/api/auth';
-
-const getHeaders = (): HeadersInit => {
-    const token = localStorage.getItem('authToken');
-    return {
-        'Content-Type': 'application/json',
-        ...(token && { 'Authorization': `Bearer ${token}` })
-    };
-};
 
 const getPublicHeaders = (): HeadersInit => {
     return {
@@ -34,6 +26,7 @@ export const authApi = {
         return response.json();
     },
 
+    // Змінюємо тип повернення на User (з auth.ts)
     register: async (userData: RegisterRequest): Promise<User> => {
         const response = await fetch(`${API_URL}/register`, {
             method: 'POST',
@@ -45,8 +38,12 @@ export const authApi = {
     },
 
     getCurrentUser: async (): Promise<User> => {
+        const token = localStorage.getItem('authToken');
         const response = await fetch(`${API_URL}/me`, {
-            headers: getHeaders(),
+            headers: {
+                'Content-Type': 'application/json',
+                ...(token && { 'Authorization': `Bearer ${token}` }),
+            },
         });
         if (!response.ok) throw await handleApiError(response);
         return response.json();

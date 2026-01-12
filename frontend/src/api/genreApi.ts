@@ -1,98 +1,88 @@
 import type { GenreResponse, GenreRequest } from '@/types/genre';
-import type { PageResponse, SearchParams } from '@/types/pagination';
+import type { PageResponse } from '@/types/pagination';
 import { handleApiError } from '@/utils/apiErrorHandler';
 
-const PUBLIC_API_URL = '/api/genres';
-const ADMIN_API_URL = '/api/admin/genres';
+const PUBLIC_URL = '/api/genres';
+const ADMIN_URL = '/api/admin/genres';
 
-const getAuthHeaders = () => {
+const getAuthHeaders = (): HeadersInit => {
   const token = localStorage.getItem('authToken');
   return {
     'Content-Type': 'application/json',
-    'Authorization': token ? `Bearer ${token}` : '',
+    ...(token && { 'Authorization': `Bearer ${token}` }),
   };
 };
 
+const getPublicHeaders = (): HeadersInit => {
+  return {
+    'Content-Type': 'application/json',
+  };
+};
+
+const fetchApi = async <T>(url: string, options: RequestInit = {}, isPublic: boolean = false): Promise<T> => {
+  const headers = isPublic ? getPublicHeaders() : getAuthHeaders();
+
+  const response = await fetch(url, {
+    headers,
+    ...options,
+  });
+
+  if (!response.ok) throw await handleApiError(response);
+  if (response.status === 204) return undefined as T;
+
+  return response.json();
+};
+
 export const genreApi = {
-  getAll: async (): Promise<GenreResponse[]> => {
-    const response = await fetch(`${PUBLIC_API_URL}/all`, {
-      headers: getAuthHeaders(),
-    });
-    if (!response.ok) throw await handleApiError(response);
-    return response.json();
+  public: {
+    getById: (id: number): Promise<GenreResponse> =>
+      fetchApi<GenreResponse>(`${PUBLIC_URL}/${id}`, {}, true),
+
+    getAllPaginated: (page?: number, size: number = 12, sort: string = 'name'): Promise<PageResponse<GenreResponse>> => {
+      const params = new URLSearchParams();
+      if (page !== undefined) params.append('page', page.toString());
+      params.append('size', size.toString());
+      params.append('sort', sort);
+
+      return fetchApi<PageResponse<GenreResponse>>(`${PUBLIC_URL}?${params}`, {}, true);
+    },
+
+    search: (query?: string, page?: number, size: number = 12): Promise<PageResponse<GenreResponse>> => {
+      const params = new URLSearchParams();
+      if (query) params.append('query', query);
+      if (page !== undefined) params.append('page', page.toString());
+      params.append('size', size.toString());
+      params.append('sort', 'name');
+
+      return fetchApi<PageResponse<GenreResponse>>(`${PUBLIC_URL}/search?${params}`, {}, true);
+    },
+
+    getAll: (): Promise<GenreResponse[]> =>
+      fetchApi<GenreResponse[]>(`${PUBLIC_URL}/all`, {}, true),
+
+    getForSelect: (): Promise<GenreResponse[]> =>
+      fetchApi<GenreResponse[]>(`${PUBLIC_URL}/select`, {}, true),
   },
 
-  getById: async (id: number): Promise<GenreResponse> => {
-    const response = await fetch(`${PUBLIC_API_URL}/${id}`, {
-      headers: getAuthHeaders(),
-    });
-    if (!response.ok) throw await handleApiError(response);
-    return response.json();
-  },
+  admin: {
+    create: (request: GenreRequest): Promise<GenreResponse> =>
+      fetchApi<GenreResponse>(ADMIN_URL, {
+        method: 'POST',
+        body: JSON.stringify(request),
+      }),
 
-  getAllPaginated: async (page: number = 0, size: number = 12): Promise<PageResponse<GenreResponse>> => {
-    const searchParams = new URLSearchParams({
-      page: page.toString(),
-      size: size.toString(),
-    });
+    getById: (id: number): Promise<GenreResponse> =>
+      fetchApi<GenreResponse>(`${ADMIN_URL}/${id}`),
 
-    const response = await fetch(`${PUBLIC_API_URL}?${searchParams}`, {
-      headers: getAuthHeaders(),
-    });
+    update: (id: number, request: GenreRequest): Promise<GenreResponse> =>
+      fetchApi<GenreResponse>(`${ADMIN_URL}/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(request),
+      }),
 
-    if (!response.ok) throw await handleApiError(response);
-    return response.json();
-  },
-
-  search: async (params: SearchParams): Promise<PageResponse<GenreResponse>> => {
-    const { query, page = 0, size = 12 } = params;
-
-    const searchParams = new URLSearchParams();
-    if (query) searchParams.append('query', query);
-    searchParams.append('page', page.toString());
-    searchParams.append('size', size.toString());
-
-    const response = await fetch(`${PUBLIC_API_URL}/search?${searchParams}`, {
-      headers: getAuthHeaders(),
-    });
-
-    if (!response.ok) throw await handleApiError(response);
-    return response.json();
-  },
-
-  create: async (genreData: GenreRequest): Promise<GenreResponse> => {
-    const response = await fetch(ADMIN_API_URL, {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(genreData),
-    });
-    if (!response.ok) throw await handleApiError(response);
-    return response.json();
-  },
-
-  update: async (id: number, genreData: GenreRequest): Promise<GenreResponse> => {
-    const response = await fetch(`${ADMIN_API_URL}/${id}`, {
-      method: 'PUT',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(genreData),
-    });
-    if (!response.ok) throw await handleApiError(response);
-    return response.json();
-  },
-
-  delete: async (id: number): Promise<void> => {
-    const response = await fetch(`${ADMIN_API_URL}/${id}`, {
-      method: 'DELETE',
-      headers: getAuthHeaders(),
-    });
-    if (!response.ok) throw await handleApiError(response);
-  },
-
-  getByIdAdmin: async (id: number): Promise<GenreResponse> => {
-    const response = await fetch(`${ADMIN_API_URL}/${id}`, {
-      headers: getAuthHeaders(),
-    });
-    if (!response.ok) throw await handleApiError(response);
-    return response.json();
-  },
+    delete: (id: number): Promise<void> =>
+      fetchApi<void>(`${ADMIN_URL}/${id}`, {
+        method: 'DELETE',
+      }),
+  }
 };

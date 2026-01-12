@@ -1,71 +1,79 @@
 import type {
-    UserProfile,
+    UserProfileResponse,
     UserUpdateRequest,
-    EmailChangeResponse,
-    PasswordUpdateResponse
+    UserPasswordUpdateRequest
 } from '@/types/user';
 import { handleApiError } from '@/utils/apiErrorHandler';
 
 const API_URL = '/api/users';
 
-const getAuthHeaders = () => {
+const getAuthHeaders = (): HeadersInit => {
     const token = localStorage.getItem('authToken');
     return {
         'Content-Type': 'application/json',
-        'Authorization': token ? `Bearer ${token}` : '',
+        ...(token && { 'Authorization': `Bearer ${token}` }),
     };
 };
 
-export interface PasswordUpdateRequest {
-    currentPassword: string;
-    newPassword: string;
-    passwordConfirm: string;
-}
-
 export const userApi = {
-    getProfile: async (): Promise<UserProfile> => {
-        const response = await fetch(`${API_URL}/profile`, {
+    getProfile: async (): Promise<UserProfileResponse> => {
+        return fetchApi<UserProfileResponse>(`${API_URL}/profile`, {
             headers: getAuthHeaders(),
         });
-        if (!response.ok) throw await handleApiError(response);
-        return response.json();
     },
 
-    updateProfile: async (updateData: UserUpdateRequest): Promise<UserProfile> => {
-        const response = await fetch(`${API_URL}/profile`, {
+    updateProfile: async (updateData: UserUpdateRequest): Promise<UserProfileResponse> => {
+        return fetchApi<UserProfileResponse>(`${API_URL}/profile`, {
             method: 'PUT',
             headers: getAuthHeaders(),
             body: JSON.stringify(updateData),
         });
-        if (!response.ok) throw await handleApiError(response);
-        return response.json();
     },
 
-    requestEmailChange: async (newEmail: string): Promise<EmailChangeResponse> => {
-        const response = await fetch(`${API_URL}/email/change-request?newEmail=${encodeURIComponent(newEmail)}`, {
+    requestEmailChange: async (newEmail: string): Promise<{ message: string }> => {
+        return fetchApi<{ message: string }>(`${API_URL}/email/change-request?newEmail=${encodeURIComponent(newEmail)}`, {
             method: 'POST',
             headers: getAuthHeaders(),
         });
-        if (!response.ok) throw await handleApiError(response);
-        return response.json();
     },
 
-    confirmEmailChange: async (token: string): Promise<UserProfile> => {
-        const response = await fetch(`${API_URL}/email/confirm-change?token=${encodeURIComponent(token)}`, {
+    confirmEmailChange: async (token: string): Promise<UserProfileResponse> => {
+        return fetchApi<UserProfileResponse>(`${API_URL}/email/confirm-change?token=${encodeURIComponent(token)}`, {
             method: 'POST',
             headers: getAuthHeaders(),
         });
-        if (!response.ok) throw await handleApiError(response);
-        return response.json();
     },
 
-    updatePassword: async (passwordData: PasswordUpdateRequest): Promise<PasswordUpdateResponse> => {
-        const response = await fetch(`${API_URL}/password`, {
+    updatePassword: async (passwordData: UserPasswordUpdateRequest): Promise<{ message: string }> => {
+        return fetchApi<{ message: string }>(`${API_URL}/password`, {
             method: 'PATCH',
             headers: getAuthHeaders(),
             body: JSON.stringify(passwordData),
         });
-        if (!response.ok) throw await handleApiError(response);
+    }
+};
+
+const fetchApi = async <T>(url: string, options: RequestInit = {}): Promise<T> => {
+    const response = await fetch(url, {
+        ...options,
+        headers: {
+            ...getAuthHeaders(),
+            ...options.headers,
+        },
+    });
+
+    if (!response.ok) {
+        throw await handleApiError(response);
+    }
+
+    if (response.status === 204) {
+        return undefined as T;
+    }
+
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
         return response.json();
     }
+
+    return undefined as T;
 };

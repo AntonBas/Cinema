@@ -3,11 +3,11 @@ import type {
     CinemaHallRequest,
     CinemaHallWithSeatsResponse,
     HallLayoutResponse
-} from '@/types';
+} from '@/types/cinemaHall';
 import { handleApiError } from '@/utils/apiErrorHandler';
 
-const PUBLIC_API_URL = '/api/cinema-halls';
-const ADMIN_API_URL = '/api/admin/cinema-halls';
+const PUBLIC_URL = '/api/cinema-halls';
+const ADMIN_URL = '/api/admin/cinema-halls';
 
 const getAuthHeaders = (): HeadersInit => {
     const token = localStorage.getItem('authToken');
@@ -17,9 +17,17 @@ const getAuthHeaders = (): HeadersInit => {
     };
 };
 
-const fetchApi = async <T>(url: string, options: RequestInit = {}): Promise<T> => {
+const getPublicHeaders = (): HeadersInit => {
+    return {
+        'Content-Type': 'application/json',
+    };
+};
+
+const fetchApi = async <T>(url: string, options: RequestInit = {}, isPublic: boolean = false): Promise<T> => {
+    const headers = isPublic ? getPublicHeaders() : getAuthHeaders();
+
     const response = await fetch(url, {
-        headers: getAuthHeaders(),
+        headers,
         ...options,
     });
 
@@ -30,35 +38,39 @@ const fetchApi = async <T>(url: string, options: RequestInit = {}): Promise<T> =
 };
 
 export const cinemaHallApi = {
-    getHallById: (id: number) =>
-        fetchApi<CinemaHallResponse>(`${PUBLIC_API_URL}/${id}`),
+    getById: (id: number): Promise<CinemaHallResponse> =>
+        fetchApi<CinemaHallResponse>(`${PUBLIC_URL}/${id}`, {}, true),
 
-    getAllHalls: () =>
-        fetchApi<CinemaHallResponse[]>(PUBLIC_API_URL),
+    getAll: (): Promise<CinemaHallResponse[]> =>
+        fetchApi<CinemaHallResponse[]>(PUBLIC_URL, {}, true),
 
-    getHallWithSeats: (id: number) =>
-        fetchApi<CinemaHallWithSeatsResponse>(`${PUBLIC_API_URL}/${id}/with-seats`),
+    getWithSeats: (id: number): Promise<CinemaHallWithSeatsResponse> =>
+        fetchApi<CinemaHallWithSeatsResponse>(`${PUBLIC_URL}/${id}/with-seats`, {}, true),
 
-    getHallLayout: (id: number) =>
-        fetchApi<HallLayoutResponse>(`${PUBLIC_API_URL}/${id}/layout`),
+    getLayout: (id: number): Promise<HallLayoutResponse> =>
+        fetchApi<HallLayoutResponse>(`${PUBLIC_URL}/${id}/layout`, {}, true),
 
-    searchHalls: (name?: string) => {
-        const url = name ? `${PUBLIC_API_URL}/search?name=${encodeURIComponent(name)}` : `${PUBLIC_API_URL}/search`;
-        return fetchApi<CinemaHallResponse[]>(url);
+    search: (name?: string): Promise<CinemaHallResponse[]> => {
+        const url = name ? `${PUBLIC_URL}/search?name=${encodeURIComponent(name)}` : `${PUBLIC_URL}/search`;
+        return fetchApi<CinemaHallResponse[]>(url, {}, true);
     },
 
-    createHall: (request: CinemaHallRequest) =>
-        fetchApi<CinemaHallResponse>(ADMIN_API_URL, {
-            method: 'POST',
-            body: JSON.stringify(request),
-        }),
+    admin: {
+        create: (request: CinemaHallRequest): Promise<CinemaHallResponse> =>
+            fetchApi<CinemaHallResponse>(ADMIN_URL, {
+                method: 'POST',
+                body: JSON.stringify(request),
+            }),
 
-    updateHall: (id: number, request: CinemaHallRequest) =>
-        fetchApi<CinemaHallResponse>(`${ADMIN_API_URL}/${id}`, {
-            method: 'PUT',
-            body: JSON.stringify(request),
-        }),
+        update: (id: number, request: CinemaHallRequest): Promise<CinemaHallResponse> =>
+            fetchApi<CinemaHallResponse>(`${ADMIN_URL}/${id}`, {
+                method: 'PUT',
+                body: JSON.stringify(request),
+            }),
 
-    deleteHall: (id: number) =>
-        fetchApi<void>(`${ADMIN_API_URL}/${id}`, { method: 'DELETE' }),
+        delete: (id: number): Promise<void> =>
+            fetchApi<void>(`${ADMIN_URL}/${id}`, {
+                method: 'DELETE'
+            }),
+    }
 };

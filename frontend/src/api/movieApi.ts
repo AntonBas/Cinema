@@ -4,13 +4,13 @@ import type {
   MovieCardResponse,
   MovieDetailResponse,
   MovieSessionSearchResponse,
-  MovieFilter
+  MovieStatus,
 } from '@/types/movie';
 import type { PageResponse } from '@/types/pagination';
 import { handleApiError } from '@/utils/apiErrorHandler';
 
-const PUBLIC_API_URL = '/api/movies';
-const ADMIN_API_URL = '/api/admin/movies';
+const PUBLIC_URL = '/api/movies';
+const ADMIN_URL = '/api/admin/movies';
 
 const getAuthHeaders = (isFormData: boolean = false): HeadersInit => {
   const token = localStorage.getItem('authToken');
@@ -27,253 +27,185 @@ const getAuthHeaders = (isFormData: boolean = false): HeadersInit => {
   return headers;
 };
 
+const getPublicHeaders = (): HeadersInit => {
+  return {
+    'Content-Type': 'application/json',
+  };
+};
+
+const fetchApi = async <T>(
+  url: string,
+  options: RequestInit = {},
+  isFormData: boolean = false,
+  isPublic: boolean = false
+): Promise<T> => {
+  const headers = isPublic ? getPublicHeaders() : getAuthHeaders(isFormData);
+
+  const response = await fetch(url, {
+    headers,
+    ...options,
+  });
+
+  if (!response.ok) throw await handleApiError(response);
+  if (response.status === 204) return undefined as T;
+
+  return response.json();
+};
+
 export const movieApi = {
-  getMovieById: async (id: number): Promise<MovieDetailResponse> => {
-    const response = await fetch(`${PUBLIC_API_URL}/${id}`, {
-      headers: getAuthHeaders(),
-    });
-    if (!response.ok) throw await handleApiError(response);
-    return response.json();
+  public: {
+    getById: (id: number): Promise<MovieDetailResponse> =>
+      fetchApi<MovieDetailResponse>(`${PUBLIC_URL}/${id}`, {}, false, true),
+
+    getBySlug: (slug: string): Promise<MovieDetailResponse> =>
+      fetchApi<MovieDetailResponse>(`${PUBLIC_URL}/slug/${slug}`, {}, false, true),
+
+    getMoviesPaginated: (page?: number, size: number = 12): Promise<PageResponse<MovieCardResponse>> => {
+      const params = new URLSearchParams();
+      if (page !== undefined) params.append('page', page.toString());
+      params.append('size', size.toString());
+      params.append('sort', 'title');
+
+      return fetchApi<PageResponse<MovieCardResponse>>(`${PUBLIC_URL}?${params}`, {}, false, true);
+    },
+
+    getCurrentlyShowing: (): Promise<MovieCardResponse[]> =>
+      fetchApi<MovieCardResponse[]>(`${PUBLIC_URL}/status/current`, {}, false, true),
+
+    getCurrentlyShowingPaginated: (page?: number, size: number = 12): Promise<PageResponse<MovieCardResponse>> => {
+      const params = new URLSearchParams();
+      if (page !== undefined) params.append('page', page.toString());
+      params.append('size', size.toString());
+      params.append('sort', 'title');
+
+      return fetchApi<PageResponse<MovieCardResponse>>(`${PUBLIC_URL}/status/current/paginated?${params}`, {}, false, true);
+    },
+
+    getUpcoming: (): Promise<MovieCardResponse[]> =>
+      fetchApi<MovieCardResponse[]>(`${PUBLIC_URL}/status/upcoming`, {}, false, true),
+
+    getUpcomingPaginated: (page?: number, size: number = 12): Promise<PageResponse<MovieCardResponse>> => {
+      const params = new URLSearchParams();
+      if (page !== undefined) params.append('page', page.toString());
+      params.append('size', size.toString());
+      params.append('sort', 'title');
+
+      return fetchApi<PageResponse<MovieCardResponse>>(`${PUBLIC_URL}/status/upcoming/paginated?${params}`, {}, false, true);
+    },
+
+    getFilteredMovies: (search?: string, status?: MovieStatus, page?: number, size: number = 20): Promise<PageResponse<MovieCardResponse>> => {
+      const params = new URLSearchParams();
+      if (search) params.append('search', search);
+      if (status) params.append('status', status);
+      if (page !== undefined) params.append('page', page.toString());
+      params.append('size', size.toString());
+      params.append('sort', 'title');
+
+      return fetchApi<PageResponse<MovieCardResponse>>(`${PUBLIC_URL}/filtered?${params}`, {}, false, true);
+    },
+
+    getPoster: (id: number): Promise<Blob> =>
+      fetch(`${PUBLIC_URL}/${id}/poster`).then(res => {
+        if (!res.ok) throw new Error('Failed to fetch poster');
+        return res.blob();
+      }),
+
+    getPosterUrl: (id: number): string =>
+      `${PUBLIC_URL}/${id}/poster`,
   },
 
-  getMovieBySlug: async (slug: string): Promise<MovieDetailResponse> => {
-    const response = await fetch(`${PUBLIC_API_URL}/slug/${slug}`, {
-      headers: getAuthHeaders(),
-    });
-    if (!response.ok) throw await handleApiError(response);
-    return response.json();
-  },
+  admin: {
+    create: (request: MovieCreateRequest): Promise<MovieDetailResponse> => {
+      const formData = new FormData();
+      const { posterFile, ...requestData } = request;
 
-  getMoviesPaginated: async (page: number = 0, size: number = 12): Promise<PageResponse<MovieDetailResponse>> => {
-    const params = new URLSearchParams({
-      page: page.toString(),
-      size: size.toString(),
-    });
+      formData.append('movieData', new Blob([JSON.stringify(requestData)], {
+        type: 'application/json',
+      }));
 
-    const response = await fetch(`${PUBLIC_API_URL}?${params}`, {
-      headers: getAuthHeaders(),
-    });
-    if (!response.ok) throw await handleApiError(response);
-    return response.json();
-  },
-
-  getCurrentlyShowingMovies: async (): Promise<MovieCardResponse[]> => {
-    const response = await fetch(`${PUBLIC_API_URL}/status/current`, {
-      headers: getAuthHeaders(),
-    });
-    if (!response.ok) throw await handleApiError(response);
-    return response.json();
-  },
-
-  getCurrentlyShowingMoviesPaginated: async (page: number = 0, size: number = 12): Promise<PageResponse<MovieCardResponse>> => {
-    const params = new URLSearchParams({
-      page: page.toString(),
-      size: size.toString(),
-    });
-
-    const response = await fetch(`${PUBLIC_API_URL}/status/current/paginated?${params}`, {
-      headers: getAuthHeaders(),
-    });
-    if (!response.ok) throw await handleApiError(response);
-    return response.json();
-  },
-
-  getUpcomingMovies: async (): Promise<MovieCardResponse[]> => {
-    const response = await fetch(`${PUBLIC_API_URL}/status/upcoming`, {
-      headers: getAuthHeaders(),
-    });
-    if (!response.ok) throw await handleApiError(response);
-    return response.json();
-  },
-
-  getUpcomingMoviesPaginated: async (page: number = 0, size: number = 12): Promise<PageResponse<MovieCardResponse>> => {
-    const params = new URLSearchParams({
-      page: page.toString(),
-      size: size.toString(),
-    });
-
-    const response = await fetch(`${PUBLIC_API_URL}/status/upcoming/paginated?${params}`, {
-      headers: getAuthHeaders(),
-    });
-    if (!response.ok) throw await handleApiError(response);
-    return response.json();
-  },
-
-  getArchivedMovies: async (): Promise<MovieCardResponse[]> => {
-    const response = await fetch(`${ADMIN_API_URL}/status/archived`, {
-      headers: getAuthHeaders(),
-    });
-    if (!response.ok) throw await handleApiError(response);
-    return response.json();
-  },
-
-  getArchivedMoviesPaginated: async (page: number = 0, size: number = 12): Promise<PageResponse<MovieCardResponse>> => {
-    const params = new URLSearchParams({
-      page: page.toString(),
-      size: size.toString(),
-    });
-
-    const response = await fetch(`${ADMIN_API_URL}/status/archived/paginated?${params}`, {
-      headers: getAuthHeaders(),
-    });
-    if (!response.ok) throw await handleApiError(response);
-    return response.json();
-  },
-
-  getNewReleases: async (limit: number = 5): Promise<MovieCardResponse[]> => {
-    const params = new URLSearchParams({
-      limit: limit.toString(),
-    });
-
-    const response = await fetch(`${PUBLIC_API_URL}/new-releases?${params}`, {
-      headers: getAuthHeaders(),
-    });
-    if (!response.ok) throw await handleApiError(response);
-    return response.json();
-  },
-
-  getEndingSoon: async (limit: number = 5): Promise<MovieCardResponse[]> => {
-    const params = new URLSearchParams({
-      limit: limit.toString(),
-    });
-
-    const response = await fetch(`${PUBLIC_API_URL}/ending-soon?${params}`, {
-      headers: getAuthHeaders(),
-    });
-    if (!response.ok) throw await handleApiError(response);
-    return response.json();
-  },
-
-  getFilteredMovies: async (filter: Partial<MovieFilter>): Promise<PageResponse<MovieCardResponse>> => {
-    const params = new URLSearchParams();
-
-    Object.entries(filter).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== '') {
-        params.append(key, String(value));
+      if (posterFile) {
+        formData.append('posterFile', posterFile);
       }
-    });
 
-    const response = await fetch(`${PUBLIC_API_URL}/filtered?${params}`, {
-      headers: getAuthHeaders(),
-    });
-    if (!response.ok) throw await handleApiError(response);
-    return response.json();
-  },
+      return fetchApi<MovieDetailResponse>(ADMIN_URL, {
+        method: 'POST',
+        body: formData,
+      }, true);
+    },
 
-  getMoviePoster: async (id: number): Promise<Blob> => {
-    const response = await fetch(`${PUBLIC_API_URL}/${id}/poster`, {
-      headers: getAuthHeaders(),
-    });
-    if (!response.ok) throw await handleApiError(response);
-    return response.blob();
-  },
+    update: (id: number, request: MovieUpdateRequest): Promise<MovieDetailResponse> => {
+      const formData = new FormData();
+      const { posterFile, ...requestData } = request;
 
-  getMoviePosterUrl: (id: number): string => {
-    return `${PUBLIC_API_URL}/${id}/poster`;
-  },
+      formData.append('movieData', new Blob([JSON.stringify(requestData)], {
+        type: 'application/json',
+      }));
 
-  getMoviePosterUrlWithTimestamp: (id: number): string => {
-    return `${PUBLIC_API_URL}/${id}/poster?t=${Date.now()}`;
-  },
-
-  searchMoviesForSessionCreation: async (sessionDate: string, search?: string): Promise<MovieSessionSearchResponse[]> => {
-    const params = new URLSearchParams({
-      sessionDate: sessionDate,
-    });
-
-    if (search) {
-      params.append('search', search);
-    }
-
-    const response = await fetch(`${ADMIN_API_URL}/search/for-session?${params}`, {
-      headers: getAuthHeaders(),
-    });
-    if (!response.ok) throw await handleApiError(response);
-    return response.json();
-  },
-
-  createMovie: async (movieData: MovieCreateRequest): Promise<MovieDetailResponse> => {
-    const formData = new FormData();
-    const { posterFile, ...requestData } = movieData;
-
-    formData.append('movieData', new Blob([JSON.stringify(requestData)], {
-      type: 'application/json',
-    }));
-
-    if (posterFile) {
-      formData.append('posterFile', posterFile);
-    }
-
-    const response = await fetch(ADMIN_API_URL, {
-      method: 'POST',
-      headers: getAuthHeaders(true),
-      body: formData,
-    });
-
-    if (!response.ok) throw await handleApiError(response);
-    return response.json();
-  },
-
-  updateMovie: async (id: number, movieData: MovieUpdateRequest): Promise<MovieDetailResponse> => {
-    const formData = new FormData();
-    const { posterFile, ...requestData } = movieData;
-
-    formData.append('movieData', new Blob([JSON.stringify(requestData)], {
-      type: 'application/json',
-    }));
-
-    if (posterFile) {
-      formData.append('posterFile', posterFile);
-    }
-
-    const response = await fetch(`${ADMIN_API_URL}/${id}`, {
-      method: 'PUT',
-      headers: getAuthHeaders(true),
-      body: formData,
-    });
-
-    if (!response.ok) throw await handleApiError(response);
-    return response.json();
-  },
-
-  deleteMovie: async (id: number): Promise<void> => {
-    const response = await fetch(`${ADMIN_API_URL}/${id}`, {
-      method: 'DELETE',
-      headers: getAuthHeaders(),
-    });
-    if (!response.ok) throw await handleApiError(response);
-  },
-
-  searchPersonsForMovie: async (params: {
-    query?: string;
-    role?: string;
-    page?: number;
-    size?: number;
-  }): Promise<PageResponse<any>> => {
-    const searchParams = new URLSearchParams();
-
-    Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== '') {
-        searchParams.append(key, String(value));
+      if (posterFile) {
+        formData.append('posterFile', posterFile);
       }
-    });
 
-    const response = await fetch(`${ADMIN_API_URL}/persons/search?${searchParams}`, {
-      headers: getAuthHeaders(),
-    });
+      return fetchApi<MovieDetailResponse>(`${ADMIN_URL}/${id}`, {
+        method: 'PUT',
+        body: formData,
+      }, true);
+    },
 
-    if (!response.ok) throw await handleApiError(response);
-    return response.json();
-  },
+    delete: (id: number): Promise<void> =>
+      fetchApi<void>(`${ADMIN_URL}/${id}`, {
+        method: 'DELETE'
+      }),
 
-  quickAddPerson: async (request: { name: string; role: string }): Promise<any> => {
-    const response = await fetch(`${ADMIN_API_URL}/quick-add-person`, {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(request),
-    });
+    getArchivedMovies: (page?: number, size: number = 12): Promise<PageResponse<MovieCardResponse>> => {
+      const params = new URLSearchParams();
+      if (page !== undefined) params.append('page', page.toString());
+      params.append('size', size.toString());
+      params.append('sort', 'title');
 
-    if (!response.ok) throw await handleApiError(response);
-    return response.json();
-  },
+      return fetchApi<PageResponse<MovieCardResponse>>(`${ADMIN_URL}/status/archived?${params}`);
+    },
+
+    getByStatus: (status: MovieStatus, page?: number, size: number = 12): Promise<PageResponse<MovieCardResponse>> => {
+      const params = new URLSearchParams();
+      if (page !== undefined) params.append('page', page.toString());
+      params.append('size', size.toString());
+      params.append('sort', 'title');
+
+      return fetchApi<PageResponse<MovieCardResponse>>(`${ADMIN_URL}/status/${status}?${params}`);
+    },
+
+    search: (search?: string, status?: MovieStatus, page?: number, size: number = 12): Promise<PageResponse<MovieCardResponse>> => {
+      const params = new URLSearchParams();
+      if (search) params.append('search', search);
+      if (status) params.append('status', status);
+      if (page !== undefined) params.append('page', page.toString());
+      params.append('size', size.toString());
+      params.append('sort', 'title');
+
+      return fetchApi<PageResponse<MovieCardResponse>>(`${ADMIN_URL}/search?${params}`);
+    },
+
+    searchForSession: (sessionDate: string, search?: string): Promise<MovieSessionSearchResponse[]> => {
+      const params = new URLSearchParams({ sessionDate });
+      if (search) params.append('search', search);
+
+      return fetchApi<MovieSessionSearchResponse[]>(`${ADMIN_URL}/search/for-session?${params}`);
+    },
+
+    quickAddPerson: (request: { name: string; role: string }): Promise<any> =>
+      fetchApi<any>(`${ADMIN_URL}/quick-add-person`, {
+        method: 'POST',
+        body: JSON.stringify(request),
+      }),
+
+    searchPersons: (query?: string, role?: string, page?: number, size: number = 10): Promise<PageResponse<any>> => {
+      const params = new URLSearchParams();
+      if (query) params.append('query', query);
+      if (role) params.append('role', role);
+      if (page !== undefined) params.append('page', page.toString());
+      params.append('size', size.toString());
+
+      return fetchApi<PageResponse<any>>(`${ADMIN_URL}/persons/search?${params}`);
+    },
+  }
 };

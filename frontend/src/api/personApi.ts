@@ -2,134 +2,85 @@ import type { PersonResponse, PersonRequest, PersonRole, QuickCreatePersonReques
 import type { PageResponse } from '@/types/pagination';
 import { handleApiError } from '@/utils/apiErrorHandler';
 
-const PUBLIC_API_URL = '/api/persons';
-const ADMIN_API_URL = '/api/admin/persons';
+const PUBLIC_URL = '/api/persons';
+const ADMIN_URL = '/api/admin/persons';
 
-const getAuthHeaders = () => {
+const getAuthHeaders = (): HeadersInit => {
   const token = localStorage.getItem('authToken');
   return {
     'Content-Type': 'application/json',
-    'Authorization': token ? `Bearer ${token}` : '',
+    ...(token && { 'Authorization': `Bearer ${token}` }),
   };
 };
 
-const buildQueryParams = (params: Record<string, any>): string => {
-  const searchParams = new URLSearchParams();
+const getPublicHeaders = (): HeadersInit => {
+  return {
+    'Content-Type': 'application/json',
+  };
+};
 
-  Object.entries(params).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && value !== '') {
-      searchParams.append(key, String(value));
-    }
+const fetchApi = async <T>(url: string, options: RequestInit = {}, isPublic: boolean = false): Promise<T> => {
+  const headers = isPublic ? getPublicHeaders() : getAuthHeaders();
+
+  const response = await fetch(url, {
+    headers,
+    ...options,
   });
 
-  return searchParams.toString();
+  if (!response.ok) throw await handleApiError(response);
+  if (response.status === 204) return undefined as T;
+
+  return response.json();
 };
 
 export const personApi = {
-  getById: async (id: number): Promise<PersonResponse> => {
-    const response = await fetch(`${PUBLIC_API_URL}/${id}`, {
-      headers: getAuthHeaders(),
-    });
-    if (!response.ok) throw await handleApiError(response);
-    return response.json();
+  public: {
+    getById: (id: number): Promise<PersonResponse> =>
+      fetchApi<PersonResponse>(`${PUBLIC_URL}/${id}`, {}, true),
+
+    search: (query?: string, role?: PersonRole, page?: number, size: number = 12): Promise<PageResponse<PersonResponse>> => {
+      const params = new URLSearchParams();
+      if (query) params.append('query', query);
+      if (role) params.append('role', role);
+      if (page !== undefined) params.append('page', page.toString());
+      params.append('size', size.toString());
+      params.append('sort', 'name');
+
+      return fetchApi<PageResponse<PersonResponse>>(`${PUBLIC_URL}/search?${params}`, {}, true);
+    },
+
+    getByRole: (role: PersonRole, page?: number, size: number = 12): Promise<PageResponse<PersonResponse>> => {
+      const params = new URLSearchParams();
+      if (page !== undefined) params.append('page', page.toString());
+      params.append('size', size.toString());
+      params.append('sort', 'name');
+
+      return fetchApi<PageResponse<PersonResponse>>(`${PUBLIC_URL}/role/${role}?${params}`, {}, true);
+    },
   },
 
-  getAllPaginated: async (page: number = 0, size: number = 12): Promise<PageResponse<PersonResponse>> => {
-    const searchParams = buildQueryParams({ page, size });
-    const response = await fetch(`${PUBLIC_API_URL}/search?${searchParams}`, {
-      headers: getAuthHeaders(),
-    });
-    if (!response.ok) throw await handleApiError(response);
-    return response.json();
-  },
+  admin: {
+    create: (request: PersonRequest): Promise<PersonResponse> =>
+      fetchApi<PersonResponse>(ADMIN_URL, {
+        method: 'POST',
+        body: JSON.stringify(request),
+      }),
 
-  getAll: async (): Promise<PersonResponse[]> => {
-    let allPersons: PersonResponse[] = [];
-    let currentPage = 0;
-    const pageSize = 100;
+    update: (id: number, request: PersonRequest): Promise<PersonResponse> =>
+      fetchApi<PersonResponse>(`${ADMIN_URL}/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(request),
+      }),
 
-    try {
-      while (true) {
-        const response = await personApi.getAllPaginated(currentPage, pageSize);
-        allPersons = [...allPersons, ...response.content];
+    delete: (id: number): Promise<void> =>
+      fetchApi<void>(`${ADMIN_URL}/${id}`, {
+        method: 'DELETE',
+      }),
 
-        if (response.last) break;
-        currentPage++;
-      }
-      return allPersons;
-    } catch (error) {
-      console.error('Error fetching all persons:', error);
-      throw error;
-    }
-  },
-
-  search: async (params: {
-    query?: string;
-    role?: PersonRole;
-    page?: number;
-    size?: number;
-  }): Promise<PageResponse<PersonResponse>> => {
-    const { query, role, page = 0, size = 12 } = params;
-    const searchParams = buildQueryParams({ query, role, page, size });
-    const response = await fetch(`${PUBLIC_API_URL}/search?${searchParams}`, {
-      headers: getAuthHeaders(),
-    });
-    if (!response.ok) throw await handleApiError(response);
-    return response.json();
-  },
-
-  getByRole: async (role: PersonRole, page: number = 0, size: number = 12): Promise<PageResponse<PersonResponse>> => {
-    const searchParams = buildQueryParams({ page, size });
-    const response = await fetch(`${PUBLIC_API_URL}/role/${role}?${searchParams}`, {
-      headers: getAuthHeaders(),
-    });
-    if (!response.ok) throw await handleApiError(response);
-    return response.json();
-  },
-
-  create: async (personData: PersonRequest): Promise<PersonResponse> => {
-    const response = await fetch(ADMIN_API_URL, {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(personData),
-    });
-    if (!response.ok) throw await handleApiError(response);
-    return response.json();
-  },
-
-  quickCreate: async (personData: QuickCreatePersonRequest): Promise<PersonResponse> => {
-    const response = await fetch(`${ADMIN_API_URL}/quick-create`, {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(personData),
-    });
-    if (!response.ok) throw await handleApiError(response);
-    return response.json();
-  },
-
-  update: async (id: number, personData: PersonRequest): Promise<PersonResponse> => {
-    const response = await fetch(`${ADMIN_API_URL}/${id}`, {
-      method: 'PUT',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(personData),
-    });
-    if (!response.ok) throw await handleApiError(response);
-    return response.json();
-  },
-
-  delete: async (id: number): Promise<void> => {
-    const response = await fetch(`${ADMIN_API_URL}/${id}`, {
-      method: 'DELETE',
-      headers: getAuthHeaders(),
-    });
-    if (!response.ok) throw await handleApiError(response);
-  },
-
-  getByIdAdmin: async (id: number): Promise<PersonResponse> => {
-    const response = await fetch(`${ADMIN_API_URL}/${id}`, {
-      headers: getAuthHeaders(),
-    });
-    if (!response.ok) throw await handleApiError(response);
-    return response.json();
-  },
+    quickCreate: (request: QuickCreatePersonRequest): Promise<PersonResponse> =>
+      fetchApi<PersonResponse>(`${ADMIN_URL}/quick-create`, {
+        method: 'POST',
+        body: JSON.stringify(request),
+      }),
+  }
 };

@@ -2,7 +2,8 @@ import type {
     AdminUsersResponse,
     UserRoleUpdateRequest,
     UserStatusUpdateRequest,
-    VerificationBirthDateRequest
+    VerificationBirthDateRequest,
+    UserResponse
 } from '@/types/user';
 import { handleApiError } from '@/utils/apiErrorHandler';
 
@@ -61,8 +62,8 @@ export const adminApi = {
             body: JSON.stringify(statusData),
         }),
 
-    updateBirthDateVerification: (userId: number, verificationData: VerificationBirthDateRequest): Promise<void> =>
-        fetchApi<void>(`${ADMIN_API_URL}/${userId}/birthdate-verification`, {
+    updateBirthDateVerification: (userId: number, verificationData: VerificationBirthDateRequest): Promise<UserResponse> =>
+        fetchApi<UserResponse>(`${ADMIN_API_URL}/${userId}/birthdate-verification`, {
             method: 'PATCH',
             body: JSON.stringify(verificationData),
         })
