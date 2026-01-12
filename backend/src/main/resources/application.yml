@@ -14,22 +14,15 @@ spring:
     jpa:
         hibernate:
             ddl-auto: validate
+        open-in-view: false
         properties:
             hibernate:
                 "[format_sql]": ${SHOW_SQL:true}
-                "[enable_lazy_load_no_trans]": true
-                dialect: org.hibernate.dialect.PostgreSQLDialect
-            jpa:
-                query:
-                    dsl:
-                        enabled: false
-            javax:
+            jakarta:
                 persistence:
                     schema-generation:
                         scripts:
                             action: none
-                            create-target: none
-                            drop-target: none
         show-sql: ${SHOW_SQL:true}
     flyway:
         enabled: true
