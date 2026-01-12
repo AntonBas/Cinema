@@ -2,55 +2,26 @@ spring:
     config:
         activate:
             on-profile: docker
-
     datasource:
         url: jdbc:postgresql://${DB_HOST:postgres}:${DB_PORT:5432}/${DB_NAME:cinema_db}
         hikari:
             maximum-pool-size: 10
 
-    jpa:
-        show-sql: false
-        properties:
-            hibernate:
-                "[jdbc.batch_size]": 20
-                "[jdbc.fetch_size]": 50
-                "[order_inserts]": true
-                "[order_updates]": true
-
-    task:
-        execution:
-            pool:
-                core-size: 5
-                max-size: 10
-                queue-capacity: 100
-            thread-name-prefix: "scheduler-"
-
 scheduler:
     birthday-bonus:
         cron: "0 0 9 * * *"
-
     email-token:
         cleanup-expired-cron: "0 */30 * * * *"
         cleanup-confirmed-cron: "0 0 3 * * *"
-
     movie-status:
         cron: "0 0 2 * * *"
-
     session-status:
         cron: "0 */5 * * * *"
-
     booking:
-        expiration-interval: 30000
+        expiration-interval: 180000
         cleanup-cron: "0 0 4 * * *"
         reminder-cron: "0 */10 * * * *"
-
     payment:
         expiration-interval: 300000
         cleanup-cron: "0 0 5 * * *"
         daily-stats: "0 0 23 * * *"
-
-logging:
-    level:
-        "[ua.lviv.bas.cinema]": INFO
-        "[org.springframework]": WARN
-        "[ua.lviv.bas.cinema.scheduler]": INFO
