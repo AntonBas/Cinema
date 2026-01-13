@@ -39,7 +39,7 @@ export const personApi = {
     getById: (id: number): Promise<PersonResponse> =>
       fetchApi<PersonResponse>(`${PUBLIC_URL}/${id}`, {}, true),
 
-    search: (params?: SearchParams & { role?: PersonRole; search?: string }): Promise<PageResponse<PersonResponse>> => {
+    search: (params?: SearchParams & { role?: PersonRole }): Promise<PageResponse<PersonResponse>> => {
       const url = buildPagedUrl(`${PUBLIC_URL}/search`, params, 'grid');
       return fetchApi<PageResponse<PersonResponse>>(url, {}, true);
     },

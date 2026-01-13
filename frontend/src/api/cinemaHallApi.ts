@@ -50,8 +50,8 @@ export const cinemaHallApi = {
     getLayout: (id: number): Promise<HallLayoutResponse> =>
         fetchApi<HallLayoutResponse>(`${PUBLIC_URL}/${id}/layout`, {}, true),
 
-    search: (name?: string): Promise<CinemaHallResponse[]> => {
-        const url = name ? `${PUBLIC_URL}/search?name=${encodeURIComponent(name)}` : `${PUBLIC_URL}/search`;
+    search: (search?: string): Promise<CinemaHallResponse[]> => {
+        const url = search ? `${PUBLIC_URL}/search?search=${encodeURIComponent(search)}` : `${PUBLIC_URL}/search`;
         return fetchApi<CinemaHallResponse[]>(url, {}, true);
     },
 

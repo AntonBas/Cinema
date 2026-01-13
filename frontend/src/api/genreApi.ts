@@ -44,7 +44,7 @@ export const genreApi = {
       return fetchApi<PageResponse<GenreResponse>>(url, {}, true);
     },
 
-    search: (params?: SearchParams & { search?: string }): Promise<PageResponse<GenreResponse>> => {
+    search: (params?: SearchParams): Promise<PageResponse<GenreResponse>> => {
       const url = buildPagedUrl(`${PUBLIC_URL}/search`, params, 'grid');
       return fetchApi<PageResponse<GenreResponse>>(url, {}, true);
     },
