@@ -10,7 +10,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import ua.lviv.bas.cinema.domain.enums.BookingStatus;
-import ua.lviv.bas.cinema.domain.enums.PaymentStatus;
 
 @Data
 @Builder
@@ -27,6 +26,9 @@ public class BookingResponse {
 
 	@Schema(description = "Booking status", example = "PENDING")
 	private BookingStatus status;
+
+	@Schema(description = "Session ID", example = "789")
+	private Long sessionId;
 
 	@Schema(description = "Session start time", example = "2024-01-15T18:30:00")
 	private LocalDateTime sessionTime;
@@ -48,9 +50,6 @@ public class BookingResponse {
 
 	@Schema(description = "Final price", example = "950.00")
 	private BigDecimal finalPrice;
-
-	@Schema(description = "Payment status", example = "PENDING")
-	private PaymentStatus paymentStatus;
 
 	@Schema(description = "LiqPay order ID", example = "ORDER_ABC123")
 	private String liqpayOrderId;

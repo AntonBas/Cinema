@@ -1,9 +1,9 @@
 import type {
     BookingResponse,
     BookingCreateRequest,
-    BookingStatus,
-    BookingsListResponse
+    BookingStatus
 } from '@/types/booking';
+import type { PageResponse } from '@/types/pagination';
 import { handleApiError } from '@/utils/apiErrorHandler';
 
 const BASE_URL = '/api/bookings';
@@ -36,13 +36,13 @@ export const bookingApi = {
     getById: (bookingId: number) =>
         fetchApi<BookingResponse>(`${BASE_URL}/${bookingId}`),
 
-    getUserBookings: (status?: BookingStatus, page?: number, size: number = 20) => {
+    getUserBookings: (status?: BookingStatus, page?: number, size: number = 20): Promise<PageResponse<BookingResponse>> => {
         const params = new URLSearchParams();
         if (status) params.append('status', status);
         if (page !== undefined) params.append('page', page.toString());
         params.append('size', size.toString());
         const url = `${BASE_URL}?${params}`;
-        return fetchApi<BookingsListResponse>(url);
+        return fetchApi<PageResponse<BookingResponse>>(url);
     },
 
     cancel: (bookingId: number) =>

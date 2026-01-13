@@ -11,10 +11,10 @@ import ua.lviv.bas.cinema.dto.booking.response.BookingResponse;
 public interface BookingMapper {
 
 	@Mapping(target = "bookingNumber", ignore = true)
+	@Mapping(target = "sessionId", source = "session.id")
 	@Mapping(target = "sessionTime", source = "session.startTime")
 	@Mapping(target = "movieTitle", source = "session.movie.title")
 	@Mapping(target = "hallName", source = "session.hall.name")
-	@Mapping(target = "paymentStatus", source = "payment.status")
 	@Mapping(target = "liqpayOrderId", source = "payment.liqpayOrderId")
 	@Mapping(target = "bookedSeats", source = "bookedSeats")
 	BookingResponse toBookingResponse(Booking booking);
