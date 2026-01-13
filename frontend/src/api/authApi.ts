@@ -26,7 +26,6 @@ export const authApi = {
         return response.json();
     },
 
-    // Змінюємо тип повернення на User (з auth.ts)
     register: async (userData: RegisterRequest): Promise<User> => {
         const response = await fetch(`${API_URL}/register`, {
             method: 'POST',
