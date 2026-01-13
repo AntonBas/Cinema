@@ -1,29 +1,53 @@
 import type { PageResponse, SearchParams } from '@/types/pagination';
 
 export const DEFAULT_PAGE = 0;
-export const DEFAULT_PAGE_SIZE = 10;
+export const DEFAULT_PAGE_SIZE = 12;
+export const DEFAULT_PAGE_SIZE_SMALL = 8;
+export const DEFAULT_PAGE_SIZE_MEDIUM = 16;
+export const DEFAULT_PAGE_SIZE_LARGE = 24;
+export const DEFAULT_PAGE_SIZE_ADMIN = 20;
 export const DEFAULT_SORT = 'id,desc';
 
-export const createSearchParams = (params: SearchParams): URLSearchParams => {
+export const getDefaultPageSize = (context: 'grid' | 'list' | 'table' | 'admin' | 'small' | 'medium' | 'large' = 'grid'): number => {
+    switch (context) {
+        case 'small':
+            return DEFAULT_PAGE_SIZE_SMALL;
+        case 'medium':
+            return DEFAULT_PAGE_SIZE_MEDIUM;
+        case 'large':
+            return DEFAULT_PAGE_SIZE_LARGE;
+        case 'admin':
+        case 'table':
+            return DEFAULT_PAGE_SIZE_ADMIN;
+        case 'grid':
+            return DEFAULT_PAGE_SIZE;
+        case 'list':
+            return DEFAULT_PAGE_SIZE_MEDIUM;
+        default:
+            return DEFAULT_PAGE_SIZE;
+    }
+};
+
+export const createSearchParams = (params: SearchParams, context?: 'grid' | 'list' | 'table' | 'admin' | 'small' | 'medium' | 'large'): URLSearchParams => {
     const searchParams = new URLSearchParams();
 
     const page = params.page !== undefined ? Math.max(0, params.page) : DEFAULT_PAGE;
     searchParams.append('page', page.toString());
 
-    const size = params.size !== undefined ? Math.max(1, params.size) : DEFAULT_PAGE_SIZE;
+    const defaultSize = context ? getDefaultPageSize(context) : DEFAULT_PAGE_SIZE;
+    const size = params.size !== undefined ? Math.max(1, params.size) : defaultSize;
     searchParams.append('size', size.toString());
 
     if (params.sort) {
         searchParams.append('sort', params.sort);
     }
 
-    if (params.query) {
-        searchParams.append('query', params.query);
-        searchParams.append('search', params.query);
+    if (params.search) {
+        searchParams.append('search', params.search);
     }
 
     Object.keys(params).forEach(key => {
-        if (!['page', 'size', 'sort', 'query', 'search'].includes(key)) {
+        if (!['page', 'size', 'sort', 'search'].includes(key)) {
             const value = params[key];
             if (value !== undefined && value !== null && value !== '') {
                 if (Array.isArray(value)) {
@@ -38,8 +62,8 @@ export const createSearchParams = (params: SearchParams): URLSearchParams => {
     return searchParams;
 };
 
-export const buildPagedUrl = (baseUrl: string, params: SearchParams = {}): string => {
-    const searchParams = createSearchParams(params);
+export const buildPagedUrl = (baseUrl: string, params: SearchParams = {}, context?: string): string => {
+    const searchParams = createSearchParams(params, context as any);
     const queryString = searchParams.toString();
     return queryString ? `${baseUrl}?${queryString}` : baseUrl;
 };

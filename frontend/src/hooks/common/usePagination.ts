@@ -5,21 +5,25 @@ interface UsePaginationReturn {
     params: SearchParams;
     setPage: (page: number) => void;
     setSize: (size: number) => void;
-    setQuery: (query: string) => void;
+    setSearch: (search: string) => void;
     setSort: (sort: string) => void;
     setFilter: (key: string, value: any) => void;
     removeFilter: (key: string) => void;
     reset: () => void;
+    goToNextPage: () => void;
+    goToPrevPage: () => void;
+    goToFirstPage: () => void;
 }
 
 export const usePagination = (
-    initialParams: Partial<SearchParams> = {}
+    initialParams: Partial<SearchParams> = {},
+    defaultPageSize: number = 12
 ): UsePaginationReturn => {
     const [params, setParams] = useState<SearchParams>({
         page: initialParams.page ?? 0,
-        size: initialParams.size ?? 10,
+        size: initialParams.size ?? defaultPageSize,
         sort: initialParams.sort,
-        query: initialParams.query,
+        search: initialParams.search,
         ...initialParams
     });
 
@@ -38,10 +42,10 @@ export const usePagination = (
         }));
     }, []);
 
-    const setQuery = useCallback((query: string) => {
+    const setSearch = useCallback((search: string) => {
         setParams(prev => ({
             ...prev,
-            query: query.trim() || undefined,
+            search: search.trim() || undefined,
             page: 0
         }));
     }, []);
@@ -72,18 +76,39 @@ export const usePagination = (
     const reset = useCallback(() => {
         setParams({
             page: 0,
-            size: 10
+            size: defaultPageSize
         });
+    }, [defaultPageSize]);
+
+    const goToNextPage = useCallback(() => {
+        setParams(prev => ({
+            ...prev,
+            page: (prev.page ?? 0) + 1
+        }));
     }, []);
+
+    const goToPrevPage = useCallback(() => {
+        setParams(prev => ({
+            ...prev,
+            page: Math.max(0, (prev.page ?? 0) - 1)
+        }));
+    }, []);
+
+    const goToFirstPage = useCallback(() => {
+        setPage(0);
+    }, [setPage]);
 
     return {
         params,
         setPage,
         setSize,
-        setQuery,
+        setSearch,
         setSort,
         setFilter,
         removeFilter,
-        reset
+        reset,
+        goToNextPage,
+        goToPrevPage,
+        goToFirstPage
     };
 };
