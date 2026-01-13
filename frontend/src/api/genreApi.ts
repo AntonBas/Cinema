@@ -1,6 +1,7 @@
 import type { GenreResponse, GenreRequest } from '@/types/genre';
-import type { PageResponse } from '@/types/pagination';
+import type { PageResponse, SearchParams } from '@/types/pagination';
 import { handleApiError } from '@/utils/apiErrorHandler';
+import { buildPagedUrl } from '@/utils/paginationUtils';
 
 const PUBLIC_URL = '/api/genres';
 const ADMIN_URL = '/api/admin/genres';
@@ -38,23 +39,14 @@ export const genreApi = {
     getById: (id: number): Promise<GenreResponse> =>
       fetchApi<GenreResponse>(`${PUBLIC_URL}/${id}`, {}, true),
 
-    getAllPaginated: (page?: number, size: number = 12, sort: string = 'name'): Promise<PageResponse<GenreResponse>> => {
-      const params = new URLSearchParams();
-      if (page !== undefined) params.append('page', page.toString());
-      params.append('size', size.toString());
-      params.append('sort', sort);
-
-      return fetchApi<PageResponse<GenreResponse>>(`${PUBLIC_URL}?${params}`, {}, true);
+    getAllPaginated: (params?: SearchParams): Promise<PageResponse<GenreResponse>> => {
+      const url = buildPagedUrl(PUBLIC_URL, params, 'grid');
+      return fetchApi<PageResponse<GenreResponse>>(url, {}, true);
     },
 
-    search: (query?: string, page?: number, size: number = 12): Promise<PageResponse<GenreResponse>> => {
-      const params = new URLSearchParams();
-      if (query) params.append('query', query);
-      if (page !== undefined) params.append('page', page.toString());
-      params.append('size', size.toString());
-      params.append('sort', 'name');
-
-      return fetchApi<PageResponse<GenreResponse>>(`${PUBLIC_URL}/search?${params}`, {}, true);
+    search: (params?: SearchParams & { search?: string }): Promise<PageResponse<GenreResponse>> => {
+      const url = buildPagedUrl(`${PUBLIC_URL}/search`, params, 'grid');
+      return fetchApi<PageResponse<GenreResponse>>(url, {}, true);
     },
 
     getAll: (): Promise<GenreResponse[]> =>

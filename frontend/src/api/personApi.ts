@@ -1,6 +1,7 @@
 import type { PersonResponse, PersonRequest, PersonRole, QuickCreatePersonRequest } from '@/types/person';
-import type { PageResponse } from '@/types/pagination';
+import type { PageResponse, SearchParams } from '@/types/pagination';
 import { handleApiError } from '@/utils/apiErrorHandler';
+import { buildPagedUrl } from '@/utils/paginationUtils';
 
 const PUBLIC_URL = '/api/persons';
 const ADMIN_URL = '/api/admin/persons';
@@ -38,24 +39,14 @@ export const personApi = {
     getById: (id: number): Promise<PersonResponse> =>
       fetchApi<PersonResponse>(`${PUBLIC_URL}/${id}`, {}, true),
 
-    search: (query?: string, role?: PersonRole, page?: number, size: number = 12): Promise<PageResponse<PersonResponse>> => {
-      const params = new URLSearchParams();
-      if (query) params.append('query', query);
-      if (role) params.append('role', role);
-      if (page !== undefined) params.append('page', page.toString());
-      params.append('size', size.toString());
-      params.append('sort', 'name');
-
-      return fetchApi<PageResponse<PersonResponse>>(`${PUBLIC_URL}/search?${params}`, {}, true);
+    search: (params?: SearchParams & { role?: PersonRole; search?: string }): Promise<PageResponse<PersonResponse>> => {
+      const url = buildPagedUrl(`${PUBLIC_URL}/search`, params, 'grid');
+      return fetchApi<PageResponse<PersonResponse>>(url, {}, true);
     },
 
-    getByRole: (role: PersonRole, page?: number, size: number = 12): Promise<PageResponse<PersonResponse>> => {
-      const params = new URLSearchParams();
-      if (page !== undefined) params.append('page', page.toString());
-      params.append('size', size.toString());
-      params.append('sort', 'name');
-
-      return fetchApi<PageResponse<PersonResponse>>(`${PUBLIC_URL}/role/${role}?${params}`, {}, true);
+    getByRole: (role: PersonRole, params?: SearchParams): Promise<PageResponse<PersonResponse>> => {
+      const url = buildPagedUrl(`${PUBLIC_URL}/role/${role}`, params, 'grid');
+      return fetchApi<PageResponse<PersonResponse>>(url, {}, true);
     },
   },
 
