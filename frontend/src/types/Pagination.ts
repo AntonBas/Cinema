@@ -7,7 +7,6 @@ export interface PageResponse<T> {
     first: boolean;
     last: boolean;
     empty: boolean;
-    currentPage?: number;
 }
 
 export interface SearchParams {
