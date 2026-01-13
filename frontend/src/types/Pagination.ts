@@ -7,6 +7,7 @@ export interface PageResponse<T> {
     first: boolean;
     last: boolean;
     empty: boolean;
+    numberOfElements?: number;
 }
 
 export interface SearchParams {
@@ -14,4 +15,5 @@ export interface SearchParams {
     size?: number;
     sort?: string;
     query?: string;
+    [key: string]: any;
 }
