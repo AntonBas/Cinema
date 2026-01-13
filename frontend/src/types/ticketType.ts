@@ -1,4 +1,11 @@
-export type TicketTypeCategory = 'STANDARD' | 'DISCOUNT' | 'VIP' | 'FAMILY';
+export type TicketTypeCategory =
+    | 'STANDARD'
+    | 'CHILD'
+    | 'STUDENT'
+    | 'DISABLED'
+    | 'MILITARY'
+    | 'SENIOR'
+    | 'SPECIAL';
 
 export interface TicketTypeCreateRequest {
     code: string;
@@ -48,9 +55,12 @@ export interface TicketTypeSimpleResponse {
 
 export const TicketTypeCategoryDisplay: Record<TicketTypeCategory, string> = {
     STANDARD: 'Standard',
-    DISCOUNT: 'Discount',
-    VIP: 'VIP',
-    FAMILY: 'Family'
+    CHILD: 'Child',
+    STUDENT: 'Student',
+    DISABLED: 'Disabled',
+    MILITARY: 'Military',
+    SENIOR: 'Senior',
+    SPECIAL: 'Special'
 };
 
 export interface TicketTypesListResponse {

@@ -3,7 +3,7 @@ import type {
     TicketTypeSimpleResponse,
     TicketTypeCreateRequest,
     TicketTypeUpdateRequest
-} from '@/types/ticket-type';
+} from '@/types/ticketType';
 import { handleApiError } from '@/utils/apiErrorHandler';
 
 const PUBLIC_URL = '/api/ticket-types';
