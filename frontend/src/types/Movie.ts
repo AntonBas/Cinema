@@ -34,12 +34,6 @@ export const MovieStatusDisplay: Record<MovieStatus, string> = {
   ARCHIVED: 'Archived'
 };
 
-export const MovieStatusColors: Record<MovieStatus, string> = {
-  UPCOMING: 'info',
-  CURRENT: 'success',
-  ARCHIVED: 'default'
-};
-
 export const getAgeRatingDisplay = (rating: AgeRating): string => {
   return AgeRatingDisplay[rating];
 };
@@ -123,36 +117,4 @@ export interface MovieSessionSearchResponse {
   title: string;
   releaseYear: number;
   durationMinutes: number;
-}
-
-export interface MoviesListResponse {
-  content: MovieCardResponse[];
-  totalElements: number;
-  totalPages: number;
-  size: number;
-  number: number;
-}
-
-export interface MovieFilter {
-  searchTerm?: string;
-  status?: MovieStatus;
-  ageRating?: AgeRating;
-  minDuration?: number;
-  maxDuration?: number;
-  releaseDateFrom?: string;
-  releaseDateTo?: string;
-  genreIds?: number[];
-  sortBy?: 'title' | 'releaseDate' | 'duration' | 'status';
-  sortDirection?: 'ASC' | 'DESC';
-  page?: number;
-  size?: number;
-}
-
-export interface MovieStatsResponse {
-  movieId: number;
-  title: string;
-  totalSessions: number;
-  totalTicketsSold: number;
-  totalRevenue: string;
-  averageOccupancy: number;
 }

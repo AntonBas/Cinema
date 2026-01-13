@@ -121,8 +121,3 @@ export const VerificationStatusDisplay: Record<VerificationStatus, string> = {
     VERIFIED: 'Verified',
     NOT_VERIFIED: 'Not Verified'
 };
-
-export const VerificationStatusColors: Record<VerificationStatus, string> = {
-    VERIFIED: 'success',
-    NOT_VERIFIED: 'warning'
-};

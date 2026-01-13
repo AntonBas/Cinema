@@ -41,19 +41,3 @@ export const PromotionStatusDisplay: Record<string, string> = {
     'upcoming': 'Upcoming',
     'expired': 'Expired'
 };
-
-export interface PromotionsListResponse {
-    content: PromotionResponse[];
-    totalElements: number;
-    totalPages: number;
-    size: number;
-    number: number;
-}
-
-export interface UserPromotionsListResponse {
-    content: UserPromotionResponse[];
-    totalElements: number;
-    totalPages: number;
-    size: number;
-    number: number;
-}

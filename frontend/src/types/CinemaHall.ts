@@ -39,26 +39,3 @@ export interface HallLayoutResponse {
 export interface CinemaHallUpdateRequest {
     name?: string;
 }
-
-export interface CinemaHallStatsResponse extends CinemaHallResponse {
-    sessionsCount?: number;
-    occupancyRate?: number;
-    averageRevenue?: string;
-    lastSessionDate?: string;
-}
-
-export interface CinemaHallsListResponse {
-    content: CinemaHallResponse[];
-    totalElements: number;
-    totalPages: number;
-    size: number;
-    number: number;
-}
-
-export interface HallSearchRequest {
-    name?: string;
-    minCapacity?: number;
-    maxCapacity?: number;
-    page?: number;
-    size?: number;
-}

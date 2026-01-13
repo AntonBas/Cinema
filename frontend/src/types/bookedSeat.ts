@@ -39,12 +39,3 @@ export const BookedSeatStatusDisplay: Record<BookedSeatStatus, string> = {
     EXPIRED: 'Expired',
     CHECKED_IN: 'Checked In'
 };
-
-export const BookedSeatStatusColors: Record<BookedSeatStatus, string> = {
-    TEMPORARY: 'default',
-    PENDING: 'warning',
-    CONFIRMED: 'success',
-    CANCELLED: 'error',
-    EXPIRED: 'default',
-    CHECKED_IN: 'info'
-};

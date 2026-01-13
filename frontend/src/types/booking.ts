@@ -15,6 +15,7 @@ export interface BookingResponse {
     id: number;
     bookingNumber: string;
     status: BookingStatus;
+    sessionId: number;
     sessionTime: string;
     movieTitle: string;
     hallName: string;
@@ -45,21 +46,3 @@ export const BookingStatusDisplay: Record<BookingStatus, string> = {
     FAILED: 'Failed',
     REFUNDED: 'Refunded'
 };
-
-export const BookingStatusColors: Record<BookingStatus, string> = {
-    DRAFT: 'default',
-    PENDING: 'warning',
-    CONFIRMED: 'success',
-    CANCELLED: 'error',
-    EXPIRED: 'default',
-    FAILED: 'error',
-    REFUNDED: 'info'
-};
-
-export interface BookingsListResponse {
-    content: BookingResponse[];
-    totalElements: number;
-    totalPages: number;
-    size: number;
-    number: number;
-}

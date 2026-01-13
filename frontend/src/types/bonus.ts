@@ -67,23 +67,3 @@ export const BonusTransactionTypeDisplay: Record<BonusTransactionType, string> =
     REFUND_RETURN: 'Refund Return',
     BOOKING_CANCEL: 'Booking Cancel'
 };
-
-export const BonusTransactionTypeColors: Record<BonusTransactionType, string> = {
-    WELCOME_BONUS: 'success',
-    BIRTHDAY_BONUS: 'primary',
-    PROMOTION_BONUS: 'info',
-    BOOKING_SPEND: 'warning',
-    PAYMENT_ACCRUAL: 'success',
-    REFUND_RETURN: 'info',
-    BOOKING_CANCEL: 'error'
-};
-
-export type BonusTransactionListResponse = BonusTransactionResponse[];
-
-export interface BonusRulesListResponse {
-    content: BonusRulesResponse[];
-    totalElements: number;
-    totalPages: number;
-    size: number;
-    number: number;
-}

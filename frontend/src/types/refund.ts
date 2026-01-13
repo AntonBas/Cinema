@@ -120,14 +120,6 @@ export const RefundStatusDisplay: Record<RefundStatus, string> = {
     CANCELLED: 'Cancelled'
 };
 
-export const RefundStatusColors: Record<RefundStatus, string> = {
-    PENDING: 'warning',
-    APPROVED: 'info',
-    REJECTED: 'error',
-    PROCESSED: 'success',
-    CANCELLED: 'default'
-};
-
 export const RefundItemStatusDisplay: Record<RefundItemStatus, string> = {
     PENDING: 'Pending',
     APPROVED: 'Approved',
@@ -135,11 +127,3 @@ export const RefundItemStatusDisplay: Record<RefundItemStatus, string> = {
     PROCESSED: 'Processed',
     CANCELLED: 'Cancelled'
 };
-
-export interface RefundsListResponse {
-    content: RefundDetailsResponse[];
-    totalElements: number;
-    totalPages: number;
-    size: number;
-    number: number;
-}

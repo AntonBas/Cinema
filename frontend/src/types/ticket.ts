@@ -23,20 +23,3 @@ export const TicketStatusDisplay: Record<TicketStatus, string> = {
     REFUNDED: 'Refunded',
     EXPIRED: 'Expired'
 };
-
-export const TicketStatusColors: Record<TicketStatus, string> = {
-    PENDING: 'warning',
-    ACTIVE: 'success',
-    USED: 'info',
-    CANCELLED: 'error',
-    REFUNDED: 'default',
-    EXPIRED: 'default'
-};
-
-export interface TicketsListResponse {
-    content: TicketResponse[];
-    totalElements: number;
-    totalPages: number;
-    size: number;
-    number: number;
-}

@@ -52,22 +52,3 @@ export const PaymentStatusDisplay: Record<PaymentStatus, string> = {
     REFUNDED: 'Refunded',
     PARTIALLY_REFUNDED: 'Partially Refunded'
 };
-
-export const PaymentStatusColors: Record<PaymentStatus, string> = {
-    PENDING: 'warning',
-    PROCESSING: 'info',
-    SUCCESS: 'success',
-    FAILED: 'error',
-    CANCELLED: 'error',
-    EXPIRED: 'default',
-    REFUNDED: 'info',
-    PARTIALLY_REFUNDED: 'warning'
-};
-
-export interface PaymentsListResponse {
-    content: PaymentResponse[];
-    totalElements: number;
-    totalPages: number;
-    size: number;
-    number: number;
-}

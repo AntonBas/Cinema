@@ -62,11 +62,3 @@ export const TicketTypeCategoryDisplay: Record<TicketTypeCategory, string> = {
     SENIOR: 'Senior',
     SPECIAL: 'Special'
 };
-
-export interface TicketTypesListResponse {
-    content: TicketTypeResponse[];
-    totalElements: number;
-    totalPages: number;
-    size: number;
-    number: number;
-}

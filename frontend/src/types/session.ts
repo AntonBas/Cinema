@@ -7,13 +7,6 @@ export const SessionStatusDisplay: Record<CinemaSessionStatus, string> = {
     CANCELLED: 'Cancelled'
 };
 
-export const SessionStatusColors: Record<CinemaSessionStatus, string> = {
-    SCHEDULED: 'info',
-    ONGOING: 'success',
-    COMPLETED: 'default',
-    CANCELLED: 'error'
-};
-
 export interface SessionCreateRequest {
     startTime: string;
     basePrice: string;
@@ -82,24 +75,6 @@ export interface SessionDetailResponse {
     isAvailableForBooking: boolean;
 }
 
-export interface SessionFilters {
-    date?: string;
-    hallId?: number;
-    movieId?: number;
-    days?: number;
-}
-
-export interface SessionFilter {
-    search?: string;
-    movieId?: number;
-    hallId?: number;
-    status?: CinemaSessionStatus;
-    startDate?: string;
-    endDate?: string;
-    page?: number;
-    size?: number;
-}
-
 export interface ScheduleDay {
     date: string;
     sessions: SessionScheduleResponse[];
@@ -110,30 +85,4 @@ export interface ScheduleMovie {
     movieTitle: string;
     moviePosterFileName: string | null;
     sessions: SessionScheduleResponse[];
-}
-
-export interface SessionsListResponse {
-    content: SessionAdminResponse[];
-    totalElements: number;
-    totalPages: number;
-    size: number;
-    number: number;
-}
-
-export interface ScheduleListResponse {
-    content: SessionScheduleResponse[];
-    totalElements: number;
-    totalPages: number;
-    size: number;
-    number: number;
-}
-
-export interface SessionStats {
-    totalSessions: number;
-    upcomingSessions: number;
-    ongoingSessions: number;
-    completedSessions: number;
-    cancelledSessions: number;
-    totalRevenue: string;
-    averageOccupancy: number;
 }

@@ -19,13 +19,6 @@ export const SeatTypePriceMultiplier: Record<SeatType, number> = {
     COUPLE: 1.8
 };
 
-export const SeatTypeColors: Record<SeatType, string> = {
-    STANDARD: 'default',
-    VIP: 'primary',
-    DISABLED: 'warning',
-    COUPLE: 'success'
-};
-
 export const isPremiumSeat = (seatType: SeatType): boolean => {
     return seatType === SeatType.VIP || seatType === SeatType.COUPLE;
 };
