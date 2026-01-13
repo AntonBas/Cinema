@@ -1,4 +1,4 @@
-import type { SeatAvailabilityResponse } from '@/types/bookedSeat';
+import type { SeatAvailabilityResponse } from '@/types/seatAvailability';
 import { handleApiError } from '@/utils/apiErrorHandler';
 
 const BASE_URL = '/api/sessions';
