@@ -1,7 +1,7 @@
 export * from './api';
 export * from './auth';
 export * from './bonus';
-export * from './booked-seat';
+export * from './bookedSeat';
 export * from './booking';
 export * from './cinemaHall';
 export * from './genre';
@@ -14,5 +14,5 @@ export * from './refund';
 export * from './seat';
 export * from './session';
 export * from './ticket';
-export * from './ticket-type';
+export * from './ticketType';
 export * from './user';
