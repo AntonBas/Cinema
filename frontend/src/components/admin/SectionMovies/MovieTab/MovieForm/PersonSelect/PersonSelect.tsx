@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react';
-import type { PersonResponse } from '@/types/person';
-import { PersonRole } from '@/types/person';
+import type { PersonResponse, PersonRole } from '@/types/person';
 import type { NotificationType } from '@/hooks/common/useNotification';
 import { usePersonSelect } from '@/hooks/features/persons/usePersonSelect';
 import styles from './PersonSelect.module.css';
@@ -33,7 +32,11 @@ export const PersonSelect: React.FC<PersonSelectProps> = ({
         dropdownRef,
         showAddOption,
         handleAddNew
-    } = usePersonSelect({ selectedIds, role, showNotification });
+    } = usePersonSelect({
+        selectedIds,
+        role,
+        showNotification
+    });
 
     const displayPersons = useMemo(() => {
         return selectedPersons.length > 0 ? selectedPersons : allSelectedPersons;
@@ -80,8 +83,9 @@ export const PersonSelect: React.FC<PersonSelectProps> = ({
                             {person.name}
                             <button
                                 type="button"
-                                onClick={() => handleRemovePerson(person.id!)}
+                                onClick={() => handleRemovePerson(person.id)}
                                 className={styles.removeTag}
+                                title={`Remove ${person.name}`}
                             >
                                 ×
                             </button>
@@ -107,13 +111,13 @@ export const PersonSelect: React.FC<PersonSelectProps> = ({
                         <label key={person.id} className={styles.option}>
                             <input
                                 type="checkbox"
-                                checked={selectedIds.includes(person.id!)}
-                                onChange={() => handleSelectPerson(person.id!)}
+                                checked={selectedIds.includes(person.id)}
+                                onChange={() => handleSelectPerson(person.id)}
                             />
                             <span className={styles.checkmark}></span>
                             <span className={styles.optionLabel}>
                                 {person.name}
-                                {selectedIds.includes(person.id!) && (
+                                {selectedIds.includes(person.id) && (
                                     <span className={styles.alreadySelected}>(selected)</span>
                                 )}
                             </span>

@@ -7,11 +7,14 @@ export const useMovieSessionSearch = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const searchMoviesForSession = useCallback(async (sessionDate: string, search: string = '') => {
+    const searchMoviesForSession = useCallback(async (
+        sessionDate: string,
+        search: string = ''
+    ): Promise<MovieSessionSearchResponse[]> => {
         setLoading(true);
         setError(null);
         try {
-            const response = await movieApi.searchMoviesForSessionCreation(sessionDate, search);
+            const response = await movieApi.admin.searchForSession(sessionDate, search);
             setMovies(response);
             return response;
         } catch (err) {

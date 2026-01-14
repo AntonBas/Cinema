@@ -26,7 +26,7 @@ export const MovieCard: React.FC<MovieCardProps> = ({
     if (movie.posterUrl) {
       newPosterUrl = movie.posterUrl;
     } else if (movie.id) {
-      newPosterUrl = movieApi.getMoviePosterUrlWithTimestamp?.(movie.id) || movieApi.getMoviePosterUrl(movie.id);
+      newPosterUrl = movieApi.public.getPosterUrl(movie.id);
     }
 
     setPosterUrl(newPosterUrl);

@@ -1,17 +1,17 @@
 import { useState, useEffect } from 'react';
 import { movieApi } from '@/api/movieApi';
-import type { MovieDetailResponse } from '@/types/movie';
+import type { MovieCardResponse } from '@/types/movie';
 
 export const useMovies = () => {
-    const [movies, setMovies] = useState<MovieDetailResponse[]>([]);
+    const [movies, setMovies] = useState<MovieCardResponse[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const loadMovies = async () => {
+    const loadMovies = async (): Promise<MovieCardResponse[]> => {
         setLoading(true);
         setError(null);
         try {
-            const response = await movieApi.getMoviesPaginated(0, 100);
+            const response = await movieApi.public.getMoviesPaginated(0, 100);
             setMovies(response.content);
             return response.content;
         } catch (err) {

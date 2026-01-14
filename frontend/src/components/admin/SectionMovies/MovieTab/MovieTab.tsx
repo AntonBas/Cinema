@@ -1,10 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import type { MovieDetailResponse, MovieCardResponse } from '@/types/movie';
-import { MovieStatus } from '@/types/movie';
 import { movieApi } from '@/api/movieApi';
 import { useMovieMutation } from '@/hooks/features/movies';
 import { useNotification } from '@/hooks/common/useNotification';
-import { usePagination } from '@/hooks/common/usePagination';
 import { MovieList } from './MovieList';
 import { MovieForm } from './MovieForm';
 import {
@@ -12,7 +10,8 @@ import {
   Notification,
   Button,
   SearchInput,
-  Badge
+  Badge,
+  Pagination
 } from '@/components/ui';
 import styles from './MovieTab.module.css';
 
@@ -26,96 +25,86 @@ export const MovieTab: React.FC = () => {
   const [activeTab, setActiveTab] = useState<MovieTabType>('CURRENT');
   const [searchQuery, setSearchQuery] = useState('');
   const [movies, setMovies] = useState<MovieCardResponse[]>([]);
-  const [allMovies, setAllMovies] = useState<MovieCardResponse[]>([]);
+  const [pagination, setPagination] = useState<any>(null);
   const [loading, setLoading] = useState(false);
-  const [, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [pageSize] = useState(12);
+  const [tabStats, setTabStats] = useState({
+    CURRENT: 0,
+    UPCOMING: 0,
+    ARCHIVED: 0
+  });
 
-  const { reset: resetPagination } = usePagination();
   const { deleteMovie, loading: mutationLoading, error: mutationError } = useMovieMutation();
   const { notifications, showNotification, hideNotification } = useNotification();
 
-  const loadAllMovies = useCallback(async () => {
+  const loadMovies = useCallback(async () => {
     setLoading(true);
-    setError(null);
     try {
-      const response = await movieApi.getCurrentlyShowingMovies();
-      const upcoming = await movieApi.getUpcomingMovies();
-      const archived = await movieApi.getArchivedMovies();
+      let response;
 
-      const all = [...response, ...upcoming, ...archived];
-      setAllMovies(all);
-      return all;
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to load movies';
-      setError(message);
-      showNotification(message, 'error');
-    } finally {
-      setLoading(false);
-    }
-  }, [showNotification]);
-
-  const loadMoviesByStatus = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      let response: MovieCardResponse[];
-      switch (activeTab) {
-        case 'CURRENT':
-          response = await movieApi.getCurrentlyShowingMovies();
-          break;
-        case 'UPCOMING':
-          response = await movieApi.getUpcomingMovies();
-          break;
-        case 'ARCHIVED':
-          response = await movieApi.getArchivedMovies();
-          break;
-        default:
-          response = [];
+      if (searchQuery.trim()) {
+        response = await movieApi.public.getFilteredMovies(
+          searchQuery,
+          activeTab === 'CURRENT' ? 'CURRENT' :
+            activeTab === 'UPCOMING' ? 'UPCOMING' :
+              'ARCHIVED',
+          currentPage,
+          pageSize
+        );
+      } else {
+        switch (activeTab) {
+          case 'CURRENT':
+            response = await movieApi.public.getCurrentlyShowingPaginated(currentPage, pageSize);
+            break;
+          case 'UPCOMING':
+            response = await movieApi.public.getUpcomingPaginated(currentPage, pageSize);
+            break;
+          case 'ARCHIVED':
+            response = await movieApi.admin.getArchivedMovies(currentPage, pageSize);
+            break;
+          default:
+            response = { content: [], totalElements: 0, totalPages: 0, size: pageSize, number: 0, first: true, last: true, empty: true };
+        }
       }
-      setMovies(response);
+
+      setMovies(response.content);
+      setPagination(response);
     } catch (err) {
       const message = err instanceof Error ? err.message : `Failed to load ${activeTab.toLowerCase()} movies`;
-      setError(message);
       showNotification(message, 'error');
     } finally {
       setLoading(false);
     }
-  }, [activeTab, showNotification]);
+  }, [activeTab, currentPage, searchQuery, pageSize, showNotification]);
 
-  const searchMovies = useCallback(async (query: string) => {
-    if (!query.trim()) {
-      await loadMoviesByStatus();
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
+  const loadTabStats = useCallback(async () => {
     try {
-      const filteredMovies = allMovies.filter(movie =>
-        movie.title.toLowerCase().includes(query.toLowerCase()) ||
-        movie.slug.toLowerCase().includes(query.toLowerCase())
-      );
-      setMovies(filteredMovies);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to search movies';
-      setError(message);
-      showNotification(message, 'error');
-    } finally {
-      setLoading(false);
+      const [currentResponse, upcomingResponse] = await Promise.all([
+        movieApi.public.getCurrentlyShowingPaginated(0, 1),
+        movieApi.public.getUpcomingPaginated(0, 1)
+      ]);
+
+      const archivedResponse = await movieApi.admin.getArchivedMovies(0, 1);
+
+      return {
+        CURRENT: currentResponse.totalElements,
+        UPCOMING: upcomingResponse.totalElements,
+        ARCHIVED: archivedResponse.totalElements
+      };
+    } catch (error) {
+      console.error('Failed to load tab stats:', error);
+      return { CURRENT: 0, UPCOMING: 0, ARCHIVED: 0 };
     }
-  }, [allMovies, loadMoviesByStatus, showNotification]);
+  }, []);
 
   useEffect(() => {
-    loadAllMovies();
-  }, [loadAllMovies]);
+    loadMovies();
+  }, [loadMovies]);
 
   useEffect(() => {
-    if (searchQuery) {
-      searchMovies(searchQuery);
-    } else {
-      loadMoviesByStatus();
-    }
-  }, [searchQuery, activeTab, searchMovies, loadMoviesByStatus]);
+    loadTabStats().then(stats => setTabStats(stats));
+  }, [loadTabStats]);
 
   useEffect(() => {
     if (mutationError) {
@@ -126,17 +115,21 @@ export const MovieTab: React.FC = () => {
   const handleTabChange = (tab: MovieTabType) => {
     setActiveTab(tab);
     setSearchQuery('');
-    resetPagination();
+    setCurrentPage(0);
   };
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
-    resetPagination();
+    setCurrentPage(0);
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
   };
 
   const handleEdit = async (movie: MovieCardResponse) => {
     try {
-      const fullMovie = await movieApi.getMovieById(movie.id);
+      const fullMovie = await movieApi.public.getById(movie.id);
       setEditingMovie(fullMovie);
       setIsModalOpen(true);
     } catch (error) {
@@ -156,8 +149,8 @@ export const MovieTab: React.FC = () => {
     try {
       await deleteMovie(deletingMovie.id);
       showNotification('Movie deleted successfully!', 'success');
-      await loadAllMovies();
-      await loadMoviesByStatus();
+      await loadMovies();
+      await loadTabStats().then(stats => setTabStats(stats));
     } catch (error) {
       console.error('Failed to delete movie:', error);
     } finally {
@@ -174,8 +167,8 @@ export const MovieTab: React.FC = () => {
   const handleFormSuccess = () => {
     setIsModalOpen(false);
     setEditingMovie(null);
-    loadAllMovies();
-    loadMoviesByStatus();
+    loadMovies();
+    loadTabStats().then(stats => setTabStats(stats));
     showNotification(
       editingMovie ? 'Movie updated successfully!' : 'Movie created successfully!',
       'success'
@@ -192,39 +185,22 @@ export const MovieTab: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const getTabStats = () => {
-    return {
-      CURRENT: allMovies.filter(m => m.status === MovieStatus.CURRENT).length,
-      UPCOMING: allMovies.filter(m => m.status === MovieStatus.UPCOMING).length,
-      ARCHIVED: allMovies.filter(m => m.status === MovieStatus.ARCHIVED).length
-    };
+  const getDisplayRange = () => {
+    if (!pagination) return { start: 0, end: 0, total: 0 };
+
+    const start = (currentPage * pageSize) + 1;
+    const end = Math.min((currentPage + 1) * pageSize, pagination.totalElements);
+
+    return { start, end, total: pagination.totalElements };
   };
 
-  const tabStats = getTabStats();
-
-  const getTotalCount = () => {
-    switch (activeTab) {
-      case 'CURRENT':
-        return tabStats.CURRENT;
-      case 'UPCOMING':
-        return tabStats.UPCOMING;
-      case 'ARCHIVED':
-        return tabStats.ARCHIVED;
-      default:
-        return 0;
-    }
-  };
-
-  const totalCount = getTotalCount();
+  const { start, end, total } = getDisplayRange();
 
   return (
     <div className={styles.container}>
       <div className={styles.header}>
         <h2 className={styles.title}>Movie Management</h2>
-        <Button
-          onClick={handleAddNew}
-          variant="primary"
-        >
+        <Button onClick={handleAddNew} variant="primary">
           Add Movie
         </Button>
       </div>
@@ -267,9 +243,9 @@ export const MovieTab: React.FC = () => {
         </button>
       </div>
 
-      {movies.length > 0 && (
+      {pagination && !pagination.empty && (
         <div className={styles.resultsInfo}>
-          Showing {movies.length} of {totalCount} movies
+          Showing {start}-{end} of {total} movies
           {searchQuery && ` for "${searchQuery}"`}
         </div>
       )}
@@ -280,8 +256,23 @@ export const MovieTab: React.FC = () => {
           onEdit={handleEdit}
           onDelete={handleDeleteClick}
           loading={loading}
+          onCreateNew={handleAddNew}
         />
       </div>
+
+      {pagination && pagination.totalPages > 1 && (
+        <div className={styles.paginationContainer}>
+          <Pagination
+            currentPage={currentPage}
+            totalPages={pagination.totalPages}
+            totalElements={pagination.totalElements}
+            pageSize={pageSize}
+            onPageChange={handlePageChange}
+            variant="pages"
+            loading={loading}
+          />
+        </div>
+      )}
 
       {isModalOpen && (
         <MovieForm

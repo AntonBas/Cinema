@@ -1,7 +1,11 @@
 import { useState, useCallback } from 'react';
 import { movieApi } from '@/api/movieApi';
-import type { MovieCardResponse, MovieSessionSearchResponse, MovieFilter } from '@/types/movie';
-import type { PageResponse } from '@/types/pagination';
+import type {
+    MovieCardResponse,
+    MovieSessionSearchResponse,
+    MovieStatus
+} from '@/types/movie';
+import type { PageResponse, SearchParams } from '@/types/pagination';
 
 export const useMovieSearch = () => {
     const [movies, setMovies] = useState<MovieCardResponse[]>([]);
@@ -10,11 +14,18 @@ export const useMovieSearch = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const searchMovies = useCallback(async (filter: Partial<MovieFilter> = {}) => {
+    const searchMovies = useCallback(async (
+        params: SearchParams & { status?: MovieStatus } = {}
+    ): Promise<PageResponse<MovieCardResponse>> => {
         setLoading(true);
         setError(null);
         try {
-            const response = await movieApi.getFilteredMovies(filter);
+            const response = await movieApi.public.getFilteredMovies(
+                params.search,
+                params.status,
+                params.page,
+                params.size || 20
+            );
             setMovies(response.content);
             setPagination(response);
             return response;
@@ -27,11 +38,14 @@ export const useMovieSearch = () => {
         }
     }, []);
 
-    const searchMoviesForSession = useCallback(async (sessionDate: string, search: string = '') => {
+    const searchMoviesForSession = useCallback(async (
+        sessionDate: string,
+        search: string = ''
+    ): Promise<MovieSessionSearchResponse[]> => {
         setLoading(true);
         setError(null);
         try {
-            const response = await movieApi.searchMoviesForSessionCreation(sessionDate, search);
+            const response = await movieApi.admin.searchForSession(sessionDate, search);
             setSessionMovies(response);
             return response;
         } catch (err) {
@@ -43,11 +57,14 @@ export const useMovieSearch = () => {
         }
     }, []);
 
-    const getCurrentlyShowingPaginated = useCallback(async (page: number = 0, size: number = 12) => {
+    const getCurrentlyShowingPaginated = useCallback(async (
+        page: number = 0,
+        size: number = 12
+    ): Promise<PageResponse<MovieCardResponse>> => {
         setLoading(true);
         setError(null);
         try {
-            const response = await movieApi.getCurrentlyShowingMoviesPaginated(page, size);
+            const response = await movieApi.public.getCurrentlyShowingPaginated(page, size);
             setMovies(response.content);
             setPagination(response);
             return response;
@@ -60,11 +77,14 @@ export const useMovieSearch = () => {
         }
     }, []);
 
-    const getUpcomingPaginated = useCallback(async (page: number = 0, size: number = 12) => {
+    const getUpcomingPaginated = useCallback(async (
+        page: number = 0,
+        size: number = 12
+    ): Promise<PageResponse<MovieCardResponse>> => {
         setLoading(true);
         setError(null);
         try {
-            const response = await movieApi.getUpcomingMoviesPaginated(page, size);
+            const response = await movieApi.public.getUpcomingPaginated(page, size);
             setMovies(response.content);
             setPagination(response);
             return response;

@@ -1,9 +1,12 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import type { MovieDetailResponse, MovieFormData, MovieCreateRequest, MovieUpdateRequest } from '@/types/movie';
+import type {
+    MovieDetailResponse,
+    MovieCreateRequest,
+    MovieUpdateRequest,
+    AgeRating
+} from '@/types/movie';
 import type { GenreResponse } from '@/types/genre';
-import type { PersonResponse } from '@/types/person';
-import { AgeRating } from '@/types/movie';
-import { PersonRole } from '@/types/person';
+import type { PersonResponse, PersonRole } from '@/types/person';
 import { movieApi } from '@/api/movieApi';
 import { genreApi } from '@/api/genreApi';
 import type { NotificationType } from '@/hooks/common/useNotification';
@@ -18,6 +21,22 @@ interface MovieFormProps {
     onSuccess: () => void;
     onCancel: () => void;
     showNotification: (message: string, type?: NotificationType) => void;
+}
+
+interface MovieFormData {
+    title: string;
+    trailerUrl: string;
+    description: string;
+    durationMinutes: number;
+    releaseDate: Date | null;
+    endShowingDate: Date | null;
+    ageRating: AgeRating;
+    selectedGenres: number[];
+    selectedDirectors: number[];
+    selectedScreenwriters: number[];
+    selectedActors: number[];
+    posterFile?: File;
+    removePoster: boolean;
 }
 
 export const MovieForm: React.FC<MovieFormProps> = ({
@@ -43,7 +62,7 @@ export const MovieForm: React.FC<MovieFormProps> = ({
         durationMinutes: 0,
         releaseDate: null,
         endShowingDate: null,
-        ageRating: AgeRating.PEGI_12,
+        ageRating: 'PEGI_12',
         selectedGenres: [],
         selectedDirectors: [],
         selectedScreenwriters: [],
@@ -54,7 +73,7 @@ export const MovieForm: React.FC<MovieFormProps> = ({
 
     const loadGenres = useCallback(async () => {
         try {
-            const genresData = await genreApi.getAll();
+            const genresData = await genreApi.public.getAll();
             setGenres(genresData);
         } catch (error) {
             console.error('Error loading genres:', error);
@@ -186,7 +205,7 @@ export const MovieForm: React.FC<MovieFormProps> = ({
                     posterFile: formData.posterFile
                 };
 
-                await movieApi.updateMovie(movie.id, updateRequest);
+                await movieApi.admin.update(movie.id, updateRequest);
                 showNotification('Movie updated successfully!', 'success');
             } else {
                 if (!formData.posterFile) {
@@ -209,7 +228,7 @@ export const MovieForm: React.FC<MovieFormProps> = ({
                     posterFile: formData.posterFile
                 };
 
-                await movieApi.createMovie(createRequest);
+                await movieApi.admin.create(createRequest);
                 showNotification('Movie created successfully!', 'success');
             }
 
@@ -245,11 +264,11 @@ export const MovieForm: React.FC<MovieFormProps> = ({
     };
 
     const ageRatingOptions = [
-        { value: AgeRating.PEGI_3, label: 'PEGI 3' },
-        { value: AgeRating.PEGI_7, label: 'PEGI 7' },
-        { value: AgeRating.PEGI_12, label: 'PEGI 12' },
-        { value: AgeRating.PEGI_16, label: 'PEGI 16' },
-        { value: AgeRating.PEGI_18, label: 'PEGI 18' }
+        { value: 'PEGI_3', label: 'PEGI 3' },
+        { value: 'PEGI_7', label: 'PEGI 7' },
+        { value: 'PEGI_12', label: 'PEGI 12' },
+        { value: 'PEGI_16', label: 'PEGI 16' },
+        { value: 'PEGI_18', label: 'PEGI 18' }
     ];
 
     if (isLoadingData) {
@@ -434,7 +453,7 @@ export const MovieForm: React.FC<MovieFormProps> = ({
                         selectedIds={formData.selectedActors}
                         selectedPersons={selectedActors}
                         onChange={handleActorsChange}
-                        role={PersonRole.ACTOR}
+                        role={'ACTOR' as PersonRole}
                         placeholder="Search actors or add new..."
                         showNotification={showNotification}
                     />
@@ -446,7 +465,7 @@ export const MovieForm: React.FC<MovieFormProps> = ({
                         selectedIds={formData.selectedDirectors}
                         selectedPersons={selectedDirectors}
                         onChange={handleDirectorsChange}
-                        role={PersonRole.DIRECTOR}
+                        role={'DIRECTOR' as PersonRole}
                         placeholder="Search directors or add new..."
                         showNotification={showNotification}
                     />
@@ -458,7 +477,7 @@ export const MovieForm: React.FC<MovieFormProps> = ({
                         selectedIds={formData.selectedScreenwriters}
                         selectedPersons={selectedScreenwriters}
                         onChange={handleScreenwritersChange}
-                        role={PersonRole.SCREENWRITER}
+                        role={'SCREENWRITER' as PersonRole}
                         placeholder="Search screenwriters or add new..."
                         showNotification={showNotification}
                     />
