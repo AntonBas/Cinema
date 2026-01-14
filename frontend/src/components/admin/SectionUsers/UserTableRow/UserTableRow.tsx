@@ -1,6 +1,8 @@
+// src/components/admin/SectionUsers/UserTableRow/UserTableRow.tsx
 import React, { useState, useEffect } from 'react';
 import { Badge, Button, Select, ConfirmModal } from '@/components/ui';
-import { useAdminUserMutations } from '@/hooks/features';
+import { useAdminUserMutations } from '@/hooks/features/admin/useAdminUserMutations';
+import { useAdminUsers } from '@/hooks/features/admin/useAdminUsers';
 import { UserRoleDisplay, UserStatusDisplay, VerificationStatusDisplay, VerificationStatusColors } from '@/types/user';
 import type { AdminUser, UserRole, VerificationStatus } from '@/types/user';
 import { toDisplayFormat } from '@/utils/dateUtils';
@@ -19,12 +21,13 @@ export const UserTableRow: React.FC<UserTableRowProps> = ({ user, onUpdate, onEr
     const [selectedRole, setSelectedRole] = useState<UserRole>(user.userRole);
     const [currentUser, setCurrentUser] = useState<AdminUser>(user);
 
+    const { updateUserRoleLocal, updateUserStatusLocal, updateVerificationStatusLocal } = useAdminUsers();
+    const { updateUserRole, updateUserStatus, updateBirthDateVerification, isLoading } = useAdminUserMutations();
+
     useEffect(() => {
         setCurrentUser(user);
         setSelectedRole(user.userRole);
     }, [user]);
-
-    const { updateUserRole, updateUserStatus, updateBirthDateVerification, isLoading } = useAdminUserMutations();
 
     const handleRoleChange = async (value: string | number) => {
         const newRole = value as UserRole;
@@ -37,7 +40,7 @@ export const UserTableRow: React.FC<UserTableRowProps> = ({ user, onUpdate, onEr
 
         try {
             await updateUserRole(currentUser.id, newRole);
-            setCurrentUser(prev => ({ ...prev, userRole: newRole }));
+            updateUserRoleLocal(currentUser.id, newRole);
             onUpdate();
             onSuccess('User role updated successfully');
         } catch (error) {
@@ -50,7 +53,7 @@ export const UserTableRow: React.FC<UserTableRowProps> = ({ user, onUpdate, onEr
     const handleStatusChange = async () => {
         try {
             await updateUserStatus(currentUser.id, !currentUser.enabled);
-            setCurrentUser(prev => ({ ...prev, enabled: !prev.enabled }));
+            updateUserStatusLocal(currentUser.id, !currentUser.enabled);
             setShowStatusModal(false);
             onUpdate();
             onSuccess(`User ${!currentUser.enabled ? 'activated' : 'blocked'} successfully`);
@@ -65,11 +68,11 @@ export const UserTableRow: React.FC<UserTableRowProps> = ({ user, onUpdate, onEr
             const newVerificationStatus: VerificationStatus = currentUser.verificationStatus === 'VERIFIED' ? 'NOT_VERIFIED' : 'VERIFIED';
             await updateBirthDateVerification(currentUser.id, newVerificationStatus);
             const now = new Date().toISOString();
-            setCurrentUser(prev => ({
-                ...prev,
-                verificationStatus: newVerificationStatus,
-                verifiedAt: newVerificationStatus === 'VERIFIED' ? now : null
-            }));
+            updateVerificationStatusLocal(
+                currentUser.id,
+                newVerificationStatus,
+                newVerificationStatus === 'VERIFIED' ? now : null
+            );
             setShowVerificationModal(false);
             onUpdate();
             onSuccess(`User verification ${newVerificationStatus === 'VERIFIED' ? 'granted' : 'revoked'} successfully`);

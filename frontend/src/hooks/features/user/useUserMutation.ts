@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import type { UserProfile, UserUpdateRequest, EmailChangeResponse, PasswordUpdateResponse } from '@/types/user';
-import { userApi, type PasswordUpdateRequest } from '@/api/userApi';
+import type { UserProfile, UserUpdateRequest, EmailChangeResponse, PasswordUpdateResponse, UserPasswordUpdateRequest } from '@/types/user';
+import { userApi } from '@/api/userApi';
 
 export const useUserMutation = () => {
     const [isLoading, setIsLoading] = useState(false);
@@ -52,7 +52,7 @@ export const useUserMutation = () => {
         setIsLoading(true);
         setError(null);
         try {
-            const passwordData: PasswordUpdateRequest = {
+            const passwordData: UserPasswordUpdateRequest = {
                 currentPassword,
                 newPassword,
                 passwordConfirm
