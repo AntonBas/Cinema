@@ -6,17 +6,17 @@ export enum SeatType {
 }
 
 export const SeatTypeDisplay: Record<SeatType, string> = {
-    STANDARD: 'Standard',
-    VIP: 'VIP',
-    DISABLED: 'Disabled Access',
-    COUPLE: 'Couple'
+    [SeatType.STANDARD]: 'Standard',
+    [SeatType.VIP]: 'VIP',
+    [SeatType.DISABLED]: 'Disabled Access',
+    [SeatType.COUPLE]: 'Couple'
 };
 
 export const SeatTypePriceMultiplier: Record<SeatType, number> = {
-    STANDARD: 1.0,
-    VIP: 1.5,
-    DISABLED: 1.0,
-    COUPLE: 1.8
+    [SeatType.STANDARD]: 1.0,
+    [SeatType.VIP]: 1.5,
+    [SeatType.DISABLED]: 1.0,
+    [SeatType.COUPLE]: 1.8
 };
 
 export const isPremiumSeat = (seatType: SeatType): boolean => {

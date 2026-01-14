@@ -3,7 +3,9 @@ import { Modal } from '@/components/ui/Modal';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Select';
-import type { CinemaHallRequest, SeatType } from '@/types';
+import type { CinemaHallRequest } from '@/types/cinemaHall';
+import { SeatType } from '@/types/seat';
+import styles from './CreateHallModal.module.css';
 
 interface CreateHallModalProps {
     onClose: () => void;
@@ -12,10 +14,10 @@ interface CreateHallModalProps {
 }
 
 const seatTypeOptions = [
-    { value: 'STANDARD', label: 'Standard' },
-    { value: 'VIP', label: 'VIP' },
-    { value: 'DISABLED', label: 'Disabled' },
-    { value: 'COUPLE', label: 'Couple' }
+    { value: SeatType.STANDARD, label: 'Standard' },
+    { value: SeatType.VIP, label: 'VIP' },
+    { value: SeatType.DISABLED, label: 'Disabled' },
+    { value: SeatType.COUPLE, label: 'Couple' }
 ];
 
 export const CreateHallModal: React.FC<CreateHallModalProps> = ({
@@ -27,17 +29,13 @@ export const CreateHallModal: React.FC<CreateHallModalProps> = ({
         name: '',
         rows: 10,
         seatsPerRow: 15,
-        defaultSeatType: 'STANDARD' as SeatType
+        defaultSeatType: SeatType.STANDARD
     });
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!formData.name.trim() || loading) return;
-
-        try {
-            await onCreate(formData);
-        } catch (err) {
-        }
+        await onCreate(formData);
     };
 
     const updateField = <K extends keyof CinemaHallRequest>(
@@ -52,15 +50,8 @@ export const CreateHallModal: React.FC<CreateHallModalProps> = ({
     return (
         <Modal isOpen={true} onClose={onClose} title="Create New Hall" size="medium">
             <form onSubmit={handleSubmit}>
-                <div style={{ marginBottom: '1.5rem' }}>
-                    <label htmlFor="hallName" style={{
-                        display: 'block',
-                        color: '#ffffff',
-                        fontWeight: 600,
-                        marginBottom: '0.5rem'
-                    }}>
-                        Hall Name *
-                    </label>
+                <div className={styles.formGroup}>
+                    <label className={styles.label}>Hall Name *</label>
                     <Input
                         type="text"
                         value={formData.name}
@@ -72,21 +63,9 @@ export const CreateHallModal: React.FC<CreateHallModalProps> = ({
                     />
                 </div>
 
-                <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 1fr',
-                    gap: '1rem',
-                    marginBottom: '1.5rem'
-                }}>
-                    <div>
-                        <label style={{
-                            display: 'block',
-                            color: '#ffffff',
-                            fontWeight: 600,
-                            marginBottom: '0.5rem'
-                        }}>
-                            Number of Rows *
-                        </label>
+                <div className={styles.rowContainer}>
+                    <div className={styles.formGroup}>
+                        <label className={styles.label}>Number of Rows *</label>
                         <Input
                             type="number"
                             value={formData.rows?.toString() || ''}
@@ -99,15 +78,8 @@ export const CreateHallModal: React.FC<CreateHallModalProps> = ({
                         />
                     </div>
 
-                    <div>
-                        <label style={{
-                            display: 'block',
-                            color: '#ffffff',
-                            fontWeight: 600,
-                            marginBottom: '0.5rem'
-                        }}>
-                            Seats Per Row *
-                        </label>
+                    <div className={styles.formGroup}>
+                        <label className={styles.label}>Seats Per Row *</label>
                         <Input
                             type="number"
                             value={formData.seatsPerRow?.toString() || ''}
@@ -121,59 +93,26 @@ export const CreateHallModal: React.FC<CreateHallModalProps> = ({
                     </div>
                 </div>
 
-                <div style={{ marginBottom: '1.5rem' }}>
-                    <label style={{
-                        display: 'block',
-                        color: '#ffffff',
-                        fontWeight: 600,
-                        marginBottom: '0.5rem'
-                    }}>
-                        Default Seat Type
-                    </label>
+                <div className={styles.formGroup}>
+                    <label className={styles.label}>Default Seat Type</label>
                     <Select
-                        value={formData.defaultSeatType || 'STANDARD'}
+                        value={formData.defaultSeatType || SeatType.STANDARD}
                         onChange={(value) => updateField('defaultSeatType', value as SeatType)}
                         options={seatTypeOptions}
                         disabled={loading}
                     />
                 </div>
 
-                <div style={{
-                    backgroundColor: '#2a2f3d',
-                    padding: '1rem',
-                    borderRadius: '8px',
-                    marginBottom: '1.5rem',
-                    border: '1px solid #3a4051'
-                }}>
-                    <h4 style={{
-                        color: '#ffffff',
-                        margin: '0 0 0.5rem 0',
-                        fontSize: '0.9rem',
-                        fontWeight: 600
-                    }}>
-                        Layout Summary
-                    </h4>
-                    <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(3, 1fr)',
-                        gap: '0.5rem',
-                        color: '#a0a4b8',
-                        fontSize: '0.8rem'
-                    }}>
+                <div className={styles.summary}>
+                    <h4 className={styles.summaryTitle}>Layout Summary</h4>
+                    <div className={styles.summaryGrid}>
                         <div>Rows: <strong>{formData.rows}</strong></div>
                         <div>Seats/Row: <strong>{formData.seatsPerRow}</strong></div>
                         <div>Total: <strong>{totalSeats}</strong></div>
                     </div>
                 </div>
 
-                <div style={{
-                    display: 'flex',
-                    gap: '1rem',
-                    justifyContent: 'flex-end',
-                    marginTop: '2rem',
-                    paddingTop: '1.5rem',
-                    borderTop: '1px solid #3a4051'
-                }}>
+                <div className={styles.actions}>
                     <Button
                         variant="cancel"
                         onClick={onClose}

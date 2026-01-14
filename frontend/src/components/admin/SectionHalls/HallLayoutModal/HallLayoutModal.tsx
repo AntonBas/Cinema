@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import type { CinemaHallResponse, HallLayoutResponse, SeatResponse } from '@/types';
-import { SeatType } from '@/types';
+import type { CinemaHallResponse, HallLayoutResponse } from '@/types/cinemaHall';
+import { type SeatResponse, SeatType } from '@/types/seat';
 import { useCinemaHalls, useSeatMutation } from '@/hooks/features/cinemaHalls';
 import { useNotification } from '@/hooks/common/useNotification';
 import { Modal, Button } from '@/components/ui';
@@ -84,7 +84,7 @@ export const HallLayoutModal: React.FC<HallLayoutModalProps> = ({
 
             await updateSeatType(hall.id, seat.id, nextSeatType);
 
-            showNotification(`Seat ${seat.row}-${seat.number} type changed to ${getSeatTypeName(nextSeatType)}`, 'success');
+            showNotification(`Seat ${seat.row}-${seat.number} type changed`, 'success');
         } catch (err) {
             await getHallLayout(hall.id);
             showNotification('Failed to update seat type', 'error');
@@ -147,10 +147,10 @@ export const HallLayoutModal: React.FC<HallLayoutModalProps> = ({
         try {
             if (newActive) {
                 await activateSeat(hall.id, selectedSeat.id);
-                showNotification(`Seat ${selectedSeat.row}-${selectedSeat.number} activated`, 'success');
+                showNotification(`Seat activated`, 'success');
             } else {
                 await deactivateSeat(hall.id, selectedSeat.id);
-                showNotification(`Seat ${selectedSeat.row}-${selectedSeat.number} deactivated`, 'success');
+                showNotification(`Seat deactivated`, 'success');
             }
 
             await getHallLayout(hall.id);
@@ -160,7 +160,7 @@ export const HallLayoutModal: React.FC<HallLayoutModalProps> = ({
     };
 
     const getNextSeatType = (currentType: SeatType): SeatType => {
-        const types = Object.values(SeatType);
+        const types = [SeatType.STANDARD, SeatType.VIP, SeatType.DISABLED, SeatType.COUPLE];
         const currentIndex = types.indexOf(currentType);
         const nextIndex = (currentIndex + 1) % types.length;
         return types[nextIndex];
@@ -173,17 +173,17 @@ export const HallLayoutModal: React.FC<HallLayoutModalProps> = ({
             [SeatType.DISABLED]: 'Disabled',
             [SeatType.COUPLE]: 'Couple'
         };
-        return names[seatType];
+        return names[seatType] || seatType;
     };
 
     const getSeatTypeColor = (seatType: SeatType): string => {
         const colors = {
-            [SeatType.STANDARD]: '#4CAF50',
-            [SeatType.VIP]: '#FF9800',
-            [SeatType.DISABLED]: '#2196F3',
-            [SeatType.COUPLE]: '#9C27B0'
+            [SeatType.STANDARD]: '#3498db',
+            [SeatType.VIP]: '#f39c12',
+            [SeatType.DISABLED]: '#95a5a6',
+            [SeatType.COUPLE]: '#e74c3c'
         };
-        return colors[seatType];
+        return colors[seatType] || '#3498db';
     };
 
     const SeatComponent: React.FC<{ seat: SeatResponse; rowIndex: number }> = ({ seat }) => {
@@ -195,11 +195,7 @@ export const HallLayoutModal: React.FC<HallLayoutModalProps> = ({
                 className={`${styles.seatButton} ${styles[seat.seatType.toLowerCase()]} ${!seat.active ? styles.inactive : ''}`}
                 onClick={(e) => handleSeatTypeClick(seat, e)}
                 onContextMenu={(e) => handleSeatStatusClick(seat, e)}
-                title={`Row ${seat.row}, Seat ${seat.number}
-Type: ${getSeatTypeName(seat.seatType)}
-Status: ${seat.active ? 'Active' : 'Inactive'}
-Left click: Change type
-Right click: Activate/Deactivate`}
+                title={`Row ${seat.row}, Seat ${seat.number}`}
                 disabled={isUpdatingType || isUpdatingStatus}
             >
                 {isUpdatingType || isUpdatingStatus ? (
@@ -249,7 +245,7 @@ Right click: Activate/Deactivate`}
 
                 <div className={styles.seatsLayout}>
                     <div className={styles.rowsContainer}>
-                        {localLayout.rows.map((row, rowIndex) => (
+                        {localLayout.rows.map((row) => (
                             <div key={`row-${row.rowNumber}`} className={styles.row}>
                                 <div className={styles.rowLabel}>Row {row.rowNumber}</div>
                                 <div className={styles.seatsRow}>
@@ -257,7 +253,7 @@ Right click: Activate/Deactivate`}
                                         <SeatComponent
                                             key={`seat-${seat.id}`}
                                             seat={seat}
-                                            rowIndex={rowIndex}
+                                            rowIndex={row.rowNumber}
                                         />
                                     ))}
                                 </div>
@@ -299,7 +295,7 @@ Right click: Activate/Deactivate`}
                             <div className={styles.instructionText}>
                                 <p><strong>Left click:</strong> Change seat type</p>
                                 <p><strong>Right click:</strong> Toggle active status</p>
-                                <p className={styles.note}><em>Inactive seats cannot be booked</em></p>
+                                <p className={styles.note}>Inactive seats cannot be booked</p>
                             </div>
                         </div>
 
