@@ -1,35 +1,59 @@
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { seatApi } from '@/api/seatApi';
-import type { SeatType } from '@/types';
+import type { SeatType } from '@/types/seat';
 
 export const useSeatMutation = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const executeMutation = useCallback(async <T>(operation: () => Promise<T>): Promise<T> => {
+    const updateSeatType = async (hallId: number, seatId: number, seatType: SeatType) => {
         setLoading(true);
         setError(null);
         try {
-            return await operation();
+            const seat = await seatApi.admin.updateSeatType(hallId, seatId, seatType);
+            return seat;
         } catch (err) {
-            const message = err instanceof Error ? err.message : 'Operation failed';
+            const message = err instanceof Error ? err.message : 'Failed to update seat type';
             setError(message);
             throw err;
         } finally {
             setLoading(false);
         }
-    }, []);
+    };
 
-    const updateSeatType = useCallback((hallId: number, seatId: number, seatType: SeatType) =>
-        executeMutation(() => seatApi.updateSeatType(hallId, seatId, seatType)), [executeMutation]);
+    const activateSeat = async (hallId: number, seatId: number) => {
+        setLoading(true);
+        setError(null);
+        try {
+            const seat = await seatApi.admin.activateSeat(hallId, seatId);
+            return seat;
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'Failed to activate seat';
+            setError(message);
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    };
 
-    const activateSeat = useCallback((hallId: number, seatId: number) =>
-        executeMutation(() => seatApi.activateSeat(hallId, seatId)), [executeMutation]);
+    const deactivateSeat = async (hallId: number, seatId: number) => {
+        setLoading(true);
+        setError(null);
+        try {
+            const seat = await seatApi.admin.deactivateSeat(hallId, seatId);
+            return seat;
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'Failed to deactivate seat';
+            setError(message);
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    };
 
-    const deactivateSeat = useCallback((hallId: number, seatId: number) =>
-        executeMutation(() => seatApi.deactivateSeat(hallId, seatId)), [executeMutation]);
-
-    const clearError = () => setError(null);
+    const clearError = () => {
+        setError(null);
+    };
 
     return {
         loading,

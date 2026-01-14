@@ -1,47 +1,62 @@
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { cinemaHallApi } from '@/api/cinemaHallApi';
-import type { CinemaHallRequest } from '@/types';
+import type { CinemaHallRequest } from '@/types/cinemaHall';
 
-const useMutation = <T>() => {
+export const useCinemaHallMutation = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const execute = useCallback(async (operation: () => Promise<T>): Promise<T> => {
+    const createHall = async (request: CinemaHallRequest) => {
         setLoading(true);
         setError(null);
         try {
-            return await operation();
+            const hall = await cinemaHallApi.admin.create(request);
+            return hall;
         } catch (err) {
-            const message = err instanceof Error ? err.message : 'Operation failed';
+            const message = err instanceof Error ? err.message : 'Failed to create cinema hall';
             setError(message);
             throw err;
         } finally {
             setLoading(false);
         }
-    }, []);
+    };
 
-    const clearError = () => setError(null);
+    const updateHall = async (id: number, request: CinemaHallRequest) => {
+        setLoading(true);
+        setError(null);
+        try {
+            const hall = await cinemaHallApi.admin.update(id, request);
+            return hall;
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'Failed to update cinema hall';
+            setError(message);
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    };
 
-    return { loading, error, execute, clearError };
-};
+    const deleteHall = async (id: number) => {
+        setLoading(true);
+        setError(null);
+        try {
+            await cinemaHallApi.admin.delete(id);
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'Failed to delete cinema hall';
+            setError(message);
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    };
 
-export const useCinemaHallMutation = () => {
-    const mutation = useMutation();
-
-    const createHall = useCallback((request: CinemaHallRequest) =>
-        mutation.execute(() => cinemaHallApi.createHall(request)), [mutation]);
-
-    const updateHall = useCallback((id: number, request: CinemaHallRequest) =>
-        mutation.execute(() => cinemaHallApi.updateHall(id, request)), [mutation]);
-
-    const deleteHall = useCallback((id: number) =>
-        mutation.execute(() => cinemaHallApi.deleteHall(id)), [mutation]);
-
-    const clearError = () => mutation.clearError();
+    const clearError = () => {
+        setError(null);
+    };
 
     return {
-        loading: mutation.loading,
-        error: mutation.error,
+        loading,
+        error,
         createHall,
         updateHall,
         deleteHall,

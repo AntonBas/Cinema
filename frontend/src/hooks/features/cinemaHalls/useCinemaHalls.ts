@@ -1,21 +1,23 @@
 import { useState, useCallback, useEffect } from 'react';
 import { cinemaHallApi } from '@/api/cinemaHallApi';
-import type { CinemaHallResponse, CinemaHallWithSeatsResponse, HallLayoutResponse } from '@/types';
+import type { CinemaHallResponse, CinemaHallWithSeatsResponse, HallLayoutResponse } from '@/types/cinemaHall';
 
-const useQuery = <T>() => {
-    const [data, setData] = useState<T | null>(null);
+export const useCinemaHalls = () => {
+    const [allHalls, setAllHalls] = useState<CinemaHallResponse[]>([]);
+    const [hallWithSeats, setHallWithSeats] = useState<CinemaHallWithSeatsResponse | null>(null);
+    const [hallLayout, setHallLayout] = useState<HallLayoutResponse | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const execute = useCallback(async (operation: () => Promise<T>): Promise<T> => {
+    const getAllHalls = useCallback(async () => {
         setLoading(true);
         setError(null);
         try {
-            const result = await operation();
-            setData(result);
-            return result;
+            const data = await cinemaHallApi.getAll();
+            setAllHalls(data);
+            return data;
         } catch (err) {
-            const message = err instanceof Error ? err.message : 'Operation failed';
+            const message = err instanceof Error ? err.message : 'Failed to load cinema halls';
             setError(message);
             throw err;
         } finally {
@@ -23,45 +25,67 @@ const useQuery = <T>() => {
         }
     }, []);
 
-    const clearError = () => setError(null);
-
-    return { data, loading, error, execute, clearError };
-};
-
-export const useCinemaHalls = () => {
-    const allHallsQuery = useQuery<CinemaHallResponse[]>();
-    const hallWithSeatsQuery = useQuery<CinemaHallWithSeatsResponse>();
-    const hallLayoutQuery = useQuery<HallLayoutResponse>();
-
-    const getAllHalls = useCallback(() =>
-        allHallsQuery.execute(() => cinemaHallApi.getAllHalls()), [allHallsQuery.execute]);
-
     useEffect(() => {
         getAllHalls();
+    }, [getAllHalls]);
+
+    const getHallWithSeats = useCallback(async (id: number) => {
+        setLoading(true);
+        setError(null);
+        try {
+            const data = await cinemaHallApi.getWithSeats(id);
+            setHallWithSeats(data);
+            return data;
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'Failed to load hall with seats';
+            setError(message);
+            throw err;
+        } finally {
+            setLoading(false);
+        }
     }, []);
 
-    const getHallWithSeats = useCallback((id: number) =>
-        hallWithSeatsQuery.execute(() => cinemaHallApi.getHallWithSeats(id)), [hallWithSeatsQuery]);
-
-    const getHallLayout = useCallback((id: number) =>
-        hallLayoutQuery.execute(() => cinemaHallApi.getHallLayout(id)), [hallLayoutQuery]);
+    const getHallLayout = useCallback(async (id: number) => {
+        setLoading(true);
+        setError(null);
+        try {
+            const data = await cinemaHallApi.getLayout(id);
+            setHallLayout(data);
+            return data;
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'Failed to load hall layout';
+            setError(message);
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    }, []);
 
     const searchHalls = useCallback(async (name?: string) => {
-        return await cinemaHallApi.searchHalls(name);
+        setLoading(true);
+        setError(null);
+        try {
+            const data = await cinemaHallApi.search(name);
+            return data;
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'Failed to search halls';
+            setError(message);
+            throw err;
+        } finally {
+            setLoading(false);
+        }
     }, []);
 
     const clearError = () => {
-        allHallsQuery.clearError();
-        hallWithSeatsQuery.clearError();
-        hallLayoutQuery.clearError();
+        setError(null);
     };
 
     return {
-        allHalls: allHallsQuery.data || [],
-        hallWithSeats: hallWithSeatsQuery.data,
-        hallLayout: hallLayoutQuery.data,
-        loading: allHallsQuery.loading || hallWithSeatsQuery.loading || hallLayoutQuery.loading,
-        error: allHallsQuery.error || hallWithSeatsQuery.error || hallLayoutQuery.error,
+        allHalls,
+        hallWithSeats,
+        hallLayout,
+        loading,
+        error,
         getAllHalls,
         getHallWithSeats,
         getHallLayout,
