@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useSessions, useSessionMutation, useSessionFilters, useNotification } from '@/hooks';
 import { SessionFilters } from './SessionFilters';
 import { SessionTable } from './SessionTable';
@@ -22,21 +22,23 @@ export const SectionSchedule: React.FC = () => {
     const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
     const [isReactivateModalOpen, setIsReactivateModalOpen] = useState(false);
 
-    const [pagination, setPagination] = useState({
-        page: 0,
-        size: 20
-    });
-
     const {
         filters,
         setDateFilter,
         setHallFilter,
         setMovieFilter,
-        setUpcomingDaysFilter,
+        setDaysAheadFilter,
         clearFilters,
         hasActiveFilters,
         activeFilterCount
     } = useSessionFilters();
+
+    const [pagination, setPagination] = useState({
+        page: 0,
+        size: 20,
+        sort: 'startTime',
+        search: ''
+    });
 
     const {
         sessions,
@@ -44,7 +46,13 @@ export const SectionSchedule: React.FC = () => {
         error,
         pagination: apiPagination,
         refetch
-    } = useSessions(filters, pagination);
+    } = useSessions({
+        ...filters,
+        page: pagination.page,
+        size: pagination.size,
+        sort: pagination.sort,
+        search: pagination.search
+    });
 
     const {
         createSession,
@@ -54,12 +62,6 @@ export const SectionSchedule: React.FC = () => {
         reactivateSession,
         loading: mutationLoading
     } = useSessionMutation();
-
-    useEffect(() => {
-        console.log('Current sessions:', sessions);
-        console.log('Loading:', loading);
-        console.log('Error:', error);
-    }, [sessions, loading, error]);
 
     const handleCreateSession = () => {
         setSelectedSession(null);
@@ -166,11 +168,14 @@ export const SectionSchedule: React.FC = () => {
 
     const handleClearFilters = () => {
         clearFilters();
+        setPagination(prev => ({ ...prev, page: 0 }));
         showNotification('Filters cleared', 'info');
     };
 
     const totalSessions = apiPagination?.totalElements || 0;
     const filteredCount = hasActiveFilters ? sessions.length : totalSessions;
+    const currentPage = pagination.page;
+    const totalPages = apiPagination?.totalPages || 1;
 
     return (
         <div className={styles.container}>
@@ -199,6 +204,10 @@ export const SectionSchedule: React.FC = () => {
                                 <span className={styles.statLabel}>Filtered</span>
                             </div>
                         )}
+                        <div className={styles.statItem}>
+                            <span className={styles.statValue}>{pagination.size}</span>
+                            <span className={styles.statLabel}>Per Page</span>
+                        </div>
                     </div>
                 </div>
                 <Button
@@ -217,7 +226,7 @@ export const SectionSchedule: React.FC = () => {
                 onDateChange={setDateFilter}
                 onHallChange={setHallFilter}
                 onMovieChange={setMovieFilter}
-                onUpcomingDaysChange={setUpcomingDaysFilter}
+                onUpcomingDaysChange={setDaysAheadFilter}
                 onClearFilters={handleClearFilters}
                 hasActiveFilters={hasActiveFilters}
                 activeFilterCount={activeFilterCount}
@@ -253,13 +262,13 @@ export const SectionSchedule: React.FC = () => {
                 />
             </div>
 
-            {apiPagination && apiPagination.totalPages > 1 && (
+            {totalPages > 1 && (
                 <div className={styles.paginationSection}>
                     <Pagination
-                        currentPage={apiPagination.currentPage}
-                        totalPages={apiPagination.totalPages}
-                        totalElements={apiPagination.totalElements}
-                        pageSize={apiPagination.pageSize}
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        totalElements={totalSessions}
+                        pageSize={pagination.size}
                         onPageChange={handlePageChange}
                     />
                 </div>

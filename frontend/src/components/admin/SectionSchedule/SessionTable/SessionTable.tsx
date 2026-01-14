@@ -60,8 +60,9 @@ const getOccupancyColor = (percentage: number): string => {
     return '#6b7280';
 };
 
-const formatCurrency = (price: number): string => {
-    return `${price.toFixed(2)} UAH`;
+const formatCurrency = (price: string): string => {
+    const numericPrice = parseFloat(price);
+    return `${numericPrice.toFixed(2)} UAH`;
 };
 
 const truncateText = (text: string, maxLength: number): string => {
@@ -181,6 +182,11 @@ export const SessionTable: React.FC<SessionTableProps> = ({
                             const handleCancel = () => onCancel(session);
                             const handleReactivate = () => onReactivate(session);
 
+                            const totalRevenueNum = parseFloat(session.totalRevenue);
+                            const avgRevenue = session.ticketsSold > 0
+                                ? totalRevenueNum / session.ticketsSold
+                                : 0;
+
                             return (
                                 <tr
                                     key={session.id}
@@ -256,7 +262,7 @@ export const SessionTable: React.FC<SessionTableProps> = ({
                                             {formatCurrency(session.totalRevenue)}
                                         </div>
                                         <div className={styles.revenuePerSeat}>
-                                            {formatCurrency(session.totalRevenue / (session.ticketsSold || 1))} avg
+                                            {avgRevenue.toFixed(2)} UAH avg
                                         </div>
                                     </td>
 

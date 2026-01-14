@@ -1,15 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useMovieSearch, useCinemaHalls } from '@/hooks/features';
 import { Input, Select, Button } from '@/components/ui';
-import type { SessionFilters as SessionFiltersType } from '@/types/session';
 import styles from './SessionFilters.module.css';
 
 interface SessionFiltersProps {
-    filters: SessionFiltersType;
+    filters: {
+        date?: string;
+        hallId?: number;
+        movieId?: number;
+        daysAhead?: number;
+    };
     onDateChange: (date: string | undefined) => void;
     onHallChange: (hallId: number | undefined) => void;
     onMovieChange: (movieId: number | undefined) => void;
-    onUpcomingDaysChange: (days: number | undefined) => void;
+    onUpcomingDaysChange: (daysAhead: number | undefined) => void;
     onClearFilters: () => void;
     hasActiveFilters: boolean;
     activeFilterCount: number;
@@ -164,7 +168,7 @@ export const SessionFilters: React.FC<SessionFiltersProps> = ({
                     <label className={styles.label}>Upcoming Days</label>
                     <div className={styles.selectContainer}>
                         <Select
-                            value={filters.days?.toString() || ''}
+                            value={filters.daysAhead?.toString() || ''}
                             onChange={handleUpcomingDaysChange}
                             options={upcomingDaysOptions}
                         />

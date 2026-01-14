@@ -206,8 +206,8 @@ export const SessionCreateModal: React.FC<SessionCreateModalProps> = ({
         if (!validateForm()) return;
 
         const sessionData: SessionCreateRequest = {
-            startTime: formData.startTime + ':00',
-            basePrice: Number(formData.basePrice),
+            startTime: formData.startTime,
+            basePrice: formData.basePrice,
             movieId: Number(formData.movieId),
             hallId: Number(formData.hallId)
         };

@@ -1,10 +1,18 @@
 import { useState, useEffect, useCallback } from 'react';
 import { sessionApi } from '@/api/sessionApi';
-import type { SessionAdminResponse, SessionFilter, SessionFilters } from '@/types/session';
-import type { PageResponse, SearchParams } from '@/types/pagination';
+import type { SessionAdminResponse, CinemaSessionStatus } from '@/types/session';
+import type { PageResponse } from '@/types/pagination';
 
 interface UseSessionsOptions {
     enabled?: boolean;
+    page?: number;
+    size?: number;
+    sort?: string;
+    search?: string;
+    date?: string;
+    hallId?: number;
+    movieId?: number;
+    status?: CinemaSessionStatus;
 }
 
 interface UseSessionsReturn {
@@ -16,8 +24,6 @@ interface UseSessionsReturn {
 }
 
 export const useSessions = (
-    filters?: SessionFilters,
-    searchParams?: SearchParams,
     options?: UseSessionsOptions
 ): UseSessionsReturn => {
     const [sessions, setSessions] = useState<SessionAdminResponse[]>([]);
@@ -27,39 +33,6 @@ export const useSessions = (
 
     const enabled = options?.enabled ?? true;
 
-    const convertToApiFilter = useCallback((filters?: SessionFilters): SessionFilter => {
-        const apiFilter: SessionFilter = {};
-
-        if (filters?.date) {
-            apiFilter.startDate = filters.date;
-            apiFilter.endDate = filters.date;
-        } else if (filters?.days) {
-            const startDate = new Date();
-            const endDate = new Date();
-            endDate.setDate(endDate.getDate() + filters.days);
-
-            apiFilter.startDate = startDate.toISOString().split('T')[0];
-            apiFilter.endDate = endDate.toISOString().split('T')[0];
-        }
-
-        if (filters?.hallId) {
-            apiFilter.hallId = filters.hallId;
-        }
-
-        if (filters?.movieId) {
-            apiFilter.movieId = filters.movieId;
-        }
-
-        if (searchParams?.page !== undefined) {
-            apiFilter.page = searchParams.page;
-        }
-        if (searchParams?.size !== undefined) {
-            apiFilter.size = searchParams.size;
-        }
-
-        return apiFilter;
-    }, [searchParams]);
-
     const loadSessions = useCallback(async () => {
         if (!enabled) return;
 
@@ -67,17 +40,26 @@ export const useSessions = (
         setError(null);
 
         try {
-            const apiFilter = convertToApiFilter(filters);
-            const response = await sessionApi.getFilteredSessions(apiFilter);
+            const response = await sessionApi.admin.getAll(
+                options?.page,
+                options?.size,
+                options?.sort,
+                options?.search,
+                options?.date,
+                options?.hallId,
+                options?.movieId,
+                options?.status
+            );
 
             setSessions(response.content);
             setPagination(response);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to load sessions');
+            throw err;
         } finally {
             setLoading(false);
         }
-    }, [filters, enabled, convertToApiFilter]);
+    }, [enabled, options]);
 
     useEffect(() => {
         loadSessions();

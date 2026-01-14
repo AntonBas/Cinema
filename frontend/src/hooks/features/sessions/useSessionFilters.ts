@@ -1,12 +1,18 @@
 import { useState, useCallback, useMemo } from 'react';
-import type { SessionFilters } from '@/types/session';
+
+interface SessionFilters {
+    date?: string;
+    hallId?: number;
+    movieId?: number;
+    daysAhead?: number;
+}
 
 interface UseSessionFiltersReturn {
     filters: SessionFilters;
     setDateFilter: (date: string | undefined) => void;
     setHallFilter: (hallId: number | undefined) => void;
     setMovieFilter: (movieId: number | undefined) => void;
-    setUpcomingDaysFilter: (days: number | undefined) => void;
+    setDaysAheadFilter: (daysAhead: number | undefined) => void;
     clearFilters: () => void;
     hasActiveFilters: boolean;
     activeFilterCount: number;
@@ -33,7 +39,7 @@ export const useSessionFilters = (
         updateFilters(prev => ({
             ...prev,
             date,
-            ...(date && { days: undefined })
+            daysAhead: undefined
         }));
     }, [updateFilters]);
 
@@ -45,11 +51,11 @@ export const useSessionFilters = (
         updateFilters(prev => ({ ...prev, movieId }));
     }, [updateFilters]);
 
-    const setUpcomingDaysFilter = useCallback((days: number | undefined) => {
+    const setDaysAheadFilter = useCallback((daysAhead: number | undefined) => {
         updateFilters(prev => ({
             ...prev,
-            days,
-            ...(days && { date: undefined })
+            daysAhead,
+            date: undefined
         }));
     }, [updateFilters]);
 
@@ -63,7 +69,7 @@ export const useSessionFilters = (
 
     const hasActiveFilters = useMemo(() => {
         return Boolean(
-            filters.date || filters.hallId || filters.movieId || filters.days
+            filters.date || filters.hallId || filters.movieId || filters.daysAhead
         );
     }, [filters]);
 
@@ -72,7 +78,7 @@ export const useSessionFilters = (
         if (filters.date) count++;
         if (filters.hallId) count++;
         if (filters.movieId) count++;
-        if (filters.days) count++;
+        if (filters.daysAhead) count++;
         return count;
     }, [filters]);
 
@@ -81,7 +87,7 @@ export const useSessionFilters = (
         setDateFilter,
         setHallFilter,
         setMovieFilter,
-        setUpcomingDaysFilter,
+        setDaysAheadFilter,
         clearFilters,
         resetToDefault,
         hasActiveFilters,

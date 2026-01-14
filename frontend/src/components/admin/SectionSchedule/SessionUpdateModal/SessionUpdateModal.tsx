@@ -1,3 +1,4 @@
+// src/components/admin/SectionSchedule/SessionUpdateModal/SessionUpdateModal.tsx
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useCinemaHalls, useMovieSessionSearch } from '@/hooks/features';
 import { Input, Select, Button, Modal } from '@/components/ui';
@@ -193,10 +194,10 @@ export const SessionUpdateModal: React.FC<SessionUpdateModalProps> = ({
         const updateData: SessionUpdateRequest = {};
 
         if (formData.startTime && formData.startTime !== initialFormData.current?.startTime) {
-            updateData.startTime = formData.startTime + ':00';
+            updateData.startTime = formData.startTime;
         }
         if (formData.basePrice && formData.basePrice !== initialFormData.current?.basePrice) {
-            updateData.basePrice = Number(formData.basePrice);
+            updateData.basePrice = formData.basePrice;
         }
         if (formData.movieId && formData.movieId !== initialFormData.current?.movieId) {
             updateData.movieId = Number(formData.movieId);
@@ -234,8 +235,9 @@ export const SessionUpdateModal: React.FC<SessionUpdateModalProps> = ({
         if (session.ticketsSold > 0) {
             info.push(`${session.ticketsSold} tickets sold`);
         }
-        if (session.totalRevenue > 0) {
-            info.push(`Revenue: ${session.totalRevenue.toFixed(2)} UAH`);
+        const totalRevenueNum = parseFloat(session.totalRevenue);
+        if (totalRevenueNum > 0) {
+            info.push(`Revenue: ${totalRevenueNum.toFixed(2)} UAH`);
         }
         return info.length > 0 ? info.join(', ') : 'No tickets sold yet';
     };

@@ -38,7 +38,7 @@ export const useSessionMutation = (options?: UseSessionMutationOptions): UseSess
         setError(null);
 
         try {
-            const result = await sessionApi.createSession(request);
+            const result = await sessionApi.admin.create(request);
             options?.onSuccess?.(result, 'create');
             return result;
         } catch (err) {
@@ -56,7 +56,7 @@ export const useSessionMutation = (options?: UseSessionMutationOptions): UseSess
         setError(null);
 
         try {
-            const result = await sessionApi.updateSession(id, request);
+            const result = await sessionApi.admin.update(id, request);
             options?.onSuccess?.(result, 'update');
             return result;
         } catch (err) {
@@ -74,7 +74,7 @@ export const useSessionMutation = (options?: UseSessionMutationOptions): UseSess
         setError(null);
 
         try {
-            await sessionApi.cancelSession(id);
+            await sessionApi.admin.cancel(id);
             options?.onSuccess?.({} as SessionAdminResponse, 'cancel');
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to cancel session';
@@ -91,7 +91,7 @@ export const useSessionMutation = (options?: UseSessionMutationOptions): UseSess
         setError(null);
 
         try {
-            await sessionApi.reactivateSession(id);
+            await sessionApi.admin.reactivate(id);
             options?.onSuccess?.({} as SessionAdminResponse, 'reactivate');
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to reactivate session';
@@ -108,7 +108,7 @@ export const useSessionMutation = (options?: UseSessionMutationOptions): UseSess
         setError(null);
 
         try {
-            await sessionApi.deleteSession(id);
+            await sessionApi.admin.delete(id);
             options?.onSuccess?.({} as SessionAdminResponse, 'delete');
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to delete session';
@@ -133,7 +133,12 @@ export const useSessionMutation = (options?: UseSessionMutationOptions): UseSess
         abortControllerRef.current = new AbortController();
 
         try {
-            return await sessionApi.checkTimeConflict(hallId, startTime, durationMinutes, excludeSessionId);
+            return await sessionApi.admin.checkTimeConflict(
+                hallId,
+                startTime,
+                durationMinutes,
+                excludeSessionId
+            );
         } catch (err) {
             if (err instanceof DOMException && err.name === 'AbortError') {
                 return false;
