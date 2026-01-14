@@ -30,7 +30,7 @@ export const usePersonSelect = ({
 
         try {
             const personsData = await Promise.all(
-                selectedIds.map(id => personApi.getById(id))
+                selectedIds.map(id => personApi.public.getById(id))
             );
             setAllSelectedPersons(personsData);
         } catch (error) {
@@ -58,7 +58,7 @@ export const usePersonSelect = ({
             setIsLoading(true);
             try {
                 abortControllerRef.current = new AbortController();
-                const result = await personApi.search({
+                const result = await personApi.public.search({
                     query: searchQuery,
                     role,
                     page: 0,
@@ -105,7 +105,7 @@ export const usePersonSelect = ({
 
         setIsLoading(true);
         try {
-            const newPerson = await personApi.quickCreate({
+            const newPerson = await personApi.admin.quickCreate({
                 name: searchQuery.trim(),
                 role: role
             });

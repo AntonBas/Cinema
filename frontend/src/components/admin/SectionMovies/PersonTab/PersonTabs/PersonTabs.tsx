@@ -1,5 +1,6 @@
 import React from 'react';
-import { PersonRole } from '@/types/person';
+import type { PersonRole } from '@/types/person';
+import { PersonRoleEnum } from '@/types/person';
 import { Badge } from '@/components/ui';
 import styles from './PersonTabs.module.css';
 
@@ -8,9 +9,9 @@ interface PersonTabsProps {
     onTabChange: (tab: PersonRole | 'ALL') => void;
     stats: {
         ALL: number;
-        [PersonRole.ACTOR]: number;
-        [PersonRole.DIRECTOR]: number;
-        [PersonRole.SCREENWRITER]: number;
+        [PersonRoleEnum.ACTOR]: number;
+        [PersonRoleEnum.DIRECTOR]: number;
+        [PersonRoleEnum.SCREENWRITER]: number;
     };
 }
 
@@ -36,24 +37,24 @@ export const PersonTabs: React.FC<PersonTabsProps> = ({
             variant: 'primary'
         },
         {
-            id: PersonRole.ACTOR,
+            id: PersonRoleEnum.ACTOR,
             label: 'Actors',
             icon: '🎭',
-            count: stats[PersonRole.ACTOR],
+            count: stats[PersonRoleEnum.ACTOR],
             variant: 'success'
         },
         {
-            id: PersonRole.DIRECTOR,
+            id: PersonRoleEnum.DIRECTOR,
             label: 'Directors',
             icon: '🎬',
-            count: stats[PersonRole.DIRECTOR],
+            count: stats[PersonRoleEnum.DIRECTOR],
             variant: 'primary'
         },
         {
-            id: PersonRole.SCREENWRITER,
+            id: PersonRoleEnum.SCREENWRITER,
             label: 'Screenwriters',
             icon: '✍️',
-            count: stats[PersonRole.SCREENWRITER],
+            count: stats[PersonRoleEnum.SCREENWRITER],
             variant: 'warning'
         },
     ];

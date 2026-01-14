@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { PersonRole, type PersonResponse, type PersonRequest } from '@/types/person';
+import type { PersonResponse, PersonRequest, PersonRole } from '@/types/person';
+import { PersonRoleEnum, PersonRoleDisplay } from '@/types/person';
 import { Modal, Input, Button, Select } from '@/components/ui';
 import styles from './PersonForm.module.css';
 
@@ -18,7 +19,7 @@ export const PersonForm: React.FC<PersonFormProps> = ({
 }) => {
     const [formData, setFormData] = useState<PersonRequest>({
         name: '',
-        role: PersonRole.ACTOR
+        role: PersonRoleEnum.ACTOR
     });
 
     const [errors, setErrors] = useState<{ name?: string }>({});
@@ -87,9 +88,9 @@ export const PersonForm: React.FC<PersonFormProps> = ({
     const isNameInvalid = shouldShowError('name');
 
     const roleOptions = [
-        { value: PersonRole.ACTOR, label: '🎭 Actor' },
-        { value: PersonRole.DIRECTOR, label: '🎬 Director' },
-        { value: PersonRole.SCREENWRITER, label: '✍️ Screenwriter' }
+        { value: PersonRoleEnum.ACTOR, label: `🎭 ${PersonRoleDisplay.ACTOR}` },
+        { value: PersonRoleEnum.DIRECTOR, label: `🎬 ${PersonRoleDisplay.DIRECTOR}` },
+        { value: PersonRoleEnum.SCREENWRITER, label: `✍️ ${PersonRoleDisplay.SCREENWRITER}` }
     ];
 
     return (

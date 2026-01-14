@@ -1,5 +1,11 @@
 export type PersonRole = 'ACTOR' | 'DIRECTOR' | 'SCREENWRITER';
 
+export const PersonRoleEnum = {
+    ACTOR: 'ACTOR' as PersonRole,
+    DIRECTOR: 'DIRECTOR' as PersonRole,
+    SCREENWRITER: 'SCREENWRITER' as PersonRole,
+} as const;
+
 export interface PersonRequest {
     name: string;
     role: PersonRole;

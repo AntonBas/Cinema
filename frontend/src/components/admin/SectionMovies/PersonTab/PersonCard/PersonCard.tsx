@@ -1,6 +1,6 @@
 import React from 'react';
 import type { PersonResponse } from '@/types/person';
-import { PersonRole } from '@/types/person';
+import { PersonRoleEnum, PersonRoleDisplay } from '@/types/person';
 import { Button, Badge } from '@/components/ui';
 import styles from './PersonCard.module.css';
 
@@ -15,25 +15,25 @@ export const PersonCard: React.FC<PersonCardProps> = ({
     onEdit,
     onDelete
 }) => {
-    const getRoleConfig = (role: PersonRole) => {
+    const getRoleConfig = (role: string) => {
         switch (role) {
-            case PersonRole.ACTOR:
+            case PersonRoleEnum.ACTOR:
                 return {
                     icon: '🎭',
                     variant: 'success' as const,
-                    label: 'Actor'
+                    label: PersonRoleDisplay.ACTOR
                 };
-            case PersonRole.DIRECTOR:
+            case PersonRoleEnum.DIRECTOR:
                 return {
                     icon: '🎬',
                     variant: 'primary' as const,
-                    label: 'Director'
+                    label: PersonRoleDisplay.DIRECTOR
                 };
-            case PersonRole.SCREENWRITER:
+            case PersonRoleEnum.SCREENWRITER:
                 return {
                     icon: '✍️',
                     variant: 'warning' as const,
-                    label: 'Screenwriter'
+                    label: PersonRoleDisplay.SCREENWRITER
                 };
             default:
                 return {

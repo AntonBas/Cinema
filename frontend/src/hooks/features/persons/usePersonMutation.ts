@@ -10,7 +10,7 @@ export const usePersonMutation = () => {
         setLoading(true);
         setError(null);
         try {
-            const person = await personApi.create(personData);
+            const person = await personApi.admin.create(personData);
             return person;
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to create person';
@@ -25,7 +25,7 @@ export const usePersonMutation = () => {
         setLoading(true);
         setError(null);
         try {
-            const person = await personApi.update(id, personData);
+            const person = await personApi.admin.update(id, personData);
             return person;
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to update person';
@@ -40,7 +40,7 @@ export const usePersonMutation = () => {
         setLoading(true);
         setError(null);
         try {
-            await personApi.delete(id);
+            await personApi.admin.delete(id);
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to delete person';
             setError(message);
@@ -54,7 +54,7 @@ export const usePersonMutation = () => {
         setLoading(true);
         setError(null);
         try {
-            const person = await personApi.quickCreate(personData);
+            const person = await personApi.admin.quickCreate(personData);
             return person;
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to quick create person';

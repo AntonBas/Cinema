@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { personApi } from '@/api/personApi';
 import type { PersonResponse, PersonRole } from '@/types/person';
-import type { PageResponse } from '@/types/pagination';
+import type { PageResponse, SearchParams } from '@/types/pagination';
 
 export const usePersonSearch = () => {
     const [persons, setPersons] = useState<PersonResponse[]>([]);
@@ -10,16 +10,11 @@ export const usePersonSearch = () => {
     const [error, setError] = useState<string | null>(null);
 
     const searchPersons = useCallback(
-        async (params: {
-            query?: string;
-            role?: PersonRole;
-            page?: number;
-            size?: number;
-        } = {}): Promise<PageResponse<PersonResponse>> => {
+        async (params: SearchParams & { role?: PersonRole } = {}): Promise<PageResponse<PersonResponse>> => {
             setLoading(true);
             setError(null);
             try {
-                const response = await personApi.search(params);
+                const response = await personApi.public.search(params);
                 setPersons(response.content);
                 setPagination(response);
                 return response;
@@ -34,32 +29,12 @@ export const usePersonSearch = () => {
         []
     );
 
-    const getAllPersonsPaginated = useCallback(
-        async (page: number = 0, size: number = 12): Promise<PageResponse<PersonResponse>> => {
-            setLoading(true);
-            setError(null);
-            try {
-                const response = await personApi.getAllPaginated(page, size);
-                setPersons(response.content);
-                setPagination(response);
-                return response;
-            } catch (err) {
-                const message = err instanceof Error ? err.message : 'Failed to get persons';
-                setError(message);
-                throw err;
-            } finally {
-                setLoading(false);
-            }
-        },
-        []
-    );
-
     const getByRole = useCallback(
-        async (role: PersonRole, page: number = 0, size: number = 12): Promise<PageResponse<PersonResponse>> => {
+        async (role: PersonRole, params: SearchParams = {}): Promise<PageResponse<PersonResponse>> => {
             setLoading(true);
             setError(null);
             try {
-                const response = await personApi.getByRole(role, page, size);
+                const response = await personApi.public.getByRole(role, params);
                 setPersons(response.content);
                 setPagination(response);
                 return response;
@@ -84,7 +59,6 @@ export const usePersonSearch = () => {
         loading,
         error,
         searchPersons,
-        getAllPersonsPaginated,
         getByRole,
         clearError
     };

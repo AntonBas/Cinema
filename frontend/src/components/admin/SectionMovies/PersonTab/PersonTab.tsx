@@ -9,8 +9,8 @@ import { Button } from '@/components/ui/Button';
 import { Pagination } from '@/components/ui/Pagination';
 import { useNotification } from '@/hooks/common/useNotification';
 import { usePersonSearch, usePersonMutation } from '@/hooks/features/persons';
-import type { PersonResponse, PersonRequest } from '@/types/person';
-import { PersonRole } from '@/types/person';
+import type { PersonResponse, PersonRequest, PersonRole } from '@/types/person';
+import { PersonRoleEnum } from '@/types/person';
 import styles from './PersonTab.module.css';
 
 export const PersonTab: React.FC = () => {
@@ -23,9 +23,9 @@ export const PersonTab: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [totalCounts, setTotalCounts] = useState({
     ALL: 0,
-    [PersonRole.ACTOR]: 0,
-    [PersonRole.DIRECTOR]: 0,
-    [PersonRole.SCREENWRITER]: 0,
+    [PersonRoleEnum.ACTOR]: 0,
+    [PersonRoleEnum.DIRECTOR]: 0,
+    [PersonRoleEnum.SCREENWRITER]: 0,
   });
 
   const {
@@ -34,7 +34,6 @@ export const PersonTab: React.FC = () => {
     loading,
     error: searchError,
     searchPersons,
-    getAllPersonsPaginated,
     getByRole,
     clearError: clearSearchError
   } = usePersonSearch();
@@ -60,36 +59,42 @@ export const PersonTab: React.FC = () => {
           size: 12
         });
       } else if (activeTab === 'ALL') {
-        await getAllPersonsPaginated(currentPage, 12);
+        await searchPersons({
+          page: currentPage,
+          size: 12
+        });
       } else {
-        await getByRole(activeTab, currentPage, 12);
+        await getByRole(activeTab, {
+          page: currentPage,
+          size: 12
+        });
       }
     } catch (error) {
       console.error('Failed to load persons:', error);
     }
-  }, [activeTab, currentPage, searchQuery, searchPersons, getAllPersonsPaginated, getByRole]);
+  }, [activeTab, currentPage, searchQuery, searchPersons, getByRole]);
 
   const refreshAllCounts = useCallback(async () => {
     if (searchQuery.trim()) return;
 
     try {
       const [allResult, actorsResult, directorsResult, screenwritersResult] = await Promise.all([
-        getAllPersonsPaginated(0, 1),
-        getByRole(PersonRole.ACTOR, 0, 1),
-        getByRole(PersonRole.DIRECTOR, 0, 1),
-        getByRole(PersonRole.SCREENWRITER, 0, 1),
+        searchPersons({ page: 0, size: 1 }),
+        getByRole(PersonRoleEnum.ACTOR, { page: 0, size: 1 }),
+        getByRole(PersonRoleEnum.DIRECTOR, { page: 0, size: 1 }),
+        getByRole(PersonRoleEnum.SCREENWRITER, { page: 0, size: 1 }),
       ]);
 
       setTotalCounts({
         ALL: allResult.totalElements,
-        [PersonRole.ACTOR]: actorsResult.totalElements,
-        [PersonRole.DIRECTOR]: directorsResult.totalElements,
-        [PersonRole.SCREENWRITER]: screenwritersResult.totalElements,
+        [PersonRoleEnum.ACTOR]: actorsResult.totalElements,
+        [PersonRoleEnum.DIRECTOR]: directorsResult.totalElements,
+        [PersonRoleEnum.SCREENWRITER]: screenwritersResult.totalElements,
       });
     } catch (error) {
       console.error('Failed to refresh counts:', error);
     }
-  }, [getAllPersonsPaginated, getByRole, searchQuery]);
+  }, [searchPersons, getByRole, searchQuery]);
 
   useEffect(() => {
     loadPersons();
@@ -194,15 +199,15 @@ export const PersonTab: React.FC = () => {
         activeTab === 'ALL' || person.role === activeTab
       );
 
-      const actors = persons.filter(p => p.role === PersonRole.ACTOR);
-      const directors = persons.filter(p => p.role === PersonRole.DIRECTOR);
-      const screenwriters = persons.filter(p => p.role === PersonRole.SCREENWRITER);
+      const actors = persons.filter(p => p.role === PersonRoleEnum.ACTOR);
+      const directors = persons.filter(p => p.role === PersonRoleEnum.DIRECTOR);
+      const screenwriters = persons.filter(p => p.role === PersonRoleEnum.SCREENWRITER);
 
       return {
         ALL: activeTab === 'ALL' ? filtered.length : persons.length,
-        [PersonRole.ACTOR]: actors.length,
-        [PersonRole.DIRECTOR]: directors.length,
-        [PersonRole.SCREENWRITER]: screenwriters.length,
+        [PersonRoleEnum.ACTOR]: actors.length,
+        [PersonRoleEnum.DIRECTOR]: directors.length,
+        [PersonRoleEnum.SCREENWRITER]: screenwriters.length,
       };
     }
 
@@ -270,7 +275,7 @@ export const PersonTab: React.FC = () => {
             currentPage={currentPage}
             totalPages={pagination.totalPages}
             totalElements={pagination.totalElements}
-            pageSize={pagination.pageSize}
+            pageSize={pagination.size}
             onPageChange={handlePageChange}
             variant="pages"
             loading={loading}
