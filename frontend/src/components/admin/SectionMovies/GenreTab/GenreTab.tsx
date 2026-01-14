@@ -22,7 +22,8 @@ export const GenreTab: React.FC = () => {
   const [formData, setFormData] = useState<GenreRequest>({ name: '' });
   const [searchQuery, setSearchQuery] = useState('');
 
-  const { page: currentPage, setPage: setCurrentPage } = usePagination(0, 12);
+  const { params, setPage } = usePagination({}, 12);
+  const currentPage = params.page || 0;
 
   const {
     genres,
@@ -48,7 +49,11 @@ export const GenreTab: React.FC = () => {
   const loadGenres = useCallback(async () => {
     try {
       if (searchQuery.trim()) {
-        await searchGenres({ query: searchQuery, page: currentPage, size: 12 });
+        await searchGenres({
+          query: searchQuery,
+          page: currentPage,
+          size: 12
+        });
       } else {
         await getAllGenresPaginated(currentPage, 12);
       }
@@ -107,7 +112,7 @@ export const GenreTab: React.FC = () => {
       showNotification('Genre deleted successfully!', 'success');
 
       if (genres.length === 1 && currentPage > 0) {
-        setCurrentPage(currentPage - 1);
+        setPage(currentPage - 1);
       } else {
         await loadGenres();
       }
@@ -139,12 +144,12 @@ export const GenreTab: React.FC = () => {
   const handleSearch = useCallback((query: string) => {
     if (query !== searchQuery) {
       setSearchQuery(query);
-      setCurrentPage(0);
+      setPage(0);
     }
-  }, [searchQuery, setCurrentPage]);
+  }, [searchQuery, setPage]);
 
   const handlePageChange = (page: number) => {
-    setCurrentPage(page);
+    setPage(page);
   };
 
   if (loading && genres.length === 0) {
@@ -255,7 +260,7 @@ export const GenreTab: React.FC = () => {
             currentPage={currentPage}
             totalPages={pagination.totalPages}
             totalElements={pagination.totalElements}
-            pageSize={12}
+            pageSize={pagination.size}
             onPageChange={handlePageChange}
             variant="pages"
             loading={loading}

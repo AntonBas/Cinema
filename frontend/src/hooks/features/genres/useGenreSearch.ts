@@ -9,11 +9,11 @@ export const useGenreSearch = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const searchGenres = useCallback(async (params: SearchParams = {}) => {
+    const searchGenres = useCallback(async (params: SearchParams = {}): Promise<PageResponse<GenreResponse>> => {
         setLoading(true);
         setError(null);
         try {
-            const response = await genreApi.search(params);
+            const response = await genreApi.public.search(params);
             setGenres(response.content);
             setPagination(response);
             return response;
@@ -26,11 +26,14 @@ export const useGenreSearch = () => {
         }
     }, []);
 
-    const getAllGenresPaginated = useCallback(async (page: number = 0, size: number = 12) => {
+    const getAllGenresPaginated = useCallback(async (
+        page: number = 0,
+        size: number = 12
+    ): Promise<PageResponse<GenreResponse>> => {
         setLoading(true);
         setError(null);
         try {
-            const response = await genreApi.getAllPaginated(page, size);
+            const response = await genreApi.public.getAllPaginated({ page, size });
             setGenres(response.content);
             setPagination(response);
             return response;

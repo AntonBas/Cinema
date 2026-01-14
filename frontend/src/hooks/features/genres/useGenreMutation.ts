@@ -10,7 +10,7 @@ export const useGenreMutation = () => {
         setLoading(true);
         setError(null);
         try {
-            const genre = await genreApi.create(genreData);
+            const genre = await genreApi.admin.create(genreData);
             return genre;
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to create genre';
@@ -25,7 +25,7 @@ export const useGenreMutation = () => {
         setLoading(true);
         setError(null);
         try {
-            const genre = await genreApi.update(id, genreData);
+            const genre = await genreApi.admin.update(id, genreData);
             return genre;
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to update genre';
@@ -40,7 +40,7 @@ export const useGenreMutation = () => {
         setLoading(true);
         setError(null);
         try {
-            await genreApi.delete(id);
+            await genreApi.admin.delete(id);
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to delete genre';
             setError(message);

@@ -7,11 +7,11 @@ export const useGenres = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const loadGenres = async () => {
+    const loadGenres = async (): Promise<GenreResponse[]> => {
         setLoading(true);
         setError(null);
         try {
-            const data = await genreApi.getAll();
+            const data = await genreApi.public.getAll();
             setGenres(data);
             return data;
         } catch (err) {
