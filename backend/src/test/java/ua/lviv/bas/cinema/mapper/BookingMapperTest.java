@@ -1,9 +1,6 @@
 package ua.lviv.bas.cinema.mapper;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -16,6 +13,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import ua.lviv.bas.cinema.domain.BookedSeat;
 import ua.lviv.bas.cinema.domain.Booking;
+import ua.lviv.bas.cinema.domain.CinemaHall;
+import ua.lviv.bas.cinema.domain.Movie;
 import ua.lviv.bas.cinema.domain.Payment;
 import ua.lviv.bas.cinema.domain.Seat;
 import ua.lviv.bas.cinema.domain.Session;
@@ -42,11 +41,9 @@ public class BookingMapperTest {
 	void setUp() {
 		User user = User.builder().id(1L).email("user@example.com").firstName("John").lastName("Doe").build();
 
-		ua.lviv.bas.cinema.domain.Movie movie = ua.lviv.bas.cinema.domain.Movie.builder().id(1L).title("Inception")
-				.build();
+		Movie movie = Movie.builder().id(1L).title("Inception").build();
 
-		ua.lviv.bas.cinema.domain.CinemaHall cinemaHall = ua.lviv.bas.cinema.domain.CinemaHall.builder().id(1L)
-				.name("Hall A").build();
+		CinemaHall cinemaHall = CinemaHall.builder().id(1L).name("Hall A").build();
 
 		session = Session.builder().id(1L).movie(movie).hall(cinemaHall)
 				.startTime(LocalDateTime.of(2024, 1, 15, 18, 30)).build();
@@ -82,25 +79,38 @@ public class BookingMapperTest {
 	void toBookingResponse_ShouldMapAllFieldsCorrectly() {
 		BookingResponse response = bookingMapper.toBookingResponse(booking);
 
-		assertNotNull(response);
-		assertEquals(123L, response.getId());
-		assertEquals(BookingStatus.PENDING, response.getStatus());
-		assertEquals(LocalDateTime.of(2024, 1, 15, 18, 30), response.getSessionTime());
-		assertEquals("Inception", response.getMovieTitle());
-		assertEquals("Hall A", response.getHallName());
-		assertEquals(new BigDecimal("500.00"), response.getTotalPrice());
-		assertEquals(50, response.getBonusPointsUsed());
-		assertEquals(new BigDecimal("25.00"), response.getBonusDiscountAmount());
-		assertEquals(new BigDecimal("475.00"), response.getFinalPrice());
-		assertEquals(PaymentStatus.PENDING, response.getPaymentStatus());
-		assertEquals("ORDER_ABC123", response.getLiqpayOrderId());
-		assertEquals(LocalDateTime.of(2024, 1, 15, 14, 50), response.getExpiresAt());
-		assertEquals(LocalDateTime.of(2024, 1, 15, 14, 30), response.getCreatedAt());
+		assertThat(response).isNotNull();
+		assertThat(response.getId()).isEqualTo(123L);
+		assertThat(response.getStatus()).isEqualTo(BookingStatus.PENDING);
+		assertThat(response.getSessionId()).isEqualTo(1L);
+		assertThat(response.getSessionTime()).isEqualTo(LocalDateTime.of(2024, 1, 15, 18, 30));
+		assertThat(response.getMovieTitle()).isEqualTo("Inception");
+		assertThat(response.getHallName()).isEqualTo("Hall A");
+		assertThat(response.getTotalPrice()).isEqualTo(new BigDecimal("500.00"));
+		assertThat(response.getBonusPointsUsed()).isEqualTo(50);
+		assertThat(response.getBonusDiscountAmount()).isEqualTo(new BigDecimal("25.00"));
+		assertThat(response.getFinalPrice()).isEqualTo(new BigDecimal("475.00"));
+		assertThat(response.getLiqpayOrderId()).isEqualTo("ORDER_ABC123");
+		assertThat(response.getExpiresAt()).isEqualTo(LocalDateTime.of(2024, 1, 15, 14, 50));
+		assertThat(response.getCreatedAt()).isEqualTo(LocalDateTime.of(2024, 1, 15, 14, 30));
 
-		assertNotNull(response.getBookedSeats());
-		assertEquals(2, response.getBookedSeats().size());
+		assertThat(response.getBookedSeats()).hasSize(2);
 
-		assertNull(response.getBookingNumber());
+		BookingResponse.BookedSeatInfo seatInfo1 = response.getBookedSeats().get(0);
+		assertThat(seatInfo1.getId()).isEqualTo(1L);
+		assertThat(seatInfo1.getSeatId()).isEqualTo(1L);
+		assertThat(seatInfo1.getRow()).isEqualTo(5);
+		assertThat(seatInfo1.getSeatNumber()).isEqualTo(12);
+		assertThat(seatInfo1.getTicketTypeName()).isEqualTo("Adult");
+		assertThat(seatInfo1.getSeatPrice()).isEqualTo(new BigDecimal("250.00"));
+
+		BookingResponse.BookedSeatInfo seatInfo2 = response.getBookedSeats().get(1);
+		assertThat(seatInfo2.getId()).isEqualTo(2L);
+		assertThat(seatInfo2.getSeatId()).isEqualTo(2L);
+		assertThat(seatInfo2.getRow()).isEqualTo(5);
+		assertThat(seatInfo2.getSeatNumber()).isEqualTo(13);
+		assertThat(seatInfo2.getTicketTypeName()).isEqualTo("Adult");
+		assertThat(seatInfo2.getSeatPrice()).isEqualTo(new BigDecimal("250.00"));
 	}
 
 	@Test
@@ -109,11 +119,10 @@ public class BookingMapperTest {
 
 		BookingResponse response = bookingMapper.toBookingResponse(booking);
 
-		assertNotNull(response);
-		assertNull(response.getPaymentStatus());
-		assertNull(response.getLiqpayOrderId());
-		assertEquals(123L, response.getId());
-		assertEquals("Inception", response.getMovieTitle());
+		assertThat(response).isNotNull();
+		assertThat(response.getLiqpayOrderId()).isNull();
+		assertThat(response.getId()).isEqualTo(123L);
+		assertThat(response.getMovieTitle()).isEqualTo("Inception");
 	}
 
 	@Test
@@ -122,46 +131,30 @@ public class BookingMapperTest {
 
 		BookingResponse response = bookingMapper.toBookingResponse(booking);
 
-		assertNotNull(response);
-		assertNotNull(response.getBookedSeats());
-		assertTrue(response.getBookedSeats().isEmpty());
-		assertEquals(123L, response.getId());
+		assertThat(response).isNotNull();
+		assertThat(response.getBookedSeats()).isNotNull().isEmpty();
+		assertThat(response.getId()).isEqualTo(123L);
 	}
 
 	@Test
 	void toBookingResponse_ShouldReturnNull_WhenBookingIsNull() {
 		BookingResponse response = bookingMapper.toBookingResponse(null);
-		assertNull(response);
+		assertThat(response).isNull();
 	}
 
 	@Test
 	void toBookingResponse_ShouldHandleDifferentBookingStatuses() {
 		booking.setStatus(BookingStatus.CONFIRMED);
 		BookingResponse response1 = bookingMapper.toBookingResponse(booking);
-		assertEquals(BookingStatus.CONFIRMED, response1.getStatus());
+		assertThat(response1.getStatus()).isEqualTo(BookingStatus.CONFIRMED);
 
 		booking.setStatus(BookingStatus.CANCELLED);
 		BookingResponse response2 = bookingMapper.toBookingResponse(booking);
-		assertEquals(BookingStatus.CANCELLED, response2.getStatus());
+		assertThat(response2.getStatus()).isEqualTo(BookingStatus.CANCELLED);
 
 		booking.setStatus(BookingStatus.EXPIRED);
 		BookingResponse response3 = bookingMapper.toBookingResponse(booking);
-		assertEquals(BookingStatus.EXPIRED, response3.getStatus());
-	}
-
-	@Test
-	void toBookingResponse_ShouldHandleDifferentPaymentStatuses() {
-		payment.setStatus(PaymentStatus.SUCCESS);
-		BookingResponse response1 = bookingMapper.toBookingResponse(booking);
-		assertEquals(PaymentStatus.SUCCESS, response1.getPaymentStatus());
-
-		payment.setStatus(PaymentStatus.FAILED);
-		BookingResponse response2 = bookingMapper.toBookingResponse(booking);
-		assertEquals(PaymentStatus.FAILED, response2.getPaymentStatus());
-
-		payment.setStatus(PaymentStatus.PROCESSING);
-		BookingResponse response3 = bookingMapper.toBookingResponse(booking);
-		assertEquals(PaymentStatus.PROCESSING, response3.getPaymentStatus());
+		assertThat(response3.getStatus()).isEqualTo(BookingStatus.EXPIRED);
 	}
 
 	@Test
@@ -170,12 +163,13 @@ public class BookingMapperTest {
 
 		BookingResponse response = bookingMapper.toBookingResponse(booking);
 
-		assertNotNull(response);
-		assertEquals(123L, response.getId());
-		assertNull(response.getSessionTime());
-		assertNull(response.getMovieTitle());
-		assertNull(response.getHallName());
-		assertEquals(BookingStatus.PENDING, response.getStatus());
+		assertThat(response).isNotNull();
+		assertThat(response.getId()).isEqualTo(123L);
+		assertThat(response.getSessionTime()).isNull();
+		assertThat(response.getMovieTitle()).isNull();
+		assertThat(response.getHallName()).isNull();
+		assertThat(response.getSessionId()).isNull();
+		assertThat(response.getStatus()).isEqualTo(BookingStatus.PENDING);
 	}
 
 	@Test
@@ -184,11 +178,11 @@ public class BookingMapperTest {
 
 		BookingResponse response = bookingMapper.toBookingResponse(booking);
 
-		assertNotNull(response);
-		assertEquals(123L, response.getId());
-		assertEquals(LocalDateTime.of(2024, 1, 15, 18, 30), response.getSessionTime());
-		assertNull(response.getMovieTitle());
-		assertEquals("Hall A", response.getHallName());
+		assertThat(response).isNotNull();
+		assertThat(response.getId()).isEqualTo(123L);
+		assertThat(response.getSessionTime()).isEqualTo(LocalDateTime.of(2024, 1, 15, 18, 30));
+		assertThat(response.getMovieTitle()).isNull();
+		assertThat(response.getHallName()).isEqualTo("Hall A");
 	}
 
 	@Test
@@ -197,11 +191,11 @@ public class BookingMapperTest {
 
 		BookingResponse response = bookingMapper.toBookingResponse(booking);
 
-		assertNotNull(response);
-		assertEquals(123L, response.getId());
-		assertEquals(LocalDateTime.of(2024, 1, 15, 18, 30), response.getSessionTime());
-		assertEquals("Inception", response.getMovieTitle());
-		assertNull(response.getHallName());
+		assertThat(response).isNotNull();
+		assertThat(response.getId()).isEqualTo(123L);
+		assertThat(response.getSessionTime()).isEqualTo(LocalDateTime.of(2024, 1, 15, 18, 30));
+		assertThat(response.getMovieTitle()).isEqualTo("Inception");
+		assertThat(response.getHallName()).isNull();
 	}
 
 	@Test
@@ -212,9 +206,27 @@ public class BookingMapperTest {
 
 		BookingResponse response = bookingMapper.toBookingResponse(booking);
 
-		assertNotNull(response);
-		assertEquals(0, response.getBonusPointsUsed());
-		assertEquals(BigDecimal.ZERO, response.getBonusDiscountAmount());
-		assertEquals(new BigDecimal("500.00"), response.getFinalPrice());
+		assertThat(response).isNotNull();
+		assertThat(response.getBonusPointsUsed()).isEqualTo(0);
+		assertThat(response.getBonusDiscountAmount()).isEqualTo(BigDecimal.ZERO);
+		assertThat(response.getFinalPrice()).isEqualTo(new BigDecimal("500.00"));
+	}
+
+	@Test
+	void toBookingResponse_ShouldHandleNullBookedSeatProperties() {
+		bookedSeat1.setSeat(null);
+		bookedSeat1.setTicketType(null);
+
+		BookingResponse response = bookingMapper.toBookingResponse(booking);
+
+		assertThat(response).isNotNull();
+		assertThat(response.getBookedSeats()).hasSize(2);
+
+		BookingResponse.BookedSeatInfo seatInfo1 = response.getBookedSeats().get(0);
+		assertThat(seatInfo1.getSeatId()).isNull();
+		assertThat(seatInfo1.getRow()).isNull();
+		assertThat(seatInfo1.getSeatNumber()).isNull();
+		assertThat(seatInfo1.getTicketTypeName()).isNull();
+		assertThat(seatInfo1.getSeatPrice()).isEqualTo(new BigDecimal("250.00"));
 	}
 }

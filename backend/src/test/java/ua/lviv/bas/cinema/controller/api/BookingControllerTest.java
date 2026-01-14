@@ -1,7 +1,6 @@
 package ua.lviv.bas.cinema.controller.api;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
@@ -27,14 +26,13 @@ import org.springframework.http.ResponseEntity;
 
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.enums.BookingStatus;
-import ua.lviv.bas.cinema.domain.enums.PaymentStatus;
 import ua.lviv.bas.cinema.dto.booking.request.BookingCreateRequest;
 import ua.lviv.bas.cinema.dto.booking.response.BookingResponse;
 import ua.lviv.bas.cinema.exception.domain.booking.BookingNotFoundException;
 import ua.lviv.bas.cinema.service.booking.BookingService;
 
 @ExtendWith(MockitoExtension.class)
-public class BookingControllerTest {
+class BookingControllerTest {
 
 	@Mock
 	private BookingService bookingService;
@@ -52,7 +50,7 @@ public class BookingControllerTest {
 	}
 
 	private BookingResponse createBookingResponse(Long id, String bookingNumber, BigDecimal totalPrice,
-			BookingStatus bookingStatus, PaymentStatus paymentStatus, Integer bonusPointsUsed, String movieTitle) {
+			BookingStatus bookingStatus, Integer bonusPointsUsed, String movieTitle) {
 		BigDecimal bonusDiscount = bonusPointsUsed > 0
 				? BigDecimal.valueOf(bonusPointsUsed / 100.0 * totalPrice.doubleValue())
 				: BigDecimal.ZERO;
@@ -61,9 +59,9 @@ public class BookingControllerTest {
 		return BookingResponse.builder().id(id).bookingNumber(bookingNumber).status(bookingStatus)
 				.sessionTime(LocalDateTime.now().plusDays(1)).movieTitle(movieTitle != null ? movieTitle : "Test Movie")
 				.hallName("Hall A").totalPrice(totalPrice).bonusPointsUsed(bonusPointsUsed)
-				.bonusDiscountAmount(bonusDiscount).finalPrice(finalPrice).paymentStatus(paymentStatus)
-				.liqpayOrderId("ORDER_ABC123").expiresAt(LocalDateTime.now().plusMinutes(15))
-				.createdAt(LocalDateTime.now()).bookedSeats(Arrays.asList()).build();
+				.bonusDiscountAmount(bonusDiscount).finalPrice(finalPrice).liqpayOrderId("ORDER_ABC123")
+				.expiresAt(LocalDateTime.now().plusMinutes(15)).createdAt(LocalDateTime.now())
+				.bookedSeats(Arrays.asList()).build();
 	}
 
 	@Test
@@ -74,17 +72,17 @@ public class BookingControllerTest {
 		request.setBonusPointsToUse(0);
 
 		BookingResponse bookingResponse = createBookingResponse(1L, "BK-20240115-00123", new BigDecimal("150.00"),
-				BookingStatus.PENDING, PaymentStatus.PENDING, 0, "Inception");
+				BookingStatus.PENDING, 0, "Inception");
 
 		when(bookingService.createBooking(request, user)).thenReturn(bookingResponse);
 
 		ResponseEntity<BookingResponse> response = bookingController.createBooking(request, user);
 
-		assertEquals(HttpStatus.CREATED, response.getStatusCode());
-		assertNotNull(response.getBody());
-		assertEquals(1L, response.getBody().getId());
-		assertEquals("BK-20240115-00123", response.getBody().getBookingNumber());
-		assertEquals(new BigDecimal("150.00"), response.getBody().getTotalPrice());
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+		assertThat(response.getBody()).isNotNull();
+		assertThat(response.getBody().getId()).isEqualTo(1L);
+		assertThat(response.getBody().getBookingNumber()).isEqualTo("BK-20240115-00123");
+		assertThat(response.getBody().getTotalPrice()).isEqualTo(new BigDecimal("150.00"));
 		verify(bookingService).createBooking(request, user);
 	}
 
@@ -96,15 +94,15 @@ public class BookingControllerTest {
 		request.setBonusPointsToUse(100);
 
 		BookingResponse bookingResponse = createBookingResponse(1L, "BK-20240115-00124", new BigDecimal("150.00"),
-				BookingStatus.PENDING, PaymentStatus.PENDING, 100, "The Matrix");
+				BookingStatus.PENDING, 100, "The Matrix");
 
 		when(bookingService.createBooking(request, user)).thenReturn(bookingResponse);
 
 		ResponseEntity<BookingResponse> response = bookingController.createBooking(request, user);
 
-		assertEquals(HttpStatus.CREATED, response.getStatusCode());
-		assertNotNull(response.getBody());
-		assertEquals(100, response.getBody().getBonusPointsUsed());
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+		assertThat(response.getBody()).isNotNull();
+		assertThat(response.getBody().getBonusPointsUsed()).isEqualTo(100);
 		verify(bookingService).createBooking(request, user);
 	}
 
@@ -125,16 +123,16 @@ public class BookingControllerTest {
 		Long bookingId = 1L;
 
 		BookingResponse bookingResponse = createBookingResponse(bookingId, "BK-20240115-00125",
-				new BigDecimal("150.00"), BookingStatus.CONFIRMED, PaymentStatus.SUCCESS, 50, "Interstellar");
+				new BigDecimal("150.00"), BookingStatus.CONFIRMED, 50, "Interstellar");
 
 		when(bookingService.getBookingById(bookingId, user)).thenReturn(bookingResponse);
 
 		ResponseEntity<BookingResponse> response = bookingController.getBooking(bookingId, user);
 
-		assertEquals(HttpStatus.OK, response.getStatusCode());
-		assertNotNull(response.getBody());
-		assertEquals(bookingId, response.getBody().getId());
-		assertEquals(BookingStatus.CONFIRMED, response.getBody().getStatus());
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+		assertThat(response.getBody()).isNotNull();
+		assertThat(response.getBody().getId()).isEqualTo(bookingId);
+		assertThat(response.getBody().getStatus()).isEqualTo(BookingStatus.CONFIRMED);
 		verify(bookingService).getBookingById(bookingId, user);
 	}
 
@@ -155,9 +153,9 @@ public class BookingControllerTest {
 		Pageable pageable = PageRequest.of(0, 20);
 
 		BookingResponse booking1 = createBookingResponse(1L, "BK-20240115-00126", new BigDecimal("150.00"),
-				BookingStatus.CONFIRMED, PaymentStatus.SUCCESS, 100, "Movie 1");
+				BookingStatus.CONFIRMED, 100, "Movie 1");
 		BookingResponse booking2 = createBookingResponse(2L, "BK-20240115-00127", new BigDecimal("200.00"),
-				BookingStatus.EXPIRED, PaymentStatus.SUCCESS, 0, "Movie 2");
+				BookingStatus.EXPIRED, 0, "Movie 2");
 		List<BookingResponse> bookings = Arrays.asList(booking1, booking2);
 		Page<BookingResponse> page = new PageImpl<>(bookings, pageable, 2);
 
@@ -165,10 +163,10 @@ public class BookingControllerTest {
 
 		ResponseEntity<Page<BookingResponse>> response = bookingController.getUserBookings(pageable, null, user);
 
-		assertEquals(HttpStatus.OK, response.getStatusCode());
-		assertNotNull(response.getBody());
-		assertEquals(2, response.getBody().getTotalElements());
-		assertEquals(2, response.getBody().getContent().size());
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+		assertThat(response.getBody()).isNotNull();
+		assertThat(response.getBody().getTotalElements()).isEqualTo(2);
+		assertThat(response.getBody().getContent()).hasSize(2);
 		verify(bookingService).getUserBookings(user.getId(), null, pageable);
 	}
 
@@ -178,10 +176,10 @@ public class BookingControllerTest {
 		Pageable pageable = PageRequest.of(0, 20);
 		BookingStatus status = BookingStatus.CONFIRMED;
 
-		BookingResponse booking1 = createBookingResponse(1L, "BK-20240115-00128", new BigDecimal("150.00"), status,
-				PaymentStatus.SUCCESS, 100, "Movie 1");
-		BookingResponse booking2 = createBookingResponse(2L, "BK-20240115-00129", new BigDecimal("200.00"), status,
-				PaymentStatus.SUCCESS, 50, "Movie 2");
+		BookingResponse booking1 = createBookingResponse(1L, "BK-20240115-00128", new BigDecimal("150.00"), status, 100,
+				"Movie 1");
+		BookingResponse booking2 = createBookingResponse(2L, "BK-20240115-00129", new BigDecimal("200.00"), status, 50,
+				"Movie 2");
 		List<BookingResponse> bookings = Arrays.asList(booking1, booking2);
 		Page<BookingResponse> page = new PageImpl<>(bookings, pageable, 2);
 
@@ -189,10 +187,10 @@ public class BookingControllerTest {
 
 		ResponseEntity<Page<BookingResponse>> response = bookingController.getUserBookings(pageable, status, user);
 
-		assertEquals(HttpStatus.OK, response.getStatusCode());
-		assertNotNull(response.getBody());
-		assertEquals(2, response.getBody().getTotalElements());
-		response.getBody().getContent().forEach(booking -> assertEquals(status, booking.getStatus()));
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+		assertThat(response.getBody()).isNotNull();
+		assertThat(response.getBody().getTotalElements()).isEqualTo(2);
+		response.getBody().getContent().forEach(booking -> assertThat(booking.getStatus()).isEqualTo(status));
 		verify(bookingService).getUserBookings(user.getId(), status, pageable);
 	}
 
@@ -207,10 +205,10 @@ public class BookingControllerTest {
 
 		ResponseEntity<Page<BookingResponse>> response = bookingController.getUserBookings(pageable, null, user);
 
-		assertEquals(HttpStatus.OK, response.getStatusCode());
-		assertNotNull(response.getBody());
-		assertEquals(0, response.getBody().getTotalElements());
-		assertEquals(0, response.getBody().getContent().size());
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+		assertThat(response.getBody()).isNotNull();
+		assertThat(response.getBody().getTotalElements()).isEqualTo(0);
+		assertThat(response.getBody().getContent()).isEmpty();
 		verify(bookingService).getUserBookings(user.getId(), null, pageable);
 	}
 
@@ -223,7 +221,7 @@ public class BookingControllerTest {
 
 		ResponseEntity<Void> response = bookingController.cancelBooking(bookingId, user);
 
-		assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
 		verify(bookingService).cancelBooking(bookingId, user);
 	}
 
@@ -259,9 +257,8 @@ public class BookingControllerTest {
 
 		ResponseEntity<Integer> response = bookingController.getAvailableBonusPoints(totalPrice, user);
 
-		assertEquals(HttpStatus.OK, response.getStatusCode());
-		assertNotNull(response.getBody());
-		assertEquals(100, response.getBody());
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+		assertThat(response.getBody()).isEqualTo(100);
 		verify(bookingService).getAvailableBonusPointsForBooking(user.getId(), totalPrice);
 	}
 
@@ -275,9 +272,8 @@ public class BookingControllerTest {
 
 		ResponseEntity<Integer> response = bookingController.getAvailableBonusPoints(totalPrice, user);
 
-		assertEquals(HttpStatus.OK, response.getStatusCode());
-		assertNotNull(response.getBody());
-		assertEquals(0, response.getBody());
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+		assertThat(response.getBody()).isEqualTo(0);
 		verify(bookingService).getAvailableBonusPointsForBooking(user.getId(), totalPrice);
 	}
 
@@ -292,9 +288,9 @@ public class BookingControllerTest {
 
 		ResponseEntity<Page<BookingResponse>> response = bookingController.getUserBookings(pageable, null, user);
 
-		assertEquals(HttpStatus.OK, response.getStatusCode());
-		assertNotNull(response.getBody());
-		assertEquals(0, response.getBody().getTotalElements());
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+		assertThat(response.getBody()).isNotNull();
+		assertThat(response.getBody().getTotalElements()).isEqualTo(0);
 		verify(bookingService).getUserBookings(user.getId(), null, pageable);
 	}
 
@@ -321,9 +317,8 @@ public class BookingControllerTest {
 
 		ResponseEntity<Integer> response = bookingController.getAvailableBonusPoints(totalPrice, user);
 
-		assertEquals(HttpStatus.OK, response.getStatusCode());
-		assertNotNull(response.getBody());
-		assertEquals(500, response.getBody());
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+		assertThat(response.getBody()).isEqualTo(500);
 		verify(bookingService).getAvailableBonusPointsForBooking(user.getId(), totalPrice);
 	}
 
@@ -353,9 +348,9 @@ public class BookingControllerTest {
 
 		ResponseEntity<Page<BookingResponse>> response = bookingController.getUserBookings(pageable, status, user);
 
-		assertEquals(HttpStatus.OK, response.getStatusCode());
-		assertNotNull(response.getBody());
-		assertEquals(0, response.getBody().getTotalElements());
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+		assertThat(response.getBody()).isNotNull();
+		assertThat(response.getBody().getTotalElements()).isEqualTo(0);
 		verify(bookingService).getUserBookings(user.getId(), status, pageable);
 	}
 }
