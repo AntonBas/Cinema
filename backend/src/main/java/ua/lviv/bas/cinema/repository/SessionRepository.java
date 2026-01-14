@@ -26,11 +26,12 @@ public interface SessionRepository extends JpaRepository<Session, Long> {
 	@Query("SELECT s FROM Session s WHERE s.status = 'SCHEDULED' AND s.startTime <= :currentTime")
 	List<Session> findSessionsToStart(@Param("currentTime") LocalDateTime currentTime);
 
-	@Query("""
-			    SELECT s FROM Session s
-			    WHERE s.status = 'ONGOING'
-			    AND (s.startTime + FUNCTION('NUMTODSINTERVAL', s.movie.durationMinutes, 'MINUTE')) <= :currentTime
-			""")
+	@Query(value = """
+			SELECT s.* FROM session s
+			JOIN movie m ON s.movie_id = m.id
+			WHERE s.status = 'ONGOING'
+			AND (s.start_time + (m.duration_minutes || ' minutes')::interval) <= :currentTime
+			""", nativeQuery = true)
 	List<Session> findSessionsToComplete(@Param("currentTime") LocalDateTime currentTime);
 
 	@Query("SELECT s FROM Session s WHERE "
@@ -60,29 +61,31 @@ public interface SessionRepository extends JpaRepository<Session, Long> {
 			+ "s.startTime > CURRENT_TIMESTAMP")
 	Page<Session> findAvailableSessions(Pageable pageable);
 
-	@Query("""
-			    SELECT s FROM Session s
-			    WHERE s.hall.id = :hallId
-			    AND (:excludeSessionId IS NULL OR s.id != :excludeSessionId)
-			    AND (
-			        (s.startTime < :endTime)
-			        AND
-			        (s.startTime + FUNCTION('NUMTODSINTERVAL', s.movie.durationMinutes, 'MINUTE')) > :startTime
-			    )
-			""")
+	@Query(value = """
+			SELECT s.* FROM session s
+			JOIN movie m ON s.movie_id = m.id
+			WHERE s.hall_id = :hallId
+			AND (:excludeSessionId IS NULL OR s.id != :excludeSessionId)
+			AND (
+			    (s.start_time < :endTime)
+			    AND
+			    (s.start_time + (m.duration_minutes || ' minutes')::interval) > :startTime
+			)
+			""", nativeQuery = true)
 	List<Session> findConflictingSessions(@Param("hallId") Long hallId, @Param("startTime") LocalDateTime startTime,
 			@Param("endTime") LocalDateTime endTime, @Param("excludeSessionId") Long excludeSessionId);
 
-	@Query("""
-			    SELECT CASE WHEN COUNT(s) > 0 THEN true ELSE false END FROM Session s
-			    WHERE s.hall.id = :hallId
-			    AND (:excludeSessionId IS NULL OR s.id != :excludeSessionId)
-			    AND (
-			        (s.startTime < :endTime)
-			        AND
-			        (s.startTime + FUNCTION('NUMTODSINTERVAL', s.movie.durationMinutes, 'MINUTE')) > :startTime
-			    )
-			""")
+	@Query(value = """
+			SELECT COUNT(s) > 0 FROM session s
+			JOIN movie m ON s.movie_id = m.id
+			WHERE s.hall_id = :hallId
+			AND (:excludeSessionId IS NULL OR s.id != :excludeSessionId)
+			AND (
+			    (s.start_time < :endTime)
+			    AND
+			    (s.start_time + (m.duration_minutes || ' minutes')::interval) > :startTime
+			)
+			""", nativeQuery = true)
 	boolean existsConflictingSession(@Param("hallId") Long hallId, @Param("startTime") LocalDateTime startTime,
 			@Param("endTime") LocalDateTime endTime, @Param("excludeSessionId") Long excludeSessionId);
 }
