@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/Button';
 import { Pagination } from '@/components/ui/Pagination';
 import { useNotification } from '@/hooks/common/useNotification';
 import { usePersonSearch, usePersonMutation } from '@/hooks/features/persons';
+import { usePagination } from '@/hooks/common/usePagination';
 import type { PersonResponse, PersonRequest, PersonRole } from '@/types/person';
 import { PersonRoleEnum } from '@/types/person';
 import styles from './PersonTab.module.css';
@@ -19,7 +20,6 @@ export const PersonTab: React.FC = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [editingPerson, setEditingPerson] = useState<PersonResponse | null>(null);
   const [personToDelete, setPersonToDelete] = useState<PersonResponse | null>(null);
-  const [currentPage, setCurrentPage] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [totalCounts, setTotalCounts] = useState({
     ALL: 0,
@@ -27,6 +27,9 @@ export const PersonTab: React.FC = () => {
     [PersonRoleEnum.DIRECTOR]: 0,
     [PersonRoleEnum.SCREENWRITER]: 0,
   });
+
+  const { params, setPage } = usePagination({}, 12);
+  const currentPage = params.page || 0;
 
   const {
     persons,
@@ -122,17 +125,17 @@ export const PersonTab: React.FC = () => {
 
   const handleSearch = useCallback((query: string) => {
     setSearchQuery(query);
-    setCurrentPage(0);
-  }, []);
+    setPage(0);
+  }, [setPage]);
 
   const handleTabChange = (tab: PersonRole | 'ALL') => {
     setActiveTab(tab);
-    setCurrentPage(0);
+    setPage(0);
     setSearchQuery('');
   };
 
   const handlePageChange = (page: number) => {
-    setCurrentPage(page);
+    setPage(page);
   };
 
   const handleSubmit = async (data: PersonRequest) => {
@@ -214,7 +217,18 @@ export const PersonTab: React.FC = () => {
     return totalCounts;
   };
 
+  const getDisplayRange = () => {
+    if (!pagination) return { start: 0, end: 0 };
+
+    const pageSize = pagination.size || 12;
+    const startItem = currentPage * pageSize + 1;
+    const endItem = Math.min((currentPage + 1) * pageSize, pagination.totalElements);
+
+    return { start: startItem, end: endItem };
+  };
+
   const tabStats = getTabStats();
+  const { start, end } = getDisplayRange();
 
   if (loading && !persons.length) {
     return (
@@ -249,8 +263,7 @@ export const PersonTab: React.FC = () => {
 
       {pagination && (
         <div className={styles.resultsInfo}>
-          Showing {(currentPage * 12) + 1}-
-          {Math.min((currentPage + 1) * 12, pagination.totalElements)} of {pagination.totalElements} people
+          Showing {start}-{end} of {pagination.totalElements} people
           {searchQuery && ` for "${searchQuery}"`}
         </div>
       )}
