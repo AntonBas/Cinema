@@ -21,8 +21,16 @@ public interface PersonRepository extends JpaRepository<Person, Long> {
 
 	long countByRole(PersonRole role);
 
-	@Query("SELECT p FROM Person p WHERE "
-			+ "(:query IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', :query, '%'))) AND "
-			+ "(:role IS NULL OR p.role = :role)")
-	Page<Person> searchByNameAndRole(@Param("query") String query, @Param("role") PersonRole role, Pageable pageable);
+	@Query(value = """
+			SELECT p.* FROM persons p
+			WHERE (:query IS NULL OR :query = '' OR
+			       p.name ILIKE '%' || :query || '%')
+			AND (:role IS NULL OR p.role = :role)
+			""", countQuery = """
+			SELECT COUNT(*) FROM persons p
+			WHERE (:query IS NULL OR :query = '' OR
+			       p.name ILIKE '%' || :query || '%')
+			AND (:role IS NULL OR p.role = :role)
+			""", nativeQuery = true)
+	Page<Person> searchByNameAndRole(@Param("query") String query, @Param("role") String role, Pageable pageable);
 }

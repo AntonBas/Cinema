@@ -27,15 +27,29 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
 	long countByUserRoleAndEnabledTrue(UserRole role);
 
-	@Query("SELECT u FROM User u WHERE " + "(:search IS NULL OR LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%')) "
-			+ "OR LOWER(u.firstName) LIKE LOWER(CONCAT('%', :search, '%')) "
-			+ "OR LOWER(u.lastName) LIKE LOWER(CONCAT('%', :search, '%'))) AND "
-			+ "(:role IS NULL OR u.userRole = :role) AND " + "(:enabled IS NULL OR u.enabled = :enabled)")
-	Page<User> findFilteredUsers(@Param("search") String search, @Param("role") UserRole role,
+	@Query(value = """
+			SELECT u.* FROM users u
+			LEFT JOIN bonus_cards bc ON u.id = bc.user_id
+			WHERE (:search IS NULL OR
+			       LOWER(u.email) LIKE '%' || LOWER(COALESCE(:search, '')) || '%' OR
+			       LOWER(u.first_name) LIKE '%' || LOWER(COALESCE(:search, '')) || '%' OR
+			       LOWER(u.last_name) LIKE '%' || LOWER(COALESCE(:search, '')) || '%')
+			AND (:role IS NULL OR u.user_role = :role)
+			AND (:enabled IS NULL OR u.enabled = :enabled)
+			""", countQuery = """
+			SELECT COUNT(*) FROM users u
+			WHERE (:search IS NULL OR
+			       LOWER(u.email) LIKE '%' || LOWER(COALESCE(:search, '')) || '%' OR
+			       LOWER(u.first_name) LIKE '%' || LOWER(COALESCE(:search, '')) || '%' OR
+			       LOWER(u.last_name) LIKE '%' || LOWER(COALESCE(:search, '')) || '%')
+			AND (:role IS NULL OR u.user_role = :role)
+			AND (:enabled IS NULL OR u.enabled = :enabled)
+			""", nativeQuery = true)
+	Page<User> findFilteredUsers(@Param("search") String search, @Param("role") String role,
 			@Param("enabled") Boolean enabled, Pageable pageable);
 
-	@Query("SELECT u FROM User u WHERE " + "u.verificationStatus = :status AND " + "u.enabled = true AND "
-			+ "FUNCTION('DAY', u.dateOfBirth) = :day AND " + "FUNCTION('MONTH', u.dateOfBirth) = :month")
+	@Query("SELECT u FROM User u LEFT JOIN FETCH u.bonusCard WHERE " + "u.verificationStatus = :status AND "
+			+ "u.enabled = true AND " + "DAY(u.dateOfBirth) = :day AND " + "MONTH(u.dateOfBirth) = :month")
 	List<User> findVerifiedUsersWithBirthday(@Param("status") VerificationStatus status, @Param("day") int day,
 			@Param("month") int month);
 }

@@ -16,6 +16,12 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
 
 	Optional<Ticket> findByUniqueCode(String uniqueCode);
 
+	@Query("SELECT COUNT(t) FROM Ticket t WHERE t.user.id = :userId")
+	long countByUserId(@Param("userId") Long userId);
+
+	@Query("SELECT t.user.id, COUNT(t) FROM Ticket t WHERE t.user.id IN :userIds GROUP BY t.user.id")
+	List<Object[]> countTicketsByUserIds(@Param("userIds") List<Long> userIds);
+
 	@Query("SELECT t FROM Ticket t WHERE t.booking.id = :bookingId")
 	List<Ticket> findByBookingId(@Param("bookingId") Long bookingId);
 

@@ -51,7 +51,7 @@ public interface UserMapper {
 	@Mapping(target = "email", ignore = true)
 	void updateUserFromRequest(UserUpdateRequest dto, @MappingTarget User user);
 
-	@Mapping(target = "ticketsCount", expression = "java(user.getTickets() != null ? user.getTickets().size() : 0)")
+	@Mapping(target = "ticketsCount", ignore = true)
 	@Mapping(target = "lastActivity", source = "updatedAt")
 	AdminUserListResponse toAdminUserListResponse(User user);
 }

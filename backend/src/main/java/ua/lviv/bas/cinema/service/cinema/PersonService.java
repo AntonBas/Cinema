@@ -109,8 +109,10 @@ public class PersonService {
 	public Page<PersonResponse> searchPersons(String query, PersonRole role, Pageable pageable) {
 		log.info("Searching persons: query='{}', role={}", query, role);
 
+		String roleString = (role != null) ? role.name() : null;
+
 		Page<Person> personPage = personRepository.searchByNameAndRole(StringUtils.hasText(query) ? query.trim() : null,
-				role, pageable);
+				roleString, pageable);
 
 		log.debug("Found {} persons", personPage.getTotalElements());
 		return personPage.map(personMapper::toPersonResponse);

@@ -1,7 +1,10 @@
 package ua.lviv.bas.cinema.service.admin;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -24,6 +27,7 @@ import ua.lviv.bas.cinema.exception.domain.user.SelfBlockException;
 import ua.lviv.bas.cinema.exception.domain.user.SelfRoleChangeException;
 import ua.lviv.bas.cinema.exception.domain.user.UserNotFoundException;
 import ua.lviv.bas.cinema.mapper.UserMapper;
+import ua.lviv.bas.cinema.repository.TicketRepository;
 import ua.lviv.bas.cinema.repository.UserRepository;
 
 @Slf4j
@@ -32,6 +36,7 @@ import ua.lviv.bas.cinema.repository.UserRepository;
 public class AdminUserService {
 
 	private final UserRepository userRepository;
+	private final TicketRepository ticketRepository;
 	private final UserMapper userMapper;
 
 	@Transactional
@@ -41,7 +46,6 @@ public class AdminUserService {
 		UserRole oldRole = user.getUserRole();
 
 		String currentUserEmail = getCurrentUserEmail();
-
 		validateSelfOperation(user.getEmail(), currentUserEmail, () -> new SelfRoleChangeException(userId));
 
 		if (oldRole == UserRole.ROLE_ADMIN && newRole != UserRole.ROLE_ADMIN) {
@@ -50,7 +54,6 @@ public class AdminUserService {
 
 		user.setUserRole(newRole);
 		userRepository.save(user);
-
 		log.info("User role updated for user {}: {} -> {}", userId, oldRole, newRole);
 	}
 
@@ -61,14 +64,12 @@ public class AdminUserService {
 		boolean oldStatus = user.isEnabled();
 
 		String currentUserEmail = getCurrentUserEmail();
-
 		if (user.getEmail().equals(currentUserEmail) && !enabled) {
 			throw new SelfBlockException();
 		}
 
 		user.setEnabled(enabled);
 		userRepository.save(user);
-
 		log.info("User status updated for user {}: enabled = {} -> {}", userId, oldStatus, enabled);
 	}
 
@@ -90,7 +91,6 @@ public class AdminUserService {
 		}
 
 		User saved = userRepository.save(user);
-
 		log.info("Birth date verification updated for user {}: {} -> {}", userId, oldStatus, newStatus);
 
 		return userMapper.toUserResponse(saved);
@@ -100,8 +100,29 @@ public class AdminUserService {
 	@Cacheable(value = "users", key = "#search + '-' + #role + '-' + #enabled + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
 	public Page<AdminUserListResponse> findAllForAdmin(String search, UserRole role, Boolean enabled,
 			Pageable pageable) {
-		return userRepository.findFilteredUsers(search, role, enabled, pageable)
-				.map(userMapper::toAdminUserListResponse);
+		String roleString = role != null ? role.name() : null;
+		Page<User> usersPage = userRepository.findFilteredUsers(search, roleString, enabled, pageable);
+
+		List<Long> userIds = usersPage.getContent().stream().map(User::getId).collect(Collectors.toList());
+
+		Map<Long, Long> ticketsCountMap = new HashMap<>();
+		if (!userIds.isEmpty()) {
+			List<Object[]> counts = ticketRepository.countTicketsByUserIds(userIds);
+			for (Object[] count : counts) {
+				Long userId = (Long) count[0];
+				Long ticketsCount = (Long) count[1];
+				ticketsCountMap.put(userId, ticketsCount);
+			}
+		}
+
+		return usersPage.map(user -> {
+			AdminUserListResponse response = userMapper.toAdminUserListResponse(user);
+
+			Long ticketsCount = ticketsCountMap.get(user.getId());
+			response.setTicketsCount(ticketsCount != null ? ticketsCount.intValue() : 0);
+
+			return response;
+		});
 	}
 
 	@Transactional(readOnly = true)
