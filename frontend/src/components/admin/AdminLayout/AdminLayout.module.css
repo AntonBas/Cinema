@@ -1,0 +1,104 @@
+.adminLayout {
+    display: flex;
+    min-height: 100vh;
+    background: #0f172a;
+}
+
+.mainContent {
+    flex: 1;
+    margin-left: 280px;
+    transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    width: calc(100% - 280px);
+}
+
+.mainContent.fullWidth {
+    margin-left: 0;
+    width: 100%;
+}
+
+.content {
+    flex: 1;
+    padding: 2rem;
+    overflow-y: auto;
+    background: linear-gradient(135deg, #1a1f2d 0%, #2d3447 100%);
+    position: relative;
+}
+
+.content::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 280px;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    z-index: 0;
+    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mainContent.fullWidth .content::before {
+    left: 0;
+}
+
+.adminFooter {
+    padding: 1.5rem 2rem;
+    background: rgba(15, 23, 42, 0.95);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    position: relative;
+    z-index: 10;
+}
+
+.footerContent {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1400px;
+    margin: 0 auto;
+    color: #94a3b8;
+    font-size: 0.9rem;
+}
+
+.websiteLink {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #fd5f00;
+    text-decoration: none;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    background: rgba(253, 95, 0, 0.1);
+    border: 1px solid rgba(253, 95, 0, 0.2);
+    transition: all 0.3s ease;
+}
+
+.websiteLink:hover {
+    background: rgba(253, 95, 0, 0.2);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(253, 95, 0, 0.2);
+}
+
+@media (max-width: 768px) {
+    .mainContent {
+        margin-left: 0 !important;
+        width: 100% !important;
+    }
+
+    .content {
+        padding: 1rem;
+    }
+
+    .content::before {
+        left: 0;
+    }
+
+    .footerContent {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+}
