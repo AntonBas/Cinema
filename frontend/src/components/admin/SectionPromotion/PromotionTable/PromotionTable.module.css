@@ -1,0 +1,94 @@
+.tableWrapper {
+    overflow-x: auto;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.tableHead {
+    background-color: #f9fafb;
+}
+
+.th {
+    padding: 0.75rem 1.5rem;
+    text-align: left;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.tableBody {
+    background-color: white;
+}
+
+.tr {
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.tr:hover {
+    background-color: #f9fafb;
+}
+
+.td {
+    padding: 1rem 1.5rem;
+    white-space: nowrap;
+}
+
+.titleCell {
+    min-width: 200px;
+}
+
+.title {
+    font-weight: 500;
+    color: #111827;
+}
+
+.description {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin-top: 0.25rem;
+}
+
+.points {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    background-color: #dbeafe;
+    color: #1e40af;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.dates {
+    font-size: 0.875rem;
+    color: #111827;
+}
+
+.dateSeparator {
+    color: #9ca3af;
+    font-size: 0.75rem;
+}
+
+.actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.loadingContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 200px;
+}
+
+.emptyContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 200px;
+    color: #6b7280;
+}

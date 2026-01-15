@@ -1,4 +1,3 @@
-// src/components/admin/SectionUsers/UserTableRow/UserTableRow.tsx
 import React, { useState, useEffect } from 'react';
 import { Badge, Button, Select, ConfirmModal } from '@/components/ui';
 import { useAdminUserMutations } from '@/hooks/features/admin/useAdminUserMutations';

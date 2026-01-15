@@ -1,0 +1,38 @@
+.container {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.statCard {
+    background: white;
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.statLabel {
+    color: #6b7280;
+    font-size: 0.875rem;
+    margin: 0;
+}
+
+.statValue {
+    font-size: 1.875rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0.5rem 0 0 0;
+}
+
+.active {
+    color: #059669;
+}
+
+.upcoming {
+    color: #2563eb;
+}
+
+.expired {
+    color: #dc2626;
+}

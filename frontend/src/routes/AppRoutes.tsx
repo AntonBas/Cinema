@@ -21,7 +21,7 @@ import { SectionHalls } from '@/components/admin/SectionHalls/SectionHalls';
 import { SectionSchedule } from '@/components/admin/SectionSchedule';
 import { SectionUsers } from '@/components/admin/SectionUsers/SectionUsers';
 import { SectionBonus } from '@/components/admin/SectionBonus/SectionBonus';
-import { SectionPromotion } from '@/components/admin/SectionPromotion/SectionPromotion';
+import SectionPromotion from '@/components/admin/SectionPromotion';
 import { SectionTicketType } from '@/components/admin/SectionTicketType/SectionTicketType';
 
 export const AppRoutes: React.FC = () => {
