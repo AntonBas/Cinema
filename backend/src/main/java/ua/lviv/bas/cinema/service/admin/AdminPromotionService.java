@@ -1,6 +1,6 @@
 package ua.lviv.bas.cinema.service.admin;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -38,7 +38,7 @@ public class AdminPromotionService {
 
 		if (request.getStartDate() != null && request.getEndDate() != null
 				&& request.getEndDate().isBefore(request.getStartDate())) {
-			throw new PromotionDatesInvalidException(request.getStartDate(), request.getEndDate()); // ✅ НОВИЙ КАСТОМНИЙ
+			throw new PromotionDatesInvalidException(request.getStartDate(), request.getEndDate());
 		}
 
 		Promotion promotion = promotionMapper.toPromotion(request);
@@ -98,9 +98,9 @@ public class AdminPromotionService {
 			return false;
 		}
 
-		LocalDateTime now = LocalDateTime.now();
-		LocalDateTime start = promotion.getStartDate();
-		LocalDateTime end = promotion.getEndDate();
+		LocalDate now = LocalDate.now();
+		LocalDate start = promotion.getStartDate();
+		LocalDate end = promotion.getEndDate();
 
 		boolean afterStart = (start == null) || !now.isBefore(start);
 		boolean beforeEnd = (end == null) || !now.isAfter(end);

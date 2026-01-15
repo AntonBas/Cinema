@@ -9,6 +9,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
@@ -51,8 +52,8 @@ public class PromotionControllerTest {
 		response.setId(id);
 		response.setTitle(title);
 		response.setBonusPoints(bonusPoints);
-		response.setStartDate(LocalDateTime.now().minusDays(1));
-		response.setEndDate(LocalDateTime.now().plusDays(5));
+		response.setStartDate(LocalDate.now().minusDays(1));
+		response.setEndDate(LocalDate.now().plusDays(5));
 		return response;
 	}
 

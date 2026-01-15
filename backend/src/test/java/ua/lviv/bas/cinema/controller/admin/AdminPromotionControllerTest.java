@@ -10,7 +10,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -46,8 +46,8 @@ public class AdminPromotionControllerTest {
 		response.setTitle(title);
 		response.setDescription("Test description");
 		response.setBonusPoints(bonusPoints);
-		response.setStartDate(LocalDateTime.now().plusDays(1));
-		response.setEndDate(LocalDateTime.now().plusDays(10));
+		response.setStartDate(LocalDate.now().plusDays(1));
+		response.setEndDate(LocalDate.now().plusDays(10));
 		return response;
 	}
 
@@ -57,8 +57,8 @@ public class AdminPromotionControllerTest {
 		request.setTitle("New Promotion");
 		request.setDescription("Test description");
 		request.setBonusPoints(100);
-		request.setStartDate(LocalDateTime.now().plusDays(1));
-		request.setEndDate(LocalDateTime.now().plusDays(10));
+		request.setStartDate(LocalDate.now().plusDays(1));
+		request.setEndDate(LocalDate.now().plusDays(10));
 
 		PromotionResponse response = createPromotionResponse(1L, "New Promotion", 100);
 

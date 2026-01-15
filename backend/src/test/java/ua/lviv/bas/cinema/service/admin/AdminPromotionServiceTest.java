@@ -7,7 +7,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -33,7 +33,7 @@ import ua.lviv.bas.cinema.mapper.PromotionMapper;
 import ua.lviv.bas.cinema.repository.PromotionRepository;
 
 @ExtendWith(MockitoExtension.class)
-class AdminPromotionServiceTest {
+public class AdminPromotionServiceTest {
 
 	@Mock
 	private PromotionRepository promotionRepository;
@@ -54,8 +54,8 @@ class AdminPromotionServiceTest {
 	private final String PROMOTION_TITLE = "Summer Sale";
 	private final String ANOTHER_TITLE = "Winter Discount";
 	private final String DESCRIPTION = "Special summer promotion";
-	private final LocalDateTime START_DATE = LocalDateTime.now().plusDays(1);
-	private final LocalDateTime END_DATE = LocalDateTime.now().plusDays(30);
+	private final LocalDate START_DATE = LocalDate.now().plusDays(1);
+	private final LocalDate END_DATE = LocalDate.now().plusDays(30);
 	private final Integer BONUS_POINTS = 1000;
 
 	@BeforeEach
@@ -64,8 +64,8 @@ class AdminPromotionServiceTest {
 				.bonusPoints(BONUS_POINTS).startDate(START_DATE).endDate(END_DATE).build();
 
 		anotherPromotion = Promotion.builder().id(ANOTHER_PROMOTION_ID).title(ANOTHER_TITLE)
-				.description("Winter promotion").bonusPoints(2000).startDate(LocalDateTime.now().plusDays(10))
-				.endDate(LocalDateTime.now().plusDays(60)).build();
+				.description("Winter promotion").bonusPoints(2000).startDate(LocalDate.now().plusDays(10))
+				.endDate(LocalDate.now().plusDays(60)).build();
 
 		createRequest = new PromotionCreateRequest();
 		createRequest.setTitle(PROMOTION_TITLE);
@@ -123,8 +123,8 @@ class AdminPromotionServiceTest {
 
 	@Test
 	void createPromotion_WhenEndDateBeforeStartDate_ShouldThrowException() {
-		createRequest.setStartDate(LocalDateTime.now().plusDays(10));
-		createRequest.setEndDate(LocalDateTime.now().plusDays(5));
+		createRequest.setStartDate(LocalDate.now().plusDays(10));
+		createRequest.setEndDate(LocalDate.now().plusDays(5));
 
 		when(promotionRepository.existsByTitle(PROMOTION_TITLE)).thenReturn(false);
 
@@ -187,7 +187,6 @@ class AdminPromotionServiceTest {
 	@Test
 	void deletePromotion_WhenHasRedemptions_ShouldThrowException() {
 		UserPromotion userPromotion = UserPromotion.builder().id(1L).promotion(testPromotion).build();
-
 		testPromotion.setUserRedemptions(Arrays.asList(userPromotion));
 
 		when(promotionRepository.findById(PROMOTION_ID)).thenReturn(Optional.of(testPromotion));
@@ -297,8 +296,8 @@ class AdminPromotionServiceTest {
 
 	@Test
 	void isPromotionActive_WhenCurrentTimeIsBeforeStart_ShouldReturnFalse() {
-		Promotion futurePromotion = Promotion.builder().startDate(LocalDateTime.now().plusHours(1))
-				.endDate(LocalDateTime.now().plusDays(1)).build();
+		Promotion futurePromotion = Promotion.builder().startDate(LocalDate.now().plusDays(1))
+				.endDate(LocalDate.now().plusDays(2)).build();
 
 		boolean result = adminPromotionService.isPromotionActive(futurePromotion);
 		assertThat(result).isFalse();
@@ -306,8 +305,8 @@ class AdminPromotionServiceTest {
 
 	@Test
 	void isPromotionActive_WhenCurrentTimeIsAfterEnd_ShouldReturnFalse() {
-		Promotion pastPromotion = Promotion.builder().startDate(LocalDateTime.now().minusDays(2))
-				.endDate(LocalDateTime.now().minusHours(1)).build();
+		Promotion pastPromotion = Promotion.builder().startDate(LocalDate.now().minusDays(2))
+				.endDate(LocalDate.now().minusDays(1)).build();
 
 		boolean result = adminPromotionService.isPromotionActive(pastPromotion);
 		assertThat(result).isFalse();
@@ -315,8 +314,8 @@ class AdminPromotionServiceTest {
 
 	@Test
 	void isPromotionActive_WhenCurrentTimeIsBetweenStartAndEnd_ShouldReturnTrue() {
-		Promotion activePromotion = Promotion.builder().startDate(LocalDateTime.now().minusHours(1))
-				.endDate(LocalDateTime.now().plusHours(1)).build();
+		Promotion activePromotion = Promotion.builder().startDate(LocalDate.now().minusDays(1))
+				.endDate(LocalDate.now().plusDays(1)).build();
 
 		boolean result = adminPromotionService.isPromotionActive(activePromotion);
 		assertThat(result).isTrue();
@@ -324,7 +323,7 @@ class AdminPromotionServiceTest {
 
 	@Test
 	void isPromotionActive_WhenStartIsNullAndCurrentTimeIsBeforeEnd_ShouldReturnTrue() {
-		Promotion promotionWithoutStart = Promotion.builder().startDate(null).endDate(LocalDateTime.now().plusHours(1))
+		Promotion promotionWithoutStart = Promotion.builder().startDate(null).endDate(LocalDate.now().plusDays(1))
 				.build();
 
 		boolean result = adminPromotionService.isPromotionActive(promotionWithoutStart);
@@ -333,7 +332,7 @@ class AdminPromotionServiceTest {
 
 	@Test
 	void isPromotionActive_WhenEndIsNullAndCurrentTimeIsAfterStart_ShouldReturnTrue() {
-		Promotion promotionWithoutEnd = Promotion.builder().startDate(LocalDateTime.now().minusHours(1)).endDate(null)
+		Promotion promotionWithoutEnd = Promotion.builder().startDate(LocalDate.now().minusDays(1)).endDate(null)
 				.build();
 
 		boolean result = adminPromotionService.isPromotionActive(promotionWithoutEnd);
@@ -349,21 +348,21 @@ class AdminPromotionServiceTest {
 	}
 
 	@Test
-	void isPromotionActive_WhenExactlyAtStartTime_ShouldReturnTrue() {
-		LocalDateTime startTime = LocalDateTime.now();
-		Promotion promotion = Promotion.builder().startDate(startTime).endDate(startTime.plusHours(1)).build();
+	void isPromotionActive_WhenExactlyAtStartDate_ShouldReturnTrue() {
+		LocalDate startDate = LocalDate.now();
+		Promotion promotion = Promotion.builder().startDate(startDate).endDate(startDate.plusDays(1)).build();
 
 		boolean result = adminPromotionService.isPromotionActive(promotion);
 		assertThat(result).isTrue();
 	}
 
 	@Test
-	void isPromotionActive_WhenExactlyAtEndTime_ShouldReturnFalse() {
-		LocalDateTime endTime = LocalDateTime.now();
-		Promotion promotion = Promotion.builder().startDate(endTime.minusHours(1)).endDate(endTime).build();
+	void isPromotionActive_WhenExactlyAtEndDate_ShouldReturnTrue() {
+		LocalDate endDate = LocalDate.now();
+		Promotion promotion = Promotion.builder().startDate(endDate.minusDays(1)).endDate(endDate).build();
 
 		boolean result = adminPromotionService.isPromotionActive(promotion);
-		assertThat(result).isFalse();
+		assertThat(result).isTrue();
 	}
 
 	@Test

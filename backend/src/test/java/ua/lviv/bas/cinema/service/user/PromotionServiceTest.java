@@ -7,6 +7,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
@@ -65,7 +66,7 @@ public class PromotionServiceTest {
 		request.setPromotionId(promotionId);
 
 		Promotion promotion = Promotion.builder().id(promotionId).title("Test Promotion").bonusPoints(bonusPoints)
-				.startDate(LocalDateTime.now().minusDays(1)).endDate(LocalDateTime.now().plusDays(1)).build();
+				.startDate(LocalDate.now().minusDays(1)).endDate(LocalDate.now().plusDays(1)).build();
 
 		UserPromotion userPromotion = UserPromotion.builder().id(1L).user(user).promotion(promotion)
 				.redeemedAt(LocalDateTime.now()).pointsAwarded(bonusPoints).build();
@@ -106,7 +107,7 @@ public class PromotionServiceTest {
 		request.setPromotionId(promotionId);
 
 		Promotion promotion = Promotion.builder().id(promotionId).title("Expired Promotion")
-				.startDate(LocalDateTime.now().minusDays(10)).endDate(LocalDateTime.now().minusDays(5)).build();
+				.startDate(LocalDate.now().minusDays(10)).endDate(LocalDate.now().minusDays(5)).build();
 
 		when(promotionService.findByIdOrThrow(promotionId)).thenReturn(promotion);
 		when(promotionService.isPromotionActive(promotion)).thenReturn(false);
@@ -130,7 +131,7 @@ public class PromotionServiceTest {
 		request.setPromotionId(promotionId);
 
 		Promotion promotion = Promotion.builder().id(promotionId).title("Test Promotion")
-				.startDate(LocalDateTime.now().minusDays(1)).endDate(LocalDateTime.now().plusDays(1)).build();
+				.startDate(LocalDate.now().minusDays(1)).endDate(LocalDate.now().plusDays(1)).build();
 
 		when(promotionService.findByIdOrThrow(promotionId)).thenReturn(promotion);
 		when(promotionService.isPromotionActive(promotion)).thenReturn(true);
@@ -283,8 +284,8 @@ public class PromotionServiceTest {
 		Long promotionId = 1L;
 		User user = User.builder().id(1L).build();
 
-		Promotion promotion = Promotion.builder().id(promotionId).startDate(LocalDateTime.now().minusDays(1))
-				.endDate(LocalDateTime.now().plusDays(1)).build();
+		Promotion promotion = Promotion.builder().id(promotionId).startDate(LocalDate.now().minusDays(1))
+				.endDate(LocalDate.now().plusDays(1)).build();
 
 		when(promotionService.findByIdOrThrow(promotionId)).thenReturn(promotion);
 		when(promotionService.isPromotionActive(promotion)).thenReturn(true);
@@ -321,8 +322,8 @@ public class PromotionServiceTest {
 		Long promotionId = 1L;
 		User user = User.builder().build();
 
-		Promotion promotion = Promotion.builder().id(promotionId).startDate(LocalDateTime.now().minusDays(1))
-				.endDate(LocalDateTime.now().plusDays(1)).build();
+		Promotion promotion = Promotion.builder().id(promotionId).startDate(LocalDate.now().minusDays(1))
+				.endDate(LocalDate.now().plusDays(1)).build();
 
 		when(promotionService.findByIdOrThrow(promotionId)).thenReturn(promotion);
 		when(promotionService.isPromotionActive(promotion)).thenReturn(true);

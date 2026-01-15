@@ -1,6 +1,6 @@
 package ua.lviv.bas.cinema.dto.promotion.request;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Future;
@@ -30,9 +30,9 @@ public class PromotionCreateRequest {
 
 	@Future(message = "Start date must be in the future")
 	@Schema(description = "Start date of the promotion", example = "2024-07-01T00:00:00")
-	private LocalDateTime startDate;
+	private LocalDate startDate;
 
 	@Future(message = "End date must be in the future")
 	@Schema(description = "End date of the promotion", example = "2024-07-10T00:00:00")
-	private LocalDateTime endDate;
+	private LocalDate endDate;
 }

@@ -1,6 +1,6 @@
 package ua.lviv.bas.cinema.dto.promotion.response;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -28,8 +28,8 @@ public class PromotionResponse {
 	private Integer bonusPoints;
 
 	@Schema(description = "Start date of the promotion", example = "2024-07-01T00:00:00")
-	private LocalDateTime startDate;
+	private LocalDate startDate;
 
 	@Schema(description = "End date of the promotion", example = "2024-07-10T00:00:00")
-	private LocalDateTime endDate;
+	private LocalDate endDate;
 }

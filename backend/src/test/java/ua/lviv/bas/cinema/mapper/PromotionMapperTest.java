@@ -3,7 +3,7 @@ package ua.lviv.bas.cinema.mapper;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -34,12 +34,12 @@ public class PromotionMapperTest {
 
 	@Test
 	void toPromotionResponse_ShouldMapAllFieldsFromPromotion() {
-		LocalDateTime startDate = LocalDateTime.of(2024, 1, 1, 10, 0);
-		LocalDateTime endDate = LocalDateTime.of(2024, 12, 31, 23, 59);
+		LocalDate startDate = LocalDate.of(2024, 1, 1);
+		LocalDate endDate = LocalDate.of(2024, 12, 31);
 
 		Promotion promotion = Promotion.builder().id(1L).title("Summer Sale")
 				.description("Get bonus points for summer purchases").bonusPoints(500).startDate(startDate)
-				.endDate(endDate).createdAt(LocalDateTime.now()).build();
+				.endDate(endDate).build();
 
 		PromotionResponse response = mapper.toPromotionResponse(promotion);
 
@@ -53,7 +53,6 @@ public class PromotionMapperTest {
 	@Test
 	void toPromotionResponse_ShouldReturnNull_WhenInputIsNull() {
 		PromotionResponse response = mapper.toPromotionResponse(null);
-
 		assertThat(response).isNull();
 	}
 
@@ -75,14 +74,13 @@ public class PromotionMapperTest {
 		Promotion promotion = Promotion.builder().id(3L).title("Zero Points").bonusPoints(0).build();
 
 		PromotionResponse response = mapper.toPromotionResponse(promotion);
-
 		assertThat(response.getBonusPoints()).isZero();
 	}
 
 	@Test
 	void toPromotion_ShouldMapAllFieldsFromCreateRequest() {
-		LocalDateTime startDate = LocalDateTime.of(2024, 6, 1, 0, 0);
-		LocalDateTime endDate = LocalDateTime.of(2024, 6, 30, 23, 59);
+		LocalDate startDate = LocalDate.of(2024, 6, 1);
+		LocalDate endDate = LocalDate.of(2024, 6, 30);
 
 		PromotionCreateRequest request = new PromotionCreateRequest();
 		request.setTitle("June Promotion");
@@ -95,27 +93,24 @@ public class PromotionMapperTest {
 
 		assertThat(promotion).isNotNull()
 				.extracting(Promotion::getId, Promotion::getTitle, Promotion::getDescription, Promotion::getBonusPoints,
-						Promotion::getStartDate, Promotion::getEndDate, Promotion::getCreatedAt)
-				.containsExactly(null, "June Promotion", "June special offer", 300, startDate, endDate, null);
+						Promotion::getStartDate, Promotion::getEndDate)
+				.containsExactly(null, "June Promotion", "June special offer", 300, startDate, endDate);
 	}
 
 	@Test
 	void toPromotion_ShouldReturnNull_WhenRequestIsNull() {
 		Promotion promotion = mapper.toPromotion(null);
-
 		assertThat(promotion).isNull();
 	}
 
 	@Test
-	void toPromotion_ShouldIgnoreIdAndCreatedAt() {
+	void toPromotion_ShouldIgnoreId() {
 		PromotionCreateRequest request = new PromotionCreateRequest();
 		request.setTitle("Test");
 		request.setBonusPoints(100);
 
 		Promotion promotion = mapper.toPromotion(request);
-
 		assertThat(promotion.getId()).isNull();
-		assertThat(promotion.getCreatedAt()).isNull();
 	}
 
 	@ParameterizedTest
@@ -127,15 +122,16 @@ public class PromotionMapperTest {
 		request.setBonusPoints(100);
 
 		Promotion promotion = mapper.toPromotion(request);
-
 		assertThat(promotion.getTitle()).isEqualTo(title);
 	}
 
 	@Test
 	void updatePromotionFromRequest_ShouldUpdateOnlyNonNullFields() {
+		LocalDate oldStartDate = LocalDate.of(2024, 1, 1);
+		LocalDate oldEndDate = LocalDate.of(2024, 1, 31);
+
 		Promotion existing = Promotion.builder().id(1L).title("Old Title").description("Old Description")
-				.bonusPoints(100).startDate(LocalDateTime.of(2024, 1, 1, 0, 0))
-				.endDate(LocalDateTime.of(2024, 1, 31, 23, 59)).createdAt(LocalDateTime.now()).build();
+				.bonusPoints(100).startDate(oldStartDate).endDate(oldEndDate).build();
 
 		PromotionUpdateRequest update = new PromotionUpdateRequest();
 		update.setTitle("New Title");
@@ -145,8 +141,8 @@ public class PromotionMapperTest {
 
 		assertThat(existing)
 				.extracting(Promotion::getId, Promotion::getTitle, Promotion::getDescription, Promotion::getBonusPoints,
-						Promotion::getCreatedAt)
-				.containsExactly(1L, "New Title", "Old Description", 200, existing.getCreatedAt());
+						Promotion::getStartDate, Promotion::getEndDate)
+				.containsExactly(1L, "New Title", "Old Description", 200, oldStartDate, oldEndDate);
 	}
 
 	@Test
@@ -160,6 +156,24 @@ public class PromotionMapperTest {
 	}
 
 	@Test
+	void updatePromotionFromRequest_ShouldUpdateDatesWhenProvided() {
+		LocalDate newStartDate = LocalDate.of(2024, 2, 1);
+		LocalDate newEndDate = LocalDate.of(2024, 2, 28);
+
+		Promotion existing = Promotion.builder().id(1L).title("Original").bonusPoints(100)
+				.startDate(LocalDate.of(2024, 1, 1)).endDate(LocalDate.of(2024, 1, 31)).build();
+
+		PromotionUpdateRequest update = new PromotionUpdateRequest();
+		update.setStartDate(newStartDate);
+		update.setEndDate(newEndDate);
+
+		mapper.updatePromotionFromRequest(existing, update);
+
+		assertThat(existing.getStartDate()).isEqualTo(newStartDate);
+		assertThat(existing.getEndDate()).isEqualTo(newEndDate);
+	}
+
+	@Test
 	void updatePromotionFromRequest_ShouldNotUpdateId() {
 		Promotion existing = Promotion.builder().id(999L).title("Original").build();
 
@@ -167,7 +181,6 @@ public class PromotionMapperTest {
 		update.setTitle("Updated");
 
 		mapper.updatePromotionFromRequest(existing, update);
-
 		assertThat(existing.getId()).isEqualTo(999L);
 	}
 
@@ -186,24 +199,22 @@ public class PromotionMapperTest {
 
 		User user = User.builder().id(1L).email("test@example.com").build();
 
-		LocalDateTime redeemedAt = LocalDateTime.of(2024, 5, 15, 14, 30);
+		LocalDate redeemedDate = LocalDate.of(2024, 5, 15);
 
 		UserPromotion userPromotion = UserPromotion.builder().id(100L).user(user).promotion(promotion)
-				.redeemedAt(redeemedAt).pointsAwarded(500).build();
+				.redeemedAt(redeemedDate.atStartOfDay()).pointsAwarded(500).build();
 
 		UserPromotionResponse response = mapper.toUserPromotionResponse(userPromotion);
 
 		assertThat(response).isNotNull()
 				.extracting(UserPromotionResponse::getId, UserPromotionResponse::getPromotionId,
-						UserPromotionResponse::getPromotionTitle, UserPromotionResponse::getClaimedAt,
-						UserPromotionResponse::getPointsAwarded)
-				.containsExactly(100L, 10L, "Welcome Bonus", redeemedAt, 500);
+						UserPromotionResponse::getPromotionTitle, UserPromotionResponse::getPointsAwarded)
+				.containsExactly(100L, 10L, "Welcome Bonus", 500);
 	}
 
 	@Test
 	void toUserPromotionResponse_ShouldReturnNull_WhenInputIsNull() {
 		UserPromotionResponse response = mapper.toUserPromotionResponse(null);
-
 		assertThat(response).isNull();
 	}
 
@@ -222,14 +233,12 @@ public class PromotionMapperTest {
 	@Test
 	void toPromotionResponseList_ShouldReturnEmptyList_WhenInputIsEmpty() {
 		List<PromotionResponse> responses = mapper.toPromotionResponseList(Collections.emptyList());
-
 		assertThat(responses).isNotNull().isEmpty();
 	}
 
 	@Test
 	void toPromotionResponseList_ShouldReturnNull_WhenInputIsNull() {
 		List<PromotionResponse> responses = mapper.toPromotionResponseList(null);
-
 		assertThat(responses).isNull();
 	}
 
@@ -238,10 +247,10 @@ public class PromotionMapperTest {
 		Promotion promotion = Promotion.builder().id(1L).title("Test Promotion").build();
 
 		List<UserPromotion> userPromotions = Arrays.asList(
-				UserPromotion.builder().id(1L).promotion(promotion).redeemedAt(LocalDateTime.now()).pointsAwarded(100)
-						.build(),
-				UserPromotion.builder().id(2L).promotion(promotion).redeemedAt(LocalDateTime.now().plusDays(1))
-						.pointsAwarded(200).build());
+				UserPromotion.builder().id(1L).promotion(promotion).redeemedAt(LocalDate.now().atStartOfDay())
+						.pointsAwarded(100).build(),
+				UserPromotion.builder().id(2L).promotion(promotion)
+						.redeemedAt(LocalDate.now().plusDays(1).atStartOfDay()).pointsAwarded(200).build());
 
 		List<UserPromotionResponse> responses = mapper.toUserPromotionResponseList(userPromotions);
 
@@ -251,12 +260,15 @@ public class PromotionMapperTest {
 
 	@Test
 	void consistency_ToPromotionThenToPromotionResponse_ShouldReturnSameValues() {
+		LocalDate startDate = LocalDate.of(2024, 7, 1);
+		LocalDate endDate = LocalDate.of(2024, 7, 31);
+
 		PromotionCreateRequest request = new PromotionCreateRequest();
 		request.setTitle("Consistency Test");
 		request.setDescription("Test description");
 		request.setBonusPoints(150);
-		request.setStartDate(LocalDateTime.of(2024, 7, 1, 0, 0));
-		request.setEndDate(LocalDateTime.of(2024, 7, 31, 23, 59));
+		request.setStartDate(startDate);
+		request.setEndDate(endDate);
 
 		Promotion entity = mapper.toPromotion(request);
 		PromotionResponse response = mapper.toPromotionResponse(entity);
