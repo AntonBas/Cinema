@@ -7,7 +7,7 @@
     border-radius: 16px;
     border: 1px solid #3a4051;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-    min-height: calc(100vh - 4rem);
+    min-height: auto;
 }
 
 .header {
