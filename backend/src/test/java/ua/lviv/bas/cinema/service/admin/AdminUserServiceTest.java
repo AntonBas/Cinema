@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -14,6 +15,7 @@ import static org.mockito.Mockito.when;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -41,6 +43,7 @@ import ua.lviv.bas.cinema.exception.domain.user.SelfBlockException;
 import ua.lviv.bas.cinema.exception.domain.user.SelfRoleChangeException;
 import ua.lviv.bas.cinema.exception.domain.user.UserNotFoundException;
 import ua.lviv.bas.cinema.mapper.UserMapper;
+import ua.lviv.bas.cinema.repository.TicketRepository;
 import ua.lviv.bas.cinema.repository.UserRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -48,6 +51,9 @@ class AdminUserServiceTest {
 
 	@Mock
 	private UserRepository userRepository;
+
+	@Mock
+	private TicketRepository ticketRepository;
 
 	@Mock
 	private UserMapper userMapper;
@@ -230,9 +236,12 @@ class AdminUserServiceTest {
 		Page<User> userPage = new PageImpl<>(Arrays.asList(testUser));
 
 		AdminUserListResponse adminResponse = AdminUserListResponse.builder().id(USER_ID).email(USER_EMAIL)
-				.firstName("Anton").lastName("Bas").build();
+				.firstName("Anton").lastName("Bas").userRole(UserRole.ROLE_USER)
+				.verificationStatus(VerificationStatus.NOT_VERIFIED).enabled(true).createdAt(LocalDateTime.now())
+				.updatedAt(LocalDateTime.now()).ticketsCount(0).lastActivity(LocalDateTime.now()).build();
 
-		when(userRepository.findFilteredUsers(search, role, enabled, pageable)).thenReturn(userPage);
+		when(userRepository.findFilteredUsers(search, role.name(), enabled, pageable)).thenReturn(userPage);
+		when(ticketRepository.countTicketsByUserIds(anyList())).thenReturn(Collections.emptyList());
 		when(userMapper.toAdminUserListResponse(testUser)).thenReturn(adminResponse);
 
 		Page<AdminUserListResponse> result = adminUserService.findAllForAdmin(search, role, enabled, pageable);
@@ -240,7 +249,8 @@ class AdminUserServiceTest {
 		assertNotNull(result);
 		assertEquals(1, result.getTotalElements());
 		assertEquals(USER_ID, result.getContent().get(0).getId());
-		verify(userRepository).findFilteredUsers(search, role, enabled, pageable);
+		verify(userRepository).findFilteredUsers(search, role.name(), enabled, pageable);
+		verify(ticketRepository).countTicketsByUserIds(Arrays.asList(USER_ID));
 		verify(userMapper).toAdminUserListResponse(testUser);
 	}
 
@@ -409,5 +419,29 @@ class AdminUserServiceTest {
 		verify(userRepository).findById(nonExistentId);
 		verify(userRepository, never()).save(any());
 		verify(userMapper, never()).toUserResponse(any());
+	}
+
+	@Test
+	void findAllForAdmin_WithNullRole() {
+		String search = "Anton";
+		UserRole role = null;
+		Boolean enabled = true;
+		Pageable pageable = Pageable.unpaged();
+		Page<User> userPage = new PageImpl<>(Arrays.asList(testUser));
+
+		AdminUserListResponse adminResponse = AdminUserListResponse.builder().id(USER_ID).email(USER_EMAIL)
+				.firstName("Anton").lastName("Bas").userRole(UserRole.ROLE_USER)
+				.verificationStatus(VerificationStatus.NOT_VERIFIED).enabled(true).createdAt(LocalDateTime.now())
+				.updatedAt(LocalDateTime.now()).ticketsCount(0).lastActivity(LocalDateTime.now()).build();
+
+		when(userRepository.findFilteredUsers(search, null, enabled, pageable)).thenReturn(userPage);
+		when(ticketRepository.countTicketsByUserIds(anyList())).thenReturn(Collections.emptyList());
+		when(userMapper.toAdminUserListResponse(testUser)).thenReturn(adminResponse);
+
+		Page<AdminUserListResponse> result = adminUserService.findAllForAdmin(search, role, enabled, pageable);
+
+		assertNotNull(result);
+		assertEquals(1, result.getTotalElements());
+		verify(userRepository).findFilteredUsers(search, null, enabled, pageable);
 	}
 }

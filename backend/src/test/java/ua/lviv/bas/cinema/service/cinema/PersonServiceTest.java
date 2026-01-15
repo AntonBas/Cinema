@@ -214,7 +214,8 @@ public class PersonServiceTest {
 		Pageable pageable = Pageable.unpaged();
 		Page<Person> page = new PageImpl<>(Collections.singletonList(person));
 
-		when(personRepository.searchByNameAndRole("John", PersonRole.ACTOR, pageable)).thenReturn(page);
+		// Виправлено: використовуємо enum name як String
+		when(personRepository.searchByNameAndRole("John", PersonRole.ACTOR.name(), pageable)).thenReturn(page);
 		when(personMapper.toPersonResponse(person)).thenReturn(response);
 
 		Page<PersonResponse> result = personService.searchPersons("John", PersonRole.ACTOR, pageable);
@@ -232,10 +233,49 @@ public class PersonServiceTest {
 		Pageable pageable = Pageable.unpaged();
 		Page<Person> page = new PageImpl<>(Collections.singletonList(person));
 
-		when(personRepository.searchByNameAndRole(null, PersonRole.ACTOR, pageable)).thenReturn(page);
+		// Виправлено: null для query і enum name як String для role
+		when(personRepository.searchByNameAndRole(null, PersonRole.ACTOR.name(), pageable)).thenReturn(page);
 		when(personMapper.toPersonResponse(person)).thenReturn(response);
 
 		Page<PersonResponse> result = personService.searchPersons("", PersonRole.ACTOR, pageable);
+
+		assertThat(result.getContent()).hasSize(1);
+	}
+
+	@Test
+	void searchPersons_WithNullRole() {
+		Person person = new Person();
+		person.setId(1L);
+
+		PersonResponse response = PersonResponse.builder().id(1L).name("John Doe").build();
+
+		Pageable pageable = Pageable.unpaged();
+		Page<Person> page = new PageImpl<>(Collections.singletonList(person));
+
+		// Виправлено: null для role
+		when(personRepository.searchByNameAndRole("John", null, pageable)).thenReturn(page);
+		when(personMapper.toPersonResponse(person)).thenReturn(response);
+
+		Page<PersonResponse> result = personService.searchPersons("John", null, pageable);
+
+		assertThat(result.getContent()).hasSize(1);
+	}
+
+	@Test
+	void searchPersons_WithEmptyQueryAndNullRole() {
+		Person person = new Person();
+		person.setId(1L);
+
+		PersonResponse response = PersonResponse.builder().id(1L).name("John Doe").build();
+
+		Pageable pageable = Pageable.unpaged();
+		Page<Person> page = new PageImpl<>(Collections.singletonList(person));
+
+		// Виправлено: обидва параметри null
+		when(personRepository.searchByNameAndRole(null, null, pageable)).thenReturn(page);
+		when(personMapper.toPersonResponse(person)).thenReturn(response);
+
+		Page<PersonResponse> result = personService.searchPersons("", null, pageable);
 
 		assertThat(result.getContent()).hasSize(1);
 	}
@@ -258,6 +298,13 @@ public class PersonServiceTest {
 		List<PersonResponse> result = personService.getPersonsByIds(Arrays.asList(1L, 2L));
 
 		assertThat(result).hasSize(2);
+	}
+
+	@Test
+	void getPersonsByIds_WithEmptyList() {
+		List<PersonResponse> result = personService.getPersonsByIds(Collections.emptyList());
+
+		assertThat(result).isEmpty();
 	}
 
 	@Test
