@@ -19,15 +19,17 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import lombok.RequiredArgsConstructor;
-
 @Configuration
 @EnableWebSecurity
-@RequiredArgsConstructor
 public class WebSecurityConfig {
 
 	private final UserDetailsService userDetailsService;
 	private final JwtTokenProvider jwtTokenProvider;
+
+	public WebSecurityConfig(UserDetailsService userDetailsService, JwtTokenProvider jwtTokenProvider) {
+		this.userDetailsService = userDetailsService;
+		this.jwtTokenProvider = jwtTokenProvider;
+	}
 
 	@Bean
 	PasswordEncoder passwordEncoder() {
@@ -64,16 +66,23 @@ public class WebSecurityConfig {
 	SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 		http.cors(cors -> cors.configurationSource(corsConfigurationSource())).csrf(csrf -> csrf.disable())
 				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-				.authorizeHttpRequests(
-						auth -> auth.requestMatchers("/actuator/health", "/actuator/info").permitAll()
-								.requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/api-docs/**",
-										"/v3/api-docs/**", "/swagger-resources/**", "/swagger-resources",
-										"/configuration/ui", "/configuration/security", "/webjars/**", "/error")
-								.permitAll()
-								.requestMatchers("/api/auth/**", "/api/movies/public/**", "/api/cinema-halls/public/**",
-										"/api/movies/*/poster")
-								.permitAll().requestMatchers("/api/users/**").authenticated()
-								.requestMatchers("/api/admin/**").hasRole("ADMIN").anyRequest().authenticated())
+				.authorizeHttpRequests(auth -> auth.requestMatchers("/actuator/health", "/actuator/info").permitAll()
+						.requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/api-docs/**", "/v3/api-docs/**",
+								"/swagger-resources/**", "/swagger-resources", "/configuration/ui",
+								"/configuration/security", "/webjars/**", "/error")
+						.permitAll().requestMatchers("/api/auth/**").permitAll()
+						.requestMatchers("/api/movies/public/**").permitAll()
+						.requestMatchers("/api/cinema-halls/public/**").permitAll().requestMatchers("/api/persons/**")
+						.permitAll().requestMatchers("/api/movies/**").permitAll().requestMatchers("/api/genres/**")
+						.permitAll().requestMatchers("/api/sessions/**").permitAll()
+						.requestMatchers("/api/ticket-types/**").permitAll().requestMatchers("/api/cinema-halls/**")
+						.permitAll().requestMatchers("/api/cinema-halls/{hallId}/seats/**").permitAll()
+						.requestMatchers("/api/promotions/**").permitAll().requestMatchers("/api/bonus/**")
+						.authenticated().requestMatchers("/api/bookings/**").authenticated()
+						.requestMatchers("/api/payments/**").authenticated().requestMatchers("/api/refunds/**")
+						.authenticated().requestMatchers("/api/tickets/**").authenticated()
+						.requestMatchers("/api/users/**").authenticated().requestMatchers("/api/admin/**")
+						.hasRole("ADMIN").anyRequest().authenticated())
 				.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
 				.formLogin(form -> form.disable()).httpBasic(basic -> basic.disable())
 				.logout(logout -> logout.disable());
