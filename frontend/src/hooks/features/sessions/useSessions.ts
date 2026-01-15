@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { sessionApi } from '@/api/sessionApi';
 import type { SessionAdminResponse, CinemaSessionStatus } from '@/types/session';
 import type { PageResponse } from '@/types/pagination';
@@ -33,6 +33,18 @@ export const useSessions = (
 
     const enabled = options?.enabled ?? true;
 
+    const memoizedOptions = useMemo(() => options, [
+        options?.enabled,
+        options?.page,
+        options?.size,
+        options?.sort,
+        options?.search,
+        options?.date,
+        options?.hallId,
+        options?.movieId,
+        options?.status
+    ]);
+
     const loadSessions = useCallback(async () => {
         if (!enabled) return;
 
@@ -41,14 +53,14 @@ export const useSessions = (
 
         try {
             const response = await sessionApi.admin.getAll(
-                options?.page,
-                options?.size,
-                options?.sort,
-                options?.search,
-                options?.date,
-                options?.hallId,
-                options?.movieId,
-                options?.status
+                memoizedOptions?.page,
+                memoizedOptions?.size,
+                memoizedOptions?.sort,
+                memoizedOptions?.search,
+                memoizedOptions?.date,
+                memoizedOptions?.hallId,
+                memoizedOptions?.movieId,
+                memoizedOptions?.status
             );
 
             setSessions(response.content);
@@ -59,7 +71,7 @@ export const useSessions = (
         } finally {
             setLoading(false);
         }
-    }, [enabled, options]);
+    }, [enabled, memoizedOptions]);
 
     useEffect(() => {
         loadSessions();
