@@ -1,6 +1,5 @@
 import React from 'react';
 import { Button, Badge, LoadingSpinner } from '@/components/ui';
-import { useAdminPromotionList } from '@/hooks/features/promotion/useAdminPromotionList';
 import type { PromotionResponse } from '@/types/promotion';
 import styles from './PromotionTable.module.css';
 
@@ -9,16 +8,18 @@ interface PromotionTableProps {
     loading: boolean;
     onEdit: (promotionId: number) => void;
     onDelete: (promotionId: number, title: string) => void;
+    getPromotionStatus: (promotion: PromotionResponse) => string;
+    getStatusDisplay: (status: string) => string;
 }
 
 const PromotionTable: React.FC<PromotionTableProps> = ({
     promotions,
     loading,
     onEdit,
-    onDelete
+    onDelete,
+    getPromotionStatus,
+    getStatusDisplay
 }) => {
-    const { getPromotionStatus, getStatusDisplay } = useAdminPromotionList();
-
     const formatDate = (dateString?: string): string => {
         if (!dateString) return 'No date';
         return new Date(dateString).toLocaleDateString('uk-UA');

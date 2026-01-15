@@ -1,57 +1,116 @@
 .form {
-    padding: 0.5rem 0;
+    padding: 1rem 0;
 }
 
 .formGroup {
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
 }
 
 .label {
     display: block;
-    margin-bottom: 0.25rem;
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: #374151;
+    color: #ffffff;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
 }
 
 .textarea {
     width: 100%;
-    padding: 0.5rem 0.75rem;
-    border: 1px solid #d1d5db;
-    border-radius: 0.375rem;
+    padding: 0.75rem;
+    border: 1px solid #3a4051;
+    border-radius: 8px;
     font-size: 0.875rem;
-    transition: border-color 0.2s;
+    background: #2a3041;
+    color: #ffffff;
+    transition: all 0.2s ease;
+    resize: vertical;
+    min-height: 80px;
 }
 
 .textarea:focus {
     outline: none;
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    border-color: #fd5f00;
+    background: #2d3444;
+    box-shadow: 0 0 0 3px rgba(253, 95, 0, 0.1);
 }
 
 .dateRow {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 1rem;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
 }
 
 .error {
     margin-top: 0.5rem;
-    color: #dc2626;
+    color: #e74c3c;
     font-size: 0.875rem;
+    background: rgba(231, 76, 60, 0.1);
+    padding: 0.75rem;
+    border-radius: 8px;
+    border: 1px solid rgba(231, 76, 60, 0.3);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.error::before {
+    content: "⚠";
+    font-size: 1rem;
 }
 
 .success {
     margin-top: 0.5rem;
-    color: #059669;
+    color: #4CAF50;
     font-size: 0.875rem;
+    background: rgba(76, 175, 80, 0.1);
+    padding: 0.75rem;
+    border-radius: 8px;
+    border: 1px solid rgba(76, 175, 80, 0.3);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.success::before {
+    content: "✓";
+    font-size: 1rem;
+    font-weight: bold;
 }
 
 .actions {
     display: flex;
+    gap: 1rem;
     justify-content: flex-end;
-    gap: 0.5rem;
-    margin-top: 1.5rem;
-    padding-top: 1rem;
-    border-top: 1px solid #e5e7eb;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #3a4051;
+}
+
+.loadingContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 200px;
+    color: #a0a8c0;
+    background: linear-gradient(135deg, rgba(42, 48, 65, 0.8) 0%, rgba(58, 64, 81, 0.8) 100%);
+    border-radius: 16px;
+    border: 1px solid #3a4051;
+}
+
+@media (max-width: 768px) {
+    .dateRow {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .actions {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .actions button {
+        width: 100%;
+        justify-content: center;
+    }
 }

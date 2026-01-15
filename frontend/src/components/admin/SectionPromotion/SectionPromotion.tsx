@@ -15,7 +15,7 @@ const SectionPromotion: React.FC = () => {
     const [editingPromotion, setEditingPromotion] = useState<number | null>(null);
     const [deletingPromotion, setDeletingPromotion] = useState<{ id: number; title: string } | null>(null);
 
-    const { promotions, loading, refresh } = useAdminPromotionList({ autoFetch: true });
+    const { promotions, loading, refresh, getPromotionStatus, getStatusDisplay } = useAdminPromotionList({ autoFetch: true });
     const { remove } = useAdminPromotion();
 
     const filteredPromotions = promotions.filter(promotion => {
@@ -24,7 +24,9 @@ const SectionPromotion: React.FC = () => {
             promotion.description?.toLowerCase().includes(search.toLowerCase());
 
         if (!statusFilter) return matchesSearch;
-        return matchesSearch;
+
+        const status = getPromotionStatus(promotion);
+        return matchesSearch && status === statusFilter;
     });
 
     const handleDeleteConfirm = async () => {
@@ -69,6 +71,8 @@ const SectionPromotion: React.FC = () => {
                     loading={loading}
                     onEdit={setEditingPromotion}
                     onDelete={(id, title) => setDeletingPromotion({ id, title })}
+                    getPromotionStatus={getPromotionStatus}
+                    getStatusDisplay={getStatusDisplay}
                 />
             </div>
 
