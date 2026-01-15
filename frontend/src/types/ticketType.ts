@@ -21,7 +21,7 @@ export interface TicketTypeCreateRequest {
 
 export interface TicketTypeUpdateRequest {
     displayName?: string;
-    priceModifier?: string;
+    priceMultiplier?: string;
     minAge?: number | null;
     maxAge?: number | null;
     requiresDocument?: boolean;

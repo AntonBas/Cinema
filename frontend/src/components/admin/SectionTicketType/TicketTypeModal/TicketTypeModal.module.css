@@ -1,0 +1,52 @@
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 8px 0;
+}
+
+.formRow {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.formGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.label {
+    font-weight: 500;
+    font-size: 14px;
+    color: var(--text-primary);
+}
+
+.required::after {
+    content: "*";
+    color: var(--error);
+    margin-left: 4px;
+}
+
+.checkboxGroup {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.checkboxLabel {
+    font-size: 14px;
+    color: var(--text-primary);
+    cursor: pointer;
+}
+
+.actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+}

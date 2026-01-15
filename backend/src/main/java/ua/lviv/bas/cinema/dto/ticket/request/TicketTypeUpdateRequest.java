@@ -25,9 +25,9 @@ public class TicketTypeUpdateRequest {
 	@Schema(description = "Display name for the ticket type", example = "Adult Ticket")
 	private String displayName;
 
-	@DecimalMin(value = "0.01", inclusive = false, message = "Price modifier must be greater than 0")
-	@DecimalMax(value = "9.99", inclusive = true, message = "Price modifier must be less than or equal to 9.99")
-	private BigDecimal priceModifier;
+	@DecimalMin(value = "0.01", inclusive = false, message = "Price multiplier must be greater than 0")
+	@DecimalMax(value = "9.99", inclusive = true, message = "Price multiplier must be less than or equal to 9.99")
+	private BigDecimal priceMultiplier;
 
 	@Min(value = 0, message = "Minimum age must be at least 0")
 	@Max(value = 100, message = "Minimum age must be at most 100")

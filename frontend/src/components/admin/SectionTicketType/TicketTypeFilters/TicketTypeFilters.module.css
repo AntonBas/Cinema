@@ -1,0 +1,55 @@
+.filters {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.topRow {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+}
+
+.search {
+    flex: 1;
+    max-width: 400px;
+}
+
+.filterButtons {
+    display: flex;
+    gap: 8px;
+}
+
+.filterButton {
+    padding: 8px 16px;
+    border: 1px solid var(--border);
+    background: var(--background-default);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.filterButton:hover {
+    background: var(--background-hover);
+}
+
+.filterButton.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+.stats {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.count {
+    font-weight: 600;
+    color: var(--text-primary);
+}
