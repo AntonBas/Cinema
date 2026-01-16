@@ -18,7 +18,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
@@ -51,7 +50,6 @@ public class Session {
 	private Long id;
 
 	@NotNull
-	@FutureOrPresent
 	@Column(nullable = false, name = "start_time")
 	private LocalDateTime startTime;
 
