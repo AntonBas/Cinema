@@ -195,7 +195,7 @@ public class AdminTicketTypeControllerTest {
 	@Test
 	void updateTicketType_ShouldReturnOk_WhenValidRequest() throws Exception {
 		TicketTypeUpdateRequest updateRequest = TicketTypeUpdateRequest.builder().displayName("Updated Child Ticket")
-				.priceModifier(new BigDecimal("0.75")).build();
+				.priceMultiplier(new BigDecimal("0.75")).build();
 
 		TicketTypeResponse updatedResponse = TicketTypeResponse.builder().id(1L).code("CHILD")
 				.displayName("Updated Child Ticket").priceMultiplier(new BigDecimal("0.75")).minAge(0).maxAge(12)
