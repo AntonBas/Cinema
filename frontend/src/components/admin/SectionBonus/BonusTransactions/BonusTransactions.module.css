@@ -1,0 +1,176 @@
+.transactions {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
+}
+
+.title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.description {
+    color: var(--text-secondary);
+    font-size: 14px;
+    margin-top: 4px;
+}
+
+.filters {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 20px;
+    padding: 16px;
+    background: var(--background-default);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+}
+
+.filterGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 200px;
+}
+
+.filterLabel {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.stats {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.stat {
+    display: flex;
+    flex-direction: column;
+    padding: 12px;
+    background: var(--background-default);
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    min-width: 150px;
+}
+
+.statValue {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.statLabel {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 4px;
+}
+
+.positive {
+    color: var(--success);
+}
+
+.negative {
+    color: var(--error);
+}
+
+.tableContainer {
+    overflow-x: auto;
+    margin-bottom: 20px;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table th {
+    text-align: left;
+    padding: 12px 16px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    border-bottom: 2px solid var(--border);
+    background: var(--background-default);
+}
+
+.table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+}
+
+.table tr:hover {
+    background: var(--background-hover);
+}
+
+.typeCell {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.typeName {
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.typeCode {
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-family: 'Monaco', 'Courier New', monospace;
+}
+
+.points {
+    font-family: 'Monaco', 'Courier New', monospace;
+    font-weight: 600;
+}
+
+.positivePoints {
+    color: var(--success);
+}
+
+.negativePoints {
+    color: var(--error);
+}
+
+.balance {
+    font-family: 'Monaco', 'Courier New', monospace;
+    font-weight: 600;
+}
+
+.date {
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
+.actions {
+    display: flex;
+    gap: 8px;
+}
+
+.pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 0;
+    border-top: 1px solid var(--border);
+}
+
+.pageInfo {
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.empty {
+    text-align: center;
+    padding: 40px;
+    color: var(--text-secondary);
+}

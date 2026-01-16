@@ -1,0 +1,103 @@
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 8px 0;
+}
+
+.formRow {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.formGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.label {
+    font-weight: 500;
+    font-size: 14px;
+    color: var(--text-primary);
+}
+
+.required::after {
+    content: "*";
+    color: var(--error);
+    margin-left: 4px;
+}
+
+.checkboxGroup {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.checkboxLabel {
+    font-size: 14px;
+    color: var(--text-primary);
+    cursor: pointer;
+}
+
+.ruleInfo {
+    background: var(--background-hover);
+    border-radius: 6px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.ruleInfoRow {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.ruleInfoLabel {
+    color: var(--text-secondary);
+}
+
+.ruleInfoValue {
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+}
+
+.resetContent {
+    text-align: center;
+    padding: 16px 0;
+}
+
+.resetMessage {
+    color: var(--text-secondary);
+    margin-bottom: 20px;
+    line-height: 1.5;
+}
+
+.resetWarning {
+    background: var(--warning-light);
+    border: 1px solid var(--warning);
+    border-radius: 6px;
+    padding: 12px;
+    margin: 16px 0;
+    color: var(--warning);
+    font-size: 14px;
+}
+
+.resetActions {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 24px;
+}

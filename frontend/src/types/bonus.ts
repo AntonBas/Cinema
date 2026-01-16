@@ -17,7 +17,7 @@ export interface BonusRulesRequest {
     pointValue?: string | null;
     minPointsPerTransaction?: number | null;
     maxPointsPerTransaction?: number | null;
-    active?: boolean | null;
+    active?: boolean;
 }
 
 export interface BonusBalanceResponse {
@@ -43,8 +43,8 @@ export interface BonusRulesResponse {
     bonusType: BonusTransactionType;
     points: number | null;
     moneyRatio: string | null;
-    minPointsPerTransaction: number;
-    maxPointsPerTransaction: number;
+    minPointsPerTransaction: number | null;
+    maxPointsPerTransaction: number | null;
     active: boolean;
     updatedAt: string;
 }

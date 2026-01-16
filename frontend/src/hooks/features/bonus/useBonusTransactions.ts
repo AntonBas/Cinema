@@ -48,21 +48,21 @@ export const useBonusTransactions = (options: UseBonusTransactionsOptions = {}) 
 
     const nextPage = useCallback(async () => {
         if (pageData && !pageData.last) {
-            return await loadPage(pageData.currentPage + 1);
+            return await loadPage(pageData.number + 1);
         }
         return null;
     }, [pageData, loadPage]);
 
     const prevPage = useCallback(async () => {
         if (pageData && !pageData.first) {
-            return await loadPage(pageData.currentPage - 1);
+            return await loadPage(pageData.number - 1);
         }
         return null;
     }, [pageData, loadPage]);
 
     const refresh = useCallback(async () => {
         if (pageData) {
-            return await fetchTransactions(pageData.currentPage);
+            return await fetchTransactions(pageData.number);
         }
         return await fetchTransactions(initialPage);
     }, [fetchTransactions, pageData, initialPage]);
@@ -117,26 +117,35 @@ export const useBonusTransactions = (options: UseBonusTransactionsOptions = {}) 
         };
     }, [transactions]);
 
+    const currentPage = pageData?.number || 0;
+    const totalPages = pageData?.totalPages || 0;
+    const totalElements = pageData?.totalElements || 0;
+    const currentPageSize = pageData?.size || pageSize;
+
     return {
         transactions,
         pageData,
+
         loading: loading || isFetching,
         error,
+
         loadPage,
         nextPage,
         prevPage,
         refresh,
+
         getTransactionTypeDisplay,
         getTransactionTypeColor,
         isPositiveTransaction,
         filterByType,
         getTransactionSummary,
+
         hasTransactions: transactions.length > 0,
         isEmpty: pageData?.empty || false,
-        currentPage: pageData?.currentPage || 0,
-        totalPages: pageData?.totalPages || 0,
-        totalElements: pageData?.totalElements || 0,
-        pageSize: pageData?.pageSize || pageSize,
+        currentPage,
+        totalPages,
+        totalElements,
+        pageSize: currentPageSize,
         isFirstPage: pageData?.first || true,
         isLastPage: pageData?.last || true,
         canGoNext: pageData ? !pageData.last : false,
