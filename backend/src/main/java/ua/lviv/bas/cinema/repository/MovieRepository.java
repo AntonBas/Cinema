@@ -29,7 +29,7 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
 	long countByScreenwritersId(@Param("personId") Long personId);
 
 	@Query("SELECT m FROM Movie m WHERE " + "m.status = :status AND "
-			+ "(:search IS NULL OR LOWER(m.title) LIKE LOWER(CONCAT('%', :search, '%')))")
+			+ "(:search IS NULL OR LOWER(CAST(m.title AS string)) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')))")
 	Page<Movie> findByStatusWithSearch(@Param("status") MovieStatus status, @Param("search") String search,
 			Pageable pageable);
 
@@ -51,7 +51,8 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
 
 	@Query("SELECT m FROM Movie m WHERE " + "m.releaseDate <= :sessionDate AND "
 			+ "m.endShowingDate >= :sessionDate AND "
-			+ "(:searchTerm IS NULL OR LOWER(m.title) LIKE LOWER(CONCAT('%', :searchTerm, '%'))) " + "ORDER BY m.title")
+			+ "(:searchTerm IS NULL OR LOWER(CAST(m.title AS string)) LIKE LOWER(CONCAT('%', CAST(:searchTerm AS string), '%'))) "
+			+ "ORDER BY m.title")
 	List<Movie> findMoviesForSessionCreation(@Param("searchTerm") String searchTerm,
 			@Param("sessionDate") LocalDate sessionDate);
 }

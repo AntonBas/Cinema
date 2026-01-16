@@ -80,12 +80,11 @@ export const MovieTab: React.FC = () => {
 
   const loadTabStats = useCallback(async () => {
     try {
-      const [currentResponse, upcomingResponse] = await Promise.all([
+      const [currentResponse, upcomingResponse, archivedResponse] = await Promise.all([
         movieApi.public.getCurrentlyShowingPaginated(0, 1),
-        movieApi.public.getUpcomingPaginated(0, 1)
+        movieApi.public.getUpcomingPaginated(0, 1),
+        movieApi.admin.getArchivedMovies(0, 1)
       ]);
-
-      const archivedResponse = await movieApi.admin.getArchivedMovies(0, 1);
 
       return {
         CURRENT: currentResponse.totalElements,
@@ -111,6 +110,17 @@ export const MovieTab: React.FC = () => {
       showNotification(mutationError, 'error');
     }
   }, [mutationError, showNotification]);
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      if (!isModalOpen && !isDeleteModalOpen) {
+        loadMovies();
+        loadTabStats().then(stats => setTabStats(stats));
+      }
+    }, 30000);
+
+    return () => clearInterval(intervalId);
+  }, [isModalOpen, isDeleteModalOpen, loadMovies, loadTabStats]);
 
   const handleTabChange = (tab: MovieTabType) => {
     setActiveTab(tab);
