@@ -3,7 +3,7 @@ import { UserTable } from './UserTable/UserTable';
 import { UserFilters } from './UserFilters/UserFilters';
 import { useAdminUsers } from '@/hooks/features/admin/useAdminUsers';
 import { useNotification } from '@/hooks/common/useNotification';
-import { LoadingSpinner, Notification, Pagination } from '@/components/ui';
+import { Notification, Pagination } from '@/components/ui';
 import styles from './SectionUsers.module.css';
 
 export const SectionUsers: React.FC = () => {
@@ -14,7 +14,6 @@ export const SectionUsers: React.FC = () => {
     const {
         users,
         pagination,
-        loading,
         searchUsers,
         refreshUsers
     } = useAdminUsers();
@@ -73,16 +72,6 @@ export const SectionUsers: React.FC = () => {
     };
 
     const { start, end } = getDisplayRange();
-
-    if (loading && users.length === 0) {
-        return (
-            <div className={styles.loading}>
-                <LoadingSpinner />
-                <p>Loading users...</p>
-            </div>
-        );
-    }
-
     return (
         <div className={styles.container}>
             <header className={styles.header}>
