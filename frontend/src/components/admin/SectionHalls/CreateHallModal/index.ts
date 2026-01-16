@@ -1,1 +1,0 @@
-export { CreateHallModal } from './CreateHallModal';

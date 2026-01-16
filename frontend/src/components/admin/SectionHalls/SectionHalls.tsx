@@ -2,10 +2,9 @@ import React, { useState, useEffect } from 'react';
 import type { CinemaHallResponse, CinemaHallRequest } from '@/types';
 import { useCinemaHalls, useCinemaHallMutation } from '@/hooks/features/cinemaHalls';
 import { useNotification } from '@/hooks/common/useNotification';
-import { DeleteConfirmModal, Notification, Button, LoadingSpinner } from '@/components/ui';
+import { DeleteConfirmModal, Notification, Button } from '@/components/ui';
+import { CreateHallModal, EditHallModal } from './HallModal';
 import { HallsTable } from './HallsTable/HallsTable';
-import { CreateHallModal } from './CreateHallModal/CreateHallModal';
-import { EditHallModal } from './EditHallModal/EditHallModal';
 import { HallLayoutModal } from './HallLayoutModal/HallLayoutModal';
 import styles from './SectionHalls.module.css';
 
@@ -117,15 +116,6 @@ export const SectionHalls: React.FC = () => {
         setSelectedHall(hall);
         setShowLayoutModal(true);
     };
-
-    if (loading) {
-        return (
-            <div className={styles.loading}>
-                <LoadingSpinner />
-                <p>Loading cinema halls...</p>
-            </div>
-        );
-    }
 
     return (
         <div className={styles.section}>

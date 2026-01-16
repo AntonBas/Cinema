@@ -3,7 +3,7 @@ import type { CinemaHallResponse, HallLayoutResponse } from '@/types/cinemaHall'
 import { type SeatResponse, SeatType } from '@/types/seat';
 import { useCinemaHalls, useSeatMutation } from '@/hooks/features/cinemaHalls';
 import { useNotification } from '@/hooks/common/useNotification';
-import { Modal, Button } from '@/components/ui';
+import { Modal } from '@/components/ui';
 import styles from './HallLayoutModal.module.css';
 
 interface HallLayoutModalProps {
@@ -21,8 +21,6 @@ export const HallLayoutModal: React.FC<HallLayoutModalProps> = ({
     const [updatingSeatAction, setUpdatingSeatAction] = useState<'type' | 'status' | null>(null);
     const [localLayout, setLocalLayout] = useState<HallLayoutResponse | null>(null);
     const [hasLoaded, setHasLoaded] = useState(false);
-    const [selectedSeat, setSelectedSeat] = useState<SeatResponse | null>(null);
-    const [showSeatDetails, setShowSeatDetails] = useState(false);
 
     const { hallLayout, loading, error, getHallLayout } = useCinemaHalls();
     const { updateSeatType, activateSeat, deactivateSeat, loading: updatingSeatType } = useSeatMutation();
@@ -43,8 +41,6 @@ export const HallLayoutModal: React.FC<HallLayoutModalProps> = ({
         if (!isOpen) {
             setHasLoaded(false);
             setLocalLayout(null);
-            setSelectedSeat(null);
-            setShowSeatDetails(false);
         }
     }, [isOpen]);
 
@@ -58,9 +54,6 @@ export const HallLayoutModal: React.FC<HallLayoutModalProps> = ({
         if (updatingSeat === seat.id || updatingSeatType) return;
 
         e.stopPropagation();
-        setSelectedSeat(seat);
-        setShowSeatDetails(true);
-
         const nextSeatType = getNextSeatType(seat.seatType);
 
         try {
@@ -84,7 +77,7 @@ export const HallLayoutModal: React.FC<HallLayoutModalProps> = ({
 
             await updateSeatType(hall.id, seat.id, nextSeatType);
 
-            showNotification(`Seat ${seat.row}-${seat.number} type changed`, 'success');
+            showNotification(`Seat ${seat.row}-${seat.number} type changed to ${getSeatTypeName(nextSeatType)}`, 'success');
         } catch (err) {
             await getHallLayout(hall.id);
             showNotification('Failed to update seat type', 'error');
@@ -99,8 +92,6 @@ export const HallLayoutModal: React.FC<HallLayoutModalProps> = ({
 
         e.stopPropagation();
         e.preventDefault();
-        setSelectedSeat(seat);
-        setShowSeatDetails(true);
 
         const newActive = !seat.active;
 
@@ -139,28 +130,8 @@ export const HallLayoutModal: React.FC<HallLayoutModalProps> = ({
         }
     };
 
-    const handleQuickToggleStatus = async () => {
-        if (!selectedSeat) return;
-
-        const newActive = !selectedSeat.active;
-
-        try {
-            if (newActive) {
-                await activateSeat(hall.id, selectedSeat.id);
-                showNotification(`Seat activated`, 'success');
-            } else {
-                await deactivateSeat(hall.id, selectedSeat.id);
-                showNotification(`Seat deactivated`, 'success');
-            }
-
-            await getHallLayout(hall.id);
-        } catch (err) {
-            showNotification('Failed to update seat status', 'error');
-        }
-    };
-
     const getNextSeatType = (currentType: SeatType): SeatType => {
-        const types = [SeatType.STANDARD, SeatType.VIP, SeatType.DISABLED, SeatType.COUPLE];
+        const types = [SeatType.STANDARD, SeatType.VIP, SeatType.COUPLE];
         const currentIndex = types.indexOf(currentType);
         const nextIndex = (currentIndex + 1) % types.length;
         return types[nextIndex];
@@ -170,20 +141,9 @@ export const HallLayoutModal: React.FC<HallLayoutModalProps> = ({
         const names = {
             [SeatType.STANDARD]: 'Standard',
             [SeatType.VIP]: 'VIP',
-            [SeatType.DISABLED]: 'Disabled',
             [SeatType.COUPLE]: 'Couple'
         };
         return names[seatType] || seatType;
-    };
-
-    const getSeatTypeColor = (seatType: SeatType): string => {
-        const colors = {
-            [SeatType.STANDARD]: '#3498db',
-            [SeatType.VIP]: '#f39c12',
-            [SeatType.DISABLED]: '#95a5a6',
-            [SeatType.COUPLE]: '#e74c3c'
-        };
-        return colors[seatType] || '#3498db';
     };
 
     const SeatComponent: React.FC<{ seat: SeatResponse; rowIndex: number }> = ({ seat }) => {
@@ -195,7 +155,7 @@ export const HallLayoutModal: React.FC<HallLayoutModalProps> = ({
                 className={`${styles.seatButton} ${styles[seat.seatType.toLowerCase()]} ${!seat.active ? styles.inactive : ''}`}
                 onClick={(e) => handleSeatTypeClick(seat, e)}
                 onContextMenu={(e) => handleSeatStatusClick(seat, e)}
-                title={`Row ${seat.row}, Seat ${seat.number}`}
+                title={`Row ${seat.row}, Seat ${seat.number}\nType: ${getSeatTypeName(seat.seatType)}\nStatus: ${seat.active ? 'Active' : 'Inactive'}\n\nLeft click: Change type\nRight click: Toggle status`}
                 disabled={isUpdatingType || isUpdatingStatus}
             >
                 {isUpdatingType || isUpdatingStatus ? (
@@ -275,10 +235,6 @@ export const HallLayoutModal: React.FC<HallLayoutModalProps> = ({
                                 <span>VIP</span>
                             </div>
                             <div className={styles.legendItem}>
-                                <div className={`${styles.legendColor} ${styles.disabled}`}></div>
-                                <span>Disabled</span>
-                            </div>
-                            <div className={styles.legendItem}>
                                 <div className={`${styles.legendColor} ${styles.couple}`}></div>
                                 <span>Couple</span>
                             </div>
@@ -289,56 +245,13 @@ export const HallLayoutModal: React.FC<HallLayoutModalProps> = ({
                         </div>
                     </div>
 
-                    <div className={styles.controls}>
-                        <div className={styles.instructions}>
-                            <div className={styles.instructionIcon}>🎯</div>
-                            <div className={styles.instructionText}>
-                                <p><strong>Left click:</strong> Change seat type</p>
-                                <p><strong>Right click:</strong> Toggle active status</p>
-                                <p className={styles.note}>Inactive seats cannot be booked</p>
-                            </div>
+                    <div className={styles.instructions}>
+                        <div className={styles.instructionIcon}>🎯</div>
+                        <div className={styles.instructionText}>
+                            <p><strong>Left click:</strong> Change seat type</p>
+                            <p><strong>Right click:</strong> Toggle active status</p>
+                            <p className={styles.note}>Inactive seats cannot be booked</p>
                         </div>
-
-                        {selectedSeat && showSeatDetails && (
-                            <div className={styles.seatDetails}>
-                                <h4>Selected Seat</h4>
-                                <div className={styles.seatInfo}>
-                                    <div className={styles.seatInfoItem}>
-                                        <span>Position:</span>
-                                        <strong>Row {selectedSeat.row}, Seat {selectedSeat.number}</strong>
-                                    </div>
-                                    <div className={styles.seatInfoItem}>
-                                        <span>Type:</span>
-                                        <strong style={{ color: getSeatTypeColor(selectedSeat.seatType) }}>
-                                            {getSeatTypeName(selectedSeat.seatType)}
-                                        </strong>
-                                    </div>
-                                    <div className={styles.seatInfoItem}>
-                                        <span>Status:</span>
-                                        <strong className={selectedSeat.active ? styles.statusActive : styles.statusInactive}>
-                                            {selectedSeat.active ? 'Active' : 'Inactive'}
-                                        </strong>
-                                    </div>
-                                </div>
-                                <div className={styles.seatActions}>
-                                    <Button
-                                        variant={selectedSeat.active ? "error" : "success"}
-                                        size="small"
-                                        onClick={handleQuickToggleStatus}
-                                        disabled={updatingSeatType}
-                                    >
-                                        {selectedSeat.active ? 'Deactivate' : 'Activate'}
-                                    </Button>
-                                    <Button
-                                        variant="cancel"
-                                        size="small"
-                                        onClick={() => setShowSeatDetails(false)}
-                                    >
-                                        Close
-                                    </Button>
-                                </div>
-                            </div>
-                        )}
                     </div>
                 </div>
             </div>

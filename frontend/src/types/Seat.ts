@@ -1,21 +1,18 @@
 export enum SeatType {
     STANDARD = 'STANDARD',
     VIP = 'VIP',
-    DISABLED = 'DISABLED',
     COUPLE = 'COUPLE'
 }
 
 export const SeatTypeDisplay: Record<SeatType, string> = {
     [SeatType.STANDARD]: 'Standard',
     [SeatType.VIP]: 'VIP',
-    [SeatType.DISABLED]: 'Disabled Access',
     [SeatType.COUPLE]: 'Couple'
 };
 
 export const SeatTypePriceMultiplier: Record<SeatType, number> = {
     [SeatType.STANDARD]: 1.0,
     [SeatType.VIP]: 1.5,
-    [SeatType.DISABLED]: 1.0,
     [SeatType.COUPLE]: 1.8
 };
 

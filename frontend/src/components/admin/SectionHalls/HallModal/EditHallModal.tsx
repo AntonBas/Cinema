@@ -1,15 +1,14 @@
-import React, { useState } from 'react';
-import { Modal } from '@/components/ui/Modal';
-import { Input } from '@/components/ui/Input';
-import { Button } from '@/components/ui/Button';
-import { Select } from '@/components/ui/Select';
-import type { CinemaHallRequest } from '@/types/cinemaHall';
+import React, { useState, useEffect } from 'react';
+import type { CinemaHallResponse, CinemaHallRequest } from '@/types/cinemaHall';
 import { SeatType } from '@/types/seat';
-import styles from './CreateHallModal.module.css';
+import { Modal, Input, Button, Select } from '@/components/ui';
+import styles from './HallModal.module.css';
 
-interface CreateHallModalProps {
+interface EditHallModalProps {
+    hall: CinemaHallResponse;
+    currentLayout?: { rows: number; seatsPerRow: number };
     onClose: () => void;
-    onCreate: (request: CinemaHallRequest) => Promise<void>;
+    onUpdate: (id: number, request: CinemaHallRequest) => Promise<void>;
     loading?: boolean;
 }
 
@@ -20,22 +19,33 @@ const seatTypeOptions = [
     { value: SeatType.COUPLE, label: 'Couple' }
 ];
 
-export const CreateHallModal: React.FC<CreateHallModalProps> = ({
+export const EditHallModal: React.FC<EditHallModalProps> = ({
+    hall,
+    currentLayout,
     onClose,
-    onCreate,
+    onUpdate,
     loading = false
 }) => {
     const [formData, setFormData] = useState<CinemaHallRequest>({
-        name: '',
-        rows: 10,
-        seatsPerRow: 15,
+        name: hall.name,
+        rows: currentLayout?.rows || 10,
+        seatsPerRow: currentLayout?.seatsPerRow || 15,
         defaultSeatType: SeatType.STANDARD
     });
+
+    useEffect(() => {
+        setFormData({
+            name: hall.name,
+            rows: currentLayout?.rows || 10,
+            seatsPerRow: currentLayout?.seatsPerRow || 15,
+            defaultSeatType: SeatType.STANDARD
+        });
+    }, [hall, currentLayout]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!formData.name.trim() || loading) return;
-        await onCreate(formData);
+        await onUpdate(hall.id, formData);
     };
 
     const updateField = <K extends keyof CinemaHallRequest>(
@@ -46,9 +56,12 @@ export const CreateHallModal: React.FC<CreateHallModalProps> = ({
     };
 
     const totalSeats = (formData.rows || 0) * (formData.seatsPerRow || 0);
+    const hasChanges = formData.name !== hall.name ||
+        formData.rows !== currentLayout?.rows ||
+        formData.seatsPerRow !== currentLayout?.seatsPerRow;
 
     return (
-        <Modal isOpen={true} onClose={onClose} title="Create New Hall" size="medium">
+        <Modal isOpen={true} onClose={onClose} title="Edit Cinema Hall" size="medium">
             <form onSubmit={handleSubmit}>
                 <div className={styles.formGroup}>
                     <label className={styles.label}>Hall Name *</label>
@@ -64,7 +77,7 @@ export const CreateHallModal: React.FC<CreateHallModalProps> = ({
                 </div>
 
                 <div className={styles.rowContainer}>
-                    <div className={styles.formGroup}>
+                    <div>
                         <label className={styles.label}>Number of Rows *</label>
                         <Input
                             type="number"
@@ -78,7 +91,7 @@ export const CreateHallModal: React.FC<CreateHallModalProps> = ({
                         />
                     </div>
 
-                    <div className={styles.formGroup}>
+                    <div>
                         <label className={styles.label}>Seats Per Row *</label>
                         <Input
                             type="number"
@@ -123,10 +136,10 @@ export const CreateHallModal: React.FC<CreateHallModalProps> = ({
                     <Button
                         type="submit"
                         variant="primary"
-                        disabled={!formData.name.trim() || loading}
+                        disabled={!formData.name.trim() || !hasChanges || loading}
                         loading={loading}
                     >
-                        Create Hall
+                        Update Hall
                     </Button>
                 </div>
             </form>
