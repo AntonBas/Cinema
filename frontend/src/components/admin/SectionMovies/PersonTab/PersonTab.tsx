@@ -82,10 +82,10 @@ export const PersonTab: React.FC = () => {
 
     try {
       const [allResult, actorsResult, directorsResult, screenwritersResult] = await Promise.all([
-        searchPersons({ page: 0, size: 1 }),
-        getByRole(PersonRoleEnum.ACTOR, { page: 0, size: 1 }),
-        getByRole(PersonRoleEnum.DIRECTOR, { page: 0, size: 1 }),
-        getByRole(PersonRoleEnum.SCREENWRITER, { page: 0, size: 1 }),
+        searchPersons({ page: 0, size: 0 }),
+        getByRole(PersonRoleEnum.ACTOR, { page: 0, size: 0 }),
+        getByRole(PersonRoleEnum.DIRECTOR, { page: 0, size: 0 }),
+        getByRole(PersonRoleEnum.SCREENWRITER, { page: 0, size: 0 }),
       ]);
 
       setTotalCounts({
