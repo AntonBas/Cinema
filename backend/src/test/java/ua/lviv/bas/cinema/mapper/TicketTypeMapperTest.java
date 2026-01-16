@@ -115,7 +115,7 @@ public class TicketTypeMapperTest {
 				.updatedAt(LocalDateTime.now()).build();
 
 		TicketTypeUpdateRequest updateRequest = TicketTypeUpdateRequest.builder().displayName("New Name")
-				.priceModifier(new BigDecimal("0.80")).minAge(18).maxAge(65).requiresDocument(true)
+				.priceMultiplier(new BigDecimal("0.80")).minAge(18).maxAge(65).requiresDocument(true)
 				.documentType("ID Card").active(false).category(TicketTypeCategory.SENIOR).build();
 
 		mapper.updateTicketTypeFromRequest(existing, updateRequest);

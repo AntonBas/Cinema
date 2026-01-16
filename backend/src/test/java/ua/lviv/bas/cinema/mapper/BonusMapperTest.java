@@ -125,7 +125,7 @@ public class BonusMapperTest {
 
 		assertThat(existing.getPoints()).isEqualTo(150);
 		assertThat(existing.getMoneyRatio()).isEqualTo(new BigDecimal("0.1"));
-		assertThat(existing.isActive()).isFalse();
+		assertThat(existing.getActive()).isFalse();
 		assertThat(existing.getMinPointsPerTransaction()).isEqualTo(10);
 		assertThat(existing.getMaxPointsPerTransaction()).isEqualTo(500);
 		assertThat(existing.getBonusType()).isEqualTo(BonusTransactionType.PAYMENT_ACCRUAL);
@@ -143,7 +143,7 @@ public class BonusMapperTest {
 
 		assertThat(existing.getPoints()).isEqualTo(100);
 		assertThat(existing.getMoneyRatio()).isEqualTo(new BigDecimal("0.1"));
-		assertThat(existing.isActive()).isFalse();
+		assertThat(existing.getActive()).isFalse();
 		assertThat(existing.getMinPointsPerTransaction()).isEqualTo(10);
 		assertThat(existing.getMaxPointsPerTransaction()).isEqualTo(500);
 	}

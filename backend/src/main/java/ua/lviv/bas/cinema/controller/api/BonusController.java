@@ -6,14 +6,13 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -38,8 +37,8 @@ public class BonusController {
 	@GetMapping("/my-card")
 	@ResponseStatus(HttpStatus.OK)
 	@PreAuthorize("isAuthenticated()")
-	public BonusCardResponse getMyBonusCard(@AuthenticationPrincipal UserDetails userDetails) {
-		Long userId = Long.parseLong(userDetails.getUsername());
+	public BonusCardResponse getMyBonusCard(
+			@Parameter(hidden = true) @AuthenticationPrincipal(expression = "id") Long userId) {
 		return bonusService.getBonusCard(userId);
 	}
 
@@ -49,7 +48,8 @@ public class BonusController {
 	@GetMapping("/my-balance")
 	@ResponseStatus(HttpStatus.OK)
 	@PreAuthorize("isAuthenticated()")
-	public BonusBalanceResponse getMyBalance(@RequestAttribute Long userId) {
+	public BonusBalanceResponse getMyBalance(
+			@Parameter(hidden = true) @AuthenticationPrincipal(expression = "id") Long userId) {
 		return bonusService.getBalance(userId);
 	}
 
@@ -58,7 +58,8 @@ public class BonusController {
 	@GetMapping("/my-transactions")
 	@ResponseStatus(HttpStatus.OK)
 	@PreAuthorize("isAuthenticated()")
-	public Page<BonusTransactionResponse> getMyTransactions(@RequestAttribute Long userId,
+	public Page<BonusTransactionResponse> getMyTransactions(
+			@Parameter(hidden = true) @AuthenticationPrincipal(expression = "id") Long userId,
 			@PageableDefault(size = 20) Pageable pageable) {
 		return bonusService.getUserTransactions(userId, pageable);
 	}

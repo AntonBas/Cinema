@@ -33,7 +33,7 @@ import ua.lviv.bas.cinema.service.user.BonusService;
 public class BonusControllerTest {
 
 	@Mock
-	private BonusService bonusUserService;
+	private BonusService bonusService;
 
 	@InjectMocks
 	private BonusController bonusController;
@@ -45,7 +45,7 @@ public class BonusControllerTest {
 		BonusCardResponse cardResponse = BonusCardResponse.builder().id(1L).userId(userId).pointsBalance(250)
 				.welcomeBonusReceived(true).build();
 
-		when(bonusUserService.getBonusCard(userId)).thenReturn(cardResponse);
+		when(bonusService.getBonusCard(userId)).thenReturn(cardResponse);
 
 		BonusCardResponse response = bonusController.getMyBonusCard(userId);
 
@@ -60,7 +60,7 @@ public class BonusControllerTest {
 	void getMyBonusCard_ShouldThrowWhenCardNotFound() {
 		Long userId = 1L;
 
-		when(bonusUserService.getBonusCard(userId)).thenThrow(new BonusCardNotFoundException(userId));
+		when(bonusService.getBonusCard(userId)).thenThrow(new BonusCardNotFoundException(userId));
 
 		assertThrows(BonusCardNotFoundException.class, () -> bonusController.getMyBonusCard(userId));
 	}
@@ -72,7 +72,7 @@ public class BonusControllerTest {
 		BonusBalanceResponse balanceResponse = BonusBalanceResponse.builder().pointsBalance(250)
 				.pointValue(new BigDecimal("1.00")).balanceValue(new BigDecimal("250.00")).build();
 
-		when(bonusUserService.getBalance(userId)).thenReturn(balanceResponse);
+		when(bonusService.getBalance(userId)).thenReturn(balanceResponse);
 
 		BonusBalanceResponse response = bonusController.getMyBalance(userId);
 
@@ -85,8 +85,7 @@ public class BonusControllerTest {
 	@Test
 	void getMyBalance_ShouldThrowWhenCardNotFound() {
 		Long userId = 1L;
-
-		when(bonusUserService.getBalance(userId)).thenThrow(new BonusCardNotFoundException(userId));
+		when(bonusService.getBalance(userId)).thenThrow(new BonusCardNotFoundException(userId));
 
 		assertThrows(BonusCardNotFoundException.class, () -> bonusController.getMyBalance(userId));
 	}
@@ -94,8 +93,7 @@ public class BonusControllerTest {
 	@Test
 	void getMyBalance_ShouldThrowWhenRuleNotFound() {
 		Long userId = 1L;
-
-		when(bonusUserService.getBalance(userId))
+		when(bonusService.getBalance(userId))
 				.thenThrow(new BonusRuleNotFoundException(BonusTransactionType.WELCOME_BONUS));
 
 		assertThrows(BonusRuleNotFoundException.class, () -> bonusController.getMyBalance(userId));
@@ -114,7 +112,7 @@ public class BonusControllerTest {
 
 		Page<BonusTransactionResponse> page = new PageImpl<>(List.of(transaction1, transaction2), pageable, 2);
 
-		when(bonusUserService.getUserTransactions(eq(userId), any(Pageable.class))).thenReturn(page);
+		when(bonusService.getUserTransactions(eq(userId), any(Pageable.class))).thenReturn(page);
 
 		Page<BonusTransactionResponse> response = bonusController.getMyTransactions(userId, pageable);
 
@@ -136,7 +134,7 @@ public class BonusControllerTest {
 
 		Page<BonusTransactionResponse> emptyPage = new PageImpl<>(List.of(), pageable, 0);
 
-		when(bonusUserService.getUserTransactions(eq(userId), any(Pageable.class))).thenReturn(emptyPage);
+		when(bonusService.getUserTransactions(eq(userId), any(Pageable.class))).thenReturn(emptyPage);
 
 		Page<BonusTransactionResponse> response = bonusController.getMyTransactions(userId, pageable);
 
