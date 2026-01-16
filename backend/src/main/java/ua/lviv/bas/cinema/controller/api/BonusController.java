@@ -5,6 +5,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -28,7 +30,7 @@ import ua.lviv.bas.cinema.service.user.BonusService;
 @SecurityRequirement(name = "bearerAuth")
 public class BonusController {
 
-	private final BonusService bonusUserService;
+	private final BonusService bonusService;
 
 	@Operation(summary = "Get user bonus card", description = "Returns the current user's bonus card information")
 	@ApiResponse(responseCode = "200", description = "Bonus card retrieved successfully")
@@ -36,8 +38,9 @@ public class BonusController {
 	@GetMapping("/my-card")
 	@ResponseStatus(HttpStatus.OK)
 	@PreAuthorize("isAuthenticated()")
-	public BonusCardResponse getMyBonusCard(@RequestAttribute Long userId) {
-		return bonusUserService.getBonusCard(userId);
+	public BonusCardResponse getMyBonusCard(@AuthenticationPrincipal UserDetails userDetails) {
+		Long userId = Long.parseLong(userDetails.getUsername());
+		return bonusService.getBonusCard(userId);
 	}
 
 	@Operation(summary = "Get bonus balance", description = "Returns the current user's bonus balance with conversion details")
@@ -47,7 +50,7 @@ public class BonusController {
 	@ResponseStatus(HttpStatus.OK)
 	@PreAuthorize("isAuthenticated()")
 	public BonusBalanceResponse getMyBalance(@RequestAttribute Long userId) {
-		return bonusUserService.getBalance(userId);
+		return bonusService.getBalance(userId);
 	}
 
 	@Operation(summary = "Get user bonus transactions", description = "Returns the current user's bonus transaction history")
@@ -57,6 +60,6 @@ public class BonusController {
 	@PreAuthorize("isAuthenticated()")
 	public Page<BonusTransactionResponse> getMyTransactions(@RequestAttribute Long userId,
 			@PageableDefault(size = 20) Pageable pageable) {
-		return bonusUserService.getUserTransactions(userId, pageable);
+		return bonusService.getUserTransactions(userId, pageable);
 	}
 }

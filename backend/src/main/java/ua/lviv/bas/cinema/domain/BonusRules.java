@@ -14,8 +14,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -34,7 +32,7 @@ import ua.lviv.bas.cinema.domain.enums.BonusTransactionType;
 @AllArgsConstructor
 @ToString
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@Table(name = "bonus_rules", indexes = { @Index(name = "idx_bonus_rules_active", columnList = "is_active"),
+@Table(name = "bonus_rules", indexes = { @Index(name = "idx_bonus_rules_active", columnList = "active"),
 		@Index(name = "idx_bonus_rules_type", columnList = "bonus_type") })
 public class BonusRules {
 
@@ -49,24 +47,20 @@ public class BonusRules {
 	private BonusTransactionType bonusType;
 
 	@Column(name = "points")
-	@Min(0)
 	private Integer points;
 
 	@Column(name = "money_ratio", precision = 10, scale = 4)
-	@DecimalMin(value = "0.00", inclusive = true)
 	private BigDecimal moneyRatio;
 
 	@Column(name = "min_points_per_transaction")
-	@Min(1)
 	private Integer minPointsPerTransaction;
 
 	@Column(name = "max_points_per_transaction")
-	@Min(1)
 	private Integer maxPointsPerTransaction;
 
 	@Column(name = "active", nullable = false)
 	@Builder.Default
-	private boolean active = true;
+	private Boolean active = true;
 
 	@UpdateTimestamp
 	@Column(name = "updated_at")
