@@ -15,8 +15,17 @@ export const usePersonSearch = () => {
             setError(null);
             try {
                 const response = await personApi.public.search(params);
-                setPersons(response.content);
-                setPagination(response);
+
+                if (params.size && params.size > 1) {
+                    setPersons(response.content);
+                    setPagination(response);
+                } else if (!params.size) {
+                    setPersons(response.content);
+                    setPagination(response);
+                } else {
+                    setPagination(response);
+                }
+
                 return response;
             } catch (err) {
                 const message = err instanceof Error ? err.message : 'Failed to search persons';
@@ -35,8 +44,17 @@ export const usePersonSearch = () => {
             setError(null);
             try {
                 const response = await personApi.public.getByRole(role, params);
-                setPersons(response.content);
-                setPagination(response);
+
+                if (params.size && params.size > 1) {
+                    setPersons(response.content);
+                    setPagination(response);
+                } else if (!params.size) {
+                    setPersons(response.content);
+                    setPagination(response);
+                } else {
+                    setPagination(response);
+                }
+
                 return response;
             } catch (err) {
                 const message = err instanceof Error ? err.message : 'Failed to get persons by role';
