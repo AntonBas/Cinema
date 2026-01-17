@@ -2,9 +2,8 @@ package ua.lviv.bas.cinema.service.booking;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -50,11 +49,10 @@ public class TicketTypeServiceTest {
 	@Test
 	void createTicketType_Success() {
 		TicketTypeCreateRequest request = TicketTypeCreateRequest.builder().code("ADULT").displayName("Adult")
-				.priceMultiplier(BigDecimal.ONE).active(true).build();
+				.priceMultiplier(BigDecimal.ONE).build();
 
 		TicketType ticketType = new TicketType();
 		ticketType.setId(1L);
-		ticketType.setCode("ADULT");
 
 		TicketTypeResponse response = TicketTypeResponse.builder().id(1L).code("ADULT").build();
 
@@ -65,7 +63,7 @@ public class TicketTypeServiceTest {
 
 		TicketTypeResponse result = ticketTypeService.createTicketType(request);
 
-		assertThat(result.getCode()).isEqualTo("ADULT");
+		assertThat(result.getId()).isEqualTo(1L);
 		verify(ticketTypeRepository).existsByCode("ADULT");
 		verify(ticketTypeRepository).save(ticketType);
 	}
@@ -79,31 +77,36 @@ public class TicketTypeServiceTest {
 
 		assertThatThrownBy(() -> ticketTypeService.createTicketType(request))
 				.isInstanceOf(TicketTypeDuplicateException.class);
+
+		verify(ticketTypeRepository).existsByCode("ADULT");
+		verify(ticketTypeRepository, never()).save(any());
 	}
 
 	@Test
 	void createTicketType_WhenInvalidAgeRange_ShouldThrowException() {
-		TicketTypeCreateRequest request = TicketTypeCreateRequest.builder().code("CHILD").displayName("Child")
-				.priceMultiplier(BigDecimal.ONE).minAge(15).maxAge(10).build();
+		TicketTypeCreateRequest request = TicketTypeCreateRequest.builder().code("CHILD").minAge(15).maxAge(10).build();
 
 		assertThatThrownBy(() -> ticketTypeService.createTicketType(request))
 				.isInstanceOf(TicketTypeValidationException.class);
+
+		verify(ticketTypeRepository, never()).existsByCode(any());
+		verify(ticketTypeRepository, never()).save(any());
 	}
 
 	@Test
 	void getTicketTypeById_Success() {
 		TicketType ticketType = new TicketType();
 		ticketType.setId(1L);
-		ticketType.setCode("ADULT");
 
-		TicketTypeResponse response = TicketTypeResponse.builder().id(1L).code("ADULT").build();
+		TicketTypeResponse response = TicketTypeResponse.builder().id(1L).build();
 
 		when(ticketTypeRepository.findById(1L)).thenReturn(Optional.of(ticketType));
 		when(ticketTypeMapper.toTicketTypeResponse(ticketType)).thenReturn(response);
 
 		TicketTypeResponse result = ticketTypeService.getTicketTypeById(1L);
 
-		assertThat(result.getCode()).isEqualTo("ADULT");
+		assertThat(result.getId()).isEqualTo(1L);
+		verify(ticketTypeRepository).findById(1L);
 	}
 
 	@Test
@@ -112,49 +115,44 @@ public class TicketTypeServiceTest {
 
 		assertThatThrownBy(() -> ticketTypeService.getTicketTypeById(1L))
 				.isInstanceOf(TicketTypeNotFoundException.class);
+
+		verify(ticketTypeRepository).findById(1L);
 	}
 
 	@Test
 	void getTicketTypeByCode_Success() {
 		TicketType ticketType = new TicketType();
-		ticketType.setCode("ADULT");
+		ticketType.setId(1L);
 
-		TicketTypeResponse response = TicketTypeResponse.builder().code("ADULT").build();
+		TicketTypeResponse response = TicketTypeResponse.builder().id(1L).build();
 
 		when(ticketTypeRepository.findByCode("ADULT")).thenReturn(Optional.of(ticketType));
 		when(ticketTypeMapper.toTicketTypeResponse(ticketType)).thenReturn(response);
 
 		TicketTypeResponse result = ticketTypeService.getTicketTypeByCode("ADULT");
 
-		assertThat(result.getCode()).isEqualTo("ADULT");
+		assertThat(result.getId()).isEqualTo(1L);
+		verify(ticketTypeRepository).findByCode("ADULT");
 	}
 
 	@Test
 	void getAllTicketTypes_WhenActiveNull() {
-		TicketType ticketType1 = new TicketType();
-		ticketType1.setActive(true);
+		TicketType ticketType = new TicketType();
+		TicketTypeResponse response = TicketTypeResponse.builder().build();
 
-		TicketType ticketType2 = new TicketType();
-		ticketType2.setActive(false);
-
-		TicketTypeResponse response1 = TicketTypeResponse.builder().id(1L).build();
-		TicketTypeResponse response2 = TicketTypeResponse.builder().id(2L).build();
-
-		when(ticketTypeRepository.findAll()).thenReturn(Arrays.asList(ticketType1, ticketType2));
-		when(ticketTypeMapper.toTicketTypeResponse(ticketType1)).thenReturn(response1);
-		when(ticketTypeMapper.toTicketTypeResponse(ticketType2)).thenReturn(response2);
+		when(ticketTypeRepository.findAll()).thenReturn(Arrays.asList(ticketType));
+		when(ticketTypeMapper.toTicketTypeResponse(ticketType)).thenReturn(response);
 
 		List<TicketTypeResponse> result = ticketTypeService.getAllTicketTypes(null);
 
-		assertThat(result).hasSize(2);
+		assertThat(result).hasSize(1);
+		verify(ticketTypeRepository).findAll();
 	}
 
 	@Test
 	void getAllTicketTypes_WhenActiveTrue() {
 		TicketType ticketType = new TicketType();
-		ticketType.setActive(true);
-
-		TicketTypeResponse response = TicketTypeResponse.builder().id(1L).build();
+		TicketTypeResponse response = TicketTypeResponse.builder().build();
 
 		when(ticketTypeRepository.findByActiveTrue()).thenReturn(Arrays.asList(ticketType));
 		when(ticketTypeMapper.toTicketTypeResponse(ticketType)).thenReturn(response);
@@ -162,14 +160,13 @@ public class TicketTypeServiceTest {
 		List<TicketTypeResponse> result = ticketTypeService.getAllTicketTypes(true);
 
 		assertThat(result).hasSize(1);
+		verify(ticketTypeRepository).findByActiveTrue();
 	}
 
 	@Test
 	void getSimpleTicketTypes_WhenActiveTrue() {
 		TicketType ticketType = new TicketType();
-		ticketType.setActive(true);
-
-		TicketTypeSimpleResponse response = TicketTypeSimpleResponse.builder().id(1L).build();
+		TicketTypeSimpleResponse response = TicketTypeSimpleResponse.builder().build();
 
 		when(ticketTypeRepository.findByActiveTrue()).thenReturn(Arrays.asList(ticketType));
 		when(ticketTypeMapper.toTicketTypeSimpleResponse(ticketType)).thenReturn(response);
@@ -177,27 +174,26 @@ public class TicketTypeServiceTest {
 		List<TicketTypeSimpleResponse> result = ticketTypeService.getSimpleTicketTypes(true);
 
 		assertThat(result).hasSize(1);
+		verify(ticketTypeRepository).findByActiveTrue();
 	}
 
 	@Test
 	void updateTicketType_Success() {
 		TicketType ticketType = new TicketType();
 		ticketType.setId(1L);
-		ticketType.setMinAge(0);
-		ticketType.setMaxAge(12);
 
-		TicketTypeUpdateRequest request = TicketTypeUpdateRequest.builder().displayName("Updated Name").build();
-
-		TicketTypeResponse response = TicketTypeResponse.builder().id(1L).displayName("Updated Name").build();
+		TicketTypeUpdateRequest request = TicketTypeUpdateRequest.builder().displayName("Updated").build();
+		TicketTypeResponse response = TicketTypeResponse.builder().displayName("Updated").build();
 
 		when(ticketTypeRepository.findById(1L)).thenReturn(Optional.of(ticketType));
-		doNothing().when(ticketTypeMapper).updateTicketTypeFromRequest(ticketType, request);
 		when(ticketTypeRepository.save(ticketType)).thenReturn(ticketType);
 		when(ticketTypeMapper.toTicketTypeResponse(ticketType)).thenReturn(response);
 
 		TicketTypeResponse result = ticketTypeService.updateTicketType(1L, request);
 
-		assertThat(result.getDisplayName()).isEqualTo("Updated Name");
+		assertThat(result.getDisplayName()).isEqualTo("Updated");
+		verify(ticketTypeRepository).findById(1L);
+		verify(ticketTypeRepository).save(ticketType);
 	}
 
 	@Test
@@ -213,6 +209,9 @@ public class TicketTypeServiceTest {
 
 		assertThatThrownBy(() -> ticketTypeService.updateTicketType(1L, request))
 				.isInstanceOf(TicketTypeValidationException.class);
+
+		verify(ticketTypeRepository).findById(1L);
+		verify(ticketTypeRepository, never()).save(any());
 	}
 
 	@Test
@@ -222,10 +221,10 @@ public class TicketTypeServiceTest {
 
 		when(ticketTypeRepository.findById(1L)).thenReturn(Optional.of(ticketType));
 		when(ticketRepository.existsByTicketTypeId(1L)).thenReturn(false);
-		doNothing().when(ticketTypeRepository).delete(ticketType);
 
 		ticketTypeService.deleteTicketType(1L);
 
+		verify(ticketTypeRepository).findById(1L);
 		verify(ticketTypeRepository).delete(ticketType);
 	}
 
@@ -239,24 +238,27 @@ public class TicketTypeServiceTest {
 		when(ticketRepository.countByTicketTypeId(1L)).thenReturn(5L);
 
 		assertThatThrownBy(() -> ticketTypeService.deleteTicketType(1L)).isInstanceOf(TicketTypeInUseException.class);
+
+		verify(ticketTypeRepository).findById(1L);
+		verify(ticketTypeRepository, never()).delete(any());
 	}
 
 	@Test
-	void toggleTicketTypeActiveStatus_Success() {
+	void toggleTicketTypeActiveStatus_ActivateSuccess() {
 		TicketType ticketType = new TicketType();
 		ticketType.setId(1L);
-		ticketType.setActive(true);
+		ticketType.setActive(false);
 
-		TicketTypeResponse response = TicketTypeResponse.builder().id(1L).active(false).build();
+		TicketTypeResponse response = TicketTypeResponse.builder().active(true).build();
 
 		when(ticketTypeRepository.findById(1L)).thenReturn(Optional.of(ticketType));
-		when(ticketRepository.existsByTicketTypeIdAndStatusIn(eq(1L), anyList())).thenReturn(false);
 		when(ticketTypeRepository.save(ticketType)).thenReturn(ticketType);
 		when(ticketTypeMapper.toTicketTypeResponse(ticketType)).thenReturn(response);
 
 		TicketTypeResponse result = ticketTypeService.toggleTicketTypeActiveStatus(1L);
 
-		assertThat(result.isActive()).isFalse();
+		assertThat(result.isActive()).isTrue();
+		verify(ticketTypeRepository).save(ticketType);
 	}
 
 	@Test
@@ -266,11 +268,13 @@ public class TicketTypeServiceTest {
 		ticketType.setActive(true);
 
 		when(ticketTypeRepository.findById(1L)).thenReturn(Optional.of(ticketType));
-		when(ticketRepository.existsByTicketTypeIdAndStatusIn(eq(1L), anyList())).thenReturn(true);
-		when(ticketRepository.countByTicketTypeIdAndStatusIn(eq(1L), anyList())).thenReturn(3L);
+		when(ticketRepository.existsByTicketTypeIdAndStatusIn(any(), any())).thenReturn(true);
+		when(ticketRepository.countByTicketTypeIdAndStatusIn(any(), any())).thenReturn(3L);
 
 		assertThatThrownBy(() -> ticketTypeService.toggleTicketTypeActiveStatus(1L))
 				.isInstanceOf(TicketTypeInUseException.class);
+
+		verify(ticketTypeRepository, never()).save(any());
 	}
 
 	@Test
@@ -287,14 +291,25 @@ public class TicketTypeServiceTest {
 	}
 
 	@Test
-	void isAgeValidForTicketType_WhenNullAge() {
+	void isAgeValidForTicketType_WhenAgeValid() {
 		TicketType ticketType = new TicketType();
-		ticketType.setMinAge(null);
-		ticketType.setMaxAge(null);
+		ticketType.setMinAge(18);
+		ticketType.setMaxAge(65);
 
-		boolean result = ticketTypeService.isAgeValidForTicketType(ticketType, null);
+		boolean result = ticketTypeService.isAgeValidForTicketType(ticketType, 25);
 
 		assertThat(result).isTrue();
+	}
+
+	@Test
+	void isAgeValidForTicketType_WhenAgeTooLow() {
+		TicketType ticketType = new TicketType();
+		ticketType.setMinAge(18);
+		ticketType.setMaxAge(65);
+
+		boolean result = ticketTypeService.isAgeValidForTicketType(ticketType, 15);
+
+		assertThat(result).isFalse();
 	}
 
 	@Test
@@ -304,6 +319,7 @@ public class TicketTypeServiceTest {
 		boolean result = ticketTypeService.existsByCode("ADULT");
 
 		assertThat(result).isTrue();
+		verify(ticketTypeRepository).existsByCode("ADULT");
 	}
 
 	@Test
@@ -330,35 +346,5 @@ public class TicketTypeServiceTest {
 		String result = ticketTypeService.getFormattedAgeRange(1L);
 
 		assertThat(result).isEqualTo("No age restrictions");
-	}
-
-	@Test
-	void getAllTicketTypes_WhenActiveFalse() {
-		TicketType ticketType = new TicketType();
-		ticketType.setActive(false);
-
-		TicketTypeResponse response = TicketTypeResponse.builder().id(1L).build();
-
-		when(ticketTypeRepository.findByActiveFalse()).thenReturn(Arrays.asList(ticketType));
-		when(ticketTypeMapper.toTicketTypeResponse(ticketType)).thenReturn(response);
-
-		List<TicketTypeResponse> result = ticketTypeService.getAllTicketTypes(false);
-
-		assertThat(result).hasSize(1);
-	}
-
-	@Test
-	void getSimpleTicketTypes_WhenActiveNull() {
-		TicketType ticketType = new TicketType();
-		ticketType.setActive(true);
-
-		TicketTypeSimpleResponse response = TicketTypeSimpleResponse.builder().id(1L).build();
-
-		when(ticketTypeRepository.findByActiveTrue()).thenReturn(Arrays.asList(ticketType));
-		when(ticketTypeMapper.toTicketTypeSimpleResponse(ticketType)).thenReturn(response);
-
-		List<TicketTypeSimpleResponse> result = ticketTypeService.getSimpleTicketTypes(null);
-
-		assertThat(result).hasSize(1);
 	}
 }

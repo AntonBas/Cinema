@@ -38,7 +38,6 @@ import ua.lviv.bas.cinema.service.booking.TicketTypeService;
 @Tag(name = "Admin Ticket Types", description = "Admin API for managing ticket types")
 @SecurityRequirement(name = "bearerAuth")
 public class AdminTicketTypeController {
-
 	private final TicketTypeService ticketTypeService;
 
 	@PostMapping
@@ -55,14 +54,20 @@ public class AdminTicketTypeController {
 	}
 
 	@GetMapping
-	@Operation(summary = "Get all ticket types")
+	@Operation(summary = "Get all ticket types with optional filters")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Ticket types retrieved successfully") })
 	@PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
 	public ResponseEntity<List<TicketTypeResponse>> getAllTicketTypes(
-			@Parameter(description = "Filter by active status") @RequestParam(required = false) Boolean active) {
-
-		log.info("Getting all ticket types with active filter: {}", active);
-		List<TicketTypeResponse> ticketTypes = ticketTypeService.getAllTicketTypes(active);
+			@Parameter(description = "Filter by active status") @RequestParam(required = false) Boolean active,
+			@Parameter(description = "Filter by category") @RequestParam(required = false) String category,
+			@Parameter(description = "Search by code or display name") @RequestParam(required = false) String search) {
+		log.info("Getting ticket types with filters - active: {}, category: {}, search: {}", active, category, search);
+		List<TicketTypeResponse> ticketTypes;
+		if (search != null || category != null) {
+			ticketTypes = ticketTypeService.getTicketTypesWithFilters(active, category, search);
+		} else {
+			ticketTypes = ticketTypeService.getAllTicketTypes(active);
+		}
 		return ResponseEntity.ok(ticketTypes);
 	}
 
@@ -135,7 +140,6 @@ public class AdminTicketTypeController {
 	@PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
 	public ResponseEntity<List<TicketTypeSimpleResponse>> getSimpleTicketTypes(
 			@Parameter(description = "Filter by active status") @RequestParam(required = false, defaultValue = "true") Boolean active) {
-
 		log.info("Getting simple ticket types with active filter: {}", active);
 		List<TicketTypeSimpleResponse> ticketTypes = ticketTypeService.getSimpleTicketTypes(active);
 		return ResponseEntity.ok(ticketTypes);
