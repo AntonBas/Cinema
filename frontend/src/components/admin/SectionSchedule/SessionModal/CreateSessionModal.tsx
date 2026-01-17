@@ -3,9 +3,9 @@ import { useCinemaHalls, useMovieSessionSearch } from '@/hooks/features';
 import { Input, Select, Button, Modal } from '@/components/ui';
 import type { SessionAdminResponse, SessionCreateRequest } from '@/types/session';
 import type { MovieSessionSearchResponse } from '@/types/movie';
-import styles from './SessionCreateModal.module.css';
+import styles from './SessionModal.module.css';
 
-interface SessionCreateModalProps {
+interface CreateSessionModalProps {
     isOpen: boolean;
     session: SessionAdminResponse | null;
     onSave: (data: SessionCreateRequest) => Promise<void>;
@@ -20,7 +20,7 @@ interface FormData {
     hallId: string;
 }
 
-export const SessionCreateModal: React.FC<SessionCreateModalProps> = ({
+export const CreateSessionModal: React.FC<CreateSessionModalProps> = ({
     isOpen,
     session,
     onSave,

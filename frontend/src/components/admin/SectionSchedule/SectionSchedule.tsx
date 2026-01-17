@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { useSessions, useSessionMutation, useSessionFilters, useNotification } from '@/hooks';
 import { SessionFilters } from './SessionFilters';
 import { SessionTable } from './SessionTable';
-import { SessionCreateModal } from './SessionCreateModal';
-import { SessionUpdateModal } from './SessionUpdateModal';
+import { CreateSessionModal, EditSessionModal } from './SessionModal';
 import { DeleteConfirmModal, Pagination, Button } from '@/components/ui';
 import type { SessionAdminResponse, SessionCreateRequest, SessionUpdateRequest } from '@/types/session';
 import styles from './SectionSchedule.module.css';
@@ -173,7 +172,6 @@ export const SectionSchedule: React.FC = () => {
     };
 
     const totalSessions = apiPagination?.totalElements || 0;
-    const filteredCount = hasActiveFilters ? sessions.length : totalSessions;
     const currentPage = pagination.page;
     const totalPages = apiPagination?.totalPages || 1;
 
@@ -193,31 +191,15 @@ export const SectionSchedule: React.FC = () => {
                     <p className={styles.subtitle}>
                         Manage movie sessions, showtimes, and schedules
                     </p>
-                    <div className={styles.stats}>
-                        <div className={styles.statItem}>
-                            <span className={styles.statValue}>{totalSessions}</span>
-                            <span className={styles.statLabel}>Total Sessions</span>
-                        </div>
-                        {hasActiveFilters && (
-                            <div className={styles.statItem}>
-                                <span className={styles.statValue}>{filteredCount}</span>
-                                <span className={styles.statLabel}>Filtered</span>
-                            </div>
-                        )}
-                        <div className={styles.statItem}>
-                            <span className={styles.statValue}>{pagination.size}</span>
-                            <span className={styles.statLabel}>Per Page</span>
-                        </div>
-                    </div>
                 </div>
                 <Button
                     variant="primary"
-                    size="large"
+                    size="medium"
                     onClick={handleCreateSession}
                     disabled={mutationLoading}
                     className={styles.createButton}
                 >
-                    + Add Session
+                    Add Session
                 </Button>
             </div>
 
@@ -274,7 +256,7 @@ export const SectionSchedule: React.FC = () => {
                 </div>
             )}
 
-            <SessionCreateModal
+            <CreateSessionModal
                 isOpen={isCreateModalOpen}
                 session={null}
                 onSave={handleSaveNewSession}
@@ -286,7 +268,7 @@ export const SectionSchedule: React.FC = () => {
             />
 
             {selectedSession && (
-                <SessionUpdateModal
+                <EditSessionModal
                     isOpen={isUpdateModalOpen}
                     session={selectedSession}
                     onSave={handleSaveUpdatedSession}

@@ -5,6 +5,55 @@
     padding: var(--space-2);
 }
 
+.formRow {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-4);
+}
+
+.formGroup {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.label {
+    color: var(--color-text-primary);
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.input {
+    width: 100%;
+}
+
+.errorText {
+    color: var(--color-error-alt);
+    font-size: var(--font-size-xs);
+    font-weight: 500;
+    margin-top: var(--space-1);
+}
+
+.formActions {
+    margin-top: var(--space-4);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--color-border-medium);
+}
+
+.actions {
+    display: flex;
+    gap: var(--space-4);
+    justify-content: flex-end;
+}
+
+.cancelButton {
+    min-width: 100px;
+}
+
+.submitButton {
+    min-width: 140px;
+}
+
 .sessionInfo {
     background: rgba(58, 64, 81, 0.3);
     border-radius: var(--radius-md);
@@ -83,40 +132,25 @@
     flex-shrink: 0;
 }
 
-.formRow {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--space-4);
-}
-
-.formGroup {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-2);
-}
-
-.label {
-    color: var(--color-text-primary);
-    font-weight: 600;
-    font-size: 0.9rem;
-}
-
-.input {
-    width: 100%;
-}
-
-.errorText {
-    color: var(--color-error-alt);
-    font-size: var(--font-size-xs);
-    font-weight: 500;
-    margin-top: var(--space-1);
-}
-
 .disabledHint {
     color: var(--color-text-secondary);
     font-size: var(--font-size-xs);
     font-style: italic;
     margin-top: var(--space-1);
+}
+
+.changesHint {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    color: #f59e0b;
+    font-size: 0.85rem;
+    font-weight: 500;
+    justify-content: center;
+}
+
+.changesIcon {
+    font-size: 1rem;
 }
 
 .movieSearch {
@@ -223,41 +257,80 @@
     text-align: center;
 }
 
-.formActions {
-    margin-top: var(--space-4);
-    padding-top: var(--space-4);
-    border-top: 1px solid var(--color-border-medium);
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-4);
+.notificationWrapper {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10000;
 }
 
-.actions {
-    display: flex;
-    gap: var(--space-4);
-    justify-content: flex-end;
-}
-
-.cancelButton {
-    min-width: 100px;
-}
-
-.submitButton {
-    min-width: 140px;
-}
-
-.changesHint {
+.customNotification {
     display: flex;
     align-items: center;
-    gap: var(--space-2);
-    color: #f59e0b;
-    font-size: 0.85rem;
-    font-weight: 500;
-    justify-content: center;
+    gap: var(--space-3);
+    padding: var(--space-4) var(--space-5);
+    border-radius: var(--radius-md);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+    animation: slideIn 0.3s ease forwards;
+    min-width: 300px;
+    max-width: 400px;
 }
 
-.changesIcon {
-    font-size: 1rem;
+.customNotification.success {
+    background: linear-gradient(135deg, var(--color-success) 0%, #059669 100%);
+    border: 1px solid #059669;
+}
+
+.customNotification.error {
+    background: linear-gradient(135deg, var(--color-error) 0%, #dc2626 100%);
+    border: 1px solid #dc2626;
+}
+
+.notificationIcon {
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.notificationMessage {
+    color: var(--color-text-primary);
+    font-weight: 500;
+    flex: 1;
+    font-size: 0.95rem;
+}
+
+.notificationClose {
+    background: transparent;
+    border: none;
+    color: var(--color-text-primary);
+    font-size: 1.5rem;
+    cursor: pointer;
+    opacity: 0.8;
+    transition: opacity var(--transition-fast);
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-sm);
+    flex-shrink: 0;
+}
+
+.notificationClose:hover {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
 }
 
 @media (max-width: 768px) {
@@ -295,6 +368,16 @@
         max-width: 400px;
         max-height: 60vh;
     }
+
+    .notificationWrapper {
+        left: 20px;
+        right: 20px;
+    }
+
+    .customNotification {
+        min-width: unset;
+        width: 100%;
+    }
 }
 
 @media (max-width: 480px) {
@@ -320,5 +403,10 @@
 
     .selectedMovieTitle {
         font-size: 0.9rem;
+    }
+
+    .notificationWrapper {
+        left: 10px;
+        right: 10px;
     }
 }
