@@ -1,16 +1,25 @@
+.tableWrapper {
+    width: 100%;
+    overflow: hidden;
+}
+
 .tableContainer {
-    background: var(--color-bg-quaternary);
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: visible;
     border-radius: var(--radius-lg);
     border: 1px solid var(--color-border-medium);
-    overflow: visible;
-    margin-bottom: var(--space-8);
+    background: var(--color-bg-quaternary);
     box-shadow: var(--shadow-lg);
 }
 
 .table {
     width: 100%;
-    border-collapse: collapse;
+    border-collapse: separate;
+    border-spacing: 0;
+    min-width: 1000px;
     background: transparent;
+    position: relative;
 }
 
 .table th {
@@ -22,6 +31,8 @@
     text-transform: uppercase;
     letter-spacing: 0.5px;
     color: var(--color-text-primary);
+    background: var(--color-bg-quaternary);
+    white-space: nowrap;
 }
 
 .table td {
@@ -29,6 +40,11 @@
     border-bottom: 1px solid var(--color-border-medium);
     color: var(--color-text-secondary);
     transition: all var(--transition-normal);
+    white-space: nowrap;
+}
+
+.table tbody tr:last-child td {
+    border-bottom: none;
 }
 
 .empty {
@@ -38,7 +54,7 @@
     background: var(--color-bg-quaternary);
     border-radius: var(--radius-lg);
     border: 1px solid var(--color-border-medium);
-    margin-bottom: var(--space-8);
+    box-shadow: var(--shadow-lg);
 }
 
 .emptyIcon {
@@ -63,11 +79,24 @@
 
 @media (max-width: 1024px) {
     .tableContainer {
-        overflow-x: auto;
+        border-radius: var(--radius-lg);
+        margin: 0 -1px;
+        width: calc(100% + 2px);
     }
 
-    .table {
-        min-width: 1000px;
+    .table th,
+    .table td {
+        min-width: 0;
+    }
+
+    .table th:last-child,
+    .table td:last-child {
+        padding-right: var(--space-8);
+    }
+
+    .table th:first-child,
+    .table td:first-child {
+        padding-left: var(--space-8);
     }
 }
 
@@ -75,7 +104,7 @@
 
     .table th,
     .table td {
-        padding: var(--space-4) var(--space-3);
+        padding: var(--space-3) var(--space-3);
         font-size: var(--font-size-sm);
     }
 
@@ -89,5 +118,27 @@
 
     .emptyIcon {
         font-size: 2.5rem;
+    }
+
+    .tableContainer {
+        border-radius: var(--radius-md);
+        margin: 0 calc(-1 * var(--space-4));
+        width: calc(100% + 2 * var(--space-4));
+    }
+
+    .table {
+        min-width: 900px;
+    }
+}
+
+@media (max-width: 480px) {
+    .tableContainer {
+        margin: 0 calc(-1 * var(--space-3));
+        width: calc(100% + 2 * var(--space-3));
+        border-radius: var(--radius-sm);
+    }
+
+    .table {
+        min-width: 800px;
     }
 }

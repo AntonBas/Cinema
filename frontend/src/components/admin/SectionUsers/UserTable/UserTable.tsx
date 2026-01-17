@@ -27,32 +27,34 @@ export const UserTable: React.FC<UserTableProps> = ({
     }
 
     return (
-        <div className={styles.tableContainer}>
-            <table className={styles.table}>
-                <thead>
-                    <tr>
-                        <th>User</th>
-                        <th>Role</th>
-                        <th>Verification</th>
-                        <th>Status</th>
-                        <th>Registration</th>
-                        <th>Tickets</th>
-                        <th>Last Activity</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {users.map((user) => (
-                        <UserTableRow
-                            key={user.id}
-                            user={user}
-                            onUpdate={onRefresh}
-                            onError={onError}
-                            onSuccess={onSuccess}
-                        />
-                    ))}
-                </tbody>
-            </table>
+        <div className={styles.tableWrapper}>
+            <div className={styles.tableContainer}>
+                <table className={styles.table}>
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Role</th>
+                            <th>Verification</th>
+                            <th>Status</th>
+                            <th>Registration</th>
+                            <th>Tickets</th>
+                            <th>Last Activity</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {users.map((user) => (
+                            <UserTableRow
+                                key={user.id}
+                                user={user}
+                                onUpdate={onRefresh}
+                                onError={onError}
+                                onSuccess={onSuccess}
+                            />
+                        ))}
+                    </tbody>
+                </table>
+            </div>
         </div>
     );
 };

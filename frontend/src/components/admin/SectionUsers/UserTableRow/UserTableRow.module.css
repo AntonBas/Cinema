@@ -9,24 +9,31 @@
 
 .userCell {
     min-width: 200px;
+    max-width: 250px;
+    white-space: normal;
 }
 
 .userInfo {
     display: flex;
     flex-direction: column;
     gap: var(--space-1);
+    min-width: 0;
 }
 
 .userName {
     color: var(--color-text-primary);
     font-weight: 600;
     font-size: var(--font-size-md);
+    white-space: normal;
+    word-break: break-word;
 }
 
 .userEmail {
     color: var(--color-text-muted);
     font-size: var(--font-size-xs);
     font-weight: 500;
+    word-break: break-all;
+    white-space: normal;
 }
 
 .roleCell {
@@ -35,16 +42,19 @@
 
 .roleSelect {
     width: 100%;
+    min-width: 120px;
 }
 
 .verificationCell {
-    min-width: 180px;
+    min-width: 200px;
+    max-width: 220px;
 }
 
 .verificationInfo {
     display: flex;
     flex-direction: column;
     gap: var(--space-2);
+    min-width: 0;
 }
 
 .verificationBadge {
@@ -55,10 +65,13 @@
     color: var(--color-text-secondary);
     font-size: var(--font-size-xs);
     font-style: italic;
+    white-space: normal;
+    word-break: break-word;
 }
 
 .verificationButton {
     width: 100%;
+    min-width: 90px;
     margin-top: var(--space-1);
 }
 
@@ -69,6 +82,7 @@
 .dateCell {
     min-width: 120px;
     color: var(--color-text-secondary);
+    white-space: nowrap;
 }
 
 .ticketsCell {
@@ -97,41 +111,102 @@
 }
 
 .actionsCell {
-    min-width: 120px;
+    min-width: 140px;
+    padding-right: var(--space-8) !important;
 }
 
 .actionButton {
     min-width: 100px;
+    white-space: nowrap;
+}
+
+@media (max-width: 1024px) {
+    .userCell {
+        min-width: 180px;
+    }
+
+    .verificationCell {
+        min-width: 180px;
+    }
+
+    .actionsCell {
+        min-width: 130px;
+        padding-right: var(--space-6) !important;
+    }
 }
 
 @media (max-width: 768px) {
+    .userCell {
+        min-width: 160px;
+        max-width: 200px;
+    }
 
-    .userCell,
-    .roleCell,
-    .verificationCell,
+    .roleCell {
+        min-width: 130px;
+    }
+
+    .verificationCell {
+        min-width: 160px;
+        max-width: 180px;
+    }
+
     .statusCell,
     .dateCell,
     .ticketsCell,
-    .activityCell,
-    .actionsCell {
+    .activityCell {
         min-width: auto;
+    }
+
+    .actionsCell {
+        min-width: 120px;
+        padding-right: var(--space-8) !important;
     }
 
     .actionButton,
     .verificationButton {
-        min-width: 80px;
+        min-width: 85px;
+        font-size: var(--font-size-xs);
+        padding: var(--space-1) var(--space-2);
+    }
+
+    .roleSelect {
+        min-width: 100px;
+    }
+
+    .userName {
+        font-size: var(--font-size-sm);
+    }
+
+    .userEmail {
+        font-size: var(--font-size-xs);
+    }
+}
+
+@media (max-width: 480px) {
+    .userCell {
+        min-width: 140px;
+        max-width: 160px;
+    }
+
+    .verificationCell {
+        min-width: 140px;
+        max-width: 160px;
+    }
+
+    .actionsCell {
+        min-width: 100px;
+        padding-right: var(--space-6) !important;
+    }
+
+    .actionButton,
+    .verificationButton {
+        min-width: 75px;
+        font-size: var(--font-size-xs);
+        padding: var(--space-1);
     }
 
     .ticketsCount {
-        padding: var(--space-1) var(--space-2);
-        font-size: var(--font-size-xs);
-    }
-
-    .verificationInfo {
-        gap: var(--space-1);
-    }
-
-    .verificationDate {
+        padding: var(--space-1);
         font-size: var(--font-size-xs);
     }
 }
