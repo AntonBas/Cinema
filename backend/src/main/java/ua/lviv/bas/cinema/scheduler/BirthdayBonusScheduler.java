@@ -3,7 +3,6 @@ package ua.lviv.bas.cinema.scheduler;
 import java.time.LocalDate;
 import java.util.List;
 
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,7 +23,6 @@ public class BirthdayBonusScheduler {
 	private final BonusService bonusUserService;
 
 	@Scheduled(cron = "${scheduler.birthday-bonus.cron:0 0 9 * * *}")
-	@Async("taskExecutor")
 	@Transactional
 	public void awardBirthdayBonuses() {
 		log.info("Starting automatic birthday bonus distribution");

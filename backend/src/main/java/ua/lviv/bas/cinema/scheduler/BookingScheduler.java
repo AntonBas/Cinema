@@ -26,8 +26,7 @@ public class BookingScheduler {
 	private final BookingRepository bookingRepository;
 	private final PaymentRepository paymentRepository;
 
-	@Scheduled(fixedDelayString = "${scheduler.booking.expiration-interval:60000}")
-	@Async("taskExecutor")
+	@Scheduled(fixedRateString = "${scheduler.booking.expiration-interval:60000}")
 	@Transactional
 	public void processExpiredBookings() {
 		log.debug("Starting expired bookings processing");
@@ -51,8 +50,7 @@ public class BookingScheduler {
 		log.info("Successfully expired {} bookings", expiredBookings.size());
 	}
 
-	@Scheduled(fixedDelayString = "${scheduler.payment.expiration-interval:300000}")
-	@Async("taskExecutor")
+	@Scheduled(fixedRateString = "${scheduler.payment.expiration-interval:300000}")
 	@Transactional
 	public void processExpiredPayments() {
 		log.debug("Starting expired payments processing");
@@ -83,7 +81,6 @@ public class BookingScheduler {
 	}
 
 	@Scheduled(cron = "${scheduler.booking.cleanup-cron:0 0 4 * * *}")
-	@Async("taskExecutor")
 	@Transactional
 	public void cleanupOldBookings() {
 		log.debug("Starting old bookings cleanup");

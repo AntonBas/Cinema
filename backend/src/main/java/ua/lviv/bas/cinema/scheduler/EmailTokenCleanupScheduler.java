@@ -2,7 +2,6 @@ package ua.lviv.bas.cinema.scheduler;
 
 import java.time.LocalDateTime;
 
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,7 +18,6 @@ public class EmailTokenCleanupScheduler {
 	private final EmailTokenRepository tokenRepository;
 
 	@Scheduled(cron = "${scheduler.email-token.cleanup-expired-cron:0 */30 * * * *}")
-	@Async("taskExecutor")
 	@Transactional
 	public void cleanupExpiredTokens() {
 		log.debug("Starting expired email tokens cleanup");
@@ -35,7 +33,6 @@ public class EmailTokenCleanupScheduler {
 	}
 
 	@Scheduled(cron = "${scheduler.email-token.cleanup-confirmed-cron:0 0 3 * * *}")
-	@Async("taskExecutor")
 	@Transactional
 	public void cleanupOldConfirmedTokens() {
 		log.debug("Starting old confirmed email tokens cleanup");
