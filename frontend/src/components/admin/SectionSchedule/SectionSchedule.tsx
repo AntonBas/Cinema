@@ -26,6 +26,7 @@ export const SectionSchedule: React.FC = () => {
         setDateFilter,
         setHallFilter,
         setMovieFilter,
+        setStatusFilter,
         setDaysAheadFilter,
         clearFilters,
         hasActiveFilters,
@@ -35,8 +36,7 @@ export const SectionSchedule: React.FC = () => {
     const [pagination, setPagination] = useState({
         page: 0,
         size: 20,
-        sort: 'startTime',
-        search: ''
+        sort: 'startTime'
     });
 
     const {
@@ -49,8 +49,7 @@ export const SectionSchedule: React.FC = () => {
         ...filters,
         page: pagination.page,
         size: pagination.size,
-        sort: pagination.sort,
-        search: pagination.search
+        sort: pagination.sort
     });
 
     const {
@@ -208,6 +207,7 @@ export const SectionSchedule: React.FC = () => {
                 onDateChange={setDateFilter}
                 onHallChange={setHallFilter}
                 onMovieChange={setMovieFilter}
+                onStatusChange={setStatusFilter}
                 onUpcomingDaysChange={setDaysAheadFilter}
                 onClearFilters={handleClearFilters}
                 hasActiveFilters={hasActiveFilters}

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useMovieSearch, useCinemaHalls } from '@/hooks/features';
 import { Input, Select, Button } from '@/components/ui';
+import type { CinemaSessionStatus } from '@/types/session';
 import styles from './SessionFilters.module.css';
 
 interface SessionFiltersProps {
@@ -9,10 +10,12 @@ interface SessionFiltersProps {
         hallId?: number;
         movieId?: number;
         daysAhead?: number;
+        status?: CinemaSessionStatus;
     };
     onDateChange: (date: string | undefined) => void;
     onHallChange: (hallId: number | undefined) => void;
     onMovieChange: (movieId: number | undefined) => void;
+    onStatusChange: (status: CinemaSessionStatus | undefined) => void;
     onUpcomingDaysChange: (daysAhead: number | undefined) => void;
     onClearFilters: () => void;
     hasActiveFilters: boolean;
@@ -24,6 +27,7 @@ export const SessionFilters: React.FC<SessionFiltersProps> = ({
     onDateChange,
     onHallChange,
     onMovieChange,
+    onStatusChange,
     onUpcomingDaysChange,
     onClearFilters,
     hasActiveFilters,
@@ -109,6 +113,10 @@ export const SessionFilters: React.FC<SessionFiltersProps> = ({
         setShowMovieResults(false);
     };
 
+    const handleStatusChange = (value: string | number) => {
+        onStatusChange(value as CinemaSessionStatus || undefined);
+    };
+
     const handleUpcomingDaysChange = (value: string | number) => {
         onUpcomingDaysChange(value ? Number(value) : undefined);
     };
@@ -137,20 +145,18 @@ export const SessionFilters: React.FC<SessionFiltersProps> = ({
         }))
     ];
 
+    const statusOptions = [
+        { value: '', label: 'All statuses' },
+        { value: 'SCHEDULED', label: 'Scheduled' },
+        { value: 'ONGOING', label: 'Ongoing' },
+        { value: 'COMPLETED', label: 'Completed' },
+        { value: 'CANCELLED', label: 'Cancelled' }
+    ];
+
     const displayValue = selectedMovieTitle || movieSearchTerm;
 
     return (
         <div className={styles.filters}>
-            <div className={styles.header}>
-                <h3 className={styles.title}>Filter Sessions</h3>
-                {hasActiveFilters && (
-                    <div className={styles.filterCount}>
-                        <span className={styles.countBadge}>{activeFilterCount}</span>
-                        filter{activeFilterCount !== 1 ? 's' : ''} active
-                    </div>
-                )}
-            </div>
-
             <div className={styles.filterGrid}>
                 <div className={styles.filterGroup}>
                     <label className={styles.label}>Date</label>
@@ -187,6 +193,19 @@ export const SessionFilters: React.FC<SessionFiltersProps> = ({
                 </div>
 
                 <div className={styles.filterGroup}>
+                    <label className={styles.label}>Status</label>
+                    <div className={styles.selectContainer}>
+                        <Select
+                            value={filters.status || ''}
+                            onChange={handleStatusChange}
+                            options={statusOptions}
+                        />
+                    </div>
+                </div>
+            </div>
+
+            <div className={styles.movieFilterRow}>
+                <div className={styles.movieFilterGroup}>
                     <label className={styles.label}>Movie</label>
                     <div className={styles.movieSearch} ref={movieSearchRef}>
                         <div className={styles.movieInputWrapper}>
@@ -219,7 +238,7 @@ export const SessionFilters: React.FC<SessionFiltersProps> = ({
                                 {!isSearching && movies.map(movie => (
                                     <div
                                         key={movie.id}
-                                        className={styles.movieOption}
+                                        className={`${styles.movieOption} ${filters.movieId === movie.id ? styles.selected : ''}`}
                                         onClick={() => handleMovieSelect(movie.id, movie.title)}
                                     >
                                         <div className={styles.movieTitle}>{movie.title}</div>
@@ -239,16 +258,26 @@ export const SessionFilters: React.FC<SessionFiltersProps> = ({
             </div>
 
             <div className={styles.footer}>
-                {hasActiveFilters && (
-                    <Button
-                        variant="error"
-                        size="medium"
-                        onClick={onClearFilters}
-                        className={styles.clearButton}
-                    >
-                        Clear All Filters
-                    </Button>
-                )}
+                <div className={styles.footerContent}>
+                    <div className={styles.filterInfo}>
+                        {hasActiveFilters && (
+                            <>
+                                <div className={styles.filterCount}>
+                                    <span className={styles.countBadge}>{activeFilterCount}</span>
+                                    active filter{activeFilterCount !== 1 ? 's' : ''}
+                                </div>
+                                <Button
+                                    variant="error"
+                                    size="medium"
+                                    onClick={onClearFilters}
+                                    className={styles.clearButton}
+                                >
+                                    Clear All Filters
+                                </Button>
+                            </>
+                        )}
+                    </div>
+                </div>
             </div>
         </div>
     );
