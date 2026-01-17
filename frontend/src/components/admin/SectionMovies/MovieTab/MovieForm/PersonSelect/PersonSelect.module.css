@@ -11,13 +11,13 @@
 
 .searchInput {
     width: 100%;
-    padding: 0.75rem 1rem;
-    border: 1px solid #3a4051;
-    border-radius: 6px;
+    padding: var(--space-3) var(--space-4);
+    border: 1px solid var(--color-border-medium);
+    border-radius: var(--radius-sm);
     background: #1a1f2e;
-    color: #ffffff;
+    color: var(--color-text-primary);
     font-size: 0.9rem;
-    transition: all 0.2s ease;
+    transition: all var(--transition-fast);
 }
 
 .searchInput:focus {
@@ -27,33 +27,33 @@
 }
 
 .searchInput::placeholder {
-    color: #6b7280;
+    color: var(--color-text-muted);
 }
 
 .spinner {
     position: absolute;
     right: 0.75rem;
-    color: #6b7280;
+    color: var(--color-text-muted);
     font-size: 0.8rem;
 }
 
 .selectedItems {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.5rem;
-    margin-top: 0.75rem;
+    gap: var(--space-2);
+    margin-top: var(--space-3);
 }
 
 .selectedTag {
     display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: var(--space-2);
     padding: 0.375rem 0.75rem;
-    background: #2a3041;
-    border: 1px solid #3a4051;
+    background: var(--color-bg-quaternary);
+    border: 1px solid var(--color-border-medium);
     border-radius: 20px;
-    color: #ffffff;
-    font-size: 0.8rem;
+    color: var(--color-text-primary);
+    font-size: var(--font-size-xs);
     font-weight: 500;
 }
 
@@ -63,17 +63,17 @@
     justify-content: center;
     width: 16px;
     height: 16px;
-    background: #6b7280;
+    background: var(--color-text-muted);
     border: none;
     border-radius: 50%;
-    color: #ffffff;
+    color: var(--color-text-primary);
     font-size: 0.7rem;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all var(--transition-fast);
 }
 
 .removeTag:hover {
-    background: #ef4444;
+    background: var(--color-error);
 }
 
 .dropdown {
@@ -84,8 +84,8 @@
     max-height: 200px;
     overflow-y: auto;
     background: #1a1f2e;
-    border: 1px solid #3a4051;
-    border-radius: 6px;
+    border: 1px solid var(--color-border-medium);
+    border-radius: var(--radius-sm);
     margin-top: 0.25rem;
     z-index: 1000;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
@@ -93,19 +93,19 @@
 
 .addOption {
     width: 100%;
-    padding: 0.75rem 1rem;
+    padding: var(--space-3) var(--space-4);
     background: transparent;
     border: none;
-    border-bottom: 1px solid #2a3041;
-    color: #10b981;
+    border-bottom: 1px solid var(--color-bg-quaternary);
+    color: var(--color-success);
     font-size: 0.9rem;
     text-align: left;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all var(--transition-fast);
 }
 
 .addOption:hover:not(:disabled) {
-    background: rgba(16, 185, 129, 0.1);
+    background: rgba(var(--color-success-rgb), 0.1);
 }
 
 .addOption:disabled {
@@ -116,11 +116,11 @@
 .option {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    padding: 0.75rem 1rem;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
     cursor: pointer;
-    transition: all 0.2s ease;
-    border-bottom: 1px solid #2a3041;
+    transition: all var(--transition-fast);
+    border-bottom: 1px solid var(--color-bg-quaternary);
 }
 
 .option:last-child {
@@ -128,7 +128,7 @@
 }
 
 .option:hover {
-    background: #2a3041;
+    background: var(--color-bg-quaternary);
 }
 
 .option input[type="checkbox"] {
@@ -139,9 +139,9 @@
     width: 18px;
     height: 18px;
     border: 2px solid #4b5563;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     background: #1a1f2e;
-    transition: all 0.2s ease;
+    transition: all var(--transition-fast);
     position: relative;
 }
 
@@ -156,27 +156,27 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    color: #ffffff;
+    color: var(--color-text-primary);
     font-size: 0.7rem;
     font-weight: bold;
 }
 
 .optionLabel {
-    color: #ffffff;
+    color: var(--color-text-primary);
     font-size: 0.9rem;
     flex: 1;
 }
 
 .alreadySelected {
-    color: #6b7280;
-    font-size: 0.8rem;
+    color: var(--color-text-muted);
+    font-size: var(--font-size-xs);
     margin-left: 0.5rem;
     font-style: italic;
 }
 
 .noResults {
-    padding: 0.75rem 1rem;
-    color: #6b7280;
+    padding: var(--space-3) var(--space-4);
+    color: var(--color-text-muted);
     font-size: 0.9rem;
     text-align: center;
 }
@@ -184,7 +184,7 @@
 @media (max-width: 768px) {
     .searchInput {
         padding: 0.875rem 1rem;
-        font-size: 1rem;
+        font-size: var(--font-size-md);
     }
 
     .dropdown {
@@ -192,10 +192,10 @@
     }
 
     .option {
-        padding: 1rem;
+        padding: var(--space-4);
     }
 
     .addOption {
-        padding: 1rem;
+        padding: var(--space-4);
     }
 }

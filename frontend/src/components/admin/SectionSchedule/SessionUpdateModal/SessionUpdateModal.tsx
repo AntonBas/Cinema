@@ -1,4 +1,3 @@
-// src/components/admin/SectionSchedule/SessionUpdateModal/SessionUpdateModal.tsx
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useCinemaHalls, useMovieSessionSearch } from '@/hooks/features';
 import { Input, Select, Button, Modal } from '@/components/ui';

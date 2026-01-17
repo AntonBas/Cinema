@@ -1,24 +1,24 @@
 .form {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
-    padding: 0.5rem;
+    gap: var(--space-6);
+    padding: var(--space-2);
 }
 
 .formRow {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 1rem;
+    gap: var(--space-4);
 }
 
 .formGroup {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: var(--space-2);
 }
 
 .label {
-    color: #ffffff;
+    color: var(--color-text-primary);
     font-weight: 600;
     font-size: 0.9rem;
 }
@@ -28,21 +28,21 @@
 }
 
 .errorText {
-    color: #ff4757;
-    font-size: 0.8rem;
+    color: var(--color-error-alt);
+    font-size: var(--font-size-xs);
     font-weight: 500;
-    margin-top: 0.25rem;
+    margin-top: var(--space-1);
 }
 
 .formActions {
-    margin-top: 1rem;
-    padding-top: 1rem;
-    border-top: 1px solid #3a4051;
+    margin-top: var(--space-4);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--color-border-medium);
 }
 
 .actions {
     display: flex;
-    gap: 1rem;
+    gap: var(--space-4);
     justify-content: flex-end;
 }
 
@@ -64,30 +64,30 @@
 }
 
 .hint {
-    color: #a0a8c0;
-    font-size: 0.8rem;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-xs);
     font-style: italic;
-    margin-top: 0.25rem;
+    margin-top: var(--space-1);
 }
 
 .selectedMovieInfo {
-    background: rgba(253, 95, 0, 0.1);
-    border: 1px solid rgba(253, 95, 0, 0.3);
-    border-radius: 8px;
-    padding: 0.75rem;
-    margin-top: 0.5rem;
+    background: rgba(var(--color-primary-rgb), 0.1);
+    border: 1px solid rgba(var(--color-primary-rgb), 0.3);
+    border-radius: var(--radius-md);
+    padding: var(--space-3);
+    margin-top: var(--space-2);
 }
 
 .selectedMovieTitle {
-    color: #fd5f00;
+    color: var(--color-primary);
     font-weight: 600;
     font-size: 0.95rem;
-    margin-bottom: 0.25rem;
+    margin-bottom: var(--space-1);
 }
 
 .selectedMovieDetails {
-    color: #a0a8c0;
-    font-size: 0.8rem;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-xs);
 }
 
 .movieResults {
@@ -95,9 +95,9 @@
     top: calc(100% + 4px);
     left: 0;
     right: 0;
-    background: #1a1f2d;
-    border: 1px solid #3a4051;
-    border-radius: 8px;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border-medium);
+    border-radius: var(--radius-md);
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
     z-index: 1000;
     max-height: 250px;
@@ -105,26 +105,26 @@
 }
 
 .loadingResults {
-    padding: 1rem;
+    padding: var(--space-4);
     text-align: center;
-    color: #a0a8c0;
+    color: var(--color-text-secondary);
     font-style: italic;
 }
 
 .movieOption {
-    padding: 0.75rem;
+    padding: var(--space-3);
     cursor: pointer;
-    border-bottom: 1px solid #2a3041;
-    transition: all 0.2s ease;
+    border-bottom: 1px solid var(--color-bg-quaternary);
+    transition: all var(--transition-fast);
 }
 
 .movieOption:hover {
-    background: rgba(253, 95, 0, 0.1);
+    background: rgba(var(--color-primary-rgb), 0.1);
 }
 
 .movieOption.selected {
-    background: linear-gradient(135deg, rgba(253, 95, 0, 0.2) 0%, rgba(255, 123, 0, 0.2) 100%);
-    border-left: 3px solid #fd5f00;
+    background: linear-gradient(135deg, rgba(var(--color-primary-rgb), 0.2) 0%, rgba(255, 123, 0, 0.2) 100%);
+    border-left: 3px solid var(--color-primary);
 }
 
 .movieOption:last-child {
@@ -132,28 +132,28 @@
 }
 
 .movieTitle {
-    color: #ffffff;
+    color: var(--color-text-primary);
     font-weight: 500;
-    margin-bottom: 0.25rem;
+    margin-bottom: var(--space-1);
     font-size: 0.9rem;
 }
 
 .movieDetails {
-    color: #a0a8c0;
-    font-size: 0.8rem;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-xs);
 }
 
 .movieOption.selected .movieTitle {
-    color: #fd5f00;
+    color: var(--color-primary);
 }
 
 .movieOption.selected .movieDetails {
-    color: rgba(253, 95, 0, 0.8);
+    color: rgba(var(--color-primary-rgb), 0.8);
 }
 
 .noResults {
-    padding: 1rem;
-    color: #a0a8c0;
+    padding: var(--space-4);
+    color: var(--color-text-secondary);
     font-style: italic;
     text-align: center;
 }
@@ -168,9 +168,9 @@
 .customNotification {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    padding: 1rem 1.25rem;
-    border-radius: 8px;
+    gap: var(--space-3);
+    padding: var(--space-4) var(--space-5);
+    border-radius: var(--radius-md);
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
     animation: slideIn 0.3s ease forwards;
     min-width: 300px;
@@ -178,12 +178,12 @@
 }
 
 .customNotification.success {
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    background: linear-gradient(135deg, var(--color-success) 0%, #059669 100%);
     border: 1px solid #059669;
 }
 
 .customNotification.error {
-    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    background: linear-gradient(135deg, var(--color-error) 0%, #dc2626 100%);
     border: 1px solid #dc2626;
 }
 
@@ -193,7 +193,7 @@
 }
 
 .notificationMessage {
-    color: #ffffff;
+    color: var(--color-text-primary);
     font-weight: 500;
     flex: 1;
     font-size: 0.95rem;
@@ -202,18 +202,18 @@
 .notificationClose {
     background: transparent;
     border: none;
-    color: #ffffff;
+    color: var(--color-text-primary);
     font-size: 1.5rem;
     cursor: pointer;
     opacity: 0.8;
-    transition: opacity 0.2s ease;
+    transition: opacity var(--transition-fast);
     padding: 0;
     width: 24px;
     height: 24px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     flex-shrink: 0;
 }
 
@@ -237,7 +237,7 @@
 @media (max-width: 768px) {
     .formRow {
         grid-template-columns: 1fr;
-        gap: 1.5rem;
+        gap: var(--space-6);
     }
 
     .actions {
@@ -273,11 +273,11 @@
 
 @media (max-width: 480px) {
     .form {
-        gap: 1.25rem;
+        gap: var(--space-5);
     }
 
     .formRow {
-        gap: 1.25rem;
+        gap: var(--space-5);
     }
 
     .label {
@@ -285,7 +285,7 @@
     }
 
     .selectedMovieInfo {
-        padding: 0.5rem;
+        padding: var(--space-2);
     }
 
     .selectedMovieTitle {

@@ -1,30 +1,30 @@
 .container {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 1.5rem;
+    gap: var(--space-6);
     margin-bottom: 2.5rem;
 }
 
 .statCard {
     background: linear-gradient(135deg, rgba(42, 48, 65, 0.8) 0%, rgba(58, 64, 81, 0.8) 100%);
-    border-radius: 16px;
-    padding: 1.5rem;
+    border-radius: var(--radius-xl);
+    padding: var(--space-6);
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-    border: 1px solid #3a4051;
-    transition: all 0.3s ease;
+    border: 1px solid var(--color-border-medium);
+    transition: all var(--transition-normal);
     backdrop-filter: blur(10px);
 }
 
 .statCard:hover {
     background: linear-gradient(135deg, rgba(42, 48, 65, 0.9) 0%, rgba(58, 64, 81, 0.9) 100%);
-    border-color: #fd5f00;
+    border-color: var(--color-primary);
     transform: translateY(-4px);
     box-shadow: 0 15px 50px rgba(0, 0, 0, 0.3);
 }
 
 .statLabel {
-    color: #a0a8c0;
-    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
     margin: 0;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -34,9 +34,9 @@
 .statValue {
     font-size: 2.5rem;
     font-weight: 700;
-    color: #ffffff;
-    margin: 0.5rem 0 0 0;
-    text-shadow: 0 0 10px rgba(253, 95, 0, 0.3);
+    color: var(--color-text-primary);
+    margin: var(--space-2) 0 0 0;
+    text-shadow: 0 0 10px rgba(var(--color-primary-rgb), 0.3);
     line-height: 1;
 }
 
@@ -51,18 +51,18 @@
 }
 
 .statValue.expired {
-    color: #e74c3c;
-    text-shadow: 0 0 10px rgba(231, 76, 60, 0.3);
+    color: var(--color-error);
+    text-shadow: 0 0 10px rgba(var(--color-error-rgb), 0.3);
 }
 
 @media (max-width: 768px) {
     .container {
         grid-template-columns: repeat(2, 1fr);
-        gap: 1rem;
+        gap: var(--space-4);
     }
 
     .statCard {
-        padding: 1.25rem;
+        padding: var(--space-5);
     }
 
     .statValue {
@@ -76,7 +76,7 @@
     }
 
     .statCard {
-        padding: 1rem;
+        padding: var(--space-4);
     }
 
     .statValue {

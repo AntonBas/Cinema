@@ -8,27 +8,27 @@
 }
 
 .tableHead {
-    background: #1a1f2d;
+    background: var(--color-bg-secondary);
 }
 
 .th {
-    padding: 1.5rem 2rem;
+    padding: var(--space-6) var(--space-8);
     text-align: left;
     font-size: 0.9rem;
     font-weight: 500;
-    color: #ffffff;
+    color: var(--color-text-primary);
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    border-bottom: 1px solid #3a4051;
+    border-bottom: 1px solid var(--color-border-medium);
 }
 
 .tableBody {
-    background: #2a3041;
+    background: var(--color-bg-quaternary);
 }
 
 .tr {
-    border-bottom: 1px solid #3a4051;
-    transition: all 0.3s ease;
+    border-bottom: 1px solid var(--color-border-medium);
+    transition: all var(--transition-normal);
 }
 
 .tr:hover {
@@ -40,7 +40,7 @@
 }
 
 .td {
-    padding: 1.5rem 2rem;
+    padding: var(--space-6) var(--space-8);
     white-space: nowrap;
 }
 
@@ -50,12 +50,12 @@
 
 .title {
     font-weight: 600;
-    color: #ffffff;
+    color: var(--color-text-primary);
     font-size: 1.1rem;
 }
 
 .description {
-    font-size: 0.875rem;
+    font-size: var(--font-size-sm);
     color: #a0a4b8;
     margin-top: 0.25rem;
     max-width: 300px;
@@ -67,27 +67,27 @@
     display: inline-block;
     padding: 0.25rem 0.75rem;
     background: linear-gradient(135deg, #3498db, #2980b9);
-    color: #ffffff;
+    color: var(--color-text-primary);
     border-radius: 9999px;
-    font-size: 0.875rem;
+    font-size: var(--font-size-sm);
     font-weight: 600;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .dates {
-    font-size: 0.875rem;
-    color: #ffffff;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-primary);
 }
 
 .dateSeparator {
     color: #a0a4b8;
-    font-size: 0.75rem;
-    margin: 0.25rem 0;
+    font-size: var(--font-size-xs);
+    margin: var(--space-1) 0;
 }
 
 .actions {
     display: flex;
-    gap: 0.5rem;
+    gap: var(--space-2);
     flex-wrap: wrap;
 }
 
@@ -96,9 +96,9 @@
     justify-content: center;
     align-items: center;
     height: 200px;
-    background: #2a3041;
-    border-radius: 16px;
-    border: 1px solid #3a4051;
+    background: var(--color-bg-quaternary);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--color-border-medium);
 }
 
 .emptyContainer {
@@ -107,9 +107,9 @@
     align-items: center;
     height: 200px;
     color: #a0a4b8;
-    background: #2a3041;
-    border-radius: 16px;
-    border: 1px solid #3a4051;
+    background: var(--color-bg-quaternary);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--color-border-medium);
     text-align: center;
 }
 
@@ -120,12 +120,12 @@
 
 @media (max-width: 768px) {
     .th {
-        padding: 1rem;
-        font-size: 0.8rem;
+        padding: var(--space-4);
+        font-size: var(--font-size-xs);
     }
 
     .td {
-        padding: 1rem;
+        padding: var(--space-4);
     }
 
     .actions {

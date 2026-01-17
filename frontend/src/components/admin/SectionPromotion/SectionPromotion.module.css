@@ -1,11 +1,11 @@
 .container {
-    padding: 2rem;
+    padding: var(--space-8);
     max-width: 1400px;
     margin: 0 auto;
-    animation: fadeIn 0.3s ease;
-    background: linear-gradient(135deg, #1a1f2d 0%, #2a3041 100%);
-    border-radius: 16px;
-    border: 1px solid #3a4051;
+    animation: fadeIn var(--transition-normal) ease;
+    background: linear-gradient(135deg, var(--color-bg-secondary) 0%, var(--color-bg-quaternary) 100%);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--color-border-medium);
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
     min-height: auto;
 }
@@ -15,20 +15,20 @@
     justify-content: space-between;
     align-items: flex-start;
     margin-bottom: 2.5rem;
-    padding-bottom: 1.5rem;
-    border-bottom: 1px solid #3a4051;
+    padding-bottom: var(--space-6);
+    border-bottom: 1px solid var(--color-border-medium);
 }
 
 .titleContainer {
     display: flex;
     align-items: center;
-    gap: 1rem;
-    margin-bottom: 0.5rem;
+    gap: var(--space-4);
+    margin-bottom: var(--space-2);
     flex-wrap: wrap;
 }
 
 .title {
-    color: #ffffff;
+    color: var(--color-text-primary);
     margin: 0;
     font-size: 2.2rem;
     font-weight: 600;
@@ -38,20 +38,20 @@
 .filterIndicator {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    color: #fd5f00;
+    gap: var(--space-2);
+    color: var(--color-primary);
     font-size: 0.9rem;
     font-weight: 500;
     padding: 0.25rem 0.75rem;
-    background: rgba(253, 95, 0, 0.1);
-    border-radius: 12px;
-    border: 1px solid rgba(253, 95, 0, 0.3);
+    background: rgba(var(--color-primary-rgb), 0.1);
+    border-radius: var(--radius-lg);
+    border: 1px solid rgba(var(--color-primary-rgb), 0.3);
 }
 
 .filterDot {
     width: 8px;
     height: 8px;
-    background: #fd5f00;
+    background: var(--color-primary);
     border-radius: 50%;
     animation: pulse 2s infinite;
 }
@@ -69,8 +69,8 @@
 }
 
 .subtitle {
-    color: #a0a8c0;
-    margin: 0 0 1.5rem 0;
+    color: var(--color-text-secondary);
+    margin: 0 0 var(--space-6) 0;
     font-size: 1.1rem;
     line-height: 1.5;
     font-weight: 400;
@@ -78,41 +78,41 @@
 
 .stats {
     display: flex;
-    gap: 2rem;
-    margin-top: 0.5rem;
+    gap: var(--space-8);
+    margin-top: var(--space-2);
 }
 
 .statItem {
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: var(--space-1);
 }
 
 .statValue {
-    color: #ffffff;
+    color: var(--color-text-primary);
     font-size: 2rem;
     font-weight: 600;
     line-height: 1;
 }
 
 .statLabel {
-    color: #a0a8c0;
+    color: var(--color-text-secondary);
     font-size: 0.9rem;
     font-weight: 500;
 }
 
 .createButton {
-    background: linear-gradient(135deg, #fd5f00 0%, #ff7b00 100%);
+    background: linear-gradient(135deg, var(--color-primary) 0%, #ff7b00 100%);
     border: none;
-    box-shadow: 0 4px 15px rgba(253, 95, 0, 0.4);
+    box-shadow: 0 4px 15px rgba(var(--color-primary-rgb), 0.4);
     font-weight: 600;
-    transition: all 0.3s ease;
+    transition: all var(--transition-normal);
     min-width: 180px;
 }
 
 .createButton:hover:not(:disabled) {
     transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(253, 95, 0, 0.5);
+    box-shadow: 0 8px 25px rgba(var(--color-primary-rgb), 0.5);
 }
 
 .createButton:disabled {
@@ -121,22 +121,22 @@
 }
 
 .error {
-    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.1) 100%);
+    background: linear-gradient(135deg, rgba(var(--color-error-rgb), 0.1) 0%, rgba(220, 38, 38, 0.1) 100%);
     color: #f87171;
     padding: 1.25rem 1.5rem;
-    border-radius: 10px;
-    margin-bottom: 2rem;
+    border-radius: var(--radius-md);
+    margin-bottom: var(--space-8);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border: 1px solid rgba(239, 68, 68, 0.3);
-    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(var(--color-error-rgb), 0.3);
+    box-shadow: 0 4px 15px rgba(var(--color-error-rgb), 0.1);
 }
 
 .errorContent {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: var(--space-3);
 }
 
 .errorIcon {
@@ -150,26 +150,26 @@
 }
 
 .retryButton {
-    background: rgba(239, 68, 68, 0.1);
-    border: 1px solid rgba(239, 68, 68, 0.3);
+    background: rgba(var(--color-error-rgb), 0.1);
+    border: 1px solid rgba(var(--color-error-rgb), 0.3);
     color: #f87171;
     font-weight: 500;
     min-width: 80px;
 }
 
 .retryButton:hover {
-    background: rgba(239, 68, 68, 0.2);
+    background: rgba(var(--color-error-rgb), 0.2);
 }
 
 .filtersContainer {
     display: grid;
     grid-template-columns: 1fr auto;
-    gap: 1rem;
-    margin-bottom: 2rem;
-    background: #2a3041;
-    padding: 1.5rem;
-    border-radius: 16px;
-    border: 1px solid #3a4051;
+    gap: var(--space-4);
+    margin-bottom: var(--space-8);
+    background: var(--color-bg-quaternary);
+    padding: var(--space-6);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--color-border-medium);
     align-items: center;
 }
 
@@ -178,9 +178,9 @@
 }
 
 .tableContainer {
-    background: #2a3041;
-    border-radius: 16px;
-    border: 1px solid #3a4051;
+    background: var(--color-bg-quaternary);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--color-border-medium);
     overflow: hidden;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
     animation: fadeIn 0.4s ease;
@@ -200,21 +200,21 @@
 
 @media (max-width: 768px) {
     .container {
-        padding: 1.25rem;
+        padding: var(--space-5);
         min-height: calc(100vh - 2.5rem);
     }
 
     .header {
         flex-direction: column;
-        gap: 1.5rem;
+        gap: var(--space-6);
         align-items: stretch;
-        margin-bottom: 2rem;
+        margin-bottom: var(--space-8);
     }
 
     .titleContainer {
         flex-direction: column;
         align-items: flex-start;
-        gap: 0.75rem;
+        gap: var(--space-3);
     }
 
     .title {
@@ -222,12 +222,12 @@
     }
 
     .subtitle {
-        font-size: 1rem;
-        margin-bottom: 1.25rem;
+        font-size: var(--font-size-md);
+        margin-bottom: var(--space-5);
     }
 
     .stats {
-        gap: 1.5rem;
+        gap: var(--space-6);
     }
 
     .statValue {
@@ -246,21 +246,21 @@
 
     .error {
         flex-direction: column;
-        gap: 1rem;
+        gap: var(--space-4);
         text-align: center;
-        padding: 1rem;
+        padding: var(--space-4);
     }
 
     .errorContent {
         flex-direction: column;
         text-align: center;
-        gap: 0.5rem;
+        gap: var(--space-2);
     }
 
     .filtersContainer {
         grid-template-columns: 1fr;
-        gap: 1rem;
-        padding: 1rem;
+        gap: var(--space-4);
+        padding: var(--space-4);
     }
 
     .searchWrapper {
@@ -270,7 +270,7 @@
 
 @media (max-width: 480px) {
     .container {
-        padding: 1rem;
+        padding: var(--space-4);
     }
 
     .title {
@@ -283,7 +283,7 @@
 
     .stats {
         flex-direction: column;
-        gap: 1rem;
+        gap: var(--space-4);
     }
 
     .filterIndicator {

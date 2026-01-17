@@ -9,24 +9,25 @@
     justify-content: center;
     align-items: center;
     z-index: 1000;
-    animation: fadeIn 0.3s ease;
-    padding: 20px;
+    animation: fadeIn var(--transition-normal);
+    padding: var(--space-8);
 }
 
 .modal {
-    background: #1e232e;
-    border-radius: 16px;
+    background: var(--color-bg-modal);
+    border-radius: var(--radius-xl);
     position: relative;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-    animation: slideUp 0.3s ease;
+    box-shadow: var(--shadow-xl);
+    animation: slideUp var(--transition-normal);
     max-height: 90vh;
     overflow-y: auto;
+    border: 1px solid var(--color-border);
 }
 
 .small {
     width: 100%;
     max-width: 400px;
-    padding: 2rem;
+    padding: var(--space-8);
 }
 
 .medium {
@@ -38,65 +39,55 @@
 .large {
     width: 100%;
     max-width: 600px;
-    padding: 3rem;
+    padding: var(--space-12);
 }
 
 .fullscreen {
     width: 95vw;
     height: 95vh;
     max-width: none;
-    padding: 2rem;
+    padding: var(--space-8);
 }
 
 .header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1.5rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid #2d3444;
+    margin-bottom: var(--space-6);
+    padding-bottom: var(--space-4);
+    border-bottom: 1px solid var(--color-border);
 }
 
 .title {
     margin: 0;
-    color: #ffffff;
-    font-size: 1.5rem;
+    color: var(--color-text-primary);
+    font-size: var(--font-size-2xl);
     font-weight: 600;
 }
 
 .closeButton {
-    background: rgba(253, 95, 0, 0.1);
-    border: 1px solid rgba(253, 95, 0, 0.3);
-    color: #fd5f00;
+    background: rgba(var(--color-primary-rgb), var(--opacity-low));
+    border: 1px solid rgba(var(--color-primary-rgb), var(--opacity-high));
+    color: var(--color-primary);
     cursor: pointer;
     width: 40px;
     height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 10px;
-    transition: all 0.3s ease;
+    border-radius: var(--radius-md);
+    transition: all var(--transition-normal);
 }
 
 .closeButton:hover {
-    background: #fd5f00;
-    color: white;
+    background: var(--color-primary);
+    color: var(--color-text-primary);
     transform: rotate(90deg);
 }
 
 .content {
-    color: #ffffff;
+    color: var(--color-text-primary);
     height: 100%;
-}
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-
-    to {
-        opacity: 1;
-    }
 }
 
 @keyframes slideUp {
@@ -113,14 +104,14 @@
 
 @media (max-width: 768px) {
     .overlay {
-        padding: 10px;
+        padding: var(--space-2);
     }
 
     .small,
     .medium,
     .large,
     .fullscreen {
-        padding: 1.5rem;
+        padding: var(--space-6);
     }
 
     .fullscreen {
@@ -129,7 +120,7 @@
     }
 
     .closeButton {
-        top: 0.5rem;
-        right: 0.5rem;
+        top: var(--space-1);
+        right: var(--space-1);
     }
 }

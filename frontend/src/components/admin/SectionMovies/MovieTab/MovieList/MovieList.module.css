@@ -1,41 +1,41 @@
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1.5rem;
-  padding: 1rem 0;
+  gap: var(--space-6);
+  padding: var(--space-4) 0;
 }
 
 .empty {
   text-align: center;
   padding: 4rem 2rem;
-  color: #a0a8c0;
+  color: var(--color-text-secondary);
   grid-column: 1 / -1;
-  background: linear-gradient(135deg, #1a1f2d 0%, #2a3041 100%);
-  border-radius: 12px;
-  border: 1px solid #3a4051;
+  background: linear-gradient(135deg, var(--color-bg-secondary) 0%, var(--color-bg-quaternary) 100%);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border-medium);
 }
 
 .emptyIcon {
   font-size: 4rem;
-  margin-bottom: 1rem;
+  margin-bottom: var(--space-4);
   opacity: 0.5;
 }
 
 .empty h3 {
-  color: #ffffff;
-  margin: 0 0 0.5rem 0;
+  color: var(--color-text-primary);
+  margin: 0 0 var(--space-2) 0;
   font-size: 1.5rem;
   font-weight: 600;
 }
 
 .empty p {
-  margin: 0 0 1.5rem 0;
-  font-size: 1rem;
+  margin: 0 0 var(--space-6) 0;
+  font-size: var(--font-size-md);
   line-height: 1.5;
 }
 
 .createButton {
-  margin-top: 1rem;
+  margin-top: var(--space-4);
 }
 
 .loading {
@@ -44,22 +44,22 @@
   align-items: center;
   justify-content: center;
   padding: 4rem 2rem;
-  color: #a0a8c0;
+  color: var(--color-text-secondary);
   grid-column: 1 / -1;
-  background: linear-gradient(135deg, #1a1f2d 0%, #2a3041 100%);
-  border-radius: 12px;
-  border: 1px solid #3a4051;
+  background: linear-gradient(135deg, var(--color-bg-secondary) 0%, var(--color-bg-quaternary) 100%);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border-medium);
 }
 
 @media (max-width: 768px) {
   .grid {
     grid-template-columns: 1fr;
-    gap: 1rem;
+    gap: var(--space-4);
   }
 
   .empty {
     padding: 3rem 1rem;
-    margin: 1rem 0;
+    margin: var(--space-4) 0;
   }
 
   .emptyIcon {
@@ -71,7 +71,7 @@
   }
 
   .empty p {
-    font-size: 0.9rem;
+    font-size: var(--font-size-sm);
   }
 
   .loading {
@@ -81,7 +81,7 @@
 
 @media (max-width: 480px) {
   .grid {
-    gap: 0.75rem;
+    gap: var(--space-3);
   }
 
   .empty {

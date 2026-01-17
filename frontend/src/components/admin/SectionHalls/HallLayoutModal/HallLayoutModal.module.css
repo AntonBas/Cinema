@@ -1,5 +1,5 @@
 .modalContent {
-    padding: 2rem;
+    padding: var(--space-8);
 }
 
 .cinemaHall {
@@ -21,23 +21,23 @@
 .statItem {
     text-align: center;
     padding: 10px 20px;
-    background: #2a2f3d;
-    border-radius: 8px;
+    background: var(--color-bg-quaternary);
+    border-radius: var(--radius-md);
     min-width: 80px;
-    border: 1px solid #3a4051;
+    border: 1px solid var(--color-border-medium);
 }
 
 .statNumber {
     display: block;
     font-size: 24px;
     font-weight: 700;
-    color: #fd5f00;
+    color: var(--color-primary);
     margin-bottom: 4px;
-    text-shadow: 0 0 10px rgba(253, 95, 0, 0.3);
+    text-shadow: 0 0 10px rgba(var(--color-primary-rgb), 0.3);
 }
 
 .statLabel {
-    color: #a0a8c0;
+    color: var(--color-text-secondary);
     font-size: 12px;
     font-weight: 500;
     text-transform: uppercase;
@@ -51,26 +51,26 @@
 
 .screen {
     background: #0a0e17;
-    color: #fd5f00;
+    color: var(--color-primary);
     padding: 2rem 4rem;
     margin: 0 auto 1rem auto;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     font-weight: 800;
     font-size: 1.5rem;
     text-transform: uppercase;
     letter-spacing: 4px;
     box-shadow:
-        0 10px 30px rgba(253, 95, 0, 0.3),
-        inset 0 0 50px rgba(253, 95, 0, 0.1);
+        0 10px 30px rgba(var(--color-primary-rgb), 0.3),
+        inset 0 0 50px rgba(var(--color-primary-rgb), 0.1);
     position: relative;
     max-width: 600px;
-    border: 2px solid rgba(253, 95, 0, 0.3);
-    text-shadow: 0 0 10px rgba(253, 95, 0, 0.5);
+    border: 2px solid rgba(var(--color-primary-rgb), 0.3);
+    text-shadow: 0 0 10px rgba(var(--color-primary-rgb), 0.5);
 }
 
 .screenReflection {
     height: 20px;
-    background: linear-gradient(180deg, rgba(253, 95, 0, 0.2) 0%, transparent 100%);
+    background: linear-gradient(180deg, rgba(var(--color-primary-rgb), 0.2) 0%, transparent 100%);
     margin: 0 auto;
     border-radius: 50%;
     filter: blur(5px);
@@ -79,9 +79,9 @@
 
 .seatsLayout {
     background: rgba(42, 48, 65, 0.6);
-    border-radius: 20px;
+    border-radius: var(--radius-lg);
     padding: 2rem 1rem;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--color-border-light);
     box-shadow:
         inset 0 0 50px rgba(0, 0, 0, 0.3),
         0 10px 30px rgba(0, 0, 0, 0.3);
@@ -93,7 +93,7 @@
 .rowsContainer {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: var(--space-4);
     align-items: center;
     max-width: 800px;
     margin: 0 auto;
@@ -102,7 +102,7 @@
 .row {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: var(--space-4);
     width: 100%;
     justify-content: center;
 }
@@ -118,7 +118,7 @@
 
 .seatsRow {
     display: flex;
-    gap: 0.5rem;
+    gap: var(--space-2);
     justify-content: center;
     flex-wrap: wrap;
 }
@@ -127,17 +127,17 @@
     position: relative;
     width: 32px;
     height: 32px;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     border: 2px solid transparent;
     background-color: #4CAF50;
-    color: white;
+    color: var(--color-text-primary);
     font-weight: 600;
     font-size: 12px;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s ease;
+    transition: all var(--transition-fast);
     padding: 0;
     margin: 2px;
     box-shadow:
@@ -194,7 +194,7 @@
     align-items: center;
     justify-content: center;
     background-color: rgba(0, 0, 0, 0.3);
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
 }
 
 .inactiveIcon {
@@ -208,7 +208,7 @@
     width: 20px;
     height: 20px;
     border: 2px solid rgba(255, 255, 255, 0.3);
-    border-top: 2px solid white;
+    border-top: 2px solid var(--color-text-primary);
     border-radius: 50%;
     animation: spin 1s linear infinite;
 }
@@ -216,24 +216,24 @@
 .footer {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: var(--space-6);
     align-items: center;
 }
 
 .legend {
     background: rgba(255, 255, 255, 0.05);
-    border-radius: 15px;
-    padding: 1.5rem 2rem;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-md);
+    padding: var(--space-6) var(--space-8);
+    border: 1px solid var(--color-border-light);
     width: 100%;
     max-width: 600px;
 }
 
 .legendTitle {
-    color: #ffffff;
+    color: var(--color-text-primary);
     font-size: 1.1rem;
     font-weight: 600;
-    margin-bottom: 1rem;
+    margin-bottom: var(--space-4);
     text-align: center;
 }
 
@@ -247,14 +247,14 @@
 .legendItem {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    color: #a0a8c0;
+    gap: var(--space-3);
+    color: var(--color-text-secondary);
     font-size: 0.9rem;
     font-weight: 500;
-    padding: 0.5rem 1rem;
-    border-radius: 8px;
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius-md);
     background: rgba(255, 255, 255, 0.05);
-    transition: all 0.3s ease;
+    transition: all var(--transition-normal);
 }
 
 .legendItem:hover {
@@ -265,7 +265,7 @@
 .legendColor {
     width: 20px;
     height: 20px;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
     border: 2px solid rgba(255, 255, 255, 0.2);
 }
@@ -289,11 +289,11 @@
 .instructions {
     display: flex;
     align-items: center;
-    gap: 1rem;
-    background: rgba(253, 95, 0, 0.1);
-    border: 1px solid rgba(253, 95, 0, 0.3);
-    border-radius: 10px;
-    padding: 1rem 1.5rem;
+    gap: var(--space-4);
+    background: rgba(var(--color-primary-rgb), 0.1);
+    border: 1px solid rgba(var(--color-primary-rgb), 0.3);
+    border-radius: var(--radius-md);
+    padding: var(--space-4) var(--space-6);
     text-align: left;
 }
 
@@ -302,11 +302,11 @@
 }
 
 .instructionText {
-    color: #fd5f00;
+    color: var(--color-primary);
     font-weight: 600;
     font-size: 0.9rem;
     margin: 0;
-    text-shadow: 0 0 10px rgba(253, 95, 0, 0.3);
+    text-shadow: 0 0 10px rgba(var(--color-primary-rgb), 0.3);
 }
 
 .instructionText p {
@@ -316,7 +316,7 @@
 }
 
 .instructionText p strong {
-    color: #ffffff;
+    color: var(--color-text-primary);
 }
 
 .note {
@@ -329,46 +329,46 @@
 .loading {
     text-align: center;
     padding: 4rem;
-    color: #a0a8c0;
+    color: var(--color-text-secondary);
     font-size: 1.1rem;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 1.5rem;
+    gap: var(--space-6);
 }
 
 .noLayout {
     text-align: center;
     padding: 4rem 2rem;
-    color: #a0a8c0;
+    color: var(--color-text-secondary);
     background: rgba(255, 255, 255, 0.02);
-    border-radius: 15px;
-    border: 2px dashed rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-md);
+    border: 2px dashed var(--color-border-light);
 }
 
 .emptyIcon {
     font-size: 4rem;
-    margin-bottom: 1rem;
+    margin-bottom: var(--space-4);
     opacity: 0.5;
-    filter: drop-shadow(0 0 10px rgba(253, 95, 0, 0.3));
+    filter: drop-shadow(0 0 10px rgba(var(--color-primary-rgb), 0.3));
 }
 
 .noLayout h3 {
-    color: #ffffff;
-    margin: 0 0 1rem 0;
+    color: var(--color-text-primary);
+    margin: 0 0 var(--space-4) 0;
     font-size: 1.5rem;
     font-weight: 600;
 }
 
 .noLayout p {
-    margin: 0 0 1.5rem 0;
+    margin: 0 0 var(--space-6) 0;
     font-size: 1.1rem;
 }
 
 .seatNumber {
     font-size: 11px;
     font-weight: 600;
-    color: white;
+    color: var(--color-text-primary);
     text-shadow: 0 1px 1px rgba(0, 0, 0, 0.5);
 }
 
@@ -384,11 +384,11 @@
 
 @media (max-width: 768px) {
     .modalContent {
-        padding: 1.5rem;
+        padding: var(--space-6);
     }
 
     .screen {
-        padding: 1.5rem 2rem;
+        padding: var(--space-6) var(--space-8);
         font-size: 1.2rem;
         letter-spacing: 2px;
     }
@@ -398,15 +398,15 @@
     }
 
     .legendItem {
-        padding: 0.5rem;
+        padding: var(--space-2);
     }
 
     .seatsLayout {
-        padding: 1.5rem 0.5rem;
+        padding: var(--space-6) var(--space-2);
     }
 
     .row {
-        gap: 0.5rem;
+        gap: var(--space-2);
     }
 
     .rowLabel {
@@ -427,11 +427,11 @@
 
 @media (max-width: 480px) {
     .modalContent {
-        padding: 1rem;
+        padding: var(--space-4);
     }
 
     .screen {
-        padding: 1rem 1.5rem;
+        padding: var(--space-4) var(--space-6);
         font-size: 1rem;
         letter-spacing: 1px;
     }
@@ -453,7 +453,7 @@
     .instructions {
         flex-direction: column;
         text-align: center;
-        gap: 0.5rem;
+        gap: var(--space-2);
     }
 
     .stats {

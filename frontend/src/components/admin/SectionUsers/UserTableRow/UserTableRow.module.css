@@ -1,6 +1,6 @@
 .row:hover td {
-    background: rgba(253, 95, 0, 0.05);
-    color: #ffffff;
+    background: rgba(var(--color-primary-rgb), 0.05);
+    color: var(--color-text-primary);
 }
 
 .row:last-child td {
@@ -14,18 +14,18 @@
 .userInfo {
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: var(--space-1);
 }
 
 .userName {
-    color: #ffffff;
+    color: var(--color-text-primary);
     font-weight: 600;
-    font-size: 1rem;
+    font-size: var(--font-size-md);
 }
 
 .userEmail {
-    color: #6b7280;
-    font-size: 0.8rem;
+    color: var(--color-text-muted);
+    font-size: var(--font-size-xs);
     font-weight: 500;
 }
 
@@ -44,7 +44,7 @@
 .verificationInfo {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: var(--space-2);
 }
 
 .verificationBadge {
@@ -52,14 +52,14 @@
 }
 
 .verificationDate {
-    color: #a0a8c0;
-    font-size: 0.8rem;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-xs);
     font-style: italic;
 }
 
 .verificationButton {
     width: 100%;
-    margin-top: 0.25rem;
+    margin-top: var(--space-1);
 }
 
 .statusCell {
@@ -68,7 +68,7 @@
 
 .dateCell {
     min-width: 120px;
-    color: #a0a8c0;
+    color: var(--color-text-secondary);
 }
 
 .ticketsCell {
@@ -77,20 +77,23 @@
 }
 
 .ticketsCount {
-    color: #ffffff;
+    color: var(--color-text-primary);
     font-weight: 600;
-    padding: 0.25rem 0.5rem;
+    padding: var(--space-1) var(--space-2);
+    background: rgba(var(--color-primary-rgb), 0.1);
+    border-radius: var(--radius-sm);
+    display: inline-block;
 }
 
 .activityCell {
     min-width: 120px;
-    color: #a0a8c0;
+    color: var(--color-text-secondary);
 }
 
 .activityInfo {
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: var(--space-1);
 }
 
 .actionsCell {
@@ -120,15 +123,15 @@
     }
 
     .ticketsCount {
-        padding: 0.2rem 0.4rem;
-        font-size: 0.8rem;
+        padding: var(--space-1) var(--space-2);
+        font-size: var(--font-size-xs);
     }
 
     .verificationInfo {
-        gap: 0.25rem;
+        gap: var(--space-1);
     }
 
     .verificationDate {
-        font-size: 0.75rem;
+        font-size: var(--font-size-xs);
     }
 }

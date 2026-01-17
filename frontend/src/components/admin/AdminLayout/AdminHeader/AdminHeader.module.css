@@ -2,11 +2,11 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 2rem;
+    padding: 0 var(--space-8);
     height: 70px;
     background: rgba(15, 23, 42, 0.95);
     backdrop-filter: blur(10px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid var(--color-border-light);
     position: sticky;
     top: 0;
     z-index: 100;
@@ -16,27 +16,27 @@
 .leftSection {
     display: flex;
     align-items: center;
-    gap: 1.5rem;
+    gap: var(--space-6);
 }
 
 .menuButton {
     background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--color-border-light);
     width: 44px;
     height: 44px;
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all var(--transition-normal) cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .menuButton:hover {
-    background: rgba(253, 95, 0, 0.2);
-    border-color: rgba(253, 95, 0, 0.3);
+    background: rgba(var(--color-primary-rgb), var(--opacity-medium));
+    border-color: rgba(var(--color-primary-rgb), var(--opacity-high));
     transform: scale(1.05);
-    box-shadow: 0 4px 12px rgba(253, 95, 0, 0.2);
+    box-shadow: 0 4px 12px rgba(var(--color-primary-rgb), 0.2);
 }
 
 .hamburgerIcon {
@@ -51,9 +51,9 @@
 .hamburgerIcon span {
     display: block;
     height: 2px;
-    background: #ffffff;
+    background: var(--color-text-primary);
     border-radius: 1px;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all var(--transition-normal) cubic-bezier(0.4, 0, 0.2, 1);
     transform-origin: center;
 }
 
@@ -87,12 +87,12 @@
 .breadcrumb {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: var(--space-3);
 }
 
 .breadcrumbText {
-    color: #ffffff;
-    font-size: 1.25rem;
+    color: var(--color-text-primary);
+    font-size: var(--font-size-xl);
     font-weight: 600;
     letter-spacing: -0.5px;
 }
@@ -100,23 +100,23 @@
 .rightSection {
     display: flex;
     align-items: center;
-    gap: 1.5rem;
+    gap: var(--space-6);
 }
 
 .userInfo {
     display: flex;
     align-items: center;
-    gap: 1rem;
-    padding: 0.5rem 1rem;
+    gap: var(--space-4);
+    padding: var(--space-2) var(--space-4);
     background: rgba(255, 255, 255, 0.03);
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     border: 1px solid rgba(255, 255, 255, 0.05);
-    transition: all 0.3s ease;
+    transition: all var(--transition-normal);
 }
 
 .userInfo:hover {
     background: rgba(255, 255, 255, 0.06);
-    border-color: rgba(253, 95, 0, 0.2);
+    border-color: rgba(var(--color-primary-rgb), var(--opacity-high));
 }
 
 .userDetails {
@@ -126,23 +126,23 @@
 }
 
 .userName {
-    color: #ffffff;
+    color: var(--color-text-primary);
     font-size: 0.95rem;
     font-weight: 600;
 }
 
 .userRole {
-    color: #94a3b8;
-    font-size: 0.8rem;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-xs);
     font-weight: 500;
 }
 
 .statusIndicator {
     width: 10px;
     height: 10px;
-    background: #10b981;
+    background: var(--color-success);
     border-radius: 50%;
-    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3);
+    box-shadow: 0 0 0 2px rgba(var(--color-success-rgb), 0.3);
     animation: pulse 2s infinite;
 }
 
@@ -150,17 +150,17 @@
 
     0%,
     100% {
-        box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3);
+        box-shadow: 0 0 0 2px rgba(var(--color-success-rgb), 0.3);
     }
 
     50% {
-        box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.3);
+        box-shadow: 0 0 0 4px rgba(var(--color-success-rgb), 0.3);
     }
 }
 
 @media (max-width: 768px) {
     .header {
-        padding: 0 1rem;
+        padding: 0 var(--space-4);
     }
 
     .userName {
@@ -172,6 +172,6 @@
     }
 
     .breadcrumbText {
-        font-size: 1.1rem;
+        font-size: var(--font-size-lg);
     }
 }

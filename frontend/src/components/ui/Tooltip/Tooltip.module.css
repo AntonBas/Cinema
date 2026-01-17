@@ -9,26 +9,26 @@
 
 .tooltip {
     position: absolute;
-    background: #1e232e;
-    color: white;
-    padding: 12px 16px;
-    border-radius: 8px;
-    font-size: 0.9rem;
+    background: var(--color-bg-modal);
+    color: var(--color-text-primary);
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-sm);
     white-space: pre-line;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-    border: 1px solid rgba(253, 95, 0, 0.3);
+    box-shadow: var(--shadow-lg);
+    border: 1px solid rgba(var(--color-primary-rgb), var(--opacity-high));
     z-index: 1000;
     max-width: 250px;
     width: max-content;
     backdrop-filter: blur(10px);
-    animation: fadeIn 0.2s ease;
+    animation: fadeIn var(--transition-fast);
 }
 
 .tooltipArrow {
     position: absolute;
     width: 8px;
     height: 8px;
-    background: #1e232e;
+    background: var(--color-bg-modal);
     transform: rotate(45deg);
 }
 
@@ -43,8 +43,8 @@
     top: 100%;
     left: 50%;
     transform: translateX(-50%) translateY(-50%) rotate(45deg);
-    border-right: 1px solid rgba(253, 95, 0, 0.3);
-    border-bottom: 1px solid rgba(253, 95, 0, 0.3);
+    border-right: 1px solid rgba(var(--color-primary-rgb), var(--opacity-high));
+    border-bottom: 1px solid rgba(var(--color-primary-rgb), var(--opacity-high));
 }
 
 .tooltip.bottom {
@@ -58,8 +58,8 @@
     bottom: 100%;
     left: 50%;
     transform: translateX(-50%) translateY(50%) rotate(45deg);
-    border-top: 1px solid rgba(253, 95, 0, 0.3);
-    border-left: 1px solid rgba(253, 95, 0, 0.3);
+    border-top: 1px solid rgba(var(--color-primary-rgb), var(--opacity-high));
+    border-left: 1px solid rgba(var(--color-primary-rgb), var(--opacity-high));
 }
 
 .tooltip.left {
@@ -74,8 +74,8 @@
     left: 100%;
     top: 50%;
     transform: translateY(-50%) translateX(-50%) rotate(45deg);
-    border-top: 1px solid rgba(253, 95, 0, 0.3);
-    border-right: 1px solid rgba(253, 95, 0, 0.3);
+    border-top: 1px solid rgba(var(--color-primary-rgb), var(--opacity-high));
+    border-right: 1px solid rgba(var(--color-primary-rgb), var(--opacity-high));
 }
 
 .tooltip.right {
@@ -89,8 +89,8 @@
     right: 100%;
     top: 50%;
     transform: translateY(-50%) translateX(50%) rotate(45deg);
-    border-bottom: 1px solid rgba(253, 95, 0, 0.3);
-    border-left: 1px solid rgba(253, 95, 0, 0.3);
+    border-bottom: 1px solid rgba(var(--color-primary-rgb), var(--opacity-high));
+    border-left: 1px solid rgba(var(--color-primary-rgb), var(--opacity-high));
 }
 
 @keyframes fadeIn {

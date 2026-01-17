@@ -1,90 +1,90 @@
 .form {
-    padding: 1rem 0;
+    padding: var(--space-4) 0;
 }
 
 .formGroup {
-    margin-bottom: 1.5rem;
+    margin-bottom: var(--space-6);
 }
 
 .label {
     display: block;
-    color: #ffffff;
+    color: var(--color-text-primary);
     font-weight: 600;
-    margin-bottom: 0.5rem;
+    margin-bottom: var(--space-2);
     font-size: 0.95rem;
 }
 
 .textarea {
     width: 100%;
-    padding: 0.75rem;
-    border: 1px solid #3a4051;
-    border-radius: 8px;
-    font-size: 0.875rem;
-    background: #2a3041;
-    color: #ffffff;
-    transition: all 0.2s ease;
+    padding: var(--space-3);
+    border: 1px solid var(--color-border-medium);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-sm);
+    background: var(--color-bg-quaternary);
+    color: var(--color-text-primary);
+    transition: all var(--transition-fast);
     resize: vertical;
     min-height: 80px;
 }
 
 .textarea:focus {
     outline: none;
-    border-color: #fd5f00;
+    border-color: var(--color-primary);
     background: #2d3444;
-    box-shadow: 0 0 0 3px rgba(253, 95, 0, 0.1);
+    box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb), 0.1);
 }
 
 .dateRow {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 1.5rem;
-    margin-bottom: 1.5rem;
+    gap: var(--space-6);
+    margin-bottom: var(--space-6);
 }
 
 .error {
-    margin-top: 0.5rem;
-    color: #e74c3c;
-    font-size: 0.875rem;
-    background: rgba(231, 76, 60, 0.1);
-    padding: 0.75rem;
-    border-radius: 8px;
-    border: 1px solid rgba(231, 76, 60, 0.3);
+    margin-top: var(--space-2);
+    color: var(--color-error);
+    font-size: var(--font-size-sm);
+    background: rgba(var(--color-error-rgb), 0.1);
+    padding: var(--space-3);
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(var(--color-error-rgb), 0.3);
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: var(--space-2);
 }
 
 .error::before {
     content: "⚠";
-    font-size: 1rem;
+    font-size: var(--font-size-md);
 }
 
 .success {
-    margin-top: 0.5rem;
+    margin-top: var(--space-2);
     color: #4CAF50;
-    font-size: 0.875rem;
+    font-size: var(--font-size-sm);
     background: rgba(76, 175, 80, 0.1);
-    padding: 0.75rem;
-    border-radius: 8px;
+    padding: var(--space-3);
+    border-radius: var(--radius-md);
     border: 1px solid rgba(76, 175, 80, 0.3);
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: var(--space-2);
 }
 
 .success::before {
     content: "✓";
-    font-size: 1rem;
+    font-size: var(--font-size-md);
     font-weight: bold;
 }
 
 .actions {
     display: flex;
-    gap: 1rem;
+    gap: var(--space-4);
     justify-content: flex-end;
-    margin-top: 2rem;
-    padding-top: 1.5rem;
-    border-top: 1px solid #3a4051;
+    margin-top: var(--space-8);
+    padding-top: var(--space-6);
+    border-top: 1px solid var(--color-border-medium);
 }
 
 .loadingContainer {
@@ -92,21 +92,21 @@
     justify-content: center;
     align-items: center;
     height: 200px;
-    color: #a0a8c0;
+    color: var(--color-text-secondary);
     background: linear-gradient(135deg, rgba(42, 48, 65, 0.8) 0%, rgba(58, 64, 81, 0.8) 100%);
-    border-radius: 16px;
-    border: 1px solid #3a4051;
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--color-border-medium);
 }
 
 @media (max-width: 768px) {
     .dateRow {
         grid-template-columns: 1fr;
-        gap: 1rem;
+        gap: var(--space-4);
     }
 
     .actions {
         flex-direction: column;
-        gap: 0.75rem;
+        gap: var(--space-3);
     }
 
     .actions button {

@@ -1,32 +1,32 @@
 .formGroup {
-    margin-bottom: 1.5rem;
+    margin-bottom: var(--space-6);
 }
 
 .label {
     display: block;
-    color: #ffffff;
+    color: var(--color-text-primary);
     font-weight: 600;
-    margin-bottom: 0.5rem;
+    margin-bottom: var(--space-2);
 }
 
 .rowContainer {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
+    gap: var(--space-4);
+    margin-bottom: var(--space-6);
 }
 
 .summary {
-    background-color: #2a2f3d;
-    padding: 1rem;
-    border-radius: 8px;
-    margin-bottom: 1.5rem;
-    border: 1px solid #3a4051;
+    background-color: var(--color-bg-quaternary);
+    padding: var(--space-4);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--space-6);
+    border: 1px solid var(--color-border-medium);
 }
 
 .summaryTitle {
-    color: #ffffff;
-    margin: 0 0 0.5rem 0;
+    color: var(--color-text-primary);
+    margin: 0 0 var(--space-2) 0;
     font-size: 0.9rem;
     font-weight: 600;
 }
@@ -34,16 +34,16 @@
 .summaryGrid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 0.5rem;
+    gap: var(--space-2);
     color: #a0a4b8;
-    font-size: 0.8rem;
+    font-size: var(--font-size-xs);
 }
 
 .actions {
     display: flex;
-    gap: 1rem;
+    gap: var(--space-4);
     justify-content: flex-end;
-    margin-top: 2rem;
-    padding-top: 1.5rem;
-    border-top: 1px solid #3a4051;
+    margin-top: var(--space-8);
+    padding-top: var(--space-6);
+    border-top: 1px solid var(--color-border-medium);
 }
