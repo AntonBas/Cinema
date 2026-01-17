@@ -76,20 +76,24 @@ public class BonusService {
 	public void awardWelcomeBonus(User user) {
 		log.debug("Processing welcome bonus for user: {}", user.getId());
 
-		BonusCard card = findOrCreateBonusCard(user);
+		try {
+			BonusCard card = findOrCreateBonusCard(user);
 
-		if (card.isWelcomeBonusReceived()) {
-			log.debug("User {} already received welcome bonus", user.getId());
-			return;
+			if (card.isWelcomeBonusReceived()) {
+				log.debug("User {} already received welcome bonus", user.getId());
+				return;
+			}
+
+			BonusRules rule = findActiveRule(BonusTransactionType.WELCOME_BONUS);
+			createBonusTransaction(card, rule.getPoints(), BonusTransactionType.WELCOME_BONUS, "USER_" + user.getId(),
+					null, null, null);
+
+			card.setWelcomeBonusReceived(true);
+			bonusCardRepository.save(card);
+			log.info("Awarded welcome bonus ({} points) to user {}", rule.getPoints(), user.getId());
+		} catch (BonusRuleNotFoundException e) {
+			log.warn("Could not award welcome bonus to user {}: {}", user.getId(), e.getMessage());
 		}
-
-		BonusRules rule = findActiveRule(BonusTransactionType.WELCOME_BONUS);
-		createBonusTransaction(card, rule.getPoints(), BonusTransactionType.WELCOME_BONUS, "USER_" + user.getId(), null,
-				null, null);
-
-		card.setWelcomeBonusReceived(true);
-		bonusCardRepository.save(card);
-		log.info("Awarded welcome bonus ({} points) to user {}", rule.getPoints(), user.getId());
 	}
 
 	@Transactional
