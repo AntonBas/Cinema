@@ -41,7 +41,6 @@ export const CreateSessionModal: React.FC<CreateSessionModalProps> = ({
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [showMovieResults, setShowMovieResults] = useState(false);
     const [movieSearchTerm, setMovieSearchTerm] = useState('');
-    const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
     const [isSearching, setIsSearching] = useState(false);
     const movieSearchRef = useRef<HTMLDivElement>(null);
 
@@ -93,17 +92,8 @@ export const CreateSessionModal: React.FC<CreateSessionModalProps> = ({
         setSelectedMovie(null);
         setMovieSearchTerm('');
         setErrors({});
-        setNotification(null);
         setShowMovieResults(false);
         setIsSearching(false);
-    };
-
-    const showNotification = (message: string, type: 'success' | 'error') => {
-        setNotification({ message, type });
-
-        setTimeout(() => {
-            setNotification(null);
-        }, 5000);
     };
 
     const handleStartTimeChange = (value: string) => {
@@ -214,13 +204,9 @@ export const CreateSessionModal: React.FC<CreateSessionModalProps> = ({
 
         try {
             await onSave(sessionData);
-            showNotification(
-                isEditing ? 'Session updated successfully' : 'Session created successfully',
-                'success'
-            );
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Failed to save session';
-            showNotification(errorMessage, 'error');
+            setErrors(prev => ({ ...prev, _form: errorMessage }));
         }
     };
 
@@ -240,151 +226,137 @@ export const CreateSessionModal: React.FC<CreateSessionModalProps> = ({
     };
 
     return (
-        <>
-            <Modal
-                isOpen={isOpen}
-                onClose={onClose}
-                title={isEditing ? 'Edit Session' : 'Create New Session'}
-                size="large"
-            >
-                <form onSubmit={handleSubmit} className={styles.form}>
-                    <div className={styles.formRow}>
-                        <div className={styles.formGroup}>
-                            <label className={styles.label}>Start Time *</label>
-                            <Input
-                                type="datetime-local"
-                                value={formData.startTime}
-                                onChange={handleStartTimeChange}
-                                error={hasError('startTime') ? errors.startTime : undefined}
-                                min={calculateMinDateTime()}
-                                className={styles.input}
-                            />
-                            {hasError('startTime') && <span className={styles.errorText}>{errors.startTime}</span>}
-                        </div>
-
-                        <div className={styles.formGroup}>
-                            <label className={styles.label}>Base Price (UAH) *</label>
-                            <Input
-                                type="number"
-                                step="0.01"
-                                min="10"
-                                value={formData.basePrice}
-                                onChange={handleBasePriceChange}
-                                error={hasError('basePrice') ? errors.basePrice : undefined}
-                                placeholder="10.00"
-                                className={styles.input}
-                            />
-                            {hasError('basePrice') && <span className={styles.errorText}>{errors.basePrice}</span>}
-                        </div>
-                    </div>
-
+        <Modal
+            isOpen={isOpen}
+            onClose={onClose}
+            title={isEditing ? 'Edit Session' : 'Create New Session'}
+            size="large"
+        >
+            <form onSubmit={handleSubmit} className={styles.form}>
+                <div className={styles.formRow}>
                     <div className={styles.formGroup}>
-                        <label className={styles.label}>Movie *</label>
-                        <div className={styles.movieSearch} ref={movieSearchRef}>
-                            <Input
-                                type="text"
-                                value={movieSearchTerm}
-                                onChange={handleMovieInputChange}
-                                onClick={handleMovieInputClick}
-                                placeholder={formData.startTime ? "Select or search movie..." : "Select start time first"}
-                                disabled={!formData.startTime}
-                                className={styles.movieInput}
-                                error={hasError('movieId') && !showMovieResults ? errors.movieId : undefined}
-                            />
-                            {!formData.startTime && (
-                                <div className={styles.hint}>Please select start time first to see available movies</div>
-                            )}
-
-                            {selectedMovie && (
-                                <div className={styles.selectedMovieInfo}>
-                                    <div className={styles.selectedMovieTitle}>{selectedMovie.title}</div>
-                                    <div className={styles.selectedMovieDetails}>
-                                        {selectedMovie.releaseYear} • {selectedMovie.durationMinutes} minutes
-                                    </div>
-                                </div>
-                            )}
-
-                            {showMovieResults && (
-                                <div className={styles.movieResults}>
-                                    {isSearching || moviesLoading ? (
-                                        <div className={styles.loadingResults}>Loading movies...</div>
-                                    ) : movies.length > 0 ? (
-                                        movies.map(movie => (
-                                            <div
-                                                key={movie.id}
-                                                className={`${styles.movieOption} ${selectedMovie?.id === movie.id ? styles.selected : ''}`}
-                                                onClick={() => handleMovieSelect(movie)}
-                                            >
-                                                <div className={styles.movieTitle}>{movie.title}</div>
-                                                <div className={styles.movieDetails}>
-                                                    {movie.releaseYear} • {movie.durationMinutes} min
-                                                </div>
-                                            </div>
-                                        ))
-                                    ) : (
-                                        <div className={styles.noResults}>No movies available for selected date</div>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-                        {hasError('movieId') && !showMovieResults && <span className={styles.errorText}>{errors.movieId}</span>}
-                    </div>
-
-                    <div className={styles.formGroup}>
-                        <label className={styles.label}>Hall *</label>
-                        <Select
-                            value={formData.hallId}
-                            onChange={handleHallChange}
-                            options={hallOptions}
-                            disabled={hallsLoading}
-                            placeholder="Select hall"
+                        <label className={styles.label}>Start Time *</label>
+                        <Input
+                            type="datetime-local"
+                            value={formData.startTime}
+                            onChange={handleStartTimeChange}
+                            error={hasError('startTime') ? errors.startTime : undefined}
+                            min={calculateMinDateTime()}
+                            className={styles.input}
                         />
-                        {hasError('hallId') && <span className={styles.errorText}>{errors.hallId}</span>}
+                        {hasError('startTime') && <span className={styles.errorText}>{errors.startTime}</span>}
                     </div>
 
-                    <div className={styles.formActions}>
-                        <div className={styles.actions}>
-                            <Button
-                                type="button"
-                                variant="secondary"
-                                onClick={onClose}
-                                disabled={loading}
-                                className={styles.cancelButton}
-                            >
-                                Cancel
-                            </Button>
-                            <Button
-                                type="submit"
-                                variant="success"
-                                disabled={loading || hallsLoading}
-                                loading={loading}
-                                className={styles.submitButton}
-                            >
-                                {isEditing ? 'Update Session' : 'Create Session'}
-                            </Button>
-                        </div>
-                    </div>
-                </form>
-            </Modal>
-
-            {notification && (
-                <div className={styles.notificationWrapper}>
-                    <div className={`${styles.customNotification} ${notification.type === 'success' ? styles.success : styles.error}`}>
-                        <span className={styles.notificationIcon}>
-                            {notification.type === 'success' ? '✅' : '❌'}
-                        </span>
-                        <span className={styles.notificationMessage}>
-                            {notification.message}
-                        </span>
-                        <button
-                            className={styles.notificationClose}
-                            onClick={() => setNotification(null)}
-                        >
-                            ×
-                        </button>
+                    <div className={styles.formGroup}>
+                        <label className={styles.label}>Base Price (UAH) *</label>
+                        <Input
+                            type="number"
+                            step="0.01"
+                            min="10"
+                            value={formData.basePrice}
+                            onChange={handleBasePriceChange}
+                            error={hasError('basePrice') ? errors.basePrice : undefined}
+                            placeholder="10.00"
+                            className={styles.input}
+                        />
+                        {hasError('basePrice') && <span className={styles.errorText}>{errors.basePrice}</span>}
                     </div>
                 </div>
-            )}
-        </>
+
+                <div className={styles.formGroup}>
+                    <label className={styles.label}>Movie *</label>
+                    <div className={styles.movieSearch} ref={movieSearchRef}>
+                        <Input
+                            type="text"
+                            value={movieSearchTerm}
+                            onChange={handleMovieInputChange}
+                            onClick={handleMovieInputClick}
+                            placeholder={formData.startTime ? "Select or search movie..." : "Select start time first"}
+                            disabled={!formData.startTime}
+                            className={styles.movieInput}
+                            error={hasError('movieId') && !showMovieResults ? errors.movieId : undefined}
+                        />
+                        {!formData.startTime && (
+                            <div className={styles.hint}>Please select start time first to see available movies</div>
+                        )}
+
+                        {selectedMovie && (
+                            <div className={styles.selectedMovieInfo}>
+                                <div className={styles.selectedMovieTitle}>{selectedMovie.title}</div>
+                                <div className={styles.selectedMovieDetails}>
+                                    {selectedMovie.releaseYear} • {selectedMovie.durationMinutes} minutes
+                                </div>
+                            </div>
+                        )}
+
+                        {showMovieResults && (
+                            <div className={styles.movieResults}>
+                                {isSearching || moviesLoading ? (
+                                    <div className={styles.loadingResults}>Loading movies...</div>
+                                ) : movies.length > 0 ? (
+                                    movies.map(movie => (
+                                        <div
+                                            key={movie.id}
+                                            className={`${styles.movieOption} ${selectedMovie?.id === movie.id ? styles.selected : ''}`}
+                                            onClick={() => handleMovieSelect(movie)}
+                                        >
+                                            <div className={styles.movieTitle}>{movie.title}</div>
+                                            <div className={styles.movieDetails}>
+                                                {movie.releaseYear} • {movie.durationMinutes} min
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className={styles.noResults}>No movies available for selected date</div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                    {hasError('movieId') && !showMovieResults && <span className={styles.errorText}>{errors.movieId}</span>}
+                </div>
+
+                <div className={styles.formGroup}>
+                    <label className={styles.label}>Hall *</label>
+                    <Select
+                        value={formData.hallId}
+                        onChange={handleHallChange}
+                        options={hallOptions}
+                        disabled={hallsLoading}
+                        placeholder="Select hall"
+                    />
+                    {hasError('hallId') && <span className={styles.errorText}>{errors.hallId}</span>}
+                </div>
+
+                {errors._form && (
+                    <div className={styles.formError}>
+                        <span className={styles.errorIcon}>⚠️</span>
+                        <span>{errors._form}</span>
+                    </div>
+                )}
+
+                <div className={styles.formActions}>
+                    <div className={styles.actions}>
+                        <Button
+                            type="button"
+                            variant="secondary"
+                            onClick={onClose}
+                            disabled={loading}
+                            className={styles.cancelButton}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            type="submit"
+                            variant="success"
+                            disabled={loading || hallsLoading}
+                            loading={loading}
+                            className={styles.submitButton}
+                        >
+                            {isEditing ? 'Update Session' : 'Create Session'}
+                        </Button>
+                    </div>
+                </div>
+            </form>
+        </Modal>
     );
 };

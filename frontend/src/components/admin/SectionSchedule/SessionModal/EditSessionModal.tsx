@@ -411,12 +411,6 @@ export const EditSessionModal: React.FC<EditSessionModalProps> = ({
                             Update Session
                         </Button>
                     </div>
-                    {hasChanges && (
-                        <div className={styles.changesHint}>
-                            <span className={styles.changesIcon}>📝</span>
-                            <span>You have unsaved changes</span>
-                        </div>
-                    )}
                 </div>
             </form>
         </Modal>

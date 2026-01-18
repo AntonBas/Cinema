@@ -139,20 +139,6 @@
     margin-top: var(--space-1);
 }
 
-.changesHint {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-    color: #f59e0b;
-    font-size: 0.85rem;
-    font-weight: 500;
-    justify-content: center;
-}
-
-.changesIcon {
-    font-size: 1rem;
-}
-
 .movieSearch {
     position: relative;
 }
@@ -257,82 +243,6 @@
     text-align: center;
 }
 
-.notificationWrapper {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 10000;
-}
-
-.customNotification {
-    display: flex;
-    align-items: center;
-    gap: var(--space-3);
-    padding: var(--space-4) var(--space-5);
-    border-radius: var(--radius-md);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-    animation: slideIn 0.3s ease forwards;
-    min-width: 300px;
-    max-width: 400px;
-}
-
-.customNotification.success {
-    background: linear-gradient(135deg, var(--color-success) 0%, #059669 100%);
-    border: 1px solid #059669;
-}
-
-.customNotification.error {
-    background: linear-gradient(135deg, var(--color-error) 0%, #dc2626 100%);
-    border: 1px solid #dc2626;
-}
-
-.notificationIcon {
-    font-size: 1.25rem;
-    flex-shrink: 0;
-}
-
-.notificationMessage {
-    color: var(--color-text-primary);
-    font-weight: 500;
-    flex: 1;
-    font-size: 0.95rem;
-}
-
-.notificationClose {
-    background: transparent;
-    border: none;
-    color: var(--color-text-primary);
-    font-size: 1.5rem;
-    cursor: pointer;
-    opacity: 0.8;
-    transition: opacity var(--transition-fast);
-    padding: 0;
-    width: 24px;
-    height: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: var(--radius-sm);
-    flex-shrink: 0;
-}
-
-.notificationClose:hover {
-    opacity: 1;
-    background: rgba(255, 255, 255, 0.1);
-}
-
-@keyframes slideIn {
-    from {
-        transform: translateX(100%);
-        opacity: 0;
-    }
-
-    to {
-        transform: translateX(0);
-        opacity: 1;
-    }
-}
-
 @media (max-width: 768px) {
     .formRow {
         grid-template-columns: 1fr;
@@ -368,16 +278,6 @@
         max-width: 400px;
         max-height: 60vh;
     }
-
-    .notificationWrapper {
-        left: 20px;
-        right: 20px;
-    }
-
-    .customNotification {
-        min-width: unset;
-        width: 100%;
-    }
 }
 
 @media (max-width: 480px) {
@@ -403,10 +303,5 @@
 
     .selectedMovieTitle {
         font-size: 0.9rem;
-    }
-
-    .notificationWrapper {
-        left: 10px;
-        right: 10px;
     }
 }

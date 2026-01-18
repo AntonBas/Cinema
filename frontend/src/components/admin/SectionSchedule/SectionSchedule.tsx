@@ -3,12 +3,12 @@ import { useSessions, useSessionMutation, useSessionFilters, useNotification } f
 import { SessionFilters } from './SessionFilters';
 import { SessionTable } from './SessionTable';
 import { CreateSessionModal, EditSessionModal } from './SessionModal';
-import { DeleteConfirmModal, Pagination, Button } from '@/components/ui';
+import { DeleteConfirmModal, Pagination, Button, Notification } from '@/components/ui';
 import type { SessionAdminResponse, SessionCreateRequest, SessionUpdateRequest } from '@/types/session';
 import styles from './SectionSchedule.module.css';
 
 export const SectionSchedule: React.FC = () => {
-    const { showNotification } = useNotification();
+    const { notifications, showNotification, hideNotification } = useNotification();
 
     const [selectedSession, setSelectedSession] = useState<SessionAdminResponse | null>(null);
     const [sessionToDelete, setSessionToDelete] = useState<SessionAdminResponse | null>(null);
@@ -27,7 +27,6 @@ export const SectionSchedule: React.FC = () => {
         setHallFilter,
         setMovieFilter,
         setStatusFilter,
-        setDaysAheadFilter,
         clearFilters,
         hasActiveFilters,
         activeFilterCount
@@ -145,6 +144,19 @@ export const SectionSchedule: React.FC = () => {
 
     return (
         <div className={styles.container}>
+            {notifications.map((notification, index) => (
+                <Notification
+                    key={notification.id}
+                    id={notification.id}
+                    message={notification.message}
+                    type={notification.type}
+                    isVisible={notification.isVisible}
+                    onClose={hideNotification}
+                    duration={4000}
+                    position={index}
+                />
+            ))}
+
             <div className={styles.header}>
                 <div className={styles.headerContent}>
                     <div className={styles.titleContainer}>
@@ -177,7 +189,6 @@ export const SectionSchedule: React.FC = () => {
                 onHallChange={setHallFilter}
                 onMovieChange={setMovieFilter}
                 onStatusChange={setStatusFilter}
-                onUpcomingDaysChange={setDaysAheadFilter}
                 onClearFilters={handleClearFilters}
                 hasActiveFilters={hasActiveFilters}
                 activeFilterCount={activeFilterCount}
