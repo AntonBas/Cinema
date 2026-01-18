@@ -3,7 +3,7 @@
     max-width: 1400px;
     margin: 0 auto;
     animation: fadeIn var(--transition-normal) ease;
-    background: linear-gradient(135deg, var(--color-bg-secondary) 0%, var(--color-bg-quaternary) 100%);
+    background: var(--color-bg-quaternary);
     border-radius: var(--radius-xl);
     border: 1px solid var(--color-border-medium);
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
