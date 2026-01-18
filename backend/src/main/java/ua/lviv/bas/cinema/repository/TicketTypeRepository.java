@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import ua.lviv.bas.cinema.domain.TicketType;
+import ua.lviv.bas.cinema.domain.enums.TicketTypeCategory;
 
 @Repository
 public interface TicketTypeRepository extends JpaRepository<TicketType, Long> {
@@ -21,16 +22,16 @@ public interface TicketTypeRepository extends JpaRepository<TicketType, Long> {
 
 	List<TicketType> findByActiveFalse();
 
-	List<TicketType> findByActiveTrueAndCategory(String category);
+	List<TicketType> findByCategory(TicketTypeCategory category);
 
-	List<TicketType> findByActiveFalseAndCategory(String category);
+	List<TicketType> findByActiveTrueAndCategory(TicketTypeCategory category);
 
-	List<TicketType> findByCategory(String category);
+	List<TicketType> findByActiveFalseAndCategory(TicketTypeCategory category);
 
-	@Query("SELECT tt FROM TicketType tt WHERE " + "(:active IS NULL OR tt.active = :active) AND "
-			+ "(:category IS NULL OR tt.category = :category) AND "
-			+ "(LOWER(tt.code) LIKE LOWER(CONCAT('%', :search, '%')) OR "
-			+ "LOWER(tt.displayName) LIKE LOWER(CONCAT('%', :search, '%')))")
-	List<TicketType> findByFilters(@Param("active") Boolean active, @Param("category") String category,
+	@Query("SELECT t FROM TicketType t WHERE " + "(:active IS NULL OR t.active = :active) AND "
+			+ "(:category IS NULL OR t.category = :category) AND "
+			+ "(LOWER(t.code) LIKE LOWER(CONCAT('%', :search, '%')) OR "
+			+ "LOWER(t.displayName) LIKE LOWER(CONCAT('%', :search, '%')))")
+	List<TicketType> findByFilters(@Param("active") Boolean active, @Param("category") TicketTypeCategory category,
 			@Param("search") String search);
 }

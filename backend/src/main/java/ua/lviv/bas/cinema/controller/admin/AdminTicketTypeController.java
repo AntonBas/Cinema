@@ -25,6 +25,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import ua.lviv.bas.cinema.domain.enums.TicketTypeCategory;
 import ua.lviv.bas.cinema.dto.ticket.request.TicketTypeCreateRequest;
 import ua.lviv.bas.cinema.dto.ticket.request.TicketTypeUpdateRequest;
 import ua.lviv.bas.cinema.dto.ticket.response.TicketTypeResponse;
@@ -59,7 +60,7 @@ public class AdminTicketTypeController {
 	@PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
 	public ResponseEntity<List<TicketTypeResponse>> getAllTicketTypes(
 			@Parameter(description = "Filter by active status") @RequestParam(required = false) Boolean active,
-			@Parameter(description = "Filter by category") @RequestParam(required = false) String category,
+			@Parameter(description = "Filter by category") @RequestParam(required = false) TicketTypeCategory category,
 			@Parameter(description = "Search by code or display name") @RequestParam(required = false) String search) {
 		log.info("Getting ticket types with filters - active: {}, category: {}, search: {}", active, category, search);
 		List<TicketTypeResponse> ticketTypes;

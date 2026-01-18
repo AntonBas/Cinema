@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.TicketType;
 import ua.lviv.bas.cinema.domain.enums.TicketStatus;
+import ua.lviv.bas.cinema.domain.enums.TicketTypeCategory;
 import ua.lviv.bas.cinema.dto.ticket.request.TicketTypeCreateRequest;
 import ua.lviv.bas.cinema.dto.ticket.request.TicketTypeUpdateRequest;
 import ua.lviv.bas.cinema.dto.ticket.response.TicketTypeResponse;
@@ -67,7 +68,8 @@ public class TicketTypeService {
 		return ticketTypes.stream().map(ticketTypeMapper::toTicketTypeResponse).collect(Collectors.toList());
 	}
 
-	public List<TicketTypeResponse> getTicketTypesWithFilters(Boolean active, String category, String search) {
+	public List<TicketTypeResponse> getTicketTypesWithFilters(Boolean active, TicketTypeCategory category,
+			String search) {
 		List<TicketType> ticketTypes;
 		if (search != null && !search.trim().isEmpty()) {
 			ticketTypes = ticketTypeRepository.findByFilters(active, category, search.trim());
