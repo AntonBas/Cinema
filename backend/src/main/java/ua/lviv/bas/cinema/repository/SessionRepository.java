@@ -36,61 +36,24 @@ public interface SessionRepository extends JpaRepository<Session, Long> {
 
 	@Query("SELECT s FROM Session s WHERE "
 			+ "(:search IS NULL OR LOWER(s.movie.title) LIKE LOWER(CONCAT('%', :search, '%'))) AND "
+			+ "(:startTime IS NULL OR s.startTime >= :startTime) AND "
+			+ "(:endTime IS NULL OR s.startTime <= :endTime) AND " + "(:movieId IS NULL OR s.movie.id = :movieId) AND "
+			+ "(:hallId IS NULL OR s.hall.id = :hallId) AND " + "(:status IS NULL OR s.status = :status) AND "
 			+ "(:adminView = true OR s.status = ua.lviv.bas.cinema.domain.enums.CinemaSessionStatus.SCHEDULED)")
-	Page<Session> findByMovieTitle(@Param("search") String search, @Param("adminView") boolean adminView,
-			Pageable pageable);
+	Page<Session> findByFilters(@Param("search") String search, @Param("startTime") LocalDateTime startTime,
+			@Param("endTime") LocalDateTime endTime, @Param("movieId") Long movieId, @Param("hallId") Long hallId,
+			@Param("status") CinemaSessionStatus status, @Param("adminView") boolean adminView, Pageable pageable);
 
 	@Query("SELECT s FROM Session s LEFT JOIN FETCH s.movie LEFT JOIN FETCH s.hall WHERE "
 			+ "(:search IS NULL OR LOWER(s.movie.title) LIKE LOWER(CONCAT('%', :search, '%'))) AND "
+			+ "(:startTime IS NULL OR s.startTime >= :startTime) AND "
+			+ "(:endTime IS NULL OR s.startTime <= :endTime) AND " + "(:movieId IS NULL OR s.movie.id = :movieId) AND "
+			+ "(:hallId IS NULL OR s.hall.id = :hallId) AND " + "(:status IS NULL OR s.status = :status) AND "
 			+ "(:adminView = true OR s.status = ua.lviv.bas.cinema.domain.enums.CinemaSessionStatus.SCHEDULED)")
-	Page<Session> findByMovieTitleWithMovieAndHall(@Param("search") String search,
+	Page<Session> findByFiltersWithMovieAndHall(@Param("search") String search,
+			@Param("startTime") LocalDateTime startTime, @Param("endTime") LocalDateTime endTime,
+			@Param("movieId") Long movieId, @Param("hallId") Long hallId, @Param("status") CinemaSessionStatus status,
 			@Param("adminView") boolean adminView, Pageable pageable);
-
-	@Query("SELECT s FROM Session s WHERE " + "s.startTime >= :start AND s.startTime <= :end AND "
-			+ "(:adminView = true OR s.status = ua.lviv.bas.cinema.domain.enums.CinemaSessionStatus.SCHEDULED)")
-	Page<Session> findByStartTimeBetween(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end,
-			@Param("adminView") boolean adminView, Pageable pageable);
-
-	@Query("SELECT s FROM Session s LEFT JOIN FETCH s.movie LEFT JOIN FETCH s.hall WHERE "
-			+ "s.startTime >= :start AND s.startTime <= :end AND "
-			+ "(:adminView = true OR s.status = ua.lviv.bas.cinema.domain.enums.CinemaSessionStatus.SCHEDULED)")
-	Page<Session> findByStartTimeBetweenWithMovieAndHall(@Param("start") LocalDateTime start,
-			@Param("end") LocalDateTime end, @Param("adminView") boolean adminView, Pageable pageable);
-
-	@Query("SELECT s FROM Session s WHERE " + "s.hall.id = :hallId AND "
-			+ "(:adminView = true OR s.status = ua.lviv.bas.cinema.domain.enums.CinemaSessionStatus.SCHEDULED)")
-	Page<Session> findByHallId(@Param("hallId") Long hallId, @Param("adminView") boolean adminView, Pageable pageable);
-
-	@Query("SELECT s FROM Session s LEFT JOIN FETCH s.movie LEFT JOIN FETCH s.hall WHERE " + "s.hall.id = :hallId AND "
-			+ "(:adminView = true OR s.status = ua.lviv.bas.cinema.domain.enums.CinemaSessionStatus.SCHEDULED)")
-	Page<Session> findByHallIdWithMovieAndHall(@Param("hallId") Long hallId, @Param("adminView") boolean adminView,
-			Pageable pageable);
-
-	@Query("SELECT s FROM Session s WHERE " + "s.movie.id = :movieId AND "
-			+ "(:adminView = true OR s.status = ua.lviv.bas.cinema.domain.enums.CinemaSessionStatus.SCHEDULED)")
-	Page<Session> findByMovieId(@Param("movieId") Long movieId, @Param("adminView") boolean adminView,
-			Pageable pageable);
-
-	@Query("SELECT s FROM Session s LEFT JOIN FETCH s.movie LEFT JOIN FETCH s.hall WHERE "
-			+ "s.movie.id = :movieId AND "
-			+ "(:adminView = true OR s.status = ua.lviv.bas.cinema.domain.enums.CinemaSessionStatus.SCHEDULED)")
-	Page<Session> findByMovieIdWithMovieAndHall(@Param("movieId") Long movieId, @Param("adminView") boolean adminView,
-			Pageable pageable);
-
-	Page<Session> findByStatus(CinemaSessionStatus status, Pageable pageable);
-
-	@Query("SELECT s FROM Session s LEFT JOIN FETCH s.movie LEFT JOIN FETCH s.hall WHERE s.status = :status")
-	Page<Session> findByStatusWithMovieAndHall(@Param("status") CinemaSessionStatus status, Pageable pageable);
-
-	@Query("SELECT s FROM Session s WHERE "
-			+ "s.status = ua.lviv.bas.cinema.domain.enums.CinemaSessionStatus.SCHEDULED AND "
-			+ "s.startTime > CURRENT_TIMESTAMP")
-	Page<Session> findAvailableSessions(Pageable pageable);
-
-	@Query("SELECT s FROM Session s LEFT JOIN FETCH s.movie LEFT JOIN FETCH s.hall WHERE "
-			+ "s.status = ua.lviv.bas.cinema.domain.enums.CinemaSessionStatus.SCHEDULED AND "
-			+ "s.startTime > CURRENT_TIMESTAMP")
-	Page<Session> findAvailableSessionsWithMovieAndHall(Pageable pageable);
 
 	@Query(value = """
 			SELECT s.* FROM sessions s
@@ -119,7 +82,4 @@ public interface SessionRepository extends JpaRepository<Session, Long> {
 			""", nativeQuery = true)
 	boolean existsConflictingSession(@Param("hallId") Long hallId, @Param("startTime") LocalDateTime startTime,
 			@Param("endTime") LocalDateTime endTime, @Param("excludeSessionId") Long excludeSessionId);
-
-	@Query("SELECT s FROM Session s LEFT JOIN FETCH s.movie LEFT JOIN FETCH s.hall ORDER BY s.startTime")
-	Page<Session> findAllWithMovieAndHall(Pageable pageable);
 }

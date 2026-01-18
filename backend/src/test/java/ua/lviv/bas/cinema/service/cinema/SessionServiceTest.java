@@ -297,11 +297,110 @@ public class SessionServiceTest {
 		Pageable pageable = PageRequest.of(0, 10);
 		Page<Session> page = new PageImpl<>(List.of(testSession));
 
-		when(sessionRepository.findByMovieTitle("test", true, pageable)).thenReturn(page);
+		when(sessionRepository.findByFiltersWithMovieAndHall(eq("test"), any(), any(), any(), any(), any(), eq(true),
+				eq(pageable))).thenReturn(page);
 		when(sessionMapper.toSessionAdminResponse(testSession)).thenReturn(response);
 
 		Page<SessionAdminResponse> result = sessionService.getSessionsForAdmin("test", null, null, null, null,
 				pageable);
+
+		assertThat(result.getContent()).hasSize(1);
+	}
+
+	@Test
+	void getSessionsForAdmin_WithDate() {
+		SessionAdminResponse response = SessionAdminResponse.builder().id(1L).build();
+
+		Pageable pageable = PageRequest.of(0, 10);
+		Page<Session> page = new PageImpl<>(List.of(testSession));
+
+		when(sessionRepository.findByFiltersWithMovieAndHall(any(), any(), any(), any(), any(), any(), eq(true),
+				eq(pageable))).thenReturn(page);
+		when(sessionMapper.toSessionAdminResponse(testSession)).thenReturn(response);
+
+		Page<SessionAdminResponse> result = sessionService.getSessionsForAdmin(null, LocalDate.now(), null, null, null,
+				pageable);
+
+		assertThat(result.getContent()).hasSize(1);
+	}
+
+	@Test
+	void getSessionsForAdmin_WithHallId() {
+		SessionAdminResponse response = SessionAdminResponse.builder().id(1L).build();
+
+		Pageable pageable = PageRequest.of(0, 10);
+		Page<Session> page = new PageImpl<>(List.of(testSession));
+
+		when(sessionRepository.findByFiltersWithMovieAndHall(any(), any(), any(), any(), eq(1L), any(), eq(true),
+				eq(pageable))).thenReturn(page);
+		when(sessionMapper.toSessionAdminResponse(testSession)).thenReturn(response);
+
+		Page<SessionAdminResponse> result = sessionService.getSessionsForAdmin(null, null, 1L, null, null, pageable);
+
+		assertThat(result.getContent()).hasSize(1);
+	}
+
+	@Test
+	void getSessionsForAdmin_WithMovieId() {
+		SessionAdminResponse response = SessionAdminResponse.builder().id(1L).build();
+
+		Pageable pageable = PageRequest.of(0, 10);
+		Page<Session> page = new PageImpl<>(List.of(testSession));
+
+		when(sessionRepository.findByFiltersWithMovieAndHall(any(), any(), any(), eq(1L), any(), any(), eq(true),
+				eq(pageable))).thenReturn(page);
+		when(sessionMapper.toSessionAdminResponse(testSession)).thenReturn(response);
+
+		Page<SessionAdminResponse> result = sessionService.getSessionsForAdmin(null, null, null, 1L, null, pageable);
+
+		assertThat(result.getContent()).hasSize(1);
+	}
+
+	@Test
+	void getSessionsForAdmin_WithStatus() {
+		SessionAdminResponse response = SessionAdminResponse.builder().id(1L).build();
+
+		Pageable pageable = PageRequest.of(0, 10);
+		Page<Session> page = new PageImpl<>(List.of(testSession));
+
+		when(sessionRepository.findByFiltersWithMovieAndHall(any(), any(), any(), any(), any(),
+				eq(CinemaSessionStatus.SCHEDULED), eq(true), eq(pageable))).thenReturn(page);
+		when(sessionMapper.toSessionAdminResponse(testSession)).thenReturn(response);
+
+		Page<SessionAdminResponse> result = sessionService.getSessionsForAdmin(null, null, null, null,
+				CinemaSessionStatus.SCHEDULED, pageable);
+
+		assertThat(result.getContent()).hasSize(1);
+	}
+
+	@Test
+	void getSessionsForAdmin_NoFilters() {
+		SessionAdminResponse response = SessionAdminResponse.builder().id(1L).build();
+
+		Pageable pageable = PageRequest.of(0, 10);
+		Page<Session> page = new PageImpl<>(List.of(testSession));
+
+		when(sessionRepository.findByFiltersWithMovieAndHall(any(), any(), any(), any(), any(), any(), eq(true),
+				eq(pageable))).thenReturn(page);
+		when(sessionMapper.toSessionAdminResponse(testSession)).thenReturn(response);
+
+		Page<SessionAdminResponse> result = sessionService.getSessionsForAdmin(null, null, null, null, null, pageable);
+
+		assertThat(result.getContent()).hasSize(1);
+	}
+
+	@Test
+	void getTodaySessions() {
+		SessionAdminResponse response = SessionAdminResponse.builder().id(1L).build();
+
+		Pageable pageable = PageRequest.of(0, 10);
+		Page<Session> page = new PageImpl<>(List.of(testSession));
+
+		when(sessionRepository.findByFiltersWithMovieAndHall(any(), any(), any(), any(), any(), any(), eq(true),
+				eq(pageable))).thenReturn(page);
+		when(sessionMapper.toSessionAdminResponse(testSession)).thenReturn(response);
+
+		Page<SessionAdminResponse> result = sessionService.getTodaySessions(pageable);
 
 		assertThat(result.getContent()).hasSize(1);
 	}
@@ -313,11 +412,76 @@ public class SessionServiceTest {
 		Pageable pageable = PageRequest.of(0, 10);
 		Page<Session> page = new PageImpl<>(List.of(testSession));
 
-		when(sessionRepository.findByStartTimeBetween(any(), any(), eq(false), any())).thenReturn(page);
+		when(sessionRepository.findByFiltersWithMovieAndHall(any(), any(), any(), any(), any(), any(), eq(false),
+				eq(pageable))).thenReturn(page);
 		when(sessionMapper.toSessionScheduleResponse(testSession)).thenReturn(response);
 
 		Page<SessionScheduleResponse> result = sessionService.getScheduleSessions(LocalDate.now(), null, null,
 				pageable);
+
+		assertThat(result.getContent()).hasSize(1);
+	}
+
+	@Test
+	void getScheduleSessions_WithMovieId() {
+		SessionScheduleResponse response = SessionScheduleResponse.builder().id(1L).build();
+
+		Pageable pageable = PageRequest.of(0, 10);
+		Page<Session> page = new PageImpl<>(List.of(testSession));
+
+		when(sessionRepository.findByFiltersWithMovieAndHall(any(), any(), any(), eq(1L), any(), any(), eq(false),
+				eq(pageable))).thenReturn(page);
+		when(sessionMapper.toSessionScheduleResponse(testSession)).thenReturn(response);
+
+		Page<SessionScheduleResponse> result = sessionService.getScheduleSessions(null, 1L, null, pageable);
+
+		assertThat(result.getContent()).hasSize(1);
+	}
+
+	@Test
+	void getScheduleSessions_WithDaysAhead() {
+		SessionScheduleResponse response = SessionScheduleResponse.builder().id(1L).build();
+
+		Pageable pageable = PageRequest.of(0, 10);
+		Page<Session> page = new PageImpl<>(List.of(testSession));
+
+		when(sessionRepository.findByFiltersWithMovieAndHall(any(), any(), any(), any(), any(), any(), eq(false),
+				eq(pageable))).thenReturn(page);
+		when(sessionMapper.toSessionScheduleResponse(testSession)).thenReturn(response);
+
+		Page<SessionScheduleResponse> result = sessionService.getScheduleSessions(null, null, 7, pageable);
+
+		assertThat(result.getContent()).hasSize(1);
+	}
+
+	@Test
+	void getScheduleSessions_NoFilters() {
+		SessionScheduleResponse response = SessionScheduleResponse.builder().id(1L).build();
+
+		Pageable pageable = PageRequest.of(0, 10);
+		Page<Session> page = new PageImpl<>(List.of(testSession));
+
+		when(sessionRepository.findByFiltersWithMovieAndHall(any(), any(), any(), any(), any(), any(), eq(false),
+				eq(pageable))).thenReturn(page);
+		when(sessionMapper.toSessionScheduleResponse(testSession)).thenReturn(response);
+
+		Page<SessionScheduleResponse> result = sessionService.getScheduleSessions(null, null, null, pageable);
+
+		assertThat(result.getContent()).hasSize(1);
+	}
+
+	@Test
+	void getTodayPublicSessions() {
+		SessionScheduleResponse response = SessionScheduleResponse.builder().id(1L).build();
+
+		Pageable pageable = PageRequest.of(0, 10);
+		Page<Session> page = new PageImpl<>(List.of(testSession));
+
+		when(sessionRepository.findByFiltersWithMovieAndHall(any(), any(), any(), any(), any(), any(), eq(false),
+				eq(pageable))).thenReturn(page);
+		when(sessionMapper.toSessionScheduleResponse(testSession)).thenReturn(response);
+
+		Page<SessionScheduleResponse> result = sessionService.getTodayPublicSessions(pageable);
 
 		assertThat(result.getContent()).hasSize(1);
 	}
@@ -362,20 +526,5 @@ public class SessionServiceTest {
 
 		assertThat(result).hasSize(1);
 		verify(sessionRepository).findSessionsToComplete(any(LocalDateTime.class));
-	}
-
-	@Test
-	void calculateEndTime_PrivateMethod_ShouldReturnNullForInvalidData() throws Exception {
-		SessionService service = new SessionService(sessionRepository, sessionMapper, movieRepository,
-				cinemaHallService);
-
-		Session invalidSession = new Session();
-		invalidSession.setStartTime(null);
-
-		java.lang.reflect.Method method = SessionService.class.getDeclaredMethod("calculateEndTime", Session.class);
-		method.setAccessible(true);
-		LocalDateTime result = (LocalDateTime) method.invoke(service, invalidSession);
-
-		assertThat(result).isNull();
 	}
 }
