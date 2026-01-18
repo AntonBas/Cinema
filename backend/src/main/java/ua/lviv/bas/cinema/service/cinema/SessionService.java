@@ -4,8 +4,10 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -82,28 +84,23 @@ public class SessionService {
 	public SessionAdminResponse updateSession(Long id, SessionUpdateRequest request) {
 		Session session = sessionRepository.findByIdWithLock(id).orElseThrow(() -> new SessionNotFoundException(id));
 
-		if (request.getStartTime() != null) {
-			validateStartTime(request.getStartTime());
-			Movie movie = session.getMovie();
-			CinemaHall hall = session.getHall();
+		if (request.getStartTime() != null || request.getMovieId() != null || request.getHallId() != null) {
+			LocalDateTime startTime = request.getStartTime() != null ? request.getStartTime() : session.getStartTime();
+			validateStartTime(startTime);
 
-			if (request.getMovieId() != null) {
-				movie = movieRepository.findById(request.getMovieId())
-						.orElseThrow(() -> new MovieNotFoundException(request.getMovieId()));
-			}
+			Movie movie = request.getMovieId() != null ? movieRepository.findById(request.getMovieId())
+					.orElseThrow(() -> new MovieNotFoundException(request.getMovieId())) : session.getMovie();
 
-			if (request.getHallId() != null) {
-				hall = cinemaHallService.getHallEntityById(request.getHallId());
-			}
+			CinemaHall hall = request.getHallId() != null ? cinemaHallService.getHallEntityById(request.getHallId())
+					: session.getHall();
 
-			if (movie != null && hall != null) {
-				validateMovieAvailability(movie, request.getStartTime());
-				LocalDateTime endTime = request.getStartTime().plusMinutes(movie.getDurationMinutes());
-				boolean hasConflict = sessionRepository.existsConflictingSession(hall.getId(), request.getStartTime(),
-						endTime, id);
-				if (hasConflict) {
-					throw new SessionTimeConflictException(hall.getId(), request.getStartTime());
-				}
+			validateMovieAvailability(movie, startTime);
+
+			LocalDateTime endTime = startTime.plusMinutes(movie.getDurationMinutes());
+			boolean hasConflict = sessionRepository.existsConflictingSession(hall.getId(), startTime, endTime, id);
+
+			if (hasConflict) {
+				throw new SessionTimeConflictException(hall.getId(), startTime);
 			}
 		}
 
@@ -184,15 +181,61 @@ public class SessionService {
 	public Page<SessionAdminResponse> getSessionsForAdmin(String search, LocalDate date, Long hallId, Long movieId,
 			CinemaSessionStatus status, Pageable pageable) {
 
+		log.info("Getting sessions with filters - search: '{}', date: {}, hallId: {}, movieId: {}, status: {}", search,
+				date, hallId, movieId, status);
+
 		Page<Session> sessions;
 
-		LocalDateTime startTime = date != null ? date.atStartOfDay() : null;
-		LocalDateTime endTime = date != null ? date.atTime(23, 59, 59) : null;
+		boolean adminView = true;
 
-		sessions = sessionRepository.findByFiltersWithMovieAndHall(search, startTime, endTime, movieId, hallId, status,
-				true, pageable);
+		if (search != null && !search.trim().isEmpty()) {
+			sessions = sessionRepository.findByMovieTitleWithMovieAndHall(search, adminView, pageable);
+		} else if (hallId != null) {
+			sessions = sessionRepository.findByHallIdWithMovieAndHall(hallId, adminView, pageable);
+		} else if (movieId != null) {
+			sessions = sessionRepository.findByMovieIdWithMovieAndHall(movieId, adminView, pageable);
+		} else if (status != null) {
+			sessions = sessionRepository.findByStatusWithMovieAndHall(status, pageable);
+		} else if (date != null) {
+			LocalDateTime start = date.atStartOfDay();
+			LocalDateTime end = date.atTime(23, 59, 59);
+			sessions = sessionRepository.findByStartTimeBetweenWithMovieAndHall(start, end, adminView, pageable);
+		} else {
+			sessions = sessionRepository.findAllWithMovieAndHall(pageable);
+		}
 
-		return sessions.map(this::toAdminResponse);
+		List<Session> filteredList = sessions.getContent();
+
+		if (date != null && (search != null || hallId != null || movieId != null || status != null)) {
+			filteredList = filteredList.stream().filter(s -> s.getStartTime().toLocalDate().equals(date))
+					.collect(Collectors.toList());
+		}
+
+		if (hallId != null && (search != null || movieId != null)) {
+			filteredList = filteredList.stream().filter(s -> s.getHall().getId().equals(hallId))
+					.collect(Collectors.toList());
+		}
+
+		if (movieId != null && (search != null || hallId != null)) {
+			filteredList = filteredList.stream().filter(s -> s.getMovie().getId().equals(movieId))
+					.collect(Collectors.toList());
+		}
+
+		if (status != null && (search != null || hallId != null || movieId != null)) {
+			filteredList = filteredList.stream().filter(s -> s.getStatus() == status).collect(Collectors.toList());
+		}
+
+		if (search != null && !search.trim().isEmpty() && (hallId != null || movieId != null || status != null)) {
+			String searchLower = search.toLowerCase();
+			filteredList = filteredList.stream()
+					.filter(s -> s.getMovie().getTitle().toLowerCase().contains(searchLower))
+					.collect(Collectors.toList());
+		}
+
+		Page<Session> filteredPage = new PageImpl<>(filteredList, pageable, filteredList.size());
+
+		log.info("Found {} sessions after filtering", filteredList.size());
+		return filteredPage.map(this::toAdminResponse);
 	}
 
 	@Transactional(readOnly = true)
@@ -201,8 +244,8 @@ public class SessionService {
 		LocalDateTime startOfDay = today.atStartOfDay();
 		LocalDateTime endOfDay = today.atTime(23, 59, 59);
 
-		Page<Session> sessions = sessionRepository.findByFiltersWithMovieAndHall(null, startOfDay, endOfDay, null, null,
-				null, true, pageable);
+		Page<Session> sessions = sessionRepository.findByStartTimeBetweenWithMovieAndHall(startOfDay, endOfDay, true,
+				pageable);
 		return sessions.map(this::toAdminResponse);
 	}
 
@@ -210,19 +253,21 @@ public class SessionService {
 	public Page<SessionScheduleResponse> getScheduleSessions(LocalDate date, Long movieId, Integer daysAhead,
 			Pageable pageable) {
 
-		LocalDateTime startTime = null;
-		LocalDateTime endTime = null;
+		Page<Session> sessions;
 
 		if (date != null) {
-			startTime = date.atStartOfDay();
-			endTime = date.atTime(23, 59, 59);
+			LocalDateTime start = date.atStartOfDay();
+			LocalDateTime end = date.atTime(23, 59, 59);
+			sessions = sessionRepository.findByStartTimeBetweenWithMovieAndHall(start, end, false, pageable);
+		} else if (movieId != null) {
+			sessions = sessionRepository.findByMovieIdWithMovieAndHall(movieId, false, pageable);
 		} else if (daysAhead != null) {
-			startTime = LocalDateTime.now();
-			endTime = startTime.plusDays(daysAhead);
+			LocalDateTime start = LocalDateTime.now();
+			LocalDateTime end = start.plusDays(daysAhead);
+			sessions = sessionRepository.findByStartTimeBetweenWithMovieAndHall(start, end, false, pageable);
+		} else {
+			sessions = sessionRepository.findAvailableSessionsWithMovieAndHall(pageable);
 		}
-
-		Page<Session> sessions = sessionRepository.findByFiltersWithMovieAndHall(null, startTime, endTime, movieId,
-				null, null, false, pageable);
 
 		return sessions.map(this::toScheduleResponse);
 	}
@@ -233,8 +278,8 @@ public class SessionService {
 		LocalDateTime startOfDay = today.atStartOfDay();
 		LocalDateTime endOfDay = today.atTime(23, 59, 59);
 
-		Page<Session> sessions = sessionRepository.findByFiltersWithMovieAndHall(null, startOfDay, endOfDay, null, null,
-				null, false, pageable);
+		Page<Session> sessions = sessionRepository.findByStartTimeBetweenWithMovieAndHall(startOfDay, endOfDay, false,
+				pageable);
 		return sessions.map(this::toScheduleResponse);
 	}
 
