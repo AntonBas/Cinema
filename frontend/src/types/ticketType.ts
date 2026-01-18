@@ -20,6 +20,7 @@ export interface TicketTypeCreateRequest {
 }
 
 export interface TicketTypeUpdateRequest {
+    code: string;
     displayName?: string;
     priceMultiplier?: string;
     minAge?: number | null;

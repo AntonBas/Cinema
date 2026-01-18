@@ -22,12 +22,15 @@ const EditTicketTypeModal: React.FC<EditTicketTypeModalProps> = ({
     ticketType
 }) => {
     const { handleUpdate, loading, error, getCategoryOptions } = useTicketTypeForm();
-    const [formData, setFormData] = useState<TicketTypeUpdateRequest>({});
+    const [formData, setFormData] = useState<TicketTypeUpdateRequest>({
+        code: ''
+    });
     const [showNotification, setShowNotification] = useState(false);
 
     useEffect(() => {
         if (ticketType) {
             setFormData({
+                code: ticketType.code,
                 displayName: ticketType.displayName,
                 category: ticketType.category,
                 priceMultiplier: ticketType.priceMultiplier,
@@ -66,7 +69,6 @@ const EditTicketTypeModal: React.FC<EditTicketTypeModalProps> = ({
         }
     };
 
-    // Функція для disabled Input (без onChange)
     const DisabledInput = ({ value }: { value: string }) => (
         <div className={`${styles.disabledInput} ${styles.input}`}>
             <input

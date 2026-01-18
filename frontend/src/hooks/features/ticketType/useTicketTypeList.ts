@@ -1,21 +1,50 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useAdminTicketTypes } from './useAdminTicketTypes';
-import type { TicketTypeResponse } from '@/types/ticketType';
+import type { TicketTypeResponse, TicketTypeCategory } from '@/types/ticketType';
 
-export const useTicketTypeList = (options?: { activeFilter?: boolean; autoFetch?: boolean }) => {
-    const { activeFilter, autoFetch = true } = options || {};
+export const useTicketTypeList = (
+    options?: {
+        statusFilter?: 'all' | 'active' | 'inactive';
+        categoryFilter?: TicketTypeCategory | 'all';
+        searchQuery?: string;
+        autoFetch?: boolean;
+    }
+) => {
+    const {
+        statusFilter = 'all',
+        categoryFilter = 'all',
+        searchQuery = '',
+        autoFetch = true
+    } = options || {};
+
     const { getAll, loading, error, clearError } = useAdminTicketTypes();
     const [ticketTypes, setTicketTypes] = useState<TicketTypeResponse[]>([]);
 
     const fetchTicketTypes = useCallback(async () => {
         try {
-            const data = await getAll(activeFilter);
+            const params: { active?: boolean; category?: string; search?: string } = {};
+
+            if (statusFilter === 'active') {
+                params.active = true;
+            } else if (statusFilter === 'inactive') {
+                params.active = false;
+            }
+
+            if (categoryFilter !== 'all') {
+                params.category = categoryFilter;
+            }
+
+            if (searchQuery.trim()) {
+                params.search = searchQuery;
+            }
+
+            const data = await getAll(params);
             setTicketTypes(data);
             return data;
         } catch {
             return [];
         }
-    }, [getAll, activeFilter]);
+    }, [getAll, statusFilter, categoryFilter, searchQuery]);
 
     useEffect(() => {
         if (autoFetch) {
@@ -45,7 +74,8 @@ export const useTicketTypeList = (options?: { activeFilter?: boolean; autoFetch?
 
     const toggleTicketTypeActive = useCallback(async (id: number) => {
         try {
-            const updated = await useAdminTicketTypes().toggleActive(id);
+            const { toggleActive } = useAdminTicketTypes();
+            const updated = await toggleActive(id);
             setTicketTypes(prev =>
                 prev.map(ticketType =>
                     ticketType.id === id ? updated : ticketType

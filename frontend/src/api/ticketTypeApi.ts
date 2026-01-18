@@ -51,8 +51,24 @@ export const ticketTypeApi = {
                 body: JSON.stringify(request),
             }),
 
-        getAll: (active?: boolean) => {
-            const url = active !== undefined ? `${ADMIN_URL}?active=${active}` : ADMIN_URL;
+        getAll: (params?: { active?: boolean; category?: string; search?: string }) => {
+            const queryParams = new URLSearchParams();
+
+            if (params?.active !== undefined) {
+                queryParams.append('active', params.active.toString());
+            }
+
+            if (params?.category) {
+                queryParams.append('category', params.category);
+            }
+
+            if (params?.search) {
+                queryParams.append('search', params.search);
+            }
+
+            const queryString = queryParams.toString();
+            const url = queryString ? `${ADMIN_URL}?${queryString}` : ADMIN_URL;
+
             return fetchApi<TicketTypeResponse[]>(url);
         },
 

@@ -11,11 +11,11 @@ export const useAdminTicketTypes = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const getAll = useCallback(async (active?: boolean): Promise<TicketTypeResponse[]> => {
+    const getAll = useCallback(async (params?: { active?: boolean; category?: string; search?: string }): Promise<TicketTypeResponse[]> => {
         setLoading(true);
         setError(null);
         try {
-            return await ticketTypeApi.admin.getAll(active);
+            return await ticketTypeApi.admin.getAll(params);
         } catch (err) {
             const message = isApiErrorException(err) ? err.message : 'Failed to fetch ticket types';
             setError(message);

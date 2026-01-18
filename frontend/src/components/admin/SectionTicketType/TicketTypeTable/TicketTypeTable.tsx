@@ -63,83 +63,95 @@ const TicketTypeTable: React.FC<TicketTypeTableProps> = ({
         }
     };
 
+    if (ticketTypes.length === 0) {
+        return (
+            <div className={styles.empty}>
+                <div className={styles.emptyIcon}>🎫</div>
+                <h3>No ticket types found</h3>
+                <p>There are no ticket types matching your criteria.</p>
+            </div>
+        );
+    }
+
     return (
         <>
-            <table className={styles.table}>
-                <thead>
-                    <tr>
-                        <th>Code</th>
-                        <th>Display Name</th>
-                        <th>Category</th>
-                        <th>Price Multiplier</th>
-                        <th>Age Range</th>
-                        <th>Document</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {ticketTypes.map((ticketType) => (
-                        <tr key={ticketType.id}>
-                            <td>
-                                <span className={styles.code}>{ticketType.code}</span>
-                            </td>
-                            <td>
-                                <span className={styles.displayName}>{ticketType.displayName}</span>
-                            </td>
-                            <td>
-                                <Badge variant={getCategoryVariant(ticketType.category)}>
-                                    {TicketTypeCategoryDisplay[ticketType.category]}
-                                </Badge>
-                            </td>
-                            <td>
-                                <span className={styles.price}>× {ticketType.priceMultiplier}</span>
-                            </td>
-                            <td>
-                                <span className={styles.ageRange}>
-                                    {formatAgeRange(ticketType)}
-                                </span>
-                            </td>
-                            <td>
-                                {ticketType.requiresDocument ? (
-                                    <Tooltip content={ticketType.documentType || 'Document required'}>
-                                        <Badge variant="warning">Required</Badge>
-                                    </Tooltip>
-                                ) : (
-                                    <Badge variant="outline">Not required</Badge>
-                                )}
-                            </td>
-                            <td>
-                                <button
-                                    className={`${styles.toggleButton} ${ticketType.active ? styles.activeToggle : styles.inactiveToggle
-                                        }`}
-                                    onClick={() => onToggleActive(ticketType.id)}
-                                >
-                                    {ticketType.active ? 'Active' : 'Inactive'}
-                                </button>
-                            </td>
-                            <td>
-                                <div className={styles.actions}>
-                                    <Button
-                                        variant="secondary"
-                                        size="small"
-                                        onClick={() => onEdit(ticketType)}
-                                    >
-                                        Edit
-                                    </Button>
-                                    <Button
-                                        variant="error"
-                                        size="small"
-                                        onClick={() => handleDeleteClick(ticketType)}
-                                    >
-                                        Delete
-                                    </Button>
-                                </div>
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
+            <div className={styles.tableWrapper}>
+                <div className={styles.tableContainer}>
+                    <table className={styles.table}>
+                        <thead>
+                            <tr>
+                                <th>Display Name</th>
+                                <th>Category</th>
+                                <th>Price Multiplier</th>
+                                <th>Age Range</th>
+                                <th>Document</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {ticketTypes.map((ticketType) => (
+                                <tr key={ticketType.id} className={styles.row}>
+                                    <td className={styles.nameCell}>
+                                        <span className={styles.displayName}>{ticketType.displayName}</span>
+                                    </td>
+                                    <td className={styles.categoryCell}>
+                                        <Badge variant={getCategoryVariant(ticketType.category)}>
+                                            {TicketTypeCategoryDisplay[ticketType.category]}
+                                        </Badge>
+                                    </td>
+                                    <td className={styles.priceCell}>
+                                        <span className={styles.price}>× {ticketType.priceMultiplier}</span>
+                                    </td>
+                                    <td className={styles.ageCell}>
+                                        <span className={styles.ageRange}>
+                                            {formatAgeRange(ticketType)}
+                                        </span>
+                                    </td>
+                                    <td className={styles.documentCell}>
+                                        {ticketType.requiresDocument ? (
+                                            <Tooltip content={ticketType.documentType || 'Document required'}>
+                                                <Badge variant="warning">Required</Badge>
+                                            </Tooltip>
+                                        ) : (
+                                            <Badge variant="outline">Not required</Badge>
+                                        )}
+                                    </td>
+                                    <td className={styles.statusCell}>
+                                        <button
+                                            className={`${styles.toggleButton} ${ticketType.active ? styles.activeToggle : styles.inactiveToggle
+                                                }`}
+                                            onClick={() => onToggleActive(ticketType.id)}
+                                        >
+                                            {ticketType.active ? 'Active' : 'Inactive'}
+                                        </button>
+                                    </td>
+                                    <td className={styles.actionsCell}>
+                                        <div className={styles.actions}>
+                                            <Button
+                                                variant="secondary"
+                                                size="small"
+                                                onClick={() => onEdit(ticketType)}
+                                                className={styles.actionButton}
+                                            >
+                                                Edit
+                                            </Button>
+                                            <Button
+                                                variant="error"
+                                                size="small"
+                                                onClick={() => handleDeleteClick(ticketType)}
+                                                className={styles.actionButton}
+                                            >
+                                                Delete
+                                            </Button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
 
             <DeleteConfirmModal
                 isOpen={deleteModalOpen}

@@ -7,13 +7,14 @@ import CreateTicketTypeModal from './TicketTypeModal/CreateTicketTypeModal';
 import EditTicketTypeModal from './TicketTypeModal/EditTicketTypeModal';
 import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';
 import styles from './SectionTicketType.module.css';
-import type { TicketTypeResponse } from '@/types/ticketType';
+import type { TicketTypeResponse, TicketTypeCategory } from '@/types/ticketType';
 
 const SectionTicketType = () => {
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [editingTicketType, setEditingTicketType] = useState<TicketTypeResponse | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
+    const [categoryFilter, setCategoryFilter] = useState<TicketTypeCategory | 'all'>('all');
 
     const {
         ticketTypes,
@@ -23,15 +24,11 @@ const SectionTicketType = () => {
         removeTicketType,
         toggleTicketTypeActive
     } = useTicketTypeList({
-        activeFilter: statusFilter === 'all' ? undefined : statusFilter === 'active',
+        statusFilter,
+        categoryFilter,
+        searchQuery,
         autoFetch: true
     });
-
-    const filteredTicketTypes = ticketTypes.filter(ticketType =>
-        ticketType.displayName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        ticketType.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        ticketType.category.toLowerCase().includes(searchQuery.toLowerCase())
-    );
 
     const handleCreateSuccess = () => {
         setShowCreateModal(false);
@@ -69,6 +66,9 @@ const SectionTicketType = () => {
         );
     }
 
+    const activeCount = ticketTypes.filter(t => t.active).length;
+    const inactiveCount = ticketTypes.filter(t => !t.active).length;
+
     return (
         <div className={styles.section}>
             <div className={styles.header}>
@@ -89,31 +89,46 @@ const SectionTicketType = () => {
                     onSearchChange={setSearchQuery}
                     statusFilter={statusFilter}
                     onStatusChange={setStatusFilter}
+                    categoryFilter={categoryFilter}
+                    onCategoryChange={setCategoryFilter}
+                    activeCount={activeCount}
+                    inactiveCount={inactiveCount}
                 />
 
                 {loading ? (
                     <div className={styles.loading}>
                         <LoadingSpinner text="Loading ticket types..." />
                     </div>
-                ) : filteredTicketTypes.length === 0 ? (
+                ) : ticketTypes.length === 0 ? (
                     <div className={styles.empty}>
                         <p>No ticket types found</p>
-                        {searchQuery && (
+                        {(searchQuery || statusFilter !== 'all' || categoryFilter !== 'all') && (
                             <Button
                                 variant="secondary"
-                                onClick={() => setSearchQuery('')}
+                                onClick={() => {
+                                    setSearchQuery('');
+                                    setStatusFilter('all');
+                                    setCategoryFilter('all');
+                                }}
                             >
-                                Clear search
+                                Clear all filters
                             </Button>
                         )}
                     </div>
                 ) : (
-                    <TicketTypeTable
-                        ticketTypes={filteredTicketTypes}
-                        onEdit={handleEdit}
-                        onDelete={handleDelete}
-                        onToggleActive={handleToggleActive}
-                    />
+                    <>
+                        <div className={styles.stats}>
+                            <span>Total: {ticketTypes.length}</span>
+                            <span>Active: {activeCount}</span>
+                            <span>Inactive: {inactiveCount}</span>
+                        </div>
+                        <TicketTypeTable
+                            ticketTypes={ticketTypes}
+                            onEdit={handleEdit}
+                            onDelete={handleDelete}
+                            onToggleActive={handleToggleActive}
+                        />
+                    </>
                 )}
             </div>
 
