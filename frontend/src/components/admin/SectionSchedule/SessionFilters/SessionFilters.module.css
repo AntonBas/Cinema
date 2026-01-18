@@ -10,7 +10,7 @@
 
 .filterGrid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    grid-template-columns: repeat(3, minmax(200px, 1fr));
     gap: var(--space-6);
     padding: var(--space-6);
     position: relative;
@@ -102,13 +102,6 @@
     margin-top: 4px;
 }
 
-.loadingResults {
-    padding: var(--space-4);
-    text-align: center;
-    color: var(--color-text-secondary);
-    font-style: italic;
-}
-
 .movieOption {
     padding: var(--space-3);
     cursor: pointer;
@@ -198,6 +191,12 @@
 
 .clearButton {
     min-width: 140px;
+}
+
+@media (max-width: 1024px) {
+    .filterGrid {
+        grid-template-columns: repeat(2, minmax(200px, 1fr));
+    }
 }
 
 @media (max-width: 768px) {

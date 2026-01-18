@@ -86,82 +86,51 @@ export const SectionSchedule: React.FC = () => {
         setIsReactivateModalOpen(true);
     };
 
-    const handleViewDetails = (session: SessionAdminResponse) => {
-        console.log('View session details:', session);
-    };
-
     const handleConfirmDelete = async () => {
         if (!sessionToDelete) return;
-
-        try {
-            await deleteSession(sessionToDelete.id);
-            showNotification('Session deleted successfully', 'success');
-            refetch();
-            setIsDeleteModalOpen(false);
-            setSessionToDelete(null);
-        } catch (error) {
-            showNotification('Failed to delete session', 'error');
-        }
+        await deleteSession(sessionToDelete.id);
+        showNotification('Session deleted successfully', 'success');
+        refetch();
+        setIsDeleteModalOpen(false);
+        setSessionToDelete(null);
     };
 
     const handleConfirmCancel = async () => {
         if (!sessionToCancel) return;
-
-        try {
-            await cancelSession(sessionToCancel.id);
-            showNotification('Session cancelled successfully', 'success');
-            refetch();
-            setIsCancelModalOpen(false);
-            setSessionToCancel(null);
-        } catch (error) {
-            showNotification('Failed to cancel session', 'error');
-        }
+        await cancelSession(sessionToCancel.id);
+        showNotification('Session cancelled successfully', 'success');
+        refetch();
+        setIsCancelModalOpen(false);
+        setSessionToCancel(null);
     };
 
     const handleConfirmReactivate = async () => {
         if (!sessionToReactivate) return;
-
-        try {
-            await reactivateSession(sessionToReactivate.id);
-            showNotification('Session reactivated successfully', 'success');
-            refetch();
-            setIsReactivateModalOpen(false);
-            setSessionToReactivate(null);
-        } catch (error) {
-            showNotification('Failed to reactivate session', 'error');
-        }
+        await reactivateSession(sessionToReactivate.id);
+        showNotification('Session reactivated successfully', 'success');
+        refetch();
+        setIsReactivateModalOpen(false);
+        setSessionToReactivate(null);
     };
 
     const handleSaveNewSession = async (data: SessionCreateRequest) => {
-        try {
-            await createSession(data);
-            showNotification('Session created successfully', 'success');
-            setIsCreateModalOpen(false);
-            setSelectedSession(null);
-            refetch();
-        } catch (error) {
-            throw error;
-        }
+        await createSession(data);
+        showNotification('Session created successfully', 'success');
+        setIsCreateModalOpen(false);
+        setSelectedSession(null);
+        refetch();
     };
 
     const handleSaveUpdatedSession = async (id: number, data: SessionUpdateRequest) => {
-        try {
-            await updateSession(id, data);
-            showNotification('Session updated successfully', 'success');
-            setIsUpdateModalOpen(false);
-            setSelectedSession(null);
-            refetch();
-        } catch (error) {
-            throw error;
-        }
+        await updateSession(id, data);
+        showNotification('Session updated successfully', 'success');
+        setIsUpdateModalOpen(false);
+        setSelectedSession(null);
+        refetch();
     };
 
     const handlePageChange = (page: number) => {
         setPagination(prev => ({ ...prev, page }));
-    };
-
-    const handleRetry = () => {
-        refetch();
     };
 
     const handleClearFilters = () => {
@@ -214,23 +183,6 @@ export const SectionSchedule: React.FC = () => {
                 activeFilterCount={activeFilterCount}
             />
 
-            {error && (
-                <div className={styles.error}>
-                    <div className={styles.errorContent}>
-                        <span className={styles.errorIcon}>⚠️</span>
-                        <span className={styles.errorMessage}>{error}</span>
-                    </div>
-                    <Button
-                        variant="secondary"
-                        size="small"
-                        onClick={handleRetry}
-                        className={styles.retryButton}
-                    >
-                        Retry
-                    </Button>
-                </div>
-            )}
-
             <div className={styles.tableSection}>
                 <SessionTable
                     sessions={sessions}
@@ -240,7 +192,6 @@ export const SectionSchedule: React.FC = () => {
                     onDelete={handleDeleteSession}
                     onCancel={handleCancelSession}
                     onReactivate={handleReactivateSession}
-                    onViewDetails={handleViewDetails}
                 />
             </div>
 

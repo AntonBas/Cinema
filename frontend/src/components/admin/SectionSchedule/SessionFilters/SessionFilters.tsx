@@ -9,14 +9,12 @@ interface SessionFiltersProps {
         date?: string;
         hallId?: number;
         movieId?: number;
-        daysAhead?: number;
         status?: CinemaSessionStatus;
     };
     onDateChange: (date: string | undefined) => void;
     onHallChange: (hallId: number | undefined) => void;
     onMovieChange: (movieId: number | undefined) => void;
     onStatusChange: (status: CinemaSessionStatus | undefined) => void;
-    onUpcomingDaysChange: (daysAhead: number | undefined) => void;
     onClearFilters: () => void;
     hasActiveFilters: boolean;
     activeFilterCount: number;
@@ -28,7 +26,6 @@ export const SessionFilters: React.FC<SessionFiltersProps> = ({
     onHallChange,
     onMovieChange,
     onStatusChange,
-    onUpcomingDaysChange,
     onClearFilters,
     hasActiveFilters,
     activeFilterCount
@@ -39,11 +36,9 @@ export const SessionFilters: React.FC<SessionFiltersProps> = ({
     const [showMovieResults, setShowMovieResults] = useState(false);
     const [selectedMovieTitle, setSelectedMovieTitle] = useState('');
     const movieSearchRef = useRef<HTMLDivElement>(null);
-    const [isSearching, setIsSearching] = useState(false);
 
     useEffect(() => {
         searchMovies({
-            searchTerm: '',
             page: 0,
             size: 50
         });
@@ -55,7 +50,7 @@ export const SessionFilters: React.FC<SessionFiltersProps> = ({
             if (selectedMovie) {
                 setSelectedMovieTitle(selectedMovie.title);
             }
-        } else if (!filters.movieId) {
+        } else {
             setSelectedMovieTitle('');
         }
     }, [filters.movieId, movies]);
@@ -72,16 +67,19 @@ export const SessionFilters: React.FC<SessionFiltersProps> = ({
     }, []);
 
     useEffect(() => {
-        setIsSearching(true);
         const debounceTimer = setTimeout(() => {
-            if (movieSearchTerm !== '') {
+            if (movieSearchTerm.trim().length > 0) {
                 searchMovies({
-                    searchTerm: movieSearchTerm,
+                    searchTerm: movieSearchTerm.trim(),
+                    page: 0,
+                    size: 50
+                });
+            } else {
+                searchMovies({
                     page: 0,
                     size: 50
                 });
             }
-            setIsSearching(false);
         }, 300);
 
         return () => clearTimeout(debounceTimer);
@@ -117,25 +115,16 @@ export const SessionFilters: React.FC<SessionFiltersProps> = ({
         onStatusChange(value as CinemaSessionStatus || undefined);
     };
 
-    const handleUpcomingDaysChange = (value: string | number) => {
-        onUpcomingDaysChange(value ? Number(value) : undefined);
-    };
-
     const handleClearMovieSearch = () => {
         setMovieSearchTerm('');
         setSelectedMovieTitle('');
         setShowMovieResults(false);
         onMovieChange(undefined);
+        searchMovies({
+            page: 0,
+            size: 50
+        });
     };
-
-    const upcomingDaysOptions = [
-        { value: '', label: 'All days' },
-        { value: '1', label: 'Next 1 day' },
-        { value: '3', label: 'Next 3 days' },
-        { value: '7', label: 'Next 7 days' },
-        { value: '14', label: 'Next 14 days' },
-        { value: '30', label: 'Next 30 days' }
-    ];
 
     const hallOptions = [
         { value: '', label: 'All halls' },
@@ -166,17 +155,6 @@ export const SessionFilters: React.FC<SessionFiltersProps> = ({
                             value={filters.date || ''}
                             onChange={handleDateChange}
                             className={styles.input}
-                        />
-                    </div>
-                </div>
-
-                <div className={styles.filterGroup}>
-                    <label className={styles.label}>Upcoming Days</label>
-                    <div className={styles.selectContainer}>
-                        <Select
-                            value={filters.daysAhead?.toString() || ''}
-                            onChange={handleUpcomingDaysChange}
-                            options={upcomingDaysOptions}
                         />
                     </div>
                 </div>
@@ -231,11 +209,7 @@ export const SessionFilters: React.FC<SessionFiltersProps> = ({
 
                         {showMovieResults && (
                             <div className={styles.movieResults}>
-                                {isSearching && (
-                                    <div className={styles.loadingResults}>Searching...</div>
-                                )}
-
-                                {!isSearching && movies.map(movie => (
+                                {movies.map(movie => (
                                     <div
                                         key={movie.id}
                                         className={`${styles.movieOption} ${filters.movieId === movie.id ? styles.selected : ''}`}
@@ -248,7 +222,7 @@ export const SessionFilters: React.FC<SessionFiltersProps> = ({
                                     </div>
                                 ))}
 
-                                {!isSearching && movies.length === 0 && (
+                                {movies.length === 0 && (
                                     <div className={styles.noResults}>No movies found</div>
                                 )}
                             </div>
