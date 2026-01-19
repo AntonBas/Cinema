@@ -601,6 +601,20 @@ h5,
   cursor: wait;
 }
 
+.admin-table thead tr th {
+  font-weight: 600;
+  padding: var(--space-4) var(--space-4);
+  text-align: left;
+  border-bottom: 2px solid var(--color-border-medium);
+  font-size: var(--font-size-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-text-primary) !important;
+  background: var(--color-bg-quaternary) !important;
+  white-space: nowrap;
+}
+
+
 @keyframes fadeIn {
   from {
     opacity: 0;

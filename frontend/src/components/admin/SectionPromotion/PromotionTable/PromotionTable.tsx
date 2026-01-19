@@ -99,6 +99,7 @@ const PromotionTable: React.FC<PromotionTableProps> = ({
                                             variant="secondary"
                                             size="small"
                                             onClick={() => onEdit(promotion.id)}
+                                            className={styles.actionButton}
                                         >
                                             Edit
                                         </Button>
@@ -106,6 +107,7 @@ const PromotionTable: React.FC<PromotionTableProps> = ({
                                             variant="error"
                                             size="small"
                                             onClick={() => onDelete(promotion.id, promotion.title)}
+                                            className={styles.actionButton}
                                         >
                                             Delete
                                         </Button>

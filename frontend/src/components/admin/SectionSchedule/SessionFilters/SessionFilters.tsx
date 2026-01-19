@@ -31,10 +31,11 @@ export const SessionFilters: React.FC<SessionFiltersProps> = ({
     activeFilterCount
 }) => {
     const { allHalls: halls } = useCinemaHalls();
-    const { movies, searchMovies } = useMovieSearch();
+    const { movies, searchMovies, loading } = useMovieSearch();
     const [movieSearchTerm, setMovieSearchTerm] = useState('');
     const [showMovieResults, setShowMovieResults] = useState(false);
     const [selectedMovieTitle, setSelectedMovieTitle] = useState('');
+    const [localMovies, setLocalMovies] = useState(movies);
     const movieSearchRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -45,15 +46,19 @@ export const SessionFilters: React.FC<SessionFiltersProps> = ({
     }, [searchMovies]);
 
     useEffect(() => {
-        if (filters.movieId && movies.length > 0) {
-            const selectedMovie = movies.find(movie => movie.id === filters.movieId);
+        setLocalMovies(movies);
+    }, [movies]);
+
+    useEffect(() => {
+        if (filters.movieId && localMovies.length > 0) {
+            const selectedMovie = localMovies.find(movie => movie.id === filters.movieId);
             if (selectedMovie) {
                 setSelectedMovieTitle(selectedMovie.title);
             }
         } else {
             setSelectedMovieTitle('');
         }
-    }, [filters.movieId, movies]);
+    }, [filters.movieId, localMovies]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -68,22 +73,26 @@ export const SessionFilters: React.FC<SessionFiltersProps> = ({
 
     useEffect(() => {
         const debounceTimer = setTimeout(() => {
-            if (movieSearchTerm.trim().length > 0) {
-                searchMovies({
-                    searchTerm: movieSearchTerm.trim(),
-                    page: 0,
-                    size: 50
-                });
-            } else {
-                searchMovies({
-                    page: 0,
-                    size: 50
-                });
-            }
+            searchMovies({
+                searchTerm: movieSearchTerm.trim(),
+                page: 0,
+                size: 50
+            });
         }, 300);
 
         return () => clearTimeout(debounceTimer);
     }, [movieSearchTerm, searchMovies]);
+
+    const filteredMovies = React.useMemo(() => {
+        if (!movieSearchTerm.trim()) {
+            return localMovies;
+        }
+
+        const searchLower = movieSearchTerm.toLowerCase();
+        return localMovies.filter(movie =>
+            movie.title.toLowerCase().includes(searchLower)
+        );
+    }, [localMovies, movieSearchTerm]);
 
     const handleDateChange = (value: string) => {
         onDateChange(value || undefined);
@@ -101,7 +110,9 @@ export const SessionFilters: React.FC<SessionFiltersProps> = ({
         setMovieSearchTerm(value);
         if (value === '') {
             onMovieChange(undefined);
+            setSelectedMovieTitle('');
         }
+        setShowMovieResults(true);
     };
 
     const handleMovieSelect = (movieId: number, movieTitle: string) => {
@@ -139,7 +150,7 @@ export const SessionFilters: React.FC<SessionFiltersProps> = ({
         { value: 'SCHEDULED', label: 'Scheduled' },
         { value: 'ONGOING', label: 'Ongoing' },
         { value: 'COMPLETED', label: 'Completed' },
-        { value: 'CANCELLED', label: 'Cancelled' }
+        { value: 'CANCELLED', label: 'CANCELLED' }
     ];
 
     const displayValue = selectedMovieTitle || movieSearchTerm;
@@ -209,21 +220,27 @@ export const SessionFilters: React.FC<SessionFiltersProps> = ({
 
                         {showMovieResults && (
                             <div className={styles.movieResults}>
-                                {movies.map(movie => (
-                                    <div
-                                        key={movie.id}
-                                        className={`${styles.movieOption} ${filters.movieId === movie.id ? styles.selected : ''}`}
-                                        onClick={() => handleMovieSelect(movie.id, movie.title)}
-                                    >
-                                        <div className={styles.movieTitle}>{movie.title}</div>
-                                        <div className={styles.movieDetails}>
-                                            {movie.releaseDate ? new Date(movie.releaseDate).getFullYear() : 'N/A'} • {movie.durationMinutes} min
-                                        </div>
+                                {loading ? (
+                                    <div className={styles.loadingResults}>
+                                        Loading movies...
                                     </div>
-                                ))}
-
-                                {movies.length === 0 && (
-                                    <div className={styles.noResults}>No movies found</div>
+                                ) : filteredMovies.length > 0 ? (
+                                    filteredMovies.map(movie => (
+                                        <div
+                                            key={movie.id}
+                                            className={`${styles.movieOption} ${filters.movieId === movie.id ? styles.selected : ''}`}
+                                            onClick={() => handleMovieSelect(movie.id, movie.title)}
+                                        >
+                                            <div className={styles.movieTitle}>{movie.title}</div>
+                                            <div className={styles.movieDetails}>
+                                                {movie.releaseDate ? new Date(movie.releaseDate).getFullYear() : 'N/A'} • {movie.durationMinutes} min
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className={styles.noResults}>
+                                        {movieSearchTerm.trim() ? `No movies found for "${movieSearchTerm}"` : 'No movies available'}
+                                    </div>
                                 )}
                             </div>
                         )}
@@ -231,28 +248,26 @@ export const SessionFilters: React.FC<SessionFiltersProps> = ({
                 </div>
             </div>
 
-            <div className={styles.footer}>
-                <div className={styles.footerContent}>
-                    <div className={styles.filterInfo}>
-                        {hasActiveFilters && (
-                            <>
-                                <div className={styles.filterCount}>
-                                    <span className={styles.countBadge}>{activeFilterCount}</span>
-                                    active filter{activeFilterCount !== 1 ? 's' : ''}
-                                </div>
-                                <Button
-                                    variant="error"
-                                    size="medium"
-                                    onClick={onClearFilters}
-                                    className={styles.clearButton}
-                                >
-                                    Clear All Filters
-                                </Button>
-                            </>
-                        )}
+            {hasActiveFilters && (
+                <div className={styles.clearFiltersContainer}>
+                    <div className={styles.clearFiltersWrapper}>
+                        <div className={styles.filterInfo}>
+                            <div className={styles.filterCount}>
+                                <span className={styles.countBadge}>{activeFilterCount}</span>
+                                active filter{activeFilterCount !== 1 ? 's' : ''}
+                            </div>
+                            <Button
+                                variant="error"
+                                size="medium"
+                                onClick={onClearFilters}
+                                className={styles.clearButton}
+                            >
+                                Clear All Filters
+                            </Button>
+                        </div>
                     </div>
                 </div>
-            </div>
+            )}
         </div>
     );
 };

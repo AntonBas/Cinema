@@ -153,7 +153,6 @@ const BonusTransactions = () => {
                             <th>New Balance</th>
                             <th>Reference ID</th>
                             <th>Date</th>
-                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -196,19 +195,6 @@ const BonusTransactions = () => {
                                     <span className={styles.date}>
                                         {new Date(transaction.createdAt).toLocaleString()}
                                     </span>
-                                </td>
-                                <td>
-                                    <div className={styles.actions}>
-                                        <Button
-                                            variant="secondary"
-                                            size="small"
-                                            onClick={() => {
-                                                console.log('View transaction:', transaction.id);
-                                            }}
-                                        >
-                                            View
-                                        </Button>
-                                    </div>
                                 </td>
                             </tr>
                         ))}

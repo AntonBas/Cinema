@@ -29,8 +29,8 @@ export const UserTable: React.FC<UserTableProps> = ({
     return (
         <div className={styles.tableWrapper}>
             <div className={styles.tableContainer}>
-                <table className={styles.table}>
-                    <thead>
+                <table className={`${styles.table} admin-table`}>
+                    <thead className={styles.tableHead}>
                         <tr>
                             <th>User</th>
                             <th>Role</th>
@@ -42,7 +42,7 @@ export const UserTable: React.FC<UserTableProps> = ({
                             <th>Actions</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody className={styles.tableBody}>
                         {users.map((user) => (
                             <UserTableRow
                                 key={user.id}
