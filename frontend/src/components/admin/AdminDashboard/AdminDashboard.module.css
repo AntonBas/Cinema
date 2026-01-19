@@ -5,9 +5,6 @@
 }
 
 .header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   margin-bottom: var(--space-8);
 }
 
@@ -15,45 +12,76 @@
   color: var(--color-text-primary);
   font-size: var(--font-size-3xl);
   font-weight: 700;
-  margin: 0;
+  margin: 0 0 var(--space-2) 0;
   background: linear-gradient(45deg, var(--color-primary), var(--color-primary-light));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-.refreshButton {
-  background: rgba(var(--color-primary-rgb), var(--opacity-low));
-  color: var(--color-primary);
-  border: 1px solid var(--color-primary);
-  padding: var(--space-3) var(--space-6);
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  font-weight: 600;
-  transition: all var(--transition-normal);
+.subtitle {
+  color: var(--color-text-secondary);
   font-size: var(--font-size-sm);
+  font-weight: 500;
 }
 
-.refreshButton:hover:not(:disabled) {
-  background: var(--color-primary);
-  color: var(--color-text-primary);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
+.statsOverview {
+  margin-bottom: var(--space-8);
 }
 
-.refreshButton:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none;
+.overviewCard {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  color: white;
+  box-shadow: var(--shadow-lg);
 }
 
-.refreshButton:active:not(:disabled) {
-  transform: translateY(-1px);
+.overviewHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-6);
+}
+
+.overviewTitle {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+}
+
+.overviewDate {
+  font-size: var(--font-size-sm);
+  opacity: 0.9;
+}
+
+.overviewStats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--space-6);
+}
+
+.overviewStat {
+  text-align: center;
+}
+
+.overviewLabel {
+  display: block;
+  font-size: var(--font-size-xs);
+  opacity: 0.8;
+  margin-bottom: var(--space-2);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.overviewValue {
+  display: block;
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
 }
 
 .stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: var(--space-6);
   margin-bottom: var(--space-8);
 }
@@ -62,9 +90,9 @@
   background: var(--color-bg-quaternary);
   border: 1px solid var(--color-border-medium);
   border-radius: var(--radius-lg);
-  padding: var(--space-8);
+  padding: var(--space-6);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--space-6);
   transition: all var(--transition-normal);
 }
@@ -75,19 +103,36 @@
   border-color: var(--color-primary);
 }
 
+.statHeader {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
 .statIcon {
-  font-size: 3rem;
+  font-size: 2.5rem;
   opacity: 0.8;
-  color: var(--color-primary);
+}
+
+.statTrend {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--color-success);
+  padding: var(--space-1) var(--space-2);
+  background: rgba(var(--color-success-rgb), var(--opacity-low));
+  border-radius: var(--radius-sm);
 }
 
 .statContent {
   flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .statNumber {
   color: var(--color-text-primary);
-  font-size: var(--font-size-3xl);
+  font-size: var(--font-size-2xl);
   font-weight: 700;
   margin: 0 0 var(--space-1) 0;
   line-height: 1;
@@ -99,21 +144,46 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  margin-bottom: var(--space-1);
+}
+
+.statSubtext {
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-xs);
+  font-weight: 500;
 }
 
 .activity {
   background: var(--color-bg-quaternary);
   border-radius: var(--radius-xl);
   border: 1px solid var(--color-border-medium);
-  padding: var(--space-8);
+  padding: var(--space-6);
   box-shadow: var(--shadow-md);
 }
 
-.activity h2 {
+.activityHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-6);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--color-border-medium);
+}
+
+.activityHeader h2 {
   color: var(--color-text-primary);
   font-size: var(--font-size-xl);
   font-weight: 600;
-  margin: 0 0 var(--space-6) 0;
+  margin: 0;
+}
+
+.activityCount {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  background: var(--color-bg-secondary);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+  font-weight: 500;
 }
 
 .activityList {
@@ -157,12 +227,73 @@
   min-width: 0;
 }
 
+.activityMain {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  margin-bottom: var(--space-1);
+}
+
+.activityType {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.activityAction {
+  font-size: var(--font-size-xs);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.activityAction.created {
+  background: rgba(var(--color-success-rgb), var(--opacity-low));
+  color: var(--color-success);
+}
+
+.activityAction.updated {
+  background: rgba(var(--color-warning-rgb), var(--opacity-low));
+  color: var(--color-warning);
+}
+
+.activityAction.deleted {
+  background: rgba(var(--color-error-rgb), var(--opacity-low));
+  color: var(--color-error);
+}
+
+.activityAction.sold {
+  background: rgba(var(--color-info-rgb), var(--opacity-low));
+  color: var(--color-info);
+}
+
+.activityAction.cancelled {
+  background: rgba(var(--color-error-rgb), var(--opacity-low));
+  color: var(--color-error);
+}
+
+.activityAction.booked {
+  background: rgba(var(--color-success-rgb), var(--opacity-low));
+  color: var(--color-success);
+}
+
 .activityText {
   color: var(--color-text-primary);
   margin: 0 0 var(--space-1) 0;
   font-weight: 500;
   font-size: var(--font-size-sm);
   line-height: 1.4;
+}
+
+.activityDetails {
+  display: block;
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-xs);
+  margin-bottom: var(--space-1);
+  font-weight: 500;
 }
 
 .activityTime {
@@ -197,8 +328,22 @@
   animation: spin 1s linear infinite;
 }
 
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
 @media (max-width: 1024px) {
   .stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .overviewStats {
     grid-template-columns: repeat(2, 1fr);
   }
 }
@@ -208,23 +353,17 @@
     padding: var(--space-4);
   }
 
-  .header {
-    flex-direction: column;
-    gap: var(--space-4);
-    align-items: flex-start;
-  }
-
   .stats {
     grid-template-columns: 1fr;
     gap: var(--space-4);
   }
 
   .statCard {
-    padding: var(--space-6);
+    padding: var(--space-4);
   }
 
   .statNumber {
-    font-size: var(--font-size-2xl);
+    font-size: var(--font-size-xl);
   }
 
   .activity {
@@ -235,9 +374,9 @@
     font-size: var(--font-size-2xl);
   }
 
-  .refreshButton {
-    width: 100%;
-    text-align: center;
+  .overviewStats {
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
   }
 }
 
@@ -250,11 +389,11 @@
     flex-direction: column;
     text-align: center;
     gap: var(--space-3);
-    padding: var(--space-4);
+    padding: var(--space-3);
   }
 
   .statIcon {
-    font-size: 2.5rem;
+    font-size: 2rem;
   }
 
   .activityItem {
@@ -265,24 +404,4 @@
   .activityText {
     font-size: var(--font-size-xs);
   }
-}
-
-.activitySuccess .activityIcon {
-  background: rgba(var(--color-success-rgb), var(--opacity-low));
-  color: var(--color-success);
-}
-
-.activityWarning .activityIcon {
-  background: rgba(var(--color-warning-rgb), var(--opacity-low));
-  color: var(--color-warning);
-}
-
-.activityError .activityIcon {
-  background: rgba(var(--color-error-rgb), var(--opacity-low));
-  color: var(--color-error);
-}
-
-.activityInfo .activityIcon {
-  background: rgba(var(--color-info-rgb), var(--opacity-low));
-  color: var(--color-info);
 }
