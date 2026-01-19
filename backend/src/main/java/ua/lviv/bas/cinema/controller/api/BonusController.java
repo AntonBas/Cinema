@@ -38,7 +38,7 @@ public class BonusController {
 	@ResponseStatus(HttpStatus.OK)
 	@PreAuthorize("isAuthenticated()")
 	public BonusCardResponse getMyBonusCard(
-			@Parameter(hidden = true) @AuthenticationPrincipal(expression = "id") Long userId) {
+			@Parameter(hidden = true) @AuthenticationPrincipal(expression = "userId") Long userId) {
 		return bonusService.getBonusCard(userId);
 	}
 
@@ -49,7 +49,7 @@ public class BonusController {
 	@ResponseStatus(HttpStatus.OK)
 	@PreAuthorize("isAuthenticated()")
 	public BonusBalanceResponse getMyBalance(
-			@Parameter(hidden = true) @AuthenticationPrincipal(expression = "id") Long userId) {
+			@Parameter(hidden = true) @AuthenticationPrincipal(expression = "userId") Long userId) {
 		return bonusService.getBalance(userId);
 	}
 
@@ -59,7 +59,7 @@ public class BonusController {
 	@ResponseStatus(HttpStatus.OK)
 	@PreAuthorize("isAuthenticated()")
 	public Page<BonusTransactionResponse> getMyTransactions(
-			@Parameter(hidden = true) @AuthenticationPrincipal(expression = "id") Long userId,
+			@Parameter(hidden = true) @AuthenticationPrincipal(expression = "userId") Long userId,
 			@PageableDefault(size = 20) Pageable pageable) {
 		return bonusService.getUserTransactions(userId, pageable);
 	}

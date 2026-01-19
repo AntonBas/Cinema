@@ -329,9 +329,24 @@ public class BonusService {
 	}
 
 	private BonusBalanceResponse buildBalanceResponse(BonusCard card) {
-		BigDecimal balanceValue = POINT_VALUE.multiply(BigDecimal.valueOf(card.getPointsBalance()));
+		BigDecimal pointValue = POINT_VALUE;
+		BigDecimal balanceValue = pointValue.multiply(BigDecimal.valueOf(card.getPointsBalance()));
 
-		return BonusBalanceResponse.builder().pointsBalance(card.getPointsBalance()).pointValue(POINT_VALUE)
-				.balanceValue(balanceValue).build();
+		BonusRules bookingSpendRule = bonusRulesRepository
+				.findByBonusTypeAndActiveTrue(BonusTransactionType.BOOKING_SPEND).orElse(null);
+
+		Integer minUsablePoints = bookingSpendRule != null ? bookingSpendRule.getMinPointsPerTransaction() : 0;
+		Integer maxUsablePoints = bookingSpendRule != null ? bookingSpendRule.getMaxPointsPerTransaction() : 0;
+
+		BigDecimal minRedemptionValue = minUsablePoints != null && minUsablePoints > 0
+				? pointValue.multiply(new BigDecimal(minUsablePoints))
+				: BigDecimal.ZERO;
+		BigDecimal maxRedemptionValue = maxUsablePoints != null && maxUsablePoints > 0
+				? pointValue.multiply(new BigDecimal(maxUsablePoints))
+				: BigDecimal.ZERO;
+
+		return BonusBalanceResponse.builder().pointsBalance(card.getPointsBalance()).pointValue(pointValue)
+				.balanceValue(balanceValue).minUsablePoints(minUsablePoints).maxUsablePoints(maxUsablePoints)
+				.minRedemptionValue(minRedemptionValue).maxRedemptionValue(maxRedemptionValue).build();
 	}
 }
