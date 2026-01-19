@@ -13,6 +13,8 @@ import { EmailVerificationPage } from '@/pages/auth/EmailVerificationPage';
 import { HomePage } from '@/pages/home/HomePage';
 import { DashboardPage } from '@/pages/account/DashboardPage';
 import { SecurityPage } from '@/pages/account/SecurityPage';
+import { BonusPage } from '@/pages/account/BonusPage';
+import { TicketsPage } from '@/pages/account/TicketsPage';
 
 import {
     MoviesLayout,
@@ -69,6 +71,18 @@ export const AppRoutes: React.FC = () => {
             <Route path="/account/security" element={
                 <ProtectedRoute>
                     <SecurityPage />
+                </ProtectedRoute>
+            } />
+
+            <Route path="/account/bonuses" element={
+                <ProtectedRoute>
+                    <BonusPage />
+                </ProtectedRoute>
+            } />
+
+            <Route path="/account/tickets" element={
+                <ProtectedRoute>
+                    <TicketsPage />
                 </ProtectedRoute>
             } />
 

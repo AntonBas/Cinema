@@ -1,0 +1,140 @@
+.transactions {
+    width: 100%;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.count {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    background: var(--bg-secondary);
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+}
+
+.table {
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.tableHeader {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr 1fr 1fr 1fr;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.headerCell {
+    padding: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    text-align: left;
+}
+
+.tableBody {
+    background: var(--bg-primary);
+}
+
+.tableRow {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr 1fr 1fr 1fr;
+    border-bottom: 1px solid var(--border-color);
+    transition: background-color 0.2s ease;
+}
+
+.tableRow:hover {
+    background: var(--bg-hover);
+}
+
+.tableRow:last-child {
+    border-bottom: none;
+}
+
+.tableCell {
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+}
+
+.positive {
+    color: var(--success-color);
+    font-weight: 600;
+}
+
+.negative {
+    color: var(--error-color);
+    font-weight: 600;
+}
+
+.loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+}
+
+.noTransactions {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+}
+
+@media (max-width: 1024px) {
+    .tableHeader {
+        grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+    }
+
+    .tableRow {
+        grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+    }
+
+    .headerCell,
+    .tableCell {
+        padding: 0.75rem 0.5rem;
+        font-size: 0.85rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .table {
+        overflow-x: auto;
+    }
+
+    .tableHeader,
+    .tableRow {
+        grid-template-columns: 180px 120px 120px 100px 100px;
+        min-width: 620px;
+    }
+
+    .headerCell,
+    .tableCell {
+        padding: 0.75rem;
+    }
+}

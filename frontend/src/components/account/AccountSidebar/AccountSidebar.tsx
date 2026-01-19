@@ -23,25 +23,25 @@ export const AccountSidebar: React.FC<AccountSidebarProps> = ({ activePage }) =>
             path: '/account',
             icon: '🏠'
         },
+
+        {
+            id: 'tickets',
+            label: 'My Tickets',
+            path: '/account/tickets',
+            icon: '🎫'
+        },
+        {
+            id: 'bonuses',
+            label: 'Bonuses',
+            path: '/account/bonuses',
+            icon: '🎁'
+        },
         {
             id: 'security',
             label: 'Security',
             path: '/account/security',
             icon: '🔒'
-        },
-        // Тут згодом додамо:
-        // {
-        //   id: 'tickets',
-        //   label: 'My Tickets', 
-        //   path: '/account/tickets',
-        //   icon: '🎫'
-        // },
-        // {
-        //   id: 'bonuses',
-        //   label: 'Bonuses',
-        //   path: '/account/bonuses',
-        //   icon: '🎁'
-        // }
+        }
     ];
 
     const isActive = (path: string) => {

@@ -1,0 +1,133 @@
+.balanceCard {
+    background: linear-gradient(135deg, var(--primary-color) 0%, #667eea 100%);
+    border-radius: 12px;
+    padding: 2rem;
+    color: white;
+    box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+}
+
+.title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0 0 1.5rem 0;
+    text-align: center;
+}
+
+.mainBalance {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.points {
+    font-size: 3.5rem;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+}
+
+.pointsLabel {
+    font-size: 1.2rem;
+    opacity: 0.9;
+    font-weight: 500;
+}
+
+.valueInfo {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+}
+
+.valueItem {
+    text-align: center;
+}
+
+.valueLabel {
+    font-size: 0.9rem;
+    opacity: 0.8;
+    margin-bottom: 0.25rem;
+}
+
+.valueAmount {
+    font-size: 1.3rem;
+    font-weight: 600;
+}
+
+.usageLimits {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 1.5rem;
+}
+
+.limitsTitle {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 1rem 0;
+    text-align: center;
+}
+
+.limitsGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+}
+
+.limitItem {
+    text-align: center;
+    padding: 0.75rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
+}
+
+.limitLabel {
+    font-size: 0.85rem;
+    opacity: 0.8;
+    margin-bottom: 0.25rem;
+}
+
+.limitValue {
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+    font-size: 1.1rem;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.noData {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+    font-size: 1.1rem;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+@media (max-width: 768px) {
+    .balanceCard {
+        padding: 1.5rem;
+    }
+
+    .points {
+        font-size: 2.5rem;
+    }
+
+    .valueInfo {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        padding: 1rem;
+    }
+
+    .limitsGrid {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+}
