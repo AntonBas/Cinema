@@ -24,9 +24,9 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.enums.TicketStatus;
 import ua.lviv.bas.cinema.dto.ticket.response.TicketResponse;
+import ua.lviv.bas.cinema.security.CustomUserDetails;
 import ua.lviv.bas.cinema.service.booking.TicketService;
 
 @Slf4j
@@ -47,9 +47,9 @@ public class TicketController {
 	@PreAuthorize("hasRole('USER')")
 	public ResponseEntity<TicketResponse> getTicket(
 			@Parameter(description = "ID of the ticket", required = true) @PathVariable Long ticketId,
-			@AuthenticationPrincipal User user) {
-		log.info("Fetching ticket ID: {} for user ID: {}", ticketId, user.getId());
-		TicketResponse response = ticketService.getTicketById(ticketId, user);
+			@AuthenticationPrincipal CustomUserDetails userDetails) {
+		log.info("Fetching ticket ID: {} for user ID: {}", ticketId, userDetails.getUserId());
+		TicketResponse response = ticketService.getTicketById(ticketId, userDetails.getUser());
 		return ResponseEntity.ok(response);
 	}
 
@@ -60,9 +60,9 @@ public class TicketController {
 	@PreAuthorize("hasRole('USER')")
 	public ResponseEntity<List<TicketResponse>> getUserTickets(
 			@Parameter(description = "Filter by ticket status") @RequestParam(required = false) TicketStatus status,
-			@AuthenticationPrincipal User user) {
-		log.info("Fetching tickets for user ID: {} with status filter: {}", user.getId(), status);
-		List<TicketResponse> tickets = ticketService.getUserTickets(user, status);
+			@AuthenticationPrincipal CustomUserDetails userDetails) {
+		log.info("Fetching tickets for user ID: {} with status filter: {}", userDetails.getUserId(), status);
+		List<TicketResponse> tickets = ticketService.getUserTickets(userDetails.getUser(), status);
 		return ResponseEntity.ok(tickets);
 	}
 
@@ -74,9 +74,9 @@ public class TicketController {
 	@PreAuthorize("hasRole('USER')")
 	public ResponseEntity<List<TicketResponse>> getBookingTickets(
 			@Parameter(description = "ID of the booking", required = true) @PathVariable Long bookingId,
-			@AuthenticationPrincipal User user) {
-		log.info("Fetching tickets for booking ID: {} for user ID: {}", bookingId, user.getId());
-		List<TicketResponse> tickets = ticketService.getBookingTickets(bookingId, user);
+			@AuthenticationPrincipal CustomUserDetails userDetails) {
+		log.info("Fetching tickets for booking ID: {} for user ID: {}", bookingId, userDetails.getUserId());
+		List<TicketResponse> tickets = ticketService.getBookingTickets(bookingId, userDetails.getUser());
 		return ResponseEntity.ok(tickets);
 	}
 
@@ -116,9 +116,9 @@ public class TicketController {
 	@PreAuthorize("hasRole('USER')")
 	public ResponseEntity<Void> voidTicket(
 			@Parameter(description = "ID of the ticket to void", required = true) @PathVariable Long ticketId,
-			@AuthenticationPrincipal User user) {
-		log.info("Voiding ticket ID: {} for user ID: {}", ticketId, user.getId());
-		ticketService.voidTicket(ticketId, user);
+			@AuthenticationPrincipal CustomUserDetails userDetails) {
+		log.info("Voiding ticket ID: {} for user ID: {}", ticketId, userDetails.getUserId());
+		ticketService.voidTicket(ticketId, userDetails.getUser());
 		return ResponseEntity.ok().build();
 	}
 
