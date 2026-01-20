@@ -3,7 +3,6 @@ package ua.lviv.bas.cinema.scheduler;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -97,7 +96,6 @@ public class BookingScheduler {
 	}
 
 	@Scheduled(cron = "${scheduler.payment.cleanup-cron:0 0 5 * * *}")
-	@Async("taskExecutor")
 	@Transactional
 	public void cleanupOldPayments() {
 		log.debug("Starting old payments cleanup");
@@ -116,7 +114,6 @@ public class BookingScheduler {
 	}
 
 	@Scheduled(cron = "${scheduler.booking.reminder-cron:0 */10 * * * *}")
-	@Async("taskExecutor")
 	@Transactional(readOnly = true)
 	public void sendExpirationReminders() {
 		LocalDateTime now = LocalDateTime.now();
@@ -131,7 +128,6 @@ public class BookingScheduler {
 	}
 
 	@Scheduled(cron = "${scheduler.payment.daily-stats:0 0 23 * * *}")
-	@Async("taskExecutor")
 	@Transactional(readOnly = true)
 	public void generateDailyPaymentStatistics() {
 		LocalDateTime startOfDay = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0);
