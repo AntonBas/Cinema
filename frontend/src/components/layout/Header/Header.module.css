@@ -1,6 +1,6 @@
 .headerMain {
-  background: linear-gradient(135deg, #1a1f2d 0%, #2a3041 100%);
-  border-bottom: 1px solid #fd5f00;
+  background: linear-gradient(135deg, var(--color-bg-secondary) 0%, var(--color-bg-quaternary) 100%);
+  border-bottom: 1px solid var(--color-primary);
   position: fixed;
   top: 0;
   left: 0;
@@ -13,7 +13,7 @@
 .headerNavbar {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 2rem;
+  padding: 0 var(--space-8);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -22,19 +22,19 @@
 }
 
 .logo a {
-  color: #fd5f00;
-  font-size: 1.8rem;
+  color: var(--color-primary);
+  font-size: var(--font-size-xl);
   font-weight: bold;
   text-decoration: none;
-  font-family: 'Inter', sans-serif;
-  transition: all 0.3s ease;
+  font-family: var(--font-family);
+  transition: var(--transition-normal);
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 
 .logo a:hover {
-  color: #ff8c42;
+  color: var(--color-primary-light);
   transform: translateY(-1px);
 }
 
@@ -52,18 +52,18 @@
 }
 
 .navLinks li a {
-  color: #a0a8c0;
+  color: var(--color-text-secondary);
   font-weight: 500;
   text-decoration: none;
-  transition: all 0.3s ease;
-  padding: 0.5rem 0;
+  transition: var(--transition-normal);
+  padding: var(--space-2) 0;
   position: relative;
-  font-size: 1rem;
+  font-size: var(--font-size-md);
   white-space: nowrap;
 }
 
 .navLinks li a.active {
-  color: #fd5f00;
+  color: var(--color-primary);
   font-weight: 600;
 }
 
@@ -74,8 +74,8 @@
   left: 0;
   width: 0;
   height: 2px;
-  background: #fd5f00;
-  transition: width 0.3s ease;
+  background: var(--color-primary);
+  transition: width var(--transition-normal);
 }
 
 .navLinks li a:hover::after,
@@ -90,7 +90,7 @@
   transform: translateX(-50%);
   width: 4px;
   height: 4px;
-  background: #fd5f00;
+  background: var(--color-primary);
   border-radius: 50%;
 }
 
@@ -99,25 +99,25 @@
 }
 
 .dropdownBtn {
-  background: rgba(253, 95, 0, 0.1);
-  border: 1px solid rgba(253, 95, 0, 0.2);
-  color: #a0a8c0;
+  background: rgba(var(--color-primary-rgb), var(--opacity-low));
+  border: 1px solid rgba(var(--color-primary-rgb), 0.2);
+  color: var(--color-text-secondary);
   font-weight: 500;
   cursor: pointer;
-  padding: 0.6rem 1.2rem;
-  font-size: 1rem;
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--font-size-md);
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  border-radius: 8px;
-  transition: all 0.3s ease;
+  gap: var(--space-2);
+  border-radius: var(--radius-md);
+  transition: var(--transition-normal);
   white-space: nowrap;
 }
 
 .dropdownBtn:hover {
-  color: #fd5f00;
-  background: rgba(253, 95, 0, 0.15);
-  border-color: rgba(253, 95, 0, 0.3);
+  color: var(--color-primary);
+  background: rgba(var(--color-primary-rgb), 0.15);
+  border-color: rgba(var(--color-primary-rgb), var(--opacity-medium));
   transform: translateY(-1px);
 }
 
@@ -130,7 +130,7 @@
 
 .dropdownArrow {
   font-size: 0.7rem;
-  transition: transform 0.3s ease;
+  transition: transform var(--transition-normal);
 }
 
 .dropdownArrow.open {
@@ -141,15 +141,15 @@
   position: absolute;
   top: 100%;
   right: 0;
-  background: #1e232e;
-  border: 1px solid #2a3041;
-  border-radius: 8px;
-  padding: 0.5rem 0;
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-bg-quaternary);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) 0;
   list-style: none;
   min-width: 220px;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--shadow-xl);
   z-index: 1001;
-  margin-top: 0.75rem;
+  margin-top: var(--space-3);
   animation: dropdownFade 0.2s ease;
 }
 
@@ -166,65 +166,65 @@
 }
 
 .userInfoItem {
-  padding: 0.75rem 1rem;
-  border-bottom: 1px solid #2a3041;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--color-bg-quaternary);
 }
 
 .userInfo {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: var(--space-1);
 }
 
 .userInfo strong {
-  color: #ffffff;
-  font-size: 0.95rem;
+  color: var(--color-text-primary);
+  font-size: var(--font-size-sm);
 }
 
 .userEmail {
-  color: #a0a8c0;
-  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
 }
 
 .dropdownDivider {
   height: 1px;
-  background: #2a3041;
-  margin: 0.25rem 0;
+  background: var(--color-bg-quaternary);
+  margin: var(--space-1) 0;
 }
 
 .dropdownMenu li a,
 .dropdownMenu li button {
   display: block;
   width: 100%;
-  padding: 0.75rem 1rem;
-  color: #a0a8c0;
+  padding: var(--space-3) var(--space-4);
+  color: var(--color-text-secondary);
   text-align: left;
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 0.9rem;
-  transition: all 0.3s ease;
+  font-size: var(--font-size-sm);
+  transition: var(--transition-normal);
   text-decoration: none;
   white-space: nowrap;
 }
 
 .dropdownMenu li a:hover,
 .dropdownMenu li button:hover {
-  background-color: #2a3041;
-  color: #fd5f00;
+  background-color: var(--color-bg-quaternary);
+  color: var(--color-primary);
 }
 
 .logoutBtn,
 .mobileLogoutBtn {
-  color: #ff6b6b;
+  color: var(--color-error);
   width: 100%;
   text-align: left;
 }
 
 .logoutBtn:hover,
 .mobileLogoutBtn:hover {
-  color: #ff5252;
-  background: rgba(255, 107, 107, 0.1);
+  color: var(--color-error-alt);
+  background: rgba(var(--color-error-rgb), var(--opacity-low));
 }
 
 .mobileMenuBtn {
@@ -234,16 +234,16 @@
   background: none;
   border: none;
   cursor: pointer;
-  padding: 0.5rem;
-  transition: all 0.3s ease;
+  padding: var(--space-2);
+  transition: var(--transition-normal);
 }
 
 .mobileMenuBtn span {
   width: 25px;
   height: 3px;
-  background: #fd5f00;
+  background: var(--color-primary);
   border-radius: 2px;
-  transition: all 0.3s ease;
+  transition: var(--transition-normal);
 }
 
 .mobileMenuBtn.open span:nth-child(1) {
@@ -264,14 +264,14 @@
   top: 70px;
   left: 0;
   right: 0;
-  background: #1a1f2d;
-  border-top: 1px solid #2a3041;
-  padding: 1rem 2rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  background: var(--color-bg-secondary);
+  border-top: 1px solid var(--color-bg-quaternary);
+  padding: var(--space-4) var(--space-8);
+  box-shadow: var(--shadow-lg);
   z-index: 999;
   transform: translateY(-100%);
   opacity: 0;
-  transition: all 0.3s ease;
+  transition: var(--transition-normal);
 }
 
 .mobileMenu.open {
@@ -282,65 +282,65 @@
 .mobileMenuContent {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 
 .mobileMenuContent a {
-  color: #a0a8c0;
+  color: var(--color-text-secondary);
   text-decoration: none;
-  padding: 1rem;
-  border-radius: 8px;
-  transition: all 0.3s ease;
-  font-size: 1.1rem;
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  transition: var(--transition-normal);
+  font-size: var(--font-size-lg);
   text-align: center;
 }
 
 .mobileMenuContent a.active {
-  color: #fd5f00;
-  background: rgba(253, 95, 0, 0.1);
+  color: var(--color-primary);
+  background: rgba(var(--color-primary-rgb), var(--opacity-low));
 }
 
 .mobileMenuContent a:hover {
-  color: #fd5f00;
-  background: rgba(253, 95, 0, 0.1);
+  color: var(--color-primary);
+  background: rgba(var(--color-primary-rgb), var(--opacity-low));
 }
 
 .mobileAccountSection {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  border-top: 1px solid #2a3041;
-  padding-top: 1rem;
-  margin-top: 0.5rem;
+  gap: var(--space-2);
+  border-top: 1px solid var(--color-bg-quaternary);
+  padding-top: var(--space-4);
+  margin-top: var(--space-2);
 }
 
 .mobileUserInfo {
-  padding: 1rem;
-  background: rgba(42, 48, 65, 0.5);
-  border-radius: 8px;
-  margin-bottom: 0.5rem;
+  padding: var(--space-4);
+  background: rgba(var(--color-bg-quaternary-rgb), 0.5);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-2);
   text-align: center;
 }
 
 .mobileUserInfo div {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: var(--space-1);
 }
 
 .mobileUserInfo strong {
-  color: #ffffff;
-  font-size: 1rem;
+  color: var(--color-text-primary);
+  font-size: var(--font-size-md);
 }
 
 .mobileUserInfo .userEmail {
-  color: #a0a8c0;
-  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
 }
 
 @media (max-width: 768px) {
   .headerNavbar {
-    padding: 0 1rem;
+    padding: 0 var(--space-4);
   }
 
   .navLinks {
@@ -353,18 +353,18 @@
 
   .mobileMenu {
     display: block;
-    padding: 1rem;
+    padding: var(--space-4);
   }
 }
 
 @media (max-width: 480px) {
   .headerNavbar {
-    padding: 0 0.5rem;
+    padding: 0 var(--space-2);
     height: 60px;
   }
 
   .logo a {
-    font-size: 1.5rem;
+    font-size: var(--font-size-lg);
   }
 
   .mobileMenu {

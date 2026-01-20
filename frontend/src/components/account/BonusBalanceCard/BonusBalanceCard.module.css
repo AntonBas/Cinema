@@ -1,32 +1,32 @@
 .balanceCard {
-    background: linear-gradient(135deg, var(--primary-color) 0%, #667eea 100%);
-    border-radius: 12px;
-    padding: 2rem;
-    color: white;
-    box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+    background: linear-gradient(135deg, var(--color-primary) 0%, #667eea 100%);
+    border-radius: var(--radius-lg);
+    padding: var(--space-8);
+    color: var(--color-text-primary);
+    box-shadow: var(--shadow-xl);
 }
 
 .title {
-    font-size: 1.5rem;
+    font-size: var(--font-size-xl);
     font-weight: 600;
-    margin: 0 0 1.5rem 0;
+    margin: 0 0 var(--space-6) 0;
     text-align: center;
 }
 
 .mainBalance {
     text-align: center;
-    margin-bottom: 2rem;
+    margin-bottom: var(--space-8);
 }
 
 .points {
     font-size: 3.5rem;
     font-weight: 700;
     line-height: 1;
-    margin-bottom: 0.5rem;
+    margin-bottom: var(--space-2);
 }
 
 .pointsLabel {
-    font-size: 1.2rem;
+    font-size: var(--font-size-lg);
     opacity: 0.9;
     font-weight: 500;
 }
@@ -34,11 +34,11 @@
 .valueInfo {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 2rem;
-    padding: 1.5rem;
+    gap: var(--space-6);
+    margin-bottom: var(--space-8);
+    padding: var(--space-6);
     background: rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
 }
 
 .valueItem {
@@ -46,74 +46,66 @@
 }
 
 .valueLabel {
-    font-size: 0.9rem;
+    font-size: var(--font-size-sm);
     opacity: 0.8;
-    margin-bottom: 0.25rem;
+    margin-bottom: var(--space-1);
 }
 
 .valueAmount {
-    font-size: 1.3rem;
+    font-size: var(--font-size-xl);
     font-weight: 600;
 }
 
 .usageLimits {
     background: rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
-    padding: 1.5rem;
+    border-radius: var(--radius-md);
+    padding: var(--space-6);
 }
 
 .limitsTitle {
-    font-size: 1.1rem;
+    font-size: var(--font-size-lg);
     font-weight: 600;
-    margin: 0 0 1rem 0;
+    margin: 0 0 var(--space-4) 0;
     text-align: center;
 }
 
 .limitsGrid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 1rem;
+    gap: var(--space-4);
 }
 
 .limitItem {
     text-align: center;
-    padding: 0.75rem;
+    padding: var(--space-3);
     background: rgba(255, 255, 255, 0.05);
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
 }
 
 .limitLabel {
-    font-size: 0.85rem;
+    font-size: var(--font-size-xs);
     opacity: 0.8;
-    margin-bottom: 0.25rem;
+    margin-bottom: var(--space-1);
 }
 
 .limitValue {
-    font-size: 1.1rem;
+    font-size: var(--font-size-lg);
     font-weight: 600;
 }
 
-.loading {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 200px;
-    font-size: 1.1rem;
-    color: rgba(255, 255, 255, 0.8);
-}
-
+.loading,
 .noData {
     display: flex;
     justify-content: center;
     align-items: center;
     min-height: 200px;
-    font-size: 1.1rem;
+    font-size: var(--font-size-lg);
     color: rgba(255, 255, 255, 0.8);
 }
 
 @media (max-width: 768px) {
     .balanceCard {
-        padding: 1.5rem;
+        padding: var(--space-6);
     }
 
     .points {
@@ -122,12 +114,12 @@
 
     .valueInfo {
         grid-template-columns: 1fr;
-        gap: 1rem;
-        padding: 1rem;
+        gap: var(--space-4);
+        padding: var(--space-4);
     }
 
     .limitsGrid {
         grid-template-columns: 1fr;
-        gap: 0.75rem;
+        gap: var(--space-3);
     }
 }

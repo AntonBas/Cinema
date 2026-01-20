@@ -3,15 +3,15 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 20px;
+    padding: var(--space-8);
     box-sizing: border-box;
     min-height: calc(100vh - 70px - 250px);
-    background-color: #12161f;
+    background-color: var(--color-bg-primary);
 }
 
 @media (max-width: 768px) {
     .container {
-        padding: 15px;
+        padding: var(--space-6);
         min-height: calc(100vh - 70px - 200px);
     }
 }

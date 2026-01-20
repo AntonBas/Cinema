@@ -3,61 +3,61 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: #12161f;
-  padding: 2rem;
+  background-color: var(--color-bg-primary);
+  padding: var(--space-8);
 }
 
 .verificationCard {
-  background: #1e232e;
-  border-radius: 12px;
-  padding: 3rem;
+  background: var(--color-bg-modal);
+  border-radius: var(--radius-lg);
+  padding: var(--space-12);
   text-align: center;
   max-width: 500px;
   width: 100%;
-  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  animation: slideUp 0.5s ease;
+  box-shadow: var(--shadow-xl);
+  border: 1px solid var(--color-border);
+  animation: slideUp var(--transition-normal);
 }
 
 .verificationCard.success {
-  border-color: rgba(72, 187, 120, 0.3);
+  border-color: rgba(var(--color-success-rgb), var(--opacity-medium));
 }
 
 .verificationCard.error {
-  border-color: rgba(255, 71, 87, 0.3);
+  border-color: rgba(var(--color-error-rgb), var(--opacity-medium));
 }
 
 .icon {
   font-size: 4rem;
-  margin-bottom: 1.5rem;
-  animation: scaleIn 0.5s ease;
+  margin-bottom: var(--space-6);
+  animation: scaleIn var(--transition-normal);
 }
 
 .verificationCard h2 {
-  color: #ffffff;
-  font-size: 2rem;
-  margin-bottom: 1rem;
+  color: var(--color-text-primary);
+  font-size: var(--font-size-2xl);
+  margin-bottom: var(--space-4);
   font-weight: 600;
 }
 
 .message {
-  color: #a0a8c0;
-  font-size: 1.1rem;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-lg);
   line-height: 1.6;
-  margin-bottom: 2rem;
+  margin-bottom: var(--space-8);
 }
 
 .redirectText {
-  color: #fd5f00;
-  font-size: 1rem;
-  margin-bottom: 1.5rem;
+  color: var(--color-primary);
+  font-size: var(--font-size-md);
+  margin-bottom: var(--space-6);
 }
 
 .successActions,
 .errorActions {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 
 @keyframes slideUp {
@@ -86,15 +86,15 @@
 
 @media (max-width: 768px) {
   .verificationContainer {
-    padding: 1rem;
+    padding: var(--space-4);
   }
 
   .verificationCard {
-    padding: 2rem;
+    padding: var(--space-8);
   }
 
   .verificationCard h2 {
-    font-size: 1.5rem;
+    font-size: var(--font-size-xl);
   }
 
   .icon {

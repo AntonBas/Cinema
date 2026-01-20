@@ -1,6 +1,6 @@
 .securityPage {
     min-height: 100vh;
-    background-color: var(--bg-secondary);
+    background-color: var(--color-bg-secondary);
 }
 
 .container {
@@ -12,90 +12,90 @@
 
 .content {
     flex: 1;
-    padding: 2rem;
+    padding: var(--space-8);
 }
 
 .header {
-    margin-bottom: 2rem;
+    margin-bottom: var(--space-8);
 }
 
 .title {
-    font-size: 2rem;
+    font-size: var(--font-size-3xl);
     font-weight: 700;
-    color: var(--text-primary);
-    margin: 0 0 0.5rem 0;
+    color: var(--color-text-primary);
+    margin: 0 0 var(--space-2) 0;
 }
 
 .subtitle {
-    font-size: 1.1rem;
-    color: var(--text-secondary);
+    font-size: var(--font-size-lg);
+    color: var(--color-text-secondary);
     margin: 0;
 }
 
 .securityLayout {
     display: grid;
     grid-template-columns: 280px 1fr;
-    gap: 2rem;
+    gap: var(--space-8);
 }
 
 .sidebar {
-    background: var(--bg-primary);
-    border-radius: 12px;
-    padding: 1.5rem;
+    background: var(--color-bg-primary);
+    border-radius: var(--radius-lg);
+    padding: var(--space-6);
     height: fit-content;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-md);
 }
 
 .securityNav {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: var(--space-2);
 }
 
 .navButton {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    padding: 1rem;
+    gap: var(--space-3);
+    padding: var(--space-4);
     background: none;
     border: none;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all var(--transition-fast);
     text-align: left;
-    color: var(--text-secondary);
+    color: var(--color-text-secondary);
 }
 
 .navButton:hover {
-    background: var(--bg-hover);
-    color: var(--text-primary);
+    background: var(--color-bg-tertiary);
+    color: var(--color-text-primary);
 }
 
 .navButton.active {
-    background: var(--primary-color);
-    color: white;
+    background: var(--color-primary);
+    color: #ffffff;
 }
 
 .navIcon {
-    font-size: 1.1rem;
+    font-size: var(--font-size-lg);
 }
 
 .navLabel {
-    font-size: 0.95rem;
+    font-size: var(--font-size-sm);
     font-weight: 500;
 }
 
 .mainContent {
-    background: var(--bg-primary);
-    border-radius: 12px;
-    padding: 2rem;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    background: var(--color-bg-primary);
+    border-radius: var(--radius-lg);
+    padding: var(--space-8);
+    box-shadow: var(--shadow-md);
 }
 
 @media (max-width: 968px) {
     .securityLayout {
         grid-template-columns: 1fr;
-        gap: 1.5rem;
+        gap: var(--space-6);
     }
 
     .sidebar {
@@ -109,18 +109,18 @@
 
 @media (max-width: 768px) {
     .content {
-        padding: 1.5rem;
+        padding: var(--space-6);
     }
 
     .title {
-        font-size: 1.75rem;
+        font-size: var(--font-size-2xl);
     }
 
     .securityLayout {
-        gap: 1rem;
+        gap: var(--space-4);
     }
 
     .mainContent {
-        padding: 1.5rem;
+        padding: var(--space-6);
     }
 }

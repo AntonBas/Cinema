@@ -1,21 +1,21 @@
 .homePage {
     min-height: 100vh;
-    background-color: #12161f;
-    color: white;
+    background-color: var(--color-bg-primary);
+    color: var(--color-text-primary);
 }
 
 .homeContent {
-    padding: 2rem;
+    padding: var(--space-8);
     text-align: center;
 }
 
 .homeContent h1 {
-    color: #fd5f00;
-    font-size: 2.5rem;
-    margin-bottom: 1rem;
+    color: var(--color-primary);
+    font-size: var(--font-size-3xl);
+    margin-bottom: var(--space-4);
 }
 
 .homeContent p {
-    font-size: 1.2rem;
-    color: #a0a8c0;
+    font-size: var(--font-size-lg);
+    color: var(--color-text-secondary);
 }

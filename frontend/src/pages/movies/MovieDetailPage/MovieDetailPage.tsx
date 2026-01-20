@@ -21,7 +21,7 @@ export const MovieDetailPage: React.FC = () => {
 
             try {
                 setLoading(true);
-                const movieData = await movieApi.getMovieBySlug(slug);
+                const movieData = await movieApi.public.getBySlug(slug);
                 setMovie(movieData);
             } catch (err) {
                 showNotification('Failed to load movie', 'error');
@@ -35,7 +35,9 @@ export const MovieDetailPage: React.FC = () => {
     }, [slug, showNotification]);
 
     const handleBuyTickets = () => {
-        console.log('Buy tickets for movie:', movie?.id);
+        if (movie) {
+            navigate(`/book/${movie.id}`);
+        }
     };
 
     if (loading) {
@@ -51,7 +53,7 @@ export const MovieDetailPage: React.FC = () => {
             <Layout>
                 <div className={styles.error}>
                     <h2>Movie not found</h2>
-                    <Button variant="primary" onClick={() => navigate('/movies')}>
+                    <Button variant="primary" onClick={() => navigate('/movies/current')}>
                         Back to Movies
                     </Button>
                 </div>
@@ -63,7 +65,7 @@ export const MovieDetailPage: React.FC = () => {
         <Layout>
             <div className={styles.container}>
                 <div className={styles.header}>
-                    <Button variant="secondary" onClick={() => navigate('/movies')}>
+                    <Button variant="secondary" onClick={() => navigate('/movies/current')}>
                         ← Back to Movies
                     </Button>
                 </div>
@@ -71,7 +73,7 @@ export const MovieDetailPage: React.FC = () => {
                 <div className={styles.content}>
                     <div className={styles.posterSection}>
                         <img
-                            src={movieApi.getMoviePosterUrl(movie.id)}
+                            src={movieApi.public.getPosterUrl(movie.id)}
                             alt={movie.title}
                             className={styles.poster}
                             onError={(e) => {
@@ -107,9 +109,26 @@ export const MovieDetailPage: React.FC = () => {
                             <p>{movie.description}</p>
                         </div>
 
+                        {movie.genres && movie.genres.length > 0 && (
+                            <div className={styles.genres}>
+                                <h3>Genres</h3>
+                                <div className={styles.genreList}>
+                                    {movie.genres.map(genre => (
+                                        <span key={genre.id} className={styles.genreTag}>
+                                            {genre.name}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
                         <div className={styles.actions}>
-                            <Button variant="primary" onClick={handleBuyTickets}>
-                                Buy Tickets
+                            <Button
+                                variant="primary"
+                                onClick={handleBuyTickets}
+                                disabled={!movie.currentlyShowing}
+                            >
+                                {movie.currentlyShowing ? 'Buy Tickets' : 'Coming Soon'}
                             </Button>
                         </div>
                     </div>

@@ -10,7 +10,7 @@ export const CurrentMoviesPage: React.FC = () => {
     const { notifications, showNotification, hideNotification } = useNotification();
 
     useEffect(() => {
-        fetchMoviesByStatus('current');
+        fetchMoviesByStatus('CURRENT');
     }, [fetchMoviesByStatus]);
 
     useEffect(() => {

@@ -5,15 +5,15 @@
     align-items: center;
     justify-content: center;
     min-height: 100vh;
-    padding: 20px;
+    padding: var(--space-8);
 }
 
 .loginContainer {
-    background-color: #1e232e;
-    border-radius: 12px;
-    padding: 45px;
-    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    background-color: var(--color-bg-modal);
+    border-radius: var(--radius-lg);
+    padding: 3rem;
+    box-shadow: var(--shadow-xl);
+    transition: var(--transition-normal);
     animation: fadeIn 0.6s ease-out forwards;
     width: 100%;
     max-width: 450px;
@@ -25,36 +25,36 @@
 }
 
 .loginTitle {
-    font-size: 2rem;
-    margin-bottom: 1.5rem;
-    color: #fd5f00;
+    font-size: var(--font-size-2xl);
+    margin-bottom: var(--space-6);
+    color: var(--color-primary);
     text-align: center;
     font-weight: 600;
 }
 
 .loginTop {
     text-align: center;
-    margin-bottom: 2rem;
-    color: #a0a8c0;
+    margin-bottom: var(--space-8);
+    color: var(--color-text-secondary);
 }
 
 .loginTop a {
-    color: #fd5f00;
+    color: var(--color-primary);
     text-decoration: none;
     font-weight: 500;
-    transition: color 0.3s;
-    margin-left: 5px;
+    transition: color var(--transition-normal);
+    margin-left: var(--space-2);
 }
 
 .loginTop a:hover {
-    color: #ff8c42;
+    color: var(--color-primary-light);
     text-decoration: underline;
 }
 
 .loginForm {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: var(--space-6);
 }
 
 .loginMiddleEmail,
@@ -68,36 +68,36 @@
 
 .loginBottom {
     text-align: center;
-    margin-top: 1.5rem;
-    color: #a0a8c0;
+    margin-top: var(--space-6);
+    color: var(--color-text-secondary);
 }
 
 .loginBottom a {
-    color: #a0a8c0;
+    color: var(--color-text-secondary);
     text-decoration: none;
-    transition: color 0.3s;
-    font-size: 0.9rem;
+    transition: color var(--transition-normal);
+    font-size: var(--font-size-sm);
 }
 
 .loginBottom a:hover {
-    color: #fd5f00;
+    color: var(--color-primary);
     text-decoration: underline;
 }
 
 .notification {
-    padding: 12px 16px;
-    border-radius: 8px;
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-md);
     font-weight: 500;
     text-align: center;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--shadow-sm);
     border: 1px solid;
-    animation: slideDown 0.3s ease;
+    animation: slideDown var(--transition-fast);
 }
 
 .notification[data-type="error"] {
-    background: rgba(255, 71, 87, 0.1);
-    color: #ff6b6b;
-    border-color: rgba(255, 71, 87, 0.3);
+    background: rgba(var(--color-error-rgb), var(--opacity-low));
+    color: var(--color-error);
+    border-color: rgba(var(--color-error-rgb), var(--opacity-medium));
 }
 
 @keyframes fadeIn {
@@ -126,28 +126,28 @@
 
 @media (max-width: 768px) {
     .login {
-        padding: 15px;
+        padding: var(--space-6);
     }
 
     .loginContainer {
-        padding: 30px 25px;
+        padding: 2rem 1.5rem;
     }
 
     .loginTitle {
-        font-size: 1.8rem;
+        font-size: var(--font-size-xl);
     }
 }
 
 @media (max-width: 480px) {
     .loginContainer {
-        padding: 25px 20px;
+        padding: 1.5rem 1.25rem;
     }
 
     .loginTitle {
-        font-size: 1.6rem;
+        font-size: var(--font-size-lg);
     }
 
     .loginForm {
-        gap: 1.25rem;
+        gap: var(--space-4);
     }
 }

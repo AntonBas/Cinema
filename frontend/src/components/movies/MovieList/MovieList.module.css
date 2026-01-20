@@ -1,35 +1,50 @@
 .grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 2rem;
+    gap: var(--space-8);
 }
 
 .loading {
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 4rem;
-    color: #8f9bb3;
+    padding: var(--space-16);
+    color: var(--color-text-secondary);
 }
 
 .empty {
     text-align: center;
-    padding: 4rem;
-    color: #8f9bb3;
+    padding: var(--space-16);
+    color: var(--color-text-secondary);
 }
 
 .emptyIcon {
     font-size: 4rem;
-    margin-bottom: 1rem;
+    margin-bottom: var(--space-4);
 }
 
 .empty h3 {
-    color: #ffffff;
-    margin-bottom: 0.5rem;
-    font-size: 1.5rem;
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-2);
+    font-size: var(--font-size-xl);
 }
 
 .empty p {
-    color: #8f9bb3;
-    font-size: 1rem;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-md);
+}
+
+@media (max-width: 768px) {
+    .grid {
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: var(--space-6);
+    }
+
+    .emptyIcon {
+        font-size: 3rem;
+    }
+
+    .empty h3 {
+        font-size: var(--font-size-lg);
+    }
 }

@@ -1,6 +1,6 @@
 .profileCard {
-    border-radius: 12px;
-    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-xl);
     overflow: hidden;
 }
 
@@ -8,23 +8,23 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1.5rem 2rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding: var(--space-6) var(--space-8);
+    border-bottom: 1px solid var(--color-border);
 }
 
 .cardTitle {
-    font-size: 1.5rem;
+    font-size: var(--font-size-xl);
     font-weight: 600;
-    color: #fff;
+    color: var(--color-text-primary);
     margin: 0;
 }
 
 .cardContent {
-    padding: 2rem;
+    padding: var(--space-8);
 }
 
 .profileSection {
-    margin-bottom: 2rem;
+    margin-bottom: var(--space-8);
 }
 
 .userInfo {
@@ -32,45 +32,45 @@
 }
 
 .userName {
-    font-size: 1.5rem;
+    font-size: var(--font-size-xl);
     font-weight: 600;
-    color: white;
-    margin: 0 0 0.25rem 0;
+    color: var(--color-text-primary);
+    margin: 0 0 var(--space-1) 0;
 }
 
 .userEmail {
-    color: #a0a8c0;
+    color: var(--color-text-secondary);
     margin: 0;
-    font-size: 0.95rem;
+    font-size: var(--font-size-sm);
 }
 
 .detailsGrid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1.5rem;
+    gap: var(--space-6);
 }
 
 .detailItem {
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: var(--space-1);
 }
 
 .detailLabel {
-    font-size: 0.85rem;
-    color: #a0a8c0;
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
     font-weight: 500;
     text-transform: none;
     letter-spacing: 0.5px;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: var(--space-2);
 }
 
 .tooltipIcon {
     font-size: 0.7rem;
     opacity: 0.7;
-    transition: opacity 0.3s ease;
+    transition: opacity var(--transition-normal);
     cursor: help;
 }
 
@@ -79,22 +79,22 @@
 }
 
 .detailValue {
-    font-size: 1rem;
-    color: white;
+    font-size: var(--font-size-md);
+    color: var(--color-text-primary);
     font-weight: 500;
 }
 
 @media (max-width: 768px) {
     .cardHeader {
-        padding: 1rem 1.5rem;
+        padding: var(--space-4) var(--space-6);
     }
 
     .cardContent {
-        padding: 1.5rem;
+        padding: var(--space-6);
     }
 
     .detailsGrid {
         grid-template-columns: 1fr;
-        gap: 1rem;
+        gap: var(--space-4);
     }
 }

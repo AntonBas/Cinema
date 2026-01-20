@@ -1,6 +1,6 @@
 .dashboardPage {
     min-height: 100vh;
-    background-color: var(--bg-secondary);
+    background-color: var(--color-bg-secondary);
 }
 
 .container {
@@ -12,54 +12,54 @@
 
 .content {
     flex: 1;
-    padding: 2rem;
+    padding: var(--space-8);
 }
 
 .header {
-    margin-bottom: 2rem;
+    margin-bottom: var(--space-8);
 }
 
 .title {
-    font-size: 2rem;
+    font-size: var(--font-size-3xl);
     font-weight: 700;
-    color: var(--text-primary);
-    margin: 0 0 0.5rem 0;
+    color: var(--color-text-primary);
+    margin: 0 0 var(--space-2) 0;
 }
 
 .subtitle {
-    font-size: 1.1rem;
-    color: var(--text-secondary);
+    font-size: var(--font-size-lg);
+    color: var(--color-text-secondary);
     margin: 0;
 }
 
 .profileSection {
-    margin-bottom: 2rem;
+    margin-bottom: var(--space-8);
 }
 
 .quickStats {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1.5rem;
-    margin-top: 2rem;
+    gap: var(--space-6);
+    margin-top: var(--space-8);
 }
 
 .statCard {
-    background: var(--bg-primary);
-    padding: 1.5rem;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    background: var(--color-bg-primary);
+    padding: var(--space-6);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
 }
 
 .statCard h3 {
-    margin: 0 0 0.5rem 0;
-    color: var(--text-primary);
-    font-size: 1.1rem;
+    margin: 0 0 var(--space-2) 0;
+    color: var(--color-text-primary);
+    font-size: var(--font-size-lg);
 }
 
 .statCard p {
     margin: 0;
-    color: var(--text-secondary);
-    font-size: 1.5rem;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-xl);
     font-weight: 600;
 }
 
@@ -68,25 +68,25 @@
     justify-content: center;
     align-items: center;
     min-height: 400px;
-    font-size: 1.1rem;
+    font-size: var(--font-size-lg);
 }
 
 .notification {
-    padding: 12px 16px;
-    border-radius: 8px;
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-md);
     font-weight: 500;
     text-align: center;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--shadow-md);
     border: 1px solid;
-    animation: slideDown 0.3s ease;
-    margin: 2rem auto;
+    animation: slideDown var(--transition-normal);
+    margin: var(--space-8) auto;
     max-width: 500px;
 }
 
 .notification[data-type="error"] {
-    background: rgba(255, 71, 87, 0.1);
-    color: #ff6b6b;
-    border-color: rgba(255, 71, 87, 0.3);
+    background: rgba(var(--color-error-rgb), 0.1);
+    color: var(--color-error);
+    border-color: rgba(var(--color-error-rgb), 0.3);
 }
 
 @keyframes slideDown {

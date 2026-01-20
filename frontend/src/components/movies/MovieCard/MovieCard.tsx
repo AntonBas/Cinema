@@ -10,7 +10,9 @@ interface MovieCardProps {
 }
 
 export const MovieCard: React.FC<MovieCardProps> = ({ movie }) => {
-    const handleBuyTickets = () => {
+    const handleBuyTickets = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
         console.log('Buy tickets for:', movie.id);
     };
 
@@ -28,7 +30,7 @@ export const MovieCard: React.FC<MovieCardProps> = ({ movie }) => {
         <Link to={`/movies/${movie.slug}`} className={styles.card}>
             <div className={styles.posterContainer}>
                 <img
-                    src={movieApi.getMoviePosterUrl(movie.id)}
+                    src={movieApi.public.getPosterUrl(movie.id)}
                     alt={movie.title}
                     className={styles.poster}
                     onError={(e) => {
@@ -39,16 +41,14 @@ export const MovieCard: React.FC<MovieCardProps> = ({ movie }) => {
                     <div className={styles.badges}>
                         {getStatusBadge()}
                     </div>
-                    <div
-                        className={styles.buyButtonContainer}
-                        onClick={(e) => e.preventDefault()}
-                    >
+                    <div className={styles.buyButtonContainer}>
                         <Button
                             variant="primary"
                             size="small"
                             onClick={handleBuyTickets}
+                            disabled={!movie.currentlyShowing}
                         >
-                            Buy Tickets
+                            {movie.currentlyShowing ? 'Buy Tickets' : 'Coming Soon'}
                         </Button>
                     </div>
                 </div>

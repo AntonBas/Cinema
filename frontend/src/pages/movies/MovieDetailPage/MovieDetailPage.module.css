@@ -1,36 +1,43 @@
 .container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 2rem;
+    padding: var(--space-8);
 }
 
 .header {
-    margin-bottom: 2rem;
+    margin-bottom: var(--space-8);
 }
 
 .loading {
     text-align: center;
-    padding: 4rem;
-    color: #8f9bb3;
-    font-size: 1.1rem;
+    padding: var(--space-16);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-lg);
 }
 
 .error {
     text-align: center;
-    padding: 4rem;
-    color: #8f9bb3;
+    padding: var(--space-16);
+    color: var(--color-text-secondary);
 }
 
 .error h2 {
-    color: #ffffff;
-    margin-bottom: 1rem;
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-4);
 }
 
 .content {
     display: grid;
     grid-template-columns: 300px 1fr;
-    gap: 3rem;
+    gap: var(--space-12);
     align-items: start;
+}
+
+@media (max-width: 768px) {
+    .content {
+        grid-template-columns: 1fr;
+        gap: var(--space-8);
+    }
 }
 
 .posterSection {
@@ -39,53 +46,55 @@
 
 .poster {
     width: 100%;
-    border-radius: 12px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
 }
 
 .detailsSection {
-    padding-top: 1rem;
+    padding-top: var(--space-4);
 }
 
 .title {
-    font-size: 2.5rem;
+    font-size: var(--font-size-3xl);
     font-weight: 700;
-    color: #ffffff;
-    margin: 0 0 1rem 0;
+    color: var(--color-text-primary);
+    margin: 0 0 var(--space-4) 0;
     line-height: 1.2;
 }
 
 .meta {
     display: flex;
     align-items: center;
-    gap: 1rem;
-    margin-bottom: 2rem;
-    color: #8f9bb3;
-    font-size: 1.1rem;
+    gap: var(--space-4);
+    margin-bottom: var(--space-8);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-lg);
+    flex-wrap: wrap;
 }
 
 .trailer {
-    margin-bottom: 2rem;
+    margin-bottom: var(--space-8);
 }
 
 .description {
-    margin-bottom: 2rem;
+    margin-bottom: var(--space-8);
 }
 
 .description h3 {
-    color: #ffffff;
-    margin-bottom: 1rem;
-    font-size: 1.3rem;
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-4);
+    font-size: var(--font-size-xl);
 }
 
 .description p {
-    color: #c5cee0;
+    color: var(--color-text-secondary);
     line-height: 1.6;
-    font-size: 1.1rem;
+    font-size: var(--font-size-lg);
 }
 
 .actions {
     display: flex;
-    gap: 1rem;
-    margin-top: 2rem;
+    gap: var(--space-4);
+    margin-top: var(--space-8);
+    flex-wrap: wrap;
 }

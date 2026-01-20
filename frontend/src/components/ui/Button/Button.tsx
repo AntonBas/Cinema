@@ -12,7 +12,7 @@ export interface ButtonProps {
     type?: 'button' | 'submit' | 'reset';
     loading?: boolean;
     disabled?: boolean;
-    onClick?: () => void;
+    onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
     className?: string;
     style?: React.CSSProperties;
     'aria-label'?: string;
