@@ -20,12 +20,12 @@ import ua.lviv.bas.cinema.service.user.BonusService;
 public class BirthdayBonusScheduler {
 
 	private final UserRepository userRepository;
-	private final BonusService bonusUserService;
+	private final BonusService bonusService;
 
 	@Scheduled(cron = "${scheduler.birthday-bonus.cron:0 0 9 * * *}")
 	@Transactional
 	public void awardBirthdayBonuses() {
-		log.info("Starting automatic birthday bonus distribution");
+		log.info("Starting birthday bonus distribution");
 
 		LocalDate today = LocalDate.now();
 		int dayOfMonth = today.getDayOfMonth();
@@ -39,22 +39,22 @@ public class BirthdayBonusScheduler {
 			return;
 		}
 
-		log.info("Found {} verified users with birthday today", birthdayUsers.size());
+		log.info("Found {} users with birthday today", birthdayUsers.size());
 
 		int awardedCount = 0;
 		int failedCount = 0;
 
 		for (User user : birthdayUsers) {
 			try {
-				bonusUserService.awardBirthdayBonus(user);
+				bonusService.awardBirthdayBonus(user);
 				awardedCount++;
-				log.debug("Processed birthday bonus for user {}", user.getId());
+				log.info("Awarded birthday bonus to user {} ({})", user.getId(), user.getEmail());
 			} catch (Exception e) {
-				log.error("Failed to process birthday bonus for user {}: {}", user.getId(), e.getMessage(), e);
 				failedCount++;
+				log.error("Failed to award birthday bonus to user {}: {}", user.getId(), e.getMessage());
 			}
 		}
 
-		log.info("Birthday bonus distribution completed. Processed: {}, Failed: {}", awardedCount, failedCount);
+		log.info("Birthday bonus distribution completed. Awarded: {}, Failed: {}", awardedCount, failedCount);
 	}
 }

@@ -48,8 +48,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
 	Page<User> findFilteredUsers(@Param("search") String search, @Param("role") String role,
 			@Param("enabled") Boolean enabled, Pageable pageable);
 
-	@Query("SELECT u FROM User u LEFT JOIN FETCH u.bonusCard WHERE " + "u.verificationStatus = :status AND "
-			+ "u.enabled = true AND " + "DAY(u.dateOfBirth) = :day AND " + "MONTH(u.dateOfBirth) = :month")
+	@Query("SELECT u FROM User u WHERE " + "u.verificationStatus = :status AND " + "u.enabled = true AND "
+			+ "DAY(u.dateOfBirth) = :day AND " + "MONTH(u.dateOfBirth) = :month")
 	List<User> findVerifiedUsersWithBirthday(@Param("status") VerificationStatus status, @Param("day") int day,
 			@Param("month") int month);
 }
