@@ -9,9 +9,7 @@ interface MovieCardProps {
 }
 
 export const MovieCard: React.FC<MovieCardProps> = ({ movie }) => {
-    const handleButtonClick = (e: React.MouseEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
+    const handleButtonClick = () => {
         console.log('View details for:', movie.id);
     };
 
