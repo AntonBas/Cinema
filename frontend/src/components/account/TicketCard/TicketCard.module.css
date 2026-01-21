@@ -1,0 +1,140 @@
+.ticketCard {
+    background: var(--color-bg-tertiary);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border);
+    overflow: hidden;
+    transition: var(--transition-normal);
+    display: flex;
+    flex-direction: column;
+}
+
+.ticketCard:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--color-primary);
+}
+
+.cardHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-4);
+    background: var(--color-bg-secondary);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.headerLeft {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    flex: 1;
+}
+
+.movieTitle {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin: 0;
+    line-height: 1.3;
+}
+
+.ticketCode {
+    font-family: 'Courier New', monospace;
+    font-size: var(--font-size-sm);
+    color: var(--color-primary);
+    background: rgba(var(--color-primary-rgb), var(--opacity-low));
+    padding: var(--space-1) var(--space-3);
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(var(--color-primary-rgb), var(--opacity-medium));
+    font-weight: 600;
+    letter-spacing: 1px;
+    white-space: nowrap;
+}
+
+.cardContent {
+    padding: var(--space-4);
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: var(--space-6);
+    flex: 1;
+}
+
+.sessionInfo,
+.purchaseInfo {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+.infoRow {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.infoLabel {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
+    font-weight: 500;
+    min-width: 70px;
+}
+
+.infoValue {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-primary);
+    font-weight: 500;
+}
+
+.price {
+    font-size: var(--font-size-lg);
+    font-weight: 700;
+    color: var(--color-primary);
+    text-align: right;
+    margin-top: var(--space-2);
+}
+
+.cardActions {
+    padding: var(--space-4);
+    background: var(--color-bg-secondary);
+    border-top: 1px solid var(--color-border);
+    display: flex;
+    gap: var(--space-3);
+    justify-content: flex-end;
+}
+
+@media (max-width: 768px) {
+    .cardHeader {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-3);
+    }
+
+    .cardContent {
+        grid-template-columns: 1fr;
+        gap: var(--space-4);
+    }
+
+    .ticketCode {
+        align-self: flex-start;
+    }
+
+    .cardActions {
+        flex-direction: column;
+    }
+
+    .cardActions button {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .infoRow {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-1);
+    }
+
+    .infoLabel {
+        min-width: auto;
+    }
+}

@@ -145,7 +145,31 @@ export const TicketsPage: React.FC = () => {
                                 </div>
                             ) : filteredTickets.length === 0 ? (
                                 <div className={styles.noTickets}>
-                                    {hasFilters ? 'No tickets match your filters' : 'No tickets found'}
+                                    <div className={styles.noTicketsContent}>
+                                        <div className={styles.noTicketsIcon}>🎫</div>
+                                        <h3 className={styles.noTicketsTitle}>
+                                            {tickets.length === 0
+                                                ? 'No tickets yet'
+                                                : hasFilters
+                                                    ? 'No tickets match your filters'
+                                                    : 'No tickets found'}
+                                        </h3>
+                                        <p className={styles.noTicketsDescription}>
+                                            {tickets.length === 0
+                                                ? 'Purchase your first ticket to see it here'
+                                                : 'Try adjusting your search filters'}
+                                        </p>
+                                        {tickets.length === 0 && (
+                                            <Button variant="primary" size="medium">
+                                                Browse Movies
+                                            </Button>
+                                        )}
+                                        {hasFilters && tickets.length > 0 && (
+                                            <Button variant="secondary" size="medium" onClick={clearFilters}>
+                                                Clear Filters
+                                            </Button>
+                                        )}
+                                    </div>
                                 </div>
                             ) : (
                                 <TicketsList tickets={filteredTickets} />

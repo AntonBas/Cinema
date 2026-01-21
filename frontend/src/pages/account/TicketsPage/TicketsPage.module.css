@@ -1,0 +1,223 @@
+.ticketsPage {
+    min-height: calc(100vh - 80px);
+    background: var(--color-bg-primary);
+}
+
+.container {
+    display: flex;
+    min-height: calc(100vh - 80px);
+}
+
+.content {
+    flex: 1;
+    padding: var(--space-8) var(--space-10);
+    overflow-y: auto;
+    background: var(--color-bg-primary);
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-8);
+    padding-bottom: var(--space-6);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.title {
+    font-size: var(--font-size-3xl);
+    font-weight: 700;
+    color: var(--color-text-primary);
+    margin: 0;
+}
+
+.headerActions {
+    display: flex;
+    gap: var(--space-3);
+}
+
+.error {
+    background: var(--color-error-bg);
+    color: var(--color-error);
+    padding: var(--space-4) var(--space-6);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-error-border);
+    margin-bottom: var(--space-6);
+    font-size: var(--font-size-sm);
+}
+
+.tabs {
+    display: flex;
+    gap: var(--space-2);
+    margin-bottom: var(--space-6);
+    padding-bottom: var(--space-4);
+    border-bottom: 1px solid var(--color-border);
+    overflow-x: auto;
+    scrollbar-width: thin;
+}
+
+.tab {
+    padding: var(--space-2) var(--space-4);
+    border: none;
+    background: transparent;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: var(--transition-fast);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.tab:hover {
+    background: var(--color-bg-tertiary);
+    color: var(--color-text-primary);
+}
+
+.tab.active {
+    background: var(--color-primary);
+    color: white;
+    font-weight: 600;
+}
+
+.statistics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--space-4);
+    margin-bottom: var(--space-8);
+    padding: var(--space-6);
+    background: var(--color-bg-secondary);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border);
+}
+
+.statItem {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: var(--space-4);
+    background: var(--color-bg-primary);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+}
+
+.statLabel {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
+    margin-bottom: var(--space-2);
+    font-weight: 500;
+}
+
+.statValue {
+    font-size: var(--font-size-xl);
+    font-weight: 700;
+    color: var(--color-text-primary);
+}
+
+.filtersSection {
+    margin-bottom: var(--space-8);
+}
+
+.ticketsContent {
+    min-height: 300px;
+}
+
+.loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 300px;
+    font-size: var(--font-size-lg);
+    color: var(--color-text-secondary);
+}
+
+.noTickets {
+    text-align: center;
+    padding: var(--space-12) var(--space-6);
+    background: var(--color-bg-secondary);
+    border-radius: var(--radius-xl);
+    border: 2px dashed var(--color-border);
+}
+
+.noTicketsContent {
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.noTicketsIcon {
+    font-size: 4rem;
+    margin-bottom: var(--space-6);
+    color: var(--color-text-tertiary);
+}
+
+.noTicketsTitle {
+    font-size: var(--font-size-xl);
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-3);
+}
+
+.noTicketsDescription {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    margin-bottom: var(--space-6);
+    line-height: 1.5;
+}
+
+@media (max-width: 1024px) {
+    .content {
+        padding: var(--space-6) var(--space-6);
+    }
+
+    .statistics {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .container {
+        flex-direction: column;
+    }
+
+    .content {
+        padding: var(--space-4) var(--space-4);
+    }
+
+    .header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-4);
+        margin-bottom: var(--space-6);
+    }
+
+    .headerActions {
+        width: 100%;
+    }
+
+    .headerActions button {
+        width: 100%;
+    }
+
+    .statistics {
+        grid-template-columns: 1fr;
+        padding: var(--space-4);
+        gap: var(--space-3);
+    }
+
+    .noTickets {
+        padding: var(--space-8) var(--space-4);
+    }
+}
+
+@media (max-width: 480px) {
+    .tabs {
+        gap: var(--space-1);
+    }
+
+    .tab {
+        padding: var(--space-2) var(--space-3);
+        font-size: var(--font-size-xs);
+    }
+}

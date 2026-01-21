@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Button, Input, Select } from '@/components/ui';
+import { Button, Input } from '@/components/ui';
 import styles from './TicketFilters.module.css';
 
 interface TicketFiltersProps {
