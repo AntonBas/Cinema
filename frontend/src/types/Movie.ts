@@ -84,7 +84,6 @@ export interface MovieCardResponse {
   posterUrl: string;
   durationMinutes: number;
   ageRating: AgeRating;
-  releaseDate: string;
   status: MovieStatus;
   currentlyShowing: boolean;
 }

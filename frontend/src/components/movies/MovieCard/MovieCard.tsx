@@ -1,8 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import type { MovieCardResponse } from '@/types/movie';
-import { movieApi } from '@/api/movieApi';
-import { Badge, Button } from '@/components/ui';
+import { Button } from '@/components/ui';
 import styles from './MovieCard.module.css';
 
 interface MovieCardProps {
@@ -10,61 +9,60 @@ interface MovieCardProps {
 }
 
 export const MovieCard: React.FC<MovieCardProps> = ({ movie }) => {
-    const handleBuyTickets = (e: React.MouseEvent) => {
+    const handleButtonClick = (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
-        console.log('Buy tickets for:', movie.id);
+        console.log('View details for:', movie.id);
     };
 
-    const getStatusBadge = () => {
-        if (movie.currentlyShowing) {
-            return <Badge variant="success" size="small">Now Playing</Badge>;
-        }
-        if (movie.status === 'UPCOMING') {
-            return <Badge variant="info" size="small">Coming Soon</Badge>;
-        }
-        return null;
+    const getAgeRatingDisplay = () => {
+        const ratingMap: Record<string, string> = {
+            'PEGI_3': '3+',
+            'PEGI_7': '7+',
+            'PEGI_12': '12+',
+            'PEGI_16': '16+',
+            'PEGI_18': '18+'
+        };
+        return ratingMap[movie.ageRating] || movie.ageRating;
     };
 
     return (
-        <Link to={`/movies/${movie.slug}`} className={styles.card}>
-            <div className={styles.posterContainer}>
-                <img
-                    src={movieApi.public.getPosterUrl(movie.id)}
-                    alt={movie.title}
-                    className={styles.poster}
-                    onError={(e) => {
-                        (e.target as HTMLImageElement).src = '/placeholder-poster.jpg';
-                    }}
-                />
-                <div className={styles.overlay}>
-                    <div className={styles.badges}>
-                        {getStatusBadge()}
+        <div className={styles.cardWrapper}>
+            <Link to={`/movies/${movie.slug}`} className={styles.card}>
+                <div className={styles.posterContainer}>
+                    <img
+                        src={movie.posterUrl}
+                        alt={movie.title}
+                        className={styles.poster}
+                        onError={(e) => {
+                            (e.target as HTMLImageElement).src = '/placeholder-poster.jpg';
+                        }}
+                    />
+                    <div className={styles.cornerInfo}>
+                        <div className={styles.durationBadge}>
+                            {movie.durationMinutes}m
+                        </div>
+                        <div className={styles.ageBadge}>
+                            {getAgeRatingDisplay()}
+                        </div>
                     </div>
-                    <div className={styles.buyButtonContainer}>
-                        <Button
-                            variant="primary"
-                            size="small"
-                            onClick={handleBuyTickets}
-                            disabled={!movie.currentlyShowing}
-                        >
-                            {movie.currentlyShowing ? 'Buy Tickets' : 'Coming Soon'}
-                        </Button>
+                    <div className={styles.overlay}>
+                        <div className={styles.buttonContainer}>
+                            <Button
+                                variant="primary"
+                                size="medium"
+                                onClick={handleButtonClick}
+                            >
+                                View Details
+                            </Button>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div className={styles.content}>
-                <h3 className={styles.title}>{movie.title}</h3>
-                <div className={styles.meta}>
-                    <span>{movie.durationMinutes} min</span>
-                    <span>•</span>
-                    <span>{movie.ageRating}</span>
+                <div className={styles.content}>
+                    <h3 className={styles.title}>{movie.title}</h3>
                 </div>
-                <div className={styles.year}>
-                    {new Date(movie.releaseDate).getFullYear()}
-                </div>
-            </div>
-        </Link>
+            </Link>
+        </div>
     );
 };
