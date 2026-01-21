@@ -47,6 +47,7 @@ export const useScheduleSessions = (
             const response = await sessionApi.public.getSchedule(
                 pageToLoad,
                 options?.size,
+                'startTime,asc',
                 options?.date,
                 options?.movieId,
                 options?.daysAhead

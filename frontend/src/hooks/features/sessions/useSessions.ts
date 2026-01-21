@@ -43,7 +43,7 @@ export const useSessions = (
             const response = await sessionApi.admin.getAll(
                 options?.page,
                 options?.size,
-                options?.sort,
+                options?.sort || 'startTime,desc',
                 options?.search,
                 options?.date,
                 options?.hallId,

@@ -23,8 +23,9 @@ public interface SessionRepository extends JpaRepository<Session, Long> {
 	@Query("SELECT s FROM Session s WHERE s.id = :id")
 	Optional<Session> findByIdWithLock(@Param("id") Long id);
 
-	@Query("SELECT s FROM Session s WHERE s.status = 'SCHEDULED' AND s.startTime <= :currentTime")
-	List<Session> findSessionsToStart(@Param("currentTime") LocalDateTime currentTime);
+	@Query("SELECT s FROM Session s WHERE s.status = :scheduledStatus AND s.startTime <= :currentTime")
+	List<Session> findSessionsToStart(@Param("currentTime") LocalDateTime currentTime,
+			@Param("scheduledStatus") CinemaSessionStatus scheduledStatus);
 
 	@Query(value = """
 			SELECT s.* FROM sessions s
@@ -34,39 +35,42 @@ public interface SessionRepository extends JpaRepository<Session, Long> {
 			""", nativeQuery = true)
 	List<Session> findSessionsToComplete(@Param("currentTime") LocalDateTime currentTime);
 
-	@Query("SELECT s FROM Session s LEFT JOIN FETCH s.movie LEFT JOIN FETCH s.hall ORDER BY s.startTime")
+	@Query("SELECT s FROM Session s LEFT JOIN FETCH s.movie LEFT JOIN FETCH s.hall ORDER BY s.startTime DESC")
 	Page<Session> findAllWithMovieAndHall(Pageable pageable);
 
 	@Query("SELECT s FROM Session s LEFT JOIN FETCH s.movie m LEFT JOIN FETCH s.hall h WHERE "
 			+ "(:search IS NULL OR LOWER(m.title) LIKE LOWER(CONCAT('%', :search, '%'))) AND "
-			+ "(:adminView = true OR s.status = ua.lviv.bas.cinema.domain.enums.CinemaSessionStatus.SCHEDULED)")
+			+ "(:adminView = true OR s.status = :scheduledStatus) " + "ORDER BY s.startTime DESC")
 	Page<Session> findByMovieTitleWithMovieAndHall(@Param("search") String search,
-			@Param("adminView") boolean adminView, Pageable pageable);
+			@Param("adminView") boolean adminView, @Param("scheduledStatus") CinemaSessionStatus scheduledStatus,
+			Pageable pageable);
 
 	@Query("SELECT s FROM Session s LEFT JOIN FETCH s.movie LEFT JOIN FETCH s.hall WHERE "
 			+ "s.startTime >= :start AND s.startTime <= :end AND "
-			+ "(:adminView = true OR s.status = ua.lviv.bas.cinema.domain.enums.CinemaSessionStatus.SCHEDULED)")
+			+ "(:adminView = true OR s.status = :scheduledStatus) " + "ORDER BY s.startTime DESC")
 	Page<Session> findByStartTimeBetweenWithMovieAndHall(@Param("start") LocalDateTime start,
-			@Param("end") LocalDateTime end, @Param("adminView") boolean adminView, Pageable pageable);
+			@Param("end") LocalDateTime end, @Param("adminView") boolean adminView,
+			@Param("scheduledStatus") CinemaSessionStatus scheduledStatus, Pageable pageable);
 
 	@Query("SELECT s FROM Session s LEFT JOIN FETCH s.movie LEFT JOIN FETCH s.hall WHERE " + "s.hall.id = :hallId AND "
-			+ "(:adminView = true OR s.status = ua.lviv.bas.cinema.domain.enums.CinemaSessionStatus.SCHEDULED)")
+			+ "(:adminView = true OR s.status = :scheduledStatus) " + "ORDER BY s.startTime DESC")
 	Page<Session> findByHallIdWithMovieAndHall(@Param("hallId") Long hallId, @Param("adminView") boolean adminView,
-			Pageable pageable);
+			@Param("scheduledStatus") CinemaSessionStatus scheduledStatus, Pageable pageable);
 
 	@Query("SELECT s FROM Session s LEFT JOIN FETCH s.movie LEFT JOIN FETCH s.hall WHERE "
-			+ "s.movie.id = :movieId AND "
-			+ "(:adminView = true OR s.status = ua.lviv.bas.cinema.domain.enums.CinemaSessionStatus.SCHEDULED)")
+			+ "s.movie.id = :movieId AND " + "(:adminView = true OR s.status = :scheduledStatus) "
+			+ "ORDER BY s.startTime DESC")
 	Page<Session> findByMovieIdWithMovieAndHall(@Param("movieId") Long movieId, @Param("adminView") boolean adminView,
-			Pageable pageable);
+			@Param("scheduledStatus") CinemaSessionStatus scheduledStatus, Pageable pageable);
 
-	@Query("SELECT s FROM Session s LEFT JOIN FETCH s.movie LEFT JOIN FETCH s.hall WHERE s.status = :status")
+	@Query("SELECT s FROM Session s LEFT JOIN FETCH s.movie LEFT JOIN FETCH s.hall WHERE s.status = :status "
+			+ "ORDER BY s.startTime DESC")
 	Page<Session> findByStatusWithMovieAndHall(@Param("status") CinemaSessionStatus status, Pageable pageable);
 
 	@Query("SELECT s FROM Session s LEFT JOIN FETCH s.movie LEFT JOIN FETCH s.hall WHERE "
-			+ "s.status = ua.lviv.bas.cinema.domain.enums.CinemaSessionStatus.SCHEDULED AND "
-			+ "s.startTime > CURRENT_TIMESTAMP")
-	Page<Session> findAvailableSessionsWithMovieAndHall(Pageable pageable);
+			+ "s.status = :scheduledStatus AND " + "s.startTime > CURRENT_TIMESTAMP " + "ORDER BY s.startTime ASC")
+	Page<Session> findAvailableSessionsWithMovieAndHall(@Param("scheduledStatus") CinemaSessionStatus scheduledStatus,
+			Pageable pageable);
 
 	@Query(value = """
 			SELECT s.* FROM sessions s

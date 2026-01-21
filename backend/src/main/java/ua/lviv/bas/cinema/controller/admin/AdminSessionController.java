@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -154,7 +155,7 @@ public class AdminSessionController {
 			@ApiResponse(responseCode = "401", description = "Unauthorized - authentication required", content = @Content(schema = @Schema(implementation = String.class))),
 			@ApiResponse(responseCode = "403", description = "Forbidden - admin or content manager access required", content = @Content(schema = @Schema(implementation = String.class))) })
 	public ResponseEntity<Page<SessionAdminResponse>> getSessions(
-			@Parameter(description = "Pagination parameters (page, size, sort)") @PageableDefault(size = 20, sort = "startTime") Pageable pageable,
+			@Parameter(description = "Pagination parameters (page, size, sort)") @PageableDefault(size = 20, sort = "startTime", direction = Sort.Direction.DESC) Pageable pageable,
 
 			@Parameter(description = "Search term for movie title or description", example = "Avengers") @RequestParam(required = false) String search,
 
@@ -203,7 +204,7 @@ public class AdminSessionController {
 			@ApiResponse(responseCode = "401", description = "Unauthorized - authentication required", content = @Content(schema = @Schema(implementation = String.class))),
 			@ApiResponse(responseCode = "403", description = "Forbidden - admin or content manager access required", content = @Content(schema = @Schema(implementation = String.class))) })
 	public ResponseEntity<Page<SessionAdminResponse>> getTodaySessions(
-			@Parameter(description = "Pagination parameters") @PageableDefault(size = 50, sort = "startTime") Pageable pageable) {
+			@Parameter(description = "Pagination parameters") @PageableDefault(size = 50, sort = "startTime", direction = Sort.Direction.ASC) Pageable pageable) {
 
 		log.info("GET /api/admin/sessions/upcoming/today - Retrieving today's sessions");
 		Page<SessionAdminResponse> sessions = sessionService.getTodaySessions(pageable);

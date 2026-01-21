@@ -185,21 +185,24 @@ public class SessionService {
 				date, hallId, movieId, status);
 
 		Page<Session> sessions;
-
 		boolean adminView = true;
 
 		if (search != null && !search.trim().isEmpty()) {
-			sessions = sessionRepository.findByMovieTitleWithMovieAndHall(search, adminView, pageable);
+			sessions = sessionRepository.findByMovieTitleWithMovieAndHall(search, adminView,
+					CinemaSessionStatus.SCHEDULED, pageable);
 		} else if (hallId != null) {
-			sessions = sessionRepository.findByHallIdWithMovieAndHall(hallId, adminView, pageable);
+			sessions = sessionRepository.findByHallIdWithMovieAndHall(hallId, adminView, CinemaSessionStatus.SCHEDULED,
+					pageable);
 		} else if (movieId != null) {
-			sessions = sessionRepository.findByMovieIdWithMovieAndHall(movieId, adminView, pageable);
+			sessions = sessionRepository.findByMovieIdWithMovieAndHall(movieId, adminView,
+					CinemaSessionStatus.SCHEDULED, pageable);
 		} else if (status != null) {
 			sessions = sessionRepository.findByStatusWithMovieAndHall(status, pageable);
 		} else if (date != null) {
 			LocalDateTime start = date.atStartOfDay();
 			LocalDateTime end = date.atTime(23, 59, 59);
-			sessions = sessionRepository.findByStartTimeBetweenWithMovieAndHall(start, end, adminView, pageable);
+			sessions = sessionRepository.findByStartTimeBetweenWithMovieAndHall(start, end, adminView,
+					CinemaSessionStatus.SCHEDULED, pageable);
 		} else {
 			sessions = sessionRepository.findAllWithMovieAndHall(pageable);
 		}
@@ -244,8 +247,9 @@ public class SessionService {
 		LocalDateTime startOfDay = today.atStartOfDay();
 		LocalDateTime endOfDay = today.atTime(23, 59, 59);
 
-		Page<Session> sessions = sessionRepository.findByStartTimeBetweenWithMovieAndHall(startOfDay, endOfDay, true,
-				pageable);
+		boolean adminView = true;
+		Page<Session> sessions = sessionRepository.findByStartTimeBetweenWithMovieAndHall(startOfDay, endOfDay,
+				adminView, CinemaSessionStatus.SCHEDULED, pageable);
 		return sessions.map(this::toAdminResponse);
 	}
 
@@ -254,19 +258,23 @@ public class SessionService {
 			Pageable pageable) {
 
 		Page<Session> sessions;
+		boolean adminView = false;
 
 		if (date != null) {
 			LocalDateTime start = date.atStartOfDay();
 			LocalDateTime end = date.atTime(23, 59, 59);
-			sessions = sessionRepository.findByStartTimeBetweenWithMovieAndHall(start, end, false, pageable);
+			sessions = sessionRepository.findByStartTimeBetweenWithMovieAndHall(start, end, adminView,
+					CinemaSessionStatus.SCHEDULED, pageable);
 		} else if (movieId != null) {
-			sessions = sessionRepository.findByMovieIdWithMovieAndHall(movieId, false, pageable);
+			sessions = sessionRepository.findByMovieIdWithMovieAndHall(movieId, adminView,
+					CinemaSessionStatus.SCHEDULED, pageable);
 		} else if (daysAhead != null) {
 			LocalDateTime start = LocalDateTime.now();
 			LocalDateTime end = start.plusDays(daysAhead);
-			sessions = sessionRepository.findByStartTimeBetweenWithMovieAndHall(start, end, false, pageable);
+			sessions = sessionRepository.findByStartTimeBetweenWithMovieAndHall(start, end, adminView,
+					CinemaSessionStatus.SCHEDULED, pageable);
 		} else {
-			sessions = sessionRepository.findAvailableSessionsWithMovieAndHall(pageable);
+			sessions = sessionRepository.findAvailableSessionsWithMovieAndHall(CinemaSessionStatus.SCHEDULED, pageable);
 		}
 
 		return sessions.map(this::toScheduleResponse);
@@ -278,8 +286,9 @@ public class SessionService {
 		LocalDateTime startOfDay = today.atStartOfDay();
 		LocalDateTime endOfDay = today.atTime(23, 59, 59);
 
-		Page<Session> sessions = sessionRepository.findByStartTimeBetweenWithMovieAndHall(startOfDay, endOfDay, false,
-				pageable);
+		boolean adminView = false;
+		Page<Session> sessions = sessionRepository.findByStartTimeBetweenWithMovieAndHall(startOfDay, endOfDay,
+				adminView, CinemaSessionStatus.SCHEDULED, pageable);
 		return sessions.map(this::toScheduleResponse);
 	}
 
@@ -293,7 +302,7 @@ public class SessionService {
 	@Transactional(readOnly = true)
 	public List<Session> findSessionsToStart() {
 		LocalDateTime now = LocalDateTime.now();
-		return sessionRepository.findSessionsToStart(now);
+		return sessionRepository.findSessionsToStart(now, CinemaSessionStatus.SCHEDULED);
 	}
 
 	@Transactional(readOnly = true)

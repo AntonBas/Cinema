@@ -78,7 +78,7 @@ export const sessionApi = {
         getAll: (
             page?: number,
             size: number = 20,
-            sort: string = 'startTime',
+            sort: string = 'startTime,desc',
             search?: string,
             date?: string,
             hallId?: number,
@@ -121,7 +121,7 @@ export const sessionApi = {
             const params = new URLSearchParams();
             if (page !== undefined) params.append('page', page.toString());
             params.append('size', size.toString());
-            params.append('sort', 'startTime');
+            params.append('sort', 'startTime,asc');
 
             return fetchApi<PageResponse<SessionAdminResponse>>(`${ADMIN_URL}/upcoming/today?${params}`);
         },
@@ -131,6 +131,7 @@ export const sessionApi = {
         getSchedule: (
             page?: number,
             size: number = 20,
+            sort: string = 'startTime,asc',
             date?: string,
             movieId?: number,
             daysAhead?: number
@@ -138,7 +139,7 @@ export const sessionApi = {
             const params = new URLSearchParams();
             if (page !== undefined) params.append('page', page.toString());
             params.append('size', size.toString());
-            params.append('sort', 'startTime');
+            params.append('sort', sort);
             if (date) params.append('date', date);
             if (movieId !== undefined) params.append('movieId', movieId.toString());
             if (daysAhead !== undefined) params.append('daysAhead', daysAhead.toString());

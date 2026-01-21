@@ -4,6 +4,7 @@ import java.time.LocalDate;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -28,7 +29,7 @@ public class SessionController {
 
 	@GetMapping
 	public ResponseEntity<Page<SessionScheduleResponse>> getScheduleSessions(
-			@PageableDefault(size = 20, sort = "startTime") Pageable pageable,
+			@PageableDefault(size = 20, sort = "startTime", direction = Sort.Direction.ASC) Pageable pageable,
 			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
 			@RequestParam(required = false) Long movieId, @RequestParam(required = false) Integer daysAhead) {
 

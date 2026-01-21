@@ -26,7 +26,7 @@ public class SessionStatusScheduler {
 		log.debug("Starting scheduled session status update");
 		LocalDateTime now = LocalDateTime.now();
 
-		List<Session> sessionsToStart = sessionRepository.findSessionsToStart(now);
+		List<Session> sessionsToStart = sessionRepository.findSessionsToStart(now, CinemaSessionStatus.SCHEDULED);
 		if (!sessionsToStart.isEmpty()) {
 			sessionsToStart.forEach(session -> {
 				session.setStatus(CinemaSessionStatus.ONGOING);
