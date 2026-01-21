@@ -3,7 +3,6 @@ import { useMovieStatus } from '@/hooks/features/movies';
 import { MovieList } from '@/components/movies';
 import { useNotification } from '@/hooks/common/useNotification';
 import { Notification } from '@/components/ui';
-import styles from './UpcomingMoviesPage.module.css';
 
 export const UpcomingMoviesPage: React.FC = () => {
     const { movies, loading, error, fetchMoviesByStatus } = useMovieStatus();
@@ -20,12 +19,7 @@ export const UpcomingMoviesPage: React.FC = () => {
     }, [error, showNotification]);
 
     return (
-        <div className={styles.page}>
-            <div className={styles.header}>
-                <h1>Coming Soon</h1>
-                <p>Upcoming movies in cinemas</p>
-            </div>
-
+        <div className="page">
             <MovieList
                 movies={movies}
                 loading={loading}

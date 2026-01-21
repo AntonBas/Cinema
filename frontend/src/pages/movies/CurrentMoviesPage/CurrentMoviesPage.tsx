@@ -21,11 +21,6 @@ export const CurrentMoviesPage: React.FC = () => {
 
     return (
         <div className={styles.page}>
-            <div className={styles.header}>
-                <h1>Now Playing</h1>
-                <p>Movies currently showing in cinemas</p>
-            </div>
-
             <MovieList
                 movies={movies}
                 loading={loading}
