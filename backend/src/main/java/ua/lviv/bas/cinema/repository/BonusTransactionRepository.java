@@ -16,4 +16,6 @@ public interface BonusTransactionRepository extends JpaRepository<BonusTransacti
 	Page<BonusTransaction> findByBonusCardUserIdOrderByCreatedAtDesc(Long userId, Pageable pageable);
 
 	Page<BonusTransaction> findByTypeOrderByCreatedAtDesc(@Param("type") BonusTransactionType type, Pageable pageable);
+
+	Page<BonusTransaction> findAllByOrderByCreatedAtDesc(Pageable pageable);
 }

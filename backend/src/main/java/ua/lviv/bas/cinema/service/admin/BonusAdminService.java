@@ -81,7 +81,7 @@ public class BonusAdminService {
 		log.debug("Admin: getting all transactions, page: {}, size: {}", pageable.getPageNumber(),
 				pageable.getPageSize());
 
-		Page<BonusTransaction> page = bonusTransactionRepository.findAll(pageable);
+		Page<BonusTransaction> page = bonusTransactionRepository.findAllByOrderByCreatedAtDesc(pageable);
 		return page.map(bonusMapper::toBonusTransactionResponse);
 	}
 

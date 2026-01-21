@@ -10,6 +10,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -22,6 +23,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 import ua.lviv.bas.cinema.domain.BonusRules;
 import ua.lviv.bas.cinema.domain.BonusTransaction;
@@ -230,28 +232,34 @@ class BonusAdminServiceTest {
 	}
 
 	@Test
-	void getAllTransactions_ShouldReturnAllPaged() {
-		Pageable pageable = PageRequest.of(0, 20);
+	void getAllTransactions_ShouldReturnAllPagedSortedByCreatedAtDesc() {
+		Pageable pageable = PageRequest.of(0, 20, Sort.by(Sort.Direction.DESC, "createdAt"));
+
+		LocalDateTime now = LocalDateTime.now();
 		BonusTransaction transaction1 = BonusTransaction.builder().id(1L).type(BonusTransactionType.WELCOME_BONUS)
-				.pointsChange(100).build();
+				.pointsChange(100).createdAt(now.minusDays(1)).build();
 
 		BonusTransaction transaction2 = BonusTransaction.builder().id(2L).type(BonusTransactionType.PAYMENT_ACCRUAL)
-				.pointsChange(25).build();
+				.pointsChange(25).createdAt(now).build();
 
-		Page<BonusTransaction> page = new PageImpl<>(List.of(transaction1, transaction2), pageable, 2);
+		Page<BonusTransaction> page = new PageImpl<>(List.of(transaction2, transaction1), pageable, 2);
+
 		BonusTransactionResponse response1 = new BonusTransactionResponse();
 		BonusTransactionResponse response2 = new BonusTransactionResponse();
 
-		when(bonusTransactionRepository.findAll(pageable)).thenReturn(page);
-		when(bonusMapper.toBonusTransactionResponse(transaction1)).thenReturn(response1);
-		when(bonusMapper.toBonusTransactionResponse(transaction2)).thenReturn(response2);
+		when(bonusTransactionRepository.findAllByOrderByCreatedAtDesc(pageable)).thenReturn(page);
+
+		when(bonusMapper.toBonusTransactionResponse(transaction2)).thenReturn(response1);
+		when(bonusMapper.toBonusTransactionResponse(transaction1)).thenReturn(response2);
 
 		Page<BonusTransactionResponse> result = bonusAdminService.getAllTransactions(pageable);
 
 		assertThat(result.getContent()).hasSize(2);
+
 		assertThat(result.getContent()).containsExactly(response1, response2);
 		assertThat(result.getTotalElements()).isEqualTo(2);
-		verify(bonusTransactionRepository).findAll(pageable);
+
+		verify(bonusTransactionRepository).findAllByOrderByCreatedAtDesc(pageable);
 		verify(bonusMapper, times(2)).toBonusTransactionResponse(any());
 	}
 
