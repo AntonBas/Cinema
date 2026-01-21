@@ -1,7 +1,5 @@
 package ua.lviv.bas.cinema.dto.movie.response;
 
-import java.time.LocalDate;
-
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -35,9 +33,6 @@ public class MovieCardResponse {
 	@Schema(description = "Age rating of the movie", example = "PG_13", allowableValues = { "G", "PG", "PG_13", "R",
 			"NC_17" })
 	private AgeRating ageRating;
-
-	@Schema(description = "Release date of the movie", example = "2024-01-15", type = "string", format = "date")
-	private LocalDate releaseDate;
 
 	@Schema(description = "Current status of the movie", example = "ACTIVE", allowableValues = { "ACTIVE", "UPCOMING",
 			"ARCHIVED", "CANCELLED" })

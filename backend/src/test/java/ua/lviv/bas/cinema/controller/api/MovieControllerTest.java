@@ -47,8 +47,7 @@ public class MovieControllerTest {
 
 	private MovieCardResponse createMovieCardResponse(Long id, String title, String slug, MovieStatus status) {
 		return MovieCardResponse.builder().id(id).title(title).slug(slug).posterUrl("/api/movies/" + id + "/poster")
-				.durationMinutes(120).ageRating(AgeRating.PEGI_12).releaseDate(LocalDate.now().plusDays(1))
-				.status(status).currentlyShowing(false).build();
+				.durationMinutes(120).ageRating(AgeRating.PEGI_12).status(status).currentlyShowing(false).build();
 	}
 
 	@Test

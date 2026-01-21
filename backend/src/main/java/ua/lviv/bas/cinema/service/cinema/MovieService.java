@@ -128,45 +128,45 @@ public class MovieService {
 	@Transactional(readOnly = true)
 	public Page<MovieCardResponse> getMoviesByStatus(MovieStatus status, Pageable pageable) {
 		Page<Movie> movies = movieRepository.findByStatusWithSearch(status, null, pageable);
-		return movies.map(movieMapper::toMovieCardResponse);
+		return movies.map(this::buildCardResponse);
 	}
 
 	@Transactional(readOnly = true)
 	public Page<MovieCardResponse> searchMoviesByTitle(String search, MovieStatus status, Pageable pageable) {
 		Page<Movie> movies = movieRepository.findByStatusWithSearch(status, search, pageable);
-		return movies.map(movieMapper::toMovieCardResponse);
+		return movies.map(this::buildCardResponse);
 	}
 
 	@Transactional(readOnly = true)
 	public List<MovieCardResponse> getCurrentlyShowing(int limit) {
 		Pageable pageable = PageRequest.of(0, limit, Sort.by("releaseDate").descending());
 		List<Movie> movies = movieRepository.findCurrentlyShowing(pageable);
-		return movieMapper.toMovieCardResponseList(movies);
+		return movies.stream().map(this::buildCardResponse).toList();
 	}
 
 	@Transactional(readOnly = true)
 	public Page<MovieCardResponse> getCurrentlyShowingPage(Pageable pageable) {
 		Page<Movie> movies = movieRepository.findCurrentlyShowingPage(pageable);
-		return movies.map(movieMapper::toMovieCardResponse);
+		return movies.map(this::buildCardResponse);
 	}
 
 	@Transactional(readOnly = true)
 	public List<MovieCardResponse> getUpcoming(int limit) {
 		Pageable pageable = PageRequest.of(0, limit, Sort.by("releaseDate"));
 		List<Movie> movies = movieRepository.findUpcoming(pageable);
-		return movieMapper.toMovieCardResponseList(movies);
+		return movies.stream().map(this::buildCardResponse).toList();
 	}
 
 	@Transactional(readOnly = true)
 	public Page<MovieCardResponse> getUpcomingPage(Pageable pageable) {
 		Page<Movie> movies = movieRepository.findUpcomingPage(pageable);
-		return movies.map(movieMapper::toMovieCardResponse);
+		return movies.map(this::buildCardResponse);
 	}
 
 	@Transactional(readOnly = true)
 	public Page<MovieCardResponse> getArchivedMovies(Pageable pageable) {
 		Page<Movie> movies = movieRepository.findArchived(pageable);
-		return movies.map(movieMapper::toMovieCardResponse);
+		return movies.map(this::buildCardResponse);
 	}
 
 	@Transactional(readOnly = true)
@@ -181,9 +181,15 @@ public class MovieService {
 		return posterService.getPosterResponse(movie.getPosterFileName());
 	}
 
+	private MovieCardResponse buildCardResponse(Movie movie) {
+		MovieCardResponse response = movieMapper.toMovieCardResponse(movie);
+		enrichCardResponse(response, movie);
+		return response;
+	}
+
 	private MovieDetailResponse buildDetailResponse(Movie movie) {
 		MovieDetailResponse response = movieMapper.toMovieDetailResponse(movie);
-		enrichResponse(response, movie);
+		enrichDetailResponse(response, movie);
 		return response;
 	}
 
@@ -262,13 +268,18 @@ public class MovieService {
 		}
 	}
 
-	private void enrichResponse(MovieDetailResponse response, Movie movie) {
+	private void enrichCardResponse(MovieCardResponse response, Movie movie) {
+		String posterUrl = posterService.getPosterUrl(movie.getId(), movie.getPosterFileName());
+		response.setPosterUrl(posterUrl);
+		response.setCurrentlyShowing(movie.getStatus() == MovieStatus.CURRENT);
+	}
+
+	private void enrichDetailResponse(MovieDetailResponse response, Movie movie) {
+		String posterUrl = posterService.getPosterUrl(movie.getId(), movie.getPosterFileName());
+		response.setPosterUrl(posterUrl);
 		response.setCurrentlyShowing(movie.getStatus() == MovieStatus.CURRENT);
 		response.setUpcoming(movie.getStatus() == MovieStatus.UPCOMING);
 		response.setArchived(movie.getStatus() == MovieStatus.ARCHIVED);
-
-		String posterUrl = posterService.getPosterUrl(movie.getId(), movie.getPosterFileName());
-		response.setPosterUrl(posterUrl);
 	}
 
 	private MovieSessionSearchResponse toSessionSearchResponse(Movie movie) {

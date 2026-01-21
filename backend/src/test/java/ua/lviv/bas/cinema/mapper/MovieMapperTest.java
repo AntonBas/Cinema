@@ -45,7 +45,6 @@ public class MovieMapperTest {
 		assertThat(result.getPosterUrl()).isNull();
 		assertThat(result.getDurationMinutes()).isEqualTo(120);
 		assertThat(result.getAgeRating()).isEqualTo(AgeRating.PEGI_12);
-		assertThat(result.getReleaseDate()).isEqualTo(movie.getReleaseDate());
 		assertThat(result.getStatus()).isEqualTo(MovieStatus.UPCOMING);
 	}
 
