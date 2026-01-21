@@ -19,14 +19,19 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.enums.TicketStatus;
 import ua.lviv.bas.cinema.dto.ticket.response.TicketResponse;
 import ua.lviv.bas.cinema.exception.domain.ticket.TicketNotFoundException;
+import ua.lviv.bas.cinema.security.CustomUserDetails;
 import ua.lviv.bas.cinema.service.booking.TicketService;
 
 @ExtendWith(MockitoExtension.class)
@@ -38,13 +43,20 @@ public class TicketControllerTest {
 	@InjectMocks
 	private TicketController ticketController;
 
-	private User createUser(Long id, String email) {
+	private CustomUserDetails createUserDetails(Long id, String email) {
 		User user = new User();
 		user.setId(id);
 		user.setEmail(email);
 		user.setFirstName("John");
 		user.setLastName("Doe");
-		return user;
+
+		return new CustomUserDetails(user);
+	}
+
+	private void setupSecurityContext(CustomUserDetails userDetails) {
+		UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, null,
+				List.of(new SimpleGrantedAuthority("ROLE_USER")));
+		SecurityContextHolder.getContext().setAuthentication(authentication);
 	}
 
 	private TicketResponse createTicketResponse(Long id, String ticketCode, TicketStatus status, String movieTitle) {
@@ -56,117 +68,126 @@ public class TicketControllerTest {
 
 	@Test
 	void getTicket_ShouldReturnTicket_WhenExistsAndAuthorized() {
-		User user = createUser(1L, "user@example.com");
+		CustomUserDetails userDetails = createUserDetails(1L, "user@example.com");
+		setupSecurityContext(userDetails);
 		Long ticketId = 1L;
 
 		TicketResponse ticketResponse = createTicketResponse(ticketId, "TKT-20240115-ABC123", TicketStatus.ACTIVE,
 				"Inception");
 
-		when(ticketService.getTicketById(ticketId, user)).thenReturn(ticketResponse);
+		when(ticketService.getTicketById(ticketId, userDetails.getUser())).thenReturn(ticketResponse);
 
-		ResponseEntity<TicketResponse> response = ticketController.getTicket(ticketId, user);
+		ResponseEntity<TicketResponse> response = ticketController.getTicket(ticketId, userDetails);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
 		assertNotNull(response.getBody());
 		assertEquals(ticketId, response.getBody().getId());
 		assertEquals("TKT-20240115-ABC123", response.getBody().getTicketCode());
 		assertEquals(TicketStatus.ACTIVE, response.getBody().getStatus());
-		verify(ticketService).getTicketById(ticketId, user);
+		verify(ticketService).getTicketById(ticketId, userDetails.getUser());
 	}
 
 	@Test
 	void getTicket_ShouldThrowException_WhenNotFound() {
-		User user = createUser(1L, "user@example.com");
+		CustomUserDetails userDetails = createUserDetails(1L, "user@example.com");
+		setupSecurityContext(userDetails);
 		Long ticketId = 999L;
 
-		when(ticketService.getTicketById(ticketId, user)).thenThrow(new TicketNotFoundException(ticketId));
+		when(ticketService.getTicketById(ticketId, userDetails.getUser()))
+				.thenThrow(new TicketNotFoundException(ticketId));
 
-		assertThrows(TicketNotFoundException.class, () -> ticketController.getTicket(ticketId, user));
-		verify(ticketService).getTicketById(ticketId, user);
+		assertThrows(TicketNotFoundException.class, () -> ticketController.getTicket(ticketId, userDetails));
+		verify(ticketService).getTicketById(ticketId, userDetails.getUser());
 	}
 
 	@Test
 	void getUserTickets_ShouldReturnTickets_WhenNoStatusFilter() {
-		User user = createUser(1L, "user@example.com");
+		CustomUserDetails userDetails = createUserDetails(1L, "user@example.com");
+		setupSecurityContext(userDetails);
 
 		TicketResponse ticket1 = createTicketResponse(1L, "TKT-20240115-ABC123", TicketStatus.ACTIVE, "Movie 1");
 		TicketResponse ticket2 = createTicketResponse(2L, "TKT-20240115-DEF456", TicketStatus.USED, "Movie 2");
 		List<TicketResponse> tickets = Arrays.asList(ticket1, ticket2);
 
-		when(ticketService.getUserTickets(user, null)).thenReturn(tickets);
+		when(ticketService.getUserTickets(userDetails.getUser(), null)).thenReturn(tickets);
 
-		ResponseEntity<List<TicketResponse>> response = ticketController.getUserTickets(null, user);
+		ResponseEntity<List<TicketResponse>> response = ticketController.getUserTickets(null, userDetails);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
 		assertNotNull(response.getBody());
 		assertEquals(2, response.getBody().size());
-		verify(ticketService).getUserTickets(user, null);
+		verify(ticketService).getUserTickets(userDetails.getUser(), null);
 	}
 
 	@Test
 	void getUserTickets_ShouldReturnFilteredTickets_WhenStatusFiltered() {
-		User user = createUser(1L, "user@example.com");
+		CustomUserDetails userDetails = createUserDetails(1L, "user@example.com");
+		setupSecurityContext(userDetails);
 		TicketStatus status = TicketStatus.ACTIVE;
 
 		TicketResponse ticket1 = createTicketResponse(1L, "TKT-20240115-ABC123", status, "Movie 1");
 		TicketResponse ticket2 = createTicketResponse(2L, "TKT-20240115-DEF456", status, "Movie 2");
 		List<TicketResponse> tickets = Arrays.asList(ticket1, ticket2);
 
-		when(ticketService.getUserTickets(user, status)).thenReturn(tickets);
+		when(ticketService.getUserTickets(userDetails.getUser(), status)).thenReturn(tickets);
 
-		ResponseEntity<List<TicketResponse>> response = ticketController.getUserTickets(status, user);
+		ResponseEntity<List<TicketResponse>> response = ticketController.getUserTickets(status, userDetails);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
 		assertNotNull(response.getBody());
 		assertEquals(2, response.getBody().size());
 		response.getBody().forEach(ticket -> assertEquals(status, ticket.getStatus()));
-		verify(ticketService).getUserTickets(user, status);
+		verify(ticketService).getUserTickets(userDetails.getUser(), status);
 	}
 
 	@Test
 	void getUserTickets_ShouldReturnEmptyList_WhenNoTickets() {
-		User user = createUser(1L, "user@example.com");
+		CustomUserDetails userDetails = createUserDetails(1L, "user@example.com");
+		setupSecurityContext(userDetails);
 
 		List<TicketResponse> emptyList = Arrays.asList();
 
-		when(ticketService.getUserTickets(user, null)).thenReturn(emptyList);
+		when(ticketService.getUserTickets(userDetails.getUser(), null)).thenReturn(emptyList);
 
-		ResponseEntity<List<TicketResponse>> response = ticketController.getUserTickets(null, user);
+		ResponseEntity<List<TicketResponse>> response = ticketController.getUserTickets(null, userDetails);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
 		assertNotNull(response.getBody());
 		assertEquals(0, response.getBody().size());
-		verify(ticketService).getUserTickets(user, null);
+		verify(ticketService).getUserTickets(userDetails.getUser(), null);
 	}
 
 	@Test
 	void getBookingTickets_ShouldReturnTickets() {
-		User user = createUser(1L, "user@example.com");
+		CustomUserDetails userDetails = createUserDetails(1L, "user@example.com");
+		setupSecurityContext(userDetails);
 		Long bookingId = 100L;
 
 		TicketResponse ticket1 = createTicketResponse(1L, "TKT-20240115-ABC123", TicketStatus.ACTIVE, "Movie 1");
 		TicketResponse ticket2 = createTicketResponse(2L, "TKT-20240115-DEF456", TicketStatus.ACTIVE, "Movie 1");
 		List<TicketResponse> tickets = Arrays.asList(ticket1, ticket2);
 
-		when(ticketService.getBookingTickets(bookingId, user)).thenReturn(tickets);
+		when(ticketService.getBookingTickets(bookingId, userDetails.getUser())).thenReturn(tickets);
 
-		ResponseEntity<List<TicketResponse>> response = ticketController.getBookingTickets(bookingId, user);
+		ResponseEntity<List<TicketResponse>> response = ticketController.getBookingTickets(bookingId, userDetails);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
 		assertNotNull(response.getBody());
 		assertEquals(2, response.getBody().size());
-		verify(ticketService).getBookingTickets(bookingId, user);
+		verify(ticketService).getBookingTickets(bookingId, userDetails.getUser());
 	}
 
 	@Test
 	void getBookingTickets_ShouldThrowException_WhenBookingNotFound() {
-		User user = createUser(1L, "user@example.com");
+		CustomUserDetails userDetails = createUserDetails(1L, "user@example.com");
+		setupSecurityContext(userDetails);
 		Long bookingId = 999L;
 
-		when(ticketService.getBookingTickets(bookingId, user)).thenThrow(new RuntimeException("Booking not found"));
+		when(ticketService.getBookingTickets(bookingId, userDetails.getUser()))
+				.thenThrow(new RuntimeException("Booking not found"));
 
-		assertThrows(RuntimeException.class, () -> ticketController.getBookingTickets(bookingId, user));
-		verify(ticketService).getBookingTickets(bookingId, user);
+		assertThrows(RuntimeException.class, () -> ticketController.getBookingTickets(bookingId, userDetails));
+		verify(ticketService).getBookingTickets(bookingId, userDetails.getUser());
 	}
 
 	@Test
@@ -213,6 +234,8 @@ public class TicketControllerTest {
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
 		assertEquals(MediaType.IMAGE_PNG, response.getHeaders().getContentType());
+		assertEquals("inline; filename=\"ticket-qr.png\"",
+				response.getHeaders().getFirst(HttpHeaders.CONTENT_DISPOSITION));
 		assertNotNull(response.getBody());
 		verify(ticketService).generateTicketQRCode(ticketCode);
 	}
@@ -229,37 +252,41 @@ public class TicketControllerTest {
 
 	@Test
 	void voidTicket_ShouldVoidSuccessfully() {
-		User user = createUser(1L, "user@example.com");
+		CustomUserDetails userDetails = createUserDetails(1L, "user@example.com");
+		setupSecurityContext(userDetails);
 		Long ticketId = 1L;
 
-		doNothing().when(ticketService).voidTicket(ticketId, user);
+		doNothing().when(ticketService).voidTicket(ticketId, userDetails.getUser());
 
-		ResponseEntity<Void> response = ticketController.voidTicket(ticketId, user);
+		ResponseEntity<Void> response = ticketController.voidTicket(ticketId, userDetails);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
-		verify(ticketService).voidTicket(ticketId, user);
+		verify(ticketService).voidTicket(ticketId, userDetails.getUser());
 	}
 
 	@Test
 	void voidTicket_ShouldThrowException_WhenCannotVoid() {
-		User user = createUser(1L, "user@example.com");
+		CustomUserDetails userDetails = createUserDetails(1L, "user@example.com");
+		setupSecurityContext(userDetails);
 		Long ticketId = 1L;
 
-		doThrow(new RuntimeException("Ticket cannot be voided")).when(ticketService).voidTicket(ticketId, user);
+		doThrow(new RuntimeException("Ticket cannot be voided")).when(ticketService).voidTicket(ticketId,
+				userDetails.getUser());
 
-		assertThrows(RuntimeException.class, () -> ticketController.voidTicket(ticketId, user));
-		verify(ticketService).voidTicket(ticketId, user);
+		assertThrows(RuntimeException.class, () -> ticketController.voidTicket(ticketId, userDetails));
+		verify(ticketService).voidTicket(ticketId, userDetails.getUser());
 	}
 
 	@Test
 	void voidTicket_ShouldThrowException_WhenNotFound() {
-		User user = createUser(1L, "user@example.com");
+		CustomUserDetails userDetails = createUserDetails(1L, "user@example.com");
+		setupSecurityContext(userDetails);
 		Long ticketId = 999L;
 
-		doThrow(new TicketNotFoundException(ticketId)).when(ticketService).voidTicket(ticketId, user);
+		doThrow(new TicketNotFoundException(ticketId)).when(ticketService).voidTicket(ticketId, userDetails.getUser());
 
-		assertThrows(TicketNotFoundException.class, () -> ticketController.voidTicket(ticketId, user));
-		verify(ticketService).voidTicket(ticketId, user);
+		assertThrows(TicketNotFoundException.class, () -> ticketController.voidTicket(ticketId, userDetails));
+		verify(ticketService).voidTicket(ticketId, userDetails.getUser());
 	}
 
 	@Test
@@ -301,20 +328,21 @@ public class TicketControllerTest {
 
 	@Test
 	void getUserTickets_ShouldHandleMixedStatusTickets() {
-		User user = createUser(1L, "user@example.com");
+		CustomUserDetails userDetails = createUserDetails(1L, "user@example.com");
+		setupSecurityContext(userDetails);
 
 		TicketResponse ticket1 = createTicketResponse(1L, "TKT-20240115-ABC123", TicketStatus.ACTIVE, "Movie 1");
 		TicketResponse ticket2 = createTicketResponse(2L, "TKT-20240115-DEF456", TicketStatus.USED, "Movie 2");
 		TicketResponse ticket3 = createTicketResponse(3L, "TKT-20240115-GHI789", TicketStatus.CANCELLED, "Movie 3");
 		List<TicketResponse> tickets = Arrays.asList(ticket1, ticket2, ticket3);
 
-		when(ticketService.getUserTickets(user, null)).thenReturn(tickets);
+		when(ticketService.getUserTickets(userDetails.getUser(), null)).thenReturn(tickets);
 
-		ResponseEntity<List<TicketResponse>> response = ticketController.getUserTickets(null, user);
+		ResponseEntity<List<TicketResponse>> response = ticketController.getUserTickets(null, userDetails);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
 		assertEquals(3, response.getBody().size());
-		verify(ticketService).getUserTickets(user, null);
+		verify(ticketService).getUserTickets(userDetails.getUser(), null);
 	}
 
 	@Test
@@ -340,17 +368,98 @@ public class TicketControllerTest {
 
 	@Test
 	void getBookingTickets_ShouldReturnEmptyList_WhenNoTickets() {
-		User user = createUser(1L, "user@example.com");
+		CustomUserDetails userDetails = createUserDetails(1L, "user@example.com");
+		setupSecurityContext(userDetails);
 		Long bookingId = 100L;
 
 		List<TicketResponse> emptyList = Arrays.asList();
 
-		when(ticketService.getBookingTickets(bookingId, user)).thenReturn(emptyList);
+		when(ticketService.getBookingTickets(bookingId, userDetails.getUser())).thenReturn(emptyList);
 
-		ResponseEntity<List<TicketResponse>> response = ticketController.getBookingTickets(bookingId, user);
+		ResponseEntity<List<TicketResponse>> response = ticketController.getBookingTickets(bookingId, userDetails);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
 		assertEquals(0, response.getBody().size());
-		verify(ticketService).getBookingTickets(bookingId, user);
+		verify(ticketService).getBookingTickets(bookingId, userDetails.getUser());
+	}
+
+	@Test
+	void getUserTickets_ShouldHandleStatusNotFound() {
+		CustomUserDetails userDetails = createUserDetails(1L, "user@example.com");
+		setupSecurityContext(userDetails);
+		TicketStatus nonExistentStatus = TicketStatus.CANCELLED;
+
+		List<TicketResponse> emptyList = Arrays.asList();
+
+		when(ticketService.getUserTickets(userDetails.getUser(), nonExistentStatus)).thenReturn(emptyList);
+
+		ResponseEntity<List<TicketResponse>> response = ticketController.getUserTickets(nonExistentStatus, userDetails);
+
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+		assertEquals(0, response.getBody().size());
+		verify(ticketService).getUserTickets(userDetails.getUser(), nonExistentStatus);
+	}
+
+	@Test
+	void getTicketQrCode_ShouldHandleEmptyQRCode() {
+		String ticketCode = "TKT-20240115-ABC123";
+		byte[] emptyQrCodeData = new byte[0];
+
+		when(ticketService.generateTicketQRCode(ticketCode)).thenReturn(emptyQrCodeData);
+
+		ResponseEntity<Resource> response = ticketController.getTicketQrCode(ticketCode);
+
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+		assertEquals(MediaType.IMAGE_PNG, response.getHeaders().getContentType());
+		assertNotNull(response.getBody());
+		verify(ticketService).generateTicketQRCode(ticketCode);
+	}
+
+	@Test
+	void validateTicket_ShouldHandleInvalidTicketCode() {
+		String invalidTicketCode = "INVALID-CODE";
+
+		doThrow(new IllegalArgumentException("Invalid ticket code format")).when(ticketService)
+				.validateTicket(invalidTicketCode);
+
+		assertThrows(IllegalArgumentException.class, () -> ticketController.validateTicket(invalidTicketCode));
+		verify(ticketService).validateTicket(invalidTicketCode);
+	}
+
+	@Test
+	void checkTicketStatus_ShouldHandleEmptyTicketCode() {
+		String emptyTicketCode = "";
+
+		when(ticketService.checkTicketStatus(emptyTicketCode))
+				.thenThrow(new IllegalArgumentException("Ticket code cannot be empty"));
+
+		assertThrows(IllegalArgumentException.class, () -> ticketController.checkTicketStatus(emptyTicketCode));
+		verify(ticketService).checkTicketStatus(emptyTicketCode);
+	}
+
+	@Test
+	void getTicket_ShouldHandleDifferentUserTryingToAccessTicket() {
+		CustomUserDetails userDetails = createUserDetails(1L, "user@example.com");
+		setupSecurityContext(userDetails);
+		Long ticketId = 1L;
+
+		when(ticketService.getTicketById(ticketId, userDetails.getUser()))
+				.thenThrow(new SecurityException("Access denied to ticket"));
+
+		assertThrows(SecurityException.class, () -> ticketController.getTicket(ticketId, userDetails));
+		verify(ticketService).getTicketById(ticketId, userDetails.getUser());
+	}
+
+	@Test
+	void getBookingTickets_ShouldHandleDifferentUserTryingToAccessBooking() {
+		CustomUserDetails userDetails = createUserDetails(1L, "user@example.com");
+		setupSecurityContext(userDetails);
+		Long bookingId = 100L;
+
+		when(ticketService.getBookingTickets(bookingId, userDetails.getUser()))
+				.thenThrow(new SecurityException("Access denied to booking"));
+
+		assertThrows(SecurityException.class, () -> ticketController.getBookingTickets(bookingId, userDetails));
+		verify(ticketService).getBookingTickets(bookingId, userDetails.getUser());
 	}
 }
