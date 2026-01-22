@@ -1,59 +1,66 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { CustomCalendar } from '../CustomCalendar';
 import styles from './DateFilter.module.css';
 
 interface DateFilterProps {
     selectedDate: string;
     onDateChange: (date: string) => void;
+    sessionDates?: string[];
 }
 
-export const DateFilter: React.FC<DateFilterProps> = ({ selectedDate, onDateChange }) => {
+export const DateFilter: React.FC<DateFilterProps> = ({
+    selectedDate,
+    onDateChange,
+    sessionDates = []
+}) => {
     const today = new Date().toISOString().split('T')[0];
-    const [showDatePicker, setShowDatePicker] = useState(false);
+    const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+    const calendarRef = useRef<HTMLDivElement>(null);
 
-    const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        onDateChange(e.target.value);
-    };
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (calendarRef.current && !calendarRef.current.contains(event.target as Node)) {
+                setIsCalendarOpen(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
 
     const handleTodayClick = () => {
         onDateChange(today);
+        setIsCalendarOpen(false);
     };
 
     const handleTomorrowClick = () => {
         const tomorrow = new Date();
         tomorrow.setDate(tomorrow.getDate() + 1);
         onDateChange(tomorrow.toISOString().split('T')[0]);
+        setIsCalendarOpen(false);
     };
 
-    const handleNextWeekClick = () => {
-        const nextWeek = new Date();
-        nextWeek.setDate(nextWeek.getDate() + 7);
-        onDateChange(nextWeek.toISOString().split('T')[0]);
+    const handleDateClick = (date: string) => {
+        onDateChange(date);
+        setIsCalendarOpen(false);
     };
 
     const formatDisplayDate = (dateString: string): string => {
         const date = new Date(dateString);
         return date.toLocaleDateString('en-US', {
-            weekday: 'long',
-            month: 'long',
+            weekday: 'short',
+            month: 'short',
             day: 'numeric',
             year: 'numeric'
         });
     };
 
-    const formatShortDate = (dateString: string): string => {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric'
-        });
-    };
+    const isTomorrow = selectedDate === new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split('T')[0];
 
     return (
-        <div className={styles.container}>
-            <div className={styles.header}>
-                <h3 className={styles.title}>Select Date</h3>
-            </div>
-
+        <div className={styles.container} ref={calendarRef}>
             <div className={styles.quickActions}>
                 <button
                     type="button"
@@ -65,39 +72,36 @@ export const DateFilter: React.FC<DateFilterProps> = ({ selectedDate, onDateChan
                 <button
                     type="button"
                     onClick={handleTomorrowClick}
-                    className={`${styles.quickButton} ${formatShortDate(selectedDate) === formatShortDate(new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split('T')[0]) ? styles.activeButton : ''}`}
+                    className={`${styles.quickButton} ${isTomorrow ? styles.activeButton : ''}`}
                 >
                     Tomorrow
                 </button>
-                <button
-                    type="button"
-                    onClick={handleNextWeekClick}
-                    className={styles.quickButton}
-                >
-                    Next Week
-                </button>
             </div>
 
-            <div className={styles.dateDisplay}>
-                <span className={styles.currentDate}>{formatDisplayDate(selectedDate)}</span>
-                <button
-                    type="button"
-                    onClick={() => setShowDatePicker(!showDatePicker)}
-                    className={styles.toggleButton}
-                >
-                    {showDatePicker ? 'Hide Calendar' : 'Select Date'}
-                </button>
+            <div
+                className={styles.dateDisplay}
+                onClick={() => setIsCalendarOpen(!isCalendarOpen)}
+            >
+                <div className={styles.dateInfo}>
+                    <span className={styles.currentDate}>{formatDisplayDate(selectedDate)}</span>
+                    <button
+                        className={styles.calendarToggle}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setIsCalendarOpen(!isCalendarOpen);
+                        }}
+                    >
+                        {isCalendarOpen ? '▲' : '▼'}
+                    </button>
+                </div>
             </div>
 
-            {showDatePicker && (
-                <div className={styles.datePicker}>
-                    <input
-                        type="date"
-                        value={selectedDate}
-                        onChange={handleDateChange}
-                        className={styles.dateInput}
-                        min={today}
-                        max={new Date(new Date().setDate(new Date().getDate() + 60)).toISOString().split('T')[0]}
+            {isCalendarOpen && (
+                <div className={styles.calendarWrapper}>
+                    <CustomCalendar
+                        selectedDate={selectedDate}
+                        onDateChange={handleDateClick}
+                        sessionDates={sessionDates}
                     />
                 </div>
             )}

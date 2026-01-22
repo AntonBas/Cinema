@@ -21,6 +21,7 @@ const SessionsPage: React.FC = () => {
     const [page, setPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
     const [totalElements, setTotalElements] = useState(0);
+    const [availableDates, setAvailableDates] = useState<string[]>([]);
 
     const { notifications, showNotification, hideNotification } = useNotification();
 
@@ -62,9 +63,31 @@ const SessionsPage: React.FC = () => {
         }
     }, [selectedDate, selectedMovieId, page, showNotification]);
 
+    const fetchAvailableDates = useCallback(async () => {
+        try {
+            const response: PageResponse<SessionScheduleResponse> = await sessionApi.public.getSchedule(
+                0,
+                1000,
+                'startTime,asc',
+                undefined,
+                selectedMovieId,
+                30
+            );
+
+            const dates = response.content
+                .map(session => new Date(session.startTime).toISOString().split('T')[0])
+                .filter((date, index, self) => self.indexOf(date) === index);
+
+            setAvailableDates(dates);
+        } catch (err) {
+            console.error('Error fetching available dates:', err);
+        }
+    }, [selectedMovieId]);
+
     useEffect(() => {
         fetchSessions();
-    }, [fetchSessions]);
+        fetchAvailableDates();
+    }, [fetchSessions, fetchAvailableDates]);
 
     useEffect(() => {
         const params = new URLSearchParams();
@@ -108,6 +131,7 @@ const SessionsPage: React.FC = () => {
 
     const handleRefresh = () => {
         fetchSessions();
+        fetchAvailableDates();
     };
 
     const hasFilters = selectedMovieId !== undefined || selectedDate !== new Date().toISOString().split('T')[0];
@@ -149,6 +173,7 @@ const SessionsPage: React.FC = () => {
                         <DateFilter
                             selectedDate={selectedDate}
                             onDateChange={handleDateChange}
+                            sessionDates={availableDates}
                         />
                     </div>
                     <div className={styles.filterGroup}>

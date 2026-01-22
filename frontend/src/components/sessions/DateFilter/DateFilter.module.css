@@ -1,23 +1,12 @@
 .container {
     width: 100%;
-}
-
-.header {
-    margin-bottom: 1rem;
-}
-
-.title {
-    font-size: 1.125rem;
-    font-weight: 600;
-    color: var(--color-text-primary);
-    margin: 0;
+    position: relative;
 }
 
 .quickActions {
     display: flex;
     gap: 0.5rem;
     margin-bottom: 1rem;
-    flex-wrap: wrap;
 }
 
 .quickButton {
@@ -44,70 +33,90 @@
 }
 
 .dateDisplay {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
     padding: 1rem;
     background: var(--color-bg-primary);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
-    margin-bottom: 1rem;
-}
-
-.currentDate {
-    font-size: 1rem;
-    font-weight: 500;
-    color: var(--color-text-primary);
-}
-
-.toggleButton {
-    padding: 0.5rem 1rem;
-    background: var(--color-bg-secondary);
-    color: var(--color-text-secondary);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-sm);
-    font-size: 0.875rem;
-    font-weight: 500;
+    margin-bottom: 0.5rem;
     cursor: pointer;
     transition: all 0.2s ease;
 }
 
-.toggleButton:hover {
-    background: var(--color-bg-tertiary);
-}
-
-.datePicker {
-    padding: 1rem;
+.dateDisplay:hover {
+    border-color: var(--color-primary);
     background: var(--color-bg-secondary);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
 }
 
-.dateInput {
-    width: 100%;
-    padding: 0.75rem;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-sm);
+.dateInfo {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.currentDate {
     font-size: 1rem;
-    font-family: inherit;
-    background: var(--color-bg-primary);
+    font-weight: 600;
     color: var(--color-text-primary);
 }
 
-.dateInput:focus {
-    outline: none;
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 2px var(--color-primary-light);
+.calendarToggle {
+    background: none;
+    border: none;
+    color: var(--color-text-secondary);
+    font-size: 1rem;
+    cursor: pointer;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-sm);
+    transition: all 0.2s ease;
+}
+
+.calendarToggle:hover {
+    background: var(--color-bg-tertiary);
+    color: var(--color-text-primary);
+}
+
+.calendarWrapper {
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    left: 0;
+    right: 0;
+    z-index: 100;
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 @media (max-width: 768px) {
-    .dateDisplay {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.75rem;
+    .quickActions {
+        flex-wrap: wrap;
     }
 
-    .toggleButton {
-        align-self: flex-start;
+    .calendarWrapper {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: calc(100% - 2rem);
+        max-width: 400px;
+        max-height: 80vh;
+        overflow-y: auto;
     }
 }
