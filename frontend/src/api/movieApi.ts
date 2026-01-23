@@ -207,5 +207,16 @@ export const movieApi = {
 
       return fetchApi<PageResponse<any>>(`${ADMIN_URL}/persons/search?${params}`);
     },
-  }
+
+    searchActiveMovies: (search?: string): Promise<MovieSessionSearchResponse[]> => {
+      const params = new URLSearchParams();
+      if (search) params.append('search', search);
+
+      return fetchApi<MovieSessionSearchResponse[]>(
+        `${PUBLIC_URL}/search/active${params.toString() ? `?${params}` : ''}`,
+        {},
+        true
+      );
+    },
+  },
 };

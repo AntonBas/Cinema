@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { movieApi } from '@/api/movieApi';
 import type { MovieSessionSearchResponse } from '@/types/movie';
 import styles from './MovieFilter.module.css';
@@ -14,6 +14,7 @@ export const MovieFilter: React.FC<MovieFilterProps> = ({ selectedMovieId, onMov
     const [searchTerm, setSearchTerm] = useState('');
     const [showDropdown, setShowDropdown] = useState(false);
     const [selectedMovie, setSelectedMovie] = useState<MovieSessionSearchResponse | null>(null);
+    const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     const searchMovies = useCallback(async (query: string) => {
         if (!query.trim()) {
@@ -23,8 +24,12 @@ export const MovieFilter: React.FC<MovieFilterProps> = ({ selectedMovieId, onMov
 
         setLoading(true);
         try {
-            const today = new Date().toISOString().split('T')[0];
-            const results = await movieApi.admin.searchForSession(today, query);
+            const results = await movieApi.admin.searchActiveMovies(query);
+            console.log('🔍 MovieFilter - active movies search results:', {
+                query,
+                results,
+                resultsLength: results.length
+            });
             setMovies(results);
         } catch (error) {
             console.error('Error searching movies:', error);
@@ -35,29 +40,42 @@ export const MovieFilter: React.FC<MovieFilterProps> = ({ selectedMovieId, onMov
     }, []);
 
     useEffect(() => {
-        const delayDebounceFn = setTimeout(() => {
-            searchMovies(searchTerm);
-        }, 300);
-
-        return () => clearTimeout(delayDebounceFn);
-    }, [searchTerm, searchMovies]);
-
-    useEffect(() => {
-        if (selectedMovieId && movies.length > 0) {
-            const movie = movies.find(m => m.id === selectedMovieId);
-            if (movie) {
-                setSelectedMovie(movie);
-                setSearchTerm(movie.title);
-            }
+        if (selectedMovieId && selectedMovie?.id !== selectedMovieId) {
+            const fetchSelectedMovie = async () => {
+                try {
+                    const results = await movieApi.admin.searchActiveMovies('');
+                    const movie = results.find(m => m.id === selectedMovieId);
+                    if (movie) {
+                        setSelectedMovie(movie);
+                        setSearchTerm(movie.title);
+                    }
+                } catch (error) {
+                    console.error('Error fetching selected movie:', error);
+                }
+            };
+            fetchSelectedMovie();
         }
-    }, [selectedMovieId, movies]);
+    }, [selectedMovieId]);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setSearchTerm(e.target.value);
+        const value = e.target.value;
+        setSearchTerm(value);
         setShowDropdown(true);
-        if (!e.target.value.trim()) {
-            setSelectedMovie(null);
-            onMovieChange(undefined);
+
+        if (searchTimeoutRef.current) {
+            clearTimeout(searchTimeoutRef.current);
+        }
+
+        if (!value.trim()) {
+            setMovies([]);
+            if (selectedMovie) {
+                setSelectedMovie(null);
+                onMovieChange(undefined);
+            }
+        } else {
+            searchTimeoutRef.current = setTimeout(() => {
+                searchMovies(value);
+            }, 300);
         }
     };
 
@@ -66,6 +84,7 @@ export const MovieFilter: React.FC<MovieFilterProps> = ({ selectedMovieId, onMov
         setSearchTerm(movie.title);
         onMovieChange(movie.id);
         setShowDropdown(false);
+        setMovies([]);
     };
 
     const handleClearSelection = () => {
@@ -73,6 +92,13 @@ export const MovieFilter: React.FC<MovieFilterProps> = ({ selectedMovieId, onMov
         setSearchTerm('');
         onMovieChange(undefined);
         setShowDropdown(false);
+        setMovies([]);
+    };
+
+    const handleInputBlur = () => {
+        setTimeout(() => {
+            setShowDropdown(false);
+        }, 200);
     };
 
     return (
@@ -98,6 +124,7 @@ export const MovieFilter: React.FC<MovieFilterProps> = ({ selectedMovieId, onMov
                         value={searchTerm}
                         onChange={handleInputChange}
                         onFocus={() => setShowDropdown(true)}
+                        onBlur={handleInputBlur}
                         placeholder="Search for a movie..."
                         className={styles.searchInput}
                     />
