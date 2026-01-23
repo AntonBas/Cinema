@@ -3,6 +3,7 @@ package ua.lviv.bas.cinema.service.cinema;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -132,12 +133,6 @@ public class MovieService {
 	}
 
 	@Transactional(readOnly = true)
-	public Page<MovieCardResponse> searchMoviesByTitle(String search, MovieStatus status, Pageable pageable) {
-		Page<Movie> movies = movieRepository.findByStatusWithSearch(status, search, pageable);
-		return movies.map(this::buildCardResponse);
-	}
-
-	@Transactional(readOnly = true)
 	public List<MovieCardResponse> getCurrentlyShowing(int limit) {
 		Pageable pageable = PageRequest.of(0, limit, Sort.by("releaseDate").descending());
 		List<Movie> movies = movieRepository.findCurrentlyShowing(pageable);
@@ -173,6 +168,18 @@ public class MovieService {
 	public List<MovieSessionSearchResponse> searchMoviesForSessionCreation(String searchTerm, LocalDate sessionDate) {
 		List<Movie> movies = movieRepository.findMoviesForSessionCreation(searchTerm, sessionDate);
 		return movies.stream().map(this::toSessionSearchResponse).toList();
+	}
+
+	@Transactional(readOnly = true)
+	public List<MovieSessionSearchResponse> searchActiveMovies(String searchTerm) {
+		List<Movie> movies = movieRepository.findActiveMoviesForSearch(searchTerm);
+		return movies.stream().map(this::toSessionSearchResponse).collect(Collectors.toList());
+	}
+
+	@Transactional(readOnly = true)
+	public Page<MovieCardResponse> searchMoviesByTitle(String search, MovieStatus status, Pageable pageable) {
+		Page<Movie> movies = movieRepository.findByStatusWithSearch(status, search, pageable);
+		return movies.map(this::buildCardResponse);
 	}
 
 	@Transactional(readOnly = true)

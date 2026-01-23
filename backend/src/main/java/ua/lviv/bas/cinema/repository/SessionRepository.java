@@ -99,4 +99,11 @@ public interface SessionRepository extends JpaRepository<Session, Long> {
 			""", nativeQuery = true)
 	boolean existsConflictingSession(@Param("hallId") Long hallId, @Param("startTime") LocalDateTime startTime,
 			@Param("endTime") LocalDateTime endTime, @Param("excludeSessionId") Long excludeSessionId);
+
+	@Query("SELECT s FROM Session s LEFT JOIN FETCH s.movie LEFT JOIN FETCH s.hall WHERE "
+			+ "s.startTime >= :start AND s.startTime <= :end AND " + "s.movie.id = :movieId AND "
+			+ "(:adminView = true OR s.status = :scheduledStatus) " + "ORDER BY s.startTime ASC")
+	Page<Session> findByStartTimeBetweenAndMovieId(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end,
+			@Param("movieId") Long movieId, @Param("adminView") boolean adminView,
+			@Param("scheduledStatus") CinemaSessionStatus scheduledStatus, Pageable pageable);
 }

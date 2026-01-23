@@ -55,4 +55,9 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
 			+ "ORDER BY m.title")
 	List<Movie> findMoviesForSessionCreation(@Param("searchTerm") String searchTerm,
 			@Param("sessionDate") LocalDate sessionDate);
+
+	@Query("SELECT m FROM Movie m WHERE "
+			+ "(:searchTerm IS NULL OR LOWER(CAST(m.title AS string)) LIKE LOWER(CONCAT('%', CAST(:searchTerm AS string), '%'))) "
+			+ "AND m.status IN ('CURRENT', 'UPCOMING') " + "ORDER BY m.title")
+	List<Movie> findActiveMoviesForSearch(@Param("searchTerm") String searchTerm);
 }

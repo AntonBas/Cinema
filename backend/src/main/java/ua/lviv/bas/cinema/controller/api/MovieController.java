@@ -24,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.enums.MovieStatus;
 import ua.lviv.bas.cinema.dto.movie.response.MovieCardResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieDetailResponse;
+import ua.lviv.bas.cinema.dto.movie.response.MovieSessionSearchResponse;
 import ua.lviv.bas.cinema.service.cinema.MovieService;
 
 @Slf4j
@@ -104,6 +105,19 @@ public class MovieController {
 
 		log.info("GET /api/movies/status/upcoming - Getting upcoming movies");
 		List<MovieCardResponse> movies = movieService.getUpcoming(10);
+		return ResponseEntity.ok(movies);
+	}
+
+	@GetMapping("/search/active")
+	@Operation(summary = "Search active movies", description = "Search through currently showing and upcoming movies for session filtering")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Movies retrieved successfully", content = @Content(schema = @Schema(implementation = MovieSessionSearchResponse.class))),
+			@ApiResponse(responseCode = "400", description = "Invalid request parameters", content = @Content(schema = @Schema(implementation = String.class))) })
+	public ResponseEntity<List<MovieSessionSearchResponse>> searchActiveMovies(
+			@Parameter(description = "Search term for movie title", example = "Avengers") @RequestParam(required = false) String search) {
+
+		log.info("GET /api/movies/search/active - Searching active movies: '{}'", search);
+		List<MovieSessionSearchResponse> movies = movieService.searchActiveMovies(search);
 		return ResponseEntity.ok(movies);
 	}
 

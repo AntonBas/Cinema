@@ -260,7 +260,12 @@ public class SessionService {
 		Page<Session> sessions;
 		boolean adminView = false;
 
-		if (date != null) {
+		if (date != null && movieId != null) {
+			LocalDateTime start = date.atStartOfDay();
+			LocalDateTime end = date.atTime(23, 59, 59);
+			sessions = sessionRepository.findByStartTimeBetweenAndMovieId(start, end, movieId, adminView,
+					CinemaSessionStatus.SCHEDULED, pageable);
+		} else if (date != null) {
 			LocalDateTime start = date.atStartOfDay();
 			LocalDateTime end = date.atTime(23, 59, 59);
 			sessions = sessionRepository.findByStartTimeBetweenWithMovieAndHall(start, end, adminView,
