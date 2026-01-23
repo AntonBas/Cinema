@@ -22,6 +22,7 @@ const SessionsPage: React.FC = () => {
     const [totalPages, setTotalPages] = useState(0);
     const [totalElements, setTotalElements] = useState(0);
     const [availableDates, setAvailableDates] = useState<string[]>([]);
+    const [initialLoad, setInitialLoad] = useState(true);
 
     const { notifications, showNotification, hideNotification } = useNotification();
 
@@ -87,19 +88,22 @@ const SessionsPage: React.FC = () => {
     useEffect(() => {
         fetchSessions();
         fetchAvailableDates();
+        setInitialLoad(false);
     }, [fetchSessions, fetchAvailableDates]);
 
     useEffect(() => {
-        const params = new URLSearchParams();
-        params.set('date', selectedDate);
-        if (selectedMovieId) {
-            params.set('movieId', selectedMovieId.toString());
+        if (!initialLoad) {
+            const params = new URLSearchParams();
+            params.set('date', selectedDate);
+            if (selectedMovieId) {
+                params.set('movieId', selectedMovieId.toString());
+            }
+            if (page > 0) {
+                params.set('page', page.toString());
+            }
+            setSearchParams(params, { replace: true });
         }
-        if (page > 0) {
-            params.set('page', page.toString());
-        }
-        setSearchParams(params, { replace: true });
-    }, [selectedDate, selectedMovieId, page, setSearchParams]);
+    }, [selectedDate, selectedMovieId, page, setSearchParams, initialLoad]);
 
     const handleDateChange = (date: string) => {
         setSelectedDate(date);
