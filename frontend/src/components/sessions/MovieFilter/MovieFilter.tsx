@@ -77,8 +77,8 @@ export const MovieFilter: React.FC<MovieFilterProps> = ({ selectedMovieId, onMov
 
     return (
         <div className={styles.container}>
-            <div className={styles.header}>
-                <h3 className={styles.title}>Filter by Movie</h3>
+            <div className={styles.filterHeader}>
+                <h3 className={styles.title}>Movie</h3>
                 {selectedMovie && (
                     <button
                         type="button"
@@ -91,18 +91,22 @@ export const MovieFilter: React.FC<MovieFilterProps> = ({ selectedMovieId, onMov
             </div>
 
             <div className={styles.searchContainer}>
-                <input
-                    type="text"
-                    value={searchTerm}
-                    onChange={handleInputChange}
-                    onFocus={() => setShowDropdown(true)}
-                    placeholder="Search movies by title..."
-                    className={styles.searchInput}
-                />
-
-                {loading && (
-                    <div className={styles.loadingIndicator}>Searching...</div>
-                )}
+                <div className={styles.searchWrapper}>
+                    <span className={styles.searchIcon}>🎬</span>
+                    <input
+                        type="text"
+                        value={searchTerm}
+                        onChange={handleInputChange}
+                        onFocus={() => setShowDropdown(true)}
+                        placeholder="Search for a movie..."
+                        className={styles.searchInput}
+                    />
+                    {loading && (
+                        <div className={styles.loadingIndicator}>
+                            <div className={styles.spinner}></div>
+                        </div>
+                    )}
+                </div>
             </div>
 
             {showDropdown && searchTerm && movies.length > 0 && (
@@ -114,13 +118,16 @@ export const MovieFilter: React.FC<MovieFilterProps> = ({ selectedMovieId, onMov
                             onClick={() => handleMovieSelect(movie)}
                             className={`${styles.movieOption} ${selectedMovie?.id === movie.id ? styles.selected : ''}`}
                         >
-                            <div className={styles.movieInfo}>
+                            <div className={styles.movieContent}>
                                 <span className={styles.movieTitle}>{movie.title}</span>
-                                <span className={styles.movieYear}>({movie.releaseYear})</span>
+                                <div className={styles.movieMeta}>
+                                    <span className={styles.movieYear}>{movie.releaseYear}</span>
+                                    <span className={styles.movieDuration}>{movie.durationMinutes} min</span>
+                                </div>
                             </div>
-                            <div className={styles.movieMeta}>
-                                <span className={styles.movieDuration}>{movie.durationMinutes} min</span>
-                            </div>
+                            {selectedMovie?.id === movie.id && (
+                                <span className={styles.checkmark}>✓</span>
+                            )}
                         </button>
                     ))}
                 </div>
@@ -128,7 +135,7 @@ export const MovieFilter: React.FC<MovieFilterProps> = ({ selectedMovieId, onMov
 
             {showDropdown && searchTerm && !loading && movies.length === 0 && (
                 <div className={styles.noResults}>
-                    No movies found matching "{searchTerm}"
+                    No movies found
                 </div>
             )}
         </div>

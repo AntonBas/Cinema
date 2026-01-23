@@ -3,10 +3,28 @@
     position: relative;
 }
 
+.filterHeader {
+    margin-bottom: 0.75rem;
+}
+
+.title {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.dateSelector {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
 .quickActions {
     display: flex;
     gap: 0.5rem;
-    margin-bottom: 1rem;
 }
 
 .quickButton {
@@ -19,6 +37,8 @@
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
+    flex: 1;
+    text-align: center;
 }
 
 .quickButton:hover {
@@ -33,11 +53,10 @@
 }
 
 .dateDisplay {
-    padding: 1rem;
+    padding: 0.75rem 1rem;
     background: var(--color-bg-primary);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
-    margin-bottom: 0.5rem;
     cursor: pointer;
     transition: all 0.2s ease;
 }
@@ -49,29 +68,37 @@
 
 .dateInfo {
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+}
+
+.calendarIcon {
+    font-size: 1.125rem;
+    color: var(--color-text-secondary);
 }
 
 .currentDate {
-    font-size: 1rem;
-    font-weight: 600;
+    font-size: 0.9375rem;
+    font-weight: 500;
     color: var(--color-text-primary);
+    flex: 1;
 }
 
 .calendarToggle {
     background: none;
     border: none;
     color: var(--color-text-secondary);
-    font-size: 1rem;
+    font-size: 0.75rem;
     cursor: pointer;
-    width: 24px;
-    height: 24px;
+    width: 20px;
+    height: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: var(--radius-sm);
     transition: all 0.2s ease;
+    flex-shrink: 0;
 }
 
 .calendarToggle:hover {
@@ -88,7 +115,7 @@
     background: var(--color-bg-primary);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
     animation: slideDown 0.2s ease;
 }
 
@@ -107,6 +134,10 @@
 @media (max-width: 768px) {
     .quickActions {
         flex-wrap: wrap;
+    }
+
+    .quickButton {
+        flex: 0 0 calc(50% - 0.25rem);
     }
 
     .calendarWrapper {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { sessionApi } from '@/api/sessionApi';
 import type { SessionScheduleResponse } from '@/types/session';
@@ -43,11 +43,11 @@ const SessionsPage: React.FC = () => {
         try {
             const response: PageResponse<SessionScheduleResponse> = await sessionApi.public.getSchedule(
                 page,
-                20,
+                50,
                 'startTime,asc',
                 selectedDate,
                 selectedMovieId,
-                7
+                1
             );
 
             setSessions(response.content);
@@ -137,6 +137,11 @@ const SessionsPage: React.FC = () => {
     const hasFilters = selectedMovieId !== undefined || selectedDate !== new Date().toISOString().split('T')[0];
     const hasSessions = sessions.length > 0;
 
+    const uniqueMoviesCount = useMemo(() => {
+        const movieIds = new Set(sessions.map(session => session.movieId));
+        return movieIds.size;
+    }, [sessions]);
+
     return (
         <Layout>
             <div className={styles.container}>
@@ -188,7 +193,7 @@ const SessionsPage: React.FC = () => {
                     {hasSessions ? (
                         <div className={styles.resultsInfo}>
                             <span className={styles.resultsCount}>
-                                Found {totalElements} session{totalElements !== 1 ? 's' : ''}
+                                {uniqueMoviesCount} movie{uniqueMoviesCount !== 1 ? 's' : ''} • {totalElements} session{totalElements !== 1 ? 's' : ''}
                             </span>
                             {selectedMovieId && (
                                 <Button

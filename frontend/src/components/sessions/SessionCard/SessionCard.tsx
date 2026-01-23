@@ -28,8 +28,22 @@ export const SessionCard: React.FC<SessionCardProps> = ({ session }) => {
         return `${hours}h ${mins}m`;
     };
 
+    const getMovieSlug = (title: string): string => {
+        return title
+            .toLowerCase()
+            .replace(/[^\w\s-]/g, '')
+            .replace(/\s+/g, '-')
+            .replace(/--+/g, '-')
+            .trim();
+    };
+
     const handleBookClick = () => {
         navigate(`/book/${session.id}`);
+    };
+
+    const handleMovieClick = () => {
+        const slug = getMovieSlug(session.movieTitle);
+        navigate(`/movies/${slug}`);
     };
 
     const isAvailable = session.status === 'SCHEDULED' && session.availableSeats > 0;
@@ -50,7 +64,13 @@ export const SessionCard: React.FC<SessionCardProps> = ({ session }) => {
             <div className={styles.content}>
                 <div className={styles.header}>
                     <div className={styles.movieInfo}>
-                        <h3 className={styles.movieTitle}>{session.movieTitle}</h3>
+                        <h3
+                            className={styles.movieTitle}
+                            onClick={handleMovieClick}
+                            style={{ cursor: 'pointer' }}
+                        >
+                            {session.movieTitle}
+                        </h3>
                         <div className={styles.movieMeta}>
                             <span className={styles.ageRating}>{session.movieAgeRating || 'N/A'}</span>
                             <span className={styles.duration}>{formatDuration(session.movieDuration)}</span>
@@ -84,7 +104,7 @@ export const SessionCard: React.FC<SessionCardProps> = ({ session }) => {
                 <div className={styles.footer}>
                     <div className={styles.price}>
                         <span className={styles.priceLabel}>Price:</span>
-                        <span className={styles.priceValue}>${parseFloat(session.basePrice).toFixed(2)}</span>
+                        <span className={styles.priceValue}>₴{parseFloat(session.basePrice).toFixed(0)}</span>
                     </div>
                     <Button
                         variant="primary"

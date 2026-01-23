@@ -3,27 +3,29 @@
     position: relative;
 }
 
-.header {
+.filterHeader {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1rem;
+    margin-bottom: 0.75rem;
 }
 
 .title {
-    font-size: 1.125rem;
+    font-size: 0.9375rem;
     font-weight: 600;
-    color: var(--color-text-primary);
+    color: var(--color-text-secondary);
     margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .clearButton {
-    padding: 0.5rem 1rem;
+    padding: 0.25rem 0.75rem;
     background: var(--color-bg-tertiary);
     color: var(--color-text-secondary);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-sm);
-    font-size: 0.875rem;
+    font-size: 0.75rem;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -36,15 +38,28 @@
 
 .searchContainer {
     position: relative;
-    margin-bottom: 0.5rem;
+}
+
+.searchWrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.searchIcon {
+    position: absolute;
+    left: 1rem;
+    font-size: 1.125rem;
+    color: var(--color-text-secondary);
+    z-index: 1;
 }
 
 .searchInput {
     width: 100%;
-    padding: 0.75rem 1rem;
+    padding: 0.75rem 1rem 0.75rem 3rem;
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
-    font-size: 1rem;
+    font-size: 0.9375rem;
     font-family: inherit;
     background: var(--color-bg-primary);
     color: var(--color-text-primary);
@@ -54,17 +69,31 @@
 .searchInput:focus {
     outline: none;
     border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px var(--color-primary-light);
+    box-shadow: 0 0 0 2px var(--color-primary-light);
+}
+
+.searchInput::placeholder {
+    color: var(--color-text-tertiary);
 }
 
 .loadingIndicator {
     position: absolute;
     right: 1rem;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 0.875rem;
-    color: var(--color-text-secondary);
-    font-style: italic;
+}
+
+.spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--color-border);
+    border-top-color: var(--color-primary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 .dropdown {
@@ -77,19 +106,24 @@
     background: var(--color-bg-primary);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
-    box-shadow: var(--shadow-md);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
     z-index: 100;
+    margin-top: 0.5rem;
 }
 
 .movieOption {
     width: 100%;
-    padding: 0.75rem 1rem;
+    padding: 0.875rem 1rem;
     text-align: left;
     background: transparent;
     border: none;
     border-bottom: 1px solid var(--color-border);
     cursor: pointer;
     transition: all 0.2s ease;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
 }
 
 .movieOption:hover {
@@ -100,10 +134,15 @@
     background: var(--color-primary-light);
 }
 
-.movieInfo {
+.movieOption:last-child {
+    border-bottom: none;
+}
+
+.movieContent {
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
+    flex: 1;
 }
 
 .movieTitle {
@@ -112,13 +151,15 @@
     color: var(--color-text-primary);
 }
 
+.movieMeta {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
 .movieYear {
     font-size: 0.8125rem;
     color: var(--color-text-secondary);
-}
-
-.movieMeta {
-    margin-top: 0.25rem;
 }
 
 .movieDuration {
@@ -129,11 +170,17 @@
     border-radius: var(--radius-sm);
 }
 
+.checkmark {
+    color: var(--color-primary);
+    font-weight: bold;
+    font-size: 1rem;
+}
+
 .noResults {
     padding: 1rem;
     text-align: center;
     color: var(--color-text-secondary);
-    font-size: 0.9375rem;
+    font-size: 0.875rem;
     background: var(--color-bg-secondary);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
