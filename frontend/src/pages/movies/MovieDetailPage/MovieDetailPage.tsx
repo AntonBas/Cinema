@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { movieApi } from '@/api/movieApi';
+import { sessionApi } from '@/api/sessionApi';
 import type { MovieDetailResponse } from '@/types/movie';
 import {
     AgeRatingDisplay,
@@ -18,6 +19,7 @@ export const MovieDetailPage: React.FC = () => {
     const [movie, setMovie] = useState<MovieDetailResponse | null>(null);
     const [loading, setLoading] = useState(true);
     const [findingSession, setFindingSession] = useState(false);
+    const [nextSessionDate, setNextSessionDate] = useState<string | null>(null);
 
     const { notifications, showNotification, hideNotification } = useNotification();
 
@@ -29,6 +31,10 @@ export const MovieDetailPage: React.FC = () => {
                 setLoading(true);
                 const movieData = await movieApi.public.getBySlug(slug);
                 setMovie(movieData);
+
+                if (movieData.id) {
+                    await findNextSessionDate(movieData.id);
+                }
             } catch (err) {
                 showNotification('Failed to load movie', 'error');
                 console.error('Error fetching movie:', err);
@@ -40,9 +46,35 @@ export const MovieDetailPage: React.FC = () => {
         fetchMovie();
     }, [slug, showNotification]);
 
-    const handleBuyTickets = () => {
-        if (movie) {
-            navigate(`/book/${movie.id}`);
+    const findNextSessionDate = async (movieId: number) => {
+        try {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const response = await sessionApi.public.getSchedule(
+                0,
+                100,
+                'startTime,asc',
+                undefined,
+                movieId,
+                30
+            );
+
+            const upcomingSessions = response.content.filter((session: any) => {
+                const sessionDate = new Date(session.startTime);
+                return sessionDate >= today;
+            });
+
+            if (upcomingSessions.length > 0) {
+                const nextSession = upcomingSessions[0];
+                const sessionDate = new Date(nextSession.startTime).toISOString().split('T')[0];
+                setNextSessionDate(sessionDate);
+            } else {
+                setNextSessionDate(null);
+            }
+        } catch (error) {
+            console.error('Error finding next session:', error);
+            setNextSessionDate(null);
         }
     };
 
@@ -51,8 +83,12 @@ export const MovieDetailPage: React.FC = () => {
 
         setFindingSession(true);
         try {
-            const today = new Date().toISOString().split('T')[0];
-            navigate(`/sessions?movieId=${movie.id}&date=${today}`);
+            if (nextSessionDate) {
+                navigate(`/schedule?movieId=${movie.id}&date=${nextSessionDate}`);
+            } else {
+                const today = new Date().toISOString().split('T')[0];
+                navigate(`/schedule?movieId=${movie.id}&date=${today}`);
+            }
         } catch (error) {
             showNotification('Error finding sessions', 'error');
             console.error('Error:', error);
@@ -94,19 +130,24 @@ export const MovieDetailPage: React.FC = () => {
         );
     }
 
+    const getFindSessionButtonText = () => {
+        if (findingSession) return 'Finding...';
+        if (nextSessionDate) {
+            const nextDate = new Date(nextSessionDate);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const diffDays = Math.ceil((nextDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+            if (diffDays === 0) return 'Find Sessions Today';
+            if (diffDays === 1) return 'Find Sessions Tomorrow';
+            return `Find Sessions on ${formatDate(nextSessionDate)}`;
+        }
+        return 'Find Sessions';
+    };
+
     return (
         <Layout>
             <div className={styles.container}>
-                <div className={styles.header}>
-                    <Button
-                        variant="secondary"
-                        onClick={() => navigate('/movies/current')}
-                        className={styles.backButton}
-                    >
-                        ← Back to Movies
-                    </Button>
-                </div>
-
                 <div className={styles.content}>
                     <div className={styles.leftColumn}>
                         <div className={styles.posterContainer}>
@@ -126,26 +167,14 @@ export const MovieDetailPage: React.FC = () => {
                         </div>
 
                         <div className={styles.actionButtons}>
-                            {movie.currentlyShowing ? (
-                                <Button
-                                    variant="primary"
-                                    onClick={handleBuyTickets}
-                                    className={styles.actionButton}
-                                >
-                                    <span className={styles.buttonIcon}>🎟️</span>
-                                    Buy Tickets
-                                </Button>
-                            ) : (
-                                <Button
-                                    variant="primary"
-                                    onClick={handleFindSession}
-                                    className={styles.actionButton}
-                                    loading={findingSession}
-                                >
-                                    <span className={styles.buttonIcon}>🔍</span>
-                                    {findingSession ? 'Finding...' : 'Find Session'}
-                                </Button>
-                            )}
+                            <Button
+                                variant="primary"
+                                onClick={handleFindSession}
+                                className={styles.actionButton}
+                                loading={findingSession}
+                            >
+                                {getFindSessionButtonText()}
+                            </Button>
 
                             {movie.trailerUrl && (
                                 <Button
@@ -153,7 +182,6 @@ export const MovieDetailPage: React.FC = () => {
                                     onClick={() => window.open(movie.trailerUrl, '_blank')}
                                     className={styles.trailerButton}
                                 >
-                                    <span className={styles.buttonIcon}>🎬</span>
                                     Watch Trailer
                                 </Button>
                             )}
