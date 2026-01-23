@@ -12,24 +12,38 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
     onDateChange,
     sessionDates = []
 }) => {
-    const [currentMonth, setCurrentMonth] = useState(new Date(selectedDate));
+    const [currentMonth, setCurrentMonth] = useState(new Date());
     const [availableDates, setAvailableDates] = useState<{ [key: string]: boolean }>({});
 
     useEffect(() => {
-        setCurrentMonth(new Date(selectedDate));
+        const date = new Date(selectedDate);
+        setCurrentMonth(new Date(date.getFullYear(), date.getMonth(), 1));
     }, [selectedDate]);
 
     useEffect(() => {
         const sessionDateMap: { [key: string]: boolean } = {};
-        sessionDates.forEach(date => {
-            const dateObj = new Date(date);
-            const formattedDate = dateObj.toISOString().split('T')[0];
+        sessionDates.forEach(dateStr => {
+            const dateObj = new Date(dateStr);
+            const year = dateObj.getFullYear();
+            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const day = String(dateObj.getDate()).padStart(2, '0');
+            const formattedDate = `${year}-${month}-${day}`;
             sessionDateMap[formattedDate] = true;
         });
         setAvailableDates(sessionDateMap);
     }, [sessionDates]);
 
-    const today = new Date().toISOString().split('T')[0];
+    const formatDate = (date: Date): string => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+
+    const getToday = (): string => {
+        const today = new Date();
+        return formatDate(today);
+    };
 
     const getDaysInMonth = (year: number, month: number) => {
         return new Date(year, month + 1, 0).getDate();
@@ -48,7 +62,7 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
     };
 
     const handleDateClick = (date: Date) => {
-        onDateChange(date.toISOString().split('T')[0]);
+        onDateChange(formatDate(date));
     };
 
     const renderCalendar = () => {
@@ -58,7 +72,7 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
         const firstDay = getFirstDayOfMonth(year, month);
 
         const days = [];
-        const dayNames = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+        const dayNames = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
 
         for (let i = 0; i < 7; i++) {
             days.push(
@@ -74,11 +88,14 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
 
         for (let day = 1; day <= daysInMonth; day++) {
             const date = new Date(year, month, day);
-            const dateString = date.toISOString().split('T')[0];
+            const dateString = formatDate(date);
             const isSelected = dateString === selectedDate;
-            const isToday = dateString === today;
+            const isToday = dateString === getToday();
             const hasSession = availableDates[dateString];
-            const isPast = date < new Date(new Date().setHours(0, 0, 0, 0));
+            const today = new Date();
+            const todayWithoutTime = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+            const dateWithoutTime = new Date(year, month, day);
+            const isPast = dateWithoutTime < todayWithoutTime;
             const isDisabled = isPast && !isToday;
 
             days.push(
