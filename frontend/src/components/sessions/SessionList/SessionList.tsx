@@ -77,7 +77,8 @@ export const SessionList: React.FC<SessionListProps> = ({ sessions }) => {
     };
 
     const handleSessionClick = (sessionId: number) => {
-        navigate(`/book/${sessionId}`);
+        console.log('Session clicked, navigating to booking page:', sessionId);
+        navigate(`/booking/${sessionId}`);
     };
 
     if (sessions.length === 0) {
@@ -132,7 +133,11 @@ export const SessionList: React.FC<SessionListProps> = ({ sessions }) => {
                                     <div
                                         key={session.id}
                                         className={`${styles.sessionCard} ${isAvailable ? styles.available : styles.unavailable}`}
-                                        onClick={() => isAvailable && handleSessionClick(session.id)}
+                                        onClick={() => {
+                                            if (isAvailable) {
+                                                handleSessionClick(session.id);
+                                            }
+                                        }}
                                     >
                                         <div className={styles.sessionTime}>
                                             <span className={styles.time}>{formatTime(session.startTime)}</span>
