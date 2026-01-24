@@ -1,0 +1,153 @@
+.sidebar {
+    background: var(--color-bg-primary);
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--color-border);
+    height: fit-content;
+    position: sticky;
+    top: 100px;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.header h3 {
+    margin: 0;
+    font-size: 20px;
+    color: var(--color-text-primary);
+    font-weight: 600;
+}
+
+.seatCount {
+    background: var(--color-primary);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.seatsList {
+    margin-bottom: 24px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.seatItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 12px;
+    background: var(--color-bg-secondary);
+    border-radius: 8px;
+    margin-bottom: 12px;
+    border: 1px solid var(--color-border);
+}
+
+.seatInfo {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.seatNumber {
+    font-weight: 600;
+    color: var(--color-text-primary);
+    font-size: 14px;
+    margin-bottom: 8px;
+}
+
+.ticketTypeContainer {
+    width: 100%;
+}
+
+.seatPrice {
+    font-weight: 700;
+    color: var(--color-success);
+    font-size: 16px;
+    margin-left: 12px;
+    min-width: 70px;
+    text-align: right;
+}
+
+.summary {
+    border-top: 2px solid var(--color-border);
+    padding-top: 20px;
+}
+
+.total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+}
+
+.totalPrice {
+    color: var(--color-primary);
+    font-size: 24px;
+}
+
+.reserveButton {
+    width: 100%;
+    padding: 16px;
+    background: var(--color-primary);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.reserveButton:hover:not(:disabled) {
+    background: var(--color-primary-dark);
+}
+
+.reserveButton:disabled {
+    background: var(--color-disabled);
+    cursor: not-allowed;
+}
+
+.error {
+    color: var(--color-error);
+    font-size: 14px;
+    margin-top: 12px;
+    text-align: center;
+    padding: 8px;
+    background: var(--color-error-light);
+    border-radius: 6px;
+    border: 1px solid var(--color-error);
+}
+
+.empty {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.emptyIcon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+}
+
+.empty h3 {
+    color: var(--color-text-secondary);
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+
+.empty p {
+    color: var(--color-text-tertiary);
+    margin: 0;
+}

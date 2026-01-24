@@ -1,6 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
 import type { SeatInfo } from '@/types/seatAvailability';
-import { useSeatAvailability } from './useSeatAvailability';
 
 export interface SelectedSeat {
     seat: SeatInfo;
@@ -8,15 +7,20 @@ export interface SelectedSeat {
     price: number;
 }
 
-export const useSeatSelection = (sessionId: number, maxSeats?: number) => {
-    const {
-        seatData,
-        getSeatInfo,
-        checkSpecificSeat,
-        loading,
-        error
-    } = useSeatAvailability(sessionId);
+interface UseSeatSelectionProps {
+    seatData: {
+        seats: SeatInfo[];
+        availableSeats: number;
+        movieTitle: string;
+        hallName: string;
+        basePrice: string;
+        sessionId: number;
+    } | null;
+    checkSpecificSeat: (seatId: number) => Promise<boolean>;
+    maxSeats?: number;
+}
 
+export const useSeatSelection = ({ seatData, checkSpecificSeat, maxSeats }: UseSeatSelectionProps) => {
     const [selectedSeats, setSelectedSeats] = useState<SelectedSeat[]>([]);
     const [totalPrice, setTotalPrice] = useState(0);
 
@@ -30,7 +34,11 @@ export const useSeatSelection = (sessionId: number, maxSeats?: number) => {
             throw new Error(`Maximum ${maxSeats} seats allowed`);
         }
 
-        const seatInfo = getSeatInfo(seatId);
+        if (!seatData) {
+            throw new Error('Seat data not loaded');
+        }
+
+        const seatInfo = seatData.seats.find(seat => seat.id === seatId);
         if (!seatInfo) {
             throw new Error('Seat not found');
         }
@@ -39,28 +47,43 @@ export const useSeatSelection = (sessionId: number, maxSeats?: number) => {
             throw new Error('Seat is not available');
         }
 
-        const isAvailable = await checkSpecificSeat(seatId);
-        if (!isAvailable) {
-            throw new Error('Seat is no longer available');
+        if (seatInfo.temporarilyReserved) {
+            throw new Error('Seat is temporarily reserved');
         }
 
         let price = 0;
-        if (ticketTypeId) {
-            const ticketPrice = seatInfo.ticketPrices.find(tp => tp.ticketTypeId === ticketTypeId);
-            price = ticketPrice ? parseFloat(ticketPrice.finalPrice) : 0;
-        } else {
-            price = seatInfo.ticketPrices[0] ? parseFloat(seatInfo.ticketPrices[0].finalPrice) : 0;
+        let finalTicketTypeId = ticketTypeId;
+
+        if (seatInfo.ticketPrices.length === 0) {
+            throw new Error('No ticket prices available for this seat');
         }
 
-        setSelectedSeats(prev => [...prev, { seat: seatInfo, ticketTypeId, price }]);
-    }, [getSeatInfo, checkSpecificSeat, selectedSeats.length, maxSeats]);
+        if (finalTicketTypeId) {
+            const ticketPrice = seatInfo.ticketPrices.find(tp => tp.ticketTypeId === finalTicketTypeId);
+            if (!ticketPrice) {
+                throw new Error('Invalid ticket type');
+            }
+            price = parseFloat(ticketPrice.finalPrice);
+        } else {
+            finalTicketTypeId = seatInfo.ticketPrices[0].ticketTypeId;
+            price = parseFloat(seatInfo.ticketPrices[0].finalPrice);
+        }
+
+        setSelectedSeats(prev => [...prev, {
+            seat: seatInfo,
+            ticketTypeId: finalTicketTypeId,
+            price
+        }]);
+    }, [seatData, selectedSeats.length, maxSeats]);
 
     const deselectSeat = useCallback((seatId: number) => {
         setSelectedSeats(prev => prev.filter(selected => selected.seat.id !== seatId));
     }, []);
 
     const updateSeatTicketType = useCallback((seatId: number, ticketTypeId: number) => {
-        const seatInfo = getSeatInfo(seatId);
+        if (!seatData) return;
+
+        const seatInfo = seatData.seats.find(seat => seat.id === seatId);
         if (!seatInfo) return;
 
         const ticketPrice = seatInfo.ticketPrices.find(tp => tp.ticketTypeId === ticketTypeId);
@@ -73,7 +96,7 @@ export const useSeatSelection = (sessionId: number, maxSeats?: number) => {
                 ? { ...selected, ticketTypeId, price }
                 : selected
         ));
-    }, [getSeatInfo]);
+    }, [seatData]);
 
     const clearSelection = useCallback(() => {
         setSelectedSeats([]);
@@ -101,8 +124,6 @@ export const useSeatSelection = (sessionId: number, maxSeats?: number) => {
     return {
         selectedSeats,
         totalPrice,
-        loading,
-        error,
         selectSeat,
         deselectSeat,
         updateSeatTicketType,
@@ -111,7 +132,6 @@ export const useSeatSelection = (sessionId: number, maxSeats?: number) => {
         validateSelection,
         count: selectedSeats.length,
         hasSelection: selectedSeats.length > 0,
-        seatData,
         isAtMax: maxSeats ? selectedSeats.length >= maxSeats : false
     };
 };

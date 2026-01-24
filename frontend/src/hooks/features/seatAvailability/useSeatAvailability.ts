@@ -49,19 +49,25 @@ export const useSeatAvailability = (sessionId: number) => {
     }, [sessionId, fetchApi]);
 
     const checkSpecificSeat = useCallback(async (seatId: number) => {
-        setLoading(true);
-        setError(null);
         try {
-            await fetchApi<void>(`${BASE_URL}/${sessionId}/seats/${seatId}/availability`);
-            return true;
-        } catch (err) {
-            const message = err instanceof ApiErrorException ? err.message : 'Failed to check seat availability';
-            setError(message);
+            const response = await fetch(`${BASE_URL}/${sessionId}/seats/${seatId}/availability`, {
+                headers: getAuthHeaders(),
+            });
+
+            if (response.ok) {
+                return true;
+            }
+
+            if (response.status === 404) {
+                return true;
+            }
+
             return false;
-        } finally {
-            setLoading(false);
+        } catch (err) {
+            console.error('Seat availability check failed:', err);
+            return true;
         }
-    }, [sessionId, fetchApi]);
+    }, [sessionId, getAuthHeaders]);
 
     const fetchAvailableSeatsCount = useCallback(async () => {
         try {
