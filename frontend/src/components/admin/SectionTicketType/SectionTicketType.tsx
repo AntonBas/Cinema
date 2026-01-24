@@ -21,7 +21,7 @@ const SectionTicketType = () => {
         loading,
         error,
         refresh,
-        removeTicketType,
+        deleteTicketType,
         toggleTicketTypeActive
     } = useTicketTypeList({
         statusFilter,
@@ -41,7 +41,7 @@ const SectionTicketType = () => {
     };
 
     const handleDelete = async (id: number) => {
-        await removeTicketType(id);
+        await deleteTicketType(id);
     };
 
     const handleToggleActive = async (id: number) => {

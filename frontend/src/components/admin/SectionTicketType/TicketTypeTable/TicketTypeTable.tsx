@@ -10,8 +10,8 @@ import styles from './TicketTypeTable.module.css';
 interface TicketTypeTableProps {
     ticketTypes: TicketTypeResponse[];
     onEdit: (ticketType: TicketTypeResponse) => void;
-    onDelete: (id: number) => void;
-    onToggleActive: (id: number) => void;
+    onDelete: (id: number) => Promise<void>;
+    onToggleActive: (id: number) => Promise<void>;
 }
 
 const TicketTypeTable: React.FC<TicketTypeTableProps> = ({
@@ -23,22 +23,40 @@ const TicketTypeTable: React.FC<TicketTypeTableProps> = ({
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [selectedTicketType, setSelectedTicketType] = useState<TicketTypeResponse | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [toggleLoading, setToggleLoading] = useState<number | null>(null);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     const handleDeleteClick = (ticketType: TicketTypeResponse) => {
         setSelectedTicketType(ticketType);
         setDeleteModalOpen(true);
+        setErrorMessage(null);
     };
 
     const handleConfirmDelete = async () => {
         if (!selectedTicketType) return;
 
         setIsDeleting(true);
+        setErrorMessage(null);
         try {
             await onDelete(selectedTicketType.id);
             setDeleteModalOpen(false);
             setSelectedTicketType(null);
+        } catch (error) {
+            setErrorMessage(error instanceof Error ? error.message : 'Failed to delete ticket type');
         } finally {
             setIsDeleting(false);
+        }
+    };
+
+    const handleToggleActive = async (id: number) => {
+        setToggleLoading(id);
+        setErrorMessage(null);
+        try {
+            await onToggleActive(id);
+        } catch (error) {
+            setErrorMessage(error instanceof Error ? error.message : 'Failed to toggle status');
+        } finally {
+            setToggleLoading(null);
         }
     };
 
@@ -75,6 +93,12 @@ const TicketTypeTable: React.FC<TicketTypeTableProps> = ({
 
     return (
         <>
+            {errorMessage && (
+                <div className={styles.errorMessage}>
+                    {errorMessage}
+                </div>
+            )}
+
             <div className={styles.tableWrapper}>
                 <div className={styles.tableContainer}>
                     <table className={styles.table}>
@@ -121,9 +145,11 @@ const TicketTypeTable: React.FC<TicketTypeTableProps> = ({
                                         <button
                                             className={`${styles.toggleButton} ${ticketType.active ? styles.activeToggle : styles.inactiveToggle
                                                 }`}
-                                            onClick={() => onToggleActive(ticketType.id)}
+                                            onClick={() => handleToggleActive(ticketType.id)}
+                                            disabled={toggleLoading === ticketType.id}
                                         >
-                                            {ticketType.active ? 'Active' : 'Inactive'}
+                                            {toggleLoading === ticketType.id ? 'Updating...' :
+                                                ticketType.active ? 'Active' : 'Inactive'}
                                         </button>
                                     </td>
                                     <td className={styles.actionsCell}>
@@ -159,6 +185,7 @@ const TicketTypeTable: React.FC<TicketTypeTableProps> = ({
                 onCancel={() => {
                     setDeleteModalOpen(false);
                     setSelectedTicketType(null);
+                    setErrorMessage(null);
                 }}
                 itemName={selectedTicketType?.displayName}
                 itemType="ticket type"
