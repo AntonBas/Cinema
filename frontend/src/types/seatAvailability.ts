@@ -22,7 +22,8 @@ export interface SeatInfo {
     seatType: string;
     available: boolean;
     temporarilyReserved: boolean;
-    ticketPrices: TicketPriceInfo[];
+    active: boolean;
+    ticketPrices?: TicketPriceInfo[];
 }
 
 export interface TicketPriceInfo {

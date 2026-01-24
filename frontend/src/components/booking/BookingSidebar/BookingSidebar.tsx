@@ -69,14 +69,14 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
                             <div className={styles.ticketTypeContainer}>
                                 <TicketTypeSelect
                                     seatId={selectedSeat.seat.id}
-                                    ticketPrices={selectedSeat.seat.ticketPrices}
+                                    ticketPrices={selectedSeat.seat.ticketPrices || []}
                                     selectedTicketTypeId={selectedSeat.ticketTypeId}
                                     onSelect={onTicketTypeChange}
                                 />
                             </div>
                         </div>
                         <div className={styles.seatPrice}>
-                            ${selectedSeat.price.toFixed(2)}
+                            ₴{selectedSeat.price.toFixed(2)}
                         </div>
                     </div>
                 ))}
@@ -85,7 +85,7 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
             <div className={styles.summary}>
                 <div className={styles.total}>
                     <span>Total:</span>
-                    <span className={styles.totalPrice}>${totalPrice.toFixed(2)}</span>
+                    <span className={styles.totalPrice}>₴{totalPrice.toFixed(2)}</span>
                 </div>
 
                 <button

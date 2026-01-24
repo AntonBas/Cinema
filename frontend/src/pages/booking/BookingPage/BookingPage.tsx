@@ -1,4 +1,3 @@
-// src/pages/booking/BookingPage/BookingPage.tsx
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useSeatAvailability } from '@/hooks/features/seatAvailability/useSeatAvailability';
@@ -89,7 +88,7 @@ export const BookingPage: React.FC = () => {
                     <div className={styles.sessionInfo}>
                         <span>Hall: {seatData.hallName}</span>
                         <span>Available seats: {seatData.availableSeats}</span>
-                        <span>Price from: ${parseFloat(seatData.basePrice).toFixed(2)}</span>
+                        <span>Price from: ₴{parseFloat(seatData.basePrice).toFixed(2)}</span>
                     </div>
                 </div>
 

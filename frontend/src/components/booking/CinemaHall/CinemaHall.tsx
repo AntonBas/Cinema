@@ -1,4 +1,5 @@
 import React from 'react';
+import { Tooltip } from '@/components/ui/Tooltip/Tooltip';
 import styles from './CinemaHall.module.css';
 import type { SeatInfo } from '@/types/seatAvailability';
 
@@ -16,7 +17,8 @@ export const CinemaHall: React.FC<CinemaHallProps> = ({
     const rows = [...new Set(seats.map(seat => seat.row))].sort((a, b) => a - b);
 
     const getSeatStatus = (seat: SeatInfo) => {
-        if (!seat.available) return 'occupied';
+        if (!seat.active) return 'unavailable';
+        if (!seat.available) return 'booked';
         if (selectedSeats.includes(seat.id)) return 'selected';
         if (seat.temporarilyReserved) return 'temporary';
         return 'available';
@@ -27,6 +29,31 @@ export const CinemaHall: React.FC<CinemaHallProps> = ({
         const seatType = seat.seatType.toLowerCase();
 
         return `${styles.seat} ${styles[status]} ${styles[seatType]}`;
+    };
+
+    const getSeatTitle = (seat: SeatInfo) => {
+        const status = getSeatStatus(seat);
+        const seatType = seat.seatType === 'VIP' ? 'VIP' : seat.seatType === 'COUPLE' ? 'Couple' : 'Standard';
+
+        let title = `Row ${seat.row}, Seat ${seat.seatNumber} (${seatType})`;
+
+        if (status === 'booked') {
+            title += ' - Booked';
+        } else if (status === 'unavailable') {
+            title += ' - Unavailable';
+        } else if (status === 'temporary') {
+            title += ' - Temporarily reserved';
+        } else if (status === 'selected') {
+            title += ' - Selected';
+        } else {
+            title += ' - Available';
+        }
+
+        return title;
+    };
+
+    const isSeatDisabled = (seat: SeatInfo) => {
+        return !seat.active || !seat.available || seat.temporarilyReserved;
     };
 
     return (
@@ -42,23 +69,57 @@ export const CinemaHall: React.FC<CinemaHallProps> = ({
 
                     return (
                         <div key={`row-${rowNumber}`} className={styles.row}>
-                            <div className={styles.rowLabel}>Row {rowNumber}</div>
                             <div className={styles.seats}>
                                 {rowSeats.map(seat => (
-                                    <button
+                                    <Tooltip
                                         key={`seat-${seat.id}`}
-                                        className={getSeatClass(seat)}
-                                        onClick={() => onSeatClick(seat.id)}
-                                        disabled={!seat.available || seat.temporarilyReserved}
-                                        title={`Row ${seat.row}, Seat ${seat.seatNumber}`}
+                                        content={getSeatTitle(seat)}
+                                        position="top"
                                     >
-                                        <span className={styles.seatNumber}>{seat.seatNumber}</span>
-                                    </button>
+                                        <button
+                                            className={getSeatClass(seat)}
+                                            onClick={() => onSeatClick(seat.id)}
+                                            disabled={isSeatDisabled(seat)}
+                                        >
+                                            <span className={styles.seatNumber}>{seat.seatNumber}</span>
+                                        </button>
+                                    </Tooltip>
                                 ))}
                             </div>
                         </div>
                     );
                 })}
+            </div>
+
+            <div className={styles.legend}>
+                <div className={styles.legendItem}>
+                    <div className={`${styles.legendColor} ${styles.available}`}></div>
+                    <span>Available</span>
+                </div>
+                <div className={styles.legendItem}>
+                    <div className={`${styles.legendColor} ${styles.selected}`}></div>
+                    <span>Selected</span>
+                </div>
+                <div className={styles.legendItem}>
+                    <div className={`${styles.legendColor} ${styles.booked}`}></div>
+                    <span>Booked</span>
+                </div>
+                <div className={styles.legendItem}>
+                    <div className={`${styles.legendColor} ${styles.unavailable}`}></div>
+                    <span>Unavailable</span>
+                </div>
+                <div className={styles.legendItem}>
+                    <div className={`${styles.legendColor} ${styles.temporary}`}></div>
+                    <span>Temporary</span>
+                </div>
+                <div className={styles.legendItem}>
+                    <div className={`${styles.legendColor} ${styles.vip}`}></div>
+                    <span>VIP</span>
+                </div>
+                <div className={styles.legendItem}>
+                    <div className={`${styles.legendColor} ${styles.couple}`}></div>
+                    <span>Couple</span>
+                </div>
             </div>
         </div>
     );
