@@ -17,7 +17,16 @@ export const useMovieStatus = () => {
         setLoading(true);
         setError(null);
         try {
-            const response = await movieApi.admin.getByStatus(status, page, size);
+            let response: PageResponse<MovieCardResponse>;
+
+            if (status === 'CURRENT') {
+                response = await movieApi.public.getCurrentlyShowingPaginated(page, size);
+            } else if (status === 'UPCOMING') {
+                response = await movieApi.public.getUpcomingPaginated(page, size);
+            } else {
+                response = await movieApi.admin.getByStatus(status, page, size);
+            }
+
             setMovies(response.content);
             setPagination(response);
             return response;

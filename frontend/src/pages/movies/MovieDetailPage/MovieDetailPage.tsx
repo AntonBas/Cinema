@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { movieApi } from '@/api/movieApi';
 import { sessionApi } from '@/api/sessionApi';
 import type { MovieDetailResponse } from '@/types/movie';
+import type { SessionScheduleResponse } from '@/types/session';
 import {
     AgeRatingDisplay,
     AgeRatingDescription,
@@ -20,6 +21,7 @@ export const MovieDetailPage: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [findingSession, setFindingSession] = useState(false);
     const [nextSessionDate, setNextSessionDate] = useState<string | null>(null);
+    const [nextSessionTime, setNextSessionTime] = useState<string | null>(null);
 
     const { notifications, showNotification, hideNotification } = useNotification();
 
@@ -48,8 +50,7 @@ export const MovieDetailPage: React.FC = () => {
 
     const findNextSessionDate = async (movieId: number) => {
         try {
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
+            const now = new Date();
 
             const response = await sessionApi.public.getSchedule(
                 0,
@@ -60,21 +61,36 @@ export const MovieDetailPage: React.FC = () => {
                 30
             );
 
-            const upcomingSessions = response.content.filter((session: any) => {
-                const sessionDate = new Date(session.startTime);
-                return sessionDate >= today;
+            const upcomingSessions = response.content.filter((session: SessionScheduleResponse) => {
+                const sessionTime = new Date(session.startTime);
+                return sessionTime > now && session.status === 'SCHEDULED';
             });
 
             if (upcomingSessions.length > 0) {
-                const nextSession = upcomingSessions[0];
-                const sessionDate = new Date(nextSession.startTime).toISOString().split('T')[0];
+                const nearestSession = upcomingSessions.reduce((nearest: SessionScheduleResponse, current: SessionScheduleResponse) => {
+                    const nearestTime = new Date(nearest.startTime).getTime();
+                    const currentTime = new Date(current.startTime).getTime();
+                    return currentTime < nearestTime ? current : nearest;
+                });
+
+                const sessionDateTime = new Date(nearestSession.startTime);
+                const sessionDate = sessionDateTime.toISOString().split('T')[0];
+                const sessionTimeStr = sessionDateTime.toLocaleTimeString('en-US', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                });
+
                 setNextSessionDate(sessionDate);
+                setNextSessionTime(sessionTimeStr);
             } else {
                 setNextSessionDate(null);
+                setNextSessionTime(null);
             }
         } catch (error) {
             console.error('Error finding next session:', error);
             setNextSessionDate(null);
+            setNextSessionTime(null);
         }
     };
 
@@ -105,6 +121,32 @@ export const MovieDetailPage: React.FC = () => {
         });
     };
 
+    const formatButtonDate = (dateString: string, timeString: string | null): string => {
+        const date = new Date(dateString);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+        const diffDays = Math.ceil((dateOnly.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+        if (diffDays === 0) {
+            return `Today at ${timeString}`;
+        }
+        if (diffDays === 1) {
+            return `Tomorrow at ${timeString}`;
+        }
+        if (diffDays < 7) {
+            const weekday = date.toLocaleDateString('en-US', { weekday: 'long' });
+            return `${weekday} at ${timeString}`;
+        }
+
+        const formattedDate = date.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric'
+        });
+        return `${formattedDate} at ${timeString}`;
+    };
+
     if (loading) {
         return (
             <Layout>
@@ -132,17 +174,10 @@ export const MovieDetailPage: React.FC = () => {
 
     const getFindSessionButtonText = () => {
         if (findingSession) return 'Finding...';
-        if (nextSessionDate) {
-            const nextDate = new Date(nextSessionDate);
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            const diffDays = Math.ceil((nextDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-
-            if (diffDays === 0) return 'Find Sessions Today';
-            if (diffDays === 1) return 'Find Sessions Tomorrow';
-            return `Find Sessions on ${formatDate(nextSessionDate)}`;
+        if (nextSessionDate && nextSessionTime) {
+            return `Book Session: ${formatButtonDate(nextSessionDate, nextSessionTime)}`;
         }
-        return 'Find Sessions';
+        return 'Find Available Sessions';
     };
 
     return (
