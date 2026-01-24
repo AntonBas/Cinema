@@ -59,6 +59,9 @@ public class SeatAvailabilityResponse {
 		@Schema(description = "Is temporarily reserved", example = "false")
 		private Boolean temporarilyReserved;
 
+		@Schema(description = "Is seat active (technically available)", example = "true")
+		private Boolean active;
+
 		@Schema(description = "Calculated prices for ticket types")
 		private List<TicketPriceInfo> ticketPrices;
 	}

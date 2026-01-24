@@ -45,13 +45,7 @@ public class SeatAvailabilityService {
 			boolean isBooked = bookedSeats.stream().anyMatch(bs -> bs.getSeat().getId().equals(seat.getId()));
 			boolean isTemporary = bookedSeats.stream().anyMatch(
 					bs -> bs.getSeat().getId().equals(seat.getId()) && bs.getStatus() == BookedSeatStatus.PENDING);
-
-			List<SeatAvailabilityResponse.TicketPriceInfo> ticketPrices = calculateTicketPrices(seat, session);
-
-			return SeatAvailabilityResponse.SeatInfo.builder().id(seat.getId()).row(seat.getRow())
-					.seatNumber(seat.getNumber()).seatType(seat.getSeatType().name())
-					.available(!isBooked && seat.isActive()).temporarilyReserved(isTemporary).ticketPrices(ticketPrices)
-					.build();
+			return buildSeatInfo(seat, isBooked, isTemporary, session);
 		}).collect(Collectors.toList());
 
 		int availableSeatsCount = (int) seatInfos.stream().filter(seat -> seat.getAvailable()).count();
@@ -59,6 +53,16 @@ public class SeatAvailabilityService {
 		return SeatAvailabilityResponse.builder().sessionId(session.getId()).movieTitle(session.getMovie().getTitle())
 				.basePrice(session.getBasePrice()).hallName(session.getHall().getName())
 				.availableSeats(availableSeatsCount).seats(seatInfos).build();
+	}
+
+	private SeatAvailabilityResponse.SeatInfo buildSeatInfo(Seat seat, boolean isBooked, boolean isTemporary,
+			Session session) {
+		List<SeatAvailabilityResponse.TicketPriceInfo> ticketPrices = calculateTicketPrices(seat, session);
+
+		return SeatAvailabilityResponse.SeatInfo.builder().id(seat.getId()).row(seat.getRow())
+				.seatNumber(seat.getNumber()).seatType(seat.getSeatType().name())
+				.available(!isBooked && seat.isActive()).temporarilyReserved(isTemporary).active(seat.isActive())
+				.ticketPrices(ticketPrices).build();
 	}
 
 	public void validateSeatAvailability(Long sessionId, Long seatId) {
