@@ -140,7 +140,11 @@ export const SessionList: React.FC<SessionListProps> = ({ sessions }) => {
                                         }}
                                     >
                                         <div className={styles.sessionTime}>
-                                            <span className={styles.time}>{formatTime(session.startTime)}</span>
+                                            <div className={styles.timeRange}>
+                                                <span className={styles.startTime}>{formatTime(session.startTime)}</span>
+                                                <span className={styles.timeSeparator}>–</span>
+                                                <span className={styles.endTime}>{formatTime(session.endTime)}</span>
+                                            </div>
                                             <span className={styles.hall}>{session.hallName}</span>
                                         </div>
 
