@@ -25,6 +25,7 @@ import ua.lviv.bas.cinema.dto.payment.request.LiqPayCallbackRequest;
 import ua.lviv.bas.cinema.dto.payment.request.PaymentCreateRequest;
 import ua.lviv.bas.cinema.dto.payment.response.PaymentLiqPayDataResponse;
 import ua.lviv.bas.cinema.dto.payment.response.PaymentResponse;
+import ua.lviv.bas.cinema.security.CustomUserDetails;
 import ua.lviv.bas.cinema.service.booking.PaymentService;
 
 @Slf4j
@@ -45,7 +46,8 @@ public class PaymentController {
 			@ApiResponse(responseCode = "409", description = "Payment already in progress") })
 	@PreAuthorize("hasRole('USER')")
 	public ResponseEntity<PaymentResponse> createPayment(@Valid @RequestBody PaymentCreateRequest request,
-			@AuthenticationPrincipal User user) {
+			@AuthenticationPrincipal CustomUserDetails userDetails) {
+		User user = userDetails.getUser();
 		log.info("Creating payment for booking ID: {} by user ID: {}", request.getBookingId(), user.getId());
 		PaymentResponse response = paymentService.createPayment(request, user);
 		return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -70,7 +72,8 @@ public class PaymentController {
 	@PreAuthorize("hasRole('USER')")
 	public ResponseEntity<PaymentLiqPayDataResponse> getLiqPayPaymentData(
 			@Parameter(description = "Payment ID", required = true) @PathVariable Long paymentId,
-			@AuthenticationPrincipal User user) {
+			@AuthenticationPrincipal CustomUserDetails userDetails) {
+		User user = userDetails.getUser();
 		log.info("Fetching LiqPay data for payment ID: {} for user ID: {}", paymentId, user.getId());
 		PaymentLiqPayDataResponse response = paymentService.preparePaymentData(paymentId, user);
 		return ResponseEntity.ok(response);
@@ -84,7 +87,8 @@ public class PaymentController {
 	@PreAuthorize("hasRole('USER')")
 	public ResponseEntity<PaymentResponse> getPaymentStatus(
 			@Parameter(description = "Payment ID", required = true) @PathVariable Long paymentId,
-			@AuthenticationPrincipal User user) {
+			@AuthenticationPrincipal CustomUserDetails userDetails) {
+		User user = userDetails.getUser();
 		log.info("Fetching status for payment ID: {} for user ID: {}", paymentId, user.getId());
 		PaymentResponse response = paymentService.getPaymentStatus(paymentId, user);
 		return ResponseEntity.ok(response);
@@ -99,7 +103,8 @@ public class PaymentController {
 	@PreAuthorize("hasRole('USER')")
 	public ResponseEntity<PaymentResponse> retryPayment(
 			@Parameter(description = "Payment ID", required = true) @PathVariable Long paymentId,
-			@AuthenticationPrincipal User user) {
+			@AuthenticationPrincipal CustomUserDetails userDetails) {
+		User user = userDetails.getUser();
 		log.info("Retrying payment ID: {} for user ID: {}", paymentId, user.getId());
 		PaymentResponse response = paymentService.retryPayment(paymentId, user);
 		return ResponseEntity.ok(response);
@@ -113,7 +118,8 @@ public class PaymentController {
 	@PreAuthorize("hasRole('USER')")
 	public ResponseEntity<PaymentResponse> getPaymentByBookingId(
 			@Parameter(description = "Booking ID", required = true) @PathVariable Long bookingId,
-			@AuthenticationPrincipal User user) {
+			@AuthenticationPrincipal CustomUserDetails userDetails) {
+		User user = userDetails.getUser();
 		log.info("Fetching payment for booking ID: {} for user ID: {}", bookingId, user.getId());
 		PaymentResponse response = paymentService.getUserPaymentByBookingId(bookingId, user);
 		return ResponseEntity.ok(response);
