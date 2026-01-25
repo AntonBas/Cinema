@@ -30,6 +30,7 @@ import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.enums.BookingStatus;
 import ua.lviv.bas.cinema.dto.booking.request.BookingCreateRequest;
 import ua.lviv.bas.cinema.dto.booking.response.BookingResponse;
+import ua.lviv.bas.cinema.security.CustomUserDetails;
 import ua.lviv.bas.cinema.service.booking.BookingService;
 
 @Slf4j
@@ -50,7 +51,8 @@ public class BookingController {
 			@ApiResponse(responseCode = "409", description = "Booking conflict or session not available") })
 	@PreAuthorize("hasRole('USER')")
 	public ResponseEntity<BookingResponse> createBooking(@Valid @RequestBody BookingCreateRequest request,
-			@AuthenticationPrincipal User user) {
+			@AuthenticationPrincipal CustomUserDetails userDetails) {
+		User user = userDetails.getUser();
 		log.info("Creating new booking for user ID: {}, session ID: {}", user.getId(), request.getSessionId());
 		BookingResponse response = bookingService.createBooking(request, user);
 		return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -63,7 +65,8 @@ public class BookingController {
 			@ApiResponse(responseCode = "403", description = "Access denied to booking") })
 	@PreAuthorize("hasRole('USER')")
 	public ResponseEntity<BookingResponse> getBooking(@PathVariable Long bookingId,
-			@AuthenticationPrincipal User user) {
+			@AuthenticationPrincipal CustomUserDetails userDetails) {
+		User user = userDetails.getUser();
 		log.info("Fetching booking ID: {} for user ID: {}", bookingId, user.getId());
 		BookingResponse response = bookingService.getBookingById(bookingId, user);
 		return ResponseEntity.ok(response);
@@ -75,7 +78,9 @@ public class BookingController {
 			@ApiResponse(responseCode = "400", description = "Invalid status parameter") })
 	@PreAuthorize("hasRole('USER')")
 	public ResponseEntity<Page<BookingResponse>> getUserBookings(@PageableDefault(size = 20) Pageable pageable,
-			@RequestParam(required = false) BookingStatus status, @AuthenticationPrincipal User user) {
+			@RequestParam(required = false) BookingStatus status,
+			@AuthenticationPrincipal CustomUserDetails userDetails) {
+		User user = userDetails.getUser();
 		log.info("Fetching bookings for user ID: {} with status filter: {}", user.getId(), status);
 		Page<BookingResponse> bookings = bookingService.getUserBookings(user.getId(), status, pageable);
 		return ResponseEntity.ok(bookings);
@@ -88,7 +93,9 @@ public class BookingController {
 			@ApiResponse(responseCode = "404", description = "Booking not found"),
 			@ApiResponse(responseCode = "403", description = "Access denied to booking") })
 	@PreAuthorize("hasRole('USER')")
-	public ResponseEntity<Void> cancelBooking(@PathVariable Long bookingId, @AuthenticationPrincipal User user) {
+	public ResponseEntity<Void> cancelBooking(@PathVariable Long bookingId,
+			@AuthenticationPrincipal CustomUserDetails userDetails) {
+		User user = userDetails.getUser();
 		log.info("Cancelling booking ID: {} for user ID: {}", bookingId, user.getId());
 		bookingService.cancelBooking(bookingId, user);
 		return ResponseEntity.noContent().build();
@@ -100,7 +107,8 @@ public class BookingController {
 			@ApiResponse(responseCode = "200", description = "Available points calculated successfully") })
 	@PreAuthorize("hasRole('USER')")
 	public ResponseEntity<Integer> getAvailableBonusPoints(@RequestParam BigDecimal totalPrice,
-			@AuthenticationPrincipal User user) {
+			@AuthenticationPrincipal CustomUserDetails userDetails) {
+		User user = userDetails.getUser();
 		log.info("Calculating available bonus points for user ID: {} with total price: {}", user.getId(), totalPrice);
 		Integer availablePoints = bookingService.getAvailableBonusPointsForBooking(user.getId(), totalPrice);
 		return ResponseEntity.ok(availablePoints);
