@@ -47,6 +47,10 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
     const validateBonusPoints = (points: number) => {
         setBonusError(null);
 
+        if (points === 0) {
+            return true;
+        }
+
         if (points < minUsablePoints) {
             setBonusError(`Minimum ${minUsablePoints} points required`);
             return false;
@@ -167,7 +171,7 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
                         <div className={styles.pointsInput}>
                             <input
                                 type="number"
-                                min={minUsablePoints}
+                                min={0}
                                 max={maxAvailablePoints}
                                 value={bonusPointsToUse}
                                 onChange={(e) => handleBonusPointsChange(parseInt(e.target.value) || 0)}
