@@ -15,7 +15,6 @@ import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -35,16 +34,14 @@ import ua.lviv.bas.cinema.domain.enums.BookedSeatStatus;
 @AllArgsConstructor
 @ToString(exclude = { "booking", "seat", "session", "ticketType", "reservedByUser" })
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@Table(name = "booked_seats", uniqueConstraints = @UniqueConstraint(columnNames = { "session_id",
-		"seat_id" }, name = "uk_booked_seat_session_seat"), indexes = {
-				@Index(name = "idx_booked_seat_booking", columnList = "booking_id"),
-				@Index(name = "idx_booked_seat_session", columnList = "session_id"),
-				@Index(name = "idx_booked_seat_seat", columnList = "seat_id"),
-				@Index(name = "idx_booked_seat_status", columnList = "status"),
-				@Index(name = "idx_booked_seat_reserved_until", columnList = "reserved_until"),
-				@Index(name = "idx_booked_seat_composite_status", columnList = "session_id, seat_id, status"),
-				@Index(name = "idx_booked_seat_created", columnList = "booked_at"),
-				@Index(name = "idx_booked_seat_user", columnList = "user_id") })
+@Table(name = "booked_seats", indexes = { @Index(name = "idx_booked_seat_booking", columnList = "booking_id"),
+		@Index(name = "idx_booked_seat_session", columnList = "session_id"),
+		@Index(name = "idx_booked_seat_seat", columnList = "seat_id"),
+		@Index(name = "idx_booked_seat_status", columnList = "status"),
+		@Index(name = "idx_booked_seat_reserved_until", columnList = "reserved_until"),
+		@Index(name = "idx_booked_seat_composite", columnList = "session_id, seat_id, status"),
+		@Index(name = "idx_booked_seat_created", columnList = "booked_at"),
+		@Index(name = "idx_booked_seat_user", columnList = "user_id") })
 public class BookedSeat {
 
 	@Id

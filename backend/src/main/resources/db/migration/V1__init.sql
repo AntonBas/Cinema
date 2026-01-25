@@ -205,8 +205,7 @@ CREATE TABLE IF NOT EXISTS booked_seats (
     status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
     booked_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     reserved_until TIMESTAMP NOT NULL,
-    user_id BIGINT REFERENCES users(id) ON DELETE SET NULL,
-    UNIQUE (session_id, seat_id)
+    user_id BIGINT REFERENCES users(id) ON DELETE SET NULL
 );
 
 CREATE INDEX IF NOT EXISTS idx_booked_seat_booking ON booked_seats(booking_id);
