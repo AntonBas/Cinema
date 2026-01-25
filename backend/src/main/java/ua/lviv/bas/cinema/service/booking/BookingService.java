@@ -173,7 +173,14 @@ public class BookingService {
 		if (booking.getStatus() == BookingStatus.PENDING) {
 			booking.setStatus(BookingStatus.EXPIRED);
 			booking.getBookedSeats().forEach(bs -> bs.setStatus(BookedSeatStatus.EXPIRED));
+
+			if (booking.getBonusPointsUsed() != null && booking.getBonusPointsUsed() > 0) {
+				bonusService.refundBonusPointsForCancellation(booking);
+			}
+
 			bookingRepository.save(booking);
+			log.info("Expired booking {} for user {}. Bonus points refunded: {}", bookingId, booking.getUser().getId(),
+					booking.getBonusPointsUsed());
 		} else {
 			throw BookingOperationException.cannotExpireNonPending();
 		}
