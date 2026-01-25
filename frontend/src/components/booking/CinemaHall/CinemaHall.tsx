@@ -63,32 +63,34 @@ export const CinemaHall: React.FC<CinemaHallProps> = ({
             </div>
 
             <div className={styles.seatsContainer}>
-                {rows.map(rowNumber => {
-                    const rowSeats = seats.filter(seat => seat.row === rowNumber)
-                        .sort((a, b) => a.seatNumber - b.seatNumber);
+                <div className={styles.scrollableArea}>
+                    {rows.map(rowNumber => {
+                        const rowSeats = seats.filter(seat => seat.row === rowNumber)
+                            .sort((a, b) => a.seatNumber - b.seatNumber);
 
-                    return (
-                        <div key={`row-${rowNumber}`} className={styles.row}>
-                            <div className={styles.seats}>
-                                {rowSeats.map(seat => (
-                                    <Tooltip
-                                        key={`seat-${seat.id}`}
-                                        content={getSeatTitle(seat)}
-                                        position="top"
-                                    >
-                                        <button
-                                            className={getSeatClass(seat)}
-                                            onClick={() => onSeatClick(seat.id)}
-                                            disabled={isSeatDisabled(seat)}
+                        return (
+                            <div key={`row-${rowNumber}`} className={styles.row}>
+                                <div className={styles.seats}>
+                                    {rowSeats.map(seat => (
+                                        <Tooltip
+                                            key={`seat-${seat.id}`}
+                                            content={getSeatTitle(seat)}
+                                            position="top"
                                         >
-                                            <span className={styles.seatNumber}>{seat.seatNumber}</span>
-                                        </button>
-                                    </Tooltip>
-                                ))}
+                                            <button
+                                                className={getSeatClass(seat)}
+                                                onClick={() => onSeatClick(seat.id)}
+                                                disabled={isSeatDisabled(seat)}
+                                            >
+                                                <span className={styles.seatNumber}>{seat.seatNumber}</span>
+                                            </button>
+                                        </Tooltip>
+                                    ))}
+                                </div>
                             </div>
-                        </div>
-                    );
-                })}
+                        );
+                    })}
+                </div>
             </div>
 
             <div className={styles.legend}>
