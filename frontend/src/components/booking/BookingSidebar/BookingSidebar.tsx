@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Tooltip } from '@/components/ui/Tooltip/Tooltip';
 import type { SelectedSeat } from '@/hooks/features/seatAvailability/useSeatSelection';
 import { TicketTypeSelect } from '../TicketTypeSelect';
@@ -9,8 +9,11 @@ interface BookingSidebarProps {
     totalPrice: number;
     sessionId: number;
     onTicketTypeChange: (seatId: number, ticketTypeId: number) => void;
-    onBooking: () => Promise<void>;
+    onBooking: (bonusPointsToUse: number) => Promise<void>;
     isBooking: boolean;
+    bonusBalance: number;
+    maxUsablePoints: number;
+    minUsablePoints: number;
 }
 
 export const BookingSidebar: React.FC<BookingSidebarProps> = ({
@@ -18,8 +21,78 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
     totalPrice,
     onTicketTypeChange,
     onBooking,
-    isBooking
+    isBooking,
+    bonusBalance,
+    maxUsablePoints,
+    minUsablePoints
 }) => {
+    const [bonusPointsToUse, setBonusPointsToUse] = useState<number>(0);
+    const [useAllPoints, setUseAllPoints] = useState(false);
+    const [bonusError, setBonusError] = useState<string | null>(null);
+
+    const calculateMaxAvailablePoints = () => {
+        const maxPointsFromBalance = Math.min(bonusBalance, maxUsablePoints);
+        const maxPointsFromTotalPrice = Math.floor(totalPrice * 0.50);
+        return Math.min(maxPointsFromBalance, maxPointsFromTotalPrice);
+    };
+
+    useEffect(() => {
+        if (useAllPoints) {
+            const points = calculateMaxAvailablePoints();
+            setBonusPointsToUse(points);
+            validateBonusPoints(points);
+        }
+    }, [useAllPoints, bonusBalance, maxUsablePoints, totalPrice]);
+
+    const validateBonusPoints = (points: number) => {
+        setBonusError(null);
+
+        if (points < minUsablePoints) {
+            setBonusError(`Minimum ${minUsablePoints} points required`);
+            return false;
+        }
+
+        if (points > maxUsablePoints) {
+            setBonusError(`Maximum ${maxUsablePoints} points allowed per booking`);
+            return false;
+        }
+
+        if (points > bonusBalance) {
+            setBonusError(`You only have ${bonusBalance} points available`);
+            return false;
+        }
+
+        const maxFromPrice = Math.floor(totalPrice * 0.50);
+        if (points > maxFromPrice) {
+            setBonusError(`Cannot use more than ${maxFromPrice} points (50% of total)`);
+            return false;
+        }
+
+        return true;
+    };
+
+    const handleBonusPointsChange = (points: number) => {
+        const validPoints = Math.max(0, Math.min(points, calculateMaxAvailablePoints()));
+        setBonusPointsToUse(validPoints);
+        setUseAllPoints(false);
+        validateBonusPoints(validPoints);
+    };
+
+    const handleUseAllPoints = () => {
+        const points = calculateMaxAvailablePoints();
+        setUseAllPoints(true);
+        validateBonusPoints(points);
+    };
+
+    const calculateDiscount = (points: number): number => {
+        return points;
+    };
+
+    const calculateFinalPrice = (): number => {
+        const discount = calculateDiscount(bonusPointsToUse);
+        return Math.max(0, totalPrice - discount);
+    };
+
     if (selectedSeats.length === 0) {
         return (
             <div className={styles.sidebar}>
@@ -31,6 +104,20 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
             </div>
         );
     }
+
+    const discount = calculateDiscount(bonusPointsToUse);
+    const finalPrice = calculateFinalPrice();
+    const maxAvailablePoints = calculateMaxAvailablePoints();
+    const canUseAllPoints = bonusBalance > 0 && maxAvailablePoints > 0;
+
+    const bonusRules = [
+        `• 1 bonus point = 1 ₴ discount`,
+        `• Minimum points to use: ${minUsablePoints}`,
+        `• Cannot cover more than 50% of total price`,
+        `• Maximum usable: ${maxAvailablePoints} points (₴${maxAvailablePoints.toFixed(2)})`,
+        `• Points must be used in whole numbers`,
+        `• Points expire according to bonus program terms`
+    ].join('\n');
 
     return (
         <div className={styles.sidebar}>
@@ -62,22 +149,88 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
                 ))}
             </div>
 
+            <div className={styles.bonusSection}>
+                <div className={styles.bonusHeader}>
+                    <h4>Use Bonus Points</h4>
+                    <Tooltip content={bonusRules} position="left">
+                        <button className={styles.infoButton}>ℹ️</button>
+                    </Tooltip>
+                </div>
+                <div className={styles.bonusInfo}>
+                    <span className={styles.balanceText}>
+                        Available: {bonusBalance} points (₴{bonusBalance.toFixed(2)})
+                    </span>
+                </div>
+
+                {canUseAllPoints && (
+                    <div className={styles.bonusControls}>
+                        <div className={styles.pointsInput}>
+                            <input
+                                type="number"
+                                min={minUsablePoints}
+                                max={maxAvailablePoints}
+                                value={bonusPointsToUse}
+                                onChange={(e) => handleBonusPointsChange(parseInt(e.target.value) || 0)}
+                                disabled={isBooking}
+                                placeholder={`Min ${minUsablePoints} points`}
+                            />
+                            <button
+                                className={styles.useAllButton}
+                                onClick={handleUseAllPoints}
+                                disabled={isBooking || !canUseAllPoints}
+                            >
+                                Use Max
+                            </button>
+                        </div>
+                        {bonusError && (
+                            <div className={styles.bonusError}>{bonusError}</div>
+                        )}
+                        <div className={styles.pointsLimits}>
+                            <span>Min: {minUsablePoints}</span>
+                            <span>Max: {maxAvailablePoints}</span>
+                        </div>
+                    </div>
+                )}
+            </div>
+
             <div className={styles.summary}>
-                <div className={styles.total}>
-                    <span>Total:</span>
-                    <span className={styles.totalPrice}>₴{totalPrice.toFixed(2)}</span>
+                <div className={styles.priceBreakdown}>
+                    <div className={styles.priceRow}>
+                        <span>Total price:</span>
+                        <span>₴{totalPrice.toFixed(2)}</span>
+                    </div>
+                    {bonusPointsToUse > 0 && (
+                        <>
+                            <div className={styles.priceRow}>
+                                <span>Bonus points:</span>
+                                <span>{bonusPointsToUse} points</span>
+                            </div>
+                            <div className={styles.priceRow}>
+                                <span>Bonus discount:</span>
+                                <span className={styles.discount}>-₴{discount.toFixed(2)}</span>
+                            </div>
+                        </>
+                    )}
+                    <div className={styles.finalPriceRow}>
+                        <span>Amount to pay:</span>
+                        <span className={styles.finalPrice}>₴{finalPrice.toFixed(2)}</span>
+                    </div>
                 </div>
 
                 <Tooltip
-                    content="After booking, you will have 20 minutes to complete the payment. Seats will be temporarily reserved during this time."
+                    content="After booking, you will have 20 minutes to complete the payment"
                     position="top"
                 >
                     <button
                         className={styles.bookButton}
-                        onClick={onBooking}
-                        disabled={isBooking || selectedSeats.length === 0}
+                        onClick={() => {
+                            if (validateBonusPoints(bonusPointsToUse)) {
+                                onBooking(bonusPointsToUse);
+                            }
+                        }}
+                        disabled={isBooking || selectedSeats.length === 0 || !!bonusError}
                     >
-                        {isBooking ? 'Processing...' : `Book Now - ₴${totalPrice.toFixed(2)}`}
+                        {isBooking ? 'Processing...' : `Book Now - ₴${finalPrice.toFixed(2)}`}
                     </button>
                 </Tooltip>
             </div>
