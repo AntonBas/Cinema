@@ -25,6 +25,8 @@ import {
 
 import { SessionsPage } from '@/pages/sessions';
 import { BookingPage } from '@/pages/booking/BookingPage';
+import { BookingSummaryPage } from '@/pages/booking/BookingSummaryPage/BookingSummaryPage';
+import { PaymentPage } from '@/pages/booking/PaymentPage/PaymentPage';
 
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { AdminDashboard } from '@/components/admin/AdminDashboard';
@@ -125,6 +127,18 @@ export const AppRoutes: React.FC = () => {
             <Route path="/booking/:sessionId" element={
                 <ProtectedRoute>
                     <BookingPage />
+                </ProtectedRoute>
+            } />
+
+            <Route path="/booking/summary/:bookingId" element={
+                <ProtectedRoute>
+                    <BookingSummaryPage />
+                </ProtectedRoute>
+            } />
+
+            <Route path="/booking/payment/:bookingId" element={
+                <ProtectedRoute>
+                    <PaymentPage />
                 </ProtectedRoute>
             } />
 
