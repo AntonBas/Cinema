@@ -46,6 +46,7 @@ import ua.lviv.bas.cinema.dto.booking.request.BookingCreateRequest;
 import ua.lviv.bas.cinema.dto.booking.request.BookingCreateRequest.SeatSelectionRequest;
 import ua.lviv.bas.cinema.dto.booking.response.BookingResponse;
 import ua.lviv.bas.cinema.exception.domain.booking.BookingNotFoundException;
+import ua.lviv.bas.cinema.exception.domain.booking.BookingOperationException;
 import ua.lviv.bas.cinema.exception.domain.booking.BookingValidationException;
 import ua.lviv.bas.cinema.exception.domain.cinema.SessionNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.tickettype.TicketTypeNotFoundException;
@@ -153,7 +154,7 @@ public class BookingServiceTest {
 		childTicketType = new TicketType();
 		childTicketType.setId(TICKET_TYPE_CHILD_ID);
 		childTicketType.setDisplayName("Child");
-		childTicketType.setPriceMultiplier(new BigDecimal("1.4")); // VIP * 1.4
+		childTicketType.setPriceMultiplier(new BigDecimal("1.4"));
 
 		SeatSelectionRequest seatSelection1 = new SeatSelectionRequest();
 		seatSelection1.setSeatId(SEAT_ID_1);
@@ -172,8 +173,7 @@ public class BookingServiceTest {
 				.seatPrice(new BigDecimal("200.00")).status(BookedSeatStatus.PENDING).build();
 
 		bookedSeat2 = BookedSeat.builder().id(2L).seat(testSeat2).session(testSession).ticketType(childTicketType)
-				.seatPrice(new BigDecimal("280.00")) // 200 * 1.4
-				.status(BookedSeatStatus.PENDING).build();
+				.seatPrice(new BigDecimal("280.00")).status(BookedSeatStatus.PENDING).build();
 
 		testBooking = Booking.builder().id(BOOKING_ID).user(testUser).session(testSession).status(BookingStatus.PENDING)
 				.totalPrice(new BigDecimal("480.00")).bonusPointsUsed(100).bonusDiscountAmount(new BigDecimal("100.00"))
@@ -472,6 +472,29 @@ public class BookingServiceTest {
 	}
 
 	@Test
+	void confirmBooking_WhenBookingNotFound_ShouldThrowException() {
+		when(bookingRepository.findById(BOOKING_ID)).thenReturn(Optional.empty());
+
+		assertThatThrownBy(() -> bookingService.confirmBooking(BOOKING_ID))
+				.isInstanceOf(BookingNotFoundException.class);
+
+		verify(bookingRepository).findById(BOOKING_ID);
+		verify(bookingRepository, never()).save(any());
+	}
+
+	@Test
+	void confirmBooking_WhenNotPending_ShouldThrowException() {
+		testBooking.setStatus(BookingStatus.CONFIRMED);
+		when(bookingRepository.findById(BOOKING_ID)).thenReturn(Optional.of(testBooking));
+
+		assertThatThrownBy(() -> bookingService.confirmBooking(BOOKING_ID))
+				.isInstanceOf(BookingOperationException.class).hasMessage("Only pending bookings can be confirmed");
+
+		verify(bookingRepository).findById(BOOKING_ID);
+		verify(bookingRepository, never()).save(any());
+	}
+
+	@Test
 	void expireBooking_Success() {
 		testBooking.setStatus(BookingStatus.PENDING);
 		when(bookingRepository.findById(BOOKING_ID)).thenReturn(Optional.of(testBooking));
@@ -482,6 +505,30 @@ public class BookingServiceTest {
 		assertThat(testBooking.getStatus()).isEqualTo(BookingStatus.EXPIRED);
 		testBooking.getBookedSeats().forEach(bs -> assertThat(bs.getStatus()).isEqualTo(BookedSeatStatus.EXPIRED));
 		verify(bookingRepository).save(testBooking);
+		verify(bonusService).refundBonusPointsForCancellation(testBooking);
+	}
+
+	@Test
+	void expireBooking_WhenBookingNotFound_ShouldThrowException() {
+		when(bookingRepository.findById(BOOKING_ID)).thenReturn(Optional.empty());
+
+		assertThatThrownBy(() -> bookingService.expireBooking(BOOKING_ID)).isInstanceOf(BookingNotFoundException.class);
+
+		verify(bookingRepository).findById(BOOKING_ID);
+		verify(bookingRepository, never()).save(any());
+	}
+
+	@Test
+	void expireBooking_WhenNotPending_ShouldThrowException() {
+		testBooking.setStatus(BookingStatus.CONFIRMED);
+		when(bookingRepository.findById(BOOKING_ID)).thenReturn(Optional.of(testBooking));
+
+		assertThatThrownBy(() -> bookingService.expireBooking(BOOKING_ID)).isInstanceOf(BookingOperationException.class)
+				.hasMessage("Cannot expire a booking that is not in PENDING status");
+
+		verify(bookingRepository).findById(BOOKING_ID);
+		verify(bookingRepository, never()).save(any());
+		verify(bonusService, never()).refundBonusPointsForCancellation(any());
 	}
 
 	@Test
