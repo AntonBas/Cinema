@@ -1,5 +1,5 @@
 import React from 'react';
-import { useSeatReservation } from '@/hooks/features/seatAvailability/useSeatReservation';
+import { Tooltip } from '@/components/ui/Tooltip/Tooltip';
 import type { SelectedSeat } from '@/hooks/features/seatAvailability/useSeatSelection';
 import { TicketTypeSelect } from '../TicketTypeSelect';
 import styles from './BookingSidebar.module.css';
@@ -9,37 +9,17 @@ interface BookingSidebarProps {
     totalPrice: number;
     sessionId: number;
     onTicketTypeChange: (seatId: number, ticketTypeId: number) => void;
+    onBooking: () => Promise<void>;
+    isBooking: boolean;
 }
 
 export const BookingSidebar: React.FC<BookingSidebarProps> = ({
     selectedSeats,
     totalPrice,
-    sessionId,
-    onTicketTypeChange
+    onTicketTypeChange,
+    onBooking,
+    isBooking
 }) => {
-    const { createTemporaryReservation, reserving, error } = useSeatReservation();
-
-    const handleReserve = async () => {
-        if (selectedSeats.length === 0) return;
-
-        const reservationData = {
-            sessionId,
-            seatIds: selectedSeats.map(seat => seat.seat.id),
-            ticketTypeIds: selectedSeats.reduce((acc, selected) => {
-                if (selected.ticketTypeId) {
-                    acc[selected.seat.id] = selected.ticketTypeId;
-                }
-                return acc;
-            }, {} as Record<number, number>)
-        };
-
-        try {
-            await createTemporaryReservation(reservationData);
-        } catch (error) {
-            console.error('Reservation failed:', error);
-        }
-    };
-
     if (selectedSeats.length === 0) {
         return (
             <div className={styles.sidebar}>
@@ -88,15 +68,18 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
                     <span className={styles.totalPrice}>₴{totalPrice.toFixed(2)}</span>
                 </div>
 
-                <button
-                    className={styles.reserveButton}
-                    onClick={handleReserve}
-                    disabled={reserving || selectedSeats.length === 0}
+                <Tooltip
+                    content="After booking, you will have 20 minutes to complete the payment. Seats will be temporarily reserved during this time."
+                    position="top"
                 >
-                    {reserving ? 'Processing...' : `Reserve ${selectedSeats.length} seat(s)`}
-                </button>
-
-                {error && <div className={styles.error}>{error}</div>}
+                    <button
+                        className={styles.bookButton}
+                        onClick={onBooking}
+                        disabled={isBooking || selectedSeats.length === 0}
+                    >
+                        {isBooking ? 'Processing...' : `Book Now - ₴${totalPrice.toFixed(2)}`}
+                    </button>
+                </Tooltip>
             </div>
         </div>
     );
