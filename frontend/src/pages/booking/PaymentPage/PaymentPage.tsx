@@ -40,7 +40,7 @@ export const PaymentPage: React.FC = () => {
         paymentStatus,
         error: liqPayError,
         getPaymentTimeLeft,
-        startStatusPolling,
+        checkPaymentStatus,
         stopStatusPolling,
         reset
     } = useLiqPayPayment();
@@ -48,6 +48,7 @@ export const PaymentPage: React.FC = () => {
     const [step, setStep] = useState<'init' | 'processing' | 'ready' | 'paying' | 'success' | 'failed'>('init');
     const [selectedMethod, setSelectedMethod] = useState<'liqpay' | null>('liqpay');
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null);
 
     useEffect(() => {
         if (bookingId && step === 'init') {
@@ -56,14 +57,23 @@ export const PaymentPage: React.FC = () => {
     }, [bookingId]);
 
     useEffect(() => {
+        return () => {
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+            }
+            stopStatusPolling();
+        };
+    }, [pollingInterval, stopStatusPolling]);
+
+    useEffect(() => {
         if (paymentStatus) {
             if (paymentStatus.status === 'SUCCESS') {
                 setStep('success');
-                stopStatusPolling();
+                stopPolling();
             } else if (['FAILED', 'CANCELLED', 'EXPIRED'].includes(paymentStatus.status)) {
                 setStep('failed');
                 setErrorMessage(paymentStatus.errorDescription || 'Payment failed');
-                stopStatusPolling();
+                stopPolling();
             } else if (paymentStatus.status === 'PROCESSING' && step !== 'paying') {
                 setStep('paying');
             }
@@ -80,6 +90,36 @@ export const PaymentPage: React.FC = () => {
             setStep('failed');
         }
     }, [createError, liqPayError]);
+
+    const startPolling = (paymentId: number, intervalMs: number = 3000, maxAttempts: number = 60) => {
+        stopPolling();
+        let attempts = 0;
+
+        const interval = setInterval(async () => {
+            attempts++;
+
+            if (attempts >= maxAttempts) {
+                clearInterval(interval);
+                return;
+            }
+
+            const status = await checkPaymentStatus(paymentId);
+
+            if (status && (status.status === 'SUCCESS' || status.status === 'FAILED' || status.status === 'CANCELLED' || status.status === 'EXPIRED')) {
+                clearInterval(interval);
+            }
+        }, intervalMs);
+
+        setPollingInterval(interval);
+    };
+
+    const stopPolling = () => {
+        if (pollingInterval) {
+            clearInterval(pollingInterval);
+            setPollingInterval(null);
+        }
+        stopStatusPolling();
+    };
 
     const initPayment = async () => {
         if (!bookingId) return;
@@ -106,10 +146,11 @@ export const PaymentPage: React.FC = () => {
 
         setStep('paying');
         openLiqPayPopup();
-        startStatusPolling(paymentResult.id, 3000);
+        startPolling(paymentResult.id);
     };
 
     const handleRetry = () => {
+        stopPolling();
         reset();
         setErrorMessage(null);
         setStep('init');
