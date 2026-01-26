@@ -21,7 +21,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.User;
-import ua.lviv.bas.cinema.dto.payment.request.LiqPayCallbackRequest;
 import ua.lviv.bas.cinema.dto.payment.request.PaymentCreateRequest;
 import ua.lviv.bas.cinema.dto.payment.response.PaymentLiqPayDataResponse;
 import ua.lviv.bas.cinema.dto.payment.response.PaymentResponse;
@@ -53,16 +52,6 @@ public class PaymentController {
 		return ResponseEntity.status(HttpStatus.CREATED).body(response);
 	}
 
-	@PostMapping("/liqpay/callback")
-	@Operation(summary = "LiqPay callback", description = "Endpoint for LiqPay payment gateway callbacks")
-	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Callback processed"),
-			@ApiResponse(responseCode = "400", description = "Invalid callback data") })
-	public ResponseEntity<String> processLiqPayCallback(@Valid @RequestBody LiqPayCallbackRequest callbackRequest) {
-		log.info("Received LiqPay callback for order ID: {}", callbackRequest.getOrderId());
-		paymentService.processLiqPayCallback(callbackRequest);
-		return ResponseEntity.ok("OK");
-	}
-
 	@GetMapping("/{paymentId}/liqpay-data")
 	@Operation(summary = "Get LiqPay data", description = "Returns prepared data for LiqPay payment gateway")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Payment data retrieved"),
@@ -76,6 +65,21 @@ public class PaymentController {
 		User user = userDetails.getUser();
 		log.info("Fetching LiqPay data for payment ID: {} for user ID: {}", paymentId, user.getId());
 		PaymentLiqPayDataResponse response = paymentService.preparePaymentData(paymentId, user);
+		return ResponseEntity.ok(response);
+	}
+
+	@GetMapping("/{paymentId}")
+	@Operation(summary = "Get payment by ID", description = "Retrieves payment information by ID")
+	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Payment retrieved"),
+			@ApiResponse(responseCode = "404", description = "Payment not found"),
+			@ApiResponse(responseCode = "403", description = "Access denied") })
+	@PreAuthorize("hasRole('USER')")
+	public ResponseEntity<PaymentResponse> getPaymentById(
+			@Parameter(description = "Payment ID", required = true) @PathVariable Long paymentId,
+			@AuthenticationPrincipal CustomUserDetails userDetails) {
+		User user = userDetails.getUser();
+		log.info("Fetching payment ID: {} for user ID: {}", paymentId, user.getId());
+		PaymentResponse response = paymentService.getPaymentStatus(paymentId, user);
 		return ResponseEntity.ok(response);
 	}
 
