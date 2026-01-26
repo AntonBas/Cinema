@@ -67,7 +67,6 @@ export const useLiqPayPayment = () => {
     const getPaymentRedirectUrl = useCallback((): string | null => {
         if (!liqPayData) return null;
 
-        // Можна додати параметри до URL
         const url = new URL(liqPayData.paymentUrl);
         return url.toString();
     }, [liqPayData]);
@@ -75,7 +74,6 @@ export const useLiqPayPayment = () => {
     const openLiqPayPopup = useCallback((): void => {
         if (!liqPayData) return;
 
-        // Створення форми для LiqPay
         const form = document.createElement('form');
         form.method = 'POST';
         form.action = 'https://www.liqpay.ua/api/3/checkout';

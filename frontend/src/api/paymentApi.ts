@@ -1,7 +1,6 @@
 import type {
     PaymentResponse,
     PaymentCreateRequest,
-    LiqPayCallbackRequest,
     PaymentLiqPayDataResponse,
 } from '@/types/payment';
 import { handleApiError } from '@/utils/apiErrorHandler';
@@ -33,11 +32,8 @@ export const paymentApi = {
             body: JSON.stringify(request),
         }),
 
-    processLiqPayCallback: (callbackRequest: LiqPayCallbackRequest) =>
-        fetchApi<string>(`${BASE_URL}/liqpay/callback`, {
-            method: 'POST',
-            body: JSON.stringify(callbackRequest),
-        }),
+    getById: (paymentId: number) =>
+        fetchApi<PaymentResponse>(`${BASE_URL}/${paymentId}`),
 
     getLiqPayData: (paymentId: number) =>
         fetchApi<PaymentLiqPayDataResponse>(`${BASE_URL}/${paymentId}/liqpay-data`),
@@ -51,5 +47,8 @@ export const paymentApi = {
         }),
 
     getByBooking: (bookingId: number) =>
-        fetchApi<PaymentResponse>(`${BASE_URL}/booking/${bookingId}`)
+        fetchApi<PaymentResponse>(`${BASE_URL}/booking/${bookingId}`),
+
+    testCallback: () =>
+        fetchApi<string>(`${BASE_URL}/test/callback`)
 };

@@ -3,7 +3,6 @@ import { paymentApi } from '@/api/paymentApi';
 import type {
     PaymentResponse,
     PaymentCreateRequest,
-    LiqPayCallbackRequest,
     PaymentLiqPayDataResponse,
 } from '@/types/payment';
 import { isApiErrorException } from '@/utils/apiErrorHandler';
@@ -26,13 +25,13 @@ export const usePayment = () => {
         }
     }, []);
 
-    const processLiqPayCallback = useCallback(async (callbackRequest: LiqPayCallbackRequest): Promise<string> => {
+    const getById = useCallback(async (paymentId: number): Promise<PaymentResponse> => {
         setLoading(true);
         setError(null);
         try {
-            return await paymentApi.processLiqPayCallback(callbackRequest);
+            return await paymentApi.getById(paymentId);
         } catch (err) {
-            const message = isApiErrorException(err) ? err.message : 'Failed to process payment callback';
+            const message = isApiErrorException(err) ? err.message : `Failed to get payment for ID: ${paymentId}`;
             setError(message);
             throw err;
         } finally {
@@ -104,7 +103,7 @@ export const usePayment = () => {
         loading,
         error,
         create,
-        processLiqPayCallback,
+        getById,
         getLiqPayData,
         getStatus,
         retry,

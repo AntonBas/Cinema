@@ -5,13 +5,8 @@ export interface PaymentCreateRequest {
 }
 
 export interface LiqPayCallbackRequest {
-    payment_id: string;
-    order_id: string;
-    transaction_id: string;
-    status: string;
-    sender_card_mask: string;
-    err_code: string | null;
-    err_description: string | null;
+    data: string;
+    signature: string;
 }
 
 export interface PaymentLiqPayDataResponse {
@@ -34,6 +29,7 @@ export interface PaymentResponse {
     status: PaymentStatus;
     liqpayOrderId: string | null;
     liqpayPaymentId: string | null;
+    liqpayTransactionId: string | null;
     paymentTime: string | null;
     errorCode: string | null;
     errorDescription: string | null;
