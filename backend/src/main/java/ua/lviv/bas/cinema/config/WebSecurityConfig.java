@@ -49,10 +49,11 @@ public class WebSecurityConfig {
 	@Bean
 	CorsConfigurationSource corsConfigurationSource() {
 		CorsConfiguration configuration = new CorsConfiguration();
-		configuration.setAllowedOrigins(List.of("http://localhost:5173"));
+		configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173",
+				"https://unethnologically-barytic-lean.ngrok-free.dev", "https://*.ngrok-free.dev"));
 		configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-		configuration
-				.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With", "Cache-Control"));
+		configuration.setAllowedHeaders(
+				Arrays.asList("Authorization", "Content-Type", "X-Requested-With", "Cache-Control", "*"));
 		configuration.setExposedHeaders(List.of("Authorization"));
 		configuration.setAllowCredentials(true);
 		configuration.setMaxAge(3600L);
@@ -77,12 +78,12 @@ public class WebSecurityConfig {
 						.permitAll().requestMatchers("/api/sessions/**").permitAll()
 						.requestMatchers("/api/ticket-types/**").permitAll().requestMatchers("/api/cinema-halls/**")
 						.permitAll().requestMatchers("/api/cinema-halls/{hallId}/seats/**").permitAll()
-						.requestMatchers("/api/promotions/**").permitAll().requestMatchers("/api/bonus/**")
-						.authenticated().requestMatchers("/api/bookings/**").authenticated()
-						.requestMatchers("/api/payments/**").authenticated().requestMatchers("/api/refunds/**")
-						.authenticated().requestMatchers("/api/tickets/**").authenticated()
-						.requestMatchers("/api/users/**").authenticated().requestMatchers("/api/admin/**")
-						.hasRole("ADMIN").anyRequest().authenticated())
+						.requestMatchers("/api/promotions/**").permitAll().requestMatchers("/api/liqpay/**").permitAll()
+						.requestMatchers("/api/bonus/**").authenticated().requestMatchers("/api/bookings/**")
+						.authenticated().requestMatchers("/api/payments/**").authenticated()
+						.requestMatchers("/api/refunds/**").authenticated().requestMatchers("/api/tickets/**")
+						.authenticated().requestMatchers("/api/users/**").authenticated()
+						.requestMatchers("/api/admin/**").hasRole("ADMIN").anyRequest().authenticated())
 				.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
 				.formLogin(form -> form.disable()).httpBasic(basic -> basic.disable())
 				.logout(logout -> logout.disable());
