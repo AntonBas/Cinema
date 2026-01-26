@@ -3,13 +3,13 @@ package ua.lviv.bas.cinema.controller.api;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -20,11 +20,15 @@ import org.springframework.http.ResponseEntity;
 
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.enums.PaymentStatus;
-import ua.lviv.bas.cinema.dto.payment.request.LiqPayCallbackRequest;
+import ua.lviv.bas.cinema.domain.enums.UserRole;
 import ua.lviv.bas.cinema.dto.payment.request.PaymentCreateRequest;
 import ua.lviv.bas.cinema.dto.payment.response.PaymentLiqPayDataResponse;
 import ua.lviv.bas.cinema.dto.payment.response.PaymentResponse;
+import ua.lviv.bas.cinema.exception.domain.booking.BookingNotFoundException;
+import ua.lviv.bas.cinema.exception.domain.payment.PaymentAccessDeniedException;
 import ua.lviv.bas.cinema.exception.domain.payment.PaymentNotFoundException;
+import ua.lviv.bas.cinema.exception.domain.payment.PaymentProcessingException;
+import ua.lviv.bas.cinema.security.CustomUserDetails;
 import ua.lviv.bas.cinema.service.booking.PaymentService;
 
 @ExtendWith(MockitoExtension.class)
@@ -36,298 +40,281 @@ public class PaymentControllerTest {
 	@InjectMocks
 	private PaymentController paymentController;
 
-	private User createUser(Long id, String email) {
-		User user = new User();
-		user.setId(id);
-		user.setEmail(email);
-		user.setFirstName("John");
-		user.setLastName("Doe");
-		return user;
+	private User testUser;
+	private CustomUserDetails userDetails;
+
+	@BeforeEach
+	void setUp() {
+		testUser = new User();
+		testUser.setId(1L);
+		testUser.setEmail("user@example.com");
+		testUser.setFirstName("John");
+		testUser.setLastName("Doe");
+		testUser.setPassword("password");
+		testUser.setEnabled(true);
+		testUser.setUserRole(UserRole.ROLE_USER);
+
+		userDetails = new CustomUserDetails(testUser);
 	}
 
 	private PaymentResponse createPaymentResponse(Long id, Long bookingId, BigDecimal amount, PaymentStatus status,
 			String liqpayOrderId) {
-		PaymentResponse response = new PaymentResponse();
-		response.setId(id);
-		response.setBookingId(bookingId);
-		response.setAmount(amount);
-		response.setStatus(status);
-		response.setLiqpayOrderId(liqpayOrderId);
-		response.setCreatedAt(LocalDateTime.now());
-		response.setUpdatedAt(LocalDateTime.now());
-		return response;
+		return PaymentResponse.builder().id(id).bookingId(bookingId).amount(amount).status(status)
+				.liqpayOrderId(liqpayOrderId).createdAt(LocalDateTime.now()).updatedAt(LocalDateTime.now()).build();
 	}
 
 	private PaymentLiqPayDataResponse createLiqPayDataResponse(String data, String signature) {
-		PaymentLiqPayDataResponse response = new PaymentLiqPayDataResponse();
-		response.setData(data);
-		response.setSignature(signature);
-		return response;
+		return PaymentLiqPayDataResponse.builder().data(data).signature(signature)
+				.paymentUrl("https://www.liqpay.ua/api/3/checkout").liqpayOrderId("ORDER_ABC123").build();
 	}
 
 	@Test
 	void createPayment_ShouldCreateSuccessfully() {
-		User user = createUser(1L, "user@example.com");
 		PaymentCreateRequest request = new PaymentCreateRequest();
 		request.setBookingId(100L);
 
 		PaymentResponse paymentResponse = createPaymentResponse(1L, 100L, new BigDecimal("150.00"),
 				PaymentStatus.PENDING, "ORDER_ABC123");
 
-		when(paymentService.createPayment(request, user)).thenReturn(paymentResponse);
+		when(paymentService.createPayment(request, testUser)).thenReturn(paymentResponse);
 
-		ResponseEntity<PaymentResponse> response = paymentController.createPayment(request, user);
+		ResponseEntity<PaymentResponse> response = paymentController.createPayment(request, userDetails);
 
 		assertEquals(HttpStatus.CREATED, response.getStatusCode());
 		assertNotNull(response.getBody());
 		assertEquals(1L, response.getBody().getId());
 		assertEquals(100L, response.getBody().getBookingId());
 		assertEquals(PaymentStatus.PENDING, response.getBody().getStatus());
-		verify(paymentService).createPayment(request, user);
-	}
-
-	@Test
-	void createPayment_ShouldThrowException_WhenInvalidRequest() {
-		User user = createUser(1L, "user@example.com");
-		PaymentCreateRequest request = new PaymentCreateRequest();
-
-		when(paymentService.createPayment(request, user)).thenThrow(new IllegalArgumentException("Invalid request"));
-
-		assertThrows(IllegalArgumentException.class, () -> paymentController.createPayment(request, user));
-		verify(paymentService).createPayment(request, user);
+		verify(paymentService).createPayment(request, testUser);
 	}
 
 	@Test
 	void createPayment_ShouldThrowException_WhenBookingNotFound() {
-		User user = createUser(1L, "user@example.com");
 		PaymentCreateRequest request = new PaymentCreateRequest();
 		request.setBookingId(999L);
 
-		when(paymentService.createPayment(request, user)).thenThrow(new RuntimeException("Booking not found"));
+		when(paymentService.createPayment(request, testUser)).thenThrow(new BookingNotFoundException(999L));
 
-		assertThrows(RuntimeException.class, () -> paymentController.createPayment(request, user));
-		verify(paymentService).createPayment(request, user);
+		assertThrows(BookingNotFoundException.class, () -> paymentController.createPayment(request, userDetails));
+		verify(paymentService).createPayment(request, testUser);
 	}
 
 	@Test
-	void processLiqPayCallback_ShouldProcessSuccessfully() {
-		LiqPayCallbackRequest callbackRequest = new LiqPayCallbackRequest();
-		callbackRequest.setOrderId("ORDER_ABC123");
-		callbackRequest.setStatus("success");
+	void createPayment_ShouldThrowException_WhenPaymentAlreadyInProgress() {
+		PaymentCreateRequest request = new PaymentCreateRequest();
+		request.setBookingId(100L);
 
-		ResponseEntity<String> response = paymentController.processLiqPayCallback(callbackRequest);
+		when(paymentService.createPayment(request, testUser)).thenThrow(PaymentProcessingException.paymentInProgress());
 
-		assertEquals(HttpStatus.OK, response.getStatusCode());
-		assertEquals("OK", response.getBody());
-		verify(paymentService).processLiqPayCallback(callbackRequest);
-	}
-
-	@Test
-	void processLiqPayCallback_ShouldThrowException_WhenInvalidCallback() {
-		LiqPayCallbackRequest callbackRequest = new LiqPayCallbackRequest();
-
-		doThrow(new IllegalArgumentException("Invalid callback data")).when(paymentService)
-				.processLiqPayCallback(callbackRequest);
-
-		assertThrows(IllegalArgumentException.class, () -> paymentController.processLiqPayCallback(callbackRequest));
-		verify(paymentService).processLiqPayCallback(callbackRequest);
+		assertThrows(PaymentProcessingException.class, () -> paymentController.createPayment(request, userDetails));
+		verify(paymentService).createPayment(request, testUser);
 	}
 
 	@Test
 	void getLiqPayPaymentData_ShouldReturnData() {
-		User user = createUser(1L, "user@example.com");
 		Long paymentId = 1L;
 
 		PaymentLiqPayDataResponse liqPayData = createLiqPayDataResponse("encoded_data", "signature_hash");
 
-		when(paymentService.preparePaymentData(paymentId, user)).thenReturn(liqPayData);
+		when(paymentService.preparePaymentData(paymentId, testUser)).thenReturn(liqPayData);
 
-		ResponseEntity<PaymentLiqPayDataResponse> response = paymentController.getLiqPayPaymentData(paymentId, user);
+		ResponseEntity<PaymentLiqPayDataResponse> response = paymentController.getLiqPayPaymentData(paymentId,
+				userDetails);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
 		assertNotNull(response.getBody());
 		assertEquals("encoded_data", response.getBody().getData());
 		assertEquals("signature_hash", response.getBody().getSignature());
-		verify(paymentService).preparePaymentData(paymentId, user);
+		verify(paymentService).preparePaymentData(paymentId, testUser);
 	}
 
 	@Test
 	void getLiqPayPaymentData_ShouldThrowException_WhenNotFound() {
-		User user = createUser(1L, "user@example.com");
 		Long paymentId = 999L;
 
-		when(paymentService.preparePaymentData(paymentId, user)).thenThrow(new PaymentNotFoundException(paymentId));
+		when(paymentService.preparePaymentData(paymentId, testUser)).thenThrow(new PaymentNotFoundException(paymentId));
 
-		assertThrows(PaymentNotFoundException.class, () -> paymentController.getLiqPayPaymentData(paymentId, user));
-		verify(paymentService).preparePaymentData(paymentId, user);
+		assertThrows(PaymentNotFoundException.class,
+				() -> paymentController.getLiqPayPaymentData(paymentId, userDetails));
+		verify(paymentService).preparePaymentData(paymentId, testUser);
 	}
 
 	@Test
-	void getPaymentStatus_ShouldReturnStatus() {
-		User user = createUser(1L, "user@example.com");
+	void getLiqPayPaymentData_ShouldThrowException_WhenAccessDenied() {
+		Long paymentId = 1L;
+
+		User otherUser = new User();
+		otherUser.setId(999L);
+		otherUser.setEmail("other@example.com");
+		otherUser.setPassword("password");
+		otherUser.setEnabled(true);
+		otherUser.setUserRole(UserRole.ROLE_USER);
+		CustomUserDetails otherUserDetails = new CustomUserDetails(otherUser);
+
+		when(paymentService.preparePaymentData(paymentId, otherUser))
+				.thenThrow(new PaymentAccessDeniedException(paymentId, 999L));
+
+		assertThrows(PaymentAccessDeniedException.class,
+				() -> paymentController.getLiqPayPaymentData(paymentId, otherUserDetails));
+		verify(paymentService).preparePaymentData(paymentId, otherUser);
+	}
+
+	@Test
+	void getPaymentById_ShouldReturnPayment() {
 		Long paymentId = 1L;
 
 		PaymentResponse paymentResponse = createPaymentResponse(paymentId, 100L, new BigDecimal("150.00"),
 				PaymentStatus.SUCCESS, "ORDER_ABC123");
 
-		when(paymentService.getPaymentStatus(paymentId, user)).thenReturn(paymentResponse);
+		when(paymentService.getPaymentStatus(paymentId, testUser)).thenReturn(paymentResponse);
 
-		ResponseEntity<PaymentResponse> response = paymentController.getPaymentStatus(paymentId, user);
+		ResponseEntity<PaymentResponse> response = paymentController.getPaymentById(paymentId, userDetails);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
 		assertNotNull(response.getBody());
 		assertEquals(paymentId, response.getBody().getId());
 		assertEquals(PaymentStatus.SUCCESS, response.getBody().getStatus());
-		verify(paymentService).getPaymentStatus(paymentId, user);
+		verify(paymentService).getPaymentStatus(paymentId, testUser);
+	}
+
+	@Test
+	void getPaymentById_ShouldThrowException_WhenNotFound() {
+		Long paymentId = 999L;
+
+		when(paymentService.getPaymentStatus(paymentId, testUser)).thenThrow(new PaymentNotFoundException(paymentId));
+
+		assertThrows(PaymentNotFoundException.class, () -> paymentController.getPaymentById(paymentId, userDetails));
+		verify(paymentService).getPaymentStatus(paymentId, testUser);
+	}
+
+	@Test
+	void getPaymentStatus_ShouldReturnStatus() {
+		Long paymentId = 1L;
+
+		PaymentResponse paymentResponse = createPaymentResponse(paymentId, 100L, new BigDecimal("150.00"),
+				PaymentStatus.SUCCESS, "ORDER_ABC123");
+
+		when(paymentService.getPaymentStatus(paymentId, testUser)).thenReturn(paymentResponse);
+
+		ResponseEntity<PaymentResponse> response = paymentController.getPaymentStatus(paymentId, userDetails);
+
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+		assertNotNull(response.getBody());
+		assertEquals(paymentId, response.getBody().getId());
+		assertEquals(PaymentStatus.SUCCESS, response.getBody().getStatus());
+		verify(paymentService).getPaymentStatus(paymentId, testUser);
 	}
 
 	@Test
 	void getPaymentStatus_ShouldThrowException_WhenNotFound() {
-		User user = createUser(1L, "user@example.com");
 		Long paymentId = 999L;
 
-		when(paymentService.getPaymentStatus(paymentId, user)).thenThrow(new PaymentNotFoundException(paymentId));
+		when(paymentService.getPaymentStatus(paymentId, testUser)).thenThrow(new PaymentNotFoundException(paymentId));
 
-		assertThrows(PaymentNotFoundException.class, () -> paymentController.getPaymentStatus(paymentId, user));
-		verify(paymentService).getPaymentStatus(paymentId, user);
+		assertThrows(PaymentNotFoundException.class, () -> paymentController.getPaymentStatus(paymentId, userDetails));
+		verify(paymentService).getPaymentStatus(paymentId, testUser);
 	}
 
 	@Test
 	void retryPayment_ShouldRetrySuccessfully() {
-		User user = createUser(1L, "user@example.com");
 		Long paymentId = 1L;
 
 		PaymentResponse paymentResponse = createPaymentResponse(paymentId, 100L, new BigDecimal("150.00"),
 				PaymentStatus.PENDING, "ORDER_NEW123");
 
-		when(paymentService.retryPayment(paymentId, user)).thenReturn(paymentResponse);
+		when(paymentService.retryPayment(paymentId, testUser)).thenReturn(paymentResponse);
 
-		ResponseEntity<PaymentResponse> response = paymentController.retryPayment(paymentId, user);
+		ResponseEntity<PaymentResponse> response = paymentController.retryPayment(paymentId, userDetails);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
 		assertNotNull(response.getBody());
 		assertEquals(paymentId, response.getBody().getId());
 		assertEquals(PaymentStatus.PENDING, response.getBody().getStatus());
-		verify(paymentService).retryPayment(paymentId, user);
-	}
-
-	@Test
-	void retryPayment_ShouldThrowException_WhenCannotRetry() {
-		User user = createUser(1L, "user@example.com");
-		Long paymentId = 1L;
-
-		when(paymentService.retryPayment(paymentId, user)).thenThrow(new RuntimeException("Payment cannot be retried"));
-
-		assertThrows(RuntimeException.class, () -> paymentController.retryPayment(paymentId, user));
-		verify(paymentService).retryPayment(paymentId, user);
+		verify(paymentService).retryPayment(paymentId, testUser);
 	}
 
 	@Test
 	void retryPayment_ShouldThrowException_WhenNotFound() {
-		User user = createUser(1L, "user@example.com");
 		Long paymentId = 999L;
 
-		when(paymentService.retryPayment(paymentId, user)).thenThrow(new PaymentNotFoundException(paymentId));
+		when(paymentService.retryPayment(paymentId, testUser)).thenThrow(new PaymentNotFoundException(paymentId));
 
-		assertThrows(PaymentNotFoundException.class, () -> paymentController.retryPayment(paymentId, user));
-		verify(paymentService).retryPayment(paymentId, user);
+		assertThrows(PaymentNotFoundException.class, () -> paymentController.retryPayment(paymentId, userDetails));
+		verify(paymentService).retryPayment(paymentId, testUser);
+	}
+
+	@Test
+	void retryPayment_ShouldThrowException_WhenCannotRetry() {
+		Long paymentId = 1L;
+
+		when(paymentService.retryPayment(paymentId, testUser))
+				.thenThrow(new PaymentProcessingException("Payment cannot be retried"));
+
+		assertThrows(PaymentProcessingException.class, () -> paymentController.retryPayment(paymentId, userDetails));
+		verify(paymentService).retryPayment(paymentId, testUser);
 	}
 
 	@Test
 	void getPaymentByBookingId_ShouldReturnPayment() {
-		User user = createUser(1L, "user@example.com");
 		Long bookingId = 100L;
 
 		PaymentResponse paymentResponse = createPaymentResponse(1L, bookingId, new BigDecimal("150.00"),
 				PaymentStatus.SUCCESS, "ORDER_ABC123");
 
-		when(paymentService.getUserPaymentByBookingId(bookingId, user)).thenReturn(paymentResponse);
+		when(paymentService.getUserPaymentByBookingId(bookingId, testUser)).thenReturn(paymentResponse);
 
-		ResponseEntity<PaymentResponse> response = paymentController.getPaymentByBookingId(bookingId, user);
+		ResponseEntity<PaymentResponse> response = paymentController.getPaymentByBookingId(bookingId, userDetails);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
 		assertNotNull(response.getBody());
 		assertEquals(bookingId, response.getBody().getBookingId());
 		assertEquals(PaymentStatus.SUCCESS, response.getBody().getStatus());
-		verify(paymentService).getUserPaymentByBookingId(bookingId, user);
+		verify(paymentService).getUserPaymentByBookingId(bookingId, testUser);
 	}
 
 	@Test
 	void getPaymentByBookingId_ShouldThrowException_WhenNotFound() {
-		User user = createUser(1L, "user@example.com");
 		Long bookingId = 999L;
 
-		when(paymentService.getUserPaymentByBookingId(bookingId, user))
-				.thenThrow(new PaymentNotFoundException("Payment not found for booking"));
+		when(paymentService.getUserPaymentByBookingId(bookingId, testUser))
+				.thenThrow(new PaymentNotFoundException("Payment for booking 999 not found"));
 
-		assertThrows(PaymentNotFoundException.class, () -> paymentController.getPaymentByBookingId(bookingId, user));
-		verify(paymentService).getUserPaymentByBookingId(bookingId, user);
+		assertThrows(PaymentNotFoundException.class,
+				() -> paymentController.getPaymentByBookingId(bookingId, userDetails));
+		verify(paymentService).getUserPaymentByBookingId(bookingId, testUser);
 	}
 
 	@Test
-	void createPayment_ShouldHandlePaymentAlreadyExists() {
-		User user = createUser(1L, "user@example.com");
+	void createPayment_ShouldHandleSessionTooCloseException() {
 		PaymentCreateRequest request = new PaymentCreateRequest();
 		request.setBookingId(100L);
 
-		when(paymentService.createPayment(request, user)).thenThrow(new RuntimeException("Payment already exists"));
+		when(paymentService.createPayment(request, testUser)).thenThrow(new RuntimeException("Session is too close"));
 
-		assertThrows(RuntimeException.class, () -> paymentController.createPayment(request, user));
-		verify(paymentService).createPayment(request, user);
-	}
-
-	@Test
-	void getPaymentStatus_ShouldHandleDifferentStatuses() {
-		User user = createUser(1L, "user@example.com");
-		Long paymentId = 1L;
-
-		PaymentResponse paymentResponse = createPaymentResponse(paymentId, 100L, new BigDecimal("150.00"),
-				PaymentStatus.FAILED, "ORDER_ABC123");
-
-		when(paymentService.getPaymentStatus(paymentId, user)).thenReturn(paymentResponse);
-
-		ResponseEntity<PaymentResponse> response = paymentController.getPaymentStatus(paymentId, user);
-
-		assertEquals(HttpStatus.OK, response.getStatusCode());
-		assertEquals(PaymentStatus.FAILED, response.getBody().getStatus());
-		verify(paymentService).getPaymentStatus(paymentId, user);
-	}
-
-	@Test
-	void processLiqPayCallback_ShouldHandleFailedPayment() {
-		LiqPayCallbackRequest callbackRequest = new LiqPayCallbackRequest();
-		callbackRequest.setOrderId("ORDER_FAILED");
-		callbackRequest.setStatus("failure");
-
-		ResponseEntity<String> response = paymentController.processLiqPayCallback(callbackRequest);
-
-		assertEquals(HttpStatus.OK, response.getStatusCode());
-		assertEquals("OK", response.getBody());
-		verify(paymentService).processLiqPayCallback(callbackRequest);
+		assertThrows(RuntimeException.class, () -> paymentController.createPayment(request, userDetails));
+		verify(paymentService).createPayment(request, testUser);
 	}
 
 	@Test
 	void getLiqPayPaymentData_ShouldThrowException_WhenPaymentNotPending() {
-		User user = createUser(1L, "user@example.com");
 		Long paymentId = 1L;
 
-		when(paymentService.preparePaymentData(paymentId, user))
+		when(paymentService.preparePaymentData(paymentId, testUser))
 				.thenThrow(new RuntimeException("Payment is not pending"));
 
-		assertThrows(RuntimeException.class, () -> paymentController.getLiqPayPaymentData(paymentId, user));
-		verify(paymentService).preparePaymentData(paymentId, user);
+		assertThrows(RuntimeException.class, () -> paymentController.getLiqPayPaymentData(paymentId, userDetails));
+		verify(paymentService).preparePaymentData(paymentId, testUser);
 	}
 
 	@Test
-	void createPayment_ShouldHandleConcurrentPaymentCreation() {
-		User user = createUser(1L, "user@example.com");
+	void createPayment_ShouldHandleSeatsNoLongerAvailable() {
 		PaymentCreateRequest request = new PaymentCreateRequest();
 		request.setBookingId(100L);
 
-		when(paymentService.createPayment(request, user))
-				.thenThrow(new RuntimeException("Payment already in progress"));
+		when(paymentService.createPayment(request, testUser))
+				.thenThrow(PaymentProcessingException.seatsNoLongerAvailable());
 
-		assertThrows(RuntimeException.class, () -> paymentController.createPayment(request, user));
-		verify(paymentService).createPayment(request, user);
+		assertThrows(PaymentProcessingException.class, () -> paymentController.createPayment(request, userDetails));
+		verify(paymentService).createPayment(request, testUser);
 	}
 }
