@@ -9,30 +9,11 @@ import lombok.Data;
 @Schema(description = "LiqPay callback request")
 public class LiqPayCallbackRequest {
 
-	@JsonProperty("payment_id")
-	@Schema(description = "LiqPay payment ID", example = "lp_123456789")
-	private String paymentId;
+	@JsonProperty("data")
+	@Schema(description = "Base64 encoded JSON data from LiqPay", example = "eyJvcmRlcl9pZCI6Ik9SRF9BQkMxMjMiLCJzdGF0dXMiOiJzdWNjZXNzIn0=")
+	private String data;
 
-	@JsonProperty("order_id")
-	@Schema(description = "Order ID", example = "ORDER_ABC123")
-	private String orderId;
-
-	@JsonProperty("transaction_id")
-	@Schema(description = "Transaction ID", example = "txn_123456")
-	private String transactionId;
-
-	@Schema(description = "Status", example = "success")
-	private String status;
-
-	@JsonProperty("sender_card_mask")
-	@Schema(description = "Masked card number", example = "****4832")
-	private String senderCardMask;
-
-	@JsonProperty("err_code")
-	@Schema(description = "Error code", example = "error_validation")
-	private String errorCode;
-
-	@JsonProperty("err_description")
-	@Schema(description = "Error description", example = "Invalid signature")
-	private String errorDescription;
+	@JsonProperty("signature")
+	@Schema(description = "SHA1 signature for validation", example = "wBqNnqJ5k8D6eB3vQ2sR7tY9uI0oP4aZ1xC7vE9gH2iK5mN8pQ3sR6tY=")
+	private String signature;
 }
