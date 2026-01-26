@@ -27,6 +27,7 @@ import { SessionsPage } from '@/pages/sessions';
 import { BookingPage } from '@/pages/booking/BookingPage';
 import { BookingSummaryPage } from '@/pages/booking/BookingSummaryPage/BookingSummaryPage';
 import { PaymentPage } from '@/pages/booking/PaymentPage/PaymentPage';
+import SuccessPage from '@/pages/booking/SuccessPage/SuccessPage';
 
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { AdminDashboard } from '@/components/admin/AdminDashboard';
@@ -139,6 +140,12 @@ export const AppRoutes: React.FC = () => {
             <Route path="/booking/payment/:bookingId" element={
                 <ProtectedRoute>
                     <PaymentPage />
+                </ProtectedRoute>
+            } />
+
+            <Route path="/booking/success" element={
+                <ProtectedRoute>
+                    <SuccessPage />
                 </ProtectedRoute>
             } />
 
