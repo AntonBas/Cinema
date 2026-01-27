@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.service.infrastructure;
+package ua.lviv.bas.cinema.service.integration.qr;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;

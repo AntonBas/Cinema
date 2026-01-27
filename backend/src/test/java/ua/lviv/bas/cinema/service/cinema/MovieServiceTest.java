@@ -46,8 +46,8 @@ import ua.lviv.bas.cinema.repository.GenreRepository;
 import ua.lviv.bas.cinema.repository.MovieRepository;
 import ua.lviv.bas.cinema.repository.PersonRepository;
 import ua.lviv.bas.cinema.scheduler.MovieScheduler;
-import ua.lviv.bas.cinema.service.infrastructure.PosterService;
-import ua.lviv.bas.cinema.service.infrastructure.SlugService;
+import ua.lviv.bas.cinema.service.integration.file.PosterService;
+import ua.lviv.bas.cinema.service.integration.slug.SlugService;
 
 @ExtendWith(MockitoExtension.class)
 public class MovieServiceTest {

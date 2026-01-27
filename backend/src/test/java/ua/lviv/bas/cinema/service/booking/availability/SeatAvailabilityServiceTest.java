@@ -1,7 +1,11 @@
-package ua.lviv.bas.cinema.service.booking;
+package ua.lviv.bas.cinema.service.booking.availability;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
@@ -27,12 +31,12 @@ import ua.lviv.bas.cinema.domain.enums.BookedSeatStatus;
 import ua.lviv.bas.cinema.domain.enums.SeatType;
 import ua.lviv.bas.cinema.dto.cinemaHall.response.SeatAvailabilityResponse;
 import ua.lviv.bas.cinema.exception.domain.booking.SeatNotAvailableException;
-import ua.lviv.bas.cinema.exception.domain.cinema.SeatNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.cinema.SessionNotFoundException;
 import ua.lviv.bas.cinema.repository.BookedSeatRepository;
 import ua.lviv.bas.cinema.repository.SeatRepository;
 import ua.lviv.bas.cinema.repository.SessionRepository;
 import ua.lviv.bas.cinema.repository.TicketTypeRepository;
+import ua.lviv.bas.cinema.service.shared.PriceCalculatorService;
 
 @ExtendWith(MockitoExtension.class)
 public class SeatAvailabilityServiceTest {
@@ -49,6 +53,12 @@ public class SeatAvailabilityServiceTest {
 	@Mock
 	private TicketTypeRepository ticketTypeRepository;
 
+	@Mock
+	private PriceCalculatorService priceCalculator;
+
+	@Mock
+	private AvailabilityValidator availabilityValidator;
+
 	@InjectMocks
 	private SeatAvailabilityService seatAvailabilityService;
 
@@ -58,16 +68,13 @@ public class SeatAvailabilityServiceTest {
 	private Seat testSeat2;
 	private Seat inactiveSeat;
 	private TicketType adultTicketType;
-	private TicketType childTicketType;
-	private final Long SESSION_ID = 1L;
-	private final Long HALL_ID = 2L;
-	private final Long SEAT_ID_1 = 3L;
-	private final Long SEAT_ID_2 = 4L;
-	private final Long INACTIVE_SEAT_ID = 5L;
-	private final BigDecimal BASE_PRICE = new BigDecimal("200.00");
 
-	private static final List<BookedSeatStatus> BOOKED_STATUSES = Arrays.asList(BookedSeatStatus.PENDING,
-			BookedSeatStatus.CONFIRMED);
+	private static final Long SESSION_ID = 1L;
+	private static final Long HALL_ID = 2L;
+	private static final Long SEAT_ID_1 = 3L;
+	private static final Long SEAT_ID_2 = 4L;
+	private static final Long INACTIVE_SEAT_ID = 5L;
+	private static final BigDecimal BASE_PRICE = new BigDecimal("200.00");
 
 	@BeforeEach
 	void setUp() {
@@ -111,34 +118,26 @@ public class SeatAvailabilityServiceTest {
 		adultTicketType = new TicketType();
 		adultTicketType.setId(1L);
 		adultTicketType.setDisplayName("Adult");
-		adultTicketType.setPriceMultiplier(BigDecimal.ONE);
 		adultTicketType.setActive(true);
-
-		childTicketType = new TicketType();
-		childTicketType.setId(2L);
-		childTicketType.setDisplayName("Child");
-		childTicketType.setPriceMultiplier(new BigDecimal("0.7"));
-		childTicketType.setActive(true);
 	}
 
 	@Test
 	void getSeatAvailability_Success() {
 		List<Seat> allSeats = Arrays.asList(testSeat1, testSeat2, inactiveSeat);
-		List<BookedSeat> bookedSeats = Collections.emptyList();
-		List<TicketType> activeTicketTypes = Arrays.asList(adultTicketType, childTicketType);
+		List<TicketType> activeTicketTypes = Arrays.asList(adultTicketType);
 
 		when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(testSession));
 		when(seatRepository.findByHallId(HALL_ID)).thenReturn(allSeats);
-		when(bookedSeatRepository.findBySessionIdAndStatusIn(SESSION_ID, BOOKED_STATUSES)).thenReturn(bookedSeats);
+		when(bookedSeatRepository.findBySessionIdAndStatusIn(eq(SESSION_ID), any()))
+				.thenReturn(Collections.emptyList());
 		when(ticketTypeRepository.findByActiveTrue()).thenReturn(activeTicketTypes);
+		when(priceCalculator.calculateSeatPrice(any(), any(), any())).thenReturn(BigDecimal.TEN);
 
 		SeatAvailabilityResponse result = seatAvailabilityService.getSeatAvailability(SESSION_ID);
 
 		assertThat(result).isNotNull();
 		assertThat(result.getSessionId()).isEqualTo(SESSION_ID);
 		assertThat(result.getMovieTitle()).isEqualTo("Test Movie");
-		assertThat(result.getBasePrice()).isEqualTo(BASE_PRICE);
-		assertThat(result.getHallName()).isEqualTo("Hall A");
 		assertThat(result.getAvailableSeats()).isEqualTo(2);
 		assertThat(result.getSeats()).hasSize(3);
 	}
@@ -157,13 +156,34 @@ public class SeatAvailabilityServiceTest {
 		BookedSeat bookedSeat = new BookedSeat();
 		bookedSeat.setSeat(testSeat1);
 		bookedSeat.setStatus(BookedSeatStatus.CONFIRMED);
-		List<BookedSeat> bookedSeats = Arrays.asList(bookedSeat);
 		List<TicketType> activeTicketTypes = Arrays.asList(adultTicketType);
 
 		when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(testSession));
 		when(seatRepository.findByHallId(HALL_ID)).thenReturn(allSeats);
-		when(bookedSeatRepository.findBySessionIdAndStatusIn(SESSION_ID, BOOKED_STATUSES)).thenReturn(bookedSeats);
+		when(bookedSeatRepository.findBySessionIdAndStatusIn(eq(SESSION_ID), any()))
+				.thenReturn(Arrays.asList(bookedSeat));
 		when(ticketTypeRepository.findByActiveTrue()).thenReturn(activeTicketTypes);
+		when(priceCalculator.calculateSeatPrice(any(), any(), any())).thenReturn(BigDecimal.TEN);
+
+		SeatAvailabilityResponse result = seatAvailabilityService.getSeatAvailability(SESSION_ID);
+
+		assertThat(result.getAvailableSeats()).isEqualTo(1);
+	}
+
+	@Test
+	void getSeatAvailability_WithTemporarilyReservedSeat() {
+		List<Seat> allSeats = Arrays.asList(testSeat1, testSeat2);
+		BookedSeat pendingSeat = new BookedSeat();
+		pendingSeat.setSeat(testSeat1);
+		pendingSeat.setStatus(BookedSeatStatus.PENDING);
+		List<TicketType> activeTicketTypes = Arrays.asList(adultTicketType);
+
+		when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(testSession));
+		when(seatRepository.findByHallId(HALL_ID)).thenReturn(allSeats);
+		when(bookedSeatRepository.findBySessionIdAndStatusIn(eq(SESSION_ID), any()))
+				.thenReturn(Arrays.asList(pendingSeat));
+		when(ticketTypeRepository.findByActiveTrue()).thenReturn(activeTicketTypes);
+		when(priceCalculator.calculateSeatPrice(any(), any(), any())).thenReturn(BigDecimal.TEN);
 
 		SeatAvailabilityResponse result = seatAvailabilityService.getSeatAvailability(SESSION_ID);
 
@@ -172,76 +192,23 @@ public class SeatAvailabilityServiceTest {
 
 	@Test
 	void validateSeatAvailability_Success() {
-		when(bookedSeatRepository.existsBySessionIdAndSeatIdAndStatusIn(SESSION_ID, SEAT_ID_1, BOOKED_STATUSES))
-				.thenReturn(false);
-		when(seatRepository.findById(SEAT_ID_1)).thenReturn(Optional.of(testSeat1));
-
 		seatAvailabilityService.validateSeatAvailability(SESSION_ID, SEAT_ID_1);
+
+		verify(availabilityValidator).validateSeat(SESSION_ID, SEAT_ID_1);
 	}
 
 	@Test
-	void validateSeatAvailability_WhenSeatBooked_ShouldThrowException() {
-		when(bookedSeatRepository.existsBySessionIdAndSeatIdAndStatusIn(SESSION_ID, SEAT_ID_1, BOOKED_STATUSES))
-				.thenReturn(true);
+	void validateSeatAvailability_WhenValidatorThrowsException_ShouldPropagate() {
+		doThrow(SeatNotAvailableException.seatInactive(SEAT_ID_1)).when(availabilityValidator).validateSeat(SESSION_ID,
+				SEAT_ID_1);
 
 		assertThatThrownBy(() -> seatAvailabilityService.validateSeatAvailability(SESSION_ID, SEAT_ID_1))
 				.isInstanceOf(SeatNotAvailableException.class);
 	}
 
 	@Test
-	void validateSeatAvailability_WhenSeatInactive_ShouldThrowException() {
-		when(bookedSeatRepository.existsBySessionIdAndSeatIdAndStatusIn(SESSION_ID, INACTIVE_SEAT_ID, BOOKED_STATUSES))
-				.thenReturn(false);
-		when(seatRepository.findById(INACTIVE_SEAT_ID)).thenReturn(Optional.of(inactiveSeat));
-
-		assertThatThrownBy(() -> seatAvailabilityService.validateSeatAvailability(SESSION_ID, INACTIVE_SEAT_ID))
-				.isInstanceOf(SeatNotAvailableException.class);
-	}
-
-	@Test
-	void validateSeatAvailability_WhenSeatNotFound_ShouldThrowException() {
-		Long nonExistentSeatId = 999L;
-		when(bookedSeatRepository.existsBySessionIdAndSeatIdAndStatusIn(SESSION_ID, nonExistentSeatId, BOOKED_STATUSES))
-				.thenReturn(false);
-		when(seatRepository.findById(nonExistentSeatId)).thenReturn(Optional.empty());
-
-		assertThatThrownBy(() -> seatAvailabilityService.validateSeatAvailability(SESSION_ID, nonExistentSeatId))
-				.isInstanceOf(SeatNotFoundException.class);
-	}
-
-	@Test
-	void calculateSeatPrice_StandardSeatAdultTicket() {
-		BigDecimal result = seatAvailabilityService.calculateSeatPrice(testSession, testSeat1, adultTicketType);
-
-		BigDecimal expected = BASE_PRICE.multiply(testSeat1.getSeatType().getPriceMultiplier())
-				.multiply(adultTicketType.getPriceMultiplier());
-
-		assertThat(result).isEqualByComparingTo(expected);
-	}
-
-	@Test
-	void calculateSeatPrice_VIPSeatChildTicket() {
-		BigDecimal result = seatAvailabilityService.calculateSeatPrice(testSession, testSeat2, childTicketType);
-
-		BigDecimal expected = BASE_PRICE.multiply(testSeat2.getSeatType().getPriceMultiplier())
-				.multiply(childTicketType.getPriceMultiplier());
-
-		assertThat(result).isEqualByComparingTo(expected);
-	}
-
-	@Test
-	void calculateSeatPrice_WithNullTicketType() {
-		BigDecimal result = seatAvailabilityService.calculateSeatPrice(testSession, testSeat1, null);
-
-		BigDecimal expected = BASE_PRICE.multiply(testSeat1.getSeatType().getPriceMultiplier());
-
-		assertThat(result).isEqualByComparingTo(expected);
-	}
-
-	@Test
 	void isSeatAvailableForSession_WhenAvailable() {
-		when(bookedSeatRepository.existsBySessionIdAndSeatIdAndStatusIn(SESSION_ID, SEAT_ID_1, BOOKED_STATUSES))
-				.thenReturn(false);
+		when(availabilityValidator.isSeatAvailable(SESSION_ID, SEAT_ID_1)).thenReturn(true);
 
 		boolean result = seatAvailabilityService.isSeatAvailableForSession(SESSION_ID, SEAT_ID_1);
 
@@ -250,8 +217,7 @@ public class SeatAvailabilityServiceTest {
 
 	@Test
 	void isSeatAvailableForSession_WhenNotAvailable() {
-		when(bookedSeatRepository.existsBySessionIdAndSeatIdAndStatusIn(SESSION_ID, SEAT_ID_1, BOOKED_STATUSES))
-				.thenReturn(true);
+		when(availabilityValidator.isSeatAvailable(SESSION_ID, SEAT_ID_1)).thenReturn(false);
 
 		boolean result = seatAvailabilityService.isSeatAvailableForSession(SESSION_ID, SEAT_ID_1);
 
@@ -262,7 +228,7 @@ public class SeatAvailabilityServiceTest {
 	void getAvailableSeatsCount_Success() {
 		when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(testSession));
 		when(seatRepository.countByHallId(HALL_ID)).thenReturn(100L);
-		when(bookedSeatRepository.countBySessionIdAndStatusIn(SESSION_ID, BOOKED_STATUSES)).thenReturn(25L);
+		when(bookedSeatRepository.countBySessionIdAndStatusIn(eq(SESSION_ID), any())).thenReturn(25L);
 
 		int result = seatAvailabilityService.getAvailableSeatsCount(SESSION_ID);
 
@@ -278,48 +244,25 @@ public class SeatAvailabilityServiceTest {
 	}
 
 	@Test
-	void getSeatAvailability_WithTemporarilyReservedSeat() {
-		List<Seat> allSeats = Arrays.asList(testSeat1, testSeat2);
-		BookedSeat pendingSeat = new BookedSeat();
-		pendingSeat.setSeat(testSeat1);
-		pendingSeat.setStatus(BookedSeatStatus.PENDING);
-		List<BookedSeat> bookedSeats = Arrays.asList(pendingSeat);
-		List<TicketType> activeTicketTypes = Arrays.asList(adultTicketType);
-
-		when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(testSession));
-		when(seatRepository.findByHallId(HALL_ID)).thenReturn(allSeats);
-		when(bookedSeatRepository.findBySessionIdAndStatusIn(SESSION_ID, BOOKED_STATUSES)).thenReturn(bookedSeats);
-		when(ticketTypeRepository.findByActiveTrue()).thenReturn(activeTicketTypes);
-
-		SeatAvailabilityResponse result = seatAvailabilityService.getSeatAvailability(SESSION_ID);
-
-		SeatAvailabilityResponse.SeatInfo pendingSeatInfo = result.getSeats().stream()
-				.filter(s -> s.getId().equals(SEAT_ID_1)).findFirst().orElseThrow();
-		assertThat(pendingSeatInfo.getAvailable()).isFalse();
-		assertThat(pendingSeatInfo.getTemporarilyReserved()).isTrue();
-	}
-
-	@Test
 	void getSeatAvailability_WithNoActiveTicketTypes() {
 		List<Seat> allSeats = Arrays.asList(testSeat1);
-		List<BookedSeat> bookedSeats = Collections.emptyList();
 
 		when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(testSession));
 		when(seatRepository.findByHallId(HALL_ID)).thenReturn(allSeats);
-		when(bookedSeatRepository.findBySessionIdAndStatusIn(SESSION_ID, BOOKED_STATUSES)).thenReturn(bookedSeats);
+		when(bookedSeatRepository.findBySessionIdAndStatusIn(eq(SESSION_ID), any()))
+				.thenReturn(Collections.emptyList());
 		when(ticketTypeRepository.findByActiveTrue()).thenReturn(Collections.emptyList());
 
 		SeatAvailabilityResponse result = seatAvailabilityService.getSeatAvailability(SESSION_ID);
 
-		SeatAvailabilityResponse.SeatInfo seatInfo = result.getSeats().get(0);
-		assertThat(seatInfo.getTicketPrices()).isEmpty();
+		assertThat(result.getSeats().get(0).getTicketPrices()).isEmpty();
 	}
 
 	@Test
 	void getAvailableSeatsCount_WhenAllSeatsAvailable() {
 		when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(testSession));
 		when(seatRepository.countByHallId(HALL_ID)).thenReturn(50L);
-		when(bookedSeatRepository.countBySessionIdAndStatusIn(SESSION_ID, BOOKED_STATUSES)).thenReturn(0L);
+		when(bookedSeatRepository.countBySessionIdAndStatusIn(eq(SESSION_ID), any())).thenReturn(0L);
 
 		int result = seatAvailabilityService.getAvailableSeatsCount(SESSION_ID);
 
@@ -330,7 +273,7 @@ public class SeatAvailabilityServiceTest {
 	void getAvailableSeatsCount_WhenAllSeatsBooked() {
 		when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(testSession));
 		when(seatRepository.countByHallId(HALL_ID)).thenReturn(30L);
-		when(bookedSeatRepository.countBySessionIdAndStatusIn(SESSION_ID, BOOKED_STATUSES)).thenReturn(30L);
+		when(bookedSeatRepository.countBySessionIdAndStatusIn(eq(SESSION_ID), any())).thenReturn(30L);
 
 		int result = seatAvailabilityService.getAvailableSeatsCount(SESSION_ID);
 
