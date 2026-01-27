@@ -3,9 +3,8 @@ import { useBooking } from './useBooking';
 import type { BookingResponse, BookingCreateRequest, SeatSelectionRequest } from '@/types/booking';
 
 export const useBookingForm = () => {
-    const { create, getAvailableBonusPoints, loading, error, clearError } = useBooking();
+    const { create, loading, error, clearError } = useBooking();
     const [success, setSuccess] = useState(false);
-    const [availablePoints, setAvailablePoints] = useState<number>(0);
 
     const handleCreate = useCallback(async (data: BookingCreateRequest): Promise<BookingResponse | null> => {
         clearError();
@@ -18,18 +17,6 @@ export const useBookingForm = () => {
             return null;
         }
     }, [create, clearError]);
-
-    const calculateAvailableBonusPoints = useCallback(async (totalPrice: string): Promise<number> => {
-        clearError();
-        try {
-            const points = await getAvailableBonusPoints(totalPrice);
-            setAvailablePoints(points);
-            return points;
-        } catch {
-            setAvailablePoints(0);
-            return 0;
-        }
-    }, [getAvailableBonusPoints, clearError]);
 
     const calculateTotalPrice = useCallback((selections: Array<{ price: string }>): string => {
         const total = selections.reduce((sum, selection) => {
@@ -67,7 +54,6 @@ export const useBookingForm = () => {
 
     const reset = useCallback(() => {
         setSuccess(false);
-        setAvailablePoints(0);
         clearError();
     }, [clearError]);
 
@@ -75,9 +61,7 @@ export const useBookingForm = () => {
         loading,
         error,
         success,
-        availablePoints,
         handleCreate,
-        calculateAvailableBonusPoints,
         calculateTotalPrice,
         calculateFinalPrice,
         getDefaultValues,

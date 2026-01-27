@@ -21,7 +21,7 @@ export const useBookingList = (options: UseBookingListOptions = {}) => {
         setIsFetching(true);
         clearError();
         try {
-            const response = await getUserBookings(status, { page, size: pageSize });
+            const response = await getUserBookings(status, page, pageSize);
             setBookings(response.content);
             setPageData(response);
             return response;

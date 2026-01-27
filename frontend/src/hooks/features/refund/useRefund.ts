@@ -1,30 +1,11 @@
 import { useState, useCallback } from 'react';
 import { refundApi } from '@/api/refundApi';
-import type {
-    RefundPreviewResponse,
-    RefundResponse,
-    RefundPreviewRequest,
-    RefundRequest
-} from '@/types/refund';
+import type { RefundResponse, RefundRequest } from '@/types/refund';
 import { isApiErrorException } from '@/utils/apiErrorHandler';
 
 export const useRefund = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-
-    const getPreview = useCallback(async (request: RefundPreviewRequest): Promise<RefundPreviewResponse> => {
-        setLoading(true);
-        setError(null);
-        try {
-            return await refundApi.getPreview(request);
-        } catch (err) {
-            const message = isApiErrorException(err) ? err.message : 'Failed to get refund preview';
-            setError(message);
-            throw err;
-        } finally {
-            setLoading(false);
-        }
-    }, []);
 
     const processRefund = useCallback(async (request: RefundRequest): Promise<RefundResponse> => {
         setLoading(true);
@@ -44,9 +25,20 @@ export const useRefund = () => {
         setLoading(true);
         setError(null);
         try {
-            return await refundApi.getUserRefunds();
+            const response = await fetch('/api/refunds', {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch refunds');
+            }
+
+            return await response.json();
         } catch (err) {
-            const message = isApiErrorException(err) ? err.message : 'Failed to get user refunds';
+            const message = err instanceof Error ? err.message : 'Failed to get user refunds';
             setError(message);
             throw err;
         } finally {
@@ -61,7 +53,6 @@ export const useRefund = () => {
     return {
         loading,
         error,
-        getPreview,
         processRefund,
         getUserRefunds,
         clearError

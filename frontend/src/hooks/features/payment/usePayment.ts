@@ -1,10 +1,6 @@
 import { useState, useCallback } from 'react';
 import { paymentApi } from '@/api/paymentApi';
-import type {
-    PaymentResponse,
-    PaymentCreateRequest,
-    PaymentLiqPayDataResponse,
-} from '@/types/payment';
+import type { PaymentResponse, PaymentCreateRequest, PaymentLiqPayDataResponse } from '@/types/payment';
 import { isApiErrorException } from '@/utils/apiErrorHandler';
 
 export const usePayment = () => {
@@ -53,48 +49,6 @@ export const usePayment = () => {
         }
     }, []);
 
-    const getStatus = useCallback(async (paymentId: number): Promise<PaymentResponse> => {
-        setLoading(true);
-        setError(null);
-        try {
-            return await paymentApi.getStatus(paymentId);
-        } catch (err) {
-            const message = isApiErrorException(err) ? err.message : `Failed to get payment status for ID: ${paymentId}`;
-            setError(message);
-            throw err;
-        } finally {
-            setLoading(false);
-        }
-    }, []);
-
-    const retry = useCallback(async (paymentId: number): Promise<PaymentResponse> => {
-        setLoading(true);
-        setError(null);
-        try {
-            return await paymentApi.retry(paymentId);
-        } catch (err) {
-            const message = isApiErrorException(err) ? err.message : `Failed to retry payment for ID: ${paymentId}`;
-            setError(message);
-            throw err;
-        } finally {
-            setLoading(false);
-        }
-    }, []);
-
-    const getByBooking = useCallback(async (bookingId: number): Promise<PaymentResponse> => {
-        setLoading(true);
-        setError(null);
-        try {
-            return await paymentApi.getByBooking(bookingId);
-        } catch (err) {
-            const message = isApiErrorException(err) ? err.message : `Failed to get payment for booking ID: ${bookingId}`;
-            setError(message);
-            throw err;
-        } finally {
-            setLoading(false);
-        }
-    }, []);
-
     const clearError = useCallback(() => {
         setError(null);
     }, []);
@@ -105,9 +59,6 @@ export const usePayment = () => {
         create,
         getById,
         getLiqPayData,
-        getStatus,
-        retry,
-        getByBooking,
         clearError
     };
 };

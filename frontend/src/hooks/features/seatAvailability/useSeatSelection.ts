@@ -54,7 +54,7 @@ export const useSeatSelection = ({ seatData, checkSpecificSeat, maxSeats }: UseS
         let price = 0;
         let finalTicketTypeId = ticketTypeId;
 
-        if (seatInfo.ticketPrices.length === 0) {
+        if (!seatInfo.ticketPrices || seatInfo.ticketPrices.length === 0) {
             throw new Error('No ticket prices available for this seat');
         }
 
@@ -84,7 +84,7 @@ export const useSeatSelection = ({ seatData, checkSpecificSeat, maxSeats }: UseS
         if (!seatData) return;
 
         const seatInfo = seatData.seats.find(seat => seat.id === seatId);
-        if (!seatInfo) return;
+        if (!seatInfo || !seatInfo.ticketPrices) return;
 
         const ticketPrice = seatInfo.ticketPrices.find(tp => tp.ticketTypeId === ticketTypeId);
         if (!ticketPrice) return;

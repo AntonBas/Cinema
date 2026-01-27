@@ -17,7 +17,7 @@ export const useTicketTypeList = (
         autoFetch = true
     } = options || {};
 
-    const { getAll, remove, toggleActive, loading, error, clearError } = useAdminTicketTypes();
+    const { getAll, loading, error, clearError } = useAdminTicketTypes();
     const [ticketTypes, setTicketTypes] = useState<TicketTypeResponse[]>([]);
 
     const fetchTicketTypes = useCallback(async () => {
@@ -56,16 +56,6 @@ export const useTicketTypeList = (
         return await fetchTicketTypes();
     }, [fetchTicketTypes]);
 
-    const handleDelete = useCallback(async (id: number): Promise<void> => {
-        await remove(id);
-        await refresh();
-    }, [remove, refresh]);
-
-    const handleToggleActive = useCallback(async (id: number): Promise<void> => {
-        await toggleActive(id);
-        await refresh();
-    }, [toggleActive, refresh]);
-
     const addTicketType = useCallback((ticketType: TicketTypeResponse) => {
         setTicketTypes(prev => [...prev, ticketType]);
     }, []);
@@ -90,8 +80,6 @@ export const useTicketTypeList = (
         addTicketType,
         updateTicketType,
         removeTicketType,
-        deleteTicketType: handleDelete,
-        toggleTicketTypeActive: handleToggleActive,
         clearError,
         isEmpty: ticketTypes.length === 0
     };

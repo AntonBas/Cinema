@@ -39,6 +39,20 @@ export const useAdminTicketTypes = () => {
         }
     }, []);
 
+    const getByCode = useCallback(async (code: string): Promise<TicketTypeResponse> => {
+        setLoading(true);
+        setError(null);
+        try {
+            return await ticketTypeApi.admin.getByCode(code);
+        } catch (err) {
+            const message = isApiErrorException(err) ? err.message : `Failed to fetch ticket type with code: ${code}`;
+            setError(message);
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
     const create = useCallback(async (request: TicketTypeCreateRequest): Promise<TicketTypeResponse> => {
         setLoading(true);
         setError(null);
@@ -95,6 +109,20 @@ export const useAdminTicketTypes = () => {
         }
     }, []);
 
+    const getActiveForDropdown = useCallback(async (): Promise<any[]> => {
+        setLoading(true);
+        setError(null);
+        try {
+            return await ticketTypeApi.admin.getActiveForDropdown();
+        } catch (err) {
+            const message = isApiErrorException(err) ? err.message : 'Failed to fetch active ticket types';
+            setError(message);
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
     const clearError = useCallback(() => {
         setError(null);
     }, []);
@@ -104,10 +132,12 @@ export const useAdminTicketTypes = () => {
         error,
         getAll,
         getById,
+        getByCode,
         create,
         update,
         remove,
         toggleActive,
+        getActiveForDropdown,
         clearError
     };
 };

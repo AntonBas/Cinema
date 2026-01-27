@@ -4,7 +4,7 @@ import type { RefundResponse, RefundStatus } from '@/types/refund';
 
 export const useRefundList = (options?: { autoFetch?: boolean }) => {
     const { autoFetch = true } = options || {};
-    const { getUserRefunds, loading, error, clearError } = useRefund();
+    const { loading, error, clearError } = useRefund();
     const [refunds, setRefunds] = useState<RefundResponse[]>([]);
     const [localLoading, setLocalLoading] = useState(false);
 
@@ -12,7 +12,18 @@ export const useRefundList = (options?: { autoFetch?: boolean }) => {
         setLocalLoading(true);
         clearError();
         try {
-            const data = await getUserRefunds();
+            const response = await fetch('/api/refunds', {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch refunds');
+            }
+
+            const data = await response.json();
             setRefunds(data);
             return data;
         } catch {
@@ -20,7 +31,7 @@ export const useRefundList = (options?: { autoFetch?: boolean }) => {
         } finally {
             setLocalLoading(false);
         }
-    }, [getUserRefunds, clearError]);
+    }, [clearError]);
 
     useEffect(() => {
         if (autoFetch) {

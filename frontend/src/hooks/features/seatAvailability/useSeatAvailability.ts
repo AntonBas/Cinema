@@ -48,57 +48,6 @@ export const useSeatAvailability = (sessionId: number) => {
         }
     }, [sessionId, fetchApi]);
 
-    const checkSpecificSeat = useCallback(async (seatId: number) => {
-        try {
-            const response = await fetch(`${BASE_URL}/${sessionId}/seats/${seatId}/availability`, {
-                headers: getAuthHeaders(),
-            });
-
-            if (response.ok) {
-                return true;
-            }
-
-            if (response.status === 404) {
-                return true;
-            }
-
-            return false;
-        } catch (err) {
-            console.error('Seat availability check failed:', err);
-            return true;
-        }
-    }, [sessionId, getAuthHeaders]);
-
-    const fetchAvailableSeatsCount = useCallback(async () => {
-        try {
-            const count = await fetchApi<number>(`${BASE_URL}/${sessionId}/available-seats/count`);
-            setAvailableSeatsCount(count);
-            return count;
-        } catch (err) {
-            const message = err instanceof ApiErrorException ? err.message : 'Failed to fetch available seats count';
-            setError(message);
-            throw err;
-        }
-    }, [sessionId, fetchApi]);
-
-    const updateSeatStatus = useCallback((seatId: number, isAvailable: boolean) => {
-        setSeatData(prev => {
-            if (!prev) return prev;
-
-            return {
-                ...prev,
-                seats: prev.seats.map(seat =>
-                    seat.id === seatId
-                        ? { ...seat, available: isAvailable }
-                        : seat
-                ),
-                availableSeats: isAvailable
-                    ? prev.availableSeats + 1
-                    : prev.availableSeats - 1
-            };
-        });
-    }, []);
-
     const getSeatInfo = useCallback((seatId: number) => {
         if (!seatData) return null;
         return seatData.seats.find(seat => seat.id === seatId) || null;
@@ -111,14 +60,14 @@ export const useSeatAvailability = (sessionId: number) => {
 
     const getSeatPrice = useCallback((seatId: number, ticketTypeId?: number) => {
         const seatInfo = getSeatInfo(seatId);
-        if (!seatInfo) return null;
+        if (!seatInfo || !seatInfo.ticketPrices || seatInfo.ticketPrices.length === 0) return null;
 
         if (ticketTypeId) {
             const ticketPrice = seatInfo.ticketPrices.find(tp => tp.ticketTypeId === ticketTypeId);
             return ticketPrice ? parseFloat(ticketPrice.finalPrice) : null;
         }
 
-        return seatInfo.ticketPrices[0] ? parseFloat(seatInfo.ticketPrices[0].finalPrice) : null;
+        return parseFloat(seatInfo.ticketPrices[0].finalPrice);
     }, [getSeatInfo]);
 
     return {
@@ -127,9 +76,6 @@ export const useSeatAvailability = (sessionId: number) => {
         loading,
         error,
         fetchSeatAvailability,
-        checkSpecificSeat,
-        fetchAvailableSeatsCount,
-        updateSeatStatus,
         getSeatInfo,
         filterSeatsByRow,
         getSeatPrice,
