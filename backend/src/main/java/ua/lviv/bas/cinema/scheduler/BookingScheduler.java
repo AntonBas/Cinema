@@ -16,22 +16,22 @@ import ua.lviv.bas.cinema.domain.enums.BookingStatus;
 import ua.lviv.bas.cinema.domain.enums.PaymentStatus;
 import ua.lviv.bas.cinema.repository.BookingRepository;
 import ua.lviv.bas.cinema.repository.PaymentRepository;
+import ua.lviv.bas.cinema.service.user.BonusService;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class BookingScheduler {
-
 	private final BookingRepository bookingRepository;
 	private final PaymentRepository paymentRepository;
+	private final BonusService bonusService;
 
 	@Scheduled(fixedRateString = "${scheduler.booking.expiration-interval:60000}")
 	@Transactional
 	public void processExpiredBookings() {
 		log.debug("Starting expired bookings processing");
-
-		List<Booking> expiredBookings = bookingRepository.findByExpiresAtBeforeAndStatus(LocalDateTime.now(),
-				BookingStatus.PENDING);
+		LocalDateTime now = LocalDateTime.now();
+		List<Booking> expiredBookings = bookingRepository.findByStatusAndExpiresAtBefore(BookingStatus.PENDING, now);
 
 		if (expiredBookings.isEmpty()) {
 			log.debug("No expired bookings found");
@@ -40,10 +40,14 @@ public class BookingScheduler {
 
 		log.info("Found {} expired bookings to process", expiredBookings.size());
 
-		expiredBookings.forEach(booking -> {
+		for (Booking booking : expiredBookings) {
 			booking.setStatus(BookingStatus.EXPIRED);
 			booking.getBookedSeats().forEach(bs -> bs.setStatus(BookedSeatStatus.EXPIRED));
-		});
+
+			if (booking.getBonusPointsUsed() != null && booking.getBonusPointsUsed() > 0) {
+				bonusService.refundBonusPointsForCancellation(booking);
+			}
+		}
 
 		bookingRepository.saveAll(expiredBookings);
 		log.info("Successfully expired {} bookings", expiredBookings.size());
@@ -53,7 +57,6 @@ public class BookingScheduler {
 	@Transactional
 	public void processExpiredPayments() {
 		log.debug("Starting expired payments processing");
-
 		LocalDateTime cutoffTime = LocalDateTime.now().minusMinutes(30);
 		List<Payment> expiredPayments = paymentRepository.findByStatusAndCreatedAtBefore(PaymentStatus.PENDING,
 				cutoffTime);
@@ -65,7 +68,7 @@ public class BookingScheduler {
 
 		log.info("Found {} expired payments to process", expiredPayments.size());
 
-		expiredPayments.forEach(payment -> {
+		for (Payment payment : expiredPayments) {
 			payment.setStatus(PaymentStatus.EXPIRED);
 			payment.setUpdatedAt(LocalDateTime.now());
 
@@ -73,7 +76,7 @@ public class BookingScheduler {
 				payment.getBooking().setStatus(BookingStatus.EXPIRED);
 				payment.getBooking().getBookedSeats().forEach(seat -> seat.setStatus(BookedSeatStatus.EXPIRED));
 			}
-		});
+		}
 
 		paymentRepository.saveAll(expiredPayments);
 		log.info("Successfully expired {} payments", expiredPayments.size());
@@ -83,7 +86,6 @@ public class BookingScheduler {
 	@Transactional
 	public void cleanupOldBookings() {
 		log.debug("Starting old bookings cleanup");
-
 		LocalDateTime thirtyDaysAgo = LocalDateTime.now().minusDays(30);
 		int deletedCount = bookingRepository.deleteByStatusInAndCreatedAtBefore(
 				List.of(BookingStatus.EXPIRED, BookingStatus.CANCELLED), thirtyDaysAgo);
@@ -99,9 +101,7 @@ public class BookingScheduler {
 	@Transactional
 	public void cleanupOldPayments() {
 		log.debug("Starting old payments cleanup");
-
 		LocalDateTime ninetyDaysAgo = LocalDateTime.now().minusDays(90);
-
 		List<Payment> oldPayments = paymentRepository
 				.findByStatusInAndCreatedAtBefore(List.of(PaymentStatus.FAILED, PaymentStatus.EXPIRED), ninetyDaysAgo);
 
@@ -118,7 +118,6 @@ public class BookingScheduler {
 	public void sendExpirationReminders() {
 		LocalDateTime now = LocalDateTime.now();
 		LocalDateTime reminderTime = now.plusMinutes(5);
-
 		List<Booking> soonToExpire = bookingRepository.findByExpiresAtBetweenAndStatus(now, reminderTime,
 				BookingStatus.PENDING);
 
