@@ -51,6 +51,10 @@ spring:
                 max-size: 5
                 queue-capacity: 50
             thread-name-prefix: "scheduler-"
+    servlet:
+        multipart:
+            max-file-size: 10MB
+            max-request-size: 10MB
 
 app:
     jwt:
@@ -71,13 +75,44 @@ app:
             size: 200
             margin: 1
             format: PNG
+    upload:
+        dir: ${UPLOAD_DIR:uploads}
+
+booking:
+    expiration-minutes: 30
+    session-too-close-minutes: 30
+    max-bonus-points-percentage: 70
+    max-seats-per-booking: 10
+    min-minutes-for-payment: 5
 
 payment:
-  liqpay:
-    public_key: ${LIQPAY_PUBLIC_KEY}
-    private_key: ${LIQPAY_PRIVATE_KEY}
-    sandbox_mode: ${LIQPAY_SANDBOX_MODE:true}
-    currency: ${LIQPAY_CURRENCY:UAH}
-    language: ${LIQPAY_LANGUAGE:uk}
-    callback_url: ${PAYMENT_LIQPAY_CALLBACK_URL:https://unethnologically-barytic-lean.ngrok-free.dev/api/liqpay/callback}
-    result_url: ${PAYMENT_LIQPAY_RESULT_URL:http://localhost:5173/booking/success}
+    expiration-minutes: 15
+    max-payment-time: 15
+    liqpay:
+        public_key: ${LIQPAY_PUBLIC_KEY}
+        private_key: ${LIQPAY_PRIVATE_KEY}
+        sandbox_mode: ${LIQPAY_SANDBOX_MODE:true}
+        currency: ${LIQPAY_CURRENCY:UAH}
+        language: ${LIQPAY_LANGUAGE:uk}
+        callback_url: ${PAYMENT_LIQPAY_CALLBACK_URL:https://unethnologically-barytic-lean.ngrok-free.dev/api/liqpay/callback}
+        result_url: ${PAYMENT_LIQPAY_RESULT_URL:http://localhost:5173/booking/success}
+        api_url: ${LIQPAY_API_URL:https://www.liqpay.ua/api/}
+
+scheduler:
+    booking:
+        expiration-interval: 60000
+        cleanup-cron: "0 0 4 * * *"
+        reminder-cron: "0 */10 * * * *"
+    payment:
+        expiration-interval: 60000
+        cleanup-cron: "0 0 5 * * *"
+        daily-stats: "0 0 23 * * *"
+
+bonus:
+    welcome-bonus: 150
+    birthday-bonus: 200
+    promotion-bonus: 100
+
+ticket:
+    validation:
+        max-hours-after-session: 2
