@@ -14,7 +14,6 @@ import ua.lviv.bas.cinema.domain.enums.PaymentStatus;
 
 @Repository
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
-
 	Optional<Payment> findByBookingId(Long bookingId);
 
 	@Query("SELECT p FROM Payment p WHERE p.booking.id = :bookingId AND p.booking.user.id = :userId")
@@ -32,4 +31,7 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
 	long countByStatus(PaymentStatus status);
 
 	long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
+
+	@Query("SELECT p FROM Payment p WHERE p.booking.user.id = :userId")
+	List<Payment> findByUserId(@Param("userId") Long userId);
 }
