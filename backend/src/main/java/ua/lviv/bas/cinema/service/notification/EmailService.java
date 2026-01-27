@@ -104,19 +104,22 @@ public class EmailService {
 					Amount Paid: %s UAH
 					Payment Method: %s
 
-					Please present this information at the cinema entrance.
+					Your tickets are available in your account:
+					%s/my-tickets
+
+					Please present the QR codes at the cinema entrance.
 					Arrive 10-15 minutes before the session.
 
 					Important:
 					• Have your ID ready if required
 					• No refunds 30 minutes before session
-					• QR code will be available in your account
+					• QR codes available in your account
 
 					Thank you for choosing %s!
 
 					This is an automated email. Please do not reply.
 					""".formatted(movieTitle, bookingNumber, movieTitle, sessionTime, hallName, seatInfo, amountPaid,
-					paymentMethod, companyName);
+					paymentMethod, frontendUrl, companyName);
 
 			sendSimpleEmail(toEmail, "Your Tickets: " + movieTitle, text);
 			log.info("Tickets email sent to {}", toEmail);
@@ -133,7 +136,7 @@ public class EmailService {
 			String text = """
 					Payment Failed
 
-					Booking: %s
+					Booking Number: %s
 					Movie: %s
 					Time: %s
 

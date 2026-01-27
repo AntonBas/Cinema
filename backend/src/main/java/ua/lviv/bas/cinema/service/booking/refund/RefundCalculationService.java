@@ -1,0 +1,73 @@
+package ua.lviv.bas.cinema.service.booking.refund;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+
+import org.springframework.stereotype.Service;
+
+import lombok.RequiredArgsConstructor;
+import ua.lviv.bas.cinema.config.RefundRules;
+import ua.lviv.bas.cinema.domain.BookedSeat;
+import ua.lviv.bas.cinema.domain.Ticket;
+import ua.lviv.bas.cinema.dto.refund.response.RefundPreviewResponse;
+
+@Service
+@RequiredArgsConstructor
+public class RefundCalculationService {
+
+	public BigDecimal calculateRefundAmount(BigDecimal price, BigDecimal percentage) {
+		return price.multiply(percentage).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+	}
+
+	public Integer calculateBonusRefund(Integer bonusPointsUsed, BigDecimal percentage) {
+		if (bonusPointsUsed == null || bonusPointsUsed == 0) {
+			return 0;
+		}
+		return (int) (bonusPointsUsed * percentage.doubleValue() / 100);
+	}
+
+	public String formatRemainingTime(LocalDateTime sessionTime) {
+		long hours = ChronoUnit.HOURS.between(LocalDateTime.now(), sessionTime);
+		long minutes = ChronoUnit.MINUTES.between(LocalDateTime.now(), sessionTime) % 60;
+
+		if (hours > 0 && minutes > 0) {
+			return String.format("%d hours %d minutes", hours, minutes);
+		} else if (hours > 0) {
+			return String.format("%d hours", hours);
+		} else if (minutes > 0) {
+			return String.format("%d minutes", minutes);
+		} else {
+			return "Less than a minute";
+		}
+	}
+
+	public RefundPreviewResponse createPreviewResponse(Ticket ticket, RefundRules refundRules) {
+		LocalDateTime sessionTime = ticket.getBooking().getSession().getStartTime();
+		BigDecimal percentage = refundRules.getRefundPercentage(sessionTime);
+		BigDecimal refundAmount = calculateRefundAmount(ticket.getFinalPrice(), percentage);
+		BigDecimal feeAmount = ticket.getFinalPrice().subtract(refundAmount);
+
+		String seatInfo = "N/A";
+		if (ticket.getBooking().getBookedSeats() != null && !ticket.getBooking().getBookedSeats().isEmpty()) {
+			BookedSeat bookedSeat = ticket.getBooking().getBookedSeats().get(0);
+			seatInfo = String.format("Row %d, Seat %d", bookedSeat.getSeat().getRow(),
+					bookedSeat.getSeat().getNumber());
+		}
+
+		return RefundPreviewResponse.builder().ticketId(ticket.getId()).ticketCode(ticket.getUniqueCode())
+				.movieTitle(ticket.getBooking().getSession().getMovie().getTitle()).sessionTime(sessionTime)
+				.hallName(ticket.getBooking().getSession().getHall().getName()).seatInfo(seatInfo)
+				.originalPrice(ticket.getOriginalPrice()).finalPrice(ticket.getFinalPrice()).refundAmount(refundAmount)
+				.refundPercentage(percentage).feeAmount(feeAmount)
+				.feePercentage(BigDecimal.valueOf(100).subtract(percentage))
+				.bonusPointsUsed(ticket.getBonusPointsUsed())
+				.bonusPointsToRefund(calculateBonusRefund(ticket.getBonusPointsUsed(), percentage))
+				.policyName(refundRules.getPolicyName(sessionTime))
+				.policyDescription(refundRules.getPolicyDescription(sessionTime)).isRefundable(true)
+				.refundDeadline(sessionTime.minusMinutes(30)).remainingTime(formatRemainingTime(sessionTime))
+				.purchaseTime(ticket.getPurchaseTime().toString()).ticketType(ticket.getTicketType().getDisplayName())
+				.build();
+	}
+}

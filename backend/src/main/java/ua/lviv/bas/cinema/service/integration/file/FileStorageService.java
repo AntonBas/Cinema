@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.service.infrastructure;
+package ua.lviv.bas.cinema.service.integration.file;
 
 import java.io.IOException;
 import java.nio.file.Files;
