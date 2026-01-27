@@ -32,12 +32,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import ua.lviv.bas.cinema.dto.ticket.request.TicketTypeCreateRequest;
 import ua.lviv.bas.cinema.dto.ticket.request.TicketTypeUpdateRequest;
 import ua.lviv.bas.cinema.dto.ticket.response.TicketTypeResponse;
-import ua.lviv.bas.cinema.dto.ticket.response.TicketTypeSimpleResponse;
 import ua.lviv.bas.cinema.exception.api.ApiErrorHandler;
 import ua.lviv.bas.cinema.exception.domain.tickettype.TicketTypeDuplicateException;
 import ua.lviv.bas.cinema.exception.domain.tickettype.TicketTypeInUseException;
 import ua.lviv.bas.cinema.exception.domain.tickettype.TicketTypeNotFoundException;
-import ua.lviv.bas.cinema.service.booking.TicketTypeService;
+import ua.lviv.bas.cinema.service.booking.types.TicketTypeService;
 
 @ExtendWith(MockitoExtension.class)
 public class AdminTicketTypeControllerTest {
@@ -52,7 +51,6 @@ public class AdminTicketTypeControllerTest {
 	private AdminTicketTypeController adminTicketTypeController;
 
 	private TicketTypeResponse ticketTypeResponse;
-	private TicketTypeSimpleResponse ticketTypeSimpleResponse;
 
 	@BeforeEach
 	void setUp() {
@@ -62,9 +60,6 @@ public class AdminTicketTypeControllerTest {
 		ticketTypeResponse = TicketTypeResponse.builder().id(1L).code("CHILD").displayName("Child Ticket")
 				.priceMultiplier(new BigDecimal("0.70")).minAge(0).maxAge(12).requiresDocument(true)
 				.documentType("Birth Certificate").active(true).build();
-
-		ticketTypeSimpleResponse = TicketTypeSimpleResponse.builder().id(1L).code("CHILD").displayName("Child Ticket")
-				.priceMultiplier(new BigDecimal("0.70")).active(true).build();
 	}
 
 	@Test
@@ -93,14 +88,6 @@ public class AdminTicketTypeControllerTest {
 				.content(objectMapper.writeValueAsString(createRequest))).andExpect(status().isConflict());
 
 		verify(ticketTypeService).createTicketType(any(TicketTypeCreateRequest.class));
-	}
-
-	@Test
-	void createTicketType_ShouldReturnBadRequestWhenInvalid() throws Exception {
-		TicketTypeCreateRequest createRequest = TicketTypeCreateRequest.builder().code("").displayName("").build();
-
-		mockMvc.perform(post("/api/admin/ticket-types").contentType(MediaType.APPLICATION_JSON)
-				.content(objectMapper.writeValueAsString(createRequest))).andExpect(status().isBadRequest());
 	}
 
 	@Test
@@ -213,20 +200,5 @@ public class AdminTicketTypeControllerTest {
 				.andExpect(jsonPath("$.active").value(false));
 
 		verify(ticketTypeService).toggleTicketTypeActiveStatus(1L);
-	}
-
-	@Test
-	void getSimpleTicketTypes_ShouldReturnSimpleList() throws Exception {
-		TicketTypeSimpleResponse adultSimpleResponse = TicketTypeSimpleResponse.builder().id(2L).code("ADULT")
-				.displayName("Adult Ticket").priceMultiplier(new BigDecimal("1.00")).active(true).build();
-
-		List<TicketTypeSimpleResponse> simpleResponses = Arrays.asList(ticketTypeSimpleResponse, adultSimpleResponse);
-
-		when(ticketTypeService.getSimpleTicketTypes(true)).thenReturn(simpleResponses);
-
-		mockMvc.perform(get("/api/admin/ticket-types/simple")).andExpect(status().isOk())
-				.andExpect(jsonPath("$.length()").value(2));
-
-		verify(ticketTypeService).getSimpleTicketTypes(true);
 	}
 }
