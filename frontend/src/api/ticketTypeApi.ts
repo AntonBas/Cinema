@@ -28,21 +28,10 @@ const fetchApi = async <T>(url: string, options: RequestInit = {}): Promise<T> =
 };
 
 export const ticketTypeApi = {
-    getAllActive: () => fetchApi<TicketTypeResponse[]>(PUBLIC_URL),
-
-    getById: (id: number) => fetchApi<TicketTypeResponse>(`${PUBLIC_URL}/${id}`),
-
-    getByCode: (code: string) => fetchApi<TicketTypeResponse>(`${PUBLIC_URL}/code/${code}`),
-
-    getSimpleActive: () => fetchApi<TicketTypeSimpleResponse[]>(`${PUBLIC_URL}/simple`),
-
-    validateAge: (ticketTypeId: number, age: number) =>
-        fetchApi<boolean>(`${PUBLIC_URL}/age-validation?ticketTypeId=${ticketTypeId}&age=${age}`),
-
-    getAgeRange: (id: number) => fetchApi<string>(`${PUBLIC_URL}/${id}/age-range`),
-
-    getAvailableForAge: (age: number) =>
-        fetchApi<TicketTypeSimpleResponse[]>(`${PUBLIC_URL}/available-for-age?age=${age}`),
+    public: {
+        getDropdownTypes: () =>
+            fetchApi<TicketTypeSimpleResponse[]>(`${PUBLIC_URL}/dropdown`),
+    },
 
     admin: {
         create: (request: TicketTypeCreateRequest) =>
@@ -72,9 +61,11 @@ export const ticketTypeApi = {
             return fetchApi<TicketTypeResponse[]>(url);
         },
 
-        getById: (id: number) => fetchApi<TicketTypeResponse>(`${ADMIN_URL}/${id}`),
+        getById: (id: number) =>
+            fetchApi<TicketTypeResponse>(`${ADMIN_URL}/${id}`),
 
-        getByCode: (code: string) => fetchApi<TicketTypeResponse>(`${ADMIN_URL}/code/${code}`),
+        getByCode: (code: string) =>
+            fetchApi<TicketTypeResponse>(`${ADMIN_URL}/code/${code}`),
 
         update: (id: number, request: TicketTypeUpdateRequest) =>
             fetchApi<TicketTypeResponse>(`${ADMIN_URL}/${id}`, {
@@ -82,14 +73,17 @@ export const ticketTypeApi = {
                 body: JSON.stringify(request),
             }),
 
-        delete: (id: number) => fetchApi<void>(`${ADMIN_URL}/${id}`, { method: 'DELETE' }),
+        delete: (id: number) =>
+            fetchApi<void>(`${ADMIN_URL}/${id}`, {
+                method: 'DELETE'
+            }),
 
         toggleActive: (id: number) =>
             fetchApi<TicketTypeResponse>(`${ADMIN_URL}/${id}/toggle-active`, {
                 method: 'PATCH',
             }),
 
-        getSimple: (active: boolean = true) =>
-            fetchApi<TicketTypeSimpleResponse[]>(`${ADMIN_URL}/simple?active=${active}`),
+        getActiveForDropdown: () =>
+            fetchApi<TicketTypeSimpleResponse[]>(`${ADMIN_URL}/dropdown`),
     }
 };

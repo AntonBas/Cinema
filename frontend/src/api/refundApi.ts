@@ -1,7 +1,5 @@
 import type {
-    RefundPreviewResponse,
     RefundResponse,
-    RefundPreviewRequest,
     RefundRequest,
 } from '@/types/refund';
 import { handleApiError } from '@/utils/apiErrorHandler';
@@ -27,17 +25,9 @@ const fetchApi = async <T>(url: string, options: RequestInit = {}): Promise<T> =
 };
 
 export const refundApi = {
-    getPreview: (request: RefundPreviewRequest) =>
-        fetchApi<RefundPreviewResponse>(`${BASE_URL}/preview`, {
-            method: 'POST',
-            body: JSON.stringify(request),
-        }),
-
     processRefund: (request: RefundRequest) =>
         fetchApi<RefundResponse>(BASE_URL, {
             method: 'POST',
             body: JSON.stringify(request),
         }),
-
-    getUserRefunds: () => fetchApi<RefundResponse[]>(BASE_URL)
 };

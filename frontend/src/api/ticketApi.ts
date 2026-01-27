@@ -25,29 +25,27 @@ export const ticketApi = {
     getById: (ticketId: number) =>
         fetchApi<TicketResponse>(`${BASE_URL}/${ticketId}`),
 
+    getByCode: (ticketCode: string) =>
+        fetchApi<TicketResponse>(`${BASE_URL}/code/${ticketCode}`),
+
     getUserTickets: (status?: TicketStatus) => {
-        const url = status ? `${BASE_URL}?status=${status}` : BASE_URL;
+        const params = new URLSearchParams();
+        if (status) params.append('status', status);
+        const queryString = params.toString();
+        const url = queryString ? `${BASE_URL}?${queryString}` : BASE_URL;
         return fetchApi<TicketResponse[]>(url);
     },
 
-    getBookingTickets: (bookingId: number) =>
-        fetchApi<TicketResponse[]>(`${BASE_URL}/booking/${bookingId}`),
-
-    validate: (ticketCode: string) =>
-        fetchApi<string>(`${BASE_URL}/validate/${ticketCode}`, {
-            method: 'POST',
-        }),
+    getUpcomingTickets: () =>
+        fetchApi<TicketResponse[]>(`${BASE_URL}/upcoming`),
 
     getQrCode: (ticketCode: string) =>
         fetch(`${BASE_URL}/${ticketCode}/qr`, {
             headers: getAuthHeaders(),
         }),
 
-    voidTicket: (ticketId: number) =>
-        fetchApi<void>(`${BASE_URL}/${ticketId}/void`, {
+    validate: (ticketCode: string) =>
+        fetchApi<void>(`${BASE_URL}/${ticketCode}/validate`, {
             method: 'POST',
         }),
-
-    checkStatus: (ticketCode: string) =>
-        fetchApi<string>(`${BASE_URL}/${ticketCode}/status`)
 };

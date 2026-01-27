@@ -24,10 +24,4 @@ const fetchApi = async <T>(url: string, options: RequestInit = {}): Promise<T> =
 export const seatAvailabilityApi = {
     getSeatAvailability: (sessionId: number) =>
         fetchApi<SeatAvailabilityResponse>(`${BASE_URL}/${sessionId}/seats/availability`),
-
-    checkSeatAvailability: (sessionId: number, seatId: number) =>
-        fetchApi<void>(`${BASE_URL}/${sessionId}/seats/${seatId}/availability`),
-
-    getAvailableSeatsCount: (sessionId: number) =>
-        fetchApi<number>(`${BASE_URL}/${sessionId}/available-seats/count`)
 };

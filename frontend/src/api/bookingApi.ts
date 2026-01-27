@@ -36,10 +36,10 @@ export const bookingApi = {
     getById: (bookingId: number) =>
         fetchApi<BookingResponse>(`${BASE_URL}/${bookingId}`),
 
-    getUserBookings: (status?: BookingStatus, page?: number, size: number = 20): Promise<PageResponse<BookingResponse>> => {
+    getUserBookings: (status?: BookingStatus, page: number = 0, size: number = 20): Promise<PageResponse<BookingResponse>> => {
         const params = new URLSearchParams();
         if (status) params.append('status', status);
-        if (page !== undefined) params.append('page', page.toString());
+        params.append('page', page.toString());
         params.append('size', size.toString());
         const url = `${BASE_URL}?${params}`;
         return fetchApi<PageResponse<BookingResponse>>(url);
@@ -50,10 +50,6 @@ export const bookingApi = {
             method: 'DELETE',
         }),
 
-    getAvailableBonusPoints: (totalPrice: string) => {
-        const params = new URLSearchParams();
-        params.append('totalPrice', totalPrice);
-        const url = `${BASE_URL}/available-bonus-points?${params}`;
-        return fetchApi<number>(url);
-    }
+    getUpcomingTickets: () =>
+        fetchApi<BookingResponse[]>(`${BASE_URL}/upcoming`),
 };

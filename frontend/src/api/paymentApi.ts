@@ -37,18 +37,4 @@ export const paymentApi = {
 
     getLiqPayData: (paymentId: number) =>
         fetchApi<PaymentLiqPayDataResponse>(`${BASE_URL}/${paymentId}/liqpay-data`),
-
-    getStatus: (paymentId: number) =>
-        fetchApi<PaymentResponse>(`${BASE_URL}/${paymentId}/status`),
-
-    retry: (paymentId: number) =>
-        fetchApi<PaymentResponse>(`${BASE_URL}/${paymentId}/retry`, {
-            method: 'POST',
-        }),
-
-    getByBooking: (bookingId: number) =>
-        fetchApi<PaymentResponse>(`${BASE_URL}/booking/${bookingId}`),
-
-    testCallback: () =>
-        fetchApi<string>(`${BASE_URL}/test/callback`)
 };
