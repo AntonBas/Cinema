@@ -33,7 +33,4 @@ public interface TicketTypeRepository extends JpaRepository<TicketType, Long> {
 			+ "LOWER(t.displayName) LIKE LOWER(CONCAT('%', :search, '%')))")
 	List<TicketType> findByFilters(@Param("active") Boolean active, @Param("category") TicketTypeCategory category,
 			@Param("search") String search);
-
-	@Query("SELECT t FROM TicketType t WHERE t.active = true ORDER BY t.displayOrder ASC")
-	List<TicketType> findByActiveTrueOrderByDisplayOrderAsc();
 }
