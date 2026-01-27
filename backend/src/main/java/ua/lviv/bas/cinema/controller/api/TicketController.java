@@ -2,10 +2,6 @@ package ua.lviv.bas.cinema.controller.api;
 
 import java.util.List;
 
-import org.springframework.core.io.ByteArrayResource;
-import org.springframework.core.io.Resource;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -17,119 +13,84 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.enums.TicketStatus;
 import ua.lviv.bas.cinema.dto.ticket.response.TicketResponse;
 import ua.lviv.bas.cinema.security.CustomUserDetails;
-import ua.lviv.bas.cinema.service.booking.TicketService;
+import ua.lviv.bas.cinema.service.booking.ControllerFacade;
+import ua.lviv.bas.cinema.service.booking.ticket.TicketService;
 
 @Slf4j
 @RestController
 @RequestMapping("/api/tickets")
 @RequiredArgsConstructor
-@Tag(name = "Tickets", description = "APIs for managing and validating cinema tickets")
+@Tag(name = "Tickets", description = "Ticket management APIs")
 @SecurityRequirement(name = "bearerAuth")
 public class TicketController {
-
+	private final ControllerFacade controllerFacade;
 	private final TicketService ticketService;
 
-	@GetMapping("/{ticketId}")
-	@Operation(summary = "Get ticket details", description = "Retrieves detailed information about a specific ticket including QR code URL")
-	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Ticket details retrieved successfully"),
-			@ApiResponse(responseCode = "404", description = "Ticket not found"),
-			@ApiResponse(responseCode = "403", description = "Access denied to ticket") })
-	@PreAuthorize("hasRole('USER')")
-	public ResponseEntity<TicketResponse> getTicket(
-			@Parameter(description = "ID of the ticket", required = true) @PathVariable Long ticketId,
-			@AuthenticationPrincipal CustomUserDetails userDetails) {
-		log.info("Fetching ticket ID: {} for user ID: {}", ticketId, userDetails.getUserId());
-		TicketResponse response = ticketService.getTicketById(ticketId, userDetails.getUser());
-		return ResponseEntity.ok(response);
-	}
-
 	@GetMapping
-	@Operation(summary = "Get user tickets", description = "Retrieves a list of tickets for the authenticated user, optionally filtered by status")
-	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Tickets retrieved successfully"),
-			@ApiResponse(responseCode = "400", description = "Invalid status parameter") })
+	@Operation(summary = "Get user tickets", description = "Get all tickets for authenticated user")
 	@PreAuthorize("hasRole('USER')")
-	public ResponseEntity<List<TicketResponse>> getUserTickets(
-			@Parameter(description = "Filter by ticket status") @RequestParam(required = false) TicketStatus status,
+	public ResponseEntity<List<TicketResponse>> getUserTickets(@RequestParam(required = false) TicketStatus status,
 			@AuthenticationPrincipal CustomUserDetails userDetails) {
-		log.info("Fetching tickets for user ID: {} with status filter: {}", userDetails.getUserId(), status);
-		List<TicketResponse> tickets = ticketService.getUserTickets(userDetails.getUser(), status);
+		User user = userDetails.getUser();
+		log.info("Getting tickets for user ID: {} with status: {}", user.getId(), status);
+		List<TicketResponse> tickets = controllerFacade.getUserTickets(user, status);
 		return ResponseEntity.ok(tickets);
 	}
 
-	@GetMapping("/booking/{bookingId}")
-	@Operation(summary = "Get tickets for booking", description = "Retrieves all tickets associated with a specific booking")
-	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Tickets retrieved successfully"),
-			@ApiResponse(responseCode = "404", description = "Booking not found"),
-			@ApiResponse(responseCode = "403", description = "Access denied to booking") })
+	@GetMapping("/upcoming")
+	@Operation(summary = "Get upcoming tickets", description = "Get upcoming tickets for authenticated user")
 	@PreAuthorize("hasRole('USER')")
-	public ResponseEntity<List<TicketResponse>> getBookingTickets(
-			@Parameter(description = "ID of the booking", required = true) @PathVariable Long bookingId,
+	public ResponseEntity<List<TicketResponse>> getUpcomingTickets(
 			@AuthenticationPrincipal CustomUserDetails userDetails) {
-		log.info("Fetching tickets for booking ID: {} for user ID: {}", bookingId, userDetails.getUserId());
-		List<TicketResponse> tickets = ticketService.getBookingTickets(bookingId, userDetails.getUser());
+		User user = userDetails.getUser();
+		log.info("Getting upcoming tickets for user ID: {}", user.getId());
+		List<TicketResponse> tickets = controllerFacade.getUpcomingTickets(user);
 		return ResponseEntity.ok(tickets);
 	}
 
-	@PostMapping("/validate/{ticketCode}")
-	@Operation(summary = "Validate ticket", description = "Validates a ticket for entry and marks it as used if valid")
-	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Ticket validated successfully"),
-			@ApiResponse(responseCode = "400", description = "Ticket validation failed"),
-			@ApiResponse(responseCode = "404", description = "Ticket not found") })
-	public ResponseEntity<String> validateTicket(
-			@Parameter(description = "Unique ticket code", required = true) @PathVariable String ticketCode) {
-		log.info("Validating ticket with code: {}", ticketCode);
-		ticketService.validateTicket(ticketCode);
-		return ResponseEntity.ok("Ticket validated successfully");
+	@GetMapping("/{ticketId}")
+	@Operation(summary = "Get ticket details", description = "Get ticket details by ID")
+	@PreAuthorize("hasRole('USER')")
+	public ResponseEntity<TicketResponse> getTicketById(@PathVariable Long ticketId,
+			@AuthenticationPrincipal CustomUserDetails userDetails) {
+		User user = userDetails.getUser();
+		log.info("Getting ticket ID: {} for user ID: {}", ticketId, user.getId());
+		TicketResponse ticket = controllerFacade.getTicketById(ticketId, user);
+		return ResponseEntity.ok(ticket);
+	}
+
+	@GetMapping("/code/{ticketCode}")
+	@Operation(summary = "Get ticket by code", description = "Get ticket details by code")
+	@PreAuthorize("hasRole('USER')")
+	public ResponseEntity<TicketResponse> getTicketByCode(@PathVariable String ticketCode,
+			@AuthenticationPrincipal CustomUserDetails userDetails) {
+		User user = userDetails.getUser();
+		log.info("Getting ticket by code: {} for user ID: {}", ticketCode, user.getId());
+		TicketResponse ticket = controllerFacade.getTicketByCode(ticketCode, user);
+		return ResponseEntity.ok(ticket);
 	}
 
 	@GetMapping("/{ticketCode}/qr")
-	@Operation(summary = "Get ticket QR code", description = "Generates and returns a QR code image for ticket validation")
-	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "QR code generated successfully"),
-			@ApiResponse(responseCode = "404", description = "Ticket not found") })
-	public ResponseEntity<Resource> getTicketQrCode(
-			@Parameter(description = "Unique ticket code", required = true) @PathVariable String ticketCode) {
+	@Operation(summary = "Get ticket QR code", description = "Generate QR code for ticket validation")
+	public ResponseEntity<byte[]> getTicketQRCode(@PathVariable String ticketCode) {
 		log.info("Generating QR code for ticket: {}", ticketCode);
 		byte[] qrCode = ticketService.generateTicketQRCode(ticketCode);
-
-		ByteArrayResource resource = new ByteArrayResource(qrCode);
-
-		return ResponseEntity.ok().contentType(MediaType.IMAGE_PNG)
-				.header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"ticket-qr.png\"").body(resource);
+		return ResponseEntity.ok().header("Content-Type", "image/png").body(qrCode);
 	}
 
-	@PostMapping("/{ticketId}/void")
-	@Operation(summary = "Void a ticket", description = "Cancels a ticket if it hasn't been used yet")
-	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Ticket voided successfully"),
-			@ApiResponse(responseCode = "400", description = "Ticket cannot be voided"),
-			@ApiResponse(responseCode = "404", description = "Ticket not found"),
-			@ApiResponse(responseCode = "403", description = "Access denied to ticket") })
-	@PreAuthorize("hasRole('USER')")
-	public ResponseEntity<Void> voidTicket(
-			@Parameter(description = "ID of the ticket to void", required = true) @PathVariable Long ticketId,
-			@AuthenticationPrincipal CustomUserDetails userDetails) {
-		log.info("Voiding ticket ID: {} for user ID: {}", ticketId, userDetails.getUserId());
-		ticketService.voidTicket(ticketId, userDetails.getUser());
+	@PostMapping("/{ticketCode}/validate")
+	@Operation(summary = "Validate ticket", description = "Validate ticket for entry (used by staff)")
+	public ResponseEntity<Void> validateTicket(@PathVariable String ticketCode) {
+		log.info("Validating ticket: {}", ticketCode);
+		ticketService.validateTicket(ticketCode);
 		return ResponseEntity.ok().build();
-	}
-
-	@GetMapping("/{ticketCode}/status")
-	@Operation(summary = "Check ticket status", description = "Checks the current status of a ticket without validating it")
-	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Ticket status retrieved successfully"),
-			@ApiResponse(responseCode = "404", description = "Ticket not found") })
-	public ResponseEntity<String> checkTicketStatus(
-			@Parameter(description = "Unique ticket code", required = true) @PathVariable String ticketCode) {
-		log.info("Checking status for ticket: {}", ticketCode);
-		TicketStatus status = ticketService.checkTicketStatus(ticketCode);
-		return ResponseEntity.ok(status != null ? status.toString() : "NOT_FOUND");
 	}
 }

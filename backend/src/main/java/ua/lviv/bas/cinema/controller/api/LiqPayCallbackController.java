@@ -12,8 +12,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import ua.lviv.bas.cinema.dto.payment.request.LiqPayCallbackRequest;
-import ua.lviv.bas.cinema.service.booking.PaymentService;
+import ua.lviv.bas.cinema.service.booking.payment.PaymentStatusService;
 
 @Slf4j
 @RestController
@@ -21,8 +20,7 @@ import ua.lviv.bas.cinema.service.booking.PaymentService;
 @RequiredArgsConstructor
 @Tag(name = "LiqPay Callback", description = "Callback endpoint for LiqPay payment gateway")
 public class LiqPayCallbackController {
-
-	private final PaymentService paymentService;
+	private final PaymentStatusService paymentStatusService;
 
 	@PostMapping("/callback")
 	@Operation(summary = "LiqPay callback endpoint", description = "Receives payment notifications from LiqPay")
@@ -31,15 +29,8 @@ public class LiqPayCallbackController {
 	public ResponseEntity<String> handleLiqPayCallback(@RequestParam("data") String data,
 			@RequestParam("signature") String signature) {
 
-		log.info("=== LIQPAY CALLBACK RECEIVED ===");
-		log.info("Data length: {}", data != null ? data.length() : 0);
-		log.info("Signature present: {}", signature != null && !signature.isEmpty());
-
-		LiqPayCallbackRequest callbackRequest = new LiqPayCallbackRequest();
-		callbackRequest.setData(data);
-		callbackRequest.setSignature(signature);
-
-		paymentService.processLiqPayCallback(callbackRequest);
+		log.info("Processing LiqPay callback");
+		paymentStatusService.handleLiqPayCallback(data, signature);
 		return ResponseEntity.ok("OK");
 	}
 }

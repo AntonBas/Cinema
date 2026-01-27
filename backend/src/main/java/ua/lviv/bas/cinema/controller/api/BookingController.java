@@ -1,7 +1,5 @@
 package ua.lviv.bas.cinema.controller.api;
 
-import java.math.BigDecimal;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -31,7 +29,7 @@ import ua.lviv.bas.cinema.domain.enums.BookingStatus;
 import ua.lviv.bas.cinema.dto.booking.request.BookingCreateRequest;
 import ua.lviv.bas.cinema.dto.booking.response.BookingResponse;
 import ua.lviv.bas.cinema.security.CustomUserDetails;
-import ua.lviv.bas.cinema.service.booking.BookingService;
+import ua.lviv.bas.cinema.service.booking.ControllerFacade;
 
 @Slf4j
 @RestController
@@ -40,8 +38,7 @@ import ua.lviv.bas.cinema.service.booking.BookingService;
 @Tag(name = "Bookings", description = "APIs for managing cinema bookings")
 @SecurityRequirement(name = "bearerAuth")
 public class BookingController {
-
-	private final BookingService bookingService;
+	private final ControllerFacade controllerFacade;
 
 	@PostMapping
 	@Operation(summary = "Create a new booking", description = "Creates a new booking for a cinema session with selected seats and ticket types")
@@ -54,7 +51,7 @@ public class BookingController {
 			@AuthenticationPrincipal CustomUserDetails userDetails) {
 		User user = userDetails.getUser();
 		log.info("Creating new booking for user ID: {}, session ID: {}", user.getId(), request.getSessionId());
-		BookingResponse response = bookingService.createBooking(request, user);
+		BookingResponse response = controllerFacade.createBooking(request, user);
 		return ResponseEntity.status(HttpStatus.CREATED).body(response);
 	}
 
@@ -68,7 +65,7 @@ public class BookingController {
 			@AuthenticationPrincipal CustomUserDetails userDetails) {
 		User user = userDetails.getUser();
 		log.info("Fetching booking ID: {} for user ID: {}", bookingId, user.getId());
-		BookingResponse response = bookingService.getBookingById(bookingId, user);
+		BookingResponse response = controllerFacade.getBookingById(bookingId, user);
 		return ResponseEntity.ok(response);
 	}
 
@@ -82,7 +79,7 @@ public class BookingController {
 			@AuthenticationPrincipal CustomUserDetails userDetails) {
 		User user = userDetails.getUser();
 		log.info("Fetching bookings for user ID: {} with status filter: {}", user.getId(), status);
-		Page<BookingResponse> bookings = bookingService.getUserBookings(user.getId(), status, pageable);
+		Page<BookingResponse> bookings = controllerFacade.getUserBookings(user.getId(), status, pageable);
 		return ResponseEntity.ok(bookings);
 	}
 
@@ -97,20 +94,7 @@ public class BookingController {
 			@AuthenticationPrincipal CustomUserDetails userDetails) {
 		User user = userDetails.getUser();
 		log.info("Cancelling booking ID: {} for user ID: {}", bookingId, user.getId());
-		bookingService.cancelBooking(bookingId, user);
+		controllerFacade.cancelBooking(bookingId, user);
 		return ResponseEntity.noContent().build();
-	}
-
-	@GetMapping("/available-bonus-points")
-	@Operation(summary = "Get available bonus points for booking", description = "Calculates available bonus points that can be used for a booking based on total price")
-	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Available points calculated successfully") })
-	@PreAuthorize("hasRole('USER')")
-	public ResponseEntity<Integer> getAvailableBonusPoints(@RequestParam BigDecimal totalPrice,
-			@AuthenticationPrincipal CustomUserDetails userDetails) {
-		User user = userDetails.getUser();
-		log.info("Calculating available bonus points for user ID: {} with total price: {}", user.getId(), totalPrice);
-		Integer availablePoints = bookingService.getAvailableBonusPointsForBooking(user.getId(), totalPrice);
-		return ResponseEntity.ok(availablePoints);
 	}
 }

@@ -29,8 +29,7 @@ import ua.lviv.bas.cinema.domain.enums.TicketTypeCategory;
 import ua.lviv.bas.cinema.dto.ticket.request.TicketTypeCreateRequest;
 import ua.lviv.bas.cinema.dto.ticket.request.TicketTypeUpdateRequest;
 import ua.lviv.bas.cinema.dto.ticket.response.TicketTypeResponse;
-import ua.lviv.bas.cinema.dto.ticket.response.TicketTypeSimpleResponse;
-import ua.lviv.bas.cinema.service.booking.TicketTypeService;
+import ua.lviv.bas.cinema.service.booking.types.TicketTypeService;
 
 @Slf4j
 @RestController
@@ -133,16 +132,5 @@ public class AdminTicketTypeController {
 		log.info("Toggling active status for ticket type ID: {}", id);
 		var ticketType = ticketTypeService.toggleTicketTypeActiveStatus(id);
 		return ResponseEntity.ok(ticketType);
-	}
-
-	@GetMapping("/simple")
-	@Operation(summary = "Get simple list of ticket types")
-	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Ticket types retrieved successfully") })
-	@PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
-	public ResponseEntity<List<TicketTypeSimpleResponse>> getSimpleTicketTypes(
-			@Parameter(description = "Filter by active status") @RequestParam(required = false, defaultValue = "true") Boolean active) {
-		log.info("Getting simple ticket types with active filter: {}", active);
-		List<TicketTypeSimpleResponse> ticketTypes = ticketTypeService.getSimpleTicketTypes(active);
-		return ResponseEntity.ok(ticketTypes);
 	}
 }
