@@ -80,13 +80,12 @@ export const useLiqPayPayment = () => {
         return `${diffMinutes} minutes`;
     }, [paymentStatus]);
 
-    const openLiqPayPopup = useCallback((): void => {
+    const redirectToLiqPay = useCallback((): void => {
         if (!liqPayData) return;
 
         const form = document.createElement('form');
         form.method = 'POST';
         form.action = 'https://www.liqpay.ua/api/3/checkout';
-        form.target = '_blank';
 
         const dataInput = document.createElement('input');
         dataInput.type = 'hidden';
@@ -102,7 +101,6 @@ export const useLiqPayPayment = () => {
 
         document.body.appendChild(form);
         form.submit();
-        document.body.removeChild(form);
     }, [liqPayData]);
 
     const getLiqPayFormData = useCallback((): { data: string; signature: string } | null => {
@@ -140,7 +138,7 @@ export const useLiqPayPayment = () => {
         startStatusPolling,
         stopStatusPolling,
         getPaymentTimeLeft,
-        openLiqPayPopup,
+        redirectToLiqPay,
         getLiqPayFormData,
         reset,
         isPaymentInProgress,

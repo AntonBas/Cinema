@@ -36,7 +36,7 @@ export const PaymentPage: React.FC = () => {
     const { handleCreate, paymentResult, error: createError } = usePaymentForm();
     const {
         initializePayment,
-        openLiqPayPopup,
+        redirectToLiqPay,
         paymentStatus,
         error: liqPayError,
         getPaymentTimeLeft,
@@ -145,7 +145,7 @@ export const PaymentPage: React.FC = () => {
         if (!paymentResult?.id) return;
 
         setStep('paying');
-        openLiqPayPopup();
+        redirectToLiqPay();
         startPolling(paymentResult.id);
     };
 
@@ -239,12 +239,12 @@ export const PaymentPage: React.FC = () => {
                 return (
                     <div className={styles.statusContainer}>
                         <Loader2 className={styles.loadingSpinner} size={64} />
-                        <h3 className={styles.statusTitle}>Awaiting Payment</h3>
-                        <p className={styles.statusMessage}>Please complete the payment in the opened window</p>
+                        <h3 className={styles.statusTitle}>Redirecting to Payment</h3>
+                        <p className={styles.statusMessage}>You will be redirected to the payment page</p>
                         <p className={styles.statusMessage}>Time left: {getPaymentTimeLeft() || '30 minutes'}</p>
                         <div className={styles.alertContainer}>
                             <AlertCircle size={16} />
-                            <p>Do not close this page until payment is complete</p>
+                            <p>Please complete the payment on the next page</p>
                         </div>
                     </div>
                 );
@@ -398,7 +398,7 @@ export const PaymentPage: React.FC = () => {
                             <h3 className={styles.paymentTitle}>Payment Details</h3>
                             <p className={styles.paymentDescription}>
                                 {step === 'ready' && 'Select payment method and proceed'}
-                                {step === 'paying' && 'Processing your payment'}
+                                {step === 'paying' && 'Redirecting to payment page'}
                                 {step === 'success' && 'Payment completed successfully'}
                                 {step === 'failed' && 'Payment processing failed'}
                                 {step === 'processing' && 'Setting up your payment'}

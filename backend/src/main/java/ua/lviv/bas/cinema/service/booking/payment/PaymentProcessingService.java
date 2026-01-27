@@ -98,7 +98,6 @@ public class PaymentProcessingService {
 					payment.getBooking(), payment);
 		}
 
-		ticketService.sendTicketsToUser(payment.getBooking());
 		notificationService.sendPaymentSuccessEmail(payment, payment.getBooking(), tickets);
 
 		log.info("Payment {} completed successfully", payment.getId());
