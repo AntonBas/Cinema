@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useTicketTypeList } from '@/hooks/features/ticketType/useTicketTypeList';
+import { useAdminTicketTypes } from '@/hooks/features/ticketType/useAdminTicketTypes';
 import { Button } from '@/components/ui/Button';
 import TicketTypeTable from './TicketTypeTable/TicketTypeTable';
 import TicketTypeFilters from './TicketTypeFilters/TicketTypeFilters';
@@ -21,14 +22,14 @@ const SectionTicketType = () => {
         loading,
         error,
         refresh,
-        deleteTicketType,
-        toggleTicketTypeActive
-    } = useTicketTypeList({
-        statusFilter,
-        categoryFilter,
-        searchQuery,
-        autoFetch: true
-    });
+        removeTicketType: removeTicketTypeFromList } = useTicketTypeList({
+            statusFilter,
+            categoryFilter,
+            searchQuery,
+            autoFetch: true
+        });
+
+    const { remove, toggleActive } = useAdminTicketTypes();
 
     const handleCreateSuccess = () => {
         setShowCreateModal(false);
@@ -41,11 +42,21 @@ const SectionTicketType = () => {
     };
 
     const handleDelete = async (id: number) => {
-        await deleteTicketType(id);
+        try {
+            await remove(id);
+            removeTicketTypeFromList(id);
+        } catch (err) {
+            console.error('Failed to delete ticket type:', err);
+        }
     };
 
     const handleToggleActive = async (id: number) => {
-        await toggleTicketTypeActive(id);
+        try {
+            await toggleActive(id);
+            refresh();
+        } catch (err) {
+            console.error('Failed to toggle active status:', err);
+        }
     };
 
     const handleEdit = (ticketType: TicketTypeResponse) => {

@@ -4,13 +4,13 @@ import { AccountSidebar } from '@/components/account/AccountSidebar/AccountSideb
 import { TicketsList } from '@/components/account/TicketsList/TicketsList';
 import { TicketFilters } from '@/components/account/TicketFilters/TicketFilters';
 import { Button, Notification } from '@/components/ui';
-import { useTicketManagement } from '@/hooks/features/tickets/useTicketManagement';
+import { useTickets } from '@/hooks/features/tickets/useTickets';
 import { useTicketFilters } from '@/hooks/features/tickets/useTicketFilters';
 import type { TicketResponse, TicketStatus } from '@/types/ticket';
 import styles from './TicketsPage.module.css';
 
 export const TicketsPage: React.FC = () => {
-    const { getUserTickets, loading, error } = useTicketManagement();
+    const { getUserTickets, loading, error } = useTickets();
     const [tickets, setTickets] = useState<TicketResponse[]>([]);
     const [activeTab, setActiveTab] = useState<TicketStatus | 'all'>('all');
     const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null);

@@ -15,9 +15,9 @@ const SuccessPage = () => {
         fetchPaymentData,
         getResultMessage,
         getResultType,
-        getResultIcon,
         getPaymentDetails,
-        hasPaymentData } = usePaymentResult();
+        hasPaymentData
+    } = usePaymentResult();
 
     const [isPolling, setIsPolling] = useState(false);
     const [pollingCount, setPollingCount] = useState(0);
@@ -43,7 +43,7 @@ const SuccessPage = () => {
                 }
                 return prev + 1;
             });
-            fetchPaymentData(bookingId || undefined, paymentId || undefined);
+            fetchPaymentData(paymentId);
         }, 5000);
 
         return () => {
@@ -53,7 +53,7 @@ const SuccessPage = () => {
             }
             setIsPolling(false);
         };
-    }, [paymentId, isPolling, bookingId, fetchPaymentData]);
+    }, [paymentId, isPolling, fetchPaymentData]);
 
     const stopPolling = useCallback(() => {
         if (pollingRef.current) {
@@ -72,7 +72,11 @@ const SuccessPage = () => {
     useEffect(() => {
         if (isInitialMount.current) {
             isInitialMount.current = false;
-            fetchPaymentData(bookingId || undefined, paymentId || undefined);
+            if (paymentId) {
+                fetchPaymentData(paymentId);
+            } else if (bookingId) {
+                fetchPaymentData(bookingId);
+            }
         }
     }, [bookingId, paymentId, fetchPaymentData]);
 
@@ -111,24 +115,6 @@ const SuccessPage = () => {
         navigate('/support');
     };
 
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('uk-UA', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    };
-
-    const formatTime = (dateString: string) => {
-        return new Date(dateString).toLocaleTimeString('uk-UA', {
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    };
-
     if (loading && !hasPaymentData && !paymentData) {
         return (
             <div className={styles.loadingContainer}>
@@ -138,7 +124,6 @@ const SuccessPage = () => {
     }
 
     const resultType = getResultType();
-    const resultIcon = getResultIcon();
     const resultMessage = getResultMessage();
     const paymentDetails = getPaymentDetails();
 
@@ -171,7 +156,17 @@ const SuccessPage = () => {
         }
     };
 
+    const getResultIcon = () => {
+        switch (resultType) {
+            case 'success': return '✓';
+            case 'error': return '✗';
+            case 'warning': return '⏳';
+            default: return 'ℹ️';
+        }
+    };
+
     const resultStyles = getResultStyles();
+    const resultIcon = getResultIcon();
 
     return (
         <div className={styles.container}>
@@ -207,38 +202,20 @@ const SuccessPage = () => {
                             <div className={styles.detailsGrid}>
                                 <div className={styles.detailItem}>
                                     <p className={styles.detailLabel}>Booking Number</p>
-                                    <p className={styles.detailValue}>{paymentDetails.bookingNumber}</p>
-                                </div>
-                                <div className={styles.detailItem}>
-                                    <p className={styles.detailLabel}>Movie</p>
-                                    <p className={styles.detailValue}>{paymentDetails.movieTitle}</p>
-                                </div>
-                                <div className={styles.detailItem}>
-                                    <p className={styles.detailLabel}>Hall</p>
-                                    <p className={styles.detailValue}>{paymentDetails.hallName}</p>
-                                </div>
-                                <div className={styles.detailItem}>
-                                    <p className={styles.detailLabel}>Session Time</p>
-                                    <p className={styles.detailValue}>
-                                        {formatDate(paymentDetails.sessionTime)}
-                                    </p>
+                                    <p className={styles.detailValue}>{paymentDetails.bookingId}</p>
                                 </div>
                                 <div className={styles.detailItem}>
                                     <p className={styles.detailLabel}>Amount</p>
-                                    <p className={styles.detailPrice}>{paymentDetails.finalAmount} UAH</p>
+                                    <p className={styles.detailPrice}>{paymentDetails.amount} UAH</p>
                                 </div>
-                                {paymentDetails.paymentTime && (
+                                <div className={styles.detailItem}>
+                                    <p className={styles.detailLabel}>Status</p>
+                                    <p className={styles.detailValue}>{paymentDetails.status}</p>
+                                </div>
+                                {paymentDetails.liqpayOrderId && (
                                     <div className={styles.detailItem}>
-                                        <p className={styles.detailLabel}>Payment Time</p>
-                                        <p className={styles.detailValue}>
-                                            {formatTime(paymentDetails.paymentTime)}
-                                        </p>
-                                    </div>
-                                )}
-                                {paymentDetails.senderCardMask && (
-                                    <div className={styles.detailItem}>
-                                        <p className={styles.detailLabel}>Card</p>
-                                        <p className={styles.detailValue}>{paymentDetails.senderCardMask}</p>
+                                        <p className={styles.detailLabel}>LiqPay Order ID</p>
+                                        <p className={styles.detailValue}>{paymentDetails.liqpayOrderId}</p>
                                     </div>
                                 )}
                             </div>

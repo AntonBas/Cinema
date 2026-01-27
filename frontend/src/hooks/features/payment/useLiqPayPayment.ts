@@ -1,12 +1,14 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { usePayment } from './usePayment';
-import type { PaymentLiqPayDataResponse } from '@/types/payment';
+import type { PaymentLiqPayDataResponse, PaymentResponse } from '@/types/payment';
 
 export const useLiqPayPayment = () => {
-    const { getLiqPayData, loading, error, clearError } = usePayment();
+    const { getLiqPayData, getById, loading, error, clearError } = usePayment();
 
     const [liqPayData, setLiqPayData] = useState<PaymentLiqPayDataResponse | null>(null);
+    const [paymentStatus, setPaymentStatus] = useState<PaymentResponse | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
+    const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
     const initializePayment = useCallback(async (paymentId: number): Promise<PaymentLiqPayDataResponse | null> => {
         setIsProcessing(true);
@@ -14,13 +16,69 @@ export const useLiqPayPayment = () => {
         try {
             const data = await getLiqPayData(paymentId);
             setLiqPayData(data);
+
+            const status = await getById(paymentId);
+            setPaymentStatus(status);
+
             return data;
         } catch {
             return null;
         } finally {
             setIsProcessing(false);
         }
-    }, [getLiqPayData, clearError]);
+    }, [getLiqPayData, getById, clearError]);
+
+    const checkPaymentStatus = useCallback(async (paymentId: number): Promise<PaymentResponse | null> => {
+        clearError();
+        try {
+            const status = await getById(paymentId);
+            setPaymentStatus(status);
+            return status;
+        } catch {
+            return null;
+        }
+    }, [getById, clearError]);
+
+    const startStatusPolling = useCallback((paymentId: number, intervalMs: number = 5000) => {
+        if (pollingIntervalRef.current) {
+            clearInterval(pollingIntervalRef.current);
+        }
+
+        const interval = setInterval(async () => {
+            const status = await checkPaymentStatus(paymentId);
+
+            if (status && (status.status === 'SUCCESS' || status.status === 'FAILED' || status.status === 'CANCELLED' || status.status === 'EXPIRED')) {
+                if (pollingIntervalRef.current) {
+                    clearInterval(pollingIntervalRef.current);
+                    pollingIntervalRef.current = null;
+                }
+            }
+        }, intervalMs);
+
+        pollingIntervalRef.current = interval;
+        return interval;
+    }, [checkPaymentStatus]);
+
+    const stopStatusPolling = useCallback(() => {
+        if (pollingIntervalRef.current) {
+            clearInterval(pollingIntervalRef.current);
+            pollingIntervalRef.current = null;
+        }
+    }, []);
+
+    const getPaymentTimeLeft = useCallback((): string | null => {
+        if (!paymentStatus || !paymentStatus.createdAt) return null;
+
+        const createdAt = new Date(paymentStatus.createdAt);
+        const now = new Date();
+        const expiresAt = new Date(createdAt.getTime() + 30 * 60 * 1000);
+        const diffMs = expiresAt.getTime() - now.getTime();
+
+        if (diffMs <= 0) return 'Expired';
+
+        const diffMinutes = Math.floor(diffMs / (1000 * 60));
+        return `${diffMinutes} minutes`;
+    }, [paymentStatus]);
 
     const openLiqPayPopup = useCallback((): void => {
         if (!liqPayData) return;
@@ -57,17 +115,37 @@ export const useLiqPayPayment = () => {
 
     const reset = useCallback(() => {
         setLiqPayData(null);
+        setPaymentStatus(null);
+        stopStatusPolling();
         clearError();
-    }, [clearError]);
+    }, [stopStatusPolling, clearError]);
+
+    const isPaymentInProgress = useCallback((): boolean => {
+        if (!paymentStatus) return false;
+        return paymentStatus.status === 'PENDING' || paymentStatus.status === 'PROCESSING';
+    }, [paymentStatus]);
+
+    const isPaymentComplete = useCallback((): boolean => {
+        if (!paymentStatus) return false;
+        return paymentStatus.status === 'SUCCESS';
+    }, [paymentStatus]);
 
     return {
         loading: loading || isProcessing,
         error,
         liqPayData,
+        paymentStatus,
         initializePayment,
+        checkPaymentStatus,
+        startStatusPolling,
+        stopStatusPolling,
+        getPaymentTimeLeft,
         openLiqPayPopup,
         getLiqPayFormData,
         reset,
-        hasLiqPayData: !!liqPayData
+        isPaymentInProgress,
+        isPaymentComplete,
+        hasLiqPayData: !!liqPayData,
+        hasPaymentStatus: !!paymentStatus
     };
 };

@@ -48,6 +48,17 @@ export const useSeatAvailability = (sessionId: number) => {
         }
     }, [sessionId, fetchApi]);
 
+    const checkSpecificSeat = useCallback(async (seatId: number): Promise<boolean> => {
+        if (!seatData) return false;
+
+        try {
+            await fetchApi<void>(`${BASE_URL}/${sessionId}/seats/${seatId}/availability`);
+            return true;
+        } catch {
+            return false;
+        }
+    }, [sessionId, fetchApi, seatData]);
+
     const getSeatInfo = useCallback((seatId: number) => {
         if (!seatData) return null;
         return seatData.seats.find(seat => seat.id === seatId) || null;
@@ -76,6 +87,7 @@ export const useSeatAvailability = (sessionId: number) => {
         loading,
         error,
         fetchSeatAvailability,
+        checkSpecificSeat,
         getSeatInfo,
         filterSeatsByRow,
         getSeatPrice,
