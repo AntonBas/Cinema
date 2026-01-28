@@ -1,0 +1,1 @@
+export { TicketQRModal } from './TicketQRModal';

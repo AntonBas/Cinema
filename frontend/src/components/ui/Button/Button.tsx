@@ -2,7 +2,7 @@ import React from 'react';
 import styles from './Button.module.css';
 import clsx from 'clsx';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'error' | 'success' | 'cancel';
+export type ButtonVariant = 'primary' | 'secondary' | 'error' | 'success' | 'cancel' | 'outline';
 export type ButtonSize = 'small' | 'medium' | 'large';
 
 export interface ButtonProps {
@@ -16,6 +16,7 @@ export interface ButtonProps {
     className?: string;
     style?: React.CSSProperties;
     'aria-label'?: string;
+    icon?: React.ReactNode;
 }
 
 export const Button: React.FC<ButtonProps> = ({
@@ -28,13 +29,15 @@ export const Button: React.FC<ButtonProps> = ({
     onClick,
     className = '',
     style,
-    'aria-label': ariaLabel
+    'aria-label': ariaLabel,
+    icon
 }) => {
     const buttonClass = clsx(
         styles.button,
         styles[variant],
         styles[size],
         loading && styles.loading,
+        disabled && styles.disabled,
         className
     );
 
@@ -49,6 +52,7 @@ export const Button: React.FC<ButtonProps> = ({
             aria-busy={loading}
         >
             {loading && <span className={styles.spinner} aria-hidden="true">⏳</span>}
+            {icon && <span className={styles.icon}>{icon}</span>}
             {children}
         </button>
     );

@@ -5,30 +5,40 @@ import styles from './TicketsList.module.css';
 
 interface TicketsListProps {
     tickets: TicketResponse[];
+    viewMode: 'grid' | 'list';
+    onShowQR: (ticketCode: string) => void;
+    onViewDetails?: (ticket: TicketResponse) => void;
 }
 
-export const TicketsList: React.FC<TicketsListProps> = ({ tickets }) => {
+export const TicketsList: React.FC<TicketsListProps> = ({
+    tickets,
+    viewMode,
+    onShowQR,
+    onViewDetails
+}) => {
     if (!tickets || tickets.length === 0) {
         return (
-            <div className={styles.ticketsList}>
-                <div className={styles.empty}>
-                    No tickets available
-                </div>
+            <div className={styles.emptyState}>
+                <div className={styles.emptyIcon}>🎫</div>
+                <h3 className={styles.emptyTitle}>No tickets found</h3>
+                <p className={styles.emptyDescription}>
+                    No tickets match your current filters
+                </p>
             </div>
         );
     }
 
     return (
-        <div className={styles.ticketsList}>
-            <div className={styles.header}>
-                <h2 className={styles.title}>My Tickets ({tickets.length})</h2>
-            </div>
-
-            <div className={styles.grid}>
-                {tickets.map(ticket => (
-                    <TicketCard key={ticket.id} ticket={ticket} />
-                ))}
-            </div>
+        <div className={viewMode === 'grid' ? styles.gridView : styles.listView}>
+            {tickets.map(ticket => (
+                <TicketCard
+                    key={ticket.id}
+                    ticket={ticket}
+                    viewMode={viewMode}
+                    onShowQR={onShowQR}
+                    onViewDetails={onViewDetails}
+                />
+            ))}
         </div>
     );
 };

@@ -1,16 +1,17 @@
-.ticketCard {
-    background: var(--color-bg-tertiary);
-    border-radius: var(--radius-lg);
+.ticketCardGrid {
+    background: var(--color-bg-secondary);
     border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
     overflow: hidden;
     transition: var(--transition-normal);
     display: flex;
     flex-direction: column;
+    height: 100%;
 }
 
-.ticketCard:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
+.ticketCardGrid:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
     border-color: var(--color-primary);
 }
 
@@ -19,14 +20,29 @@
     justify-content: space-between;
     align-items: center;
     padding: var(--space-4);
-    background: var(--color-bg-secondary);
+    background: var(--color-bg-tertiary);
     border-bottom: 1px solid var(--color-border);
 }
 
-.headerLeft {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-2);
+.statusBadge {
+    padding: var(--space-1) var(--space-3);
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    color: white;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.ticketCode {
+    font-family: 'Courier New', monospace;
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
+    font-weight: 500;
+}
+
+.cardContent {
+    padding: var(--space-6);
     flex: 1;
 }
 
@@ -34,107 +50,230 @@
     font-size: var(--font-size-lg);
     font-weight: 600;
     color: var(--color-text-primary);
-    margin: 0;
-    line-height: 1.3;
+    margin: 0 0 var(--space-4) 0;
+    line-height: 1.4;
 }
 
-.ticketCode {
-    font-family: 'Courier New', monospace;
-    font-size: var(--font-size-sm);
-    color: var(--color-primary);
-    background: rgba(var(--color-primary-rgb), var(--opacity-low));
-    padding: var(--space-1) var(--space-3);
-    border-radius: var(--radius-sm);
-    border: 1px solid rgba(var(--color-primary-rgb), var(--opacity-medium));
-    font-weight: 600;
-    letter-spacing: 1px;
-    white-space: nowrap;
-}
-
-.cardContent {
-    padding: var(--space-4);
+.detailsGrid {
     display: grid;
-    grid-template-columns: 1fr auto;
-    gap: var(--space-6);
-    flex: 1;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-4);
 }
 
-.sessionInfo,
-.purchaseInfo {
+.detailItem {
     display: flex;
-    flex-direction: column;
+    align-items: flex-start;
     gap: var(--space-3);
 }
 
-.infoRow {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
+.detailIcon {
+    color: var(--color-primary);
+    flex-shrink: 0;
+    margin-top: 2px;
 }
 
-.infoLabel {
+.detailLabel {
     font-size: var(--font-size-xs);
     color: var(--color-text-secondary);
-    font-weight: 500;
-    min-width: 70px;
+    margin-bottom: 2px;
 }
 
-.infoValue {
+.detailValue {
     font-size: var(--font-size-sm);
     color: var(--color-text-primary);
     font-weight: 500;
 }
 
-.price {
-    font-size: var(--font-size-lg);
-    font-weight: 700;
-    color: var(--color-primary);
-    text-align: right;
-    margin-top: var(--space-2);
+.cardFooter {
+    padding: var(--space-6);
+    background: var(--color-bg-tertiary);
+    border-top: 1px solid var(--color-border);
 }
 
-.cardActions {
-    padding: var(--space-4);
+.priceSection {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-4);
+}
+
+.priceLabel {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+}
+
+.priceValue {
+    font-size: var(--font-size-xl);
+    font-weight: 700;
+    color: var(--color-primary);
+}
+
+.actionButtons {
+    display: flex;
+    gap: var(--space-3);
+}
+
+.actionButtons button {
+    flex: 1;
+}
+
+.ticketCardList {
     background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-6);
+    transition: var(--transition-normal);
+}
+
+.ticketCardList:hover {
+    transform: translateX(4px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--color-primary);
+}
+
+.listHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: var(--space-4);
+}
+
+.listMovieInfo {
+    flex: 1;
+}
+
+.listMovieTitle {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin: 0 0 var(--space-2) 0;
+}
+
+.listMeta {
+    display: flex;
+    gap: var(--space-4);
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+}
+
+.listHall,
+.listSeat {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+}
+
+.listStatus {
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: var(--space-1) var(--space-3);
+    border-radius: var(--radius-full);
+    color: white;
+}
+
+.listDetails {
+    display: flex;
+    align-items: center;
+    gap: var(--space-8);
+    margin-bottom: var(--space-4);
+    padding: var(--space-4) 0;
     border-top: 1px solid var(--color-border);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.listDetailItem {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+}
+
+.listDetailItem svg {
+    color: var(--color-primary);
+}
+
+.listPrice {
+    font-size: var(--font-size-xl);
+    font-weight: 700;
+    color: var(--color-primary);
+    margin-left: auto;
+}
+
+.listActions {
     display: flex;
     gap: var(--space-3);
     justify-content: flex-end;
 }
 
+@media (max-width: 1024px) {
+    .detailsGrid {
+        grid-template-columns: 1fr;
+        gap: var(--space-3);
+    }
+
+    .listDetails {
+        gap: var(--space-4);
+        flex-wrap: wrap;
+    }
+
+    .listPrice {
+        margin-left: 0;
+        width: 100%;
+        text-align: right;
+    }
+}
+
 @media (max-width: 768px) {
-    .cardHeader {
+    .ticketCardList {
+        padding: var(--space-4);
+    }
+
+    .listHeader {
+        flex-direction: column;
+        gap: var(--space-3);
+    }
+
+    .listStatus {
+        align-self: flex-start;
+    }
+
+    .listMeta {
+        flex-direction: column;
+        gap: var(--space-2);
+    }
+
+    .listDetails {
         flex-direction: column;
         align-items: flex-start;
         gap: var(--space-3);
     }
 
-    .cardContent {
-        grid-template-columns: 1fr;
-        gap: var(--space-4);
+    .listPrice {
+        align-self: flex-end;
     }
 
-    .ticketCode {
-        align-self: flex-start;
-    }
-
-    .cardActions {
+    .listActions {
         flex-direction: column;
     }
 
-    .cardActions button {
+    .listActions button {
         width: 100%;
+    }
+
+    .actionButtons {
+        flex-direction: column;
     }
 }
 
 @media (max-width: 480px) {
-    .infoRow {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: var(--space-1);
+    .cardContent {
+        padding: var(--space-4);
     }
 
-    .infoLabel {
-        min-width: auto;
+    .cardFooter {
+        padding: var(--space-4);
     }
 }

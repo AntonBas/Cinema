@@ -1,65 +1,58 @@
-.ticketsList {
-    width: 100%;
+.gridView {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: var(--space-6);
 }
 
-.header {
+.listView {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: var(--space-8);
-    padding-bottom: var(--space-4);
-    border-bottom: 1px solid var(--color-border);
+    flex-direction: column;
+    gap: var(--space-4);
 }
 
-.title {
-    font-size: var(--font-size-2xl);
+.emptyState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    text-align: center;
+    padding: var(--space-8);
+    background: var(--color-bg-secondary);
+    border-radius: var(--radius-xl);
+    border: 2px dashed var(--color-border);
+    gap: var(--space-4);
+}
+
+.emptyIcon {
+    font-size: 4rem;
+    color: var(--color-text-secondary);
+    margin-bottom: var(--space-2);
+}
+
+.emptyTitle {
+    font-size: var(--font-size-xl);
     font-weight: 600;
     color: var(--color-text-primary);
     margin: 0;
 }
 
-.grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
-    gap: var(--space-6);
-}
-
-.empty {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 200px;
-    font-size: var(--font-size-lg);
+.emptyDescription {
+    font-size: var(--font-size-sm);
     color: var(--color-text-secondary);
-    background: var(--color-bg-tertiary);
-    border-radius: var(--radius-lg);
-    border: 1px solid var(--color-border);
-    padding: var(--space-8);
-    text-align: center;
+    margin: 0;
+    max-width: 300px;
 }
 
 @media (max-width: 1024px) {
-    .grid {
-        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    .gridView {
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
         gap: var(--space-4);
     }
 }
 
 @media (max-width: 768px) {
-    .header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: var(--space-3);
-        margin-bottom: var(--space-6);
-    }
-
-    .grid {
+    .gridView {
         grid-template-columns: 1fr;
-        gap: var(--space-4);
-    }
-
-    .empty {
-        padding: var(--space-6);
-        font-size: var(--font-size-md);
     }
 }

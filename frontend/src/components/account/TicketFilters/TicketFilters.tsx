@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Button, Input } from '@/components/ui';
+import { Filter, Calendar, X } from 'lucide-react';
 import styles from './TicketFilters.module.css';
 
 interface TicketFiltersProps {
@@ -18,6 +19,7 @@ export const TicketFilters: React.FC<TicketFiltersProps> = ({
     const [searchQuery, setSearchQuery] = useState('');
     const [dateFrom, setDateFrom] = useState('');
     const [dateTo, setDateTo] = useState('');
+    const [showDateFilters, setShowDateFilters] = useState(false);
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
@@ -34,6 +36,7 @@ export const TicketFilters: React.FC<TicketFiltersProps> = ({
         setSearchQuery('');
         setDateFrom('');
         setDateTo('');
+        setShowDateFilters(false);
         onClearFilters();
     };
 
@@ -45,45 +48,63 @@ export const TicketFilters: React.FC<TicketFiltersProps> = ({
                     placeholder="Search by movie, hall, ticket code..."
                     value={searchQuery}
                     onChange={setSearchQuery}
+                    className={styles.searchInput}
                 />
-                <Button type="submit" variant="primary" size="medium">
-                    Search
+                <Button type="submit" variant="secondary" size="medium">
+                    <Filter size={16} /> Search
                 </Button>
             </form>
 
-            <div className={styles.dateFilters}>
-                <div className={styles.dateInputs}>
-                    <Input
-                        type="date"
-                        placeholder="From"
-                        value={dateFrom}
-                        onChange={setDateFrom}
-                    />
-                    <Input
-                        type="date"
-                        placeholder="To"
-                        value={dateTo}
-                        onChange={setDateTo}
-                    />
-                    <Button
-                        variant="secondary"
-                        onClick={handleDateFilter}
-                        disabled={!dateFrom || !dateTo}
-                    >
-                        Filter by Date
-                    </Button>
-                </div>
-            </div>
-
-            {hasFilters && (
+            <div className={styles.advancedFilters}>
                 <Button
-                    variant="cancel"
-                    onClick={clearAll}
-                    className={styles.clearButton}
+                    variant="outline"
+                    size="small"
+                    onClick={() => setShowDateFilters(!showDateFilters)}
                 >
-                    Clear All Filters
+                    <Calendar size={16} /> {showDateFilters ? 'Hide Date Filters' : 'Date Filters'}
                 </Button>
-            )}
+
+                {showDateFilters && (
+                    <div className={styles.dateFilters}>
+                        <div className={styles.dateInputs}>
+                            <div className={styles.dateGroup}>
+                                <label className={styles.dateLabel}>From:</label>
+                                <Input
+                                    type="date"
+                                    value={dateFrom}
+                                    onChange={setDateFrom}
+                                />
+                            </div>
+                            <div className={styles.dateGroup}>
+                                <label className={styles.dateLabel}>To:</label>
+                                <Input
+                                    type="date"
+                                    value={dateTo}
+                                    onChange={setDateTo}
+                                />
+                            </div>
+                            <Button
+                                variant="secondary"
+                                onClick={handleDateFilter}
+                                disabled={!dateFrom || !dateTo}
+                                size="small"
+                            >
+                                Apply Date Filter
+                            </Button>
+                        </div>
+                    </div>
+                )}
+
+                {hasFilters && (
+                    <Button
+                        variant="cancel"
+                        onClick={clearAll}
+                        size="small"
+                    >
+                        <X size={16} /> Clear All Filters
+                    </Button>
+                )}
+            </div>
         </div>
     );
 };

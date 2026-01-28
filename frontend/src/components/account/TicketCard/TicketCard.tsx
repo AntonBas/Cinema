@@ -1,111 +1,181 @@
 import React from 'react';
-import { Badge, Button } from '@/components/ui';
+import { Button } from '@/components/ui';
 import type { TicketResponse } from '@/types/ticket';
 import { TicketStatusDisplay } from '@/types/ticket';
+import { QrCode, Calendar, MapPin, User, Clock, ArrowRight } from 'lucide-react';
 import styles from './TicketCard.module.css';
 
 interface TicketCardProps {
     ticket: TicketResponse;
+    viewMode: 'grid' | 'list';
+    onShowQR: (ticketCode: string) => void;
     onViewDetails?: (ticket: TicketResponse) => void;
-    onValidate?: (ticketCode: string) => void;
 }
 
 export const TicketCard: React.FC<TicketCardProps> = ({
     ticket,
-    onViewDetails,
-    onValidate
+    viewMode,
+    onShowQR,
+    onViewDetails
 }) => {
-    const formatDateTime = (dateString: string) => {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', {
-            weekday: 'short',
-            year: 'numeric',
+    const formatDate = (dateString: string) => {
+        return new Date(dateString).toLocaleDateString('en-US', {
             month: 'short',
             day: 'numeric',
+            year: 'numeric'
+        });
+    };
+
+    const formatTime = (dateString: string) => {
+        return new Date(dateString).toLocaleTimeString('en-US', {
             hour: '2-digit',
             minute: '2-digit'
         });
     };
 
-    const getStatusVariant = (status: string) => {
-        switch (status) {
-            case 'ACTIVE': return 'success';
-            case 'USED': return 'info';
-            case 'CANCELLED': return 'error';
-            case 'REFUNDED': return 'warning';
-            case 'EXPIRED': return 'secondary';
-            case 'PENDING': return 'outline';
-            default: return 'secondary';
-        }
+    const getStatusColor = (status: string) => {
+        const colors = {
+            ACTIVE: '#48bb78',
+            USED: '#3b82f6',
+            CANCELLED: '#ff6b6b',
+            REFUNDED: '#ed8936',
+            EXPIRED: '#a0a8c0',
+            PENDING: '#e2e8f0'
+        };
+        return colors[status as keyof typeof colors] || '#a0a8c0';
     };
 
-    return (
-        <div className={styles.ticketCard}>
-            <div className={styles.cardHeader}>
-                <div className={styles.headerLeft}>
-                    <h3 className={styles.movieTitle}>{ticket.movieTitle}</h3>
-                    <Badge variant={getStatusVariant(ticket.status)} size="small">
+    if (viewMode === 'list') {
+        return (
+            <div className={styles.ticketCardList}>
+                <div className={styles.listHeader}>
+                    <div className={styles.listMovieInfo}>
+                        <h3 className={styles.listMovieTitle}>{ticket.movieTitle}</h3>
+                        <div className={styles.listMeta}>
+                            <span className={styles.listHall}>{ticket.hallName}</span>
+                            <span className={styles.listSeat}>
+                                Row {ticket.row}, Seat {ticket.seatNumber}
+                            </span>
+                        </div>
+                    </div>
+                    <div className={styles.listStatus} style={{ backgroundColor: getStatusColor(ticket.status) }}>
                         {TicketStatusDisplay[ticket.status]}
-                    </Badge>
+                    </div>
+                </div>
+
+                <div className={styles.listDetails}>
+                    <div className={styles.listDetailItem}>
+                        <Calendar size={16} />
+                        <span>{formatDate(ticket.sessionTime)}</span>
+                    </div>
+                    <div className={styles.listDetailItem}>
+                        <Clock size={16} />
+                        <span>{formatTime(ticket.sessionTime)}</span>
+                    </div>
+                    <div className={styles.listDetailItem}>
+                        <User size={16} />
+                        <span>{ticket.ticketType}</span>
+                    </div>
+                    <div className={styles.listPrice}>
+                        {ticket.price} UAH
+                    </div>
+                </div>
+
+                <div className={styles.listActions}>
+                    <Button
+                        variant="secondary"
+                        size="small"
+                        onClick={() => onShowQR(ticket.ticketCode)}
+                        disabled={ticket.status !== 'ACTIVE'}
+                    >
+                        <QrCode size={18} /> {ticket.status === 'ACTIVE' ? 'Show QR' : 'QR Code'}
+                    </Button>
+                    {onViewDetails && (
+                        <Button
+                            variant="outline"
+                            size="small"
+                            onClick={() => onViewDetails(ticket)}
+                        >
+                            <ArrowRight size={18} /> Details
+                        </Button>
+                    )}
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className={styles.ticketCardGrid}>
+            <div className={styles.cardHeader}>
+                <div className={styles.statusBadge} style={{ backgroundColor: getStatusColor(ticket.status) }}>
+                    {TicketStatusDisplay[ticket.status]}
                 </div>
                 <div className={styles.ticketCode}>
-                    {ticket.ticketCode}
+                    #{ticket.ticketCode}
                 </div>
             </div>
 
             <div className={styles.cardContent}>
-                <div className={styles.sessionInfo}>
-                    <div className={styles.infoRow}>
-                        <span className={styles.infoLabel}>Session:</span>
-                        <span className={styles.infoValue}>{formatDateTime(ticket.sessionTime)}</span>
-                    </div>
-                    <div className={styles.infoRow}>
-                        <span className={styles.infoLabel}>Hall:</span>
-                        <span className={styles.infoValue}>{ticket.hallName}</span>
-                    </div>
-                    <div className={styles.infoRow}>
-                        <span className={styles.infoLabel}>Seat:</span>
-                        <span className={styles.infoValue}>
-                            Row {ticket.row}, Seat {ticket.seatNumber}
-                        </span>
-                    </div>
-                    <div className={styles.infoRow}>
-                        <span className={styles.infoLabel}>Type:</span>
-                        <span className={styles.infoValue}>{ticket.ticketType}</span>
-                    </div>
-                </div>
+                <h3 className={styles.movieTitle}>{ticket.movieTitle}</h3>
 
-                <div className={styles.purchaseInfo}>
-                    <div className={styles.infoRow}>
-                        <span className={styles.infoLabel}>Purchased:</span>
-                        <span className={styles.infoValue}>{formatDateTime(ticket.purchaseTime)}</span>
+                <div className={styles.detailsGrid}>
+                    <div className={styles.detailItem}>
+                        <Calendar size={16} className={styles.detailIcon} />
+                        <div>
+                            <div className={styles.detailLabel}>Date</div>
+                            <div className={styles.detailValue}>{formatDate(ticket.sessionTime)}</div>
+                        </div>
                     </div>
-                    <div className={styles.price}>
-                        {ticket.price} UAH
+
+                    <div className={styles.detailItem}>
+                        <Clock size={16} className={styles.detailIcon} />
+                        <div>
+                            <div className={styles.detailLabel}>Time</div>
+                            <div className={styles.detailValue}>{formatTime(ticket.sessionTime)}</div>
+                        </div>
+                    </div>
+
+                    <div className={styles.detailItem}>
+                        <MapPin size={16} className={styles.detailIcon} />
+                        <div>
+                            <div className={styles.detailLabel}>Hall</div>
+                            <div className={styles.detailValue}>{ticket.hallName}</div>
+                        </div>
+                    </div>
+
+                    <div className={styles.detailItem}>
+                        <User size={16} className={styles.detailIcon} />
+                        <div>
+                            <div className={styles.detailLabel}>Seat</div>
+                            <div className={styles.detailValue}>
+                                Row {ticket.row}, Seat {ticket.seatNumber}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div className={styles.cardActions}>
-                {ticket.status === 'ACTIVE' && onValidate && (
+            <div className={styles.cardFooter}>
+                <div className={styles.priceSection}>
+                    <div className={styles.priceLabel}>Price</div>
+                    <div className={styles.priceValue}>{ticket.price} UAH</div>
+                </div>
+
+                <div className={styles.actionButtons}>
                     <Button
                         variant="primary"
                         size="small"
-                        onClick={() => onValidate(ticket.ticketCode)}
+                        onClick={() => onShowQR(ticket.ticketCode)}
+                        disabled={ticket.status !== 'ACTIVE'}
                     >
-                        Show QR Code
+                        <QrCode size={18} /> {ticket.status === 'ACTIVE' ? 'Show QR' : 'QR Code'}
                     </Button>
-                )}
-
-                {onViewDetails && (
-                    <Button
-                        variant="secondary"
-                        size="small"
-                        onClick={() => onViewDetails(ticket)}
-                    >
-                        Details
-                    </Button>
-                )}
+                    {onViewDetails && (
+                        <Button variant="secondary" size="small" onClick={() => onViewDetails(ticket)}>
+                            Details
+                        </Button>
+                    )}
+                </div>
             </div>
         </div>
     );
