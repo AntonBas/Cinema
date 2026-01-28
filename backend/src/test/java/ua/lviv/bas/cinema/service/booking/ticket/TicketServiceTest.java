@@ -2,7 +2,6 @@ package ua.lviv.bas.cinema.service.booking.ticket;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -144,30 +143,6 @@ public class TicketServiceTest {
 
 		assertThat(tickets).isNotEmpty();
 		verify(ticketRepository).saveAll(anyList());
-	}
-
-	@Test
-	void sendTicketsToUser_Success() {
-		List<Ticket> tickets = Arrays.asList(testTicket);
-		when(ticketRepository.findByBookingId(BOOKING_ID)).thenReturn(tickets);
-		when(numberGenerator.generateBookingNumber(testBooking)).thenReturn("BK-2024-00001");
-		doNothing().when(emailService).sendTicketsEmail(anyString(), anyString(), anyString(), anyString(), anyString(),
-				any(), anyString(), anyString());
-
-		ticketService.sendTicketsToUser(testBooking);
-
-		verify(emailService).sendTicketsEmail(eq("test@example.com"), anyString(), eq("Test Movie"), anyString(),
-				eq("Hall A"), any(), eq("Credit Card"), anyString());
-	}
-
-	@Test
-	void sendTicketsToUser_WhenNoTickets() {
-		when(ticketRepository.findByBookingId(BOOKING_ID)).thenReturn(Arrays.asList());
-
-		ticketService.sendTicketsToUser(testBooking);
-
-		verify(emailService, org.mockito.Mockito.never()).sendTicketsEmail(anyString(), anyString(), anyString(),
-				anyString(), anyString(), any(), anyString(), anyString());
 	}
 
 	@Test

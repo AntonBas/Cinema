@@ -217,7 +217,6 @@ public class PaymentProcessingServiceTest {
 		verify(bookingManagementService).confirmBooking(BOOKING_ID);
 		verify(ticketService).createTicketsForBooking(testBooking, testPayment);
 		verify(bonusService).accrueBonusPointsForPayment(USER_ID, 20, testBooking, testPayment);
-		verify(ticketService).sendTicketsToUser(testBooking);
 		verify(notificationService).sendPaymentSuccessEmail(testPayment, testBooking, tickets);
 	}
 
