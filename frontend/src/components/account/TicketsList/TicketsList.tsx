@@ -7,14 +7,14 @@ interface TicketsListProps {
     tickets: TicketResponse[];
     viewMode: 'grid' | 'list';
     onShowQR: (ticketCode: string) => void;
-    onViewDetails?: (ticket: TicketResponse) => void;
+    onRequestRefund?: (ticket: TicketResponse) => void;
 }
 
 export const TicketsList: React.FC<TicketsListProps> = ({
     tickets,
     viewMode,
     onShowQR,
-    onViewDetails
+    onRequestRefund
 }) => {
     if (!tickets || tickets.length === 0) {
         return (
@@ -36,7 +36,7 @@ export const TicketsList: React.FC<TicketsListProps> = ({
                     ticket={ticket}
                     viewMode={viewMode}
                     onShowQR={onShowQR}
-                    onViewDetails={onViewDetails}
+                    onRequestRefund={onRequestRefund}
                 />
             ))}
         </div>

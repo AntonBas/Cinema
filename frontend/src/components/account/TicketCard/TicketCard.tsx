@@ -2,7 +2,7 @@ import React from 'react';
 import { Button } from '@/components/ui';
 import type { TicketResponse } from '@/types/ticket';
 import { TicketStatusDisplay } from '@/types/ticket';
-import { QrCode, Calendar, MapPin, User, Clock, ArrowRight } from 'lucide-react';
+import { QrCode, Calendar, MapPin, User, Clock, ArrowRight, Undo2 } from 'lucide-react';
 import styles from './TicketCard.module.css';
 
 interface TicketCardProps {
@@ -10,13 +10,15 @@ interface TicketCardProps {
     viewMode: 'grid' | 'list';
     onShowQR: (ticketCode: string) => void;
     onViewDetails?: (ticket: TicketResponse) => void;
+    onRequestRefund?: (ticket: TicketResponse) => void;
 }
 
 export const TicketCard: React.FC<TicketCardProps> = ({
     ticket,
     viewMode,
     onShowQR,
-    onViewDetails
+    onViewDetails,
+    onRequestRefund
 }) => {
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString('en-US', {
@@ -44,6 +46,12 @@ export const TicketCard: React.FC<TicketCardProps> = ({
         };
         return colors[status as keyof typeof colors] || '#a0a8c0';
     };
+
+    const canShowRefundButton = ticket.status === 'ACTIVE' || ticket.status === 'PENDING';
+    const sessionDate = new Date(ticket.sessionTime);
+    const now = new Date();
+    const hoursUntilSession = (sessionDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+    const isWithinRefundWindow = hoursUntilSession > 24;
 
     if (viewMode === 'list') {
         return (
@@ -90,6 +98,17 @@ export const TicketCard: React.FC<TicketCardProps> = ({
                     >
                         <QrCode size={18} /> {ticket.status === 'ACTIVE' ? 'Show QR' : 'QR Code'}
                     </Button>
+
+                    {canShowRefundButton && isWithinRefundWindow && onRequestRefund && (
+                        <Button
+                            variant="outline"
+                            size="small"
+                            onClick={() => onRequestRefund(ticket)}
+                        >
+                            <Undo2 size={18} /> Return
+                        </Button>
+                    )}
+
                     {onViewDetails && (
                         <Button
                             variant="outline"
@@ -170,6 +189,17 @@ export const TicketCard: React.FC<TicketCardProps> = ({
                     >
                         <QrCode size={18} /> {ticket.status === 'ACTIVE' ? 'Show QR' : 'QR Code'}
                     </Button>
+
+                    {canShowRefundButton && isWithinRefundWindow && onRequestRefund && (
+                        <Button
+                            variant="secondary"
+                            size="small"
+                            onClick={() => onRequestRefund(ticket)}
+                        >
+                            <Undo2 size={18} /> Return
+                        </Button>
+                    )}
+
                     {onViewDetails && (
                         <Button variant="secondary" size="small" onClick={() => onViewDetails(ticket)}>
                             Details

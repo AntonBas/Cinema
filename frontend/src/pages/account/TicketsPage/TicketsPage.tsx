@@ -4,6 +4,7 @@ import { AccountSidebar } from '@/components/account/AccountSidebar/AccountSideb
 import { TicketFilters } from '@/components/account/TicketFilters/TicketFilters';
 import { TicketsList } from '@/components/account/TicketsList/TicketsList';
 import { TicketQRModal } from '@/components/account/TicketQRModal/TicketQRModal';
+import { TicketRefundModal } from '@/components/account/TicketRefundModal/TicketRefundModal';
 import { Button, Input, Notification } from '@/components/ui';
 import { useTickets } from '@/hooks/features/tickets/useTickets';
 import { useTicketFilters } from '@/hooks/features/tickets/useTicketFilters';
@@ -18,7 +19,9 @@ export const TicketsPage: React.FC = () => {
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [searchQuery, setSearchQuery] = useState('');
     const [showQRModal, setShowQRModal] = useState(false);
+    const [showRefundModal, setShowRefundModal] = useState(false);
     const [selectedQRCode, setSelectedQRCode] = useState<string>('');
+    const [selectedTicket, setSelectedTicket] = useState<TicketResponse | null>(null);
     const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null);
 
     const {
@@ -59,8 +62,14 @@ export const TicketsPage: React.FC = () => {
         setShowQRModal(true);
     };
 
-    const handleViewDetails = (ticket: TicketResponse) => {
-        console.log('View details for ticket:', ticket.id);
+    const handleRequestRefund = (ticket: TicketResponse) => {
+        setSelectedTicket(ticket);
+        setShowRefundModal(true);
+    };
+
+    const handleRefundSuccess = () => {
+        showNotification('success', 'Refund request submitted successfully');
+        loadTickets();
     };
 
     const showNotification = (type: 'success' | 'error', message: string) => {
@@ -227,7 +236,7 @@ export const TicketsPage: React.FC = () => {
                                     tickets={filteredTickets}
                                     viewMode={viewMode}
                                     onShowQR={handleShowQR}
-                                    onViewDetails={handleViewDetails}
+                                    onRequestRefund={handleRequestRefund}
                                 />
                             )}
                         </div>
@@ -238,6 +247,17 @@ export const TicketsPage: React.FC = () => {
                     <TicketQRModal
                         ticketCode={selectedQRCode}
                         onClose={() => setShowQRModal(false)}
+                    />
+                )}
+
+                {showRefundModal && (
+                    <TicketRefundModal
+                        ticket={selectedTicket}
+                        onClose={() => {
+                            setShowRefundModal(false);
+                            setSelectedTicket(null);
+                        }}
+                        onRefundSuccess={handleRefundSuccess}
                     />
                 )}
             </div>
