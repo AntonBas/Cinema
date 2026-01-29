@@ -1,6 +1,7 @@
 package ua.lviv.bas.cinema.service.booking.refund;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -13,6 +14,8 @@ import ua.lviv.bas.cinema.config.RefundRules;
 import ua.lviv.bas.cinema.domain.Refund;
 import ua.lviv.bas.cinema.domain.RefundItem;
 import ua.lviv.bas.cinema.domain.Ticket;
+import ua.lviv.bas.cinema.domain.enums.BonusTransactionType;
+import ua.lviv.bas.cinema.domain.enums.PaymentStatus;
 import ua.lviv.bas.cinema.domain.enums.RefundItemStatus;
 import ua.lviv.bas.cinema.domain.enums.RefundStatus;
 import ua.lviv.bas.cinema.domain.enums.TicketStatus;
@@ -96,8 +99,8 @@ public class RefundService {
 
 			if (bonusPointsToRefund > 0) {
 				bonusService.createBonusTransaction(bonusService.findOrCreateBonusCard(refund.getUser()),
-						bonusPointsToRefund, ua.lviv.bas.cinema.domain.enums.BonusTransactionType.REFUND_RETURN,
-						"REFUND_TICKET_" + ticket.getId(), null, null, refund);
+						bonusPointsToRefund, BonusTransactionType.REFUND_RETURN, "REFUND_TICKET_" + ticket.getId(),
+						null, null, refund);
 			}
 
 			ticket.setStatus(TicketStatus.REFUNDED);
@@ -136,12 +139,7 @@ public class RefundService {
 				return paymentStatus.getRefundableViaApi();
 			}
 
-			if (paymentStatus.getActionType() != null) {
-				return "invoice_bot".equals(paymentStatus.getActionType())
-						|| "p2p".equals(paymentStatus.getActionType());
-			}
-
-			return false;
+			return paymentStatus.getStatus() == PaymentStatus.SUCCESS;
 
 		} catch (Exception e) {
 			log.warn("Failed to check payment refundable status for ticket {}", ticket.getId(), e);
@@ -162,7 +160,7 @@ public class RefundService {
 				.totalBonusPointsToDeduct(bonusPointsToRefund).reason(reason).status(RefundStatus.PENDING)
 				.processedAt(LocalDateTime.now()).processedBy("AUTO_SYSTEM").build();
 
-		BigDecimal safePercentage = percentage.setScale(2, java.math.RoundingMode.HALF_UP);
+		BigDecimal safePercentage = percentage.setScale(2, RoundingMode.HALF_UP);
 
 		RefundItem refundItem = RefundItem.builder().refund(refund).ticket(ticket).ticketPrice(ticket.getFinalPrice())
 				.refundPercentage(safePercentage).refundAmount(refundAmount).bonusPointsToDeduct(bonusPointsToRefund)

@@ -224,7 +224,8 @@ public class PaymentGatewayService {
 				log.info("Refund status: {}", status);
 				log.info("Full response: {}", responseMap);
 
-				if ("success".equals(result) || "success".equals(status) || "sandbox".equals(status)) {
+				if ("ok".equals(result) || "success".equals(result) || "success".equals(status)
+						|| "sandbox".equals(status)) {
 					log.info("Refund processed successfully via LiqPay API");
 				} else {
 					String errorCode = (String) responseMap.get("err_code");
@@ -284,6 +285,7 @@ public class PaymentGatewayService {
 
 				String result = (String) responseMap.get("result");
 				String status = (String) responseMap.get("status");
+				String actionType = (String) responseMap.get("action");
 
 				if ("error".equals(result)) {
 					String errorCode = (String) responseMap.get("err_code");
@@ -299,7 +301,6 @@ public class PaymentGatewayService {
 					throw new PaymentProcessingException("LiqPay status check error: " + errorDescription);
 				}
 
-				String actionType = (String) responseMap.get("action");
 				boolean isRefundableViaApi = isPaymentRefundableViaApi(status, actionType);
 
 				log.info("Payment action: {}, status: {}, isRefundableViaApi: {}", actionType, status,
@@ -372,19 +373,13 @@ public class PaymentGatewayService {
 			return false;
 		}
 
-		if (!"success".equals(status) && !"sandbox".equals(status)) {
+		boolean isStatusRefundable = "success".equals(status) || "sandbox".equals(status);
+
+		if (!isStatusRefundable) {
 			return false;
 		}
 
-		if ("pay".equals(actionType)) {
-			return false;
-		}
-
-		if ("invoice_bot".equals(actionType) || "p2p".equals(actionType)) {
-			return true;
-		}
-
-		return false;
+		return true;
 	}
 
 	private Map<String, Object> buildPaymentParams(Payment payment) {
