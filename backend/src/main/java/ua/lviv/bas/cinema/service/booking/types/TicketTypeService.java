@@ -131,7 +131,7 @@ public class TicketTypeService {
 				.orElseThrow(() -> new TicketTypeNotFoundException(id));
 
 		if (ticketType.isActive() && hasActiveTicketsWithType(id)) {
-			List<TicketStatus> activeStatuses = List.of(TicketStatus.ACTIVE, TicketStatus.PENDING);
+			List<TicketStatus> activeStatuses = List.of(TicketStatus.ACTIVE);
 			long activeTicketCount = ticketRepository.countByTicketTypeIdAndStatusIn(id, activeStatuses);
 			throw new TicketTypeInUseException(id,
 					"Cannot deactivate ticket type. It is used in " + activeTicketCount + " active ticket(s)");
@@ -162,7 +162,7 @@ public class TicketTypeService {
 	}
 
 	private boolean hasActiveTicketsWithType(Long ticketTypeId) {
-		List<TicketStatus> activeStatuses = List.of(TicketStatus.ACTIVE, TicketStatus.PENDING);
+		List<TicketStatus> activeStatuses = List.of(TicketStatus.ACTIVE);
 		return ticketRepository.existsByTicketTypeIdAndStatusIn(ticketTypeId, activeStatuses);
 	}
 }

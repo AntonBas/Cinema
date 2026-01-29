@@ -98,16 +98,6 @@ payment:
         result_url: ${PAYMENT_LIQPAY_RESULT_URL:http://localhost:5173/booking/success}
         api_url: ${LIQPAY_API_URL:https://www.liqpay.ua/api/}
 
-scheduler:
-    booking:
-        expiration-interval: 60000
-        cleanup-cron: "0 0 4 * * *"
-        reminder-cron: "0 */10 * * * *"
-    payment:
-        expiration-interval: 60000
-        cleanup-cron: "0 0 5 * * *"
-        daily-stats: "0 0 23 * * *"
-
 bonus:
     welcome-bonus: 150
     birthday-bonus: 200

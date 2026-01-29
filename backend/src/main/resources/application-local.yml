@@ -23,3 +23,8 @@ scheduler:
         expiration-interval: 300000
         cleanup-cron: "0 */5 * * * *"
         daily-stats: "0 */5 * * * *"
+    ticket:
+        mark-as-used: 300000
+        cleanup-cron: "0 */5 * * * *"
+        daily-stats: "0 */5 * * * *"
+        upcoming-reminder: "0 */5 * * * *"

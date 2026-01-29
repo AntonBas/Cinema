@@ -20,8 +20,8 @@ public class TicketValidationService {
 			throw TicketValidationException.alreadyUsed();
 		}
 
-		if (ticket.getStatus() == TicketStatus.CANCELLED) {
-			throw new TicketValidationException("Ticket has been cancelled");
+		if (ticket.getStatus() == TicketStatus.REFUNDED) {
+			throw new TicketValidationException("Ticket has been refunded");
 		}
 
 		if (ticket.getStatus() != TicketStatus.ACTIVE) {
@@ -29,8 +29,9 @@ public class TicketValidationService {
 		}
 
 		Session session = ticket.getBooking().getSession();
-		if (session.getStartTime().isBefore(LocalDateTime.now())) {
-			throw TicketValidationException.sessionStarted();
+
+		if (session.getStartTime().isAfter(LocalDateTime.now())) {
+			throw new TicketValidationException("Session has not started yet");
 		}
 
 		if (session.getStartTime().isBefore(LocalDateTime.now().minusHours(2))) {
