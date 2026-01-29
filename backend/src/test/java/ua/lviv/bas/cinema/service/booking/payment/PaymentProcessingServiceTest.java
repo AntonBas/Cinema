@@ -49,7 +49,7 @@ import ua.lviv.bas.cinema.service.shared.NumberGeneratorService;
 import ua.lviv.bas.cinema.service.user.BonusService;
 
 @ExtendWith(MockitoExtension.class)
-public class PaymentProcessingServiceTest {
+class PaymentProcessingServiceTest {
 
 	@Mock
 	private PaymentRepository paymentRepository;
@@ -282,7 +282,8 @@ public class PaymentProcessingServiceTest {
 		BigDecimal refundAmount = new BigDecimal("100.00");
 		String description = "Test refund";
 
-		when(paymentGatewayService.prepareRefundData("PAY123", refundAmount, description)).thenReturn("refund_data");
+		when(paymentGatewayService.prepareRefundData("PAY123", testPayment.getLiqpayOrderId(), refundAmount,
+				description)).thenReturn("refund_data");
 		when(paymentRepository.save(testPayment)).thenReturn(testPayment);
 
 		paymentProcessingService.refundPayment(testPayment, refundAmount, description);
@@ -320,5 +321,44 @@ public class PaymentProcessingServiceTest {
 
 		assertThatThrownBy(() -> paymentProcessingService.refundPayment(testPayment, refundAmount, description))
 				.isInstanceOf(PaymentProcessingException.class);
+	}
+
+	@Test
+	void refundPayment_WhenFullRefund_ShouldMarkAsFullyRefunded() {
+		testPayment.setStatus(PaymentStatus.SUCCESS);
+		testPayment.setLiqpayPaymentId("PAY123");
+		BigDecimal refundAmount = AMOUNT;
+		String description = "Full refund";
+
+		when(paymentGatewayService.prepareRefundData("PAY123", testPayment.getLiqpayOrderId(), refundAmount,
+				description)).thenReturn("refund_data");
+		when(paymentRepository.save(testPayment)).thenReturn(testPayment);
+
+		paymentProcessingService.refundPayment(testPayment, refundAmount, description);
+
+		assertThat(testPayment.getStatus()).isEqualTo(PaymentStatus.REFUNDED);
+	}
+
+	@Test
+	void refundPayment_WhenMissingLiqPayPaymentId_ShouldThrowException() {
+		testPayment.setStatus(PaymentStatus.SUCCESS);
+		testPayment.setLiqpayPaymentId(null);
+		BigDecimal refundAmount = new BigDecimal("100.00");
+		String description = "Test refund";
+
+		assertThatThrownBy(() -> paymentProcessingService.refundPayment(testPayment, refundAmount, description))
+				.isInstanceOf(PaymentProcessingException.class).hasMessageContaining("Missing LiqPay payment ID");
+	}
+
+	@Test
+	void refundPayment_WhenMissingLiqPayOrderId_ShouldThrowException() {
+		testPayment.setStatus(PaymentStatus.SUCCESS);
+		testPayment.setLiqpayPaymentId("PAY123");
+		testPayment.setLiqpayOrderId(null);
+		BigDecimal refundAmount = new BigDecimal("100.00");
+		String description = "Test refund";
+
+		assertThatThrownBy(() -> paymentProcessingService.refundPayment(testPayment, refundAmount, description))
+				.isInstanceOf(PaymentProcessingException.class).hasMessageContaining("Missing LiqPay order ID");
 	}
 }

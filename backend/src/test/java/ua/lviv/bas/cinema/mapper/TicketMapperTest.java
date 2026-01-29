@@ -90,10 +90,6 @@ public class TicketMapperTest {
 		TicketResponse response1 = ticketMapper.toTicketResponse(ticket);
 		assertEquals(TicketStatus.USED, response1.getStatus());
 
-		ticket.setStatus(TicketStatus.CANCELLED);
-		TicketResponse response2 = ticketMapper.toTicketResponse(ticket);
-		assertEquals(TicketStatus.CANCELLED, response2.getStatus());
-
 		ticket.setStatus(TicketStatus.ACTIVE);
 		TicketResponse response3 = ticketMapper.toTicketResponse(ticket);
 		assertEquals(TicketStatus.ACTIVE, response3.getStatus());

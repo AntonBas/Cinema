@@ -1,9 +1,12 @@
 package ua.lviv.bas.cinema.service.booking.payment;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -53,96 +56,127 @@ public class PaymentNotificationServiceTest {
 
 	@BeforeEach
 	void setUp() {
-		testUser = new User();
-		testUser.setId(1L);
-		testUser.setEmail("test@example.com");
+		testUser = User.builder().id(1L).email("test@example.com").build();
 
-		Movie movie = new Movie();
-		movie.setTitle("Test Movie");
+		Movie movie = Movie.builder().title("Test Movie").build();
 
-		CinemaHall hall = new CinemaHall();
-		hall.setName("Hall A");
+		CinemaHall hall = CinemaHall.builder().name("Hall A").build();
 
-		testSession = new Session();
-		testSession.setId(1L);
-		testSession.setMovie(movie);
-		testSession.setHall(hall);
-		testSession.setStartTime(LocalDateTime.now().plusHours(2));
+		testSession = Session.builder().id(1L).movie(movie).hall(hall).startTime(LocalDateTime.now().plusHours(2))
+				.build();
 
-		Seat seat1 = new Seat();
-		seat1.setRow(1);
-		seat1.setNumber(1);
+		Seat seat1 = Seat.builder().row(1).number(1).build();
 
-		Seat seat2 = new Seat();
-		seat2.setRow(1);
-		seat2.setNumber(2);
+		Seat seat2 = Seat.builder().row(1).number(2).build();
 
-		BookedSeat bookedSeat1 = new BookedSeat();
-		bookedSeat1.setSeat(seat1);
+		BookedSeat bookedSeat1 = BookedSeat.builder().seat(seat1).build();
 
-		BookedSeat bookedSeat2 = new BookedSeat();
-		bookedSeat2.setSeat(seat2);
+		BookedSeat bookedSeat2 = BookedSeat.builder().seat(seat2).build();
 
-		testBooking = new Booking();
-		testBooking.setId(1L);
-		testBooking.setUser(testUser);
-		testBooking.setSession(testSession);
-		testBooking.setBookedSeats(Arrays.asList(bookedSeat1, bookedSeat2));
+		testBooking = Booking.builder().id(1L).user(testUser).session(testSession)
+				.bookedSeats(Arrays.asList(bookedSeat1, bookedSeat2)).build();
 
-		testPayment = new Payment();
-		testPayment.setId(1L);
-		testPayment.setBooking(testBooking);
-		testPayment.setAmount(new BigDecimal("200.00"));
+		testPayment = Payment.builder().id(1L).booking(testBooking).amount(new BigDecimal("200.00")).build();
 
-		testTickets = Arrays.asList(new Ticket(), new Ticket());
+		testTickets = Arrays.asList(Ticket.builder().build(), Ticket.builder().build());
 
-		org.mockito.Mockito.when(dateTimeFormatter.formatStandard(any(LocalDateTime.class)))
-				.thenReturn("2024-01-01 14:00");
-		org.mockito.Mockito.when(numberGenerator.generateBookingNumber(testBooking)).thenReturn("BK-2024-00001");
+		when(dateTimeFormatter.formatStandard(any(LocalDateTime.class))).thenReturn("2024-01-01 14:00");
+		when(numberGenerator.generateBookingNumber(testBooking)).thenReturn("BK-2024-00001");
 	}
 
 	@Test
-	void sendPaymentSuccessEmail_Success() {
+	void sendPaymentSuccessEmail_ShouldExtractDataAndCallEmailService() {
 		paymentNotificationService.sendPaymentSuccessEmail(testPayment, testBooking, testTickets);
 
-		verify(emailService).sendTicketsEmail("test@example.com", "BK-2024-00001", "Test Movie", "2024-01-01 14:00",
-				"Hall A", new BigDecimal("200.00"), "Credit card", "Row 1, Seat 1, Row 1, Seat 2");
+		verify(emailService).sendTicketsEmail(eq("test@example.com"), eq("BK-2024-00001"), eq("Test Movie"),
+				eq("2024-01-01 14:00"), eq("Hall A"), eq(new BigDecimal("200.00")), eq("Credit card"),
+				eq("Row 1, Seat 1, Row 1, Seat 2"));
 	}
 
 	@Test
-	void sendPaymentFailedEmail_Success() {
+	void sendPaymentFailedEmail_WithErrorDescription_ShouldCallEmailService() {
 		testPayment.setLiqpayErrorDescription("Insufficient funds");
 
 		paymentNotificationService.sendPaymentFailedEmail(testPayment, testBooking);
 
-		verify(emailService).sendPaymentFailedEmail("test@example.com", "BK-2024-00001", "Test Movie",
-				"2024-01-01 14:00", "Insufficient funds");
+		verify(emailService).sendPaymentFailedEmail(eq("test@example.com"), eq("BK-2024-00001"), eq("Test Movie"),
+				eq("2024-01-01 14:00"), eq("Insufficient funds"));
 	}
 
 	@Test
-	void sendRefundEmail_Success() {
+	void sendPaymentFailedEmail_WithoutErrorDescription_ShouldUseDefaultMessage() {
+		testPayment.setLiqpayErrorDescription(null);
+
+		paymentNotificationService.sendPaymentFailedEmail(testPayment, testBooking);
+
+		verify(emailService).sendPaymentFailedEmail(eq("test@example.com"), eq("BK-2024-00001"), eq("Test Movie"),
+				eq("2024-01-01 14:00"), eq("Payment error"));
+	}
+
+	@Test
+	void sendRefundEmail_ShouldExtractDataAndCallEmailService() {
 		BigDecimal refundAmount = new BigDecimal("100.00");
 		String description = "Cancellation";
 
 		paymentNotificationService.sendRefundEmail(testPayment, refundAmount, description);
 
-		verify(emailService).sendRefundEmail("test@example.com", "BK-2024-00001", "Test Movie", "2024-01-01 14:00",
-				"Hall A", refundAmount, "Row 1, Seat 1, Row 1, Seat 2", description);
+		verify(emailService).sendRefundEmail(eq("test@example.com"), eq("BK-2024-00001"), eq("Test Movie"),
+				eq("2024-01-01 14:00"), eq("Hall A"), eq(refundAmount), eq("Row 1, Seat 1, Row 1, Seat 2"),
+				eq(description));
 	}
 
 	@Test
-	void sendPaymentSuccessEmail_WhenException_ShouldLogError() {
+	void sendPaymentSuccessEmail_WhenEmailServiceThrowsException_ShouldNotPropagate() {
 		doThrow(new RuntimeException("Email service error")).when(emailService).sendTicketsEmail(anyString(),
 				anyString(), anyString(), anyString(), anyString(), any(), anyString(), anyString());
 
-		paymentNotificationService.sendPaymentSuccessEmail(testPayment, testBooking, testTickets);
+		assertDoesNotThrow(
+				() -> paymentNotificationService.sendPaymentSuccessEmail(testPayment, testBooking, testTickets));
 	}
 
 	@Test
-	void sendPaymentFailedEmail_WhenException_ShouldLogError() {
+	void sendPaymentFailedEmail_WhenEmailServiceThrowsException_ShouldNotPropagate() {
 		doThrow(new RuntimeException("Email service error")).when(emailService).sendPaymentFailedEmail(anyString(),
 				anyString(), anyString(), anyString(), anyString());
 
-		paymentNotificationService.sendPaymentFailedEmail(testPayment, testBooking);
+		assertDoesNotThrow(() -> paymentNotificationService.sendPaymentFailedEmail(testPayment, testBooking));
+	}
+
+	@Test
+	void sendRefundEmail_WhenEmailServiceThrowsException_ShouldNotPropagate() {
+		BigDecimal refundAmount = new BigDecimal("100.00");
+		String description = "Cancellation";
+
+		doThrow(new RuntimeException("Email service error")).when(emailService).sendRefundEmail(anyString(),
+				anyString(), anyString(), anyString(), anyString(), any(), anyString(), anyString());
+
+		assertDoesNotThrow(() -> paymentNotificationService.sendRefundEmail(testPayment, refundAmount, description));
+	}
+
+	@Test
+	void sendPaymentSuccessEmail_ShouldFormatSeatsInfoCorrectly() {
+		Seat seat3 = Seat.builder().row(2).number(3).build();
+		Seat seat4 = Seat.builder().row(2).number(4).build();
+		BookedSeat bookedSeat3 = BookedSeat.builder().seat(seat3).build();
+		BookedSeat bookedSeat4 = BookedSeat.builder().seat(seat4).build();
+
+		testBooking.setBookedSeats(Arrays.asList(bookedSeat3, bookedSeat4));
+
+		paymentNotificationService.sendPaymentSuccessEmail(testPayment, testBooking, testTickets);
+
+		verify(emailService).sendTicketsEmail(anyString(), anyString(), anyString(), anyString(), anyString(), any(),
+				anyString(), eq("Row 2, Seat 3, Row 2, Seat 4"));
+	}
+
+	@Test
+	void sendPaymentSuccessEmail_ShouldHandleSingleSeat() {
+		Seat singleSeat = Seat.builder().row(3).number(5).build();
+		BookedSeat bookedSeat = BookedSeat.builder().seat(singleSeat).build();
+		testBooking.setBookedSeats(Arrays.asList(bookedSeat));
+
+		paymentNotificationService.sendPaymentSuccessEmail(testPayment, testBooking, testTickets);
+
+		verify(emailService).sendTicketsEmail(anyString(), anyString(), anyString(), anyString(), anyString(), any(),
+				anyString(), eq("Row 3, Seat 5"));
 	}
 }

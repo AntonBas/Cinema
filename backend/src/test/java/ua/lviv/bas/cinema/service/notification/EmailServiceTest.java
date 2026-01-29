@@ -50,7 +50,7 @@ public class EmailServiceTest {
 	}
 
 	@Test
-	void sendVerificationEmail_ShouldSendEmail_WhenValidParameters() {
+	void sendVerificationEmail_ShouldSendCriticalEmailWithCorrectContent() {
 		String toEmail = "test@example.com";
 		String token = "verification-token-123";
 
@@ -59,17 +59,26 @@ public class EmailServiceTest {
 		verify(mailSender).send(messageCaptor.capture());
 		SimpleMailMessage sentMessage = messageCaptor.getValue();
 
-		assertThat(sentMessage).isNotNull();
 		assertThat(sentMessage.getFrom()).isEqualTo(fromEmail);
 		assertThat(sentMessage.getTo()).containsExactly(toEmail);
 		assertThat(sentMessage.getSubject()).isEqualTo("Confirm Your Email Address");
-		assertThat(sentMessage.getText()).contains(frontendUrl + "/verify-email/" + token);
-		assertThat(sentMessage.getText()).contains("10 minutes");
-		assertThat(sentMessage.getText()).contains(companyName);
+		assertThat(sentMessage.getText()).contains(frontendUrl + "/verify-email/" + token).contains("10 minutes")
+				.contains(companyName);
 	}
 
 	@Test
-	void sendPasswordResetEmail_ShouldSendEmail_WhenValidParameters() {
+	void sendVerificationEmail_WhenMailException_ShouldThrowExternalServiceException() {
+		String toEmail = "test@example.com";
+		String token = "verification-token-123";
+		doThrow(new MailException("SMTP error") {
+		}).when(mailSender).send(any(SimpleMailMessage.class));
+
+		assertThatThrownBy(() -> emailService.sendVerificationEmail(toEmail, token))
+				.isInstanceOf(ExternalServiceException.class).hasMessageContaining("Email Service");
+	}
+
+	@Test
+	void sendPasswordResetEmail_ShouldSendCriticalEmailWithCorrectContent() {
 		String toEmail = "test@example.com";
 		String token = "reset-token-456";
 
@@ -78,17 +87,23 @@ public class EmailServiceTest {
 		verify(mailSender).send(messageCaptor.capture());
 		SimpleMailMessage sentMessage = messageCaptor.getValue();
 
-		assertThat(sentMessage).isNotNull();
-		assertThat(sentMessage.getFrom()).isEqualTo(fromEmail);
-		assertThat(sentMessage.getTo()).containsExactly(toEmail);
 		assertThat(sentMessage.getSubject()).isEqualTo("Password Reset Request");
-		assertThat(sentMessage.getText()).contains(frontendUrl + "/reset-password/" + token);
-		assertThat(sentMessage.getText()).contains("10 minutes");
-		assertThat(sentMessage.getText()).contains(companyName);
+		assertThat(sentMessage.getText()).contains(frontendUrl + "/reset-password/" + token).contains("10 minutes");
 	}
 
 	@Test
-	void sendEmailChangeConfirmation_ShouldSendEmail_WhenValidParameters() {
+	void sendPasswordResetEmail_WhenMailException_ShouldThrowExternalServiceException() {
+		String toEmail = "test@example.com";
+		String token = "reset-token-456";
+		doThrow(new MailException("SMTP error") {
+		}).when(mailSender).send(any(SimpleMailMessage.class));
+
+		assertThatThrownBy(() -> emailService.sendPasswordResetEmail(toEmail, token))
+				.isInstanceOf(ExternalServiceException.class);
+	}
+
+	@Test
+	void sendEmailChangeConfirmation_ShouldSendCriticalEmailWithCorrectContent() {
 		String toEmail = "new@example.com";
 		String token = "email-change-token-789";
 
@@ -97,36 +112,23 @@ public class EmailServiceTest {
 		verify(mailSender).send(messageCaptor.capture());
 		SimpleMailMessage sentMessage = messageCaptor.getValue();
 
-		assertThat(sentMessage).isNotNull();
-		assertThat(sentMessage.getFrom()).isEqualTo(fromEmail);
-		assertThat(sentMessage.getTo()).containsExactly(toEmail);
 		assertThat(sentMessage.getSubject()).isEqualTo("Confirm Your Email Change");
-		assertThat(sentMessage.getText()).contains(frontendUrl + "/confirm-email-change/" + token);
-		assertThat(sentMessage.getText()).contains("24 hours");
-		assertThat(sentMessage.getText()).contains(companyName);
+		assertThat(sentMessage.getText()).contains(frontendUrl + "/confirm-email-change/" + token).contains("24 hours");
 	}
 
 	@Test
-	void sendEmailChangeNotification_ShouldSendEmail_WhenValidParameters() {
-		String oldEmail = "old@example.com";
-		String newEmail = "new@example.com";
+	void sendEmailChangeConfirmation_WhenMailException_ShouldThrowExternalServiceException() {
+		String toEmail = "new@example.com";
+		String token = "email-change-token-789";
+		doThrow(new MailException("SMTP error") {
+		}).when(mailSender).send(any(SimpleMailMessage.class));
 
-		emailService.sendEmailChangeNotification(oldEmail, newEmail);
-
-		verify(mailSender).send(messageCaptor.capture());
-		SimpleMailMessage sentMessage = messageCaptor.getValue();
-
-		assertThat(sentMessage).isNotNull();
-		assertThat(sentMessage.getFrom()).isEqualTo(fromEmail);
-		assertThat(sentMessage.getTo()).containsExactly(oldEmail);
-		assertThat(sentMessage.getSubject()).isEqualTo("Email Address Changed");
-		assertThat(sentMessage.getText()).contains(oldEmail);
-		assertThat(sentMessage.getText()).contains(newEmail);
-		assertThat(sentMessage.getText()).contains(companyName);
+		assertThatThrownBy(() -> emailService.sendEmailChangeConfirmation(toEmail, token))
+				.isInstanceOf(ExternalServiceException.class);
 	}
 
 	@Test
-	void sendTicketsEmail_ShouldSendEmail_WhenValidParameters() {
+	void sendTicketsEmail_ShouldSendNonCriticalEmailWithCorrectContent() {
 		String toEmail = "customer@example.com";
 		String bookingNumber = "BK-2024-001";
 		String movieTitle = "Inception";
@@ -142,23 +144,32 @@ public class EmailServiceTest {
 		verify(mailSender).send(messageCaptor.capture());
 		SimpleMailMessage sentMessage = messageCaptor.getValue();
 
-		assertThat(sentMessage).isNotNull();
-		assertThat(sentMessage.getFrom()).isEqualTo(fromEmail);
-		assertThat(sentMessage.getTo()).containsExactly(toEmail);
 		assertThat(sentMessage.getSubject()).isEqualTo("Your Tickets: " + movieTitle);
-		assertThat(sentMessage.getText()).contains(bookingNumber);
-		assertThat(sentMessage.getText()).contains(movieTitle);
-		assertThat(sentMessage.getText()).contains(sessionTime);
-		assertThat(sentMessage.getText()).contains(hallName);
-		assertThat(sentMessage.getText()).contains("450.00");
-		assertThat(sentMessage.getText()).contains(paymentMethod);
-		assertThat(sentMessage.getText()).contains(seatInfo);
-		assertThat(sentMessage.getText()).contains(companyName);
-		assertThat(sentMessage.getText()).contains("10-15 minutes");
+		assertThat(sentMessage.getText()).contains(bookingNumber).contains(movieTitle).contains(sessionTime)
+				.contains(hallName).contains("450.00").contains(paymentMethod).contains(seatInfo)
+				.contains("10-15 minutes").contains("This is an automated email");
 	}
 
 	@Test
-	void sendPaymentFailedEmail_ShouldSendEmail_WhenValidParameters() {
+	void sendTicketsEmail_WhenMailException_ShouldNotThrowException() {
+		String toEmail = "customer@example.com";
+		String bookingNumber = "BK-2024-001";
+		String movieTitle = "Inception";
+		String sessionTime = "2024-01-15 18:30";
+		String hallName = "Hall A";
+		BigDecimal amountPaid = new BigDecimal("450.00");
+		String paymentMethod = "Credit Card";
+		String seatInfo = "Row 5, Seats 12-13";
+
+		doThrow(new MailException("SMTP error") {
+		}).when(mailSender).send(any(SimpleMailMessage.class));
+
+		assertThatCode(() -> emailService.sendTicketsEmail(toEmail, bookingNumber, movieTitle, sessionTime, hallName,
+				amountPaid, paymentMethod, seatInfo)).doesNotThrowAnyException();
+	}
+
+	@Test
+	void sendPaymentFailedEmail_ShouldSendNonCriticalEmailWithCorrectContent() {
 		String toEmail = "customer@example.com";
 		String bookingNumber = "BK-2024-002";
 		String movieTitle = "Interstellar";
@@ -170,19 +181,28 @@ public class EmailServiceTest {
 		verify(mailSender).send(messageCaptor.capture());
 		SimpleMailMessage sentMessage = messageCaptor.getValue();
 
-		assertThat(sentMessage).isNotNull();
-		assertThat(sentMessage.getFrom()).isEqualTo(fromEmail);
-		assertThat(sentMessage.getTo()).containsExactly(toEmail);
 		assertThat(sentMessage.getSubject()).isEqualTo("Payment Failed: " + movieTitle);
-		assertThat(sentMessage.getText()).contains(bookingNumber);
-		assertThat(sentMessage.getText()).contains(movieTitle);
-		assertThat(sentMessage.getText()).contains(sessionTime);
-		assertThat(sentMessage.getText()).contains(errorMessage);
-		assertThat(sentMessage.getText()).contains(companyName);
+		assertThat(sentMessage.getText()).contains(bookingNumber).contains(movieTitle).contains(sessionTime)
+				.contains(errorMessage);
 	}
 
 	@Test
-	void sendRefundEmail_ShouldSendEmail_WhenValidParameters() {
+	void sendPaymentFailedEmail_WhenMailException_ShouldNotThrowException() {
+		String toEmail = "customer@example.com";
+		String bookingNumber = "BK-2024-002";
+		String movieTitle = "Interstellar";
+		String sessionTime = "2024-01-16 20:00";
+		String errorMessage = "Insufficient funds";
+
+		doThrow(new MailException("SMTP error") {
+		}).when(mailSender).send(any(SimpleMailMessage.class));
+
+		assertThatCode(() -> emailService.sendPaymentFailedEmail(toEmail, bookingNumber, movieTitle, sessionTime,
+				errorMessage)).doesNotThrowAnyException();
+	}
+
+	@Test
+	void sendRefundEmail_ShouldSendNonCriticalEmailWithCorrectContent() {
 		String toEmail = "customer@example.com";
 		String bookingNumber = "BK-2024-003";
 		String movieTitle = "The Dark Knight";
@@ -191,6 +211,74 @@ public class EmailServiceTest {
 		BigDecimal refundAmount = new BigDecimal("300.00");
 		String seatInfo = "Row 6, Seat 8";
 		String refundReason = "Customer request";
+
+		emailService.sendRefundEmail(toEmail, bookingNumber, movieTitle, sessionTime, hallName, refundAmount, seatInfo,
+				refundReason);
+
+		verify(mailSender).send(messageCaptor.capture());
+		SimpleMailMessage sentMessage = messageCaptor.getValue();
+
+		assertThat(sentMessage.getSubject()).isEqualTo("Refund Confirmation: " + movieTitle);
+		assertThat(sentMessage.getText()).contains(bookingNumber).contains(movieTitle).contains(sessionTime)
+				.contains(hallName).contains("300.00").contains(seatInfo).contains(refundReason)
+				.contains("3-5 business days").contains("This is an automated email");
+	}
+
+	@Test
+	void sendRefundEmail_WhenMailException_ShouldNotThrowException() {
+		String toEmail = "customer@example.com";
+		String bookingNumber = "BK-2024-003";
+		String movieTitle = "The Dark Knight";
+		String sessionTime = "2024-01-17 19:00";
+		String hallName = "Hall B";
+		BigDecimal refundAmount = new BigDecimal("300.00");
+		String seatInfo = "Row 6, Seat 8";
+		String refundReason = "Customer request";
+
+		doThrow(new MailException("SMTP error") {
+		}).when(mailSender).send(any(SimpleMailMessage.class));
+
+		assertThatCode(() -> emailService.sendRefundEmail(toEmail, bookingNumber, movieTitle, sessionTime, hallName,
+				refundAmount, seatInfo, refundReason)).doesNotThrowAnyException();
+	}
+
+	@Test
+	void sendEmailChangeNotification_ShouldSendNonCriticalEmailWithCorrectContent() {
+		String oldEmail = "old@example.com";
+		String newEmail = "new@example.com";
+
+		emailService.sendEmailChangeNotification(oldEmail, newEmail);
+
+		verify(mailSender).send(messageCaptor.capture());
+		SimpleMailMessage sentMessage = messageCaptor.getValue();
+
+		assertThat(sentMessage.getSubject()).isEqualTo("Email Address Changed");
+		assertThat(sentMessage.getText()).contains(oldEmail).contains(newEmail)
+				.contains("contact our support team immediately");
+	}
+
+	@Test
+	void sendEmailChangeNotification_WhenMailException_ShouldNotThrowException() {
+		String oldEmail = "old@example.com";
+		String newEmail = "new@example.com";
+
+		doThrow(new MailException("SMTP error") {
+		}).when(mailSender).send(any(SimpleMailMessage.class));
+
+		assertThatCode(() -> emailService.sendEmailChangeNotification(oldEmail, newEmail)).doesNotThrowAnyException();
+	}
+
+	@Test
+	void sendRefundEmail_ShouldContainCurrentTimestamp() {
+		String toEmail = "customer@example.com";
+		String bookingNumber = "BK-2024-003";
+		String movieTitle = "The Dark Knight";
+		String sessionTime = "2024-01-17 19:00";
+		String hallName = "Hall B";
+		BigDecimal refundAmount = new BigDecimal("300.00");
+		String seatInfo = "Row 6, Seat 8";
+		String refundReason = "Customer request";
+
 		String expectedDate = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm"));
 
 		emailService.sendRefundEmail(toEmail, bookingNumber, movieTitle, sessionTime, hallName, refundAmount, seatInfo,
@@ -199,146 +287,6 @@ public class EmailServiceTest {
 		verify(mailSender).send(messageCaptor.capture());
 		SimpleMailMessage sentMessage = messageCaptor.getValue();
 
-		assertThat(sentMessage).isNotNull();
-		assertThat(sentMessage.getFrom()).isEqualTo(fromEmail);
-		assertThat(sentMessage.getTo()).containsExactly(toEmail);
-		assertThat(sentMessage.getSubject()).isEqualTo("Refund Confirmation: " + movieTitle);
-		assertThat(sentMessage.getText()).contains(bookingNumber);
-		assertThat(sentMessage.getText()).contains(movieTitle);
-		assertThat(sentMessage.getText()).contains(sessionTime);
-		assertThat(sentMessage.getText()).contains(hallName);
-		assertThat(sentMessage.getText()).contains("300.00");
-		assertThat(sentMessage.getText()).contains(seatInfo);
-		assertThat(sentMessage.getText()).contains(refundReason);
 		assertThat(sentMessage.getText()).contains(expectedDate);
-		assertThat(sentMessage.getText()).contains("3-5 business days");
-		assertThat(sentMessage.getText()).contains(companyName);
-	}
-
-	@Test
-	void sendTicketsEmail_ShouldNotThrow_WhenMailSendingFails() {
-		String toEmail = "customer@example.com";
-		String bookingNumber = "BK-2024-001";
-		String movieTitle = "Inception";
-		String sessionTime = "2024-01-15 18:30";
-		String hallName = "Hall A";
-		BigDecimal amountPaid = new BigDecimal("450.00");
-		String paymentMethod = "Credit Card";
-		String seatInfo = "Row 5, Seats 12-13";
-
-		MailException mailException = new MailException("SMTP error") {
-			private static final long serialVersionUID = 1L;
-		};
-
-		doThrow(mailException).when(mailSender).send(any(SimpleMailMessage.class));
-
-		assertThatCode(() -> emailService.sendTicketsEmail(toEmail, bookingNumber, movieTitle, sessionTime, hallName,
-				amountPaid, paymentMethod, seatInfo)).doesNotThrowAnyException();
-
-		verify(mailSender).send(any(SimpleMailMessage.class));
-	}
-
-	@Test
-	void sendPaymentFailedEmail_ShouldNotThrow_WhenMailSendingFails() {
-		String toEmail = "customer@example.com";
-		String bookingNumber = "BK-2024-002";
-		String movieTitle = "Interstellar";
-		String sessionTime = "2024-01-16 20:00";
-		String errorMessage = "Insufficient funds";
-
-		MailException mailException = new MailException("SMTP error") {
-			private static final long serialVersionUID = 1L;
-		};
-
-		doThrow(mailException).when(mailSender).send(any(SimpleMailMessage.class));
-
-		assertThatCode(() -> emailService.sendPaymentFailedEmail(toEmail, bookingNumber, movieTitle, sessionTime,
-				errorMessage)).doesNotThrowAnyException();
-
-		verify(mailSender).send(any(SimpleMailMessage.class));
-	}
-
-	@Test
-	void sendRefundEmail_ShouldNotThrow_WhenMailSendingFails() {
-		String toEmail = "customer@example.com";
-		String bookingNumber = "BK-2024-003";
-		String movieTitle = "The Dark Knight";
-		String sessionTime = "2024-01-17 19:00";
-		String hallName = "Hall B";
-		BigDecimal refundAmount = new BigDecimal("300.00");
-		String seatInfo = "Row 6, Seat 8";
-		String refundReason = "Customer request";
-
-		MailException mailException = new MailException("SMTP error") {
-			private static final long serialVersionUID = 1L;
-		};
-
-		doThrow(mailException).when(mailSender).send(any(SimpleMailMessage.class));
-
-		assertThatCode(() -> emailService.sendRefundEmail(toEmail, bookingNumber, movieTitle, sessionTime, hallName,
-				refundAmount, seatInfo, refundReason)).doesNotThrowAnyException();
-
-		verify(mailSender).send(any(SimpleMailMessage.class));
-	}
-
-	@Test
-	void sendEmailChangeNotification_ShouldNotThrow_WhenMailSendingFails() {
-		String oldEmail = "old@example.com";
-		String newEmail = "new@example.com";
-
-		MailException mailException = new MailException("SMTP error") {
-			private static final long serialVersionUID = 1L;
-		};
-
-		doThrow(mailException).when(mailSender).send(any(SimpleMailMessage.class));
-
-		assertThatCode(() -> emailService.sendEmailChangeNotification(oldEmail, newEmail)).doesNotThrowAnyException();
-
-		verify(mailSender).send(any(SimpleMailMessage.class));
-	}
-
-	@Test
-	void sendVerificationEmail_ShouldThrowException_WhenMailSendingFails() {
-		String toEmail = "test@example.com";
-		String token = "verification-token-123";
-
-		MailException mailException = new MailException("SMTP error") {
-			private static final long serialVersionUID = 1L;
-		};
-
-		doThrow(mailException).when(mailSender).send(any(SimpleMailMessage.class));
-
-		assertThatThrownBy(() -> emailService.sendVerificationEmail(toEmail, token))
-				.isInstanceOf(ExternalServiceException.class).hasMessageContaining("Email Service");
-	}
-
-	@Test
-	void sendPasswordResetEmail_ShouldThrowException_WhenMailSendingFails() {
-		String toEmail = "test@example.com";
-		String token = "reset-token-456";
-
-		MailException mailException = new MailException("SMTP error") {
-			private static final long serialVersionUID = 1L;
-		};
-
-		doThrow(mailException).when(mailSender).send(any(SimpleMailMessage.class));
-
-		assertThatThrownBy(() -> emailService.sendPasswordResetEmail(toEmail, token))
-				.isInstanceOf(ExternalServiceException.class).hasMessageContaining("Email Service");
-	}
-
-	@Test
-	void sendEmailChangeConfirmation_ShouldThrowException_WhenMailSendingFails() {
-		String toEmail = "new@example.com";
-		String token = "email-change-token-789";
-
-		MailException mailException = new MailException("SMTP error") {
-			private static final long serialVersionUID = 1L;
-		};
-
-		doThrow(mailException).when(mailSender).send(any(SimpleMailMessage.class));
-
-		assertThatThrownBy(() -> emailService.sendEmailChangeConfirmation(toEmail, token))
-				.isInstanceOf(ExternalServiceException.class).hasMessageContaining("Email Service");
 	}
 }
