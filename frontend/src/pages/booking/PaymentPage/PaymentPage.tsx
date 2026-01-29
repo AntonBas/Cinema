@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { usePaymentForm } from '@/hooks/features/payment/usePaymentForm';
 import { useLiqPayPayment } from '@/hooks/features/payment/useLiqPayPayment';
@@ -48,22 +48,92 @@ export const PaymentPage: React.FC = () => {
     const [step, setStep] = useState<'init' | 'processing' | 'ready' | 'paying' | 'success' | 'failed'>('init');
     const [selectedMethod, setSelectedMethod] = useState<'liqpay' | null>('liqpay');
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
-    const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null);
+
+    const isMountedRef = useRef(true);
+    const isCreatingRef = useRef(false);
+    const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+    const startPolling = useCallback((paymentId: number) => {
+        stopPolling();
+
+        const interval = setInterval(async () => {
+            const status = await checkPaymentStatus(paymentId);
+
+            if (status && (status.status === 'SUCCESS' || status.status === 'FAILED' || status.status === 'CANCELLED' || status.status === 'EXPIRED')) {
+                stopPolling();
+            }
+        }, 3000);
+
+        pollingIntervalRef.current = interval;
+    }, [checkPaymentStatus]);
+
+    const stopPolling = useCallback(() => {
+        if (pollingIntervalRef.current) {
+            clearInterval(pollingIntervalRef.current);
+            pollingIntervalRef.current = null;
+        }
+        stopStatusPolling();
+    }, [stopStatusPolling]);
+
+    const initPayment = useCallback(async () => {
+        if (!bookingId || isCreatingRef.current) {
+            return;
+        }
+
+        isCreatingRef.current = true;
+        setStep('processing');
+        setErrorMessage(null);
+
+        const paymentKey = `payment_attempt_${bookingId}`;
+        const attemptTime = localStorage.getItem(paymentKey);
+        const now = Date.now();
+
+        if (attemptTime && (now - parseInt(attemptTime)) < 10000) {
+            setErrorMessage('Payment is already being processed. Please wait.');
+            setStep('failed');
+            isCreatingRef.current = false;
+            return;
+        }
+
+        localStorage.setItem(paymentKey, now.toString());
+
+        try {
+            const result = await handleCreate({ bookingId: parseInt(bookingId) });
+
+            if (result) {
+                const liqPayData = await initializePayment(result.id);
+                if (liqPayData) {
+                    setStep('ready');
+                } else {
+                    setStep('failed');
+                    setErrorMessage('Failed to initialize payment gateway');
+                }
+            } else {
+                setStep('failed');
+            }
+        } catch (error) {
+            setStep('failed');
+            setErrorMessage('Failed to create payment');
+        } finally {
+            isCreatingRef.current = false;
+            setTimeout(() => {
+                localStorage.removeItem(paymentKey);
+            }, 10000);
+        }
+    }, [bookingId, handleCreate, initializePayment]);
 
     useEffect(() => {
+        isMountedRef.current = true;
+
         if (bookingId && step === 'init') {
             initPayment();
         }
-    }, [bookingId]);
 
-    useEffect(() => {
         return () => {
-            if (pollingInterval) {
-                clearInterval(pollingInterval);
-            }
-            stopStatusPolling();
+            isMountedRef.current = false;
+            stopPolling();
         };
-    }, [pollingInterval, stopStatusPolling]);
+    }, [bookingId, step, initPayment, stopPolling]);
 
     useEffect(() => {
         if (paymentStatus) {
@@ -78,7 +148,7 @@ export const PaymentPage: React.FC = () => {
                 setStep('paying');
             }
         }
-    }, [paymentStatus]);
+    }, [paymentStatus, step, stopPolling]);
 
     useEffect(() => {
         if (createError) {
@@ -91,62 +161,21 @@ export const PaymentPage: React.FC = () => {
         }
     }, [createError, liqPayError]);
 
-    const startPolling = (paymentId: number, intervalMs: number = 3000, maxAttempts: number = 60) => {
-        stopPolling();
-        let attempts = 0;
-
-        const interval = setInterval(async () => {
-            attempts++;
-
-            if (attempts >= maxAttempts) {
-                clearInterval(interval);
-                return;
-            }
-
-            const status = await checkPaymentStatus(paymentId);
-
-            if (status && (status.status === 'SUCCESS' || status.status === 'FAILED' || status.status === 'CANCELLED' || status.status === 'EXPIRED')) {
-                clearInterval(interval);
-            }
-        }, intervalMs);
-
-        setPollingInterval(interval);
-    };
-
-    const stopPolling = () => {
-        if (pollingInterval) {
-            clearInterval(pollingInterval);
-            setPollingInterval(null);
-        }
-        stopStatusPolling();
-    };
-
-    const initPayment = async () => {
-        if (!bookingId) return;
-
-        setStep('processing');
-        setErrorMessage(null);
-        const result = await handleCreate({ bookingId: parseInt(bookingId) });
-
-        if (result) {
-            const liqPayData = await initializePayment(result.id);
-            if (liqPayData) {
-                setStep('ready');
-            } else {
-                setStep('failed');
-                setErrorMessage('Failed to initialize payment gateway');
-            }
-        } else {
-            setStep('failed');
-        }
-    };
-
     const handlePayWithLiqPay = async () => {
         if (!paymentResult?.id) return;
 
+        console.log('Starting payment with ID:', paymentResult.id);
         setStep('paying');
-        redirectToLiqPay();
-        startPolling(paymentResult.id);
+
+        setTimeout(() => {
+            if (paymentResult.id) {
+                redirectToLiqPay();
+                startPolling(paymentResult.id);
+            } else {
+                setStep('failed');
+                setErrorMessage('Payment data not available');
+            }
+        }, 500);
     };
 
     const handleRetry = () => {
@@ -154,7 +183,6 @@ export const PaymentPage: React.FC = () => {
         reset();
         setErrorMessage(null);
         setStep('init');
-        initPayment();
     };
 
     const handleBack = () => {

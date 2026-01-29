@@ -13,7 +13,7 @@ interface AccountSidebarProps {
     activePage: string;
 }
 
-export const AccountSidebar: React.FC<AccountSidebarProps> = ({ activePage }) => {
+export const AccountSidebar: React.FC<AccountSidebarProps> = ({ }) => {
     const location = useLocation();
 
     const sidebarItems: SidebarItem[] = [

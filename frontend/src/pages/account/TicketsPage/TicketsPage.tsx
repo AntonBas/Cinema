@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Layout } from '@/components/layout/Layout/Layout';
 import { AccountSidebar } from '@/components/account/AccountSidebar/AccountSidebar';
-import { TicketFilters } from '@/components/account/TicketFilters/TicketFilters';
 import { TicketsList } from '@/components/account/TicketsList/TicketsList';
 import { TicketQRModal } from '@/components/account/TicketQRModal/TicketQRModal';
 import { TicketRefundModal } from '@/components/account/TicketRefundModal/TicketRefundModal';
@@ -28,7 +27,6 @@ export const TicketsPage: React.FC = () => {
         filteredTickets,
         updateStatusFilter,
         updateSearchQuery,
-        updateDateRange,
         clearFilters,
         statistics,
         hasFilters
@@ -81,13 +79,10 @@ export const TicketsPage: React.FC = () => {
         { id: 'all', label: 'All', count: statistics.total },
         { id: 'ACTIVE', label: 'Active', count: statistics.activeCount },
         { id: 'USED', label: 'Used', count: statistics.usedCount },
-        { id: 'CANCELLED', label: 'Cancelled', count: statistics.cancelledCount }
     ];
 
     const statusTabs: Array<{ id: TicketStatus, label: string, count: number }> = [
-        { id: 'REFUNDED', label: 'Refunded', count: statistics.byStatus?.REFUNDED || 0 },
-        { id: 'PENDING', label: 'Pending', count: statistics.byStatus?.PENDING || 0 },
-        { id: 'EXPIRED', label: 'Expired', count: statistics.byStatus?.EXPIRED || 0 }
+        { id: 'REFUNDED', label: 'Refunded', count: statistics.byStatus?.REFUNDED || 0 }
     ];
 
     return (
@@ -96,7 +91,7 @@ export const TicketsPage: React.FC = () => {
                 <div className={styles.container}>
                     <AccountSidebar activePage="tickets" />
 
-                    <main className={styles.mainContent}>
+                    <div className={styles.mainContent}>
                         {notification && (
                             <Notification
                                 id="tickets-notification"
@@ -114,7 +109,7 @@ export const TicketsPage: React.FC = () => {
                                 <h1 className={styles.pageTitle}>My Tickets</h1>
                                 <p className={styles.pageSubtitle}>Manage and view your movie tickets</p>
                             </div>
-                            <div className={styles.refreshButton}>
+                            <div className={styles.headerActions}>
                                 <RefreshCw size={18} />
                                 <Button
                                     variant="primary"
@@ -189,15 +184,6 @@ export const TicketsPage: React.FC = () => {
                             </div>
                         </div>
 
-                        <div className={styles.filtersSection}>
-                            <TicketFilters
-                                onSearch={updateSearchQuery}
-                                onDateRangeChange={updateDateRange}
-                                onClearFilters={clearFilters}
-                                hasFilters={hasFilters}
-                            />
-                        </div>
-
                         <div className={styles.tabsSection}>
                             <div className={styles.mainTabs}>
                                 {tabs.map(tab => (
@@ -240,7 +226,7 @@ export const TicketsPage: React.FC = () => {
                                 />
                             )}
                         </div>
-                    </main>
+                    </div>
                 </div>
 
                 {showQRModal && (
