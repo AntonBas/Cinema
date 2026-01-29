@@ -24,11 +24,8 @@ public class PaymentNotificationService {
 
 	public void sendPaymentSuccessEmail(Payment payment, Booking booking, List<Ticket> tickets) {
 		try {
-			String sessionTime = dateTimeFormatter.formatStandard(booking.getSession().getStartTime());
-			String seatsInfo = booking.getBookedSeats().stream()
-					.map(seat -> String.format("Row %d, Seat %d", seat.getSeat().getRow(), seat.getSeat().getNumber()))
-					.collect(java.util.stream.Collectors.joining(", "));
-
+			String sessionTime = formatSessionTime(booking);
+			String seatsInfo = extractSeatsInfo(booking);
 			String bookingNumber = numberGenerator.generateBookingNumber(booking);
 
 			emailService.sendTicketsEmail(booking.getUser().getEmail(), bookingNumber,
@@ -43,10 +40,9 @@ public class PaymentNotificationService {
 
 	public void sendPaymentFailedEmail(Payment payment, Booking booking) {
 		try {
-			String sessionTime = dateTimeFormatter.formatStandard(booking.getSession().getStartTime());
+			String sessionTime = formatSessionTime(booking);
 			String errorDescription = payment.getLiqpayErrorDescription() != null ? payment.getLiqpayErrorDescription()
 					: "Payment error";
-
 			String bookingNumber = numberGenerator.generateBookingNumber(booking);
 
 			emailService.sendPaymentFailedEmail(booking.getUser().getEmail(), bookingNumber,
@@ -61,11 +57,8 @@ public class PaymentNotificationService {
 	public void sendRefundEmail(Payment payment, BigDecimal amount, String description) {
 		try {
 			Booking booking = payment.getBooking();
-			String sessionTime = dateTimeFormatter.formatStandard(booking.getSession().getStartTime());
-			String seatsInfo = booking.getBookedSeats().stream()
-					.map(seat -> String.format("Row %d, Seat %d", seat.getSeat().getRow(), seat.getSeat().getNumber()))
-					.collect(java.util.stream.Collectors.joining(", "));
-
+			String sessionTime = formatSessionTime(booking);
+			String seatsInfo = extractSeatsInfo(booking);
 			String bookingNumber = numberGenerator.generateBookingNumber(booking);
 
 			emailService.sendRefundEmail(booking.getUser().getEmail(), bookingNumber,
@@ -76,5 +69,15 @@ public class PaymentNotificationService {
 		} catch (Exception e) {
 			log.error("Failed to send refund email for payment {}", payment.getId(), e);
 		}
+	}
+
+	private String formatSessionTime(Booking booking) {
+		return dateTimeFormatter.formatStandard(booking.getSession().getStartTime());
+	}
+
+	private String extractSeatsInfo(Booking booking) {
+		return booking.getBookedSeats().stream()
+				.map(seat -> String.format("Row %d, Seat %d", seat.getSeat().getRow(), seat.getSeat().getNumber()))
+				.collect(java.util.stream.Collectors.joining(", "));
 	}
 }

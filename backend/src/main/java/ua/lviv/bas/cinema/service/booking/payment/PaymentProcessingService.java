@@ -152,9 +152,25 @@ public class PaymentProcessingService {
 					String.format("Refund amount %s exceeds payment amount %s", amount, payment.getAmount()));
 		}
 
+		if (payment.getLiqpayPaymentId() == null || payment.getLiqpayPaymentId().isEmpty()) {
+			throw PaymentProcessingException.refundFailed("Missing LiqPay payment ID for refund");
+		}
+
+		if (payment.getLiqpayOrderId() == null || payment.getLiqpayOrderId().isEmpty()) {
+			throw PaymentProcessingException.refundFailed("Missing LiqPay order ID for refund");
+		}
+
 		try {
-			String refundData = paymentGatewayService.prepareRefundData(payment.getLiqpayPaymentId(), amount,
-					description);
+			log.info("=== STARTING REFUND PROCESS ===");
+			log.info("Payment ID: {}", payment.getId());
+			log.info("LiqPay Payment ID: {}", payment.getLiqpayPaymentId());
+			log.info("LiqPay Order ID: {}", payment.getLiqpayOrderId());
+			log.info("Refund amount: {} (Original: {})", amount, payment.getAmount());
+			log.info("Description: {}", description);
+
+			String refundData = paymentGatewayService.prepareRefundData(payment.getLiqpayPaymentId(),
+					payment.getLiqpayOrderId(), amount, description);
+
 			paymentGatewayService.processRefund(refundData);
 
 			log.info("Refund initiated for payment {}: amount={}, description={}", payment.getId(), amount,
@@ -162,8 +178,10 @@ public class PaymentProcessingService {
 
 			if (amount.compareTo(payment.getAmount()) == 0) {
 				payment.setStatus(PaymentStatus.REFUNDED);
+				log.info("Payment {} fully refunded", payment.getId());
 			} else {
 				payment.setStatus(PaymentStatus.PARTIALLY_REFUNDED);
+				log.info("Payment {} partially refunded ({} of {})", payment.getId(), amount, payment.getAmount());
 			}
 
 			payment.setUpdatedAt(LocalDateTime.now());
@@ -173,9 +191,12 @@ public class PaymentProcessingService {
 
 			log.info("Refund processed successfully: paymentId={}, amount={}", payment.getId(), amount);
 
+		} catch (PaymentProcessingException e) {
+			log.error("Payment processing failed for refund payment {}", payment.getId(), e);
+			throw e;
 		} catch (Exception e) {
-			log.error("Refund processing failed for payment {}", payment.getId(), e);
-			throw new PaymentProcessingException("Failed to process refund", e);
+			log.error("Unexpected error during refund processing for payment {}", payment.getId(), e);
+			throw new PaymentProcessingException("Failed to process refund: " + e.getMessage(), e);
 		}
 	}
 

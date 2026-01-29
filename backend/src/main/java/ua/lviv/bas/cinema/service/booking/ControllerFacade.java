@@ -154,7 +154,7 @@ public class ControllerFacade {
 		return ticketService.checkTicketStatus(ticketCode);
 	}
 
-	@Transactional(readOnly = true)
+	@Transactional
 	public RefundResponse processRefund(RefundRequest request, Long userId) {
 		return refundService.processRefund(request, userId);
 	}

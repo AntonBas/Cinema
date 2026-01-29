@@ -54,8 +54,9 @@ public class RefundItem {
 
 	@DecimalMin("0.00")
 	@DecimalMax("100.00")
-	@Column(name = "refund_percentage", precision = 5, scale = 2)
-	private BigDecimal refundPercentage;
+	@Column(name = "refund_percentage", precision = 10, scale = 2, nullable = false)
+	@Builder.Default
+	private BigDecimal refundPercentage = BigDecimal.ZERO;
 
 	@Column(name = "refund_amount", precision = 10, scale = 2)
 	private BigDecimal refundAmount;

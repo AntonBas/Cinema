@@ -28,17 +28,18 @@ import ua.lviv.bas.cinema.mapper.RefundMapper;
 import ua.lviv.bas.cinema.repository.RefundRepository;
 import ua.lviv.bas.cinema.repository.TicketRepository;
 import ua.lviv.bas.cinema.service.booking.payment.PaymentProcessingService;
+import ua.lviv.bas.cinema.service.integration.payment.PaymentGatewayService;
 import ua.lviv.bas.cinema.service.shared.NumberGeneratorService;
 import ua.lviv.bas.cinema.service.user.BonusService;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class RefundService {
 	private final TicketRepository ticketRepository;
 	private final RefundRepository refundRepository;
 	private final PaymentProcessingService paymentProcessingService;
+	private final PaymentGatewayService paymentGatewayService;
 	private final BonusService bonusService;
 	private final RefundRules refundRules;
 	private final RefundMapper refundMapper;
@@ -56,9 +57,15 @@ public class RefundService {
 			return createNonRefundablePreview(ticket, validationError);
 		}
 
+		boolean isPaymentRefundable = checkPaymentRefundable(ticket);
+		if (!isPaymentRefundable) {
+			return createNonRefundablePreview(ticket, "Payment cannot be refunded via API. Contact support.");
+		}
+
 		return calculationService.createPreviewResponse(ticket, refundRules);
 	}
 
+	@Transactional
 	public RefundResponse processRefund(RefundRequest request, Long userId) {
 		Ticket ticket = findActiveTicket(request.getTicketId(), userId);
 
@@ -67,8 +74,17 @@ public class RefundService {
 			throw new TicketNotRefundableException(validationError);
 		}
 
+		boolean isPaymentRefundable = checkPaymentRefundable(ticket);
+		if (!isPaymentRefundable) {
+			throw new TicketNotRefundableException("Payment cannot be refunded via API. Contact support.");
+		}
+
 		LocalDateTime sessionTime = ticket.getBooking().getSession().getStartTime();
 		BigDecimal percentage = refundRules.getRefundPercentage(sessionTime);
+
+		log.debug("Refund percentage: {}", percentage);
+		log.debug("Refund percentage scale: {}, precision: {}", percentage.scale(), percentage.precision());
+
 		BigDecimal refundAmount = calculationService.calculateRefundAmount(ticket.getFinalPrice(), percentage);
 		Integer bonusPointsToRefund = calculationService.calculateBonusRefund(ticket.getBonusPointsUsed(), percentage);
 
@@ -112,6 +128,27 @@ public class RefundService {
 				() -> new TicketNotFoundException("Ticket not found or not active. Ticket ID: " + ticketId));
 	}
 
+	private boolean checkPaymentRefundable(Ticket ticket) {
+		try {
+			var paymentStatus = paymentGatewayService.getPaymentStatus(ticket.getPayment().getLiqpayPaymentId());
+
+			if (paymentStatus.getRefundableViaApi() != null) {
+				return paymentStatus.getRefundableViaApi();
+			}
+
+			if (paymentStatus.getActionType() != null) {
+				return "invoice_bot".equals(paymentStatus.getActionType())
+						|| "p2p".equals(paymentStatus.getActionType());
+			}
+
+			return false;
+
+		} catch (Exception e) {
+			log.warn("Failed to check payment refundable status for ticket {}", ticket.getId(), e);
+			return false;
+		}
+	}
+
 	private RefundPreviewResponse createNonRefundablePreview(Ticket ticket, String reason) {
 		return RefundPreviewResponse.builder().ticketId(ticket.getId()).ticketCode(ticket.getUniqueCode())
 				.movieTitle(ticket.getBooking().getSession().getMovie().getTitle())
@@ -122,12 +159,14 @@ public class RefundService {
 	private Refund createRefundRecord(Ticket ticket, BigDecimal refundAmount, BigDecimal percentage,
 			Integer bonusPointsToRefund, String reason) {
 		Refund refund = Refund.builder().payment(ticket.getPayment()).user(ticket.getUser()).totalAmount(refundAmount)
-				.totalBonusPointsToDeduct(bonusPointsToRefund).reason(reason).status(RefundStatus.PROCESSED)
+				.totalBonusPointsToDeduct(bonusPointsToRefund).reason(reason).status(RefundStatus.PENDING)
 				.processedAt(LocalDateTime.now()).processedBy("AUTO_SYSTEM").build();
 
+		BigDecimal safePercentage = percentage.setScale(2, java.math.RoundingMode.HALF_UP);
+
 		RefundItem refundItem = RefundItem.builder().refund(refund).ticket(ticket).ticketPrice(ticket.getFinalPrice())
-				.refundPercentage(percentage).refundAmount(refundAmount).bonusPointsToDeduct(bonusPointsToRefund)
-				.status(RefundItemStatus.PROCESSED).build();
+				.refundPercentage(safePercentage).refundAmount(refundAmount).bonusPointsToDeduct(bonusPointsToRefund)
+				.status(RefundItemStatus.PENDING).build();
 
 		refund.getItems().add(refundItem);
 		return refundRepository.save(refund);

@@ -19,7 +19,6 @@ import ua.lviv.bas.cinema.exception.infrastructure.ExternalServiceException;
 @Service
 @RequiredArgsConstructor
 public class EmailService {
-
 	private final JavaMailSender mailSender;
 
 	@Value("${app.frontend.url:http://localhost:5173}")
@@ -31,11 +30,13 @@ public class EmailService {
 	@Value("${app.company.name:Cinema}")
 	private String companyName;
 
+	private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
+
 	@Async
 	public void sendVerificationEmail(String toEmail, String token) {
-		try {
+		sendCriticalEmail(toEmail, "Confirm Your Email Address", () -> {
 			String link = frontendUrl + "/verify-email/" + token;
-			String text = """
+			return String.format("""
 					Confirm Your Email Address
 
 					Thank you for registering with %s!
@@ -47,24 +48,15 @@ public class EmailService {
 
 					If you didn't create an account, please ignore this email.
 
-					Best regards,
-					%s Team
-					""".formatted(companyName, link, companyName);
-
-			sendSimpleEmail(toEmail, "Confirm Your Email Address", text);
-			log.info("Verification email sent to {}", toEmail);
-
-		} catch (MailException e) {
-			log.error("Failed to send verification email to {}: {}", toEmail, e.getMessage());
-			throw new ExternalServiceException("Email Service", e);
-		}
+					%s""", companyName, link, getCompanySignature());
+		});
 	}
 
 	@Async
 	public void sendPasswordResetEmail(String toEmail, String token) {
-		try {
+		sendCriticalEmail(toEmail, "Password Reset Request", () -> {
 			String link = frontendUrl + "/reset-password/" + token;
-			String text = """
+			return String.format("""
 					Password Reset Request
 
 					You have requested to reset your password for your %s account.
@@ -76,132 +68,97 @@ public class EmailService {
 
 					If you didn't request a password reset, please ignore this email.
 
-					Best regards,
-					%s Team
-					""".formatted(companyName, link, companyName);
-
-			sendSimpleEmail(toEmail, "Password Reset Request", text);
-			log.info("Password reset email sent to {}", toEmail);
-
-		} catch (MailException e) {
-			log.error("Failed to send password reset email to {}: {}", toEmail, e.getMessage());
-			throw new ExternalServiceException("Email Service", e);
-		}
+					%s""", companyName, link, getCompanySignature());
+		});
 	}
 
 	@Async
 	public void sendTicketsEmail(String toEmail, String bookingNumber, String movieTitle, String sessionTime,
 			String hallName, BigDecimal amountPaid, String paymentMethod, String seatInfo) {
-		try {
-			String text = """
-					Your Tickets - %s
+		sendNonCriticalEmail(toEmail, "Your Tickets: " + movieTitle, () -> String.format("""
+				Your Tickets - %s
 
-					Booking Number: %s
-					Movie: %s
-					Time: %s
-					Hall: %s
-					Seats: %s
-					Amount Paid: %s UAH
-					Payment Method: %s
+				Booking Number: %s
+				Movie: %s
+				Time: %s
+				Hall: %s
+				Seats: %s
+				Amount Paid: %s UAH
+				Payment Method: %s
 
-					Your tickets are available in your account:
-					%s/my-tickets
+				Your tickets are available in your account:
+				%s/account/tickets
 
-					Please present the QR codes at the cinema entrance.
-					Arrive 10-15 minutes before the session.
+				Please present the QR codes at the cinema entrance.
+				Arrive 10-15 minutes before the session.
 
-					Important:
-					• Have your ID ready if required
-					• No refunds 30 minutes before session
-					• QR codes available in your account
+				Important:
+				• Have your ID ready if required
+				• No refunds 30 minutes before session
+				• QR codes available in your account
 
-					Thank you for choosing %s!
+				Thank you for choosing %s!
 
-					This is an automated email. Please do not reply.
-					""".formatted(movieTitle, bookingNumber, movieTitle, sessionTime, hallName, seatInfo, amountPaid,
-					paymentMethod, frontendUrl, companyName);
-
-			sendSimpleEmail(toEmail, "Your Tickets: " + movieTitle, text);
-			log.info("Tickets email sent to {}", toEmail);
-
-		} catch (Exception e) {
-			log.error("Failed to send tickets email to {}: {}", toEmail, e.getMessage());
-		}
+				This is an automated email. Please do not reply.""", movieTitle, bookingNumber, movieTitle, sessionTime,
+				hallName, seatInfo, amountPaid, paymentMethod, frontendUrl, companyName));
 	}
 
 	@Async
 	public void sendPaymentFailedEmail(String toEmail, String bookingNumber, String movieTitle, String sessionTime,
 			String errorMessage) {
-		try {
-			String text = """
-					Payment Failed
+		sendNonCriticalEmail(toEmail, "Payment Failed: " + movieTitle, () -> String.format("""
+				Payment Failed
 
-					Booking Number: %s
-					Movie: %s
-					Time: %s
+				Booking Number: %s
+				Movie: %s
+				Time: %s
 
-					Error: %s
+				Error: %s
 
-					Please try again or contact support.
+				Please try again or contact support.
 
-					%s Support
-					""".formatted(bookingNumber, movieTitle, sessionTime, errorMessage, companyName);
-
-			sendSimpleEmail(toEmail, "Payment Failed: " + movieTitle, text);
-			log.info("Payment failed email sent to {}", toEmail);
-
-		} catch (Exception e) {
-			log.error("Failed to send payment failed email to {}: {}", toEmail, e.getMessage());
-		}
+				%s""", bookingNumber, movieTitle, sessionTime, errorMessage, getCompanySignature()));
 	}
 
 	@Async
 	public void sendRefundEmail(String toEmail, String bookingNumber, String movieTitle, String sessionTime,
 			String hallName, BigDecimal refundAmount, String seatInfo, String refundReason) {
-		try {
-			String text = """
-					Refund Confirmation - %s
+		sendNonCriticalEmail(toEmail, "Refund Confirmation: " + movieTitle,
+				() -> String.format("""
+						Refund Confirmation - %s
 
-					Your refund request has been successfully processed.
+						Your refund request has been successfully processed.
 
-					Booking Number: %s
-					Movie: %s
-					Time: %s
-					Hall: %s
-					Seats: %s
-					Refund Amount: %s UAH
-					Reason: %s
+						Booking Number: %s
+						Movie: %s
+						Time: %s
+						Hall: %s
+						Seats: %s
+						Refund Amount: %s UAH
+						Reason: %s
 
-					The refunded amount will be returned to your original
-					payment method within 3-5 business days.
+						The refunded amount will be returned to your original
+						payment method within 3-5 business days.
 
-					Refund Summary:
-					• Ticket price refunded: %s UAH
-					• Refund processed at: %s
+						Refund Summary:
+						• Ticket price refunded: %s UAH
+						• Refund processed at: %s
 
-					If you have any questions about your refund,
-					please contact our support team.
+						If you have any questions about your refund,
+						please contact our support team.
 
-					Thank you for choosing %s!
+						Thank you for choosing %s!
 
-					This is an automated email. Please do not reply.
-					""".formatted(movieTitle, bookingNumber, movieTitle, sessionTime, hallName, seatInfo, refundAmount,
-					refundReason, refundAmount,
-					LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")), companyName);
-
-			sendSimpleEmail(toEmail, "Refund Confirmation: " + movieTitle, text);
-			log.info("Refund email sent to {}", toEmail);
-
-		} catch (Exception e) {
-			log.error("Failed to send refund email to {}: {}", toEmail, e.getMessage());
-		}
+						This is an automated email. Please do not reply.""", movieTitle, bookingNumber, movieTitle,
+						sessionTime, hallName, seatInfo, refundAmount, refundReason, refundAmount,
+						LocalDateTime.now().format(DATE_TIME_FORMATTER), companyName));
 	}
 
 	@Async
 	public void sendEmailChangeConfirmation(String toEmail, String token) {
-		try {
+		sendCriticalEmail(toEmail, "Confirm Your Email Change", () -> {
 			String link = frontendUrl + "/confirm-email-change/" + token;
-			String text = """
+			return String.format("""
 					Confirm Your Email Change
 
 					You have requested to change your %s account email address.
@@ -213,41 +170,41 @@ public class EmailService {
 
 					If you didn't request this change, please ignore this email.
 
-					Best regards,
-					%s Team
-					""".formatted(companyName, link, companyName);
-
-			sendSimpleEmail(toEmail, "Confirm Your Email Change", text);
-			log.info("Email change confirmation sent to {}", toEmail);
-
-		} catch (MailException e) {
-			log.error("Failed to send email change confirmation to {}: {}", toEmail, e.getMessage());
-			throw new ExternalServiceException("Email Service", e);
-		}
+					%s""", companyName, link, getCompanySignature());
+		});
 	}
 
 	@Async
 	public void sendEmailChangeNotification(String oldEmail, String newEmail) {
+		sendNonCriticalEmail(oldEmail, "Email Address Changed", () -> String.format("""
+				Email Address Changed
+
+				Your %s account email address has been successfully changed:
+
+				Old email: %s
+				New email: %s
+
+				If you didn't make this change, please contact our support team immediately.
+
+				%s""", companyName, oldEmail, newEmail, getCompanySignature()));
+	}
+
+	private void sendCriticalEmail(String toEmail, String subject, EmailContentSupplier contentSupplier) {
 		try {
-			String text = """
-					Email Address Changed
-
-					Your %s account email address has been successfully changed:
-
-					Old email: %s
-					New email: %s
-
-					If you didn't make this change, please contact our support team immediately.
-
-					Best regards,
-					%s Team
-					""".formatted(companyName, oldEmail, newEmail, companyName);
-
-			sendSimpleEmail(oldEmail, "Email Address Changed", text);
-			log.info("Email change notification sent to {}", oldEmail);
-
+			sendSimpleEmail(toEmail, subject, contentSupplier.get());
+			log.info("Email sent to {}", toEmail);
 		} catch (MailException e) {
-			log.error("Failed to send email change notification to {}: {}", oldEmail, e.getMessage());
+			log.error("Failed to send email to {}: {}", toEmail, e.getMessage());
+			throw new ExternalServiceException("Email Service", e);
+		}
+	}
+
+	private void sendNonCriticalEmail(String toEmail, String subject, EmailContentSupplier contentSupplier) {
+		try {
+			sendSimpleEmail(toEmail, subject, contentSupplier.get());
+			log.info("Email sent to {}", toEmail);
+		} catch (Exception e) {
+			log.error("Failed to send email to {}: {}", toEmail, e.getMessage());
 		}
 	}
 
@@ -258,5 +215,14 @@ public class EmailService {
 		message.setSubject(subject);
 		message.setText(text);
 		mailSender.send(message);
+	}
+
+	private String getCompanySignature() {
+		return String.format("Best regards,\n%s Team", companyName);
+	}
+
+	@FunctionalInterface
+	private interface EmailContentSupplier {
+		String get();
 	}
 }

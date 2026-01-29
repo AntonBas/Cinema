@@ -222,7 +222,7 @@ CREATE TABLE IF NOT EXISTS refund_items (
     refund_id BIGINT NOT NULL REFERENCES refunds(id) ON DELETE CASCADE,
     ticket_id BIGINT NOT NULL REFERENCES tickets(id) ON DELETE CASCADE,
     ticket_price DECIMAL(10, 2) NOT NULL,
-    refund_percentage DECIMAL(5, 2),
+    refund_percentage DECIMAL(5, 2) NOT NULL DEFAULT 0.00,
     refund_amount DECIMAL(10, 2),
     bonus_points_to_deduct INTEGER NOT NULL DEFAULT 0,
     status VARCHAR(20) NOT NULL DEFAULT 'PENDING',

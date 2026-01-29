@@ -65,6 +65,12 @@ public class PaymentResponse {
 	@Schema(description = "Masked card number", example = "****4832")
 	private String senderCardMask;
 
+	@Schema(description = "LiqPay action type", example = "pay")
+	private String actionType;
+
+	@Schema(description = "Whether payment can be refunded via API", example = "true")
+	private Boolean refundableViaApi;
+
 	@Schema(description = "Created at", example = "2024-01-15T14:30:00")
 	private LocalDateTime createdAt;
 
