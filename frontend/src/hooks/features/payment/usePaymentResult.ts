@@ -8,7 +8,7 @@ export const usePaymentResult = () => {
     const [paymentData, setPaymentData] = useState<PaymentResponse | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
-    const fetchPaymentData = useCallback(async (paymentId?: string) => {
+    const fetchPaymentData = useCallback(async (paymentId?: string | number) => {
         if (!paymentId) {
             setIsLoading(false);
             return;
@@ -18,7 +18,13 @@ export const usePaymentResult = () => {
         setIsLoading(true);
 
         try {
-            const payment = await getById(parseInt(paymentId));
+            const id = typeof paymentId === 'string' ? parseInt(paymentId, 10) : paymentId;
+
+            if (isNaN(id)) {
+                throw new Error('Invalid payment ID');
+            }
+
+            const payment = await getById(id);
             setPaymentData(payment);
         } catch (err) {
             console.error('Failed to fetch payment:', err);
@@ -28,7 +34,7 @@ export const usePaymentResult = () => {
     }, [getById, clearError]);
 
     const getResultMessage = useCallback(() => {
-        if (!paymentData) return null;
+        if (!paymentData) return 'Loading payment information...';
 
         switch (paymentData.status) {
             case 'SUCCESS':
@@ -79,9 +85,16 @@ export const usePaymentResult = () => {
             bookingId: paymentData.bookingId,
             amount: paymentData.amount,
             status: paymentData.status,
-            liqpayOrderId: paymentData.liqpayOrderId
+            liqpayOrderId: paymentData.liqpayOrderId,
+            paymentId: paymentData.id
         };
     }, [paymentData]);
+
+    const reset = useCallback(() => {
+        setPaymentData(null);
+        setIsLoading(true);
+        clearError();
+    }, [clearError]);
 
     return {
         loading: loading || isLoading,
@@ -92,6 +105,7 @@ export const usePaymentResult = () => {
         getResultType,
         getPaymentDetails,
         hasPaymentData: !!paymentData,
-        clearError
+        clearError,
+        reset
     };
 };

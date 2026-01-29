@@ -83,6 +83,11 @@ export const useLiqPayPayment = () => {
     const redirectToLiqPay = useCallback((): void => {
         if (!liqPayData) return;
 
+        if (liqPayData.paymentUrl && liqPayData.paymentUrl.includes('liqpay.ua')) {
+            window.location.href = liqPayData.paymentUrl;
+            return;
+        }
+
         const form = document.createElement('form');
         form.method = 'POST';
         form.action = 'https://www.liqpay.ua/api/3/checkout';

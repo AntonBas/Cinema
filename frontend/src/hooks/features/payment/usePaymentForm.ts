@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { usePayment } from './usePayment';
 import type { PaymentCreateRequest, PaymentResponse } from '@/types/payment';
 
@@ -6,8 +6,12 @@ export const usePaymentForm = () => {
     const { create, loading, error, clearError } = usePayment();
     const [success, setSuccess] = useState(false);
     const [paymentResult, setPaymentResult] = useState<PaymentResponse | null>(null);
+    const isCreatingRef = useRef(false);
 
     const handleCreate = useCallback(async (data: PaymentCreateRequest): Promise<PaymentResponse | null> => {
+        if (isCreatingRef.current) return null;
+
+        isCreatingRef.current = true;
         clearError();
         setSuccess(false);
         setPaymentResult(null);
@@ -19,6 +23,8 @@ export const usePaymentForm = () => {
             return result;
         } catch {
             return null;
+        } finally {
+            isCreatingRef.current = false;
         }
     }, [create, clearError]);
 

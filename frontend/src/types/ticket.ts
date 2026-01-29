@@ -1,4 +1,4 @@
-export type TicketStatus = 'PENDING' | 'ACTIVE' | 'USED' | 'CANCELLED' | 'REFUNDED' | 'EXPIRED';
+export type TicketStatus = 'ACTIVE' | 'USED' | 'REFUNDED';
 
 export interface TicketResponse {
     id: number;
@@ -16,10 +16,7 @@ export interface TicketResponse {
 }
 
 export const TicketStatusDisplay: Record<TicketStatus, string> = {
-    PENDING: 'Pending',
     ACTIVE: 'Active',
     USED: 'Used',
-    CANCELLED: 'Cancelled',
     REFUNDED: 'Refunded',
-    EXPIRED: 'Expired'
 };
