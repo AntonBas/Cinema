@@ -21,6 +21,7 @@ const SuccessPage = () => {
 
     const [isPolling, setIsPolling] = useState(false);
     const [pollingCount, setPollingCount] = useState(0);
+    const [isVisible, setIsVisible] = useState(false);
     const pollingRef = useRef<NodeJS.Timeout | null>(null);
     const isInitialMount = useRef(true);
 
@@ -64,7 +65,10 @@ const SuccessPage = () => {
     }, []);
 
     useEffect(() => {
-        if (!bookingId && !paymentId) {
+        setIsVisible(true);
+
+        const paramsValid = bookingId || paymentId;
+        if (!paramsValid) {
             navigate('/booking');
         }
     }, [bookingId, paymentId, navigate]);
@@ -72,10 +76,9 @@ const SuccessPage = () => {
     useEffect(() => {
         if (isInitialMount.current) {
             isInitialMount.current = false;
-            if (paymentId) {
-                fetchPaymentData(paymentId);
-            } else if (bookingId) {
-                fetchPaymentData(bookingId);
+            const idToFetch = paymentId || bookingId;
+            if (idToFetch) {
+                fetchPaymentData(idToFetch);
             }
         }
     }, [bookingId, paymentId, fetchPaymentData]);
@@ -85,7 +88,7 @@ const SuccessPage = () => {
             const status = paymentData.status;
             if (status === 'PENDING' || status === 'PROCESSING') {
                 startPolling();
-            } else if (status === 'SUCCESS' || status === 'FAILED' || status === 'CANCELLED') {
+            } else if (status === 'SUCCESS' || status === 'FAILED' || status === 'CANCELLED' || status === 'EXPIRED') {
                 stopPolling();
             }
         }
@@ -115,7 +118,7 @@ const SuccessPage = () => {
         navigate('/support');
     };
 
-    if (loading && !hasPaymentData && !paymentData) {
+    if ((loading && !hasPaymentData && !paymentData) || !isVisible) {
         return (
             <div className={styles.loadingContainer}>
                 <LoadingSpinner text="Loading payment information..." />
@@ -169,7 +172,7 @@ const SuccessPage = () => {
     const resultIcon = getResultIcon();
 
     return (
-        <div className={styles.container}>
+        <div className={`${styles.container} ${isVisible ? styles.visible : ''}`}>
             <div className={styles.contentWrapper}>
                 <div className={styles.card}>
                     {error && (
@@ -204,6 +207,12 @@ const SuccessPage = () => {
                                     <p className={styles.detailLabel}>Booking Number</p>
                                     <p className={styles.detailValue}>{paymentDetails.bookingId}</p>
                                 </div>
+                                {paymentDetails.paymentId && (
+                                    <div className={styles.detailItem}>
+                                        <p className={styles.detailLabel}>Payment ID</p>
+                                        <p className={styles.detailValue}>{paymentDetails.paymentId}</p>
+                                    </div>
+                                )}
                                 <div className={styles.detailItem}>
                                     <p className={styles.detailLabel}>Amount</p>
                                     <p className={styles.detailPrice}>{paymentDetails.amount} UAH</p>
