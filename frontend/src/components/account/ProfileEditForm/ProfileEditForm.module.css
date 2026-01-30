@@ -1,71 +1,157 @@
 .profileForm {
     width: 100%;
-    max-width: 500px;
 }
 
 .form {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-8);
-}
-
-.formSection {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-4);
-}
-
-.sectionTitle {
-    color: var(--color-text-primary);
-    font-size: var(--font-size-lg);
-    margin-bottom: var(--space-2);
-    font-weight: 600;
-}
-
-.formRow {
-    display: flex;
-    gap: var(--space-4);
-}
-
-.formRow>* {
-    flex: 1;
+    width: 100%;
 }
 
 .notification {
-    padding: var(--space-3) var(--space-4);
-    border-radius: var(--radius-md);
-    font-weight: 500;
-    text-align: center;
-    box-shadow: var(--shadow-sm);
-    border: 1px solid;
-    animation: slideDown var(--transition-fast);
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 14px;
 }
 
 .notification[data-type="error"] {
-    background: rgba(var(--color-error-rgb), var(--opacity-low));
-    color: var(--color-error);
-    border-color: rgba(var(--color-error-rgb), var(--opacity-medium));
+    background-color: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+    border: 1px solid rgba(220, 53, 69, 0.3);
 }
 
 .notification[data-type="success"] {
-    background: rgba(var(--color-success-rgb), var(--opacity-low));
-    color: var(--color-success);
-    border-color: rgba(var(--color-success-rgb), var(--opacity-medium));
+    background-color: rgba(40, 167, 69, 0.1);
+    color: #28a745;
+    border: 1px solid rgba(40, 167, 69, 0.3);
+}
+
+.verificationAlert {
+    display: flex;
+    gap: 12px;
+    padding: 16px;
+    border-radius: 8px;
+    margin-bottom: 24px;
+    border-left: 4px solid;
+}
+
+.verificationAlert.verified {
+    background-color: #d4edda;
+    border-color: #28a745;
+    color: #155724;
+}
+
+.verificationAlert.not_verified {
+    background-color: #fff3cd;
+    border-color: #ffc107;
+    color: #856404;
+}
+
+.alertIcon {
+    font-size: 20px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+}
+
+.alertContent {
+    flex: 1;
+}
+
+.alertTitle {
+    font-weight: 600;
+    margin-bottom: 4px;
+    font-size: 16px;
+}
+
+.alertMessage {
+    margin-bottom: 8px;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.alertNote {
+    font-size: 13px;
+    opacity: 0.8;
+    margin: 0;
+    font-style: italic;
+}
+
+.formSection {
+    margin-bottom: 32px;
+}
+
+.sectionTitle {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: #343a40;
+}
+
+.formRow {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.dateOfBirthField {
+    position: relative;
+}
+
+.dateChangeNote {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: #dc3545;
+    margin-top: 4px;
+    padding: 4px 8px;
+    background-color: rgba(220, 53, 69, 0.1);
+    border-radius: 4px;
+    animation: fadeIn 0.3s ease;
+}
+
+.warningIcon {
+    font-size: 14px;
 }
 
 .formActions {
     display: flex;
-    gap: var(--space-4);
     justify-content: flex-end;
-    margin-top: var(--space-4);
-    padding-top: var(--space-4);
-    border-top: 1px solid var(--color-border);
+    gap: 12px;
+    margin-top: 32px;
+    padding-top: 20px;
+    border-top: 1px solid #e9ecef;
 }
 
-@keyframes slideDown {
+.modalContent {
+    padding: 16px 0;
+}
+
+.warningText {
+    font-size: 16px;
+    margin-bottom: 16px;
+    color: #dc3545;
+}
+
+.modalDescription {
+    font-size: 14px;
+    line-height: 1.5;
+    margin-bottom: 24px;
+    color: #6c757d;
+}
+
+.modalActions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 24px;
+}
+
+@keyframes fadeIn {
     from {
         opacity: 0;
-        transform: translateY(-10px);
+        transform: translateY(-5px);
     }
 
     to {
@@ -75,13 +161,21 @@
 }
 
 @media (max-width: 768px) {
-    .profileForm {
-        max-width: 100%;
+    .formRow {
+        grid-template-columns: 1fr;
     }
 
-    .formRow {
+    .verificationAlert {
         flex-direction: column;
-        gap: var(--space-4);
+        gap: 8px;
+    }
+
+    .modalActions {
+        flex-direction: column;
+    }
+
+    .modalActions button {
+        width: 100%;
     }
 
     .formActions {

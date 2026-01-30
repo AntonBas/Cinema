@@ -11,7 +11,7 @@ import { ResetPasswordPage } from '@/pages/auth/ResetPasswordPage';
 import { EmailVerificationPage } from '@/pages/auth/EmailVerificationPage';
 
 import { HomePage } from '@/pages/home/HomePage';
-import { DashboardPage } from '@/pages/account/DashboardPage';
+import { ProfilePage } from '@/pages/account/ProfilePage';
 import { SecurityPage } from '@/pages/account/SecurityPage';
 import { BonusPage } from '@/pages/account/BonusPage';
 import { TicketsPage } from '@/pages/account/TicketsPage';
@@ -70,7 +70,7 @@ export const AppRoutes: React.FC = () => {
 
             <Route path="/account" element={
                 <ProtectedRoute>
-                    <DashboardPage />
+                    <ProfilePage />
                 </ProtectedRoute>
             } />
 

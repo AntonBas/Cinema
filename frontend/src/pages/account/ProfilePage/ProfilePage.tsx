@@ -4,9 +4,9 @@ import { AccountSidebar } from '@/components/account/AccountSidebar/AccountSideb
 import { UserProfileCard } from '@/components/account/UserProfileCard/UserProfileCard';
 import { ProfileEditForm } from '@/components/account/ProfileEditForm/ProfileEditForm';
 import { useUser } from '@/hooks/features/user';
-import styles from './DashboardPage.module.css';
+import styles from './ProfilePage.module.css';
 
-export const DashboardPage: React.FC = () => {
+export const ProfilePage: React.FC = () => {
     const { user, isLoading, error, refreshUser } = useUser();
     const [isEditing, setIsEditing] = useState(false);
 
@@ -26,7 +26,7 @@ export const DashboardPage: React.FC = () => {
     if (isLoading) {
         return (
             <Layout>
-                <div className={styles.dashboardPage}>
+                <div className={styles.profilePage}>
                     <div className={styles.loading}>Loading your account...</div>
                 </div>
             </Layout>
@@ -36,7 +36,7 @@ export const DashboardPage: React.FC = () => {
     if (error || !user) {
         return (
             <Layout>
-                <div className={styles.dashboardPage}>
+                <div className={styles.profilePage}>
                     <div className={styles.notification} data-type="error">
                         {error || 'Failed to load user data'}
                     </div>
@@ -47,19 +47,36 @@ export const DashboardPage: React.FC = () => {
 
     return (
         <Layout>
-            <div className={styles.dashboardPage}>
+            <div className={styles.profilePage}>
                 <div className={styles.container}>
-                    <AccountSidebar activePage="dashboard" />
+                    <AccountSidebar activePage="profile" />
 
                     <div className={styles.content}>
                         <div className={styles.header}>
                             <h1 className={styles.title}>
-                                {isEditing ? 'Edit Profile' : 'Welcome back, ' + user.firstName + '! 👋'}
+                                {isEditing ? 'Edit Profile' : 'My Profile'}
                             </h1>
                             <p className={styles.subtitle}>
-                                {isEditing ? 'Update your personal information' : 'Here\'s your account overview'}
+                                {isEditing
+                                    ? 'Update your personal information'
+                                    : 'Manage your account information and preferences'}
                             </p>
                         </div>
+
+                        {!isEditing && user.verificationStatus === 'NOT_VERIFIED' && (
+                            <div className={styles.verificationBanner}>
+                                <div className={styles.bannerContent}>
+                                    <span className={styles.bannerIcon}>📅</span>
+                                    <div>
+                                        <p className={styles.bannerTitle}>Verify Your Date of Birth</p>
+                                        <p className={styles.bannerText}>
+                                            To change your date of birth ({new Date(user.dateOfBirth).toLocaleDateString()})
+                                            you will need to verify it at the cinema cash desk.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
 
                         <div className={styles.profileSection}>
                             {isEditing ? (
@@ -75,19 +92,6 @@ export const DashboardPage: React.FC = () => {
                                 />
                             )}
                         </div>
-
-                        {!isEditing && (
-                            <div className={styles.quickStats}>
-                                <div className={styles.statCard}>
-                                    <h3>Recent Tickets</h3>
-                                    <p>No tickets yet</p>
-                                </div>
-                                <div className={styles.statCard}>
-                                    <h3>Loyalty Points</h3>
-                                    <p>0 points</p>
-                                </div>
-                            </div>
-                        )}
                     </div>
                 </div>
             </div>

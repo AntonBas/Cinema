@@ -1,2 +1,2 @@
-export { DashboardPage } from './DashboardPage';
+export { ProfilePage } from './ProfilePage';
 export { SecurityPage } from './SecurityPage';
