@@ -107,20 +107,16 @@ export const CinemaHall: React.FC<CinemaHallProps> = ({
                     <span>Booked</span>
                 </div>
                 <div className={styles.legendItem}>
-                    <div className={`${styles.legendColor} ${styles.unavailable}`}></div>
-                    <span>Unavailable</span>
-                </div>
-                <div className={styles.legendItem}>
-                    <div className={`${styles.legendColor} ${styles.temporary}`}></div>
-                    <span>Temporary</span>
-                </div>
-                <div className={styles.legendItem}>
                     <div className={`${styles.legendColor} ${styles.vip}`}></div>
                     <span>VIP</span>
                 </div>
                 <div className={styles.legendItem}>
                     <div className={`${styles.legendColor} ${styles.couple}`}></div>
                     <span>Couple</span>
+                </div>
+                <div className={styles.legendItem}>
+                    <div className={`${styles.legendColor} ${styles.unavailable}`}></div>
+                    <span>Unavailable</span>
                 </div>
             </div>
         </div>

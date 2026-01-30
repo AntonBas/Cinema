@@ -147,7 +147,7 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
                             </div>
                         </div>
                         <div className={styles.seatPrice}>
-                            ₴{selectedSeat.price.toFixed(2)}
+                            {selectedSeat.price.toFixed(2)}₴
                         </div>
                     </div>
                 ))}
@@ -199,12 +199,13 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
 
             <div className={styles.summary}>
                 <div className={styles.priceBreakdown}>
-                    <div className={styles.priceRow}>
-                        <span>Total price:</span>
-                        <span>₴{totalPrice.toFixed(2)}</span>
-                    </div>
+
                     {bonusPointsToUse > 0 && (
                         <>
+                            <div className={styles.priceRow}>
+                                <span>Total price:</span>
+                                <span>{totalPrice.toFixed(2)}₴</span>
+                            </div>
                             <div className={styles.priceRow}>
                                 <span>Bonus points:</span>
                                 <span>{bonusPointsToUse} points</span>
@@ -217,7 +218,7 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
                     )}
                     <div className={styles.finalPriceRow}>
                         <span>Amount to pay:</span>
-                        <span className={styles.finalPrice}>₴{finalPrice.toFixed(2)}</span>
+                        <span className={styles.finalPrice}>{finalPrice.toFixed(2)}₴</span>
                     </div>
                 </div>
 

@@ -206,7 +206,7 @@ export const BookingPage: React.FC = () => {
                     <div className={styles.sessionInfo}>
                         <span>Hall: {seatData.hallName}</span>
                         <span>Available seats: {seatData.availableSeats}</span>
-                        <span>Price from: ₴{parseFloat(seatData.basePrice).toFixed(2)}</span>
+                        <span>Price from: {parseFloat(seatData.basePrice).toFixed(2)}₴</span>
                     </div>
                 </div>
 

@@ -41,7 +41,7 @@ export const TicketTypeSelect: React.FC<TicketTypeSelectProps> = ({
                     value={ticket.ticketTypeId}
                     className={styles.option}
                 >
-                    {ticket.ticketTypeName} - ${parseFloat(ticket.finalPrice).toFixed(2)}
+                    {ticket.ticketTypeName} - {parseFloat(ticket.finalPrice).toFixed(2)}₴
                 </option>
             ))}
         </select>

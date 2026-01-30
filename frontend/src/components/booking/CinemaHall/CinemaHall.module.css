@@ -285,10 +285,6 @@
     background: var(--color-gray-dark);
 }
 
-.legendColor.temporary {
-    background: var(--color-warning);
-}
-
 .legendColor.vip {
     background: linear-gradient(135deg, var(--color-warning), var(--color-primary-light));
 }
