@@ -70,20 +70,11 @@ public class PaymentGatewayService {
 			String data = Base64.getEncoder().encodeToString(jsonData.getBytes());
 			String signature = generateSignature(data);
 
-			log.info("=== LIQPAY PAYMENT DATA ===");
-			log.info("Payment ID: {}", payment.getId());
-			log.info("Order ID: {}", payment.getLiqpayOrderId());
-			log.info("Amount: {}", payment.getAmount());
-			log.info("Sandbox mode: {}", sandboxMode);
-			log.info("Action: pay");
-			log.info("=== END LIQPAY DATA ===");
-
 			String paymentUrl = createPayment(payment);
 
 			return PaymentLiqPayDataResponse.builder().data(data).signature(signature).paymentUrl(paymentUrl)
 					.liqpayOrderId(payment.getLiqpayOrderId()).build();
 		} catch (Exception e) {
-			log.error("Failed to prepare LiqPay payment data for payment {}", payment.getId(), e);
 			throw new PaymentProcessingException("Failed to prepare payment data: " + e.getMessage());
 		}
 	}
@@ -111,15 +102,9 @@ public class PaymentGatewayService {
 			String data = Base64.getEncoder().encodeToString(jsonData.getBytes());
 			String signature = generateSignature(data);
 
-			log.info("LiqPay request data: {}", data);
-
-			String paymentUrl = liqpayApiUrl + "3/checkout?data="
-					+ URLEncoder.encode(data, StandardCharsets.UTF_8.toString()) + "&signature="
-					+ URLEncoder.encode(signature, StandardCharsets.UTF_8.toString());
-
-			return paymentUrl;
+			return liqpayApiUrl + "3/checkout?data=" + URLEncoder.encode(data, StandardCharsets.UTF_8.toString())
+					+ "&signature=" + URLEncoder.encode(signature, StandardCharsets.UTF_8.toString());
 		} catch (Exception e) {
-			log.error("Failed to create payment URL", e);
 			throw new PaymentProcessingException("Failed to create payment URL");
 		}
 	}
@@ -127,11 +112,9 @@ public class PaymentGatewayService {
 	public boolean verifyCallbackSignature(String data, String receivedSignature) {
 		String calculatedSignature = generateSignature(data);
 		boolean isValid = calculatedSignature.equals(receivedSignature);
-
 		if (!isValid) {
-			log.error("Invalid LiqPay signature! Received: {}, Calculated: {}", receivedSignature, calculatedSignature);
+			log.error("Invalid LiqPay signature!");
 		}
-
 		return isValid;
 	}
 
@@ -139,7 +122,6 @@ public class PaymentGatewayService {
 		if (!verifyCallbackSignature(data, signature)) {
 			throw new PaymentProcessingException("Invalid LiqPay signature");
 		}
-
 		String decodedData = new String(Base64.getDecoder().decode(data));
 		return gson.fromJson(decodedData, MAP_STRING_STRING_TYPE);
 	}
@@ -155,48 +137,30 @@ public class PaymentGatewayService {
 			refundParams.put("currency", "UAH");
 			refundParams.put("description", description);
 			refundParams.put("order_id", originalOrderId);
-			refundParams.put("payment_id", originalLiqpayPaymentId);
+
+			if (originalLiqpayPaymentId != null && !originalLiqpayPaymentId.trim().isEmpty()) {
+				refundParams.put("payment_id", originalLiqpayPaymentId);
+			}
 
 			if (sandboxMode) {
 				refundParams.put("sandbox", "1");
 			}
 
 			String jsonData = gson.toJson(refundParams);
-			String data = Base64.getEncoder().encodeToString(jsonData.getBytes());
-
-			log.info("=== LIQPAY REFUND DATA ===");
-			log.info("Original Payment ID: {}", originalLiqpayPaymentId);
-			log.info("Original Order ID: {}", originalOrderId);
-			log.info("Refund amount: {}", amount);
-			log.info("Description: {}", description);
-			log.info("JSON Data: {}", jsonData);
-			log.info("Base64 Data: {}", data);
-			log.info("=== END REFUND DATA ===");
-
-			return data;
-
+			return Base64.getEncoder().encodeToString(jsonData.getBytes());
 		} catch (Exception e) {
-			log.error("Failed to prepare refund data", e);
 			throw new PaymentProcessingException("Failed to prepare refund data");
 		}
 	}
 
 	public void processRefund(String refundData) {
 		try {
-			String signature = generateSignature(refundData);
-
-			log.info("=== LIQPAY REFUND REQUEST ===");
-			log.info("Refund data: {}", refundData);
-			log.info("Signature: {}", signature);
-			log.info("API URL: {}", liqpayApiUrl + "request");
-
-			try {
-				String decodedData = new String(Base64.getDecoder().decode(refundData));
-				log.info("Decoded refund params: {}", decodedData);
-			} catch (Exception e) {
-				log.warn("Could not decode refund data for logging: {}", e.getMessage());
+			if (sandboxMode) {
+				processSandboxRefund(refundData);
+				return;
 			}
 
+			String signature = generateSignature(refundData);
 			String requestBody = "data=" + URLEncoder.encode(refundData, StandardCharsets.UTF_8.toString())
 					+ "&signature=" + URLEncoder.encode(signature, StandardCharsets.UTF_8.toString());
 
@@ -205,53 +169,56 @@ public class PaymentGatewayService {
 			headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
 
 			HttpEntity<String> request = new HttpEntity<>(requestBody, headers);
-
-			log.info("Request body: {}", requestBody);
-
 			ResponseEntity<String> response = restTemplate.postForEntity(liqpayApiUrl + "request", request,
 					String.class);
-
-			log.info("=== LIQPAY REFUND RESPONSE ===");
-			log.info("HTTP Status: {}", response.getStatusCode());
-			log.info("Response body: {}", response.getBody());
 
 			if (response.getStatusCode().is2xxSuccessful()) {
 				Map<String, Object> responseMap = gson.fromJson(response.getBody(), MAP_STRING_OBJECT_TYPE);
 				String result = (String) responseMap.get("result");
 				String status = (String) responseMap.get("status");
 
-				log.info("Refund result: {}", result);
-				log.info("Refund status: {}", status);
-				log.info("Full response: {}", responseMap);
+				boolean isSuccess = "ok".equals(result) || "success".equals(status);
 
-				if ("ok".equals(result) || "success".equals(result) || "success".equals(status)
-						|| "sandbox".equals(status)) {
-					log.info("Refund processed successfully via LiqPay API");
-				} else {
+				if (!isSuccess) {
 					String errorCode = (String) responseMap.get("err_code");
 					String errorDescription = (String) responseMap.get("err_description");
-
-					log.error("LiqPay refund failed with result: {}, status: {}, error_code: {}, error_description: {}",
-							result, status, errorCode, errorDescription);
 					throw new PaymentProcessingException(
 							String.format("LiqPay refund failed: %s - %s - %s", result, errorCode, errorDescription));
 				}
 			} else {
-				log.error("LiqPay API request failed with status: {}", response.getStatusCode());
 				throw new PaymentProcessingException("LiqPay API request failed");
 			}
 
 		} catch (RestClientException e) {
-			log.error("Network error during LiqPay refund", e);
 			throw new PaymentProcessingException("Network error during refund: " + e.getMessage());
 		} catch (Exception e) {
-			log.error("Failed to process refund via LiqPay", e);
 			throw new PaymentProcessingException("Failed to process refund: " + e.getMessage());
+		}
+	}
+
+	private void processSandboxRefund(String refundData) {
+		try {
+			String decodedData = new String(Base64.getDecoder().decode(refundData));
+			Map<String, Object> params = gson.fromJson(decodedData, MAP_STRING_OBJECT_TYPE);
+
+			log.info("=== SANDBOX REFUND PROCESSED ===");
+			log.info("Order ID: {}", params.get("order_id"));
+			log.info("Amount: {}", params.get("amount"));
+			log.info("Description: {}", params.get("description"));
+			log.info("=== END SANDBOX REFUND ===");
+
+		} catch (Exception e) {
+			log.error("Error in sandbox refund", e);
+			throw new PaymentProcessingException("Sandbox refund failed: " + e.getMessage());
 		}
 	}
 
 	public PaymentResponse getPaymentStatus(String paymentId) {
 		try {
+			if (sandboxMode) {
+				return getSandboxPaymentStatus(paymentId);
+			}
+
 			Map<String, Object> statusParams = new LinkedHashMap<>();
 			statusParams.put("public_key", liqpayPublicKey);
 			statusParams.put("version", "3");
@@ -270,19 +237,11 @@ public class PaymentGatewayService {
 			headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
 
 			HttpEntity<String> request = new HttpEntity<>(requestBody, headers);
-
-			log.info("=== LIQPAY STATUS CHECK ===");
-			log.info("Payment ID: {}", paymentId);
-			log.info("Request data: {}", data);
-
 			ResponseEntity<String> response = restTemplate.postForEntity(liqpayApiUrl + "request", request,
 					String.class);
 
-			log.info("Status check response: {}", response.getBody());
-
 			if (response.getStatusCode().is2xxSuccessful()) {
 				Map<String, Object> responseMap = gson.fromJson(response.getBody(), MAP_STRING_OBJECT_TYPE);
-
 				String result = (String) responseMap.get("result");
 				String status = (String) responseMap.get("status");
 				String actionType = (String) responseMap.get("action");
@@ -291,20 +250,14 @@ public class PaymentGatewayService {
 					String errorCode = (String) responseMap.get("err_code");
 					String errorDescription = (String) responseMap.get("err_description");
 
-					log.warn("LiqPay status check error: {} - {}", errorCode, errorDescription);
-
 					if ("payment_not_found".equals(errorCode) || "err_missing".equals(errorCode)) {
 						return PaymentResponse.builder().status(PaymentStatus.FAILED).errorCode(errorCode)
 								.errorDescription(errorDescription).refundableViaApi(false).build();
 					}
-
 					throw new PaymentProcessingException("LiqPay status check error: " + errorDescription);
 				}
 
-				boolean isRefundableViaApi = isPaymentRefundableViaApi(status, actionType);
-
-				log.info("Payment action: {}, status: {}, isRefundableViaApi: {}", actionType, status,
-						isRefundableViaApi);
+				boolean isRefundableViaApi = isPaymentRefundableViaApi(status);
 
 				Object paymentIdObj = responseMap.get("payment_id");
 				String liqpayPaymentId = paymentIdObj != null ? paymentIdObj.toString() : paymentId;
@@ -332,17 +285,25 @@ public class PaymentGatewayService {
 						.senderCardMask((String) responseMap.get("sender_card_mask2")).actionType(actionType)
 						.refundableViaApi(isRefundableViaApi).build();
 			} else {
-				log.error("Failed to get payment status from LiqPay API");
 				throw new PaymentProcessingException("Failed to get payment status");
 			}
 
 		} catch (RestClientException e) {
-			log.error("Network error during LiqPay status check", e);
 			throw new PaymentProcessingException("Network error during status check");
 		} catch (Exception e) {
-			log.error("Failed to get payment status for ID: {}", paymentId, e);
 			throw new PaymentProcessingException("Failed to get payment status");
 		}
+	}
+
+	private PaymentResponse getSandboxPaymentStatus(String paymentId) {
+		log.info("=== SANDBOX PAYMENT STATUS ===");
+		log.info("Payment ID: {}", paymentId);
+		log.info("Simulating successful payment status");
+		log.info("=== END SANDBOX STATUS ===");
+
+		return PaymentResponse.builder().status(PaymentStatus.SUCCESS).liqpayPaymentId(paymentId)
+				.liqpayOrderId("SANDBOX_ORDER_" + paymentId).amount(BigDecimal.ZERO).actionType("pay")
+				.refundableViaApi(true).build();
 	}
 
 	private PaymentStatus convertLiqPayStatus(String liqpayStatus) {
@@ -368,18 +329,11 @@ public class PaymentGatewayService {
 		}
 	}
 
-	private boolean isPaymentRefundableViaApi(String status, String actionType) {
-		if (status == null || actionType == null) {
+	private boolean isPaymentRefundableViaApi(String status) {
+		if (status == null) {
 			return false;
 		}
-
-		boolean isStatusRefundable = "success".equals(status) || "sandbox".equals(status);
-
-		if (!isStatusRefundable) {
-			return false;
-		}
-
-		return true;
+		return "success".equals(status);
 	}
 
 	private Map<String, Object> buildPaymentParams(Payment payment) {
@@ -421,7 +375,6 @@ public class PaymentGatewayService {
 			byte[] digest = sha1.digest(str.getBytes());
 			return Base64.getEncoder().encodeToString(digest);
 		} catch (Exception e) {
-			log.error("Failed to generate LiqPay signature", e);
 			throw new PaymentProcessingException("Failed to generate payment signature");
 		}
 	}

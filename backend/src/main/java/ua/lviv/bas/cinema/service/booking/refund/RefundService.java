@@ -85,9 +85,6 @@ public class RefundService {
 		LocalDateTime sessionTime = ticket.getBooking().getSession().getStartTime();
 		BigDecimal percentage = refundRules.getRefundPercentage(sessionTime);
 
-		log.debug("Refund percentage: {}", percentage);
-		log.debug("Refund percentage scale: {}, precision: {}", percentage.scale(), percentage.precision());
-
 		BigDecimal refundAmount = calculationService.calculateRefundAmount(ticket.getFinalPrice(), percentage);
 		Integer bonusPointsToRefund = calculationService.calculateBonusRefund(ticket.getBonusPointsUsed(), percentage);
 
@@ -107,13 +104,9 @@ public class RefundService {
 			ticket.setRefund(refund);
 			ticketRepository.save(ticket);
 
-			log.info("Refund processed: refundId={}, ticketId={}, amount={}", refund.getId(), ticket.getId(),
-					refundAmount);
-
 			return createSuccessResponse(refund);
 
 		} catch (Exception e) {
-			log.error("Refund processing failed: refundId={}", refund.getId(), e);
 			refund.setStatus(RefundStatus.REJECTED);
 			refundRepository.save(refund);
 			throw new RefundProcessingException("Refund processing failed", e);
@@ -134,15 +127,9 @@ public class RefundService {
 	private boolean checkPaymentRefundable(Ticket ticket) {
 		try {
 			var paymentStatus = paymentGatewayService.getPaymentStatus(ticket.getPayment().getLiqpayPaymentId());
-
-			if (paymentStatus.getRefundableViaApi() != null) {
-				return paymentStatus.getRefundableViaApi();
-			}
-
-			return paymentStatus.getStatus() == PaymentStatus.SUCCESS;
-
+			return paymentStatus.getRefundableViaApi() != null ? paymentStatus.getRefundableViaApi()
+					: paymentStatus.getStatus() == PaymentStatus.SUCCESS;
 		} catch (Exception e) {
-			log.warn("Failed to check payment refundable status for ticket {}", ticket.getId(), e);
 			return false;
 		}
 	}
