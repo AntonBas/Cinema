@@ -1,7 +1,9 @@
 package ua.lviv.bas.cinema.controller.api;
 
-import java.util.List;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -35,24 +37,28 @@ public class TicketController {
 	private final TicketService ticketService;
 
 	@GetMapping
-	@Operation(summary = "Get user tickets", description = "Get all tickets for authenticated user")
+	@Operation(summary = "Get user tickets", description = "Get all tickets for authenticated user with pagination")
 	@PreAuthorize("hasRole('USER')")
-	public ResponseEntity<List<TicketResponse>> getUserTickets(@RequestParam(required = false) TicketStatus status,
-			@AuthenticationPrincipal CustomUserDetails userDetails) {
+	public ResponseEntity<Page<TicketResponse>> getUserTickets(@RequestParam(required = false) TicketStatus status,
+			@RequestParam(required = false) String search, @AuthenticationPrincipal CustomUserDetails userDetails,
+			@PageableDefault(size = 10, sort = "purchaseTime", direction = Sort.Direction.DESC) Pageable pageable) {
 		User user = userDetails.getUser();
-		log.info("Getting tickets for user ID: {} with status: {}", user.getId(), status);
-		List<TicketResponse> tickets = controllerFacade.getUserTickets(user, status);
+		log.info("Getting tickets for user ID: {} with status: {}, search: {}, page: {}, size: {}", user.getId(),
+				status, search, pageable.getPageNumber(), pageable.getPageSize());
+		Page<TicketResponse> tickets = controllerFacade.getUserTickets(user, status, search, pageable);
 		return ResponseEntity.ok(tickets);
 	}
 
 	@GetMapping("/upcoming")
-	@Operation(summary = "Get upcoming tickets", description = "Get upcoming tickets for authenticated user")
+	@Operation(summary = "Get upcoming tickets", description = "Get upcoming tickets for authenticated user with pagination")
 	@PreAuthorize("hasRole('USER')")
-	public ResponseEntity<List<TicketResponse>> getUpcomingTickets(
-			@AuthenticationPrincipal CustomUserDetails userDetails) {
+	public ResponseEntity<Page<TicketResponse>> getUpcomingTickets(@RequestParam(required = false) String search,
+			@AuthenticationPrincipal CustomUserDetails userDetails,
+			@PageableDefault(size = 10, sort = "booking.session.startTime", direction = Sort.Direction.ASC) Pageable pageable) {
 		User user = userDetails.getUser();
-		log.info("Getting upcoming tickets for user ID: {}", user.getId());
-		List<TicketResponse> tickets = controllerFacade.getUpcomingTickets(user);
+		log.info("Getting upcoming tickets for user ID: {}, search: {}, page: {}, size: {}", user.getId(), search,
+				pageable.getPageNumber(), pageable.getPageSize());
+		Page<TicketResponse> tickets = controllerFacade.getUpcomingTickets(user, search, pageable);
 		return ResponseEntity.ok(tickets);
 	}
 

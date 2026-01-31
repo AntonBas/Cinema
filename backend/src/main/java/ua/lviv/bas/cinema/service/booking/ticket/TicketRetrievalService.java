@@ -1,14 +1,13 @@
 package ua.lviv.bas.cinema.service.booking.ticket;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.Ticket;
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.enums.TicketStatus;
@@ -18,7 +17,6 @@ import ua.lviv.bas.cinema.exception.domain.ticket.TicketValidationException;
 import ua.lviv.bas.cinema.mapper.TicketMapper;
 import ua.lviv.bas.cinema.repository.TicketRepository;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -48,21 +46,35 @@ public class TicketRetrievalService {
 		return toTicketResponse(ticket);
 	}
 
-	public List<TicketResponse> getUserTickets(User user, TicketStatus status) {
-		List<Ticket> tickets;
+	public Page<TicketResponse> getUserTickets(User user, TicketStatus status, String search, Pageable pageable) {
+		Page<Ticket> tickets;
+
 		if (status != null) {
-			tickets = ticketRepository.findByUserIdAndStatusOrderByPurchaseTimeDesc(user.getId(), status);
+			switch (status) {
+			case ACTIVE:
+				tickets = ticketRepository.findActiveByUserId(user.getId(), search, pageable);
+				break;
+			case USED:
+				tickets = ticketRepository.findUsedByUserId(user.getId(), search, pageable);
+				break;
+			case REFUNDED:
+				tickets = ticketRepository.findRefundedByUserId(user.getId(), search, pageable);
+				break;
+			default:
+				tickets = ticketRepository.findAllByUserId(user.getId(), search, pageable);
+				break;
+			}
 		} else {
-			tickets = ticketRepository.findByUserIdOrderByPurchaseTimeDesc(user.getId());
+			tickets = ticketRepository.findAllByUserId(user.getId(), search, pageable);
 		}
 
-		return tickets.stream().map(this::toTicketResponse).collect(Collectors.toList());
+		return tickets.map(this::toTicketResponse);
 	}
 
-	public List<TicketResponse> getUpcomingTickets(User user) {
+	public Page<TicketResponse> getUpcomingTickets(User user, String search, Pageable pageable) {
 		LocalDateTime now = LocalDateTime.now();
-		List<Ticket> tickets = ticketRepository.findUpcomingTickets(user.getId(), now);
-		return tickets.stream().map(this::toTicketResponse).collect(Collectors.toList());
+		Page<Ticket> tickets = ticketRepository.findUpcomingByUserId(user.getId(), now, search, pageable);
+		return tickets.map(this::toTicketResponse);
 	}
 
 	private TicketResponse toTicketResponse(Ticket ticket) {

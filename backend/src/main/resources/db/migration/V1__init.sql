@@ -129,6 +129,28 @@ CREATE INDEX IF NOT EXISTS idx_booking_expires ON bookings(expires_at);
 CREATE INDEX IF NOT EXISTS idx_booking_created ON bookings(created_at);
 CREATE INDEX IF NOT EXISTS idx_booking_final_price ON bookings(final_price);
 
+CREATE TABLE IF NOT EXISTS booked_seats (
+    id BIGSERIAL PRIMARY KEY,
+    booking_id BIGINT REFERENCES bookings(id) ON DELETE CASCADE,
+    seat_id BIGINT NOT NULL REFERENCES seats(id) ON DELETE CASCADE,
+    session_id BIGINT NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
+    ticket_type_id BIGINT NOT NULL REFERENCES ticket_types(id) ON DELETE CASCADE,
+    seat_price DECIMAL(10, 2) NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+    booked_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    reserved_until TIMESTAMP NOT NULL,
+    user_id BIGINT REFERENCES users(id) ON DELETE SET NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_booked_seat_booking ON booked_seats(booking_id);
+CREATE INDEX IF NOT EXISTS idx_booked_seat_session ON booked_seats(session_id);
+CREATE INDEX IF NOT EXISTS idx_booked_seat_seat ON booked_seats(seat_id);
+CREATE INDEX IF NOT EXISTS idx_booked_seat_status ON booked_seats(status);
+CREATE INDEX IF NOT EXISTS idx_booked_seat_reserved_until ON booked_seats(reserved_until);
+CREATE INDEX IF NOT EXISTS idx_booked_seat_composite_status ON booked_seats(session_id, seat_id, status);
+CREATE INDEX IF NOT EXISTS idx_booked_seat_created ON booked_seats(booked_at);
+CREATE INDEX IF NOT EXISTS idx_booked_seat_user ON booked_seats(user_id);
+
 CREATE TABLE IF NOT EXISTS payments (
     id BIGSERIAL PRIMARY KEY,
     amount DECIMAL(10, 2) NOT NULL,
@@ -176,6 +198,7 @@ CREATE TABLE IF NOT EXISTS tickets (
     ticket_type_id BIGINT NOT NULL REFERENCES ticket_types(id) ON DELETE CASCADE,
     purchase_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     payment_id BIGINT REFERENCES payments(id) ON DELETE SET NULL,
+    booked_seat_id BIGINT REFERENCES booked_seats(id),
     original_price DECIMAL(10, 2) NOT NULL,
     final_price DECIMAL(10, 2) NOT NULL,
     discount_amount DECIMAL(10, 2) DEFAULT 0.00,
@@ -194,28 +217,7 @@ CREATE INDEX IF NOT EXISTS idx_ticket_purchase_time ON tickets(purchase_time);
 CREATE INDEX IF NOT EXISTS idx_ticket_ticket_type ON tickets(ticket_type_id);
 CREATE INDEX IF NOT EXISTS idx_ticket_unique_code ON tickets(unique_code);
 CREATE INDEX IF NOT EXISTS idx_ticket_user ON tickets(user_id);
-
-CREATE TABLE IF NOT EXISTS booked_seats (
-    id BIGSERIAL PRIMARY KEY,
-    booking_id BIGINT REFERENCES bookings(id) ON DELETE CASCADE,
-    seat_id BIGINT NOT NULL REFERENCES seats(id) ON DELETE CASCADE,
-    session_id BIGINT NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
-    ticket_type_id BIGINT NOT NULL REFERENCES ticket_types(id) ON DELETE CASCADE,
-    seat_price DECIMAL(10, 2) NOT NULL,
-    status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
-    booked_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    reserved_until TIMESTAMP NOT NULL,
-    user_id BIGINT REFERENCES users(id) ON DELETE SET NULL
-);
-
-CREATE INDEX IF NOT EXISTS idx_booked_seat_booking ON booked_seats(booking_id);
-CREATE INDEX IF NOT EXISTS idx_booked_seat_session ON booked_seats(session_id);
-CREATE INDEX IF NOT EXISTS idx_booked_seat_seat ON booked_seats(seat_id);
-CREATE INDEX IF NOT EXISTS idx_booked_seat_status ON booked_seats(status);
-CREATE INDEX IF NOT EXISTS idx_booked_seat_reserved_until ON booked_seats(reserved_until);
-CREATE INDEX IF NOT EXISTS idx_booked_seat_composite_status ON booked_seats(session_id, seat_id, status);
-CREATE INDEX IF NOT EXISTS idx_booked_seat_created ON booked_seats(booked_at);
-CREATE INDEX IF NOT EXISTS idx_booked_seat_user ON booked_seats(user_id);
+CREATE INDEX IF NOT EXISTS idx_ticket_booked_seat ON tickets(booked_seat_id);
 
 CREATE TABLE IF NOT EXISTS refund_items (
     id BIGSERIAL PRIMARY KEY,

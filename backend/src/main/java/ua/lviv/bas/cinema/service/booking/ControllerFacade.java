@@ -125,13 +125,13 @@ public class ControllerFacade {
 	}
 
 	@Transactional(readOnly = true)
-	public List<TicketResponse> getUserTickets(User user, TicketStatus status) {
-		return ticketRetrievalService.getUserTickets(user, status);
+	public Page<TicketResponse> getUserTickets(User user, TicketStatus status, String search, Pageable pageable) {
+		return ticketRetrievalService.getUserTickets(user, status, search, pageable);
 	}
 
 	@Transactional(readOnly = true)
-	public List<TicketResponse> getUpcomingTickets(User user) {
-		return ticketRetrievalService.getUpcomingTickets(user);
+	public Page<TicketResponse> getUpcomingTickets(User user, String search, Pageable pageable) {
+		return ticketRetrievalService.getUpcomingTickets(user, search, pageable);
 	}
 
 	@Transactional

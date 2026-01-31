@@ -41,7 +41,8 @@ public class TicketService {
 
 		for (BookedSeat bookedSeat : booking.getBookedSeats()) {
 			Ticket ticket = Ticket.builder().booking(booking).user(booking.getUser())
-					.ticketType(bookedSeat.getTicketType()).payment(payment).originalPrice(bookedSeat.getSeatPrice())
+					.ticketType(bookedSeat.getTicketType()).payment(payment).bookedSeat(
+							bookedSeat).originalPrice(bookedSeat.getSeatPrice())
 					.finalPrice(bookedSeat.getSeatPrice()).uniqueCode(numberGenerator.generateTicketCode())
 					.status(TicketStatus.ACTIVE).purchaseTime(LocalDateTime.now()).build();
 
