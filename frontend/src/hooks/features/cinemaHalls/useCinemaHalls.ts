@@ -1,95 +1,100 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { cinemaHallApi } from '@/api/cinemaHallApi';
-import type { CinemaHallResponse, CinemaHallWithSeatsResponse, HallLayoutResponse } from '@/types/cinemaHall';
+import type { CinemaHallRequest, CinemaHallResponse, CinemaHallWithSeatsResponse, HallLayoutResponse } from '@/types/cinemaHall';
+import { useApi } from '@/hooks/common/useApi';
 
 export const useCinemaHalls = () => {
     const [allHalls, setAllHalls] = useState<CinemaHallResponse[]>([]);
     const [hallWithSeats, setHallWithSeats] = useState<CinemaHallWithSeatsResponse | null>(null);
     const [hallLayout, setHallLayout] = useState<HallLayoutResponse | null>(null);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
 
-    const getAllHalls = useCallback(async () => {
-        setLoading(true);
-        setError(null);
-        try {
+    const getAllHallsHook = useApi<CinemaHallResponse[]>();
+    const getHallByIdHook = useApi<CinemaHallResponse>();
+    const getHallWithSeatsHook = useApi<CinemaHallWithSeatsResponse>();
+    const getHallLayoutHook = useApi<HallLayoutResponse>();
+    const searchHallsHook = useApi<CinemaHallResponse[]>();
+    const createHallHook = useApi<CinemaHallResponse>();
+    const updateHallHook = useApi<CinemaHallResponse>();
+    const deleteHallHook = useApi<void>();
+
+    const getAllHalls = useCallback(async (): Promise<CinemaHallResponse[]> => {
+        return getAllHallsHook.callApi(async () => {
             const data = await cinemaHallApi.getAll();
             setAllHalls(data);
             return data;
-        } catch (err) {
-            const message = err instanceof Error ? err.message : 'Failed to load cinema halls';
-            setError(message);
-            throw err;
-        } finally {
-            setLoading(false);
-        }
-    }, []);
+        });
+    }, [getAllHallsHook]);
 
-    useEffect(() => {
-        getAllHalls();
-    }, [getAllHalls]);
+    const getHallById = useCallback(async (id: number): Promise<CinemaHallResponse> => {
+        return getHallByIdHook.callApi(async () => {
+            return await cinemaHallApi.getById(id);
+        });
+    }, [getHallByIdHook]);
 
-    const getHallWithSeats = useCallback(async (id: number) => {
-        setLoading(true);
-        setError(null);
-        try {
+    const getHallWithSeats = useCallback(async (id: number): Promise<CinemaHallWithSeatsResponse> => {
+        return getHallWithSeatsHook.callApi(async () => {
             const data = await cinemaHallApi.getWithSeats(id);
             setHallWithSeats(data);
             return data;
-        } catch (err) {
-            const message = err instanceof Error ? err.message : 'Failed to load hall with seats';
-            setError(message);
-            throw err;
-        } finally {
-            setLoading(false);
-        }
-    }, []);
+        });
+    }, [getHallWithSeatsHook]);
 
-    const getHallLayout = useCallback(async (id: number) => {
-        setLoading(true);
-        setError(null);
-        try {
+    const getHallLayout = useCallback(async (id: number): Promise<HallLayoutResponse> => {
+        return getHallLayoutHook.callApi(async () => {
             const data = await cinemaHallApi.getLayout(id);
             setHallLayout(data);
             return data;
-        } catch (err) {
-            const message = err instanceof Error ? err.message : 'Failed to load hall layout';
-            setError(message);
-            throw err;
-        } finally {
-            setLoading(false);
-        }
-    }, []);
+        });
+    }, [getHallLayoutHook]);
 
-    const searchHalls = useCallback(async (name?: string) => {
-        setLoading(true);
-        setError(null);
-        try {
-            const data = await cinemaHallApi.search(name);
-            return data;
-        } catch (err) {
-            const message = err instanceof Error ? err.message : 'Failed to search halls';
-            setError(message);
-            throw err;
-        } finally {
-            setLoading(false);
-        }
-    }, []);
+    const searchHalls = useCallback(async (name?: string): Promise<CinemaHallResponse[]> => {
+        return searchHallsHook.callApi(async () => {
+            return await cinemaHallApi.search(name);
+        });
+    }, [searchHallsHook]);
 
-    const clearError = () => {
-        setError(null);
-    };
+    const createHall = useCallback(async (request: CinemaHallRequest): Promise<CinemaHallResponse> => {
+        return createHallHook.callApi(async () => {
+            const hall = await cinemaHallApi.admin.create(request);
+            setAllHalls(prev => [...prev, hall]);
+            return hall;
+        });
+    }, [createHallHook]);
+
+    const updateHall = useCallback(async (id: number, request: CinemaHallRequest): Promise<CinemaHallResponse> => {
+        return updateHallHook.callApi(async () => {
+            const hall = await cinemaHallApi.admin.update(id, request);
+            setAllHalls(prevHalls => prevHalls.map(h => h.id === id ? hall : h));
+            return hall;
+        });
+    }, [updateHallHook]);
+
+    const deleteHall = useCallback(async (id: number): Promise<void> => {
+        return deleteHallHook.callApi(async () => {
+            await cinemaHallApi.admin.delete(id);
+            setAllHalls(prevHalls => prevHalls.filter(h => h.id !== id));
+        });
+    }, [deleteHallHook]);
+
+    const refreshHalls = useCallback(() => {
+        getAllHalls();
+    }, [getAllHalls]);
 
     return {
         allHalls,
         hallWithSeats,
         hallLayout,
-        loading,
-        error,
+        loading: getAllHallsHook.loading || getHallByIdHook.loading || getHallWithSeatsHook.loading ||
+            getHallLayoutHook.loading || searchHallsHook.loading || createHallHook.loading ||
+            updateHallHook.loading || deleteHallHook.loading,
         getAllHalls,
+        getHallById,
         getHallWithSeats,
         getHallLayout,
         searchHalls,
-        clearError
+        createHall,
+        updateHall,
+        deleteHall,
+        refreshHalls,
     };
 };

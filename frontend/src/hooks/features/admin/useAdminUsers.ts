@@ -1,39 +1,39 @@
-import { useState } from 'react';
-import type { AdminUser, AdminUsersResponse, UserRole, VerificationStatus } from '@/types/user';
+import { useState, useCallback } from 'react';
+import type { AdminUserListResponse, UserRole, VerificationStatus } from '@/types/user';
 import { adminApi } from '@/api/adminApi';
+import { useApi } from '@/hooks/common/useApi';
 
-interface PaginationInfo {
-    currentPage: number;
-    totalPages: number;
-    totalElements: number;
-    pageSize: number;
-}
+export const useAdminUsers = () => {
+    const [users, setUsers] = useState<AdminUserListResponse[]>([]);
+    const [pagination, setPagination] = useState<{
+        currentPage: number;
+        totalPages: number;
+        totalElements: number;
+        pageSize: number;
+    } | null>(null);
+    const [currentParams, setCurrentParams] = useState<{
+        query?: string;
+        role?: string;
+        enabled?: boolean;
+        page?: number;
+        size?: number;
+    }>({});
 
-interface UseAdminUsersReturn {
-    users: AdminUser[];
-    pagination: PaginationInfo | null;
-    loading: boolean;
-    error: string | null;
-    searchUsers: (params: { query?: string; role?: string; enabled?: boolean; page?: number; size?: number }) => Promise<void>;
-    refreshUsers: () => void;
-    updateUserRoleLocal: (userId: number, userRole: UserRole) => void;
-    updateUserStatusLocal: (userId: number, enabled: boolean) => void;
-    updateVerificationStatusLocal: (userId: number, verificationStatus: VerificationStatus, verifiedAt: string | null) => void;
-}
+    const { loading: fetchLoading, callApi: fetchCallApi } = useApi<AdminUserListResponse[]>();
+    const { loading: mutationLoading, callApi: mutationCallApi } = useApi<void>();
 
-export const useAdminUsers = (): UseAdminUsersReturn => {
-    const [users, setUsers] = useState<AdminUser[]>([]);
-    const [pagination, setPagination] = useState<PaginationInfo | null>(null);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const fetchUsers = useCallback(async (params: {
+        query?: string;
+        role?: string;
+        enabled?: boolean;
+        page?: number;
+        size?: number;
+    } = {}) => {
+        const { query, role, enabled, page = 0, size = 10 } = params;
+        setCurrentParams(params);
 
-    const searchUsers = async (params: { query?: string; role?: string; enabled?: boolean; page?: number; size?: number } = {}) => {
-        setLoading(true);
-        setError(null);
-        try {
-            const { query, role, enabled, page = 0, size = 10 } = params;
-            const response: AdminUsersResponse = await adminApi.getUsers(page, size, query, role, enabled);
-
+        return fetchCallApi(async () => {
+            const response = await adminApi.getUsers(page, size, query, role, enabled);
             setUsers(response.content);
             setPagination({
                 currentPage: response.number,
@@ -41,60 +41,57 @@ export const useAdminUsers = (): UseAdminUsersReturn => {
                 totalElements: response.totalElements,
                 pageSize: response.size
             });
-        } catch (err) {
-            const message = err instanceof Error ? err.message : 'Failed to load users';
-            setError(message);
-        } finally {
-            setLoading(false);
-        }
-    };
+            return response.content;
+        }, { showErrorNotification: false });
+    }, [fetchCallApi]);
 
-    const refreshUsers = () => {
-        if (pagination) {
-            searchUsers({
-                page: pagination.currentPage,
-                size: pagination.pageSize
-            });
-        }
-    };
-
-    const updateUserRoleLocal = (userId: number, userRole: UserRole) => {
-        setUsers(prevUsers =>
-            prevUsers.map(user =>
+    const updateUserRole = useCallback(async (userId: number, userRole: UserRole) => {
+        return mutationCallApi(async () => {
+            await adminApi.updateUserRole(userId, { userRole });
+            setUsers(prevUsers => prevUsers.map(user =>
                 user.id === userId ? { ...user, userRole } : user
-            )
-        );
-    };
+            ));
+        });
+    }, [mutationCallApi]);
 
-    const updateUserStatusLocal = (userId: number, enabled: boolean) => {
-        setUsers(prevUsers =>
-            prevUsers.map(user =>
+    const updateUserStatus = useCallback(async (userId: number, enabled: boolean) => {
+        return mutationCallApi(async () => {
+            await adminApi.updateUserStatus(userId, { enabled });
+            setUsers(prevUsers => prevUsers.map(user =>
                 user.id === userId ? { ...user, enabled } : user
-            )
-        );
-    };
+            ));
+        });
+    }, [mutationCallApi]);
 
-    const updateVerificationStatusLocal = (userId: number, verificationStatus: VerificationStatus, verifiedAt: string | null) => {
-        setUsers(prevUsers =>
-            prevUsers.map(user =>
-                user.id === userId ? {
-                    ...user,
-                    verificationStatus,
-                    verifiedAt
-                } : user
-            )
-        );
-    };
+    const updateBirthDateVerification = useCallback(async (userId: number, verificationStatus: VerificationStatus) => {
+        return mutationCallApi(async () => {
+            const response = await adminApi.updateBirthDateVerification(userId, { verificationStatus });
+            setUsers(prevUsers => prevUsers.map(user =>
+                user.id === userId ? { ...user, verificationStatus: response.verificationStatus } : user
+            ));
+        });
+    }, [mutationCallApi]);
+
+    const refresh = useCallback(() => {
+        if (Object.keys(currentParams).length > 0) {
+            fetchUsers(currentParams);
+        }
+    }, [currentParams, fetchUsers]);
+
+    const clearUsers = useCallback(() => {
+        setUsers([]);
+        setPagination(null);
+    }, []);
 
     return {
         users,
         pagination,
-        loading,
-        error,
-        searchUsers,
-        refreshUsers,
-        updateUserRoleLocal,
-        updateUserStatusLocal,
-        updateVerificationStatusLocal
+        loading: fetchLoading || mutationLoading,
+        fetchUsers,
+        updateUserRole,
+        updateUserStatus,
+        updateBirthDateVerification,
+        refresh,
+        clearUsers
     };
 };

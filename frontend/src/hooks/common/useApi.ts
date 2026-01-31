@@ -5,10 +5,13 @@ export const useApi = <T>() => {
     const [loading, setLoading] = useState(false);
     const { showNotification } = useNotification();
 
-    const callApi = async (apiCall: () => Promise<T>, options?: {
-        showErrorNotification?: boolean;
-        successMessage?: string;
-    }): Promise<T> => {
+    const callApi = async (
+        apiCall: () => Promise<T>,
+        options?: {
+            showErrorNotification?: boolean;
+            successMessage?: string;
+        }
+    ): Promise<T> => {
         const {
             showErrorNotification = true,
             successMessage

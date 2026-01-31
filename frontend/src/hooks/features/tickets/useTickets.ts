@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { ticketApi } from '@/api/ticketApi';
 import type { TicketResponse, TicketStatus } from '@/types/ticket';
 import type { PageResponse, SearchParams } from '@/types/pagination';
-import { isApiErrorException } from '@/utils/apiErrorHandler';
+import { useApi } from '@/hooks/common/useApi';
 
 export interface TicketFilters {
     search?: string;
@@ -13,8 +13,6 @@ export interface TicketFilters {
 }
 
 export const useTickets = () => {
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
     const [data, setData] = useState<PageResponse<TicketResponse>>({
         content: [],
         totalElements: 0,
@@ -29,6 +27,13 @@ export const useTickets = () => {
     const [isUpcoming, setIsUpcoming] = useState(false);
     const [filters, setFilters] = useState<TicketFilters>({});
     const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+    const getUserTicketsHook = useApi<PageResponse<TicketResponse>>();
+    const getUpcomingTicketsHook = useApi<PageResponse<TicketResponse>>();
+    const getByIdHook = useApi<TicketResponse>();
+    const getByCodeHook = useApi<TicketResponse>();
+    const validateHook = useApi<void>();
+    const getQRCodeHook = useApi<Blob>();
 
     const searchParams = useMemo(() => {
         const params: SearchParams = {
@@ -53,23 +58,20 @@ export const useTickets = () => {
     }, [status, filters.search, filters.dateRange, data.number, data.size]);
 
     const fetchTickets = useCallback(async () => {
-        setLoading(true);
-        setError(null);
-
-        try {
-            const response = isUpcoming
-                ? await ticketApi.getUpcomingTickets(searchParams)
-                : await ticketApi.getUserTickets(status, searchParams);
-
-            setData(response);
-        } catch (err) {
-            const message = isApiErrorException(err) ? err.message : 'Failed to fetch tickets';
-            setError(message);
-            console.error('Error fetching tickets:', err);
-        } finally {
-            setLoading(false);
+        if (isUpcoming) {
+            return getUpcomingTicketsHook.callApi(async () => {
+                const response = await ticketApi.getUpcomingTickets(searchParams);
+                setData(response);
+                return response;
+            }, { showErrorNotification: false });
+        } else {
+            return getUserTicketsHook.callApi(async () => {
+                const response = await ticketApi.getUserTickets(status, searchParams);
+                setData(response);
+                return response;
+            }, { showErrorNotification: false });
         }
-    }, [isUpcoming, status, searchParams]);
+    }, [isUpcoming, getUserTicketsHook, getUpcomingTicketsHook, searchParams, status]);
 
     useEffect(() => {
         fetchTickets();
@@ -120,66 +122,29 @@ export const useTickets = () => {
         setData(prev => ({ ...prev, number: 0 }));
     }, []);
 
-    const clearError = useCallback(() => {
-        setError(null);
-    }, []);
-
     const getById = useCallback(async (ticketId: number): Promise<TicketResponse> => {
-        setLoading(true);
-        setError(null);
-        try {
+        return getByIdHook.callApi(async () => {
             return await ticketApi.getById(ticketId);
-        } catch (err) {
-            const message = isApiErrorException(err) ? err.message : `Failed to fetch ticket with ID: ${ticketId}`;
-            setError(message);
-            throw err;
-        } finally {
-            setLoading(false);
-        }
-    }, []);
+        }, { showErrorNotification: false });
+    }, [getByIdHook]);
 
     const getByCode = useCallback(async (ticketCode: string): Promise<TicketResponse> => {
-        setLoading(true);
-        setError(null);
-        try {
+        return getByCodeHook.callApi(async () => {
             return await ticketApi.getByCode(ticketCode);
-        } catch (err) {
-            const message = isApiErrorException(err) ? err.message : `Failed to fetch ticket with code: ${ticketCode}`;
-            setError(message);
-            throw err;
-        } finally {
-            setLoading(false);
-        }
-    }, []);
-
-    const validate = useCallback(async (ticketCode: string): Promise<void> => {
-        setLoading(true);
-        setError(null);
-        try {
-            await ticketApi.validate(ticketCode);
-        } catch (err) {
-            const message = isApiErrorException(err) ? err.message : 'Failed to validate ticket';
-            setError(message);
-            throw err;
-        } finally {
-            setLoading(false);
-        }
-    }, []);
+        }, { showErrorNotification: false });
+    }, [getByCodeHook]);
 
     const getQrCode = useCallback(async (ticketCode: string): Promise<Blob> => {
-        setLoading(true);
-        setError(null);
-        try {
-            const response = await ticketApi.getQrCode(ticketCode);
-            return await response.blob();
-        } catch (err) {
-            const message = isApiErrorException(err) ? err.message : 'Failed to fetch QR code';
-            setError(message);
-            throw err;
-        } finally {
-            setLoading(false);
-        }
-    }, []);
+        return getQRCodeHook.callApi(async () => {
+            return await ticketApi.getQRCode(ticketCode);
+        }, { showErrorNotification: false });
+    }, [getQRCodeHook]);
+
+    const validate = useCallback(async (ticketCode: string): Promise<void> => {
+        return validateHook.callApi(async () => {
+            await ticketApi.validate(ticketCode);
+        }, { showErrorNotification: false });
+    }, [validateHook]);
 
     useEffect(() => {
         return () => {
@@ -191,8 +156,9 @@ export const useTickets = () => {
 
     return {
         data,
-        loading,
-        error,
+        loading: getUserTicketsHook.loading || getUpcomingTicketsHook.loading ||
+            getByIdHook.loading || getByCodeHook.loading || validateHook.loading ||
+            getQRCodeHook.loading,
         status,
         isUpcoming,
         filters,
@@ -203,12 +169,19 @@ export const useTickets = () => {
         handleSearch,
         handleDateRangeChange: updateDateRange,
         refresh: fetchTickets,
-        clearError,
         clearFilters,
         getById,
         getByCode,
-        validate,
         getQrCode,
-        hasFilters: status !== undefined || Object.keys(filters).length > 0
+        validate,
+        hasFilters: status !== undefined || Object.keys(filters).length > 0,
+        currentPage: data.number,
+        totalPages: data.totalPages,
+        totalElements: data.totalElements,
+        pageSize: data.size,
+        isEmpty: data.empty,
+        isFirstPage: data.first,
+        isLastPage: data.last,
+        tickets: data.content,
     };
 };
