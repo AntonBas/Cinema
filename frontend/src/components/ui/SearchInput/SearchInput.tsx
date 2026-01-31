@@ -7,16 +7,22 @@ export interface SearchInputProps {
     delay?: number;
     className?: string;
     disabled?: boolean;
+    value?: string;
 }
 export const SearchInput: React.FC<SearchInputProps> = ({
     onSearch,
     placeholder = "Search...",
     delay = 300,
     className = '',
-    disabled = false
+    disabled = false,
+    value = ''
 }) => {
-    const [query, setQuery] = useState('');
+    const [query, setQuery] = useState(value);
     const [isSearching, setIsSearching] = useState(false);
+
+    useEffect(() => {
+        setQuery(value);
+    }, [value]);
 
     const handleSearch = useCallback((searchQuery: string) => {
         onSearch(searchQuery);

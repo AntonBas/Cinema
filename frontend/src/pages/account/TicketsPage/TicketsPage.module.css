@@ -16,9 +16,6 @@
 }
 
 .pageHeader {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
     margin-bottom: var(--space-8);
 }
 
@@ -33,46 +30,6 @@
     font-size: var(--font-size-sm);
     color: var(--color-text-secondary);
     margin: 0;
-}
-
-.statsCards {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: var(--space-4);
-    margin-bottom: var(--space-8);
-}
-
-.statCard {
-    background: var(--color-bg-primary);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-lg);
-    padding: var(--space-6) var(--space-4);
-    text-align: center;
-    transition: var(--transition-fast);
-}
-
-.statCard:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
-    border-color: var(--color-primary);
-}
-
-.statValue {
-    font-size: var(--font-size-3xl);
-    font-weight: 700;
-    color: var(--color-text-primary);
-    margin-bottom: var(--space-2);
-}
-
-.statValue.revenue {
-    color: var(--color-primary);
-    font-size: var(--font-size-2xl);
-}
-
-.statLabel {
-    font-size: var(--font-size-sm);
-    color: var(--color-text-secondary);
-    font-weight: 500;
 }
 
 .controlsSection {
@@ -94,37 +51,30 @@
     gap: var(--space-3);
     flex: 1;
     min-width: 300px;
-    position: relative;
-}
-
-.searchIcon {
-    position: absolute;
-    left: var(--space-4);
-    color: var(--color-text-secondary);
-    pointer-events: none;
 }
 
 .searchInput {
-    padding-left: calc(var(--space-4) + 24px);
     flex: 1;
+}
+
+.clearButton {
+    white-space: nowrap;
 }
 
 .viewControls {
     display: flex;
     align-items: center;
-    gap: var(--space-3);
 }
 
 .viewButtons {
     display: flex;
     gap: var(--space-2);
-    background: var(--color-bg-tertiary);
-    padding: var(--space-1);
-    border-radius: var(--radius-md);
 }
 
-.filtersSection {
-    margin-bottom: var(--space-8);
+.viewButton {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
 }
 
 .tabsSection {
@@ -134,7 +84,6 @@
 .mainTabs {
     display: flex;
     gap: var(--space-2);
-    margin-bottom: var(--space-4);
     flex-wrap: wrap;
 }
 
@@ -167,62 +116,6 @@
 
 .tabLabel {
     font-weight: 500;
-}
-
-.tabCount {
-    background: rgba(255, 255, 255, 0.1);
-    padding: 2px 8px;
-    border-radius: var(--radius-full);
-    font-size: var(--font-size-xs);
-    font-weight: 600;
-}
-
-.tab.active .tabCount {
-    background: rgba(255, 255, 255, 0.2);
-}
-
-.statusTabs {
-    display: flex;
-    gap: var(--space-2);
-    flex-wrap: wrap;
-}
-
-.statusTab {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-    padding: var(--space-2) var(--space-4);
-    background: transparent;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-full);
-    color: var(--color-text-secondary);
-    font-size: var(--font-size-xs);
-    font-weight: 500;
-    cursor: pointer;
-    transition: var(--transition-fast);
-}
-
-.statusTab:hover {
-    background: var(--color-bg-tertiary);
-    color: var(--color-text-primary);
-}
-
-.statusTab.active {
-    background: var(--color-bg-tertiary);
-    color: var(--color-primary);
-    border-color: var(--color-primary);
-}
-
-.statusTabCount {
-    background: var(--color-bg-quaternary);
-    padding: 1px 6px;
-    border-radius: var(--radius-full);
-    font-size: var(--font-size-xs);
-    font-weight: 600;
-}
-
-.statusTab.active .statusTabCount {
-    background: rgba(var(--color-primary-rgb), var(--opacity-low));
 }
 
 .ticketsSection {
@@ -258,16 +151,6 @@
         padding: var(--space-4);
     }
 
-    .pageHeader {
-        flex-direction: column;
-        align-items: stretch;
-        gap: var(--space-4);
-    }
-
-    .statsCards {
-        grid-template-columns: repeat(2, 1fr);
-    }
-
     .controlsSection {
         flex-direction: column;
         align-items: stretch;
@@ -275,17 +158,22 @@
 
     .searchBox {
         min-width: auto;
+        flex-direction: column;
+        align-items: stretch;
+        gap: var(--space-2);
+    }
+
+    .searchInput {
+        width: 100%;
+    }
+
+    .clearButton {
+        align-self: flex-start;
     }
 
     .viewControls {
         align-self: stretch;
         justify-content: space-between;
-    }
-}
-
-@media (max-width: 480px) {
-    .statsCards {
-        grid-template-columns: 1fr;
     }
 
     .mainTabs {
@@ -296,9 +184,16 @@
         padding: var(--space-2) var(--space-4);
         font-size: var(--font-size-xs);
     }
+}
 
-    .statusTabs {
+@media (max-width: 480px) {
+    .mainTabs {
         justify-content: center;
+    }
+
+    .tab {
+        padding: var(--space-2) var(--space-4);
+        font-size: var(--font-size-xs);
     }
 }
 

@@ -34,6 +34,18 @@
     letter-spacing: 0.5px;
 }
 
+.ticketTypeBadge {
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background-color: var(--color-primary);
+}
+
 .ticketCode {
     font-family: 'Courier New', monospace;
     font-size: var(--font-size-xs);
@@ -206,6 +218,12 @@
     display: flex;
     gap: var(--space-3);
     justify-content: flex-end;
+}
+
+.headerLeft {
+    display: flex;
+    gap: var(--space-2);
+    align-items: center;
 }
 
 @media (max-width: 1024px) {

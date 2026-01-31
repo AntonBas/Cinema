@@ -14,6 +14,6 @@ export interface SearchParams {
     page?: number;
     size?: number;
     sort?: string;
-    query?: string;
+    search?: string;
     [key: string]: any;
 }

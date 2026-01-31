@@ -2,7 +2,7 @@ import React from 'react';
 import { Button } from '@/components/ui';
 import type { TicketResponse } from '@/types/ticket';
 import { TicketStatusDisplay } from '@/types/ticket';
-import { QrCode, Calendar, MapPin, User, Clock, ArrowRight, Undo2 } from 'lucide-react';
+import { QrCode, Calendar, MapPin, User, Clock, ArrowRight, Undo2, Tag } from 'lucide-react';
 import styles from './TicketCard.module.css';
 
 interface TicketCardProps {
@@ -39,15 +39,19 @@ export const TicketCard: React.FC<TicketCardProps> = ({
         const colors = {
             ACTIVE: '#48bb78',
             USED: '#3b82f6',
-            CANCELLED: '#ff6b6b',
-            REFUNDED: '#ed8936',
-            EXPIRED: '#a0a8c0',
-            PENDING: '#e2e8f0'
+            REFUNDED: '#ed8936'
         };
         return colors[status as keyof typeof colors] || '#a0a8c0';
     };
 
-    const canShowRefundButton = ticket.status === 'ACTIVE' || ticket.status === 'PENDING';
+    const getSeatInfo = () => {
+        if (ticket.row == null || ticket.seatNumber == null) {
+            return 'Seat not assigned';
+        }
+        return `Row ${ticket.row}, Seat ${ticket.seatNumber}`;
+    };
+
+    const canShowRefundButton = ticket.status === 'ACTIVE';
     const sessionDate = new Date(ticket.sessionTime);
     const now = new Date();
     const hoursUntilSession = (sessionDate.getTime() - now.getTime()) / (1000 * 60 * 60);
@@ -62,7 +66,10 @@ export const TicketCard: React.FC<TicketCardProps> = ({
                         <div className={styles.listMeta}>
                             <span className={styles.listHall}>{ticket.hallName}</span>
                             <span className={styles.listSeat}>
-                                Row {ticket.row}, Seat {ticket.seatNumber}
+                                {getSeatInfo()}
+                            </span>
+                            <span className={styles.ticketTypeBadge}>
+                                <Tag size={12} /> {ticket.ticketType}
                             </span>
                         </div>
                     </div>
@@ -126,8 +133,13 @@ export const TicketCard: React.FC<TicketCardProps> = ({
     return (
         <div className={styles.ticketCardGrid}>
             <div className={styles.cardHeader}>
-                <div className={styles.statusBadge} style={{ backgroundColor: getStatusColor(ticket.status) }}>
-                    {TicketStatusDisplay[ticket.status]}
+                <div className={styles.headerLeft}>
+                    <div className={styles.statusBadge} style={{ backgroundColor: getStatusColor(ticket.status) }}>
+                        {TicketStatusDisplay[ticket.status]}
+                    </div>
+                    <div className={styles.ticketTypeBadge}>
+                        <Tag size={12} /> {ticket.ticketType}
+                    </div>
                 </div>
                 <div className={styles.ticketCode}>
                     #{ticket.ticketCode}
@@ -167,7 +179,7 @@ export const TicketCard: React.FC<TicketCardProps> = ({
                         <div>
                             <div className={styles.detailLabel}>Seat</div>
                             <div className={styles.detailValue}>
-                                Row {ticket.row}, Seat {ticket.seatNumber}
+                                {getSeatInfo()}
                             </div>
                         </div>
                     </div>

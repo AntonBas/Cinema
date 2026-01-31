@@ -11,8 +11,8 @@ export interface TicketResponse {
     movieTitle: string;
     sessionTime: string;
     hallName: string;
-    row: number;
-    seatNumber: number;
+    row: number | null;
+    seatNumber: number | null;
 }
 
 export const TicketStatusDisplay: Record<TicketStatus, string> = {
