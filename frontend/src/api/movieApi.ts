@@ -104,12 +104,6 @@ export const movieApi = {
       return fetchApi<PageResponse<MovieCardResponse>>(`${PUBLIC_URL}/filtered?${params}`, {}, false, true);
     },
 
-    getPoster: (id: number): Promise<Blob> =>
-      fetch(`${PUBLIC_URL}/${id}/poster`).then(res => {
-        if (!res.ok) throw new Error('Failed to fetch poster');
-        return res.blob();
-      }),
-
     getPosterUrl: (id: number): string =>
       `${PUBLIC_URL}/${id}/poster`,
   },
@@ -117,14 +111,12 @@ export const movieApi = {
   admin: {
     create: (request: MovieCreateRequest): Promise<MovieDetailResponse> => {
       const formData = new FormData();
-      const { posterFile, ...requestData } = request;
-
-      formData.append('movieData', new Blob([JSON.stringify(requestData)], {
+      formData.append('movieData', new Blob([JSON.stringify(request)], {
         type: 'application/json',
       }));
 
-      if (posterFile) {
-        formData.append('posterFile', posterFile);
+      if (request.posterFile) {
+        formData.append('posterFile', request.posterFile);
       }
 
       return fetchApi<MovieDetailResponse>(ADMIN_URL, {
@@ -135,14 +127,12 @@ export const movieApi = {
 
     update: (id: number, request: MovieUpdateRequest): Promise<MovieDetailResponse> => {
       const formData = new FormData();
-      const { posterFile, ...requestData } = request;
-
-      formData.append('movieData', new Blob([JSON.stringify(requestData)], {
+      formData.append('movieData', new Blob([JSON.stringify(request)], {
         type: 'application/json',
       }));
 
-      if (posterFile) {
-        formData.append('posterFile', posterFile);
+      if (request.posterFile) {
+        formData.append('posterFile', request.posterFile);
       }
 
       return fetchApi<MovieDetailResponse>(`${ADMIN_URL}/${id}`, {
@@ -213,8 +203,9 @@ export const movieApi = {
       if (search) params.append('search', search);
 
       return fetchApi<MovieSessionSearchResponse[]>(
-        `${PUBLIC_URL}/search/active${params.toString() ? `?${params}` : ''}`,
+        `${PUBLIC_URL}/search/active?${params}`,
         {},
+        false,
         true
       );
     },

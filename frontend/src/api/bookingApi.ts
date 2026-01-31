@@ -49,7 +49,4 @@ export const bookingApi = {
         fetchApi<void>(`${BASE_URL}/${bookingId}`, {
             method: 'DELETE',
         }),
-
-    getUpcomingTickets: () =>
-        fetchApi<BookingResponse[]>(`${BASE_URL}/upcoming`),
 };

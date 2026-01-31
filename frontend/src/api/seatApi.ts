@@ -9,9 +9,17 @@ const getAuthHeaders = (): HeadersInit => {
     };
 };
 
-const fetchApi = async <T>(url: string, options: RequestInit = {}): Promise<T> => {
+const getPublicHeaders = (): HeadersInit => {
+    return {
+        'Content-Type': 'application/json',
+    };
+};
+
+const fetchApi = async <T>(url: string, options: RequestInit = {}, isPublic: boolean = false): Promise<T> => {
+    const headers = isPublic ? getPublicHeaders() : getAuthHeaders();
+
     const response = await fetch(url, {
-        headers: getAuthHeaders(),
+        headers,
         ...options,
     });
     if (!response.ok) throw await handleApiError(response);
@@ -21,22 +29,22 @@ const fetchApi = async <T>(url: string, options: RequestInit = {}): Promise<T> =
 
 export const seatApi = {
     getSeatsByHall: (hallId: number): Promise<SeatResponse[]> =>
-        fetchApi<SeatResponse[]>(`/api/cinema-halls/${hallId}/seats`),
+        fetchApi<SeatResponse[]>(`/api/cinema-halls/${hallId}/seats`, {}, true),
 
     getSeatById: (hallId: number, seatId: number): Promise<SeatResponse> =>
-        fetchApi<SeatResponse>(`/api/cinema-halls/${hallId}/seats/${seatId}`),
+        fetchApi<SeatResponse>(`/api/cinema-halls/${hallId}/seats/${seatId}`, {}, true),
 
     getSeatByPosition: (hallId: number, row: number, number: number): Promise<SeatResponse> =>
-        fetchApi<SeatResponse>(`/api/cinema-halls/${hallId}/seats/position?row=${row}&number=${number}`),
+        fetchApi<SeatResponse>(`/api/cinema-halls/${hallId}/seats/position?row=${row}&number=${number}`, {}, true),
 
     checkSeatAvailability: (hallId: number, row: number, number: number): Promise<boolean> =>
-        fetchApi<boolean>(`/api/cinema-halls/${hallId}/seats/check-availability?row=${row}&number=${number}`),
+        fetchApi<boolean>(`/api/cinema-halls/${hallId}/seats/check-availability?row=${row}&number=${number}`, {}, true),
 
     countSeatsByHall: (hallId: number): Promise<number> =>
-        fetchApi<number>(`/api/cinema-halls/${hallId}/seats/count`),
+        fetchApi<number>(`/api/cinema-halls/${hallId}/seats/count`, {}, true),
 
     getSeatsByType: (hallId: number, seatType: SeatType): Promise<SeatResponse[]> =>
-        fetchApi<SeatResponse[]>(`/api/cinema-halls/${hallId}/seats/by-type?seatType=${seatType}`),
+        fetchApi<SeatResponse[]>(`/api/cinema-halls/${hallId}/seats/by-type?seatType=${seatType}`, {}, true),
 
     admin: {
         updateSeatType: (hallId: number, seatId: number, seatType: SeatType): Promise<SeatResponse> =>

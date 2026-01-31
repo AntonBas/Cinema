@@ -1,19 +1,15 @@
 import type { SeatAvailabilityResponse } from '@/types/seatAvailability';
 import { handleApiError } from '@/utils/apiErrorHandler';
 
-const BASE_URL = '/api/sessions';
-
-const getAuthHeaders = (): HeadersInit => {
-    const token = localStorage.getItem('authToken');
+const getPublicHeaders = (): HeadersInit => {
     return {
         'Content-Type': 'application/json',
-        ...(token && { 'Authorization': `Bearer ${token}` }),
     };
 };
 
 const fetchApi = async <T>(url: string, options: RequestInit = {}): Promise<T> => {
     const response = await fetch(url, {
-        headers: getAuthHeaders(),
+        headers: getPublicHeaders(),
         ...options,
     });
     if (!response.ok) throw await handleApiError(response);
@@ -23,5 +19,5 @@ const fetchApi = async <T>(url: string, options: RequestInit = {}): Promise<T> =
 
 export const seatAvailabilityApi = {
     getSeatAvailability: (sessionId: number) =>
-        fetchApi<SeatAvailabilityResponse>(`${BASE_URL}/${sessionId}/seats/availability`),
+        fetchApi<SeatAvailabilityResponse>(`/api/sessions/${sessionId}/seats/availability`),
 };

@@ -25,9 +25,7 @@ const fetchApi = async <T>(url: string, options: RequestInit = {}): Promise<T> =
 
     if (!response.ok) throw await handleApiError(response);
 
-    if (response.status === 204) {
-        return undefined as T;
-    }
+    if (response.status === 204) return undefined as T;
 
     const contentType = response.headers.get('content-type');
     if (contentType && contentType.includes('application/json')) {

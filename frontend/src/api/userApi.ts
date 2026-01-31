@@ -15,44 +15,6 @@ const getAuthHeaders = (): HeadersInit => {
     };
 };
 
-export const userApi = {
-    getProfile: async (): Promise<UserProfileResponse> => {
-        return fetchApi<UserProfileResponse>(`${API_URL}/profile`, {
-            headers: getAuthHeaders(),
-        });
-    },
-
-    updateProfile: async (updateData: UserUpdateRequest): Promise<UserProfileResponse> => {
-        return fetchApi<UserProfileResponse>(`${API_URL}/profile`, {
-            method: 'PUT',
-            headers: getAuthHeaders(),
-            body: JSON.stringify(updateData),
-        });
-    },
-
-    requestEmailChange: async (newEmail: string): Promise<{ message: string }> => {
-        return fetchApi<{ message: string }>(`${API_URL}/email/change-request?newEmail=${encodeURIComponent(newEmail)}`, {
-            method: 'POST',
-            headers: getAuthHeaders(),
-        });
-    },
-
-    confirmEmailChange: async (token: string): Promise<UserProfileResponse> => {
-        return fetchApi<UserProfileResponse>(`${API_URL}/email/confirm-change?token=${encodeURIComponent(token)}`, {
-            method: 'POST',
-            headers: getAuthHeaders(),
-        });
-    },
-
-    updatePassword: async (passwordData: UserPasswordUpdateRequest): Promise<{ message: string }> => {
-        return fetchApi<{ message: string }>(`${API_URL}/password`, {
-            method: 'PATCH',
-            headers: getAuthHeaders(),
-            body: JSON.stringify(passwordData),
-        });
-    }
-};
-
 const fetchApi = async <T>(url: string, options: RequestInit = {}): Promise<T> => {
     const response = await fetch(url, {
         ...options,
@@ -76,4 +38,36 @@ const fetchApi = async <T>(url: string, options: RequestInit = {}): Promise<T> =
     }
 
     return undefined as T;
+};
+
+export const userApi = {
+    getProfile: async (): Promise<UserProfileResponse> => {
+        return fetchApi<UserProfileResponse>(`${API_URL}/profile`);
+    },
+
+    updateProfile: async (updateData: UserUpdateRequest): Promise<UserProfileResponse> => {
+        return fetchApi<UserProfileResponse>(`${API_URL}/profile`, {
+            method: 'PUT',
+            body: JSON.stringify(updateData),
+        });
+    },
+
+    requestEmailChange: async (newEmail: string): Promise<{ message: string }> => {
+        return fetchApi<{ message: string }>(`${API_URL}/email/change-request?newEmail=${encodeURIComponent(newEmail)}`, {
+            method: 'POST',
+        });
+    },
+
+    confirmEmailChange: async (token: string): Promise<UserProfileResponse> => {
+        return fetchApi<UserProfileResponse>(`${API_URL}/email/confirm-change?token=${encodeURIComponent(token)}`, {
+            method: 'POST',
+        });
+    },
+
+    updatePassword: async (passwordData: UserPasswordUpdateRequest): Promise<{ message: string }> => {
+        return fetchApi<{ message: string }>(`${API_URL}/password`, {
+            method: 'PATCH',
+            body: JSON.stringify(passwordData),
+        });
+    }
 };

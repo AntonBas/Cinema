@@ -23,6 +23,18 @@ const fetchApi = async <T>(url: string, options: RequestInit = {}): Promise<T> =
     return response.json();
 };
 
+const fetchBlob = async (url: string, options: RequestInit = {}): Promise<Blob> => {
+    const response = await fetch(url, {
+        headers: {
+            ...(options.headers || {}),
+            'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+        },
+        ...options,
+    });
+    if (!response.ok) throw await handleApiError(response);
+    return response.blob();
+};
+
 export const ticketApi = {
     getById: (ticketId: number) =>
         fetchApi<TicketResponse>(`${BASE_URL}/${ticketId}`),
@@ -42,13 +54,11 @@ export const ticketApi = {
         return fetchApi<PageResponse<TicketResponse>>(url);
     },
 
-    getQrCode: (ticketCode: string) =>
-        fetch(`${BASE_URL}/${ticketCode}/qr`, {
-            headers: getAuthHeaders(),
-        }),
-
     validate: (ticketCode: string) =>
         fetchApi<void>(`${BASE_URL}/${ticketCode}/validate`, {
             method: 'POST',
         }),
+
+    getQRCode: (ticketCode: string): Promise<Blob> =>
+        fetchBlob(`${BASE_URL}/${ticketCode}/qr`),
 };
