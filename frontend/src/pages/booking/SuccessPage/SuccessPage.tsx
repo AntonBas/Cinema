@@ -1,32 +1,96 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { usePaymentResult } from '@/hooks/features/payment/usePaymentResult';
+import { usePayment } from '@/hooks/features/payment/usePayment';
 import { Button } from '@/components/ui/Button';
 import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';
+import type { PaymentStatus, PaymentResponse } from '@/types/payment';
 import styles from './SuccessPage.module.css';
+
+const PaymentStatusDisplay: Record<PaymentStatus, string> = {
+    PENDING: 'Pending',
+    PROCESSING: 'Processing',
+    SUCCESS: 'Success',
+    FAILED: 'Failed',
+    CANCELLED: 'Cancelled',
+    EXPIRED: 'Expired',
+    REFUNDED: 'Refunded',
+    PARTIALLY_REFUNDED: 'Partially Refunded'
+};
 
 const SuccessPage = () => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const {
+        getById,
         loading,
-        error,
-        paymentData,
-        fetchPaymentData,
-        getResultMessage,
-        getResultType,
-        getPaymentDetails,
-        hasPaymentData
-    } = usePaymentResult();
+        isPaymentComplete,
+        isPaymentFailed,
+        isPaymentInProgress,
+        getPaymentErrorMessage
+    } = usePayment();
 
     const [isPolling, setIsPolling] = useState(false);
     const [pollingCount, setPollingCount] = useState(0);
     const [isVisible, setIsVisible] = useState(false);
+    const [paymentData, setPaymentData] = useState<PaymentResponse | null>(null);
+    const [error, setError] = useState<string | null>(null);
     const pollingRef = useRef<NodeJS.Timeout | null>(null);
     const isInitialMount = useRef(true);
 
     const bookingId = searchParams.get('bookingId');
     const paymentId = searchParams.get('paymentId');
+
+    const fetchPaymentData = useCallback(async (id: string) => {
+        try {
+            const data = await getById(parseInt(id));
+            setPaymentData(data);
+            setError(null);
+            return data;
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to load payment data');
+            return null;
+        }
+    }, [getById]);
+
+    const getResultType = () => {
+        if (!paymentData) return 'info';
+        if (isPaymentComplete(paymentData)) return 'success';
+        if (isPaymentFailed(paymentData)) return 'error';
+        if (isPaymentInProgress(paymentData)) return 'warning';
+        return 'info';
+    };
+
+    const getResultMessage = () => {
+        if (!paymentData) return 'Loading payment information...';
+
+        const status = paymentData.status as PaymentStatus;
+        const messages: Record<PaymentStatus, string> = {
+            PENDING: 'Your payment is being processed. Please wait...',
+            PROCESSING: 'Payment is currently being processed.',
+            SUCCESS: 'Payment was successful! Your tickets have been booked.',
+            FAILED: 'Payment failed. Please try again or contact support.',
+            CANCELLED: 'Payment was cancelled.',
+            EXPIRED: 'Payment session has expired.',
+            REFUNDED: 'Payment has been refunded.',
+            PARTIALLY_REFUNDED: 'Payment has been partially refunded.'
+        };
+
+        return messages[status] || 'Payment status unknown.';
+    };
+
+    const getPaymentDetails = () => {
+        if (!paymentData) return null;
+
+        return {
+            bookingId: paymentData.bookingId,
+            paymentId: paymentData.id,
+            amount: paymentData.amount,
+            status: paymentData.status,
+            statusDisplay: PaymentStatusDisplay[paymentData.status as PaymentStatus],
+            liqpayOrderId: paymentData.liqpayOrderId,
+            error: getPaymentErrorMessage(paymentData)
+        };
+    };
 
     const startPolling = useCallback(() => {
         if (!paymentId || isPolling || pollingRef.current) return;
@@ -118,7 +182,7 @@ const SuccessPage = () => {
         navigate('/support');
     };
 
-    if ((loading && !hasPaymentData && !paymentData) || !isVisible) {
+    if ((loading && !paymentData) || !isVisible) {
         return (
             <div className={styles.loadingContainer}>
                 <LoadingSpinner text="Loading payment information..." />
@@ -219,7 +283,7 @@ const SuccessPage = () => {
                                 </div>
                                 <div className={styles.detailItem}>
                                     <p className={styles.detailLabel}>Status</p>
-                                    <p className={styles.detailValue}>{paymentDetails.status}</p>
+                                    <p className={styles.detailValue}>{paymentDetails.statusDisplay}</p>
                                 </div>
                                 {paymentDetails.liqpayOrderId && (
                                     <div className={styles.detailItem}>

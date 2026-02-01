@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Button, Input } from '@/components/ui';
-import { useAdminPromotion } from '@/hooks/features/promotion/useAdminPromotion';
-import { usePromotionForm } from '@/hooks/features/promotion/usePromotionForm';
+import { usePromotion } from '@/hooks/features/promotion/usePromotion';
 import { toBackendFormat } from '@/utils/dateUtils';
 import styles from './PromotionModal.module.css';
 
@@ -16,8 +15,7 @@ const EditPromotionModal: React.FC<EditPromotionModalProps> = ({
     onClose,
     onSuccess
 }) => {
-    const { getById } = useAdminPromotion();
-    const { handleUpdate, loading: updating, error, success, reset } = usePromotionForm();
+    const { getById, update, loading } = usePromotion();
     const [formData, setFormData] = useState({
         title: '',
         description: '',
@@ -26,6 +24,8 @@ const EditPromotionModal: React.FC<EditPromotionModalProps> = ({
         endDate: ''
     });
     const [dateError, setDateError] = useState('');
+    const [errorMessage, setErrorMessage] = useState('');
+    const [successMessage, setSuccessMessage] = useState('');
 
     useEffect(() => {
         const fetchPromotion = async () => {
@@ -39,6 +39,7 @@ const EditPromotionModal: React.FC<EditPromotionModalProps> = ({
                     endDate: promotion.endDate ? promotion.endDate.split('T')[0] : ''
                 });
             } catch (error) {
+                setErrorMessage('Failed to load promotion');
             }
         };
         fetchPromotion();
@@ -56,21 +57,28 @@ const EditPromotionModal: React.FC<EditPromotionModalProps> = ({
             }
         }
         setDateError('');
+        setErrorMessage('');
+        setSuccessMessage('');
 
-        const submissionData = {
-            title: formData.title,
-            description: formData.description || undefined,
-            bonusPoints: parseInt(formData.bonusPoints) || 100,
-            startDate: formData.startDate ? toBackendFormat(formData.startDate) : undefined,
-            endDate: formData.endDate ? toBackendFormat(formData.endDate) : undefined
-        };
+        try {
+            const submissionData = {
+                title: formData.title,
+                description: formData.description || undefined,
+                bonusPoints: parseInt(formData.bonusPoints) || 100,
+                startDate: formData.startDate ? toBackendFormat(formData.startDate) : undefined,
+                endDate: formData.endDate ? toBackendFormat(formData.endDate) : undefined
+            };
 
-        const result = await handleUpdate(promotionId, submissionData);
-        if (result) {
-            setTimeout(() => {
-                reset();
-                onSuccess();
-            }, 1000);
+            const result = await update(promotionId, submissionData);
+            if (result) {
+                setSuccessMessage('Promotion updated successfully!');
+                setTimeout(() => {
+                    setSuccessMessage('');
+                    onSuccess();
+                }, 1000);
+            }
+        } catch (err) {
+            setErrorMessage('Failed to update promotion');
         }
     };
 
@@ -79,7 +87,6 @@ const EditPromotionModal: React.FC<EditPromotionModalProps> = ({
     };
 
     const handleClose = () => {
-        reset();
         onClose();
     };
 
@@ -137,14 +144,14 @@ const EditPromotionModal: React.FC<EditPromotionModalProps> = ({
                 </div>
 
                 {dateError && <div className={styles.error}>{dateError}</div>}
-                {error && <div className={styles.error}>{error}</div>}
-                {success && <div className={styles.success}>Promotion updated successfully!</div>}
+                {errorMessage && <div className={styles.error}>{errorMessage}</div>}
+                {successMessage && <div className={styles.success}>{successMessage}</div>}
 
                 <div className={styles.actions}>
                     <Button type="button" variant="cancel" onClick={handleClose}>
                         Cancel
                     </Button>
-                    <Button type="submit" variant="primary" loading={updating}>
+                    <Button type="submit" variant="primary" loading={loading}>
                         Update
                     </Button>
                 </div>

@@ -105,12 +105,6 @@ export const MovieCard: React.FC<MovieCardProps> = ({
               {getStatusDisplay(movie.status)}
             </Badge>
           </div>
-
-          {movie.releaseDate && (
-            <div className={styles.releaseDate}>
-              {new Date(movie.releaseDate).toLocaleDateString()}
-            </div>
-          )}
         </div>
       </div>
 

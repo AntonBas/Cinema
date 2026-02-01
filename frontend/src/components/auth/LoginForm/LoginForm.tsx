@@ -1,26 +1,34 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useAuth, useAuthMutation } from '@/hooks/features/auth';
+import { useAuth } from '@/hooks/features';
 import { Input, Button } from '@/components/ui';
 import styles from './LoginForm.module.css';
 
 export const LoginForm: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { login: authLogin } = useAuth();
-  const { login, isLoading, error } = useAuthMutation();
+  const [localError, setLocalError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const { login, isMutating } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLocalError(null);
+    setIsSubmitting(true);
 
     try {
-      const response = await login({ email, password });
-      authLogin(response);
+      await login({ email, password });
       navigate('/');
-    } catch (err) {
+    } catch (err: any) {
+      setLocalError(err.message || 'Login failed');
+    } finally {
+      setIsSubmitting(false);
     }
   };
+
+  const isLoading = isSubmitting || isMutating;
 
   return (
     <section className={styles.login}>
@@ -33,9 +41,9 @@ export const LoginForm: React.FC = () => {
         </div>
 
         <form className={styles.loginForm} onSubmit={handleSubmit}>
-          {error && (
+          {localError && (
             <div className={styles.notification} data-type="error">
-              {error}
+              {localError}
             </div>
           )}
 

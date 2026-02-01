@@ -7,9 +7,7 @@ import { Notification } from '@/components/ui/Notification';
 import { SearchInput } from '@/components/ui/SearchInput';
 import { Button } from '@/components/ui/Button';
 import { Pagination } from '@/components/ui/Pagination';
-import { useNotification } from '@/hooks/common/useNotification';
-import { usePersonSearch, usePersonMutation } from '@/hooks/features/persons';
-import { usePagination } from '@/hooks/common/usePagination';
+import { usePerson } from '@/hooks/features/persons/usePerson';
 import type { PersonResponse, PersonRequest, PersonRole } from '@/types/person';
 import { PersonRoleEnum } from '@/types/person';
 import styles from './PersonTab.module.css';
@@ -21,6 +19,9 @@ export const PersonTab: React.FC = () => {
   const [editingPerson, setEditingPerson] = useState<PersonResponse | null>(null);
   const [personToDelete, setPersonToDelete] = useState<PersonResponse | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(0);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
   const [totalCounts, setTotalCounts] = useState({
     ALL: 0,
     [PersonRoleEnum.ACTOR]: 0,
@@ -30,29 +31,16 @@ export const PersonTab: React.FC = () => {
   const [hasLoadedCounts, setHasLoadedCounts] = useState(false);
   const isMountedRef = useRef(true);
 
-  const { params, setPage } = usePagination({}, 12);
-  const currentPage = params.page || 0;
-
   const {
     persons,
     pagination,
     loading,
-    error: searchError,
     searchPersons,
     getByRole,
-    clearError: clearSearchError
-  } = usePersonSearch();
-
-  const {
     createPerson,
     updatePerson,
-    deletePerson,
-    loading: mutationLoading,
-    error: mutationError,
-    clearError: clearMutationError
-  } = usePersonMutation();
-
-  const { notifications, showNotification, hideNotification } = useNotification();
+    deletePerson
+  } = usePerson();
 
   const loadData = useCallback(async () => {
     try {
@@ -106,7 +94,7 @@ export const PersonTab: React.FC = () => {
         }
       }
     } catch (error) {
-      console.error('Failed to load persons:', error);
+      setErrorMessage('Failed to load persons');
     }
   }, [activeTab, currentPage, searchQuery, searchPersons, getByRole, hasLoadedCounts]);
 
@@ -119,51 +107,37 @@ export const PersonTab: React.FC = () => {
     };
   }, [loadData]);
 
-  useEffect(() => {
-    if (searchError) {
-      showNotification(searchError, 'error');
-      clearSearchError();
-    }
-  }, [searchError, showNotification, clearSearchError]);
-
-  useEffect(() => {
-    if (mutationError) {
-      showNotification(mutationError, 'error');
-      clearMutationError();
-    }
-  }, [mutationError, showNotification, clearMutationError]);
-
   const handleSearch = useCallback((query: string) => {
     setSearchQuery(query);
-    setPage(0);
-  }, [setPage]);
+    setCurrentPage(0);
+  }, []);
 
   const handleTabChange = (tab: PersonRole | 'ALL') => {
     setActiveTab(tab);
-    setPage(0);
+    setCurrentPage(0);
     setSearchQuery('');
     setHasLoadedCounts(false);
   };
 
   const handlePageChange = (page: number) => {
-    setPage(page);
+    setCurrentPage(page);
   };
 
   const handleSubmit = async (data: PersonRequest) => {
     try {
       if (editingPerson?.id) {
         await updatePerson(editingPerson.id, data);
-        showNotification('Person updated successfully!', 'success');
+        setSuccessMessage('Person updated successfully!');
       } else {
         await createPerson(data);
-        showNotification('Person created successfully!', 'success');
+        setSuccessMessage('Person created successfully!');
       }
 
       resetForm();
       setHasLoadedCounts(false);
       await loadData();
     } catch (error) {
-      console.error('Failed to save person:', error);
+      setErrorMessage('Failed to save person');
     }
   };
 
@@ -181,11 +155,11 @@ export const PersonTab: React.FC = () => {
     if (!personToDelete?.id) return;
     try {
       await deletePerson(personToDelete.id);
-      showNotification('Person deleted successfully!', 'success');
+      setSuccessMessage('Person deleted successfully!');
       setHasLoadedCounts(false);
       await loadData();
     } catch (error) {
-      console.error('Failed to delete person:', error);
+      setErrorMessage('Failed to delete person');
     } finally {
       setIsDeleteModalOpen(false);
       setPersonToDelete(null);
@@ -205,6 +179,11 @@ export const PersonTab: React.FC = () => {
   const handleAddNew = () => {
     setEditingPerson(null);
     setIsModalOpen(true);
+  };
+
+  const handleCloseNotification = () => {
+    setErrorMessage('');
+    setSuccessMessage('');
   };
 
   const getTabStats = () => {
@@ -252,6 +231,28 @@ export const PersonTab: React.FC = () => {
 
   return (
     <div className={styles.container}>
+      {successMessage && (
+        <Notification
+          id="success"
+          message={successMessage}
+          type="success"
+          isVisible={true}
+          onClose={handleCloseNotification}
+          duration={4000}
+        />
+      )}
+
+      {errorMessage && (
+        <Notification
+          id="error"
+          message={errorMessage}
+          type="error"
+          isVisible={true}
+          onClose={handleCloseNotification}
+          duration={4000}
+        />
+      )}
+
       <div className={styles.header}>
         <h2>People Management</h2>
         <Button
@@ -313,7 +314,7 @@ export const PersonTab: React.FC = () => {
           person={editingPerson}
           onSubmit={handleSubmit}
           onCancel={resetForm}
-          isLoading={mutationLoading}
+          isLoading={loading}
         />
       )}
 
@@ -323,21 +324,8 @@ export const PersonTab: React.FC = () => {
         onCancel={handleDeleteCancel}
         itemName={personToDelete?.name}
         itemType="person"
-        isDeleting={mutationLoading}
+        isDeleting={loading}
       />
-
-      {notifications.map((notification, index) => (
-        <Notification
-          key={notification.id}
-          id={notification.id}
-          message={notification.message}
-          type={notification.type}
-          isVisible={notification.isVisible}
-          onClose={hideNotification}
-          duration={4000}
-          position={index}
-        />
-      ))}
     </div>
   );
 };

@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useMovieSearch, useCinemaHalls } from '@/hooks/features';
+import { useMovies, useCinemaHalls } from '@/hooks/features';
 import { Input, Select, Button } from '@/components/ui';
 import type { CinemaSessionStatus } from '@/types/session';
+import type { MovieCardResponse } from '@/types/movie';
 import styles from './SessionFilters.module.css';
 
 interface SessionFiltersProps {
@@ -31,19 +32,19 @@ export const SessionFilters: React.FC<SessionFiltersProps> = ({
     activeFilterCount
 }) => {
     const { allHalls: halls } = useCinemaHalls();
-    const { movies, searchMovies, loading } = useMovieSearch();
+    const { movies, search, loading } = useMovies();
     const [movieSearchTerm, setMovieSearchTerm] = useState('');
     const [showMovieResults, setShowMovieResults] = useState(false);
     const [selectedMovieTitle, setSelectedMovieTitle] = useState('');
-    const [localMovies, setLocalMovies] = useState(movies);
+    const [localMovies, setLocalMovies] = useState<MovieCardResponse[]>(movies);
     const movieSearchRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        searchMovies({
+        search({
             page: 0,
             size: 50
         });
-    }, [searchMovies]);
+    }, [search]);
 
     useEffect(() => {
         setLocalMovies(movies);
@@ -73,15 +74,15 @@ export const SessionFilters: React.FC<SessionFiltersProps> = ({
 
     useEffect(() => {
         const debounceTimer = setTimeout(() => {
-            searchMovies({
-                searchTerm: movieSearchTerm.trim(),
+            search({
+                search: movieSearchTerm.trim(),
                 page: 0,
                 size: 50
             });
         }, 300);
 
         return () => clearTimeout(debounceTimer);
-    }, [movieSearchTerm, searchMovies]);
+    }, [movieSearchTerm, search]);
 
     const filteredMovies = React.useMemo(() => {
         if (!movieSearchTerm.trim()) {
@@ -131,7 +132,7 @@ export const SessionFilters: React.FC<SessionFiltersProps> = ({
         setSelectedMovieTitle('');
         setShowMovieResults(false);
         onMovieChange(undefined);
-        searchMovies({
+        search({
             page: 0,
             size: 50
         });
@@ -150,7 +151,7 @@ export const SessionFilters: React.FC<SessionFiltersProps> = ({
         { value: 'SCHEDULED', label: 'Scheduled' },
         { value: 'ONGOING', label: 'Ongoing' },
         { value: 'COMPLETED', label: 'Completed' },
-        { value: 'CANCELLED', label: 'CANCELLED' }
+        { value: 'CANCELLED', label: 'Cancelled' }
     ];
 
     const displayValue = selectedMovieTitle || movieSearchTerm;
@@ -233,7 +234,7 @@ export const SessionFilters: React.FC<SessionFiltersProps> = ({
                                         >
                                             <div className={styles.movieTitle}>{movie.title}</div>
                                             <div className={styles.movieDetails}>
-                                                {movie.releaseDate ? new Date(movie.releaseDate).getFullYear() : 'N/A'} • {movie.durationMinutes} min
+                                                {movie.durationMinutes} min
                                             </div>
                                         </div>
                                     ))

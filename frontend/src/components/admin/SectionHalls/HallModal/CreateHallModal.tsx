@@ -16,7 +16,6 @@ interface CreateHallModalProps {
 const seatTypeOptions = [
     { value: SeatType.STANDARD, label: 'Standard' },
     { value: SeatType.VIP, label: 'VIP' },
-    { value: SeatType.DISABLED, label: 'Disabled' },
     { value: SeatType.COUPLE, label: 'Couple' }
 ];
 

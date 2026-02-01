@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Button, Select, ConfirmModal } from '@/components/ui';
-import { useAdminUserMutations } from '@/hooks/features';
+import { useAdminUsers } from '@/hooks/features';
 import { type UserRole, type VerificationStatus, UserRoleDisplay, VerificationStatusDisplay, VerificationStatusColors } from '@/types/user';
 import type { AdminUser } from '@/types/user';
 import styles from './UserActions.module.css';
@@ -18,7 +18,7 @@ export const UserActions: React.FC<UserActionsProps> = ({ user, onUpdate }) => {
     const [statusLoading, setStatusLoading] = useState(false);
     const [verificationLoading, setVerificationLoading] = useState(false);
 
-    const { updateUserRole, updateUserStatus, updateBirthDateVerification } = useAdminUserMutations();
+    const { updateUserRole, updateUserStatus, updateBirthDateVerification } = useAdminUsers();
 
     const handleRoleChange = async (value: string | number) => {
         const newRole = value as UserRole;

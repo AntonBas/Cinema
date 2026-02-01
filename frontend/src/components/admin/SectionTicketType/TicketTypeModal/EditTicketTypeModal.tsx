@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Notification } from '@/components/ui/Notification';
-import { useTicketTypeForm } from '@/hooks/features/ticketType/useTicketTypeForm';
+import { useTicketType } from '@/hooks/features/ticketType/useTicketType';
 import type { TicketTypeResponse, TicketTypeUpdateRequest, TicketTypeCategory } from '@/types/ticketType';
 import styles from './TicketTypeModal.module.css';
 
@@ -21,11 +21,20 @@ const EditTicketTypeModal: React.FC<EditTicketTypeModalProps> = ({
     onSuccess,
     ticketType
 }) => {
-    const { handleUpdate, loading, error, getCategoryOptions } = useTicketTypeForm();
+    const { update, getCategoryOptions, loading: apiLoading } = useTicketType();
     const [formData, setFormData] = useState<TicketTypeUpdateRequest>({
-        code: ''
+        code: ticketType.code,
+        displayName: ticketType.displayName,
+        category: ticketType.category,
+        priceMultiplier: ticketType.priceMultiplier,
+        minAge: ticketType.minAge,
+        maxAge: ticketType.maxAge,
+        requiresDocument: ticketType.requiresDocument,
+        documentType: ticketType.documentType,
+        active: ticketType.active
     });
     const [showNotification, setShowNotification] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         if (ticketType) {
@@ -50,22 +59,45 @@ const EditTicketTypeModal: React.FC<EditTicketTypeModalProps> = ({
 
     const handleInputChange = (field: keyof TicketTypeUpdateRequest, value: any) => {
         setFormData(prev => ({ ...prev, [field]: value }));
+        if (error) setError(null);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setError(null);
 
-        const success = await handleUpdate(ticketType.id, {
-            ...formData,
-            priceMultiplier: formData.priceMultiplier || ticketType.priceMultiplier
-        });
+        try {
+            const updateData: TicketTypeUpdateRequest = {
+                code: formData.code,
+                displayName: formData.displayName !== ticketType.displayName ? formData.displayName : undefined,
+                category: formData.category !== ticketType.category ? formData.category : undefined,
+                priceMultiplier: formData.priceMultiplier !== ticketType.priceMultiplier ? formData.priceMultiplier : undefined,
+                minAge: formData.minAge !== ticketType.minAge ? formData.minAge : undefined,
+                maxAge: formData.maxAge !== ticketType.maxAge ? formData.maxAge : undefined,
+                requiresDocument: formData.requiresDocument !== ticketType.requiresDocument ? formData.requiresDocument : undefined,
+                documentType: formData.documentType !== ticketType.documentType ? formData.documentType : undefined,
+                active: formData.active !== ticketType.active ? formData.active : undefined,
+            };
 
-        if (success) {
+            // Видаляємо undefined значення
+            const filteredData = Object.fromEntries(
+                Object.entries(updateData).filter(([_, value]) => value !== undefined)
+            );
+
+            if (Object.keys(filteredData).length === 0) {
+                onClose();
+                return;
+            }
+
+            await update(ticketType.id, filteredData as TicketTypeUpdateRequest);
+
             setShowNotification(true);
             setTimeout(() => {
                 setShowNotification(false);
                 onSuccess();
             }, 1500);
+        } catch (err: any) {
+            setError(err.message || 'Failed to update ticket type');
         }
     };
 
@@ -96,7 +128,7 @@ const EditTicketTypeModal: React.FC<EditTicketTypeModalProps> = ({
                                 Code
                             </label>
                             <DisabledInput value={ticketType.code} />
-                            <small style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+                            <small className={styles.hint}>
                                 Code cannot be changed
                             </small>
                         </div>
@@ -107,7 +139,7 @@ const EditTicketTypeModal: React.FC<EditTicketTypeModalProps> = ({
                             </label>
                             <Input
                                 type="text"
-                                value={formData.displayName || ticketType.displayName}
+                                value={formData.displayName || ''}
                                 onChange={(value) => handleInputChange('displayName', value)}
                                 placeholder="e.g., Adult, Child"
                                 required
@@ -177,7 +209,7 @@ const EditTicketTypeModal: React.FC<EditTicketTypeModalProps> = ({
                             <input
                                 type="checkbox"
                                 id="requiresDocument"
-                                checked={formData.requiresDocument || ticketType.requiresDocument}
+                                checked={formData.requiresDocument || false}
                                 onChange={(e) => handleInputChange('requiresDocument', e.target.checked)}
                             />
                             <label htmlFor="requiresDocument" className={styles.checkboxLabel}>
@@ -186,14 +218,14 @@ const EditTicketTypeModal: React.FC<EditTicketTypeModalProps> = ({
                         </div>
                     </div>
 
-                    {(formData.requiresDocument || ticketType.requiresDocument) && (
+                    {formData.requiresDocument && (
                         <div className={styles.formGroup}>
                             <label className={styles.label}>
                                 Document Type
                             </label>
                             <Input
                                 type="text"
-                                value={formData.documentType || ticketType.documentType || ''}
+                                value={formData.documentType || ''}
                                 onChange={(value) => handleInputChange('documentType', value || null)}
                                 placeholder="e.g., Student ID, Military ID"
                             />
@@ -205,7 +237,7 @@ const EditTicketTypeModal: React.FC<EditTicketTypeModalProps> = ({
                             <input
                                 type="checkbox"
                                 id="active"
-                                checked={formData.active !== undefined ? formData.active : ticketType.active}
+                                checked={formData.active || false}
                                 onChange={(e) => handleInputChange('active', e.target.checked)}
                             />
                             <label htmlFor="active" className={styles.checkboxLabel}>
@@ -215,7 +247,7 @@ const EditTicketTypeModal: React.FC<EditTicketTypeModalProps> = ({
                     </div>
 
                     {error && (
-                        <div style={{ color: 'var(--error)', fontSize: '14px' }}>
+                        <div className={styles.error}>
                             {error}
                         </div>
                     )}
@@ -224,15 +256,15 @@ const EditTicketTypeModal: React.FC<EditTicketTypeModalProps> = ({
                         <Button
                             variant="cancel"
                             onClick={onClose}
-                            disabled={loading}
+                            disabled={apiLoading}
                         >
                             Cancel
                         </Button>
                         <Button
                             type="submit"
                             variant="primary"
-                            loading={loading}
-                            disabled={loading}
+                            loading={apiLoading}
+                            disabled={apiLoading}
                         >
                             Save Changes
                         </Button>

@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Pagination } from '@/components/ui/Pagination';
-import { useAdminBonusTransactions } from '@/hooks/features/bonus/useAdminBonusTransactions';
+import { useBonus } from '@/hooks/features/bonus/useBonus';
 import type { BonusTransactionType } from '@/types/bonus';
 import { BonusTransactionTypeDisplay } from '@/types/bonus';
 import styles from './BonusTransactions.module.css';
@@ -13,24 +13,37 @@ const BonusTransactions = () => {
     const [typeFilter, setTypeFilter] = useState<string>('');
     const [userId, setUserId] = useState<string>('');
     const [currentPage, setCurrentPage] = useState(0);
+    const [errorMessage, setErrorMessage] = useState<string>('');
 
     const {
         transactions,
         loading,
-        error,
-        loadPage,
-        getTransactionTypeDisplay,
-        getTransactionSummary,
+        getAllTransactions,
+        getUserTransactions,
+        getTransactionsByType,
         totalPages,
         totalElements,
         pageSize
-    } = useAdminBonusTransactions({
-        type: typeFilter ? (typeFilter as BonusTransactionType) : undefined,
-        userId: userId ? parseInt(userId) : undefined,
-        initialPage: currentPage,
-        pageSize: 20,
-        autoFetch: true
-    });
+    } = useBonus();
+
+    useEffect(() => {
+        loadTransactions();
+    }, [currentPage, typeFilter, userId]);
+
+    const loadTransactions = async () => {
+        try {
+            setErrorMessage('');
+            if (userId && typeFilter) {
+                await getUserTransactions(parseInt(userId), { page: currentPage, size: 20 });
+            } else if (typeFilter) {
+                await getTransactionsByType(typeFilter as BonusTransactionType, { page: currentPage, size: 20 });
+            } else {
+                await getAllTransactions({ page: currentPage, size: 20 });
+            }
+        } catch (err) {
+            setErrorMessage('Failed to load transactions');
+        }
+    };
 
     useEffect(() => {
         setCurrentPage(0);
@@ -38,7 +51,6 @@ const BonusTransactions = () => {
 
     const handlePageChange = (page: number) => {
         setCurrentPage(page);
-        loadPage(page);
     };
 
     const handleTypeFilterChange = (value: string | number) => {
@@ -55,6 +67,29 @@ const BonusTransactions = () => {
         setCurrentPage(0);
     };
 
+    const getTransactionTypeDisplay = (type: BonusTransactionType): string => {
+        return BonusTransactionTypeDisplay[type] || type;
+    };
+
+    const getTransactionSummary = () => {
+        let totalEarned = 0;
+        let totalSpent = 0;
+
+        transactions.forEach(transaction => {
+            if (transaction.pointsChange > 0) {
+                totalEarned += transaction.pointsChange;
+            } else {
+                totalSpent += Math.abs(transaction.pointsChange);
+            }
+        });
+
+        return {
+            totalEarned,
+            totalSpent,
+            netChange: totalEarned - totalSpent
+        };
+    };
+
     const typeOptions = [
         { value: '', label: 'All Types' },
         ...Object.entries(BonusTransactionTypeDisplay).map(([value, label]) => ({
@@ -69,8 +104,8 @@ const BonusTransactions = () => {
         return <div className={styles.loading}>Loading transactions...</div>;
     }
 
-    if (error) {
-        return <div className={styles.error}>Error: {error}</div>;
+    if (errorMessage) {
+        return <div className={styles.error}>Error: {errorMessage}</div>;
     }
 
     const startItem = currentPage * pageSize + 1;

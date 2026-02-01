@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAuthMutation } from '@/hooks/features/auth';
+import { useAuth } from '@/hooks/features';
 import { Input, Button, Modal } from '@/components/ui';
 import styles from './ResetPasswordForm.module.css';
 
@@ -50,7 +50,10 @@ export const ResetPasswordForm: React.FC = () => {
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const { resetPassword, isLoading, error } = useAuthMutation();
+  const [localError, setLocalError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const { resetPassword, isMutating } = useAuth();
 
   const handleChange = (field: string, value: string) => {
     setFormData(prev => ({
@@ -60,6 +63,7 @@ export const ResetPasswordForm: React.FC = () => {
     if (formErrors[field]) {
       setFormErrors(prev => ({ ...prev, [field]: '' }));
     }
+    if (localError) setLocalError(null);
   };
 
   const validateForm = () => {
@@ -79,19 +83,32 @@ export const ResetPasswordForm: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLocalError(null);
 
     if (!validateForm()) {
       return;
     }
 
     if (!token) {
+      setLocalError('Reset token is missing');
       return;
     }
+
+    setIsSubmitting(true);
 
     try {
       await resetPassword(token, formData.newPassword);
       setShowSuccessModal(true);
-    } catch (err) { }
+    } catch (err: any) {
+      const errorMessage = err.message || 'Failed to reset password';
+      if (errorMessage.includes('cannot be the same')) {
+        setLocalError('New password cannot be the same as your current password');
+      } else {
+        setLocalError(errorMessage);
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleModalClose = () => {
@@ -99,17 +116,7 @@ export const ResetPasswordForm: React.FC = () => {
     navigate('/login');
   };
 
-  const getErrorMessage = () => {
-    if (!error) return null;
-
-    if (error.includes('cannot be the same')) {
-      return 'New password cannot be the same as your current password';
-    }
-
-    return error;
-  };
-
-  const errorMessage = getErrorMessage();
+  const isLoading = isSubmitting || isMutating;
 
   return (
     <section className={styles.resetPassword}>
@@ -118,9 +125,9 @@ export const ResetPasswordForm: React.FC = () => {
           Set New Password
         </h1>
 
-        {errorMessage && (
+        {localError && (
           <div className={styles.notification} data-type="error">
-            {errorMessage}
+            {localError}
           </div>
         )}
 

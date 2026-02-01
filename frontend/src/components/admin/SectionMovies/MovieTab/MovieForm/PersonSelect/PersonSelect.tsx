@@ -1,7 +1,6 @@
-import React, { useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import type { PersonResponse, PersonRole } from '@/types/person';
-import type { NotificationType } from '@/hooks/common/useNotification';
-import { usePersonSelect } from '@/hooks/features/persons/usePersonSelect';
+import { usePerson } from '@/hooks/features/persons/usePerson';
 import styles from './PersonSelect.module.css';
 
 interface PersonSelectProps {
@@ -10,7 +9,7 @@ interface PersonSelectProps {
     onChange: (ids: number[]) => void;
     role: PersonRole;
     placeholder?: string;
-    showNotification: (message: string, type?: NotificationType) => void;
+    showNotification?: (message: string, type?: 'success' | 'error' | 'warning' | 'info') => void;
 }
 
 export const PersonSelect: React.FC<PersonSelectProps> = ({
@@ -18,29 +17,49 @@ export const PersonSelect: React.FC<PersonSelectProps> = ({
     selectedPersons = [],
     onChange,
     role,
-    placeholder = "Search or add new...",
-    showNotification
-}) => {
+    placeholder = "Search or add new..." }) => {
+    const [searchQuery, setSearchQuery] = useState('');
+    const [isOpen, setIsOpen] = useState(false);
+    const [localOptions, setLocalOptions] = useState<PersonResponse[]>([]);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
     const {
-        searchQuery,
-        setSearchQuery,
-        options,
+        loading,
+        handlePersonSearch,
+        handleAddNewPerson,
         allSelectedPersons,
-        isLoading,
-        isOpen,
-        setIsOpen,
-        dropdownRef,
-        showAddOption,
-        handleAddNew
-    } = usePersonSelect({
-        selectedIds,
-        role,
-        showNotification
-    });
+        setIsDropdownOpen
+    } = usePerson();
 
     const displayPersons = useMemo(() => {
         return selectedPersons.length > 0 ? selectedPersons : allSelectedPersons;
     }, [selectedPersons, allSelectedPersons]);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setIsOpen(false);
+                setIsDropdownOpen(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [setIsDropdownOpen]);
+
+    useEffect(() => {
+        if (searchQuery.length >= 2) {
+            const search = async () => {
+                const results = await handlePersonSearch(searchQuery, role);
+                setLocalOptions(results);
+                setIsOpen(true);
+            };
+            search();
+        } else {
+            setLocalOptions([]);
+            setIsOpen(false);
+        }
+    }, [searchQuery, role, handlePersonSearch]);
 
     const handleSelectPerson = (personId: number) => {
         const newSelectedIds = selectedIds.includes(personId)
@@ -55,12 +74,17 @@ export const PersonSelect: React.FC<PersonSelectProps> = ({
     };
 
     const handleAddAndSelect = async () => {
-        const newPersonId = await handleAddNew();
+        const newPersonId = await handleAddNewPerson(searchQuery, role);
         if (newPersonId) {
             const newSelectedIds = [...selectedIds, newPersonId];
             onChange(newSelectedIds);
         }
     };
+
+    const showAddOption = searchQuery.trim().length >= 2 &&
+        !localOptions.some(person =>
+            person.name.toLowerCase().includes(searchQuery.toLowerCase())
+        );
 
     return (
         <div className={styles.container} ref={dropdownRef}>
@@ -73,7 +97,7 @@ export const PersonSelect: React.FC<PersonSelectProps> = ({
                     placeholder={placeholder}
                     className={styles.searchInput}
                 />
-                {isLoading && <div className={styles.spinner}>⏳</div>}
+                {loading && <div className={styles.spinner}>⏳</div>}
             </div>
 
             {displayPersons.length > 0 && (
@@ -101,13 +125,13 @@ export const PersonSelect: React.FC<PersonSelectProps> = ({
                             type="button"
                             onClick={handleAddAndSelect}
                             className={styles.addOption}
-                            disabled={isLoading}
+                            disabled={loading}
                         >
                             ➕ Add & select "{searchQuery}"
                         </button>
                     )}
 
-                    {options.map(person => (
+                    {localOptions.map(person => (
                         <label key={person.id} className={styles.option}>
                             <input
                                 type="checkbox"
@@ -124,7 +148,7 @@ export const PersonSelect: React.FC<PersonSelectProps> = ({
                         </label>
                     ))}
 
-                    {options.length === 0 && searchQuery.length >= 2 && !showAddOption && (
+                    {localOptions.length === 0 && searchQuery.length >= 2 && !showAddOption && (
                         <div className={styles.noResults}>No results found</div>
                     )}
                 </div>

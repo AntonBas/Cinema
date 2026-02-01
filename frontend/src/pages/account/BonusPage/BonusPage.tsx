@@ -7,23 +7,16 @@ import { BonusTransactions } from '@/components/account/BonusTransactions/BonusT
 import { Button } from '@/components/ui/Button/Button';
 import { Notification } from '@/components/ui/Notification/Notification';
 import { useBonus } from '@/hooks/features/bonus/useBonus';
-import { useBonusTransactions } from '@/hooks/features/bonus/useBonusTransactions';
 import styles from './BonusPage.module.css';
 
 export const BonusPage: React.FC = () => {
-    const { getMyBalance, getMyCard, loading: bonusLoading, error: bonusError } = useBonus();
-    const {
-        transactions,
-        loading: transactionsLoading,
-        error: transactionsError,
-        refresh: refreshTransactions,
-        getTransactionSummary
-    } = useBonusTransactions({ autoFetch: true });
-
+    const { getMyBalance, getMyCard, getMyTransactions, loading } = useBonus();
     const [balance, setBalance] = useState<any>(null);
     const [cardInfo, setCardInfo] = useState<any>(null);
+    const [transactionsList, setTransactionsList] = useState<any[]>([]);
     const [activeTab, setActiveTab] = useState<'balance' | 'transactions'>('balance');
     const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null);
+    const [localError, setLocalError] = useState<string | null>(null);
 
     useEffect(() => {
         loadBonusData();
@@ -31,25 +24,25 @@ export const BonusPage: React.FC = () => {
 
     const loadBonusData = async () => {
         try {
-            const [balanceData, cardData] = await Promise.all([
+            const [balanceData, cardData, transactionsData] = await Promise.all([
                 getMyBalance(),
-                getMyCard()
+                getMyCard(),
+                getMyTransactions()
             ]);
             setBalance(balanceData);
             setCardInfo(cardData);
-        } catch (error) {
-            console.error('Failed to load bonus data:', error);
+            setTransactionsList(transactionsData.content);
+            setLocalError(null);
+        } catch (error: any) {
+            setLocalError(error.message || 'Failed to load bonus data');
         }
     };
 
     const handleRefresh = async () => {
         try {
-            await Promise.all([
-                loadBonusData(),
-                refreshTransactions()
-            ]);
+            await loadBonusData();
             showNotification('success', 'Bonus data refreshed successfully');
-        } catch (error) {
+        } catch (error: any) {
             showNotification('error', 'Failed to refresh bonus data');
         }
     };
@@ -59,8 +52,22 @@ export const BonusPage: React.FC = () => {
         setTimeout(() => setNotification(null), 3000);
     };
 
-    const error = bonusError || transactionsError;
-    const loading = bonusLoading || transactionsLoading;
+    const getTransactionSummary = () => {
+        if (!transactionsList.length) return null;
+
+        const totalEarned = transactionsList
+            .filter(t => t.pointsChange > 0)
+            .reduce((sum, t) => sum + t.pointsChange, 0);
+
+        const totalSpent = transactionsList
+            .filter(t => t.pointsChange < 0)
+            .reduce((sum, t) => sum + Math.abs(t.pointsChange), 0);
+
+        const netChange = totalEarned - totalSpent;
+
+        return { totalEarned, totalSpent, netChange };
+    };
+
     const summary = getTransactionSummary();
 
     return (
@@ -97,9 +104,9 @@ export const BonusPage: React.FC = () => {
                             </div>
                         </div>
 
-                        {error && (
+                        {localError && (
                             <div className={styles.error}>
-                                {error}
+                                {localError}
                             </div>
                         )}
 
@@ -123,11 +130,11 @@ export const BonusPage: React.FC = () => {
                                 <div className={styles.balanceContent}>
                                     <BonusBalanceCard
                                         balance={balance}
-                                        loading={bonusLoading}
+                                        loading={loading}
                                     />
                                     <BonusCardInfo
                                         cardInfo={cardInfo}
-                                        loading={bonusLoading}
+                                        loading={loading}
                                     />
 
                                     {summary && (
@@ -159,8 +166,8 @@ export const BonusPage: React.FC = () => {
                             ) : (
                                 <div className={styles.transactionsContent}>
                                     <BonusTransactions
-                                        transactions={transactions}
-                                        loading={transactionsLoading}
+                                        transactions={transactionsList}
+                                        loading={loading}
                                     />
                                 </div>
                             )}

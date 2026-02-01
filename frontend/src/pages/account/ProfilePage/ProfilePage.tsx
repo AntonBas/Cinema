@@ -7,8 +7,9 @@ import { useUser } from '@/hooks/features/user';
 import styles from './ProfilePage.module.css';
 
 export const ProfilePage: React.FC = () => {
-    const { user, isLoading, error, refreshUser } = useUser();
+    const { user, isLoading, refreshUser } = useUser();
     const [isEditing, setIsEditing] = useState(false);
+    const [localError] = useState<string | null>(null);
 
     const handleEditStart = () => {
         setIsEditing(true);
@@ -33,12 +34,12 @@ export const ProfilePage: React.FC = () => {
         );
     }
 
-    if (error || !user) {
+    if (!user) {
         return (
             <Layout>
                 <div className={styles.profilePage}>
                     <div className={styles.notification} data-type="error">
-                        {error || 'Failed to load user data'}
+                        Failed to load user data
                     </div>
                 </div>
             </Layout>
@@ -52,6 +53,12 @@ export const ProfilePage: React.FC = () => {
                     <AccountSidebar activePage="profile" />
 
                     <div className={styles.content}>
+                        {localError && (
+                            <div className={styles.notification} data-type="error">
+                                {localError}
+                            </div>
+                        )}
+
                         <div className={styles.header}>
                             <h1 className={styles.title}>
                                 {isEditing ? 'Edit Profile' : 'My Profile'}

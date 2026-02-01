@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuthMutation } from '@/hooks/features/auth';
+import { useAuth } from '@/hooks/features';
 import { Input, Button, Modal } from '@/components/ui';
 import styles from './ForgotPasswordForm.module.css';
 
@@ -51,20 +51,31 @@ const PasswordResetModal: React.FC<SuccessModalProps> = ({
 export const ForgotPasswordForm: React.FC = () => {
   const [email, setEmail] = useState('');
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const { forgotPassword, isLoading, error } = useAuthMutation();
+  const [localError, setLocalError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const { forgotPassword, isMutating } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLocalError(null);
+    setIsSubmitting(true);
 
     try {
       await forgotPassword(email);
       setShowSuccessModal(true);
-    } catch (err) { }
+    } catch (err: any) {
+      setLocalError(err.message || 'Failed to send reset instructions');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleModalClose = () => {
     setShowSuccessModal(false);
   };
+
+  const isLoading = isSubmitting || isMutating;
 
   return (
     <section className={styles.forgotPassword}>
@@ -73,9 +84,9 @@ export const ForgotPasswordForm: React.FC = () => {
           Password Recovery
         </h2>
 
-        {error && (
+        {localError && (
           <div className={styles.notification} data-type="error">
-            {error}
+            {localError}
           </div>
         )}
 
@@ -86,7 +97,7 @@ export const ForgotPasswordForm: React.FC = () => {
             value={email}
             onChange={setEmail}
             disabled={isLoading}
-            error={error ? '' : undefined}
+            error={localError ? '' : undefined}
           />
 
           <Button

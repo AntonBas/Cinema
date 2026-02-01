@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { UserTable } from './UserTable/UserTable';
 import { UserFilters } from './UserFilters/UserFilters';
-import { useAdminUsers } from '@/hooks/features/admin/useAdminUsers';
+import { useAdminUsers } from '@/hooks/features';
 import { useNotification } from '@/hooks/common/useNotification';
 import { Notification, Pagination } from '@/components/ui';
 import styles from './SectionUsers.module.css';
@@ -10,48 +10,45 @@ export const SectionUsers: React.FC = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [roleFilter, setRoleFilter] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
+    const [currentPage, setCurrentPage] = useState(0);
 
     const {
         users,
         pagination,
-        searchUsers,
-        refreshUsers
+        loading,
+        fetchUsers
     } = useAdminUsers();
 
     const { notifications, hideNotification, showNotification } = useNotification();
 
     useEffect(() => {
         const enabledFilter = statusFilter === '' ? undefined : statusFilter === 'true';
-        searchUsers({
-            query: searchQuery,
+        fetchUsers({
+            query: searchQuery || undefined,
             role: roleFilter || undefined,
             enabled: enabledFilter,
-            page: pagination?.currentPage || 0,
+            page: currentPage,
             size: 10
         });
-    }, [searchQuery, roleFilter, statusFilter]);
+    }, [searchQuery, roleFilter, statusFilter, currentPage]);
 
     const handleSearch = (query: string) => {
         setSearchQuery(query);
+        setCurrentPage(0);
     };
 
     const handleRoleFilterChange = (value: string) => {
         setRoleFilter(value);
+        setCurrentPage(0);
     };
 
     const handleStatusFilterChange = (value: string) => {
         setStatusFilter(value);
+        setCurrentPage(0);
     };
 
     const handlePageChange = (page: number) => {
-        const enabledFilter = statusFilter === '' ? undefined : statusFilter === 'true';
-        searchUsers({
-            query: searchQuery,
-            role: roleFilter || undefined,
-            enabled: enabledFilter,
-            page,
-            size: 10
-        });
+        setCurrentPage(page);
     };
 
     const handleError = (error: string) => {
@@ -60,6 +57,17 @@ export const SectionUsers: React.FC = () => {
 
     const handleSuccess = (message: string) => {
         showNotification(message, 'success');
+    };
+
+    const handleUserUpdate = () => {
+        const enabledFilter = statusFilter === '' ? undefined : statusFilter === 'true';
+        fetchUsers({
+            query: searchQuery || undefined,
+            role: roleFilter || undefined,
+            enabled: enabledFilter,
+            page: currentPage,
+            size: 10
+        });
     };
 
     const getDisplayRange = () => {
@@ -72,6 +80,7 @@ export const SectionUsers: React.FC = () => {
     };
 
     const { start, end } = getDisplayRange();
+
     return (
         <div className={styles.container}>
             <header className={styles.header}>
@@ -90,12 +99,16 @@ export const SectionUsers: React.FC = () => {
             </div>
 
             <div className={styles.content}>
-                <UserTable
-                    users={users}
-                    onRefresh={refreshUsers}
-                    onError={handleError}
-                    onSuccess={handleSuccess}
-                />
+                {loading ? (
+                    <div className={styles.loading}>Loading users...</div>
+                ) : (
+                    <UserTable
+                        users={users}
+                        onRefresh={handleUserUpdate}
+                        onError={handleError}
+                        onSuccess={handleSuccess}
+                    />
+                )}
             </div>
 
             {pagination && pagination.totalPages > 1 && (

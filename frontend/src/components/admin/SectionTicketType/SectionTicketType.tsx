@@ -1,6 +1,5 @@
-import { useState } from 'react';
-import { useTicketTypeList } from '@/hooks/features/ticketType/useTicketTypeList';
-import { useAdminTicketTypes } from '@/hooks/features/ticketType/useAdminTicketTypes';
+import { useState, useMemo, useEffect } from 'react';
+import { useTicketType } from '@/hooks/features/ticketType/useTicketType';
 import { Button } from '@/components/ui/Button';
 import TicketTypeTable from './TicketTypeTable/TicketTypeTable';
 import TicketTypeFilters from './TicketTypeFilters/TicketTypeFilters';
@@ -20,31 +19,69 @@ const SectionTicketType = () => {
     const {
         ticketTypes,
         loading,
-        error,
-        refresh,
-        removeTicketType: removeTicketTypeFromList } = useTicketTypeList({
-            statusFilter,
-            categoryFilter,
-            searchQuery,
-            autoFetch: true
-        });
+        fetchTicketTypes,
+        remove: deleteTicketType,
+        toggleActive
+    } = useTicketType();
 
-    const { remove, toggleActive } = useAdminTicketTypes();
+    const filteredTicketTypes = useMemo(() => {
+        let filtered = ticketTypes;
+
+        if (statusFilter === 'active') {
+            filtered = filtered.filter(t => t.active);
+        } else if (statusFilter === 'inactive') {
+            filtered = filtered.filter(t => !t.active);
+        }
+
+        if (categoryFilter !== 'all') {
+            filtered = filtered.filter(t => t.category === categoryFilter);
+        }
+
+        if (searchQuery.trim()) {
+            const query = searchQuery.toLowerCase();
+            filtered = filtered.filter(t =>
+                t.code.toLowerCase().includes(query) ||
+                t.displayName.toLowerCase().includes(query)
+            );
+        }
+
+        return filtered;
+    }, [ticketTypes, statusFilter, categoryFilter, searchQuery]);
+
+    useEffect(() => {
+        fetchTicketTypes({
+            statusFilter,
+            categoryFilter: categoryFilter === 'all' ? undefined : categoryFilter,
+            searchQuery: searchQuery.trim() ? searchQuery : undefined
+        });
+    }, [statusFilter, categoryFilter, searchQuery]);
 
     const handleCreateSuccess = () => {
         setShowCreateModal(false);
-        refresh();
+        fetchTicketTypes({
+            statusFilter,
+            categoryFilter: categoryFilter === 'all' ? undefined : categoryFilter,
+            searchQuery: searchQuery.trim() ? searchQuery : undefined
+        });
     };
 
     const handleEditSuccess = () => {
         setEditingTicketType(null);
-        refresh();
+        fetchTicketTypes({
+            statusFilter,
+            categoryFilter: categoryFilter === 'all' ? undefined : categoryFilter,
+            searchQuery: searchQuery.trim() ? searchQuery : undefined
+        });
     };
 
     const handleDelete = async (id: number) => {
         try {
-            await remove(id);
-            removeTicketTypeFromList(id);
+            await deleteTicketType(id);
+            fetchTicketTypes({
+                statusFilter,
+                categoryFilter: categoryFilter === 'all' ? undefined : categoryFilter,
+                searchQuery: searchQuery.trim() ? searchQuery : undefined
+            });
         } catch (err) {
             console.error('Failed to delete ticket type:', err);
         }
@@ -53,7 +90,11 @@ const SectionTicketType = () => {
     const handleToggleActive = async (id: number) => {
         try {
             await toggleActive(id);
-            refresh();
+            fetchTicketTypes({
+                statusFilter,
+                categoryFilter: categoryFilter === 'all' ? undefined : categoryFilter,
+                searchQuery: searchQuery.trim() ? searchQuery : undefined
+            });
         } catch (err) {
             console.error('Failed to toggle active status:', err);
         }
@@ -63,22 +104,8 @@ const SectionTicketType = () => {
         setEditingTicketType(ticketType);
     };
 
-    if (error) {
-        return (
-            <div className={styles.section}>
-                <div className={styles.error}>
-                    <h3>Error loading ticket types</h3>
-                    <p>{error}</p>
-                    <Button onClick={() => refresh()}>
-                        Try Again
-                    </Button>
-                </div>
-            </div>
-        );
-    }
-
-    const activeCount = ticketTypes.filter(t => t.active).length;
-    const inactiveCount = ticketTypes.filter(t => !t.active).length;
+    const activeCount = filteredTicketTypes.filter(t => t.active).length;
+    const inactiveCount = filteredTicketTypes.filter(t => !t.active).length;
 
     return (
         <div className={styles.section}>
@@ -110,7 +137,7 @@ const SectionTicketType = () => {
                     <div className={styles.loading}>
                         <LoadingSpinner text="Loading ticket types..." />
                     </div>
-                ) : ticketTypes.length === 0 ? (
+                ) : filteredTicketTypes.length === 0 ? (
                     <div className={styles.empty}>
                         <p>No ticket types found</p>
                         {(searchQuery || statusFilter !== 'all' || categoryFilter !== 'all') && (
@@ -129,12 +156,12 @@ const SectionTicketType = () => {
                 ) : (
                     <>
                         <div className={styles.stats}>
-                            <span>Total: {ticketTypes.length}</span>
+                            <span>Total: {filteredTicketTypes.length}</span>
                             <span>Active: {activeCount}</span>
                             <span>Inactive: {inactiveCount}</span>
                         </div>
                         <TicketTypeTable
-                            ticketTypes={ticketTypes}
+                            ticketTypes={filteredTicketTypes}
                             onEdit={handleEdit}
                             onDelete={handleDelete}
                             onToggleActive={handleToggleActive}

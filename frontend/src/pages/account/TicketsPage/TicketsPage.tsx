@@ -23,7 +23,6 @@ export const TicketsPage: React.FC = () => {
     const {
         data,
         loading,
-        error,
         status,
         filters,
         handlePageChange,
@@ -33,6 +32,9 @@ export const TicketsPage: React.FC = () => {
         refresh
     } = useTickets();
 
+    useEffect(() => {
+    }, []);
+
     const hasActiveFilters = useMemo(() => {
         return (
             (filters.search && filters.search.trim() !== '') ||
@@ -40,12 +42,6 @@ export const TicketsPage: React.FC = () => {
             (filters.dateRange && filters.dateRange.from && filters.dateRange.to)
         );
     }, [filters, status]);
-
-    useEffect(() => {
-        if (error) {
-            showNotification('error', error);
-        }
-    }, [error]);
 
     const handleShowQR = (ticketCode: string) => {
         setSelectedQRCode(ticketCode);

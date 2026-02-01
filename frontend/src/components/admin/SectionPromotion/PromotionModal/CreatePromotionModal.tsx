@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Modal, Button, Input } from '@/components/ui';
-import { usePromotionForm } from '@/hooks/features/promotion/usePromotionForm';
+import { usePromotion } from '@/hooks/features/promotion/usePromotion';
 import { toBackendFormat } from '@/utils/dateUtils';
 import styles from './PromotionModal.module.css';
 
@@ -13,7 +13,7 @@ const CreatePromotionModal: React.FC<CreatePromotionModalProps> = ({
     onClose,
     onSuccess
 }) => {
-    const { handleCreate, loading, error, success, reset } = usePromotionForm();
+    const { create, loading } = usePromotion();
     const [formData, setFormData] = useState({
         title: '',
         description: '',
@@ -22,6 +22,8 @@ const CreatePromotionModal: React.FC<CreatePromotionModalProps> = ({
         endDate: ''
     });
     const [dateError, setDateError] = useState('');
+    const [errorMessage, setErrorMessage] = useState('');
+    const [successMessage, setSuccessMessage] = useState('');
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -35,21 +37,28 @@ const CreatePromotionModal: React.FC<CreatePromotionModalProps> = ({
             }
         }
         setDateError('');
+        setErrorMessage('');
+        setSuccessMessage('');
 
-        const submissionData = {
-            title: formData.title,
-            description: formData.description || undefined,
-            bonusPoints: parseInt(formData.bonusPoints) || 100,
-            startDate: formData.startDate ? toBackendFormat(formData.startDate) : undefined,
-            endDate: formData.endDate ? toBackendFormat(formData.endDate) : undefined
-        };
+        try {
+            const submissionData = {
+                title: formData.title,
+                description: formData.description || undefined,
+                bonusPoints: parseInt(formData.bonusPoints) || 100,
+                startDate: formData.startDate ? toBackendFormat(formData.startDate) : undefined,
+                endDate: formData.endDate ? toBackendFormat(formData.endDate) : undefined
+            };
 
-        const result = await handleCreate(submissionData);
-        if (result) {
-            setTimeout(() => {
-                reset();
-                onSuccess();
-            }, 1000);
+            const result = await create(submissionData);
+            if (result) {
+                setSuccessMessage('Promotion created successfully!');
+                setTimeout(() => {
+                    setSuccessMessage('');
+                    onSuccess();
+                }, 1000);
+            }
+        } catch (err) {
+            setErrorMessage('Failed to create promotion');
         }
     };
 
@@ -58,7 +67,6 @@ const CreatePromotionModal: React.FC<CreatePromotionModalProps> = ({
     };
 
     const handleClose = () => {
-        reset();
         onClose();
     };
 
@@ -119,8 +127,8 @@ const CreatePromotionModal: React.FC<CreatePromotionModalProps> = ({
                 </div>
 
                 {dateError && <div className={styles.error}>{dateError}</div>}
-                {error && <div className={styles.error}>{error}</div>}
-                {success && <div className={styles.success}>Promotion created successfully!</div>}
+                {errorMessage && <div className={styles.error}>{errorMessage}</div>}
+                {successMessage && <div className={styles.success}>{successMessage}</div>}
 
                 <div className={styles.actions}>
                     <Button type="button" variant="cancel" onClick={handleClose}>

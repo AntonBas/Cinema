@@ -18,7 +18,7 @@ export const AccountSidebar: React.FC<AccountSidebarProps> = ({ }) => {
 
     const sidebarItems: SidebarItem[] = [
         {
-            id: 'dashboard',
+            id: 'overview',
             label: 'Overview',
             path: '/account',
             icon: '🏠'

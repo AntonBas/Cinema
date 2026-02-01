@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import type { GenreResponse, GenreRequest } from '@/types/genre';
-import { useGenreSearch, useGenreMutation } from '@/hooks/features/genres';
-import { useNotification } from '@/hooks/common/useNotification';
-import { usePagination } from '@/hooks/common/usePagination';
+import { useGenres } from '@/hooks/features/genres/useGenres';
 import {
   Notification,
   DeleteConfirmModal,
@@ -21,86 +19,66 @@ export const GenreTab: React.FC = () => {
   const [deletingGenre, setDeletingGenre] = useState<GenreResponse | null>(null);
   const [formData, setFormData] = useState<GenreRequest>({ name: '' });
   const [searchQuery, setSearchQuery] = useState('');
-
-  const { params, setPage } = usePagination({}, 12);
-  const currentPage = params.page || 0;
+  const [currentPage, setCurrentPage] = useState(0);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
   const {
     genres,
     pagination,
     loading,
-    error: searchError,
-    searchGenres,
-    getAllGenresPaginated,
-    clearError: clearSearchError
-  } = useGenreSearch();
-
-  const {
-    createGenre,
-    updateGenre,
-    deleteGenre,
-    loading: mutationLoading,
-    error: mutationError,
-    clearError: clearMutationError
-  } = useGenreMutation();
-
-  const { notifications, showNotification, hideNotification } = useNotification();
+    search,
+    getAllPaginated,
+    create,
+    update,
+    remove
+  } = useGenres();
 
   const loadGenres = useCallback(async () => {
     try {
       if (searchQuery.trim()) {
-        await searchGenres({
+        await search({
           query: searchQuery,
           page: currentPage,
           size: 12
         });
       } else {
-        await getAllGenresPaginated(currentPage, 12);
+        await getAllPaginated({
+          page: currentPage,
+          size: 12
+        });
       }
+      setErrorMessage('');
     } catch (error) {
-      console.error('Failed to load genres:', error);
+      setErrorMessage('Failed to load genres');
     }
-  }, [searchQuery, currentPage, searchGenres, getAllGenresPaginated]);
+  }, [searchQuery, currentPage, search, getAllPaginated]);
 
   useEffect(() => {
     loadGenres();
   }, [loadGenres]);
 
-  useEffect(() => {
-    if (searchError) {
-      showNotification(searchError, 'error');
-      clearSearchError();
-    }
-  }, [searchError, showNotification, clearSearchError]);
-
-  useEffect(() => {
-    if (mutationError) {
-      showNotification(mutationError, 'error');
-      clearMutationError();
-    }
-  }, [mutationError, showNotification, clearMutationError]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!formData.name.trim()) {
-      showNotification('Genre name is required', 'error');
+      setErrorMessage('Genre name is required');
       return;
     }
 
     try {
       if (editingGenre?.id) {
-        await updateGenre(editingGenre.id, formData);
-        showNotification('Genre updated successfully!', 'success');
+        await update(editingGenre.id, formData);
+        setSuccessMessage('Genre updated successfully!');
       } else {
-        await createGenre(formData);
-        showNotification('Genre created successfully!', 'success');
+        await create(formData);
+        setSuccessMessage('Genre created successfully!');
       }
 
       resetForm();
       await loadGenres();
     } catch (err) {
-      console.error('Failed to save genre:', err);
+      setErrorMessage('Failed to save genre');
     }
   };
 
@@ -108,16 +86,16 @@ export const GenreTab: React.FC = () => {
     if (!deletingGenre?.id) return;
 
     try {
-      await deleteGenre(deletingGenre.id);
-      showNotification('Genre deleted successfully!', 'success');
+      await remove(deletingGenre.id);
+      setSuccessMessage('Genre deleted successfully!');
 
       if (genres.length === 1 && currentPage > 0) {
-        setPage(currentPage - 1);
+        setCurrentPage(currentPage - 1);
       } else {
         await loadGenres();
       }
     } catch (err) {
-      console.error('Failed to delete genre:', err);
+      setErrorMessage('Failed to delete genre');
     } finally {
       setIsDeleteModalOpen(false);
       setDeletingGenre(null);
@@ -144,12 +122,17 @@ export const GenreTab: React.FC = () => {
   const handleSearch = useCallback((query: string) => {
     if (query !== searchQuery) {
       setSearchQuery(query);
-      setPage(0);
+      setCurrentPage(0);
     }
-  }, [searchQuery, setPage]);
+  }, [searchQuery]);
 
   const handlePageChange = (page: number) => {
-    setPage(page);
+    setCurrentPage(page);
+  };
+
+  const handleCloseNotification = () => {
+    setErrorMessage('');
+    setSuccessMessage('');
   };
 
   if (loading && genres.length === 0) {
@@ -174,6 +157,28 @@ export const GenreTab: React.FC = () => {
 
   return (
     <div className={styles.container}>
+      {successMessage && (
+        <Notification
+          id="success"
+          message={successMessage}
+          type="success"
+          isVisible={true}
+          onClose={handleCloseNotification}
+          duration={4000}
+        />
+      )}
+
+      {errorMessage && (
+        <Notification
+          id="error"
+          message={errorMessage}
+          type="error"
+          isVisible={true}
+          onClose={handleCloseNotification}
+          duration={4000}
+        />
+      )}
+
       <div className={styles.header}>
         <h2>Genre Management</h2>
         <Button
@@ -284,7 +289,7 @@ export const GenreTab: React.FC = () => {
             onChange={(value) => setFormData({ name: value })}
             required
             maxLength={50}
-            disabled={mutationLoading}
+            disabled={loading}
             className={styles.formInput}
           />
           <div className={styles.formHint}>Maximum 50 characters</div>
@@ -294,15 +299,15 @@ export const GenreTab: React.FC = () => {
               type="button"
               variant="cancel"
               onClick={resetForm}
-              disabled={mutationLoading}
+              disabled={loading}
             >
               Cancel
             </Button>
             <Button
               type="submit"
               variant="primary"
-              loading={mutationLoading}
-              disabled={mutationLoading}
+              loading={loading}
+              disabled={loading}
             >
               {editingGenre ? 'Update' : 'Create'} Genre
             </Button>
@@ -316,21 +321,8 @@ export const GenreTab: React.FC = () => {
         onCancel={handleDeleteCancel}
         itemName={deletingGenre?.name}
         itemType="genre"
-        isDeleting={mutationLoading}
+        isDeleting={loading}
       />
-
-      {notifications.map((notification, index) => (
-        <Notification
-          key={notification.id}
-          id={notification.id}
-          message={notification.message}
-          type={notification.type}
-          isVisible={notification.isVisible}
-          onClose={hideNotification}
-          duration={4000}
-          position={index}
-        />
-      ))}
     </div>
   );
 };

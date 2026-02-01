@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useUserMutation } from '@/hooks/features/user';
+import { useUser } from '@/hooks/features/user';
 import { Input, Button, Modal } from '@/components/ui';
 import type { UserProfile, UserUpdateRequest } from '@/types/user';
 import styles from './ProfileEditForm.module.css';
@@ -15,7 +15,7 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
     onCancel,
     onSuccess
 }) => {
-    const { updateProfile, isLoading, error, clearError } = useUserMutation();
+    const { updateProfile, isLoading } = useUser();
     const [formData, setFormData] = useState<UserUpdateRequest>({
         firstName: user.firstName,
         lastName: user.lastName,
@@ -24,6 +24,7 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
         phoneNumber: user.phoneNumber || ''
     });
     const [successMessage, setSuccessMessage] = useState('');
+    const [errorMessage, setErrorMessage] = useState('');
     const [formErrors, setFormErrors] = useState<Record<string, string>>({});
     const [showDateChangeWarning, setShowDateChangeWarning] = useState(false);
     const [originalDateOfBirth] = useState(user.dateOfBirth);
@@ -43,7 +44,7 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
         if (formErrors[field]) {
             setFormErrors(prev => ({ ...prev, [field]: '' }));
         }
-        if (error) clearError();
+        if (errorMessage) setErrorMessage('');
         if (successMessage) setSuccessMessage('');
     };
 
@@ -86,7 +87,7 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
                 onSuccess();
             }, 1500);
         } catch (err) {
-            console.error('Failed to update profile:', err);
+            setErrorMessage('Failed to update profile. Please try again.');
         }
     };
 
@@ -132,9 +133,9 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
             </Modal>
 
             <form onSubmit={handleSubmit} className={styles.form}>
-                {error && (
+                {errorMessage && (
                     <div className={styles.notification} data-type="error">
-                        {error}
+                        {errorMessage}
                     </div>
                 )}
 

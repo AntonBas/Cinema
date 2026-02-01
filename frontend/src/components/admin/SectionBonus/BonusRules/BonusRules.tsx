@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
-import { useAdminBonus } from '@/hooks/features/bonus/useAdminBonus';
+import { useBonus } from '@/hooks/features/bonus/useBonus';
 import EditRuleModal from '../BonusModal/EditRuleModal';
 import ResetRuleModal from '../BonusModal/ResetRuleModal';
 import type { BonusRulesResponse, BonusTransactionType } from '@/types/bonus';
@@ -9,8 +9,9 @@ import { BonusTransactionTypeDisplay } from '@/types/bonus';
 import styles from './BonusRules.module.css';
 
 const BonusRules = () => {
-    const { getAllRules, loading, error } = useAdminBonus();
+    const { getAllRules, loading } = useBonus();
     const [rules, setRules] = useState<BonusRulesResponse[]>([]);
+    const [errorMessage, setErrorMessage] = useState('');
     const [editingRule, setEditingRule] = useState<BonusRulesResponse | null>(null);
     const [resettingRuleType, setResettingRuleType] = useState<BonusTransactionType | null>(null);
 
@@ -22,8 +23,9 @@ const BonusRules = () => {
         try {
             const data = await getAllRules();
             setRules(data);
+            setErrorMessage('');
         } catch (err) {
-            console.error('Failed to load bonus rules:', err);
+            setErrorMessage('Failed to load bonus rules');
         }
     };
 
@@ -59,8 +61,8 @@ const BonusRules = () => {
         return <div className={styles.loading}>Loading rules...</div>;
     }
 
-    if (error) {
-        return <div className={styles.error}>Error: {error}</div>;
+    if (errorMessage) {
+        return <div className={styles.error}>Error: {errorMessage}</div>;
     }
 
     return (

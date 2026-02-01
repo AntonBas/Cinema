@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button, SearchInput, ConfirmModal } from '@/components/ui';
-import { useAdminPromotionList } from '@/hooks/features/promotion/useAdminPromotionList';
-import { useAdminPromotion } from '@/hooks/features/promotion/useAdminPromotion';
+import { usePromotion } from '@/hooks/features/promotion/usePromotion';
+import type { PromotionResponse } from '@/types/promotion';
 import PromotionStats from './PromotionStats';
 import PromotionTable from './PromotionTable';
 import PromotionFilters from './PromotionFilters';
@@ -14,20 +14,49 @@ const SectionPromotion: React.FC = () => {
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [editingPromotion, setEditingPromotion] = useState<number | null>(null);
     const [deletingPromotion, setDeletingPromotion] = useState<{ id: number; title: string } | null>(null);
+    const [filteredPromotions, setFilteredPromotions] = useState<PromotionResponse[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
 
-    const { promotions, loading, refresh, getPromotionStatus, getStatusDisplay } = useAdminPromotionList({ autoFetch: true });
-    const { remove } = useAdminPromotion();
+    const {
+        adminPromotions: promotions,
+        getPromotionStatus,
+        getStatusDisplay,
+        fetchAdminPromotions,
+        remove
+    } = usePromotion();
 
-    const filteredPromotions = promotions.filter(promotion => {
-        const matchesSearch = search === '' ||
-            promotion.title.toLowerCase().includes(search.toLowerCase()) ||
-            promotion.description?.toLowerCase().includes(search.toLowerCase());
+    useEffect(() => {
+        loadPromotions();
+    }, []);
 
-        if (!statusFilter) return matchesSearch;
+    useEffect(() => {
+        filterPromotions();
+    }, [search, statusFilter, promotions]);
 
-        const status = getPromotionStatus(promotion);
-        return matchesSearch && status === statusFilter;
-    });
+    const loadPromotions = async () => {
+        setIsLoading(true);
+        try {
+            await fetchAdminPromotions();
+        } catch (error) {
+            console.error('Failed to load promotions');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const filterPromotions = () => {
+        const filtered = promotions.filter(promotion => {
+            const matchesSearch = search === '' ||
+                promotion.title.toLowerCase().includes(search.toLowerCase()) ||
+                promotion.description?.toLowerCase().includes(search.toLowerCase());
+
+            if (!statusFilter) return matchesSearch;
+
+            const status = getPromotionStatus(promotion);
+            return matchesSearch && status === statusFilter;
+        });
+        setFilteredPromotions(filtered);
+    };
 
     const handleDeleteConfirm = async () => {
         if (!deletingPromotion) return;
@@ -35,9 +64,14 @@ const SectionPromotion: React.FC = () => {
         try {
             await remove(deletingPromotion.id);
             setDeletingPromotion(null);
-            refresh();
+            await fetchAdminPromotions();
         } catch (error) {
+            console.error('Failed to delete promotion');
         }
+    };
+
+    const handleRefresh = () => {
+        fetchAdminPromotions();
     };
 
     return (
@@ -47,7 +81,13 @@ const SectionPromotion: React.FC = () => {
                     <h1 className={styles.title}>Promotion Management</h1>
                     <p className={styles.subtitle}>Create and manage promotions</p>
                 </div>
-                <Button onClick={() => setShowCreateModal(true)} variant="primary">Create Promotion</Button>
+                <Button
+                    onClick={() => setShowCreateModal(true)}
+                    variant="primary"
+                    disabled={isLoading}
+                >
+                    Create Promotion
+                </Button>
             </div>
 
             <PromotionStats />
@@ -68,7 +108,7 @@ const SectionPromotion: React.FC = () => {
             <div className={styles.tableContainer}>
                 <PromotionTable
                     promotions={filteredPromotions}
-                    loading={loading}
+                    loading={isLoading}
                     onEdit={setEditingPromotion}
                     onDelete={(id, title) => setDeletingPromotion({ id, title })}
                     getPromotionStatus={getPromotionStatus}
@@ -79,7 +119,7 @@ const SectionPromotion: React.FC = () => {
             {showCreateModal && (
                 <CreatePromotionModal
                     onClose={() => setShowCreateModal(false)}
-                    onSuccess={refresh}
+                    onSuccess={handleRefresh}
                 />
             )}
 
@@ -87,7 +127,7 @@ const SectionPromotion: React.FC = () => {
                 <EditPromotionModal
                     promotionId={editingPromotion}
                     onClose={() => setEditingPromotion(null)}
-                    onSuccess={refresh}
+                    onSuccess={handleRefresh}
                 />
             )}
 

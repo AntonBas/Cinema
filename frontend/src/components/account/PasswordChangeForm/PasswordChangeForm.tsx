@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { useUserMutation } from '@/hooks/features/user';
+import { useUser } from '@/hooks/features/user';
 import { Input, Button, Notification } from '@/components/ui';
 import styles from './PasswordChangeForm.module.css';
 
 export const PasswordChangeForm: React.FC = () => {
-    const { updatePassword, isLoading, error, clearError } = useUserMutation();
+    const { updatePassword, isLoading } = useUser();
     const [formData, setFormData] = useState({
         currentPassword: '',
         newPassword: '',
@@ -12,6 +12,7 @@ export const PasswordChangeForm: React.FC = () => {
     });
     const [showSuccess, setShowSuccess] = useState(false);
     const [showError, setShowError] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
     const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
     const handleChange = (field: string, value: string) => {
@@ -23,11 +24,11 @@ export const PasswordChangeForm: React.FC = () => {
         if (formErrors[field]) {
             setFormErrors(prev => ({ ...prev, [field]: '' }));
         }
-        if (error) {
-            clearError();
-            setShowError(false);
+        if (errorMessage) {
+            setErrorMessage('');
         }
         if (showSuccess) setShowSuccess(false);
+        if (showError) setShowError(false);
     };
 
     const validateForm = () => {
@@ -73,7 +74,9 @@ export const PasswordChangeForm: React.FC = () => {
                 confirmPassword: ''
             });
             setFormErrors({});
+            setErrorMessage('');
         } catch (err) {
+            setErrorMessage('Failed to update password. Please try again.');
             setShowError(true);
         }
     };
@@ -85,7 +88,6 @@ export const PasswordChangeForm: React.FC = () => {
 
     return (
         <div className={styles.passwordForm}>
-            {/* Спливаючі сповіщення */}
             <Notification
                 id="success"
                 message="Password updated successfully!"
@@ -97,7 +99,7 @@ export const PasswordChangeForm: React.FC = () => {
 
             <Notification
                 id="error"
-                message={error || 'Failed to update password'}
+                message={errorMessage}
                 type="error"
                 isVisible={showError}
                 onClose={handleCloseNotification}

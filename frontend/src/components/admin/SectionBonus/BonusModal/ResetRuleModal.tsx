@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { Notification } from '@/components/ui/Notification';
-import { useAdminBonus } from '@/hooks/features/bonus/useAdminBonus';
+import { useBonus } from '@/hooks/features/bonus/useBonus';
 import type { BonusTransactionType } from '@/types/bonus';
 import { BonusTransactionTypeDisplay } from '@/types/bonus';
 import styles from './BonusModal.module.css';
@@ -20,20 +20,20 @@ const ResetRuleModal: React.FC<ResetRuleModalProps> = ({
     onSuccess,
     ruleType
 }) => {
-    const { resetRule, loading, error } = useAdminBonus();
+    const { resetRule, loading } = useBonus();
     const [showNotification, setShowNotification] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
 
     const handleReset = async () => {
         try {
             await resetRule(ruleType);
-
             setShowNotification(true);
             setTimeout(() => {
                 setShowNotification(false);
                 onSuccess();
             }, 1500);
         } catch (err) {
-            console.error('Failed to reset rule:', err);
+            setErrorMessage('Failed to reset rule');
         }
     };
 
@@ -59,9 +59,9 @@ const ResetRuleModal: React.FC<ResetRuleModalProps> = ({
                         ⚠️ This action cannot be undone. All custom settings for this rule will be lost.
                     </div>
 
-                    {error && (
+                    {errorMessage && (
                         <div style={{ color: 'var(--error)', fontSize: '14px', marginBottom: '16px' }}>
-                            {error}
+                            {errorMessage}
                         </div>
                     )}
 

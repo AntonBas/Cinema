@@ -1,23 +1,24 @@
 import React, { useEffect } from 'react';
-import { useMovieStatus } from '@/hooks/features/movies';
+import { useMovies } from '@/hooks/features/movies/useMovies';
 import { MovieList } from '@/components/movies';
 import { useNotification } from '@/hooks/common/useNotification';
 import { Notification } from '@/components/ui';
 import styles from './CurrentMoviesPage.module.css';
 
 export const CurrentMoviesPage: React.FC = () => {
-    const { movies, loading, error, fetchMoviesByStatus } = useMovieStatus();
+    const { movies, loading, getCurrentlyShowing } = useMovies();
     const { notifications, showNotification, hideNotification } = useNotification();
 
     useEffect(() => {
-        fetchMoviesByStatus('CURRENT');
-    }, [fetchMoviesByStatus]);
-
-    useEffect(() => {
-        if (error) {
-            showNotification(error, 'error');
-        }
-    }, [error, showNotification]);
+        const loadMovies = async () => {
+            try {
+                await getCurrentlyShowing();
+            } catch (err) {
+                showNotification('Failed to load movies', 'error');
+            }
+        };
+        loadMovies();
+    }, [getCurrentlyShowing, showNotification]);
 
     return (
         <div className={styles.page}>

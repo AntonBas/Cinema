@@ -1,16 +1,15 @@
 import React, { useState } from 'react';
-import { useUserMutation } from '@/hooks/features/user';
+import { useUser } from '@/hooks/features/user';
 import { Input, Button, Notification, Tooltip } from '@/components/ui';
 import styles from './EmailChangeForm.module.css';
 
 export const EmailChangeForm: React.FC = () => {
-    const { requestEmailChange, isLoading, error, clearError } = useUserMutation();
+    const { requestEmailChange, isLoading } = useUser();
     const [formData, setFormData] = useState({
         newEmail: '',
         password: ''
     });
     const [showSuccess, setShowSuccess] = useState(false);
-    const [showError, setShowError] = useState(false);
     const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
     const handleChange = (field: string, value: string) => {
@@ -21,10 +20,6 @@ export const EmailChangeForm: React.FC = () => {
 
         if (formErrors[field]) {
             setFormErrors(prev => ({ ...prev, [field]: '' }));
-        }
-        if (error) {
-            clearError();
-            setShowError(false);
         }
         if (showSuccess) setShowSuccess(false);
     };
@@ -61,14 +56,12 @@ export const EmailChangeForm: React.FC = () => {
                 password: ''
             });
             setFormErrors({});
-        } catch (err) {
-            setShowError(true);
+        } catch {
         }
     };
 
     const handleCloseNotification = (id: string) => {
         if (id === 'success') setShowSuccess(false);
-        if (id === 'error') setShowError(false);
     };
 
     return (
@@ -78,15 +71,6 @@ export const EmailChangeForm: React.FC = () => {
                 message="Confirmation email sent to your new address! Please check your inbox."
                 type="success"
                 isVisible={showSuccess}
-                onClose={handleCloseNotification}
-                duration={5000}
-            />
-
-            <Notification
-                id="error"
-                message={error || 'Failed to send confirmation email'}
-                type="error"
-                isVisible={showError}
                 onClose={handleCloseNotification}
                 duration={5000}
             />

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import type { CinemaHallResponse, CinemaHallRequest } from '@/types';
-import { useCinemaHalls, useCinemaHallMutation } from '@/hooks/features/cinemaHalls';
-import { useNotification } from '@/hooks/common/useNotification';
+import type { CinemaHallResponse, CinemaHallRequest } from '@/types/cinemaHall';
+import { useCinemaHalls } from '@/hooks/features/cinemaHalls/useCinemaHalls';
 import { DeleteConfirmModal, Notification, Button } from '@/components/ui';
 import { CreateHallModal, EditHallModal } from './HallModal';
 import { HallsTable } from './HallsTable/HallsTable';
@@ -9,20 +8,21 @@ import { HallLayoutModal } from './HallLayoutModal/HallLayoutModal';
 import styles from './SectionHalls.module.css';
 
 export const SectionHalls: React.FC = () => {
-    const { allHalls: halls, loading, error, getAllHalls, getHallLayout } = useCinemaHalls();
     const {
+        allHalls: halls,
+        loading,
+        getAllHalls,
         createHall,
         updateHall,
-        deleteHall,
-        loading: mutationLoading,
-        error: mutationError
-    } = useCinemaHallMutation();
+        deleteHall
+    } = useCinemaHalls();
 
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
     const [selectedHall, setSelectedHall] = useState<CinemaHallResponse | null>(null);
     const [showLayoutModal, setShowLayoutModal] = useState(false);
-    const [hallLayouts, setHallLayouts] = useState<{ [key: number]: { rows: number, seatsPerRow: number } }>({});
+    const [successMessage, setSuccessMessage] = useState('');
+    const [errorMessage, setErrorMessage] = useState('');
     const [deleteModal, setDeleteModal] = useState<{
         isOpen: boolean;
         hall: CinemaHallResponse | null;
@@ -31,47 +31,18 @@ export const SectionHalls: React.FC = () => {
         hall: null
     });
 
-    const { notifications, showNotification, hideNotification } = useNotification();
-
     useEffect(() => {
         getAllHalls();
     }, []);
-
-    useEffect(() => {
-        if (error) {
-            showNotification(error, 'error');
-        }
-    }, [error, showNotification]);
-
-    useEffect(() => {
-        if (mutationError) {
-            showNotification(mutationError, 'error');
-        }
-    }, [mutationError, showNotification]);
-
-    const loadHallLayout = async (hallId: number) => {
-        try {
-            const layout = await getHallLayout(hallId);
-            setHallLayouts(prev => ({
-                ...prev,
-                [hallId]: {
-                    rows: layout.totalRows,
-                    seatsPerRow: layout.maxSeatsPerRow
-                }
-            }));
-        } catch (err) {
-            console.error('Failed to load hall layout:', err);
-        }
-    };
 
     const handleCreateHall = async (request: CinemaHallRequest) => {
         try {
             await createHall(request);
             setShowCreateModal(false);
-            showNotification('Cinema hall created successfully', 'success');
-            await getAllHalls();
+            setSuccessMessage('Cinema hall created successfully');
+            getAllHalls();
         } catch (err) {
-            console.error('Failed to create hall:', err);
+            setErrorMessage('Failed to create hall');
         }
     };
 
@@ -80,20 +51,20 @@ export const SectionHalls: React.FC = () => {
             await updateHall(id, request);
             setShowEditModal(false);
             setSelectedHall(null);
-            showNotification('Cinema hall updated successfully', 'success');
-            await getAllHalls();
+            setSuccessMessage('Cinema hall updated successfully');
+            getAllHalls();
         } catch (err) {
-            console.error('Failed to update hall:', err);
+            setErrorMessage('Failed to update hall');
         }
     };
 
     const handleDeleteHall = async (id: number) => {
         try {
             await deleteHall(id);
-            showNotification('Cinema hall deleted successfully', 'success');
-            await getAllHalls();
+            setSuccessMessage('Cinema hall deleted successfully');
+            getAllHalls();
         } catch (err) {
-            console.error('Failed to delete hall:', err);
+            setErrorMessage('Failed to delete hall');
         } finally {
             setDeleteModal({ isOpen: false, hall: null });
         }
@@ -106,9 +77,8 @@ export const SectionHalls: React.FC = () => {
         });
     };
 
-    const handleEdit = async (hall: CinemaHallResponse) => {
+    const handleEdit = (hall: CinemaHallResponse) => {
         setSelectedHall(hall);
-        await loadHallLayout(hall.id);
         setShowEditModal(true);
     };
 
@@ -117,20 +87,34 @@ export const SectionHalls: React.FC = () => {
         setShowLayoutModal(true);
     };
 
+    const handleCloseNotification = () => {
+        setErrorMessage('');
+        setSuccessMessage('');
+    };
+
     return (
         <div className={styles.section}>
-            {notifications.map((notification, index) => (
+            {successMessage && (
                 <Notification
-                    key={notification.id}
-                    id={notification.id}
-                    message={notification.message}
-                    type={notification.type}
-                    isVisible={notification.isVisible}
-                    onClose={hideNotification}
+                    id="success"
+                    message={successMessage}
+                    type="success"
+                    isVisible={true}
+                    onClose={handleCloseNotification}
                     duration={4000}
-                    position={index}
                 />
-            ))}
+            )}
+
+            {errorMessage && (
+                <Notification
+                    id="error"
+                    message={errorMessage}
+                    type="error"
+                    isVisible={true}
+                    onClose={handleCloseNotification}
+                    duration={4000}
+                />
+            )}
 
             <div className={styles.header}>
                 <div className={styles.headerContent}>
@@ -142,8 +126,8 @@ export const SectionHalls: React.FC = () => {
                 <Button
                     variant="primary"
                     onClick={() => setShowCreateModal(true)}
-                    disabled={mutationLoading}
-                    loading={mutationLoading}
+                    disabled={loading}
+                    loading={loading}
                 >
                     Add Hall
                 </Button>
@@ -163,20 +147,19 @@ export const SectionHalls: React.FC = () => {
                 <CreateHallModal
                     onClose={() => setShowCreateModal(false)}
                     onCreate={handleCreateHall}
-                    loading={mutationLoading}
+                    loading={loading}
                 />
             )}
 
             {showEditModal && selectedHall && (
                 <EditHallModal
                     hall={selectedHall}
-                    currentLayout={hallLayouts[selectedHall.id]}
                     onClose={() => {
                         setShowEditModal(false);
                         setSelectedHall(null);
                     }}
                     onUpdate={handleEditHall}
-                    loading={mutationLoading}
+                    loading={loading}
                 />
             )}
 
@@ -197,7 +180,7 @@ export const SectionHalls: React.FC = () => {
                 onCancel={() => setDeleteModal({ isOpen: false, hall: null })}
                 itemName={deleteModal.hall?.name}
                 itemType="cinema hall"
-                isDeleting={mutationLoading}
+                isDeleting={loading}
             />
         </div>
     );

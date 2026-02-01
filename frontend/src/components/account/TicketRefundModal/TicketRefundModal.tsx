@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Modal, Button, Notification } from '@/components/ui';
-import { useRefundForm } from '@/hooks/features/refund/useRefundForm';
+import { useRefund } from '@/hooks/features/refund/useRefund';
 import type { TicketResponse } from '@/types/ticket';
 import { AlertCircle, Clock, DollarSign, ExternalLink, X, Check } from 'lucide-react';
 import styles from './TicketRefundModal.module.css';
@@ -21,11 +21,10 @@ export const TicketRefundModal: React.FC<TicketRefundModalProps> = ({
     const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null);
 
     const {
-        handleProcessRefund,
+        processRefund,
         loading,
-        error,
-        success,
-        refundResult } = useRefundForm();
+        refundResult
+    } = useRefund();
 
     if (!ticket) return null;
 
@@ -63,7 +62,7 @@ export const TicketRefundModal: React.FC<TicketRefundModalProps> = ({
         };
 
         try {
-            const result = await handleProcessRefund(refundRequest);
+            const result = await processRefund(refundRequest);
             if (result) {
                 setNotification({ type: 'success', message: 'Refund request submitted successfully' });
                 setTimeout(() => {
@@ -114,7 +113,7 @@ export const TicketRefundModal: React.FC<TicketRefundModalProps> = ({
                             </p>
                         </div>
                     </div>
-                ) : success && refundResult ? (
+                ) : refundResult ? (
                     <div className={styles.successMessage}>
                         <Check size={24} />
                         <div>
@@ -254,19 +253,12 @@ export const TicketRefundModal: React.FC<TicketRefundModalProps> = ({
                                 </span>
                             </label>
                         </div>
-
-                        {error && (
-                            <div className={styles.errorAlert}>
-                                <AlertCircle size={18} />
-                                <span>{error}</span>
-                            </div>
-                        )}
                     </>
                 )}
             </div>
 
             <div className={styles.modalFooter}>
-                {success && refundResult ? (
+                {refundResult ? (
                     <Button variant="primary" onClick={onClose}>
                         Close
                     </Button>

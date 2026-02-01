@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Notification } from '@/components/ui/Notification';
-import { useTicketTypeForm } from '@/hooks/features/ticketType/useTicketTypeForm';
+import { useTicketType } from '@/hooks/features/ticketType/useTicketType';
 import type { TicketTypeCreateRequest, TicketTypeCategory } from '@/types/ticketType';
 import styles from './TicketTypeModal.module.css';
 
@@ -19,9 +19,10 @@ const CreateTicketTypeModal: React.FC<CreateTicketTypeModalProps> = ({
     onClose,
     onSuccess
 }) => {
-    const { handleCreate, loading, error, getDefaultValues, getCategoryOptions } = useTicketTypeForm();
+    const { create, getCategoryOptions, getDefaultValues, loading: apiLoading } = useTicketType();
     const [formData, setFormData] = useState<TicketTypeCreateRequest>(getDefaultValues());
     const [showNotification, setShowNotification] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     const categoryOptions = getCategoryOptions().map(cat => ({
         value: cat.value,
@@ -30,25 +31,29 @@ const CreateTicketTypeModal: React.FC<CreateTicketTypeModalProps> = ({
 
     const handleInputChange = (field: keyof TicketTypeCreateRequest, value: any) => {
         setFormData(prev => ({ ...prev, [field]: value }));
+        if (error) setError(null);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setError(null);
 
-        const success = await handleCreate({
-            ...formData,
-            priceMultiplier: formData.priceMultiplier || '1.0',
-            requiresDocument: formData.requiresDocument || false,
-            active: formData.active !== undefined ? formData.active : true
-        });
+        try {
+            await create({
+                ...formData,
+                priceMultiplier: formData.priceMultiplier || '1.0',
+                requiresDocument: formData.requiresDocument || false,
+                active: formData.active !== undefined ? formData.active : true
+            });
 
-        if (success) {
             setShowNotification(true);
             setTimeout(() => {
                 setShowNotification(false);
                 onSuccess();
                 setFormData(getDefaultValues());
             }, 1500);
+        } catch (err: any) {
+            setError(err.message || 'Failed to create ticket type');
         }
     };
 
@@ -189,7 +194,7 @@ const CreateTicketTypeModal: React.FC<CreateTicketTypeModalProps> = ({
                     </div>
 
                     {error && (
-                        <div style={{ color: 'var(--error)', fontSize: '14px' }}>
+                        <div className={styles.error}>
                             {error}
                         </div>
                     )}
@@ -198,15 +203,15 @@ const CreateTicketTypeModal: React.FC<CreateTicketTypeModalProps> = ({
                         <Button
                             variant="cancel"
                             onClick={onClose}
-                            disabled={loading}
+                            disabled={apiLoading}
                         >
                             Cancel
                         </Button>
                         <Button
                             type="submit"
                             variant="primary"
-                            loading={loading}
-                            disabled={loading}
+                            loading={apiLoading}
+                            disabled={apiLoading}
                         >
                             Create Ticket Type
                         </Button>

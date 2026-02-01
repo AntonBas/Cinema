@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import type { CinemaHallResponse, HallLayoutResponse } from '@/types/cinemaHall';
 import { type SeatResponse, SeatType } from '@/types/seat';
-import { useCinemaHalls, useSeatMutation } from '@/hooks/features/cinemaHalls';
-import { useNotification } from '@/hooks/common/useNotification';
+import { useCinemaHalls } from '@/hooks/features/cinemaHalls/useCinemaHalls';
+import { useSeats } from '@/hooks/features/seats/useSeats';
 import { Modal } from '@/components/ui';
 import styles from './HallLayoutModal.module.css';
 
@@ -22,9 +22,8 @@ export const HallLayoutModal: React.FC<HallLayoutModalProps> = ({
     const [localLayout, setLocalLayout] = useState<HallLayoutResponse | null>(null);
     const [hasLoaded, setHasLoaded] = useState(false);
 
-    const { hallLayout, loading, error, getHallLayout } = useCinemaHalls();
-    const { updateSeatType, activateSeat, deactivateSeat, loading: updatingSeatType } = useSeatMutation();
-    const { showNotification } = useNotification();
+    const { hallLayout, loading, getHallLayout } = useCinemaHalls();
+    const { updateSeatType, activateSeat, deactivateSeat, loading: updatingSeatType } = useSeats();
 
     useEffect(() => {
         setLocalLayout(hallLayout);
@@ -43,12 +42,6 @@ export const HallLayoutModal: React.FC<HallLayoutModalProps> = ({
             setLocalLayout(null);
         }
     }, [isOpen]);
-
-    useEffect(() => {
-        if (error) {
-            showNotification(error, 'error');
-        }
-    }, [error, showNotification]);
 
     const handleSeatTypeClick = async (seat: SeatResponse, e: React.MouseEvent) => {
         if (updatingSeat === seat.id || updatingSeatType) return;
@@ -76,11 +69,8 @@ export const HallLayoutModal: React.FC<HallLayoutModalProps> = ({
             });
 
             await updateSeatType(hall.id, seat.id, nextSeatType);
-
-            showNotification(`Seat ${seat.row}-${seat.number} type changed to ${getSeatTypeName(nextSeatType)}`, 'success');
         } catch (err) {
             await getHallLayout(hall.id);
-            showNotification('Failed to update seat type', 'error');
         } finally {
             setUpdatingSeat(null);
             setUpdatingSeatAction(null);
@@ -116,14 +106,11 @@ export const HallLayoutModal: React.FC<HallLayoutModalProps> = ({
 
             if (newActive) {
                 await activateSeat(hall.id, seat.id);
-                showNotification(`Seat ${seat.row}-${seat.number} activated`, 'success');
             } else {
                 await deactivateSeat(hall.id, seat.id);
-                showNotification(`Seat ${seat.row}-${seat.number} deactivated`, 'success');
             }
         } catch (err) {
             await getHallLayout(hall.id);
-            showNotification('Failed to update seat status', 'error');
         } finally {
             setUpdatingSeat(null);
             setUpdatingSeatAction(null);

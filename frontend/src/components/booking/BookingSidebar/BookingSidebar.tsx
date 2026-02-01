@@ -1,17 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import { Tooltip } from '@/components/ui/Tooltip/Tooltip';
-import type { SelectedSeat } from '@/hooks/features/seatAvailability/useSeatSelection';
+import { useBonus } from '@/hooks/features/bonus/useBonus';
 import { TicketTypeSelect } from '../TicketTypeSelect';
 import styles from './BookingSidebar.module.css';
 
+interface SelectedSeatItem {
+    seat: {
+        id: number;
+        row: number;
+        seatNumber: number;
+        ticketPrices?: Array<{
+            ticketTypeId: number;
+            finalPrice: string;
+            ticketTypeName?: string;
+        }>;
+    };
+    ticketTypeId?: number;
+    price: number;
+}
+
 interface BookingSidebarProps {
-    selectedSeats: SelectedSeat[];
+    selectedSeats: SelectedSeatItem[];
     totalPrice: number;
     sessionId: number;
     onTicketTypeChange: (seatId: number, ticketTypeId: number) => void;
     onBooking: (bonusPointsToUse: number) => Promise<void>;
     isBooking: boolean;
-    bonusBalance: number;
     maxUsablePoints: number;
     minUsablePoints: number;
 }
@@ -22,7 +36,6 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
     onTicketTypeChange,
     onBooking,
     isBooking,
-    bonusBalance,
     maxUsablePoints,
     minUsablePoints
 }) => {
@@ -30,8 +43,17 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
     const [useAllPoints, setUseAllPoints] = useState(false);
     const [bonusError, setBonusError] = useState<string | null>(null);
 
+    const { getMyBalance, balanceData, loading: balanceLoading } = useBonus();
+    const bonusBalance = balanceData?.pointsBalance || 0;
+    const actualMaxUsablePoints = balanceData?.maxUsablePoints || maxUsablePoints;
+    const actualMinUsablePoints = balanceData?.minUsablePoints || minUsablePoints;
+
+    useEffect(() => {
+        getMyBalance();
+    }, [getMyBalance]);
+
     const calculateMaxAvailablePoints = () => {
-        const maxPointsFromBalance = Math.min(bonusBalance, maxUsablePoints);
+        const maxPointsFromBalance = Math.min(bonusBalance, actualMaxUsablePoints);
         const maxPointsFromTotalPrice = Math.floor(totalPrice * 0.50);
         return Math.min(maxPointsFromBalance, maxPointsFromTotalPrice);
     };
@@ -42,7 +64,7 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
             setBonusPointsToUse(points);
             validateBonusPoints(points);
         }
-    }, [useAllPoints, bonusBalance, maxUsablePoints, totalPrice]);
+    }, [useAllPoints, bonusBalance, actualMaxUsablePoints, totalPrice]);
 
     const validateBonusPoints = (points: number) => {
         setBonusError(null);
@@ -51,13 +73,13 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
             return true;
         }
 
-        if (points < minUsablePoints) {
-            setBonusError(`Minimum ${minUsablePoints} points required`);
+        if (points < actualMinUsablePoints) {
+            setBonusError(`Minimum ${actualMinUsablePoints} points required`);
             return false;
         }
 
-        if (points > maxUsablePoints) {
-            setBonusError(`Maximum ${maxUsablePoints} points allowed per booking`);
+        if (points > actualMaxUsablePoints) {
+            setBonusError(`Maximum ${actualMaxUsablePoints} points allowed per booking`);
             return false;
         }
 
@@ -116,7 +138,7 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
 
     const bonusRules = [
         `• 1 bonus point = 1 ₴ discount`,
-        `• Minimum points to use: ${minUsablePoints}`,
+        `• Minimum points to use: ${actualMinUsablePoints}`,
         `• Cannot cover more than 50% of total price`,
         `• Maximum usable: ${maxAvailablePoints} points (₴${maxAvailablePoints.toFixed(2)})`,
         `• Points must be used in whole numbers`,
@@ -140,7 +162,11 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
                             <div className={styles.ticketTypeContainer}>
                                 <TicketTypeSelect
                                     seatId={selectedSeat.seat.id}
-                                    ticketPrices={selectedSeat.seat.ticketPrices || []}
+                                    ticketPrices={(selectedSeat.seat.ticketPrices || []).map(tp => ({
+                                        ticketTypeId: tp.ticketTypeId,
+                                        ticketTypeName: tp.ticketTypeName || `Type ${tp.ticketTypeId}`,
+                                        finalPrice: tp.finalPrice
+                                    }))}
                                     selectedTicketTypeId={selectedSeat.ticketTypeId}
                                     onSelect={onTicketTypeChange}
                                 />
@@ -164,6 +190,7 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
                     <span className={styles.balanceText}>
                         Available: {bonusBalance} points (₴{bonusBalance.toFixed(2)})
                     </span>
+                    {balanceLoading && <span className={styles.loadingText}>Loading...</span>}
                 </div>
 
                 {canUseAllPoints && (
@@ -175,13 +202,13 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
                                 max={maxAvailablePoints}
                                 value={bonusPointsToUse}
                                 onChange={(e) => handleBonusPointsChange(parseInt(e.target.value) || 0)}
-                                disabled={isBooking}
-                                placeholder={`Min ${minUsablePoints} points`}
+                                disabled={isBooking || balanceLoading}
+                                placeholder={`Min ${actualMinUsablePoints} points`}
                             />
                             <button
                                 className={styles.useAllButton}
                                 onClick={handleUseAllPoints}
-                                disabled={isBooking || !canUseAllPoints}
+                                disabled={isBooking || !canUseAllPoints || balanceLoading}
                             >
                                 Use Max
                             </button>
@@ -190,7 +217,7 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
                             <div className={styles.bonusError}>{bonusError}</div>
                         )}
                         <div className={styles.pointsLimits}>
-                            <span>Min: {minUsablePoints}</span>
+                            <span>Min: {actualMinUsablePoints}</span>
                             <span>Max: {maxAvailablePoints}</span>
                         </div>
                     </div>
@@ -233,7 +260,7 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
                                 onBooking(bonusPointsToUse);
                             }
                         }}
-                        disabled={isBooking || selectedSeats.length === 0 || !!bonusError}
+                        disabled={isBooking || selectedSeats.length === 0 || !!bonusError || balanceLoading}
                     >
                         {isBooking ? 'Processing...' : `Book Now - ₴${finalPrice.toFixed(2)}`}
                     </button>

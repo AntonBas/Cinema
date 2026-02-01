@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useCinemaHalls, useMovieSessionSearch } from '@/hooks/features';
+import { useCinemaHalls, useMovies } from '@/hooks/features';
 import { Input, Select, Button, Modal } from '@/components/ui';
 import type { SessionAdminResponse, SessionUpdateRequest } from '@/types/session';
 import type { MovieSessionSearchResponse } from '@/types/movie';
@@ -28,7 +28,7 @@ export const EditSessionModal: React.FC<EditSessionModalProps> = ({
     loading
 }) => {
     const { allHalls: halls, loading: hallsLoading } = useCinemaHalls();
-    const { movies, searchMoviesForSession, loading: moviesLoading } = useMovieSessionSearch();
+    const { searchForSession, loading: moviesLoading } = useMovies();
 
     const [formData, setFormData] = useState<FormData>({
         startTime: '',
@@ -38,6 +38,7 @@ export const EditSessionModal: React.FC<EditSessionModalProps> = ({
     });
 
     const [selectedMovie, setSelectedMovie] = useState<MovieSessionSearchResponse | null>(null);
+    const [movies, setMovies] = useState<MovieSessionSearchResponse[]>([]);
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [showMovieResults, setShowMovieResults] = useState(false);
     const [movieSearchTerm, setMovieSearchTerm] = useState('');
@@ -124,7 +125,8 @@ export const EditSessionModal: React.FC<EditSessionModalProps> = ({
         if (formData.startTime) {
             const date = formData.startTime.split('T')[0];
             setIsSearching(true);
-            await searchMoviesForSession(date, '');
+            const results = await searchForSession(date, '');
+            setMovies(results);
             setIsSearching(false);
             setShowMovieResults(true);
         }
@@ -135,7 +137,8 @@ export const EditSessionModal: React.FC<EditSessionModalProps> = ({
         if (formData.startTime) {
             const date = formData.startTime.split('T')[0];
             setIsSearching(true);
-            await searchMoviesForSession(date, value);
+            const results = await searchForSession(date, value);
+            setMovies(results);
             setIsSearching(false);
             setShowMovieResults(true);
         }

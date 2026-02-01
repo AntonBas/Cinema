@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
-import { useSessions, useSessionMutation, useSessionFilters, useNotification } from '@/hooks';
+import React, { useState, useMemo } from 'react';
+import { useSession } from '@/hooks/features';
+import { useNotification } from '@/hooks/common/useNotification';
 import { SessionFilters } from './SessionFilters';
 import { SessionTable } from './SessionTable';
 import { CreateSessionModal, EditSessionModal } from './SessionModal';
 import { DeleteConfirmModal, Pagination, Button, Notification } from '@/components/ui';
-import type { SessionAdminResponse, SessionCreateRequest, SessionUpdateRequest } from '@/types/session';
+import type { SessionAdminResponse, SessionCreateRequest, SessionUpdateRequest, CinemaSessionStatus } from '@/types/session';
 import styles from './SectionSchedule.module.css';
 
 export const SectionSchedule: React.FC = () => {
@@ -21,44 +22,64 @@ export const SectionSchedule: React.FC = () => {
     const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
     const [isReactivateModalOpen, setIsReactivateModalOpen] = useState(false);
 
-    const {
-        filters,
-        setDateFilter,
-        setHallFilter,
-        setMovieFilter,
-        setStatusFilter,
-        clearFilters,
-        hasActiveFilters,
-        activeFilterCount
-    } = useSessionFilters();
+    const [filters, setFilters] = useState<{
+        date?: string;
+        hallId?: number;
+        movieId?: number;
+        status?: CinemaSessionStatus;
+    }>({});
 
     const [pagination, setPagination] = useState({
         page: 0,
         size: 20,
-        sort: 'startTime'
+        sort: 'startTime,desc' as string
     });
 
     const {
         sessions,
-        loading,
-        error,
         pagination: apiPagination,
-        refetch
-    } = useSessions({
-        ...filters,
-        page: pagination.page,
-        size: pagination.size,
-        sort: pagination.sort
-    });
-
-    const {
+        loading,
+        getSessions,
         createSession,
         updateSession,
         deleteSession,
         cancelSession,
         reactivateSession,
-        loading: mutationLoading
-    } = useSessionMutation();
+    } = useSession();
+
+    const handleDateFilter = (date: string | undefined) => {
+        setFilters(prev => ({ ...prev, date }));
+        setPagination(prev => ({ ...prev, page: 0 }));
+    };
+
+    const handleHallFilter = (hallId: number | undefined) => {
+        setFilters(prev => ({ ...prev, hallId }));
+        setPagination(prev => ({ ...prev, page: 0 }));
+    };
+
+    const handleMovieFilter = (movieId: number | undefined) => {
+        setFilters(prev => ({ ...prev, movieId }));
+        setPagination(prev => ({ ...prev, page: 0 }));
+    };
+
+    const handleStatusFilter = (status: CinemaSessionStatus | undefined) => {
+        setFilters(prev => ({ ...prev, status }));
+        setPagination(prev => ({ ...prev, page: 0 }));
+    };
+
+    const handleClearFilters = () => {
+        setFilters({});
+        setPagination(prev => ({ ...prev, page: 0 }));
+        showNotification('Filters cleared', 'info');
+    };
+
+    const hasActiveFilters = useMemo(() => {
+        return Object.values(filters).some(value => value !== undefined);
+    }, [filters]);
+
+    const activeFilterCount = useMemo(() => {
+        return Object.values(filters).filter(value => value !== undefined).length;
+    }, [filters]);
 
     const handleCreateSession = () => {
         setSelectedSession(null);
@@ -87,60 +108,131 @@ export const SectionSchedule: React.FC = () => {
 
     const handleConfirmDelete = async () => {
         if (!sessionToDelete) return;
-        await deleteSession(sessionToDelete.id);
-        showNotification('Session deleted successfully', 'success');
-        refetch();
-        setIsDeleteModalOpen(false);
-        setSessionToDelete(null);
+        try {
+            await deleteSession(sessionToDelete.id);
+            showNotification('Session deleted successfully', 'success');
+            await getSessions({
+                page: pagination.page,
+                size: pagination.size,
+                sort: pagination.sort,
+                date: filters.date,
+                hallId: filters.hallId,
+                movieId: filters.movieId,
+                status: filters.status
+            });
+        } catch (error) {
+            showNotification('Failed to delete session', 'error');
+        } finally {
+            setIsDeleteModalOpen(false);
+            setSessionToDelete(null);
+        }
     };
 
     const handleConfirmCancel = async () => {
         if (!sessionToCancel) return;
-        await cancelSession(sessionToCancel.id);
-        showNotification('Session cancelled successfully', 'success');
-        refetch();
-        setIsCancelModalOpen(false);
-        setSessionToCancel(null);
+        try {
+            await cancelSession(sessionToCancel.id);
+            showNotification('Session cancelled successfully', 'success');
+            await getSessions({
+                page: pagination.page,
+                size: pagination.size,
+                sort: pagination.sort,
+                date: filters.date,
+                hallId: filters.hallId,
+                movieId: filters.movieId,
+                status: filters.status
+            });
+        } catch (error) {
+            showNotification('Failed to cancel session', 'error');
+        } finally {
+            setIsCancelModalOpen(false);
+            setSessionToCancel(null);
+        }
     };
 
     const handleConfirmReactivate = async () => {
         if (!sessionToReactivate) return;
-        await reactivateSession(sessionToReactivate.id);
-        showNotification('Session reactivated successfully', 'success');
-        refetch();
-        setIsReactivateModalOpen(false);
-        setSessionToReactivate(null);
+        try {
+            await reactivateSession(sessionToReactivate.id);
+            showNotification('Session reactivated successfully', 'success');
+            await getSessions({
+                page: pagination.page,
+                size: pagination.size,
+                sort: pagination.sort,
+                date: filters.date,
+                hallId: filters.hallId,
+                movieId: filters.movieId,
+                status: filters.status
+            });
+        } catch (error) {
+            showNotification('Failed to reactivate session', 'error');
+        } finally {
+            setIsReactivateModalOpen(false);
+            setSessionToReactivate(null);
+        }
     };
 
     const handleSaveNewSession = async (data: SessionCreateRequest) => {
-        await createSession(data);
-        showNotification('Session created successfully', 'success');
-        setIsCreateModalOpen(false);
-        setSelectedSession(null);
-        refetch();
+        try {
+            await createSession(data);
+            showNotification('Session created successfully', 'success');
+            setIsCreateModalOpen(false);
+            setSelectedSession(null);
+            await getSessions({
+                page: pagination.page,
+                size: pagination.size,
+                sort: pagination.sort,
+                date: filters.date,
+                hallId: filters.hallId,
+                movieId: filters.movieId,
+                status: filters.status
+            });
+        } catch (error) {
+            showNotification('Failed to create session', 'error');
+        }
     };
 
     const handleSaveUpdatedSession = async (id: number, data: SessionUpdateRequest) => {
-        await updateSession(id, data);
-        showNotification('Session updated successfully', 'success');
-        setIsUpdateModalOpen(false);
-        setSelectedSession(null);
-        refetch();
+        try {
+            await updateSession(id, data);
+            showNotification('Session updated successfully', 'success');
+            setIsUpdateModalOpen(false);
+            setSelectedSession(null);
+            await getSessions({
+                page: pagination.page,
+                size: pagination.size,
+                sort: pagination.sort,
+                date: filters.date,
+                hallId: filters.hallId,
+                movieId: filters.movieId,
+                status: filters.status
+            });
+        } catch (error) {
+            showNotification('Failed to update session', 'error');
+        }
     };
 
     const handlePageChange = (page: number) => {
         setPagination(prev => ({ ...prev, page }));
     };
 
-    const handleClearFilters = () => {
-        clearFilters();
-        setPagination(prev => ({ ...prev, page: 0 }));
-        showNotification('Filters cleared', 'info');
-    };
+    React.useEffect(() => {
+        getSessions({
+            page: pagination.page,
+            size: pagination.size,
+            sort: pagination.sort,
+            search: undefined,
+            date: filters.date,
+            hallId: filters.hallId,
+            movieId: filters.movieId,
+            status: filters.status
+        });
+    }, [pagination.page, pagination.size, pagination.sort, filters.date, filters.hallId, filters.movieId, filters.status]);
 
     const totalSessions = apiPagination?.totalElements || 0;
     const currentPage = pagination.page;
     const totalPages = apiPagination?.totalPages || 1;
+    const mutationLoading = loading;
 
     return (
         <div className={styles.container}>
@@ -185,10 +277,10 @@ export const SectionSchedule: React.FC = () => {
 
             <SessionFilters
                 filters={filters}
-                onDateChange={setDateFilter}
-                onHallChange={setHallFilter}
-                onMovieChange={setMovieFilter}
-                onStatusChange={setStatusFilter}
+                onDateChange={handleDateFilter}
+                onHallChange={handleHallFilter}
+                onMovieChange={handleMovieFilter}
+                onStatusChange={handleStatusFilter}
                 onClearFilters={handleClearFilters}
                 hasActiveFilters={hasActiveFilters}
                 activeFilterCount={activeFilterCount}
@@ -198,7 +290,7 @@ export const SectionSchedule: React.FC = () => {
                 <SessionTable
                     sessions={sessions}
                     loading={loading}
-                    error={error || undefined}
+                    error={undefined}
                     onEdit={handleEditSession}
                     onDelete={handleDeleteSession}
                     onCancel={handleCancelSession}

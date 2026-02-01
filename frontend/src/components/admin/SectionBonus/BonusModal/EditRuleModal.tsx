@@ -3,7 +3,7 @@ import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Notification } from '@/components/ui/Notification';
-import { useAdminBonus } from '@/hooks/features/bonus/useAdminBonus';
+import { useBonus } from '@/hooks/features/bonus/useBonus';
 import type { BonusRulesResponse, BonusRulesRequest, BonusTransactionType } from '@/types/bonus';
 import { BonusTransactionTypeDisplay } from '@/types/bonus';
 import styles from './BonusModal.module.css';
@@ -21,7 +21,7 @@ const EditRuleModal: React.FC<EditRuleModalProps> = ({
     onSuccess,
     rule
 }) => {
-    const { updateRule, loading, error } = useAdminBonus();
+    const { updateRule, loading } = useBonus();
     const [formValues, setFormValues] = useState({
         points: '',
         moneyRatio: '',
@@ -29,6 +29,7 @@ const EditRuleModal: React.FC<EditRuleModalProps> = ({
         maxPointsPerTransaction: '',
         active: false
     });
+    const [errorMessage, setErrorMessage] = useState<string>('');
     const [showNotification, setShowNotification] = useState(false);
 
     useEffect(() => {
@@ -45,60 +46,44 @@ const EditRuleModal: React.FC<EditRuleModalProps> = ({
 
     const handleInputChange = (field: keyof typeof formValues, value: any) => {
         setFormValues(prev => ({ ...prev, [field]: value }));
+        if (errorMessage) setErrorMessage('');
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        console.log('Current form values:', formValues);
-        console.log('Original rule:', rule);
-
         try {
             const requestData: BonusRulesRequest = {};
 
-            // Points
             if (formValues.points !== (rule.points?.toString() || '')) {
                 requestData.points = formValues.points === '' ? null : Number(formValues.points);
-                console.log('Points changed to:', requestData.points);
             }
 
-            // Money Ratio
             if (formValues.moneyRatio !== (rule.moneyRatio || '')) {
                 requestData.moneyRatio = formValues.moneyRatio === '' ? null : formValues.moneyRatio;
-                console.log('MoneyRatio changed to:', requestData.moneyRatio);
             }
 
-            // Min Points
             if (formValues.minPointsPerTransaction !== (rule.minPointsPerTransaction?.toString() || '')) {
                 requestData.minPointsPerTransaction = formValues.minPointsPerTransaction === ''
                     ? null
                     : Number(formValues.minPointsPerTransaction);
-                console.log('MinPoints changed to:', requestData.minPointsPerTransaction);
             }
 
-            // Max Points
             if (formValues.maxPointsPerTransaction !== (rule.maxPointsPerTransaction?.toString() || '')) {
                 requestData.maxPointsPerTransaction = formValues.maxPointsPerTransaction === ''
                     ? null
                     : Number(formValues.maxPointsPerTransaction);
-                console.log('MaxPoints changed to:', requestData.maxPointsPerTransaction);
             }
 
-            // Active
             if (formValues.active !== rule.active) {
                 requestData.active = formValues.active;
-                console.log('Active changed to:', requestData.active);
             }
 
-            // Якщо немає змін
             if (Object.keys(requestData).length === 0) {
-                console.log('No changes detected');
                 setShowNotification(true);
                 setTimeout(() => setShowNotification(false), 1500);
                 return;
             }
-
-            console.log('Sending update request:', requestData);
 
             await updateRule(rule.bonusType, requestData);
 
@@ -108,7 +93,7 @@ const EditRuleModal: React.FC<EditRuleModalProps> = ({
                 onSuccess();
             }, 1500);
         } catch (err) {
-            console.error('Failed to update rule:', err);
+            setErrorMessage('Failed to update rule');
         }
     };
 
@@ -208,9 +193,9 @@ const EditRuleModal: React.FC<EditRuleModalProps> = ({
                         </div>
                     </div>
 
-                    {error && (
+                    {errorMessage && (
                         <div style={{ color: 'var(--error)', fontSize: '14px' }}>
-                            Error: {error}
+                            Error: {errorMessage}
                         </div>
                     )}
 

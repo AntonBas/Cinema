@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuthMutation } from '@/hooks/features/auth';
+import { useAuth } from '@/hooks/features';
 import { Input, Button, Modal } from '@/components/ui';
 import styles from './RegisterForm.module.css';
 
@@ -61,7 +61,10 @@ export const RegisterForm: React.FC = () => {
   });
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
-  const { register, isLoading, error } = useAuthMutation();
+  const [localError, setLocalError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const { register, isMutating } = useAuth();
   const navigate = useNavigate();
 
   const handleChange = (field: string, value: string) => {
@@ -72,6 +75,7 @@ export const RegisterForm: React.FC = () => {
     if (formErrors[field]) {
       setFormErrors(prev => ({ ...prev, [field]: '' }));
     }
+    if (localError) setLocalError(null);
   };
 
   const validateForm = () => {
@@ -91,15 +95,22 @@ export const RegisterForm: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLocalError(null);
 
     if (!validateForm()) {
       return;
     }
 
+    setIsSubmitting(true);
+
     try {
       await register(formData);
       setShowSuccessModal(true);
-    } catch (err) { }
+    } catch (err: any) {
+      setLocalError(err.message || 'Registration failed');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleModalClose = () => {
@@ -107,14 +118,16 @@ export const RegisterForm: React.FC = () => {
     navigate('/login');
   };
 
+  const isLoading = isSubmitting || isMutating;
+
   return (
     <section className={styles.registration}>
       <div className={styles.registrationContainer}>
         <h1 className={styles.registrationTitle}>Registration</h1>
         <form className={styles.registrationForm} onSubmit={handleSubmit}>
-          {error && (
+          {localError && (
             <div className={styles.notification} data-type="error">
-              {error}
+              {localError}
             </div>
           )}
 

@@ -9,7 +9,6 @@ import type { GenreResponse } from '@/types/genre';
 import type { PersonResponse, PersonRole } from '@/types/person';
 import { movieApi } from '@/api/movieApi';
 import { genreApi } from '@/api/genreApi';
-import type { NotificationType } from '@/hooks/common/useNotification';
 import { toBackendFormat } from '@/utils/dateUtils';
 import { PersonSelect } from './PersonSelect/PersonSelect';
 import { GenreSearchList } from './GenreSearchList';
@@ -20,7 +19,7 @@ interface MovieFormProps {
     movie?: MovieDetailResponse | null;
     onSuccess: () => void;
     onCancel: () => void;
-    showNotification: (message: string, type?: NotificationType) => void;
+    showNotification?: (message: string, type?: 'success' | 'error' | 'warning' | 'info') => void;
 }
 
 interface MovieFormData {
@@ -52,6 +51,7 @@ export const MovieForm: React.FC<MovieFormProps> = ({
     const [selectedScreenwriters, setSelectedScreenwriters] = useState<PersonResponse[]>([]);
     const [isLoadingData, setIsLoadingData] = useState(true);
     const [isUploading, setIsUploading] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
     const [posterPreview, setPosterPreview] = useState<string>('');
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -71,15 +71,26 @@ export const MovieForm: React.FC<MovieFormProps> = ({
         removePoster: false
     });
 
+    const notify = useCallback((message: string, type: 'success' | 'error' | 'warning' | 'info') => {
+        if (showNotification) {
+            showNotification(message, type);
+        } else {
+            if (type === 'error') {
+                setErrorMessage(message);
+                setTimeout(() => setErrorMessage(''), 5000);
+            }
+        }
+    }, [showNotification]);
+
     const loadGenres = useCallback(async () => {
         try {
             const genresData = await genreApi.public.getAll();
             setGenres(genresData);
         } catch (error) {
             console.error('Error loading genres:', error);
-            showNotification('Failed to load genres', 'error');
+            notify('Failed to load genres', 'error');
         }
-    }, [showNotification]);
+    }, [notify]);
 
     const loadSelectedObjects = useCallback(async () => {
         if (!movie) return;
@@ -108,14 +119,14 @@ export const MovieForm: React.FC<MovieFormProps> = ({
                 ]);
             } catch (error) {
                 console.error('Error loading form data:', error);
-                showNotification('Failed to load form data', 'error');
+                notify('Failed to load form data', 'error');
             } finally {
                 setIsLoadingData(false);
             }
         };
 
         loadAllData();
-    }, [loadGenres, loadSelectedObjects, showNotification]);
+    }, [loadGenres, loadSelectedObjects, notify]);
 
     useEffect(() => {
         if (movie) {
@@ -186,6 +197,7 @@ export const MovieForm: React.FC<MovieFormProps> = ({
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsUploading(true);
+        setErrorMessage('');
 
         try {
             if (movie?.id) {
@@ -206,10 +218,11 @@ export const MovieForm: React.FC<MovieFormProps> = ({
                 };
 
                 await movieApi.admin.update(movie.id, updateRequest);
-                showNotification('Movie updated successfully!', 'success');
+                notify('Movie updated successfully!', 'success');
             } else {
                 if (!formData.posterFile) {
-                    showNotification('Poster is required for new movie', 'error');
+                    notify('Poster is required for new movie', 'error');
+                    setIsUploading(false);
                     return;
                 }
 
@@ -229,13 +242,13 @@ export const MovieForm: React.FC<MovieFormProps> = ({
                 };
 
                 await movieApi.admin.create(createRequest);
-                showNotification('Movie created successfully!', 'success');
+                notify('Movie created successfully!', 'success');
             }
 
             onSuccess();
         } catch (error) {
             console.error('Error saving movie:', error);
-            showNotification('Error saving movie. Please try again.', 'error');
+            notify('Error saving movie. Please try again.', 'error');
         } finally {
             setIsUploading(false);
         }
@@ -288,6 +301,12 @@ export const MovieForm: React.FC<MovieFormProps> = ({
             title={movie ? 'Edit Movie' : 'Add New Movie'}
             size="large"
         >
+            {errorMessage && (
+                <div className={styles.errorMessage}>
+                    {errorMessage}
+                </div>
+            )}
+
             <form onSubmit={handleSubmit} className={styles.form}>
                 <div className={styles.formGroup}>
                     <label className={styles.label}>Movie Poster {!movie && '*'}</label>

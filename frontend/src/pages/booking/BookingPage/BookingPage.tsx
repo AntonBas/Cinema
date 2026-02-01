@@ -1,15 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSeatAvailability } from '@/hooks/features/seatAvailability/useSeatAvailability';
-import { useSeatSelection } from '@/hooks/features/seatAvailability/useSeatSelection';
 import { useBonus } from '@/hooks/features/bonus/useBonus';
+import { useBooking } from '@/hooks/features/booking/useBooking';
 import { CinemaHall } from '@/components/booking/CinemaHall';
 import { BookingSidebar } from '@/components/booking/BookingSidebar';
 import { Layout } from '@/components/layout/Layout';
 import { Notification } from '@/components/ui/Notification/Notification';
-import { bookingApi } from '@/api/bookingApi';
-import type { SelectedSeat } from '@/hooks/features/seatAvailability/useSeatSelection';
-import type { BookingCreateRequest, SeatSelectionRequest } from '@/types/booking';
+import type { SelectedSeat } from '@/hooks/features/seatAvailability/useSeatAvailability';
 import type { NotificationType } from '@/components/ui/Notification/Notification';
 import styles from './BookingPage.module.css';
 
@@ -25,40 +23,41 @@ export const BookingPage: React.FC = () => {
     const navigate = useNavigate();
     const sessionIdNum = parseInt(sessionId || '0');
     const [selectionError, setSelectionError] = useState<string | null>(null);
-    const [isBooking, setIsBooking] = useState(false);
     const [notifications, setNotifications] = useState<NotificationState[]>([]);
 
     const {
         seatData,
-        loading,
-        error,
-        fetchSeatAvailability,
-        checkSpecificSeat
-    } = useSeatAvailability(sessionIdNum);
-
-    const {
+        availableSeatsCount,
         selectedSeats,
         totalPrice,
+        loading,
+        fetchSeatAvailability,
         selectSeat,
         deselectSeat,
         isSeatSelected,
-        updateSeatTicketType
-    } = useSeatSelection({
-        seatData,
-        checkSpecificSeat,
-        maxSeats: 10
-    });
+        updateSeatTicketType,
+        hasData,
+        hasSelection
+    } = useSeatAvailability(sessionIdNum);
 
-    const { getMyBalance } = useBonus();
-    const [bonusBalance, setBonusBalance] = useState<number>(0);
+    const {
+        balanceData,
+        getMyBalance
+    } = useBonus();
+
+    const {
+        create,
+        loading: bookingLoading
+    } = useBooking();
+
     const [maxUsablePoints, setMaxUsablePoints] = useState<number>(0);
     const [minUsablePoints, setMinUsablePoints] = useState<number>(0);
 
     useEffect(() => {
-        if (sessionIdNum && !seatData && !loading) {
+        if (sessionIdNum && !hasData && !loading) {
             fetchSeatAvailability();
         }
-    }, [sessionIdNum, fetchSeatAvailability, loading, seatData]);
+    }, [sessionIdNum, hasData, loading, fetchSeatAvailability]);
 
     useEffect(() => {
         const loadBonusData = async () => {
@@ -66,16 +65,17 @@ export const BookingPage: React.FC = () => {
                 const token = localStorage.getItem('authToken');
                 if (!token) return;
 
-                const balanceData = await getMyBalance();
-                setBonusBalance(balanceData.pointsBalance);
-                setMinUsablePoints(balanceData.minUsablePoints);
+                await getMyBalance();
+                if (balanceData) {
+                    setMinUsablePoints(balanceData.minUsablePoints);
 
-                const maxPoints = Math.min(
-                    balanceData.pointsBalance,
-                    balanceData.maxUsablePoints,
-                    Math.floor(totalPrice / 0.01)
-                );
-                setMaxUsablePoints(maxPoints);
+                    const maxPoints = Math.min(
+                        balanceData.pointsBalance,
+                        balanceData.maxUsablePoints,
+                        Math.floor(totalPrice / 0.01)
+                    );
+                    setMaxUsablePoints(maxPoints);
+                }
             } catch (error) {
                 showNotification('Failed to load bonus data', 'error');
             }
@@ -84,7 +84,7 @@ export const BookingPage: React.FC = () => {
         if (sessionIdNum && seatData) {
             loadBonusData();
         }
-    }, [sessionIdNum, seatData, totalPrice, getMyBalance]);
+    }, [sessionIdNum, seatData, totalPrice, getMyBalance, balanceData]);
 
     const showNotification = (message: string, type: NotificationType = 'info') => {
         const id = Date.now().toString();
@@ -116,7 +116,7 @@ export const BookingPage: React.FC = () => {
     };
 
     const handleBooking = async (bonusPointsToUse: number) => {
-        if (selectedSeats.length === 0) {
+        if (!hasSelection) {
             showNotification('Please select at least one seat', 'warning');
             return;
         }
@@ -127,7 +127,6 @@ export const BookingPage: React.FC = () => {
         }
 
         try {
-            setIsBooking(true);
             setSelectionError(null);
 
             const token = localStorage.getItem('authToken');
@@ -136,18 +135,16 @@ export const BookingPage: React.FC = () => {
                 return;
             }
 
-            const seats: SeatSelectionRequest[] = selectedSeats.map(seat => ({
+            const seats = selectedSeats.map(seat => ({
                 seatId: seat.seat.id,
                 ticketTypeId: seat.ticketTypeId || 1
             }));
 
-            const bookingRequest: BookingCreateRequest = {
+            const bookingResponse = await create({
                 sessionId: sessionIdNum,
                 seats: seats,
                 bonusPointsToUse: bonusPointsToUse > 0 ? bonusPointsToUse : undefined
-            };
-
-            const bookingResponse = await bookingApi.create(bookingRequest);
+            });
 
             showNotification('Booking created successfully!', 'success');
             setTimeout(() => {
@@ -157,8 +154,6 @@ export const BookingPage: React.FC = () => {
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Failed to create booking';
             showNotification(`Booking failed: ${errorMessage}`, 'error');
-        } finally {
-            setIsBooking(false);
         }
     };
 
@@ -166,14 +161,6 @@ export const BookingPage: React.FC = () => {
         return (
             <Layout>
                 <div className={styles.loading}>Loading seats...</div>
-            </Layout>
-        );
-    }
-
-    if (error) {
-        return (
-            <Layout>
-                <div className={styles.error}>Error: {error}</div>
             </Layout>
         );
     }
@@ -205,7 +192,7 @@ export const BookingPage: React.FC = () => {
                     <h1>{seatData.movieTitle}</h1>
                     <div className={styles.sessionInfo}>
                         <span>Hall: {seatData.hallName}</span>
-                        <span>Available seats: {seatData.availableSeats}</span>
+                        <span>Available seats: {availableSeatsCount || seatData.availableSeats}</span>
                         <span>Price from: {parseFloat(seatData.basePrice).toFixed(2)}₴</span>
                     </div>
                 </div>
@@ -232,8 +219,7 @@ export const BookingPage: React.FC = () => {
                             sessionId={sessionIdNum}
                             onTicketTypeChange={updateSeatTicketType}
                             onBooking={handleBooking}
-                            isBooking={isBooking}
-                            bonusBalance={bonusBalance}
+                            isBooking={bookingLoading}
                             maxUsablePoints={maxUsablePoints}
                             minUsablePoints={minUsablePoints}
                         />

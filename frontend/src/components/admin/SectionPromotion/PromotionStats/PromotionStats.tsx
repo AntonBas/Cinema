@@ -1,9 +1,9 @@
 import React from 'react';
-import { useAdminPromotionList } from '@/hooks/features/promotion/useAdminPromotionList';
+import { usePromotion } from '@/hooks/features/promotion/usePromotion';
 import styles from './PromotionStats.module.css';
 
 const PromotionStats: React.FC = () => {
-    const { promotions, getPromotionStatus } = useAdminPromotionList();
+    const { promotions, getPromotionStatus } = usePromotion();
 
     const stats = {
         total: promotions.length,
