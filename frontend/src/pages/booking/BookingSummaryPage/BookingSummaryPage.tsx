@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { ProgressStepper } from '@/components/booking/ProgressStepper';
 import { Layout } from '@/components/layout/Layout';
 import { Notification } from '@/components/ui/Notification/Notification';
 import { Modal } from '@/components/ui/Modal/Modal';
@@ -31,6 +32,33 @@ interface BookingStateData {
         seatPrice: string;
     }>;
 }
+
+const BOOKING_STEPS = [
+    {
+        id: 1,
+        title: 'Select Seats',
+        description: 'Choose your seats',
+        isClickable: true
+    },
+    {
+        id: 2,
+        title: 'Booking Summary',
+        description: 'Review your booking',
+        isClickable: true
+    },
+    {
+        id: 3,
+        title: 'Payment',
+        description: 'Secure payment',
+        isClickable: false
+    },
+    {
+        id: 4,
+        title: 'Confirmation',
+        description: 'Booking confirmed',
+        isClickable: false
+    }
+];
 
 export const BookingSummaryPage: React.FC = () => {
     const { bookingId } = useParams<{ bookingId: string }>();
@@ -99,6 +127,15 @@ export const BookingSummaryPage: React.FC = () => {
         setTimeout(() => {
             setNotifications(prev => prev.filter(notification => notification.id !== id));
         }, 300);
+    };
+
+    const handleStepClick = (step: any) => {
+        if (step.id === 1 && booking?.sessionId) {
+            navigate(`/booking/${booking.sessionId}`);
+        }
+        if (step.id === 2) {
+            return;
+        }
     };
 
     if (loading) {
@@ -184,6 +221,13 @@ export const BookingSummaryPage: React.FC = () => {
                         position={index}
                     />
                 ))}
+
+                <ProgressStepper
+                    steps={BOOKING_STEPS}
+                    currentStep={2}
+                    className={styles.stepper}
+                    onStepClick={handleStepClick}
+                />
 
                 <div className={styles.header}>
                     <h1>Booking Confirmed!</h1>

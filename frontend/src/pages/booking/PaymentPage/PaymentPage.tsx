@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { usePayment } from '@/hooks/features/payment/usePayment';
+import { ProgressStepper } from '@/components/booking/ProgressStepper';
 import { Badge } from '@/components/ui/Badge/Badge';
 import { Button } from '@/components/ui/Button/Button';
 import { Layout } from '@/components/layout/Layout/Layout';
@@ -35,6 +36,33 @@ const PaymentStatusDisplay: Record<PaymentStatus, string> = {
     REFUNDED: 'Refunded',
     PARTIALLY_REFUNDED: 'Partially Refunded'
 };
+
+const BOOKING_STEPS = [
+    {
+        id: 1,
+        title: 'Select Seats',
+        description: 'Choose your seats',
+        isClickable: true
+    },
+    {
+        id: 2,
+        title: 'Booking Summary',
+        description: 'Review your booking',
+        isClickable: true
+    },
+    {
+        id: 3,
+        title: 'Payment',
+        description: 'Secure payment',
+        isClickable: true
+    },
+    {
+        id: 4,
+        title: 'Confirmation',
+        description: 'Booking confirmed',
+        isClickable: false
+    }
+];
 
 export const PaymentPage: React.FC = () => {
     const { bookingId } = useParams<{ bookingId: string }>();
@@ -215,6 +243,18 @@ export const PaymentPage: React.FC = () => {
 
     const handleGoHome = () => {
         navigate('/');
+    };
+
+    const handleStepClick = (step: any) => {
+        if (step.id === 1 && bookingData?.id) {
+            navigate(`/booking/summary/${bookingData.id}`);
+        }
+        if (step.id === 2 && bookingData?.id) {
+            navigate(`/booking/summary/${bookingData.id}`);
+        }
+        if (step.id === 3) {
+            return;
+        }
     };
 
     const formatTime = (dateString: string) => {
@@ -437,6 +477,13 @@ export const PaymentPage: React.FC = () => {
     return (
         <Layout>
             <div className={styles.container}>
+                <ProgressStepper
+                    steps={BOOKING_STEPS}
+                    currentStep={3}
+                    className={styles.stepper}
+                    onStepClick={handleStepClick}
+                />
+
                 <div className={styles.header}>
                     <h1 className={styles.title}>Payment</h1>
                     <p className={styles.subtitle}>

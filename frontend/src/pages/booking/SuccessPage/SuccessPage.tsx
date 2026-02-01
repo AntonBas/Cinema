@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { usePayment } from '@/hooks/features/payment/usePayment';
+import { ProgressStepper } from '@/components/booking/ProgressStepper';
 import { Button } from '@/components/ui/Button';
 import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';
 import type { PaymentStatus, PaymentResponse } from '@/types/payment';
@@ -16,6 +17,33 @@ const PaymentStatusDisplay: Record<PaymentStatus, string> = {
     REFUNDED: 'Refunded',
     PARTIALLY_REFUNDED: 'Partially Refunded'
 };
+
+const BOOKING_STEPS = [
+    {
+        id: 1,
+        title: 'Select Seats',
+        description: 'Choose your seats',
+        isClickable: true
+    },
+    {
+        id: 2,
+        title: 'Booking Summary',
+        description: 'Review your booking',
+        isClickable: true
+    },
+    {
+        id: 3,
+        title: 'Payment',
+        description: 'Secure payment',
+        isClickable: true
+    },
+    {
+        id: 4,
+        title: 'Confirmation',
+        description: 'Booking confirmed',
+        isClickable: false
+    }
+];
 
 const SuccessPage = () => {
     const navigate = useNavigate();
@@ -182,6 +210,21 @@ const SuccessPage = () => {
         navigate('/support');
     };
 
+    const handleStepClick = (step: any) => {
+        if (step.id === 1 && paymentData?.bookingId) {
+            navigate(`/booking/summary/${paymentData.bookingId}`);
+        }
+        if (step.id === 2 && paymentData?.bookingId) {
+            navigate(`/booking/summary/${paymentData.bookingId}`);
+        }
+        if (step.id === 3 && paymentData?.bookingId) {
+            navigate(`/booking/payment/${paymentData.bookingId}`);
+        }
+        if (step.id === 4) {
+            return;
+        }
+    };
+
     if ((loading && !paymentData) || !isVisible) {
         return (
             <div className={styles.loadingContainer}>
@@ -238,6 +281,13 @@ const SuccessPage = () => {
     return (
         <div className={`${styles.container} ${isVisible ? styles.visible : ''}`}>
             <div className={styles.contentWrapper}>
+                <ProgressStepper
+                    steps={BOOKING_STEPS}
+                    currentStep={4}
+                    className={styles.stepper}
+                    onStepClick={handleStepClick}
+                />
+
                 <div className={styles.card}>
                     {error && (
                         <div className={styles.errorAlert}>
