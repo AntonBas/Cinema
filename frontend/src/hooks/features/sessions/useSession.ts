@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useMemo } from 'react';
 import { sessionApi } from '@/api/sessionApi';
 import type {
     SessionAdminResponse,
@@ -24,9 +24,7 @@ export const useSession = () => {
         status?: CinemaSessionStatus;
     }>({});
 
-    const apiHookRef = useRef(useApi<PageResponse<SessionAdminResponse>>());
-    const apiHook = apiHookRef.current;
-
+    const getSessionsHook = useApi<PageResponse<SessionAdminResponse>>();
     const getScheduleHook = useApi<PageResponse<SessionScheduleResponse>>();
     const getSessionByIdHook = useApi<SessionScheduleResponse>();
     const getAdminSessionByIdHook = useApi<SessionAdminResponse>();
@@ -51,7 +49,7 @@ export const useSession = () => {
         movieId?: number;
         status?: CinemaSessionStatus;
     }): Promise<PageResponse<SessionAdminResponse>> => {
-        return apiHook.callApi(async () => {
+        return getSessionsHook.callApi(async () => {
             const response = await sessionApi.admin.getAll(
                 options?.page,
                 options?.size || 20,
@@ -69,7 +67,7 @@ export const useSession = () => {
             }
             return response;
         }, { showErrorNotification: false });
-    }, [apiHook]);
+    }, [getSessionsHook]);
 
     const getSchedule = useCallback(async (options?: {
         page?: number;
@@ -243,16 +241,25 @@ export const useSession = () => {
 
     const activeFilterCount = Object.values(filters).filter(Boolean).length;
 
+    const loading = useMemo(() => {
+        return getSessionsHook.loading || getScheduleHook.loading || getSessionByIdHook.loading ||
+            getAdminSessionByIdHook.loading || createSessionHook.loading || updateSessionHook.loading ||
+            cancelSessionHook.loading || reactivateSessionHook.loading || deleteSessionHook.loading ||
+            checkTimeConflictHook.loading || getTodaySessionsHook.loading;
+    }, [
+        getSessionsHook.loading, getScheduleHook.loading, getSessionByIdHook.loading,
+        getAdminSessionByIdHook.loading, createSessionHook.loading, updateSessionHook.loading,
+        cancelSessionHook.loading, reactivateSessionHook.loading, deleteSessionHook.loading,
+        checkTimeConflictHook.loading, getTodaySessionsHook.loading
+    ]);
+
     return {
         sessions,
         scheduleSessions,
         pagination,
         schedulePagination,
         filters,
-        loading: apiHook.loading || getScheduleHook.loading || getSessionByIdHook.loading ||
-            getAdminSessionByIdHook.loading || createSessionHook.loading || updateSessionHook.loading ||
-            cancelSessionHook.loading || reactivateSessionHook.loading || deleteSessionHook.loading ||
-            checkTimeConflictHook.loading || getTodaySessionsHook.loading,
+        loading,
         getSessions,
         getSchedule,
         getSessionById,

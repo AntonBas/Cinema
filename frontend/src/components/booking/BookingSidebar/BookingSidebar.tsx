@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Tooltip } from '@/components/ui/Tooltip/Tooltip';
 import { useBonus } from '@/hooks/features/bonus/useBonus';
 import { TicketTypeSelect } from '../TicketTypeSelect';
@@ -48,15 +48,21 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
     const actualMaxUsablePoints = balanceData?.maxUsablePoints || maxUsablePoints;
     const actualMinUsablePoints = balanceData?.minUsablePoints || minUsablePoints;
 
+    const getMyBalanceRef = useRef(getMyBalance);
+
     useEffect(() => {
-        getMyBalance();
+        getMyBalanceRef.current = getMyBalance;
     }, [getMyBalance]);
 
-    const calculateMaxAvailablePoints = () => {
+    useEffect(() => {
+        getMyBalanceRef.current();
+    }, []);
+
+    const calculateMaxAvailablePoints = useCallback(() => {
         const maxPointsFromBalance = Math.min(bonusBalance, actualMaxUsablePoints);
         const maxPointsFromTotalPrice = Math.floor(totalPrice * 0.50);
         return Math.min(maxPointsFromBalance, maxPointsFromTotalPrice);
-    };
+    }, [bonusBalance, actualMaxUsablePoints, totalPrice]);
 
     useEffect(() => {
         if (useAllPoints) {
@@ -64,9 +70,9 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
             setBonusPointsToUse(points);
             validateBonusPoints(points);
         }
-    }, [useAllPoints, bonusBalance, actualMaxUsablePoints, totalPrice]);
+    }, [useAllPoints, calculateMaxAvailablePoints]);
 
-    const validateBonusPoints = (points: number) => {
+    const validateBonusPoints = useCallback((points: number) => {
         setBonusError(null);
 
         if (points === 0) {
@@ -95,29 +101,29 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
         }
 
         return true;
-    };
+    }, [actualMinUsablePoints, actualMaxUsablePoints, bonusBalance, totalPrice]);
 
-    const handleBonusPointsChange = (points: number) => {
+    const handleBonusPointsChange = useCallback((points: number) => {
         const validPoints = Math.max(0, Math.min(points, calculateMaxAvailablePoints()));
         setBonusPointsToUse(validPoints);
         setUseAllPoints(false);
         validateBonusPoints(validPoints);
-    };
+    }, [calculateMaxAvailablePoints, validateBonusPoints]);
 
-    const handleUseAllPoints = () => {
+    const handleUseAllPoints = useCallback(() => {
         const points = calculateMaxAvailablePoints();
         setUseAllPoints(true);
         validateBonusPoints(points);
-    };
+    }, [calculateMaxAvailablePoints, validateBonusPoints]);
 
-    const calculateDiscount = (points: number): number => {
+    const calculateDiscount = useCallback((points: number): number => {
         return points;
-    };
+    }, []);
 
-    const calculateFinalPrice = (): number => {
+    const calculateFinalPrice = useCallback((): number => {
         const discount = calculateDiscount(bonusPointsToUse);
         return Math.max(0, totalPrice - discount);
-    };
+    }, [bonusPointsToUse, totalPrice, calculateDiscount]);
 
     if (selectedSeats.length === 0) {
         return (

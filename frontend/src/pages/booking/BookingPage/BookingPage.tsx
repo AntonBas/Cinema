@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSeatAvailability } from '@/hooks/features/seatAvailability/useSeatAvailability';
 import { useBonus } from '@/hooks/features/bonus/useBonus';
@@ -24,6 +24,8 @@ export const BookingPage: React.FC = () => {
     const sessionIdNum = parseInt(sessionId || '0');
     const [selectionError, setSelectionError] = useState<string | null>(null);
     const [notifications, setNotifications] = useState<NotificationState[]>([]);
+    const [maxUsablePoints, setMaxUsablePoints] = useState<number>(0);
+    const [minUsablePoints, setMinUsablePoints] = useState<number>(0);
 
     const {
         seatData,
@@ -50,8 +52,11 @@ export const BookingPage: React.FC = () => {
         loading: bookingLoading
     } = useBooking();
 
-    const [maxUsablePoints, setMaxUsablePoints] = useState<number>(0);
-    const [minUsablePoints, setMinUsablePoints] = useState<number>(0);
+    const loadBonusDataRef = React.useRef(getMyBalance);
+
+    useEffect(() => {
+        loadBonusDataRef.current = getMyBalance;
+    }, [getMyBalance]);
 
     useEffect(() => {
         if (sessionIdNum && !hasData && !loading) {
@@ -60,45 +65,47 @@ export const BookingPage: React.FC = () => {
     }, [sessionIdNum, hasData, loading, fetchSeatAvailability]);
 
     useEffect(() => {
-        const loadBonusData = async () => {
-            try {
-                const token = localStorage.getItem('authToken');
-                if (!token) return;
-
-                await getMyBalance();
-                if (balanceData) {
-                    setMinUsablePoints(balanceData.minUsablePoints);
-
-                    const maxPoints = Math.min(
-                        balanceData.pointsBalance,
-                        balanceData.maxUsablePoints,
-                        Math.floor(totalPrice / 0.01)
-                    );
-                    setMaxUsablePoints(maxPoints);
-                }
-            } catch (error) {
-                showNotification('Failed to load bonus data', 'error');
-            }
-        };
-
         if (sessionIdNum && seatData) {
+            const loadBonusData = async () => {
+                try {
+                    const token = localStorage.getItem('authToken');
+                    if (!token) return;
+
+                    await loadBonusDataRef.current();
+                } catch (error) {
+                    showNotification('Failed to load bonus data', 'error');
+                }
+            };
             loadBonusData();
         }
-    }, [sessionIdNum, seatData, totalPrice, getMyBalance, balanceData]);
+    }, [sessionIdNum, seatData]);
 
-    const showNotification = (message: string, type: NotificationType = 'info') => {
+    useEffect(() => {
+        if (balanceData) {
+            setMinUsablePoints(balanceData.minUsablePoints || 0);
+
+            const maxPoints = Math.min(
+                balanceData.pointsBalance || 0,
+                balanceData.maxUsablePoints || 0,
+                Math.floor(totalPrice / 0.01)
+            );
+            setMaxUsablePoints(maxPoints);
+        }
+    }, [balanceData, totalPrice]);
+
+    const showNotification = useCallback((message: string, type: NotificationType = 'info') => {
         const id = Date.now().toString();
         setNotifications(prev => [...prev, { id, message, type, isVisible: true }]);
-    };
+    }, []);
 
-    const closeNotification = (id: string) => {
+    const closeNotification = useCallback((id: string) => {
         setNotifications(prev => prev.map(notification =>
             notification.id === id ? { ...notification, isVisible: false } : notification
         ));
         setTimeout(() => {
             setNotifications(prev => prev.filter(notification => notification.id !== id));
         }, 300);
-    };
+    }, []);
 
     const handleSeatClick = async (seatId: number) => {
         try {

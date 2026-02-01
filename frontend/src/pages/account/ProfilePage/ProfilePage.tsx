@@ -3,11 +3,11 @@ import { Layout } from '@/components/layout/Layout/Layout';
 import { AccountSidebar } from '@/components/account/AccountSidebar/AccountSidebar';
 import { UserProfileCard } from '@/components/account/UserProfileCard/UserProfileCard';
 import { ProfileEditForm } from '@/components/account/ProfileEditForm/ProfileEditForm';
-import { useUser } from '@/hooks/features/user';
+import { useUser } from '@/hooks/features/user/useUser';
 import styles from './ProfilePage.module.css';
 
 export const ProfilePage: React.FC = () => {
-    const { user, isLoading, refreshUser } = useUser();
+    const { user, isLoading, error, refreshUser } = useUser();
     const [isEditing, setIsEditing] = useState(false);
     const [localError] = useState<string | null>(null);
 
@@ -34,12 +34,17 @@ export const ProfilePage: React.FC = () => {
         );
     }
 
-    if (!user) {
+    if (error || !user) {
         return (
             <Layout>
                 <div className={styles.profilePage}>
-                    <div className={styles.notification} data-type="error">
-                        Failed to load user data
+                    <div className={styles.container}>
+                        <AccountSidebar activePage="profile" />
+                        <div className={styles.content}>
+                            <div className={styles.notification} data-type="error">
+                                {error || 'Failed to load user data'}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </Layout>

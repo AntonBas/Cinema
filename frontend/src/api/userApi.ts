@@ -9,19 +9,21 @@ const API_URL = '/api/users';
 
 const getAuthHeaders = (): HeadersInit => {
     const token = localStorage.getItem('authToken');
-    return {
+    const headers: HeadersInit = {
         'Content-Type': 'application/json',
-        ...(token && { 'Authorization': `Bearer ${token}` }),
     };
+
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    return headers;
 };
 
 const fetchApi = async <T>(url: string, options: RequestInit = {}): Promise<T> => {
     const response = await fetch(url, {
+        headers: getAuthHeaders(),
         ...options,
-        headers: {
-            ...getAuthHeaders(),
-            ...options.headers,
-        },
     });
 
     if (!response.ok) {
@@ -53,15 +55,21 @@ export const userApi = {
     },
 
     requestEmailChange: async (newEmail: string): Promise<{ message: string }> => {
-        return fetchApi<{ message: string }>(`${API_URL}/email/change-request?newEmail=${encodeURIComponent(newEmail)}`, {
-            method: 'POST',
-        });
+        return fetchApi<{ message: string }>(
+            `${API_URL}/email/change-request?newEmail=${encodeURIComponent(newEmail)}`,
+            {
+                method: 'POST',
+            }
+        );
     },
 
     confirmEmailChange: async (token: string): Promise<UserProfileResponse> => {
-        return fetchApi<UserProfileResponse>(`${API_URL}/email/confirm-change?token=${encodeURIComponent(token)}`, {
-            method: 'POST',
-        });
+        return fetchApi<UserProfileResponse>(
+            `${API_URL}/email/confirm-change?token=${encodeURIComponent(token)}`,
+            {
+                method: 'POST',
+            }
+        );
     },
 
     updatePassword: async (passwordData: UserPasswordUpdateRequest): Promise<{ message: string }> => {

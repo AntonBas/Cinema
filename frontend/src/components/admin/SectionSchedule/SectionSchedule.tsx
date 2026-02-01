@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useSession } from '@/hooks/features';
 import { useNotification } from '@/hooks/common/useNotification';
 import { SessionFilters } from './SessionFilters';
@@ -10,6 +10,11 @@ import styles from './SectionSchedule.module.css';
 
 export const SectionSchedule: React.FC = () => {
     const { notifications, showNotification, hideNotification } = useNotification();
+    const showNotificationRef = useRef(showNotification);
+
+    useEffect(() => {
+        showNotificationRef.current = showNotification;
+    }, [showNotification]);
 
     const [selectedSession, setSelectedSession] = useState<SessionAdminResponse | null>(null);
     const [sessionToDelete, setSessionToDelete] = useState<SessionAdminResponse | null>(null);
@@ -47,6 +52,40 @@ export const SectionSchedule: React.FC = () => {
         reactivateSession,
     } = useSession();
 
+    const getSessionsRef = useRef(getSessions);
+    const createSessionRef = useRef(createSession);
+    const updateSessionRef = useRef(updateSession);
+    const deleteSessionRef = useRef(deleteSession);
+    const cancelSessionRef = useRef(cancelSession);
+    const reactivateSessionRef = useRef(reactivateSession);
+
+    useEffect(() => {
+        getSessionsRef.current = getSessions;
+        createSessionRef.current = createSession;
+        updateSessionRef.current = updateSession;
+        deleteSessionRef.current = deleteSession;
+        cancelSessionRef.current = cancelSession;
+        reactivateSessionRef.current = reactivateSession;
+    }, [getSessions, createSession, updateSession, deleteSession, cancelSession, reactivateSession]);
+
+    const requestParams = useMemo(() => ({
+        page: pagination.page,
+        size: pagination.size,
+        sort: pagination.sort,
+        search: undefined,
+        date: filters.date,
+        hallId: filters.hallId,
+        movieId: filters.movieId,
+        status: filters.status
+    }), [pagination.page, pagination.size, pagination.sort, filters.date, filters.hallId, filters.movieId, filters.status]);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            await getSessionsRef.current(requestParams);
+        };
+        fetchData();
+    }, [requestParams]);
+
     const handleDateFilter = (date: string | undefined) => {
         setFilters(prev => ({ ...prev, date }));
         setPagination(prev => ({ ...prev, page: 0 }));
@@ -70,7 +109,7 @@ export const SectionSchedule: React.FC = () => {
     const handleClearFilters = () => {
         setFilters({});
         setPagination(prev => ({ ...prev, page: 0 }));
-        showNotification('Filters cleared', 'info');
+        showNotificationRef.current('Filters cleared', 'info');
     };
 
     const hasActiveFilters = useMemo(() => {
@@ -109,19 +148,11 @@ export const SectionSchedule: React.FC = () => {
     const handleConfirmDelete = async () => {
         if (!sessionToDelete) return;
         try {
-            await deleteSession(sessionToDelete.id);
-            showNotification('Session deleted successfully', 'success');
-            await getSessions({
-                page: pagination.page,
-                size: pagination.size,
-                sort: pagination.sort,
-                date: filters.date,
-                hallId: filters.hallId,
-                movieId: filters.movieId,
-                status: filters.status
-            });
+            await deleteSessionRef.current(sessionToDelete.id);
+            showNotificationRef.current('Session deleted successfully', 'success');
+            await getSessionsRef.current(requestParams);
         } catch (error) {
-            showNotification('Failed to delete session', 'error');
+            showNotificationRef.current('Failed to delete session', 'error');
         } finally {
             setIsDeleteModalOpen(false);
             setSessionToDelete(null);
@@ -131,19 +162,11 @@ export const SectionSchedule: React.FC = () => {
     const handleConfirmCancel = async () => {
         if (!sessionToCancel) return;
         try {
-            await cancelSession(sessionToCancel.id);
-            showNotification('Session cancelled successfully', 'success');
-            await getSessions({
-                page: pagination.page,
-                size: pagination.size,
-                sort: pagination.sort,
-                date: filters.date,
-                hallId: filters.hallId,
-                movieId: filters.movieId,
-                status: filters.status
-            });
+            await cancelSessionRef.current(sessionToCancel.id);
+            showNotificationRef.current('Session cancelled successfully', 'success');
+            await getSessionsRef.current(requestParams);
         } catch (error) {
-            showNotification('Failed to cancel session', 'error');
+            showNotificationRef.current('Failed to cancel session', 'error');
         } finally {
             setIsCancelModalOpen(false);
             setSessionToCancel(null);
@@ -153,19 +176,11 @@ export const SectionSchedule: React.FC = () => {
     const handleConfirmReactivate = async () => {
         if (!sessionToReactivate) return;
         try {
-            await reactivateSession(sessionToReactivate.id);
-            showNotification('Session reactivated successfully', 'success');
-            await getSessions({
-                page: pagination.page,
-                size: pagination.size,
-                sort: pagination.sort,
-                date: filters.date,
-                hallId: filters.hallId,
-                movieId: filters.movieId,
-                status: filters.status
-            });
+            await reactivateSessionRef.current(sessionToReactivate.id);
+            showNotificationRef.current('Session reactivated successfully', 'success');
+            await getSessionsRef.current(requestParams);
         } catch (error) {
-            showNotification('Failed to reactivate session', 'error');
+            showNotificationRef.current('Failed to reactivate session', 'error');
         } finally {
             setIsReactivateModalOpen(false);
             setSessionToReactivate(null);
@@ -174,60 +189,31 @@ export const SectionSchedule: React.FC = () => {
 
     const handleSaveNewSession = async (data: SessionCreateRequest) => {
         try {
-            await createSession(data);
-            showNotification('Session created successfully', 'success');
+            await createSessionRef.current(data);
+            showNotificationRef.current('Session created successfully', 'success');
             setIsCreateModalOpen(false);
             setSelectedSession(null);
-            await getSessions({
-                page: pagination.page,
-                size: pagination.size,
-                sort: pagination.sort,
-                date: filters.date,
-                hallId: filters.hallId,
-                movieId: filters.movieId,
-                status: filters.status
-            });
+            await getSessionsRef.current(requestParams);
         } catch (error) {
-            showNotification('Failed to create session', 'error');
+            showNotificationRef.current('Failed to create session', 'error');
         }
     };
 
     const handleSaveUpdatedSession = async (id: number, data: SessionUpdateRequest) => {
         try {
-            await updateSession(id, data);
-            showNotification('Session updated successfully', 'success');
+            await updateSessionRef.current(id, data);
+            showNotificationRef.current('Session updated successfully', 'success');
             setIsUpdateModalOpen(false);
             setSelectedSession(null);
-            await getSessions({
-                page: pagination.page,
-                size: pagination.size,
-                sort: pagination.sort,
-                date: filters.date,
-                hallId: filters.hallId,
-                movieId: filters.movieId,
-                status: filters.status
-            });
+            await getSessionsRef.current(requestParams);
         } catch (error) {
-            showNotification('Failed to update session', 'error');
+            showNotificationRef.current('Failed to update session', 'error');
         }
     };
 
     const handlePageChange = (page: number) => {
         setPagination(prev => ({ ...prev, page }));
     };
-
-    React.useEffect(() => {
-        getSessions({
-            page: pagination.page,
-            size: pagination.size,
-            sort: pagination.sort,
-            search: undefined,
-            date: filters.date,
-            hallId: filters.hallId,
-            movieId: filters.movieId,
-            status: filters.status
-        });
-    }, [pagination.page, pagination.size, pagination.sort, filters.date, filters.hallId, filters.movieId, filters.status]);
 
     const totalSessions = apiPagination?.totalElements || 0;
     const currentPage = pagination.page;

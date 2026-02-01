@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useNotification } from './useNotification';
 
 export const useApi = <T>() => {
@@ -7,7 +7,6 @@ export const useApi = <T>() => {
     const [data, setData] = useState<T | null>(null);
     const { showNotification } = useNotification();
     const abortControllerRef = useRef<AbortController | null>(null);
-    const isMountedRef = useRef(true);
 
     const callApi = useCallback(async (
         apiCall: () => Promise<T>,
@@ -34,9 +33,6 @@ export const useApi = <T>() => {
 
         try {
             const result = await apiCall();
-
-            if (!isMountedRef.current) return result;
-
             setData(result);
 
             if (successMessage && !silent) {
@@ -45,8 +41,6 @@ export const useApi = <T>() => {
 
             return result;
         } catch (err) {
-            if (!isMountedRef.current) throw err;
-
             if (err instanceof DOMException && err.name === 'AbortError') {
                 throw err;
             }
@@ -60,9 +54,10 @@ export const useApi = <T>() => {
 
             throw err;
         } finally {
-            if (!silent && isMountedRef.current) {
+            if (!silent) {
                 setLoading(false);
             }
+            abortControllerRef.current = null;
         }
     }, [showNotification]);
 
@@ -76,14 +71,13 @@ export const useApi = <T>() => {
         }
     }, []);
 
-    useState(() => {
+    useEffect(() => {
         return () => {
-            isMountedRef.current = false;
             if (abortControllerRef.current) {
                 abortControllerRef.current.abort();
             }
         };
-    });
+    }, []);
 
     return {
         loading,

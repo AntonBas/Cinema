@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { movieApi } from '@/api/movieApi';
 import { sessionApi } from '@/api/sessionApi';
@@ -22,33 +22,16 @@ export const MovieDetailPage: React.FC = () => {
     const [findingSession, setFindingSession] = useState(false);
     const [nextSessionDate, setNextSessionDate] = useState<string | null>(null);
     const [nextSessionTime, setNextSessionTime] = useState<string | null>(null);
+    const isMounted = useRef(true);
 
     const { notifications, showNotification, hideNotification } = useNotification();
+    const showNotificationRef = useRef(showNotification);
 
     useEffect(() => {
-        const fetchMovie = async () => {
-            if (!slug) return;
+        showNotificationRef.current = showNotification;
+    }, [showNotification]);
 
-            try {
-                setLoading(true);
-                const movieData = await movieApi.public.getBySlug(slug);
-                setMovie(movieData);
-
-                if (movieData.id) {
-                    await findNextSessionDate(movieData.id);
-                }
-            } catch (err) {
-                showNotification('Failed to load movie', 'error');
-                console.error('Error fetching movie:', err);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchMovie();
-    }, [slug, showNotification]);
-
-    const findNextSessionDate = async (movieId: number) => {
+    const findNextSessionDate = useCallback(async (movieId: number) => {
         try {
             const now = new Date();
 
@@ -81,18 +64,60 @@ export const MovieDetailPage: React.FC = () => {
                     hour12: false
                 });
 
-                setNextSessionDate(sessionDate);
-                setNextSessionTime(sessionTimeStr);
+                if (isMounted.current) {
+                    setNextSessionDate(sessionDate);
+                    setNextSessionTime(sessionTimeStr);
+                }
             } else {
-                setNextSessionDate(null);
-                setNextSessionTime(null);
+                if (isMounted.current) {
+                    setNextSessionDate(null);
+                    setNextSessionTime(null);
+                }
             }
         } catch (error) {
             console.error('Error finding next session:', error);
-            setNextSessionDate(null);
-            setNextSessionTime(null);
+            if (isMounted.current) {
+                setNextSessionDate(null);
+                setNextSessionTime(null);
+            }
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        isMounted.current = true;
+
+        const fetchMovie = async () => {
+            if (!slug) return;
+
+            try {
+                setLoading(true);
+                const movieData = await movieApi.public.getBySlug(slug);
+
+                if (isMounted.current) {
+                    setMovie(movieData);
+                }
+
+                if (movieData.id && isMounted.current) {
+                    await findNextSessionDate(movieData.id);
+                }
+            } catch (err) {
+                if (isMounted.current) {
+                    showNotificationRef.current('Failed to load movie', 'error');
+                }
+                console.error('Error fetching movie:', err);
+            } finally {
+                if (isMounted.current) {
+                    setLoading(false);
+                }
+            }
+        };
+
+        fetchMovie();
+
+        return () => {
+            isMounted.current = false;
+        };
+    }, [slug, findNextSessionDate]);
 
     const handleFindSession = async () => {
         if (!movie) return;
@@ -106,7 +131,7 @@ export const MovieDetailPage: React.FC = () => {
                 navigate(`/schedule?movieId=${movie.id}&date=${today}`);
             }
         } catch (error) {
-            showNotification('Error finding sessions', 'error');
+            showNotificationRef.current('Error finding sessions', 'error');
             console.error('Error:', error);
         } finally {
             setFindingSession(false);

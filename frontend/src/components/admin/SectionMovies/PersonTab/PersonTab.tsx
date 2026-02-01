@@ -42,70 +42,85 @@ export const PersonTab: React.FC = () => {
     deletePerson
   } = usePerson();
 
-  const loadData = useCallback(async () => {
+  const searchPersonsRef = useRef(searchPersons);
+  const getByRoleRef = useRef(getByRole);
+
+  useEffect(() => {
+    searchPersonsRef.current = searchPersons;
+    getByRoleRef.current = getByRole;
+  }, [searchPersons, getByRole]);
+
+  const loadCounts = useCallback(async () => {
+    if (!isMountedRef.current || searchQuery.trim() || hasLoadedCounts) return;
+
+    try {
+      const [allResult, actorsResult, directorsResult, screenwritersResult] = await Promise.all([
+        searchPersonsRef.current({ page: 0, size: 1 }),
+        getByRoleRef.current(PersonRoleEnum.ACTOR, { page: 0, size: 1 }),
+        getByRoleRef.current(PersonRoleEnum.DIRECTOR, { page: 0, size: 1 }),
+        getByRoleRef.current(PersonRoleEnum.SCREENWRITER, { page: 0, size: 1 })
+      ]);
+
+      if (isMountedRef.current) {
+        setTotalCounts({
+          ALL: allResult.totalElements,
+          [PersonRoleEnum.ACTOR]: actorsResult.totalElements,
+          [PersonRoleEnum.DIRECTOR]: directorsResult.totalElements,
+          [PersonRoleEnum.SCREENWRITER]: screenwritersResult.totalElements,
+        });
+        setHasLoadedCounts(true);
+      }
+    } catch (error) {
+      console.error('Failed to load counts:', error);
+    }
+  }, [searchQuery, hasLoadedCounts]);
+
+  const loadPersons = useCallback(async () => {
     try {
       if (searchQuery.trim()) {
-        await searchPersons({
+        await searchPersonsRef.current({
           query: searchQuery,
           role: activeTab === 'ALL' ? undefined : activeTab,
           page: currentPage,
           size: 12
         });
-        setHasLoadedCounts(false);
+        if (isMountedRef.current) {
+          setHasLoadedCounts(false);
+        }
       } else if (activeTab === 'ALL') {
-        await searchPersons({
+        await searchPersonsRef.current({
           page: currentPage,
           size: 12
         });
-
-        if (isMountedRef.current && !hasLoadedCounts && !searchQuery.trim()) {
-          const allResult = await searchPersons({ page: 0, size: 1 });
-          const actorsResult = await getByRole(PersonRoleEnum.ACTOR, { page: 0, size: 1 });
-          const directorsResult = await getByRole(PersonRoleEnum.DIRECTOR, { page: 0, size: 1 });
-          const screenwritersResult = await getByRole(PersonRoleEnum.SCREENWRITER, { page: 0, size: 1 });
-
-          setTotalCounts({
-            ALL: allResult.totalElements,
-            [PersonRoleEnum.ACTOR]: actorsResult.totalElements,
-            [PersonRoleEnum.DIRECTOR]: directorsResult.totalElements,
-            [PersonRoleEnum.SCREENWRITER]: screenwritersResult.totalElements,
-          });
-          setHasLoadedCounts(true);
-        }
       } else {
-        await getByRole(activeTab, {
+        await getByRoleRef.current(activeTab, {
           page: currentPage,
           size: 12
         });
-
-        if (isMountedRef.current && !hasLoadedCounts && !searchQuery.trim()) {
-          const allResult = await searchPersons({ page: 0, size: 1 });
-          const actorsResult = await getByRole(PersonRoleEnum.ACTOR, { page: 0, size: 1 });
-          const directorsResult = await getByRole(PersonRoleEnum.DIRECTOR, { page: 0, size: 1 });
-          const screenwritersResult = await getByRole(PersonRoleEnum.SCREENWRITER, { page: 0, size: 1 });
-
-          setTotalCounts({
-            ALL: allResult.totalElements,
-            [PersonRoleEnum.ACTOR]: actorsResult.totalElements,
-            [PersonRoleEnum.DIRECTOR]: directorsResult.totalElements,
-            [PersonRoleEnum.SCREENWRITER]: screenwritersResult.totalElements,
-          });
-          setHasLoadedCounts(true);
-        }
       }
     } catch (error) {
-      setErrorMessage('Failed to load persons');
+      if (isMountedRef.current) {
+        setErrorMessage('Failed to load persons');
+      }
     }
-  }, [activeTab, currentPage, searchQuery, searchPersons, getByRole, hasLoadedCounts]);
+  }, [activeTab, currentPage, searchQuery]);
 
   useEffect(() => {
     isMountedRef.current = true;
-    loadData();
+
+    const loadAllData = async () => {
+      await loadPersons();
+      if (!searchQuery.trim()) {
+        await loadCounts();
+      }
+    };
+
+    loadAllData();
 
     return () => {
       isMountedRef.current = false;
     };
-  }, [loadData]);
+  }, [activeTab, currentPage, searchQuery]);
 
   const handleSearch = useCallback((query: string) => {
     setSearchQuery(query);
@@ -116,7 +131,9 @@ export const PersonTab: React.FC = () => {
     setActiveTab(tab);
     setCurrentPage(0);
     setSearchQuery('');
-    setHasLoadedCounts(false);
+    if (isMountedRef.current) {
+      setHasLoadedCounts(false);
+    }
   };
 
   const handlePageChange = (page: number) => {
@@ -134,8 +151,14 @@ export const PersonTab: React.FC = () => {
       }
 
       resetForm();
-      setHasLoadedCounts(false);
-      await loadData();
+      if (isMountedRef.current) {
+        setHasLoadedCounts(false);
+      }
+
+      await loadPersons();
+      if (!searchQuery.trim()) {
+        await loadCounts();
+      }
     } catch (error) {
       setErrorMessage('Failed to save person');
     }
@@ -156,8 +179,14 @@ export const PersonTab: React.FC = () => {
     try {
       await deletePerson(personToDelete.id);
       setSuccessMessage('Person deleted successfully!');
-      setHasLoadedCounts(false);
-      await loadData();
+      if (isMountedRef.current) {
+        setHasLoadedCounts(false);
+      }
+
+      await loadPersons();
+      if (!searchQuery.trim()) {
+        await loadCounts();
+      }
     } catch (error) {
       setErrorMessage('Failed to delete person');
     } finally {

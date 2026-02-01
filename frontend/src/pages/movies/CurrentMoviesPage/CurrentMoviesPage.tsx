@@ -1,24 +1,48 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useMovies } from '@/hooks/features/movies/useMovies';
+import type { MovieCardResponse } from '@/types/movie';
 import { MovieList } from '@/components/movies';
 import { useNotification } from '@/hooks/common/useNotification';
 import { Notification } from '@/components/ui';
 import styles from './CurrentMoviesPage.module.css';
 
 export const CurrentMoviesPage: React.FC = () => {
-    const { movies, loading, getCurrentlyShowing } = useMovies();
+    const { loading, getCurrentlyShowing } = useMovies();
+    const [movies, setMovies] = useState<MovieCardResponse[]>([]);
     const { notifications, showNotification, hideNotification } = useNotification();
 
+    const getCurrentlyShowingRef = useRef(getCurrentlyShowing);
+    const showNotificationRef = useRef(showNotification);
+
     useEffect(() => {
+        getCurrentlyShowingRef.current = getCurrentlyShowing;
+        showNotificationRef.current = showNotification;
+    }, [getCurrentlyShowing, showNotification]);
+
+    useEffect(() => {
+        let isMounted = true;
+
         const loadMovies = async () => {
             try {
-                await getCurrentlyShowing();
+                const data = await getCurrentlyShowingRef.current();
+                if (isMounted) {
+                    setMovies(data);
+                }
             } catch (err) {
-                showNotification('Failed to load movies', 'error');
+                if (isMounted) {
+                    showNotificationRef.current('Failed to load movies', 'error');
+                }
             }
         };
-        loadMovies();
-    }, [getCurrentlyShowing, showNotification]);
+
+        if (isMounted) {
+            loadMovies();
+        }
+
+        return () => {
+            isMounted = false;
+        };
+    }, []);
 
     return (
         <div className={styles.page}>

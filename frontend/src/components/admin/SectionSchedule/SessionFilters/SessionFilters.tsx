@@ -38,13 +38,18 @@ export const SessionFilters: React.FC<SessionFiltersProps> = ({
     const [selectedMovieTitle, setSelectedMovieTitle] = useState('');
     const [localMovies, setLocalMovies] = useState<MovieCardResponse[]>(movies);
     const movieSearchRef = useRef<HTMLDivElement>(null);
+    const searchRef = useRef(search);
 
     useEffect(() => {
-        search({
+        searchRef.current = search;
+    }, [search]);
+
+    useEffect(() => {
+        searchRef.current({
             page: 0,
             size: 50
         });
-    }, [search]);
+    }, []);
 
     useEffect(() => {
         setLocalMovies(movies);
@@ -74,7 +79,7 @@ export const SessionFilters: React.FC<SessionFiltersProps> = ({
 
     useEffect(() => {
         const debounceTimer = setTimeout(() => {
-            search({
+            searchRef.current({
                 search: movieSearchTerm.trim(),
                 page: 0,
                 size: 50
@@ -82,7 +87,7 @@ export const SessionFilters: React.FC<SessionFiltersProps> = ({
         }, 300);
 
         return () => clearTimeout(debounceTimer);
-    }, [movieSearchTerm, search]);
+    }, [movieSearchTerm]);
 
     const filteredMovies = React.useMemo(() => {
         if (!movieSearchTerm.trim()) {
@@ -132,7 +137,7 @@ export const SessionFilters: React.FC<SessionFiltersProps> = ({
         setSelectedMovieTitle('');
         setShowMovieResults(false);
         onMovieChange(undefined);
-        search({
+        searchRef.current({
             page: 0,
             size: 50
         });

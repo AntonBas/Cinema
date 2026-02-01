@@ -63,7 +63,9 @@ export const useMovies = () => {
 
     const getCurrentlyShowing = useCallback(async (): Promise<MovieCardResponse[]> => {
         return getCurrentlyShowingHook.callApi(async () => {
-            return await movieApi.public.getCurrentlyShowing();
+            const data = await movieApi.public.getCurrentlyShowing();
+            setMovies(data);
+            return data;
         });
     }, [getCurrentlyShowingHook]);
 
@@ -78,7 +80,9 @@ export const useMovies = () => {
 
     const getUpcoming = useCallback(async (): Promise<MovieCardResponse[]> => {
         return getUpcomingHook.callApi(async () => {
-            return await movieApi.public.getUpcoming();
+            const data = await movieApi.public.getUpcoming();
+            setMovies(data);
+            return data;
         });
     }, [getUpcomingHook]);
 

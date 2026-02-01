@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { ticketApi } from '@/api/ticketApi';
 import type { TicketResponse, TicketStatus } from '@/types/ticket';
 import type { PageResponse, SearchParams } from '@/types/pagination';
@@ -24,18 +24,17 @@ export const useTickets = () => {
             to: string;
         };
     }>({});
+
     const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-    const apiHookRef = useRef(useApi<PageResponse<TicketResponse>>());
-    const apiHook = apiHookRef.current;
-
+    const apiHook = useApi<PageResponse<TicketResponse>>();
     const getUpcomingTicketsHook = useApi<PageResponse<TicketResponse>>();
     const getByIdHook = useApi<TicketResponse>();
     const getByCodeHook = useApi<TicketResponse>();
     const validateHook = useApi<void>();
     const getQRCodeHook = useApi<Blob>();
 
-    const searchParams = useCallback(() => {
+    const searchParams = useMemo(() => {
         const params: SearchParams = {
             page: data.number,
             size: data.size
@@ -60,18 +59,28 @@ export const useTickets = () => {
     const fetchTickets = useCallback(async () => {
         if (isUpcoming) {
             return getUpcomingTicketsHook.callApi(async () => {
-                const response = await ticketApi.getUpcomingTickets(searchParams());
+                const response = await ticketApi.getUpcomingTickets(searchParams);
                 setData(response);
                 return response;
             }, { showErrorNotification: false });
         } else {
             return apiHook.callApi(async () => {
-                const response = await ticketApi.getUserTickets(status, searchParams());
+                const response = await ticketApi.getUserTickets(status, searchParams);
                 setData(response);
                 return response;
             }, { showErrorNotification: false });
         }
-    }, [isUpcoming, apiHook, getUpcomingTicketsHook, status]);
+    }, [isUpcoming, searchParams, status]);
+
+    const fetchTicketsRef = useRef(fetchTickets);
+
+    useEffect(() => {
+        fetchTicketsRef.current = fetchTickets;
+    }, [fetchTickets]);
+
+    useEffect(() => {
+        fetchTicketsRef.current();
+    }, [searchParams]);
 
     const handlePageChange = useCallback((page: number) => {
         setData(prev => ({ ...prev, number: page }));
@@ -83,10 +92,12 @@ export const useTickets = () => {
 
     const handleStatusChange = useCallback((newStatus?: TicketStatus) => {
         setStatus(newStatus);
+        setData(prev => ({ ...prev, number: 0 }));
     }, []);
 
     const handleUpcomingToggle = useCallback((upcoming: boolean) => {
         setIsUpcoming(upcoming);
+        setData(prev => ({ ...prev, number: 0 }));
     }, []);
 
     const handleSearch = useCallback((query: string) => {
@@ -142,11 +153,13 @@ export const useTickets = () => {
         }, { showErrorNotification: false });
     }, [validateHook]);
 
+    const loading = apiHook.loading || getUpcomingTicketsHook.loading ||
+        getByIdHook.loading || getByCodeHook.loading || validateHook.loading ||
+        getQRCodeHook.loading;
+
     return {
         data,
-        loading: apiHook.loading || getUpcomingTicketsHook.loading ||
-            getByIdHook.loading || getByCodeHook.loading || validateHook.loading ||
-            getQRCodeHook.loading,
+        loading,
         status,
         isUpcoming,
         filters,
