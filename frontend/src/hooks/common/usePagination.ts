@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import type { SearchParams } from "@/types/pagination";
 
 interface UsePaginationReturn {
@@ -19,13 +19,13 @@ export const usePagination = (
     initialParams: Partial<SearchParams> = {},
     defaultPageSize: number = 12
 ): UsePaginationReturn => {
-    const [params, setParams] = useState<SearchParams>({
+    const [params, setParams] = useState<SearchParams>(() => ({
         page: initialParams.page ?? 0,
         size: initialParams.size ?? defaultPageSize,
         sort: initialParams.sort,
         search: initialParams.search,
         ...initialParams
-    });
+    }));
 
     const setPage = useCallback((page: number) => {
         setParams(prev => ({
@@ -69,7 +69,7 @@ export const usePagination = (
         setParams(prev => {
             const newParams = { ...prev };
             delete newParams[key];
-            return newParams;
+            return { ...newParams, page: 0 };
         });
     }, []);
 
@@ -98,8 +98,16 @@ export const usePagination = (
         setPage(0);
     }, [setPage]);
 
+    const stableParams = useMemo(() => params, [
+        params.page,
+        params.size,
+        params.sort,
+        params.search,
+        JSON.stringify(params)
+    ]);
+
     return {
-        params,
+        params: stableParams,
         setPage,
         setSize,
         setSearch,

@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { bonusApi } from '@/api/bonusApi';
 import type {
     BonusCardResponse,
@@ -18,9 +18,11 @@ export const useBonus = () => {
     const [transactions, setTransactions] = useState<BonusTransactionResponse[]>([]);
     const [pageData, setPageData] = useState<PageResponse<BonusTransactionResponse> | null>(null);
 
+    const apiHookRef = useRef(useApi<PageResponse<BonusTransactionResponse>>());
+    const apiHook = apiHookRef.current;
+
     const getMyCardHook = useApi<BonusCardResponse>();
     const getMyBalanceHook = useApi<BonusBalanceResponse>();
-    const getMyTransactionsHook = useApi<PageResponse<BonusTransactionResponse>>();
     const getAllRulesHook = useApi<BonusRulesResponse[]>();
     const getRuleByTypeHook = useApi<BonusRulesResponse>();
     const updateRuleHook = useApi<BonusRulesResponse>();
@@ -46,7 +48,7 @@ export const useBonus = () => {
     }, [getMyBalanceHook]);
 
     const getMyTransactions = useCallback(async (params?: SearchParams): Promise<PageResponse<BonusTransactionResponse>> => {
-        return getMyTransactionsHook.callApi(async () => {
+        return apiHook.callApi(async () => {
             const page = params?.page;
             const size = params?.size || 20;
             const response = await bonusApi.user.getMyTransactions(page, size);
@@ -54,7 +56,7 @@ export const useBonus = () => {
             setPageData(response);
             return response;
         });
-    }, [getMyTransactionsHook]);
+    }, [apiHook]);
 
     const getAllRules = useCallback(async (): Promise<BonusRulesResponse[]> => {
         return getAllRulesHook.callApi(async () => {
@@ -125,7 +127,7 @@ export const useBonus = () => {
         rulesData,
         transactions,
         pageData,
-        loading: getMyCardHook.loading || getMyBalanceHook.loading || getMyTransactionsHook.loading ||
+        loading: getMyCardHook.loading || getMyBalanceHook.loading || apiHook.loading ||
             getAllRulesHook.loading || getRuleByTypeHook.loading || updateRuleHook.loading ||
             resetRuleHook.loading || getUserTransactionsHook.loading || getAllTransactionsHook.loading ||
             getTransactionsByTypeHook.loading,

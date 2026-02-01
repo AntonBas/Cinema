@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { bookingApi } from '@/api/bookingApi';
 import type { BookingResponse, BookingCreateRequest, BookingStatus, SeatSelectionRequest } from '@/types/booking';
 import type { PageResponse } from '@/types/pagination';
@@ -10,9 +10,11 @@ export const useBooking = () => {
     const [cancellingId, setCancellingId] = useState<number | null>(null);
     const [currentStatus, setCurrentStatus] = useState<BookingStatus | undefined>(undefined);
 
+    const apiHookRef = useRef(useApi<PageResponse<BookingResponse>>());
+    const apiHook = apiHookRef.current;
+
     const createHook = useApi<BookingResponse>();
     const getByIdHook = useApi<BookingResponse>();
-    const getUserBookingsHook = useApi<PageResponse<BookingResponse>>();
     const cancelHook = useApi<void>();
 
     const create = useCallback(async (request: BookingCreateRequest): Promise<BookingResponse> => {
@@ -31,13 +33,13 @@ export const useBooking = () => {
 
     const getUserBookings = useCallback(async (status?: BookingStatus, page: number = 0, size: number = 20): Promise<PageResponse<BookingResponse>> => {
         setCurrentStatus(status);
-        return getUserBookingsHook.callApi(async () => {
+        return apiHook.callApi(async () => {
             const response = await bookingApi.getUserBookings(status, page, size);
             setBookings(response.content);
             setPageData(response);
             return response;
         });
-    }, [getUserBookingsHook]);
+    }, [apiHook]);
 
     const cancel = useCallback(async (bookingId: number): Promise<void> => {
         setCancellingId(bookingId);
@@ -136,7 +138,7 @@ export const useBooking = () => {
         if (pageData) {
             getUserBookings(currentStatus, pageData.number, pageData.size);
         }
-    }, [pageData, currentStatus, getUserBookings]);
+    }, [pageData, currentStatus]);
 
     const isCancelling = useCallback((bookingId: number) => {
         return cancellingId === bookingId;
@@ -174,26 +176,26 @@ export const useBooking = () => {
     const loadPage = useCallback(async (page: number = 0, size?: number) => {
         const pageSize = size || pageData?.size || 20;
         return await getUserBookings(currentStatus, page, pageSize);
-    }, [currentStatus, pageData, getUserBookings]);
+    }, [currentStatus, pageData]);
 
     const nextPage = useCallback(async () => {
         if (pageData && !pageData.last) {
             return await loadPage(pageData.number + 1);
         }
         return null;
-    }, [pageData, loadPage]);
+    }, [pageData]);
 
     const prevPage = useCallback(async () => {
         if (pageData && !pageData.first) {
             return await loadPage(pageData.number - 1);
         }
         return null;
-    }, [pageData, loadPage]);
+    }, [pageData]);
 
     return {
         bookings,
         pageData,
-        loading: createHook.loading || getByIdHook.loading || getUserBookingsHook.loading || cancelHook.loading,
+        loading: createHook.loading || getByIdHook.loading || apiHook.loading || cancelHook.loading,
         cancellingId,
         currentStatus,
         create,

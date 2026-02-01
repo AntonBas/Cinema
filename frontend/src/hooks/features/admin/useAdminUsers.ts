@@ -76,7 +76,7 @@ export const useAdminUsers = () => {
         if (Object.keys(currentParams).length > 0) {
             fetchUsers(currentParams);
         }
-    }, [currentParams, fetchUsers]);
+    }, [currentParams]);
 
     const clearUsers = useCallback(() => {
         setUsers([]);

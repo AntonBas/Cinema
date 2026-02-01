@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { genreApi } from '@/api/genreApi';
 import type { GenreResponse, GenreRequest } from '@/types/genre';
 import type { PageResponse, SearchParams } from '@/types/pagination';
@@ -8,10 +8,11 @@ export const useGenres = () => {
     const [genres, setGenres] = useState<GenreResponse[]>([]);
     const [paginationData, setPaginationData] = useState<PageResponse<GenreResponse> | null>(null);
 
+    const apiHookRef = useRef(useApi<PageResponse<GenreResponse>>());
+    const apiHook = apiHookRef.current;
+
     const getAllHook = useApi<GenreResponse[]>();
     const getByIdHook = useApi<GenreResponse>();
-    const getAllPaginatedHook = useApi<PageResponse<GenreResponse>>();
-    const searchHook = useApi<PageResponse<GenreResponse>>();
     const getForSelectHook = useApi<GenreResponse[]>();
     const createHook = useApi<GenreResponse>();
     const updateHook = useApi<GenreResponse>();
@@ -33,22 +34,22 @@ export const useGenres = () => {
     }, [getByIdHook]);
 
     const getAllPaginated = useCallback(async (params?: SearchParams): Promise<PageResponse<GenreResponse>> => {
-        return getAllPaginatedHook.callApi(async () => {
+        return apiHook.callApi(async () => {
             const response = await genreApi.public.getAllPaginated(params);
             setGenres(response.content);
             setPaginationData(response);
             return response;
         });
-    }, [getAllPaginatedHook]);
+    }, [apiHook]);
 
     const search = useCallback(async (params?: SearchParams): Promise<PageResponse<GenreResponse>> => {
-        return searchHook.callApi(async () => {
+        return apiHook.callApi(async () => {
             const response = await genreApi.public.search(params);
             setGenres(response.content);
             setPaginationData(response);
             return response;
         });
-    }, [searchHook]);
+    }, [apiHook]);
 
     const getForSelect = useCallback(async (): Promise<GenreResponse[]> => {
         return getForSelectHook.callApi(async () => {
@@ -106,8 +107,8 @@ export const useGenres = () => {
     return {
         genres,
         pagination: paginationData,
-        loading: getAllHook.loading || getByIdHook.loading || getAllPaginatedHook.loading ||
-            searchHook.loading || getForSelectHook.loading || createHook.loading ||
+        loading: getAllHook.loading || getByIdHook.loading || apiHook.loading ||
+            getForSelectHook.loading || createHook.loading ||
             updateHook.loading || removeHook.loading || getAdminByIdHook.loading,
         getAll,
         getById,

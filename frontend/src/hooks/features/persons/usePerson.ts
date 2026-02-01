@@ -12,7 +12,9 @@ export const usePerson = () => {
     const dropdownRef = useRef<HTMLDivElement>(null);
     const abortControllerRef = useRef<AbortController | null>(null);
 
-    const searchHook = useApi<PageResponse<PersonResponse>>();
+    const apiHookRef = useRef(useApi<PageResponse<PersonResponse>>());
+    const apiHook = apiHookRef.current;
+
     const getByRoleHook = useApi<PageResponse<PersonResponse>>();
     const createHook = useApi<PersonResponse>();
     const updateHook = useApi<PersonResponse>();
@@ -23,13 +25,13 @@ export const usePerson = () => {
     const searchPersons = useCallback(async (
         params: SearchParams & { role?: PersonRole } = {}
     ): Promise<PageResponse<PersonResponse>> => {
-        return searchHook.callApi(async () => {
+        return apiHook.callApi(async () => {
             const response = await personApi.public.search(params);
             setPersons(response.content);
             setPagination(response);
             return response;
         }, { showErrorNotification: false });
-    }, [searchHook]);
+    }, [apiHook]);
 
     const getByRole = useCallback(async (
         role: PersonRole,
@@ -74,13 +76,13 @@ export const usePerson = () => {
     }, [getByIdHook]);
 
     const fetchPage = useCallback(async (page: number = 0, size: number = 12): Promise<PageResponse<PersonResponse>> => {
-        return searchHook.callApi(async () => {
+        return apiHook.callApi(async () => {
             const response = await personApi.public.search({ page, size });
             setPersons(response.content);
             setPagination(response);
             return response;
         }, { showErrorNotification: false });
-    }, [searchHook]);
+    }, [apiHook]);
 
     const nextPage = useCallback(async (): Promise<PageResponse<PersonResponse> | null> => {
         if (!pagination || pagination.last) return null;
@@ -177,7 +179,7 @@ export const usePerson = () => {
         allSelectedPersons,
         isDropdownOpen,
         dropdownRef,
-        loading: searchHook.loading || getByRoleHook.loading || createHook.loading ||
+        loading: apiHook.loading || getByRoleHook.loading || createHook.loading ||
             updateHook.loading || deleteHook.loading || quickCreateHook.loading ||
             getByIdHook.loading,
         searchPersons,

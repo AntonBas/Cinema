@@ -1,16 +1,8 @@
-import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { ticketApi } from '@/api/ticketApi';
 import type { TicketResponse, TicketStatus } from '@/types/ticket';
 import type { PageResponse, SearchParams } from '@/types/pagination';
 import { useApi } from '@/hooks/common/useApi';
-
-export interface TicketFilters {
-    search?: string;
-    dateRange?: {
-        from: string;
-        to: string;
-    };
-}
 
 export const useTickets = () => {
     const [data, setData] = useState<PageResponse<TicketResponse>>({
@@ -25,17 +17,25 @@ export const useTickets = () => {
     });
     const [status, setStatus] = useState<TicketStatus | undefined>();
     const [isUpcoming, setIsUpcoming] = useState(false);
-    const [filters, setFilters] = useState<TicketFilters>({});
+    const [filters, setFilters] = useState<{
+        search?: string;
+        dateRange?: {
+            from: string;
+            to: string;
+        };
+    }>({});
     const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-    const getUserTicketsHook = useApi<PageResponse<TicketResponse>>();
+    const apiHookRef = useRef(useApi<PageResponse<TicketResponse>>());
+    const apiHook = apiHookRef.current;
+
     const getUpcomingTicketsHook = useApi<PageResponse<TicketResponse>>();
     const getByIdHook = useApi<TicketResponse>();
     const getByCodeHook = useApi<TicketResponse>();
     const validateHook = useApi<void>();
     const getQRCodeHook = useApi<Blob>();
 
-    const searchParams = useMemo(() => {
+    const searchParams = useCallback(() => {
         const params: SearchParams = {
             page: data.number,
             size: data.size
@@ -60,22 +60,18 @@ export const useTickets = () => {
     const fetchTickets = useCallback(async () => {
         if (isUpcoming) {
             return getUpcomingTicketsHook.callApi(async () => {
-                const response = await ticketApi.getUpcomingTickets(searchParams);
+                const response = await ticketApi.getUpcomingTickets(searchParams());
                 setData(response);
                 return response;
             }, { showErrorNotification: false });
         } else {
-            return getUserTicketsHook.callApi(async () => {
-                const response = await ticketApi.getUserTickets(status, searchParams);
+            return apiHook.callApi(async () => {
+                const response = await ticketApi.getUserTickets(status, searchParams());
                 setData(response);
                 return response;
             }, { showErrorNotification: false });
         }
-    }, [isUpcoming, getUserTicketsHook, getUpcomingTicketsHook, searchParams, status]);
-
-    useEffect(() => {
-        fetchTickets();
-    }, [fetchTickets]);
+    }, [isUpcoming, apiHook, getUpcomingTicketsHook, status]);
 
     const handlePageChange = useCallback((page: number) => {
         setData(prev => ({ ...prev, number: page }));
@@ -146,17 +142,9 @@ export const useTickets = () => {
         }, { showErrorNotification: false });
     }, [validateHook]);
 
-    useEffect(() => {
-        return () => {
-            if (searchTimeoutRef.current) {
-                clearTimeout(searchTimeoutRef.current);
-            }
-        };
-    }, []);
-
     return {
         data,
-        loading: getUserTicketsHook.loading || getUpcomingTicketsHook.loading ||
+        loading: apiHook.loading || getUpcomingTicketsHook.loading ||
             getByIdHook.loading || getByCodeHook.loading || validateHook.loading ||
             getQRCodeHook.loading,
         status,

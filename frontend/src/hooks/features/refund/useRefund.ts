@@ -1,18 +1,16 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { refundApi } from '@/api/refundApi';
 import type { RefundResponse, RefundRequest, RefundStatus } from '@/types/refund';
 import { useApi } from '@/hooks/common/useApi';
-
-interface UseRefundListOptions {
-    autoFetch?: boolean;
-}
 
 export const useRefund = () => {
     const [refunds, setRefunds] = useState<RefundResponse[]>([]);
     const [refundResult, setRefundResult] = useState<RefundResponse | null>(null);
 
+    const apiHookRef = useRef(useApi<RefundResponse[]>());
+    const apiHook = apiHookRef.current;
+
     const processRefundHook = useApi<RefundResponse>();
-    const getRefundsHook = useApi<RefundResponse[]>();
 
     const processRefund = useCallback(async (request: RefundRequest): Promise<RefundResponse> => {
         return processRefundHook.callApi(async () => {
@@ -24,7 +22,7 @@ export const useRefund = () => {
     }, [processRefundHook]);
 
     const getUserRefunds = useCallback(async (): Promise<RefundResponse[]> => {
-        return getRefundsHook.callApi(async () => {
+        return apiHook.callApi(async () => {
             const response = await fetch('/api/refunds', {
                 headers: {
                     'Content-Type': 'application/json',
@@ -40,14 +38,12 @@ export const useRefund = () => {
             setRefunds(data);
             return data;
         }, { showErrorNotification: false });
-    }, [getRefundsHook]);
+    }, [apiHook]);
 
-    const fetchRefunds = useCallback(async (options?: UseRefundListOptions) => {
-        const { autoFetch = true } = options || {};
-
+    const fetchRefunds = useCallback(async (autoFetch = true) => {
         if (!autoFetch) return [];
 
-        return getRefundsHook.callApi(async () => {
+        return apiHook.callApi(async () => {
             const response = await fetch('/api/refunds', {
                 headers: {
                     'Content-Type': 'application/json',
@@ -63,7 +59,7 @@ export const useRefund = () => {
             setRefunds(data);
             return data;
         }, { showErrorNotification: false });
-    }, [getRefundsHook]);
+    }, [apiHook]);
 
     const getRefundByNumber = useCallback((refundNumber: string): RefundResponse | undefined => {
         return refunds.find(refund => refund.refundNumber === refundNumber);
@@ -179,7 +175,7 @@ export const useRefund = () => {
     return {
         refunds,
         refundResult,
-        loading: processRefundHook.loading || getRefundsHook.loading,
+        loading: processRefundHook.loading || apiHook.loading,
         processRefund,
         getUserRefunds,
         fetchRefunds,

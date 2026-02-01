@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import type { User, LoginRequest, RegisterRequest, LoginResponse } from '@/types/auth';
 import { authApi } from '@/api/authApi';
 import { useApi } from '@/hooks/common/useApi';
@@ -7,6 +7,7 @@ export const useAuth = () => {
     const [user, setUser] = useState<User | null>(null);
     const [token, setToken] = useState<string | null>(localStorage.getItem('authToken'));
     const [authLoading, setAuthLoading] = useState(true);
+    const isMountedRef = useRef(true);
 
     const loginHook = useApi<LoginResponse>();
     const registerHook = useApi<User>();
@@ -17,11 +18,11 @@ export const useAuth = () => {
     const confirmEmailChangeHook = useApi<User>();
 
     useEffect(() => {
-        let isMounted = true;
+        isMountedRef.current = true;
 
         const loadUser = async () => {
             if (!token) {
-                if (isMounted) {
+                if (isMountedRef.current) {
                     setUser(null);
                     setAuthLoading(false);
                 }
@@ -30,15 +31,20 @@ export const useAuth = () => {
 
             try {
                 const userData = await authApi.getCurrentUser();
-                if (isMounted) setUser(userData);
-            } catch {
-                if (isMounted) {
+                if (isMountedRef.current) {
+                    setUser(userData);
+                }
+            } catch (error) {
+                console.error('Failed to load user:', error);
+                if (isMountedRef.current) {
                     setUser(null);
                     setToken(null);
                     localStorage.removeItem('authToken');
                 }
             } finally {
-                if (isMounted) setAuthLoading(false);
+                if (isMountedRef.current) {
+                    setAuthLoading(false);
+                }
             }
         };
 
@@ -46,7 +52,7 @@ export const useAuth = () => {
         loadUser();
 
         return () => {
-            isMounted = false;
+            isMountedRef.current = false;
         };
     }, [token]);
 
@@ -59,12 +65,25 @@ export const useAuth = () => {
     }, [token]);
 
     const login = useCallback(async (credentials: LoginRequest): Promise<LoginResponse> => {
-        return loginHook.callApi(async () => {
-            const response = await authApi.login(credentials);
-            setUser(response.user);
-            setToken(response.token);
+        try {
+            const response = await loginHook.callApi(async () => {
+                const data = await authApi.login(credentials);
+                return data;
+            });
+
+            if (isMountedRef.current) {
+                setUser(response.user);
+                setToken(response.token);
+            }
+
             return response;
-        });
+        } catch (error) {
+            if (isMountedRef.current) {
+                setUser(null);
+                setToken(null);
+            }
+            throw error;
+        }
     }, [loginHook]);
 
     const register = useCallback(async (userData: RegisterRequest): Promise<User> => {
@@ -100,19 +119,25 @@ export const useAuth = () => {
     const confirmEmailChange = useCallback(async (token: string): Promise<User> => {
         return confirmEmailChangeHook.callApi(async () => {
             const updatedUser = await authApi.confirmEmailChange(token);
-            setUser(prevUser => prevUser?.id === updatedUser.id ? updatedUser : prevUser);
+            if (isMountedRef.current) {
+                setUser(prevUser => prevUser?.id === updatedUser.id ? updatedUser : prevUser);
+            }
             return updatedUser;
         });
     }, [confirmEmailChangeHook]);
 
     const logout = useCallback(() => {
-        setUser(null);
-        setToken(null);
+        if (isMountedRef.current) {
+            setUser(null);
+            setToken(null);
+        }
         localStorage.removeItem('authToken');
     }, []);
 
     const updateUser = useCallback((userData: User) => {
-        setUser(userData);
+        if (isMountedRef.current) {
+            setUser(userData);
+        }
     }, []);
 
     return {

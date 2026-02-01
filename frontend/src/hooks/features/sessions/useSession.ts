@@ -10,45 +10,23 @@ import type {
 import type { PageResponse } from '@/types/pagination';
 import { useApi } from '@/hooks/common/useApi';
 
-interface UseSessionsOptions {
-    enabled?: boolean;
-    page?: number;
-    size?: number;
-    sort?: string;
-    search?: string;
-    date?: string;
-    hallId?: number;
-    movieId?: number;
-    status?: CinemaSessionStatus;
-}
-
-interface UseScheduleSessionsOptions {
-    page?: number;
-    size?: number;
-    date?: string;
-    movieId?: number;
-    daysAhead?: number;
-    enabled?: boolean;
-    keepPreviousData?: boolean;
-}
-
-interface SessionFilters {
-    search?: string;
-    date?: string;
-    hallId?: number;
-    movieId?: number;
-    daysAhead?: number;
-    status?: CinemaSessionStatus;
-}
-
 export const useSession = () => {
     const [sessions, setSessions] = useState<SessionAdminResponse[]>([]);
     const [scheduleSessions, setScheduleSessions] = useState<SessionScheduleResponse[]>([]);
     const [pagination, setPagination] = useState<PageResponse<SessionAdminResponse> | null>(null);
     const [schedulePagination, setSchedulePagination] = useState<PageResponse<SessionScheduleResponse> | null>(null);
-    const [filters, setFilters] = useState<SessionFilters>({});
+    const [filters, setFilters] = useState<{
+        search?: string;
+        date?: string;
+        hallId?: number;
+        movieId?: number;
+        daysAhead?: number;
+        status?: CinemaSessionStatus;
+    }>({});
 
-    const getSessionsHook = useApi<PageResponse<SessionAdminResponse>>();
+    const apiHookRef = useRef(useApi<PageResponse<SessionAdminResponse>>());
+    const apiHook = apiHookRef.current;
+
     const getScheduleHook = useApi<PageResponse<SessionScheduleResponse>>();
     const getSessionByIdHook = useApi<SessionScheduleResponse>();
     const getAdminSessionByIdHook = useApi<SessionAdminResponse>();
@@ -62,8 +40,18 @@ export const useSession = () => {
 
     const abortControllerRef = useRef<AbortController | null>(null);
 
-    const getSessions = useCallback(async (options?: UseSessionsOptions): Promise<PageResponse<SessionAdminResponse>> => {
-        return getSessionsHook.callApi(async () => {
+    const getSessions = useCallback(async (options?: {
+        enabled?: boolean;
+        page?: number;
+        size?: number;
+        sort?: string;
+        search?: string;
+        date?: string;
+        hallId?: number;
+        movieId?: number;
+        status?: CinemaSessionStatus;
+    }): Promise<PageResponse<SessionAdminResponse>> => {
+        return apiHook.callApi(async () => {
             const response = await sessionApi.admin.getAll(
                 options?.page,
                 options?.size || 20,
@@ -81,9 +69,17 @@ export const useSession = () => {
             }
             return response;
         }, { showErrorNotification: false });
-    }, [getSessionsHook]);
+    }, [apiHook]);
 
-    const getSchedule = useCallback(async (options?: UseScheduleSessionsOptions): Promise<PageResponse<SessionScheduleResponse>> => {
+    const getSchedule = useCallback(async (options?: {
+        page?: number;
+        size?: number;
+        date?: string;
+        movieId?: number;
+        daysAhead?: number;
+        enabled?: boolean;
+        keepPreviousData?: boolean;
+    }): Promise<PageResponse<SessionScheduleResponse>> => {
         return getScheduleHook.callApi(async () => {
             const pageToLoad = options?.keepPreviousData && schedulePagination
                 ? (schedulePagination.number + 1)
@@ -253,7 +249,7 @@ export const useSession = () => {
         pagination,
         schedulePagination,
         filters,
-        loading: getSessionsHook.loading || getScheduleHook.loading || getSessionByIdHook.loading ||
+        loading: apiHook.loading || getScheduleHook.loading || getSessionByIdHook.loading ||
             getAdminSessionByIdHook.loading || createSessionHook.loading || updateSessionHook.loading ||
             cancelSessionHook.loading || reactivateSessionHook.loading || deleteSessionHook.loading ||
             checkTimeConflictHook.loading || getTodaySessionsHook.loading,

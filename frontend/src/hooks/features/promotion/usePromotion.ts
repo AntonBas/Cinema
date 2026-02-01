@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { promotionApi } from '@/api/promotionApi';
 import type {
     PromotionResponse,
@@ -9,34 +9,29 @@ import type {
 } from '@/types/promotion';
 import { useApi } from '@/hooks/common/useApi';
 
-interface UsePromotionListOptions {
-    activeOnly?: boolean;
-    autoFetch?: boolean;
-}
-
 export const usePromotion = () => {
     const [promotions, setPromotions] = useState<PromotionResponse[]>([]);
     const [myPromotions, setMyPromotions] = useState<UserPromotionResponse[]>([]);
     const [adminPromotions, setAdminPromotions] = useState<PromotionResponse[]>([]);
 
-    const getAvailableHook = useApi<PromotionResponse[]>();
+    const apiHookRef = useRef(useApi<PromotionResponse[]>());
+    const apiHook = apiHookRef.current;
+
     const getMyPromotionsHook = useApi<UserPromotionResponse[]>();
     const claimPromotionHook = useApi<UserPromotionResponse>();
     const checkStatusHook = useApi<boolean>();
     const createHook = useApi<PromotionResponse>();
     const getByIdHook = useApi<PromotionResponse>();
-    const getAllHook = useApi<PromotionResponse[]>();
-    const getActiveHook = useApi<PromotionResponse[]>();
     const updateHook = useApi<PromotionResponse>();
     const removeHook = useApi<void>();
 
     const getAvailable = useCallback(async (): Promise<PromotionResponse[]> => {
-        return getAvailableHook.callApi(async () => {
+        return apiHook.callApi(async () => {
             const data = await promotionApi.user.getAvailable();
             setPromotions(data);
             return data;
         }, { showErrorNotification: false });
-    }, [getAvailableHook]);
+    }, [apiHook]);
 
     const getMyPromotions = useCallback(async (): Promise<UserPromotionResponse[]> => {
         return getMyPromotionsHook.callApi(async () => {
@@ -73,20 +68,20 @@ export const usePromotion = () => {
     }, [getByIdHook]);
 
     const getAll = useCallback(async (): Promise<PromotionResponse[]> => {
-        return getAllHook.callApi(async () => {
+        return apiHook.callApi(async () => {
             const data = await promotionApi.admin.getAll();
             setAdminPromotions(data);
             return data;
         }, { showErrorNotification: false });
-    }, [getAllHook]);
+    }, [apiHook]);
 
     const getActive = useCallback(async (): Promise<PromotionResponse[]> => {
-        return getActiveHook.callApi(async () => {
+        return apiHook.callApi(async () => {
             const data = await promotionApi.admin.getActive();
             setAdminPromotions(data);
             return data;
         }, { showErrorNotification: false });
-    }, [getActiveHook]);
+    }, [apiHook]);
 
     const update = useCallback(async (promotionId: number, request: PromotionUpdateRequest): Promise<PromotionResponse> => {
         return updateHook.callApi(async () => {
@@ -103,23 +98,21 @@ export const usePromotion = () => {
         }, { showErrorNotification: false });
     }, [removeHook]);
 
-    const fetchPromotionsList = useCallback(async (options?: UsePromotionListOptions) => {
-        const { activeOnly = false } = options || {};
-
+    const fetchPromotionsList = useCallback(async (activeOnly = false) => {
         if (activeOnly) {
-            return getAvailableHook.callApi(async () => {
+            return apiHook.callApi(async () => {
                 const data = await promotionApi.user.getAvailable();
                 setPromotions(data);
                 return data;
             }, { showErrorNotification: false });
         } else {
-            return getAvailableHook.callApi(async () => {
+            return apiHook.callApi(async () => {
                 const data = await promotionApi.user.getAvailable();
                 setPromotions(data);
                 return data;
             }, { showErrorNotification: false });
         }
-    }, [getAvailableHook]);
+    }, [apiHook]);
 
     const fetchMyPromotions = useCallback(async () => {
         return getMyPromotionsHook.callApi(async () => {
@@ -131,19 +124,19 @@ export const usePromotion = () => {
 
     const fetchAdminPromotions = useCallback(async (activeOnly: boolean = false) => {
         if (activeOnly) {
-            return getActiveHook.callApi(async () => {
+            return apiHook.callApi(async () => {
                 const data = await promotionApi.admin.getActive();
                 setAdminPromotions(data);
                 return data;
             }, { showErrorNotification: false });
         } else {
-            return getAllHook.callApi(async () => {
+            return apiHook.callApi(async () => {
                 const data = await promotionApi.admin.getAll();
                 setAdminPromotions(data);
                 return data;
             }, { showErrorNotification: false });
         }
-    }, [getActiveHook, getAllHook]);
+    }, [apiHook]);
 
     const isPromotionActive = useCallback((promotion: PromotionResponse): boolean => {
         if (!promotion.startDate && !promotion.endDate) return true;
@@ -249,9 +242,9 @@ export const usePromotion = () => {
         promotions,
         myPromotions,
         adminPromotions,
-        loading: getAvailableHook.loading || getMyPromotionsHook.loading || claimPromotionHook.loading ||
+        loading: apiHook.loading || getMyPromotionsHook.loading || claimPromotionHook.loading ||
             checkStatusHook.loading || createHook.loading || getByIdHook.loading ||
-            getAllHook.loading || getActiveHook.loading || updateHook.loading || removeHook.loading,
+            updateHook.loading || removeHook.loading,
         getAvailable,
         getMyPromotions,
         claimPromotion,

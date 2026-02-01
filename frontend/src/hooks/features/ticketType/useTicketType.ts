@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { ticketTypeApi } from '@/api/ticketTypeApi';
 import type {
     TicketTypeResponse,
@@ -9,13 +9,6 @@ import type {
 } from '@/types/ticketType';
 import { useApi } from '@/hooks/common/useApi';
 
-interface UseTicketTypeListOptions {
-    statusFilter?: 'all' | 'active' | 'inactive';
-    categoryFilter?: TicketTypeCategory | 'all';
-    searchQuery?: string;
-    autoFetch?: boolean;
-}
-
 export const useTicketType = () => {
     const [ticketTypes, setTicketTypes] = useState<TicketTypeResponse[]>([]);
     const [dropdownTypes, setDropdownTypes] = useState<TicketTypeSimpleResponse[]>([]);
@@ -23,7 +16,9 @@ export const useTicketType = () => {
     const [categoryFilter, setCategoryFilter] = useState<TicketTypeCategory | 'all'>('all');
     const [searchQuery, setSearchQuery] = useState<string>('');
 
-    const getAllHook = useApi<TicketTypeResponse[]>();
+    const apiHookRef = useRef(useApi<TicketTypeResponse[]>());
+    const apiHook = apiHookRef.current;
+
     const getByIdHook = useApi<TicketTypeResponse>();
     const getByCodeHook = useApi<TicketTypeResponse>();
     const createHook = useApi<TicketTypeResponse>();
@@ -34,12 +29,12 @@ export const useTicketType = () => {
     const getDropdownTypesHook = useApi<TicketTypeSimpleResponse[]>();
 
     const getAll = useCallback(async (params?: { active?: boolean; category?: string; search?: string }): Promise<TicketTypeResponse[]> => {
-        return getAllHook.callApi(async () => {
+        return apiHook.callApi(async () => {
             const data = await ticketTypeApi.admin.getAll(params);
             setTicketTypes(data);
             return data;
         }, { showErrorNotification: false });
-    }, [getAllHook]);
+    }, [apiHook]);
 
     const getById = useCallback(async (id: number): Promise<TicketTypeResponse> => {
         return getByIdHook.callApi(async () => {
@@ -100,7 +95,11 @@ export const useTicketType = () => {
         }, { showErrorNotification: false });
     }, [getDropdownTypesHook]);
 
-    const fetchTicketTypes = useCallback(async (options?: UseTicketTypeListOptions) => {
+    const fetchTicketTypes = useCallback(async (options?: {
+        statusFilter?: 'all' | 'active' | 'inactive';
+        categoryFilter?: TicketTypeCategory | 'all';
+        searchQuery?: string;
+    }) => {
         const params: { active?: boolean; category?: string; search?: string } = {};
 
         if (options?.statusFilter === 'active') {
@@ -117,16 +116,12 @@ export const useTicketType = () => {
             params.search = options.searchQuery;
         }
 
-        return getAllHook.callApi(async () => {
+        return apiHook.callApi(async () => {
             const data = await ticketTypeApi.admin.getAll(params);
             setTicketTypes(data);
             return data;
         }, { showErrorNotification: false });
-    }, [getAllHook]);
-
-    useEffect(() => {
-        getDropdownTypes();
-    }, [getDropdownTypes]);
+    }, [apiHook]);
 
     const addTicketType = useCallback((ticketType: TicketTypeResponse) => {
         setTicketTypes(prev => [...prev, ticketType]);
@@ -177,7 +172,7 @@ export const useTicketType = () => {
         statusFilter,
         categoryFilter,
         searchQuery,
-        loading: getAllHook.loading || getByIdHook.loading || getByCodeHook.loading ||
+        loading: apiHook.loading || getByIdHook.loading || getByCodeHook.loading ||
             createHook.loading || updateHook.loading || deleteHook.loading ||
             toggleActiveHook.loading || getActiveForDropdownHook.loading || getDropdownTypesHook.loading,
         getAll,

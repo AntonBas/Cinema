@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { cinemaHallApi } from '@/api/cinemaHallApi';
 import type { CinemaHallRequest, CinemaHallResponse, CinemaHallWithSeatsResponse, HallLayoutResponse } from '@/types/cinemaHall';
 import { useApi } from '@/hooks/common/useApi';
@@ -8,22 +8,23 @@ export const useCinemaHalls = () => {
     const [hallWithSeats, setHallWithSeats] = useState<CinemaHallWithSeatsResponse | null>(null);
     const [hallLayout, setHallLayout] = useState<HallLayoutResponse | null>(null);
 
-    const getAllHallsHook = useApi<CinemaHallResponse[]>();
+    const apiHookRef = useRef(useApi<CinemaHallResponse[]>());
+    const apiHook = apiHookRef.current;
+
     const getHallByIdHook = useApi<CinemaHallResponse>();
     const getHallWithSeatsHook = useApi<CinemaHallWithSeatsResponse>();
     const getHallLayoutHook = useApi<HallLayoutResponse>();
-    const searchHallsHook = useApi<CinemaHallResponse[]>();
     const createHallHook = useApi<CinemaHallResponse>();
     const updateHallHook = useApi<CinemaHallResponse>();
     const deleteHallHook = useApi<void>();
 
     const getAllHalls = useCallback(async (): Promise<CinemaHallResponse[]> => {
-        return getAllHallsHook.callApi(async () => {
+        return apiHook.callApi(async () => {
             const data = await cinemaHallApi.getAll();
             setAllHalls(data);
             return data;
         });
-    }, [getAllHallsHook]);
+    }, [apiHook]);
 
     const getHallById = useCallback(async (id: number): Promise<CinemaHallResponse> => {
         return getHallByIdHook.callApi(async () => {
@@ -48,10 +49,10 @@ export const useCinemaHalls = () => {
     }, [getHallLayoutHook]);
 
     const searchHalls = useCallback(async (name?: string): Promise<CinemaHallResponse[]> => {
-        return searchHallsHook.callApi(async () => {
+        return apiHook.callApi(async () => {
             return await cinemaHallApi.search(name);
         });
-    }, [searchHallsHook]);
+    }, [apiHook]);
 
     const createHall = useCallback(async (request: CinemaHallRequest): Promise<CinemaHallResponse> => {
         return createHallHook.callApi(async () => {
@@ -84,8 +85,8 @@ export const useCinemaHalls = () => {
         allHalls,
         hallWithSeats,
         hallLayout,
-        loading: getAllHallsHook.loading || getHallByIdHook.loading || getHallWithSeatsHook.loading ||
-            getHallLayoutHook.loading || searchHallsHook.loading || createHallHook.loading ||
+        loading: apiHook.loading || getHallByIdHook.loading || getHallWithSeatsHook.loading ||
+            getHallLayoutHook.loading || createHallHook.loading ||
             updateHallHook.loading || deleteHallHook.loading,
         getAllHalls,
         getHallById,

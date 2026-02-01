@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useMemo } from 'react';
 import { movieApi } from '@/api/movieApi';
 import type {
     MovieCardResponse,
@@ -16,6 +16,8 @@ export const useMovies = () => {
     const [movie, setMovie] = useState<MovieDetailResponse | null>(null);
     const [sessionMovies, setSessionMovies] = useState<MovieSessionSearchResponse[]>([]);
     const [paginationData, setPaginationData] = useState<PageResponse<MovieCardResponse> | null>(null);
+
+    const currentSearchParamsRef = useRef<SearchParams & { status?: MovieStatus }>({});
 
     const getByIdHook = useApi<MovieDetailResponse>();
     const getBySlugHook = useApi<MovieDetailResponse>();
@@ -90,6 +92,8 @@ export const useMovies = () => {
     }, [getUpcomingPaginatedHook]);
 
     const search = useCallback(async (params: SearchParams & { status?: MovieStatus } = {}): Promise<PageResponse<MovieCardResponse>> => {
+        currentSearchParamsRef.current = params;
+
         return searchHook.callApi(async () => {
             const response = await movieApi.public.getFilteredMovies(
                 params.search,
@@ -174,35 +178,83 @@ export const useMovies = () => {
     const clearMovies = useCallback(() => {
         setMovies([]);
         setSessionMovies([]);
+        setPaginationData(null);
     }, []);
 
-    const refresh = useCallback(() => {
-        if (paginationData) {
-            search({ page: paginationData.number, size: paginationData.size });
-        }
-    }, [paginationData, search]);
+    const refresh = useCallback(async () => {
+        if (!paginationData) return;
+
+        const params = currentSearchParamsRef.current;
+        return searchHook.callApi(async () => {
+            const response = await movieApi.public.getFilteredMovies(
+                params.search,
+                params.status,
+                paginationData.number,
+                paginationData.size
+            );
+            setMovies(response.content);
+            setPaginationData(response);
+            return response;
+        });
+    }, [paginationData, searchHook]);
 
     const nextPage = useCallback(async (): Promise<PageResponse<MovieCardResponse> | null> => {
         if (!paginationData || paginationData.last) return null;
-        return search({ page: paginationData.number + 1, size: paginationData.size });
-    }, [paginationData, search]);
+
+        const params = currentSearchParamsRef.current;
+        return searchHook.callApi(async () => {
+            const response = await movieApi.public.getFilteredMovies(
+                params.search,
+                params.status,
+                paginationData.number + 1,
+                paginationData.size
+            );
+            setMovies(response.content);
+            setPaginationData(response);
+            return response;
+        });
+    }, [paginationData, searchHook]);
 
     const prevPage = useCallback(async (): Promise<PageResponse<MovieCardResponse> | null> => {
         if (!paginationData || paginationData.first) return null;
-        return search({ page: paginationData.number - 1, size: paginationData.size });
-    }, [paginationData, search]);
+
+        const params = currentSearchParamsRef.current;
+        return searchHook.callApi(async () => {
+            const response = await movieApi.public.getFilteredMovies(
+                params.search,
+                params.status,
+                paginationData.number - 1,
+                paginationData.size
+            );
+            setMovies(response.content);
+            setPaginationData(response);
+            return response;
+        });
+    }, [paginationData, searchHook]);
+
+    const isLoading = useMemo(() => {
+        return getByIdHook.loading || getBySlugHook.loading || getAllPaginatedHook.loading ||
+            getCurrentlyShowingHook.loading || getCurrentlyShowingPaginatedHook.loading ||
+            getUpcomingHook.loading || getUpcomingPaginatedHook.loading || searchHook.loading ||
+            searchActiveMoviesHook.loading || searchForSessionHook.loading || createHook.loading ||
+            updateHook.loading || removeHook.loading || getArchivedMoviesHook.loading ||
+            getByStatusHook.loading || searchAdminHook.loading;
+    }, [
+        getByIdHook.loading, getBySlugHook.loading, getAllPaginatedHook.loading,
+        getCurrentlyShowingHook.loading, getCurrentlyShowingPaginatedHook.loading,
+        getUpcomingHook.loading, getUpcomingPaginatedHook.loading, searchHook.loading,
+        searchActiveMoviesHook.loading, searchForSessionHook.loading, createHook.loading,
+        updateHook.loading, removeHook.loading, getArchivedMoviesHook.loading,
+        getByStatusHook.loading, searchAdminHook.loading
+    ]);
 
     return {
         movies,
         movie,
         sessionMovies,
         pagination: paginationData,
-        loading: getByIdHook.loading || getBySlugHook.loading || getAllPaginatedHook.loading ||
-            getCurrentlyShowingHook.loading || getCurrentlyShowingPaginatedHook.loading ||
-            getUpcomingHook.loading || getUpcomingPaginatedHook.loading || searchHook.loading ||
-            searchActiveMoviesHook.loading || searchForSessionHook.loading || createHook.loading ||
-            updateHook.loading || removeHook.loading || getArchivedMoviesHook.loading ||
-            getByStatusHook.loading || searchAdminHook.loading,
+        loading: isLoading,
+
         getById,
         getBySlug,
         getAllPaginated,
@@ -210,19 +262,24 @@ export const useMovies = () => {
         getCurrentlyShowingPaginated,
         getUpcoming,
         getUpcomingPaginated,
+
         search,
         searchActiveMovies,
         searchForSession,
+
         create,
         update,
         remove,
+
         getArchivedMovies,
         getByStatus,
         searchAdmin,
+
         clearMovies,
         refresh,
         nextPage,
         prevPage,
+
         currentPage: paginationData?.number || 0,
         totalPages: paginationData?.totalPages || 0,
         totalElements: paginationData?.totalElements || 0,

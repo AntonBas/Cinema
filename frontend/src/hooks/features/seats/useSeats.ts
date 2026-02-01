@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { seatApi } from '@/api/seatApi';
 import type { SeatResponse, SeatType } from '@/types/seat';
 import { useApi } from '@/hooks/common/useApi';
@@ -7,23 +7,24 @@ export const useSeats = () => {
     const [seats, setSeats] = useState<SeatResponse[]>([]);
     const [seat, setSeat] = useState<SeatResponse | null>(null);
 
-    const getSeatsByHallHook = useApi<SeatResponse[]>();
+    const apiHookRef = useRef(useApi<SeatResponse[]>());
+    const apiHook = apiHookRef.current;
+
     const getSeatByIdHook = useApi<SeatResponse>();
     const getSeatByPositionHook = useApi<SeatResponse>();
     const checkSeatAvailabilityHook = useApi<boolean>();
     const countSeatsByHallHook = useApi<number>();
-    const getSeatsByTypeHook = useApi<SeatResponse[]>();
     const updateSeatTypeHook = useApi<SeatResponse>();
     const activateSeatHook = useApi<SeatResponse>();
     const deactivateSeatHook = useApi<SeatResponse>();
 
     const getSeatsByHall = useCallback(async (hallId: number): Promise<SeatResponse[]> => {
-        return getSeatsByHallHook.callApi(async () => {
+        return apiHook.callApi(async () => {
             const data = await seatApi.getSeatsByHall(hallId);
             setSeats(data);
             return data;
         }, { showErrorNotification: false });
-    }, [getSeatsByHallHook]);
+    }, [apiHook]);
 
     const getSeatById = useCallback(async (hallId: number, seatId: number): Promise<SeatResponse> => {
         return getSeatByIdHook.callApi(async () => {
@@ -54,21 +55,21 @@ export const useSeats = () => {
     }, [countSeatsByHallHook]);
 
     const getSeatsByType = useCallback(async (hallId: number, seatType: SeatType): Promise<SeatResponse[]> => {
-        return getSeatsByTypeHook.callApi(async () => {
+        return apiHook.callApi(async () => {
             const data = await seatApi.getSeatsByType(hallId, seatType);
             setSeats(data);
             return data;
         }, { showErrorNotification: false });
-    }, [getSeatsByTypeHook]);
+    }, [apiHook]);
 
     const getActiveSeatsByHall = useCallback(async (hallId: number): Promise<SeatResponse[]> => {
-        return getSeatsByHallHook.callApi(async () => {
+        return apiHook.callApi(async () => {
             const allSeats = await seatApi.getSeatsByHall(hallId);
-            const activeSeats = allSeats.filter(seat => seat.active);
+            const activeSeats = allSeats.filter(s => s.active);
             setSeats(activeSeats);
             return activeSeats;
         }, { showErrorNotification: false });
-    }, [getSeatsByHallHook]);
+    }, [apiHook]);
 
     const updateSeatType = useCallback(async (hallId: number, seatId: number, seatType: SeatType): Promise<SeatResponse> => {
         return updateSeatTypeHook.callApi(async () => {
@@ -132,8 +133,8 @@ export const useSeats = () => {
     return {
         seats,
         seat,
-        loading: getSeatsByHallHook.loading || getSeatByIdHook.loading || getSeatByPositionHook.loading ||
-            checkSeatAvailabilityHook.loading || countSeatsByHallHook.loading || getSeatsByTypeHook.loading ||
+        loading: apiHook.loading || getSeatByIdHook.loading || getSeatByPositionHook.loading ||
+            checkSeatAvailabilityHook.loading || countSeatsByHallHook.loading ||
             updateSeatTypeHook.loading || activateSeatHook.loading || deactivateSeatHook.loading,
         getSeatsByHall,
         getSeatById,
