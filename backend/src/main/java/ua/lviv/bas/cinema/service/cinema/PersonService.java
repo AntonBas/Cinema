@@ -4,14 +4,17 @@ import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.Person;
 import ua.lviv.bas.cinema.domain.enums.PersonRole;
+import ua.lviv.bas.cinema.domain.projection.PersonProjection;
+import ua.lviv.bas.cinema.domain.specification.PersonSpecification;
+import ua.lviv.bas.cinema.dto.movie.request.PersonFilterRequest;
 import ua.lviv.bas.cinema.dto.movie.request.PersonRequest;
 import ua.lviv.bas.cinema.dto.movie.request.QuickCreatePersonRequest;
 import ua.lviv.bas.cinema.dto.movie.response.PersonResponse;
@@ -19,7 +22,6 @@ import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
 import ua.lviv.bas.cinema.exception.domain.cinema.PersonHasMoviesException;
 import ua.lviv.bas.cinema.exception.domain.cinema.PersonNotFoundException;
 import ua.lviv.bas.cinema.mapper.PersonMapper;
-import ua.lviv.bas.cinema.repository.MovieRepository;
 import ua.lviv.bas.cinema.repository.PersonRepository;
 
 @Slf4j
@@ -30,7 +32,7 @@ public class PersonService {
 
 	private final PersonRepository personRepository;
 	private final PersonMapper personMapper;
-	private final MovieRepository movieRepository;
+	private final PersonSpecification personSpecification;
 
 	@Transactional
 	public PersonResponse createPerson(PersonRequest request) {
@@ -65,8 +67,7 @@ public class PersonService {
 	public PersonResponse getPersonById(Long id) {
 		log.debug("Retrieving person by id: {}", id);
 
-		Person person = personRepository.findById(id).orElseThrow(() -> new PersonNotFoundException(id));
-
+		Person person = findPersonById(id);
 		return personMapper.toPersonResponse(person);
 	}
 
@@ -74,7 +75,7 @@ public class PersonService {
 	public PersonResponse updatePerson(Long id, PersonRequest request) {
 		log.info("Updating person with id: {}", id);
 
-		Person existing = personRepository.findById(id).orElseThrow(() -> new PersonNotFoundException(id));
+		Person existing = findPersonById(id);
 
 		String personName = request.getName().trim();
 		validatePersonUniqueness(personName, request.getRole(), id);
@@ -91,12 +92,47 @@ public class PersonService {
 	public void deletePerson(Long id) {
 		log.info("Deleting person with id: {}", id);
 
-		Person person = personRepository.findById(id).orElseThrow(() -> new PersonNotFoundException(id));
-
+		Person person = findPersonById(id);
 		checkPersonUsageInMovies(person);
 		personRepository.delete(person);
 
 		log.debug("Person deleted with ID: {}", id);
+	}
+
+	public Page<PersonResponse> searchPersons(PersonFilterRequest filter, Pageable pageable) {
+		log.info("Searching persons with filter: {}", filter);
+
+		Specification<Person> spec = personSpecification.build(filter);
+		Page<Person> personPage = personRepository.findAll(spec, pageable);
+
+		log.debug("Found {} persons", personPage.getTotalElements());
+		return personPage.map(personMapper::toPersonResponse);
+	}
+
+	public PersonProjection getPersonProjectionById(Long id) {
+		log.debug("Retrieving person projection by id: {}", id);
+
+		PersonProjection projection = personRepository.findProjectionById(id);
+		if (projection == null) {
+			throw new PersonNotFoundException(id);
+		}
+		return projection;
+	}
+
+	public Page<PersonProjection> getPersonProjections(Pageable pageable) {
+		log.debug("Retrieving all person projections");
+		return personRepository.findAllProjections(pageable);
+	}
+
+	public Page<PersonProjection> getPersonProjectionsByRole(PersonRole role, Pageable pageable) {
+		log.debug("Retrieving person projections by role: {}", role);
+		return personRepository.findProjectionsByRole(role, pageable);
+	}
+
+	public Page<PersonProjection> searchPersonProjections(PersonFilterRequest filter, Pageable pageable) {
+		log.info("Searching person projections with filter: {}", filter);
+
+		return personRepository.findProjectionsByFilters(filter.getName(), filter.getRole(), pageable);
 	}
 
 	public Page<PersonResponse> getPersonsByRole(PersonRole role, Pageable pageable) {
@@ -104,18 +140,6 @@ public class PersonService {
 
 		Page<Person> persons = personRepository.findByRole(role, pageable);
 		return persons.map(personMapper::toPersonResponse);
-	}
-
-	public Page<PersonResponse> searchPersons(String query, PersonRole role, Pageable pageable) {
-		log.info("Searching persons: query='{}', role={}", query, role);
-
-		String roleString = (role != null) ? role.name() : null;
-
-		Page<Person> personPage = personRepository.searchByNameAndRole(StringUtils.hasText(query) ? query.trim() : null,
-				roleString, pageable);
-
-		log.debug("Found {} persons", personPage.getTotalElements());
-		return personPage.map(personMapper::toPersonResponse);
 	}
 
 	public List<PersonResponse> getPersonsByIds(List<Long> ids) {
@@ -129,7 +153,7 @@ public class PersonService {
 		return personMapper.toPersonResponseList(persons);
 	}
 
-	public List<PersonResponse> getPersons() {
+	public List<PersonResponse> getAllPersons() {
 		log.debug("Retrieving all persons");
 		return personMapper.toPersonResponseList(personRepository.findAll());
 	}
@@ -144,6 +168,10 @@ public class PersonService {
 
 	public long countByRole(PersonRole role) {
 		return personRepository.countByRole(role);
+	}
+
+	private Person findPersonById(Long id) {
+		return personRepository.findById(id).orElseThrow(() -> new PersonNotFoundException(id));
 	}
 
 	private void validatePersonUniqueness(String name, PersonRole role, Long excludeId) {
@@ -161,9 +189,9 @@ public class PersonService {
 	}
 
 	private void checkPersonUsageInMovies(Person person) {
-		long actorCount = movieRepository.countByActorsId(person.getId());
-		long directorCount = movieRepository.countByDirectorsId(person.getId());
-		long screenwriterCount = movieRepository.countByScreenwritersId(person.getId());
+		long actorCount = personRepository.countByActorsId(person.getId());
+		long directorCount = personRepository.countByDirectorsId(person.getId());
+		long screenwriterCount = personRepository.countByScreenwritersId(person.getId());
 
 		long totalUsage = actorCount + directorCount + screenwriterCount;
 

@@ -1,9 +1,14 @@
 package ua.lviv.bas.cinema.controller.admin;
 
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -13,8 +18,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -22,6 +25,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import ua.lviv.bas.cinema.domain.projection.PersonProjection;
+import ua.lviv.bas.cinema.dto.common.PageResponse;
+import ua.lviv.bas.cinema.dto.movie.request.PersonFilterRequest;
 import ua.lviv.bas.cinema.dto.movie.request.PersonRequest;
 import ua.lviv.bas.cinema.dto.movie.request.QuickCreatePersonRequest;
 import ua.lviv.bas.cinema.dto.movie.response.PersonResponse;
@@ -44,8 +50,7 @@ public class AdminPersonController {
 			@ApiResponse(responseCode = "400", description = "Invalid request data or person with same name and role already exists"),
 			@ApiResponse(responseCode = "401", description = "User not authenticated"),
 			@ApiResponse(responseCode = "403", description = "User does not have required role") })
-	public ResponseEntity<PersonResponse> createPerson(
-			@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Person creation request", required = true, content = @Content(schema = @Schema(implementation = PersonRequest.class))) @RequestBody @Valid PersonRequest request) {
+	public ResponseEntity<PersonResponse> createPerson(@RequestBody @Valid PersonRequest request) {
 		log.info("POST /api/admin/persons - Creating new person: {}", request.getName());
 		PersonResponse createdPerson = personService.createPerson(request);
 		return ResponseEntity.status(HttpStatus.CREATED).body(createdPerson);
@@ -60,7 +65,7 @@ public class AdminPersonController {
 			@ApiResponse(responseCode = "403", description = "User does not have required role") })
 	public ResponseEntity<PersonResponse> updatePerson(
 			@Parameter(description = "ID of the person to update", required = true, example = "1") @PathVariable Long id,
-			@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Updated person data", required = true, content = @Content(schema = @Schema(implementation = PersonRequest.class))) @RequestBody @Valid PersonRequest request) {
+			@RequestBody @Valid PersonRequest request) {
 		log.info("PUT /api/admin/persons/{} - Updating person", id);
 		PersonResponse updatedPerson = personService.updatePerson(id, request);
 		return ResponseEntity.ok(updatedPerson);
@@ -86,11 +91,37 @@ public class AdminPersonController {
 			@ApiResponse(responseCode = "400", description = "Invalid request data"),
 			@ApiResponse(responseCode = "401", description = "User not authenticated"),
 			@ApiResponse(responseCode = "403", description = "User does not have required role") })
-	public ResponseEntity<PersonResponse> quickCreatePerson(
-			@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Quick person creation request", required = true, content = @Content(schema = @Schema(implementation = QuickCreatePersonRequest.class))) @RequestBody @Valid QuickCreatePersonRequest request) {
+	public ResponseEntity<PersonResponse> quickCreatePerson(@RequestBody @Valid QuickCreatePersonRequest request) {
 		log.info("POST /api/admin/persons/quick-create - Quick creating person: {} with role: {}", request.getName(),
 				request.getRole());
 		PersonResponse createdPerson = personService.quickCreatePerson(request);
 		return ResponseEntity.status(HttpStatus.CREATED).body(createdPerson);
+	}
+
+	@GetMapping("/stats")
+	@Operation(summary = "Get persons with statistics (admin)", description = "Get all persons with movie statistics for admin panel.")
+	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Persons retrieved successfully"),
+			@ApiResponse(responseCode = "401", description = "User not authenticated"),
+			@ApiResponse(responseCode = "403", description = "User does not have required role") })
+	public ResponseEntity<PageResponse<PersonProjection>> getPersonsWithStats(
+			@Parameter(description = "Filter for persons") @ModelAttribute PersonFilterRequest filter,
+			@Parameter(hidden = true) @PageableDefault(size = 20, sort = "name", direction = Sort.Direction.ASC) Pageable pageable) {
+
+		log.info("GET /api/admin/persons/stats - filter: {}", filter);
+		var result = personService.searchPersonProjections(filter, pageable);
+		return ResponseEntity.ok(PageResponse.from(result));
+	}
+
+	@GetMapping("/{id}/stats")
+	@Operation(summary = "Get person statistics (admin)", description = "Get detailed person statistics for admin panel.")
+	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Person statistics found"),
+			@ApiResponse(responseCode = "404", description = "Person not found"),
+			@ApiResponse(responseCode = "401", description = "User not authenticated"),
+			@ApiResponse(responseCode = "403", description = "User does not have required role") })
+	public ResponseEntity<PersonProjection> getPersonStatsAdmin(
+			@Parameter(description = "ID of the person", required = true, example = "1") @PathVariable Long id) {
+		log.info("GET /api/admin/persons/{}/stats - Getting person statistics (admin)", id);
+		PersonProjection projection = personService.getPersonProjectionById(id);
+		return ResponseEntity.ok(projection);
 	}
 }
