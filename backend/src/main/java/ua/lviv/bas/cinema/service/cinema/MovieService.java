@@ -3,12 +3,10 @@ package ua.lviv.bas.cinema.service.cinema;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,7 +16,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.Movie;
 import ua.lviv.bas.cinema.domain.enums.MovieStatus;
+import ua.lviv.bas.cinema.domain.projection.MovieProjection;
+import ua.lviv.bas.cinema.domain.specification.MovieSpecification;
 import ua.lviv.bas.cinema.dto.movie.request.MovieCreateRequest;
+import ua.lviv.bas.cinema.dto.movie.request.MovieFilterRequest;
 import ua.lviv.bas.cinema.dto.movie.request.MovieUpdateRequest;
 import ua.lviv.bas.cinema.dto.movie.response.MovieCardResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieDetailResponse;
@@ -37,6 +38,7 @@ import ua.lviv.bas.cinema.service.integration.slug.SlugService;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class MovieService {
 
 	private final MovieRepository movieRepository;
@@ -46,6 +48,7 @@ public class MovieService {
 	private final SlugService slugService;
 	private final MovieScheduler movieScheduler;
 	private final PosterService posterService;
+	private final MovieSpecification movieSpecification;
 
 	@Transactional
 	public MovieDetailResponse createMovie(MovieCreateRequest request) {
@@ -101,91 +104,89 @@ public class MovieService {
 		movieRepository.delete(movie);
 	}
 
-	@Transactional(readOnly = true)
 	public MovieDetailResponse getMovieById(Long id) {
 		Movie movie = findMovieById(id);
 		return buildDetailResponse(movie);
 	}
 
-	@Transactional(readOnly = true)
+	public MovieProjection getMovieProjectionById(Long id) {
+		return movieRepository.findProjectionById(id).orElseThrow(() -> new MovieNotFoundException(id));
+	}
+
 	public MovieDetailResponse getMovieBySlug(String slug) {
 		Movie movie = movieRepository.findBySlug(slug).orElseThrow(() -> new MovieNotFoundException(slug));
 		return buildDetailResponse(movie);
 	}
 
-	@Transactional(readOnly = true)
-	public Page<MovieCardResponse> findFilteredMovies(String search, MovieStatus status, Pageable pageable) {
-		log.debug("Finding filtered movies: search='{}', status={}", search, status);
+	public Page<MovieCardResponse> searchMovies(MovieFilterRequest filter, Pageable pageable) {
+		log.info("Searching movies with filter: {}", filter);
 
-		if (search != null && !search.isBlank()) {
-			return searchMoviesByTitle(search, status, pageable);
-		} else if (status != null) {
-			return getMoviesByStatus(status, pageable);
-		} else {
-			return getCurrentlyShowingPage(pageable);
-		}
-	}
-
-	@Transactional(readOnly = true)
-	public Page<MovieCardResponse> getMoviesByStatus(MovieStatus status, Pageable pageable) {
-		Page<Movie> movies = movieRepository.findByStatusWithSearch(status, null, pageable);
+		Specification<Movie> spec = movieSpecification.buildWithJoins(filter);
+		Page<Movie> movies = movieRepository.findAll(spec, pageable);
 		return movies.map(this::buildCardResponse);
 	}
 
-	@Transactional(readOnly = true)
-	public List<MovieCardResponse> getCurrentlyShowing(int limit) {
-		Pageable pageable = PageRequest.of(0, limit, Sort.by("releaseDate").descending());
-		List<Movie> movies = movieRepository.findCurrentlyShowing(pageable);
-		return movies.stream().map(this::buildCardResponse).toList();
+	public Page<MovieProjection> getMovieProjections(Pageable pageable) {
+		return movieRepository.findAllProjections(pageable);
 	}
 
-	@Transactional(readOnly = true)
-	public Page<MovieCardResponse> getCurrentlyShowingPage(Pageable pageable) {
-		Page<Movie> movies = movieRepository.findCurrentlyShowingPage(pageable);
-		return movies.map(this::buildCardResponse);
+	public Page<MovieProjection> getMovieProjectionsByStatus(MovieStatus status, Pageable pageable) {
+		return movieRepository.findProjectionsByStatus(status, pageable);
 	}
 
-	@Transactional(readOnly = true)
-	public List<MovieCardResponse> getUpcoming(int limit) {
-		Pageable pageable = PageRequest.of(0, limit, Sort.by("releaseDate"));
-		List<Movie> movies = movieRepository.findUpcoming(pageable);
-		return movies.stream().map(this::buildCardResponse).toList();
+	public Page<MovieProjection> getCurrentlyShowingProjections(Pageable pageable) {
+		return movieRepository.findCurrentlyShowingProjections(pageable);
 	}
 
-	@Transactional(readOnly = true)
-	public Page<MovieCardResponse> getUpcomingPage(Pageable pageable) {
-		Page<Movie> movies = movieRepository.findUpcomingPage(pageable);
-		return movies.map(this::buildCardResponse);
+	public Page<MovieProjection> getUpcomingProjections(Pageable pageable) {
+		return movieRepository.findUpcomingProjections(pageable);
 	}
 
-	@Transactional(readOnly = true)
-	public Page<MovieCardResponse> getArchivedMovies(Pageable pageable) {
-		Page<Movie> movies = movieRepository.findArchived(pageable);
-		return movies.map(this::buildCardResponse);
+	public Page<MovieProjection> getArchivedProjections(Pageable pageable) {
+		return movieRepository.findArchivedProjections(pageable);
 	}
 
-	@Transactional(readOnly = true)
 	public List<MovieSessionSearchResponse> searchMoviesForSessionCreation(String searchTerm, LocalDate sessionDate) {
 		List<Movie> movies = movieRepository.findMoviesForSessionCreation(searchTerm, sessionDate);
-		return movies.stream().map(this::toSessionSearchResponse).toList();
+		return movies.stream()
+				.map(movie -> MovieSessionSearchResponse.builder().id(movie.getId()).title(movie.getTitle())
+						.releaseYear(movie.getReleaseDate().getYear()).durationMinutes(movie.getDurationMinutes())
+						.build())
+				.toList();
 	}
 
-	@Transactional(readOnly = true)
 	public List<MovieSessionSearchResponse> searchActiveMovies(String searchTerm) {
 		List<Movie> movies = movieRepository.findActiveMoviesForSearch(searchTerm);
-		return movies.stream().map(this::toSessionSearchResponse).collect(Collectors.toList());
+		return movies.stream()
+				.map(movie -> MovieSessionSearchResponse.builder().id(movie.getId()).title(movie.getTitle())
+						.releaseYear(movie.getReleaseDate().getYear()).durationMinutes(movie.getDurationMinutes())
+						.build())
+				.toList();
 	}
 
-	@Transactional(readOnly = true)
-	public Page<MovieCardResponse> searchMoviesByTitle(String search, MovieStatus status, Pageable pageable) {
-		Page<Movie> movies = movieRepository.findByStatusWithSearch(status, search, pageable);
-		return movies.map(this::buildCardResponse);
-	}
-
-	@Transactional(readOnly = true)
 	public ResponseEntity<byte[]> getMoviePoster(Long id) {
 		Movie movie = findMovieById(id);
 		return posterService.getPosterResponse(movie.getPosterFileName());
+	}
+
+	public long countByStatus(MovieStatus status) {
+		return movieRepository.countByStatus(status);
+	}
+
+	public boolean existsBySlug(String slug) {
+		return movieRepository.findBySlug(slug).isPresent();
+	}
+
+	public long countByActorId(Long actorId) {
+		return movieRepository.countByActorsId(actorId);
+	}
+
+	public long countByDirectorId(Long directorId) {
+		return movieRepository.countByDirectorsId(directorId);
+	}
+
+	public long countByScreenwriterId(Long screenwriterId) {
+		return movieRepository.countByScreenwritersId(screenwriterId);
 	}
 
 	private MovieCardResponse buildCardResponse(Movie movie) {
@@ -287,10 +288,5 @@ public class MovieService {
 		response.setCurrentlyShowing(movie.getStatus() == MovieStatus.CURRENT);
 		response.setUpcoming(movie.getStatus() == MovieStatus.UPCOMING);
 		response.setArchived(movie.getStatus() == MovieStatus.ARCHIVED);
-	}
-
-	private MovieSessionSearchResponse toSessionSearchResponse(Movie movie) {
-		return MovieSessionSearchResponse.builder().id(movie.getId()).title(movie.getTitle())
-				.releaseYear(movie.getReleaseDate().getYear()).durationMinutes(movie.getDurationMinutes()).build();
 	}
 }
