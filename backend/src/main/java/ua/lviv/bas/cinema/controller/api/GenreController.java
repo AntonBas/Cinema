@@ -2,7 +2,6 @@ package ua.lviv.bas.cinema.controller.api;
 
 import java.util.List;
 
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -20,6 +19,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import ua.lviv.bas.cinema.dto.common.PageResponse;
 import ua.lviv.bas.cinema.dto.movie.response.GenreResponse;
 import ua.lviv.bas.cinema.service.cinema.GenreService;
 
@@ -46,21 +46,21 @@ public class GenreController {
 	@GetMapping
 	@Operation(summary = "Get all genres with pagination", description = "Retrieve paginated list of all movie genres.")
 	@ApiResponse(responseCode = "200", description = "Genres retrieved successfully")
-	public ResponseEntity<Page<GenreResponse>> getAllGenres(
+	public ResponseEntity<PageResponse<GenreResponse>> getAllGenres(
 			@PageableDefault(size = 12, sort = "name", direction = Sort.Direction.ASC) Pageable pageable) {
 		log.info("GET /api/genres - pageable: {}", pageable);
-		Page<GenreResponse> result = genreService.getGenresPage(pageable);
-		return ResponseEntity.ok(result);
+		var result = genreService.getGenresPage(pageable);
+		return ResponseEntity.ok(PageResponse.from(result));
 	}
 
 	@GetMapping("/search")
 	@Operation(summary = "Search genres", description = "Search movie genres by name with pagination support.")
 	@ApiResponse(responseCode = "200", description = "Genres retrieved successfully")
-	public ResponseEntity<Page<GenreResponse>> searchGenres(@RequestParam(required = false) String query,
+	public ResponseEntity<PageResponse<GenreResponse>> searchGenres(@RequestParam(required = false) String query,
 			@PageableDefault(size = 12, sort = "name", direction = Sort.Direction.ASC) Pageable pageable) {
 		log.info("GET /api/genres/search - query: '{}', pageable: {}", query, pageable);
-		Page<GenreResponse> result = genreService.searchGenres(query, pageable);
-		return ResponseEntity.ok(result);
+		var result = genreService.searchGenres(query, pageable);
+		return ResponseEntity.ok(PageResponse.from(result));
 	}
 
 	@GetMapping("/all")

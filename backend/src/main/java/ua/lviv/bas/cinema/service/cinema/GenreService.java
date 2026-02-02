@@ -12,6 +12,7 @@ import org.springframework.util.StringUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.Genre;
+import ua.lviv.bas.cinema.domain.projection.GenreProjection;
 import ua.lviv.bas.cinema.dto.movie.request.GenreRequest;
 import ua.lviv.bas.cinema.dto.movie.response.GenreResponse;
 import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
@@ -48,6 +49,16 @@ public class GenreService {
 
 		return genreRepository.findById(id).map(genreMapper::toGenreResponse)
 				.orElseThrow(() -> new GenreNotFoundException(id));
+	}
+
+	public GenreProjection getGenreProjectionById(Long id) {
+		log.debug("Retrieving genre projection by id: {}", id);
+
+		GenreProjection projection = genreRepository.findProjectionById(id);
+		if (projection == null) {
+			throw new GenreNotFoundException(id);
+		}
+		return projection;
 	}
 
 	@Transactional
@@ -107,16 +118,26 @@ public class GenreService {
 		return genrePage.map(genreMapper::toGenreResponse);
 	}
 
+	public Page<GenreProjection> getGenreProjections(Pageable pageable) {
+		log.debug("Retrieving genre projections with pagination");
+		return genreRepository.findAllProjections(pageable);
+	}
+
 	public Page<GenreResponse> searchGenres(String query, Pageable pageable) {
 		log.info("Searching genres: query='{}'", query);
 
 		if (StringUtils.hasText(query)) {
 			String searchQuery = query.trim();
-			Page<Genre> genrePage = genreRepository.findByNameContainingIgnoreCase(searchQuery, pageable);
+			Page<Genre> genrePage = genreRepository.searchByName(searchQuery, pageable);
 			return genrePage.map(genreMapper::toGenreResponse);
 		}
 
 		return getGenresPage(pageable);
+	}
+
+	public Page<GenreProjection> searchGenreProjections(String query, Pageable pageable) {
+		log.info("Searching genre projections: query='{}'", query);
+		return genreRepository.searchProjectionsByName(query, pageable);
 	}
 
 	public boolean existsById(Long id) {

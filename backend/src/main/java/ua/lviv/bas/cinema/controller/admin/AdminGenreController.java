@@ -1,5 +1,8 @@
 package ua.lviv.bas.cinema.controller.admin;
 
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -11,12 +14,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -24,6 +26,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import ua.lviv.bas.cinema.domain.projection.GenreProjection;
+import ua.lviv.bas.cinema.dto.common.PageResponse;
 import ua.lviv.bas.cinema.dto.movie.request.GenreRequest;
 import ua.lviv.bas.cinema.dto.movie.response.GenreResponse;
 import ua.lviv.bas.cinema.service.cinema.GenreService;
@@ -46,8 +50,7 @@ public class AdminGenreController {
 			@ApiResponse(responseCode = "400", description = "Invalid request data or genre name already exists"),
 			@ApiResponse(responseCode = "401", description = "User not authenticated"),
 			@ApiResponse(responseCode = "403", description = "User does not have required role") })
-	public ResponseEntity<GenreResponse> createGenre(
-			@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Genre creation request", required = true, content = @Content(schema = @Schema(implementation = GenreRequest.class))) @RequestBody @Valid GenreRequest request) {
+	public ResponseEntity<GenreResponse> createGenre(@RequestBody @Valid GenreRequest request) {
 
 		log.info("POST /api/admin/genres - Creating new genre: {}", request.getName());
 		GenreResponse createdGenre = genreService.createGenre(request);
@@ -67,6 +70,19 @@ public class AdminGenreController {
 		return ResponseEntity.ok(genre);
 	}
 
+	@GetMapping("/{id}/stats")
+	@Operation(summary = "Get genre statistics", description = "Retrieve genre with movie count statistics.")
+	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Genre statistics found"),
+			@ApiResponse(responseCode = "404", description = "Genre not found"),
+			@ApiResponse(responseCode = "403", description = "User does not have required role") })
+	public ResponseEntity<GenreProjection> getGenreStats(
+			@Parameter(description = "ID of the genre", required = true, example = "1") @PathVariable Long id) {
+
+		log.info("GET /api/admin/genres/{}/stats - Getting genre statistics", id);
+		GenreProjection projection = genreService.getGenreProjectionById(id);
+		return ResponseEntity.ok(projection);
+	}
+
 	@PutMapping("/{id}")
 	@Operation(summary = "Update genre", description = "Update existing movie genre information.")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Genre updated successfully"),
@@ -76,8 +92,7 @@ public class AdminGenreController {
 			@ApiResponse(responseCode = "403", description = "User does not have required role") })
 	public ResponseEntity<GenreResponse> updateGenre(
 			@Parameter(description = "ID of the genre to update", required = true, example = "1") @PathVariable Long id,
-
-			@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Updated genre data", required = true, content = @Content(schema = @Schema(implementation = GenreRequest.class))) @RequestBody @Valid GenreRequest request) {
+			@RequestBody @Valid GenreRequest request) {
 
 		log.info("PUT /api/admin/genres/{} - Updating genre", id);
 		GenreResponse updatedGenre = genreService.updateGenre(id, request);
@@ -97,5 +112,28 @@ public class AdminGenreController {
 		log.info("DELETE /api/admin/genres/{} - Deleting genre", id);
 		genreService.deleteGenre(id);
 		return ResponseEntity.noContent().build();
+	}
+
+	@GetMapping
+	@Operation(summary = "Get all genres with statistics", description = "Retrieve paginated list of all genres with movie counts.")
+	@ApiResponse(responseCode = "200", description = "Genres retrieved successfully")
+	public ResponseEntity<PageResponse<GenreProjection>> getAllGenresWithStats(
+			@PageableDefault(size = 20, sort = "name", direction = Sort.Direction.ASC) Pageable pageable) {
+
+		log.info("GET /api/admin/genres - Getting all genres with statistics");
+		var result = genreService.getGenreProjections(pageable);
+		return ResponseEntity.ok(PageResponse.from(result));
+	}
+
+	@GetMapping("/search")
+	@Operation(summary = "Search genres with statistics", description = "Search genres by name with movie count statistics.")
+	@ApiResponse(responseCode = "200", description = "Genres retrieved successfully")
+	public ResponseEntity<PageResponse<GenreProjection>> searchGenresWithStats(
+			@RequestParam(required = false) String query,
+			@PageableDefault(size = 20, sort = "name", direction = Sort.Direction.ASC) Pageable pageable) {
+
+		log.info("GET /api/admin/genres/search - query: '{}'", query);
+		var result = genreService.searchGenreProjections(query, pageable);
+		return ResponseEntity.ok(PageResponse.from(result));
 	}
 }

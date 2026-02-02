@@ -8,11 +8,10 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import ua.lviv.bas.cinema.domain.Genre;
+import ua.lviv.bas.cinema.domain.projection.GenreProjection;
 
 @Repository
 public interface GenreRepository extends JpaRepository<Genre, Long> {
-
-	Page<Genre> findByNameContainingIgnoreCase(String name, Pageable pageable);
 
 	boolean existsByNameIgnoreCase(String name);
 
@@ -20,4 +19,18 @@ public interface GenreRepository extends JpaRepository<Genre, Long> {
 
 	@Query("SELECT g FROM Genre g WHERE " + "(:query IS NULL OR LOWER(g.name) LIKE LOWER(CONCAT('%', :query, '%')))")
 	Page<Genre> searchByName(@Param("query") String query, Pageable pageable);
+
+	@Query("SELECT g.id as id, g.name as name, "
+			+ "(SELECT COUNT(m) FROM Movie m JOIN m.genres mg WHERE mg.id = g.id) as movieCount " + "FROM Genre g")
+	Page<GenreProjection> findAllProjections(Pageable pageable);
+
+	@Query("SELECT g.id as id, g.name as name, "
+			+ "(SELECT COUNT(m) FROM Movie m JOIN m.genres mg WHERE mg.id = g.id) as movieCount "
+			+ "FROM Genre g WHERE g.id = :id")
+	GenreProjection findProjectionById(@Param("id") Long id);
+
+	@Query("SELECT g.id as id, g.name as name, "
+			+ "(SELECT COUNT(m) FROM Movie m JOIN m.genres mg WHERE mg.id = g.id) as movieCount "
+			+ "FROM Genre g WHERE " + "(:query IS NULL OR LOWER(g.name) LIKE LOWER(CONCAT('%', :query, '%')))")
+	Page<GenreProjection> searchProjectionsByName(@Param("query") String query, Pageable pageable);
 }
