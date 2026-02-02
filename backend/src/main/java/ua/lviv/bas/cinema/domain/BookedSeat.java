@@ -40,6 +40,7 @@ import ua.lviv.bas.cinema.domain.enums.BookedSeatStatus;
 		@Index(name = "idx_booked_seat_status", columnList = "status"),
 		@Index(name = "idx_booked_seat_reserved_until", columnList = "reserved_until"),
 		@Index(name = "idx_booked_seat_composite", columnList = "session_id, seat_id, status"),
+		@Index(name = "idx_booked_seat_active", columnList = "status, reserved_until"),
 		@Index(name = "idx_booked_seat_created", columnList = "booked_at"),
 		@Index(name = "idx_booked_seat_user", columnList = "user_id") })
 public class BookedSeat {

@@ -3,6 +3,8 @@ package ua.lviv.bas.cinema.domain;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.hibernate.annotations.BatchSize;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -42,5 +44,6 @@ public class Genre {
 
 	@Builder.Default
 	@ManyToMany(mappedBy = "genres")
+	@BatchSize(size = 20)
 	private Set<Movie> movies = new HashSet<>();
 }

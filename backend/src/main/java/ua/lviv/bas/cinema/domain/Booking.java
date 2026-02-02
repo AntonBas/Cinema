@@ -5,7 +5,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.CreationTimestamp;
 
 import jakarta.persistence.Column;
@@ -64,18 +63,15 @@ public class Booking {
 	@JoinColumn(name = "session_id", nullable = false)
 	private Session session;
 
-	@OneToMany(mappedBy = "booking", fetch = FetchType.LAZY)
-	@BatchSize(size = 20)
+	@OneToMany(mappedBy = "booking", fetch = FetchType.LAZY, orphanRemoval = true)
 	@Builder.Default
 	private List<BookedSeat> bookedSeats = new ArrayList<>();
 
-	@OneToMany(mappedBy = "booking", fetch = FetchType.LAZY)
-	@BatchSize(size = 10)
+	@OneToMany(mappedBy = "booking", fetch = FetchType.LAZY, orphanRemoval = true)
 	@Builder.Default
 	private List<Ticket> tickets = new ArrayList<>();
 
-	@OneToMany(mappedBy = "booking", fetch = FetchType.LAZY)
-	@BatchSize(size = 10)
+	@OneToMany(mappedBy = "booking", fetch = FetchType.LAZY, orphanRemoval = true)
 	@Builder.Default
 	private List<BonusTransaction> bonusTransactions = new ArrayList<>();
 

@@ -5,6 +5,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.hibernate.annotations.BatchSize;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -74,10 +76,12 @@ public class Session {
 	private CinemaSessionStatus status = CinemaSessionStatus.SCHEDULED;
 
 	@OneToMany(mappedBy = "session", fetch = FetchType.LAZY)
+	@BatchSize(size = 20)
 	@Builder.Default
 	private List<Booking> bookings = new ArrayList<>();
 
 	@OneToMany(mappedBy = "session", fetch = FetchType.LAZY)
+	@BatchSize(size = 20)
 	@Builder.Default
 	private List<BookedSeat> bookedSeats = new ArrayList<>();
 }

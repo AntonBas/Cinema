@@ -7,11 +7,11 @@ import java.util.Set;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.validator.constraints.URL;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -103,8 +103,8 @@ public class Movie {
 	@Column(nullable = false, name = "age_rating")
 	private AgeRating ageRating;
 
-	@OneToMany(mappedBy = "movie", cascade = { CascadeType.PERSIST, CascadeType.MERGE })
-	@BatchSize(size = 20)
+	@OneToMany(mappedBy = "movie", fetch = FetchType.LAZY)
+	@BatchSize(size = 10)
 	@Builder.Default
 	private Set<Session> sessions = new HashSet<>();
 

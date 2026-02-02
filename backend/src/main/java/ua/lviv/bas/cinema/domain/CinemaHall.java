@@ -48,12 +48,11 @@ public class CinemaHall {
 	private String name;
 
 	@OneToMany(mappedBy = "hall", fetch = FetchType.LAZY)
-	@BatchSize(size = 20)
+	@BatchSize(size = 10)
 	@Builder.Default
 	private List<Session> sessions = new ArrayList<>();
 
 	@OneToMany(mappedBy = "hall", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-	@BatchSize(size = 20)
 	@Builder.Default
 	private List<Seat> seats = new ArrayList<>();
 }

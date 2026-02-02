@@ -67,7 +67,7 @@ public class Refund {
 	@Builder.Default
 	private List<RefundItem> items = new ArrayList<>();
 
-	@OneToMany(mappedBy = "refund", fetch = FetchType.LAZY)
+	@OneToMany(mappedBy = "refund", fetch = FetchType.LAZY, orphanRemoval = true)
 	@Builder.Default
 	private List<BonusTransaction> bonusTransactions = new ArrayList<>();
 

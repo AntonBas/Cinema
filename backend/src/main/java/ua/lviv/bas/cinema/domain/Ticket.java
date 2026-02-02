@@ -37,7 +37,6 @@ import ua.lviv.bas.cinema.domain.enums.TicketStatus;
 @ToString(exclude = { "booking", "ticketType", "payment", "refund", "user", "bookedSeat" })
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Table(name = "tickets", indexes = { @Index(name = "idx_ticket_booking", columnList = "booking_id"),
-		@Index(name = "idx_ticket_payment", columnList = "payment_id"),
 		@Index(name = "idx_ticket_status", columnList = "status"),
 		@Index(name = "idx_ticket_purchase_time", columnList = "purchase_time"),
 		@Index(name = "idx_ticket_ticket_type", columnList = "ticket_type_id"),
@@ -101,7 +100,7 @@ public class Ticket {
 	@Builder.Default
 	private Integer bonusPointsUsed = 0;
 
-	@Column(name = "bonus_points_earned")
+	@Column(name = "bonus points_earned")
 	@Builder.Default
 	private Integer bonusPointsEarned = 0;
 
