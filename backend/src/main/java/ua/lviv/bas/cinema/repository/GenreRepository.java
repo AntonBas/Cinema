@@ -17,17 +17,9 @@ public interface GenreRepository extends JpaRepository<Genre, Long> {
 
 	boolean existsByNameIgnoreCaseAndIdNot(String name, Long id);
 
-	@Query("SELECT g FROM Genre g WHERE " + "(:query IS NULL OR LOWER(g.name) LIKE LOWER(CONCAT('%', :query, '%')))")
-	Page<Genre> searchByName(@Param("query") String query, Pageable pageable);
-
 	@Query("SELECT g.id as id, g.name as name, "
 			+ "(SELECT COUNT(m) FROM Movie m JOIN m.genres mg WHERE mg.id = g.id) as movieCount " + "FROM Genre g")
 	Page<GenreProjection> findAllProjections(Pageable pageable);
-
-	@Query("SELECT g.id as id, g.name as name, "
-			+ "(SELECT COUNT(m) FROM Movie m JOIN m.genres mg WHERE mg.id = g.id) as movieCount "
-			+ "FROM Genre g WHERE g.id = :id")
-	GenreProjection findProjectionById(@Param("id") Long id);
 
 	@Query("SELECT g.id as id, g.name as name, "
 			+ "(SELECT COUNT(m) FROM Movie m JOIN m.genres mg WHERE mg.id = g.id) as movieCount "

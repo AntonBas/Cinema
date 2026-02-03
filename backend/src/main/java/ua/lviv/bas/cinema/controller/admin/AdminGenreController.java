@@ -51,36 +51,21 @@ public class AdminGenreController {
 			@ApiResponse(responseCode = "401", description = "User not authenticated"),
 			@ApiResponse(responseCode = "403", description = "User does not have required role") })
 	public ResponseEntity<GenreResponse> createGenre(@RequestBody @Valid GenreRequest request) {
-
 		log.info("POST /api/admin/genres - Creating new genre: {}", request.getName());
 		GenreResponse createdGenre = genreService.createGenre(request);
 		return ResponseEntity.status(HttpStatus.CREATED).body(createdGenre);
 	}
 
 	@GetMapping("/{id}")
-	@Operation(summary = "Get genre by ID (admin)", description = "Retrieve genre details (admin version).")
+	@Operation(summary = "Get genre by ID", description = "Retrieve genre details.")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Genre found"),
 			@ApiResponse(responseCode = "404", description = "Genre not found"),
 			@ApiResponse(responseCode = "403", description = "User does not have required role") })
 	public ResponseEntity<GenreResponse> getGenreById(
 			@Parameter(description = "ID of the genre", required = true, example = "1") @PathVariable Long id) {
-
-		log.info("GET /api/admin/genres/{} - Getting genre by id (admin)", id);
+		log.info("GET /api/admin/genres/{} - Getting genre by id", id);
 		GenreResponse genre = genreService.getGenreById(id);
 		return ResponseEntity.ok(genre);
-	}
-
-	@GetMapping("/{id}/stats")
-	@Operation(summary = "Get genre statistics", description = "Retrieve genre with movie count statistics.")
-	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Genre statistics found"),
-			@ApiResponse(responseCode = "404", description = "Genre not found"),
-			@ApiResponse(responseCode = "403", description = "User does not have required role") })
-	public ResponseEntity<GenreProjection> getGenreStats(
-			@Parameter(description = "ID of the genre", required = true, example = "1") @PathVariable Long id) {
-
-		log.info("GET /api/admin/genres/{}/stats - Getting genre statistics", id);
-		GenreProjection projection = genreService.getGenreProjectionById(id);
-		return ResponseEntity.ok(projection);
 	}
 
 	@PutMapping("/{id}")
@@ -93,7 +78,6 @@ public class AdminGenreController {
 	public ResponseEntity<GenreResponse> updateGenre(
 			@Parameter(description = "ID of the genre to update", required = true, example = "1") @PathVariable Long id,
 			@RequestBody @Valid GenreRequest request) {
-
 		log.info("PUT /api/admin/genres/{} - Updating genre", id);
 		GenreResponse updatedGenre = genreService.updateGenre(id, request);
 		return ResponseEntity.ok(updatedGenre);
@@ -103,25 +87,22 @@ public class AdminGenreController {
 	@Operation(summary = "Delete genre", description = "Delete a movie genre by its ID.")
 	@ApiResponses(value = { @ApiResponse(responseCode = "204", description = "Genre deleted successfully"),
 			@ApiResponse(responseCode = "404", description = "Genre not found"),
-			@ApiResponse(responseCode = "409", description = "Cannot delete genre that is associated with movies"),
 			@ApiResponse(responseCode = "401", description = "User not authenticated"),
 			@ApiResponse(responseCode = "403", description = "User does not have required role") })
 	public ResponseEntity<Void> deleteGenre(
 			@Parameter(description = "ID of the genre to delete", required = true, example = "1") @PathVariable Long id) {
-
 		log.info("DELETE /api/admin/genres/{} - Deleting genre", id);
 		genreService.deleteGenre(id);
 		return ResponseEntity.noContent().build();
 	}
 
 	@GetMapping
-	@Operation(summary = "Get all genres with statistics", description = "Retrieve paginated list of all genres with movie counts.")
+	@Operation(summary = "Get genres with statistics", description = "Retrieve paginated list of genres with movie counts.")
 	@ApiResponse(responseCode = "200", description = "Genres retrieved successfully")
-	public ResponseEntity<PageResponse<GenreProjection>> getAllGenresWithStats(
+	public ResponseEntity<PageResponse<GenreProjection>> getGenresWithStats(
 			@PageableDefault(size = 20, sort = "name", direction = Sort.Direction.ASC) Pageable pageable) {
-
-		log.info("GET /api/admin/genres - Getting all genres with statistics");
-		var result = genreService.getGenreProjections(pageable);
+		log.info("GET /api/admin/genres - Getting genres with statistics");
+		var result = genreService.getGenreProjectionsPage(pageable);
 		return ResponseEntity.ok(PageResponse.from(result));
 	}
 
@@ -131,7 +112,6 @@ public class AdminGenreController {
 	public ResponseEntity<PageResponse<GenreProjection>> searchGenresWithStats(
 			@RequestParam(required = false) String query,
 			@PageableDefault(size = 20, sort = "name", direction = Sort.Direction.ASC) Pageable pageable) {
-
 		log.info("GET /api/admin/genres/search - query: '{}'", query);
 		var result = genreService.searchGenreProjections(query, pageable);
 		return ResponseEntity.ok(PageResponse.from(result));

@@ -1,10 +1,15 @@
 package ua.lviv.bas.cinema.service.cinema;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -24,11 +29,13 @@ import ua.lviv.bas.cinema.repository.GenreRepository;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
+@CacheConfig(cacheNames = "genres")
 public class GenreService {
 
 	private final GenreRepository genreRepository;
 	private final GenreMapper genreMapper;
 
+	@CacheEvict(allEntries = true)
 	@Transactional
 	public GenreResponse createGenre(GenreRequest request) {
 		log.info("Creating genre: {}", request.getName());
@@ -44,23 +51,14 @@ public class GenreService {
 		return genreMapper.toGenreResponse(savedGenre);
 	}
 
+	@Cacheable(key = "#id")
 	public GenreResponse getGenreById(Long id) {
 		log.debug("Retrieving genre by id: {}", id);
-
 		return genreRepository.findById(id).map(genreMapper::toGenreResponse)
 				.orElseThrow(() -> new GenreNotFoundException(id));
 	}
 
-	public GenreProjection getGenreProjectionById(Long id) {
-		log.debug("Retrieving genre projection by id: {}", id);
-
-		GenreProjection projection = genreRepository.findProjectionById(id);
-		if (projection == null) {
-			throw new GenreNotFoundException(id);
-		}
-		return projection;
-	}
-
+	@Caching(evict = { @CacheEvict(key = "#id"), @CacheEvict(key = "'projection-' + #id") })
 	@Transactional
 	public GenreResponse updateGenre(Long id, GenreRequest request) {
 		log.info("Updating genre with id: {}", id);
@@ -74,11 +72,11 @@ public class GenreService {
 		existingGenre.setName(genreName);
 
 		Genre updatedGenre = genreRepository.save(existingGenre);
-
 		log.debug("Genre updated with ID: {}", updatedGenre.getId());
 		return genreMapper.toGenreResponse(updatedGenre);
 	}
 
+	@Caching(evict = { @CacheEvict(key = "#id"), @CacheEvict(key = "'projection-' + #id") })
 	@Transactional
 	public void deleteGenre(Long id) {
 		log.info("Deleting genre with id: {}", id);
@@ -91,16 +89,43 @@ public class GenreService {
 		log.debug("Genre deleted with ID: {}", id);
 	}
 
-	public List<GenreResponse> getGenres() {
-		log.debug("Retrieving all genres");
-		return genreMapper.toGenreResponseList(genreRepository.findAll());
+	@Cacheable(key = "'projections-page-' + #pageable")
+	public Page<GenreProjection> getGenreProjectionsPage(Pageable pageable) {
+		log.debug("Retrieving genre projections with pagination");
+		return genreRepository.findAllProjections(pageable);
 	}
 
-	public List<GenreResponse> getGenresSorted() {
-		log.debug("Retrieving all genres sorted by name");
-		return genreMapper.toGenreResponseList(genreRepository.findAll(Sort.by("name").ascending()));
+	@Cacheable(key = "'search-projections-' + #query + '-' + #pageable")
+	public Page<GenreProjection> searchGenreProjections(String query, Pageable pageable) {
+		log.info("Searching genre projections: query='{}'", query);
+
+		if (!StringUtils.hasText(query)) {
+			return getGenreProjectionsPage(pageable);
+		}
+
+		return genreRepository.searchProjectionsByName(query.trim(), pageable);
 	}
 
+	@Cacheable(key = "'search-popular-' + #query + '-' + #limit")
+	public List<GenreResponse> searchPopularGenres(String query, int limit) {
+		log.info("Searching popular genres: query='{}', limit={}", query, limit);
+
+		List<GenreProjection> projections;
+
+		if (StringUtils.hasText(query)) {
+			Page<GenreProjection> page = genreRepository.searchProjectionsByName(query.trim(), PageRequest.of(0, 100));
+			projections = page.getContent();
+		} else {
+			Page<GenreProjection> page = genreRepository.findAllProjections(PageRequest.of(0, 100));
+			projections = page.getContent();
+		}
+
+		return projections.stream().sorted((a, b) -> Integer.compare(b.getMovieCount(), a.getMovieCount())).limit(limit)
+				.map(proj -> GenreResponse.builder().id(proj.getId()).name(proj.getName()).build())
+				.collect(Collectors.toList());
+	}
+
+	@Cacheable(key = "'by-ids-' + #ids.hashCode()")
 	public List<GenreResponse> getGenresByIds(List<Long> ids) {
 		log.debug("Retrieving genres by ids: {}", ids);
 
@@ -112,50 +137,13 @@ public class GenreService {
 		return genreMapper.toGenreResponseList(genres);
 	}
 
-	public Page<GenreResponse> getGenresPage(Pageable pageable) {
-		log.debug("Retrieving genres with pagination");
-		Page<Genre> genrePage = genreRepository.findAll(pageable);
-		return genrePage.map(genreMapper::toGenreResponse);
-	}
-
-	public Page<GenreProjection> getGenreProjections(Pageable pageable) {
-		log.debug("Retrieving genre projections with pagination");
-		return genreRepository.findAllProjections(pageable);
-	}
-
-	public Page<GenreResponse> searchGenres(String query, Pageable pageable) {
-		log.info("Searching genres: query='{}'", query);
-
-		if (StringUtils.hasText(query)) {
-			String searchQuery = query.trim();
-			Page<Genre> genrePage = genreRepository.searchByName(searchQuery, pageable);
-			return genrePage.map(genreMapper::toGenreResponse);
-		}
-
-		return getGenresPage(pageable);
-	}
-
-	public Page<GenreProjection> searchGenreProjections(String query, Pageable pageable) {
-		log.info("Searching genre projections: query='{}'", query);
-		return genreRepository.searchProjectionsByName(query, pageable);
-	}
-
-	public boolean existsById(Long id) {
-		return genreRepository.existsById(id);
-	}
-
 	public boolean existsByName(String name) {
 		return genreRepository.existsByNameIgnoreCase(name.trim());
 	}
 
 	private void validateGenreUniqueness(String name, Long excludeId) {
-		boolean exists;
-
-		if (excludeId != null) {
-			exists = genreRepository.existsByNameIgnoreCaseAndIdNot(name, excludeId);
-		} else {
-			exists = genreRepository.existsByNameIgnoreCase(name);
-		}
+		boolean exists = excludeId != null ? genreRepository.existsByNameIgnoreCaseAndIdNot(name, excludeId)
+				: genreRepository.existsByNameIgnoreCase(name);
 
 		if (exists) {
 			throw new DuplicateEntityException("Genre", name);

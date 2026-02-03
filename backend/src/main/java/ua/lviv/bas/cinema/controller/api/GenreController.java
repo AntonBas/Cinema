@@ -2,9 +2,6 @@ package ua.lviv.bas.cinema.controller.api;
 
 import java.util.List;
 
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,12 +11,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import ua.lviv.bas.cinema.dto.common.PageResponse;
 import ua.lviv.bas.cinema.dto.movie.response.GenreResponse;
 import ua.lviv.bas.cinema.service.cinema.GenreService;
 
@@ -37,47 +34,30 @@ public class GenreController {
 	@Operation(summary = "Get genre by ID", description = "Retrieve genre information by its unique identifier.")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Genre found"),
 			@ApiResponse(responseCode = "404", description = "Genre not found") })
-	public ResponseEntity<GenreResponse> getGenreById(@PathVariable Long id) {
+	public ResponseEntity<GenreResponse> getGenreById(
+			@Parameter(description = "ID of the genre", required = true, example = "1") @PathVariable Long id) {
 		log.info("GET /api/genres/{} - Getting genre by id", id);
 		GenreResponse genre = genreService.getGenreById(id);
 		return ResponseEntity.ok(genre);
 	}
 
-	@GetMapping
-	@Operation(summary = "Get all genres with pagination", description = "Retrieve paginated list of all movie genres.")
+	@GetMapping("/popular")
+	@Operation(summary = "Get popular genres", description = "Get list of popular genres sorted by movie count. Used for genre selection.")
 	@ApiResponse(responseCode = "200", description = "Genres retrieved successfully")
-	public ResponseEntity<PageResponse<GenreResponse>> getAllGenres(
-			@PageableDefault(size = 12, sort = "name", direction = Sort.Direction.ASC) Pageable pageable) {
-		log.info("GET /api/genres - pageable: {}", pageable);
-		var result = genreService.getGenresPage(pageable);
-		return ResponseEntity.ok(PageResponse.from(result));
-	}
-
-	@GetMapping("/search")
-	@Operation(summary = "Search genres", description = "Search movie genres by name with pagination support.")
-	@ApiResponse(responseCode = "200", description = "Genres retrieved successfully")
-	public ResponseEntity<PageResponse<GenreResponse>> searchGenres(@RequestParam(required = false) String query,
-			@PageableDefault(size = 12, sort = "name", direction = Sort.Direction.ASC) Pageable pageable) {
-		log.info("GET /api/genres/search - query: '{}', pageable: {}", query, pageable);
-		var result = genreService.searchGenres(query, pageable);
-		return ResponseEntity.ok(PageResponse.from(result));
-	}
-
-	@GetMapping("/all")
-	@Operation(summary = "Get all genres without pagination", description = "Retrieve complete list of all movie genres (for dropdowns, filters, etc.).")
-	@ApiResponse(responseCode = "200", description = "All genres retrieved successfully")
-	public ResponseEntity<List<GenreResponse>> getAllGenresWithoutPagination() {
-		log.info("GET /api/genres/all - Getting all genres without pagination");
-		List<GenreResponse> genres = genreService.getGenres();
+	public ResponseEntity<List<GenreResponse>> getPopularGenres(@RequestParam(required = false) String query,
+			@RequestParam(defaultValue = "10") int limit) {
+		log.info("GET /api/genres/popular - query: '{}', limit: {}", query, limit);
+		List<GenreResponse> genres = genreService.searchPopularGenres(query, limit);
 		return ResponseEntity.ok(genres);
 	}
 
-	@GetMapping("/select")
-	@Operation(summary = "Get genres for select dropdown", description = "Retrieve sorted list of genres for dropdown selection.")
+	@GetMapping("/by-ids")
+	@Operation(summary = "Get genres by IDs", description = "Get multiple genres by their IDs. Used for displaying movie genres.")
 	@ApiResponse(responseCode = "200", description = "Genres retrieved successfully")
-	public ResponseEntity<List<GenreResponse>> getGenresForSelect() {
-		log.info("GET /api/genres/select - Getting genres for select dropdown");
-		List<GenreResponse> genres = genreService.getGenresSorted();
+	public ResponseEntity<List<GenreResponse>> getGenresByIds(
+			@Parameter(description = "Comma-separated list of genre IDs", example = "1,2,3") @RequestParam List<Long> ids) {
+		log.info("GET /api/genres/by-ids - ids: {}", ids);
+		List<GenreResponse> genres = genreService.getGenresByIds(ids);
 		return ResponseEntity.ok(genres);
 	}
 }
