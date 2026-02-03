@@ -1,8 +1,8 @@
 package ua.lviv.bas.cinema.service.booking.ticket;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -23,8 +23,8 @@ import ua.lviv.bas.cinema.service.shared.NumberGeneratorService;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class TicketService {
+
 	private final TicketRepository ticketRepository;
 	private final TicketValidationService validationService;
 	private final QRCodeService qrCodeService;
@@ -36,25 +36,24 @@ public class TicketService {
 	@Value("${app.ticket.base-url}")
 	private String ticketBaseUrl;
 
+	@Transactional
 	public List<Ticket> createTicketsForBooking(Booking booking, Payment payment) {
-		List<Ticket> tickets = new ArrayList<>();
-
-		for (BookedSeat bookedSeat : booking.getBookedSeats()) {
-			Ticket ticket = Ticket.builder().booking(booking).user(booking.getUser())
-					.ticketType(bookedSeat.getTicketType()).payment(payment).bookedSeat(
-							bookedSeat).originalPrice(bookedSeat.getSeatPrice())
-					.finalPrice(bookedSeat.getSeatPrice()).uniqueCode(numberGenerator.generateTicketCode())
-					.status(TicketStatus.ACTIVE).purchaseTime(LocalDateTime.now()).build();
-
-			tickets.add(ticket);
-		}
+		List<Ticket> tickets = booking.getBookedSeats().stream()
+				.map(bookedSeat -> buildTicket(booking, payment, bookedSeat)).collect(Collectors.toList());
 
 		List<Ticket> savedTickets = ticketRepository.saveAll(tickets);
 		log.info("Created {} tickets for booking {}", savedTickets.size(), booking.getId());
-
 		return savedTickets;
 	}
 
+	private Ticket buildTicket(Booking booking, Payment payment, BookedSeat bookedSeat) {
+		return Ticket.builder().booking(booking).user(booking.getUser()).ticketType(bookedSeat.getTicketType())
+				.payment(payment).bookedSeat(bookedSeat).originalPrice(bookedSeat.getSeatPrice())
+				.finalPrice(bookedSeat.getSeatPrice()).uniqueCode(numberGenerator.generateTicketCode())
+				.status(TicketStatus.ACTIVE).purchaseTime(LocalDateTime.now()).build();
+	}
+
+	@Transactional
 	public void validateTicket(String ticketCode) {
 		Ticket ticket = ticketRepository.findByUniqueCode(ticketCode).orElseThrow(TicketValidationException::notFound);
 
@@ -62,7 +61,6 @@ public class TicketService {
 
 		ticket.setStatus(TicketStatus.USED);
 		ticketRepository.save(ticket);
-
 		log.info("Ticket {} validated and marked as used", ticketCode);
 	}
 

@@ -17,6 +17,7 @@ import ua.lviv.bas.cinema.repository.TicketRepository;
 @Component
 @RequiredArgsConstructor
 public class TicketScheduler {
+
 	private final TicketRepository ticketRepository;
 
 	@Scheduled(fixedRateString = "${scheduler.ticket.mark-as-used:60000}")
@@ -24,22 +25,16 @@ public class TicketScheduler {
 	public void markTicketsAsUsedAfterSession() {
 		log.debug("Starting to mark tickets as used after sessions");
 		LocalDateTime now = LocalDateTime.now();
-		List<Ticket> activeTicketsForPastSessions = ticketRepository
-				.findActiveTicketsWithPastSessions(TicketStatus.ACTIVE, now);
+		List<Ticket> tickets = ticketRepository.findActiveTicketsWithPastSessions(TicketStatus.ACTIVE, now);
 
-		if (activeTicketsForPastSessions.isEmpty()) {
+		if (tickets.isEmpty()) {
 			log.debug("No tickets to mark as used");
 			return;
 		}
 
-		log.info("Found {} tickets to mark as used", activeTicketsForPastSessions.size());
-
-		for (Ticket ticket : activeTicketsForPastSessions) {
-			ticket.setStatus(TicketStatus.USED);
-		}
-
-		ticketRepository.saveAll(activeTicketsForPastSessions);
-		log.info("Successfully marked {} tickets as used", activeTicketsForPastSessions.size());
+		tickets.forEach(ticket -> ticket.setStatus(TicketStatus.USED));
+		ticketRepository.saveAll(tickets);
+		log.info("Successfully marked {} tickets as used", tickets.size());
 	}
 
 	@Scheduled(cron = "${scheduler.ticket.cleanup-cron:0 0 3 * * *}")
@@ -47,13 +42,13 @@ public class TicketScheduler {
 	public void cleanupRefundedTickets() {
 		log.debug("Starting refunded tickets cleanup");
 		LocalDateTime oneYearAgo = LocalDateTime.now().minusYears(1);
+		List<TicketStatus> refundedStatus = List.of(TicketStatus.REFUNDED);
 
-		List<Ticket> refundedTickets = ticketRepository
-				.findByStatusInAndPurchaseTimeBefore(List.of(TicketStatus.REFUNDED), oneYearAgo);
+		List<Ticket> tickets = ticketRepository.findByStatusInAndPurchaseTimeBefore(refundedStatus, oneYearAgo);
 
-		if (!refundedTickets.isEmpty()) {
-			ticketRepository.deleteAll(refundedTickets);
-			log.info("Cleaned up {} refunded tickets", refundedTickets.size());
+		if (!tickets.isEmpty()) {
+			ticketRepository.deleteAll(tickets);
+			log.info("Cleaned up {} refunded tickets", tickets.size());
 		} else {
 			log.debug("No refunded tickets to clean up");
 		}
@@ -63,38 +58,31 @@ public class TicketScheduler {
 	@Transactional(readOnly = true)
 	public void generateDailyTicketStatistics() {
 		log.debug("Starting daily ticket statistics generation");
-		LocalDateTime startOfDay = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0);
-		LocalDateTime endOfDay = LocalDateTime.now().withHour(23).withMinute(59).withSecond(59);
 
-		List<Ticket> todayTickets = ticketRepository.findAll().stream()
-				.filter(ticket -> ticket.getPurchaseTime() != null && !ticket.getPurchaseTime().isBefore(startOfDay)
-						&& !ticket.getPurchaseTime().isAfter(endOfDay))
-				.toList();
-
-		long totalTicketsToday = todayTickets.size();
-		long activeTickets = todayTickets.stream().filter(t -> t.getStatus() == TicketStatus.ACTIVE).count();
-		long usedTickets = todayTickets.stream().filter(t -> t.getStatus() == TicketStatus.USED).count();
-		long refundedTickets = todayTickets.stream().filter(t -> t.getStatus() == TicketStatus.REFUNDED).count();
+		long totalTicketsToday = ticketRepository.countToday();
+		long activeTicketsToday = ticketRepository.countByStatusToday(TicketStatus.ACTIVE);
+		long usedTicketsToday = ticketRepository.countByStatusToday(TicketStatus.USED);
+		long refundedTicketsToday = ticketRepository.countByStatusToday(TicketStatus.REFUNDED);
 
 		log.info("Daily ticket statistics:");
 		log.info("  Total tickets sold today: {}", totalTicketsToday);
-		log.info("  Active tickets: {}", activeTickets);
-		log.info("  Used tickets: {}", usedTickets);
-		log.info("  Refunded tickets: {}", refundedTickets);
+		log.info("  Active tickets today: {}", activeTicketsToday);
+		log.info("  Used tickets today: {}", usedTicketsToday);
+		log.info("  Refunded tickets today: {}", refundedTicketsToday);
 	}
 
 	@Scheduled(cron = "${scheduler.ticket.upcoming-reminder:0 */15 * * * *}")
 	@Transactional(readOnly = true)
 	public void checkUpcomingSessionsForReminders() {
 		LocalDateTime now = LocalDateTime.now();
-		LocalDateTime reminderTime = now.plusHours(1);
-		LocalDateTime twoHoursBefore = now.plusHours(2);
+		LocalDateTime fromTime = now.plusHours(1);
+		LocalDateTime toTime = now.plusHours(2);
 
-		List<Ticket> ticketsForReminder = ticketRepository.findByBookingSessionStartTimeBetweenAndStatus(reminderTime,
-				twoHoursBefore, TicketStatus.ACTIVE);
+		List<Ticket> tickets = ticketRepository.findByBookingSessionStartTimeBetweenAndStatus(fromTime, toTime,
+				TicketStatus.ACTIVE);
 
-		if (!ticketsForReminder.isEmpty()) {
-			log.info("Found {} active tickets with sessions starting soon (1-2 hours)", ticketsForReminder.size());
+		if (!tickets.isEmpty()) {
+			log.info("Found {} active tickets with sessions starting soon (1-2 hours)", tickets.size());
 		}
 	}
 }

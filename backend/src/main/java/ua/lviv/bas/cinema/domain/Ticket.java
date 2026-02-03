@@ -100,7 +100,7 @@ public class Ticket {
 	@Builder.Default
 	private Integer bonusPointsUsed = 0;
 
-	@Column(name = "bonus points_earned")
+	@Column(name = "bonus_points_earned")
 	@Builder.Default
 	private Integer bonusPointsEarned = 0;
 

@@ -21,6 +21,7 @@ import ua.lviv.bas.cinema.dto.payment.response.PaymentLiqPayDataResponse;
 import ua.lviv.bas.cinema.dto.payment.response.PaymentResponse;
 import ua.lviv.bas.cinema.dto.refund.request.RefundRequest;
 import ua.lviv.bas.cinema.dto.refund.response.RefundResponse;
+import ua.lviv.bas.cinema.dto.ticket.request.TicketFilterRequest;
 import ua.lviv.bas.cinema.dto.ticket.request.TicketTypeCreateRequest;
 import ua.lviv.bas.cinema.dto.ticket.request.TicketTypeUpdateRequest;
 import ua.lviv.bas.cinema.dto.ticket.response.TicketResponse;
@@ -39,6 +40,7 @@ import ua.lviv.bas.cinema.service.booking.types.TicketTypeService;
 @Service
 @RequiredArgsConstructor
 public class ControllerFacade {
+
 	private final BookingCreationService bookingCreationService;
 	private final BookingManagementService bookingManagementService;
 	private final SeatAvailabilityService seatAvailabilityService;
@@ -125,13 +127,13 @@ public class ControllerFacade {
 	}
 
 	@Transactional(readOnly = true)
-	public Page<TicketResponse> getUserTickets(User user, TicketStatus status, String search, Pageable pageable) {
-		return ticketRetrievalService.getUserTickets(user, status, search, pageable);
-	}
+	public Page<TicketResponse> getUserTickets(User user, TicketFilterRequest filter, Pageable pageable) {
+		TicketFilterRequest userFilter = TicketFilterRequest.builder().userId(user.getId()).status(filter.getStatus())
+				.purchaseDateFrom(filter.getPurchaseDateFrom()).purchaseDateTo(filter.getPurchaseDateTo())
+				.sessionDateFrom(filter.getSessionDateFrom()).sessionDateTo(filter.getSessionDateTo())
+				.movieId(filter.getMovieId()).build();
 
-	@Transactional(readOnly = true)
-	public Page<TicketResponse> getUpcomingTickets(User user, String search, Pageable pageable) {
-		return ticketRetrievalService.getUpcomingTickets(user, search, pageable);
+		return ticketRetrievalService.getUserTickets(user, userFilter, pageable);
 	}
 
 	@Transactional

@@ -7,9 +7,11 @@ import java.util.Collection;
 
 import org.springframework.data.jpa.domain.Specification;
 
+import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Path;
+import jakarta.persistence.criteria.Root;
 
 public class SpecificationUtils {
 	private SpecificationUtils() {
@@ -37,6 +39,16 @@ public class SpecificationUtils {
 				return cb.conjunction();
 			}
 			return cb.equal(root.get(field), value);
+		};
+	}
+
+	public static <T> Specification<T> nestedEqualIfNotNull(String nestedField, Object value) {
+		return (root, query, cb) -> {
+			if (value == null) {
+				return cb.conjunction();
+			}
+			Path<?> path = getNestedPath(root, nestedField);
+			return cb.equal(path, value);
 		};
 	}
 
@@ -74,7 +86,18 @@ public class SpecificationUtils {
 			if (date == null) {
 				return cb.conjunction();
 			}
-			return cb.greaterThanOrEqualTo(root.get(field), date.atStartOfDay());
+			Expression<LocalDateTime> dateExpr = root.get(field);
+			return cb.greaterThanOrEqualTo(dateExpr, date.atStartOfDay());
+		};
+	}
+
+	public static <T> Specification<T> nestedDateFromIfNotNull(String nestedField, LocalDate date) {
+		return (root, query, cb) -> {
+			if (date == null) {
+				return cb.conjunction();
+			}
+			Path<?> path = getNestedPath(root, nestedField);
+			return cb.greaterThanOrEqualTo(path.as(LocalDateTime.class), date.atStartOfDay());
 		};
 	}
 
@@ -83,7 +106,18 @@ public class SpecificationUtils {
 			if (date == null) {
 				return cb.conjunction();
 			}
-			return cb.lessThanOrEqualTo(root.get(field), date.atTime(LocalTime.MAX));
+			Expression<LocalDateTime> dateExpr = root.get(field);
+			return cb.lessThanOrEqualTo(dateExpr, date.atTime(LocalTime.MAX));
+		};
+	}
+
+	public static <T> Specification<T> nestedDateToIfNotNull(String nestedField, LocalDate date) {
+		return (root, query, cb) -> {
+			if (date == null) {
+				return cb.conjunction();
+			}
+			Path<?> path = getNestedPath(root, nestedField);
+			return cb.lessThanOrEqualTo(path.as(LocalDateTime.class), date.atTime(LocalTime.MAX));
 		};
 	}
 
@@ -92,7 +126,8 @@ public class SpecificationUtils {
 			if (value == null) {
 				return cb.conjunction();
 			}
-			return cb.gt(root.get(field), value);
+			Expression<Number> numberExpr = root.get(field);
+			return cb.gt(numberExpr, value);
 		};
 	}
 
@@ -101,7 +136,8 @@ public class SpecificationUtils {
 			if (value == null) {
 				return cb.conjunction();
 			}
-			return cb.lt(root.get(field), value);
+			Expression<Number> numberExpr = root.get(field);
+			return cb.lt(numberExpr, value);
 		};
 	}
 
@@ -111,14 +147,14 @@ public class SpecificationUtils {
 				return cb.conjunction();
 			}
 
-			Path<Number> numberPath = root.get(field);
+			Expression<Number> numberExpr = root.get(field);
 
 			if (min != null && max != null) {
-				return cb.and(cb.ge(numberPath, min), cb.le(numberPath, max));
+				return cb.and(cb.ge(numberExpr, min), cb.le(numberExpr, max));
 			} else if (min != null) {
-				return cb.ge(numberPath, min);
+				return cb.ge(numberExpr, min);
 			} else {
-				return cb.le(numberPath, max);
+				return cb.le(numberExpr, max);
 			}
 		};
 	}
@@ -146,16 +182,45 @@ public class SpecificationUtils {
 				return cb.conjunction();
 			}
 
-			Path<LocalDateTime> datePath = root.get(field);
+			Expression<LocalDateTime> dateExpr = root.get(field);
 
 			if (from != null && to != null) {
-				return cb.and(cb.greaterThanOrEqualTo(datePath, from.atStartOfDay()),
-						cb.lessThanOrEqualTo(datePath, to.atTime(LocalTime.MAX)));
+				return cb.and(cb.greaterThanOrEqualTo(dateExpr, from.atStartOfDay()),
+						cb.lessThanOrEqualTo(dateExpr, to.atTime(LocalTime.MAX)));
 			} else if (from != null) {
-				return cb.greaterThanOrEqualTo(datePath, from.atStartOfDay());
+				return cb.greaterThanOrEqualTo(dateExpr, from.atStartOfDay());
 			} else {
-				return cb.lessThanOrEqualTo(datePath, to.atTime(LocalTime.MAX));
+				return cb.lessThanOrEqualTo(dateExpr, to.atTime(LocalTime.MAX));
 			}
 		};
+	}
+
+	public static <T> Specification<T> nestedBetweenDatesIfNotNull(String nestedField, LocalDate from, LocalDate to) {
+		return (root, query, cb) -> {
+			if (from == null && to == null) {
+				return cb.conjunction();
+			}
+
+			Path<?> path = getNestedPath(root, nestedField);
+			Expression<LocalDateTime> dateExpr = path.as(LocalDateTime.class);
+
+			if (from != null && to != null) {
+				return cb.and(cb.greaterThanOrEqualTo(dateExpr, from.atStartOfDay()),
+						cb.lessThanOrEqualTo(dateExpr, to.atTime(LocalTime.MAX)));
+			} else if (from != null) {
+				return cb.greaterThanOrEqualTo(dateExpr, from.atStartOfDay());
+			} else {
+				return cb.lessThanOrEqualTo(dateExpr, to.atTime(LocalTime.MAX));
+			}
+		};
+	}
+
+	private static <T> Path<?> getNestedPath(Root<T> root, String fieldPath) {
+		String[] parts = fieldPath.split("\\.");
+		Path<?> path = root.get(parts[0]);
+		for (int i = 1; i < parts.length; i++) {
+			path = path.get(parts[i]);
+		}
+		return path;
 	}
 }

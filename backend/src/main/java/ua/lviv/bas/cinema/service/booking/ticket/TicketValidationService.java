@@ -5,7 +5,6 @@ import java.time.LocalDateTime;
 import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
-import ua.lviv.bas.cinema.domain.Session;
 import ua.lviv.bas.cinema.domain.Ticket;
 import ua.lviv.bas.cinema.domain.enums.CinemaSessionStatus;
 import ua.lviv.bas.cinema.domain.enums.TicketStatus;
@@ -16,6 +15,11 @@ import ua.lviv.bas.cinema.exception.domain.ticket.TicketValidationException;
 public class TicketValidationService {
 
 	public void validateTicketForEntry(Ticket ticket) {
+		validateTicketStatus(ticket);
+		validateSession(ticket);
+	}
+
+	private void validateTicketStatus(Ticket ticket) {
 		if (ticket.getStatus() == TicketStatus.USED) {
 			throw TicketValidationException.alreadyUsed();
 		}
@@ -27,14 +31,17 @@ public class TicketValidationService {
 		if (ticket.getStatus() != TicketStatus.ACTIVE) {
 			throw new TicketValidationException("Ticket is not active");
 		}
+	}
 
-		Session session = ticket.getBooking().getSession();
+	private void validateSession(Ticket ticket) {
+		var session = ticket.getBooking().getSession();
+		LocalDateTime now = LocalDateTime.now();
 
-		if (session.getStartTime().isAfter(LocalDateTime.now())) {
+		if (session.getStartTime().isAfter(now)) {
 			throw new TicketValidationException("Session has not started yet");
 		}
 
-		if (session.getStartTime().isBefore(LocalDateTime.now().minusHours(2))) {
+		if (session.getStartTime().isBefore(now.minusHours(2))) {
 			throw new TicketValidationException("Session ended more than 2 hours ago");
 		}
 
