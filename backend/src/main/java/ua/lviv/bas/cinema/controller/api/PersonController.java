@@ -1,14 +1,16 @@
 package ua.lviv.bas.cinema.controller.api;
 
+import java.util.List;
+
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -19,9 +21,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.enums.PersonRole;
-import ua.lviv.bas.cinema.domain.projection.PersonProjection;
 import ua.lviv.bas.cinema.dto.common.PageResponse;
-import ua.lviv.bas.cinema.dto.movie.request.PersonFilterRequest;
 import ua.lviv.bas.cinema.dto.movie.response.PersonResponse;
 import ua.lviv.bas.cinema.service.cinema.PersonService;
 
@@ -36,7 +36,7 @@ public class PersonController {
 	private final PersonService personService;
 
 	@GetMapping("/{id}")
-	@Operation(summary = "Get person by ID", description = "Retrieve detailed information about a person (actor, director, screenwriter) by ID.")
+	@Operation(summary = "Get person by ID", description = "Retrieve person information by ID.")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Person found"),
 			@ApiResponse(responseCode = "404", description = "Person not found") })
 	public ResponseEntity<PersonResponse> getPersonById(
@@ -46,63 +46,37 @@ public class PersonController {
 		return ResponseEntity.ok(person);
 	}
 
-	@GetMapping("/{id}/stats")
-	@Operation(summary = "Get person statistics", description = "Retrieve person with movie statistics.")
-	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Person statistics found"),
-			@ApiResponse(responseCode = "404", description = "Person not found") })
-	public ResponseEntity<PersonProjection> getPersonStats(
-			@Parameter(description = "ID of the person", required = true, example = "1") @PathVariable Long id) {
-		log.info("GET /api/persons/{}/stats - Getting person statistics", id);
-		PersonProjection projection = personService.getPersonProjectionById(id);
-		return ResponseEntity.ok(projection);
-	}
-
-	@GetMapping
-	@Operation(summary = "Search persons with pagination", description = "Search persons by name and/or role with pagination support.")
-	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Persons retrieved successfully") })
-	public ResponseEntity<PageResponse<PersonResponse>> searchPersons(
-			@Parameter(description = "Filter for persons") @ModelAttribute PersonFilterRequest filter,
+	@GetMapping("/search")
+	@Operation(summary = "Search persons", description = "Search persons by name and/or role.")
+	@ApiResponse(responseCode = "200", description = "Persons retrieved successfully")
+	public ResponseEntity<PageResponse<PersonResponse>> searchPersons(@RequestParam(required = false) String name,
+			@RequestParam(required = false) PersonRole role,
 			@Parameter(hidden = true) @PageableDefault(size = 12, sort = "name", direction = Sort.Direction.ASC) Pageable pageable) {
 
-		log.info("GET /api/persons - filter: {}, pageable: {}", filter, pageable);
-		var result = personService.searchPersons(filter, pageable);
+		log.info("GET /api/persons/search - name: '{}', role: {}", name, role);
+		var result = personService.searchPersons(name, role, pageable);
 		return ResponseEntity.ok(PageResponse.from(result));
 	}
 
-	@GetMapping("/catalog")
-	@Operation(summary = "Get persons catalog with statistics", description = "Get persons with movie count statistics for catalog view.")
-	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Persons catalog retrieved successfully") })
-	public ResponseEntity<PageResponse<PersonProjection>> getPersonsCatalog(
-			@Parameter(description = "Filter for persons") @ModelAttribute PersonFilterRequest filter,
-			@Parameter(hidden = true) @PageableDefault(size = 12, sort = "name", direction = Sort.Direction.ASC) Pageable pageable) {
+	@GetMapping("/popular")
+	@Operation(summary = "Get popular persons", description = "Get list of popular persons sorted by movie count. Used for person selection.")
+	@ApiResponse(responseCode = "200", description = "Persons retrieved successfully")
+	public ResponseEntity<List<PersonResponse>> getPopularPersons(@RequestParam(required = false) String name,
+			@RequestParam(required = false) PersonRole role, @RequestParam(defaultValue = "10") int limit) {
 
-		log.info("GET /api/persons/catalog - filter: {}, pageable: {}", filter, pageable);
-		var result = personService.searchPersonProjections(filter, pageable);
-		return ResponseEntity.ok(PageResponse.from(result));
+		log.info("GET /api/persons/popular - name: '{}', role: {}, limit: {}", name, role, limit);
+		List<PersonResponse> persons = personService.searchPopularPersons(name, role, limit);
+		return ResponseEntity.ok(persons);
 	}
 
-	@GetMapping("/role/{role}")
-	@Operation(summary = "Get persons by role", description = "Get paginated list of persons filtered by role.")
-	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Persons retrieved successfully") })
-	public ResponseEntity<PageResponse<PersonResponse>> getPersonsByRole(
-			@Parameter(description = "Role to filter by", required = true, example = "ACTOR") @PathVariable PersonRole role,
-			@Parameter(hidden = true) @PageableDefault(size = 12, sort = "name", direction = Sort.Direction.ASC) Pageable pageable) {
+	@GetMapping("/by-ids")
+	@Operation(summary = "Get persons by IDs", description = "Get multiple persons by their IDs. Used for displaying movie cast/crew.")
+	@ApiResponse(responseCode = "200", description = "Persons retrieved successfully")
+	public ResponseEntity<List<PersonResponse>> getPersonsByIds(
+			@Parameter(description = "Comma-separated list of person IDs", example = "1,2,3") @RequestParam List<Long> ids) {
 
-		log.info("GET /api/persons/role/{} - Getting persons by role", role);
-		var result = personService.getPersonsByRole(role, pageable);
-		return ResponseEntity.ok(PageResponse.from(result));
-	}
-
-	@GetMapping("/role/{role}/catalog")
-	@Operation(summary = "Get persons by role with statistics", description = "Get persons filtered by role with movie count statistics.")
-	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Persons retrieved successfully") })
-	public ResponseEntity<PageResponse<PersonProjection>> getPersonsByRoleWithStats(
-			@Parameter(description = "Role to filter by", required = true, example = "ACTOR") @PathVariable PersonRole role,
-			@Parameter(hidden = true) @PageableDefault(size = 12, sort = "name", direction = Sort.Direction.ASC) Pageable pageable) {
-
-		log.info("GET /api/persons/role/{}/catalog - Getting persons by role with stats", role);
-		var result = personService.getPersonProjectionsByRole(role, pageable);
-		return ResponseEntity.ok(PageResponse.from(result));
+		log.info("GET /api/persons/by-ids - ids: {}", ids);
+		List<PersonResponse> persons = personService.getPersonsByIds(ids);
+		return ResponseEntity.ok(persons);
 	}
 }

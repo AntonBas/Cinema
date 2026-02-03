@@ -1,10 +1,14 @@
 package ua.lviv.bas.cinema.service.cinema;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,8 +17,6 @@ import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.Person;
 import ua.lviv.bas.cinema.domain.enums.PersonRole;
 import ua.lviv.bas.cinema.domain.projection.PersonProjection;
-import ua.lviv.bas.cinema.domain.specification.PersonSpecification;
-import ua.lviv.bas.cinema.dto.movie.request.PersonFilterRequest;
 import ua.lviv.bas.cinema.dto.movie.request.PersonRequest;
 import ua.lviv.bas.cinema.dto.movie.request.QuickCreatePersonRequest;
 import ua.lviv.bas.cinema.dto.movie.response.PersonResponse;
@@ -28,12 +30,13 @@ import ua.lviv.bas.cinema.repository.PersonRepository;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
+@CacheConfig(cacheNames = "persons")
 public class PersonService {
 
 	private final PersonRepository personRepository;
 	private final PersonMapper personMapper;
-	private final PersonSpecification personSpecification;
 
+	@CacheEvict(allEntries = true)
 	@Transactional
 	public PersonResponse createPerson(PersonRequest request) {
 		log.info("Creating person: {}", request.getName());
@@ -49,6 +52,7 @@ public class PersonService {
 		return personMapper.toPersonResponse(saved);
 	}
 
+	@CacheEvict(allEntries = true)
 	@Transactional
 	public PersonResponse quickCreatePerson(QuickCreatePersonRequest request) {
 		log.info("Quick creating person: {} with role: {}", request.getName(), request.getRole());
@@ -59,11 +63,11 @@ public class PersonService {
 		Person person = Person.builder().name(personName).role(request.getRole()).build();
 
 		Person saved = personRepository.save(person);
-
 		log.debug("Person quick-created with ID: {}", saved.getId());
 		return personMapper.toPersonResponse(saved);
 	}
 
+	@Cacheable(key = "#id")
 	public PersonResponse getPersonById(Long id) {
 		log.debug("Retrieving person by id: {}", id);
 
@@ -71,6 +75,7 @@ public class PersonService {
 		return personMapper.toPersonResponse(person);
 	}
 
+	@Caching(evict = { @CacheEvict(key = "#id"), @CacheEvict(key = "'projection-' + #id") })
 	@Transactional
 	public PersonResponse updatePerson(Long id, PersonRequest request) {
 		log.info("Updating person with id: {}", id);
@@ -88,6 +93,7 @@ public class PersonService {
 		return personMapper.toPersonResponse(updated);
 	}
 
+	@Caching(evict = { @CacheEvict(key = "#id"), @CacheEvict(key = "'projection-' + #id") })
 	@Transactional
 	public void deletePerson(Long id) {
 		log.info("Deleting person with id: {}", id);
@@ -99,49 +105,34 @@ public class PersonService {
 		log.debug("Person deleted with ID: {}", id);
 	}
 
-	public Page<PersonResponse> searchPersons(PersonFilterRequest filter, Pageable pageable) {
-		log.info("Searching persons with filter: {}", filter);
-
-		Specification<Person> spec = personSpecification.build(filter);
-		Page<Person> personPage = personRepository.findAll(spec, pageable);
-
-		log.debug("Found {} persons", personPage.getTotalElements());
-		return personPage.map(personMapper::toPersonResponse);
+	@Cacheable(key = "'projections-' + #name + '-' + #role + '-' + #pageable")
+	public Page<PersonProjection> searchPersonProjections(String name, PersonRole role, Pageable pageable) {
+		log.info("Searching person projections: name='{}', role={}", name, role);
+		return personRepository.findProjectionsByFilters(name, role, pageable);
 	}
 
-	public PersonProjection getPersonProjectionById(Long id) {
-		log.debug("Retrieving person projection by id: {}", id);
+	@Cacheable(key = "'search-' + #name + '-' + #role + '-' + #pageable")
+	public Page<PersonResponse> searchPersons(String name, PersonRole role, Pageable pageable) {
+		log.info("Searching persons: name='{}', role={}", name, role);
 
-		PersonProjection projection = personRepository.findProjectionById(id);
-		if (projection == null) {
-			throw new PersonNotFoundException(id);
-		}
-		return projection;
-	}
-
-	public Page<PersonProjection> getPersonProjections(Pageable pageable) {
-		log.debug("Retrieving all person projections");
-		return personRepository.findAllProjections(pageable);
-	}
-
-	public Page<PersonProjection> getPersonProjectionsByRole(PersonRole role, Pageable pageable) {
-		log.debug("Retrieving person projections by role: {}", role);
-		return personRepository.findProjectionsByRole(role, pageable);
-	}
-
-	public Page<PersonProjection> searchPersonProjections(PersonFilterRequest filter, Pageable pageable) {
-		log.info("Searching person projections with filter: {}", filter);
-
-		return personRepository.findProjectionsByFilters(filter.getName(), filter.getRole(), pageable);
-	}
-
-	public Page<PersonResponse> getPersonsByRole(PersonRole role, Pageable pageable) {
-		log.info("Getting persons by role: {}", role);
-
-		Page<Person> persons = personRepository.findByRole(role, pageable);
+		Page<Person> persons = personRepository.findByFilters(name, role, pageable);
 		return persons.map(personMapper::toPersonResponse);
 	}
 
+	@Cacheable(key = "'popular-' + #name + '-' + #role + '-' + #limit")
+	public List<PersonResponse> searchPopularPersons(String name, PersonRole role, int limit) {
+		log.info("Searching popular persons: name='{}', role={}, limit={}", name, role, limit);
+
+		Page<PersonProjection> page = personRepository.findProjectionsByFilters(name, role,
+				org.springframework.data.domain.PageRequest.of(0, 100));
+
+		return page.getContent().stream().sorted((a, b) -> Integer.compare(b.getMovieCount(), a.getMovieCount()))
+				.limit(limit).map(proj -> PersonResponse.builder().id(proj.getId()).name(proj.getName())
+						.role(proj.getRole()).build())
+				.collect(Collectors.toList());
+	}
+
+	@Cacheable(key = "'by-ids-' + #ids.hashCode()")
 	public List<PersonResponse> getPersonsByIds(List<Long> ids) {
 		log.debug("Retrieving persons by ids: {}", ids);
 
@@ -153,21 +144,8 @@ public class PersonService {
 		return personMapper.toPersonResponseList(persons);
 	}
 
-	public List<PersonResponse> getAllPersons() {
-		log.debug("Retrieving all persons");
-		return personMapper.toPersonResponseList(personRepository.findAll());
-	}
-
-	public boolean existsById(Long id) {
-		return personRepository.existsById(id);
-	}
-
 	public boolean existsByNameAndRole(String name, PersonRole role) {
 		return personRepository.existsByNameAndRole(name.trim(), role);
-	}
-
-	public long countByRole(PersonRole role) {
-		return personRepository.countByRole(role);
 	}
 
 	private Person findPersonById(Long id) {
@@ -175,13 +153,8 @@ public class PersonService {
 	}
 
 	private void validatePersonUniqueness(String name, PersonRole role, Long excludeId) {
-		boolean exists;
-
-		if (excludeId != null) {
-			exists = personRepository.existsByNameAndRoleAndIdNot(name, role, excludeId);
-		} else {
-			exists = personRepository.existsByNameAndRole(name, role);
-		}
+		boolean exists = excludeId != null ? personRepository.existsByNameAndRoleAndIdNot(name, role, excludeId)
+				: personRepository.existsByNameAndRole(name, role);
 
 		if (exists) {
 			throw new DuplicateEntityException("Person", name + " (" + role + ")");
@@ -189,15 +162,10 @@ public class PersonService {
 	}
 
 	private void checkPersonUsageInMovies(Person person) {
-		long actorCount = personRepository.countByActorsId(person.getId());
-		long directorCount = personRepository.countByDirectorsId(person.getId());
-		long screenwriterCount = personRepository.countByScreenwritersId(person.getId());
+		long usageCount = personRepository.countMovieUsage(person.getId());
 
-		long totalUsage = actorCount + directorCount + screenwriterCount;
-
-		if (totalUsage > 0) {
-			throw new PersonHasMoviesException(person.getId(), person.getName(), actorCount, directorCount,
-					screenwriterCount);
+		if (usageCount > 0) {
+			throw new PersonHasMoviesException(person.getId(), person.getName(), usageCount);
 		}
 	}
 }

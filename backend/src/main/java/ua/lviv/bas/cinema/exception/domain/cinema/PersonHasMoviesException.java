@@ -29,4 +29,10 @@ public class PersonHasMoviesException extends BusinessException {
 						personName, actorCount + directorCount + screenwriterCount, actorCount, directorCount,
 						screenwriterCount));
 	}
+
+	public PersonHasMoviesException(Long personId, String personName, long totalMovieCount) {
+		super(String.format("Person '%s' (id: %d) cannot be deleted", personName, personId), ERROR_CODE, STATUS,
+				String.format("Person '%s' is associated with %d movie(s) and cannot be deleted", personName,
+						totalMovieCount));
+	}
 }
