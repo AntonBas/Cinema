@@ -36,14 +36,22 @@ public interface SessionRepository extends JpaRepository<Session, Long>, JpaSpec
 	@Query("SELECT s FROM Session s WHERE s.status = 'SCHEDULED' AND s.startTime <= :currentTime")
 	List<Session> findSessionsToStart(@Param("currentTime") LocalDateTime currentTime);
 
-	@Query("SELECT s FROM Session s WHERE s.status = 'ONGOING' "
-			+ "AND s.startTime + s.movie.durationMinutes * FUNCTION('NUMTODSINTERVAL', 1, 'MINUTE') <= :currentTime")
+	@Query("""
+			SELECT s FROM Session s
+			WHERE s.status = 'ONGOING'
+			AND FUNCTION('TIMESTAMPADD', MINUTE, s.movie.durationMinutes, s.startTime) <= :currentTime
+			""")
 	List<Session> findSessionsToComplete(@Param("currentTime") LocalDateTime currentTime);
 
-	@Query("SELECT CASE WHEN COUNT(s) > 0 THEN true ELSE false END " + "FROM Session s " + "JOIN s.movie m "
-			+ "WHERE s.hall.id = :hallId " + "AND (:excludeSessionId IS NULL OR s.id != :excludeSessionId) "
-			+ "AND s.status IN ('SCHEDULED', 'ONGOING') " + "AND ((s.startTime < :endTime) "
-			+ "AND (s.startTime + m.durationMinutes * FUNCTION('NUMTODSINTERVAL', 1, 'MINUTE') > :startTime))")
+	@Query("""
+			SELECT CASE WHEN COUNT(s) > 0 THEN true ELSE false END
+			FROM Session s
+			WHERE s.hall.id = :hallId
+			AND (:excludeSessionId IS NULL OR s.id != :excludeSessionId)
+			AND s.status IN ('SCHEDULED', 'ONGOING')
+			AND s.startTime < :endTime
+			AND FUNCTION('TIMESTAMPADD', MINUTE, s.movie.durationMinutes, s.startTime) > :startTime
+			""")
 	boolean existsConflictingSession(@Param("hallId") Long hallId, @Param("startTime") LocalDateTime startTime,
 			@Param("endTime") LocalDateTime endTime, @Param("excludeSessionId") Long excludeSessionId);
 }
