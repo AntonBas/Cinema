@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.EmailToken;
 import ua.lviv.bas.cinema.domain.User;
+import ua.lviv.bas.cinema.domain.enums.TokenType;
 import ua.lviv.bas.cinema.exception.domain.auth.InvalidTokenException;
 import ua.lviv.bas.cinema.exception.domain.auth.SamePasswordException;
 import ua.lviv.bas.cinema.exception.domain.auth.TokenExpiredException;
@@ -24,14 +25,15 @@ import ua.lviv.bas.cinema.service.notification.EmailTokenGeneratorService;
 public class UserPasswordResetService {
 
 	private final EmailTokenGeneratorService tokenGeneratorService;
-	private final UserService userService;
 	private final UserRepository userRepository;
 	private final PasswordEncoder passwordEncoder;
 	private final EmailTokenRepository tokenRepository;
 
 	public void requestPasswordReset(String email) {
 		log.info("Password reset requested for email: {}", email);
-		User user = userService.getByEmail(email);
+
+		User user = userRepository.findByEmail(email)
+				.orElseThrow(() -> new EmailNotVerifiedException("reset password", email));
 
 		if (!user.isEnabled()) {
 			throw new EmailNotVerifiedException("reset password", email);
@@ -46,6 +48,10 @@ public class UserPasswordResetService {
 		EmailToken resetToken = tokenRepository.findByToken(token)
 				.orElseThrow(() -> new InvalidTokenException("password-reset"));
 
+		if (resetToken.getType() != TokenType.PASSWORD_RESET) {
+			throw new InvalidTokenException("password-reset");
+		}
+
 		if (LocalDateTime.now().isAfter(resetToken.getExpiresAt())) {
 			throw new TokenExpiredException("password-reset");
 		}
@@ -54,9 +60,9 @@ public class UserPasswordResetService {
 			throw new InvalidTokenException("password-reset");
 		}
 
-		var user = resetToken.getUser();
+		User user = resetToken.getUser();
 
-		if (user.getPassword() != null && passwordEncoder.matches(newPassword, user.getPassword())) {
+		if (passwordEncoder.matches(newPassword, user.getPassword())) {
 			throw new SamePasswordException();
 		}
 
@@ -67,6 +73,6 @@ public class UserPasswordResetService {
 		resetToken.setConfirmedAt(LocalDateTime.now());
 		tokenRepository.save(resetToken);
 
-		log.info("Password updated successfully for user: {}", user.getEmail());
+		log.info("Password reset successfully for user: {}", user.getEmail());
 	}
 }

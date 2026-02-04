@@ -15,8 +15,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -47,7 +45,8 @@ public class UserController {
 			@ApiResponse(responseCode = "404", description = "User not found") })
 	public ResponseEntity<UserProfileResponse> getProfile(
 			@Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
-		log.info("GET /api/users/profile - Retrieving profile for user ID: {}", userDetails.getUserId());
+
+		log.info("GET /api/users/profile - user ID: {}", userDetails.getUserId());
 		return ResponseEntity.ok(userService.getUserProfile(userDetails.getUserId()));
 	}
 
@@ -59,37 +58,25 @@ public class UserController {
 			@ApiResponse(responseCode = "404", description = "User not found") })
 	public ResponseEntity<UserProfileResponse> updateProfile(
 			@Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
+			@Valid @RequestBody UserUpdateRequest request) {
 
-			@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Updated profile data", required = true, content = @Content(schema = @Schema(implementation = UserUpdateRequest.class))) @Valid @RequestBody UserUpdateRequest request) {
-		log.info("PUT /api/users/profile - Updating profile for user ID: {}", userDetails.getUserId());
+		log.info("PUT /api/users/profile - user ID: {}", userDetails.getUserId());
 		return ResponseEntity.ok(userService.updateUser(userDetails.getUserId(), request));
 	}
 
 	@PostMapping("/email/change-request")
-	@Operation(summary = "Request email change", description = "Initiate email change process. Sends confirmation email to the new address.")
+	@Operation(summary = "Request email change", description = "Initiate email change process.")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Email change request sent successfully"),
 			@ApiResponse(responseCode = "400", description = "Invalid email format or email already in use"),
 			@ApiResponse(responseCode = "401", description = "User not authenticated"),
 			@ApiResponse(responseCode = "404", description = "User not found") })
 	public ResponseEntity<Map<String, String>> requestEmailChange(
 			@Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
+			@RequestParam String newEmail) {
 
-			@Parameter(description = "New email address", required = true, example = "new.email@example.com") @RequestParam String newEmail) {
-		log.info("POST /api/users/email/change-request - Requesting email change for user ID: {}",
-				userDetails.getUserId());
+		log.info("POST /api/users/email/change-request - user ID: {}", userDetails.getUserId());
 		userService.requestEmailChange(userDetails.getUserId(), newEmail);
 		return ResponseEntity.ok(Map.of("message", "Confirmation email sent to your new address"));
-	}
-
-	@PostMapping("/email/confirm-change")
-	@Operation(summary = "Confirm email change", description = "Confirm email change using the token sent to the new email address.")
-	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Email changed successfully"),
-			@ApiResponse(responseCode = "400", description = "Invalid or expired token"),
-			@ApiResponse(responseCode = "404", description = "Token not found") })
-	public ResponseEntity<UserProfileResponse> confirmEmailChange(
-			@Parameter(description = "Email change confirmation token", required = true, example = "abc123def456") @RequestParam String token) {
-		log.info("POST /api/users/email/confirm-change - Confirming email change with token");
-		return ResponseEntity.ok(userService.confirmEmailChange(token));
 	}
 
 	@PatchMapping("/password")
@@ -100,9 +87,9 @@ public class UserController {
 			@ApiResponse(responseCode = "404", description = "User not found") })
 	public ResponseEntity<Map<String, String>> updatePassword(
 			@Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
+			@Valid @RequestBody UserPasswordUpdateRequest request) {
 
-			@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Password update request", required = true, content = @Content(schema = @Schema(implementation = UserPasswordUpdateRequest.class))) @Valid @RequestBody UserPasswordUpdateRequest request) {
-		log.info("PATCH /api/users/password - Updating password for user ID: {}", userDetails.getUserId());
+		log.info("PATCH /api/users/password - user ID: {}", userDetails.getUserId());
 		userService.updateUserPassword(userDetails.getUserId(), request);
 		return ResponseEntity.ok(Map.of("message", "Password updated successfully"));
 	}

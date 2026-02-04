@@ -5,7 +5,10 @@ import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -15,41 +18,27 @@ import ua.lviv.bas.cinema.domain.enums.UserRole;
 import ua.lviv.bas.cinema.domain.enums.VerificationStatus;
 
 @Repository
-public interface UserRepository extends JpaRepository<User, Long> {
+public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificationExecutor<User> {
 
 	Optional<User> findByEmail(String email);
 
 	boolean existsByEmail(String email);
 
-	List<User> findByEnabledTrue();
+	@Query("SELECT COUNT(t) FROM Ticket t WHERE t.user.id = :userId")
+	long countTicketsByUserId(@Param("userId") Long userId);
 
-	List<User> findByUserRoleAndEnabledTrue(UserRole role);
+	@EntityGraph(attributePaths = { "tickets", "bonusCard" })
+	@Override
+	Page<User> findAll(Specification<User> spec, Pageable pageable);
 
-	long countByUserRoleAndEnabledTrue(UserRole role);
-
-	@Query(value = """
-			SELECT u.* FROM users u
-			LEFT JOIN bonus_cards bc ON u.id = bc.user_id
-			WHERE (:search IS NULL OR
-			       LOWER(u.email) LIKE '%' || LOWER(COALESCE(:search, '')) || '%' OR
-			       LOWER(u.first_name) LIKE '%' || LOWER(COALESCE(:search, '')) || '%' OR
-			       LOWER(u.last_name) LIKE '%' || LOWER(COALESCE(:search, '')) || '%')
-			AND (:role IS NULL OR u.user_role = :role)
-			AND (:enabled IS NULL OR u.enabled = :enabled)
-			""", countQuery = """
-			SELECT COUNT(*) FROM users u
-			WHERE (:search IS NULL OR
-			       LOWER(u.email) LIKE '%' || LOWER(COALESCE(:search, '')) || '%' OR
-			       LOWER(u.first_name) LIKE '%' || LOWER(COALESCE(:search, '')) || '%' OR
-			       LOWER(u.last_name) LIKE '%' || LOWER(COALESCE(:search, '')) || '%')
-			AND (:role IS NULL OR u.user_role = :role)
-			AND (:enabled IS NULL OR u.enabled = :enabled)
-			""", nativeQuery = true)
-	Page<User> findFilteredUsers(@Param("search") String search, @Param("role") String role,
-			@Param("enabled") Boolean enabled, Pageable pageable);
+	@EntityGraph(attributePaths = { "tickets", "bonusCard" })
+	@Override
+	Optional<User> findById(Long id);
 
 	@Query("SELECT u FROM User u WHERE " + "u.verificationStatus = :status AND " + "u.enabled = true AND "
 			+ "DAY(u.dateOfBirth) = :day AND " + "MONTH(u.dateOfBirth) = :month")
 	List<User> findVerifiedUsersWithBirthday(@Param("status") VerificationStatus status, @Param("day") int day,
 			@Param("month") int month);
+
+	long countByUserRoleAndEnabledTrue(UserRole role);
 }
