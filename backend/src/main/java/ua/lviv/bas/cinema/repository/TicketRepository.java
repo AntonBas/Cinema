@@ -51,9 +51,9 @@ public interface TicketRepository extends JpaRepository<Ticket, Long>, JpaSpecif
 	@Query("SELECT t.user.id, COUNT(t) FROM Ticket t WHERE t.user.id IN :userIds GROUP BY t.user.id")
 	List<Object[]> countTicketsByUserIds(@Param("userIds") List<Long> userIds);
 
-	@Query("SELECT COUNT(t) FROM Ticket t WHERE t.status = :status AND DATE(t.purchaseTime) = CURRENT_DATE")
+	@Query("SELECT COUNT(t) FROM Ticket t WHERE t.status = :status AND CAST(t.purchaseTime AS date) = CURRENT_DATE")
 	long countByStatusToday(@Param("status") TicketStatus status);
 
-	@Query("SELECT COUNT(t) FROM Ticket t WHERE DATE(t.purchaseTime) = CURRENT_DATE")
+	@Query("SELECT COUNT(t) FROM Ticket t WHERE CAST(t.purchaseTime AS date) = CURRENT_DATE")
 	long countToday();
 }
