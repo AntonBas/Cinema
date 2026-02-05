@@ -226,7 +226,6 @@ export const GenreTab: React.FC = () => {
           placeholder="Search genres..."
           delay={500}
           className={styles.searchInput}
-          initialValue={currentSearch}
         />
       </div>
 
