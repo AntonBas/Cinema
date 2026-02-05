@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import styles from './SearchInput.module.css';
 
 export interface SearchInputProps {
@@ -7,62 +7,65 @@ export interface SearchInputProps {
     delay?: number;
     className?: string;
     disabled?: boolean;
-    value?: string;
 }
+
 export const SearchInput: React.FC<SearchInputProps> = ({
     onSearch,
     placeholder = "Search...",
     delay = 300,
     className = '',
-    disabled = false,
-    value = ''
+    disabled = false
 }) => {
-    const [query, setQuery] = useState(value);
-    const [isSearching, setIsSearching] = useState(false);
+    const [query, setQuery] = useState('');
+    const [timer, setTimer] = useState<NodeJS.Timeout | null>(null);
 
     useEffect(() => {
-        setQuery(value);
-    }, [value]);
+        return () => {
+            if (timer) {
+                clearTimeout(timer);
+            }
+        };
+    }, [timer]);
 
-    const handleSearch = useCallback((searchQuery: string) => {
-        onSearch(searchQuery);
-        setIsSearching(false);
-    }, [onSearch]);
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const newQuery = e.target.value;
+        setQuery(newQuery);
 
-    useEffect(() => {
-        if (query.trim() === '') {
-            handleSearch('');
-            return;
+        if (timer) {
+            clearTimeout(timer);
         }
 
-        setIsSearching(true);
-        const timeoutId = setTimeout(() => {
-            handleSearch(query);
+        const newTimer = setTimeout(() => {
+            onSearch(newQuery);
         }, delay);
 
-        return () => clearTimeout(timeoutId);
-    }, [query, delay, handleSearch]);
+        setTimer(newTimer);
+    };
 
     const handleClear = () => {
         setQuery('');
-        handleSearch('');
+        onSearch('');
     };
+
+    const inputId = `search-input-${Math.random().toString(36).substr(2, 9)}`;
 
     return (
         <div className={`${styles.searchContainer} ${className}`}>
             <div className={styles.searchInputWrapper}>
                 <span className={styles.searchIcon} aria-hidden="true">🔍</span>
                 <input
+                    id={inputId}
                     type="text"
                     value={query}
-                    onChange={(e) => setQuery(e.target.value)}
+                    onChange={handleChange}
                     placeholder={placeholder}
                     className={styles.searchInput}
                     aria-label="Search"
                     disabled={disabled}
+                    name={inputId}
+                    autoComplete="off"
                 />
-                {isSearching && <div className={styles.spinner} aria-label="Searching">⏳</div>}
-                {query && !isSearching && (
+                {query && (
                     <button
                         type="button"
                         onClick={handleClear}

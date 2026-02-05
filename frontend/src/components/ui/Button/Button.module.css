@@ -116,6 +116,19 @@
     font-size: 1.1em;
 }
 
+.sortIcon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9em;
+    margin-left: var(--space-1);
+    font-weight: bold;
+}
+
+.hasSortIcon {
+    padding-right: var(--space-3);
+}
+
 .button:focus {
     outline: none;
     box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb), var(--opacity-high));

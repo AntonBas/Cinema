@@ -1,13 +1,22 @@
 export interface PageResponse<T> {
     content: T[];
+    number: number;
+    size: number;
     totalElements: number;
     totalPages: number;
-    size: number;
-    number: number;
     first: boolean;
     last: boolean;
     empty: boolean;
+    hasNext: boolean;
+    hasPrevious: boolean;
     numberOfElements?: number;
+    sort?: SortInfo[];
+}
+
+export interface SortInfo {
+    property: string;
+    direction: string;
+    ascending: boolean;
 }
 
 export interface SearchParams {

@@ -83,14 +83,23 @@ export const getPaginationInfo = <T>(pageResponse: PageResponse<T>) => {
         totalElements,
         startElement,
         endElement,
-        hasPrevious: currentPage > 0,
-        hasNext: currentPage < totalPages - 1,
+        hasPrevious: pageResponse.hasPrevious !== undefined ? pageResponse.hasPrevious : currentPage > 0,
+        hasNext: pageResponse.hasNext !== undefined ? pageResponse.hasNext : currentPage < totalPages - 1,
         isFirst: pageResponse.first,
         isLast: pageResponse.last,
-        isEmpty: pageResponse.empty
+        isEmpty: pageResponse.empty,
+        sort: pageResponse.sort
     };
 };
 
 export const createSortString = (property: string, direction: 'asc' | 'desc' = 'asc'): string => {
     return `${property},${direction}`;
+};
+
+export const parseSortString = (sortString: string): { property: string, direction: 'asc' | 'desc' } => {
+    const [property, direction] = sortString.split(',');
+    return {
+        property,
+        direction: (direction?.toLowerCase() as 'asc' | 'desc') || 'asc'
+    };
 };

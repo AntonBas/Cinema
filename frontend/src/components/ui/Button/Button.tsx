@@ -5,18 +5,14 @@ import clsx from 'clsx';
 export type ButtonVariant = 'primary' | 'secondary' | 'error' | 'success' | 'cancel' | 'outline';
 export type ButtonSize = 'small' | 'medium' | 'large';
 
-export interface ButtonProps {
+export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
     children: React.ReactNode;
     variant?: ButtonVariant;
     size?: ButtonSize;
-    type?: 'button' | 'submit' | 'reset';
     loading?: boolean;
     disabled?: boolean;
-    onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
-    className?: string;
-    style?: React.CSSProperties;
-    'aria-label'?: string;
     icon?: React.ReactNode;
+    sortIcon?: 'asc' | 'desc' | 'none';
 }
 
 export const Button: React.FC<ButtonProps> = ({
@@ -26,11 +22,10 @@ export const Button: React.FC<ButtonProps> = ({
     type = 'button',
     loading = false,
     disabled = false,
-    onClick,
+    icon,
+    sortIcon = 'none',
     className = '',
-    style,
-    'aria-label': ariaLabel,
-    icon
+    ...props
 }) => {
     const buttonClass = clsx(
         styles.button,
@@ -38,22 +33,35 @@ export const Button: React.FC<ButtonProps> = ({
         styles[size],
         loading && styles.loading,
         disabled && styles.disabled,
+        sortIcon !== 'none' && styles.hasSortIcon,
         className
     );
+
+    const getSortIcon = () => {
+        switch (sortIcon) {
+            case 'asc':
+                return '↑';
+            case 'desc':
+                return '↓';
+            default:
+                return null;
+        }
+    };
+
+    const sortIconElement = getSortIcon();
 
     return (
         <button
             type={type}
             className={buttonClass}
             disabled={disabled || loading}
-            onClick={onClick}
-            style={style}
-            aria-label={ariaLabel || (loading ? 'Loading' : undefined)}
+            {...props}
             aria-busy={loading}
         >
             {loading && <span className={styles.spinner} aria-hidden="true">⏳</span>}
             {icon && <span className={styles.icon}>{icon}</span>}
             {children}
+            {sortIconElement && <span className={styles.sortIcon}>{sortIconElement}</span>}
         </button>
     );
 };
