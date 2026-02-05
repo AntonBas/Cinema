@@ -1,82 +1,69 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import type { GenreResponse, GenreRequest } from '@/types/genre';
+import React, { useState, useEffect, useRef } from 'react';
+import type { GenreResponse, GenreStatsResponse } from '@/types/genre';
 import { useGenres } from '@/hooks/features/genres/useGenres';
-import {
-  Notification,
-  DeleteConfirmModal,
-  SearchInput,
-  Button,
-  Input,
-  Modal,
-  Pagination
-} from '@/components/ui';
+import { Notification, SearchInput, Button, Pagination, DeleteConfirmModal } from '@/components/ui';
+import { GenreTable } from './GenreTable/GenreTable';
+import { GenreFormModal } from './GenreFormModal/GenreFormModal';
 import styles from './GenreTab.module.css';
 
 export const GenreTab: React.FC = () => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const {
+    statsGenres,
+    pagination,
+    loading,
+    getAllWithStats,
+    create,
+    update,
+    remove,
+    currentPage: hookCurrentPage,
+    totalPages: hookTotalPages,
+    pageSize: hookPageSize,
+    nextPage,
+    prevPage,
+    refresh,
+    currentSearch
+  } = useGenres();
+
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [editingGenre, setEditingGenre] = useState<GenreResponse | null>(null);
   const [deletingGenre, setDeletingGenre] = useState<GenreResponse | null>(null);
-  const [formData, setFormData] = useState<GenreRequest>({ name: '' });
-  const [searchQuery, setSearchQuery] = useState('');
-  const [currentPage, setCurrentPage] = useState(0);
-  const [successMessage, setSuccessMessage] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
-
-  const {
-    genres,
-    pagination,
-    loading,
-    search,
-    getAllPaginated,
-    create,
-    update,
-    remove
-  } = useGenres();
-
-  const loadGenres = useCallback(async () => {
-    try {
-      if (searchQuery.trim()) {
-        await search({
-          query: searchQuery,
-          page: currentPage,
-          size: 12
-        });
-      } else {
-        await getAllPaginated({
-          page: currentPage,
-          size: 12
-        });
-      }
-      setErrorMessage('');
-    } catch (error) {
-      setErrorMessage('Failed to load genres');
-    }
-  }, [searchQuery, currentPage, search, getAllPaginated]);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isInitialLoad = useRef(false);
 
   useEffect(() => {
-    loadGenres();
-  }, [loadGenres]);
+    if (!isInitialLoad.current) {
+      isInitialLoad.current = true;
+      getAllWithStats({
+        page: 0,
+        size: 20
+      });
+    }
+  }, [getAllWithStats]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!formData.name.trim()) {
+  const handleSubmit = async (name: string) => {
+    if (!name.trim()) {
       setErrorMessage('Genre name is required');
       return;
     }
 
     try {
       if (editingGenre?.id) {
-        await update(editingGenre.id, formData);
+        await update(editingGenre.id, { name });
         setSuccessMessage('Genre updated successfully!');
       } else {
-        await create(formData);
+        await create({ name });
         setSuccessMessage('Genre created successfully!');
       }
 
-      resetForm();
-      await loadGenres();
+      closeFormModal();
+      await getAllWithStats({
+        page: 0,
+        size: hookPageSize,
+        search: currentSearch
+      });
     } catch (err) {
       setErrorMessage('Failed to save genre');
     }
@@ -89,10 +76,14 @@ export const GenreTab: React.FC = () => {
       await remove(deletingGenre.id);
       setSuccessMessage('Genre deleted successfully!');
 
-      if (genres.length === 1 && currentPage > 0) {
-        setCurrentPage(currentPage - 1);
+      if (statsGenres.length === 1 && hookCurrentPage > 0) {
+        await getAllWithStats({
+          page: hookCurrentPage - 1,
+          size: hookPageSize,
+          search: currentSearch
+        });
       } else {
-        await loadGenres();
+        await refresh();
       }
     } catch (err) {
       setErrorMessage('Failed to delete genre');
@@ -102,32 +93,60 @@ export const GenreTab: React.FC = () => {
     }
   };
 
-  const handleDeleteCancel = () => {
-    setIsDeleteModalOpen(false);
-    setDeletingGenre(null);
+  const handleEdit = (genre: GenreStatsResponse) => {
+    setEditingGenre({ id: genre.id, name: genre.name });
+    setIsFormModalOpen(true);
   };
 
-  const resetForm = () => {
-    setIsModalOpen(false);
-    setEditingGenre(null);
-    setFormData({ name: '' });
+  const handleDelete = (genre: GenreStatsResponse) => {
+    setDeletingGenre({ id: genre.id, name: genre.name });
+    setIsDeleteModalOpen(true);
   };
 
-  const handleEdit = (genre: GenreResponse) => {
-    setEditingGenre(genre);
-    setFormData({ name: genre.name });
-    setIsModalOpen(true);
-  };
-
-  const handleSearch = useCallback((query: string) => {
-    if (query !== searchQuery) {
-      setSearchQuery(query);
-      setCurrentPage(0);
+  const handleSearch = (query: string) => {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
     }
-  }, [searchQuery]);
 
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
+    searchTimeoutRef.current = setTimeout(async () => {
+      try {
+        await getAllWithStats({
+          page: 0,
+          size: hookPageSize,
+          ...(query.trim() && { search: query })
+        });
+      } catch (error) {
+        setErrorMessage('Failed to search genres');
+      }
+    }, 500);
+  };
+
+  const handlePageChange = async (page: number) => {
+    try {
+      if (page === hookCurrentPage + 1) {
+        await nextPage();
+      } else if (page === hookCurrentPage - 1) {
+        await prevPage();
+      } else {
+        await getAllWithStats({
+          page: page,
+          size: hookPageSize,
+          search: currentSearch
+        });
+      }
+    } catch (error) {
+      setErrorMessage('Failed to change page');
+    }
+  };
+
+  const openFormModal = () => {
+    setEditingGenre(null);
+    setIsFormModalOpen(true);
+  };
+
+  const closeFormModal = () => {
+    setIsFormModalOpen(false);
+    setEditingGenre(null);
   };
 
   const handleCloseNotification = () => {
@@ -135,7 +154,15 @@ export const GenreTab: React.FC = () => {
     setSuccessMessage('');
   };
 
-  if (loading && genres.length === 0) {
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  if (loading.getAllWithStats && !statsGenres.length) {
     return (
       <div className={styles.loading}>
         <div className={styles.loadingSpinner}></div>
@@ -146,10 +173,8 @@ export const GenreTab: React.FC = () => {
 
   const getDisplayRange = () => {
     if (!pagination) return { start: 0, end: 0 };
-
-    const startItem = currentPage * 12 + 1;
-    const endItem = Math.min((currentPage + 1) * 12, pagination.totalElements);
-
+    const startItem = hookCurrentPage * hookPageSize + 1;
+    const endItem = Math.min((hookCurrentPage + 1) * hookPageSize, pagination.totalElements);
     return { start: startItem, end: endItem };
   };
 
@@ -180,10 +205,15 @@ export const GenreTab: React.FC = () => {
       )}
 
       <div className={styles.header}>
-        <h2>Genre Management</h2>
+        <div className={styles.headerContent}>
+          <h2>Genre Management</h2>
+          <p className={styles.subtitle}>
+            Manage movie genres and their statistics
+          </p>
+        </div>
         <Button
           variant="primary"
-          onClick={() => setIsModalOpen(true)}
+          onClick={openFormModal}
           className={styles.addButton}
         >
           Add Genre
@@ -196,132 +226,59 @@ export const GenreTab: React.FC = () => {
           placeholder="Search genres..."
           delay={500}
           className={styles.searchInput}
+          initialValue={currentSearch}
         />
-
-        {pagination && (
-          <div className={styles.resultsInfo}>
-            <span>
-              Showing {start}-{end} of {pagination.totalElements} genres
-              {searchQuery && ` for "${searchQuery}"`}
-            </span>
-          </div>
-        )}
       </div>
 
-      <div className={styles.grid}>
-        {genres.length === 0 && !loading ? (
-          <div className={styles.empty}>
-            <div className={styles.emptyIcon}>📚</div>
-            <h3>No genres found</h3>
-            <p>
-              {searchQuery
-                ? `No genres found for "${searchQuery}"`
-                : 'Create your first genre to get started!'
-              }
-            </p>
-            {!searchQuery && (
-              <Button
-                variant="primary"
-                onClick={() => setIsModalOpen(true)}
-                className={styles.addButton}
-              >
-                Create First Genre
-              </Button>
-            )}
-          </div>
-        ) : (
-          genres.map(genre => (
-            <div key={genre.id} className={styles.card}>
-              <div className={styles.cardContent}>
-                <h3 className={styles.name}>{genre.name}</h3>
-                <div className={styles.actions}>
-                  <Button
-                    variant="success"
-                    size="small"
-                    onClick={() => handleEdit(genre)}
-                  >
-                    Edit
-                  </Button>
-                  <Button
-                    variant="error"
-                    size="small"
-                    onClick={() => {
-                      setDeletingGenre(genre);
-                      setIsDeleteModalOpen(true);
-                    }}
-                  >
-                    Delete
-                  </Button>
-                </div>
-              </div>
-            </div>
-          ))
-        )}
-      </div>
+      {pagination && (
+        <div className={styles.resultsInfo}>
+          Showing {start}-{end} of {pagination.totalElements} genres
+          {currentSearch && ` for "${currentSearch}"`}
+        </div>
+      )}
 
-      {pagination && pagination.totalPages > 1 && (
+      <GenreTable
+        genres={statsGenres}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        loading={loading.getAllWithStats}
+      />
+
+      {pagination && hookTotalPages > 1 && (
         <div className={styles.paginationWrapper}>
           <Pagination
-            currentPage={currentPage}
-            totalPages={pagination.totalPages}
+            currentPage={hookCurrentPage}
+            totalPages={hookTotalPages}
             totalElements={pagination.totalElements}
-            pageSize={pagination.size}
+            pageSize={hookPageSize}
             onPageChange={handlePageChange}
             variant="pages"
-            loading={loading}
+            loading={loading.getAllWithStats}
             className={styles.pagination}
             showInfo={false}
           />
         </div>
       )}
 
-      <Modal
-        isOpen={isModalOpen}
-        onClose={resetForm}
-        title={editingGenre ? 'Edit Genre' : 'Add New Genre'}
-        size="small"
-      >
-        <form onSubmit={handleSubmit} className={styles.form}>
-          <Input
-            type="text"
-            placeholder="Genre name"
-            value={formData.name}
-            onChange={(value) => setFormData({ name: value })}
-            required
-            maxLength={50}
-            disabled={loading}
-            className={styles.formInput}
-          />
-          <div className={styles.formHint}>Maximum 50 characters</div>
-
-          <div className={styles.formActions}>
-            <Button
-              type="button"
-              variant="cancel"
-              onClick={resetForm}
-              disabled={loading}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              variant="primary"
-              loading={loading}
-              disabled={loading}
-            >
-              {editingGenre ? 'Update' : 'Create'} Genre
-            </Button>
-          </div>
-        </form>
-      </Modal>
+      <GenreFormModal
+        isOpen={isFormModalOpen}
+        onClose={closeFormModal}
+        onSubmit={handleSubmit}
+        initialName={editingGenre?.name || ''}
+        loading={loading.create || loading.update}
+        isEditing={!!editingGenre}
+      />
 
       <DeleteConfirmModal
         isOpen={isDeleteModalOpen}
         onConfirm={handleDeleteConfirm}
-        onCancel={handleDeleteCancel}
+        onCancel={() => {
+          setIsDeleteModalOpen(false);
+          setDeletingGenre(null);
+        }}
         itemName={deletingGenre?.name}
         itemType="genre"
-        isDeleting={loading}
+        isDeleting={loading.remove}
       />
     </div>
   );

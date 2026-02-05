@@ -8,7 +8,7 @@ export interface GenreResponse {
 }
 
 export interface GenreStatsResponse extends GenreResponse {
-    moviesCount?: number;
+    movieCount: number;
     popularity?: number;
 }
 
