@@ -100,20 +100,16 @@ public class AdminGenreController {
 	@Operation(summary = "Get genres with statistics", description = "Retrieve paginated list of genres with movie counts.")
 	@ApiResponse(responseCode = "200", description = "Genres retrieved successfully")
 	public ResponseEntity<PageResponse<GenreProjection>> getGenresWithStats(
+			@RequestParam(required = false) String search,
 			@PageableDefault(size = 20, sort = "name", direction = Sort.Direction.ASC) Pageable pageable) {
-		log.info("GET /api/admin/genres - Getting genres with statistics");
-		var result = genreService.getGenreProjectionsPage(pageable);
-		return ResponseEntity.ok(PageResponse.from(result));
-	}
-
-	@GetMapping("/search")
-	@Operation(summary = "Search genres with statistics", description = "Search genres by name with movie count statistics.")
-	@ApiResponse(responseCode = "200", description = "Genres retrieved successfully")
-	public ResponseEntity<PageResponse<GenreProjection>> searchGenresWithStats(
-			@RequestParam(required = false) String query,
-			@PageableDefault(size = 20, sort = "name", direction = Sort.Direction.ASC) Pageable pageable) {
-		log.info("GET /api/admin/genres/search - query: '{}'", query);
-		var result = genreService.searchGenreProjections(query, pageable);
-		return ResponseEntity.ok(PageResponse.from(result));
+		if (search != null && !search.trim().isEmpty()) {
+			log.info("GET /api/admin/genres - search: '{}'", search);
+			var result = genreService.searchGenreProjections(search, pageable);
+			return ResponseEntity.ok(PageResponse.from(result));
+		} else {
+			log.info("GET /api/admin/genres - Getting genres with statistics");
+			var result = genreService.getGenreProjectionsPage(pageable);
+			return ResponseEntity.ok(PageResponse.from(result));
+		}
 	}
 }
