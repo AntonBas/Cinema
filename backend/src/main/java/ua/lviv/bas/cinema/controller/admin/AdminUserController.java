@@ -58,7 +58,6 @@ public class AdminUserController {
 			@ApiResponse(responseCode = "403", description = "User does not have ADMIN role") })
 	public ResponseEntity<Void> updateUserRole(
 			@Parameter(description = "ID of the user to update", required = true, example = "1") @PathVariable Long userId,
-
 			@Valid @RequestBody UserRoleUpdateRequest request) {
 
 		adminUserService.updateUserRole(userId, request.getUserRole());
@@ -74,7 +73,6 @@ public class AdminUserController {
 			@ApiResponse(responseCode = "403", description = "User does not have ADMIN role") })
 	public ResponseEntity<Void> updateUserStatus(
 			@Parameter(description = "ID of the user to update", required = true, example = "1") @PathVariable Long userId,
-
 			@Valid @RequestBody UserStatusUpdateRequest request) {
 
 		adminUserService.updateUserStatus(userId, request.isEnabled());
@@ -89,7 +87,6 @@ public class AdminUserController {
 			@ApiResponse(responseCode = "404", description = "User not found") })
 	public ResponseEntity<UserResponse> updateBirthDateVerification(
 			@Parameter(description = "ID of the user to update", required = true) @PathVariable Long userId,
-
 			@Valid @RequestBody VerificationBirthDateRequest request) {
 
 		UserResponse response = adminUserService.updateBirthDateVerification(userId, request);

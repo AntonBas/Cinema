@@ -17,7 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.enums.UserRole;
 import ua.lviv.bas.cinema.domain.enums.VerificationStatus;
-import ua.lviv.bas.cinema.domain.specification.UserSpecification;
+import ua.lviv.bas.cinema.domain.specification.AdminUserSpecification;
 import ua.lviv.bas.cinema.dto.user.request.UserFilterRequest;
 import ua.lviv.bas.cinema.dto.user.request.VerificationBirthDateRequest;
 import ua.lviv.bas.cinema.dto.user.response.AdminUserListResponse;
@@ -28,6 +28,7 @@ import ua.lviv.bas.cinema.exception.domain.user.SelfRoleChangeException;
 import ua.lviv.bas.cinema.exception.domain.user.UserNotFoundException;
 import ua.lviv.bas.cinema.mapper.UserMapper;
 import ua.lviv.bas.cinema.repository.UserRepository;
+import ua.lviv.bas.cinema.repository.projection.AdminUserProjectionRepository;
 
 @Slf4j
 @Service
@@ -37,8 +38,9 @@ import ua.lviv.bas.cinema.repository.UserRepository;
 public class AdminUserService {
 
 	private final UserRepository userRepository;
+	private final AdminUserProjectionRepository projectionRepository;
 	private final UserMapper userMapper;
-	private final UserSpecification userSpecification;
+	private final AdminUserSpecification adminUserSpecification;
 
 	@CacheEvict(allEntries = true)
 	@Transactional
@@ -86,7 +88,8 @@ public class AdminUserService {
 
 	@Cacheable(key = "'list-' + #filter.hashCode() + '-' + #pageable")
 	public Page<AdminUserListResponse> getUsersForAdmin(UserFilterRequest filter, Pageable pageable) {
-		return userRepository.findAll(userSpecification.build(filter), pageable).map(this::toAdminUserListResponse);
+		return projectionRepository.findAll(adminUserSpecification.build(filter), pageable)
+				.map(userMapper::toAdminUserListResponse);
 	}
 
 	@Cacheable(key = "'active-admins'")
@@ -113,13 +116,6 @@ public class AdminUserService {
 		LocalDateTime today = LocalDateTime.now();
 		return userRepository.findVerifiedUsersWithBirthday(VerificationStatus.VERIFIED, today.getDayOfMonth(),
 				today.getMonthValue());
-	}
-
-	private AdminUserListResponse toAdminUserListResponse(User user) {
-		AdminUserListResponse response = userMapper.toAdminUserListResponse(user);
-		response.setTicketsCount((int) userRepository.countTicketsByUserId(user.getId()));
-		response.setLastActivity(user.getUpdatedAt());
-		return response;
 	}
 
 	private User findById(Long id) {

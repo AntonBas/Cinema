@@ -8,6 +8,7 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.mapstruct.ReportingPolicy;
 
 import ua.lviv.bas.cinema.domain.User;
+import ua.lviv.bas.cinema.domain.projection.AdminUserProjection;
 import ua.lviv.bas.cinema.dto.user.request.UserRegistrationRequest;
 import ua.lviv.bas.cinema.dto.user.request.UserUpdateRequest;
 import ua.lviv.bas.cinema.dto.user.response.AdminUserListResponse;
@@ -54,4 +55,8 @@ public interface UserMapper {
 	@Mapping(target = "ticketsCount", ignore = true)
 	@Mapping(target = "lastActivity", source = "updatedAt")
 	AdminUserListResponse toAdminUserListResponse(User user);
+
+	@Mapping(source = "ticketsCount", target = "ticketsCount")
+	@Mapping(source = "lastActivity", target = "lastActivity")
+	AdminUserListResponse toAdminUserListResponse(AdminUserProjection projection);
 }

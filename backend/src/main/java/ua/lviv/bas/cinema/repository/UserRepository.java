@@ -41,4 +41,13 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 			@Param("month") int month);
 
 	long countByUserRoleAndEnabledTrue(UserRole role);
+
+	@EntityGraph(attributePaths = { "bonusCard" })
+	Optional<User> findWithBonusCardById(Long id);
+
+	@Query("SELECT DISTINCT u FROM User u LEFT JOIN FETCH u.tickets WHERE u.id = :id")
+	Optional<User> findWithTicketsById(@Param("id") Long id);
+
+	@Query("SELECT u FROM User u WHERE u.userRole = :role AND u.enabled = true")
+	List<User> findActiveByRole(@Param("role") UserRole role);
 }
