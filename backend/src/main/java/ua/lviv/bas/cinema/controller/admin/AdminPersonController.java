@@ -26,7 +26,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.enums.PersonRole;
-import ua.lviv.bas.cinema.domain.projection.PersonProjection;
 import ua.lviv.bas.cinema.dto.common.PageResponse;
 import ua.lviv.bas.cinema.dto.movie.request.PersonRequest;
 import ua.lviv.bas.cinema.dto.movie.request.QuickCreatePersonRequest;
@@ -111,16 +110,69 @@ public class AdminPersonController {
 	}
 
 	@GetMapping
-	@Operation(summary = "Get persons with statistics", description = "Get paginated list of persons with movie statistics.")
+	@Operation(summary = "Get all persons", description = "Get paginated list of all persons with filters and movie statistics.")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Persons retrieved successfully"),
 			@ApiResponse(responseCode = "401", description = "User not authenticated"),
 			@ApiResponse(responseCode = "403", description = "User does not have required role") })
-	public ResponseEntity<PageResponse<PersonProjection>> getPersonsWithStats(
-			@RequestParam(required = false) String name, @RequestParam(required = false) PersonRole role,
+	public ResponseEntity<PageResponse<PersonResponse>> getAllPersons(@RequestParam(required = false) String name,
+			@RequestParam(required = false) PersonRole role,
 			@Parameter(hidden = true) @PageableDefault(size = 20, sort = "name", direction = Sort.Direction.ASC) Pageable pageable) {
 
 		log.info("GET /api/admin/persons - name: '{}', role: {}", name, role);
-		var result = personService.searchPersonProjections(name, role, pageable);
+		var result = personService.searchPersons(name, role, pageable);
+		return ResponseEntity.ok(PageResponse.from(result));
+	}
+
+	@GetMapping("/actors")
+	@Operation(summary = "Get actors", description = "Get paginated list of actors.")
+	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Actors retrieved successfully"),
+			@ApiResponse(responseCode = "401", description = "User not authenticated"),
+			@ApiResponse(responseCode = "403", description = "User does not have required role") })
+	public ResponseEntity<PageResponse<PersonResponse>> getActors(@RequestParam(required = false) String name,
+			@Parameter(hidden = true) @PageableDefault(size = 20, sort = "name", direction = Sort.Direction.ASC) Pageable pageable) {
+
+		log.info("GET /api/admin/persons/actors - name: '{}'", name);
+		var result = personService.searchPersons(name, PersonRole.ACTOR, pageable);
+		return ResponseEntity.ok(PageResponse.from(result));
+	}
+
+	@GetMapping("/directors")
+	@Operation(summary = "Get directors", description = "Get paginated list of directors.")
+	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Directors retrieved successfully"),
+			@ApiResponse(responseCode = "401", description = "User not authenticated"),
+			@ApiResponse(responseCode = "403", description = "User does not have required role") })
+	public ResponseEntity<PageResponse<PersonResponse>> getDirectors(@RequestParam(required = false) String name,
+			@Parameter(hidden = true) @PageableDefault(size = 20, sort = "name", direction = Sort.Direction.ASC) Pageable pageable) {
+
+		log.info("GET /api/admin/persons/directors - name: '{}'", name);
+		var result = personService.searchPersons(name, PersonRole.DIRECTOR, pageable);
+		return ResponseEntity.ok(PageResponse.from(result));
+	}
+
+	@GetMapping("/screenwriters")
+	@Operation(summary = "Get screenwriters", description = "Get paginated list of screenwriters.")
+	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Screenwriters retrieved successfully"),
+			@ApiResponse(responseCode = "401", description = "User not authenticated"),
+			@ApiResponse(responseCode = "403", description = "User does not have required role") })
+	public ResponseEntity<PageResponse<PersonResponse>> getScreenwriters(@RequestParam(required = false) String name,
+			@Parameter(hidden = true) @PageableDefault(size = 20, sort = "name", direction = Sort.Direction.ASC) Pageable pageable) {
+
+		log.info("GET /api/admin/persons/screenwriters - name: '{}'", name);
+		var result = personService.searchPersons(name, PersonRole.SCREENWRITER, pageable);
+		return ResponseEntity.ok(PageResponse.from(result));
+	}
+
+	@GetMapping("/popular")
+	@Operation(summary = "Get popular persons", description = "Get popular persons (most movies).")
+	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Persons retrieved successfully"),
+			@ApiResponse(responseCode = "401", description = "User not authenticated"),
+			@ApiResponse(responseCode = "403", description = "User does not have required role") })
+	public ResponseEntity<PageResponse<PersonResponse>> getPopularPersons(@RequestParam(required = false) String name,
+			@RequestParam(required = false) PersonRole role,
+			@Parameter(hidden = true) @PageableDefault(size = 10, sort = "movieCount", direction = Sort.Direction.DESC) Pageable pageable) {
+
+		log.info("GET /api/admin/persons/popular - name: '{}', role: {}", name, role);
+		var result = personService.searchPersons(name, role, pageable);
 		return ResponseEntity.ok(PageResponse.from(result));
 	}
 }

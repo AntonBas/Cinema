@@ -8,6 +8,7 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -105,31 +106,23 @@ public class PersonService {
 		log.debug("Person deleted with ID: {}", id);
 	}
 
-	@Cacheable(key = "'projections-' + #name + '-' + #role + '-' + #pageable")
-	public Page<PersonProjection> searchPersonProjections(String name, PersonRole role, Pageable pageable) {
-		log.info("Searching person projections: name='{}', role={}", name, role);
-		return personRepository.findProjectionsByFilters(name, role, pageable);
-	}
-
 	@Cacheable(key = "'search-' + #name + '-' + #role + '-' + #pageable")
 	public Page<PersonResponse> searchPersons(String name, PersonRole role, Pageable pageable) {
 		log.info("Searching persons: name='{}', role={}", name, role);
 
-		Page<Person> persons = personRepository.findByFilters(name, role, pageable);
-		return persons.map(personMapper::toPersonResponse);
+		Page<PersonProjection> projections = personRepository.findProjectionsByFilters(name, role, pageable);
+
+		return projections.map(personMapper::toPersonResponse);
 	}
 
 	@Cacheable(key = "'popular-' + #name + '-' + #role + '-' + #limit")
-	public List<PersonResponse> searchPopularPersons(String name, PersonRole role, int limit) {
-		log.info("Searching popular persons: name='{}', role={}, limit={}", name, role, limit);
+	public List<PersonResponse> getPopularPersons(String name, PersonRole role, int limit) {
+		log.info("Getting popular persons: name='{}', role={}, limit={}", name, role, limit);
 
-		Page<PersonProjection> page = personRepository.findProjectionsByFilters(name, role,
-				org.springframework.data.domain.PageRequest.of(0, 100));
+		Page<PersonProjection> page = personRepository.findProjectionsByFilters(name, role, PageRequest.of(0, 100));
 
 		return page.getContent().stream().sorted((a, b) -> Integer.compare(b.getMovieCount(), a.getMovieCount()))
-				.limit(limit).map(proj -> PersonResponse.builder().id(proj.getId()).name(proj.getName())
-						.role(proj.getRole()).build())
-				.collect(Collectors.toList());
+				.limit(limit).map(personMapper::toPersonResponse).collect(Collectors.toList());
 	}
 
 	@Cacheable(key = "'by-ids-' + #ids.hashCode()")

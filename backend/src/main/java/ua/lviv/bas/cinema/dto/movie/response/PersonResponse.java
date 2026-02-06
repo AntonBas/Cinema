@@ -23,4 +23,7 @@ public class PersonResponse {
 	@Schema(description = "Role of the person in movies", example = "ACTOR", allowableValues = { "ACTOR", "DIRECTOR",
 			"SCREENWRITER" })
 	private PersonRole role;
+
+	@Schema(description = "Number of movies this person appears in (optional)", example = "15")
+	private Integer movieCount;
 }
