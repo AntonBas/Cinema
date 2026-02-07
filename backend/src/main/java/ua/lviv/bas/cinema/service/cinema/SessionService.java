@@ -10,7 +10,6 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,7 +20,8 @@ import ua.lviv.bas.cinema.domain.Movie;
 import ua.lviv.bas.cinema.domain.Session;
 import ua.lviv.bas.cinema.domain.enums.BookedSeatStatus;
 import ua.lviv.bas.cinema.domain.enums.CinemaSessionStatus;
-import ua.lviv.bas.cinema.domain.specification.SessionSpecification;
+import ua.lviv.bas.cinema.domain.specification.SessionAdminProjectionSpecification;
+import ua.lviv.bas.cinema.domain.specification.SessionScheduleProjectionSpecification;
 import ua.lviv.bas.cinema.dto.session.request.SessionCreateRequest;
 import ua.lviv.bas.cinema.dto.session.request.SessionFilterRequest;
 import ua.lviv.bas.cinema.dto.session.request.SessionUpdateRequest;
@@ -35,6 +35,8 @@ import ua.lviv.bas.cinema.exception.domain.cinema.SessionValidationException;
 import ua.lviv.bas.cinema.mapper.SessionMapper;
 import ua.lviv.bas.cinema.repository.MovieRepository;
 import ua.lviv.bas.cinema.repository.SessionRepository;
+import ua.lviv.bas.cinema.repository.projection.SessionAdminProjectionRepository;
+import ua.lviv.bas.cinema.repository.projection.SessionScheduleProjectionRepository;
 
 @Slf4j
 @Service
@@ -44,20 +46,20 @@ import ua.lviv.bas.cinema.repository.SessionRepository;
 public class SessionService {
 
 	private final SessionRepository sessionRepository;
+	private final SessionAdminProjectionRepository adminProjectionRepository;
+	private final SessionScheduleProjectionRepository scheduleProjectionRepository;
 	private final SessionMapper sessionMapper;
 	private final MovieRepository movieRepository;
 	private final CinemaHallService cinemaHallService;
-	private final SessionSpecification sessionSpecification;
+	private final SessionAdminProjectionSpecification adminProjectionSpecification;
+	private final SessionScheduleProjectionSpecification scheduleProjectionSpecification;
 
 	@Cacheable(key = "'public-schedule-' + #filter.hashCode() + '-' + #pageable")
 	public Page<SessionScheduleResponse> getScheduleSessions(SessionFilterRequest filter, Pageable pageable) {
 		log.info("Getting public schedule sessions - filter: {}", filter);
 
-		Specification<Session> spec = sessionSpecification.build(filter)
-				.and((root, query, cb) -> cb.equal(root.get("status"), CinemaSessionStatus.SCHEDULED))
-				.and((root, query, cb) -> cb.greaterThan(root.get("startTime"), LocalDateTime.now()));
-
-		return sessionRepository.findAll(spec, pageable).map(this::toScheduleResponse);
+		return scheduleProjectionRepository.findAll(scheduleProjectionSpecification.build(filter), pageable)
+				.map(sessionMapper::toSessionScheduleResponse);
 	}
 
 	@Cacheable(key = "'public-' + #id")
@@ -69,20 +71,24 @@ public class SessionService {
 			throw new SessionNotFoundException(id);
 		}
 
-		return toScheduleResponse(session);
+		SessionScheduleResponse response = sessionMapper.toSessionScheduleResponse(session);
+		return enhanceSessionScheduleResponse(response, session);
 	}
 
 	@Cacheable(key = "'admin-' + #filter.hashCode() + '-' + #pageable")
 	public Page<SessionAdminResponse> getSessionsForAdmin(SessionFilterRequest filter, Pageable pageable) {
 		log.info("Getting admin sessions - filter: {}", filter);
 
-		return sessionRepository.findAll(sessionSpecification.build(filter), pageable).map(this::toAdminResponse);
+		return adminProjectionRepository.findAll(adminProjectionSpecification.build(filter), pageable)
+				.map(sessionMapper::toSessionAdminResponse);
 	}
 
 	@Cacheable(key = "'admin-' + #id")
 	public SessionAdminResponse getSessionById(Long id) {
-		return sessionRepository.findById(id).map(this::toAdminResponse)
-				.orElseThrow(() -> new SessionNotFoundException(id));
+		Session session = sessionRepository.findById(id).orElseThrow(() -> new SessionNotFoundException(id));
+
+		SessionAdminResponse response = sessionMapper.toSessionAdminResponse(session);
+		return enhanceSessionAdminResponse(response, session);
 	}
 
 	public boolean hasTimeConflict(Long hallId, LocalDateTime startTime, Integer durationMinutes,
@@ -114,7 +120,8 @@ public class SessionService {
 		Session saved = sessionRepository.save(session);
 		log.info("Session created with ID: {}", saved.getId());
 
-		return toAdminResponse(saved);
+		SessionAdminResponse response = sessionMapper.toSessionAdminResponse(saved);
+		return enhanceSessionAdminResponse(response, saved);
 	}
 
 	@Caching(evict = { @CacheEvict(allEntries = true, cacheNames = "sessions"),
@@ -148,10 +155,15 @@ public class SessionService {
 			session.setHall(hall);
 		}
 
+		if (request.getStartTime() != null) {
+			session.setStartTime(request.getStartTime());
+		}
+
 		Session updated = sessionRepository.save(session);
 		log.info("Session updated with ID: {}", updated.getId());
 
-		return toAdminResponse(updated);
+		SessionAdminResponse response = sessionMapper.toSessionAdminResponse(updated);
+		return enhanceSessionAdminResponse(response, updated);
 	}
 
 	@Caching(evict = { @CacheEvict(allEntries = true, cacheNames = "sessions"),
@@ -216,30 +228,18 @@ public class SessionService {
 		log.info("Session reactivated with ID: {}", sessionId);
 	}
 
-	private SessionAdminResponse toAdminResponse(Session session) {
-		SessionAdminResponse response = sessionMapper.toSessionAdminResponse(session);
+	private SessionAdminResponse enhanceSessionAdminResponse(SessionAdminResponse response, Session session) {
 		response.setEndTime(calculateEndTime(session));
-
-		int hallCapacity = calculateHallCapacity(session);
-		int ticketsSold = calculateTicketsSold(session);
-
-		response.setHallCapacity(hallCapacity);
-		response.setTicketsSold(ticketsSold);
-		response.setTotalRevenue(calculateRevenue(session.getBasePrice(), ticketsSold));
-
+		response.setHallCapacity(calculateHallCapacity(session));
+		response.setTicketsSold(calculateTicketsSold(session));
+		response.setTotalRevenue(calculateRevenue(session.getBasePrice(), response.getTicketsSold()));
 		return response;
 	}
 
-	private SessionScheduleResponse toScheduleResponse(Session session) {
-		SessionScheduleResponse response = sessionMapper.toSessionScheduleResponse(session);
+	private SessionScheduleResponse enhanceSessionScheduleResponse(SessionScheduleResponse response, Session session) {
 		response.setEndTime(calculateEndTime(session));
-
-		int hallCapacity = calculateHallCapacity(session);
-		int ticketsSold = calculateTicketsSold(session);
-
-		response.setAvailableSeats(Math.max(0, hallCapacity - ticketsSold));
-		response.setHallCapacity(hallCapacity);
-
+		response.setHallCapacity(calculateHallCapacity(session));
+		response.setAvailableSeats(calculateAvailableSeats(session));
 		return response;
 	}
 
@@ -250,6 +250,12 @@ public class SessionService {
 	private int calculateTicketsSold(Session session) {
 		return (int) session.getBookedSeats().stream().filter(bs -> bs.getStatus() == BookedSeatStatus.CONFIRMED)
 				.count();
+	}
+
+	private int calculateAvailableSeats(Session session) {
+		int hallCapacity = calculateHallCapacity(session);
+		int ticketsSold = calculateTicketsSold(session);
+		return Math.max(0, hallCapacity - ticketsSold);
 	}
 
 	private BigDecimal calculateRevenue(BigDecimal basePrice, int ticketsSold) {

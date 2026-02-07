@@ -4,9 +4,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -21,11 +18,7 @@ import ua.lviv.bas.cinema.domain.Session;
 @Repository
 public interface SessionRepository extends JpaRepository<Session, Long>, JpaSpecificationExecutor<Session> {
 
-	@EntityGraph(attributePaths = { "movie", "hall", "hall.seats", "bookedSeats" })
-	@Override
-	Page<Session> findAll(Specification<Session> spec, Pageable pageable);
-
-	@EntityGraph(attributePaths = { "movie", "hall", "hall.seats", "bookedSeats" })
+	@EntityGraph(attributePaths = { "movie", "hall", "bookedSeats" })
 	@Override
 	Optional<Session> findById(Long id);
 

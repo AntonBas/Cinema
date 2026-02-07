@@ -4,10 +4,14 @@ import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
+import org.mapstruct.Named;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.mapstruct.ReportingPolicy;
 
 import ua.lviv.bas.cinema.domain.Session;
+import ua.lviv.bas.cinema.domain.enums.CinemaSessionStatus;
+import ua.lviv.bas.cinema.domain.projection.SessionAdminProjection;
+import ua.lviv.bas.cinema.domain.projection.SessionScheduleProjection;
 import ua.lviv.bas.cinema.dto.session.request.SessionCreateRequest;
 import ua.lviv.bas.cinema.dto.session.request.SessionUpdateRequest;
 import ua.lviv.bas.cinema.dto.session.response.SessionAdminResponse;
@@ -21,7 +25,6 @@ public interface SessionMapper {
 	@Mapping(target = "movieDuration", source = "movie.durationMinutes")
 	@Mapping(target = "hallId", source = "hall.id")
 	@Mapping(target = "hallName", source = "hall.name")
-	@Mapping(target = "status", source = "status")
 	@Mapping(target = "endTime", ignore = true)
 	@Mapping(target = "hallCapacity", ignore = true)
 	@Mapping(target = "ticketsSold", ignore = true)
@@ -35,11 +38,30 @@ public interface SessionMapper {
 	@Mapping(target = "movieDuration", source = "movie.durationMinutes")
 	@Mapping(target = "hallId", source = "hall.id")
 	@Mapping(target = "hallName", source = "hall.name")
-	@Mapping(target = "status", source = "status")
 	@Mapping(target = "endTime", ignore = true)
 	@Mapping(target = "availableSeats", ignore = true)
 	@Mapping(target = "hallCapacity", ignore = true)
 	SessionScheduleResponse toSessionScheduleResponse(Session session);
+
+	@Mapping(target = "movieTitle", source = "movieTitle")
+	@Mapping(target = "movieDuration", source = "movieDuration")
+	@Mapping(target = "hallName", source = "hallName")
+	@Mapping(target = "hallCapacity", source = "hallCapacity")
+	@Mapping(target = "ticketsSold", source = "ticketsSold")
+	@Mapping(target = "totalRevenue", source = "totalRevenue")
+	@Mapping(target = "endTime", source = "endTime")
+	SessionAdminResponse toSessionAdminResponse(SessionAdminProjection projection);
+
+	@Mapping(target = "movieTitle", source = "movieTitle")
+	@Mapping(target = "moviePosterFileName", source = "moviePosterFileName")
+	@Mapping(target = "movieAgeRating", source = "movieAgeRating")
+	@Mapping(target = "movieDuration", source = "movieDuration")
+	@Mapping(target = "hallName", source = "hallName")
+	@Mapping(target = "hallCapacity", source = "hallCapacity")
+	@Mapping(target = "availableSeats", ignore = true)
+	@Mapping(target = "endTime", source = "endTime")
+	@Mapping(target = "status", source = "status", qualifiedByName = "stringToCinemaSessionStatus")
+	SessionScheduleResponse toSessionScheduleResponse(SessionScheduleProjection projection);
 
 	@Mapping(target = "id", ignore = true)
 	@Mapping(target = "movie", ignore = true)
@@ -57,4 +79,9 @@ public interface SessionMapper {
 	@Mapping(target = "bookings", ignore = true)
 	@Mapping(target = "bookedSeats", ignore = true)
 	void updateSessionFromRequest(SessionUpdateRequest request, @MappingTarget Session session);
+
+	@Named("stringToCinemaSessionStatus")
+	default CinemaSessionStatus stringToCinemaSessionStatus(String status) {
+		return status != null ? CinemaSessionStatus.valueOf(status) : CinemaSessionStatus.SCHEDULED;
+	}
 }
