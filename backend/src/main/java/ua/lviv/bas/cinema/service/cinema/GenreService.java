@@ -89,40 +89,31 @@ public class GenreService {
 		log.debug("Genre deleted with ID: {}", id);
 	}
 
-	@Cacheable(key = "'projections-page-' + #pageable")
-	public Page<GenreProjection> getGenreProjectionsPage(Pageable pageable) {
-		log.debug("Retrieving genre projections with pagination");
-		return genreRepository.findAllProjections(pageable);
-	}
+	@Cacheable(key = "'search-' + #query + '-' + #pageable")
+	public Page<GenreResponse> searchGenres(String query, Pageable pageable) {
+		log.info("Searching genres: query='{}'", query);
 
-	@Cacheable(key = "'search-projections-' + #query + '-' + #pageable")
-	public Page<GenreProjection> searchGenreProjections(String query, Pageable pageable) {
-		log.info("Searching genre projections: query='{}'", query);
+		Page<GenreProjection> projections;
 
 		if (!StringUtils.hasText(query)) {
-			return getGenreProjectionsPage(pageable);
+			projections = genreRepository.findAllProjections(pageable);
+		} else {
+			projections = genreRepository.searchProjectionsByName(query.trim(), pageable);
 		}
 
-		return genreRepository.searchProjectionsByName(query.trim(), pageable);
+		return projections.map(genreMapper::toGenreResponse);
 	}
 
-	@Cacheable(key = "'search-popular-' + #query + '-' + #limit")
-	public List<GenreResponse> searchPopularGenres(String query, int limit) {
-		log.info("Searching popular genres: query='{}', limit={}", query, limit);
+	@Cacheable(key = "'popular-' + #query + '-' + #limit")
+	public List<GenreResponse> getPopularGenres(String query, int limit) {
+		log.info("Getting popular genres: query='{}', limit={}", query, limit);
 
-		List<GenreProjection> projections;
+		Page<GenreProjection> page = StringUtils.hasText(query)
+				? genreRepository.searchProjectionsByName(query.trim(), PageRequest.of(0, 100))
+				: genreRepository.findAllProjections(PageRequest.of(0, 100));
 
-		if (StringUtils.hasText(query)) {
-			Page<GenreProjection> page = genreRepository.searchProjectionsByName(query.trim(), PageRequest.of(0, 100));
-			projections = page.getContent();
-		} else {
-			Page<GenreProjection> page = genreRepository.findAllProjections(PageRequest.of(0, 100));
-			projections = page.getContent();
-		}
-
-		return projections.stream().sorted((a, b) -> Integer.compare(b.getMovieCount(), a.getMovieCount())).limit(limit)
-				.map(proj -> GenreResponse.builder().id(proj.getId()).name(proj.getName()).build())
-				.collect(Collectors.toList());
+		return page.getContent().stream().sorted((a, b) -> Integer.compare(b.getMovieCount(), a.getMovieCount()))
+				.limit(limit).map(genreMapper::toGenreResponse).collect(Collectors.toList());
 	}
 
 	@Cacheable(key = "'by-ids-' + #ids.hashCode()")

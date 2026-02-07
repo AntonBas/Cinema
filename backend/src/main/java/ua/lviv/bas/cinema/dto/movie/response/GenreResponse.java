@@ -18,4 +18,7 @@ public class GenreResponse {
 
 	@Schema(description = "Name of the genre", example = "Action")
 	private String name;
+
+	@Schema(description = "Number of movies in this genre", example = "25")
+	private Integer movieCount;
 }

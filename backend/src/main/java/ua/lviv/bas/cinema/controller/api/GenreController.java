@@ -46,8 +46,9 @@ public class GenreController {
 	@ApiResponse(responseCode = "200", description = "Genres retrieved successfully")
 	public ResponseEntity<List<GenreResponse>> getPopularGenres(@RequestParam(required = false) String query,
 			@RequestParam(defaultValue = "10") int limit) {
+
 		log.info("GET /api/genres/popular - query: '{}', limit: {}", query, limit);
-		List<GenreResponse> genres = genreService.searchPopularGenres(query, limit);
+		List<GenreResponse> genres = genreService.getPopularGenres(query, limit);
 		return ResponseEntity.ok(genres);
 	}
 
@@ -56,6 +57,7 @@ public class GenreController {
 	@ApiResponse(responseCode = "200", description = "Genres retrieved successfully")
 	public ResponseEntity<List<GenreResponse>> getGenresByIds(
 			@Parameter(description = "Comma-separated list of genre IDs", example = "1,2,3") @RequestParam List<Long> ids) {
+
 		log.info("GET /api/genres/by-ids - ids: {}", ids);
 		List<GenreResponse> genres = genreService.getGenresByIds(ids);
 		return ResponseEntity.ok(genres);

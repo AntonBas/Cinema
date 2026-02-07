@@ -26,7 +26,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import ua.lviv.bas.cinema.domain.projection.GenreProjection;
 import ua.lviv.bas.cinema.dto.common.PageResponse;
 import ua.lviv.bas.cinema.dto.movie.request.GenreRequest;
 import ua.lviv.bas.cinema.dto.movie.response.GenreResponse;
@@ -97,19 +96,24 @@ public class AdminGenreController {
 	}
 
 	@GetMapping
-	@Operation(summary = "Get genres with statistics", description = "Retrieve paginated list of genres with movie counts.")
+	@Operation(summary = "Get genres list", description = "Retrieve paginated list of genres with movie counts.")
 	@ApiResponse(responseCode = "200", description = "Genres retrieved successfully")
-	public ResponseEntity<PageResponse<GenreProjection>> getGenresWithStats(
-			@RequestParam(required = false) String search,
-			@PageableDefault(size = 20, sort = "name", direction = Sort.Direction.ASC) Pageable pageable) {
-		if (search != null && !search.trim().isEmpty()) {
-			log.info("GET /api/admin/genres - search: '{}'", search);
-			var result = genreService.searchGenreProjections(search, pageable);
-			return ResponseEntity.ok(PageResponse.from(result));
-		} else {
-			log.info("GET /api/admin/genres - Getting genres with statistics");
-			var result = genreService.getGenreProjectionsPage(pageable);
-			return ResponseEntity.ok(PageResponse.from(result));
-		}
+	public ResponseEntity<PageResponse<GenreResponse>> getGenres(@RequestParam(required = false) String search,
+			@Parameter(hidden = true) @PageableDefault(size = 20, sort = "name", direction = Sort.Direction.ASC) Pageable pageable) {
+
+		log.info("GET /api/admin/genres - search: '{}'", search);
+		var result = genreService.searchGenres(search, pageable);
+		return ResponseEntity.ok(PageResponse.from(result));
+	}
+
+	@GetMapping("/popular")
+	@Operation(summary = "Get popular genres", description = "Get popular genres sorted by movie count.")
+	@ApiResponse(responseCode = "200", description = "Genres retrieved successfully")
+	public ResponseEntity<PageResponse<GenreResponse>> getPopularGenres(@RequestParam(required = false) String query,
+			@Parameter(hidden = true) @PageableDefault(size = 10, sort = "movieCount", direction = Sort.Direction.DESC) Pageable pageable) {
+
+		log.info("GET /api/admin/genres/popular - query: '{}'", query);
+		var result = genreService.searchGenres(query, pageable);
+		return ResponseEntity.ok(PageResponse.from(result));
 	}
 }

@@ -4,11 +4,13 @@ import java.util.List;
 
 import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.mapstruct.ReportingPolicy;
 
 import ua.lviv.bas.cinema.domain.Genre;
+import ua.lviv.bas.cinema.domain.projection.GenreProjection;
 import ua.lviv.bas.cinema.dto.movie.request.GenreRequest;
 import ua.lviv.bas.cinema.dto.movie.response.GenreResponse;
 
@@ -16,6 +18,9 @@ import ua.lviv.bas.cinema.dto.movie.response.GenreResponse;
 public interface GenreMapper {
 
 	GenreResponse toGenreResponse(Genre genre);
+
+	@Mapping(target = "movieCount", source = "movieCount")
+	GenreResponse toGenreResponse(GenreProjection projection);
 
 	List<GenreResponse> toGenreResponseList(List<Genre> genres);
 
