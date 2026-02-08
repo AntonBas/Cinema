@@ -20,7 +20,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import ua.lviv.bas.cinema.domain.enums.MovieStatus;
 import ua.lviv.bas.cinema.dto.common.PageResponse;
 import ua.lviv.bas.cinema.dto.movie.request.MovieFilterRequest;
 import ua.lviv.bas.cinema.dto.movie.response.MovieCardResponse;
@@ -64,12 +63,12 @@ public class MovieController {
 	@GetMapping
 	@Operation(summary = "Search movies", description = "Search and filter movies with pagination")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Movies retrieved successfully") })
-	public ResponseEntity<PageResponse<MovieCardResponse>> searchMovies(
+	public ResponseEntity<PageResponse<MovieCardResponse>> getMovies(
 			@Parameter(description = "Filter criteria") @ModelAttribute MovieFilterRequest filter,
 			@Parameter(description = "Pagination parameters") @PageableDefault(size = 12, sort = "title", direction = Sort.Direction.ASC) Pageable pageable) {
 
 		log.info("GET /api/movies - filter: {}", filter);
-		var result = movieService.searchMovies(filter, pageable);
+		var result = movieService.getMovieCards(filter, pageable);
 		return ResponseEntity.ok(PageResponse.from(result));
 	}
 
@@ -91,8 +90,8 @@ public class MovieController {
 			@Parameter(description = "Pagination parameters") @PageableDefault(size = 12, sort = "releaseDate", direction = Sort.Direction.DESC) Pageable pageable) {
 
 		log.info("GET /api/movies/currently-showing - Getting currently showing movies");
-		var filter = MovieFilterRequest.builder().status(MovieStatus.CURRENT).build();
-		var result = movieService.searchMovies(filter, pageable);
+		var filter = MovieFilterRequest.builder().currentlyShowing(true).build();
+		var result = movieService.getMovieCards(filter, pageable);
 		return ResponseEntity.ok(PageResponse.from(result));
 	}
 
@@ -103,19 +102,19 @@ public class MovieController {
 			@Parameter(description = "Pagination parameters") @PageableDefault(size = 12, sort = "releaseDate", direction = Sort.Direction.ASC) Pageable pageable) {
 
 		log.info("GET /api/movies/upcoming - Getting upcoming movies");
-		var filter = MovieFilterRequest.builder().status(MovieStatus.UPCOMING).build();
-		var result = movieService.searchMovies(filter, pageable);
+		var filter = MovieFilterRequest.builder().upcoming(true).build();
+		var result = movieService.getMovieCards(filter, pageable);
 		return ResponseEntity.ok(PageResponse.from(result));
 	}
 
-	@GetMapping("/search/active")
-	@Operation(summary = "Search active movies for sessions", description = "Search through currently showing and upcoming movies for session creation")
+	@GetMapping("/search/session")
+	@Operation(summary = "Search movies for sessions", description = "Search active movies for session creation")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Movies retrieved successfully") })
-	public ResponseEntity<List<MovieSessionSearchResponse>> searchActiveMovies(
+	public ResponseEntity<List<MovieSessionSearchResponse>> searchMoviesForSession(
 			@Parameter(description = "Search term for movie title", example = "Avengers") @RequestParam(required = false) String search) {
 
-		log.info("GET /api/movies/search/active - Searching active movies: '{}'", search);
-		List<MovieSessionSearchResponse> movies = movieService.searchActiveMovies(search);
+		log.info("GET /api/movies/search/session - Searching movies for session: '{}'", search);
+		List<MovieSessionSearchResponse> movies = movieService.searchMoviesForSession(search);
 		return ResponseEntity.ok(movies);
 	}
 }

@@ -6,7 +6,6 @@ import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,8 +15,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.Movie;
 import ua.lviv.bas.cinema.domain.enums.MovieStatus;
-import ua.lviv.bas.cinema.domain.projection.MovieProjection;
-import ua.lviv.bas.cinema.domain.specification.MovieSpecification;
+import ua.lviv.bas.cinema.domain.projection.MovieCardProjection;
+import ua.lviv.bas.cinema.domain.projection.MovieDetailProjection;
+import ua.lviv.bas.cinema.domain.projection.MovieSessionSearchProjection;
+import ua.lviv.bas.cinema.domain.specification.MovieCardSpecification;
 import ua.lviv.bas.cinema.dto.movie.request.MovieCreateRequest;
 import ua.lviv.bas.cinema.dto.movie.request.MovieFilterRequest;
 import ua.lviv.bas.cinema.dto.movie.request.MovieUpdateRequest;
@@ -31,6 +32,7 @@ import ua.lviv.bas.cinema.mapper.MovieMapper;
 import ua.lviv.bas.cinema.repository.GenreRepository;
 import ua.lviv.bas.cinema.repository.MovieRepository;
 import ua.lviv.bas.cinema.repository.PersonRepository;
+import ua.lviv.bas.cinema.repository.projection.MovieCardProjectionRepository;
 import ua.lviv.bas.cinema.scheduler.MovieScheduler;
 import ua.lviv.bas.cinema.service.integration.file.PosterService;
 import ua.lviv.bas.cinema.service.integration.slug.SlugService;
@@ -42,19 +44,20 @@ import ua.lviv.bas.cinema.service.integration.slug.SlugService;
 public class MovieService {
 
 	private final MovieRepository movieRepository;
+	private final MovieCardProjectionRepository movieCardProjectionRepository;
 	private final GenreRepository genreRepository;
 	private final PersonRepository personRepository;
 	private final MovieMapper movieMapper;
 	private final SlugService slugService;
 	private final MovieScheduler movieScheduler;
 	private final PosterService posterService;
-	private final MovieSpecification movieSpecification;
+	private final MovieCardSpecification movieCardSpecification;
 
 	@Transactional
 	public MovieDetailResponse createMovie(MovieCreateRequest request) {
 		log.info("Creating movie: {}", request.getTitle());
 
-		validateCreateRequest(request);
+		validateDates(request.getReleaseDate(), request.getEndShowingDate());
 
 		String slug = slugService.generateUniqueSlug(request.getTitle());
 		validateSlugUniqueness(slug);
@@ -75,7 +78,7 @@ public class MovieService {
 		log.info("Updating movie with id: {}", id);
 
 		Movie existing = findMovieById(id);
-		validateUpdateRequest(request);
+		validateDates(request.getReleaseDate(), request.getEndShowingDate());
 
 		movieMapper.updateMovieFromRequest(request, existing);
 
@@ -105,12 +108,11 @@ public class MovieService {
 	}
 
 	public MovieDetailResponse getMovieById(Long id) {
-		Movie movie = findMovieById(id);
-		return buildDetailResponse(movie);
-	}
-
-	public MovieProjection getMovieProjectionById(Long id) {
-		return movieRepository.findProjectionById(id).orElseThrow(() -> new MovieNotFoundException(id));
+		return movieRepository.findDetailProjectionById(id).map(projection -> {
+			MovieDetailResponse response = movieMapper.toMovieDetailResponse(projection);
+			enrichDetailResponse(response, projection);
+			return response;
+		}).orElseThrow(() -> new MovieNotFoundException(id));
 	}
 
 	public MovieDetailResponse getMovieBySlug(String slug) {
@@ -118,50 +120,21 @@ public class MovieService {
 		return buildDetailResponse(movie);
 	}
 
-	public Page<MovieCardResponse> searchMovies(MovieFilterRequest filter, Pageable pageable) {
-		log.info("Searching movies with filter: {}", filter);
+	public Page<MovieCardResponse> getMovieCards(MovieFilterRequest filter, Pageable pageable) {
+		var spec = movieCardSpecification.build(filter);
+		Page<MovieCardProjection> projections = movieCardProjectionRepository.findAll(spec, pageable);
 
-		Specification<Movie> spec = movieSpecification.buildWithJoins(filter);
-		Page<Movie> movies = movieRepository.findAll(spec, pageable);
-		return movies.map(this::buildCardResponse);
+		return projections.map(projection -> {
+			MovieCardResponse response = movieMapper.toMovieCardResponse(projection);
+			response.setPosterUrl("/api/movies/" + projection.getId() + "/poster");
+			response.setCurrentlyShowing(isCurrentlyShowing(projection));
+			return response;
+		});
 	}
 
-	public Page<MovieProjection> getMovieProjections(Pageable pageable) {
-		return movieRepository.findAllProjections(pageable);
-	}
-
-	public Page<MovieProjection> getMovieProjectionsByStatus(MovieStatus status, Pageable pageable) {
-		return movieRepository.findProjectionsByStatus(status, pageable);
-	}
-
-	public Page<MovieProjection> getCurrentlyShowingProjections(Pageable pageable) {
-		return movieRepository.findCurrentlyShowingProjections(pageable);
-	}
-
-	public Page<MovieProjection> getUpcomingProjections(Pageable pageable) {
-		return movieRepository.findUpcomingProjections(pageable);
-	}
-
-	public Page<MovieProjection> getArchivedProjections(Pageable pageable) {
-		return movieRepository.findArchivedProjections(pageable);
-	}
-
-	public List<MovieSessionSearchResponse> searchMoviesForSessionCreation(String searchTerm, LocalDate sessionDate) {
-		List<Movie> movies = movieRepository.findMoviesForSessionCreation(searchTerm, sessionDate);
-		return movies.stream()
-				.map(movie -> MovieSessionSearchResponse.builder().id(movie.getId()).title(movie.getTitle())
-						.releaseYear(movie.getReleaseDate().getYear()).durationMinutes(movie.getDurationMinutes())
-						.build())
-				.toList();
-	}
-
-	public List<MovieSessionSearchResponse> searchActiveMovies(String searchTerm) {
-		List<Movie> movies = movieRepository.findActiveMoviesForSearch(searchTerm);
-		return movies.stream()
-				.map(movie -> MovieSessionSearchResponse.builder().id(movie.getId()).title(movie.getTitle())
-						.releaseYear(movie.getReleaseDate().getYear()).durationMinutes(movie.getDurationMinutes())
-						.build())
-				.toList();
+	public List<MovieSessionSearchResponse> searchMoviesForSession(String searchTerm) {
+		List<MovieSessionSearchProjection> projections = movieRepository.findMoviesForSession(searchTerm);
+		return projections.stream().map(movieMapper::toMovieSessionSearchResponse).toList();
 	}
 
 	public ResponseEntity<byte[]> getMoviePoster(Long id) {
@@ -170,7 +143,7 @@ public class MovieService {
 	}
 
 	public long countByStatus(MovieStatus status) {
-		return movieRepository.countByStatus(status);
+		return movieRepository.countByStatus(status.name());
 	}
 
 	public boolean existsBySlug(String slug) {
@@ -189,12 +162,6 @@ public class MovieService {
 		return movieRepository.countByScreenwritersId(screenwriterId);
 	}
 
-	private MovieCardResponse buildCardResponse(Movie movie) {
-		MovieCardResponse response = movieMapper.toMovieCardResponse(movie);
-		enrichCardResponse(response, movie);
-		return response;
-	}
-
 	private MovieDetailResponse buildDetailResponse(Movie movie) {
 		MovieDetailResponse response = movieMapper.toMovieDetailResponse(movie);
 		enrichDetailResponse(response, movie);
@@ -205,15 +172,9 @@ public class MovieService {
 		return movieRepository.findById(id).orElseThrow(() -> new MovieNotFoundException(id));
 	}
 
-	private void validateCreateRequest(MovieCreateRequest request) {
-		if (request.getEndShowingDate().isBefore(request.getReleaseDate())) {
-			throw MovieValidationException.invalidDates(request.getReleaseDate(), request.getEndShowingDate());
-		}
-	}
-
-	private void validateUpdateRequest(MovieUpdateRequest request) {
-		if (request.getEndShowingDate().isBefore(request.getReleaseDate())) {
-			throw MovieValidationException.invalidDates(request.getReleaseDate(), request.getEndShowingDate());
+	private void validateDates(LocalDate releaseDate, LocalDate endShowingDate) {
+		if (endShowingDate.isBefore(releaseDate)) {
+			throw MovieValidationException.invalidDates(releaseDate, endShowingDate);
 		}
 	}
 
@@ -224,18 +185,10 @@ public class MovieService {
 	}
 
 	private void setMovieRelations(Movie movie, MovieCreateRequest request) {
-		if (request.getGenreIds() != null && !request.getGenreIds().isEmpty()) {
-			movie.setGenres(new HashSet<>(genreRepository.findAllById(request.getGenreIds())));
-		}
-		if (request.getActorIds() != null && !request.getActorIds().isEmpty()) {
-			movie.setActors(new HashSet<>(personRepository.findAllById(request.getActorIds())));
-		}
-		if (request.getDirectorIds() != null && !request.getDirectorIds().isEmpty()) {
-			movie.setDirectors(new HashSet<>(personRepository.findAllById(request.getDirectorIds())));
-		}
-		if (request.getScreenwriterIds() != null && !request.getScreenwriterIds().isEmpty()) {
-			movie.setScreenwriters(new HashSet<>(personRepository.findAllById(request.getScreenwriterIds())));
-		}
+		movie.setGenres(new HashSet<>(genreRepository.findAllById(request.getGenreIds())));
+		movie.setActors(new HashSet<>(personRepository.findAllById(request.getActorIds())));
+		movie.setDirectors(new HashSet<>(personRepository.findAllById(request.getDirectorIds())));
+		movie.setScreenwriters(new HashSet<>(personRepository.findAllById(request.getScreenwriterIds())));
 	}
 
 	private void updateMovieRelations(Movie movie, MovieUpdateRequest request) {
@@ -244,18 +197,10 @@ public class MovieService {
 		movie.getDirectors().clear();
 		movie.getScreenwriters().clear();
 
-		if (request.getGenreIds() != null && !request.getGenreIds().isEmpty()) {
-			movie.getGenres().addAll(new HashSet<>(genreRepository.findAllById(request.getGenreIds())));
-		}
-		if (request.getActorIds() != null && !request.getActorIds().isEmpty()) {
-			movie.getActors().addAll(new HashSet<>(personRepository.findAllById(request.getActorIds())));
-		}
-		if (request.getDirectorIds() != null && !request.getDirectorIds().isEmpty()) {
-			movie.getDirectors().addAll(new HashSet<>(personRepository.findAllById(request.getDirectorIds())));
-		}
-		if (request.getScreenwriterIds() != null && !request.getScreenwriterIds().isEmpty()) {
-			movie.getScreenwriters().addAll(new HashSet<>(personRepository.findAllById(request.getScreenwriterIds())));
-		}
+		movie.getGenres().addAll(new HashSet<>(genreRepository.findAllById(request.getGenreIds())));
+		movie.getActors().addAll(new HashSet<>(personRepository.findAllById(request.getActorIds())));
+		movie.getDirectors().addAll(new HashSet<>(personRepository.findAllById(request.getDirectorIds())));
+		movie.getScreenwriters().addAll(new HashSet<>(personRepository.findAllById(request.getScreenwriterIds())));
 	}
 
 	private void handlePosterUpload(MultipartFile posterFile, Movie movie) {
@@ -276,17 +221,28 @@ public class MovieService {
 		}
 	}
 
-	private void enrichCardResponse(MovieCardResponse response, Movie movie) {
-		String posterUrl = posterService.getPosterUrl(movie.getId(), movie.getPosterFileName());
-		response.setPosterUrl(posterUrl);
-		response.setCurrentlyShowing(movie.getStatus() == MovieStatus.CURRENT);
+	private void enrichDetailResponse(MovieDetailResponse response, MovieDetailProjection projection) {
+		response.setPosterUrl("/api/movies/" + projection.getId() + "/poster");
+		LocalDate today = LocalDate.now();
+		response.setCurrentlyShowing(projection.getStatus() == MovieStatus.CURRENT
+				&& !today.isBefore(projection.getReleaseDate()) && !today.isAfter(projection.getEndShowingDate()));
+		response.setUpcoming(today.isBefore(projection.getReleaseDate()));
+		response.setArchived(today.isAfter(projection.getEndShowingDate()));
+		response.setActive(
+				projection.getStatus() == MovieStatus.CURRENT || projection.getStatus() == MovieStatus.UPCOMING);
 	}
 
 	private void enrichDetailResponse(MovieDetailResponse response, Movie movie) {
-		String posterUrl = posterService.getPosterUrl(movie.getId(), movie.getPosterFileName());
-		response.setPosterUrl(posterUrl);
+		response.setPosterUrl("/api/movies/" + movie.getId() + "/poster");
 		response.setCurrentlyShowing(movie.getStatus() == MovieStatus.CURRENT);
 		response.setUpcoming(movie.getStatus() == MovieStatus.UPCOMING);
 		response.setArchived(movie.getStatus() == MovieStatus.ARCHIVED);
+		response.setActive(movie.getStatus() == MovieStatus.CURRENT || movie.getStatus() == MovieStatus.UPCOMING);
+	}
+
+	private boolean isCurrentlyShowing(MovieCardProjection projection) {
+		LocalDate today = LocalDate.now();
+		return projection.getStatus() == MovieStatus.CURRENT && !today.isBefore(projection.getReleaseDate())
+				&& !today.isAfter(projection.getEndShowingDate());
 	}
 }

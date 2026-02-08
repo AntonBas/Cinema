@@ -67,11 +67,11 @@ public class AdminMovieController {
 	}
 
 	@GetMapping
-	public ResponseEntity<PageResponse<MovieCardResponse>> searchMovies(@ModelAttribute MovieFilterRequest filter,
+	public ResponseEntity<PageResponse<MovieCardResponse>> getMovies(@ModelAttribute MovieFilterRequest filter,
 			@PageableDefault(size = 20, sort = "title", direction = Sort.Direction.ASC) Pageable pageable) {
 
 		log.info("GET /api/admin/movies - filter: {}", filter);
-		var result = movieService.searchMovies(filter, pageable);
+		var result = movieService.getMovieCards(filter, pageable);
 		return ResponseEntity.ok(PageResponse.from(result));
 	}
 
@@ -83,11 +83,9 @@ public class AdminMovieController {
 	}
 
 	@GetMapping("/search/session")
-	public ResponseEntity<?> searchMoviesForSessionCreation(@RequestParam(required = false) String search,
-			@RequestParam(required = false) java.time.LocalDate sessionDate) {
-
-		log.info("GET /api/admin/movies/search/session - search: '{}', date: {}", search, sessionDate);
-		var movies = movieService.searchMoviesForSessionCreation(search, sessionDate);
+	public ResponseEntity<?> searchMoviesForSession(@RequestParam(required = false) String search) {
+		log.info("GET /api/admin/movies/search/session - search: '{}'", search);
+		var movies = movieService.searchMoviesForSession(search);
 		return ResponseEntity.ok(movies);
 	}
 }
