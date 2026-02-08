@@ -10,9 +10,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import ua.lviv.bas.cinema.domain.SeatReservation;
 import ua.lviv.bas.cinema.domain.Booking;
 import ua.lviv.bas.cinema.domain.Payment;
+import ua.lviv.bas.cinema.domain.SeatReservation;
 import ua.lviv.bas.cinema.domain.Ticket;
 import ua.lviv.bas.cinema.domain.enums.TicketStatus;
 import ua.lviv.bas.cinema.exception.domain.ticket.TicketValidationException;
@@ -38,7 +38,7 @@ public class TicketService {
 
 	@Transactional
 	public List<Ticket> createTicketsForBooking(Booking booking, Payment payment) {
-		List<Ticket> tickets = booking.getBookedSeats().stream()
+		List<Ticket> tickets = booking.getSeatReservations().stream()
 				.map(bookedSeat -> buildTicket(booking, payment, bookedSeat)).collect(Collectors.toList());
 
 		List<Ticket> savedTickets = ticketRepository.saveAll(tickets);
@@ -46,10 +46,10 @@ public class TicketService {
 		return savedTickets;
 	}
 
-	private Ticket buildTicket(Booking booking, Payment payment, SeatReservation bookedSeat) {
-		return Ticket.builder().booking(booking).user(booking.getUser()).ticketType(bookedSeat.getTicketType())
-				.payment(payment).bookedSeat(bookedSeat).originalPrice(bookedSeat.getSeatPrice())
-				.finalPrice(bookedSeat.getSeatPrice()).uniqueCode(numberGenerator.generateTicketCode())
+	private Ticket buildTicket(Booking booking, Payment payment, SeatReservation seatReservation) {
+		return Ticket.builder().booking(booking).user(booking.getUser()).ticketType(seatReservation.getTicketType())
+				.payment(payment).seatReservation(seatReservation).originalPrice(seatReservation.getSeatPrice())
+				.finalPrice(seatReservation.getSeatPrice()).uniqueCode(numberGenerator.generateTicketCode())
 				.status(TicketStatus.ACTIVE).purchaseTime(LocalDateTime.now()).build();
 	}
 

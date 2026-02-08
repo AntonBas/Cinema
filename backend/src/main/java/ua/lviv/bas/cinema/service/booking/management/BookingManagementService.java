@@ -11,8 +11,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.Booking;
 import ua.lviv.bas.cinema.domain.User;
-import ua.lviv.bas.cinema.domain.enums.ReservationStatus;
 import ua.lviv.bas.cinema.domain.enums.BookingStatus;
+import ua.lviv.bas.cinema.domain.enums.ReservationStatus;
 import ua.lviv.bas.cinema.dto.booking.response.BookingResponse;
 import ua.lviv.bas.cinema.exception.domain.booking.BookingNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.booking.BookingOperationException;
@@ -60,7 +60,7 @@ public class BookingManagementService {
 		}
 
 		booking.setStatus(BookingStatus.CANCELLED);
-		booking.getBookedSeats().forEach(bs -> bs.setStatus(ReservationStatus.CANCELLED));
+		booking.getSeatReservations().forEach(bs -> bs.setStatus(ReservationStatus.CANCELLED));
 
 		if (booking.getBonusPointsUsed() != null && booking.getBonusPointsUsed() > 0) {
 			bonusService.refundBonusPointsForCancellation(booking);
@@ -81,7 +81,7 @@ public class BookingManagementService {
 		}
 
 		booking.setStatus(BookingStatus.CONFIRMED);
-		booking.getBookedSeats().forEach(bs -> bs.setStatus(ReservationStatus.CONFIRMED));
+		booking.getSeatReservations().forEach(bs -> bs.setStatus(ReservationStatus.CONFIRMED));
 		bookingRepository.save(booking);
 	}
 

@@ -15,7 +15,7 @@ import ua.lviv.bas.cinema.domain.enums.TicketStatus;
 import ua.lviv.bas.cinema.domain.enums.TicketTypeCategory;
 import ua.lviv.bas.cinema.dto.booking.request.BookingCreateRequest;
 import ua.lviv.bas.cinema.dto.booking.response.BookingResponse;
-import ua.lviv.bas.cinema.dto.cinemaHall.response.SeatAvailabilityResponse;
+import ua.lviv.bas.cinema.dto.cinemaHall.response.SeatReservationResponse;
 import ua.lviv.bas.cinema.dto.payment.request.PaymentCreateRequest;
 import ua.lviv.bas.cinema.dto.payment.response.PaymentLiqPayDataResponse;
 import ua.lviv.bas.cinema.dto.payment.response.PaymentResponse;
@@ -27,7 +27,7 @@ import ua.lviv.bas.cinema.dto.ticket.request.TicketTypeUpdateRequest;
 import ua.lviv.bas.cinema.dto.ticket.response.TicketResponse;
 import ua.lviv.bas.cinema.dto.ticket.response.TicketTypeResponse;
 import ua.lviv.bas.cinema.dto.ticket.response.TicketTypeSimpleResponse;
-import ua.lviv.bas.cinema.service.booking.availability.SeatAvailabilityService;
+import ua.lviv.bas.cinema.service.booking.availability.SeatReservationService;
 import ua.lviv.bas.cinema.service.booking.creation.BookingCreationService;
 import ua.lviv.bas.cinema.service.booking.management.BookingManagementService;
 import ua.lviv.bas.cinema.service.booking.payment.PaymentProcessingService;
@@ -43,7 +43,7 @@ public class ControllerFacade {
 
 	private final BookingCreationService bookingCreationService;
 	private final BookingManagementService bookingManagementService;
-	private final SeatAvailabilityService seatAvailabilityService;
+	private final SeatReservationService seatAvailabilityService;
 	private final PaymentProcessingService paymentProcessingService;
 	private final PaymentStatusService paymentStatusService;
 	private final TicketService ticketService;
@@ -77,7 +77,7 @@ public class ControllerFacade {
 	}
 
 	@Transactional(readOnly = true)
-	public SeatAvailabilityResponse getSeatAvailability(Long sessionId) {
+	public SeatReservationResponse getSeatAvailability(Long sessionId) {
 		return seatAvailabilityService.getSeatAvailability(sessionId);
 	}
 

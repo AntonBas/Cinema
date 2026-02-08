@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Schema(description = "Seat availability for session")
-public class SeatAvailabilityResponse {
+public class SeatReservationResponse {
 
 	@Schema(description = "Session ID", example = "1")
 	private Long sessionId;

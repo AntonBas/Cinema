@@ -18,14 +18,14 @@ import ua.lviv.bas.cinema.domain.Seat;
 import ua.lviv.bas.cinema.domain.enums.ReservationStatus;
 import ua.lviv.bas.cinema.exception.domain.booking.SeatNotAvailableException;
 import ua.lviv.bas.cinema.exception.domain.cinema.SeatNotFoundException;
-import ua.lviv.bas.cinema.repository.BookedSeatRepository;
+import ua.lviv.bas.cinema.repository.SeatReservationRepository;
 import ua.lviv.bas.cinema.repository.SeatRepository;
 
 @ExtendWith(MockitoExtension.class)
 public class AvailabilityValidatorTest {
 
 	@Mock
-	private BookedSeatRepository bookedSeatRepository;
+	private SeatReservationRepository bookedSeatRepository;
 
 	@Mock
 	private SeatRepository seatRepository;

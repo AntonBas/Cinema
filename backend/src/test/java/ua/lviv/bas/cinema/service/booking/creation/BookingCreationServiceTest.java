@@ -42,7 +42,7 @@ import ua.lviv.bas.cinema.exception.domain.cinema.SeatNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.cinema.SessionNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.tickettype.TicketTypeNotFoundException;
 import ua.lviv.bas.cinema.mapper.BookingMapper;
-import ua.lviv.bas.cinema.repository.BookedSeatRepository;
+import ua.lviv.bas.cinema.repository.SeatReservationRepository;
 import ua.lviv.bas.cinema.repository.BookingRepository;
 import ua.lviv.bas.cinema.repository.SeatRepository;
 import ua.lviv.bas.cinema.repository.SessionRepository;
@@ -68,7 +68,7 @@ public class BookingCreationServiceTest {
 	private TicketTypeRepository ticketTypeRepository;
 
 	@Mock
-	private BookedSeatRepository bookedSeatRepository;
+	private SeatReservationRepository bookedSeatRepository;
 
 	@Mock
 	private BookingMapper bookingMapper;

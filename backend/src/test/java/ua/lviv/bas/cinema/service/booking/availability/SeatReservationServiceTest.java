@@ -29,17 +29,17 @@ import ua.lviv.bas.cinema.domain.Session;
 import ua.lviv.bas.cinema.domain.TicketType;
 import ua.lviv.bas.cinema.domain.enums.ReservationStatus;
 import ua.lviv.bas.cinema.domain.enums.SeatType;
-import ua.lviv.bas.cinema.dto.cinemaHall.response.SeatAvailabilityResponse;
+import ua.lviv.bas.cinema.dto.cinemaHall.response.SeatReservationResponse;
 import ua.lviv.bas.cinema.exception.domain.booking.SeatNotAvailableException;
 import ua.lviv.bas.cinema.exception.domain.cinema.SessionNotFoundException;
-import ua.lviv.bas.cinema.repository.BookedSeatRepository;
+import ua.lviv.bas.cinema.repository.SeatReservationRepository;
 import ua.lviv.bas.cinema.repository.SeatRepository;
 import ua.lviv.bas.cinema.repository.SessionRepository;
 import ua.lviv.bas.cinema.repository.TicketTypeRepository;
 import ua.lviv.bas.cinema.service.shared.PriceCalculatorService;
 
 @ExtendWith(MockitoExtension.class)
-public class SeatAvailabilityServiceTest {
+public class SeatReservationServiceTest {
 
 	@Mock
 	private SessionRepository sessionRepository;
@@ -48,7 +48,7 @@ public class SeatAvailabilityServiceTest {
 	private SeatRepository seatRepository;
 
 	@Mock
-	private BookedSeatRepository bookedSeatRepository;
+	private SeatReservationRepository bookedSeatRepository;
 
 	@Mock
 	private TicketTypeRepository ticketTypeRepository;
@@ -60,7 +60,7 @@ public class SeatAvailabilityServiceTest {
 	private AvailabilityValidator availabilityValidator;
 
 	@InjectMocks
-	private SeatAvailabilityService seatAvailabilityService;
+	private SeatReservationService seatAvailabilityService;
 
 	private Session testSession;
 	private CinemaHall testHall;
@@ -133,7 +133,7 @@ public class SeatAvailabilityServiceTest {
 		when(ticketTypeRepository.findByActiveTrue()).thenReturn(activeTicketTypes);
 		when(priceCalculator.calculateSeatPrice(any(), any(), any())).thenReturn(BigDecimal.TEN);
 
-		SeatAvailabilityResponse result = seatAvailabilityService.getSeatAvailability(SESSION_ID);
+		SeatReservationResponse result = seatAvailabilityService.getSeatAvailability(SESSION_ID);
 
 		assertThat(result).isNotNull();
 		assertThat(result.getSessionId()).isEqualTo(SESSION_ID);
@@ -165,7 +165,7 @@ public class SeatAvailabilityServiceTest {
 		when(ticketTypeRepository.findByActiveTrue()).thenReturn(activeTicketTypes);
 		when(priceCalculator.calculateSeatPrice(any(), any(), any())).thenReturn(BigDecimal.TEN);
 
-		SeatAvailabilityResponse result = seatAvailabilityService.getSeatAvailability(SESSION_ID);
+		SeatReservationResponse result = seatAvailabilityService.getSeatAvailability(SESSION_ID);
 
 		assertThat(result.getAvailableSeats()).isEqualTo(1);
 	}
@@ -185,7 +185,7 @@ public class SeatAvailabilityServiceTest {
 		when(ticketTypeRepository.findByActiveTrue()).thenReturn(activeTicketTypes);
 		when(priceCalculator.calculateSeatPrice(any(), any(), any())).thenReturn(BigDecimal.TEN);
 
-		SeatAvailabilityResponse result = seatAvailabilityService.getSeatAvailability(SESSION_ID);
+		SeatReservationResponse result = seatAvailabilityService.getSeatAvailability(SESSION_ID);
 
 		assertThat(result.getAvailableSeats()).isEqualTo(1);
 	}
@@ -253,7 +253,7 @@ public class SeatAvailabilityServiceTest {
 				.thenReturn(Collections.emptyList());
 		when(ticketTypeRepository.findByActiveTrue()).thenReturn(Collections.emptyList());
 
-		SeatAvailabilityResponse result = seatAvailabilityService.getSeatAvailability(SESSION_ID);
+		SeatReservationResponse result = seatAvailabilityService.getSeatAvailability(SESSION_ID);
 
 		assertThat(result.getSeats().get(0).getTicketPrices()).isEmpty();
 	}

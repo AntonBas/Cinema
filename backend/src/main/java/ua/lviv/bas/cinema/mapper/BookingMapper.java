@@ -4,8 +4,8 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.ReportingPolicy;
 
-import ua.lviv.bas.cinema.domain.SeatReservation;
 import ua.lviv.bas.cinema.domain.Booking;
+import ua.lviv.bas.cinema.domain.SeatReservation;
 import ua.lviv.bas.cinema.dto.booking.response.BookingResponse;
 
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
@@ -17,12 +17,12 @@ public interface BookingMapper {
 	@Mapping(target = "movieTitle", source = "session.movie.title")
 	@Mapping(target = "hallName", source = "session.hall.name")
 	@Mapping(target = "liqpayOrderId", source = "payment.liqpayOrderId")
-	@Mapping(target = "bookedSeats", source = "bookedSeats")
+	@Mapping(target = "seatReservations", source = "seatReservations")
 	BookingResponse toBookingResponse(Booking booking);
 
 	@Mapping(target = "seatId", source = "seat.id")
 	@Mapping(target = "row", source = "seat.row")
 	@Mapping(target = "seatNumber", source = "seat.number")
 	@Mapping(target = "ticketTypeName", source = "ticketType.displayName")
-	BookingResponse.BookedSeatInfo toBookedSeatInfo(SeatReservation bookedSeat);
+	BookingResponse.SeatReservationInfo toSeatReservationInfo(SeatReservation seatReservation);
 }

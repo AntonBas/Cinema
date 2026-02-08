@@ -63,13 +63,17 @@ public class SessionScheduleProjection {
 	@Column(name = "hall_name", nullable = false, length = 50)
 	private String hallName;
 
-	@Formula("(SELECT COUNT(*) FROM cinema_seats cs WHERE cs.hall_id = hall_id AND cs.active = true)")
+	@Formula("(SELECT COUNT(*) FROM seats s WHERE s.hall_id = hall_id AND s.active = true)")
 	@Column(name = "hall_capacity", nullable = false)
 	private Integer hallCapacity;
 
-	@Formula("(SELECT COUNT(*) FROM booked_seats bs WHERE bs.session_id = id AND bs.status = 'CONFIRMED')")
+	@Formula("(SELECT COUNT(*) FROM seat_reservations sr WHERE sr.session_id = id AND sr.status IN ('CONFIRMED', 'ACTIVE', 'PAID'))")
 	@Column(name = "booked_seats_count", nullable = false)
 	private Long bookedSeatsCount;
+
+	@Formula("(SELECT hall_capacity - booked_seats_count)")
+	@Column(name = "available_seats", nullable = false)
+	private Integer availableSeats;
 
 	@Formula("(SELECT TIMESTAMPADD(MINUTE, movie_duration, start_time))")
 	@Column(name = "end_time", nullable = false)

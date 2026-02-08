@@ -57,15 +57,15 @@ public class SessionAdminProjection {
 	@Column(name = "hall_name", nullable = false, length = 50)
 	private String hallName;
 
-	@Formula("(SELECT COUNT(*) FROM cinema_seats cs WHERE cs.hall_id = hall_id AND cs.active = true)")
+	@Formula("(SELECT COUNT(*) FROM seats s WHERE s.hall_id = hall_id AND s.active = true)")
 	@Column(name = "hall_capacity", nullable = false)
 	private Integer hallCapacity;
 
-	@Formula("(SELECT COUNT(*) FROM booked_seats bs WHERE bs.session_id = id AND bs.status = 'CONFIRMED')")
+	@Formula("(SELECT COUNT(*) FROM tickets t WHERE t.booking_id IN (SELECT b.id FROM bookings b WHERE b.session_id = id AND b.status = 'CONFIRMED'))")
 	@Column(name = "tickets_sold", nullable = false)
 	private Integer ticketsSold;
 
-	@Formula("(SELECT base_price * (SELECT COUNT(*) FROM booked_seats bs WHERE bs.session_id = id AND bs.status = 'CONFIRMED'))")
+	@Formula("(SELECT COALESCE(SUM(t.final_price), 0) FROM tickets t WHERE t.booking_id IN (SELECT b.id FROM bookings b WHERE b.session_id = id AND b.status = 'CONFIRMED'))")
 	@Column(name = "total_revenue", nullable = false)
 	private BigDecimal totalRevenue;
 

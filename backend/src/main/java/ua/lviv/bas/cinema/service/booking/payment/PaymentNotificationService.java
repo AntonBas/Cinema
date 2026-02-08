@@ -76,7 +76,7 @@ public class PaymentNotificationService {
 	}
 
 	private String extractSeatsInfo(Booking booking) {
-		return booking.getBookedSeats().stream()
+		return booking.getSeatReservations().stream()
 				.map(seat -> String.format("Row %d, Seat %d", seat.getSeat().getRow(), seat.getSeat().getNumber()))
 				.collect(java.util.stream.Collectors.joining(", "));
 	}

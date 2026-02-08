@@ -11,7 +11,7 @@ import ua.lviv.bas.cinema.domain.SeatReservation;
 import ua.lviv.bas.cinema.domain.enums.ReservationStatus;
 
 @Repository
-public interface BookedSeatRepository extends JpaRepository<SeatReservation, Long> {
+public interface SeatReservationRepository extends JpaRepository<SeatReservation, Long> {
 	@Query("SELECT COUNT(bs) > 0 FROM BookedSeat bs WHERE bs.session.id = :sessionId AND bs.seat.id = :seatId AND bs.status IN :statuses")
 	boolean existsBySessionIdAndSeatIdAndStatusIn(@Param("sessionId") Long sessionId, @Param("seatId") Long seatId,
 			@Param("statuses") List<ReservationStatus> statuses);

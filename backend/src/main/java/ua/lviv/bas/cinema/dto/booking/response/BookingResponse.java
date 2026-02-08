@@ -60,17 +60,17 @@ public class BookingResponse {
 	@Schema(description = "Created at", example = "2024-01-15T14:30:00")
 	private LocalDateTime createdAt;
 
-	@Schema(description = "List of booked seats")
-	private List<BookedSeatInfo> bookedSeats;
+	@Schema(description = "List of seat reservations")
+	private List<SeatReservationInfo> seatReservations;
 
 	@Data
 	@Builder
 	@NoArgsConstructor
 	@AllArgsConstructor
-	@Schema(description = "Booked seat information")
-	public static class BookedSeatInfo {
+	@Schema(description = "Seat reservation information")
+	public static class SeatReservationInfo {
 
-		@Schema(description = "Booked seat ID", example = "456")
+		@Schema(description = "Seat reservation ID", example = "456")
 		private Long id;
 
 		@Schema(description = "Seat ID", example = "45")

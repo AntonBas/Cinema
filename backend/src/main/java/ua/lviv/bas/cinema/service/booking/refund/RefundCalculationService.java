@@ -50,8 +50,8 @@ public class RefundCalculationService {
 		BigDecimal feeAmount = ticket.getFinalPrice().subtract(refundAmount);
 
 		String seatInfo = "N/A";
-		if (ticket.getBooking().getBookedSeats() != null && !ticket.getBooking().getBookedSeats().isEmpty()) {
-			SeatReservation bookedSeat = ticket.getBooking().getBookedSeats().get(0);
+		if (ticket.getBooking().getSeatReservations() != null && !ticket.getBooking().getSeatReservations().isEmpty()) {
+			SeatReservation bookedSeat = ticket.getBooking().getSeatReservations().get(0);
 			seatInfo = String.format("Row %d, Seat %d", bookedSeat.getSeat().getRow(),
 					bookedSeat.getSeat().getNumber());
 		}

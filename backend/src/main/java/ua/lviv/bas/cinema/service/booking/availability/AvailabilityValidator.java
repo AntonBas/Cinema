@@ -9,13 +9,13 @@ import ua.lviv.bas.cinema.domain.Seat;
 import ua.lviv.bas.cinema.domain.enums.ReservationStatus;
 import ua.lviv.bas.cinema.exception.domain.booking.SeatNotAvailableException;
 import ua.lviv.bas.cinema.exception.domain.cinema.SeatNotFoundException;
-import ua.lviv.bas.cinema.repository.BookedSeatRepository;
+import ua.lviv.bas.cinema.repository.SeatReservationRepository;
 import ua.lviv.bas.cinema.repository.SeatRepository;
 
 @Service
 @RequiredArgsConstructor
 public class AvailabilityValidator {
-	private final BookedSeatRepository bookedSeatRepository;
+	private final SeatReservationRepository bookedSeatRepository;
 	private final SeatRepository seatRepository;
 
 	public void validateSeat(Long sessionId, Long seatId) {

@@ -18,7 +18,7 @@ public interface TicketMapper {
 	@Mapping(target = "movieTitle", source = "booking.session.movie.title")
 	@Mapping(target = "sessionTime", source = "booking.session.startTime")
 	@Mapping(target = "hallName", source = "booking.session.hall.name")
-	@Mapping(target = "row", source = "bookedSeat.seat.row")
-	@Mapping(target = "seatNumber", source = "bookedSeat.seat.number")
+	@Mapping(target = "row", source = "seatReservation.seat.row")
+	@Mapping(target = "seatNumber", source = "seatReservation.seat.number")
 	TicketResponse toTicketResponse(Ticket ticket);
 }

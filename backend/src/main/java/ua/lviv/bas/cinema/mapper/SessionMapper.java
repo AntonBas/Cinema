@@ -58,7 +58,7 @@ public interface SessionMapper {
 	@Mapping(target = "movieDuration", source = "movieDuration")
 	@Mapping(target = "hallName", source = "hallName")
 	@Mapping(target = "hallCapacity", source = "hallCapacity")
-	@Mapping(target = "availableSeats", ignore = true)
+	@Mapping(target = "availableSeats", source = "availableSeats")
 	@Mapping(target = "endTime", source = "endTime")
 	@Mapping(target = "status", source = "status", qualifiedByName = "stringToCinemaSessionStatus")
 	SessionScheduleResponse toSessionScheduleResponse(SessionScheduleProjection projection);
@@ -68,7 +68,7 @@ public interface SessionMapper {
 	@Mapping(target = "hall", ignore = true)
 	@Mapping(target = "status", constant = "SCHEDULED")
 	@Mapping(target = "bookings", ignore = true)
-	@Mapping(target = "bookedSeats", ignore = true)
+	@Mapping(target = "seatReservations", ignore = true)
 	Session toSession(SessionCreateRequest request);
 
 	@BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
@@ -77,7 +77,7 @@ public interface SessionMapper {
 	@Mapping(target = "hall", ignore = true)
 	@Mapping(target = "status", ignore = true)
 	@Mapping(target = "bookings", ignore = true)
-	@Mapping(target = "bookedSeats", ignore = true)
+	@Mapping(target = "seatReservations", ignore = true)
 	void updateSessionFromRequest(SessionUpdateRequest request, @MappingTarget Session session);
 
 	@Named("stringToCinemaSessionStatus")
