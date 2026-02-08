@@ -13,12 +13,12 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "Request to use bonus points for purchase")
+@Schema(description = "Request to use bonus points for booking")
 public class UseBonusPointsRequest {
 
 	@NotNull(message = "Points amount is required")
-	@Min(value = 50, message = "Minimum 50 points required")
-	@Max(value = 300, message = "Maximum 300 points allowed")
-	@Schema(description = "Number of bonus points to use (50-300)", example = "150", minimum = "50", maximum = "300")
+	@Min(value = 100, message = "Minimum 100 points required")
+	@Max(value = 1000, message = "Maximum 1000 points allowed")
+	@Schema(description = "Number of bonus points to use (100-1000)", example = "500", minimum = "100", maximum = "1000")
 	private Integer pointsToUse;
 }

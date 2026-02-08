@@ -43,7 +43,7 @@ public class EmailTokenService {
 		user.setEnabled(true);
 		User updatedUser = userRepository.save(user);
 
-		bonusUserService.findOrCreateBonusCard(updatedUser);
+		bonusUserService.getOrCreateCard(updatedUser);
 
 		bonusUserService.awardWelcomeBonus(updatedUser);
 

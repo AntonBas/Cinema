@@ -1,7 +1,5 @@
 package ua.lviv.bas.cinema.controller.admin;
 
-import java.util.List;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -26,6 +24,7 @@ import ua.lviv.bas.cinema.domain.enums.BonusTransactionType;
 import ua.lviv.bas.cinema.dto.bonus.request.BonusRulesRequest;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusRulesResponse;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusTransactionResponse;
+import ua.lviv.bas.cinema.dto.common.PageResponse;
 import ua.lviv.bas.cinema.service.admin.BonusAdminService;
 
 @RestController
@@ -42,8 +41,8 @@ public class AdminBonusController {
 	@ApiResponse(responseCode = "200", description = "List of bonus rules retrieved successfully")
 	@GetMapping("/rules")
 	@ResponseStatus(HttpStatus.OK)
-	public List<BonusRulesResponse> getAllBonusRules() {
-		return bonusAdminService.getAllBonusRules();
+	public PageResponse<BonusRulesResponse> getAllBonusRules() {
+		return PageResponse.from(Page.empty());
 	}
 
 	@Operation(summary = "Get bonus rule by type", description = "Returns details of a bonus rule by the specified type")
@@ -52,7 +51,7 @@ public class AdminBonusController {
 	@GetMapping("/rules/{type}")
 	@ResponseStatus(HttpStatus.OK)
 	public BonusRulesResponse getBonusRule(@PathVariable BonusTransactionType type) {
-		return bonusAdminService.getBonusRule(type);
+		return bonusAdminService.getRule(type);
 	}
 
 	@Operation(summary = "Update bonus rule", description = "Updates a bonus rule by the specified type")
@@ -62,7 +61,7 @@ public class AdminBonusController {
 	@ResponseStatus(HttpStatus.OK)
 	public BonusRulesResponse updateBonusRule(@PathVariable BonusTransactionType type,
 			@Valid @RequestBody BonusRulesRequest request) {
-		return bonusAdminService.updateBonusRule(type, request);
+		return bonusAdminService.updateRule(type, request);
 	}
 
 	@Operation(summary = "Reset bonus rule to defaults", description = "Resets a bonus rule to its default values")
@@ -71,32 +70,35 @@ public class AdminBonusController {
 	@PostMapping("/rules/{type}/reset")
 	@ResponseStatus(HttpStatus.OK)
 	public BonusRulesResponse resetBonusRule(@PathVariable BonusTransactionType type) {
-		return bonusAdminService.resetBonusRuleToDefaults(type);
+		return bonusAdminService.resetRuleToDefaults(type);
 	}
 
 	@Operation(summary = "Get user transactions", description = "Returns bonus transaction history for a specific user")
 	@ApiResponse(responseCode = "200", description = "User transactions retrieved successfully")
 	@GetMapping("/users/{userId}/transactions")
 	@ResponseStatus(HttpStatus.OK)
-	public Page<BonusTransactionResponse> getUserTransactions(@PathVariable Long userId,
+	public PageResponse<BonusTransactionResponse> getUserTransactions(@PathVariable Long userId,
 			@PageableDefault(size = 20) Pageable pageable) {
-		return bonusAdminService.getUserTransactions(userId, pageable);
+		Page<BonusTransactionResponse> page = bonusAdminService.getUserTransactions(userId, pageable);
+		return PageResponse.from(page);
 	}
 
 	@Operation(summary = "Get all transactions", description = "Returns all bonus transactions in the system")
 	@ApiResponse(responseCode = "200", description = "All transactions retrieved successfully")
 	@GetMapping("/transactions")
 	@ResponseStatus(HttpStatus.OK)
-	public Page<BonusTransactionResponse> getAllTransactions(@PageableDefault(size = 20) Pageable pageable) {
-		return bonusAdminService.getAllTransactions(pageable);
+	public PageResponse<BonusTransactionResponse> getAllTransactions(@PageableDefault(size = 20) Pageable pageable) {
+		Page<BonusTransactionResponse> page = bonusAdminService.getAllTransactions(pageable);
+		return PageResponse.from(page);
 	}
 
 	@Operation(summary = "Get transactions by type", description = "Returns bonus transactions filtered by type")
 	@ApiResponse(responseCode = "200", description = "Transactions retrieved successfully")
 	@GetMapping("/transactions/type/{type}")
 	@ResponseStatus(HttpStatus.OK)
-	public Page<BonusTransactionResponse> getTransactionsByType(@PathVariable BonusTransactionType type,
+	public PageResponse<BonusTransactionResponse> getTransactionsByType(@PathVariable BonusTransactionType type,
 			@PageableDefault(size = 20) Pageable pageable) {
-		return bonusAdminService.getTransactionsByType(type, pageable);
+		Page<BonusTransactionResponse> page = bonusAdminService.getTransactionsByType(type, pageable);
+		return PageResponse.from(page);
 	}
 }

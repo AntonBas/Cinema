@@ -92,10 +92,10 @@ public class PaymentProcessingService {
 		bookingManagementService.confirmBooking(payment.getBooking().getId());
 		List<Ticket> tickets = ticketService.createTicketsForBooking(payment.getBooking(), payment);
 
-		Integer pointsToAccrue = bonusService.calculateAccruedPointsForAmount(payment.getBooking().getFinalPrice());
+		Integer pointsToAccrue = bonusService.calculatePoints(payment.getBooking().getFinalPrice());
 		if (pointsToAccrue != null && pointsToAccrue > 0) {
-			bonusService.accrueBonusPointsForPayment(payment.getBooking().getUser().getId(), pointsToAccrue,
-					payment.getBooking(), payment);
+			bonusService.accruePoints(payment.getBooking().getUser().getId(), pointsToAccrue, payment.getBooking(),
+					payment);
 		}
 
 		notificationService.sendPaymentSuccessEmail(payment, payment.getBooking(), tickets);

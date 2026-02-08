@@ -63,7 +63,7 @@ public class BookingManagementService {
 		booking.getSeatReservations().forEach(bs -> bs.setStatus(ReservationStatus.CANCELLED));
 
 		if (booking.getBonusPointsUsed() != null && booking.getBonusPointsUsed() > 0) {
-			bonusService.refundBonusPointsForCancellation(booking);
+			bonusService.refundPoints(booking);
 		}
 
 		bookingRepository.save(booking);
@@ -87,7 +87,7 @@ public class BookingManagementService {
 
 	@Transactional(readOnly = true)
 	public Integer getAvailableBonusPointsForBooking(Long userId, BigDecimal bookingTotalPrice) {
-		return bonusService.getAvailablePointsForRedemption(userId, bookingTotalPrice);
+		return bonusService.getAvailablePoints(userId, bookingTotalPrice);
 	}
 
 	private BookingResponse buildBookingResponse(Booking booking) {

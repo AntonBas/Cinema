@@ -27,7 +27,7 @@ public class BookingPriceCalculator {
 		Integer bonusPointsUsed = 0;
 
 		if (bonusPointsToUse != null && bonusPointsToUse > 0) {
-			bonusService.validateBonusPointsForBooking(userId, bonusPointsToUse, totalPrice);
+			bonusService.validatePointsForBooking(userId, bonusPointsToUse, totalPrice);
 			bonusDiscount = priceCalculator.calculateBonusDiscount(bonusPointsToUse);
 			bonusPointsUsed = bonusPointsToUse;
 		}

@@ -18,16 +18,13 @@ public class BonusRulesRequest {
 	@Schema(description = "Fixed points amount (for WELCOME_BONUS, BIRTHDAY_BONUS)", example = "100", nullable = true)
 	private Integer points;
 
-	@Schema(description = "Points per currency unit (for PURCHASE_BONUS). Example: 0.1 = 1 point per 10 UAH", example = "0.1", nullable = true)
+	@Schema(description = "Points per currency unit (for PAYMENT_ACCRUAL). Example: 0.05 = 5 points per 100 UAH", example = "0.05", nullable = true)
 	private BigDecimal moneyRatio;
 
-	@Schema(description = "Currency value per point (for PURCHASE_WRITE_OFF). Example: 1.00 = 1 point = 1.00 UAH", example = "1.00", nullable = true)
-	private BigDecimal pointValue;
-
-	@Schema(description = "Minimum points that can be used in one transaction", example = "50", nullable = true)
+	@Schema(description = "Minimum points that can be used in one transaction", example = "100", nullable = true)
 	private Integer minPointsPerTransaction;
 
-	@Schema(description = "Maximum points that can be used in one transaction", example = "300", nullable = true)
+	@Schema(description = "Maximum points that can be used in one transaction", example = "1000", nullable = true)
 	private Integer maxPointsPerTransaction;
 
 	@Schema(description = "Whether this bonus rule is active", example = "true", nullable = true)

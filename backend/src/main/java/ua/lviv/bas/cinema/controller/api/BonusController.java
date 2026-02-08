@@ -20,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusBalanceResponse;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusCardResponse;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusTransactionResponse;
+import ua.lviv.bas.cinema.dto.common.PageResponse;
 import ua.lviv.bas.cinema.service.user.BonusService;
 
 @RestController
@@ -39,7 +40,7 @@ public class BonusController {
 	@PreAuthorize("isAuthenticated()")
 	public BonusCardResponse getMyBonusCard(
 			@Parameter(hidden = true) @AuthenticationPrincipal(expression = "userId") Long userId) {
-		return bonusService.getBonusCard(userId);
+		return bonusService.getCard(userId);
 	}
 
 	@Operation(summary = "Get bonus balance", description = "Returns the current user's bonus balance with conversion details")
@@ -58,9 +59,10 @@ public class BonusController {
 	@GetMapping("/my-transactions")
 	@ResponseStatus(HttpStatus.OK)
 	@PreAuthorize("isAuthenticated()")
-	public Page<BonusTransactionResponse> getMyTransactions(
+	public PageResponse<BonusTransactionResponse> getMyTransactions(
 			@Parameter(hidden = true) @AuthenticationPrincipal(expression = "userId") Long userId,
 			@PageableDefault(size = 20) Pageable pageable) {
-		return bonusService.getUserTransactions(userId, pageable);
+		Page<BonusTransactionResponse> page = bonusService.getTransactions(userId, pageable);
+		return PageResponse.from(page);
 	}
 }

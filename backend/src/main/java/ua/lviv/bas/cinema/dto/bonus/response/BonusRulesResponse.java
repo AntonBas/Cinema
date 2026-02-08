@@ -19,20 +19,21 @@ public class BonusRulesResponse {
 	@Schema(description = "Rule ID", example = "1")
 	private Long id;
 
-	@Schema(description = "Bonus type", example = "PURCHASE_WRITE_OFF", allowableValues = { "WELCOME_BONUS",
-			"BIRTHDAY_BONUS", "PURCHASE_BONUS", "PURCHASE_WRITE_OFF" })
+	@Schema(description = "Bonus type", example = "BOOKING_SPEND", allowableValues = { "WELCOME_BONUS",
+			"BIRTHDAY_BONUS", "PROMOTION_BONUS", "BOOKING_SPEND", "PAYMENT_ACCRUAL", "REFUND_RETURN",
+			"BOOKING_CANCEL" })
 	private String bonusType;
 
 	@Schema(description = "Fixed points amount (for WELCOME_BONUS, BIRTHDAY_BONUS)", example = "100", nullable = true)
 	private Integer points;
 
-	@Schema(description = "Points per currency unit (for PURCHASE_BONUS)", example = "0.1", nullable = true)
+	@Schema(description = "Points per currency unit (for PAYMENT_ACCRUAL)", example = "0.05", nullable = true)
 	private BigDecimal moneyRatio;
 
-	@Schema(description = "Minimum points that can be used in one transaction", example = "50")
+	@Schema(description = "Minimum points that can be used in one transaction", example = "100")
 	private Integer minPointsPerTransaction;
 
-	@Schema(description = "Maximum points that can be used in one transaction", example = "300")
+	@Schema(description = "Maximum points that can be used in one transaction", example = "1000")
 	private Integer maxPointsPerTransaction;
 
 	@Schema(description = "Whether this bonus rule is active", example = "true")

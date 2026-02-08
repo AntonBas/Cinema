@@ -39,8 +39,9 @@ import ua.lviv.bas.cinema.domain.enums.BonusTransactionType;
 		@Index(name = "idx_bonus_trans_card_created", columnList = "bonus_card_id, created_at"),
 		@Index(name = "idx_bonus_trans_created", columnList = "created_at"),
 		@Index(name = "idx_bonus_trans_type", columnList = "type"),
-		@Index(name = "idx_bonus_trans_payment", columnList = "payment_id"),
-		@Index(name = "idx_bonus_trans_refund", columnList = "refund_id") })
+		@Index(name = "idx_bonus_trans_booking", columnList = "booking_id"),
+		@Index(name = "idx_bonus_trans_refund", columnList = "refund_id"),
+		@Index(name = "idx_bonus_trans_user_date", columnList = "bonus_card_id, created_at DESC") })
 public class BonusTransaction {
 
 	@Id

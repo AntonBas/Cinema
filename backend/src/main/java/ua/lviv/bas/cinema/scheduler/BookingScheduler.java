@@ -45,7 +45,7 @@ public class BookingScheduler {
 			booking.getSeatReservations().forEach(sr -> sr.setStatus(ReservationStatus.EXPIRED));
 
 			if (booking.getBonusPointsUsed() != null && booking.getBonusPointsUsed() > 0) {
-				bonusService.refundBonusPointsForCancellation(booking);
+				bonusService.refundPoints(booking);
 			}
 		}
 

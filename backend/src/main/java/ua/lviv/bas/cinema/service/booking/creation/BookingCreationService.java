@@ -79,7 +79,7 @@ public class BookingCreationService {
 		seatReservationRepository.saveAll(seatReservations);
 
 		if (priceResult.bonusPointsUsed() > 0) {
-			bonusService.spendBonusPointsForBooking(user.getId(), priceResult.bonusPointsUsed(), savedBooking,
+			bonusService.spendPoints(user.getId(), priceResult.bonusPointsUsed(), savedBooking,
 					"BOOKING_" + savedBooking.getId());
 		}
 

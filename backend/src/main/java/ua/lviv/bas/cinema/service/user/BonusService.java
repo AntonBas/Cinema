@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import ua.lviv.bas.cinema.config.BonusProperties;
 import ua.lviv.bas.cinema.domain.BonusCard;
 import ua.lviv.bas.cinema.domain.BonusRules;
 import ua.lviv.bas.cinema.domain.BonusTransaction;
@@ -21,6 +22,7 @@ import ua.lviv.bas.cinema.domain.Refund;
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.enums.BonusTransactionType;
 import ua.lviv.bas.cinema.domain.enums.VerificationStatus;
+import ua.lviv.bas.cinema.domain.projection.BonusTransactionProjection;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusBalanceResponse;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusCardResponse;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusTransactionResponse;
@@ -38,110 +40,86 @@ import ua.lviv.bas.cinema.repository.BonusTransactionRepository;
 @RequiredArgsConstructor
 public class BonusService {
 
-	private static final BigDecimal POINT_VALUE = new BigDecimal("1.00");
-	private static final BigDecimal ACCRUAL_RATIO = new BigDecimal("0.05");
-	private static final BigDecimal MAX_DISCOUNT_PERCENTAGE = new BigDecimal("0.5");
-
 	private final BonusCardRepository bonusCardRepository;
 	private final BonusRulesRepository bonusRulesRepository;
 	private final BonusTransactionRepository bonusTransactionRepository;
 	private final BonusMapper bonusMapper;
+	private final BonusProperties bonusProperties;
 
 	@Transactional(readOnly = true)
-	public BonusCardResponse getBonusCard(Long userId) {
-		log.debug("Getting bonus card for user: {}", userId);
-		BonusCard card = findBonusCardByUserId(userId);
+	public BonusCardResponse getCard(Long userId) {
+		BonusCard card = getCardByUserId(userId);
 		return bonusMapper.toBonusCardResponse(card);
 	}
 
 	@Transactional(readOnly = true)
 	public BonusBalanceResponse getBalance(Long userId) {
-		log.debug("Getting balance for user: {}", userId);
-		BonusCard card = findBonusCardByUserId(userId);
-		return buildBalanceResponse(card);
+		BonusCard card = getCardByUserId(userId);
+		return buildBalance(card);
 	}
 
 	@Transactional(readOnly = true)
-	public Page<BonusTransactionResponse> getUserTransactions(Long userId, Pageable pageable) {
-		log.debug("Getting transactions for user: {}, page: {}, size: {}", userId, pageable.getPageNumber(),
-				pageable.getPageSize());
+	public Page<BonusTransactionResponse> getTransactions(Long userId, Pageable pageable) {
+		Page<BonusTransactionProjection> page = bonusTransactionRepository.findProjectionsByUserId(userId, pageable);
 
-		BonusCard card = findBonusCardByUserId(userId);
-		Page<BonusTransaction> page = bonusTransactionRepository.findByBonusCardOrderByCreatedAtDesc(card, pageable);
-
-		return page.map(bonusMapper::toBonusTransactionResponse);
+		return page.map(projection -> {
+			BonusTransactionResponse response = bonusMapper.toBonusTransactionResponse(projection);
+			response.setBookingDetails(bonusMapper.toBookingDetails(projection));
+			return response;
+		});
 	}
 
 	@Transactional
 	public void awardWelcomeBonus(User user) {
-		log.debug("Processing welcome bonus for user: {}", user.getId());
+		BonusCard card = getOrCreateCard(user);
 
-		try {
-			BonusCard card = findOrCreateBonusCard(user);
-
-			if (card.isWelcomeBonusReceived()) {
-				log.debug("User {} already received welcome bonus", user.getId());
-				return;
-			}
-
-			BonusRules rule = findActiveRule(BonusTransactionType.WELCOME_BONUS);
-			createBonusTransaction(card, rule.getPoints(), BonusTransactionType.WELCOME_BONUS, "USER_" + user.getId(),
-					null, null, null);
-
-			card.setWelcomeBonusReceived(true);
-			bonusCardRepository.save(card);
-			log.info("Awarded welcome bonus ({} points) to user {}", rule.getPoints(), user.getId());
-		} catch (BonusRuleNotFoundException e) {
-			log.warn("Could not award welcome bonus to user {}: {}", user.getId(), e.getMessage());
+		if (card.isWelcomeBonusReceived()) {
+			return;
 		}
+
+		BonusRules rule = getActiveRule(BonusTransactionType.WELCOME_BONUS);
+		createTransaction(card, rule.getPoints(), BonusTransactionType.WELCOME_BONUS, "USER_" + user.getId(), null,
+				null, null);
+
+		card.setWelcomeBonusReceived(true);
+		bonusCardRepository.save(card);
 	}
 
 	@Transactional
 	public void awardBirthdayBonus(User user) {
-		log.debug("Checking birthday bonus for user: {}", user.getId());
-
 		if (user.getVerificationStatus() != VerificationStatus.VERIFIED) {
-			log.debug("User {} is not verified. Status: {}. Skipping birthday bonus.", user.getId(),
-					user.getVerificationStatus());
 			return;
 		}
 
 		if (user.getDateOfBirth() == null) {
-			log.debug("User {} has no birth date set", user.getId());
 			return;
 		}
 
 		LocalDate today = LocalDate.now();
-		if (user.getDateOfBirth().getMonth() != today.getMonth()
-				|| user.getDateOfBirth().getDayOfMonth() != today.getDayOfMonth()) {
-			log.debug("Today is not birthday for user {}", user.getId());
+		if (!isBirthdayToday(user.getDateOfBirth(), today)) {
 			return;
 		}
 
-		BonusCard card = findOrCreateBonusCard(user);
-		if (card.getLastBirthdayBonusDate() != null && card.getLastBirthdayBonusDate().getYear() == today.getYear()) {
-			log.debug("User {} already received birthday bonus this year", user.getId());
+		BonusCard card = getOrCreateCard(user);
+		if (alreadyReceivedBirthdayBonus(card, today)) {
 			return;
 		}
 
-		BonusRules rule = findActiveRule(BonusTransactionType.BIRTHDAY_BONUS);
-		createBonusTransaction(card, rule.getPoints(), BonusTransactionType.BIRTHDAY_BONUS, "USER_" + user.getId(),
-				null, null, null);
+		BonusRules rule = getActiveRule(BonusTransactionType.BIRTHDAY_BONUS);
+		createTransaction(card, rule.getPoints(), BonusTransactionType.BIRTHDAY_BONUS, "USER_" + user.getId(), null,
+				null, null);
 
 		card.setLastBirthdayBonusDate(today);
 		bonusCardRepository.save(card);
-		log.info("Awarded birthday bonus ({} points) to user {}", rule.getPoints(), user.getId());
 	}
 
 	@Transactional
 	public Integer addPoints(User user, Integer points) {
-		log.info("Adding {} points to user {} from promotion", points, user.getId());
-
 		if (points == null || points <= 0) {
 			throw BonusValidationException.invalidPoints(points);
 		}
 
-		BonusCard card = findOrCreateBonusCard(user);
+		BonusCard card = getOrCreateCard(user);
 
 		BonusTransaction transaction = BonusTransaction.builder().bonusCard(card)
 				.type(BonusTransactionType.PROMOTION_BONUS).pointsChange(points)
@@ -151,202 +129,179 @@ public class BonusService {
 		bonusCardRepository.save(card);
 		bonusTransactionRepository.save(transaction);
 
-		log.info("Added {} points to user {}. New balance: {}", points, user.getId(), card.getPointsBalance());
-
 		return card.getPointsBalance();
 	}
 
 	@Transactional(readOnly = true)
-	public void validatePointsRedemption(Long userId, Integer pointsToUse) {
-		log.debug("Validating {} points redemption for user: {}", pointsToUse, userId);
-		BonusCard card = findBonusCardByUserId(userId);
+	public void validateRedemption(Long userId, Integer points) {
+		BonusCard card = getCardByUserId(userId);
 
-		if (card.getPointsBalance() < pointsToUse) {
-			log.warn("User {} has insufficient points: available {}, required {}", userId, card.getPointsBalance(),
-					pointsToUse);
-			throw new InsufficientPointsException(card.getPointsBalance(), pointsToUse);
+		if (card.getPointsBalance() < points) {
+			throw new InsufficientPointsException(card.getPointsBalance(), points);
 		}
 
-		if (pointsToUse <= 0) {
-			log.warn("User {} attempted invalid redemption: {} points", userId, pointsToUse);
-			throw BonusValidationException.invalidPoints(pointsToUse);
+		if (points <= 0) {
+			throw BonusValidationException.invalidPoints(points);
 		}
-
-		log.debug("Points redemption validation passed for user: {}", userId);
 	}
 
 	@Transactional
-	public BonusTransaction spendBonusPointsForBooking(Long userId, Integer pointsToUse, Booking booking,
-			String reference) {
-		log.info("Spending {} points for booking {} (user: {})", pointsToUse, booking.getId(), userId);
-
-		validatePointsRedemption(userId, pointsToUse);
-		BonusCard card = findBonusCardByUserId(userId);
+	public BonusTransaction spendPoints(Long userId, Integer points, Booking booking, String reference) {
+		validateRedemption(userId, points);
+		BonusCard card = getCardByUserId(userId);
 
 		BonusTransaction transaction = BonusTransaction.builder().bonusCard(card).booking(booking)
-				.type(BonusTransactionType.BOOKING_SPEND).pointsChange(-pointsToUse)
+				.type(BonusTransactionType.BOOKING_SPEND).pointsChange(-points)
 				.referenceId(reference != null ? reference : "BOOKING_" + booking.getId())
 				.createdAt(LocalDateTime.now()).build();
 
-		card.setPointsBalance(card.getPointsBalance() - pointsToUse);
+		card.setPointsBalance(card.getPointsBalance() - points);
 		bonusCardRepository.save(card);
 
-		BonusTransaction saved = bonusTransactionRepository.save(transaction);
-		log.info("Successfully spent {} points for booking {}", pointsToUse, booking.getId());
-
-		return saved;
+		return bonusTransactionRepository.save(transaction);
 	}
 
 	@Transactional
-	public BonusTransaction accrueBonusPointsForPayment(Long userId, Integer pointsToAccrue, Booking booking,
-			Payment payment) {
-		log.info("Accruing {} points for payment {} (user: {})", pointsToAccrue, payment.getId(), userId);
-
-		if (pointsToAccrue == null || pointsToAccrue <= 0) {
-			log.debug("No points to accrue for payment {}", payment.getId());
+	public BonusTransaction accruePoints(Long userId, Integer points, Booking booking, Payment payment) {
+		if (points == null || points <= 0) {
 			return null;
 		}
 
-		BonusCard card = findBonusCardByUserId(userId);
+		BonusCard card = getCardByUserId(userId);
 
 		BonusTransaction transaction = BonusTransaction.builder().bonusCard(card).booking(booking)
-				.type(BonusTransactionType.PAYMENT_ACCRUAL).pointsChange(pointsToAccrue)
+				.type(BonusTransactionType.PAYMENT_ACCRUAL).pointsChange(points)
 				.referenceId("PAYMENT_" + payment.getId()).createdAt(LocalDateTime.now()).build();
 
-		card.setPointsBalance(card.getPointsBalance() + pointsToAccrue);
+		card.setPointsBalance(card.getPointsBalance() + points);
 		bonusCardRepository.save(card);
 
-		BonusTransaction saved = bonusTransactionRepository.save(transaction);
-		log.info("Successfully accrued {} points for payment {}", pointsToAccrue, payment.getId());
-
-		return saved;
+		return bonusTransactionRepository.save(transaction);
 	}
 
 	@Transactional
-	public BonusTransaction refundBonusPointsForCancellation(Booking booking) {
+	public BonusTransaction refundPoints(Booking booking) {
 		if (booking.getBonusPointsUsed() == null || booking.getBonusPointsUsed() <= 0) {
-			log.debug("No bonus points to refund for booking {}", booking.getId());
 			return null;
 		}
 
-		log.info("Refunding {} bonus points for cancelled booking {}", booking.getBonusPointsUsed(), booking.getId());
-
-		BonusCard card = findBonusCardByUserId(booking.getUser().getId());
-		Integer pointsToRefund = booking.getBonusPointsUsed();
+		BonusCard card = getCardByUserId(booking.getUser().getId());
+		Integer points = booking.getBonusPointsUsed();
 
 		BonusTransaction transaction = BonusTransaction.builder().bonusCard(card).booking(booking)
-				.type(BonusTransactionType.REFUND_RETURN).pointsChange(pointsToRefund)
+				.type(BonusTransactionType.REFUND_RETURN).pointsChange(points)
 				.referenceId("REFUND_BOOKING_" + booking.getId()).createdAt(LocalDateTime.now()).build();
 
-		card.setPointsBalance(card.getPointsBalance() + pointsToRefund);
+		card.setPointsBalance(card.getPointsBalance() + points);
 		bonusCardRepository.save(card);
 
-		BonusTransaction saved = bonusTransactionRepository.save(transaction);
-		log.info("Successfully refunded {} points for booking {}", pointsToRefund, booking.getId());
-
-		return saved;
+		return bonusTransactionRepository.save(transaction);
 	}
 
 	@Transactional(readOnly = true)
-	public Integer calculateAccruedPointsForAmount(BigDecimal finalAmount) {
-		log.debug("Calculating accrued points for amount: {}", finalAmount);
-
-		if (finalAmount == null || finalAmount.compareTo(BigDecimal.ZERO) <= 0) {
+	public Integer calculatePoints(BigDecimal amount) {
+		if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
 			return 0;
 		}
 
-		Integer points = finalAmount.multiply(ACCRUAL_RATIO).intValue();
-		log.debug("Calculated {} points for {} UAH purchase", points, finalAmount);
+		BonusRules rule = bonusRulesRepository.findByBonusTypeAndActiveTrue(BonusTransactionType.PAYMENT_ACCRUAL)
+				.orElse(null);
+
+		if (rule == null || rule.getMoneyRatio() == null) {
+			return 0;
+		}
+
+		Integer points = amount.multiply(rule.getMoneyRatio()).intValue();
+
+		if (rule.getMinPointsPerTransaction() != null && points < rule.getMinPointsPerTransaction()) {
+			points = rule.getMinPointsPerTransaction();
+		}
+		if (rule.getMaxPointsPerTransaction() != null && points > rule.getMaxPointsPerTransaction()) {
+			points = rule.getMaxPointsPerTransaction();
+		}
+
 		return points;
 	}
 
 	@Transactional(readOnly = true)
-	public void validateBonusPointsForBooking(Long userId, Integer pointsToUse, BigDecimal bookingTotalPrice) {
-		validatePointsRedemption(userId, pointsToUse);
+	public void validatePointsForBooking(Long userId, Integer points, BigDecimal totalPrice) {
+		validateRedemption(userId, points);
 
-		BigDecimal discountAmount = POINT_VALUE.multiply(BigDecimal.valueOf(pointsToUse));
-		BigDecimal maxAllowedDiscount = bookingTotalPrice.multiply(MAX_DISCOUNT_PERCENTAGE);
+		BigDecimal discount = bonusProperties.getPointValue().multiply(BigDecimal.valueOf(points));
+		BigDecimal maxDiscount = totalPrice.multiply(bonusProperties.getMaxDiscountPercentage());
 
-		if (discountAmount.compareTo(maxAllowedDiscount) > 0) {
-			throw BonusValidationException.discountExceedsMax(discountAmount, maxAllowedDiscount);
+		if (discount.compareTo(maxDiscount) > 0) {
+			throw BonusValidationException.discountExceedsMax(discount, maxDiscount);
 		}
 	}
 
 	@Transactional(readOnly = true)
-	public Integer getAvailablePointsForRedemption(Long userId, BigDecimal bookingTotalPrice) {
-		BonusCard card = findBonusCardByUserId(userId);
+	public Integer getAvailablePoints(Long userId, BigDecimal totalPrice) {
+		BonusCard card = getCardByUserId(userId);
+		int available = card.getPointsBalance();
 
-		int availablePoints = card.getPointsBalance();
+		BigDecimal maxDiscount = totalPrice.multiply(bonusProperties.getMaxDiscountPercentage());
+		int maxByPrice = maxDiscount.divide(bonusProperties.getPointValue(), 0, RoundingMode.DOWN).intValue();
 
-		BigDecimal maxDiscountAmount = bookingTotalPrice.multiply(MAX_DISCOUNT_PERCENTAGE);
-		int maxPointsByPrice = maxDiscountAmount.divide(POINT_VALUE, 0, RoundingMode.DOWN).intValue();
-
-		availablePoints = Math.min(availablePoints, maxPointsByPrice);
-
-		return Math.max(availablePoints, 0);
+		available = Math.min(available, maxByPrice);
+		return Math.max(available, 0);
 	}
 
 	@Transactional
-	public BonusCard findOrCreateBonusCard(User user) {
+	public BonusCard getOrCreateCard(User user) {
 		return bonusCardRepository.findByUserId(user.getId()).orElseGet(() -> {
-			log.debug("Creating new bonus card for user: {}", user.getId());
 			return bonusCardRepository
 					.save(BonusCard.builder().user(user).pointsBalance(0).welcomeBonusReceived(false).build());
 		});
 	}
 
 	@Transactional(readOnly = true)
-	public BonusRules findActiveRule(BonusTransactionType type) {
-		return bonusRulesRepository.findByBonusTypeAndActiveTrue(type).orElseThrow(() -> {
-			log.error("Active bonus rule not found for type: {}", type);
-			return new BonusRuleNotFoundException(type);
-		});
+	public BonusRules getActiveRule(BonusTransactionType type) {
+		return bonusRulesRepository.findByBonusTypeAndActiveTrue(type)
+				.orElseThrow(() -> new BonusRuleNotFoundException(type));
 	}
 
 	@Transactional
-	public BonusTransaction createBonusTransaction(BonusCard card, Integer pointsChange, BonusTransactionType type,
+	public BonusTransaction createTransaction(BonusCard card, Integer points, BonusTransactionType type,
 			String referenceId, Booking booking, Payment payment, Refund refund) {
-		log.debug("Creating {} transaction: {} points for card {}", type, pointsChange, card.getId());
-
 		BonusTransaction transaction = BonusTransaction.builder().bonusCard(card).booking(booking).type(type)
-				.pointsChange(pointsChange).referenceId(referenceId).refund(refund).createdAt(LocalDateTime.now())
-				.build();
+				.pointsChange(points).referenceId(referenceId).refund(refund).createdAt(LocalDateTime.now()).build();
 
-		card.setPointsBalance(card.getPointsBalance() + pointsChange);
+		card.setPointsBalance(card.getPointsBalance() + points);
 		bonusCardRepository.save(card);
 
-		BonusTransaction saved = bonusTransactionRepository.save(transaction);
-		log.debug("Created transaction {} for card {}", saved.getId(), card.getId());
-		return saved;
+		return bonusTransactionRepository.save(transaction);
 	}
 
-	@Transactional(readOnly = true)
-	private BonusCard findBonusCardByUserId(Long userId) {
-		return bonusCardRepository.findByUserId(userId).orElseThrow(() -> {
-			log.error("Bonus card not found for user: {}", userId);
-			return new BonusCardNotFoundException(userId);
-		});
+	private BonusCard getCardByUserId(Long userId) {
+		return bonusCardRepository.findByUserId(userId).orElseThrow(() -> new BonusCardNotFoundException(userId));
 	}
 
-	private BonusBalanceResponse buildBalanceResponse(BonusCard card) {
-		BigDecimal pointValue = POINT_VALUE;
+	private BonusBalanceResponse buildBalance(BonusCard card) {
+		BigDecimal pointValue = bonusProperties.getPointValue();
 		BigDecimal balanceValue = pointValue.multiply(BigDecimal.valueOf(card.getPointsBalance()));
 
-		BonusRules bookingSpendRule = bonusRulesRepository
-				.findByBonusTypeAndActiveTrue(BonusTransactionType.BOOKING_SPEND).orElse(null);
+		BonusRules spendRule = bonusRulesRepository.findByBonusTypeAndActiveTrue(BonusTransactionType.BOOKING_SPEND)
+				.orElse(null);
 
-		Integer minUsablePoints = bookingSpendRule != null ? bookingSpendRule.getMinPointsPerTransaction() : 0;
-		Integer maxUsablePoints = bookingSpendRule != null ? bookingSpendRule.getMaxPointsPerTransaction() : 0;
+		Integer minPoints = spendRule != null ? spendRule.getMinPointsPerTransaction() : null;
+		Integer maxPoints = spendRule != null ? spendRule.getMaxPointsPerTransaction() : null;
 
-		BigDecimal minRedemptionValue = minUsablePoints != null && minUsablePoints > 0
-				? pointValue.multiply(new BigDecimal(minUsablePoints))
-				: BigDecimal.ZERO;
-		BigDecimal maxRedemptionValue = maxUsablePoints != null && maxUsablePoints > 0
-				? pointValue.multiply(new BigDecimal(maxUsablePoints))
-				: BigDecimal.ZERO;
+		BigDecimal minValue = minPoints != null && minPoints > 0 ? pointValue.multiply(new BigDecimal(minPoints))
+				: null;
+		BigDecimal maxValue = maxPoints != null && maxPoints > 0 ? pointValue.multiply(new BigDecimal(maxPoints))
+				: null;
 
 		return BonusBalanceResponse.builder().pointsBalance(card.getPointsBalance()).pointValue(pointValue)
-				.balanceValue(balanceValue).minUsablePoints(minUsablePoints).maxUsablePoints(maxUsablePoints)
-				.minRedemptionValue(minRedemptionValue).maxRedemptionValue(maxRedemptionValue).build();
+				.balanceValue(balanceValue).minUsablePoints(minPoints).maxUsablePoints(maxPoints)
+				.minRedemptionValue(minValue).maxRedemptionValue(maxValue).build();
+	}
+
+	private boolean isBirthdayToday(LocalDate birthDate, LocalDate today) {
+		return birthDate.getMonth() == today.getMonth() && birthDate.getDayOfMonth() == today.getDayOfMonth();
+	}
+
+	private boolean alreadyReceivedBirthdayBonus(BonusCard card, LocalDate today) {
+		return card.getLastBirthdayBonusDate() != null && card.getLastBirthdayBonusDate().getYear() == today.getYear();
 	}
 }

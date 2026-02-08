@@ -24,15 +24,15 @@ public class BonusBalanceResponse {
 	@Schema(description = "Total monetary value of points balance", example = "250.00")
 	private BigDecimal balanceValue;
 
-	@Schema(description = "Minimum points that can be used in one transaction", example = "50")
+	@Schema(description = "Minimum points that can be used in one transaction", example = "100")
 	private Integer minUsablePoints;
 
-	@Schema(description = "Maximum points that can be used in one transaction", example = "300")
+	@Schema(description = "Maximum points that can be used in one transaction", example = "1000")
 	private Integer maxUsablePoints;
 
-	@Schema(description = "Minimum monetary value for redemption", example = "50.00")
+	@Schema(description = "Minimum monetary value for redemption", example = "100.00")
 	private BigDecimal minRedemptionValue;
 
-	@Schema(description = "Maximum monetary value for redemption", example = "300.00")
+	@Schema(description = "Maximum monetary value for redemption", example = "1000.00")
 	private BigDecimal maxRedemptionValue;
 }
