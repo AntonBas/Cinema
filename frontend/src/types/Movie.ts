@@ -1,6 +1,3 @@
-import type { GenreResponse } from './genre';
-import type { PersonResponse } from './person';
-
 export type MovieStatus = 'UPCOMING' | 'CURRENT' | 'ARCHIVED';
 export type AgeRating = 'PEGI_3' | 'PEGI_7' | 'PEGI_12' | 'PEGI_16' | 'PEGI_18';
 
@@ -74,7 +71,21 @@ export interface MovieUpdateRequest {
   directorIds: number[];
   screenwriterIds: number[];
   posterFile?: File;
-  removePoster?: boolean;
+  removePoster: boolean;
+}
+
+export interface MovieFilterRequest {
+  title?: string;
+  status?: MovieStatus;
+  ageRating?: AgeRating;
+  currentlyShowing?: boolean;
+  upcoming?: boolean;
+  releaseDateFrom?: string;
+  releaseDateTo?: string;
+  genreId?: number;
+  actorId?: number;
+  directorId?: number;
+  screenwriterId?: number;
 }
 
 export interface MovieCardResponse {
@@ -105,15 +116,48 @@ export interface MovieDetailResponse {
   upcoming: boolean;
   archived: boolean;
   active: boolean;
-  genres?: GenreResponse[];
-  actors?: PersonResponse[];
-  directors?: PersonResponse[];
-  screenwriters?: PersonResponse[];
+  genres?: any[];
+  actors?: any[];
+  directors?: any[];
+  screenwriters?: any[];
 }
 
 export interface MovieSessionSearchResponse {
   id: number;
   title: string;
   releaseYear: number;
+  durationMinutes: number;
+}
+
+export interface MovieCardProjection {
+  id: number;
+  title: string;
+  slug: string;
+  posterFileName: string;
+  durationMinutes: number;
+  ageRating: AgeRating;
+  status: MovieStatus;
+  releaseDate: string;
+  endShowingDate: string;
+}
+
+export interface MovieDetailProjection {
+  id: number;
+  title: string;
+  slug: string;
+  trailerUrl: string;
+  description: string;
+  durationMinutes: number;
+  releaseDate: string;
+  endShowingDate: string;
+  ageRating: AgeRating;
+  status: MovieStatus;
+  posterFileName: string;
+}
+
+export interface MovieSessionSearchProjection {
+  id: number;
+  title: string;
+  releaseDate: string;
   durationMinutes: number;
 }

@@ -1,4 +1,4 @@
-export type BookingStatus = 'DRAFT' | 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'EXPIRED' | 'FAILED' | 'REFUNDED';
+export type BookingStatus = 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'EXPIRED' | 'FAILED' | 'REFUNDED';
 
 export interface BookingCreateRequest {
     sessionId: number;
@@ -23,12 +23,13 @@ export interface BookingResponse {
     bonusPointsUsed: number;
     bonusDiscountAmount: string;
     finalPrice: string;
+    liqpayOrderId?: string;
     expiresAt: string;
     createdAt: string;
-    bookedSeats: BookedSeatInfo[];
+    seatReservations: SeatReservationInfo[];
 }
 
-export interface BookedSeatInfo {
+export interface SeatReservationInfo {
     id: number;
     seatId: number;
     row: number;
@@ -38,7 +39,6 @@ export interface BookedSeatInfo {
 }
 
 export const BookingStatusDisplay: Record<BookingStatus, string> = {
-    DRAFT: 'Draft',
     PENDING: 'Pending',
     CONFIRMED: 'Confirmed',
     CANCELLED: 'Cancelled',

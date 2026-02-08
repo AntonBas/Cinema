@@ -3,7 +3,6 @@ export interface ApiError {
     status: string;
     statusCode: number;
     message: string;
-    errorCode?: string;
     debugMessage?: string;
     path?: string;
     subErrors?: ApiSubError[];
@@ -14,4 +13,11 @@ export interface ApiSubError {
     field?: string;
     rejectedValue?: any;
     message?: string;
+}
+
+export interface ApiValidationError extends ApiSubError {
+    object: string;
+    field?: string;
+    rejectedValue?: any;
+    message: string;
 }

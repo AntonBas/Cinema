@@ -9,7 +9,7 @@ export interface PageResponse<T> {
     empty: boolean;
     hasNext: boolean;
     hasPrevious: boolean;
-    numberOfElements?: number;
+    numberOfElements: number;
     sort?: SortInfo[];
 }
 

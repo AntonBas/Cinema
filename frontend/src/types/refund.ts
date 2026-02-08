@@ -1,5 +1,5 @@
-export type RefundStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'PROCESSED' | 'CANCELLED';
-export type RefundItemStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'PROCESSED' | 'CANCELLED';
+export type RefundStatus = 'PENDING' | 'COMPLETED' | 'REJECTED' | 'CANCELLED';
+export type RefundItemStatus = 'PENDING' | 'COMPLETED' | 'REJECTED' | 'CANCELLED';
 
 export interface RefundPreviewRequest {
     ticketId: number;
@@ -38,7 +38,7 @@ export interface RefundPreviewResponse {
 export interface RefundResponse {
     id: number;
     refundNumber: string;
-    status: RefundStatus;
+    status: string;
     totalAmount: string;
     totalBonusPointsToDeduct: number;
     reason?: string;
@@ -60,14 +60,14 @@ export interface RefundItemResponse {
     refundPercentage: string;
     refundAmount: string;
     bonusPointsToDeduct: number;
-    status: RefundItemStatus;
+    status: string;
     createdAt: string;
 }
 
 export interface RefundDetailsResponse {
     id: number;
     refundNumber: string;
-    status: RefundStatus;
+    status: string;
     userId: number;
     userEmail: string;
     userName: string;
@@ -100,7 +100,7 @@ export interface RefundItemDetails {
     feeAmount: string;
     bonusPointsUsed: number;
     bonusPointsToDeduct: number;
-    status: RefundItemStatus;
+    status: string;
     createdAt: string;
 }
 
@@ -112,18 +112,16 @@ export interface RefundBonusTransactionResponse {
     createdAt: string;
 }
 
-export const RefundStatusDisplay: Record<RefundStatus, string> = {
+export const RefundStatusDisplay: Record<string, string> = {
     PENDING: 'Pending',
-    APPROVED: 'Approved',
+    COMPLETED: 'Completed',
     REJECTED: 'Rejected',
-    PROCESSED: 'Processed',
     CANCELLED: 'Cancelled'
 };
 
-export const RefundItemStatusDisplay: Record<RefundItemStatus, string> = {
+export const RefundItemStatusDisplay: Record<string, string> = {
     PENDING: 'Pending',
-    APPROVED: 'Approved',
+    COMPLETED: 'Completed',
     REJECTED: 'Rejected',
-    PROCESSED: 'Processed',
     CANCELLED: 'Cancelled'
 };

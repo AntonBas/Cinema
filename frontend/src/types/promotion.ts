@@ -27,6 +27,15 @@ export interface PromotionResponse {
     endDate?: string;
 }
 
+export interface PromotionResponseProjection {
+    id: number;
+    title: string;
+    description?: string;
+    bonusPoints: number;
+    startDate?: string;
+    endDate?: string;
+}
+
 export interface UserPromotionResponse {
     id: number;
     promotionId: number;
@@ -34,6 +43,14 @@ export interface UserPromotionResponse {
     claimedAt: string;
     pointsAwarded: number;
     newBalance: number;
+}
+
+export interface UserPromotionResponseProjection {
+    id: number;
+    promotionId: number;
+    promotionTitle: string;
+    claimedAt: string;
+    pointsAwarded: number;
 }
 
 export const PromotionStatusDisplay: Record<string, string> = {

@@ -27,13 +27,14 @@ export interface PaymentResponse {
     amount: string;
     finalAmount: string;
     status: PaymentStatus;
-    liqpayOrderId: string | null;
-    liqpayPaymentId: string | null;
-    liqpayTransactionId: string | null;
-    paymentTime: string | null;
-    errorCode: string | null;
-    errorDescription: string | null;
-    senderCardMask: string | null;
+    liqpayOrderId?: string;
+    liqpayPaymentId?: string;
+    paymentTime?: string;
+    errorCode?: string;
+    errorDescription?: string;
+    senderCardMask?: string;
+    actionType?: string;
+    refundableViaApi?: boolean;
     createdAt: string;
     updatedAt: string;
 }

@@ -1,27 +1,5 @@
 import type { UserRole, UserResponse } from './user';
 
-export interface User {
-    id: number;
-    email: string;
-    firstName: string;
-    lastName: string;
-    dateOfBirth: string;
-    city: string;
-    phoneNumber: string;
-    userRole: UserRole;
-    enabled: boolean;
-    createdAt?: string;
-    updatedAt?: string;
-}
-
-export interface UserSimple {
-    id: number;
-    email: string;
-    firstName: string;
-    lastName: string;
-    userRole: UserRole;
-}
-
 export interface LoginResponse {
     token: string;
     tokenType: string;
@@ -50,4 +28,26 @@ export interface CheckEmailRequest {
 
 export interface CheckEmailResponse {
     exists: boolean;
+}
+
+export interface User {
+    id: number;
+    email: string;
+    firstName: string;
+    lastName: string;
+    dateOfBirth: string;
+    city: string;
+    phoneNumber: string;
+    userRole: UserRole;
+    enabled: boolean;
+    createdAt?: string;
+    updatedAt?: string;
+}
+
+export interface UserSimple {
+    id: number;
+    email: string;
+    firstName: string;
+    lastName: string;
+    userRole: UserRole;
 }

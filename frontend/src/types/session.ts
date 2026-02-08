@@ -21,6 +21,14 @@ export interface SessionUpdateRequest {
     hallId?: number;
 }
 
+export interface SessionFilterRequest {
+    status?: CinemaSessionStatus;
+    dateFrom?: string;
+    dateTo?: string;
+    hallId?: number;
+    movieId?: number;
+}
+
 export interface SessionAdminResponse {
     id: number;
     startTime: string;
@@ -37,6 +45,22 @@ export interface SessionAdminResponse {
     totalRevenue: string;
 }
 
+export interface SessionAdminProjection {
+    id: number;
+    startTime: string;
+    basePrice: string;
+    status: CinemaSessionStatus;
+    movieId: number;
+    movieTitle: string;
+    movieDuration: number;
+    hallId: number;
+    hallName: string;
+    hallCapacity: number;
+    ticketsSold: number;
+    totalRevenue: string;
+    endTime: string;
+}
+
 export interface SessionScheduleResponse {
     id: number;
     startTime: string;
@@ -46,12 +70,30 @@ export interface SessionScheduleResponse {
     availableSeats: number;
     movieId: number;
     movieTitle: string;
-    moviePosterFileName: string | null;
-    movieAgeRating: string | null;
+    moviePosterFileName?: string;
+    movieAgeRating: string;
     movieDuration: number;
     hallId: number;
     hallName: string;
     hallCapacity: number;
+}
+
+export interface SessionScheduleProjection {
+    id: number;
+    startTime: string;
+    basePrice: string;
+    status: CinemaSessionStatus;
+    movieId: number;
+    movieTitle: string;
+    moviePosterFileName?: string;
+    movieAgeRating: string;
+    movieDuration: number;
+    hallId: number;
+    hallName: string;
+    hallCapacity: number;
+    bookedSeatsCount: number;
+    availableSeats: number;
+    endTime: string;
 }
 
 export interface SessionDetailResponse {
@@ -83,6 +125,6 @@ export interface ScheduleDay {
 export interface ScheduleMovie {
     movieId: number;
     movieTitle: string;
-    moviePosterFileName: string | null;
+    moviePosterFileName?: string;
     sessions: SessionScheduleResponse[];
 }

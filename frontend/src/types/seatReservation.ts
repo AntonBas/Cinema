@@ -1,12 +1,6 @@
-export type BookedSeatStatus =
-    | 'TEMPORARY'
-    | 'PENDING'
-    | 'CONFIRMED'
-    | 'CANCELLED'
-    | 'EXPIRED'
-    | 'CHECKED_IN';
+export type ReservationStatus = 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'EXPIRED' | 'CHECKED_IN';
 
-export interface SeatAvailabilityResponse {
+export interface SeatReservationResponse {
     sessionId: number;
     movieTitle: string;
     basePrice: string;
@@ -32,8 +26,7 @@ export interface TicketPriceInfo {
     finalPrice: string;
 }
 
-export const BookedSeatStatusDisplay: Record<BookedSeatStatus, string> = {
-    TEMPORARY: 'Temporary',
+export const ReservationStatusDisplay: Record<ReservationStatus, string> = {
     PENDING: 'Pending',
     CONFIRMED: 'Confirmed',
     CANCELLED: 'Cancelled',

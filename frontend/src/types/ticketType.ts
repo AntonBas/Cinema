@@ -1,32 +1,24 @@
-export type TicketTypeCategory =
-    | 'STANDARD'
-    | 'CHILD'
-    | 'STUDENT'
-    | 'DISABLED'
-    | 'MILITARY'
-    | 'SENIOR'
-    | 'SPECIAL';
+export type TicketTypeCategory = 'STANDARD' | 'CHILD' | 'STUDENT' | 'DISABLED' | 'MILITARY' | 'SENIOR' | 'SPECIAL';
 
 export interface TicketTypeCreateRequest {
     code: string;
     displayName: string;
     priceMultiplier: string;
-    minAge?: number | null;
-    maxAge?: number | null;
+    minAge?: number;
+    maxAge?: number;
     requiresDocument?: boolean;
-    documentType?: string | null;
+    documentType?: string;
     active?: boolean;
     category: TicketTypeCategory;
 }
 
 export interface TicketTypeUpdateRequest {
-    code: string;
     displayName?: string;
     priceMultiplier?: string;
-    minAge?: number | null;
-    maxAge?: number | null;
+    minAge?: number;
+    maxAge?: number;
     requiresDocument?: boolean;
-    documentType?: string | null;
+    documentType?: string;
     active?: boolean;
     category?: TicketTypeCategory;
 }
@@ -36,12 +28,12 @@ export interface TicketTypeResponse {
     code: string;
     displayName: string;
     priceMultiplier: string;
-    minAge: number | null;
-    maxAge: number | null;
+    minAge?: number;
+    maxAge?: number;
     requiresDocument: boolean;
-    documentType: string | null;
+    documentType?: string;
     active: boolean;
-    category: TicketTypeCategory;
+    category?: TicketTypeCategory;
     createdAt: string;
     updatedAt: string;
 }

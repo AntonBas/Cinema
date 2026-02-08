@@ -14,10 +14,9 @@ export interface UseBonusPointsRequest {
 export interface BonusRulesRequest {
     points?: number | null;
     moneyRatio?: string | null;
-    pointValue?: string | null;
     minPointsPerTransaction?: number | null;
     maxPointsPerTransaction?: number | null;
-    active?: boolean;
+    active?: boolean | null;
 }
 
 export interface BonusBalanceResponse {
@@ -40,11 +39,11 @@ export interface BonusCardResponse {
 
 export interface BonusRulesResponse {
     id: number;
-    bonusType: BonusTransactionType;
-    points: number | null;
-    moneyRatio: string | null;
-    minPointsPerTransaction: number | null;
-    maxPointsPerTransaction: number | null;
+    bonusType: string;
+    points?: number | null;
+    moneyRatio?: string | null;
+    minPointsPerTransaction?: number | null;
+    maxPointsPerTransaction?: number | null;
     active: boolean;
     updatedAt: string;
 }
@@ -52,10 +51,30 @@ export interface BonusRulesResponse {
 export interface BonusTransactionResponse {
     id: number;
     type: BonusTransactionType;
-    pointsChange: number;
-    referenceId: string | null;
+    typeDisplay: string;
+    pointsChange: string;
     createdAt: string;
     newBalance: number;
+    bookingDetails?: {
+        movieTitle: string;
+        bookingReference: string;
+        cinemaHall: string;
+        sessionDateTime: string;
+    } | null;
+}
+
+export interface BonusTransactionProjection {
+    id: number;
+    type: string;
+    typeDisplay: string;
+    pointsChangeRaw: number;
+    pointsChange: string;
+    createdAt: string;
+    newBalance: number;
+    movieTitle?: string | null;
+    bookingReference?: string | null;
+    cinemaHall?: string | null;
+    sessionDateTime?: string | null;
 }
 
 export const BonusTransactionTypeDisplay: Record<BonusTransactionType, string> = {
