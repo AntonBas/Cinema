@@ -99,9 +99,23 @@ payment:
         api_url: ${LIQPAY_API_URL:https://www.liqpay.ua/api/}
 
 bonus:
-    welcome-bonus: 150
-    birthday-bonus: 200
-    promotion-bonus: 100
+    point-value: 1.00
+    max-discount-percentage: 0.5
+    defaults:
+        WELCOME_BONUS:
+            points: 150
+        BIRTHDAY_BONUS:
+            points: 200
+        PROMOTION_BONUS:
+            points: 100
+        BOOKING_SPEND:
+            min-points: 100
+            max-points: 1000
+        PAYMENT_ACCRUAL:
+            money-ratio: 0.05
+            min-points: 10
+        REFUND_RETURN: {}
+        BOOKING_CANCEL: {}
 
 ticket:
     validation:
