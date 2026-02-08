@@ -44,9 +44,10 @@ public class CinemaHallController {
 	@GetMapping
 	@Operation(summary = "Get all cinema halls", description = "Retrieve list of all available cinema halls.")
 	@ApiResponse(responseCode = "200", description = "List of cinema halls retrieved successfully")
-	public ResponseEntity<List<CinemaHallResponse>> getAllHalls() {
-		log.info("GET /api/cinema-halls - Retrieving all cinema halls");
-		List<CinemaHallResponse> halls = cinemaHallService.getAllHalls();
+	public ResponseEntity<List<CinemaHallResponse>> getAllOrSearchHalls(
+			@Parameter(description = "Partial name to search for (case-insensitive)", example = "Hall A") @RequestParam(required = false) String name) {
+		log.info("GET /api/cinema-halls?name={} - Retrieving cinema halls", name);
+		List<CinemaHallResponse> halls = cinemaHallService.getAllOrSearchHalls(name);
 		return ResponseEntity.ok(halls);
 	}
 
@@ -70,16 +71,5 @@ public class CinemaHallController {
 		log.info("GET /api/cinema-halls/{}/layout - Retrieving hall layout", id);
 		HallLayoutResponse layout = cinemaHallService.getHallLayout(id);
 		return ResponseEntity.ok(layout);
-	}
-
-	@GetMapping("/search")
-	@Operation(summary = "Search cinema halls by name", description = "Search cinema halls by partial name match.")
-	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Search results retrieved successfully"),
-			@ApiResponse(responseCode = "400", description = "Invalid search parameters") })
-	public ResponseEntity<List<CinemaHallResponse>> searchHalls(
-			@Parameter(description = "Partial name to search for (case-insensitive)", example = "Hall A") @RequestParam(required = false) String name) {
-		log.info("GET /api/cinema-halls/search?name={} - Searching cinema halls", name);
-		List<CinemaHallResponse> halls = cinemaHallService.searchHalls(name);
-		return ResponseEntity.ok(halls);
 	}
 }

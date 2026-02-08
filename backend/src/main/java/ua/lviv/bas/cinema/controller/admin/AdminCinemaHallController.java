@@ -59,7 +59,6 @@ public class AdminCinemaHallController {
 			@ApiResponse(responseCode = "403", description = "User does not have required role") })
 	public ResponseEntity<CinemaHallResponse> updateHall(
 			@Parameter(description = "ID of the cinema hall to update", required = true, example = "1") @PathVariable Long id,
-
 			@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Updated cinema hall data", required = true, content = @Content(schema = @Schema(implementation = CinemaHallRequest.class))) @Valid @RequestBody CinemaHallRequest request) {
 		log.info("PUT /api/admin/cinema-halls/{} - Updating cinema hall", id);
 		CinemaHallResponse updated = cinemaHallService.updateHall(id, request);

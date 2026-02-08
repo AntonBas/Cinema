@@ -48,31 +48,19 @@ public class AdminSeatController {
 		return ResponseEntity.ok(updated);
 	}
 
-	@PutMapping("/{seatId}/activate")
-	@Operation(summary = "Activate seat", description = "Activate a seat that was previously deactivated")
-	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Seat activated successfully"),
+	@PutMapping("/{seatId}/status")
+	@Operation(summary = "Set seat active status", description = "Activate or deactivate a seat")
+	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Seat status updated successfully"),
 			@ApiResponse(responseCode = "404", description = "Seat not found"),
 			@ApiResponse(responseCode = "401", description = "User not authenticated"),
 			@ApiResponse(responseCode = "403", description = "User does not have required role") })
-	public ResponseEntity<SeatResponse> activateSeat(
+	public ResponseEntity<SeatResponse> setSeatActiveStatus(
 			@Parameter(description = "ID of the cinema hall", required = true, example = "1") @PathVariable Long hallId,
-			@Parameter(description = "ID of the seat to activate", required = true, example = "5") @PathVariable Long seatId) {
-		log.info("PUT /api/admin/cinema-halls/{}/seats/{}/activate - Activating seat", hallId, seatId);
-		SeatResponse updated = seatService.activateSeat(seatId);
-		return ResponseEntity.ok(updated);
-	}
-
-	@PutMapping("/{seatId}/deactivate")
-	@Operation(summary = "Deactivate seat", description = "Deactivate a seat (makes it unavailable for booking)")
-	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Seat deactivated successfully"),
-			@ApiResponse(responseCode = "404", description = "Seat not found"),
-			@ApiResponse(responseCode = "401", description = "User not authenticated"),
-			@ApiResponse(responseCode = "403", description = "User does not have required role") })
-	public ResponseEntity<SeatResponse> deactivateSeat(
-			@Parameter(description = "ID of the cinema hall", required = true, example = "1") @PathVariable Long hallId,
-			@Parameter(description = "ID of the seat to deactivate", required = true, example = "5") @PathVariable Long seatId) {
-		log.info("PUT /api/admin/cinema-halls/{}/seats/{}/deactivate - Deactivating seat", hallId, seatId);
-		SeatResponse updated = seatService.deactivateSeat(seatId);
+			@Parameter(description = "ID of the seat to update", required = true, example = "5") @PathVariable Long seatId,
+			@Parameter(description = "Active status", required = true, example = "true") @RequestParam boolean active) {
+		log.info("PUT /api/admin/cinema-halls/{}/seats/{}/status?active={} - Setting seat status", hallId, seatId,
+				active);
+		SeatResponse updated = seatService.setSeatActiveStatus(seatId, active);
 		return ResponseEntity.ok(updated);
 	}
 }

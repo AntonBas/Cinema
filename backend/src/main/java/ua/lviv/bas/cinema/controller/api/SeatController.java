@@ -46,7 +46,6 @@ public class SeatController {
 			@ApiResponse(responseCode = "404", description = "Seat or cinema hall not found") })
 	public ResponseEntity<SeatResponse> getSeatById(
 			@Parameter(description = "ID of the cinema hall", required = true, example = "1") @PathVariable Long hallId,
-
 			@Parameter(description = "ID of the seat", required = true, example = "5") @PathVariable Long seatId) {
 		log.info("GET /api/cinema-halls/{}/seats/{} - Retrieving seat", hallId, seatId);
 		SeatResponse seat = seatService.getSeatById(seatId);
@@ -59,9 +58,7 @@ public class SeatController {
 			@ApiResponse(responseCode = "404", description = "Seat not found at specified position") })
 	public ResponseEntity<SeatResponse> getSeatByPosition(
 			@Parameter(description = "ID of the cinema hall", required = true, example = "1") @PathVariable Long hallId,
-
 			@Parameter(description = "Row number (starting from 1)", required = true, example = "5") @RequestParam int row,
-
 			@Parameter(description = "Seat number within the row (starting from 1)", required = true, example = "12") @RequestParam int number) {
 		log.info("GET /api/cinema-halls/{}/seats/position?row={}&number={} - Retrieving seat by position", hallId, row,
 				number);
@@ -75,9 +72,7 @@ public class SeatController {
 			@ApiResponse(responseCode = "400", description = "Invalid seat position") })
 	public ResponseEntity<Boolean> checkSeatAvailability(
 			@Parameter(description = "ID of the cinema hall", required = true, example = "1") @PathVariable Long hallId,
-
 			@Parameter(description = "Row number (starting from 1)", required = true, example = "5") @RequestParam int row,
-
 			@Parameter(description = "Seat number within the row (starting from 1)", required = true, example = "12") @RequestParam int number) {
 		log.info("GET /api/cinema-halls/{}/seats/check-availability?row={}&number={} - Checking seat availability",
 				hallId, row, number);
@@ -102,10 +97,31 @@ public class SeatController {
 			@ApiResponse(responseCode = "404", description = "Cinema hall not found") })
 	public ResponseEntity<List<SeatResponse>> getSeatsByType(
 			@Parameter(description = "ID of the cinema hall", required = true, example = "1") @PathVariable Long hallId,
-
 			@Parameter(description = "Type of seats to retrieve", required = true, example = "VIP") @RequestParam SeatType seatType) {
 		log.info("GET /api/cinema-halls/{}/seats/by-type?seatType={} - Retrieving seats by type", hallId, seatType);
 		List<SeatResponse> seats = seatService.getSeatsByType(hallId, seatType);
 		return ResponseEntity.ok(seats);
+	}
+
+	@GetMapping("/active")
+	@Operation(summary = "Get active seats", description = "Retrieve all active seats in a cinema hall.")
+	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Active seats retrieved successfully"),
+			@ApiResponse(responseCode = "404", description = "Cinema hall not found") })
+	public ResponseEntity<List<SeatResponse>> getActiveSeatsByHall(
+			@Parameter(description = "ID of the cinema hall", required = true, example = "1") @PathVariable Long hallId) {
+		log.info("GET /api/cinema-halls/{}/seats/active - Retrieving active seats", hallId);
+		List<SeatResponse> seats = seatService.getActiveSeatsByHall(hallId);
+		return ResponseEntity.ok(seats);
+	}
+
+	@GetMapping("/rows")
+	@Operation(summary = "Get distinct rows", description = "Get list of distinct row numbers in a cinema hall.")
+	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Row list retrieved"),
+			@ApiResponse(responseCode = "404", description = "Cinema hall not found") })
+	public ResponseEntity<List<Integer>> getDistinctRowsByHall(
+			@Parameter(description = "ID of the cinema hall", required = true, example = "1") @PathVariable Long hallId) {
+		log.info("GET /api/cinema-halls/{}/seats/rows - Retrieving distinct rows", hallId);
+		List<Integer> rows = seatService.getDistinctRowsByHall(hallId);
+		return ResponseEntity.ok(rows);
 	}
 }

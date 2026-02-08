@@ -18,6 +18,7 @@ import ua.lviv.bas.cinema.repository.SeatRepository;
 @Service
 @RequiredArgsConstructor
 public class SeatService {
+
 	private final SeatRepository seatRepository;
 	private final SeatMapper seatMapper;
 
@@ -35,6 +36,15 @@ public class SeatService {
 		seat.setSeatType(seatType);
 		Seat updated = seatRepository.save(seat);
 		log.debug("Seat type updated for seat ID: {}", id);
+		return seatMapper.toSeatResponse(updated);
+	}
+
+	@Transactional
+	public SeatResponse setSeatActiveStatus(Long id, boolean active) {
+		log.info("Setting seat active status: id={}, active={}", id, active);
+		Seat seat = seatRepository.findById(id).orElseThrow(() -> new SeatNotFoundException(id));
+		seat.setActive(active);
+		Seat updated = seatRepository.save(seat);
 		return seatMapper.toSeatResponse(updated);
 	}
 
@@ -67,24 +77,6 @@ public class SeatService {
 	public List<SeatResponse> getSeatsByType(Long hallId, SeatType seatType) {
 		log.debug("Retrieving {} seats for hall id: {}", seatType, hallId);
 		return seatMapper.toSeatResponseList(seatRepository.findByHallIdAndSeatType(hallId, seatType));
-	}
-
-	@Transactional
-	public SeatResponse activateSeat(Long id) {
-		log.info("Activating seat with id: {}", id);
-		Seat seat = seatRepository.findById(id).orElseThrow(() -> new SeatNotFoundException(id));
-		seat.setActive(true);
-		Seat updated = seatRepository.save(seat);
-		return seatMapper.toSeatResponse(updated);
-	}
-
-	@Transactional
-	public SeatResponse deactivateSeat(Long id) {
-		log.info("Deactivating seat with id: {}", id);
-		Seat seat = seatRepository.findById(id).orElseThrow(() -> new SeatNotFoundException(id));
-		seat.setActive(false);
-		Seat updated = seatRepository.save(seat);
-		return seatMapper.toSeatResponse(updated);
 	}
 
 	@Transactional(readOnly = true)
