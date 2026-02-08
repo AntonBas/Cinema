@@ -2,7 +2,6 @@ package ua.lviv.bas.cinema.service.booking.ticket;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -10,13 +9,15 @@ import lombok.RequiredArgsConstructor;
 import ua.lviv.bas.cinema.domain.Ticket;
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.enums.TicketStatus;
-import ua.lviv.bas.cinema.domain.specification.TicketSpecification;
+import ua.lviv.bas.cinema.domain.projection.TicketInfoProjection;
+import ua.lviv.bas.cinema.domain.specification.TicketInfoSpecification;
 import ua.lviv.bas.cinema.dto.ticket.request.TicketFilterRequest;
 import ua.lviv.bas.cinema.dto.ticket.response.TicketResponse;
 import ua.lviv.bas.cinema.exception.domain.ticket.TicketNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.ticket.TicketValidationException;
 import ua.lviv.bas.cinema.mapper.TicketMapper;
 import ua.lviv.bas.cinema.repository.TicketRepository;
+import ua.lviv.bas.cinema.repository.projection.TicketInfoProjectionRepository;
 
 @Service
 @RequiredArgsConstructor
@@ -24,8 +25,9 @@ import ua.lviv.bas.cinema.repository.TicketRepository;
 public class TicketRetrievalService {
 
 	private final TicketRepository ticketRepository;
+	private final TicketInfoProjectionRepository ticketInfoProjectionRepository;
+	private final TicketInfoSpecification ticketInfoSpecification;
 	private final TicketMapper ticketMapper;
-	private final TicketSpecification ticketSpecification;
 
 	public TicketResponse getTicketById(Long ticketId, User user) {
 		Ticket ticket = ticketRepository.findByIdAndUserIdAndStatus(ticketId, user.getId(), TicketStatus.ACTIVE)
@@ -46,20 +48,23 @@ public class TicketRetrievalService {
 	}
 
 	public Page<TicketResponse> getUserTickets(User user, TicketFilterRequest filter, Pageable pageable) {
-		TicketFilterRequest userFilter = TicketFilterRequest.builder().userId(user.getId()).status(filter.getStatus())
-				.purchaseDateFrom(filter.getPurchaseDateFrom()).purchaseDateTo(filter.getPurchaseDateTo())
-				.sessionDateFrom(filter.getSessionDateFrom()).sessionDateTo(filter.getSessionDateTo())
-				.movieId(filter.getMovieId()).build();
+		var spec = ticketInfoSpecification.build(user.getId(), filter);
+		Page<TicketInfoProjection> projections = ticketInfoProjectionRepository.findAll(spec, pageable);
 
-		Specification<Ticket> spec = ticketSpecification.build(userFilter);
-		Page<Ticket> tickets = ticketRepository.findAll(spec, pageable);
-
-		return tickets.map(this::toTicketResponse);
+		return projections.map(this::toTicketResponse);
 	}
 
 	private TicketResponse toTicketResponse(Ticket ticket) {
 		TicketResponse response = ticketMapper.toTicketResponse(ticket);
 		response.setQrCodeUrl(generateQrCodeUrl(ticket.getUniqueCode()));
+		return response;
+	}
+
+	private TicketResponse toTicketResponse(TicketInfoProjection projection) {
+		TicketResponse response = ticketMapper.toTicketResponse(projection);
+		response.setQrCodeUrl(generateQrCodeUrl(projection.getUniqueCode()));
+		response.setRow(projection.getRow());
+		response.setSeatNumber(projection.getSeatNumber());
 		return response;
 	}
 

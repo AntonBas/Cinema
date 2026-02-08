@@ -5,6 +5,7 @@ import org.mapstruct.Mapping;
 import org.mapstruct.ReportingPolicy;
 
 import ua.lviv.bas.cinema.domain.Ticket;
+import ua.lviv.bas.cinema.domain.projection.TicketInfoProjection;
 import ua.lviv.bas.cinema.dto.ticket.response.TicketResponse;
 
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
@@ -21,4 +22,13 @@ public interface TicketMapper {
 	@Mapping(target = "row", source = "seatReservation.seat.row")
 	@Mapping(target = "seatNumber", source = "seatReservation.seat.number")
 	TicketResponse toTicketResponse(Ticket ticket);
+
+	@Mapping(target = "ticketCode", source = "uniqueCode")
+	@Mapping(target = "qrCodeUrl", ignore = true)
+	@Mapping(target = "price", source = "finalPrice")
+	@Mapping(target = "ticketType", source = "ticketTypeName")
+	@Mapping(target = "movieTitle", source = "movieTitle")
+	@Mapping(target = "sessionTime", source = "sessionStartTime")
+	@Mapping(target = "hallName", source = "hallName")
+	TicketResponse toTicketResponse(TicketInfoProjection projection);
 }

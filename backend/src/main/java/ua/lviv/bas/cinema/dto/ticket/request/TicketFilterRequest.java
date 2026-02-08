@@ -20,10 +20,6 @@ import ua.lviv.bas.cinema.domain.enums.TicketStatus;
 @Schema(description = "Request DTO for filtering tickets")
 public class TicketFilterRequest {
 
-	@Schema(description = "User ID", example = "1")
-	@Positive
-	private Long userId;
-
 	@Schema(description = "Ticket status", example = "ACTIVE")
 	private TicketStatus status;
 

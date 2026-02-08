@@ -21,7 +21,6 @@ import ua.lviv.bas.cinema.dto.payment.response.PaymentLiqPayDataResponse;
 import ua.lviv.bas.cinema.dto.payment.response.PaymentResponse;
 import ua.lviv.bas.cinema.dto.refund.request.RefundRequest;
 import ua.lviv.bas.cinema.dto.refund.response.RefundResponse;
-import ua.lviv.bas.cinema.dto.ticket.request.TicketFilterRequest;
 import ua.lviv.bas.cinema.dto.ticket.request.TicketTypeCreateRequest;
 import ua.lviv.bas.cinema.dto.ticket.request.TicketTypeUpdateRequest;
 import ua.lviv.bas.cinema.dto.ticket.response.TicketResponse;
@@ -124,16 +123,6 @@ public class ControllerFacade {
 	@Transactional(readOnly = true)
 	public TicketResponse getTicketByCode(String ticketCode, User user) {
 		return ticketRetrievalService.getTicketByCode(ticketCode, user);
-	}
-
-	@Transactional(readOnly = true)
-	public Page<TicketResponse> getUserTickets(User user, TicketFilterRequest filter, Pageable pageable) {
-		TicketFilterRequest userFilter = TicketFilterRequest.builder().userId(user.getId()).status(filter.getStatus())
-				.purchaseDateFrom(filter.getPurchaseDateFrom()).purchaseDateTo(filter.getPurchaseDateTo())
-				.sessionDateFrom(filter.getSessionDateFrom()).sessionDateTo(filter.getSessionDateTo())
-				.movieId(filter.getMovieId()).build();
-
-		return ticketRetrievalService.getUserTickets(user, userFilter, pageable);
 	}
 
 	@Transactional

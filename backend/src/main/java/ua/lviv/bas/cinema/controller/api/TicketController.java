@@ -28,7 +28,7 @@ import ua.lviv.bas.cinema.dto.common.PageResponse;
 import ua.lviv.bas.cinema.dto.ticket.request.TicketFilterRequest;
 import ua.lviv.bas.cinema.dto.ticket.response.TicketResponse;
 import ua.lviv.bas.cinema.security.CustomUserDetails;
-import ua.lviv.bas.cinema.service.booking.ControllerFacade;
+import ua.lviv.bas.cinema.service.booking.ticket.TicketRetrievalService;
 import ua.lviv.bas.cinema.service.booking.ticket.TicketService;
 
 @Slf4j
@@ -39,7 +39,7 @@ import ua.lviv.bas.cinema.service.booking.ticket.TicketService;
 @SecurityRequirement(name = "bearerAuth")
 public class TicketController {
 
-	private final ControllerFacade controllerFacade;
+	private final TicketRetrievalService ticketRetrievalService;
 	private final TicketService ticketService;
 
 	@GetMapping
@@ -59,11 +59,11 @@ public class TicketController {
 				"Getting tickets for user ID: {}, filters: status={}, purchaseDateFrom={}, purchaseDateTo={}, sessionDateFrom={}, sessionDateTo={}, movieId={}",
 				user.getId(), status, purchaseDateFrom, purchaseDateTo, sessionDateFrom, sessionDateTo, movieId);
 
-		TicketFilterRequest filter = TicketFilterRequest.builder().userId(user.getId()).status(status)
-				.purchaseDateFrom(purchaseDateFrom).purchaseDateTo(purchaseDateTo).sessionDateFrom(sessionDateFrom)
-				.sessionDateTo(sessionDateTo).movieId(movieId).build();
+		TicketFilterRequest filter = TicketFilterRequest.builder().status(status).purchaseDateFrom(purchaseDateFrom)
+				.purchaseDateTo(purchaseDateTo).sessionDateFrom(sessionDateFrom).sessionDateTo(sessionDateTo)
+				.movieId(movieId).build();
 
-		Page<TicketResponse> tickets = controllerFacade.getUserTickets(user, filter, pageable);
+		Page<TicketResponse> tickets = ticketRetrievalService.getUserTickets(user, filter, pageable);
 		return ResponseEntity.ok(PageResponse.from(tickets));
 	}
 
@@ -72,15 +72,15 @@ public class TicketController {
 	@PreAuthorize("hasRole('USER')")
 	public ResponseEntity<PageResponse<TicketResponse>> getUpcomingTickets(
 			@AuthenticationPrincipal CustomUserDetails userDetails,
-			@PageableDefault(size = 10, sort = "booking.session.startTime", direction = Sort.Direction.ASC) Pageable pageable) {
+			@PageableDefault(size = 10, sort = "sessionTime", direction = Sort.Direction.ASC) Pageable pageable) {
 
 		User user = userDetails.getUser();
 		log.info("Getting upcoming tickets for user ID: {}", user.getId());
 
-		TicketFilterRequest filter = TicketFilterRequest.builder().userId(user.getId()).status(TicketStatus.ACTIVE)
+		TicketFilterRequest filter = TicketFilterRequest.builder().status(TicketStatus.ACTIVE)
 				.sessionDateFrom(LocalDate.now()).build();
 
-		Page<TicketResponse> tickets = controllerFacade.getUserTickets(user, filter, pageable);
+		Page<TicketResponse> tickets = ticketRetrievalService.getUserTickets(user, filter, pageable);
 		return ResponseEntity.ok(PageResponse.from(tickets));
 	}
 
@@ -92,7 +92,7 @@ public class TicketController {
 
 		User user = userDetails.getUser();
 		log.info("Getting ticket ID: {} for user ID: {}", ticketId, user.getId());
-		TicketResponse ticket = controllerFacade.getTicketById(ticketId, user);
+		TicketResponse ticket = ticketRetrievalService.getTicketById(ticketId, user);
 		return ResponseEntity.ok(ticket);
 	}
 
@@ -104,7 +104,7 @@ public class TicketController {
 
 		User user = userDetails.getUser();
 		log.info("Getting ticket by code: {} for user ID: {}", ticketCode, user.getId());
-		TicketResponse ticket = controllerFacade.getTicketByCode(ticketCode, user);
+		TicketResponse ticket = ticketRetrievalService.getTicketByCode(ticketCode, user);
 		return ResponseEntity.ok(ticket);
 	}
 

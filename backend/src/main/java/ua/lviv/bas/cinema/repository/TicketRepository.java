@@ -4,6 +4,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -12,6 +14,7 @@ import org.springframework.stereotype.Repository;
 
 import ua.lviv.bas.cinema.domain.Ticket;
 import ua.lviv.bas.cinema.domain.enums.TicketStatus;
+import ua.lviv.bas.cinema.domain.projection.TicketInfoProjection;
 
 @Repository
 public interface TicketRepository extends JpaRepository<Ticket, Long>, JpaSpecificationExecutor<Ticket> {
@@ -56,4 +59,42 @@ public interface TicketRepository extends JpaRepository<Ticket, Long>, JpaSpecif
 
 	@Query("SELECT COUNT(t) FROM Ticket t WHERE CAST(t.purchaseTime AS date) = CURRENT_DATE")
 	long countToday();
+
+	@Query(value = """
+			SELECT
+			    t.id as id,
+			    t.unique_code as uniqueCode,
+			    t.status as status,
+			    t.purchase_time as purchaseTime,
+			    t.final_price as finalPrice,
+			    tt.display_name as ticketTypeName,
+			    m.title as movieTitle,
+			    s.start_time as sessionStartTime,
+			    h.name as hallName,
+			    seat.row as row,
+			    seat.number as seatNumber,
+			    t.user_id as userId,
+			    m.id as movieId
+			FROM tickets t
+			JOIN bookings b ON t.booking_id = b.id
+			JOIN movie_sessions s ON b.session_id = s.id
+			JOIN movies m ON s.movie_id = m.id
+			JOIN halls h ON s.hall_id = h.id
+			JOIN ticket_types tt ON t.ticket_type_id = tt.id
+			LEFT JOIN seat_reservations sr ON t.seat_reservation_id = sr.id
+			LEFT JOIN seats seat ON sr.seat_id = seat.id
+			WHERE (:userId IS NULL OR t.user_id = :userId)
+			AND (:status IS NULL OR t.status = :status)
+			AND (:movieId IS NULL OR m.id = :movieId)
+			AND (:purchaseDateFrom IS NULL OR t.purchase_time >= :purchaseDateFrom)
+			AND (:purchaseDateTo IS NULL OR t.purchase_time <= :purchaseDateTo)
+			AND (:sessionDateFrom IS NULL OR s.start_time >= :sessionDateFrom)
+			AND (:sessionDateTo IS NULL OR s.start_time <= :sessionDateTo)
+			""", nativeQuery = true)
+	Page<TicketInfoProjection> findAllTicketInfoProjections(@Param("userId") Long userId,
+			@Param("status") String status, @Param("movieId") Long movieId,
+			@Param("purchaseDateFrom") LocalDateTime purchaseDateFrom,
+			@Param("purchaseDateTo") LocalDateTime purchaseDateTo,
+			@Param("sessionDateFrom") LocalDateTime sessionDateFrom,
+			@Param("sessionDateTo") LocalDateTime sessionDateTo, Pageable pageable);
 }
