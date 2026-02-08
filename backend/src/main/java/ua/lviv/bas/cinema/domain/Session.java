@@ -5,8 +5,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.hibernate.annotations.BatchSize;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -37,7 +35,7 @@ import ua.lviv.bas.cinema.domain.enums.CinemaSessionStatus;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString(exclude = { "movie", "hall", "bookings", "bookedSeats" })
+@ToString(exclude = { "movie", "hall", "bookings", "seatReservations" })
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Table(name = "sessions", indexes = { @Index(name = "idx_session_movie", columnList = "movie_id"),
 		@Index(name = "idx_session_hall", columnList = "hall_id"),
@@ -76,12 +74,10 @@ public class Session {
 	private CinemaSessionStatus status = CinemaSessionStatus.SCHEDULED;
 
 	@OneToMany(mappedBy = "session", fetch = FetchType.LAZY)
-	@BatchSize(size = 20)
 	@Builder.Default
 	private List<Booking> bookings = new ArrayList<>();
 
 	@OneToMany(mappedBy = "session", fetch = FetchType.LAZY)
-	@BatchSize(size = 20)
 	@Builder.Default
-	private List<BookedSeat> bookedSeats = new ArrayList<>();
+	private List<SeatReservation> seatReservations = new ArrayList<>();
 }

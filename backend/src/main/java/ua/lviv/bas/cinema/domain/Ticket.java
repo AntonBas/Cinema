@@ -3,8 +3,6 @@ package ua.lviv.bas.cinema.domain;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-import org.hibernate.annotations.CreationTimestamp;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -34,7 +32,7 @@ import ua.lviv.bas.cinema.domain.enums.TicketStatus;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString(exclude = { "booking", "ticketType", "payment", "refund", "user", "bookedSeat" })
+@ToString(exclude = { "booking", "ticketType", "payment", "refund", "user", "seatReservation" })
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Table(name = "tickets", indexes = { @Index(name = "idx_ticket_booking", columnList = "booking_id"),
 		@Index(name = "idx_ticket_status", columnList = "status"),
@@ -42,7 +40,7 @@ import ua.lviv.bas.cinema.domain.enums.TicketStatus;
 		@Index(name = "idx_ticket_ticket_type", columnList = "ticket_type_id"),
 		@Index(name = "idx_ticket_unique_code", columnList = "unique_code", unique = true),
 		@Index(name = "idx_ticket_user", columnList = "user_id"),
-		@Index(name = "idx_ticket_booked_seat", columnList = "booked_seat_id") })
+		@Index(name = "idx_ticket_seat_reservation", columnList = "seat_reservation_id") })
 public class Ticket {
 
 	@Id
@@ -75,8 +73,8 @@ public class Ticket {
 	private Payment payment;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "booked_seat_id")
-	private BookedSeat bookedSeat;
+	@JoinColumn(name = "seat_reservation_id")
+	private SeatReservation seatReservation;
 
 	@NotNull
 	@DecimalMin("0.01")
@@ -109,7 +107,6 @@ public class Ticket {
 	@Builder.Default
 	private TicketStatus status = TicketStatus.ACTIVE;
 
-	@CreationTimestamp
 	@Column(name = "created_at", updatable = false)
 	private LocalDateTime createdAt;
 

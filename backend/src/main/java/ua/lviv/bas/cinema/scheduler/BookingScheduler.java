@@ -11,7 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.Booking;
 import ua.lviv.bas.cinema.domain.Payment;
-import ua.lviv.bas.cinema.domain.enums.BookedSeatStatus;
+import ua.lviv.bas.cinema.domain.enums.ReservationStatus;
 import ua.lviv.bas.cinema.domain.enums.BookingStatus;
 import ua.lviv.bas.cinema.domain.enums.PaymentStatus;
 import ua.lviv.bas.cinema.repository.BookingRepository;
@@ -42,7 +42,7 @@ public class BookingScheduler {
 
 		for (Booking booking : expiredBookings) {
 			booking.setStatus(BookingStatus.EXPIRED);
-			booking.getBookedSeats().forEach(bs -> bs.setStatus(BookedSeatStatus.EXPIRED));
+			booking.getBookedSeats().forEach(bs -> bs.setStatus(ReservationStatus.EXPIRED));
 
 			if (booking.getBonusPointsUsed() != null && booking.getBonusPointsUsed() > 0) {
 				bonusService.refundBonusPointsForCancellation(booking);
@@ -74,7 +74,7 @@ public class BookingScheduler {
 
 			if (payment.getBooking().getStatus() == BookingStatus.PENDING) {
 				payment.getBooking().setStatus(BookingStatus.EXPIRED);
-				payment.getBooking().getBookedSeats().forEach(seat -> seat.setStatus(BookedSeatStatus.EXPIRED));
+				payment.getBooking().getBookedSeats().forEach(seat -> seat.setStatus(ReservationStatus.EXPIRED));
 			}
 		}
 

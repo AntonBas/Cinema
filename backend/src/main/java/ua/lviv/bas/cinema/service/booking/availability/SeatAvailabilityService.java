@@ -8,11 +8,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
-import ua.lviv.bas.cinema.domain.BookedSeat;
+import ua.lviv.bas.cinema.domain.SeatReservation;
 import ua.lviv.bas.cinema.domain.Seat;
 import ua.lviv.bas.cinema.domain.Session;
 import ua.lviv.bas.cinema.domain.TicketType;
-import ua.lviv.bas.cinema.domain.enums.BookedSeatStatus;
+import ua.lviv.bas.cinema.domain.enums.ReservationStatus;
 import ua.lviv.bas.cinema.dto.cinemaHall.response.SeatAvailabilityResponse;
 import ua.lviv.bas.cinema.exception.domain.cinema.SessionNotFoundException;
 import ua.lviv.bas.cinema.repository.BookedSeatRepository;
@@ -37,8 +37,8 @@ public class SeatAvailabilityService {
 				.orElseThrow(() -> new SessionNotFoundException(sessionId));
 
 		List<Seat> allSeats = seatRepository.findByHallId(session.getHall().getId());
-		List<BookedSeat> bookedSeats = bookedSeatRepository.findBySessionIdAndStatusIn(sessionId,
-				List.of(BookedSeatStatus.PENDING, BookedSeatStatus.CONFIRMED));
+		List<SeatReservation> bookedSeats = bookedSeatRepository.findBySessionIdAndStatusIn(sessionId,
+				List.of(ReservationStatus.PENDING, ReservationStatus.CONFIRMED));
 
 		List<SeatAvailabilityResponse.SeatInfo> seatInfos = allSeats.stream()
 				.map(seat -> buildSeatInfo(seat, bookedSeats, session)).collect(Collectors.toList());
@@ -66,15 +66,15 @@ public class SeatAvailabilityService {
 		Long hallId = session.getHall().getId();
 		long totalSeats = seatRepository.countByHallId(hallId);
 		long bookedSeats = bookedSeatRepository.countBySessionIdAndStatusIn(sessionId,
-				List.of(BookedSeatStatus.PENDING, BookedSeatStatus.CONFIRMED));
+				List.of(ReservationStatus.PENDING, ReservationStatus.CONFIRMED));
 
 		return (int) (totalSeats - bookedSeats);
 	}
 
-	private SeatAvailabilityResponse.SeatInfo buildSeatInfo(Seat seat, List<BookedSeat> bookedSeats, Session session) {
+	private SeatAvailabilityResponse.SeatInfo buildSeatInfo(Seat seat, List<SeatReservation> bookedSeats, Session session) {
 		boolean isBooked = bookedSeats.stream().anyMatch(bs -> bs.getSeat().getId().equals(seat.getId()));
 		boolean isTemporary = bookedSeats.stream().anyMatch(
-				bs -> bs.getSeat().getId().equals(seat.getId()) && bs.getStatus() == BookedSeatStatus.PENDING);
+				bs -> bs.getSeat().getId().equals(seat.getId()) && bs.getStatus() == ReservationStatus.PENDING);
 
 		List<SeatAvailabilityResponse.TicketPriceInfo> ticketPrices = calculateTicketPrices(seat, session);
 

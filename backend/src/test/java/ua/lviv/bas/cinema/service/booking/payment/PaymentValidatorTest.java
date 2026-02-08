@@ -10,11 +10,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import ua.lviv.bas.cinema.domain.BookedSeat;
+import ua.lviv.bas.cinema.domain.SeatReservation;
 import ua.lviv.bas.cinema.domain.Booking;
 import ua.lviv.bas.cinema.domain.Seat;
 import ua.lviv.bas.cinema.domain.Session;
-import ua.lviv.bas.cinema.domain.enums.BookedSeatStatus;
+import ua.lviv.bas.cinema.domain.enums.ReservationStatus;
 import ua.lviv.bas.cinema.domain.enums.BookingStatus;
 import ua.lviv.bas.cinema.exception.domain.booking.SessionTooCloseException;
 import ua.lviv.bas.cinema.exception.domain.payment.PaymentProcessingException;
@@ -38,9 +38,9 @@ public class PaymentValidatorTest {
 		seat.setRow(1);
 		seat.setNumber(1);
 
-		BookedSeat bookedSeat = new BookedSeat();
+		SeatReservation bookedSeat = new SeatReservation();
 		bookedSeat.setSeat(seat);
-		bookedSeat.setStatus(BookedSeatStatus.PENDING);
+		bookedSeat.setStatus(ReservationStatus.PENDING);
 
 		Booking booking = new Booking();
 		booking.setStatus(BookingStatus.PENDING);
@@ -94,9 +94,9 @@ public class PaymentValidatorTest {
 		seat.setRow(1);
 		seat.setNumber(1);
 
-		BookedSeat bookedSeat = new BookedSeat();
+		SeatReservation bookedSeat = new SeatReservation();
 		bookedSeat.setSeat(seat);
-		bookedSeat.setStatus(BookedSeatStatus.CONFIRMED);
+		bookedSeat.setStatus(ReservationStatus.CONFIRMED);
 
 		Booking booking = new Booking();
 		booking.setStatus(BookingStatus.PENDING);

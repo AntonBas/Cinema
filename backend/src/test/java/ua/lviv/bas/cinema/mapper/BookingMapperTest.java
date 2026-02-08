@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import ua.lviv.bas.cinema.domain.BookedSeat;
+import ua.lviv.bas.cinema.domain.SeatReservation;
 import ua.lviv.bas.cinema.domain.Booking;
 import ua.lviv.bas.cinema.domain.CinemaHall;
 import ua.lviv.bas.cinema.domain.Movie;
@@ -20,7 +20,7 @@ import ua.lviv.bas.cinema.domain.Seat;
 import ua.lviv.bas.cinema.domain.Session;
 import ua.lviv.bas.cinema.domain.TicketType;
 import ua.lviv.bas.cinema.domain.User;
-import ua.lviv.bas.cinema.domain.enums.BookedSeatStatus;
+import ua.lviv.bas.cinema.domain.enums.ReservationStatus;
 import ua.lviv.bas.cinema.domain.enums.BookingStatus;
 import ua.lviv.bas.cinema.domain.enums.PaymentStatus;
 import ua.lviv.bas.cinema.domain.enums.SeatType;
@@ -32,8 +32,8 @@ public class BookingMapperTest {
 	private BookingMapper bookingMapper = new BookingMapperImpl();
 
 	private Booking booking;
-	private BookedSeat bookedSeat1;
-	private BookedSeat bookedSeat2;
+	private SeatReservation bookedSeat1;
+	private SeatReservation bookedSeat2;
 	private Session session;
 	private Payment payment;
 
@@ -57,11 +57,11 @@ public class BookingMapperTest {
 		TicketType adultTicket = TicketType.builder().id(1L).code("ADULT").displayName("Adult")
 				.priceMultiplier(new BigDecimal("1.0")).build();
 
-		bookedSeat1 = BookedSeat.builder().id(1L).seat(seat1).ticketType(adultTicket)
-				.seatPrice(new BigDecimal("250.00")).status(BookedSeatStatus.PENDING).build();
+		bookedSeat1 = SeatReservation.builder().id(1L).seat(seat1).ticketType(adultTicket)
+				.seatPrice(new BigDecimal("250.00")).status(ReservationStatus.PENDING).build();
 
-		bookedSeat2 = BookedSeat.builder().id(2L).seat(seat2).ticketType(adultTicket)
-				.seatPrice(new BigDecimal("250.00")).status(BookedSeatStatus.PENDING).build();
+		bookedSeat2 = SeatReservation.builder().id(2L).seat(seat2).ticketType(adultTicket)
+				.seatPrice(new BigDecimal("250.00")).status(ReservationStatus.PENDING).build();
 
 		LocalDateTime createdAt = LocalDateTime.of(2024, 1, 15, 14, 30);
 		LocalDateTime expiresAt = LocalDateTime.of(2024, 1, 15, 14, 50);

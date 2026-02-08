@@ -23,7 +23,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import ua.lviv.bas.cinema.domain.BookedSeat;
+import ua.lviv.bas.cinema.domain.SeatReservation;
 import ua.lviv.bas.cinema.domain.Booking;
 import ua.lviv.bas.cinema.domain.CinemaHall;
 import ua.lviv.bas.cinema.domain.Movie;
@@ -67,7 +67,7 @@ public class TicketServiceTest {
 	private Booking testBooking;
 	private Payment testPayment;
 	private Session testSession;
-	private BookedSeat bookedSeat;
+	private SeatReservation bookedSeat;
 	private TicketType ticketType;
 	private Ticket testTicket;
 
@@ -104,7 +104,7 @@ public class TicketServiceTest {
 		seat.setRow(1);
 		seat.setNumber(1);
 
-		bookedSeat = new BookedSeat();
+		bookedSeat = new SeatReservation();
 		bookedSeat.setTicketType(ticketType);
 		bookedSeat.setSeat(seat);
 		bookedSeat.setSeatPrice(new BigDecimal("200.00"));

@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
 import ua.lviv.bas.cinema.config.RefundRules;
-import ua.lviv.bas.cinema.domain.BookedSeat;
+import ua.lviv.bas.cinema.domain.SeatReservation;
 import ua.lviv.bas.cinema.domain.Ticket;
 import ua.lviv.bas.cinema.dto.refund.response.RefundPreviewResponse;
 
@@ -51,7 +51,7 @@ public class RefundCalculationService {
 
 		String seatInfo = "N/A";
 		if (ticket.getBooking().getBookedSeats() != null && !ticket.getBooking().getBookedSeats().isEmpty()) {
-			BookedSeat bookedSeat = ticket.getBooking().getBookedSeats().get(0);
+			SeatReservation bookedSeat = ticket.getBooking().getBookedSeats().get(0);
 			seatInfo = String.format("Row %d, Seat %d", bookedSeat.getSeat().getRow(),
 					bookedSeat.getSeat().getNumber());
 		}

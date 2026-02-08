@@ -4,7 +4,7 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.ReportingPolicy;
 
-import ua.lviv.bas.cinema.domain.BookedSeat;
+import ua.lviv.bas.cinema.domain.SeatReservation;
 import ua.lviv.bas.cinema.domain.Booking;
 import ua.lviv.bas.cinema.dto.booking.response.BookingResponse;
 
@@ -24,5 +24,5 @@ public interface BookingMapper {
 	@Mapping(target = "row", source = "seat.row")
 	@Mapping(target = "seatNumber", source = "seat.number")
 	@Mapping(target = "ticketTypeName", source = "ticketType.displayName")
-	BookingResponse.BookedSeatInfo toBookedSeatInfo(BookedSeat bookedSeat);
+	BookingResponse.BookedSeatInfo toBookedSeatInfo(SeatReservation bookedSeat);
 }

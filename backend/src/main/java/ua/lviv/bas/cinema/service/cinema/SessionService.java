@@ -18,7 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.CinemaHall;
 import ua.lviv.bas.cinema.domain.Movie;
 import ua.lviv.bas.cinema.domain.Session;
-import ua.lviv.bas.cinema.domain.enums.BookedSeatStatus;
+import ua.lviv.bas.cinema.domain.enums.ReservationStatus;
 import ua.lviv.bas.cinema.domain.enums.CinemaSessionStatus;
 import ua.lviv.bas.cinema.domain.specification.SessionAdminProjectionSpecification;
 import ua.lviv.bas.cinema.domain.specification.SessionScheduleProjectionSpecification;
@@ -248,7 +248,7 @@ public class SessionService {
 	}
 
 	private int calculateTicketsSold(Session session) {
-		return (int) session.getBookedSeats().stream().filter(bs -> bs.getStatus() == BookedSeatStatus.CONFIRMED)
+		return (int) session.getBookedSeats().stream().filter(bs -> bs.getStatus() == ReservationStatus.CONFIRMED)
 				.count();
 	}
 

@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
 import ua.lviv.bas.cinema.domain.Seat;
-import ua.lviv.bas.cinema.domain.enums.BookedSeatStatus;
+import ua.lviv.bas.cinema.domain.enums.ReservationStatus;
 import ua.lviv.bas.cinema.exception.domain.booking.SeatNotAvailableException;
 import ua.lviv.bas.cinema.exception.domain.cinema.SeatNotFoundException;
 import ua.lviv.bas.cinema.repository.BookedSeatRepository;
@@ -36,6 +36,6 @@ public class AvailabilityValidator {
 
 	private boolean isSeatBooked(Long sessionId, Long seatId) {
 		return bookedSeatRepository.existsBySessionIdAndSeatIdAndStatusIn(sessionId, seatId,
-				List.of(BookedSeatStatus.PENDING, BookedSeatStatus.CONFIRMED));
+				List.of(ReservationStatus.PENDING, ReservationStatus.CONFIRMED));
 	}
 }

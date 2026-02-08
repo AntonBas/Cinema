@@ -22,7 +22,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
-import ua.lviv.bas.cinema.domain.BookedSeat;
+import ua.lviv.bas.cinema.domain.SeatReservation;
 import ua.lviv.bas.cinema.domain.Booking;
 import ua.lviv.bas.cinema.domain.CinemaHall;
 import ua.lviv.bas.cinema.domain.Movie;
@@ -30,7 +30,7 @@ import ua.lviv.bas.cinema.domain.Seat;
 import ua.lviv.bas.cinema.domain.Session;
 import ua.lviv.bas.cinema.domain.TicketType;
 import ua.lviv.bas.cinema.domain.User;
-import ua.lviv.bas.cinema.domain.enums.BookedSeatStatus;
+import ua.lviv.bas.cinema.domain.enums.ReservationStatus;
 import ua.lviv.bas.cinema.domain.enums.BookingStatus;
 import ua.lviv.bas.cinema.domain.enums.CinemaSessionStatus;
 import ua.lviv.bas.cinema.domain.enums.SeatType;
@@ -67,8 +67,8 @@ public class BookingManagementServiceTest {
 
 	private User testUser;
 	private Booking testBooking;
-	private BookedSeat bookedSeat1;
-	private BookedSeat bookedSeat2;
+	private SeatReservation bookedSeat1;
+	private SeatReservation bookedSeat2;
 
 	private static final Long USER_ID = 1L;
 	private static final Long BOOKING_ID = 2L;
@@ -104,11 +104,11 @@ public class BookingManagementServiceTest {
 		ticketType.setId(1L);
 		ticketType.setDisplayName("Adult");
 
-		bookedSeat1 = BookedSeat.builder().id(1L).seat(seat1).session(session).ticketType(ticketType)
-				.seatPrice(new BigDecimal("200.00")).status(BookedSeatStatus.PENDING).build();
+		bookedSeat1 = SeatReservation.builder().id(1L).seat(seat1).session(session).ticketType(ticketType)
+				.seatPrice(new BigDecimal("200.00")).status(ReservationStatus.PENDING).build();
 
-		bookedSeat2 = BookedSeat.builder().id(2L).seat(seat2).session(session).ticketType(ticketType)
-				.seatPrice(new BigDecimal("300.00")).status(BookedSeatStatus.PENDING).build();
+		bookedSeat2 = SeatReservation.builder().id(2L).seat(seat2).session(session).ticketType(ticketType)
+				.seatPrice(new BigDecimal("300.00")).status(ReservationStatus.PENDING).build();
 
 		testBooking = Booking.builder().id(BOOKING_ID).user(testUser).session(session).status(BookingStatus.PENDING)
 				.totalPrice(new BigDecimal("500.00")).bonusPointsUsed(100).bonusDiscountAmount(new BigDecimal("100.00"))
@@ -189,8 +189,8 @@ public class BookingManagementServiceTest {
 		bookingManagementService.cancelBooking(BOOKING_ID, testUser);
 
 		assertThat(testBooking.getStatus()).isEqualTo(BookingStatus.CANCELLED);
-		assertThat(bookedSeat1.getStatus()).isEqualTo(BookedSeatStatus.CANCELLED);
-		assertThat(bookedSeat2.getStatus()).isEqualTo(BookedSeatStatus.CANCELLED);
+		assertThat(bookedSeat1.getStatus()).isEqualTo(ReservationStatus.CANCELLED);
+		assertThat(bookedSeat2.getStatus()).isEqualTo(ReservationStatus.CANCELLED);
 	}
 
 	@Test
@@ -222,8 +222,8 @@ public class BookingManagementServiceTest {
 		bookingManagementService.confirmBooking(BOOKING_ID);
 
 		assertThat(testBooking.getStatus()).isEqualTo(BookingStatus.CONFIRMED);
-		assertThat(bookedSeat1.getStatus()).isEqualTo(BookedSeatStatus.CONFIRMED);
-		assertThat(bookedSeat2.getStatus()).isEqualTo(BookedSeatStatus.CONFIRMED);
+		assertThat(bookedSeat1.getStatus()).isEqualTo(ReservationStatus.CONFIRMED);
+		assertThat(bookedSeat2.getStatus()).isEqualTo(ReservationStatus.CONFIRMED);
 	}
 
 	@Test

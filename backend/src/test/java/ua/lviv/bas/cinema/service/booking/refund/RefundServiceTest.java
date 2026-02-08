@@ -26,7 +26,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import ua.lviv.bas.cinema.config.RefundRules;
 import ua.lviv.bas.cinema.domain.BonusCard;
 import ua.lviv.bas.cinema.domain.BonusTransaction;
-import ua.lviv.bas.cinema.domain.BookedSeat;
+import ua.lviv.bas.cinema.domain.SeatReservation;
 import ua.lviv.bas.cinema.domain.Booking;
 import ua.lviv.bas.cinema.domain.CinemaHall;
 import ua.lviv.bas.cinema.domain.Movie;
@@ -124,7 +124,7 @@ public class RefundServiceTest {
 		seat.setRow(5);
 		seat.setNumber(10);
 
-		BookedSeat bookedSeat = new BookedSeat();
+		SeatReservation bookedSeat = new SeatReservation();
 		bookedSeat.setSeat(seat);
 
 		Booking booking = new Booking();

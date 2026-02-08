@@ -20,7 +20,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import ua.lviv.bas.cinema.domain.BookedSeat;
+import ua.lviv.bas.cinema.domain.SeatReservation;
 import ua.lviv.bas.cinema.domain.Booking;
 import ua.lviv.bas.cinema.domain.CinemaHall;
 import ua.lviv.bas.cinema.domain.Movie;
@@ -69,9 +69,9 @@ public class PaymentNotificationServiceTest {
 
 		Seat seat2 = Seat.builder().row(1).number(2).build();
 
-		BookedSeat bookedSeat1 = BookedSeat.builder().seat(seat1).build();
+		SeatReservation bookedSeat1 = SeatReservation.builder().seat(seat1).build();
 
-		BookedSeat bookedSeat2 = BookedSeat.builder().seat(seat2).build();
+		SeatReservation bookedSeat2 = SeatReservation.builder().seat(seat2).build();
 
 		testBooking = Booking.builder().id(1L).user(testUser).session(testSession)
 				.bookedSeats(Arrays.asList(bookedSeat1, bookedSeat2)).build();
@@ -157,8 +157,8 @@ public class PaymentNotificationServiceTest {
 	void sendPaymentSuccessEmail_ShouldFormatSeatsInfoCorrectly() {
 		Seat seat3 = Seat.builder().row(2).number(3).build();
 		Seat seat4 = Seat.builder().row(2).number(4).build();
-		BookedSeat bookedSeat3 = BookedSeat.builder().seat(seat3).build();
-		BookedSeat bookedSeat4 = BookedSeat.builder().seat(seat4).build();
+		SeatReservation bookedSeat3 = SeatReservation.builder().seat(seat3).build();
+		SeatReservation bookedSeat4 = SeatReservation.builder().seat(seat4).build();
 
 		testBooking.setBookedSeats(Arrays.asList(bookedSeat3, bookedSeat4));
 
@@ -171,7 +171,7 @@ public class PaymentNotificationServiceTest {
 	@Test
 	void sendPaymentSuccessEmail_ShouldHandleSingleSeat() {
 		Seat singleSeat = Seat.builder().row(3).number(5).build();
-		BookedSeat bookedSeat = BookedSeat.builder().seat(singleSeat).build();
+		SeatReservation bookedSeat = SeatReservation.builder().seat(singleSeat).build();
 		testBooking.setBookedSeats(Arrays.asList(bookedSeat));
 
 		paymentNotificationService.sendPaymentSuccessEmail(testPayment, testBooking, testTickets);

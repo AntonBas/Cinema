@@ -21,13 +21,13 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import ua.lviv.bas.cinema.domain.BookedSeat;
+import ua.lviv.bas.cinema.domain.SeatReservation;
 import ua.lviv.bas.cinema.domain.CinemaHall;
 import ua.lviv.bas.cinema.domain.Movie;
 import ua.lviv.bas.cinema.domain.Seat;
 import ua.lviv.bas.cinema.domain.Session;
 import ua.lviv.bas.cinema.domain.TicketType;
-import ua.lviv.bas.cinema.domain.enums.BookedSeatStatus;
+import ua.lviv.bas.cinema.domain.enums.ReservationStatus;
 import ua.lviv.bas.cinema.domain.enums.SeatType;
 import ua.lviv.bas.cinema.dto.cinemaHall.response.SeatAvailabilityResponse;
 import ua.lviv.bas.cinema.exception.domain.booking.SeatNotAvailableException;
@@ -153,9 +153,9 @@ public class SeatAvailabilityServiceTest {
 	@Test
 	void getSeatAvailability_WithBookedSeats() {
 		List<Seat> allSeats = Arrays.asList(testSeat1, testSeat2);
-		BookedSeat bookedSeat = new BookedSeat();
+		SeatReservation bookedSeat = new SeatReservation();
 		bookedSeat.setSeat(testSeat1);
-		bookedSeat.setStatus(BookedSeatStatus.CONFIRMED);
+		bookedSeat.setStatus(ReservationStatus.CONFIRMED);
 		List<TicketType> activeTicketTypes = Arrays.asList(adultTicketType);
 
 		when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(testSession));
@@ -173,9 +173,9 @@ public class SeatAvailabilityServiceTest {
 	@Test
 	void getSeatAvailability_WithTemporarilyReservedSeat() {
 		List<Seat> allSeats = Arrays.asList(testSeat1, testSeat2);
-		BookedSeat pendingSeat = new BookedSeat();
+		SeatReservation pendingSeat = new SeatReservation();
 		pendingSeat.setSeat(testSeat1);
-		pendingSeat.setStatus(BookedSeatStatus.PENDING);
+		pendingSeat.setStatus(ReservationStatus.PENDING);
 		List<TicketType> activeTicketTypes = Arrays.asList(adultTicketType);
 
 		when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(testSession));

@@ -11,13 +11,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import ua.lviv.bas.cinema.domain.BookedSeat;
+import ua.lviv.bas.cinema.domain.SeatReservation;
 import ua.lviv.bas.cinema.domain.Booking;
 import ua.lviv.bas.cinema.domain.Seat;
 import ua.lviv.bas.cinema.domain.Session;
 import ua.lviv.bas.cinema.domain.TicketType;
 import ua.lviv.bas.cinema.domain.User;
-import ua.lviv.bas.cinema.domain.enums.BookedSeatStatus;
+import ua.lviv.bas.cinema.domain.enums.ReservationStatus;
 import ua.lviv.bas.cinema.domain.enums.BookingStatus;
 import ua.lviv.bas.cinema.dto.booking.request.BookingCreateRequest;
 import ua.lviv.bas.cinema.dto.booking.response.BookingResponse;
@@ -68,10 +68,10 @@ public class BookingCreationService {
 
 		bookingValidator.validateSessionForBooking(session);
 
-		List<BookedSeat> bookedSeats = request.getSeats().stream()
+		List<SeatReservation> bookedSeats = request.getSeats().stream()
 				.map(seatSelection -> createBookedSeat(session, user, seatSelection)).collect(Collectors.toList());
 
-		BigDecimal totalPrice = bookedSeats.stream().map(BookedSeat::getSeatPrice).reduce(BigDecimal.ZERO,
+		BigDecimal totalPrice = bookedSeats.stream().map(SeatReservation::getSeatPrice).reduce(BigDecimal.ZERO,
 				BigDecimal::add);
 
 		BookingPriceCalculator.BookingPriceResult priceResult = bookingPriceCalculator.calculateFinalPrice(totalPrice,
@@ -95,7 +95,7 @@ public class BookingCreationService {
 		return buildBookingResponse(savedBooking);
 	}
 
-	private BookedSeat createBookedSeat(Session session, User user,
+	private SeatReservation createBookedSeat(Session session, User user,
 			BookingCreateRequest.SeatSelectionRequest seatSelection) {
 		Seat seat = seatRepository.findById(seatSelection.getSeatId())
 				.orElseThrow(() -> new SeatNotFoundException(seatSelection.getSeatId()));
@@ -107,12 +107,12 @@ public class BookingCreationService {
 
 		BigDecimal seatPrice = priceCalculator.calculateSeatPrice(session, seat, ticketType);
 
-		return BookedSeat.builder().seat(seat).session(session).ticketType(ticketType).seatPrice(seatPrice)
-				.status(BookedSeatStatus.PENDING).bookedAt(LocalDateTime.now())
+		return SeatReservation.builder().seat(seat).session(session).ticketType(ticketType).seatPrice(seatPrice)
+				.status(ReservationStatus.PENDING).bookedAt(LocalDateTime.now())
 				.reservedUntil(LocalDateTime.now().plusMinutes(expirationMinutes)).reservedByUser(user).build();
 	}
 
-	private Booking createBookingEntity(User user, Session session, List<BookedSeat> bookedSeats,
+	private Booking createBookingEntity(User user, Session session, List<SeatReservation> bookedSeats,
 			BookingPriceCalculator.BookingPriceResult priceResult, LocalDateTime expiresAt) {
 		return Booking.builder().user(user).session(session).status(BookingStatus.PENDING)
 				.totalPrice(priceResult.totalPrice()).bonusPointsUsed(priceResult.bonusPointsUsed())

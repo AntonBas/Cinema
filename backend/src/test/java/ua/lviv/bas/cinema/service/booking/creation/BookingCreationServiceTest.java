@@ -23,7 +23,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import ua.lviv.bas.cinema.domain.BookedSeat;
+import ua.lviv.bas.cinema.domain.SeatReservation;
 import ua.lviv.bas.cinema.domain.Booking;
 import ua.lviv.bas.cinema.domain.CinemaHall;
 import ua.lviv.bas.cinema.domain.Movie;
@@ -31,7 +31,7 @@ import ua.lviv.bas.cinema.domain.Seat;
 import ua.lviv.bas.cinema.domain.Session;
 import ua.lviv.bas.cinema.domain.TicketType;
 import ua.lviv.bas.cinema.domain.User;
-import ua.lviv.bas.cinema.domain.enums.BookedSeatStatus;
+import ua.lviv.bas.cinema.domain.enums.ReservationStatus;
 import ua.lviv.bas.cinema.domain.enums.BookingStatus;
 import ua.lviv.bas.cinema.domain.enums.CinemaSessionStatus;
 import ua.lviv.bas.cinema.domain.enums.SeatType;
@@ -187,10 +187,10 @@ public class BookingCreationServiceTest {
 				.totalPrice(new BigDecimal("480.00")).bonusPointsUsed(100).bonusDiscountAmount(new BigDecimal("100.00"))
 				.finalPrice(new BigDecimal("380.00")).expiresAt(LocalDateTime.now().plusMinutes(20))
 				.bookedSeats(Arrays.asList(
-						BookedSeat.builder().seat(testSeat1).session(testSession).ticketType(adultTicketType)
-								.seatPrice(new BigDecimal("200.00")).status(BookedSeatStatus.PENDING).build(),
-						BookedSeat.builder().seat(testSeat2).session(testSession).ticketType(childTicketType)
-								.seatPrice(new BigDecimal("280.00")).status(BookedSeatStatus.PENDING).build()))
+						SeatReservation.builder().seat(testSeat1).session(testSession).ticketType(adultTicketType)
+								.seatPrice(new BigDecimal("200.00")).status(ReservationStatus.PENDING).build(),
+						SeatReservation.builder().seat(testSeat2).session(testSession).ticketType(childTicketType)
+								.seatPrice(new BigDecimal("280.00")).status(ReservationStatus.PENDING).build()))
 				.build();
 
 		when(bookingRepository.save(any(Booking.class))).thenReturn(booking);

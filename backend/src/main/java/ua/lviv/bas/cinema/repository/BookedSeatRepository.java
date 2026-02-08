@@ -7,26 +7,26 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import ua.lviv.bas.cinema.domain.BookedSeat;
-import ua.lviv.bas.cinema.domain.enums.BookedSeatStatus;
+import ua.lviv.bas.cinema.domain.SeatReservation;
+import ua.lviv.bas.cinema.domain.enums.ReservationStatus;
 
 @Repository
-public interface BookedSeatRepository extends JpaRepository<BookedSeat, Long> {
+public interface BookedSeatRepository extends JpaRepository<SeatReservation, Long> {
 	@Query("SELECT COUNT(bs) > 0 FROM BookedSeat bs WHERE bs.session.id = :sessionId AND bs.seat.id = :seatId AND bs.status IN :statuses")
 	boolean existsBySessionIdAndSeatIdAndStatusIn(@Param("sessionId") Long sessionId, @Param("seatId") Long seatId,
-			@Param("statuses") List<BookedSeatStatus> statuses);
+			@Param("statuses") List<ReservationStatus> statuses);
 
-	List<BookedSeat> findBySessionId(Long sessionId);
+	List<SeatReservation> findBySessionId(Long sessionId);
 
-	List<BookedSeat> findBySessionIdAndStatusIn(Long sessionId, List<BookedSeatStatus> statuses);
+	List<SeatReservation> findBySessionIdAndStatusIn(Long sessionId, List<ReservationStatus> statuses);
 
 	@Query("SELECT COUNT(bs) FROM BookedSeat bs WHERE bs.session.id = :sessionId AND bs.status IN :statuses")
 	long countBySessionIdAndStatusIn(@Param("sessionId") Long sessionId,
-			@Param("statuses") List<BookedSeatStatus> statuses);
+			@Param("statuses") List<ReservationStatus> statuses);
 
 	@Query("SELECT bs FROM BookedSeat bs WHERE bs.booking.id = :bookingId")
-	List<BookedSeat> findByBookingId(@Param("bookingId") Long bookingId);
+	List<SeatReservation> findByBookingId(@Param("bookingId") Long bookingId);
 
 	@Query("SELECT bs FROM BookedSeat bs WHERE bs.booking.user.id = :userId")
-	List<BookedSeat> findByUserId(@Param("userId") Long userId);
+	List<SeatReservation> findByUserId(@Param("userId") Long userId);
 }

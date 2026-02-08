@@ -21,7 +21,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import ua.lviv.bas.cinema.domain.BookedSeat;
+import ua.lviv.bas.cinema.domain.SeatReservation;
 import ua.lviv.bas.cinema.domain.Booking;
 import ua.lviv.bas.cinema.domain.CinemaHall;
 import ua.lviv.bas.cinema.domain.Movie;
@@ -30,7 +30,7 @@ import ua.lviv.bas.cinema.domain.Seat;
 import ua.lviv.bas.cinema.domain.Session;
 import ua.lviv.bas.cinema.domain.Ticket;
 import ua.lviv.bas.cinema.domain.User;
-import ua.lviv.bas.cinema.domain.enums.BookedSeatStatus;
+import ua.lviv.bas.cinema.domain.enums.ReservationStatus;
 import ua.lviv.bas.cinema.domain.enums.BookingStatus;
 import ua.lviv.bas.cinema.domain.enums.PaymentStatus;
 import ua.lviv.bas.cinema.dto.payment.request.PaymentCreateRequest;
@@ -114,9 +114,9 @@ class PaymentProcessingServiceTest {
 		seat.setRow(1);
 		seat.setNumber(1);
 
-		BookedSeat bookedSeat = new BookedSeat();
+		SeatReservation bookedSeat = new SeatReservation();
 		bookedSeat.setSeat(seat);
-		bookedSeat.setStatus(BookedSeatStatus.PENDING);
+		bookedSeat.setStatus(ReservationStatus.PENDING);
 
 		testBooking = new Booking();
 		testBooking.setId(BOOKING_ID);

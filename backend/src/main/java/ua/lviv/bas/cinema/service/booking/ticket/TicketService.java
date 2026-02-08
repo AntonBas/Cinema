@@ -10,7 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import ua.lviv.bas.cinema.domain.BookedSeat;
+import ua.lviv.bas.cinema.domain.SeatReservation;
 import ua.lviv.bas.cinema.domain.Booking;
 import ua.lviv.bas.cinema.domain.Payment;
 import ua.lviv.bas.cinema.domain.Ticket;
@@ -46,7 +46,7 @@ public class TicketService {
 		return savedTickets;
 	}
 
-	private Ticket buildTicket(Booking booking, Payment payment, BookedSeat bookedSeat) {
+	private Ticket buildTicket(Booking booking, Payment payment, SeatReservation bookedSeat) {
 		return Ticket.builder().booking(booking).user(booking.getUser()).ticketType(bookedSeat.getTicketType())
 				.payment(payment).bookedSeat(bookedSeat).originalPrice(bookedSeat.getSeatPrice())
 				.finalPrice(bookedSeat.getSeatPrice()).uniqueCode(numberGenerator.generateTicketCode())

@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
 import ua.lviv.bas.cinema.domain.Booking;
-import ua.lviv.bas.cinema.domain.enums.BookedSeatStatus;
+import ua.lviv.bas.cinema.domain.enums.ReservationStatus;
 import ua.lviv.bas.cinema.domain.enums.BookingStatus;
 import ua.lviv.bas.cinema.exception.domain.booking.SessionTooCloseException;
 import ua.lviv.bas.cinema.exception.domain.payment.PaymentProcessingException;
@@ -33,7 +33,7 @@ public class PaymentValidator {
 		}
 
 		boolean allSeatsAvailable = booking.getBookedSeats().stream()
-				.allMatch(seat -> seat.getStatus() == BookedSeatStatus.PENDING);
+				.allMatch(seat -> seat.getStatus() == ReservationStatus.PENDING);
 
 		if (!allSeatsAvailable) {
 			throw PaymentProcessingException.seatsNoLongerAvailable();

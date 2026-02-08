@@ -15,7 +15,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import ua.lviv.bas.cinema.domain.Seat;
-import ua.lviv.bas.cinema.domain.enums.BookedSeatStatus;
+import ua.lviv.bas.cinema.domain.enums.ReservationStatus;
 import ua.lviv.bas.cinema.exception.domain.booking.SeatNotAvailableException;
 import ua.lviv.bas.cinema.exception.domain.cinema.SeatNotFoundException;
 import ua.lviv.bas.cinema.repository.BookedSeatRepository;
@@ -56,7 +56,7 @@ public class AvailabilityValidatorTest {
 	@Test
 	void validateSeat_WhenSeatAvailable_ShouldNotThrowException() {
 		when(bookedSeatRepository.existsBySessionIdAndSeatIdAndStatusIn(SESSION_ID, AVAILABLE_SEAT_ID,
-				List.of(BookedSeatStatus.PENDING, BookedSeatStatus.CONFIRMED))).thenReturn(false);
+				List.of(ReservationStatus.PENDING, ReservationStatus.CONFIRMED))).thenReturn(false);
 		when(seatRepository.findById(AVAILABLE_SEAT_ID)).thenReturn(Optional.of(availableSeat));
 
 		availabilityValidator.validateSeat(SESSION_ID, AVAILABLE_SEAT_ID);
@@ -65,7 +65,7 @@ public class AvailabilityValidatorTest {
 	@Test
 	void validateSeat_WhenSeatBooked_ShouldThrowSeatNotAvailableException() {
 		when(bookedSeatRepository.existsBySessionIdAndSeatIdAndStatusIn(SESSION_ID, BOOKED_SEAT_ID,
-				List.of(BookedSeatStatus.PENDING, BookedSeatStatus.CONFIRMED))).thenReturn(true);
+				List.of(ReservationStatus.PENDING, ReservationStatus.CONFIRMED))).thenReturn(true);
 
 		assertThatThrownBy(() -> availabilityValidator.validateSeat(SESSION_ID, BOOKED_SEAT_ID))
 				.isInstanceOf(SeatNotAvailableException.class);
@@ -74,7 +74,7 @@ public class AvailabilityValidatorTest {
 	@Test
 	void validateSeat_WhenSeatInactive_ShouldThrowSeatNotAvailableException() {
 		when(bookedSeatRepository.existsBySessionIdAndSeatIdAndStatusIn(SESSION_ID, INACTIVE_SEAT_ID,
-				List.of(BookedSeatStatus.PENDING, BookedSeatStatus.CONFIRMED))).thenReturn(false);
+				List.of(ReservationStatus.PENDING, ReservationStatus.CONFIRMED))).thenReturn(false);
 		when(seatRepository.findById(INACTIVE_SEAT_ID)).thenReturn(Optional.of(inactiveSeat));
 
 		assertThatThrownBy(() -> availabilityValidator.validateSeat(SESSION_ID, INACTIVE_SEAT_ID))
@@ -84,7 +84,7 @@ public class AvailabilityValidatorTest {
 	@Test
 	void validateSeat_WhenSeatNotFound_ShouldThrowSeatNotFoundException() {
 		when(bookedSeatRepository.existsBySessionIdAndSeatIdAndStatusIn(SESSION_ID, NON_EXISTENT_SEAT_ID,
-				List.of(BookedSeatStatus.PENDING, BookedSeatStatus.CONFIRMED))).thenReturn(false);
+				List.of(ReservationStatus.PENDING, ReservationStatus.CONFIRMED))).thenReturn(false);
 		when(seatRepository.findById(NON_EXISTENT_SEAT_ID)).thenReturn(Optional.empty());
 
 		assertThatThrownBy(() -> availabilityValidator.validateSeat(SESSION_ID, NON_EXISTENT_SEAT_ID))
@@ -94,7 +94,7 @@ public class AvailabilityValidatorTest {
 	@Test
 	void isSeatAvailable_WhenSeatNotBooked_ShouldReturnTrue() {
 		when(bookedSeatRepository.existsBySessionIdAndSeatIdAndStatusIn(SESSION_ID, AVAILABLE_SEAT_ID,
-				List.of(BookedSeatStatus.PENDING, BookedSeatStatus.CONFIRMED))).thenReturn(false);
+				List.of(ReservationStatus.PENDING, ReservationStatus.CONFIRMED))).thenReturn(false);
 
 		boolean result = availabilityValidator.isSeatAvailable(SESSION_ID, AVAILABLE_SEAT_ID);
 
@@ -104,7 +104,7 @@ public class AvailabilityValidatorTest {
 	@Test
 	void isSeatAvailable_WhenSeatBooked_ShouldReturnFalse() {
 		when(bookedSeatRepository.existsBySessionIdAndSeatIdAndStatusIn(SESSION_ID, BOOKED_SEAT_ID,
-				List.of(BookedSeatStatus.PENDING, BookedSeatStatus.CONFIRMED))).thenReturn(true);
+				List.of(ReservationStatus.PENDING, ReservationStatus.CONFIRMED))).thenReturn(true);
 
 		boolean result = availabilityValidator.isSeatAvailable(SESSION_ID, BOOKED_SEAT_ID);
 
