@@ -60,6 +60,10 @@ public interface TicketRepository extends JpaRepository<Ticket, Long>, JpaSpecif
 	@Query("SELECT COUNT(t) FROM Ticket t WHERE CAST(t.purchaseTime AS date) = CURRENT_DATE")
 	long countToday();
 
+	@Query("SELECT COUNT(t) FROM Ticket t WHERE t.ticketType.id = :ticketTypeId AND t.status IN :statuses AND t.booking.session.startTime > :currentTime")
+	long countByTicketTypeIdAndStatusInAndBookingSessionStartTimeAfter(@Param("ticketTypeId") Long ticketTypeId,
+			@Param("statuses") List<TicketStatus> statuses, @Param("currentTime") LocalDateTime currentTime);
+
 	@Query(value = """
 			SELECT
 			    t.id as id,

@@ -26,7 +26,7 @@ public interface TicketTypeMapper {
 	@Mapping(target = "code", ignore = true)
 	@Mapping(target = "createdAt", ignore = true)
 	@Mapping(target = "updatedAt", ignore = true)
-	@Mapping(target = "priceMultiplier")
+	@Mapping(target = "active", source = "active", defaultValue = "true")
 	void updateTicketTypeFromRequest(@MappingTarget TicketType entity, TicketTypeUpdateRequest dto);
 
 	TicketTypeResponse toTicketTypeResponse(TicketType entity);

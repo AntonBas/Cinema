@@ -57,17 +57,12 @@ public class AdminTicketTypeController {
 	@Operation(summary = "Get all ticket types with optional filters")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Ticket types retrieved successfully") })
 	@PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
-	public ResponseEntity<List<TicketTypeResponse>> getAllTicketTypes(
+	public ResponseEntity<List<TicketTypeResponse>> getTicketTypes(
 			@Parameter(description = "Filter by active status") @RequestParam(required = false) Boolean active,
 			@Parameter(description = "Filter by category") @RequestParam(required = false) TicketTypeCategory category,
 			@Parameter(description = "Search by code or display name") @RequestParam(required = false) String search) {
 		log.info("Getting ticket types with filters - active: {}, category: {}, search: {}", active, category, search);
-		List<TicketTypeResponse> ticketTypes;
-		if (search != null || category != null) {
-			ticketTypes = ticketTypeService.getTicketTypesWithFilters(active, category, search);
-		} else {
-			ticketTypes = ticketTypeService.getAllTicketTypes(active);
-		}
+		List<TicketTypeResponse> ticketTypes = ticketTypeService.getTicketTypes(active, category, search);
 		return ResponseEntity.ok(ticketTypes);
 	}
 

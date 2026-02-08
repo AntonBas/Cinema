@@ -1,13 +1,9 @@
 package ua.lviv.bas.cinema.service.booking.types;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ua.lviv.bas.cinema.domain.TicketType;
 import ua.lviv.bas.cinema.domain.enums.TicketStatus;
 import ua.lviv.bas.cinema.domain.enums.TicketTypeCategory;
@@ -21,6 +17,10 @@ import ua.lviv.bas.cinema.exception.domain.tickettype.TicketTypeNotFoundExceptio
 import ua.lviv.bas.cinema.mapper.TicketTypeMapper;
 import ua.lviv.bas.cinema.repository.TicketRepository;
 import ua.lviv.bas.cinema.repository.TicketTypeRepository;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -59,36 +59,8 @@ public class TicketTypeService {
 		return ticketTypeMapper.toTicketTypeResponse(ticketType);
 	}
 
-	public List<TicketTypeResponse> getAllTicketTypes(Boolean active) {
-		List<TicketType> ticketTypes;
-		if (active == null) {
-			ticketTypes = ticketTypeRepository.findAll();
-		} else if (active) {
-			ticketTypes = ticketTypeRepository.findByActiveTrue();
-		} else {
-			ticketTypes = ticketTypeRepository.findByActiveFalse();
-		}
-		return ticketTypes.stream().map(ticketTypeMapper::toTicketTypeResponse).collect(Collectors.toList());
-	}
-
-	public List<TicketTypeResponse> getTicketTypesWithFilters(Boolean active, TicketTypeCategory category,
-			String search) {
-		List<TicketType> ticketTypes;
-		if (search != null && !search.trim().isEmpty()) {
-			ticketTypes = ticketTypeRepository.findByFilters(active, category, search.trim());
-		} else {
-			if (active == null && category == null) {
-				ticketTypes = ticketTypeRepository.findAll();
-			} else if (active == null) {
-				ticketTypes = ticketTypeRepository.findByCategory(category);
-			} else if (category == null) {
-				ticketTypes = active ? ticketTypeRepository.findByActiveTrue()
-						: ticketTypeRepository.findByActiveFalse();
-			} else {
-				ticketTypes = active ? ticketTypeRepository.findByActiveTrueAndCategory(category)
-						: ticketTypeRepository.findByActiveFalseAndCategory(category);
-			}
-		}
+	public List<TicketTypeResponse> getTicketTypes(Boolean active, TicketTypeCategory category, String search) {
+		List<TicketType> ticketTypes = ticketTypeRepository.findByFilters(active, category, search);
 		return ticketTypes.stream().map(ticketTypeMapper::toTicketTypeResponse).collect(Collectors.toList());
 	}
 
@@ -115,10 +87,10 @@ public class TicketTypeService {
 		TicketType ticketType = ticketTypeRepository.findById(id)
 				.orElseThrow(() -> new TicketTypeNotFoundException(id));
 
-		if (isTicketTypeInUse(id)) {
-			long ticketCount = ticketRepository.countByTicketTypeId(id);
+		if (hasFutureTicketsWithType(id)) {
+			long ticketCount = countFutureTicketsWithType(id);
 			throw new TicketTypeInUseException(id,
-					"Cannot delete ticket type. It is used in " + ticketCount + " ticket(s)");
+					"Cannot delete ticket type. It is used in " + ticketCount + " future ticket(s)");
 		}
 
 		ticketTypeRepository.delete(ticketType);
@@ -130,11 +102,10 @@ public class TicketTypeService {
 		TicketType ticketType = ticketTypeRepository.findById(id)
 				.orElseThrow(() -> new TicketTypeNotFoundException(id));
 
-		if (ticketType.isActive() && hasActiveTicketsWithType(id)) {
-			List<TicketStatus> activeStatuses = List.of(TicketStatus.ACTIVE);
-			long activeTicketCount = ticketRepository.countByTicketTypeIdAndStatusIn(id, activeStatuses);
+		if (ticketType.isActive() && hasFutureTicketsWithType(id)) {
+			long activeTicketCount = countFutureTicketsWithType(id);
 			throw new TicketTypeInUseException(id,
-					"Cannot deactivate ticket type. It is used in " + activeTicketCount + " active ticket(s)");
+					"Cannot deactivate ticket type. It is used in " + activeTicketCount + " future ticket(s)");
 		}
 
 		ticketType.setActive(!ticketType.isActive());
@@ -157,12 +128,14 @@ public class TicketTypeService {
 		return ticketTypeRepository.existsByCode(code);
 	}
 
-	private boolean isTicketTypeInUse(Long ticketTypeId) {
-		return ticketRepository.existsByTicketTypeId(ticketTypeId);
+	private boolean hasFutureTicketsWithType(Long ticketTypeId) {
+		return countFutureTicketsWithType(ticketTypeId) > 0;
 	}
 
-	private boolean hasActiveTicketsWithType(Long ticketTypeId) {
+	private long countFutureTicketsWithType(Long ticketTypeId) {
+		LocalDateTime now = LocalDateTime.now();
 		List<TicketStatus> activeStatuses = List.of(TicketStatus.ACTIVE);
-		return ticketRepository.existsByTicketTypeIdAndStatusIn(ticketTypeId, activeStatuses);
+		return ticketRepository.countByTicketTypeIdAndStatusInAndBookingSessionStartTimeAfter(ticketTypeId,
+				activeStatuses, now);
 	}
 }
