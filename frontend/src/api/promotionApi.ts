@@ -30,41 +30,45 @@ const fetchApi = async <T>(url: string, options: RequestInit = {}): Promise<T> =
 
 export const promotionApi = {
     user: {
-        getAvailable: () => fetchApi<PromotionResponse[]>(USER_URL),
+        getAvailable: (): Promise<PromotionResponse[]> =>
+            fetchApi<PromotionResponse[]>(USER_URL),
 
-        getMyPromotions: () => fetchApi<UserPromotionResponse[]>(`${USER_URL}/my`),
+        getMyPromotions: (): Promise<UserPromotionResponse[]> =>
+            fetchApi<UserPromotionResponse[]>(`${USER_URL}/my`),
 
-        claimPromotion: (request: UserPromotionCreateRequest) =>
+        claimPromotion: (request: UserPromotionCreateRequest): Promise<UserPromotionResponse> =>
             fetchApi<UserPromotionResponse>(`${USER_URL}/claim`, {
                 method: 'POST',
                 body: JSON.stringify(request),
             }),
 
-        checkStatus: (promotionId: number) =>
+        checkStatus: (promotionId: number): Promise<boolean> =>
             fetchApi<boolean>(`${USER_URL}/${promotionId}/status`),
     },
 
     admin: {
-        create: (request: PromotionCreateRequest) =>
+        create: (request: PromotionCreateRequest): Promise<PromotionResponse> =>
             fetchApi<PromotionResponse>(ADMIN_URL, {
                 method: 'POST',
                 body: JSON.stringify(request),
             }),
 
-        getById: (promotionId: number) =>
+        getById: (promotionId: number): Promise<PromotionResponse> =>
             fetchApi<PromotionResponse>(`${ADMIN_URL}/${promotionId}`),
 
-        getAll: () => fetchApi<PromotionResponse[]>(ADMIN_URL),
+        getAll: (): Promise<PromotionResponse[]> =>
+            fetchApi<PromotionResponse[]>(ADMIN_URL),
 
-        getActive: () => fetchApi<PromotionResponse[]>(`${ADMIN_URL}/active`),
+        getActive: (): Promise<PromotionResponse[]> =>
+            fetchApi<PromotionResponse[]>(`${ADMIN_URL}/active`),
 
-        update: (promotionId: number, request: PromotionUpdateRequest) =>
+        update: (promotionId: number, request: PromotionUpdateRequest): Promise<PromotionResponse> =>
             fetchApi<PromotionResponse>(`${ADMIN_URL}/${promotionId}`, {
                 method: 'PUT',
                 body: JSON.stringify(request),
             }),
 
-        delete: (promotionId: number) =>
+        delete: (promotionId: number): Promise<void> =>
             fetchApi<void>(`${ADMIN_URL}/${promotionId}`, {
                 method: 'DELETE'
             }),

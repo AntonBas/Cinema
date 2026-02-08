@@ -25,7 +25,7 @@ const fetchApi = async <T>(url: string, options: RequestInit = {}): Promise<T> =
 };
 
 export const refundApi = {
-    processRefund: (request: RefundRequest) =>
+    processRefund: (request: RefundRequest): Promise<RefundResponse> =>
         fetchApi<RefundResponse>(BASE_URL, {
             method: 'POST',
             body: JSON.stringify(request),

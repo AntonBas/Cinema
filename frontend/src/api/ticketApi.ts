@@ -1,4 +1,4 @@
-import type { TicketResponse, TicketStatus } from '@/types/ticket';
+import type { TicketResponse, TicketFilterRequest } from '@/types/ticket';
 import type { PageResponse, SearchParams } from '@/types/pagination';
 import { buildPagedUrl } from '@/utils/paginationUtils';
 import { handleApiError } from '@/utils/apiErrorHandler';
@@ -36,25 +36,23 @@ const fetchBlob = async (url: string, options: RequestInit = {}): Promise<Blob> 
 };
 
 export const ticketApi = {
-    getById: (ticketId: number) =>
+    getById: (ticketId: number): Promise<TicketResponse> =>
         fetchApi<TicketResponse>(`${BASE_URL}/${ticketId}`),
 
-    getByCode: (ticketCode: string) =>
+    getByCode: (ticketCode: string): Promise<TicketResponse> =>
         fetchApi<TicketResponse>(`${BASE_URL}/code/${ticketCode}`),
 
-    getUserTickets: (status?: TicketStatus, searchParams?: SearchParams) => {
-        const params: Record<string, any> = { ...searchParams };
-        if (status) params.status = status;
+    getUserTickets: (params?: SearchParams & TicketFilterRequest): Promise<PageResponse<TicketResponse>> => {
         const url = buildPagedUrl(BASE_URL, params, 'list');
         return fetchApi<PageResponse<TicketResponse>>(url);
     },
 
-    getUpcomingTickets: (searchParams?: SearchParams) => {
-        const url = buildPagedUrl(`${BASE_URL}/upcoming`, searchParams, 'list');
+    getUpcomingTickets: (params?: SearchParams): Promise<PageResponse<TicketResponse>> => {
+        const url = buildPagedUrl(`${BASE_URL}/upcoming`, params, 'list');
         return fetchApi<PageResponse<TicketResponse>>(url);
     },
 
-    validate: (ticketCode: string) =>
+    validate: (ticketCode: string): Promise<void> =>
         fetchApi<void>(`${BASE_URL}/${ticketCode}/validate`, {
             method: 'POST',
         }),

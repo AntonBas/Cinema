@@ -41,19 +41,16 @@ export const cinemaHallApi = {
     getById: (id: number): Promise<CinemaHallResponse> =>
         fetchApi<CinemaHallResponse>(`${PUBLIC_URL}/${id}`, {}, true),
 
-    getAll: (): Promise<CinemaHallResponse[]> =>
-        fetchApi<CinemaHallResponse[]>(PUBLIC_URL, {}, true),
+    getAll: (name?: string): Promise<CinemaHallResponse[]> => {
+        const url = name ? `${PUBLIC_URL}?name=${encodeURIComponent(name)}` : PUBLIC_URL;
+        return fetchApi<CinemaHallResponse[]>(url, {}, true);
+    },
 
     getWithSeats: (id: number): Promise<CinemaHallWithSeatsResponse> =>
         fetchApi<CinemaHallWithSeatsResponse>(`${PUBLIC_URL}/${id}/with-seats`, {}, true),
 
     getLayout: (id: number): Promise<HallLayoutResponse> =>
         fetchApi<HallLayoutResponse>(`${PUBLIC_URL}/${id}/layout`, {}, true),
-
-    search: (search?: string): Promise<CinemaHallResponse[]> => {
-        const url = search ? `${PUBLIC_URL}/search?name=${encodeURIComponent(search)}` : `${PUBLIC_URL}/search`;
-        return fetchApi<CinemaHallResponse[]>(url, {}, true);
-    },
 
     admin: {
         create: (request: CinemaHallRequest): Promise<CinemaHallResponse> =>

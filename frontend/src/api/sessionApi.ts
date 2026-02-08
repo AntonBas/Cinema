@@ -3,10 +3,11 @@ import type {
     SessionScheduleResponse,
     SessionCreateRequest,
     SessionUpdateRequest,
-    CinemaSessionStatus
+    SessionFilterRequest
 } from '@/types/session';
-import type { PageResponse } from '@/types/pagination';
+import type { PageResponse, SearchParams } from '@/types/pagination';
 import { handleApiError } from '@/utils/apiErrorHandler';
+import { buildPagedUrl } from '@/utils/paginationUtils';
 
 const ADMIN_URL = '/api/admin/sessions';
 const PUBLIC_URL = '/api/sessions';
@@ -75,80 +76,16 @@ export const sessionApi = {
                 method: 'DELETE',
             }),
 
-        getAll: (
-            page?: number,
-            size: number = 20,
-            sort: string = 'startTime,desc',
-            search?: string,
-            date?: string,
-            hallId?: number,
-            movieId?: number,
-            status?: CinemaSessionStatus
-        ): Promise<PageResponse<SessionAdminResponse>> => {
-            const params = new URLSearchParams();
-            if (page !== undefined) params.append('page', page.toString());
-            params.append('size', size.toString());
-            params.append('sort', sort);
-            if (search) params.append('search', search);
-            if (date) params.append('date', date);
-            if (hallId !== undefined) params.append('hallId', hallId.toString());
-            if (movieId !== undefined) params.append('movieId', movieId.toString());
-            if (status) params.append('status', status);
-
-            return fetchApi<PageResponse<SessionAdminResponse>>(`${ADMIN_URL}?${params}`);
-        },
-
-        checkTimeConflict: (
-            hallId: number,
-            startTime: string,
-            durationMinutes: number,
-            excludeSessionId?: number
-        ): Promise<boolean> => {
-            const params = new URLSearchParams({
-                hallId: hallId.toString(),
-                startTime: startTime,
-                durationMinutes: durationMinutes.toString(),
-            });
-
-            if (excludeSessionId !== undefined) {
-                params.append('excludeSessionId', excludeSessionId.toString());
-            }
-
-            return fetchApi<boolean>(`${ADMIN_URL}/check-conflict?${params}`);
-        },
-
-        getTodaySessions: (page?: number, size: number = 50): Promise<PageResponse<SessionAdminResponse>> => {
-            const params = new URLSearchParams();
-            if (page !== undefined) params.append('page', page.toString());
-            params.append('size', size.toString());
-            params.append('sort', 'startTime,asc');
-
-            return fetchApi<PageResponse<SessionAdminResponse>>(`${ADMIN_URL}/upcoming/today?${params}`);
+        getSessions: (params?: SearchParams & SessionFilterRequest): Promise<PageResponse<SessionAdminResponse>> => {
+            const url = buildPagedUrl(ADMIN_URL, params, 'table');
+            return fetchApi<PageResponse<SessionAdminResponse>>(url);
         },
     },
 
     public: {
-        getSchedule: (
-            page?: number,
-            size: number = 20,
-            sort: string = 'startTime,asc',
-            date?: string,
-            movieId?: number,
-            daysAhead?: number
-        ): Promise<PageResponse<SessionScheduleResponse>> => {
-            const params = new URLSearchParams();
-            if (page !== undefined) params.append('page', page.toString());
-            params.append('size', size.toString());
-            params.append('sort', sort);
-            if (date) params.append('date', date);
-            if (movieId !== undefined) params.append('movieId', movieId.toString());
-            if (daysAhead !== undefined) params.append('daysAhead', daysAhead.toString());
-
-            return fetchApi<PageResponse<SessionScheduleResponse>>(
-                `${PUBLIC_URL}?${params}`,
-                {},
-                true
-            );
+        getSessions: (params?: SearchParams & SessionFilterRequest): Promise<PageResponse<SessionScheduleResponse>> => {
+            const url = buildPagedUrl(PUBLIC_URL, params, 'grid');
+            return fetchApi<PageResponse<SessionScheduleResponse>>(url, {}, true);
         },
 
         getById: (id: number): Promise<SessionScheduleResponse> =>

@@ -1,12 +1,13 @@
 import type {
     LoginRequest,
     RegisterRequest,
-    LoginResponse,
-    User
+    LoginResponse
 } from '@/types/auth';
+import type { UserResponse } from '@/types/user';
 import { handleApiError } from '@/utils/apiErrorHandler';
 
 const API_URL = '/api/auth';
+const TOKENS_URL = '/api/tokens';
 
 const getPublicHeaders = (): HeadersInit => {
     return {
@@ -30,17 +31,17 @@ export const authApi = {
         });
     },
 
-    register: async (userData: RegisterRequest): Promise<User> => {
-        return fetchApi<User>(`${API_URL}/register`, {
+    register: async (userData: RegisterRequest): Promise<UserResponse> => {
+        return fetchApi<UserResponse>(`${API_URL}/register`, {
             method: 'POST',
             headers: getPublicHeaders(),
             body: JSON.stringify(userData),
         });
     },
 
-    getCurrentUser: async (): Promise<User> => {
+    getCurrentUser: async (): Promise<UserResponse> => {
         const token = localStorage.getItem('authToken');
-        return fetchApi<User>(`${API_URL}/me`, {
+        return fetchApi<UserResponse>(`${API_URL}/me`, {
             headers: {
                 'Content-Type': 'application/json',
                 ...(token && { 'Authorization': `Bearer ${token}` }),
@@ -68,16 +69,15 @@ export const authApi = {
         });
     },
 
-    verifyEmail: async (token: string): Promise<string> => {
-        const data = await fetchApi<{ message: string }>(`${API_URL}/email/verify?token=${encodeURIComponent(token)}`, {
+    verifyEmail: async (token: string): Promise<{ message: string }> => {
+        return fetchApi<{ message: string }>(`${TOKENS_URL}/email/verify?token=${encodeURIComponent(token)}`, {
             method: 'POST',
             headers: getPublicHeaders(),
         });
-        return data.message;
     },
 
-    confirmEmailChange: async (token: string): Promise<User> => {
-        return fetchApi<User>(`${API_URL}/email/change/confirm?token=${encodeURIComponent(token)}`, {
+    confirmEmailChange: async (token: string): Promise<UserResponse> => {
+        return fetchApi<UserResponse>(`${TOKENS_URL}/email/change/confirm?token=${encodeURIComponent(token)}`, {
             method: 'POST',
             headers: getPublicHeaders(),
         });

@@ -1,4 +1,4 @@
-import type { GenreResponse, GenreRequest, GenreStatsResponse } from '@/types/genre';
+import type { GenreResponse, GenreRequest } from '@/types/genre';
 import type { PageResponse, SearchParams } from '@/types/pagination';
 import { handleApiError } from '@/utils/apiErrorHandler';
 import { buildPagedUrl } from '@/utils/paginationUtils';
@@ -40,16 +40,13 @@ export const genreApi = {
       fetchApi<GenreResponse>(`${PUBLIC_URL}/${id}`, {}, true),
 
     getPopular: (query?: string, limit: number = 10): Promise<GenreResponse[]> => {
-      const url = new URL(`${PUBLIC_URL}/popular`, window.location.origin);
-      if (query) url.searchParams.append('query', query);
-      url.searchParams.append('limit', limit.toString());
-      return fetchApi<GenreResponse[]>(url.toString(), {}, true);
+      const url = `${PUBLIC_URL}/popular?limit=${limit}${query ? `&query=${encodeURIComponent(query)}` : ''}`;
+      return fetchApi<GenreResponse[]>(url, {}, true);
     },
 
     getByIds: (ids: number[]): Promise<GenreResponse[]> => {
-      const url = new URL(`${PUBLIC_URL}/by-ids`, window.location.origin);
-      ids.forEach(id => url.searchParams.append('ids', id.toString()));
-      return fetchApi<GenreResponse[]>(url.toString(), {}, true);
+      const idsParam = ids.join(',');
+      return fetchApi<GenreResponse[]>(`${PUBLIC_URL}/by-ids?ids=${idsParam}`, {}, true);
     },
   },
 
@@ -74,15 +71,14 @@ export const genreApi = {
         method: 'DELETE',
       }),
 
-    getAllWithStats: (params?: SearchParams): Promise<PageResponse<GenreStatsResponse>> => {
-      const apiParams: SearchParams = { ...params };
+    getAll: (params?: SearchParams): Promise<PageResponse<GenreResponse>> => {
+      const url = buildPagedUrl(ADMIN_URL, params, 'admin');
+      return fetchApi<PageResponse<GenreResponse>>(url);
+    },
 
-      if (params?.search !== undefined) {
-        apiParams.search = params.search;
-      }
-
-      const url = buildPagedUrl(ADMIN_URL, apiParams, 'admin');
-      return fetchApi<PageResponse<GenreStatsResponse>>(url);
+    getPopular: (params?: SearchParams): Promise<PageResponse<GenreResponse>> => {
+      const url = buildPagedUrl(`${ADMIN_URL}/popular`, params, 'admin');
+      return fetchApi<PageResponse<GenreResponse>>(url);
     },
   }
 };

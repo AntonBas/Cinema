@@ -4,6 +4,7 @@ import type {
     BookingStatus
 } from '@/types/booking';
 import type { PageResponse } from '@/types/pagination';
+import { buildPagedUrl } from '@/utils/paginationUtils';
 import { handleApiError } from '@/utils/apiErrorHandler';
 
 const BASE_URL = '/api/bookings';
@@ -36,12 +37,8 @@ export const bookingApi = {
     getById: (bookingId: number) =>
         fetchApi<BookingResponse>(`${BASE_URL}/${bookingId}`),
 
-    getUserBookings: (status?: BookingStatus, page: number = 0, size: number = 20): Promise<PageResponse<BookingResponse>> => {
-        const params = new URLSearchParams();
-        if (status) params.append('status', status);
-        params.append('page', page.toString());
-        params.append('size', size.toString());
-        const url = `${BASE_URL}?${params}`;
+    getUserBookings: (params?: { status?: BookingStatus; page?: number; size?: number }) => {
+        const url = buildPagedUrl(BASE_URL, { ...params, size: params?.size || 20 });
         return fetchApi<PageResponse<BookingResponse>>(url);
     },
 

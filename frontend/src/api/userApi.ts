@@ -63,15 +63,6 @@ export const userApi = {
         );
     },
 
-    confirmEmailChange: async (token: string): Promise<UserProfileResponse> => {
-        return fetchApi<UserProfileResponse>(
-            `${API_URL}/email/confirm-change?token=${encodeURIComponent(token)}`,
-            {
-                method: 'POST',
-            }
-        );
-    },
-
     updatePassword: async (passwordData: UserPasswordUpdateRequest): Promise<{ message: string }> => {
         return fetchApi<{ message: string }>(`${API_URL}/password`, {
             method: 'PATCH',

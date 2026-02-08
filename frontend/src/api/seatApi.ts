@@ -46,19 +46,20 @@ export const seatApi = {
     getSeatsByType: (hallId: number, seatType: SeatType): Promise<SeatResponse[]> =>
         fetchApi<SeatResponse[]>(`/api/cinema-halls/${hallId}/seats/by-type?seatType=${seatType}`, {}, true),
 
+    getActiveSeats: (hallId: number): Promise<SeatResponse[]> =>
+        fetchApi<SeatResponse[]>(`/api/cinema-halls/${hallId}/seats/active`, {}, true),
+
+    getDistinctRows: (hallId: number): Promise<number[]> =>
+        fetchApi<number[]>(`/api/cinema-halls/${hallId}/seats/rows`, {}, true),
+
     admin: {
         updateSeatType: (hallId: number, seatId: number, seatType: SeatType): Promise<SeatResponse> =>
             fetchApi<SeatResponse>(`/api/admin/cinema-halls/${hallId}/seats/${seatId}/type?seatType=${seatType}`, {
                 method: 'PUT',
             }),
 
-        activateSeat: (hallId: number, seatId: number): Promise<SeatResponse> =>
-            fetchApi<SeatResponse>(`/api/admin/cinema-halls/${hallId}/seats/${seatId}/activate`, {
-                method: 'PUT',
-            }),
-
-        deactivateSeat: (hallId: number, seatId: number): Promise<SeatResponse> =>
-            fetchApi<SeatResponse>(`/api/admin/cinema-halls/${hallId}/seats/${seatId}/deactivate`, {
+        setSeatStatus: (hallId: number, seatId: number, active: boolean): Promise<SeatResponse> =>
+            fetchApi<SeatResponse>(`/api/admin/cinema-halls/${hallId}/seats/${seatId}/status?active=${active}`, {
                 method: 'PUT',
             }),
     }

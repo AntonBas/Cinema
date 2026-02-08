@@ -1,4 +1,4 @@
-import type { PersonResponse, PersonRequest, PersonRole, QuickCreatePersonRequest } from '@/types/person';
+import type { PersonResponse, PersonRequest, QuickCreatePersonRequest } from '@/types/person';
 import type { PageResponse, SearchParams } from '@/types/pagination';
 import { handleApiError } from '@/utils/apiErrorHandler';
 import { buildPagedUrl } from '@/utils/paginationUtils';
@@ -38,16 +38,6 @@ export const personApi = {
   public: {
     getById: (id: number): Promise<PersonResponse> =>
       fetchApi<PersonResponse>(`${PUBLIC_URL}/${id}`, {}, true),
-
-    search: (params?: SearchParams & { role?: PersonRole }): Promise<PageResponse<PersonResponse>> => {
-      const url = buildPagedUrl(`${PUBLIC_URL}/search`, params, 'grid');
-      return fetchApi<PageResponse<PersonResponse>>(url, {}, true);
-    },
-
-    getByRole: (role: PersonRole, params?: SearchParams): Promise<PageResponse<PersonResponse>> => {
-      const url = buildPagedUrl(`${PUBLIC_URL}/role/${role}`, params, 'grid');
-      return fetchApi<PageResponse<PersonResponse>>(url, {}, true);
-    },
   },
 
   admin: {
@@ -56,6 +46,15 @@ export const personApi = {
         method: 'POST',
         body: JSON.stringify(request),
       }),
+
+    quickCreate: (request: QuickCreatePersonRequest): Promise<PersonResponse> =>
+      fetchApi<PersonResponse>(`${ADMIN_URL}/quick`, {
+        method: 'POST',
+        body: JSON.stringify(request),
+      }),
+
+    getById: (id: number): Promise<PersonResponse> =>
+      fetchApi<PersonResponse>(`${ADMIN_URL}/${id}`),
 
     update: (id: number, request: PersonRequest): Promise<PersonResponse> =>
       fetchApi<PersonResponse>(`${ADMIN_URL}/${id}`, {
@@ -68,10 +67,29 @@ export const personApi = {
         method: 'DELETE',
       }),
 
-    quickCreate: (request: QuickCreatePersonRequest): Promise<PersonResponse> =>
-      fetchApi<PersonResponse>(`${ADMIN_URL}/quick-create`, {
-        method: 'POST',
-        body: JSON.stringify(request),
-      }),
+    getAll: (params?: SearchParams & { name?: string; role?: string }): Promise<PageResponse<PersonResponse>> => {
+      const url = buildPagedUrl(ADMIN_URL, params, 'table');
+      return fetchApi<PageResponse<PersonResponse>>(url);
+    },
+
+    getActors: (params?: SearchParams & { name?: string }): Promise<PageResponse<PersonResponse>> => {
+      const url = buildPagedUrl(`${ADMIN_URL}/actors`, params, 'table');
+      return fetchApi<PageResponse<PersonResponse>>(url);
+    },
+
+    getDirectors: (params?: SearchParams & { name?: string }): Promise<PageResponse<PersonResponse>> => {
+      const url = buildPagedUrl(`${ADMIN_URL}/directors`, params, 'table');
+      return fetchApi<PageResponse<PersonResponse>>(url);
+    },
+
+    getScreenwriters: (params?: SearchParams & { name?: string }): Promise<PageResponse<PersonResponse>> => {
+      const url = buildPagedUrl(`${ADMIN_URL}/screenwriters`, params, 'table');
+      return fetchApi<PageResponse<PersonResponse>>(url);
+    },
+
+    getPopular: (params?: SearchParams & { name?: string; role?: string }): Promise<PageResponse<PersonResponse>> => {
+      const url = buildPagedUrl(`${ADMIN_URL}/popular`, params, 'table');
+      return fetchApi<PageResponse<PersonResponse>>(url);
+    },
   }
 };

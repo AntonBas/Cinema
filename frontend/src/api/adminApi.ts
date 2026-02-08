@@ -5,6 +5,8 @@ import type {
     VerificationBirthDateRequest,
     UserResponse
 } from '@/types/user';
+import type { PageResponse } from '@/types/pagination';
+import { buildPagedUrl } from '@/utils/paginationUtils';
 import { handleApiError } from '@/utils/apiErrorHandler';
 
 const ADMIN_API_URL = '/api/admin/users';
@@ -36,16 +38,16 @@ const fetchApi = async <T>(url: string, options: RequestInit = {}): Promise<T> =
 };
 
 export const adminApi = {
-    getUsers: (page: number = 0, size: number = 10, search?: string, role?: string, enabled?: boolean): Promise<AdminUsersResponse> => {
-        const params = new URLSearchParams({
-            page: page.toString(),
-            size: size.toString()
-        });
-        if (search) params.append('search', search);
-        if (role) params.append('role', role);
-        if (enabled !== undefined) params.append('enabled', enabled.toString());
-
-        return fetchApi<AdminUsersResponse>(`${ADMIN_API_URL}?${params}`);
+    getUsers: (params: {
+        page?: number;
+        size?: number;
+        search?: string;
+        role?: string;
+        verificationStatus?: string;
+        enabled?: boolean;
+    }): Promise<PageResponse<AdminUsersResponse>> => {
+        const url = buildPagedUrl(ADMIN_API_URL, params, 'admin');
+        return fetchApi<PageResponse<AdminUsersResponse>>(url);
     },
 
     updateUserRole: (userId: number, roleData: UserRoleUpdateRequest): Promise<void> =>
@@ -61,7 +63,7 @@ export const adminApi = {
         }),
 
     updateBirthDateVerification: (userId: number, verificationData: VerificationBirthDateRequest): Promise<UserResponse> =>
-        fetchApi<UserResponse>(`${ADMIN_API_URL}/${userId}/birthdate-verification`, {
+        fetchApi<UserResponse>(`${ADMIN_API_URL}/${userId}/verification`, {
             method: 'PATCH',
             body: JSON.stringify(verificationData),
         })

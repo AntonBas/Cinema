@@ -1,4 +1,4 @@
-import type { SeatAvailabilityResponse } from '@/types/seatAvailability';
+import type { SeatReservationResponse } from '@/types/seatReservation';
 import { handleApiError } from '@/utils/apiErrorHandler';
 
 const getPublicHeaders = (): HeadersInit => {
@@ -18,6 +18,6 @@ const fetchApi = async <T>(url: string, options: RequestInit = {}): Promise<T> =
 };
 
 export const seatAvailabilityApi = {
-    getSeatAvailability: (sessionId: number) =>
-        fetchApi<SeatAvailabilityResponse>(`/api/sessions/${sessionId}/seats/availability`),
+    getSeatAvailability: (sessionId: number): Promise<SeatReservationResponse> =>
+        fetchApi<SeatReservationResponse>(`/api/sessions/${sessionId}/seats/availability`),
 };

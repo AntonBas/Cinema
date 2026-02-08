@@ -26,15 +26,15 @@ const fetchApi = async <T>(url: string, options: RequestInit = {}): Promise<T> =
 };
 
 export const paymentApi = {
-    create: (request: PaymentCreateRequest) =>
+    create: (request: PaymentCreateRequest): Promise<PaymentResponse> =>
         fetchApi<PaymentResponse>(BASE_URL, {
             method: 'POST',
             body: JSON.stringify(request),
         }),
 
-    getById: (paymentId: number) =>
+    getById: (paymentId: number): Promise<PaymentResponse> =>
         fetchApi<PaymentResponse>(`${BASE_URL}/${paymentId}`),
 
-    getLiqPayData: (paymentId: number) =>
+    getLiqPayData: (paymentId: number): Promise<PaymentLiqPayDataResponse> =>
         fetchApi<PaymentLiqPayDataResponse>(`${BASE_URL}/${paymentId}/liqpay-data`),
 };

@@ -7,6 +7,7 @@ import type {
     BonusTransactionType
 } from '@/types/bonus';
 import type { PageResponse } from '@/types/pagination';
+import { buildPagedUrl } from '@/utils/paginationUtils';
 import { handleApiError } from '@/utils/apiErrorHandler';
 
 const USER_URL = '/api/bonus';
@@ -36,11 +37,8 @@ export const bonusApi = {
 
         getMyBalance: () => fetchApi<BonusBalanceResponse>(`${USER_URL}/my-balance`),
 
-        getMyTransactions: (page?: number, size: number = 20) => {
-            const params = new URLSearchParams();
-            if (page !== undefined) params.append('page', page.toString());
-            params.append('size', size.toString());
-            const url = `${USER_URL}/my-transactions?${params}`;
+        getMyTransactions: (params?: { page?: number; size?: number }) => {
+            const url = buildPagedUrl(`${USER_URL}/my-transactions`, { ...params, size: params?.size || 20 });
             return fetchApi<PageResponse<BonusTransactionResponse>>(url);
         }
     },
@@ -62,27 +60,18 @@ export const bonusApi = {
                 method: 'POST',
             }),
 
-        getUserTransactions: (userId: number, page?: number, size: number = 20) => {
-            const params = new URLSearchParams();
-            if (page !== undefined) params.append('page', page.toString());
-            params.append('size', size.toString());
-            const url = `${ADMIN_URL}/users/${userId}/transactions?${params}`;
+        getUserTransactions: (userId: number, params?: { page?: number; size?: number }) => {
+            const url = buildPagedUrl(`${ADMIN_URL}/users/${userId}/transactions`, { ...params, size: params?.size || 20 });
             return fetchApi<PageResponse<BonusTransactionResponse>>(url);
         },
 
-        getAllTransactions: (page?: number, size: number = 20) => {
-            const params = new URLSearchParams();
-            if (page !== undefined) params.append('page', page.toString());
-            params.append('size', size.toString());
-            const url = `${ADMIN_URL}/transactions?${params}`;
+        getAllTransactions: (params?: { page?: number; size?: number }) => {
+            const url = buildPagedUrl(`${ADMIN_URL}/transactions`, { ...params, size: params?.size || 20 });
             return fetchApi<PageResponse<BonusTransactionResponse>>(url);
         },
 
-        getTransactionsByType: (type: BonusTransactionType, page?: number, size: number = 20) => {
-            const params = new URLSearchParams();
-            if (page !== undefined) params.append('page', page.toString());
-            params.append('size', size.toString());
-            const url = `${ADMIN_URL}/transactions/type/${type}?${params}`;
+        getTransactionsByType: (type: BonusTransactionType, params?: { page?: number; size?: number }) => {
+            const url = buildPagedUrl(`${ADMIN_URL}/transactions/type/${type}`, { ...params, size: params?.size || 20 });
             return fetchApi<PageResponse<BonusTransactionResponse>>(url);
         }
     }
