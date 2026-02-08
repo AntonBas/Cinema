@@ -10,18 +10,26 @@ import org.springframework.stereotype.Repository;
 import ua.lviv.bas.cinema.domain.Promotion;
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.UserPromotion;
+import ua.lviv.bas.cinema.domain.projection.UserPromotionResponseProjection;
 
 @Repository
 public interface UserPromotionRepository extends JpaRepository<UserPromotion, Long> {
-
 	boolean existsByUserAndPromotion(User user, Promotion promotion);
 
-	@Query("SELECT CASE WHEN COUNT(up) > 0 THEN true ELSE false END "
-			+ "FROM UserPromotion up WHERE up.user = :user AND up.promotion.id = :promotionId")
+	@Query("SELECT COUNT(up) > 0 FROM UserPromotion up WHERE up.user = :user AND up.promotion.id = :promotionId")
 	boolean existsByUserAndPromotionId(@Param("user") User user, @Param("promotionId") Long promotionId);
 
-	@Query("SELECT up FROM UserPromotion up JOIN FETCH up.promotion WHERE up.user = :user")
-	List<UserPromotion> findByUserWithPromotion(@Param("user") User user);
-
-	long countByPromotion(Promotion promotion);
+	@Query("""
+			    SELECT
+			        up.id as id,
+			        p.id as promotionId,
+			        p.title as promotionTitle,
+			        up.redeemedAt as claimedAt,
+			        up.pointsAwarded as pointsAwarded
+			    FROM UserPromotion up
+			    JOIN up.promotion p
+			    WHERE up.user = :user
+			    ORDER BY up.redeemedAt DESC
+			""")
+	List<UserPromotionResponseProjection> findUserPromotionResponsesByUser(@Param("user") User user);
 }

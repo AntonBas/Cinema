@@ -13,6 +13,7 @@ import ua.lviv.bas.cinema.domain.BonusCard;
 import ua.lviv.bas.cinema.domain.Promotion;
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.UserPromotion;
+import ua.lviv.bas.cinema.domain.projection.UserPromotionResponseProjection;
 import ua.lviv.bas.cinema.dto.promotion.request.UserPromotionCreateRequest;
 import ua.lviv.bas.cinema.dto.promotion.response.PromotionResponse;
 import ua.lviv.bas.cinema.dto.promotion.response.UserPromotionResponse;
@@ -62,64 +63,25 @@ public class PromotionService {
 
 	public List<PromotionResponse> getAvailablePromotions(User user) {
 		log.debug("Getting available promotions for user: {}", user.getEmail());
-		List<PromotionResponse> allPromotions = promotionService.getAllPromotions();
+		List<PromotionResponse> activePromotions = promotionService.getActivePromotions();
 
-		return allPromotions.stream().filter(promotion -> {
-			try {
-				boolean isActive = promotionService
-						.isPromotionActive(promotionService.findByIdOrThrow(promotion.getId()));
-				boolean isClaimed = userPromotionRepository.existsByUserAndPromotionId(user, promotion.getId());
-				return isActive && !isClaimed;
-			} catch (Exception e) {
-				log.debug("Promotion {} not available: {}", promotion.getId(), e.getMessage());
-				return false;
-			}
-		}).collect(Collectors.toList());
+		return activePromotions.stream().filter(promotion -> !hasUserClaimedPromotion(user, promotion.getId()))
+				.collect(Collectors.toList());
 	}
 
 	public List<UserPromotionResponse> getUserPromotions(User user) {
-		List<UserPromotion> userPromotions = userPromotionRepository.findByUserWithPromotion(user);
+		List<UserPromotionResponseProjection> projections = userPromotionRepository
+				.findUserPromotionResponsesByUser(user);
 
 		BonusCard bonusCard = user.getBonusCard();
 		Integer currentBalance = bonusCard != null ? bonusCard.getPointsBalance() : 0;
 
-		List<UserPromotionResponse> responses = promotionMapper.toUserPromotionResponseList(userPromotions);
+		List<UserPromotionResponse> responses = promotionMapper.toUserPromotionResponseListFromProjections(projections);
 		responses.forEach(r -> r.setNewBalance(currentBalance));
-
 		return responses;
 	}
 
 	public boolean hasUserClaimedPromotion(User user, Long promotionId) {
-		Promotion promotion = promotionService.findByIdOrThrow(promotionId);
-		return userPromotionRepository.existsByUserAndPromotion(user, promotion);
-	}
-
-	public Long getPromotionRedemptionCount(Long promotionId) {
-		Promotion promotion = promotionService.findByIdOrThrow(promotionId);
-		return userPromotionRepository.countByPromotion(promotion);
-	}
-
-	public List<UserPromotion> getPromotionRedemptions(Long promotionId) {
-		Promotion promotion = promotionService.findByIdOrThrow(promotionId);
-		return promotion.getUserRedemptions();
-	}
-
-	public boolean isPromotionAvailableForUser(User user, Long promotionId) {
-		try {
-			Promotion promotion = promotionService.findByIdOrThrow(promotionId);
-
-			if (!promotionService.isPromotionActive(promotion)) {
-				return false;
-			}
-
-			if (userPromotionRepository.existsByUserAndPromotion(user, promotion)) {
-				return false;
-			}
-
-			return true;
-		} catch (Exception e) {
-			log.warn("Error checking promotion availability: {}", e.getMessage());
-			return false;
-		}
+		return userPromotionRepository.existsByUserAndPromotionId(user, promotionId);
 	}
 }

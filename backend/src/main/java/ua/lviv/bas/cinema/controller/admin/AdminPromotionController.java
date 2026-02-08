@@ -50,7 +50,6 @@ public class AdminPromotionController {
 			@ApiResponse(responseCode = "403", description = "Forbidden - admin access required", content = @Content(schema = @Schema(implementation = String.class))) })
 	@PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
 	public ResponseEntity<PromotionResponse> createPromotion(@Valid @RequestBody PromotionCreateRequest request) {
-
 		log.info("Admin creating new promotion with title: {}", request.getTitle());
 		PromotionResponse response = promotionService.createPromotion(request);
 		return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -66,7 +65,6 @@ public class AdminPromotionController {
 	@PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
 	public ResponseEntity<PromotionResponse> getPromotion(
 			@Parameter(description = "ID of the promotion to retrieve", required = true, example = "1") @PathVariable Long promotionId) {
-
 		log.info("Admin retrieving promotion with ID: {}", promotionId);
 		PromotionResponse response = promotionService.getPromotionById(promotionId);
 		return ResponseEntity.ok(response);
@@ -109,9 +107,7 @@ public class AdminPromotionController {
 	@PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
 	public ResponseEntity<PromotionResponse> updatePromotion(
 			@Parameter(description = "ID of the promotion to update", required = true, example = "1") @PathVariable Long promotionId,
-
 			@Valid @RequestBody PromotionUpdateRequest request) {
-
 		log.info("Admin updating promotion with ID: {}", promotionId);
 		PromotionResponse response = promotionService.updatePromotion(promotionId, request);
 		return ResponseEntity.ok(response);
@@ -128,7 +124,6 @@ public class AdminPromotionController {
 	@PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
 	public ResponseEntity<Void> deletePromotion(
 			@Parameter(description = "ID of the promotion to delete", required = true, example = "1") @PathVariable Long promotionId) {
-
 		log.info("Admin deleting promotion with ID: {}", promotionId);
 		promotionService.deletePromotion(promotionId);
 		return ResponseEntity.noContent().build();

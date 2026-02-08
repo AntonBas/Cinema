@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.Promotion;
+import ua.lviv.bas.cinema.domain.projection.PromotionResponseProjection;
 import ua.lviv.bas.cinema.dto.promotion.request.PromotionCreateRequest;
 import ua.lviv.bas.cinema.dto.promotion.request.PromotionUpdateRequest;
 import ua.lviv.bas.cinema.dto.promotion.response.PromotionResponse;
@@ -75,18 +76,21 @@ public class AdminPromotionService {
 	}
 
 	public PromotionResponse getPromotionById(Long promotionId) {
-		Promotion promotion = findByIdOrThrow(promotionId);
-		return promotionMapper.toPromotionResponse(promotion);
+		PromotionResponseProjection projection = promotionRepository.findPromotionById(promotionId);
+		if (projection == null) {
+			throw new PromotionNotFoundException(promotionId);
+		}
+		return promotionMapper.toPromotionResponse(projection);
 	}
 
 	public List<PromotionResponse> getAllPromotions() {
-		List<Promotion> promotions = promotionRepository.findAll();
-		return promotionMapper.toPromotionResponseList(promotions);
+		List<PromotionResponseProjection> projections = promotionRepository.findAllPromotions(false);
+		return promotionMapper.toPromotionResponseListFromProjections(projections);
 	}
 
 	public List<PromotionResponse> getActivePromotions() {
-		List<Promotion> promotions = promotionRepository.findAll();
-		return promotionMapper.toPromotionResponseList(promotions);
+		List<PromotionResponseProjection> projections = promotionRepository.findAllPromotions(true);
+		return promotionMapper.toPromotionResponseListFromProjections(projections);
 	}
 
 	public Promotion findByIdOrThrow(Long promotionId) {

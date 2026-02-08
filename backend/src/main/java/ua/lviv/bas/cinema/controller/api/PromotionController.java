@@ -66,7 +66,6 @@ public class PromotionController {
 	@PreAuthorize("hasRole('USER') or hasRole('PREMIUM_USER')")
 	public ResponseEntity<UserPromotionResponse> claimPromotion(@Valid @RequestBody UserPromotionCreateRequest request,
 			@AuthenticationPrincipal User user) {
-
 		log.info("User ID: {} claiming promotion ID: {}", user.getId(), request.getPromotionId());
 		UserPromotionResponse response = promotionService.claimPromotion(request, user);
 		return ResponseEntity.ok(response);
@@ -80,9 +79,9 @@ public class PromotionController {
 	public ResponseEntity<Boolean> checkPromotionStatus(
 			@Parameter(description = "Promotion ID") @PathVariable Long promotionId,
 			@AuthenticationPrincipal User user) {
-
 		log.info("Checking promotion status for promotion ID: {} and user ID: {}", promotionId, user.getId());
-		boolean isAvailable = promotionService.isPromotionAvailableForUser(user, promotionId);
+		boolean isAvailable = promotionService.hasUserClaimedPromotion(user, promotionId) ? false
+				: promotionService.getAvailablePromotions(user).stream().anyMatch(p -> p.getId().equals(promotionId));
 		return ResponseEntity.ok(isAvailable);
 	}
 }
