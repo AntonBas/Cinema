@@ -12,7 +12,6 @@ import lombok.RequiredArgsConstructor;
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.enums.BookingStatus;
 import ua.lviv.bas.cinema.domain.enums.TicketStatus;
-import ua.lviv.bas.cinema.domain.enums.TicketTypeCategory;
 import ua.lviv.bas.cinema.dto.booking.request.BookingCreateRequest;
 import ua.lviv.bas.cinema.dto.booking.response.BookingResponse;
 import ua.lviv.bas.cinema.dto.cinemaHall.response.SeatReservationResponse;
@@ -168,17 +167,6 @@ public class ControllerFacade {
 	@Transactional(readOnly = true)
 	public TicketTypeResponse getTicketTypeByCode(String code) {
 		return ticketTypeService.getTicketTypeByCode(code);
-	}
-
-	@Transactional(readOnly = true)
-	public List<TicketTypeResponse> getAllTicketTypes(Boolean active) {
-		return ticketTypeService.getAllTicketTypes(active);
-	}
-
-	@Transactional(readOnly = true)
-	public List<TicketTypeResponse> getTicketTypesWithFilters(Boolean active, TicketTypeCategory category,
-			String search) {
-		return ticketTypeService.getTicketTypesWithFilters(active, category, search);
 	}
 
 	@Transactional(readOnly = true)
