@@ -4,7 +4,6 @@ export class ApiErrorException extends Error {
     public readonly timestamp: string;
     public readonly status: string;
     public readonly statusCode: number;
-    public readonly errorCode?: string;
     public readonly debugMessage?: string;
     public readonly path?: string;
     public readonly subErrors?: ApiSubError[];
@@ -15,7 +14,6 @@ export class ApiErrorException extends Error {
         this.timestamp = apiError.timestamp;
         this.status = apiError.status;
         this.statusCode = apiError.statusCode;
-        this.errorCode = apiError.errorCode;
         this.debugMessage = apiError.debugMessage;
         this.path = apiError.path;
         this.subErrors = apiError.subErrors;
@@ -73,7 +71,7 @@ export class ApiErrorException extends Error {
     }
 
     toString(): string {
-        return `[${this.statusCode}] ${this.message}${this.errorCode ? ` (${this.errorCode})` : ''}`;
+        return `[${this.statusCode}] ${this.message}`;
     }
 }
 
