@@ -1,267 +1,153 @@
-import { useState, useCallback, useRef, useMemo } from 'react';
+import { useCallback } from 'react';
 import { sessionApi } from '@/api/sessionApi';
 import type {
     SessionAdminResponse,
     SessionScheduleResponse,
     SessionCreateRequest,
     SessionUpdateRequest,
-    CinemaSessionStatus
 } from '@/types/session';
 import type { PageResponse } from '@/types/pagination';
 import { useApi } from '@/hooks/common/useApi';
 
 export const useSession = () => {
-    const [sessions, setSessions] = useState<SessionAdminResponse[]>([]);
-    const [scheduleSessions, setScheduleSessions] = useState<SessionScheduleResponse[]>([]);
-    const [pagination, setPagination] = useState<PageResponse<SessionAdminResponse> | null>(null);
-    const [schedulePagination, setSchedulePagination] = useState<PageResponse<SessionScheduleResponse> | null>(null);
-    const [filters, setFilters] = useState<{
-        search?: string;
-        date?: string;
-        hallId?: number;
-        movieId?: number;
-        daysAhead?: number;
-        status?: CinemaSessionStatus;
-    }>({});
+    const sessionsApi = useApi<PageResponse<SessionAdminResponse>>();
+    const scheduleApi = useApi<PageResponse<SessionScheduleResponse>>();
+    const sessionByIdApi = useApi<SessionScheduleResponse>();
+    const adminSessionByIdApi = useApi<SessionAdminResponse>();
 
-    const getSessionsHook = useApi<PageResponse<SessionAdminResponse>>();
-    const getScheduleHook = useApi<PageResponse<SessionScheduleResponse>>();
-    const getSessionByIdHook = useApi<SessionScheduleResponse>();
-    const getAdminSessionByIdHook = useApi<SessionAdminResponse>();
-    const createSessionHook = useApi<SessionAdminResponse>();
-    const updateSessionHook = useApi<SessionAdminResponse>();
-    const cancelSessionHook = useApi<void>();
-    const reactivateSessionHook = useApi<void>();
-    const deleteSessionHook = useApi<void>();
-    const checkTimeConflictHook = useApi<boolean>();
-    const getTodaySessionsHook = useApi<PageResponse<SessionAdminResponse>>();
-
-    const abortControllerRef = useRef<AbortController | null>(null);
-
-    const getSessions = useCallback(async (options?: {
-        enabled?: boolean;
-        page?: number;
-        size?: number;
-        sort?: string;
-        search?: string;
-        date?: string;
-        hallId?: number;
-        movieId?: number;
-        status?: CinemaSessionStatus;
-    }): Promise<PageResponse<SessionAdminResponse>> => {
-        return getSessionsHook.callApi(async () => {
-            const response = await sessionApi.admin.getAll(
-                options?.page,
-                options?.size || 20,
-                options?.sort || 'startTime,desc',
-                options?.search,
-                options?.date,
-                options?.hallId,
-                options?.movieId,
-                options?.status
-            );
-
-            if (options?.enabled !== false) {
-                setSessions(response.content);
-                setPagination(response);
+    const getSessions = useCallback(async (params?: any) => {
+        return sessionsApi.callApi(
+            () => sessionApi.admin.getSessions(params),
+            {
+                cacheKey: `admin_sessions_${JSON.stringify(params)}`,
+                cacheTime: 30 * 1000,
+                showErrorNotification: false,
             }
-            return response;
-        }, { showErrorNotification: false });
-    }, [getSessionsHook]);
+        );
+    }, [sessionsApi]);
 
-    const getSchedule = useCallback(async (options?: {
-        page?: number;
-        size?: number;
-        date?: string;
-        movieId?: number;
-        daysAhead?: number;
-        enabled?: boolean;
-        keepPreviousData?: boolean;
-    }): Promise<PageResponse<SessionScheduleResponse>> => {
-        return getScheduleHook.callApi(async () => {
-            const pageToLoad = options?.keepPreviousData && schedulePagination
-                ? (schedulePagination.number + 1)
-                : (options?.page ?? 0);
-
-            const response = await sessionApi.public.getSchedule(
-                pageToLoad,
-                options?.size,
-                'startTime,asc',
-                options?.date,
-                options?.movieId,
-                options?.daysAhead
-            );
-
-            if (options?.enabled !== false) {
-                if (options?.keepPreviousData && scheduleSessions.length > 0 && pageToLoad > 0) {
-                    setScheduleSessions(prev => [...prev, ...response.content]);
-                } else {
-                    setScheduleSessions(response.content);
-                }
-                setSchedulePagination(response);
+    const getPublicSessions = useCallback(async (params?: any) => {
+        return scheduleApi.callApi(
+            () => sessionApi.public.getSessions(params),
+            {
+                cacheKey: `public_sessions_${JSON.stringify(params)}`,
+                cacheTime: 30 * 1000,
+                showErrorNotification: false,
             }
-            return response;
-        }, { showErrorNotification: false });
-    }, [getScheduleHook, schedulePagination, scheduleSessions.length]);
+        );
+    }, [scheduleApi]);
 
-    const getSessionById = useCallback(async (id: number): Promise<SessionScheduleResponse> => {
-        return getSessionByIdHook.callApi(async () => {
-            return await sessionApi.public.getById(id);
-        }, { showErrorNotification: false });
-    }, [getSessionByIdHook]);
+    const getSessionById = useCallback(async (id: number) => {
+        return sessionByIdApi.callApi(
+            () => sessionApi.public.getById(id),
+            {
+                cacheKey: `session_${id}`,
+                cacheTime: 5 * 60 * 1000,
+                showErrorNotification: false,
+            }
+        );
+    }, [sessionByIdApi]);
 
-    const getAdminSessionById = useCallback(async (id: number): Promise<SessionAdminResponse> => {
-        return getAdminSessionByIdHook.callApi(async () => {
-            return await sessionApi.admin.getById(id);
-        }, { showErrorNotification: false });
-    }, [getAdminSessionByIdHook]);
+    const getAdminSessionById = useCallback(async (id: number) => {
+        return adminSessionByIdApi.callApi(
+            () => sessionApi.admin.getById(id),
+            {
+                cacheKey: `admin_session_${id}`,
+                cacheTime: 5 * 60 * 1000,
+            }
+        );
+    }, [adminSessionByIdApi]);
 
-    const createSession = useCallback(async (request: SessionCreateRequest): Promise<SessionAdminResponse> => {
-        return createSessionHook.callApi(async () => {
-            const response = await sessionApi.admin.create(request);
-            setSessions(prev => [...prev, response]);
-            return response;
-        }, { showErrorNotification: false });
-    }, [createSessionHook]);
+    const createSession = useCallback(async (request: SessionCreateRequest) => {
+        const api = useApi<SessionAdminResponse>();
+        return api.callApi(
+            () => sessionApi.admin.create(request),
+            {
+                successMessage: 'Session created successfully',
+                onSuccess: () => {
+                    sessionsApi.invalidateCache();
+                },
+            }
+        );
+    }, [sessionsApi]);
 
-    const updateSession = useCallback(async (id: number, request: SessionUpdateRequest): Promise<SessionAdminResponse> => {
-        return updateSessionHook.callApi(async () => {
-            const response = await sessionApi.admin.update(id, request);
-            setSessions(prev => prev.map(session => session.id === id ? response : session));
-            return response;
-        }, { showErrorNotification: false });
-    }, [updateSessionHook]);
+    const updateSession = useCallback(async (id: number, request: SessionUpdateRequest) => {
+        const api = useApi<SessionAdminResponse>();
+        return api.callApi(
+            () => sessionApi.admin.update(id, request),
+            {
+                successMessage: 'Session updated successfully',
+                onSuccess: () => {
+                    sessionsApi.invalidateCache();
+                    adminSessionByIdApi.invalidateCache(`admin_session_${id}`);
+                },
+            }
+        );
+    }, [sessionsApi, adminSessionByIdApi]);
 
-    const cancelSession = useCallback(async (id: number): Promise<void> => {
-        return cancelSessionHook.callApi(async () => {
-            await sessionApi.admin.cancel(id);
-            setSessions(prev => prev.map(session =>
-                session.id === id ? { ...session, status: 'CANCELLED' } : session
-            ));
-        }, { showErrorNotification: false });
-    }, [cancelSessionHook]);
+    const cancelSession = useCallback(async (id: number) => {
+        const api = useApi<void>();
+        return api.callApi(
+            () => sessionApi.admin.cancel(id),
+            {
+                successMessage: 'Session cancelled successfully',
+                onSuccess: () => {
+                    sessionsApi.invalidateCache();
+                    adminSessionByIdApi.invalidateCache(`admin_session_${id}`);
+                },
+            }
+        );
+    }, [sessionsApi, adminSessionByIdApi]);
 
-    const reactivateSession = useCallback(async (id: number): Promise<void> => {
-        return reactivateSessionHook.callApi(async () => {
-            await sessionApi.admin.reactivate(id);
-            setSessions(prev => prev.map(session =>
-                session.id === id ? { ...session, status: 'SCHEDULED' } : session
-            ));
-        }, { showErrorNotification: false });
-    }, [reactivateSessionHook]);
+    const reactivateSession = useCallback(async (id: number) => {
+        const api = useApi<void>();
+        return api.callApi(
+            () => sessionApi.admin.reactivate(id),
+            {
+                successMessage: 'Session reactivated successfully',
+                onSuccess: () => {
+                    sessionsApi.invalidateCache();
+                    adminSessionByIdApi.invalidateCache(`admin_session_${id}`);
+                },
+            }
+        );
+    }, [sessionsApi, adminSessionByIdApi]);
 
-    const deleteSession = useCallback(async (id: number): Promise<void> => {
-        return deleteSessionHook.callApi(async () => {
-            await sessionApi.admin.delete(id);
-            setSessions(prev => prev.filter(session => session.id !== id));
-        }, { showErrorNotification: false });
-    }, [deleteSessionHook]);
+    const deleteSession = useCallback(async (id: number) => {
+        const api = useApi<void>();
+        return api.callApi(
+            () => sessionApi.admin.delete(id),
+            {
+                successMessage: 'Session deleted successfully',
+                onSuccess: () => {
+                    sessionsApi.invalidateCache();
+                },
+            }
+        );
+    }, [sessionsApi]);
 
-    const checkTimeConflict = useCallback(async (
-        hallId: number,
-        startTime: string,
-        durationMinutes: number,
-        excludeSessionId?: number
-    ): Promise<boolean> => {
-        if (abortControllerRef.current) {
-            abortControllerRef.current.abort();
-        }
-
-        abortControllerRef.current = new AbortController();
-
-        return checkTimeConflictHook.callApi(async () => {
-            return await sessionApi.admin.checkTimeConflict(
-                hallId,
-                startTime,
-                durationMinutes,
-                excludeSessionId
-            );
-        }, { showErrorNotification: false });
-    }, [checkTimeConflictHook]);
-
-    const getTodaySessions = useCallback(async (page?: number, size: number = 50): Promise<PageResponse<SessionAdminResponse>> => {
-        return getTodaySessionsHook.callApi(async () => {
-            const response = await sessionApi.admin.getTodaySessions(page, size);
-            setSessions(response.content);
-            setPagination(response);
-            return response;
-        }, { showErrorNotification: false });
-    }, [getTodaySessionsHook]);
-
-    const setSearchFilter = useCallback((search: string | undefined) => {
-        setFilters(prev => ({ ...prev, search }));
-    }, []);
-
-    const setDateFilter = useCallback((date: string | undefined) => {
-        setFilters(prev => ({
-            ...prev,
-            date,
-            daysAhead: undefined
-        }));
-    }, []);
-
-    const setHallFilter = useCallback((hallId: number | undefined) => {
-        setFilters(prev => ({ ...prev, hallId }));
-    }, []);
-
-    const setMovieFilter = useCallback((movieId: number | undefined) => {
-        setFilters(prev => ({ ...prev, movieId }));
-    }, []);
-
-    const setStatusFilter = useCallback((status: CinemaSessionStatus | undefined) => {
-        setFilters(prev => ({ ...prev, status }));
-    }, []);
-
-    const setDaysAheadFilter = useCallback((daysAhead: number | undefined) => {
-        setFilters(prev => ({
-            ...prev,
-            daysAhead,
-            date: undefined
-        }));
-    }, []);
-
-    const clearFilters = useCallback(() => {
-        setFilters({});
-    }, []);
-
-    const resetToDefault = useCallback(() => {
-        setFilters({});
-    }, []);
-
-    const hasMore = schedulePagination ? !schedulePagination.last : false;
-
-    const hasActiveFilters = Boolean(
-        filters.search ||
-        filters.date ||
-        filters.hallId ||
-        filters.movieId ||
-        filters.daysAhead ||
-        filters.status
-    );
-
-    const activeFilterCount = Object.values(filters).filter(Boolean).length;
-
-    const loading = useMemo(() => {
-        return getSessionsHook.loading || getScheduleHook.loading || getSessionByIdHook.loading ||
-            getAdminSessionByIdHook.loading || createSessionHook.loading || updateSessionHook.loading ||
-            cancelSessionHook.loading || reactivateSessionHook.loading || deleteSessionHook.loading ||
-            checkTimeConflictHook.loading || getTodaySessionsHook.loading;
-    }, [
-        getSessionsHook.loading, getScheduleHook.loading, getSessionByIdHook.loading,
-        getAdminSessionByIdHook.loading, createSessionHook.loading, updateSessionHook.loading,
-        cancelSessionHook.loading, reactivateSessionHook.loading, deleteSessionHook.loading,
-        checkTimeConflictHook.loading, getTodaySessionsHook.loading
-    ]);
+    const clearCache = useCallback(() => {
+        sessionsApi.invalidateCache();
+        scheduleApi.invalidateCache();
+        sessionByIdApi.invalidateCache();
+        adminSessionByIdApi.invalidateCache();
+    }, [sessionsApi, scheduleApi, sessionByIdApi, adminSessionByIdApi]);
 
     return {
-        sessions,
-        scheduleSessions,
-        pagination,
-        schedulePagination,
-        filters,
-        loading,
+        sessions: sessionsApi.data?.content || [],
+        scheduleSessions: scheduleApi.data?.content || [],
+        session: sessionByIdApi.data,
+        adminSession: adminSessionByIdApi.data,
+        pagination: sessionsApi.data,
+        schedulePagination: scheduleApi.data,
+
+        loading: sessionsApi.state.isLoading || scheduleApi.state.isLoading ||
+            sessionByIdApi.state.isLoading || adminSessionByIdApi.state.isLoading,
+        error: sessionsApi.state.isError || scheduleApi.state.isError ||
+            sessionByIdApi.state.isError || adminSessionByIdApi.state.isError,
+
         getSessions,
-        getSchedule,
+        getPublicSessions,
         getSessionById,
         getAdminSessionById,
         createSession,
@@ -269,32 +155,13 @@ export const useSession = () => {
         cancelSession,
         reactivateSession,
         deleteSession,
-        checkTimeConflict,
-        getTodaySessions,
-        setSearchFilter,
-        setDateFilter,
-        setHallFilter,
-        setMovieFilter,
-        setStatusFilter,
-        setDaysAheadFilter,
-        clearFilters,
-        resetToDefault,
-        hasMore,
-        hasActiveFilters,
-        activeFilterCount,
-        currentPage: pagination?.number || 0,
-        scheduleCurrentPage: schedulePagination?.number || 0,
-        totalPages: pagination?.totalPages || 0,
-        scheduleTotalPages: schedulePagination?.totalPages || 0,
-        totalElements: pagination?.totalElements || 0,
-        scheduleTotalElements: schedulePagination?.totalElements || 0,
-        pageSize: pagination?.size || 0,
-        schedulePageSize: schedulePagination?.size || 0,
-        isEmpty: pagination?.empty || false,
-        scheduleIsEmpty: schedulePagination?.empty || false,
-        isFirstPage: pagination?.first || true,
-        scheduleIsFirstPage: schedulePagination?.first || true,
-        isLastPage: pagination?.last || true,
-        scheduleIsLastPage: schedulePagination?.last || true,
+        clearCache,
+
+        resetSessions: sessionsApi.reset,
+        resetSchedule: scheduleApi.reset,
+        resetSession: sessionByIdApi.reset,
+        resetAdminSession: adminSessionByIdApi.reset,
+        refetchSessions: sessionsApi.refetch,
+        refetchSchedule: scheduleApi.refetch,
     };
 };

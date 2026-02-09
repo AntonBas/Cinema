@@ -1,180 +1,144 @@
-import { useState, useCallback, useRef } from 'react';
+import { useCallback } from 'react';
 import { ticketTypeApi } from '@/api/ticketTypeApi';
 import type {
     TicketTypeResponse,
     TicketTypeCreateRequest,
     TicketTypeUpdateRequest,
-    TicketTypeCategory,
     TicketTypeSimpleResponse
 } from '@/types/ticketType';
 import { useApi } from '@/hooks/common/useApi';
 
 export const useTicketType = () => {
-    const [ticketTypes, setTicketTypes] = useState<TicketTypeResponse[]>([]);
-    const [dropdownTypes, setDropdownTypes] = useState<TicketTypeSimpleResponse[]>([]);
-    const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
-    const [categoryFilter, setCategoryFilter] = useState<TicketTypeCategory | 'all'>('all');
-    const [searchQuery, setSearchQuery] = useState<string>('');
+    const ticketTypesApi = useApi<TicketTypeResponse[]>();
+    const dropdownTypesApi = useApi<TicketTypeSimpleResponse[]>();
+    const ticketTypeByIdApi = useApi<TicketTypeResponse>();
+    const ticketTypeByCodeApi = useApi<TicketTypeResponse>();
 
-    const apiHookRef = useRef(useApi<TicketTypeResponse[]>());
-    const apiHook = apiHookRef.current;
+    const getAll = useCallback(async (params?: any) => {
+        return ticketTypesApi.callApi(
+            () => ticketTypeApi.admin.getAll(params),
+            {
+                cacheKey: `ticket_types_${JSON.stringify(params)}`,
+                cacheTime: 5 * 60 * 1000,
+                showErrorNotification: false,
+            }
+        );
+    }, [ticketTypesApi]);
 
-    const getByIdHook = useApi<TicketTypeResponse>();
-    const getByCodeHook = useApi<TicketTypeResponse>();
-    const createHook = useApi<TicketTypeResponse>();
-    const updateHook = useApi<TicketTypeResponse>();
-    const deleteHook = useApi<void>();
-    const toggleActiveHook = useApi<TicketTypeResponse>();
-    const getActiveForDropdownHook = useApi<TicketTypeSimpleResponse[]>();
-    const getDropdownTypesHook = useApi<TicketTypeSimpleResponse[]>();
+    const getById = useCallback(async (id: number) => {
+        return ticketTypeByIdApi.callApi(
+            () => ticketTypeApi.admin.getById(id),
+            {
+                cacheKey: `ticket_type_${id}`,
+                cacheTime: 5 * 60 * 1000,
+            }
+        );
+    }, [ticketTypeByIdApi]);
 
-    const getAll = useCallback(async (params?: { active?: boolean; category?: string; search?: string }): Promise<TicketTypeResponse[]> => {
-        return apiHook.callApi(async () => {
-            const data = await ticketTypeApi.admin.getAll(params);
-            setTicketTypes(data);
-            return data;
-        }, { showErrorNotification: false });
-    }, [apiHook]);
+    const getByCode = useCallback(async (code: string) => {
+        return ticketTypeByCodeApi.callApi(
+            () => ticketTypeApi.admin.getByCode(code),
+            {
+                cacheKey: `ticket_type_code_${code}`,
+                cacheTime: 5 * 60 * 1000,
+            }
+        );
+    }, [ticketTypeByCodeApi]);
 
-    const getById = useCallback(async (id: number): Promise<TicketTypeResponse> => {
-        return getByIdHook.callApi(async () => {
-            return await ticketTypeApi.admin.getById(id);
-        }, { showErrorNotification: false });
-    }, [getByIdHook]);
+    const create = useCallback(async (request: TicketTypeCreateRequest) => {
+        const api = useApi<TicketTypeResponse>();
+        return api.callApi(
+            () => ticketTypeApi.admin.create(request),
+            {
+                successMessage: 'Ticket type created successfully',
+                onSuccess: () => {
+                    ticketTypesApi.invalidateCache();
+                },
+            }
+        );
+    }, [ticketTypesApi]);
 
-    const getByCode = useCallback(async (code: string): Promise<TicketTypeResponse> => {
-        return getByCodeHook.callApi(async () => {
-            return await ticketTypeApi.admin.getByCode(code);
-        }, { showErrorNotification: false });
-    }, [getByCodeHook]);
+    const update = useCallback(async (id: number, request: TicketTypeUpdateRequest) => {
+        const api = useApi<TicketTypeResponse>();
+        return api.callApi(
+            () => ticketTypeApi.admin.update(id, request),
+            {
+                successMessage: 'Ticket type updated successfully',
+                onSuccess: () => {
+                    ticketTypesApi.invalidateCache();
+                    ticketTypeByIdApi.invalidateCache(`ticket_type_${id}`);
+                },
+            }
+        );
+    }, [ticketTypesApi, ticketTypeByIdApi]);
 
-    const create = useCallback(async (request: TicketTypeCreateRequest): Promise<TicketTypeResponse> => {
-        return createHook.callApi(async () => {
-            const response = await ticketTypeApi.admin.create(request);
-            setTicketTypes(prev => [...prev, response]);
-            return response;
-        }, { showErrorNotification: false });
-    }, [createHook]);
+    const remove = useCallback(async (id: number) => {
+        const api = useApi<void>();
+        return api.callApi(
+            () => ticketTypeApi.admin.delete(id),
+            {
+                successMessage: 'Ticket type deleted successfully',
+                onSuccess: () => {
+                    ticketTypesApi.invalidateCache();
+                },
+            }
+        );
+    }, [ticketTypesApi]);
 
-    const update = useCallback(async (id: number, request: TicketTypeUpdateRequest): Promise<TicketTypeResponse> => {
-        return updateHook.callApi(async () => {
-            const response = await ticketTypeApi.admin.update(id, request);
-            setTicketTypes(prev => prev.map(tt => tt.id === id ? response : tt));
-            return response;
-        }, { showErrorNotification: false });
-    }, [updateHook]);
+    const toggleActive = useCallback(async (id: number) => {
+        const api = useApi<TicketTypeResponse>();
+        return api.callApi(
+            () => ticketTypeApi.admin.toggleActive(id),
+            {
+                successMessage: 'Ticket type status updated successfully',
+                onSuccess: () => {
+                    ticketTypesApi.invalidateCache();
+                    ticketTypeByIdApi.invalidateCache(`ticket_type_${id}`);
+                },
+            }
+        );
+    }, [ticketTypesApi, ticketTypeByIdApi]);
 
-    const remove = useCallback(async (id: number): Promise<void> => {
-        return deleteHook.callApi(async () => {
-            await ticketTypeApi.admin.delete(id);
-            setTicketTypes(prev => prev.filter(tt => tt.id !== id));
-        }, { showErrorNotification: false });
-    }, [deleteHook]);
+    const getDropdownTypes = useCallback(async () => {
+        return dropdownTypesApi.callApi(
+            () => ticketTypeApi.public.getDropdownTypes(),
+            {
+                cacheKey: 'ticket_type_dropdown',
+                cacheTime: 5 * 60 * 1000,
+                showErrorNotification: false,
+            }
+        );
+    }, [dropdownTypesApi]);
 
-    const toggleActive = useCallback(async (id: number): Promise<TicketTypeResponse> => {
-        return toggleActiveHook.callApi(async () => {
-            const response = await ticketTypeApi.admin.toggleActive(id);
-            setTicketTypes(prev => prev.map(tt => tt.id === id ? response : tt));
-            return response;
-        }, { showErrorNotification: false });
-    }, [toggleActiveHook]);
-
-    const getActiveForDropdown = useCallback(async (): Promise<TicketTypeSimpleResponse[]> => {
-        return getActiveForDropdownHook.callApi(async () => {
-            const data = await ticketTypeApi.admin.getActiveForDropdown();
-            setDropdownTypes(data);
-            return data;
-        }, { showErrorNotification: false });
-    }, [getActiveForDropdownHook]);
-
-    const getDropdownTypes = useCallback(async (): Promise<TicketTypeSimpleResponse[]> => {
-        return getDropdownTypesHook.callApi(async () => {
-            const data = await ticketTypeApi.public.getDropdownTypes();
-            setDropdownTypes(data);
-            return data;
-        }, { showErrorNotification: false });
-    }, [getDropdownTypesHook]);
-
-    const fetchTicketTypes = useCallback(async (options?: {
-        statusFilter?: 'all' | 'active' | 'inactive';
-        categoryFilter?: TicketTypeCategory | 'all';
-        searchQuery?: string;
-    }) => {
-        const params: { active?: boolean; category?: string; search?: string } = {};
-
-        if (options?.statusFilter === 'active') {
-            params.active = true;
-        } else if (options?.statusFilter === 'inactive') {
-            params.active = false;
-        }
-
-        if (options?.categoryFilter && options.categoryFilter !== 'all') {
-            params.category = options.categoryFilter;
-        }
-
-        if (options?.searchQuery?.trim()) {
-            params.search = options.searchQuery;
-        }
-
-        return apiHook.callApi(async () => {
-            const data = await ticketTypeApi.admin.getAll(params);
-            setTicketTypes(data);
-            return data;
-        }, { showErrorNotification: false });
-    }, [apiHook]);
-
-    const addTicketType = useCallback((ticketType: TicketTypeResponse) => {
-        setTicketTypes(prev => [...prev, ticketType]);
+    const getAdminDropdownTypes = useCallback(async () => {
+        const api = useApi<TicketTypeSimpleResponse[]>();
+        return api.callApi(
+            () => ticketTypeApi.admin.getDropdownTypes(),
+            {
+                cacheKey: 'admin_ticket_type_dropdown',
+                cacheTime: 5 * 60 * 1000,
+                showErrorNotification: false,
+            }
+        );
     }, []);
 
-    const updateTicketType = useCallback((updatedTicketType: TicketTypeResponse) => {
-        setTicketTypes(prev => prev.map(tt => tt.id === updatedTicketType.id ? updatedTicketType : tt));
-    }, []);
-
-    const removeTicketType = useCallback((id: number) => {
-        setTicketTypes(prev => prev.filter(tt => tt.id !== id));
-    }, []);
-
-    const getDefaultValues = useCallback((): TicketTypeCreateRequest => ({
-        code: '',
-        displayName: '',
-        priceMultiplier: '1.0',
-        category: 'STANDARD',
-        minAge: null,
-        maxAge: null,
-        requiresDocument: false,
-        documentType: null,
-        active: true
-    }), []);
-
-    const getCategoryOptions = useCallback((): Array<{ value: TicketTypeCategory; label: string }> => [
-        { value: 'STANDARD', label: 'Standard' },
-        { value: 'CHILD', label: 'Child' },
-        { value: 'STUDENT', label: 'Student' },
-        { value: 'DISABLED', label: 'Disabled' },
-        { value: 'MILITARY', label: 'Military' },
-        { value: 'SENIOR', label: 'Senior' },
-        { value: 'SPECIAL', label: 'Special' }
-    ], []);
-
-    const isAgeRestricted = useCallback((age: number, ticketType: { minAge?: number | null; maxAge?: number | null }): boolean => {
-        const minAge = ticketType.minAge ?? null;
-        const maxAge = ticketType.maxAge ?? null;
-
-        if (minAge !== null && age < minAge) return true;
-        if (maxAge !== null && age > maxAge) return true;
-        return false;
-    }, []);
+    const clearCache = useCallback(() => {
+        ticketTypesApi.invalidateCache();
+        dropdownTypesApi.invalidateCache();
+        ticketTypeByIdApi.invalidateCache();
+        ticketTypeByCodeApi.invalidateCache();
+    }, [ticketTypesApi, dropdownTypesApi, ticketTypeByIdApi, ticketTypeByCodeApi]);
 
     return {
-        ticketTypes,
-        dropdownTypes,
-        statusFilter,
-        categoryFilter,
-        searchQuery,
-        loading: apiHook.loading || getByIdHook.loading || getByCodeHook.loading ||
-            createHook.loading || updateHook.loading || deleteHook.loading ||
-            toggleActiveHook.loading || getActiveForDropdownHook.loading || getDropdownTypesHook.loading,
+        ticketTypes: ticketTypesApi.data || [],
+        dropdownTypes: dropdownTypesApi.data || [],
+        ticketType: ticketTypeByIdApi.data || ticketTypeByCodeApi.data,
+
+        loading: ticketTypesApi.state.isLoading || dropdownTypesApi.state.isLoading ||
+            ticketTypeByIdApi.state.isLoading || ticketTypeByCodeApi.state.isLoading,
+        error: ticketTypesApi.state.isError || dropdownTypesApi.state.isError ||
+            ticketTypeByIdApi.state.isError || ticketTypeByCodeApi.state.isError,
+
         getAll,
         getById,
         getByCode,
@@ -182,19 +146,14 @@ export const useTicketType = () => {
         update,
         remove,
         toggleActive,
-        getActiveForDropdown,
         getDropdownTypes,
-        fetchTicketTypes,
-        addTicketType,
-        updateTicketType,
-        removeTicketType,
-        setStatusFilter,
-        setCategoryFilter,
-        setSearchQuery,
-        getDefaultValues,
-        getCategoryOptions,
-        isAgeRestricted,
-        isEmpty: ticketTypes.length === 0,
-        isDropdownEmpty: dropdownTypes.length === 0,
+        getAdminDropdownTypes,
+        clearCache,
+
+        resetTicketTypes: ticketTypesApi.reset,
+        resetDropdownTypes: dropdownTypesApi.reset,
+        resetTicketType: ticketTypeByIdApi.reset,
+        refetchTicketTypes: ticketTypesApi.refetch,
+        refetchDropdownTypes: dropdownTypesApi.refetch,
     };
 };

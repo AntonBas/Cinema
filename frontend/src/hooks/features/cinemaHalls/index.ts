@@ -1,1 +1,0 @@
-export { useCinemaHalls } from './useCinemaHalls';

@@ -1,1 +1,0 @@
-export { usePerson } from './usePerson';

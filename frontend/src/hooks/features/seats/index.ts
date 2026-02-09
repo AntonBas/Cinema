@@ -1,1 +1,0 @@
-export { useSeats } from '../seats/useSeats';

@@ -1,1 +1,0 @@
-export { useSeatAvailability } from './useSeatAvailability';

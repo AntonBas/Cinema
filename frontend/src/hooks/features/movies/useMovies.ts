@@ -1,295 +1,200 @@
-import { useState, useCallback, useRef, useMemo } from 'react';
+import { useCallback } from 'react';
 import { movieApi } from '@/api/movieApi';
 import type {
     MovieCardResponse,
     MovieDetailResponse,
     MovieSessionSearchResponse,
-    MovieStatus,
     MovieCreateRequest,
     MovieUpdateRequest
 } from '@/types/movie';
-import type { PageResponse, SearchParams } from '@/types/pagination';
+import type { PageResponse } from '@/types/pagination';
 import { useApi } from '@/hooks/common/useApi';
 
 export const useMovies = () => {
-    const [movies, setMovies] = useState<MovieCardResponse[]>([]);
-    const [movie, setMovie] = useState<MovieDetailResponse | null>(null);
-    const [sessionMovies, setSessionMovies] = useState<MovieSessionSearchResponse[]>([]);
-    const [paginationData, setPaginationData] = useState<PageResponse<MovieCardResponse> | null>(null);
+    const allMoviesApi = useApi<PageResponse<MovieCardResponse>>();
+    const movieByIdApi = useApi<MovieDetailResponse>();
+    const movieBySlugApi = useApi<MovieDetailResponse>();
+    const currentlyShowingApi = useApi<PageResponse<MovieCardResponse>>();
+    const upcomingApi = useApi<PageResponse<MovieCardResponse>>();
 
-    const currentSearchParamsRef = useRef<SearchParams & { status?: MovieStatus }>({});
+    const getAll = useCallback(async (params?: any) => {
+        return allMoviesApi.callApi(
+            () => movieApi.public.getMovies(params),
+            {
+                cacheKey: `movies_all_${JSON.stringify(params)}`,
+                cacheTime: 5 * 60 * 1000,
+                showErrorNotification: false,
+            }
+        );
+    }, [allMoviesApi]);
 
-    const getByIdHook = useApi<MovieDetailResponse>();
-    const getBySlugHook = useApi<MovieDetailResponse>();
-    const getAllPaginatedHook = useApi<PageResponse<MovieCardResponse>>();
-    const getCurrentlyShowingHook = useApi<MovieCardResponse[]>();
-    const getCurrentlyShowingPaginatedHook = useApi<PageResponse<MovieCardResponse>>();
-    const getUpcomingHook = useApi<MovieCardResponse[]>();
-    const getUpcomingPaginatedHook = useApi<PageResponse<MovieCardResponse>>();
-    const searchHook = useApi<PageResponse<MovieCardResponse>>();
-    const searchActiveMoviesHook = useApi<MovieSessionSearchResponse[]>();
-    const searchForSessionHook = useApi<MovieSessionSearchResponse[]>();
-    const createHook = useApi<MovieDetailResponse>();
-    const updateHook = useApi<MovieDetailResponse>();
-    const removeHook = useApi<void>();
-    const getArchivedMoviesHook = useApi<PageResponse<MovieCardResponse>>();
-    const getByStatusHook = useApi<PageResponse<MovieCardResponse>>();
-    const searchAdminHook = useApi<PageResponse<MovieCardResponse>>();
+    const getCurrentlyShowing = useCallback(async (params?: any) => {
+        return currentlyShowingApi.callApi(
+            () => movieApi.public.getCurrentlyShowing(params),
+            {
+                cacheKey: `movies_currently_showing_${JSON.stringify(params)}`,
+                cacheTime: 10 * 60 * 1000,
+                showErrorNotification: false,
+            }
+        );
+    }, [currentlyShowingApi]);
 
-    const getById = useCallback(async (id: number): Promise<MovieDetailResponse> => {
-        return getByIdHook.callApi(async () => {
-            const data = await movieApi.public.getById(id);
-            setMovie(data);
-            return data;
-        });
-    }, [getByIdHook]);
+    const getUpcoming = useCallback(async (params?: any) => {
+        return upcomingApi.callApi(
+            () => movieApi.public.getUpcoming(params),
+            {
+                cacheKey: `movies_upcoming_${JSON.stringify(params)}`,
+                cacheTime: 15 * 60 * 1000,
+                showErrorNotification: false,
+            }
+        );
+    }, [upcomingApi]);
 
-    const getBySlug = useCallback(async (slug: string): Promise<MovieDetailResponse> => {
-        return getBySlugHook.callApi(async () => {
-            const data = await movieApi.public.getBySlug(slug);
-            setMovie(data);
-            return data;
-        });
-    }, [getBySlugHook]);
+    const getById = useCallback(async (id: number) => {
+        return movieByIdApi.callApi(
+            () => movieApi.public.getById(id),
+            {
+                cacheKey: `movie_${id}`,
+                cacheTime: 10 * 60 * 1000,
+                showErrorNotification: false,
+            }
+        );
+    }, [movieByIdApi]);
 
-    const getAllPaginated = useCallback(async (page?: number, size: number = 12): Promise<PageResponse<MovieCardResponse>> => {
-        return getAllPaginatedHook.callApi(async () => {
-            const response = await movieApi.public.getMoviesPaginated(page, size);
-            setMovies(response.content);
-            setPaginationData(response);
-            return response;
-        });
-    }, [getAllPaginatedHook]);
+    const getBySlug = useCallback(async (slug: string) => {
+        return movieBySlugApi.callApi(
+            () => movieApi.public.getBySlug(slug),
+            {
+                cacheKey: `movie_slug_${slug}`,
+                cacheTime: 10 * 60 * 1000,
+                showErrorNotification: false,
+            }
+        );
+    }, [movieBySlugApi]);
 
-    const getCurrentlyShowing = useCallback(async (): Promise<MovieCardResponse[]> => {
-        return getCurrentlyShowingHook.callApi(async () => {
-            const data = await movieApi.public.getCurrentlyShowing();
-            setMovies(data);
-            return data;
-        });
-    }, [getCurrentlyShowingHook]);
-
-    const getCurrentlyShowingPaginated = useCallback(async (page?: number, size: number = 12): Promise<PageResponse<MovieCardResponse>> => {
-        return getCurrentlyShowingPaginatedHook.callApi(async () => {
-            const response = await movieApi.public.getCurrentlyShowingPaginated(page, size);
-            setMovies(response.content);
-            setPaginationData(response);
-            return response;
-        });
-    }, [getCurrentlyShowingPaginatedHook]);
-
-    const getUpcoming = useCallback(async (): Promise<MovieCardResponse[]> => {
-        return getUpcomingHook.callApi(async () => {
-            const data = await movieApi.public.getUpcoming();
-            setMovies(data);
-            return data;
-        });
-    }, [getUpcomingHook]);
-
-    const getUpcomingPaginated = useCallback(async (page?: number, size: number = 12): Promise<PageResponse<MovieCardResponse>> => {
-        return getUpcomingPaginatedHook.callApi(async () => {
-            const response = await movieApi.public.getUpcomingPaginated(page, size);
-            setMovies(response.content);
-            setPaginationData(response);
-            return response;
-        });
-    }, [getUpcomingPaginatedHook]);
-
-    const search = useCallback(async (params: SearchParams & { status?: MovieStatus } = {}): Promise<PageResponse<MovieCardResponse>> => {
-        currentSearchParamsRef.current = params;
-
-        return searchHook.callApi(async () => {
-            const response = await movieApi.public.getFilteredMovies(
-                params.search,
-                params.status,
-                params.page,
-                params.size || 20
-            );
-            setMovies(response.content);
-            setPaginationData(response);
-            return response;
-        });
-    }, [searchHook]);
-
-    const searchActiveMovies = useCallback(async (search?: string): Promise<MovieSessionSearchResponse[]> => {
-        return searchActiveMoviesHook.callApi(async () => {
-            const response = await movieApi.admin.searchActiveMovies(search);
-            setSessionMovies(response);
-            return response;
-        });
-    }, [searchActiveMoviesHook]);
-
-    const searchForSession = useCallback(async (sessionDate: string, search?: string): Promise<MovieSessionSearchResponse[]> => {
-        return searchForSessionHook.callApi(async () => {
-            const response = await movieApi.admin.searchForSession(sessionDate, search);
-            setSessionMovies(response);
-            return response;
-        });
-    }, [searchForSessionHook]);
-
-    const create = useCallback(async (movieData: MovieCreateRequest): Promise<MovieDetailResponse> => {
-        return createHook.callApi(async () => {
-            const response = await movieApi.admin.create(movieData);
-            setMovie(response);
-            return response;
-        });
-    }, [createHook]);
-
-    const update = useCallback(async (id: number, movieData: MovieUpdateRequest): Promise<MovieDetailResponse> => {
-        return updateHook.callApi(async () => {
-            const response = await movieApi.admin.update(id, movieData);
-            setMovie(response);
-            setMovies(prev => prev.map(m => m.id === id ? response : m));
-            return response;
-        });
-    }, [updateHook]);
-
-    const remove = useCallback(async (id: number): Promise<void> => {
-        return removeHook.callApi(async () => {
-            await movieApi.admin.delete(id);
-            setMovies(prev => prev.filter(m => m.id !== id));
-            if (movie?.id === id) setMovie(null);
-        });
-    }, [removeHook, movie]);
-
-    const getArchivedMovies = useCallback(async (page?: number, size: number = 12): Promise<PageResponse<MovieCardResponse>> => {
-        return getArchivedMoviesHook.callApi(async () => {
-            const response = await movieApi.admin.getArchivedMovies(page, size);
-            setMovies(response.content);
-            setPaginationData(response);
-            return response;
-        });
-    }, [getArchivedMoviesHook]);
-
-    const getByStatus = useCallback(async (status: MovieStatus, page?: number, size: number = 12): Promise<PageResponse<MovieCardResponse>> => {
-        return getByStatusHook.callApi(async () => {
-            const response = await movieApi.admin.getByStatus(status, page, size);
-            setMovies(response.content);
-            setPaginationData(response);
-            return response;
-        });
-    }, [getByStatusHook]);
-
-    const searchAdmin = useCallback(async (search?: string, status?: MovieStatus, page?: number, size: number = 12): Promise<PageResponse<MovieCardResponse>> => {
-        return searchAdminHook.callApi(async () => {
-            const response = await movieApi.admin.search(search, status, page, size);
-            setMovies(response.content);
-            setPaginationData(response);
-            return response;
-        });
-    }, [searchAdminHook]);
-
-    const clearMovies = useCallback(() => {
-        setMovies([]);
-        setSessionMovies([]);
-        setPaginationData(null);
+    const searchMoviesForSession = useCallback(async (search?: string) => {
+        const api = useApi<MovieSessionSearchResponse[]>();
+        return api.callApi(
+            () => movieApi.public.searchMoviesForSession(search),
+            {
+                cacheKey: `movies_search_${search || 'all'}`,
+                cacheTime: 2 * 60 * 1000,
+                silent: true,
+                showErrorNotification: false,
+            }
+        );
     }, []);
 
-    const refresh = useCallback(async () => {
-        if (!paginationData) return;
+    const create = useCallback(async (request: MovieCreateRequest) => {
+        const api = useApi<MovieDetailResponse>();
+        return api.callApi(
+            () => movieApi.admin.create(request),
+            {
+                successMessage: 'Movie created successfully',
+                onSuccess: () => {
+                    allMoviesApi.invalidateCache();
+                    currentlyShowingApi.invalidateCache();
+                    upcomingApi.invalidateCache();
+                },
+            }
+        );
+    }, [allMoviesApi, currentlyShowingApi, upcomingApi]);
 
-        const params = currentSearchParamsRef.current;
-        return searchHook.callApi(async () => {
-            const response = await movieApi.public.getFilteredMovies(
-                params.search,
-                params.status,
-                paginationData.number,
-                paginationData.size
-            );
-            setMovies(response.content);
-            setPaginationData(response);
-            return response;
-        });
-    }, [paginationData, searchHook]);
+    const update = useCallback(async (id: number, request: MovieUpdateRequest) => {
+        const api = useApi<MovieDetailResponse>();
+        return api.callApi(
+            () => movieApi.admin.update(id, request),
+            {
+                successMessage: 'Movie updated successfully',
+                onSuccess: () => {
+                    movieByIdApi.invalidateCache(`movie_${id}`);
+                    movieBySlugApi.invalidateCache();
+                    allMoviesApi.invalidateCache();
+                    currentlyShowingApi.invalidateCache();
+                    upcomingApi.invalidateCache();
+                },
+            }
+        );
+    }, [movieByIdApi, movieBySlugApi, allMoviesApi, currentlyShowingApi, upcomingApi]);
 
-    const nextPage = useCallback(async (): Promise<PageResponse<MovieCardResponse> | null> => {
-        if (!paginationData || paginationData.last) return null;
+    const remove = useCallback(async (id: number) => {
+        const api = useApi<void>();
+        return api.callApi(
+            () => movieApi.admin.delete(id),
+            {
+                successMessage: 'Movie deleted successfully',
+                onSuccess: () => {
+                    movieByIdApi.invalidateCache(`movie_${id}`);
+                    movieBySlugApi.invalidateCache();
+                    allMoviesApi.invalidateCache();
+                    currentlyShowingApi.invalidateCache();
+                    upcomingApi.invalidateCache();
+                },
+            }
+        );
+    }, [movieByIdApi, movieBySlugApi, allMoviesApi, currentlyShowingApi, upcomingApi]);
 
-        const params = currentSearchParamsRef.current;
-        return searchHook.callApi(async () => {
-            const response = await movieApi.public.getFilteredMovies(
-                params.search,
-                params.status,
-                paginationData.number + 1,
-                paginationData.size
-            );
-            setMovies(response.content);
-            setPaginationData(response);
-            return response;
-        });
-    }, [paginationData, searchHook]);
+    const getAdminMovies = useCallback(async (params?: any) => {
+        const api = useApi<PageResponse<MovieCardResponse>>();
+        return api.callApi(
+            () => movieApi.admin.getMovies(params),
+            {
+                cacheKey: `movies_admin_${JSON.stringify(params)}`,
+                cacheTime: 2 * 60 * 1000,
+            }
+        );
+    }, []);
 
-    const prevPage = useCallback(async (): Promise<PageResponse<MovieCardResponse> | null> => {
-        if (!paginationData || paginationData.first) return null;
+    const clearCache = useCallback(() => {
+        allMoviesApi.invalidateCache();
+        movieByIdApi.invalidateCache();
+        movieBySlugApi.invalidateCache();
+        currentlyShowingApi.invalidateCache();
+        upcomingApi.invalidateCache();
+    }, [allMoviesApi, movieByIdApi, movieBySlugApi, currentlyShowingApi, upcomingApi]);
 
-        const params = currentSearchParamsRef.current;
-        return searchHook.callApi(async () => {
-            const response = await movieApi.public.getFilteredMovies(
-                params.search,
-                params.status,
-                paginationData.number - 1,
-                paginationData.size
-            );
-            setMovies(response.content);
-            setPaginationData(response);
-            return response;
-        });
-    }, [paginationData, searchHook]);
-
-    const isLoading = useMemo(() => {
-        return getByIdHook.loading || getBySlugHook.loading || getAllPaginatedHook.loading ||
-            getCurrentlyShowingHook.loading || getCurrentlyShowingPaginatedHook.loading ||
-            getUpcomingHook.loading || getUpcomingPaginatedHook.loading || searchHook.loading ||
-            searchActiveMoviesHook.loading || searchForSessionHook.loading || createHook.loading ||
-            updateHook.loading || removeHook.loading || getArchivedMoviesHook.loading ||
-            getByStatusHook.loading || searchAdminHook.loading;
-    }, [
-        getByIdHook.loading, getBySlugHook.loading, getAllPaginatedHook.loading,
-        getCurrentlyShowingHook.loading, getCurrentlyShowingPaginatedHook.loading,
-        getUpcomingHook.loading, getUpcomingPaginatedHook.loading, searchHook.loading,
-        searchActiveMoviesHook.loading, searchForSessionHook.loading, createHook.loading,
-        updateHook.loading, removeHook.loading, getArchivedMoviesHook.loading,
-        getByStatusHook.loading, searchAdminHook.loading
-    ]);
+    const getPosterUrl = useCallback((id: number): string => {
+        return movieApi.public.getPosterUrl(id);
+    }, []);
 
     return {
-        movies,
-        movie,
-        sessionMovies,
-        pagination: paginationData,
-        loading: isLoading,
+        allMovies: allMoviesApi.data?.content || [],
+        currentlyShowing: currentlyShowingApi.data?.content || [],
+        upcoming: upcomingApi.data?.content || [],
+        movie: movieByIdApi.data || movieBySlugApi.data,
+        movieBySlug: movieBySlugApi.data,
 
+        loading: allMoviesApi.state.isLoading || movieByIdApi.state.isLoading ||
+            movieBySlugApi.state.isLoading || currentlyShowingApi.state.isLoading ||
+            upcomingApi.state.isLoading,
+        error: allMoviesApi.state.isError || movieByIdApi.state.isError ||
+            movieBySlugApi.state.isError || currentlyShowingApi.state.isError ||
+            upcomingApi.state.isError,
+
+        getAll,
+        getCurrentlyShowing,
+        getUpcoming,
         getById,
         getBySlug,
-        getAllPaginated,
-        getCurrentlyShowing,
-        getCurrentlyShowingPaginated,
-        getUpcoming,
-        getUpcomingPaginated,
-
-        search,
-        searchActiveMovies,
-        searchForSession,
-
+        searchMoviesForSession,
         create,
         update,
         remove,
+        getAdminMovies,
+        clearCache,
+        getPosterUrl,
 
-        getArchivedMovies,
-        getByStatus,
-        searchAdmin,
+        resetAllMovies: allMoviesApi.reset,
+        resetMovie: movieByIdApi.reset,
+        resetMovieBySlug: movieBySlugApi.reset,
+        resetCurrentlyShowing: currentlyShowingApi.reset,
+        resetUpcoming: upcomingApi.reset,
+        refetchAllMovies: allMoviesApi.refetch,
+        refetchCurrentlyShowing: currentlyShowingApi.refetch,
+        refetchUpcoming: upcomingApi.refetch,
 
-        clearMovies,
-        refresh,
-        nextPage,
-        prevPage,
-
-        currentPage: paginationData?.number || 0,
-        totalPages: paginationData?.totalPages || 0,
-        totalElements: paginationData?.totalElements || 0,
-        pageSize: paginationData?.size || 0,
-        isEmpty: paginationData?.empty || false,
-        isFirstPage: paginationData?.first || true,
-        isLastPage: paginationData?.last || true,
+        pagination: allMoviesApi.data,
+        currentlyShowingPagination: currentlyShowingApi.data,
+        upcomingPagination: upcomingApi.data,
     };
 };

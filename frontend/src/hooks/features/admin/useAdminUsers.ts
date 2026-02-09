@@ -1,97 +1,107 @@
-import { useState, useCallback } from 'react';
-import type { AdminUserListResponse, UserRole, VerificationStatus } from '@/types/user';
+import { useCallback } from 'react';
+import type {
+    AdminUserListResponse,
+    UserRole,
+    VerificationStatus,
+    UserRoleUpdateRequest,
+    UserStatusUpdateRequest,
+    VerificationBirthDateRequest,
+    UserResponse
+} from '@/types/user';
+import type { PageResponse } from '@/types/pagination';
 import { adminApi } from '@/api/adminApi';
 import { useApi } from '@/hooks/common/useApi';
 
 export const useAdminUsers = () => {
-    const [users, setUsers] = useState<AdminUserListResponse[]>([]);
-    const [pagination, setPagination] = useState<{
-        currentPage: number;
-        totalPages: number;
-        totalElements: number;
-        pageSize: number;
-    } | null>(null);
-    const [currentParams, setCurrentParams] = useState<{
-        query?: string;
-        role?: string;
-        enabled?: boolean;
-        page?: number;
-        size?: number;
-    }>({});
+    const usersApi = useApi<PageResponse<AdminUserListResponse>>();
 
-    const { loading: fetchLoading, callApi: fetchCallApi } = useApi<AdminUserListResponse[]>();
-    const { loading: mutationLoading, callApi: mutationCallApi } = useApi<void>();
-
-    const fetchUsers = useCallback(async (params: {
-        query?: string;
-        role?: string;
-        enabled?: boolean;
-        page?: number;
-        size?: number;
-    } = {}) => {
-        const { query, role, enabled, page = 0, size = 10 } = params;
-        setCurrentParams(params);
-
-        return fetchCallApi(async () => {
-            const response = await adminApi.getUsers(page, size, query, role, enabled);
-            setUsers(response.content);
-            setPagination({
-                currentPage: response.number,
-                totalPages: response.totalPages,
-                totalElements: response.totalElements,
-                pageSize: response.size
-            });
-            return response.content;
-        }, { showErrorNotification: false });
-    }, [fetchCallApi]);
+    const getUsers = useCallback(async (params?: any) => {
+        return usersApi.callApi(
+            () => adminApi.getUsers(params),
+            {
+                cacheKey: `admin_users_${JSON.stringify(params)}`,
+                cacheTime: 30 * 1000,
+                showErrorNotification: false,
+            }
+        );
+    }, [usersApi]);
 
     const updateUserRole = useCallback(async (userId: number, userRole: UserRole) => {
-        return mutationCallApi(async () => {
-            await adminApi.updateUserRole(userId, { userRole });
-            setUsers(prevUsers => prevUsers.map(user =>
-                user.id === userId ? { ...user, userRole } : user
-            ));
-        });
-    }, [mutationCallApi]);
+        const api = useApi<void>();
+        const roleData: UserRoleUpdateRequest = { userRole };
+
+        return api.callApi(
+            () => adminApi.updateUserRole(userId, roleData),
+            {
+                successMessage: 'User role updated successfully',
+                onSuccess: () => {
+                    usersApi.invalidateCache();
+                },
+            }
+        );
+    }, [usersApi]);
 
     const updateUserStatus = useCallback(async (userId: number, enabled: boolean) => {
-        return mutationCallApi(async () => {
-            await adminApi.updateUserStatus(userId, { enabled });
-            setUsers(prevUsers => prevUsers.map(user =>
-                user.id === userId ? { ...user, enabled } : user
-            ));
-        });
-    }, [mutationCallApi]);
+        const api = useApi<void>();
+        const statusData: UserStatusUpdateRequest = { enabled };
 
-    const updateBirthDateVerification = useCallback(async (userId: number, verificationStatus: VerificationStatus) => {
-        return mutationCallApi(async () => {
-            const response = await adminApi.updateBirthDateVerification(userId, { verificationStatus });
-            setUsers(prevUsers => prevUsers.map(user =>
-                user.id === userId ? { ...user, verificationStatus: response.verificationStatus } : user
-            ));
-        });
-    }, [mutationCallApi]);
+        return api.callApi(
+            () => adminApi.updateUserStatus(userId, statusData),
+            {
+                successMessage: enabled ? 'User activated successfully' : 'User deactivated successfully',
+                onSuccess: () => {
+                    usersApi.invalidateCache();
+                },
+            }
+        );
+    }, [usersApi]);
 
-    const refresh = useCallback(() => {
-        if (Object.keys(currentParams).length > 0) {
-            fetchUsers(currentParams);
-        }
-    }, [currentParams]);
+    const updateBirthDateVerification = useCallback(async (
+        userId: number,
+        verificationStatus: VerificationStatus
+    ) => {
+        const api = useApi<UserResponse>();
+        const verificationData: VerificationBirthDateRequest = { verificationStatus };
 
-    const clearUsers = useCallback(() => {
-        setUsers([]);
-        setPagination(null);
-    }, []);
+        return api.callApi(
+            () => adminApi.updateBirthDateVerification(userId, verificationData),
+            {
+                successMessage: 'Verification status updated successfully',
+                onSuccess: () => {
+                    usersApi.invalidateCache();
+                },
+            }
+        );
+    }, [usersApi]);
+
+    const clearCache = useCallback(() => {
+        usersApi.invalidateCache();
+    }, [usersApi]);
 
     return {
-        users,
-        pagination,
-        loading: fetchLoading || mutationLoading,
-        fetchUsers,
+        users: usersApi.data?.content || [],
+        pagination: usersApi.data,
+
+        loading: usersApi.state.isLoading,
+        error: usersApi.state.isError,
+        isSuccess: usersApi.state.isSuccess,
+        isCached: usersApi.state.isCached,
+
+        getUsers,
         updateUserRole,
         updateUserStatus,
         updateBirthDateVerification,
-        refresh,
-        clearUsers
+        clearCache,
+
+        resetUsers: usersApi.reset,
+        refetchUsers: usersApi.refetch,
+
+        currentPage: usersApi.data?.number || 0,
+        totalPages: usersApi.data?.totalPages || 0,
+        totalElements: usersApi.data?.totalElements || 0,
+        pageSize: usersApi.data?.size || 10,
+        isEmpty: usersApi.data?.empty || false,
+        isFirstPage: usersApi.data?.first || true,
+        isLastPage: usersApi.data?.last || true,
     };
 };

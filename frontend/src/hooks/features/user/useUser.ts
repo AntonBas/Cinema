@@ -1,6 +1,6 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useCallback } from 'react';
 import type {
-    UserProfile,
+    UserProfileResponse,
     UserUpdateRequest,
     UserPasswordUpdateRequest
 } from '@/types/user';
@@ -8,156 +8,82 @@ import { userApi } from '@/api/userApi';
 import { useApi } from '@/hooks/common/useApi';
 
 export const useUser = () => {
-    const profileApi = useApi<UserProfile>();
+    const profileApi = useApi<UserProfileResponse>();
     const emailChangeApi = useApi<{ message: string }>();
     const passwordApi = useApi<{ message: string }>();
 
-    const [user, setUser] = useState<UserProfile | null>(null);
-    const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-    useEffect(() => {
-        const loadInitialProfile = async () => {
-            const token = localStorage.getItem('authToken');
-            if (!token) {
-                setErrorMessage('No authentication token found. Please log in.');
-                return;
-            }
-            try {
-                const userData = await profileApi.callApi(() => userApi.getProfile(), {
-                    showErrorNotification: false,
-                    silent: true
-                });
-                setUser(userData);
-                setErrorMessage(null);
-            } catch (error) {
-                console.error('Failed to load initial profile:', error);
-                setErrorMessage(error instanceof Error ? error.message : 'Failed to load user data');
-            }
-        };
-
-        loadInitialProfile();
-    }, []);
-
-    useEffect(() => {
-        setUser(profileApi.data);
-        if (profileApi.error) {
-            setErrorMessage(profileApi.error.message);
-        }
-    }, [profileApi.data, profileApi.error]);
-
-    useEffect(() => {
-        if (emailChangeApi.error) {
-            setErrorMessage(emailChangeApi.error.message);
-        }
-    }, [emailChangeApi.error]);
-
-    useEffect(() => {
-        if (passwordApi.error) {
-            setErrorMessage(passwordApi.error.message);
-        }
-    }, [passwordApi.error]);
-
-    const loadProfile = useCallback(async () => {
-        try {
-            const userData = await profileApi.callApi(() => userApi.getProfile(), {
+    const getProfile = useCallback(async () => {
+        return profileApi.callApi(
+            () => userApi.getProfile(),
+            {
+                cacheKey: 'user_profile',
+                cacheTime: 5 * 60 * 1000,
                 showErrorNotification: false,
-                silent: true
-            });
-            setUser(userData);
-            setErrorMessage(null);
-            return userData;
-        } catch (error) {
-            setErrorMessage(error instanceof Error ? error.message : 'Failed to load user data');
-            throw error;
-        }
+            }
+        );
     }, [profileApi]);
 
-    const updateProfile = useCallback(async (updateData: UserUpdateRequest): Promise<UserProfile> => {
-        try {
-            const updatedUser = await profileApi.callApi(() => userApi.updateProfile(updateData), {
+    const updateProfile = useCallback(async (updateData: UserUpdateRequest) => {
+        return profileApi.callApi(
+            () => userApi.updateProfile(updateData),
+            {
                 successMessage: 'Profile updated successfully',
-                showErrorNotification: false
-            });
-            setUser(updatedUser);
-            setErrorMessage(null);
-            return updatedUser;
-        } catch (error) {
-            setErrorMessage(error instanceof Error ? error.message : 'Failed to update profile');
-            throw error;
-        }
+                onSuccess: () => {
+                    profileApi.invalidateCache('user_profile');
+                },
+            }
+        );
     }, [profileApi]);
 
-    const requestEmailChange = useCallback(async (newEmail: string): Promise<{ message: string }> => {
-        try {
-            const result = await emailChangeApi.callApi(() => userApi.requestEmailChange(newEmail), {
+    const requestEmailChange = useCallback(async (newEmail: string) => {
+        return emailChangeApi.callApi(
+            () => userApi.requestEmailChange(newEmail),
+            {
                 successMessage: 'Email change request sent. Check your new email.',
-                showErrorNotification: false
-            });
-            setErrorMessage(null);
-            return result;
-        } catch (error) {
-            setErrorMessage(error instanceof Error ? error.message : 'Failed to request email change');
-            throw error;
-        }
+            }
+        );
     }, [emailChangeApi]);
 
-    const confirmEmailChange = useCallback(async (token: string): Promise<UserProfile> => {
-        try {
-            const updatedUser = await profileApi.callApi(() => userApi.confirmEmailChange(token), {
-                successMessage: 'Email updated successfully',
-                showErrorNotification: false
-            });
-            setUser(updatedUser);
-            setErrorMessage(null);
-            return updatedUser;
-        } catch (error) {
-            setErrorMessage(error instanceof Error ? error.message : 'Failed to confirm email change');
-            throw error;
-        }
-    }, [profileApi]);
-
-    const updatePassword = useCallback(async (
-        currentPassword: string,
-        newPassword: string,
-        passwordConfirm: string
-    ): Promise<{ message: string }> => {
-        try {
-            const passwordData: UserPasswordUpdateRequest = {
-                currentPassword,
-                newPassword,
-                passwordConfirm
-            };
-            const result = await passwordApi.callApi(() => userApi.updatePassword(passwordData), {
+    const updatePassword = useCallback(async (passwordData: UserPasswordUpdateRequest) => {
+        return passwordApi.callApi(
+            () => userApi.updatePassword(passwordData),
+            {
                 successMessage: 'Password updated successfully',
-                showErrorNotification: false
-            });
-            setErrorMessage(null);
-            return result;
-        } catch (error) {
-            setErrorMessage(error instanceof Error ? error.message : 'Failed to update password');
-            throw error;
-        }
+            }
+        );
     }, [passwordApi]);
 
-    const refreshUser = useCallback(async () => {
-        return loadProfile();
-    }, [loadProfile]);
+    const clearCache = useCallback(() => {
+        profileApi.invalidateCache();
+        emailChangeApi.invalidateCache();
+        passwordApi.invalidateCache();
+    }, [profileApi, emailChangeApi, passwordApi]);
 
-    const clearError = useCallback(() => {
-        setErrorMessage(null);
-    }, []);
+    const logout = useCallback(() => {
+        localStorage.removeItem('authToken');
+        clearCache();
+        window.location.href = '/login';
+    }, [clearCache]);
 
     return {
-        user,
-        isLoading: profileApi.loading || emailChangeApi.loading || passwordApi.loading,
-        error: errorMessage,
-        loadProfile,
+        user: profileApi.data,
+
+        loading: profileApi.state.isLoading || emailChangeApi.state.isLoading || passwordApi.state.isLoading,
+        error: profileApi.state.isError || emailChangeApi.state.isError || passwordApi.state.isError,
+        isProfileLoading: profileApi.state.isLoading,
+        isEmailChanging: emailChangeApi.state.isLoading,
+        isPasswordUpdating: passwordApi.state.isLoading,
+
+        getProfile,
         updateProfile,
         requestEmailChange,
-        confirmEmailChange,
         updatePassword,
-        refreshUser,
-        clearError,
-        resetProfile: profileApi.reset
+        clearCache,
+        logout,
+
+        resetProfile: profileApi.reset,
+        resetEmailChange: emailChangeApi.reset,
+        resetPassword: passwordApi.reset,
+        refetchProfile: profileApi.refetch,
     };
 };

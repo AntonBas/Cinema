@@ -1,1 +1,0 @@
-export { useMovies } from './useMovies';

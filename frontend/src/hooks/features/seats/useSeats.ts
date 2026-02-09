@@ -1,151 +1,168 @@
-import { useState, useCallback, useRef } from 'react';
+import { useCallback } from 'react';
 import { seatApi } from '@/api/seatApi';
 import type { SeatResponse, SeatType } from '@/types/seat';
 import { useApi } from '@/hooks/common/useApi';
 
 export const useSeats = () => {
-    const [seats, setSeats] = useState<SeatResponse[]>([]);
-    const [seat, setSeat] = useState<SeatResponse | null>(null);
+    const seatsByHallApi = useApi<SeatResponse[]>();
+    const seatByIdApi = useApi<SeatResponse>();
+    const seatByPositionApi = useApi<SeatResponse>();
+    const checkAvailabilityApi = useApi<boolean>();
+    const countSeatsApi = useApi<number>();
 
-    const apiHookRef = useRef(useApi<SeatResponse[]>());
-    const apiHook = apiHookRef.current;
-
-    const getSeatByIdHook = useApi<SeatResponse>();
-    const getSeatByPositionHook = useApi<SeatResponse>();
-    const checkSeatAvailabilityHook = useApi<boolean>();
-    const countSeatsByHallHook = useApi<number>();
-    const updateSeatTypeHook = useApi<SeatResponse>();
-    const activateSeatHook = useApi<SeatResponse>();
-    const deactivateSeatHook = useApi<SeatResponse>();
-
-    const getSeatsByHall = useCallback(async (hallId: number): Promise<SeatResponse[]> => {
-        return apiHook.callApi(async () => {
-            const data = await seatApi.getSeatsByHall(hallId);
-            setSeats(data);
-            return data;
-        }, { showErrorNotification: false });
-    }, [apiHook]);
-
-    const getSeatById = useCallback(async (hallId: number, seatId: number): Promise<SeatResponse> => {
-        return getSeatByIdHook.callApi(async () => {
-            const data = await seatApi.getSeatById(hallId, seatId);
-            setSeat(data);
-            return data;
-        }, { showErrorNotification: false });
-    }, [getSeatByIdHook]);
-
-    const getSeatByPosition = useCallback(async (hallId: number, row: number, number: number): Promise<SeatResponse> => {
-        return getSeatByPositionHook.callApi(async () => {
-            const data = await seatApi.getSeatByPosition(hallId, row, number);
-            setSeat(data);
-            return data;
-        }, { showErrorNotification: false });
-    }, [getSeatByPositionHook]);
-
-    const checkSeatAvailability = useCallback(async (hallId: number, row: number, number: number): Promise<boolean> => {
-        return checkSeatAvailabilityHook.callApi(async () => {
-            return await seatApi.checkSeatAvailability(hallId, row, number);
-        }, { showErrorNotification: false });
-    }, [checkSeatAvailabilityHook]);
-
-    const countSeatsByHall = useCallback(async (hallId: number): Promise<number> => {
-        return countSeatsByHallHook.callApi(async () => {
-            return await seatApi.countSeatsByHall(hallId);
-        }, { showErrorNotification: false });
-    }, [countSeatsByHallHook]);
-
-    const getSeatsByType = useCallback(async (hallId: number, seatType: SeatType): Promise<SeatResponse[]> => {
-        return apiHook.callApi(async () => {
-            const data = await seatApi.getSeatsByType(hallId, seatType);
-            setSeats(data);
-            return data;
-        }, { showErrorNotification: false });
-    }, [apiHook]);
-
-    const getActiveSeatsByHall = useCallback(async (hallId: number): Promise<SeatResponse[]> => {
-        return apiHook.callApi(async () => {
-            const allSeats = await seatApi.getSeatsByHall(hallId);
-            const activeSeats = allSeats.filter(s => s.active);
-            setSeats(activeSeats);
-            return activeSeats;
-        }, { showErrorNotification: false });
-    }, [apiHook]);
-
-    const updateSeatType = useCallback(async (hallId: number, seatId: number, seatType: SeatType): Promise<SeatResponse> => {
-        return updateSeatTypeHook.callApi(async () => {
-            const updatedSeat = await seatApi.admin.updateSeatType(hallId, seatId, seatType);
-
-            setSeats(prevSeats =>
-                prevSeats.map(s =>
-                    s.id === seatId ? { ...s, seatType } : s
-                )
-            );
-
-            if (seat?.id === seatId) {
-                setSeat(updatedSeat);
+    const getSeatsByHall = useCallback(async (hallId: number) => {
+        return seatsByHallApi.callApi(
+            () => seatApi.getSeatsByHall(hallId),
+            {
+                cacheKey: `seats_hall_${hallId}`,
+                cacheTime: 5 * 60 * 1000,
+                showErrorNotification: false,
             }
+        );
+    }, [seatsByHallApi]);
 
-            return updatedSeat;
-        }, { showErrorNotification: false });
-    }, [updateSeatTypeHook, seat]);
-
-    const activateSeat = useCallback(async (hallId: number, seatId: number): Promise<SeatResponse> => {
-        return activateSeatHook.callApi(async () => {
-            const updatedSeat = await seatApi.admin.activateSeat(hallId, seatId);
-
-            setSeats(prevSeats =>
-                prevSeats.map(s =>
-                    s.id === seatId ? { ...s, active: true } : s
-                )
-            );
-
-            if (seat?.id === seatId) {
-                setSeat(updatedSeat);
+    const getSeatById = useCallback(async (hallId: number, seatId: number) => {
+        return seatByIdApi.callApi(
+            () => seatApi.getSeatById(hallId, seatId),
+            {
+                cacheKey: `seat_${hallId}_${seatId}`,
+                cacheTime: 5 * 60 * 1000,
+                showErrorNotification: false,
             }
+        );
+    }, [seatByIdApi]);
 
-            return updatedSeat;
-        }, { showErrorNotification: false });
-    }, [activateSeatHook, seat]);
-
-    const deactivateSeat = useCallback(async (hallId: number, seatId: number): Promise<SeatResponse> => {
-        return deactivateSeatHook.callApi(async () => {
-            const updatedSeat = await seatApi.admin.deactivateSeat(hallId, seatId);
-
-            setSeats(prevSeats =>
-                prevSeats.map(s =>
-                    s.id === seatId ? { ...s, active: false } : s
-                )
-            );
-
-            if (seat?.id === seatId) {
-                setSeat(updatedSeat);
+    const getSeatByPosition = useCallback(async (hallId: number, row: number, number: number) => {
+        return seatByPositionApi.callApi(
+            () => seatApi.getSeatByPosition(hallId, row, number),
+            {
+                cacheKey: `seat_position_${hallId}_${row}_${number}`,
+                cacheTime: 5 * 60 * 1000,
+                showErrorNotification: false,
             }
+        );
+    }, [seatByPositionApi]);
 
-            return updatedSeat;
-        }, { showErrorNotification: false });
-    }, [deactivateSeatHook, seat]);
+    const checkSeatAvailability = useCallback(async (hallId: number, row: number, number: number) => {
+        return checkAvailabilityApi.callApi(
+            () => seatApi.checkSeatAvailability(hallId, row, number),
+            {
+                cacheKey: `seat_availability_${hallId}_${row}_${number}`,
+                cacheTime: 10 * 1000,
+                silent: true,
+                showErrorNotification: false,
+            }
+        );
+    }, [checkAvailabilityApi]);
 
-    const clearSeats = useCallback(() => {
-        setSeats([]);
-        setSeat(null);
+    const countSeatsByHall = useCallback(async (hallId: number) => {
+        return countSeatsApi.callApi(
+            () => seatApi.countSeatsByHall(hallId),
+            {
+                cacheKey: `seats_count_${hallId}`,
+                cacheTime: 5 * 60 * 1000,
+                showErrorNotification: false,
+            }
+        );
+    }, [countSeatsApi]);
+
+    const getSeatsByType = useCallback(async (hallId: number, seatType: SeatType) => {
+        const api = useApi<SeatResponse[]>();
+        return api.callApi(
+            () => seatApi.getSeatsByType(hallId, seatType),
+            {
+                cacheKey: `seats_type_${hallId}_${seatType}`,
+                cacheTime: 5 * 60 * 1000,
+                showErrorNotification: false,
+            }
+        );
     }, []);
 
+    const getActiveSeats = useCallback(async (hallId: number) => {
+        const api = useApi<SeatResponse[]>();
+        return api.callApi(
+            () => seatApi.getActiveSeats(hallId),
+            {
+                cacheKey: `active_seats_${hallId}`,
+                cacheTime: 5 * 60 * 1000,
+                showErrorNotification: false,
+            }
+        );
+    }, []);
+
+    const getDistinctRows = useCallback(async (hallId: number) => {
+        const api = useApi<number[]>();
+        return api.callApi(
+            () => seatApi.getDistinctRows(hallId),
+            {
+                cacheKey: `rows_${hallId}`,
+                cacheTime: 5 * 60 * 1000,
+                showErrorNotification: false,
+            }
+        );
+    }, []);
+
+    const updateSeatType = useCallback(async (hallId: number, seatId: number, seatType: SeatType) => {
+        const api = useApi<SeatResponse>();
+        return api.callApi(
+            () => seatApi.admin.updateSeatType(hallId, seatId, seatType),
+            {
+                successMessage: 'Seat type updated successfully',
+                onSuccess: () => {
+                    seatsByHallApi.invalidateCache(`seats_hall_${hallId}`);
+                    seatByIdApi.invalidateCache(`seat_${hallId}_${seatId}`);
+                },
+            }
+        );
+    }, [seatsByHallApi, seatByIdApi]);
+
+    const setSeatStatus = useCallback(async (hallId: number, seatId: number, active: boolean) => {
+        const api = useApi<SeatResponse>();
+        return api.callApi(
+            () => seatApi.admin.setSeatStatus(hallId, seatId, active),
+            {
+                successMessage: active ? 'Seat activated successfully' : 'Seat deactivated successfully',
+                onSuccess: () => {
+                    seatsByHallApi.invalidateCache(`seats_hall_${hallId}`);
+                    seatByIdApi.invalidateCache(`seat_${hallId}_${seatId}`);
+                },
+            }
+        );
+    }, [seatsByHallApi, seatByIdApi]);
+
+    const clearSeatsCache = useCallback((hallId?: number) => {
+        if (hallId) {
+            seatsByHallApi.invalidateCache(`seats_hall_${hallId}`);
+        } else {
+            seatsByHallApi.invalidateCache();
+            seatByIdApi.invalidateCache();
+            seatByPositionApi.invalidateCache();
+            checkAvailabilityApi.invalidateCache();
+            countSeatsApi.invalidateCache();
+        }
+    }, [seatsByHallApi, seatByIdApi, seatByPositionApi, checkAvailabilityApi, countSeatsApi]);
+
     return {
-        seats,
-        seat,
-        loading: apiHook.loading || getSeatByIdHook.loading || getSeatByPositionHook.loading ||
-            checkSeatAvailabilityHook.loading || countSeatsByHallHook.loading ||
-            updateSeatTypeHook.loading || activateSeatHook.loading || deactivateSeatHook.loading,
+        seats: seatsByHallApi.data || [],
+        seat: seatByIdApi.data || seatByPositionApi.data,
+
+        loading: seatsByHallApi.state.isLoading || seatByIdApi.state.isLoading || seatByPositionApi.state.isLoading,
+        error: seatsByHallApi.state.isError || seatByIdApi.state.isError || seatByPositionApi.state.isError,
+
         getSeatsByHall,
         getSeatById,
         getSeatByPosition,
         checkSeatAvailability,
         countSeatsByHall,
         getSeatsByType,
-        getActiveSeatsByHall,
+        getActiveSeats,
+        getDistinctRows,
         updateSeatType,
-        activateSeat,
-        deactivateSeat,
-        clearSeats,
+        setSeatStatus,
+        clearSeatsCache,
+
+        resetSeats: seatsByHallApi.reset,
+        resetSeat: seatByIdApi.reset,
+        refetchSeats: seatsByHallApi.refetch,
     };
 };

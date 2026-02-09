@@ -1,1 +1,0 @@
-export { useTicketType } from './useTicketType';

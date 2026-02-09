@@ -1,188 +1,122 @@
-import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
+import { useCallback } from 'react';
 import { ticketApi } from '@/api/ticketApi';
-import type { TicketResponse, TicketStatus } from '@/types/ticket';
-import type { PageResponse, SearchParams } from '@/types/pagination';
+import type { TicketResponse } from '@/types/ticket';
+import type { PageResponse } from '@/types/pagination';
 import { useApi } from '@/hooks/common/useApi';
 
 export const useTickets = () => {
-    const [data, setData] = useState<PageResponse<TicketResponse>>({
-        content: [],
-        totalElements: 0,
-        totalPages: 0,
-        size: 12,
-        number: 0,
-        first: true,
-        last: true,
-        empty: true
-    });
-    const [status, setStatus] = useState<TicketStatus | undefined>();
-    const [isUpcoming, setIsUpcoming] = useState(false);
-    const [filters, setFilters] = useState<{
-        search?: string;
-        dateRange?: {
-            from: string;
-            to: string;
-        };
-    }>({});
+    const userTicketsApi = useApi<PageResponse<TicketResponse>>();
+    const upcomingTicketsApi = useApi<PageResponse<TicketResponse>>();
+    const ticketByIdApi = useApi<TicketResponse>();
+    const ticketByCodeApi = useApi<TicketResponse>();
 
-    const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const getUserTickets = useCallback(async (params?: any) => {
+        return userTicketsApi.callApi(
+            () => ticketApi.getUserTickets(params),
+            {
+                cacheKey: `user_tickets_${JSON.stringify(params)}`,
+                cacheTime: 30 * 1000,
+                showErrorNotification: false,
+            }
+        );
+    }, [userTicketsApi]);
 
-    const apiHook = useApi<PageResponse<TicketResponse>>();
-    const getUpcomingTicketsHook = useApi<PageResponse<TicketResponse>>();
-    const getByIdHook = useApi<TicketResponse>();
-    const getByCodeHook = useApi<TicketResponse>();
-    const validateHook = useApi<void>();
-    const getQRCodeHook = useApi<Blob>();
+    const getUpcomingTickets = useCallback(async (params?: any) => {
+        return upcomingTicketsApi.callApi(
+            () => ticketApi.getUpcomingTickets(params),
+            {
+                cacheKey: `upcoming_tickets_${JSON.stringify(params)}`,
+                cacheTime: 30 * 1000,
+                showErrorNotification: false,
+            }
+        );
+    }, [upcomingTicketsApi]);
 
-    const searchParams = useMemo(() => {
-        const params: SearchParams = {
-            page: data.number,
-            size: data.size
-        };
+    const getById = useCallback(async (ticketId: number) => {
+        return ticketByIdApi.callApi(
+            () => ticketApi.getById(ticketId),
+            {
+                cacheKey: `ticket_${ticketId}`,
+                cacheTime: 5 * 60 * 1000,
+                showErrorNotification: false,
+            }
+        );
+    }, [ticketByIdApi]);
 
-        if (status) {
-            params.status = status;
-        }
+    const getByCode = useCallback(async (ticketCode: string) => {
+        return ticketByCodeApi.callApi(
+            () => ticketApi.getByCode(ticketCode),
+            {
+                cacheKey: `ticket_code_${ticketCode}`,
+                cacheTime: 5 * 60 * 1000,
+                showErrorNotification: false,
+            }
+        );
+    }, [ticketByCodeApi]);
 
-        if (filters.search) {
-            params.search = filters.search;
-        }
-
-        if (filters.dateRange) {
-            params.from = filters.dateRange.from;
-            params.to = filters.dateRange.to;
-        }
-
-        return params;
-    }, [status, filters.search, filters.dateRange, data.number, data.size]);
-
-    const fetchTickets = useCallback(async () => {
-        if (isUpcoming) {
-            return getUpcomingTicketsHook.callApi(async () => {
-                const response = await ticketApi.getUpcomingTickets(searchParams);
-                setData(response);
-                return response;
-            }, { showErrorNotification: false });
-        } else {
-            return apiHook.callApi(async () => {
-                const response = await ticketApi.getUserTickets(status, searchParams);
-                setData(response);
-                return response;
-            }, { showErrorNotification: false });
-        }
-    }, [isUpcoming, searchParams, status]);
-
-    const fetchTicketsRef = useRef(fetchTickets);
-
-    useEffect(() => {
-        fetchTicketsRef.current = fetchTickets;
-    }, [fetchTickets]);
-
-    useEffect(() => {
-        fetchTicketsRef.current();
-    }, [searchParams]);
-
-    const handlePageChange = useCallback((page: number) => {
-        setData(prev => ({ ...prev, number: page }));
+    const validateTicket = useCallback(async (ticketCode: string) => {
+        const api = useApi<void>();
+        return api.callApi(
+            () => ticketApi.validate(ticketCode),
+            {
+                successMessage: 'Ticket validated successfully',
+            }
+        );
     }, []);
 
-    const handleSizeChange = useCallback((size: number) => {
-        setData(prev => ({ ...prev, size, number: 0 }));
+    const getQRCode = useCallback(async (ticketCode: string) => {
+        const api = useApi<Blob>();
+        return api.callApi(
+            async () => {
+                const response = await fetch(`/api/tickets/${ticketCode}/qr`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+                    },
+                });
+                if (!response.ok) throw new Error('Failed to fetch QR code');
+                return response.blob();
+            },
+            {
+                cacheKey: `qr_code_${ticketCode}`,
+                cacheTime: 24 * 60 * 60 * 1000,
+                silent: true,
+                showErrorNotification: false,
+            }
+        );
     }, []);
 
-    const handleStatusChange = useCallback((newStatus?: TicketStatus) => {
-        setStatus(newStatus);
-        setData(prev => ({ ...prev, number: 0 }));
-    }, []);
-
-    const handleUpcomingToggle = useCallback((upcoming: boolean) => {
-        setIsUpcoming(upcoming);
-        setData(prev => ({ ...prev, number: 0 }));
-    }, []);
-
-    const handleSearch = useCallback((query: string) => {
-        if (searchTimeoutRef.current) {
-            clearTimeout(searchTimeoutRef.current);
-        }
-
-        searchTimeoutRef.current = setTimeout(() => {
-            setFilters(prev => ({ ...prev, search: query }));
-            setData(prev => ({ ...prev, number: 0 }));
-        }, 300);
-    }, []);
-
-    const updateDateRange = useCallback((from?: string, to?: string) => {
-        if (from && to) {
-            setFilters(prev => ({ ...prev, dateRange: { from, to } }));
-            setData(prev => ({ ...prev, number: 0 }));
-        } else {
-            setFilters(prev => {
-                const { dateRange, ...rest } = prev;
-                return rest;
-            });
-        }
-    }, []);
-
-    const clearFilters = useCallback(() => {
-        setFilters({});
-        setStatus(undefined);
-        setData(prev => ({ ...prev, number: 0 }));
-    }, []);
-
-    const getById = useCallback(async (ticketId: number): Promise<TicketResponse> => {
-        return getByIdHook.callApi(async () => {
-            return await ticketApi.getById(ticketId);
-        }, { showErrorNotification: false });
-    }, [getByIdHook]);
-
-    const getByCode = useCallback(async (ticketCode: string): Promise<TicketResponse> => {
-        return getByCodeHook.callApi(async () => {
-            return await ticketApi.getByCode(ticketCode);
-        }, { showErrorNotification: false });
-    }, [getByCodeHook]);
-
-    const getQrCode = useCallback(async (ticketCode: string): Promise<Blob> => {
-        return getQRCodeHook.callApi(async () => {
-            return await ticketApi.getQRCode(ticketCode);
-        }, { showErrorNotification: false });
-    }, [getQRCodeHook]);
-
-    const validate = useCallback(async (ticketCode: string): Promise<void> => {
-        return validateHook.callApi(async () => {
-            await ticketApi.validate(ticketCode);
-        }, { showErrorNotification: false });
-    }, [validateHook]);
-
-    const loading = apiHook.loading || getUpcomingTicketsHook.loading ||
-        getByIdHook.loading || getByCodeHook.loading || validateHook.loading ||
-        getQRCodeHook.loading;
+    const clearCache = useCallback(() => {
+        userTicketsApi.invalidateCache();
+        upcomingTicketsApi.invalidateCache();
+        ticketByIdApi.invalidateCache();
+        ticketByCodeApi.invalidateCache();
+    }, [userTicketsApi, upcomingTicketsApi, ticketByIdApi, ticketByCodeApi]);
 
     return {
-        data,
-        loading,
-        status,
-        isUpcoming,
-        filters,
-        handlePageChange,
-        handleSizeChange,
-        handleStatusChange,
-        handleUpcomingToggle,
-        handleSearch,
-        handleDateRangeChange: updateDateRange,
-        refresh: fetchTickets,
-        clearFilters,
+        userTickets: userTicketsApi.data?.content || [],
+        upcomingTickets: upcomingTicketsApi.data?.content || [],
+        ticket: ticketByIdApi.data || ticketByCodeApi.data,
+        userPagination: userTicketsApi.data,
+        upcomingPagination: upcomingTicketsApi.data,
+
+        loading: userTicketsApi.state.isLoading || upcomingTicketsApi.state.isLoading ||
+            ticketByIdApi.state.isLoading || ticketByCodeApi.state.isLoading,
+        error: userTicketsApi.state.isError || upcomingTicketsApi.state.isError ||
+            ticketByIdApi.state.isError || ticketByCodeApi.state.isError,
+
+        getUserTickets,
+        getUpcomingTickets,
         getById,
         getByCode,
-        getQrCode,
-        validate,
-        hasFilters: status !== undefined || Object.keys(filters).length > 0,
-        currentPage: data.number,
-        totalPages: data.totalPages,
-        totalElements: data.totalElements,
-        pageSize: data.size,
-        isEmpty: data.empty,
-        isFirstPage: data.first,
-        isLastPage: data.last,
-        tickets: data.content,
+        validateTicket,
+        getQRCode,
+        clearCache,
+
+        resetUserTickets: userTicketsApi.reset,
+        resetUpcomingTickets: upcomingTicketsApi.reset,
+        resetTicket: ticketByIdApi.reset,
+        resetTicketByCode: ticketByCodeApi.reset,
+        refetchUserTickets: userTicketsApi.refetch,
+        refetchUpcomingTickets: upcomingTicketsApi.refetch,
     };
 };
