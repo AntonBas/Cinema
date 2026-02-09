@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.config;
+package ua.lviv.bas.cinema.config.security;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

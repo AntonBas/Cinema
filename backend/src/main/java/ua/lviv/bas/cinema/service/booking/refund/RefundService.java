@@ -10,7 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import ua.lviv.bas.cinema.config.RefundRules;
+import ua.lviv.bas.cinema.config.properties.RefundRules;
 import ua.lviv.bas.cinema.domain.Refund;
 import ua.lviv.bas.cinema.domain.RefundItem;
 import ua.lviv.bas.cinema.domain.Ticket;

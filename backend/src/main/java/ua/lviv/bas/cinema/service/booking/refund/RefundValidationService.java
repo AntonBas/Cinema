@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
-import ua.lviv.bas.cinema.config.RefundRules;
+import ua.lviv.bas.cinema.config.properties.RefundRules;
 import ua.lviv.bas.cinema.domain.Ticket;
 import ua.lviv.bas.cinema.domain.enums.TicketStatus;
 

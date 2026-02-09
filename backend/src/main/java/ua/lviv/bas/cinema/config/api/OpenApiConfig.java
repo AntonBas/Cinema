@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.config;
+package ua.lviv.bas.cinema.config.api;
 
 import org.springframework.context.annotation.Configuration;
 

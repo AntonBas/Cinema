@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.config;
+package ua.lviv.bas.cinema.config.properties;
 
 import java.math.BigDecimal;
 import java.util.Map;

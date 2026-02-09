@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.config;
+package ua.lviv.bas.cinema.initializer;
 
 import java.math.BigDecimal;
 

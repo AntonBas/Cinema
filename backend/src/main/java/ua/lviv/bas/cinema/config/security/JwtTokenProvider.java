@@ -1,6 +1,10 @@
-package ua.lviv.bas.cinema.config;
+package ua.lviv.bas.cinema.config.security;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.crypto.SecretKey;
 
@@ -11,6 +15,7 @@ import org.springframework.stereotype.Component;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.security.CustomUserDetails;
@@ -29,35 +34,43 @@ public class JwtTokenProvider {
 
 	private SecretKey getSigningKey() {
 		if (signingKey == null) {
-			byte[] keyBytes = jwtSecret.getBytes();
-			if (keyBytes.length < 64) {
-				byte[] paddedKey = new byte[64];
-				System.arraycopy(keyBytes, 0, paddedKey, 0, Math.min(keyBytes.length, 64));
-				signingKey = Keys.hmacShaKeyFor(paddedKey);
-			} else {
-				signingKey = Keys.hmacShaKeyFor(keyBytes);
+			if (jwtSecret.length() < 32) {
+				StringBuilder safeSecret = new StringBuilder(jwtSecret);
+				while (safeSecret.length() < 32) {
+					safeSecret.append("0");
+				}
+				jwtSecret = safeSecret.toString();
 			}
+
+			byte[] keyBytes = Decoders.BASE64.decode(jwtSecret);
+			signingKey = Keys.hmacShaKeyFor(keyBytes);
 		}
 		return signingKey;
 	}
 
 	public String generateToken(Authentication authentication) {
 		CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-		Date now = new Date();
-		Date expiryDate = new Date(now.getTime() + jwtExpiration);
+		Instant now = Instant.now();
+		Instant expiry = now.plus(jwtExpiration, ChronoUnit.MILLIS);
 
-		return Jwts.builder().setSubject(userDetails.getUsername()).setIssuedAt(now).setExpiration(expiryDate)
-				.signWith(getSigningKey()).compact();
+		Map<String, Object> claims = new HashMap<>();
+		claims.put("username", userDetails.getUsername());
+		claims.put("userId", userDetails.getUserId());
+		claims.put("role", userDetails.getAuthorities());
+
+		return Jwts.builder().claims(claims).subject(userDetails.getUsername()).issuedAt(Date.from(now))
+				.expiration(Date.from(expiry)).signWith(getSigningKey(), Jwts.SIG.HS256).compact();
 	}
 
 	public String getEmailFromToken(String token) {
-		Claims claims = Jwts.parserBuilder().setSigningKey(getSigningKey()).build().parseClaimsJws(token).getBody();
+		Claims claims = Jwts.parser().verifyWith(getSigningKey()).build().parseSignedClaims(token).getPayload();
+
 		return claims.getSubject();
 	}
 
 	public boolean validateToken(String token) {
 		try {
-			Jwts.parserBuilder().setSigningKey(getSigningKey()).build().parseClaimsJws(token);
+			Jwts.parser().verifyWith(getSigningKey()).build().parseSignedClaims(token);
 			return true;
 		} catch (ExpiredJwtException ex) {
 			log.error("JWT token is expired: {}", ex.getMessage());
@@ -68,7 +81,8 @@ public class JwtTokenProvider {
 	}
 
 	public Date getExpirationFromToken(String token) {
-		Claims claims = Jwts.parserBuilder().setSigningKey(getSigningKey()).build().parseClaimsJws(token).getBody();
+		Claims claims = Jwts.parser().verifyWith(getSigningKey()).build().parseSignedClaims(token).getPayload();
+
 		return claims.getExpiration();
 	}
 }
