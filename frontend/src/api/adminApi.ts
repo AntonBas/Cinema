@@ -1,5 +1,5 @@
 import type {
-    AdminUsersResponse,
+    AdminUserListResponse,
     UserRoleUpdateRequest,
     UserStatusUpdateRequest,
     VerificationBirthDateRequest,
@@ -45,9 +45,9 @@ export const adminApi = {
         role?: string;
         verificationStatus?: string;
         enabled?: boolean;
-    }): Promise<PageResponse<AdminUsersResponse>> => {
+    }): Promise<PageResponse<AdminUserListResponse>> => {
         const url = buildPagedUrl(ADMIN_API_URL, params, 'admin');
-        return fetchApi<PageResponse<AdminUsersResponse>>(url);
+        return fetchApi<PageResponse<AdminUserListResponse>>(url);
     },
 
     updateUserRole: (userId: number, roleData: UserRoleUpdateRequest): Promise<void> =>
