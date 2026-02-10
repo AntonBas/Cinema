@@ -12,7 +12,8 @@ import ua.lviv.bas.cinema.domain.enums.ReservationStatus;
 
 @Repository
 public interface SeatReservationRepository extends JpaRepository<SeatReservation, Long> {
-	@Query("SELECT COUNT(bs) > 0 FROM BookedSeat bs WHERE bs.session.id = :sessionId AND bs.seat.id = :seatId AND bs.status IN :statuses")
+
+	@Query("SELECT COUNT(sr) > 0 FROM SeatReservation sr WHERE sr.session.id = :sessionId AND sr.seat.id = :seatId AND sr.status IN :statuses")
 	boolean existsBySessionIdAndSeatIdAndStatusIn(@Param("sessionId") Long sessionId, @Param("seatId") Long seatId,
 			@Param("statuses") List<ReservationStatus> statuses);
 
@@ -20,13 +21,13 @@ public interface SeatReservationRepository extends JpaRepository<SeatReservation
 
 	List<SeatReservation> findBySessionIdAndStatusIn(Long sessionId, List<ReservationStatus> statuses);
 
-	@Query("SELECT COUNT(bs) FROM BookedSeat bs WHERE bs.session.id = :sessionId AND bs.status IN :statuses")
+	@Query("SELECT COUNT(sr) FROM SeatReservation sr WHERE sr.session.id = :sessionId AND sr.status IN :statuses")
 	long countBySessionIdAndStatusIn(@Param("sessionId") Long sessionId,
 			@Param("statuses") List<ReservationStatus> statuses);
 
-	@Query("SELECT bs FROM BookedSeat bs WHERE bs.booking.id = :bookingId")
+	@Query("SELECT sr FROM SeatReservation sr WHERE sr.booking.id = :bookingId")
 	List<SeatReservation> findByBookingId(@Param("bookingId") Long bookingId);
 
-	@Query("SELECT bs FROM BookedSeat bs WHERE bs.booking.user.id = :userId")
+	@Query("SELECT sr FROM SeatReservation sr WHERE sr.booking.user.id = :userId")
 	List<SeatReservation> findByUserId(@Param("userId") Long userId);
 }

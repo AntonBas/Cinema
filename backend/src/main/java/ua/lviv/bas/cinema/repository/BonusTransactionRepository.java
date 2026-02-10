@@ -15,12 +15,12 @@ public interface BonusTransactionRepository extends JpaRepository<BonusTransacti
 
 	Page<BonusTransaction> findByBonusCard(BonusCard bonusCard, Pageable pageable);
 
-	Page<BonusTransaction> findByUserId(Long userId, Pageable pageable);
+	@Query("SELECT bt FROM BonusTransaction bt WHERE bt.bonusCard.user.id = :userId")
+	Page<BonusTransaction> findByUserId(@Param("userId") Long userId, Pageable pageable);
 
 	Page<BonusTransaction> findByType(BonusTransactionType type, Pageable pageable);
 
-	@Query("SELECT bt FROM BonusTransaction bt " + "LEFT JOIN bt.booking b " + "LEFT JOIN b.movieSession ms "
-			+ "LEFT JOIN ms.movie m " + "LEFT JOIN ms.cinemaHall ch " + "WHERE bt.bonusCard.user.id = :userId "
-			+ "ORDER BY bt.createdAt DESC")
+	@Query("SELECT bt FROM BonusTransaction bt " + "LEFT JOIN bt.booking b " + "LEFT JOIN b.session s "
+			+ "WHERE bt.bonusCard.user.id = :userId " + "ORDER BY bt.createdAt DESC")
 	Page<BonusTransactionProjection> findProjectionsByUserId(@Param("userId") Long userId, Pageable pageable);
 }
