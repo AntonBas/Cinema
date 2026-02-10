@@ -25,7 +25,7 @@ import ua.lviv.bas.cinema.repository.BonusTransactionRepository;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class BonusAdminService {
+public class AdminBonusService {
 
 	private final BonusRulesRepository bonusRulesRepository;
 	private final BonusTransactionRepository bonusTransactionRepository;

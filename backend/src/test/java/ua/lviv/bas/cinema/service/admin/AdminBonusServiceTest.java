@@ -30,7 +30,7 @@ import ua.lviv.bas.cinema.repository.BonusRulesRepository;
 import ua.lviv.bas.cinema.repository.BonusTransactionRepository;
 
 @ExtendWith(MockitoExtension.class)
-class BonusAdminServiceTest {
+class AdminBonusServiceTest {
 
 	@Mock
 	private BonusRulesRepository bonusRulesRepository;
@@ -42,7 +42,7 @@ class BonusAdminServiceTest {
 	private BonusMapper bonusMapper;
 
 	@InjectMocks
-	private BonusAdminService service;
+	private AdminBonusService service;
 
 	@Test
 	void getAllRules() {
