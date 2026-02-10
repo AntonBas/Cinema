@@ -13,7 +13,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import ua.lviv.bas.cinema.domain.enums.SeatType;
@@ -64,7 +63,7 @@ public class CinemaHallControllerTest {
 
 		ResponseEntity<CinemaHallResponse> response = cinemaHallController.getHallById(HALL_ID);
 
-		assertEquals(HttpStatus.OK, response.getStatusCode());
+		assertEquals(200, response.getStatusCode().value());
 
 		CinemaHallResponse responseBody = response.getBody();
 		assertNotNull(responseBody);
@@ -83,16 +82,16 @@ public class CinemaHallControllerTest {
 	}
 
 	@Test
-	void getAllHalls_ShouldReturnListOfHalls() {
+	void getAllOrSearchHalls_ShouldReturnListOfHalls() {
 		CinemaHallResponse hall1 = createCinemaHallDto(1L, "Hall A", 50);
 		CinemaHallResponse hall2 = createCinemaHallDto(2L, "Hall B", 60);
 		List<CinemaHallResponse> halls = List.of(hall1, hall2);
 
-		when(cinemaHallService.getAllHalls()).thenReturn(halls);
+		when(cinemaHallService.getAllOrSearchHalls(null)).thenReturn(halls);
 
-		ResponseEntity<List<CinemaHallResponse>> response = cinemaHallController.getAllHalls();
+		ResponseEntity<List<CinemaHallResponse>> response = cinemaHallController.getAllOrSearchHalls(null);
 
-		assertEquals(HttpStatus.OK, response.getStatusCode());
+		assertEquals(200, response.getStatusCode().value());
 
 		List<CinemaHallResponse> responseBody = response.getBody();
 		assertNotNull(responseBody);
@@ -100,7 +99,26 @@ public class CinemaHallControllerTest {
 		assertEquals(2, responseBody.size());
 		assertEquals(1L, responseBody.get(0).getId());
 		assertEquals(2L, responseBody.get(1).getId());
-		verify(cinemaHallService).getAllHalls();
+		verify(cinemaHallService).getAllOrSearchHalls(null);
+	}
+
+	@Test
+	void getAllOrSearchHalls_WithName_ShouldReturnFilteredHalls() {
+		CinemaHallResponse hall1 = createCinemaHallDto(1L, "Main Hall", 50);
+		List<CinemaHallResponse> halls = List.of(hall1);
+
+		when(cinemaHallService.getAllOrSearchHalls("Main")).thenReturn(halls);
+
+		ResponseEntity<List<CinemaHallResponse>> response = cinemaHallController.getAllOrSearchHalls("Main");
+
+		assertEquals(200, response.getStatusCode().value());
+
+		List<CinemaHallResponse> responseBody = response.getBody();
+		assertNotNull(responseBody);
+
+		assertEquals(1, responseBody.size());
+		assertEquals("Main Hall", responseBody.get(0).getName());
+		verify(cinemaHallService).getAllOrSearchHalls("Main");
 	}
 
 	@Test
@@ -114,7 +132,7 @@ public class CinemaHallControllerTest {
 
 		ResponseEntity<CinemaHallWithSeatsResponse> response = cinemaHallController.getHallWithSeats(HALL_ID);
 
-		assertEquals(HttpStatus.OK, response.getStatusCode());
+		assertEquals(200, response.getStatusCode().value());
 
 		CinemaHallWithSeatsResponse responseBody = response.getBody();
 		assertNotNull(responseBody);
@@ -132,7 +150,7 @@ public class CinemaHallControllerTest {
 
 		ResponseEntity<HallLayoutResponse> response = cinemaHallController.getHallLayout(HALL_ID);
 
-		assertEquals(HttpStatus.OK, response.getStatusCode());
+		assertEquals(200, response.getStatusCode().value());
 
 		HallLayoutResponse responseBody = response.getBody();
 		assertNotNull(responseBody);
@@ -143,62 +161,5 @@ public class CinemaHallControllerTest {
 		assertEquals(10, responseBody.getMaxSeatsPerRow());
 		assertEquals(CAPACITY, responseBody.getTotalSeats());
 		verify(cinemaHallService).getHallLayout(HALL_ID);
-	}
-
-	@Test
-	void searchHalls_WithName_ShouldReturnFilteredHalls() {
-		CinemaHallResponse hall1 = createCinemaHallDto(1L, "Main Hall", 50);
-		List<CinemaHallResponse> halls = List.of(hall1);
-
-		when(cinemaHallService.searchHalls("Main")).thenReturn(halls);
-
-		ResponseEntity<List<CinemaHallResponse>> response = cinemaHallController.searchHalls("Main");
-
-		assertEquals(HttpStatus.OK, response.getStatusCode());
-
-		List<CinemaHallResponse> responseBody = response.getBody();
-		assertNotNull(responseBody);
-
-		assertEquals(1, responseBody.size());
-		assertEquals("Main Hall", responseBody.get(0).getName());
-		verify(cinemaHallService).searchHalls("Main");
-	}
-
-	@Test
-	void searchHalls_WithNullName_ShouldReturnAllHalls() {
-		CinemaHallResponse hall1 = createCinemaHallDto(1L, "Hall A", 50);
-		CinemaHallResponse hall2 = createCinemaHallDto(2L, "Hall B", 60);
-		List<CinemaHallResponse> halls = List.of(hall1, hall2);
-
-		when(cinemaHallService.searchHalls(null)).thenReturn(halls);
-
-		ResponseEntity<List<CinemaHallResponse>> response = cinemaHallController.searchHalls(null);
-
-		assertEquals(HttpStatus.OK, response.getStatusCode());
-
-		List<CinemaHallResponse> responseBody = response.getBody();
-		assertNotNull(responseBody);
-
-		assertEquals(2, responseBody.size());
-		verify(cinemaHallService).searchHalls(null);
-	}
-
-	@Test
-	void searchHalls_WithEmptyName_ShouldReturnAllHalls() {
-		CinemaHallResponse hall1 = createCinemaHallDto(1L, "Hall A", 50);
-		CinemaHallResponse hall2 = createCinemaHallDto(2L, "Hall B", 60);
-		List<CinemaHallResponse> halls = List.of(hall1, hall2);
-
-		when(cinemaHallService.searchHalls("")).thenReturn(halls);
-
-		ResponseEntity<List<CinemaHallResponse>> response = cinemaHallController.searchHalls("");
-
-		assertEquals(HttpStatus.OK, response.getStatusCode());
-
-		List<CinemaHallResponse> responseBody = response.getBody();
-		assertNotNull(responseBody);
-
-		assertEquals(2, responseBody.size());
-		verify(cinemaHallService).searchHalls("");
 	}
 }

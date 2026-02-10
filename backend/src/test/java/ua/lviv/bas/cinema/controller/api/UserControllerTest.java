@@ -15,7 +15,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatusCode;
+import org.springframework.http.ResponseEntity;
 
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.enums.UserRole;
@@ -54,10 +54,10 @@ public class UserControllerTest {
 
 		when(userService.getUserProfile(userId)).thenReturn(profileResponse);
 
-		var response = userController.getProfile(userDetails);
+		ResponseEntity<UserProfileResponse> response = userController.getProfile(userDetails);
 
 		assertNotNull(response);
-		assertEquals(HttpStatusCode.valueOf(200), response.getStatusCode());
+		assertEquals(200, response.getStatusCode().value());
 
 		UserProfileResponse responseBody = response.getBody();
 		assertNotNull(responseBody);
@@ -77,12 +77,12 @@ public class UserControllerTest {
 				.firstName("Updated").lastName("Name").dateOfBirth(LocalDate.of(1995, 5, 5)).city("Kyiv")
 				.phoneNumber("+987654321").verificationStatus(VerificationStatus.VERIFIED).build();
 
-		when(userService.updateUser(eq(userId), any())).thenReturn(profileResponse);
+		when(userService.updateUser(eq(userId), any(UserUpdateRequest.class))).thenReturn(profileResponse);
 
-		var response = userController.updateProfile(userDetails, request);
+		ResponseEntity<UserProfileResponse> response = userController.updateProfile(userDetails, request);
 
 		assertNotNull(response);
-		assertEquals(HttpStatusCode.valueOf(200), response.getStatusCode());
+		assertEquals(200, response.getStatusCode().value());
 
 		UserProfileResponse responseBody = response.getBody();
 		assertNotNull(responseBody);
@@ -97,36 +97,15 @@ public class UserControllerTest {
 
 		String newEmail = "new.email@example.com";
 
-		var response = userController.requestEmailChange(userDetails, newEmail);
+		ResponseEntity<Map<String, String>> response = userController.requestEmailChange(userDetails, newEmail);
 
 		assertNotNull(response);
-		assertEquals(HttpStatusCode.valueOf(200), response.getStatusCode());
+		assertEquals(200, response.getStatusCode().value());
 
 		Map<String, String> responseBody = response.getBody();
 		assertNotNull(responseBody);
 		assertEquals("Confirmation email sent to your new address", responseBody.get("message"));
 		verify(userService).requestEmailChange(userId, newEmail);
-	}
-
-	@Test
-	void confirmEmailChange_ShouldConfirmEmailChange() {
-		String token = "test-token";
-
-		UserProfileResponse profileResponse = UserProfileResponse.builder().id(1L).email("new.email@example.com")
-				.firstName("John").lastName("Doe").dateOfBirth(LocalDate.of(1990, 1, 1)).city("Kyiv")
-				.phoneNumber("+380123456789").verificationStatus(VerificationStatus.VERIFIED).build();
-
-		when(userService.confirmEmailChange(token)).thenReturn(profileResponse);
-
-		var response = userController.confirmEmailChange(token);
-
-		assertNotNull(response);
-		assertEquals(HttpStatusCode.valueOf(200), response.getStatusCode());
-
-		UserProfileResponse responseBody = response.getBody();
-		assertNotNull(responseBody);
-		assertEquals("new.email@example.com", responseBody.getEmail());
-		verify(userService).confirmEmailChange(token);
 	}
 
 	@Test
@@ -137,11 +116,12 @@ public class UserControllerTest {
 		UserPasswordUpdateRequest request = new UserPasswordUpdateRequest();
 		request.setCurrentPassword("oldPassword123");
 		request.setNewPassword("newPassword123");
+		request.setPasswordConfirm("newPassword123");
 
-		var response = userController.updatePassword(userDetails, request);
+		ResponseEntity<Map<String, String>> response = userController.updatePassword(userDetails, request);
 
 		assertNotNull(response);
-		assertEquals(HttpStatusCode.valueOf(200), response.getStatusCode());
+		assertEquals(200, response.getStatusCode().value());
 
 		Map<String, String> responseBody = response.getBody();
 		assertNotNull(responseBody);

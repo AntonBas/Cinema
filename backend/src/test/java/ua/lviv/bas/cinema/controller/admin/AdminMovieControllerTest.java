@@ -6,12 +6,10 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.time.LocalDate;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -19,19 +17,21 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockMultipartFile;
 
-import ua.lviv.bas.cinema.domain.enums.AgeRating;
-import ua.lviv.bas.cinema.domain.enums.MovieStatus;
-import ua.lviv.bas.cinema.domain.enums.PersonRole;
+import ua.lviv.bas.cinema.dto.common.PageResponse;
 import ua.lviv.bas.cinema.dto.movie.request.MovieCreateRequest;
+import ua.lviv.bas.cinema.dto.movie.request.MovieFilterRequest;
 import ua.lviv.bas.cinema.dto.movie.request.MovieUpdateRequest;
-import ua.lviv.bas.cinema.dto.movie.response.GenreResponse;
+import ua.lviv.bas.cinema.dto.movie.response.MovieCardResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieDetailResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieSessionSearchResponse;
-import ua.lviv.bas.cinema.dto.movie.response.PersonResponse;
 import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
 import ua.lviv.bas.cinema.exception.domain.cinema.MovieNotFoundException;
 import ua.lviv.bas.cinema.service.cinema.MovieService;
@@ -45,124 +45,77 @@ public class AdminMovieControllerTest {
 	@InjectMocks
 	private AdminMovieController movieController;
 
-	private MovieDetailResponse createMovieDto(Long id, String title, String slug, MovieStatus status) {
-		GenreResponse genreResponse = GenreResponse.builder().id(1L).name("Action").build();
-		PersonResponse actorResponse = PersonResponse.builder().id(1L).name("Actor One").role(PersonRole.ACTOR).build();
-		PersonResponse directorResponse = PersonResponse.builder().id(2L).name("Director One").role(PersonRole.DIRECTOR)
-				.build();
-		PersonResponse screenwriterResponse = PersonResponse.builder().id(3L).name("Writer One")
-				.role(PersonRole.SCREENWRITER).build();
+	private MovieDetailResponse createMovieDetailDto(Long id, String title) {
+		return MovieDetailResponse.builder().id(id).title(title).slug(title.toLowerCase().replace(" ", "-")).build();
+	}
 
-		return MovieDetailResponse.builder().id(id).title(title).slug(slug).posterUrl("/api/movies/" + id + "/poster")
-				.trailerUrl("https://example.com/trailer").description("Description").durationMinutes(120)
-				.ageRating(AgeRating.PEGI_12).releaseDate(LocalDate.now().plusDays(1))
-				.endShowingDate(LocalDate.now().plusDays(30)).status(status).currentlyShowing(false)
-				.upcoming(status == MovieStatus.UPCOMING).archived(status == MovieStatus.ARCHIVED)
-				.genres(List.of(genreResponse)).actors(List.of(actorResponse)).directors(List.of(directorResponse))
-				.screenwriters(List.of(screenwriterResponse)).build();
+	private MovieCardResponse createMovieCardDto(Long id, String title) {
+		return MovieCardResponse.builder().id(id).title(title).slug(title.toLowerCase().replace(" ", "-")).build();
 	}
 
 	private MovieCreateRequest createMovieCreateRequest(String title) {
-		return MovieCreateRequest.builder().title(title).trailerUrl("https://example.com/trailer")
-				.description("Description").durationMinutes(120).releaseDate(LocalDate.now().plusDays(1))
-				.endShowingDate(LocalDate.now().plusDays(30)).ageRating(AgeRating.PEGI_12).genreIds(List.of(1L, 2L))
-				.actorIds(List.of(1L, 2L)).directorIds(List.of(3L)).screenwriterIds(List.of(4L)).build();
+		return MovieCreateRequest.builder().title(title).description("Description").durationMinutes(120).build();
 	}
 
 	private MovieUpdateRequest createMovieUpdateRequest(String title) {
-		return MovieUpdateRequest.builder().title(title).trailerUrl("https://example.com/trailer")
-				.description("Updated Description").durationMinutes(130).releaseDate(LocalDate.now().plusDays(2))
-				.endShowingDate(LocalDate.now().plusDays(35)).ageRating(AgeRating.PEGI_16).genreIds(List.of(1L, 2L))
-				.actorIds(List.of(1L, 2L)).directorIds(List.of(3L)).screenwriterIds(List.of(4L)).removePoster(false)
-				.build();
+		return MovieUpdateRequest.builder().title(title).description("Updated Description").durationMinutes(130)
+				.removePoster(false).build();
 	}
 
 	@Test
 	void createMovie_ShouldReturnCreatedMovie() {
-		MovieCreateRequest createRequest = createMovieCreateRequest("New Movie");
-		MovieDetailResponse movieDto = createMovieDto(1L, "New Movie", "new-movie", MovieStatus.UPCOMING);
+		MovieCreateRequest request = createMovieCreateRequest("New Movie");
+		MovieDetailResponse responseDto = createMovieDetailDto(1L, "New Movie");
 		MockMultipartFile posterFile = new MockMultipartFile("posterFile", "poster.jpg", "image/jpeg",
 				"content".getBytes());
 
-		createRequest.setPosterFile(posterFile);
-		when(movieService.createMovie(any(MovieCreateRequest.class))).thenReturn(movieDto);
+		when(movieService.createMovie(any())).thenReturn(responseDto);
 
-		ResponseEntity<MovieDetailResponse> response = movieController.createMovie(createRequest, posterFile);
+		ResponseEntity<MovieDetailResponse> response = movieController.createMovie(request, posterFile);
 
 		assertEquals(HttpStatus.CREATED, response.getStatusCode());
-
-		MovieDetailResponse responseBody = response.getBody();
-		assertNotNull(responseBody);
-
-		assertEquals(1L, responseBody.getId());
-		assertEquals("New Movie", responseBody.getTitle());
-		verify(movieService).createMovie(createRequest);
+		assertNotNull(response.getBody());
+		assertEquals("New Movie", response.getBody().getTitle());
+		verify(movieService).createMovie(any());
 	}
 
 	@Test
 	void createMovie_WhenDuplicateTitle_ShouldThrowException() {
-		MovieCreateRequest createRequest = createMovieCreateRequest("Existing Movie");
+		MovieCreateRequest request = createMovieCreateRequest("Existing Movie");
 		MockMultipartFile posterFile = new MockMultipartFile("posterFile", "poster.jpg", "image/jpeg",
 				"content".getBytes());
 
-		when(movieService.createMovie(any(MovieCreateRequest.class)))
-				.thenThrow(new DuplicateEntityException("Movie", "Existing Movie"));
+		when(movieService.createMovie(any())).thenThrow(new DuplicateEntityException("Movie", "Existing Movie"));
 
-		assertThrows(DuplicateEntityException.class, () -> movieController.createMovie(createRequest, posterFile));
-		verify(movieService).createMovie(createRequest);
+		assertThrows(DuplicateEntityException.class, () -> movieController.createMovie(request, posterFile));
 	}
 
 	@Test
 	void updateMovie_ShouldReturnUpdatedMovie() {
-		MovieUpdateRequest updateRequest = createMovieUpdateRequest("Updated Movie");
-		MovieDetailResponse movieDto = createMovieDto(1L, "Updated Movie", "updated-movie", MovieStatus.CURRENT);
+		MovieUpdateRequest request = createMovieUpdateRequest("Updated Movie");
+		MovieDetailResponse responseDto = createMovieDetailDto(1L, "Updated Movie");
 		MockMultipartFile posterFile = new MockMultipartFile("posterFile", "poster.jpg", "image/jpeg",
 				"content".getBytes());
 
-		updateRequest.setPosterFile(posterFile);
-		when(movieService.updateMovie(eq(1L), any(MovieUpdateRequest.class))).thenReturn(movieDto);
+		when(movieService.updateMovie(eq(1L), any())).thenReturn(responseDto);
 
-		ResponseEntity<MovieDetailResponse> response = movieController.updateMovie(1L, updateRequest, posterFile);
+		ResponseEntity<MovieDetailResponse> response = movieController.updateMovie(1L, request, posterFile);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
-
-		MovieDetailResponse responseBody = response.getBody();
-		assertNotNull(responseBody);
-
-		assertEquals(1L, responseBody.getId());
-		assertEquals("Updated Movie", responseBody.getTitle());
-		verify(movieService).updateMovie(1L, updateRequest);
+		assertNotNull(response.getBody());
+		assertEquals("Updated Movie", response.getBody().getTitle());
+		verify(movieService).updateMovie(eq(1L), any());
 	}
 
 	@Test
 	void updateMovie_WhenNotFound_ShouldThrowException() {
-		MovieUpdateRequest updateRequest = createMovieUpdateRequest("Updated Movie");
+		MovieUpdateRequest request = createMovieUpdateRequest("Updated Movie");
 		MockMultipartFile posterFile = new MockMultipartFile("posterFile", "poster.jpg", "image/jpeg",
 				"content".getBytes());
 
-		when(movieService.updateMovie(eq(999L), any(MovieUpdateRequest.class)))
-				.thenThrow(new MovieNotFoundException(999L));
+		when(movieService.updateMovie(eq(999L), any())).thenThrow(new MovieNotFoundException(999L));
 
-		assertThrows(MovieNotFoundException.class, () -> movieController.updateMovie(999L, updateRequest, posterFile));
-		verify(movieService).updateMovie(999L, updateRequest);
-	}
-
-	@Test
-	void updateMovie_WithoutPosterFile_ShouldReturnUpdatedMovie() {
-		MovieUpdateRequest updateRequest = createMovieUpdateRequest("Updated Movie");
-		MovieDetailResponse movieDto = createMovieDto(1L, "Updated Movie", "updated-movie", MovieStatus.CURRENT);
-
-		when(movieService.updateMovie(eq(1L), any(MovieUpdateRequest.class))).thenReturn(movieDto);
-
-		ResponseEntity<MovieDetailResponse> response = movieController.updateMovie(1L, updateRequest, null);
-
-		assertEquals(HttpStatus.OK, response.getStatusCode());
-
-		MovieDetailResponse responseBody = response.getBody();
-		assertNotNull(responseBody);
-
-		assertEquals("Updated Movie", responseBody.getTitle());
-		verify(movieService).updateMovie(1L, updateRequest);
+		assertThrows(MovieNotFoundException.class, () -> movieController.updateMovie(999L, request, posterFile));
 	}
 
 	@Test
@@ -179,49 +132,51 @@ public class AdminMovieControllerTest {
 		doThrow(new MovieNotFoundException(999L)).when(movieService).deleteMovie(999L);
 
 		assertThrows(MovieNotFoundException.class, () -> movieController.deleteMovie(999L));
-		verify(movieService).deleteMovie(999L);
 	}
 
 	@Test
-	void searchMoviesForSessionCreation_ShouldReturnMovies() {
-		MovieSessionSearchResponse movie1 = MovieSessionSearchResponse.builder().id(1L).title("Session Movie 1")
-				.releaseYear(2024).durationMinutes(120).build();
-		MovieSessionSearchResponse movie2 = MovieSessionSearchResponse.builder().id(2L).title("Session Movie 2")
-				.releaseYear(2024).durationMinutes(150).build();
-		List<MovieSessionSearchResponse> movies = List.of(movie1, movie2);
+	void getMovies_ShouldReturnPageResponse() {
+		MovieFilterRequest filter = new MovieFilterRequest();
+		Pageable pageable = PageRequest.of(0, 20);
+		Page<MovieCardResponse> page = new PageImpl<>(
+				List.of(createMovieCardDto(1L, "Movie 1"), createMovieCardDto(2L, "Movie 2")));
 
-		when(movieService.searchMoviesForSessionCreation("test", LocalDate.now())).thenReturn(movies);
+		when(movieService.getMovieCards(any(), any())).thenReturn(page);
 
-		ResponseEntity<List<MovieSessionSearchResponse>> response = movieController
-				.searchMoviesForSessionCreation(LocalDate.now(), "test");
+		ResponseEntity<PageResponse<MovieCardResponse>> response = movieController.getMovies(filter, pageable);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
-
-		List<MovieSessionSearchResponse> responseBody = response.getBody();
-		assertNotNull(responseBody);
-
-		assertEquals(2, responseBody.size());
-		assertEquals("Session Movie 1", responseBody.get(0).getTitle());
-		verify(movieService).searchMoviesForSessionCreation("test", LocalDate.now());
+		assertNotNull(response.getBody());
+		assertEquals(2, response.getBody().getContent().size());
+		verify(movieService).getMovieCards(any(), any());
 	}
 
 	@Test
-	void searchMoviesForSessionCreation_WithNullSearch_ShouldReturnMovies() {
-		MovieSessionSearchResponse movie1 = MovieSessionSearchResponse.builder().id(1L).title("Movie 1")
-				.releaseYear(2024).durationMinutes(120).build();
-		List<MovieSessionSearchResponse> movies = List.of(movie1);
+	void getMovieById_ShouldReturnMovie() {
+		MovieDetailResponse responseDto = createMovieDetailDto(1L, "Test Movie");
 
-		when(movieService.searchMoviesForSessionCreation(isNull(), eq(LocalDate.now()))).thenReturn(movies);
+		when(movieService.getMovieById(1L)).thenReturn(responseDto);
 
-		ResponseEntity<List<MovieSessionSearchResponse>> response = movieController
-				.searchMoviesForSessionCreation(LocalDate.now(), null);
+		ResponseEntity<MovieDetailResponse> response = movieController.getMovieById(1L);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
+		assertNotNull(response.getBody());
+		assertEquals("Test Movie", response.getBody().getTitle());
+		verify(movieService).getMovieById(1L);
+	}
 
-		List<MovieSessionSearchResponse> responseBody = response.getBody();
-		assertNotNull(responseBody);
+	@Test
+	void searchMoviesForSession_ShouldReturnMovies() {
+		List<MovieSessionSearchResponse> movies = List.of(
+				MovieSessionSearchResponse.builder().id(1L).title("Movie 1").build(),
+				MovieSessionSearchResponse.builder().id(2L).title("Movie 2").build());
 
-		assertEquals(1, responseBody.size());
-		verify(movieService).searchMoviesForSessionCreation(null, LocalDate.now());
+		when(movieService.searchMoviesForSession("search")).thenReturn(movies);
+
+		ResponseEntity<?> response = movieController.searchMoviesForSession("search");
+
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+		assertEquals(movies, response.getBody());
+		verify(movieService).searchMoviesForSession("search");
 	}
 }

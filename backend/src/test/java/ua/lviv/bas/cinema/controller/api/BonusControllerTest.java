@@ -25,6 +25,8 @@ import ua.lviv.bas.cinema.domain.enums.BonusTransactionType;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusBalanceResponse;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusCardResponse;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusTransactionResponse;
+import ua.lviv.bas.cinema.dto.bonus.response.BonusTransactionResponse.BookingDetails;
+import ua.lviv.bas.cinema.dto.common.PageResponse;
 import ua.lviv.bas.cinema.exception.domain.bonus.BonusCardNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.bonus.BonusRuleNotFoundException;
 import ua.lviv.bas.cinema.service.user.BonusService;
@@ -45,7 +47,7 @@ public class BonusControllerTest {
 		BonusCardResponse cardResponse = BonusCardResponse.builder().id(1L).userId(userId).pointsBalance(250)
 				.welcomeBonusReceived(true).build();
 
-		when(bonusService.getBonusCard(userId)).thenReturn(cardResponse);
+		when(bonusService.getCard(userId)).thenReturn(cardResponse);
 
 		BonusCardResponse response = bonusController.getMyBonusCard(userId);
 
@@ -60,7 +62,7 @@ public class BonusControllerTest {
 	void getMyBonusCard_ShouldThrowWhenCardNotFound() {
 		Long userId = 1L;
 
-		when(bonusService.getBonusCard(userId)).thenThrow(new BonusCardNotFoundException(userId));
+		when(bonusService.getCard(userId)).thenThrow(new BonusCardNotFoundException(userId));
 
 		assertThrows(BonusCardNotFoundException.class, () -> bonusController.getMyBonusCard(userId));
 	}
@@ -104,27 +106,35 @@ public class BonusControllerTest {
 		Long userId = 1L;
 		Pageable pageable = PageRequest.of(0, 20);
 
-		BonusTransactionResponse transaction1 = BonusTransactionResponse.builder().id(1L).type("WELCOME_BONUS")
-				.pointsChange(150).referenceId("USER_1").createdAt(LocalDateTime.now()).newBalance(150).build();
+		BookingDetails bookingDetails = BookingDetails.builder().movieTitle("Interstellar").bookingReference("BK-12345")
+				.cinemaHall("Hall 1").sessionDateTime(LocalDateTime.now().plusDays(7)).build();
 
-		BonusTransactionResponse transaction2 = BonusTransactionResponse.builder().id(2L).type("PURCHASE_BONUS")
-				.pointsChange(25).referenceId("PAYMENT_123").createdAt(LocalDateTime.now()).newBalance(175).build();
+		BonusTransactionResponse transaction1 = BonusTransactionResponse.builder().id(1L).type("WELCOME_BONUS")
+				.typeDisplay("Welcome Bonus").pointsChange("+150").createdAt(LocalDateTime.now()).newBalance(150)
+				.build();
+
+		BonusTransactionResponse transaction2 = BonusTransactionResponse.builder().id(2L).type("BOOKING_SPEND")
+				.typeDisplay("Booking Spend").pointsChange("-25").createdAt(LocalDateTime.now()).newBalance(125)
+				.bookingDetails(bookingDetails).build();
 
 		Page<BonusTransactionResponse> page = new PageImpl<>(List.of(transaction1, transaction2), pageable, 2);
 
-		when(bonusService.getUserTransactions(eq(userId), any(Pageable.class))).thenReturn(page);
+		when(bonusService.getTransactions(eq(userId), any(Pageable.class))).thenReturn(page);
 
-		Page<BonusTransactionResponse> response = bonusController.getMyTransactions(userId, pageable);
+		PageResponse<BonusTransactionResponse> response = bonusController.getMyTransactions(userId, pageable);
 
 		assertNotNull(response);
 		assertEquals(2, response.getContent().size());
 		assertEquals(2, response.getTotalElements());
 		assertEquals(1L, response.getContent().get(0).getId());
 		assertEquals("WELCOME_BONUS", response.getContent().get(0).getType());
-		assertEquals(150, response.getContent().get(0).getPointsChange());
+		assertEquals("Welcome Bonus", response.getContent().get(0).getTypeDisplay());
+		assertEquals("+150", response.getContent().get(0).getPointsChange());
 		assertEquals(2L, response.getContent().get(1).getId());
-		assertEquals("PURCHASE_BONUS", response.getContent().get(1).getType());
-		assertEquals(25, response.getContent().get(1).getPointsChange());
+		assertEquals("BOOKING_SPEND", response.getContent().get(1).getType());
+		assertEquals("-25", response.getContent().get(1).getPointsChange());
+		assertNotNull(response.getContent().get(1).getBookingDetails());
+		assertEquals("Interstellar", response.getContent().get(1).getBookingDetails().getMovieTitle());
 	}
 
 	@Test
@@ -134,9 +144,9 @@ public class BonusControllerTest {
 
 		Page<BonusTransactionResponse> emptyPage = new PageImpl<>(List.of(), pageable, 0);
 
-		when(bonusService.getUserTransactions(eq(userId), any(Pageable.class))).thenReturn(emptyPage);
+		when(bonusService.getTransactions(eq(userId), any(Pageable.class))).thenReturn(emptyPage);
 
-		Page<BonusTransactionResponse> response = bonusController.getMyTransactions(userId, pageable);
+		PageResponse<BonusTransactionResponse> response = bonusController.getMyTransactions(userId, pageable);
 
 		assertNotNull(response);
 		assertEquals(0, response.getContent().size());

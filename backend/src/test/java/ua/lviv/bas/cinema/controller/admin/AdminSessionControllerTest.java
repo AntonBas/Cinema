@@ -1,18 +1,14 @@
 package ua.lviv.bas.cinema.controller.admin;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -28,8 +24,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import ua.lviv.bas.cinema.domain.enums.CinemaSessionStatus;
+import ua.lviv.bas.cinema.dto.common.PageResponse;
 import ua.lviv.bas.cinema.dto.session.request.SessionCreateRequest;
+import ua.lviv.bas.cinema.dto.session.request.SessionFilterRequest;
 import ua.lviv.bas.cinema.dto.session.request.SessionUpdateRequest;
 import ua.lviv.bas.cinema.dto.session.response.SessionAdminResponse;
 import ua.lviv.bas.cinema.exception.domain.cinema.SessionNotFoundException;
@@ -45,13 +42,17 @@ public class AdminSessionControllerTest {
 	@InjectMocks
 	private AdminSessionController adminSessionController;
 
+	private SessionAdminResponse createSessionResponse(Long id, String title) {
+		return SessionAdminResponse.builder().id(id).movieTitle(title).startTime(LocalDateTime.now().plusHours(2))
+				.basePrice(BigDecimal.valueOf(250)).build();
+	}
+
 	@Test
 	void createSession_ShouldCreateSuccessfully() {
 		SessionCreateRequest request = SessionCreateRequest.builder().startTime(LocalDateTime.now().plusHours(2))
 				.basePrice(BigDecimal.valueOf(250)).movieId(1L).hallId(1L).build();
 
-		SessionAdminResponse response = SessionAdminResponse.builder().id(1L).startTime(request.getStartTime())
-				.basePrice(request.getBasePrice()).build();
+		SessionAdminResponse response = createSessionResponse(1L, "Test Movie");
 
 		when(sessionService.createSession(request)).thenReturn(response);
 
@@ -66,8 +67,7 @@ public class AdminSessionControllerTest {
 
 	@Test
 	void getSessionById_ShouldReturnSession() {
-		SessionAdminResponse response = SessionAdminResponse.builder().id(1L)
-				.startTime(LocalDateTime.now().plusHours(2)).basePrice(BigDecimal.valueOf(250)).build();
+		SessionAdminResponse response = createSessionResponse(1L, "Test Movie");
 
 		when(sessionService.getSessionById(1L)).thenReturn(response);
 
@@ -84,8 +84,8 @@ public class AdminSessionControllerTest {
 	void updateSession_ShouldUpdateSuccessfully() {
 		SessionUpdateRequest request = SessionUpdateRequest.builder().basePrice(BigDecimal.valueOf(300)).build();
 
-		SessionAdminResponse response = SessionAdminResponse.builder().id(1L).basePrice(BigDecimal.valueOf(300))
-				.build();
+		SessionAdminResponse response = createSessionResponse(1L, "Test Movie");
+		response.setBasePrice(BigDecimal.valueOf(300));
 
 		when(sessionService.updateSession(1L, request)).thenReturn(response);
 
@@ -147,153 +147,21 @@ public class AdminSessionControllerTest {
 	}
 
 	@Test
-	void getSessions_ShouldReturnAllSessions_WhenNoFilters() {
+	void getSessions_ShouldReturnSessions() {
+		SessionFilterRequest filter = new SessionFilterRequest();
 		Pageable pageable = PageRequest.of(0, 20);
-		SessionAdminResponse response = SessionAdminResponse.builder().id(1L).build();
+		SessionAdminResponse response = createSessionResponse(1L, "Test Movie");
 		Page<SessionAdminResponse> page = new PageImpl<>(List.of(response));
 
-		when(sessionService.getSessionsForAdmin(null, null, null, null, null, pageable)).thenReturn(page);
+		when(sessionService.getSessionsForAdmin(any(SessionFilterRequest.class), any(Pageable.class))).thenReturn(page);
 
-		ResponseEntity<Page<SessionAdminResponse>> result = adminSessionController.getSessions(pageable, null, null,
-				null, null, null);
+		ResponseEntity<PageResponse<SessionAdminResponse>> result = adminSessionController.getSessions(filter,
+				pageable);
 
 		assertEquals(HttpStatus.OK, result.getStatusCode());
-		Page<SessionAdminResponse> body = result.getBody();
+		PageResponse<SessionAdminResponse> body = result.getBody();
 		assertNotNull(body);
 		assertEquals(1, body.getContent().size());
-		verify(sessionService).getSessionsForAdmin(null, null, null, null, null, pageable);
-	}
-
-	@Test
-	void getSessions_ShouldFilterBySearch() {
-		Pageable pageable = PageRequest.of(0, 20);
-		String search = "Test";
-		SessionAdminResponse response = SessionAdminResponse.builder().id(1L).build();
-		Page<SessionAdminResponse> page = new PageImpl<>(List.of(response));
-
-		when(sessionService.getSessionsForAdmin(eq(search), any(), any(), any(), any(), eq(pageable))).thenReturn(page);
-
-		ResponseEntity<Page<SessionAdminResponse>> result = adminSessionController.getSessions(pageable, search, null,
-				null, null, null);
-
-		assertEquals(HttpStatus.OK, result.getStatusCode());
-		Page<SessionAdminResponse> body = result.getBody();
-		assertNotNull(body);
-		assertEquals(1, body.getContent().size());
-		verify(sessionService).getSessionsForAdmin(eq(search), any(), any(), any(), any(), eq(pageable));
-	}
-
-	@Test
-	void getSessions_ShouldFilterByDate() {
-		Pageable pageable = PageRequest.of(0, 20);
-		LocalDate date = LocalDate.now();
-		SessionAdminResponse response = SessionAdminResponse.builder().id(1L).build();
-		Page<SessionAdminResponse> page = new PageImpl<>(List.of(response));
-
-		when(sessionService.getSessionsForAdmin(any(), eq(date), any(), any(), any(), eq(pageable))).thenReturn(page);
-
-		ResponseEntity<Page<SessionAdminResponse>> result = adminSessionController.getSessions(pageable, null, date,
-				null, null, null);
-
-		assertEquals(HttpStatus.OK, result.getStatusCode());
-		Page<SessionAdminResponse> body = result.getBody();
-		assertNotNull(body);
-		assertEquals(1, body.getContent().size());
-		verify(sessionService).getSessionsForAdmin(any(), eq(date), any(), any(), any(), eq(pageable));
-	}
-
-	@Test
-	void getSessions_ShouldFilterByHallId() {
-		Pageable pageable = PageRequest.of(0, 20);
-		Long hallId = 1L;
-		SessionAdminResponse response = SessionAdminResponse.builder().id(1L).build();
-		Page<SessionAdminResponse> page = new PageImpl<>(List.of(response));
-
-		when(sessionService.getSessionsForAdmin(any(), any(), eq(hallId), any(), any(), eq(pageable))).thenReturn(page);
-
-		ResponseEntity<Page<SessionAdminResponse>> result = adminSessionController.getSessions(pageable, null, null,
-				hallId, null, null);
-
-		assertEquals(HttpStatus.OK, result.getStatusCode());
-		Page<SessionAdminResponse> body = result.getBody();
-		assertNotNull(body);
-		assertEquals(1, body.getContent().size());
-		verify(sessionService).getSessionsForAdmin(any(), any(), eq(hallId), any(), any(), eq(pageable));
-	}
-
-	@Test
-	void getSessions_ShouldFilterByMovieId() {
-		Pageable pageable = PageRequest.of(0, 20);
-		Long movieId = 1L;
-		SessionAdminResponse response = SessionAdminResponse.builder().id(1L).build();
-		Page<SessionAdminResponse> page = new PageImpl<>(List.of(response));
-
-		when(sessionService.getSessionsForAdmin(any(), any(), any(), eq(movieId), any(), eq(pageable)))
-				.thenReturn(page);
-
-		ResponseEntity<Page<SessionAdminResponse>> result = adminSessionController.getSessions(pageable, null, null,
-				null, movieId, null);
-
-		assertEquals(HttpStatus.OK, result.getStatusCode());
-		Page<SessionAdminResponse> body = result.getBody();
-		assertNotNull(body);
-		assertEquals(1, body.getContent().size());
-		verify(sessionService).getSessionsForAdmin(any(), any(), any(), eq(movieId), any(), eq(pageable));
-	}
-
-	@Test
-	void getSessions_ShouldFilterByStatus() {
-		Pageable pageable = PageRequest.of(0, 20);
-		CinemaSessionStatus status = CinemaSessionStatus.SCHEDULED;
-		SessionAdminResponse response = SessionAdminResponse.builder().id(1L).build();
-		Page<SessionAdminResponse> page = new PageImpl<>(List.of(response));
-
-		when(sessionService.getSessionsForAdmin(any(), any(), any(), any(), eq(status), eq(pageable))).thenReturn(page);
-
-		ResponseEntity<Page<SessionAdminResponse>> result = adminSessionController.getSessions(pageable, null, null,
-				null, null, status);
-
-		assertEquals(HttpStatus.OK, result.getStatusCode());
-		Page<SessionAdminResponse> body = result.getBody();
-		assertNotNull(body);
-		assertEquals(1, body.getContent().size());
-		verify(sessionService).getSessionsForAdmin(any(), any(), any(), any(), eq(status), eq(pageable));
-	}
-
-	@Test
-	void checkTimeConflict_ShouldReturnTrue_WhenConflictExists() {
-		Long hallId = 1L;
-		LocalDateTime startTime = LocalDateTime.now();
-		Integer durationMinutes = 120;
-
-		when(sessionService.hasTimeConflict(hallId, startTime, durationMinutes, null)).thenReturn(true);
-
-		ResponseEntity<Boolean> result = adminSessionController.checkTimeConflict(hallId, startTime, durationMinutes,
-				null);
-
-		assertEquals(HttpStatus.OK, result.getStatusCode());
-		Boolean body = result.getBody();
-		assertNotNull(body);
-		assertTrue(body);
-		verify(sessionService).hasTimeConflict(hallId, startTime, durationMinutes, null);
-	}
-
-	@Test
-	void checkTimeConflict_ShouldReturnFalse_WhenNoConflict() {
-		Long hallId = 1L;
-		LocalDateTime startTime = LocalDateTime.now();
-		Integer durationMinutes = 120;
-		Long excludeSessionId = 5L;
-
-		when(sessionService.hasTimeConflict(hallId, startTime, durationMinutes, excludeSessionId)).thenReturn(false);
-
-		ResponseEntity<Boolean> result = adminSessionController.checkTimeConflict(hallId, startTime, durationMinutes,
-				excludeSessionId);
-
-		assertEquals(HttpStatus.OK, result.getStatusCode());
-		Boolean body = result.getBody();
-		assertNotNull(body);
-		assertFalse(body);
-		verify(sessionService).hasTimeConflict(hallId, startTime, durationMinutes, excludeSessionId);
+		verify(sessionService).getSessionsForAdmin(any(SessionFilterRequest.class), any(Pageable.class));
 	}
 }

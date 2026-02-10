@@ -1,10 +1,8 @@
 package ua.lviv.bas.cinema.controller.admin;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -49,7 +47,7 @@ public class AdminSeatControllerTest {
 
 		assertEquals(SeatType.VIP, responseBody.getSeatType());
 		assertEquals(1L, responseBody.getId());
-		assertTrue(responseBody.isActive());
+		assertEquals(true, responseBody.isActive());
 
 		verify(seatService).updateSeatType(1L, SeatType.VIP);
 	}
@@ -64,12 +62,12 @@ public class AdminSeatControllerTest {
 	}
 
 	@Test
-	void activateSeat_ShouldReturnActivatedSeat() {
+	void setSeatActiveStatus_ShouldReturnActivatedSeat() {
 		SeatResponse activatedSeat = createSeatDto(1L, 1, 1, SeatType.STANDARD, true);
 
-		when(seatService.activateSeat(1L)).thenReturn(activatedSeat);
+		when(seatService.setSeatActiveStatus(1L, true)).thenReturn(activatedSeat);
 
-		ResponseEntity<SeatResponse> response = seatController.activateSeat(1L, 1L);
+		ResponseEntity<SeatResponse> response = seatController.setSeatActiveStatus(1L, 1L, true);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
 
@@ -77,27 +75,18 @@ public class AdminSeatControllerTest {
 		assertNotNull(responseBody);
 
 		assertEquals(1L, responseBody.getId());
-		assertTrue(responseBody.isActive());
+		assertEquals(true, responseBody.isActive());
 
-		verify(seatService).activateSeat(1L);
+		verify(seatService).setSeatActiveStatus(1L, true);
 	}
 
 	@Test
-	void activateSeat_WhenNotFound_ShouldThrowException() {
-		when(seatService.activateSeat(999L)).thenThrow(new SeatNotFoundException(999L));
-
-		assertThrows(SeatNotFoundException.class, () -> seatController.activateSeat(1L, 999L));
-
-		verify(seatService).activateSeat(999L);
-	}
-
-	@Test
-	void deactivateSeat_ShouldReturnDeactivatedSeat() {
+	void setSeatActiveStatus_ShouldReturnDeactivatedSeat() {
 		SeatResponse deactivatedSeat = createSeatDto(1L, 1, 1, SeatType.STANDARD, false);
 
-		when(seatService.deactivateSeat(1L)).thenReturn(deactivatedSeat);
+		when(seatService.setSeatActiveStatus(1L, false)).thenReturn(deactivatedSeat);
 
-		ResponseEntity<SeatResponse> response = seatController.deactivateSeat(1L, 1L);
+		ResponseEntity<SeatResponse> response = seatController.setSeatActiveStatus(1L, 1L, false);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
 
@@ -105,17 +94,17 @@ public class AdminSeatControllerTest {
 		assertNotNull(responseBody);
 
 		assertEquals(1L, responseBody.getId());
-		assertFalse(responseBody.isActive());
+		assertEquals(false, responseBody.isActive());
 
-		verify(seatService).deactivateSeat(1L);
+		verify(seatService).setSeatActiveStatus(1L, false);
 	}
 
 	@Test
-	void deactivateSeat_WhenNotFound_ShouldThrowException() {
-		when(seatService.deactivateSeat(999L)).thenThrow(new SeatNotFoundException(999L));
+	void setSeatActiveStatus_WhenNotFound_ShouldThrowException() {
+		when(seatService.setSeatActiveStatus(999L, true)).thenThrow(new SeatNotFoundException(999L));
 
-		assertThrows(SeatNotFoundException.class, () -> seatController.deactivateSeat(1L, 999L));
+		assertThrows(SeatNotFoundException.class, () -> seatController.setSeatActiveStatus(1L, 999L, true));
 
-		verify(seatService).deactivateSeat(999L);
+		verify(seatService).setSeatActiveStatus(999L, true);
 	}
 }

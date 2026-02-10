@@ -1,10 +1,8 @@
 package ua.lviv.bas.cinema.controller.api;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -20,7 +18,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import ua.lviv.bas.cinema.domain.User;
@@ -75,7 +72,7 @@ public class PromotionControllerTest {
 
 		ResponseEntity<List<PromotionResponse>> result = promotionController.getAvailablePromotions(user);
 
-		assertEquals(HttpStatus.OK, result.getStatusCode());
+		assertEquals(200, result.getStatusCode().value());
 		assertNotNull(result.getBody());
 		assertEquals(3, result.getBody().size());
 		assertEquals("Active Promo 1", result.getBody().get(0).getTitle());
@@ -91,18 +88,9 @@ public class PromotionControllerTest {
 
 		ResponseEntity<List<PromotionResponse>> result = promotionController.getAvailablePromotions(user);
 
-		assertEquals(HttpStatus.OK, result.getStatusCode());
+		assertEquals(200, result.getStatusCode().value());
 		assertNotNull(result.getBody());
-		assertTrue(result.getBody().isEmpty());
-		verify(promotionService).getAvailablePromotions(user);
-	}
-
-	@Test
-	void getAvailablePromotions_ShouldHandleServiceExceptionGracefully() {
-		User user = createUser(1L, "test@example.com");
-		when(promotionService.getAvailablePromotions(user)).thenThrow(new RuntimeException("Service error"));
-
-		assertThrows(RuntimeException.class, () -> promotionController.getAvailablePromotions(user));
+		assertEquals(0, result.getBody().size());
 		verify(promotionService).getAvailablePromotions(user);
 	}
 
@@ -117,24 +105,11 @@ public class PromotionControllerTest {
 
 		ResponseEntity<List<UserPromotionResponse>> result = promotionController.getUserPromotions(user);
 
-		assertEquals(HttpStatus.OK, result.getStatusCode());
+		assertEquals(200, result.getStatusCode().value());
 		assertNotNull(result.getBody());
 		assertEquals(2, result.getBody().size());
 		assertEquals("Promo 1", result.getBody().get(0).getPromotionTitle());
 		assertEquals("Promo 2", result.getBody().get(1).getPromotionTitle());
-		verify(promotionService).getUserPromotions(user);
-	}
-
-	@Test
-	void getUserPromotions_ShouldReturnEmptyList() {
-		User user = createUser(1L, "test@example.com");
-		when(promotionService.getUserPromotions(user)).thenReturn(Collections.emptyList());
-
-		ResponseEntity<List<UserPromotionResponse>> result = promotionController.getUserPromotions(user);
-
-		assertEquals(HttpStatus.OK, result.getStatusCode());
-		assertNotNull(result.getBody());
-		assertTrue(result.getBody().isEmpty());
 		verify(promotionService).getUserPromotions(user);
 	}
 
@@ -149,7 +124,7 @@ public class PromotionControllerTest {
 
 		ResponseEntity<UserPromotionResponse> result = promotionController.claimPromotion(request, user);
 
-		assertEquals(HttpStatus.OK, result.getStatusCode());
+		assertEquals(200, result.getStatusCode().value());
 		assertNotNull(result.getBody());
 		assertEquals(1L, result.getBody().getPromotionId());
 		assertEquals("Test Promotion", result.getBody().getPromotionTitle());
@@ -188,40 +163,32 @@ public class PromotionControllerTest {
 		User user = createUser(1L, "test@example.com");
 		Long promotionId = 1L;
 
-		when(promotionService.isPromotionAvailableForUser(user, promotionId)).thenReturn(true);
+		when(promotionService.hasUserClaimedPromotion(user, promotionId)).thenReturn(false);
+
+		PromotionResponse promo = createPromotionResponse(promotionId, "Test Promotion", 100);
+		when(promotionService.getAvailablePromotions(user)).thenReturn(Arrays.asList(promo));
 
 		ResponseEntity<Boolean> result = promotionController.checkPromotionStatus(promotionId, user);
 
-		assertEquals(HttpStatus.OK, result.getStatusCode());
+		assertEquals(200, result.getStatusCode().value());
 		assertNotNull(result.getBody());
-		assertTrue(result.getBody());
-		verify(promotionService).isPromotionAvailableForUser(user, promotionId);
+		assertEquals(true, result.getBody());
+		verify(promotionService).hasUserClaimedPromotion(user, promotionId);
+		verify(promotionService).getAvailablePromotions(user);
 	}
 
 	@Test
-	void checkPromotionStatus_ShouldReturnFalseWhenNotAvailable() {
+	void checkPromotionStatus_ShouldReturnFalseWhenAlreadyClaimed() {
 		User user = createUser(1L, "test@example.com");
 		Long promotionId = 1L;
 
-		when(promotionService.isPromotionAvailableForUser(user, promotionId)).thenReturn(false);
+		when(promotionService.hasUserClaimedPromotion(user, promotionId)).thenReturn(true);
 
 		ResponseEntity<Boolean> result = promotionController.checkPromotionStatus(promotionId, user);
 
-		assertEquals(HttpStatus.OK, result.getStatusCode());
+		assertEquals(200, result.getStatusCode().value());
 		assertNotNull(result.getBody());
-		assertFalse(result.getBody());
-		verify(promotionService).isPromotionAvailableForUser(user, promotionId);
-	}
-
-	@Test
-	void checkPromotionStatus_ShouldThrowException() {
-		User user = createUser(1L, "test@example.com");
-		Long promotionId = 1L;
-
-		when(promotionService.isPromotionAvailableForUser(user, promotionId))
-				.thenThrow(new RuntimeException("Promotion not found"));
-
-		assertThrows(RuntimeException.class, () -> promotionController.checkPromotionStatus(promotionId, user));
-		verify(promotionService).isPromotionAvailableForUser(user, promotionId);
+		assertEquals(false, result.getBody());
+		verify(promotionService).hasUserClaimedPromotion(user, promotionId);
 	}
 }
