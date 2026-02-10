@@ -3,12 +3,9 @@ package ua.lviv.bas.cinema.service.cinema;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,6 +20,7 @@ import org.springframework.data.domain.Pageable;
 
 import ua.lviv.bas.cinema.domain.Person;
 import ua.lviv.bas.cinema.domain.enums.PersonRole;
+import ua.lviv.bas.cinema.domain.projection.PersonProjection;
 import ua.lviv.bas.cinema.dto.movie.request.PersonRequest;
 import ua.lviv.bas.cinema.dto.movie.request.QuickCreatePersonRequest;
 import ua.lviv.bas.cinema.dto.movie.response.PersonResponse;
@@ -30,11 +28,10 @@ import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
 import ua.lviv.bas.cinema.exception.domain.cinema.PersonHasMoviesException;
 import ua.lviv.bas.cinema.exception.domain.cinema.PersonNotFoundException;
 import ua.lviv.bas.cinema.mapper.PersonMapper;
-import ua.lviv.bas.cinema.repository.MovieRepository;
 import ua.lviv.bas.cinema.repository.PersonRepository;
 
 @ExtendWith(MockitoExtension.class)
-public class PersonServiceTest {
+class PersonServiceTest {
 
 	@Mock
 	private PersonRepository personRepository;
@@ -42,311 +39,195 @@ public class PersonServiceTest {
 	@Mock
 	private PersonMapper personMapper;
 
-	@Mock
-	private MovieRepository movieRepository;
-
 	@InjectMocks
 	private PersonService personService;
 
+	private final Long PERSON_ID = 1L;
+	private final String PERSON_NAME = "John Doe";
+	private final PersonRole PERSON_ROLE = PersonRole.ACTOR;
+
 	@Test
 	void createPerson_Success() {
-		PersonRequest request = PersonRequest.builder().name("John Doe").role(PersonRole.ACTOR).build();
+		PersonRequest request = PersonRequest.builder().name(PERSON_NAME).role(PERSON_ROLE).build();
 
-		Person person = new Person();
-		person.setName("John Doe");
+		Person person = createPerson();
+		PersonResponse response = createPersonResponse();
 
-		Person savedPerson = new Person();
-		savedPerson.setId(1L);
-		savedPerson.setName("John Doe");
-
-		PersonResponse response = PersonResponse.builder().id(1L).name("John Doe").build();
-
-		when(personRepository.existsByNameAndRole("John Doe", PersonRole.ACTOR)).thenReturn(false);
+		when(personRepository.existsByNameAndRole(PERSON_NAME, PERSON_ROLE)).thenReturn(false);
 		when(personMapper.toPerson(request)).thenReturn(person);
-		when(personRepository.save(person)).thenReturn(savedPerson);
-		when(personMapper.toPersonResponse(savedPerson)).thenReturn(response);
+		when(personRepository.save(person)).thenReturn(person);
+		when(personMapper.toPersonResponse(person)).thenReturn(response);
 
 		PersonResponse result = personService.createPerson(request);
 
-		assertThat(result.getName()).isEqualTo("John Doe");
+		assertThat(result).isEqualTo(response);
+		verify(personRepository).save(person);
 	}
 
 	@Test
-	void createPerson_WhenNameExists_ShouldThrowException() {
-		PersonRequest request = PersonRequest.builder().name("John Doe").role(PersonRole.ACTOR).build();
+	void createPerson_DuplicateName_ThrowsException() {
+		PersonRequest request = PersonRequest.builder().name(PERSON_NAME).role(PERSON_ROLE).build();
 
-		when(personRepository.existsByNameAndRole("John Doe", PersonRole.ACTOR)).thenReturn(true);
+		when(personRepository.existsByNameAndRole(PERSON_NAME, PERSON_ROLE)).thenReturn(true);
 
 		assertThatThrownBy(() -> personService.createPerson(request)).isInstanceOf(DuplicateEntityException.class);
 	}
 
 	@Test
 	void quickCreatePerson_Success() {
-		QuickCreatePersonRequest request = QuickCreatePersonRequest.builder().name("Jane Doe").role(PersonRole.DIRECTOR)
+		QuickCreatePersonRequest request = QuickCreatePersonRequest.builder().name(PERSON_NAME).role(PERSON_ROLE)
 				.build();
 
-		Person savedPerson = new Person();
-		savedPerson.setId(1L);
-		savedPerson.setName("Jane Doe");
+		Person person = createPerson();
+		PersonResponse response = createPersonResponse();
 
-		PersonResponse response = PersonResponse.builder().id(1L).name("Jane Doe").build();
-
-		when(personRepository.existsByNameAndRole("Jane Doe", PersonRole.DIRECTOR)).thenReturn(false);
-		when(personRepository.save(any(Person.class))).thenReturn(savedPerson);
-		when(personMapper.toPersonResponse(savedPerson)).thenReturn(response);
+		when(personRepository.existsByNameAndRole(PERSON_NAME, PERSON_ROLE)).thenReturn(false);
+		when(personRepository.save(any(Person.class))).thenReturn(person);
+		when(personMapper.toPersonResponse(person)).thenReturn(response);
 
 		PersonResponse result = personService.quickCreatePerson(request);
 
-		assertThat(result.getName()).isEqualTo("Jane Doe");
+		assertThat(result).isEqualTo(response);
+		verify(personRepository).save(any(Person.class));
 	}
 
 	@Test
 	void getPersonById_Success() {
-		Person person = new Person();
-		person.setId(1L);
-		person.setName("John Doe");
+		Person person = createPerson();
+		PersonResponse response = createPersonResponse();
 
-		PersonResponse response = PersonResponse.builder().id(1L).name("John Doe").build();
-
-		when(personRepository.findById(1L)).thenReturn(Optional.of(person));
+		when(personRepository.findById(PERSON_ID)).thenReturn(Optional.of(person));
 		when(personMapper.toPersonResponse(person)).thenReturn(response);
 
-		PersonResponse result = personService.getPersonById(1L);
+		PersonResponse result = personService.getPersonById(PERSON_ID);
 
-		assertThat(result.getName()).isEqualTo("John Doe");
+		assertThat(result).isEqualTo(response);
 	}
 
 	@Test
-	void getPersonById_WhenNotFound_ShouldThrowException() {
-		when(personRepository.findById(1L)).thenReturn(Optional.empty());
+	void getPersonById_NotFound_ThrowsException() {
+		when(personRepository.findById(PERSON_ID)).thenReturn(Optional.empty());
 
-		assertThatThrownBy(() -> personService.getPersonById(1L)).isInstanceOf(PersonNotFoundException.class);
+		assertThatThrownBy(() -> personService.getPersonById(PERSON_ID)).isInstanceOf(PersonNotFoundException.class);
 	}
 
 	@Test
 	void updatePerson_Success() {
-		Person person = new Person();
-		person.setId(1L);
-		person.setName("Old Name");
+		Person existingPerson = createPerson();
+		existingPerson.setName("Old Name");
 
-		PersonRequest request = PersonRequest.builder().name("New Name").role(PersonRole.ACTOR).build();
+		PersonRequest request = PersonRequest.builder().name(PERSON_NAME).role(PERSON_ROLE).build();
 
-		PersonResponse response = PersonResponse.builder().id(1L).name("New Name").build();
+		PersonResponse response = createPersonResponse();
 
-		when(personRepository.findById(1L)).thenReturn(Optional.of(person));
-		when(personRepository.existsByNameAndRoleAndIdNot("New Name", PersonRole.ACTOR, 1L)).thenReturn(false);
-		when(personRepository.save(person)).thenReturn(person);
-		when(personMapper.toPersonResponse(person)).thenReturn(response);
+		when(personRepository.findById(PERSON_ID)).thenReturn(Optional.of(existingPerson));
+		when(personRepository.existsByNameAndRoleAndIdNot(PERSON_NAME, PERSON_ROLE, PERSON_ID)).thenReturn(false);
+		when(personRepository.save(existingPerson)).thenReturn(existingPerson);
+		when(personMapper.toPersonResponse(existingPerson)).thenReturn(response);
 
-		PersonResponse result = personService.updatePerson(1L, request);
+		PersonResponse result = personService.updatePerson(PERSON_ID, request);
 
-		assertThat(result.getName()).isEqualTo("New Name");
-	}
-
-	@Test
-	void updatePerson_WhenNameExists_ShouldThrowException() {
-		Person person = new Person();
-		person.setId(1L);
-		person.setName("Old Name");
-
-		PersonRequest request = PersonRequest.builder().name("Existing Name").role(PersonRole.ACTOR).build();
-
-		when(personRepository.findById(1L)).thenReturn(Optional.of(person));
-		when(personRepository.existsByNameAndRoleAndIdNot("Existing Name", PersonRole.ACTOR, 1L)).thenReturn(true);
-
-		assertThatThrownBy(() -> personService.updatePerson(1L, request)).isInstanceOf(DuplicateEntityException.class);
+		assertThat(result).isEqualTo(response);
+		verify(personMapper).updatePersonFromRequest(request, existingPerson);
+		assertThat(existingPerson.getName()).isEqualTo(PERSON_NAME);
 	}
 
 	@Test
 	void deletePerson_Success() {
-		Person person = new Person();
-		person.setId(1L);
-		person.setName("John Doe");
+		Person person = createPerson();
 
-		when(personRepository.findById(1L)).thenReturn(Optional.of(person));
-		when(movieRepository.countByActorsId(1L)).thenReturn(0L);
-		when(movieRepository.countByDirectorsId(1L)).thenReturn(0L);
-		when(movieRepository.countByScreenwritersId(1L)).thenReturn(0L);
-		doNothing().when(personRepository).delete(person);
+		when(personRepository.findById(PERSON_ID)).thenReturn(Optional.of(person));
+		when(personRepository.countMovieUsage(PERSON_ID)).thenReturn(0L);
 
-		personService.deletePerson(1L);
+		personService.deletePerson(PERSON_ID);
 
 		verify(personRepository).delete(person);
 	}
 
 	@Test
-	void deletePerson_WhenUsedInMovies_ShouldThrowException() {
-		Person person = new Person();
-		person.setId(1L);
-		person.setName("John Doe");
+	void deletePerson_HasMovies_ThrowsException() {
+		Person person = createPerson();
 
-		when(personRepository.findById(1L)).thenReturn(Optional.of(person));
-		when(movieRepository.countByActorsId(1L)).thenReturn(1L);
+		when(personRepository.findById(PERSON_ID)).thenReturn(Optional.of(person));
+		when(personRepository.countMovieUsage(PERSON_ID)).thenReturn(3L);
 
-		assertThatThrownBy(() -> personService.deletePerson(1L)).isInstanceOf(PersonHasMoviesException.class);
+		assertThatThrownBy(() -> personService.deletePerson(PERSON_ID)).isInstanceOf(PersonHasMoviesException.class);
 	}
 
 	@Test
-	void getPersonsByRole_Success() {
-		Person person = new Person();
-		person.setId(1L);
-
-		PersonResponse response = PersonResponse.builder().id(1L).name("John Doe").build();
-
+	void searchPersons_Success() {
+		String searchName = "John";
 		Pageable pageable = Pageable.unpaged();
-		Page<Person> page = new PageImpl<>(Collections.singletonList(person));
+		PersonProjection projection = createPersonProjection();
+		Page<PersonProjection> projectionPage = new PageImpl<>(List.of(projection));
+		PersonResponse response = createPersonResponse();
 
-		when(personRepository.findByRole(PersonRole.ACTOR, pageable)).thenReturn(page);
-		when(personMapper.toPersonResponse(person)).thenReturn(response);
+		when(personRepository.findProjectionsByFilters(searchName, PERSON_ROLE, pageable)).thenReturn(projectionPage);
+		when(personMapper.toPersonResponse(projection)).thenReturn(response);
 
-		Page<PersonResponse> result = personService.getPersonsByRole(PersonRole.ACTOR, pageable);
+		Page<PersonResponse> result = personService.searchPersons(searchName, PERSON_ROLE, pageable);
 
 		assertThat(result.getContent()).hasSize(1);
-	}
-
-	@Test
-	void searchPersons_WithQuery() {
-		Person person = new Person();
-		person.setId(1L);
-
-		PersonResponse response = PersonResponse.builder().id(1L).name("John Doe").build();
-
-		Pageable pageable = Pageable.unpaged();
-		Page<Person> page = new PageImpl<>(Collections.singletonList(person));
-
-		// Виправлено: використовуємо enum name як String
-		when(personRepository.searchByNameAndRole("John", PersonRole.ACTOR.name(), pageable)).thenReturn(page);
-		when(personMapper.toPersonResponse(person)).thenReturn(response);
-
-		Page<PersonResponse> result = personService.searchPersons("John", PersonRole.ACTOR, pageable);
-
-		assertThat(result.getContent()).hasSize(1);
-	}
-
-	@Test
-	void searchPersons_WithEmptyQuery() {
-		Person person = new Person();
-		person.setId(1L);
-
-		PersonResponse response = PersonResponse.builder().id(1L).name("John Doe").build();
-
-		Pageable pageable = Pageable.unpaged();
-		Page<Person> page = new PageImpl<>(Collections.singletonList(person));
-
-		// Виправлено: null для query і enum name як String для role
-		when(personRepository.searchByNameAndRole(null, PersonRole.ACTOR.name(), pageable)).thenReturn(page);
-		when(personMapper.toPersonResponse(person)).thenReturn(response);
-
-		Page<PersonResponse> result = personService.searchPersons("", PersonRole.ACTOR, pageable);
-
-		assertThat(result.getContent()).hasSize(1);
-	}
-
-	@Test
-	void searchPersons_WithNullRole() {
-		Person person = new Person();
-		person.setId(1L);
-
-		PersonResponse response = PersonResponse.builder().id(1L).name("John Doe").build();
-
-		Pageable pageable = Pageable.unpaged();
-		Page<Person> page = new PageImpl<>(Collections.singletonList(person));
-
-		// Виправлено: null для role
-		when(personRepository.searchByNameAndRole("John", null, pageable)).thenReturn(page);
-		when(personMapper.toPersonResponse(person)).thenReturn(response);
-
-		Page<PersonResponse> result = personService.searchPersons("John", null, pageable);
-
-		assertThat(result.getContent()).hasSize(1);
-	}
-
-	@Test
-	void searchPersons_WithEmptyQueryAndNullRole() {
-		Person person = new Person();
-		person.setId(1L);
-
-		PersonResponse response = PersonResponse.builder().id(1L).name("John Doe").build();
-
-		Pageable pageable = Pageable.unpaged();
-		Page<Person> page = new PageImpl<>(Collections.singletonList(person));
-
-		// Виправлено: обидва параметри null
-		when(personRepository.searchByNameAndRole(null, null, pageable)).thenReturn(page);
-		when(personMapper.toPersonResponse(person)).thenReturn(response);
-
-		Page<PersonResponse> result = personService.searchPersons("", null, pageable);
-
-		assertThat(result.getContent()).hasSize(1);
+		assertThat(result.getContent().get(0)).isEqualTo(response);
 	}
 
 	@Test
 	void getPersonsByIds_Success() {
-		Person person1 = new Person();
-		person1.setId(1L);
+		List<Long> ids = List.of(1L, 2L);
+		Person person = createPerson();
+		PersonResponse response = createPersonResponse();
 
-		Person person2 = new Person();
-		person2.setId(2L);
+		when(personRepository.findAllById(ids)).thenReturn(List.of(person));
+		when(personMapper.toPersonResponseList(List.of(person))).thenReturn(List.of(response));
 
-		PersonResponse response1 = PersonResponse.builder().id(1L).build();
-		PersonResponse response2 = PersonResponse.builder().id(2L).build();
-
-		when(personRepository.findAllById(Arrays.asList(1L, 2L))).thenReturn(Arrays.asList(person1, person2));
-		when(personMapper.toPersonResponseList(Arrays.asList(person1, person2)))
-				.thenReturn(Arrays.asList(response1, response2));
-
-		List<PersonResponse> result = personService.getPersonsByIds(Arrays.asList(1L, 2L));
-
-		assertThat(result).hasSize(2);
-	}
-
-	@Test
-	void getPersonsByIds_WithEmptyList() {
-		List<PersonResponse> result = personService.getPersonsByIds(Collections.emptyList());
-
-		assertThat(result).isEmpty();
-	}
-
-	@Test
-	void getPersons_Success() {
-		Person person = new Person();
-		person.setId(1L);
-
-		PersonResponse response = PersonResponse.builder().id(1L).name("John Doe").build();
-
-		when(personRepository.findAll()).thenReturn(Collections.singletonList(person));
-		when(personMapper.toPersonResponseList(Collections.singletonList(person)))
-				.thenReturn(Collections.singletonList(response));
-
-		List<PersonResponse> result = personService.getPersons();
+		List<PersonResponse> result = personService.getPersonsByIds(ids);
 
 		assertThat(result).hasSize(1);
-	}
-
-	@Test
-	void existsById_Success() {
-		when(personRepository.existsById(1L)).thenReturn(true);
-
-		boolean result = personService.existsById(1L);
-
-		assertThat(result).isTrue();
+		assertThat(result.get(0)).isEqualTo(response);
 	}
 
 	@Test
 	void existsByNameAndRole_Success() {
-		when(personRepository.existsByNameAndRole("John Doe", PersonRole.ACTOR)).thenReturn(true);
+		when(personRepository.existsByNameAndRole(PERSON_NAME, PERSON_ROLE)).thenReturn(true);
 
-		boolean result = personService.existsByNameAndRole("John Doe", PersonRole.ACTOR);
+		boolean result = personService.existsByNameAndRole(PERSON_NAME, PERSON_ROLE);
 
 		assertThat(result).isTrue();
 	}
 
-	@Test
-	void countByRole_Success() {
-		when(personRepository.countByRole(PersonRole.ACTOR)).thenReturn(5L);
+	private Person createPerson() {
+		Person person = new Person();
+		person.setId(PERSON_ID);
+		person.setName(PERSON_NAME);
+		person.setRole(PERSON_ROLE);
+		return person;
+	}
 
-		long result = personService.countByRole(PersonRole.ACTOR);
+	private PersonResponse createPersonResponse() {
+		return PersonResponse.builder().id(PERSON_ID).name(PERSON_NAME).role(PERSON_ROLE).build();
+	}
 
-		assertThat(result).isEqualTo(5);
+	private PersonProjection createPersonProjection() {
+		return new PersonProjection() {
+			@Override
+			public Long getId() {
+				return PERSON_ID;
+			}
+
+			@Override
+			public String getName() {
+				return PERSON_NAME;
+			}
+
+			@Override
+			public PersonRole getRole() {
+				return PERSON_ROLE;
+			}
+
+			@Override
+			public Integer getMovieCount() {
+				return 5;
+			}
+		};
 	}
 }

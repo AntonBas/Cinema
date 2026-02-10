@@ -2,12 +2,10 @@ package ua.lviv.bas.cinema.service.cinema;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.doNothing;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -20,9 +18,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 
 import ua.lviv.bas.cinema.domain.Genre;
+import ua.lviv.bas.cinema.domain.projection.GenreProjection;
 import ua.lviv.bas.cinema.dto.movie.request.GenreRequest;
 import ua.lviv.bas.cinema.dto.movie.response.GenreResponse;
 import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
@@ -31,7 +29,7 @@ import ua.lviv.bas.cinema.mapper.GenreMapper;
 import ua.lviv.bas.cinema.repository.GenreRepository;
 
 @ExtendWith(MockitoExtension.class)
-public class GenreServiceTest {
+class GenreServiceTest {
 
 	@Mock
 	private GenreRepository genreRepository;
@@ -42,246 +40,231 @@ public class GenreServiceTest {
 	@InjectMocks
 	private GenreService genreService;
 
+	private final Long GENRE_ID = 1L;
+	private final String GENRE_NAME = "Action";
+
 	@Test
 	void createGenre_Success() {
-		GenreRequest request = GenreRequest.builder().name("Action").build();
+		GenreRequest request = GenreRequest.builder().name(GENRE_NAME).build();
 
-		Genre genre = new Genre();
-		genre.setName("Action");
+		Genre genre = createGenre();
+		GenreResponse response = createGenreResponse();
 
-		Genre savedGenre = new Genre();
-		savedGenre.setId(1L);
-		savedGenre.setName("Action");
-
-		GenreResponse response = GenreResponse.builder().id(1L).name("Action").build();
-
-		when(genreRepository.existsByNameIgnoreCase("Action")).thenReturn(false);
+		when(genreRepository.existsByNameIgnoreCase(GENRE_NAME)).thenReturn(false);
 		when(genreMapper.toGenre(request)).thenReturn(genre);
-		when(genreRepository.save(genre)).thenReturn(savedGenre);
-		when(genreMapper.toGenreResponse(savedGenre)).thenReturn(response);
+		when(genreRepository.save(genre)).thenReturn(genre);
+		when(genreMapper.toGenreResponse(genre)).thenReturn(response);
 
 		GenreResponse result = genreService.createGenre(request);
 
-		assertThat(result.getName()).isEqualTo("Action");
-		verify(genreRepository).existsByNameIgnoreCase("Action");
+		assertThat(result).isEqualTo(response);
+		verify(genreRepository).save(genre);
 	}
 
 	@Test
-	void createGenre_WhenNameExists_ShouldThrowException() {
-		GenreRequest request = GenreRequest.builder().name("Action").build();
+	void createGenre_DuplicateName_ThrowsException() {
+		GenreRequest request = GenreRequest.builder().name(GENRE_NAME).build();
 
-		when(genreRepository.existsByNameIgnoreCase("Action")).thenReturn(true);
+		when(genreRepository.existsByNameIgnoreCase(GENRE_NAME)).thenReturn(true);
 
 		assertThatThrownBy(() -> genreService.createGenre(request)).isInstanceOf(DuplicateEntityException.class);
 	}
 
 	@Test
 	void getGenreById_Success() {
-		Genre genre = new Genre();
-		genre.setId(1L);
-		genre.setName("Action");
+		Genre genre = createGenre();
+		GenreResponse response = createGenreResponse();
 
-		GenreResponse response = GenreResponse.builder().id(1L).name("Action").build();
-
-		when(genreRepository.findById(1L)).thenReturn(Optional.of(genre));
+		when(genreRepository.findById(GENRE_ID)).thenReturn(Optional.of(genre));
 		when(genreMapper.toGenreResponse(genre)).thenReturn(response);
 
-		GenreResponse result = genreService.getGenreById(1L);
+		GenreResponse result = genreService.getGenreById(GENRE_ID);
 
-		assertThat(result.getName()).isEqualTo("Action");
+		assertThat(result).isEqualTo(response);
 	}
 
 	@Test
-	void getGenreById_WhenNotFound_ShouldThrowException() {
-		when(genreRepository.findById(1L)).thenReturn(Optional.empty());
+	void getGenreById_NotFound_ThrowsException() {
+		when(genreRepository.findById(GENRE_ID)).thenReturn(Optional.empty());
 
-		assertThatThrownBy(() -> genreService.getGenreById(1L)).isInstanceOf(GenreNotFoundException.class);
+		assertThatThrownBy(() -> genreService.getGenreById(GENRE_ID)).isInstanceOf(GenreNotFoundException.class);
 	}
 
 	@Test
 	void updateGenre_Success() {
-		Genre genre = new Genre();
-		genre.setId(1L);
-		genre.setName("Old Name");
+		Genre existingGenre = createGenre();
+		existingGenre.setName("Old Name");
 
-		GenreRequest request = GenreRequest.builder().name("New Name").build();
+		GenreRequest request = GenreRequest.builder().name(GENRE_NAME).build();
 
-		GenreResponse response = GenreResponse.builder().id(1L).name("New Name").build();
+		GenreResponse response = createGenreResponse();
 
-		when(genreRepository.findById(1L)).thenReturn(Optional.of(genre));
-		when(genreRepository.existsByNameIgnoreCaseAndIdNot("New Name", 1L)).thenReturn(false);
-		when(genreRepository.save(genre)).thenReturn(genre);
-		when(genreMapper.toGenreResponse(genre)).thenReturn(response);
+		when(genreRepository.findById(GENRE_ID)).thenReturn(Optional.of(existingGenre));
+		when(genreRepository.existsByNameIgnoreCaseAndIdNot(GENRE_NAME, GENRE_ID)).thenReturn(false);
+		when(genreRepository.save(existingGenre)).thenReturn(existingGenre);
+		when(genreMapper.toGenreResponse(existingGenre)).thenReturn(response);
 
-		GenreResponse result = genreService.updateGenre(1L, request);
+		GenreResponse result = genreService.updateGenre(GENRE_ID, request);
 
-		assertThat(result.getName()).isEqualTo("New Name");
+		assertThat(result).isEqualTo(response);
+		assertThat(existingGenre.getName()).isEqualTo(GENRE_NAME);
 	}
 
 	@Test
-	void updateGenre_WhenNotFound_ShouldThrowException() {
-		GenreRequest request = GenreRequest.builder().name("New Name").build();
+	void updateGenre_DuplicateName_ThrowsException() {
+		Genre existingGenre = createGenre();
+		existingGenre.setName("Old Name");
 
-		when(genreRepository.findById(1L)).thenReturn(Optional.empty());
+		GenreRequest request = GenreRequest.builder().name("Existing Genre").build();
 
-		assertThatThrownBy(() -> genreService.updateGenre(1L, request)).isInstanceOf(GenreNotFoundException.class);
-	}
+		when(genreRepository.findById(GENRE_ID)).thenReturn(Optional.of(existingGenre));
+		when(genreRepository.existsByNameIgnoreCaseAndIdNot("Existing Genre", GENRE_ID)).thenReturn(true);
 
-	@Test
-	void updateGenre_WhenNameExists_ShouldThrowException() {
-		Genre genre = new Genre();
-		genre.setId(1L);
-		genre.setName("Old Name");
-
-		GenreRequest request = GenreRequest.builder().name("Existing Name").build();
-
-		when(genreRepository.findById(1L)).thenReturn(Optional.of(genre));
-		when(genreRepository.existsByNameIgnoreCaseAndIdNot("Existing Name", 1L)).thenReturn(true);
-
-		assertThatThrownBy(() -> genreService.updateGenre(1L, request)).isInstanceOf(DuplicateEntityException.class);
+		assertThatThrownBy(() -> genreService.updateGenre(GENRE_ID, request))
+				.isInstanceOf(DuplicateEntityException.class);
 	}
 
 	@Test
 	void deleteGenre_Success() {
-		when(genreRepository.existsById(1L)).thenReturn(true);
-		doNothing().when(genreRepository).deleteById(1L);
+		when(genreRepository.existsById(GENRE_ID)).thenReturn(true);
 
-		genreService.deleteGenre(1L);
+		genreService.deleteGenre(GENRE_ID);
 
-		verify(genreRepository).deleteById(1L);
+		verify(genreRepository).deleteById(GENRE_ID);
 	}
 
 	@Test
-	void deleteGenre_WhenNotFound_ShouldThrowException() {
-		when(genreRepository.existsById(1L)).thenReturn(false);
+	void deleteGenre_NotFound_ThrowsException() {
+		when(genreRepository.existsById(GENRE_ID)).thenReturn(false);
 
-		assertThatThrownBy(() -> genreService.deleteGenre(1L)).isInstanceOf(GenreNotFoundException.class);
+		assertThatThrownBy(() -> genreService.deleteGenre(GENRE_ID)).isInstanceOf(GenreNotFoundException.class);
 	}
 
 	@Test
-	void getGenres_Success() {
-		Genre genre = new Genre();
-		genre.setId(1L);
-		genre.setName("Action");
+	void searchGenres_WithQuery_Success() {
+		String query = "act";
+		Pageable pageable = PageRequest.of(0, 10);
+		GenreProjection projection = createGenreProjection(10);
+		Page<GenreProjection> projectionPage = new PageImpl<>(List.of(projection));
+		GenreResponse response = createGenreResponse();
 
-		GenreResponse response = GenreResponse.builder().id(1L).name("Action").build();
+		when(genreRepository.searchProjectionsByName(query, pageable)).thenReturn(projectionPage);
+		when(genreMapper.toGenreResponse(projection)).thenReturn(response);
 
-		when(genreRepository.findAll()).thenReturn(Collections.singletonList(genre));
-		when(genreMapper.toGenreResponseList(Collections.singletonList(genre)))
-				.thenReturn(Collections.singletonList(response));
+		Page<GenreResponse> result = genreService.searchGenres(query, pageable);
 
-		List<GenreResponse> result = genreService.getGenres();
-
-		assertThat(result).hasSize(1);
-		assertThat(result.get(0).getName()).isEqualTo("Action");
+		assertThat(result.getContent()).hasSize(1);
+		assertThat(result.getContent().get(0)).isEqualTo(response);
 	}
 
 	@Test
-	void getGenresSorted_Success() {
-		Genre genre = new Genre();
-		genre.setId(1L);
-		genre.setName("Action");
+	void searchGenres_WithoutQuery_Success() {
+		Pageable pageable = PageRequest.of(0, 10);
+		GenreProjection projection = createGenreProjection(5);
+		Page<GenreProjection> projectionPage = new PageImpl<>(List.of(projection));
+		GenreResponse response = createGenreResponse();
 
-		GenreResponse response = GenreResponse.builder().id(1L).name("Action").build();
+		when(genreRepository.findAllProjections(pageable)).thenReturn(projectionPage);
+		when(genreMapper.toGenreResponse(projection)).thenReturn(response);
 
-		when(genreRepository.findAll(Sort.by("name").ascending())).thenReturn(Collections.singletonList(genre));
-		when(genreMapper.toGenreResponseList(Collections.singletonList(genre)))
-				.thenReturn(Collections.singletonList(response));
+		Page<GenreResponse> result = genreService.searchGenres(null, pageable);
 
-		List<GenreResponse> result = genreService.getGenresSorted();
+		assertThat(result.getContent()).hasSize(1);
+		assertThat(result.getContent().get(0)).isEqualTo(response);
+	}
+
+	@Test
+	void getPopularGenres_WithQuery_Success() {
+		String query = "act";
+		int limit = 5;
+
+		GenreProjection projection1 = createGenreProjection(10);
+		GenreProjection projection2 = createGenreProjection(5);
+
+		Page<GenreProjection> page = new PageImpl<>(List.of(projection1, projection2));
+		GenreResponse response = createGenreResponse();
+
+		when(genreRepository.searchProjectionsByName(query, PageRequest.of(0, 100))).thenReturn(page);
+		when(genreMapper.toGenreResponse(any(GenreProjection.class))).thenReturn(response);
+
+		List<GenreResponse> result = genreService.getPopularGenres(query, limit);
+
+		assertThat(result).hasSize(2);
+	}
+
+	@Test
+	void getPopularGenres_WithoutQuery_Success() {
+		int limit = 5;
+		GenreProjection projection = createGenreProjection(10);
+		Page<GenreProjection> page = new PageImpl<>(List.of(projection));
+		GenreResponse response = createGenreResponse();
+
+		when(genreRepository.findAllProjections(PageRequest.of(0, 100))).thenReturn(page);
+		when(genreMapper.toGenreResponse(projection)).thenReturn(response);
+
+		List<GenreResponse> result = genreService.getPopularGenres(null, limit);
 
 		assertThat(result).hasSize(1);
 	}
 
 	@Test
 	void getGenresByIds_Success() {
-		Genre genre = new Genre();
-		genre.setId(1L);
-		genre.setName("Action");
+		List<Long> ids = List.of(1L, 2L);
+		Genre genre = createGenre();
+		GenreResponse response = createGenreResponse();
 
-		GenreResponse response = GenreResponse.builder().id(1L).name("Action").build();
+		when(genreRepository.findAllById(ids)).thenReturn(List.of(genre));
+		when(genreMapper.toGenreResponseList(List.of(genre))).thenReturn(List.of(response));
 
-		when(genreRepository.findAllById(Arrays.asList(1L, 2L))).thenReturn(Collections.singletonList(genre));
-		when(genreMapper.toGenreResponseList(Collections.singletonList(genre)))
-				.thenReturn(Collections.singletonList(response));
-
-		List<GenreResponse> result = genreService.getGenresByIds(Arrays.asList(1L, 2L));
+		List<GenreResponse> result = genreService.getGenresByIds(ids);
 
 		assertThat(result).hasSize(1);
+		assertThat(result.get(0)).isEqualTo(response);
 	}
 
 	@Test
-	void searchGenres_WithQuery() {
-		Genre genre = new Genre();
-		genre.setId(1L);
-		genre.setName("Action");
+	void getGenresByIds_EmptyList_Success() {
+		List<GenreResponse> result = genreService.getGenresByIds(List.of());
 
-		GenreResponse response = GenreResponse.builder().id(1L).name("Action").build();
-
-		Pageable pageable = PageRequest.of(0, 10);
-		Page<Genre> page = new PageImpl<>(Collections.singletonList(genre));
-
-		when(genreRepository.findByNameContainingIgnoreCase("Act", pageable)).thenReturn(page);
-		when(genreMapper.toGenreResponse(genre)).thenReturn(response);
-
-		Page<GenreResponse> result = genreService.searchGenres("Act", pageable);
-
-		assertThat(result.getContent()).hasSize(1);
-	}
-
-	@Test
-	void searchGenres_WithEmptyQuery() {
-		Genre genre = new Genre();
-		genre.setId(1L);
-		genre.setName("Action");
-
-		GenreResponse response = GenreResponse.builder().id(1L).name("Action").build();
-
-		Pageable pageable = PageRequest.of(0, 10);
-		Page<Genre> page = new PageImpl<>(Collections.singletonList(genre));
-
-		when(genreRepository.findAll(pageable)).thenReturn(page);
-		when(genreMapper.toGenreResponse(genre)).thenReturn(response);
-
-		Page<GenreResponse> result = genreService.searchGenres("", pageable);
-
-		assertThat(result.getContent()).hasSize(1);
-	}
-
-	@Test
-	void getGenresPage_Success() {
-		Genre genre = new Genre();
-		genre.setId(1L);
-		genre.setName("Action");
-
-		GenreResponse response = GenreResponse.builder().id(1L).name("Action").build();
-
-		Pageable pageable = PageRequest.of(0, 10);
-		Page<Genre> page = new PageImpl<>(Collections.singletonList(genre));
-
-		when(genreRepository.findAll(pageable)).thenReturn(page);
-		when(genreMapper.toGenreResponse(genre)).thenReturn(response);
-
-		Page<GenreResponse> result = genreService.getGenresPage(pageable);
-
-		assertThat(result.getContent()).hasSize(1);
-	}
-
-	@Test
-	void existsById_Success() {
-		when(genreRepository.existsById(1L)).thenReturn(true);
-
-		boolean result = genreService.existsById(1L);
-
-		assertThat(result).isTrue();
+		assertThat(result).isEmpty();
 	}
 
 	@Test
 	void existsByName_Success() {
-		when(genreRepository.existsByNameIgnoreCase("Action")).thenReturn(true);
+		when(genreRepository.existsByNameIgnoreCase(GENRE_NAME)).thenReturn(true);
 
-		boolean result = genreService.existsByName("Action");
+		boolean result = genreService.existsByName(GENRE_NAME);
 
 		assertThat(result).isTrue();
+	}
+
+	private Genre createGenre() {
+		Genre genre = new Genre();
+		genre.setId(GENRE_ID);
+		genre.setName(GENRE_NAME);
+		return genre;
+	}
+
+	private GenreResponse createGenreResponse() {
+		return GenreResponse.builder().id(GENRE_ID).name(GENRE_NAME).build();
+	}
+
+	private GenreProjection createGenreProjection(Integer movieCount) {
+		return new GenreProjection() {
+			@Override
+			public Long getId() {
+				return GENRE_ID;
+			}
+
+			@Override
+			public String getName() {
+				return GENRE_NAME;
+			}
+
+			@Override
+			public Integer getMovieCount() {
+				return movieCount;
+			}
+		};
 	}
 }

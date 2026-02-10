@@ -20,12 +20,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import ua.lviv.bas.cinema.domain.SeatReservation;
 import ua.lviv.bas.cinema.domain.Booking;
 import ua.lviv.bas.cinema.domain.CinemaHall;
 import ua.lviv.bas.cinema.domain.Movie;
 import ua.lviv.bas.cinema.domain.Payment;
 import ua.lviv.bas.cinema.domain.Seat;
+import ua.lviv.bas.cinema.domain.SeatReservation;
 import ua.lviv.bas.cinema.domain.Session;
 import ua.lviv.bas.cinema.domain.Ticket;
 import ua.lviv.bas.cinema.domain.User;
@@ -69,12 +69,12 @@ public class PaymentNotificationServiceTest {
 
 		Seat seat2 = Seat.builder().row(1).number(2).build();
 
-		SeatReservation bookedSeat1 = SeatReservation.builder().seat(seat1).build();
+		SeatReservation seatReservation1 = SeatReservation.builder().seat(seat1).build();
 
-		SeatReservation bookedSeat2 = SeatReservation.builder().seat(seat2).build();
+		SeatReservation seatReservation2 = SeatReservation.builder().seat(seat2).build();
 
 		testBooking = Booking.builder().id(1L).user(testUser).session(testSession)
-				.bookedSeats(Arrays.asList(bookedSeat1, bookedSeat2)).build();
+				.seatReservations(Arrays.asList(seatReservation1, seatReservation2)).build();
 
 		testPayment = Payment.builder().id(1L).booking(testBooking).amount(new BigDecimal("200.00")).build();
 
@@ -157,10 +157,10 @@ public class PaymentNotificationServiceTest {
 	void sendPaymentSuccessEmail_ShouldFormatSeatsInfoCorrectly() {
 		Seat seat3 = Seat.builder().row(2).number(3).build();
 		Seat seat4 = Seat.builder().row(2).number(4).build();
-		SeatReservation bookedSeat3 = SeatReservation.builder().seat(seat3).build();
-		SeatReservation bookedSeat4 = SeatReservation.builder().seat(seat4).build();
+		SeatReservation seatReservation3 = SeatReservation.builder().seat(seat3).build();
+		SeatReservation seatReservation4 = SeatReservation.builder().seat(seat4).build();
 
-		testBooking.setBookedSeats(Arrays.asList(bookedSeat3, bookedSeat4));
+		testBooking.setSeatReservations(Arrays.asList(seatReservation3, seatReservation4));
 
 		paymentNotificationService.sendPaymentSuccessEmail(testPayment, testBooking, testTickets);
 
@@ -171,12 +171,22 @@ public class PaymentNotificationServiceTest {
 	@Test
 	void sendPaymentSuccessEmail_ShouldHandleSingleSeat() {
 		Seat singleSeat = Seat.builder().row(3).number(5).build();
-		SeatReservation bookedSeat = SeatReservation.builder().seat(singleSeat).build();
-		testBooking.setBookedSeats(Arrays.asList(bookedSeat));
+		SeatReservation seatReservation = SeatReservation.builder().seat(singleSeat).build();
+		testBooking.setSeatReservations(Arrays.asList(seatReservation));
 
 		paymentNotificationService.sendPaymentSuccessEmail(testPayment, testBooking, testTickets);
 
 		verify(emailService).sendTicketsEmail(anyString(), anyString(), anyString(), anyString(), anyString(), any(),
 				anyString(), eq("Row 3, Seat 5"));
+	}
+
+	@Test
+	void sendPaymentSuccessEmail_ShouldHandleEmptySeats() {
+		testBooking.setSeatReservations(Arrays.asList());
+
+		paymentNotificationService.sendPaymentSuccessEmail(testPayment, testBooking, testTickets);
+
+		verify(emailService).sendTicketsEmail(anyString(), anyString(), anyString(), anyString(), anyString(), any(),
+				anyString(), eq(""));
 	}
 }

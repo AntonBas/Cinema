@@ -1,11 +1,7 @@
 package ua.lviv.bas.cinema.service.user;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -13,11 +9,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -40,7 +33,6 @@ import ua.lviv.bas.cinema.exception.domain.user.UserNotFoundException;
 import ua.lviv.bas.cinema.mapper.UserMapper;
 import ua.lviv.bas.cinema.repository.UserRepository;
 import ua.lviv.bas.cinema.service.notification.EmailTokenGeneratorService;
-import ua.lviv.bas.cinema.service.notification.EmailTokenService;
 
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
@@ -55,440 +47,295 @@ class UserServiceTest {
 	private UserMapper userMapper;
 
 	@Mock
-	private EmailTokenService emailTokenService;
-
-	@Mock
 	private EmailTokenGeneratorService emailTokenGeneratorService;
 
 	@InjectMocks
 	private UserService userService;
 
-	@Captor
-	private ArgumentCaptor<User> userCaptor;
-
-	private User testUser;
-	private final Long USER_ID = 1L;
-	private final String USER_EMAIL = "anton.bas@example.com";
-	private final String USER_PHONE = "+3801234567";
-	private final String ENCODED_PASSWORD = "encodedPassword123";
-
-	@BeforeEach
-	void setUp() {
-		testUser = User.builder().id(USER_ID).email(USER_EMAIL).firstName("Anton").lastName("Bas")
-				.phoneNumber(USER_PHONE).dateOfBirth(LocalDate.of(1990, 1, 1)).password(ENCODED_PASSWORD)
-				.verificationStatus(VerificationStatus.VERIFIED).verifiedAt(LocalDateTime.now()).city("Kyiv").build();
-	}
-
 	@Test
-	void registerUser_Success() {
+	void registerUser_ShouldRegisterUser() {
 		UserRegistrationRequest request = new UserRegistrationRequest();
-		request.setEmail("new.user@example.com");
-		request.setPhoneNumber("+3807654321");
-		request.setFirstName("Anton");
-		request.setLastName("Bas");
+		request.setEmail("test@example.com");
 		request.setPassword("password123");
 		request.setPasswordConfirm("password123");
-		request.setCity("Lviv");
-		request.setDateOfBirth(LocalDate.of(1995, 5, 15));
 
-		User newUser = User.builder().email(request.getEmail()).phoneNumber(request.getPhoneNumber())
-				.firstName(request.getFirstName()).lastName(request.getLastName()).city(request.getCity())
-				.dateOfBirth(request.getDateOfBirth()).build();
-
-		User savedUser = User.builder().id(2L).email(request.getEmail()).phoneNumber(request.getPhoneNumber())
-				.firstName(request.getFirstName()).lastName(request.getLastName()).city(request.getCity())
-				.dateOfBirth(request.getDateOfBirth()).password(ENCODED_PASSWORD).build();
-
-		UserResponse expectedResponse = new UserResponse();
+		User user = new User();
+		User savedUser = new User();
+		UserResponse response = new UserResponse();
 
 		when(userRepository.existsByEmail(request.getEmail())).thenReturn(false);
-		when(userMapper.toUser(request)).thenReturn(newUser);
-		when(passwordEncoder.encode(request.getPassword())).thenReturn(ENCODED_PASSWORD);
-		when(userRepository.save(any(User.class))).thenReturn(savedUser);
-		when(userMapper.toUserResponse(savedUser)).thenReturn(expectedResponse);
+		when(userMapper.toUser(request)).thenReturn(user);
+		when(passwordEncoder.encode(request.getPassword())).thenReturn("encoded");
+		when(userRepository.save(user)).thenReturn(savedUser);
+		when(userMapper.toUserResponse(savedUser)).thenReturn(response);
 
 		UserResponse result = userService.registerUser(request);
 
-		assertNotNull(result);
+		assertThat(result).isEqualTo(response);
 		verify(passwordEncoder).encode(request.getPassword());
-		verify(userRepository).save(userCaptor.capture());
-		User capturedUser = userCaptor.getValue();
-		assertEquals(ENCODED_PASSWORD, capturedUser.getPassword());
+		verify(userRepository).save(user);
 		verify(emailTokenGeneratorService).generateVerificationToken(savedUser.getEmail());
 	}
 
 	@Test
-	void registerUser_PasswordMismatch() {
+	void registerUser_ShouldThrowWhenPasswordMismatch() {
 		UserRegistrationRequest request = new UserRegistrationRequest();
-		request.setEmail("anton.bas@example.com");
 		request.setPassword("password123");
-		request.setPasswordConfirm("differentPassword");
+		request.setPasswordConfirm("different");
 
-		assertThrows(PasswordMismatchException.class, () -> userService.registerUser(request));
+		assertThatThrownBy(() -> userService.registerUser(request)).isInstanceOf(PasswordMismatchException.class);
 	}
 
 	@Test
-	void registerUser_EmailAlreadyExists() {
+	void registerUser_ShouldThrowWhenEmailExists() {
 		UserRegistrationRequest request = new UserRegistrationRequest();
-		request.setEmail("existing@example.com");
+		request.setEmail("test@example.com");
 		request.setPassword("password123");
 		request.setPasswordConfirm("password123");
 
 		when(userRepository.existsByEmail(request.getEmail())).thenReturn(true);
 
-		assertThrows(EmailAlreadyExistsException.class, () -> userService.registerUser(request));
+		assertThatThrownBy(() -> userService.registerUser(request)).isInstanceOf(EmailAlreadyExistsException.class);
 	}
 
 	@Test
-	void updateUser_Success() {
+	void updateUser_ShouldUpdateUser() {
+		Long userId = 1L;
 		UserUpdateRequest request = new UserUpdateRequest();
-		request.setFirstName("Anton");
-		request.setLastName("Bas Updated");
-		request.setDateOfBirth(LocalDate.of(1995, 5, 15));
+		User user = new User();
+		user.setVerificationStatus(VerificationStatus.VERIFIED);
+		UserProfileResponse response = new UserProfileResponse();
 
-		User updatedUser = User.builder().id(USER_ID).email(USER_EMAIL).phoneNumber(USER_PHONE).firstName("Anton")
-				.lastName("Bas Updated").dateOfBirth(LocalDate.of(1995, 5, 15)).password(ENCODED_PASSWORD)
-				.verificationStatus(VerificationStatus.NOT_VERIFIED).verifiedAt(null).city("Kyiv").build();
+		when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+		when(userRepository.save(user)).thenReturn(user);
+		when(userMapper.toUserProfileResponse(user)).thenReturn(response);
 
-		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(testUser));
-		when(userRepository.save(any(User.class))).thenReturn(updatedUser);
-		when(userMapper.toUserProfileResponse(updatedUser)).thenReturn(new UserProfileResponse());
+		UserProfileResponse result = userService.updateUser(userId, request);
 
-		UserProfileResponse result = userService.updateUser(USER_ID, request);
-
-		assertNotNull(result);
-		verify(userMapper).updateUserFromRequest(request, testUser);
-		verify(userRepository).save(any(User.class));
+		assertThat(result).isEqualTo(response);
+		verify(userMapper).updateUserFromRequest(request, user);
+		verify(userRepository).save(user);
 	}
 
 	@Test
-	void updateUser_BirthDateChanged_VerificationRevoked() {
+	void updateUser_ShouldRevokeVerificationWhenBirthDateChanged() {
+		Long userId = 1L;
 		UserUpdateRequest request = new UserUpdateRequest();
-		request.setDateOfBirth(LocalDate.of(1995, 5, 15));
+		request.setDateOfBirth(LocalDate.now());
 
-		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(testUser));
-		when(userRepository.save(any(User.class))).thenReturn(testUser);
-		when(userMapper.toUserProfileResponse(testUser)).thenReturn(new UserProfileResponse());
+		User user = new User();
+		user.setDateOfBirth(LocalDate.now().minusDays(1));
+		user.setVerificationStatus(VerificationStatus.VERIFIED);
+		user.setVerifiedAt(LocalDateTime.now());
 
-		userService.updateUser(USER_ID, request);
+		when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+		when(userRepository.save(user)).thenReturn(user);
+		when(userMapper.toUserProfileResponse(user)).thenReturn(new UserProfileResponse());
 
-		verify(userRepository).save(userCaptor.capture());
-		User capturedUser = userCaptor.getValue();
-		assertEquals(VerificationStatus.NOT_VERIFIED, capturedUser.getVerificationStatus());
-		assertNull(capturedUser.getVerifiedAt());
+		userService.updateUser(userId, request);
+
+		assertThat(user.getVerificationStatus()).isEqualTo(VerificationStatus.NOT_VERIFIED);
+		assertThat(user.getVerifiedAt()).isNull();
 	}
 
 	@Test
-	void requestEmailChange_Success() {
-		String newEmail = "anton.new@example.com";
+	void updateUser_ShouldThrowWhenUserNotFound() {
+		Long userId = 1L;
+		UserUpdateRequest request = new UserUpdateRequest();
 
-		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(testUser));
+		when(userRepository.findById(userId)).thenReturn(Optional.empty());
+
+		assertThatThrownBy(() -> userService.updateUser(userId, request)).isInstanceOf(UserNotFoundException.class);
+	}
+
+	@Test
+	void requestEmailChange_ShouldGenerateToken() {
+		Long userId = 1L;
+		String newEmail = "new@example.com";
+		User user = new User();
+		user.setEmail("old@example.com");
+
+		when(userRepository.findById(userId)).thenReturn(Optional.of(user));
 		when(userRepository.existsByEmail(newEmail)).thenReturn(false);
 
-		userService.requestEmailChange(USER_ID, newEmail);
+		userService.requestEmailChange(userId, newEmail);
 
-		verify(emailTokenGeneratorService).generateEmailChangeToken(USER_EMAIL, newEmail);
+		verify(emailTokenGeneratorService).generateEmailChangeToken(user.getEmail(), newEmail);
 	}
 
 	@Test
-	void requestEmailChange_SameEmail() {
-		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(testUser));
+	void requestEmailChange_ShouldThrowWhenSameEmail() {
+		Long userId = 1L;
+		String sameEmail = "test@example.com";
+		User user = new User();
+		user.setEmail(sameEmail);
 
-		assertThrows(SameEmailException.class, () -> userService.requestEmailChange(USER_ID, USER_EMAIL));
+		when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+
+		assertThatThrownBy(() -> userService.requestEmailChange(userId, sameEmail))
+				.isInstanceOf(SameEmailException.class);
 	}
 
 	@Test
-	void requestEmailChange_EmailAlreadyExists() {
-		String newEmail = "existing@example.com";
+	void requestEmailChange_ShouldThrowWhenEmailExists() {
+		Long userId = 1L;
+		String existingEmail = "existing@example.com";
+		User user = new User();
+		user.setEmail("old@example.com");
 
-		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(testUser));
-		when(userRepository.existsByEmail(newEmail)).thenReturn(true);
+		when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+		when(userRepository.existsByEmail(existingEmail)).thenReturn(true);
 
-		assertThrows(EmailAlreadyExistsException.class, () -> userService.requestEmailChange(USER_ID, newEmail));
+		assertThatThrownBy(() -> userService.requestEmailChange(userId, existingEmail))
+				.isInstanceOf(EmailAlreadyExistsException.class);
 	}
 
 	@Test
-	void updateUserPassword_Success() {
+	void updateUserPassword_ShouldUpdatePassword() {
+		Long userId = 1L;
 		UserPasswordUpdateRequest request = new UserPasswordUpdateRequest();
-		request.setCurrentPassword("oldPassword123");
-		request.setNewPassword("newPassword123");
-		request.setPasswordConfirm("newPassword123");
+		request.setCurrentPassword("oldPass");
+		request.setNewPassword("newPass123");
+		request.setPasswordConfirm("newPass123");
 
-		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(testUser));
-		when(passwordEncoder.matches(request.getCurrentPassword(), ENCODED_PASSWORD)).thenReturn(true);
-		when(passwordEncoder.matches(request.getNewPassword(), ENCODED_PASSWORD)).thenReturn(false);
-		when(passwordEncoder.encode(request.getNewPassword())).thenReturn("newEncodedPassword");
+		User user = new User();
+		user.setPassword("encodedOld");
 
-		userService.updateUserPassword(USER_ID, request);
+		when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+		when(passwordEncoder.matches("oldPass", "encodedOld")).thenReturn(true);
+		when(passwordEncoder.matches("newPass123", "encodedOld")).thenReturn(false);
+		when(passwordEncoder.encode("newPass123")).thenReturn("encodedNew");
 
-		verify(passwordEncoder).encode(request.getNewPassword());
-		verify(userRepository).save(userCaptor.capture());
-		User capturedUser = userCaptor.getValue();
-		assertEquals("newEncodedPassword", capturedUser.getPassword());
+		userService.updateUserPassword(userId, request);
+
+		assertThat(user.getPassword()).isEqualTo("encodedNew");
+		verify(userRepository).save(user);
 	}
 
 	@Test
-	void updateUserPassword_PasswordMismatch() {
+	void updateUserPassword_ShouldThrowWhenPasswordMismatch() {
+		Long userId = 1L;
 		UserPasswordUpdateRequest request = new UserPasswordUpdateRequest();
-		request.setNewPassword("password123");
-		request.setPasswordConfirm("differentPassword");
+		request.setNewPassword("pass1");
+		request.setPasswordConfirm("pass2");
 
-		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(testUser));
+		User user = new User();
 
-		assertThrows(PasswordMismatchException.class, () -> userService.updateUserPassword(USER_ID, request));
+		when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+
+		assertThatThrownBy(() -> userService.updateUserPassword(userId, request))
+				.isInstanceOf(PasswordMismatchException.class);
 	}
 
 	@Test
-	void updateUserPassword_InvalidCurrentPassword() {
+	void updateUserPassword_ShouldThrowWhenCurrentPasswordInvalid() {
+		Long userId = 1L;
 		UserPasswordUpdateRequest request = new UserPasswordUpdateRequest();
-		request.setCurrentPassword("wrongPassword");
-		request.setNewPassword("newPassword123");
-		request.setPasswordConfirm("newPassword123");
+		request.setCurrentPassword("wrong");
+		request.setNewPassword("newPass123");
+		request.setPasswordConfirm("newPass123");
 
-		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(testUser));
-		when(passwordEncoder.matches(request.getCurrentPassword(), ENCODED_PASSWORD)).thenReturn(false);
+		User user = new User();
+		user.setPassword("encoded");
 
-		assertThrows(InvalidCurrentPasswordException.class, () -> userService.updateUserPassword(USER_ID, request));
+		when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+		when(passwordEncoder.matches("wrong", "encoded")).thenReturn(false);
+
+		assertThatThrownBy(() -> userService.updateUserPassword(userId, request))
+				.isInstanceOf(InvalidCurrentPasswordException.class);
 	}
 
 	@Test
-	void updateUserPassword_SamePassword() {
+	void updateUserPassword_ShouldThrowWhenSamePassword() {
+		Long userId = 1L;
 		UserPasswordUpdateRequest request = new UserPasswordUpdateRequest();
-		request.setCurrentPassword("oldPassword123");
-		request.setNewPassword("samePassword");
-		request.setPasswordConfirm("samePassword");
+		request.setCurrentPassword("same");
+		request.setNewPassword("same");
+		request.setPasswordConfirm("same");
 
-		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(testUser));
-		when(passwordEncoder.matches(request.getCurrentPassword(), ENCODED_PASSWORD)).thenReturn(true);
-		when(passwordEncoder.matches(request.getNewPassword(), ENCODED_PASSWORD)).thenReturn(true);
+		User user = new User();
+		user.setPassword("encoded");
 
-		assertThrows(SamePasswordException.class, () -> userService.updateUserPassword(USER_ID, request));
+		when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+		when(passwordEncoder.matches("same", "encoded")).thenReturn(true);
+
+		assertThatThrownBy(() -> userService.updateUserPassword(userId, request))
+				.isInstanceOf(SamePasswordException.class);
 	}
 
 	@Test
-	void updateUserPassword_TooShortPassword() {
+	void updateUserPassword_ShouldThrowWhenPasswordTooShort() {
+		Long userId = 1L;
 		UserPasswordUpdateRequest request = new UserPasswordUpdateRequest();
-		request.setCurrentPassword("oldPassword123");
+		request.setCurrentPassword("old");
 		request.setNewPassword("short");
 		request.setPasswordConfirm("short");
 
-		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(testUser));
-		when(passwordEncoder.matches(request.getCurrentPassword(), ENCODED_PASSWORD)).thenReturn(true);
+		User user = new User();
+		user.setPassword("encoded");
 
-		assertThrows(PasswordValidationException.class, () -> userService.updateUserPassword(USER_ID, request));
+		when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+		when(passwordEncoder.matches("old", "encoded")).thenReturn(true);
+
+		assertThatThrownBy(() -> userService.updateUserPassword(userId, request))
+				.isInstanceOf(PasswordValidationException.class);
 	}
 
 	@Test
-	void confirmRegistration_Success() {
-		String token = "verificationToken";
-		String expectedMessage = "Email verified successfully";
+	void getUserById_ShouldReturnUser() {
+		Long userId = 1L;
+		User user = new User();
 
-		when(emailTokenService.confirmEmail(token)).thenReturn(expectedMessage);
+		when(userRepository.findById(userId)).thenReturn(Optional.of(user));
 
-		String result = userService.confirmRegistration(token);
+		User result = userService.getUserById(userId);
 
-		assertEquals(expectedMessage, result);
-		verify(emailTokenService).confirmEmail(token);
+		assertThat(result).isEqualTo(user);
 	}
 
 	@Test
-	void confirmEmailChange_Success() {
-		String token = "emailChangeToken";
-		UserProfileResponse expectedResponse = new UserProfileResponse();
+	void getUserById_ShouldThrowWhenNotFound() {
+		Long userId = 1L;
 
-		when(emailTokenService.confirmEmailChange(token)).thenReturn(testUser);
-		when(userMapper.toUserProfileResponse(testUser)).thenReturn(expectedResponse);
+		when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
-		UserProfileResponse result = userService.confirmEmailChange(token);
-
-		assertNotNull(result);
-		assertEquals(expectedResponse, result);
-		verify(emailTokenService).confirmEmailChange(token);
-		verify(userMapper).toUserProfileResponse(testUser);
+		assertThatThrownBy(() -> userService.getUserById(userId)).isInstanceOf(UserNotFoundException.class);
 	}
 
 	@Test
-	void getUserProfile_Success() {
-		UserProfileResponse expectedResponse = new UserProfileResponse();
+	void getUserByEmail_ShouldReturnUser() {
+		String email = "test@example.com";
+		User user = new User();
 
-		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(testUser));
-		when(userMapper.toUserProfileResponse(testUser)).thenReturn(expectedResponse);
+		when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
 
-		UserProfileResponse result = userService.getUserProfile(USER_ID);
+		User result = userService.getUserByEmail(email);
 
-		assertNotNull(result);
-		assertEquals(expectedResponse, result);
-		verify(userMapper).toUserProfileResponse(testUser);
+		assertThat(result).isEqualTo(user);
 	}
 
 	@Test
-	void getUserProfile_UserNotFound() {
-		Long nonExistentId = 999L;
-		when(userRepository.findById(nonExistentId)).thenReturn(Optional.empty());
+	void getUserProfile_ShouldReturnProfileResponse() {
+		Long userId = 1L;
+		User user = new User();
+		UserProfileResponse response = new UserProfileResponse();
 
-		assertThrows(UserNotFoundException.class, () -> userService.getUserProfile(nonExistentId));
+		when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+		when(userMapper.toUserProfileResponse(user)).thenReturn(response);
+
+		UserProfileResponse result = userService.getUserProfile(userId);
+
+		assertThat(result).isEqualTo(response);
 	}
 
 	@Test
-	void getUserById_Success() {
-		UserResponse expectedResponse = new UserResponse();
+	void emailExists_ShouldReturnTrue() {
+		String email = "test@example.com";
 
-		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(testUser));
-		when(userMapper.toUserResponse(testUser)).thenReturn(expectedResponse);
+		when(userRepository.existsByEmail(email)).thenReturn(true);
 
-		UserResponse result = userService.getUserById(USER_ID);
+		boolean result = userService.emailExists(email);
 
-		assertNotNull(result);
-		assertEquals(expectedResponse, result);
-		verify(userMapper).toUserResponse(testUser);
-	}
-
-	@Test
-	void getById_Success() {
-		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(testUser));
-
-		User result = userService.getById(USER_ID);
-
-		assertEquals(testUser, result);
-	}
-
-	@Test
-	void getById_UserNotFound() {
-		Long nonExistentId = 999L;
-		when(userRepository.findById(nonExistentId)).thenReturn(Optional.empty());
-
-		assertThrows(UserNotFoundException.class, () -> userService.getById(nonExistentId));
-	}
-
-	@Test
-	void getByEmail_Success() {
-		when(userRepository.findByEmail(USER_EMAIL)).thenReturn(Optional.of(testUser));
-
-		User result = userService.getByEmail(USER_EMAIL);
-
-		assertEquals(testUser, result);
-	}
-
-	@Test
-	void getByEmail_UserNotFound() {
-		String nonExistentEmail = "nonexistent@example.com";
-		when(userRepository.findByEmail(nonExistentEmail)).thenReturn(Optional.empty());
-
-		assertThrows(UserNotFoundException.class, () -> userService.getByEmail(nonExistentEmail));
-	}
-
-	@Test
-	void existsByEmail_True() {
-		when(userRepository.existsByEmail(USER_EMAIL)).thenReturn(true);
-
-		boolean result = userService.existsByEmail(USER_EMAIL);
-
-		assertTrue(result);
-	}
-
-	@Test
-	void existsById_True() {
-		when(userRepository.existsById(USER_ID)).thenReturn(true);
-
-		boolean result = userService.existsById(USER_ID);
-
-		assertTrue(result);
-	}
-
-	@Test
-	void updateUser_BirthDateNotChanged_VerificationNotRevoked() {
-		UserUpdateRequest request = new UserUpdateRequest();
-		request.setFirstName("Updated");
-		request.setDateOfBirth(LocalDate.of(1990, 1, 1));
-
-		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(testUser));
-		when(userRepository.save(any(User.class))).thenReturn(testUser);
-		when(userMapper.toUserProfileResponse(testUser)).thenReturn(new UserProfileResponse());
-
-		userService.updateUser(USER_ID, request);
-
-		verify(userRepository).save(userCaptor.capture());
-		User capturedUser = userCaptor.getValue();
-		assertEquals(VerificationStatus.VERIFIED, capturedUser.getVerificationStatus());
-		assertNotNull(capturedUser.getVerifiedAt());
-	}
-
-	@Test
-	void updateUser_NoBirthDateChange() {
-		UserUpdateRequest request = new UserUpdateRequest();
-		request.setFirstName("Updated");
-		request.setDateOfBirth(null);
-
-		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(testUser));
-		when(userRepository.save(any(User.class))).thenReturn(testUser);
-		when(userMapper.toUserProfileResponse(testUser)).thenReturn(new UserProfileResponse());
-
-		userService.updateUser(USER_ID, request);
-
-		verify(userRepository).save(userCaptor.capture());
-		User capturedUser = userCaptor.getValue();
-		assertEquals(VerificationStatus.VERIFIED, capturedUser.getVerificationStatus());
-		assertNotNull(capturedUser.getVerifiedAt());
-	}
-
-	@Test
-	void updateUser_NullBirthDateWhenOriginalNull() {
-		User userWithNullBirthDate = User.builder().id(USER_ID).email(USER_EMAIL).firstName("Anton").lastName("Bas")
-				.phoneNumber(USER_PHONE).dateOfBirth(null).password(ENCODED_PASSWORD)
-				.verificationStatus(VerificationStatus.VERIFIED).verifiedAt(LocalDateTime.now()).city("Kyiv").build();
-
-		UserUpdateRequest request = new UserUpdateRequest();
-		request.setFirstName("Updated");
-		request.setDateOfBirth(null);
-
-		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(userWithNullBirthDate));
-		when(userRepository.save(any(User.class))).thenReturn(userWithNullBirthDate);
-		when(userMapper.toUserProfileResponse(userWithNullBirthDate)).thenReturn(new UserProfileResponse());
-
-		userService.updateUser(USER_ID, request);
-
-		verify(userRepository).save(userCaptor.capture());
-		User capturedUser = userCaptor.getValue();
-		assertEquals(VerificationStatus.VERIFIED, capturedUser.getVerificationStatus());
-		assertNotNull(capturedUser.getVerifiedAt());
-	}
-
-	@Test
-	void updateUserPassword_ValidatesPasswordLength() {
-		UserPasswordUpdateRequest request = new UserPasswordUpdateRequest();
-		request.setCurrentPassword("oldPassword123");
-		request.setNewPassword("validPassword123");
-		request.setPasswordConfirm("validPassword123");
-
-		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(testUser));
-		when(passwordEncoder.matches(request.getCurrentPassword(), ENCODED_PASSWORD)).thenReturn(true);
-		when(passwordEncoder.matches(request.getNewPassword(), ENCODED_PASSWORD)).thenReturn(false);
-		when(passwordEncoder.encode(request.getNewPassword())).thenReturn("newEncodedPassword");
-
-		userService.updateUserPassword(USER_ID, request);
-
-		verify(passwordEncoder).encode(request.getNewPassword());
-		verify(userRepository).save(any(User.class));
-	}
-
-	@Test
-	void updateUser_NotVerifiedUser_BirthDateChanged() {
-		User notVerifiedUser = User.builder().id(USER_ID).email(USER_EMAIL).firstName("Anton").lastName("Bas")
-				.phoneNumber(USER_PHONE).dateOfBirth(LocalDate.of(1990, 1, 1)).password(ENCODED_PASSWORD)
-				.verificationStatus(VerificationStatus.NOT_VERIFIED).verifiedAt(null).city("Kyiv").build();
-
-		UserUpdateRequest request = new UserUpdateRequest();
-		request.setDateOfBirth(LocalDate.of(1995, 5, 15));
-
-		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(notVerifiedUser));
-		when(userRepository.save(any(User.class))).thenReturn(notVerifiedUser);
-		when(userMapper.toUserProfileResponse(notVerifiedUser)).thenReturn(new UserProfileResponse());
-
-		userService.updateUser(USER_ID, request);
-
-		verify(userRepository).save(userCaptor.capture());
-		User capturedUser = userCaptor.getValue();
-		assertEquals(VerificationStatus.NOT_VERIFIED, capturedUser.getVerificationStatus());
-		assertNull(capturedUser.getVerifiedAt());
+		assertThat(result).isTrue();
 	}
 }

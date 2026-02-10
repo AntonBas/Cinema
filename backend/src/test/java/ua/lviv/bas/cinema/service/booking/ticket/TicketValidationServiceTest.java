@@ -15,7 +15,7 @@ import ua.lviv.bas.cinema.domain.enums.CinemaSessionStatus;
 import ua.lviv.bas.cinema.domain.enums.TicketStatus;
 import ua.lviv.bas.cinema.exception.domain.ticket.TicketValidationException;
 
-class TicketValidationServiceTest {
+public class TicketValidationServiceTest {
 
 	private TicketValidationService ticketValidationService;
 

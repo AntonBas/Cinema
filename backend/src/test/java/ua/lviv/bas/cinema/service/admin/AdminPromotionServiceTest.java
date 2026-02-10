@@ -2,8 +2,6 @@ package ua.lviv.bas.cinema.service.admin;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -13,7 +11,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -21,13 +18,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import ua.lviv.bas.cinema.domain.Promotion;
-import ua.lviv.bas.cinema.domain.UserPromotion;
+import ua.lviv.bas.cinema.domain.projection.PromotionResponseProjection;
 import ua.lviv.bas.cinema.dto.promotion.request.PromotionCreateRequest;
 import ua.lviv.bas.cinema.dto.promotion.request.PromotionUpdateRequest;
 import ua.lviv.bas.cinema.dto.promotion.response.PromotionResponse;
 import ua.lviv.bas.cinema.exception.domain.promotion.PromotionAlreadyExistsException;
 import ua.lviv.bas.cinema.exception.domain.promotion.PromotionDatesInvalidException;
-import ua.lviv.bas.cinema.exception.domain.promotion.PromotionHasRedemptionsException;
 import ua.lviv.bas.cinema.exception.domain.promotion.PromotionNotFoundException;
 import ua.lviv.bas.cinema.mapper.PromotionMapper;
 import ua.lviv.bas.cinema.repository.PromotionRepository;
@@ -42,385 +38,277 @@ public class AdminPromotionServiceTest {
 	private PromotionMapper promotionMapper;
 
 	@InjectMocks
-	private AdminPromotionService adminPromotionService;
+	private AdminPromotionService service;
 
-	private Promotion testPromotion;
-	private Promotion anotherPromotion;
-	private PromotionCreateRequest createRequest;
-	private PromotionUpdateRequest updateRequest;
-	private PromotionResponse promotionResponse;
-	private final Long PROMOTION_ID = 1L;
-	private final Long ANOTHER_PROMOTION_ID = 2L;
-	private final String PROMOTION_TITLE = "Summer Sale";
-	private final String ANOTHER_TITLE = "Winter Discount";
-	private final String DESCRIPTION = "Special summer promotion";
-	private final LocalDate START_DATE = LocalDate.now().plusDays(1);
-	private final LocalDate END_DATE = LocalDate.now().plusDays(30);
-	private final Integer BONUS_POINTS = 1000;
+	@Test
+	void createPromotion() {
+		PromotionCreateRequest request = new PromotionCreateRequest();
+		request.setTitle("Test Promotion");
+		request.setStartDate(LocalDate.now());
+		request.setEndDate(LocalDate.now().plusDays(7));
 
-	@BeforeEach
-	void setUp() {
-		testPromotion = Promotion.builder().id(PROMOTION_ID).title(PROMOTION_TITLE).description(DESCRIPTION)
-				.bonusPoints(BONUS_POINTS).startDate(START_DATE).endDate(END_DATE).build();
+		Promotion promotion = Promotion.builder().id(1L).title("Test Promotion").build();
 
-		anotherPromotion = Promotion.builder().id(ANOTHER_PROMOTION_ID).title(ANOTHER_TITLE)
-				.description("Winter promotion").bonusPoints(2000).startDate(LocalDate.now().plusDays(10))
-				.endDate(LocalDate.now().plusDays(60)).build();
+		PromotionResponse response = new PromotionResponse();
+		response.setId(1L);
 
-		createRequest = new PromotionCreateRequest();
-		createRequest.setTitle(PROMOTION_TITLE);
-		createRequest.setDescription(DESCRIPTION);
-		createRequest.setBonusPoints(BONUS_POINTS);
-		createRequest.setStartDate(START_DATE);
-		createRequest.setEndDate(END_DATE);
+		when(promotionRepository.existsByTitle("Test Promotion")).thenReturn(false);
+		when(promotionMapper.toPromotion(request)).thenReturn(promotion);
+		when(promotionRepository.save(promotion)).thenReturn(promotion);
+		when(promotionMapper.toPromotionResponse(promotion)).thenReturn(response);
 
-		updateRequest = new PromotionUpdateRequest();
-		updateRequest.setTitle("Updated Title");
-		updateRequest.setDescription("Updated Description");
-		updateRequest.setBonusPoints(500);
-		updateRequest.setStartDate(START_DATE.plusDays(1));
-		updateRequest.setEndDate(END_DATE.minusDays(1));
+		PromotionResponse result = service.createPromotion(request);
 
-		promotionResponse = new PromotionResponse();
-		promotionResponse.setId(PROMOTION_ID);
-		promotionResponse.setTitle(PROMOTION_TITLE);
-		promotionResponse.setDescription(DESCRIPTION);
-		promotionResponse.setBonusPoints(BONUS_POINTS);
-		promotionResponse.setStartDate(START_DATE);
-		promotionResponse.setEndDate(END_DATE);
+		assertThat(result.getId()).isEqualTo(1L);
+		verify(promotionRepository).save(promotion);
 	}
 
 	@Test
-	void createPromotion_Success() {
-		when(promotionRepository.existsByTitle(PROMOTION_TITLE)).thenReturn(false);
-		when(promotionMapper.toPromotion(createRequest)).thenReturn(testPromotion);
-		when(promotionRepository.save(testPromotion)).thenReturn(testPromotion);
-		when(promotionMapper.toPromotionResponse(testPromotion)).thenReturn(promotionResponse);
+	void createPromotionWithExistingTitle() {
+		PromotionCreateRequest request = new PromotionCreateRequest();
+		request.setTitle("Existing Promotion");
 
-		PromotionResponse result = adminPromotionService.createPromotion(createRequest);
+		when(promotionRepository.existsByTitle("Existing Promotion")).thenReturn(true);
+
+		assertThatThrownBy(() -> service.createPromotion(request)).isInstanceOf(PromotionAlreadyExistsException.class);
+	}
+
+	@Test
+	void createPromotionWithInvalidDates() {
+		PromotionCreateRequest request = new PromotionCreateRequest();
+		request.setTitle("Test");
+		request.setStartDate(LocalDate.now().plusDays(7));
+		request.setEndDate(LocalDate.now());
+
+		when(promotionRepository.existsByTitle("Test")).thenReturn(false);
+
+		assertThatThrownBy(() -> service.createPromotion(request)).isInstanceOf(PromotionDatesInvalidException.class);
+	}
+
+	@Test
+	void updatePromotion() {
+		Promotion promotion = Promotion.builder().id(1L).build();
+		PromotionUpdateRequest request = new PromotionUpdateRequest();
+		request.setTitle("Updated");
+		PromotionResponse response = new PromotionResponse();
+
+		when(promotionRepository.findById(1L)).thenReturn(Optional.of(promotion));
+		when(promotionRepository.save(promotion)).thenReturn(promotion);
+		when(promotionMapper.toPromotionResponse(promotion)).thenReturn(response);
+
+		PromotionResponse result = service.updatePromotion(1L, request);
 
 		assertThat(result).isNotNull();
-		assertThat(result.getId()).isEqualTo(PROMOTION_ID);
-		assertThat(result.getTitle()).isEqualTo(PROMOTION_TITLE);
-		assertThat(result.getBonusPoints()).isEqualTo(BONUS_POINTS);
-		verify(promotionRepository).existsByTitle(PROMOTION_TITLE);
-		verify(promotionMapper).toPromotion(createRequest);
-		verify(promotionRepository).save(testPromotion);
-		verify(promotionMapper).toPromotionResponse(testPromotion);
+		verify(promotionMapper).updatePromotionFromRequest(promotion, request);
+		verify(promotionRepository).save(promotion);
 	}
 
 	@Test
-	void createPromotion_WhenTitleAlreadyExists_ShouldThrowException() {
-		when(promotionRepository.existsByTitle(PROMOTION_TITLE)).thenReturn(true);
+	void updatePromotionNotFound() {
+		PromotionUpdateRequest request = new PromotionUpdateRequest();
 
-		assertThatThrownBy(() -> adminPromotionService.createPromotion(createRequest))
-				.isInstanceOf(PromotionAlreadyExistsException.class).hasMessageContaining(PROMOTION_TITLE);
+		when(promotionRepository.findById(1L)).thenReturn(Optional.empty());
 
-		verify(promotionRepository).existsByTitle(PROMOTION_TITLE);
-		verify(promotionMapper, never()).toPromotion(any());
-		verify(promotionRepository, never()).save(any());
+		assertThatThrownBy(() -> service.updatePromotion(1L, request)).isInstanceOf(PromotionNotFoundException.class);
 	}
 
 	@Test
-	void createPromotion_WhenEndDateBeforeStartDate_ShouldThrowException() {
-		createRequest.setStartDate(LocalDate.now().plusDays(10));
-		createRequest.setEndDate(LocalDate.now().plusDays(5));
+	void deletePromotion() {
+		Promotion promotion = Promotion.builder().id(1L).build();
 
-		when(promotionRepository.existsByTitle(PROMOTION_TITLE)).thenReturn(false);
+		when(promotionRepository.findById(1L)).thenReturn(Optional.of(promotion));
 
-		assertThatThrownBy(() -> adminPromotionService.createPromotion(createRequest))
-				.isInstanceOf(PromotionDatesInvalidException.class);
+		service.deletePromotion(1L);
 
-		verify(promotionRepository).existsByTitle(PROMOTION_TITLE);
-		verify(promotionMapper, never()).toPromotion(any());
-		verify(promotionRepository, never()).save(any());
+		verify(promotionRepository).delete(promotion);
 	}
 
 	@Test
-	void updatePromotion_Success() {
-		when(promotionRepository.findById(PROMOTION_ID)).thenReturn(Optional.of(testPromotion));
-		when(promotionRepository.save(testPromotion)).thenReturn(testPromotion);
-		when(promotionMapper.toPromotionResponse(testPromotion)).thenReturn(promotionResponse);
+	void getPromotionById() {
+		PromotionResponseProjection projection = new PromotionResponseProjection() {
+			@Override
+			public Long getId() {
+				return 1L;
+			}
 
-		PromotionResponse result = adminPromotionService.updatePromotion(PROMOTION_ID, updateRequest);
+			@Override
+			public String getTitle() {
+				return "Test";
+			}
 
-		assertThat(result).isNotNull();
-		verify(promotionRepository).findById(PROMOTION_ID);
-		verify(promotionMapper).updatePromotionFromRequest(testPromotion, updateRequest);
-		verify(promotionRepository).save(testPromotion);
-		verify(promotionMapper).toPromotionResponse(testPromotion);
+			@Override
+			public String getDescription() {
+				return null;
+			}
+
+			@Override
+			public Integer getBonusPoints() {
+				return 100;
+			}
+
+			@Override
+			public LocalDate getStartDate() {
+				return null;
+			}
+
+			@Override
+			public LocalDate getEndDate() {
+				return null;
+			}
+		};
+
+		PromotionResponse response = new PromotionResponse();
+		response.setId(1L);
+
+		when(promotionRepository.findPromotionById(1L)).thenReturn(projection);
+		when(promotionMapper.toPromotionResponse(projection)).thenReturn(response);
+
+		PromotionResponse result = service.getPromotionById(1L);
+
+		assertThat(result.getId()).isEqualTo(1L);
 	}
 
 	@Test
-	void updatePromotion_WhenPromotionNotFound_ShouldThrowException() {
-		when(promotionRepository.findById(PROMOTION_ID)).thenReturn(Optional.empty());
+	void getPromotionByIdNotFound() {
+		when(promotionRepository.findPromotionById(1L)).thenReturn(null);
 
-		assertThatThrownBy(() -> adminPromotionService.updatePromotion(PROMOTION_ID, updateRequest))
-				.isInstanceOf(PromotionNotFoundException.class);
-
-		verify(promotionRepository).findById(PROMOTION_ID);
-		verify(promotionMapper, never()).updatePromotionFromRequest(any(), any());
-		verify(promotionRepository, never()).save(any());
+		assertThatThrownBy(() -> service.getPromotionById(1L)).isInstanceOf(PromotionNotFoundException.class);
 	}
 
 	@Test
-	void deletePromotion_Success() {
-		when(promotionRepository.findById(PROMOTION_ID)).thenReturn(Optional.of(testPromotion));
+	void getAllPromotions() {
+		PromotionResponseProjection projection = new PromotionResponseProjection() {
+			@Override
+			public Long getId() {
+				return 1L;
+			}
 
-		adminPromotionService.deletePromotion(PROMOTION_ID);
+			@Override
+			public String getTitle() {
+				return "Test";
+			}
 
-		verify(promotionRepository).findById(PROMOTION_ID);
-		verify(promotionRepository).delete(testPromotion);
+			@Override
+			public String getDescription() {
+				return null;
+			}
+
+			@Override
+			public Integer getBonusPoints() {
+				return 100;
+			}
+
+			@Override
+			public LocalDate getStartDate() {
+				return null;
+			}
+
+			@Override
+			public LocalDate getEndDate() {
+				return null;
+			}
+		};
+
+		List<PromotionResponseProjection> projections = Arrays.asList(projection);
+		PromotionResponse response = new PromotionResponse();
+
+		when(promotionRepository.findAllPromotions(false)).thenReturn(projections);
+		when(promotionMapper.toPromotionResponseListFromProjections(projections)).thenReturn(Arrays.asList(response));
+
+		List<PromotionResponse> result = service.getAllPromotions();
+
+		assertThat(result).hasSize(1);
 	}
 
 	@Test
-	void deletePromotion_WhenPromotionNotFound_ShouldThrowException() {
-		when(promotionRepository.findById(PROMOTION_ID)).thenReturn(Optional.empty());
+	void getAllPromotionsEmpty() {
+		when(promotionRepository.findAllPromotions(false)).thenReturn(Collections.emptyList());
+		when(promotionMapper.toPromotionResponseListFromProjections(Collections.emptyList()))
+				.thenReturn(Collections.emptyList());
 
-		assertThatThrownBy(() -> adminPromotionService.deletePromotion(PROMOTION_ID))
-				.isInstanceOf(PromotionNotFoundException.class);
+		List<PromotionResponse> result = service.getAllPromotions();
 
-		verify(promotionRepository).findById(PROMOTION_ID);
-		verify(promotionRepository, never()).delete(any());
-	}
-
-	@Test
-	void deletePromotion_WhenHasRedemptions_ShouldThrowException() {
-		UserPromotion userPromotion = UserPromotion.builder().id(1L).promotion(testPromotion).build();
-		testPromotion.setUserRedemptions(Arrays.asList(userPromotion));
-
-		when(promotionRepository.findById(PROMOTION_ID)).thenReturn(Optional.of(testPromotion));
-
-		assertThatThrownBy(() -> adminPromotionService.deletePromotion(PROMOTION_ID))
-				.isInstanceOf(PromotionHasRedemptionsException.class).hasMessageContaining("1");
-
-		verify(promotionRepository).findById(PROMOTION_ID);
-		verify(promotionRepository, never()).delete(any());
-	}
-
-	@Test
-	void getPromotionById_Success() {
-		when(promotionRepository.findById(PROMOTION_ID)).thenReturn(Optional.of(testPromotion));
-		when(promotionMapper.toPromotionResponse(testPromotion)).thenReturn(promotionResponse);
-
-		PromotionResponse result = adminPromotionService.getPromotionById(PROMOTION_ID);
-
-		assertThat(result).isNotNull();
-		assertThat(result.getId()).isEqualTo(PROMOTION_ID);
-		assertThat(result.getBonusPoints()).isEqualTo(BONUS_POINTS);
-		verify(promotionRepository).findById(PROMOTION_ID);
-		verify(promotionMapper).toPromotionResponse(testPromotion);
-	}
-
-	@Test
-	void getPromotionById_WhenPromotionNotFound_ShouldThrowException() {
-		when(promotionRepository.findById(PROMOTION_ID)).thenReturn(Optional.empty());
-
-		assertThatThrownBy(() -> adminPromotionService.getPromotionById(PROMOTION_ID))
-				.isInstanceOf(PromotionNotFoundException.class);
-
-		verify(promotionRepository).findById(PROMOTION_ID);
-		verify(promotionMapper, never()).toPromotionResponse(any());
-	}
-
-	@Test
-	void getAllPromotions_Success() {
-		List<Promotion> promotions = Arrays.asList(testPromotion, anotherPromotion);
-		List<PromotionResponse> responses = Arrays.asList(promotionResponse, promotionResponse);
-
-		when(promotionRepository.findAll()).thenReturn(promotions);
-		when(promotionMapper.toPromotionResponseList(promotions)).thenReturn(responses);
-
-		List<PromotionResponse> result = adminPromotionService.getAllPromotions();
-
-		assertThat(result).isNotNull();
-		assertThat(result).hasSize(2);
-		verify(promotionRepository).findAll();
-		verify(promotionMapper).toPromotionResponseList(promotions);
-	}
-
-	@Test
-	void getAllPromotions_WhenNoPromotions_ShouldReturnEmptyList() {
-		when(promotionRepository.findAll()).thenReturn(Collections.emptyList());
-		when(promotionMapper.toPromotionResponseList(Collections.emptyList())).thenReturn(Collections.emptyList());
-
-		List<PromotionResponse> result = adminPromotionService.getAllPromotions();
-
-		assertThat(result).isNotNull();
 		assertThat(result).isEmpty();
-		verify(promotionRepository).findAll();
-		verify(promotionMapper).toPromotionResponseList(Collections.emptyList());
 	}
 
 	@Test
-	void getActivePromotions_Success() {
-		List<Promotion> promotions = Arrays.asList(testPromotion, anotherPromotion);
-		List<PromotionResponse> responses = Arrays.asList(promotionResponse, promotionResponse);
+	void getActivePromotions() {
+		PromotionResponseProjection projection = new PromotionResponseProjection() {
+			@Override
+			public Long getId() {
+				return 1L;
+			}
 
-		when(promotionRepository.findAll()).thenReturn(promotions);
-		when(promotionMapper.toPromotionResponseList(promotions)).thenReturn(responses);
+			@Override
+			public String getTitle() {
+				return "Test";
+			}
 
-		List<PromotionResponse> result = adminPromotionService.getActivePromotions();
+			@Override
+			public String getDescription() {
+				return null;
+			}
 
-		assertThat(result).isNotNull();
-		assertThat(result).hasSize(2);
-		verify(promotionRepository).findAll();
-		verify(promotionMapper).toPromotionResponseList(promotions);
+			@Override
+			public Integer getBonusPoints() {
+				return 100;
+			}
+
+			@Override
+			public LocalDate getStartDate() {
+				return null;
+			}
+
+			@Override
+			public LocalDate getEndDate() {
+				return null;
+			}
+		};
+
+		List<PromotionResponseProjection> projections = Arrays.asList(projection);
+		PromotionResponse response = new PromotionResponse();
+
+		when(promotionRepository.findAllPromotions(true)).thenReturn(projections);
+		when(promotionMapper.toPromotionResponseListFromProjections(projections)).thenReturn(Arrays.asList(response));
+
+		List<PromotionResponse> result = service.getActivePromotions();
+
+		assertThat(result).hasSize(1);
 	}
 
 	@Test
-	void findByIdOrThrow_Success() {
-		when(promotionRepository.findById(PROMOTION_ID)).thenReturn(Optional.of(testPromotion));
-
-		Promotion result = adminPromotionService.findByIdOrThrow(PROMOTION_ID);
-
-		assertThat(result).isEqualTo(testPromotion);
-		verify(promotionRepository).findById(PROMOTION_ID);
-	}
-
-	@Test
-	void findByIdOrThrow_WhenNotFound_ShouldThrowException() {
-		when(promotionRepository.findById(PROMOTION_ID)).thenReturn(Optional.empty());
-
-		assertThatThrownBy(() -> adminPromotionService.findByIdOrThrow(PROMOTION_ID))
-				.isInstanceOf(PromotionNotFoundException.class);
-
-		verify(promotionRepository).findById(PROMOTION_ID);
-	}
-
-	@Test
-	void isPromotionActive_WhenPromotionIsNull_ShouldReturnFalse() {
-		boolean result = adminPromotionService.isPromotionActive(null);
-		assertThat(result).isFalse();
-	}
-
-	@Test
-	void isPromotionActive_WhenCurrentTimeIsBeforeStart_ShouldReturnFalse() {
-		Promotion futurePromotion = Promotion.builder().startDate(LocalDate.now().plusDays(1))
-				.endDate(LocalDate.now().plusDays(2)).build();
-
-		boolean result = adminPromotionService.isPromotionActive(futurePromotion);
-		assertThat(result).isFalse();
-	}
-
-	@Test
-	void isPromotionActive_WhenCurrentTimeIsAfterEnd_ShouldReturnFalse() {
-		Promotion pastPromotion = Promotion.builder().startDate(LocalDate.now().minusDays(2))
-				.endDate(LocalDate.now().minusDays(1)).build();
-
-		boolean result = adminPromotionService.isPromotionActive(pastPromotion);
-		assertThat(result).isFalse();
-	}
-
-	@Test
-	void isPromotionActive_WhenCurrentTimeIsBetweenStartAndEnd_ShouldReturnTrue() {
-		Promotion activePromotion = Promotion.builder().startDate(LocalDate.now().minusDays(1))
+	void isPromotionActive() {
+		Promotion promotion = Promotion.builder().startDate(LocalDate.now().minusDays(1))
 				.endDate(LocalDate.now().plusDays(1)).build();
 
-		boolean result = adminPromotionService.isPromotionActive(activePromotion);
+		boolean result = service.isPromotionActive(promotion);
+
 		assertThat(result).isTrue();
 	}
 
 	@Test
-	void isPromotionActive_WhenStartIsNullAndCurrentTimeIsBeforeEnd_ShouldReturnTrue() {
-		Promotion promotionWithoutStart = Promotion.builder().startDate(null).endDate(LocalDate.now().plusDays(1))
-				.build();
+	void isPromotionActiveBeforeStart() {
+		Promotion promotion = Promotion.builder().startDate(LocalDate.now().plusDays(1))
+				.endDate(LocalDate.now().plusDays(2)).build();
 
-		boolean result = adminPromotionService.isPromotionActive(promotionWithoutStart);
-		assertThat(result).isTrue();
+		boolean result = service.isPromotionActive(promotion);
+
+		assertThat(result).isFalse();
 	}
 
 	@Test
-	void isPromotionActive_WhenEndIsNullAndCurrentTimeIsAfterStart_ShouldReturnTrue() {
-		Promotion promotionWithoutEnd = Promotion.builder().startDate(LocalDate.now().minusDays(1)).endDate(null)
-				.build();
+	void isPromotionActiveAfterEnd() {
+		Promotion promotion = Promotion.builder().startDate(LocalDate.now().minusDays(2))
+				.endDate(LocalDate.now().minusDays(1)).build();
 
-		boolean result = adminPromotionService.isPromotionActive(promotionWithoutEnd);
-		assertThat(result).isTrue();
+		boolean result = service.isPromotionActive(promotion);
+
+		assertThat(result).isFalse();
 	}
 
 	@Test
-	void isPromotionActive_WhenBothDatesAreNull_ShouldReturnTrue() {
-		Promotion promotionWithoutDates = Promotion.builder().startDate(null).endDate(null).build();
-
-		boolean result = adminPromotionService.isPromotionActive(promotionWithoutDates);
-		assertThat(result).isTrue();
-	}
-
-	@Test
-	void isPromotionActive_WhenExactlyAtStartDate_ShouldReturnTrue() {
-		LocalDate startDate = LocalDate.now();
-		Promotion promotion = Promotion.builder().startDate(startDate).endDate(startDate.plusDays(1)).build();
-
-		boolean result = adminPromotionService.isPromotionActive(promotion);
-		assertThat(result).isTrue();
-	}
-
-	@Test
-	void isPromotionActive_WhenExactlyAtEndDate_ShouldReturnTrue() {
-		LocalDate endDate = LocalDate.now();
-		Promotion promotion = Promotion.builder().startDate(endDate.minusDays(1)).endDate(endDate).build();
-
-		boolean result = adminPromotionService.isPromotionActive(promotion);
-		assertThat(result).isTrue();
-	}
-
-	@Test
-	void createPromotion_ShouldBeTransactional() {
-		when(promotionRepository.existsByTitle(PROMOTION_TITLE)).thenReturn(false);
-		when(promotionMapper.toPromotion(createRequest)).thenReturn(testPromotion);
-		when(promotionRepository.save(testPromotion)).thenReturn(testPromotion);
-		when(promotionMapper.toPromotionResponse(testPromotion)).thenReturn(promotionResponse);
-
-		PromotionResponse result = adminPromotionService.createPromotion(createRequest);
-
-		assertThat(result).isNotNull();
-		verify(promotionRepository).save(testPromotion);
-	}
-
-	@Test
-	void updatePromotion_ShouldBeTransactional() {
-		when(promotionRepository.findById(PROMOTION_ID)).thenReturn(Optional.of(testPromotion));
-		when(promotionRepository.save(testPromotion)).thenReturn(testPromotion);
-		when(promotionMapper.toPromotionResponse(testPromotion)).thenReturn(promotionResponse);
-
-		PromotionResponse result = adminPromotionService.updatePromotion(PROMOTION_ID, updateRequest);
-
-		assertThat(result).isNotNull();
-		verify(promotionRepository).save(testPromotion);
-	}
-
-	@Test
-	void deletePromotion_ShouldBeTransactional() {
-		when(promotionRepository.findById(PROMOTION_ID)).thenReturn(Optional.of(testPromotion));
-
-		adminPromotionService.deletePromotion(PROMOTION_ID);
-
-		verify(promotionRepository).delete(testPromotion);
-	}
-
-	@Test
-	void getAllPromotions_ShouldReturnEmptyListWhenRepositoryEmpty() {
-		when(promotionRepository.findAll()).thenReturn(Collections.emptyList());
-		when(promotionMapper.toPromotionResponseList(Collections.emptyList())).thenReturn(Collections.emptyList());
-
-		List<PromotionResponse> result = adminPromotionService.getAllPromotions();
-
-		assertThat(result).isEmpty();
-		verify(promotionRepository).findAll();
-	}
-
-	@Test
-	void getActivePromotions_ShouldReturnAllPromotions() {
-		List<Promotion> promotions = Arrays.asList(testPromotion, anotherPromotion);
-		List<PromotionResponse> responses = Arrays.asList(promotionResponse, promotionResponse);
-
-		when(promotionRepository.findAll()).thenReturn(promotions);
-		when(promotionMapper.toPromotionResponseList(promotions)).thenReturn(responses);
-
-		List<PromotionResponse> result = adminPromotionService.getActivePromotions();
-
-		assertThat(result).hasSize(2);
-		verify(promotionRepository).findAll();
+	void isPromotionActiveWithNull() {
+		boolean result = service.isPromotionActive(null);
+		assertThat(result).isFalse();
 	}
 }

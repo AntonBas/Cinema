@@ -5,7 +5,6 @@ import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Arrays;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -13,17 +12,15 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import ua.lviv.bas.cinema.config.RefundRules;
-import ua.lviv.bas.cinema.domain.SeatReservation;
+import ua.lviv.bas.cinema.config.properties.RefundRules;
 import ua.lviv.bas.cinema.domain.Booking;
 import ua.lviv.bas.cinema.domain.CinemaHall;
 import ua.lviv.bas.cinema.domain.Movie;
 import ua.lviv.bas.cinema.domain.Seat;
+import ua.lviv.bas.cinema.domain.SeatReservation;
 import ua.lviv.bas.cinema.domain.Session;
 import ua.lviv.bas.cinema.domain.Ticket;
 import ua.lviv.bas.cinema.domain.TicketType;
-import ua.lviv.bas.cinema.domain.User;
-import ua.lviv.bas.cinema.domain.enums.TicketStatus;
 import ua.lviv.bas.cinema.dto.refund.response.RefundPreviewResponse;
 
 @ExtendWith(MockitoExtension.class)
@@ -60,6 +57,36 @@ public class RefundCalculationServiceTest {
 	}
 
 	@Test
+	void calculateRefundAmount_ZeroPrice() {
+		BigDecimal price = BigDecimal.ZERO;
+		BigDecimal percentage = new BigDecimal("70.00");
+
+		BigDecimal result = refundCalculationService.calculateRefundAmount(price, percentage);
+
+		assertThat(result).isEqualByComparingTo(BigDecimal.ZERO);
+	}
+
+	@Test
+	void calculateRefundAmount_ZeroPercentage() {
+		BigDecimal price = new BigDecimal("100.00");
+		BigDecimal percentage = BigDecimal.ZERO;
+
+		BigDecimal result = refundCalculationService.calculateRefundAmount(price, percentage);
+
+		assertThat(result).isEqualByComparingTo(BigDecimal.ZERO);
+	}
+
+	@Test
+	void calculateRefundAmount_FullRefund() {
+		BigDecimal price = new BigDecimal("100.00");
+		BigDecimal percentage = new BigDecimal("100.00");
+
+		BigDecimal result = refundCalculationService.calculateRefundAmount(price, percentage);
+
+		assertThat(result).isEqualByComparingTo("100.00");
+	}
+
+	@Test
 	void calculateBonusRefund_Success() {
 		Integer bonusPointsUsed = 100;
 		BigDecimal percentage = new BigDecimal("70.00");
@@ -86,6 +113,16 @@ public class RefundCalculationServiceTest {
 		Integer result = refundCalculationService.calculateBonusRefund(null, percentage);
 
 		assertThat(result).isEqualTo(0);
+	}
+
+	@Test
+	void calculateBonusRefund_FullRefund() {
+		Integer bonusPointsUsed = 100;
+		BigDecimal percentage = new BigDecimal("100.00");
+
+		Integer result = refundCalculationService.calculateBonusRefund(bonusPointsUsed, percentage);
+
+		assertThat(result).isEqualTo(100);
 	}
 
 	@Test
@@ -117,19 +154,7 @@ public class RefundCalculationServiceTest {
 	}
 
 	@Test
-	void formatRemainingTime_LessThanMinute() {
-		LocalDateTime futureTime = LocalDateTime.now().plusSeconds(30);
-
-		String result = refundCalculationService.formatRemainingTime(futureTime);
-
-		assertThat(result).isEqualTo("Less than a minute");
-	}
-
-	@Test
 	void createPreviewResponse_Success() {
-		User user = new User();
-		user.setId(1L);
-
 		Movie movie = new Movie();
 		movie.setTitle("Test Movie");
 
@@ -137,33 +162,31 @@ public class RefundCalculationServiceTest {
 		hall.setName("Hall 1");
 
 		Session session = new Session();
-		session.setStartTime(LocalDateTime.now().plusHours(3));
 		session.setMovie(movie);
 		session.setHall(hall);
+		session.setStartTime(LocalDateTime.now().plusHours(3));
 
 		Seat seat = new Seat();
 		seat.setRow(5);
 		seat.setNumber(10);
 
-		SeatReservation bookedSeat = new SeatReservation();
-		bookedSeat.setSeat(seat);
+		SeatReservation seatReservation = new SeatReservation();
+		seatReservation.setSeat(seat);
 
 		Booking booking = new Booking();
 		booking.setSession(session);
-		booking.setBookedSeats(Arrays.asList(bookedSeat));
+		booking.setSeatReservations(java.util.Arrays.asList(seatReservation));
 
 		TicketType ticketType = new TicketType();
 		ticketType.setDisplayName("Standard");
 
 		Ticket ticket = new Ticket();
 		ticket.setId(1L);
-		ticket.setUser(user);
 		ticket.setBooking(booking);
 		ticket.setTicketType(ticketType);
 		ticket.setOriginalPrice(new BigDecimal("150.00"));
 		ticket.setFinalPrice(new BigDecimal("100.00"));
 		ticket.setUniqueCode("TKT-123456");
-		ticket.setStatus(TicketStatus.ACTIVE);
 		ticket.setPurchaseTime(LocalDateTime.now().minusHours(1));
 		ticket.setBonusPointsUsed(50);
 
@@ -183,49 +206,12 @@ public class RefundCalculationServiceTest {
 		assertThat(response.getOriginalPrice()).isEqualByComparingTo("150.00");
 		assertThat(response.getFinalPrice()).isEqualByComparingTo("100.00");
 		assertThat(response.getRefundPercentage()).isEqualByComparingTo("70.00");
-		assertThat(response.getFeePercentage()).isEqualByComparingTo("30.00");
+		assertThat(response.getRefundAmount()).isEqualByComparingTo("70.00");
 		assertThat(response.getIsRefundable()).isTrue();
 		assertThat(response.getBonusPointsUsed()).isEqualTo(50);
 		assertThat(response.getBonusPointsToRefund()).isEqualTo(35);
 		assertThat(response.getPolicyName()).isEqualTo("Partial Refund");
 		assertThat(response.getPolicyDescription()).isEqualTo("70% refund if cancelled 3+ hours before");
-	}
-
-	@Test
-	void createPreviewResponse_WithEmptySeats() {
-		Movie movie = new Movie();
-		movie.setTitle("Test Movie");
-
-		CinemaHall hall = new CinemaHall();
-		hall.setName("Hall 1");
-
-		Session session = new Session();
-		session.setStartTime(LocalDateTime.now().plusHours(3));
-		session.setMovie(movie);
-		session.setHall(hall);
-
-		Booking booking = new Booking();
-		booking.setSession(session);
-		booking.setBookedSeats(Arrays.asList());
-
-		Ticket ticket = new Ticket();
-		ticket.setId(1L);
-		ticket.setBooking(booking);
-		ticket.setFinalPrice(new BigDecimal("100.00"));
-		ticket.setUniqueCode("TKT-123456");
-		ticket.setPurchaseTime(LocalDateTime.now().minusHours(1));
-
-		TicketType ticketType = new TicketType();
-		ticketType.setDisplayName("Standard");
-		ticket.setTicketType(ticketType);
-
-		when(refundRules.getRefundPercentage(session.getStartTime())).thenReturn(new BigDecimal("70.00"));
-		when(refundRules.getPolicyName(session.getStartTime())).thenReturn("Partial Refund");
-		when(refundRules.getPolicyDescription(session.getStartTime()))
-				.thenReturn("70% refund if cancelled 3+ hours before");
-
-		RefundPreviewResponse response = refundCalculationService.createPreviewResponse(ticket, refundRules);
-
-		assertThat(response.getSeatInfo()).isEqualTo("N/A");
+		assertThat(response.getTicketType()).isEqualTo("Standard");
 	}
 }

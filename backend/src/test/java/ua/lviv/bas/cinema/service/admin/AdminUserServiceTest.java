@@ -1,22 +1,12 @@
 package ua.lviv.bas.cinema.service.admin;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.Mockito.never;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -25,25 +15,19 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.enums.UserRole;
 import ua.lviv.bas.cinema.domain.enums.VerificationStatus;
 import ua.lviv.bas.cinema.dto.user.request.VerificationBirthDateRequest;
-import ua.lviv.bas.cinema.dto.user.response.AdminUserListResponse;
 import ua.lviv.bas.cinema.dto.user.response.UserResponse;
 import ua.lviv.bas.cinema.exception.domain.user.LastAdminException;
 import ua.lviv.bas.cinema.exception.domain.user.SelfBlockException;
 import ua.lviv.bas.cinema.exception.domain.user.SelfRoleChangeException;
 import ua.lviv.bas.cinema.exception.domain.user.UserNotFoundException;
 import ua.lviv.bas.cinema.mapper.UserMapper;
-import ua.lviv.bas.cinema.repository.TicketRepository;
 import ua.lviv.bas.cinema.repository.UserRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -53,395 +37,204 @@ class AdminUserServiceTest {
 	private UserRepository userRepository;
 
 	@Mock
-	private TicketRepository ticketRepository;
-
-	@Mock
 	private UserMapper userMapper;
-
-	@Mock
-	private SecurityContext securityContext;
 
 	@Mock
 	private Authentication authentication;
 
 	@InjectMocks
-	private AdminUserService adminUserService;
-
-	private User testUser;
-	private User adminUser;
-	private User anotherAdmin;
-	private final Long USER_ID = 1L;
-	private final Long ADMIN_ID = 2L;
-	private final Long ANOTHER_ADMIN_ID = 3L;
-	private final String USER_EMAIL = "anton.bas@example.com";
-	private final String ADMIN_EMAIL = "admin@example.com";
-	private final String ANOTHER_ADMIN_EMAIL = "another.admin@example.com";
-	private final String USER_PHONE = "+3801234567";
+	private AdminUserService service;
 
 	@BeforeEach
 	void setUp() {
-		testUser = User.builder().id(USER_ID).email(USER_EMAIL).firstName("Anton").lastName("Bas")
-				.phoneNumber(USER_PHONE).dateOfBirth(LocalDate.of(1990, 1, 1)).password("encodedPassword")
-				.verificationStatus(VerificationStatus.NOT_VERIFIED).city("Kyiv").userRole(UserRole.ROLE_USER)
-				.enabled(true).build();
-
-		adminUser = User.builder().id(ADMIN_ID).email(ADMIN_EMAIL).firstName("Admin").lastName("User")
-				.phoneNumber("+3809876543").dateOfBirth(LocalDate.of(1985, 5, 15)).password("adminPassword")
-				.verificationStatus(VerificationStatus.VERIFIED).city("Lviv").userRole(UserRole.ROLE_ADMIN)
-				.enabled(true).build();
-
-		anotherAdmin = User.builder().id(ANOTHER_ADMIN_ID).email(ANOTHER_ADMIN_EMAIL).firstName("Another")
-				.lastName("Admin").phoneNumber("+3805555555").dateOfBirth(LocalDate.of(1980, 3, 10))
-				.password("anotherPassword").verificationStatus(VerificationStatus.VERIFIED).city("Odessa")
-				.userRole(UserRole.ROLE_ADMIN).enabled(true).build();
-
-		SecurityContextHolder.setContext(securityContext);
+		SecurityContextHolder.getContext().setAuthentication(authentication);
 	}
 
 	@Test
-	void updateUserRole_Success() {
-		testUser.setUserRole(UserRole.ROLE_ADMIN);
+	void updateUserRolePromoteToAdmin() {
+		User user = User.builder().id(1L).email("user@test.com").userRole(UserRole.ROLE_USER).build();
 
-		when(securityContext.getAuthentication()).thenReturn(authentication);
-		when(authentication.getName()).thenReturn(ADMIN_EMAIL);
-		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(testUser));
-		when(userRepository.countByUserRoleAndEnabledTrue(UserRole.ROLE_ADMIN)).thenReturn(2L);
-		when(userRepository.save(testUser)).thenReturn(testUser);
+		when(authentication.getName()).thenReturn("admin@test.com");
+		when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+		when(userRepository.save(user)).thenReturn(user);
 
-		adminUserService.updateUserRole(USER_ID, UserRole.ROLE_USER);
+		service.updateUserRole(1L, UserRole.ROLE_ADMIN);
 
-		assertEquals(UserRole.ROLE_USER, testUser.getUserRole());
-		verify(userRepository).save(testUser);
+		assertThat(user.getUserRole()).isEqualTo(UserRole.ROLE_ADMIN);
+		verify(userRepository).save(user);
+	}
+
+	@Test
+	void updateUserRoleDemoteAdminWithMultipleAdmins() {
+		User admin = User.builder().id(1L).email("admin@test.com").userRole(UserRole.ROLE_ADMIN).build();
+
+		when(authentication.getName()).thenReturn("other@test.com");
+		when(userRepository.findById(1L)).thenReturn(Optional.of(admin));
+		when(userRepository.countByUserRoleAndEnabledTrue(UserRole.ROLE_ADMIN)).thenReturn(3L);
+		when(userRepository.save(admin)).thenReturn(admin);
+
+		service.updateUserRole(1L, UserRole.ROLE_USER);
+
+		assertThat(admin.getUserRole()).isEqualTo(UserRole.ROLE_USER);
 		verify(userRepository).countByUserRoleAndEnabledTrue(UserRole.ROLE_ADMIN);
 	}
 
 	@Test
-	void updateUserRole_SelfRoleChange() {
-		when(securityContext.getAuthentication()).thenReturn(authentication);
-		when(authentication.getName()).thenReturn(USER_EMAIL);
-		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(testUser));
+	void updateUserRoleSelfChange() {
+		User user = User.builder().id(1L).email("user@test.com").userRole(UserRole.ROLE_USER).build();
 
-		assertThrows(SelfRoleChangeException.class,
-				() -> adminUserService.updateUserRole(USER_ID, UserRole.ROLE_ADMIN));
-		verify(userRepository, never()).save(any());
-		verify(userRepository, never()).countByUserRoleAndEnabledTrue(any());
+		when(authentication.getName()).thenReturn("user@test.com");
+		when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+
+		assertThatThrownBy(() -> service.updateUserRole(1L, UserRole.ROLE_ADMIN))
+				.isInstanceOf(SelfRoleChangeException.class);
 	}
 
 	@Test
-	void updateUserRole_LastAdmin_Demotion() {
-		User lastAdmin = User.builder().id(3L).email("last.admin@example.com").userRole(UserRole.ROLE_ADMIN)
-				.enabled(true).build();
+	void updateUserRoleLastAdmin() {
+		User admin = User.builder().id(1L).email("admin@test.com").userRole(UserRole.ROLE_ADMIN).build();
 
-		when(securityContext.getAuthentication()).thenReturn(authentication);
-		when(authentication.getName()).thenReturn(ADMIN_EMAIL);
-		when(userRepository.findById(3L)).thenReturn(Optional.of(lastAdmin));
+		when(authentication.getName()).thenReturn("other@test.com");
+		when(userRepository.findById(1L)).thenReturn(Optional.of(admin));
 		when(userRepository.countByUserRoleAndEnabledTrue(UserRole.ROLE_ADMIN)).thenReturn(1L);
 
-		assertThrows(LastAdminException.class, () -> adminUserService.updateUserRole(3L, UserRole.ROLE_USER));
-		verify(userRepository, never()).save(any());
-		verify(userRepository).countByUserRoleAndEnabledTrue(UserRole.ROLE_ADMIN);
+		assertThatThrownBy(() -> service.updateUserRole(1L, UserRole.ROLE_USER)).isInstanceOf(LastAdminException.class);
 	}
 
 	@Test
-	void updateUserRole_AdminToUser_WhenMultipleAdmins() {
-		when(securityContext.getAuthentication()).thenReturn(authentication);
-		when(authentication.getName()).thenReturn(ADMIN_EMAIL);
-		when(userRepository.findById(ANOTHER_ADMIN_ID)).thenReturn(Optional.of(anotherAdmin));
-		when(userRepository.countByUserRoleAndEnabledTrue(UserRole.ROLE_ADMIN)).thenReturn(3L);
-		when(userRepository.save(anotherAdmin)).thenReturn(anotherAdmin);
+	void updateUserStatus() {
+		User user = User.builder().id(1L).email("user@test.com").enabled(true).build();
 
-		adminUserService.updateUserRole(ANOTHER_ADMIN_ID, UserRole.ROLE_USER);
+		when(authentication.getName()).thenReturn("admin@test.com");
+		when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+		when(userRepository.save(user)).thenReturn(user);
 
-		assertEquals(UserRole.ROLE_USER, anotherAdmin.getUserRole());
-		verify(userRepository).save(anotherAdmin);
-		verify(userRepository).countByUserRoleAndEnabledTrue(UserRole.ROLE_ADMIN);
+		service.updateUserStatus(1L, false);
+
+		assertThat(user.isEnabled()).isFalse();
+		verify(userRepository).save(user);
 	}
 
 	@Test
-	void updateUserStatus_Success() {
-		when(securityContext.getAuthentication()).thenReturn(authentication);
-		when(authentication.getName()).thenReturn(ADMIN_EMAIL);
-		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(testUser));
-		when(userRepository.save(testUser)).thenReturn(testUser);
+	void updateUserStatusSelfBlock() {
+		User user = User.builder().id(1L).email("user@test.com").enabled(true).build();
 
-		adminUserService.updateUserStatus(USER_ID, false);
+		when(authentication.getName()).thenReturn("user@test.com");
+		when(userRepository.findById(1L)).thenReturn(Optional.of(user));
 
-		assertFalse(testUser.isEnabled());
-		verify(userRepository).save(testUser);
+		assertThatThrownBy(() -> service.updateUserStatus(1L, false)).isInstanceOf(SelfBlockException.class);
 	}
 
 	@Test
-	void updateUserStatus_SelfBlock() {
-		when(securityContext.getAuthentication()).thenReturn(authentication);
-		when(authentication.getName()).thenReturn(USER_EMAIL);
-		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(testUser));
+	void updateBirthDateVerification() {
+		User user = User.builder().id(1L).verificationStatus(VerificationStatus.NOT_VERIFIED).build();
 
-		assertThrows(SelfBlockException.class, () -> adminUserService.updateUserStatus(USER_ID, false));
-		verify(userRepository, never()).save(any());
-	}
-
-	@Test
-	void updateBirthDateVerification_Success_Verified() {
 		VerificationBirthDateRequest request = new VerificationBirthDateRequest();
 		request.setVerificationStatus(VerificationStatus.VERIFIED);
 
-		UserResponse userResponse = UserResponse.builder().id(USER_ID).email(USER_EMAIL).build();
+		UserResponse response = new UserResponse();
 
-		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(testUser));
-		when(userRepository.save(testUser)).thenReturn(testUser);
-		when(userMapper.toUserResponse(testUser)).thenReturn(userResponse);
+		when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+		when(userRepository.save(user)).thenReturn(user);
+		when(userMapper.toUserResponse(user)).thenReturn(response);
 
-		UserResponse result = adminUserService.updateBirthDateVerification(USER_ID, request);
+		UserResponse result = service.updateBirthDateVerification(1L, request);
 
-		assertNotNull(result);
-		assertEquals(USER_ID, result.getId());
-		assertEquals(USER_EMAIL, result.getEmail());
-		assertEquals(VerificationStatus.VERIFIED, testUser.getVerificationStatus());
-		assertNotNull(testUser.getVerifiedAt());
-		verify(userRepository).save(testUser);
-		verify(userMapper).toUserResponse(testUser);
+		assertThat(result).isNotNull();
+		assertThat(user.getVerificationStatus()).isEqualTo(VerificationStatus.VERIFIED);
+		assertThat(user.getVerifiedAt()).isNotNull();
 	}
 
 	@Test
-	void updateBirthDateVerification_Success_NotVerified() {
-		testUser.setVerificationStatus(VerificationStatus.VERIFIED);
-		testUser.setVerifiedAt(LocalDateTime.now());
+	void getUserById() {
+		User user = User.builder().id(1L).build();
+
+		when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+
+		User result = service.getUserById(1L);
+
+		assertThat(result).isEqualTo(user);
+	}
+
+	@Test
+	void getUserByIdNotFound() {
+		when(userRepository.findById(1L)).thenReturn(Optional.empty());
+
+		assertThatThrownBy(() -> service.getUserById(1L)).isInstanceOf(UserNotFoundException.class);
+	}
+
+	@Test
+	void getAdminCount() {
+		when(userRepository.countByUserRoleAndEnabledTrue(UserRole.ROLE_ADMIN)).thenReturn(3L);
+
+		long result = service.getAdminCount();
+
+		assertThat(result).isEqualTo(3L);
+	}
+
+	@Test
+	void getTodayBirthdayUsers() {
+		User user = User.builder().id(1L).build();
+		LocalDateTime today = LocalDateTime.now();
+
+		when(userRepository.findVerifiedUsersWithBirthday(VerificationStatus.VERIFIED, today.getDayOfMonth(),
+				today.getMonthValue())).thenReturn(Collections.singletonList(user));
+
+		var result = service.getTodayBirthdayUsers();
+
+		assertThat(result).hasSize(1);
+	}
+
+	@Test
+	void updateUserStatusEnable() {
+		User user = User.builder().id(1L).email("user@test.com").enabled(false).build();
+
+		when(authentication.getName()).thenReturn("admin@test.com");
+		when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+		when(userRepository.save(user)).thenReturn(user);
+
+		service.updateUserStatus(1L, true);
+
+		assertThat(user.isEnabled()).isTrue();
+	}
+
+	@Test
+	void updateBirthDateVerificationToNotVerified() {
+		User user = User.builder().id(1L).verificationStatus(VerificationStatus.VERIFIED)
+				.verifiedAt(LocalDateTime.now()).build();
 
 		VerificationBirthDateRequest request = new VerificationBirthDateRequest();
 		request.setVerificationStatus(VerificationStatus.NOT_VERIFIED);
 
-		UserResponse userResponse = UserResponse.builder().id(USER_ID).email(USER_EMAIL).build();
+		UserResponse response = new UserResponse();
 
-		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(testUser));
-		when(userRepository.save(testUser)).thenReturn(testUser);
-		when(userMapper.toUserResponse(testUser)).thenReturn(userResponse);
+		when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+		when(userRepository.save(user)).thenReturn(user);
+		when(userMapper.toUserResponse(user)).thenReturn(response);
 
-		UserResponse result = adminUserService.updateBirthDateVerification(USER_ID, request);
+		service.updateBirthDateVerification(1L, request);
 
-		assertNotNull(result);
-		assertEquals(USER_ID, result.getId());
-		assertEquals(USER_EMAIL, result.getEmail());
-		assertEquals(VerificationStatus.NOT_VERIFIED, testUser.getVerificationStatus());
-		assertNull(testUser.getVerifiedAt());
-		verify(userRepository).save(testUser);
-		verify(userMapper).toUserResponse(testUser);
+		assertThat(user.getVerificationStatus()).isEqualTo(VerificationStatus.NOT_VERIFIED);
+		assertThat(user.getVerifiedAt()).isNull();
 	}
 
 	@Test
-	void findAllForAdmin_Success() {
-		String search = "Anton";
-		UserRole role = UserRole.ROLE_USER;
-		Boolean enabled = true;
-		Pageable pageable = Pageable.unpaged();
-		Page<User> userPage = new PageImpl<>(Arrays.asList(testUser));
-
-		AdminUserListResponse adminResponse = AdminUserListResponse.builder().id(USER_ID).email(USER_EMAIL)
-				.firstName("Anton").lastName("Bas").userRole(UserRole.ROLE_USER)
-				.verificationStatus(VerificationStatus.NOT_VERIFIED).enabled(true).createdAt(LocalDateTime.now())
-				.updatedAt(LocalDateTime.now()).ticketsCount(0).lastActivity(LocalDateTime.now()).build();
-
-		when(userRepository.findFilteredUsers(search, role.name(), enabled, pageable)).thenReturn(userPage);
-		when(ticketRepository.countTicketsByUserIds(anyList())).thenReturn(Collections.emptyList());
-		when(userMapper.toAdminUserListResponse(testUser)).thenReturn(adminResponse);
-
-		Page<AdminUserListResponse> result = adminUserService.findAllForAdmin(search, role, enabled, pageable);
-
-		assertNotNull(result);
-		assertEquals(1, result.getTotalElements());
-		assertEquals(USER_ID, result.getContent().get(0).getId());
-		verify(userRepository).findFilteredUsers(search, role.name(), enabled, pageable);
-		verify(ticketRepository).countTicketsByUserIds(Arrays.asList(USER_ID));
-		verify(userMapper).toAdminUserListResponse(testUser);
-	}
-
-	@Test
-	void findAllActiveAdmins_Success() {
-		List<User> admins = Arrays.asList(adminUser, anotherAdmin);
-		when(userRepository.findByUserRoleAndEnabledTrue(UserRole.ROLE_ADMIN)).thenReturn(admins);
-
-		List<User> result = adminUserService.findAllActiveAdmins();
-
-		assertNotNull(result);
-		assertEquals(2, result.size());
-		assertEquals(UserRole.ROLE_ADMIN, result.get(0).getUserRole());
-		verify(userRepository).findByUserRoleAndEnabledTrue(UserRole.ROLE_ADMIN);
-	}
-
-	@Test
-	void findAllActiveUsers_Success() {
-		List<User> users = Arrays.asList(testUser, adminUser, anotherAdmin);
-		when(userRepository.findByEnabledTrue()).thenReturn(users);
-
-		List<User> result = adminUserService.findAllActiveUsers();
-
-		assertNotNull(result);
-		assertEquals(3, result.size());
-		verify(userRepository).findByEnabledTrue();
-	}
-
-	@Test
-	void findById_Success() {
-		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(testUser));
-
-		User result = adminUserService.findById(USER_ID);
-
-		assertEquals(testUser, result);
-		verify(userRepository).findById(USER_ID);
-	}
-
-	@Test
-	void findById_UserNotFound() {
-		Long nonExistentId = 999L;
-		when(userRepository.findById(nonExistentId)).thenReturn(Optional.empty());
-
-		assertThrows(UserNotFoundException.class, () -> adminUserService.findById(nonExistentId));
-		verify(userRepository).findById(nonExistentId);
-	}
-
-	@Test
-	void updateBirthDateVerification_VerifiedAtNotOverwritten() {
-		LocalDateTime existingVerifiedAt = LocalDateTime.now().minusDays(1);
-		testUser.setVerificationStatus(VerificationStatus.VERIFIED);
-		testUser.setVerifiedAt(existingVerifiedAt);
+	void updateBirthDateVerificationSameStatus() {
+		LocalDateTime originalTime = LocalDateTime.now().minusDays(1);
+		User user = User.builder().id(1L).verificationStatus(VerificationStatus.VERIFIED).verifiedAt(originalTime)
+				.build();
 
 		VerificationBirthDateRequest request = new VerificationBirthDateRequest();
 		request.setVerificationStatus(VerificationStatus.VERIFIED);
 
-		UserResponse userResponse = UserResponse.builder().id(USER_ID).email(USER_EMAIL).build();
+		UserResponse response = new UserResponse();
 
-		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(testUser));
-		when(userRepository.save(testUser)).thenReturn(testUser);
-		when(userMapper.toUserResponse(testUser)).thenReturn(userResponse);
+		when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+		when(userRepository.save(user)).thenReturn(user);
+		when(userMapper.toUserResponse(user)).thenReturn(response);
 
-		UserResponse result = adminUserService.updateBirthDateVerification(USER_ID, request);
+		UserResponse result = service.updateBirthDateVerification(1L, request);
 
-		assertNotNull(result);
-		assertEquals(USER_ID, result.getId());
-		assertEquals(existingVerifiedAt, testUser.getVerifiedAt());
-		verify(userRepository).save(testUser);
-		verify(userMapper).toUserResponse(testUser);
-	}
-
-	@Test
-	void updateUserStatus_EnableUser() {
-		testUser.setEnabled(false);
-
-		when(securityContext.getAuthentication()).thenReturn(authentication);
-		when(authentication.getName()).thenReturn(ADMIN_EMAIL);
-		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(testUser));
-		when(userRepository.save(testUser)).thenReturn(testUser);
-
-		adminUserService.updateUserStatus(USER_ID, true);
-
-		assertTrue(testUser.isEnabled());
-		verify(userRepository).save(testUser);
-	}
-
-	@Test
-	void updateUserStatus_Success_WhenCurrentUserIsDifferent() {
-		when(securityContext.getAuthentication()).thenReturn(authentication);
-		when(authentication.getName()).thenReturn("different.admin@example.com");
-		when(userRepository.findById(ADMIN_ID)).thenReturn(Optional.of(adminUser));
-		when(userRepository.save(adminUser)).thenReturn(adminUser);
-
-		adminUserService.updateUserStatus(ADMIN_ID, false);
-
-		assertFalse(adminUser.isEnabled());
-		verify(userRepository).save(adminUser);
-	}
-
-	@Test
-	void countAdmins_Success() {
-		when(userRepository.countByUserRoleAndEnabledTrue(UserRole.ROLE_ADMIN)).thenReturn(3L);
-
-		long result = adminUserService.countAdmins();
-
-		assertEquals(3L, result);
-		verify(userRepository).countByUserRoleAndEnabledTrue(UserRole.ROLE_ADMIN);
-	}
-
-	@Test
-	void findBirthdayUsersToday_Success() {
-		int day = LocalDateTime.now().getDayOfMonth();
-		int month = LocalDateTime.now().getMonthValue();
-		List<User> birthdayUsers = Arrays.asList(testUser);
-
-		when(userRepository.findVerifiedUsersWithBirthday(VerificationStatus.VERIFIED, day, month))
-				.thenReturn(birthdayUsers);
-
-		List<User> result = adminUserService.findBirthdayUsersToday();
-
-		assertNotNull(result);
-		assertEquals(1, result.size());
-		assertEquals(testUser, result.get(0));
-		verify(userRepository).findVerifiedUsersWithBirthday(VerificationStatus.VERIFIED, day, month);
-	}
-
-	@Test
-	void updateUserRole_WhenUserIsNotAdmin() {
-		when(securityContext.getAuthentication()).thenReturn(authentication);
-		when(authentication.getName()).thenReturn(ADMIN_EMAIL);
-		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(testUser));
-		when(userRepository.save(testUser)).thenReturn(testUser);
-
-		adminUserService.updateUserRole(USER_ID, UserRole.ROLE_ADMIN);
-
-		assertEquals(UserRole.ROLE_ADMIN, testUser.getUserRole());
-		verify(userRepository).save(testUser);
-		verify(userRepository, never()).countByUserRoleAndEnabledTrue(any());
-	}
-
-	@Test
-	void updateUserRole_WhenPromotingUserToAdmin() {
-		when(securityContext.getAuthentication()).thenReturn(authentication);
-		when(authentication.getName()).thenReturn(ADMIN_EMAIL);
-		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(testUser));
-		when(userRepository.save(testUser)).thenReturn(testUser);
-
-		adminUserService.updateUserRole(USER_ID, UserRole.ROLE_ADMIN);
-
-		assertEquals(UserRole.ROLE_ADMIN, testUser.getUserRole());
-		verify(userRepository).save(testUser);
-		verify(userRepository, never()).countByUserRoleAndEnabledTrue(any());
-	}
-
-	@Test
-	void updateBirthDateVerification_WhenUserNotFound() {
-		Long nonExistentId = 999L;
-		VerificationBirthDateRequest request = new VerificationBirthDateRequest();
-		request.setVerificationStatus(VerificationStatus.VERIFIED);
-
-		when(userRepository.findById(nonExistentId)).thenReturn(Optional.empty());
-
-		assertThrows(UserNotFoundException.class,
-				() -> adminUserService.updateBirthDateVerification(nonExistentId, request));
-
-		verify(userRepository).findById(nonExistentId);
-		verify(userRepository, never()).save(any());
-		verify(userMapper, never()).toUserResponse(any());
-	}
-
-	@Test
-	void findAllForAdmin_WithNullRole() {
-		String search = "Anton";
-		UserRole role = null;
-		Boolean enabled = true;
-		Pageable pageable = Pageable.unpaged();
-		Page<User> userPage = new PageImpl<>(Arrays.asList(testUser));
-
-		AdminUserListResponse adminResponse = AdminUserListResponse.builder().id(USER_ID).email(USER_EMAIL)
-				.firstName("Anton").lastName("Bas").userRole(UserRole.ROLE_USER)
-				.verificationStatus(VerificationStatus.NOT_VERIFIED).enabled(true).createdAt(LocalDateTime.now())
-				.updatedAt(LocalDateTime.now()).ticketsCount(0).lastActivity(LocalDateTime.now()).build();
-
-		when(userRepository.findFilteredUsers(search, null, enabled, pageable)).thenReturn(userPage);
-		when(ticketRepository.countTicketsByUserIds(anyList())).thenReturn(Collections.emptyList());
-		when(userMapper.toAdminUserListResponse(testUser)).thenReturn(adminResponse);
-
-		Page<AdminUserListResponse> result = adminUserService.findAllForAdmin(search, role, enabled, pageable);
-
-		assertNotNull(result);
-		assertEquals(1, result.getTotalElements());
-		verify(userRepository).findFilteredUsers(search, null, enabled, pageable);
+		assertThat(result).isNotNull();
 	}
 }

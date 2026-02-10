@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -23,17 +22,17 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import ua.lviv.bas.cinema.domain.SeatReservation;
 import ua.lviv.bas.cinema.domain.Booking;
 import ua.lviv.bas.cinema.domain.CinemaHall;
 import ua.lviv.bas.cinema.domain.Movie;
 import ua.lviv.bas.cinema.domain.Seat;
+import ua.lviv.bas.cinema.domain.SeatReservation;
 import ua.lviv.bas.cinema.domain.Session;
 import ua.lviv.bas.cinema.domain.TicketType;
 import ua.lviv.bas.cinema.domain.User;
-import ua.lviv.bas.cinema.domain.enums.ReservationStatus;
 import ua.lviv.bas.cinema.domain.enums.BookingStatus;
 import ua.lviv.bas.cinema.domain.enums.CinemaSessionStatus;
+import ua.lviv.bas.cinema.domain.enums.ReservationStatus;
 import ua.lviv.bas.cinema.domain.enums.SeatType;
 import ua.lviv.bas.cinema.dto.booking.request.BookingCreateRequest;
 import ua.lviv.bas.cinema.dto.booking.request.BookingCreateRequest.SeatSelectionRequest;
@@ -42,9 +41,9 @@ import ua.lviv.bas.cinema.exception.domain.cinema.SeatNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.cinema.SessionNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.tickettype.TicketTypeNotFoundException;
 import ua.lviv.bas.cinema.mapper.BookingMapper;
-import ua.lviv.bas.cinema.repository.SeatReservationRepository;
 import ua.lviv.bas.cinema.repository.BookingRepository;
 import ua.lviv.bas.cinema.repository.SeatRepository;
+import ua.lviv.bas.cinema.repository.SeatReservationRepository;
 import ua.lviv.bas.cinema.repository.SessionRepository;
 import ua.lviv.bas.cinema.repository.TicketTypeRepository;
 import ua.lviv.bas.cinema.service.booking.availability.AvailabilityValidator;
@@ -68,7 +67,7 @@ public class BookingCreationServiceTest {
 	private TicketTypeRepository ticketTypeRepository;
 
 	@Mock
-	private SeatReservationRepository bookedSeatRepository;
+	private SeatReservationRepository seatReservationRepository;
 
 	@Mock
 	private BookingMapper bookingMapper;
@@ -186,7 +185,7 @@ public class BookingCreationServiceTest {
 		Booking booking = Booking.builder().id(1L).user(testUser).session(testSession).status(BookingStatus.PENDING)
 				.totalPrice(new BigDecimal("480.00")).bonusPointsUsed(100).bonusDiscountAmount(new BigDecimal("100.00"))
 				.finalPrice(new BigDecimal("380.00")).expiresAt(LocalDateTime.now().plusMinutes(20))
-				.bookedSeats(Arrays.asList(
+				.seatReservations(Arrays.asList(
 						SeatReservation.builder().seat(testSeat1).session(testSession).ticketType(adultTicketType)
 								.seatPrice(new BigDecimal("200.00")).status(ReservationStatus.PENDING).build(),
 						SeatReservation.builder().seat(testSeat2).session(testSession).ticketType(childTicketType)
@@ -209,8 +208,8 @@ public class BookingCreationServiceTest {
 		verify(availabilityValidator).validateSeat(SESSION_ID, SEAT_ID_1);
 		verify(availabilityValidator).validateSeat(SESSION_ID, SEAT_ID_2);
 		verify(bookingRepository).save(any(Booking.class));
-		verify(bookedSeatRepository).saveAll(anyList());
-		verify(bonusService).spendBonusPointsForBooking(eq(USER_ID), eq(100), any(Booking.class), any(String.class));
+		verify(seatReservationRepository).saveAll(anyList());
+		verify(bonusService).spendPoints(eq(USER_ID), eq(100), any(Booking.class), eq("BOOKING_1"));
 	}
 
 	@Test
@@ -259,15 +258,54 @@ public class BookingCreationServiceTest {
 
 		Booking booking = Booking.builder().id(1L).user(testUser).session(testSession).status(BookingStatus.PENDING)
 				.totalPrice(new BigDecimal("200.00")).bonusPointsUsed(0).bonusDiscountAmount(BigDecimal.ZERO)
-				.finalPrice(new BigDecimal("200.00")).build();
+				.finalPrice(new BigDecimal("200.00")).expiresAt(LocalDateTime.now().plusMinutes(20))
+				.seatReservations(Arrays.asList(
+						SeatReservation.builder().seat(testSeat1).session(testSession).ticketType(adultTicketType)
+								.seatPrice(new BigDecimal("200.00")).status(ReservationStatus.PENDING).build()))
+				.build();
 
 		when(bookingRepository.save(any(Booking.class))).thenReturn(booking);
 		when(bookingMapper.toBookingResponse(any(Booking.class))).thenReturn(new BookingResponse());
+		when(numberGenerator.generateBookingNumber(any(Booking.class))).thenReturn("BK-2024-00001");
 
 		BookingResponse result = bookingCreationService.createBooking(createRequest, testUser);
 
 		assertThat(result).isNotNull();
-		verify(bonusService, never()).spendBonusPointsForBooking(anyLong(), any(), any(Booking.class),
-				any(String.class));
+		verify(bonusService, never()).spendPoints(any(), any(), any(), any());
+	}
+
+	@Test
+	void createBooking_WithZeroBonusPoints() {
+		createRequest.setBonusPointsToUse(0);
+		List<SeatSelectionRequest> singleSeat = Arrays.asList(createRequest.getSeats().get(0));
+		createRequest.setSeats(singleSeat);
+
+		when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(testSession));
+		when(seatRepository.findById(SEAT_ID_1)).thenReturn(Optional.of(testSeat1));
+		when(ticketTypeRepository.findById(TICKET_TYPE_ADULT_ID)).thenReturn(Optional.of(adultTicketType));
+		when(priceCalculator.calculateSeatPrice(testSession, testSeat1, adultTicketType))
+				.thenReturn(new BigDecimal("200.00"));
+
+		BookingPriceCalculator.BookingPriceResult priceResult = new BookingPriceCalculator.BookingPriceResult(
+				new BigDecimal("200.00"), 0, BigDecimal.ZERO, new BigDecimal("200.00"));
+		when(bookingPriceCalculator.calculateFinalPrice(any(BigDecimal.class), eq(0), eq(USER_ID)))
+				.thenReturn(priceResult);
+
+		Booking booking = Booking.builder().id(1L).user(testUser).session(testSession).status(BookingStatus.PENDING)
+				.totalPrice(new BigDecimal("200.00")).bonusPointsUsed(0).bonusDiscountAmount(BigDecimal.ZERO)
+				.finalPrice(new BigDecimal("200.00")).expiresAt(LocalDateTime.now().plusMinutes(20))
+				.seatReservations(Arrays.asList(
+						SeatReservation.builder().seat(testSeat1).session(testSession).ticketType(adultTicketType)
+								.seatPrice(new BigDecimal("200.00")).status(ReservationStatus.PENDING).build()))
+				.build();
+
+		when(bookingRepository.save(any(Booking.class))).thenReturn(booking);
+		when(bookingMapper.toBookingResponse(any(Booking.class))).thenReturn(new BookingResponse());
+		when(numberGenerator.generateBookingNumber(any(Booking.class))).thenReturn("BK-2024-00001");
+
+		BookingResponse result = bookingCreationService.createBooking(createRequest, testUser);
+
+		assertThat(result).isNotNull();
+		verify(bonusService, never()).spendPoints(any(), any(), any(), any());
 	}
 }

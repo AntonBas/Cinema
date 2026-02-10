@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
@@ -22,17 +23,17 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
-import ua.lviv.bas.cinema.domain.SeatReservation;
 import ua.lviv.bas.cinema.domain.Booking;
 import ua.lviv.bas.cinema.domain.CinemaHall;
 import ua.lviv.bas.cinema.domain.Movie;
 import ua.lviv.bas.cinema.domain.Seat;
+import ua.lviv.bas.cinema.domain.SeatReservation;
 import ua.lviv.bas.cinema.domain.Session;
 import ua.lviv.bas.cinema.domain.TicketType;
 import ua.lviv.bas.cinema.domain.User;
-import ua.lviv.bas.cinema.domain.enums.ReservationStatus;
 import ua.lviv.bas.cinema.domain.enums.BookingStatus;
 import ua.lviv.bas.cinema.domain.enums.CinemaSessionStatus;
+import ua.lviv.bas.cinema.domain.enums.ReservationStatus;
 import ua.lviv.bas.cinema.domain.enums.SeatType;
 import ua.lviv.bas.cinema.dto.booking.response.BookingResponse;
 import ua.lviv.bas.cinema.exception.domain.booking.BookingNotFoundException;
@@ -67,8 +68,8 @@ public class BookingManagementServiceTest {
 
 	private User testUser;
 	private Booking testBooking;
-	private SeatReservation bookedSeat1;
-	private SeatReservation bookedSeat2;
+	private SeatReservation seatReservation1;
+	private SeatReservation seatReservation2;
 
 	private static final Long USER_ID = 1L;
 	private static final Long BOOKING_ID = 2L;
@@ -104,19 +105,19 @@ public class BookingManagementServiceTest {
 		ticketType.setId(1L);
 		ticketType.setDisplayName("Adult");
 
-		bookedSeat1 = SeatReservation.builder().id(1L).seat(seat1).session(session).ticketType(ticketType)
+		seatReservation1 = SeatReservation.builder().id(1L).seat(seat1).session(session).ticketType(ticketType)
 				.seatPrice(new BigDecimal("200.00")).status(ReservationStatus.PENDING).build();
 
-		bookedSeat2 = SeatReservation.builder().id(2L).seat(seat2).session(session).ticketType(ticketType)
+		seatReservation2 = SeatReservation.builder().id(2L).seat(seat2).session(session).ticketType(ticketType)
 				.seatPrice(new BigDecimal("300.00")).status(ReservationStatus.PENDING).build();
 
 		testBooking = Booking.builder().id(BOOKING_ID).user(testUser).session(session).status(BookingStatus.PENDING)
 				.totalPrice(new BigDecimal("500.00")).bonusPointsUsed(100).bonusDiscountAmount(new BigDecimal("100.00"))
 				.finalPrice(new BigDecimal("400.00")).expiresAt(LocalDateTime.now().plusMinutes(20))
-				.bookedSeats(Arrays.asList(bookedSeat1, bookedSeat2)).build();
+				.seatReservations(Arrays.asList(seatReservation1, seatReservation2)).build();
 
-		bookedSeat1.setBooking(testBooking);
-		bookedSeat2.setBooking(testBooking);
+		seatReservation1.setBooking(testBooking);
+		seatReservation2.setBooking(testBooking);
 	}
 
 	@Test
@@ -189,8 +190,8 @@ public class BookingManagementServiceTest {
 		bookingManagementService.cancelBooking(BOOKING_ID, testUser);
 
 		assertThat(testBooking.getStatus()).isEqualTo(BookingStatus.CANCELLED);
-		assertThat(bookedSeat1.getStatus()).isEqualTo(ReservationStatus.CANCELLED);
-		assertThat(bookedSeat2.getStatus()).isEqualTo(ReservationStatus.CANCELLED);
+		assertThat(seatReservation1.getStatus()).isEqualTo(ReservationStatus.CANCELLED);
+		assertThat(seatReservation2.getStatus()).isEqualTo(ReservationStatus.CANCELLED);
 	}
 
 	@Test
@@ -222,8 +223,8 @@ public class BookingManagementServiceTest {
 		bookingManagementService.confirmBooking(BOOKING_ID);
 
 		assertThat(testBooking.getStatus()).isEqualTo(BookingStatus.CONFIRMED);
-		assertThat(bookedSeat1.getStatus()).isEqualTo(ReservationStatus.CONFIRMED);
-		assertThat(bookedSeat2.getStatus()).isEqualTo(ReservationStatus.CONFIRMED);
+		assertThat(seatReservation1.getStatus()).isEqualTo(ReservationStatus.CONFIRMED);
+		assertThat(seatReservation2.getStatus()).isEqualTo(ReservationStatus.CONFIRMED);
 	}
 
 	@Test
@@ -247,10 +248,39 @@ public class BookingManagementServiceTest {
 	@Test
 	void getAvailableBonusPointsForBooking_Success() {
 		BigDecimal totalPrice = new BigDecimal("500.00");
-		when(bonusService.getAvailablePointsForRedemption(USER_ID, totalPrice)).thenReturn(150);
+		when(bonusService.getAvailablePoints(USER_ID, totalPrice)).thenReturn(150);
 
 		Integer result = bookingManagementService.getAvailableBonusPointsForBooking(USER_ID, totalPrice);
 
 		assertThat(result).isEqualTo(150);
+	}
+
+	@Test
+	void cancelBooking_WithBonusPointsRefund() {
+		testBooking.setStatus(BookingStatus.PENDING);
+		testBooking.setBonusPointsUsed(100);
+
+		when(bookingRepository.findByIdAndUserId(BOOKING_ID, USER_ID)).thenReturn(Optional.of(testBooking));
+		when(bookingValidator.canBookingBeCancelled(testBooking)).thenReturn(true);
+		when(bookingRepository.save(testBooking)).thenReturn(testBooking);
+
+		bookingManagementService.cancelBooking(BOOKING_ID, testUser);
+
+		assertThat(testBooking.getStatus()).isEqualTo(BookingStatus.CANCELLED);
+		verify(bonusService).refundPoints(testBooking);
+	}
+
+	@Test
+	void cancelBooking_WithoutBonusPoints_NoRefund() {
+		testBooking.setStatus(BookingStatus.PENDING);
+		testBooking.setBonusPointsUsed(0);
+
+		when(bookingRepository.findByIdAndUserId(BOOKING_ID, USER_ID)).thenReturn(Optional.of(testBooking));
+		when(bookingValidator.canBookingBeCancelled(testBooking)).thenReturn(true);
+		when(bookingRepository.save(testBooking)).thenReturn(testBooking);
+
+		bookingManagementService.cancelBooking(BOOKING_ID, testUser);
+
+		assertThat(testBooking.getStatus()).isEqualTo(BookingStatus.CANCELLED);
 	}
 }

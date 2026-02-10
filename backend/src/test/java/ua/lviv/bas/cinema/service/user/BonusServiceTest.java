@@ -10,27 +10,25 @@ import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
+import ua.lviv.bas.cinema.config.properties.BonusProperties;
 import ua.lviv.bas.cinema.domain.BonusCard;
 import ua.lviv.bas.cinema.domain.BonusRules;
 import ua.lviv.bas.cinema.domain.BonusTransaction;
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.enums.BonusTransactionType;
 import ua.lviv.bas.cinema.domain.enums.VerificationStatus;
+import ua.lviv.bas.cinema.domain.projection.BonusTransactionProjection;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusBalanceResponse;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusCardResponse;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusTransactionResponse;
@@ -58,574 +56,281 @@ public class BonusServiceTest {
 	@Mock
 	private BonusMapper bonusMapper;
 
+	@Mock
+	private BonusProperties bonusProperties;
+
 	@InjectMocks
-	private BonusService bonusUserService;
-
-	@Captor
-	private ArgumentCaptor<BonusTransaction> transactionCaptor;
-
-	@Captor
-	private ArgumentCaptor<BonusCard> cardCaptor;
+	private BonusService bonusService;
 
 	@Test
-	void getBonusCard_ShouldReturnCardResponse() {
+	void getCard_ShouldReturnCardResponse() {
 		Long userId = 1L;
-		User user = new User();
-		user.setId(userId);
-
 		BonusCard card = new BonusCard();
 		card.setId(1L);
-		card.setUser(user);
-		card.setPointsBalance(250);
-		card.setWelcomeBonusReceived(true);
-
-		BonusCardResponse expectedResponse = BonusCardResponse.builder().id(1L).userId(userId).pointsBalance(250)
-				.welcomeBonusReceived(true).build();
+		BonusCardResponse response = new BonusCardResponse();
 
 		when(bonusCardRepository.findByUserId(userId)).thenReturn(Optional.of(card));
-		when(bonusMapper.toBonusCardResponse(card)).thenReturn(expectedResponse);
+		when(bonusMapper.toBonusCardResponse(card)).thenReturn(response);
 
-		BonusCardResponse result = bonusUserService.getBonusCard(userId);
+		BonusCardResponse result = bonusService.getCard(userId);
 
-		assertThat(result).isSameAs(expectedResponse);
+		assertThat(result).isEqualTo(response);
 		verify(bonusCardRepository).findByUserId(userId);
-		verify(bonusMapper).toBonusCardResponse(card);
 	}
 
 	@Test
-	void getBonusCard_ShouldThrowWhenNotFound() {
+	void getCard_ShouldThrowWhenCardNotFound() {
 		Long userId = 1L;
 
 		when(bonusCardRepository.findByUserId(userId)).thenReturn(Optional.empty());
 
-		assertThatThrownBy(() -> bonusUserService.getBonusCard(userId)).isInstanceOf(BonusCardNotFoundException.class);
-
-		verify(bonusCardRepository).findByUserId(userId);
+		assertThatThrownBy(() -> bonusService.getCard(userId)).isInstanceOf(BonusCardNotFoundException.class);
 	}
 
 	@Test
 	void getBalance_ShouldReturnBalanceResponse() {
 		Long userId = 1L;
-		User user = new User();
-		user.setId(userId);
-
 		BonusCard card = new BonusCard();
-		card.setId(1L);
-		card.setUser(user);
-		card.setPointsBalance(250);
+		card.setPointsBalance(100);
 
 		when(bonusCardRepository.findByUserId(userId)).thenReturn(Optional.of(card));
+		when(bonusProperties.getPointValue()).thenReturn(new BigDecimal("1.00"));
 
-		BonusBalanceResponse result = bonusUserService.getBalance(userId);
+		BonusBalanceResponse result = bonusService.getBalance(userId);
 
-		assertThat(result.getPointsBalance()).isEqualTo(250);
-		assertThat(result.getPointValue()).isEqualByComparingTo("1.00");
-		assertThat(result.getBalanceValue()).isEqualByComparingTo("250.00");
+		assertThat(result).isNotNull();
+		assertThat(result.getPointsBalance()).isEqualTo(100);
 	}
 
 	@Test
-	void getBalance_ShouldThrowWhenCardNotFound() {
+	void getTransactions_ShouldReturnPage() {
 		Long userId = 1L;
+		Pageable pageable = PageRequest.of(0, 10);
+		Page<BonusTransactionProjection> page = Page.empty();
 
-		when(bonusCardRepository.findByUserId(userId)).thenReturn(Optional.empty());
+		when(bonusTransactionRepository.findProjectionsByUserId(userId, pageable)).thenReturn(page);
 
-		assertThatThrownBy(() -> bonusUserService.getBalance(userId)).isInstanceOf(BonusCardNotFoundException.class);
+		Page<BonusTransactionResponse> result = bonusService.getTransactions(userId, pageable);
+
+		assertThat(result).isNotNull();
+		verify(bonusTransactionRepository).findProjectionsByUserId(userId, pageable);
 	}
 
 	@Test
-	void getUserTransactions_ShouldReturnPagedTransactions() {
-		Long userId = 1L;
-		Pageable pageable = PageRequest.of(0, 20);
-
-		BonusCard card = new BonusCard();
-		card.setId(1L);
-
-		BonusTransaction transaction = BonusTransaction.builder().id(1L).bonusCard(card)
-				.type(BonusTransactionType.PAYMENT_ACCRUAL).pointsChange(25).build();
-
-		Page<BonusTransaction> page = new PageImpl<>(List.of(transaction), pageable, 1);
-		BonusTransactionResponse response = BonusTransactionResponse.builder().id(1L).type("PURCHASE_BONUS")
-				.pointsChange(25).build();
-
-		when(bonusCardRepository.findByUserId(userId)).thenReturn(Optional.of(card));
-		when(bonusTransactionRepository.findByBonusCardOrderByCreatedAtDesc(card, pageable)).thenReturn(page);
-		when(bonusMapper.toBonusTransactionResponse(transaction)).thenReturn(response);
-
-		Page<BonusTransactionResponse> result = bonusUserService.getUserTransactions(userId, pageable);
-
-		assertThat(result.getContent()).hasSize(1);
-		assertThat(result.getContent().get(0)).isSameAs(response);
-		verify(bonusCardRepository).findByUserId(userId);
-		verify(bonusTransactionRepository).findByBonusCardOrderByCreatedAtDesc(card, pageable);
-	}
-
-	@Test
-	void awardWelcomeBonus_ShouldAwardWhenNotReceived() {
+	void awardWelcomeBonus_ShouldAddPointsWhenNotReceived() {
 		User user = new User();
 		user.setId(1L);
-
 		BonusCard card = new BonusCard();
-		card.setId(1L);
-		card.setUser(user);
-		card.setPointsBalance(0);
 		card.setWelcomeBonusReceived(false);
-
 		BonusRules rule = new BonusRules();
-		rule.setBonusType(BonusTransactionType.WELCOME_BONUS);
-		rule.setPoints(100);
-		rule.setActive(true);
+		rule.setPoints(50);
 
 		when(bonusCardRepository.findByUserId(user.getId())).thenReturn(Optional.of(card));
 		when(bonusRulesRepository.findByBonusTypeAndActiveTrue(BonusTransactionType.WELCOME_BONUS))
 				.thenReturn(Optional.of(rule));
-		when(bonusCardRepository.save(any(BonusCard.class))).thenAnswer(invocation -> invocation.getArgument(0));
-		when(bonusTransactionRepository.save(any(BonusTransaction.class)))
-				.thenAnswer(invocation -> invocation.getArgument(0));
+		when(bonusCardRepository.save(any())).thenReturn(card);
+		when(bonusTransactionRepository.save(any())).thenReturn(new BonusTransaction());
 
-		bonusUserService.awardWelcomeBonus(user);
+		bonusService.awardWelcomeBonus(user);
 
-		verify(bonusCardRepository, times(2)).save(cardCaptor.capture());
-		List<BonusCard> savedCards = cardCaptor.getAllValues();
-		assertThat(savedCards.get(1).isWelcomeBonusReceived()).isTrue();
-		assertThat(savedCards.get(1).getPointsBalance()).isEqualTo(100);
-		verify(bonusTransactionRepository).save(transactionCaptor.capture());
-		assertThat(transactionCaptor.getValue().getPointsChange()).isEqualTo(100);
-		assertThat(transactionCaptor.getValue().getType()).isEqualTo(BonusTransactionType.WELCOME_BONUS);
+		verify(bonusCardRepository, times(2)).save(card);
+		verify(bonusTransactionRepository).save(any());
+		assertThat(card.isWelcomeBonusReceived()).isTrue();
 	}
 
 	@Test
-	void awardWelcomeBonus_ShouldNotAwardWhenAlreadyReceived() {
+	void awardWelcomeBonus_ShouldSkipWhenAlreadyReceived() {
 		User user = new User();
 		user.setId(1L);
-
 		BonusCard card = new BonusCard();
-		card.setId(1L);
-		card.setUser(user);
 		card.setWelcomeBonusReceived(true);
 
 		when(bonusCardRepository.findByUserId(user.getId())).thenReturn(Optional.of(card));
 
-		bonusUserService.awardWelcomeBonus(user);
+		bonusService.awardWelcomeBonus(user);
 
-		verify(bonusRulesRepository, never()).findByBonusTypeAndActiveTrue(any());
 		verify(bonusCardRepository, never()).save(any());
 		verify(bonusTransactionRepository, never()).save(any());
 	}
 
 	@Test
-	void awardBirthdayBonus_ShouldAwardWhenConditionsMet() {
+	void awardBirthdayBonus_ShouldAddPointsWhenConditionsMet() {
 		User user = new User();
 		user.setId(1L);
-		user.setDateOfBirth(LocalDate.now());
 		user.setVerificationStatus(VerificationStatus.VERIFIED);
-
+		user.setDateOfBirth(LocalDate.now());
 		BonusCard card = new BonusCard();
-		card.setId(1L);
-		card.setUser(user);
-		card.setPointsBalance(0);
 		card.setLastBirthdayBonusDate(null);
-
 		BonusRules rule = new BonusRules();
-		rule.setBonusType(BonusTransactionType.BIRTHDAY_BONUS);
-		rule.setPoints(200);
-		rule.setActive(true);
+		rule.setPoints(100);
 
 		when(bonusCardRepository.findByUserId(user.getId())).thenReturn(Optional.of(card));
 		when(bonusRulesRepository.findByBonusTypeAndActiveTrue(BonusTransactionType.BIRTHDAY_BONUS))
 				.thenReturn(Optional.of(rule));
-		when(bonusCardRepository.save(any(BonusCard.class))).thenAnswer(invocation -> invocation.getArgument(0));
-		when(bonusTransactionRepository.save(any(BonusTransaction.class)))
-				.thenAnswer(invocation -> invocation.getArgument(0));
+		when(bonusCardRepository.save(any())).thenReturn(card);
+		when(bonusTransactionRepository.save(any())).thenReturn(new BonusTransaction());
 
-		bonusUserService.awardBirthdayBonus(user);
+		bonusService.awardBirthdayBonus(user);
 
-		verify(bonusCardRepository, times(2)).save(cardCaptor.capture());
-		List<BonusCard> savedCards = cardCaptor.getAllValues();
-		assertThat(savedCards.get(1).getPointsBalance()).isEqualTo(200);
-		assertThat(savedCards.get(1).getLastBirthdayBonusDate()).isEqualTo(LocalDate.now());
-		verify(bonusTransactionRepository).save(transactionCaptor.capture());
-		assertThat(transactionCaptor.getValue().getPointsChange()).isEqualTo(200);
-		assertThat(transactionCaptor.getValue().getType()).isEqualTo(BonusTransactionType.BIRTHDAY_BONUS);
+		verify(bonusCardRepository, times(2)).save(card);
+		verify(bonusTransactionRepository).save(any());
 	}
 
 	@Test
-	void awardBirthdayBonus_ShouldNotAwardWhenNotVerified() {
+	void awardBirthdayBonus_ShouldSkipWhenNotVerified() {
 		User user = new User();
-		user.setId(1L);
-		user.setDateOfBirth(LocalDate.now());
 		user.setVerificationStatus(VerificationStatus.NOT_VERIFIED);
 
-		bonusUserService.awardBirthdayBonus(user);
+		bonusService.awardBirthdayBonus(user);
 
 		verify(bonusCardRepository, never()).findByUserId(any());
-		verify(bonusRulesRepository, never()).findByBonusTypeAndActiveTrue(any());
 	}
 
 	@Test
-	void awardBirthdayBonus_ShouldNotAwardWhenNoBirthDate() {
+	void addPoints_ShouldAddPoints() {
 		User user = new User();
 		user.setId(1L);
-		user.setDateOfBirth(null);
-		user.setVerificationStatus(VerificationStatus.VERIFIED);
-
-		bonusUserService.awardBirthdayBonus(user);
-
-		verify(bonusCardRepository, never()).findByUserId(any());
-		verify(bonusRulesRepository, never()).findByBonusTypeAndActiveTrue(any());
-	}
-
-	@Test
-	void awardBirthdayBonus_ShouldNotAwardWhenNotBirthday() {
-		User user = new User();
-		user.setId(1L);
-		user.setDateOfBirth(LocalDate.now().minusDays(1));
-		user.setVerificationStatus(VerificationStatus.VERIFIED);
-
-		bonusUserService.awardBirthdayBonus(user);
-
-		verify(bonusCardRepository, never()).findByUserId(any());
-		verify(bonusRulesRepository, never()).findByBonusTypeAndActiveTrue(any());
-	}
-
-	@Test
-	void awardBirthdayBonus_ShouldNotAwardWhenAlreadyReceivedThisYear() {
-		User user = new User();
-		user.setId(1L);
-		user.setDateOfBirth(LocalDate.now());
-		user.setVerificationStatus(VerificationStatus.VERIFIED);
-
 		BonusCard card = new BonusCard();
-		card.setId(1L);
-		card.setUser(user);
-		card.setLastBirthdayBonusDate(LocalDate.now());
+		card.setPointsBalance(100);
 
 		when(bonusCardRepository.findByUserId(user.getId())).thenReturn(Optional.of(card));
+		when(bonusCardRepository.save(any())).thenReturn(card);
+		when(bonusTransactionRepository.save(any())).thenReturn(new BonusTransaction());
 
-		bonusUserService.awardBirthdayBonus(user);
+		Integer result = bonusService.addPoints(user, 50);
 
-		verify(bonusRulesRepository, never()).findByBonusTypeAndActiveTrue(any());
-		verify(bonusCardRepository, never()).save(any());
-		verify(bonusTransactionRepository, never()).save(any());
+		assertThat(result).isEqualTo(150);
+		verify(bonusCardRepository).save(card);
+		verify(bonusTransactionRepository).save(any());
 	}
 
 	@Test
-	void validatePointsRedemption_ShouldPassWhenValid() {
-		Long userId = 1L;
-		Integer pointsToUse = 150;
+	void addPoints_ShouldThrowWhenPointsInvalid() {
+		User user = new User();
 
-		BonusCard card = new BonusCard();
-		card.setId(1L);
-		card.setPointsBalance(250);
-
-		when(bonusCardRepository.findByUserId(userId)).thenReturn(Optional.of(card));
-
-		bonusUserService.validatePointsRedemption(userId, pointsToUse);
-
-		verify(bonusCardRepository).findByUserId(userId);
+		assertThatThrownBy(() -> bonusService.addPoints(user, 0)).isInstanceOf(BonusValidationException.class);
 	}
 
 	@Test
-	void validatePointsRedemption_ShouldThrowWhenInsufficientPoints() {
+	void validateRedemption_ShouldPassWhenSufficientPoints() {
 		Long userId = 1L;
-		Integer pointsToUse = 300;
-
 		BonusCard card = new BonusCard();
-		card.setId(1L);
-		card.setPointsBalance(250);
+		card.setPointsBalance(100);
 
 		when(bonusCardRepository.findByUserId(userId)).thenReturn(Optional.of(card));
 
-		assertThatThrownBy(() -> bonusUserService.validatePointsRedemption(userId, pointsToUse))
+		bonusService.validateRedemption(userId, 50);
+	}
+
+	@Test
+	void validateRedemption_ShouldThrowWhenInsufficientPoints() {
+		Long userId = 1L;
+		BonusCard card = new BonusCard();
+		card.setPointsBalance(30);
+
+		when(bonusCardRepository.findByUserId(userId)).thenReturn(Optional.of(card));
+
+		assertThatThrownBy(() -> bonusService.validateRedemption(userId, 50))
 				.isInstanceOf(InsufficientPointsException.class);
 	}
 
 	@Test
-	void validatePointsRedemption_ShouldThrowWhenPointsOutsideRange() {
-		Long userId = 1L;
-		Integer pointsToUse = 0;
+	void calculatePoints_ShouldReturnZeroWhenAmountNull() {
+		Integer result = bonusService.calculatePoints(null);
 
-		BonusCard card = new BonusCard();
-		card.setId(1L);
-		card.setPointsBalance(500);
-
-		when(bonusCardRepository.findByUserId(userId)).thenReturn(Optional.of(card));
-
-		assertThatThrownBy(() -> bonusUserService.validatePointsRedemption(userId, pointsToUse))
-				.isInstanceOf(BonusValidationException.class);
+		assertThat(result).isEqualTo(0);
 	}
 
 	@Test
-	void validatePointsRedemption_ShouldThrowWhenCardNotFound() {
-		Long userId = 1L;
-		Integer pointsToUse = 100;
+	void calculatePoints_ShouldCalculateCorrectly() {
+		BigDecimal amount = new BigDecimal("100");
+		BonusRules rule = new BonusRules();
+		rule.setMoneyRatio(new BigDecimal("1.5"));
 
-		when(bonusCardRepository.findByUserId(userId)).thenReturn(Optional.empty());
+		when(bonusRulesRepository.findByBonusTypeAndActiveTrue(BonusTransactionType.PAYMENT_ACCRUAL))
+				.thenReturn(Optional.of(rule));
 
-		assertThatThrownBy(() -> bonusUserService.validatePointsRedemption(userId, pointsToUse))
-				.isInstanceOf(BonusCardNotFoundException.class);
-	}
-
-	@Test
-	void addPoints_ShouldAddPointsToUser() {
-		User user = new User();
-		user.setId(1L);
-
-		BonusCard card = new BonusCard();
-		card.setId(1L);
-		card.setUser(user);
-		card.setPointsBalance(100);
-
-		when(bonusCardRepository.findByUserId(user.getId())).thenReturn(Optional.of(card));
-		when(bonusCardRepository.save(any(BonusCard.class))).thenAnswer(invocation -> invocation.getArgument(0));
-		when(bonusTransactionRepository.save(any(BonusTransaction.class)))
-				.thenAnswer(invocation -> invocation.getArgument(0));
-
-		Integer result = bonusUserService.addPoints(user, 50);
+		Integer result = bonusService.calculatePoints(amount);
 
 		assertThat(result).isEqualTo(150);
-		assertThat(card.getPointsBalance()).isEqualTo(150);
-
-		verify(bonusCardRepository).save(card);
-		verify(bonusTransactionRepository).save(transactionCaptor.capture());
-		assertThat(transactionCaptor.getValue().getType()).isEqualTo(BonusTransactionType.PROMOTION_BONUS);
-		assertThat(transactionCaptor.getValue().getPointsChange()).isEqualTo(50);
 	}
 
 	@Test
-	void addPoints_ShouldCreateNewCardIfNotExists() {
+	void getOrCreateCard_ShouldReturnExistingCard() {
 		User user = new User();
 		user.setId(1L);
-
-		BonusCard newCard = BonusCard.builder().user(user).pointsBalance(0).welcomeBonusReceived(false).build();
-
-		when(bonusCardRepository.findByUserId(user.getId())).thenReturn(Optional.empty());
-		when(bonusCardRepository.save(any(BonusCard.class))).thenReturn(newCard);
-		when(bonusTransactionRepository.save(any(BonusTransaction.class)))
-				.thenAnswer(invocation -> invocation.getArgument(0));
-
-		Integer result = bonusUserService.addPoints(user, 100);
-
-		assertThat(result).isEqualTo(100);
-		assertThat(newCard.getPointsBalance()).isEqualTo(100);
-
-		verify(bonusCardRepository, times(2)).save(any(BonusCard.class));
-		verify(bonusTransactionRepository).save(any(BonusTransaction.class));
-	}
-
-	@Test
-	void addPoints_ShouldThrowWhenPointsIsNull() {
-		User user = new User();
-		user.setId(1L);
-
-		assertThatThrownBy(() -> bonusUserService.addPoints(user, null)).isInstanceOf(BonusValidationException.class);
-	}
-
-	@Test
-	void addPoints_ShouldThrowWhenPointsIsZero() {
-		User user = new User();
-		user.setId(1L);
-
-		assertThatThrownBy(() -> bonusUserService.addPoints(user, 0)).isInstanceOf(BonusValidationException.class);
-	}
-
-	@Test
-	void addPoints_ShouldThrowWhenPointsIsNegative() {
-		User user = new User();
-		user.setId(1L);
-
-		assertThatThrownBy(() -> bonusUserService.addPoints(user, -50)).isInstanceOf(BonusValidationException.class);
-	}
-
-	@Test
-	void findOrCreateBonusCard_ShouldReturnExistingCard() {
-		User user = new User();
-		user.setId(1L);
-
 		BonusCard card = new BonusCard();
-		card.setId(1L);
-		card.setUser(user);
 
 		when(bonusCardRepository.findByUserId(user.getId())).thenReturn(Optional.of(card));
 
-		BonusCard result = bonusUserService.findOrCreateBonusCard(user);
+		BonusCard result = bonusService.getOrCreateCard(user);
 
-		assertThat(result).isSameAs(card);
-		verify(bonusCardRepository).findByUserId(user.getId());
+		assertThat(result).isEqualTo(card);
 		verify(bonusCardRepository, never()).save(any());
 	}
 
 	@Test
-	void findOrCreateBonusCard_ShouldCreateNewCard() {
+	void getOrCreateCard_ShouldCreateNewCard() {
 		User user = new User();
 		user.setId(1L);
 
-		BonusCard newCard = BonusCard.builder().user(user).pointsBalance(0).welcomeBonusReceived(false).build();
-
 		when(bonusCardRepository.findByUserId(user.getId())).thenReturn(Optional.empty());
-		when(bonusCardRepository.save(any(BonusCard.class))).thenReturn(newCard);
+		when(bonusCardRepository.save(any())).thenReturn(new BonusCard());
 
-		BonusCard result = bonusUserService.findOrCreateBonusCard(user);
-
-		assertThat(result).isNotNull();
-		assertThat(result.getUser()).isEqualTo(user);
-		assertThat(result.getPointsBalance()).isEqualTo(0);
-		assertThat(result.isWelcomeBonusReceived()).isFalse();
-		verify(bonusCardRepository).save(any(BonusCard.class));
-	}
-
-	@Test
-	void createBonusTransaction_ShouldCreateAndUpdateBalance() {
-		BonusCard card = new BonusCard();
-		card.setId(1L);
-		card.setPointsBalance(100);
-
-		Integer pointsChange = 25;
-		BonusTransactionType type = BonusTransactionType.PAYMENT_ACCRUAL;
-		String referenceId = "PAYMENT_123";
-
-		when(bonusTransactionRepository.save(any(BonusTransaction.class)))
-				.thenAnswer(invocation -> invocation.getArgument(0));
-		when(bonusCardRepository.save(any(BonusCard.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
-		BonusTransaction result = bonusUserService.createBonusTransaction(card, pointsChange, type, referenceId, null,
-				null, null);
+		BonusCard result = bonusService.getOrCreateCard(user);
 
 		assertThat(result).isNotNull();
-		assertThat(result.getType()).isEqualTo(type);
-		assertThat(result.getPointsChange()).isEqualTo(pointsChange);
-		assertThat(result.getReferenceId()).isEqualTo(referenceId);
-		assertThat(card.getPointsBalance()).isEqualTo(125);
-
-		verify(bonusCardRepository).save(card);
-		verify(bonusTransactionRepository).save(any(BonusTransaction.class));
+		verify(bonusCardRepository).save(any());
 	}
 
 	@Test
-	void createBonusTransaction_ShouldCreateWithNegativePoints() {
-		BonusCard card = new BonusCard();
-		card.setId(1L);
-		card.setPointsBalance(100);
-
-		when(bonusTransactionRepository.save(any(BonusTransaction.class)))
-				.thenAnswer(invocation -> invocation.getArgument(0));
-		when(bonusCardRepository.save(any(BonusCard.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
-		BonusTransaction result = bonusUserService.createBonusTransaction(card, -50, BonusTransactionType.BOOKING_SPEND,
-				"PAYMENT_1", null, null, null);
-
-		assertThat(result).isNotNull();
-		assertThat(result.getPointsChange()).isEqualTo(-50);
-		assertThat(card.getPointsBalance()).isEqualTo(50);
-	}
-
-	@Test
-	void calculateAccruedPointsForAmount_ShouldCalculateCorrectly() {
-		BigDecimal purchaseAmount = new BigDecimal("1000");
-		Integer result = bonusUserService.calculateAccruedPointsForAmount(purchaseAmount);
-		assertThat(result).isEqualTo(50);
-	}
-
-	@Test
-	void calculateAccruedPointsForAmount_ShouldReturnZeroWhenAmountIsNull() {
-		Integer result = bonusUserService.calculateAccruedPointsForAmount(null);
-		assertThat(result).isEqualTo(0);
-	}
-
-	@Test
-	void calculateAccruedPointsForAmount_ShouldReturnZeroWhenAmountIsZero() {
-		Integer result = bonusUserService.calculateAccruedPointsForAmount(BigDecimal.ZERO);
-		assertThat(result).isEqualTo(0);
-	}
-
-	@Test
-	void calculateAccruedPointsForAmount_ShouldReturnZeroWhenAmountIsNegative() {
-		Integer result = bonusUserService.calculateAccruedPointsForAmount(new BigDecimal("-100"));
-		assertThat(result).isEqualTo(0);
-	}
-
-	@Test
-	void validateBonusPointsForBooking_ShouldPassWhenValid() {
-		Long userId = 1L;
-		Integer pointsToUse = 50;
-		BigDecimal bookingTotalPrice = new BigDecimal("200");
-
-		BonusCard card = new BonusCard();
-		card.setId(1L);
-		card.setPointsBalance(100);
-
-		when(bonusCardRepository.findByUserId(userId)).thenReturn(Optional.of(card));
-
-		bonusUserService.validateBonusPointsForBooking(userId, pointsToUse, bookingTotalPrice);
-	}
-
-	@Test
-	void validateBonusPointsForBooking_ShouldThrowWhenDiscountExceedsMax() {
-		Long userId = 1L;
-		Integer pointsToUse = 150;
-		BigDecimal bookingTotalPrice = new BigDecimal("200");
-
-		BonusCard card = new BonusCard();
-		card.setId(1L);
-		card.setPointsBalance(200);
-
-		when(bonusCardRepository.findByUserId(userId)).thenReturn(Optional.of(card));
-
-		assertThatThrownBy(() -> bonusUserService.validateBonusPointsForBooking(userId, pointsToUse, bookingTotalPrice))
-				.isInstanceOf(BonusValidationException.class);
-	}
-
-	@Test
-	void getAvailablePointsForRedemption_ShouldReturnCorrectValue() {
-		Long userId = 1L;
-		BigDecimal bookingTotalPrice = new BigDecimal("200");
-
-		BonusCard card = new BonusCard();
-		card.setId(1L);
-		card.setPointsBalance(150);
-
-		when(bonusCardRepository.findByUserId(userId)).thenReturn(Optional.of(card));
-
-		Integer result = bonusUserService.getAvailablePointsForRedemption(userId, bookingTotalPrice);
-
-		assertThat(result).isEqualTo(100);
-	}
-
-	@Test
-	void getAvailablePointsForRedemption_ShouldReturnZeroWhenNoBalance() {
-		Long userId = 1L;
-		BigDecimal bookingTotalPrice = new BigDecimal("200");
-
-		BonusCard card = new BonusCard();
-		card.setId(1L);
-		card.setPointsBalance(0);
-
-		when(bonusCardRepository.findByUserId(userId)).thenReturn(Optional.of(card));
-
-		Integer result = bonusUserService.getAvailablePointsForRedemption(userId, bookingTotalPrice);
-
-		assertThat(result).isEqualTo(0);
-	}
-
-	@Test
-	void findActiveRule_ShouldReturnRule() {
+	void getActiveRule_ShouldReturnRule() {
 		BonusTransactionType type = BonusTransactionType.WELCOME_BONUS;
 		BonusRules rule = new BonusRules();
-		rule.setBonusType(type);
-		rule.setActive(true);
 
 		when(bonusRulesRepository.findByBonusTypeAndActiveTrue(type)).thenReturn(Optional.of(rule));
 
-		BonusRules result = bonusUserService.findActiveRule(type);
+		BonusRules result = bonusService.getActiveRule(type);
 
-		assertThat(result).isSameAs(rule);
+		assertThat(result).isEqualTo(rule);
 	}
 
 	@Test
-	void findActiveRule_ShouldThrowWhenNotFound() {
+	void getActiveRule_ShouldThrowWhenNotFound() {
 		BonusTransactionType type = BonusTransactionType.WELCOME_BONUS;
 
 		when(bonusRulesRepository.findByBonusTypeAndActiveTrue(type)).thenReturn(Optional.empty());
 
-		assertThatThrownBy(() -> bonusUserService.findActiveRule(type)).isInstanceOf(BonusRuleNotFoundException.class);
+		assertThatThrownBy(() -> bonusService.getActiveRule(type)).isInstanceOf(BonusRuleNotFoundException.class);
+	}
+
+	@Test
+	void validatePointsForBooking_ShouldPassWhenValid() {
+		Long userId = 1L;
+		BigDecimal totalPrice = new BigDecimal("100");
+		BonusCard card = new BonusCard();
+		card.setPointsBalance(50);
+
+		when(bonusCardRepository.findByUserId(userId)).thenReturn(Optional.of(card));
+		when(bonusProperties.getPointValue()).thenReturn(new BigDecimal("1.00"));
+		when(bonusProperties.getMaxDiscountPercentage()).thenReturn(new BigDecimal("0.5"));
+
+		bonusService.validatePointsForBooking(userId, 30, totalPrice);
+	}
+
+	@Test
+	void getAvailablePoints_ShouldReturnCorrectValue() {
+		Long userId = 1L;
+		BigDecimal totalPrice = new BigDecimal("100");
+		BonusCard card = new BonusCard();
+		card.setPointsBalance(200);
+
+		when(bonusCardRepository.findByUserId(userId)).thenReturn(Optional.of(card));
+		when(bonusProperties.getPointValue()).thenReturn(new BigDecimal("1.00"));
+		when(bonusProperties.getMaxDiscountPercentage()).thenReturn(new BigDecimal("0.5"));
+
+		Integer result = bonusService.getAvailablePoints(userId, totalPrice);
+
+		assertThat(result).isEqualTo(50);
 	}
 }

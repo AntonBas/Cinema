@@ -2,35 +2,33 @@ package ua.lviv.bas.cinema.service.booking.ticket;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 
-import ua.lviv.bas.cinema.domain.Booking;
-import ua.lviv.bas.cinema.domain.CinemaHall;
-import ua.lviv.bas.cinema.domain.Movie;
-import ua.lviv.bas.cinema.domain.Session;
 import ua.lviv.bas.cinema.domain.Ticket;
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.enums.TicketStatus;
+import ua.lviv.bas.cinema.domain.projection.TicketInfoProjection;
+import ua.lviv.bas.cinema.domain.specification.TicketInfoSpecification;
+import ua.lviv.bas.cinema.dto.ticket.request.TicketFilterRequest;
 import ua.lviv.bas.cinema.dto.ticket.response.TicketResponse;
 import ua.lviv.bas.cinema.exception.domain.ticket.TicketNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.ticket.TicketValidationException;
 import ua.lviv.bas.cinema.mapper.TicketMapper;
 import ua.lviv.bas.cinema.repository.TicketRepository;
+import ua.lviv.bas.cinema.repository.projection.TicketInfoProjectionRepository;
 
 @ExtendWith(MockitoExtension.class)
 public class TicketRetrievalServiceTest {
@@ -39,143 +37,167 @@ public class TicketRetrievalServiceTest {
 	private TicketRepository ticketRepository;
 
 	@Mock
+	private TicketInfoProjectionRepository ticketInfoProjectionRepository;
+
+	@Mock
+	private TicketInfoSpecification ticketInfoSpecification;
+
+	@Mock
 	private TicketMapper ticketMapper;
 
 	@InjectMocks
 	private TicketRetrievalService ticketRetrievalService;
 
-	private User testUser;
-	private Ticket testTicket;
-	private TicketResponse testTicketResponse;
-
-	private static final Long USER_ID = 1L;
-	private static final Long TICKET_ID = 2L;
-	private static final String TICKET_CODE = "TKT-123456";
-
-	@BeforeEach
-	void setUp() {
-		testUser = new User();
-		testUser.setId(USER_ID);
-		testUser.setEmail("test@example.com");
-
-		Movie movie = new Movie();
-		movie.setTitle("Test Movie");
-
-		CinemaHall hall = new CinemaHall();
-		hall.setName("Hall 1");
-
-		Session session = new Session();
-		session.setMovie(movie);
-		session.setHall(hall);
-		session.setStartTime(LocalDateTime.now().plusHours(2));
-
-		Booking booking = new Booking();
-		booking.setSession(session);
-
-		testTicket = new Ticket();
-		testTicket.setId(TICKET_ID);
-		testTicket.setUser(testUser);
-		testTicket.setBooking(booking);
-		testTicket.setUniqueCode(TICKET_CODE);
-		testTicket.setStatus(TicketStatus.ACTIVE);
-		testTicket.setPurchaseTime(LocalDateTime.now());
-
-		testTicketResponse = new TicketResponse();
-		testTicketResponse.setId(TICKET_ID);
-		testTicketResponse.setTicketCode(TICKET_CODE);
-		testTicketResponse.setStatus(TicketStatus.ACTIVE);
-		testTicketResponse.setMovieTitle("Test Movie");
-		testTicketResponse.setHallName("Hall 1");
-	}
+	private final Long USER_ID = 1L;
+	private final Long OTHER_USER_ID = 2L;
+	private final Long TICKET_ID = 100L;
+	private final String TICKET_CODE = "TICKET-123";
 
 	@Test
 	void getTicketById_Success() {
-		when(ticketRepository.findById(TICKET_ID)).thenReturn(Optional.of(testTicket));
-		when(ticketMapper.toTicketResponse(testTicket)).thenReturn(testTicketResponse);
+		User user = createUser(USER_ID);
+		Ticket ticket = createTicket(USER_ID, TICKET_ID, TICKET_CODE);
+		TicketResponse expectedResponse = createTicketResponse();
 
-		TicketResponse response = ticketRetrievalService.getTicketById(TICKET_ID, testUser);
+		when(ticketRepository.findByIdAndUserIdAndStatus(TICKET_ID, USER_ID, TicketStatus.ACTIVE))
+				.thenReturn(Optional.of(ticket));
+		when(ticketMapper.toTicketResponse(ticket)).thenReturn(expectedResponse);
 
-		assertThat(response).isNotNull();
-		assertThat(response.getId()).isEqualTo(TICKET_ID);
-		assertThat(response.getTicketCode()).isEqualTo(TICKET_CODE);
-		verify(ticketRepository).findById(TICKET_ID);
+		TicketResponse result = ticketRetrievalService.getTicketById(TICKET_ID, user);
+
+		assertThat(result).isEqualTo(expectedResponse);
+		assertThat(result.getQrCodeUrl()).contains(TICKET_CODE);
 	}
 
 	@Test
-	void getTicketById_WhenTicketNotFound_ShouldThrowException() {
-		when(ticketRepository.findById(TICKET_ID)).thenReturn(Optional.empty());
+	void getTicketById_NotFound_ThrowsException() {
+		User user = createUser(USER_ID);
 
-		assertThatThrownBy(() -> ticketRetrievalService.getTicketById(TICKET_ID, testUser))
-				.isInstanceOf(TicketNotFoundException.class);
-	}
+		when(ticketRepository.findByIdAndUserIdAndStatus(TICKET_ID, USER_ID, TicketStatus.ACTIVE))
+				.thenReturn(Optional.empty());
 
-	@Test
-	void getTicketById_WhenAccessDenied_ShouldThrowException() {
-		User otherUser = new User();
-		otherUser.setId(999L);
-
-		when(ticketRepository.findById(TICKET_ID)).thenReturn(Optional.of(testTicket));
-
-		assertThatThrownBy(() -> ticketRetrievalService.getTicketById(TICKET_ID, otherUser))
+		assertThatThrownBy(() -> ticketRetrievalService.getTicketById(TICKET_ID, user))
 				.isInstanceOf(TicketValidationException.class);
 	}
 
 	@Test
 	void getTicketByCode_Success() {
-		when(ticketRepository.findByUniqueCode(TICKET_CODE)).thenReturn(Optional.of(testTicket));
-		when(ticketMapper.toTicketResponse(testTicket)).thenReturn(testTicketResponse);
+		User user = createUser(USER_ID);
+		Ticket ticket = createTicket(USER_ID, TICKET_ID, TICKET_CODE);
+		TicketResponse expectedResponse = createTicketResponse();
 
-		TicketResponse response = ticketRetrievalService.getTicketByCode(TICKET_CODE, testUser);
+		when(ticketRepository.findByUniqueCode(TICKET_CODE)).thenReturn(Optional.of(ticket));
+		when(ticketMapper.toTicketResponse(ticket)).thenReturn(expectedResponse);
 
-		assertThat(response).isNotNull();
-		assertThat(response.getTicketCode()).isEqualTo(TICKET_CODE);
-		verify(ticketRepository).findByUniqueCode(TICKET_CODE);
+		TicketResponse result = ticketRetrievalService.getTicketByCode(TICKET_CODE, user);
+
+		assertThat(result).isEqualTo(expectedResponse);
+		assertThat(result.getQrCodeUrl()).contains(TICKET_CODE);
 	}
 
 	@Test
-	void getTicketByCode_WhenTicketNotFound_ShouldThrowException() {
+	void getTicketByCode_NotFound_ThrowsException() {
+		User user = createUser(USER_ID);
+
 		when(ticketRepository.findByUniqueCode(TICKET_CODE)).thenReturn(Optional.empty());
 
-		assertThatThrownBy(() -> ticketRetrievalService.getTicketByCode(TICKET_CODE, testUser))
+		assertThatThrownBy(() -> ticketRetrievalService.getTicketByCode(TICKET_CODE, user))
 				.isInstanceOf(TicketNotFoundException.class);
 	}
 
 	@Test
-	void getUserTickets_WithStatusFilter() {
-		List<Ticket> tickets = Arrays.asList(testTicket);
-		when(ticketRepository.findByUserIdAndStatusOrderByPurchaseTimeDesc(USER_ID, TicketStatus.ACTIVE))
-				.thenReturn(tickets);
-		when(ticketMapper.toTicketResponse(testTicket)).thenReturn(testTicketResponse);
+	void getTicketByCode_WrongUser_ThrowsException() {
+		User user = createUser(OTHER_USER_ID);
+		Ticket ticket = createTicket(USER_ID, TICKET_ID, TICKET_CODE);
 
-		List<TicketResponse> responses = ticketRetrievalService.getUserTickets(testUser, TicketStatus.ACTIVE);
+		when(ticketRepository.findByUniqueCode(TICKET_CODE)).thenReturn(Optional.of(ticket));
 
-		assertThat(responses).hasSize(1);
-		assertThat(responses.get(0).getStatus()).isEqualTo(TicketStatus.ACTIVE);
-		verify(ticketRepository).findByUserIdAndStatusOrderByPurchaseTimeDesc(USER_ID, TicketStatus.ACTIVE);
+		assertThatThrownBy(() -> ticketRetrievalService.getTicketByCode(TICKET_CODE, user))
+				.isInstanceOf(TicketValidationException.class);
 	}
 
 	@Test
-	void getUserTickets_WithoutStatusFilter() {
-		List<Ticket> tickets = Arrays.asList(testTicket);
-		when(ticketRepository.findByUserIdOrderByPurchaseTimeDesc(USER_ID)).thenReturn(tickets);
-		when(ticketMapper.toTicketResponse(testTicket)).thenReturn(testTicketResponse);
+	void getUserTickets_Success() {
+		User user = createUser(USER_ID);
+		TicketFilterRequest filter = new TicketFilterRequest();
+		Pageable pageable = Pageable.unpaged();
+		TicketInfoProjection projection = createTicketInfoProjection();
+		TicketResponse ticketResponse = createTicketResponse();
 
-		List<TicketResponse> responses = ticketRetrievalService.getUserTickets(testUser, null);
+		Page<TicketInfoProjection> projectionPage = new PageImpl<>(List.of(projection));
 
-		assertThat(responses).hasSize(1);
-		verify(ticketRepository).findByUserIdOrderByPurchaseTimeDesc(USER_ID);
+		Specification<TicketInfoProjection> spec = (Specification<TicketInfoProjection>) (root, query, cb) -> cb
+				.conjunction();
+
+		when(ticketInfoSpecification.build(USER_ID, filter)).thenReturn(spec);
+		when(ticketInfoProjectionRepository.findAll(spec, pageable)).thenReturn(projectionPage);
+		when(ticketMapper.toTicketResponse(projection)).thenReturn(ticketResponse);
+
+		Page<TicketResponse> result = ticketRetrievalService.getUserTickets(user, filter, pageable);
+
+		assertThat(result.getContent()).hasSize(1);
+		assertThat(result.getContent().get(0)).isEqualTo(ticketResponse);
 	}
 
-	@Test
-	void getUpcomingTickets_Success() {
-		List<Ticket> tickets = Arrays.asList(testTicket);
+	private User createUser(Long id) {
+		User user = new User();
+		user.setId(id);
+		return user;
+	}
 
-		when(ticketRepository.findUpcomingTickets(eq(USER_ID), any(LocalDateTime.class))).thenReturn(tickets);
-		when(ticketMapper.toTicketResponse(testTicket)).thenReturn(testTicketResponse);
+	private Ticket createTicket(Long userId, Long ticketId, String ticketCode) {
+		User user = createUser(userId);
+		Ticket ticket = new Ticket();
+		ticket.setId(ticketId);
+		ticket.setUser(user);
+		ticket.setUniqueCode(ticketCode);
+		ticket.setStatus(TicketStatus.ACTIVE);
+		return ticket;
+	}
 
-		List<TicketResponse> responses = ticketRetrievalService.getUpcomingTickets(testUser);
+	private TicketResponse createTicketResponse() {
+		TicketResponse response = new TicketResponse();
+		response.setId(TICKET_ID);
+		response.setTicketCode(TICKET_CODE);
+		return response;
+	}
 
-		assertThat(responses).hasSize(1);
-		verify(ticketRepository).findUpcomingTickets(eq(USER_ID), any(LocalDateTime.class));
+	private TicketInfoProjection createTicketInfoProjection() {
+		return new TicketInfoProjection() {
+			@Override
+			public Long getId() {
+				return TICKET_ID;
+			}
+
+			@Override
+			public String getUniqueCode() {
+				return TICKET_CODE;
+			}
+
+			@Override
+			public String getMovieTitle() {
+				return "Test Movie";
+			}
+
+			@Override
+			public String getHallName() {
+				return "Hall 1";
+			}
+
+			@Override
+			public Integer getRow() {
+				return 1;
+			}
+
+			@Override
+			public Integer getSeatNumber() {
+				return 10;
+			}
+
+			@Override
+			public TicketStatus getStatus() {
+				return TicketStatus.ACTIVE;
+			}
+		};
 	}
 }
