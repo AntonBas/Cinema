@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useMovies } from '@/hooks/features/movies/useMovies';
 import type { MovieCardResponse } from '@/types/movie';
-import { MovieList } from '@/components/movies';
+import { MovieList } from '@/components/movies/MovieList/MovieList';
 import { useNotification } from '@/hooks/common/useNotification';
 import { Notification } from '@/components/ui';
 import styles from './CurrentMoviesPage.module.css';
@@ -24,9 +24,9 @@ export const CurrentMoviesPage: React.FC = () => {
 
         const loadMovies = async () => {
             try {
-                const data = await getCurrentlyShowingRef.current();
+                const response = await getCurrentlyShowingRef.current();
                 if (isMounted) {
-                    setMovies(data);
+                    setMovies(response.content);
                 }
             } catch (err) {
                 if (isMounted) {

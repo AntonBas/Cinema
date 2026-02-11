@@ -11,7 +11,7 @@ import {
 } from '@/types/movie';
 import { useNotification } from '@/hooks/common/useNotification';
 import { Button, Notification } from '@/components/ui';
-import { Layout } from '@/components/layout/Layout';
+import { Layout } from '@/components/layout/Layout/Layout';
 import styles from './MovieDetailPage.module.css';
 
 export const MovieDetailPage: React.FC = () => {
@@ -35,14 +35,12 @@ export const MovieDetailPage: React.FC = () => {
         try {
             const now = new Date();
 
-            const response = await sessionApi.public.getSchedule(
-                0,
-                100,
-                'startTime,asc',
-                undefined,
+            const response = await sessionApi.public.getSessions({
                 movieId,
-                30
-            );
+                page: 0,
+                size: 100,
+                sort: 'startTime,asc'
+            });
 
             const upcomingSessions = response.content.filter((session: SessionScheduleResponse) => {
                 const sessionTime = new Date(session.startTime);
@@ -290,7 +288,7 @@ export const MovieDetailPage: React.FC = () => {
                                     <span className={styles.infoLabel}>Genres:</span>
                                     <div className={styles.infoValue}>
                                         <div className={styles.genreList}>
-                                            {movie.genres.map((genre) => (
+                                            {movie.genres.map((genre: any) => (
                                                 <span key={genre.id} className={styles.genreItem}>
                                                     {genre.name}
                                                 </span>
@@ -305,7 +303,7 @@ export const MovieDetailPage: React.FC = () => {
                                     <span className={styles.infoLabel}>Director{movie.directors.length > 1 ? 's' : ''}:</span>
                                     <div className={styles.infoValue}>
                                         <div className={styles.peopleList}>
-                                            {movie.directors.map((person) => (
+                                            {movie.directors.map((person: any) => (
                                                 <span key={person.id} className={styles.personItem}>
                                                     {person.name}
                                                 </span>
@@ -320,7 +318,7 @@ export const MovieDetailPage: React.FC = () => {
                                     <span className={styles.infoLabel}>Screenwriter{movie.screenwriters.length > 1 ? 's' : ''}:</span>
                                     <div className={styles.infoValue}>
                                         <div className={styles.peopleList}>
-                                            {movie.screenwriters.map((person) => (
+                                            {movie.screenwriters.map((person: any) => (
                                                 <span key={person.id} className={styles.personItem}>
                                                     {person.name}
                                                 </span>
@@ -335,7 +333,7 @@ export const MovieDetailPage: React.FC = () => {
                                     <span className={styles.infoLabel}>Cast:</span>
                                     <div className={styles.infoValue}>
                                         <div className={styles.peopleList}>
-                                            {movie.actors.map((person) => (
+                                            {movie.actors.map((person: any) => (
                                                 <span key={person.id} className={styles.personItem}>
                                                     {person.name}
                                                 </span>
@@ -364,4 +362,4 @@ export const MovieDetailPage: React.FC = () => {
             </div>
         </Layout>
     );
-};
+};÷

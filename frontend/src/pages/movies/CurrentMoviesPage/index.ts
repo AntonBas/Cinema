@@ -1,1 +1,0 @@
-export { CurrentMoviesPage } from './CurrentMoviesPage';

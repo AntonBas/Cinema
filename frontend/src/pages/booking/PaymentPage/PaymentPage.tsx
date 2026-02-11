@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { usePayment } from '@/hooks/features/payment/usePayment';
-import { ProgressStepper } from '@/components/booking/ProgressStepper';
+import { ProgressStepper } from '@/components/booking/ProgressStepper/ProgressStepper';
 import { Badge } from '@/components/ui/Badge/Badge';
 import { Button } from '@/components/ui/Button/Button';
 import { Layout } from '@/components/layout/Layout/Layout';
@@ -75,10 +75,8 @@ export const PaymentPage: React.FC = () => {
         create,
         getById,
         getLiqPayData,
-        redirectToLiqPay,
-        getLiqPayFormData,
-        getPaymentErrorMessage,
-        reset
+        clearCache,
+        resetPayment
     } = usePayment();
 
     const [step, setStep] = useState<'init' | 'processing' | 'ready' | 'paying' | 'success' | 'failed'>('init');
@@ -202,23 +200,23 @@ export const PaymentPage: React.FC = () => {
                 stopPolling();
             } else if (['FAILED', 'CANCELLED', 'EXPIRED'].includes(currentPayment.status)) {
                 setStep('failed');
-                setErrorMessage(currentPayment.errorDescription || getPaymentErrorMessage(currentPayment) || 'Payment failed');
+                setErrorMessage(currentPayment.errorDescription || currentPayment.errorCode || 'Payment failed');
                 stopPolling();
             } else if (currentPayment.status === 'PROCESSING' && step !== 'paying') {
                 setStep('paying');
             }
         }
-    }, [currentPayment, step, stopPolling, getPaymentErrorMessage]);
+    }, [currentPayment, step, stopPolling]);
 
     const handlePayWithLiqPay = async () => {
         if (!currentPayment?.id) return;
 
         setStep('paying');
 
-        const liqPayData = getLiqPayFormData();
-        if (liqPayData) {
-            redirectToLiqPay();
+        const liqPayData = await getLiqPayData(currentPayment.id);
+        if (liqPayData?.paymentUrl) {
             startPolling(currentPayment.id);
+            window.location.href = liqPayData.paymentUrl;
         } else {
             setStep('failed');
             setErrorMessage('Payment data not available');
@@ -227,7 +225,8 @@ export const PaymentPage: React.FC = () => {
 
     const handleRetry = () => {
         stopPolling();
-        reset();
+        clearCache();
+        resetPayment();
         setCurrentPayment(null);
         setErrorMessage(null);
         setStep('init');
@@ -247,7 +246,7 @@ export const PaymentPage: React.FC = () => {
 
     const handleStepClick = (step: any) => {
         if (step.id === 1 && bookingData?.id) {
-            navigate(`/booking/summary/${bookingData.id}`);
+            navigate(`/booking/${bookingData.id}`);
         }
         if (step.id === 2 && bookingData?.id) {
             navigate(`/booking/summary/${bookingData.id}`);

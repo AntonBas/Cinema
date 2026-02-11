@@ -3,12 +3,13 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useSeatAvailability } from '@/hooks/features/seatReservation/useSeatReservation';
 import { useBonus } from '@/hooks/features/bonus/useBonus';
 import { useBooking } from '@/hooks/features/booking/useBooking';
-import { CinemaHall } from '@/components/booking/CinemaHall';
-import { BookingSidebar } from '@/components/booking/BookingSidebar';
-import { ProgressStepper } from '@/components/booking/ProgressStepper';
-import { Layout } from '@/components/layout/Layout';
+import { CinemaHall } from '@/components/booking/CinemaHall/CinemaHall';
+import { BookingSidebar } from '@/components/booking/BookingSidebar/BookingSidebar';
+import { ProgressStepper } from '@/components/booking/ProgressStepper/ProgressStepper';
+import { Layout } from '@/components/layout/Layout/Layout';
 import { Notification } from '@/components/ui/Notification/Notification';
 import type { SelectedSeat } from '@/hooks/features/seatReservation/useSeatReservation';
+import type { SeatInfo } from '@/types/seatReservation';
 import type { NotificationType } from '@/components/ui/Notification/Notification';
 import styles from './BookingPage.module.css';
 
@@ -56,22 +57,22 @@ export const BookingPage: React.FC = () => {
     const [minUsablePoints, setMinUsablePoints] = useState<number>(0);
 
     const {
-        seatData,
+        data: seatData,
         availableSeatsCount,
         selectedSeats,
         totalPrice,
         loading,
-        fetchSeatAvailability,
-        selectSeat,
+        getSeatAvailability,
+        selectSeat: hookSelectSeat,
         deselectSeat,
         isSeatSelected,
         updateSeatTicketType,
         hasData,
-        hasSelection
+        totalSelected
     } = useSeatAvailability(sessionIdNum);
 
     const {
-        balanceData,
+        data: bonusData,
         getMyBalance
     } = useBonus();
 
@@ -88,9 +89,9 @@ export const BookingPage: React.FC = () => {
 
     useEffect(() => {
         if (sessionIdNum && !hasData && !loading) {
-            fetchSeatAvailability();
+            getSeatAvailability();
         }
-    }, [sessionIdNum, hasData, loading, fetchSeatAvailability]);
+    }, [sessionIdNum, hasData, loading, getSeatAvailability]);
 
     useEffect(() => {
         if (sessionIdNum && seatData) {
@@ -109,17 +110,17 @@ export const BookingPage: React.FC = () => {
     }, [sessionIdNum, seatData]);
 
     useEffect(() => {
-        if (balanceData) {
-            setMinUsablePoints(balanceData.minUsablePoints || 0);
+        if (bonusData?.myBalance) {
+            setMinUsablePoints(bonusData.myBalance.minUsablePoints || 0);
 
             const maxPoints = Math.min(
-                balanceData.pointsBalance || 0,
-                balanceData.maxUsablePoints || 0,
+                bonusData.myBalance.pointsBalance || 0,
+                bonusData.myBalance.maxUsablePoints || 0,
                 Math.floor(totalPrice / 0.01)
             );
             setMaxUsablePoints(maxPoints);
         }
-    }, [balanceData, totalPrice]);
+    }, [bonusData, totalPrice]);
 
     const showNotification = useCallback((message: string, type: NotificationType = 'info') => {
         const id = Date.now().toString();
@@ -138,10 +139,16 @@ export const BookingPage: React.FC = () => {
     const handleSeatClick = async (seatId: number) => {
         try {
             setSelectionError(null);
+
+            const seat = seatData?.seats.find((s: SeatInfo) => s.id === seatId);
+            if (!seat) {
+                throw new Error('Seat not found');
+            }
+
             if (isSeatSelected(seatId)) {
                 deselectSeat(seatId);
             } else {
-                await selectSeat(seatId);
+                await hookSelectSeat(seat);
             }
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Failed to select seat';
@@ -151,7 +158,7 @@ export const BookingPage: React.FC = () => {
     };
 
     const handleBooking = async (bonusPointsToUse: number) => {
-        if (!hasSelection) {
+        if (totalSelected === 0) {
             showNotification('Please select at least one seat', 'warning');
             return;
         }

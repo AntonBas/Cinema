@@ -1,13 +1,13 @@
 import React from 'react';
 import { RegisterForm } from '@/components/auth/RegisterForm/RegisterForm';
-import { useAuth } from '@/hooks/features/auth';
+import { useAuth } from '@/hooks/features/auth/useAuth';
 import { Layout } from '@/components/layout/Layout/Layout';
 import styles from './RegisterPage.module.css';
 
 export const RegisterPage: React.FC = () => {
-  const { token, isLoading } = useAuth();
+  const { user, loading } = useAuth();
 
-  if (token && !isLoading) {
+  if (user && !loading) {
     window.location.href = '/';
     return null;
   }

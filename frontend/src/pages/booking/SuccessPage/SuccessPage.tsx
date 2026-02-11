@@ -1,8 +1,8 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { usePayment } from '@/hooks/features/payment/usePayment';
-import { ProgressStepper } from '@/components/booking/ProgressStepper';
-import { Button } from '@/components/ui/Button';
+import { ProgressStepper } from '@/components/booking/ProgressStepper/ProgressStepper';
+import { Button } from '@/components/ui/Button/Button';
 import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';
 import type { PaymentStatus, PaymentResponse } from '@/types/payment';
 import styles from './SuccessPage.module.css';
@@ -50,11 +50,7 @@ const SuccessPage = () => {
     const [searchParams] = useSearchParams();
     const {
         getById,
-        loading,
-        isPaymentComplete,
-        isPaymentFailed,
-        isPaymentInProgress,
-        getPaymentErrorMessage
+        loading
     } = usePayment();
 
     const [isPolling, setIsPolling] = useState(false);
@@ -82,9 +78,11 @@ const SuccessPage = () => {
 
     const getResultType = () => {
         if (!paymentData) return 'info';
-        if (isPaymentComplete(paymentData)) return 'success';
-        if (isPaymentFailed(paymentData)) return 'error';
-        if (isPaymentInProgress(paymentData)) return 'warning';
+        
+        const status = paymentData.status;
+        if (status === 'SUCCESS') return 'success';
+        if (['FAILED', 'CANCELLED', 'EXPIRED'].includes(status)) return 'error';
+        if (['PENDING', 'PROCESSING'].includes(status)) return 'warning';
         return 'info';
     };
 
@@ -116,7 +114,7 @@ const SuccessPage = () => {
             status: paymentData.status,
             statusDisplay: PaymentStatusDisplay[paymentData.status as PaymentStatus],
             liqpayOrderId: paymentData.liqpayOrderId,
-            error: getPaymentErrorMessage(paymentData)
+            error: paymentData.errorDescription || paymentData.errorCode
         };
     };
 
@@ -180,7 +178,7 @@ const SuccessPage = () => {
             const status = paymentData.status;
             if (status === 'PENDING' || status === 'PROCESSING') {
                 startPolling();
-            } else if (status === 'SUCCESS' || status === 'FAILED' || status === 'CANCELLED' || status === 'EXPIRED') {
+            } else if (['SUCCESS', 'FAILED', 'CANCELLED', 'EXPIRED'].includes(status)) {
                 stopPolling();
             }
         }
@@ -212,7 +210,7 @@ const SuccessPage = () => {
 
     const handleStepClick = (step: any) => {
         if (step.id === 1 && paymentData?.bookingId) {
-            navigate(`/booking/summary/${paymentData.bookingId}`);
+            navigate(`/booking/${paymentData.bookingId}`);
         }
         if (step.id === 2 && paymentData?.bookingId) {
             navigate(`/booking/summary/${paymentData.bookingId}`);

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
-import { Layout } from '@/components/layout/Layout';
+import { Layout } from '@/components/layout/Layout/Layout';
 import styles from './MoviesLayout.module.css';
 
 export const MoviesLayout: React.FC = () => {

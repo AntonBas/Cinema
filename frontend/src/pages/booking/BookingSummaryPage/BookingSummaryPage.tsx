@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ProgressStepper } from '@/components/booking/ProgressStepper';
-import { Layout } from '@/components/layout/Layout';
+import { ProgressStepper } from '@/components/booking/ProgressStepper/ProgressStepper';
+import { Layout } from '@/components/layout/Layout/Layout';
 import { Notification } from '@/components/ui/Notification/Notification';
 import { Modal } from '@/components/ui/Modal/Modal';
 import { bookingApi } from '@/api/bookingApi';
@@ -230,7 +230,7 @@ export const BookingSummaryPage: React.FC = () => {
                 />
 
                 <div className={styles.header}>
-                    <h1>Booking Confirmed!</h1>
+                    <h1>Booking Summary</h1>
                     <p className={styles.bookingNumber}>Booking #: {booking.bookingNumber}</p>
                 </div>
 
@@ -260,8 +260,8 @@ export const BookingSummaryPage: React.FC = () => {
                     <div className={styles.seatsInfo}>
                         <h3>Selected Seats</h3>
                         <div className={styles.seatsList}>
-                            {booking.bookedSeats.map((seat) => (
-                                <div key={seat.seatId} className={styles.seatItem}>
+                            {booking.seatReservations.map((seat) => (
+                                <div key={seat.id} className={styles.seatItem}>
                                     <div className={styles.seatInfo}>
                                         <span className={styles.seatLocation}>
                                             Row {seat.row}, Seat {seat.seatNumber}
@@ -342,7 +342,7 @@ export const BookingSummaryPage: React.FC = () => {
                                         totalPrice: booking.totalPrice,
                                         finalPrice: booking.finalPrice,
                                         bonusPointsUsed: booking.bonusPointsUsed,
-                                        bookedSeats: booking.bookedSeats.map(seat => ({
+                                        bookedSeats: booking.seatReservations.map(seat => ({
                                             seatNumber: seat.seatNumber.toString(),
                                             seatRow: seat.row,
                                             ticketType: seat.ticketTypeName,

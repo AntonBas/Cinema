@@ -3,10 +3,10 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { sessionApi } from '@/api/sessionApi';
 import type { SessionScheduleResponse } from '@/types/session';
 import type { PageResponse } from '@/types/pagination';
-import { Layout } from '@/components/layout/Layout';
-import { DateFilter } from '@/components/sessions/DateFilter';
-import { MovieFilter } from '@/components/sessions/MovieFilter';
-import { SessionList } from '@/components/sessions/SessionList';
+import { Layout } from '@/components/layout/Layout/Layout';
+import { DateFilter } from '@/components/sessions/DateFilter/DateFilter';
+import { MovieFilter } from '@/components/sessions/MovieFilter/MovieFilter';
+import { SessionList } from '@/components/sessions/SessionList/SessionList';
 import { Button } from '@/components/ui';
 import { useNotification } from '@/hooks/common/useNotification';
 import { Notification } from '@/components/ui/Notification';
@@ -42,14 +42,14 @@ const SessionsPage: React.FC = () => {
         setError(null);
 
         try {
-            const response: PageResponse<SessionScheduleResponse> = await sessionApi.public.getSchedule(
+            const response: PageResponse<SessionScheduleResponse> = await sessionApi.public.getSessions({
                 page,
-                50,
-                'startTime,asc',
-                selectedDate,
-                selectedMovieId,
-                1
-            );
+                size: 50,
+                sort: 'startTime,asc',
+                dateFrom: selectedDate,
+                dateTo: selectedDate,
+                movieId: selectedMovieId
+            });
 
             setSessions(response.content);
             setTotalPages(response.totalPages);
@@ -66,18 +66,17 @@ const SessionsPage: React.FC = () => {
 
     const fetchAvailableDates = useCallback(async () => {
         try {
-            const response: PageResponse<SessionScheduleResponse> = await sessionApi.public.getSchedule(
-                0,
-                1000,
-                'startTime,asc',
-                undefined,
-                selectedMovieId,
-                30
-            );
+            const response: PageResponse<SessionScheduleResponse> = await sessionApi.public.getSessions({
+                page: 0,
+                size: 1000,
+                sort: 'startTime,asc',
+                movieId: selectedMovieId
+            });
 
             const dates = response.content
                 .map(session => new Date(session.startTime).toISOString().split('T')[0])
-                .filter((date, index, self) => self.indexOf(date) === index);
+                .filter((date, index, self) => self.indexOf(date) === index)
+                .sort();
 
             setAvailableDates(dates);
         } catch (err) {

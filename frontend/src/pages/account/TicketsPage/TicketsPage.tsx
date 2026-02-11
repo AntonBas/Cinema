@@ -21,27 +21,41 @@ export const TicketsPage: React.FC = () => {
     const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null);
 
     const {
-        data,
+        userTickets: tickets,
+        userPagination: pagination,
         loading,
-        status,
-        filters,
-        handlePageChange,
-        handleStatusChange,
-        handleSearch,
-        clearFilters,
-        refresh
+        getUserTickets,
+        refetchUserTickets
     } = useTickets();
 
+    const [statusFilter, setStatusFilter] = useState<TicketStatus | undefined>(undefined);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [currentPage, setCurrentPage] = useState(0);
+
     useEffect(() => {
-    }, []);
+        loadTickets();
+    }, [statusFilter, searchQuery, currentPage]);
+
+    const loadTickets = async () => {
+        const params: any = {
+            page: currentPage,
+            size: 10
+        };
+
+        if (statusFilter) {
+            params.status = statusFilter;
+        }
+
+        if (searchQuery.trim()) {
+            params.search = searchQuery;
+        }
+
+        await getUserTickets(params);
+    };
 
     const hasActiveFilters = useMemo(() => {
-        return (
-            (filters.search && filters.search.trim() !== '') ||
-            status !== undefined ||
-            (filters.dateRange && filters.dateRange.from && filters.dateRange.to)
-        );
-    }, [filters, status]);
+        return searchQuery.trim() !== '' || statusFilter !== undefined;
+    }, [searchQuery, statusFilter]);
 
     const handleShowQR = (ticketCode: string) => {
         setSelectedQRCode(ticketCode);
@@ -55,7 +69,7 @@ export const TicketsPage: React.FC = () => {
 
     const handleRefundSuccess = () => {
         showNotification('success', 'Refund request submitted successfully');
-        refresh();
+        refetchUserTickets();
     };
 
     const showNotification = (type: 'success' | 'error', message: string) => {
@@ -64,7 +78,23 @@ export const TicketsPage: React.FC = () => {
     };
 
     const handleClearAllFilters = () => {
-        clearFilters();
+        setStatusFilter(undefined);
+        setSearchQuery('');
+        setCurrentPage(0);
+    };
+
+    const handleStatusChange = (status: TicketStatus | undefined) => {
+        setStatusFilter(status);
+        setCurrentPage(0);
+    };
+
+    const handleSearch = (query: string) => {
+        setSearchQuery(query);
+        setCurrentPage(0);
+    };
+
+    const handlePageChange = (page: number) => {
+        setCurrentPage(page);
     };
 
     const tabs: Array<{ id: TicketStatus | 'all', label: string }> = [
@@ -107,7 +137,6 @@ export const TicketsPage: React.FC = () => {
                                     placeholder="Search tickets by movie, hall, or code..."
                                     delay={300}
                                     className={styles.searchInput}
-                                    value={filters.search || ''}
                                 />
                                 {hasActiveFilters && (
                                     <Button
@@ -148,7 +177,7 @@ export const TicketsPage: React.FC = () => {
                                 {tabs.map(tab => (
                                     <button
                                         key={tab.id}
-                                        className={`${styles.tab} ${status === (tab.id === 'all' ? undefined : tab.id) ? styles.active : ''}`}
+                                        className={`${styles.tab} ${statusFilter === (tab.id === 'all' ? undefined : tab.id) ? styles.active : ''}`}
                                         onClick={() => handleStatusChange(tab.id === 'all' ? undefined : tab.id)}
                                     >
                                         <span className={styles.tabLabel}>{tab.label}</span>
@@ -166,18 +195,18 @@ export const TicketsPage: React.FC = () => {
                             ) : (
                                 <>
                                     <TicketsList
-                                        tickets={data.content || []}
+                                        tickets={tickets}
                                         viewMode={viewMode}
                                         onShowQR={handleShowQR}
                                         onRequestRefund={handleRequestRefund}
                                     />
-                                    {data.totalPages > 1 && (
+                                    {pagination && pagination.totalPages > 1 && (
                                         <div className={styles.paginationContainer}>
                                             <Pagination
-                                                currentPage={data.number}
-                                                totalPages={data.totalPages}
-                                                totalElements={data.totalElements}
-                                                pageSize={data.size}
+                                                currentPage={pagination.number}
+                                                totalPages={pagination.totalPages}
+                                                totalElements={pagination.totalElements}
+                                                pageSize={pagination.size}
                                                 onPageChange={handlePageChange}
                                                 variant="pages"
                                                 showInfo={true}
