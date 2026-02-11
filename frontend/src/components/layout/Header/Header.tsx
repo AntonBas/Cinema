@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useAuth } from '@/hooks/features/auth';
+import { useAuth } from '@/hooks/features/auth/useAuth';
 import { Link, useLocation } from 'react-router-dom';
 import styles from './Header.module.css';
 
@@ -10,7 +10,7 @@ interface NavLink {
 }
 
 export const Header: React.FC = () => {
-  const { user, token, logout } = useAuth();
+  const { user, logout, isAuthenticated } = useAuth();
   const location = useLocation();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -79,7 +79,7 @@ export const Header: React.FC = () => {
             </li>
           ))}
 
-          {token ? (
+          {isAuthenticated ? (
             <li className={styles.dropdown} ref={dropdownRef}>
               <button
                 className={styles.dropdownBtn}
@@ -159,7 +159,7 @@ export const Header: React.FC = () => {
               </Link>
             ))}
 
-            {token ? (
+            {isAuthenticated ? (
               <div className={styles.mobileAccountSection}>
                 <div className={styles.mobileUserInfo}>
                   <div>
