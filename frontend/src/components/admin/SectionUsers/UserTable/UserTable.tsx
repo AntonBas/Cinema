@@ -1,10 +1,10 @@
 import React from 'react';
 import { UserTableRow } from '../UserTableRow/UserTableRow';
-import type { AdminUser } from '@/types/user';
+import type { AdminUserListResponse } from '@/types/user';
 import styles from './UserTable.module.css';
 
 interface UserTableProps {
-    users: AdminUser[];
+    users: AdminUserListResponse[];
     onRefresh: () => void;
     onError: (error: string) => void;
     onSuccess: (message: string) => void;

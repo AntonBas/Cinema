@@ -3,13 +3,23 @@ import { usePromotion } from '@/hooks/features/promotion/usePromotion';
 import styles from './PromotionStats.module.css';
 
 const PromotionStats: React.FC = () => {
-    const { promotions, getPromotionStatus } = usePromotion();
+    const { allPromotions } = usePromotion();
+
+    const getPromotionStatus = (promotion: any) => {
+        const now = new Date();
+        const startDate = new Date(promotion.startDate);
+        const endDate = new Date(promotion.endDate);
+
+        if (now < startDate) return 'upcoming';
+        if (now > endDate) return 'expired';
+        return 'active';
+    };
 
     const stats = {
-        total: promotions.length,
-        active: promotions.filter(p => getPromotionStatus(p) === 'active').length,
-        upcoming: promotions.filter(p => getPromotionStatus(p) === 'upcoming').length,
-        expired: promotions.filter(p => getPromotionStatus(p) === 'expired').length
+        total: allPromotions.length,
+        active: allPromotions.filter(p => getPromotionStatus(p) === 'active').length,
+        upcoming: allPromotions.filter(p => getPromotionStatus(p) === 'upcoming').length,
+        expired: allPromotions.filter(p => getPromotionStatus(p) === 'expired').length
     };
 
     return (

@@ -103,7 +103,7 @@ const BonusRules = () => {
                         {rules.map((rule) => (
                             <tr key={rule.id}>
                                 <td>
-                                    <strong>{BonusTransactionTypeDisplay[rule.bonusType]}</strong>
+                                    <strong>{BonusTransactionTypeDisplay[rule.bonusType as BonusTransactionType]}</strong>
                                     <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
                                         {rule.bonusType}
                                     </div>
@@ -129,7 +129,7 @@ const BonusRules = () => {
                                         <Button
                                             variant="error"
                                             size="small"
-                                            onClick={() => handleResetRule(rule.bonusType)}
+                                            onClick={() => handleResetRule(rule.bonusType as BonusTransactionType)}
                                         >
                                             Reset
                                         </Button>

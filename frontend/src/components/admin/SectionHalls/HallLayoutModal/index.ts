@@ -1,1 +1,0 @@
-export { HallLayoutModal } from './HallLayoutModal';

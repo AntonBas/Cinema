@@ -17,35 +17,66 @@ export const PersonSelect: React.FC<PersonSelectProps> = ({
     selectedPersons = [],
     onChange,
     role,
-    placeholder = "Search or add new..." }) => {
+    placeholder = "Search or add new...",
+    showNotification
+}) => {
     const [searchQuery, setSearchQuery] = useState('');
     const [isOpen, setIsOpen] = useState(false);
     const [localOptions, setLocalOptions] = useState<PersonResponse[]>([]);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
     const {
-        loading,
-        handlePersonSearch,
-        handleAddNewPerson,
-        allSelectedPersons,
-        setIsDropdownOpen
+        getActors,
+        getDirectors,
+        getScreenwriters,
+        quickCreate,
+        loading
     } = usePerson();
 
+    const handlePersonSearch = async (query: string, personRole: PersonRole) => {
+        if (!query.trim()) return [];
+
+        let result;
+        if (personRole === 'ACTOR') {
+            result = await getActors({ name: query, page: 0, size: 10 });
+        } else if (personRole === 'DIRECTOR') {
+            result = await getDirectors({ name: query, page: 0, size: 10 });
+        } else {
+            result = await getScreenwriters({ name: query, page: 0, size: 10 });
+        }
+
+        return result?.content || [];
+    };
+
+    const handleAddNewPerson = async (name: string, personRole: PersonRole) => {
+        try {
+            const newPerson = await quickCreate({ name, role: personRole });
+            if (showNotification) {
+                showNotification(`Person "${name}" created successfully`, 'success');
+            }
+            return newPerson.id;
+        } catch (error) {
+            if (showNotification) {
+                showNotification('Failed to create person', 'error');
+            }
+            return null;
+        }
+    };
+
     const displayPersons = useMemo(() => {
-        return selectedPersons.length > 0 ? selectedPersons : allSelectedPersons;
-    }, [selectedPersons, allSelectedPersons]);
+        return selectedPersons.length > 0 ? selectedPersons : [];
+    }, [selectedPersons]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
                 setIsOpen(false);
-                setIsDropdownOpen(false);
             }
         };
 
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, [setIsDropdownOpen]);
+    }, []);
 
     useEffect(() => {
         if (searchQuery.length >= 2) {
@@ -59,7 +90,7 @@ export const PersonSelect: React.FC<PersonSelectProps> = ({
             setLocalOptions([]);
             setIsOpen(false);
         }
-    }, [searchQuery, role, handlePersonSearch]);
+    }, [searchQuery, role]);
 
     const handleSelectPerson = (personId: number) => {
         const newSelectedIds = selectedIds.includes(personId)
@@ -78,6 +109,7 @@ export const PersonSelect: React.FC<PersonSelectProps> = ({
         if (newPersonId) {
             const newSelectedIds = [...selectedIds, newPersonId];
             onChange(newSelectedIds);
+            setSearchQuery('');
         }
     };
 

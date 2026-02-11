@@ -23,7 +23,7 @@ export const HallLayoutModal: React.FC<HallLayoutModalProps> = ({
     const [hasLoaded, setHasLoaded] = useState(false);
 
     const { hallLayout, loading, getHallLayout } = useCinemaHalls();
-    const { updateSeatType, activateSeat, deactivateSeat, loading: updatingSeatType } = useSeats();
+    const { updateSeatType, setSeatStatus, loading: updatingSeatLoading } = useSeats();
 
     useEffect(() => {
         setLocalLayout(hallLayout);
@@ -44,7 +44,7 @@ export const HallLayoutModal: React.FC<HallLayoutModalProps> = ({
     }, [isOpen]);
 
     const handleSeatTypeClick = async (seat: SeatResponse, e: React.MouseEvent) => {
-        if (updatingSeat === seat.id || updatingSeatType) return;
+        if (updatingSeat === seat.id || updatingSeatLoading) return;
 
         e.stopPropagation();
         const nextSeatType = getNextSeatType(seat.seatType);
@@ -78,7 +78,7 @@ export const HallLayoutModal: React.FC<HallLayoutModalProps> = ({
     };
 
     const handleSeatStatusClick = async (seat: SeatResponse, e: React.MouseEvent) => {
-        if (updatingSeat === seat.id || updatingSeatType) return;
+        if (updatingSeat === seat.id || updatingSeatLoading) return;
 
         e.stopPropagation();
         e.preventDefault();
@@ -104,11 +104,7 @@ export const HallLayoutModal: React.FC<HallLayoutModalProps> = ({
                 };
             });
 
-            if (newActive) {
-                await activateSeat(hall.id, seat.id);
-            } else {
-                await deactivateSeat(hall.id, seat.id);
-            }
+            await setSeatStatus(hall.id, seat.id, newActive);
         } catch (err) {
             await getHallLayout(hall.id);
         } finally {

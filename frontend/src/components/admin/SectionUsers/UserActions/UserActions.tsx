@@ -1,12 +1,18 @@
 import React, { useState } from 'react';
 import { Button, Select, ConfirmModal } from '@/components/ui';
-import { useAdminUsers } from '@/hooks/features';
-import { type UserRole, type VerificationStatus, UserRoleDisplay, VerificationStatusDisplay, VerificationStatusColors } from '@/types/user';
-import type { AdminUser } from '@/types/user';
+import { useAdminUsers } from '@/hooks/features/admin/useAdminUsers';
+import {
+    type UserRole,
+    type VerificationStatus,
+    UserRoleDisplay,
+    VerificationStatusDisplay,
+    VerificationStatusColors
+} from '@/types/user';
+import type { AdminUserListResponse } from '@/types/user';
 import styles from './UserActions.module.css';
 
 interface UserActionsProps {
-    user: AdminUser;
+    user: AdminUserListResponse;
     onUpdate: () => void;
 }
 

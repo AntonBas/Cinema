@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import type { MovieDetailResponse, MovieCardResponse } from '@/types/movie';
+import type { MovieDetailResponse, MovieCardResponse, MovieStatus } from '@/types/movie';
 import { useMovies } from '@/hooks/features/movies/useMovies';
-import { MovieList } from './MovieList';
-import { MovieForm } from './MovieForm';
+import { MovieList } from './MovieList/MovieList';
+import { MovieForm } from './MovieForm/MovieForm';
 import {
   DeleteConfirmModal,
   Notification,
@@ -13,7 +13,7 @@ import {
 } from '@/components/ui';
 import styles from './MovieTab.module.css';
 
-type MovieTabType = 'CURRENT' | 'UPCOMING' | 'ARCHIVED';
+type MovieTabType = Extract<MovieStatus, 'CURRENT' | 'UPCOMING' | 'ARCHIVED'>;
 
 export const MovieTab: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -32,74 +32,52 @@ export const MovieTab: React.FC = () => {
   });
 
   const {
-    movies,
+    allMovies: movies,
     pagination,
     loading,
-    getCurrentlyShowingPaginated,
-    getUpcomingPaginated,
-    getArchivedMovies,
-    search: searchMovies,
-    remove,
-    getById
+    getCurrentlyShowing,
+    getUpcoming,
+    getAdminMovies,
+    getById,
+    remove
   } = useMovies();
 
   const hasLoadedRef = useRef(false);
   const isInitialMount = useRef(true);
 
-  // Використовуємо useRef для стабільних функцій
-  const searchMoviesRef = useRef(searchMovies);
-  const getCurrentlyShowingPaginatedRef = useRef(getCurrentlyShowingPaginated);
-  const getUpcomingPaginatedRef = useRef(getUpcomingPaginated);
-  const getArchivedMoviesRef = useRef(getArchivedMovies);
-
-  // Оновлюємо refs при зміні функцій
-  useEffect(() => {
-    searchMoviesRef.current = searchMovies;
-    getCurrentlyShowingPaginatedRef.current = getCurrentlyShowingPaginated;
-    getUpcomingPaginatedRef.current = getUpcomingPaginated;
-    getArchivedMoviesRef.current = getArchivedMovies;
-  }, [searchMovies, getCurrentlyShowingPaginated, getUpcomingPaginated, getArchivedMovies]);
-
   const loadMovies = useCallback(async (tab: MovieTabType, page: number, query: string) => {
     try {
       setErrorMessage('');
 
+      const params: any = {
+        page,
+        size: 12
+      };
+
       if (query.trim()) {
-        await searchMoviesRef.current({
-          search: query,
-          status: tab === 'CURRENT' ? 'CURRENT' :
-            tab === 'UPCOMING' ? 'UPCOMING' :
-              'ARCHIVED',
-          page: page,
-          size: 12
-        });
+        params.search = query;
+      }
+
+      if (tab === 'CURRENT') {
+        await getCurrentlyShowing(params);
+      } else if (tab === 'UPCOMING') {
+        await getUpcoming(params);
       } else {
-        switch (tab) {
-          case 'CURRENT':
-            await getCurrentlyShowingPaginatedRef.current(page, 12);
-            break;
-          case 'UPCOMING':
-            await getUpcomingPaginatedRef.current(page, 12);
-            break;
-          case 'ARCHIVED':
-            await getArchivedMoviesRef.current(page, 12);
-            break;
-          default:
-            break;
-        }
+        await getAdminMovies({ ...params, status: 'ARCHIVED' });
       }
     } catch (err) {
       setErrorMessage(`Failed to load ${tab.toLowerCase()} movies`);
     }
-  }, []); // ✅ Пустий масив - функція стабільна
+  }, [getCurrentlyShowing, getUpcoming, getAdminMovies]);
 
   const loadTabStats = useCallback(async () => {
     try {
-      const [currentResponse, upcomingResponse, archivedResponse] = await Promise.all([
-        getCurrentlyShowingPaginatedRef.current(0, 1),
-        getUpcomingPaginatedRef.current(0, 1),
-        getArchivedMoviesRef.current(0, 1)
+      const [currentResponse, upcomingResponse] = await Promise.all([
+        getCurrentlyShowing({ page: 0, size: 1 }),
+        getUpcoming({ page: 0, size: 1 })
       ]);
+
+      const archivedResponse = await getAdminMovies({ page: 0, size: 1, status: 'ARCHIVED' });
 
       return {
         CURRENT: currentResponse.totalElements,
@@ -110,32 +88,27 @@ export const MovieTab: React.FC = () => {
       console.error('Failed to load tab stats:', error);
       return { CURRENT: 0, UPCOMING: 0, ARCHIVED: 0 };
     }
-  }, []); // ✅ Пустий масив - функція стабільна
+  }, [getCurrentlyShowing, getUpcoming, getAdminMovies]);
 
-  // Ефект для завантаження фільмів
   useEffect(() => {
-    // Пропускаємо перший рендер
     if (isInitialMount.current) {
       isInitialMount.current = false;
       return;
     }
 
     loadMovies(activeTab, currentPage, searchQuery);
-  }, [activeTab, currentPage, searchQuery]); // ✅ Видалено loadMovies з залежностей
+  }, [activeTab, currentPage, searchQuery, loadMovies]);
 
-  // Ефект для завантаження статистики при першому монтуванні
   useEffect(() => {
     if (!hasLoadedRef.current) {
       hasLoadedRef.current = true;
       loadTabStats().then(stats => setTabStats(stats));
     }
-  }, []); // ✅ Пустий масив - тільки при монтуванні
+  }, [loadTabStats]);
 
-  // Ефект для завантаження початкових даних
   useEffect(() => {
-    // Завантажуємо початкові фільми при монтуванні
     loadMovies('CURRENT', 0, '');
-  }, []); // ✅ Пустий масив - тільки при монтуванні
+  }, [loadMovies]);
 
   const handleTabChange = (tab: MovieTabType) => {
     setActiveTab(tab);

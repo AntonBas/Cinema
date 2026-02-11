@@ -1,5 +1,5 @@
 import React from 'react';
-import type { CinemaHallResponse } from '@/types';
+import type { CinemaHallResponse } from '@/types/cinemaHall';
 import { Button, Badge } from '@/components/ui';
 import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';
 import styles from './HallsTable.module.css';

@@ -1,6 +1,6 @@
 import React from 'react';
 import type { MovieCardResponse } from '@/types/movie';
-import { MovieCard } from './MovieCard';
+import { MovieCard } from './MovieCard/MovieCard';
 import { Button, LoadingSpinner } from '@/components/ui';
 import styles from './MovieList.module.css';
 

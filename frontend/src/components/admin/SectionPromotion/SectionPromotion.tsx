@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Button, SearchInput, ConfirmModal } from '@/components/ui';
 import { usePromotion } from '@/hooks/features/promotion/usePromotion';
 import type { PromotionResponse } from '@/types/promotion';
-import PromotionStats from './PromotionStats';
-import PromotionTable from './PromotionTable';
-import PromotionFilters from './PromotionFilters';
-import { CreatePromotionModal, EditPromotionModal } from './PromotionModal';
+import PromotionStats from './PromotionStats/PromotionStats';
+import PromotionTable from './PromotionTable/PromotionTable';
+import PromotionFilters from './PromotionFilters/PromotionFilters';
+import CreatePromotionModal from './PromotionModal/CreatePromotionModal';
+import EditPromotionModal from './PromotionModal/EditPromotionModal';
 import styles from './SectionPromotion.module.css';
 
 const SectionPromotion: React.FC = () => {
@@ -18,12 +19,37 @@ const SectionPromotion: React.FC = () => {
     const [isLoading, setIsLoading] = useState(false);
 
     const {
-        adminPromotions: promotions,
-        getPromotionStatus,
-        getStatusDisplay,
-        fetchAdminPromotions,
+        allPromotions: promotions,
+        getAll,
         remove
     } = usePromotion();
+
+    const getPromotionStatus = (promotion: PromotionResponse): string => {
+        const now = new Date();
+
+        if (!promotion.startDate && !promotion.endDate) return 'active';
+
+        if (promotion.startDate) {
+            const startDate = new Date(promotion.startDate);
+            if (now < startDate) return 'upcoming';
+        }
+
+        if (promotion.endDate) {
+            const endDate = new Date(promotion.endDate);
+            if (now > endDate) return 'expired';
+        }
+
+        return 'active';
+    };
+
+    const getStatusDisplay = (status: string): string => {
+        const displayMap: Record<string, string> = {
+            'active': 'Active',
+            'upcoming': 'Upcoming',
+            'expired': 'Expired'
+        };
+        return displayMap[status] || status;
+    };
 
     useEffect(() => {
         loadPromotions();
@@ -36,7 +62,7 @@ const SectionPromotion: React.FC = () => {
     const loadPromotions = async () => {
         setIsLoading(true);
         try {
-            await fetchAdminPromotions();
+            await getAll();
         } catch (error) {
             console.error('Failed to load promotions');
         } finally {
@@ -64,14 +90,14 @@ const SectionPromotion: React.FC = () => {
         try {
             await remove(deletingPromotion.id);
             setDeletingPromotion(null);
-            await fetchAdminPromotions();
+            await loadPromotions();
         } catch (error) {
             console.error('Failed to delete promotion');
         }
     };
 
     const handleRefresh = () => {
-        fetchAdminPromotions();
+        loadPromotions();
     };
 
     return (

@@ -1,1 +1,0 @@
-export { SectionHalls } from './SectionHalls';

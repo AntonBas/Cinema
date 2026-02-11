@@ -85,7 +85,7 @@ const EditRuleModal: React.FC<EditRuleModalProps> = ({
                 return;
             }
 
-            await updateRule(rule.bonusType, requestData);
+            await updateRule(rule.bonusType as BonusTransactionType, requestData);
 
             setShowNotification(true);
             setTimeout(() => {
@@ -97,8 +97,8 @@ const EditRuleModal: React.FC<EditRuleModalProps> = ({
         }
     };
 
-    const formatRuleType = (type: BonusTransactionType): string => {
-        return BonusTransactionTypeDisplay[type] || type;
+    const formatRuleType = (type: string): string => {
+        return BonusTransactionTypeDisplay[type as BonusTransactionType] || type;
     };
 
     return (

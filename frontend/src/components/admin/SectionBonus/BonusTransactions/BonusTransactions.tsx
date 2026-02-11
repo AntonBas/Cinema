@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Pagination } from '@/components/ui/Pagination';
 import { useBonus } from '@/hooks/features/bonus/useBonus';
-import type { BonusTransactionType } from '@/types/bonus';
+import type { BonusTransactionType, BonusTransactionResponse } from '@/types/bonus';
 import { BonusTransactionTypeDisplay } from '@/types/bonus';
 import styles from './BonusTransactions.module.css';
 
@@ -16,15 +16,18 @@ const BonusTransactions = () => {
     const [errorMessage, setErrorMessage] = useState<string>('');
 
     const {
-        transactions,
+        data: bonusData,
+        pagination,
         loading,
         getAllTransactions,
         getUserTransactions,
-        getTransactionsByType,
-        totalPages,
-        totalElements,
-        pageSize
+        getTransactionsByType
     } = useBonus();
+
+    const transactions = bonusData?.transactions || [];
+    const totalPages = pagination?.transactions?.totalPages || 0;
+    const totalElements = pagination?.transactions?.totalElements || 0;
+    const pageSize = pagination?.transactions?.size || 20;
 
     useEffect(() => {
         loadTransactions();
@@ -75,11 +78,12 @@ const BonusTransactions = () => {
         let totalEarned = 0;
         let totalSpent = 0;
 
-        transactions.forEach(transaction => {
-            if (transaction.pointsChange > 0) {
-                totalEarned += transaction.pointsChange;
+        transactions.forEach((transaction: BonusTransactionResponse) => {
+            const pointsValue = parseFloat(transaction.pointsChange);
+            if (pointsValue > 0) {
+                totalEarned += pointsValue;
             } else {
-                totalSpent += Math.abs(transaction.pointsChange);
+                totalSpent += Math.abs(pointsValue);
             }
         });
 
@@ -92,9 +96,9 @@ const BonusTransactions = () => {
 
     const typeOptions = [
         { value: '', label: 'All Types' },
-        ...Object.entries(BonusTransactionTypeDisplay).map(([value, label]) => ({
-            value,
-            label
+        ...(Object.keys(BonusTransactionTypeDisplay) as BonusTransactionType[]).map((key) => ({
+            value: key,
+            label: BonusTransactionTypeDisplay[key]
         }))
     ];
 
@@ -160,19 +164,19 @@ const BonusTransactions = () => {
                 </div>
                 <div className={styles.stat}>
                     <span className={`${styles.statValue} ${styles.positive}`}>
-                        +{summary.totalEarned}
+                        +{summary.totalEarned.toFixed(0)}
                     </span>
                     <span className={styles.statLabel}>Points Earned</span>
                 </div>
                 <div className={styles.stat}>
                     <span className={`${styles.statValue} ${styles.negative}`}>
-                        -{summary.totalSpent}
+                        -{summary.totalSpent.toFixed(0)}
                     </span>
                     <span className={styles.statLabel}>Points Spent</span>
                 </div>
                 <div className={styles.stat}>
                     <span className={`${styles.statValue} ${summary.netChange >= 0 ? styles.positive : styles.negative}`}>
-                        {summary.netChange >= 0 ? '+' : ''}{summary.netChange}
+                        {summary.netChange >= 0 ? '+' : ''}{summary.netChange.toFixed(0)}
                     </span>
                     <span className={styles.statLabel}>Net Change</span>
                 </div>
@@ -186,53 +190,56 @@ const BonusTransactions = () => {
                             <th>Type</th>
                             <th>Points Change</th>
                             <th>New Balance</th>
-                            <th>Reference ID</th>
+                            <th>Reference</th>
                             <th>Date</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {transactions.map((transaction) => (
-                            <tr key={transaction.id}>
-                                <td>{transaction.id}</td>
-                                <td>
-                                    <div className={styles.typeCell}>
-                                        <span className={styles.typeName}>
-                                            {getTransactionTypeDisplay(transaction.type)}
+                        {transactions.map((transaction: BonusTransactionResponse) => {
+                            const pointsValue = parseFloat(transaction.pointsChange);
+                            return (
+                                <tr key={transaction.id}>
+                                    <td>{transaction.id}</td>
+                                    <td>
+                                        <div className={styles.typeCell}>
+                                            <span className={styles.typeName}>
+                                                {getTransactionTypeDisplay(transaction.type)}
+                                            </span>
+                                            <span className={styles.typeCode}>
+                                                {transaction.type}
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span className={`${styles.points} ${pointsValue > 0
+                                            ? styles.positivePoints
+                                            : styles.negativePoints
+                                            }`}>
+                                            {pointsValue > 0 ? '+' : ''}{transaction.pointsChange}
                                         </span>
-                                        <span className={styles.typeCode}>
-                                            {transaction.type}
+                                    </td>
+                                    <td>
+                                        <span className={styles.balance}>
+                                            {transaction.newBalance}
                                         </span>
-                                    </div>
-                                </td>
-                                <td>
-                                    <span className={`${styles.points} ${transaction.pointsChange > 0
-                                        ? styles.positivePoints
-                                        : styles.negativePoints
-                                        }`}>
-                                        {transaction.pointsChange > 0 ? '+' : ''}{transaction.pointsChange}
-                                    </span>
-                                </td>
-                                <td>
-                                    <span className={styles.balance}>
-                                        {transaction.newBalance}
-                                    </span>
-                                </td>
-                                <td>
-                                    {transaction.referenceId ? (
-                                        <Badge variant="outline">
-                                            {transaction.referenceId}
-                                        </Badge>
-                                    ) : (
-                                        <span style={{ color: 'var(--text-secondary)' }}>N/A</span>
-                                    )}
-                                </td>
-                                <td>
-                                    <span className={styles.date}>
-                                        {new Date(transaction.createdAt).toLocaleString()}
-                                    </span>
-                                </td>
-                            </tr>
-                        ))}
+                                    </td>
+                                    <td>
+                                        {transaction.bookingDetails?.bookingReference ? (
+                                            <Badge variant="outline">
+                                                {transaction.bookingDetails.bookingReference}
+                                            </Badge>
+                                        ) : (
+                                            <span style={{ color: 'var(--text-secondary)' }}>N/A</span>
+                                        )}
+                                    </td>
+                                    <td>
+                                        <span className={styles.date}>
+                                            {new Date(transaction.createdAt).toLocaleString()}
+                                        </span>
+                                    </td>
+                                </tr>
+                            );
+                        })}
                     </tbody>
                 </table>
             </div>

@@ -6,6 +6,7 @@ import { Select } from '@/components/ui/Select';
 import { Notification } from '@/components/ui/Notification';
 import { useTicketType } from '@/hooks/features/ticketType/useTicketType';
 import type { TicketTypeResponse, TicketTypeUpdateRequest, TicketTypeCategory } from '@/types/ticketType';
+import { TicketTypeCategoryDisplay } from '@/types/ticketType';
 import styles from './TicketTypeModal.module.css';
 
 interface EditTicketTypeModalProps {
@@ -21,9 +22,8 @@ const EditTicketTypeModal: React.FC<EditTicketTypeModalProps> = ({
     onSuccess,
     ticketType
 }) => {
-    const { update, getCategoryOptions, loading: apiLoading } = useTicketType();
+    const { update, loading } = useTicketType();
     const [formData, setFormData] = useState<TicketTypeUpdateRequest>({
-        code: ticketType.code,
         displayName: ticketType.displayName,
         category: ticketType.category,
         priceMultiplier: ticketType.priceMultiplier,
@@ -39,7 +39,6 @@ const EditTicketTypeModal: React.FC<EditTicketTypeModalProps> = ({
     useEffect(() => {
         if (ticketType) {
             setFormData({
-                code: ticketType.code,
                 displayName: ticketType.displayName,
                 category: ticketType.category,
                 priceMultiplier: ticketType.priceMultiplier,
@@ -52,9 +51,9 @@ const EditTicketTypeModal: React.FC<EditTicketTypeModalProps> = ({
         }
     }, [ticketType]);
 
-    const categoryOptions = getCategoryOptions().map(cat => ({
-        value: cat.value,
-        label: cat.label
+    const categoryOptions = Object.entries(TicketTypeCategoryDisplay).map(([value, label]) => ({
+        value,
+        label
     }));
 
     const handleInputChange = (field: keyof TicketTypeUpdateRequest, value: any) => {
@@ -67,29 +66,39 @@ const EditTicketTypeModal: React.FC<EditTicketTypeModalProps> = ({
         setError(null);
 
         try {
-            const updateData: TicketTypeUpdateRequest = {
-                code: formData.code,
-                displayName: formData.displayName !== ticketType.displayName ? formData.displayName : undefined,
-                category: formData.category !== ticketType.category ? formData.category : undefined,
-                priceMultiplier: formData.priceMultiplier !== ticketType.priceMultiplier ? formData.priceMultiplier : undefined,
-                minAge: formData.minAge !== ticketType.minAge ? formData.minAge : undefined,
-                maxAge: formData.maxAge !== ticketType.maxAge ? formData.maxAge : undefined,
-                requiresDocument: formData.requiresDocument !== ticketType.requiresDocument ? formData.requiresDocument : undefined,
-                documentType: formData.documentType !== ticketType.documentType ? formData.documentType : undefined,
-                active: formData.active !== ticketType.active ? formData.active : undefined,
-            };
+            const updateData: TicketTypeUpdateRequest = {};
 
-            // Видаляємо undefined значення
-            const filteredData = Object.fromEntries(
-                Object.entries(updateData).filter(([_, value]) => value !== undefined)
-            );
+            if (formData.displayName !== ticketType.displayName) {
+                updateData.displayName = formData.displayName;
+            }
+            if (formData.category !== ticketType.category) {
+                updateData.category = formData.category;
+            }
+            if (formData.priceMultiplier !== ticketType.priceMultiplier) {
+                updateData.priceMultiplier = formData.priceMultiplier;
+            }
+            if (formData.minAge !== ticketType.minAge) {
+                updateData.minAge = formData.minAge;
+            }
+            if (formData.maxAge !== ticketType.maxAge) {
+                updateData.maxAge = formData.maxAge;
+            }
+            if (formData.requiresDocument !== ticketType.requiresDocument) {
+                updateData.requiresDocument = formData.requiresDocument;
+            }
+            if (formData.documentType !== ticketType.documentType) {
+                updateData.documentType = formData.documentType;
+            }
+            if (formData.active !== ticketType.active) {
+                updateData.active = formData.active;
+            }
 
-            if (Object.keys(filteredData).length === 0) {
+            if (Object.keys(updateData).length === 0) {
                 onClose();
                 return;
             }
 
-            await update(ticketType.id, filteredData as TicketTypeUpdateRequest);
+            await update(ticketType.id, updateData);
 
             setShowNotification(true);
             setTimeout(() => {
@@ -184,7 +193,7 @@ const EditTicketTypeModal: React.FC<EditTicketTypeModalProps> = ({
                             <Input
                                 type="number"
                                 value={formData.minAge?.toString() || ''}
-                                onChange={(value) => handleInputChange('minAge', value ? parseInt(value) : null)}
+                                onChange={(value) => handleInputChange('minAge', value ? parseInt(value) : undefined)}
                                 placeholder="Optional"
                                 min="0"
                             />
@@ -197,7 +206,7 @@ const EditTicketTypeModal: React.FC<EditTicketTypeModalProps> = ({
                             <Input
                                 type="number"
                                 value={formData.maxAge?.toString() || ''}
-                                onChange={(value) => handleInputChange('maxAge', value ? parseInt(value) : null)}
+                                onChange={(value) => handleInputChange('maxAge', value ? parseInt(value) : undefined)}
                                 placeholder="Optional"
                                 min="0"
                             />
@@ -226,7 +235,7 @@ const EditTicketTypeModal: React.FC<EditTicketTypeModalProps> = ({
                             <Input
                                 type="text"
                                 value={formData.documentType || ''}
-                                onChange={(value) => handleInputChange('documentType', value || null)}
+                                onChange={(value) => handleInputChange('documentType', value || undefined)}
                                 placeholder="e.g., Student ID, Military ID"
                             />
                         </div>
@@ -256,15 +265,15 @@ const EditTicketTypeModal: React.FC<EditTicketTypeModalProps> = ({
                         <Button
                             variant="cancel"
                             onClick={onClose}
-                            disabled={apiLoading}
+                            disabled={loading}
                         >
                             Cancel
                         </Button>
                         <Button
                             type="submit"
                             variant="primary"
-                            loading={apiLoading}
-                            disabled={apiLoading}
+                            loading={loading}
+                            disabled={loading}
                         >
                             Save Changes
                         </Button>

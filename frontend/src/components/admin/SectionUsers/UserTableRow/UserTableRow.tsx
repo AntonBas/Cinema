@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Badge, Button, Select, ConfirmModal } from '@/components/ui';
-import { useAdminUsers } from '@/hooks/features';
-import { UserRoleDisplay, UserStatusDisplay, VerificationStatusDisplay, VerificationStatusColors } from '@/types/user';
-import type { AdminUser, UserRole, VerificationStatus } from '@/types/user';
+import { useAdminUsers } from '@/hooks/features/admin/useAdminUsers';
+import { UserRoleDisplay, VerificationStatusDisplay, VerificationStatusColors } from '@/types/user';
+import type { AdminUserListResponse, UserRole, VerificationStatus } from '@/types/user';
 import { toDisplayFormat } from '@/utils/dateUtils';
 import styles from './UserTableRow.module.css';
 
 interface UserTableRowProps {
-    user: AdminUser;
+    user: AdminUserListResponse;
     onUpdate: () => void;
     onError: (error: string) => void;
     onSuccess: (message: string) => void;
@@ -17,7 +17,7 @@ export const UserTableRow: React.FC<UserTableRowProps> = ({ user, onUpdate, onEr
     const [showStatusModal, setShowStatusModal] = useState(false);
     const [showVerificationModal, setShowVerificationModal] = useState(false);
     const [selectedRole, setSelectedRole] = useState<UserRole>(user.userRole);
-    const [currentUser, setCurrentUser] = useState<AdminUser>(user);
+    const [currentUser, setCurrentUser] = useState<AdminUserListResponse>(user);
 
     const {
         updateUserRole,
@@ -89,6 +89,10 @@ export const UserTableRow: React.FC<UserTableRowProps> = ({ user, onUpdate, onEr
         label,
     }));
 
+    const getStatusDisplay = (enabled: boolean): string => {
+        return enabled ? 'Active' : 'Blocked';
+    };
+
     return (
         <>
             <tr className={styles.row}>
@@ -140,7 +144,7 @@ export const UserTableRow: React.FC<UserTableRowProps> = ({ user, onUpdate, onEr
                         variant={currentUser.enabled ? 'success' : 'error'}
                         size="small"
                     >
-                        {UserStatusDisplay[String(currentUser.enabled)]}
+                        {getStatusDisplay(currentUser.enabled)}
                     </Badge>
                 </td>
 

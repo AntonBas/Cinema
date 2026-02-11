@@ -6,12 +6,12 @@ import type {
     AgeRating
 } from '@/types/movie';
 import type { GenreResponse } from '@/types/genre';
-import type { PersonResponse, PersonRole } from '@/types/person';
+import type { PersonResponse } from '@/types/person';
 import { movieApi } from '@/api/movieApi';
 import { genreApi } from '@/api/genreApi';
 import { toBackendFormat } from '@/utils/dateUtils';
 import { PersonSelect } from './PersonSelect/PersonSelect';
-import { GenreSearchList } from './GenreSearchList';
+import { GenreSearchList } from './GenreSearchList/GenreSearchList';
 import { Button, Modal, LoadingSpinner } from '@/components/ui';
 import styles from './MovieForm.module.css';
 
@@ -84,7 +84,7 @@ export const MovieForm: React.FC<MovieFormProps> = ({
 
     const loadGenres = useCallback(async () => {
         try {
-            const genresData = await genreApi.public.getAll();
+            const genresData = await genreApi.public.getPopular('', 100);
             setGenres(genresData);
         } catch (error) {
             console.error('Error loading genres:', error);
@@ -472,7 +472,7 @@ export const MovieForm: React.FC<MovieFormProps> = ({
                         selectedIds={formData.selectedActors}
                         selectedPersons={selectedActors}
                         onChange={handleActorsChange}
-                        role={'ACTOR' as PersonRole}
+                        role="ACTOR"
                         placeholder="Search actors or add new..."
                         showNotification={showNotification}
                     />
@@ -484,7 +484,7 @@ export const MovieForm: React.FC<MovieFormProps> = ({
                         selectedIds={formData.selectedDirectors}
                         selectedPersons={selectedDirectors}
                         onChange={handleDirectorsChange}
-                        role={'DIRECTOR' as PersonRole}
+                        role="DIRECTOR"
                         placeholder="Search directors or add new..."
                         showNotification={showNotification}
                     />
@@ -496,7 +496,7 @@ export const MovieForm: React.FC<MovieFormProps> = ({
                         selectedIds={formData.selectedScreenwriters}
                         selectedPersons={selectedScreenwriters}
                         onChange={handleScreenwritersChange}
-                        role={'SCREENWRITER' as PersonRole}
+                        role="SCREENWRITER"
                         placeholder="Search screenwriters or add new..."
                         showNotification={showNotification}
                     />

@@ -6,6 +6,7 @@ import { Select } from '@/components/ui/Select';
 import { Notification } from '@/components/ui/Notification';
 import { useTicketType } from '@/hooks/features/ticketType/useTicketType';
 import type { TicketTypeCreateRequest, TicketTypeCategory } from '@/types/ticketType';
+import { TicketTypeCategoryDisplay } from '@/types/ticketType';
 import styles from './TicketTypeModal.module.css';
 
 interface CreateTicketTypeModalProps {
@@ -19,14 +20,24 @@ const CreateTicketTypeModal: React.FC<CreateTicketTypeModalProps> = ({
     onClose,
     onSuccess
 }) => {
-    const { create, getCategoryOptions, getDefaultValues, loading: apiLoading } = useTicketType();
-    const [formData, setFormData] = useState<TicketTypeCreateRequest>(getDefaultValues());
+    const { create, loading } = useTicketType();
+    const [formData, setFormData] = useState<TicketTypeCreateRequest>({
+        code: '',
+        displayName: '',
+        category: 'STANDARD',
+        priceMultiplier: '1.0',
+        minAge: undefined,
+        maxAge: undefined,
+        requiresDocument: false,
+        documentType: undefined,
+        active: true
+    });
     const [showNotification, setShowNotification] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const categoryOptions = getCategoryOptions().map(cat => ({
-        value: cat.value,
-        label: cat.label
+    const categoryOptions = Object.entries(TicketTypeCategoryDisplay).map(([value, label]) => ({
+        value,
+        label
     }));
 
     const handleInputChange = (field: keyof TicketTypeCreateRequest, value: any) => {
@@ -39,18 +50,23 @@ const CreateTicketTypeModal: React.FC<CreateTicketTypeModalProps> = ({
         setError(null);
 
         try {
-            await create({
-                ...formData,
-                priceMultiplier: formData.priceMultiplier || '1.0',
-                requiresDocument: formData.requiresDocument || false,
-                active: formData.active !== undefined ? formData.active : true
-            });
+            await create(formData);
 
             setShowNotification(true);
             setTimeout(() => {
                 setShowNotification(false);
                 onSuccess();
-                setFormData(getDefaultValues());
+                setFormData({
+                    code: '',
+                    displayName: '',
+                    category: 'STANDARD',
+                    priceMultiplier: '1.0',
+                    minAge: undefined,
+                    maxAge: undefined,
+                    requiresDocument: false,
+                    documentType: undefined,
+                    active: true
+                });
             }, 1500);
         } catch (err: any) {
             setError(err.message || 'Failed to create ticket type');
@@ -131,7 +147,7 @@ const CreateTicketTypeModal: React.FC<CreateTicketTypeModalProps> = ({
                             <Input
                                 type="number"
                                 value={formData.minAge?.toString() || ''}
-                                onChange={(value) => handleInputChange('minAge', value ? parseInt(value) : null)}
+                                onChange={(value) => handleInputChange('minAge', value ? parseInt(value) : undefined)}
                                 placeholder="Optional"
                                 min="0"
                             />
@@ -144,7 +160,7 @@ const CreateTicketTypeModal: React.FC<CreateTicketTypeModalProps> = ({
                             <Input
                                 type="number"
                                 value={formData.maxAge?.toString() || ''}
-                                onChange={(value) => handleInputChange('maxAge', value ? parseInt(value) : null)}
+                                onChange={(value) => handleInputChange('maxAge', value ? parseInt(value) : undefined)}
                                 placeholder="Optional"
                                 min="0"
                             />
@@ -173,7 +189,7 @@ const CreateTicketTypeModal: React.FC<CreateTicketTypeModalProps> = ({
                             <Input
                                 type="text"
                                 value={formData.documentType || ''}
-                                onChange={(value) => handleInputChange('documentType', value || null)}
+                                onChange={(value) => handleInputChange('documentType', value || undefined)}
                                 placeholder="e.g., Student ID, Military ID"
                             />
                         </div>
@@ -184,7 +200,7 @@ const CreateTicketTypeModal: React.FC<CreateTicketTypeModalProps> = ({
                             <input
                                 type="checkbox"
                                 id="active"
-                                checked={formData.active !== undefined ? formData.active : true}
+                                checked={formData.active}
                                 onChange={(e) => handleInputChange('active', e.target.checked)}
                             />
                             <label htmlFor="active" className={styles.checkboxLabel}>
@@ -203,15 +219,15 @@ const CreateTicketTypeModal: React.FC<CreateTicketTypeModalProps> = ({
                         <Button
                             variant="cancel"
                             onClick={onClose}
-                            disabled={apiLoading}
+                            disabled={loading}
                         >
                             Cancel
                         </Button>
                         <Button
                             type="submit"
                             variant="primary"
-                            loading={apiLoading}
-                            disabled={apiLoading}
+                            loading={loading}
+                            disabled={loading}
                         >
                             Create Ticket Type
                         </Button>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { UserTable } from './UserTable/UserTable';
 import { UserFilters } from './UserFilters/UserFilters';
-import { useAdminUsers } from '@/hooks/features';
+import { useAdminUsers } from '@/hooks/features/admin/useAdminUsers';
 import { useNotification } from '@/hooks/common/useNotification';
 import { Notification, Pagination } from '@/components/ui';
 import styles from './SectionUsers.module.css';
@@ -16,15 +16,15 @@ export const SectionUsers: React.FC = () => {
         users,
         pagination,
         loading,
-        fetchUsers
+        getUsers
     } = useAdminUsers();
 
     const { notifications, hideNotification, showNotification } = useNotification();
 
     useEffect(() => {
         const enabledFilter = statusFilter === '' ? undefined : statusFilter === 'true';
-        fetchUsers({
-            query: searchQuery || undefined,
+        getUsers({
+            search: searchQuery || undefined,
             role: roleFilter || undefined,
             enabled: enabledFilter,
             page: currentPage,
@@ -61,8 +61,8 @@ export const SectionUsers: React.FC = () => {
 
     const handleUserUpdate = () => {
         const enabledFilter = statusFilter === '' ? undefined : statusFilter === 'true';
-        fetchUsers({
-            query: searchQuery || undefined,
+        getUsers({
+            search: searchQuery || undefined,
             role: roleFilter || undefined,
             enabled: enabledFilter,
             page: currentPage,
@@ -73,8 +73,8 @@ export const SectionUsers: React.FC = () => {
     const getDisplayRange = () => {
         if (!pagination) return { start: 0, end: 0 };
 
-        const startItem = pagination.currentPage * pagination.pageSize + 1;
-        const endItem = Math.min((pagination.currentPage + 1) * pagination.pageSize, pagination.totalElements);
+        const startItem = pagination.number * pagination.size + 1;
+        const endItem = Math.min((pagination.number + 1) * pagination.size, pagination.totalElements);
 
         return { start: startItem, end: endItem };
     };
@@ -123,10 +123,10 @@ export const SectionUsers: React.FC = () => {
                     )}
 
                     <Pagination
-                        currentPage={pagination.currentPage}
+                        currentPage={pagination.number}
                         totalPages={pagination.totalPages}
                         totalElements={pagination.totalElements}
-                        pageSize={pagination.pageSize}
+                        pageSize={pagination.size}
                         onPageChange={handlePageChange}
                         className={styles.pagination}
                         showInfo={false}

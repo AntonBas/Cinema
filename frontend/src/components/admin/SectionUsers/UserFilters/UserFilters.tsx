@@ -1,6 +1,6 @@
 import React from 'react';
 import { SearchInput, Select } from '@/components/ui';
-import { UserRoleDisplay, UserStatusDisplay } from '@/types/user';
+import { UserRoleDisplay, VerificationStatusDisplay } from '@/types/user';
 import styles from './UserFilters.module.css';
 
 interface UserFiltersProps {
@@ -28,7 +28,7 @@ export const UserFilters: React.FC<UserFiltersProps> = ({
 
     const statusOptions = [
         { value: '', label: 'All Statuses' },
-        ...Object.entries(UserStatusDisplay).map(([value, label]) => ({
+        ...Object.entries(VerificationStatusDisplay).map(([value, label]) => ({
             value,
             label,
         }))

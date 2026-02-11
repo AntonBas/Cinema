@@ -19,10 +19,18 @@ const SectionTicketType = () => {
     const {
         ticketTypes,
         loading,
-        fetchTicketTypes,
+        getAll,
         remove: deleteTicketType,
         toggleActive
     } = useTicketType();
+
+    const loadTicketTypes = async () => {
+        await getAll({
+            active: statusFilter === 'all' ? undefined : statusFilter === 'active',
+            category: categoryFilter === 'all' ? undefined : categoryFilter,
+            search: searchQuery.trim() || undefined
+        });
+    };
 
     const filteredTicketTypes = useMemo(() => {
         let filtered = ticketTypes;
@@ -49,39 +57,23 @@ const SectionTicketType = () => {
     }, [ticketTypes, statusFilter, categoryFilter, searchQuery]);
 
     useEffect(() => {
-        fetchTicketTypes({
-            statusFilter,
-            categoryFilter: categoryFilter === 'all' ? undefined : categoryFilter,
-            searchQuery: searchQuery.trim() ? searchQuery : undefined
-        });
+        loadTicketTypes();
     }, [statusFilter, categoryFilter, searchQuery]);
 
     const handleCreateSuccess = () => {
         setShowCreateModal(false);
-        fetchTicketTypes({
-            statusFilter,
-            categoryFilter: categoryFilter === 'all' ? undefined : categoryFilter,
-            searchQuery: searchQuery.trim() ? searchQuery : undefined
-        });
+        loadTicketTypes();
     };
 
     const handleEditSuccess = () => {
         setEditingTicketType(null);
-        fetchTicketTypes({
-            statusFilter,
-            categoryFilter: categoryFilter === 'all' ? undefined : categoryFilter,
-            searchQuery: searchQuery.trim() ? searchQuery : undefined
-        });
+        loadTicketTypes();
     };
 
     const handleDelete = async (id: number) => {
         try {
             await deleteTicketType(id);
-            fetchTicketTypes({
-                statusFilter,
-                categoryFilter: categoryFilter === 'all' ? undefined : categoryFilter,
-                searchQuery: searchQuery.trim() ? searchQuery : undefined
-            });
+            loadTicketTypes();
         } catch (err) {
             console.error('Failed to delete ticket type:', err);
         }
@@ -90,11 +82,7 @@ const SectionTicketType = () => {
     const handleToggleActive = async (id: number) => {
         try {
             await toggleActive(id);
-            fetchTicketTypes({
-                statusFilter,
-                categoryFilter: categoryFilter === 'all' ? undefined : categoryFilter,
-                searchQuery: searchQuery.trim() ? searchQuery : undefined
-            });
+            loadTicketTypes();
         } catch (err) {
             console.error('Failed to toggle active status:', err);
         }

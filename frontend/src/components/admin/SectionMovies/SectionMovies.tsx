@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { MovieTab } from './MovieTab';
-import { GenreTab } from './GenreTab';
-import { PersonTab } from './PersonTab';
+import { MovieTab } from './MovieTab/MovieTab';
+import { GenreTab } from './GenreTab/GenreTab';
+import { PersonTab } from './PersonTab/PersonTab';
 import styles from './SectionMovies.module.css';
 import clsx from 'clsx';
 
