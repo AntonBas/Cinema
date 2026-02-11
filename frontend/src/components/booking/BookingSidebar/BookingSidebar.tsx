@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Tooltip } from '@/components/ui/Tooltip/Tooltip';
 import { useBonus } from '@/hooks/features/bonus/useBonus';
-import { TicketTypeSelect } from '../TicketTypeSelect';
+import { TicketTypeSelect } from '../TicketTypeSelect/TicketTypeSelect';
 import styles from './BookingSidebar.module.css';
 
 interface SelectedSeatItem {
@@ -43,10 +43,10 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
     const [useAllPoints, setUseAllPoints] = useState(false);
     const [bonusError, setBonusError] = useState<string | null>(null);
 
-    const { getMyBalance, balanceData, loading: balanceLoading } = useBonus();
-    const bonusBalance = balanceData?.pointsBalance || 0;
-    const actualMaxUsablePoints = balanceData?.maxUsablePoints || maxUsablePoints;
-    const actualMinUsablePoints = balanceData?.minUsablePoints || minUsablePoints;
+    const { data: bonusData, getMyBalance, loading } = useBonus();
+    const bonusBalance = bonusData?.myBalance?.pointsBalance || 0;
+    const actualMaxUsablePoints = bonusData?.myBalance?.maxUsablePoints || maxUsablePoints;
+    const actualMinUsablePoints = bonusData?.myBalance?.minUsablePoints || minUsablePoints;
 
     const getMyBalanceRef = useRef(getMyBalance);
 
@@ -196,7 +196,7 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
                     <span className={styles.balanceText}>
                         Available: {bonusBalance} points (₴{bonusBalance.toFixed(2)})
                     </span>
-                    {balanceLoading && <span className={styles.loadingText}>Loading...</span>}
+                    {loading && <span className={styles.loadingText}>Loading...</span>}
                 </div>
 
                 {canUseAllPoints && (
@@ -208,13 +208,13 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
                                 max={maxAvailablePoints}
                                 value={bonusPointsToUse}
                                 onChange={(e) => handleBonusPointsChange(parseInt(e.target.value) || 0)}
-                                disabled={isBooking || balanceLoading}
+                                disabled={isBooking || loading}
                                 placeholder={`Min ${actualMinUsablePoints} points`}
                             />
                             <button
                                 className={styles.useAllButton}
                                 onClick={handleUseAllPoints}
-                                disabled={isBooking || !canUseAllPoints || balanceLoading}
+                                disabled={isBooking || !canUseAllPoints || loading}
                             >
                                 Use Max
                             </button>
@@ -266,7 +266,7 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
                                 onBooking(bonusPointsToUse);
                             }
                         }}
-                        disabled={isBooking || selectedSeats.length === 0 || !!bonusError || balanceLoading}
+                        disabled={isBooking || selectedSeats.length === 0 || !!bonusError || loading}
                     >
                         {isBooking ? 'Processing...' : `Book Now - ₴${finalPrice.toFixed(2)}`}
                     </button>
