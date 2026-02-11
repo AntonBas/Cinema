@@ -9,7 +9,6 @@ import { Button } from '@/components/ui/Button';
 import { Pagination } from '@/components/ui/Pagination';
 import { usePerson } from '@/hooks/features/persons/usePerson';
 import type { PersonResponse, PersonRequest, PersonRole } from '@/types/person';
-import { PersonRoleEnum } from '@/types/person';
 import styles from './PersonTab.module.css';
 
 export const PersonTab: React.FC = () => {
@@ -24,86 +23,71 @@ export const PersonTab: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState('');
   const [totalCounts, setTotalCounts] = useState({
     ALL: 0,
-    [PersonRoleEnum.ACTOR]: 0,
-    [PersonRoleEnum.DIRECTOR]: 0,
-    [PersonRoleEnum.SCREENWRITER]: 0,
+    ACTOR: 0,
+    DIRECTOR: 0,
+    SCREENWRITER: 0,
   });
   const [hasLoadedCounts, setHasLoadedCounts] = useState(false);
   const isMountedRef = useRef(true);
 
   const {
-    persons,
+    allPersons,
     pagination,
     loading,
-    searchPersons,
-    getByRole,
-    createPerson,
-    updatePerson,
-    deletePerson
+    getAll,
+    getActors,
+    getDirectors,
+    getScreenwriters,
+    create,
+    update,
+    remove
   } = usePerson();
 
-  const searchPersonsRef = useRef(searchPersons);
-  const getByRoleRef = useRef(getByRole);
-
-  useEffect(() => {
-    searchPersonsRef.current = searchPersons;
-    getByRoleRef.current = getByRole;
-  }, [searchPersons, getByRole]);
+  const getLoadMethod = useCallback(() => {
+    if (activeTab === 'ALL') return getAll;
+    if (activeTab === 'ACTOR') return getActors;
+    if (activeTab === 'DIRECTOR') return getDirectors;
+    return getScreenwriters;
+  }, [activeTab, getAll, getActors, getDirectors, getScreenwriters]);
 
   const loadCounts = useCallback(async () => {
     if (!isMountedRef.current || searchQuery.trim() || hasLoadedCounts) return;
 
     try {
-      const [allResult, actorsResult, directorsResult, screenwritersResult] = await Promise.all([
-        searchPersonsRef.current({ page: 0, size: 1 }),
-        getByRoleRef.current(PersonRoleEnum.ACTOR, { page: 0, size: 1 }),
-        getByRoleRef.current(PersonRoleEnum.DIRECTOR, { page: 0, size: 1 }),
-        getByRoleRef.current(PersonRoleEnum.SCREENWRITER, { page: 0, size: 1 })
-      ]);
+      const result = await getAll({ page: 0, size: 1 });
 
       if (isMountedRef.current) {
         setTotalCounts({
-          ALL: allResult.totalElements,
-          [PersonRoleEnum.ACTOR]: actorsResult.totalElements,
-          [PersonRoleEnum.DIRECTOR]: directorsResult.totalElements,
-          [PersonRoleEnum.SCREENWRITER]: screenwritersResult.totalElements,
+          ALL: result.totalElements || 0,
+          ACTOR: 0,
+          DIRECTOR: 0,
+          SCREENWRITER: 0,
         });
         setHasLoadedCounts(true);
       }
     } catch (error) {
       console.error('Failed to load counts:', error);
     }
-  }, [searchQuery, hasLoadedCounts]);
+  }, [searchQuery, hasLoadedCounts, getAll]);
 
   const loadPersons = useCallback(async () => {
     try {
-      if (searchQuery.trim()) {
-        await searchPersonsRef.current({
-          query: searchQuery,
-          role: activeTab === 'ALL' ? undefined : activeTab,
-          page: currentPage,
-          size: 12
-        });
-        if (isMountedRef.current) {
-          setHasLoadedCounts(false);
-        }
-      } else if (activeTab === 'ALL') {
-        await searchPersonsRef.current({
-          page: currentPage,
-          size: 12
-        });
-      } else {
-        await getByRoleRef.current(activeTab, {
-          page: currentPage,
-          size: 12
-        });
+      const loadMethod = getLoadMethod();
+      await loadMethod({
+        name: searchQuery.trim() || undefined,
+        page: currentPage,
+        size: 12
+      });
+
+      if (searchQuery.trim() && isMountedRef.current) {
+        setHasLoadedCounts(false);
       }
     } catch (error) {
       if (isMountedRef.current) {
         setErrorMessage('Failed to load persons');
       }
     }
-  }, [activeTab, currentPage, searchQuery]);
+  }, [activeTab, currentPage, searchQuery, getLoadMethod]);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -120,7 +104,7 @@ export const PersonTab: React.FC = () => {
     return () => {
       isMountedRef.current = false;
     };
-  }, [activeTab, currentPage, searchQuery]);
+  }, [activeTab, currentPage, searchQuery, loadPersons, loadCounts]);
 
   const handleSearch = useCallback((query: string) => {
     setSearchQuery(query);
@@ -143,10 +127,10 @@ export const PersonTab: React.FC = () => {
   const handleSubmit = async (data: PersonRequest) => {
     try {
       if (editingPerson?.id) {
-        await updatePerson(editingPerson.id, data);
+        await update(editingPerson.id, data);
         setSuccessMessage('Person updated successfully!');
       } else {
-        await createPerson(data);
+        await create(data);
         setSuccessMessage('Person created successfully!');
       }
 
@@ -177,7 +161,7 @@ export const PersonTab: React.FC = () => {
   const handleDeleteConfirm = async () => {
     if (!personToDelete?.id) return;
     try {
-      await deletePerson(personToDelete.id);
+      await remove(personToDelete.id);
       setSuccessMessage('Person deleted successfully!');
       if (isMountedRef.current) {
         setHasLoadedCounts(false);
@@ -217,19 +201,19 @@ export const PersonTab: React.FC = () => {
 
   const getTabStats = () => {
     if (searchQuery.trim()) {
-      const filtered = persons.filter(person =>
+      const filtered = allPersons.filter(person =>
         activeTab === 'ALL' || person.role === activeTab
       );
 
-      const actors = persons.filter(p => p.role === PersonRoleEnum.ACTOR);
-      const directors = persons.filter(p => p.role === PersonRoleEnum.DIRECTOR);
-      const screenwriters = persons.filter(p => p.role === PersonRoleEnum.SCREENWRITER);
+      const actors = allPersons.filter(p => p.role === 'ACTOR');
+      const directors = allPersons.filter(p => p.role === 'DIRECTOR');
+      const screenwriters = allPersons.filter(p => p.role === 'SCREENWRITER');
 
       return {
-        ALL: activeTab === 'ALL' ? filtered.length : persons.length,
-        [PersonRoleEnum.ACTOR]: actors.length,
-        [PersonRoleEnum.DIRECTOR]: directors.length,
-        [PersonRoleEnum.SCREENWRITER]: screenwriters.length,
+        ALL: activeTab === 'ALL' ? filtered.length : allPersons.length,
+        ACTOR: actors.length,
+        DIRECTOR: directors.length,
+        SCREENWRITER: screenwriters.length,
       };
     }
 
@@ -249,7 +233,9 @@ export const PersonTab: React.FC = () => {
   const tabStats = getTabStats();
   const { start, end } = getDisplayRange();
 
-  if (loading && !persons.length) {
+  const isLoading = loading;
+
+  if (isLoading && !allPersons.length) {
     return (
       <div className={styles.loading}>
         <div className={styles.loadingSpinner}></div>
@@ -316,7 +302,7 @@ export const PersonTab: React.FC = () => {
       />
 
       <PersonList
-        persons={persons}
+        persons={allPersons}
         activeTab={activeTab}
         onEdit={handleEdit}
         onDelete={handleDeleteClick}
@@ -332,7 +318,7 @@ export const PersonTab: React.FC = () => {
             pageSize={pagination.size}
             onPageChange={handlePageChange}
             variant="pages"
-            loading={loading}
+            loading={isLoading}
             className={styles.pagination}
           />
         </div>

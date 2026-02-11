@@ -1,1 +1,0 @@
-export { PersonList } from './PersonList';

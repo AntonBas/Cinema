@@ -1,13 +1,12 @@
 import React from 'react';
-import { type PersonResponse } from '@/types/person';
-import { PersonRoleEnum } from '@/types/person';
+import { type PersonResponse, type PersonRole } from '@/types/person';
 import { PersonCard } from '../PersonCard';
 import { Button } from '@/components/ui';
 import styles from './PersonList.module.css';
 
 interface PersonListProps {
     persons: PersonResponse[];
-    activeTab: string | 'ALL';
+    activeTab: PersonRole | 'ALL';
     onEdit: (person: PersonResponse) => void;
     onDelete: (person: PersonResponse) => void;
     onAddPerson: () => void;
@@ -33,21 +32,21 @@ export const PersonList: React.FC<PersonListProps> = ({
                     description: 'Get started by adding your first person',
                     buttonText: 'Add Person'
                 };
-            case PersonRoleEnum.ACTOR:
+            case 'ACTOR':
                 return {
                     icon: '🎭',
                     title: 'No actors found',
                     description: 'Add actors to appear in movie casts',
                     buttonText: 'Add Actor'
                 };
-            case PersonRoleEnum.DIRECTOR:
+            case 'DIRECTOR':
                 return {
                     icon: '🎬',
                     title: 'No directors found',
                     description: 'Add directors to direct movies',
                     buttonText: 'Add Director'
                 };
-            case PersonRoleEnum.SCREENWRITER:
+            case 'SCREENWRITER':
                 return {
                     icon: '✍️',
                     title: 'No screenwriters found',
