@@ -1,13 +1,13 @@
 import React from 'react';
 import { Layout } from '@/components/layout/Layout/Layout';
 import { ForgotPasswordForm } from '@/components/auth/ForgotPasswordForm/ForgotPasswordForm';
-import { useAuth } from '@/hooks/features/auth';
+import { useAuth } from '@/hooks/features/auth/useAuth';
 import styles from './ForgotPasswordPage.module.css';
 
 export const ForgotPasswordPage: React.FC = () => {
-  const { token, isLoading } = useAuth();
+  const { user, loading } = useAuth();
 
-  if (token && !isLoading) {
+  if (user && !loading) {
     window.location.href = '/';
     return null;
   }

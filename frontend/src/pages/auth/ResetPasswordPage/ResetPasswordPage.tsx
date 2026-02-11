@@ -1,13 +1,13 @@
 import React from 'react';
 import { ResetPasswordForm } from '@/components/auth/ResetPasswordForm/ResetPasswordForm';
-import { useAuth } from '@/hooks/features/auth';
+import { useAuth } from '@/hooks/features/auth/useAuth';
 import { Layout } from '@/components/layout/Layout/Layout';
 import styles from './ResetPasswordPage.module.css';
 
 export const ResetPasswordPage: React.FC = () => {
-  const { token, isLoading } = useAuth();
+  const { user, loading } = useAuth();
 
-  if (token && !isLoading) {
+  if (user && !loading) {
     window.location.href = '/';
     return null;
   }

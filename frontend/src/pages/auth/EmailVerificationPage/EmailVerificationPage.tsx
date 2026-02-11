@@ -26,7 +26,7 @@ export const EmailVerificationPage: React.FC = () => {
 
       try {
         const response = await authApi.verifyEmail(verificationToken);
-        setMessage(response || 'Email verified successfully!');
+        setMessage(response.message);
         setIsSuccess(true);
 
         setTimeout(() => {
