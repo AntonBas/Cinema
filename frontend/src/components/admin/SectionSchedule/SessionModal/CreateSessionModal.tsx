@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useCinemaHalls, useMovies } from '@/hooks/features';
+import { useCinemaHalls } from '@/hooks/features/cinemaHalls/useCinemaHalls';
+import { useMovies } from '@/hooks/features/movies/useMovies';
 import { Input, Select, Button, Modal } from '@/components/ui';
 import type { SessionAdminResponse, SessionCreateRequest } from '@/types/session';
 import type { MovieSessionSearchResponse } from '@/types/movie';
+import type { CinemaHallResponse } from '@/types/cinemaHall';
 import styles from './SessionModal.module.css';
 
 interface CreateSessionModalProps {
@@ -28,7 +30,7 @@ export const CreateSessionModal: React.FC<CreateSessionModalProps> = ({
     loading
 }) => {
     const { allHalls: halls, loading: hallsLoading } = useCinemaHalls();
-    const { searchForSession, loading: moviesLoading } = useMovies();
+    const { searchMoviesForSession, loading: moviesLoading } = useMovies();
 
     const [formData, setFormData] = useState<FormData>({
         startTime: '',
@@ -124,7 +126,7 @@ export const CreateSessionModal: React.FC<CreateSessionModalProps> = ({
         if (formData.startTime) {
             const date = formData.startTime.split('T')[0];
             setIsSearching(true);
-            const results = await searchForSession(date, '');
+            const results = await searchMoviesForSession(date);
             setMovies(results);
             setIsSearching(false);
             setShowMovieResults(true);
@@ -136,7 +138,7 @@ export const CreateSessionModal: React.FC<CreateSessionModalProps> = ({
         if (formData.startTime) {
             const date = formData.startTime.split('T')[0];
             setIsSearching(true);
-            const results = await searchForSession(date, value);
+            const results = await searchMoviesForSession(value || date);
             setMovies(results);
             setIsSearching(false);
             setShowMovieResults(true);
@@ -214,7 +216,7 @@ export const CreateSessionModal: React.FC<CreateSessionModalProps> = ({
         }
     };
 
-    const hallOptions = halls.map(hall => ({
+    const hallOptions = halls.map((hall: CinemaHallResponse) => ({
         value: hall.id.toString(),
         label: `${hall.name} (${hall.capacity} seats)`
     }));
@@ -298,7 +300,7 @@ export const CreateSessionModal: React.FC<CreateSessionModalProps> = ({
                                 {isSearching || moviesLoading ? (
                                     <div className={styles.loadingResults}>Loading movies...</div>
                                 ) : movies.length > 0 ? (
-                                    movies.map(movie => (
+                                    movies.map((movie: MovieSessionSearchResponse) => (
                                         <div
                                             key={movie.id}
                                             className={`${styles.movieOption} ${selectedMovie?.id === movie.id ? styles.selected : ''}`}

@@ -1,21 +1,27 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useMovies, useCinemaHalls } from '@/hooks/features';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { useMovies } from '@/hooks/features/movies/useMovies';
+import { useCinemaHalls } from '@/hooks/features/cinemaHalls/useCinemaHalls';
 import { Input, Select, Button } from '@/components/ui';
 import type { CinemaSessionStatus } from '@/types/session';
 import type { MovieCardResponse } from '@/types/movie';
+import type { CinemaHallResponse } from '@/types/cinemaHall';
 import styles from './SessionFilters.module.css';
 
 interface SessionFiltersProps {
     filters: {
-        date?: string;
+        dateFrom?: string;
+        dateTo?: string;
         hallId?: number;
         movieId?: number;
         status?: CinemaSessionStatus;
+        sort?: string;
     };
-    onDateChange: (date: string | undefined) => void;
+    onDateFromChange: (dateFrom: string | undefined) => void;
+    onDateToChange: (dateTo: string | undefined) => void;
     onHallChange: (hallId: number | undefined) => void;
     onMovieChange: (movieId: number | undefined) => void;
     onStatusChange: (status: CinemaSessionStatus | undefined) => void;
+    onSortChange: (sort: string) => void;
     onClearFilters: () => void;
     hasActiveFilters: boolean;
     activeFilterCount: number;
@@ -23,48 +29,33 @@ interface SessionFiltersProps {
 
 export const SessionFilters: React.FC<SessionFiltersProps> = ({
     filters,
-    onDateChange,
+    onDateFromChange,
+    onDateToChange,
     onHallChange,
     onMovieChange,
     onStatusChange,
+    onSortChange,
     onClearFilters,
     hasActiveFilters,
     activeFilterCount
 }) => {
     const { allHalls: halls } = useCinemaHalls();
-    const { movies, search, loading } = useMovies();
+    const { allMovies, loading: moviesLoading } = useMovies();
     const [movieSearchTerm, setMovieSearchTerm] = useState('');
     const [showMovieResults, setShowMovieResults] = useState(false);
     const [selectedMovieTitle, setSelectedMovieTitle] = useState('');
-    const [localMovies, setLocalMovies] = useState<MovieCardResponse[]>(movies);
     const movieSearchRef = useRef<HTMLDivElement>(null);
-    const searchRef = useRef(search);
 
     useEffect(() => {
-        searchRef.current = search;
-    }, [search]);
-
-    useEffect(() => {
-        searchRef.current({
-            page: 0,
-            size: 50
-        });
-    }, []);
-
-    useEffect(() => {
-        setLocalMovies(movies);
-    }, [movies]);
-
-    useEffect(() => {
-        if (filters.movieId && localMovies.length > 0) {
-            const selectedMovie = localMovies.find(movie => movie.id === filters.movieId);
+        if (filters.movieId && allMovies.length > 0) {
+            const selectedMovie = allMovies.find((movie: MovieCardResponse) => movie.id === filters.movieId);
             if (selectedMovie) {
                 setSelectedMovieTitle(selectedMovie.title);
             }
         } else {
             setSelectedMovieTitle('');
         }
-    }, [filters.movieId, localMovies]);
+    }, [filters.movieId, allMovies]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -77,31 +68,23 @@ export const SessionFilters: React.FC<SessionFiltersProps> = ({
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    useEffect(() => {
-        const debounceTimer = setTimeout(() => {
-            searchRef.current({
-                search: movieSearchTerm.trim(),
-                page: 0,
-                size: 50
-            });
-        }, 300);
-
-        return () => clearTimeout(debounceTimer);
-    }, [movieSearchTerm]);
-
-    const filteredMovies = React.useMemo(() => {
+    const filteredMovies = useMemo(() => {
         if (!movieSearchTerm.trim()) {
-            return localMovies;
+            return allMovies.slice(0, 20);
         }
 
         const searchLower = movieSearchTerm.toLowerCase();
-        return localMovies.filter(movie =>
-            movie.title.toLowerCase().includes(searchLower)
-        );
-    }, [localMovies, movieSearchTerm]);
+        return allMovies
+            .filter((movie: MovieCardResponse) => movie.title.toLowerCase().includes(searchLower))
+            .slice(0, 20);
+    }, [allMovies, movieSearchTerm]);
 
-    const handleDateChange = (value: string) => {
-        onDateChange(value || undefined);
+    const handleDateFromChange = (value: string) => {
+        onDateFromChange(value || undefined);
+    };
+
+    const handleDateToChange = (value: string) => {
+        onDateToChange(value || undefined);
     };
 
     const handleHallChange = (value: string | number) => {
@@ -132,20 +115,44 @@ export const SessionFilters: React.FC<SessionFiltersProps> = ({
         onStatusChange(value as CinemaSessionStatus || undefined);
     };
 
+    const getCurrentSortProperty = () => {
+        return filters.sort?.split(',')[0] || 'startTime';
+    };
+
+    const getCurrentSortDirection = () => {
+        return filters.sort?.split(',')[1] || 'asc';
+    };
+
+    const handleSortPropertyChange = (value: string | number) => {
+        const direction = getCurrentSortDirection();
+        const newSort = `${value as string},${direction}`;
+        onSortChange(newSort);
+    };
+
+    const handleSortDirectionChange = (value: string | number) => {
+        const property = getCurrentSortProperty();
+        const newSort = `${property},${value as string}`;
+        onSortChange(newSort);
+    };
+
+    const handleToggleSortOrder = () => {
+        const property = getCurrentSortProperty();
+        const currentDirection = getCurrentSortDirection();
+        const newDirection = currentDirection === 'asc' ? 'desc' : 'asc';
+        const newSort = `${property},${newDirection}`;
+        onSortChange(newSort);
+    };
+
     const handleClearMovieSearch = () => {
         setMovieSearchTerm('');
         setSelectedMovieTitle('');
         setShowMovieResults(false);
         onMovieChange(undefined);
-        searchRef.current({
-            page: 0,
-            size: 50
-        });
     };
 
     const hallOptions = [
         { value: '', label: 'All halls' },
-        ...halls.map(hall => ({
+        ...halls.map((hall: CinemaHallResponse) => ({
             value: hall.id.toString(),
             label: hall.name
         }))
@@ -159,19 +166,42 @@ export const SessionFilters: React.FC<SessionFiltersProps> = ({
         { value: 'CANCELLED', label: 'Cancelled' }
     ];
 
+    const sortOptions = [
+        { value: 'startTime', label: 'Start Time' },
+        { value: 'basePrice', label: 'Price' }
+    ];
+
+    const sortDirectionOptions = [
+        { value: 'asc', label: 'Ascending' },
+        { value: 'desc', label: 'Descending' }
+    ];
+
     const displayValue = selectedMovieTitle || movieSearchTerm;
 
     return (
         <div className={styles.filters}>
             <div className={styles.filterGrid}>
                 <div className={styles.filterGroup}>
-                    <label className={styles.label}>Date</label>
+                    <label className={styles.label}>Date From</label>
                     <div className={styles.inputContainer}>
                         <Input
                             type="date"
-                            value={filters.date || ''}
-                            onChange={handleDateChange}
+                            value={filters.dateFrom || ''}
+                            onChange={handleDateFromChange}
                             className={styles.input}
+                        />
+                    </div>
+                </div>
+
+                <div className={styles.filterGroup}>
+                    <label className={styles.label}>Date To</label>
+                    <div className={styles.inputContainer}>
+                        <Input
+                            type="date"
+                            value={filters.dateTo || ''}
+                            onChange={handleDateToChange}
+                            className={styles.input}
+                            min={filters.dateFrom}
                         />
                     </div>
                 </div>
@@ -195,6 +225,38 @@ export const SessionFilters: React.FC<SessionFiltersProps> = ({
                             onChange={handleStatusChange}
                             options={statusOptions}
                         />
+                    </div>
+                </div>
+
+                <div className={styles.filterGroup}>
+                    <label className={styles.label}>Sort By</label>
+                    <div className={styles.selectContainer}>
+                        <Select
+                            value={getCurrentSortProperty()}
+                            onChange={handleSortPropertyChange}
+                            options={sortOptions}
+                        />
+                    </div>
+                </div>
+
+                <div className={styles.filterGroup}>
+                    <label className={styles.label}>Sort Direction</label>
+                    <div className={styles.sortOrderContainer}>
+                        <Select
+                            value={getCurrentSortDirection()}
+                            onChange={handleSortDirectionChange}
+                            options={sortDirectionOptions}
+                            className={styles.sortOrderSelect}
+                        />
+                        <Button
+                            variant="secondary"
+                            size="small"
+                            onClick={handleToggleSortOrder}
+                            className={styles.sortOrderToggle}
+                            title="Toggle sort order"
+                        >
+                            ↕️
+                        </Button>
                     </div>
                 </div>
             </div>
@@ -226,12 +288,12 @@ export const SessionFilters: React.FC<SessionFiltersProps> = ({
 
                         {showMovieResults && (
                             <div className={styles.movieResults}>
-                                {loading ? (
+                                {moviesLoading ? (
                                     <div className={styles.loadingResults}>
                                         Loading movies...
                                     </div>
                                 ) : filteredMovies.length > 0 ? (
-                                    filteredMovies.map(movie => (
+                                    filteredMovies.map((movie: MovieCardResponse) => (
                                         <div
                                             key={movie.id}
                                             className={`${styles.movieOption} ${filters.movieId === movie.id ? styles.selected : ''}`}
@@ -262,14 +324,16 @@ export const SessionFilters: React.FC<SessionFiltersProps> = ({
                                 <span className={styles.countBadge}>{activeFilterCount}</span>
                                 active filter{activeFilterCount !== 1 ? 's' : ''}
                             </div>
-                            <Button
-                                variant="error"
-                                size="medium"
-                                onClick={onClearFilters}
-                                className={styles.clearButton}
-                            >
-                                Clear All Filters
-                            </Button>
+                            <div className={styles.filterActions}>
+                                <Button
+                                    variant="error"
+                                    size="medium"
+                                    onClick={onClearFilters}
+                                    className={styles.clearButton}
+                                >
+                                    Clear All Filters
+                                </Button>
+                            </div>
                         </div>
                     </div>
                 </div>
