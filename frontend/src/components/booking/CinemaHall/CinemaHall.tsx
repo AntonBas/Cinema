@@ -1,7 +1,7 @@
 import React from 'react';
 import { Tooltip } from '@/components/ui/Tooltip/Tooltip';
 import styles from './CinemaHall.module.css';
-import type { SeatInfo } from '@/types/seatAvailability';
+import type { SeatInfo } from '@/types/seatReservation';
 
 interface CinemaHallProps {
     seats: SeatInfo[];

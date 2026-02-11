@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useSeatAvailability } from '@/hooks/features/seatAvailability/useSeatAvailability';
+import { useSeatAvailability } from '@/hooks/features/seatReservation/useSeatReservation';
 import { useBonus } from '@/hooks/features/bonus/useBonus';
 import { useBooking } from '@/hooks/features/booking/useBooking';
 import { CinemaHall } from '@/components/booking/CinemaHall';
@@ -8,7 +8,7 @@ import { BookingSidebar } from '@/components/booking/BookingSidebar';
 import { ProgressStepper } from '@/components/booking/ProgressStepper';
 import { Layout } from '@/components/layout/Layout';
 import { Notification } from '@/components/ui/Notification/Notification';
-import type { SelectedSeat } from '@/hooks/features/seatAvailability/useSeatAvailability';
+import type { SelectedSeat } from '@/hooks/features/seatReservation/useSeatReservation';
 import type { NotificationType } from '@/components/ui/Notification/Notification';
 import styles from './BookingPage.module.css';
 

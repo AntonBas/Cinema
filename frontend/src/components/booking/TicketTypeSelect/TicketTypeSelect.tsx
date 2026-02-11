@@ -1,5 +1,5 @@
 import React from 'react';
-import type { TicketPriceInfo } from '@/types/seatAvailability';
+import type { TicketPriceInfo } from '@/types/seatReservation';
 import styles from './TicketTypeSelect.module.css';
 
 interface TicketTypeSelectProps {
