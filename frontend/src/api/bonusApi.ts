@@ -57,7 +57,7 @@ export const bonusApi = {
 
         resetRule: (type: BonusTransactionType) =>
             fetchApi<BonusRulesResponse>(`${ADMIN_URL}/rules/${type}/reset`, {
-                method: 'POST',
+                method: 'PUT',
             }),
 
         getUserTransactions: (userId: number, params?: { page?: number; size?: number }) => {
