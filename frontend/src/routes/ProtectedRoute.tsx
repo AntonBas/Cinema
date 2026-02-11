@@ -1,6 +1,6 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import { useAuth } from '@/hooks/features/auth';
+import { useAuth } from '@/hooks/features/auth/useAuth';
 import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
 import { LoadingSpinner } from '@/components/ui';
 
@@ -16,8 +16,8 @@ const centerStyle = {
 };
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-    const { token, isLoading } = useAuth();
-    const showLoading = useDelayedLoading(isLoading, 300);
+    const { isAuthenticated, loading } = useAuth();
+    const showLoading = useDelayedLoading(loading, 300);
 
     if (showLoading) {
         return (
@@ -27,5 +27,5 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
         );
     }
 
-    return token ? <>{children}</> : <Navigate to="/login" replace />;
+    return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
 };

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import { useAuth } from '@/hooks/features/auth';
+import { useAuth } from '@/hooks/features/auth/useAuth';
 import { LoadingSpinner } from '@/components/ui';
 
 interface AdminRouteProps {
@@ -16,9 +16,9 @@ const centerStyle = {
 };
 
 export const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
-    const { token, user, isLoading } = useAuth();
+    const { user, loading, isAuthenticated } = useAuth();
 
-    if (isLoading) {
+    if (loading) {
         return (
             <div style={centerStyle}>
                 <LoadingSpinner text="Verifying admin access..." />
@@ -26,7 +26,7 @@ export const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
         );
     }
 
-    if (!token) return <Navigate to="/login" replace />;
+    if (!isAuthenticated) return <Navigate to="/login" replace />;
     if (user?.userRole !== 'ROLE_ADMIN') return <Navigate to="/" replace />;
 
     return <>{children}</>;

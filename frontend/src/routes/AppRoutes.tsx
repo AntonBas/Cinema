@@ -4,40 +4,38 @@ import { ProtectedRoute } from './ProtectedRoute';
 import { PublicRoute } from './PublicRoute';
 import { AdminRoute } from './AdminRoute';
 
-import { LoginPage } from '@/pages/auth/LoginPage';
-import { RegisterPage } from '@/pages/auth/RegisterPage';
-import { ForgotPasswordPage } from '@/pages/auth/ForgotPasswordPage';
-import { ResetPasswordPage } from '@/pages/auth/ResetPasswordPage';
-import { EmailVerificationPage } from '@/pages/auth/EmailVerificationPage';
+import { LoginPage } from '@/pages/auth/LoginPage/LoginPage';
+import { RegisterPage } from '@/pages/auth/RegisterPage/RegisterPage';
+import { ForgotPasswordPage } from '@/pages/auth/ForgotPasswordPage/ForgotPasswordPage';
+import { ResetPasswordPage } from '@/pages/auth/ResetPasswordPage/ResetPasswordPage';
+import { EmailVerificationPage } from '@/pages/auth/EmailVerificationPage/EmailVerificationPage';
 
 import { HomePage } from '@/pages/home/HomePage';
-import { ProfilePage } from '@/pages/account/ProfilePage';
-import { SecurityPage } from '@/pages/account/SecurityPage';
-import { BonusPage } from '@/pages/account/BonusPage';
-import { TicketsPage } from '@/pages/account/TicketsPage';
+import { ProfilePage } from '@/pages/account/ProfilePage/ProfilePage';
+import { SecurityPage } from '@/pages/account/SecurityPage/SecurityPage';
+import { BonusPage } from '@/pages/account/BonusPage/BonusPage';
+import { TicketsPage } from '@/pages/account/TicketsPage/TicketsPage';
 
-import {
-    MoviesLayout,
-    CurrentMoviesPage,
-    UpcomingMoviesPage,
-    MovieDetailPage
-} from '@/pages/movies';
+import { MoviesLayout } from '@/pages/movies/MoviesLayout/MoviesLayout';
+import { CurrentMoviesPage } from '@/pages/movies/CurrentMoviesPage/CurrentMoviesPage';
+import { UpcomingMoviesPage } from '@/pages/movies/UpcomingMoviesPage/UpcomingMoviesPage';
+import { MovieDetailPage } from '@/pages/movies/MovieDetailPage/MovieDetailPage';
 
-import { SessionsPage } from '@/pages/sessions';
-import { BookingPage } from '@/pages/booking/BookingPage';
+import SessionsPage from '@/pages/sessions/SessionsPage';
+import { BookingPage } from '@/pages/booking/BookingPage/BookingPage';
 import { BookingSummaryPage } from '@/pages/booking/BookingSummaryPage/BookingSummaryPage';
 import { PaymentPage } from '@/pages/booking/PaymentPage/PaymentPage';
 import SuccessPage from '@/pages/booking/SuccessPage/SuccessPage';
 
-import { AdminLayout } from '@/components/admin/AdminLayout';
-import { AdminDashboard } from '@/components/admin/AdminDashboard';
-import { SectionMovies } from '@/components/admin/SectionMovies';
-import { SectionHalls } from '@/components/admin/SectionHalls';
-import { SectionSchedule } from '@/components/admin/SectionSchedule';
-import { SectionUsers } from '@/components/admin/SectionUsers';
-import SectionBonus from '@/components/admin/SectionBonus';
-import SectionPromotion from '@/components/admin/SectionPromotion';
-import SectionTicketType from '@/components/admin/SectionTicketType';
+import { AdminLayout } from '@/components/admin/AdminLayout/AdminLayout';
+import { AdminDashboard } from '@/components/admin/AdminDashboard/AdminDashboard';
+import { SectionMovies } from '@/components/admin/SectionMovies/SectionMovies';
+import { SectionHalls } from '@/components/admin/SectionHalls/SectionHalls';
+import { SectionSchedule } from '@/components/admin/SectionSchedule/SectionSchedule';
+import { SectionUsers } from '@/components/admin/SectionUsers/SectionUsers';
+import SectionBonus from '@/components/admin/SectionBonus/SectionBonus';
+import SectionPromotion from '@/components/admin/SectionPromotion/SectionPromotion';
+import SectionTicketType from '@/components/admin/SectionTicketType/SectionTicketType';
 
 export const AppRoutes: React.FC = () => {
     return (
