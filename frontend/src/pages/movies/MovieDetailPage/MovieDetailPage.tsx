@@ -362,4 +362,4 @@ export const MovieDetailPage: React.FC = () => {
             </div>
         </Layout>
     );
-};÷
+};
