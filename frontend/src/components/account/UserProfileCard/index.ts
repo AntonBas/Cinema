@@ -1,1 +1,0 @@
-export { UserProfileCard } from './UserProfileCard';

@@ -10,7 +10,7 @@ interface TicketQRModalProps {
 }
 
 export const TicketQRModal: React.FC<TicketQRModalProps> = ({ ticketCode, onClose }) => {
-    const { getQrCode, loading } = useTickets();
+    const { getQRCode, loading } = useTickets();
     const [qrImage, setQrImage] = useState<string>('');
     const [copied, setCopied] = useState(false);
 
@@ -20,7 +20,7 @@ export const TicketQRModal: React.FC<TicketQRModalProps> = ({ ticketCode, onClos
 
     const loadQRCode = async () => {
         try {
-            const blob = await getQrCode(ticketCode);
+            const blob = await getQRCode(ticketCode);
             const imageUrl = URL.createObjectURL(blob);
             setQrImage(imageUrl);
         } catch (error) {

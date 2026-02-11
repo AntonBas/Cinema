@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { useUser } from '@/hooks/features/user';
+import { useUser } from '@/hooks/features/user/useUser';
 import { Input, Button, Notification } from '@/components/ui';
+import type { UserPasswordUpdateRequest } from '@/types/user';
 import styles from './PasswordChangeForm.module.css';
 
 export const PasswordChangeForm: React.FC = () => {
-    const { updatePassword, isLoading } = useUser();
+    const { updatePassword, isPasswordUpdating } = useUser();
     const [formData, setFormData] = useState({
         currentPassword: '',
         newPassword: '',
@@ -62,11 +63,13 @@ export const PasswordChangeForm: React.FC = () => {
         }
 
         try {
-            await updatePassword(
-                formData.currentPassword,
-                formData.newPassword,
-                formData.confirmPassword
-            );
+            const passwordData: UserPasswordUpdateRequest = {
+                currentPassword: formData.currentPassword,
+                newPassword: formData.newPassword,
+                passwordConfirm: formData.confirmPassword
+            };
+
+            await updatePassword(passwordData);
             setShowSuccess(true);
             setFormData({
                 currentPassword: '',
@@ -120,7 +123,7 @@ export const PasswordChangeForm: React.FC = () => {
                         placeholder="Enter your current password"
                         value={formData.currentPassword}
                         onChange={(value) => handleChange('currentPassword', value)}
-                        disabled={isLoading}
+                        disabled={isPasswordUpdating}
                         error={formErrors.currentPassword}
                     />
 
@@ -129,7 +132,7 @@ export const PasswordChangeForm: React.FC = () => {
                         placeholder="Enter new password (min 8 characters)"
                         value={formData.newPassword}
                         onChange={(value) => handleChange('newPassword', value)}
-                        disabled={isLoading}
+                        disabled={isPasswordUpdating}
                         error={formErrors.newPassword}
                     />
 
@@ -138,7 +141,7 @@ export const PasswordChangeForm: React.FC = () => {
                         placeholder="Confirm your new password"
                         value={formData.confirmPassword}
                         onChange={(value) => handleChange('confirmPassword', value)}
-                        disabled={isLoading}
+                        disabled={isPasswordUpdating}
                         error={formErrors.confirmPassword}
                     />
                 </div>
@@ -147,11 +150,11 @@ export const PasswordChangeForm: React.FC = () => {
                     type="submit"
                     variant="primary"
                     size="large"
-                    loading={isLoading}
-                    disabled={isLoading}
+                    loading={isPasswordUpdating}
+                    disabled={isPasswordUpdating}
                     style={{ width: '100%' }}
                 >
-                    {isLoading ? 'Updating Password...' : 'Update Password'}
+                    {isPasswordUpdating ? 'Updating Password...' : 'Update Password'}
                 </Button>
             </form>
         </div>

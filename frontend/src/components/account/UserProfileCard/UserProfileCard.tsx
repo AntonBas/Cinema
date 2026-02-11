@@ -1,10 +1,10 @@
 import React from 'react';
-import type { UserProfile } from '@/types/user';
+import type { UserProfileResponse } from '@/types/user';
 import { Button, Tooltip } from '@/components/ui';
 import styles from './UserProfileCard.module.css';
 
 interface UserProfileCardProps {
-    user: UserProfile;
+    user: UserProfileResponse;
     onEdit: () => void;
 }
 

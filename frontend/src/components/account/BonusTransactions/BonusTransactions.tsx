@@ -1,6 +1,7 @@
 import React from 'react';
 import { Badge } from '@/components/ui/Badge/Badge';
 import { Pagination } from '@/components/ui/Pagination/Pagination';
+import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';
 import type { BonusTransactionResponse } from '@/types/bonus';
 import { BonusTransactionTypeDisplay } from '@/types/bonus';
 import styles from './BonusTransactions.module.css';
@@ -25,9 +26,7 @@ export const BonusTransactions: React.FC<BonusTransactionsProps> = ({
     if (loading) {
         return (
             <div className={styles.transactions}>
-                <div className={styles.loading}>
-                    Loading transactions...
-                </div>
+                <LoadingSpinner text="Loading transactions..." />
             </div>
         );
     }
@@ -61,6 +60,17 @@ export const BonusTransactions: React.FC<BonusTransactionsProps> = ({
         return 'secondary';
     };
 
+    const getPointsValue = (pointsChange: string): number => {
+        return parseFloat(pointsChange);
+    };
+
+    const getReferenceInfo = (transaction: BonusTransactionResponse) => {
+        if (transaction.bookingDetails?.bookingReference) {
+            return transaction.bookingDetails.bookingReference;
+        }
+        return '-';
+    };
+
     return (
         <div className={styles.transactions}>
             <div className={styles.header}>
@@ -78,32 +88,36 @@ export const BonusTransactions: React.FC<BonusTransactionsProps> = ({
                 </div>
 
                 <div className={styles.tableBody}>
-                    {transactions.map((transaction) => (
-                        <div key={transaction.id} className={styles.tableRow}>
-                            <div className={styles.tableCell}>
-                                {formatDate(transaction.createdAt)}
+                    {transactions.map((transaction) => {
+                        const pointsValue = getPointsValue(transaction.pointsChange);
+
+                        return (
+                            <div key={transaction.id} className={styles.tableRow}>
+                                <div className={styles.tableCell}>
+                                    {formatDate(transaction.createdAt)}
+                                </div>
+                                <div className={styles.tableCell}>
+                                    <Badge
+                                        variant={getBadgeVariant(transaction.type)}
+                                        size="small"
+                                    >
+                                        {BonusTransactionTypeDisplay[transaction.type] || transaction.type}
+                                    </Badge>
+                                </div>
+                                <div className={styles.tableCell}>
+                                    {getReferenceInfo(transaction)}
+                                </div>
+                                <div className={styles.tableCell}>
+                                    <span className={pointsValue > 0 ? styles.positive : styles.negative}>
+                                        {pointsValue > 0 ? '+' : ''}{transaction.pointsChange}
+                                    </span>
+                                </div>
+                                <div className={styles.tableCell}>
+                                    {transaction.newBalance}
+                                </div>
                             </div>
-                            <div className={styles.tableCell}>
-                                <Badge
-                                    variant={getBadgeVariant(transaction.type)}
-                                    size="small"
-                                >
-                                    {BonusTransactionTypeDisplay[transaction.type] || transaction.type}
-                                </Badge>
-                            </div>
-                            <div className={styles.tableCell}>
-                                {transaction.referenceId || '-'}
-                            </div>
-                            <div className={styles.tableCell}>
-                                <span className={transaction.pointsChange > 0 ? styles.positive : styles.negative}>
-                                    {transaction.pointsChange > 0 ? '+' : ''}{transaction.pointsChange}
-                                </span>
-                            </div>
-                            <div className={styles.tableCell}>
-                                {transaction.newBalance}
-                            </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             </div>
 

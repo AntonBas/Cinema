@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { useUser } from '@/hooks/features/user';
+import { useUser } from '@/hooks/features/user/useUser';
 import { Input, Button, Notification, Tooltip } from '@/components/ui';
 import styles from './EmailChangeForm.module.css';
 
 export const EmailChangeForm: React.FC = () => {
-    const { requestEmailChange, isLoading } = useUser();
+    const { requestEmailChange, isEmailChanging } = useUser();
     const [formData, setFormData] = useState({
         newEmail: '',
         password: ''
@@ -89,7 +89,7 @@ export const EmailChangeForm: React.FC = () => {
                         placeholder="Enter your new email address"
                         value={formData.newEmail}
                         onChange={(value) => handleChange('newEmail', value)}
-                        disabled={isLoading}
+                        disabled={isEmailChanging}
                         error={formErrors.newEmail}
                     />
 
@@ -98,7 +98,7 @@ export const EmailChangeForm: React.FC = () => {
                         placeholder="Enter your current password to confirm"
                         value={formData.password}
                         onChange={(value) => handleChange('password', value)}
-                        disabled={isLoading}
+                        disabled={isEmailChanging}
                         error={formErrors.password}
                     />
 
@@ -116,10 +116,10 @@ export const EmailChangeForm: React.FC = () => {
                             type="submit"
                             variant="primary"
                             size="large"
-                            loading={isLoading}
-                            disabled={isLoading}
+                            loading={isEmailChanging}
+                            disabled={isEmailChanging}
                         >
-                            {isLoading ? 'Sending Confirmation...' : 'Change Email Address'}
+                            {isEmailChanging ? 'Sending Confirmation...' : 'Change Email Address'}
                         </Button>
                     </Tooltip>
                 </div>
