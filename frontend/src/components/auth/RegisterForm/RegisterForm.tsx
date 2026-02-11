@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/hooks/features';
+import { useAuth } from '@/hooks/features/auth/useAuth';
 import { Input, Button, Modal } from '@/components/ui';
+import type { RegisterRequest } from '@/types/auth';
 import styles from './RegisterForm.module.css';
 
 interface SuccessModalProps {
@@ -49,7 +50,7 @@ const RegistrationSuccessModal: React.FC<SuccessModalProps> = ({
 };
 
 export const RegisterForm: React.FC = () => {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<RegisterRequest>({
     firstName: '',
     lastName: '',
     dateOfBirth: '',
@@ -64,7 +65,7 @@ export const RegisterForm: React.FC = () => {
   const [localError, setLocalError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { register, isMutating } = useAuth();
+  const { register, loading } = useAuth();
   const navigate = useNavigate();
 
   const handleChange = (field: string, value: string) => {
@@ -81,12 +82,28 @@ export const RegisterForm: React.FC = () => {
   const validateForm = () => {
     const errors: Record<string, string> = {};
 
-    if (formData.password !== formData.passwordConfirm) {
-      errors.passwordConfirm = 'Passwords do not match';
+    if (!formData.firstName) {
+      errors.firstName = 'First name is required';
     }
 
-    if (formData.password.length < 8) {
+    if (!formData.lastName) {
+      errors.lastName = 'Last name is required';
+    }
+
+    if (!formData.email) {
+      errors.email = 'Email is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      errors.email = 'Please enter a valid email address';
+    }
+
+    if (!formData.password) {
+      errors.password = 'Password is required';
+    } else if (formData.password.length < 8) {
       errors.password = 'Password must be at least 8 characters';
+    }
+
+    if (formData.password !== formData.passwordConfirm) {
+      errors.passwordConfirm = 'Passwords do not match';
     }
 
     setFormErrors(errors);
@@ -118,7 +135,7 @@ export const RegisterForm: React.FC = () => {
     navigate('/login');
   };
 
-  const isLoading = isSubmitting || isMutating;
+  const isLoading = isSubmitting || loading;
 
   return (
     <section className={styles.registration}>
@@ -152,9 +169,11 @@ export const RegisterForm: React.FC = () => {
             <div className={styles.registrationGroup}>
               <Input
                 type="date"
+                placeholder="Date of Birth"
                 value={formData.dateOfBirth}
                 onChange={(value) => handleChange('dateOfBirth', value)}
                 disabled={isLoading}
+                error={formErrors.dateOfBirth}
               />
               <Input
                 placeholder="Your City"

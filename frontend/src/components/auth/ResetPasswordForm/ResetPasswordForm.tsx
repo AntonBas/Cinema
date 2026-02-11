@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/hooks/features';
+import { useAuth } from '@/hooks/features/auth/useAuth';
 import { Input, Button, Modal } from '@/components/ui';
 import styles from './ResetPasswordForm.module.css';
 
@@ -53,7 +53,7 @@ export const ResetPasswordForm: React.FC = () => {
   const [localError, setLocalError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { resetPassword, isMutating } = useAuth();
+  const { resetPassword, loading } = useAuth();
 
   const handleChange = (field: string, value: string) => {
     setFormData(prev => ({
@@ -69,11 +69,15 @@ export const ResetPasswordForm: React.FC = () => {
   const validateForm = () => {
     const errors: Record<string, string> = {};
 
-    if (formData.newPassword.length < 8) {
+    if (!formData.newPassword) {
+      errors.newPassword = 'New password is required';
+    } else if (formData.newPassword.length < 8) {
       errors.newPassword = 'Password must be at least 8 characters';
     }
 
-    if (formData.newPassword !== formData.confirmPassword) {
+    if (!formData.confirmPassword) {
+      errors.confirmPassword = 'Please confirm your new password';
+    } else if (formData.newPassword !== formData.confirmPassword) {
       errors.confirmPassword = 'Passwords do not match';
     }
 
@@ -116,7 +120,7 @@ export const ResetPasswordForm: React.FC = () => {
     navigate('/login');
   };
 
-  const isLoading = isSubmitting || isMutating;
+  const isLoading = isSubmitting || loading;
 
   return (
     <section className={styles.resetPassword}>

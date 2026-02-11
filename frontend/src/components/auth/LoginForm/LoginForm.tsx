@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '@/hooks/features';
+import { useAuth } from '@/hooks/features/auth/useAuth';
 import { Input, Button } from '@/components/ui';
 import styles from './LoginForm.module.css';
 
@@ -10,7 +10,7 @@ export const LoginForm: React.FC = () => {
   const [localError, setLocalError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { login, isMutating } = useAuth();
+  const { login, loading } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -28,7 +28,7 @@ export const LoginForm: React.FC = () => {
     }
   };
 
-  const isLoading = isSubmitting || isMutating;
+  const isLoading = isSubmitting || loading;
 
   return (
     <section className={styles.login}>

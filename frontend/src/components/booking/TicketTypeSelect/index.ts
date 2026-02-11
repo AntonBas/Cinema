@@ -1,1 +1,0 @@
-export { TicketTypeSelect } from './TicketTypeSelect';

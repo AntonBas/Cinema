@@ -1,1 +1,0 @@
-export { CinemaHall } from './CinemaHall';
