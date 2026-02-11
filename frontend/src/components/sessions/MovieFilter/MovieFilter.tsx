@@ -24,7 +24,7 @@ export const MovieFilter: React.FC<MovieFilterProps> = ({ selectedMovieId, onMov
 
         setLoading(true);
         try {
-            const results = await movieApi.admin.searchActiveMovies(query);
+            const results = await movieApi.admin.searchMoviesForSession(query);
             console.log('🔍 MovieFilter - active movies search results:', {
                 query,
                 results,
@@ -43,7 +43,7 @@ export const MovieFilter: React.FC<MovieFilterProps> = ({ selectedMovieId, onMov
         if (selectedMovieId && selectedMovie?.id !== selectedMovieId) {
             const fetchSelectedMovie = async () => {
                 try {
-                    const results = await movieApi.admin.searchActiveMovies('');
+                    const results = await movieApi.admin.searchMoviesForSession('');
                     const movie = results.find(m => m.id === selectedMovieId);
                     if (movie) {
                         setSelectedMovie(movie);
