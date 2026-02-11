@@ -13,6 +13,11 @@ export const useTicketType = () => {
     const dropdownTypesApi = useApi<TicketTypeSimpleResponse[]>();
     const ticketTypeByIdApi = useApi<TicketTypeResponse>();
     const ticketTypeByCodeApi = useApi<TicketTypeResponse>();
+    const createApi = useApi<TicketTypeResponse>();
+    const updateApi = useApi<TicketTypeResponse>();
+    const deleteApi = useApi<void>();
+    const toggleActiveApi = useApi<TicketTypeResponse>();
+    const adminDropdownApi = useApi<TicketTypeSimpleResponse[]>();
 
     const getAll = useCallback(async (params?: any) => {
         return ticketTypesApi.callApi(
@@ -31,6 +36,7 @@ export const useTicketType = () => {
             {
                 cacheKey: `ticket_type_${id}`,
                 cacheTime: 5 * 60 * 1000,
+                showErrorNotification: false,
             }
         );
     }, [ticketTypeByIdApi]);
@@ -41,63 +47,68 @@ export const useTicketType = () => {
             {
                 cacheKey: `ticket_type_code_${code}`,
                 cacheTime: 5 * 60 * 1000,
+                showErrorNotification: false,
             }
         );
     }, [ticketTypeByCodeApi]);
 
     const create = useCallback(async (request: TicketTypeCreateRequest) => {
-        const api = useApi<TicketTypeResponse>();
-        return api.callApi(
+        return createApi.callApi(
             () => ticketTypeApi.admin.create(request),
             {
                 successMessage: 'Ticket type created successfully',
                 onSuccess: () => {
                     ticketTypesApi.invalidateCache();
+                    dropdownTypesApi.invalidateCache();
+                    adminDropdownApi.invalidateCache();
                 },
             }
         );
-    }, [ticketTypesApi]);
+    }, [createApi, ticketTypesApi, dropdownTypesApi, adminDropdownApi]);
 
     const update = useCallback(async (id: number, request: TicketTypeUpdateRequest) => {
-        const api = useApi<TicketTypeResponse>();
-        return api.callApi(
+        return updateApi.callApi(
             () => ticketTypeApi.admin.update(id, request),
             {
                 successMessage: 'Ticket type updated successfully',
                 onSuccess: () => {
                     ticketTypesApi.invalidateCache();
                     ticketTypeByIdApi.invalidateCache(`ticket_type_${id}`);
+                    dropdownTypesApi.invalidateCache();
+                    adminDropdownApi.invalidateCache();
                 },
             }
         );
-    }, [ticketTypesApi, ticketTypeByIdApi]);
+    }, [updateApi, ticketTypesApi, ticketTypeByIdApi, dropdownTypesApi, adminDropdownApi]);
 
     const remove = useCallback(async (id: number) => {
-        const api = useApi<void>();
-        return api.callApi(
+        return deleteApi.callApi(
             () => ticketTypeApi.admin.delete(id),
             {
                 successMessage: 'Ticket type deleted successfully',
                 onSuccess: () => {
                     ticketTypesApi.invalidateCache();
+                    dropdownTypesApi.invalidateCache();
+                    adminDropdownApi.invalidateCache();
                 },
             }
         );
-    }, [ticketTypesApi]);
+    }, [deleteApi, ticketTypesApi, dropdownTypesApi, adminDropdownApi]);
 
     const toggleActive = useCallback(async (id: number) => {
-        const api = useApi<TicketTypeResponse>();
-        return api.callApi(
+        return toggleActiveApi.callApi(
             () => ticketTypeApi.admin.toggleActive(id),
             {
                 successMessage: 'Ticket type status updated successfully',
                 onSuccess: () => {
                     ticketTypesApi.invalidateCache();
                     ticketTypeByIdApi.invalidateCache(`ticket_type_${id}`);
+                    dropdownTypesApi.invalidateCache();
+                    adminDropdownApi.invalidateCache();
                 },
             }
         );
-    }, [ticketTypesApi, ticketTypeByIdApi]);
+    }, [toggleActiveApi, ticketTypesApi, ticketTypeByIdApi, dropdownTypesApi, adminDropdownApi]);
 
     const getDropdownTypes = useCallback(async () => {
         return dropdownTypesApi.callApi(
@@ -111,8 +122,7 @@ export const useTicketType = () => {
     }, [dropdownTypesApi]);
 
     const getAdminDropdownTypes = useCallback(async () => {
-        const api = useApi<TicketTypeSimpleResponse[]>();
-        return api.callApi(
+        return adminDropdownApi.callApi(
             () => ticketTypeApi.admin.getDropdownTypes(),
             {
                 cacheKey: 'admin_ticket_type_dropdown',
@@ -120,24 +130,37 @@ export const useTicketType = () => {
                 showErrorNotification: false,
             }
         );
-    }, []);
+    }, [adminDropdownApi]);
 
     const clearCache = useCallback(() => {
         ticketTypesApi.invalidateCache();
         dropdownTypesApi.invalidateCache();
         ticketTypeByIdApi.invalidateCache();
         ticketTypeByCodeApi.invalidateCache();
-    }, [ticketTypesApi, dropdownTypesApi, ticketTypeByIdApi, ticketTypeByCodeApi]);
+        createApi.invalidateCache();
+        updateApi.invalidateCache();
+        deleteApi.invalidateCache();
+        toggleActiveApi.invalidateCache();
+        adminDropdownApi.invalidateCache();
+    }, [ticketTypesApi, dropdownTypesApi, ticketTypeByIdApi, ticketTypeByCodeApi,
+        createApi, updateApi, deleteApi, toggleActiveApi, adminDropdownApi]);
 
     return {
         ticketTypes: ticketTypesApi.data || [],
         dropdownTypes: dropdownTypesApi.data || [],
+        adminDropdownTypes: adminDropdownApi.data || [],
         ticketType: ticketTypeByIdApi.data || ticketTypeByCodeApi.data,
 
         loading: ticketTypesApi.state.isLoading || dropdownTypesApi.state.isLoading ||
-            ticketTypeByIdApi.state.isLoading || ticketTypeByCodeApi.state.isLoading,
+            ticketTypeByIdApi.state.isLoading || ticketTypeByCodeApi.state.isLoading ||
+            createApi.state.isLoading || updateApi.state.isLoading ||
+            deleteApi.state.isLoading || toggleActiveApi.state.isLoading ||
+            adminDropdownApi.state.isLoading,
         error: ticketTypesApi.state.isError || dropdownTypesApi.state.isError ||
-            ticketTypeByIdApi.state.isError || ticketTypeByCodeApi.state.isError,
+            ticketTypeByIdApi.state.isError || ticketTypeByCodeApi.state.isError ||
+            createApi.state.isError || updateApi.state.isError ||
+            deleteApi.state.isError || toggleActiveApi.state.isError ||
+            adminDropdownApi.state.isError,
 
         getAll,
         getById,

@@ -15,6 +15,9 @@ export const usePromotion = () => {
     const claimPromotionApi = useApi<UserPromotionResponse>();
     const promotionByIdApi = useApi<PromotionResponse>();
     const allPromotionsApi = useApi<PromotionResponse[]>();
+    const createPromotionApi = useApi<PromotionResponse>();
+    const updatePromotionApi = useApi<PromotionResponse>();
+    const deletePromotionApi = useApi<void>();
 
     const getAvailable = useCallback(async () => {
         return availablePromotionsApi.callApi(
@@ -57,6 +60,7 @@ export const usePromotion = () => {
             {
                 cacheKey: `promotion_${promotionId}`,
                 cacheTime: 2 * 60 * 1000,
+                showErrorNotification: false,
             }
         );
     }, [promotionByIdApi]);
@@ -72,9 +76,20 @@ export const usePromotion = () => {
         );
     }, [allPromotionsApi]);
 
+    const getActive = useCallback(async () => {
+        const api = useApi<PromotionResponse[]>();
+        return api.callApi(
+            () => promotionApi.admin.getActive(),
+            {
+                cacheKey: 'active_promotions_admin',
+                cacheTime: 2 * 60 * 1000,
+                showErrorNotification: false,
+            }
+        );
+    }, []);
+
     const create = useCallback(async (request: PromotionCreateRequest) => {
-        const createApi = useApi<PromotionResponse>();
-        return createApi.callApi(
+        return createPromotionApi.callApi(
             () => promotionApi.admin.create(request),
             {
                 successMessage: 'Promotion created successfully',
@@ -84,11 +99,10 @@ export const usePromotion = () => {
                 },
             }
         );
-    }, [allPromotionsApi, availablePromotionsApi]);
+    }, [createPromotionApi, allPromotionsApi, availablePromotionsApi]);
 
     const update = useCallback(async (promotionId: number, request: PromotionUpdateRequest) => {
-        const updateApi = useApi<PromotionResponse>();
-        return updateApi.callApi(
+        return updatePromotionApi.callApi(
             () => promotionApi.admin.update(promotionId, request),
             {
                 successMessage: 'Promotion updated successfully',
@@ -100,11 +114,10 @@ export const usePromotion = () => {
                 },
             }
         );
-    }, [promotionByIdApi, allPromotionsApi, availablePromotionsApi, myPromotionsApi]);
+    }, [updatePromotionApi, promotionByIdApi, allPromotionsApi, availablePromotionsApi, myPromotionsApi]);
 
     const remove = useCallback(async (promotionId: number) => {
-        const deleteApi = useApi<void>();
-        return deleteApi.callApi(
+        return deletePromotionApi.callApi(
             () => promotionApi.admin.delete(promotionId),
             {
                 successMessage: 'Promotion deleted successfully',
@@ -116,14 +129,18 @@ export const usePromotion = () => {
                 },
             }
         );
-    }, [promotionByIdApi, allPromotionsApi, availablePromotionsApi, myPromotionsApi]);
+    }, [deletePromotionApi, promotionByIdApi, allPromotionsApi, availablePromotionsApi, myPromotionsApi]);
 
     const clearPromotionCache = useCallback(() => {
         availablePromotionsApi.invalidateCache();
         myPromotionsApi.invalidateCache();
         promotionByIdApi.invalidateCache();
         allPromotionsApi.invalidateCache();
-    }, [availablePromotionsApi, myPromotionsApi, promotionByIdApi, allPromotionsApi]);
+        createPromotionApi.invalidateCache();
+        updatePromotionApi.invalidateCache();
+        deletePromotionApi.invalidateCache();
+    }, [availablePromotionsApi, myPromotionsApi, promotionByIdApi, allPromotionsApi,
+        createPromotionApi, updatePromotionApi, deletePromotionApi]);
 
     return {
         availablePromotions: availablePromotionsApi.data || [],
@@ -131,14 +148,21 @@ export const usePromotion = () => {
         promotion: promotionByIdApi.data,
         allPromotions: allPromotionsApi.data || [],
 
-        loading: availablePromotionsApi.state.isLoading || myPromotionsApi.state.isLoading,
-        error: availablePromotionsApi.state.isError || myPromotionsApi.state.isError,
+        loading: availablePromotionsApi.state.isLoading || myPromotionsApi.state.isLoading ||
+            claimPromotionApi.state.isLoading || promotionByIdApi.state.isLoading ||
+            allPromotionsApi.state.isLoading || createPromotionApi.state.isLoading ||
+            updatePromotionApi.state.isLoading || deletePromotionApi.state.isLoading,
+        error: availablePromotionsApi.state.isError || myPromotionsApi.state.isError ||
+            claimPromotionApi.state.isError || promotionByIdApi.state.isError ||
+            allPromotionsApi.state.isError || createPromotionApi.state.isError ||
+            updatePromotionApi.state.isError || deletePromotionApi.state.isError,
 
         getAvailable,
         getMyPromotions,
         claimPromotion,
         getById,
         getAll,
+        getActive,
         create,
         update,
         remove,
@@ -146,7 +170,11 @@ export const usePromotion = () => {
 
         resetAvailable: availablePromotionsApi.reset,
         resetMyPromotions: myPromotionsApi.reset,
+        resetPromotion: promotionByIdApi.reset,
+        resetAllPromotions: allPromotionsApi.reset,
         refetchAvailable: availablePromotionsApi.refetch,
         refetchMyPromotions: myPromotionsApi.refetch,
+        refetchPromotion: promotionByIdApi.refetch,
+        refetchAllPromotions: allPromotionsApi.refetch,
     };
 };

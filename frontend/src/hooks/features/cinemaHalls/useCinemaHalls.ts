@@ -13,6 +13,9 @@ export const useCinemaHalls = () => {
     const hallByIdApi = useApi<CinemaHallResponse>();
     const hallWithSeatsApi = useApi<CinemaHallWithSeatsResponse>();
     const hallLayoutApi = useApi<HallLayoutResponse>();
+    const createHallApi = useApi<CinemaHallResponse>();
+    const updateHallApi = useApi<CinemaHallResponse>();
+    const deleteHallApi = useApi<void>();
 
     const getAllHalls = useCallback(async (name?: string) => {
         return allHallsApi.callApi(
@@ -59,8 +62,7 @@ export const useCinemaHalls = () => {
     }, [hallLayoutApi]);
 
     const createHall = useCallback(async (request: CinemaHallRequest) => {
-        const api = useApi<CinemaHallResponse>();
-        return api.callApi(
+        return createHallApi.callApi(
             () => cinemaHallApi.admin.create(request),
             {
                 successMessage: 'Cinema hall created successfully',
@@ -69,11 +71,10 @@ export const useCinemaHalls = () => {
                 },
             }
         );
-    }, [allHallsApi]);
+    }, [createHallApi, allHallsApi]);
 
     const updateHall = useCallback(async (id: number, request: CinemaHallRequest) => {
-        const api = useApi<CinemaHallResponse>();
-        return api.callApi(
+        return updateHallApi.callApi(
             () => cinemaHallApi.admin.update(id, request),
             {
                 successMessage: 'Cinema hall updated successfully',
@@ -85,11 +86,10 @@ export const useCinemaHalls = () => {
                 },
             }
         );
-    }, [allHallsApi, hallByIdApi, hallWithSeatsApi, hallLayoutApi]);
+    }, [updateHallApi, allHallsApi, hallByIdApi, hallWithSeatsApi, hallLayoutApi]);
 
     const deleteHall = useCallback(async (id: number) => {
-        const api = useApi<void>();
-        return api.callApi(
+        return deleteHallApi.callApi(
             () => cinemaHallApi.admin.delete(id),
             {
                 successMessage: 'Cinema hall deleted successfully',
@@ -98,14 +98,18 @@ export const useCinemaHalls = () => {
                 },
             }
         );
-    }, [allHallsApi]);
+    }, [deleteHallApi, allHallsApi]);
 
     const clearCache = useCallback(() => {
         allHallsApi.invalidateCache();
         hallByIdApi.invalidateCache();
         hallWithSeatsApi.invalidateCache();
         hallLayoutApi.invalidateCache();
-    }, [allHallsApi, hallByIdApi, hallWithSeatsApi, hallLayoutApi]);
+        createHallApi.invalidateCache();
+        updateHallApi.invalidateCache();
+        deleteHallApi.invalidateCache();
+    }, [allHallsApi, hallByIdApi, hallWithSeatsApi, hallLayoutApi,
+        createHallApi, updateHallApi, deleteHallApi]);
 
     return {
         allHalls: allHallsApi.data || [],
@@ -114,9 +118,13 @@ export const useCinemaHalls = () => {
         hallLayout: hallLayoutApi.data,
 
         loading: allHallsApi.state.isLoading || hallByIdApi.state.isLoading ||
-            hallWithSeatsApi.state.isLoading || hallLayoutApi.state.isLoading,
+            hallWithSeatsApi.state.isLoading || hallLayoutApi.state.isLoading ||
+            createHallApi.state.isLoading || updateHallApi.state.isLoading ||
+            deleteHallApi.state.isLoading,
         error: allHallsApi.state.isError || hallByIdApi.state.isError ||
-            hallWithSeatsApi.state.isError || hallLayoutApi.state.isError,
+            hallWithSeatsApi.state.isError || hallLayoutApi.state.isError ||
+            createHallApi.state.isError || updateHallApi.state.isError ||
+            deleteHallApi.state.isError,
 
         getAllHalls,
         getHallById,

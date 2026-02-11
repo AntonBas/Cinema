@@ -16,6 +16,11 @@ export const useMovies = () => {
     const movieBySlugApi = useApi<MovieDetailResponse>();
     const currentlyShowingApi = useApi<PageResponse<MovieCardResponse>>();
     const upcomingApi = useApi<PageResponse<MovieCardResponse>>();
+    const searchMoviesApi = useApi<MovieSessionSearchResponse[]>();
+    const createMovieApi = useApi<MovieDetailResponse>();
+    const updateMovieApi = useApi<MovieDetailResponse>();
+    const deleteMovieApi = useApi<void>();
+    const adminMoviesApi = useApi<PageResponse<MovieCardResponse>>();
 
     const getAll = useCallback(async (params?: any) => {
         return allMoviesApi.callApi(
@@ -73,8 +78,7 @@ export const useMovies = () => {
     }, [movieBySlugApi]);
 
     const searchMoviesForSession = useCallback(async (search?: string) => {
-        const api = useApi<MovieSessionSearchResponse[]>();
-        return api.callApi(
+        return searchMoviesApi.callApi(
             () => movieApi.public.searchMoviesForSession(search),
             {
                 cacheKey: `movies_search_${search || 'all'}`,
@@ -83,11 +87,10 @@ export const useMovies = () => {
                 showErrorNotification: false,
             }
         );
-    }, []);
+    }, [searchMoviesApi]);
 
     const create = useCallback(async (request: MovieCreateRequest) => {
-        const api = useApi<MovieDetailResponse>();
-        return api.callApi(
+        return createMovieApi.callApi(
             () => movieApi.admin.create(request),
             {
                 successMessage: 'Movie created successfully',
@@ -98,11 +101,10 @@ export const useMovies = () => {
                 },
             }
         );
-    }, [allMoviesApi, currentlyShowingApi, upcomingApi]);
+    }, [createMovieApi, allMoviesApi, currentlyShowingApi, upcomingApi]);
 
     const update = useCallback(async (id: number, request: MovieUpdateRequest) => {
-        const api = useApi<MovieDetailResponse>();
-        return api.callApi(
+        return updateMovieApi.callApi(
             () => movieApi.admin.update(id, request),
             {
                 successMessage: 'Movie updated successfully',
@@ -115,11 +117,10 @@ export const useMovies = () => {
                 },
             }
         );
-    }, [movieByIdApi, movieBySlugApi, allMoviesApi, currentlyShowingApi, upcomingApi]);
+    }, [updateMovieApi, movieByIdApi, movieBySlugApi, allMoviesApi, currentlyShowingApi, upcomingApi]);
 
     const remove = useCallback(async (id: number) => {
-        const api = useApi<void>();
-        return api.callApi(
+        return deleteMovieApi.callApi(
             () => movieApi.admin.delete(id),
             {
                 successMessage: 'Movie deleted successfully',
@@ -132,18 +133,17 @@ export const useMovies = () => {
                 },
             }
         );
-    }, [movieByIdApi, movieBySlugApi, allMoviesApi, currentlyShowingApi, upcomingApi]);
+    }, [deleteMovieApi, movieByIdApi, movieBySlugApi, allMoviesApi, currentlyShowingApi, upcomingApi]);
 
     const getAdminMovies = useCallback(async (params?: any) => {
-        const api = useApi<PageResponse<MovieCardResponse>>();
-        return api.callApi(
+        return adminMoviesApi.callApi(
             () => movieApi.admin.getMovies(params),
             {
                 cacheKey: `movies_admin_${JSON.stringify(params)}`,
                 cacheTime: 2 * 60 * 1000,
             }
         );
-    }, []);
+    }, [adminMoviesApi]);
 
     const clearCache = useCallback(() => {
         allMoviesApi.invalidateCache();
@@ -151,7 +151,13 @@ export const useMovies = () => {
         movieBySlugApi.invalidateCache();
         currentlyShowingApi.invalidateCache();
         upcomingApi.invalidateCache();
-    }, [allMoviesApi, movieByIdApi, movieBySlugApi, currentlyShowingApi, upcomingApi]);
+        searchMoviesApi.invalidateCache();
+        createMovieApi.invalidateCache();
+        updateMovieApi.invalidateCache();
+        deleteMovieApi.invalidateCache();
+        adminMoviesApi.invalidateCache();
+    }, [allMoviesApi, movieByIdApi, movieBySlugApi, currentlyShowingApi, upcomingApi,
+        searchMoviesApi, createMovieApi, updateMovieApi, deleteMovieApi, adminMoviesApi]);
 
     const getPosterUrl = useCallback((id: number): string => {
         return movieApi.public.getPosterUrl(id);
@@ -163,13 +169,19 @@ export const useMovies = () => {
         upcoming: upcomingApi.data?.content || [],
         movie: movieByIdApi.data || movieBySlugApi.data,
         movieBySlug: movieBySlugApi.data,
+        searchResults: searchMoviesApi.data || [],
+        adminMovies: adminMoviesApi.data?.content || [],
 
         loading: allMoviesApi.state.isLoading || movieByIdApi.state.isLoading ||
             movieBySlugApi.state.isLoading || currentlyShowingApi.state.isLoading ||
-            upcomingApi.state.isLoading,
+            upcomingApi.state.isLoading || searchMoviesApi.state.isLoading ||
+            createMovieApi.state.isLoading || updateMovieApi.state.isLoading ||
+            deleteMovieApi.state.isLoading || adminMoviesApi.state.isLoading,
         error: allMoviesApi.state.isError || movieByIdApi.state.isError ||
             movieBySlugApi.state.isError || currentlyShowingApi.state.isError ||
-            upcomingApi.state.isError,
+            upcomingApi.state.isError || searchMoviesApi.state.isError ||
+            createMovieApi.state.isError || updateMovieApi.state.isError ||
+            deleteMovieApi.state.isError || adminMoviesApi.state.isError,
 
         getAll,
         getCurrentlyShowing,
@@ -196,5 +208,6 @@ export const useMovies = () => {
         pagination: allMoviesApi.data,
         currentlyShowingPagination: currentlyShowingApi.data,
         upcomingPagination: upcomingApi.data,
+        adminMoviesPagination: adminMoviesApi.data,
     };
 };

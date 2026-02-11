@@ -9,6 +9,8 @@ export const useTickets = () => {
     const upcomingTicketsApi = useApi<PageResponse<TicketResponse>>();
     const ticketByIdApi = useApi<TicketResponse>();
     const ticketByCodeApi = useApi<TicketResponse>();
+    const validateTicketApi = useApi<void>();
+    const qrCodeApi = useApi<Blob>();
 
     const getUserTickets = useCallback(async (params?: any) => {
         return userTicketsApi.callApi(
@@ -55,27 +57,18 @@ export const useTickets = () => {
     }, [ticketByCodeApi]);
 
     const validateTicket = useCallback(async (ticketCode: string) => {
-        const api = useApi<void>();
-        return api.callApi(
+        return validateTicketApi.callApi(
             () => ticketApi.validate(ticketCode),
             {
                 successMessage: 'Ticket validated successfully',
+                showErrorNotification: true,
             }
         );
-    }, []);
+    }, [validateTicketApi]);
 
     const getQRCode = useCallback(async (ticketCode: string) => {
-        const api = useApi<Blob>();
-        return api.callApi(
-            async () => {
-                const response = await fetch(`/api/tickets/${ticketCode}/qr`, {
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
-                    },
-                });
-                if (!response.ok) throw new Error('Failed to fetch QR code');
-                return response.blob();
-            },
+        return qrCodeApi.callApi(
+            () => ticketApi.getQRCode(ticketCode),
             {
                 cacheKey: `qr_code_${ticketCode}`,
                 cacheTime: 24 * 60 * 60 * 1000,
@@ -83,26 +76,32 @@ export const useTickets = () => {
                 showErrorNotification: false,
             }
         );
-    }, []);
+    }, [qrCodeApi]);
 
     const clearCache = useCallback(() => {
         userTicketsApi.invalidateCache();
         upcomingTicketsApi.invalidateCache();
         ticketByIdApi.invalidateCache();
         ticketByCodeApi.invalidateCache();
-    }, [userTicketsApi, upcomingTicketsApi, ticketByIdApi, ticketByCodeApi]);
+        validateTicketApi.invalidateCache();
+        qrCodeApi.invalidateCache();
+    }, [userTicketsApi, upcomingTicketsApi, ticketByIdApi, ticketByCodeApi,
+        validateTicketApi, qrCodeApi]);
 
     return {
         userTickets: userTicketsApi.data?.content || [],
         upcomingTickets: upcomingTicketsApi.data?.content || [],
         ticket: ticketByIdApi.data || ticketByCodeApi.data,
+        qrCode: qrCodeApi.data,
         userPagination: userTicketsApi.data,
         upcomingPagination: upcomingTicketsApi.data,
 
         loading: userTicketsApi.state.isLoading || upcomingTicketsApi.state.isLoading ||
-            ticketByIdApi.state.isLoading || ticketByCodeApi.state.isLoading,
+            ticketByIdApi.state.isLoading || ticketByCodeApi.state.isLoading ||
+            validateTicketApi.state.isLoading || qrCodeApi.state.isLoading,
         error: userTicketsApi.state.isError || upcomingTicketsApi.state.isError ||
-            ticketByIdApi.state.isError || ticketByCodeApi.state.isError,
+            ticketByIdApi.state.isError || ticketByCodeApi.state.isError ||
+            validateTicketApi.state.isError || qrCodeApi.state.isError,
 
         getUserTickets,
         getUpcomingTickets,

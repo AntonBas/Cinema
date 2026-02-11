@@ -13,6 +13,10 @@ export const useAuth = () => {
     const registerApi = useApi<User>();
     const currentUserApi = useApi<User>();
     const checkEmailApi = useApi<boolean>();
+    const forgotPasswordApi = useApi<void>();
+    const resetPasswordApi = useApi<void>();
+    const verifyEmailApi = useApi<{ message: string }>();
+    const confirmEmailChangeApi = useApi<User>();
 
     const login = useCallback(async (credentials: LoginRequest) => {
         return loginApi.callApi(
@@ -62,38 +66,34 @@ export const useAuth = () => {
     }, [checkEmailApi]);
 
     const forgotPassword = useCallback(async (email: string) => {
-        const api = useApi<void>();
-        return api.callApi(
+        return forgotPasswordApi.callApi(
             () => authApi.forgotPassword(email),
             {
                 successMessage: 'Password reset instructions sent to your email',
             }
         );
-    }, []);
+    }, [forgotPasswordApi]);
 
     const resetPassword = useCallback(async (token: string, newPassword: string) => {
-        const api = useApi<void>();
-        return api.callApi(
+        return resetPasswordApi.callApi(
             () => authApi.resetPassword(token, newPassword),
             {
                 successMessage: 'Password has been reset successfully',
             }
         );
-    }, []);
+    }, [resetPasswordApi]);
 
     const verifyEmail = useCallback(async (token: string) => {
-        const api = useApi<{ message: string }>();
-        return api.callApi(
+        return verifyEmailApi.callApi(
             () => authApi.verifyEmail(token),
             {
                 successMessage: 'Email verified successfully',
             }
         );
-    }, []);
+    }, [verifyEmailApi]);
 
     const confirmEmailChange = useCallback(async (token: string) => {
-        const api = useApi<User>();
-        return api.callApi(
+        return confirmEmailChangeApi.callApi(
             () => authApi.confirmEmailChange(token),
             {
                 successMessage: 'Email changed successfully',
@@ -102,7 +102,7 @@ export const useAuth = () => {
                 },
             }
         );
-    }, [currentUserApi]);
+    }, [confirmEmailChangeApi, currentUserApi]);
 
     const logout = useCallback(() => {
         localStorage.removeItem('authToken');
@@ -110,22 +110,36 @@ export const useAuth = () => {
         currentUserApi.invalidateCache();
         checkEmailApi.invalidateCache();
         registerApi.invalidateCache();
-    }, [loginApi, currentUserApi, checkEmailApi, registerApi]);
+        forgotPasswordApi.invalidateCache();
+        resetPasswordApi.invalidateCache();
+        verifyEmailApi.invalidateCache();
+        confirmEmailChangeApi.invalidateCache();
+    }, [loginApi, currentUserApi, checkEmailApi, registerApi, forgotPasswordApi,
+        resetPasswordApi, verifyEmailApi, confirmEmailChangeApi]);
 
     const clearAuthCache = useCallback(() => {
         loginApi.invalidateCache();
         currentUserApi.invalidateCache();
         checkEmailApi.invalidateCache();
         registerApi.invalidateCache();
-    }, [loginApi, currentUserApi, checkEmailApi, registerApi]);
+        forgotPasswordApi.invalidateCache();
+        resetPasswordApi.invalidateCache();
+        verifyEmailApi.invalidateCache();
+        confirmEmailChangeApi.invalidateCache();
+    }, [loginApi, currentUserApi, checkEmailApi, registerApi, forgotPasswordApi,
+        resetPasswordApi, verifyEmailApi, confirmEmailChangeApi]);
 
     return {
         user: currentUserApi.data,
 
         loading: currentUserApi.state.isLoading || loginApi.state.isLoading ||
-            registerApi.state.isLoading || checkEmailApi.state.isLoading,
+            registerApi.state.isLoading || checkEmailApi.state.isLoading ||
+            forgotPasswordApi.state.isLoading || resetPasswordApi.state.isLoading ||
+            verifyEmailApi.state.isLoading || confirmEmailChangeApi.state.isLoading,
         error: currentUserApi.state.isError || loginApi.state.isError ||
-            registerApi.state.isError || checkEmailApi.state.isError,
+            registerApi.state.isError || checkEmailApi.state.isError ||
+            forgotPasswordApi.state.isError || resetPasswordApi.state.isError ||
+            verifyEmailApi.state.isError || confirmEmailChangeApi.state.isError,
         isAuthenticating: loginApi.state.isLoading,
         isRegistering: registerApi.state.isLoading,
         isCheckingEmail: checkEmailApi.state.isLoading,

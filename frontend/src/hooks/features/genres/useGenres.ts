@@ -8,6 +8,12 @@ export const useGenres = () => {
     const allGenresApi = useApi<PageResponse<GenreResponse>>();
     const genreByIdApi = useApi<GenreResponse>();
     const popularGenresApi = useApi<GenreResponse[]>();
+    const publicPopularGenresApi = useApi<GenreResponse[]>();
+    const genreByIdsApi = useApi<GenreResponse[]>();
+    const createGenreApi = useApi<GenreResponse>();
+    const updateGenreApi = useApi<GenreResponse>();
+    const deleteGenreApi = useApi<void>();
+    const adminPopularGenresApi = useApi<PageResponse<GenreResponse>>();
 
     const getAll = useCallback(async (params?: any) => {
         return allGenresApi.callApi(
@@ -21,8 +27,7 @@ export const useGenres = () => {
     }, [allGenresApi]);
 
     const getPopular = useCallback(async (query?: string, limit: number = 10) => {
-        const api = useApi<GenreResponse[]>();
-        return api.callApi(
+        return publicPopularGenresApi.callApi(
             () => genreApi.public.getPopular(query, limit),
             {
                 cacheKey: `genres_popular_${query || 'all'}_${limit}`,
@@ -30,7 +35,7 @@ export const useGenres = () => {
                 showErrorNotification: false,
             }
         );
-    }, []);
+    }, [publicPopularGenresApi]);
 
     const getById = useCallback(async (id: number) => {
         return genreByIdApi.callApi(
@@ -44,8 +49,7 @@ export const useGenres = () => {
     }, [genreByIdApi]);
 
     const getByIds = useCallback(async (ids: number[]) => {
-        const api = useApi<GenreResponse[]>();
-        return api.callApi(
+        return genreByIdsApi.callApi(
             () => genreApi.public.getByIds(ids),
             {
                 cacheKey: `genres_ids_${ids.join('_')}`,
@@ -53,72 +57,85 @@ export const useGenres = () => {
                 showErrorNotification: false,
             }
         );
-    }, []);
+    }, [genreByIdsApi]);
 
     const create = useCallback(async (request: GenreRequest) => {
-        const api = useApi<GenreResponse>();
-        return api.callApi(
+        return createGenreApi.callApi(
             () => genreApi.admin.create(request),
             {
                 successMessage: 'Genre created successfully',
                 onSuccess: () => {
                     allGenresApi.invalidateCache();
+                    publicPopularGenresApi.invalidateCache();
                 },
             }
         );
-    }, [allGenresApi]);
+    }, [createGenreApi, allGenresApi, publicPopularGenresApi]);
 
     const update = useCallback(async (id: number, request: GenreRequest) => {
-        const api = useApi<GenreResponse>();
-        return api.callApi(
+        return updateGenreApi.callApi(
             () => genreApi.admin.update(id, request),
             {
                 successMessage: 'Genre updated successfully',
                 onSuccess: () => {
                     allGenresApi.invalidateCache();
                     genreByIdApi.invalidateCache(`genre_${id}`);
+                    publicPopularGenresApi.invalidateCache();
                 },
             }
         );
-    }, [allGenresApi, genreByIdApi]);
+    }, [updateGenreApi, allGenresApi, genreByIdApi, publicPopularGenresApi]);
 
     const remove = useCallback(async (id: number) => {
-        const api = useApi<void>();
-        return api.callApi(
+        return deleteGenreApi.callApi(
             () => genreApi.admin.delete(id),
             {
                 successMessage: 'Genre deleted successfully',
                 onSuccess: () => {
                     allGenresApi.invalidateCache();
+                    publicPopularGenresApi.invalidateCache();
                 },
             }
         );
-    }, [allGenresApi]);
+    }, [deleteGenreApi, allGenresApi, publicPopularGenresApi]);
 
     const getAdminPopular = useCallback(async (params?: any) => {
-        const api = useApi<PageResponse<GenreResponse>>();
-        return api.callApi(
+        return adminPopularGenresApi.callApi(
             () => genreApi.admin.getPopular(params),
             {
                 cacheKey: `genres_admin_popular_${JSON.stringify(params)}`,
                 cacheTime: 5 * 60 * 1000,
             }
         );
-    }, []);
+    }, [adminPopularGenresApi]);
 
     const clearCache = useCallback(() => {
         allGenresApi.invalidateCache();
         genreByIdApi.invalidateCache();
         popularGenresApi.invalidateCache();
-    }, [allGenresApi, genreByIdApi, popularGenresApi]);
+        publicPopularGenresApi.invalidateCache();
+        genreByIdsApi.invalidateCache();
+        createGenreApi.invalidateCache();
+        updateGenreApi.invalidateCache();
+        deleteGenreApi.invalidateCache();
+        adminPopularGenresApi.invalidateCache();
+    }, [allGenresApi, genreByIdApi, popularGenresApi, publicPopularGenresApi,
+        genreByIdsApi, createGenreApi, updateGenreApi, deleteGenreApi, adminPopularGenresApi]);
 
     return {
         allGenres: allGenresApi.data?.content || [],
         genre: genreByIdApi.data,
-        popularGenres: popularGenresApi.data || [],
+        popularGenres: publicPopularGenresApi.data || [],
+        adminPopularGenres: adminPopularGenresApi.data?.content || [],
 
-        loading: allGenresApi.state.isLoading || genreByIdApi.state.isLoading || popularGenresApi.state.isLoading,
-        error: allGenresApi.state.isError || genreByIdApi.state.isError || popularGenresApi.state.isError,
+        loading: allGenresApi.state.isLoading || genreByIdApi.state.isLoading ||
+            publicPopularGenresApi.state.isLoading || genreByIdsApi.state.isLoading ||
+            createGenreApi.state.isLoading || updateGenreApi.state.isLoading ||
+            deleteGenreApi.state.isLoading || adminPopularGenresApi.state.isLoading,
+        error: allGenresApi.state.isError || genreByIdApi.state.isError ||
+            publicPopularGenresApi.state.isError || genreByIdsApi.state.isError ||
+            createGenreApi.state.isError || updateGenreApi.state.isError ||
+            deleteGenreApi.state.isError || adminPopularGenresApi.state.isError,
 
         getAll,
         getPopular,
@@ -132,7 +149,7 @@ export const useGenres = () => {
 
         resetAllGenres: allGenresApi.reset,
         resetGenre: genreByIdApi.reset,
-        resetPopularGenres: popularGenresApi.reset,
+        resetPopularGenres: publicPopularGenresApi.reset,
         refetchAllGenres: allGenresApi.refetch,
         refetchGenre: genreByIdApi.refetch,
 

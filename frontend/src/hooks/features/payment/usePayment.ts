@@ -10,16 +10,16 @@ import { useApi } from '@/hooks/common/useApi';
 export const usePayment = () => {
     const paymentByIdApi = useApi<PaymentResponse>();
     const liqPayDataApi = useApi<PaymentLiqPayDataResponse>();
+    const createPaymentApi = useApi<PaymentResponse>();
 
     const create = useCallback(async (request: PaymentCreateRequest) => {
-        const api = useApi<PaymentResponse>();
-        return api.callApi(
+        return createPaymentApi.callApi(
             () => paymentApi.create(request),
             {
                 successMessage: 'Payment initialized successfully',
             }
         );
-    }, []);
+    }, [createPaymentApi]);
 
     const getById = useCallback(async (paymentId: number) => {
         return paymentByIdApi.callApi(
@@ -46,14 +46,17 @@ export const usePayment = () => {
     const clearCache = useCallback(() => {
         paymentByIdApi.invalidateCache();
         liqPayDataApi.invalidateCache();
-    }, [paymentByIdApi, liqPayDataApi]);
+        createPaymentApi.invalidateCache();
+    }, [paymentByIdApi, liqPayDataApi, createPaymentApi]);
 
     return {
         payment: paymentByIdApi.data,
         liqPayData: liqPayDataApi.data,
 
-        loading: paymentByIdApi.state.isLoading || liqPayDataApi.state.isLoading,
-        error: paymentByIdApi.state.isError || liqPayDataApi.state.isError,
+        loading: paymentByIdApi.state.isLoading || liqPayDataApi.state.isLoading ||
+            createPaymentApi.state.isLoading,
+        error: paymentByIdApi.state.isError || liqPayDataApi.state.isError ||
+            createPaymentApi.state.isError,
 
         create,
         getById,
@@ -62,6 +65,7 @@ export const usePayment = () => {
 
         resetPayment: paymentByIdApi.reset,
         resetLiqPayData: liqPayDataApi.reset,
+        resetCreatePayment: createPaymentApi.reset,
         refetchPayment: paymentByIdApi.refetch,
         refetchLiqPayData: liqPayDataApi.refetch,
     };

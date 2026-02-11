@@ -44,27 +44,29 @@ export const useSeatAvailability = (sessionId: number, maxSeats?: number) => {
     }, [seatAvailabilityApiHook, sessionId]);
 
     const selectSeat = useCallback((seat: SeatInfo, ticketTypeId?: number) => {
-        if (maxSeats && selectedSeats.length >= maxSeats) {
-            throw new Error(`Maximum ${maxSeats} seats allowed`);
-        }
+        setSelectedSeats(prev => {
+            if (maxSeats && prev.length >= maxSeats) {
+                throw new Error(`Maximum ${maxSeats} seats allowed`);
+            }
 
-        const ticketPrice = seat.ticketPrices?.find(tp =>
-            ticketTypeId ? tp.ticketTypeId === ticketTypeId : true
-        );
+            const ticketPrice = seat.ticketPrices?.find(tp =>
+                ticketTypeId ? tp.ticketTypeId === ticketTypeId : true
+            );
 
-        if (!ticketPrice) {
-            throw new Error('No ticket price available');
-        }
+            if (!ticketPrice) {
+                throw new Error('No ticket price available');
+            }
 
-        const selectedSeat: SelectedSeat = {
-            seat,
-            ticketTypeId: ticketPrice.ticketTypeId,
-            price: parseFloat(ticketPrice.finalPrice),
-            ticketTypeName: ticketPrice.ticketTypeName,
-        };
+            const selectedSeat: SelectedSeat = {
+                seat,
+                ticketTypeId: ticketPrice.ticketTypeId,
+                price: parseFloat(ticketPrice.finalPrice),
+                ticketTypeName: ticketPrice.ticketTypeName,
+            };
 
-        setSelectedSeats(prev => [...prev, selectedSeat]);
-    }, [maxSeats, selectedSeats.length]);
+            return [...prev, selectedSeat];
+        });
+    }, [maxSeats]);
 
     const deselectSeat = useCallback((seatId: number) => {
         setSelectedSeats(prev => prev.filter(s => s.seat.id !== seatId));
@@ -95,10 +97,6 @@ export const useSeatAvailability = (sessionId: number, maxSeats?: number) => {
         setSelectedSeats([]);
     }, []);
 
-    const calculateTotalPrice = useCallback(() => {
-        return selectedSeats.reduce((sum, seat) => sum + seat.price, 0);
-    }, [selectedSeats]);
-
     const isSeatSelected = useCallback((seatId: number) => {
         return selectedSeats.some(s => s.seat.id === seatId);
     }, [selectedSeats]);
@@ -107,7 +105,9 @@ export const useSeatAvailability = (sessionId: number, maxSeats?: number) => {
         return selectedSeats.find(s => s.seat.id === seatId);
     }, [selectedSeats]);
 
-    const totalPrice = useMemo(() => calculateTotalPrice(), [calculateTotalPrice]);
+    const totalPrice = useMemo(() => {
+        return selectedSeats.reduce((sum, seat) => sum + seat.price, 0);
+    }, [selectedSeats]);
 
     return {
         data: seatAvailabilityApiHook.data,

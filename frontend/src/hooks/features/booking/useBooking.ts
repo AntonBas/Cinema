@@ -10,10 +10,11 @@ import { useApi } from '@/hooks/common/useApi';
 export const useBooking = () => {
     const bookingByIdApi = useApi<BookingResponse>();
     const userBookingsApi = useApi<PageResponse<BookingResponse>>();
+    const createBookingApi = useApi<BookingResponse>();
+    const cancelBookingApi = useApi<void>();
 
     const create = useCallback(async (request: BookingCreateRequest) => {
-        const api = useApi<BookingResponse>();
-        return api.callApi(
+        return createBookingApi.callApi(
             () => bookingApi.create(request),
             {
                 successMessage: 'Booking created successfully',
@@ -22,7 +23,7 @@ export const useBooking = () => {
                 },
             }
         );
-    }, [userBookingsApi]);
+    }, [createBookingApi, userBookingsApi]);
 
     const getById = useCallback(async (bookingId: number) => {
         return bookingByIdApi.callApi(
@@ -47,8 +48,7 @@ export const useBooking = () => {
     }, [userBookingsApi]);
 
     const cancel = useCallback(async (bookingId: number) => {
-        const api = useApi<void>();
-        return api.callApi(
+        return cancelBookingApi.callApi(
             () => bookingApi.cancel(bookingId),
             {
                 successMessage: 'Booking cancelled successfully',
@@ -58,20 +58,24 @@ export const useBooking = () => {
                 },
             }
         );
-    }, [bookingByIdApi, userBookingsApi]);
+    }, [cancelBookingApi, bookingByIdApi, userBookingsApi]);
 
     const clearCache = useCallback(() => {
         bookingByIdApi.invalidateCache();
         userBookingsApi.invalidateCache();
-    }, [bookingByIdApi, userBookingsApi]);
+        createBookingApi.invalidateCache();
+        cancelBookingApi.invalidateCache();
+    }, [bookingByIdApi, userBookingsApi, createBookingApi, cancelBookingApi]);
 
     return {
         booking: bookingByIdApi.data,
         bookings: userBookingsApi.data?.content || [],
         pagination: userBookingsApi.data,
 
-        loading: bookingByIdApi.state.isLoading || userBookingsApi.state.isLoading,
-        error: bookingByIdApi.state.isError || userBookingsApi.state.isError,
+        loading: bookingByIdApi.state.isLoading || userBookingsApi.state.isLoading ||
+            createBookingApi.state.isLoading || cancelBookingApi.state.isLoading,
+        error: bookingByIdApi.state.isError || userBookingsApi.state.isError ||
+            createBookingApi.state.isError || cancelBookingApi.state.isError,
 
         create,
         getById,

@@ -9,6 +9,11 @@ export const useSeats = () => {
     const seatByPositionApi = useApi<SeatResponse>();
     const checkAvailabilityApi = useApi<boolean>();
     const countSeatsApi = useApi<number>();
+    const seatsByTypeApi = useApi<SeatResponse[]>();
+    const activeSeatsApi = useApi<SeatResponse[]>();
+    const distinctRowsApi = useApi<number[]>();
+    const updateSeatTypeApi = useApi<SeatResponse>();
+    const setSeatStatusApi = useApi<SeatResponse>();
 
     const getSeatsByHall = useCallback(async (hallId: number) => {
         return seatsByHallApi.callApi(
@@ -67,8 +72,7 @@ export const useSeats = () => {
     }, [countSeatsApi]);
 
     const getSeatsByType = useCallback(async (hallId: number, seatType: SeatType) => {
-        const api = useApi<SeatResponse[]>();
-        return api.callApi(
+        return seatsByTypeApi.callApi(
             () => seatApi.getSeatsByType(hallId, seatType),
             {
                 cacheKey: `seats_type_${hallId}_${seatType}`,
@@ -76,11 +80,10 @@ export const useSeats = () => {
                 showErrorNotification: false,
             }
         );
-    }, []);
+    }, [seatsByTypeApi]);
 
     const getActiveSeats = useCallback(async (hallId: number) => {
-        const api = useApi<SeatResponse[]>();
-        return api.callApi(
+        return activeSeatsApi.callApi(
             () => seatApi.getActiveSeats(hallId),
             {
                 cacheKey: `active_seats_${hallId}`,
@@ -88,11 +91,10 @@ export const useSeats = () => {
                 showErrorNotification: false,
             }
         );
-    }, []);
+    }, [activeSeatsApi]);
 
     const getDistinctRows = useCallback(async (hallId: number) => {
-        const api = useApi<number[]>();
-        return api.callApi(
+        return distinctRowsApi.callApi(
             () => seatApi.getDistinctRows(hallId),
             {
                 cacheKey: `rows_${hallId}`,
@@ -100,35 +102,36 @@ export const useSeats = () => {
                 showErrorNotification: false,
             }
         );
-    }, []);
+    }, [distinctRowsApi]);
 
     const updateSeatType = useCallback(async (hallId: number, seatId: number, seatType: SeatType) => {
-        const api = useApi<SeatResponse>();
-        return api.callApi(
+        return updateSeatTypeApi.callApi(
             () => seatApi.admin.updateSeatType(hallId, seatId, seatType),
             {
                 successMessage: 'Seat type updated successfully',
                 onSuccess: () => {
                     seatsByHallApi.invalidateCache(`seats_hall_${hallId}`);
                     seatByIdApi.invalidateCache(`seat_${hallId}_${seatId}`);
+                    seatsByTypeApi.invalidateCache();
+                    activeSeatsApi.invalidateCache();
                 },
             }
         );
-    }, [seatsByHallApi, seatByIdApi]);
+    }, [updateSeatTypeApi, seatsByHallApi, seatByIdApi, seatsByTypeApi, activeSeatsApi]);
 
     const setSeatStatus = useCallback(async (hallId: number, seatId: number, active: boolean) => {
-        const api = useApi<SeatResponse>();
-        return api.callApi(
+        return setSeatStatusApi.callApi(
             () => seatApi.admin.setSeatStatus(hallId, seatId, active),
             {
                 successMessage: active ? 'Seat activated successfully' : 'Seat deactivated successfully',
                 onSuccess: () => {
                     seatsByHallApi.invalidateCache(`seats_hall_${hallId}`);
                     seatByIdApi.invalidateCache(`seat_${hallId}_${seatId}`);
+                    activeSeatsApi.invalidateCache();
                 },
             }
         );
-    }, [seatsByHallApi, seatByIdApi]);
+    }, [setSeatStatusApi, seatsByHallApi, seatByIdApi, activeSeatsApi]);
 
     const clearSeatsCache = useCallback((hallId?: number) => {
         if (hallId) {
@@ -139,15 +142,35 @@ export const useSeats = () => {
             seatByPositionApi.invalidateCache();
             checkAvailabilityApi.invalidateCache();
             countSeatsApi.invalidateCache();
+            seatsByTypeApi.invalidateCache();
+            activeSeatsApi.invalidateCache();
+            distinctRowsApi.invalidateCache();
+            updateSeatTypeApi.invalidateCache();
+            setSeatStatusApi.invalidateCache();
         }
-    }, [seatsByHallApi, seatByIdApi, seatByPositionApi, checkAvailabilityApi, countSeatsApi]);
+    }, [seatsByHallApi, seatByIdApi, seatByPositionApi, checkAvailabilityApi,
+        countSeatsApi, seatsByTypeApi, activeSeatsApi, distinctRowsApi,
+        updateSeatTypeApi, setSeatStatusApi]);
 
     return {
         seats: seatsByHallApi.data || [],
         seat: seatByIdApi.data || seatByPositionApi.data,
+        seatsByType: seatsByTypeApi.data || [],
+        activeSeats: activeSeatsApi.data || [],
+        rows: distinctRowsApi.data || [],
+        seatAvailability: checkAvailabilityApi.data,
+        seatsCount: countSeatsApi.data,
 
-        loading: seatsByHallApi.state.isLoading || seatByIdApi.state.isLoading || seatByPositionApi.state.isLoading,
-        error: seatsByHallApi.state.isError || seatByIdApi.state.isError || seatByPositionApi.state.isError,
+        loading: seatsByHallApi.state.isLoading || seatByIdApi.state.isLoading ||
+            seatByPositionApi.state.isLoading || checkAvailabilityApi.state.isLoading ||
+            countSeatsApi.state.isLoading || seatsByTypeApi.state.isLoading ||
+            activeSeatsApi.state.isLoading || distinctRowsApi.state.isLoading ||
+            updateSeatTypeApi.state.isLoading || setSeatStatusApi.state.isLoading,
+        error: seatsByHallApi.state.isError || seatByIdApi.state.isError ||
+            seatByPositionApi.state.isError || checkAvailabilityApi.state.isError ||
+            countSeatsApi.state.isError || seatsByTypeApi.state.isError ||
+            activeSeatsApi.state.isError || distinctRowsApi.state.isError ||
+            updateSeatTypeApi.state.isError || setSeatStatusApi.state.isError,
 
         getSeatsByHall,
         getSeatById,
@@ -163,6 +186,9 @@ export const useSeats = () => {
 
         resetSeats: seatsByHallApi.reset,
         resetSeat: seatByIdApi.reset,
+        resetSeatsByType: seatsByTypeApi.reset,
+        resetActiveSeats: activeSeatsApi.reset,
         refetchSeats: seatsByHallApi.refetch,
+        refetchSeat: seatByIdApi.refetch,
     };
 };
