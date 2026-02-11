@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { PersonTabs } from './PersonTabs';
-import { PersonList } from './PersonList';
-import { PersonForm } from './PersonForm';
+import { PersonTabs } from './PersonTabs/PersonTabs';
+import { PersonList } from './PersonList/PersonList';
+import { PersonForm } from './PersonForm/PersonForm';
 import { DeleteConfirmModal } from '@/components/ui/DeleteConfirmModal';
 import { Notification } from '@/components/ui/Notification';
 import { SearchInput } from '@/components/ui/SearchInput';

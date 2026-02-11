@@ -1,6 +1,6 @@
 import React from 'react';
 import { type PersonResponse, type PersonRole } from '@/types/person';
-import { PersonCard } from '../PersonCard';
+import { PersonCard } from '../PersonCard/PersonCard';
 import { Button } from '@/components/ui';
 import styles from './PersonList.module.css';
 
