@@ -1,4 +1,5 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import type {
     LoginRequest,
     RegisterRequest,
@@ -9,6 +10,7 @@ import { authApi } from '@/api/authApi';
 import { useApi } from '@/hooks/common/useApi';
 
 export const useAuth = () => {
+    const navigate = useNavigate();
     const loginApi = useApi<LoginResponse>();
     const registerApi = useApi<User>();
     const currentUserApi = useApi<User>();
@@ -18,20 +20,31 @@ export const useAuth = () => {
     const verifyEmailApi = useApi<{ message: string }>();
     const confirmEmailChangeApi = useApi<User>();
 
+    const token = localStorage.getItem('authToken');
+    const isAuthenticated = !!token;
+
+    useEffect(() => {
+        if (isAuthenticated && !currentUserApi.data && !currentUserApi.state.isLoading) {
+            getCurrentUser();
+        }
+    }, [isAuthenticated]);
+
     const login = useCallback(async (credentials: LoginRequest) => {
         return loginApi.callApi(
             () => authApi.login(credentials),
             {
                 cacheKey: `auth_login_${credentials.email}`,
                 cacheTime: 0,
-                onSuccess: (response) => {
+                onSuccess: async (response) => {
                     localStorage.setItem('authToken', response.token);
                     currentUserApi.invalidateCache();
+                    await getCurrentUser();
+                    navigate('/');
                 },
                 successMessage: 'Login successful',
             }
         );
-    }, [loginApi, currentUserApi]);
+    }, [loginApi, currentUserApi, navigate]);
 
     const register = useCallback(async (userData: RegisterRequest) => {
         return registerApi.callApi(
@@ -49,6 +62,11 @@ export const useAuth = () => {
                 cacheKey: 'current_user',
                 cacheTime: 5 * 60 * 1000,
                 showErrorNotification: false,
+                onError: (error) => {
+                    if (error.message.includes('401') || error.message.includes('403')) {
+                        logout();
+                    }
+                }
             }
         );
     }, [currentUserApi]);
@@ -114,8 +132,9 @@ export const useAuth = () => {
         resetPasswordApi.invalidateCache();
         verifyEmailApi.invalidateCache();
         confirmEmailChangeApi.invalidateCache();
+        navigate('/login');
     }, [loginApi, currentUserApi, checkEmailApi, registerApi, forgotPasswordApi,
-        resetPasswordApi, verifyEmailApi, confirmEmailChangeApi]);
+        resetPasswordApi, verifyEmailApi, confirmEmailChangeApi, navigate]);
 
     const clearAuthCache = useCallback(() => {
         loginApi.invalidateCache();
@@ -131,7 +150,6 @@ export const useAuth = () => {
 
     return {
         user: currentUserApi.data,
-
         loading: currentUserApi.state.isLoading || loginApi.state.isLoading ||
             registerApi.state.isLoading || checkEmailApi.state.isLoading ||
             forgotPasswordApi.state.isLoading || resetPasswordApi.state.isLoading ||
@@ -143,7 +161,6 @@ export const useAuth = () => {
         isAuthenticating: loginApi.state.isLoading,
         isRegistering: registerApi.state.isLoading,
         isCheckingEmail: checkEmailApi.state.isLoading,
-
         login,
         register,
         getCurrentUser,
@@ -154,14 +171,12 @@ export const useAuth = () => {
         confirmEmailChange,
         logout,
         clearAuthCache,
-
         resetLogin: loginApi.reset,
         resetRegister: registerApi.reset,
         resetCurrentUser: currentUserApi.reset,
         resetCheckEmail: checkEmailApi.reset,
         refetchCurrentUser: currentUserApi.refetch,
-
-        isAuthenticated: !!currentUserApi.data && !!localStorage.getItem('authToken'),
+        isAuthenticated: !!localStorage.getItem('authToken'),
         isAdmin: currentUserApi.data?.userRole === 'ROLE_ADMIN',
     };
 };

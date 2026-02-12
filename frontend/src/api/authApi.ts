@@ -18,8 +18,21 @@ const getPublicHeaders = (): HeadersInit => {
 const fetchApi = async <T>(url: string, options: RequestInit = {}): Promise<T> => {
     const response = await fetch(url, options);
     if (!response.ok) throw await handleApiError(response);
-    if (response.status === 204) return undefined as T;
-    return response.json();
+
+    if (response.status === 204) {
+        return undefined as T;
+    }
+
+    const text = await response.text();
+    if (!text) {
+        return undefined as T;
+    }
+
+    try {
+        return JSON.parse(text);
+    } catch {
+        throw new Error('Invalid JSON response');
+    }
 };
 
 export const authApi = {
@@ -41,10 +54,13 @@ export const authApi = {
 
     getCurrentUser: async (): Promise<UserResponse> => {
         const token = localStorage.getItem('authToken');
+        if (!token) {
+            throw new Error('No authentication token');
+        }
         return fetchApi<UserResponse>(`${API_URL}/me`, {
             headers: {
                 'Content-Type': 'application/json',
-                ...(token && { 'Authorization': `Bearer ${token}` }),
+                'Authorization': `Bearer ${token}`,
             },
         });
     },
@@ -56,14 +72,14 @@ export const authApi = {
     },
 
     forgotPassword: async (email: string): Promise<void> => {
-        await fetchApi<void>(`${API_URL}/password/forgot?email=${encodeURIComponent(email)}`, {
+        return fetchApi<void>(`${API_URL}/password/forgot?email=${encodeURIComponent(email)}`, {
             method: 'POST',
             headers: getPublicHeaders(),
         });
     },
 
     resetPassword: async (token: string, newPassword: string): Promise<void> => {
-        await fetchApi<void>(`${API_URL}/password/reset?token=${encodeURIComponent(token)}&newPassword=${encodeURIComponent(newPassword)}`, {
+        return fetchApi<void>(`${API_URL}/password/reset?token=${encodeURIComponent(token)}&newPassword=${encodeURIComponent(newPassword)}`, {
             method: 'POST',
             headers: getPublicHeaders(),
         });

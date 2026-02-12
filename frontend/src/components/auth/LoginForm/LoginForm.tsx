@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/features/auth/useAuth';
 import { Input, Button } from '@/components/ui';
 import styles from './LoginForm.module.css';
@@ -11,7 +11,6 @@ export const LoginForm: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { login, loading } = useAuth();
-  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,7 +19,6 @@ export const LoginForm: React.FC = () => {
 
     try {
       await login({ email, password });
-      navigate('/');
     } catch (err: any) {
       setLocalError(err.message || 'Login failed');
     } finally {
