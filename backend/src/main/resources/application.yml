@@ -102,21 +102,82 @@ bonus:
     point-value: 1.00
     max-discount-percentage: 0.5
     defaults:
-        WELCOME_BONUS:
+        "[WELCOME_BONUS]":
             points: 150
-        BIRTHDAY_BONUS:
+        "[BIRTHDAY_BONUS]":
             points: 200
-        PROMOTION_BONUS:
+        "[PROMOTION_BONUS]":
             points: 100
-        BOOKING_SPEND:
+        "[BOOKING_SPEND]":
             min-points: 100
             max-points: 1000
-        PAYMENT_ACCRUAL:
+        "[PAYMENT_ACCRUAL]":
             money-ratio: 0.05
             min-points: 10
-        REFUND_RETURN: {}
-        BOOKING_CANCEL: {}
+        "[REFUND_RETURN]": {}
+        "[BOOKING_CANCEL]": {}
 
 ticket:
     validation:
         max-hours-after-session: 2
+
+logging:
+    level:
+        org.springframework.security: DEBUG
+        org.springframework.security.web: DEBUG
+        org.springframework.security.config: DEBUG
+        org.springframework.web: DEBUG
+        org.springframework.web.cors: DEBUG
+        org.springframework.web.filter: DEBUG
+        org.springframework.web.servlet: DEBUG
+        ua.lviv.bas.cinema.config.security: DEBUG
+        ua.lviv.bas.cinema.controller: DEBUG
+        ua.lviv.bas.cinema.service: DEBUG
+        org.hibernate.SQL: DEBUG
+        org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    pattern:
+        console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+        file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    file:
+        name: logs/cinema.log
+        max-size: 10MB
+        max-history: 30
+
+---
+spring:
+    config:
+        activate:
+            on-profile: local
+    datasource:
+        url: jdbc:postgresql://localhost:5433/cinema_db
+
+scheduler:
+    birthday-bonus:
+        cron: "0 */5 * * * *"
+    email-token:
+        cleanup-expired-cron: "0 */5 * * * *"
+        cleanup-confirmed-cron: "0 */5 * * * *"
+    movie-status:
+        cron: "0 */5 * * * *"
+    session-status:
+        cron: "0 */5 * * * *"
+    booking:
+        expiration-interval: 300000
+        cleanup-cron: "0 */5 * * * *"
+        reminder-cron: "0 */5 * * * *"
+    payment:
+        expiration-interval: 300000
+        cleanup-cron: "0 */5 * * * *"
+        daily-stats: "0 */5 * * * *"
+    ticket:
+        mark-as-used: 300000
+        cleanup-cron: "0 */5 * * * *"
+        daily-stats: "0 */5 * * * *"
+        upcoming-reminder: "0 */5 * * * *"
+
+logging:
+    level:
+        org.springframework.security: DEBUG
+        org.springframework.web: DEBUG
+        org.springframework.web.cors: DEBUG
+        ua.lviv.bas.cinema.config.security: DEBUG
