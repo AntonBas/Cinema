@@ -26,8 +26,21 @@ export const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
         );
     }
 
-    if (!isAuthenticated) return <Navigate to="/login" replace />;
-    if (user?.userRole !== 'ROLE_ADMIN') return <Navigate to="/" replace />;
+    if (!isAuthenticated) {
+        return <Navigate to="/login" replace />;
+    }
+
+    if (!user) {
+        return (
+            <div style={centerStyle}>
+                <LoadingSpinner text="Loading user data..." />
+            </div>
+        );
+    }
+
+    if (user.userRole !== 'ROLE_ADMIN') {
+        return <Navigate to="/" replace />;
+    }
 
     return <>{children}</>;
 };
