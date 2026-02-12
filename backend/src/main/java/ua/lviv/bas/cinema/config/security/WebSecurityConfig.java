@@ -10,7 +10,6 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.config.annotation.web.configurers.AuthorizeHttpRequestsConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -54,8 +53,8 @@ public class WebSecurityConfig {
 		configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173",
 				"https://unethnologically-barytic-lean.ngrok-free.dev", "https://*.ngrok-free.dev"));
 		configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-		configuration
-				.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With", "Cache-Control"));
+		configuration.setAllowedHeaders(
+				Arrays.asList("Authorization", "Content-Type", "X-Requested-With", "Cache-Control", "*"));
 		configuration.setExposedHeaders(List.of("Authorization"));
 		configuration.setAllowCredentials(true);
 		configuration.setMaxAge(3600L);
@@ -67,36 +66,31 @@ public class WebSecurityConfig {
 
 	@Bean
 	SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-		return http.cors(cors -> cors.configurationSource(corsConfigurationSource()))
-				.csrf(AbstractHttpConfigurer::disable)
+		http.cors(cors -> cors.configurationSource(corsConfigurationSource())).csrf(AbstractHttpConfigurer::disable)
 				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-				.authorizeHttpRequests(this::configureAuthorization)
+				.authorizeHttpRequests(auth -> auth.requestMatchers("/actuator/health", "/actuator/info").permitAll()
+						.requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/api-docs/**", "/v3/api-docs/**",
+								"/swagger-resources/**", "/swagger-resources", "/configuration/ui",
+								"/configuration/security", "/webjars/**", "/error")
+						.permitAll().requestMatchers("/api/auth/**").permitAll().requestMatchers("/api/verify/**")
+						.permitAll().requestMatchers("/api/registration/**").permitAll()
+						.requestMatchers("/api/tokens/**").permitAll().requestMatchers("/api/movies/public/**")
+						.permitAll().requestMatchers("/api/cinema-halls/public/**").permitAll()
+						.requestMatchers("/api/cinema-halls/{hallId}/seats/**").permitAll()
+						.requestMatchers("/api/movies/**").permitAll().requestMatchers("/api/sessions/**").permitAll()
+						.requestMatchers("/api/genres/**").permitAll().requestMatchers("/api/cinema-halls/**")
+						.permitAll().requestMatchers("/api/persons/**").permitAll()
+						.requestMatchers("/api/ticket-types/**").permitAll().requestMatchers("/api/promotions/**")
+						.permitAll().requestMatchers("/api/liqpay/**").permitAll().requestMatchers("/api/seats/**")
+						.permitAll().requestMatchers("/api/bonus/**").authenticated()
+						.requestMatchers("/api/bookings/**").authenticated().requestMatchers("/api/payments/**")
+						.authenticated().requestMatchers("/api/refunds/**").authenticated()
+						.requestMatchers("/api/tickets/**").authenticated().requestMatchers("/api/users/**")
+						.authenticated().requestMatchers("/api/admin/**").hasRole("ADMIN").anyRequest().authenticated())
 				.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
 				.formLogin(AbstractHttpConfigurer::disable).httpBasic(AbstractHttpConfigurer::disable)
-				.logout(AbstractHttpConfigurer::disable).build();
-	}
+				.logout(AbstractHttpConfigurer::disable);
 
-	private void configureAuthorization(
-			AuthorizeHttpRequestsConfigurer<HttpSecurity>.AuthorizationManagerRequestMatcherRegistry auth) {
-		auth.requestMatchers("/actuator/health", "/actuator/info").permitAll()
-				.requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/api-docs/**", "/v3/api-docs/**").permitAll()
-				.requestMatchers("/api/auth/**").permitAll()
-				.requestMatchers("/api/movies/**").permitAll()
-				.requestMatchers("/api/sessions/**").permitAll()
-				.requestMatchers("/api/genres/**").permitAll()
-				.requestMatchers("/api/cinema-halls/**").permitAll()
-				.requestMatchers("/api/persons/**").permitAll()
-				.requestMatchers("/api/ticket-types/**").permitAll()
-				.requestMatchers("/api/promotions/**").permitAll()
-				.requestMatchers("/api/liqpay/**").permitAll()
-				.requestMatchers("/api/seats/**").permitAll()
-				.requestMatchers("/api/bonus/**").authenticated()
-				.requestMatchers("/api/bookings/**").authenticated()
-				.requestMatchers("/api/payments/**").authenticated()
-				.requestMatchers("/api/refunds/**").authenticated()
-				.requestMatchers("/api/tickets/**").authenticated()
-				.requestMatchers("/api/users/**").authenticated()
-				.requestMatchers("/api/admin/**").hasRole("ADMIN")
-				.anyRequest().authenticated();
+		return http.build();
 	}
 }
