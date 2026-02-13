@@ -56,7 +56,5 @@ public interface UserMapper {
 	@Mapping(target = "lastActivity", source = "updatedAt")
 	AdminUserListResponse toAdminUserListResponse(User user);
 
-	@Mapping(source = "ticketsCount", target = "ticketsCount")
-	@Mapping(source = "lastActivity", target = "lastActivity")
 	AdminUserListResponse toAdminUserListResponse(AdminUserProjection projection);
 }

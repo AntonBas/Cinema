@@ -8,6 +8,7 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,7 +18,8 @@ import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.enums.UserRole;
 import ua.lviv.bas.cinema.domain.enums.VerificationStatus;
-import ua.lviv.bas.cinema.domain.specification.AdminUserSpecification;
+import ua.lviv.bas.cinema.domain.projection.AdminUserProjection;
+import ua.lviv.bas.cinema.domain.specification.UserSpecification;
 import ua.lviv.bas.cinema.dto.user.request.UserFilterRequest;
 import ua.lviv.bas.cinema.dto.user.request.VerificationBirthDateRequest;
 import ua.lviv.bas.cinema.dto.user.response.AdminUserListResponse;
@@ -28,7 +30,6 @@ import ua.lviv.bas.cinema.exception.domain.user.SelfRoleChangeException;
 import ua.lviv.bas.cinema.exception.domain.user.UserNotFoundException;
 import ua.lviv.bas.cinema.mapper.UserMapper;
 import ua.lviv.bas.cinema.repository.UserRepository;
-import ua.lviv.bas.cinema.repository.projection.AdminUserProjectionRepository;
 
 @Slf4j
 @Service
@@ -38,9 +39,8 @@ import ua.lviv.bas.cinema.repository.projection.AdminUserProjectionRepository;
 public class AdminUserService {
 
 	private final UserRepository userRepository;
-	private final AdminUserProjectionRepository projectionRepository;
 	private final UserMapper userMapper;
-	private final AdminUserSpecification adminUserSpecification;
+	private final UserSpecification userSpecification;
 
 	@CacheEvict(allEntries = true)
 	@Transactional
@@ -88,8 +88,10 @@ public class AdminUserService {
 
 	@Cacheable(key = "'list-' + #filter.hashCode() + '-' + #pageable")
 	public Page<AdminUserListResponse> getUsersForAdmin(UserFilterRequest filter, Pageable pageable) {
-		return projectionRepository.findAll(adminUserSpecification.build(filter), pageable)
-				.map(userMapper::toAdminUserListResponse);
+		Specification<User> spec = userSpecification.buildForAdmin(filter);
+		Page<AdminUserProjection> projections = userRepository.findAdminUsers(spec, pageable);
+
+		return projections.map(userMapper::toAdminUserListResponse);
 	}
 
 	@Cacheable(key = "'active-admins'")

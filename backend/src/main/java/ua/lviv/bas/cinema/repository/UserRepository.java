@@ -16,6 +16,7 @@ import org.springframework.stereotype.Repository;
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.enums.UserRole;
 import ua.lviv.bas.cinema.domain.enums.VerificationStatus;
+import ua.lviv.bas.cinema.domain.projection.AdminUserProjection;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificationExecutor<User> {
@@ -50,4 +51,22 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 
 	@Query("SELECT u FROM User u WHERE u.userRole = :role AND u.enabled = true")
 	List<User> findActiveByRole(@Param("role") UserRole role);
+
+	@Query("""
+			SELECT
+			    u.id as id,
+			    u.email as email,
+			    u.firstName as firstName,
+			    u.lastName as lastName,
+			    u.userRole as userRole,
+			    u.enabled as enabled,
+			    u.verificationStatus as verificationStatus,
+			    u.verifiedAt as verifiedAt,
+			    u.createdAt as createdAt,
+			    u.updatedAt as updatedAt,
+			    (SELECT COUNT(t.id) FROM Ticket t WHERE t.user.id = u.id) as ticketsCount,
+			    u.updatedAt as lastActivity
+			FROM User u
+			""")
+	Page<AdminUserProjection> findAdminUsers(Specification<User> spec, Pageable pageable);
 }
