@@ -71,7 +71,7 @@ public class AdminMovieController {
 			@PageableDefault(size = 20, sort = "title", direction = Sort.Direction.ASC) Pageable pageable) {
 
 		log.info("GET /api/admin/movies - filter: {}", filter);
-		var result = movieService.getMovieCards(filter, pageable);
+		var result = movieService.getFilteredMovies(filter, pageable);
 		return ResponseEntity.ok(PageResponse.from(result));
 	}
 

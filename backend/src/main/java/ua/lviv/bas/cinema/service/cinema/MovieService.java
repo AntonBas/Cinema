@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,7 +19,7 @@ import ua.lviv.bas.cinema.domain.enums.MovieStatus;
 import ua.lviv.bas.cinema.domain.projection.MovieCardProjection;
 import ua.lviv.bas.cinema.domain.projection.MovieDetailProjection;
 import ua.lviv.bas.cinema.domain.projection.MovieSessionSearchProjection;
-import ua.lviv.bas.cinema.domain.specification.MovieCardSpecification;
+import ua.lviv.bas.cinema.domain.specification.MovieSpecification;
 import ua.lviv.bas.cinema.dto.movie.request.MovieCreateRequest;
 import ua.lviv.bas.cinema.dto.movie.request.MovieFilterRequest;
 import ua.lviv.bas.cinema.dto.movie.request.MovieUpdateRequest;
@@ -32,7 +33,6 @@ import ua.lviv.bas.cinema.mapper.MovieMapper;
 import ua.lviv.bas.cinema.repository.GenreRepository;
 import ua.lviv.bas.cinema.repository.MovieRepository;
 import ua.lviv.bas.cinema.repository.PersonRepository;
-import ua.lviv.bas.cinema.repository.projection.MovieCardProjectionRepository;
 import ua.lviv.bas.cinema.scheduler.MovieScheduler;
 import ua.lviv.bas.cinema.service.integration.file.PosterService;
 import ua.lviv.bas.cinema.service.integration.slug.SlugService;
@@ -44,14 +44,13 @@ import ua.lviv.bas.cinema.service.integration.slug.SlugService;
 public class MovieService {
 
 	private final MovieRepository movieRepository;
-	private final MovieCardProjectionRepository movieCardProjectionRepository;
 	private final GenreRepository genreRepository;
 	private final PersonRepository personRepository;
 	private final MovieMapper movieMapper;
 	private final SlugService slugService;
 	private final MovieScheduler movieScheduler;
 	private final PosterService posterService;
-	private final MovieCardSpecification movieCardSpecification;
+	private final MovieSpecification movieSpecification;
 
 	@Transactional
 	public MovieDetailResponse createMovie(MovieCreateRequest request) {
@@ -120,12 +119,19 @@ public class MovieService {
 		return buildDetailResponse(movie);
 	}
 
-	public Page<MovieCardResponse> getMovieCards(MovieFilterRequest filter, Pageable pageable) {
-		var spec = movieCardSpecification.build(filter);
-		Page<MovieCardProjection> projections = movieCardProjectionRepository.findAll(spec, pageable);
+	public Page<MovieCardResponse> getFilteredMovies(MovieFilterRequest filter, Pageable pageable) {
+		Specification<Movie> spec = movieSpecification.build(filter);
+
+		Page<MovieCardProjection> projections = movieRepository.findMovieCards(spec, pageable);
 
 		return projections.map(projection -> {
-			MovieCardResponse response = movieMapper.toMovieCardResponse(projection);
+			MovieCardResponse response = new MovieCardResponse();
+			response.setId(projection.getId());
+			response.setTitle(projection.getTitle());
+			response.setSlug(projection.getSlug());
+			response.setDurationMinutes(projection.getDurationMinutes());
+			response.setAgeRating(projection.getAgeRating());
+			response.setStatus(projection.getStatus());
 			response.setPosterUrl("/api/movies/" + projection.getId() + "/poster");
 			response.setCurrentlyShowing(isCurrentlyShowing(projection));
 			return response;

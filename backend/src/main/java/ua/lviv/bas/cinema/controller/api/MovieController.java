@@ -68,7 +68,7 @@ public class MovieController {
 			@Parameter(description = "Pagination parameters") @PageableDefault(size = 12, sort = "title", direction = Sort.Direction.ASC) Pageable pageable) {
 
 		log.info("GET /api/movies - filter: {}", filter);
-		var result = movieService.getMovieCards(filter, pageable);
+		var result = movieService.getFilteredMovies(filter, pageable);
 		return ResponseEntity.ok(PageResponse.from(result));
 	}
 
@@ -91,7 +91,7 @@ public class MovieController {
 
 		log.info("GET /api/movies/currently-showing - Getting currently showing movies");
 		var filter = MovieFilterRequest.builder().currentlyShowing(true).build();
-		var result = movieService.getMovieCards(filter, pageable);
+		var result = movieService.getFilteredMovies(filter, pageable);
 		return ResponseEntity.ok(PageResponse.from(result));
 	}
 
@@ -103,7 +103,7 @@ public class MovieController {
 
 		log.info("GET /api/movies/upcoming - Getting upcoming movies");
 		var filter = MovieFilterRequest.builder().upcoming(true).build();
-		var result = movieService.getMovieCards(filter, pageable);
+		var result = movieService.getFilteredMovies(filter, pageable);
 		return ResponseEntity.ok(PageResponse.from(result));
 	}
 
