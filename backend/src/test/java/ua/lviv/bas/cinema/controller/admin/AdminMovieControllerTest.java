@@ -141,14 +141,14 @@ public class AdminMovieControllerTest {
 		Page<MovieCardResponse> page = new PageImpl<>(
 				List.of(createMovieCardDto(1L, "Movie 1"), createMovieCardDto(2L, "Movie 2")));
 
-		when(movieService.getMovieCards(any(), any())).thenReturn(page);
+		when(movieService.getFilteredMovies(any(), any())).thenReturn(page);
 
 		ResponseEntity<PageResponse<MovieCardResponse>> response = movieController.getMovies(filter, pageable);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
 		assertNotNull(response.getBody());
 		assertEquals(2, response.getBody().getContent().size());
-		verify(movieService).getMovieCards(any(), any());
+		verify(movieService).getFilteredMovies(any(), any());
 	}
 
 	@Test

@@ -2,8 +2,11 @@ package ua.lviv.bas.cinema.service.booking.ticket;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -15,32 +18,23 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 
 import ua.lviv.bas.cinema.domain.Ticket;
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.enums.TicketStatus;
 import ua.lviv.bas.cinema.domain.projection.TicketInfoProjection;
-import ua.lviv.bas.cinema.domain.specification.TicketInfoSpecification;
 import ua.lviv.bas.cinema.dto.ticket.request.TicketFilterRequest;
 import ua.lviv.bas.cinema.dto.ticket.response.TicketResponse;
 import ua.lviv.bas.cinema.exception.domain.ticket.TicketNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.ticket.TicketValidationException;
 import ua.lviv.bas.cinema.mapper.TicketMapper;
 import ua.lviv.bas.cinema.repository.TicketRepository;
-import ua.lviv.bas.cinema.repository.projection.TicketInfoProjectionRepository;
 
 @ExtendWith(MockitoExtension.class)
 public class TicketRetrievalServiceTest {
 
 	@Mock
 	private TicketRepository ticketRepository;
-
-	@Mock
-	private TicketInfoProjectionRepository ticketInfoProjectionRepository;
-
-	@Mock
-	private TicketInfoSpecification ticketInfoSpecification;
 
 	@Mock
 	private TicketMapper ticketMapper;
@@ -102,7 +96,7 @@ public class TicketRetrievalServiceTest {
 		when(ticketRepository.findByUniqueCode(TICKET_CODE)).thenReturn(Optional.empty());
 
 		assertThatThrownBy(() -> ticketRetrievalService.getTicketByCode(TICKET_CODE, user))
-				.isInstanceOf(TicketNotFoundException.class);
+				.isInstanceOf(TicketNotFoundException.class).hasMessageContaining(TICKET_CODE);
 	}
 
 	@Test
@@ -119,18 +113,40 @@ public class TicketRetrievalServiceTest {
 	@Test
 	void getUserTickets_Success() {
 		User user = createUser(USER_ID);
-		TicketFilterRequest filter = new TicketFilterRequest();
+		TicketFilterRequest filter = TicketFilterRequest.builder().status(TicketStatus.ACTIVE).build();
 		Pageable pageable = Pageable.unpaged();
+
 		TicketInfoProjection projection = createTicketInfoProjection();
 		TicketResponse ticketResponse = createTicketResponse();
 
 		Page<TicketInfoProjection> projectionPage = new PageImpl<>(List.of(projection));
 
-		Specification<TicketInfoProjection> spec = (Specification<TicketInfoProjection>) (root, query, cb) -> cb
-				.conjunction();
+		when(ticketRepository.findUserTickets(eq(USER_ID), eq(filter.getStatus()), eq(filter.getMovieId()), any(),
+				any(), any(), any(), eq(pageable))).thenReturn(projectionPage);
+		when(ticketMapper.toTicketResponse(projection)).thenReturn(ticketResponse);
 
-		when(ticketInfoSpecification.build(USER_ID, filter)).thenReturn(spec);
-		when(ticketInfoProjectionRepository.findAll(spec, pageable)).thenReturn(projectionPage);
+		Page<TicketResponse> result = ticketRetrievalService.getUserTickets(user, filter, pageable);
+
+		assertThat(result.getContent()).hasSize(1);
+		assertThat(result.getContent().get(0)).isEqualTo(ticketResponse);
+	}
+
+	@Test
+	void getUserTickets_WithDateFilters_Success() {
+		User user = createUser(USER_ID);
+		LocalDateTime now = LocalDateTime.now();
+		TicketFilterRequest filter = TicketFilterRequest.builder().status(TicketStatus.ACTIVE)
+				.purchaseDateFrom(now.toLocalDate()).purchaseDateTo(now.toLocalDate())
+				.sessionDateFrom(now.toLocalDate()).sessionDateTo(now.toLocalDate()).movieId(5L).build();
+		Pageable pageable = Pageable.unpaged();
+
+		TicketInfoProjection projection = createTicketInfoProjection();
+		TicketResponse ticketResponse = createTicketResponse();
+
+		Page<TicketInfoProjection> projectionPage = new PageImpl<>(List.of(projection));
+
+		when(ticketRepository.findUserTickets(eq(USER_ID), eq(filter.getStatus()), eq(5L), any(), any(), any(), any(),
+				eq(pageable))).thenReturn(projectionPage);
 		when(ticketMapper.toTicketResponse(projection)).thenReturn(ticketResponse);
 
 		Page<TicketResponse> result = ticketRetrievalService.getUserTickets(user, filter, pageable);
@@ -175,8 +191,33 @@ public class TicketRetrievalServiceTest {
 			}
 
 			@Override
+			public TicketStatus getStatus() {
+				return TicketStatus.ACTIVE;
+			}
+
+			@Override
+			public LocalDateTime getPurchaseTime() {
+				return LocalDateTime.now();
+			}
+
+			@Override
+			public java.math.BigDecimal getFinalPrice() {
+				return java.math.BigDecimal.valueOf(150);
+			}
+
+			@Override
+			public String getTicketTypeName() {
+				return "Adult";
+			}
+
+			@Override
 			public String getMovieTitle() {
 				return "Test Movie";
+			}
+
+			@Override
+			public LocalDateTime getSessionStartTime() {
+				return LocalDateTime.now().plusDays(1);
 			}
 
 			@Override
@@ -195,8 +236,13 @@ public class TicketRetrievalServiceTest {
 			}
 
 			@Override
-			public TicketStatus getStatus() {
-				return TicketStatus.ACTIVE;
+			public Long getUserId() {
+				return USER_ID;
+			}
+
+			@Override
+			public Long getMovieId() {
+				return 5L;
 			}
 		};
 	}

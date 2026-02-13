@@ -113,7 +113,7 @@ public class MovieControllerTest {
 		MovieCardResponse movie = createMovieCardResponse(1L, "Test Movie", "test-movie", MovieStatus.CURRENT);
 		Page<MovieCardResponse> page = new PageImpl<>(List.of(movie), pageable, 1);
 
-		when(movieService.getMovieCards(filter, pageable)).thenReturn(page);
+		when(movieService.getFilteredMovies(filter, pageable)).thenReturn(page);
 
 		ResponseEntity<PageResponse<MovieCardResponse>> response = movieController.getMovies(filter, pageable);
 
@@ -124,7 +124,7 @@ public class MovieControllerTest {
 		assertEquals(1, body.getContent().size());
 		assertEquals("Test Movie", body.getContent().get(0).getTitle());
 
-		verify(movieService).getMovieCards(filter, pageable);
+		verify(movieService).getFilteredMovies(filter, pageable);
 	}
 
 	@Test
@@ -134,8 +134,8 @@ public class MovieControllerTest {
 		MovieCardResponse movie = createMovieCardResponse(1L, "Current Movie", "current-1", MovieStatus.CURRENT);
 		Page<MovieCardResponse> page = new PageImpl<>(List.of(movie), pageable, 1);
 
-		when(movieService.getMovieCards(MovieFilterRequest.builder().currentlyShowing(true).build(), pageable))
-				.thenReturn(page);
+		MovieFilterRequest filter = MovieFilterRequest.builder().currentlyShowing(true).build();
+		when(movieService.getFilteredMovies(filter, pageable)).thenReturn(page);
 
 		ResponseEntity<PageResponse<MovieCardResponse>> response = movieController.getCurrentlyShowingMovies(pageable);
 
@@ -146,7 +146,7 @@ public class MovieControllerTest {
 		assertEquals(1, body.getContent().size());
 		assertEquals("Current Movie", body.getContent().get(0).getTitle());
 
-		verify(movieService).getMovieCards(MovieFilterRequest.builder().currentlyShowing(true).build(), pageable);
+		verify(movieService).getFilteredMovies(filter, pageable);
 	}
 
 	@Test
@@ -156,8 +156,8 @@ public class MovieControllerTest {
 		MovieCardResponse movie = createMovieCardResponse(1L, "Upcoming Movie", "upcoming-1", MovieStatus.UPCOMING);
 		Page<MovieCardResponse> page = new PageImpl<>(List.of(movie), pageable, 1);
 
-		when(movieService.getMovieCards(MovieFilterRequest.builder().upcoming(true).build(), pageable))
-				.thenReturn(page);
+		MovieFilterRequest filter = MovieFilterRequest.builder().upcoming(true).build();
+		when(movieService.getFilteredMovies(filter, pageable)).thenReturn(page);
 
 		ResponseEntity<PageResponse<MovieCardResponse>> response = movieController.getUpcomingMovies(pageable);
 
@@ -168,15 +168,13 @@ public class MovieControllerTest {
 		assertEquals(1, body.getContent().size());
 		assertEquals("Upcoming Movie", body.getContent().get(0).getTitle());
 
-		verify(movieService).getMovieCards(MovieFilterRequest.builder().upcoming(true).build(), pageable);
+		verify(movieService).getFilteredMovies(filter, pageable);
 	}
 
 	@Test
 	void searchMoviesForSession_ShouldReturnMovies() {
 		MovieSessionSearchResponse movie1 = MovieSessionSearchResponse.builder().id(1L).title("Movie 1").build();
-
 		MovieSessionSearchResponse movie2 = MovieSessionSearchResponse.builder().id(2L).title("Movie 2").build();
-
 		List<MovieSessionSearchResponse> movies = List.of(movie1, movie2);
 
 		when(movieService.searchMoviesForSession("search")).thenReturn(movies);
@@ -196,7 +194,6 @@ public class MovieControllerTest {
 	@Test
 	void searchMoviesForSession_WithNullSearch_ShouldReturnMovies() {
 		MovieSessionSearchResponse movie = MovieSessionSearchResponse.builder().id(1L).title("Movie 1").build();
-
 		List<MovieSessionSearchResponse> movies = List.of(movie);
 
 		when(movieService.searchMoviesForSession(null)).thenReturn(movies);

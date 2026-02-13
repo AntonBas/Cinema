@@ -33,9 +33,14 @@ public class TicketRetrievalService {
 	}
 
 	public TicketResponse getTicketByCode(String ticketCode, User user) {
-		return ticketRepository.findByUniqueCode(ticketCode)
-				.filter(ticket -> ticket.getUser().getId().equals(user.getId())).map(this::toTicketResponse)
+		Ticket ticket = ticketRepository.findByUniqueCode(ticketCode)
 				.orElseThrow(() -> new TicketNotFoundException("Ticket not found with code: " + ticketCode));
+
+		if (!ticket.getUser().getId().equals(user.getId())) {
+			throw TicketValidationException.notFound();
+		}
+
+		return toTicketResponse(ticket);
 	}
 
 	public Page<TicketResponse> getUserTickets(User user, TicketFilterRequest filter, Pageable pageable) {
