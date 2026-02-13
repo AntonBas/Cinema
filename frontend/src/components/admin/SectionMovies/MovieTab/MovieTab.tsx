@@ -42,8 +42,7 @@ export const MovieTab: React.FC = () => {
     remove
   } = useMovies();
 
-  const hasLoadedRef = useRef(false);
-  const isInitialMount = useRef(true);
+  const initialLoadRef = useRef(false);
 
   const loadMovies = useCallback(async (tab: MovieTabType, page: number, query: string) => {
     try {
@@ -68,7 +67,7 @@ export const MovieTab: React.FC = () => {
     } catch (err) {
       setErrorMessage(`Failed to load ${tab.toLowerCase()} movies`);
     }
-  }, [getCurrentlyShowing, getUpcoming, getAdminMovies]);
+  }, []);
 
   const loadTabStats = useCallback(async () => {
     try {
@@ -88,42 +87,33 @@ export const MovieTab: React.FC = () => {
       console.error('Failed to load tab stats:', error);
       return { CURRENT: 0, UPCOMING: 0, ARCHIVED: 0 };
     }
-  }, [getCurrentlyShowing, getUpcoming, getAdminMovies]);
+  }, []);
 
   useEffect(() => {
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
-      return;
-    }
-
-    loadMovies(activeTab, currentPage, searchQuery);
-  }, [activeTab, currentPage, searchQuery, loadMovies]);
-
-  useEffect(() => {
-    if (!hasLoadedRef.current) {
-      hasLoadedRef.current = true;
+    if (!initialLoadRef.current) {
+      initialLoadRef.current = true;
+      loadMovies(activeTab, currentPage, searchQuery);
       loadTabStats().then(stats => setTabStats(stats));
     }
-  }, [loadTabStats]);
-
-  useEffect(() => {
-    loadMovies('CURRENT', 0, '');
-  }, [loadMovies]);
+  }, []);
 
   const handleTabChange = (tab: MovieTabType) => {
     setActiveTab(tab);
     setSearchQuery('');
     setCurrentPage(0);
+    loadMovies(tab, 0, '');
   };
 
   const handleSearch = useCallback((query: string) => {
     setSearchQuery(query);
     setCurrentPage(0);
-  }, []);
+    loadMovies(activeTab, 0, query);
+  }, [activeTab, loadMovies]);
 
   const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page);
-  }, []);
+    loadMovies(activeTab, page, searchQuery);
+  }, [activeTab, searchQuery, loadMovies]);
 
   const handleEdit = useCallback(async (movie: MovieCardResponse) => {
     try {
@@ -150,7 +140,6 @@ export const MovieTab: React.FC = () => {
       await loadMovies(activeTab, currentPage, searchQuery);
       const stats = await loadTabStats();
       setTabStats(stats);
-      setErrorMessage('');
     } catch (error) {
       setErrorMessage('Failed to delete movie');
     } finally {
@@ -189,11 +178,9 @@ export const MovieTab: React.FC = () => {
 
   const getDisplayRange = useCallback(() => {
     if (!pagination) return { start: 0, end: 0, total: 0 };
-
     const pageSize = pagination.size || 12;
     const start = (currentPage * pageSize) + 1;
     const end = Math.min((currentPage + 1) * pageSize, pagination.totalElements);
-
     return { start, end, total: pagination.totalElements };
   }, [pagination, currentPage]);
 

@@ -98,10 +98,11 @@ export const useMovies = () => {
                     allMoviesApi.invalidateCache();
                     currentlyShowingApi.invalidateCache();
                     upcomingApi.invalidateCache();
+                    adminMoviesApi.invalidateCache();
                 },
             }
         );
-    }, [createMovieApi, allMoviesApi, currentlyShowingApi, upcomingApi]);
+    }, [createMovieApi, allMoviesApi, currentlyShowingApi, upcomingApi, adminMoviesApi]);
 
     const update = useCallback(async (id: number, request: MovieUpdateRequest) => {
         return updateMovieApi.callApi(
@@ -114,10 +115,11 @@ export const useMovies = () => {
                     allMoviesApi.invalidateCache();
                     currentlyShowingApi.invalidateCache();
                     upcomingApi.invalidateCache();
+                    adminMoviesApi.invalidateCache();
                 },
             }
         );
-    }, [updateMovieApi, movieByIdApi, movieBySlugApi, allMoviesApi, currentlyShowingApi, upcomingApi]);
+    }, [updateMovieApi, movieByIdApi, movieBySlugApi, allMoviesApi, currentlyShowingApi, upcomingApi, adminMoviesApi]);
 
     const remove = useCallback(async (id: number) => {
         return deleteMovieApi.callApi(
@@ -130,10 +132,11 @@ export const useMovies = () => {
                     allMoviesApi.invalidateCache();
                     currentlyShowingApi.invalidateCache();
                     upcomingApi.invalidateCache();
+                    adminMoviesApi.invalidateCache();
                 },
             }
         );
-    }, [deleteMovieApi, movieByIdApi, movieBySlugApi, allMoviesApi, currentlyShowingApi, upcomingApi]);
+    }, [deleteMovieApi, movieByIdApi, movieBySlugApi, allMoviesApi, currentlyShowingApi, upcomingApi, adminMoviesApi]);
 
     const getAdminMovies = useCallback(async (params?: any) => {
         return adminMoviesApi.callApi(
@@ -152,12 +155,8 @@ export const useMovies = () => {
         currentlyShowingApi.invalidateCache();
         upcomingApi.invalidateCache();
         searchMoviesApi.invalidateCache();
-        createMovieApi.invalidateCache();
-        updateMovieApi.invalidateCache();
-        deleteMovieApi.invalidateCache();
         adminMoviesApi.invalidateCache();
-    }, [allMoviesApi, movieByIdApi, movieBySlugApi, currentlyShowingApi, upcomingApi,
-        searchMoviesApi, createMovieApi, updateMovieApi, deleteMovieApi, adminMoviesApi]);
+    }, [allMoviesApi, movieByIdApi, movieBySlugApi, currentlyShowingApi, upcomingApi, searchMoviesApi, adminMoviesApi]);
 
     const getPosterUrl = useCallback((id: number): string => {
         return movieApi.public.getPosterUrl(id);
