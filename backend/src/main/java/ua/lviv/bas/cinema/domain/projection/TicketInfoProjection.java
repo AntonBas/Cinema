@@ -3,65 +3,32 @@ package ua.lviv.bas.cinema.domain.projection;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-import org.hibernate.annotations.Immutable;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.Id;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 import ua.lviv.bas.cinema.domain.enums.TicketStatus;
 
-@Entity
-@Getter
-@Setter
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-@Immutable
-public class TicketInfoProjection {
+public interface TicketInfoProjection {
+	Long getId();
 
-	@Id
-	private Long id;
+	String getUniqueCode();
 
-	@Column(name = "unique_code")
-	private String uniqueCode;
+	TicketStatus getStatus();
 
-	@Enumerated(EnumType.STRING)
-	private TicketStatus status;
+	LocalDateTime getPurchaseTime();
 
-	@Column(name = "purchase_time")
-	private LocalDateTime purchaseTime;
+	BigDecimal getFinalPrice();
 
-	@Column(name = "final_price")
-	private BigDecimal finalPrice;
+	String getTicketTypeName();
 
-	@Column(name = "ticket_type_name")
-	private String ticketTypeName;
+	String getMovieTitle();
 
-	@Column(name = "movie_title")
-	private String movieTitle;
+	LocalDateTime getSessionStartTime();
 
-	@Column(name = "session_start_time")
-	private LocalDateTime sessionStartTime;
+	String getHallName();
 
-	@Column(name = "hall_name")
-	private String hallName;
+	Integer getRow();
 
-	@Column(name = "row")
-	private Integer row;
+	Integer getSeatNumber();
 
-	@Column(name = "seat_number")
-	private Integer seatNumber;
+	Long getUserId();
 
-	@Column(name = "user_id")
-	private Long userId;
-
-	@Column(name = "movie_id")
-	private Long movieId;
+	Long getMovieId();
 }

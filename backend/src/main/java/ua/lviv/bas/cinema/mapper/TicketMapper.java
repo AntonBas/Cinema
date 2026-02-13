@@ -12,8 +12,6 @@ import ua.lviv.bas.cinema.dto.ticket.response.TicketResponse;
 public interface TicketMapper {
 
 	@Mapping(target = "ticketCode", source = "uniqueCode")
-	@Mapping(target = "qrCodeUrl", ignore = true)
-	@Mapping(target = "purchaseTime", source = "purchaseTime")
 	@Mapping(target = "price", source = "finalPrice")
 	@Mapping(target = "ticketType", source = "ticketType.displayName")
 	@Mapping(target = "movieTitle", source = "booking.session.movie.title")
@@ -21,14 +19,17 @@ public interface TicketMapper {
 	@Mapping(target = "hallName", source = "booking.session.hall.name")
 	@Mapping(target = "row", source = "seatReservation.seat.row")
 	@Mapping(target = "seatNumber", source = "seatReservation.seat.number")
+	@Mapping(target = "qrCodeUrl", ignore = true)
 	TicketResponse toTicketResponse(Ticket ticket);
 
 	@Mapping(target = "ticketCode", source = "uniqueCode")
-	@Mapping(target = "qrCodeUrl", ignore = true)
 	@Mapping(target = "price", source = "finalPrice")
 	@Mapping(target = "ticketType", source = "ticketTypeName")
 	@Mapping(target = "movieTitle", source = "movieTitle")
 	@Mapping(target = "sessionTime", source = "sessionStartTime")
 	@Mapping(target = "hallName", source = "hallName")
+	@Mapping(target = "row", source = "row")
+	@Mapping(target = "seatNumber", source = "seatNumber")
+	@Mapping(target = "qrCodeUrl", ignore = true)
 	TicketResponse toTicketResponse(TicketInfoProjection projection);
 }

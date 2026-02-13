@@ -1,5 +1,7 @@
 package ua.lviv.bas.cinema.service.booking.ticket;
 
+import java.time.LocalDateTime;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -10,14 +12,12 @@ import ua.lviv.bas.cinema.domain.Ticket;
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.enums.TicketStatus;
 import ua.lviv.bas.cinema.domain.projection.TicketInfoProjection;
-import ua.lviv.bas.cinema.domain.specification.TicketInfoSpecification;
 import ua.lviv.bas.cinema.dto.ticket.request.TicketFilterRequest;
 import ua.lviv.bas.cinema.dto.ticket.response.TicketResponse;
 import ua.lviv.bas.cinema.exception.domain.ticket.TicketNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.ticket.TicketValidationException;
 import ua.lviv.bas.cinema.mapper.TicketMapper;
 import ua.lviv.bas.cinema.repository.TicketRepository;
-import ua.lviv.bas.cinema.repository.projection.TicketInfoProjectionRepository;
 
 @Service
 @RequiredArgsConstructor
@@ -25,31 +25,31 @@ import ua.lviv.bas.cinema.repository.projection.TicketInfoProjectionRepository;
 public class TicketRetrievalService {
 
 	private final TicketRepository ticketRepository;
-	private final TicketInfoProjectionRepository ticketInfoProjectionRepository;
-	private final TicketInfoSpecification ticketInfoSpecification;
 	private final TicketMapper ticketMapper;
 
 	public TicketResponse getTicketById(Long ticketId, User user) {
-		Ticket ticket = ticketRepository.findByIdAndUserIdAndStatus(ticketId, user.getId(), TicketStatus.ACTIVE)
-				.orElseThrow(() -> TicketValidationException.notFound());
-
-		return toTicketResponse(ticket);
+		return ticketRepository.findByIdAndUserIdAndStatus(ticketId, user.getId(), TicketStatus.ACTIVE)
+				.map(this::toTicketResponse).orElseThrow(TicketValidationException::notFound);
 	}
 
 	public TicketResponse getTicketByCode(String ticketCode, User user) {
-		Ticket ticket = ticketRepository.findByUniqueCode(ticketCode)
+		return ticketRepository.findByUniqueCode(ticketCode)
+				.filter(ticket -> ticket.getUser().getId().equals(user.getId())).map(this::toTicketResponse)
 				.orElseThrow(() -> new TicketNotFoundException("Ticket not found with code: " + ticketCode));
-
-		if (!ticket.getUser().getId().equals(user.getId())) {
-			throw TicketValidationException.notFound();
-		}
-
-		return toTicketResponse(ticket);
 	}
 
 	public Page<TicketResponse> getUserTickets(User user, TicketFilterRequest filter, Pageable pageable) {
-		var spec = ticketInfoSpecification.build(user.getId(), filter);
-		Page<TicketInfoProjection> projections = ticketInfoProjectionRepository.findAll(spec, pageable);
+		LocalDateTime purchaseFrom = filter.getPurchaseDateFrom() != null ? filter.getPurchaseDateFrom().atStartOfDay()
+				: null;
+		LocalDateTime purchaseTo = filter.getPurchaseDateTo() != null ? filter.getPurchaseDateTo().atTime(23, 59, 59)
+				: null;
+		LocalDateTime sessionFrom = filter.getSessionDateFrom() != null ? filter.getSessionDateFrom().atStartOfDay()
+				: null;
+		LocalDateTime sessionTo = filter.getSessionDateTo() != null ? filter.getSessionDateTo().atTime(23, 59, 59)
+				: null;
+
+		Page<TicketInfoProjection> projections = ticketRepository.findUserTickets(user.getId(), filter.getStatus(),
+				filter.getMovieId(), purchaseFrom, purchaseTo, sessionFrom, sessionTo, pageable);
 
 		return projections.map(this::toTicketResponse);
 	}
@@ -63,8 +63,6 @@ public class TicketRetrievalService {
 	private TicketResponse toTicketResponse(TicketInfoProjection projection) {
 		TicketResponse response = ticketMapper.toTicketResponse(projection);
 		response.setQrCodeUrl(generateQrCodeUrl(projection.getUniqueCode()));
-		response.setRow(projection.getRow());
-		response.setSeatNumber(projection.getSeatNumber());
 		return response;
 	}
 

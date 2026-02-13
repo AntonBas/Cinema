@@ -64,40 +64,39 @@ public interface TicketRepository extends JpaRepository<Ticket, Long>, JpaSpecif
 	long countByTicketTypeIdAndStatusInAndBookingSessionStartTimeAfter(@Param("ticketTypeId") Long ticketTypeId,
 			@Param("statuses") List<TicketStatus> statuses, @Param("currentTime") LocalDateTime currentTime);
 
-	@Query(value = """
+	@Query("""
 			SELECT
 			    t.id as id,
-			    t.unique_code as uniqueCode,
+			    t.uniqueCode as uniqueCode,
 			    t.status as status,
-			    t.purchase_time as purchaseTime,
-			    t.final_price as finalPrice,
-			    tt.display_name as ticketTypeName,
+			    t.purchaseTime as purchaseTime,
+			    t.finalPrice as finalPrice,
+			    tt.displayName as ticketTypeName,
 			    m.title as movieTitle,
-			    s.start_time as sessionStartTime,
+			    s.startTime as sessionStartTime,
 			    h.name as hallName,
 			    seat.row as row,
 			    seat.number as seatNumber,
-			    t.user_id as userId,
+			    t.user.id as userId,
 			    m.id as movieId
-			FROM tickets t
-			JOIN bookings b ON t.booking_id = b.id
-			JOIN movie_sessions s ON b.session_id = s.id
-			JOIN movies m ON s.movie_id = m.id
-			JOIN halls h ON s.hall_id = h.id
-			JOIN ticket_types tt ON t.ticket_type_id = tt.id
-			LEFT JOIN seat_reservations sr ON t.seat_reservation_id = sr.id
-			LEFT JOIN seats seat ON sr.seat_id = seat.id
-			WHERE (:userId IS NULL OR t.user_id = :userId)
+			FROM Ticket t
+			JOIN t.booking b
+			JOIN b.session s
+			JOIN s.movie m
+			JOIN s.hall h
+			JOIN t.ticketType tt
+			LEFT JOIN t.seatReservation sr
+			LEFT JOIN sr.seat seat
+			WHERE t.user.id = :userId
 			AND (:status IS NULL OR t.status = :status)
 			AND (:movieId IS NULL OR m.id = :movieId)
-			AND (:purchaseDateFrom IS NULL OR t.purchase_time >= :purchaseDateFrom)
-			AND (:purchaseDateTo IS NULL OR t.purchase_time <= :purchaseDateTo)
-			AND (:sessionDateFrom IS NULL OR s.start_time >= :sessionDateFrom)
-			AND (:sessionDateTo IS NULL OR s.start_time <= :sessionDateTo)
-			""", nativeQuery = true)
-	Page<TicketInfoProjection> findAllTicketInfoProjections(@Param("userId") Long userId,
-			@Param("status") String status, @Param("movieId") Long movieId,
-			@Param("purchaseDateFrom") LocalDateTime purchaseDateFrom,
+			AND (:purchaseDateFrom IS NULL OR t.purchaseTime >= :purchaseDateFrom)
+			AND (:purchaseDateTo IS NULL OR t.purchaseTime <= :purchaseDateTo)
+			AND (:sessionDateFrom IS NULL OR s.startTime >= :sessionDateFrom)
+			AND (:sessionDateTo IS NULL OR s.startTime <= :sessionDateTo)
+			""")
+	Page<TicketInfoProjection> findUserTickets(@Param("userId") Long userId, @Param("status") TicketStatus status,
+			@Param("movieId") Long movieId, @Param("purchaseDateFrom") LocalDateTime purchaseDateFrom,
 			@Param("purchaseDateTo") LocalDateTime purchaseDateTo,
 			@Param("sessionDateFrom") LocalDateTime sessionDateFrom,
 			@Param("sessionDateTo") LocalDateTime sessionDateTo, Pageable pageable);
