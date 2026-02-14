@@ -1,4 +1,7 @@
-export type MovieStatus = 'UPCOMING' | 'CURRENT' | 'ARCHIVED';
+import type { GenreResponse } from './genre';
+import type { PersonResponse } from './person';
+
+export type MovieStatus = 'UPCOMING' | 'CURRENT' | 'ARCHIVED' | 'UNKNOWN';
 export type AgeRating = 'PEGI_3' | 'PEGI_7' | 'PEGI_12' | 'PEGI_16' | 'PEGI_18';
 
 export const AgeRatingDisplay: Record<AgeRating, string> = {
@@ -28,7 +31,8 @@ export const AgeRatingMinAge: Record<AgeRating, number> = {
 export const MovieStatusDisplay: Record<MovieStatus, string> = {
   UPCOMING: 'Upcoming',
   CURRENT: 'Now Showing',
-  ARCHIVED: 'Archived'
+  ARCHIVED: 'Archived',
+  UNKNOWN: 'Unknown'
 };
 
 export const getAgeRatingDisplay = (rating: AgeRating): string => {
@@ -41,6 +45,22 @@ export const getAgeRatingDescription = (rating: AgeRating): string => {
 
 export const getMinAge = (rating: AgeRating): number => {
   return AgeRatingMinAge[rating];
+};
+
+export const isCurrentlyShowing = (status: MovieStatus): boolean => {
+  return status === 'CURRENT';
+};
+
+export const isUpcoming = (status: MovieStatus): boolean => {
+  return status === 'UPCOMING';
+};
+
+export const isArchived = (status: MovieStatus): boolean => {
+  return status === 'ARCHIVED';
+};
+
+export const isActive = (status: MovieStatus): boolean => {
+  return status === 'CURRENT' || status === 'UPCOMING';
 };
 
 export interface MovieCreateRequest {
@@ -80,6 +100,7 @@ export interface MovieFilterRequest {
   ageRating?: AgeRating;
   currentlyShowing?: boolean;
   upcoming?: boolean;
+  archived?: boolean;
   releaseDateFrom?: string;
   releaseDateTo?: string;
   genreId?: number;
@@ -116,10 +137,10 @@ export interface MovieDetailResponse {
   upcoming: boolean;
   archived: boolean;
   active: boolean;
-  genres?: any[];
-  actors?: any[];
-  directors?: any[];
-  screenwriters?: any[];
+  genres?: GenreResponse[];
+  actors?: PersonResponse[];
+  directors?: PersonResponse[];
+  screenwriters?: PersonResponse[];
 }
 
 export interface MovieSessionSearchResponse {
@@ -139,6 +160,10 @@ export interface MovieCardProjection {
   status: MovieStatus;
   releaseDate: string;
   endShowingDate: string;
+  getPosterUrl(): string;
+  isCurrentlyShowing(): boolean;
+  isUpcoming(): boolean;
+  isArchived(): boolean;
 }
 
 export interface MovieDetailProjection {
@@ -153,6 +178,11 @@ export interface MovieDetailProjection {
   ageRating: AgeRating;
   status: MovieStatus;
   posterFileName: string;
+  getPosterUrl(): string;
+  isCurrentlyShowing(): boolean;
+  isUpcoming(): boolean;
+  isArchived(): boolean;
+  isActive(): boolean;
 }
 
 export interface MovieSessionSearchProjection {

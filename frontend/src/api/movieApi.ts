@@ -60,7 +60,7 @@ export const movieApi = {
     getBySlug: (slug: string): Promise<MovieDetailResponse> =>
       fetchApi<MovieDetailResponse>(`${PUBLIC_URL}/slug/${slug}`, {}, false, true),
 
-    getMovies: (params?: SearchParams): Promise<PageResponse<MovieCardResponse>> => {
+    getFilteredMovies: (params?: SearchParams): Promise<PageResponse<MovieCardResponse>> => {
       const url = buildPagedUrl(PUBLIC_URL, params, 'grid');
       return fetchApi<PageResponse<MovieCardResponse>>(url, {}, false, true);
     },
@@ -122,13 +122,16 @@ export const movieApi = {
         method: 'DELETE'
       }),
 
-    getMovies: (params?: SearchParams): Promise<PageResponse<MovieCardResponse>> => {
+    getFilteredMovies: (params?: SearchParams): Promise<PageResponse<MovieCardResponse>> => {
       const url = buildPagedUrl(ADMIN_URL, params, 'table');
       return fetchApi<PageResponse<MovieCardResponse>>(url);
     },
 
     getMovieById: (id: number): Promise<MovieDetailResponse> =>
       fetchApi<MovieDetailResponse>(`${ADMIN_URL}/${id}`),
+
+    getMovieBySlug: (slug: string): Promise<MovieDetailResponse> =>
+      fetchApi<MovieDetailResponse>(`${ADMIN_URL}/by-slug/${slug}`),
 
     searchMoviesForSession: (search?: string): Promise<MovieSessionSearchResponse[]> => {
       const url = `${ADMIN_URL}/search/session${search ? `?search=${encodeURIComponent(search)}` : ''}`;
