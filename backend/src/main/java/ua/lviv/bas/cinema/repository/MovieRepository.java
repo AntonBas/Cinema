@@ -23,15 +23,6 @@ public interface MovieRepository extends JpaRepository<Movie, Long>, JpaSpecific
 
 	Optional<Movie> findBySlug(String slug);
 
-	@Query("SELECT COUNT(m) FROM Movie m JOIN m.actors a WHERE a.id = :personId")
-	long countByActorsId(@Param("personId") Long personId);
-
-	@Query("SELECT COUNT(m) FROM Movie m JOIN m.directors d WHERE d.id = :personId")
-	long countByDirectorsId(@Param("personId") Long personId);
-
-	@Query("SELECT COUNT(m) FROM Movie m JOIN m.screenwriters s WHERE s.id = :personId")
-	long countByScreenwritersId(@Param("personId") Long personId);
-
 	Optional<MovieDetailProjection> findDetailProjectionById(Long id);
 
 	@Query("""
@@ -61,7 +52,4 @@ public interface MovieRepository extends JpaRepository<Movie, Long>, JpaSpecific
 	@EntityGraph(attributePaths = { "genres", "actors", "directors", "screenwriters" })
 	@Override
 	Optional<Movie> findById(Long id);
-
-	@Query("SELECT COUNT(m) FROM Movie m WHERE m.status = :status")
-	long countByStatus(@Param("status") String status);
 }

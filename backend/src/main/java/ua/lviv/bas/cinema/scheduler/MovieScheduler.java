@@ -23,38 +23,45 @@ public class MovieScheduler {
 	@Scheduled(cron = "${scheduler.movie-status.cron:0 */5 * * * *}")
 	@Transactional
 	public void updateMovieStatuses() {
-		log.info("=== SCHEDULER START ===");
-		log.info("Date now: {}", LocalDate.now());
-
 		LocalDate today = LocalDate.now();
-		List<Movie> allMovies = movieRepository.findAll();
+		log.info("Starting movie status update for date: {}", today);
 
-		log.info("Found {} movies", allMovies.size());
+		List<Movie> allMovies = movieRepository.findAll();
+		log.info("Found {} movies to check", allMovies.size());
 
 		int updatedCount = 0;
+		int currentCount = 0;
+		int upcomingCount = 0;
+		int archivedCount = 0;
 
 		for (Movie movie : allMovies) {
 			MovieStatus currentStatus = movie.getStatus();
 			MovieStatus newStatus = calculateMovieStatus(movie, today);
 
-			log.info("Checking movie {} '{}': release={}, end={}, current={}, calculated={}", movie.getId(),
-					movie.getTitle(), movie.getReleaseDate(), movie.getEndShowingDate(), currentStatus, newStatus);
-
 			if (currentStatus != newStatus) {
 				movie.setStatus(newStatus);
 				updatedCount++;
-				log.warn("CHANGING: {} from {} to {}", movie.getTitle(), currentStatus, newStatus);
+				log.info("Movie ID {} '{}': status changed from {} to {}", movie.getId(), movie.getTitle(),
+						currentStatus, newStatus);
+			}
+
+			switch (newStatus) {
+			case CURRENT -> currentCount++;
+			case UPCOMING -> upcomingCount++;
+			case ARCHIVED -> archivedCount++;
+			default -> {
+			}
 			}
 		}
 
 		if (updatedCount > 0) {
 			movieRepository.saveAll(allMovies);
-			log.info("SAVED {} CHANGES!", updatedCount);
-		} else {
-			log.info("No changes needed");
+			log.info("Updated {} movie statuses", updatedCount);
 		}
 
-		log.info("=== SCHEDULER END ===");
+		log.info("Movie status summary - CURRENT: {}, UPCOMING: {}, ARCHIVED: {}", currentCount, upcomingCount,
+				archivedCount);
+		log.info("Movie status update completed");
 	}
 
 	public MovieStatus calculateMovieStatus(Movie movie, LocalDate referenceDate) {

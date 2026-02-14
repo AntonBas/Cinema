@@ -15,9 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.Movie;
-import ua.lviv.bas.cinema.domain.enums.MovieStatus;
 import ua.lviv.bas.cinema.domain.projection.MovieCardProjection;
-import ua.lviv.bas.cinema.domain.projection.MovieDetailProjection;
 import ua.lviv.bas.cinema.domain.projection.MovieSessionSearchProjection;
 import ua.lviv.bas.cinema.domain.specification.MovieSpecification;
 import ua.lviv.bas.cinema.dto.movie.request.MovieCreateRequest;
@@ -69,6 +67,7 @@ public class MovieService {
 		setMovieRelations(movie, request);
 
 		Movie saved = movieRepository.save(movie);
+		log.info("Movie created successfully with id: {}", saved.getId());
 		return buildDetailResponse(saved);
 	}
 
@@ -94,6 +93,7 @@ public class MovieService {
 		updateMovieRelations(existing, request);
 
 		Movie updated = movieRepository.save(existing);
+		log.info("Movie updated successfully with id: {}", updated.getId());
 		return buildDetailResponse(updated);
 	}
 
@@ -102,16 +102,16 @@ public class MovieService {
 		log.info("Deleting movie with id: {}", id);
 
 		Movie movie = findMovieById(id);
-		posterService.deletePoster(movie.getPosterFileName());
+		if (movie.getPosterFileName() != null) {
+			posterService.deletePoster(movie.getPosterFileName());
+		}
 		movieRepository.delete(movie);
+		log.info("Movie deleted successfully with id: {}", id);
 	}
 
 	public MovieDetailResponse getMovieById(Long id) {
-		return movieRepository.findDetailProjectionById(id).map(projection -> {
-			MovieDetailResponse response = movieMapper.toMovieDetailResponse(projection);
-			enrichDetailResponse(response, projection);
-			return response;
-		}).orElseThrow(() -> new MovieNotFoundException(id));
+		return movieRepository.findDetailProjectionById(id).map(movieMapper::toMovieDetailResponse)
+				.orElseThrow(() -> new MovieNotFoundException(id));
 	}
 
 	public MovieDetailResponse getMovieBySlug(String slug) {
@@ -122,20 +122,14 @@ public class MovieService {
 	public Page<MovieCardResponse> getFilteredMovies(MovieFilterRequest filter, Pageable pageable) {
 		Specification<Movie> spec = movieSpecification.build(filter);
 
+		if (!pageable.getSort().isSorted()) {
+			pageable = Pageable.ofSize(pageable.getPageSize()).withPage(pageable.getPageNumber());
+		}
+
 		Page<MovieCardProjection> projections = movieRepository.findMovieCards(spec, pageable);
 
-		return projections.map(projection -> {
-			MovieCardResponse response = new MovieCardResponse();
-			response.setId(projection.getId());
-			response.setTitle(projection.getTitle());
-			response.setSlug(projection.getSlug());
-			response.setDurationMinutes(projection.getDurationMinutes());
-			response.setAgeRating(projection.getAgeRating());
-			response.setStatus(projection.getStatus());
-			response.setPosterUrl("/api/movies/" + projection.getId() + "/poster");
-			response.setCurrentlyShowing(isCurrentlyShowing(projection));
-			return response;
-		});
+		log.debug("Found {} movies for filter: {}", projections.getTotalElements(), filter);
+		return projections.map(movieMapper::toMovieCardResponse);
 	}
 
 	public List<MovieSessionSearchResponse> searchMoviesForSession(String searchTerm) {
@@ -145,33 +139,18 @@ public class MovieService {
 
 	public ResponseEntity<byte[]> getMoviePoster(Long id) {
 		Movie movie = findMovieById(id);
+		if (movie.getPosterFileName() == null) {
+			return ResponseEntity.notFound().build();
+		}
 		return posterService.getPosterResponse(movie.getPosterFileName());
-	}
-
-	public long countByStatus(MovieStatus status) {
-		return movieRepository.countByStatus(status.name());
 	}
 
 	public boolean existsBySlug(String slug) {
 		return movieRepository.findBySlug(slug).isPresent();
 	}
 
-	public long countByActorId(Long actorId) {
-		return movieRepository.countByActorsId(actorId);
-	}
-
-	public long countByDirectorId(Long directorId) {
-		return movieRepository.countByDirectorsId(directorId);
-	}
-
-	public long countByScreenwriterId(Long screenwriterId) {
-		return movieRepository.countByScreenwritersId(screenwriterId);
-	}
-
 	private MovieDetailResponse buildDetailResponse(Movie movie) {
-		MovieDetailResponse response = movieMapper.toMovieDetailResponse(movie);
-		enrichDetailResponse(response, movie);
-		return response;
+		return movieMapper.toMovieDetailResponse(movie);
 	}
 
 	private Movie findMovieById(Long id) {
@@ -213,42 +192,22 @@ public class MovieService {
 		if (posterFile != null && !posterFile.isEmpty()) {
 			String posterFileName = posterService.uploadPoster(posterFile);
 			movie.setPosterFileName(posterFileName);
+			log.debug("Poster uploaded: {}", posterFileName);
 		}
 	}
 
 	private void handlePosterUpdate(Movie movie, MultipartFile posterFile, Boolean removePoster) {
 		if (posterFile != null && !posterFile.isEmpty()) {
-			posterService.deletePoster(movie.getPosterFileName());
+			if (movie.getPosterFileName() != null) {
+				posterService.deletePoster(movie.getPosterFileName());
+			}
 			String newPosterFileName = posterService.uploadPoster(posterFile);
 			movie.setPosterFileName(newPosterFileName);
-		} else if (Boolean.TRUE.equals(removePoster)) {
+			log.debug("Poster updated: {}", newPosterFileName);
+		} else if (Boolean.TRUE.equals(removePoster) && movie.getPosterFileName() != null) {
 			posterService.deletePoster(movie.getPosterFileName());
 			movie.setPosterFileName(null);
+			log.debug("Poster removed");
 		}
-	}
-
-	private void enrichDetailResponse(MovieDetailResponse response, MovieDetailProjection projection) {
-		response.setPosterUrl("/api/movies/" + projection.getId() + "/poster");
-		LocalDate today = LocalDate.now();
-		response.setCurrentlyShowing(projection.getStatus() == MovieStatus.CURRENT
-				&& !today.isBefore(projection.getReleaseDate()) && !today.isAfter(projection.getEndShowingDate()));
-		response.setUpcoming(today.isBefore(projection.getReleaseDate()));
-		response.setArchived(today.isAfter(projection.getEndShowingDate()));
-		response.setActive(
-				projection.getStatus() == MovieStatus.CURRENT || projection.getStatus() == MovieStatus.UPCOMING);
-	}
-
-	private void enrichDetailResponse(MovieDetailResponse response, Movie movie) {
-		response.setPosterUrl("/api/movies/" + movie.getId() + "/poster");
-		response.setCurrentlyShowing(movie.getStatus() == MovieStatus.CURRENT);
-		response.setUpcoming(movie.getStatus() == MovieStatus.UPCOMING);
-		response.setArchived(movie.getStatus() == MovieStatus.ARCHIVED);
-		response.setActive(movie.getStatus() == MovieStatus.CURRENT || movie.getStatus() == MovieStatus.UPCOMING);
-	}
-
-	private boolean isCurrentlyShowing(MovieCardProjection projection) {
-		LocalDate today = LocalDate.now();
-		return projection.getStatus() == MovieStatus.CURRENT && !today.isBefore(projection.getReleaseDate())
-				&& !today.isAfter(projection.getEndShowingDate());
 	}
 }

@@ -1,10 +1,12 @@
 package ua.lviv.bas.cinema.controller.api;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.CacheControl;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -18,6 +20,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.dto.common.PageResponse;
@@ -45,7 +48,7 @@ public class MovieController {
 
 		log.info("GET /api/movies/{} - Getting movie by id", id);
 		MovieDetailResponse movie = movieService.getMovieById(id);
-		return ResponseEntity.ok(movie);
+		return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.HOURS)).body(movie);
 	}
 
 	@GetMapping("/slug/{slug}")
@@ -57,14 +60,15 @@ public class MovieController {
 
 		log.info("GET /api/movies/slug/{} - Getting movie by slug", slug);
 		MovieDetailResponse movie = movieService.getMovieBySlug(slug);
-		return ResponseEntity.ok(movie);
+		return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.HOURS)).body(movie);
 	}
 
 	@GetMapping
 	@Operation(summary = "Search movies", description = "Search and filter movies with pagination")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Movies retrieved successfully") })
 	public ResponseEntity<PageResponse<MovieCardResponse>> getMovies(
-			@Parameter(description = "Filter criteria") @ModelAttribute MovieFilterRequest filter,
+			@Parameter(description = "Filter criteria") @ModelAttribute @Valid MovieFilterRequest filter,
+
 			@Parameter(description = "Pagination parameters") @PageableDefault(size = 12, sort = "title", direction = Sort.Direction.ASC) Pageable pageable) {
 
 		log.info("GET /api/movies - filter: {}", filter);

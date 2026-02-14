@@ -23,4 +23,20 @@ public interface MovieCardProjection {
 	LocalDate getReleaseDate();
 
 	LocalDate getEndShowingDate();
+
+	default String getPosterUrl() {
+		return "/api/movies/" + getId() + "/poster";
+	}
+
+	default boolean isCurrentlyShowing() {
+		return getStatus() == MovieStatus.CURRENT;
+	}
+
+	default boolean isUpcoming() {
+		return getStatus() == MovieStatus.UPCOMING;
+	}
+
+	default boolean isArchived() {
+		return getStatus() == MovieStatus.ARCHIVED;
+	}
 }

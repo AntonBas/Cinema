@@ -20,10 +20,10 @@ public class MovieSpecification {
 	public Specification<Movie> build(MovieFilterRequest filter) {
 		return Specification.allOf(filterByTitle(filter.getTitle()), filterByStatus(filter.getStatus()),
 				filterByAgeRating(filter.getAgeRating()), filterByCurrentlyShowing(filter.getCurrentlyShowing()),
-				filterByUpcoming(filter.getUpcoming()), filterByReleaseDateFrom(filter.getReleaseDateFrom()),
-				filterByReleaseDateTo(filter.getReleaseDateTo()), filterByGenre(filter.getGenreId()),
-				filterByActor(filter.getActorId()), filterByDirector(filter.getDirectorId()),
-				filterByScreenwriter(filter.getScreenwriterId()));
+				filterByUpcoming(filter.getUpcoming()), filterByArchived(filter.getArchived()),
+				filterByReleaseDateFrom(filter.getReleaseDateFrom()), filterByReleaseDateTo(filter.getReleaseDateTo()),
+				filterByGenre(filter.getGenreId()), filterByActor(filter.getActorId()),
+				filterByDirector(filter.getDirectorId()), filterByScreenwriter(filter.getScreenwriterId()));
 	}
 
 	private Specification<Movie> filterByTitle(String title) {
@@ -46,10 +46,7 @@ public class MovieSpecification {
 		return (root, query, cb) -> {
 			if (currentlyShowing == null || !currentlyShowing)
 				return null;
-			LocalDate today = LocalDate.now();
-			return cb.and(cb.lessThanOrEqualTo(root.get("releaseDate"), today),
-					cb.greaterThanOrEqualTo(root.get("endShowingDate"), today),
-					cb.equal(root.get("status"), MovieStatus.CURRENT));
+			return cb.equal(root.get("status"), MovieStatus.CURRENT);
 		};
 	}
 
@@ -57,9 +54,15 @@ public class MovieSpecification {
 		return (root, query, cb) -> {
 			if (upcoming == null || !upcoming)
 				return null;
-			LocalDate today = LocalDate.now();
-			return cb.and(cb.greaterThan(root.get("releaseDate"), today),
-					cb.equal(root.get("status"), MovieStatus.UPCOMING));
+			return cb.equal(root.get("status"), MovieStatus.UPCOMING);
+		};
+	}
+
+	private Specification<Movie> filterByArchived(Boolean archived) {
+		return (root, query, cb) -> {
+			if (archived == null || !archived)
+				return null;
+			return cb.equal(root.get("status"), MovieStatus.ARCHIVED);
 		};
 	}
 

@@ -20,7 +20,7 @@ public class MovieFilterRequest {
 	@Schema(description = "Search term for movie title", example = "Inception")
 	private String title;
 
-	@Schema(description = "Filter by movie status", example = "ACTIVE")
+	@Schema(description = "Filter by movie status", example = "CURRENT")
 	private MovieStatus status;
 
 	@Schema(description = "Filter by age rating", example = "PG_13")
@@ -31,6 +31,9 @@ public class MovieFilterRequest {
 
 	@Schema(description = "Filter upcoming movies", example = "true")
 	private Boolean upcoming;
+
+	@Schema(description = "Filter archived movies", example = "true")
+	private Boolean archived;
 
 	@Schema(description = "Filter by release date from", example = "2024-01-01")
 	private LocalDate releaseDateFrom;
