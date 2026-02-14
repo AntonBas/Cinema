@@ -1,12 +1,12 @@
 import React from 'react';
-import type { GenreStatsResponse } from '@/types/genre';
+import type { GenreResponse } from '@/types/genre';
 import { Button, Badge } from '@/components/ui';
 import styles from './GenreTable.module.css';
 
 interface GenreTableProps {
-    genres: GenreStatsResponse[];
-    onEdit: (genre: GenreStatsResponse) => void;
-    onDelete: (genre: GenreStatsResponse) => void;
+    genres: GenreResponse[];
+    onEdit: (genre: GenreResponse) => void;
+    onDelete: (genre: GenreResponse) => void;
     loading?: boolean;
 }
 
@@ -42,38 +42,40 @@ export const GenreTable: React.FC<GenreTableProps> = ({
                 <div className={styles.headerCell}>Movies Count</div>
                 <div className={styles.headerCell}>Actions</div>
             </div>
-            {genres.map(genre => (
-                <div key={genre.id} className={styles.tableRow}>
-                    <div className={styles.nameCell}>
-                        <span className={styles.name}>{genre.name}</span>
-                    </div>
-                    <div className={styles.countCell}>
-                        <Badge variant="primary">
-                            {genre.movieCount} movies
-                        </Badge>
-                    </div>
-                    <div className={styles.actionsCell}>
-                        <div className={styles.actions}>
-                            <Button
-                                variant="success"
-                                size="small"
-                                onClick={() => onEdit(genre)}
-                                className={styles.editButton}
-                            >
-                                Edit
-                            </Button>
-                            <Button
-                                variant="error"
-                                size="small"
-                                onClick={() => onDelete(genre)}
-                                className={styles.deleteButton}
-                            >
-                                Delete
-                            </Button>
+            <div className={styles.tableBody}>
+                {genres.map((genre) => (
+                    <div key={genre.id} className={styles.tableRow}>
+                        <div className={styles.nameCell}>
+                            <span className={styles.name}>{genre.name}</span>
+                        </div>
+                        <div className={styles.countCell}>
+                            <Badge variant="primary">
+                                {genre.movieCount} {genre.movieCount === 1 ? 'movie' : 'movies'}
+                            </Badge>
+                        </div>
+                        <div className={styles.actionsCell}>
+                            <div className={styles.actions}>
+                                <Button
+                                    variant="success"
+                                    size="small"
+                                    onClick={() => onEdit(genre)}
+                                    className={styles.editButton}
+                                >
+                                    Edit
+                                </Button>
+                                <Button
+                                    variant="error"
+                                    size="small"
+                                    onClick={() => onDelete(genre)}
+                                    className={styles.deleteButton}
+                                >
+                                    Delete
+                                </Button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            ))}
+                ))}
+            </div>
         </div>
     );
 };
