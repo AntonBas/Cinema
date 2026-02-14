@@ -35,9 +35,9 @@ export const GenreSearchList: React.FC<GenreSearchListProps> = ({
         );
     }, [genres, localSearchQuery]);
 
-    const displayGenres = useMemo(() => {
-        return selectedGenres.length > 0 ? selectedGenres : genres;
-    }, [selectedGenres, genres]);
+    const displaySelectedGenres = useMemo(() => {
+        return selectedGenres.filter(genre => selectedIds.includes(genre.id));
+    }, [selectedGenres, selectedIds]);
 
     if (isLoading) {
         return (
@@ -59,22 +59,19 @@ export const GenreSearchList: React.FC<GenreSearchListProps> = ({
                 />
             </div>
 
-            {selectedIds.length > 0 && (
+            {displaySelectedGenres.length > 0 && (
                 <div className={styles.selectedItems}>
-                    {selectedIds.map(genreId => {
-                        const genre = displayGenres.find(g => g.id === genreId);
-                        return genre ? (
-                            <Badge
-                                key={genreId}
-                                variant="primary"
-                                onClick={() => onChange(genreId)}
-                                className={styles.selectedTag}
-                                title={`Remove ${genre.name}`}
-                            >
-                                {genre.name} ×
-                            </Badge>
-                        ) : null;
-                    })}
+                    {displaySelectedGenres.map(genre => (
+                        <Badge
+                            key={genre.id}
+                            variant="primary"
+                            onClick={() => onChange(genre.id)}
+                            className={styles.selectedTag}
+                            title={`Remove ${genre.name}`}
+                        >
+                            {genre.name} ×
+                        </Badge>
+                    ))}
                 </div>
             )}
 
@@ -88,6 +85,9 @@ export const GenreSearchList: React.FC<GenreSearchListProps> = ({
                         />
                         <span className={styles.checkmark}></span>
                         {genre.name}
+                        {selectedIds.includes(genre.id) && (
+                            <span className={styles.selectedIndicator}>(selected)</span>
+                        )}
                     </label>
                 ))}
 

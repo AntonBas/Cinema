@@ -54,7 +54,7 @@ export const PersonSelect: React.FC<PersonSelectProps> = ({
             if (showNotification) {
                 showNotification(`Person "${name}" created successfully`, 'success');
             }
-            return newPerson.id;
+            return newPerson;
         } catch (error) {
             if (showNotification) {
                 showNotification('Failed to create person', 'error');
@@ -64,8 +64,8 @@ export const PersonSelect: React.FC<PersonSelectProps> = ({
     };
 
     const displayPersons = useMemo(() => {
-        return selectedPersons.length > 0 ? selectedPersons : [];
-    }, [selectedPersons]);
+        return selectedPersons.filter(person => selectedIds.includes(person.id));
+    }, [selectedPersons, selectedIds]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -105,9 +105,9 @@ export const PersonSelect: React.FC<PersonSelectProps> = ({
     };
 
     const handleAddAndSelect = async () => {
-        const newPersonId = await handleAddNewPerson(searchQuery, role);
-        if (newPersonId) {
-            const newSelectedIds = [...selectedIds, newPersonId];
+        const newPerson = await handleAddNewPerson(searchQuery, role);
+        if (newPerson) {
+            const newSelectedIds = [...selectedIds, newPerson.id];
             onChange(newSelectedIds);
             setSearchQuery('');
         }

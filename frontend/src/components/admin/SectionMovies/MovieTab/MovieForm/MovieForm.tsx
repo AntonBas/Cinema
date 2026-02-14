@@ -51,7 +51,6 @@ export const MovieForm: React.FC<MovieFormProps> = ({
     const [selectedScreenwriters, setSelectedScreenwriters] = useState<PersonResponse[]>([]);
     const [isLoadingData, setIsLoadingData] = useState(true);
     const [isUploading, setIsUploading] = useState(false);
-    const [errorMessage, setErrorMessage] = useState('');
     const [posterPreview, setPosterPreview] = useState<string>('');
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -74,11 +73,6 @@ export const MovieForm: React.FC<MovieFormProps> = ({
     const notify = useCallback((message: string, type: 'success' | 'error' | 'warning' | 'info') => {
         if (showNotification) {
             showNotification(message, type);
-        } else {
-            if (type === 'error') {
-                setErrorMessage(message);
-                setTimeout(() => setErrorMessage(''), 5000);
-            }
         }
     }, [showNotification]);
 
@@ -88,48 +82,24 @@ export const MovieForm: React.FC<MovieFormProps> = ({
             setGenres(genresData);
         } catch (error) {
             console.error('Error loading genres:', error);
-            notify('Failed to load genres', 'error');
         }
-    }, [notify]);
-
-    const loadSelectedObjects = useCallback(async () => {
-        if (!movie) return;
-
-        if (movie.genres) {
-            setSelectedGenres(movie.genres);
-        }
-        if (movie.actors) {
-            setSelectedActors(movie.actors);
-        }
-        if (movie.directors) {
-            setSelectedDirectors(movie.directors);
-        }
-        if (movie.screenwriters) {
-            setSelectedScreenwriters(movie.screenwriters);
-        }
-    }, [movie]);
-
-    useEffect(() => {
-        const loadAllData = async () => {
-            setIsLoadingData(true);
-            try {
-                await Promise.all([
-                    loadGenres(),
-                    loadSelectedObjects()
-                ]);
-            } catch (error) {
-                console.error('Error loading form data:', error);
-                notify('Failed to load form data', 'error');
-            } finally {
-                setIsLoadingData(false);
-            }
-        };
-
-        loadAllData();
-    }, [loadGenres, loadSelectedObjects, notify]);
+    }, []);
 
     useEffect(() => {
         if (movie) {
+            if (movie.genres) {
+                setSelectedGenres(movie.genres);
+            }
+            if (movie.actors) {
+                setSelectedActors(movie.actors);
+            }
+            if (movie.directors) {
+                setSelectedDirectors(movie.directors);
+            }
+            if (movie.screenwriters) {
+                setSelectedScreenwriters(movie.screenwriters);
+            }
+
             const genreIds = movie.genres?.map(g => g.id) || [];
             const actorIds = movie.actors?.map(a => a.id) || [];
             const directorIds = movie.directors?.map(d => d.id) || [];
@@ -158,6 +128,21 @@ export const MovieForm: React.FC<MovieFormProps> = ({
             }
         }
     }, [movie]);
+
+    useEffect(() => {
+        const loadAllData = async () => {
+            setIsLoadingData(true);
+            try {
+                await loadGenres();
+            } catch (error) {
+                console.error('Error loading form data:', error);
+            } finally {
+                setIsLoadingData(false);
+            }
+        };
+
+        loadAllData();
+    }, [loadGenres]);
 
     const handlePosterSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -197,7 +182,6 @@ export const MovieForm: React.FC<MovieFormProps> = ({
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsUploading(true);
-        setErrorMessage('');
 
         try {
             if (movie?.id) {
@@ -248,7 +232,6 @@ export const MovieForm: React.FC<MovieFormProps> = ({
             onSuccess();
         } catch (error) {
             console.error('Error saving movie:', error);
-            notify('Error saving movie. Please try again.', 'error');
         } finally {
             setIsUploading(false);
         }
@@ -301,12 +284,6 @@ export const MovieForm: React.FC<MovieFormProps> = ({
             title={movie ? 'Edit Movie' : 'Add New Movie'}
             size="large"
         >
-            {errorMessage && (
-                <div className={styles.errorMessage}>
-                    {errorMessage}
-                </div>
-            )}
-
             <form onSubmit={handleSubmit} className={styles.form}>
                 <div className={styles.formGroup}>
                     <label className={styles.label}>Movie Poster {!movie && '*'}</label>
