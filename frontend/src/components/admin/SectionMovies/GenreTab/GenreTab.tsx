@@ -36,20 +36,22 @@ export const GenreTab: React.FC = () => {
   });
 
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const isInitialLoad = useRef(false);
+  const isMountedRef = useRef(false);
 
   useEffect(() => {
-    if (isInitialLoad.current) {
-      getAll(currentParams);
-    }
-  }, [currentParams, getAll]);
+    isMountedRef.current = true;
+    getAll(currentParams);
+
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   useEffect(() => {
-    if (!isInitialLoad.current) {
-      isInitialLoad.current = true;
+    if (isMountedRef.current) {
       getAll(currentParams);
     }
-  }, [getAll, currentParams]);
+  }, [currentParams]);
 
   const handleSubmit = async (name: string) => {
     if (!name.trim()) {
