@@ -8,7 +8,6 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.mapstruct.ReportingPolicy;
 
 import ua.lviv.bas.cinema.domain.Movie;
-import ua.lviv.bas.cinema.domain.projection.MovieCardProjection;
 import ua.lviv.bas.cinema.domain.projection.MovieDetailProjection;
 import ua.lviv.bas.cinema.domain.projection.MovieSessionSearchProjection;
 import ua.lviv.bas.cinema.dto.movie.request.MovieCreateRequest;
@@ -20,9 +19,9 @@ import ua.lviv.bas.cinema.dto.movie.response.MovieSessionSearchResponse;
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface MovieMapper {
 
-	@Mapping(target = "posterUrl", expression = "java(projection.getPosterUrl())")
-	@Mapping(target = "currentlyShowing", expression = "java(projection.isCurrentlyShowing())")
-	MovieCardResponse toMovieCardResponse(MovieCardProjection projection);
+	@Mapping(target = "posterUrl", expression = "java(\"/api/movies/\" + movie.getId() + \"/poster\")")
+	@Mapping(target = "currentlyShowing", expression = "java(movie.getStatus() == ua.lviv.bas.cinema.domain.enums.MovieStatus.CURRENT)")
+	MovieCardResponse toMovieCardResponse(Movie movie);
 
 	@Mapping(target = "posterUrl", expression = "java(projection.getPosterUrl())")
 	@Mapping(target = "currentlyShowing", expression = "java(projection.isCurrentlyShowing())")
