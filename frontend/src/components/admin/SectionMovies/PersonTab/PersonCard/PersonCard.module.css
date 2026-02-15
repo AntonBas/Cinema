@@ -93,6 +93,20 @@
     max-width: 100px;
 }
 
+.movieCountBadge {
+    background: rgba(var(--color-info-rgb), var(--opacity-medium));
+    color: var(--color-info);
+    border: 1px solid rgba(var(--color-info-rgb), var(--opacity-low));
+    font-size: 0.75rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.movieCountBadge:hover {
+    background: rgba(var(--color-info-rgb), var(--opacity-high));
+}
+
 @media (max-width: 768px) {
     .cardContent {
         padding: var(--space-5);

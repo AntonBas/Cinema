@@ -45,6 +45,7 @@ export const PersonCard: React.FC<PersonCardProps> = ({
     };
 
     const roleConfig = getRoleConfig(person.role);
+    const movieCount = person.movieCount || 0;
 
     return (
         <div className={styles.card}>
@@ -62,6 +63,7 @@ export const PersonCard: React.FC<PersonCardProps> = ({
                         </h3>
                     </div>
                 </div>
+
                 <div className={styles.details}>
                     <Badge
                         variant={roleConfig.variant}
@@ -69,7 +71,16 @@ export const PersonCard: React.FC<PersonCardProps> = ({
                     >
                         {roleConfig.label}
                     </Badge>
+
+                    <Badge
+                        variant="info"
+                        size="small"
+                        className={styles.movieCountBadge}
+                    >
+                        🎬 {movieCount} {movieCount === 1 ? 'movie' : 'movies'}
+                    </Badge>
                 </div>
+
                 <div className={styles.actions}>
                     <Button
                         variant="success"
