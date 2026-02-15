@@ -87,12 +87,14 @@ export const movieApi = {
   admin: {
     create: (request: MovieCreateRequest): Promise<MovieDetailResponse> => {
       const formData = new FormData();
-      formData.append('movieData', new Blob([JSON.stringify(request)], {
+      const { posterFile, ...requestData } = request;
+
+      formData.append('movieData', new Blob([JSON.stringify(requestData)], {
         type: 'application/json',
       }));
 
-      if (request.posterFile) {
-        formData.append('posterFile', request.posterFile);
+      if (posterFile) {
+        formData.append('posterFile', posterFile);
       }
 
       return fetchApi<MovieDetailResponse>(ADMIN_URL, {
@@ -103,12 +105,19 @@ export const movieApi = {
 
     update: (id: number, request: MovieUpdateRequest): Promise<MovieDetailResponse> => {
       const formData = new FormData();
-      formData.append('movieData', new Blob([JSON.stringify(request)], {
+      const { posterFile, removePoster, ...requestData } = request;
+
+      const requestWithRemovePoster = {
+        ...requestData,
+        removePoster: removePoster || false
+      };
+
+      formData.append('movieData', new Blob([JSON.stringify(requestWithRemovePoster)], {
         type: 'application/json',
       }));
 
-      if (request.posterFile) {
-        formData.append('posterFile', request.posterFile);
+      if (posterFile) {
+        formData.append('posterFile', posterFile);
       }
 
       return fetchApi<MovieDetailResponse>(`${ADMIN_URL}/${id}`, {

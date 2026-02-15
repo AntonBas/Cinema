@@ -21,6 +21,8 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -47,6 +49,7 @@ import ua.lviv.bas.cinema.service.cinema.MovieService;
 public class AdminMovieController {
 
 	private final MovieService movieService;
+	private final ObjectMapper objectMapper;
 
 	@PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@Operation(summary = "Create a new movie", description = "Creates a new movie with poster")
@@ -54,14 +57,21 @@ public class AdminMovieController {
 			@ApiResponse(responseCode = "400", description = "Invalid input data"),
 			@ApiResponse(responseCode = "409", description = "Movie with same slug already exists") })
 	public ResponseEntity<MovieDetailResponse> createMovie(
-			@Parameter(description = "Movie data in JSON format", required = true) @RequestPart("movieData") @Valid MovieCreateRequest request,
+			@Parameter(description = "Movie data in JSON format", required = true) @RequestPart("movieData") String movieDataJson,
 
 			@Parameter(description = "Movie poster image file (JPG, PNG)") @RequestPart(value = "posterFile", required = false) MultipartFile posterFile) {
 
-		log.info("POST /api/admin/movies - Creating new movie: {}", request.getTitle());
-		request.setPosterFile(posterFile);
-		MovieDetailResponse createdMovie = movieService.createMovie(request);
-		return ResponseEntity.status(HttpStatus.CREATED).body(createdMovie);
+		log.info("POST /api/admin/movies - Creating new movie");
+
+		try {
+			MovieCreateRequest request = objectMapper.readValue(movieDataJson, MovieCreateRequest.class);
+			request.setPosterFile(posterFile);
+			MovieDetailResponse createdMovie = movieService.createMovie(request);
+			return ResponseEntity.status(HttpStatus.CREATED).body(createdMovie);
+		} catch (Exception e) {
+			log.error("Error parsing movie data", e);
+			throw new IllegalArgumentException("Invalid movie data format", e);
+		}
 	}
 
 	@PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -73,14 +83,21 @@ public class AdminMovieController {
 	public ResponseEntity<MovieDetailResponse> updateMovie(
 			@Parameter(description = "ID of the movie to update", required = true, example = "1") @PathVariable Long id,
 
-			@Parameter(description = "Updated movie data in JSON format", required = true) @RequestPart("movieData") @Valid MovieUpdateRequest request,
+			@Parameter(description = "Updated movie data in JSON format", required = true) @RequestPart("movieData") String movieDataJson,
 
 			@Parameter(description = "New movie poster image file (JPG, PNG)") @RequestPart(value = "posterFile", required = false) MultipartFile posterFile) {
 
 		log.info("PUT /api/admin/movies/{} - Updating movie", id);
-		request.setPosterFile(posterFile);
-		MovieDetailResponse updatedMovie = movieService.updateMovie(id, request);
-		return ResponseEntity.ok(updatedMovie);
+
+		try {
+			MovieUpdateRequest request = objectMapper.readValue(movieDataJson, MovieUpdateRequest.class);
+			request.setPosterFile(posterFile);
+			MovieDetailResponse updatedMovie = movieService.updateMovie(id, request);
+			return ResponseEntity.ok(updatedMovie);
+		} catch (Exception e) {
+			log.error("Error parsing movie data", e);
+			throw new IllegalArgumentException("Invalid movie data format", e);
+		}
 	}
 
 	@DeleteMapping("/{id}")
