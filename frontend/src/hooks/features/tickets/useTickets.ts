@@ -13,7 +13,7 @@ export const useTickets = () => {
     const qrCodeApi = useApi<Blob>();
 
     const getUserTickets = useCallback(async (params?: any) => {
-        return userTicketsApi.callApi(
+        return userTicketsApi.execute(
             () => ticketApi.getUserTickets(params),
             {
                 cacheKey: `user_tickets_${JSON.stringify(params)}`,
@@ -24,7 +24,7 @@ export const useTickets = () => {
     }, [userTicketsApi]);
 
     const getUpcomingTickets = useCallback(async (params?: any) => {
-        return upcomingTicketsApi.callApi(
+        return upcomingTicketsApi.execute(
             () => ticketApi.getUpcomingTickets(params),
             {
                 cacheKey: `upcoming_tickets_${JSON.stringify(params)}`,
@@ -35,7 +35,7 @@ export const useTickets = () => {
     }, [upcomingTicketsApi]);
 
     const getById = useCallback(async (ticketId: number) => {
-        return ticketByIdApi.callApi(
+        return ticketByIdApi.execute(
             () => ticketApi.getById(ticketId),
             {
                 cacheKey: `ticket_${ticketId}`,
@@ -46,7 +46,7 @@ export const useTickets = () => {
     }, [ticketByIdApi]);
 
     const getByCode = useCallback(async (ticketCode: string) => {
-        return ticketByCodeApi.callApi(
+        return ticketByCodeApi.execute(
             () => ticketApi.getByCode(ticketCode),
             {
                 cacheKey: `ticket_code_${ticketCode}`,
@@ -57,22 +57,20 @@ export const useTickets = () => {
     }, [ticketByCodeApi]);
 
     const validateTicket = useCallback(async (ticketCode: string) => {
-        return validateTicketApi.callApi(
+        return validateTicketApi.execute(
             () => ticketApi.validate(ticketCode),
             {
                 successMessage: 'Ticket validated successfully',
-                showErrorNotification: true,
             }
         );
     }, [validateTicketApi]);
 
     const getQRCode = useCallback(async (ticketCode: string) => {
-        return qrCodeApi.callApi(
+        return qrCodeApi.execute(
             () => ticketApi.getQRCode(ticketCode),
             {
                 cacheKey: `qr_code_${ticketCode}`,
                 cacheTime: 24 * 60 * 60 * 1000,
-                silent: true,
                 showErrorNotification: false,
             }
         );
@@ -88,6 +86,14 @@ export const useTickets = () => {
     }, [userTicketsApi, upcomingTicketsApi, ticketByIdApi, ticketByCodeApi,
         validateTicketApi, qrCodeApi]);
 
+    const loading = userTicketsApi.loading || upcomingTicketsApi.loading ||
+        ticketByIdApi.loading || ticketByCodeApi.loading ||
+        validateTicketApi.loading || qrCodeApi.loading;
+
+    const error = !!(userTicketsApi.error || upcomingTicketsApi.error ||
+        ticketByIdApi.error || ticketByCodeApi.error ||
+        validateTicketApi.error || qrCodeApi.error);
+
     return {
         userTickets: userTicketsApi.data?.content || [],
         upcomingTickets: upcomingTicketsApi.data?.content || [],
@@ -96,12 +102,8 @@ export const useTickets = () => {
         userPagination: userTicketsApi.data,
         upcomingPagination: upcomingTicketsApi.data,
 
-        loading: userTicketsApi.state.isLoading || upcomingTicketsApi.state.isLoading ||
-            ticketByIdApi.state.isLoading || ticketByCodeApi.state.isLoading ||
-            validateTicketApi.state.isLoading || qrCodeApi.state.isLoading,
-        error: userTicketsApi.state.isError || upcomingTicketsApi.state.isError ||
-            ticketByIdApi.state.isError || ticketByCodeApi.state.isError ||
-            validateTicketApi.state.isError || qrCodeApi.state.isError,
+        loading,
+        error,
 
         getUserTickets,
         getUpcomingTickets,
@@ -115,7 +117,5 @@ export const useTickets = () => {
         resetUpcomingTickets: upcomingTicketsApi.reset,
         resetTicket: ticketByIdApi.reset,
         resetTicketByCode: ticketByCodeApi.reset,
-        refetchUserTickets: userTicketsApi.refetch,
-        refetchUpcomingTickets: upcomingTicketsApi.refetch,
     };
 };

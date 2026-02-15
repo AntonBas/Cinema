@@ -7,7 +7,7 @@ export const useRefund = () => {
     const processRefundApi = useApi<RefundResponse>();
 
     const processRefund = useCallback(async (request: RefundRequest) => {
-        return processRefundApi.callApi(
+        return processRefundApi.execute(
             () => refundApi.processRefund(request),
             {
                 successMessage: 'Refund request submitted successfully',
@@ -26,14 +26,13 @@ export const useRefund = () => {
     return {
         refundResult: processRefundApi.data,
 
-        loading: processRefundApi.state.isLoading,
-        error: processRefundApi.state.isError,
-        isSubmitting: processRefundApi.state.isLoading,
-        isSuccess: processRefundApi.state.isSuccess,
+        loading: processRefundApi.loading,
+        error: processRefundApi.error,
+        isSubmitting: processRefundApi.loading,
+        isSuccess: !!(processRefundApi.data && !processRefundApi.loading && !processRefundApi.error),
 
         processRefund,
         clearRefundCache,
         resetProcess,
-        refetchRefund: processRefundApi.refetch,
     };
 };

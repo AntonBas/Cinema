@@ -1,74 +1,61 @@
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { useNotification } from './useNotification';
 
-interface UseApiOptions<T = any> {
-    showErrorNotification?: boolean;
-    successMessage?: string;
-    silent?: boolean;
-    cacheKey?: string;
-    cacheTime?: number;
-    retryCount?: number;
-    retryDelay?: number;
-    optimisticData?: T;
-    onSuccess?: (data: T) => void;
-    onError?: (error: Error) => void;
-    enabled?: boolean;
-}
-
-interface CacheItem<T = any> {
+interface CacheItem<T> {
     data: T;
     timestamp: number;
     expiresAt: number;
 }
 
-interface RequestState {
-    isLoading: boolean;
-    isError: boolean;
-    isSuccess: boolean;
+interface UseApiState<T> {
+    data: T | null;
+    loading: boolean;
+    error: Error | null;
     isCached: boolean;
-    attempts: number;
     timestamp: number | null;
 }
 
+interface UseApiOptions<T> {
+    showErrorNotification?: boolean;
+    successMessage?: string;
+    cacheKey?: string;
+    cacheTime?: number;
+    onSuccess?: (data: T) => void;
+    onError?: (error: Error) => void;
+    enabled?: boolean;
+}
+
 export const useApi = <T = any>() => {
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<Error | null>(null);
-    const [data, setData] = useState<T | null>(null);
-    const [state, setState] = useState<RequestState>({
-        isLoading: false,
-        isError: false,
-        isSuccess: false,
+    const [state, setState] = useState<UseApiState<T>>({
+        data: null,
+        loading: false,
+        error: null,
         isCached: false,
-        attempts: 0,
         timestamp: null
     });
 
     const { showNotification } = useNotification();
     const abortControllerRef = useRef<AbortController | null>(null);
     const cacheRef = useRef<Map<string, CacheItem<T>>>(new Map());
-    const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-    const originalDataRef = useRef<T | null>(null);
-    const lastRequestRef = useRef<{
-        apiCall: (() => Promise<T>) | null;
-        options?: UseApiOptions<T>;
-    }>({ apiCall: null, options: undefined });
+    const mountedRef = useRef(true);
 
-    const clearRetryTimeout = useCallback(() => {
-        if (retryTimeoutRef.current) {
-            clearTimeout(retryTimeoutRef.current);
-            retryTimeoutRef.current = null;
-        }
+    useEffect(() => {
+        mountedRef.current = true;
+        return () => {
+            mountedRef.current = false;
+            if (abortControllerRef.current) {
+                abortControllerRef.current.abort();
+            }
+        };
     }, []);
 
     const getCache = useCallback((key: string): T | null => {
         const item = cacheRef.current.get(key);
         if (!item) return null;
-
         if (Date.now() > item.expiresAt) {
             cacheRef.current.delete(key);
             return null;
         }
-
         return item.data;
     }, []);
 
@@ -89,57 +76,18 @@ export const useApi = <T = any>() => {
         }
     }, []);
 
-    const executeWithRetry = useCallback(async (
-        apiCall: () => Promise<T>,
-        retryCount: number,
-        retryDelay: number,
-        attempt: number = 1
-    ): Promise<T> => {
-        try {
-            const result = await apiCall();
-            return result;
-        } catch (err) {
-            if (attempt >= retryCount) {
-                throw err;
-            }
-
-            if (err instanceof DOMException && err.name === 'AbortError') {
-                throw err;
-            }
-
-            await new Promise(resolve => {
-                retryTimeoutRef.current = setTimeout(resolve, retryDelay);
-            });
-
-            return executeWithRetry(apiCall, retryCount, retryDelay, attempt + 1);
-        }
-    }, []);
-
-    const callApi = useCallback(async (
-        apiCall: () => Promise<T>,
-        options?: UseApiOptions<T>
-    ): Promise<T> => {
+    const execute = useCallback(async <R>(
+        apiCall: (signal?: AbortSignal) => Promise<R>,
+        options?: UseApiOptions<R>
+    ): Promise<R> => {
         const {
             showErrorNotification = true,
             successMessage,
-            silent = false,
             cacheKey,
-            cacheTime = 300000,
-            retryCount = 0,
-            retryDelay = 1000,
-            optimisticData,
+            cacheTime = 5 * 60 * 1000,
             onSuccess,
-            onError,
-            enabled = true
+            onError
         } = options || {};
-
-        if (!enabled) {
-            throw new Error('API call is disabled');
-        }
-
-        clearRetryTimeout();
-
-        lastRequestRef.current = { apiCall, options };
 
         if (abortControllerRef.current) {
             abortControllerRef.current.abort();
@@ -147,169 +95,108 @@ export const useApi = <T = any>() => {
 
         abortControllerRef.current = new AbortController();
 
-        setState(prev => ({
-            ...prev,
-            isLoading: true,
-            isError: false,
-            isSuccess: false,
-            isCached: false,
-            attempts: 0,
-            timestamp: Date.now()
-        }));
-
-        if (!silent) setLoading(true);
-        setError(null);
-
         if (cacheKey) {
-            const cachedData = getCache(cacheKey);
+            const cachedData = getCache(cacheKey) as R | null;
             if (cachedData !== null) {
-                setData(cachedData);
-                setState(prev => ({
-                    ...prev,
-                    isLoading: false,
-                    isSuccess: true,
-                    isCached: true
-                }));
-                if (!silent) setLoading(false);
+                if (mountedRef.current) {
+                    setState({
+                        data: cachedData as unknown as T,
+                        loading: false,
+                        error: null,
+                        isCached: true,
+                        timestamp: Date.now()
+                    });
+                }
                 if (onSuccess) onSuccess(cachedData);
                 return cachedData;
             }
         }
 
-        if (optimisticData !== undefined) {
-            originalDataRef.current = data;
-            setData(optimisticData);
+        if (mountedRef.current) {
+            setState(prev => ({
+                ...prev,
+                loading: true,
+                error: null,
+                isCached: false,
+                timestamp: Date.now()
+            }));
         }
 
         try {
-            let result: T;
+            const result = await apiCall(abortControllerRef.current.signal);
 
-            if (retryCount > 0) {
-                result = await executeWithRetry(
-                    apiCall,
-                    retryCount,
-                    retryDelay
-                );
-            } else {
-                result = await apiCall();
+            if (mountedRef.current) {
+                setState({
+                    data: result as unknown as T,
+                    loading: false,
+                    error: null,
+                    isCached: false,
+                    timestamp: Date.now()
+                });
             }
-
-            setData(result);
-            setState(prev => ({
-                ...prev,
-                isLoading: false,
-                isSuccess: true,
-                isError: false,
-                attempts: prev.attempts + 1
-            }));
 
             if (cacheKey && cacheTime > 0) {
-                setCache(cacheKey, result, cacheTime);
+                setCache(cacheKey, result as unknown as T, cacheTime);
             }
 
-            if (successMessage && !silent) {
+            if (successMessage) {
                 showNotification(successMessage, 'success');
             }
 
             if (onSuccess) onSuccess(result);
             return result;
         } catch (err) {
+            if (!mountedRef.current) throw err;
+
             if (err instanceof DOMException && err.name === 'AbortError') {
-                throw err;
+                return null as R;
             }
 
             const error = err instanceof Error ? err : new Error('Operation failed');
-            setError(error);
 
             setState(prev => ({
                 ...prev,
-                isLoading: false,
-                isError: true,
-                isSuccess: false,
-                attempts: prev.attempts + 1
+                loading: false,
+                error,
+                isCached: false
             }));
 
-            if (optimisticData !== undefined && originalDataRef.current !== null) {
-                setData(originalDataRef.current);
-            }
-
-            if (showErrorNotification && !silent) {
+            if (showErrorNotification) {
                 showNotification(error.message, 'error');
             }
 
             if (onError) onError(error);
-            throw err;
+            throw error;
         } finally {
-            if (!silent) {
-                setLoading(false);
-            }
             abortControllerRef.current = null;
         }
-    }, [showNotification, getCache, setCache, executeWithRetry, clearRetryTimeout]);
+    }, [getCache, setCache, showNotification]);
 
     const reset = useCallback(() => {
-        setLoading(false);
-        setError(null);
-        setData(null);
-        setState({
-            isLoading: false,
-            isError: false,
-            isSuccess: false,
-            isCached: false,
-            attempts: 0,
-            timestamp: null
-        });
-        clearRetryTimeout();
-
+        if (mountedRef.current) {
+            setState({
+                data: null,
+                loading: false,
+                error: null,
+                isCached: false,
+                timestamp: null
+            });
+        }
         if (abortControllerRef.current) {
             abortControllerRef.current.abort();
             abortControllerRef.current = null;
         }
-    }, [clearRetryTimeout]);
-
-    const refetch = useCallback(async (): Promise<T | null> => {
-        if (!lastRequestRef.current.apiCall) return null;
-
-        try {
-            return await callApi(
-                lastRequestRef.current.apiCall,
-                lastRequestRef.current.options
-            );
-        } catch {
-            return null;
-        }
-    }, [callApi]);
-
-    const updateData = useCallback((updater: (currentData: T | null) => T | null) => {
-        setData(prev => updater(prev));
     }, []);
 
-    useEffect(() => {
-        return () => {
-            clearRetryTimeout();
-            if (abortControllerRef.current) {
-                abortControllerRef.current.abort();
-            }
-        };
-    }, [clearRetryTimeout]);
-
     return {
-        loading,
-        error,
-        data,
-        state,
-        callApi,
+        ...state,
+        execute,
         reset,
-        refetch,
-        updateData,
         invalidateCache,
-        setData,
-        setError,
-        setLoading: (isLoading: boolean) => {
-            setLoading(isLoading);
-            setState(prev => ({ ...prev, isLoading }));
-        },
-        isIdle: !state.isLoading && !state.isError && !state.isSuccess,
-        isCached: state.isCached
+        setData: (data: T | null) => {
+            if (mountedRef.current) {
+                setState(prev => ({ ...prev, data }));
+            }
+        }
     };
 };

@@ -11,6 +11,7 @@ import { useApi } from '@/hooks/common/useApi';
 
 export const useAuth = () => {
     const navigate = useNavigate();
+
     const loginApi = useApi<LoginResponse>();
     const registerApi = useApi<User>();
     const currentUserApi = useApi<User>();
@@ -24,39 +25,44 @@ export const useAuth = () => {
     const isAuthenticated = !!token;
 
     useEffect(() => {
-        if (isAuthenticated && !currentUserApi.data && !currentUserApi.state.isLoading) {
+        if (isAuthenticated && !currentUserApi.data && !currentUserApi.loading) {
             getCurrentUser();
         }
     }, [isAuthenticated]);
 
     const login = useCallback(async (credentials: LoginRequest) => {
-        return loginApi.callApi(
-            () => authApi.login(credentials),
-            {
-                cacheKey: `auth_login_${credentials.email}`,
-                cacheTime: 0,
-                onSuccess: async (response) => {
-                    localStorage.setItem('authToken', response.token);
-                    currentUserApi.invalidateCache();
-                    await getCurrentUser();
-                    navigate('/');
-                },
-                successMessage: 'Login successful',
+        try {
+            const response = await loginApi.execute(
+                () => authApi.login(credentials),
+                {
+                    successMessage: 'Login successful'
+                }
+            );
+
+            if (response) {
+                localStorage.setItem('authToken', response.token);
+                currentUserApi.invalidateCache();
+                await getCurrentUser();
+                navigate('/');
             }
-        );
+
+            return response;
+        } catch (error) {
+            throw error;
+        }
     }, [loginApi, currentUserApi, navigate]);
 
     const register = useCallback(async (userData: RegisterRequest) => {
-        return registerApi.callApi(
+        return registerApi.execute(
             () => authApi.register(userData),
             {
-                successMessage: 'Registration successful. Please check your email.',
+                successMessage: 'Registration successful. Please check your email.'
             }
         );
     }, [registerApi]);
 
     const getCurrentUser = useCallback(async () => {
-        return currentUserApi.callApi(
+        return currentUserApi.execute(
             () => authApi.getCurrentUser(),
             {
                 cacheKey: 'current_user',
@@ -72,52 +78,51 @@ export const useAuth = () => {
     }, [currentUserApi]);
 
     const checkEmail = useCallback(async (email: string) => {
-        return checkEmailApi.callApi(
+        return checkEmailApi.execute(
             () => authApi.checkEmail(email),
             {
                 cacheKey: `email_check_${email}`,
                 cacheTime: 60 * 1000,
-                silent: true,
-                showErrorNotification: false,
+                showErrorNotification: false
             }
         );
     }, [checkEmailApi]);
 
     const forgotPassword = useCallback(async (email: string) => {
-        return forgotPasswordApi.callApi(
+        return forgotPasswordApi.execute(
             () => authApi.forgotPassword(email),
             {
-                successMessage: 'Password reset instructions sent to your email',
+                successMessage: 'Password reset instructions sent to your email'
             }
         );
     }, [forgotPasswordApi]);
 
     const resetPassword = useCallback(async (token: string, newPassword: string) => {
-        return resetPasswordApi.callApi(
+        return resetPasswordApi.execute(
             () => authApi.resetPassword(token, newPassword),
             {
-                successMessage: 'Password has been reset successfully',
+                successMessage: 'Password has been reset successfully'
             }
         );
     }, [resetPasswordApi]);
 
     const verifyEmail = useCallback(async (token: string) => {
-        return verifyEmailApi.callApi(
+        return verifyEmailApi.execute(
             () => authApi.verifyEmail(token),
             {
-                successMessage: 'Email verified successfully',
+                successMessage: 'Email verified successfully'
             }
         );
     }, [verifyEmailApi]);
 
     const confirmEmailChange = useCallback(async (token: string) => {
-        return confirmEmailChangeApi.callApi(
+        return confirmEmailChangeApi.execute(
             () => authApi.confirmEmailChange(token),
             {
                 successMessage: 'Email changed successfully',
                 onSuccess: () => {
                     currentUserApi.invalidateCache();
-                },
+                }
             }
         );
     }, [confirmEmailChangeApi, currentUserApi]);
@@ -148,19 +153,21 @@ export const useAuth = () => {
     }, [loginApi, currentUserApi, checkEmailApi, registerApi, forgotPasswordApi,
         resetPasswordApi, verifyEmailApi, confirmEmailChangeApi]);
 
+    const loading = loginApi.loading || registerApi.loading || currentUserApi.loading ||
+        checkEmailApi.loading || forgotPasswordApi.loading || resetPasswordApi.loading ||
+        verifyEmailApi.loading || confirmEmailChangeApi.loading;
+
+    const error = !!(loginApi.error || registerApi.error || currentUserApi.error ||
+        checkEmailApi.error || forgotPasswordApi.error || resetPasswordApi.error ||
+        verifyEmailApi.error || confirmEmailChangeApi.error);
+
     return {
         user: currentUserApi.data,
-        loading: currentUserApi.state.isLoading || loginApi.state.isLoading ||
-            registerApi.state.isLoading || checkEmailApi.state.isLoading ||
-            forgotPasswordApi.state.isLoading || resetPasswordApi.state.isLoading ||
-            verifyEmailApi.state.isLoading || confirmEmailChangeApi.state.isLoading,
-        error: currentUserApi.state.isError || loginApi.state.isError ||
-            registerApi.state.isError || checkEmailApi.state.isError ||
-            forgotPasswordApi.state.isError || resetPasswordApi.state.isError ||
-            verifyEmailApi.state.isError || confirmEmailChangeApi.state.isError,
-        isAuthenticating: loginApi.state.isLoading,
-        isRegistering: registerApi.state.isLoading,
-        isCheckingEmail: checkEmailApi.state.isLoading,
+        loading,
+        error,
+        isAuthenticating: loginApi.loading,
+        isRegistering: registerApi.loading,
+        isCheckingEmail: checkEmailApi.loading,
         login,
         register,
         getCurrentUser,
@@ -175,7 +182,6 @@ export const useAuth = () => {
         resetRegister: registerApi.reset,
         resetCurrentUser: currentUserApi.reset,
         resetCheckEmail: checkEmailApi.reset,
-        refetchCurrentUser: currentUserApi.refetch,
         isAuthenticated: !!localStorage.getItem('authToken'),
         isAdmin: currentUserApi.data?.userRole === 'ROLE_ADMIN',
     };

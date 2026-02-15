@@ -19,7 +19,7 @@ export const useAdminUsers = () => {
     const updateVerificationApi = useApi<UserResponse>();
 
     const getUsers = useCallback(async (params?: any) => {
-        return usersApi.callApi(
+        return usersApi.execute(
             () => adminApi.getUsers(params),
             {
                 cacheKey: `admin_users_${JSON.stringify(params)}`,
@@ -32,7 +32,7 @@ export const useAdminUsers = () => {
     const updateUserRole = useCallback(async (userId: number, userRole: UserRole) => {
         const roleData: UserRoleUpdateRequest = { userRole };
 
-        return updateRoleApi.callApi(
+        return updateRoleApi.execute(
             () => adminApi.updateUserRole(userId, roleData),
             {
                 successMessage: 'User role updated successfully',
@@ -46,7 +46,7 @@ export const useAdminUsers = () => {
     const updateUserStatus = useCallback(async (userId: number, enabled: boolean) => {
         const statusData: UserStatusUpdateRequest = { enabled };
 
-        return updateStatusApi.callApi(
+        return updateStatusApi.execute(
             () => adminApi.updateUserStatus(userId, statusData),
             {
                 successMessage: enabled ? 'User activated successfully' : 'User deactivated successfully',
@@ -63,7 +63,7 @@ export const useAdminUsers = () => {
     ) => {
         const verificationData: VerificationBirthDateRequest = { verificationStatus };
 
-        return updateVerificationApi.callApi(
+        return updateVerificationApi.execute(
             () => adminApi.updateBirthDateVerification(userId, verificationData),
             {
                 successMessage: 'Verification status updated successfully',
@@ -81,16 +81,20 @@ export const useAdminUsers = () => {
         updateVerificationApi.invalidateCache();
     }, [usersApi, updateRoleApi, updateStatusApi, updateVerificationApi]);
 
+    const loading = usersApi.loading || updateRoleApi.loading ||
+        updateStatusApi.loading || updateVerificationApi.loading;
+
+    const error = !!(usersApi.error || updateRoleApi.error ||
+        updateStatusApi.error || updateVerificationApi.error);
+
     return {
         users: usersApi.data?.content || [],
         pagination: usersApi.data,
 
-        loading: usersApi.state.isLoading || updateRoleApi.state.isLoading ||
-            updateStatusApi.state.isLoading || updateVerificationApi.state.isLoading,
-        error: usersApi.state.isError || updateRoleApi.state.isError ||
-            updateStatusApi.state.isError || updateVerificationApi.state.isError,
-        isSuccess: usersApi.state.isSuccess,
-        isCached: usersApi.state.isCached,
+        loading,
+        error,
+        isSuccess: !!usersApi.data,
+        isCached: usersApi.isCached,
 
         getUsers,
         updateUserRole,
@@ -99,7 +103,6 @@ export const useAdminUsers = () => {
         clearCache,
 
         resetUsers: usersApi.reset,
-        refetchUsers: usersApi.refetch,
 
         currentPage: usersApi.data?.number || 0,
         totalPages: usersApi.data?.totalPages || 0,

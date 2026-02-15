@@ -14,7 +14,7 @@ export const useBooking = () => {
     const cancelBookingApi = useApi<void>();
 
     const create = useCallback(async (request: BookingCreateRequest) => {
-        return createBookingApi.callApi(
+        return createBookingApi.execute(
             () => bookingApi.create(request),
             {
                 successMessage: 'Booking created successfully',
@@ -26,7 +26,7 @@ export const useBooking = () => {
     }, [createBookingApi, userBookingsApi]);
 
     const getById = useCallback(async (bookingId: number) => {
-        return bookingByIdApi.callApi(
+        return bookingByIdApi.execute(
             () => bookingApi.getById(bookingId),
             {
                 cacheKey: `booking_${bookingId}`,
@@ -37,7 +37,7 @@ export const useBooking = () => {
     }, [bookingByIdApi]);
 
     const getUserBookings = useCallback(async (params?: any) => {
-        return userBookingsApi.callApi(
+        return userBookingsApi.execute(
             () => bookingApi.getUserBookings(params),
             {
                 cacheKey: `user_bookings_${JSON.stringify(params)}`,
@@ -48,7 +48,7 @@ export const useBooking = () => {
     }, [userBookingsApi]);
 
     const cancel = useCallback(async (bookingId: number) => {
-        return cancelBookingApi.callApi(
+        return cancelBookingApi.execute(
             () => bookingApi.cancel(bookingId),
             {
                 successMessage: 'Booking cancelled successfully',
@@ -67,15 +67,19 @@ export const useBooking = () => {
         cancelBookingApi.invalidateCache();
     }, [bookingByIdApi, userBookingsApi, createBookingApi, cancelBookingApi]);
 
+    const loading = bookingByIdApi.loading || userBookingsApi.loading ||
+        createBookingApi.loading || cancelBookingApi.loading;
+
+    const error = !!(bookingByIdApi.error || userBookingsApi.error ||
+        createBookingApi.error || cancelBookingApi.error);
+
     return {
         booking: bookingByIdApi.data,
         bookings: userBookingsApi.data?.content || [],
         pagination: userBookingsApi.data,
 
-        loading: bookingByIdApi.state.isLoading || userBookingsApi.state.isLoading ||
-            createBookingApi.state.isLoading || cancelBookingApi.state.isLoading,
-        error: bookingByIdApi.state.isError || userBookingsApi.state.isError ||
-            createBookingApi.state.isError || cancelBookingApi.state.isError,
+        loading,
+        error,
 
         create,
         getById,
@@ -85,7 +89,6 @@ export const useBooking = () => {
 
         resetBooking: bookingByIdApi.reset,
         resetBookings: userBookingsApi.reset,
-        refetchBookings: userBookingsApi.refetch,
 
         currentPage: userBookingsApi.data?.number || 0,
         totalPages: userBookingsApi.data?.totalPages || 0,

@@ -5,8 +5,9 @@ import type {
     SessionScheduleResponse,
     SessionCreateRequest,
     SessionUpdateRequest,
+    SessionFilterRequest
 } from '@/types/session';
-import type { PageResponse } from '@/types/pagination';
+import type { PageResponse, SearchParams } from '@/types/pagination';
 import { useApi } from '@/hooks/common/useApi';
 
 export const useSession = () => {
@@ -20,22 +21,24 @@ export const useSession = () => {
     const reactivateSessionApi = useApi<void>();
     const deleteSessionApi = useApi<void>();
 
-    const getSessions = useCallback(async (params?: any) => {
-        return sessionsApi.callApi(
+    const getSessions = useCallback(async (params?: SearchParams & SessionFilterRequest) => {
+        const cacheKey = params ? `admin_sessions_${JSON.stringify(params)}` : 'admin_sessions_all';
+        return sessionsApi.execute(
             () => sessionApi.admin.getSessions(params),
             {
-                cacheKey: `admin_sessions_${JSON.stringify(params)}`,
+                cacheKey,
                 cacheTime: 30 * 1000,
                 showErrorNotification: false,
             }
         );
     }, [sessionsApi]);
 
-    const getPublicSessions = useCallback(async (params?: any) => {
-        return scheduleApi.callApi(
+    const getPublicSessions = useCallback(async (params?: SearchParams & SessionFilterRequest) => {
+        const cacheKey = params ? `public_sessions_${JSON.stringify(params)}` : 'public_sessions_all';
+        return scheduleApi.execute(
             () => sessionApi.public.getSessions(params),
             {
-                cacheKey: `public_sessions_${JSON.stringify(params)}`,
+                cacheKey,
                 cacheTime: 30 * 1000,
                 showErrorNotification: false,
             }
@@ -43,7 +46,7 @@ export const useSession = () => {
     }, [scheduleApi]);
 
     const getSessionById = useCallback(async (id: number) => {
-        return sessionByIdApi.callApi(
+        return sessionByIdApi.execute(
             () => sessionApi.public.getById(id),
             {
                 cacheKey: `session_${id}`,
@@ -54,7 +57,7 @@ export const useSession = () => {
     }, [sessionByIdApi]);
 
     const getAdminSessionById = useCallback(async (id: number) => {
-        return adminSessionByIdApi.callApi(
+        return adminSessionByIdApi.execute(
             () => sessionApi.admin.getById(id),
             {
                 cacheKey: `admin_session_${id}`,
@@ -65,7 +68,7 @@ export const useSession = () => {
     }, [adminSessionByIdApi]);
 
     const createSession = useCallback(async (request: SessionCreateRequest) => {
-        return createSessionApi.callApi(
+        return createSessionApi.execute(
             () => sessionApi.admin.create(request),
             {
                 successMessage: 'Session created successfully',
@@ -78,14 +81,14 @@ export const useSession = () => {
     }, [createSessionApi, sessionsApi, scheduleApi]);
 
     const updateSession = useCallback(async (id: number, request: SessionUpdateRequest) => {
-        return updateSessionApi.callApi(
+        return updateSessionApi.execute(
             () => sessionApi.admin.update(id, request),
             {
                 successMessage: 'Session updated successfully',
                 onSuccess: () => {
                     sessionsApi.invalidateCache();
-                    adminSessionByIdApi.invalidateCache(`admin_session_${id}`);
                     scheduleApi.invalidateCache();
+                    adminSessionByIdApi.invalidateCache(`admin_session_${id}`);
                     sessionByIdApi.invalidateCache(`session_${id}`);
                 },
             }
@@ -93,14 +96,14 @@ export const useSession = () => {
     }, [updateSessionApi, sessionsApi, adminSessionByIdApi, scheduleApi, sessionByIdApi]);
 
     const cancelSession = useCallback(async (id: number) => {
-        return cancelSessionApi.callApi(
+        return cancelSessionApi.execute(
             () => sessionApi.admin.cancel(id),
             {
                 successMessage: 'Session cancelled successfully',
                 onSuccess: () => {
                     sessionsApi.invalidateCache();
-                    adminSessionByIdApi.invalidateCache(`admin_session_${id}`);
                     scheduleApi.invalidateCache();
+                    adminSessionByIdApi.invalidateCache(`admin_session_${id}`);
                     sessionByIdApi.invalidateCache(`session_${id}`);
                 },
             }
@@ -108,14 +111,14 @@ export const useSession = () => {
     }, [cancelSessionApi, sessionsApi, adminSessionByIdApi, scheduleApi, sessionByIdApi]);
 
     const reactivateSession = useCallback(async (id: number) => {
-        return reactivateSessionApi.callApi(
+        return reactivateSessionApi.execute(
             () => sessionApi.admin.reactivate(id),
             {
                 successMessage: 'Session reactivated successfully',
                 onSuccess: () => {
                     sessionsApi.invalidateCache();
-                    adminSessionByIdApi.invalidateCache(`admin_session_${id}`);
                     scheduleApi.invalidateCache();
+                    adminSessionByIdApi.invalidateCache(`admin_session_${id}`);
                     sessionByIdApi.invalidateCache(`session_${id}`);
                 },
             }
@@ -123,17 +126,19 @@ export const useSession = () => {
     }, [reactivateSessionApi, sessionsApi, adminSessionByIdApi, scheduleApi, sessionByIdApi]);
 
     const deleteSession = useCallback(async (id: number) => {
-        return deleteSessionApi.callApi(
+        return deleteSessionApi.execute(
             () => sessionApi.admin.delete(id),
             {
                 successMessage: 'Session deleted successfully',
                 onSuccess: () => {
                     sessionsApi.invalidateCache();
                     scheduleApi.invalidateCache();
+                    adminSessionByIdApi.invalidateCache(`admin_session_${id}`);
+                    sessionByIdApi.invalidateCache(`session_${id}`);
                 },
             }
         );
-    }, [deleteSessionApi, sessionsApi, scheduleApi]);
+    }, [deleteSessionApi, sessionsApi, scheduleApi, adminSessionByIdApi, sessionByIdApi]);
 
     const clearCache = useCallback(() => {
         sessionsApi.invalidateCache();
@@ -145,8 +150,23 @@ export const useSession = () => {
         cancelSessionApi.invalidateCache();
         reactivateSessionApi.invalidateCache();
         deleteSessionApi.invalidateCache();
-    }, [sessionsApi, scheduleApi, sessionByIdApi, adminSessionByIdApi,
-        createSessionApi, updateSessionApi, cancelSessionApi, reactivateSessionApi, deleteSessionApi]);
+    }, [
+        sessionsApi, scheduleApi, sessionByIdApi, adminSessionByIdApi,
+        createSessionApi, updateSessionApi, cancelSessionApi,
+        reactivateSessionApi, deleteSessionApi
+    ]);
+
+    const loading = sessionsApi.loading || scheduleApi.loading ||
+        sessionByIdApi.loading || adminSessionByIdApi.loading ||
+        createSessionApi.loading || updateSessionApi.loading ||
+        cancelSessionApi.loading || reactivateSessionApi.loading ||
+        deleteSessionApi.loading;
+
+    const error = !!(sessionsApi.error || scheduleApi.error ||
+        sessionByIdApi.error || adminSessionByIdApi.error ||
+        createSessionApi.error || updateSessionApi.error ||
+        cancelSessionApi.error || reactivateSessionApi.error ||
+        deleteSessionApi.error);
 
     return {
         sessions: sessionsApi.data?.content || [],
@@ -156,16 +176,8 @@ export const useSession = () => {
         pagination: sessionsApi.data,
         schedulePagination: scheduleApi.data,
 
-        loading: sessionsApi.state.isLoading || scheduleApi.state.isLoading ||
-            sessionByIdApi.state.isLoading || adminSessionByIdApi.state.isLoading ||
-            createSessionApi.state.isLoading || updateSessionApi.state.isLoading ||
-            cancelSessionApi.state.isLoading || reactivateSessionApi.state.isLoading ||
-            deleteSessionApi.state.isLoading,
-        error: sessionsApi.state.isError || scheduleApi.state.isError ||
-            sessionByIdApi.state.isError || adminSessionByIdApi.state.isError ||
-            createSessionApi.state.isError || updateSessionApi.state.isError ||
-            cancelSessionApi.state.isError || reactivateSessionApi.state.isError ||
-            deleteSessionApi.state.isError,
+        loading,
+        error,
 
         getSessions,
         getPublicSessions,
@@ -182,9 +194,5 @@ export const useSession = () => {
         resetSchedule: scheduleApi.reset,
         resetSession: sessionByIdApi.reset,
         resetAdminSession: adminSessionByIdApi.reset,
-        refetchSessions: sessionsApi.refetch,
-        refetchSchedule: scheduleApi.refetch,
-        refetchSession: sessionByIdApi.refetch,
-        refetchAdminSession: adminSessionByIdApi.refetch,
     };
 };

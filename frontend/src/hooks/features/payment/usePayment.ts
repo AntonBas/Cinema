@@ -13,7 +13,7 @@ export const usePayment = () => {
     const createPaymentApi = useApi<PaymentResponse>();
 
     const create = useCallback(async (request: PaymentCreateRequest) => {
-        return createPaymentApi.callApi(
+        return createPaymentApi.execute(
             () => paymentApi.create(request),
             {
                 successMessage: 'Payment initialized successfully',
@@ -22,7 +22,7 @@ export const usePayment = () => {
     }, [createPaymentApi]);
 
     const getById = useCallback(async (paymentId: number) => {
-        return paymentByIdApi.callApi(
+        return paymentByIdApi.execute(
             () => paymentApi.getById(paymentId),
             {
                 cacheKey: `payment_${paymentId}`,
@@ -33,7 +33,7 @@ export const usePayment = () => {
     }, [paymentByIdApi]);
 
     const getLiqPayData = useCallback(async (paymentId: number) => {
-        return liqPayDataApi.callApi(
+        return liqPayDataApi.execute(
             () => paymentApi.getLiqPayData(paymentId),
             {
                 cacheKey: `liqpay_data_${paymentId}`,
@@ -49,14 +49,18 @@ export const usePayment = () => {
         createPaymentApi.invalidateCache();
     }, [paymentByIdApi, liqPayDataApi, createPaymentApi]);
 
+    const loading = paymentByIdApi.loading || liqPayDataApi.loading ||
+        createPaymentApi.loading;
+
+    const error = !!(paymentByIdApi.error || liqPayDataApi.error ||
+        createPaymentApi.error);
+
     return {
         payment: paymentByIdApi.data,
         liqPayData: liqPayDataApi.data,
 
-        loading: paymentByIdApi.state.isLoading || liqPayDataApi.state.isLoading ||
-            createPaymentApi.state.isLoading,
-        error: paymentByIdApi.state.isError || liqPayDataApi.state.isError ||
-            createPaymentApi.state.isError,
+        loading,
+        error,
 
         create,
         getById,
@@ -66,7 +70,5 @@ export const usePayment = () => {
         resetPayment: paymentByIdApi.reset,
         resetLiqPayData: liqPayDataApi.reset,
         resetCreatePayment: createPaymentApi.reset,
-        refetchPayment: paymentByIdApi.refetch,
-        refetchLiqPayData: liqPayDataApi.refetch,
     };
 };

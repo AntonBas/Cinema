@@ -16,24 +16,23 @@ export const useSeatAvailability = (sessionId: number, maxSeats?: number) => {
     const seatAvailabilityApiHook = useApi<SeatReservationResponse>();
 
     const getSeatAvailability = useCallback(async () => {
-        return seatAvailabilityApiHook.callApi(
+        return seatAvailabilityApiHook.execute(
             () => seatAvailabilityApi.getSeatAvailability(sessionId),
             {
                 cacheKey: `seat_availability_${sessionId}`,
                 cacheTime: 30 * 1000,
-                silent: true,
                 showErrorNotification: false,
             }
         );
     }, [seatAvailabilityApiHook, sessionId]);
 
     const refreshSeatAvailability = useCallback(async () => {
-        return seatAvailabilityApiHook.callApi(
+        seatAvailabilityApiHook.invalidateCache(`seat_availability_${sessionId}`);
+        return seatAvailabilityApiHook.execute(
             () => seatAvailabilityApi.getSeatAvailability(sessionId),
             {
                 cacheKey: `seat_availability_${sessionId}`,
-                cacheTime: 0,
-                silent: true,
+                cacheTime: 30 * 1000,
                 showErrorNotification: false,
             }
         );
@@ -111,10 +110,9 @@ export const useSeatAvailability = (sessionId: number, maxSeats?: number) => {
 
     return {
         data: seatAvailabilityApiHook.data,
-        loading: seatAvailabilityApiHook.state.isLoading,
-        error: seatAvailabilityApiHook.state.isError,
-        isCached: seatAvailabilityApiHook.state.isCached,
-        isSuccess: seatAvailabilityApiHook.state.isSuccess,
+        loading: seatAvailabilityApiHook.loading,
+        error: seatAvailabilityApiHook.error,
+        isSuccess: !!seatAvailabilityApiHook.data,
 
         selectedSeats,
         totalPrice,
@@ -124,7 +122,6 @@ export const useSeatAvailability = (sessionId: number, maxSeats?: number) => {
         refreshSeatAvailability,
         invalidateSeatCache,
         reset: seatAvailabilityApiHook.reset,
-        refetch: seatAvailabilityApiHook.refetch,
 
         selectSeat,
         deselectSeat,

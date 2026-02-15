@@ -20,7 +20,7 @@ export const useBonus = () => {
     const transactionsApi = useApi<PageResponse<BonusTransactionResponse>>();
 
     const getMyCard = useCallback(async () => {
-        return myCardApi.callApi(() => bonusApi.user.getMyCard(), {
+        return myCardApi.execute(() => bonusApi.user.getMyCard(), {
             cacheKey: 'my_bonus_card',
             cacheTime: 2 * 60 * 1000,
             showErrorNotification: false,
@@ -28,7 +28,7 @@ export const useBonus = () => {
     }, [myCardApi]);
 
     const getMyBalance = useCallback(async () => {
-        return myBalanceApi.callApi(() => bonusApi.user.getMyBalance(), {
+        return myBalanceApi.execute(() => bonusApi.user.getMyBalance(), {
             cacheKey: 'my_bonus_balance',
             cacheTime: 60 * 1000,
             showErrorNotification: false,
@@ -36,7 +36,7 @@ export const useBonus = () => {
     }, [myBalanceApi]);
 
     const getMyTransactions = useCallback(async (params?: { page?: number; size?: number }) => {
-        return myTransactionsApi.callApi(() => bonusApi.user.getMyTransactions(params), {
+        return myTransactionsApi.execute(() => bonusApi.user.getMyTransactions(params), {
             cacheKey: `my_transactions_${JSON.stringify(params)}`,
             cacheTime: 30 * 1000,
             showErrorNotification: false,
@@ -44,21 +44,21 @@ export const useBonus = () => {
     }, [myTransactionsApi]);
 
     const getAllRules = useCallback(async () => {
-        return rulesApi.callApi(() => bonusApi.admin.getAllRules(), {
+        return rulesApi.execute(() => bonusApi.admin.getAllRules(), {
             cacheKey: 'bonus_rules',
             cacheTime: 5 * 60 * 1000,
         });
     }, [rulesApi]);
 
     const getRuleByType = useCallback(async (type: BonusTransactionType) => {
-        return ruleApi.callApi(() => bonusApi.admin.getRuleByType(type), {
+        return ruleApi.execute(() => bonusApi.admin.getRuleByType(type), {
             cacheKey: `bonus_rule_${type}`,
             cacheTime: 5 * 60 * 1000,
         });
     }, [ruleApi]);
 
     const updateRule = useCallback(async (type: BonusTransactionType, request: BonusRulesRequest) => {
-        return ruleApi.callApi(() => bonusApi.admin.updateRule(type, request), {
+        return ruleApi.execute(() => bonusApi.admin.updateRule(type, request), {
             successMessage: 'Bonus rule updated successfully',
             onSuccess: () => {
                 rulesApi.invalidateCache();
@@ -68,7 +68,7 @@ export const useBonus = () => {
     }, [ruleApi, rulesApi]);
 
     const resetRule = useCallback(async (type: BonusTransactionType) => {
-        return ruleApi.callApi(() => bonusApi.admin.resetRule(type), {
+        return ruleApi.execute(() => bonusApi.admin.resetRule(type), {
             successMessage: 'Bonus rule reset successfully',
             onSuccess: () => {
                 rulesApi.invalidateCache();
@@ -78,21 +78,21 @@ export const useBonus = () => {
     }, [ruleApi, rulesApi]);
 
     const getUserTransactions = useCallback(async (userId: number, params?: { page?: number; size?: number }) => {
-        return transactionsApi.callApi(() => bonusApi.admin.getUserTransactions(userId, params), {
+        return transactionsApi.execute(() => bonusApi.admin.getUserTransactions(userId, params), {
             cacheKey: `user_transactions_${userId}_${JSON.stringify(params)}`,
             cacheTime: 60 * 1000,
         });
     }, [transactionsApi]);
 
     const getAllTransactions = useCallback(async (params?: { page?: number; size?: number }) => {
-        return transactionsApi.callApi(() => bonusApi.admin.getAllTransactions(params), {
+        return transactionsApi.execute(() => bonusApi.admin.getAllTransactions(params), {
             cacheKey: `all_transactions_${JSON.stringify(params)}`,
             cacheTime: 60 * 1000,
         });
     }, [transactionsApi]);
 
     const getTransactionsByType = useCallback(async (type: BonusTransactionType, params?: { page?: number; size?: number }) => {
-        return transactionsApi.callApi(() => bonusApi.admin.getTransactionsByType(type, params), {
+        return transactionsApi.execute(() => bonusApi.admin.getTransactionsByType(type, params), {
             cacheKey: `transactions_type_${type}_${JSON.stringify(params)}`,
             cacheTime: 60 * 1000,
         });
@@ -116,6 +116,14 @@ export const useBonus = () => {
         transactionsApi.reset();
     }, [myCardApi, myBalanceApi, myTransactionsApi, rulesApi, ruleApi, transactionsApi]);
 
+    const loading = myCardApi.loading || myBalanceApi.loading ||
+        myTransactionsApi.loading || rulesApi.loading ||
+        ruleApi.loading || transactionsApi.loading;
+
+    const error = !!(myCardApi.error || myBalanceApi.error ||
+        myTransactionsApi.error || rulesApi.error ||
+        ruleApi.error || transactionsApi.error);
+
     return {
         data: {
             myCard: myCardApi.data,
@@ -129,12 +137,8 @@ export const useBonus = () => {
             myTransactions: myTransactionsApi.data,
             transactions: transactionsApi.data,
         },
-        loading: myCardApi.loading || myBalanceApi.loading ||
-            myTransactionsApi.loading || rulesApi.loading ||
-            ruleApi.loading || transactionsApi.loading,
-        error: myCardApi.error || myBalanceApi.error ||
-            myTransactionsApi.error || rulesApi.error ||
-            ruleApi.error || transactionsApi.error,
+        loading,
+        error,
         getMyCard,
         getMyBalance,
         getMyTransactions,
@@ -147,14 +151,6 @@ export const useBonus = () => {
         getTransactionsByType,
         clearCache,
         resetAll,
-        refetch: {
-            myCard: myCardApi.refetch,
-            myBalance: myBalanceApi.refetch,
-            myTransactions: myTransactionsApi.refetch,
-            rules: rulesApi.refetch,
-            rule: ruleApi.refetch,
-            transactions: transactionsApi.refetch,
-        },
         totalPoints: myBalanceApi.data?.pointsBalance || 0,
         hasCard: !!myCardApi.data,
     };

@@ -20,7 +20,7 @@ export const useTicketType = () => {
     const adminDropdownApi = useApi<TicketTypeSimpleResponse[]>();
 
     const getAll = useCallback(async (params?: any) => {
-        return ticketTypesApi.callApi(
+        return ticketTypesApi.execute(
             () => ticketTypeApi.admin.getAll(params),
             {
                 cacheKey: `ticket_types_${JSON.stringify(params)}`,
@@ -31,7 +31,7 @@ export const useTicketType = () => {
     }, [ticketTypesApi]);
 
     const getById = useCallback(async (id: number) => {
-        return ticketTypeByIdApi.callApi(
+        return ticketTypeByIdApi.execute(
             () => ticketTypeApi.admin.getById(id),
             {
                 cacheKey: `ticket_type_${id}`,
@@ -42,7 +42,7 @@ export const useTicketType = () => {
     }, [ticketTypeByIdApi]);
 
     const getByCode = useCallback(async (code: string) => {
-        return ticketTypeByCodeApi.callApi(
+        return ticketTypeByCodeApi.execute(
             () => ticketTypeApi.admin.getByCode(code),
             {
                 cacheKey: `ticket_type_code_${code}`,
@@ -53,7 +53,7 @@ export const useTicketType = () => {
     }, [ticketTypeByCodeApi]);
 
     const create = useCallback(async (request: TicketTypeCreateRequest) => {
-        return createApi.callApi(
+        return createApi.execute(
             () => ticketTypeApi.admin.create(request),
             {
                 successMessage: 'Ticket type created successfully',
@@ -67,7 +67,7 @@ export const useTicketType = () => {
     }, [createApi, ticketTypesApi, dropdownTypesApi, adminDropdownApi]);
 
     const update = useCallback(async (id: number, request: TicketTypeUpdateRequest) => {
-        return updateApi.callApi(
+        return updateApi.execute(
             () => ticketTypeApi.admin.update(id, request),
             {
                 successMessage: 'Ticket type updated successfully',
@@ -82,7 +82,7 @@ export const useTicketType = () => {
     }, [updateApi, ticketTypesApi, ticketTypeByIdApi, dropdownTypesApi, adminDropdownApi]);
 
     const remove = useCallback(async (id: number) => {
-        return deleteApi.callApi(
+        return deleteApi.execute(
             () => ticketTypeApi.admin.delete(id),
             {
                 successMessage: 'Ticket type deleted successfully',
@@ -96,7 +96,7 @@ export const useTicketType = () => {
     }, [deleteApi, ticketTypesApi, dropdownTypesApi, adminDropdownApi]);
 
     const toggleActive = useCallback(async (id: number) => {
-        return toggleActiveApi.callApi(
+        return toggleActiveApi.execute(
             () => ticketTypeApi.admin.toggleActive(id),
             {
                 successMessage: 'Ticket type status updated successfully',
@@ -111,7 +111,7 @@ export const useTicketType = () => {
     }, [toggleActiveApi, ticketTypesApi, ticketTypeByIdApi, dropdownTypesApi, adminDropdownApi]);
 
     const getDropdownTypes = useCallback(async () => {
-        return dropdownTypesApi.callApi(
+        return dropdownTypesApi.execute(
             () => ticketTypeApi.public.getDropdownTypes(),
             {
                 cacheKey: 'ticket_type_dropdown',
@@ -122,7 +122,7 @@ export const useTicketType = () => {
     }, [dropdownTypesApi]);
 
     const getAdminDropdownTypes = useCallback(async () => {
-        return adminDropdownApi.callApi(
+        return adminDropdownApi.execute(
             () => ticketTypeApi.admin.getDropdownTypes(),
             {
                 cacheKey: 'admin_ticket_type_dropdown',
@@ -145,22 +145,26 @@ export const useTicketType = () => {
     }, [ticketTypesApi, dropdownTypesApi, ticketTypeByIdApi, ticketTypeByCodeApi,
         createApi, updateApi, deleteApi, toggleActiveApi, adminDropdownApi]);
 
+    const loading = ticketTypesApi.loading || dropdownTypesApi.loading ||
+        ticketTypeByIdApi.loading || ticketTypeByCodeApi.loading ||
+        createApi.loading || updateApi.loading ||
+        deleteApi.loading || toggleActiveApi.loading ||
+        adminDropdownApi.loading;
+
+    const error = !!(ticketTypesApi.error || dropdownTypesApi.error ||
+        ticketTypeByIdApi.error || ticketTypeByCodeApi.error ||
+        createApi.error || updateApi.error ||
+        deleteApi.error || toggleActiveApi.error ||
+        adminDropdownApi.error);
+
     return {
         ticketTypes: ticketTypesApi.data || [],
         dropdownTypes: dropdownTypesApi.data || [],
         adminDropdownTypes: adminDropdownApi.data || [],
         ticketType: ticketTypeByIdApi.data || ticketTypeByCodeApi.data,
 
-        loading: ticketTypesApi.state.isLoading || dropdownTypesApi.state.isLoading ||
-            ticketTypeByIdApi.state.isLoading || ticketTypeByCodeApi.state.isLoading ||
-            createApi.state.isLoading || updateApi.state.isLoading ||
-            deleteApi.state.isLoading || toggleActiveApi.state.isLoading ||
-            adminDropdownApi.state.isLoading,
-        error: ticketTypesApi.state.isError || dropdownTypesApi.state.isError ||
-            ticketTypeByIdApi.state.isError || ticketTypeByCodeApi.state.isError ||
-            createApi.state.isError || updateApi.state.isError ||
-            deleteApi.state.isError || toggleActiveApi.state.isError ||
-            adminDropdownApi.state.isError,
+        loading,
+        error,
 
         getAll,
         getById,
@@ -176,7 +180,5 @@ export const useTicketType = () => {
         resetTicketTypes: ticketTypesApi.reset,
         resetDropdownTypes: dropdownTypesApi.reset,
         resetTicketType: ticketTypeByIdApi.reset,
-        refetchTicketTypes: ticketTypesApi.refetch,
-        refetchDropdownTypes: dropdownTypesApi.refetch,
     };
 };

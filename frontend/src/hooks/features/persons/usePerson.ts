@@ -21,7 +21,7 @@ export const usePerson = () => {
     const deleteApi = useApi<void>();
 
     const getAll = useCallback(async (params?: any) => {
-        return allPersonsApi.callApi(
+        return allPersonsApi.execute(
             () => personApi.admin.getAll(params),
             {
                 cacheKey: `persons_all_${JSON.stringify(params)}`,
@@ -32,7 +32,7 @@ export const usePerson = () => {
     }, [allPersonsApi]);
 
     const getById = useCallback(async (id: number) => {
-        return personByIdApi.callApi(
+        return personByIdApi.execute(
             () => personApi.public.getById(id),
             {
                 cacheKey: `person_${id}`,
@@ -43,7 +43,7 @@ export const usePerson = () => {
     }, [personByIdApi]);
 
     const getActors = useCallback(async (params?: any) => {
-        return actorsApi.callApi(
+        return actorsApi.execute(
             () => personApi.admin.getActors(params),
             {
                 cacheKey: `actors_${JSON.stringify(params)}`,
@@ -54,7 +54,7 @@ export const usePerson = () => {
     }, [actorsApi]);
 
     const getDirectors = useCallback(async (params?: any) => {
-        return directorsApi.callApi(
+        return directorsApi.execute(
             () => personApi.admin.getDirectors(params),
             {
                 cacheKey: `directors_${JSON.stringify(params)}`,
@@ -65,7 +65,7 @@ export const usePerson = () => {
     }, [directorsApi]);
 
     const getScreenwriters = useCallback(async (params?: any) => {
-        return screenwritersApi.callApi(
+        return screenwritersApi.execute(
             () => personApi.admin.getScreenwriters(params),
             {
                 cacheKey: `screenwriters_${JSON.stringify(params)}`,
@@ -76,7 +76,7 @@ export const usePerson = () => {
     }, [screenwritersApi]);
 
     const getPopular = useCallback(async (params?: any) => {
-        return popularApi.callApi(
+        return popularApi.execute(
             () => personApi.admin.getPopular(params),
             {
                 cacheKey: `persons_popular_${JSON.stringify(params)}`,
@@ -87,7 +87,7 @@ export const usePerson = () => {
     }, [popularApi]);
 
     const create = useCallback(async (request: PersonRequest) => {
-        return createApi.callApi(
+        return createApi.execute(
             () => personApi.admin.create(request),
             {
                 successMessage: 'Person created successfully',
@@ -103,7 +103,7 @@ export const usePerson = () => {
     }, [createApi, allPersonsApi, actorsApi, directorsApi, screenwritersApi, popularApi]);
 
     const quickCreate = useCallback(async (request: QuickCreatePersonRequest) => {
-        return quickCreateApi.callApi(
+        return quickCreateApi.execute(
             () => personApi.admin.quickCreate(request),
             {
                 successMessage: 'Person created successfully',
@@ -119,7 +119,7 @@ export const usePerson = () => {
     }, [quickCreateApi, allPersonsApi, actorsApi, directorsApi, screenwritersApi, popularApi]);
 
     const update = useCallback(async (id: number, request: PersonRequest) => {
-        return updateApi.callApi(
+        return updateApi.execute(
             () => personApi.admin.update(id, request),
             {
                 successMessage: 'Person updated successfully',
@@ -136,7 +136,7 @@ export const usePerson = () => {
     }, [updateApi, personByIdApi, allPersonsApi, actorsApi, directorsApi, screenwritersApi, popularApi]);
 
     const remove = useCallback(async (id: number) => {
-        return deleteApi.callApi(
+        return deleteApi.execute(
             () => personApi.admin.delete(id),
             {
                 successMessage: 'Person deleted successfully',
@@ -166,6 +166,18 @@ export const usePerson = () => {
     }, [allPersonsApi, personByIdApi, actorsApi, directorsApi, screenwritersApi,
         popularApi, createApi, quickCreateApi, updateApi, deleteApi]);
 
+    const loading = allPersonsApi.loading || personByIdApi.loading ||
+        actorsApi.loading || directorsApi.loading ||
+        screenwritersApi.loading || popularApi.loading ||
+        createApi.loading || quickCreateApi.loading ||
+        updateApi.loading || deleteApi.loading;
+
+    const error = !!(allPersonsApi.error || personByIdApi.error ||
+        actorsApi.error || directorsApi.error ||
+        screenwritersApi.error || popularApi.error ||
+        createApi.error || quickCreateApi.error ||
+        updateApi.error || deleteApi.error);
+
     return {
         allPersons: allPersonsApi.data?.content || [],
         person: personByIdApi.data,
@@ -174,16 +186,8 @@ export const usePerson = () => {
         screenwriters: screenwritersApi.data?.content || [],
         popular: popularApi.data?.content || [],
 
-        loading: allPersonsApi.state.isLoading || personByIdApi.state.isLoading ||
-            actorsApi.state.isLoading || directorsApi.state.isLoading ||
-            screenwritersApi.state.isLoading || popularApi.state.isLoading ||
-            createApi.state.isLoading || quickCreateApi.state.isLoading ||
-            updateApi.state.isLoading || deleteApi.state.isLoading,
-        error: allPersonsApi.state.isError || personByIdApi.state.isError ||
-            actorsApi.state.isError || directorsApi.state.isError ||
-            screenwritersApi.state.isError || popularApi.state.isError ||
-            createApi.state.isError || quickCreateApi.state.isError ||
-            updateApi.state.isError || deleteApi.state.isError,
+        loading,
+        error,
 
         getAll,
         getById,
@@ -203,12 +207,6 @@ export const usePerson = () => {
         resetDirectors: directorsApi.reset,
         resetScreenwriters: screenwritersApi.reset,
         resetPopular: popularApi.reset,
-        refetchAllPersons: allPersonsApi.refetch,
-        refetchPerson: personByIdApi.refetch,
-        refetchActors: actorsApi.refetch,
-        refetchDirectors: directorsApi.refetch,
-        refetchScreenwriters: screenwritersApi.refetch,
-        refetchPopular: popularApi.refetch,
 
         pagination: allPersonsApi.data,
         actorsPagination: actorsApi.data,

@@ -13,7 +13,7 @@ export const useUser = () => {
     const passwordApi = useApi<{ message: string }>();
 
     const getProfile = useCallback(async () => {
-        return profileApi.callApi(
+        return profileApi.execute(
             () => userApi.getProfile(),
             {
                 cacheKey: 'user_profile',
@@ -24,7 +24,7 @@ export const useUser = () => {
     }, [profileApi]);
 
     const updateProfile = useCallback(async (updateData: UserUpdateRequest) => {
-        return profileApi.callApi(
+        return profileApi.execute(
             () => userApi.updateProfile(updateData),
             {
                 successMessage: 'Profile updated successfully',
@@ -36,7 +36,7 @@ export const useUser = () => {
     }, [profileApi]);
 
     const requestEmailChange = useCallback(async (newEmail: string) => {
-        return emailChangeApi.callApi(
+        return emailChangeApi.execute(
             () => userApi.requestEmailChange(newEmail),
             {
                 successMessage: 'Email change request sent. Check your new email.',
@@ -45,7 +45,7 @@ export const useUser = () => {
     }, [emailChangeApi]);
 
     const updatePassword = useCallback(async (passwordData: UserPasswordUpdateRequest) => {
-        return passwordApi.callApi(
+        return passwordApi.execute(
             () => userApi.updatePassword(passwordData),
             {
                 successMessage: 'Password updated successfully',
@@ -65,14 +65,17 @@ export const useUser = () => {
         window.location.href = '/login';
     }, [clearCache]);
 
+    const loading = profileApi.loading || emailChangeApi.loading || passwordApi.loading;
+    const error = !!(profileApi.error || emailChangeApi.error || passwordApi.error);
+
     return {
         user: profileApi.data,
 
-        loading: profileApi.state.isLoading || emailChangeApi.state.isLoading || passwordApi.state.isLoading,
-        error: profileApi.state.isError || emailChangeApi.state.isError || passwordApi.state.isError,
-        isProfileLoading: profileApi.state.isLoading,
-        isEmailChanging: emailChangeApi.state.isLoading,
-        isPasswordUpdating: passwordApi.state.isLoading,
+        loading,
+        error,
+        isProfileLoading: profileApi.loading,
+        isEmailChanging: emailChangeApi.loading,
+        isPasswordUpdating: passwordApi.loading,
 
         getProfile,
         updateProfile,
@@ -84,6 +87,5 @@ export const useUser = () => {
         resetProfile: profileApi.reset,
         resetEmailChange: emailChangeApi.reset,
         resetPassword: passwordApi.reset,
-        refetchProfile: profileApi.refetch,
     };
 };

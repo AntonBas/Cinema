@@ -16,7 +16,7 @@ export const useSeats = () => {
     const setSeatStatusApi = useApi<SeatResponse>();
 
     const getSeatsByHall = useCallback(async (hallId: number) => {
-        return seatsByHallApi.callApi(
+        return seatsByHallApi.execute(
             () => seatApi.getSeatsByHall(hallId),
             {
                 cacheKey: `seats_hall_${hallId}`,
@@ -27,7 +27,7 @@ export const useSeats = () => {
     }, [seatsByHallApi]);
 
     const getSeatById = useCallback(async (hallId: number, seatId: number) => {
-        return seatByIdApi.callApi(
+        return seatByIdApi.execute(
             () => seatApi.getSeatById(hallId, seatId),
             {
                 cacheKey: `seat_${hallId}_${seatId}`,
@@ -38,7 +38,7 @@ export const useSeats = () => {
     }, [seatByIdApi]);
 
     const getSeatByPosition = useCallback(async (hallId: number, row: number, number: number) => {
-        return seatByPositionApi.callApi(
+        return seatByPositionApi.execute(
             () => seatApi.getSeatByPosition(hallId, row, number),
             {
                 cacheKey: `seat_position_${hallId}_${row}_${number}`,
@@ -49,19 +49,18 @@ export const useSeats = () => {
     }, [seatByPositionApi]);
 
     const checkSeatAvailability = useCallback(async (hallId: number, row: number, number: number) => {
-        return checkAvailabilityApi.callApi(
+        return checkAvailabilityApi.execute(
             () => seatApi.checkSeatAvailability(hallId, row, number),
             {
                 cacheKey: `seat_availability_${hallId}_${row}_${number}`,
                 cacheTime: 10 * 1000,
-                silent: true,
                 showErrorNotification: false,
             }
         );
     }, [checkAvailabilityApi]);
 
     const countSeatsByHall = useCallback(async (hallId: number) => {
-        return countSeatsApi.callApi(
+        return countSeatsApi.execute(
             () => seatApi.countSeatsByHall(hallId),
             {
                 cacheKey: `seats_count_${hallId}`,
@@ -72,7 +71,7 @@ export const useSeats = () => {
     }, [countSeatsApi]);
 
     const getSeatsByType = useCallback(async (hallId: number, seatType: SeatType) => {
-        return seatsByTypeApi.callApi(
+        return seatsByTypeApi.execute(
             () => seatApi.getSeatsByType(hallId, seatType),
             {
                 cacheKey: `seats_type_${hallId}_${seatType}`,
@@ -83,7 +82,7 @@ export const useSeats = () => {
     }, [seatsByTypeApi]);
 
     const getActiveSeats = useCallback(async (hallId: number) => {
-        return activeSeatsApi.callApi(
+        return activeSeatsApi.execute(
             () => seatApi.getActiveSeats(hallId),
             {
                 cacheKey: `active_seats_${hallId}`,
@@ -94,7 +93,7 @@ export const useSeats = () => {
     }, [activeSeatsApi]);
 
     const getDistinctRows = useCallback(async (hallId: number) => {
-        return distinctRowsApi.callApi(
+        return distinctRowsApi.execute(
             () => seatApi.getDistinctRows(hallId),
             {
                 cacheKey: `rows_${hallId}`,
@@ -105,7 +104,7 @@ export const useSeats = () => {
     }, [distinctRowsApi]);
 
     const updateSeatType = useCallback(async (hallId: number, seatId: number, seatType: SeatType) => {
-        return updateSeatTypeApi.callApi(
+        return updateSeatTypeApi.execute(
             () => seatApi.admin.updateSeatType(hallId, seatId, seatType),
             {
                 successMessage: 'Seat type updated successfully',
@@ -120,7 +119,7 @@ export const useSeats = () => {
     }, [updateSeatTypeApi, seatsByHallApi, seatByIdApi, seatsByTypeApi, activeSeatsApi]);
 
     const setSeatStatus = useCallback(async (hallId: number, seatId: number, active: boolean) => {
-        return setSeatStatusApi.callApi(
+        return setSeatStatusApi.execute(
             () => seatApi.admin.setSeatStatus(hallId, seatId, active),
             {
                 successMessage: active ? 'Seat activated successfully' : 'Seat deactivated successfully',
@@ -152,6 +151,18 @@ export const useSeats = () => {
         countSeatsApi, seatsByTypeApi, activeSeatsApi, distinctRowsApi,
         updateSeatTypeApi, setSeatStatusApi]);
 
+    const loading = seatsByHallApi.loading || seatByIdApi.loading ||
+        seatByPositionApi.loading || checkAvailabilityApi.loading ||
+        countSeatsApi.loading || seatsByTypeApi.loading ||
+        activeSeatsApi.loading || distinctRowsApi.loading ||
+        updateSeatTypeApi.loading || setSeatStatusApi.loading;
+
+    const error = !!(seatsByHallApi.error || seatByIdApi.error ||
+        seatByPositionApi.error || checkAvailabilityApi.error ||
+        countSeatsApi.error || seatsByTypeApi.error ||
+        activeSeatsApi.error || distinctRowsApi.error ||
+        updateSeatTypeApi.error || setSeatStatusApi.error);
+
     return {
         seats: seatsByHallApi.data || [],
         seat: seatByIdApi.data || seatByPositionApi.data,
@@ -161,16 +172,8 @@ export const useSeats = () => {
         seatAvailability: checkAvailabilityApi.data,
         seatsCount: countSeatsApi.data,
 
-        loading: seatsByHallApi.state.isLoading || seatByIdApi.state.isLoading ||
-            seatByPositionApi.state.isLoading || checkAvailabilityApi.state.isLoading ||
-            countSeatsApi.state.isLoading || seatsByTypeApi.state.isLoading ||
-            activeSeatsApi.state.isLoading || distinctRowsApi.state.isLoading ||
-            updateSeatTypeApi.state.isLoading || setSeatStatusApi.state.isLoading,
-        error: seatsByHallApi.state.isError || seatByIdApi.state.isError ||
-            seatByPositionApi.state.isError || checkAvailabilityApi.state.isError ||
-            countSeatsApi.state.isError || seatsByTypeApi.state.isError ||
-            activeSeatsApi.state.isError || distinctRowsApi.state.isError ||
-            updateSeatTypeApi.state.isError || setSeatStatusApi.state.isError,
+        loading,
+        error,
 
         getSeatsByHall,
         getSeatById,
@@ -188,7 +191,5 @@ export const useSeats = () => {
         resetSeat: seatByIdApi.reset,
         resetSeatsByType: seatsByTypeApi.reset,
         resetActiveSeats: activeSeatsApi.reset,
-        refetchSeats: seatsByHallApi.refetch,
-        refetchSeat: seatByIdApi.refetch,
     };
 };
