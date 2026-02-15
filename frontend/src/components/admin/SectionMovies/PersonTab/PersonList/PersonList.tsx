@@ -1,5 +1,5 @@
-import React from 'react';
-import { type PersonResponse, type PersonRole } from '@/types/person';
+import React, { useMemo, useCallback } from 'react';
+import type { PersonResponse, PersonRole } from '@/types/person';
 import { PersonCard } from '../PersonCard/PersonCard';
 import { Button } from '@/components/ui';
 import styles from './PersonList.module.css';
@@ -12,73 +12,78 @@ interface PersonListProps {
     onAddPerson: () => void;
 }
 
-export const PersonList: React.FC<PersonListProps> = ({
+interface EmptyStateConfig {
+    icon: string;
+    title: string;
+    description: string;
+    buttonText: string;
+}
+
+const EMPTY_STATE_CONFIGS: Record<PersonRole | 'ALL', EmptyStateConfig> = {
+    ALL: {
+        icon: '👥',
+        title: 'No people found',
+        description: 'Get started by adding your first person',
+        buttonText: 'Add Person'
+    },
+    ACTOR: {
+        icon: '🎭',
+        title: 'No actors found',
+        description: 'Add actors to appear in movie casts',
+        buttonText: 'Add Actor'
+    },
+    DIRECTOR: {
+        icon: '🎬',
+        title: 'No directors found',
+        description: 'Add directors to direct movies',
+        buttonText: 'Add Director'
+    },
+    SCREENWRITER: {
+        icon: '✍️',
+        title: 'No screenwriters found',
+        description: 'Add screenwriters to write movie scripts',
+        buttonText: 'Add Screenwriter'
+    }
+} as const;
+
+export const PersonList: React.FC<PersonListProps> = React.memo(({
     persons,
     activeTab,
     onEdit,
     onDelete,
     onAddPerson,
 }) => {
-    const filteredPersons = activeTab === 'ALL'
-        ? persons
-        : persons.filter(person => person.role === activeTab);
+    const filteredPersons = useMemo(() =>
+        activeTab === 'ALL'
+            ? persons
+            : persons.filter(person => person.role === activeTab),
+        [persons, activeTab]
+    );
 
-    const getEmptyStateConfig = () => {
-        switch (activeTab) {
-            case 'ALL':
-                return {
-                    icon: '👥',
-                    title: 'No people found',
-                    description: 'Get started by adding your first person',
-                    buttonText: 'Add Person'
-                };
-            case 'ACTOR':
-                return {
-                    icon: '🎭',
-                    title: 'No actors found',
-                    description: 'Add actors to appear in movie casts',
-                    buttonText: 'Add Actor'
-                };
-            case 'DIRECTOR':
-                return {
-                    icon: '🎬',
-                    title: 'No directors found',
-                    description: 'Add directors to direct movies',
-                    buttonText: 'Add Director'
-                };
-            case 'SCREENWRITER':
-                return {
-                    icon: '✍️',
-                    title: 'No screenwriters found',
-                    description: 'Add screenwriters to write movie scripts',
-                    buttonText: 'Add Screenwriter'
-                };
-            default:
-                return {
-                    icon: '👥',
-                    title: 'No people found',
-                    description: 'Get started by adding your first person',
-                    buttonText: 'Add Person'
-                };
-        }
-    };
+    const emptyConfig = useMemo(() =>
+        EMPTY_STATE_CONFIGS[activeTab] || EMPTY_STATE_CONFIGS.ALL,
+        [activeTab]
+    );
+
+    const handleAddClick = useCallback(() => {
+        onAddPerson();
+    }, [onAddPerson]);
 
     if (filteredPersons.length === 0) {
-        const emptyConfig = getEmptyStateConfig();
-
         return (
             <div className={styles.empty}>
-                <div className={styles.emptyIcon}>
+                <div className={styles.emptyIcon} aria-hidden="true">
                     {emptyConfig.icon}
                 </div>
                 <h3>{emptyConfig.title}</h3>
                 <p>{emptyConfig.description}</p>
                 <Button
                     variant="primary"
-                    onClick={onAddPerson}
+                    onClick={handleAddClick}
                     className={styles.addButton}
+                    aria-label={emptyConfig.buttonText}
                 >
-                    <span className={styles.buttonIcon}>+</span>
+                    <span className={styles.buttonIcon} aria-hidden="true">+</span>
                     {emptyConfig.buttonText}
                 </Button>
             </div>
@@ -86,7 +91,7 @@ export const PersonList: React.FC<PersonListProps> = ({
     }
 
     return (
-        <div className={styles.grid}>
+        <div className={styles.grid} role="grid" aria-label={`${activeTab} persons list`}>
             {filteredPersons.map(person => (
                 <PersonCard
                     key={person.id}
@@ -97,4 +102,6 @@ export const PersonList: React.FC<PersonListProps> = ({
             ))}
         </div>
     );
-};
+});
+
+PersonList.displayName = 'PersonList';

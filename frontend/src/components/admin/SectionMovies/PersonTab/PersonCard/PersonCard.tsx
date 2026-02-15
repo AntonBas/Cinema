@@ -1,51 +1,68 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import type { PersonResponse, PersonRole } from '@/types/person';
 import { PersonRoleDisplay } from '@/types/person';
 import { Button, Badge } from '@/components/ui';
 import styles from './PersonCard.module.css';
 
-export interface PersonCardProps {
+interface PersonCardProps {
     person: PersonResponse;
     onEdit: (person: PersonResponse) => void;
     onDelete: (person: PersonResponse) => void;
 }
 
-export const PersonCard: React.FC<PersonCardProps> = ({
+interface RoleConfig {
+    icon: string;
+    variant: 'success' | 'primary' | 'warning' | 'secondary';
+    label: string;
+}
+
+const ROLE_CONFIGS: Record<PersonRole, RoleConfig> = {
+    ACTOR: {
+        icon: '🎭',
+        variant: 'success',
+        label: PersonRoleDisplay.ACTOR
+    },
+    DIRECTOR: {
+        icon: '🎬',
+        variant: 'primary',
+        label: PersonRoleDisplay.DIRECTOR
+    },
+    SCREENWRITER: {
+        icon: '✍️',
+        variant: 'warning',
+        label: PersonRoleDisplay.SCREENWRITER
+    }
+} as const;
+
+export const PersonCard: React.FC<PersonCardProps> = React.memo(({
     person,
     onEdit,
     onDelete
 }) => {
-    const getRoleConfig = (role: PersonRole) => {
-        switch (role) {
-            case 'ACTOR':
-                return {
-                    icon: '🎭',
-                    variant: 'success' as const,
-                    label: PersonRoleDisplay.ACTOR
-                };
-            case 'DIRECTOR':
-                return {
-                    icon: '🎬',
-                    variant: 'primary' as const,
-                    label: PersonRoleDisplay.DIRECTOR
-                };
-            case 'SCREENWRITER':
-                return {
-                    icon: '✍️',
-                    variant: 'warning' as const,
-                    label: PersonRoleDisplay.SCREENWRITER
-                };
-            default:
-                return {
-                    icon: '👤',
-                    variant: 'secondary' as const,
-                    label: 'Person'
-                };
-        }
-    };
+    const roleConfig = useMemo(() =>
+        ROLE_CONFIGS[person.role] || {
+            icon: '👤',
+            variant: 'secondary',
+            label: 'Person'
+        },
+        [person.role]
+    );
 
-    const roleConfig = getRoleConfig(person.role);
     const movieCount = person.movieCount || 0;
+    const movieText = useMemo(() =>
+        `🎬 ${movieCount} ${movieCount === 1 ? 'movie' : 'movies'}`,
+        [movieCount]
+    );
+
+    const handleEdit = useMemo(() =>
+        () => onEdit(person),
+        [onEdit, person]
+    );
+
+    const handleDelete = useMemo(() =>
+        () => onDelete(person),
+        [onDelete, person]
+    );
 
     return (
         <div className={styles.card}>
@@ -77,7 +94,7 @@ export const PersonCard: React.FC<PersonCardProps> = ({
                         size="small"
                         className={styles.movieCountBadge}
                     >
-                        🎬 {movieCount} {movieCount === 1 ? 'movie' : 'movies'}
+                        {movieText}
                     </Badge>
                 </div>
 
@@ -85,7 +102,7 @@ export const PersonCard: React.FC<PersonCardProps> = ({
                     <Button
                         variant="success"
                         size="small"
-                        onClick={() => onEdit(person)}
+                        onClick={handleEdit}
                         className={styles.editButton}
                     >
                         Edit
@@ -93,7 +110,7 @@ export const PersonCard: React.FC<PersonCardProps> = ({
                     <Button
                         variant="error"
                         size="small"
-                        onClick={() => onDelete(person)}
+                        onClick={handleDelete}
                         className={styles.deleteButton}
                     >
                         Delete
@@ -102,4 +119,6 @@ export const PersonCard: React.FC<PersonCardProps> = ({
             </div>
         </div>
     );
-};
+});
+
+PersonCard.displayName = 'PersonCard';

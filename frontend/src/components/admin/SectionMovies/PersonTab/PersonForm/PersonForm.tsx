@@ -1,28 +1,35 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import type { PersonResponse, PersonRequest, PersonRole } from '@/types/person';
 import { PersonRoleDisplay } from '@/types/person';
 import { Modal, Input, Button, Select } from '@/components/ui';
 import styles from './PersonForm.module.css';
 
-export interface PersonFormProps {
+interface PersonFormProps {
     person?: PersonResponse | null;
     onSubmit: (data: PersonRequest) => void;
     onCancel: () => void;
     isLoading?: boolean;
 }
 
-export const PersonForm: React.FC<PersonFormProps> = ({
+interface FormErrors {
+    name?: string;
+}
+
+const NAME_MIN_LENGTH = 2;
+const NAME_MAX_LENGTH = 50;
+
+export const PersonForm: React.FC<PersonFormProps> = React.memo(({
     person,
     onSubmit,
     onCancel,
     isLoading = false
 }) => {
-    const [formData, setFormData] = useState<PersonRequest>({
+    const [formData, setFormData] = useState<PersonRequest>(() => ({
         name: '',
         role: 'ACTOR'
-    });
+    }));
 
-    const [errors, setErrors] = useState<{ name?: string }>({});
+    const [errors, setErrors] = useState<FormErrors>({});
     const [touched, setTouched] = useState({ name: false });
 
     useEffect(() => {
@@ -31,27 +38,34 @@ export const PersonForm: React.FC<PersonFormProps> = ({
                 name: person.name,
                 role: person.role
             });
+            setErrors({});
+            setTouched({ name: false });
         }
-        setErrors({});
-        setTouched({ name: false });
     }, [person]);
 
-    const validateForm = (): boolean => {
-        const newErrors: { name?: string } = {};
+    const validateName = useCallback((name: string): string | undefined => {
+        const trimmedName = name.trim();
 
-        if (!formData.name.trim()) {
-            newErrors.name = 'Name is required';
-        } else if (formData.name.trim().length < 2) {
-            newErrors.name = 'Name must be at least 2 characters long';
-        } else if (formData.name.trim().length > 50) {
-            newErrors.name = 'Name must be less than 50 characters';
+        if (!trimmedName) {
+            return 'Name is required';
+        }
+        if (trimmedName.length < NAME_MIN_LENGTH) {
+            return `Name must be at least ${NAME_MIN_LENGTH} characters long`;
+        }
+        if (trimmedName.length > NAME_MAX_LENGTH) {
+            return `Name must be less than ${NAME_MAX_LENGTH} characters`;
         }
 
-        setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
-    };
+        return undefined;
+    }, []);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const validateForm = useCallback((): boolean => {
+        const nameError = validateName(formData.name);
+        setErrors({ name: nameError });
+        return !nameError;
+    }, [formData.name, validateName]);
+
+    const handleSubmit = useCallback((e: React.FormEvent) => {
         e.preventDefault();
         setTouched({ name: true });
 
@@ -61,49 +75,54 @@ export const PersonForm: React.FC<PersonFormProps> = ({
                 role: formData.role
             });
         }
-    };
+    }, [formData, validateForm, onSubmit]);
 
-    const handleInputChange = (field: keyof PersonRequest, value: string) => {
+    const handleInputChange = useCallback((field: keyof PersonRequest, value: string) => {
         setFormData(prev => ({
             ...prev,
             [field]: field === 'role' ? value as PersonRole : value
         }));
 
-        if (errors.name && field === 'name') {
+        if (field === 'name' && errors.name) {
             setErrors(prev => ({ ...prev, name: undefined }));
         }
-    };
+    }, [errors.name]);
 
-    const handleBlur = (field: string) => {
+    const handleBlur = useCallback((field: string) => {
         setTouched(prev => ({ ...prev, [field]: true }));
         if (field === 'name') {
-            validateForm();
+            const nameError = validateName(formData.name);
+            setErrors(prev => ({ ...prev, name: nameError }));
         }
-    };
+    }, [formData.name, validateName]);
 
-    const shouldShowError = (field: 'name') => {
-        return touched[field] && errors[field];
-    };
+    const handleClose = useCallback(() => {
+        if (!isLoading) {
+            onCancel();
+        }
+    }, [isLoading, onCancel]);
 
-    const isNameInvalid = shouldShowError('name');
-
-    const roleOptions = [
+    const roleOptions = useMemo(() => [
         { value: 'ACTOR', label: `🎭 ${PersonRoleDisplay.ACTOR}` },
         { value: 'DIRECTOR', label: `🎬 ${PersonRoleDisplay.DIRECTOR}` },
         { value: 'SCREENWRITER', label: `✍️ ${PersonRoleDisplay.SCREENWRITER}` }
-    ];
+    ], []);
+
+    const isNameInvalid = touched.name && !!errors.name;
+    const charCount = formData.name.length;
+    const isCharCountValid = charCount <= NAME_MAX_LENGTH;
 
     return (
         <Modal
             isOpen={true}
-            onClose={onCancel}
+            onClose={handleClose}
             title={person ? 'Edit Person' : 'Add New Person'}
             size="small"
         >
             <form onSubmit={handleSubmit} className={styles.form} noValidate>
                 <div className={styles.formGroup}>
                     <label className={styles.label}>
-                        Full Name *
+                        Full Name <span className={styles.required}>*</span>
                     </label>
                     <Input
                         type="text"
@@ -112,17 +131,17 @@ export const PersonForm: React.FC<PersonFormProps> = ({
                         onBlur={() => handleBlur('name')}
                         placeholder="Enter full name (e.g., Tom Hanks, Christopher Nolan)"
                         error={isNameInvalid ? errors.name : undefined}
-                        maxLength={50}
+                        maxLength={NAME_MAX_LENGTH}
                         disabled={isLoading}
                     />
-                    <div className={styles.charCount}>
-                        {formData.name.length}/50 characters
+                    <div className={`${styles.charCount} ${!isCharCountValid ? styles.error : ''}`}>
+                        {charCount}/{NAME_MAX_LENGTH} characters
                     </div>
                 </div>
 
                 <div className={styles.formGroup}>
                     <label className={styles.label}>
-                        Role *
+                        Role <span className={styles.required}>*</span>
                     </label>
                     <Select
                         value={formData.role}
@@ -136,7 +155,7 @@ export const PersonForm: React.FC<PersonFormProps> = ({
                     <Button
                         type="button"
                         variant="cancel"
-                        onClick={onCancel}
+                        onClick={handleClose}
                         disabled={isLoading}
                     >
                         Cancel
@@ -153,4 +172,6 @@ export const PersonForm: React.FC<PersonFormProps> = ({
             </form>
         </Modal>
     );
-};
+});
+
+PersonForm.displayName = 'PersonForm';

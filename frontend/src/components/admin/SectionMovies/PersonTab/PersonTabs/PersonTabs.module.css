@@ -6,6 +6,7 @@
     border: 1px solid var(--color-border-medium);
     margin-bottom: var(--space-8);
     gap: var(--space-2);
+    box-shadow: var(--shadow-sm);
 }
 
 .tab {
@@ -24,11 +25,22 @@
     flex: 1;
     justify-content: center;
     position: relative;
+    outline: none;
+}
+
+.tab:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
 }
 
 .tab:hover {
     background: rgba(var(--color-primary-rgb), 0.1);
     color: var(--color-primary);
+    transform: translateY(-1px);
+}
+
+.tab:active {
+    transform: translateY(0);
 }
 
 .tabActive {
@@ -40,6 +52,8 @@
 .tabActive:hover {
     background: linear-gradient(135deg, var(--color-primary), var(--color-primary-hover));
     color: var(--color-text-primary);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(var(--color-primary-rgb), 0.4);
 }
 
 .tabIcon {
@@ -49,6 +63,15 @@
     justify-content: center;
     width: 20px;
     height: 20px;
+    transition: transform var(--transition-normal);
+}
+
+.tab:hover .tabIcon {
+    transform: scale(1.1);
+}
+
+.tabActive .tabIcon {
+    transform: scale(1.05);
 }
 
 .tabLabel {
@@ -59,12 +82,30 @@
 .tabBadge {
     min-width: 1.5rem;
     text-align: center;
+    transition: all var(--transition-normal);
+}
+
+.tab:hover .tabBadge {
+    transform: scale(1.05);
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    .tab,
+    .tabIcon,
+    .tabBadge,
+    .tab:hover,
+    .tabActive:hover {
+        transition: none;
+        transform: none;
+    }
 }
 
 @media (max-width: 768px) {
     .tabs {
         flex-direction: column;
         gap: var(--space-1);
+        padding: var(--space-1);
     }
 
     .tab {
@@ -76,23 +117,33 @@
         flex: 1;
         text-align: left;
     }
+
+    .tabIcon {
+        width: 24px;
+    }
 }
 
 @media (max-width: 480px) {
     .tabs {
-        padding: var(--space-1);
+        margin-bottom: var(--space-4);
     }
 
     .tab {
-        padding: var(--space-3) var(--space-2);
+        padding: var(--space-2) var(--space-2);
         gap: var(--space-1);
     }
 
     .tabIcon {
         font-size: 1rem;
+        width: 20px;
     }
 
     .tabLabel {
-        font-size: 0.8125rem;
+        font-size: var(--font-size-xs);
+    }
+
+    .tabBadge {
+        min-width: 1.25rem;
+        font-size: var(--font-size-xs);
     }
 }

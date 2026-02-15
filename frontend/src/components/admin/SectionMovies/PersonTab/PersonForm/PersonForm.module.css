@@ -13,14 +13,24 @@
 .label {
     color: var(--color-text-primary);
     font-weight: 500;
-    font-size: 0.9rem;
+    font-size: var(--font-size-sm);
+}
+
+.required {
+    color: var(--color-error);
+    margin-left: var(--space-1);
 }
 
 .charCount {
     color: var(--color-text-muted);
     font-size: var(--font-size-xs);
     text-align: right;
-    margin-top: -0.25rem;
+    margin-top: calc(var(--space-1) * -1);
+    transition: color var(--transition-fast);
+}
+
+.charCount.error {
+    color: var(--color-error);
 }
 
 .formActions {
@@ -33,5 +43,9 @@
 @media (max-width: 768px) {
     .formActions {
         flex-direction: column;
+    }
+
+    .formActions button {
+        width: 100%;
     }
 }

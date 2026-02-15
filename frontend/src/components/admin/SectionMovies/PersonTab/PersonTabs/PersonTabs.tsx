@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import type { PersonRole } from '@/types/person';
 import { Badge } from '@/components/ui';
 import styles from './PersonTabs.module.css';
@@ -18,58 +18,65 @@ interface TabConfig {
     id: PersonRole | 'ALL';
     label: string;
     icon: string;
-    count: number;
-    variant: 'primary' | 'secondary' | 'success' | 'warning' | 'error';
 }
 
-export const PersonTabs: React.FC<PersonTabsProps> = ({
+const TAB_CONFIGS: TabConfig[] = [
+    {
+        id: 'ALL',
+        label: 'All People',
+        icon: '👥'
+    },
+    {
+        id: 'ACTOR',
+        label: 'Actors',
+        icon: '🎭'
+    },
+    {
+        id: 'DIRECTOR',
+        label: 'Directors',
+        icon: '🎬'
+    },
+    {
+        id: 'SCREENWRITER',
+        label: 'Screenwriters',
+        icon: '✍️'
+    }
+] as const;
+
+export const PersonTabs: React.FC<PersonTabsProps> = React.memo(({
     activeTab,
     onTabChange,
     stats,
 }) => {
-    const tabs: TabConfig[] = [
-        {
-            id: 'ALL',
-            label: 'All People',
-            icon: '👥',
-            count: stats.ALL,
-            variant: 'primary'
-        },
-        {
-            id: 'ACTOR',
-            label: 'Actors',
-            icon: '🎭',
-            count: stats.ACTOR,
-            variant: 'success'
-        },
-        {
-            id: 'DIRECTOR',
-            label: 'Directors',
-            icon: '🎬',
-            count: stats.DIRECTOR,
-            variant: 'primary'
-        },
-        {
-            id: 'SCREENWRITER',
-            label: 'Screenwriters',
-            icon: '✍️',
-            count: stats.SCREENWRITER,
-            variant: 'warning'
-        },
-    ];
+    const handleTabClick = useCallback((tabId: PersonRole | 'ALL') => {
+        onTabChange(tabId);
+    }, [onTabChange]);
+
+    const handleKeyDown = useCallback((e: React.KeyboardEvent, tabId: PersonRole | 'ALL') => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onTabChange(tabId);
+        }
+    }, [onTabChange]);
 
     return (
-        <div className={styles.tabs} role="tablist" aria-label="Person categories">
-            {tabs.map((tab) => (
+        <div
+            className={styles.tabs}
+            role="tablist"
+            aria-label="Person categories"
+        >
+            {TAB_CONFIGS.map((tab) => (
                 <button
                     key={tab.id}
                     className={`${styles.tab} ${activeTab === tab.id ? styles.tabActive : ''}`}
-                    onClick={() => onTabChange(tab.id)}
+                    onClick={() => handleTabClick(tab.id)}
+                    onKeyDown={(e) => handleKeyDown(e, tab.id)}
                     type="button"
                     role="tab"
                     aria-selected={activeTab === tab.id}
                     aria-controls={`${tab.id}-panel`}
                     id={`${tab.id}-tab`}
+                    tabIndex={activeTab === tab.id ? 0 : -1}
                 >
                     <span className={styles.tabIcon} aria-hidden="true">
                         {tab.icon}
@@ -79,11 +86,14 @@ export const PersonTabs: React.FC<PersonTabsProps> = ({
                         variant={activeTab === tab.id ? "primary" : "secondary"}
                         size="small"
                         className={styles.tabBadge}
+                        aria-label={`${stats[tab.id]} items`}
                     >
-                        {tab.count}
+                        {stats[tab.id]}
                     </Badge>
                 </button>
             ))}
         </div>
     );
-};
+});
+
+PersonTabs.displayName = 'PersonTabs';
