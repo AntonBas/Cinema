@@ -8,6 +8,7 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.mapstruct.ReportingPolicy;
 
 import ua.lviv.bas.cinema.domain.Movie;
+import ua.lviv.bas.cinema.domain.projection.MovieCardProjection;
 import ua.lviv.bas.cinema.domain.projection.MovieDetailProjection;
 import ua.lviv.bas.cinema.domain.projection.MovieSessionSearchProjection;
 import ua.lviv.bas.cinema.dto.movie.request.MovieCreateRequest;
@@ -70,4 +71,8 @@ public interface MovieMapper {
 	@Mapping(target = "genres", ignore = true)
 	@Mapping(target = "posterFileName", ignore = true)
 	void updateMovieFromRequest(MovieUpdateRequest request, @MappingTarget Movie movie);
+
+	@Mapping(target = "posterUrl", expression = "java(\"/api/movies/\" + projection.getId() + \"/poster\")")
+	@Mapping(target = "currentlyShowing", expression = "java(projection.getStatus() == ua.lviv.bas.cinema.domain.enums.MovieStatus.CURRENT)")
+	MovieCardResponse toMovieCardResponse(MovieCardProjection projection);
 }

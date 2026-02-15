@@ -15,6 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.Movie;
+import ua.lviv.bas.cinema.domain.projection.MovieCardProjection;
 import ua.lviv.bas.cinema.domain.projection.MovieSessionSearchProjection;
 import ua.lviv.bas.cinema.domain.specification.MovieSpecification;
 import ua.lviv.bas.cinema.dto.movie.request.MovieCreateRequest;
@@ -121,19 +122,15 @@ public class MovieService {
 	public Page<MovieCardResponse> getFilteredMovies(MovieFilterRequest filter, Pageable pageable) {
 		Specification<Movie> spec = movieSpecification.build(filter);
 
-		if (!pageable.getSort().isSorted()) {
-			pageable = Pageable.ofSize(pageable.getPageSize()).withPage(pageable.getPageNumber());
-		}
+		Page<MovieCardProjection> moviePage = movieRepository.findMovieCardProjections(spec, pageable);
 
-		Page<Movie> movies = movieRepository.findAll(spec, pageable);
-
-		log.info("Found {} movies for filter: {}", movies.getTotalElements(), filter);
+		log.info("Found {} movies for filter: {}", moviePage.getTotalElements(), filter);
 
 		if (log.isDebugEnabled()) {
-			movies.getContent().forEach(m -> log.debug("Movie: {}, Status: {}", m.getTitle(), m.getStatus()));
+			moviePage.getContent().forEach(m -> log.debug("Movie: {}, Status: {}", m.getTitle(), m.getStatus()));
 		}
 
-		return movies.map(movieMapper::toMovieCardResponse);
+		return moviePage.map(movieMapper::toMovieCardResponse);
 	}
 
 	public List<MovieSessionSearchResponse> searchMoviesForSession(String searchTerm) {
