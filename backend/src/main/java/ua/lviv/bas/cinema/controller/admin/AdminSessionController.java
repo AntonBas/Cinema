@@ -135,8 +135,8 @@ public class AdminSessionController {
 			@ApiResponse(responseCode = "403", description = "User does not have required role") })
 	public ResponseEntity<PageResponse<SessionAdminResponse>> getSessions(@Valid SessionFilterRequest filter,
 			@Parameter(hidden = true) @PageableDefault(size = 20, sort = "startTime", direction = Sort.Direction.DESC) Pageable pageable) {
-		log.info("GET /api/admin/sessions - Getting sessions with filters");
-		var page = sessionService.getSessionsForAdmin(filter, pageable);
-		return ResponseEntity.ok(PageResponse.from(page));
+		log.info("GET /api/admin/sessions - Getting sessions with filters: {}", filter);
+		PageResponse<SessionAdminResponse> page = sessionService.getSessionsForAdmin(filter, pageable);
+		return ResponseEntity.ok(page);
 	}
 }

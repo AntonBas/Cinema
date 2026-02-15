@@ -19,9 +19,8 @@ import ua.lviv.bas.cinema.domain.CinemaHall;
 import ua.lviv.bas.cinema.domain.Movie;
 import ua.lviv.bas.cinema.domain.Session;
 import ua.lviv.bas.cinema.domain.enums.CinemaSessionStatus;
-import ua.lviv.bas.cinema.domain.projection.SessionAdminProjection;
-import ua.lviv.bas.cinema.domain.projection.SessionScheduleProjection;
 import ua.lviv.bas.cinema.domain.specification.SessionSpecification;
+import ua.lviv.bas.cinema.dto.common.PageResponse;
 import ua.lviv.bas.cinema.dto.session.request.SessionCreateRequest;
 import ua.lviv.bas.cinema.dto.session.request.SessionFilterRequest;
 import ua.lviv.bas.cinema.dto.session.request.SessionUpdateRequest;
@@ -50,39 +49,35 @@ public class SessionService {
 	private final SessionSpecification sessionSpecification;
 
 	@Cacheable(key = "'public-schedule-' + #filter.hashCode() + '-' + #pageable")
-	public Page<SessionScheduleResponse> getScheduleSessions(SessionFilterRequest filter, Pageable pageable) {
+	public PageResponse<SessionScheduleResponse> getScheduleSessions(SessionFilterRequest filter, Pageable pageable) {
 		log.info("Getting public schedule sessions - filter: {}", filter);
 
 		Specification<Session> spec = sessionSpecification.buildForSchedule(filter);
-		Page<SessionScheduleProjection> projections = sessionRepository.findScheduleSessions(spec, pageable);
+		Page<Session> page = sessionRepository.findAll(spec, pageable);
 
-		return projections.map(sessionMapper::toSessionScheduleResponse);
+		return PageResponse.from(page.map(sessionMapper::toSessionScheduleResponse));
 	}
 
 	@Cacheable(key = "'public-' + #id")
 	public SessionScheduleResponse getSessionByIdForPublic(Long id) {
-		SessionScheduleProjection projection = sessionRepository.findScheduleProjectionById(id)
-				.orElseThrow(() -> new SessionNotFoundException(id));
-
-		return sessionMapper.toSessionScheduleResponse(projection);
+		Session session = sessionRepository.findById(id).orElseThrow(() -> new SessionNotFoundException(id));
+		return sessionMapper.toSessionScheduleResponse(session);
 	}
 
 	@Cacheable(key = "'admin-' + #filter.hashCode() + '-' + #pageable")
-	public Page<SessionAdminResponse> getSessionsForAdmin(SessionFilterRequest filter, Pageable pageable) {
+	public PageResponse<SessionAdminResponse> getSessionsForAdmin(SessionFilterRequest filter, Pageable pageable) {
 		log.info("Getting admin sessions - filter: {}", filter);
 
 		Specification<Session> spec = sessionSpecification.buildForAdmin(filter);
-		Page<SessionAdminProjection> projections = sessionRepository.findAdminSessions(spec, pageable);
+		Page<Session> page = sessionRepository.findAll(spec, pageable);
 
-		return projections.map(sessionMapper::toSessionAdminResponse);
+		return PageResponse.from(page.map(sessionMapper::toSessionAdminResponse));
 	}
 
 	@Cacheable(key = "'admin-' + #id")
 	public SessionAdminResponse getSessionById(Long id) {
-		SessionAdminProjection projection = sessionRepository.findAdminProjectionById(id)
-				.orElseThrow(() -> new SessionNotFoundException(id));
-
-		return sessionMapper.toSessionAdminResponse(projection);
+		Session session = sessionRepository.findById(id).orElseThrow(() -> new SessionNotFoundException(id));
+		return sessionMapper.toSessionAdminResponse(session);
 	}
 
 	public boolean hasTimeConflict(Long hallId, LocalDateTime startTime, Integer durationMinutes,

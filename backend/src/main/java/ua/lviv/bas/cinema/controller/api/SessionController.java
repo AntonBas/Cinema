@@ -35,10 +35,10 @@ public class SessionController {
 	@Operation(summary = "Get schedule sessions", description = "Get paginated list of upcoming sessions.")
 	@ApiResponse(responseCode = "200", description = "Sessions retrieved successfully")
 	public ResponseEntity<PageResponse<SessionScheduleResponse>> getScheduleSessions(@Valid SessionFilterRequest filter,
-			@Parameter(hidden = true) @PageableDefault(size = 20, sort = "startTime", direction = Sort.Direction.ASC) Pageable pageable) {
-		log.info("GET /api/sessions - Getting schedule sessions with filters");
-		var page = sessionService.getScheduleSessions(filter, pageable);
-		return ResponseEntity.ok(PageResponse.from(page));
+			@Parameter(hidden = true) @PageableDefault(size = 12, sort = "startTime", direction = Sort.Direction.ASC) Pageable pageable) {
+		log.info("GET /api/sessions - Getting schedule sessions with filters: {}", filter);
+		PageResponse<SessionScheduleResponse> page = sessionService.getScheduleSessions(filter, pageable);
+		return ResponseEntity.ok(page);
 	}
 
 	@GetMapping("/{id}")
