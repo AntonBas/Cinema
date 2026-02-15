@@ -3,8 +3,8 @@
     border-radius: var(--radius-xl);
     border: 1px solid var(--color-border-medium);
     overflow: hidden;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-    animation: fadeIn 0.4s ease;
+    box-shadow: var(--shadow-lg);
+    animation: fadeIn var(--transition-normal);
 }
 
 .tableHeader {
@@ -26,6 +26,10 @@
     align-items: center;
 }
 
+.tableBody {
+    background: var(--color-bg-quaternary);
+}
+
 .tableRow {
     display: grid;
     grid-template-columns: 2fr 1fr 1.5fr;
@@ -33,15 +37,15 @@
     padding: var(--space-6) var(--space-8);
     border-bottom: 1px solid var(--color-border-medium);
     align-items: center;
-    transition: all var(--transition-normal);
-}
-
-.tableRow:hover {
-    background: rgba(255, 255, 255, 0.02);
+    transition: background-color var(--transition-fast);
 }
 
 .tableRow:last-child {
     border-bottom: none;
+}
+
+.tableRow:hover {
+    background: rgba(var(--color-primary-rgb), var(--opacity-low));
 }
 
 .nameCell,
@@ -55,11 +59,6 @@
     font-weight: 600;
     color: var(--color-text-primary);
     font-size: var(--font-size-md);
-}
-
-.count {
-    display: flex;
-    align-items: center;
 }
 
 .actions {
@@ -78,46 +77,27 @@
     transition: all var(--transition-fast);
 }
 
-.editButton:hover {
-    opacity: 0.9;
-}
-
-.deleteButton:hover {
-    opacity: 0.9;
-}
-
 .loading {
     text-align: center;
-    padding: 4rem 2rem;
+    padding: var(--space-12) var(--space-8);
     color: var(--color-text-secondary);
     background: var(--color-bg-quaternary);
     border-radius: var(--radius-xl);
     border: 1px solid var(--color-border-medium);
-    margin: var(--space-8) 0;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: var(--space-4);
-}
-
-.loadingSpinner {
-    width: 48px;
-    height: 48px;
-    border: 3px solid var(--color-border);
-    border-top: 3px solid var(--color-primary);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    margin-bottom: var(--space-4);
+    justify-content: center;
+    min-height: 200px;
 }
 
 .empty {
     text-align: center;
-    padding: 4rem 2rem;
+    padding: var(--space-12) var(--space-8);
     color: var(--color-text-secondary);
     background: var(--color-bg-quaternary);
     border-radius: var(--radius-xl);
     border: 1px solid var(--color-border-medium);
-    margin: var(--space-8) 0;
 }
 
 .emptyIcon {
@@ -125,6 +105,19 @@
     margin-bottom: var(--space-6);
     opacity: 0.6;
     display: block;
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-8px);
+    }
 }
 
 .empty h3 {
@@ -137,10 +130,11 @@
 .empty p {
     margin: 0;
     font-size: var(--font-size-md);
-    line-height: 1.5;
+    line-height: 1.6;
     max-width: 400px;
     margin-left: auto;
     margin-right: auto;
+    color: var(--color-text-secondary);
 }
 
 @keyframes fadeIn {
@@ -155,13 +149,13 @@
     }
 }
 
-@keyframes spin {
-    0% {
-        transform: rotate(0deg);
-    }
+@media (prefers-reduced-motion: reduce) {
 
-    100% {
-        transform: rotate(360deg);
+    .table,
+    .tableRow,
+    .emptyIcon {
+        animation: none;
+        transition: none;
     }
 }
 
@@ -180,6 +174,12 @@
         text-align: center;
     }
 
+    .nameCell,
+    .countCell,
+    .actionsCell {
+        justify-content: center;
+    }
+
     .actions {
         justify-content: center;
         flex-wrap: wrap;
@@ -193,11 +193,13 @@
 
     .loading,
     .empty {
-        padding: 3rem 1rem;
+        padding: var(--space-8) var(--space-4);
+        min-height: 150px;
     }
 
     .emptyIcon {
         font-size: 2.5rem;
+        margin-bottom: var(--space-4);
     }
 }
 
@@ -205,11 +207,20 @@
     .actions {
         flex-direction: column;
         align-items: center;
+        width: 100%;
     }
 
     .editButton,
     .deleteButton {
         width: 100%;
         max-width: 200px;
+    }
+
+    .empty h3 {
+        font-size: var(--font-size-lg);
+    }
+
+    .empty p {
+        font-size: var(--font-size-sm);
     }
 }

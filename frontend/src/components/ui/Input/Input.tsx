@@ -1,14 +1,18 @@
-import React from 'react';
+import React, { useId, useCallback } from 'react';
 import styles from './Input.module.css';
 import clsx from 'clsx';
 
+export type InputType = 'text' | 'email' | 'password' | 'number' | 'date' | 'datetime-local';
+export type InputSize = 'small' | 'medium' | 'large';
+
 export interface InputProps {
-    type?: 'text' | 'email' | 'password' | 'number' | 'date' | 'datetime-local';
+    type?: InputType;
     value: string;
     onChange: (value: string) => void;
     placeholder?: string;
     disabled?: boolean;
     onBlur?: () => void;
+    onFocus?: () => void;
     onClick?: () => void;
     error?: string;
     required?: boolean;
@@ -18,8 +22,11 @@ export interface InputProps {
     step?: string | number;
     className?: string;
     label?: string;
-    size?: 'small' | 'medium' | 'large';
+    size?: InputSize;
     id?: string;
+    autoFocus?: boolean;
+    'aria-label'?: string;
+    'aria-describedby'?: string;
 }
 
 export const Input: React.FC<InputProps> = ({
@@ -28,18 +35,39 @@ export const Input: React.FC<InputProps> = ({
     onChange,
     placeholder,
     disabled = false,
+    onBlur,
+    onFocus,
+    onClick,
     error,
     required = false,
     maxLength,
     min,
     max,
     step,
-    onClick,
     className = '',
     label,
     size = 'medium',
-    id
+    id: externalId,
+    autoFocus = false,
+    'aria-label': ariaLabel,
+    'aria-describedby': ariaDescribedby,
 }) => {
+    const generatedId = useId();
+    const inputId = externalId || generatedId;
+    const errorId = error ? `${inputId}-error` : undefined;
+
+    const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+        onChange(e.target.value);
+    }, [onChange]);
+
+    const handleBlur = useCallback(() => {
+        onBlur?.();
+    }, [onBlur]);
+
+    const handleFocus = useCallback(() => {
+        onFocus?.();
+    }, [onFocus]);
+
     const inputClass = clsx(
         styles.input,
         error && styles.error,
@@ -49,21 +77,25 @@ export const Input: React.FC<InputProps> = ({
         className
     );
 
-    const inputId = id || `input-${Math.random().toString(36).substr(2, 9)}`;
-
     return (
         <div className={styles.container}>
             {label && (
-                <label htmlFor={inputId} className={styles.label}>
+                <label
+                    htmlFor={inputId}
+                    className={clsx(styles.label, required && styles.required)}
+                >
                     {label}
-                    {required && <span className={styles.required}>*</span>}
+                    {required && <span className={styles.requiredStar} aria-hidden="true">*</span>}
                 </label>
             )}
+
             <input
                 id={inputId}
                 type={type}
                 value={value}
-                onChange={(e) => onChange(e.target.value)}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                onFocus={handleFocus}
                 onClick={onClick}
                 placeholder={placeholder}
                 disabled={disabled}
@@ -72,9 +104,23 @@ export const Input: React.FC<InputProps> = ({
                 min={min}
                 max={max}
                 step={step}
+                autoFocus={autoFocus}
                 className={inputClass}
+                aria-label={ariaLabel}
+                aria-describedby={errorId || ariaDescribedby}
+                aria-invalid={!!error}
+                aria-required={required}
             />
-            {error && <div className={styles.errorMessage}>{error}</div>}
+
+            {error && (
+                <div
+                    id={errorId}
+                    className={styles.errorMessage}
+                    role="alert"
+                >
+                    {error}
+                </div>
+            )}
         </div>
     );
 };

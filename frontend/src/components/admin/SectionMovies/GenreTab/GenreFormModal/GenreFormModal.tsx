@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Modal, Input, Button } from '@/components/ui';
+import { useNotification } from '@/hooks/common/useNotification';
 import styles from './GenreFormModal.module.css';
 
 interface GenreFormModalProps {
@@ -10,6 +11,9 @@ interface GenreFormModalProps {
     loading?: boolean;
     isEditing?: boolean;
 }
+
+const MAX_NAME_LENGTH = 50;
+const WARNING_THRESHOLD = 10;
 
 export const GenreFormModal: React.FC<GenreFormModalProps> = ({
     isOpen,
@@ -22,6 +26,8 @@ export const GenreFormModal: React.FC<GenreFormModalProps> = ({
     const [name, setName] = useState(initialName);
     const [error, setError] = useState('');
 
+    const { showNotification } = useNotification();
+
     useEffect(() => {
         if (isOpen) {
             setName(initialName);
@@ -29,27 +35,62 @@ export const GenreFormModal: React.FC<GenreFormModalProps> = ({
         }
     }, [isOpen, initialName]);
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
+    const validateName = useCallback((value: string): string | null => {
+        const trimmed = value.trim();
 
-        if (!name.trim()) {
-            setError('Genre name is required');
-            return;
+        if (!trimmed) {
+            return 'Genre name is required';
         }
 
-        if (name.trim().length > 50) {
-            setError('Genre name cannot exceed 50 characters');
+        if (trimmed.length > MAX_NAME_LENGTH) {
+            return `Genre name cannot exceed ${MAX_NAME_LENGTH} characters`;
+        }
+
+        return null;
+    }, []);
+
+    const handleSubmit = useCallback((e: React.FormEvent) => {
+        e.preventDefault();
+
+        const validationError = validateName(name);
+        if (validationError) {
+            setError(validationError);
             return;
         }
 
         onSubmit(name.trim());
-    };
 
-    const handleClose = () => {
+        if (!isEditing) {
+            showNotification(`Genre "${name.trim()}" created successfully`, 'success');
+        }
+    }, [name, onSubmit, validateName, showNotification, isEditing]);
+
+    const handleChange = useCallback((value: string) => {
+        setName(value);
+        if (error) {
+            setError('');
+        }
+    }, [error]);
+
+    const handleClose = useCallback(() => {
         if (!loading) {
             onClose();
+            setName('');
+            setError('');
         }
-    };
+    }, [loading, onClose]);
+
+    const remainingChars = useMemo(() =>
+        MAX_NAME_LENGTH - name.length,
+        [name.length]
+    );
+
+    const isValid = useMemo(() =>
+        name.trim().length > 0 && name.trim().length <= MAX_NAME_LENGTH,
+        [name]
+    );
+
+    const isWarning = remainingChars < WARNING_THRESHOLD;
 
     return (
         <Modal
@@ -59,21 +100,23 @@ export const GenreFormModal: React.FC<GenreFormModalProps> = ({
             size="small"
         >
             <form onSubmit={handleSubmit} className={styles.form}>
-                <Input
-                    type="text"
-                    placeholder="Genre name"
-                    value={name}
-                    onChange={(value) => {
-                        setName(value);
-                        setError('');
-                    }}
-                    error={error}
-                    required
-                    maxLength={50}
-                    disabled={loading}
-                    className={styles.input}
-                />
-                <div className={styles.hint}>Maximum 50 characters</div>
+                <div className={styles.inputWrapper}>
+                    <Input
+                        type="text"
+                        placeholder="Enter genre name"
+                        value={name}
+                        onChange={handleChange}
+                        error={error}
+                        required
+                        maxLength={MAX_NAME_LENGTH}
+                        disabled={loading}
+                        className={styles.input}
+                        autoFocus={!isEditing}
+                    />
+                    <div className={`${styles.charCount} ${isWarning ? styles.warning : ''}`}>
+                        {remainingChars} character{remainingChars !== 1 ? 's' : ''} remaining
+                    </div>
+                </div>
 
                 <div className={styles.actions}>
                     <Button
@@ -81,7 +124,6 @@ export const GenreFormModal: React.FC<GenreFormModalProps> = ({
                         variant="cancel"
                         onClick={handleClose}
                         disabled={loading}
-                        className={styles.cancelButton}
                     >
                         Cancel
                     </Button>
@@ -89,8 +131,7 @@ export const GenreFormModal: React.FC<GenreFormModalProps> = ({
                         type="submit"
                         variant="primary"
                         loading={loading}
-                        disabled={loading}
-                        className={styles.submitButton}
+                        disabled={loading || !isValid}
                     >
                         {isEditing ? 'Update' : 'Create'} Genre
                     </Button>

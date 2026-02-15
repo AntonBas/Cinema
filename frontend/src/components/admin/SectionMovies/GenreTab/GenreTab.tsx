@@ -2,7 +2,10 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import type { GenreResponse } from '@/types/genre';
 import type { SearchParams } from '@/types/pagination';
 import { useGenres } from '@/hooks/features/genres/useGenres';
-import { Notification, SearchInput, Button, Pagination, DeleteConfirmModal } from '@/components/ui';
+import { useNotification } from '@/hooks/common/useNotification';
+import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
+import { SearchInput, Button, Pagination, DeleteConfirmModal, LoadingSpinner } from '@/components/ui';
+import { Notification } from '@/components/ui/Notification';
 import { GenreTable } from './GenreTable/GenreTable';
 import { GenreFormModal } from './GenreFormModal/GenreFormModal';
 import { isApiErrorException } from '@/utils/apiErrorHandler';
@@ -23,8 +26,9 @@ export const GenreTab: React.FC = () => {
     totalElements,
   } = useGenres();
 
-  const [successMessage, setSuccessMessage] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
+  const { notifications, showNotification, hideNotification } = useNotification();
+  const showDelayedLoading = useDelayedLoading(loading, 300);
+
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [editingGenre, setEditingGenre] = useState<GenreResponse | null>(null);
@@ -36,54 +40,47 @@ export const GenreTab: React.FC = () => {
   });
 
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const isMountedRef = useRef(false);
+  const initialLoadRef = useRef(false);
 
   useEffect(() => {
-    isMountedRef.current = true;
-    getAll(currentParams);
-
-    return () => {
-      isMountedRef.current = false;
-    };
+    if (!initialLoadRef.current) {
+      initialLoadRef.current = true;
+      getAll(currentParams);
+    }
   }, []);
 
   useEffect(() => {
-    if (isMountedRef.current) {
-      getAll(currentParams);
+    if (initialLoadRef.current) {
+      const timer = setTimeout(() => {
+        getAll(currentParams);
+      }, 100);
+      return () => clearTimeout(timer);
     }
   }, [currentParams]);
 
   const handleSubmit = async (name: string) => {
     if (!name.trim()) {
-      setErrorMessage('Genre name is required');
+      showNotification('Genre name is required', 'error');
       return;
     }
 
     try {
       if (editingGenre?.id) {
         const result = await update(editingGenre.id, { name });
-        setSuccessMessage(`Genre "${result.name}" updated successfully!`);
+        showNotification(`Genre "${result.name}" updated successfully!`, 'success');
       } else {
         const result = await create({ name });
-        setSuccessMessage(`Genre "${result.name}" created successfully!`);
+        showNotification(`Genre "${result.name}" created successfully!`, 'success');
       }
 
       closeFormModal();
-
-      setCurrentParams(prev => ({
-        ...prev,
-        page: 0
-      }));
+      setCurrentParams(prev => ({ ...prev, page: 0 }));
     } catch (err) {
       if (isApiErrorException(err)) {
         const validationError = err.getFirstValidationError();
-        if (validationError) {
-          setErrorMessage(validationError);
-        } else {
-          setErrorMessage(err.message);
-        }
+        showNotification(validationError || err.message, 'error');
       } else {
-        setErrorMessage(err instanceof Error ? err.message : 'Failed to save genre');
+        showNotification(err instanceof Error ? err.message : 'Failed to save genre', 'error');
       }
     }
   };
@@ -93,25 +90,22 @@ export const GenreTab: React.FC = () => {
 
     try {
       await remove(deletingGenre.id);
-      setSuccessMessage(`Genre "${deletingGenre.name}" deleted successfully!`);
+      showNotification(`Genre "${deletingGenre.name}" deleted successfully!`, 'success');
 
       if (allGenres.length === 1 && currentPage > 0) {
-        setCurrentParams(prev => ({
-          ...prev,
-          page: currentPage - 1
-        }));
+        setCurrentParams(prev => ({ ...prev, page: currentPage - 1 }));
       } else {
         getAll(currentParams);
       }
     } catch (err) {
       if (isApiErrorException(err)) {
         if (err.isConflict()) {
-          setErrorMessage(`Cannot delete genre "${deletingGenre.name}" because it has associated movies.`);
+          showNotification(`Cannot delete genre "${deletingGenre.name}" because it has associated movies.`, 'error');
         } else {
-          setErrorMessage(err.message);
+          showNotification(err.message, 'error');
         }
       } else {
-        setErrorMessage(err instanceof Error ? err.message : 'Failed to delete genre');
+        showNotification(err instanceof Error ? err.message : 'Failed to delete genre', 'error');
       }
     } finally {
       setIsDeleteModalOpen(false);
@@ -129,7 +123,7 @@ export const GenreTab: React.FC = () => {
     setIsDeleteModalOpen(true);
   }, []);
 
-  const handleSearch = (query: string) => {
+  const handleSearch = useCallback((query: string) => {
     setSearchQuery(query);
 
     if (searchTimeoutRef.current) {
@@ -149,29 +143,21 @@ export const GenreTab: React.FC = () => {
 
       setCurrentParams(newParams);
     }, 500);
-  };
+  }, [currentParams]);
 
-  const handlePageChange = (page: number) => {
-    setCurrentParams(prev => ({
-      ...prev,
-      page
-    }));
-  };
+  const handlePageChange = useCallback((page: number) => {
+    setCurrentParams(prev => ({ ...prev, page }));
+  }, []);
 
-  const openFormModal = () => {
+  const openFormModal = useCallback(() => {
     setEditingGenre(null);
     setIsFormModalOpen(true);
-  };
+  }, []);
 
-  const closeFormModal = () => {
+  const closeFormModal = useCallback(() => {
     setIsFormModalOpen(false);
     setEditingGenre(null);
-  };
-
-  const handleCloseNotification = () => {
-    setErrorMessage('');
-    setSuccessMessage('');
-  };
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -181,11 +167,10 @@ export const GenreTab: React.FC = () => {
     };
   }, []);
 
-  if (loading && !allGenres.length) {
+  if (showDelayedLoading && !allGenres.length) {
     return (
       <div className={styles.loading}>
-        <div className={styles.loadingSpinner}></div>
-        <p>Loading genres...</p>
+        <LoadingSpinner text="Loading genres" />
       </div>
     );
   }
@@ -201,27 +186,17 @@ export const GenreTab: React.FC = () => {
 
   return (
     <div className={styles.container}>
-      {successMessage && (
+      {notifications.map((notification) => (
         <Notification
-          id="success"
-          message={successMessage}
-          type="success"
-          isVisible={true}
-          onClose={handleCloseNotification}
-          duration={4000}
+          key={notification.id}
+          id={notification.id}
+          message={notification.message}
+          type={notification.type}
+          isVisible={notification.isVisible}
+          onClose={hideNotification}
+          duration={notification.duration}
         />
-      )}
-
-      {errorMessage && (
-        <Notification
-          id="error"
-          message={errorMessage}
-          type="error"
-          isVisible={true}
-          onClose={handleCloseNotification}
-          duration={4000}
-        />
-      )}
+      ))}
 
       <div className={styles.header}>
         <div className={styles.headerContent}>
@@ -244,11 +219,10 @@ export const GenreTab: React.FC = () => {
           onSearch={handleSearch}
           placeholder="Search genres..."
           delay={500}
-          className={styles.searchInput}
         />
       </div>
 
-      {pagination && (
+      {pagination && totalElements > 0 && (
         <div className={styles.resultsInfo}>
           Showing {start}-{end} of {totalElements} genres
           {searchQuery && ` for "${searchQuery}"`}
@@ -272,7 +246,6 @@ export const GenreTab: React.FC = () => {
             onPageChange={handlePageChange}
             variant="pages"
             loading={loading}
-            className={styles.pagination}
             showInfo={false}
           />
         </div>
