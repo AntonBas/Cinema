@@ -24,22 +24,6 @@ export interface TicketResponse {
     seatNumber?: number;
 }
 
-export interface TicketInfoProjection {
-    id: number;
-    uniqueCode: string;
-    status: TicketStatus;
-    purchaseTime: string;
-    finalPrice: string;
-    ticketTypeName: string;
-    movieTitle: string;
-    sessionStartTime: string;
-    hallName: string;
-    row?: number;
-    seatNumber?: number;
-    userId: number;
-    movieId: number;
-}
-
 export const TicketStatusDisplay: Record<TicketStatus, string> = {
     ACTIVE: 'Active',
     USED: 'Used',

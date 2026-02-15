@@ -7,9 +7,3 @@ export interface GenreResponse {
     name: string;
     movieCount: number;
 }
-
-export interface GenreProjection {
-    id: number;
-    name: string;
-    movieCount: number;
-}

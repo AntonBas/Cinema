@@ -63,20 +63,6 @@ export interface BonusTransactionResponse {
     } | null;
 }
 
-export interface BonusTransactionProjection {
-    id: number;
-    type: string;
-    typeDisplay: string;
-    pointsChangeRaw: number;
-    pointsChange: string;
-    createdAt: string;
-    newBalance: number;
-    movieTitle?: string | null;
-    bookingReference?: string | null;
-    cinemaHall?: string | null;
-    sessionDateTime?: string | null;
-}
-
 export const BonusTransactionTypeDisplay: Record<BonusTransactionType, string> = {
     WELCOME_BONUS: 'Welcome Bonus',
     BIRTHDAY_BONUS: 'Birthday Bonus',
