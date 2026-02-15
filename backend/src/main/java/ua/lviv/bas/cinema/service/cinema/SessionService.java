@@ -2,6 +2,9 @@ package ua.lviv.bas.cinema.service.cinema;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
@@ -9,7 +12,6 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +21,8 @@ import ua.lviv.bas.cinema.domain.CinemaHall;
 import ua.lviv.bas.cinema.domain.Movie;
 import ua.lviv.bas.cinema.domain.Session;
 import ua.lviv.bas.cinema.domain.enums.CinemaSessionStatus;
+import ua.lviv.bas.cinema.domain.projection.SessionAdminProjection;
+import ua.lviv.bas.cinema.domain.projection.SessionScheduleProjection;
 import ua.lviv.bas.cinema.domain.specification.SessionSpecification;
 import ua.lviv.bas.cinema.dto.common.PageResponse;
 import ua.lviv.bas.cinema.dto.session.request.SessionCreateRequest;
@@ -26,7 +30,6 @@ import ua.lviv.bas.cinema.dto.session.request.SessionFilterRequest;
 import ua.lviv.bas.cinema.dto.session.request.SessionUpdateRequest;
 import ua.lviv.bas.cinema.dto.session.response.SessionAdminResponse;
 import ua.lviv.bas.cinema.dto.session.response.SessionScheduleResponse;
-import ua.lviv.bas.cinema.exception.domain.cinema.MovieNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.cinema.SessionNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.cinema.SessionOperationException;
 import ua.lviv.bas.cinema.exception.domain.cinema.SessionTimeConflictException;
@@ -34,6 +37,7 @@ import ua.lviv.bas.cinema.exception.domain.cinema.SessionValidationException;
 import ua.lviv.bas.cinema.mapper.SessionMapper;
 import ua.lviv.bas.cinema.repository.MovieRepository;
 import ua.lviv.bas.cinema.repository.SessionRepository;
+import ua.lviv.bas.cinema.service.booking.availability.SeatReservationService;
 
 @Slf4j
 @Service
@@ -46,38 +50,86 @@ public class SessionService {
 	private final SessionMapper sessionMapper;
 	private final MovieRepository movieRepository;
 	private final CinemaHallService cinemaHallService;
+	private final SeatReservationService seatReservationService;
 	private final SessionSpecification sessionSpecification;
 
-	@Cacheable(key = "'public-schedule-' + #filter.hashCode() + '-' + #pageable")
+	@Cacheable(key = "'public-schedule-' + #filter.hashCode() + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
 	public PageResponse<SessionScheduleResponse> getScheduleSessions(SessionFilterRequest filter, Pageable pageable) {
 		log.info("Getting public schedule sessions - filter: {}", filter);
 
-		Specification<Session> spec = sessionSpecification.buildForSchedule(filter);
-		Page<Session> page = sessionRepository.findAll(spec, pageable);
+		Page<SessionScheduleProjection> page = sessionRepository.findAllScheduleProjections(LocalDateTime.now(),
+				pageable);
 
-		return PageResponse.from(page.map(sessionMapper::toSessionScheduleResponse));
+		Map<Long, Integer> hallCapacities = getHallCapacitiesForProjections(page.getContent());
+		Map<Long, Integer> availableSeats = getAvailableSeatsForProjections(page.getContent());
+
+		return PageResponse.from(page.map(projection -> {
+			SessionScheduleResponse response = sessionMapper.toSessionScheduleResponse(projection);
+			response.setHallCapacity(hallCapacities.get(projection.getHallId()));
+			response.setAvailableSeats(availableSeats.get(projection.getId()));
+			return response;
+		}));
 	}
 
 	@Cacheable(key = "'public-' + #id")
 	public SessionScheduleResponse getSessionByIdForPublic(Long id) {
-		Session session = sessionRepository.findById(id).orElseThrow(() -> new SessionNotFoundException(id));
-		return sessionMapper.toSessionScheduleResponse(session);
+		SessionScheduleProjection projection = sessionRepository.findScheduleProjectionById(id)
+				.orElseThrow(() -> new SessionNotFoundException(id));
+		SessionScheduleResponse response = sessionMapper.toSessionScheduleResponse(projection);
+		response.setHallCapacity(getHallCapacity(projection.getHallId()));
+		response.setAvailableSeats(getAvailableSeats(projection.getId()));
+		return response;
 	}
 
-	@Cacheable(key = "'admin-' + #filter.hashCode() + '-' + #pageable")
+	@Cacheable(key = "'admin-' + #filter.hashCode() + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
 	public PageResponse<SessionAdminResponse> getSessionsForAdmin(SessionFilterRequest filter, Pageable pageable) {
 		log.info("Getting admin sessions - filter: {}", filter);
 
-		Specification<Session> spec = sessionSpecification.buildForAdmin(filter);
-		Page<Session> page = sessionRepository.findAll(spec, pageable);
+		var spec = sessionSpecification.buildForAdmin(filter);
+		Page<Session> sessionPage = sessionRepository.findAll(spec, pageable);
 
-		return PageResponse.from(page.map(sessionMapper::toSessionAdminResponse));
+		List<Long> sessionIds = sessionPage.getContent().stream().map(Session::getId).collect(Collectors.toList());
+
+		Map<Long, SessionAdminProjection> projections = sessionIds.stream()
+				.collect(Collectors.toMap(id -> id, id -> sessionRepository.findAdminProjectionById(id).orElseThrow()));
+
+		Map<Long, Integer> hallCapacities = sessionPage.getContent().stream()
+				.collect(Collectors.toMap(Session::getId, session -> getHallCapacity(session.getHall().getId())));
+
+		return PageResponse.from(sessionPage.map(session -> {
+			SessionAdminResponse response = sessionMapper.toSessionAdminResponse(projections.get(session.getId()));
+			response.setHallCapacity(hallCapacities.get(session.getId()));
+			return response;
+		}));
 	}
 
 	@Cacheable(key = "'admin-' + #id")
 	public SessionAdminResponse getSessionById(Long id) {
-		Session session = sessionRepository.findById(id).orElseThrow(() -> new SessionNotFoundException(id));
-		return sessionMapper.toSessionAdminResponse(session);
+		SessionAdminProjection projection = sessionRepository.findAdminProjectionById(id)
+				.orElseThrow(() -> new SessionNotFoundException(id));
+		SessionAdminResponse response = sessionMapper.toSessionAdminResponse(projection);
+		response.setHallCapacity(getHallCapacity(projection.getHallId()));
+		return response;
+	}
+
+	private Map<Long, Integer> getHallCapacitiesForProjections(List<SessionScheduleProjection> projections) {
+		List<Long> hallIds = projections.stream().map(SessionScheduleProjection::getHallId).distinct()
+				.collect(Collectors.toList());
+
+		return hallIds.stream().collect(Collectors.toMap(hallId -> hallId, this::getHallCapacity));
+	}
+
+	private Map<Long, Integer> getAvailableSeatsForProjections(List<SessionScheduleProjection> projections) {
+		return projections.stream().collect(Collectors.toMap(SessionScheduleProjection::getId,
+				projection -> getAvailableSeats(projection.getId())));
+	}
+
+	private Integer getHallCapacity(Long hallId) {
+		return cinemaHallService.getHallWithSeats(hallId).getCapacity();
+	}
+
+	private Integer getAvailableSeats(Long sessionId) {
+		return seatReservationService.getAvailableSeatsCount(sessionId);
 	}
 
 	public boolean hasTimeConflict(Long hallId, LocalDateTime startTime, Integer durationMinutes,
@@ -93,10 +145,9 @@ public class SessionService {
 	public SessionAdminResponse createSession(SessionCreateRequest request) {
 		validateStartTime(request.getStartTime());
 
-		Movie movie = movieRepository.findById(request.getMovieId())
-				.orElseThrow(() -> new MovieNotFoundException(request.getMovieId()));
-
+		Movie movie = movieRepository.getReferenceById(request.getMovieId());
 		CinemaHall hall = cinemaHallService.getHallEntityById(request.getHallId());
+
 		validateMovieAvailability(movie, request.getStartTime());
 
 		LocalDateTime endTime = request.getStartTime().plusMinutes(movie.getDurationMinutes());
@@ -119,38 +170,41 @@ public class SessionService {
 	public SessionAdminResponse updateSession(Long id, SessionUpdateRequest request) {
 		Session session = sessionRepository.findByIdWithLock(id).orElseThrow(() -> new SessionNotFoundException(id));
 
-		LocalDateTime startTime = request.getStartTime() != null ? request.getStartTime() : session.getStartTime();
-		Movie movie = request.getMovieId() != null ? movieRepository.findById(request.getMovieId())
-				.orElseThrow(() -> new MovieNotFoundException(request.getMovieId())) : session.getMovie();
-		CinemaHall hall = request.getHallId() != null ? cinemaHallService.getHallEntityById(request.getHallId())
-				: session.getHall();
+		boolean hasChanges = false;
 
-		if (request.getStartTime() != null || request.getMovieId() != null || request.getHallId() != null) {
-			validateStartTime(startTime);
-			validateMovieAvailability(movie, startTime);
-
-			LocalDateTime endTime = startTime.plusMinutes(movie.getDurationMinutes());
-			validateNoTimeConflict(hall.getId(), startTime, endTime, id);
-		}
-
-		sessionMapper.updateSessionFromRequest(request, session);
-
-		if (request.getMovieId() != null) {
-			session.setMovie(movie);
-		}
-
-		if (request.getHallId() != null) {
-			session.setHall(hall);
-		}
-
-		if (request.getStartTime() != null) {
+		if (request.getStartTime() != null && !request.getStartTime().equals(session.getStartTime())) {
+			validateStartTime(request.getStartTime());
 			session.setStartTime(request.getStartTime());
+			hasChanges = true;
 		}
 
-		Session updated = sessionRepository.save(session);
-		log.info("Session updated with ID: {}", updated.getId());
+		if (request.getBasePrice() != null && !request.getBasePrice().equals(session.getBasePrice())) {
+			session.setBasePrice(request.getBasePrice());
+			hasChanges = true;
+		}
 
-		return getSessionById(updated.getId());
+		if (request.getMovieId() != null && !request.getMovieId().equals(session.getMovie().getId())) {
+			Movie movie = movieRepository.getReferenceById(request.getMovieId());
+			validateMovieAvailability(movie, session.getStartTime());
+			session.setMovie(movie);
+			hasChanges = true;
+		}
+
+		if (request.getHallId() != null && !request.getHallId().equals(session.getHall().getId())) {
+			CinemaHall hall = cinemaHallService.getHallEntityById(request.getHallId());
+			session.setHall(hall);
+			hasChanges = true;
+		}
+
+		if (hasChanges) {
+			LocalDateTime endTime = session.getStartTime().plusMinutes(session.getMovie().getDurationMinutes());
+			validateNoTimeConflict(session.getHall().getId(), session.getStartTime(), endTime, id);
+
+			session = sessionRepository.save(session);
+			log.info("Session updated with ID: {}", session.getId());
+		}
+
+		return getSessionById(session.getId());
 	}
 
 	@Caching(evict = { @CacheEvict(allEntries = true, cacheNames = "sessions"),
@@ -161,7 +215,6 @@ public class SessionService {
 		if (!sessionRepository.existsById(id)) {
 			throw new SessionNotFoundException(id);
 		}
-
 		sessionRepository.deleteById(id);
 		log.info("Session deleted with ID: {}", id);
 	}

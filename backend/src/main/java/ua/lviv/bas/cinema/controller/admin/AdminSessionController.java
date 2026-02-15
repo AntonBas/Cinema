@@ -1,8 +1,11 @@
 package ua.lviv.bas.cinema.controller.admin;
 
+import java.time.LocalDate;
+
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -14,6 +17,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -26,6 +30,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import ua.lviv.bas.cinema.domain.enums.CinemaSessionStatus;
 import ua.lviv.bas.cinema.dto.common.PageResponse;
 import ua.lviv.bas.cinema.dto.session.request.SessionCreateRequest;
 import ua.lviv.bas.cinema.dto.session.request.SessionFilterRequest;
@@ -133,9 +138,19 @@ public class AdminSessionController {
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Sessions retrieved successfully"),
 			@ApiResponse(responseCode = "401", description = "User not authenticated"),
 			@ApiResponse(responseCode = "403", description = "User does not have required role") })
-	public ResponseEntity<PageResponse<SessionAdminResponse>> getSessions(@Valid SessionFilterRequest filter,
+	public ResponseEntity<PageResponse<SessionAdminResponse>> getSessions(@RequestParam(required = false) Long hallId,
+			@RequestParam(required = false) Long movieId, @RequestParam(required = false) CinemaSessionStatus status,
+			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFrom,
+			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateTo,
 			@Parameter(hidden = true) @PageableDefault(size = 20, sort = "startTime", direction = Sort.Direction.DESC) Pageable pageable) {
-		log.info("GET /api/admin/sessions - Getting sessions with filters: {}", filter);
+
+		log.info(
+				"GET /api/admin/sessions - Getting sessions with filters: hallId={}, movieId={}, status={}, dateFrom={}, dateTo={}",
+				hallId, movieId, status, dateFrom, dateTo);
+
+		SessionFilterRequest filter = SessionFilterRequest.builder().hallId(hallId).movieId(movieId).status(status)
+				.dateFrom(dateFrom).dateTo(dateTo).build();
+
 		PageResponse<SessionAdminResponse> page = sessionService.getSessionsForAdmin(filter, pageable);
 		return ResponseEntity.ok(page);
 	}

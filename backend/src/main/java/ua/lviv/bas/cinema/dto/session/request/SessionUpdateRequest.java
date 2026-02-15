@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.Positive;
@@ -33,4 +34,9 @@ public class SessionUpdateRequest {
 
 	@Schema(description = "ID of the cinema hall", example = "2")
 	private Long hallId;
+
+	@AssertTrue(message = "At least one field must be provided for update")
+	public boolean isAtLeastOneFieldPresent() {
+		return startTime != null || basePrice != null || movieId != null || hallId != null;
+	}
 }

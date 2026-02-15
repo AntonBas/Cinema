@@ -27,26 +27,35 @@ public class SessionStatusScheduler {
 		LocalDateTime now = LocalDateTime.now();
 
 		List<Session> sessionsToStart = sessionRepository.findSessionsToStart(now);
-		if (!sessionsToStart.isEmpty()) {
-			sessionsToStart.forEach(session -> {
+		int startedCount = 0;
+		for (Session session : sessionsToStart) {
+			try {
 				session.setStatus(CinemaSessionStatus.ONGOING);
+				startedCount++;
 				log.info("Session {} started", session.getId());
-			});
+			} catch (Exception e) {
+				log.error("Failed to start session {}: {}", session.getId(), e.getMessage());
+			}
+		}
+		if (!sessionsToStart.isEmpty()) {
 			sessionRepository.saveAll(sessionsToStart);
-			log.debug("Updated {} sessions to ONGOING status", sessionsToStart.size());
 		}
 
 		List<Session> sessionsToComplete = sessionRepository.findSessionsToComplete(now);
-		if (!sessionsToComplete.isEmpty()) {
-			sessionsToComplete.forEach(session -> {
+		int completedCount = 0;
+		for (Session session : sessionsToComplete) {
+			try {
 				session.setStatus(CinemaSessionStatus.COMPLETED);
+				completedCount++;
 				log.info("Session {} completed", session.getId());
-			});
+			} catch (Exception e) {
+				log.error("Failed to complete session {}: {}", session.getId(), e.getMessage());
+			}
+		}
+		if (!sessionsToComplete.isEmpty()) {
 			sessionRepository.saveAll(sessionsToComplete);
-			log.debug("Updated {} sessions to COMPLETED status", sessionsToComplete.size());
 		}
 
-		log.info("Session status update completed: {} started, {} completed", sessionsToStart.size(),
-				sessionsToComplete.size());
+		log.info("Session status update completed: {} started, {} completed", startedCount, completedCount);
 	}
 }
