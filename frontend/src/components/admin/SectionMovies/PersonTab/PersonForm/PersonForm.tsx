@@ -133,6 +133,7 @@ export const PersonForm: React.FC<PersonFormProps> = React.memo(({
                         error={isNameInvalid ? errors.name : undefined}
                         maxLength={NAME_MAX_LENGTH}
                         disabled={isLoading}
+                        autoFocus={!person}
                     />
                     <div className={`${styles.charCount} ${!isCharCountValid ? styles.error : ''}`}>
                         {charCount}/{NAME_MAX_LENGTH} characters
