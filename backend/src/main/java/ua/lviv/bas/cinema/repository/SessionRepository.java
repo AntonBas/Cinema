@@ -6,6 +6,7 @@ import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -105,4 +106,18 @@ public interface SessionRepository extends JpaRepository<Session, Long>, JpaSpec
 			""")
 	Page<SessionScheduleProjection> findAllScheduleProjections(@Param("currentTime") LocalDateTime currentTime,
 			Pageable pageable);
+
+	@Query("""
+			SELECT s.id as id, s.startTime as startTime,
+			       FUNCTION('TIMESTAMPADD', MINUTE, s.movie.durationMinutes, s.startTime) as endTime,
+			       s.basePrice as basePrice, s.status as status,
+			       m.id as movieId, m.title as movieTitle, m.durationMinutes as movieDuration,
+			       h.id as hallId, h.name as hallName,
+			       (SELECT COUNT(b) FROM Booking b WHERE b.session = s AND b.status = 'CONFIRMED') as ticketsSold,
+			       (SELECT COALESCE(SUM(b.totalPrice), 0) FROM Booking b WHERE b.session = s AND b.status = 'CONFIRMED') as totalRevenue
+			FROM Session s
+			JOIN s.movie m
+			JOIN s.hall h
+			""")
+	Page<SessionAdminProjection> findAllAdminProjections(Specification<Session> spec, Pageable pageable);
 }

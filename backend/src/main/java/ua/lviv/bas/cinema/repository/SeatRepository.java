@@ -31,4 +31,7 @@ public interface SeatRepository extends JpaRepository<Seat, Long> {
 
 	@Query("SELECT DISTINCT s.row FROM Seat s WHERE s.hall.id = :hallId ORDER BY s.row")
 	List<Integer> findDistinctRowsByHallId(@Param("hallId") Long hallId);
+
+	@Query("SELECT s.hall.id, COUNT(s) FROM Seat s WHERE s.hall.id IN :hallIds GROUP BY s.hall.id")
+	List<Object[]> countSeatsByHallIds(@Param("hallIds") List<Long> hallIds);
 }

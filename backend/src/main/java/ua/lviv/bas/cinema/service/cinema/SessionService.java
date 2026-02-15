@@ -12,6 +12,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,6 +37,7 @@ import ua.lviv.bas.cinema.exception.domain.cinema.SessionTimeConflictException;
 import ua.lviv.bas.cinema.exception.domain.cinema.SessionValidationException;
 import ua.lviv.bas.cinema.mapper.SessionMapper;
 import ua.lviv.bas.cinema.repository.MovieRepository;
+import ua.lviv.bas.cinema.repository.SeatRepository;
 import ua.lviv.bas.cinema.repository.SessionRepository;
 import ua.lviv.bas.cinema.service.booking.availability.SeatReservationService;
 
@@ -51,6 +53,7 @@ public class SessionService {
 	private final MovieRepository movieRepository;
 	private final CinemaHallService cinemaHallService;
 	private final SeatReservationService seatReservationService;
+	private final SeatRepository seatRepository;
 	private final SessionSpecification sessionSpecification;
 
 	@Cacheable(key = "'public-schedule-' + #filter.hashCode() + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
@@ -60,13 +63,29 @@ public class SessionService {
 		Page<SessionScheduleProjection> page = sessionRepository.findAllScheduleProjections(LocalDateTime.now(),
 				pageable);
 
-		Map<Long, Integer> hallCapacities = getHallCapacitiesForProjections(page.getContent());
-		Map<Long, Integer> availableSeats = getAvailableSeatsForProjections(page.getContent());
+		Map<Long, Integer> hallCapacities = getHallCapacitiesBatch(page.getContent());
+		Map<Long, Integer> availableSeats = getAvailableSeatsBatch(page.getContent());
 
 		return PageResponse.from(page.map(projection -> {
 			SessionScheduleResponse response = sessionMapper.toSessionScheduleResponse(projection);
 			response.setHallCapacity(hallCapacities.get(projection.getHallId()));
 			response.setAvailableSeats(availableSeats.get(projection.getId()));
+			return response;
+		}));
+	}
+
+	@Cacheable(key = "'admin-' + #filter.hashCode() + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
+	public PageResponse<SessionAdminResponse> getSessionsForAdmin(SessionFilterRequest filter, Pageable pageable) {
+		log.info("Getting admin sessions - filter: {}", filter);
+
+		Specification<Session> spec = sessionSpecification.buildForAdmin(filter);
+		Page<SessionAdminProjection> page = sessionRepository.findAllAdminProjections(spec, pageable);
+
+		Map<Long, Integer> hallCapacities = getHallCapacitiesBatch(page.getContent());
+
+		return PageResponse.from(page.map(projection -> {
+			SessionAdminResponse response = sessionMapper.toSessionAdminResponse(projection);
+			response.setHallCapacity(hallCapacities.get(projection.getHallId()));
 			return response;
 		}));
 	}
@@ -81,28 +100,6 @@ public class SessionService {
 		return response;
 	}
 
-	@Cacheable(key = "'admin-' + #filter.hashCode() + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
-	public PageResponse<SessionAdminResponse> getSessionsForAdmin(SessionFilterRequest filter, Pageable pageable) {
-		log.info("Getting admin sessions - filter: {}", filter);
-
-		var spec = sessionSpecification.buildForAdmin(filter);
-		Page<Session> sessionPage = sessionRepository.findAll(spec, pageable);
-
-		List<Long> sessionIds = sessionPage.getContent().stream().map(Session::getId).collect(Collectors.toList());
-
-		Map<Long, SessionAdminProjection> projections = sessionIds.stream()
-				.collect(Collectors.toMap(id -> id, id -> sessionRepository.findAdminProjectionById(id).orElseThrow()));
-
-		Map<Long, Integer> hallCapacities = sessionPage.getContent().stream()
-				.collect(Collectors.toMap(Session::getId, session -> getHallCapacity(session.getHall().getId())));
-
-		return PageResponse.from(sessionPage.map(session -> {
-			SessionAdminResponse response = sessionMapper.toSessionAdminResponse(projections.get(session.getId()));
-			response.setHallCapacity(hallCapacities.get(session.getId()));
-			return response;
-		}));
-	}
-
 	@Cacheable(key = "'admin-' + #id")
 	public SessionAdminResponse getSessionById(Long id) {
 		SessionAdminProjection projection = sessionRepository.findAdminProjectionById(id)
@@ -112,20 +109,37 @@ public class SessionService {
 		return response;
 	}
 
-	private Map<Long, Integer> getHallCapacitiesForProjections(List<SessionScheduleProjection> projections) {
-		List<Long> hallIds = projections.stream().map(SessionScheduleProjection::getHallId).distinct()
-				.collect(Collectors.toList());
+	private Map<Long, Integer> getHallCapacitiesBatch(List<?> projections) {
+		List<Long> hallIds = projections.stream().map(p -> {
+			if (p instanceof SessionScheduleProjection) {
+				return ((SessionScheduleProjection) p).getHallId();
+			} else if (p instanceof SessionAdminProjection) {
+				return ((SessionAdminProjection) p).getHallId();
+			}
+			return null;
+		}).filter(id -> id != null).distinct().collect(Collectors.toList());
 
-		return hallIds.stream().collect(Collectors.toMap(hallId -> hallId, this::getHallCapacity));
+		if (hallIds.isEmpty()) {
+			return Map.of();
+		}
+
+		List<Object[]> results = seatRepository.countSeatsByHallIds(hallIds);
+
+		return results.stream().collect(Collectors.toMap(row -> (Long) row[0], row -> ((Number) row[1]).intValue()));
 	}
 
-	private Map<Long, Integer> getAvailableSeatsForProjections(List<SessionScheduleProjection> projections) {
-		return projections.stream().collect(Collectors.toMap(SessionScheduleProjection::getId,
-				projection -> getAvailableSeats(projection.getId())));
+	private Map<Long, Integer> getAvailableSeatsBatch(List<SessionScheduleProjection> projections) {
+		List<Long> sessionIds = projections.stream().map(SessionScheduleProjection::getId).collect(Collectors.toList());
+
+		if (sessionIds.isEmpty()) {
+			return Map.of();
+		}
+
+		return sessionIds.stream().collect(Collectors.toMap(sessionId -> sessionId, this::getAvailableSeats));
 	}
 
 	private Integer getHallCapacity(Long hallId) {
-		return cinemaHallService.getHallWithSeats(hallId).getCapacity();
+		return Long.valueOf(seatRepository.countByHallId(hallId)).intValue();
 	}
 
 	private Integer getAvailableSeats(Long sessionId) {
