@@ -1,5 +1,7 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { useSession } from '@/hooks/features/sessions/useSession';
+import { useCinemaHalls } from '@/hooks/features/cinemaHalls/useCinemaHalls';
+import { useMovies } from '@/hooks/features/movies/useMovies';
 import { useNotification } from '@/hooks/common/useNotification';
 import { SessionFilters } from './SessionFilters/SessionFilters';
 import { SessionTable } from './SessionTable/SessionTable';
@@ -9,8 +11,20 @@ import { DeleteConfirmModal, Pagination, Button, Notification } from '@/componen
 import type { SessionAdminResponse, SessionCreateRequest, SessionUpdateRequest, CinemaSessionStatus } from '@/types/session';
 import styles from './SectionSchedule.module.css';
 
+interface FiltersState {
+    dateFrom?: string;
+    dateTo?: string;
+    hallId?: number;
+    movieId?: number;
+    status?: CinemaSessionStatus;
+    sort?: string;
+}
+
 export const SectionSchedule: React.FC = () => {
     const { notifications, showNotification, hideNotification } = useNotification();
+
+    const { allHalls, loading: hallsLoading, getAllHalls } = useCinemaHalls();
+    const { currentlyShowing, upcoming, loading: moviesLoading, getCurrentlyShowing, getUpcoming } = useMovies();
 
     const [selectedSession, setSelectedSession] = useState<SessionAdminResponse | null>(null);
     const [sessionToDelete, setSessionToDelete] = useState<SessionAdminResponse | null>(null);
@@ -23,21 +37,21 @@ export const SectionSchedule: React.FC = () => {
     const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
     const [isReactivateModalOpen, setIsReactivateModalOpen] = useState(false);
 
-    const [filters, setFilters] = useState<{
-        dateFrom?: string;
-        dateTo?: string;
-        hallId?: number;
-        movieId?: number;
-        status?: CinemaSessionStatus;
-        sort?: string;
-    }>({});
-
-    const [hasActiveFilters, setHasActiveFilters] = useState(false);
+    const [filters, setFilters] = useState<FiltersState>({
+        sort: 'startTime,desc'
+    });
     const [currentPage, setCurrentPage] = useState(0);
-    const [pageSize] = useState(10);
+    const [pageSize] = useState(20);
+
+    const isMounted = useRef<boolean>(true);
+    const initialHallsLoaded = useRef<boolean>(false);
+    const initialMoviesLoaded = useRef<boolean>(false);
+    const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const prevFiltersRef = useRef<string>('');
 
     const {
         sessions,
+        pagination,
         loading,
         createSession,
         updateSession,
@@ -48,172 +62,254 @@ export const SectionSchedule: React.FC = () => {
     } = useSession();
 
     useEffect(() => {
-        const initialLoad = async () => {
-            try {
-                await getSessions({ page: 0, size: pageSize });
-            } catch (error) {
-                showNotification('Failed to load sessions', 'error');
+        isMounted.current = true;
+        return () => {
+            isMounted.current = false;
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+                timeoutRef.current = null;
             }
         };
-        initialLoad();
     }, []);
+
+    useEffect(() => {
+        if (!initialHallsLoaded.current) {
+            initialHallsLoaded.current = true;
+            getAllHalls();
+        }
+    }, [getAllHalls]);
+
+    useEffect(() => {
+        if (!initialMoviesLoaded.current) {
+            initialMoviesLoaded.current = true;
+            getCurrentlyShowing();
+            getUpcoming();
+        }
+    }, [getCurrentlyShowing, getUpcoming]);
+
+    const allMovies = useMemo(() => {
+        return [...(currentlyShowing || []), ...(upcoming || [])];
+    }, [currentlyShowing, upcoming]);
 
     const activeFilterCount = useMemo(() => {
         return Object.entries(filters).filter(([key, value]) =>
             key !== 'sort' &&
-            value !== undefined
+            value !== undefined &&
+            value !== ''
         ).length;
     }, [filters]);
 
+    const hasActiveFilters = activeFilterCount > 0;
+
     useEffect(() => {
-        setHasActiveFilters(activeFilterCount > 0);
-    }, [activeFilterCount]);
-
-    const handleDateFromFilter = (dateFrom: string | undefined) => {
-        setFilters(prev => ({ ...prev, dateFrom }));
-        handleApplyFilters(0);
-    };
-
-    const handleDateToFilter = (dateTo: string | undefined) => {
-        setFilters(prev => ({ ...prev, dateTo }));
-        handleApplyFilters(0);
-    };
-
-    const handleHallFilter = (hallId: number | undefined) => {
-        setFilters(prev => ({ ...prev, hallId }));
-        handleApplyFilters(0);
-    };
-
-    const handleMovieFilter = (movieId: number | undefined) => {
-        setFilters(prev => ({ ...prev, movieId }));
-        handleApplyFilters(0);
-    };
-
-    const handleStatusFilter = (status: CinemaSessionStatus | undefined) => {
-        setFilters(prev => ({ ...prev, status }));
-        handleApplyFilters(0);
-    };
-
-    const handleSortChange = (sort: string) => {
-        setFilters(prev => ({ ...prev, sort }));
-        handleApplyFilters(0);
-    };
-
-    const handleClearFilters = () => {
-        setFilters({});
-        handleApplyFilters(0);
-        showNotification('Filters cleared', 'info');
-    };
-
-    const handleApplyFilters = async (page?: number) => {
-        try {
-            setCurrentPage(page ?? 0);
-            await getSessions({
-                ...filters,
-                page: page ?? 0,
-                size: pageSize
-            });
-        } catch (error) {
-            showNotification('Failed to apply filters', 'error');
+        const filtersString = JSON.stringify(filters);
+        if (prevFiltersRef.current !== filtersString) {
+            prevFiltersRef.current = filtersString;
+            return;
         }
-    };
 
-    const handleCreateSession = () => {
+        const loadSessions = async () => {
+            if (!isMounted.current) return;
+
+            try {
+                const params: Record<string, any> = {
+                    page: currentPage,
+                    size: pageSize
+                };
+
+                if (filters.dateFrom) params.dateFrom = filters.dateFrom;
+                if (filters.dateTo) params.dateTo = filters.dateTo;
+                if (filters.hallId) params.hallId = filters.hallId;
+                if (filters.movieId) params.movieId = filters.movieId;
+                if (filters.status) params.status = filters.status;
+                if (filters.sort) params.sort = filters.sort;
+
+                await getSessions(params);
+            } catch (error) {
+                if (isMounted.current) {
+                    console.error('Failed to load sessions:', error);
+                    showNotification('Failed to load sessions', 'error');
+                }
+            }
+        };
+
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+        }
+
+        timeoutRef.current = setTimeout(() => {
+            if (isMounted.current) {
+                loadSessions();
+            }
+        }, 100);
+
+        return () => {
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+                timeoutRef.current = null;
+            }
+        };
+    }, [currentPage, pageSize, filters, getSessions, showNotification]);
+
+    const handleDateFromChange = useCallback((dateFrom: string | undefined) => {
+        setFilters(prev => ({ ...prev, dateFrom }));
+        setCurrentPage(0);
+    }, []);
+
+    const handleDateToChange = useCallback((dateTo: string | undefined) => {
+        setFilters(prev => ({ ...prev, dateTo }));
+        setCurrentPage(0);
+    }, []);
+
+    const handleHallChange = useCallback((hallId: number | undefined) => {
+        setFilters(prev => ({ ...prev, hallId }));
+        setCurrentPage(0);
+    }, []);
+
+    const handleMovieChange = useCallback((movieId: number | undefined) => {
+        setFilters(prev => ({ ...prev, movieId }));
+        setCurrentPage(0);
+    }, []);
+
+    const handleStatusChange = useCallback((status: CinemaSessionStatus | undefined) => {
+        setFilters(prev => ({ ...prev, status }));
+        setCurrentPage(0);
+    }, []);
+
+    const handleSortChange = useCallback((sort: string) => {
+        setFilters(prev => ({ ...prev, sort }));
+        setCurrentPage(0);
+    }, []);
+
+    const handleClearFilters = useCallback(() => {
+        setFilters({
+            sort: 'startTime,desc'
+        });
+        setCurrentPage(0);
+        showNotification('Filters cleared', 'info');
+    }, [showNotification]);
+
+    const handleCreateSession = useCallback(() => {
         setSelectedSession(null);
         setIsCreateModalOpen(true);
-    };
+    }, []);
 
-    const handleEditSession = (session: SessionAdminResponse) => {
+    const handleEditSession = useCallback((session: SessionAdminResponse) => {
         setSelectedSession(session);
         setIsUpdateModalOpen(true);
-    };
+    }, []);
 
-    const handleDeleteSession = (session: SessionAdminResponse) => {
+    const handleDeleteSession = useCallback((session: SessionAdminResponse) => {
         setSessionToDelete(session);
         setIsDeleteModalOpen(true);
-    };
+    }, []);
 
-    const handleCancelSession = (session: SessionAdminResponse) => {
+    const handleCancelSession = useCallback((session: SessionAdminResponse) => {
         setSessionToCancel(session);
         setIsCancelModalOpen(true);
-    };
+    }, []);
 
-    const handleReactivateSession = (session: SessionAdminResponse) => {
+    const handleReactivateSession = useCallback((session: SessionAdminResponse) => {
         setSessionToReactivate(session);
         setIsReactivateModalOpen(true);
-    };
+    }, []);
 
-    const handleConfirmDelete = async () => {
+    const handleConfirmDelete = useCallback(async () => {
         if (!sessionToDelete) return;
         try {
             await deleteSession(sessionToDelete.id);
             showNotification('Session deleted successfully', 'success');
-            await handleApplyFilters(currentPage);
-        } catch (error) {
-            showNotification('Failed to delete session', 'error');
-        } finally {
             setIsDeleteModalOpen(false);
             setSessionToDelete(null);
+        } catch (error) {
+            showNotification('Failed to delete session', 'error');
         }
-    };
+    }, [sessionToDelete, deleteSession, showNotification]);
 
-    const handleConfirmCancel = async () => {
+    const handleConfirmCancel = useCallback(async () => {
         if (!sessionToCancel) return;
         try {
             await cancelSession(sessionToCancel.id);
             showNotification('Session cancelled successfully', 'success');
-            await handleApplyFilters(currentPage);
-        } catch (error) {
-            showNotification('Failed to cancel session', 'error');
-        } finally {
             setIsCancelModalOpen(false);
             setSessionToCancel(null);
+        } catch (error) {
+            showNotification('Failed to cancel session', 'error');
         }
-    };
+    }, [sessionToCancel, cancelSession, showNotification]);
 
-    const handleConfirmReactivate = async () => {
+    const handleConfirmReactivate = useCallback(async () => {
         if (!sessionToReactivate) return;
         try {
             await reactivateSession(sessionToReactivate.id);
             showNotification('Session reactivated successfully', 'success');
-            await handleApplyFilters(currentPage);
-        } catch (error) {
-            showNotification('Failed to reactivate session', 'error');
-        } finally {
             setIsReactivateModalOpen(false);
             setSessionToReactivate(null);
+        } catch (error) {
+            showNotification('Failed to reactivate session', 'error');
         }
-    };
+    }, [sessionToReactivate, reactivateSession, showNotification]);
 
-    const handleSaveNewSession = async (data: SessionCreateRequest) => {
+    const handleSaveNewSession = useCallback(async (data: SessionCreateRequest) => {
         try {
             await createSession(data);
             showNotification('Session created successfully', 'success');
             setIsCreateModalOpen(false);
             setSelectedSession(null);
-            await handleApplyFilters(0);
         } catch (error) {
             showNotification('Failed to create session', 'error');
+            throw error;
         }
-    };
+    }, [createSession, showNotification]);
 
-    const handleSaveUpdatedSession = async (id: number, data: SessionUpdateRequest) => {
+    const handleSaveUpdatedSession = useCallback(async (id: number, data: SessionUpdateRequest) => {
         try {
             await updateSession(id, data);
             showNotification('Session updated successfully', 'success');
             setIsUpdateModalOpen(false);
             setSelectedSession(null);
-            await handleApplyFilters(currentPage);
         } catch (error) {
             showNotification('Failed to update session', 'error');
+            throw error;
         }
-    };
+    }, [updateSession, showNotification]);
 
-    const handlePageChange = (page: number) => {
-        handleApplyFilters(page);
-    };
+    const handlePageChange = useCallback((page: number) => {
+        setCurrentPage(page);
+    }, []);
+
+    const handleCloseCreateModal = useCallback(() => {
+        setIsCreateModalOpen(false);
+        setSelectedSession(null);
+    }, []);
+
+    const handleCloseUpdateModal = useCallback(() => {
+        setIsUpdateModalOpen(false);
+        setSelectedSession(null);
+    }, []);
+
+    const handleCloseDeleteModal = useCallback(() => {
+        setIsDeleteModalOpen(false);
+        setSessionToDelete(null);
+    }, []);
+
+    const handleCloseCancelModal = useCallback(() => {
+        setIsCancelModalOpen(false);
+        setSessionToCancel(null);
+    }, []);
+
+    const handleCloseReactivateModal = useCallback(() => {
+        setIsReactivateModalOpen(false);
+        setSessionToReactivate(null);
+    }, []);
+
+    const formatSessionDateTime = useCallback((dateString: string) => {
+        return new Date(dateString).toLocaleString();
+    }, []);
 
     const mutationLoading = loading;
+    const totalPages = pagination?.totalPages || 0;
+    const totalElements = pagination?.totalElements || 0;
 
     return (
         <div className={styles.container}>
@@ -258,15 +354,19 @@ export const SectionSchedule: React.FC = () => {
 
             <SessionFilters
                 filters={filters}
-                onDateFromChange={handleDateFromFilter}
-                onDateToChange={handleDateToFilter}
-                onHallChange={handleHallFilter}
-                onMovieChange={handleMovieFilter}
-                onStatusChange={handleStatusFilter}
+                onDateFromChange={handleDateFromChange}
+                onDateToChange={handleDateToChange}
+                onHallChange={handleHallChange}
+                onMovieChange={handleMovieChange}
+                onStatusChange={handleStatusChange}
                 onSortChange={handleSortChange}
                 onClearFilters={handleClearFilters}
                 hasActiveFilters={hasActiveFilters}
                 activeFilterCount={activeFilterCount}
+                halls={allHalls}
+                hallsLoading={hallsLoading}
+                movies={allMovies}
+                moviesLoading={moviesLoading}
             />
 
             <div className={styles.tableSection}>
@@ -281,12 +381,12 @@ export const SectionSchedule: React.FC = () => {
                 />
             </div>
 
-            {sessions.length > 0 && (
+            {totalPages > 1 && (
                 <div className={styles.paginationSection}>
                     <Pagination
                         currentPage={currentPage}
-                        totalPages={10}
-                        totalElements={100}
+                        totalPages={totalPages}
+                        totalElements={totalElements}
                         pageSize={pageSize}
                         onPageChange={handlePageChange}
                     />
@@ -297,10 +397,7 @@ export const SectionSchedule: React.FC = () => {
                 isOpen={isCreateModalOpen}
                 session={null}
                 onSave={handleSaveNewSession}
-                onClose={() => {
-                    setIsCreateModalOpen(false);
-                    setSelectedSession(null);
-                }}
+                onClose={handleCloseCreateModal}
                 loading={mutationLoading}
             />
 
@@ -309,10 +406,7 @@ export const SectionSchedule: React.FC = () => {
                     isOpen={isUpdateModalOpen}
                     session={selectedSession}
                     onSave={handleSaveUpdatedSession}
-                    onClose={() => {
-                        setIsUpdateModalOpen(false);
-                        setSelectedSession(null);
-                    }}
+                    onClose={handleCloseUpdateModal}
                     loading={mutationLoading}
                 />
             )}
@@ -320,10 +414,7 @@ export const SectionSchedule: React.FC = () => {
             <DeleteConfirmModal
                 isOpen={isDeleteModalOpen}
                 onConfirm={handleConfirmDelete}
-                onCancel={() => {
-                    setIsDeleteModalOpen(false);
-                    setSessionToDelete(null);
-                }}
+                onCancel={handleCloseDeleteModal}
                 itemName={sessionToDelete?.movieTitle}
                 itemType="session"
                 isDeleting={mutationLoading}
@@ -333,16 +424,13 @@ export const SectionSchedule: React.FC = () => {
                 <DeleteConfirmModal
                     isOpen={isCancelModalOpen}
                     onConfirm={handleConfirmCancel}
-                    onCancel={() => {
-                        setIsCancelModalOpen(false);
-                        setSessionToCancel(null);
-                    }}
+                    onCancel={handleCloseCancelModal}
                     itemName={sessionToCancel.movieTitle}
                     itemType="session"
                     isDeleting={mutationLoading}
                     confirmText="Cancel Session"
                     cancelText="Keep Session"
-                    message={`Are you sure you want to cancel the session "${sessionToCancel.movieTitle}" on ${new Date(sessionToCancel.startTime).toLocaleString()}?`}
+                    message={`Are you sure you want to cancel the session "${sessionToCancel.movieTitle}" on ${formatSessionDateTime(sessionToCancel.startTime)}?`}
                 />
             )}
 
@@ -350,16 +438,13 @@ export const SectionSchedule: React.FC = () => {
                 <DeleteConfirmModal
                     isOpen={isReactivateModalOpen}
                     onConfirm={handleConfirmReactivate}
-                    onCancel={() => {
-                        setIsReactivateModalOpen(false);
-                        setSessionToReactivate(null);
-                    }}
+                    onCancel={handleCloseReactivateModal}
                     itemName={sessionToReactivate.movieTitle}
                     itemType="session"
                     isDeleting={mutationLoading}
                     confirmText="Reactivate Session"
                     cancelText="Cancel"
-                    message={`Are you sure you want to reactivate the session "${sessionToReactivate.movieTitle}" on ${new Date(sessionToReactivate.startTime).toLocaleString()}?`}
+                    message={`Are you sure you want to reactivate the session "${sessionToReactivate.movieTitle}" on ${formatSessionDateTime(sessionToReactivate.startTime)}?`}
                 />
             )}
         </div>

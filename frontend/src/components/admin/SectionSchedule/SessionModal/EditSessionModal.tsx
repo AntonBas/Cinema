@@ -90,6 +90,12 @@ export const EditSessionModal: React.FC<EditSessionModalProps> = ({
             setShowMovieResults(false);
             setIsSearching(false);
         }
+
+        return () => {
+            if (!isOpen) {
+                initialFormData.current = null;
+            }
+        };
     }, [session, isOpen]);
 
     useEffect(() => {
@@ -109,10 +115,12 @@ export const EditSessionModal: React.FC<EditSessionModalProps> = ({
             setErrors(prev => ({ ...prev, startTime: '' }));
         }
 
+        // Скидаємо вибраний фільм при зміні часу
         if (value && selectedMovie?.id.toString() === formData.movieId) {
             setSelectedMovie(null);
             setFormData(prev => ({ ...prev, movieId: '' }));
             setMovieSearchTerm('');
+            setMovies([]);
         }
     };
 
@@ -127,10 +135,16 @@ export const EditSessionModal: React.FC<EditSessionModalProps> = ({
         if (formData.startTime) {
             const date = formData.startTime.split('T')[0];
             setIsSearching(true);
-            const results = await searchMoviesForSession(date);
-            setMovies(results);
-            setIsSearching(false);
-            setShowMovieResults(true);
+            try {
+                const results = await searchMoviesForSession(date);
+                setMovies(results || []);
+            } catch (error) {
+                console.error('Failed to search movies:', error);
+                setMovies([]);
+            } finally {
+                setIsSearching(false);
+                setShowMovieResults(true);
+            }
         }
     };
 
@@ -139,10 +153,16 @@ export const EditSessionModal: React.FC<EditSessionModalProps> = ({
         if (formData.startTime) {
             const date = formData.startTime.split('T')[0];
             setIsSearching(true);
-            const results = await searchMoviesForSession(value || date);
-            setMovies(results);
-            setIsSearching(false);
-            setShowMovieResults(true);
+            try {
+                const results = await searchMoviesForSession(value || date);
+                setMovies(results || []);
+            } catch (error) {
+                console.error('Failed to search movies:', error);
+                setMovies([]);
+            } finally {
+                setIsSearching(false);
+                setShowMovieResults(true);
+            }
         }
     };
 
@@ -179,10 +199,8 @@ export const EditSessionModal: React.FC<EditSessionModalProps> = ({
 
         if (formData.basePrice) {
             const basePrice = Number(formData.basePrice);
-            if (basePrice < 10) {
+            if (isNaN(basePrice) || basePrice < 10) {
                 newErrors.basePrice = 'Price must be at least 10 UAH';
-            } else if (isNaN(basePrice)) {
-                newErrors.basePrice = 'Price must be a valid number';
             }
         }
 
@@ -223,10 +241,13 @@ export const EditSessionModal: React.FC<EditSessionModalProps> = ({
         }
     };
 
-    const hallOptions = halls.map((hall: CinemaHallResponse) => ({
-        value: hall.id.toString(),
-        label: `${hall.name} (${hall.capacity} seats)`
-    }));
+    const hallOptions = [
+        { value: '', label: 'Select a hall' },
+        ...halls.map((hall: CinemaHallResponse) => ({
+            value: hall.id.toString(),
+            label: `${hall.name} (${hall.capacity} seats)`
+        }))
+    ];
 
     const calculateMinDateTime = () => {
         const now = new Date();
@@ -300,9 +321,10 @@ export const EditSessionModal: React.FC<EditSessionModalProps> = ({
                             disabled={!canEditTime}
                         />
                         {!canEditTime && (
-                            <div className={styles.disabledHint}>Cannot change start time for {session.status.toLowerCase()} session</div>
+                            <div className={styles.disabledHint}>
+                                Cannot change start time for {session.status.toLowerCase()} session
+                            </div>
                         )}
-                        {errors.startTime && <span className={styles.errorText}>{errors.startTime}</span>}
                     </div>
 
                     <div className={styles.formGroup}>
@@ -318,9 +340,10 @@ export const EditSessionModal: React.FC<EditSessionModalProps> = ({
                             disabled={!canEditPrice}
                         />
                         {!canEditPrice && (
-                            <div className={styles.disabledHint}>Cannot change price for {session.status.toLowerCase()} session</div>
+                            <div className={styles.disabledHint}>
+                                Cannot change price for {session.status.toLowerCase()} session
+                            </div>
                         )}
-                        {errors.basePrice && <span className={styles.errorText}>{errors.basePrice}</span>}
                     </div>
                 </div>
 
@@ -337,6 +360,7 @@ export const EditSessionModal: React.FC<EditSessionModalProps> = ({
                             className={styles.movieInput}
                             error={errors.movieId && !showMovieResults ? errors.movieId : undefined}
                         />
+
                         {(!canEditMovie || !formData.startTime) && (
                             <div className={styles.hint}>
                                 {!canEditMovie
@@ -359,11 +383,13 @@ export const EditSessionModal: React.FC<EditSessionModalProps> = ({
                                 {isSearching || moviesLoading ? (
                                     <div className={styles.loadingResults}>Loading movies...</div>
                                 ) : movies.length > 0 ? (
-                                    movies.map((movie: MovieSessionSearchResponse) => (
+                                    movies.map((movie) => (
                                         <div
                                             key={movie.id}
                                             className={`${styles.movieOption} ${selectedMovie?.id === movie.id ? styles.selected : ''}`}
                                             onClick={() => handleMovieSelect(movie)}
+                                            role="option"
+                                            aria-selected={selectedMovie?.id === movie.id}
                                         >
                                             <div className={styles.movieTitle}>{movie.title}</div>
                                             <div className={styles.movieDetails}>
@@ -377,7 +403,6 @@ export const EditSessionModal: React.FC<EditSessionModalProps> = ({
                             </div>
                         )}
                     </div>
-                    {errors.movieId && !showMovieResults && <span className={styles.errorText}>{errors.movieId}</span>}
                 </div>
 
                 <div className={styles.formGroup}>
@@ -390,9 +415,10 @@ export const EditSessionModal: React.FC<EditSessionModalProps> = ({
                         placeholder="Select hall"
                     />
                     {!canEditHall && (
-                        <div className={styles.disabledHint}>Cannot change hall for {session.status.toLowerCase()} session</div>
+                        <div className={styles.disabledHint}>
+                            Cannot change hall for {session.status.toLowerCase()} session
+                        </div>
                     )}
-                    {errors.hallId && <span className={styles.errorText}>{errors.hallId}</span>}
                 </div>
 
                 <div className={styles.formActions}>

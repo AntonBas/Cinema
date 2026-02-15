@@ -108,10 +108,12 @@ export const CreateSessionModal: React.FC<CreateSessionModalProps> = ({
             setErrors(prev => ({ ...prev, startTime: '' }));
         }
 
-        if (value && selectedMovie?.id.toString() === formData.movieId) {
+        // Скидаємо вибраний фільм при зміні часу
+        if (value !== session?.startTime) {
             setSelectedMovie(null);
             setFormData(prev => ({ ...prev, movieId: '' }));
             setMovieSearchTerm('');
+            setMovies([]);
         }
     };
 
@@ -126,10 +128,16 @@ export const CreateSessionModal: React.FC<CreateSessionModalProps> = ({
         if (formData.startTime) {
             const date = formData.startTime.split('T')[0];
             setIsSearching(true);
-            const results = await searchMoviesForSession(date);
-            setMovies(results);
-            setIsSearching(false);
-            setShowMovieResults(true);
+            try {
+                const results = await searchMoviesForSession(date);
+                setMovies(results || []);
+            } catch (error) {
+                console.error('Failed to search movies:', error);
+                setMovies([]);
+            } finally {
+                setIsSearching(false);
+                setShowMovieResults(true);
+            }
         }
     };
 
@@ -138,10 +146,16 @@ export const CreateSessionModal: React.FC<CreateSessionModalProps> = ({
         if (formData.startTime) {
             const date = formData.startTime.split('T')[0];
             setIsSearching(true);
-            const results = await searchMoviesForSession(value || date);
-            setMovies(results);
-            setIsSearching(false);
-            setShowMovieResults(true);
+            try {
+                const results = await searchMoviesForSession(value || date);
+                setMovies(results || []);
+            } catch (error) {
+                console.error('Failed to search movies:', error);
+                setMovies([]);
+            } finally {
+                setIsSearching(false);
+                setShowMovieResults(true);
+            }
         }
     };
 
@@ -178,10 +192,10 @@ export const CreateSessionModal: React.FC<CreateSessionModalProps> = ({
         }
 
         const basePrice = Number(formData.basePrice);
-        if (!formData.basePrice || basePrice < 10) {
+        if (!formData.basePrice) {
+            newErrors.basePrice = 'Price is required';
+        } else if (isNaN(basePrice) || basePrice < 10) {
             newErrors.basePrice = 'Price must be at least 10 UAH';
-        } else if (isNaN(basePrice)) {
-            newErrors.basePrice = 'Price must be a valid number';
         }
 
         if (!formData.movieId) {
@@ -216,10 +230,13 @@ export const CreateSessionModal: React.FC<CreateSessionModalProps> = ({
         }
     };
 
-    const hallOptions = halls.map((hall: CinemaHallResponse) => ({
-        value: hall.id.toString(),
-        label: `${hall.name} (${hall.capacity} seats)`
-    }));
+    const hallOptions = [
+        { value: '', label: 'Select a hall' },
+        ...halls.map((hall: CinemaHallResponse) => ({
+            value: hall.id.toString(),
+            label: `${hall.name} (${hall.capacity} seats)`
+        }))
+    ];
 
     const calculateMinDateTime = () => {
         const now = new Date();
@@ -241,7 +258,9 @@ export const CreateSessionModal: React.FC<CreateSessionModalProps> = ({
             <form onSubmit={handleSubmit} className={styles.form}>
                 <div className={styles.formRow}>
                     <div className={styles.formGroup}>
-                        <label className={styles.label}>Start Time *</label>
+                        <label className={styles.label}>
+                            Start Time <span className={styles.required}>*</span>
+                        </label>
                         <Input
                             type="datetime-local"
                             value={formData.startTime}
@@ -249,12 +268,14 @@ export const CreateSessionModal: React.FC<CreateSessionModalProps> = ({
                             error={hasError('startTime') ? errors.startTime : undefined}
                             min={calculateMinDateTime()}
                             className={styles.input}
+                            required
                         />
-                        {hasError('startTime') && <span className={styles.errorText}>{errors.startTime}</span>}
                     </div>
 
                     <div className={styles.formGroup}>
-                        <label className={styles.label}>Base Price (UAH) *</label>
+                        <label className={styles.label}>
+                            Base Price (UAH) <span className={styles.required}>*</span>
+                        </label>
                         <Input
                             type="number"
                             step="0.01"
@@ -264,13 +285,15 @@ export const CreateSessionModal: React.FC<CreateSessionModalProps> = ({
                             error={hasError('basePrice') ? errors.basePrice : undefined}
                             placeholder="10.00"
                             className={styles.input}
+                            required
                         />
-                        {hasError('basePrice') && <span className={styles.errorText}>{errors.basePrice}</span>}
                     </div>
                 </div>
 
                 <div className={styles.formGroup}>
-                    <label className={styles.label}>Movie *</label>
+                    <label className={styles.label}>
+                        Movie <span className={styles.required}>*</span>
+                    </label>
                     <div className={styles.movieSearch} ref={movieSearchRef}>
                         <Input
                             type="text"
@@ -281,7 +304,9 @@ export const CreateSessionModal: React.FC<CreateSessionModalProps> = ({
                             disabled={!formData.startTime}
                             className={styles.movieInput}
                             error={hasError('movieId') && !showMovieResults ? errors.movieId : undefined}
+                            required
                         />
+
                         {!formData.startTime && (
                             <div className={styles.hint}>Please select start time first to see available movies</div>
                         )}
@@ -300,11 +325,13 @@ export const CreateSessionModal: React.FC<CreateSessionModalProps> = ({
                                 {isSearching || moviesLoading ? (
                                     <div className={styles.loadingResults}>Loading movies...</div>
                                 ) : movies.length > 0 ? (
-                                    movies.map((movie: MovieSessionSearchResponse) => (
+                                    movies.map((movie) => (
                                         <div
                                             key={movie.id}
                                             className={`${styles.movieOption} ${selectedMovie?.id === movie.id ? styles.selected : ''}`}
                                             onClick={() => handleMovieSelect(movie)}
+                                            role="option"
+                                            aria-selected={selectedMovie?.id === movie.id}
                                         >
                                             <div className={styles.movieTitle}>{movie.title}</div>
                                             <div className={styles.movieDetails}>
@@ -318,11 +345,12 @@ export const CreateSessionModal: React.FC<CreateSessionModalProps> = ({
                             </div>
                         )}
                     </div>
-                    {hasError('movieId') && !showMovieResults && <span className={styles.errorText}>{errors.movieId}</span>}
                 </div>
 
                 <div className={styles.formGroup}>
-                    <label className={styles.label}>Hall *</label>
+                    <label className={styles.label}>
+                        Hall <span className={styles.required}>*</span>
+                    </label>
                     <Select
                         value={formData.hallId}
                         onChange={handleHallChange}

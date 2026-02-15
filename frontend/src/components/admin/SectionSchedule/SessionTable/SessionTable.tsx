@@ -93,6 +93,13 @@ export const SessionTable: React.FC<SessionTableProps> = ({
         });
     };
 
+    // Всі хуки повинні бути на початку, до умовних return
+    const sortedSessions = useMemo(() => {
+        return [...sessions].sort((a, b) =>
+            new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+        );
+    }, [sessions]);
+
     const renderLoadingState = () => (
         <div className={styles.loading}>
             <div className={styles.loadingHeader}>
@@ -132,15 +139,10 @@ export const SessionTable: React.FC<SessionTableProps> = ({
         </div>
     );
 
+    // Умовні return після всіх хуків
     if (loading) return renderLoadingState();
     if (error) return renderErrorState();
     if (sessions.length === 0) return renderEmptyState();
-
-    const sortedSessions = useMemo(() => {
-        return [...sessions].sort((a, b) =>
-            new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
-        );
-    }, [sessions]);
 
     return (
         <div className={styles.tableContainer}>
@@ -177,10 +179,23 @@ export const SessionTable: React.FC<SessionTableProps> = ({
                             const cancellable = canCancel(session.status);
                             const reactivatable = canReactivate(session.status);
 
-                            const handleEdit = () => onEdit(session);
-                            const handleDelete = () => onDelete(session);
-                            const handleCancel = () => onCancel(session);
-                            const handleReactivate = () => onReactivate(session);
+                            const handleEdit = (e: React.MouseEvent) => {
+                                e.stopPropagation();
+                                onEdit(session);
+                            };
+                            const handleDelete = (e: React.MouseEvent) => {
+                                e.stopPropagation();
+                                onDelete(session);
+                            };
+                            const handleCancel = (e: React.MouseEvent) => {
+                                e.stopPropagation();
+                                onCancel(session);
+                            };
+                            const handleReactivate = (e: React.MouseEvent) => {
+                                e.stopPropagation();
+                                onReactivate(session);
+                            };
+                            const handleRowClick = () => onViewDetails?.(session);
 
                             const totalRevenueNum = parseFloat(session.totalRevenue);
                             const avgRevenue = session.ticketsSold > 0
@@ -191,7 +206,8 @@ export const SessionTable: React.FC<SessionTableProps> = ({
                                 <tr
                                     key={session.id}
                                     className={`${styles.row} ${isPast ? styles.past : ''}`}
-                                    onClick={() => onViewDetails?.(session)}
+                                    onClick={handleRowClick}
+                                    style={{ cursor: onViewDetails ? 'pointer' : 'default' }}
                                 >
                                     <td className={styles.movieCell}>
                                         <div className={styles.movieInfo}>
