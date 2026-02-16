@@ -62,17 +62,17 @@ export const movieApi = {
       fetchApi<MovieDetailResponse>(`${PUBLIC_URL}/slug/${slug}`, {}, false, true),
 
     getFilteredMovies: (params?: SearchParams): Promise<PageResponse<MovieCardResponse>> => {
-      const url = buildPagedUrl(PUBLIC_URL, params, undefined, 'grid');
+      const url = buildPagedUrl(PUBLIC_URL, params, 'grid');
       return fetchApi<PageResponse<MovieCardResponse>>(url, {}, false, true);
     },
 
     getCurrentlyShowing: (params?: SearchParams): Promise<PageResponse<MovieCardResponse>> => {
-      const url = buildPagedUrl(`${PUBLIC_URL}/currently-showing`, params, undefined, 'grid');
+      const url = buildPagedUrl(`${PUBLIC_URL}/currently-showing`, params, 'grid');
       return fetchApi<PageResponse<MovieCardResponse>>(url, {}, false, true);
     },
 
     getUpcoming: (params?: SearchParams): Promise<PageResponse<MovieCardResponse>> => {
-      const url = buildPagedUrl(`${PUBLIC_URL}/upcoming`, params, undefined, 'grid');
+      const url = buildPagedUrl(`${PUBLIC_URL}/upcoming`, params, 'grid');
       return fetchApi<PageResponse<MovieCardResponse>>(url, {}, false, true);
     },
 
@@ -133,7 +133,8 @@ export const movieApi = {
       }),
 
     getFilteredMovies: (filter?: MovieFilterRequest, params?: SearchParams): Promise<PageResponse<MovieCardResponse>> => {
-      const url = buildPagedUrl(ADMIN_URL, params, filter, 'admin');
+      const filterParams = { ...params, ...filter };
+      const url = buildPagedUrl(ADMIN_URL, filterParams, 'admin');
       return fetchApi<PageResponse<MovieCardResponse>>(url);
     },
 

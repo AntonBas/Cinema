@@ -31,8 +31,6 @@ export const MovieList: React.FC<MovieListProps> = React.memo(({
         onCreateNew?.();
     }, [onCreateNew]);
 
-    console.log('MovieList rendering with movies:', movies);
-
     if (loading) {
         return (
             <div className={styles.loading} role="status" aria-label="Loading movies">
