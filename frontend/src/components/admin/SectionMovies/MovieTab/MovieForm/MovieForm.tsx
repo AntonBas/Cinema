@@ -18,7 +18,7 @@ import styles from './MovieForm.module.css';
 
 interface MovieFormProps {
     movie?: MovieDetailResponse | null;
-    onSuccess: () => void;
+    onSuccess: (result?: MovieDetailResponse) => void;
     onCancel: () => void;
 }
 
@@ -168,6 +168,7 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(({
         setIsUploading(true);
 
         try {
+            let result;
             if (movie?.id) {
                 const updateRequest: MovieUpdateRequest = {
                     title: formData.title,
@@ -184,16 +185,13 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(({
                     removePoster: formData.removePoster,
                     posterFile: formData.posterFile
                 };
-
-                await movieApi.admin.update(movie.id, updateRequest);
-                showNotification('Movie updated successfully!', 'success');
+                result = await movieApi.admin.update(movie.id, updateRequest);
             } else {
                 if (!formData.posterFile) {
                     showNotification('Poster is required for new movie', 'error');
                     setIsUploading(false);
                     return;
                 }
-
                 const createRequest: MovieCreateRequest = {
                     title: formData.title,
                     trailerUrl: formData.trailerUrl,
@@ -208,12 +206,9 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(({
                     actorIds: formData.selectedActors,
                     posterFile: formData.posterFile
                 };
-
-                await movieApi.admin.create(createRequest);
-                showNotification('Movie created successfully!', 'success');
+                result = await movieApi.admin.create(createRequest);
             }
-
-            onSuccess();
+            onSuccess(result);
         } catch (error) {
             console.error('Error saving movie:', error);
             showNotification('Failed to save movie', 'error');

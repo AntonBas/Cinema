@@ -5,8 +5,7 @@ import type {
     MovieDetailResponse,
     MovieSessionSearchResponse,
     MovieCreateRequest,
-    MovieUpdateRequest,
-    MovieFilterRequest
+    MovieUpdateRequest
 } from '@/types/movie';
 import type { PageResponse, SearchParams } from '@/types/pagination';
 import { useApi } from '@/hooks/common/useApi';
@@ -49,31 +48,10 @@ export const useMovies = () => {
         );
     }, [archivedApi]);
 
-    const getFilteredMovies = useCallback(async (filter?: MovieFilterRequest, params?: SearchParams) => {
-        return currentlyShowingApi.execute(
-            () => movieApi.admin.getFilteredMovies(filter, params)
-        );
-    }, [currentlyShowingApi]);
-
-    const getPublicMovies = useCallback(async (params?: SearchParams) => {
-        return currentlyShowingApi.execute(
-            () => movieApi.public.getFilteredMovies(params)
-        );
-    }, [currentlyShowingApi]);
-
     const getById = useCallback(async (id: number, isAdmin: boolean = false) => {
         const apiCall = isAdmin
             ? () => movieApi.admin.getMovieById(id)
             : () => movieApi.public.getById(id);
-
-        return movieDetailApi.execute(apiCall);
-    }, [movieDetailApi]);
-
-    const getBySlug = useCallback(async (slug: string, isAdmin: boolean = false) => {
-        const apiCall = isAdmin
-            ? () => movieApi.admin.getMovieBySlug(slug)
-            : () => movieApi.public.getBySlug(slug);
-
         return movieDetailApi.execute(apiCall);
     }, [movieDetailApi]);
 
@@ -81,53 +59,26 @@ export const useMovies = () => {
         const apiCall = isAdmin
             ? () => movieApi.admin.searchMoviesForSession(search)
             : () => movieApi.public.searchMoviesForSession(search);
-
         return searchApi.execute(apiCall);
     }, [searchApi]);
 
     const create = useCallback(async (request: MovieCreateRequest) => {
         return createApi.execute(
-            () => movieApi.admin.create(request),
-            {
-                successMessage: 'Movie created successfully',
-                onSuccess: () => {
-                    currentlyShowingApi.invalidateCache();
-                    upcomingApi.invalidateCache();
-                    archivedApi.invalidateCache();
-                }
-            }
+            () => movieApi.admin.create(request)
         );
-    }, [createApi, currentlyShowingApi, upcomingApi, archivedApi]);
+    }, [createApi]);
 
     const update = useCallback(async (id: number, request: MovieUpdateRequest) => {
         return updateApi.execute(
-            () => movieApi.admin.update(id, request),
-            {
-                successMessage: 'Movie updated successfully',
-                onSuccess: () => {
-                    movieDetailApi.invalidateCache();
-                    currentlyShowingApi.invalidateCache();
-                    upcomingApi.invalidateCache();
-                    archivedApi.invalidateCache();
-                }
-            }
+            () => movieApi.admin.update(id, request)
         );
-    }, [updateApi, movieDetailApi, currentlyShowingApi, upcomingApi, archivedApi]);
+    }, [updateApi]);
 
     const remove = useCallback(async (id: number) => {
         return deleteApi.execute(
-            () => movieApi.admin.delete(id),
-            {
-                successMessage: 'Movie deleted successfully',
-                onSuccess: () => {
-                    movieDetailApi.invalidateCache();
-                    currentlyShowingApi.invalidateCache();
-                    upcomingApi.invalidateCache();
-                    archivedApi.invalidateCache();
-                }
-            }
+            () => movieApi.admin.delete(id)
         );
-    }, [deleteApi, movieDetailApi, currentlyShowingApi, upcomingApi, archivedApi]);
+    }, [deleteApi]);
 
     const clearCache = useCallback(() => {
         currentlyShowingApi.invalidateCache();
@@ -165,13 +116,10 @@ export const useMovies = () => {
         loading,
         error,
 
-        getFilteredMovies,
-        getPublicMovies,
         getCurrentlyShowing,
         getUpcoming,
         getArchived,
         getById,
-        getBySlug,
         searchMoviesForSession,
         create,
         update,
