@@ -74,7 +74,6 @@ export const LoaderWrapper = styled.span`
   }
 `;
 
-// Додатковий контейнер для центрування
 export const LoaderContainer = styled.div`
   display: flex;
   justify-content: center;

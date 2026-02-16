@@ -1,6 +1,6 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import { useAuth } from '@/hooks/features/auth/useAuth';
+import { useAuth } from '@/contexts/AuthContext';
 import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
 import { LoadingSpinner } from '@/components/ui';
 
