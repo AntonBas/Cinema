@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import type { PersonResponse, PersonRole } from '@/types/person';
 import { PersonCard } from '../PersonCard/PersonCard';
 import { Button } from '@/components/ui';
@@ -53,13 +53,6 @@ export const PersonList: React.FC<PersonListProps> = React.memo(({
     onDelete,
     onAddPerson,
 }) => {
-    const filteredPersons = useMemo(() =>
-        activeTab === 'ALL'
-            ? persons
-            : persons.filter(person => person.role === activeTab),
-        [persons, activeTab]
-    );
-
     const emptyConfig = useMemo(() =>
         EMPTY_STATE_CONFIGS[activeTab] || EMPTY_STATE_CONFIGS.ALL,
         [activeTab]
@@ -69,7 +62,7 @@ export const PersonList: React.FC<PersonListProps> = React.memo(({
         onAddPerson();
     }, [onAddPerson]);
 
-    if (filteredPersons.length === 0) {
+    if (persons.length === 0) {
         return (
             <div className={styles.empty}>
                 <div className={styles.emptyIcon} aria-hidden="true">
@@ -92,7 +85,7 @@ export const PersonList: React.FC<PersonListProps> = React.memo(({
 
     return (
         <div className={styles.grid} role="grid" aria-label={`${activeTab} persons list`}>
-            {filteredPersons.map(person => (
+            {persons.map(person => (
                 <PersonCard
                     key={person.id}
                     person={person}

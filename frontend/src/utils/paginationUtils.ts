@@ -28,13 +28,13 @@ export const getDefaultPageSize = (context: 'grid' | 'list' | 'table' | 'admin' 
     }
 };
 
-export const createSearchParams = (params: SearchParams, context?: 'grid' | 'list' | 'table' | 'admin' | 'small' | 'medium' | 'large'): URLSearchParams => {
+export const createSearchParams = (params: SearchParams, context?: string): URLSearchParams => {
     const searchParams = new URLSearchParams();
 
     const page = params.page !== undefined ? Math.max(0, params.page) : DEFAULT_PAGE;
     searchParams.append('page', page.toString());
 
-    const defaultSize = context ? getDefaultPageSize(context) : DEFAULT_PAGE_SIZE;
+    const defaultSize = context ? getDefaultPageSize(context as any) : DEFAULT_PAGE_SIZE;
     const size = params.size !== undefined ? Math.max(1, params.size) : defaultSize;
     searchParams.append('size', size.toString());
 
@@ -62,8 +62,14 @@ export const createSearchParams = (params: SearchParams, context?: 'grid' | 'lis
     return searchParams;
 };
 
-export const buildPagedUrl = (baseUrl: string, params: SearchParams = {}, filter?: Record<string, any>, context?: string): string => {
-    const searchParams = createSearchParams(params, context as any);
+export const buildPagedUrl = (baseUrl: string, params?: SearchParams, context?: string): string => {
+    const searchParams = createSearchParams(params || {}, context);
+    const queryString = searchParams.toString();
+    return queryString ? `${baseUrl}?${queryString}` : baseUrl;
+};
+
+export const buildFilteredUrl = (baseUrl: string, params?: SearchParams, filter?: Record<string, any>, context?: string): string => {
+    const searchParams = createSearchParams(params || {}, context);
 
     if (filter) {
         Object.entries(filter).forEach(([key, value]) => {

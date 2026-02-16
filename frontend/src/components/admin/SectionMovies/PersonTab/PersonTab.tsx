@@ -20,11 +20,11 @@ interface TabData {
 }
 
 export const PersonTab: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<PersonRole | 'ALL'>('ALL');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [editingPerson, setEditingPerson] = useState<PersonResponse | null>(null);
   const [personToDelete, setPersonToDelete] = useState<PersonResponse | null>(null);
+  const [activeTab, setActiveTab] = useState<PersonRole | 'ALL'>('ALL');
   const [totalCounts, setTotalCounts] = useState({
     ALL: 0,
     ACTOR: 0,
@@ -68,49 +68,14 @@ export const PersonTab: React.FC = () => {
     [activeTab, tabsData]
   );
 
-  const loadData = useCallback(async (tab: PersonRole | 'ALL', page: number, search?: string) => {
-    if (loadingDataRef.current) return;
-
-    loadingDataRef.current = true;
-
-    try {
-      let loadMethod;
-      switch (tab) {
-        case 'ACTOR':
-          loadMethod = getActors;
-          break;
-        case 'DIRECTOR':
-          loadMethod = getDirectors;
-          break;
-        case 'SCREENWRITER':
-          loadMethod = getScreenwriters;
-          break;
-        default:
-          loadMethod = getAll;
-      }
-
-      await loadMethod({
-        name: search?.trim() || undefined,
-        page,
-        size: 12
-      });
-    } catch (error) {
-      if (isApiErrorException(error)) {
-        showNotification(error.message, 'error');
-      } else {
-        showNotification('Failed to load data', 'error');
-      }
-    } finally {
-      loadingDataRef.current = false;
-    }
-  }, [getAll, getActors, getDirectors, getScreenwriters, showNotification]);
-
   const loadCounts = useCallback(async () => {
     try {
-      const allResult = await getAll({ page: 0, size: 1 });
-      const actorsResult = await getActors({ page: 0, size: 1 });
-      const directorsResult = await getDirectors({ page: 0, size: 1 });
-      const screenwritersResult = await getScreenwriters({ page: 0, size: 1 });
+      const [allResult, actorsResult, directorsResult, screenwritersResult] = await Promise.all([
+        getAll({ page: 0, size: 1 }),
+        getActors({ page: 0, size: 1 }),
+        getDirectors({ page: 0, size: 1 }),
+        getScreenwriters({ page: 0, size: 1 })
+      ]);
 
       setTotalCounts({
         ALL: allResult?.totalElements || 0,
@@ -122,6 +87,42 @@ export const PersonTab: React.FC = () => {
       console.error('Failed to load counts:', error);
     }
   }, [getAll, getActors, getDirectors, getScreenwriters]);
+
+  const loadData = useCallback(async (tab: PersonRole | 'ALL', page: number, search?: string) => {
+    if (loadingDataRef.current) return;
+
+    loadingDataRef.current = true;
+
+    try {
+      const params = {
+        name: search?.trim() || undefined,
+        page,
+        size: 12
+      };
+
+      switch (tab) {
+        case 'ACTOR':
+          await getActors(params);
+          break;
+        case 'DIRECTOR':
+          await getDirectors(params);
+          break;
+        case 'SCREENWRITER':
+          await getScreenwriters(params);
+          break;
+        default:
+          await getAll(params);
+      }
+    } catch (error) {
+      if (isApiErrorException(error)) {
+        showNotification(error.message, 'error');
+      } else {
+        showNotification('Failed to load data', 'error');
+      }
+    } finally {
+      loadingDataRef.current = false;
+    }
+  }, [getAll, getActors, getDirectors, getScreenwriters, showNotification]);
 
   useEffect(() => {
     if (!initialLoadRef.current) {
