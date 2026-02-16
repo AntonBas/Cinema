@@ -3,11 +3,12 @@ import { useSession } from '@/hooks/features/sessions/useSession';
 import { useCinemaHalls } from '@/hooks/features/cinemaHalls/useCinemaHalls';
 import { useMovies } from '@/hooks/features/movies/useMovies';
 import { useNotification } from '@/hooks/common/useNotification';
+import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
 import { SessionFilters } from './SessionFilters/SessionFilters';
 import { SessionTable } from './SessionTable/SessionTable';
 import { CreateSessionModal } from './SessionModal/CreateSessionModal';
 import { EditSessionModal } from './SessionModal/EditSessionModal';
-import { DeleteConfirmModal, Pagination, Button, Notification } from '@/components/ui';
+import { DeleteConfirmModal, Pagination, Button, Notification, LoadingSpinner } from '@/components/ui';
 import type { SessionAdminResponse, SessionCreateRequest, SessionUpdateRequest, CinemaSessionStatus } from '@/types/session';
 import styles from './SectionSchedule.module.css';
 
@@ -60,6 +61,8 @@ export const SectionSchedule: React.FC = () => {
         reactivateSession,
         getSessions
     } = useSession();
+
+    const showDelayedLoading = useDelayedLoading(loading, { delay: 150, minDisplayTime: 300 });
 
     useEffect(() => {
         isMounted.current = true;
@@ -311,6 +314,14 @@ export const SectionSchedule: React.FC = () => {
     const totalPages = pagination?.totalPages || 0;
     const totalElements = pagination?.totalElements || 0;
 
+    if (showDelayedLoading && !sessions.length) {
+        return (
+            <div className={styles.loadingContainer}>
+                <LoadingSpinner text="Loading sessions..." />
+            </div>
+        );
+    }
+
     return (
         <div className={styles.container}>
             {notifications.map((notification, index) => (
@@ -372,8 +383,6 @@ export const SectionSchedule: React.FC = () => {
             <div className={styles.tableSection}>
                 <SessionTable
                     sessions={sessions}
-                    loading={loading}
-                    error={undefined}
                     onEdit={handleEditSession}
                     onDelete={handleDeleteSession}
                     onCancel={handleCancelSession}

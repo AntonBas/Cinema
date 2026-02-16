@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useTicketType } from '@/hooks/features/ticketType/useTicketType';
+import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
 import { Button } from '@/components/ui/Button';
 import TicketTypeTable from './TicketTypeTable/TicketTypeTable';
 import TicketTypeFilters from './TicketTypeFilters/TicketTypeFilters';
@@ -23,6 +24,8 @@ const SectionTicketType = () => {
         remove: deleteTicketType,
         toggleActive
     } = useTicketType();
+
+    const showDelayedLoading = useDelayedLoading(loading, { delay: 150, minDisplayTime: 300 });
 
     const loadTicketTypes = async () => {
         await getAll({
@@ -95,6 +98,14 @@ const SectionTicketType = () => {
     const activeCount = filteredTicketTypes.filter(t => t.active).length;
     const inactiveCount = filteredTicketTypes.filter(t => !t.active).length;
 
+    if (showDelayedLoading && !ticketTypes.length) {
+        return (
+            <div className={styles.loading}>
+                <LoadingSpinner text="Loading ticket types..." />
+            </div>
+        );
+    }
+
     return (
         <div className={styles.section}>
             <div className={styles.header}>
@@ -121,11 +132,7 @@ const SectionTicketType = () => {
                     inactiveCount={inactiveCount}
                 />
 
-                {loading ? (
-                    <div className={styles.loading}>
-                        <LoadingSpinner text="Loading ticket types..." />
-                    </div>
-                ) : filteredTicketTypes.length === 0 ? (
+                {filteredTicketTypes.length === 0 ? (
                     <div className={styles.empty}>
                         <p>No ticket types found</p>
                         {(searchQuery || statusFilter !== 'all' || categoryFilter !== 'all') && (

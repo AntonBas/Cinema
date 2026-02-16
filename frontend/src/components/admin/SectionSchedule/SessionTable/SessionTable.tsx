@@ -5,8 +5,6 @@ import styles from './SessionTable.module.css';
 
 interface SessionTableProps {
     sessions: SessionAdminResponse[];
-    loading: boolean;
-    error?: string | null;
     onEdit: (session: SessionAdminResponse) => void;
     onDelete: (session: SessionAdminResponse) => void;
     onCancel: (session: SessionAdminResponse) => void;
@@ -71,8 +69,6 @@ const truncateText = (text: string, maxLength: number): string => {
 
 export const SessionTable: React.FC<SessionTableProps> = ({
     sessions,
-    loading,
-    error,
     onEdit,
     onDelete,
     onCancel,
@@ -93,35 +89,11 @@ export const SessionTable: React.FC<SessionTableProps> = ({
         });
     };
 
-    // Всі хуки повинні бути на початку, до умовних return
     const sortedSessions = useMemo(() => {
         return [...sessions].sort((a, b) =>
             new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
         );
     }, [sessions]);
-
-    const renderLoadingState = () => (
-        <div className={styles.loading}>
-            <div className={styles.loadingHeader}>
-                <div className={styles.loadingTitle}>Loading sessions...</div>
-            </div>
-            <div className={styles.loadingContent}>
-                {[...Array(5)].map((_, index) => (
-                    <div key={index} className={styles.loadingRow}>
-                        <div className={styles.loadingCell} style={{ width: '25%' }} />
-                        <div className={styles.loadingCell} style={{ width: '20%' }} />
-                        <div className={styles.loadingCell} style={{ width: '15%' }} />
-                        <div className={styles.loadingCell} style={{ width: '15%' }} />
-                        <div className={styles.loadingCell} style={{ width: '10%' }} />
-                        <div className={styles.loadingCell} style={{ width: '15%' }} />
-                        <div className={styles.loadingCell} style={{ width: '15%' }} />
-                        <div className={styles.loadingCell} style={{ width: '10%' }} />
-                        <div className={styles.loadingCell} style={{ width: '20%' }} />
-                    </div>
-                ))}
-            </div>
-        </div>
-    );
 
     const renderEmptyState = () => (
         <div className={styles.empty}>
@@ -131,17 +103,6 @@ export const SessionTable: React.FC<SessionTableProps> = ({
         </div>
     );
 
-    const renderErrorState = () => (
-        <div className={styles.error}>
-            <div className={styles.errorIcon}>⚠️</div>
-            <h3>Error loading sessions</h3>
-            <p>{error}</p>
-        </div>
-    );
-
-    // Умовні return після всіх хуків
-    if (loading) return renderLoadingState();
-    if (error) return renderErrorState();
     if (sessions.length === 0) return renderEmptyState();
 
     return (

@@ -17,7 +17,7 @@ const centerStyle = {
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     const { isAuthenticated, loading } = useAuth();
-    const showLoading = useDelayedLoading(loading, 300);
+    const showLoading = useDelayedLoading(loading, { delay: 150, minDisplayTime: 300 });
 
     if (showLoading) {
         return (

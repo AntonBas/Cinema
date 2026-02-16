@@ -54,7 +54,7 @@ export const PersonTab: React.FC = () => {
     remove
   } = usePerson();
 
-  const showDelayedLoading = useDelayedLoading(loading, 300);
+  const showDelayedLoading = useDelayedLoading(loading, { delay: 150, minDisplayTime: 300 });
 
   const tabsData: Record<PersonRole | 'ALL', TabData> = useMemo(() => ({
     ALL: { key: 'ALL', data: allPersons, total: totalCounts.ALL },

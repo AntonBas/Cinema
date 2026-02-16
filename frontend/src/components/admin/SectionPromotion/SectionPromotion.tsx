@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Button, SearchInput, ConfirmModal } from '@/components/ui';
+import { Button, SearchInput, ConfirmModal, LoadingSpinner } from '@/components/ui';
 import { usePromotion } from '@/hooks/features/promotion/usePromotion';
+import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
 import type { PromotionResponse } from '@/types/promotion';
 import PromotionStats from './PromotionStats/PromotionStats';
 import PromotionTable from './PromotionTable/PromotionTable';
@@ -23,6 +24,8 @@ const SectionPromotion: React.FC = () => {
         getAll,
         remove
     } = usePromotion();
+
+    const showDelayedLoading = useDelayedLoading(isLoading, { delay: 150, minDisplayTime: 300 });
 
     const getPromotionStatus = (promotion: PromotionResponse): string => {
         const now = new Date();
@@ -100,6 +103,14 @@ const SectionPromotion: React.FC = () => {
         loadPromotions();
     };
 
+    if (showDelayedLoading && !promotions.length) {
+        return (
+            <div className={styles.loading}>
+                <LoadingSpinner text="Loading promotions..." />
+            </div>
+        );
+    }
+
     return (
         <div className={styles.container}>
             <div className={styles.header}>
@@ -134,7 +145,6 @@ const SectionPromotion: React.FC = () => {
             <div className={styles.tableContainer}>
                 <PromotionTable
                     promotions={filteredPromotions}
-                    loading={isLoading}
                     onEdit={setEditingPromotion}
                     onDelete={(id, title) => setDeletingPromotion({ id, title })}
                     getPromotionStatus={getPromotionStatus}

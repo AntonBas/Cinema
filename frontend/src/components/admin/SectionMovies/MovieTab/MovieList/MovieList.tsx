@@ -1,14 +1,13 @@
 import React, { useCallback } from 'react';
 import type { MovieCardResponse } from '@/types/movie';
 import { MovieCard } from './MovieCard/MovieCard';
-import { Button, LoadingSpinner } from '@/components/ui';
+import { Button } from '@/components/ui';
 import styles from './MovieList.module.css';
 
 interface MovieListProps {
     movies: MovieCardResponse[];
     onEdit: (movie: MovieCardResponse) => void;
     onDelete: (movie: MovieCardResponse) => void;
-    loading?: boolean;
     onCreateNew?: () => void;
 }
 
@@ -16,7 +15,6 @@ export const MovieList: React.FC<MovieListProps> = React.memo(({
     movies,
     onEdit,
     onDelete,
-    loading = false,
     onCreateNew
 }) => {
     const handleEdit = useCallback((movie: MovieCardResponse) => {
@@ -30,14 +28,6 @@ export const MovieList: React.FC<MovieListProps> = React.memo(({
     const handleCreateNew = useCallback(() => {
         onCreateNew?.();
     }, [onCreateNew]);
-
-    if (loading) {
-        return (
-            <div className={styles.loading} role="status" aria-label="Loading movies">
-                <LoadingSpinner text="Loading movies..." />
-            </div>
-        );
-    }
 
     if (movies.length === 0) {
         return (

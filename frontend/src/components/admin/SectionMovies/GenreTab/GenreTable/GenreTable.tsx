@@ -1,20 +1,18 @@
 import React, { useCallback } from 'react';
 import type { GenreResponse } from '@/types/genre';
-import { Button, Badge, LoadingSpinner } from '@/components/ui';
+import { Button, Badge } from '@/components/ui';
 import styles from './GenreTable.module.css';
 
 interface GenreTableProps {
     genres: GenreResponse[];
     onEdit: (genre: GenreResponse) => void;
     onDelete: (genre: GenreResponse) => void;
-    loading?: boolean;
 }
 
 export const GenreTable: React.FC<GenreTableProps> = React.memo(({
     genres,
     onEdit,
-    onDelete,
-    loading = false
+    onDelete
 }) => {
     const getMovieCountText = useCallback((count: number): string =>
         `${count} ${count === 1 ? 'movie' : 'movies'}`,
@@ -28,14 +26,6 @@ export const GenreTable: React.FC<GenreTableProps> = React.memo(({
     const handleDelete = useCallback((genre: GenreResponse) => {
         onDelete(genre);
     }, [onDelete]);
-
-    if (loading) {
-        return (
-            <div className={styles.loading} role="status" aria-label="Loading genres">
-                <LoadingSpinner text="Loading genres" />
-            </div>
-        );
-    }
 
     if (genres.length === 0) {
         return (

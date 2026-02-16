@@ -1,11 +1,10 @@
 import React from 'react';
-import { Button, Badge, LoadingSpinner } from '@/components/ui';
+import { Button, Badge } from '@/components/ui';
 import type { PromotionResponse } from '@/types/promotion';
 import styles from './PromotionTable.module.css';
 
 interface PromotionTableProps {
     promotions: PromotionResponse[];
-    loading: boolean;
     onEdit: (promotionId: number) => void;
     onDelete: (promotionId: number, title: string) => void;
     getPromotionStatus: (promotion: PromotionResponse) => string;
@@ -14,7 +13,6 @@ interface PromotionTableProps {
 
 const PromotionTable: React.FC<PromotionTableProps> = ({
     promotions,
-    loading,
     onEdit,
     onDelete,
     getPromotionStatus,
@@ -33,14 +31,6 @@ const PromotionTable: React.FC<PromotionTableProps> = ({
             default: return 'info';
         }
     };
-
-    if (loading && promotions.length === 0) {
-        return (
-            <div className={styles.loadingContainer}>
-                <LoadingSpinner />
-            </div>
-        );
-    }
 
     if (promotions.length === 0) {
         return (

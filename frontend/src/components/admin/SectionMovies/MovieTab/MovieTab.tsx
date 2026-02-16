@@ -50,7 +50,7 @@ export const MovieTab: React.FC = () => {
   } = useMovies();
 
   const { notifications, showNotification, hideNotification } = useNotification();
-  const showDelayedLoading = useDelayedLoading(loading, 300);
+  const showDelayedLoading = useDelayedLoading(loading, { delay: 150, minDisplayTime: 300 });
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const initialLoadRef = useRef(false);
   const loadingDataRef = useRef(false);

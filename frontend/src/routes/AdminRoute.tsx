@@ -1,6 +1,7 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
 import { LoadingSpinner } from '@/components/ui';
 
 interface AdminRouteProps {
@@ -17,8 +18,9 @@ const centerStyle = {
 
 export const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
     const { user, loading, isAuthenticated } = useAuth();
+    const showLoading = useDelayedLoading(loading, { delay: 150, minDisplayTime: 300 });
 
-    if (loading) {
+    if (showLoading) {
         return (
             <div style={centerStyle}>
                 <LoadingSpinner text="Verifying admin access..." />

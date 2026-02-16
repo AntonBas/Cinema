@@ -2,7 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import type { CinemaHallResponse, CinemaHallRequest } from '@/types/cinemaHall';
 import { useCinemaHalls } from '@/hooks/features/cinemaHalls/useCinemaHalls';
 import { useNotification } from '@/hooks/common/useNotification';
-import { DeleteConfirmModal, Button, Notification } from '@/components/ui';
+import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
+import { DeleteConfirmModal, Button, Notification, LoadingSpinner } from '@/components/ui';
 import { CreateHallModal } from './HallModal/CreateHallModal';
 import { EditHallModal } from './HallModal/EditHallModal';
 import { HallsTable } from './HallsTable/HallsTable';
@@ -21,6 +22,7 @@ export const SectionHalls: React.FC = () => {
     } = useCinemaHalls();
 
     const { notifications, showNotification, hideNotification } = useNotification();
+    const showDelayedLoading = useDelayedLoading(loading, { delay: 150, minDisplayTime: 300 });
 
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
@@ -133,6 +135,14 @@ export const SectionHalls: React.FC = () => {
         setDeleteModal({ isOpen: false, hall: null, isDeleting: false });
     }, []);
 
+    if (showDelayedLoading && !halls.length) {
+        return (
+            <div className={styles.loading}>
+                <LoadingSpinner text="Loading cinema halls..." />
+            </div>
+        );
+    }
+
     return (
         <div className={styles.section}>
             {notifications.map((notification) => (
@@ -170,7 +180,6 @@ export const SectionHalls: React.FC = () => {
                     onDelete={confirmDelete}
                     onShowLayout={handleShowLayout}
                     onEdit={handleEdit}
-                    loading={loading}
                 />
             </div>
 

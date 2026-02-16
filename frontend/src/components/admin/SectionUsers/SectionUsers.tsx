@@ -3,7 +3,8 @@ import { UserTable } from './UserTable/UserTable';
 import { UserFilters } from './UserFilters/UserFilters';
 import { useAdminUsers } from '@/hooks/features/admin/useAdminUsers';
 import { useNotification } from '@/hooks/common/useNotification';
-import { Notification, Pagination } from '@/components/ui';
+import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
+import { Notification, Pagination, LoadingSpinner } from '@/components/ui';
 import styles from './SectionUsers.module.css';
 
 export const SectionUsers: React.FC = () => {
@@ -20,6 +21,7 @@ export const SectionUsers: React.FC = () => {
     } = useAdminUsers();
 
     const { notifications, hideNotification, showNotification } = useNotification();
+    const showDelayedLoading = useDelayedLoading(loading, { delay: 150, minDisplayTime: 300 });
 
     useEffect(() => {
         const enabledFilter = statusFilter === '' ? undefined : statusFilter === 'true';
@@ -81,6 +83,14 @@ export const SectionUsers: React.FC = () => {
 
     const { start, end } = getDisplayRange();
 
+    if (showDelayedLoading && !users.length) {
+        return (
+            <div className={styles.loadingContainer}>
+                <LoadingSpinner text="Loading users..." />
+            </div>
+        );
+    }
+
     return (
         <div className={styles.container}>
             <header className={styles.header}>
@@ -99,16 +109,12 @@ export const SectionUsers: React.FC = () => {
             </div>
 
             <div className={styles.content}>
-                {loading ? (
-                    <div className={styles.loading}>Loading users...</div>
-                ) : (
-                    <UserTable
-                        users={users}
-                        onRefresh={handleUserUpdate}
-                        onError={handleError}
-                        onSuccess={handleSuccess}
-                    />
-                )}
+                <UserTable
+                    users={users}
+                    onRefresh={handleUserUpdate}
+                    onError={handleError}
+                    onSuccess={handleSuccess}
+                />
             </div>
 
             {pagination && pagination.totalPages > 1 && (

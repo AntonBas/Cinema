@@ -1,7 +1,6 @@
 import React, { useCallback, useMemo } from 'react';
 import type { CinemaHallResponse } from '@/types/cinemaHall';
 import { Button, Badge } from '@/components/ui';
-import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';
 import styles from './HallsTable.module.css';
 
 interface HallsTableProps {
@@ -9,15 +8,13 @@ interface HallsTableProps {
     onDelete: (hall: CinemaHallResponse) => void;
     onShowLayout: (hall: CinemaHallResponse) => void;
     onEdit?: (hall: CinemaHallResponse) => void;
-    loading?: boolean;
 }
 
 export const HallsTable: React.FC<HallsTableProps> = React.memo(({
     halls,
     onDelete,
     onShowLayout,
-    onEdit,
-    loading = false
+    onEdit
 }) => {
     const handleDelete = useCallback((hall: CinemaHallResponse) => {
         onDelete(hall);
@@ -32,15 +29,6 @@ export const HallsTable: React.FC<HallsTableProps> = React.memo(({
     }, [onEdit]);
 
     const tableContent = useMemo(() => {
-        if (loading) {
-            return (
-                <div className={styles.loading}>
-                    <LoadingSpinner />
-                    <p>Loading cinema halls...</p>
-                </div>
-            );
-        }
-
         if (halls.length === 0) {
             return (
                 <div className={styles.empty}>
@@ -100,7 +88,7 @@ export const HallsTable: React.FC<HallsTableProps> = React.memo(({
                 ))}
             </div>
         );
-    }, [halls, loading, onEdit, handleDelete, handleShowLayout, handleEdit]);
+    }, [halls, onEdit, handleDelete, handleShowLayout, handleEdit]);
 
     return tableContent;
 });

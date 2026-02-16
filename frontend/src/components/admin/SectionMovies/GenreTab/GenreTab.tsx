@@ -27,7 +27,7 @@ export const GenreTab: React.FC = () => {
   } = useGenres();
 
   const { notifications, showNotification, hideNotification } = useNotification();
-  const showDelayedLoading = useDelayedLoading(loading, 300);
+  const showDelayedLoading = useDelayedLoading(loading, { delay: 150, minDisplayTime: 300 });
 
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);

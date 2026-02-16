@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
 import BonusRules from './BonusRules/BonusRules';
 import BonusTransactions from './BonusTransactions/BonusTransactions';
 import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';
@@ -6,8 +7,9 @@ import styles from './SectionBonus.module.css';
 
 const SectionBonus = () => {
     const [activeTab, setActiveTab] = useState<'rules' | 'transactions'>('rules');
-    const [loading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [loading] = useState(false);
+    const showDelayedLoading = useDelayedLoading(loading, { delay: 150, minDisplayTime: 300 });
 
     const handleTabChange = (tab: 'rules' | 'transactions') => {
         setActiveTab(tab);
@@ -26,6 +28,16 @@ const SectionBonus = () => {
                     >
                         Try Again
                     </button>
+                </div>
+            </div>
+        );
+    }
+
+    if (showDelayedLoading) {
+        return (
+            <div className={styles.section}>
+                <div className={styles.loading}>
+                    <LoadingSpinner text="Loading bonus system..." />
                 </div>
             </div>
         );
@@ -52,18 +64,10 @@ const SectionBonus = () => {
             </div>
 
             <div className={styles.content}>
-                {loading ? (
-                    <div className={styles.loading}>
-                        <LoadingSpinner text="Loading..." />
-                    </div>
+                {activeTab === 'rules' ? (
+                    <BonusRules />
                 ) : (
-                    <>
-                        {activeTab === 'rules' ? (
-                            <BonusRules />
-                        ) : (
-                            <BonusTransactions />
-                        )}
-                    </>
+                    <BonusTransactions />
                 )}
             </div>
         </div>
