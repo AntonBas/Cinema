@@ -1,11 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import type { CinemaHallResponse, CinemaHallRequest } from '@/types/cinemaHall';
 import { useCinemaHalls } from '@/hooks/features/cinemaHalls/useCinemaHalls';
-import { DeleteConfirmModal, Notification, Button } from '@/components/ui';
+import { useNotification } from '@/hooks/common/useNotification';
+import { DeleteConfirmModal, Button, Notification } from '@/components/ui';
 import { CreateHallModal } from './HallModal/CreateHallModal';
 import { EditHallModal } from './HallModal/EditHallModal';
 import { HallsTable } from './HallsTable/HallsTable';
 import { HallLayoutModal } from './HallLayoutModal/HallLayoutModal';
+import { isApiErrorException } from '@/utils/apiErrorHandler';
 import styles from './SectionHalls.module.css';
 
 export const SectionHalls: React.FC = () => {
@@ -18,108 +20,136 @@ export const SectionHalls: React.FC = () => {
         deleteHall
     } = useCinemaHalls();
 
+    const { notifications, showNotification, hideNotification } = useNotification();
+
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
     const [selectedHall, setSelectedHall] = useState<CinemaHallResponse | null>(null);
     const [showLayoutModal, setShowLayoutModal] = useState(false);
-    const [successMessage, setSuccessMessage] = useState('');
-    const [errorMessage, setErrorMessage] = useState('');
     const [deleteModal, setDeleteModal] = useState<{
         isOpen: boolean;
         hall: CinemaHallResponse | null;
+        isDeleting: boolean;
     }>({
         isOpen: false,
-        hall: null
+        hall: null,
+        isDeleting: false
     });
 
     useEffect(() => {
         getAllHalls();
     }, []);
 
-    const handleCreateHall = async (request: CinemaHallRequest) => {
-        try {
-            await createHall(request);
-            setShowCreateModal(false);
-            setSuccessMessage('Cinema hall created successfully');
-            getAllHalls();
-        } catch (err) {
-            setErrorMessage('Failed to create hall');
-        }
-    };
+    const loadHalls = useCallback(async () => {
+        await getAllHalls();
+    }, [getAllHalls]);
 
-    const handleEditHall = async (id: number, request: CinemaHallRequest) => {
+    const handleCreateHall = useCallback(async (request: CinemaHallRequest) => {
         try {
-            await updateHall(id, request);
+            const result = await createHall(request);
+            if (result) {
+                showNotification(`Cinema hall "${result.name}" created successfully!`, 'success');
+                await loadHalls();
+            }
+            setShowCreateModal(false);
+        } catch (err) {
+            if (isApiErrorException(err)) {
+                if (err.isConflict()) {
+                    showNotification(`Hall with name "${request.name}" already exists`, 'error');
+                } else {
+                    showNotification(err.message, 'error');
+                }
+            } else {
+                showNotification('Failed to create hall', 'error');
+            }
+        }
+    }, [createHall, loadHalls, showNotification]);
+
+    const handleEditHall = useCallback(async (id: number, request: CinemaHallRequest) => {
+        try {
+            const result = await updateHall(id, request);
+            if (result) {
+                showNotification(`Cinema hall "${result.name}" updated successfully!`, 'success');
+                await loadHalls();
+            }
             setShowEditModal(false);
             setSelectedHall(null);
-            setSuccessMessage('Cinema hall updated successfully');
-            getAllHalls();
         } catch (err) {
-            setErrorMessage('Failed to update hall');
+            if (isApiErrorException(err)) {
+                if (err.isConflict()) {
+                    showNotification(`Hall with name "${request.name}" already exists`, 'error');
+                } else {
+                    showNotification(err.message, 'error');
+                }
+            } else {
+                showNotification('Failed to update hall', 'error');
+            }
         }
-    };
+    }, [updateHall, loadHalls, showNotification]);
 
-    const handleDeleteHall = async (id: number) => {
+    const handleDeleteHall = useCallback(async () => {
+        if (!deleteModal.hall) return;
+
+        setDeleteModal(prev => ({ ...prev, isDeleting: true }));
+
         try {
-            await deleteHall(id);
-            setSuccessMessage('Cinema hall deleted successfully');
-            getAllHalls();
+            await deleteHall(deleteModal.hall.id);
+            showNotification(`Cinema hall "${deleteModal.hall.name}" deleted successfully!`, 'success');
+            await loadHalls();
+            setDeleteModal({ isOpen: false, hall: null, isDeleting: false });
         } catch (err) {
-            setErrorMessage('Failed to delete hall');
-        } finally {
-            setDeleteModal({ isOpen: false, hall: null });
+            if (isApiErrorException(err)) {
+                if (err.isConflict()) {
+                    showNotification('Cannot delete hall because it has associated sessions', 'error');
+                } else {
+                    showNotification(err.message, 'error');
+                }
+            } else {
+                showNotification('Failed to delete hall', 'error');
+            }
+            setDeleteModal(prev => ({ ...prev, isDeleting: false }));
         }
-    };
+    }, [deleteHall, deleteModal.hall, loadHalls, showNotification]);
 
-    const confirmDelete = (hall: CinemaHallResponse) => {
+    const confirmDelete = useCallback((hall: CinemaHallResponse) => {
         setDeleteModal({
             isOpen: true,
-            hall
+            hall,
+            isDeleting: false
         });
-    };
+    }, []);
 
-    const handleEdit = (hall: CinemaHallResponse) => {
+    const handleEdit = useCallback((hall: CinemaHallResponse) => {
         setSelectedHall(hall);
         setShowEditModal(true);
-    };
+    }, []);
 
-    const handleShowLayout = (hall: CinemaHallResponse) => {
+    const handleShowLayout = useCallback((hall: CinemaHallResponse) => {
         setSelectedHall(hall);
         setShowLayoutModal(true);
-    };
+    }, []);
 
-    const handleCloseNotification = () => {
-        setErrorMessage('');
-        setSuccessMessage('');
-    };
+    const handleCloseDelete = useCallback(() => {
+        setDeleteModal({ isOpen: false, hall: null, isDeleting: false });
+    }, []);
 
     return (
         <div className={styles.section}>
-            {successMessage && (
+            {notifications.map((notification) => (
                 <Notification
-                    id="success"
-                    message={successMessage}
-                    type="success"
-                    isVisible={true}
-                    onClose={handleCloseNotification}
-                    duration={4000}
+                    key={notification.id}
+                    id={notification.id}
+                    message={notification.message}
+                    type={notification.type}
+                    isVisible={notification.isVisible}
+                    onClose={hideNotification}
+                    duration={notification.duration}
                 />
-            )}
-
-            {errorMessage && (
-                <Notification
-                    id="error"
-                    message={errorMessage}
-                    type="error"
-                    isVisible={true}
-                    onClose={handleCloseNotification}
-                    duration={4000}
-                />
-            )}
+            ))}
 
             <div className={styles.header}>
                 <div className={styles.headerContent}>
-                    <h1>Cinema Halls Management</h1>
+                    <h1 className={styles.title}>Cinema Halls Management</h1>
                     <p className={styles.subtitle}>
                         Manage your cinema halls, seating layouts and configurations
                     </p>
@@ -166,6 +196,7 @@ export const SectionHalls: React.FC = () => {
 
             {showLayoutModal && selectedHall && (
                 <HallLayoutModal
+                    key={selectedHall.id}
                     hall={selectedHall}
                     isOpen={showLayoutModal}
                     onClose={() => {
@@ -177,11 +208,11 @@ export const SectionHalls: React.FC = () => {
 
             <DeleteConfirmModal
                 isOpen={deleteModal.isOpen}
-                onConfirm={() => deleteModal.hall && handleDeleteHall(deleteModal.hall.id)}
-                onCancel={() => setDeleteModal({ isOpen: false, hall: null })}
+                onConfirm={handleDeleteHall}
+                onCancel={handleCloseDelete}
                 itemName={deleteModal.hall?.name}
                 itemType="cinema hall"
-                isDeleting={loading}
+                isDeleting={deleteModal.isDeleting}
             />
         </div>
     );

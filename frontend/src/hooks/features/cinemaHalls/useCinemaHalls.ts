@@ -21,9 +21,7 @@ export const useCinemaHalls = () => {
         return allHallsApi.execute(
             () => cinemaHallApi.getAll(name),
             {
-                cacheKey: `cinema_halls_${name || 'all'}`,
-                cacheTime: 5 * 60 * 1000,
-                showErrorNotification: false,
+                showErrorNotification: true,
             }
         );
     }, [allHallsApi]);
@@ -32,9 +30,7 @@ export const useCinemaHalls = () => {
         return hallByIdApi.execute(
             () => cinemaHallApi.getById(id),
             {
-                cacheKey: `cinema_hall_${id}`,
-                cacheTime: 10 * 60 * 1000,
-                showErrorNotification: false,
+                showErrorNotification: true,
             }
         );
     }, [hallByIdApi]);
@@ -43,9 +39,7 @@ export const useCinemaHalls = () => {
         return hallWithSeatsApi.execute(
             () => cinemaHallApi.getWithSeats(id),
             {
-                cacheKey: `cinema_hall_seats_${id}`,
-                cacheTime: 10 * 60 * 1000,
-                showErrorNotification: false,
+                showErrorNotification: true,
             }
         );
     }, [hallWithSeatsApi]);
@@ -54,9 +48,7 @@ export const useCinemaHalls = () => {
         return hallLayoutApi.execute(
             () => cinemaHallApi.getLayout(id),
             {
-                cacheKey: `cinema_hall_layout_${id}`,
-                cacheTime: 10 * 60 * 1000,
-                showErrorNotification: false,
+                showErrorNotification: true,
             }
         );
     }, [hallLayoutApi]);
@@ -66,6 +58,7 @@ export const useCinemaHalls = () => {
             () => cinemaHallApi.admin.create(request),
             {
                 successMessage: 'Cinema hall created successfully',
+                showErrorNotification: true,
                 onSuccess: () => {
                     allHallsApi.invalidateCache();
                 },
@@ -78,6 +71,7 @@ export const useCinemaHalls = () => {
             () => cinemaHallApi.admin.update(id, request),
             {
                 successMessage: 'Cinema hall updated successfully',
+                showErrorNotification: true,
                 onSuccess: () => {
                     allHallsApi.invalidateCache();
                     hallByIdApi.invalidateCache(`cinema_hall_${id}`);
@@ -93,6 +87,7 @@ export const useCinemaHalls = () => {
             () => cinemaHallApi.admin.delete(id),
             {
                 successMessage: 'Cinema hall deleted successfully',
+                showErrorNotification: true,
                 onSuccess: () => {
                     allHallsApi.invalidateCache();
                 },
