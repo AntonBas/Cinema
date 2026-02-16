@@ -3,7 +3,9 @@ import type {
     UserRoleUpdateRequest,
     UserStatusUpdateRequest,
     VerificationBirthDateRequest,
-    UserResponse
+    UserResponse,
+    UserRole,
+    VerificationStatus
 } from '@/types/user';
 import type { PageResponse } from '@/types/pagination';
 import { buildPagedUrl } from '@/utils/paginationUtils';
@@ -42,8 +44,8 @@ export const adminApi = {
         page?: number;
         size?: number;
         search?: string;
-        role?: string;
-        verificationStatus?: string;
+        role?: UserRole;
+        verificationStatus?: VerificationStatus;
         enabled?: boolean;
     }): Promise<PageResponse<AdminUserListResponse>> => {
         const url = buildPagedUrl(ADMIN_API_URL, params, 'admin');

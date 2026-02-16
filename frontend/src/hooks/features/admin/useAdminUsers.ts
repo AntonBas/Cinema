@@ -18,9 +18,16 @@ export const useAdminUsers = () => {
     const updateStatusApi = useApi<void>();
     const updateVerificationApi = useApi<UserResponse>();
 
-    const getUsers = useCallback(async (params?: any) => {
+    const getUsers = useCallback(async (params?: {
+        page?: number;
+        size?: number;
+        search?: string;
+        role?: UserRole;
+        verificationStatus?: VerificationStatus;
+        enabled?: boolean;
+    }) => {
         return usersApi.execute(
-            () => adminApi.getUsers(params),
+            () => adminApi.getUsers(params || {}),
             {
                 cacheKey: `admin_users_${JSON.stringify(params)}`,
                 cacheTime: 30 * 1000,

@@ -1,4 +1,4 @@
-export type UserRole = 'ROLE_ADMIN' | 'ROLE_MANAGER' | 'ROLE_USER' | 'ROLE_CUSTOMER';
+export type UserRole = 'ROLE_ADMIN' | 'ROLE_USER' | 'ROLE_CASHIER' | 'ROLE_CONTENT_MANAGER';
 export type VerificationStatus = 'VERIFIED' | 'NOT_VERIFIED';
 
 export interface UserProfileResponse {
@@ -120,9 +120,9 @@ export interface AdminUsersResponse {
 
 export const UserRoleDisplay: Record<UserRole, string> = {
     ROLE_ADMIN: 'Administrator',
-    ROLE_MANAGER: 'Manager',
     ROLE_USER: 'User',
-    ROLE_CUSTOMER: 'Customer'
+    ROLE_CASHIER: 'Cashier',
+    ROLE_CONTENT_MANAGER: 'Content Manager'
 };
 
 export const VerificationStatusDisplay: Record<VerificationStatus, string> = {

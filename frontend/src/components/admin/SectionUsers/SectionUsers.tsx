@@ -1,15 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { UserTable } from './UserTable/UserTable';
 import { UserFilters } from './UserFilters/UserFilters';
 import { useAdminUsers } from '@/hooks/features/admin/useAdminUsers';
 import { useNotification } from '@/hooks/common/useNotification';
 import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
 import { Notification, Pagination, LoadingSpinner } from '@/components/ui';
+import type { UserRole } from '@/types/user';
 import styles from './SectionUsers.module.css';
 
 export const SectionUsers: React.FC = () => {
     const [searchQuery, setSearchQuery] = useState('');
-    const [roleFilter, setRoleFilter] = useState('');
+    const [roleFilter, setRoleFilter] = useState<UserRole | ''>('');
     const [statusFilter, setStatusFilter] = useState('');
     const [currentPage, setCurrentPage] = useState(0);
 
@@ -34,34 +35,34 @@ export const SectionUsers: React.FC = () => {
         });
     }, [searchQuery, roleFilter, statusFilter, currentPage]);
 
-    const handleSearch = (query: string) => {
+    const handleSearch = useCallback((query: string) => {
         setSearchQuery(query);
         setCurrentPage(0);
-    };
+    }, []);
 
-    const handleRoleFilterChange = (value: string) => {
-        setRoleFilter(value);
+    const handleRoleFilterChange = useCallback((value: string) => {
+        setRoleFilter(value as UserRole | '');
         setCurrentPage(0);
-    };
+    }, []);
 
-    const handleStatusFilterChange = (value: string) => {
+    const handleStatusFilterChange = useCallback((value: string) => {
         setStatusFilter(value);
         setCurrentPage(0);
-    };
+    }, []);
 
-    const handlePageChange = (page: number) => {
+    const handlePageChange = useCallback((page: number) => {
         setCurrentPage(page);
-    };
+    }, []);
 
-    const handleError = (error: string) => {
+    const handleError = useCallback((error: string) => {
         showNotification(error, 'error');
-    };
+    }, [showNotification]);
 
-    const handleSuccess = (message: string) => {
+    const handleSuccess = useCallback((message: string) => {
         showNotification(message, 'success');
-    };
+    }, [showNotification]);
 
-    const handleUserUpdate = () => {
+    const handleUserUpdate = useCallback(() => {
         const enabledFilter = statusFilter === '' ? undefined : statusFilter === 'true';
         getUsers({
             search: searchQuery || undefined,
@@ -70,16 +71,14 @@ export const SectionUsers: React.FC = () => {
             page: currentPage,
             size: 10
         });
-    };
+    }, [searchQuery, roleFilter, statusFilter, currentPage]);
 
-    const getDisplayRange = () => {
+    const getDisplayRange = useCallback(() => {
         if (!pagination) return { start: 0, end: 0 };
-
         const startItem = pagination.number * pagination.size + 1;
         const endItem = Math.min((pagination.number + 1) * pagination.size, pagination.totalElements);
-
         return { start: startItem, end: endItem };
-    };
+    }, [pagination]);
 
     const { start, end } = getDisplayRange();
 
@@ -119,14 +118,12 @@ export const SectionUsers: React.FC = () => {
 
             {pagination && pagination.totalPages > 1 && (
                 <div className={styles.paginationWrapper}>
-                    {pagination && (
-                        <div className={styles.resultsInfo}>
-                            <span>
-                                Showing {start}-{end} of {pagination.totalElements} users
-                                {searchQuery && ` for "${searchQuery}"`}
-                            </span>
-                        </div>
-                    )}
+                    <div className={styles.resultsInfo}>
+                        <span>
+                            Showing {start}-{end} of {pagination.totalElements} users
+                            {searchQuery && ` for "${searchQuery}"`}
+                        </span>
+                    </div>
 
                     <Pagination
                         currentPage={pagination.number}
@@ -140,7 +137,7 @@ export const SectionUsers: React.FC = () => {
                 </div>
             )}
 
-            {notifications.map((notification, index) => (
+            {notifications.map((notification) => (
                 <Notification
                     key={notification.id}
                     id={notification.id}
@@ -149,7 +146,6 @@ export const SectionUsers: React.FC = () => {
                     isVisible={notification.isVisible}
                     onClose={hideNotification}
                     duration={4000}
-                    position={index}
                 />
             ))}
         </div>

@@ -18,7 +18,7 @@ const centerStyle = {
 
 export const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
     const { user, loading, isAuthenticated } = useAuth();
-    const showLoading = useDelayedLoading(loading, { delay: 150, minDisplayTime: 300 });
+    const showLoading = useDelayedLoading(loading, { delay: 300, minDisplayTime: 500 });
 
     if (showLoading) {
         return (
