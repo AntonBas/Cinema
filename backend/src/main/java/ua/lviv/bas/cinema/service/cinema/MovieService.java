@@ -74,7 +74,7 @@ public class MovieService {
 	public MovieDetailResponse updateMovie(Long id, MovieUpdateRequest request) {
 		log.info("Updating movie with id: {}", id);
 
-		Movie existing = findMovieById(id);
+		Movie existing = findAdminMovieById(id);
 		validateDates(request.getReleaseDate(), request.getEndShowingDate());
 
 		movieMapper.updateMovieFromRequest(request, existing);
@@ -100,7 +100,7 @@ public class MovieService {
 	public void deleteMovie(Long id) {
 		log.info("Deleting movie with id: {}", id);
 
-		Movie movie = findMovieById(id);
+		Movie movie = findAdminMovieById(id);
 		if (movie.getPosterFileName() != null) {
 			posterService.deletePoster(movie.getPosterFileName());
 		}
@@ -113,22 +113,24 @@ public class MovieService {
 				.orElseThrow(() -> new MovieNotFoundException(id));
 	}
 
+	public MovieDetailResponse getAdminMovieById(Long id) {
+		Movie movie = findAdminMovieById(id);
+		return buildDetailResponse(movie);
+	}
+
 	public MovieDetailResponse getMovieBySlug(String slug) {
 		Movie movie = movieRepository.findBySlug(slug).orElseThrow(() -> new MovieNotFoundException(slug));
 		return buildDetailResponse(movie);
 	}
 
+	public MovieDetailResponse getAdminMovieBySlug(String slug) {
+		Movie movie = movieRepository.findAdminMovieBySlug(slug).orElseThrow(() -> new MovieNotFoundException(slug));
+		return buildDetailResponse(movie);
+	}
+
 	public Page<MovieCardResponse> getFilteredMovies(MovieFilterRequest filter, Pageable pageable) {
 		Specification<Movie> spec = movieSpecification.build(filter);
-
 		Page<Movie> moviePage = movieRepository.findAll(spec, pageable);
-
-		log.info("Found {} movies for filter: {}", moviePage.getTotalElements(), filter);
-
-		if (log.isDebugEnabled()) {
-			moviePage.getContent().forEach(m -> log.debug("Movie: {}, Status: {}", m.getTitle(), m.getStatus()));
-		}
-
 		return moviePage.map(movieMapper::toMovieCardResponse);
 	}
 
@@ -138,7 +140,7 @@ public class MovieService {
 	}
 
 	public ResponseEntity<byte[]> getMoviePoster(Long id) {
-		Movie movie = findMovieById(id);
+		Movie movie = findAdminMovieById(id);
 		if (movie.getPosterFileName() == null) {
 			return ResponseEntity.notFound().build();
 		}
@@ -153,8 +155,8 @@ public class MovieService {
 		return movieMapper.toMovieDetailResponse(movie);
 	}
 
-	private Movie findMovieById(Long id) {
-		return movieRepository.findById(id).orElseThrow(() -> new MovieNotFoundException(id));
+	private Movie findAdminMovieById(Long id) {
+		return movieRepository.findAdminMovieById(id).orElseThrow(() -> new MovieNotFoundException(id));
 	}
 
 	private void validateDates(LocalDate releaseDate, LocalDate endShowingDate) {

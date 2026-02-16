@@ -21,6 +21,14 @@ public interface MovieRepository extends JpaRepository<Movie, Long>, JpaSpecific
 
 	Optional<MovieDetailProjection> findDetailProjectionById(Long id);
 
+	@EntityGraph(attributePaths = { "genres", "actors", "directors", "screenwriters" })
+	@Query("SELECT m FROM Movie m WHERE m.id = :id")
+	Optional<Movie> findAdminMovieById(@Param("id") Long id);
+
+	@EntityGraph(attributePaths = { "genres", "actors", "directors", "screenwriters" })
+	@Query("SELECT m FROM Movie m WHERE m.slug = :slug")
+	Optional<Movie> findAdminMovieBySlug(@Param("slug") String slug);
+
 	@Query("""
 			SELECT m.id as id, m.title as title, m.releaseDate as releaseDate,
 			       m.durationMinutes as durationMinutes
@@ -31,8 +39,4 @@ public interface MovieRepository extends JpaRepository<Movie, Long>, JpaSpecific
 			ORDER BY m.title
 			""")
 	List<MovieSessionSearchProjection> findMoviesForSession(@Param("title") String title);
-
-	@EntityGraph(attributePaths = { "genres", "actors", "directors", "screenwriters" })
-	@Override
-	Optional<Movie> findById(Long id);
 }
