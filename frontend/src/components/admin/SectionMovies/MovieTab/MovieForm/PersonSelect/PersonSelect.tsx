@@ -1,6 +1,7 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import type { PersonResponse, PersonRole } from '@/types/person';
 import { usePerson } from '@/hooks/features/persons/usePerson';
+import { useNotification } from '@/hooks/common/useNotification';
 import styles from './PersonSelect.module.css';
 
 interface PersonSelectProps {
@@ -9,22 +10,27 @@ interface PersonSelectProps {
     onChange: (ids: number[]) => void;
     role: PersonRole;
     placeholder?: string;
-    showNotification?: (message: string, type?: 'success' | 'error' | 'warning' | 'info') => void;
 }
+
+const SEARCH_DELAY = 300;
+const MIN_SEARCH_LENGTH = 2;
+const MAX_OPTIONS = 10;
 
 export const PersonSelect: React.FC<PersonSelectProps> = ({
     selectedIds,
     selectedPersons = [],
     onChange,
     role,
-    placeholder = "Search or add new...",
-    showNotification
+    placeholder = "Search or add new..."
 }) => {
     const [searchQuery, setSearchQuery] = useState('');
     const [isOpen, setIsOpen] = useState(false);
     const [localOptions, setLocalOptions] = useState<PersonResponse[]>([]);
+    const [isSearching, setIsSearching] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
+    const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+    const { showNotification } = useNotification();
     const {
         getActors,
         getDirectors,
@@ -33,44 +39,59 @@ export const PersonSelect: React.FC<PersonSelectProps> = ({
         loading
     } = usePerson();
 
-    const handlePersonSearch = async (query: string, personRole: PersonRole) => {
-        if (!query.trim()) return [];
-
-        let result;
-        if (personRole === 'ACTOR') {
-            result = await getActors({ name: query, page: 0, size: 10 });
-        } else if (personRole === 'DIRECTOR') {
-            result = await getDirectors({ name: query, page: 0, size: 10 });
-        } else {
-            result = await getScreenwriters({ name: query, page: 0, size: 10 });
+    const getSearchMethod = useCallback((personRole: PersonRole) => {
+        switch (personRole) {
+            case 'ACTOR': return getActors;
+            case 'DIRECTOR': return getDirectors;
+            case 'SCREENWRITER': return getScreenwriters;
+            default: return getActors;
         }
+    }, [getActors, getDirectors, getScreenwriters]);
 
-        return result?.content || [];
-    };
+    const handlePersonSearch = useCallback(async (query: string, personRole: PersonRole) => {
+        if (!query.trim() || query.length < MIN_SEARCH_LENGTH) return [];
 
-    const handleAddNewPerson = async (name: string, personRole: PersonRole) => {
+        try {
+            setIsSearching(true);
+            const searchMethod = getSearchMethod(personRole);
+            const result = await searchMethod({ name: query, page: 0, size: MAX_OPTIONS });
+            return result?.content || [];
+        } catch (error) {
+            showNotification('Failed to search persons', 'error');
+            return [];
+        } finally {
+            setIsSearching(false);
+        }
+    }, [getSearchMethod, showNotification]);
+
+    const handleAddNewPerson = useCallback(async (name: string, personRole: PersonRole) => {
         try {
             const newPerson = await quickCreate({ name, role: personRole });
-            if (showNotification) {
-                showNotification(`Person "${name}" created successfully`, 'success');
-            }
+
+            const roleDisplay = {
+                ACTOR: 'Actor',
+                DIRECTOR: 'Director',
+                SCREENWRITER: 'Screenwriter'
+            }[personRole];
+
+            showNotification(`${roleDisplay} "${name}" created successfully`, 'success');
             return newPerson;
         } catch (error) {
-            if (showNotification) {
-                showNotification('Failed to create person', 'error');
-            }
+            showNotification('Failed to create person', 'error');
             return null;
         }
-    };
+    }, [quickCreate, showNotification]);
 
-    const displayPersons = useMemo(() => {
-        return selectedPersons.filter(person => selectedIds.includes(person.id));
-    }, [selectedPersons, selectedIds]);
+    const displayPersons = useMemo(() =>
+        selectedPersons.filter(person => selectedIds.includes(person.id)),
+        [selectedPersons, selectedIds]
+    );
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
                 setIsOpen(false);
+                setSearchQuery('');
             }
         };
 
@@ -79,44 +100,76 @@ export const PersonSelect: React.FC<PersonSelectProps> = ({
     }, []);
 
     useEffect(() => {
-        if (searchQuery.length >= 2) {
-            const search = async () => {
+        if (searchTimeoutRef.current) {
+            clearTimeout(searchTimeoutRef.current);
+        }
+
+        if (searchQuery.length >= MIN_SEARCH_LENGTH) {
+            searchTimeoutRef.current = setTimeout(async () => {
                 const results = await handlePersonSearch(searchQuery, role);
                 setLocalOptions(results);
                 setIsOpen(true);
-            };
-            search();
+            }, SEARCH_DELAY);
         } else {
             setLocalOptions([]);
             setIsOpen(false);
         }
-    }, [searchQuery, role]);
 
-    const handleSelectPerson = (personId: number) => {
+        return () => {
+            if (searchTimeoutRef.current) {
+                clearTimeout(searchTimeoutRef.current);
+            }
+        };
+    }, [searchQuery, role, handlePersonSearch]);
+
+    const handleSelectPerson = useCallback((personId: number) => {
         const newSelectedIds = selectedIds.includes(personId)
             ? selectedIds.filter(id => id !== personId)
             : [...selectedIds, personId];
         onChange(newSelectedIds);
-    };
+    }, [selectedIds, onChange]);
 
-    const handleRemovePerson = (personId: number) => {
+    const handleRemovePerson = useCallback((personId: number) => {
         const newSelectedIds = selectedIds.filter(id => id !== personId);
         onChange(newSelectedIds);
-    };
+    }, [selectedIds, onChange]);
 
-    const handleAddAndSelect = async () => {
+    const handleAddAndSelect = useCallback(async () => {
         const newPerson = await handleAddNewPerson(searchQuery, role);
         if (newPerson) {
             const newSelectedIds = [...selectedIds, newPerson.id];
             onChange(newSelectedIds);
             setSearchQuery('');
+            setIsOpen(false);
         }
-    };
+    }, [searchQuery, role, selectedIds, onChange, handleAddNewPerson]);
 
-    const showAddOption = searchQuery.trim().length >= 2 &&
+    const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+        setSearchQuery(e.target.value);
+    }, []);
+
+    const handleFocus = useCallback(() => {
+        if (searchQuery.length >= MIN_SEARCH_LENGTH) {
+            setIsOpen(true);
+        }
+    }, [searchQuery.length]);
+
+    const showAddOption = useMemo(() =>
+        searchQuery.trim().length >= MIN_SEARCH_LENGTH &&
         !localOptions.some(person =>
             person.name.toLowerCase().includes(searchQuery.toLowerCase())
-        );
+        ),
+        [searchQuery, localOptions]
+    );
+
+    const roleLabel = useMemo(() => {
+        switch (role) {
+            case 'ACTOR': return 'actor';
+            case 'DIRECTOR': return 'director';
+            case 'SCREENWRITER': return 'screenwriter';
+            default: return 'person';
+        }
+    }, [role]);
 
     return (
         <div className={styles.container} ref={dropdownRef}>
@@ -124,12 +177,13 @@ export const PersonSelect: React.FC<PersonSelectProps> = ({
                 <input
                     type="text"
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    onFocus={() => searchQuery.length >= 2 && setIsOpen(true)}
+                    onChange={handleSearchChange}
+                    onFocus={handleFocus}
                     placeholder={placeholder}
                     className={styles.searchInput}
+                    aria-label={`Search ${roleLabel}s`}
                 />
-                {loading && <div className={styles.spinner}>⏳</div>}
+                {(loading || isSearching) && <div className={styles.spinner} aria-label="Loading">⏳</div>}
             </div>
 
             {displayPersons.length > 0 && (
@@ -142,6 +196,7 @@ export const PersonSelect: React.FC<PersonSelectProps> = ({
                                 onClick={() => handleRemovePerson(person.id)}
                                 className={styles.removeTag}
                                 title={`Remove ${person.name}`}
+                                aria-label={`Remove ${person.name}`}
                             >
                                 ×
                             </button>
@@ -151,26 +206,30 @@ export const PersonSelect: React.FC<PersonSelectProps> = ({
             )}
 
             {isOpen && (
-                <div className={styles.dropdown}>
+                <div className={styles.dropdown} role="listbox">
                     {showAddOption && (
                         <button
                             type="button"
                             onClick={handleAddAndSelect}
                             className={styles.addOption}
-                            disabled={loading}
+                            disabled={loading || isSearching}
+                            role="option"
+                            aria-label={`Add and select "${searchQuery}" as new ${roleLabel}`}
                         >
-                            ➕ Add & select "{searchQuery}"
+                            ➕ Add & select "{searchQuery}" as new {roleLabel}
                         </button>
                     )}
 
                     {localOptions.map(person => (
-                        <label key={person.id} className={styles.option}>
+                        <label key={person.id} className={styles.option} role="option">
                             <input
                                 type="checkbox"
                                 checked={selectedIds.includes(person.id)}
                                 onChange={() => handleSelectPerson(person.id)}
+                                className={styles.checkbox}
+                                aria-label={`Select ${person.name}`}
                             />
-                            <span className={styles.checkmark}></span>
+                            <span className={styles.checkmark} />
                             <span className={styles.optionLabel}>
                                 {person.name}
                                 {selectedIds.includes(person.id) && (
@@ -180,8 +239,8 @@ export const PersonSelect: React.FC<PersonSelectProps> = ({
                         </label>
                     ))}
 
-                    {localOptions.length === 0 && searchQuery.length >= 2 && !showAddOption && (
-                        <div className={styles.noResults}>No results found</div>
+                    {localOptions.length === 0 && searchQuery.length >= MIN_SEARCH_LENGTH && !showAddOption && (
+                        <div className={styles.noResults}>No {roleLabel}s found</div>
                     )}
                 </div>
             )}

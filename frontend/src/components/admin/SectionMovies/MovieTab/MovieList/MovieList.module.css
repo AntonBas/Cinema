@@ -3,39 +3,56 @@
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: var(--space-6);
   padding: var(--space-4) 0;
+  animation: fadeIn var(--transition-normal);
 }
 
 .empty {
   text-align: center;
-  padding: 4rem 2rem;
+  padding: var(--space-12) var(--space-8);
   color: var(--color-text-secondary);
   grid-column: 1 / -1;
   background: linear-gradient(135deg, var(--color-bg-secondary) 0%, var(--color-bg-quaternary) 100%);
   border-radius: var(--radius-lg);
   border: 1px solid var(--color-border-medium);
+  animation: slideIn var(--transition-normal);
 }
 
 .emptyIcon {
   font-size: 4rem;
   margin-bottom: var(--space-4);
-  opacity: 0.5;
+  opacity: 0.6;
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
 }
 
 .empty h3 {
   color: var(--color-text-primary);
   margin: 0 0 var(--space-2) 0;
-  font-size: 1.5rem;
+  font-size: var(--font-size-2xl);
   font-weight: 600;
 }
 
 .empty p {
   margin: 0 0 var(--space-6) 0;
   font-size: var(--font-size-md);
-  line-height: 1.5;
+  line-height: 1.6;
+  color: var(--color-text-secondary);
 }
 
 .createButton {
   margin-top: var(--space-4);
+  min-width: 200px;
 }
 
 .loading {
@@ -43,12 +60,47 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 4rem 2rem;
+  padding: var(--space-12) var(--space-8);
   color: var(--color-text-secondary);
   grid-column: 1 / -1;
   background: linear-gradient(135deg, var(--color-bg-secondary) 0%, var(--color-bg-quaternary) 100%);
   border-radius: var(--radius-lg);
   border: 1px solid var(--color-border-medium);
+  min-height: 300px;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .grid,
+  .empty,
+  .emptyIcon {
+    animation: none;
+    transition: none;
+  }
 }
 
 @media (max-width: 768px) {
@@ -58,8 +110,7 @@
   }
 
   .empty {
-    padding: 3rem 1rem;
-    margin: var(--space-4) 0;
+    padding: var(--space-8) var(--space-4);
   }
 
   .emptyIcon {
@@ -67,7 +118,7 @@
   }
 
   .empty h3 {
-    font-size: 1.3rem;
+    font-size: var(--font-size-xl);
   }
 
   .empty p {
@@ -75,7 +126,13 @@
   }
 
   .loading {
-    padding: 3rem 1rem;
+    padding: var(--space-8) var(--space-4);
+    min-height: 200px;
+  }
+
+  .createButton {
+    width: 100%;
+    min-width: auto;
   }
 }
 
@@ -85,18 +142,19 @@
   }
 
   .empty {
-    padding: 2rem 1rem;
+    padding: var(--space-6) var(--space-3);
   }
 
   .emptyIcon {
     font-size: 2.5rem;
+    margin-bottom: var(--space-3);
   }
 
   .empty h3 {
-    font-size: 1.2rem;
+    font-size: var(--font-size-lg);
   }
 
   .loading {
-    padding: 2rem 1rem;
+    padding: var(--space-6) var(--space-3);
   }
 }

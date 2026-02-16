@@ -5,227 +5,168 @@ import type {
     MovieDetailResponse,
     MovieSessionSearchResponse,
     MovieCreateRequest,
-    MovieUpdateRequest
+    MovieUpdateRequest,
+    MovieFilterRequest
 } from '@/types/movie';
-import type { PageResponse } from '@/types/pagination';
+import type { PageResponse, SearchParams } from '@/types/pagination';
 import { useApi } from '@/hooks/common/useApi';
 
 export const useMovies = () => {
-    const moviesApi = useApi<PageResponse<MovieCardResponse>>();
-    const movieByIdApi = useApi<MovieDetailResponse>();
-    const movieBySlugApi = useApi<MovieDetailResponse>();
     const currentlyShowingApi = useApi<PageResponse<MovieCardResponse>>();
     const upcomingApi = useApi<PageResponse<MovieCardResponse>>();
     const archivedApi = useApi<PageResponse<MovieCardResponse>>();
-    const searchMoviesApi = useApi<MovieSessionSearchResponse[]>();
-    const createMovieApi = useApi<MovieDetailResponse>();
-    const updateMovieApi = useApi<MovieDetailResponse>();
-    const deleteMovieApi = useApi<void>();
+    const movieDetailApi = useApi<MovieDetailResponse>();
+    const searchApi = useApi<MovieSessionSearchResponse[]>();
+    const createApi = useApi<MovieDetailResponse>();
+    const updateApi = useApi<MovieDetailResponse>();
+    const deleteApi = useApi<void>();
 
-    const adminMovieByIdApi = useApi<MovieDetailResponse>();
-    const adminMovieBySlugApi = useApi<MovieDetailResponse>();
-
-    const getFilteredMovies = useCallback(async (params?: any) => {
-        const isAdmin = params?.isAdmin || false;
-        const apiCall = isAdmin
-            ? () => movieApi.admin.getFilteredMovies(params)
-            : () => movieApi.public.getFilteredMovies(params);
-
-        return moviesApi.execute(apiCall, {
-            cacheKey: `movies_filtered_${JSON.stringify(params)}`,
-            cacheTime: 5 * 60 * 1000,
-            showErrorNotification: false,
-        });
-    }, [moviesApi]);
-
-    const getCurrentlyShowing = useCallback(async (params?: any) => {
+    const getCurrentlyShowing = useCallback(async (params?: SearchParams, isAdmin: boolean = false) => {
+        if (isAdmin) {
+            return currentlyShowingApi.execute(
+                () => movieApi.admin.getFilteredMovies({ currentlyShowing: true }, params)
+            );
+        }
         return currentlyShowingApi.execute(
-            () => movieApi.public.getCurrentlyShowing(params),
-            {
-                cacheKey: `movies_currently_showing_${JSON.stringify(params)}`,
-                cacheTime: 10 * 60 * 1000,
-                showErrorNotification: false,
-            }
+            () => movieApi.public.getCurrentlyShowing(params)
         );
     }, [currentlyShowingApi]);
 
-    const getUpcoming = useCallback(async (params?: any) => {
+    const getUpcoming = useCallback(async (params?: SearchParams, isAdmin: boolean = false) => {
+        if (isAdmin) {
+            return upcomingApi.execute(
+                () => movieApi.admin.getFilteredMovies({ upcoming: true }, params)
+            );
+        }
         return upcomingApi.execute(
-            () => movieApi.public.getUpcoming(params),
-            {
-                cacheKey: `movies_upcoming_${JSON.stringify(params)}`,
-                cacheTime: 15 * 60 * 1000,
-                showErrorNotification: false,
-            }
+            () => movieApi.public.getUpcoming(params)
         );
     }, [upcomingApi]);
 
-    const getArchived = useCallback(async (params?: any) => {
-        const filterParams = { ...params, archived: true };
+    const getArchived = useCallback(async (params?: SearchParams) => {
         return archivedApi.execute(
-            () => movieApi.admin.getFilteredMovies(filterParams),
-            {
-                cacheKey: `movies_archived_${JSON.stringify(params)}`,
-                cacheTime: 5 * 60 * 1000,
-                showErrorNotification: false,
-            }
+            () => movieApi.admin.getFilteredMovies({ archived: true }, params)
         );
     }, [archivedApi]);
 
-    const getById = useCallback(async (id: number, isAdmin: boolean = false) => {
-        if (isAdmin) {
-            return adminMovieByIdApi.execute(
-                () => movieApi.admin.getMovieById(id),
-                {
-                    cacheKey: `admin_movie_${id}`,
-                    cacheTime: 5 * 60 * 1000,
-                    showErrorNotification: false,
-                }
-            );
-        }
-        return movieByIdApi.execute(
-            () => movieApi.public.getById(id),
-            {
-                cacheKey: `movie_${id}`,
-                cacheTime: 10 * 60 * 1000,
-                showErrorNotification: false,
-            }
+    const getFilteredMovies = useCallback(async (filter?: MovieFilterRequest, params?: SearchParams) => {
+        return currentlyShowingApi.execute(
+            () => movieApi.admin.getFilteredMovies(filter, params)
         );
-    }, [movieByIdApi, adminMovieByIdApi]);
+    }, [currentlyShowingApi]);
+
+    const getPublicMovies = useCallback(async (params?: SearchParams) => {
+        return currentlyShowingApi.execute(
+            () => movieApi.public.getFilteredMovies(params)
+        );
+    }, [currentlyShowingApi]);
+
+    const getById = useCallback(async (id: number, isAdmin: boolean = false) => {
+        const apiCall = isAdmin
+            ? () => movieApi.admin.getMovieById(id)
+            : () => movieApi.public.getById(id);
+
+        return movieDetailApi.execute(apiCall);
+    }, [movieDetailApi]);
 
     const getBySlug = useCallback(async (slug: string, isAdmin: boolean = false) => {
-        if (isAdmin) {
-            return adminMovieBySlugApi.execute(
-                () => movieApi.admin.getMovieBySlug(slug),
-                {
-                    cacheKey: `admin_movie_slug_${slug}`,
-                    cacheTime: 5 * 60 * 1000,
-                    showErrorNotification: false,
-                }
-            );
-        }
-        return movieBySlugApi.execute(
-            () => movieApi.public.getBySlug(slug),
-            {
-                cacheKey: `movie_slug_${slug}`,
-                cacheTime: 10 * 60 * 1000,
-                showErrorNotification: false,
-            }
-        );
-    }, [movieBySlugApi, adminMovieBySlugApi]);
+        const apiCall = isAdmin
+            ? () => movieApi.admin.getMovieBySlug(slug)
+            : () => movieApi.public.getBySlug(slug);
 
-    const searchMoviesForSession = useCallback(async (search?: string) => {
-        return searchMoviesApi.execute(
-            () => movieApi.public.searchMoviesForSession(search),
-            {
-                cacheKey: `movies_search_${search || 'all'}`,
-                cacheTime: 2 * 60 * 1000,
-                showErrorNotification: false,
-            }
-        );
-    }, [searchMoviesApi]);
+        return movieDetailApi.execute(apiCall);
+    }, [movieDetailApi]);
+
+    const searchMoviesForSession = useCallback(async (search?: string, isAdmin: boolean = false) => {
+        const apiCall = isAdmin
+            ? () => movieApi.admin.searchMoviesForSession(search)
+            : () => movieApi.public.searchMoviesForSession(search);
+
+        return searchApi.execute(apiCall);
+    }, [searchApi]);
 
     const create = useCallback(async (request: MovieCreateRequest) => {
-        return createMovieApi.execute(
+        return createApi.execute(
             () => movieApi.admin.create(request),
             {
                 successMessage: 'Movie created successfully',
                 onSuccess: () => {
-                    moviesApi.invalidateCache();
                     currentlyShowingApi.invalidateCache();
                     upcomingApi.invalidateCache();
                     archivedApi.invalidateCache();
-                },
+                }
             }
         );
-    }, [createMovieApi, moviesApi, currentlyShowingApi, upcomingApi, archivedApi]);
+    }, [createApi, currentlyShowingApi, upcomingApi, archivedApi]);
 
     const update = useCallback(async (id: number, request: MovieUpdateRequest) => {
-        return updateMovieApi.execute(
+        return updateApi.execute(
             () => movieApi.admin.update(id, request),
             {
                 successMessage: 'Movie updated successfully',
                 onSuccess: () => {
-                    movieByIdApi.invalidateCache(`movie_${id}`);
-                    movieBySlugApi.invalidateCache();
-                    adminMovieByIdApi.invalidateCache(`admin_movie_${id}`);
-                    adminMovieBySlugApi.invalidateCache();
-                    moviesApi.invalidateCache();
+                    movieDetailApi.invalidateCache();
                     currentlyShowingApi.invalidateCache();
                     upcomingApi.invalidateCache();
                     archivedApi.invalidateCache();
-                },
+                }
             }
         );
-    }, [updateMovieApi, movieByIdApi, movieBySlugApi, adminMovieByIdApi, adminMovieBySlugApi, moviesApi, currentlyShowingApi, upcomingApi, archivedApi]);
+    }, [updateApi, movieDetailApi, currentlyShowingApi, upcomingApi, archivedApi]);
 
     const remove = useCallback(async (id: number) => {
-        return deleteMovieApi.execute(
+        return deleteApi.execute(
             () => movieApi.admin.delete(id),
             {
                 successMessage: 'Movie deleted successfully',
                 onSuccess: () => {
-                    movieByIdApi.invalidateCache(`movie_${id}`);
-                    movieBySlugApi.invalidateCache();
-                    adminMovieByIdApi.invalidateCache(`admin_movie_${id}`);
-                    adminMovieBySlugApi.invalidateCache();
-                    moviesApi.invalidateCache();
+                    movieDetailApi.invalidateCache();
                     currentlyShowingApi.invalidateCache();
                     upcomingApi.invalidateCache();
                     archivedApi.invalidateCache();
-                },
+                }
             }
         );
-    }, [deleteMovieApi, movieByIdApi, movieBySlugApi, adminMovieByIdApi, adminMovieBySlugApi, moviesApi, currentlyShowingApi, upcomingApi, archivedApi]);
+    }, [deleteApi, movieDetailApi, currentlyShowingApi, upcomingApi, archivedApi]);
 
     const clearCache = useCallback(() => {
-        moviesApi.invalidateCache();
-        movieByIdApi.invalidateCache();
-        movieBySlugApi.invalidateCache();
-        adminMovieByIdApi.invalidateCache();
-        adminMovieBySlugApi.invalidateCache();
         currentlyShowingApi.invalidateCache();
         upcomingApi.invalidateCache();
         archivedApi.invalidateCache();
-        searchMoviesApi.invalidateCache();
-        createMovieApi.invalidateCache();
-        updateMovieApi.invalidateCache();
-        deleteMovieApi.invalidateCache();
-    }, [moviesApi, movieByIdApi, movieBySlugApi, adminMovieByIdApi, adminMovieBySlugApi,
-        currentlyShowingApi, upcomingApi, archivedApi, searchMoviesApi,
-        createMovieApi, updateMovieApi, deleteMovieApi]);
+        movieDetailApi.invalidateCache();
+        searchApi.invalidateCache();
+        createApi.invalidateCache();
+        updateApi.invalidateCache();
+        deleteApi.invalidateCache();
+    }, [currentlyShowingApi, upcomingApi, archivedApi, movieDetailApi, searchApi, createApi, updateApi, deleteApi]);
 
     const getPosterUrl = useCallback((id: number): string => {
         return movieApi.public.getPosterUrl(id);
     }, []);
 
-    const loading = moviesApi.loading || movieByIdApi.loading ||
-        movieBySlugApi.loading || adminMovieByIdApi.loading ||
-        adminMovieBySlugApi.loading || currentlyShowingApi.loading ||
-        upcomingApi.loading || archivedApi.loading ||
-        searchMoviesApi.loading || createMovieApi.loading ||
-        updateMovieApi.loading || deleteMovieApi.loading;
+    const loading = currentlyShowingApi.loading || upcomingApi.loading ||
+        archivedApi.loading || movieDetailApi.loading || searchApi.loading ||
+        createApi.loading || updateApi.loading || deleteApi.loading;
 
-    const error = !!(moviesApi.error || movieByIdApi.error ||
-        movieBySlugApi.error || adminMovieByIdApi.error ||
-        adminMovieBySlugApi.error || currentlyShowingApi.error ||
-        upcomingApi.error || archivedApi.error ||
-        searchMoviesApi.error || createMovieApi.error ||
-        updateMovieApi.error || deleteMovieApi.error);
+    const error = !!(currentlyShowingApi.error || upcomingApi.error ||
+        archivedApi.error || movieDetailApi.error || searchApi.error ||
+        createApi.error || updateApi.error || deleteApi.error);
 
     return {
-        movies: moviesApi.data?.content || [],
         currentlyShowing: currentlyShowingApi.data?.content || [],
         upcoming: upcomingApi.data?.content || [],
         archived: archivedApi.data?.content || [],
-        movie: movieByIdApi.data || movieBySlugApi.data || adminMovieByIdApi.data || adminMovieBySlugApi.data,
-        movieBySlug: movieBySlugApi.data || adminMovieBySlugApi.data,
-        searchResults: searchMoviesApi.data || [],
+        currentlyShowingPagination: currentlyShowingApi.data,
+        upcomingPagination: upcomingApi.data,
+        archivedPagination: archivedApi.data,
+        movie: movieDetailApi.data,
+        searchResults: searchApi.data || [],
 
         loading,
         error,
 
         getFilteredMovies,
+        getPublicMovies,
         getCurrentlyShowing,
         getUpcoming,
         getArchived,
@@ -238,16 +179,6 @@ export const useMovies = () => {
         clearCache,
         getPosterUrl,
 
-        resetMovies: moviesApi.reset,
-        resetMovie: movieByIdApi.reset,
-        resetMovieBySlug: movieBySlugApi.reset,
-        resetCurrentlyShowing: currentlyShowingApi.reset,
-        resetUpcoming: upcomingApi.reset,
-        resetArchived: archivedApi.reset,
-
-        pagination: moviesApi.data,
-        currentlyShowingPagination: currentlyShowingApi.data,
-        upcomingPagination: upcomingApi.data,
-        archivedPagination: archivedApi.data,
+        reset: currentlyShowingApi.reset,
     };
 };

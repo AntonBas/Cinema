@@ -62,8 +62,17 @@ export const createSearchParams = (params: SearchParams, context?: 'grid' | 'lis
     return searchParams;
 };
 
-export const buildPagedUrl = (baseUrl: string, params: SearchParams = {}, context?: string): string => {
+export const buildPagedUrl = (baseUrl: string, params: SearchParams = {}, filter?: Record<string, any>, context?: string): string => {
     const searchParams = createSearchParams(params, context as any);
+
+    if (filter) {
+        Object.entries(filter).forEach(([key, value]) => {
+            if (value !== undefined && value !== null && value !== '') {
+                searchParams.append(key, value.toString());
+            }
+        });
+    }
+
     const queryString = searchParams.toString();
     return queryString ? `${baseUrl}?${queryString}` : baseUrl;
 };

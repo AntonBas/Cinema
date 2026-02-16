@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import type {
     MovieDetailResponse,
     MovieCreateRequest,
@@ -13,13 +13,13 @@ import { toBackendFormat } from '@/utils/dateUtils';
 import { PersonSelect } from './PersonSelect/PersonSelect';
 import { GenreSearchList } from './GenreSearchList/GenreSearchList';
 import { Button, Modal, LoadingSpinner } from '@/components/ui';
+import { useNotification } from '@/hooks/common/useNotification';
 import styles from './MovieForm.module.css';
 
 interface MovieFormProps {
     movie?: MovieDetailResponse | null;
     onSuccess: () => void;
     onCancel: () => void;
-    showNotification?: (message: string, type?: 'success' | 'error' | 'warning' | 'info') => void;
 }
 
 interface MovieFormData {
@@ -38,12 +38,23 @@ interface MovieFormData {
     removePoster: boolean;
 }
 
-export const MovieForm: React.FC<MovieFormProps> = ({
+const AGE_RATING_OPTIONS = [
+    { value: 'PEGI_3', label: 'PEGI 3' },
+    { value: 'PEGI_7', label: 'PEGI 7' },
+    { value: 'PEGI_12', label: 'PEGI 12' },
+    { value: 'PEGI_16', label: 'PEGI 16' },
+    { value: 'PEGI_18', label: 'PEGI 18' }
+] as const;
+
+const TITLE_MAX_LENGTH = 50;
+const DESCRIPTION_MAX_LENGTH = 1000;
+
+export const MovieForm: React.FC<MovieFormProps> = React.memo(({
     movie,
     onSuccess,
-    onCancel,
-    showNotification
+    onCancel
 }) => {
+    const { showNotification } = useNotification();
     const [genres, setGenres] = useState<GenreResponse[]>([]);
     const [selectedGenres, setSelectedGenres] = useState<GenreResponse[]>([]);
     const [selectedActors, setSelectedActors] = useState<PersonResponse[]>([]);
@@ -53,6 +64,7 @@ export const MovieForm: React.FC<MovieFormProps> = ({
     const [isUploading, setIsUploading] = useState(false);
     const [posterPreview, setPosterPreview] = useState<string>('');
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const initialLoadRef = useRef(false);
 
     const [formData, setFormData] = useState<MovieFormData>({
         title: '',
@@ -70,40 +82,29 @@ export const MovieForm: React.FC<MovieFormProps> = ({
         removePoster: false
     });
 
-    const notify = useCallback((message: string, type: 'success' | 'error' | 'warning' | 'info') => {
-        if (showNotification) {
-            showNotification(message, type);
-        }
-    }, [showNotification]);
-
     const loadGenres = useCallback(async () => {
         try {
             const genresData = await genreApi.public.getPopular('', 100);
             setGenres(genresData);
         } catch (error) {
             console.error('Error loading genres:', error);
+            showNotification('Failed to load genres', 'error');
         }
-    }, []);
+    }, [showNotification]);
+
+    useEffect(() => {
+        if (!initialLoadRef.current) {
+            initialLoadRef.current = true;
+            loadGenres();
+        }
+    }, [loadGenres]);
 
     useEffect(() => {
         if (movie) {
-            if (movie.genres) {
-                setSelectedGenres(movie.genres);
-            }
-            if (movie.actors) {
-                setSelectedActors(movie.actors);
-            }
-            if (movie.directors) {
-                setSelectedDirectors(movie.directors);
-            }
-            if (movie.screenwriters) {
-                setSelectedScreenwriters(movie.screenwriters);
-            }
-
-            const genreIds = movie.genres?.map(g => g.id) || [];
-            const actorIds = movie.actors?.map(a => a.id) || [];
-            const directorIds = movie.directors?.map(d => d.id) || [];
-            const screenwriterIds = movie.screenwriters?.map(s => s.id) || [];
+            setSelectedGenres(movie.genres || []);
+            setSelectedActors(movie.actors || []);
+            setSelectedDirectors(movie.directors || []);
+            setSelectedScreenwriters(movie.screenwriters || []);
 
             setFormData({
                 title: movie.title,
@@ -113,38 +114,21 @@ export const MovieForm: React.FC<MovieFormProps> = ({
                 releaseDate: movie.releaseDate ? new Date(movie.releaseDate) : null,
                 endShowingDate: movie.endShowingDate ? new Date(movie.endShowingDate) : null,
                 ageRating: movie.ageRating,
-                selectedGenres: genreIds,
-                selectedDirectors: directorIds,
-                selectedScreenwriters: screenwriterIds,
-                selectedActors: actorIds,
+                selectedGenres: movie.genres?.map(g => g.id) || [],
+                selectedDirectors: movie.directors?.map(d => d.id) || [],
+                selectedScreenwriters: movie.screenwriters?.map(s => s.id) || [],
+                selectedActors: movie.actors?.map(a => a.id) || [],
                 posterFile: undefined,
                 removePoster: false
             });
 
             if (movie.posterUrl) {
                 setPosterPreview(movie.posterUrl);
-            } else {
-                setPosterPreview('');
             }
         }
     }, [movie]);
 
-    useEffect(() => {
-        const loadAllData = async () => {
-            setIsLoadingData(true);
-            try {
-                await loadGenres();
-            } catch (error) {
-                console.error('Error loading form data:', error);
-            } finally {
-                setIsLoadingData(false);
-            }
-        };
-
-        loadAllData();
-    }, [loadGenres]);
-
-    const handlePosterSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handlePosterSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
             const previewUrl = URL.createObjectURL(file);
@@ -155,9 +139,9 @@ export const MovieForm: React.FC<MovieFormProps> = ({
                 removePoster: false
             }));
         }
-    };
+    }, []);
 
-    const handleRemovePoster = () => {
+    const handleRemovePoster = useCallback(() => {
         setPosterPreview('');
         setFormData(prev => ({
             ...prev,
@@ -167,19 +151,19 @@ export const MovieForm: React.FC<MovieFormProps> = ({
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
         }
-    };
+    }, []);
 
-    const formatDateForInput = (date: Date | null): string => {
+    const formatDateForInput = useCallback((date: Date | null): string => {
         if (!date) return '';
         return date.toISOString().split('T')[0];
-    };
+    }, []);
 
-    const formatDateForBackend = (date: Date | null): string => {
+    const formatDateForBackend = useCallback((date: Date | null): string => {
         if (!date) return '';
         return toBackendFormat(date.toISOString().split('T')[0]);
-    };
+    }, []);
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = useCallback(async (e: React.FormEvent) => {
         e.preventDefault();
         setIsUploading(true);
 
@@ -202,10 +186,10 @@ export const MovieForm: React.FC<MovieFormProps> = ({
                 };
 
                 await movieApi.admin.update(movie.id, updateRequest);
-                notify('Movie updated successfully!', 'success');
+                showNotification('Movie updated successfully!', 'success');
             } else {
                 if (!formData.posterFile) {
-                    notify('Poster is required for new movie', 'error');
+                    showNotification('Poster is required for new movie', 'error');
                     setIsUploading(false);
                     return;
                 }
@@ -226,18 +210,19 @@ export const MovieForm: React.FC<MovieFormProps> = ({
                 };
 
                 await movieApi.admin.create(createRequest);
-                notify('Movie created successfully!', 'success');
+                showNotification('Movie created successfully!', 'success');
             }
 
             onSuccess();
         } catch (error) {
             console.error('Error saving movie:', error);
+            showNotification('Failed to save movie', 'error');
         } finally {
             setIsUploading(false);
         }
-    };
+    }, [movie, formData, formatDateForBackend, onSuccess, showNotification]);
 
-    const handleGenreChange = (genreId: number) => {
+    const handleGenreChange = useCallback((genreId: number) => {
         setFormData(prev => {
             const currentIds = prev.selectedGenres;
             const newIds = currentIds.includes(genreId)
@@ -245,27 +230,33 @@ export const MovieForm: React.FC<MovieFormProps> = ({
                 : [...currentIds, genreId];
             return { ...prev, selectedGenres: newIds };
         });
-    };
+    }, []);
 
-    const handleActorsChange = (ids: number[]) => {
+    const handleActorsChange = useCallback((ids: number[]) => {
         setFormData(prev => ({ ...prev, selectedActors: ids }));
-    };
+    }, []);
 
-    const handleDirectorsChange = (ids: number[]) => {
+    const handleDirectorsChange = useCallback((ids: number[]) => {
         setFormData(prev => ({ ...prev, selectedDirectors: ids }));
-    };
+    }, []);
 
-    const handleScreenwritersChange = (ids: number[]) => {
+    const handleScreenwritersChange = useCallback((ids: number[]) => {
         setFormData(prev => ({ ...prev, selectedScreenwriters: ids }));
-    };
+    }, []);
 
-    const ageRatingOptions = [
-        { value: 'PEGI_3', label: 'PEGI 3' },
-        { value: 'PEGI_7', label: 'PEGI 7' },
-        { value: 'PEGI_12', label: 'PEGI 12' },
-        { value: 'PEGI_16', label: 'PEGI 16' },
-        { value: 'PEGI_18', label: 'PEGI 18' }
-    ];
+    const selectedActorsIds = useMemo(() => formData.selectedActors, [formData.selectedActors]);
+    const selectedDirectorsIds = useMemo(() => formData.selectedDirectors, [formData.selectedDirectors]);
+    const selectedScreenwritersIds = useMemo(() => formData.selectedScreenwriters, [formData.selectedScreenwriters]);
+
+    const titleRemaining = TITLE_MAX_LENGTH - formData.title.length;
+    const descriptionRemaining = DESCRIPTION_MAX_LENGTH - formData.description.length;
+
+    useEffect(() => {
+        return () => {
+            setIsLoadingData(false);
+            setIsUploading(false);
+        };
+    }, []);
 
     if (isLoadingData) {
         return (
@@ -284,17 +275,20 @@ export const MovieForm: React.FC<MovieFormProps> = ({
             title={movie ? 'Edit Movie' : 'Add New Movie'}
             size="large"
         >
-            <form onSubmit={handleSubmit} className={styles.form}>
+            <form onSubmit={handleSubmit} className={styles.form} noValidate>
                 <div className={styles.formGroup}>
-                    <label className={styles.label}>Movie Poster {!movie && '*'}</label>
+                    <label className={styles.label}>
+                        Movie Poster {!movie && <span className={styles.required}>*</span>}
+                    </label>
                     <div className={styles.fileUpload}>
                         <input
                             type="file"
                             ref={fileInputRef}
                             onChange={handlePosterSelect}
-                            accept="image/*"
+                            accept="image/jpeg,image/png,image/webp"
                             className={styles.fileInput}
                             required={!movie}
+                            aria-label="Upload movie poster"
                         />
                         {posterPreview ? (
                             <div className={styles.posterPreview}>
@@ -318,16 +312,18 @@ export const MovieForm: React.FC<MovieFormProps> = ({
                             </div>
                         ) : (
                             <div className={styles.uploadPlaceholder}>
-                                <span>📷</span>
+                                <span aria-hidden="true">📷</span>
                                 <p>Click to upload poster</p>
-                                <small>Recommended: 800x1200px, JPG/PNG</small>
+                                <small>Recommended: 800x1200px, JPG/PNG/WebP</small>
                             </div>
                         )}
                     </div>
                 </div>
 
                 <div className={styles.formGroup}>
-                    <label className={styles.label}>Title *</label>
+                    <label className={styles.label}>
+                        Title <span className={styles.required}>*</span>
+                    </label>
                     <input
                         type="text"
                         value={formData.title}
@@ -335,15 +331,18 @@ export const MovieForm: React.FC<MovieFormProps> = ({
                         required
                         className={styles.input}
                         placeholder="Enter movie title"
-                        maxLength={50}
+                        maxLength={TITLE_MAX_LENGTH}
+                        autoFocus={!movie}
                     />
-                    <div className={styles.charCount}>
-                        {formData.title.length}/50 characters
+                    <div className={`${styles.charCount} ${titleRemaining < 10 ? styles.warning : ''}`}>
+                        {titleRemaining} characters remaining
                     </div>
                 </div>
 
                 <div className={styles.formGroup}>
-                    <label className={styles.label}>Trailer URL *</label>
+                    <label className={styles.label}>
+                        Trailer URL <span className={styles.required}>*</span>
+                    </label>
                     <input
                         type="url"
                         value={formData.trailerUrl}
@@ -356,28 +355,35 @@ export const MovieForm: React.FC<MovieFormProps> = ({
                 </div>
 
                 <div className={styles.formGroup}>
-                    <label className={styles.label}>Description *</label>
+                    <label className={styles.label}>
+                        Description <span className={styles.required}>*</span>
+                    </label>
                     <textarea
                         value={formData.description}
                         onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                         required
                         rows={4}
                         className={styles.textarea}
-                        maxLength={1000}
+                        maxLength={DESCRIPTION_MAX_LENGTH}
                         placeholder="Describe the movie plot, characters, and key elements"
                     />
-                    <div className={styles.charCount}>
-                        {formData.description.length}/1000 characters
+                    <div className={`${styles.charCount} ${descriptionRemaining < 100 ? styles.warning : ''}`}>
+                        {descriptionRemaining} characters remaining
                     </div>
                 </div>
 
                 <div className={styles.formRow}>
                     <div className={styles.formGroup}>
-                        <label className={styles.label}>Duration (minutes) *</label>
+                        <label className={styles.label}>
+                            Duration (minutes) <span className={styles.required}>*</span>
+                        </label>
                         <input
                             type="number"
                             value={formData.durationMinutes}
-                            onChange={(e) => setFormData(prev => ({ ...prev, durationMinutes: parseInt(e.target.value) || 0 }))}
+                            onChange={(e) => setFormData(prev => ({
+                                ...prev,
+                                durationMinutes: parseInt(e.target.value) || 0
+                            }))}
                             required
                             min="1"
                             max="300"
@@ -386,14 +392,19 @@ export const MovieForm: React.FC<MovieFormProps> = ({
                         />
                     </div>
                     <div className={styles.formGroup}>
-                        <label className={styles.label}>Age Rating *</label>
+                        <label className={styles.label}>
+                            Age Rating <span className={styles.required}>*</span>
+                        </label>
                         <select
                             value={formData.ageRating}
-                            onChange={(e) => setFormData(prev => ({ ...prev, ageRating: e.target.value as AgeRating }))}
+                            onChange={(e) => setFormData(prev => ({
+                                ...prev,
+                                ageRating: e.target.value as AgeRating
+                            }))}
                             required
                             className={styles.select}
                         >
-                            {ageRatingOptions.map(option => (
+                            {AGE_RATING_OPTIONS.map(option => (
                                 <option key={option.value} value={option.value}>
                                     {option.label}
                                 </option>
@@ -404,7 +415,9 @@ export const MovieForm: React.FC<MovieFormProps> = ({
 
                 <div className={styles.formRow}>
                     <div className={styles.formGroup}>
-                        <label className={styles.label}>Release Date *</label>
+                        <label className={styles.label}>
+                            Release Date <span className={styles.required}>*</span>
+                        </label>
                         <input
                             type="date"
                             value={formatDateForInput(formData.releaseDate)}
@@ -418,7 +431,9 @@ export const MovieForm: React.FC<MovieFormProps> = ({
                         />
                     </div>
                     <div className={styles.formGroup}>
-                        <label className={styles.label}>End Showing Date *</label>
+                        <label className={styles.label}>
+                            End Showing Date <span className={styles.required}>*</span>
+                        </label>
                         <input
                             type="date"
                             value={formatDateForInput(formData.endShowingDate)}
@@ -434,7 +449,9 @@ export const MovieForm: React.FC<MovieFormProps> = ({
                 </div>
 
                 <div className={styles.formGroup}>
-                    <label className={styles.label}>Genres *</label>
+                    <label className={styles.label}>
+                        Genres <span className={styles.required}>*</span>
+                    </label>
                     <GenreSearchList
                         genres={genres}
                         selectedIds={formData.selectedGenres}
@@ -444,38 +461,41 @@ export const MovieForm: React.FC<MovieFormProps> = ({
                 </div>
 
                 <div className={styles.formGroup}>
-                    <label className={styles.label}>Actors *</label>
+                    <label className={styles.label}>
+                        Actors <span className={styles.required}>*</span>
+                    </label>
                     <PersonSelect
-                        selectedIds={formData.selectedActors}
+                        selectedIds={selectedActorsIds}
                         selectedPersons={selectedActors}
                         onChange={handleActorsChange}
                         role="ACTOR"
                         placeholder="Search actors or add new..."
-                        showNotification={showNotification}
                     />
                 </div>
 
                 <div className={styles.formGroup}>
-                    <label className={styles.label}>Directors *</label>
+                    <label className={styles.label}>
+                        Directors <span className={styles.required}>*</span>
+                    </label>
                     <PersonSelect
-                        selectedIds={formData.selectedDirectors}
+                        selectedIds={selectedDirectorsIds}
                         selectedPersons={selectedDirectors}
                         onChange={handleDirectorsChange}
                         role="DIRECTOR"
                         placeholder="Search directors or add new..."
-                        showNotification={showNotification}
                     />
                 </div>
 
                 <div className={styles.formGroup}>
-                    <label className={styles.label}>Screenwriters *</label>
+                    <label className={styles.label}>
+                        Screenwriters <span className={styles.required}>*</span>
+                    </label>
                     <PersonSelect
-                        selectedIds={formData.selectedScreenwriters}
+                        selectedIds={selectedScreenwritersIds}
                         selectedPersons={selectedScreenwriters}
                         onChange={handleScreenwritersChange}
                         role="SCREENWRITER"
                         placeholder="Search screenwriters or add new..."
-                        showNotification={showNotification}
                     />
                 </div>
 
@@ -492,6 +512,7 @@ export const MovieForm: React.FC<MovieFormProps> = ({
                         type="button"
                         variant="secondary"
                         onClick={onCancel}
+                        disabled={isUploading}
                     >
                         Cancel
                     </Button>
@@ -499,4 +520,6 @@ export const MovieForm: React.FC<MovieFormProps> = ({
             </form>
         </Modal>
     );
-};
+});
+
+MovieForm.displayName = 'MovieForm';

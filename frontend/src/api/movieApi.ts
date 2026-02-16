@@ -3,7 +3,8 @@ import type {
   MovieUpdateRequest,
   MovieCardResponse,
   MovieDetailResponse,
-  MovieSessionSearchResponse
+  MovieSessionSearchResponse,
+  MovieFilterRequest
 } from '@/types/movie';
 import type { PageResponse, SearchParams } from '@/types/pagination';
 import { handleApiError } from '@/utils/apiErrorHandler';
@@ -61,17 +62,17 @@ export const movieApi = {
       fetchApi<MovieDetailResponse>(`${PUBLIC_URL}/slug/${slug}`, {}, false, true),
 
     getFilteredMovies: (params?: SearchParams): Promise<PageResponse<MovieCardResponse>> => {
-      const url = buildPagedUrl(PUBLIC_URL, params, 'grid');
+      const url = buildPagedUrl(PUBLIC_URL, params, undefined, 'grid');
       return fetchApi<PageResponse<MovieCardResponse>>(url, {}, false, true);
     },
 
     getCurrentlyShowing: (params?: SearchParams): Promise<PageResponse<MovieCardResponse>> => {
-      const url = buildPagedUrl(`${PUBLIC_URL}/currently-showing`, params, 'grid');
+      const url = buildPagedUrl(`${PUBLIC_URL}/currently-showing`, params, undefined, 'grid');
       return fetchApi<PageResponse<MovieCardResponse>>(url, {}, false, true);
     },
 
     getUpcoming: (params?: SearchParams): Promise<PageResponse<MovieCardResponse>> => {
-      const url = buildPagedUrl(`${PUBLIC_URL}/upcoming`, params, 'grid');
+      const url = buildPagedUrl(`${PUBLIC_URL}/upcoming`, params, undefined, 'grid');
       return fetchApi<PageResponse<MovieCardResponse>>(url, {}, false, true);
     },
 
@@ -131,8 +132,8 @@ export const movieApi = {
         method: 'DELETE'
       }),
 
-    getFilteredMovies: (params?: SearchParams): Promise<PageResponse<MovieCardResponse>> => {
-      const url = buildPagedUrl(ADMIN_URL, params, 'table');
+    getFilteredMovies: (filter?: MovieFilterRequest, params?: SearchParams): Promise<PageResponse<MovieCardResponse>> => {
+      const url = buildPagedUrl(ADMIN_URL, params, filter, 'admin');
       return fetchApi<PageResponse<MovieCardResponse>>(url);
     },
 
