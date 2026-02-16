@@ -58,7 +58,6 @@ public class AdminMovieController {
 			@ApiResponse(responseCode = "409", description = "Movie with same slug already exists") })
 	public ResponseEntity<MovieDetailResponse> createMovie(
 			@Parameter(description = "Movie data in JSON format", required = true) @RequestPart("movieData") String movieDataJson,
-
 			@Parameter(description = "Movie poster image file (JPG, PNG)") @RequestPart(value = "posterFile", required = false) MultipartFile posterFile) {
 
 		log.info("POST /api/admin/movies - Creating new movie");
@@ -82,9 +81,7 @@ public class AdminMovieController {
 			@ApiResponse(responseCode = "409", description = "Movie with same slug already exists") })
 	public ResponseEntity<MovieDetailResponse> updateMovie(
 			@Parameter(description = "ID of the movie to update", required = true, example = "1") @PathVariable Long id,
-
 			@Parameter(description = "Updated movie data in JSON format", required = true) @RequestPart("movieData") String movieDataJson,
-
 			@Parameter(description = "New movie poster image file (JPG, PNG)") @RequestPart(value = "posterFile", required = false) MultipartFile posterFile) {
 
 		log.info("PUT /api/admin/movies/{} - Updating movie", id);
@@ -117,7 +114,6 @@ public class AdminMovieController {
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Movies retrieved successfully") })
 	public ResponseEntity<PageResponse<MovieCardResponse>> getMovies(
 			@Parameter(description = "Filter criteria") @ModelAttribute @Valid MovieFilterRequest filter,
-
 			@Parameter(description = "Pagination parameters (page, size, sort)") @PageableDefault(size = 20, sort = "title", direction = Sort.Direction.ASC) Pageable pageable) {
 
 		log.info("GET /api/admin/movies - filter: {}", filter);
