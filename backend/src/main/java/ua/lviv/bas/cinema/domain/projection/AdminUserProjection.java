@@ -26,7 +26,7 @@ public interface AdminUserProjection {
 
 	LocalDateTime getUpdatedAt();
 
-	int getTicketsCount();
+	Long getTicketsCount();
 
 	LocalDateTime getLastActivity();
 }

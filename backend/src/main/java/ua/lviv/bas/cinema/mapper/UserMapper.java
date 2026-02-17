@@ -52,9 +52,11 @@ public interface UserMapper {
 	@Mapping(target = "email", ignore = true)
 	void updateUserFromRequest(UserUpdateRequest dto, @MappingTarget User user);
 
+	@Mapping(target = "ticketsCount", source = "ticketsCount")
+	@Mapping(target = "lastActivity", source = "lastActivity")
+	AdminUserListResponse toAdminUserListResponse(AdminUserProjection projection);
+
 	@Mapping(target = "ticketsCount", ignore = true)
 	@Mapping(target = "lastActivity", source = "updatedAt")
 	AdminUserListResponse toAdminUserListResponse(User user);
-
-	AdminUserListResponse toAdminUserListResponse(AdminUserProjection projection);
 }
