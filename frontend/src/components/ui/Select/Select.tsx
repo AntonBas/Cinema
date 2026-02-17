@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import styles from './Select.module.css';
 
 export interface SelectOption {
@@ -26,7 +27,11 @@ export const Select: React.FC<SelectProps> = ({
     className = ''
 }) => {
     const [isOpen, setIsOpen] = useState(false);
+    const [position, setPosition] = useState({ top: 0, left: 0, width: 0 });
+    const [openUpward, setOpenUpward] = useState(false);
     const selectRef = useRef<HTMLDivElement>(null);
+    const triggerRef = useRef<HTMLDivElement>(null);
+    const dropdownRef = useRef<HTMLDivElement>(null);
 
     const selectedOption = options.find(option => option.value === value);
 
@@ -41,6 +46,48 @@ export const Select: React.FC<SelectProps> = ({
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
+    useEffect(() => {
+        if (isOpen && triggerRef.current) {
+            const rect = triggerRef.current.getBoundingClientRect();
+            const viewportHeight = window.innerHeight;
+            const dropdownHeight = 200;
+
+            const spaceBelow = viewportHeight - rect.bottom;
+            const spaceAbove = rect.top;
+
+            const upward = spaceBelow < dropdownHeight && spaceAbove > spaceBelow;
+            setOpenUpward(upward);
+
+            setPosition({
+                top: upward ? rect.top + window.scrollY - dropdownHeight : rect.bottom + window.scrollY,
+                left: rect.left + window.scrollX,
+                width: rect.width
+            });
+        }
+    }, [isOpen]);
+
+    useEffect(() => {
+        const handleScroll = () => {
+            if (isOpen) {
+                setIsOpen(false);
+            }
+        };
+
+        window.addEventListener('scroll', handleScroll, true);
+        return () => window.removeEventListener('scroll', handleScroll, true);
+    }, [isOpen]);
+
+    useEffect(() => {
+        if (isOpen && dropdownRef.current) {
+            const handleDropdownScroll = (e: Event) => {
+                e.stopPropagation();
+            };
+
+            dropdownRef.current.addEventListener('wheel', handleDropdownScroll);
+            return () => dropdownRef.current?.removeEventListener('wheel', handleDropdownScroll);
+        }
+    }, [isOpen]);
+
     const handleSelect = (option: SelectOption) => {
         if (option.disabled) return;
         onChange(option.value);
@@ -48,6 +95,8 @@ export const Select: React.FC<SelectProps> = ({
     };
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (disabled) return;
+
         if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
             setIsOpen(!isOpen);
@@ -62,11 +111,12 @@ export const Select: React.FC<SelectProps> = ({
             ref={selectRef}
         >
             <div
+                ref={triggerRef}
                 className={`${styles.selectTrigger} ${isOpen ? styles.open : ''}`}
                 onClick={() => !disabled && setIsOpen(!isOpen)}
                 onKeyDown={handleKeyDown}
                 tabIndex={disabled ? -1 : 0}
-                role="button"
+                role="combobox"
                 aria-haspopup="listbox"
                 aria-expanded={isOpen}
             >
@@ -76,24 +126,30 @@ export const Select: React.FC<SelectProps> = ({
                 <span className={styles.arrow}>▾</span>
             </div>
 
-            {isOpen && (
-                <div className={styles.dropdown}>
+            {isOpen && createPortal(
+                <div
+                    ref={dropdownRef}
+                    className={`${styles.dropdownPortal} ${openUpward ? styles.dropdownPortalUpward : styles.dropdownPortalDownward}`}
+                    style={{
+                        top: `${position.top}px`,
+                        left: `${position.left}px`,
+                        width: `${position.width}px`
+                    }}
+                    role="listbox"
+                >
                     {options.map((option) => (
                         <div
                             key={option.value}
-                            className={`${styles.option} ${option.value === value ? styles.selected : ''
-                                } ${option.disabled ? styles.disabledOption : ''}`}
+                            className={`${styles.option} ${option.value === value ? styles.selected : ''} ${option.disabled ? styles.disabledOption : ''}`}
                             onClick={() => handleSelect(option)}
                             role="option"
                             aria-selected={option.value === value}
                         >
                             {option.label}
-                            {option.value === value && (
-                                <span className={styles.checkmark}>✓</span>
-                            )}
                         </div>
                     ))}
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );

@@ -7,7 +7,8 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: var(--space-3) var(--space-4);
+    width: 100%;
+    padding: 0.75rem 1rem;
     background: var(--color-bg-modal);
     border: 1px solid var(--color-border-light);
     border-radius: var(--radius-md);
@@ -15,20 +16,19 @@
     cursor: pointer;
     transition: all var(--transition-normal);
     user-select: none;
+    box-sizing: border-box;
 }
 
 .selectTrigger:hover:not(.disabled) {
     border-color: rgba(var(--color-primary-rgb), 0.5);
 }
 
-.selectTrigger:focus {
-    outline: none;
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb), 0.2);
-}
-
 .selectTrigger.open {
     border-color: var(--color-primary);
+}
+
+.selectTrigger:focus {
+    outline: none;
 }
 
 .placeholder {
@@ -37,12 +37,14 @@
 
 .selectedValue {
     color: var(--color-text-primary);
+    font-weight: 500;
 }
 
 .arrow {
     color: var(--color-text-secondary);
-    transition: transform var(--transition-normal);
-    font-size: 1.1rem;
+    font-size: 1rem;
+    margin-left: 0.5rem;
+    transition: transform 0.2s ease;
 }
 
 .selectTrigger.open .arrow {
@@ -53,32 +55,63 @@
 .disabled {
     opacity: 0.6;
     cursor: not-allowed;
+    pointer-events: none;
 }
 
 .disabled .selectTrigger {
     cursor: not-allowed;
 }
 
-.dropdown {
+.dropdownPortal {
     position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
     background: var(--color-bg-modal);
     border: 1px solid var(--color-border-light);
     border-radius: var(--radius-md);
-    margin-top: 4px;
     max-height: 200px;
     overflow-y: auto;
-    z-index: 1000;
     box-shadow: var(--shadow-xl);
+    z-index: 9999;
+    animation: fadeIn 0.15s ease;
+}
+
+.dropdownPortalDownward {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    border-top: none;
+}
+
+.dropdownPortalUpward {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    border-bottom: none;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(4px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .option {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: var(--space-3) var(--space-4);
+    padding: 0.75rem 1rem;
     color: var(--color-text-primary);
     cursor: pointer;
     transition: all var(--transition-fast);
@@ -97,6 +130,7 @@
 .option.selected {
     background: rgba(var(--color-primary-rgb), var(--opacity-low));
     color: var(--color-primary);
+    font-weight: 500;
 }
 
 .disabledOption {
@@ -105,17 +139,30 @@
     color: var(--color-text-secondary);
 }
 
-.checkmark {
-    color: var(--color-primary);
-    font-weight: bold;
-}
-
 @media (max-width: 768px) {
     .selectTrigger {
-        padding: var(--space-2) var(--space-3);
+        padding: 0.625rem 0.875rem;
     }
 
     .option {
-        padding: var(--space-2) var(--space-3);
+        padding: 0.625rem 0.875rem;
+    }
+
+    .dropdownPortal {
+        max-height: 180px;
+    }
+}
+
+@media (max-width: 480px) {
+    .selectTrigger {
+        padding: 0.5rem 0.75rem;
+    }
+
+    .option {
+        padding: 0.5rem 0.75rem;
+    }
+
+    .dropdownPortal {
+        max-height: 160px;
     }
 }
