@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { UserTable } from './UserTable/UserTable';
 import { UserFilters } from './UserFilters/UserFilters';
 import { useAdminUsers } from '@/hooks/features/admin/useAdminUsers';
@@ -27,7 +27,7 @@ export const SectionUsers: React.FC = () => {
     const { notifications, showNotification, hideNotification } = useNotification();
     const showDelayedLoading = useDelayedLoading(loading, { delay: 150, minDisplayTime: 300 });
 
-    const initialLoadRef = useRef<boolean>(false);
+    const initialLoadRef = useRef(false);
     const filterTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     const loadUsers = useCallback(async (showLoading: boolean = true) => {
@@ -47,11 +47,8 @@ export const SectionUsers: React.FC = () => {
                 await refreshUsers(params);
             }
         } catch (err) {
-            if (isApiErrorException(err)) {
-                showNotification(err.message, 'error');
-            } else {
-                showNotification('Failed to load users', 'error');
-            }
+            const message = isApiErrorException(err) ? err.message : 'Failed to load users';
+            showNotification(message, 'error');
         }
     }, [searchQuery, roleFilter, verificationStatusFilter, enabledFilter, currentPage, getUsers, refreshUsers, showNotification]);
 
@@ -63,21 +60,21 @@ export const SectionUsers: React.FC = () => {
     }, [loadUsers]);
 
     useEffect(() => {
-        if (initialLoadRef.current) {
+        if (!initialLoadRef.current) return;
+
+        if (filterTimeoutRef.current) {
+            clearTimeout(filterTimeoutRef.current);
+        }
+
+        filterTimeoutRef.current = setTimeout(() => {
+            loadUsers(true);
+        }, 300);
+
+        return () => {
             if (filterTimeoutRef.current) {
                 clearTimeout(filterTimeoutRef.current);
             }
-
-            filterTimeoutRef.current = setTimeout(() => {
-                loadUsers(true);
-            }, 300);
-
-            return () => {
-                if (filterTimeoutRef.current) {
-                    clearTimeout(filterTimeoutRef.current);
-                }
-            };
-        }
+        };
     }, [searchQuery, roleFilter, verificationStatusFilter, enabledFilter, currentPage, loadUsers]);
 
     const handleSearch = useCallback((query: string) => {
@@ -117,14 +114,12 @@ export const SectionUsers: React.FC = () => {
         await loadUsers(false);
     }, [loadUsers]);
 
-    const getDisplayRange = useCallback(() => {
+    const displayRange = useMemo(() => {
         if (!pagination) return { start: 0, end: 0 };
-        const startItem = pagination.number * pagination.size + 1;
-        const endItem = Math.min((pagination.number + 1) * pagination.size, pagination.totalElements);
-        return { start: startItem, end: endItem };
+        const start = pagination.number * pagination.size + 1;
+        const end = Math.min((pagination.number + 1) * pagination.size, pagination.totalElements);
+        return { start, end };
     }, [pagination]);
-
-    const { start, end } = getDisplayRange();
 
     if (showDelayedLoading && !users.length) {
         return (
@@ -178,7 +173,7 @@ export const SectionUsers: React.FC = () => {
                 <div className={styles.paginationWrapper}>
                     <div className={styles.resultsInfo}>
                         <span>
-                            Showing {start}-{end} of {pagination.totalElements} users
+                            Showing {displayRange.start}-{displayRange.end} of {pagination.totalElements} users
                             {searchQuery && ` for "${searchQuery}"`}
                         </span>
                     </div>

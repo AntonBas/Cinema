@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { UserTableRow } from '../UserTableRow/UserTableRow';
 import type { AdminUserListResponse } from '@/types/user';
 import styles from './UserTable.module.css';
@@ -16,6 +16,17 @@ export const UserTable: React.FC<UserTableProps> = ({
     onError,
     onSuccess,
 }) => {
+    const tableHeaders = useMemo(() => [
+        'User',
+        'Role',
+        'Verification',
+        'Status',
+        'Registration',
+        'Tickets',
+        'Last Activity',
+        'Actions'
+    ], []);
+
     if (users.length === 0) {
         return (
             <div className={styles.empty}>
@@ -29,17 +40,12 @@ export const UserTable: React.FC<UserTableProps> = ({
     return (
         <div className={styles.tableWrapper}>
             <div className={styles.tableContainer}>
-                <table className={`${styles.table} admin-table`}>
+                <table className={styles.table}>
                     <thead className={styles.tableHead}>
                         <tr>
-                            <th>User</th>
-                            <th>Role</th>
-                            <th>Verification</th>
-                            <th>Status</th>
-                            <th>Registration</th>
-                            <th>Tickets</th>
-                            <th>Last Activity</th>
-                            <th>Actions</th>
+                            {tableHeaders.map((header) => (
+                                <th key={header}>{header}</th>
+                            ))}
                         </tr>
                     </thead>
                     <tbody className={styles.tableBody}>

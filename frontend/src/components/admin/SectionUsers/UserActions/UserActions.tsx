@@ -27,17 +27,18 @@ export const UserActions: React.FC<UserActionsProps> = ({ user, onUpdate }) => {
     const [statusLoading, setStatusLoading] = useState(false);
     const [verificationLoading, setVerificationLoading] = useState(false);
 
-    const { updateUserRole, updateUserStatus, updateBirthDateVerification, refreshUsers } = useAdminUsers();
+    const { updateUserRole, updateUserStatus, updateBirthDateVerification } = useAdminUsers();
 
     const handleRoleChange = async (value: string | number) => {
         const newRole = value as UserRole;
+        if (newRole === user.userRole) return;
+
         setRoleLoading(true);
         try {
             await updateUserRole(user.id, newRole);
             setSelectedRole(newRole);
-            await refreshUsers();
             onUpdate();
-        } catch (error) {
+        } catch {
             setSelectedRole(user.userRole);
         } finally {
             setRoleLoading(false);
@@ -49,7 +50,6 @@ export const UserActions: React.FC<UserActionsProps> = ({ user, onUpdate }) => {
         try {
             await updateUserStatus(user.id, !user.enabled);
             setShowStatusModal(false);
-            await refreshUsers();
             onUpdate();
         } finally {
             setStatusLoading(false);
@@ -59,13 +59,10 @@ export const UserActions: React.FC<UserActionsProps> = ({ user, onUpdate }) => {
     const handleVerificationChange = async () => {
         setVerificationLoading(true);
         try {
-            const newVerificationStatus: VerificationStatus = user.verificationStatus === 'VERIFIED' ? 'NOT_VERIFIED' : 'VERIFIED';
-            await updateBirthDateVerification(user.id, newVerificationStatus);
+            const newStatus: VerificationStatus = user.verificationStatus === 'VERIFIED' ? 'NOT_VERIFIED' : 'VERIFIED';
+            await updateBirthDateVerification(user.id, newStatus);
             setShowVerificationModal(false);
-            await refreshUsers();
             onUpdate();
-        } catch (error) {
-            console.error('Verification error:', error);
         } finally {
             setVerificationLoading(false);
         }
@@ -75,6 +72,10 @@ export const UserActions: React.FC<UserActionsProps> = ({ user, onUpdate }) => {
         value,
         label,
     }));
+
+    const isLoading = roleLoading || statusLoading || verificationLoading;
+    const isVerified = user.verificationStatus === 'VERIFIED';
+    const isEnabled = user.enabled;
 
     return (
         <div className={styles.actions}>
@@ -88,10 +89,10 @@ export const UserActions: React.FC<UserActionsProps> = ({ user, onUpdate }) => {
                     size="small"
                     loading={verificationLoading}
                     onClick={() => setShowVerificationModal(true)}
-                    disabled={roleLoading || statusLoading}
+                    disabled={isLoading}
                     className={styles.verificationButton}
                 >
-                    {user.verificationStatus === 'VERIFIED' ? 'Revoke' : 'Verify'}
+                    {isVerified ? 'Revoke' : 'Verify'}
                 </Button>
             </div>
 
@@ -101,7 +102,7 @@ export const UserActions: React.FC<UserActionsProps> = ({ user, onUpdate }) => {
                     value={selectedRole}
                     onChange={handleRoleChange}
                     options={roleOptions}
-                    disabled={roleLoading || statusLoading || verificationLoading}
+                    disabled={isLoading}
                     className={styles.roleSelect}
                 />
                 {roleLoading && <span className={styles.loadingText}>Updating...</span>}
@@ -109,14 +110,14 @@ export const UserActions: React.FC<UserActionsProps> = ({ user, onUpdate }) => {
 
             <div className={styles.statusSection}>
                 <Button
-                    variant={user.enabled ? 'error' : 'success'}
+                    variant={isEnabled ? 'error' : 'success'}
                     size="small"
                     loading={statusLoading}
                     onClick={() => setShowStatusModal(true)}
-                    disabled={roleLoading || verificationLoading}
+                    disabled={isLoading}
                     className={styles.statusButton}
                 >
-                    {user.enabled ? 'Block User' : 'Activate User'}
+                    {isEnabled ? 'Block User' : 'Activate User'}
                 </Button>
             </div>
 
@@ -124,10 +125,10 @@ export const UserActions: React.FC<UserActionsProps> = ({ user, onUpdate }) => {
                 isOpen={showStatusModal}
                 onConfirm={handleStatusChange}
                 onCancel={() => setShowStatusModal(false)}
-                title={user.enabled ? 'Block User' : 'Activate User'}
-                message={`Are you sure you want to ${user.enabled ? 'block' : 'activate'} ${user.firstName} ${user.lastName}?`}
-                confirmText={user.enabled ? 'Block User' : 'Activate User'}
-                variant={user.enabled ? 'error' : 'success'}
+                title={isEnabled ? 'Block User' : 'Activate User'}
+                message={`Are you sure you want to ${isEnabled ? 'block' : 'activate'} ${user.firstName} ${user.lastName}?`}
+                confirmText={isEnabled ? 'Block User' : 'Activate User'}
+                variant={isEnabled ? 'error' : 'success'}
                 isLoading={statusLoading}
             />
 
@@ -135,10 +136,10 @@ export const UserActions: React.FC<UserActionsProps> = ({ user, onUpdate }) => {
                 isOpen={showVerificationModal}
                 onConfirm={handleVerificationChange}
                 onCancel={() => setShowVerificationModal(false)}
-                title={user.verificationStatus === 'VERIFIED' ? 'Revoke Verification' : 'Verify User'}
-                message={`Are you sure you want to ${user.verificationStatus === 'VERIFIED' ? 'revoke verification from' : 'verify'} ${user.firstName} ${user.lastName}?`}
-                confirmText={user.verificationStatus === 'VERIFIED' ? 'Revoke' : 'Verify'}
-                variant={user.verificationStatus === 'VERIFIED' ? 'error' : 'success'}
+                title={isVerified ? 'Revoke Verification' : 'Verify User'}
+                message={`Are you sure you want to ${isVerified ? 'revoke verification from' : 'verify'} ${user.firstName} ${user.lastName}?`}
+                confirmText={isVerified ? 'Revoke' : 'Verify'}
+                variant={isVerified ? 'error' : 'success'}
                 isLoading={verificationLoading}
             />
         </div>

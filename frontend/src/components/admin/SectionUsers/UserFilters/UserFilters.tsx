@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { SearchInput, Select } from '@/components/ui';
 import { UserRoleDisplay, VerificationStatusDisplay } from '@/types/user';
 import styles from './UserFilters.module.css';
@@ -28,37 +28,37 @@ export const UserFilters: React.FC<UserFiltersProps> = ({
     enabledFilter,
     onEnabledFilterChange,
 }) => {
-    const roleOptions = [
+    const roleOptions = useMemo(() => [
         { value: '', label: 'All Roles' },
         ...Object.entries(UserRoleDisplay).map(([value, label]) => ({
             value,
             label,
         }))
-    ];
+    ], []);
 
-    const verificationStatusOptions = [
+    const verificationStatusOptions = useMemo(() => [
         { value: '', label: 'All Verification' },
         ...Object.entries(VerificationStatusDisplay).map(([value, label]) => ({
             value,
             label,
         }))
-    ];
+    ], []);
 
-    const handleSearch = (query: string) => {
+    const handleSearch = useCallback((query: string) => {
         onSearchChange(query);
-    };
+    }, [onSearchChange]);
 
-    const handleRoleChange = (value: string | number) => {
+    const handleRoleChange = useCallback((value: string | number) => {
         onRoleFilterChange(String(value));
-    };
+    }, [onRoleFilterChange]);
 
-    const handleVerificationStatusChange = (value: string | number) => {
+    const handleVerificationStatusChange = useCallback((value: string | number) => {
         onVerificationStatusChange(String(value));
-    };
+    }, [onVerificationStatusChange]);
 
-    const handleEnabledChange = (value: string | number) => {
+    const handleEnabledChange = useCallback((value: string | number) => {
         onEnabledFilterChange(String(value));
-    };
+    }, [onEnabledFilterChange]);
 
     return (
         <div className={styles.filters}>
