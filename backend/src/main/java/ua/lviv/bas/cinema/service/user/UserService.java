@@ -60,7 +60,7 @@ public class UserService {
 	@CacheEvict(key = "#userId")
 	@Transactional
 	public UserProfileResponse updateUser(Long userId, UserUpdateRequest request) {
-		User user = getUserById(userId);
+		User user = getUserWithBonusCardById(userId);
 		userMapper.updateUserFromRequest(request, user);
 
 		if (isDateOfBirthChanged(request.getDateOfBirth(), user.getDateOfBirth())) {
@@ -104,8 +104,16 @@ public class UserService {
 		return userRepository.findByEmail(email).orElseThrow(() -> new UserNotFoundException(email));
 	}
 
+	public User getUserWithBonusCardById(Long id) {
+		return userRepository.findWithBonusCardById(id).orElseThrow(() -> new UserNotFoundException(id));
+	}
+
+	public User getUserWithTicketsById(Long id) {
+		return userRepository.findWithTicketsById(id).orElseThrow(() -> new UserNotFoundException(id));
+	}
+
 	public UserProfileResponse getUserProfile(Long id) {
-		return userMapper.toUserProfileResponse(getUserById(id));
+		return userMapper.toUserProfileResponse(getUserWithBonusCardById(id));
 	}
 
 	public UserResponse getUserResponseById(Long id) {

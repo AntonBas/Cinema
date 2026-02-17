@@ -7,29 +7,47 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.User;
+import ua.lviv.bas.cinema.domain.enums.UserRole;
 
+@Slf4j
+@Getter
 public class CustomUserDetails implements UserDetails {
 	private static final long serialVersionUID = 1L;
+
 	private final User user;
+	private final Long userId;
+	private final String email;
+	private final String password;
+	private final boolean enabled;
+	private final String role;
 
 	public CustomUserDetails(User user) {
 		this.user = user;
+		this.userId = user.getId();
+		this.email = user.getEmail();
+		this.password = user.getPassword();
+		this.enabled = user.isEnabled();
+		this.role = user.getUserRole().name();
+
+		log.debug("Created CustomUserDetails for user: {}, role: {}, enabled: {}", email, role, enabled);
 	}
 
 	@Override
 	public Collection<? extends GrantedAuthority> getAuthorities() {
-		return Collections.singletonList(new SimpleGrantedAuthority(user.getUserRole().toString()));
+		return Collections.singletonList(new SimpleGrantedAuthority(role));
 	}
 
 	@Override
 	public String getUsername() {
-		return user.getEmail();
+		return email;
 	}
 
 	@Override
 	public String getPassword() {
-		return user.getPassword();
+		return password;
 	}
 
 	@Override
@@ -39,7 +57,7 @@ public class CustomUserDetails implements UserDetails {
 
 	@Override
 	public boolean isAccountNonLocked() {
-		return user.isEnabled();
+		return enabled;
 	}
 
 	@Override
@@ -49,15 +67,7 @@ public class CustomUserDetails implements UserDetails {
 
 	@Override
 	public boolean isEnabled() {
-		return user.isEnabled();
-	}
-
-	public User getUser() {
-		return user;
-	}
-
-	public Long getUserId() {
-		return user.getId();
+		return enabled;
 	}
 
 	public String getFullName() {
@@ -65,10 +75,14 @@ public class CustomUserDetails implements UserDetails {
 	}
 
 	public boolean isAdmin() {
-		return user.getUserRole().isAdmin();
+		return user.getUserRole() == UserRole.ROLE_ADMIN;
 	}
 
 	public boolean isCashier() {
-		return user.getUserRole().isCashier();
+		return user.getUserRole() == UserRole.ROLE_CASHIER;
+	}
+
+	public boolean isContentManager() {
+		return user.getUserRole() == UserRole.ROLE_CONTENT_MANAGER;
 	}
 }

@@ -22,6 +22,7 @@ import ua.lviv.bas.cinema.dto.user.request.UserFilterRequest;
 @Repository
 public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificationExecutor<User> {
 
+	@EntityGraph(attributePaths = { "bonusCard" })
 	Optional<User> findByEmail(String email);
 
 	boolean existsByEmail(String email);
@@ -32,7 +33,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 	@Override
 	Page<User> findAll(Specification<User> spec, Pageable pageable);
 
-	@EntityGraph(attributePaths = { "tickets", "bonusCard" })
+	@EntityGraph(attributePaths = { "bonusCard" })
 	@Override
 	Optional<User> findById(Long id);
 
@@ -48,7 +49,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 	@Query("SELECT DISTINCT u FROM User u LEFT JOIN FETCH u.tickets WHERE u.id = :id")
 	Optional<User> findWithTicketsById(@Param("id") Long id);
 
-	@Query("SELECT u FROM User u WHERE u.userRole = :role AND u.enabled = true")
+	@Query("SELECT DISTINCT u FROM User u WHERE u.userRole = :role AND u.enabled = true")
 	List<User> findActiveByRole(@Param("role") UserRole role);
 
 	@Query("""

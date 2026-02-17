@@ -24,9 +24,13 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.config.security.JwtTokenProvider;
+import ua.lviv.bas.cinema.config.security.JwtUserDetails;
+import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.dto.user.request.UserLoginRequest;
 import ua.lviv.bas.cinema.dto.user.request.UserRegistrationRequest;
 import ua.lviv.bas.cinema.dto.user.response.UserResponse;
+import ua.lviv.bas.cinema.mapper.UserMapper;
+import ua.lviv.bas.cinema.repository.UserRepository;
 import ua.lviv.bas.cinema.security.CustomUserDetails;
 import ua.lviv.bas.cinema.service.user.UserPasswordResetService;
 import ua.lviv.bas.cinema.service.user.UserService;
@@ -42,6 +46,8 @@ public class AuthController {
 	private final UserPasswordResetService passwordResetService;
 	private final AuthenticationManager authenticationManager;
 	private final JwtTokenProvider jwtTokenProvider;
+	private final UserMapper userMapper;
+	private final UserRepository userRepository;
 
 	@PostMapping("/register")
 	@Operation(summary = "Register new user", description = "Create a new user account.")
@@ -68,7 +74,9 @@ public class AuthController {
 				.authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
 
 		String token = jwtTokenProvider.generateToken(authentication);
-		UserResponse userResponse = userService.getUserResponseByEmail(request.getEmail());
+
+		CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+		UserResponse userResponse = userMapper.toUserResponse(userDetails.getUser());
 
 		return ResponseEntity.ok(new LoginResponse(token, "Bearer", userResponse));
 	}
@@ -77,8 +85,16 @@ public class AuthController {
 	@Operation(summary = "Get current user profile", description = "Retrieve profile information of the currently authenticated user.")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "User profile retrieved successfully"),
 			@ApiResponse(responseCode = "401", description = "User not authenticated") })
-	public ResponseEntity<UserResponse> getCurrentUser(@AuthenticationPrincipal CustomUserDetails userDetails) {
-		return ResponseEntity.ok(userService.getUserResponseById(userDetails.getUserId()));
+	public ResponseEntity<UserResponse> getCurrentUser(@AuthenticationPrincipal Object principal) {
+		if (principal instanceof CustomUserDetails) {
+			CustomUserDetails userDetails = (CustomUserDetails) principal;
+			return ResponseEntity.ok(userMapper.toUserResponse(userDetails.getUser()));
+		} else if (principal instanceof JwtUserDetails) {
+			JwtUserDetails userDetails = (JwtUserDetails) principal;
+			User user = userRepository.findById(userDetails.getUserId()).orElseThrow();
+			return ResponseEntity.ok(userMapper.toUserResponse(user));
+		}
+		return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 	}
 
 	@PostMapping("/password/forgot")
@@ -90,7 +106,6 @@ public class AuthController {
 	@SecurityRequirements()
 	public ResponseEntity<Void> forgotPassword(
 			@Parameter(description = "User's email address", required = true, example = "user@example.com") @RequestParam @Email @NotBlank String email) {
-
 		log.info("Password reset request for email: {}", email);
 		passwordResetService.requestPasswordReset(email);
 		return ResponseEntity.ok().build();
@@ -103,9 +118,7 @@ public class AuthController {
 	@SecurityRequirements()
 	public ResponseEntity<Void> resetPassword(
 			@Parameter(description = "Password reset token", required = true) @RequestParam @NotBlank String token,
-
 			@Parameter(description = "New password", required = true) @RequestParam @NotBlank String newPassword) {
-
 		log.info("Password reset attempt");
 		passwordResetService.resetPassword(token, newPassword);
 		return ResponseEntity.ok().build();
@@ -118,7 +131,6 @@ public class AuthController {
 	@SecurityRequirements()
 	public ResponseEntity<Boolean> checkEmailExists(
 			@Parameter(description = "Email address to check", required = true) @RequestParam @Email @NotBlank String email) {
-
 		boolean exists = userService.emailExists(email);
 		return ResponseEntity.ok(exists);
 	}

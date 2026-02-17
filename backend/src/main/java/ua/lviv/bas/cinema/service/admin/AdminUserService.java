@@ -51,7 +51,7 @@ public class AdminUserService {
 
 		user.setUserRole(newRole);
 		userRepository.save(user);
-		log.info("User role updated: {} -> {} for user {}", user.getUserRole(), newRole, userId);
+		log.info("User role updated to {} for user {}", newRole, userId);
 	}
 
 	@CacheEvict(allEntries = true)
@@ -91,8 +91,7 @@ public class AdminUserService {
 
 	@Cacheable(key = "'active-admins'")
 	public List<User> getActiveAdmins() {
-		return userRepository.findAll((root, query, cb) -> cb.and(cb.equal(root.get("userRole"), UserRole.ROLE_ADMIN),
-				cb.isTrue(root.get("enabled"))));
+		return userRepository.findActiveByRole(UserRole.ROLE_ADMIN);
 	}
 
 	@Cacheable(key = "'active'")
@@ -102,7 +101,7 @@ public class AdminUserService {
 
 	@Cacheable(key = "#id")
 	public User getUserById(Long id) {
-		return userRepository.findById(id).orElseThrow(() -> new UserNotFoundException(id));
+		return userRepository.findWithBonusCardById(id).orElseThrow(() -> new UserNotFoundException(id));
 	}
 
 	public long getAdminCount() {
@@ -116,7 +115,7 @@ public class AdminUserService {
 	}
 
 	private User findById(Long id) {
-		return userRepository.findById(id).orElseThrow(() -> new UserNotFoundException(id));
+		return userRepository.findWithBonusCardById(id).orElseThrow(() -> new UserNotFoundException(id));
 	}
 
 	private boolean isCurrentUser(User user) {
