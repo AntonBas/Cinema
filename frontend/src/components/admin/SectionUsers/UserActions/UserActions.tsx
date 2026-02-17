@@ -5,8 +5,7 @@ import {
     type UserRole,
     type VerificationStatus,
     UserRoleDisplay,
-    VerificationStatusDisplay,
-    VerificationStatusColors
+    VerificationStatusDisplay
 } from '@/types/user';
 import type { AdminUserListResponse } from '@/types/user';
 import styles from './UserActions.module.css';
@@ -16,6 +15,10 @@ interface UserActionsProps {
     onUpdate: () => void;
 }
 
+const getVerificationColor = (status: VerificationStatus): string => {
+    return status === 'VERIFIED' ? 'verificationBadgeSuccess' : 'verificationBadgeSecondary';
+};
+
 export const UserActions: React.FC<UserActionsProps> = ({ user, onUpdate }) => {
     const [showStatusModal, setShowStatusModal] = useState(false);
     const [showVerificationModal, setShowVerificationModal] = useState(false);
@@ -24,7 +27,7 @@ export const UserActions: React.FC<UserActionsProps> = ({ user, onUpdate }) => {
     const [statusLoading, setStatusLoading] = useState(false);
     const [verificationLoading, setVerificationLoading] = useState(false);
 
-    const { updateUserRole, updateUserStatus, updateBirthDateVerification } = useAdminUsers();
+    const { updateUserRole, updateUserStatus, updateBirthDateVerification, refreshUsers } = useAdminUsers();
 
     const handleRoleChange = async (value: string | number) => {
         const newRole = value as UserRole;
@@ -32,6 +35,7 @@ export const UserActions: React.FC<UserActionsProps> = ({ user, onUpdate }) => {
         try {
             await updateUserRole(user.id, newRole);
             setSelectedRole(newRole);
+            await refreshUsers();
             onUpdate();
         } catch (error) {
             setSelectedRole(user.userRole);
@@ -45,6 +49,7 @@ export const UserActions: React.FC<UserActionsProps> = ({ user, onUpdate }) => {
         try {
             await updateUserStatus(user.id, !user.enabled);
             setShowStatusModal(false);
+            await refreshUsers();
             onUpdate();
         } finally {
             setStatusLoading(false);
@@ -57,7 +62,10 @@ export const UserActions: React.FC<UserActionsProps> = ({ user, onUpdate }) => {
             const newVerificationStatus: VerificationStatus = user.verificationStatus === 'VERIFIED' ? 'NOT_VERIFIED' : 'VERIFIED';
             await updateBirthDateVerification(user.id, newVerificationStatus);
             setShowVerificationModal(false);
+            await refreshUsers();
             onUpdate();
+        } catch (error) {
+            console.error('Verification error:', error);
         } finally {
             setVerificationLoading(false);
         }
@@ -72,7 +80,7 @@ export const UserActions: React.FC<UserActionsProps> = ({ user, onUpdate }) => {
         <div className={styles.actions}>
             <div className={styles.verificationSection}>
                 <label className={styles.label}>Verification:</label>
-                <span className={`${styles.verificationBadge} ${styles[VerificationStatusColors[user.verificationStatus]]}`}>
+                <span className={`${styles.verificationBadge} ${styles[getVerificationColor(user.verificationStatus)]}`}>
                     {VerificationStatusDisplay[user.verificationStatus]}
                 </span>
                 <Button

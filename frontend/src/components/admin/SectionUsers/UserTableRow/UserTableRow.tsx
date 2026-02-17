@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Badge, Button, Select, ConfirmModal } from '@/components/ui';
 import { useAdminUsers } from '@/hooks/features/admin/useAdminUsers';
-import { UserRoleDisplay, VerificationStatusDisplay, VerificationStatusColors } from '@/types/user';
+import { UserRoleDisplay, VerificationStatusDisplay } from '@/types/user';
 import type { AdminUserListResponse, UserRole, VerificationStatus } from '@/types/user';
 import { toDisplayFormat } from '@/utils/dateUtils';
 import styles from './UserTableRow.module.css';
@@ -13,39 +13,41 @@ interface UserTableRowProps {
     onSuccess: (message: string) => void;
 }
 
+const getVerificationColor = (status: VerificationStatus): 'success' | 'secondary' => {
+    return status === 'VERIFIED' ? 'success' : 'secondary';
+};
+
 export const UserTableRow: React.FC<UserTableRowProps> = ({ user, onUpdate, onError, onSuccess }) => {
     const [showStatusModal, setShowStatusModal] = useState(false);
     const [showVerificationModal, setShowVerificationModal] = useState(false);
     const [selectedRole, setSelectedRole] = useState<UserRole>(user.userRole);
-    const [currentUser, setCurrentUser] = useState<AdminUserListResponse>(user);
+    const [localUser, setLocalUser] = useState<AdminUserListResponse>(user);
 
     const {
         updateUserRole,
         updateUserStatus,
         updateBirthDateVerification,
+        refreshUsers,
         loading
     } = useAdminUsers();
-
-    useEffect(() => {
-        setCurrentUser(user);
-        setSelectedRole(user.userRole);
-    }, [user]);
 
     const handleRoleChange = async (value: string | number) => {
         const newRole = value as UserRole;
 
-        if (newRole === currentUser.userRole) {
+        if (newRole === localUser.userRole) {
             return;
         }
 
         setSelectedRole(newRole);
 
         try {
-            await updateUserRole(currentUser.id, newRole);
-            onUpdate();
+            await updateUserRole(localUser.id, newRole);
+            setLocalUser(prev => ({ ...prev, userRole: newRole }));
             onSuccess('User role updated successfully');
+            await refreshUsers();
+            onUpdate();
         } catch (error) {
-            setSelectedRole(currentUser.userRole);
+            setSelectedRole(localUser.userRole);
             const message = error instanceof Error ? error.message : 'Failed to update user role';
             onError(message);
         }
@@ -53,10 +55,13 @@ export const UserTableRow: React.FC<UserTableRowProps> = ({ user, onUpdate, onEr
 
     const handleStatusChange = async () => {
         try {
-            await updateUserStatus(currentUser.id, !currentUser.enabled);
+            const newEnabled = !localUser.enabled;
+            await updateUserStatus(localUser.id, newEnabled);
+            setLocalUser(prev => ({ ...prev, enabled: newEnabled }));
             setShowStatusModal(false);
+            onSuccess(`User ${newEnabled ? 'activated' : 'blocked'} successfully`);
+            await refreshUsers();
             onUpdate();
-            onSuccess(`User ${!currentUser.enabled ? 'activated' : 'blocked'} successfully`);
         } catch (error) {
             const message = error instanceof Error ? error.message : 'Failed to update user status';
             onError(message);
@@ -65,11 +70,13 @@ export const UserTableRow: React.FC<UserTableRowProps> = ({ user, onUpdate, onEr
 
     const handleVerificationChange = async () => {
         try {
-            const newVerificationStatus: VerificationStatus = currentUser.verificationStatus === 'VERIFIED' ? 'NOT_VERIFIED' : 'VERIFIED';
-            await updateBirthDateVerification(currentUser.id, newVerificationStatus);
+            const newVerificationStatus: VerificationStatus = localUser.verificationStatus === 'VERIFIED' ? 'NOT_VERIFIED' : 'VERIFIED';
+            await updateBirthDateVerification(localUser.id, newVerificationStatus);
+            setLocalUser(prev => ({ ...prev, verificationStatus: newVerificationStatus }));
             setShowVerificationModal(false);
-            onUpdate();
             onSuccess(`User verification ${newVerificationStatus === 'VERIFIED' ? 'granted' : 'revoked'} successfully`);
+            await refreshUsers();
+            onUpdate();
         } catch (error) {
             const message = error instanceof Error ? error.message : 'Failed to update verification status';
             onError(message);
@@ -99,9 +106,9 @@ export const UserTableRow: React.FC<UserTableRowProps> = ({ user, onUpdate, onEr
                 <td className={styles.userCell}>
                     <div className={styles.userInfo}>
                         <div className={styles.userName}>
-                            {currentUser.firstName} {currentUser.lastName}
+                            {localUser.firstName} {localUser.lastName}
                         </div>
-                        <div className={styles.userEmail}>{currentUser.email}</div>
+                        <div className={styles.userEmail}>{localUser.email}</div>
                     </div>
                 </td>
 
@@ -118,14 +125,14 @@ export const UserTableRow: React.FC<UserTableRowProps> = ({ user, onUpdate, onEr
                 <td className={styles.verificationCell}>
                     <div className={styles.verificationInfo}>
                         <Badge
-                            variant={VerificationStatusColors[currentUser.verificationStatus] as any}
+                            variant={getVerificationColor(localUser.verificationStatus)}
                             size="small"
                             className={styles.verificationBadge}
                         >
-                            {VerificationStatusDisplay[currentUser.verificationStatus]}
+                            {VerificationStatusDisplay[localUser.verificationStatus]}
                         </Badge>
                         <div className={styles.verificationDate}>
-                            {formatDateTime(currentUser.verifiedAt)}
+                            {formatDateTime(localUser.verifiedAt)}
                         </div>
                         <Button
                             variant="secondary"
@@ -134,43 +141,43 @@ export const UserTableRow: React.FC<UserTableRowProps> = ({ user, onUpdate, onEr
                             onClick={() => setShowVerificationModal(true)}
                             className={styles.verificationButton}
                         >
-                            {currentUser.verificationStatus === 'VERIFIED' ? 'Revoke' : 'Verify'}
+                            {localUser.verificationStatus === 'VERIFIED' ? 'Revoke' : 'Verify'}
                         </Button>
                     </div>
                 </td>
 
                 <td className={styles.statusCell}>
                     <Badge
-                        variant={currentUser.enabled ? 'success' : 'error'}
+                        variant={localUser.enabled ? 'success' : 'error'}
                         size="small"
                     >
-                        {getStatusDisplay(currentUser.enabled)}
+                        {getStatusDisplay(localUser.enabled)}
                     </Badge>
                 </td>
 
                 <td className={styles.dateCell}>
-                    {toDisplayFormat(currentUser.createdAt.split('T')[0])}
+                    {toDisplayFormat(localUser.createdAt.split('T')[0])}
                 </td>
 
                 <td className={styles.ticketsCell}>
-                    <span className={styles.ticketsCount}>{currentUser.ticketsCount}</span>
+                    <span className={styles.ticketsCount}>{localUser.ticketsCount}</span>
                 </td>
 
                 <td className={styles.activityCell}>
                     <div className={styles.activityInfo}>
-                        {toDisplayFormat(currentUser.lastActivity.split('T')[0])}
+                        {toDisplayFormat(localUser.lastActivity.split('T')[0])}
                     </div>
                 </td>
 
                 <td className={styles.actionsCell}>
                     <Button
-                        variant={currentUser.enabled ? 'error' : 'success'}
+                        variant={localUser.enabled ? 'error' : 'success'}
                         size="small"
                         loading={loading}
                         onClick={() => setShowStatusModal(true)}
                         className={styles.actionButton}
                     >
-                        {currentUser.enabled ? 'Block' : 'Activate'}
+                        {localUser.enabled ? 'Block' : 'Activate'}
                     </Button>
                 </td>
             </tr>
@@ -179,10 +186,10 @@ export const UserTableRow: React.FC<UserTableRowProps> = ({ user, onUpdate, onEr
                 isOpen={showStatusModal}
                 onConfirm={handleStatusChange}
                 onCancel={() => setShowStatusModal(false)}
-                title={currentUser.enabled ? 'Block User' : 'Activate User'}
-                message={`Are you sure you want to ${currentUser.enabled ? 'block' : 'activate'} ${currentUser.firstName} ${currentUser.lastName}?`}
-                confirmText={currentUser.enabled ? 'Block User' : 'Activate User'}
-                variant={currentUser.enabled ? 'error' : 'success'}
+                title={localUser.enabled ? 'Block User' : 'Activate User'}
+                message={`Are you sure you want to ${localUser.enabled ? 'block' : 'activate'} ${localUser.firstName} ${localUser.lastName}?`}
+                confirmText={localUser.enabled ? 'Block User' : 'Activate User'}
+                variant={localUser.enabled ? 'error' : 'success'}
                 isLoading={loading}
             />
 
@@ -190,10 +197,10 @@ export const UserTableRow: React.FC<UserTableRowProps> = ({ user, onUpdate, onEr
                 isOpen={showVerificationModal}
                 onConfirm={handleVerificationChange}
                 onCancel={() => setShowVerificationModal(false)}
-                title={currentUser.verificationStatus === 'VERIFIED' ? 'Revoke Verification' : 'Verify User'}
-                message={`Are you sure you want to ${currentUser.verificationStatus === 'VERIFIED' ? 'revoke verification from' : 'verify'} ${currentUser.firstName} ${currentUser.lastName}?`}
-                confirmText={currentUser.verificationStatus === 'VERIFIED' ? 'Revoke' : 'Verify'}
-                variant={currentUser.verificationStatus === 'VERIFIED' ? 'error' : 'success'}
+                title={localUser.verificationStatus === 'VERIFIED' ? 'Revoke Verification' : 'Verify User'}
+                message={`Are you sure you want to ${localUser.verificationStatus === 'VERIFIED' ? 'revoke verification from' : 'verify'} ${localUser.firstName} ${localUser.lastName}?`}
+                confirmText={localUser.verificationStatus === 'VERIFIED' ? 'Revoke' : 'Verify'}
+                variant={localUser.verificationStatus === 'VERIFIED' ? 'error' : 'success'}
                 isLoading={loading}
             />
         </>

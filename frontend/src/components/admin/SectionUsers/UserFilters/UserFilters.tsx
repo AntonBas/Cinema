@@ -7,16 +7,26 @@ interface UserFiltersProps {
     onSearchChange: (value: string) => void;
     roleFilter: string;
     onRoleFilterChange: (value: string) => void;
-    statusFilter: string;
-    onStatusFilterChange: (value: string) => void;
+    verificationStatusFilter: string;
+    onVerificationStatusChange: (value: string) => void;
+    enabledFilter: string;
+    onEnabledFilterChange: (value: string) => void;
 }
+
+const enabledOptions = [
+    { value: '', label: 'All Accounts' },
+    { value: 'true', label: 'Enabled' },
+    { value: 'false', label: 'Disabled' }
+];
 
 export const UserFilters: React.FC<UserFiltersProps> = ({
     onSearchChange,
     roleFilter,
     onRoleFilterChange,
-    statusFilter,
-    onStatusFilterChange,
+    verificationStatusFilter,
+    onVerificationStatusChange,
+    enabledFilter,
+    onEnabledFilterChange,
 }) => {
     const roleOptions = [
         { value: '', label: 'All Roles' },
@@ -26,8 +36,8 @@ export const UserFilters: React.FC<UserFiltersProps> = ({
         }))
     ];
 
-    const statusOptions = [
-        { value: '', label: 'All Statuses' },
+    const verificationStatusOptions = [
+        { value: '', label: 'All Verification' },
         ...Object.entries(VerificationStatusDisplay).map(([value, label]) => ({
             value,
             label,
@@ -42,8 +52,12 @@ export const UserFilters: React.FC<UserFiltersProps> = ({
         onRoleFilterChange(String(value));
     };
 
-    const handleStatusChange = (value: string | number) => {
-        onStatusFilterChange(String(value));
+    const handleVerificationStatusChange = (value: string | number) => {
+        onVerificationStatusChange(String(value));
+    };
+
+    const handleEnabledChange = (value: string | number) => {
+        onEnabledFilterChange(String(value));
     };
 
     return (
@@ -66,10 +80,18 @@ export const UserFilters: React.FC<UserFiltersProps> = ({
                 />
 
                 <Select
-                    value={statusFilter}
-                    onChange={handleStatusChange}
-                    options={statusOptions}
-                    placeholder="All Statuses"
+                    value={verificationStatusFilter}
+                    onChange={handleVerificationStatusChange}
+                    options={verificationStatusOptions}
+                    placeholder="Verification Status"
+                    className={styles.select}
+                />
+
+                <Select
+                    value={enabledFilter}
+                    onChange={handleEnabledChange}
+                    options={enabledOptions}
+                    placeholder="Account Status"
                     className={styles.select}
                 />
             </div>

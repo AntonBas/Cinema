@@ -1,39 +1,84 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { UserTable } from './UserTable/UserTable';
 import { UserFilters } from './UserFilters/UserFilters';
 import { useAdminUsers } from '@/hooks/features/admin/useAdminUsers';
 import { useNotification } from '@/hooks/common/useNotification';
 import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
 import { Notification, Pagination, LoadingSpinner } from '@/components/ui';
-import type { UserRole } from '@/types/user';
+import type { UserRole, VerificationStatus } from '@/types/user';
+import { isApiErrorException } from '@/utils/apiErrorHandler';
 import styles from './SectionUsers.module.css';
 
 export const SectionUsers: React.FC = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [roleFilter, setRoleFilter] = useState<UserRole | ''>('');
-    const [statusFilter, setStatusFilter] = useState('');
+    const [verificationStatusFilter, setVerificationStatusFilter] = useState<VerificationStatus | ''>('');
+    const [enabledFilter, setEnabledFilter] = useState<string>('');
     const [currentPage, setCurrentPage] = useState(0);
 
     const {
         users,
         pagination,
         loading,
-        getUsers
+        getUsers,
+        refreshUsers
     } = useAdminUsers();
 
-    const { notifications, hideNotification, showNotification } = useNotification();
+    const { notifications, showNotification, hideNotification } = useNotification();
     const showDelayedLoading = useDelayedLoading(loading, { delay: 150, minDisplayTime: 300 });
 
+    const initialLoadRef = useRef<boolean>(false);
+    const filterTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+    const loadUsers = useCallback(async (showLoading: boolean = true) => {
+        try {
+            const params = {
+                search: searchQuery || undefined,
+                role: roleFilter || undefined,
+                verificationStatus: verificationStatusFilter || undefined,
+                enabled: enabledFilter === '' ? undefined : enabledFilter === 'true',
+                page: currentPage,
+                size: 10
+            };
+
+            if (showLoading) {
+                await getUsers(params);
+            } else {
+                await refreshUsers(params);
+            }
+        } catch (err) {
+            if (isApiErrorException(err)) {
+                showNotification(err.message, 'error');
+            } else {
+                showNotification('Failed to load users', 'error');
+            }
+        }
+    }, [searchQuery, roleFilter, verificationStatusFilter, enabledFilter, currentPage, getUsers, refreshUsers, showNotification]);
+
     useEffect(() => {
-        const enabledFilter = statusFilter === '' ? undefined : statusFilter === 'true';
-        getUsers({
-            search: searchQuery || undefined,
-            role: roleFilter || undefined,
-            enabled: enabledFilter,
-            page: currentPage,
-            size: 10
-        });
-    }, [searchQuery, roleFilter, statusFilter, currentPage]);
+        if (!initialLoadRef.current) {
+            initialLoadRef.current = true;
+            loadUsers(true);
+        }
+    }, [loadUsers]);
+
+    useEffect(() => {
+        if (initialLoadRef.current) {
+            if (filterTimeoutRef.current) {
+                clearTimeout(filterTimeoutRef.current);
+            }
+
+            filterTimeoutRef.current = setTimeout(() => {
+                loadUsers(true);
+            }, 300);
+
+            return () => {
+                if (filterTimeoutRef.current) {
+                    clearTimeout(filterTimeoutRef.current);
+                }
+            };
+        }
+    }, [searchQuery, roleFilter, verificationStatusFilter, enabledFilter, currentPage, loadUsers]);
 
     const handleSearch = useCallback((query: string) => {
         setSearchQuery(query);
@@ -45,8 +90,13 @@ export const SectionUsers: React.FC = () => {
         setCurrentPage(0);
     }, []);
 
-    const handleStatusFilterChange = useCallback((value: string) => {
-        setStatusFilter(value);
+    const handleVerificationStatusChange = useCallback((value: string) => {
+        setVerificationStatusFilter(value as VerificationStatus | '');
+        setCurrentPage(0);
+    }, []);
+
+    const handleEnabledFilterChange = useCallback((value: string) => {
+        setEnabledFilter(value);
         setCurrentPage(0);
     }, []);
 
@@ -58,20 +108,14 @@ export const SectionUsers: React.FC = () => {
         showNotification(error, 'error');
     }, [showNotification]);
 
-    const handleSuccess = useCallback((message: string) => {
+    const handleSuccess = useCallback(async (message: string) => {
         showNotification(message, 'success');
-    }, [showNotification]);
+        await loadUsers(false);
+    }, [showNotification, loadUsers]);
 
-    const handleUserUpdate = useCallback(() => {
-        const enabledFilter = statusFilter === '' ? undefined : statusFilter === 'true';
-        getUsers({
-            search: searchQuery || undefined,
-            role: roleFilter || undefined,
-            enabled: enabledFilter,
-            page: currentPage,
-            size: 10
-        });
-    }, [searchQuery, roleFilter, statusFilter, currentPage]);
+    const handleRefresh = useCallback(async () => {
+        await loadUsers(false);
+    }, [loadUsers]);
 
     const getDisplayRange = useCallback(() => {
         if (!pagination) return { start: 0, end: 0 };
@@ -92,6 +136,18 @@ export const SectionUsers: React.FC = () => {
 
     return (
         <div className={styles.container}>
+            {notifications.map((notification) => (
+                <Notification
+                    key={notification.id}
+                    id={notification.id}
+                    message={notification.message}
+                    type={notification.type}
+                    isVisible={notification.isVisible}
+                    onClose={hideNotification}
+                    duration={4000}
+                />
+            ))}
+
             <header className={styles.header}>
                 <h1>User Management</h1>
                 <p>Manage user roles, verification status and account settings</p>
@@ -102,15 +158,17 @@ export const SectionUsers: React.FC = () => {
                     onSearchChange={handleSearch}
                     roleFilter={roleFilter}
                     onRoleFilterChange={handleRoleFilterChange}
-                    statusFilter={statusFilter}
-                    onStatusFilterChange={handleStatusFilterChange}
+                    verificationStatusFilter={verificationStatusFilter}
+                    onVerificationStatusChange={handleVerificationStatusChange}
+                    enabledFilter={enabledFilter}
+                    onEnabledFilterChange={handleEnabledFilterChange}
                 />
             </div>
 
             <div className={styles.content}>
                 <UserTable
                     users={users}
-                    onRefresh={handleUserUpdate}
+                    onRefresh={handleRefresh}
                     onError={handleError}
                     onSuccess={handleSuccess}
                 />
@@ -136,18 +194,6 @@ export const SectionUsers: React.FC = () => {
                     />
                 </div>
             )}
-
-            {notifications.map((notification) => (
-                <Notification
-                    key={notification.id}
-                    id={notification.id}
-                    message={notification.message}
-                    type={notification.type}
-                    isVisible={notification.isVisible}
-                    onClose={hideNotification}
-                    duration={4000}
-                />
-            ))}
         </div>
     );
 };

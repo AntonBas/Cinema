@@ -39,29 +39,27 @@ export const useAdminUsers = () => {
     const updateUserRole = useCallback(async (userId: number, userRole: UserRole) => {
         const roleData: UserRoleUpdateRequest = { userRole };
 
-        return updateRoleApi.execute(
+        await updateRoleApi.execute(
             () => adminApi.updateUserRole(userId, roleData),
             {
                 successMessage: 'User role updated successfully',
-                onSuccess: () => {
-                    usersApi.invalidateCache();
-                },
             }
         );
+
+        usersApi.invalidateCache();
     }, [updateRoleApi, usersApi]);
 
     const updateUserStatus = useCallback(async (userId: number, enabled: boolean) => {
         const statusData: UserStatusUpdateRequest = { enabled };
 
-        return updateStatusApi.execute(
+        await updateStatusApi.execute(
             () => adminApi.updateUserStatus(userId, statusData),
             {
                 successMessage: enabled ? 'User activated successfully' : 'User deactivated successfully',
-                onSuccess: () => {
-                    usersApi.invalidateCache();
-                },
             }
         );
+
+        usersApi.invalidateCache();
     }, [updateStatusApi, usersApi]);
 
     const updateBirthDateVerification = useCallback(async (
@@ -70,16 +68,29 @@ export const useAdminUsers = () => {
     ) => {
         const verificationData: VerificationBirthDateRequest = { verificationStatus };
 
-        return updateVerificationApi.execute(
+        const result = await updateVerificationApi.execute(
             () => adminApi.updateBirthDateVerification(userId, verificationData),
             {
                 successMessage: 'Verification status updated successfully',
-                onSuccess: () => {
-                    usersApi.invalidateCache();
-                },
             }
         );
+
+        usersApi.invalidateCache();
+
+        return result;
     }, [updateVerificationApi, usersApi]);
+
+    const refreshUsers = useCallback(async (params?: {
+        page?: number;
+        size?: number;
+        search?: string;
+        role?: UserRole;
+        verificationStatus?: VerificationStatus;
+        enabled?: boolean;
+    }) => {
+        usersApi.invalidateCache();
+        return getUsers(params);
+    }, [usersApi, getUsers]);
 
     const clearCache = useCallback(() => {
         usersApi.invalidateCache();
@@ -104,6 +115,7 @@ export const useAdminUsers = () => {
         isCached: usersApi.isCached,
 
         getUsers,
+        refreshUsers,
         updateUserRole,
         updateUserStatus,
         updateBirthDateVerification,
