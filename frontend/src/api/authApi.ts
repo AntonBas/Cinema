@@ -17,7 +17,10 @@ const getPublicHeaders = (): HeadersInit => {
 
 const fetchApi = async <T>(url: string, options: RequestInit = {}): Promise<T> => {
     const response = await fetch(url, options);
-    if (!response.ok) throw await handleApiError(response);
+
+    if (!response.ok) {
+        throw await handleApiError(response);
+    }
 
     if (response.status === 204) {
         return undefined as T;
@@ -37,11 +40,17 @@ const fetchApi = async <T>(url: string, options: RequestInit = {}): Promise<T> =
 
 export const authApi = {
     login: async (credentials: LoginRequest): Promise<LoginResponse> => {
-        return fetchApi<LoginResponse>(`${API_URL}/login`, {
-            method: 'POST',
-            headers: getPublicHeaders(),
-            body: JSON.stringify(credentials),
-        });
+        try {
+            const response = await fetchApi<LoginResponse>(`${API_URL}/login`, {
+                method: 'POST',
+                headers: getPublicHeaders(),
+                body: JSON.stringify(credentials),
+            });
+
+            return response;
+        } catch (error) {
+            throw error;
+        }
     },
 
     register: async (userData: RegisterRequest): Promise<UserResponse> => {
@@ -54,15 +63,23 @@ export const authApi = {
 
     getCurrentUser: async (): Promise<UserResponse> => {
         const token = localStorage.getItem('authToken');
+
         if (!token) {
             throw new Error('No authentication token');
         }
-        return fetchApi<UserResponse>(`${API_URL}/me`, {
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-            },
-        });
+
+        try {
+            const response = await fetchApi<UserResponse>(`${API_URL}/me`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
+
+            return response;
+        } catch (error) {
+            throw error;
+        }
     },
 
     checkEmail: async (email: string): Promise<boolean> => {

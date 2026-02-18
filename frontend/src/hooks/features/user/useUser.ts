@@ -6,10 +6,8 @@ import type {
 } from '@/types/user';
 import { userApi } from '@/api/userApi';
 import { useApi } from '@/hooks/common/useApi';
-import { useAuth } from '@/contexts/AuthContext';
 
 export const useUser = () => {
-    const { user: authUser } = useAuth();
     const profileApi = useApi<UserProfileResponse>();
     const emailChangeApi = useApi<{ message: string }>();
     const passwordApi = useApi<{ message: string }>();
@@ -49,11 +47,12 @@ export const useUser = () => {
     }, [profileApi]);
 
     useEffect(() => {
-        if (!initialLoadRef.current && authUser && !profileApi.data && !profileApi.loading) {
+        const token = localStorage.getItem('authToken');
+        if (!initialLoadRef.current && token && !profileApi.data && !profileApi.loading) {
             initialLoadRef.current = true;
             getProfile();
         }
-    }, [authUser, getProfile, profileApi.data, profileApi.loading]);
+    }, [getProfile, profileApi.data, profileApi.loading]);
 
     const updateProfile = useCallback(async (updateData: UserUpdateRequest) => {
         const result = await profileApi.execute(
