@@ -8,6 +8,7 @@ import type {
 import type { UserResponse } from '@/types/user';
 import { authApi } from '@/api/authApi';
 import { useApi } from '@/hooks/common/useApi';
+import { isApiErrorException } from '@/utils/apiErrorHandler';
 
 const CACHE_CONFIG = {
     CURRENT_USER: {
@@ -46,9 +47,9 @@ export const useAuth = () => {
         confirmEmailChangeApi.loading]);
 
     const error = useMemo(() =>
-        !!(loginApi.error || registerApi.error || currentUserApi.error ||
-            checkEmailApi.error || forgotPasswordApi.error || resetPasswordApi.error ||
-            verifyEmailApi.error || confirmEmailChangeApi.error),
+        loginApi.error || registerApi.error || currentUserApi.error ||
+        checkEmailApi.error || forgotPasswordApi.error || resetPasswordApi.error ||
+        verifyEmailApi.error || confirmEmailChangeApi.error,
         [loginApi.error, registerApi.error, currentUserApi.error, checkEmailApi.error,
         forgotPasswordApi.error, resetPasswordApi.error, verifyEmailApi.error,
         confirmEmailChangeApi.error]);
@@ -65,7 +66,8 @@ export const useAuth = () => {
             const response = await loginApi.execute(
                 () => authApi.login(credentials),
                 {
-                    successMessage: 'Login successful'
+                    successMessage: 'Login successful',
+                    showErrorNotification: false
                 }
             );
 
@@ -84,12 +86,17 @@ export const useAuth = () => {
     }, [loginApi, currentUserApi, navigate]);
 
     const register = useCallback(async (userData: RegisterRequest) => {
-        return registerApi.execute(
-            () => authApi.register(userData),
-            {
-                successMessage: 'Registration successful. Please check your email.'
-            }
-        );
+        try {
+            return await registerApi.execute(
+                () => authApi.register(userData),
+                {
+                    successMessage: 'Registration successful. Please check your email.',
+                    showErrorNotification: false
+                }
+            );
+        } catch (error) {
+            throw error;
+        }
     }, [registerApi]);
 
     const getCurrentUser = useCallback(async () => {
@@ -101,7 +108,11 @@ export const useAuth = () => {
                     cacheTime: CACHE_CONFIG.CURRENT_USER.time,
                     showErrorNotification: false,
                     onError: (error) => {
-                        if (error.message.includes('401') || error.message.includes('403')) {
+                        if (isApiErrorException(error)) {
+                            if (error.isUnauthorized() || error.isForbidden()) {
+                                logout();
+                            }
+                        } else if (error.message.includes('401') || error.message.includes('403')) {
                             logout();
                         }
                     }
@@ -126,42 +137,62 @@ export const useAuth = () => {
     }, [checkEmailApi]);
 
     const forgotPassword = useCallback(async (email: string) => {
-        return forgotPasswordApi.execute(
-            () => authApi.forgotPassword(email),
-            {
-                successMessage: 'Password reset instructions sent to your email'
-            }
-        );
+        try {
+            return await forgotPasswordApi.execute(
+                () => authApi.forgotPassword(email),
+                {
+                    successMessage: 'Password reset instructions sent to your email',
+                    showErrorNotification: false
+                }
+            );
+        } catch (error) {
+            throw error;
+        }
     }, [forgotPasswordApi]);
 
     const resetPassword = useCallback(async (token: string, newPassword: string) => {
-        return resetPasswordApi.execute(
-            () => authApi.resetPassword(token, newPassword),
-            {
-                successMessage: 'Password has been reset successfully'
-            }
-        );
+        try {
+            return await resetPasswordApi.execute(
+                () => authApi.resetPassword(token, newPassword),
+                {
+                    successMessage: 'Password has been reset successfully',
+                    showErrorNotification: false
+                }
+            );
+        } catch (error) {
+            throw error;
+        }
     }, [resetPasswordApi]);
 
     const verifyEmail = useCallback(async (token: string) => {
-        return verifyEmailApi.execute(
-            () => authApi.verifyEmail(token),
-            {
-                successMessage: 'Email verified successfully'
-            }
-        );
+        try {
+            return await verifyEmailApi.execute(
+                () => authApi.verifyEmail(token),
+                {
+                    successMessage: 'Email verified successfully',
+                    showErrorNotification: false
+                }
+            );
+        } catch (error) {
+            throw error;
+        }
     }, [verifyEmailApi]);
 
     const confirmEmailChange = useCallback(async (token: string) => {
-        return confirmEmailChangeApi.execute(
-            () => authApi.confirmEmailChange(token),
-            {
-                successMessage: 'Email changed successfully',
-                onSuccess: () => {
-                    currentUserApi.invalidateCache();
+        try {
+            return await confirmEmailChangeApi.execute(
+                () => authApi.confirmEmailChange(token),
+                {
+                    successMessage: 'Email changed successfully',
+                    showErrorNotification: false,
+                    onSuccess: () => {
+                        currentUserApi.invalidateCache();
+                    }
                 }
-            }
-        );
+            );
+        } catch (error) {
+            throw error;
+        }
     }, [confirmEmailChangeApi, currentUserApi]);
 
     const logout = useCallback(() => {

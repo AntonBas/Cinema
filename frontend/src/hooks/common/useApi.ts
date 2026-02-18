@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useNotification } from './useNotification';
+import { isApiErrorException } from '@/utils/apiErrorHandler';
 
 interface CacheItem<T> {
     data: T;
@@ -169,8 +170,12 @@ export const useApi = <T = any>() => {
                 isCached: false
             }));
 
-            if (showErrorNotification && !error.message.includes('401')) {
-                showNotification(error.message, 'error');
+            if (showErrorNotification) {
+                if (isApiErrorException(error)) {
+                    showNotification(error.message, 'error');
+                } else {
+                    showNotification(error.message, 'error');
+                }
             }
 
             if (onError) onError(error);
