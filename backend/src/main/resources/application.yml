@@ -15,15 +15,13 @@ spring:
         hibernate:
             ddl-auto: validate
         open-in-view: false
+        show-sql: false
         properties:
             hibernate:
-                "[format_sql]": ${SHOW_SQL:true}
-            jakarta:
-                persistence:
-                    schema-generation:
-                        scripts:
-                            action: none
-        show-sql: ${SHOW_SQL:true}
+                format_sql: false
+                dialect: org.hibernate.dialect.PostgreSQLDialect
+                jdbc:
+                    batch_size: 20
     flyway:
         enabled: true
         baseline-on-migrate: true
@@ -55,6 +53,8 @@ spring:
         multipart:
             max-file-size: 10MB
             max-request-size: 10MB
+    mvc:
+        log-request-details: true
 
 app:
     jwt:
@@ -133,8 +133,8 @@ logging:
         ua.lviv.bas.cinema.config.security: DEBUG
         ua.lviv.bas.cinema.controller: DEBUG
         ua.lviv.bas.cinema.service: DEBUG
-        org.hibernate.SQL: DEBUG
-        org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+        org.hibernate.SQL: OFF
+        org.hibernate.type.descriptor.sql: OFF
     pattern:
         console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
         file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
@@ -142,42 +142,3 @@ logging:
         name: logs/cinema.log
         max-size: 10MB
         max-history: 30
-
----
-spring:
-    config:
-        activate:
-            on-profile: local
-    datasource:
-        url: jdbc:postgresql://localhost:5433/cinema_db
-
-scheduler:
-    birthday-bonus:
-        cron: "0 */5 * * * *"
-    email-token:
-        cleanup-expired-cron: "0 */5 * * * *"
-        cleanup-confirmed-cron: "0 */5 * * * *"
-    movie-status:
-        cron: "0 */5 * * * *"
-    session-status:
-        cron: "0 */5 * * * *"
-    booking:
-        expiration-interval: 300000
-        cleanup-cron: "0 */5 * * * *"
-        reminder-cron: "0 */5 * * * *"
-    payment:
-        expiration-interval: 300000
-        cleanup-cron: "0 */5 * * * *"
-        daily-stats: "0 */5 * * * *"
-    ticket:
-        mark-as-used: 300000
-        cleanup-cron: "0 */5 * * * *"
-        daily-stats: "0 */5 * * * *"
-        upcoming-reminder: "0 */5 * * * *"
-
-logging:
-    level:
-        org.springframework.security: DEBUG
-        org.springframework.web: DEBUG
-        org.springframework.web.cors: DEBUG
-        ua.lviv.bas.cinema.config.security: DEBUG

@@ -4,6 +4,11 @@ spring:
             on-profile: local
     datasource:
         url: jdbc:postgresql://localhost:5433/cinema_db
+    jpa:
+        show-sql: false
+        properties:
+            hibernate:
+                format_sql: false
 
 scheduler:
     birthday-bonus:
@@ -28,3 +33,12 @@ scheduler:
         cleanup-cron: "0 */5 * * * *"
         daily-stats: "0 */5 * * * *"
         upcoming-reminder: "0 */5 * * * *"
+
+logging:
+    level:
+        org.springframework.security: DEBUG
+        org.springframework.web: DEBUG
+        org.springframework.web.cors: DEBUG
+        ua.lviv.bas.cinema.config.security: DEBUG
+        org.hibernate.SQL: OFF
+        org.hibernate.type.descriptor.sql: OFF
