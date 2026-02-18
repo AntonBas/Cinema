@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useUser } from '@/hooks/features/user/useUser';
 import { Input, Button, Notification, Tooltip } from '@/components/ui';
+import { isApiErrorException } from '@/utils/apiErrorHandler';
 import styles from './EmailChangeForm.module.css';
 
 export const EmailChangeForm: React.FC = () => {
@@ -10,6 +11,8 @@ export const EmailChangeForm: React.FC = () => {
         password: ''
     });
     const [showSuccess, setShowSuccess] = useState(false);
+    const [showError, setShowError] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
     const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
     const handleChange = (field: string, value: string) => {
@@ -21,7 +24,11 @@ export const EmailChangeForm: React.FC = () => {
         if (formErrors[field]) {
             setFormErrors(prev => ({ ...prev, [field]: '' }));
         }
+        if (errorMessage) {
+            setErrorMessage('');
+        }
         if (showSuccess) setShowSuccess(false);
+        if (showError) setShowError(false);
     };
 
     const validateForm = () => {
@@ -49,19 +56,29 @@ export const EmailChangeForm: React.FC = () => {
         }
 
         try {
-            await requestEmailChange(formData.newEmail);
+            await requestEmailChange(formData.newEmail, formData.password);
             setShowSuccess(true);
             setFormData({
                 newEmail: '',
                 password: ''
             });
             setFormErrors({});
-        } catch {
+            setErrorMessage('');
+        } catch (err) {
+            if (isApiErrorException(err)) {
+                setErrorMessage(err.message);
+            } else if (err instanceof Error) {
+                setErrorMessage(err.message);
+            } else {
+                setErrorMessage('Failed to request email change. Please try again.');
+            }
+            setShowError(true);
         }
     };
 
     const handleCloseNotification = (id: string) => {
         if (id === 'success') setShowSuccess(false);
+        if (id === 'error') setShowError(false);
     };
 
     return (
@@ -71,6 +88,15 @@ export const EmailChangeForm: React.FC = () => {
                 message="Confirmation email sent to your new address! Please check your inbox."
                 type="success"
                 isVisible={showSuccess}
+                onClose={handleCloseNotification}
+                duration={5000}
+            />
+
+            <Notification
+                id="error"
+                message={errorMessage}
+                type="error"
+                isVisible={showError}
                 onClose={handleCloseNotification}
                 duration={5000}
             />

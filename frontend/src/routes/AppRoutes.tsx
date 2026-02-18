@@ -9,6 +9,7 @@ import { RegisterPage } from '@/pages/auth/RegisterPage/RegisterPage';
 import { ForgotPasswordPage } from '@/pages/auth/ForgotPasswordPage/ForgotPasswordPage';
 import { ResetPasswordPage } from '@/pages/auth/ResetPasswordPage/ResetPasswordPage';
 import { EmailVerificationPage } from '@/pages/auth/EmailVerificationPage/EmailVerificationPage';
+import { ConfirmEmailChangePage } from '@/pages/auth/ConfirmEmailChangePage/ConfirmEmailChangePage';
 
 import { HomePage } from '@/pages/home/HomePage';
 import { ProfilePage } from '@/pages/account/ProfilePage/ProfilePage';
@@ -65,6 +66,8 @@ export const AppRoutes: React.FC = () => {
             } />
 
             <Route path="/verify-email/:token" element={<EmailVerificationPage />} />
+
+            <Route path="/confirm-email-change/:token" element={<ConfirmEmailChangePage />} />
 
             <Route path="/account" element={
                 <ProtectedRoute>
