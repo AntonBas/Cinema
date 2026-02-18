@@ -2,6 +2,7 @@ package ua.lviv.bas.cinema.controller.api;
 
 import java.util.Map;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -39,12 +40,15 @@ public class UserController {
 	private final UserService userService;
 
 	@GetMapping("/profile")
-	@Operation(summary = "Get user profile", description = "Retrieve the authenticated user's profile information.")
-	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Profile retrieved successfully"),
-			@ApiResponse(responseCode = "401", description = "User not authenticated"),
-			@ApiResponse(responseCode = "404", description = "User not found") })
 	public ResponseEntity<UserProfileResponse> getProfile(
 			@Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+		log.debug("GET /api/users/profile - userDetails: {}", userDetails);
+
+		if (userDetails == null) {
+			log.error("UserDetails is null - user not authenticated");
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+		}
 
 		log.info("GET /api/users/profile - user ID: {}", userDetails.getUserId());
 		return ResponseEntity.ok(userService.getUserProfile(userDetails.getUserId()));
