@@ -7,7 +7,7 @@ import styles from './ProfileEditForm.module.css';
 interface ProfileEditFormProps {
     user: UserProfileResponse;
     onCancel: () => void;
-    onSuccess: () => void;
+    onSuccess: (data: UserUpdateRequest) => Promise<void>;
 }
 
 export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
@@ -15,7 +15,7 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
     onCancel,
     onSuccess
 }) => {
-    const { updateProfile, isProfileLoading } = useUser();
+    const { isProfileUpdating } = useUser();
     const [formData, setFormData] = useState<UserUpdateRequest>({
         firstName: user.firstName,
         lastName: user.lastName,
@@ -81,11 +81,8 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
         }
 
         try {
-            await updateProfile(formData);
+            await onSuccess(formData);
             setSuccessMessage('Profile updated successfully!');
-            setTimeout(() => {
-                onSuccess();
-            }, 1500);
         } catch (err) {
             setErrorMessage('Failed to update profile. Please try again.');
         }
@@ -100,7 +97,7 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
         setShowDateChangeWarning(false);
     };
 
-    const isLoading = isProfileLoading;
+    const isLoading = isProfileUpdating;
 
     return (
         <div className={styles.profileForm}>

@@ -6,24 +6,32 @@ import { ProfileEditForm } from '@/components/account/ProfileEditForm/ProfileEdi
 import { useUser } from '@/hooks/features/user/useUser';
 import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
 import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';
+import type { UserUpdateRequest } from '@/types/user';
 import styles from './ProfilePage.module.css';
 
 export const ProfilePage: React.FC = () => {
-    const { user, loading, error, getProfile } = useUser();
+    const {
+        profile,
+        isLoading,
+        error,
+        getProfile,
+        updateProfile
+    } = useUser();
+
     const [isEditing, setIsEditing] = useState(false);
     const [localError, setLocalError] = useState<string | null>(null);
     const [initialLoadDone, setInitialLoadDone] = useState(false);
 
-    const showLoading = useDelayedLoading(loading);
+    const showLoading = useDelayedLoading(isLoading);
 
     useEffect(() => {
-        if (!initialLoadDone) {
+        if (!initialLoadDone && !profile) {
             setInitialLoadDone(true);
             getProfile().catch((err) => {
                 setLocalError(err instanceof Error ? err.message : 'Failed to load profile');
             });
         }
-    }, [getProfile, initialLoadDone]);
+    }, [getProfile, initialLoadDone, profile]);
 
     const handleEditStart = useCallback(() => {
         setIsEditing(true);
@@ -35,18 +43,17 @@ export const ProfilePage: React.FC = () => {
         setLocalError(null);
     }, []);
 
-    const handleProfileUpdated = useCallback(() => {
-        getProfile(true)
-            .then(() => {
-                setIsEditing(false);
-                setLocalError(null);
-            })
-            .catch((err) => {
-                setLocalError(err instanceof Error ? err.message : 'Failed to update profile');
-            });
-    }, [getProfile]);
+    const handleProfileUpdated = useCallback(async (formData: UserUpdateRequest) => {
+        try {
+            await updateProfile(formData);
+            setIsEditing(false);
+            setLocalError(null);
+        } catch (err) {
+            setLocalError(err instanceof Error ? err.message : 'Failed to update profile');
+        }
+    }, [updateProfile]);
 
-    if (showLoading) {
+    if (showLoading && !profile) {
         return (
             <Layout>
                 <div className={styles.profilePage}>
@@ -58,7 +65,7 @@ export const ProfilePage: React.FC = () => {
         );
     }
 
-    if (error && !user) {
+    if (error && !profile) {
         return (
             <Layout>
                 <div className={styles.profilePage}>
@@ -75,7 +82,7 @@ export const ProfilePage: React.FC = () => {
         );
     }
 
-    if (!user) {
+    if (!profile) {
         return (
             <Layout>
                 <div className={styles.profilePage}>
@@ -111,14 +118,14 @@ export const ProfilePage: React.FC = () => {
                             </p>
                         </div>
 
-                        {!isEditing && user.verificationStatus === 'NOT_VERIFIED' && (
+                        {!isEditing && profile.verificationStatus === 'NOT_VERIFIED' && (
                             <div className={styles.verificationBanner}>
                                 <div className={styles.bannerContent}>
                                     <span className={styles.bannerIcon}>📅</span>
                                     <div>
                                         <p className={styles.bannerTitle}>Verify Your Date of Birth</p>
                                         <p className={styles.bannerText}>
-                                            To change your date of birth ({new Date(user.dateOfBirth).toLocaleDateString()})
+                                            To change your date of birth ({new Date(profile.dateOfBirth).toLocaleDateString()})
                                             you will need to verify it at the cinema cash desk.
                                         </p>
                                     </div>
@@ -129,13 +136,13 @@ export const ProfilePage: React.FC = () => {
                         <div className={styles.profileSection}>
                             {isEditing ? (
                                 <ProfileEditForm
-                                    user={user}
+                                    user={profile}
                                     onCancel={handleEditCancel}
                                     onSuccess={handleProfileUpdated}
                                 />
                             ) : (
                                 <UserProfileCard
-                                    user={user}
+                                    user={profile}
                                     onEdit={handleEditStart}
                                 />
                             )}
