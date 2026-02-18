@@ -46,7 +46,6 @@ export const ProfilePage: React.FC = () => {
             });
     }, [getProfile]);
 
-    // Показуємо лоадер під час завантаження
     if (showLoading) {
         return (
             <Layout>
@@ -59,7 +58,6 @@ export const ProfilePage: React.FC = () => {
         );
     }
 
-    // Показуємо помилку тільки якщо немає user І є error
     if (error && !user) {
         return (
             <Layout>
@@ -77,7 +75,6 @@ export const ProfilePage: React.FC = () => {
         );
     }
 
-    // Якщо немає user але немає помилки - чекаємо
     if (!user) {
         return (
             <Layout>
