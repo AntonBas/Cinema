@@ -44,7 +44,7 @@ import ua.lviv.bas.cinema.domain.enums.PaymentStatus;
 @Table(name = "payments", indexes = { @Index(name = "idx_payment_booking", columnList = "booking_id"),
 		@Index(name = "idx_payment_status", columnList = "status"),
 		@Index(name = "idx_payment_created", columnList = "created_at"),
-		@Index(name = "idx_payment_transaction", columnList = "transaction_id"),
+		@Index(name = "idx_payment_status_created", columnList = "status, created_at"),
 		@Index(name = "idx_payment_liqpay_order", columnList = "liqpay_order_id") })
 public class Payment {
 

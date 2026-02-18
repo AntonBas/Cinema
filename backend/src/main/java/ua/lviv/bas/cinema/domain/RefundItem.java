@@ -7,10 +7,13 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -31,7 +34,9 @@ import ua.lviv.bas.cinema.domain.enums.RefundItemStatus;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "refund_items")
+@Table(name = "refund_items", indexes = { @Index(name = "idx_refund_item_refund", columnList = "refund_id"),
+		@Index(name = "idx_refund_item_ticket", columnList = "ticket_id"),
+		@Index(name = "idx_refund_item_status", columnList = "status") })
 public class RefundItem {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -65,6 +70,7 @@ public class RefundItem {
 	@Builder.Default
 	private Integer bonusPointsToDeduct = 0;
 
+	@Enumerated(EnumType.STRING)
 	@Column(name = "status", nullable = false, length = 20)
 	@Builder.Default
 	private RefundItemStatus status = RefundItemStatus.PENDING;

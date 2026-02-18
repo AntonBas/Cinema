@@ -44,7 +44,10 @@ import ua.lviv.bas.cinema.domain.enums.VerificationStatus;
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Table(name = "users", indexes = { @Index(name = "idx_user_email", columnList = "email"),
 		@Index(name = "idx_user_name", columnList = "first_name,last_name"),
-		@Index(name = "idx_user_status", columnList = "verification_status") })
+		@Index(name = "idx_user_status", columnList = "verification_status"),
+		@Index(name = "idx_user_role_status", columnList = "user_role, verification_status, enabled"),
+		@Index(name = "idx_user_updated_at", columnList = "updated_at DESC"),
+		@Index(name = "idx_user_date_of_birth", columnList = "date_of_birth") })
 public class User {
 
 	@Id
