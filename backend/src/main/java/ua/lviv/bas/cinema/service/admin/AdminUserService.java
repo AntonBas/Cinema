@@ -85,8 +85,13 @@ public class AdminUserService {
 
 	@Cacheable(key = "'list-' + #filter.hashCode() + '-' + #pageable")
 	public Page<AdminUserListResponse> getUsersForAdmin(UserFilterRequest filter, Pageable pageable) {
+		log.debug("Fetching users for admin with filter: {}, pageable: {}", filter, pageable);
+
 		Page<AdminUserProjection> projections = userRepository.findAdminUsers(filter, pageable);
-		return projections.map(userMapper::toAdminUserListResponse);
+		Page<AdminUserListResponse> result = projections.map(userMapper::toAdminUserListResponse);
+
+		log.debug("Mapped {} users for admin", result.getTotalElements());
+		return result;
 	}
 
 	@Cacheable(key = "'active-admins'")

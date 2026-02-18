@@ -52,6 +52,14 @@ public interface UserMapper {
 	@Mapping(target = "email", ignore = true)
 	void updateUserFromRequest(UserUpdateRequest dto, @MappingTarget User user);
 
+	@Mapping(target = "id", source = "id")
+	@Mapping(target = "email", source = "email")
+	@Mapping(target = "firstName", source = "firstName")
+	@Mapping(target = "lastName", source = "lastName")
+	@Mapping(target = "userRole", source = "userRole")
+	@Mapping(target = "enabled", source = "enabled")
+	@Mapping(target = "verificationStatus", source = "verificationStatus")
+	@Mapping(target = "verifiedAt", source = "verifiedAt")
 	@Mapping(target = "ticketsCount", source = "ticketsCount")
 	@Mapping(target = "lastActivity", source = "lastActivity")
 	AdminUserListResponse toAdminUserListResponse(AdminUserProjection projection);
