@@ -72,8 +72,9 @@ public class UserService {
 	}
 
 	@Transactional
-	public void requestEmailChange(Long userId, String newEmail) {
+	public void requestEmailChange(Long userId, String currentPassword, String newEmail) {
 		User user = getUserById(userId);
+		validateCurrentPassword(user, currentPassword);
 		validateNewEmail(user.getEmail(), newEmail);
 		validateEmailNotExists(newEmail);
 		emailTokenGeneratorService.generateEmailChangeToken(user.getEmail(), newEmail);

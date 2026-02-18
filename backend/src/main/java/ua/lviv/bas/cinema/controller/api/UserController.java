@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -23,6 +22,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import ua.lviv.bas.cinema.dto.user.request.UserEmailChangeRequest;
 import ua.lviv.bas.cinema.dto.user.request.UserPasswordUpdateRequest;
 import ua.lviv.bas.cinema.dto.user.request.UserUpdateRequest;
 import ua.lviv.bas.cinema.dto.user.response.UserProfileResponse;
@@ -72,14 +72,14 @@ public class UserController {
 	@Operation(summary = "Request email change", description = "Initiate email change process.")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Email change request sent successfully"),
 			@ApiResponse(responseCode = "400", description = "Invalid email format or email already in use"),
-			@ApiResponse(responseCode = "401", description = "User not authenticated"),
+			@ApiResponse(responseCode = "401", description = "User not authenticated or current password is incorrect"),
 			@ApiResponse(responseCode = "404", description = "User not found") })
 	public ResponseEntity<Map<String, String>> requestEmailChange(
 			@Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
-			@RequestParam String newEmail) {
+			@Valid @RequestBody UserEmailChangeRequest request) {
 
 		log.info("POST /api/users/email/change-request - user ID: {}", userDetails.getUserId());
-		userService.requestEmailChange(userDetails.getUserId(), newEmail);
+		userService.requestEmailChange(userDetails.getUserId(), request.getPassword(), request.getNewEmail());
 		return ResponseEntity.ok(Map.of("message", "Confirmation email sent to your new address"));
 	}
 
