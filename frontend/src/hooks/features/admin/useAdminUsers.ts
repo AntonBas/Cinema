@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import type {
     AdminUserListResponse,
     UserRole,
@@ -18,6 +18,8 @@ export const useAdminUsers = () => {
     const updateStatusApi = useApi<void>();
     const updateVerificationApi = useApi<UserResponse>();
 
+    const pendingRequestRef = useRef<Promise<PageResponse<AdminUserListResponse>> | null>(null);
+
     const getUsers = useCallback(async (params?: {
         page?: number;
         size?: number;
@@ -26,14 +28,28 @@ export const useAdminUsers = () => {
         verificationStatus?: VerificationStatus;
         enabled?: boolean;
     }) => {
-        return usersApi.execute(
+        const cacheKey = `admin_users_${JSON.stringify(params || {})}`;
+
+        if (pendingRequestRef.current) {
+            return pendingRequestRef.current;
+        }
+
+        const request = usersApi.execute(
             () => adminApi.getUsers(params || {}),
             {
-                cacheKey: `admin_users_${JSON.stringify(params)}`,
+                cacheKey,
                 cacheTime: 30 * 1000,
                 showErrorNotification: false,
             }
         );
+
+        pendingRequestRef.current = request;
+
+        try {
+            return await request;
+        } finally {
+            pendingRequestRef.current = null;
+        }
     }, [usersApi]);
 
     const updateUserRole = useCallback(async (userId: number, userRole: UserRole) => {

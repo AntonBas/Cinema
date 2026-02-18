@@ -27,7 +27,9 @@ export const UserTable: React.FC<UserTableProps> = ({
         'Actions'
     ], []);
 
-    if (users.length === 0) {
+    const validUsers = users.filter(user => user && user.id != null);
+
+    if (validUsers.length === 0) {
         return (
             <div className={styles.empty}>
                 <div className={styles.emptyIcon}>👥</div>
@@ -49,7 +51,7 @@ export const UserTable: React.FC<UserTableProps> = ({
                         </tr>
                     </thead>
                     <tbody className={styles.tableBody}>
-                        {users.map((user) => (
+                        {validUsers.map((user) => (
                             <UserTableRow
                                 key={user.id}
                                 user={user}

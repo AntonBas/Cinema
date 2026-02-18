@@ -1,4 +1,4 @@
-export const toBackendFormat = (dateString: string): string => {
+export const toBackendFormat = (dateString: string | null | undefined): string => {
     if (!dateString) return '';
 
     try {
@@ -18,8 +18,8 @@ export const toBackendFormat = (dateString: string): string => {
     }
 };
 
-export const toDisplayFormat = (dateString: string): string => {
-    if (!dateString) return '';
+export const toDisplayFormat = (dateString: string | null | undefined): string => {
+    if (!dateString) return '—';
 
     try {
         if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
@@ -30,6 +30,11 @@ export const toDisplayFormat = (dateString: string): string => {
         return dateString;
     } catch (error) {
         console.error('Date conversion error:', error);
-        return dateString;
+        return '—';
     }
+};
+
+export const safeFormatDate = (dateString: string | null | undefined): string => {
+    if (!dateString) return '—';
+    return toDisplayFormat(dateString);
 };
