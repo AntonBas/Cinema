@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type {
     LoginRequest,
@@ -11,6 +11,8 @@ import { useApi } from '@/hooks/common/useApi';
 
 export const useAuth = () => {
     const navigate = useNavigate();
+    const loadingRef = useRef(false);
+    const fetchedRef = useRef(false);
 
     const loginApi = useApi<LoginResponse>();
     const registerApi = useApi<User>();
@@ -25,10 +27,14 @@ export const useAuth = () => {
     const isAuthenticated = !!token;
 
     useEffect(() => {
-        if (isAuthenticated && !currentUserApi.data && !currentUserApi.loading) {
-            getCurrentUser();
+        if (isAuthenticated && !currentUserApi.data && !currentUserApi.loading && !currentUserApi.error && !loadingRef.current && !fetchedRef.current) {
+            fetchedRef.current = true;
+            loadingRef.current = true;
+            getCurrentUser().finally(() => {
+                loadingRef.current = false;
+            });
         }
-    }, [isAuthenticated]);
+    }, [token]);
 
     const login = useCallback(async (credentials: LoginRequest) => {
         try {
@@ -42,6 +48,7 @@ export const useAuth = () => {
             if (response) {
                 localStorage.setItem('authToken', response.token);
                 currentUserApi.invalidateCache();
+                fetchedRef.current = false;
                 await getCurrentUser();
                 navigate('/');
             }
@@ -62,6 +69,8 @@ export const useAuth = () => {
     }, [registerApi]);
 
     const getCurrentUser = useCallback(async () => {
+        if (loadingRef.current) return currentUserApi.data;
+
         return currentUserApi.execute(
             () => authApi.getCurrentUser(),
             {
@@ -137,6 +146,7 @@ export const useAuth = () => {
         resetPasswordApi.invalidateCache();
         verifyEmailApi.invalidateCache();
         confirmEmailChangeApi.invalidateCache();
+        fetchedRef.current = false;
         navigate('/login');
     }, [loginApi, currentUserApi, checkEmailApi, registerApi, forgotPasswordApi,
         resetPasswordApi, verifyEmailApi, confirmEmailChangeApi, navigate]);

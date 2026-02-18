@@ -6,18 +6,30 @@ import type {
 } from '@/types/user';
 import { userApi } from '@/api/userApi';
 import { useApi } from '@/hooks/common/useApi';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const useUser = () => {
+    const { user: authUser } = useAuth();
     const profileApi = useApi<UserProfileResponse>();
     const emailChangeApi = useApi<{ message: string }>();
     const passwordApi = useApi<{ message: string }>();
     const initialLoadRef = useRef(false);
+    const loadingPromiseRef = useRef<Promise<UserProfileResponse> | null>(null);
 
-    const getProfile = useCallback(async (skipCache: boolean = false) => {
-        if (skipCache) {
+    const getProfile = useCallback(async (forceRefresh: boolean = false) => {
+        if (forceRefresh) {
             profileApi.invalidateCache('user_profile');
         }
-        return profileApi.execute(
+
+        if (!forceRefresh && profileApi.data) {
+            return profileApi.data;
+        }
+
+        if (loadingPromiseRef.current) {
+            return loadingPromiseRef.current;
+        }
+
+        const promise = profileApi.execute(
             () => userApi.getProfile(),
             {
                 cacheKey: 'user_profile',
@@ -25,27 +37,36 @@ export const useUser = () => {
                 showErrorNotification: false,
             }
         );
+
+        loadingPromiseRef.current = promise;
+
+        try {
+            const result = await promise;
+            return result;
+        } finally {
+            loadingPromiseRef.current = null;
+        }
     }, [profileApi]);
 
     useEffect(() => {
-        if (!initialLoadRef.current) {
+        if (!initialLoadRef.current && authUser && !profileApi.data && !profileApi.loading) {
             initialLoadRef.current = true;
-            getProfile().catch(() => {
-            });
+            getProfile();
         }
-    }, [getProfile]);
+    }, [authUser, getProfile, profileApi.data, profileApi.loading]);
 
     const updateProfile = useCallback(async (updateData: UserUpdateRequest) => {
-        return profileApi.execute(
+        const result = await profileApi.execute(
             () => userApi.updateProfile(updateData),
             {
                 successMessage: 'Profile updated successfully',
-                onSuccess: () => {
-                    profileApi.invalidateCache('user_profile');
-                },
             }
         );
-    }, [profileApi]);
+
+        await getProfile(true);
+
+        return result;
+    }, [profileApi, getProfile]);
 
     const requestEmailChange = useCallback(async (newEmail: string) => {
         return emailChangeApi.execute(

@@ -36,7 +36,7 @@ export const ProfilePage: React.FC = () => {
     }, []);
 
     const handleProfileUpdated = useCallback(() => {
-        getProfile()
+        getProfile(true)
             .then(() => {
                 setIsEditing(false);
                 setLocalError(null);
