@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useUser } from '@/hooks/features/user/useUser';
 import { Input, Button, Notification } from '@/components/ui';
 import type { UserPasswordUpdateRequest } from '@/types/user';
+import { isApiErrorException } from '@/utils/apiErrorHandler';
 import styles from './PasswordChangeForm.module.css';
 
 export const PasswordChangeForm: React.FC = () => {
@@ -79,7 +80,13 @@ export const PasswordChangeForm: React.FC = () => {
             setFormErrors({});
             setErrorMessage('');
         } catch (err) {
-            setErrorMessage('Failed to update password. Please try again.');
+            if (isApiErrorException(err)) {
+                setErrorMessage(err.message);
+            } else if (err instanceof Error) {
+                setErrorMessage(err.message);
+            } else {
+                setErrorMessage('Failed to update password. Please try again.');
+            }
             setShowError(true);
         }
     };
