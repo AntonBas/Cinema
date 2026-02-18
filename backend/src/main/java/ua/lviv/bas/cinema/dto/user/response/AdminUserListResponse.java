@@ -41,12 +41,6 @@ public class AdminUserListResponse {
 	@Schema(description = "Date and time when birth date was verified")
 	private LocalDateTime verifiedAt;
 
-	@Schema(description = "Date when the account was created", example = "2024-01-10", type = "string", format = "date")
-	private LocalDateTime createdAt;
-
-	@Schema(description = "Date when the account was last updated", example = "2024-01-15", type = "string", format = "date")
-	private LocalDateTime updatedAt;
-
 	@Schema(description = "Number of tickets purchased by the user", example = "15")
 	private int ticketsCount;
 

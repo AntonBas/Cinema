@@ -22,10 +22,6 @@ public interface AdminUserProjection {
 
 	LocalDateTime getVerifiedAt();
 
-	LocalDateTime getCreatedAt();
-
-	LocalDateTime getUpdatedAt();
-
 	Long getTicketsCount();
 
 	LocalDateTime getLastActivity();
