@@ -1,40 +1,66 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Layout } from '@/components/layout/Layout/Layout';
 import { AccountSidebar } from '@/components/account/AccountSidebar/AccountSidebar';
 import { UserProfileCard } from '@/components/account/UserProfileCard/UserProfileCard';
 import { ProfileEditForm } from '@/components/account/ProfileEditForm/ProfileEditForm';
 import { useUser } from '@/hooks/features/user/useUser';
+import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
+import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';
 import styles from './ProfilePage.module.css';
 
 export const ProfilePage: React.FC = () => {
     const { user, loading, error, getProfile } = useUser();
     const [isEditing, setIsEditing] = useState(false);
-    const [localError] = useState<string | null>(null);
+    const [localError, setLocalError] = useState<string | null>(null);
+    const [initialLoadDone, setInitialLoadDone] = useState(false);
 
-    const handleEditStart = () => {
+    const showLoading = useDelayedLoading(loading);
+
+    useEffect(() => {
+        if (!initialLoadDone) {
+            setInitialLoadDone(true);
+            getProfile().catch((err) => {
+                setLocalError(err instanceof Error ? err.message : 'Failed to load profile');
+            });
+        }
+    }, [getProfile, initialLoadDone]);
+
+    const handleEditStart = useCallback(() => {
         setIsEditing(true);
-    };
+        setLocalError(null);
+    }, []);
 
-    const handleEditCancel = () => {
+    const handleEditCancel = useCallback(() => {
         setIsEditing(false);
-    };
+        setLocalError(null);
+    }, []);
 
-    const handleProfileUpdated = () => {
-        getProfile();
-        setIsEditing(false);
-    };
+    const handleProfileUpdated = useCallback(() => {
+        getProfile()
+            .then(() => {
+                setIsEditing(false);
+                setLocalError(null);
+            })
+            .catch((err) => {
+                setLocalError(err instanceof Error ? err.message : 'Failed to update profile');
+            });
+    }, [getProfile]);
 
-    if (loading) {
+    // Показуємо лоадер під час завантаження
+    if (showLoading) {
         return (
             <Layout>
                 <div className={styles.profilePage}>
-                    <div className={styles.loading}>Loading your account...</div>
+                    <div className={styles.loading}>
+                        <LoadingSpinner text="Loading your account..." />
+                    </div>
                 </div>
             </Layout>
         );
     }
 
-    if (error || !user) {
+    // Показуємо помилку тільки якщо немає user І є error
+    if (error && !user) {
         return (
             <Layout>
                 <div className={styles.profilePage}>
@@ -42,9 +68,22 @@ export const ProfilePage: React.FC = () => {
                         <AccountSidebar activePage="profile" />
                         <div className={styles.content}>
                             <div className={styles.notification} data-type="error">
-                                {error ? 'Failed to load user data' : 'User not found'}
+                                Failed to load user data. Please try again later.
                             </div>
                         </div>
+                    </div>
+                </div>
+            </Layout>
+        );
+    }
+
+    // Якщо немає user але немає помилки - чекаємо
+    if (!user) {
+        return (
+            <Layout>
+                <div className={styles.profilePage}>
+                    <div className={styles.loading}>
+                        <LoadingSpinner text="Loading your account..." />
                     </div>
                 </div>
             </Layout>

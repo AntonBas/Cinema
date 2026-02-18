@@ -35,8 +35,6 @@ export interface AdminUserListResponse {
     enabled: boolean;
     verificationStatus: VerificationStatus;
     verifiedAt: string | null;
-    createdAt: string;
-    updatedAt: string;
     ticketsCount: number;
     lastActivity: string;
 }
@@ -93,21 +91,6 @@ export interface UserFilterRequest {
     role?: UserRole;
     verificationStatus?: VerificationStatus;
     enabled?: boolean;
-}
-
-export interface AdminUserProjection {
-    id: number;
-    email: string;
-    firstName: string;
-    lastName: string;
-    userRole: UserRole;
-    enabled: boolean;
-    verificationStatus: VerificationStatus;
-    verifiedAt: string | null;
-    createdAt: string;
-    updatedAt: string;
-    ticketsCount: number;
-    lastActivity: string;
 }
 
 export interface AdminUsersResponse {

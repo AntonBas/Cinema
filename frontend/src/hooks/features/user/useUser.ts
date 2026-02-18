@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useRef, useEffect } from 'react';
 import type {
     UserProfileResponse,
     UserUpdateRequest,
@@ -11,8 +11,12 @@ export const useUser = () => {
     const profileApi = useApi<UserProfileResponse>();
     const emailChangeApi = useApi<{ message: string }>();
     const passwordApi = useApi<{ message: string }>();
+    const initialLoadRef = useRef(false);
 
-    const getProfile = useCallback(async () => {
+    const getProfile = useCallback(async (skipCache: boolean = false) => {
+        if (skipCache) {
+            profileApi.invalidateCache('user_profile');
+        }
         return profileApi.execute(
             () => userApi.getProfile(),
             {
@@ -22,6 +26,14 @@ export const useUser = () => {
             }
         );
     }, [profileApi]);
+
+    useEffect(() => {
+        if (!initialLoadRef.current) {
+            initialLoadRef.current = true;
+            getProfile().catch(() => {
+            });
+        }
+    }, [getProfile]);
 
     const updateProfile = useCallback(async (updateData: UserUpdateRequest) => {
         return profileApi.execute(
@@ -70,20 +82,17 @@ export const useUser = () => {
 
     return {
         user: profileApi.data,
-
         loading,
         error,
         isProfileLoading: profileApi.loading,
         isEmailChanging: emailChangeApi.loading,
         isPasswordUpdating: passwordApi.loading,
-
         getProfile,
         updateProfile,
         requestEmailChange,
         updatePassword,
         clearCache,
         logout,
-
         resetProfile: profileApi.reset,
         resetEmailChange: emailChangeApi.reset,
         resetPassword: passwordApi.reset,
