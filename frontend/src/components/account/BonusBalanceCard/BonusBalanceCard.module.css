@@ -1,65 +1,141 @@
 .balanceCard {
-    background: linear-gradient(135deg, var(--color-primary) 0%, #667eea 100%);
-    border-radius: var(--radius-lg);
+    background: linear-gradient(145deg, #1a1f2d 0%, #2a3041 100%);
+    border-radius: 24px;
     padding: var(--space-8);
     color: var(--color-text-primary);
-    box-shadow: var(--shadow-xl);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(253, 95, 0, 0.3);
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+}
+
+.balanceCard::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--color-primary), #ff8c42, var(--color-primary));
+    background-size: 200% 100%;
+    animation: gradientMove 3s ease infinite;
+}
+
+.balanceCard::after {
+    content: '🎬';
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    font-size: 60px;
+    opacity: 0.1;
+    transform: rotate(-10deg);
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-6);
+    position: relative;
+    z-index: 1;
 }
 
 .title {
-    font-size: var(--font-size-xl);
-    font-weight: 600;
-    margin: 0 0 var(--space-6) 0;
-    text-align: center;
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin: 0;
+    background: linear-gradient(135deg, #ffffff 0%, var(--color-primary-light) 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    letter-spacing: 1px;
+}
+
+.cardIcon {
+    font-size: 2.5rem;
+    filter: drop-shadow(0 4px 8px rgba(253, 95, 0, 0.3));
 }
 
 .mainBalance {
     text-align: center;
     margin-bottom: var(--space-8);
+    position: relative;
+    z-index: 1;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 20px;
+    padding: var(--space-6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .points {
-    font-size: 3.5rem;
-    font-weight: 700;
+    font-size: 4rem;
+    font-weight: 800;
     line-height: 1;
     margin-bottom: var(--space-2);
+    background: linear-gradient(135deg, var(--color-primary) 0%, #ff8c42 50%, #ffb347 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    text-shadow: 0 4px 15px rgba(253, 95, 0, 0.3);
 }
 
 .pointsLabel {
     font-size: var(--font-size-lg);
     opacity: 0.9;
     font-weight: 500;
+    letter-spacing: 2px;
+    text-transform: uppercase;
 }
 
 .valueInfo {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: var(--space-6);
+    gap: var(--space-4);
     margin-bottom: var(--space-8);
-    padding: var(--space-6);
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: var(--radius-md);
+    position: relative;
+    z-index: 1;
 }
 
 .valueItem {
     text-align: center;
+    padding: var(--space-4);
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(5px);
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.valueItem:hover {
+    transform: translateY(-2px);
+    border-color: rgba(var(--color-primary-rgb), 0.3);
 }
 
 .valueLabel {
-    font-size: var(--font-size-sm);
-    opacity: 0.8;
-    margin-bottom: var(--space-1);
+    font-size: var(--font-size-xs);
+    opacity: 0.7;
+    margin-bottom: var(--space-2);
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
 .valueAmount {
     font-size: var(--font-size-xl);
-    font-weight: 600;
+    font-weight: 700;
+    color: var(--color-primary-light);
 }
 
 .usageLimits {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: var(--radius-md);
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 20px;
     padding: var(--space-6);
+    position: relative;
+    z-index: 1;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(5px);
 }
 
 .limitsTitle {
@@ -67,40 +143,127 @@
     font-weight: 600;
     margin: 0 0 var(--space-4) 0;
     text-align: center;
+    color: var(--color-primary-light);
+    letter-spacing: 1px;
+    text-transform: uppercase;
 }
 
 .limitsGrid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: var(--space-4);
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: var(--space-3);
 }
 
 .limitItem {
     text-align: center;
     padding: var(--space-3);
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: var(--radius-sm);
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.02);
+    transition: all 0.2s ease;
+}
+
+.limitItem:hover {
+    background: rgba(var(--color-primary-rgb), 0.1);
+    border-color: rgba(var(--color-primary-rgb), 0.2);
 }
 
 .limitLabel {
     font-size: var(--font-size-xs);
-    opacity: 0.8;
+    opacity: 0.6;
     margin-bottom: var(--space-1);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .limitValue {
-    font-size: var(--font-size-lg);
+    font-size: var(--font-size-md);
     font-weight: 600;
+    color: var(--color-text-primary);
 }
 
-.loading,
+.loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+    position: relative;
+    z-index: 1;
+    gap: var(--space-4);
+}
+
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 3px solid rgba(255, 255, 255, 0.1);
+    border-top-color: var(--color-primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.loading span {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-lg);
+}
+
 .noData {
     display: flex;
-    justify-content: center;
+    flex-direction: column;
     align-items: center;
-    min-height: 200px;
+    justify-content: center;
+    min-height: 300px;
+    position: relative;
+    z-index: 1;
+    gap: var(--space-4);
+}
+
+.noDataIcon {
+    font-size: 4rem;
+    opacity: 0.5;
+    animation: bounce 2s ease infinite;
+}
+
+.noData p {
+    margin: 0;
+    color: var(--color-text-secondary);
     font-size: var(--font-size-lg);
-    color: rgba(255, 255, 255, 0.8);
+}
+
+@keyframes gradientMove {
+    0% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes bounce {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
 }
 
 @media (max-width: 768px) {
@@ -108,18 +271,89 @@
         padding: var(--space-6);
     }
 
+    .balanceCard::after {
+        font-size: 80px;
+        bottom: 10px;
+        right: 10px;
+    }
+
+    .title {
+        font-size: 1.5rem;
+    }
+
     .points {
-        font-size: 2.5rem;
+        font-size: 3rem;
     }
 
     .valueInfo {
         grid-template-columns: 1fr;
-        gap: var(--space-4);
-        padding: var(--space-4);
+        gap: var(--space-3);
     }
 
     .limitsGrid {
         grid-template-columns: 1fr;
-        gap: var(--space-3);
+        gap: var(--space-2);
+    }
+
+    .valueItem {
+        padding: var(--space-3);
+    }
+
+    .valueAmount {
+        font-size: var(--font-size-lg);
+    }
+
+    .loading span {
+        font-size: var(--font-size-md);
+    }
+
+    .noData p {
+        font-size: var(--font-size-md);
+    }
+}
+
+@media (max-width: 480px) {
+    .balanceCard {
+        padding: var(--space-4);
+    }
+
+    .title {
+        font-size: 1.25rem;
+    }
+
+    .cardIcon {
+        font-size: 2rem;
+    }
+
+    .points {
+        font-size: 2.5rem;
+    }
+
+    .pointsLabel {
+        font-size: var(--font-size-md);
+    }
+
+    .valueItem {
+        padding: var(--space-2);
+    }
+
+    .valueLabel {
+        font-size: var(--font-size-xs);
+    }
+
+    .limitItem {
+        padding: var(--space-2);
+    }
+
+    .limitLabel {
+        font-size: 0.7rem;
+    }
+
+    .limitValue {
+        font-size: var(--font-size-sm);
+    }
+
+    .balanceCard::after {
+        font-size: 60px;
     }
 }

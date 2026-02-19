@@ -7,42 +7,97 @@ import { BonusTransactions } from '@/components/account/BonusTransactions/BonusT
 import { Button } from '@/components/ui/Button/Button';
 import { Notification } from '@/components/ui/Notification/Notification';
 import { useBonus } from '@/hooks/features/bonus/useBonus';
+import { usePagination } from '@/hooks/common/usePagination';
+import { DEFAULT_PAGE_SIZE_ADMIN } from '@/utils/paginationUtils';
+import type { BonusBalanceResponse, BonusCardResponse, BonusTransactionResponse } from '@/types/bonus';
 import styles from './BonusPage.module.css';
 
 export const BonusPage: React.FC = () => {
     const { getMyBalance, getMyCard, getMyTransactions, loading } = useBonus();
-    const [balance, setBalance] = useState<any>(null);
-    const [cardInfo, setCardInfo] = useState<any>(null);
-    const [transactionsList, setTransactionsList] = useState<any[]>([]);
+    const [balance, setBalance] = useState<BonusBalanceResponse | null>(null);
+    const [cardInfo, setCardInfo] = useState<BonusCardResponse | null>(null);
+    const [transactions, setTransactions] = useState<BonusTransactionResponse[]>([]);
+    const [pagination, setPagination] = useState({
+        currentPage: 0,
+        totalPages: 1,
+        totalElements: 0
+    });
     const [activeTab, setActiveTab] = useState<'balance' | 'transactions'>('balance');
     const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null);
     const [localError, setLocalError] = useState<string | null>(null);
+
+    const { params, setPage } = usePagination(
+        { page: 0, size: DEFAULT_PAGE_SIZE_ADMIN },
+        DEFAULT_PAGE_SIZE_ADMIN
+    );
 
     useEffect(() => {
         loadBonusData();
     }, []);
 
+    useEffect(() => {
+        if (activeTab === 'transactions') {
+            loadTransactions(params.page || 0);
+        }
+    }, [params.page, activeTab]);
+
     const loadBonusData = async () => {
+        console.log('Loading bonus data...');
         try {
-            const [balanceData, cardData, transactionsData] = await Promise.all([
+            const [balanceData, cardData] = await Promise.all([
                 getMyBalance(),
-                getMyCard(),
-                getMyTransactions()
+                getMyCard()
             ]);
+            console.log('Balance data:', balanceData);
+            console.log('Card data:', cardData);
             setBalance(balanceData);
             setCardInfo(cardData);
-            setTransactionsList(transactionsData.content);
             setLocalError(null);
+
+            await loadTransactions(0);
         } catch (error: any) {
+            console.error('Error loading bonus data:', error);
             setLocalError(error.message || 'Failed to load bonus data');
         }
     };
 
+    const loadTransactions = async (page: number) => {
+        console.log(`Loading transactions for page ${page}...`);
+        try {
+            const transactionsData = await getMyTransactions({ page, size: DEFAULT_PAGE_SIZE_ADMIN });
+            console.log('Raw transactions data:', transactionsData);
+            console.log('Content array:', transactionsData?.content);
+            console.log('Content length:', transactionsData?.content?.length);
+            console.log('Pagination info:', {
+                number: transactionsData?.number,
+                totalPages: transactionsData?.totalPages,
+                totalElements: transactionsData?.totalElements
+            });
+
+            setTransactions(transactionsData.content || []);
+            setPagination({
+                currentPage: transactionsData.number,
+                totalPages: transactionsData.totalPages,
+                totalElements: transactionsData.totalElements
+            });
+        } catch (error: any) {
+            console.error('Error loading transactions:', error);
+            showNotification('error', 'Failed to load transactions');
+        }
+    };
+
+    const handlePageChange = (page: number) => {
+        console.log('Page changed to:', page);
+        setPage(page);
+    };
+
     const handleRefresh = async () => {
+        console.log('Refreshing bonus data...');
         try {
             await loadBonusData();
             showNotification('success', 'Bonus data refreshed successfully');
         } catch (error: any) {
+            console.error('Error refreshing:', error);
             showNotification('error', 'Failed to refresh bonus data');
         }
     };
@@ -53,15 +108,15 @@ export const BonusPage: React.FC = () => {
     };
 
     const getTransactionSummary = () => {
-        if (!transactionsList.length) return null;
+        if (!transactions.length) return null;
 
-        const totalEarned = transactionsList
-            .filter(t => t.pointsChange > 0)
-            .reduce((sum, t) => sum + t.pointsChange, 0);
+        const totalEarned = transactions
+            .filter(t => parseFloat(t.pointsChange) > 0)
+            .reduce((sum, t) => sum + parseFloat(t.pointsChange), 0);
 
-        const totalSpent = transactionsList
-            .filter(t => t.pointsChange < 0)
-            .reduce((sum, t) => sum + Math.abs(t.pointsChange), 0);
+        const totalSpent = transactions
+            .filter(t => parseFloat(t.pointsChange) < 0)
+            .reduce((sum, t) => sum + Math.abs(parseFloat(t.pointsChange)), 0);
 
         const netChange = totalEarned - totalSpent;
 
@@ -85,7 +140,7 @@ export const BonusPage: React.FC = () => {
                                 isVisible={true}
                                 onClose={() => setNotification(null)}
                                 duration={3000}
-                                position={0}
+                                isStatic={true}
                             />
                         )}
 
@@ -166,8 +221,12 @@ export const BonusPage: React.FC = () => {
                             ) : (
                                 <div className={styles.transactionsContent}>
                                     <BonusTransactions
-                                        transactions={transactionsList}
+                                        transactions={transactions}
                                         loading={loading}
+                                        onPageChange={handlePageChange}
+                                        currentPage={pagination.currentPage}
+                                        totalPages={pagination.totalPages}
+                                        totalElements={pagination.totalElements}
                                     />
                                 </div>
                             )}

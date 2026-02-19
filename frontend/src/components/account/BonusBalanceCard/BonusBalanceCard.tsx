@@ -1,4 +1,5 @@
 import React from 'react';
+import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
 import type { BonusBalanceResponse } from '@/types/bonus';
 import styles from './BonusBalanceCard.module.css';
 
@@ -8,11 +9,14 @@ interface BonusBalanceCardProps {
 }
 
 export const BonusBalanceCard: React.FC<BonusBalanceCardProps> = ({ balance, loading }) => {
-    if (loading) {
+    const showLoading = useDelayedLoading(loading);
+
+    if (showLoading) {
         return (
             <div className={styles.balanceCard}>
                 <div className={styles.loading}>
-                    Loading balance...
+                    <div className={styles.spinner}></div>
+                    <span>Loading balance...</span>
                 </div>
             </div>
         );
@@ -22,7 +26,8 @@ export const BonusBalanceCard: React.FC<BonusBalanceCardProps> = ({ balance, loa
         return (
             <div className={styles.balanceCard}>
                 <div className={styles.noData}>
-                    No balance data available
+                    <span className={styles.noDataIcon}>💰</span>
+                    <p>No balance data available</p>
                 </div>
             </div>
         );
@@ -30,7 +35,10 @@ export const BonusBalanceCard: React.FC<BonusBalanceCardProps> = ({ balance, loa
 
     return (
         <div className={styles.balanceCard}>
-            <h2 className={styles.title}>Bonus Balance</h2>
+            <div className={styles.header}>
+                <h2 className={styles.title}>Bonus Balance</h2>
+                <span className={styles.cardIcon}>🎫</span>
+            </div>
 
             <div className={styles.mainBalance}>
                 <div className={styles.points}>{balance.pointsBalance}</div>

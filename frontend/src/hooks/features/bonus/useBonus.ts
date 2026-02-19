@@ -39,7 +39,7 @@ export const useBonus = () => {
         return myTransactionsApi.execute(() => bonusApi.user.getMyTransactions(params), {
             cacheKey: `my_transactions_${JSON.stringify(params)}`,
             cacheTime: 30 * 1000,
-            showErrorNotification: false,
+            showErrorNotification: true,
         });
     }, [myTransactionsApi]);
 
@@ -81,6 +81,7 @@ export const useBonus = () => {
         return transactionsApi.execute(() => bonusApi.admin.getUserTransactions(userId, params), {
             cacheKey: `user_transactions_${userId}_${JSON.stringify(params)}`,
             cacheTime: 60 * 1000,
+            showErrorNotification: true,
         });
     }, [transactionsApi]);
 
@@ -88,6 +89,7 @@ export const useBonus = () => {
         return transactionsApi.execute(() => bonusApi.admin.getAllTransactions(params), {
             cacheKey: `all_transactions_${JSON.stringify(params)}`,
             cacheTime: 60 * 1000,
+            showErrorNotification: true,
         });
     }, [transactionsApi]);
 
@@ -95,6 +97,7 @@ export const useBonus = () => {
         return transactionsApi.execute(() => bonusApi.admin.getTransactionsByType(type, params), {
             cacheKey: `transactions_type_${type}_${JSON.stringify(params)}`,
             cacheTime: 60 * 1000,
+            showErrorNotification: true,
         });
     }, [transactionsApi]);
 

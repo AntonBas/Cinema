@@ -1,5 +1,6 @@
 import React from 'react';
 import { Badge } from '@/components/ui/Badge/Badge';
+import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
 import type { BonusCardResponse } from '@/types/bonus';
 import styles from './BonusCardInfo.module.css';
 
@@ -9,11 +10,14 @@ interface BonusCardInfoProps {
 }
 
 export const BonusCardInfo: React.FC<BonusCardInfoProps> = ({ cardInfo, loading }) => {
-    if (loading) {
+    const showLoading = useDelayedLoading(loading, { delay: 200, minDisplayTime: 300 });
+
+    if (showLoading) {
         return (
             <div className={styles.cardInfo}>
                 <div className={styles.loading}>
-                    Loading card info...
+                    <div className={styles.spinner}></div>
+                    <span>Loading card info...</span>
                 </div>
             </div>
         );
@@ -23,7 +27,8 @@ export const BonusCardInfo: React.FC<BonusCardInfoProps> = ({ cardInfo, loading 
         return (
             <div className={styles.cardInfo}>
                 <div className={styles.noData}>
-                    No card information available
+                    <span className={styles.noDataIcon}>💳</span>
+                    <p>No card information available</p>
                 </div>
             </div>
         );

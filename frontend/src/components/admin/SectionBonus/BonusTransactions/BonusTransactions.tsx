@@ -36,6 +36,8 @@ const BonusTransactions = () => {
     const loadTransactions = async () => {
         try {
             setErrorMessage('');
+            console.log('Loading transactions with filters:', { userId, typeFilter, currentPage });
+
             if (userId && typeFilter) {
                 await getUserTransactions(parseInt(userId), { page: currentPage, size: 20 });
             } else if (typeFilter) {
@@ -44,6 +46,7 @@ const BonusTransactions = () => {
                 await getAllTransactions({ page: currentPage, size: 20 });
             }
         } catch (err) {
+            console.error('Error loading transactions:', err);
             setErrorMessage('Failed to load transactions');
         }
     };
@@ -60,8 +63,8 @@ const BonusTransactions = () => {
         setTypeFilter(String(value));
     };
 
-    const handleUserIdChange = (value: string) => {
-        setUserId(value);
+    const handleUserIdChange = (value: string | number) => {
+        setUserId(String(value));
     };
 
     const clearFilters = () => {
@@ -79,7 +82,10 @@ const BonusTransactions = () => {
         let totalSpent = 0;
 
         transactions.forEach((transaction: BonusTransactionResponse) => {
-            const pointsValue = parseFloat(transaction.pointsChange);
+            const pointsValue = typeof transaction.pointsChange === 'string' 
+                ? parseFloat(transaction.pointsChange) 
+                : transaction.pointsChange;
+            
             if (pointsValue > 0) {
                 totalEarned += pointsValue;
             } else {
@@ -104,7 +110,7 @@ const BonusTransactions = () => {
 
     const summary = getTransactionSummary();
 
-    if (loading) {
+    if (loading && !transactions.length) {
         return <div className={styles.loading}>Loading transactions...</div>;
     }
 
@@ -164,19 +170,19 @@ const BonusTransactions = () => {
                 </div>
                 <div className={styles.stat}>
                     <span className={`${styles.statValue} ${styles.positive}`}>
-                        +{summary.totalEarned.toFixed(0)}
+                        +{Number(summary.totalEarned).toFixed(0)}
                     </span>
                     <span className={styles.statLabel}>Points Earned</span>
                 </div>
                 <div className={styles.stat}>
                     <span className={`${styles.statValue} ${styles.negative}`}>
-                        -{summary.totalSpent.toFixed(0)}
+                        -{Number(summary.totalSpent).toFixed(0)}
                     </span>
                     <span className={styles.statLabel}>Points Spent</span>
                 </div>
                 <div className={styles.stat}>
                     <span className={`${styles.statValue} ${summary.netChange >= 0 ? styles.positive : styles.negative}`}>
-                        {summary.netChange >= 0 ? '+' : ''}{summary.netChange.toFixed(0)}
+                        {summary.netChange >= 0 ? '+' : ''}{Number(summary.netChange).toFixed(0)}
                     </span>
                     <span className={styles.statLabel}>Net Change</span>
                 </div>
@@ -186,7 +192,6 @@ const BonusTransactions = () => {
                 <table className={styles.table}>
                     <thead>
                         <tr>
-                            <th>ID</th>
                             <th>Type</th>
                             <th>Points Change</th>
                             <th>New Balance</th>
@@ -196,10 +201,16 @@ const BonusTransactions = () => {
                     </thead>
                     <tbody>
                         {transactions.map((transaction: BonusTransactionResponse) => {
-                            const pointsValue = parseFloat(transaction.pointsChange);
+                            const pointsValue = typeof transaction.pointsChange === 'string'
+                                ? parseFloat(transaction.pointsChange)
+                                : transaction.pointsChange;
+                            
+                            const pointsDisplay = pointsValue > 0 
+                                ? pointsValue.toString() 
+                                : pointsValue.toString();
+                            
                             return (
                                 <tr key={transaction.id}>
-                                    <td>{transaction.id}</td>
                                     <td>
                                         <div className={styles.typeCell}>
                                             <span className={styles.typeName}>
@@ -215,7 +226,7 @@ const BonusTransactions = () => {
                                             ? styles.positivePoints
                                             : styles.negativePoints
                                             }`}>
-                                            {pointsValue > 0 ? '+' : ''}{transaction.pointsChange}
+                                            {pointsDisplay}
                                         </span>
                                     </td>
                                     <td>
@@ -229,7 +240,7 @@ const BonusTransactions = () => {
                                                 {transaction.bookingDetails.bookingReference}
                                             </Badge>
                                         ) : (
-                                            <span style={{ color: 'var(--text-secondary)' }}>N/A</span>
+                                            <span>-</span>
                                         )}
                                     </td>
                                     <td>
@@ -244,7 +255,7 @@ const BonusTransactions = () => {
                 </table>
             </div>
 
-            {transactions.length === 0 && (
+            {transactions.length === 0 && !loading && (
                 <div className={styles.empty}>
                     <p>No transactions found</p>
                     {(typeFilter || userId) && (

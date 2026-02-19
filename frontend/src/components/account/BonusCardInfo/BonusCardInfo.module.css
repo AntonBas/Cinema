@@ -3,6 +3,8 @@
     border-radius: var(--radius-lg);
     padding: var(--space-8);
     box-shadow: var(--shadow-md);
+    border: 1px solid var(--color-border);
+    height: 100%;
 }
 
 .title {
@@ -11,6 +13,21 @@
     color: var(--color-text-primary);
     margin: 0 0 var(--space-6) 0;
     text-align: center;
+    position: relative;
+    display: inline-block;
+    width: 100%;
+}
+
+.title::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 3px;
+    background: linear-gradient(90deg, var(--color-primary), var(--color-primary-light));
+    border-radius: var(--radius-full);
 }
 
 .infoGrid {
@@ -27,12 +44,22 @@
     background: var(--color-bg-quaternary);
     border-radius: var(--radius-md);
     text-align: center;
+    border: 1px solid var(--color-border);
+    transition: all var(--transition-fast);
+}
+
+.infoItem:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: rgba(var(--color-primary-rgb), 0.3);
 }
 
 .infoLabel {
     font-size: var(--font-size-sm);
     color: var(--color-text-secondary);
     font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .infoValue {
@@ -43,14 +70,70 @@
     justify-content: center;
 }
 
-.loading,
+.loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+    gap: var(--space-4);
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--color-border);
+    border-top-color: var(--color-primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.loading span {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-lg);
+}
+
 .noData {
     display: flex;
-    justify-content: center;
+    flex-direction: column;
     align-items: center;
-    min-height: 150px;
-    font-size: var(--font-size-lg);
+    justify-content: center;
+    min-height: 200px;
+    gap: var(--space-4);
+}
+
+.noDataIcon {
+    font-size: 3rem;
+    opacity: 0.5;
+    animation: bounce 2s ease infinite;
+}
+
+.noData p {
+    margin: 0;
     color: var(--color-text-secondary);
+    font-size: var(--font-size-lg);
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes bounce {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
 }
 
 @media (max-width: 768px) {
@@ -58,8 +141,81 @@
         padding: var(--space-6);
     }
 
+    .title {
+        font-size: var(--font-size-lg);
+        margin-bottom: var(--space-4);
+    }
+
     .infoGrid {
         grid-template-columns: 1fr;
         gap: var(--space-4);
+    }
+
+    .infoItem {
+        padding: var(--space-3);
+    }
+
+    .infoLabel {
+        font-size: var(--font-size-xs);
+    }
+
+    .infoValue {
+        font-size: var(--font-size-md);
+    }
+
+    .loading,
+    .noData {
+        min-height: 150px;
+    }
+
+    .loading span,
+    .noData p {
+        font-size: var(--font-size-md);
+    }
+
+    .spinner {
+        width: 30px;
+        height: 30px;
+    }
+
+    .noDataIcon {
+        font-size: 2.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .cardInfo {
+        padding: var(--space-4);
+    }
+
+    .title {
+        font-size: var(--font-size-md);
+    }
+
+    .infoItem {
+        padding: var(--space-2);
+    }
+
+    .infoValue {
+        font-size: var(--font-size-sm);
+    }
+
+    .loading,
+    .noData {
+        min-height: 120px;
+    }
+
+    .loading span,
+    .noData p {
+        font-size: var(--font-size-sm);
+    }
+
+    .spinner {
+        width: 25px;
+        height: 25px;
+    }
+
+    .noDataIcon {
+        font-size: 2rem;
     }
 }

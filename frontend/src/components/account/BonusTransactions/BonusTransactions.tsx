@@ -1,7 +1,7 @@
 import React from 'react';
 import { Badge } from '@/components/ui/Badge/Badge';
 import { Pagination } from '@/components/ui/Pagination/Pagination';
-import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';
+import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
 import type { BonusTransactionResponse } from '@/types/bonus';
 import { BonusTransactionTypeDisplay } from '@/types/bonus';
 import styles from './BonusTransactions.module.css';
@@ -23,10 +23,15 @@ export const BonusTransactions: React.FC<BonusTransactionsProps> = ({
     totalPages = 1,
     totalElements = 0
 }) => {
-    if (loading) {
+    const showLoading = useDelayedLoading(loading, { delay: 200, minDisplayTime: 300 });
+
+    if (showLoading) {
         return (
             <div className={styles.transactions}>
-                <LoadingSpinner text="Loading transactions..." />
+                <div className={styles.loadingContainer}>
+                    <div className={styles.spinner}></div>
+                    <span>Loading transactions...</span>
+                </div>
             </div>
         );
     }
@@ -34,8 +39,9 @@ export const BonusTransactions: React.FC<BonusTransactionsProps> = ({
     if (!transactions || transactions.length === 0) {
         return (
             <div className={styles.transactions}>
-                <div className={styles.noTransactions}>
-                    No transactions found
+                <div className={styles.noData}>
+                    <span className={styles.noDataIcon}>📋</span>
+                    <p>No transactions found</p>
                 </div>
             </div>
         );
@@ -75,7 +81,9 @@ export const BonusTransactions: React.FC<BonusTransactionsProps> = ({
         <div className={styles.transactions}>
             <div className={styles.header}>
                 <h2 className={styles.title}>Bonus Transactions</h2>
-                <div className={styles.count}>{transactions.length} transactions</div>
+                <div className={styles.count}>
+                    <span className={styles.countNumber}>{totalElements || transactions.length}</span> transactions
+                </div>
             </div>
 
             <div className={styles.table}>
@@ -93,7 +101,7 @@ export const BonusTransactions: React.FC<BonusTransactionsProps> = ({
 
                         return (
                             <div key={transaction.id} className={styles.tableRow}>
-                                <div className={styles.tableCell}>
+                                <div className={styles.tableCell} title={formatDate(transaction.createdAt)}>
                                     {formatDate(transaction.createdAt)}
                                 </div>
                                 <div className={styles.tableCell}>
@@ -105,7 +113,9 @@ export const BonusTransactions: React.FC<BonusTransactionsProps> = ({
                                     </Badge>
                                 </div>
                                 <div className={styles.tableCell}>
-                                    {getReferenceInfo(transaction)}
+                                    <span className={styles.reference}>
+                                        {getReferenceInfo(transaction)}
+                                    </span>
                                 </div>
                                 <div className={styles.tableCell}>
                                     <span className={pointsValue > 0 ? styles.positive : styles.negative}>
@@ -113,7 +123,7 @@ export const BonusTransactions: React.FC<BonusTransactionsProps> = ({
                                     </span>
                                 </div>
                                 <div className={styles.tableCell}>
-                                    {transaction.newBalance}
+                                    <span className={styles.balance}>{transaction.newBalance}</span>
                                 </div>
                             </div>
                         );
@@ -122,14 +132,16 @@ export const BonusTransactions: React.FC<BonusTransactionsProps> = ({
             </div>
 
             {onPageChange && totalPages > 1 && (
-                <Pagination
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    totalElements={totalElements}
-                    pageSize={20}
-                    onPageChange={onPageChange}
-                    showInfo={true}
-                />
+                <div className={styles.paginationWrapper}>
+                    <Pagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        totalElements={totalElements}
+                        pageSize={20}
+                        onPageChange={onPageChange}
+                        showInfo={true}
+                    />
+                </div>
             )}
         </div>
     );
