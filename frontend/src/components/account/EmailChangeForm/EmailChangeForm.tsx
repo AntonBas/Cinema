@@ -64,6 +64,10 @@ export const EmailChangeForm: React.FC = () => {
             });
             setFormErrors({});
             setErrorMessage('');
+
+            setTimeout(() => {
+                setShowSuccess(false);
+            }, 5000);
         } catch (err) {
             if (isApiErrorException(err)) {
                 setErrorMessage(err.message);
@@ -73,33 +77,38 @@ export const EmailChangeForm: React.FC = () => {
                 setErrorMessage('Failed to request email change. Please try again.');
             }
             setShowError(true);
-        }
-    };
 
-    const handleCloseNotification = (id: string) => {
-        if (id === 'success') setShowSuccess(false);
-        if (id === 'error') setShowError(false);
+            setTimeout(() => {
+                setShowError(false);
+            }, 5000);
+        }
     };
 
     return (
         <div className={styles.emailForm}>
-            <Notification
-                id="success"
-                message="Confirmation email sent to your new address! Please check your inbox."
-                type="success"
-                isVisible={showSuccess}
-                onClose={handleCloseNotification}
-                duration={5000}
-            />
+            {showSuccess && (
+                <Notification
+                    id="success"
+                    message="Confirmation email sent to your new address! Please check your inbox."
+                    type="success"
+                    isVisible={showSuccess}
+                    onClose={() => setShowSuccess(false)}
+                    duration={5000}
+                    isStatic={true}
+                />
+            )}
 
-            <Notification
-                id="error"
-                message={errorMessage}
-                type="error"
-                isVisible={showError}
-                onClose={handleCloseNotification}
-                duration={5000}
-            />
+            {showError && (
+                <Notification
+                    id="error"
+                    message={errorMessage}
+                    type="error"
+                    isVisible={showError}
+                    onClose={() => setShowError(false)}
+                    duration={5000}
+                    isStatic={true}
+                />
+            )}
 
             <h1 className={styles.title}>Change Email Address</h1>
             <p className={styles.description}>
