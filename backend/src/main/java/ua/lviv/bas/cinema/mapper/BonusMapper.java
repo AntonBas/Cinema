@@ -23,7 +23,7 @@ public interface BonusMapper {
 
 	@Mapping(target = "id", source = "id")
 	@Mapping(target = "type", source = "type")
-	@Mapping(target = "typeDisplay", source = "typeDisplay")
+	@Mapping(target = "typeDisplay", expression = "java(projection.getTypeDisplay())")
 	@Mapping(target = "pointsChange", source = "pointsChange")
 	@Mapping(target = "createdAt", source = "createdAt")
 	@Mapping(target = "newBalance", source = "newBalance")
