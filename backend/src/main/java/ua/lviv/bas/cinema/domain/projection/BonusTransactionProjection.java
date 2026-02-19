@@ -2,12 +2,12 @@ package ua.lviv.bas.cinema.domain.projection;
 
 import java.time.LocalDateTime;
 
+import ua.lviv.bas.cinema.domain.enums.BonusTransactionType;
+
 public interface BonusTransactionProjection {
 	Long getId();
 
-	String getType();
-
-	String getTypeDisplay();
+	BonusTransactionType getType();
 
 	Integer getPointsChangeRaw();
 
@@ -23,8 +23,12 @@ public interface BonusTransactionProjection {
 
 	LocalDateTime getSessionDateTime();
 
+	default String getTypeDisplay() {
+		return getType() != null ? getType().getDisplayName() : null;
+	}
+
 	default String getPointsChange() {
 		Integer raw = getPointsChangeRaw();
-		return raw > 0 ? "+" + raw : String.valueOf(raw);
+		return raw != null ? (raw > 0 ? "+" + raw : String.valueOf(raw)) : null;
 	}
 }

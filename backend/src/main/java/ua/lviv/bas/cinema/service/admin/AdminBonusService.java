@@ -11,8 +11,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.config.properties.BonusProperties;
 import ua.lviv.bas.cinema.domain.BonusRules;
-import ua.lviv.bas.cinema.domain.BonusTransaction;
 import ua.lviv.bas.cinema.domain.enums.BonusTransactionType;
+import ua.lviv.bas.cinema.domain.projection.BonusTransactionProjection;
 import ua.lviv.bas.cinema.dto.bonus.request.BonusRulesRequest;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusRulesResponse;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusTransactionResponse;
@@ -39,59 +39,27 @@ public class AdminBonusService {
 
 	@Transactional(readOnly = true)
 	public BonusRulesResponse getRule(BonusTransactionType type) {
-		BonusRules rules = bonusRulesRepository.findByBonusType(type)
-				.orElseThrow(() -> new BonusRuleNotFoundException(type));
+		BonusRules rules = getRuleByType(type);
 		return bonusMapper.toBonusRulesResponse(rules);
 	}
 
 	@Transactional
 	public BonusRulesResponse updateRule(BonusTransactionType type, BonusRulesRequest request) {
-		BonusRules rules = bonusRulesRepository.findByBonusType(type)
-				.orElseThrow(() -> new BonusRuleNotFoundException(type));
-
+		BonusRules rules = getRuleByType(type);
 		bonusMapper.updateBonusRulesFromRequest(request, rules);
 
 		if (type == BonusTransactionType.BOOKING_SPEND) {
 			validatePointsRange(rules.getMinPointsPerTransaction(), rules.getMaxPointsPerTransaction());
 		}
 
-		BonusRules updated = bonusRulesRepository.save(rules);
-		return bonusMapper.toBonusRulesResponse(updated);
-	}
-
-	@Transactional(readOnly = true)
-	public Page<BonusTransactionResponse> getUserTransactions(Long userId, Pageable pageable) {
-		return bonusTransactionRepository.findByUserId(userId, pageable).map(transaction -> {
-			BonusTransactionResponse response = bonusMapper.toBonusTransactionResponse(transaction);
-			enrichTransactionResponse(response, transaction);
-			return response;
-		});
-	}
-
-	@Transactional(readOnly = true)
-	public Page<BonusTransactionResponse> getAllTransactions(Pageable pageable) {
-		return bonusTransactionRepository.findAll(pageable).map(transaction -> {
-			BonusTransactionResponse response = bonusMapper.toBonusTransactionResponse(transaction);
-			enrichTransactionResponse(response, transaction);
-			return response;
-		});
-	}
-
-	@Transactional(readOnly = true)
-	public Page<BonusTransactionResponse> getTransactionsByType(BonusTransactionType type, Pageable pageable) {
-		return bonusTransactionRepository.findByType(type, pageable).map(transaction -> {
-			BonusTransactionResponse response = bonusMapper.toBonusTransactionResponse(transaction);
-			enrichTransactionResponse(response, transaction);
-			return response;
-		});
+		return bonusMapper.toBonusRulesResponse(bonusRulesRepository.save(rules));
 	}
 
 	@Transactional
 	public BonusRulesResponse resetRuleToDefaults(BonusTransactionType type) {
-		BonusRules rules = bonusRulesRepository.findByBonusType(type)
-				.orElseThrow(() -> new BonusRuleNotFoundException(type));
-
+		BonusRules rules = getRuleByType(type);
 		BonusProperties.RuleDefaults defaults = bonusProperties.getDefaults().get(type);
+
 		if (defaults != null) {
 			rules.setPoints(defaults.getPoints());
 			rules.setMoneyRatio(defaults.getMoneyRatio());
@@ -99,29 +67,55 @@ public class AdminBonusService {
 			rules.setMaxPointsPerTransaction(defaults.getMaxPoints());
 		}
 
-		BonusRules updated = bonusRulesRepository.save(rules);
-		return bonusMapper.toBonusRulesResponse(updated);
+		return bonusMapper.toBonusRulesResponse(bonusRulesRepository.save(rules));
+	}
+
+	@Transactional(readOnly = true)
+	public Page<BonusTransactionResponse> getUserTransactions(Long userId, Pageable pageable) {
+		Page<BonusTransactionProjection> page = bonusTransactionRepository.findProjectionsByUserId(userId, pageable);
+
+		return page.map(projection -> {
+			BonusTransactionResponse response = bonusMapper.toBonusTransactionResponse(projection);
+			if (projection.getMovieTitle() != null) {
+				response.setBookingDetails(bonusMapper.toBookingDetails(projection));
+			}
+			return response;
+		});
+	}
+
+	@Transactional(readOnly = true)
+	public Page<BonusTransactionResponse> getAllTransactions(Pageable pageable) {
+		Page<BonusTransactionProjection> page = bonusTransactionRepository.findAllProjectionsBy(pageable);
+
+		return page.map(projection -> {
+			BonusTransactionResponse response = bonusMapper.toBonusTransactionResponse(projection);
+			if (projection.getMovieTitle() != null) {
+				response.setBookingDetails(bonusMapper.toBookingDetails(projection));
+			}
+			return response;
+		});
+	}
+
+	@Transactional(readOnly = true)
+	public Page<BonusTransactionResponse> getTransactionsByType(BonusTransactionType type, Pageable pageable) {
+		Page<BonusTransactionProjection> page = bonusTransactionRepository.findProjectionsByType(type, pageable);
+
+		return page.map(projection -> {
+			BonusTransactionResponse response = bonusMapper.toBonusTransactionResponse(projection);
+			if (projection.getMovieTitle() != null) {
+				response.setBookingDetails(bonusMapper.toBookingDetails(projection));
+			}
+			return response;
+		});
+	}
+
+	private BonusRules getRuleByType(BonusTransactionType type) {
+		return bonusRulesRepository.findByBonusType(type).orElseThrow(() -> new BonusRuleNotFoundException(type));
 	}
 
 	private void validatePointsRange(Integer min, Integer max) {
 		if (min != null && max != null && min > max) {
 			throw new InvalidMinMaxPointsException(min, max);
 		}
-	}
-
-	private void enrichTransactionResponse(BonusTransactionResponse response, BonusTransaction transaction) {
-		if (transaction.getType() != null) {
-			response.setTypeDisplay(transaction.getType().getDisplayName());
-			response.setPointsChange(formatPoints(transaction.getPointsChange()));
-		}
-		if (transaction.getBonusCard() != null) {
-			response.setNewBalance(transaction.getBonusCard().getPointsBalance());
-		}
-	}
-
-	private String formatPoints(Integer points) {
-		if (points == null)
-			return null;
-		return points > 0 ? "+" + points : String.valueOf(points);
 	}
 }

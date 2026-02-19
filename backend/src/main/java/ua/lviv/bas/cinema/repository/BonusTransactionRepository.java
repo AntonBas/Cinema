@@ -20,7 +20,26 @@ public interface BonusTransactionRepository extends JpaRepository<BonusTransacti
 
 	Page<BonusTransaction> findByType(BonusTransactionType type, Pageable pageable);
 
-	@Query("SELECT bt FROM BonusTransaction bt " + "LEFT JOIN bt.booking b " + "LEFT JOIN b.session s "
-			+ "WHERE bt.bonusCard.user.id = :userId " + "ORDER BY bt.createdAt DESC")
+	@Query("SELECT " + "bt.id as id, " + "bt.type as type, " + "bt.pointsChange as pointsChangeRaw, "
+			+ "bt.createdAt as createdAt, " + "bt.bonusCard.pointsBalance as newBalance, "
+			+ "b.session.movie.title as movieTitle, " + "CAST(b.id as string) as bookingReference, "
+			+ "b.session.hall.name as cinemaHall, " + "b.session.startTime as sessionDateTime "
+			+ "FROM BonusTransaction bt " + "LEFT JOIN bt.booking b " + "WHERE bt.bonusCard.user.id = :userId "
+			+ "ORDER BY bt.createdAt DESC")
 	Page<BonusTransactionProjection> findProjectionsByUserId(@Param("userId") Long userId, Pageable pageable);
+
+	@Query("SELECT " + "bt.id as id, " + "bt.type as type, " + "bt.pointsChange as pointsChangeRaw, "
+			+ "bt.createdAt as createdAt, " + "bt.bonusCard.pointsBalance as newBalance, "
+			+ "b.session.movie.title as movieTitle, " + "CAST(b.id as string) as bookingReference, "
+			+ "b.session.hall.name as cinemaHall, " + "b.session.startTime as sessionDateTime "
+			+ "FROM BonusTransaction bt " + "LEFT JOIN bt.booking b " + "ORDER BY bt.createdAt DESC")
+	Page<BonusTransactionProjection> findAllProjectionsBy(Pageable pageable);
+
+	@Query("SELECT " + "bt.id as id, " + "bt.type as type, " + "bt.pointsChange as pointsChangeRaw, "
+			+ "bt.createdAt as createdAt, " + "bt.bonusCard.pointsBalance as newBalance, "
+			+ "b.session.movie.title as movieTitle, " + "CAST(b.id as string) as bookingReference, "
+			+ "b.session.hall.name as cinemaHall, " + "b.session.startTime as sessionDateTime "
+			+ "FROM BonusTransaction bt " + "LEFT JOIN bt.booking b " + "WHERE bt.type = :type "
+			+ "ORDER BY bt.createdAt DESC")
+	Page<BonusTransactionProjection> findProjectionsByType(@Param("type") BonusTransactionType type, Pageable pageable);
 }
