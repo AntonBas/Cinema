@@ -3,6 +3,7 @@ import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { authApi } from '@/api/authApi';
 import { Button, LoadingSpinner } from '@/components/ui';
 import { isApiErrorException } from '@/utils/apiErrorHandler';
+import { useAuth } from '@/hooks/features/auth/useAuth';
 import styles from './ConfirmEmailChangePage.module.css';
 
 export const ConfirmEmailChangePage: React.FC = () => {
@@ -13,8 +14,14 @@ export const ConfirmEmailChangePage: React.FC = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const hasConfirmed = useRef(false);
+    const { isAuthenticated } = useAuth();
 
     const confirmationToken = token || searchParams.get('token');
+    const redirectPath = isAuthenticated ? '/' : '/login';
+    const redirectText = isAuthenticated
+        ? 'Redirecting to home page in 5 seconds...'
+        : 'Redirecting to login page in 5 seconds...';
+    const buttonText = isAuthenticated ? 'Go to Home Page' : 'Go to Login';
 
     useEffect(() => {
         if (hasConfirmed.current || !confirmationToken) {
@@ -29,7 +36,7 @@ export const ConfirmEmailChangePage: React.FC = () => {
                 setIsSuccess(true);
 
                 setTimeout(() => {
-                    navigate('/login');
+                    navigate(redirectPath);
                 }, 5000);
             } catch (error: any) {
                 if (isApiErrorException(error)) {
@@ -44,7 +51,7 @@ export const ConfirmEmailChangePage: React.FC = () => {
         };
 
         confirmEmailChange();
-    }, [confirmationToken, navigate]);
+    }, [confirmationToken, navigate, redirectPath]);
 
     if (isLoading) {
         return (
@@ -69,12 +76,12 @@ export const ConfirmEmailChangePage: React.FC = () => {
 
                 {isSuccess ? (
                     <div className={styles.successActions}>
-                        <p className={styles.redirectText}>Redirecting to login page in 5 seconds...</p>
+                        <p className={styles.redirectText}>{redirectText}</p>
                         <Button
                             variant="primary"
-                            onClick={() => navigate('/login')}
+                            onClick={() => navigate(redirectPath)}
                         >
-                            Go to Login Now
+                            {buttonText} Now
                         </Button>
                     </div>
                 ) : (

@@ -125,8 +125,7 @@ export const ProfilePage: React.FC = () => {
                                     <div>
                                         <p className={styles.bannerTitle}>Verify Your Date of Birth</p>
                                         <p className={styles.bannerText}>
-                                            To change your date of birth ({new Date(profile.dateOfBirth).toLocaleDateString()})
-                                            you will need to verify it at the cinema cash desk.
+                                            To verify your age, please visit the cinema cash desk.
                                         </p>
                                     </div>
                                 </div>
