@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import type {
     MovieDetailResponse,
     MovieCreateRequest,
@@ -14,6 +14,7 @@ import { PersonSelect } from './PersonSelect/PersonSelect';
 import { GenreSearchList } from './GenreSearchList/GenreSearchList';
 import { Button, Modal, LoadingSpinner } from '@/components/ui';
 import { useNotification } from '@/hooks/common/useNotification';
+import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
 import styles from './MovieForm.module.css';
 
 interface MovieFormProps {
@@ -56,15 +57,15 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(({
 }) => {
     const { showNotification } = useNotification();
     const [genres, setGenres] = useState<GenreResponse[]>([]);
-    const [selectedGenres, setSelectedGenres] = useState<GenreResponse[]>([]);
     const [selectedActors, setSelectedActors] = useState<PersonResponse[]>([]);
     const [selectedDirectors, setSelectedDirectors] = useState<PersonResponse[]>([]);
     const [selectedScreenwriters, setSelectedScreenwriters] = useState<PersonResponse[]>([]);
-    const [isLoadingData, setIsLoadingData] = useState(true);
-    const [isUploading, setIsUploading] = useState(false);
+    const [isLoadingGenres, setIsLoadingGenres] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [posterPreview, setPosterPreview] = useState<string>('');
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const initialLoadRef = useRef(false);
+
+    const showLoading = useDelayedLoading(isLoadingGenres, { delay: 200, minDisplayTime: 300 });
 
     const [formData, setFormData] = useState<MovieFormData>({
         title: '',
@@ -82,33 +83,30 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(({
         removePoster: false
     });
 
-    const loadGenres = useCallback(async () => {
-        try {
-            const genresData = await genreApi.public.getPopular('', 100);
-            setGenres(genresData);
-        } catch (error) {
-            console.error('Error loading genres:', error);
-            showNotification('Failed to load genres', 'error');
-        }
+    useEffect(() => {
+        const loadGenres = async () => {
+            setIsLoadingGenres(true);
+            try {
+                const genresData = await genreApi.public.getPopular('', 100);
+                setGenres(genresData);
+            } catch {
+                showNotification('Failed to load genres', 'error');
+            } finally {
+                setIsLoadingGenres(false);
+            }
+        };
+        loadGenres();
     }, [showNotification]);
 
     useEffect(() => {
-        if (!initialLoadRef.current) {
-            initialLoadRef.current = true;
-            loadGenres();
-        }
-    }, [loadGenres]);
-
-    useEffect(() => {
         if (movie) {
-            setSelectedGenres(movie.genres || []);
             setSelectedActors(movie.actors || []);
             setSelectedDirectors(movie.directors || []);
             setSelectedScreenwriters(movie.screenwriters || []);
 
             setFormData({
                 title: movie.title,
-                trailerUrl: movie.trailerUrl,
+                trailerUrl: movie.trailerUrl || '',
                 description: movie.description,
                 durationMinutes: movie.durationMinutes,
                 releaseDate: movie.releaseDate ? new Date(movie.releaseDate) : null,
@@ -165,7 +163,7 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(({
 
     const handleSubmit = useCallback(async (e: React.FormEvent) => {
         e.preventDefault();
-        setIsUploading(true);
+        setIsSubmitting(true);
 
         try {
             let result;
@@ -189,7 +187,7 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(({
             } else {
                 if (!formData.posterFile) {
                     showNotification('Poster is required for new movie', 'error');
-                    setIsUploading(false);
+                    setIsSubmitting(false);
                     return;
                 }
                 const createRequest: MovieCreateRequest = {
@@ -209,11 +207,10 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(({
                 result = await movieApi.admin.create(createRequest);
             }
             onSuccess(result);
-        } catch (error) {
-            console.error('Error saving movie:', error);
+        } catch {
             showNotification('Failed to save movie', 'error');
         } finally {
-            setIsUploading(false);
+            setIsSubmitting(false);
         }
     }, [movie, formData, formatDateForBackend, onSuccess, showNotification]);
 
@@ -227,33 +224,31 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(({
         });
     }, []);
 
-    const handleActorsChange = useCallback((ids: number[]) => {
+    const handleActorsChange = useCallback((ids: number[], persons?: PersonResponse[]) => {
+        if (persons) {
+            setSelectedActors(persons);
+        }
         setFormData(prev => ({ ...prev, selectedActors: ids }));
     }, []);
 
-    const handleDirectorsChange = useCallback((ids: number[]) => {
+    const handleDirectorsChange = useCallback((ids: number[], persons?: PersonResponse[]) => {
+        if (persons) {
+            setSelectedDirectors(persons);
+        }
         setFormData(prev => ({ ...prev, selectedDirectors: ids }));
     }, []);
 
-    const handleScreenwritersChange = useCallback((ids: number[]) => {
+    const handleScreenwritersChange = useCallback((ids: number[], persons?: PersonResponse[]) => {
+        if (persons) {
+            setSelectedScreenwriters(persons);
+        }
         setFormData(prev => ({ ...prev, selectedScreenwriters: ids }));
     }, []);
-
-    const selectedActorsIds = useMemo(() => formData.selectedActors, [formData.selectedActors]);
-    const selectedDirectorsIds = useMemo(() => formData.selectedDirectors, [formData.selectedDirectors]);
-    const selectedScreenwritersIds = useMemo(() => formData.selectedScreenwriters, [formData.selectedScreenwriters]);
 
     const titleRemaining = TITLE_MAX_LENGTH - formData.title.length;
     const descriptionRemaining = DESCRIPTION_MAX_LENGTH - formData.description.length;
 
-    useEffect(() => {
-        return () => {
-            setIsLoadingData(false);
-            setIsUploading(false);
-        };
-    }, []);
-
-    if (isLoadingData) {
+    if (showLoading) {
         return (
             <Modal isOpen={true} onClose={onCancel} title="Loading...">
                 <div className={styles.loading}>
@@ -374,7 +369,7 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(({
                         </label>
                         <input
                             type="number"
-                            value={formData.durationMinutes}
+                            value={formData.durationMinutes || ''}
                             onChange={(e) => setFormData(prev => ({
                                 ...prev,
                                 durationMinutes: parseInt(e.target.value) || 0
@@ -438,7 +433,7 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(({
                             }}
                             required
                             className={styles.input}
-                            min={formatDateForInput(formData.releaseDate)}
+                            min={formatDateForInput(formData.releaseDate) || undefined}
                         />
                     </div>
                 </div>
@@ -450,7 +445,6 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(({
                     <GenreSearchList
                         genres={genres}
                         selectedIds={formData.selectedGenres}
-                        selectedGenres={selectedGenres}
                         onChange={handleGenreChange}
                     />
                 </div>
@@ -460,7 +454,7 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(({
                         Actors <span className={styles.required}>*</span>
                     </label>
                     <PersonSelect
-                        selectedIds={selectedActorsIds}
+                        selectedIds={formData.selectedActors}
                         selectedPersons={selectedActors}
                         onChange={handleActorsChange}
                         role="ACTOR"
@@ -473,7 +467,7 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(({
                         Directors <span className={styles.required}>*</span>
                     </label>
                     <PersonSelect
-                        selectedIds={selectedDirectorsIds}
+                        selectedIds={formData.selectedDirectors}
                         selectedPersons={selectedDirectors}
                         onChange={handleDirectorsChange}
                         role="DIRECTOR"
@@ -486,7 +480,7 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(({
                         Screenwriters <span className={styles.required}>*</span>
                     </label>
                     <PersonSelect
-                        selectedIds={selectedScreenwritersIds}
+                        selectedIds={formData.selectedScreenwriters}
                         selectedPersons={selectedScreenwriters}
                         onChange={handleScreenwritersChange}
                         role="SCREENWRITER"
@@ -498,8 +492,8 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(({
                     <Button
                         type="submit"
                         variant="primary"
-                        loading={isUploading}
-                        disabled={isUploading}
+                        loading={isSubmitting}
+                        disabled={isSubmitting}
                     >
                         {movie ? 'Update Movie' : 'Create Movie'}
                     </Button>
@@ -507,7 +501,7 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(({
                         type="button"
                         variant="secondary"
                         onClick={onCancel}
-                        disabled={isUploading}
+                        disabled={isSubmitting}
                     >
                         Cancel
                     </Button>

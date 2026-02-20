@@ -40,7 +40,7 @@ export const MovieTab: React.FC = () => {
     currentlyShowingPagination,
     upcomingPagination,
     archivedPagination,
-    loading,
+    loading: moviesLoading,
     getCurrentlyShowing,
     getUpcoming,
     getArchived,
@@ -50,7 +50,7 @@ export const MovieTab: React.FC = () => {
   } = useMovies();
 
   const { notifications, showNotification, hideNotification } = useNotification();
-  const showDelayedLoading = useDelayedLoading(loading, { delay: 150, minDisplayTime: 300 });
+  const showLoading = useDelayedLoading(moviesLoading, { delay: 150, minDisplayTime: 300 });
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const initialLoadRef = useRef(false);
   const loadingDataRef = useRef(false);
@@ -242,7 +242,7 @@ export const MovieTab: React.FC = () => {
     return { start, end, total: currentPagination.totalElements || 0 };
   }, [currentPagination, currentPage]);
 
-  if (showDelayedLoading && !currentMovies.length && !searchQuery) {
+  if (showLoading && !currentMovies.length && !searchQuery) {
     return <div className={styles.loading}><LoadingSpinner text={`Loading ${activeTab.toLowerCase()} movies...`} /></div>;
   }
 
@@ -296,7 +296,7 @@ export const MovieTab: React.FC = () => {
           movies={currentMovies}
           onEdit={handleEdit}
           onDelete={handleDeleteClick}
-          loading={loading}
+          loading={moviesLoading}
           onCreateNew={handleAddNew}
         />
       </div>
@@ -310,7 +310,7 @@ export const MovieTab: React.FC = () => {
             pageSize={currentPagination.size || 12}
             onPageChange={handlePageChange}
             variant="pages"
-            loading={loading}
+            loading={moviesLoading}
             showInfo={false}
           />
         </div>
@@ -330,7 +330,7 @@ export const MovieTab: React.FC = () => {
         onCancel={handleDeleteCancel}
         itemName={deletingMovie?.title}
         itemType="movie"
-        isDeleting={loading}
+        isDeleting={moviesLoading}
       />
     </div>
   );

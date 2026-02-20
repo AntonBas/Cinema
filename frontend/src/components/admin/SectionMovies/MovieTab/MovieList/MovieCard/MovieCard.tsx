@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import type { MovieCardResponse, MovieStatus } from '@/types/movie';
 import { movieApi } from '@/api/movieApi';
 import { getAgeRatingDisplay } from '@/types/movie';
@@ -10,8 +10,6 @@ interface MovieCardProps {
   onEdit: (movie: MovieCardResponse) => void;
   onDelete: (movie: MovieCardResponse) => void;
 }
-
-const DEFAULT_POSTER = '/images/default-poster.jpg';
 
 const STATUS_VARIANTS: Record<MovieStatus, 'success' | 'warning' | 'secondary'> = {
   CURRENT: 'success',
@@ -32,32 +30,15 @@ export const MovieCard: React.FC<MovieCardProps> = React.memo(({
   onEdit,
   onDelete
 }) => {
-  const [posterUrl, setPosterUrl] = useState<string>(DEFAULT_POSTER);
-  const [imageLoading, setImageLoading] = useState(true);
-  const [imageError, setImageError] = useState(false);
-
-  useEffect(() => {
-    let newPosterUrl = DEFAULT_POSTER;
-
-    if (movie.posterUrl) {
-      newPosterUrl = movie.posterUrl;
-    } else if (movie.id) {
-      newPosterUrl = movieApi.public.getPosterUrl(movie.id);
-    }
-
-    setPosterUrl(newPosterUrl);
-    setImageLoading(true);
-    setImageError(false);
-  }, [movie.id, movie.posterUrl]);
+  const [imageStatus, setImageStatus] = useState<'loading' | 'loaded' | 'error'>('loading');
+  const posterUrl = movie.posterUrl || movieApi.public.getPosterUrl(movie.id);
 
   const handleImageLoad = useCallback(() => {
-    setImageLoading(false);
+    setImageStatus('loaded');
   }, []);
 
   const handleImageError = useCallback(() => {
-    setImageLoading(false);
-    setImageError(true);
-    setPosterUrl(DEFAULT_POSTER);
+    setImageStatus('error');
   }, []);
 
   const handleEdit = useCallback(() => {
@@ -86,7 +67,7 @@ export const MovieCard: React.FC<MovieCardProps> = React.memo(({
   return (
     <div className={styles.card}>
       <div className={styles.posterContainer}>
-        {imageLoading && (
+        {imageStatus === 'loading' && (
           <div className={styles.posterPlaceholder}>
             <LoadingSpinner text="" />
           </div>
@@ -94,12 +75,12 @@ export const MovieCard: React.FC<MovieCardProps> = React.memo(({
         <img
           src={posterUrl}
           alt={`Poster for ${movie.title}`}
-          className={`${styles.poster} ${imageLoading ? styles.hidden : ''}`}
+          className={`${styles.poster} ${imageStatus !== 'loaded' ? styles.hidden : ''}`}
           onLoad={handleImageLoad}
           onError={handleImageError}
           loading="lazy"
         />
-        {imageError && !imageLoading && (
+        {imageStatus === 'error' && (
           <div className={styles.posterError} role="alert">
             <span>No Image</span>
           </div>
