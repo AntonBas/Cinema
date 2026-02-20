@@ -1,63 +1,42 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useMovies } from '@/hooks/features/movies/useMovies';
-import type { MovieCardResponse } from '@/types/movie';
 import { MovieList } from '@/components/movies/MovieList/MovieList';
 import { useNotification } from '@/hooks/common/useNotification';
 import { Notification } from '@/components/ui';
 import styles from './CurrentMoviesPage.module.css';
 
 export const CurrentMoviesPage: React.FC = () => {
-    const { loading, getCurrentlyShowing } = useMovies();
-    const [movies, setMovies] = useState<MovieCardResponse[]>([]);
+    const { currentlyShowing, loading, error, getCurrentlyShowing } = useMovies();
     const { notifications, showNotification, hideNotification } = useNotification();
-
-    const getCurrentlyShowingRef = useRef(getCurrentlyShowing);
-    const showNotificationRef = useRef(showNotification);
+    const hasLoaded = useRef(false);
 
     useEffect(() => {
-        getCurrentlyShowingRef.current = getCurrentlyShowing;
-        showNotificationRef.current = showNotification;
-    }, [getCurrentlyShowing, showNotification]);
-
-    useEffect(() => {
-        let isMounted = true;
-
-        const loadMovies = async () => {
-            try {
-                const response = await getCurrentlyShowingRef.current();
-                if (isMounted) {
-                    setMovies(response.content);
-                }
-            } catch (err) {
-                if (isMounted) {
-                    showNotificationRef.current('Failed to load movies', 'error');
-                }
-            }
-        };
-
-        if (isMounted) {
-            loadMovies();
+        if (!hasLoaded.current) {
+            hasLoaded.current = true;
+            getCurrentlyShowing().catch(() => {
+                showNotification('Failed to load movies', 'error');
+            });
         }
-
-        return () => {
-            isMounted = false;
-        };
-    }, []);
+    }, [getCurrentlyShowing, showNotification]);
 
     return (
         <div className={styles.page}>
             <MovieList
-                movies={movies}
+                movies={currentlyShowing}
                 loading={loading}
+                error={error}
                 emptyMessage="No movies currently playing"
+                onRetry={() => {
+                    hasLoaded.current = false;
+                    getCurrentlyShowing();
+                }}
             />
 
-            {notifications.map((notification, index) => (
+            {notifications.map((notification) => (
                 <Notification
                     key={notification.id}
                     {...notification}
                     onClose={hideNotification}
-                    position={index}
                 />
             ))}
         </div>

@@ -37,14 +37,15 @@ const getPublicHeaders = (): HeadersInit => {
 const fetchApi = async <T>(
   url: string,
   options: RequestInit = {},
-  isFormData: boolean = false,
-  isPublic: boolean = false
+  isPublic: boolean = false,
+  isFormData: boolean = false
 ): Promise<T> => {
   const headers = isPublic ? getPublicHeaders() : getAuthHeaders(isFormData);
 
   const response = await fetch(url, {
     headers,
     ...options,
+    credentials: 'include',
   });
 
   if (!response.ok) throw await handleApiError(response);
@@ -56,29 +57,29 @@ const fetchApi = async <T>(
 export const movieApi = {
   public: {
     getById: (id: number): Promise<MovieDetailResponse> =>
-      fetchApi<MovieDetailResponse>(`${PUBLIC_URL}/${id}`, {}, false, true),
+      fetchApi<MovieDetailResponse>(`${PUBLIC_URL}/${id}`, {}, true, false),
 
     getBySlug: (slug: string): Promise<MovieDetailResponse> =>
-      fetchApi<MovieDetailResponse>(`${PUBLIC_URL}/slug/${slug}`, {}, false, true),
+      fetchApi<MovieDetailResponse>(`${PUBLIC_URL}/slug/${slug}`, {}, true, false),
 
     getFilteredMovies: (params?: SearchParams): Promise<PageResponse<MovieCardResponse>> => {
       const url = buildPagedUrl(PUBLIC_URL, params, 'grid');
-      return fetchApi<PageResponse<MovieCardResponse>>(url, {}, false, true);
+      return fetchApi<PageResponse<MovieCardResponse>>(url, {}, true, false);
     },
 
     getCurrentlyShowing: (params?: SearchParams): Promise<PageResponse<MovieCardResponse>> => {
       const url = buildPagedUrl(`${PUBLIC_URL}/currently-showing`, params, 'grid');
-      return fetchApi<PageResponse<MovieCardResponse>>(url, {}, false, true);
+      return fetchApi<PageResponse<MovieCardResponse>>(url, {}, true, false);
     },
 
     getUpcoming: (params?: SearchParams): Promise<PageResponse<MovieCardResponse>> => {
       const url = buildPagedUrl(`${PUBLIC_URL}/upcoming`, params, 'grid');
-      return fetchApi<PageResponse<MovieCardResponse>>(url, {}, false, true);
+      return fetchApi<PageResponse<MovieCardResponse>>(url, {}, true, false);
     },
 
     searchMoviesForSession: (search?: string): Promise<MovieSessionSearchResponse[]> => {
       const url = `${PUBLIC_URL}/search/session${search ? `?search=${encodeURIComponent(search)}` : ''}`;
-      return fetchApi<MovieSessionSearchResponse[]>(url, {}, false, true);
+      return fetchApi<MovieSessionSearchResponse[]>(url, {}, true, false);
     },
 
     getPosterUrl: (id: number): string =>
@@ -101,7 +102,7 @@ export const movieApi = {
       return fetchApi<MovieDetailResponse>(ADMIN_URL, {
         method: 'POST',
         body: formData,
-      }, true);
+      }, false, true);
     },
 
     update: (id: number, request: MovieUpdateRequest): Promise<MovieDetailResponse> => {
@@ -124,29 +125,29 @@ export const movieApi = {
       return fetchApi<MovieDetailResponse>(`${ADMIN_URL}/${id}`, {
         method: 'PUT',
         body: formData,
-      }, true);
+      }, false, true);
     },
 
     delete: (id: number): Promise<void> =>
       fetchApi<void>(`${ADMIN_URL}/${id}`, {
         method: 'DELETE'
-      }),
+      }, false, false),
 
     getFilteredMovies: (filter?: MovieFilterRequest, params?: SearchParams): Promise<PageResponse<MovieCardResponse>> => {
       const filterParams = { ...params, ...filter };
       const url = buildPagedUrl(ADMIN_URL, filterParams, 'admin');
-      return fetchApi<PageResponse<MovieCardResponse>>(url);
+      return fetchApi<PageResponse<MovieCardResponse>>(url, {}, false, false);
     },
 
     getMovieById: (id: number): Promise<MovieDetailResponse> =>
-      fetchApi<MovieDetailResponse>(`${ADMIN_URL}/${id}`),
+      fetchApi<MovieDetailResponse>(`${ADMIN_URL}/${id}`, {}, false, false),
 
     getMovieBySlug: (slug: string): Promise<MovieDetailResponse> =>
-      fetchApi<MovieDetailResponse>(`${ADMIN_URL}/by-slug/${slug}`),
+      fetchApi<MovieDetailResponse>(`${ADMIN_URL}/by-slug/${slug}`, {}, false, false),
 
     searchMoviesForSession: (search?: string): Promise<MovieSessionSearchResponse[]> => {
       const url = `${ADMIN_URL}/search/session${search ? `?search=${encodeURIComponent(search)}` : ''}`;
-      return fetchApi<MovieSessionSearchResponse[]>(url);
+      return fetchApi<MovieSessionSearchResponse[]>(url, {}, false, false);
     },
   },
 };

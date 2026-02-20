@@ -99,9 +99,9 @@ export const useMovies = () => {
         archivedApi.loading || movieDetailApi.loading || searchApi.loading ||
         createApi.loading || updateApi.loading || deleteApi.loading;
 
-    const error = !!(currentlyShowingApi.error || upcomingApi.error ||
+    const error = currentlyShowingApi.error || upcomingApi.error ||
         archivedApi.error || movieDetailApi.error || searchApi.error ||
-        createApi.error || updateApi.error || deleteApi.error);
+        createApi.error || updateApi.error || deleteApi.error;
 
     return {
         currentlyShowing: currentlyShowingApi.data?.content || [],
@@ -112,10 +112,8 @@ export const useMovies = () => {
         archivedPagination: archivedApi.data,
         movie: movieDetailApi.data,
         searchResults: searchApi.data || [],
-
         loading,
         error,
-
         getCurrentlyShowing,
         getUpcoming,
         getArchived,
@@ -126,7 +124,6 @@ export const useMovies = () => {
         remove,
         clearCache,
         getPosterUrl,
-
         reset: currentlyShowingApi.reset,
     };
 };

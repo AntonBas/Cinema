@@ -72,8 +72,7 @@ export const MovieDetailPage: React.FC = () => {
                     setNextSessionTime(null);
                 }
             }
-        } catch (error) {
-            console.error('Error finding next session:', error);
+        } catch {
             if (isMounted.current) {
                 setNextSessionDate(null);
                 setNextSessionTime(null);
@@ -98,11 +97,10 @@ export const MovieDetailPage: React.FC = () => {
                 if (movieData.id && isMounted.current) {
                     await findNextSessionDate(movieData.id);
                 }
-            } catch (err) {
+            } catch {
                 if (isMounted.current) {
                     showNotificationRef.current('Failed to load movie', 'error');
                 }
-                console.error('Error fetching movie:', err);
             } finally {
                 if (isMounted.current) {
                     setLoading(false);
@@ -128,9 +126,8 @@ export const MovieDetailPage: React.FC = () => {
                 const today = new Date().toISOString().split('T')[0];
                 navigate(`/schedule?movieId=${movie.id}&date=${today}`);
             }
-        } catch (error) {
+        } catch {
             showNotificationRef.current('Error finding sessions', 'error');
-            console.error('Error:', error);
         } finally {
             setFindingSession(false);
         }

@@ -4,7 +4,6 @@
 }
 
 .navContainer {
-    background: var(--color-bg-primary);
     border-bottom: 1px solid var(--color-border);
 }
 
@@ -27,7 +26,7 @@
     padding: var(--space-2);
     border-radius: 16px;
     border: 1px solid var(--color-border);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    box-shadow: var(--shadow-sm);
 }
 
 .navLink {
@@ -54,7 +53,7 @@
 .navLink.active {
     color: var(--color-primary);
     background: var(--color-bg-primary);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-md);
     transform: translateY(-1px);
 }
 

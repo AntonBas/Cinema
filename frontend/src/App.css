@@ -15,6 +15,7 @@
   --color-error: #ff6b6b;
   --color-error-rgb: 255, 107, 107;
   --color-error-alt: #ff4757;
+  --color-error-bg: rgba(220, 38, 38, 0.85);
 
   --color-warning: #ed8936;
   --color-warning-rgb: 237, 137, 54;
@@ -41,6 +42,9 @@
   --color-border: #2d3444;
   --color-border-light: rgba(255, 255, 255, 0.2);
   --color-border-medium: #3a4051;
+
+  --color-overlay-dark: rgba(0, 0, 0, 0.75);
+  --color-overlay-darker: rgba(0, 0, 0, 0.85);
 
   --opacity-low: 0.15;
   --opacity-medium: 0.25;
@@ -609,11 +613,10 @@ h5,
   font-size: var(--font-size-sm);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: var(--color-text-primary) !important;
-  background: var(--color-bg-quaternary) !important;
+  color: var(--color-text-primary);
+  background: var(--color-bg-quaternary);
   white-space: nowrap;
 }
-
 
 @keyframes fadeIn {
   from {

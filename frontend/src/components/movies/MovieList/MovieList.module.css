@@ -20,7 +20,7 @@
 
 .empty {
     text-align: center;
-    padding: var(--space-16);
+    padding: var(--space-12);
     color: var(--color-text-secondary);
     width: 100%;
 }

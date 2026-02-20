@@ -1,7 +1,7 @@
 .container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 2rem 1rem;
+    padding: var(--space-8) var(--space-4);
 }
 
 .loadingContainer {
@@ -10,7 +10,7 @@
     align-items: center;
     justify-content: center;
     min-height: 400px;
-    gap: 1.5rem;
+    gap: var(--space-6);
 }
 
 .loadingSpinner {
@@ -30,56 +30,56 @@
 
 .loadingContainer p {
     color: var(--color-text-secondary);
-    font-size: 1.125rem;
+    font-size: var(--font-size-lg);
     font-weight: 500;
 }
 
 .errorContainer {
     text-align: center;
-    padding: 4rem 1rem;
+    padding: var(--space-16) var(--space-4);
     max-width: 500px;
     margin: 0 auto;
 }
 
 .errorContainer h2 {
     color: var(--color-text-primary);
-    font-size: 1.75rem;
+    font-size: var(--font-size-3xl);
     font-weight: 700;
-    margin-bottom: 1rem;
+    margin-bottom: var(--space-4);
 }
 
 .errorContainer p {
     color: var(--color-text-secondary);
-    font-size: 1.125rem;
+    font-size: var(--font-size-lg);
     line-height: 1.6;
-    margin-bottom: 2rem;
+    margin-bottom: var(--space-8);
 }
 
 .content {
     display: grid;
     grid-template-columns: 350px 1fr;
-    gap: 3rem;
+    gap: var(--space-12);
     animation: fadeIn 0.4s ease-out;
 }
 
 @media (max-width: 1024px) {
     .content {
         grid-template-columns: 300px 1fr;
-        gap: 2.5rem;
+        gap: var(--space-10);
     }
 }
 
 @media (max-width: 768px) {
     .content {
         grid-template-columns: 1fr;
-        gap: 2rem;
+        gap: var(--space-8);
     }
 }
 
 .leftColumn {
     display: flex;
     flex-direction: column;
-    gap: 2rem;
+    gap: var(--space-8);
 }
 
 .posterContainer {
@@ -99,16 +99,16 @@
 
 .statusBadge {
     position: absolute;
-    top: 1rem;
-    left: 1rem;
+    top: var(--space-4);
+    left: var(--space-4);
     z-index: 10;
 }
 
 .status {
     display: inline-block;
-    padding: 0.5rem 1rem;
+    padding: var(--space-2) var(--space-4);
     border-radius: var(--radius-md);
-    font-size: 0.75rem;
+    font-size: var(--font-size-xs);
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -130,13 +130,13 @@
 .actionButtons {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: var(--space-4);
 }
 
 .actionButton,
 .trailerButton {
-    padding: 1rem 1.5rem;
-    font-size: 1rem;
+    padding: var(--space-4) var(--space-6);
+    font-size: var(--font-size-md);
     font-weight: 600;
     border: none;
     border-radius: var(--radius-md);
@@ -152,7 +152,7 @@
 }
 
 .actionButton:hover:not(:disabled) {
-    background: var(--color-primary-dark);
+    background: var(--color-primary-hover);
     transform: translateY(-2px);
     box-shadow: var(--shadow-md);
 }
@@ -178,21 +178,21 @@
 .rightColumn {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: var(--space-6);
 }
 
 .titleSection {
-    margin-bottom: 0.5rem;
+    margin-bottom: var(--space-2);
 }
 
 .titleContent {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: var(--space-4);
 }
 
 .title {
-    font-size: 2.5rem;
+    font-size: var(--font-size-4xl);
     font-weight: 700;
     color: var(--color-text-primary);
     line-height: 1.2;
@@ -202,7 +202,7 @@
 .metaInfo {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: var(--space-4);
 }
 
 .ageRating {
@@ -214,7 +214,7 @@
     background: var(--color-primary);
     color: white;
     border-radius: var(--radius-md);
-    font-size: 1.25rem;
+    font-size: var(--font-size-xl);
     font-weight: 700;
     box-shadow: var(--shadow-sm);
     cursor: help;
@@ -222,10 +222,10 @@
 }
 
 .duration {
-    font-size: 1.125rem;
+    font-size: var(--font-size-lg);
     color: var(--color-text-secondary);
     font-weight: 500;
-    padding: 0.5rem 1rem;
+    padding: var(--space-2) var(--space-4);
     background: var(--color-bg-secondary);
     border-radius: var(--radius-md);
     border: 1px solid var(--color-border);
@@ -233,20 +233,20 @@
 
 @media (max-width: 768px) {
     .title {
-        font-size: 2rem;
+        font-size: var(--font-size-3xl);
     }
 
     .metaInfo {
         flex-direction: column;
         align-items: flex-start;
-        gap: 0.75rem;
+        gap: var(--space-3);
     }
 }
 
 .infoSection {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: var(--space-4);
 }
 
 .infoRow {
@@ -254,27 +254,27 @@
 }
 
 .infoLabel {
-    font-size: 1rem;
+    font-size: var(--font-size-md);
     font-weight: 600;
     color: var(--color-text-primary);
     min-width: 140px;
-    margin-right: 1rem;
+    margin-right: var(--space-4);
     padding-top: 0.25rem;
 }
 
 .infoValue {
-    font-size: 1rem;
+    font-size: var(--font-size-md);
     color: var(--color-text-secondary);
     line-height: 1.6;
     flex: 1;
 }
 
 .dateItem {
-    margin-bottom: 0.5rem;
+    margin-bottom: var(--space-2);
 }
 
 .dateValue {
-    font-size: 1rem;
+    font-size: var(--font-size-md);
     color: var(--color-text-primary);
     font-weight: 600;
 }
@@ -310,35 +310,35 @@
 }
 
 .descriptionSection {
-    margin-top: 1rem;
-    padding-top: 1.5rem;
+    margin-top: var(--space-4);
+    padding-top: var(--space-6);
     border-top: 1px solid var(--color-border);
 }
 
 .sectionTitle {
-    font-size: 1.5rem;
+    font-size: var(--font-size-2xl);
     font-weight: 600;
     color: var(--color-text-primary);
-    margin: 0 0 1rem 0;
-    padding-bottom: 0.5rem;
+    margin: 0 0 var(--space-4) 0;
+    padding-bottom: var(--space-2);
     border-bottom: 2px solid var(--color-primary);
 }
 
 .description {
     color: var(--color-text-secondary);
-    font-size: 1.125rem;
+    font-size: var(--font-size-lg);
     line-height: 1.7;
     margin: 0;
 }
 
 @media (max-width: 480px) {
     .container {
-        padding: 1.5rem 1rem;
+        padding: var(--space-6) var(--space-4);
     }
 
     .infoRow {
         flex-direction: column;
-        gap: 0.5rem;
+        gap: var(--space-2);
     }
 
     .infoLabel {

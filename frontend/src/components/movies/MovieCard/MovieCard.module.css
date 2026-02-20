@@ -15,21 +15,26 @@
     text-decoration: none;
     color: inherit;
     width: 100%;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    box-shadow: var(--shadow-sm);
     height: 100%;
 }
 
 .card:hover {
     transform: translateY(-6px);
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--shadow-lg);
     border-color: var(--color-primary);
+}
+
+.card:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
 }
 
 .posterContainer {
     position: relative;
     aspect-ratio: 2/3;
     overflow: hidden;
-    background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+    background: var(--color-bg-tertiary);
 }
 
 .poster {
@@ -53,30 +58,26 @@
     align-items: flex-end;
 }
 
-.durationBadge {
-    background: rgba(0, 0, 0, 0.75);
-    color: white;
+.durationBadge,
+.ageBadge {
     padding: 6px 10px;
     border-radius: 20px;
     font-size: 13px;
     font-weight: 600;
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
     min-width: 50px;
     text-align: center;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.durationBadge {
+    background: var(--color-overlay-dark);
+    color: white;
 }
 
 .ageBadge {
-    background: rgba(220, 38, 38, 0.85);
+    background: var(--color-error);
     color: white;
-    padding: 6px 10px;
-    border-radius: 20px;
-    font-size: 13px;
-    font-weight: 600;
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    min-width: 50px;
-    text-align: center;
 }
 
 .overlay {
@@ -85,7 +86,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.85);
+    background: var(--color-overlay-darker);
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -95,7 +96,8 @@
     transition: opacity 0.3s ease;
 }
 
-.card:hover .overlay {
+.card:hover .overlay,
+.card:focus-visible .overlay {
     opacity: 1;
 }
 
@@ -106,7 +108,8 @@
     transition: transform 0.3s ease 0.1s;
 }
 
-.card:hover .buttonContainer {
+.card:hover .buttonContainer,
+.card:focus-visible .buttonContainer {
     transform: translateY(0);
 }
 
@@ -123,7 +126,7 @@
 
 .buttonContainer button:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+    box-shadow: var(--shadow-md);
 }
 
 .content {
@@ -143,6 +146,8 @@
     line-height: 1.4;
     display: -webkit-box;
     -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
     overflow: hidden;
     min-height: 2.8em;
     letter-spacing: -0.01em;
@@ -150,22 +155,10 @@
 }
 
 @media (max-width: 768px) {
-    .content {
-        padding: 16px;
-    }
-
-    .title {
-        font-size: 16px;
-        min-height: 2.4em;
-    }
-
-    .overlay {
-        padding: 16px;
-    }
-
     .cornerInfo {
         top: 8px;
         right: 8px;
+        gap: 6px;
     }
 
     .durationBadge,
@@ -175,9 +168,22 @@
         min-width: 45px;
     }
 
+    .overlay {
+        padding: 16px;
+    }
+
     .buttonContainer button {
         padding: 10px 16px;
         font-size: 14px;
+    }
+
+    .content {
+        padding: 16px;
+    }
+
+    .title {
+        font-size: 16px;
+        min-height: 2.4em;
     }
 }
 
@@ -190,11 +196,11 @@
         aspect-ratio: 3/4;
     }
 
-    .title {
-        font-size: 15px;
-    }
-
     .buttonContainer {
         max-width: 160px;
+    }
+
+    .title {
+        font-size: 15px;
     }
 }

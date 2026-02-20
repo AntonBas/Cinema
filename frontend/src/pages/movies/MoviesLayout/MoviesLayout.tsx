@@ -1,11 +1,14 @@
 import React from 'react';
-import { Link, Outlet, useLocation } from 'react-router-dom';
+import { NavLink, Outlet } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout/Layout';
 import styles from './MoviesLayout.module.css';
 
-export const MoviesLayout: React.FC = () => {
-    const location = useLocation();
+const navItems = [
+    { path: '/movies/current', icon: '🎬', label: 'Now Playing' },
+    { path: '/movies/upcoming', icon: '📅', label: 'Coming Soon' }
+];
 
+export const MoviesLayout: React.FC = () => {
     return (
         <Layout>
             <div className={styles.layout}>
@@ -13,20 +16,18 @@ export const MoviesLayout: React.FC = () => {
                     <div className={styles.header}>
                         <nav className={styles.nav}>
                             <div className={styles.navInner}>
-                                <Link
-                                    to="/movies/current"
-                                    className={`${styles.navLink} ${location.pathname === '/movies/current' ? styles.active : ''}`}
-                                >
-                                    <span className={styles.navIcon}>🎬</span>
-                                    <span className={styles.navText}>Now Playing</span>
-                                </Link>
-                                <Link
-                                    to="/movies/upcoming"
-                                    className={`${styles.navLink} ${location.pathname === '/movies/upcoming' ? styles.active : ''}`}
-                                >
-                                    <span className={styles.navIcon}>📅</span>
-                                    <span className={styles.navText}>Coming Soon</span>
-                                </Link>
+                                {navItems.map(({ path, icon, label }) => (
+                                    <NavLink
+                                        key={path}
+                                        to={path}
+                                        className={({ isActive }) =>
+                                            `${styles.navLink} ${isActive ? styles.active : ''}`
+                                        }
+                                    >
+                                        <span className={styles.navIcon}>{icon}</span>
+                                        <span className={styles.navText}>{label}</span>
+                                    </NavLink>
+                                ))}
                             </div>
                         </nav>
                     </div>

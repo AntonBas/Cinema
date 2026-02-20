@@ -1,63 +1,44 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import { useMovies } from '@/hooks/features/movies/useMovies';
-import type { MovieCardResponse } from '@/types/movie';
 import { MovieList } from '@/components/movies/MovieList/MovieList';
 import { useNotification } from '@/hooks/common/useNotification';
 import { Notification } from '@/components/ui';
 import styles from './UpcomingMoviesPage.module.css';
 
 export const UpcomingMoviesPage: React.FC = () => {
-    const { loading, getUpcoming } = useMovies();
-    const [movies, setMovies] = useState<MovieCardResponse[]>([]);
+    const { upcoming, loading, error, getUpcoming } = useMovies();
     const { notifications, showNotification, hideNotification } = useNotification();
+    const hasLoaded = useRef(false);
 
-    const getUpcomingRef = useRef(getUpcoming);
-    const showNotificationRef = useRef(showNotification);
-
-    useEffect(() => {
-        getUpcomingRef.current = getUpcoming;
-        showNotificationRef.current = showNotification;
-    }, [getUpcoming, showNotification]);
+    const handleRetry = useCallback(() => {
+        hasLoaded.current = false;
+        getUpcoming();
+    }, [getUpcoming]);
 
     useEffect(() => {
-        let isMounted = true;
-
-        const loadMovies = async () => {
-            try {
-                const response = await getUpcomingRef.current();
-                if (isMounted) {
-                    setMovies(response.content);
-                }
-            } catch (err) {
-                if (isMounted) {
-                    showNotificationRef.current('Failed to load upcoming movies', 'error');
-                }
-            }
-        };
-
-        if (isMounted) {
-            loadMovies();
+        if (!hasLoaded.current) {
+            hasLoaded.current = true;
+            getUpcoming().catch(() => {
+                showNotification('Failed to load upcoming movies', 'error');
+            });
         }
-
-        return () => {
-            isMounted = false;
-        };
-    }, []);
+    }, [getUpcoming, showNotification]);
 
     return (
         <div className={styles.page}>
             <MovieList
-                movies={movies}
+                movies={upcoming}
                 loading={loading}
+                error={error}
                 emptyMessage="No upcoming movies"
+                onRetry={handleRetry}
             />
 
-            {notifications.map((notification, index) => (
+            {notifications.map((notification) => (
                 <Notification
                     key={notification.id}
                     {...notification}
                     onClose={hideNotification}
-                    position={index}
                 />
             ))}
         </div>
