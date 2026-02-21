@@ -12,48 +12,69 @@ export const useDelayedLoading = (
     const { delay = 150, minDisplayTime = 300 } = options;
     const [showLoading, setShowLoading] = useState(false);
     const startTimeRef = useRef<number | null>(null);
-    const timerRef = useRef<NodeJS.Timeout | null>(null);
+    const showTimerRef = useRef<NodeJS.Timeout | null>(null);
     const hideTimerRef = useRef<NodeJS.Timeout | null>(null);
+    const hasLoadedRef = useRef(false);
+    const prevIsLoadingRef = useRef(isLoading);
 
     useEffect(() => {
-        if (isLoading) {
-            if (hideTimerRef.current) {
-                clearTimeout(hideTimerRef.current);
-                hideTimerRef.current = null;
-            }
+        if (prevIsLoadingRef.current === isLoading) {
+            return;
+        }
 
-            timerRef.current = setTimeout(() => {
+        prevIsLoadingRef.current = isLoading;
+
+        if (showTimerRef.current) {
+            clearTimeout(showTimerRef.current);
+            showTimerRef.current = null;
+        }
+        if (hideTimerRef.current) {
+            clearTimeout(hideTimerRef.current);
+            hideTimerRef.current = null;
+        }
+
+        if (isLoading) {
+            if (!hasLoadedRef.current) {
                 setShowLoading(true);
                 startTimeRef.current = Date.now();
-            }, delay);
+            } else {
+                showTimerRef.current = setTimeout(() => {
+                    setShowLoading(true);
+                    startTimeRef.current = Date.now();
+                    showTimerRef.current = null;
+                }, delay);
+            }
         } else {
-            if (timerRef.current) {
-                clearTimeout(timerRef.current);
-                timerRef.current = null;
+            if (!showLoading) {
+                return;
             }
 
-            if (showLoading && startTimeRef.current) {
-                const elapsed = Date.now() - startTimeRef.current;
-                const remaining = minDisplayTime - elapsed;
+            const elapsed = startTimeRef.current ? Date.now() - startTimeRef.current : 0;
+            const remaining = minDisplayTime - elapsed;
 
-                if (remaining > 0) {
-                    hideTimerRef.current = setTimeout(() => {
-                        setShowLoading(false);
-                        startTimeRef.current = null;
-                        hideTimerRef.current = null;
-                    }, remaining);
-                } else {
+            if (remaining > 0) {
+                hideTimerRef.current = setTimeout(() => {
                     setShowLoading(false);
                     startTimeRef.current = null;
-                }
+                    hideTimerRef.current = null;
+                }, remaining);
             } else {
                 setShowLoading(false);
+                startTimeRef.current = null;
+            }
+
+            if (!hasLoadedRef.current) {
+                hasLoadedRef.current = true;
             }
         }
 
         return () => {
-            if (timerRef.current) clearTimeout(timerRef.current);
-            if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+            if (showTimerRef.current) {
+                clearTimeout(showTimerRef.current);
+            }
+            if (hideTimerRef.current) {
+                clearTimeout(hideTimerRef.current);
+            }
         };
     }, [isLoading, delay, minDisplayTime, showLoading]);
 
