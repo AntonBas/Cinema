@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -21,7 +20,6 @@ public interface SeatRepository extends JpaRepository<Seat, Long> {
 
 	List<Seat> findByHallIdAndSeatType(Long hallId, SeatType seatType);
 
-	@Modifying
 	@Query("DELETE FROM Seat s WHERE s.hall.id = :hallId")
 	void deleteByHallId(@Param("hallId") Long hallId);
 
@@ -34,4 +32,8 @@ public interface SeatRepository extends JpaRepository<Seat, Long> {
 
 	@Query("SELECT s.hall.id, COUNT(s) FROM Seat s WHERE s.hall.id IN :hallIds GROUP BY s.hall.id")
 	List<Object[]> countSeatsByHallIds(@Param("hallIds") List<Long> hallIds);
+
+	@Query("SELECT COUNT(t) > 0 FROM Ticket t " + "JOIN t.seatReservation sr " + "JOIN sr.session s "
+			+ "WHERE s.hall.id = :hallId AND s.startTime > CURRENT_TIMESTAMP")
+	boolean hasTicketsForHall(@Param("hallId") Long hallId);
 }

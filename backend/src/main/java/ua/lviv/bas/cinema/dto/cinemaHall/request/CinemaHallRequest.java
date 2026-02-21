@@ -1,5 +1,7 @@
 package ua.lviv.bas.cinema.dto.cinemaHall.request;
 
+import java.util.List;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -11,6 +13,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import ua.lviv.bas.cinema.domain.enums.SeatType;
+import ua.lviv.bas.cinema.validation.CoupleRowSeatsConstraint;
 
 @Data
 @Builder
@@ -30,14 +33,17 @@ public class CinemaHallRequest {
 	@Max(value = 20, message = "Maximum 20 rows")
 	private Integer rows;
 
-	@Schema(description = "Number of seats per row", example = "15", requiredMode = Schema.RequiredMode.REQUIRED, minimum = "1", maximum = "20")
+	@Schema(description = "Number of seats per row", example = "10", requiredMode = Schema.RequiredMode.REQUIRED, minimum = "1", maximum = "20")
 	@NotNull(message = "Seats per row is required")
 	@Min(value = 1, message = "Minimum 1 seat in a row")
 	@Max(value = 20, message = "Maximum 20 seats in a row")
+	@CoupleRowSeatsConstraint
 	private Integer seatsPerRow;
 
-	@Schema(description = "Default seat type for the hall", example = "STANDARD", defaultValue = "STANDARD", allowableValues = {
-			"STANDARD", "VIP", "COUPLE", "DISABLED" })
+	@Schema(description = "Default seat type for the hall", example = "STANDARD", defaultValue = "STANDARD")
 	@Builder.Default
 	private SeatType defaultSeatType = SeatType.STANDARD;
+
+	@Schema(description = "List of rows that should have COUPLE seats", example = "[4, 7]")
+	private List<Integer> coupleRows;
 }

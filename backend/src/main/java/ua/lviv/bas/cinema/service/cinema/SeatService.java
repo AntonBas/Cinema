@@ -62,12 +62,6 @@ public class SeatService {
 	}
 
 	@Transactional(readOnly = true)
-	public boolean isSeatAvailable(Long hallId, int row, int number) {
-		log.debug("Checking seat availability: hall={}, row={}, number={}", hallId, row, number);
-		return seatRepository.existsByHallIdAndRowAndNumberAndActiveTrue(hallId, row, number);
-	}
-
-	@Transactional(readOnly = true)
 	public long countSeatsByHall(Long hallId) {
 		log.debug("Counting seats for hall id: {}", hallId);
 		return seatRepository.countByHallId(hallId);

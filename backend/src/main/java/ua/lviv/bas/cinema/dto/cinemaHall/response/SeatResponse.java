@@ -20,13 +20,23 @@ public class SeatResponse {
 	@Schema(description = "Row number where the seat is located (starting from 1)", example = "5")
 	private Integer row;
 
-	@Schema(description = "Seat number within the row (starting from 1)", example = "12")
+	@Schema(description = "Seat number within the row", example = "12")
 	private Integer number;
 
-	@Schema(description = "Type of the seat", example = "VIP", allowableValues = { "STANDARD", "VIP", "COUPLE",
-			"DISABLED" })
+	@Schema(description = "Type of the seat", example = "VIP")
 	private SeatType seatType;
 
 	@Schema(description = "Whether the seat is active (not broken/disabled)", example = "true")
 	private boolean active;
+
+	@Schema(description = "Number of seats in this unit (1 for STANDARD/VIP, 2 for COUPLE)", example = "2")
+	public int getSeatCount() {
+		return seatType.getSeatsCount();
+	}
+
+	@Schema(description = "Display name with seat count for COUPLE seats", example = "Couple (2 seats)")
+	public String getDisplayName() {
+		return seatType.getSeatsCount() > 1 ? seatType.getDisplayName() + " (" + seatType.getSeatsCount() + " seats)"
+				: seatType.getDisplayName();
+	}
 }

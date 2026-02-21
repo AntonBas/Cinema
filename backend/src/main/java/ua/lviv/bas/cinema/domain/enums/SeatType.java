@@ -3,14 +3,17 @@ package ua.lviv.bas.cinema.domain.enums;
 import java.math.BigDecimal;
 
 public enum SeatType {
-	STANDARD("Standard", BigDecimal.ONE), VIP("VIP", new BigDecimal("1.50")), COUPLE("Couple", new BigDecimal("1.80"));
+	STANDARD("Standard", BigDecimal.ONE, 1), VIP("VIP", new BigDecimal("1.50"), 1),
+	COUPLE("Couple", new BigDecimal("1.80"), 2);
 
 	private final String displayName;
 	private final BigDecimal priceMultiplier;
+	private final int seatsCount;
 
-	SeatType(String displayName, BigDecimal priceMultiplier) {
+	SeatType(String displayName, BigDecimal priceMultiplier, int seatsCount) {
 		this.displayName = displayName;
 		this.priceMultiplier = priceMultiplier;
+		this.seatsCount = seatsCount;
 	}
 
 	public String getDisplayName() {
@@ -19,6 +22,10 @@ public enum SeatType {
 
 	public BigDecimal getPriceMultiplier() {
 		return priceMultiplier;
+	}
+
+	public int getSeatsCount() {
+		return seatsCount;
 	}
 
 	public boolean isPremium() {
