@@ -32,6 +32,7 @@ export const MovieTab: React.FC = () => {
     UPCOMING: 0,
     ARCHIVED: 0
   });
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
 
   const {
     currentlyShowing,
@@ -50,7 +51,7 @@ export const MovieTab: React.FC = () => {
   } = useMovies();
 
   const { notifications, showNotification, hideNotification } = useNotification();
-  const showLoading = useDelayedLoading(moviesLoading, { delay: 150, minDisplayTime: 300 });
+  const showLoading = useDelayedLoading(moviesLoading && isInitialLoading, { delay: 150, minDisplayTime: 300 });
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const initialLoadRef = useRef(false);
   const loadingDataRef = useRef(false);
@@ -62,8 +63,8 @@ export const MovieTab: React.FC = () => {
   const loadTabCounts = useCallback(async () => {
     try {
       const [currentResponse, upcomingResponse, archivedResponse] = await Promise.all([
-        getCurrentlyShowing({ page: 0, size: 1 }, true),
-        getUpcoming({ page: 0, size: 1 }, true),
+        getCurrentlyShowing({ page: 0, size: 1 }),
+        getUpcoming({ page: 0, size: 1 }),
         getArchived({ page: 0, size: 1 })
       ]);
 
@@ -91,10 +92,10 @@ export const MovieTab: React.FC = () => {
 
       switch (activeTab) {
         case 'CURRENT':
-          await getCurrentlyShowing(params, true);
+          await getCurrentlyShowing(params);
           break;
         case 'UPCOMING':
-          await getUpcoming(params, true);
+          await getUpcoming(params);
           break;
         case 'ARCHIVED':
           await getArchived(params);
@@ -108,14 +109,14 @@ export const MovieTab: React.FC = () => {
       }
     } finally {
       loadingDataRef.current = false;
+      setIsInitialLoading(false);
     }
   }, [activeTab, currentPage, searchQuery, getCurrentlyShowing, getUpcoming, getArchived, showNotification]);
 
   useEffect(() => {
     if (!initialLoadRef.current) {
       initialLoadRef.current = true;
-      loadTabCounts();
-      loadMovies();
+      Promise.all([loadTabCounts(), loadMovies()]);
     }
   }, []);
 
@@ -296,7 +297,7 @@ export const MovieTab: React.FC = () => {
           movies={currentMovies}
           onEdit={handleEdit}
           onDelete={handleDeleteClick}
-          loading={moviesLoading}
+          loading={moviesLoading && !currentMovies.length}
           onCreateNew={handleAddNew}
         />
       </div>

@@ -104,20 +104,15 @@ export interface MovieFilterRequest {
   releaseDateFrom?: string;
   releaseDateTo?: string;
   genreId?: number;
-  actorId?: number;
-  directorId?: number;
-  screenwriterId?: number;
 }
 
 export interface MovieCardResponse {
   id: number;
   title: string;
-  slug: string;
   posterUrl: string;
   durationMinutes: number;
   ageRating: AgeRating;
   status: MovieStatus;
-  currentlyShowing: boolean;
 }
 
 export interface MovieDetailResponse {
@@ -131,21 +126,15 @@ export interface MovieDetailResponse {
   endShowingDate: string;
   ageRating: AgeRating;
   status: MovieStatus;
-  posterFileName?: string;
   posterUrl: string;
-  currentlyShowing: boolean;
-  upcoming: boolean;
-  archived: boolean;
-  active: boolean;
-  genres?: GenreResponse[];
-  actors?: PersonResponse[];
-  directors?: PersonResponse[];
-  screenwriters?: PersonResponse[];
+  genres: GenreResponse[];
+  actors: PersonResponse[];
+  directors: PersonResponse[];
+  screenwriters: PersonResponse[];
 }
 
 export interface MovieSessionSearchResponse {
   id: number;
   title: string;
-  releaseYear: number;
   durationMinutes: number;
 }

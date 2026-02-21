@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { movieApi } from '@/api/movieApi';
 import type {
     MovieCardResponse,
@@ -20,23 +20,26 @@ export const useMovies = () => {
     const updateApi = useApi<MovieDetailResponse>();
     const deleteApi = useApi<void>();
 
-    const getCurrentlyShowing = useCallback(async (params?: SearchParams, isAdmin: boolean = false) => {
-        if (isAdmin) {
-            return currentlyShowingApi.execute(
-                () => movieApi.admin.getFilteredMovies({ currentlyShowing: true }, params)
-            );
-        }
+    const [debouncedLoading, setDebouncedLoading] = useState(false);
+
+    const rawLoading = currentlyShowingApi.loading || upcomingApi.loading ||
+        archivedApi.loading || movieDetailApi.loading || searchApi.loading ||
+        createApi.loading || updateApi.loading || deleteApi.loading;
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedLoading(rawLoading);
+        }, 50);
+        return () => clearTimeout(timer);
+    }, [rawLoading]);
+
+    const getCurrentlyShowing = useCallback(async (params?: SearchParams) => {
         return currentlyShowingApi.execute(
             () => movieApi.public.getCurrentlyShowing(params)
         );
     }, [currentlyShowingApi]);
 
-    const getUpcoming = useCallback(async (params?: SearchParams, isAdmin: boolean = false) => {
-        if (isAdmin) {
-            return upcomingApi.execute(
-                () => movieApi.admin.getFilteredMovies({ upcoming: true }, params)
-            );
-        }
+    const getUpcoming = useCallback(async (params?: SearchParams) => {
         return upcomingApi.execute(
             () => movieApi.public.getUpcoming(params)
         );
@@ -55,11 +58,22 @@ export const useMovies = () => {
         return movieDetailApi.execute(apiCall);
     }, [movieDetailApi]);
 
-    const searchMoviesForSession = useCallback(async (search?: string, isAdmin: boolean = false) => {
-        const apiCall = isAdmin
-            ? () => movieApi.admin.searchMoviesForSession(search)
-            : () => movieApi.public.searchMoviesForSession(search);
-        return searchApi.execute(apiCall);
+    const getBySlug = useCallback(async (slug: string) => {
+        return movieDetailApi.execute(
+            () => movieApi.public.getBySlug(slug)
+        );
+    }, [movieDetailApi]);
+
+    const searchMoviesForSession = useCallback(async (search?: string) => {
+        return searchApi.execute(
+            () => movieApi.public.searchMoviesForSession(search)
+        );
+    }, [searchApi]);
+
+    const adminSearchMoviesForSession = useCallback(async (search?: string) => {
+        return searchApi.execute(
+            () => movieApi.admin.searchMoviesForSession(search)
+        );
     }, [searchApi]);
 
     const create = useCallback(async (request: MovieCreateRequest) => {
@@ -95,13 +109,9 @@ export const useMovies = () => {
         return movieApi.public.getPosterUrl(id);
     }, []);
 
-    const loading = currentlyShowingApi.loading || upcomingApi.loading ||
-        archivedApi.loading || movieDetailApi.loading || searchApi.loading ||
-        createApi.loading || updateApi.loading || deleteApi.loading;
-
-    const error = currentlyShowingApi.error || upcomingApi.error ||
+    const error = !!(currentlyShowingApi.error || upcomingApi.error ||
         archivedApi.error || movieDetailApi.error || searchApi.error ||
-        createApi.error || updateApi.error || deleteApi.error;
+        createApi.error || updateApi.error || deleteApi.error);
 
     return {
         currentlyShowing: currentlyShowingApi.data?.content || [],
@@ -112,13 +122,15 @@ export const useMovies = () => {
         archivedPagination: archivedApi.data,
         movie: movieDetailApi.data,
         searchResults: searchApi.data || [],
-        loading,
+        loading: debouncedLoading,
         error,
         getCurrentlyShowing,
         getUpcoming,
         getArchived,
         getById,
+        getBySlug,
         searchMoviesForSession,
+        adminSearchMoviesForSession,
         create,
         update,
         remove,

@@ -33,9 +33,9 @@ export const MovieList: React.FC<MovieListProps> = React.memo(({
         onCreateNew?.();
     }, [onCreateNew]);
 
-    if (loading) {
+    if (loading && movies.length === 0) {
         return (
-            <div className={styles.loadingContainer}>
+            <div className={styles.loading}>
                 <LoadingSpinner text="Loading movies..." />
             </div>
         );
