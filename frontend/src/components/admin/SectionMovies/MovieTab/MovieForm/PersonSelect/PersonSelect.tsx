@@ -1,13 +1,12 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import type { PersonResponse, PersonRole } from '@/types/person';
 import { usePerson } from '@/hooks/features/persons/usePerson';
-import { useNotification } from '@/hooks/common/useNotification';
 import styles from './PersonSelect.module.css';
 
 interface PersonSelectProps {
     selectedIds: number[];
     selectedPersons?: PersonResponse[];
-    onChange: (ids: number[]) => void;
+    onChange: (ids: number[], persons?: PersonResponse[]) => void;
     role: PersonRole;
     placeholder?: string;
 }
@@ -30,7 +29,6 @@ export const PersonSelect: React.FC<PersonSelectProps> = ({
     const dropdownRef = useRef<HTMLDivElement>(null);
     const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-    const { showNotification } = useNotification();
     const {
         getActors,
         getDirectors,
@@ -57,28 +55,20 @@ export const PersonSelect: React.FC<PersonSelectProps> = ({
             const result = await searchMethod({ name: query, page: 0, size: MAX_OPTIONS });
             return result?.content || [];
         } catch {
-            showNotification('Failed to search persons', 'error');
             return [];
         } finally {
             setIsSearching(false);
         }
-    }, [getSearchMethod, showNotification]);
+    }, [getSearchMethod]);
 
     const handleAddNewPerson = useCallback(async (name: string, personRole: PersonRole) => {
         try {
             const newPerson = await quickCreate({ name, role: personRole });
-            const roleDisplay = {
-                ACTOR: 'Actor',
-                DIRECTOR: 'Director',
-                SCREENWRITER: 'Screenwriter'
-            }[personRole];
-            showNotification(`${roleDisplay} "${name}" created successfully`, 'success');
             return newPerson;
         } catch {
-            showNotification('Failed to create person', 'error');
             return null;
         }
-    }, [quickCreate, showNotification]);
+    }, [quickCreate]);
 
     const displayPersons = useMemo(() =>
         selectedPersons.filter(person => selectedIds.includes(person.id)),
@@ -121,21 +111,31 @@ export const PersonSelect: React.FC<PersonSelectProps> = ({
         const newSelectedIds = selectedIds.includes(personId)
             ? selectedIds.filter(id => id !== personId)
             : [...selectedIds, personId];
-        onChange(newSelectedIds);
-    }, [selectedIds, onChange]);
+
+        const selectedPerson = localOptions.find(p => p.id === personId);
+        const updatedPersons = selectedPerson
+            ? [...selectedPersons, selectedPerson]
+            : selectedPersons.filter(p => p.id !== personId);
+
+        onChange(newSelectedIds, updatedPersons);
+    }, [selectedIds, selectedPersons, localOptions, onChange]);
 
     const handleRemovePerson = useCallback((personId: number) => {
-        onChange(selectedIds.filter(id => id !== personId));
-    }, [selectedIds, onChange]);
+        const newSelectedIds = selectedIds.filter(id => id !== personId);
+        const updatedPersons = selectedPersons.filter(p => p.id !== personId);
+        onChange(newSelectedIds, updatedPersons);
+    }, [selectedIds, selectedPersons, onChange]);
 
     const handleAddAndSelect = useCallback(async () => {
         const newPerson = await handleAddNewPerson(searchQuery, role);
         if (newPerson) {
-            onChange([...selectedIds, newPerson.id]);
+            const newSelectedIds = [...selectedIds, newPerson.id];
+            const updatedPersons = [...selectedPersons, newPerson];
+            onChange(newSelectedIds, updatedPersons);
             setSearchQuery('');
             setIsOpen(false);
         }
-    }, [searchQuery, role, selectedIds, onChange, handleAddNewPerson]);
+    }, [searchQuery, role, selectedIds, selectedPersons, onChange, handleAddNewPerson]);
 
     const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         setSearchQuery(e.target.value);
