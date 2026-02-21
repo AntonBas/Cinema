@@ -10,24 +10,25 @@ interface UserTableProps {
     onSuccess: (message: string) => void;
 }
 
+const TABLE_HEADERS = [
+    'User',
+    'Role',
+    'Verification',
+    'Status',
+    'Tickets',
+    'Last Activity',
+    'Actions'
+] as const;
+
 export const UserTable: React.FC<UserTableProps> = ({
     users,
     onRefresh,
     onError,
     onSuccess,
 }) => {
-    const tableHeaders = useMemo(() => [
-        'User',
-        'Role',
-        'Verification',
-        'Status',
-        'Registration',
-        'Tickets',
-        'Last Activity',
-        'Actions'
-    ], []);
-
-    const validUsers = users.filter(user => user && user.id != null);
+    const validUsers = useMemo(() =>
+        users.filter(user => user && user.id != null),
+        [users]);
 
     if (validUsers.length === 0) {
         return (
@@ -45,7 +46,7 @@ export const UserTable: React.FC<UserTableProps> = ({
                 <table className={styles.table}>
                     <thead className={styles.tableHead}>
                         <tr>
-                            {tableHeaders.map((header) => (
+                            {TABLE_HEADERS.map((header) => (
                                 <th key={header}>{header}</th>
                             ))}
                         </tr>

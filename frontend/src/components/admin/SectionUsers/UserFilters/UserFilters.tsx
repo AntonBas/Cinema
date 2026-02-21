@@ -13,7 +13,7 @@ interface UserFiltersProps {
     onEnabledFilterChange: (value: string) => void;
 }
 
-const enabledOptions = [
+const ENABLED_OPTIONS = [
     { value: '', label: 'All Accounts' },
     { value: 'true', label: 'Enabled' },
     { value: 'false', label: 'Disabled' }
@@ -90,7 +90,7 @@ export const UserFilters: React.FC<UserFiltersProps> = ({
                 <Select
                     value={enabledFilter}
                     onChange={handleEnabledChange}
-                    options={enabledOptions}
+                    options={ENABLED_OPTIONS}
                     placeholder="Account Status"
                     className={styles.select}
                 />

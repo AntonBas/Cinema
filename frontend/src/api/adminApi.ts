@@ -3,7 +3,6 @@ import type {
     UserRoleUpdateRequest,
     UserStatusUpdateRequest,
     VerificationBirthDateRequest,
-    UserResponse,
     UserRole,
     VerificationStatus
 } from '@/types/user';
@@ -52,20 +51,20 @@ export const adminApi = {
         return fetchApi<PageResponse<AdminUserListResponse>>(url);
     },
 
-    updateUserRole: (userId: number, roleData: UserRoleUpdateRequest): Promise<void> =>
-        fetchApi<void>(`${ADMIN_API_URL}/${userId}/role`, {
+    updateUserRole: (userId: number, roleData: UserRoleUpdateRequest): Promise<AdminUserListResponse> =>
+        fetchApi<AdminUserListResponse>(`${ADMIN_API_URL}/${userId}/role`, {
             method: 'PATCH',
             body: JSON.stringify(roleData),
         }),
 
-    updateUserStatus: (userId: number, statusData: UserStatusUpdateRequest): Promise<void> =>
-        fetchApi<void>(`${ADMIN_API_URL}/${userId}/status`, {
+    updateUserStatus: (userId: number, statusData: UserStatusUpdateRequest): Promise<AdminUserListResponse> =>
+        fetchApi<AdminUserListResponse>(`${ADMIN_API_URL}/${userId}/status`, {
             method: 'PATCH',
             body: JSON.stringify(statusData),
         }),
 
-    updateBirthDateVerification: (userId: number, verificationData: VerificationBirthDateRequest): Promise<UserResponse> =>
-        fetchApi<UserResponse>(`${ADMIN_API_URL}/${userId}/verification`, {
+    updateBirthDateVerification: (userId: number, verificationData: VerificationBirthDateRequest): Promise<AdminUserListResponse> =>
+        fetchApi<AdminUserListResponse>(`${ADMIN_API_URL}/${userId}/verification`, {
             method: 'PATCH',
             body: JSON.stringify(verificationData),
         })
