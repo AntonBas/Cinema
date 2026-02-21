@@ -23,7 +23,7 @@
 }
 
 .tableHead {
-    background: var(--color-bg-quaternary);
+    background: var(--color-bg-secondary);
     position: sticky;
     top: 0;
     z-index: 10;
@@ -39,7 +39,7 @@
     border-bottom: 2px solid var(--color-border-medium);
     white-space: nowrap;
     text-align: left;
-    background: var(--color-bg-quaternary);
+    background: var(--color-bg-secondary);
 }
 
 .tableHead th:last-child {

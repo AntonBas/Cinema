@@ -27,8 +27,8 @@
     min-height: 40px;
     padding: var(--space-2) var(--space-3);
     padding-right: calc(var(--space-8) + var(--space-2));
-    background: var(--color-bg-modal);
-    border: 1px solid var(--color-border);
+    background: var(--color-bg-quaternary);
+    border: 1px solid var(--color-border-medium);
     border-radius: var(--radius-md);
     color: var(--color-text-primary);
     font-size: var(--font-size-sm);
@@ -64,11 +64,11 @@
 }
 
 .select.placeholder {
-    color: var(--color-text-disabled);
+    color: var(--color-text-secondary);
 }
 
 .select option {
-    background: var(--color-bg-modal);
+    background: var(--color-bg-quaternary);
     color: var(--color-text-primary);
     padding: var(--space-2);
 }

@@ -3,7 +3,7 @@
 }
 
 .row:hover {
-    background: rgba(var(--color-primary-rgb), 0.03);
+    background: rgba(var(--color-primary-rgb), 0.05);
 }
 
 .row:hover td {
@@ -36,7 +36,7 @@
 }
 
 .userEmail {
-    color: var(--color-text-muted);
+    color: var(--color-text-secondary);
     font-size: var(--font-size-xs);
     font-weight: 500;
     word-break: break-all;
@@ -50,6 +50,12 @@
 .roleSelect {
     width: 100%;
     min-width: 120px;
+}
+
+.roleSelect select {
+    background: var(--color-bg-tertiary);
+    border-color: var(--color-border-medium);
+    color: var(--color-text-primary);
 }
 
 .verificationCell {
@@ -69,7 +75,7 @@
 }
 
 .verificationDate {
-    color: var(--color-text-secondary);
+    color: var(--color-text-muted);
     font-size: var(--font-size-xs);
     font-style: italic;
     white-space: normal;
@@ -86,12 +92,6 @@
     min-width: 100px;
 }
 
-.dateCell {
-    min-width: 120px;
-    color: var(--color-text-secondary);
-    white-space: nowrap;
-}
-
 .ticketsCell {
     min-width: 80px;
     text-align: center;
@@ -101,14 +101,14 @@
     color: var(--color-text-primary);
     font-weight: 600;
     padding: var(--space-1) var(--space-2);
-    background: rgba(var(--color-primary-rgb), 0.1);
+    background: rgba(var(--color-primary-rgb), 0.15);
     border-radius: var(--radius-sm);
     display: inline-block;
 }
 
 .activityCell {
     min-width: 120px;
-    color: var(--color-text-secondary);
+    color: var(--color-text-muted);
     white-space: nowrap;
 }
 
@@ -180,8 +180,6 @@
         max-width: 160px;
     }
 
-    .statusCell,
-    .dateCell,
     .ticketsCell,
     .activityCell {
         min-width: auto;
