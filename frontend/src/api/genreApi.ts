@@ -36,17 +36,9 @@ const fetchApi = async <T>(url: string, options: RequestInit = {}, isPublic: boo
 
 export const genreApi = {
   public: {
-    getById: (id: number): Promise<GenreResponse> =>
-      fetchApi<GenreResponse>(`${PUBLIC_URL}/${id}`, {}, true),
-
-    getPopular: (query?: string, limit: number = 10): Promise<GenreResponse[]> => {
-      const url = `${PUBLIC_URL}/popular?limit=${limit}${query ? `&query=${encodeURIComponent(query)}` : ''}`;
+    search: (query: string, limit: number = 10): Promise<GenreResponse[]> => {
+      const url = `${PUBLIC_URL}/search?query=${encodeURIComponent(query)}&limit=${limit}`;
       return fetchApi<GenreResponse[]>(url, {}, true);
-    },
-
-    getByIds: (ids: number[]): Promise<GenreResponse[]> => {
-      const idsParam = ids.join(',');
-      return fetchApi<GenreResponse[]>(`${PUBLIC_URL}/by-ids?ids=${idsParam}`, {}, true);
     },
   },
 
@@ -73,11 +65,6 @@ export const genreApi = {
 
     getAll: (params?: SearchParams): Promise<PageResponse<GenreResponse>> => {
       const url = buildPagedUrl(ADMIN_URL, params, 'admin');
-      return fetchApi<PageResponse<GenreResponse>>(url);
-    },
-
-    getPopular: (params?: SearchParams): Promise<PageResponse<GenreResponse>> => {
-      const url = buildPagedUrl(`${ADMIN_URL}/popular`, params, 'admin');
       return fetchApi<PageResponse<GenreResponse>>(url);
     },
   }

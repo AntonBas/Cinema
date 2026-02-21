@@ -7,13 +7,11 @@ import { useApi } from '@/hooks/common/useApi';
 export const useGenres = () => {
     const allGenresApi = useApi<PageResponse<GenreResponse>>();
     const genreByIdApi = useApi<GenreResponse>();
-    const popularGenresApi = useApi<GenreResponse[]>();
-    const publicPopularGenresApi = useApi<GenreResponse[]>();
+    const searchGenresApi = useApi<GenreResponse[]>();
     const genreByIdsApi = useApi<GenreResponse[]>();
     const createGenreApi = useApi<GenreResponse>();
     const updateGenreApi = useApi<GenreResponse>();
     const deleteGenreApi = useApi<void>();
-    const adminPopularGenresApi = useApi<PageResponse<GenreResponse>>();
 
     const getAll = useCallback(async (params?: any) => {
         return allGenresApi.execute(
@@ -26,20 +24,9 @@ export const useGenres = () => {
         );
     }, [allGenresApi]);
 
-    const getPopular = useCallback(async (query?: string, limit: number = 10) => {
-        return publicPopularGenresApi.execute(
-            () => genreApi.public.getPopular(query, limit),
-            {
-                cacheKey: `genres_popular_${query || 'all'}_${limit}`,
-                cacheTime: 10 * 60 * 1000,
-                showErrorNotification: false,
-            }
-        );
-    }, [publicPopularGenresApi]);
-
     const getById = useCallback(async (id: number) => {
         return genreByIdApi.execute(
-            () => genreApi.public.getById(id),
+            () => genreApi.admin.getById(id),
             {
                 cacheKey: `genre_${id}`,
                 cacheTime: 10 * 60 * 1000,
@@ -48,9 +35,21 @@ export const useGenres = () => {
         );
     }, [genreByIdApi]);
 
+    const search = useCallback(async (query: string, limit: number = 10) => {
+        return searchGenresApi.execute(
+            () => genreApi.public.search(query, limit),
+            {
+                cacheKey: `genres_search_${query}_${limit}`,
+                cacheTime: 5 * 60 * 1000,
+                showErrorNotification: false,
+            }
+        );
+    }, [searchGenresApi]);
+
     const getByIds = useCallback(async (ids: number[]) => {
+        if (!ids.length) return [];
         return genreByIdsApi.execute(
-            () => genreApi.public.getByIds(ids),
+            () => genreApi.public.search('', 100),
             {
                 cacheKey: `genres_ids_${ids.join('_')}`,
                 cacheTime: 10 * 60 * 1000,
@@ -66,11 +65,11 @@ export const useGenres = () => {
                 successMessage: 'Genre created successfully',
                 onSuccess: () => {
                     allGenresApi.invalidateCache();
-                    publicPopularGenresApi.invalidateCache();
+                    searchGenresApi.invalidateCache();
                 },
             }
         );
-    }, [createGenreApi, allGenresApi, publicPopularGenresApi]);
+    }, [createGenreApi, allGenresApi, searchGenresApi]);
 
     const update = useCallback(async (id: number, request: GenreRequest) => {
         return updateGenreApi.execute(
@@ -80,11 +79,11 @@ export const useGenres = () => {
                 onSuccess: () => {
                     allGenresApi.invalidateCache();
                     genreByIdApi.invalidateCache(`genre_${id}`);
-                    publicPopularGenresApi.invalidateCache();
+                    searchGenresApi.invalidateCache();
                 },
             }
         );
-    }, [updateGenreApi, allGenresApi, genreByIdApi, publicPopularGenresApi]);
+    }, [updateGenreApi, allGenresApi, genreByIdApi, searchGenresApi]);
 
     const remove = useCallback(async (id: number) => {
         return deleteGenreApi.execute(
@@ -93,73 +92,58 @@ export const useGenres = () => {
                 successMessage: 'Genre deleted successfully',
                 onSuccess: () => {
                     allGenresApi.invalidateCache();
-                    publicPopularGenresApi.invalidateCache();
+                    searchGenresApi.invalidateCache();
                 },
             }
         );
-    }, [deleteGenreApi, allGenresApi, publicPopularGenresApi]);
-
-    const getAdminPopular = useCallback(async (params?: any) => {
-        return adminPopularGenresApi.execute(
-            () => genreApi.admin.getPopular(params),
-            {
-                cacheKey: `genres_admin_popular_${JSON.stringify(params)}`,
-                cacheTime: 5 * 60 * 1000,
-            }
-        );
-    }, [adminPopularGenresApi]);
+    }, [deleteGenreApi, allGenresApi, searchGenresApi]);
 
     const clearCache = useCallback(() => {
         allGenresApi.invalidateCache();
         genreByIdApi.invalidateCache();
-        popularGenresApi.invalidateCache();
-        publicPopularGenresApi.invalidateCache();
+        searchGenresApi.invalidateCache();
         genreByIdsApi.invalidateCache();
         createGenreApi.invalidateCache();
         updateGenreApi.invalidateCache();
         deleteGenreApi.invalidateCache();
-        adminPopularGenresApi.invalidateCache();
-    }, [allGenresApi, genreByIdApi, popularGenresApi, publicPopularGenresApi,
-        genreByIdsApi, createGenreApi, updateGenreApi, deleteGenreApi, adminPopularGenresApi]);
+    }, [allGenresApi, genreByIdApi, searchGenresApi, genreByIdsApi,
+        createGenreApi, updateGenreApi, deleteGenreApi]);
 
     const loading = allGenresApi.loading || genreByIdApi.loading ||
-        publicPopularGenresApi.loading || genreByIdsApi.loading ||
+        searchGenresApi.loading || genreByIdsApi.loading ||
         createGenreApi.loading || updateGenreApi.loading ||
-        deleteGenreApi.loading || adminPopularGenresApi.loading;
+        deleteGenreApi.loading;
 
     const error = !!(allGenresApi.error || genreByIdApi.error ||
-        publicPopularGenresApi.error || genreByIdsApi.error ||
+        searchGenresApi.error || genreByIdsApi.error ||
         createGenreApi.error || updateGenreApi.error ||
-        deleteGenreApi.error || adminPopularGenresApi.error);
+        deleteGenreApi.error);
 
     return {
         allGenres: allGenresApi.data?.content || [],
         genre: genreByIdApi.data,
-        popularGenres: publicPopularGenresApi.data || [],
-        adminPopularGenres: adminPopularGenresApi.data?.content || [],
-
-        loading,
-        error,
-
-        getAll,
-        getPopular,
-        getById,
-        getByIds,
-        create,
-        update,
-        remove,
-        getAdminPopular,
-        clearCache,
-
-        resetAllGenres: allGenresApi.reset,
-        resetGenre: genreByIdApi.reset,
-        resetPopularGenres: publicPopularGenresApi.reset,
+        searchResults: searchGenresApi.data || [],
 
         pagination: allGenresApi.data,
         currentPage: allGenresApi.data?.number || 0,
         totalPages: allGenresApi.data?.totalPages || 0,
         totalElements: allGenresApi.data?.totalElements || 0,
-        pageSize: allGenresApi.data?.size || 10,
-        isEmpty: allGenresApi.data?.empty || false,
+        pageSize: allGenresApi.data?.size || 20,
+
+        loading,
+        error,
+
+        getAll,
+        getById,
+        search,
+        getByIds,
+        create,
+        update,
+        remove,
+        clearCache,
+
+        resetAllGenres: allGenresApi.reset,
+        resetGenre: genreByIdApi.reset,
+        resetSearch: searchGenresApi.reset,
     };
 };

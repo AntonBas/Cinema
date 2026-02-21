@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Modal, Input, Button } from '@/components/ui';
-import { useNotification } from '@/hooks/common/useNotification';
 import styles from './GenreFormModal.module.css';
 
 interface GenreFormModalProps {
@@ -12,8 +11,8 @@ interface GenreFormModalProps {
     isEditing?: boolean;
 }
 
-const MAX_NAME_LENGTH = 50;
-const WARNING_THRESHOLD = 10;
+const MAX_NAME_LENGTH = 30;
+const WARNING_THRESHOLD = 5;
 
 export const GenreFormModal: React.FC<GenreFormModalProps> = ({
     isOpen,
@@ -25,8 +24,6 @@ export const GenreFormModal: React.FC<GenreFormModalProps> = ({
 }) => {
     const [name, setName] = useState(initialName);
     const [error, setError] = useState('');
-
-    const { showNotification } = useNotification();
 
     useEffect(() => {
         if (isOpen) {
@@ -40,6 +37,10 @@ export const GenreFormModal: React.FC<GenreFormModalProps> = ({
 
         if (!trimmed) {
             return 'Genre name is required';
+        }
+
+        if (trimmed.length < 2) {
+            return 'Genre name must be at least 2 characters';
         }
 
         if (trimmed.length > MAX_NAME_LENGTH) {
@@ -59,11 +60,7 @@ export const GenreFormModal: React.FC<GenreFormModalProps> = ({
         }
 
         onSubmit(name.trim());
-
-        if (!isEditing) {
-            showNotification(`Genre "${name.trim()}" created successfully`, 'success');
-        }
-    }, [name, onSubmit, validateName, showNotification, isEditing]);
+    }, [name, onSubmit, validateName]);
 
     const handleChange = useCallback((value: string) => {
         setName(value);
@@ -85,10 +82,10 @@ export const GenreFormModal: React.FC<GenreFormModalProps> = ({
         [name.length]
     );
 
-    const isValid = useMemo(() =>
-        name.trim().length > 0 && name.trim().length <= MAX_NAME_LENGTH,
-        [name]
-    );
+    const isValid = useMemo(() => {
+        const trimmed = name.trim();
+        return trimmed.length >= 2 && trimmed.length <= MAX_NAME_LENGTH;
+    }, [name]);
 
     const isWarning = remainingChars < WARNING_THRESHOLD;
 
@@ -111,7 +108,7 @@ export const GenreFormModal: React.FC<GenreFormModalProps> = ({
                         maxLength={MAX_NAME_LENGTH}
                         disabled={loading}
                         className={styles.input}
-                        autoFocus={!isEditing}
+                        autoFocus
                     />
                     <div className={`${styles.charCount} ${isWarning ? styles.warning : ''}`}>
                         {remainingChars} character{remainingChars !== 1 ? 's' : ''} remaining

@@ -20,10 +20,6 @@ export const GenreTab: React.FC = () => {
     create,
     update,
     remove,
-    currentPage,
-    totalPages,
-    pageSize,
-    totalElements,
   } = useGenres();
 
   const { notifications, showNotification, hideNotification } = useNotification();
@@ -47,7 +43,7 @@ export const GenreTab: React.FC = () => {
       initialLoadRef.current = true;
       getAll(currentParams);
     }
-  }, []);
+  }, [getAll, currentParams]);
 
   useEffect(() => {
     if (initialLoadRef.current) {
@@ -56,7 +52,7 @@ export const GenreTab: React.FC = () => {
       }, 100);
       return () => clearTimeout(timer);
     }
-  }, [currentParams]);
+  }, [getAll, currentParams]);
 
   const handleSubmit = async (name: string) => {
     if (!name.trim()) {
@@ -65,14 +61,13 @@ export const GenreTab: React.FC = () => {
     }
 
     try {
-      if (editingGenre?.id) {
+      if (editingGenre) {
         const result = await update(editingGenre.id, { name });
         showNotification(`Genre "${result.name}" updated successfully!`, 'success');
       } else {
         const result = await create({ name });
         showNotification(`Genre "${result.name}" created successfully!`, 'success');
       }
-
       closeFormModal();
       setCurrentParams(prev => ({ ...prev, page: 0 }));
     } catch (err) {
@@ -86,24 +81,20 @@ export const GenreTab: React.FC = () => {
   };
 
   const handleDeleteConfirm = async () => {
-    if (!deletingGenre?.id) return;
+    if (!deletingGenre) return;
 
     try {
       await remove(deletingGenre.id);
       showNotification(`Genre "${deletingGenre.name}" deleted successfully!`, 'success');
 
-      if (allGenres.length === 1 && currentPage > 0) {
-        setCurrentParams(prev => ({ ...prev, page: currentPage - 1 }));
+      if (allGenres.length === 1 && (currentParams.page ?? 0) > 0) {
+        setCurrentParams(prev => ({ ...prev, page: (prev.page ?? 0) - 1 }));
       } else {
         getAll(currentParams);
       }
     } catch (err) {
-      if (isApiErrorException(err)) {
-        if (err.isConflict()) {
-          showNotification(`Cannot delete genre "${deletingGenre.name}" because it has associated movies.`, 'error');
-        } else {
-          showNotification(err.message, 'error');
-        }
+      if (isApiErrorException(err) && err.isConflict()) {
+        showNotification(`Cannot delete genre "${deletingGenre.name}" because it has associated movies.`, 'error');
       } else {
         showNotification(err instanceof Error ? err.message : 'Failed to delete genre', 'error');
       }
@@ -136,11 +127,9 @@ export const GenreTab: React.FC = () => {
         page: 0,
         ...(query.trim() && { search: query })
       };
-
       if (!query.trim()) {
         delete newParams.search;
       }
-
       setCurrentParams(newParams);
     }, 500);
   }, [currentParams]);
@@ -175,14 +164,12 @@ export const GenreTab: React.FC = () => {
     );
   }
 
-  const getDisplayRange = () => {
-    if (!pagination) return { start: 0, end: 0 };
-    const startItem = currentPage * pageSize + 1;
-    const endItem = Math.min((currentPage + 1) * pageSize, totalElements);
-    return { start: startItem, end: endItem };
-  };
-
-  const { start, end } = getDisplayRange();
+  const { start, end } = pagination
+    ? {
+      start: pagination.number * pagination.size + 1,
+      end: Math.min((pagination.number + 1) * pagination.size, pagination.totalElements)
+    }
+    : { start: 0, end: 0 };
 
   return (
     <div className={styles.container}>
@@ -222,9 +209,9 @@ export const GenreTab: React.FC = () => {
         />
       </div>
 
-      {pagination && totalElements > 0 && (
+      {pagination && pagination.totalElements > 0 && (
         <div className={styles.resultsInfo}>
-          Showing {start}-{end} of {totalElements} genres
+          Showing {start}-{end} of {pagination.totalElements} genres
           {searchQuery && ` for "${searchQuery}"`}
         </div>
       )}
@@ -233,16 +220,15 @@ export const GenreTab: React.FC = () => {
         genres={allGenres}
         onEdit={handleEdit}
         onDelete={handleDelete}
-        loading={loading}
       />
 
-      {pagination && totalPages > 1 && (
+      {pagination && pagination.totalPages > 1 && (
         <div className={styles.paginationWrapper}>
           <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            totalElements={totalElements}
-            pageSize={pageSize}
+            currentPage={pagination.number}
+            totalPages={pagination.totalPages}
+            totalElements={pagination.totalElements}
+            pageSize={pagination.size}
             onPageChange={handlePageChange}
             variant="pages"
             loading={loading}

@@ -19,14 +19,6 @@ export const GenreTable: React.FC<GenreTableProps> = React.memo(({
         []
     );
 
-    const handleEdit = useCallback((genre: GenreResponse) => {
-        onEdit(genre);
-    }, [onEdit]);
-
-    const handleDelete = useCallback((genre: GenreResponse) => {
-        onDelete(genre);
-    }, [onDelete]);
-
     if (genres.length === 0) {
         return (
             <div className={styles.empty} role="status" aria-label="No genres found">
@@ -41,7 +33,7 @@ export const GenreTable: React.FC<GenreTableProps> = React.memo(({
         <div className={styles.table} role="table" aria-label="Genres list">
             <div className={styles.tableHeader} role="rowgroup">
                 <div className={styles.headerCell} role="columnheader">Name</div>
-                <div className={styles.headerCell} role="columnheader">Movies Count</div>
+                <div className={styles.headerCell} role="columnheader">Movies</div>
                 <div className={styles.headerCell} role="columnheader">Actions</div>
             </div>
             <div className={styles.tableBody} role="rowgroup">
@@ -67,7 +59,7 @@ export const GenreTable: React.FC<GenreTableProps> = React.memo(({
                                 <Button
                                     variant="success"
                                     size="small"
-                                    onClick={() => handleEdit(genre)}
+                                    onClick={() => onEdit(genre)}
                                     className={styles.editButton}
                                     aria-label={`Edit ${genre.name}`}
                                 >
@@ -76,7 +68,7 @@ export const GenreTable: React.FC<GenreTableProps> = React.memo(({
                                 <Button
                                     variant="error"
                                     size="small"
-                                    onClick={() => handleDelete(genre)}
+                                    onClick={() => onDelete(genre)}
                                     className={styles.deleteButton}
                                     aria-label={`Delete ${genre.name}`}
                                 >
