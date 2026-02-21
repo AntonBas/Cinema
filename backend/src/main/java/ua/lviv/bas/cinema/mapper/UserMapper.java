@@ -64,7 +64,15 @@ public interface UserMapper {
 	@Mapping(target = "lastActivity", source = "lastActivity")
 	AdminUserListResponse toAdminUserListResponse(AdminUserProjection projection);
 
-	@Mapping(target = "ticketsCount", ignore = true)
+	@Mapping(target = "id", source = "id")
+	@Mapping(target = "email", source = "email")
+	@Mapping(target = "firstName", source = "firstName")
+	@Mapping(target = "lastName", source = "lastName")
+	@Mapping(target = "userRole", source = "userRole")
+	@Mapping(target = "enabled", source = "enabled")
+	@Mapping(target = "verificationStatus", source = "verificationStatus")
+	@Mapping(target = "verifiedAt", source = "verifiedAt")
+	@Mapping(target = "ticketsCount", expression = "java(user.getTickets() != null ? user.getTickets().size() : 0)")
 	@Mapping(target = "lastActivity", source = "updatedAt")
 	AdminUserListResponse toAdminUserListResponse(User user);
 }

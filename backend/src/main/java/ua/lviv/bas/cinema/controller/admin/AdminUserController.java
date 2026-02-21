@@ -18,15 +18,16 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.dto.common.PageResponse;
 import ua.lviv.bas.cinema.dto.user.request.UserFilterRequest;
 import ua.lviv.bas.cinema.dto.user.request.UserRoleUpdateRequest;
 import ua.lviv.bas.cinema.dto.user.request.UserStatusUpdateRequest;
 import ua.lviv.bas.cinema.dto.user.request.VerificationBirthDateRequest;
 import ua.lviv.bas.cinema.dto.user.response.AdminUserListResponse;
-import ua.lviv.bas.cinema.dto.user.response.UserResponse;
 import ua.lviv.bas.cinema.service.admin.AdminUserService;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/admin/users")
 @RequiredArgsConstructor
@@ -45,7 +46,10 @@ public class AdminUserController {
 	public ResponseEntity<PageResponse<AdminUserListResponse>> getUsers(@Valid UserFilterRequest filter,
 			@Parameter(hidden = true) Pageable pageable) {
 
+		log.info("Admin fetching users with filter: {}, pageable: {}", filter, pageable);
 		var page = adminUserService.getUsersForAdmin(filter, pageable);
+		log.info("Retrieved {} users for admin", page.getTotalElements());
+
 		return ResponseEntity.ok(PageResponse.from(page));
 	}
 
@@ -55,13 +59,16 @@ public class AdminUserController {
 			@ApiResponse(responseCode = "400", description = "Invalid request data"),
 			@ApiResponse(responseCode = "404", description = "User not found"),
 			@ApiResponse(responseCode = "401", description = "User not authenticated"),
-			@ApiResponse(responseCode = "403", description = "User does not have ADMIN role") })
-	public ResponseEntity<Void> updateUserRole(
+			@ApiResponse(responseCode = "403", description = "User does not have ADMIN role or cannot modify own role") })
+	public ResponseEntity<AdminUserListResponse> updateUserRole(
 			@Parameter(description = "ID of the user to update", required = true, example = "1") @PathVariable Long userId,
 			@Valid @RequestBody UserRoleUpdateRequest request) {
 
-		adminUserService.updateUserRole(userId, request.getUserRole());
-		return ResponseEntity.ok().build();
+		log.info("Admin updating role for user {} to {}", userId, request.getUserRole());
+		AdminUserListResponse response = adminUserService.updateUserRole(userId, request.getUserRole());
+		log.info("User {} role updated successfully to {}", userId, request.getUserRole());
+
+		return ResponseEntity.ok(response);
 	}
 
 	@PatchMapping("/{userId}/status")
@@ -70,26 +77,35 @@ public class AdminUserController {
 			@ApiResponse(responseCode = "400", description = "Invalid request data"),
 			@ApiResponse(responseCode = "404", description = "User not found"),
 			@ApiResponse(responseCode = "401", description = "User not authenticated"),
-			@ApiResponse(responseCode = "403", description = "User does not have ADMIN role") })
-	public ResponseEntity<Void> updateUserStatus(
+			@ApiResponse(responseCode = "403", description = "User does not have ADMIN role or cannot block themselves") })
+	public ResponseEntity<AdminUserListResponse> updateUserStatus(
 			@Parameter(description = "ID of the user to update", required = true, example = "1") @PathVariable Long userId,
 			@Valid @RequestBody UserStatusUpdateRequest request) {
 
-		adminUserService.updateUserStatus(userId, request.isEnabled());
-		return ResponseEntity.ok().build();
+		log.info("Admin updating status for user {} to enabled={}", userId, request.isEnabled());
+		AdminUserListResponse response = adminUserService.updateUserStatus(userId, request.isEnabled());
+		log.info("User {} status updated to enabled={}", userId, request.isEnabled());
+
+		return ResponseEntity.ok(response);
 	}
 
 	@PatchMapping("/{userId}/verification")
-	@Operation(summary = "Update birth date verification", description = "Update user's birth date verification status.")
+	@Operation(summary = "Update birth date verification", description = "Update user's birth date verification status. Admin only.")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Verification status updated successfully"),
 			@ApiResponse(responseCode = "400", description = "Invalid request data"),
-			@ApiResponse(responseCode = "404", description = "User not found") })
-	public ResponseEntity<UserResponse> updateBirthDateVerification(
-			@Parameter(description = "ID of the user to update", required = true) @PathVariable Long userId,
+			@ApiResponse(responseCode = "404", description = "User not found"),
+			@ApiResponse(responseCode = "401", description = "User not authenticated"),
+			@ApiResponse(responseCode = "403", description = "User does not have ADMIN role") })
+	public ResponseEntity<AdminUserListResponse> updateBirthDateVerification(
+			@Parameter(description = "ID of the user to update", required = true, example = "1") @PathVariable Long userId,
 			@Valid @RequestBody VerificationBirthDateRequest request) {
 
-		UserResponse response = adminUserService.updateBirthDateVerification(userId, request);
+		log.info("Admin updating birth date verification for user {} to {}", userId, request.getVerificationStatus());
+
+		AdminUserListResponse response = adminUserService.updateBirthDateVerification(userId, request);
+		log.info("User {} birth date verification updated to {}", userId, request.getVerificationStatus());
+
 		return ResponseEntity.ok(response);
 	}
 }
