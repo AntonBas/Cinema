@@ -43,13 +43,4 @@ public class MovieFilterRequest {
 
 	@Schema(description = "Filter by genre ID", example = "1")
 	private Long genreId;
-
-	@Schema(description = "Filter by actor ID", example = "5")
-	private Long actorId;
-
-	@Schema(description = "Filter by director ID", example = "8")
-	private Long directorId;
-
-	@Schema(description = "Filter by screenwriter ID", example = "10")
-	private Long screenwriterId;
 }
