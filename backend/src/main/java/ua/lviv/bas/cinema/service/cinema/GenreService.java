@@ -8,7 +8,6 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -58,7 +57,7 @@ public class GenreService {
 				.orElseThrow(() -> new GenreNotFoundException(id));
 	}
 
-	@Caching(evict = { @CacheEvict(key = "#id"), @CacheEvict(key = "'projection-' + #id") })
+	@Caching(evict = { @CacheEvict(key = "#id"), @CacheEvict(allEntries = true) })
 	@Transactional
 	public GenreResponse updateGenre(Long id, GenreRequest request) {
 		log.info("Updating genre with id: {}", id);
@@ -76,7 +75,7 @@ public class GenreService {
 		return genreMapper.toGenreResponse(updatedGenre);
 	}
 
-	@Caching(evict = { @CacheEvict(key = "#id"), @CacheEvict(key = "'projection-' + #id") })
+	@Caching(evict = { @CacheEvict(key = "#id"), @CacheEvict(allEntries = true) })
 	@Transactional
 	public void deleteGenre(Long id) {
 		log.info("Deleting genre with id: {}", id);
@@ -91,7 +90,7 @@ public class GenreService {
 
 	@Cacheable(key = "'search-' + #query + '-' + #pageable")
 	public Page<GenreResponse> searchGenres(String query, Pageable pageable) {
-		log.info("Searching genres: query='{}'", query);
+		log.info("Searching genres: query='{}', pageable={}", query, pageable);
 
 		Page<GenreProjection> projections;
 
@@ -104,32 +103,24 @@ public class GenreService {
 		return projections.map(genreMapper::toGenreResponse);
 	}
 
-	@Cacheable(key = "'popular-' + #query + '-' + #limit")
-	public List<GenreResponse> getPopularGenres(String query, int limit) {
-		log.info("Getting popular genres: query='{}', limit={}", query, limit);
-
-		Page<GenreProjection> page = StringUtils.hasText(query)
-				? genreRepository.searchProjectionsByName(query.trim(), PageRequest.of(0, 100))
-				: genreRepository.findAllProjections(PageRequest.of(0, 100));
-
-		return page.getContent().stream().sorted((a, b) -> Integer.compare(b.getMovieCount(), a.getMovieCount()))
-				.limit(limit).map(genreMapper::toGenreResponse).collect(Collectors.toList());
-	}
-
-	@Cacheable(key = "'by-ids-' + #ids.hashCode()")
 	public List<GenreResponse> getGenresByIds(List<Long> ids) {
-		log.debug("Retrieving genres by ids: {}", ids);
+		log.debug("Getting genres by ids: {}", ids);
 
 		if (ids == null || ids.isEmpty()) {
 			return List.of();
 		}
 
 		List<Genre> genres = genreRepository.findAllById(ids);
-		return genreMapper.toGenreResponseList(genres);
-	}
 
-	public boolean existsByName(String name) {
-		return genreRepository.existsByNameIgnoreCase(name.trim());
+		if (genres.size() != ids.size()) {
+			List<Long> foundIds = genres.stream().map(Genre::getId).collect(Collectors.toList());
+
+			List<Long> missingIds = ids.stream().filter(id -> !foundIds.contains(id)).collect(Collectors.toList());
+
+			throw new GenreNotFoundException(missingIds);
+		}
+
+		return genreMapper.toGenreResponseList(genres);
 	}
 
 	private void validateGenreUniqueness(String name, Long excludeId) {
