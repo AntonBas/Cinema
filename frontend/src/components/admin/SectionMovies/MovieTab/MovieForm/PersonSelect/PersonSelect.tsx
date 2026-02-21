@@ -56,7 +56,7 @@ export const PersonSelect: React.FC<PersonSelectProps> = ({
             const searchMethod = getSearchMethod(personRole);
             const result = await searchMethod({ name: query, page: 0, size: MAX_OPTIONS });
             return result?.content || [];
-        } catch (error) {
+        } catch {
             showNotification('Failed to search persons', 'error');
             return [];
         } finally {
@@ -67,16 +67,14 @@ export const PersonSelect: React.FC<PersonSelectProps> = ({
     const handleAddNewPerson = useCallback(async (name: string, personRole: PersonRole) => {
         try {
             const newPerson = await quickCreate({ name, role: personRole });
-
             const roleDisplay = {
                 ACTOR: 'Actor',
                 DIRECTOR: 'Director',
                 SCREENWRITER: 'Screenwriter'
             }[personRole];
-
             showNotification(`${roleDisplay} "${name}" created successfully`, 'success');
             return newPerson;
-        } catch (error) {
+        } catch {
             showNotification('Failed to create person', 'error');
             return null;
         }
@@ -94,7 +92,6 @@ export const PersonSelect: React.FC<PersonSelectProps> = ({
                 setSearchQuery('');
             }
         };
-
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
@@ -103,7 +100,6 @@ export const PersonSelect: React.FC<PersonSelectProps> = ({
         if (searchTimeoutRef.current) {
             clearTimeout(searchTimeoutRef.current);
         }
-
         if (searchQuery.length >= MIN_SEARCH_LENGTH) {
             searchTimeoutRef.current = setTimeout(async () => {
                 const results = await handlePersonSearch(searchQuery, role);
@@ -114,13 +110,12 @@ export const PersonSelect: React.FC<PersonSelectProps> = ({
             setLocalOptions([]);
             setIsOpen(false);
         }
-
         return () => {
             if (searchTimeoutRef.current) {
                 clearTimeout(searchTimeoutRef.current);
             }
         };
-    }, [searchQuery, role, handlePersonSearch]);
+    }, [searchQuery, role]);
 
     const handleSelectPerson = useCallback((personId: number) => {
         const newSelectedIds = selectedIds.includes(personId)
@@ -130,15 +125,13 @@ export const PersonSelect: React.FC<PersonSelectProps> = ({
     }, [selectedIds, onChange]);
 
     const handleRemovePerson = useCallback((personId: number) => {
-        const newSelectedIds = selectedIds.filter(id => id !== personId);
-        onChange(newSelectedIds);
+        onChange(selectedIds.filter(id => id !== personId));
     }, [selectedIds, onChange]);
 
     const handleAddAndSelect = useCallback(async () => {
         const newPerson = await handleAddNewPerson(searchQuery, role);
         if (newPerson) {
-            const newSelectedIds = [...selectedIds, newPerson.id];
-            onChange(newSelectedIds);
+            onChange([...selectedIds, newPerson.id]);
             setSearchQuery('');
             setIsOpen(false);
         }
@@ -154,13 +147,12 @@ export const PersonSelect: React.FC<PersonSelectProps> = ({
         }
     }, [searchQuery.length]);
 
-    const showAddOption = useMemo(() =>
-        searchQuery.trim().length >= MIN_SEARCH_LENGTH &&
-        !localOptions.some(person =>
+    const showAddOption = useMemo(() => {
+        if (searchQuery.trim().length < MIN_SEARCH_LENGTH) return false;
+        return !localOptions.some(person =>
             person.name.toLowerCase().includes(searchQuery.toLowerCase())
-        ),
-        [searchQuery, localOptions]
-    );
+        );
+    }, [searchQuery, localOptions]);
 
     const roleLabel = useMemo(() => {
         switch (role) {
@@ -216,7 +208,7 @@ export const PersonSelect: React.FC<PersonSelectProps> = ({
                             role="option"
                             aria-label={`Add and select "${searchQuery}" as new ${roleLabel}`}
                         >
-                            ➕ Add & select "{searchQuery}" as new {roleLabel}
+                            {loading || isSearching ? '⏳ Adding...' : `➕ Add & select "${searchQuery}" as new ${roleLabel}`}
                         </button>
                     )}
 
@@ -232,9 +224,7 @@ export const PersonSelect: React.FC<PersonSelectProps> = ({
                             <span className={styles.checkmark} />
                             <span className={styles.optionLabel}>
                                 {person.name}
-                                {selectedIds.includes(person.id) && (
-                                    <span className={styles.alreadySelected}>(selected)</span>
-                                )}
+                                {selectedIds.includes(person.id) && <span className={styles.alreadySelected}> (selected)</span>}
                             </span>
                         </label>
                     ))}
