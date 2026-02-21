@@ -87,7 +87,7 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(({
         const loadGenres = async () => {
             setIsLoadingGenres(true);
             try {
-                const genresData = await genreApi.public.getPopular('', 100);
+                const genresData = await genreApi.public.search('', 100);
                 setGenres(genresData);
             } catch {
                 showNotification('Failed to load genres', 'error');
@@ -215,13 +215,12 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(({
     }, [movie, formData, formatDateForBackend, onSuccess, showNotification]);
 
     const handleGenreChange = useCallback((genreId: number) => {
-        setFormData(prev => {
-            const currentIds = prev.selectedGenres;
-            const newIds = currentIds.includes(genreId)
-                ? currentIds.filter(id => id !== genreId)
-                : [...currentIds, genreId];
-            return { ...prev, selectedGenres: newIds };
-        });
+        setFormData(prev => ({
+            ...prev,
+            selectedGenres: prev.selectedGenres.includes(genreId)
+                ? prev.selectedGenres.filter(id => id !== genreId)
+                : [...prev.selectedGenres, genreId]
+        }));
     }, []);
 
     const handleActorsChange = useCallback((ids: number[], persons?: PersonResponse[]) => {

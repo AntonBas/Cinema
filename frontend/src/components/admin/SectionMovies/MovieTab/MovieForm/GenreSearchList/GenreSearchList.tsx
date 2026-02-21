@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import type { GenreResponse } from '@/types/genre';
 import { Input, Badge, LoadingSpinner } from '@/components/ui';
 import styles from './GenreSearchList.module.css';
@@ -6,7 +6,6 @@ import styles from './GenreSearchList.module.css';
 interface GenreSearchListProps {
     genres?: GenreResponse[];
     selectedIds: number[];
-    selectedGenres?: GenreResponse[];
     onChange: (genreId: number) => void;
     onSearchChange?: (query: string) => void;
     isLoading?: boolean;
@@ -17,7 +16,6 @@ const SEARCH_DELAY = 300;
 export const GenreSearchList: React.FC<GenreSearchListProps> = React.memo(({
     genres = [],
     selectedIds,
-    selectedGenres = [],
     onChange,
     onSearchChange,
     isLoading = false
@@ -25,6 +23,14 @@ export const GenreSearchList: React.FC<GenreSearchListProps> = React.memo(({
     const [localSearchQuery, setLocalSearchQuery] = useState('');
     const [isTyping, setIsTyping] = useState(false);
     const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+    useEffect(() => {
+        return () => {
+            if (searchTimeoutRef.current) {
+                clearTimeout(searchTimeoutRef.current);
+            }
+        };
+    }, []);
 
     const handleSearchChange = useCallback((value: string) => {
         setLocalSearchQuery(value);
@@ -43,28 +49,22 @@ export const GenreSearchList: React.FC<GenreSearchListProps> = React.memo(({
     }, [onSearchChange]);
 
     const filteredGenres = useMemo(() => {
-        const safeGenres = Array.isArray(genres) ? genres : [];
-        if (!localSearchQuery.trim()) return safeGenres;
-
+        if (!localSearchQuery.trim()) return genres;
         const searchLower = localSearchQuery.toLowerCase();
-        return safeGenres.filter(genre =>
+        return genres.filter(genre =>
             genre.name.toLowerCase().includes(searchLower)
         );
     }, [genres, localSearchQuery]);
 
-    const displaySelectedGenres = useMemo(() => {
-        return selectedGenres.filter(genre => selectedIds.includes(genre.id));
-    }, [selectedGenres, selectedIds]);
+    const selectedGenres = useMemo(() => {
+        return genres.filter(genre => selectedIds.includes(genre.id));
+    }, [genres, selectedIds]);
 
     const handleGenreChange = useCallback((genreId: number) => {
         onChange(genreId);
     }, [onChange]);
 
-    const handleRemoveGenre = useCallback((genreId: number) => {
-        onChange(genreId);
-    }, [onChange]);
-
-    const hasSelected = displaySelectedGenres.length > 0;
+    const hasSelected = selectedGenres.length > 0;
 
     if (isLoading) {
         return (
@@ -90,11 +90,11 @@ export const GenreSearchList: React.FC<GenreSearchListProps> = React.memo(({
 
             {hasSelected && (
                 <div className={styles.selectedItems} role="list" aria-label="Selected genres">
-                    {displaySelectedGenres.map(genre => (
+                    {selectedGenres.map(genre => (
                         <Badge
                             key={genre.id}
                             variant="primary"
-                            onClick={() => handleRemoveGenre(genre.id)}
+                            onClick={() => handleGenreChange(genre.id)}
                             className={styles.selectedTag}
                             title={`Remove ${genre.name}`}
                         >
@@ -124,11 +124,6 @@ export const GenreSearchList: React.FC<GenreSearchListProps> = React.memo(({
                                 />
                                 <span className={styles.checkmark} aria-hidden="true"></span>
                                 <span className={styles.genreName}>{genre.name}</span>
-                                {isSelected && (
-                                    <span className={styles.selectedIndicator} aria-label="selected">
-                                        (selected)
-                                    </span>
-                                )}
                             </label>
                         );
                     })
