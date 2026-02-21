@@ -31,20 +31,4 @@ public interface MovieDetailProjection {
 	default String getPosterUrl() {
 		return "/api/movies/" + getId() + "/poster";
 	}
-
-	default boolean isCurrentlyShowing() {
-		return getStatus() == MovieStatus.CURRENT;
-	}
-
-	default boolean isUpcoming() {
-		return getStatus() == MovieStatus.UPCOMING;
-	}
-
-	default boolean isArchived() {
-		return getStatus() == MovieStatus.ARCHIVED;
-	}
-
-	default boolean isActive() {
-		return getStatus() == MovieStatus.CURRENT || getStatus() == MovieStatus.UPCOMING;
-	}
 }

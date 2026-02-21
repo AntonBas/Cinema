@@ -140,11 +140,8 @@ public class MovieService {
 	}
 
 	public ResponseEntity<byte[]> getMoviePoster(Long id) {
-		Movie movie = findAdminMovieById(id);
-		if (movie.getPosterFileName() == null) {
-			return ResponseEntity.notFound().build();
-		}
-		return posterService.getPosterResponse(movie.getPosterFileName());
+		return movieRepository.findPosterFileNameById(id).map(posterService::getPosterResponse)
+				.orElse(ResponseEntity.notFound().build());
 	}
 
 	public boolean existsBySlug(String slug) {

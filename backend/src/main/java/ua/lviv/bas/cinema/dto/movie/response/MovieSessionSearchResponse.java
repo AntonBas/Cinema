@@ -19,9 +19,6 @@ public class MovieSessionSearchResponse {
 	@Schema(description = "Title of the movie", example = "Inception")
 	private String title;
 
-	@Schema(description = "Release year of the movie", example = "2024")
-	private Integer releaseYear;
-
 	@Schema(description = "Duration of the movie in minutes", example = "148")
 	private Integer durationMinutes;
 }

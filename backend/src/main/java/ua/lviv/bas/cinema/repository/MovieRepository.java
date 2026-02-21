@@ -30,8 +30,7 @@ public interface MovieRepository extends JpaRepository<Movie, Long>, JpaSpecific
 	Optional<Movie> findAdminMovieBySlug(@Param("slug") String slug);
 
 	@Query("""
-			SELECT m.id as id, m.title as title, m.releaseDate as releaseDate,
-			       m.durationMinutes as durationMinutes
+			SELECT m.id as id, m.title as title, m.durationMinutes as durationMinutes
 			FROM Movie m
 			WHERE (:title IS NULL OR LOWER(m.title) LIKE LOWER(CONCAT('%', :title, '%')))
 			  AND m.status IN ('CURRENT', 'UPCOMING')
@@ -39,4 +38,7 @@ public interface MovieRepository extends JpaRepository<Movie, Long>, JpaSpecific
 			ORDER BY m.title
 			""")
 	List<MovieSessionSearchProjection> findMoviesForSession(@Param("title") String title);
+
+	@Query("SELECT m.posterFileName FROM Movie m WHERE m.id = :id")
+	Optional<String> findPosterFileNameById(@Param("id") Long id);
 }

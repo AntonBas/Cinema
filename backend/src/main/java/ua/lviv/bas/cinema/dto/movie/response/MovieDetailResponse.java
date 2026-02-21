@@ -46,8 +46,7 @@ public class MovieDetailResponse {
 			"NC_17" })
 	private AgeRating ageRating;
 
-	@Schema(description = "Current status of the movie", example = "ACTIVE", allowableValues = { "ACTIVE", "UPCOMING",
-			"ARCHIVED", "CANCELLED" })
+	@Schema(description = "Current status of the movie", example = "ACTIVE", allowableValues = { "ACTIVE", "UPCOMING" })
 	private MovieStatus status;
 
 	@Schema(description = "File name of the movie poster", example = "inception-poster.jpg")
@@ -55,18 +54,6 @@ public class MovieDetailResponse {
 
 	@Schema(description = "URL to the movie poster image", example = "/api/movies/1/poster")
 	private String posterUrl;
-
-	@Schema(description = "Indicates if the movie is currently showing in cinemas", example = "true")
-	private boolean currentlyShowing;
-
-	@Schema(description = "Indicates if the movie is upcoming (not yet released)", example = "false")
-	private boolean upcoming;
-
-	@Schema(description = "Indicates if the movie is archived", example = "false")
-	private boolean archived;
-
-	@Schema(description = "Indicates if the movie is active", example = "true")
-	private boolean active;
 
 	@Schema(description = "List of genres associated with the movie")
 	private List<GenreResponse> genres;

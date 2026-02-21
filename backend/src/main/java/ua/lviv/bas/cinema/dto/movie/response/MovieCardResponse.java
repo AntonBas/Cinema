@@ -21,9 +21,6 @@ public class MovieCardResponse {
 	@Schema(description = "Title of the movie", example = "Inception")
 	private String title;
 
-	@Schema(description = "URL-friendly slug for the movie", example = "inception-2020")
-	private String slug;
-
 	@Schema(description = "URL to the movie poster image", example = "/api/movies/1/poster")
 	private String posterUrl;
 
@@ -37,7 +34,4 @@ public class MovieCardResponse {
 	@Schema(description = "Current status of the movie", example = "ACTIVE", allowableValues = { "ACTIVE", "UPCOMING",
 			"ARCHIVED", "CANCELLED" })
 	private MovieStatus status;
-
-	@Schema(description = "Indicates if the movie is currently showing in cinemas", example = "true")
-	private boolean currentlyShowing;
 }

@@ -20,33 +20,26 @@ import ua.lviv.bas.cinema.dto.movie.response.MovieSessionSearchResponse;
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface MovieMapper {
 
+	@Mapping(target = "posterUrl", source = "posterUrl")
+	@Mapping(target = "status", source = "status")
+	MovieCardResponse toMovieCardResponse(MovieCardProjection projection);
+
 	@Mapping(target = "posterUrl", expression = "java(\"/api/movies/\" + movie.getId() + \"/poster\")")
-	@Mapping(target = "currentlyShowing", expression = "java(movie.getStatus() == ua.lviv.bas.cinema.domain.enums.MovieStatus.CURRENT)")
+	@Mapping(target = "status", source = "status")
 	MovieCardResponse toMovieCardResponse(Movie movie);
 
-	@Mapping(target = "posterUrl", expression = "java(projection.getPosterUrl())")
-	@Mapping(target = "currentlyShowing", expression = "java(projection.isCurrentlyShowing())")
-	@Mapping(target = "upcoming", expression = "java(projection.isUpcoming())")
-	@Mapping(target = "archived", expression = "java(projection.isArchived())")
-	@Mapping(target = "active", expression = "java(projection.isActive())")
 	@Mapping(target = "genres", ignore = true)
 	@Mapping(target = "actors", ignore = true)
 	@Mapping(target = "directors", ignore = true)
 	@Mapping(target = "screenwriters", ignore = true)
+	@Mapping(target = "status", source = "status")
 	MovieDetailResponse toMovieDetailResponse(MovieDetailProjection projection);
 
-	@Mapping(target = "genres", source = "genres")
-	@Mapping(target = "actors", source = "actors")
-	@Mapping(target = "directors", source = "directors")
-	@Mapping(target = "screenwriters", source = "screenwriters")
 	@Mapping(target = "posterUrl", expression = "java(\"/api/movies/\" + movie.getId() + \"/poster\")")
-	@Mapping(target = "currentlyShowing", expression = "java(movie.getStatus() == ua.lviv.bas.cinema.domain.enums.MovieStatus.CURRENT)")
-	@Mapping(target = "upcoming", expression = "java(movie.getStatus() == ua.lviv.bas.cinema.domain.enums.MovieStatus.UPCOMING)")
-	@Mapping(target = "archived", expression = "java(movie.getStatus() == ua.lviv.bas.cinema.domain.enums.MovieStatus.ARCHIVED)")
-	@Mapping(target = "active", expression = "java(movie.getStatus() == ua.lviv.bas.cinema.domain.enums.MovieStatus.CURRENT || movie.getStatus() == ua.lviv.bas.cinema.domain.enums.MovieStatus.UPCOMING)")
+	@Mapping(target = "status", source = "status")
 	MovieDetailResponse toMovieDetailResponse(Movie movie);
 
-	@Mapping(target = "releaseYear", expression = "java(projection.getReleaseDate() != null ? projection.getReleaseDate().getYear() : null)")
+	@Mapping(target = "durationMinutes", source = "durationMinutes")
 	MovieSessionSearchResponse toMovieSessionSearchResponse(MovieSessionSearchProjection projection);
 
 	@Mapping(target = "id", ignore = true)
@@ -71,8 +64,4 @@ public interface MovieMapper {
 	@Mapping(target = "genres", ignore = true)
 	@Mapping(target = "posterFileName", ignore = true)
 	void updateMovieFromRequest(MovieUpdateRequest request, @MappingTarget Movie movie);
-
-	@Mapping(target = "posterUrl", expression = "java(\"/api/movies/\" + projection.getId() + \"/poster\")")
-	@Mapping(target = "currentlyShowing", expression = "java(projection.getStatus() == ua.lviv.bas.cinema.domain.enums.MovieStatus.CURRENT)")
-	MovieCardResponse toMovieCardResponse(MovieCardProjection projection);
 }

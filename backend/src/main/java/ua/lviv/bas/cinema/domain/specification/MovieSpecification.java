@@ -9,7 +9,6 @@ import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import ua.lviv.bas.cinema.domain.Genre;
 import ua.lviv.bas.cinema.domain.Movie;
-import ua.lviv.bas.cinema.domain.Person;
 import ua.lviv.bas.cinema.domain.enums.AgeRating;
 import ua.lviv.bas.cinema.domain.enums.MovieStatus;
 import ua.lviv.bas.cinema.dto.movie.request.MovieFilterRequest;
@@ -22,8 +21,7 @@ public class MovieSpecification {
 				filterByAgeRating(filter.getAgeRating()), filterByCurrentlyShowing(filter.getCurrentlyShowing()),
 				filterByUpcoming(filter.getUpcoming()), filterByArchived(filter.getArchived()),
 				filterByReleaseDateFrom(filter.getReleaseDateFrom()), filterByReleaseDateTo(filter.getReleaseDateTo()),
-				filterByGenre(filter.getGenreId()), filterByActor(filter.getActorId()),
-				filterByDirector(filter.getDirectorId()), filterByScreenwriter(filter.getScreenwriterId()));
+				filterByGenre(filter.getGenreId()));
 	}
 
 	private Specification<Movie> filterByTitle(String title) {
@@ -81,33 +79,6 @@ public class MovieSpecification {
 				return null;
 			Join<Movie, Genre> genres = root.join("genres", JoinType.INNER);
 			return cb.equal(genres.get("id"), genreId);
-		};
-	}
-
-	private Specification<Movie> filterByActor(Long actorId) {
-		return (root, query, cb) -> {
-			if (actorId == null)
-				return null;
-			Join<Movie, Person> actors = root.join("actors", JoinType.INNER);
-			return cb.equal(actors.get("id"), actorId);
-		};
-	}
-
-	private Specification<Movie> filterByDirector(Long directorId) {
-		return (root, query, cb) -> {
-			if (directorId == null)
-				return null;
-			Join<Movie, Person> directors = root.join("directors", JoinType.INNER);
-			return cb.equal(directors.get("id"), directorId);
-		};
-	}
-
-	private Specification<Movie> filterByScreenwriter(Long screenwriterId) {
-		return (root, query, cb) -> {
-			if (screenwriterId == null)
-				return null;
-			Join<Movie, Person> screenwriters = root.join("screenwriters", JoinType.INNER);
-			return cb.equal(screenwriters.get("id"), screenwriterId);
 		};
 	}
 }
