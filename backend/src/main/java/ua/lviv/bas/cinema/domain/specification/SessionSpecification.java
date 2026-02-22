@@ -20,6 +20,28 @@ import ua.lviv.bas.cinema.dto.session.request.SessionFilterRequest;
 @Component
 public class SessionSpecification {
 
+	public Specification<Session> buildForSchedule(String searchTerm, LocalDate date) {
+		return (root, query, cb) -> {
+			List<Predicate> predicates = new ArrayList<>();
+
+			predicates.add(cb.equal(root.get("status"), CinemaSessionStatus.SCHEDULED));
+			predicates.add(cb.greaterThan(root.get("startTime"), LocalDateTime.now()));
+
+			if (searchTerm != null && !searchTerm.trim().isEmpty()) {
+				String pattern = "%" + searchTerm.toLowerCase() + "%";
+				predicates.add(cb.like(cb.lower(root.join("movie", JoinType.INNER).get("title")), pattern));
+			}
+
+			if (date != null) {
+				LocalDateTime fromDateTime = date.atStartOfDay();
+				LocalDateTime toDateTime = date.atTime(LocalTime.MAX);
+				predicates.add(cb.between(root.get("startTime"), fromDateTime, toDateTime));
+			}
+
+			return cb.and(predicates.toArray(new Predicate[0]));
+		};
+	}
+
 	public Specification<Session> buildForAdmin(SessionFilterRequest filter) {
 		return (root, query, cb) -> {
 			List<Predicate> predicates = new ArrayList<>();
@@ -27,29 +49,6 @@ public class SessionSpecification {
 			if (filter.getStatus() != null) {
 				predicates.add(cb.equal(root.get("status"), filter.getStatus()));
 			}
-
-			if (filter.getHallId() != null) {
-				predicates.add(cb.equal(root.join("hall", JoinType.INNER).get("id"), filter.getHallId()));
-			}
-
-			if (filter.getMovieId() != null) {
-				predicates.add(cb.equal(root.join("movie", JoinType.INNER).get("id"), filter.getMovieId()));
-			}
-
-			if (filter.getDateFrom() != null || filter.getDateTo() != null) {
-				addDateRangePredicates(predicates, root, cb, filter.getDateFrom(), filter.getDateTo());
-			}
-
-			return cb.and(predicates.toArray(new Predicate[0]));
-		};
-	}
-
-	public Specification<Session> buildForSchedule(SessionFilterRequest filter) {
-		return (root, query, cb) -> {
-			List<Predicate> predicates = new ArrayList<>();
-
-			predicates.add(cb.equal(root.get("status"), CinemaSessionStatus.SCHEDULED));
-			predicates.add(cb.greaterThan(root.get("startTime"), LocalDateTime.now()));
 
 			if (filter.getHallId() != null) {
 				predicates.add(cb.equal(root.join("hall", JoinType.INNER).get("id"), filter.getHallId()));

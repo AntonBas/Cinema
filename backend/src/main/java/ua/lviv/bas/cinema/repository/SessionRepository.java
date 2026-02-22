@@ -2,6 +2,7 @@ package ua.lviv.bas.cinema.repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -103,6 +104,7 @@ public interface SessionRepository extends JpaRepository<Session, Long>, JpaSpec
 			JOIN s.hall h
 			WHERE s.status = 'SCHEDULED'
 			AND s.startTime > :currentTime
+			ORDER BY s.startTime ASC
 			""")
 	Page<SessionScheduleProjection> findAllScheduleProjections(@Param("currentTime") LocalDateTime currentTime,
 			Pageable pageable);
@@ -118,6 +120,19 @@ public interface SessionRepository extends JpaRepository<Session, Long>, JpaSpec
 			FROM Session s
 			JOIN s.movie m
 			JOIN s.hall h
+			ORDER BY s.startTime DESC, s.status ASC
 			""")
 	Page<SessionAdminProjection> findAllAdminProjections(Specification<Session> spec, Pageable pageable);
+
+	@Query("""
+			SELECT sr.session.id as sessionId,
+			       (SELECT COUNT(s) FROM Seat s WHERE s.hall.id = h.id) - COUNT(sr) as availableSeats
+			FROM SeatReservation sr
+			RIGHT JOIN sr.session s
+			JOIN s.hall h
+			WHERE sr.session.id IN :sessionIds
+			AND (sr.status IN ('PENDING', 'CONFIRMED', 'CHECKED_IN') OR sr.status IS NULL)
+			GROUP BY sr.session.id, h.id
+			""")
+	Map<Long, Integer> findAvailableSeatsForSessions(@Param("sessionIds") List<Long> sessionIds);
 }

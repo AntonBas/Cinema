@@ -39,7 +39,6 @@ import ua.lviv.bas.cinema.mapper.SessionMapper;
 import ua.lviv.bas.cinema.repository.MovieRepository;
 import ua.lviv.bas.cinema.repository.SeatRepository;
 import ua.lviv.bas.cinema.repository.SessionRepository;
-import ua.lviv.bas.cinema.service.booking.availability.SeatReservationService;
 
 @Slf4j
 @Service
@@ -52,7 +51,6 @@ public class SessionService {
 	private final SessionMapper sessionMapper;
 	private final MovieRepository movieRepository;
 	private final CinemaHallService cinemaHallService;
-	private final SeatReservationService seatReservationService;
 	private final SeatRepository seatRepository;
 	private final SessionSpecification sessionSpecification;
 
@@ -63,8 +61,11 @@ public class SessionService {
 		Page<SessionScheduleProjection> page = sessionRepository.findAllScheduleProjections(LocalDateTime.now(),
 				pageable);
 
-		Map<Long, Integer> hallCapacities = getHallCapacitiesBatch(page.getContent());
-		Map<Long, Integer> availableSeats = getAvailableSeatsBatch(page.getContent());
+		Map<Long, Integer> hallCapacities = getHallCapacities(
+				page.getContent().stream().map(SessionScheduleProjection::getHallId).collect(Collectors.toList()));
+
+		Map<Long, Integer> availableSeats = sessionRepository.findAvailableSeatsForSessions(
+				page.getContent().stream().map(SessionScheduleProjection::getId).collect(Collectors.toList()));
 
 		return PageResponse.from(page.map(projection -> {
 			SessionScheduleResponse response = sessionMapper.toSessionScheduleResponse(projection);
@@ -81,7 +82,8 @@ public class SessionService {
 		Specification<Session> spec = sessionSpecification.buildForAdmin(filter);
 		Page<SessionAdminProjection> page = sessionRepository.findAllAdminProjections(spec, pageable);
 
-		Map<Long, Integer> hallCapacities = getHallCapacitiesBatch(page.getContent());
+		Map<Long, Integer> hallCapacities = getHallCapacities(
+				page.getContent().stream().map(SessionAdminProjection::getHallId).collect(Collectors.toList()));
 
 		return PageResponse.from(page.map(projection -> {
 			SessionAdminResponse response = sessionMapper.toSessionAdminResponse(projection);
@@ -109,43 +111,7 @@ public class SessionService {
 		return response;
 	}
 
-	private Map<Long, Integer> getHallCapacitiesBatch(List<?> projections) {
-		List<Long> hallIds = projections.stream().map(p -> {
-			if (p instanceof SessionScheduleProjection) {
-				return ((SessionScheduleProjection) p).getHallId();
-			} else if (p instanceof SessionAdminProjection) {
-				return ((SessionAdminProjection) p).getHallId();
-			}
-			return null;
-		}).filter(id -> id != null).distinct().collect(Collectors.toList());
-
-		if (hallIds.isEmpty()) {
-			return Map.of();
-		}
-
-		List<Object[]> results = seatRepository.countSeatsByHallIds(hallIds);
-
-		return results.stream().collect(Collectors.toMap(row -> (Long) row[0], row -> ((Number) row[1]).intValue()));
-	}
-
-	private Map<Long, Integer> getAvailableSeatsBatch(List<SessionScheduleProjection> projections) {
-		List<Long> sessionIds = projections.stream().map(SessionScheduleProjection::getId).collect(Collectors.toList());
-
-		if (sessionIds.isEmpty()) {
-			return Map.of();
-		}
-
-		return sessionIds.stream().collect(Collectors.toMap(sessionId -> sessionId, this::getAvailableSeats));
-	}
-
-	private Integer getHallCapacity(Long hallId) {
-		return Long.valueOf(seatRepository.countByHallId(hallId)).intValue();
-	}
-
-	private Integer getAvailableSeats(Long sessionId) {
-		return seatReservationService.getAvailableSeatsCount(sessionId);
-	}
-
+	@Cacheable(key = "'conflict-check-' + #hallId + '-' + #startTime + '-' + #excludeSessionId")
 	public boolean hasTimeConflict(Long hallId, LocalDateTime startTime, Integer durationMinutes,
 			Long excludeSessionId) {
 		LocalDateTime endTime = startTime.plusMinutes(durationMinutes);
@@ -280,6 +246,21 @@ public class SessionService {
 		session.setStatus(CinemaSessionStatus.SCHEDULED);
 		sessionRepository.save(session);
 		log.info("Session reactivated with ID: {}", sessionId);
+	}
+
+	private Map<Long, Integer> getHallCapacities(List<Long> hallIds) {
+		if (hallIds.isEmpty())
+			return Map.of();
+		return seatRepository.countSeatsByHallIds(hallIds).stream()
+				.collect(Collectors.toMap(row -> (Long) row[0], row -> ((Number) row[1]).intValue()));
+	}
+
+	private Integer getHallCapacity(Long hallId) {
+		return Long.valueOf(seatRepository.countByHallId(hallId)).intValue();
+	}
+
+	private Integer getAvailableSeats(Long sessionId) {
+		return sessionRepository.findAvailableSeatsForSessions(List.of(sessionId)).get(sessionId);
 	}
 
 	private void validateStartTime(LocalDateTime startTime) {

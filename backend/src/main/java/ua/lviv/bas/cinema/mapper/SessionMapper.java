@@ -18,30 +18,18 @@ import ua.lviv.bas.cinema.dto.session.response.SessionScheduleResponse;
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface SessionMapper {
 
-	@Mapping(target = "movieId", source = "movie.id")
-	@Mapping(target = "movieTitle", source = "movie.title")
-	@Mapping(target = "movieDuration", source = "movie.durationMinutes")
-	@Mapping(target = "hallId", source = "hall.id")
-	@Mapping(target = "hallName", source = "hall.name")
 	@Mapping(target = "endTime", expression = "java(session.getStartTime().plusMinutes(session.getMovie().getDurationMinutes()))")
 	@Mapping(target = "ticketsSold", ignore = true)
 	@Mapping(target = "totalRevenue", ignore = true)
 	@Mapping(target = "hallCapacity", ignore = true)
 	SessionAdminResponse toSessionAdminResponse(Session session);
 
-	@Mapping(target = "movieId", source = "movie.id")
-	@Mapping(target = "movieTitle", source = "movie.title")
-	@Mapping(target = "moviePosterFileName", source = "movie.posterFileName")
-	@Mapping(target = "movieAgeRating", source = "movie.ageRating")
-	@Mapping(target = "movieDuration", source = "movie.durationMinutes")
-	@Mapping(target = "hallId", source = "hall.id")
-	@Mapping(target = "hallName", source = "hall.name")
+	SessionAdminResponse toSessionAdminResponse(SessionAdminProjection projection);
+
 	@Mapping(target = "endTime", expression = "java(session.getStartTime().plusMinutes(session.getMovie().getDurationMinutes()))")
 	@Mapping(target = "availableSeats", ignore = true)
 	@Mapping(target = "hallCapacity", ignore = true)
 	SessionScheduleResponse toSessionScheduleResponse(Session session);
-
-	SessionAdminResponse toSessionAdminResponse(SessionAdminProjection projection);
 
 	SessionScheduleResponse toSessionScheduleResponse(SessionScheduleProjection projection);
 
