@@ -1,12 +1,10 @@
 import type {
     CinemaHallResponse,
     CinemaHallRequest,
-    CinemaHallWithSeatsResponse,
     HallLayoutResponse
 } from '@/types/cinemaHall';
 import { handleApiError } from '@/utils/apiErrorHandler';
 
-const PUBLIC_URL = '/api/cinema-halls';
 const ADMIN_URL = '/api/admin/cinema-halls';
 
 const getAuthHeaders = (): HeadersInit => {
@@ -17,14 +15,8 @@ const getAuthHeaders = (): HeadersInit => {
     };
 };
 
-const getPublicHeaders = (): HeadersInit => {
-    return {
-        'Content-Type': 'application/json',
-    };
-};
-
-const fetchApi = async <T>(url: string, options: RequestInit = {}, isPublic: boolean = false): Promise<T> => {
-    const headers = isPublic ? getPublicHeaders() : getAuthHeaders();
+const fetchApi = async <T>(url: string, options: RequestInit = {}): Promise<T> => {
+    const headers = getAuthHeaders();
 
     const response = await fetch(url, {
         headers,
@@ -38,21 +30,10 @@ const fetchApi = async <T>(url: string, options: RequestInit = {}, isPublic: boo
 };
 
 export const cinemaHallApi = {
-    getById: (id: number): Promise<CinemaHallResponse> =>
-        fetchApi<CinemaHallResponse>(`${PUBLIC_URL}/${id}`, {}, true),
-
-    getAll: (name?: string): Promise<CinemaHallResponse[]> => {
-        const url = name ? `${PUBLIC_URL}?name=${encodeURIComponent(name)}` : PUBLIC_URL;
-        return fetchApi<CinemaHallResponse[]>(url, {}, true);
-    },
-
-    getWithSeats: (id: number): Promise<CinemaHallWithSeatsResponse> =>
-        fetchApi<CinemaHallWithSeatsResponse>(`${PUBLIC_URL}/${id}/with-seats`, {}, true),
-
-    getLayout: (id: number): Promise<HallLayoutResponse> =>
-        fetchApi<HallLayoutResponse>(`${PUBLIC_URL}/${id}/layout`, {}, true),
-
     admin: {
+        getAll: (): Promise<CinemaHallResponse[]> =>
+            fetchApi<CinemaHallResponse[]>(ADMIN_URL),
+
         create: (request: CinemaHallRequest): Promise<CinemaHallResponse> =>
             fetchApi<CinemaHallResponse>(ADMIN_URL, {
                 method: 'POST',
@@ -69,5 +50,8 @@ export const cinemaHallApi = {
             fetchApi<void>(`${ADMIN_URL}/${id}`, {
                 method: 'DELETE'
             }),
+
+        getLayout: (id: number): Promise<HallLayoutResponse> =>
+            fetchApi<HallLayoutResponse>(`${ADMIN_URL}/${id}/layout`)
     }
 };

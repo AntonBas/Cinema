@@ -51,9 +51,3 @@ export interface SeatUpdateRequest {
     seatType?: SeatType;
     active?: boolean;
 }
-
-export interface BulkSeatsUpdateRequest {
-    seatIds: number[];
-    seatType?: SeatType;
-    active?: boolean;
-}

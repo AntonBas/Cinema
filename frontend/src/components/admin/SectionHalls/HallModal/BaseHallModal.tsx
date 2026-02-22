@@ -15,6 +15,8 @@ interface BaseHallModalProps {
     isSubmitDisabled?: boolean;
     loading?: boolean;
     showDefaultSeatType?: boolean;
+    coupleRows?: number[];
+    onCoupleRowsChange?: (rows: number[]) => void;
 }
 
 const seatTypeOptions = [
@@ -33,9 +35,20 @@ export const BaseHallModal: React.FC<BaseHallModalProps> = ({
     submitButtonText,
     isSubmitDisabled = false,
     loading = false,
-    showDefaultSeatType = true
+    showDefaultSeatType = true,
+    coupleRows = [],
+    onCoupleRowsChange
 }) => {
     const totalSeats = (formData.rows || 0) * (formData.seatsPerRow || 0);
+    const isEvenSeatsPerRow = (formData.seatsPerRow || 0) % 2 === 0;
+
+    const handleCoupleRowToggle = (row: number) => {
+        if (!onCoupleRowsChange) return;
+        const newRows = coupleRows.includes(row)
+            ? coupleRows.filter(r => r !== row)
+            : [...coupleRows, row].sort((a, b) => a - b);
+        onCoupleRowsChange(newRows);
+    };
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title={title} size="medium">
@@ -83,6 +96,12 @@ export const BaseHallModal: React.FC<BaseHallModalProps> = ({
                     </div>
                 </div>
 
+                {!isEvenSeatsPerRow && coupleRows.length > 0 && (
+                    <div className={styles.warning}>
+                        ⚠️ Seats per row must be even when using COUPLE seats
+                    </div>
+                )}
+
                 {showDefaultSeatType && (
                     <div className={styles.formGroup}>
                         <label className={styles.label}>Default Seat Type</label>
@@ -95,12 +114,37 @@ export const BaseHallModal: React.FC<BaseHallModalProps> = ({
                     </div>
                 )}
 
+                {formData.rows && formData.rows > 0 && (
+                    <div className={styles.formGroup}>
+                        <label className={styles.label}>COUPLE Rows</label>
+                        <div className={styles.coupleRowsGrid}>
+                            {Array.from({ length: formData.rows }, (_, i) => i + 1).map(row => (
+                                <label key={row} className={styles.coupleRowLabel}>
+                                    <input
+                                        type="checkbox"
+                                        checked={coupleRows.includes(row)}
+                                        onChange={() => handleCoupleRowToggle(row)}
+                                        disabled={loading}
+                                    />
+                                    <span>Row {row}</span>
+                                </label>
+                            ))}
+                        </div>
+                        <small className={styles.hint}>
+                            Select rows that should have COUPLE seats (2 seats per unit)
+                        </small>
+                    </div>
+                )}
+
                 <div className={styles.summary}>
                     <h4 className={styles.summaryTitle}>Layout Summary</h4>
                     <div className={styles.summaryGrid}>
                         <div>Rows: <strong>{formData.rows}</strong></div>
                         <div>Seats/Row: <strong>{formData.seatsPerRow}</strong></div>
                         <div>Total: <strong>{totalSeats}</strong></div>
+                        {coupleRows.length > 0 && (
+                            <div>COUPLE Rows: <strong>{coupleRows.join(', ')}</strong></div>
+                        )}
                     </div>
                 </div>
 
@@ -111,7 +155,12 @@ export const BaseHallModal: React.FC<BaseHallModalProps> = ({
                     <Button
                         type="submit"
                         variant="primary"
-                        disabled={!formData.name.trim() || isSubmitDisabled || loading}
+                        disabled={
+                            !formData.name.trim() ||
+                            isSubmitDisabled ||
+                            loading ||
+                            (coupleRows.length > 0 && (formData.seatsPerRow || 0) % 2 !== 0)
+                        }
                         loading={loading}
                     >
                         {submitButtonText}

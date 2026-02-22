@@ -5,7 +5,7 @@ import { BaseHallModal } from './BaseHallModal';
 
 interface CreateHallModalProps {
     onClose: () => void;
-    onCreate: (request: CinemaHallRequest) => Promise<void>;
+    onCreate: (request: CinemaHallRequest & { coupleRows?: number[] }) => Promise<void>;
     loading?: boolean;
 }
 
@@ -20,11 +20,12 @@ export const CreateHallModal: React.FC<CreateHallModalProps> = ({
         seatsPerRow: 15,
         defaultSeatType: SeatType.STANDARD
     });
+    const [coupleRows, setCoupleRows] = useState<number[]>([]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!formData.name.trim() || loading) return;
-        await onCreate(formData);
+        await onCreate({ ...formData, coupleRows });
     };
 
     const updateField = <K extends keyof CinemaHallRequest>(
@@ -32,6 +33,9 @@ export const CreateHallModal: React.FC<CreateHallModalProps> = ({
         value: CinemaHallRequest[K]
     ) => {
         setFormData(prev => ({ ...prev, [field]: value }));
+        if (field === 'rows') {
+            setCoupleRows(prev => prev.filter(row => row <= (value as number)));
+        }
     };
 
     return (
@@ -45,6 +49,8 @@ export const CreateHallModal: React.FC<CreateHallModalProps> = ({
             submitButtonText="Create Hall"
             loading={loading}
             showDefaultSeatType={true}
+            coupleRows={coupleRows}
+            onCoupleRowsChange={setCoupleRows}
         />
     );
 };

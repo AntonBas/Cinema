@@ -3,7 +3,7 @@ import type { CinemaHallResponse, HallLayoutResponse } from '@/types/cinemaHall'
 import { type SeatResponse, SeatType } from '@/types/seat';
 import { useCinemaHalls } from '@/hooks/features/cinemaHalls/useCinemaHalls';
 import { useSeats } from '@/hooks/features/seats/useSeats';
-import { Modal } from '@/components/ui';
+import { Modal, LoadingSpinner } from '@/components/ui';
 import styles from './HallLayoutModal.module.css';
 
 interface HallLayoutModalProps {
@@ -165,6 +165,8 @@ export const HallLayoutModal: React.FC<HallLayoutModalProps> = ({
     const renderSeats = useCallback(() => {
         if (!localLayout?.rows?.length) return null;
 
+        const sortedRows = [...localLayout.rows].sort((a, b) => a.rowNumber - b.rowNumber);
+
         return (
             <div className={styles.cinemaHall}>
                 <div className={styles.headerControls}>
@@ -191,17 +193,19 @@ export const HallLayoutModal: React.FC<HallLayoutModalProps> = ({
 
                 <div className={styles.seatsLayout}>
                     <div className={styles.rowsContainer}>
-                        {localLayout.rows.map((row) => (
+                        {sortedRows.map((row) => (
                             <div key={`row-${row.rowNumber}`} className={styles.row}>
                                 <div className={styles.rowLabel}>Row {row.rowNumber}</div>
                                 <div className={styles.seatsRow}>
-                                    {row.seats.map(seat => (
-                                        <SeatComponent
-                                            key={`seat-${seat.id}`}
-                                            seat={seat}
-                                            rowIndex={row.rowNumber}
-                                        />
-                                    ))}
+                                    {row.seats
+                                        .sort((a, b) => a.number - b.number)
+                                        .map(seat => (
+                                            <SeatComponent
+                                                key={`seat-${seat.id}`}
+                                                seat={seat}
+                                                rowIndex={row.rowNumber}
+                                            />
+                                        ))}
                                 </div>
                             </div>
                         ))}
@@ -248,8 +252,7 @@ export const HallLayoutModal: React.FC<HallLayoutModalProps> = ({
             <div className={styles.modalContent}>
                 {loading && !localLayout && (
                     <div className={styles.loading}>
-                        <div className={styles.loadingSpinner} />
-                        Loading hall layout...
+                        <LoadingSpinner text="Loading hall layout..." />
                     </div>
                 )}
 
