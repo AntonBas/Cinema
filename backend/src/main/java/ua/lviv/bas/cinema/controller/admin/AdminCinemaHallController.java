@@ -1,9 +1,12 @@
 package ua.lviv.bas.cinema.controller.admin;
 
+import java.util.List;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -24,6 +27,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.dto.cinemaHall.request.CinemaHallRequest;
 import ua.lviv.bas.cinema.dto.cinemaHall.response.CinemaHallResponse;
+import ua.lviv.bas.cinema.dto.cinemaHall.response.HallLayoutResponse;
 import ua.lviv.bas.cinema.service.cinema.CinemaHallService;
 
 @Slf4j
@@ -48,6 +52,14 @@ public class AdminCinemaHallController {
 		log.info("POST /api/admin/cinema-halls - Creating new cinema hall: {}", request.getName());
 		CinemaHallResponse created = cinemaHallService.createHall(request);
 		return ResponseEntity.status(HttpStatus.CREATED).body(created);
+	}
+
+	@GetMapping
+	@Operation(summary = "Get all cinema halls", description = "Retrieve list of all cinema halls")
+	public ResponseEntity<List<CinemaHallResponse>> getAllHalls() {
+		log.info("GET /api/admin/cinema-halls - Getting all cinema halls");
+		List<CinemaHallResponse> halls = cinemaHallService.getAllHalls();
+		return ResponseEntity.ok(halls);
 	}
 
 	@PutMapping("/{id}")
@@ -77,5 +89,18 @@ public class AdminCinemaHallController {
 		log.info("DELETE /api/admin/cinema-halls/{} - Deleting cinema hall", id);
 		cinemaHallService.deleteHall(id);
 		return ResponseEntity.noContent().build();
+	}
+
+	@GetMapping("/{id}/layout")
+	@Operation(summary = "Get hall layout", description = "Retrieve detailed hall layout with seat organization by rows.")
+	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Hall layout retrieved successfully"),
+			@ApiResponse(responseCode = "404", description = "Cinema hall not found"),
+			@ApiResponse(responseCode = "401", description = "User not authenticated"),
+			@ApiResponse(responseCode = "403", description = "User does not have required role") })
+	public ResponseEntity<HallLayoutResponse> getHallLayout(
+			@Parameter(description = "ID of the cinema hall", required = true, example = "1") @PathVariable Long id) {
+		log.info("GET /api/admin/cinema-halls/{}/layout - Getting hall layout", id);
+		HallLayoutResponse layout = cinemaHallService.getHallLayout(id);
+		return ResponseEntity.ok(layout);
 	}
 }

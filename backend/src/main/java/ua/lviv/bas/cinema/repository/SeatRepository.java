@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -20,6 +21,7 @@ public interface SeatRepository extends JpaRepository<Seat, Long> {
 
 	List<Seat> findByHallIdAndSeatType(Long hallId, SeatType seatType);
 
+	@Modifying
 	@Query("DELETE FROM Seat s WHERE s.hall.id = :hallId")
 	void deleteByHallId(@Param("hallId") Long hallId);
 
