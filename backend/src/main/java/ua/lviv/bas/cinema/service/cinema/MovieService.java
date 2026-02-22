@@ -135,8 +135,16 @@ public class MovieService {
 	}
 
 	public List<MovieSessionSearchResponse> searchMoviesForSession(String searchTerm) {
-		List<MovieSessionSearchProjection> projections = movieRepository.findMoviesForSession(searchTerm);
-		return projections.stream().map(movieMapper::toMovieSessionSearchResponse).toList();
+		log.info("Searching movies for session with term: {}", searchTerm);
+
+		try {
+			LocalDate date = LocalDate.parse(searchTerm);
+			List<MovieSessionSearchProjection> projections = movieRepository.findMoviesByDate(date);
+			return projections.stream().map(movieMapper::toMovieSessionSearchResponse).toList();
+		} catch (Exception e) {
+			List<MovieSessionSearchProjection> projections = movieRepository.findMoviesForSession(searchTerm);
+			return projections.stream().map(movieMapper::toMovieSessionSearchResponse).toList();
+		}
 	}
 
 	public ResponseEntity<byte[]> getMoviePoster(Long id) {

@@ -32,12 +32,22 @@ public interface MovieRepository extends JpaRepository<Movie, Long>, JpaSpecific
 	@Query("""
 			SELECT m.id as id, m.title as title, m.durationMinutes as durationMinutes
 			FROM Movie m
-			WHERE (:title IS NULL OR LOWER(m.title) LIKE LOWER(CONCAT('%', :title, '%')))
-			  AND m.status IN ('CURRENT', 'UPCOMING')
+			WHERE m.status IN ('CURRENT', 'UPCOMING')
 			  AND m.endShowingDate >= CURRENT_DATE
+			  AND (:search IS NULL OR LOWER(m.title) LIKE LOWER(CONCAT('%', :search, '%')))
 			ORDER BY m.title
 			""")
-	List<MovieSessionSearchProjection> findMoviesForSession(@Param("title") String title);
+	List<MovieSessionSearchProjection> findMoviesForSession(@Param("search") String search);
+
+	@Query("""
+			SELECT m.id as id, m.title as title, m.durationMinutes as durationMinutes
+			FROM Movie m
+			WHERE m.status IN ('CURRENT', 'UPCOMING')
+			  AND m.endShowingDate >= CURRENT_DATE
+			  AND :date BETWEEN m.releaseDate AND m.endShowingDate
+			ORDER BY m.title
+			""")
+	List<MovieSessionSearchProjection> findMoviesByDate(@Param("date") java.time.LocalDate date);
 
 	@Query("SELECT m.posterFileName FROM Movie m WHERE m.id = :id")
 	Optional<String> findPosterFileNameById(@Param("id") Long id);
