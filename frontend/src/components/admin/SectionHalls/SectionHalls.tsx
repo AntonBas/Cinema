@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import type { CinemaHallResponse, CinemaHallRequest } from '@/types/cinemaHall';
+import { SeatType } from '@/types/seat';
 import { useCinemaHalls } from '@/hooks/features/cinemaHalls/useCinemaHalls';
 import { useNotification } from '@/hooks/common/useNotification';
 import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
@@ -18,7 +19,8 @@ export const SectionHalls: React.FC = () => {
         getAllHalls,
         createHall,
         updateHall,
-        deleteHall
+        deleteHall,
+        getHallLayout
     } = useCinemaHalls();
 
     const { notifications, showNotification, hideNotification } = useNotification();
@@ -27,6 +29,7 @@ export const SectionHalls: React.FC = () => {
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
     const [selectedHall, setSelectedHall] = useState<CinemaHallResponse | null>(null);
+    const [currentLayout, setCurrentLayout] = useState<{ rows: number; seatsPerRow: number; coupleRows?: number[] } | undefined>();
     const [showLayoutModal, setShowLayoutModal] = useState(false);
     const [deleteModal, setDeleteModal] = useState<{
         isOpen: boolean;
@@ -67,7 +70,7 @@ export const SectionHalls: React.FC = () => {
         }
     }, [createHall, loadHalls, showNotification]);
 
-    const handleEditHall = useCallback(async (id: number, request: CinemaHallRequest) => {
+    const handleEditHall = useCallback(async (id: number, request: CinemaHallRequest & { coupleRows?: number[] }) => {
         try {
             const result = await updateHall(id, request);
             if (result) {
@@ -76,6 +79,7 @@ export const SectionHalls: React.FC = () => {
             }
             setShowEditModal(false);
             setSelectedHall(null);
+            setCurrentLayout(undefined);
         } catch (err) {
             if (isApiErrorException(err)) {
                 if (err.isConflict()) {
@@ -121,10 +125,21 @@ export const SectionHalls: React.FC = () => {
         });
     }, []);
 
-    const handleEdit = useCallback((hall: CinemaHallResponse) => {
+    const handleEdit = useCallback(async (hall: CinemaHallResponse) => {
         setSelectedHall(hall);
+        const layout = await getHallLayout(hall.id);
+        if (layout) {
+            const coupleRows = layout.rows
+                .filter(row => row.seats.every(seat => seat.seatType === SeatType.COUPLE))
+                .map(row => row.rowNumber);
+            setCurrentLayout({
+                rows: layout.totalRows,
+                seatsPerRow: layout.maxSeatsPerRow,
+                coupleRows
+            });
+        }
         setShowEditModal(true);
-    }, []);
+    }, [getHallLayout]);
 
     const handleShowLayout = useCallback((hall: CinemaHallResponse) => {
         setSelectedHall(hall);
@@ -194,9 +209,11 @@ export const SectionHalls: React.FC = () => {
             {showEditModal && selectedHall && (
                 <EditHallModal
                     hall={selectedHall}
+                    currentLayout={currentLayout}
                     onClose={() => {
                         setShowEditModal(false);
                         setSelectedHall(null);
+                        setCurrentLayout(undefined);
                     }}
                     onUpdate={handleEditHall}
                     loading={loading}
