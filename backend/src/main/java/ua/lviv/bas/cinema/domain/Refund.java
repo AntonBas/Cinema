@@ -45,7 +45,8 @@ import ua.lviv.bas.cinema.domain.enums.RefundStatus;
 @Table(name = "refunds", indexes = { @Index(name = "idx_refund_payment", columnList = "payment_id"),
 		@Index(name = "idx_refund_status", columnList = "status"),
 		@Index(name = "idx_refund_created", columnList = "created_at"),
-		@Index(name = "idx_refund_user", columnList = "user_id") })
+		@Index(name = "idx_refund_user", columnList = "user_id"),
+		@Index(name = "idx_refund_user_status", columnList = "user_id, status") })
 public class Refund {
 
 	@Id

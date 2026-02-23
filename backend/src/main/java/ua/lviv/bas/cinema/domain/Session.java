@@ -41,7 +41,8 @@ import ua.lviv.bas.cinema.domain.enums.CinemaSessionStatus;
 		@Index(name = "idx_session_hall", columnList = "hall_id"),
 		@Index(name = "idx_session_time", columnList = "start_time"),
 		@Index(name = "idx_session_hall_time", columnList = "hall_id, start_time"),
-		@Index(name = "idx_session_status", columnList = "status") })
+		@Index(name = "idx_session_status", columnList = "status"),
+		@Index(name = "idx_session_status_time", columnList = "status, start_time") })
 public class Session {
 
 	@Id
@@ -80,4 +81,8 @@ public class Session {
 	@OneToMany(mappedBy = "session", fetch = FetchType.LAZY)
 	@Builder.Default
 	private List<SeatReservation> seatReservations = new ArrayList<>();
+
+	public LocalDateTime getEndTime() {
+		return startTime.plusMinutes(movie.getDurationMinutes());
+	}
 }

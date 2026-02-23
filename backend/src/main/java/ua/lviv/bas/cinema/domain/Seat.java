@@ -37,7 +37,10 @@ import ua.lviv.bas.cinema.domain.enums.SeatType;
 @ToString(exclude = { "hall", "seatReservations" })
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Table(name = "seats", indexes = { @Index(name = "idx_seat_hall", columnList = "hall_id"),
-		@Index(name = "idx_seat_active", columnList = "active") }, uniqueConstraints = {
+		@Index(name = "idx_seat_hall_type", columnList = "hall_id, seat_type"),
+		@Index(name = "idx_seat_active", columnList = "active"),
+		@Index(name = "idx_seat_hall_active", columnList = "hall_id, active"),
+		@Index(name = "idx_seat_position", columnList = "hall_id, seat_row, number") }, uniqueConstraints = {
 				@UniqueConstraint(columnNames = { "hall_id", "seat_row", "number" }) })
 public class Seat {
 
