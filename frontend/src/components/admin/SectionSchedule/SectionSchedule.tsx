@@ -16,14 +16,14 @@ interface FiltersState {
     dateFrom?: string;
     dateTo?: string;
     hallId?: number;
-    movieId?: number;
+    movieTitle?: string;
     status?: CinemaSessionStatus;
-    sort?: string;
 }
+
+const DEBOUNCE_DELAY = 300;
 
 export const SectionSchedule: React.FC = () => {
     const { notifications, showNotification, hideNotification } = useNotification();
-
     const { allHalls, loading: hallsLoading, getAllHalls } = useCinemaHalls();
     const { currentlyShowing, upcoming, loading: moviesLoading, getCurrentlyShowing, getUpcoming } = useMovies();
 
@@ -38,17 +38,14 @@ export const SectionSchedule: React.FC = () => {
     const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
     const [isReactivateModalOpen, setIsReactivateModalOpen] = useState(false);
 
-    const [filters, setFilters] = useState<FiltersState>({
-        sort: 'startTime,desc'
-    });
+    const [filters, setFilters] = useState<FiltersState>({});
     const [currentPage, setCurrentPage] = useState(0);
-    const [pageSize] = useState(20);
+    const pageSize = 20;
 
-    const isMounted = useRef<boolean>(true);
-    const initialHallsLoaded = useRef<boolean>(false);
-    const initialMoviesLoaded = useRef<boolean>(false);
+    const isMounted = useRef(true);
+    const initialHallsLoaded = useRef(false);
+    const initialMoviesLoaded = useRef(false);
     const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-    const prevFiltersRef = useRef<string>('');
 
     const {
         sessions,
@@ -70,7 +67,6 @@ export const SectionSchedule: React.FC = () => {
             isMounted.current = false;
             if (timeoutRef.current) {
                 clearTimeout(timeoutRef.current);
-                timeoutRef.current = null;
             }
         };
     }, []);
@@ -95,42 +91,25 @@ export const SectionSchedule: React.FC = () => {
     }, [currentlyShowing, upcoming]);
 
     const activeFilterCount = useMemo(() => {
-        return Object.entries(filters).filter(([key, value]) =>
-            key !== 'sort' &&
-            value !== undefined &&
-            value !== ''
-        ).length;
+        return Object.values(filters).filter(value => value !== undefined && value !== '').length;
     }, [filters]);
 
     const hasActiveFilters = activeFilterCount > 0;
 
     useEffect(() => {
-        const filtersString = JSON.stringify(filters);
-        if (prevFiltersRef.current !== filtersString) {
-            prevFiltersRef.current = filtersString;
-            return;
-        }
-
         const loadSessions = async () => {
             if (!isMounted.current) return;
 
+            const params: Record<string, any> = {
+                page: currentPage,
+                size: pageSize,
+                ...filters
+            };
+
             try {
-                const params: Record<string, any> = {
-                    page: currentPage,
-                    size: pageSize
-                };
-
-                if (filters.dateFrom) params.dateFrom = filters.dateFrom;
-                if (filters.dateTo) params.dateTo = filters.dateTo;
-                if (filters.hallId) params.hallId = filters.hallId;
-                if (filters.movieId) params.movieId = filters.movieId;
-                if (filters.status) params.status = filters.status;
-                if (filters.sort) params.sort = filters.sort;
-
                 await getSessions(params);
             } catch (error) {
                 if (isMounted.current) {
-                    console.error('Failed to load sessions:', error);
                     showNotification('Failed to load sessions', 'error');
                 }
             }
@@ -141,53 +120,38 @@ export const SectionSchedule: React.FC = () => {
         }
 
         timeoutRef.current = setTimeout(() => {
-            if (isMounted.current) {
-                loadSessions();
-            }
-        }, 100);
+            loadSessions();
+        }, DEBOUNCE_DELAY);
 
         return () => {
             if (timeoutRef.current) {
                 clearTimeout(timeoutRef.current);
-                timeoutRef.current = null;
             }
         };
     }, [currentPage, pageSize, filters, getSessions, showNotification]);
 
-    const handleDateFromChange = useCallback((dateFrom: string | undefined) => {
-        setFilters(prev => ({ ...prev, dateFrom }));
+    const handleFilterChange = useCallback(<K extends keyof FiltersState>(key: K, value: FiltersState[K]) => {
+        setFilters(prev => ({ ...prev, [key]: value }));
         setCurrentPage(0);
     }, []);
 
-    const handleDateToChange = useCallback((dateTo: string | undefined) => {
-        setFilters(prev => ({ ...prev, dateTo }));
-        setCurrentPage(0);
-    }, []);
+    const handleDateFromChange = useCallback((dateFrom: string | undefined) =>
+        handleFilterChange('dateFrom', dateFrom), [handleFilterChange]);
 
-    const handleHallChange = useCallback((hallId: number | undefined) => {
-        setFilters(prev => ({ ...prev, hallId }));
-        setCurrentPage(0);
-    }, []);
+    const handleDateToChange = useCallback((dateTo: string | undefined) =>
+        handleFilterChange('dateTo', dateTo), [handleFilterChange]);
 
-    const handleMovieChange = useCallback((movieId: number | undefined) => {
-        setFilters(prev => ({ ...prev, movieId }));
-        setCurrentPage(0);
-    }, []);
+    const handleHallChange = useCallback((hallId: number | undefined) =>
+        handleFilterChange('hallId', hallId), [handleFilterChange]);
 
-    const handleStatusChange = useCallback((status: CinemaSessionStatus | undefined) => {
-        setFilters(prev => ({ ...prev, status }));
-        setCurrentPage(0);
-    }, []);
+    const handleMovieTitleChange = useCallback((movieTitle: string | undefined) =>
+        handleFilterChange('movieTitle', movieTitle), [handleFilterChange]);
 
-    const handleSortChange = useCallback((sort: string) => {
-        setFilters(prev => ({ ...prev, sort }));
-        setCurrentPage(0);
-    }, []);
+    const handleStatusChange = useCallback((status: CinemaSessionStatus | undefined) =>
+        handleFilterChange('status', status), [handleFilterChange]);
 
     const handleClearFilters = useCallback(() => {
-        setFilters({
-            sort: 'startTime,desc'
-        });
+        setFilters({});
         setCurrentPage(0);
         showNotification('Filters cleared', 'info');
     }, [showNotification]);
@@ -224,7 +188,7 @@ export const SectionSchedule: React.FC = () => {
             showNotification('Session deleted successfully', 'success');
             setIsDeleteModalOpen(false);
             setSessionToDelete(null);
-        } catch (error) {
+        } catch {
             showNotification('Failed to delete session', 'error');
         }
     }, [sessionToDelete, deleteSession, showNotification]);
@@ -236,7 +200,7 @@ export const SectionSchedule: React.FC = () => {
             showNotification('Session cancelled successfully', 'success');
             setIsCancelModalOpen(false);
             setSessionToCancel(null);
-        } catch (error) {
+        } catch {
             showNotification('Failed to cancel session', 'error');
         }
     }, [sessionToCancel, cancelSession, showNotification]);
@@ -248,7 +212,7 @@ export const SectionSchedule: React.FC = () => {
             showNotification('Session reactivated successfully', 'success');
             setIsReactivateModalOpen(false);
             setSessionToReactivate(null);
-        } catch (error) {
+        } catch {
             showNotification('Failed to reactivate session', 'error');
         }
     }, [sessionToReactivate, reactivateSession, showNotification]);
@@ -259,9 +223,9 @@ export const SectionSchedule: React.FC = () => {
             showNotification('Session created successfully', 'success');
             setIsCreateModalOpen(false);
             setSelectedSession(null);
-        } catch (error) {
+        } catch {
             showNotification('Failed to create session', 'error');
-            throw error;
+            throw new Error('Failed to create session');
         }
     }, [createSession, showNotification]);
 
@@ -271,9 +235,9 @@ export const SectionSchedule: React.FC = () => {
             showNotification('Session updated successfully', 'success');
             setIsUpdateModalOpen(false);
             setSelectedSession(null);
-        } catch (error) {
+        } catch {
             showNotification('Failed to update session', 'error');
-            throw error;
+            throw new Error('Failed to update session');
         }
     }, [updateSession, showNotification]);
 
@@ -310,9 +274,7 @@ export const SectionSchedule: React.FC = () => {
         return new Date(dateString).toLocaleString();
     }, []);
 
-    const mutationLoading = loading;
     const totalPages = pagination?.totalPages || 0;
-    const totalElements = pagination?.totalElements || 0;
 
     if (showDelayedLoading && !sessions.length) {
         return (
@@ -343,7 +305,7 @@ export const SectionSchedule: React.FC = () => {
                         <h1 className={styles.title}>Session Schedule</h1>
                         {hasActiveFilters && (
                             <div className={styles.filterIndicator}>
-                                <span className={styles.filterDot}></span>
+                                <span className={styles.filterDot} />
                                 Filters Active ({activeFilterCount})
                             </div>
                         )}
@@ -356,7 +318,7 @@ export const SectionSchedule: React.FC = () => {
                     variant="primary"
                     size="medium"
                     onClick={handleCreateSession}
-                    disabled={mutationLoading}
+                    disabled={loading}
                     className={styles.createButton}
                 >
                     Add Session
@@ -368,9 +330,8 @@ export const SectionSchedule: React.FC = () => {
                 onDateFromChange={handleDateFromChange}
                 onDateToChange={handleDateToChange}
                 onHallChange={handleHallChange}
-                onMovieChange={handleMovieChange}
+                onMovieTitleChange={handleMovieTitleChange}
                 onStatusChange={handleStatusChange}
-                onSortChange={handleSortChange}
                 onClearFilters={handleClearFilters}
                 hasActiveFilters={hasActiveFilters}
                 activeFilterCount={activeFilterCount}
@@ -395,7 +356,7 @@ export const SectionSchedule: React.FC = () => {
                     <Pagination
                         currentPage={currentPage}
                         totalPages={totalPages}
-                        totalElements={totalElements}
+                        totalElements={pagination?.totalElements || 0}
                         pageSize={pageSize}
                         onPageChange={handlePageChange}
                     />
@@ -404,10 +365,11 @@ export const SectionSchedule: React.FC = () => {
 
             <CreateSessionModal
                 isOpen={isCreateModalOpen}
-                session={null}
                 onSave={handleSaveNewSession}
                 onClose={handleCloseCreateModal}
-                loading={mutationLoading}
+                loading={loading}
+                halls={allHalls}
+                hallsLoading={hallsLoading}
             />
 
             {selectedSession && (
@@ -416,7 +378,9 @@ export const SectionSchedule: React.FC = () => {
                     session={selectedSession}
                     onSave={handleSaveUpdatedSession}
                     onClose={handleCloseUpdateModal}
-                    loading={mutationLoading}
+                    loading={loading}
+                    halls={allHalls}
+                    hallsLoading={hallsLoading}
                 />
             )}
 
@@ -426,7 +390,7 @@ export const SectionSchedule: React.FC = () => {
                 onCancel={handleCloseDeleteModal}
                 itemName={sessionToDelete?.movieTitle}
                 itemType="session"
-                isDeleting={mutationLoading}
+                isDeleting={loading}
             />
 
             {sessionToCancel && (
@@ -436,7 +400,7 @@ export const SectionSchedule: React.FC = () => {
                     onCancel={handleCloseCancelModal}
                     itemName={sessionToCancel.movieTitle}
                     itemType="session"
-                    isDeleting={mutationLoading}
+                    isDeleting={loading}
                     confirmText="Cancel Session"
                     cancelText="Keep Session"
                     message={`Are you sure you want to cancel the session "${sessionToCancel.movieTitle}" on ${formatSessionDateTime(sessionToCancel.startTime)}?`}
@@ -450,7 +414,7 @@ export const SectionSchedule: React.FC = () => {
                     onCancel={handleCloseReactivateModal}
                     itemName={sessionToReactivate.movieTitle}
                     itemType="session"
-                    isDeleting={mutationLoading}
+                    isDeleting={loading}
                     confirmText="Reactivate Session"
                     cancelText="Cancel"
                     message={`Are you sure you want to reactivate the session "${sessionToReactivate.movieTitle}" on ${formatSessionDateTime(sessionToReactivate.startTime)}?`}

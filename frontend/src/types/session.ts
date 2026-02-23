@@ -26,7 +26,7 @@ export interface SessionFilterRequest {
     dateFrom?: string;
     dateTo?: string;
     hallId?: number;
-    movieId?: number;
+    movieTitle?: string;
 }
 
 export interface SessionAdminResponse {
@@ -54,7 +54,7 @@ export interface SessionScheduleResponse {
     availableSeats: number;
     movieId: number;
     movieTitle: string;
-    moviePosterFileName?: string | null;
+    moviePosterFileName: string | null;
     movieAgeRating: string;
     movieDuration: number;
     hallId: number;
@@ -78,10 +78,6 @@ export interface SessionDetailResponse {
     hallName: string;
     hallCapacity: number;
     availableSeats: number;
-    bookedSeats: number;
-    occupancyRate: number;
-    timeUntilStart: string;
-    isAvailableForBooking: boolean;
 }
 
 export interface ScheduleDay {
@@ -92,6 +88,6 @@ export interface ScheduleDay {
 export interface ScheduleMovie {
     movieId: number;
     movieTitle: string;
-    moviePosterFileName?: string | null;
+    moviePosterFileName: string | null;
     sessions: SessionScheduleResponse[];
 }

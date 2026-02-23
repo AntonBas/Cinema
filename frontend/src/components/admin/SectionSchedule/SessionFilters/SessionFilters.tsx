@@ -11,16 +11,14 @@ interface SessionFiltersProps {
         dateFrom?: string;
         dateTo?: string;
         hallId?: number;
-        movieId?: number;
+        movieTitle?: string;
         status?: CinemaSessionStatus;
-        sort?: string;
     };
     onDateFromChange: (dateFrom: string | undefined) => void;
     onDateToChange: (dateTo: string | undefined) => void;
     onHallChange: (hallId: number | undefined) => void;
-    onMovieChange: (movieId: number | undefined) => void;
+    onMovieTitleChange: (movieTitle: string | undefined) => void;
     onStatusChange: (status: CinemaSessionStatus | undefined) => void;
-    onSortChange: (sort: string) => void;
     onClearFilters: () => void;
     hasActiveFilters: boolean;
     activeFilterCount: number;
@@ -39,21 +37,6 @@ const STATUS_OPTIONS: SelectOption[] = [
     { value: 'CANCELLED', label: 'Cancelled' }
 ];
 
-const SORT_OPTIONS: SelectOption[] = [
-    { value: 'startTime', label: 'Start Time' },
-    { value: 'basePrice', label: 'Price' },
-    { value: 'movie.title', label: 'Movie Title' },
-    { value: 'hall.name', label: 'Hall' },
-    { value: 'status', label: 'Status' },
-    { value: 'ticketsSold', label: 'Tickets Sold' },
-    { value: 'totalRevenue', label: 'Revenue' }
-];
-
-const SORT_DIRECTION_OPTIONS: SelectOption[] = [
-    { value: 'asc', label: 'Ascending' },
-    { value: 'desc', label: 'Descending' }
-];
-
 const DEBOUNCE_DELAY = 300;
 
 export const SessionFilters: React.FC<SessionFiltersProps> = ({
@@ -61,9 +44,8 @@ export const SessionFilters: React.FC<SessionFiltersProps> = ({
     onDateFromChange,
     onDateToChange,
     onHallChange,
-    onMovieChange,
+    onMovieTitleChange,
     onStatusChange,
-    onSortChange,
     onClearFilters,
     hasActiveFilters,
     activeFilterCount,
@@ -76,26 +58,13 @@ export const SessionFilters: React.FC<SessionFiltersProps> = ({
     const [movieSearchTerm, setMovieSearchTerm] = useState('');
     const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
     const [showMovieResults, setShowMovieResults] = useState(false);
-    const [selectedMovieTitle, setSelectedMovieTitle] = useState('');
     const movieSearchRef = useRef<HTMLDivElement>(null);
     const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
     useEffect(() => {
-        if (filters.movieId && movies.length > 0) {
-            const selectedMovie = movies.find(
-                (movie: MovieCardResponse) => movie.id === filters.movieId
-            );
-            if (selectedMovie) {
-                setSelectedMovieTitle(selectedMovie.title);
-                setMovieSearchTerm(selectedMovie.title);
-                setDebouncedSearchTerm(selectedMovie.title);
-            }
-        } else {
-            setSelectedMovieTitle('');
-            setMovieSearchTerm('');
-            setDebouncedSearchTerm('');
-        }
-    }, [filters.movieId, movies]);
+        setMovieSearchTerm(filters.movieTitle || '');
+        setDebouncedSearchTerm(filters.movieTitle || '');
+    }, [filters.movieTitle]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -133,9 +102,7 @@ export const SessionFilters: React.FC<SessionFiltersProps> = ({
 
         const searchLower = debouncedSearchTerm.toLowerCase();
         return movies
-            .filter((movie: MovieCardResponse) =>
-                movie.title.toLowerCase().includes(searchLower)
-            )
+            .filter(movie => movie.title.toLowerCase().includes(searchLower))
             .slice(0, 20);
     }, [movies, debouncedSearchTerm]);
 
@@ -158,207 +125,108 @@ export const SessionFilters: React.FC<SessionFiltersProps> = ({
     const handleMovieInputChange = useCallback((value: string) => {
         setMovieSearchTerm(value);
         if (value === '') {
-            onMovieChange(undefined);
-            setSelectedMovieTitle('');
+            onMovieTitleChange(undefined);
         }
         setShowMovieResults(true);
-    }, [onMovieChange]);
+    }, [onMovieTitleChange]);
 
-    const handleMovieSelect = useCallback((movieId: number, movieTitle: string) => {
-        onMovieChange(movieId);
-        setSelectedMovieTitle(movieTitle);
+    const handleMovieSelect = useCallback((movieTitle: string) => {
+        onMovieTitleChange(movieTitle);
         setMovieSearchTerm(movieTitle);
         setDebouncedSearchTerm(movieTitle);
         setShowMovieResults(false);
-    }, [onMovieChange]);
+    }, [onMovieTitleChange]);
 
     const handleStatusChange = useCallback((value: string | number) => {
         onStatusChange(value as CinemaSessionStatus || undefined);
     }, [onStatusChange]);
 
-    const getCurrentSortProperty = useCallback((): string => {
-        return filters.sort?.split(',')[0] || 'startTime';
-    }, [filters.sort]);
-
-    const getCurrentSortDirection = useCallback((): string => {
-        return filters.sort?.split(',')[1] || 'asc';
-    }, [filters.sort]);
-
-    const handleSortPropertyChange = useCallback((value: string | number) => {
-        const direction = getCurrentSortDirection();
-        const newSort = `${value as string},${direction}`;
-        onSortChange(newSort);
-    }, [getCurrentSortDirection, onSortChange]);
-
-    const handleSortDirectionChange = useCallback((value: string | number) => {
-        const property = getCurrentSortProperty();
-        const newSort = `${property},${value as string}`;
-        onSortChange(newSort);
-    }, [getCurrentSortProperty, onSortChange]);
-
-    const handleToggleSortOrder = useCallback(() => {
-        const property = getCurrentSortProperty();
-        const currentDirection = getCurrentSortDirection();
-        const newDirection = currentDirection === 'asc' ? 'desc' : 'asc';
-        const newSort = `${property},${newDirection}`;
-        onSortChange(newSort);
-    }, [getCurrentSortProperty, getCurrentSortDirection, onSortChange]);
-
     const handleClearMovieSearch = useCallback(() => {
         setMovieSearchTerm('');
         setDebouncedSearchTerm('');
-        setSelectedMovieTitle('');
         setShowMovieResults(false);
-        onMovieChange(undefined);
-    }, [onMovieChange]);
+        onMovieTitleChange(undefined);
+    }, [onMovieTitleChange]);
 
     const hallOptions: SelectOption[] = useMemo(() => [
         { value: '', label: 'All halls' },
-        ...(halls || []).map((hall: CinemaHallResponse) => ({
+        ...halls.map(hall => ({
             value: hall.id.toString(),
             label: hall.name
         }))
     ], [halls]);
-
-    const displayValue = selectedMovieTitle || movieSearchTerm;
-    const isMovieSelected = Boolean(filters.movieId);
-
-    const activeFiltersSummary = useMemo(() => {
-        const active: string[] = [];
-        if (filters.dateFrom) active.push('Date From');
-        if (filters.dateTo) active.push('Date To');
-        if (filters.hallId) active.push('Hall');
-        if (filters.movieId) active.push('Movie');
-        if (filters.status) active.push('Status');
-        return active;
-    }, [filters]);
-
-    useEffect(() => {
-        if (filters.dateFrom || filters.dateTo || filters.hallId || filters.movieId || filters.status) {
-            console.log('Filters changed:', filters);
-        }
-    }, [filters]);
 
     return (
         <div className={`${styles.filters} ${className || ''}`}>
             <div className={styles.filterGrid}>
                 <div className={styles.filterGroup}>
                     <label htmlFor="dateFrom" className={styles.label}>Date From</label>
-                    <div className={styles.inputContainer}>
-                        <Input
-                            id="dateFrom"
-                            type="date"
-                            value={filters.dateFrom || ''}
-                            onChange={handleDateFromChange}
-                            className={styles.input}
-                            aria-label="Filter sessions from date"
-                        />
-                    </div>
+                    <Input
+                        id="dateFrom"
+                        type="date"
+                        value={filters.dateFrom || ''}
+                        onChange={handleDateFromChange}
+                        className={styles.filterInput}
+                    />
                 </div>
 
                 <div className={styles.filterGroup}>
                     <label htmlFor="dateTo" className={styles.label}>Date To</label>
-                    <div className={styles.inputContainer}>
-                        <Input
-                            id="dateTo"
-                            type="date"
-                            value={filters.dateTo || ''}
-                            onChange={handleDateToChange}
-                            className={styles.input}
-                            min={filters.dateFrom}
-                            aria-label="Filter sessions to date"
-                        />
-                    </div>
+                    <Input
+                        id="dateTo"
+                        type="date"
+                        value={filters.dateTo || ''}
+                        onChange={handleDateToChange}
+                        className={styles.filterInput}
+                        min={filters.dateFrom}
+                    />
                 </div>
 
                 <div className={styles.filterGroup}>
                     <label htmlFor="hall" className={styles.label}>Hall</label>
-                    <div className={styles.selectContainer}>
+                    <div className={styles.filterSelectWrapper}>
                         <Select
                             value={filters.hallId?.toString() || ''}
                             onChange={handleHallChange}
                             options={hallOptions}
                             disabled={hallsLoading}
-                            aria-label="Filter by hall"
                         />
                     </div>
                 </div>
 
                 <div className={styles.filterGroup}>
                     <label htmlFor="status" className={styles.label}>Status</label>
-                    <div className={styles.selectContainer}>
+                    <div className={styles.filterSelectWrapper}>
                         <Select
                             value={filters.status || ''}
                             onChange={handleStatusChange}
                             options={STATUS_OPTIONS}
-                            aria-label="Filter by session status"
                         />
-                    </div>
-                </div>
-
-                <div className={styles.filterGroup}>
-                    <label htmlFor="sortBy" className={styles.label}>Sort By</label>
-                    <div className={styles.selectContainer}>
-                        <Select
-                            value={getCurrentSortProperty()}
-                            onChange={handleSortPropertyChange}
-                            options={SORT_OPTIONS}
-                            aria-label="Sort by field"
-                        />
-                    </div>
-                </div>
-
-                <div className={styles.filterGroup}>
-                    <label htmlFor="sortDirection" className={styles.label}>Sort Direction</label>
-                    <div className={styles.sortOrderContainer}>
-                        <Select
-                            value={getCurrentSortDirection()}
-                            onChange={handleSortDirectionChange}
-                            options={SORT_DIRECTION_OPTIONS}
-                            className={styles.sortOrderSelect}
-                            aria-label="Sort direction"
-                        />
-                        <Button
-                            variant="secondary"
-                            size="small"
-                            onClick={handleToggleSortOrder}
-                            className={styles.sortOrderToggle}
-                            title={`Switch to ${getCurrentSortDirection() === 'asc' ? 'descending' : 'ascending'} order`}
-                            aria-label="Toggle sort direction"
-                        >
-                            ↕️
-                        </Button>
                     </div>
                 </div>
             </div>
 
             <div className={styles.movieFilterRow}>
                 <div className={styles.movieFilterGroup}>
-                    <label htmlFor="movieSearch" className={styles.label}>Movie</label>
+                    <label htmlFor="movieSearch" className={styles.label}>Movie Title</label>
                     <div className={styles.movieSearch} ref={movieSearchRef}>
                         <div className={styles.movieInputWrapper}>
                             <Input
                                 id="movieSearch"
                                 type="text"
-                                value={displayValue}
+                                value={movieSearchTerm}
                                 onChange={handleMovieInputChange}
                                 onClick={handleMovieInputClick}
-                                placeholder="Select or search movie..."
-                                className={`${styles.movieInput} ${isMovieSelected ? styles.movieSelected : ''}`}
+                                placeholder="Search by movie title..."
+                                className={styles.movieInput}
                                 disabled={moviesLoading}
-                                aria-label="Search movies"
-                                aria-expanded={showMovieResults}
-                                aria-autocomplete="list"
-                                aria-controls="movie-results"
                             />
-                            {(filters.movieId || displayValue) && (
+                            {filters.movieTitle && (
                                 <Button
                                     variant="error"
                                     size="small"
                                     onClick={handleClearMovieSearch}
                                     className={styles.clearMovieButton}
-                                    aria-label="Clear movie selection"
-                                    title="Clear movie selection"
                                 >
                                     ×
                                 </Button>
@@ -366,31 +234,17 @@ export const SessionFilters: React.FC<SessionFiltersProps> = ({
                         </div>
 
                         {showMovieResults && (
-                            <div
-                                id="movie-results"
-                                className={styles.movieResults}
-                                role="listbox"
-                                aria-label="Movie search results"
-                            >
+                            <div className={styles.movieResults}>
                                 {moviesLoading ? (
-                                    <div className={styles.loadingResults} role="status">
+                                    <div className={styles.loadingResults}>
                                         Loading movies...
                                     </div>
                                 ) : filteredMovies.length > 0 ? (
-                                    filteredMovies.map((movie: MovieCardResponse) => (
+                                    filteredMovies.map(movie => (
                                         <div
                                             key={movie.id}
-                                            className={`${styles.movieOption} ${filters.movieId === movie.id ? styles.selected : ''}`}
-                                            onClick={() => handleMovieSelect(movie.id, movie.title)}
-                                            role="option"
-                                            aria-selected={filters.movieId === movie.id}
-                                            tabIndex={0}
-                                            onKeyDown={(e) => {
-                                                if (e.key === 'Enter' || e.key === ' ') {
-                                                    e.preventDefault();
-                                                    handleMovieSelect(movie.id, movie.title);
-                                                }
-                                            }}
+                                            className={`${styles.movieOption} ${filters.movieTitle === movie.title ? styles.selected : ''}`}
+                                            onClick={() => handleMovieSelect(movie.title)}
                                         >
                                             <div className={styles.movieTitle}>{movie.title}</div>
                                             <div className={styles.movieDetails}>
@@ -399,7 +253,7 @@ export const SessionFilters: React.FC<SessionFiltersProps> = ({
                                         </div>
                                     ))
                                 ) : (
-                                    <div className={styles.noResults} role="status">
+                                    <div className={styles.noResults}>
                                         {debouncedSearchTerm.trim()
                                             ? `No movies found for "${debouncedSearchTerm}"`
                                             : 'No movies available'}
@@ -413,24 +267,17 @@ export const SessionFilters: React.FC<SessionFiltersProps> = ({
 
             {hasActiveFilters && (
                 <div className={styles.clearFiltersContainer}>
-                    <div className={styles.clearFiltersWrapper}>
-                        <div className={styles.filterInfo}>
-                            <div className={styles.filterCount} title={activeFiltersSummary.join(', ')}>
-                                <span className={styles.countBadge}>{activeFilterCount}</span>
-                                active filter{activeFilterCount !== 1 ? 's' : ''}
-                            </div>
-                            <div className={styles.filterActions}>
-                                <Button
-                                    variant="error"
-                                    size="medium"
-                                    onClick={onClearFilters}
-                                    className={styles.clearButton}
-                                    aria-label="Clear all filters"
-                                >
-                                    Clear All Filters
-                                </Button>
-                            </div>
-                        </div>
+                    <div className={styles.filterInfo}>
+                        <span className={styles.countBadge}>{activeFilterCount}</span>
+                        active filter{activeFilterCount !== 1 ? 's' : ''}
+                        <Button
+                            variant="error"
+                            size="small"
+                            onClick={onClearFilters}
+                            className={styles.clearButton}
+                        >
+                            Clear All
+                        </Button>
                     </div>
                 </div>
             )}

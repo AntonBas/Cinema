@@ -7,6 +7,7 @@ import type {
 } from '@/types/session';
 import type { SeatReservationResponse } from '@/types/seatReservation';
 import type { PageResponse, SearchParams } from '@/types/pagination';
+import { buildFilteredUrl } from '@/utils/paginationUtils';
 import { handleApiError } from '@/utils/apiErrorHandler';
 
 const ADMIN_URL = '/api/admin/sessions';
@@ -30,7 +31,6 @@ const fetchApi = async <T>(
     isPublic: boolean = false
 ): Promise<T> => {
     const headers = isPublic ? getPublicHeaders() : getAuthHeaders();
-
     const response = await fetch(url, {
         headers,
         ...options,
@@ -44,11 +44,13 @@ const fetchApi = async <T>(
 
 const buildSearchParams = (params?: SearchParams & SessionFilterRequest): URLSearchParams => {
     const searchParams = new URLSearchParams();
+    const seenKeys = new Set<string>();
 
     if (params) {
         Object.entries(params).forEach(([key, value]) => {
-            if (value !== undefined && value !== null && value !== '') {
+            if (value !== undefined && value !== null && value !== '' && !seenKeys.has(key)) {
                 searchParams.append(key, value.toString());
+                seenKeys.add(key);
             }
         });
     }
@@ -94,7 +96,7 @@ export const sessionApi = {
                 size: params?.size || 20,
                 sort: params?.sort,
                 hallId: params?.hallId,
-                movieId: params?.movieId,
+                movieTitle: params?.movieTitle,
                 status: params?.status,
                 dateFrom: params?.dateFrom,
                 dateTo: params?.dateTo
@@ -103,35 +105,24 @@ export const sessionApi = {
             const url = `${ADMIN_URL}?${searchParams.toString()}`;
             return fetchApi<PageResponse<SessionAdminResponse>>(url);
         },
-
-        getSessionsAll: (params?: SearchParams & SessionFilterRequest): Promise<PageResponse<SessionAdminResponse>> =>
-            sessionApi.admin.getSessions({ ...params, size: 1000 }),
     },
 
     public: {
-        getSessions: (params?: SearchParams & SessionFilterRequest): Promise<PageResponse<SessionScheduleResponse>> => {
-            const searchParams = buildSearchParams({
-                page: params?.page || 0,
-                size: params?.size || 12,
-                sort: params?.sort || 'startTime,asc',
-                hallId: params?.hallId,
-                movieId: params?.movieId,
-                dateFrom: params?.dateFrom,
-                dateTo: params?.dateTo
-            });
+        getSessions: (
+            searchTerm?: string,
+            date?: string,
+            params?: SearchParams
+        ): Promise<PageResponse<SessionScheduleResponse>> => {
+            const filter: Record<string, any> = {};
+            if (searchTerm) filter.searchTerm = searchTerm;
+            if (date) filter.date = date;
 
-            const url = `${PUBLIC_URL}?${searchParams.toString()}`;
+            const url = buildFilteredUrl(PUBLIC_URL, params, filter, 'grid');
             return fetchApi<PageResponse<SessionScheduleResponse>>(url, {}, true);
         },
 
         getById: (id: number): Promise<SessionScheduleResponse> =>
             fetchApi<SessionScheduleResponse>(`${PUBLIC_URL}/${id}`, {}, true),
-
-        getByDate: (date: string): Promise<PageResponse<SessionScheduleResponse>> =>
-            sessionApi.public.getSessions({ dateFrom: date, dateTo: date, size: 50 }),
-
-        getByMovie: (movieId: number): Promise<PageResponse<SessionScheduleResponse>> =>
-            sessionApi.public.getSessions({ movieId, size: 20 }),
 
         getSeatAvailability: (sessionId: number): Promise<SeatReservationResponse> =>
             fetchApi<SeatReservationResponse>(`${PUBLIC_URL}/${sessionId}/seats`, {}, true),
@@ -143,7 +134,7 @@ export const sessionKeys = {
     admin: {
         all: ['sessions', 'admin'] as const,
         lists: () => [...sessionKeys.admin.all, 'list'] as const,
-        list: (params?: SearchParams & SessionFilterRequest) =>
+        list: (params?: SessionFilterRequest & SearchParams) =>
             [...sessionKeys.admin.lists(), params] as const,
         details: () => [...sessionKeys.admin.all, 'detail'] as const,
         detail: (id: number) => [...sessionKeys.admin.details(), id] as const,
@@ -151,8 +142,8 @@ export const sessionKeys = {
     public: {
         all: ['sessions', 'public'] as const,
         lists: () => [...sessionKeys.public.all, 'list'] as const,
-        list: (params?: SearchParams & SessionFilterRequest) =>
-            [...sessionKeys.public.lists(), params] as const,
+        list: (searchTerm?: string, date?: string, params?: SearchParams) =>
+            [...sessionKeys.public.lists(), { searchTerm, date, ...params }] as const,
         details: () => [...sessionKeys.public.all, 'detail'] as const,
         detail: (id: number) => [...sessionKeys.public.details(), id] as const,
         seats: (id: number) => [...sessionKeys.public.detail(id), 'seats'] as const,

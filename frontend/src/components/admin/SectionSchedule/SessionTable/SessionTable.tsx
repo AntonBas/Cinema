@@ -1,5 +1,6 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import type { SessionAdminResponse } from '@/types/session';
+import type { BadgeVariant } from '@/components/ui/Badge/Badge';
 import { Button, Badge } from '@/components/ui';
 import styles from './SessionTable.module.css';
 
@@ -13,40 +14,29 @@ interface SessionTableProps {
 }
 
 const getStatusText = (status: string): string => {
-    switch (status) {
-        case 'SCHEDULED': return 'Scheduled';
-        case 'ONGOING': return 'Ongoing';
-        case 'COMPLETED': return 'Completed';
-        case 'CANCELLED': return 'Cancelled';
-        default: return status;
-    }
+    const statusMap: Record<string, string> = {
+        SCHEDULED: 'Scheduled',
+        ONGOING: 'Ongoing',
+        COMPLETED: 'Completed',
+        CANCELLED: 'Cancelled'
+    };
+    return statusMap[status] || status;
 };
 
-const getStatusBadgeVariant = (status: string): string => {
-    switch (status) {
-        case 'SCHEDULED': return 'info';
-        case 'ONGOING': return 'success';
-        case 'COMPLETED': return 'secondary';
-        case 'CANCELLED': return 'error';
-        default: return 'secondary';
-    }
+const getStatusBadgeVariant = (status: string): BadgeVariant => {
+    const variantMap: Record<string, BadgeVariant> = {
+        SCHEDULED: 'info',
+        ONGOING: 'success',
+        COMPLETED: 'secondary',
+        CANCELLED: 'error'
+    };
+    return variantMap[status] || 'secondary';
 };
 
-const canEdit = (status: string): boolean => {
-    return status === 'SCHEDULED';
-};
-
-const canDelete = (status: string): boolean => {
-    return status === 'SCHEDULED';
-};
-
-const canCancel = (status: string): boolean => {
-    return status === 'SCHEDULED';
-};
-
-const canReactivate = (status: string): boolean => {
-    return status === 'CANCELLED';
-};
+const canEdit = (status: string): boolean => status === 'SCHEDULED';
+const canDelete = (status: string): boolean => status === 'SCHEDULED';
+const canCancel = (status: string): boolean => status === 'SCHEDULED';
+const canReactivate = (status: string): boolean => status === 'CANCELLED';
 
 const getOccupancyPercentage = (ticketsSold: number, capacity: number): number => {
     return capacity > 0 ? Math.round((ticketsSold / capacity) * 100) : 0;
@@ -58,14 +48,39 @@ const getOccupancyColor = (percentage: number): string => {
     return '#6b7280';
 };
 
-const formatCurrency = (price: string): string => {
-    const numericPrice = parseFloat(price);
+const formatCurrency = (price: string | number | null | undefined): string => {
+    if (price === null || price === undefined) return '0.00 UAH';
+    const numericPrice = typeof price === 'string' ? parseFloat(price) : price;
+    if (isNaN(numericPrice)) return '0.00 UAH';
     return `${numericPrice.toFixed(2)} UAH`;
 };
 
-const truncateText = (text: string, maxLength: number): string => {
-    return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+const formatTime = (dateString: string): string => {
+    return new Date(dateString).toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit'
+    });
 };
+
+const formatDate = (dateString: string): string => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric'
+    });
+};
+
+const truncateText = (text: string | null | undefined, maxLength: number): string => {
+    if (!text) return '';
+    return text.length > maxLength ? `${text.substring(0, maxLength)}...` : text;
+};
+
+const EmptyState: React.FC = () => (
+    <div className={styles.empty}>
+        <div className={styles.emptyIcon}>📽️</div>
+        <h3>No sessions found</h3>
+        <p>There are currently no movie sessions matching your criteria.</p>
+    </div>
+);
 
 export const SessionTable: React.FC<SessionTableProps> = ({
     sessions,
@@ -75,35 +90,37 @@ export const SessionTable: React.FC<SessionTableProps> = ({
     onReactivate,
     onViewDetails
 }) => {
-    const formatTime = (dateString: string): string => {
-        return new Date(dateString).toLocaleTimeString('en-US', {
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    };
-
-    const formatDate = (dateString: string): string => {
-        return new Date(dateString).toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric'
-        });
-    };
-
     const sortedSessions = useMemo(() => {
         return [...sessions].sort((a, b) =>
             new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
         );
     }, [sessions]);
 
-    const renderEmptyState = () => (
-        <div className={styles.empty}>
-            <div className={styles.emptyIcon}>📽️</div>
-            <h3>No sessions found</h3>
-            <p>There are currently no movie sessions matching your criteria.</p>
-        </div>
-    );
+    const handleEdit = useCallback((e: React.MouseEvent, session: SessionAdminResponse) => {
+        e.stopPropagation();
+        onEdit(session);
+    }, [onEdit]);
 
-    if (sessions.length === 0) return renderEmptyState();
+    const handleDelete = useCallback((e: React.MouseEvent, session: SessionAdminResponse) => {
+        e.stopPropagation();
+        onDelete(session);
+    }, [onDelete]);
+
+    const handleCancel = useCallback((e: React.MouseEvent, session: SessionAdminResponse) => {
+        e.stopPropagation();
+        onCancel(session);
+    }, [onCancel]);
+
+    const handleReactivate = useCallback((e: React.MouseEvent, session: SessionAdminResponse) => {
+        e.stopPropagation();
+        onReactivate(session);
+    }, [onReactivate]);
+
+    const handleRowClick = useCallback((session: SessionAdminResponse) => {
+        onViewDetails?.(session);
+    }, [onViewDetails]);
+
+    if (!sessions.length) return <EmptyState />;
 
     return (
         <div className={styles.tableContainer}>
@@ -140,34 +157,16 @@ export const SessionTable: React.FC<SessionTableProps> = ({
                             const cancellable = canCancel(session.status);
                             const reactivatable = canReactivate(session.status);
 
-                            const handleEdit = (e: React.MouseEvent) => {
-                                e.stopPropagation();
-                                onEdit(session);
-                            };
-                            const handleDelete = (e: React.MouseEvent) => {
-                                e.stopPropagation();
-                                onDelete(session);
-                            };
-                            const handleCancel = (e: React.MouseEvent) => {
-                                e.stopPropagation();
-                                onCancel(session);
-                            };
-                            const handleReactivate = (e: React.MouseEvent) => {
-                                e.stopPropagation();
-                                onReactivate(session);
-                            };
-                            const handleRowClick = () => onViewDetails?.(session);
-
-                            const totalRevenueNum = parseFloat(session.totalRevenue);
+                            const totalRevenue = parseFloat(session.totalRevenue || '0');
                             const avgRevenue = session.ticketsSold > 0
-                                ? totalRevenueNum / session.ticketsSold
+                                ? totalRevenue / session.ticketsSold
                                 : 0;
 
                             return (
                                 <tr
                                     key={session.id}
                                     className={`${styles.row} ${isPast ? styles.past : ''}`}
-                                    onClick={handleRowClick}
+                                    onClick={() => handleRowClick(session)}
                                     style={{ cursor: onViewDetails ? 'pointer' : 'default' }}
                                 >
                                     <td className={styles.movieCell}>
@@ -236,17 +235,17 @@ export const SessionTable: React.FC<SessionTableProps> = ({
 
                                     <td className={styles.revenueCell}>
                                         <div className={styles.revenue}>
-                                            {formatCurrency(session.totalRevenue)}
+                                            {formatCurrency(totalRevenue)}
                                         </div>
-                                        <div className={styles.revenuePerSeat}>
-                                            {avgRevenue.toFixed(2)} UAH avg
-                                        </div>
+                                        {session.ticketsSold > 0 && (
+                                            <div className={styles.revenuePerSeat}>
+                                                {avgRevenue.toFixed(2)} UAH avg
+                                            </div>
+                                        )}
                                     </td>
 
                                     <td className={styles.statusCell}>
-                                        <Badge
-                                            variant={getStatusBadgeVariant(session.status) as any}
-                                        >
+                                        <Badge variant={getStatusBadgeVariant(session.status)}>
                                             {getStatusText(session.status)}
                                         </Badge>
                                     </td>
@@ -257,7 +256,7 @@ export const SessionTable: React.FC<SessionTableProps> = ({
                                                 <Button
                                                     variant="success"
                                                     size="small"
-                                                    onClick={handleEdit}
+                                                    onClick={(e) => handleEdit(e, session)}
                                                     className={styles.actionButton}
                                                 >
                                                     Edit
@@ -267,7 +266,7 @@ export const SessionTable: React.FC<SessionTableProps> = ({
                                                 <Button
                                                     variant="secondary"
                                                     size="small"
-                                                    onClick={handleCancel}
+                                                    onClick={(e) => handleCancel(e, session)}
                                                     className={styles.actionButton}
                                                 >
                                                     Cancel
@@ -277,7 +276,7 @@ export const SessionTable: React.FC<SessionTableProps> = ({
                                                 <Button
                                                     variant="success"
                                                     size="small"
-                                                    onClick={handleReactivate}
+                                                    onClick={(e) => handleReactivate(e, session)}
                                                     className={styles.actionButton}
                                                 >
                                                     Reactivate
@@ -287,7 +286,7 @@ export const SessionTable: React.FC<SessionTableProps> = ({
                                                 <Button
                                                     variant="error"
                                                     size="small"
-                                                    onClick={handleDelete}
+                                                    onClick={(e) => handleDelete(e, session)}
                                                     className={styles.actionButton}
                                                 >
                                                     Delete

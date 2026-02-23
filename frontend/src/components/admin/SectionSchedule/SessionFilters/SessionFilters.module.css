@@ -10,7 +10,7 @@
 
 .filterGrid {
     display: grid;
-    grid-template-columns: repeat(5, minmax(160px, 1fr));
+    grid-template-columns: repeat(5, 1fr);
     gap: var(--space-6);
     padding: var(--space-6);
     position: relative;
@@ -21,6 +21,7 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-2);
+    min-width: 0;
 }
 
 .label {
@@ -28,36 +29,40 @@
     font-weight: 500;
     font-size: 0.9rem;
     margin-bottom: var(--space-1);
+    white-space: nowrap;
 }
 
-.inputContainer,
-.selectContainer {
+.filterInput {
+    height: 40px !important;
+    padding: 8px 12px !important;
+    font-size: var(--font-size-sm) !important;
+    line-height: 1.5 !important;
+    box-sizing: border-box !important;
     width: 100%;
-    position: relative;
 }
 
-.input {
+.filterSelectWrapper {
     width: 100%;
+    height: 40px;
 }
 
-.sortOrderContainer {
-    display: flex;
-    gap: var(--space-2);
-    align-items: center;
+.filterSelectWrapper :global(.select) {
+    height: 40px !important;
+    padding: 8px 12px !important;
+    font-size: var(--font-size-sm) !important;
+    line-height: 1.5 !important;
+    box-sizing: border-box !important;
 }
 
-.sortOrderSelect {
-    flex: 1;
+.filterSelectWrapper :global(.selectWrapper) {
+    height: 40px;
 }
 
-.sortOrderToggle {
-    min-width: 40px;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.2rem;
-    padding: 0 var(--space-2);
+.filterSelectWrapper select {
+    height: 40px !important;
+    padding: 8px 12px !important;
+    font-size: var(--font-size-sm) !important;
+    line-height: 1.5 !important;
 }
 
 .movieFilterRow {
@@ -89,6 +94,11 @@
     padding-right: 40px;
     background: var(--color-bg-secondary);
     border: 1px solid var(--color-border-medium);
+    height: 40px !important;
+    padding: 8px 12px !important;
+    font-size: var(--font-size-sm) !important;
+    line-height: 1.5 !important;
+    box-sizing: border-box !important;
 }
 
 .clearMovieButton {
@@ -96,15 +106,24 @@
     right: 8px;
     top: 50%;
     transform: translateY(-50%);
-    width: 24px;
-    height: 24px;
+    width: 26px;
+    height: 26px;
     padding: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 16px;
+    font-size: 18px;
     font-weight: bold;
     border-radius: 50%;
+    background: var(--color-error);
+    color: white;
+    border: none;
+    cursor: pointer;
+    z-index: 2;
+}
+
+.clearMovieButton:hover {
+    background: var(--color-error-alt);
 }
 
 .movieResults {
@@ -178,32 +197,12 @@
     z-index: 1;
 }
 
-.clearFiltersWrapper {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
 .filterInfo {
     display: flex;
     align-items: center;
     gap: var(--space-4);
     width: 100%;
     justify-content: space-between;
-}
-
-.filterCount {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-    color: var(--color-text-secondary);
-    font-size: 0.9rem;
-}
-
-.filterActions {
-    display: flex;
-    gap: var(--space-3);
-    align-items: center;
 }
 
 .countBadge {
@@ -218,20 +217,29 @@
 }
 
 .clearButton {
-    min-width: 140px;
+    min-width: 100px;
+    height: 36px;
 }
 
 @media (max-width: 1200px) {
     .filterGrid {
-        grid-template-columns: repeat(3, minmax(200px, 1fr));
+        grid-template-columns: repeat(3, 1fr);
     }
 }
 
 @media (max-width: 768px) {
     .filterGrid {
-        grid-template-columns: repeat(2, minmax(200px, 1fr));
+        grid-template-columns: repeat(2, 1fr);
         gap: var(--space-4);
         padding: var(--space-4);
+    }
+
+    .filterInput,
+    .movieInput,
+    .filterSelectWrapper,
+    .filterSelectWrapper :global(.select),
+    .filterSelectWrapper select {
+        height: 38px !important;
     }
 
     .movieFilterRow {
@@ -242,21 +250,11 @@
         padding: var(--space-4);
     }
 
-    .clearFiltersWrapper {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: var(--space-3);
-    }
-
     .filterInfo {
         width: 100%;
         flex-direction: column;
         align-items: flex-start;
         gap: var(--space-3);
-    }
-
-    .filterActions {
-        width: 100%;
     }
 
     .movieResults {
@@ -273,6 +271,7 @@
     .clearButton {
         width: 100%;
         min-width: unset;
+        height: 38px;
     }
 }
 
@@ -281,6 +280,16 @@
         grid-template-columns: 1fr;
         gap: var(--space-3);
         padding: var(--space-3);
+    }
+
+    .filterInput,
+    .movieInput,
+    .filterSelectWrapper,
+    .filterSelectWrapper :global(.select),
+    .filterSelectWrapper select {
+        height: 36px !important;
+        padding: 6px 10px !important;
+        font-size: var(--font-size-xs) !important;
     }
 
     .movieFilterRow {
@@ -302,14 +311,12 @@
 
     .clearButton {
         font-size: var(--font-size-sm);
+        height: 36px;
     }
 
-    .sortOrderContainer {
-        flex-direction: column;
-    }
-
-    .sortOrderToggle {
-        width: 100%;
-        min-height: 36px;
+    .clearMovieButton {
+        width: 22px;
+        height: 22px;
+        font-size: 16px;
     }
 }

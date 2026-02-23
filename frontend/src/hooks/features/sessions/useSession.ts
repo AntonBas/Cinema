@@ -13,32 +13,30 @@ import { useApi } from '@/hooks/common/useApi';
 export const useSession = () => {
     const sessionsApi = useApi<PageResponse<SessionAdminResponse>>();
     const scheduleApi = useApi<PageResponse<SessionScheduleResponse>>();
-    const sessionByIdApi = useApi<SessionScheduleResponse>();
-    const adminSessionByIdApi = useApi<SessionAdminResponse>();
-    const createSessionApi = useApi<SessionAdminResponse>();
-    const updateSessionApi = useApi<SessionAdminResponse>();
-    const cancelSessionApi = useApi<void>();
-    const reactivateSessionApi = useApi<void>();
-    const deleteSessionApi = useApi<void>();
+    const sessionDetailApi = useApi<SessionScheduleResponse>();
 
     const getSessions = useCallback(async (params?: SearchParams & SessionFilterRequest) => {
-        const cacheKey = params ? `admin_sessions_${JSON.stringify(params)}` : 'admin_sessions_all';
         return sessionsApi.execute(
             () => sessionApi.admin.getSessions(params),
             {
-                cacheKey,
+                cacheKey: params ? `admin_sessions_${JSON.stringify(params)}` : 'admin_sessions_all',
                 cacheTime: 30 * 1000,
                 showErrorNotification: false,
             }
         );
     }, [sessionsApi]);
 
-    const getPublicSessions = useCallback(async (params?: SearchParams & SessionFilterRequest) => {
-        const cacheKey = params ? `public_sessions_${JSON.stringify(params)}` : 'public_sessions_all';
+    const getPublicSessions = useCallback(async (
+        searchTerm?: string,
+        date?: string,
+        params?: SearchParams
+    ) => {
         return scheduleApi.execute(
-            () => sessionApi.public.getSessions(params),
+            () => sessionApi.public.getSessions(searchTerm, date, params),
             {
-                cacheKey,
+                cacheKey: searchTerm || date
+                    ? `public_sessions_${searchTerm || ''}_${date || ''}_${JSON.stringify(params)}`
+                    : 'public_sessions_all',
                 cacheTime: 30 * 1000,
                 showErrorNotification: false,
             }
@@ -46,153 +44,106 @@ export const useSession = () => {
     }, [scheduleApi]);
 
     const getSessionById = useCallback(async (id: number) => {
-        return sessionByIdApi.execute(
+        return sessionDetailApi.execute(
             () => sessionApi.public.getById(id),
             {
                 cacheKey: `session_${id}`,
                 cacheTime: 5 * 60 * 1000,
-                showErrorNotification: false,
+                showErrorNotification: true,
             }
         );
-    }, [sessionByIdApi]);
+    }, [sessionDetailApi]);
 
-    const getAdminSessionById = useCallback(async (id: number) => {
-        return adminSessionByIdApi.execute(
-            () => sessionApi.admin.getById(id),
+    const getSessionSeats = useCallback(async (sessionId: number) => {
+        return sessionDetailApi.execute(
+            () => sessionApi.public.getSeatAvailability(sessionId),
             {
-                cacheKey: `admin_session_${id}`,
-                cacheTime: 5 * 60 * 1000,
+                cacheKey: `session_seats_${sessionId}`,
+                cacheTime: 10 * 1000,
                 showErrorNotification: false,
             }
         );
-    }, [adminSessionByIdApi]);
+    }, [sessionDetailApi]);
 
     const createSession = useCallback(async (request: SessionCreateRequest) => {
-        return createSessionApi.execute(
+        const result = await sessionsApi.execute(
             () => sessionApi.admin.create(request),
             {
                 successMessage: 'Session created successfully',
-                onSuccess: () => {
-                    sessionsApi.invalidateCache();
-                    scheduleApi.invalidateCache();
-                },
             }
         );
-    }, [createSessionApi, sessionsApi, scheduleApi]);
+        sessionsApi.invalidateCache();
+        return result;
+    }, [sessionsApi]);
 
     const updateSession = useCallback(async (id: number, request: SessionUpdateRequest) => {
-        return updateSessionApi.execute(
+        const result = await sessionsApi.execute(
             () => sessionApi.admin.update(id, request),
             {
                 successMessage: 'Session updated successfully',
-                onSuccess: () => {
-                    sessionsApi.invalidateCache();
-                    scheduleApi.invalidateCache();
-                    adminSessionByIdApi.invalidateCache(`admin_session_${id}`);
-                    sessionByIdApi.invalidateCache(`session_${id}`);
-                },
             }
         );
-    }, [updateSessionApi, sessionsApi, adminSessionByIdApi, scheduleApi, sessionByIdApi]);
+        sessionsApi.invalidateCache();
+        sessionDetailApi.invalidateCache(`session_${id}`);
+        return result;
+    }, [sessionsApi, sessionDetailApi]);
 
     const cancelSession = useCallback(async (id: number) => {
-        return cancelSessionApi.execute(
+        const result = await sessionsApi.execute(
             () => sessionApi.admin.cancel(id),
             {
                 successMessage: 'Session cancelled successfully',
-                onSuccess: () => {
-                    sessionsApi.invalidateCache();
-                    scheduleApi.invalidateCache();
-                    adminSessionByIdApi.invalidateCache(`admin_session_${id}`);
-                    sessionByIdApi.invalidateCache(`session_${id}`);
-                },
             }
         );
-    }, [cancelSessionApi, sessionsApi, adminSessionByIdApi, scheduleApi, sessionByIdApi]);
+        sessionsApi.invalidateCache();
+        sessionDetailApi.invalidateCache(`session_${id}`);
+        return result;
+    }, [sessionsApi, sessionDetailApi]);
 
     const reactivateSession = useCallback(async (id: number) => {
-        return reactivateSessionApi.execute(
+        const result = await sessionsApi.execute(
             () => sessionApi.admin.reactivate(id),
             {
                 successMessage: 'Session reactivated successfully',
-                onSuccess: () => {
-                    sessionsApi.invalidateCache();
-                    scheduleApi.invalidateCache();
-                    adminSessionByIdApi.invalidateCache(`admin_session_${id}`);
-                    sessionByIdApi.invalidateCache(`session_${id}`);
-                },
             }
         );
-    }, [reactivateSessionApi, sessionsApi, adminSessionByIdApi, scheduleApi, sessionByIdApi]);
+        sessionsApi.invalidateCache();
+        sessionDetailApi.invalidateCache(`session_${id}`);
+        return result;
+    }, [sessionsApi, sessionDetailApi]);
 
     const deleteSession = useCallback(async (id: number) => {
-        return deleteSessionApi.execute(
+        const result = await sessionsApi.execute(
             () => sessionApi.admin.delete(id),
             {
                 successMessage: 'Session deleted successfully',
-                onSuccess: () => {
-                    sessionsApi.invalidateCache();
-                    scheduleApi.invalidateCache();
-                    adminSessionByIdApi.invalidateCache(`admin_session_${id}`);
-                    sessionByIdApi.invalidateCache(`session_${id}`);
-                },
             }
         );
-    }, [deleteSessionApi, sessionsApi, scheduleApi, adminSessionByIdApi, sessionByIdApi]);
-
-    const clearCache = useCallback(() => {
         sessionsApi.invalidateCache();
-        scheduleApi.invalidateCache();
-        sessionByIdApi.invalidateCache();
-        adminSessionByIdApi.invalidateCache();
-        createSessionApi.invalidateCache();
-        updateSessionApi.invalidateCache();
-        cancelSessionApi.invalidateCache();
-        reactivateSessionApi.invalidateCache();
-        deleteSessionApi.invalidateCache();
-    }, [
-        sessionsApi, scheduleApi, sessionByIdApi, adminSessionByIdApi,
-        createSessionApi, updateSessionApi, cancelSessionApi,
-        reactivateSessionApi, deleteSessionApi
-    ]);
-
-    const loading = sessionsApi.loading || scheduleApi.loading ||
-        sessionByIdApi.loading || adminSessionByIdApi.loading ||
-        createSessionApi.loading || updateSessionApi.loading ||
-        cancelSessionApi.loading || reactivateSessionApi.loading ||
-        deleteSessionApi.loading;
-
-    const error = !!(sessionsApi.error || scheduleApi.error ||
-        sessionByIdApi.error || adminSessionByIdApi.error ||
-        createSessionApi.error || updateSessionApi.error ||
-        cancelSessionApi.error || reactivateSessionApi.error ||
-        deleteSessionApi.error);
+        sessionDetailApi.invalidateCache(`session_${id}`);
+        return result;
+    }, [sessionsApi, sessionDetailApi]);
 
     return {
         sessions: sessionsApi.data?.content || [],
         scheduleSessions: scheduleApi.data?.content || [],
-        session: sessionByIdApi.data,
-        adminSession: adminSessionByIdApi.data,
+        selectedSession: sessionDetailApi.data,
         pagination: sessionsApi.data,
         schedulePagination: scheduleApi.data,
-
-        loading,
-        error,
-
+        loading: sessionsApi.loading || scheduleApi.loading || sessionDetailApi.loading,
+        error: sessionsApi.error || scheduleApi.error || sessionDetailApi.error,
         getSessions,
         getPublicSessions,
         getSessionById,
-        getAdminSessionById,
+        getSessionSeats,
         createSession,
         updateSession,
         cancelSession,
         reactivateSession,
         deleteSession,
-        clearCache,
-
         resetSessions: sessionsApi.reset,
         resetSchedule: scheduleApi.reset,
-        resetSession: sessionByIdApi.reset,
-        resetAdminSession: adminSessionByIdApi.reset,
+        resetSessionDetail: sessionDetailApi.reset,
+        invalidateSessionsCache: sessionsApi.invalidateCache,
     };
 };
