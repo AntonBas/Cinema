@@ -172,6 +172,12 @@ public class CinemaHallService {
 		return hallRepository.findById(id).orElseThrow(() -> new CinemaHallNotFoundException(id));
 	}
 
+	@Transactional(readOnly = true)
+	public Integer getHallCapacity(Long hallId) {
+		log.debug("Getting capacity for hall id: {}", hallId);
+		return Long.valueOf(seatRepository.countByHallId(hallId)).intValue();
+	}
+
 	private List<Seat> generateSeatLayout(CinemaHall hall, CinemaHallRequest request) {
 		List<Seat> seats = new ArrayList<>();
 		SeatType defaultType = request.getDefaultSeatType();
