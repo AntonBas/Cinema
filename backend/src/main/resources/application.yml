@@ -123,7 +123,7 @@ ticket:
 
 logging:
     level:
-        org.springframework.security: DEBUG
+        org.springframework.security: WARN
         org.springframework.security.web: DEBUG
         org.springframework.security.config: DEBUG
         org.springframework.web: DEBUG
@@ -133,7 +133,7 @@ logging:
         ua.lviv.bas.cinema.config.security: DEBUG
         ua.lviv.bas.cinema.controller: DEBUG
         ua.lviv.bas.cinema.service: DEBUG
-        org.hibernate.SQL: OFF
+        org.hibernate.SQL: DEBUG
         org.hibernate.type.descriptor.sql: OFF
     pattern:
         console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
