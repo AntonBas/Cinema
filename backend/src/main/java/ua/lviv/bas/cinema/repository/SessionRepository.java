@@ -29,7 +29,7 @@ public interface SessionRepository extends JpaRepository<Session, Long>, JpaSpec
 			SELECT
 			    s.id as id,
 			    s.start_time as startTime,
-			    (s.start_time + (s.movie.duration_minutes * INTERVAL '1 minute')) as endTime,
+			    (s.start_time + (m.duration_minutes * INTERVAL '1 minute')) as endTime,
 			    s.base_price as basePrice,
 			    s.status as status,
 			    m.id as movieId,
@@ -54,7 +54,7 @@ public interface SessionRepository extends JpaRepository<Session, Long>, JpaSpec
 			SELECT
 			    s.id as id,
 			    s.start_time as startTime,
-			    (s.start_time + (s.movie.duration_minutes * INTERVAL '1 minute')) as endTime,
+			    (s.start_time + (m.duration_minutes * INTERVAL '1 minute')) as endTime,
 			    s.base_price as basePrice,
 			    s.status as status,
 			    m.id as movieId,
