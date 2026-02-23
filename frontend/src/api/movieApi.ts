@@ -66,11 +66,6 @@ export const movieApi = {
       return fetchApi<PageResponse<MovieCardResponse>>(url, {}, true);
     },
 
-    searchMoviesForSession: (search?: string): Promise<MovieSessionSearchResponse[]> => {
-      const url = `${PUBLIC_URL}/search/session${search ? `?search=${encodeURIComponent(search)}` : ''}`;
-      return fetchApi<MovieSessionSearchResponse[]>(url, {}, true);
-    },
-
     getPosterUrl: (id: number): string =>
       `${PUBLIC_URL}/${id}/poster`,
   },

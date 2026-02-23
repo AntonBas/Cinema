@@ -66,12 +66,6 @@ export const useMovies = () => {
 
     const searchMoviesForSession = useCallback(async (search?: string) => {
         return searchApi.execute(
-            () => movieApi.public.searchMoviesForSession(search)
-        );
-    }, [searchApi]);
-
-    const adminSearchMoviesForSession = useCallback(async (search?: string) => {
-        return searchApi.execute(
             () => movieApi.admin.searchMoviesForSession(search)
         );
     }, [searchApi]);
@@ -130,7 +124,6 @@ export const useMovies = () => {
         getById,
         getBySlug,
         searchMoviesForSession,
-        adminSearchMoviesForSession,
         create,
         update,
         remove,
