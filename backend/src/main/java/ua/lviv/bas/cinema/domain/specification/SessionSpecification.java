@@ -2,7 +2,6 @@ package ua.lviv.bas.cinema.domain.specification;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,8 +33,9 @@ public class SessionSpecification {
 
 			if (date != null) {
 				LocalDateTime fromDateTime = date.atStartOfDay();
-				LocalDateTime toDateTime = date.atTime(LocalTime.MAX);
-				predicates.add(cb.between(root.get("startTime"), fromDateTime, toDateTime));
+				LocalDateTime toDateTime = date.plusDays(1).atStartOfDay();
+				predicates.add(cb.greaterThanOrEqualTo(root.get("startTime"), fromDateTime));
+				predicates.add(cb.lessThan(root.get("startTime"), toDateTime));
 			}
 
 			return cb.and(predicates.toArray(new Predicate[0]));
@@ -54,8 +54,9 @@ public class SessionSpecification {
 				predicates.add(cb.equal(root.join("hall", JoinType.INNER).get("id"), filter.getHallId()));
 			}
 
-			if (filter.getMovieId() != null) {
-				predicates.add(cb.equal(root.join("movie", JoinType.INNER).get("id"), filter.getMovieId()));
+			if (filter.getMovieTitle() != null && !filter.getMovieTitle().trim().isEmpty()) {
+				String pattern = "%" + filter.getMovieTitle().toLowerCase() + "%";
+				predicates.add(cb.like(cb.lower(root.join("movie", JoinType.INNER).get("title")), pattern));
 			}
 
 			if (filter.getDateFrom() != null || filter.getDateTo() != null) {
@@ -70,14 +71,13 @@ public class SessionSpecification {
 			LocalDate dateFrom, LocalDate dateTo) {
 		if (dateFrom != null && dateTo != null) {
 			LocalDateTime fromDateTime = dateFrom.atStartOfDay();
-			LocalDateTime toDateTime = dateTo.atTime(LocalTime.MAX);
-			predicates.add(cb.between(root.get("startTime"), fromDateTime, toDateTime));
-		} else if (dateFrom != null) {
-			LocalDateTime fromDateTime = dateFrom.atStartOfDay();
+			LocalDateTime toDateTime = dateTo.plusDays(1).atStartOfDay();
 			predicates.add(cb.greaterThanOrEqualTo(root.get("startTime"), fromDateTime));
+			predicates.add(cb.lessThan(root.get("startTime"), toDateTime));
+		} else if (dateFrom != null) {
+			predicates.add(cb.greaterThanOrEqualTo(root.get("startTime"), dateFrom.atStartOfDay()));
 		} else if (dateTo != null) {
-			LocalDateTime toDateTime = dateTo.atTime(LocalTime.MAX);
-			predicates.add(cb.lessThanOrEqualTo(root.get("startTime"), toDateTime));
+			predicates.add(cb.lessThan(root.get("startTime"), dateTo.plusDays(1).atStartOfDay()));
 		}
 	}
 }

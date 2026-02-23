@@ -29,8 +29,8 @@ public class SessionFilterRequest {
 	@Schema(description = "Filter by cinema hall ID", example = "1")
 	private Long hallId;
 
-	@Schema(description = "Filter by movie ID", example = "5")
-	private Long movieId;
+	@Schema(description = "Filter by movie title", example = "Inception")
+	private String movieTitle;
 
 	@AssertTrue(message = "dateTo must be after or equal to dateFrom")
 	public boolean isValidDateRange() {

@@ -1,10 +1,8 @@
 package ua.lviv.bas.cinema.mapper;
 
-import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
-import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.mapstruct.ReportingPolicy;
 
 import ua.lviv.bas.cinema.domain.Session;
@@ -19,19 +17,26 @@ import ua.lviv.bas.cinema.dto.session.response.SessionScheduleResponse;
 public interface SessionMapper {
 
 	@Mapping(target = "endTime", expression = "java(session.getStartTime().plusMinutes(session.getMovie().getDurationMinutes()))")
-	@Mapping(target = "ticketsSold", ignore = true)
-	@Mapping(target = "totalRevenue", ignore = true)
-	@Mapping(target = "hallCapacity", ignore = true)
-	SessionAdminResponse toSessionAdminResponse(Session session);
+	@Mapping(target = "movieId", source = "movie.id")
+	@Mapping(target = "movieTitle", source = "movie.title")
+	@Mapping(target = "movieDuration", source = "movie.durationMinutes")
+	@Mapping(target = "hallId", source = "hall.id")
+	@Mapping(target = "hallName", source = "hall.name")
+	SessionAdminResponse toAdminResponse(Session session);
 
-	SessionAdminResponse toSessionAdminResponse(SessionAdminProjection projection);
+	SessionAdminResponse toAdminResponse(SessionAdminProjection projection);
 
 	@Mapping(target = "endTime", expression = "java(session.getStartTime().plusMinutes(session.getMovie().getDurationMinutes()))")
-	@Mapping(target = "availableSeats", ignore = true)
-	@Mapping(target = "hallCapacity", ignore = true)
-	SessionScheduleResponse toSessionScheduleResponse(Session session);
+	@Mapping(target = "movieId", source = "movie.id")
+	@Mapping(target = "movieTitle", source = "movie.title")
+	@Mapping(target = "moviePosterFileName", source = "movie.posterFileName")
+	@Mapping(target = "movieAgeRating", source = "movie.ageRating")
+	@Mapping(target = "movieDuration", source = "movie.durationMinutes")
+	@Mapping(target = "hallId", source = "hall.id")
+	@Mapping(target = "hallName", source = "hall.name")
+	SessionScheduleResponse toScheduleResponse(Session session);
 
-	SessionScheduleResponse toSessionScheduleResponse(SessionScheduleProjection projection);
+	SessionScheduleResponse toScheduleResponse(SessionScheduleProjection projection);
 
 	@Mapping(target = "id", ignore = true)
 	@Mapping(target = "movie", ignore = true)
@@ -39,14 +44,13 @@ public interface SessionMapper {
 	@Mapping(target = "status", constant = "SCHEDULED")
 	@Mapping(target = "bookings", ignore = true)
 	@Mapping(target = "seatReservations", ignore = true)
-	Session toSession(SessionCreateRequest request);
+	Session toEntity(SessionCreateRequest request);
 
-	@BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 	@Mapping(target = "id", ignore = true)
 	@Mapping(target = "movie", ignore = true)
 	@Mapping(target = "hall", ignore = true)
 	@Mapping(target = "status", ignore = true)
 	@Mapping(target = "bookings", ignore = true)
 	@Mapping(target = "seatReservations", ignore = true)
-	void updateSessionFromRequest(SessionUpdateRequest request, @MappingTarget Session session);
+	void updateEntity(@MappingTarget Session session, SessionUpdateRequest request);
 }

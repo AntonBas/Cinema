@@ -70,7 +70,7 @@ public class AdminSessionController {
 	public ResponseEntity<SessionAdminResponse> getSessionById(
 			@Parameter(description = "ID of the session", required = true, example = "1") @PathVariable Long id) {
 		log.info("GET /api/admin/sessions/{} - Retrieving session for admin", id);
-		SessionAdminResponse session = sessionService.getSessionById(id);
+		SessionAdminResponse session = sessionService.getSessionForAdmin(id);
 		return ResponseEntity.ok(session);
 	}
 
@@ -139,17 +139,18 @@ public class AdminSessionController {
 			@ApiResponse(responseCode = "401", description = "User not authenticated"),
 			@ApiResponse(responseCode = "403", description = "User does not have required role") })
 	public ResponseEntity<PageResponse<SessionAdminResponse>> getSessions(@RequestParam(required = false) Long hallId,
-			@RequestParam(required = false) Long movieId, @RequestParam(required = false) CinemaSessionStatus status,
+			@RequestParam(required = false) String movieTitle,
+			@RequestParam(required = false) CinemaSessionStatus status,
 			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFrom,
 			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateTo,
 			@Parameter(hidden = true) @PageableDefault(size = 20, sort = "startTime", direction = Sort.Direction.DESC) Pageable pageable) {
 
 		log.info(
-				"GET /api/admin/sessions - Getting sessions with filters: hallId={}, movieId={}, status={}, dateFrom={}, dateTo={}",
-				hallId, movieId, status, dateFrom, dateTo);
+				"GET /api/admin/sessions - Getting sessions with filters: hallId={}, movieTitle={}, status={}, dateFrom={}, dateTo={}",
+				hallId, movieTitle, status, dateFrom, dateTo);
 
-		SessionFilterRequest filter = SessionFilterRequest.builder().hallId(hallId).movieId(movieId).status(status)
-				.dateFrom(dateFrom).dateTo(dateTo).build();
+		SessionFilterRequest filter = SessionFilterRequest.builder().hallId(hallId).movieTitle(movieTitle)
+				.status(status).dateFrom(dateFrom).dateTo(dateTo).build();
 
 		PageResponse<SessionAdminResponse> page = sessionService.getSessionsForAdmin(filter, pageable);
 		return ResponseEntity.ok(page);

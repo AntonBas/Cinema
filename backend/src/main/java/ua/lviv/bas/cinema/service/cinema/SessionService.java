@@ -9,7 +9,6 @@ import java.util.stream.Collectors;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -23,7 +22,6 @@ import ua.lviv.bas.cinema.domain.Movie;
 import ua.lviv.bas.cinema.domain.Session;
 import ua.lviv.bas.cinema.domain.enums.CinemaSessionStatus;
 import ua.lviv.bas.cinema.domain.projection.SessionAdminProjection;
-import ua.lviv.bas.cinema.domain.projection.SessionScheduleProjection;
 import ua.lviv.bas.cinema.domain.specification.SessionSpecification;
 import ua.lviv.bas.cinema.dto.common.PageResponse;
 import ua.lviv.bas.cinema.dto.session.request.SessionCreateRequest;
@@ -37,7 +35,6 @@ import ua.lviv.bas.cinema.exception.domain.cinema.SessionTimeConflictException;
 import ua.lviv.bas.cinema.exception.domain.cinema.SessionValidationException;
 import ua.lviv.bas.cinema.mapper.SessionMapper;
 import ua.lviv.bas.cinema.repository.MovieRepository;
-import ua.lviv.bas.cinema.repository.SeatRepository;
 import ua.lviv.bas.cinema.repository.SessionRepository;
 
 @Slf4j
@@ -51,76 +48,72 @@ public class SessionService {
 	private final SessionMapper sessionMapper;
 	private final MovieRepository movieRepository;
 	private final CinemaHallService cinemaHallService;
-	private final SeatRepository seatRepository;
 	private final SessionSpecification sessionSpecification;
 
-	@Cacheable(key = "'public-schedule-' + #filter.hashCode() + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
-	public PageResponse<SessionScheduleResponse> getScheduleSessions(SessionFilterRequest filter, Pageable pageable) {
-		log.info("Getting public schedule sessions - filter: {}", filter);
+	@Cacheable(key = "'public:' + #searchTerm + ':' + #date + ':' + #pageable.pageNumber + ':' + #pageable.pageSize")
+	public PageResponse<SessionScheduleResponse> getScheduleSessions(String searchTerm, LocalDate date,
+			Pageable pageable) {
+		Specification<Session> spec = sessionSpecification.buildForSchedule(searchTerm, date);
+		Page<Session> page = sessionRepository.findAll(spec, pageable);
 
-		Page<SessionScheduleProjection> page = sessionRepository.findAllScheduleProjections(LocalDateTime.now(),
-				pageable);
+		if (!page.hasContent()) {
+			return PageResponse.from(Page.empty(pageable));
+		}
 
-		Map<Long, Integer> hallCapacities = getHallCapacities(
-				page.getContent().stream().map(SessionScheduleProjection::getHallId).collect(Collectors.toList()));
+		List<Long> sessionIds = page.getContent().stream().map(Session::getId).collect(Collectors.toList());
+		Map<Long, Integer> availableSeats = getAvailableSeatsBatch(sessionIds);
 
-		Map<Long, Integer> availableSeats = sessionRepository.findAvailableSeatsForSessions(
-				page.getContent().stream().map(SessionScheduleProjection::getId).collect(Collectors.toList()));
-
-		return PageResponse.from(page.map(projection -> {
-			SessionScheduleResponse response = sessionMapper.toSessionScheduleResponse(projection);
-			response.setHallCapacity(hallCapacities.get(projection.getHallId()));
-			response.setAvailableSeats(availableSeats.get(projection.getId()));
+		return PageResponse.from(page.map(session -> {
+			SessionScheduleResponse response = sessionMapper.toScheduleResponse(session);
+			response.setAvailableSeats(availableSeats.getOrDefault(session.getId(),
+					cinemaHallService.getHallCapacity(session.getHall().getId())));
 			return response;
 		}));
 	}
 
-	@Cacheable(key = "'admin-' + #filter.hashCode() + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
+	@Cacheable(key = "'admin:' + #filter.hashCode() + ':' + #pageable.pageNumber + ':' + #pageable.pageSize")
 	public PageResponse<SessionAdminResponse> getSessionsForAdmin(SessionFilterRequest filter, Pageable pageable) {
-		log.info("Getting admin sessions - filter: {}", filter);
-
 		Specification<Session> spec = sessionSpecification.buildForAdmin(filter);
-		Page<SessionAdminProjection> page = sessionRepository.findAllAdminProjections(spec, pageable);
+		Page<Session> page = sessionRepository.findAll(spec, pageable);
 
-		Map<Long, Integer> hallCapacities = getHallCapacities(
-				page.getContent().stream().map(SessionAdminProjection::getHallId).collect(Collectors.toList()));
+		if (!page.hasContent()) {
+			return PageResponse.from(Page.empty(pageable));
+		}
 
-		return PageResponse.from(page.map(projection -> {
-			SessionAdminResponse response = sessionMapper.toSessionAdminResponse(projection);
-			response.setHallCapacity(hallCapacities.get(projection.getHallId()));
-			return response;
-		}));
+		return PageResponse.from(page.map(sessionMapper::toAdminResponse));
 	}
 
-	@Cacheable(key = "'public-' + #id")
-	public SessionScheduleResponse getSessionByIdForPublic(Long id) {
-		SessionScheduleProjection projection = sessionRepository.findScheduleProjectionById(id)
-				.orElseThrow(() -> new SessionNotFoundException(id));
-		SessionScheduleResponse response = sessionMapper.toSessionScheduleResponse(projection);
-		response.setHallCapacity(getHallCapacity(projection.getHallId()));
-		response.setAvailableSeats(getAvailableSeats(projection.getId()));
+	@Cacheable(key = "'public:' + #id")
+	public SessionScheduleResponse getSessionForPublic(Long id) {
+		Session session = sessionRepository.findById(id).orElseThrow(() -> new SessionNotFoundException(id));
+
+		SessionScheduleResponse response = sessionMapper.toScheduleResponse(session);
+		response.setAvailableSeats(getAvailableSeats(id));
+
 		return response;
 	}
 
-	@Cacheable(key = "'admin-' + #id")
-	public SessionAdminResponse getSessionById(Long id) {
+	@Cacheable(key = "'admin:' + #id")
+	public SessionAdminResponse getSessionForAdmin(Long id) {
 		SessionAdminProjection projection = sessionRepository.findAdminProjectionById(id)
 				.orElseThrow(() -> new SessionNotFoundException(id));
-		SessionAdminResponse response = sessionMapper.toSessionAdminResponse(projection);
-		response.setHallCapacity(getHallCapacity(projection.getHallId()));
-		return response;
+
+		return sessionMapper.toAdminResponse(projection);
 	}
 
-	@Cacheable(key = "'conflict-check-' + #hallId + '-' + #startTime + '-' + #excludeSessionId")
-	public boolean hasTimeConflict(Long hallId, LocalDateTime startTime, Integer durationMinutes,
-			Long excludeSessionId) {
-		LocalDateTime endTime = startTime.plusMinutes(durationMinutes);
-		return sessionRepository.existsConflictingSession(hallId, startTime, endTime, excludeSessionId);
+	@Cacheable(key = "'available:' + #sessionId")
+	public Integer getAvailableSeats(Long sessionId) {
+		return getAvailableSeatsBatch(List.of(sessionId)).getOrDefault(sessionId, 0);
 	}
 
-	@Caching(evict = { @CacheEvict(allEntries = true, cacheNames = "sessions"),
-			@CacheEvict(allEntries = true, cacheNames = "movies"),
-			@CacheEvict(allEntries = true, cacheNames = "halls") })
+	private Map<Long, Integer> getAvailableSeatsBatch(List<Long> sessionIds) {
+		if (sessionIds.isEmpty())
+			return Map.of();
+		return sessionRepository.findAvailableSeatsBatch(sessionIds).stream()
+				.collect(Collectors.toMap(arr -> (Long) arr[0], arr -> ((Number) arr[1]).intValue()));
+	}
+
+	@CacheEvict(allEntries = true)
 	@Transactional
 	public SessionAdminResponse createSession(SessionCreateRequest request) {
 		validateStartTime(request.getStartTime());
@@ -129,23 +122,20 @@ public class SessionService {
 		CinemaHall hall = cinemaHallService.getHallEntityById(request.getHallId());
 
 		validateMovieAvailability(movie, request.getStartTime());
+		validateNoTimeConflict(hall.getId(), request.getStartTime(),
+				request.getStartTime().plusMinutes(movie.getDurationMinutes()), null);
 
-		LocalDateTime endTime = request.getStartTime().plusMinutes(movie.getDurationMinutes());
-		validateNoTimeConflict(hall.getId(), request.getStartTime(), endTime, null);
-
-		Session session = sessionMapper.toSession(request);
+		Session session = sessionMapper.toEntity(request);
 		session.setMovie(movie);
 		session.setHall(hall);
 
 		Session saved = sessionRepository.save(session);
 		log.info("Session created with ID: {}", saved.getId());
 
-		return getSessionById(saved.getId());
+		return getSessionForAdmin(saved.getId());
 	}
 
-	@Caching(evict = { @CacheEvict(allEntries = true, cacheNames = "sessions"),
-			@CacheEvict(allEntries = true, cacheNames = "movies"),
-			@CacheEvict(allEntries = true, cacheNames = "halls") })
+	@CacheEvict(allEntries = true)
 	@Transactional
 	public SessionAdminResponse updateSession(Long id, SessionUpdateRequest request) {
 		Session session = sessionRepository.findByIdWithLock(id).orElseThrow(() -> new SessionNotFoundException(id));
@@ -177,19 +167,16 @@ public class SessionService {
 		}
 
 		if (hasChanges) {
-			LocalDateTime endTime = session.getStartTime().plusMinutes(session.getMovie().getDurationMinutes());
-			validateNoTimeConflict(session.getHall().getId(), session.getStartTime(), endTime, id);
-
+			validateNoTimeConflict(session.getHall().getId(), session.getStartTime(),
+					session.getStartTime().plusMinutes(session.getMovie().getDurationMinutes()), id);
 			session = sessionRepository.save(session);
 			log.info("Session updated with ID: {}", session.getId());
 		}
 
-		return getSessionById(session.getId());
+		return getSessionForAdmin(session.getId());
 	}
 
-	@Caching(evict = { @CacheEvict(allEntries = true, cacheNames = "sessions"),
-			@CacheEvict(allEntries = true, cacheNames = "movies"),
-			@CacheEvict(allEntries = true, cacheNames = "halls") })
+	@CacheEvict(allEntries = true)
 	@Transactional
 	public void deleteSession(Long id) {
 		if (!sessionRepository.existsById(id)) {
@@ -199,9 +186,7 @@ public class SessionService {
 		log.info("Session deleted with ID: {}", id);
 	}
 
-	@Caching(evict = { @CacheEvict(allEntries = true, cacheNames = "sessions"),
-			@CacheEvict(allEntries = true, cacheNames = "movies"),
-			@CacheEvict(allEntries = true, cacheNames = "halls") })
+	@CacheEvict(allEntries = true)
 	@Transactional
 	public void cancelSession(Long sessionId) {
 		Session session = sessionRepository.findByIdWithLock(sessionId)
@@ -224,9 +209,7 @@ public class SessionService {
 		log.info("Session cancelled with ID: {}", sessionId);
 	}
 
-	@Caching(evict = { @CacheEvict(allEntries = true, cacheNames = "sessions"),
-			@CacheEvict(allEntries = true, cacheNames = "movies"),
-			@CacheEvict(allEntries = true, cacheNames = "halls") })
+	@CacheEvict(allEntries = true)
 	@Transactional
 	public void reactivateSession(Long sessionId) {
 		Session session = sessionRepository.findByIdWithLock(sessionId)
@@ -240,27 +223,12 @@ public class SessionService {
 			throw SessionOperationException.cannotReactivatePast();
 		}
 
-		LocalDateTime endTime = session.getStartTime().plusMinutes(session.getMovie().getDurationMinutes());
-		validateNoTimeConflict(session.getHall().getId(), session.getStartTime(), endTime, sessionId);
+		validateNoTimeConflict(session.getHall().getId(), session.getStartTime(),
+				session.getStartTime().plusMinutes(session.getMovie().getDurationMinutes()), sessionId);
 
 		session.setStatus(CinemaSessionStatus.SCHEDULED);
 		sessionRepository.save(session);
 		log.info("Session reactivated with ID: {}", sessionId);
-	}
-
-	private Map<Long, Integer> getHallCapacities(List<Long> hallIds) {
-		if (hallIds.isEmpty())
-			return Map.of();
-		return seatRepository.countSeatsByHallIds(hallIds).stream()
-				.collect(Collectors.toMap(row -> (Long) row[0], row -> ((Number) row[1]).intValue()));
-	}
-
-	private Integer getHallCapacity(Long hallId) {
-		return Long.valueOf(seatRepository.countByHallId(hallId)).intValue();
-	}
-
-	private Integer getAvailableSeats(Long sessionId) {
-		return sessionRepository.findAvailableSeatsForSessions(List.of(sessionId)).get(sessionId);
 	}
 
 	private void validateStartTime(LocalDateTime startTime) {
@@ -271,9 +239,11 @@ public class SessionService {
 
 	private void validateMovieAvailability(Movie movie, LocalDateTime sessionStartTime) {
 		LocalDate sessionDate = sessionStartTime.toLocalDate();
+
 		if (sessionDate.isBefore(movie.getReleaseDate())) {
 			throw SessionValidationException.movieNotReleased(movie, sessionDate);
 		}
+
 		if (movie.getEndShowingDate() != null && sessionDate.isAfter(movie.getEndShowingDate())) {
 			throw SessionValidationException.movieEndedShowing(movie, sessionDate);
 		}

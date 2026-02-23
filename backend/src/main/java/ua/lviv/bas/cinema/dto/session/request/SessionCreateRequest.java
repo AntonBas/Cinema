@@ -17,25 +17,25 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "Request DTO for creating or updating a movie session")
+@Schema(description = "Request DTO for creating a movie session")
 public class SessionCreateRequest {
 
-	@Schema(description = "Start time of the movie session", example = "2024-01-15T18:30:00", requiredMode = Schema.RequiredMode.REQUIRED, type = "string", format = "date-time")
+	@Schema(description = "Start time of the movie session", example = "2024-01-15T18:30:00")
 	@FutureOrPresent
-	@NotNull(message = "Start time is required")
+	@NotNull
 	private LocalDateTime startTime;
 
-	@Schema(description = "Base price for a standard seat in this session", example = "150.00", requiredMode = Schema.RequiredMode.REQUIRED, minimum = "10.0")
-	@Positive(message = "Base price must be positive")
-	@DecimalMin(value = "10.0", message = "Base price must be at least 10 UAH")
-	@NotNull(message = "Base price is required")
+	@Schema(description = "Base price for a standard seat", example = "150.00")
+	@Positive
+	@DecimalMin("10.0")
+	@NotNull
 	private BigDecimal basePrice;
 
-	@Schema(description = "ID of the movie being shown", example = "1", requiredMode = Schema.RequiredMode.REQUIRED)
-	@NotNull(message = "Movie ID is required")
+	@Schema(description = "ID of the movie being shown", example = "1")
+	@NotNull
 	private Long movieId;
 
-	@Schema(description = "ID of the cinema hall where the session takes place", example = "2", requiredMode = Schema.RequiredMode.REQUIRED)
-	@NotNull(message = "Hall ID is required")
+	@Schema(description = "ID of the cinema hall", example = "2")
+	@NotNull
 	private Long hallId;
 }
