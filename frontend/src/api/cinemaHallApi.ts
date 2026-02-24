@@ -17,7 +17,6 @@ const getAuthHeaders = (): HeadersInit => {
 
 const fetchApi = async <T>(url: string, options: RequestInit = {}): Promise<T> => {
     const headers = getAuthHeaders();
-
     const response = await fetch(url, {
         headers,
         ...options,
@@ -33,6 +32,9 @@ export const cinemaHallApi = {
     admin: {
         getAll: (): Promise<CinemaHallResponse[]> =>
             fetchApi<CinemaHallResponse[]>(ADMIN_URL),
+
+        getById: (id: number): Promise<CinemaHallResponse> =>
+            fetchApi<CinemaHallResponse>(`${ADMIN_URL}/${id}`),
 
         create: (request: CinemaHallRequest): Promise<CinemaHallResponse> =>
             fetchApi<CinemaHallResponse>(ADMIN_URL, {
@@ -54,4 +56,14 @@ export const cinemaHallApi = {
         getLayout: (id: number): Promise<HallLayoutResponse> =>
             fetchApi<HallLayoutResponse>(`${ADMIN_URL}/${id}/layout`)
     }
+};
+
+export const cinemaHallKeys = {
+    all: ['cinemaHalls'] as const,
+    lists: () => [...cinemaHallKeys.all, 'list'] as const,
+    list: () => [...cinemaHallKeys.lists()] as const,
+    details: () => [...cinemaHallKeys.all, 'detail'] as const,
+    detail: (id: number) => [...cinemaHallKeys.details(), id] as const,
+    layouts: () => [...cinemaHallKeys.all, 'layout'] as const,
+    layout: (id: number) => [...cinemaHallKeys.layouts(), id] as const,
 };

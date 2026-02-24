@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { Modal, Input, Button, Select } from '@/components/ui';
 import { SeatType } from '@/types/seat';
 import type { CinemaHallRequest } from '@/types/cinemaHall';
@@ -39,16 +39,28 @@ export const BaseHallModal: React.FC<BaseHallModalProps> = ({
     coupleRows = [],
     onCoupleRowsChange
 }) => {
-    const totalSeats = (formData.rows || 0) * (formData.seatsPerRow || 0);
-    const isEvenSeatsPerRow = (formData.seatsPerRow || 0) % 2 === 0;
+    const totalSeats = useMemo(() =>
+        (formData.rows || 0) * (formData.seatsPerRow || 0),
+        [formData.rows, formData.seatsPerRow]
+    );
 
-    const handleCoupleRowToggle = (row: number) => {
+    const isEvenSeatsPerRow = useMemo(() =>
+        (formData.seatsPerRow || 0) % 2 === 0,
+        [formData.seatsPerRow]
+    );
+
+    const handleCoupleRowToggle = useCallback((row: number) => {
         if (!onCoupleRowsChange) return;
         const newRows = coupleRows.includes(row)
             ? coupleRows.filter(r => r !== row)
             : [...coupleRows, row].sort((a, b) => a - b);
         onCoupleRowsChange(newRows);
-    };
+    }, [coupleRows, onCoupleRowsChange]);
+
+    const rowsArray = useMemo(() =>
+        Array.from({ length: formData.rows || 0 }, (_, i) => i + 1),
+        [formData.rows]
+    );
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title={title} size="medium">
@@ -72,7 +84,7 @@ export const BaseHallModal: React.FC<BaseHallModalProps> = ({
                         <Input
                             type="number"
                             value={formData.rows?.toString() || ''}
-                            onChange={(value) => onFieldChange('rows', parseInt(value) || 1)}
+                            onChange={(value) => onFieldChange('rows', value ? parseInt(value) : 1)}
                             placeholder="Rows"
                             required={true}
                             min={1}
@@ -86,7 +98,7 @@ export const BaseHallModal: React.FC<BaseHallModalProps> = ({
                         <Input
                             type="number"
                             value={formData.seatsPerRow?.toString() || ''}
-                            onChange={(value) => onFieldChange('seatsPerRow', parseInt(value) || 1)}
+                            onChange={(value) => onFieldChange('seatsPerRow', value ? parseInt(value) : 1)}
                             placeholder="Seats per row"
                             required={true}
                             min={1}
@@ -118,7 +130,7 @@ export const BaseHallModal: React.FC<BaseHallModalProps> = ({
                     <div className={styles.formGroup}>
                         <label className={styles.label}>COUPLE Rows</label>
                         <div className={styles.coupleRowsGrid}>
-                            {Array.from({ length: formData.rows }, (_, i) => i + 1).map(row => (
+                            {rowsArray.map(row => (
                                 <label key={row} className={styles.coupleRowLabel}>
                                     <input
                                         type="checkbox"

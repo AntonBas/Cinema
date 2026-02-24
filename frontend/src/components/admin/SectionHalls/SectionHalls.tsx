@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import type { CinemaHallResponse, CinemaHallRequest } from '@/types/cinemaHall';
 import { SeatType } from '@/types/seat';
 import { useCinemaHalls } from '@/hooks/features/cinemaHalls/useCinemaHalls';
@@ -31,67 +31,62 @@ export const SectionHalls: React.FC = () => {
     const [selectedHall, setSelectedHall] = useState<CinemaHallResponse | null>(null);
     const [currentLayout, setCurrentLayout] = useState<{ rows: number; seatsPerRow: number; coupleRows?: number[] } | undefined>();
     const [showLayoutModal, setShowLayoutModal] = useState(false);
-    const [deleteModal, setDeleteModal] = useState<{
-        isOpen: boolean;
-        hall: CinemaHallResponse | null;
-        isDeleting: boolean;
-    }>({
+    const [deleteModal, setDeleteModal] = useState({
         isOpen: false,
-        hall: null,
+        hall: null as CinemaHallResponse | null,
         isDeleting: false
     });
 
-    useEffect(() => {
-        getAllHalls();
-    }, []);
+    const hasLoadedRef = useRef(false);
 
-    const loadHalls = useCallback(async () => {
-        await getAllHalls();
+    useEffect(() => {
+        if (!hasLoadedRef.current) {
+            getAllHalls();
+            hasLoadedRef.current = true;
+        }
     }, [getAllHalls]);
+
+    const handleApiError = useCallback((err: unknown, defaultMessage: string) => {
+        if (isApiErrorException(err)) {
+            showNotification(err.message, 'error');
+        } else {
+            showNotification(defaultMessage, 'error');
+        }
+    }, [showNotification]);
 
     const handleCreateHall = useCallback(async (request: CinemaHallRequest) => {
         try {
             const result = await createHall(request);
             if (result) {
                 showNotification(`Cinema hall "${result.name}" created successfully!`, 'success');
-                await loadHalls();
             }
             setShowCreateModal(false);
         } catch (err) {
-            if (isApiErrorException(err)) {
-                if (err.isConflict()) {
-                    showNotification(`Hall with name "${request.name}" already exists`, 'error');
-                } else {
-                    showNotification(err.message, 'error');
-                }
+            if (isApiErrorException(err) && err.isConflict()) {
+                showNotification(`Hall with name "${request.name}" already exists`, 'error');
             } else {
-                showNotification('Failed to create hall', 'error');
+                handleApiError(err, 'Failed to create hall');
             }
         }
-    }, [createHall, loadHalls, showNotification]);
+    }, [createHall, showNotification, handleApiError]);
 
     const handleEditHall = useCallback(async (id: number, request: CinemaHallRequest & { coupleRows?: number[] }) => {
         try {
             const result = await updateHall(id, request);
             if (result) {
                 showNotification(`Cinema hall "${result.name}" updated successfully!`, 'success');
-                await loadHalls();
             }
             setShowEditModal(false);
             setSelectedHall(null);
             setCurrentLayout(undefined);
         } catch (err) {
-            if (isApiErrorException(err)) {
-                if (err.isConflict()) {
-                    showNotification(`Hall with name "${request.name}" already exists`, 'error');
-                } else {
-                    showNotification(err.message, 'error');
-                }
+            if (isApiErrorException(err) && err.isConflict()) {
+                showNotification(`Hall with name "${request.name}" already exists`, 'error');
             } else {
-                showNotification('Failed to update hall', 'error');
+                handleApiError(err, 'Failed to update hall');
             }
         }
-    }, [updateHall, loadHalls, showNotification]);
+    }, [updateHall, showNotification, handleApiError]);
 
     const handleDeleteHall = useCallback(async () => {
         if (!deleteModal.hall) return;
@@ -101,28 +96,19 @@ export const SectionHalls: React.FC = () => {
         try {
             await deleteHall(deleteModal.hall.id);
             showNotification(`Cinema hall "${deleteModal.hall.name}" deleted successfully!`, 'success');
-            await loadHalls();
             setDeleteModal({ isOpen: false, hall: null, isDeleting: false });
         } catch (err) {
-            if (isApiErrorException(err)) {
-                if (err.isConflict()) {
-                    showNotification('Cannot delete hall because it has associated sessions', 'error');
-                } else {
-                    showNotification(err.message, 'error');
-                }
+            if (isApiErrorException(err) && err.isConflict()) {
+                showNotification('Cannot delete hall because it has associated sessions', 'error');
             } else {
-                showNotification('Failed to delete hall', 'error');
+                handleApiError(err, 'Failed to delete hall');
             }
             setDeleteModal(prev => ({ ...prev, isDeleting: false }));
         }
-    }, [deleteHall, deleteModal.hall, loadHalls, showNotification]);
+    }, [deleteHall, deleteModal.hall, showNotification, handleApiError]);
 
     const confirmDelete = useCallback((hall: CinemaHallResponse) => {
-        setDeleteModal({
-            isOpen: true,
-            hall,
-            isDeleting: false
-        });
+        setDeleteModal({ isOpen: true, hall, isDeleting: false });
     }, []);
 
     const handleEdit = useCallback(async (hall: CinemaHallResponse) => {
@@ -144,6 +130,21 @@ export const SectionHalls: React.FC = () => {
     const handleShowLayout = useCallback((hall: CinemaHallResponse) => {
         setSelectedHall(hall);
         setShowLayoutModal(true);
+    }, []);
+
+    const handleCloseCreate = useCallback(() => {
+        setShowCreateModal(false);
+    }, []);
+
+    const handleCloseEdit = useCallback(() => {
+        setShowEditModal(false);
+        setSelectedHall(null);
+        setCurrentLayout(undefined);
+    }, []);
+
+    const handleCloseLayout = useCallback(() => {
+        setShowLayoutModal(false);
+        setSelectedHall(null);
     }, []);
 
     const handleCloseDelete = useCallback(() => {
@@ -200,7 +201,7 @@ export const SectionHalls: React.FC = () => {
 
             {showCreateModal && (
                 <CreateHallModal
-                    onClose={() => setShowCreateModal(false)}
+                    onClose={handleCloseCreate}
                     onCreate={handleCreateHall}
                     loading={loading}
                 />
@@ -210,11 +211,7 @@ export const SectionHalls: React.FC = () => {
                 <EditHallModal
                     hall={selectedHall}
                     currentLayout={currentLayout}
-                    onClose={() => {
-                        setShowEditModal(false);
-                        setSelectedHall(null);
-                        setCurrentLayout(undefined);
-                    }}
+                    onClose={handleCloseEdit}
                     onUpdate={handleEditHall}
                     loading={loading}
                 />
@@ -225,10 +222,7 @@ export const SectionHalls: React.FC = () => {
                     key={selectedHall.id}
                     hall={selectedHall}
                     isOpen={showLayoutModal}
-                    onClose={() => {
-                        setShowLayoutModal(false);
-                        setSelectedHall(null);
-                    }}
+                    onClose={handleCloseLayout}
                 />
             )}
 

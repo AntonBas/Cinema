@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import type { CinemaHallResponse, CinemaHallRequest } from '@/types/cinemaHall';
 import { SeatType } from '@/types/seat';
 import { BaseHallModal } from './BaseHallModal';
@@ -36,13 +36,13 @@ export const EditHallModal: React.FC<EditHallModalProps> = ({
         setCoupleRows(currentLayout?.coupleRows || []);
     }, [hall, currentLayout]);
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = useCallback(async (e: React.FormEvent) => {
         e.preventDefault();
         if (!formData.name.trim() || loading) return;
         await onUpdate(hall.id, { ...formData, coupleRows });
-    };
+    }, [formData, coupleRows, hall.id, loading, onUpdate]);
 
-    const updateField = <K extends keyof CinemaHallRequest>(
+    const updateField = useCallback(<K extends keyof CinemaHallRequest>(
         field: K,
         value: CinemaHallRequest[K]
     ) => {
@@ -50,12 +50,15 @@ export const EditHallModal: React.FC<EditHallModalProps> = ({
         if (field === 'rows') {
             setCoupleRows(prev => prev.filter(row => row <= (value as number)));
         }
-    };
+    }, []);
 
-    const hasChanges = formData.name !== hall.name ||
+    const hasChanges = useMemo(() =>
+        formData.name !== hall.name ||
         formData.rows !== currentLayout?.rows ||
         formData.seatsPerRow !== currentLayout?.seatsPerRow ||
-        JSON.stringify(coupleRows) !== JSON.stringify(currentLayout?.coupleRows || []);
+        JSON.stringify(coupleRows) !== JSON.stringify(currentLayout?.coupleRows || []),
+        [formData, hall.name, currentLayout, coupleRows]
+    );
 
     return (
         <BaseHallModal

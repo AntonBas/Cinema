@@ -26,7 +26,9 @@ export const HallLayoutModal: React.FC<HallLayoutModalProps> = ({
     const { updateSeatType, setSeatStatus, loading: updatingSeatLoading } = useSeats();
 
     useEffect(() => {
-        setLocalLayout(hallLayout);
+        if (hallLayout) {
+            setLocalLayout(hallLayout);
+        }
     }, [hallLayout]);
 
     useEffect(() => {
@@ -85,7 +87,7 @@ export const HallLayoutModal: React.FC<HallLayoutModalProps> = ({
             });
 
             await updateSeatType(hall.id, seat.id, nextSeatType);
-        } catch (err) {
+        } catch {
             await getHallLayout(hall.id);
         } finally {
             setUpdatingSeat(null);
@@ -121,7 +123,7 @@ export const HallLayoutModal: React.FC<HallLayoutModalProps> = ({
             });
 
             await setSeatStatus(hall.id, seat.id, newActive);
-        } catch (err) {
+        } catch {
             await getHallLayout(hall.id);
         } finally {
             setUpdatingSeat(null);
@@ -242,6 +244,8 @@ export const HallLayoutModal: React.FC<HallLayoutModalProps> = ({
         );
     }, [localLayout, activeSeatsCount, SeatComponent, getSeatTypeName]);
 
+    if (!isOpen) return null;
+
     return (
         <Modal
             isOpen={isOpen}
@@ -256,7 +260,7 @@ export const HallLayoutModal: React.FC<HallLayoutModalProps> = ({
                     </div>
                 )}
 
-                {!loading && (!localLayout?.rows?.length) && (
+                {!loading && !localLayout?.rows?.length && (
                     <div className={styles.noLayout}>
                         <div className={styles.emptyIcon}>🎭</div>
                         <h3>No Seats Configured</h3>
