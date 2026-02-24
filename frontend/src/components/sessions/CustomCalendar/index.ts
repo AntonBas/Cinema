@@ -1,1 +1,0 @@
-export { CustomCalendar } from './CustomCalendar';

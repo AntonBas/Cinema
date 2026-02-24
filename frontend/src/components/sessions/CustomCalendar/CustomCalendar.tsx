@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import styles from './CustomCalendar.module.css';
 
 interface CustomCalendarProps {
@@ -13,66 +13,72 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
     sessionDates = []
 }) => {
     const [currentMonth, setCurrentMonth] = useState(new Date());
-    const [availableDates, setAvailableDates] = useState<{ [key: string]: boolean }>({});
 
     useEffect(() => {
         const date = new Date(selectedDate);
-        setCurrentMonth(new Date(date.getFullYear(), date.getMonth(), 1));
+        if (!isNaN(date.getTime())) {
+            setCurrentMonth(new Date(date.getFullYear(), date.getMonth(), 1));
+        }
     }, [selectedDate]);
 
-    useEffect(() => {
-        const sessionDateMap: { [key: string]: boolean } = {};
+    const availableDatesSet = useMemo(() => {
+        const dates = new Set<string>();
         sessionDates.forEach(dateStr => {
-            const dateObj = new Date(dateStr);
-            const year = dateObj.getFullYear();
-            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-            const day = String(dateObj.getDate()).padStart(2, '0');
-            const formattedDate = `${year}-${month}-${day}`;
-            sessionDateMap[formattedDate] = true;
+            const date = new Date(dateStr);
+            if (!isNaN(date.getTime())) {
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                dates.add(`${year}-${month}-${day}`);
+            }
         });
-        setAvailableDates(sessionDateMap);
+        return dates;
     }, [sessionDates]);
 
-    const formatDate = (date: Date): string => {
+    const formatDate = useCallback((date: Date): string => {
         const year = date.getFullYear();
         const month = String(date.getMonth() + 1).padStart(2, '0');
         const day = String(date.getDate()).padStart(2, '0');
         return `${year}-${month}-${day}`;
-    };
+    }, []);
 
-    const getToday = (): string => {
+    const getToday = useCallback((): string => {
         const today = new Date();
         return formatDate(today);
-    };
+    }, [formatDate]);
 
-    const getDaysInMonth = (year: number, month: number) => {
+    const getDaysInMonth = useCallback((year: number, month: number) => {
         return new Date(year, month + 1, 0).getDate();
-    };
+    }, []);
 
-    const getFirstDayOfMonth = (year: number, month: number) => {
-        return new Date(year, month, 1).getDay();
-    };
+    const getFirstDayOfMonth = useCallback((year: number, month: number) => {
+        const day = new Date(year, month, 1).getDay();
+        return day === 0 ? 6 : day - 1;
+    }, []);
 
-    const handlePrevMonth = () => {
-        setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1));
-    };
+    const handlePrevMonth = useCallback(() => {
+        setCurrentMonth(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
+    }, []);
 
-    const handleNextMonth = () => {
-        setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1));
-    };
+    const handleNextMonth = useCallback(() => {
+        setCurrentMonth(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
+    }, []);
 
-    const handleDateClick = (date: Date) => {
+    const handleDateClick = useCallback((date: Date) => {
         onDateChange(formatDate(date));
-    };
+    }, [onDateChange, formatDate]);
 
-    const renderCalendar = () => {
+    const renderCalendar = useCallback(() => {
         const year = currentMonth.getFullYear();
         const month = currentMonth.getMonth();
         const daysInMonth = getDaysInMonth(year, month);
         const firstDay = getFirstDayOfMonth(year, month);
+        const today = getToday();
+        const todayDate = new Date();
+        todayDate.setHours(0, 0, 0, 0);
 
         const days = [];
-        const dayNames = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
+        const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
         for (let i = 0; i < 7; i++) {
             days.push(
@@ -90,34 +96,30 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
             const date = new Date(year, month, day);
             const dateString = formatDate(date);
             const isSelected = dateString === selectedDate;
-            const isToday = dateString === getToday();
-            const hasSession = availableDates[dateString];
-            const today = new Date();
-            const todayWithoutTime = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-            const dateWithoutTime = new Date(year, month, day);
-            const isPast = dateWithoutTime < todayWithoutTime;
-            const isDisabled = isPast && !isToday;
+            const isToday = dateString === today;
+            const hasSession = availableDatesSet.has(dateString);
+            const isPast = date < todayDate && !isToday;
 
             days.push(
                 <button
                     key={day}
-                    onClick={() => !isDisabled && handleDateClick(date)}
-                    disabled={isDisabled}
-                    className={`${styles.day} ${isSelected ? styles.selected : ''
-                        } ${isToday ? styles.today : ''
-                        } ${hasSession ? styles.hasSession : ''
-                        } ${isDisabled ? styles.disabled : ''
-                        }`}
-                    title={isDisabled ? "Past dates are not available" : dateString}
+                    onClick={() => handleDateClick(date)}
+                    disabled={isPast}
+                    className={`${styles.day} 
+                        ${isSelected ? styles.selected : ''} 
+                        ${isToday ? styles.today : ''} 
+                        ${hasSession ? styles.hasSession : ''} 
+                        ${isPast ? styles.disabled : ''}`}
+                    title={isPast ? "Past dates are not available" : undefined}
                 >
                     <span className={styles.dayNumber}>{day}</span>
-                    {hasSession && <div className={styles.sessionDot}></div>}
+                    {hasSession && <div className={styles.sessionDot} />}
                 </button>
             );
         }
 
         return days;
-    };
+    }, [currentMonth, getDaysInMonth, getFirstDayOfMonth, getToday, formatDate, selectedDate, availableDatesSet, handleDateClick]);
 
     const monthYear = currentMonth.toLocaleDateString('en-US', {
         month: 'long',
@@ -148,7 +150,7 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
             </div>
             <div className={styles.legend}>
                 <div className={styles.legendItem}>
-                    <div className={styles.legendDot}></div>
+                    <div className={styles.legendDot} />
                     <span>Available sessions</span>
                 </div>
             </div>

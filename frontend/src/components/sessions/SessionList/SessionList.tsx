@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { movieApi } from '@/api/movieApi';
 import type { SessionScheduleResponse } from '@/types/session';
@@ -12,7 +12,7 @@ interface SessionListProps {
 interface MovieGroup {
     movieId: number;
     movieTitle: string;
-    movieAgeRating: string | null;
+    movieAgeRating: string;
     movieDuration: number;
     sessions: SessionScheduleResponse[];
 }
@@ -28,7 +28,7 @@ export const SessionList: React.FC<SessionListProps> = ({ sessions }) => {
                 groupedMap[session.movieId] = {
                     movieId: session.movieId,
                     movieTitle: session.movieTitle,
-                    movieAgeRating: session.movieAgeRating,
+                    movieAgeRating: session.movieAgeRating || 'N/A',
                     movieDuration: session.movieDuration,
                     sessions: []
                 };
@@ -47,39 +47,43 @@ export const SessionList: React.FC<SessionListProps> = ({ sessions }) => {
         return groupedArray;
     }, [sessions]);
 
-    const formatTime = (dateString: string): string => {
+    const formatTime = useCallback((dateString: string): string => {
         const date = new Date(dateString);
         return date.toLocaleTimeString('en-US', {
             hour: '2-digit',
             minute: '2-digit',
             hour12: false
         });
-    };
+    }, []);
 
-    const formatDuration = (minutes: number): string => {
+    const formatDuration = useCallback((minutes: number): string => {
         const hours = Math.floor(minutes / 60);
         const mins = minutes % 60;
         return `${hours}h ${mins}m`;
-    };
+    }, []);
 
-    const getMovieSlug = (title: string): string => {
+    const getMovieSlug = useCallback((title: string): string => {
         return title
             .toLowerCase()
             .replace(/[^\w\s-]/g, '')
             .replace(/\s+/g, '-')
             .replace(/--+/g, '-')
             .trim();
-    };
+    }, []);
 
-    const handleMovieClick = (movieTitle: string) => {
+    const handleMovieClick = useCallback((movieTitle: string) => {
         const slug = getMovieSlug(movieTitle);
         navigate(`/movies/${slug}`);
-    };
+    }, [navigate, getMovieSlug]);
 
-    const handleSessionClick = (sessionId: number) => {
-        console.log('Session clicked, navigating to booking page:', sessionId);
+    const handleSessionClick = useCallback((sessionId: number) => {
         navigate(`/booking/${sessionId}`);
-    };
+    }, [navigate]);
+
+    const formatPrice = useCallback((price: string): string => {
+        const numericPrice = parseFloat(price);
+        return isNaN(numericPrice) ? '0' : numericPrice.toFixed(0);
+    }, []);
 
     if (sessions.length === 0) {
         return null;
@@ -95,6 +99,7 @@ export const SessionList: React.FC<SessionListProps> = ({ sessions }) => {
                                 src={movieApi.public.getPosterUrl(movieGroup.movieId)}
                                 alt={movieGroup.movieTitle}
                                 className={styles.poster}
+                                loading="lazy"
                                 onError={(e) => {
                                     (e.target as HTMLImageElement).src = '/placeholder-poster.jpg';
                                 }}
@@ -115,7 +120,7 @@ export const SessionList: React.FC<SessionListProps> = ({ sessions }) => {
                             </div>
 
                             <div className={styles.movieMeta}>
-                                <span className={styles.ageRating}>{movieGroup.movieAgeRating || 'N/A'}</span>
+                                <span className={styles.ageRating}>{movieGroup.movieAgeRating}</span>
                                 <span className={styles.duration}>{formatDuration(movieGroup.movieDuration)}</span>
                                 <span className={styles.sessionCount}>
                                     {movieGroup.sessions.length} session{movieGroup.sessions.length !== 1 ? 's' : ''}
@@ -138,6 +143,9 @@ export const SessionList: React.FC<SessionListProps> = ({ sessions }) => {
                                                 handleSessionClick(session.id);
                                             }
                                         }}
+                                        role="button"
+                                        tabIndex={isAvailable ? 0 : -1}
+                                        aria-label={`Session at ${formatTime(session.startTime)} in ${session.hallName}`}
                                     >
                                         <div className={styles.sessionTime}>
                                             <div className={styles.timeRange}>
@@ -150,7 +158,7 @@ export const SessionList: React.FC<SessionListProps> = ({ sessions }) => {
 
                                         <div className={styles.sessionInfo}>
                                             <div className={styles.price}>
-                                                ₴{parseFloat(session.basePrice).toFixed(0)}
+                                                ₴{formatPrice(session.basePrice)}
                                             </div>
 
                                             <div className={styles.seats}>

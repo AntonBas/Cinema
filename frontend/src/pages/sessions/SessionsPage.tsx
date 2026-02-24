@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { sessionApi } from '@/api/sessionApi';
 import type { SessionScheduleResponse } from '@/types/session';
-import type { PageResponse } from '@/types/pagination';
+import type { PageResponse, SearchParams } from '@/types/pagination';
 import { Layout } from '@/components/layout/Layout/Layout';
 import { DateFilter } from '@/components/sessions/DateFilter/DateFilter';
 import { MovieFilter } from '@/components/sessions/MovieFilter/MovieFilter';
@@ -42,14 +42,27 @@ const SessionsPage: React.FC = () => {
         setError(null);
 
         try {
-            const response: PageResponse<SessionScheduleResponse> = await sessionApi.public.getSessions({
+            const params: SearchParams = {
                 page,
                 size: 50,
                 sort: 'startTime,asc',
                 dateFrom: selectedDate,
-                dateTo: selectedDate,
-                movieId: selectedMovieId
-            });
+                dateTo: selectedDate
+            };
+
+            if (selectedMovieId) {
+                params.movieId = selectedMovieId;
+            }
+
+            const response: PageResponse<SessionScheduleResponse> = await sessionApi.public.getSessions(
+                params.search || '',
+                params.dateFrom,
+                {
+                    page: params.page,
+                    size: params.size,
+                    sort: params.sort
+                }
+            );
 
             setSessions(response.content);
             setTotalPages(response.totalPages);
@@ -66,12 +79,25 @@ const SessionsPage: React.FC = () => {
 
     const fetchAvailableDates = useCallback(async () => {
         try {
-            const response: PageResponse<SessionScheduleResponse> = await sessionApi.public.getSessions({
+            const params: SearchParams = {
                 page: 0,
                 size: 1000,
-                sort: 'startTime,asc',
-                movieId: selectedMovieId
-            });
+                sort: 'startTime,asc'
+            };
+
+            if (selectedMovieId) {
+                params.movieId = selectedMovieId;
+            }
+
+            const response: PageResponse<SessionScheduleResponse> = await sessionApi.public.getSessions(
+                params.search || '',
+                params.dateFrom,
+                {
+                    page: params.page,
+                    size: params.size,
+                    sort: params.sort
+                }
+            );
 
             const dates = response.content
                 .map(session => new Date(session.startTime).toISOString().split('T')[0])

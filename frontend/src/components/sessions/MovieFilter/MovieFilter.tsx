@@ -25,11 +25,6 @@ export const MovieFilter: React.FC<MovieFilterProps> = ({ selectedMovieId, onMov
         setLoading(true);
         try {
             const results = await movieApi.admin.searchMoviesForSession(query);
-            console.log('🔍 MovieFilter - active movies search results:', {
-                query,
-                results,
-                resultsLength: results.length
-            });
             setMovies(results);
         } catch (error) {
             console.error('Error searching movies:', error);
@@ -148,7 +143,6 @@ export const MovieFilter: React.FC<MovieFilterProps> = ({ selectedMovieId, onMov
                             <div className={styles.movieContent}>
                                 <span className={styles.movieTitle}>{movie.title}</span>
                                 <div className={styles.movieMeta}>
-                                    <span className={styles.movieYear}>{movie.releaseYear}</span>
                                     <span className={styles.movieDuration}>{movie.durationMinutes} min</span>
                                 </div>
                             </div>

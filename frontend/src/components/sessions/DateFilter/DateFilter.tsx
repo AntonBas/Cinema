@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { CustomCalendar } from '../CustomCalendar';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { CustomCalendar } from '../CustomCalendar/CustomCalendar';
 import styles from './DateFilter.module.css';
 
 interface DateFilterProps {
@@ -30,31 +30,32 @@ export const DateFilter: React.FC<DateFilterProps> = ({
         };
     }, []);
 
-    const handleTodayClick = () => {
+    const handleTodayClick = useCallback(() => {
         onDateChange(today);
         setIsCalendarOpen(false);
-    };
+    }, [onDateChange, today]);
 
-    const handleTomorrowClick = () => {
+    const handleTomorrowClick = useCallback(() => {
         const tomorrow = new Date();
         tomorrow.setDate(tomorrow.getDate() + 1);
         onDateChange(tomorrow.toISOString().split('T')[0]);
         setIsCalendarOpen(false);
-    };
+    }, [onDateChange]);
 
-    const handleDateClick = (date: string) => {
+    const handleDateClick = useCallback((date: string) => {
         onDateChange(date);
         setIsCalendarOpen(false);
-    };
+    }, [onDateChange]);
 
-    const formatDisplayDate = (dateString: string): string => {
+    const formatDisplayDate = useCallback((dateString: string): string => {
         const date = new Date(dateString);
+        if (isNaN(date.getTime())) return 'Select date';
         return date.toLocaleDateString('en-US', {
             weekday: 'short',
             month: 'short',
             day: 'numeric'
         });
-    };
+    }, []);
 
     const isTomorrow = selectedDate === new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split('T')[0];
     const isToday = selectedDate === today;
