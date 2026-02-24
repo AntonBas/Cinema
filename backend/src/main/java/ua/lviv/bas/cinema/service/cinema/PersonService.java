@@ -25,6 +25,7 @@ import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
 import ua.lviv.bas.cinema.exception.domain.cinema.PersonHasMoviesException;
 import ua.lviv.bas.cinema.exception.domain.cinema.PersonNotFoundException;
 import ua.lviv.bas.cinema.mapper.PersonMapper;
+import ua.lviv.bas.cinema.repository.MovieRepository;
 import ua.lviv.bas.cinema.repository.PersonRepository;
 
 @Slf4j
@@ -35,6 +36,7 @@ import ua.lviv.bas.cinema.repository.PersonRepository;
 public class PersonService {
 
 	private final PersonRepository personRepository;
+	private final MovieRepository movieRepository;
 	private final PersonMapper personMapper;
 
 	@CacheEvict(allEntries = true)
@@ -76,7 +78,7 @@ public class PersonService {
 		return personMapper.toPersonResponse(person);
 	}
 
-	@Caching(evict = { @CacheEvict(key = "#id"), @CacheEvict(key = "'projection-' + #id") })
+	@Caching(evict = { @CacheEvict(key = "#id"), @CacheEvict(allEntries = true) })
 	@Transactional
 	public PersonResponse updatePerson(Long id, PersonRequest request) {
 		log.info("Updating person with id: {}", id);
@@ -94,7 +96,7 @@ public class PersonService {
 		return personMapper.toPersonResponse(updated);
 	}
 
-	@Caching(evict = { @CacheEvict(key = "#id"), @CacheEvict(key = "'projection-' + #id") })
+	@Caching(evict = { @CacheEvict(key = "#id"), @CacheEvict(allEntries = true) })
 	@Transactional
 	public void deletePerson(Long id) {
 		log.info("Deleting person with id: {}", id);
@@ -106,7 +108,7 @@ public class PersonService {
 		log.debug("Person deleted with ID: {}", id);
 	}
 
-	@Cacheable(key = "'search-' + #name + '-' + #role + '-' + #pageable")
+	@Cacheable(key = "'search-' + #name + '-' + #role + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
 	public Page<PersonResponse> searchPersons(String name, PersonRole role, Pageable pageable) {
 		log.info("Searching persons: name='{}', role={}", name, role);
 
@@ -119,10 +121,9 @@ public class PersonService {
 	public List<PersonResponse> getPopularPersons(String name, PersonRole role, int limit) {
 		log.info("Getting popular persons: name='{}', role={}, limit={}", name, role, limit);
 
-		Page<PersonProjection> page = personRepository.findProjectionsByFilters(name, role, PageRequest.of(0, 100));
+		Page<PersonProjection> page = personRepository.findProjectionsByFilters(name, role, PageRequest.of(0, limit));
 
-		return page.getContent().stream().sorted((a, b) -> Integer.compare(b.getMovieCount(), a.getMovieCount()))
-				.limit(limit).map(personMapper::toPersonResponse).collect(Collectors.toList());
+		return page.getContent().stream().map(personMapper::toPersonResponse).collect(Collectors.toList());
 	}
 
 	@Cacheable(key = "'by-ids-' + #ids.hashCode()")
@@ -155,7 +156,7 @@ public class PersonService {
 	}
 
 	private void checkPersonUsageInMovies(Person person) {
-		long usageCount = personRepository.countMovieUsage(person.getId());
+		long usageCount = movieRepository.countMovieUsageByPersonId(person.getId());
 
 		if (usageCount > 0) {
 			throw new PersonHasMoviesException(person.getId(), person.getName(), usageCount);
