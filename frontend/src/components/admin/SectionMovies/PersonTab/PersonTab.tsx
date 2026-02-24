@@ -54,6 +54,27 @@ export const PersonTab: React.FC = () => {
     [activeTab, tabData]
   );
 
+  const loadCounts = useCallback(async () => {
+    try {
+      const [allRes, actorsRes, directorsRes, writersRes] = await Promise.all([
+        getAll({ page: 0, size: 1, role: undefined }),
+        getAll({ page: 0, size: 1, role: 'ACTOR' }),
+        getAll({ page: 0, size: 1, role: 'DIRECTOR' }),
+        getAll({ page: 0, size: 1, role: 'SCREENWRITER' })
+      ]);
+
+      setTabData(prev => ({
+        ...prev,
+        ALL: { ...prev.ALL, total: allRes?.totalElements || 0 },
+        ACTOR: { ...prev.ACTOR, total: actorsRes?.totalElements || 0 },
+        DIRECTOR: { ...prev.DIRECTOR, total: directorsRes?.totalElements || 0 },
+        SCREENWRITER: { ...prev.SCREENWRITER, total: writersRes?.totalElements || 0 }
+      }));
+    } catch (error) {
+      console.error('Failed to load counts:', error);
+    }
+  }, [getAll]);
+
   const loadTabData = useCallback(async (tab: PersonRole | 'ALL', page: number, search?: string) => {
     if (loadingDataRef.current) return;
 
@@ -77,6 +98,10 @@ export const PersonTab: React.FC = () => {
           total: response?.totalElements || 0
         }
       }));
+
+      if (tab === 'ALL' && !search) {
+        await loadCounts();
+      }
     } catch (error) {
       if (isApiErrorException(error)) {
         showNotification(error.message, 'error');
@@ -86,34 +111,12 @@ export const PersonTab: React.FC = () => {
     } finally {
       loadingDataRef.current = false;
     }
-  }, [getAll, showNotification]);
-
-  const loadAllTabsCounts = useCallback(async () => {
-    try {
-      const [allRes, actorsRes, directorsRes, writersRes] = await Promise.all([
-        getAll({ page: 0, size: 1, role: undefined }),
-        getAll({ page: 0, size: 1, role: 'ACTOR' }),
-        getAll({ page: 0, size: 1, role: 'DIRECTOR' }),
-        getAll({ page: 0, size: 1, role: 'SCREENWRITER' })
-      ]);
-
-      setTabData(prev => ({
-        ...prev,
-        ALL: { ...prev.ALL, total: allRes?.totalElements || 0 },
-        ACTOR: { ...prev.ACTOR, total: actorsRes?.totalElements || 0 },
-        DIRECTOR: { ...prev.DIRECTOR, total: directorsRes?.totalElements || 0 },
-        SCREENWRITER: { ...prev.SCREENWRITER, total: writersRes?.totalElements || 0 }
-      }));
-    } catch (error) {
-      console.error('Failed to load counts:', error);
-    }
-  }, [getAll]);
+  }, [getAll, showNotification, loadCounts]);
 
   useEffect(() => {
     if (!initialLoadRef.current) {
       initialLoadRef.current = true;
-      loadAllTabsCounts();
-      loadTabData(activeTab, 0, '');
+      loadTabData('ALL', 0, '');
     }
   }, []);
 
@@ -155,11 +158,7 @@ export const PersonTab: React.FC = () => {
 
       setIsModalOpen(false);
       setEditingPerson(null);
-
-      await Promise.all([
-        loadAllTabsCounts(),
-        loadTabData(activeTab, params.page || 0, params.search)
-      ]);
+      await loadTabData(activeTab, params.page || 0, params.search);
     } catch (err) {
       if (isApiErrorException(err)) {
         const validationError = err.getFirstValidationError();
@@ -168,7 +167,7 @@ export const PersonTab: React.FC = () => {
         showNotification(err instanceof Error ? err.message : 'Failed to save person', 'error');
       }
     }
-  }, [editingPerson, create, update, activeTab, params.page, params.search, showNotification, loadTabData, loadAllTabsCounts]);
+  }, [editingPerson, create, update, activeTab, params.page, params.search, showNotification, loadTabData]);
 
   const handleDelete = useCallback(async () => {
     if (!personToDelete) return;
@@ -182,11 +181,7 @@ export const PersonTab: React.FC = () => {
         : params.page || 0;
 
       setPage(newPage);
-
-      await Promise.all([
-        loadAllTabsCounts(),
-        loadTabData(activeTab, newPage, params.search)
-      ]);
+      await loadTabData(activeTab, newPage, params.search);
     } catch (err) {
       if (isApiErrorException(err) && err.isConflict()) {
         showNotification(`Cannot delete "${personToDelete.name}" - associated with movies`, 'error');
@@ -197,7 +192,7 @@ export const PersonTab: React.FC = () => {
       setIsDeleteModalOpen(false);
       setPersonToDelete(null);
     }
-  }, [personToDelete, remove, activeTab, params.page, params.search, currentTabData.data.length, setPage, showNotification, loadTabData, loadAllTabsCounts]);
+  }, [personToDelete, remove, activeTab, params.page, params.search, currentTabData.data.length, setPage, showNotification, loadTabData]);
 
   const paginationInfo = useMemo(() => {
     const total = currentTabData.total;
