@@ -32,33 +32,28 @@ public class AdminSeatController {
 	private final SeatService seatService;
 
 	@PutMapping("/{seatId}/type")
-	@Operation(summary = "Update seat type", description = "Change the type of a specific seat (e.g., STANDARD to VIP).")
+	@Operation(summary = "Update seat type")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Seat type updated successfully"),
 			@ApiResponse(responseCode = "400", description = "Invalid seat type"),
-			@ApiResponse(responseCode = "404", description = "Seat not found"),
-			@ApiResponse(responseCode = "401", description = "User not authenticated"),
-			@ApiResponse(responseCode = "403", description = "User does not have required role") })
+			@ApiResponse(responseCode = "404", description = "Seat not found") })
 	public ResponseEntity<SeatResponse> updateSeatType(
-			@Parameter(description = "ID of the cinema hall", required = true, example = "1") @PathVariable Long hallId,
-			@Parameter(description = "ID of the seat to update", required = true, example = "5") @PathVariable Long seatId,
+			@Parameter(description = "Hall ID", required = true, example = "1") @PathVariable Long hallId,
+			@Parameter(description = "Seat ID", required = true, example = "5") @PathVariable Long seatId,
 			@Parameter(description = "New seat type", required = true, example = "VIP") @RequestParam SeatType seatType) {
-		log.info("PUT /api/admin/cinema-halls/{}/seats/{}/type?seatType={} - Updating seat type", hallId, seatId,
-				seatType);
+		log.info("PUT /api/admin/cinema-halls/{}/seats/{}/type - Updating seat type to {}", hallId, seatId, seatType);
 		SeatResponse updated = seatService.updateSeatType(seatId, seatType);
 		return ResponseEntity.ok(updated);
 	}
 
 	@PutMapping("/{seatId}/status")
-	@Operation(summary = "Set seat active status", description = "Activate or deactivate a seat")
+	@Operation(summary = "Set seat active status")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Seat status updated successfully"),
-			@ApiResponse(responseCode = "404", description = "Seat not found"),
-			@ApiResponse(responseCode = "401", description = "User not authenticated"),
-			@ApiResponse(responseCode = "403", description = "User does not have required role") })
+			@ApiResponse(responseCode = "404", description = "Seat not found") })
 	public ResponseEntity<SeatResponse> setSeatActiveStatus(
-			@Parameter(description = "ID of the cinema hall", required = true, example = "1") @PathVariable Long hallId,
-			@Parameter(description = "ID of the seat to update", required = true, example = "5") @PathVariable Long seatId,
+			@Parameter(description = "Hall ID", required = true, example = "1") @PathVariable Long hallId,
+			@Parameter(description = "Seat ID", required = true, example = "5") @PathVariable Long seatId,
 			@Parameter(description = "Active status", required = true, example = "true") @RequestParam boolean active) {
-		log.info("PUT /api/admin/cinema-halls/{}/seats/{}/status?active={} - Setting seat status", hallId, seatId,
+		log.info("PUT /api/admin/cinema-halls/{}/seats/{}/status - Setting active status to {}", hallId, seatId,
 				active);
 		SeatResponse updated = seatService.setSeatActiveStatus(seatId, active);
 		return ResponseEntity.ok(updated);

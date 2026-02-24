@@ -1,7 +1,10 @@
 package ua.lviv.bas.cinema.service.cinema;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +26,7 @@ public class SeatService {
 	private final SeatMapper seatMapper;
 
 	@Transactional(readOnly = true)
+	@Cacheable(value = "seats", key = "#id")
 	public SeatResponse getSeatById(Long id) {
 		log.debug("Retrieving seat by id: {}", id);
 		return seatRepository.findById(id).map(seatMapper::toSeatResponse)
@@ -35,7 +39,6 @@ public class SeatService {
 		Seat seat = seatRepository.findById(id).orElseThrow(() -> new SeatNotFoundException(id));
 		seat.setSeatType(seatType);
 		Seat updated = seatRepository.save(seat);
-		log.debug("Seat type updated for seat ID: {}", id);
 		return seatMapper.toSeatResponse(updated);
 	}
 
@@ -49,6 +52,7 @@ public class SeatService {
 	}
 
 	@Transactional(readOnly = true)
+	@Cacheable(value = "seats", key = "'hall:' + #hallId")
 	public List<SeatResponse> getSeatsByHall(Long hallId) {
 		log.debug("Retrieving seats for hall id: {}", hallId);
 		return seatMapper.toSeatResponseList(seatRepository.findByHallId(hallId));
@@ -62,32 +66,14 @@ public class SeatService {
 	}
 
 	@Transactional(readOnly = true)
-	public long countSeatsByHall(Long hallId) {
-		log.debug("Counting seats for hall id: {}", hallId);
-		return seatRepository.countByHallId(hallId);
-	}
-
-	@Transactional(readOnly = true)
-	public List<SeatResponse> getSeatsByType(Long hallId, SeatType seatType) {
-		log.debug("Retrieving {} seats for hall id: {}", seatType, hallId);
-		return seatMapper.toSeatResponseList(seatRepository.findByHallIdAndSeatType(hallId, seatType));
-	}
-
-	@Transactional(readOnly = true)
-	public List<SeatResponse> getActiveSeatsByHall(Long hallId) {
-		log.debug("Retrieving active seats for hall id: {}", hallId);
-		return seatMapper.toSeatResponseList(seatRepository.findByHallIdAndActiveTrue(hallId));
-	}
-
-	@Transactional(readOnly = true)
-	public List<Integer> getDistinctRowsByHall(Long hallId) {
-		log.debug("Retrieving distinct rows for hall id: {}", hallId);
-		return seatRepository.findDistinctRowsByHallId(hallId);
-	}
-
-	@Transactional(readOnly = true)
 	public List<Seat> getSeatsByIds(List<Long> seatIds) {
 		log.debug("Retrieving seats by ids: {}", seatIds);
 		return seatRepository.findAllById(seatIds);
+	}
+
+	@Transactional(readOnly = true)
+	public Map<Integer, List<Seat>> getSeatsGroupedByRow(Long hallId) {
+		log.debug("Retrieving seats grouped by row for hall id: {}", hallId);
+		return seatRepository.findByHallId(hallId).stream().collect(Collectors.groupingBy(Seat::getRow));
 	}
 }

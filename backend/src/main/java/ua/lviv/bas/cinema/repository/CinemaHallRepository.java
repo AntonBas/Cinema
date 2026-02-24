@@ -6,15 +6,18 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
 import ua.lviv.bas.cinema.domain.CinemaHall;
 
+@Repository
 public interface CinemaHallRepository extends JpaRepository<CinemaHall, Long> {
 
 	boolean existsByName(String name);
 
-	List<CinemaHall> findByNameContainingIgnoreCase(String name);
+	@Query("SELECT ch FROM CinemaHall ch LEFT JOIN FETCH ch.seats")
+	List<CinemaHall> findAllWithSeats();
 
-	@Query("SELECT DISTINCT h FROM CinemaHall h LEFT JOIN FETCH h.seats WHERE h.id = :id")
+	@Query("SELECT ch FROM CinemaHall ch LEFT JOIN FETCH ch.seats WHERE ch.id = :id")
 	Optional<CinemaHall> findByIdWithSeats(@Param("id") Long id);
 }
