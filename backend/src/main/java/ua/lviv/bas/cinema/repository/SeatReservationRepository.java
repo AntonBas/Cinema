@@ -30,4 +30,23 @@ public interface SeatReservationRepository extends JpaRepository<SeatReservation
 
 	@Query("SELECT sr FROM SeatReservation sr WHERE sr.booking.user.id = :userId")
 	List<SeatReservation> findByUserId(@Param("userId") Long userId);
+
+	@Query("""
+			SELECT
+			    s.id,
+			    CASE WHEN sr.id IS NOT NULL AND sr.status IN :statuses THEN true ELSE false END
+			FROM Seat s
+			LEFT JOIN SeatReservation sr ON sr.seat.id = s.id AND sr.session.id = :sessionId
+			WHERE s.hall.id = :hallId
+			""")
+	List<Object[]> findBookedSeatIds(@Param("hallId") Long hallId, @Param("sessionId") Long sessionId,
+			@Param("statuses") List<ReservationStatus> statuses);
+
+	@Query("""
+			SELECT s.id
+			FROM SeatReservation sr
+			JOIN sr.seat s
+			WHERE sr.session.id = :sessionId AND sr.status = 'PENDING'
+			""")
+	List<Long> findPendingSeatIdsBySessionId(@Param("sessionId") Long sessionId);
 }

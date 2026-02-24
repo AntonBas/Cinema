@@ -9,13 +9,14 @@ import ua.lviv.bas.cinema.domain.Seat;
 import ua.lviv.bas.cinema.domain.enums.ReservationStatus;
 import ua.lviv.bas.cinema.exception.domain.booking.SeatNotAvailableException;
 import ua.lviv.bas.cinema.exception.domain.cinema.SeatNotFoundException;
-import ua.lviv.bas.cinema.repository.SeatReservationRepository;
 import ua.lviv.bas.cinema.repository.SeatRepository;
+import ua.lviv.bas.cinema.repository.SeatReservationRepository;
 
 @Service
 @RequiredArgsConstructor
 public class AvailabilityValidator {
-	private final SeatReservationRepository bookedSeatRepository;
+
+	private final SeatReservationRepository seatReservationRepository;
 	private final SeatRepository seatRepository;
 
 	public void validateSeat(Long sessionId, Long seatId) {
@@ -35,7 +36,7 @@ public class AvailabilityValidator {
 	}
 
 	private boolean isSeatBooked(Long sessionId, Long seatId) {
-		return bookedSeatRepository.existsBySessionIdAndSeatIdAndStatusIn(sessionId, seatId,
+		return seatReservationRepository.existsBySessionIdAndSeatIdAndStatusIn(sessionId, seatId,
 				List.of(ReservationStatus.PENDING, ReservationStatus.CONFIRMED));
 	}
 }

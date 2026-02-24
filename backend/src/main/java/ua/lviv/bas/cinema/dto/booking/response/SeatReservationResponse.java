@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.dto.cinemaHall.response;
+package ua.lviv.bas.cinema.dto.booking.response;
 
 import java.math.BigDecimal;
 import java.util.List;
