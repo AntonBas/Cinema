@@ -10,6 +10,7 @@ import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -22,6 +23,7 @@ import ua.lviv.bas.cinema.domain.Movie;
 import ua.lviv.bas.cinema.domain.Session;
 import ua.lviv.bas.cinema.domain.enums.CinemaSessionStatus;
 import ua.lviv.bas.cinema.domain.projection.SessionAdminProjection;
+import ua.lviv.bas.cinema.domain.projection.SessionScheduleProjection;
 import ua.lviv.bas.cinema.domain.specification.SessionSpecification;
 import ua.lviv.bas.cinema.dto.common.PageResponse;
 import ua.lviv.bas.cinema.dto.session.request.SessionCreateRequest;
@@ -53,43 +55,55 @@ public class SessionService {
 	@Cacheable(key = "'public:' + #searchTerm + ':' + #date + ':' + #pageable.pageNumber + ':' + #pageable.pageSize")
 	public PageResponse<SessionScheduleResponse> getScheduleSessions(String searchTerm, LocalDate date,
 			Pageable pageable) {
-		Specification<Session> spec = sessionSpecification.buildForSchedule(searchTerm, date);
-		Page<Session> page = sessionRepository.findAll(spec, pageable);
+		Page<SessionScheduleProjection> page = sessionRepository.findUpcomingSessions(LocalDateTime.now(), date,
+				pageable);
 
 		if (!page.hasContent()) {
-			return PageResponse.from(Page.empty(pageable));
+			return PageResponse.from(new PageImpl<>(List.of(), pageable, page.getTotalElements()));
 		}
 
-		List<Long> sessionIds = page.getContent().stream().map(Session::getId).collect(Collectors.toList());
+		List<Long> sessionIds = page.getContent().stream().map(SessionScheduleProjection::getId)
+				.collect(Collectors.toList());
+
 		Map<Long, Integer> availableSeats = getAvailableSeatsBatch(sessionIds);
 
-		return PageResponse.from(page.map(session -> {
-			SessionScheduleResponse response = sessionMapper.toScheduleResponse(session);
-			response.setAvailableSeats(availableSeats.getOrDefault(session.getId(),
-					cinemaHallService.getHallCapacity(session.getHall().getId())));
+		List<SessionScheduleResponse> responses = page.getContent().stream().map(projection -> {
+			SessionScheduleResponse response = sessionMapper.toScheduleResponse(projection);
+			response.setAvailableSeats(availableSeats.getOrDefault(projection.getId(), 0));
 			return response;
-		}));
+		}).collect(Collectors.toList());
+
+		Page<SessionScheduleResponse> responsePage = new PageImpl<>(responses, pageable, page.getTotalElements());
+
+		return PageResponse.from(responsePage);
 	}
 
 	@Cacheable(key = "'admin:' + #filter.hashCode() + ':' + #pageable.pageNumber + ':' + #pageable.pageSize")
 	public PageResponse<SessionAdminResponse> getSessionsForAdmin(SessionFilterRequest filter, Pageable pageable) {
 		Specification<Session> spec = sessionSpecification.buildForAdmin(filter);
-		Page<Session> page = sessionRepository.findAll(spec, pageable);
+		Page<Long> sessionIdsPage = sessionRepository.findAll(spec, pageable).map(Session::getId);
 
-		if (!page.hasContent()) {
-			return PageResponse.from(Page.empty(pageable));
+		if (!sessionIdsPage.hasContent()) {
+			return PageResponse.from(new PageImpl<>(List.of(), pageable, sessionIdsPage.getTotalElements()));
 		}
 
-		return PageResponse.from(page.map(sessionMapper::toAdminResponse));
+		List<SessionAdminProjection> projections = sessionRepository
+				.findAdminProjectionsByIds(sessionIdsPage.getContent());
+
+		List<SessionAdminResponse> responses = projections.stream().map(sessionMapper::toAdminResponse)
+				.collect(Collectors.toList());
+
+		Page<SessionAdminResponse> responsePage = new PageImpl<>(responses, pageable,
+				sessionIdsPage.getTotalElements());
+
+		return PageResponse.from(responsePage);
 	}
 
 	@Cacheable(key = "'public:' + #id")
 	public SessionScheduleResponse getSessionForPublic(Long id) {
 		Session session = sessionRepository.findById(id).orElseThrow(() -> new SessionNotFoundException(id));
-
 		SessionScheduleResponse response = sessionMapper.toScheduleResponse(session);
 		response.setAvailableSeats(getAvailableSeats(id));
-
 		return response;
 	}
 
@@ -97,7 +111,6 @@ public class SessionService {
 	public SessionAdminResponse getSessionForAdmin(Long id) {
 		SessionAdminProjection projection = sessionRepository.findAdminProjectionById(id)
 				.orElseThrow(() -> new SessionNotFoundException(id));
-
 		return sessionMapper.toAdminResponse(projection);
 	}
 
