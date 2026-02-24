@@ -25,11 +25,11 @@ export const PersonTab: React.FC = () => {
   const [editingPerson, setEditingPerson] = useState<PersonResponse | null>(null);
   const [personToDelete, setPersonToDelete] = useState<PersonResponse | null>(null);
   const [activeTab, setActiveTab] = useState<PersonRole | 'ALL'>('ALL');
-  const [totalCounts, setTotalCounts] = useState({
-    ALL: 0,
-    ACTOR: 0,
-    DIRECTOR: 0,
-    SCREENWRITER: 0,
+  const [tabData, setTabData] = useState<Record<PersonRole | 'ALL', TabData>>({
+    ALL: { key: 'ALL', data: [], total: 0 },
+    ACTOR: { key: 'ACTOR', data: [], total: 0 },
+    DIRECTOR: { key: 'DIRECTOR', data: [], total: 0 },
+    SCREENWRITER: { key: 'SCREENWRITER', data: [], total: 0 }
   });
 
   const { notifications, showNotification, hideNotification } = useNotification();
@@ -40,15 +40,8 @@ export const PersonTab: React.FC = () => {
   const loadingDataRef = useRef(false);
 
   const {
-    allPersons,
-    actors,
-    directors,
-    screenwriters,
     loading,
     getAll,
-    getActors,
-    getDirectors,
-    getScreenwriters,
     create,
     update,
     remove
@@ -56,39 +49,12 @@ export const PersonTab: React.FC = () => {
 
   const showDelayedLoading = useDelayedLoading(loading, { delay: 150, minDisplayTime: 300 });
 
-  const tabsData: Record<PersonRole | 'ALL', TabData> = useMemo(() => ({
-    ALL: { key: 'ALL', data: allPersons, total: totalCounts.ALL },
-    ACTOR: { key: 'ACTOR', data: actors, total: totalCounts.ACTOR },
-    DIRECTOR: { key: 'DIRECTOR', data: directors, total: totalCounts.DIRECTOR },
-    SCREENWRITER: { key: 'SCREENWRITER', data: screenwriters, total: totalCounts.SCREENWRITER }
-  }), [allPersons, actors, directors, screenwriters, totalCounts]);
-
   const currentTabData = useMemo(() =>
-    tabsData[activeTab] || tabsData.ALL,
-    [activeTab, tabsData]
+    tabData[activeTab] || tabData.ALL,
+    [activeTab, tabData]
   );
 
-  const loadCounts = useCallback(async () => {
-    try {
-      const [allResult, actorsResult, directorsResult, screenwritersResult] = await Promise.all([
-        getAll({ page: 0, size: 1 }),
-        getActors({ page: 0, size: 1 }),
-        getDirectors({ page: 0, size: 1 }),
-        getScreenwriters({ page: 0, size: 1 })
-      ]);
-
-      setTotalCounts({
-        ALL: allResult?.totalElements || 0,
-        ACTOR: actorsResult?.totalElements || 0,
-        DIRECTOR: directorsResult?.totalElements || 0,
-        SCREENWRITER: screenwritersResult?.totalElements || 0
-      });
-    } catch (error) {
-      console.error('Failed to load counts:', error);
-    }
-  }, [getAll, getActors, getDirectors, getScreenwriters]);
-
-  const loadData = useCallback(async (tab: PersonRole | 'ALL', page: number, search?: string) => {
+  const loadTabData = useCallback(async (tab: PersonRole | 'ALL', page: number, search?: string) => {
     if (loadingDataRef.current) return;
 
     loadingDataRef.current = true;
@@ -96,23 +62,21 @@ export const PersonTab: React.FC = () => {
     try {
       const params = {
         name: search?.trim() || undefined,
+        role: tab === 'ALL' ? undefined : tab,
         page,
         size: 12
       };
 
-      switch (tab) {
-        case 'ACTOR':
-          await getActors(params);
-          break;
-        case 'DIRECTOR':
-          await getDirectors(params);
-          break;
-        case 'SCREENWRITER':
-          await getScreenwriters(params);
-          break;
-        default:
-          await getAll(params);
-      }
+      const response = await getAll(params);
+
+      setTabData(prev => ({
+        ...prev,
+        [tab]: {
+          key: tab,
+          data: response?.content || [],
+          total: response?.totalElements || 0
+        }
+      }));
     } catch (error) {
       if (isApiErrorException(error)) {
         showNotification(error.message, 'error');
@@ -122,25 +86,46 @@ export const PersonTab: React.FC = () => {
     } finally {
       loadingDataRef.current = false;
     }
-  }, [getAll, getActors, getDirectors, getScreenwriters, showNotification]);
+  }, [getAll, showNotification]);
+
+  const loadAllTabsCounts = useCallback(async () => {
+    try {
+      const [allRes, actorsRes, directorsRes, writersRes] = await Promise.all([
+        getAll({ page: 0, size: 1, role: undefined }),
+        getAll({ page: 0, size: 1, role: 'ACTOR' }),
+        getAll({ page: 0, size: 1, role: 'DIRECTOR' }),
+        getAll({ page: 0, size: 1, role: 'SCREENWRITER' })
+      ]);
+
+      setTabData(prev => ({
+        ...prev,
+        ALL: { ...prev.ALL, total: allRes?.totalElements || 0 },
+        ACTOR: { ...prev.ACTOR, total: actorsRes?.totalElements || 0 },
+        DIRECTOR: { ...prev.DIRECTOR, total: directorsRes?.totalElements || 0 },
+        SCREENWRITER: { ...prev.SCREENWRITER, total: writersRes?.totalElements || 0 }
+      }));
+    } catch (error) {
+      console.error('Failed to load counts:', error);
+    }
+  }, [getAll]);
 
   useEffect(() => {
     if (!initialLoadRef.current) {
       initialLoadRef.current = true;
-      loadCounts();
-      loadData(activeTab, 0, '');
+      loadAllTabsCounts();
+      loadTabData(activeTab, 0, '');
     }
   }, []);
 
   useEffect(() => {
     if (initialLoadRef.current) {
       const timer = setTimeout(() => {
-        loadData(activeTab, params.page || 0, params.search);
+        loadTabData(activeTab, params.page || 0, params.search);
       }, 100);
 
       return () => clearTimeout(timer);
     }
-  }, [activeTab, params.page, params.search]);
+  }, [activeTab, params.page, params.search, loadTabData]);
 
   const handleSearch = useCallback((query: string) => {
     if (searchTimeoutRef.current) {
@@ -172,8 +157,8 @@ export const PersonTab: React.FC = () => {
       setEditingPerson(null);
 
       await Promise.all([
-        loadCounts(),
-        loadData(activeTab, params.page || 0, params.search)
+        loadAllTabsCounts(),
+        loadTabData(activeTab, params.page || 0, params.search)
       ]);
     } catch (err) {
       if (isApiErrorException(err)) {
@@ -183,7 +168,7 @@ export const PersonTab: React.FC = () => {
         showNotification(err instanceof Error ? err.message : 'Failed to save person', 'error');
       }
     }
-  }, [editingPerson, create, update, activeTab, params.page, params.search, showNotification, loadData, loadCounts]);
+  }, [editingPerson, create, update, activeTab, params.page, params.search, showNotification, loadTabData, loadAllTabsCounts]);
 
   const handleDelete = useCallback(async () => {
     if (!personToDelete) return;
@@ -199,8 +184,8 @@ export const PersonTab: React.FC = () => {
       setPage(newPage);
 
       await Promise.all([
-        loadCounts(),
-        loadData(activeTab, newPage, params.search)
+        loadAllTabsCounts(),
+        loadTabData(activeTab, newPage, params.search)
       ]);
     } catch (err) {
       if (isApiErrorException(err) && err.isConflict()) {
@@ -212,7 +197,7 @@ export const PersonTab: React.FC = () => {
       setIsDeleteModalOpen(false);
       setPersonToDelete(null);
     }
-  }, [personToDelete, remove, activeTab, params.page, params.search, currentTabData.data.length, setPage, showNotification, loadData, loadCounts]);
+  }, [personToDelete, remove, activeTab, params.page, params.search, currentTabData.data.length, setPage, showNotification, loadTabData, loadAllTabsCounts]);
 
   const paginationInfo = useMemo(() => {
     const total = currentTabData.total;
@@ -240,6 +225,13 @@ export const PersonTab: React.FC = () => {
       </div>
     );
   }
+
+  const totalCounts = {
+    ALL: tabData.ALL.total,
+    ACTOR: tabData.ACTOR.total,
+    DIRECTOR: tabData.DIRECTOR.total,
+    SCREENWRITER: tabData.SCREENWRITER.total
+  };
 
   return (
     <div className={styles.container}>

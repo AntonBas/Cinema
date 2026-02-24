@@ -22,7 +22,6 @@ const getPublicHeaders = (): HeadersInit => {
 
 const fetchApi = async <T>(url: string, options: RequestInit = {}, isPublic: boolean = false): Promise<T> => {
   const headers = isPublic ? getPublicHeaders() : getAuthHeaders();
-
   const response = await fetch(url, {
     headers,
     ...options,
@@ -71,25 +70,21 @@ export const personApi = {
       const url = buildPagedUrl(ADMIN_URL, params, 'table');
       return fetchApi<PageResponse<PersonResponse>>(url);
     },
+  }
+};
 
-    getActors: (params?: SearchParams & { name?: string }): Promise<PageResponse<PersonResponse>> => {
-      const url = buildPagedUrl(`${ADMIN_URL}/actors`, params, 'table');
-      return fetchApi<PageResponse<PersonResponse>>(url);
-    },
-
-    getDirectors: (params?: SearchParams & { name?: string }): Promise<PageResponse<PersonResponse>> => {
-      const url = buildPagedUrl(`${ADMIN_URL}/directors`, params, 'table');
-      return fetchApi<PageResponse<PersonResponse>>(url);
-    },
-
-    getScreenwriters: (params?: SearchParams & { name?: string }): Promise<PageResponse<PersonResponse>> => {
-      const url = buildPagedUrl(`${ADMIN_URL}/screenwriters`, params, 'table');
-      return fetchApi<PageResponse<PersonResponse>>(url);
-    },
-
-    getPopular: (params?: SearchParams & { name?: string; role?: string }): Promise<PageResponse<PersonResponse>> => {
-      const url = buildPagedUrl(`${ADMIN_URL}/popular`, params, 'table');
-      return fetchApi<PageResponse<PersonResponse>>(url);
-    },
+export const personKeys = {
+  all: ['persons'] as const,
+  admin: {
+    all: ['persons', 'admin'] as const,
+    lists: () => [...personKeys.admin.all, 'list'] as const,
+    list: (params?: SearchParams & { name?: string; role?: string }) =>
+      [...personKeys.admin.lists(), params] as const,
+    details: () => [...personKeys.admin.all, 'detail'] as const,
+    detail: (id: number) => [...personKeys.admin.details(), id] as const,
+  },
+  public: {
+    all: ['persons', 'public'] as const,
+    detail: (id: number) => [...personKeys.public.all, id] as const,
   }
 };
