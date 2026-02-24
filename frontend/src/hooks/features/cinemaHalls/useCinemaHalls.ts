@@ -9,6 +9,7 @@ import { useApi } from '@/hooks/common/useApi';
 
 export const useCinemaHalls = () => {
     const allHallsApi = useApi<CinemaHallResponse[]>();
+    const hallDetailApi = useApi<CinemaHallResponse>();
     const createHallApi = useApi<CinemaHallResponse>();
     const updateHallApi = useApi<CinemaHallResponse>();
     const deleteHallApi = useApi<void>();
@@ -25,15 +26,25 @@ export const useCinemaHalls = () => {
         );
     }, [allHallsApi]);
 
+    const getHallById = useCallback(async (id: number) => {
+        return hallDetailApi.execute(
+            () => cinemaHallApi.admin.getById(id),
+            {
+                cacheKey: `hall_detail_${id}`,
+                cacheTime: 5 * 60 * 1000,
+                showErrorNotification: true,
+            }
+        );
+    }, [hallDetailApi]);
+
     const createHall = useCallback(async (request: CinemaHallRequest) => {
         const result = await createHallApi.execute(
             () => cinemaHallApi.admin.create(request),
             {
                 successMessage: 'Cinema hall created successfully',
-                showErrorNotification: true,
             }
         );
-        await allHallsApi.invalidateCache('all_halls');
+        allHallsApi.invalidateCache('all_halls');
         await getAllHalls();
         return result;
     }, [createHallApi, allHallsApi, getAllHalls]);
@@ -43,26 +54,28 @@ export const useCinemaHalls = () => {
             () => cinemaHallApi.admin.update(id, request),
             {
                 successMessage: 'Cinema hall updated successfully',
-                showErrorNotification: true,
             }
         );
-        await allHallsApi.invalidateCache('all_halls');
+        allHallsApi.invalidateCache('all_halls');
+        hallDetailApi.invalidateCache(`hall_detail_${id}`);
+        hallLayoutApi.invalidateCache(`hall_layout_${id}`);
         await getAllHalls();
         return result;
-    }, [updateHallApi, allHallsApi, getAllHalls]);
+    }, [updateHallApi, allHallsApi, hallDetailApi, hallLayoutApi, getAllHalls]);
 
     const deleteHall = useCallback(async (id: number) => {
         const result = await deleteHallApi.execute(
             () => cinemaHallApi.admin.delete(id),
             {
                 successMessage: 'Cinema hall deleted successfully',
-                showErrorNotification: true,
             }
         );
-        await allHallsApi.invalidateCache('all_halls');
+        allHallsApi.invalidateCache('all_halls');
+        hallDetailApi.invalidateCache(`hall_detail_${id}`);
+        hallLayoutApi.invalidateCache(`hall_layout_${id}`);
         await getAllHalls();
         return result;
-    }, [deleteHallApi, allHallsApi, getAllHalls]);
+    }, [deleteHallApi, allHallsApi, hallDetailApi, hallLayoutApi, getAllHalls]);
 
     const getHallLayout = useCallback(async (id: number) => {
         return hallLayoutApi.execute(
@@ -75,27 +88,28 @@ export const useCinemaHalls = () => {
         );
     }, [hallLayoutApi]);
 
-    const loading = allHallsApi.loading || createHallApi.loading ||
-        updateHallApi.loading || deleteHallApi.loading ||
-        hallLayoutApi.loading;
-    const error = !!(allHallsApi.error || createHallApi.error ||
-        updateHallApi.error || deleteHallApi.error ||
-        hallLayoutApi.error);
+    const loading = allHallsApi.loading || hallDetailApi.loading ||
+        createHallApi.loading || updateHallApi.loading ||
+        deleteHallApi.loading || hallLayoutApi.loading;
+
+    const error = !!(allHallsApi.error || hallDetailApi.error ||
+        createHallApi.error || updateHallApi.error ||
+        deleteHallApi.error || hallLayoutApi.error);
 
     return {
         allHalls: allHallsApi.data || [],
+        selectedHall: hallDetailApi.data,
+        hallLayout: hallLayoutApi.data,
         loading,
         error,
         getAllHalls,
+        getHallById,
         createHall,
         updateHall,
         deleteHall,
         getHallLayout,
-        hallLayout: hallLayoutApi.data,
         resetAllHalls: allHallsApi.reset,
-        resetCreate: createHallApi.reset,
-        resetUpdate: updateHallApi.reset,
-        resetDelete: deleteHallApi.reset,
+        resetSelectedHall: hallDetailApi.reset,
         resetHallLayout: hallLayoutApi.reset,
     };
 };
