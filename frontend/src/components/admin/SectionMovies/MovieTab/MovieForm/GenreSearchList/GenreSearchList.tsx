@@ -7,7 +7,6 @@ interface GenreSearchListProps {
     genres?: GenreResponse[];
     selectedIds: number[];
     onChange: (genreId: number) => void;
-    onSearchChange?: (query: string) => void;
     isLoading?: boolean;
 }
 
@@ -17,7 +16,6 @@ export const GenreSearchList: React.FC<GenreSearchListProps> = React.memo(({
     genres = [],
     selectedIds,
     onChange,
-    onSearchChange,
     isLoading = false
 }) => {
     const [localSearchQuery, setLocalSearchQuery] = useState('');
@@ -40,13 +38,10 @@ export const GenreSearchList: React.FC<GenreSearchListProps> = React.memo(({
             clearTimeout(searchTimeoutRef.current);
         }
 
-        if (onSearchChange) {
-            searchTimeoutRef.current = setTimeout(() => {
-                onSearchChange(value);
-                setIsTyping(false);
-            }, SEARCH_DELAY);
-        }
-    }, [onSearchChange]);
+        searchTimeoutRef.current = setTimeout(() => {
+            setIsTyping(false);
+        }, SEARCH_DELAY);
+    }, []);
 
     const filteredGenres = useMemo(() => {
         if (!localSearchQuery.trim()) return genres;
@@ -81,7 +76,7 @@ export const GenreSearchList: React.FC<GenreSearchListProps> = React.memo(({
                     type="text"
                     value={localSearchQuery}
                     onChange={handleSearchChange}
-                    placeholder="Type 'comedy' to search genres..."
+                    placeholder="Type to filter genres..."
                     className={styles.searchInput}
                     aria-label="Search genres"
                 />

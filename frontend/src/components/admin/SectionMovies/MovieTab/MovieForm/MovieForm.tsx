@@ -87,8 +87,8 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(({
         const loadGenres = async () => {
             setIsLoadingGenres(true);
             try {
-                const genresData = await genreApi.public.search('', 100);
-                setGenres(genresData);
+                const response = await genreApi.admin.getAll({ page: 0, size: 100 });
+                setGenres(response.content);
             } catch {
                 showNotification('Failed to load genres', 'error');
             } finally {

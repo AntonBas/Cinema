@@ -1,6 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import type { MovieCardResponse, MovieStatus } from '@/types/movie';
-import { movieApi } from '@/api/movieApi';
 import { getAgeRatingDisplay } from '@/types/movie';
 import { Button, Badge, LoadingSpinner } from '@/components/ui';
 import styles from './MovieCard.module.css';
@@ -31,7 +30,7 @@ export const MovieCard: React.FC<MovieCardProps> = React.memo(({
   onDelete
 }) => {
   const [imageStatus, setImageStatus] = useState<'loading' | 'loaded' | 'error'>('loading');
-  const posterUrl = movie.posterUrl || movieApi.public.getPosterUrl(movie.id);
+  const posterUrl = movie.posterUrl;
 
   const handleImageLoad = useCallback(() => {
     setImageStatus('loaded');
@@ -63,6 +62,36 @@ export const MovieCard: React.FC<MovieCardProps> = React.memo(({
     getAgeRatingDisplay(movie.ageRating),
     [movie.ageRating]
   );
+
+  if (!posterUrl) {
+    return (
+      <div className={styles.card}>
+        <div className={styles.posterContainer}>
+          <div className={styles.posterError} role="alert">
+            <span>No Image</span>
+          </div>
+        </div>
+        <div className={styles.info}>
+          <h3 className={styles.title} title={movie.title}>
+            {movie.title}
+          </h3>
+          <div className={styles.meta}>
+            <div className={styles.metaRow}>
+              <Badge variant="success">{movie.durationMinutes} min</Badge>
+              <Badge variant="warning">{ageRatingDisplay}</Badge>
+            </div>
+            <div className={styles.metaRow}>
+              <Badge variant={statusVariant}>{statusDisplay}</Badge>
+            </div>
+          </div>
+        </div>
+        <div className={styles.actions}>
+          <Button variant="success" size="small" onClick={handleEdit}>Edit</Button>
+          <Button variant="error" size="small" onClick={handleDelete}>Delete</Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.card}>

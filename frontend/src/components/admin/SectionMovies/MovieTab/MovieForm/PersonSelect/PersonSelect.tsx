@@ -30,36 +30,29 @@ export const PersonSelect: React.FC<PersonSelectProps> = ({
     const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     const {
-        getActors,
-        getDirectors,
-        getScreenwriters,
+        getAll,
         quickCreate,
         loading
     } = usePerson();
-
-    const getSearchMethod = useCallback((personRole: PersonRole) => {
-        switch (personRole) {
-            case 'ACTOR': return getActors;
-            case 'DIRECTOR': return getDirectors;
-            case 'SCREENWRITER': return getScreenwriters;
-            default: return getActors;
-        }
-    }, [getActors, getDirectors, getScreenwriters]);
 
     const handlePersonSearch = useCallback(async (query: string, personRole: PersonRole) => {
         if (!query.trim() || query.length < MIN_SEARCH_LENGTH) return [];
 
         try {
             setIsSearching(true);
-            const searchMethod = getSearchMethod(personRole);
-            const result = await searchMethod({ name: query, page: 0, size: MAX_OPTIONS });
+            const result = await getAll({
+                name: query,
+                role: personRole,
+                page: 0,
+                size: MAX_OPTIONS
+            });
             return result?.content || [];
         } catch {
             return [];
         } finally {
             setIsSearching(false);
         }
-    }, [getSearchMethod]);
+    }, [getAll]);
 
     const handleAddNewPerson = useCallback(async (name: string, personRole: PersonRole) => {
         try {
@@ -105,7 +98,7 @@ export const PersonSelect: React.FC<PersonSelectProps> = ({
                 clearTimeout(searchTimeoutRef.current);
             }
         };
-    }, [searchQuery, role]);
+    }, [searchQuery, role, handlePersonSearch]);
 
     const handleSelectPerson = useCallback((personId: number) => {
         const newSelectedIds = selectedIds.includes(personId)
