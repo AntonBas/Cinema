@@ -1,8 +1,5 @@
 package ua.lviv.bas.cinema.service.cinema;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -11,7 +8,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -88,39 +84,12 @@ public class GenreService {
 		log.debug("Genre deleted with ID: {}", id);
 	}
 
-	@Cacheable(key = "'search-' + #query + '-' + #pageable")
+	@Cacheable(key = "'search-' + #query + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
 	public Page<GenreResponse> searchGenres(String query, Pageable pageable) {
 		log.info("Searching genres: query='{}', pageable={}", query, pageable);
 
-		Page<GenreProjection> projections;
-
-		if (!StringUtils.hasText(query)) {
-			projections = genreRepository.findAllProjections(pageable);
-		} else {
-			projections = genreRepository.searchProjectionsByName(query.trim(), pageable);
-		}
-
+		Page<GenreProjection> projections = genreRepository.findProjectionsByQuery(query, pageable);
 		return projections.map(genreMapper::toGenreResponse);
-	}
-
-	public List<GenreResponse> getGenresByIds(List<Long> ids) {
-		log.debug("Getting genres by ids: {}", ids);
-
-		if (ids == null || ids.isEmpty()) {
-			return List.of();
-		}
-
-		List<Genre> genres = genreRepository.findAllById(ids);
-
-		if (genres.size() != ids.size()) {
-			List<Long> foundIds = genres.stream().map(Genre::getId).collect(Collectors.toList());
-
-			List<Long> missingIds = ids.stream().filter(id -> !foundIds.contains(id)).collect(Collectors.toList());
-
-			throw new GenreNotFoundException(missingIds);
-		}
-
-		return genreMapper.toGenreResponseList(genres);
 	}
 
 	private void validateGenreUniqueness(String name, Long excludeId) {

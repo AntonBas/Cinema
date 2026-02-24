@@ -17,12 +17,14 @@ public interface GenreRepository extends JpaRepository<Genre, Long> {
 
 	boolean existsByNameIgnoreCaseAndIdNot(String name, Long id);
 
-	@Query("SELECT new ua.lviv.bas.cinema.domain.projection.GenreProjection("
-			+ "g.id, g.name, SIZE(g.movies)) FROM Genre g")
-	Page<GenreProjection> findAllProjections(Pageable pageable);
-
-	@Query("SELECT new ua.lviv.bas.cinema.domain.projection.GenreProjection("
-			+ "g.id, g.name, SIZE(g.movies)) FROM Genre g "
-			+ "WHERE LOWER(g.name) LIKE LOWER(CONCAT('%', :query, '%'))")
-	Page<GenreProjection> searchProjectionsByName(@Param("query") String query, Pageable pageable);
+	@Query("""
+			SELECT
+			    g.id as id,
+			    g.name as name,
+			    SIZE(g.movies) as movieCount
+			FROM Genre g
+			WHERE (:query IS NULL OR LOWER(g.name) LIKE LOWER(CONCAT('%', CAST(:query AS string), '%')))
+			ORDER BY g.name ASC
+			""")
+	Page<GenreProjection> findProjectionsByQuery(@Param("query") String query, Pageable pageable);
 }
