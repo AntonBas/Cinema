@@ -6,7 +6,6 @@ import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,10 +14,9 @@ import org.springframework.web.multipart.MultipartFile;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.Movie;
+import ua.lviv.bas.cinema.domain.enums.MovieStatus;
 import ua.lviv.bas.cinema.domain.projection.MovieCardProjection;
-import ua.lviv.bas.cinema.domain.specification.MovieSpecification;
 import ua.lviv.bas.cinema.dto.movie.request.MovieCreateRequest;
-import ua.lviv.bas.cinema.dto.movie.request.MovieFilterRequest;
 import ua.lviv.bas.cinema.dto.movie.request.MovieUpdateRequest;
 import ua.lviv.bas.cinema.dto.movie.response.MovieCardResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieDetailResponse;
@@ -47,7 +45,6 @@ public class MovieService {
 	private final SlugService slugService;
 	private final MovieScheduler movieScheduler;
 	private final PosterService posterService;
-	private final MovieSpecification movieSpecification;
 
 	@Transactional
 	public MovieDetailResponse createMovie(MovieCreateRequest request) {
@@ -128,9 +125,8 @@ public class MovieService {
 		return buildDetailResponse(movie);
 	}
 
-	public Page<MovieCardResponse> getFilteredMovies(MovieFilterRequest filter, Pageable pageable) {
-		Specification<Movie> spec = movieSpecification.build(filter);
-		Page<Movie> moviePage = movieRepository.findAll(spec, pageable);
+	public Page<MovieCardResponse> getFilteredMovies(String title, MovieStatus status, Pageable pageable) {
+		Page<Movie> moviePage = movieRepository.findMoviesByFilters(title, status, pageable);
 		return moviePage.map(movieMapper::toMovieCardResponse);
 	}
 

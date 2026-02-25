@@ -11,7 +11,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -27,12 +26,11 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import ua.lviv.bas.cinema.domain.enums.MovieStatus;
 import ua.lviv.bas.cinema.dto.common.PageResponse;
 import ua.lviv.bas.cinema.dto.movie.request.MovieCreateRequest;
-import ua.lviv.bas.cinema.dto.movie.request.MovieFilterRequest;
 import ua.lviv.bas.cinema.dto.movie.request.MovieUpdateRequest;
 import ua.lviv.bas.cinema.dto.movie.response.MovieCardResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieDetailResponse;
@@ -102,13 +100,14 @@ public class AdminMovieController {
 	}
 
 	@GetMapping
-	@Operation(summary = "Get filtered movies")
+	@Operation(summary = "Get movies")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Movies retrieved successfully") })
-	public ResponseEntity<PageResponse<MovieCardResponse>> getMovies(@ModelAttribute @Valid MovieFilterRequest filter,
+	public ResponseEntity<PageResponse<MovieCardResponse>> getMovies(@RequestParam(required = false) String title,
+			@RequestParam(required = false) MovieStatus status,
 			@PageableDefault(size = 20, sort = "title", direction = Sort.Direction.ASC) Pageable pageable) {
 
-		log.info("GET /api/admin/movies - filter: {}", filter);
-		var result = movieService.getFilteredMovies(filter, pageable);
+		log.info("GET /api/admin/movies - title: '{}', status: {}", title, status);
+		var result = movieService.getFilteredMovies(title, status, pageable);
 		return ResponseEntity.ok(PageResponse.from(result));
 	}
 

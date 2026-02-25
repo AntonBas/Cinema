@@ -19,8 +19,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import ua.lviv.bas.cinema.domain.enums.MovieStatus;
 import ua.lviv.bas.cinema.dto.common.PageResponse;
-import ua.lviv.bas.cinema.dto.movie.request.MovieFilterRequest;
 import ua.lviv.bas.cinema.dto.movie.response.MovieCardResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieDetailResponse;
 import ua.lviv.bas.cinema.service.cinema.MovieService;
@@ -39,7 +39,7 @@ public class MovieController {
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Movie found successfully"),
 			@ApiResponse(responseCode = "404", description = "Movie not found") })
 	public ResponseEntity<MovieDetailResponse> getMovieById(
-			@Parameter(description = "ID of the movie to retrieve", required = true, example = "1") @PathVariable Long id) {
+			@Parameter(description = "ID of the movie", required = true, example = "1") @PathVariable Long id) {
 
 		log.info("GET /api/movies/{} - Getting movie by id", id);
 		MovieDetailResponse movie = movieService.getMovieById(id);
@@ -65,8 +65,7 @@ public class MovieController {
 			@Parameter(description = "Pagination parameters") @PageableDefault(size = 12, sort = "releaseDate", direction = Sort.Direction.DESC) Pageable pageable) {
 
 		log.info("GET /api/movies/currently-showing - Getting currently showing movies");
-		var filter = MovieFilterRequest.builder().currentlyShowing(true).build();
-		var result = movieService.getFilteredMovies(filter, pageable);
+		var result = movieService.getFilteredMovies(null, MovieStatus.CURRENT, pageable);
 		return ResponseEntity.ok().cacheControl(CacheControl.maxAge(5, TimeUnit.MINUTES))
 				.body(PageResponse.from(result));
 	}
@@ -78,8 +77,7 @@ public class MovieController {
 			@Parameter(description = "Pagination parameters") @PageableDefault(size = 12, sort = "releaseDate", direction = Sort.Direction.ASC) Pageable pageable) {
 
 		log.info("GET /api/movies/upcoming - Getting upcoming movies");
-		var filter = MovieFilterRequest.builder().upcoming(true).build();
-		var result = movieService.getFilteredMovies(filter, pageable);
+		var result = movieService.getFilteredMovies(null, MovieStatus.UPCOMING, pageable);
 		return ResponseEntity.ok().cacheControl(CacheControl.maxAge(5, TimeUnit.MINUTES))
 				.body(PageResponse.from(result));
 	}

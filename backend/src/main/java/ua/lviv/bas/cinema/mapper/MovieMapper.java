@@ -20,28 +20,26 @@ import ua.lviv.bas.cinema.dto.movie.response.MovieSessionSearchResponse;
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface MovieMapper {
 
-	@Mapping(target = "slug", source = "slug")
-	@Mapping(target = "posterUrl", source = "posterUrl")
-	@Mapping(target = "status", source = "status")
-	MovieCardResponse toMovieCardResponse(MovieCardProjection projection);
-
-	@Mapping(target = "slug", source = "slug")
 	@Mapping(target = "posterUrl", expression = "java(\"/api/movies/\" + movie.getId() + \"/poster\")")
-	@Mapping(target = "status", source = "status")
 	MovieCardResponse toMovieCardResponse(Movie movie);
+
+	@Mapping(target = "posterUrl", expression = "java(\"/api/movies/\" + projection.getId() + \"/poster\")")
+	MovieCardResponse toMovieCardResponse(MovieCardProjection projection);
 
 	@Mapping(target = "genres", ignore = true)
 	@Mapping(target = "actors", ignore = true)
 	@Mapping(target = "directors", ignore = true)
 	@Mapping(target = "screenwriters", ignore = true)
-	@Mapping(target = "status", source = "status")
-	MovieDetailResponse toMovieDetailResponse(MovieDetailProjection projection);
-
 	@Mapping(target = "posterUrl", expression = "java(\"/api/movies/\" + movie.getId() + \"/poster\")")
-	@Mapping(target = "status", source = "status")
 	MovieDetailResponse toMovieDetailResponse(Movie movie);
 
-	@Mapping(target = "durationMinutes", source = "durationMinutes")
+	@Mapping(target = "genres", ignore = true)
+	@Mapping(target = "actors", ignore = true)
+	@Mapping(target = "directors", ignore = true)
+	@Mapping(target = "screenwriters", ignore = true)
+	@Mapping(target = "posterUrl", expression = "java(\"/api/movies/\" + projection.getId() + \"/poster\")")
+	MovieDetailResponse toMovieDetailResponse(MovieDetailProjection projection);
+
 	MovieSessionSearchResponse toMovieSessionSearchResponse(MovieSessionSearchProjection projection);
 
 	@Mapping(target = "id", ignore = true)
