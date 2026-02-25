@@ -59,7 +59,7 @@ export const useAuth = () => {
             fetchedRef.current = true;
             getCurrentUser();
         }
-    }, [isAuthenticated, user, currentUserApi.loading, currentUserApi.error]);
+    }, []);
 
     const login = useCallback(async (credentials: LoginRequest) => {
         try {
@@ -109,7 +109,7 @@ export const useAuth = () => {
                     showErrorNotification: false,
                     onError: (error) => {
                         if (isApiErrorException(error)) {
-                            if (error.isUnauthorized() || error.isForbidden()) {
+                            if (error.isUnauthorized?.() || error.isForbidden?.()) {
                                 logout();
                             }
                         } else if (error.message.includes('401') || error.message.includes('403')) {
@@ -225,7 +225,7 @@ export const useAuth = () => {
     return {
         user,
         loading,
-        error,
+        error: error as Error | null,
         isAuthenticating: loginApi.loading,
         isRegistering: registerApi.loading,
         isCheckingEmail: checkEmailApi.loading,

@@ -1,11 +1,11 @@
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext, useEffect } from 'react';
 import { useAuth as useAuthHook } from '@/hooks/features/auth/useAuth';
 import type { UserResponse } from '@/types/user';
 
 interface AuthContextType {
     user: UserResponse | null;
     loading: boolean;
-    error: boolean;
+    error: Error | null;
     isAuthenticated: boolean;
     isAdmin: boolean;
     login: (email: string, password: string) => Promise<void>;
@@ -23,9 +23,12 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const auth = useAuthHook();
 
+    useEffect(() => {
+    }, [auth.user]);
+
     return (
         <AuthContext.Provider value={{
-            user: auth.user as UserResponse | null,
+            user: auth.user,
             loading: auth.loading,
             error: auth.error,
             isAuthenticated: auth.isAuthenticated,
