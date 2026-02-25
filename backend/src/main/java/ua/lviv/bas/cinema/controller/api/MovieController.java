@@ -51,7 +51,7 @@ public class MovieController {
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Movie found successfully"),
 			@ApiResponse(responseCode = "404", description = "Movie not found") })
 	public ResponseEntity<MovieDetailResponse> getMovieBySlug(
-			@Parameter(description = "URL-friendly slug of the movie", required = true, example = "the-matrix-1999") @PathVariable String slug) {
+			@Parameter(description = "URL-friendly slug of the movie", required = true, example = "inception") @PathVariable String slug) {
 
 		log.info("GET /api/movies/slug/{} - Getting movie by slug", slug);
 		MovieDetailResponse movie = movieService.getMovieBySlug(slug);
@@ -67,7 +67,8 @@ public class MovieController {
 		log.info("GET /api/movies/currently-showing - Getting currently showing movies");
 		var filter = MovieFilterRequest.builder().currentlyShowing(true).build();
 		var result = movieService.getFilteredMovies(filter, pageable);
-		return ResponseEntity.ok(PageResponse.from(result));
+		return ResponseEntity.ok().cacheControl(CacheControl.maxAge(5, TimeUnit.MINUTES))
+				.body(PageResponse.from(result));
 	}
 
 	@GetMapping("/upcoming")
@@ -79,7 +80,8 @@ public class MovieController {
 		log.info("GET /api/movies/upcoming - Getting upcoming movies");
 		var filter = MovieFilterRequest.builder().upcoming(true).build();
 		var result = movieService.getFilteredMovies(filter, pageable);
-		return ResponseEntity.ok(PageResponse.from(result));
+		return ResponseEntity.ok().cacheControl(CacheControl.maxAge(5, TimeUnit.MINUTES))
+				.body(PageResponse.from(result));
 	}
 
 	@GetMapping("/{id}/poster")

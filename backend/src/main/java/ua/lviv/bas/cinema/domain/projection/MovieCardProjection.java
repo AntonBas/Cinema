@@ -8,6 +8,8 @@ import ua.lviv.bas.cinema.domain.enums.MovieStatus;
 public interface MovieCardProjection {
 	Long getId();
 
+	String getSlug();
+
 	String getTitle();
 
 	String getPosterFileName();

@@ -20,10 +20,12 @@ import ua.lviv.bas.cinema.dto.movie.response.MovieSessionSearchResponse;
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface MovieMapper {
 
+	@Mapping(target = "slug", source = "slug")
 	@Mapping(target = "posterUrl", source = "posterUrl")
 	@Mapping(target = "status", source = "status")
 	MovieCardResponse toMovieCardResponse(MovieCardProjection projection);
 
+	@Mapping(target = "slug", source = "slug")
 	@Mapping(target = "posterUrl", expression = "java(\"/api/movies/\" + movie.getId() + \"/poster\")")
 	@Mapping(target = "status", source = "status")
 	MovieCardResponse toMovieCardResponse(Movie movie);

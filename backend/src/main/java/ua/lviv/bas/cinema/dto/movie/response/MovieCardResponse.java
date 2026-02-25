@@ -18,6 +18,9 @@ public class MovieCardResponse {
 	@Schema(description = "Unique identifier of the movie", example = "1")
 	private Long id;
 
+	@Schema(description = "URL-friendly slug for the movie", example = "inception")
+	private String slug;
+
 	@Schema(description = "Title of the movie", example = "Inception")
 	private String title;
 
@@ -27,11 +30,9 @@ public class MovieCardResponse {
 	@Schema(description = "Duration of the movie in minutes", example = "148")
 	private Integer durationMinutes;
 
-	@Schema(description = "Age rating of the movie", example = "PG_13", allowableValues = { "G", "PG", "PG_13", "R",
-			"NC_17" })
+	@Schema(description = "Age rating of the movie", example = "PG_13")
 	private AgeRating ageRating;
 
-	@Schema(description = "Current status of the movie", example = "ACTIVE", allowableValues = { "ACTIVE", "UPCOMING",
-			"ARCHIVED", "CANCELLED" })
+	@Schema(description = "Current status of the movie", example = "ACTIVE")
 	private MovieStatus status;
 }

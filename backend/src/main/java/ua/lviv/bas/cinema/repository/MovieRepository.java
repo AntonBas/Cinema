@@ -11,8 +11,8 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import ua.lviv.bas.cinema.domain.Movie;
+import ua.lviv.bas.cinema.domain.projection.MovieCardProjection;
 import ua.lviv.bas.cinema.domain.projection.MovieDetailProjection;
-import ua.lviv.bas.cinema.domain.projection.MovieSessionSearchProjection;
 
 @Repository
 public interface MovieRepository extends JpaRepository<Movie, Long>, JpaSpecificationExecutor<Movie> {
@@ -30,24 +30,40 @@ public interface MovieRepository extends JpaRepository<Movie, Long>, JpaSpecific
 	Optional<Movie> findAdminMovieBySlug(@Param("slug") String slug);
 
 	@Query("""
-			SELECT m.id as id, m.title as title, m.durationMinutes as durationMinutes
+			SELECT m.id as id,
+			       m.slug as slug,
+			       m.title as title,
+			       m.posterFileName as posterFileName,
+			       m.durationMinutes as durationMinutes,
+			       m.ageRating as ageRating,
+			       m.status as status,
+			       m.releaseDate as releaseDate,
+			       m.endShowingDate as endShowingDate
 			FROM Movie m
 			WHERE m.status IN ('CURRENT', 'UPCOMING')
 			  AND m.endShowingDate >= CURRENT_DATE
 			  AND (:search IS NULL OR LOWER(m.title) LIKE LOWER(CONCAT('%', :search, '%')))
 			ORDER BY m.title
 			""")
-	List<MovieSessionSearchProjection> findMoviesForSession(@Param("search") String search);
+	List<MovieCardProjection> findMoviesForSession(@Param("search") String search);
 
 	@Query("""
-			SELECT m.id as id, m.title as title, m.durationMinutes as durationMinutes
+			SELECT m.id as id,
+			       m.slug as slug,
+			       m.title as title,
+			       m.posterFileName as posterFileName,
+			       m.durationMinutes as durationMinutes,
+			       m.ageRating as ageRating,
+			       m.status as status,
+			       m.releaseDate as releaseDate,
+			       m.endShowingDate as endShowingDate
 			FROM Movie m
 			WHERE m.status IN ('CURRENT', 'UPCOMING')
 			  AND m.endShowingDate >= CURRENT_DATE
 			  AND :date BETWEEN m.releaseDate AND m.endShowingDate
 			ORDER BY m.title
 			""")
-	List<MovieSessionSearchProjection> findMoviesByDate(@Param("date") java.time.LocalDate date);
+	List<MovieCardProjection> findMoviesByDate(@Param("date") java.time.LocalDate date);
 
 	@Query("SELECT m.posterFileName FROM Movie m WHERE m.id = :id")
 	Optional<String> findPosterFileNameById(@Param("id") Long id);

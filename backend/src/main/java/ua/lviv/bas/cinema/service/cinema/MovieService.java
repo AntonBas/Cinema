@@ -15,7 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.Movie;
-import ua.lviv.bas.cinema.domain.projection.MovieSessionSearchProjection;
+import ua.lviv.bas.cinema.domain.projection.MovieCardProjection;
 import ua.lviv.bas.cinema.domain.specification.MovieSpecification;
 import ua.lviv.bas.cinema.dto.movie.request.MovieCreateRequest;
 import ua.lviv.bas.cinema.dto.movie.request.MovieFilterRequest;
@@ -139,11 +139,15 @@ public class MovieService {
 
 		try {
 			LocalDate date = LocalDate.parse(searchTerm);
-			List<MovieSessionSearchProjection> projections = movieRepository.findMoviesByDate(date);
-			return projections.stream().map(movieMapper::toMovieSessionSearchResponse).toList();
+			List<MovieCardProjection> projections = movieRepository.findMoviesByDate(date);
+			return projections.stream().map(
+					proj -> new MovieSessionSearchResponse(proj.getId(), proj.getTitle(), proj.getDurationMinutes()))
+					.toList();
 		} catch (Exception e) {
-			List<MovieSessionSearchProjection> projections = movieRepository.findMoviesForSession(searchTerm);
-			return projections.stream().map(movieMapper::toMovieSessionSearchResponse).toList();
+			List<MovieCardProjection> projections = movieRepository.findMoviesForSession(searchTerm);
+			return projections.stream().map(
+					proj -> new MovieSessionSearchResponse(proj.getId(), proj.getTitle(), proj.getDurationMinutes()))
+					.toList();
 		}
 	}
 
