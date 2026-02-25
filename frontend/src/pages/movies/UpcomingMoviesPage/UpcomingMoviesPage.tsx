@@ -6,30 +6,32 @@ import { Notification } from '@/components/ui';
 import styles from './UpcomingMoviesPage.module.css';
 
 export const UpcomingMoviesPage: React.FC = () => {
-    const { upcoming, loading, error, getUpcoming } = useMovies();
+    const { publicUpcoming, loading, error, getPublicUpcoming } = useMovies();
     const { notifications, showNotification, hideNotification } = useNotification();
     const hasLoaded = useRef(false);
 
     const handleRetry = useCallback(() => {
         hasLoaded.current = false;
-        getUpcoming();
-    }, [getUpcoming]);
+        getPublicUpcoming();
+    }, [getPublicUpcoming]);
 
     useEffect(() => {
         if (!hasLoaded.current) {
             hasLoaded.current = true;
-            getUpcoming().catch(() => {
+            getPublicUpcoming().catch(() => {
                 showNotification('Failed to load upcoming movies', 'error');
             });
         }
-    }, [getUpcoming, showNotification]);
+    }, [getPublicUpcoming, showNotification]);
+
+    const errorObject = error ? new Error('Failed to load upcoming movies') : null;
 
     return (
         <div className={styles.page}>
             <MovieList
-                movies={upcoming}
+                movies={publicUpcoming}
                 loading={loading}
-                error={error}
+                error={errorObject}
                 emptyMessage="No upcoming movies"
                 onRetry={handleRetry}
             />

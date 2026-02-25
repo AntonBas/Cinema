@@ -6,29 +6,31 @@ import { Notification } from '@/components/ui';
 import styles from './CurrentMoviesPage.module.css';
 
 export const CurrentMoviesPage: React.FC = () => {
-    const { currentlyShowing, loading, error, getCurrentlyShowing } = useMovies();
+    const { publicCurrent, loading, error, getPublicCurrent } = useMovies();
     const { notifications, showNotification, hideNotification } = useNotification();
     const hasLoaded = useRef(false);
 
     useEffect(() => {
         if (!hasLoaded.current) {
             hasLoaded.current = true;
-            getCurrentlyShowing().catch(() => {
+            getPublicCurrent().catch(() => {
                 showNotification('Failed to load movies', 'error');
             });
         }
-    }, [getCurrentlyShowing, showNotification]);
+    }, [getPublicCurrent, showNotification]);
+
+    const errorObject = error ? new Error('Failed to load movies') : null;
 
     return (
         <div className={styles.page}>
             <MovieList
-                movies={currentlyShowing}
+                movies={publicCurrent}
                 loading={loading}
-                error={error}
+                error={errorObject}
                 emptyMessage="No movies currently playing"
                 onRetry={() => {
                     hasLoaded.current = false;
-                    getCurrentlyShowing();
+                    getPublicCurrent();
                 }}
             />
 

@@ -31,16 +31,19 @@ export const MovieDetailPage: React.FC = () => {
         showNotificationRef.current = showNotification;
     }, [showNotification]);
 
-    const findNextSessionDate = useCallback(async (movieId: number) => {
+    const findNextSessionDate = useCallback(async (_movieId: number, movieTitle: string) => {
         try {
             const now = new Date();
 
-            const response = await sessionApi.public.getSessions({
-                movieId,
-                page: 0,
-                size: 100,
-                sort: 'startTime,asc'
-            });
+            const response = await sessionApi.public.getSessions(
+                movieTitle,
+                undefined,
+                {
+                    page: 0,
+                    size: 100,
+                    sort: 'startTime,asc'
+                }
+            );
 
             const upcomingSessions = response.content.filter((session: SessionScheduleResponse) => {
                 const sessionTime = new Date(session.startTime);
@@ -95,7 +98,7 @@ export const MovieDetailPage: React.FC = () => {
                 }
 
                 if (movieData.id && isMounted.current) {
-                    await findNextSessionDate(movieData.id);
+                    await findNextSessionDate(movieData.id, movieData.title);
                 }
             } catch {
                 if (isMounted.current) {
@@ -114,6 +117,10 @@ export const MovieDetailPage: React.FC = () => {
             isMounted.current = false;
         };
     }, [slug, findNextSessionDate]);
+
+    const getPosterUrl = useCallback((movieId: number): string => {
+        return `/api/movies/${movieId}/poster`;
+    }, []);
 
     const handleFindSession = async () => {
         if (!movie) return;
@@ -207,7 +214,7 @@ export const MovieDetailPage: React.FC = () => {
                     <div className={styles.leftColumn}>
                         <div className={styles.posterContainer}>
                             <img
-                                src={movieApi.public.getPosterUrl(movie.id)}
+                                src={getPosterUrl(movie.id)}
                                 alt={movie.title}
                                 className={styles.poster}
                                 onError={(e) => {
