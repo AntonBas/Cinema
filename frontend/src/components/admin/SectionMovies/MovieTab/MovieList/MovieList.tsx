@@ -33,7 +33,7 @@ export const MovieList: React.FC<MovieListProps> = React.memo(({
         onCreateNew?.();
     }, [onCreateNew]);
 
-    if (loading && movies.length === 0) {
+    if (loading) {
         return (
             <div className={styles.loading}>
                 <LoadingSpinner text="Loading movies..." />
@@ -41,7 +41,7 @@ export const MovieList: React.FC<MovieListProps> = React.memo(({
         );
     }
 
-    if (movies.length === 0) {
+    if (!movies || movies.length === 0) {
         return (
             <div className={styles.empty} role="status" aria-label="No movies found">
                 <div className={styles.emptyIcon} aria-hidden="true">🎬</div>

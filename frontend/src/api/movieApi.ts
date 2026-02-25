@@ -3,12 +3,12 @@ import type {
   MovieUpdateRequest,
   MovieCardResponse,
   MovieDetailResponse,
-  MovieSessionSearchResponse,
-  MovieFilterRequest
+  MovieSessionSearchResponse
 } from '@/types/movie';
 import type { PageResponse, SearchParams } from '@/types/pagination';
 import { handleApiError } from '@/utils/apiErrorHandler';
-import { buildPagedUrl } from '@/utils/paginationUtils';
+import { buildFilteredUrl } from '@/utils/paginationUtils';
+import type { MovieStatus } from '@/types/movie';
 
 const PUBLIC_URL = '/api/movies';
 const ADMIN_URL = '/api/admin/movies';
@@ -57,17 +57,14 @@ export const movieApi = {
       fetchApi<MovieDetailResponse>(`${PUBLIC_URL}/slug/${slug}`, {}, true),
 
     getCurrentlyShowing: (params?: SearchParams): Promise<PageResponse<MovieCardResponse>> => {
-      const url = buildPagedUrl(`${PUBLIC_URL}/currently-showing`, params, 'grid');
+      const url = buildFilteredUrl(`${PUBLIC_URL}/currently-showing`, params);
       return fetchApi<PageResponse<MovieCardResponse>>(url, {}, true);
     },
 
     getUpcoming: (params?: SearchParams): Promise<PageResponse<MovieCardResponse>> => {
-      const url = buildPagedUrl(`${PUBLIC_URL}/upcoming`, params, 'grid');
+      const url = buildFilteredUrl(`${PUBLIC_URL}/upcoming`, params);
       return fetchApi<PageResponse<MovieCardResponse>>(url, {}, true);
     },
-
-    getPosterUrl: (id: number): string =>
-      `${PUBLIC_URL}/${id}/poster`,
   },
 
   admin: {
@@ -112,9 +109,14 @@ export const movieApi = {
         method: 'DELETE'
       }, false),
 
-    getFilteredMovies: (filter?: MovieFilterRequest, params?: SearchParams): Promise<PageResponse<MovieCardResponse>> => {
-      const filterParams = { ...params, ...filter };
-      const url = buildPagedUrl(ADMIN_URL, filterParams, 'admin');
+    getMovies: (params?: {
+      title?: string;
+      status?: MovieStatus;
+      page?: number;
+      size?: number;
+      sort?: string;
+    }): Promise<PageResponse<MovieCardResponse>> => {
+      const url = buildFilteredUrl(ADMIN_URL, params);
       return fetchApi<PageResponse<MovieCardResponse>>(url, {}, false);
     },
 
@@ -128,5 +130,29 @@ export const movieApi = {
       const url = `${ADMIN_URL}/search/session${search ? `?search=${encodeURIComponent(search)}` : ''}`;
       return fetchApi<MovieSessionSearchResponse[]>(url, {}, false);
     },
+  },
+};
+
+export const movieKeys = {
+  all: ['movies'] as const,
+  public: {
+    all: ['movies', 'public'] as const,
+    currentlyShowing: (params?: SearchParams) =>
+      [...movieKeys.public.all, 'currentlyShowing', params] as const,
+    upcoming: (params?: SearchParams) =>
+      [...movieKeys.public.all, 'upcoming', params] as const,
+    detail: (id: number) => [...movieKeys.public.all, 'detail', id] as const,
+    slug: (slug: string) => [...movieKeys.public.all, 'slug', slug] as const,
+  },
+  admin: {
+    all: ['movies', 'admin'] as const,
+    lists: () => [...movieKeys.admin.all, 'list'] as const,
+    list: (params?: { title?: string; status?: MovieStatus; page?: number; size?: number; sort?: string }) =>
+      [...movieKeys.admin.lists(), params] as const,
+    details: () => [...movieKeys.admin.all, 'detail'] as const,
+    detail: (id: number) => [...movieKeys.admin.details(), id] as const,
+    slug: (slug: string) => [...movieKeys.admin.all, 'slug', slug] as const,
+    sessionSearch: (search?: string) =>
+      [...movieKeys.admin.all, 'sessionSearch', search] as const,
   },
 };

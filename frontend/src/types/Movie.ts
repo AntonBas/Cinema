@@ -94,20 +94,9 @@ export interface MovieUpdateRequest {
   removePoster: boolean;
 }
 
-export interface MovieFilterRequest {
-  title?: string;
-  status?: MovieStatus;
-  ageRating?: AgeRating;
-  currentlyShowing?: boolean;
-  upcoming?: boolean;
-  archived?: boolean;
-  releaseDateFrom?: string;
-  releaseDateTo?: string;
-  genreId?: number;
-}
-
 export interface MovieCardResponse {
   id: number;
+  slug: string;
   title: string;
   posterUrl: string;
   durationMinutes: number;
@@ -137,4 +126,12 @@ export interface MovieSessionSearchResponse {
   id: number;
   title: string;
   durationMinutes: number;
+}
+
+export interface MovieFilterParams {
+  title?: string;
+  status?: MovieStatus;
+  page?: number;
+  size?: number;
+  sort?: string;
 }

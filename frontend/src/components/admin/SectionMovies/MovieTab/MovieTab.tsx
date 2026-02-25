@@ -35,16 +35,16 @@ export const MovieTab: React.FC = () => {
   const [isInitialLoading, setIsInitialLoading] = useState(true);
 
   const {
-    currentlyShowing,
-    upcoming,
-    archived,
-    currentlyShowingPagination,
-    upcomingPagination,
-    archivedPagination,
+    adminCurrent,
+    adminUpcoming,
+    adminArchived,
+    adminCurrentPagination,
+    adminUpcomingPagination,
+    adminArchivedPagination,
     loading: moviesLoading,
-    getCurrentlyShowing,
-    getUpcoming,
-    getArchived,
+    getAdminCurrent,
+    getAdminUpcoming,
+    getAdminArchived,
     getById,
     remove,
     clearCache
@@ -55,6 +55,7 @@ export const MovieTab: React.FC = () => {
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const initialLoadRef = useRef(false);
   const loadingDataRef = useRef(false);
+  const prevParamsRef = useRef<string>('');
 
   useEffect(() => {
     clearCache();
@@ -63,9 +64,9 @@ export const MovieTab: React.FC = () => {
   const loadTabCounts = useCallback(async () => {
     try {
       const [currentResponse, upcomingResponse, archivedResponse] = await Promise.all([
-        getCurrentlyShowing({ page: 0, size: 1 }),
-        getUpcoming({ page: 0, size: 1 }),
-        getArchived({ page: 0, size: 1 })
+        getAdminCurrent({ page: 0, size: 1 }),
+        getAdminUpcoming({ page: 0, size: 1 }),
+        getAdminArchived({ page: 0, size: 1 })
       ]);
 
       setTabCounts({
@@ -76,29 +77,37 @@ export const MovieTab: React.FC = () => {
     } catch (error) {
       console.error('Failed to load tab counts:', error);
     }
-  }, [getCurrentlyShowing, getUpcoming, getArchived]);
+  }, [getAdminCurrent, getAdminUpcoming, getAdminArchived]);
 
   const loadMovies = useCallback(async () => {
-    if (loadingDataRef.current) return;
+    const paramsKey = `${activeTab}_${currentPage}_${searchQuery}`;
+    if (loadingDataRef.current || prevParamsRef.current === paramsKey) {
+      return;
+    }
 
+    prevParamsRef.current = paramsKey;
     loadingDataRef.current = true;
 
     try {
-      const params = {
+      const baseParams = {
         page: currentPage,
         size: 12,
-        title: searchQuery.trim() || undefined
+        sort: activeTab === 'UPCOMING' ? 'releaseDate,asc' : 'releaseDate,desc'
       };
+
+      const params = searchQuery
+        ? { ...baseParams, title: searchQuery }
+        : baseParams;
 
       switch (activeTab) {
         case 'CURRENT':
-          await getCurrentlyShowing(params);
+          await getAdminCurrent(params);
           break;
         case 'UPCOMING':
-          await getUpcoming(params);
+          await getAdminUpcoming(params);
           break;
         case 'ARCHIVED':
-          await getArchived(params);
+          await getAdminArchived({ ...params, title: searchQuery || undefined });
           break;
       }
     } catch (err) {
@@ -111,46 +120,40 @@ export const MovieTab: React.FC = () => {
       loadingDataRef.current = false;
       setIsInitialLoading(false);
     }
-  }, [activeTab, currentPage, searchQuery, getCurrentlyShowing, getUpcoming, getArchived, showNotification]);
+  }, [activeTab, currentPage, searchQuery, getAdminCurrent, getAdminUpcoming, getAdminArchived, showNotification]);
 
   useEffect(() => {
     if (!initialLoadRef.current) {
       initialLoadRef.current = true;
       Promise.all([loadTabCounts(), loadMovies()]);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (initialLoadRef.current) {
-      const timer = setTimeout(() => {
-        loadMovies();
-      }, 100);
-      return () => clearTimeout(timer);
+    } else {
+      loadMovies();
     }
   }, [activeTab, currentPage, searchQuery]);
 
   const currentPagination = useMemo(() => {
     switch (activeTab) {
-      case 'CURRENT': return currentlyShowingPagination;
-      case 'UPCOMING': return upcomingPagination;
-      case 'ARCHIVED': return archivedPagination;
+      case 'CURRENT': return adminCurrentPagination;
+      case 'UPCOMING': return adminUpcomingPagination;
+      case 'ARCHIVED': return adminArchivedPagination;
       default: return null;
     }
-  }, [activeTab, currentlyShowingPagination, upcomingPagination, archivedPagination]);
+  }, [activeTab, adminCurrentPagination, adminUpcomingPagination, adminArchivedPagination]);
 
-  const currentMovies = useMemo(() => {
+  const currentMovies: MovieCardResponse[] = useMemo(() => {
     switch (activeTab) {
-      case 'CURRENT': return currentlyShowing;
-      case 'UPCOMING': return upcoming;
-      case 'ARCHIVED': return archived;
+      case 'CURRENT': return adminCurrent;
+      case 'UPCOMING': return adminUpcoming;
+      case 'ARCHIVED': return adminArchived;
       default: return [];
     }
-  }, [activeTab, currentlyShowing, upcoming, archived]);
+  }, [activeTab, adminCurrent, adminUpcoming, adminArchived]);
 
   const handleTabChange = useCallback((tab: MovieTabType) => {
     setActiveTab(tab);
     setSearchQuery('');
     setCurrentPage(0);
+    prevParamsRef.current = '';
   }, []);
 
   const handleSearch = useCallback((query: string) => {
@@ -160,11 +163,13 @@ export const MovieTab: React.FC = () => {
     }
     searchTimeoutRef.current = setTimeout(() => {
       setCurrentPage(0);
+      prevParamsRef.current = '';
     }, 500);
   }, []);
 
   const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page);
+    prevParamsRef.current = '';
   }, []);
 
   const handleEdit = useCallback(async (movie: MovieCardResponse) => {
@@ -191,6 +196,7 @@ export const MovieTab: React.FC = () => {
 
       const newPage = currentMovies.length === 1 && currentPage > 0 ? currentPage - 1 : currentPage;
       setCurrentPage(newPage);
+      prevParamsRef.current = '';
       await Promise.all([loadTabCounts(), loadMovies()]);
     } catch (err) {
       if (isApiErrorException(err) && err.isConflict?.()) {
@@ -215,8 +221,8 @@ export const MovieTab: React.FC = () => {
     if (result) {
       showNotification(`Movie "${result.title}" successfully ${editingMovie ? 'updated' : 'created'}!`, 'success');
     }
-    loadMovies();
-    loadTabCounts();
+    prevParamsRef.current = '';
+    Promise.all([loadTabCounts(), loadMovies()]);
   }, [editingMovie, loadMovies, loadTabCounts, showNotification]);
 
   const handleFormCancel = useCallback(() => {
