@@ -22,6 +22,7 @@ export const MovieDetailPage: React.FC = () => {
     const [findingSession, setFindingSession] = useState(false);
     const [nextSessionDate, setNextSessionDate] = useState<string | null>(null);
     const [nextSessionTime, setNextSessionTime] = useState<string | null>(null);
+    const [hasSessions, setHasSessions] = useState<boolean>(true);
     const isMounted = useRef(true);
 
     const { notifications, showNotification, hideNotification } = useNotification();
@@ -31,7 +32,7 @@ export const MovieDetailPage: React.FC = () => {
         showNotificationRef.current = showNotification;
     }, [showNotification]);
 
-    const findNextSessionDate = useCallback(async (_movieId: number, movieTitle: string) => {
+    const findNextSessionDate = useCallback(async (movieId: number, movieTitle: string) => {
         try {
             const now = new Date();
 
@@ -47,7 +48,9 @@ export const MovieDetailPage: React.FC = () => {
 
             const upcomingSessions = response.content.filter((session: SessionScheduleResponse) => {
                 const sessionTime = new Date(session.startTime);
-                return sessionTime > now && session.status === 'SCHEDULED';
+                return session.movieId === movieId &&
+                    sessionTime > now &&
+                    session.status === 'SCHEDULED';
             });
 
             if (upcomingSessions.length > 0) {
@@ -68,17 +71,20 @@ export const MovieDetailPage: React.FC = () => {
                 if (isMounted.current) {
                     setNextSessionDate(sessionDate);
                     setNextSessionTime(sessionTimeStr);
+                    setHasSessions(true);
                 }
             } else {
                 if (isMounted.current) {
                     setNextSessionDate(null);
                     setNextSessionTime(null);
+                    setHasSessions(false);
                 }
             }
         } catch {
             if (isMounted.current) {
                 setNextSessionDate(null);
                 setNextSessionTime(null);
+                setHasSessions(false);
             }
         }
     }, []);
@@ -204,6 +210,9 @@ export const MovieDetailPage: React.FC = () => {
         if (nextSessionDate && nextSessionTime) {
             return `Book Session: ${formatButtonDate(nextSessionDate, nextSessionTime)}`;
         }
+        if (!hasSessions) {
+            return 'No sessions available';
+        }
         return 'Find Available Sessions';
     };
 
@@ -234,6 +243,7 @@ export const MovieDetailPage: React.FC = () => {
                                 onClick={handleFindSession}
                                 className={styles.actionButton}
                                 loading={findingSession}
+                                disabled={!hasSessions && !nextSessionDate}
                             >
                                 {getFindSessionButtonText()}
                             </Button>

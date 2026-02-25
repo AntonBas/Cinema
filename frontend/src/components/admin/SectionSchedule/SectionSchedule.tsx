@@ -25,7 +25,7 @@ const DEBOUNCE_DELAY = 300;
 export const SectionSchedule: React.FC = () => {
     const { notifications, showNotification, hideNotification } = useNotification();
     const { allHalls, loading: hallsLoading, getAllHalls } = useCinemaHalls();
-    const { currentlyShowing, upcoming, loading: moviesLoading, getCurrentlyShowing, getUpcoming } = useMovies();
+    const { publicCurrent, publicUpcoming, loading: moviesLoading, getPublicCurrent, getPublicUpcoming } = useMovies();
 
     const [selectedSession, setSelectedSession] = useState<SessionAdminResponse | null>(null);
     const [sessionToDelete, setSessionToDelete] = useState<SessionAdminResponse | null>(null);
@@ -81,14 +81,14 @@ export const SectionSchedule: React.FC = () => {
     useEffect(() => {
         if (!initialMoviesLoaded.current) {
             initialMoviesLoaded.current = true;
-            getCurrentlyShowing();
-            getUpcoming();
+            getPublicCurrent();
+            getPublicUpcoming();
         }
-    }, [getCurrentlyShowing, getUpcoming]);
+    }, [getPublicCurrent, getPublicUpcoming]);
 
     const allMovies = useMemo(() => {
-        return [...(currentlyShowing || []), ...(upcoming || [])];
-    }, [currentlyShowing, upcoming]);
+        return [...(publicCurrent || []), ...(publicUpcoming || [])];
+    }, [publicCurrent, publicUpcoming]);
 
     const activeFilterCount = useMemo(() => {
         return Object.values(filters).filter(value => value !== undefined && value !== '').length;

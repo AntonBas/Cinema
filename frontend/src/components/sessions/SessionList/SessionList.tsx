@@ -1,6 +1,5 @@
 import React, { useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { movieApi } from '@/api/movieApi';
 import type { SessionScheduleResponse } from '@/types/session';
 import { Button } from '@/components/ui';
 import styles from './SessionList.module.css';
@@ -16,6 +15,10 @@ interface MovieGroup {
     movieDuration: number;
     sessions: SessionScheduleResponse[];
 }
+
+const getPosterUrl = (movieId: number): string => {
+    return `/api/movies/${movieId}/poster`;
+};
 
 export const SessionList: React.FC<SessionListProps> = ({ sessions }) => {
     const navigate = useNavigate();
@@ -96,7 +99,7 @@ export const SessionList: React.FC<SessionListProps> = ({ sessions }) => {
                     <div className={styles.movieHeader}>
                         <div className={styles.posterContainer}>
                             <img
-                                src={movieApi.public.getPosterUrl(movieGroup.movieId)}
+                                src={getPosterUrl(movieGroup.movieId)}
                                 alt={movieGroup.movieTitle}
                                 className={styles.poster}
                                 loading="lazy"
