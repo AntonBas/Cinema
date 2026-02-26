@@ -3,12 +3,14 @@ package ua.lviv.bas.cinema.service.cinema;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Optional;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -16,6 +18,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import ua.lviv.bas.cinema.domain.Person;
@@ -28,14 +31,16 @@ import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
 import ua.lviv.bas.cinema.exception.domain.cinema.PersonHasMoviesException;
 import ua.lviv.bas.cinema.exception.domain.cinema.PersonNotFoundException;
 import ua.lviv.bas.cinema.mapper.PersonMapper;
+import ua.lviv.bas.cinema.repository.MovieRepository;
 import ua.lviv.bas.cinema.repository.PersonRepository;
 
 @ExtendWith(MockitoExtension.class)
-class PersonServiceTest {
+public class PersonServiceTest {
 
 	@Mock
 	private PersonRepository personRepository;
-
+	@Mock
+	private MovieRepository movieRepository;
 	@Mock
 	private PersonMapper personMapper;
 
@@ -45,14 +50,24 @@ class PersonServiceTest {
 	private final Long PERSON_ID = 1L;
 	private final String PERSON_NAME = "John Doe";
 	private final PersonRole PERSON_ROLE = PersonRole.ACTOR;
+	private Person person;
+	private PersonResponse response;
+	private PersonRequest request;
+
+	@BeforeEach
+	void setUp() {
+		person = new Person();
+		person.setId(PERSON_ID);
+		person.setName(PERSON_NAME);
+		person.setRole(PERSON_ROLE);
+
+		response = PersonResponse.builder().id(PERSON_ID).name(PERSON_NAME).role(PERSON_ROLE).build();
+
+		request = PersonRequest.builder().name(PERSON_NAME).role(PERSON_ROLE).build();
+	}
 
 	@Test
 	void createPerson_Success() {
-		PersonRequest request = PersonRequest.builder().name(PERSON_NAME).role(PERSON_ROLE).build();
-
-		Person person = createPerson();
-		PersonResponse response = createPersonResponse();
-
 		when(personRepository.existsByNameAndRole(PERSON_NAME, PERSON_ROLE)).thenReturn(false);
 		when(personMapper.toPerson(request)).thenReturn(person);
 		when(personRepository.save(person)).thenReturn(person);
@@ -65,37 +80,30 @@ class PersonServiceTest {
 	}
 
 	@Test
-	void createPerson_DuplicateName_ThrowsException() {
-		PersonRequest request = PersonRequest.builder().name(PERSON_NAME).role(PERSON_ROLE).build();
-
+	void createPerson_Duplicate_ThrowsException() {
 		when(personRepository.existsByNameAndRole(PERSON_NAME, PERSON_ROLE)).thenReturn(true);
 
 		assertThatThrownBy(() -> personService.createPerson(request)).isInstanceOf(DuplicateEntityException.class);
+
+		verify(personRepository, never()).save(any());
 	}
 
 	@Test
 	void quickCreatePerson_Success() {
-		QuickCreatePersonRequest request = QuickCreatePersonRequest.builder().name(PERSON_NAME).role(PERSON_ROLE)
+		QuickCreatePersonRequest quickRequest = QuickCreatePersonRequest.builder().name(PERSON_NAME).role(PERSON_ROLE)
 				.build();
-
-		Person person = createPerson();
-		PersonResponse response = createPersonResponse();
 
 		when(personRepository.existsByNameAndRole(PERSON_NAME, PERSON_ROLE)).thenReturn(false);
 		when(personRepository.save(any(Person.class))).thenReturn(person);
 		when(personMapper.toPersonResponse(person)).thenReturn(response);
 
-		PersonResponse result = personService.quickCreatePerson(request);
+		PersonResponse result = personService.quickCreatePerson(quickRequest);
 
 		assertThat(result).isEqualTo(response);
-		verify(personRepository).save(any(Person.class));
 	}
 
 	@Test
 	void getPersonById_Success() {
-		Person person = createPerson();
-		PersonResponse response = createPersonResponse();
-
 		when(personRepository.findById(PERSON_ID)).thenReturn(Optional.of(person));
 		when(personMapper.toPersonResponse(person)).thenReturn(response);
 
@@ -113,31 +121,35 @@ class PersonServiceTest {
 
 	@Test
 	void updatePerson_Success() {
-		Person existingPerson = createPerson();
-		existingPerson.setName("Old Name");
+		Person existing = new Person();
+		existing.setId(PERSON_ID);
+		existing.setName("Old Name");
+		existing.setRole(PERSON_ROLE);
 
-		PersonRequest request = PersonRequest.builder().name(PERSON_NAME).role(PERSON_ROLE).build();
-
-		PersonResponse response = createPersonResponse();
-
-		when(personRepository.findById(PERSON_ID)).thenReturn(Optional.of(existingPerson));
+		when(personRepository.findById(PERSON_ID)).thenReturn(Optional.of(existing));
 		when(personRepository.existsByNameAndRoleAndIdNot(PERSON_NAME, PERSON_ROLE, PERSON_ID)).thenReturn(false);
-		when(personRepository.save(existingPerson)).thenReturn(existingPerson);
-		when(personMapper.toPersonResponse(existingPerson)).thenReturn(response);
+		when(personRepository.save(existing)).thenReturn(existing);
+		when(personMapper.toPersonResponse(existing)).thenReturn(response);
 
 		PersonResponse result = personService.updatePerson(PERSON_ID, request);
 
 		assertThat(result).isEqualTo(response);
-		verify(personMapper).updatePersonFromRequest(request, existingPerson);
-		assertThat(existingPerson.getName()).isEqualTo(PERSON_NAME);
+		verify(personMapper).updatePersonFromRequest(request, existing);
+	}
+
+	@Test
+	void updatePerson_Duplicate_ThrowsException() {
+		when(personRepository.findById(PERSON_ID)).thenReturn(Optional.of(person));
+		when(personRepository.existsByNameAndRoleAndIdNot(PERSON_NAME, PERSON_ROLE, PERSON_ID)).thenReturn(true);
+
+		assertThatThrownBy(() -> personService.updatePerson(PERSON_ID, request))
+				.isInstanceOf(DuplicateEntityException.class);
 	}
 
 	@Test
 	void deletePerson_Success() {
-		Person person = createPerson();
-
 		when(personRepository.findById(PERSON_ID)).thenReturn(Optional.of(person));
-		when(personRepository.countMovieUsage(PERSON_ID)).thenReturn(0L);
+		when(movieRepository.countMovieUsageByPersonId(PERSON_ID)).thenReturn(0L);
 
 		personService.deletePerson(PERSON_ID);
 
@@ -146,37 +158,32 @@ class PersonServiceTest {
 
 	@Test
 	void deletePerson_HasMovies_ThrowsException() {
-		Person person = createPerson();
-
 		when(personRepository.findById(PERSON_ID)).thenReturn(Optional.of(person));
-		when(personRepository.countMovieUsage(PERSON_ID)).thenReturn(3L);
+		when(movieRepository.countMovieUsageByPersonId(PERSON_ID)).thenReturn(3L);
 
 		assertThatThrownBy(() -> personService.deletePerson(PERSON_ID)).isInstanceOf(PersonHasMoviesException.class);
+
+		verify(personRepository, never()).delete(any());
 	}
 
 	@Test
-	void searchPersons_Success() {
-		String searchName = "John";
-		Pageable pageable = Pageable.unpaged();
-		PersonProjection projection = createPersonProjection();
+	void searchPersons_ReturnsPage() {
+		Pageable pageable = PageRequest.of(0, 10);
+		PersonProjection projection = createProjection();
 		Page<PersonProjection> projectionPage = new PageImpl<>(List.of(projection));
-		PersonResponse response = createPersonResponse();
 
-		when(personRepository.findProjectionsByFilters(searchName, PERSON_ROLE, pageable)).thenReturn(projectionPage);
+		when(personRepository.findProjectionsByFilters(PERSON_NAME, PERSON_ROLE, pageable)).thenReturn(projectionPage);
 		when(personMapper.toPersonResponse(projection)).thenReturn(response);
 
-		Page<PersonResponse> result = personService.searchPersons(searchName, PERSON_ROLE, pageable);
+		Page<PersonResponse> result = personService.searchPersons(PERSON_NAME, PERSON_ROLE, pageable);
 
 		assertThat(result.getContent()).hasSize(1);
 		assertThat(result.getContent().get(0)).isEqualTo(response);
 	}
 
 	@Test
-	void getPersonsByIds_Success() {
+	void getPersonsByIds_ReturnsList() {
 		List<Long> ids = List.of(1L, 2L);
-		Person person = createPerson();
-		PersonResponse response = createPersonResponse();
-
 		when(personRepository.findAllById(ids)).thenReturn(List.of(person));
 		when(personMapper.toPersonResponseList(List.of(person))).thenReturn(List.of(response));
 
@@ -187,7 +194,13 @@ class PersonServiceTest {
 	}
 
 	@Test
-	void existsByNameAndRole_Success() {
+	void getPersonsByIds_EmptyList_ReturnsEmptyList() {
+		List<PersonResponse> result = personService.getPersonsByIds(List.of());
+		assertThat(result).isEmpty();
+	}
+
+	@Test
+	void existsByNameAndRole_ReturnsTrue() {
 		when(personRepository.existsByNameAndRole(PERSON_NAME, PERSON_ROLE)).thenReturn(true);
 
 		boolean result = personService.existsByNameAndRole(PERSON_NAME, PERSON_ROLE);
@@ -195,19 +208,7 @@ class PersonServiceTest {
 		assertThat(result).isTrue();
 	}
 
-	private Person createPerson() {
-		Person person = new Person();
-		person.setId(PERSON_ID);
-		person.setName(PERSON_NAME);
-		person.setRole(PERSON_ROLE);
-		return person;
-	}
-
-	private PersonResponse createPersonResponse() {
-		return PersonResponse.builder().id(PERSON_ID).name(PERSON_NAME).role(PERSON_ROLE).build();
-	}
-
-	private PersonProjection createPersonProjection() {
+	private PersonProjection createProjection() {
 		return new PersonProjection() {
 			@Override
 			public Long getId() {

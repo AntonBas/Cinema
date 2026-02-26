@@ -2,11 +2,13 @@ package ua.lviv.bas.cinema.service.cinema;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Optional;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -21,7 +23,7 @@ import ua.lviv.bas.cinema.mapper.SeatMapper;
 import ua.lviv.bas.cinema.repository.SeatRepository;
 
 @ExtendWith(MockitoExtension.class)
-class SeatServiceTest {
+public class SeatServiceTest {
 
 	@Mock
 	private SeatRepository seatRepository;
@@ -36,13 +38,24 @@ class SeatServiceTest {
 	private final Long HALL_ID = 10L;
 	private final int ROW = 1;
 	private final int NUMBER = 5;
-	private final SeatType SEAT_TYPE = SeatType.VIP;
+	private Seat seat;
+	private SeatResponse response;
+
+	@BeforeEach
+	void setUp() {
+		seat = new Seat();
+		seat.setId(SEAT_ID);
+		seat.setRow(ROW);
+		seat.setNumber(NUMBER);
+		seat.setSeatType(SeatType.STANDARD);
+		seat.setActive(true);
+
+		response = SeatResponse.builder().id(SEAT_ID).row(ROW).number(NUMBER).seatType(SeatType.STANDARD).active(true)
+				.build();
+	}
 
 	@Test
-	void getSeatById_Success() {
-		Seat seat = createSeat();
-		SeatResponse response = createSeatResponse();
-
+	void getSeatById_ShouldReturnSeat() {
 		when(seatRepository.findById(SEAT_ID)).thenReturn(Optional.of(seat));
 		when(seatMapper.toSeatResponse(seat)).thenReturn(response);
 
@@ -59,26 +72,21 @@ class SeatServiceTest {
 	}
 
 	@Test
-	void updateSeatType_Success() {
-		Seat seat = createSeat();
-		seat.setSeatType(SeatType.STANDARD);
-		SeatResponse response = createSeatResponse();
-
+	void updateSeatType_ShouldUpdateType() {
 		when(seatRepository.findById(SEAT_ID)).thenReturn(Optional.of(seat));
 		when(seatRepository.save(seat)).thenReturn(seat);
 		when(seatMapper.toSeatResponse(seat)).thenReturn(response);
 
-		SeatResponse result = seatService.updateSeatType(SEAT_ID, SEAT_TYPE);
+		SeatResponse result = seatService.updateSeatType(SEAT_ID, SeatType.VIP);
 
 		assertThat(result).isEqualTo(response);
-		assertThat(seat.getSeatType()).isEqualTo(SEAT_TYPE);
+		assertThat(seat.getSeatType()).isEqualTo(SeatType.VIP);
+		verify(seatRepository).save(seat);
 	}
 
 	@Test
-	void setSeatActiveStatus_Success() {
-		Seat seat = createSeat();
+	void setSeatActiveStatus_ShouldUpdateStatus() {
 		seat.setActive(false);
-		SeatResponse response = createSeatResponse();
 
 		when(seatRepository.findById(SEAT_ID)).thenReturn(Optional.of(seat));
 		when(seatRepository.save(seat)).thenReturn(seat);
@@ -88,13 +96,11 @@ class SeatServiceTest {
 
 		assertThat(result).isEqualTo(response);
 		assertThat(seat.isActive()).isTrue();
+		verify(seatRepository).save(seat);
 	}
 
 	@Test
-	void getSeatsByHall_Success() {
-		Seat seat = createSeat();
-		SeatResponse response = createSeatResponse();
-
+	void getSeatsByHall_ShouldReturnList() {
 		when(seatRepository.findByHallId(HALL_ID)).thenReturn(List.of(seat));
 		when(seatMapper.toSeatResponseList(List.of(seat))).thenReturn(List.of(response));
 
@@ -105,10 +111,7 @@ class SeatServiceTest {
 	}
 
 	@Test
-	void getSeatByPosition_Success() {
-		Seat seat = createSeat();
-		SeatResponse response = createSeatResponse();
-
+	void getSeatByPosition_ShouldReturnSeat() {
 		when(seatRepository.findByHallIdAndRowAndNumber(HALL_ID, ROW, NUMBER)).thenReturn(Optional.of(seat));
 		when(seatMapper.toSeatResponse(seat)).thenReturn(response);
 
@@ -126,56 +129,8 @@ class SeatServiceTest {
 	}
 
 	@Test
-	void isSeatAvailable_True() {
-		when(seatRepository.existsByHallIdAndRowAndNumberAndActiveTrue(HALL_ID, ROW, NUMBER)).thenReturn(true);
-
-		boolean result = seatService.isSeatAvailable(HALL_ID, ROW, NUMBER);
-
-		assertThat(result).isTrue();
-	}
-
-	@Test
-	void isSeatAvailable_False() {
-		when(seatRepository.existsByHallIdAndRowAndNumberAndActiveTrue(HALL_ID, ROW, NUMBER)).thenReturn(false);
-
-		boolean result = seatService.isSeatAvailable(HALL_ID, ROW, NUMBER);
-
-		assertThat(result).isFalse();
-	}
-
-	@Test
-	void getSeatsByType_Success() {
-		Seat seat = createSeat();
-		SeatResponse response = createSeatResponse();
-
-		when(seatRepository.findByHallIdAndSeatType(HALL_ID, SEAT_TYPE)).thenReturn(List.of(seat));
-		when(seatMapper.toSeatResponseList(List.of(seat))).thenReturn(List.of(response));
-
-		List<SeatResponse> result = seatService.getSeatsByType(HALL_ID, SEAT_TYPE);
-
-		assertThat(result).hasSize(1);
-		assertThat(result.get(0)).isEqualTo(response);
-	}
-
-	@Test
-	void getActiveSeatsByHall_Success() {
-		Seat seat = createSeat();
-		SeatResponse response = createSeatResponse();
-
-		when(seatRepository.findByHallIdAndActiveTrue(HALL_ID)).thenReturn(List.of(seat));
-		when(seatMapper.toSeatResponseList(List.of(seat))).thenReturn(List.of(response));
-
-		List<SeatResponse> result = seatService.getActiveSeatsByHall(HALL_ID);
-
-		assertThat(result).hasSize(1);
-		assertThat(result.get(0)).isEqualTo(response);
-	}
-
-	@Test
-	void getSeatsByIds_Success() {
-		Seat seat = createSeat();
+	void getSeatsByIds_ShouldReturnList() {
 		List<Long> ids = List.of(SEAT_ID);
-
 		when(seatRepository.findAllById(ids)).thenReturn(List.of(seat));
 
 		List<Seat> result = seatService.getSeatsByIds(ids);
@@ -184,17 +139,18 @@ class SeatServiceTest {
 		assertThat(result.get(0)).isEqualTo(seat);
 	}
 
-	private Seat createSeat() {
-		Seat seat = new Seat();
-		seat.setId(SEAT_ID);
-		seat.setRow(ROW);
-		seat.setNumber(NUMBER);
-		seat.setSeatType(SEAT_TYPE);
-		seat.setActive(true);
-		return seat;
-	}
+	@Test
+	void getSeatsGroupedByRow_ShouldReturnMap() {
+		Seat seat2 = new Seat();
+		seat2.setId(2L);
+		seat2.setRow(1);
+		seat2.setNumber(6);
 
-	private SeatResponse createSeatResponse() {
-		return SeatResponse.builder().id(SEAT_ID).row(ROW).number(NUMBER).seatType(SEAT_TYPE).active(true).build();
+		when(seatRepository.findByHallId(HALL_ID)).thenReturn(List.of(seat, seat2));
+
+		var result = seatService.getSeatsGroupedByRow(HALL_ID);
+
+		assertThat(result).hasSize(1);
+		assertThat(result.get(1)).hasSize(2);
 	}
 }

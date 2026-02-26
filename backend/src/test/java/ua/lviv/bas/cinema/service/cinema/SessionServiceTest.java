@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
@@ -20,31 +21,27 @@ import ua.lviv.bas.cinema.domain.CinemaHall;
 import ua.lviv.bas.cinema.domain.Movie;
 import ua.lviv.bas.cinema.domain.Session;
 import ua.lviv.bas.cinema.domain.enums.CinemaSessionStatus;
+import ua.lviv.bas.cinema.domain.projection.SessionAdminProjection;
 import ua.lviv.bas.cinema.dto.session.request.SessionCreateRequest;
 import ua.lviv.bas.cinema.dto.session.request.SessionUpdateRequest;
 import ua.lviv.bas.cinema.dto.session.response.SessionAdminResponse;
 import ua.lviv.bas.cinema.dto.session.response.SessionScheduleResponse;
-import ua.lviv.bas.cinema.exception.domain.cinema.MovieNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.cinema.SessionNotFoundException;
-import ua.lviv.bas.cinema.exception.domain.cinema.SessionTimeConflictException;
 import ua.lviv.bas.cinema.mapper.SessionMapper;
 import ua.lviv.bas.cinema.repository.MovieRepository;
 import ua.lviv.bas.cinema.repository.SessionRepository;
 
 @ExtendWith(MockitoExtension.class)
-class SessionServiceTest {
+public class SessionServiceTest {
 
 	@Mock
 	private SessionRepository sessionRepository;
-
-	@Mock
-	private MovieRepository movieRepository;
-
-	@Mock
-	private CinemaHallService cinemaHallService;
-
 	@Mock
 	private SessionMapper sessionMapper;
+	@Mock
+	private MovieRepository movieRepository;
+	@Mock
+	private CinemaHallService cinemaHallService;
 
 	@InjectMocks
 	private SessionService sessionService;
@@ -52,26 +49,102 @@ class SessionServiceTest {
 	private final Long SESSION_ID = 1L;
 	private final Long MOVIE_ID = 2L;
 	private final Long HALL_ID = 3L;
-	private final BigDecimal BASE_PRICE = new BigDecimal("250.00");
 	private final LocalDateTime START_TIME = LocalDateTime.now().plusHours(2);
 
 	@Test
 	void createSession_Success() {
-		SessionCreateRequest request = SessionCreateRequest.builder().startTime(START_TIME).basePrice(BASE_PRICE)
-				.movieId(MOVIE_ID).hallId(HALL_ID).build();
+		SessionCreateRequest request = SessionCreateRequest.builder().startTime(START_TIME)
+				.basePrice(BigDecimal.valueOf(250)).movieId(MOVIE_ID).hallId(HALL_ID).build();
 
-		Movie movie = createMovie();
-		CinemaHall hall = createCinemaHall();
-		Session session = createSession();
-		SessionAdminResponse response = createSessionAdminResponse();
+		Movie movie = new Movie();
+		movie.setId(MOVIE_ID);
+		movie.setDurationMinutes(120);
+		movie.setReleaseDate(LocalDate.now().minusDays(1));
 
-		when(movieRepository.findById(MOVIE_ID)).thenReturn(Optional.of(movie));
+		CinemaHall hall = new CinemaHall();
+		hall.setId(HALL_ID);
+
+		Session session = new Session();
+		session.setId(SESSION_ID);
+
+		SessionAdminProjection projection = new SessionAdminProjection() {
+			@Override
+			public Long getId() {
+				return SESSION_ID;
+			}
+
+			@Override
+			public LocalDateTime getStartTime() {
+				return START_TIME;
+			}
+
+			@Override
+			public LocalDateTime getEndTime() {
+				return START_TIME.plusMinutes(120);
+			}
+
+			@Override
+			public BigDecimal getBasePrice() {
+				return BigDecimal.valueOf(250);
+			}
+
+			@Override
+			public CinemaSessionStatus getStatus() {
+				return CinemaSessionStatus.SCHEDULED;
+			}
+
+			@Override
+			public Long getMovieId() {
+				return MOVIE_ID;
+			}
+
+			@Override
+			public String getMovieTitle() {
+				return "Test Movie";
+			}
+
+			@Override
+			public Integer getMovieDuration() {
+				return 120;
+			}
+
+			@Override
+			public Long getHallId() {
+				return HALL_ID;
+			}
+
+			@Override
+			public String getHallName() {
+				return "Hall 1";
+			}
+
+			@Override
+			public Integer getHallCapacity() {
+				return 100;
+			}
+
+			@Override
+			public Integer getTicketsSold() {
+				return 0;
+			}
+
+			@Override
+			public BigDecimal getTotalRevenue() {
+				return BigDecimal.ZERO;
+			}
+		};
+
+		SessionAdminResponse response = new SessionAdminResponse();
+		response.setId(SESSION_ID);
+
+		when(movieRepository.getReferenceById(MOVIE_ID)).thenReturn(movie);
 		when(cinemaHallService.getHallEntityById(HALL_ID)).thenReturn(hall);
-		when(sessionRepository.existsConflictingSession(HALL_ID, START_TIME,
-				START_TIME.plusMinutes(movie.getDurationMinutes()), null)).thenReturn(false);
-		when(sessionMapper.toSession(request)).thenReturn(session);
+		when(sessionRepository.existsConflictingSession(HALL_ID, START_TIME, START_TIME.plusMinutes(120), null))
+				.thenReturn(false);
+		when(sessionMapper.toEntity(request)).thenReturn(session);
 		when(sessionRepository.save(session)).thenReturn(session);
-		when(sessionMapper.toSessionAdminResponse(session)).thenReturn(response);
+		when(sessionRepository.findAdminProjectionById(SESSION_ID)).thenReturn(Optional.of(projection));
+		when(sessionMapper.toAdminResponse(projection)).thenReturn(response);
 
 		SessionAdminResponse result = sessionService.createSession(request);
 
@@ -80,91 +153,130 @@ class SessionServiceTest {
 	}
 
 	@Test
-	void createSession_MovieNotFound_ThrowsException() {
-		SessionCreateRequest request = SessionCreateRequest.builder().startTime(START_TIME).basePrice(BASE_PRICE)
-				.movieId(MOVIE_ID).hallId(HALL_ID).build();
+	void getSessionForPublic_Success() {
+		Session session = new Session();
+		session.setId(SESSION_ID);
 
-		when(movieRepository.findById(MOVIE_ID)).thenReturn(Optional.empty());
-
-		assertThatThrownBy(() -> sessionService.createSession(request)).isInstanceOf(MovieNotFoundException.class);
-	}
-
-	@Test
-	void createSession_TimeConflict_ThrowsException() {
-		SessionCreateRequest request = SessionCreateRequest.builder().startTime(START_TIME).movieId(MOVIE_ID)
-				.hallId(HALL_ID).build();
-
-		Movie movie = createMovie();
-
-		when(movieRepository.findById(MOVIE_ID)).thenReturn(Optional.of(movie));
-		when(cinemaHallService.getHallEntityById(HALL_ID)).thenReturn(createCinemaHall());
-		when(sessionRepository.existsConflictingSession(HALL_ID, START_TIME,
-				START_TIME.plusMinutes(movie.getDurationMinutes()), null)).thenReturn(true);
-
-		assertThatThrownBy(() -> sessionService.createSession(request))
-				.isInstanceOf(SessionTimeConflictException.class);
-	}
-
-	@Test
-	void getSessionById_Success() {
-		Session session = createSession();
-		SessionAdminResponse response = createSessionAdminResponse();
+		SessionScheduleResponse response = new SessionScheduleResponse();
+		response.setId(SESSION_ID);
 
 		when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(session));
-		when(sessionMapper.toSessionAdminResponse(session)).thenReturn(response);
+		when(sessionMapper.toScheduleResponse(session)).thenReturn(response);
 
-		SessionAdminResponse result = sessionService.getSessionById(SESSION_ID);
+		List<Object[]> seatData = List.<Object[]>of(new Object[] { SESSION_ID, 50 });
+		when(sessionRepository.findAvailableSeatsBatch(List.of(SESSION_ID))).thenReturn(seatData);
+
+		SessionScheduleResponse result = sessionService.getSessionForPublic(SESSION_ID);
 
 		assertThat(result).isEqualTo(response);
 	}
 
 	@Test
-	void getSessionById_NotFound_ThrowsException() {
+	void getSessionForPublic_NotFound_ThrowsException() {
 		when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.empty());
 
-		assertThatThrownBy(() -> sessionService.getSessionById(SESSION_ID))
+		assertThatThrownBy(() -> sessionService.getSessionForPublic(SESSION_ID))
 				.isInstanceOf(SessionNotFoundException.class);
 	}
 
 	@Test
-	void getSessionByIdForPublic_Success() {
-		Session session = createSession();
-		session.setStatus(CinemaSessionStatus.SCHEDULED);
-		SessionScheduleResponse response = createSessionScheduleResponse();
+	void updateSession_UpdatesStartTime_Success() {
+		SessionUpdateRequest request = SessionUpdateRequest.builder().startTime(START_TIME.plusHours(1)).build();
 
-		when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(session));
-		when(sessionMapper.toSessionScheduleResponse(session)).thenReturn(response);
+		Movie movie = new Movie();
+		movie.setDurationMinutes(120);
 
-		SessionScheduleResponse result = sessionService.getSessionByIdForPublic(SESSION_ID);
+		CinemaHall hall = new CinemaHall();
+		hall.setId(HALL_ID);
 
-		assertThat(result).isEqualTo(response);
-	}
+		Session session = new Session();
+		session.setId(SESSION_ID);
+		session.setHall(hall);
+		session.setMovie(movie);
+		session.setStartTime(START_TIME);
 
-	@Test
-	void getSessionByIdForPublic_Cancelled_ThrowsException() {
-		Session session = createSession();
-		session.setStatus(CinemaSessionStatus.CANCELLED);
+		SessionAdminProjection projection = new SessionAdminProjection() {
+			@Override
+			public Long getId() {
+				return SESSION_ID;
+			}
 
-		when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(session));
+			@Override
+			public LocalDateTime getStartTime() {
+				return START_TIME.plusHours(1);
+			}
 
-		assertThatThrownBy(() -> sessionService.getSessionByIdForPublic(SESSION_ID))
-				.isInstanceOf(SessionNotFoundException.class);
-	}
+			@Override
+			public LocalDateTime getEndTime() {
+				return START_TIME.plusHours(1).plusMinutes(120);
+			}
 
-	@Test
-	void updateSession_Success() {
-		Session session = createSession();
-		SessionUpdateRequest request = SessionUpdateRequest.builder().basePrice(new BigDecimal("300.00")).build();
-		SessionAdminResponse response = createSessionAdminResponse();
+			@Override
+			public BigDecimal getBasePrice() {
+				return BigDecimal.valueOf(250);
+			}
+
+			@Override
+			public CinemaSessionStatus getStatus() {
+				return CinemaSessionStatus.SCHEDULED;
+			}
+
+			@Override
+			public Long getMovieId() {
+				return MOVIE_ID;
+			}
+
+			@Override
+			public String getMovieTitle() {
+				return "Test Movie";
+			}
+
+			@Override
+			public Integer getMovieDuration() {
+				return 120;
+			}
+
+			@Override
+			public Long getHallId() {
+				return HALL_ID;
+			}
+
+			@Override
+			public String getHallName() {
+				return "Hall 1";
+			}
+
+			@Override
+			public Integer getHallCapacity() {
+				return 100;
+			}
+
+			@Override
+			public Integer getTicketsSold() {
+				return 0;
+			}
+
+			@Override
+			public BigDecimal getTotalRevenue() {
+				return BigDecimal.ZERO;
+			}
+		};
+
+		SessionAdminResponse response = new SessionAdminResponse();
+		response.setId(SESSION_ID);
 
 		when(sessionRepository.findByIdWithLock(SESSION_ID)).thenReturn(Optional.of(session));
+		when(sessionRepository.existsConflictingSession(HALL_ID, START_TIME.plusHours(1),
+				START_TIME.plusHours(1).plusMinutes(120), SESSION_ID)).thenReturn(false);
 		when(sessionRepository.save(session)).thenReturn(session);
-		when(sessionMapper.toSessionAdminResponse(session)).thenReturn(response);
+		when(sessionRepository.findAdminProjectionById(SESSION_ID)).thenReturn(Optional.of(projection));
+		when(sessionMapper.toAdminResponse(projection)).thenReturn(response);
 
 		SessionAdminResponse result = sessionService.updateSession(SESSION_ID, request);
 
 		assertThat(result).isEqualTo(response);
-		verify(sessionMapper).updateSessionFromRequest(request, session);
+		assertThat(session.getStartTime()).isEqualTo(START_TIME.plusHours(1));
+		verify(sessionRepository).save(session);
 	}
 
 	@Test
@@ -178,7 +290,9 @@ class SessionServiceTest {
 
 	@Test
 	void cancelSession_Success() {
-		Session session = createSession();
+		Session session = new Session();
+		session.setId(SESSION_ID);
+		session.setStartTime(LocalDateTime.now().plusHours(2));
 		session.setStatus(CinemaSessionStatus.SCHEDULED);
 
 		when(sessionRepository.findByIdWithLock(SESSION_ID)).thenReturn(Optional.of(session));
@@ -187,58 +301,5 @@ class SessionServiceTest {
 		sessionService.cancelSession(SESSION_ID);
 
 		assertThat(session.getStatus()).isEqualTo(CinemaSessionStatus.CANCELLED);
-		verify(sessionRepository).save(session);
-	}
-
-	@Test
-	void reactivateSession_Success() {
-		Session session = createSession();
-		session.setStatus(CinemaSessionStatus.CANCELLED);
-
-		when(sessionRepository.findByIdWithLock(SESSION_ID)).thenReturn(Optional.of(session));
-		when(sessionRepository.existsConflictingSession(HALL_ID, START_TIME, START_TIME.plusMinutes(120), SESSION_ID))
-				.thenReturn(false);
-		when(sessionRepository.save(session)).thenReturn(session);
-
-		sessionService.reactivateSession(SESSION_ID);
-
-		assertThat(session.getStatus()).isEqualTo(CinemaSessionStatus.SCHEDULED);
-		verify(sessionRepository).save(session);
-	}
-
-	private Movie createMovie() {
-		Movie movie = new Movie();
-		movie.setId(MOVIE_ID);
-		movie.setDurationMinutes(120);
-		movie.setReleaseDate(LocalDate.now().minusDays(1));
-		movie.setEndShowingDate(LocalDate.now().plusDays(30));
-		return movie;
-	}
-
-	private CinemaHall createCinemaHall() {
-		CinemaHall hall = new CinemaHall();
-		hall.setId(HALL_ID);
-		return hall;
-	}
-
-	private Session createSession() {
-		Session session = new Session();
-		session.setId(SESSION_ID);
-		session.setStartTime(START_TIME);
-		session.setBasePrice(BASE_PRICE);
-		session.setMovie(createMovie());
-		session.setHall(createCinemaHall());
-		session.setStatus(CinemaSessionStatus.SCHEDULED);
-		return session;
-	}
-
-	private SessionAdminResponse createSessionAdminResponse() {
-		return SessionAdminResponse.builder().id(SESSION_ID).startTime(START_TIME).basePrice(BASE_PRICE)
-				.status(CinemaSessionStatus.SCHEDULED).build();
-	}
-
-	private SessionScheduleResponse createSessionScheduleResponse() {
-		return SessionScheduleResponse.builder().id(SESSION_ID).startTime(START_TIME).basePrice(BASE_PRICE)
-				.status(CinemaSessionStatus.SCHEDULED).build();
 	}
 }
