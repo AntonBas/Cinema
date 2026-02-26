@@ -2,14 +2,13 @@ package ua.lviv.bas.cinema.mapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.Arrays;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
-import org.mockito.Mockito;
 
 import ua.lviv.bas.cinema.domain.Genre;
+import ua.lviv.bas.cinema.domain.projection.GenreProjection;
 import ua.lviv.bas.cinema.dto.movie.request.GenreRequest;
 import ua.lviv.bas.cinema.dto.movie.response.GenreResponse;
 
@@ -20,7 +19,6 @@ public class GenreMapperTest {
 	@Test
 	void toGenreResponseFromEntity() {
 		Genre genre = Genre.builder().id(1L).name("Action").build();
-
 		GenreResponse response = mapper.toGenreResponse(genre);
 
 		assertThat(response.getId()).isEqualTo(1L);
@@ -29,11 +27,7 @@ public class GenreMapperTest {
 
 	@Test
 	void toGenreResponseFromProjection() {
-		var projection = Mockito.mock(ua.lviv.bas.cinema.domain.projection.GenreProjection.class);
-		Mockito.when(projection.getId()).thenReturn(1L);
-		Mockito.when(projection.getName()).thenReturn("Comedy");
-		Mockito.when(projection.getMovieCount()).thenReturn(5);
-
+		GenreProjection projection = new GenreProjection(1L, "Comedy", 5);
 		GenreResponse response = mapper.toGenreResponse(projection);
 
 		assertThat(response.getId()).isEqualTo(1L);
@@ -43,7 +37,7 @@ public class GenreMapperTest {
 
 	@Test
 	void toGenreResponseList() {
-		List<Genre> genres = Arrays.asList(Genre.builder().id(1L).name("Action").build(),
+		List<Genre> genres = List.of(Genre.builder().id(1L).name("Action").build(),
 				Genre.builder().id(2L).name("Comedy").build());
 
 		List<GenreResponse> responses = mapper.toGenreResponseList(genres);
@@ -56,7 +50,6 @@ public class GenreMapperTest {
 	@Test
 	void toGenre() {
 		GenreRequest request = GenreRequest.builder().name("Drama").build();
-
 		Genre genre = mapper.toGenre(request);
 
 		assertThat(genre.getName()).isEqualTo("Drama");
@@ -65,7 +58,6 @@ public class GenreMapperTest {
 	@Test
 	void updateGenreFromRequest() {
 		Genre existing = Genre.builder().id(1L).name("Old").build();
-
 		GenreRequest request = GenreRequest.builder().name("New").build();
 
 		mapper.updateGenreFromRequest(request, existing);
@@ -74,31 +66,10 @@ public class GenreMapperTest {
 	}
 
 	@Test
-	void toGenreResponseFromNullEntity() {
-		GenreResponse response = mapper.toGenreResponse((Genre) null);
-		assertThat(response).isNull();
-	}
-
-	@Test
-	void toGenreFromNull() {
-		Genre genre = mapper.toGenre(null);
-		assertThat(genre).isNull();
-	}
-
-	@Test
-	void toGenreResponseListFromNull() {
-		List<GenreResponse> responses = mapper.toGenreResponseList(null);
-		assertThat(responses).isNull();
-	}
-
-	@Test
-	void updateGenreFromRequestWithNull() {
-		Genre existing = Genre.builder().id(1L).name("Old").build();
-
-		GenreRequest request = GenreRequest.builder().build();
-
-		mapper.updateGenreFromRequest(request, existing);
-
-		assertThat(existing.getName()).isEqualTo("Old");
+	void nullHandling() {
+		assertThat(mapper.toGenreResponse((Genre) null)).isNull();
+		assertThat(mapper.toGenreResponse((GenreProjection) null)).isNull();
+		assertThat(mapper.toGenre(null)).isNull();
+		assertThat(mapper.toGenreResponseList(null)).isNull();
 	}
 }

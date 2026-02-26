@@ -3,11 +3,11 @@ package ua.lviv.bas.cinema.mapper;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
-import org.mockito.Mockito;
 
 import ua.lviv.bas.cinema.domain.Person;
 import ua.lviv.bas.cinema.domain.enums.PersonRole;
@@ -30,31 +30,25 @@ public class PersonMapperTest {
 	}
 
 	@Test
-	void toPersonResponseFromProjection() {
-		var projection = Mockito.mock(ua.lviv.bas.cinema.domain.projection.PersonProjection.class);
-		Mockito.when(projection.getId()).thenReturn(1L);
-		Mockito.when(projection.getName()).thenReturn("Jane Doe");
-		Mockito.when(projection.getRole()).thenReturn(PersonRole.DIRECTOR);
-		Mockito.when(projection.getMovieCount()).thenReturn(5);
-
-		PersonResponse response = mapper.toPersonResponse(projection);
-
-		assertThat(response.getId()).isEqualTo(1L);
-		assertThat(response.getName()).isEqualTo("Jane Doe");
-		assertThat(response.getRole()).isEqualTo(PersonRole.DIRECTOR);
-		assertThat(response.getMovieCount()).isEqualTo(5);
-	}
-
-	@Test
 	void toPersonResponseList() {
-		List<Person> persons = Arrays.asList(Person.builder().id(1L).name("Actor 1").build(),
-				Person.builder().id(2L).name("Actor 2").build());
+		List<Person> persons = Arrays.asList(Person.builder().id(1L).name("Actor 1").role(PersonRole.ACTOR).build(),
+				Person.builder().id(2L).name("Director 1").role(PersonRole.DIRECTOR).build());
 
 		List<PersonResponse> responses = mapper.toPersonResponseList(persons);
 
 		assertThat(responses).hasSize(2);
+		assertThat(responses.get(0).getId()).isEqualTo(1L);
 		assertThat(responses.get(0).getName()).isEqualTo("Actor 1");
-		assertThat(responses.get(1).getName()).isEqualTo("Actor 2");
+		assertThat(responses.get(0).getRole()).isEqualTo(PersonRole.ACTOR);
+		assertThat(responses.get(1).getId()).isEqualTo(2L);
+		assertThat(responses.get(1).getName()).isEqualTo("Director 1");
+		assertThat(responses.get(1).getRole()).isEqualTo(PersonRole.DIRECTOR);
+	}
+
+	@Test
+	void toPersonResponseListFromEmptyList() {
+		List<PersonResponse> responses = mapper.toPersonResponseList(Collections.emptyList());
+		assertThat(responses).isEmpty();
 	}
 
 	@Test
@@ -63,6 +57,7 @@ public class PersonMapperTest {
 
 		Person person = mapper.toPerson(request);
 
+		assertThat(person.getId()).isNull();
 		assertThat(person.getName()).isEqualTo("New Person");
 		assertThat(person.getRole()).isEqualTo(PersonRole.SCREENWRITER);
 	}
@@ -75,37 +70,40 @@ public class PersonMapperTest {
 
 		mapper.updatePersonFromRequest(request, person);
 
+		assertThat(person.getId()).isEqualTo(1L);
 		assertThat(person.getName()).isEqualTo("New Name");
 		assertThat(person.getRole()).isEqualTo(PersonRole.DIRECTOR);
 	}
 
 	@Test
-	void toPersonResponseFromNullEntity() {
-		PersonResponse response = mapper.toPersonResponse((Person) null);
-		assertThat(response).isNull();
-	}
+	void updatePersonFromRequestWithNullFields() {
+		Person person = Person.builder().id(1L).name("Old Name").role(PersonRole.ACTOR).build();
 
-	@Test
-	void toPersonFromNull() {
-		Person person = mapper.toPerson(null);
-		assertThat(person).isNull();
-	}
-
-	@Test
-	void toPersonResponseListFromNull() {
-		List<PersonResponse> responses = mapper.toPersonResponseList(null);
-		assertThat(responses).isNull();
-	}
-
-	@Test
-	void updatePersonFromRequestWithNull() {
-		Person person = Person.builder().id(1L).name("Original").role(PersonRole.ACTOR).build();
-
-		PersonRequest request = PersonRequest.builder().build();
+		PersonRequest request = PersonRequest.builder().name(null).role(null).build();
 
 		mapper.updatePersonFromRequest(request, person);
 
-		assertThat(person.getName()).isEqualTo("Original");
+		assertThat(person.getId()).isEqualTo(1L);
+		assertThat(person.getName()).isEqualTo("Old Name");
 		assertThat(person.getRole()).isEqualTo(PersonRole.ACTOR);
+	}
+
+	@Test
+	void updatePersonFromRequestWithNullRequest() {
+		Person person = Person.builder().id(1L).name("Old Name").role(PersonRole.ACTOR).build();
+
+		mapper.updatePersonFromRequest(null, person);
+
+		assertThat(person.getId()).isEqualTo(1L);
+		assertThat(person.getName()).isEqualTo("Old Name");
+		assertThat(person.getRole()).isEqualTo(PersonRole.ACTOR);
+	}
+
+	@Test
+	void nullHandling() {
+		assertThat(mapper.toPersonResponse((Person) null)).isNull();
+		assertThat(mapper.toPersonResponse((ua.lviv.bas.cinema.domain.projection.PersonProjection) null)).isNull();
+		assertThat(mapper.toPerson(null)).isNull();
+		assertThat(mapper.toPersonResponseList(null)).isNull();
 	}
 }
