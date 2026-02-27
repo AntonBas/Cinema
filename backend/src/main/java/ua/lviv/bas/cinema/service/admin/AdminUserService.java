@@ -1,16 +1,12 @@
 package ua.lviv.bas.cinema.service.admin;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.stream.Collectors;
 
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,7 +17,6 @@ import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.enums.UserRole;
 import ua.lviv.bas.cinema.domain.enums.VerificationStatus;
 import ua.lviv.bas.cinema.domain.projection.AdminUserProjection;
-import ua.lviv.bas.cinema.domain.specification.UserSpecification;
 import ua.lviv.bas.cinema.dto.user.request.UserFilterRequest;
 import ua.lviv.bas.cinema.dto.user.request.VerificationBirthDateRequest;
 import ua.lviv.bas.cinema.dto.user.response.AdminUserListResponse;
@@ -41,7 +36,6 @@ public class AdminUserService {
 
 	private final UserRepository userRepository;
 	private final UserMapper userMapper;
-	private final UserSpecification userSpecification;
 
 	@CacheEvict(allEntries = true)
 	@Transactional
@@ -95,23 +89,12 @@ public class AdminUserService {
 	public Page<AdminUserListResponse> getUsersForAdmin(UserFilterRequest filter, Pageable pageable) {
 		log.info("Fetching users for admin with filter: {}, pageable: {}", filter, pageable);
 
-		Specification<User> spec = userSpecification.buildForAdmin(filter);
-		Page<User> userPage = userRepository.findAll(spec, pageable);
+		Page<AdminUserProjection> projections = userRepository.findAdminProjectionsWithFilters(filter.getSearch(),
+				filter.getRole() != null ? filter.getRole().name() : null,
+				filter.getVerificationStatus() != null ? filter.getVerificationStatus().name() : null,
+				filter.getEnabled(), pageable);
 
-		if (userPage.isEmpty()) {
-			return Page.empty(pageable);
-		}
-
-		List<Long> userIds = userPage.stream().map(User::getId).collect(Collectors.toList());
-
-		List<AdminUserProjection> projections = userRepository.findAdminProjectionsByUserIds(userIds);
-
-		List<AdminUserListResponse> content = projections.stream().map(userMapper::toAdminUserListResponse)
-				.collect(Collectors.toList());
-
-		log.info("Mapped {} users for admin", content.size());
-
-		return new PageImpl<>(content, pageable, userPage.getTotalElements());
+		return projections.map(userMapper::toAdminUserListResponse);
 	}
 
 	public long getAdminCount() {

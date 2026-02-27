@@ -72,7 +72,7 @@ public interface UserMapper {
 	@Mapping(target = "enabled", source = "enabled")
 	@Mapping(target = "verificationStatus", source = "verificationStatus")
 	@Mapping(target = "verifiedAt", source = "verifiedAt")
-	@Mapping(target = "ticketsCount", expression = "java(user.getTickets() != null ? user.getTickets().size() : 0)")
+	@Mapping(target = "ticketsCount", expression = "java(user.getTickets() != null ? (long) user.getTickets().size() : 0L)")
 	@Mapping(target = "lastActivity", source = "updatedAt")
 	AdminUserListResponse toAdminUserListResponse(User user);
 }

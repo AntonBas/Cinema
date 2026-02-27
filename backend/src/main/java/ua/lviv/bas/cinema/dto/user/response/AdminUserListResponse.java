@@ -42,7 +42,7 @@ public class AdminUserListResponse {
 	private LocalDateTime verifiedAt;
 
 	@Schema(description = "Number of tickets purchased by the user", example = "15")
-	private int ticketsCount;
+	private Long ticketsCount;
 
 	@Schema(description = "Date of user's last activity", example = "2024-01-15", type = "string", format = "date")
 	private LocalDateTime lastActivity;

@@ -133,8 +133,8 @@ logging:
         ua.lviv.bas.cinema.config.security: DEBUG
         ua.lviv.bas.cinema.controller: DEBUG
         ua.lviv.bas.cinema.service: DEBUG
-        org.hibernate.SQL: DEBUG
-        org.hibernate.type.descriptor.sql: OFF
+        org.hibernate.SQL: WARN
+        org.hibernate.orm.jdbc.bind: WARN
     pattern:
         console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
         file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"

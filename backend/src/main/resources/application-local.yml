@@ -5,10 +5,11 @@ spring:
     datasource:
         url: jdbc:postgresql://localhost:5433/cinema_db
     jpa:
-        show-sql: false
+        show-sql: true
         properties:
             hibernate:
-                format_sql: false
+                format_sql: true
+                use_sql_comments: true
 
 scheduler:
     birthday-bonus:
@@ -40,5 +41,5 @@ logging:
         org.springframework.web: DEBUG
         org.springframework.web.cors: DEBUG
         ua.lviv.bas.cinema.config.security: DEBUG
-        org.hibernate.SQL: OFF
-        org.hibernate.type.descriptor.sql: OFF
+        org.hibernate.SQL: DEBUG
+        org.hibernate.orm.jdbc.bind: TRACE

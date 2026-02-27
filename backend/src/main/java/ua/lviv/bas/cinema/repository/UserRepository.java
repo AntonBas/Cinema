@@ -3,9 +3,10 @@ package ua.lviv.bas.cinema.repository;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -16,7 +17,7 @@ import ua.lviv.bas.cinema.domain.enums.VerificationStatus;
 import ua.lviv.bas.cinema.domain.projection.AdminUserProjection;
 
 @Repository
-public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificationExecutor<User> {
+public interface UserRepository extends JpaRepository<User, Long> {
 
 	@EntityGraph(attributePaths = { "bonusCard" })
 	Optional<User> findByEmail(String email);
@@ -45,23 +46,41 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 
 	@Query(value = """
 			SELECT
-			    u.id AS id,
-			    u.email AS email,
-			    u.firstName AS firstName,
-			    u.lastName AS lastName,
-			    u.userRole AS userRole,
-			    u.enabled AS enabled,
-			    u.verificationStatus AS verificationStatus,
-			    u.verifiedAt AS verifiedAt,
-			    COALESCE(t.ticketCount, 0) AS ticketsCount,
-			    u.updatedAt AS lastActivity
-			FROM User u
+			    u.id,
+			    u.email,
+			    u.first_name as firstName,
+			    u.last_name as lastName,
+			    u.user_role as userRole,
+			    u.enabled,
+			    u.verification_status as verificationStatus,
+			    u.verified_at as verifiedAt,
+			    COALESCE(t.ticketCount, 0) as ticketsCount,
+			    u.updated_at as lastActivity
+			FROM users u
 			LEFT JOIN (
-			    SELECT t.user.id as userId, COUNT(t) as ticketCount
-			    FROM Ticket t
-			    GROUP BY t.user.id
-			) t ON t.userId = u.id
-			WHERE u.id IN :userIds
-			""")
-	List<AdminUserProjection> findAdminProjectionsByUserIds(@Param("userIds") List<Long> userIds);
+			    SELECT t.user_id, COUNT(t.id) as ticketCount
+			    FROM tickets t
+			    GROUP BY t.user_id
+			) t ON t.user_id = u.id
+			WHERE (:search IS NULL OR
+			       u.email ILIKE CONCAT('%', CAST(:search AS text), '%') OR
+			       u.first_name ILIKE CONCAT('%', CAST(:search AS text), '%') OR
+			       u.last_name ILIKE CONCAT('%', CAST(:search AS text), '%'))
+			  AND (:role IS NULL OR u.user_role = CAST(:role AS text))
+			  AND (:verificationStatus IS NULL OR u.verification_status = CAST(:verificationStatus AS text))
+			  AND (:enabled IS NULL OR u.enabled = :enabled)
+			""", countQuery = """
+			SELECT COUNT(*)
+			FROM users u
+			WHERE (:search IS NULL OR
+			       u.email ILIKE CONCAT('%', CAST(:search AS text), '%') OR
+			       u.first_name ILIKE CONCAT('%', CAST(:search AS text), '%') OR
+			       u.last_name ILIKE CONCAT('%', CAST(:search AS text), '%'))
+			  AND (:role IS NULL OR u.user_role = CAST(:role AS text))
+			  AND (:verificationStatus IS NULL OR u.verification_status = CAST(:verificationStatus AS text))
+			  AND (:enabled IS NULL OR u.enabled = :enabled)
+			""", nativeQuery = true)
+	Page<AdminUserProjection> findAdminProjectionsWithFilters(@Param("search") String search,
+			@Param("role") String role, @Param("verificationStatus") String verificationStatus,
+			@Param("enabled") Boolean enabled, Pageable pageable);
 }
