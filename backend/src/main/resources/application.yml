@@ -3,6 +3,10 @@ spring:
         name: cinema
     config:
         import: optional:file:.env.local[.properties]
+    cache:
+        type: caffeine
+        caffeine:
+            spec: maximumSize=100, expireAfterAccess=60m
     datasource:
         url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:cinema_db}
         username: ${DB_USER:cinema}
@@ -123,6 +127,7 @@ ticket:
 
 logging:
     level:
+        org.springframework.cache: DEBUG
         org.springframework.security: WARN
         org.springframework.security.web: DEBUG
         org.springframework.security.config: DEBUG
