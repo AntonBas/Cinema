@@ -5,19 +5,28 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import ua.lviv.bas.cinema.domain.enums.PersonRole;
+import ua.lviv.bas.cinema.dto.common.PageResponse;
 import ua.lviv.bas.cinema.dto.movie.request.PersonRequest;
 import ua.lviv.bas.cinema.dto.movie.request.QuickCreatePersonRequest;
 import ua.lviv.bas.cinema.dto.movie.response.PersonResponse;
@@ -77,6 +86,33 @@ public class AdminPersonControllerTest {
 				.thenThrow(new DuplicateEntityException("Person", "Existing Person"));
 
 		assertThrows(DuplicateEntityException.class, () -> personController.createPerson(request));
+	}
+
+	@Test
+	void getPersonById_ShouldReturnPerson() {
+		PersonResponse expectedResponse = createPersonResponse(PERSON_ID, PERSON_NAME, PersonRole.ACTOR);
+
+		when(personService.getPersonById(PERSON_ID)).thenReturn(expectedResponse);
+
+		ResponseEntity<PersonResponse> response = personController.getPersonById(PERSON_ID);
+
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+
+		PersonResponse responseBody = response.getBody();
+		assertNotNull(responseBody);
+		assertEquals(PERSON_ID, responseBody.getId());
+		assertEquals(PERSON_NAME, responseBody.getName());
+		assertEquals(PersonRole.ACTOR, responseBody.getRole());
+		verify(personService).getPersonById(PERSON_ID);
+	}
+
+	@Test
+	void getPersonById_WhenNotFound_ShouldThrowException() {
+		Long nonExistentId = 999L;
+
+		when(personService.getPersonById(nonExistentId)).thenThrow(new PersonNotFoundException(nonExistentId));
+
+		assertThrows(PersonNotFoundException.class, () -> personController.getPersonById(nonExistentId));
 	}
 
 	@Test
@@ -154,5 +190,28 @@ public class AdminPersonControllerTest {
 				.thenThrow(new DuplicateEntityException("Person", "Existing Person"));
 
 		assertThrows(DuplicateEntityException.class, () -> personController.quickCreatePerson(request));
+	}
+
+	@Test
+	void getAllPersons_ShouldReturnPageOfPersons() {
+		Pageable pageable = PageRequest.of(0, 20, Sort.by(Sort.Direction.ASC, "name"));
+		List<PersonResponse> persons = List.of(createPersonResponse(1L, "John Doe", PersonRole.ACTOR),
+				createPersonResponse(2L, "Jane Smith", PersonRole.DIRECTOR));
+		Page<PersonResponse> personPage = new PageImpl<>(persons, pageable, 2);
+
+		when(personService.searchPersons(isNull(), isNull(), eq(pageable))).thenReturn(personPage);
+
+		ResponseEntity<PageResponse<PersonResponse>> response = personController.getAllPersons(null, null, pageable);
+
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+
+		PageResponse<PersonResponse> responseBody = response.getBody();
+		assertNotNull(responseBody);
+		assertEquals(2, responseBody.getContent().size());
+		assertEquals(0, responseBody.getNumber());
+		assertEquals(20, responseBody.getSize());
+		assertEquals(2, responseBody.getTotalElements());
+
+		verify(personService).searchPersons(null, null, pageable);
 	}
 }

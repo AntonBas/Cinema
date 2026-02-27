@@ -39,8 +39,7 @@ export const useApi = <T = any>() => {
     const abortControllerRef = useRef<AbortController | null>(null);
     const cacheRef = useRef<Map<string, CacheItem<T>>>(new Map());
     const mountedRef = useRef(true);
-    const executingRef = useRef(false);
-    const requestIdRef = useRef(0);
+    const loadingRef = useRef(false);
 
     useEffect(() => {
         mountedRef.current = true;
@@ -83,7 +82,9 @@ export const useApi = <T = any>() => {
         apiCall: (signal?: AbortSignal) => Promise<R>,
         options?: UseApiOptions<R>
     ): Promise<R> => {
-        const requestId = ++requestIdRef.current;
+        if (loadingRef.current) {
+            return null as R;
+        }
 
         const {
             showErrorNotification = true,
@@ -103,7 +104,7 @@ export const useApi = <T = any>() => {
         if (cacheKey) {
             const cachedData = getCache(cacheKey) as R | null;
             if (cachedData !== null) {
-                if (mountedRef.current && requestId === requestIdRef.current) {
+                if (mountedRef.current) {
                     setState({
                         data: cachedData as unknown as T,
                         loading: false,
@@ -117,7 +118,7 @@ export const useApi = <T = any>() => {
             }
         }
 
-        if (mountedRef.current && requestId === requestIdRef.current) {
+        if (mountedRef.current) {
             setState(prev => ({
                 ...prev,
                 loading: true,
@@ -127,12 +128,12 @@ export const useApi = <T = any>() => {
             }));
         }
 
-        executingRef.current = true;
+        loadingRef.current = true;
 
         try {
             const result = await apiCall(abortControllerRef.current.signal);
 
-            if (mountedRef.current && requestId === requestIdRef.current) {
+            if (mountedRef.current) {
                 setState({
                     data: result as unknown as T,
                     loading: false,
@@ -153,22 +154,20 @@ export const useApi = <T = any>() => {
             if (onSuccess) onSuccess(result);
             return result;
         } catch (err) {
-            if (!mountedRef.current || requestId !== requestIdRef.current) {
-                throw err;
-            }
-
             if (err instanceof DOMException && err.name === 'AbortError') {
                 return null as R;
             }
 
             const error = err instanceof Error ? err : new Error('Operation failed');
 
-            setState(prev => ({
-                ...prev,
-                loading: false,
-                error,
-                isCached: false
-            }));
+            if (mountedRef.current) {
+                setState(prev => ({
+                    ...prev,
+                    loading: false,
+                    error,
+                    isCached: false
+                }));
+            }
 
             if (showErrorNotification) {
                 if (isApiErrorException(error)) {
@@ -181,13 +180,12 @@ export const useApi = <T = any>() => {
             if (onError) onError(error);
             throw error;
         } finally {
-            executingRef.current = false;
+            loadingRef.current = false;
             abortControllerRef.current = null;
         }
     }, [getCache, setCache, showNotification]);
 
     const reset = useCallback(() => {
-        requestIdRef.current++;
         if (mountedRef.current) {
             setState({
                 data: null,
@@ -197,6 +195,7 @@ export const useApi = <T = any>() => {
                 timestamp: null
             });
         }
+        loadingRef.current = false;
         if (abortControllerRef.current) {
             abortControllerRef.current.abort();
             abortControllerRef.current = null;
