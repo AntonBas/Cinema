@@ -101,7 +101,13 @@ public interface SessionRepository extends JpaRepository<Session, Long>, JpaSpec
 			    h.id as hallId,
 			    h.name as hallName,
 			    (SELECT COUNT(seat.id) FROM seats seat WHERE seat.hall_id = h.id) as hallCapacity,
-			    (SELECT COUNT(sr.id) FROM seat_reservations sr WHERE sr.session_id = s.id AND sr.status IN ('PENDING', 'CONFIRMED', 'CHECKED_IN')) as reservedSeats
+			    (SELECT COUNT(seat.id) FROM seats seat WHERE seat.hall_id = h.id) -
+			    COALESCE((
+			        SELECT COUNT(sr.id)
+			        FROM seat_reservations sr
+			        WHERE sr.session_id = s.id
+			        AND sr.status IN ('PENDING', 'CONFIRMED', 'CHECKED_IN')
+			    ), 0) as availableSeats
 			FROM sessions s
 			JOIN movies m ON m.id = s.movie_id
 			JOIN cinema_halls h ON h.id = s.hall_id

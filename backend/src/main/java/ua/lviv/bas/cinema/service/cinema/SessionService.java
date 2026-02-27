@@ -55,20 +55,8 @@ public class SessionService {
 		Page<SessionScheduleProjection> page = sessionRepository.findUpcomingSessions(LocalDateTime.now(), date,
 				pageable);
 
-		if (!page.hasContent()) {
-			return PageResponse.from(new PageImpl<>(List.of(), pageable, page.getTotalElements()));
-		}
-
-		List<Long> sessionIds = page.getContent().stream().map(SessionScheduleProjection::getId)
+		List<SessionScheduleResponse> responses = page.getContent().stream().map(sessionMapper::toScheduleResponse)
 				.collect(Collectors.toList());
-
-		Map<Long, Integer> availableSeats = getAvailableSeatsBatch(sessionIds);
-
-		List<SessionScheduleResponse> responses = page.getContent().stream().map(projection -> {
-			SessionScheduleResponse response = sessionMapper.toScheduleResponse(projection);
-			response.setAvailableSeats(availableSeats.getOrDefault(projection.getId(), 0));
-			return response;
-		}).collect(Collectors.toList());
 
 		Page<SessionScheduleResponse> responsePage = new PageImpl<>(responses, pageable, page.getTotalElements());
 
