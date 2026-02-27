@@ -73,29 +73,16 @@ public class WebSecurityConfig {
 								"/configuration/security", "/webjars/**", "/error")
 						.permitAll()
 						.requestMatchers("/api/auth/**", "/api/verify/**", "/api/registration/**", "/api/tokens/**")
-						.permitAll()
-
-						.requestMatchers("/api/movies/**").permitAll()
-						.requestMatchers("/api/movies/currently-showing/**").permitAll()
-						.requestMatchers("/api/movies/upcoming/**").permitAll().requestMatchers("/api/movies/slug/**")
-						.permitAll().requestMatchers("/api/movies/*/poster").permitAll()
-
-						.requestMatchers("/api/cinema-halls/**").permitAll()
-						.requestMatchers("/api/cinema-halls/*/seats/**").permitAll()
-
-						.requestMatchers("/api/genres/**").permitAll().requestMatchers("/api/sessions/**").permitAll()
-						.requestMatchers("/api/sessions/*/seats/**").permitAll()
-
+						.permitAll().requestMatchers("/api/movies/**").permitAll()
+						.requestMatchers("/api/cinema-halls/**").permitAll().requestMatchers("/api/genres/**")
+						.permitAll().requestMatchers("/api/sessions/**").permitAll()
 						.requestMatchers("/api/ticket-types/dropdown").permitAll()
 						.requestMatchers("/api/promotions/available").permitAll().requestMatchers("/api/seats/**")
-						.permitAll()
-
-						.requestMatchers("/api/bonus/**").authenticated().requestMatchers("/api/bookings/**")
-						.authenticated().requestMatchers("/api/payments/**").authenticated()
-						.requestMatchers("/api/refunds/**").authenticated().requestMatchers("/api/tickets/**")
-						.authenticated().requestMatchers("/api/users/**").authenticated()
-						.requestMatchers("/api/promotions/**").authenticated()
-
+						.permitAll().requestMatchers("/api/bonus/**").authenticated()
+						.requestMatchers("/api/bookings/**").authenticated().requestMatchers("/api/payments/**")
+						.authenticated().requestMatchers("/api/refunds/**").authenticated()
+						.requestMatchers("/api/tickets/**").authenticated().requestMatchers("/api/users/**")
+						.authenticated().requestMatchers("/api/promotions/**").authenticated()
 						.requestMatchers("/api/admin/**").hasRole("ADMIN").anyRequest().authenticated())
 				.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
 				.formLogin(AbstractHttpConfigurer::disable).httpBasic(AbstractHttpConfigurer::disable)
