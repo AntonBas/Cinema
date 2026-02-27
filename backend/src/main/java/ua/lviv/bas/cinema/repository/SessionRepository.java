@@ -28,28 +28,63 @@ public interface SessionRepository extends JpaRepository<Session, Long>, JpaSpec
 
 	@Query(value = """
 			SELECT
-			    s.id as id,
+			    s.id,
 			    s.start_time as startTime,
 			    (s.start_time + (m.duration_minutes * INTERVAL '1 minute')) as endTime,
 			    s.base_price as basePrice,
-			    s.status as status,
+			    s.status,
 			    m.id as movieId,
 			    m.title as movieTitle,
 			    m.duration_minutes as movieDuration,
-			    m.poster_file_name as moviePosterFileName,
-			    m.age_rating as movieAgeRating,
 			    h.id as hallId,
 			    h.name as hallName,
-			    (SELECT COUNT(b.id) FROM bookings b WHERE b.session_id = s.id AND b.status = 'CONFIRMED') as ticketsSold,
-			    (SELECT COALESCE(SUM(b.total_price), 0) FROM bookings b WHERE b.session_id = s.id AND b.status = 'CONFIRMED') as totalRevenue,
 			    (SELECT COUNT(seat.id) FROM seats seat WHERE seat.hall_id = h.id) as hallCapacity,
-			    (SELECT COUNT(sr.id) FROM seat_reservations sr WHERE sr.session_id = s.id AND sr.status IN ('PENDING', 'CONFIRMED', 'CHECKED_IN')) as reservedSeats
+			    (SELECT COUNT(b.id) FROM bookings b WHERE b.session_id = s.id AND b.status = 'CONFIRMED') as ticketsSold,
+			    COALESCE((SELECT SUM(b.total_price) FROM bookings b WHERE b.session_id = s.id AND b.status = 'CONFIRMED'), 0) as totalRevenue
 			FROM sessions s
 			JOIN movies m ON m.id = s.movie_id
 			JOIN cinema_halls h ON h.id = s.hall_id
 			WHERE s.id = :id
 			""", nativeQuery = true)
 	Optional<SessionAdminProjection> findAdminProjectionById(@Param("id") Long id);
+
+	@Query(value = """
+			SELECT
+			    s.id,
+			    s.start_time as startTime,
+			    (s.start_time + (m.duration_minutes * INTERVAL '1 minute')) as endTime,
+			    s.base_price as basePrice,
+			    s.status,
+			    m.id as movieId,
+			    m.title as movieTitle,
+			    m.duration_minutes as movieDuration,
+			    h.id as hallId,
+			    h.name as hallName,
+			    (SELECT COUNT(seat.id) FROM seats seat WHERE seat.hall_id = h.id) as hallCapacity,
+			    (SELECT COUNT(b.id) FROM bookings b WHERE b.session_id = s.id AND b.status = 'CONFIRMED') as ticketsSold,
+			    COALESCE((SELECT SUM(b.total_price) FROM bookings b WHERE b.session_id = s.id AND b.status = 'CONFIRMED'), 0) as totalRevenue
+			FROM sessions s
+			JOIN movies m ON m.id = s.movie_id
+			JOIN cinema_halls h ON h.id = s.hall_id
+			WHERE (:hallId IS NULL OR s.hall_id = :hallId)
+			  AND (:movieTitle IS NULL OR LOWER(m.title) LIKE LOWER(CONCAT('%', :movieTitle, '%')))
+			  AND (:status IS NULL OR s.status = :status)
+			  AND (cast(:dateFrom as date) IS NULL OR s.start_time >= cast(:dateFrom as timestamp))
+			  AND (cast(:dateTo as date) IS NULL OR s.start_time <= cast(:dateTo as timestamp) + interval '1 day')
+			ORDER BY s.start_time DESC
+			""", countQuery = """
+			SELECT COUNT(s.id)
+			FROM sessions s
+			JOIN movies m ON m.id = s.movie_id
+			WHERE (:hallId IS NULL OR s.hall_id = :hallId)
+			  AND (:movieTitle IS NULL OR LOWER(m.title) LIKE LOWER(CONCAT('%', :movieTitle, '%')))
+			  AND (:status IS NULL OR s.status = :status)
+			  AND (cast(:dateFrom as date) IS NULL OR s.start_time >= cast(:dateFrom as timestamp))
+			  AND (cast(:dateTo as date) IS NULL OR s.start_time <= cast(:dateTo as timestamp) + interval '1 day')
+			""", nativeQuery = true)
+	Page<SessionAdminProjection> findAdminSessionsNative(@Param("hallId") Long hallId,
+			@Param("movieTitle") String movieTitle, @Param("status") String status,
+			@Param("dateFrom") LocalDate dateFrom, @Param("dateTo") LocalDate dateTo, Pageable pageable);
 
 	@Query(value = """
 			SELECT
@@ -77,38 +112,12 @@ public interface SessionRepository extends JpaRepository<Session, Long>, JpaSpec
 			""", countQuery = """
 			SELECT COUNT(s.id)
 			FROM sessions s
-			JOIN movies m ON m.id = s.movie_id
 			WHERE s.status = 'SCHEDULED'
 			AND s.start_time > :currentTime
 			AND (cast(:date as date) IS NULL OR DATE(s.start_time) = cast(:date as date))
 			""", nativeQuery = true)
 	Page<SessionScheduleProjection> findUpcomingSessions(@Param("currentTime") LocalDateTime currentTime,
 			@Param("date") LocalDate date, Pageable pageable);
-
-	@Query(value = """
-			SELECT
-			    s.id as id,
-			    s.start_time as startTime,
-			    (s.start_time + (m.duration_minutes * INTERVAL '1 minute')) as endTime,
-			    s.base_price as basePrice,
-			    s.status as status,
-			    m.id as movieId,
-			    m.title as movieTitle,
-			    m.duration_minutes as movieDuration,
-			    m.poster_file_name as moviePosterFileName,
-			    m.age_rating as movieAgeRating,
-			    h.id as hallId,
-			    h.name as hallName,
-			    (SELECT COUNT(b.id) FROM bookings b WHERE b.session_id = s.id AND b.status = 'CONFIRMED') as ticketsSold,
-			    (SELECT COALESCE(SUM(b.total_price), 0) FROM bookings b WHERE b.session_id = s.id AND b.status = 'CONFIRMED') as totalRevenue,
-			    (SELECT COUNT(seat.id) FROM seats seat WHERE seat.hall_id = h.id) as hallCapacity,
-			    (SELECT COUNT(sr.id) FROM seat_reservations sr WHERE sr.session_id = s.id AND sr.status IN ('PENDING', 'CONFIRMED', 'CHECKED_IN')) as reservedSeats
-			FROM sessions s
-			JOIN movies m ON m.id = s.movie_id
-			JOIN cinema_halls h ON h.id = s.hall_id
-			WHERE s.id IN (:ids)
-			""", nativeQuery = true)
-	List<SessionAdminProjection> findAdminProjectionsByIds(@Param("ids") List<Long> ids);
 
 	@Query("""
 			SELECT s FROM Session s
@@ -118,13 +127,13 @@ public interface SessionRepository extends JpaRepository<Session, Long>, JpaSpec
 			""")
 	List<Session> findSessionsToStart(@Param("currentTime") LocalDateTime currentTime);
 
-	@Query("""
-			SELECT s FROM Session s
-			JOIN FETCH s.movie
-			JOIN FETCH s.hall
+	@Query(value = """
+			SELECT s.* FROM sessions s
+			JOIN movies m ON m.id = s.movie_id
+			JOIN cinema_halls h ON h.id = s.hall_id
 			WHERE s.status = 'ONGOING'
-			AND FUNCTION('TIMESTAMPADD', MINUTE, s.movie.durationMinutes, s.startTime) <= :currentTime
-			""")
+			AND (s.start_time + (m.duration_minutes * INTERVAL '1 minute')) <= :currentTime
+			""", nativeQuery = true)
 	List<Session> findSessionsToComplete(@Param("currentTime") LocalDateTime currentTime);
 
 	@Query("""

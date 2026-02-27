@@ -3,9 +3,11 @@ package ua.lviv.bas.cinema.mapper;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
+import org.mapstruct.Named;
 import org.mapstruct.ReportingPolicy;
 
 import ua.lviv.bas.cinema.domain.Session;
+import ua.lviv.bas.cinema.domain.enums.CinemaSessionStatus;
 import ua.lviv.bas.cinema.domain.projection.SessionAdminProjection;
 import ua.lviv.bas.cinema.domain.projection.SessionScheduleProjection;
 import ua.lviv.bas.cinema.dto.session.request.SessionCreateRequest;
@@ -16,6 +18,14 @@ import ua.lviv.bas.cinema.dto.session.response.SessionScheduleResponse;
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface SessionMapper {
 
+	@Named("stringToStatus")
+	default CinemaSessionStatus stringToStatus(String status) {
+		return status != null ? CinemaSessionStatus.valueOf(status) : null;
+	}
+
+	@Mapping(target = "status", source = "status", qualifiedByName = "stringToStatus")
+	SessionAdminResponse toAdminResponse(SessionAdminProjection projection);
+
 	@Mapping(target = "endTime", expression = "java(session.getStartTime().plusMinutes(session.getMovie().getDurationMinutes()))")
 	@Mapping(target = "movieId", source = "movie.id")
 	@Mapping(target = "movieTitle", source = "movie.title")
@@ -24,7 +34,7 @@ public interface SessionMapper {
 	@Mapping(target = "hallName", source = "hall.name")
 	SessionAdminResponse toAdminResponse(Session session);
 
-	SessionAdminResponse toAdminResponse(SessionAdminProjection projection);
+	SessionScheduleResponse toScheduleResponse(SessionScheduleProjection projection);
 
 	@Mapping(target = "endTime", expression = "java(session.getStartTime().plusMinutes(session.getMovie().getDurationMinutes()))")
 	@Mapping(target = "movieId", source = "movie.id")
@@ -35,8 +45,6 @@ public interface SessionMapper {
 	@Mapping(target = "hallId", source = "hall.id")
 	@Mapping(target = "hallName", source = "hall.name")
 	SessionScheduleResponse toScheduleResponse(Session session);
-
-	SessionScheduleResponse toScheduleResponse(SessionScheduleProjection projection);
 
 	@Mapping(target = "id", ignore = true)
 	@Mapping(target = "movie", ignore = true)

@@ -12,7 +12,6 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,7 +23,6 @@ import ua.lviv.bas.cinema.domain.Session;
 import ua.lviv.bas.cinema.domain.enums.CinemaSessionStatus;
 import ua.lviv.bas.cinema.domain.projection.SessionAdminProjection;
 import ua.lviv.bas.cinema.domain.projection.SessionScheduleProjection;
-import ua.lviv.bas.cinema.domain.specification.SessionSpecification;
 import ua.lviv.bas.cinema.dto.common.PageResponse;
 import ua.lviv.bas.cinema.dto.session.request.SessionCreateRequest;
 import ua.lviv.bas.cinema.dto.session.request.SessionFilterRequest;
@@ -50,7 +48,6 @@ public class SessionService {
 	private final SessionMapper sessionMapper;
 	private final MovieRepository movieRepository;
 	private final CinemaHallService cinemaHallService;
-	private final SessionSpecification sessionSpecification;
 
 	@Cacheable(key = "'public:' + #searchTerm + ':' + #date + ':' + #pageable.pageNumber + ':' + #pageable.pageSize")
 	public PageResponse<SessionScheduleResponse> getScheduleSessions(String searchTerm, LocalDate date,
@@ -80,21 +77,16 @@ public class SessionService {
 
 	@Cacheable(key = "'admin:' + #filter.hashCode() + ':' + #pageable.pageNumber + ':' + #pageable.pageSize")
 	public PageResponse<SessionAdminResponse> getSessionsForAdmin(SessionFilterRequest filter, Pageable pageable) {
-		Specification<Session> spec = sessionSpecification.buildForAdmin(filter);
-		Page<Long> sessionIdsPage = sessionRepository.findAll(spec, pageable).map(Session::getId);
+		String status = filter.getStatus() != null ? filter.getStatus().name() : null;
 
-		if (!sessionIdsPage.hasContent()) {
-			return PageResponse.from(new PageImpl<>(List.of(), pageable, sessionIdsPage.getTotalElements()));
-		}
+		Page<SessionAdminProjection> projectionPage = sessionRepository.findAdminSessionsNative(filter.getHallId(),
+				filter.getMovieTitle(), status, filter.getDateFrom(), filter.getDateTo(), pageable);
 
-		List<SessionAdminProjection> projections = sessionRepository
-				.findAdminProjectionsByIds(sessionIdsPage.getContent());
-
-		List<SessionAdminResponse> responses = projections.stream().map(sessionMapper::toAdminResponse)
+		List<SessionAdminResponse> responses = projectionPage.getContent().stream().map(sessionMapper::toAdminResponse)
 				.collect(Collectors.toList());
 
 		Page<SessionAdminResponse> responsePage = new PageImpl<>(responses, pageable,
-				sessionIdsPage.getTotalElements());
+				projectionPage.getTotalElements());
 
 		return PageResponse.from(responsePage);
 	}
