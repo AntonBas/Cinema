@@ -17,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.CinemaHall;
 import ua.lviv.bas.cinema.domain.Seat;
 import ua.lviv.bas.cinema.domain.enums.SeatType;
+import ua.lviv.bas.cinema.domain.projection.CinemaHallProjection;
 import ua.lviv.bas.cinema.dto.cinemaHall.request.CinemaHallRequest;
 import ua.lviv.bas.cinema.dto.cinemaHall.response.CinemaHallResponse;
 import ua.lviv.bas.cinema.dto.cinemaHall.response.HallLayoutResponse;
@@ -148,7 +149,8 @@ public class CinemaHallService {
 	@Cacheable(value = "cinemaHalls", key = "'all'")
 	public List<CinemaHallResponse> getAllHalls() {
 		log.debug("Retrieving all cinema halls");
-		return hallMapper.toCinemaHallResponseList(hallRepository.findAllWithSeats());
+		List<CinemaHallProjection> projections = hallRepository.findAllProjected();
+		return hallMapper.toCinemaHallResponseListFromProjection(projections);
 	}
 
 	@Transactional(readOnly = true)

@@ -8,6 +8,7 @@ import org.mapstruct.Named;
 import org.mapstruct.ReportingPolicy;
 
 import ua.lviv.bas.cinema.domain.CinemaHall;
+import ua.lviv.bas.cinema.domain.projection.CinemaHallProjection;
 import ua.lviv.bas.cinema.dto.cinemaHall.response.CinemaHallResponse;
 import ua.lviv.bas.cinema.dto.cinemaHall.response.HallLayoutResponse;
 
@@ -23,6 +24,11 @@ public interface CinemaHallMapper {
 	CinemaHallResponse toCinemaHallResponse(CinemaHall hall);
 
 	List<CinemaHallResponse> toCinemaHallResponseList(List<CinemaHall> halls);
+
+	@Mapping(target = "capacity", source = "seatsCount")
+	CinemaHallResponse toCinemaHallResponse(CinemaHallProjection projection);
+
+	List<CinemaHallResponse> toCinemaHallResponseListFromProjection(List<CinemaHallProjection> projections);
 
 	@Mapping(target = "hallId", source = "id")
 	@Mapping(target = "hallName", source = "name")
