@@ -7,12 +7,13 @@ export const useRefund = () => {
     const processRefundApi = useApi<RefundResponse>();
 
     const processRefund = useCallback(async (request: RefundRequest) => {
-        return processRefundApi.execute(
+        const response = await processRefundApi.execute(
             () => refundApi.processRefund(request),
             {
                 successMessage: 'Refund request submitted successfully',
             }
         );
+        return response?.data || null;
     }, [processRefundApi]);
 
     const clearRefundCache = useCallback(() => {

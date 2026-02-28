@@ -14,7 +14,7 @@ export const useBooking = () => {
     const cancelBookingApi = useApi<void>();
 
     const create = useCallback(async (request: BookingCreateRequest) => {
-        return createBookingApi.execute(
+        const response = await createBookingApi.execute(
             () => bookingApi.create(request),
             {
                 successMessage: 'Booking created successfully',
@@ -23,10 +23,11 @@ export const useBooking = () => {
                 },
             }
         );
+        return response?.data || null;
     }, [createBookingApi, userBookingsApi]);
 
     const getById = useCallback(async (bookingId: number) => {
-        return bookingByIdApi.execute(
+        const response = await bookingByIdApi.execute(
             () => bookingApi.getById(bookingId),
             {
                 cacheKey: `booking_${bookingId}`,
@@ -34,10 +35,11 @@ export const useBooking = () => {
                 showErrorNotification: false,
             }
         );
+        return response?.data || null;
     }, [bookingByIdApi]);
 
     const getUserBookings = useCallback(async (params?: any) => {
-        return userBookingsApi.execute(
+        const response = await userBookingsApi.execute(
             () => bookingApi.getUserBookings(params),
             {
                 cacheKey: `user_bookings_${JSON.stringify(params)}`,
@@ -45,10 +47,11 @@ export const useBooking = () => {
                 showErrorNotification: false,
             }
         );
+        return response?.data || null;
     }, [userBookingsApi]);
 
     const cancel = useCallback(async (bookingId: number) => {
-        return cancelBookingApi.execute(
+        await cancelBookingApi.execute(
             () => bookingApi.cancel(bookingId),
             {
                 successMessage: 'Booking cancelled successfully',

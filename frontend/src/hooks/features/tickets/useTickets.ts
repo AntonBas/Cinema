@@ -13,7 +13,7 @@ export const useTickets = () => {
     const qrCodeApi = useApi<Blob>();
 
     const getUserTickets = useCallback(async (params?: any) => {
-        return userTicketsApi.execute(
+        const response = await userTicketsApi.execute(
             () => ticketApi.getUserTickets(params),
             {
                 cacheKey: `user_tickets_${JSON.stringify(params)}`,
@@ -21,10 +21,11 @@ export const useTickets = () => {
                 showErrorNotification: false,
             }
         );
+        return response?.data || null;
     }, [userTicketsApi]);
 
     const getUpcomingTickets = useCallback(async (params?: any) => {
-        return upcomingTicketsApi.execute(
+        const response = await upcomingTicketsApi.execute(
             () => ticketApi.getUpcomingTickets(params),
             {
                 cacheKey: `upcoming_tickets_${JSON.stringify(params)}`,
@@ -32,10 +33,11 @@ export const useTickets = () => {
                 showErrorNotification: false,
             }
         );
+        return response?.data || null;
     }, [upcomingTicketsApi]);
 
     const getById = useCallback(async (ticketId: number) => {
-        return ticketByIdApi.execute(
+        const response = await ticketByIdApi.execute(
             () => ticketApi.getById(ticketId),
             {
                 cacheKey: `ticket_${ticketId}`,
@@ -43,10 +45,11 @@ export const useTickets = () => {
                 showErrorNotification: false,
             }
         );
+        return response?.data || null;
     }, [ticketByIdApi]);
 
     const getByCode = useCallback(async (ticketCode: string) => {
-        return ticketByCodeApi.execute(
+        const response = await ticketByCodeApi.execute(
             () => ticketApi.getByCode(ticketCode),
             {
                 cacheKey: `ticket_code_${ticketCode}`,
@@ -54,10 +57,11 @@ export const useTickets = () => {
                 showErrorNotification: false,
             }
         );
+        return response?.data || null;
     }, [ticketByCodeApi]);
 
     const validateTicket = useCallback(async (ticketCode: string) => {
-        return validateTicketApi.execute(
+        await validateTicketApi.execute(
             () => ticketApi.validate(ticketCode),
             {
                 successMessage: 'Ticket validated successfully',
@@ -66,7 +70,7 @@ export const useTickets = () => {
     }, [validateTicketApi]);
 
     const getQRCode = useCallback(async (ticketCode: string) => {
-        return qrCodeApi.execute(
+        const response = await qrCodeApi.execute(
             () => ticketApi.getQRCode(ticketCode),
             {
                 cacheKey: `qr_code_${ticketCode}`,
@@ -74,6 +78,7 @@ export const useTickets = () => {
                 showErrorNotification: false,
             }
         );
+        return response?.data || null;
     }, [qrCodeApi]);
 
     const clearCache = useCallback(() => {

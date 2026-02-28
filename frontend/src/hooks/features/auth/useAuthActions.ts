@@ -40,21 +40,21 @@ export const useAuthActions = () => {
     }, [registerApi]);
 
     const checkEmail = useCallback(async (email: string) => {
-        return checkEmailApi.execute(
+        return await checkEmailApi.execute(
             () => authApi.checkEmail(email),
             { cacheKey: `email_check_${email}`, cacheTime: 60 * 1000 }
         );
     }, [checkEmailApi]);
 
     const forgotPassword = useCallback(async (email: string) => {
-        return await forgotPasswordApi.execute(
+        await forgotPasswordApi.execute(
             () => authApi.forgotPassword(email),
             { successMessage: 'Password reset instructions sent to your email' }
         );
     }, [forgotPasswordApi]);
 
     const resetPassword = useCallback(async (token: string, newPassword: string) => {
-        return await resetPasswordApi.execute(
+        await resetPasswordApi.execute(
             () => authApi.resetPassword(token, newPassword),
             { successMessage: 'Password has been reset successfully' }
         );

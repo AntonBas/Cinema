@@ -8,23 +8,25 @@ export const useSeats = () => {
     const setSeatStatusApi = useApi<SeatResponse>();
 
     const updateSeatType = useCallback(async (hallId: number, seatId: number, seatType: SeatType) => {
-        return updateSeatTypeApi.execute(
+        const response = await updateSeatTypeApi.execute(
             () => seatApi.admin.updateSeatType(hallId, seatId, seatType),
             {
                 successMessage: 'Seat type updated successfully',
                 showErrorNotification: true,
             }
         );
+        return response?.data || null;
     }, [updateSeatTypeApi]);
 
     const setSeatStatus = useCallback(async (hallId: number, seatId: number, active: boolean) => {
-        return setSeatStatusApi.execute(
+        const response = await setSeatStatusApi.execute(
             () => seatApi.admin.setSeatStatus(hallId, seatId, active),
             {
                 successMessage: active ? 'Seat activated successfully' : 'Seat deactivated successfully',
                 showErrorNotification: true,
             }
         );
+        return response?.data || null;
     }, [setSeatStatusApi]);
 
     const loading = updateSeatTypeApi.loading || setSeatStatusApi.loading;

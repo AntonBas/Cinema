@@ -31,7 +31,7 @@ export const useMovies = () => {
     const loading = useDelayedLoading(rawLoading, { delay: 150, minDisplayTime: 300 });
 
     const getAdminCurrent = useCallback(async (params?: { title?: string; page?: number; size?: number; sort?: string }) => {
-        const result = await adminCurrentApi.execute(
+        const response = await adminCurrentApi.execute(
             () => movieApi.admin.getMovies({ ...params, status: 'CURRENT' }),
             {
                 cacheKey: `admin_current_${JSON.stringify(params)}`,
@@ -39,11 +39,11 @@ export const useMovies = () => {
                 showErrorNotification: false,
             }
         );
-        return result;
+        return response?.data || null;
     }, [adminCurrentApi]);
 
     const getAdminUpcoming = useCallback(async (params?: { title?: string; page?: number; size?: number; sort?: string }) => {
-        const result = await adminUpcomingApi.execute(
+        const response = await adminUpcomingApi.execute(
             () => movieApi.admin.getMovies({ ...params, status: 'UPCOMING' }),
             {
                 cacheKey: `admin_upcoming_${JSON.stringify(params)}`,
@@ -51,11 +51,11 @@ export const useMovies = () => {
                 showErrorNotification: false,
             }
         );
-        return result;
+        return response?.data || null;
     }, [adminUpcomingApi]);
 
     const getAdminArchived = useCallback(async (params?: { title?: string; page?: number; size?: number; sort?: string }) => {
-        const result = await adminArchivedApi.execute(
+        const response = await adminArchivedApi.execute(
             () => movieApi.admin.getMovies({ ...params, status: 'ARCHIVED' }),
             {
                 cacheKey: `admin_archived_${JSON.stringify(params)}`,
@@ -63,11 +63,11 @@ export const useMovies = () => {
                 showErrorNotification: false,
             }
         );
-        return result;
+        return response?.data || null;
     }, [adminArchivedApi]);
 
     const getPublicCurrent = useCallback(async (params?: SearchParams) => {
-        const result = await publicCurrentApi.execute(
+        const response = await publicCurrentApi.execute(
             () => movieApi.public.getCurrentlyShowing(params),
             {
                 cacheKey: `public_current_${JSON.stringify(params)}`,
@@ -75,11 +75,11 @@ export const useMovies = () => {
                 showErrorNotification: false,
             }
         );
-        return result;
+        return response?.data || null;
     }, [publicCurrentApi]);
 
     const getPublicUpcoming = useCallback(async (params?: SearchParams) => {
-        const result = await publicUpcomingApi.execute(
+        const response = await publicUpcomingApi.execute(
             () => movieApi.public.getUpcoming(params),
             {
                 cacheKey: `public_upcoming_${JSON.stringify(params)}`,
@@ -87,7 +87,7 @@ export const useMovies = () => {
                 showErrorNotification: false,
             }
         );
-        return result;
+        return response?.data || null;
     }, [publicUpcomingApi]);
 
     const getById = useCallback(async (id: number, isAdmin: boolean = false) => {
@@ -95,15 +95,16 @@ export const useMovies = () => {
         const apiCall = isAdmin
             ? () => movieApi.admin.getMovieById(id)
             : () => movieApi.public.getById(id);
-        return movieDetailApi.execute(apiCall, {
+        const response = await movieDetailApi.execute(apiCall, {
             cacheKey,
             cacheTime: 10 * 60 * 1000,
             showErrorNotification: false,
         });
+        return response?.data || null;
     }, [movieDetailApi]);
 
     const getBySlug = useCallback(async (slug: string) => {
-        return movieDetailApi.execute(
+        const response = await movieDetailApi.execute(
             () => movieApi.public.getBySlug(slug),
             {
                 cacheKey: `movie_slug_${slug}`,
@@ -111,10 +112,11 @@ export const useMovies = () => {
                 showErrorNotification: false,
             }
         );
+        return response?.data || null;
     }, [movieDetailApi]);
 
     const searchMoviesForSession = useCallback(async (search?: string) => {
-        return searchApi.execute(
+        const response = await searchApi.execute(
             () => movieApi.admin.searchMoviesForSession(search),
             {
                 cacheKey: `session_search_${search}`,
@@ -122,33 +124,33 @@ export const useMovies = () => {
                 showErrorNotification: false,
             }
         );
+        return response?.data || null;
     }, [searchApi]);
 
     const create = useCallback(async (request: MovieCreateRequest) => {
-        const result = await createApi.execute(
+        const response = await createApi.execute(
             () => movieApi.admin.create(request),
             { successMessage: 'Movie created successfully' }
         );
         clearCache();
-        return result;
+        return response?.data || null;
     }, [createApi]);
 
     const update = useCallback(async (id: number, request: MovieUpdateRequest) => {
-        const result = await updateApi.execute(
+        const response = await updateApi.execute(
             () => movieApi.admin.update(id, request),
             { successMessage: 'Movie updated successfully' }
         );
         clearCache();
-        return result;
+        return response?.data || null;
     }, [updateApi]);
 
     const remove = useCallback(async (id: number) => {
-        const result = await deleteApi.execute(
+        await deleteApi.execute(
             () => movieApi.admin.delete(id),
             { successMessage: 'Movie deleted successfully' }
         );
         clearCache();
-        return result;
     }, [deleteApi]);
 
     const clearCache = useCallback(() => {

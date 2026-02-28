@@ -14,7 +14,7 @@ export const useGenres = () => {
     const deleteGenreApi = useApi<void>();
 
     const getAll = useCallback(async (params?: any) => {
-        return allGenresApi.execute(
+        const response = await allGenresApi.execute(
             () => genreApi.admin.getAll(params),
             {
                 cacheKey: `genres_all_${JSON.stringify(params)}`,
@@ -22,10 +22,11 @@ export const useGenres = () => {
                 showErrorNotification: false,
             }
         );
+        return response?.data || null;
     }, [allGenresApi]);
 
     const getById = useCallback(async (id: number) => {
-        return genreByIdApi.execute(
+        const response = await genreByIdApi.execute(
             () => genreApi.admin.getById(id),
             {
                 cacheKey: `genre_${id}`,
@@ -33,10 +34,11 @@ export const useGenres = () => {
                 showErrorNotification: false,
             }
         );
+        return response?.data || null;
     }, [genreByIdApi]);
 
     const search = useCallback(async (query: string, limit: number = 10) => {
-        return searchGenresApi.execute(
+        const response = await searchGenresApi.execute(
             () => genreApi.public.search(query, limit),
             {
                 cacheKey: `genres_search_${query}_${limit}`,
@@ -44,11 +46,12 @@ export const useGenres = () => {
                 showErrorNotification: false,
             }
         );
+        return response?.data || null;
     }, [searchGenresApi]);
 
     const getByIds = useCallback(async (ids: number[]) => {
         if (!ids.length) return [];
-        return genreByIdsApi.execute(
+        const response = await genreByIdsApi.execute(
             () => genreApi.public.search('', 100),
             {
                 cacheKey: `genres_ids_${ids.join('_')}`,
@@ -56,10 +59,11 @@ export const useGenres = () => {
                 showErrorNotification: false,
             }
         );
+        return response?.data || null;
     }, [genreByIdsApi]);
 
     const create = useCallback(async (request: GenreRequest) => {
-        return createGenreApi.execute(
+        const response = await createGenreApi.execute(
             () => genreApi.admin.create(request),
             {
                 successMessage: 'Genre created successfully',
@@ -69,10 +73,11 @@ export const useGenres = () => {
                 },
             }
         );
+        return response?.data || null;
     }, [createGenreApi, allGenresApi, searchGenresApi]);
 
     const update = useCallback(async (id: number, request: GenreRequest) => {
-        return updateGenreApi.execute(
+        const response = await updateGenreApi.execute(
             () => genreApi.admin.update(id, request),
             {
                 successMessage: 'Genre updated successfully',
@@ -83,10 +88,11 @@ export const useGenres = () => {
                 },
             }
         );
+        return response?.data || null;
     }, [updateGenreApi, allGenresApi, genreByIdApi, searchGenresApi]);
 
     const remove = useCallback(async (id: number) => {
-        return deleteGenreApi.execute(
+        await deleteGenreApi.execute(
             () => genreApi.admin.delete(id),
             {
                 successMessage: 'Genre deleted successfully',

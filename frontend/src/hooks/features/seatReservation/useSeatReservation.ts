@@ -16,7 +16,7 @@ export const useSeatAvailability = (sessionId: number, maxSeats?: number) => {
     const seatAvailabilityApiHook = useApi<SeatReservationResponse>();
 
     const getSeatAvailability = useCallback(async () => {
-        return seatAvailabilityApiHook.execute(
+        const response = await seatAvailabilityApiHook.execute(
             () => seatAvailabilityApi.getSeatAvailability(sessionId),
             {
                 cacheKey: `seat_availability_${sessionId}`,
@@ -24,11 +24,12 @@ export const useSeatAvailability = (sessionId: number, maxSeats?: number) => {
                 showErrorNotification: false,
             }
         );
+        return response?.data || null;
     }, [seatAvailabilityApiHook, sessionId]);
 
     const refreshSeatAvailability = useCallback(async () => {
         seatAvailabilityApiHook.invalidateCache(`seat_availability_${sessionId}`);
-        return seatAvailabilityApiHook.execute(
+        const response = await seatAvailabilityApiHook.execute(
             () => seatAvailabilityApi.getSeatAvailability(sessionId),
             {
                 cacheKey: `seat_availability_${sessionId}`,
@@ -36,6 +37,7 @@ export const useSeatAvailability = (sessionId: number, maxSeats?: number) => {
                 showErrorNotification: false,
             }
         );
+        return response?.data || null;
     }, [seatAvailabilityApiHook, sessionId]);
 
     const invalidateSeatCache = useCallback(() => {

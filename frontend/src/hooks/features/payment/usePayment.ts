@@ -13,16 +13,17 @@ export const usePayment = () => {
     const createPaymentApi = useApi<PaymentResponse>();
 
     const create = useCallback(async (request: PaymentCreateRequest) => {
-        return createPaymentApi.execute(
+        const response = await createPaymentApi.execute(
             () => paymentApi.create(request),
             {
                 successMessage: 'Payment initialized successfully',
             }
         );
+        return response?.data || null;
     }, [createPaymentApi]);
 
     const getById = useCallback(async (paymentId: number) => {
-        return paymentByIdApi.execute(
+        const response = await paymentByIdApi.execute(
             () => paymentApi.getById(paymentId),
             {
                 cacheKey: `payment_${paymentId}`,
@@ -30,10 +31,11 @@ export const usePayment = () => {
                 showErrorNotification: false,
             }
         );
+        return response?.data || null;
     }, [paymentByIdApi]);
 
     const getLiqPayData = useCallback(async (paymentId: number) => {
-        return liqPayDataApi.execute(
+        const response = await liqPayDataApi.execute(
             () => paymentApi.getLiqPayData(paymentId),
             {
                 cacheKey: `liqpay_data_${paymentId}`,
@@ -41,6 +43,7 @@ export const usePayment = () => {
                 showErrorNotification: false,
             }
         );
+        return response?.data || null;
     }, [liqPayDataApi]);
 
     const clearCache = useCallback(() => {

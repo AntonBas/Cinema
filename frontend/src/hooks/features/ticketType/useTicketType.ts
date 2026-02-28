@@ -20,7 +20,7 @@ export const useTicketType = () => {
     const adminDropdownApi = useApi<TicketTypeSimpleResponse[]>();
 
     const getAll = useCallback(async (params?: any) => {
-        return ticketTypesApi.execute(
+        const response = await ticketTypesApi.execute(
             () => ticketTypeApi.admin.getAll(params),
             {
                 cacheKey: `ticket_types_${JSON.stringify(params)}`,
@@ -28,10 +28,11 @@ export const useTicketType = () => {
                 showErrorNotification: false,
             }
         );
+        return response?.data || null;
     }, [ticketTypesApi]);
 
     const getById = useCallback(async (id: number) => {
-        return ticketTypeByIdApi.execute(
+        const response = await ticketTypeByIdApi.execute(
             () => ticketTypeApi.admin.getById(id),
             {
                 cacheKey: `ticket_type_${id}`,
@@ -39,10 +40,11 @@ export const useTicketType = () => {
                 showErrorNotification: false,
             }
         );
+        return response?.data || null;
     }, [ticketTypeByIdApi]);
 
     const getByCode = useCallback(async (code: string) => {
-        return ticketTypeByCodeApi.execute(
+        const response = await ticketTypeByCodeApi.execute(
             () => ticketTypeApi.admin.getByCode(code),
             {
                 cacheKey: `ticket_type_code_${code}`,
@@ -50,10 +52,11 @@ export const useTicketType = () => {
                 showErrorNotification: false,
             }
         );
+        return response?.data || null;
     }, [ticketTypeByCodeApi]);
 
     const create = useCallback(async (request: TicketTypeCreateRequest) => {
-        return createApi.execute(
+        const response = await createApi.execute(
             () => ticketTypeApi.admin.create(request),
             {
                 successMessage: 'Ticket type created successfully',
@@ -64,10 +67,11 @@ export const useTicketType = () => {
                 },
             }
         );
+        return response?.data || null;
     }, [createApi, ticketTypesApi, dropdownTypesApi, adminDropdownApi]);
 
     const update = useCallback(async (id: number, request: TicketTypeUpdateRequest) => {
-        return updateApi.execute(
+        const response = await updateApi.execute(
             () => ticketTypeApi.admin.update(id, request),
             {
                 successMessage: 'Ticket type updated successfully',
@@ -79,10 +83,11 @@ export const useTicketType = () => {
                 },
             }
         );
+        return response?.data || null;
     }, [updateApi, ticketTypesApi, ticketTypeByIdApi, dropdownTypesApi, adminDropdownApi]);
 
     const remove = useCallback(async (id: number) => {
-        return deleteApi.execute(
+        await deleteApi.execute(
             () => ticketTypeApi.admin.delete(id),
             {
                 successMessage: 'Ticket type deleted successfully',
@@ -96,7 +101,7 @@ export const useTicketType = () => {
     }, [deleteApi, ticketTypesApi, dropdownTypesApi, adminDropdownApi]);
 
     const toggleActive = useCallback(async (id: number) => {
-        return toggleActiveApi.execute(
+        const response = await toggleActiveApi.execute(
             () => ticketTypeApi.admin.toggleActive(id),
             {
                 successMessage: 'Ticket type status updated successfully',
@@ -108,10 +113,11 @@ export const useTicketType = () => {
                 },
             }
         );
+        return response?.data || null;
     }, [toggleActiveApi, ticketTypesApi, ticketTypeByIdApi, dropdownTypesApi, adminDropdownApi]);
 
     const getDropdownTypes = useCallback(async () => {
-        return dropdownTypesApi.execute(
+        const response = await dropdownTypesApi.execute(
             () => ticketTypeApi.public.getDropdownTypes(),
             {
                 cacheKey: 'ticket_type_dropdown',
@@ -119,10 +125,11 @@ export const useTicketType = () => {
                 showErrorNotification: false,
             }
         );
+        return response?.data || null;
     }, [dropdownTypesApi]);
 
     const getAdminDropdownTypes = useCallback(async () => {
-        return adminDropdownApi.execute(
+        const response = await adminDropdownApi.execute(
             () => ticketTypeApi.admin.getDropdownTypes(),
             {
                 cacheKey: 'admin_ticket_type_dropdown',
@@ -130,6 +137,7 @@ export const useTicketType = () => {
                 showErrorNotification: false,
             }
         );
+        return response?.data || null;
     }, [adminDropdownApi]);
 
     const clearCache = useCallback(() => {

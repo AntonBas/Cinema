@@ -17,7 +17,7 @@ export const useAdminUsers = () => {
     const updateStatusApi = useApi<AdminUserListResponse>();
     const updateVerificationApi = useApi<AdminUserListResponse>();
 
-    const pendingRequestRef = useRef<Promise<PageResponse<AdminUserListResponse>> | null>(null);
+    const pendingRequestRef = useRef<Promise<PageResponse<AdminUserListResponse> | null> | null>(null);
 
     const getUsers = useCallback(async (params?: {
         page?: number;
@@ -40,7 +40,7 @@ export const useAdminUsers = () => {
                 cacheTime: 30 * 1000,
                 showErrorNotification: false,
             }
-        );
+        ).then(response => response?.data || null);
 
         pendingRequestRef.current = request;
 
@@ -54,7 +54,7 @@ export const useAdminUsers = () => {
     const updateUserRole = useCallback(async (userId: number, userRole: UserRole) => {
         const roleData: UserRoleUpdateRequest = { userRole };
 
-        const updatedUser = await updateRoleApi.execute(
+        const response = await updateRoleApi.execute(
             () => adminApi.updateUserRole(userId, roleData),
             {
                 successMessage: 'User role updated successfully',
@@ -62,13 +62,13 @@ export const useAdminUsers = () => {
         );
 
         usersApi.invalidateCache();
-        return updatedUser;
+        return response?.data || null;
     }, [updateRoleApi, usersApi]);
 
     const updateUserStatus = useCallback(async (userId: number, enabled: boolean) => {
         const statusData: UserStatusUpdateRequest = { enabled };
 
-        const updatedUser = await updateStatusApi.execute(
+        const response = await updateStatusApi.execute(
             () => adminApi.updateUserStatus(userId, statusData),
             {
                 successMessage: enabled ? 'User activated successfully' : 'User deactivated successfully',
@@ -76,7 +76,7 @@ export const useAdminUsers = () => {
         );
 
         usersApi.invalidateCache();
-        return updatedUser;
+        return response?.data || null;
     }, [updateStatusApi, usersApi]);
 
     const updateBirthDateVerification = useCallback(async (
@@ -85,7 +85,7 @@ export const useAdminUsers = () => {
     ) => {
         const verificationData: VerificationBirthDateRequest = { verificationStatus };
 
-        const updatedUser = await updateVerificationApi.execute(
+        const response = await updateVerificationApi.execute(
             () => adminApi.updateBirthDateVerification(userId, verificationData),
             {
                 successMessage: 'Verification status updated successfully',
@@ -93,7 +93,7 @@ export const useAdminUsers = () => {
         );
 
         usersApi.invalidateCache();
-        return updatedUser;
+        return response?.data || null;
     }, [updateVerificationApi, usersApi]);
 
     const refreshUsers = useCallback(async (params?: {

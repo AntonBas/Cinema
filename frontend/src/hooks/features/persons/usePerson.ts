@@ -17,7 +17,7 @@ export const usePerson = () => {
     const deleteApi = useApi<void>();
 
     const getAll = useCallback(async (params?: any) => {
-        return allPersonsApi.execute(
+        const response = await allPersonsApi.execute(
             () => personApi.admin.getAll(params),
             {
                 cacheKey: `persons_all_${JSON.stringify(params)}`,
@@ -25,10 +25,11 @@ export const usePerson = () => {
                 showErrorNotification: false,
             }
         );
+        return response?.data || null;
     }, [allPersonsApi]);
 
     const getById = useCallback(async (id: number) => {
-        return personByIdApi.execute(
+        const response = await personByIdApi.execute(
             () => personApi.public.getById(id),
             {
                 cacheKey: `person_${id}`,
@@ -36,10 +37,11 @@ export const usePerson = () => {
                 showErrorNotification: false,
             }
         );
+        return response?.data || null;
     }, [personByIdApi]);
 
     const create = useCallback(async (request: PersonRequest) => {
-        return createApi.execute(
+        const response = await createApi.execute(
             () => personApi.admin.create(request),
             {
                 successMessage: 'Person created successfully',
@@ -48,10 +50,11 @@ export const usePerson = () => {
                 },
             }
         );
+        return response?.data || null;
     }, [createApi, allPersonsApi]);
 
     const quickCreate = useCallback(async (request: QuickCreatePersonRequest) => {
-        return quickCreateApi.execute(
+        const response = await quickCreateApi.execute(
             () => personApi.admin.quickCreate(request),
             {
                 successMessage: 'Person created successfully',
@@ -60,10 +63,11 @@ export const usePerson = () => {
                 },
             }
         );
+        return response?.data || null;
     }, [quickCreateApi, allPersonsApi]);
 
     const update = useCallback(async (id: number, request: PersonRequest) => {
-        return updateApi.execute(
+        const response = await updateApi.execute(
             () => personApi.admin.update(id, request),
             {
                 successMessage: 'Person updated successfully',
@@ -73,10 +77,11 @@ export const usePerson = () => {
                 },
             }
         );
+        return response?.data || null;
     }, [updateApi, personByIdApi, allPersonsApi]);
 
     const remove = useCallback(async (id: number) => {
-        return deleteApi.execute(
+        await deleteApi.execute(
             () => personApi.admin.delete(id),
             {
                 successMessage: 'Person deleted successfully',

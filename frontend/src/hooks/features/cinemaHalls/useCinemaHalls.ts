@@ -16,7 +16,7 @@ export const useCinemaHalls = () => {
     const hallLayoutApi = useApi<HallLayoutResponse>();
 
     const getAllHalls = useCallback(async () => {
-        return allHallsApi.execute(
+        const response = await allHallsApi.execute(
             () => cinemaHallApi.admin.getAll(),
             {
                 cacheKey: 'all_halls',
@@ -24,10 +24,11 @@ export const useCinemaHalls = () => {
                 showErrorNotification: false,
             }
         );
+        return response?.data || null;
     }, [allHallsApi]);
 
     const getHallById = useCallback(async (id: number) => {
-        return hallDetailApi.execute(
+        const response = await hallDetailApi.execute(
             () => cinemaHallApi.admin.getById(id),
             {
                 cacheKey: `hall_detail_${id}`,
@@ -35,10 +36,11 @@ export const useCinemaHalls = () => {
                 showErrorNotification: true,
             }
         );
+        return response?.data || null;
     }, [hallDetailApi]);
 
     const createHall = useCallback(async (request: CinemaHallRequest) => {
-        const result = await createHallApi.execute(
+        const response = await createHallApi.execute(
             () => cinemaHallApi.admin.create(request),
             {
                 successMessage: 'Cinema hall created successfully',
@@ -46,11 +48,11 @@ export const useCinemaHalls = () => {
         );
         allHallsApi.invalidateCache('all_halls');
         await getAllHalls();
-        return result;
+        return response?.data || null;
     }, [createHallApi, allHallsApi, getAllHalls]);
 
     const updateHall = useCallback(async (id: number, request: CinemaHallRequest) => {
-        const result = await updateHallApi.execute(
+        const response = await updateHallApi.execute(
             () => cinemaHallApi.admin.update(id, request),
             {
                 successMessage: 'Cinema hall updated successfully',
@@ -60,11 +62,11 @@ export const useCinemaHalls = () => {
         hallDetailApi.invalidateCache(`hall_detail_${id}`);
         hallLayoutApi.invalidateCache(`hall_layout_${id}`);
         await getAllHalls();
-        return result;
+        return response?.data || null;
     }, [updateHallApi, allHallsApi, hallDetailApi, hallLayoutApi, getAllHalls]);
 
     const deleteHall = useCallback(async (id: number) => {
-        const result = await deleteHallApi.execute(
+        await deleteHallApi.execute(
             () => cinemaHallApi.admin.delete(id),
             {
                 successMessage: 'Cinema hall deleted successfully',
@@ -74,11 +76,10 @@ export const useCinemaHalls = () => {
         hallDetailApi.invalidateCache(`hall_detail_${id}`);
         hallLayoutApi.invalidateCache(`hall_layout_${id}`);
         await getAllHalls();
-        return result;
     }, [deleteHallApi, allHallsApi, hallDetailApi, hallLayoutApi, getAllHalls]);
 
     const getHallLayout = useCallback(async (id: number) => {
-        return hallLayoutApi.execute(
+        const response = await hallLayoutApi.execute(
             () => cinemaHallApi.admin.getLayout(id),
             {
                 cacheKey: `hall_layout_${id}`,
@@ -86,6 +87,7 @@ export const useCinemaHalls = () => {
                 showErrorNotification: false,
             }
         );
+        return response?.data || null;
     }, [hallLayoutApi]);
 
     const loading = allHallsApi.loading || hallDetailApi.loading ||

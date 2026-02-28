@@ -20,7 +20,7 @@ export const usePromotion = () => {
     const deletePromotionApi = useApi<void>();
 
     const getAvailable = useCallback(async () => {
-        return availablePromotionsApi.execute(
+        const response = await availablePromotionsApi.execute(
             () => promotionApi.user.getAvailable(),
             {
                 cacheKey: 'available_promotions',
@@ -28,10 +28,11 @@ export const usePromotion = () => {
                 showErrorNotification: false,
             }
         );
+        return response?.data || null;
     }, [availablePromotionsApi]);
 
     const getMyPromotions = useCallback(async () => {
-        return myPromotionsApi.execute(
+        const response = await myPromotionsApi.execute(
             () => promotionApi.user.getMyPromotions(),
             {
                 cacheKey: 'my_promotions',
@@ -39,10 +40,11 @@ export const usePromotion = () => {
                 showErrorNotification: false,
             }
         );
+        return response?.data || null;
     }, [myPromotionsApi]);
 
     const claimPromotion = useCallback(async (request: UserPromotionCreateRequest) => {
-        return claimPromotionApi.execute(
+        const response = await claimPromotionApi.execute(
             () => promotionApi.user.claimPromotion(request),
             {
                 successMessage: 'Promotion claimed successfully',
@@ -52,10 +54,11 @@ export const usePromotion = () => {
                 },
             }
         );
+        return response?.data || null;
     }, [claimPromotionApi, myPromotionsApi, availablePromotionsApi]);
 
     const getById = useCallback(async (promotionId: number) => {
-        return promotionByIdApi.execute(
+        const response = await promotionByIdApi.execute(
             () => promotionApi.admin.getById(promotionId),
             {
                 cacheKey: `promotion_${promotionId}`,
@@ -63,10 +66,11 @@ export const usePromotion = () => {
                 showErrorNotification: false,
             }
         );
+        return response?.data || null;
     }, [promotionByIdApi]);
 
     const getAll = useCallback(async () => {
-        return allPromotionsApi.execute(
+        const response = await allPromotionsApi.execute(
             () => promotionApi.admin.getAll(),
             {
                 cacheKey: 'all_promotions',
@@ -74,10 +78,11 @@ export const usePromotion = () => {
                 showErrorNotification: false,
             }
         );
+        return response?.data || null;
     }, [allPromotionsApi]);
 
     const getActive = useCallback(async () => {
-        return promotionByIdApi.execute(
+        const response = await promotionByIdApi.execute(
             () => promotionApi.admin.getActive(),
             {
                 cacheKey: 'active_promotions_admin',
@@ -85,10 +90,11 @@ export const usePromotion = () => {
                 showErrorNotification: false,
             }
         );
+        return response?.data || null;
     }, [promotionByIdApi]);
 
     const create = useCallback(async (request: PromotionCreateRequest) => {
-        return createPromotionApi.execute(
+        const response = await createPromotionApi.execute(
             () => promotionApi.admin.create(request),
             {
                 successMessage: 'Promotion created successfully',
@@ -98,10 +104,11 @@ export const usePromotion = () => {
                 },
             }
         );
+        return response?.data || null;
     }, [createPromotionApi, allPromotionsApi, availablePromotionsApi]);
 
     const update = useCallback(async (promotionId: number, request: PromotionUpdateRequest) => {
-        return updatePromotionApi.execute(
+        const response = await updatePromotionApi.execute(
             () => promotionApi.admin.update(promotionId, request),
             {
                 successMessage: 'Promotion updated successfully',
@@ -113,10 +120,11 @@ export const usePromotion = () => {
                 },
             }
         );
+        return response?.data || null;
     }, [updatePromotionApi, promotionByIdApi, allPromotionsApi, availablePromotionsApi, myPromotionsApi]);
 
     const remove = useCallback(async (promotionId: number) => {
-        return deletePromotionApi.execute(
+        await deletePromotionApi.execute(
             () => promotionApi.admin.delete(promotionId),
             {
                 successMessage: 'Promotion deleted successfully',

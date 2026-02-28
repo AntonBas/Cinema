@@ -26,7 +26,7 @@ export const useUser = () => {
             profileApi.invalidateCache(CACHE_CONFIG.PROFILE.key);
         }
 
-        return profileApi.execute(
+        const response = await profileApi.execute(
             () => userApi.getProfile(),
             {
                 cacheKey: CACHE_CONFIG.PROFILE.key,
@@ -34,11 +34,12 @@ export const useUser = () => {
                 showErrorNotification: false
             }
         );
+        return response?.data || null;
     }, [profileApi]);
 
     const updateProfile = useCallback(async (data: UserUpdateRequest) => {
         try {
-            const result = await updateProfileApi.execute(
+            const response = await updateProfileApi.execute(
                 () => userApi.updateProfile(data),
                 {
                     successMessage: 'Profile updated successfully',
@@ -48,24 +49,25 @@ export const useUser = () => {
 
             profileApi.invalidateCache(CACHE_CONFIG.PROFILE.key);
 
-            if (result) {
-                profileApi.setData(result);
+            if (response?.data) {
+                profileApi.setData(response.data);
             }
 
-            return result;
+            return response?.data || null;
         } catch (error) {
             throw error;
         }
     }, [updateProfileApi, profileApi]);
 
     const updatePassword = useCallback(async (data: UserPasswordUpdateRequest) => {
-        return updatePasswordApi.execute(
+        const response = await updatePasswordApi.execute(
             () => userApi.updatePassword(data),
             {
                 successMessage: 'Password updated successfully',
                 showErrorNotification: false
             }
         );
+        return response?.data || null;
     }, [updatePasswordApi]);
 
     const requestEmailChange = useCallback(async (newEmail: string, password: string) => {
@@ -73,13 +75,14 @@ export const useUser = () => {
             newEmail,
             password
         };
-        return requestEmailChangeApi.execute(
+        const response = await requestEmailChangeApi.execute(
             () => userApi.requestEmailChange(request),
             {
                 successMessage: 'Confirmation email sent to your new address',
                 showErrorNotification: false
             }
         );
+        return response?.data || null;
     }, [requestEmailChangeApi]);
 
     return {

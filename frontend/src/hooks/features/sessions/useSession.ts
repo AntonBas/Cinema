@@ -16,7 +16,7 @@ export const useSession = () => {
     const sessionDetailApi = useApi<SessionScheduleResponse>();
 
     const getSessions = useCallback(async (params?: SearchParams & SessionFilterRequest) => {
-        return sessionsApi.execute(
+        const response = await sessionsApi.execute(
             () => sessionApi.admin.getSessions(params),
             {
                 cacheKey: params ? `admin_sessions_${JSON.stringify(params)}` : 'admin_sessions_all',
@@ -24,6 +24,7 @@ export const useSession = () => {
                 showErrorNotification: false,
             }
         );
+        return response?.data || null;
     }, [sessionsApi]);
 
     const getPublicSessions = useCallback(async (
@@ -31,7 +32,7 @@ export const useSession = () => {
         date?: string,
         params?: SearchParams
     ) => {
-        return scheduleApi.execute(
+        const response = await scheduleApi.execute(
             () => sessionApi.public.getSessions(searchTerm, date, params),
             {
                 cacheKey: searchTerm || date
@@ -41,10 +42,11 @@ export const useSession = () => {
                 showErrorNotification: false,
             }
         );
+        return response?.data || null;
     }, [scheduleApi]);
 
     const getSessionById = useCallback(async (id: number) => {
-        return sessionDetailApi.execute(
+        const response = await sessionDetailApi.execute(
             () => sessionApi.public.getById(id),
             {
                 cacheKey: `session_${id}`,
@@ -52,10 +54,11 @@ export const useSession = () => {
                 showErrorNotification: true,
             }
         );
+        return response?.data || null;
     }, [sessionDetailApi]);
 
     const getSessionSeats = useCallback(async (sessionId: number) => {
-        return sessionDetailApi.execute(
+        const response = await sessionDetailApi.execute(
             () => sessionApi.public.getSeatAvailability(sessionId),
             {
                 cacheKey: `session_seats_${sessionId}`,
@@ -63,21 +66,22 @@ export const useSession = () => {
                 showErrorNotification: false,
             }
         );
+        return response?.data || null;
     }, [sessionDetailApi]);
 
     const createSession = useCallback(async (request: SessionCreateRequest) => {
-        const result = await sessionsApi.execute(
+        const response = await sessionsApi.execute(
             () => sessionApi.admin.create(request),
             {
                 successMessage: 'Session created successfully',
             }
         );
         sessionsApi.invalidateCache();
-        return result;
+        return response?.data || null;
     }, [sessionsApi]);
 
     const updateSession = useCallback(async (id: number, request: SessionUpdateRequest) => {
-        const result = await sessionsApi.execute(
+        const response = await sessionsApi.execute(
             () => sessionApi.admin.update(id, request),
             {
                 successMessage: 'Session updated successfully',
@@ -85,11 +89,11 @@ export const useSession = () => {
         );
         sessionsApi.invalidateCache();
         sessionDetailApi.invalidateCache(`session_${id}`);
-        return result;
+        return response?.data || null;
     }, [sessionsApi, sessionDetailApi]);
 
     const cancelSession = useCallback(async (id: number) => {
-        const result = await sessionsApi.execute(
+        await sessionsApi.execute(
             () => sessionApi.admin.cancel(id),
             {
                 successMessage: 'Session cancelled successfully',
@@ -97,11 +101,10 @@ export const useSession = () => {
         );
         sessionsApi.invalidateCache();
         sessionDetailApi.invalidateCache(`session_${id}`);
-        return result;
     }, [sessionsApi, sessionDetailApi]);
 
     const reactivateSession = useCallback(async (id: number) => {
-        const result = await sessionsApi.execute(
+        await sessionsApi.execute(
             () => sessionApi.admin.reactivate(id),
             {
                 successMessage: 'Session reactivated successfully',
@@ -109,11 +112,10 @@ export const useSession = () => {
         );
         sessionsApi.invalidateCache();
         sessionDetailApi.invalidateCache(`session_${id}`);
-        return result;
     }, [sessionsApi, sessionDetailApi]);
 
     const deleteSession = useCallback(async (id: number) => {
-        const result = await sessionsApi.execute(
+        await sessionsApi.execute(
             () => sessionApi.admin.delete(id),
             {
                 successMessage: 'Session deleted successfully',
@@ -121,7 +123,6 @@ export const useSession = () => {
         );
         sessionsApi.invalidateCache();
         sessionDetailApi.invalidateCache(`session_${id}`);
-        return result;
     }, [sessionsApi, sessionDetailApi]);
 
     return {
