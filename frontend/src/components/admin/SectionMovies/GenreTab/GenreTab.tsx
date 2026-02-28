@@ -67,13 +67,13 @@ export const GenreTab: React.FC = () => {
     try {
       if (editingGenre) {
         const response = await update(editingGenre.id, { name });
-        if (response?.data) {
-          showNotification(`Genre "${response.data.name}" updated successfully!`, 'success');
+        if (response) {
+          showNotification(`Genre "${response.name}" updated successfully!`, 'success');
         }
       } else {
         const response = await create({ name });
-        if (response?.data) {
-          showNotification(`Genre "${response.data.name}" created successfully!`, 'success');
+        if (response) {
+          showNotification(`Genre "${response.name}" created successfully!`, 'success');
         }
       }
       closeFormModal();

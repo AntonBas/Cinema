@@ -188,10 +188,10 @@ export const BookingPage: React.FC = () => {
                 bonusPointsToUse: bonusPointsToUse > 0 ? bonusPointsToUse : undefined
             });
 
-            if (response?.data) {
+            if (response) {
                 showNotification('Booking created successfully!', 'success');
                 setTimeout(() => {
-                    navigate(`/booking/summary/${response.data.id}`);
+                    navigate(`/booking/summary/${response.id}`);
                 }, 1000);
             }
         } catch (error) {

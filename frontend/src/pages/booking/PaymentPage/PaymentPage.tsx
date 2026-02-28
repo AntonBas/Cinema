@@ -102,7 +102,7 @@ export const PaymentPage: React.FC = () => {
         const interval = setInterval(async () => {
             try {
                 const response = await getById(paymentId);
-                const payment = response?.data || null;
+                const payment = response || null;
                 setCurrentPayment(payment);
 
                 if (payment && (payment.status === 'SUCCESS' || payment.status === 'FAILED' || payment.status === 'CANCELLED' || payment.status === 'EXPIRED')) {
@@ -156,12 +156,12 @@ export const PaymentPage: React.FC = () => {
 
         try {
             const response = await create({ bookingId: parseInt(bookingId) });
-            const payment = response?.data || null;
+            const payment = response || null;
 
             if (payment) {
                 setCurrentPayment(payment);
                 const liqPayResponse = await getLiqPayData(payment.id);
-                const liqPayData = liqPayResponse?.data || null;
+                const liqPayData = liqPayResponse || null;
                 if (liqPayData) {
                     setStep('ready');
                 } else {
@@ -217,7 +217,7 @@ export const PaymentPage: React.FC = () => {
         setStep('paying');
 
         const response = await getLiqPayData(currentPayment.id);
-        const liqPayData = response?.data || null;
+        const liqPayData = response || null;
         if (liqPayData?.paymentUrl) {
             startPolling(currentPayment.id);
             window.location.href = liqPayData.paymentUrl;

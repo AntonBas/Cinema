@@ -49,11 +49,11 @@ export const BonusPage: React.FC = () => {
                 getMyCard()
             ]);
 
-            console.log('Balance data:', balanceResponse?.data);
-            console.log('Card data:', cardResponse?.data);
+            console.log('Balance data:', balanceResponse);
+            console.log('Card data:', cardResponse);
 
-            setBalance(balanceResponse?.data || null);
-            setCardInfo(cardResponse?.data || null);
+            setBalance(balanceResponse || null);
+            setCardInfo(cardResponse || null);
             setLocalError(null);
 
             await loadTransactions(0);
@@ -68,20 +68,20 @@ export const BonusPage: React.FC = () => {
         try {
             const response = await getMyTransactions({ page, size: DEFAULT_PAGE_SIZE_ADMIN });
 
-            console.log('Raw transactions data:', response?.data);
-            console.log('Content array:', response?.data?.content);
-            console.log('Content length:', response?.data?.content?.length);
+            console.log('Raw transactions data:', response);
+            console.log('Content array:', response?.content);
+            console.log('Content length:', response?.content?.length);
             console.log('Pagination info:', {
-                number: response?.data?.number,
-                totalPages: response?.data?.totalPages,
-                totalElements: response?.data?.totalElements
+                number: response?.number,
+                totalPages: response?.totalPages,
+                totalElements: response?.totalElements
             });
 
-            setTransactions(response?.data?.content || []);
+            setTransactions(response?.content || []);
             setPagination({
-                currentPage: response?.data?.number || 0,
-                totalPages: response?.data?.totalPages || 1,
-                totalElements: response?.data?.totalElements || 0
+                currentPage: response?.number || 0,
+                totalPages: response?.totalPages || 1,
+                totalElements: response?.totalElements || 0
             });
         } catch (error: any) {
             console.error('Error loading transactions:', error);

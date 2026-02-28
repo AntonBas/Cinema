@@ -60,8 +60,8 @@ export const SectionHalls: React.FC = () => {
     const handleCreateHall = useCallback(async (request: CinemaHallRequest) => {
         try {
             const response = await createHall(request);
-            if (response?.data) {
-                showNotification(`Cinema hall "${response.data.name}" created successfully!`, 'success');
+            if (response) {
+                showNotification(`Cinema hall "${response.name}" created successfully!`, 'success');
             }
             setShowCreateModal(false);
         } catch (err) {
@@ -76,8 +76,8 @@ export const SectionHalls: React.FC = () => {
     const handleEditHall = useCallback(async (id: number, request: CinemaHallRequest & { coupleRows?: number[] }) => {
         try {
             const response = await updateHall(id, request);
-            if (response?.data) {
-                showNotification(`Cinema hall "${response.data.name}" updated successfully!`, 'success');
+            if (response) {
+                showNotification(`Cinema hall "${response.name}" updated successfully!`, 'success');
             }
             setShowEditModal(false);
             setSelectedHall(null);
@@ -117,13 +117,13 @@ export const SectionHalls: React.FC = () => {
     const handleEdit = useCallback(async (hall: CinemaHallResponse) => {
         setSelectedHall(hall);
         const response = await getHallLayout(hall.id);
-        if (response?.data) {
-            const coupleRows = response.data.rows
+        if (response) {
+            const coupleRows = response.rows
                 .filter(row => row.seats.every(seat => seat.seatType === SeatType.COUPLE))
                 .map(row => row.rowNumber);
             setCurrentLayout({
-                rows: response.data.totalRows,
-                seatsPerRow: response.data.maxSeatsPerRow,
+                rows: response.totalRows,
+                seatsPerRow: response.maxSeatsPerRow,
                 coupleRows
             });
         }

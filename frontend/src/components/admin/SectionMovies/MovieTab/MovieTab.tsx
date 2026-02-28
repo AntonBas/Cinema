@@ -68,9 +68,9 @@ export const MovieTab: React.FC = () => {
       ]);
 
       setTabCounts({
-        CURRENT: currentResponse?.data?.totalElements || 0,
-        UPCOMING: upcomingResponse?.data?.totalElements || 0,
-        ARCHIVED: archivedResponse?.data?.totalElements || 0
+        CURRENT: currentResponse?.totalElements || 0,
+        UPCOMING: upcomingResponse?.totalElements || 0,
+        ARCHIVED: archivedResponse?.totalElements || 0
       });
     } catch (error) {
       console.error('Failed to load tab counts:', error);
@@ -173,8 +173,8 @@ export const MovieTab: React.FC = () => {
   const handleEdit = useCallback(async (movie: MovieCardResponse) => {
     try {
       const response = await getById(movie.id, true);
-      if (response?.data) {
-        setEditingMovie(response.data);
+      if (response) {
+        setEditingMovie(response);
         setIsModalOpen(true);
       }
     } catch (error) {

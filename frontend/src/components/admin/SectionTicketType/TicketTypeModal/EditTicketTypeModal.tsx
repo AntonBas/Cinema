@@ -100,7 +100,7 @@ const EditTicketTypeModal: React.FC<EditTicketTypeModalProps> = ({
 
             const response = await update(ticketType.id, updateData);
 
-            if (response?.data) {
+            if (response) {
                 setShowNotification(true);
                 setTimeout(() => {
                     setShowNotification(false);

@@ -67,7 +67,7 @@ const SuccessPage = () => {
     const fetchPaymentData = useCallback(async (id: string) => {
         try {
             const response = await getById(parseInt(id));
-            const data = response?.data || null;
+            const data = response || null;
             setPaymentData(data);
             setError(null);
             return data;

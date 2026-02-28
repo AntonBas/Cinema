@@ -33,8 +33,8 @@ const EditPromotionModal: React.FC<EditPromotionModalProps> = ({
         const fetchPromotion = async () => {
             try {
                 const response = await getById(promotionId);
-                if (response?.data) {
-                    const promotion = response.data;
+                if (response) {
+                    const promotion = response;
                     setFormData({
                         title: promotion.title,
                         description: promotion.description || '',
@@ -75,7 +75,7 @@ const EditPromotionModal: React.FC<EditPromotionModalProps> = ({
             };
 
             const response = await update(promotionId, submissionData);
-            if (response?.data) {
+            if (response) {
                 setSuccessMessage('Promotion updated successfully!');
                 setTimeout(() => {
                     setSuccessMessage('');

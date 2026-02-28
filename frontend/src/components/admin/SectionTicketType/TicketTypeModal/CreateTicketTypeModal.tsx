@@ -52,7 +52,7 @@ const CreateTicketTypeModal: React.FC<CreateTicketTypeModalProps> = ({
         try {
             const response = await create(formData);
 
-            if (response?.data) {
+            if (response) {
                 setShowNotification(true);
                 setTimeout(() => {
                     setShowNotification(false);

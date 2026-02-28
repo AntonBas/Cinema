@@ -22,7 +22,7 @@ const BonusRules = () => {
     const loadRules = async () => {
         try {
             const response = await getAllRules();
-            setRules(response.data);
+            setRules(response || []);
             setErrorMessage('');
         } catch (err) {
             setErrorMessage('Failed to load bonus rules');

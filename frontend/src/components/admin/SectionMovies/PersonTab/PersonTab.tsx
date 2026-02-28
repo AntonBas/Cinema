@@ -68,10 +68,10 @@ export const PersonTab: React.FC = () => {
 
       setTabData(prev => ({
         ...prev,
-        ALL: { ...prev.ALL, total: allRes?.data?.totalElements || 0 },
-        ACTOR: { ...prev.ACTOR, total: actorsRes?.data?.totalElements || 0 },
-        DIRECTOR: { ...prev.DIRECTOR, total: directorsRes?.data?.totalElements || 0 },
-        SCREENWRITER: { ...prev.SCREENWRITER, total: writersRes?.data?.totalElements || 0 }
+        ALL: { ...prev.ALL, total: allRes?.totalElements || 0 },
+        ACTOR: { ...prev.ACTOR, total: actorsRes?.totalElements || 0 },
+        DIRECTOR: { ...prev.DIRECTOR, total: directorsRes?.totalElements || 0 },
+        SCREENWRITER: { ...prev.SCREENWRITER, total: writersRes?.totalElements || 0 }
       }));
     } catch (error) {
       console.error('Failed to load counts:', error);
@@ -97,8 +97,8 @@ export const PersonTab: React.FC = () => {
         ...prev,
         [tab]: {
           key: tab,
-          data: response?.data?.content || [],
-          total: response?.data?.totalElements || 0
+          data: response?.content || [],
+          total: response?.totalElements || 0
         }
       }));
 
@@ -154,9 +154,9 @@ export const PersonTab: React.FC = () => {
         ? await update(editingPerson.id, data)
         : await create(data);
 
-      if (result?.data) {
+      if (result) {
         showNotification(
-          `Person "${result.data.name}" ${editingPerson ? 'updated' : 'created'} successfully!`,
+          `Person "${result.name}" ${editingPerson ? 'updated' : 'created'} successfully!`,
           'success'
         );
       }

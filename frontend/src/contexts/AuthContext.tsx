@@ -60,7 +60,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     const refreshUser = async () => {
-        if (isAuthenticated) {
+        const currentToken = localStorage.getItem('authToken');
+        if (currentToken) {
             const userData = await authApi.getCurrentUser();
             setUser(userData);
         }

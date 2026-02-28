@@ -71,8 +71,8 @@ export const PersonSelect: React.FC<PersonSelectProps> = ({
                         page: 0,
                         size: MAX_OPTIONS
                     });
-                    if (isActive && response?.data) {
-                        setLocalOptions(response.data.content || []);
+                    if (isActive && response) {
+                        setLocalOptions(response.content || []);
                         setIsOpen(true);
                     }
                 } catch {
@@ -102,8 +102,8 @@ export const PersonSelect: React.FC<PersonSelectProps> = ({
 
         try {
             const response = await quickCreate({ name: searchQuery.trim(), role });
-            if (response?.data) {
-                const newPerson = response.data;
+            if (response) {
+                const newPerson = response;
                 const newSelectedIds = [...selectedIds, newPerson.id];
                 const updatedPersons = [...selectedPersons, newPerson];
                 onChange(newSelectedIds, updatedPersons);

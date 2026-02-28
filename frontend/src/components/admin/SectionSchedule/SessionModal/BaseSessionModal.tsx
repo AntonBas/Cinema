@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useMovies } from '@/hooks/features/movies/useMovies';
 import { Input } from '@/components/ui/Input/Input';
 import { Select } from '@/components/ui/Select/Select';
@@ -138,7 +138,7 @@ export const BaseSessionModal: React.FC<BaseSessionModalProps> = ({
             setIsSearching(true);
             try {
                 const response = await searchMoviesForSession(date);
-                const results = response?.data || [];
+                const results = response || [];
                 setMovieResults(results);
                 setShowMovieResults(results && results.length > 0);
             } catch (error) {
@@ -158,7 +158,7 @@ export const BaseSessionModal: React.FC<BaseSessionModalProps> = ({
             try {
                 const searchTerm = value.trim() || undefined;
                 const response = await searchMoviesForSession(searchTerm || date);
-                const results = response?.data || [];
+                const results = response || [];
                 setMovieResults(results);
                 setShowMovieResults(true);
             } catch (error) {

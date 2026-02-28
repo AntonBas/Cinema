@@ -1,12 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { movieApi } from '@/api/movieApi';
-import { cinemaHallApi } from '@/api/cinemaHallApi';
-import { sessionApi } from '@/api/sessionApi';
-import { adminApi } from '@/api/adminApi';
-import { ticketTypeApi } from '@/api/ticketTypeApi';
-import { promotionApi } from '@/api/promotionApi';
+import { useMovies } from '@/hooks/features/movies/useMovies';
+import { useCinemaHalls } from '@/hooks/features/cinemaHalls/useCinemaHalls';
+import { useSession } from '@/hooks/features/sessions/useSession';
+import { useAdminUsers } from '@/hooks/features/admin/useAdminUsers';
+import { useTicketType } from '@/hooks/features/ticketType/useTicketType';
+import { usePromotion } from '@/hooks/features/promotion/usePromotion';
 import { useNotification } from '@/hooks/common/useNotification';
 import { Notification } from '@/components/ui/Notification/Notification';
+import type { MovieCardResponse } from '@/types/movie';
+import type { CinemaHallResponse } from '@/types/cinemaHall';
+import type { SessionAdminResponse } from '@/types/session';
+import type { AdminUserListResponse } from '@/types/user';
+import type { TicketTypeResponse } from '@/types/ticketType';
+import type { PromotionResponse } from '@/types/promotion';
 import styles from './AdminDashboard.module.css';
 
 interface DashboardStats {
@@ -68,12 +74,16 @@ export const AdminDashboard: React.FC = () => {
 
   const { notifications, showNotification, hideNotification } = useNotification();
 
+  const { getAdminCurrent, getAdminUpcoming, getAdminArchived } = useMovies();
+  const { getAllHalls } = useCinemaHalls();
+  const { getSessions } = useSession();
+  const { getUsers } = useAdminUsers();
+  const { getAll: getTicketTypes } = useTicketType();
+  const { getAll: getPromotions } = usePromotion();
+
   useEffect(() => {
     loadDashboardData();
-    const interval = setInterval(() => {
-      loadDashboardData();
-    }, 300000);
-
+    const interval = setInterval(loadDashboardData, 300000);
     return () => clearInterval(interval);
   }, []);
 
@@ -86,118 +96,108 @@ export const AdminDashboard: React.FC = () => {
       const todayEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
 
       const [
-        moviesResponse,
+        currentMoviesResponse,
+        upcomingMoviesResponse,
+        archivedMoviesResponse,
         hallsResponse,
         sessionsResponse,
         usersResponse,
         ticketTypesResponse,
         promotionsResponse
       ] = await Promise.all([
-        movieApi.public.getMoviesPaginated(0, 1000),
-        cinemaHallApi.getAll(),
-        sessionApi.admin.getAll(0, 1000),
-        adminApi.getUsers(0, 1000),
-        ticketTypeApi.admin.getAll(),
-        promotionApi.admin.getAll()
+        getAdminCurrent({ page: 0, size: 1000 }),
+        getAdminUpcoming({ page: 0, size: 1000 }),
+        getAdminArchived({ page: 0, size: 1000 }),
+        getAllHalls(),
+        getSessions({ page: 0, size: 1000 }),
+        getUsers({ page: 0, size: 1000 }),
+        getTicketTypes(),
+        getPromotions()
       ]);
 
-      const getContent = (response: any): any[] => {
-        if (Array.isArray(response)) return response;
-        if (response && typeof response === 'object' && 'content' in response) {
-          return response.content || [];
-        }
-        if (response && typeof response === 'object' && 'movies' in response) {
-          return response.movies || [];
-        }
-        return [];
-      };
+      const movies: MovieCardResponse[] = [
+        ...(currentMoviesResponse?.content || []),
+        ...(upcomingMoviesResponse?.content || []),
+        ...(archivedMoviesResponse?.content || [])
+      ];
 
-      const movies = getContent(moviesResponse);
-      const halls = getContent(hallsResponse);
-      const sessions = getContent(sessionsResponse);
-      const users = getContent(usersResponse);
-      const ticketTypes = getContent(ticketTypesResponse);
-      let promotions = getContent(promotionsResponse);
-
-      // If we get an array of promotions, use it directly
-      if (!Array.isArray(promotions) && typeof promotions === 'object') {
-        // Try to extract promotions from the response object
-        promotions = Object.values(promotions).find(val => Array.isArray(val)) || [];
-      }
+      const halls: CinemaHallResponse[] = hallsResponse || [];
+      const sessions: SessionAdminResponse[] = sessionsResponse?.content || [];
+      const users: AdminUserListResponse[] = usersResponse?.content || [];
+      const ticketTypes: TicketTypeResponse[] = ticketTypesResponse || [];
+      const promotions: PromotionResponse[] = promotionsResponse || [];
 
       const now = new Date();
 
-      const activeSessions = sessions.filter((session: any) => {
+      const activeSessions = sessions.filter((session: SessionAdminResponse) => {
         const sessionTime = new Date(session.startTime);
-        return sessionTime > now && session.available !== false;
+        return sessionTime > now;
       });
 
-      const todaySessions = sessions.filter((session: any) => {
+      const todaySessions = sessions.filter((session: SessionAdminResponse) => {
         const sessionTime = new Date(session.startTime);
-        return sessionTime >= todayStart && sessionTime < todayEnd && session.available !== false;
+        return sessionTime >= todayStart && sessionTime < todayEnd;
       });
 
-      const upcomingSessions = sessions.filter((session: any) => {
+      const upcomingSessions = sessions.filter((session: SessionAdminResponse) => {
         const sessionTime = new Date(session.startTime);
         return sessionTime > now && sessionTime <= new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
       });
 
-      const completedSessions = sessions.filter((session: any) => {
+      const completedSessions = sessions.filter((session: SessionAdminResponse) => {
         const sessionTime = new Date(session.startTime);
-        const sessionEnd = new Date(sessionTime.getTime() + (session.duration || 120) * 60000);
+        const movie = movies.find(m => m.id === session.movieId);
+        const duration = movie?.durationMinutes || 120;
+        const sessionEnd = new Date(sessionTime.getTime() + duration * 60000);
         return sessionEnd <= now;
       });
 
-      // Count active promotions - try different property names
-      const activePromotions = Array.isArray(promotions) ? promotions.filter((promo: any) => {
-        const endDate = promo.endDate || promo.end_time || promo.validUntil;
-        const active = promo.active !== false && promo.status !== 'inactive';
+      const activePromotions = promotions.filter((promo: PromotionResponse) => {
+        const endDate = promo.endDate ? new Date(promo.endDate) : null;
+        const now = new Date();
+        return (!endDate || endDate > now);
+      }).length;
 
-        if (!endDate) return active;
-
-        try {
-          const end = new Date(endDate);
-          return active && end > now;
-        } catch {
-          return active;
-        }
-      }).length : 0;
-
-      const newUsersToday = users.filter((user: any) => {
-        const createdAt = new Date(user.createdAt || user.registrationDate || user.created_at);
+      const newUsersToday = users.filter((user: AdminUserListResponse) => {
+        const createdAt = new Date(user.lastActivity);
         return createdAt >= todayStart && createdAt < todayEnd;
       });
 
-      const activeMovies = movies.filter((movie: any) =>
-        movie.status === 'CURRENT' || movie.status === 'UPCOMING' || movie.status === 'current' || movie.status === 'upcoming'
+      const activeMovies = movies.filter((movie: MovieCardResponse) =>
+        movie.status === 'CURRENT' || movie.status === 'UPCOMING'
       );
 
-      const totalRevenue = sessions.reduce((sum: number, session: any) =>
-        sum + (session.totalRevenue || session.revenue || session.price || 0), 0
-      );
+      const totalRevenue = sessions.reduce((sum: number, session: SessionAdminResponse) => {
+        const revenue = typeof session.totalRevenue === 'number' ? session.totalRevenue : 0;
+        return sum + revenue;
+      }, 0);
 
-      const todayRevenue = sessions.filter((session: any) => {
-        const sessionTime = new Date(session.startTime || session.start_time);
-        return sessionTime >= todayStart && sessionTime < todayEnd;
-      }).reduce((sum: number, session: any) => sum + (session.totalRevenue || session.revenue || session.price || 0), 0);
+      const todayRevenue = todaySessions.reduce((sum: number, session: SessionAdminResponse) => {
+        const revenue = typeof session.totalRevenue === 'number' ? session.totalRevenue : 0;
+        return sum + revenue;
+      }, 0);
 
-      const ticketsSold = sessions.reduce((sum: number, session: any) =>
-        sum + (session.ticketsSold || session.bookedSeats || session.booked_seats || session.tickets_sold || 0), 0
-      );
+      const ticketsSold = sessions.reduce((sum: number, session: SessionAdminResponse) => {
+        const sold = typeof session.ticketsSold === 'number' ? session.ticketsSold : 0;
+        return sum + sold;
+      }, 0);
 
-      const todayTicketsSold = sessions.filter((session: any) => {
-        const sessionTime = new Date(session.startTime || session.start_time);
-        return sessionTime >= todayStart && sessionTime < todayEnd;
-      }).reduce((sum: number, session: any) => sum + (session.ticketsSold || session.bookedSeats || session.booked_seats || session.tickets_sold || 0), 0);
+      const todayTicketsSold = todaySessions.reduce((sum: number, session: SessionAdminResponse) => {
+        const sold = typeof session.ticketsSold === 'number' ? session.ticketsSold : 0;
+        return sum + sold;
+      }, 0);
 
-      const occupancyRates = sessions.map((session: any) => {
-        const totalSeats = session.totalSeats || session.hallCapacity || session.capacity || session.total_seats || 100;
-        const bookedSeats = session.ticketsSold || session.bookedSeats || session.booked_seats || session.tickets_sold || 0;
-        return (bookedSeats / totalSeats) * 100;
-      }).filter(rate => !isNaN(rate));
+      const occupancyRates = sessions
+        .map((session: SessionAdminResponse) => {
+          const hall = halls.find(h => h.id === session.hallId);
+          const totalSeats = hall?.capacity || 100;
+          const bookedSeats = typeof session.ticketsSold === 'number' ? session.ticketsSold : 0;
+          return (bookedSeats / totalSeats) * 100;
+        })
+        .filter((rate: number) => !isNaN(rate));
 
       const averageOccupancyRate = occupancyRates.length > 0
-        ? occupancyRates.reduce((a, b) => a + b, 0) / occupancyRates.length
+        ? occupancyRates.reduce((a: number, b: number) => a + b, 0) / occupancyRates.length
         : 0;
 
       setStats({
@@ -236,12 +236,12 @@ export const AdminDashboard: React.FC = () => {
   };
 
   const generateRecentActivity = (
-    movies: any[],
-    halls: any[],
-    sessions: any[],
-    users: any[],
-    ticketTypes: any[],
-    promotions: any[]
+    movies: MovieCardResponse[],
+    halls: CinemaHallResponse[],
+    sessions: SessionAdminResponse[],
+    users: AdminUserListResponse[],
+    ticketTypes: TicketTypeResponse[],
+    promotions: PromotionResponse[]
   ): ActivityItem[] => {
     const activities: ActivityItem[] = [];
     const now = new Date();
@@ -264,68 +264,65 @@ export const AdminDashboard: React.FC = () => {
       });
     };
 
-    movies.slice(-5).forEach(movie => {
-      addActivity('movie', Math.random() > 0.3 ? 'created' : 'updated', movie.title || movie.name, 24);
+    movies.slice(-5).forEach((movie: MovieCardResponse) => {
+      addActivity('movie', Math.random() > 0.3 ? 'created' : 'updated', movie.title, 24);
     });
 
-    halls.slice(-2).forEach(hall => {
-      addActivity('hall', Math.random() > 0.5 ? 'created' : 'updated', hall.name || hall.title, 96);
+    halls.slice(-2).forEach((hall: CinemaHallResponse) => {
+      addActivity('hall', Math.random() > 0.5 ? 'created' : 'updated', hall.name, 96);
     });
 
-    sessions.slice(-4).forEach(session => {
-      const movieTitle = session.movieTitle || session.movie_title || `Session #${session.id}`;
+    sessions.slice(-4).forEach((session: SessionAdminResponse) => {
+      const movie = movies.find(m => m.id === session.movieId);
+      const movieTitle = movie?.title || `Session #${session.id}`;
       const action = Math.random() > 0.8 ? 'cancelled' : 'created';
       addActivity('session', action, movieTitle, 24,
-        new Date(session.startTime || session.start_time).toLocaleString());
+        new Date(session.startTime).toLocaleString());
     });
 
-    ticketTypes.slice(-3).forEach(type => {
-      addActivity('ticket', 'created', type.name || type.title, 120);
+    ticketTypes.slice(-3).forEach((type: TicketTypeResponse) => {
+      addActivity('ticket', 'created', type.displayName, 120);
     });
 
-    if (Array.isArray(promotions)) {
-      promotions.slice(-2).forEach(promo => {
-        addActivity('promotion', 'created', promo.title || promo.name, 120);
-      });
-    }
+    promotions.slice(-2).forEach((promo: PromotionResponse) => {
+      addActivity('promotion', 'created', promo.title, 120);
+    });
 
-    users.slice(-3).forEach(user => {
-      const name = `${user.firstName || user.first_name || ''} ${user.lastName || user.last_name || ''}`.trim() || user.email;
+    users.slice(-3).forEach((user: AdminUserListResponse) => {
+      const name = `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email;
       addActivity('user', Math.random() > 0.7 ? 'created' : 'updated', name, 168);
     });
 
-    return activities.sort((a, b) =>
+    return activities.sort((a: ActivityItem, b: ActivityItem) =>
       new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
     ).slice(0, 8);
   };
 
-  const getActivityIcon = (type: string) => {
-    switch (type) {
-      case 'movie': return '🎬';
-      case 'hall': return '🏛️';
-      case 'session': return '⏰';
-      case 'user': return '👥';
-      case 'ticket': return '🎫';
-      case 'promotion': return '🎁';
-      default: return '📝';
-    }
+  const getActivityIcon = (type: string): string => {
+    const icons: Record<string, string> = {
+      movie: '🎬',
+      hall: '🏛️',
+      session: '⏰',
+      user: '👥',
+      ticket: '🎫',
+      promotion: '🎁'
+    };
+    return icons[type] || '📝';
   };
 
-  const formatTimeAgo = (timestamp: string) => {
+  const formatTimeAgo = (timestamp: string): string => {
     const now = new Date();
     const time = new Date(timestamp);
     const diffInMinutes = Math.floor((now.getTime() - time.getTime()) / (1000 * 60));
-    const diffInHours = Math.floor(diffInMinutes / 60);
-    const diffInDays = Math.floor(diffInHours / 24);
 
     if (diffInMinutes < 1) return 'Just now';
     if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
-    if (diffInHours < 24) return `${diffInHours}h ago`;
-    return `${diffInDays}d ago`;
+    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
+    return `${Math.floor(diffInMinutes / 1440)}d ago`;
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
+  const formatCurrency = (amount: number): string => {
+    return new Intl.NumberFormat('uk-UA', {
       style: 'currency',
       currency: 'UAH',
       minimumFractionDigits: 0,
@@ -336,7 +333,7 @@ export const AdminDashboard: React.FC = () => {
   if (isLoading) {
     return (
       <div className={styles.loading}>
-        <div className={styles.loadingSpinner}></div>
+        <div className={styles.loadingSpinner} />
         <p>Loading dashboard...</p>
       </div>
     );
@@ -357,7 +354,14 @@ export const AdminDashboard: React.FC = () => {
         <div className={styles.overviewCard}>
           <div className={styles.overviewHeader}>
             <span className={styles.overviewTitle}>Today's Overview</span>
-            <span className={styles.overviewDate}>{new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+            <span className={styles.overviewDate}>
+              {new Date().toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+              })}
+            </span>
           </div>
           <div className={styles.overviewStats}>
             <div className={styles.overviewStat}>
@@ -494,9 +498,7 @@ export const AdminDashboard: React.FC = () => {
           ) : (
             stats.recentActivity.map(activity => (
               <div key={activity.id} className={styles.activityItem}>
-                <span className={styles.activityIcon}>
-                  {getActivityIcon(activity.type)}
-                </span>
+                <span className={styles.activityIcon}>{getActivityIcon(activity.type)}</span>
                 <div className={styles.activityContent}>
                   <div className={styles.activityMain}>
                     <span className={styles.activityType}>
@@ -510,13 +512,9 @@ export const AdminDashboard: React.FC = () => {
                     <strong>{activity.title}</strong>
                   </p>
                   {activity.details && (
-                    <span className={styles.activityDetails}>
-                      {activity.details}
-                    </span>
+                    <span className={styles.activityDetails}>{activity.details}</span>
                   )}
-                  <span className={styles.activityTime}>
-                    {formatTimeAgo(activity.timestamp)}
-                  </span>
+                  <span className={styles.activityTime}>{formatTimeAgo(activity.timestamp)}</span>
                 </div>
               </div>
             ))
@@ -524,7 +522,7 @@ export const AdminDashboard: React.FC = () => {
         </div>
       </div>
 
-      {notifications.map((notification, index) => (
+      {notifications.map(notification => (
         <Notification
           key={notification.id}
           id={notification.id}
@@ -533,7 +531,6 @@ export const AdminDashboard: React.FC = () => {
           isVisible={notification.isVisible}
           onClose={hideNotification}
           duration={4000}
-          position={index}
         />
       ))}
     </div>
