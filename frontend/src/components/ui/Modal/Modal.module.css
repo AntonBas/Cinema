@@ -33,7 +33,7 @@
 .medium {
     width: 100%;
     max-width: 500px;
-    padding: 2.5rem;
+    padding: var(--space-10);
 }
 
 .large {

@@ -14,7 +14,7 @@
 }
 
 .primary {
-    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
+    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-hover));
     color: var(--color-text-primary);
     border: 1px solid var(--color-primary);
 }
@@ -38,24 +38,24 @@
 }
 
 .cancel {
-    background: var(--color-gray);
+    background: var(--color-text-muted);
     color: var(--color-text-primary);
-    border: 1px solid var(--color-gray);
+    border: 1px solid var(--color-text-muted);
 }
 
 .cancel:hover:not(:disabled) {
-    background: var(--color-gray-dark);
+    background: var(--color-text-disabled);
     transform: translateY(-2px);
 }
 
 .success {
-    background: rgba(34, 197, 94, 0.1);
-    color: var(--color-green);
-    border: 1px solid var(--color-green);
+    background: rgba(var(--color-success-rgb), var(--opacity-low));
+    color: var(--color-success);
+    border: 1px solid var(--color-success);
 }
 
 .success:hover:not(:disabled) {
-    background: var(--color-green);
+    background: var(--color-success);
     color: var(--color-text-primary);
     transform: translateY(-2px);
 }

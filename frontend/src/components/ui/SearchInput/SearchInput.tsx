@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import styles from './SearchInput.module.css';
 
 export interface SearchInputProps {
@@ -17,44 +17,36 @@ export const SearchInput: React.FC<SearchInputProps> = ({
     disabled = false
 }) => {
     const [query, setQuery] = useState('');
-    const [timer, setTimer] = useState<NodeJS.Timeout | null>(null);
+    const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-    useEffect(() => {
-        return () => {
-            if (timer) {
-                clearTimeout(timer);
-            }
-        };
-    }, [timer]);
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         const newQuery = e.target.value;
         setQuery(newQuery);
 
-        if (timer) {
-            clearTimeout(timer);
+        if (timerRef.current) {
+            clearTimeout(timerRef.current);
         }
 
-        const newTimer = setTimeout(() => {
+        timerRef.current = setTimeout(() => {
             onSearch(newQuery);
         }, delay);
+    }, [delay, onSearch]);
 
-        setTimer(newTimer);
-    };
-
-    const handleClear = () => {
+    const handleClear = useCallback(() => {
         setQuery('');
         onSearch('');
-    };
 
-    const inputId = `search-input-${Math.random().toString(36).substr(2, 9)}`;
+        if (timerRef.current) {
+            clearTimeout(timerRef.current);
+            timerRef.current = null;
+        }
+    }, [onSearch]);
 
     return (
         <div className={`${styles.searchContainer} ${className}`}>
             <div className={styles.searchInputWrapper}>
                 <span className={styles.searchIcon} aria-hidden="true">🔍</span>
                 <input
-                    id={inputId}
                     type="text"
                     value={query}
                     onChange={handleChange}
@@ -62,7 +54,6 @@ export const SearchInput: React.FC<SearchInputProps> = ({
                     className={styles.searchInput}
                     aria-label="Search"
                     disabled={disabled}
-                    name={inputId}
                     autoComplete="off"
                 />
                 {query && (

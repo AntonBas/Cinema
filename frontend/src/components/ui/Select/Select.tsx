@@ -1,4 +1,4 @@
-import React, { useId } from 'react';
+import React from 'react';
 import styles from './Select.module.css';
 
 export interface SelectOption {
@@ -30,7 +30,7 @@ export const Select: React.FC<SelectProps> = ({
     label,
     error,
 }) => {
-    const id = useId();
+    const id = `select-${Math.random().toString(36).substr(2, 9)}`;
 
     const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const newValue = e.target.value;
@@ -50,11 +50,11 @@ export const Select: React.FC<SelectProps> = ({
                 <select
                     id={id}
                     className={`
-            ${styles.select}
-            ${error ? styles.error : ''}
-            ${disabled ? styles.disabled : ''}
-            ${!value ? styles.placeholder : ''}
-          `}
+                        ${styles.select}
+                        ${error ? styles.error : ''}
+                        ${disabled ? styles.disabled : ''}
+                        ${!value ? styles.placeholder : ''}
+                    `}
                     value={value ?? ''}
                     onChange={handleChange}
                     disabled={disabled}
