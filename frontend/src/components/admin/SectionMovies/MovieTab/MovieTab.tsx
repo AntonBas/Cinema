@@ -64,9 +64,9 @@ export const MovieTab: React.FC = () => {
   const loadTabCounts = useCallback(async () => {
     try {
       const [currentResponse, upcomingResponse, archivedResponse] = await Promise.all([
-        getAdminCurrent({ page: 0, size: 1 }),
-        getAdminUpcoming({ page: 0, size: 1 }),
-        getAdminArchived({ page: 0, size: 1 })
+        getAdminCurrent({ page: 0, size: 12 }, { cacheTime: 0 }),
+        getAdminUpcoming({ page: 0, size: 12 }, { cacheTime: 0 }),
+        getAdminArchived({ page: 0, size: 12 }, { cacheTime: 0 })
       ]);
 
       setTabCounts({
@@ -107,7 +107,7 @@ export const MovieTab: React.FC = () => {
           await getAdminUpcoming(params);
           break;
         case 'ARCHIVED':
-          await getAdminArchived({ ...params, title: searchQuery || undefined });
+          await getAdminArchived(params);
           break;
       }
     } catch (err) {

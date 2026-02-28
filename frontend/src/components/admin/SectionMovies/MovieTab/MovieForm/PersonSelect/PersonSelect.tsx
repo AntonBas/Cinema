@@ -35,34 +35,6 @@ export const PersonSelect: React.FC<PersonSelectProps> = ({
         loading
     } = usePerson();
 
-    const handlePersonSearch = useCallback(async (query: string, personRole: PersonRole) => {
-        if (!query.trim() || query.length < MIN_SEARCH_LENGTH) return [];
-
-        try {
-            setIsSearching(true);
-            const result = await getAll({
-                name: query,
-                role: personRole,
-                page: 0,
-                size: MAX_OPTIONS
-            });
-            return result?.content || [];
-        } catch {
-            return [];
-        } finally {
-            setIsSearching(false);
-        }
-    }, [getAll]);
-
-    const handleAddNewPerson = useCallback(async (name: string, personRole: PersonRole) => {
-        try {
-            const newPerson = await quickCreate({ name, role: personRole });
-            return newPerson;
-        } catch {
-            return null;
-        }
-    }, [quickCreate]);
-
     const displayPersons = useMemo(() =>
         selectedPersons.filter(person => selectedIds.includes(person.id)),
         [selectedPersons, selectedIds]
@@ -80,25 +52,67 @@ export const PersonSelect: React.FC<PersonSelectProps> = ({
     }, []);
 
     useEffect(() => {
-        if (searchTimeoutRef.current) {
-            clearTimeout(searchTimeoutRef.current);
+        let isActive = true;
+
+        const searchTimeout = searchTimeoutRef.current;
+        if (searchTimeout) {
+            clearTimeout(searchTimeout);
         }
+
         if (searchQuery.length >= MIN_SEARCH_LENGTH) {
             searchTimeoutRef.current = setTimeout(async () => {
-                const results = await handlePersonSearch(searchQuery, role);
-                setLocalOptions(results);
-                setIsOpen(true);
+                if (!searchQuery.trim() || !isActive) return;
+
+                setIsSearching(true);
+                try {
+                    const result = await getAll({
+                        name: searchQuery,
+                        role: role,
+                        page: 0,
+                        size: MAX_OPTIONS
+                    });
+                    if (isActive) {
+                        setLocalOptions(result?.content || []);
+                        setIsOpen(true);
+                    }
+                } catch {
+                    if (isActive) {
+                        setLocalOptions([]);
+                    }
+                } finally {
+                    if (isActive) {
+                        setIsSearching(false);
+                    }
+                }
             }, SEARCH_DELAY);
         } else {
             setLocalOptions([]);
-            setIsOpen(false);
         }
+
         return () => {
+            isActive = false;
             if (searchTimeoutRef.current) {
                 clearTimeout(searchTimeoutRef.current);
             }
         };
-    }, [searchQuery, role, handlePersonSearch]);
+    }, [searchQuery, role]);
+
+    const handleAddNewPerson = useCallback(async () => {
+        if (!searchQuery.trim()) return;
+
+        try {
+            const newPerson = await quickCreate({ name: searchQuery.trim(), role });
+            if (newPerson) {
+                const newSelectedIds = [...selectedIds, newPerson.id];
+                const updatedPersons = [...selectedPersons, newPerson];
+                onChange(newSelectedIds, updatedPersons);
+                setSearchQuery('');
+                setIsOpen(false);
+            }
+        } catch {
+            // Помилка вже обробляється в quickCreate
+        }
+    }, [searchQuery, role, selectedIds, selectedPersons, onChange, quickCreate]);
 
     const handleSelectPerson = useCallback((personId: number) => {
         const newSelectedIds = selectedIds.includes(personId)
@@ -119,26 +133,19 @@ export const PersonSelect: React.FC<PersonSelectProps> = ({
         onChange(newSelectedIds, updatedPersons);
     }, [selectedIds, selectedPersons, onChange]);
 
-    const handleAddAndSelect = useCallback(async () => {
-        const newPerson = await handleAddNewPerson(searchQuery, role);
-        if (newPerson) {
-            const newSelectedIds = [...selectedIds, newPerson.id];
-            const updatedPersons = [...selectedPersons, newPerson];
-            onChange(newSelectedIds, updatedPersons);
-            setSearchQuery('');
-            setIsOpen(false);
-        }
-    }, [searchQuery, role, selectedIds, selectedPersons, onChange, handleAddNewPerson]);
-
     const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         setSearchQuery(e.target.value);
+        if (!e.target.value) {
+            setIsOpen(false);
+            setLocalOptions([]);
+        }
     }, []);
 
     const handleFocus = useCallback(() => {
-        if (searchQuery.length >= MIN_SEARCH_LENGTH) {
+        if (searchQuery.length >= MIN_SEARCH_LENGTH && localOptions.length > 0) {
             setIsOpen(true);
         }
-    }, [searchQuery.length]);
+    }, [searchQuery.length, localOptions.length]);
 
     const showAddOption = useMemo(() => {
         if (searchQuery.trim().length < MIN_SEARCH_LENGTH) return false;
@@ -195,7 +202,7 @@ export const PersonSelect: React.FC<PersonSelectProps> = ({
                     {showAddOption && (
                         <button
                             type="button"
-                            onClick={handleAddAndSelect}
+                            onClick={handleAddNewPerson}
                             className={styles.addOption}
                             disabled={loading || isSearching}
                             role="option"

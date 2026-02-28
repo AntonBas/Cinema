@@ -26,17 +26,9 @@ public interface MovieMapper {
 	@Mapping(target = "posterUrl", expression = "java(\"/api/movies/\" + projection.getId() + \"/poster\")")
 	MovieCardResponse toMovieCardResponse(MovieCardProjection projection);
 
-	@Mapping(target = "genres", ignore = true)
-	@Mapping(target = "actors", ignore = true)
-	@Mapping(target = "directors", ignore = true)
-	@Mapping(target = "screenwriters", ignore = true)
 	@Mapping(target = "posterUrl", expression = "java(\"/api/movies/\" + movie.getId() + \"/poster\")")
 	MovieDetailResponse toMovieDetailResponse(Movie movie);
 
-	@Mapping(target = "genres", ignore = true)
-	@Mapping(target = "actors", ignore = true)
-	@Mapping(target = "directors", ignore = true)
-	@Mapping(target = "screenwriters", ignore = true)
 	@Mapping(target = "posterUrl", expression = "java(\"/api/movies/\" + projection.getId() + \"/poster\")")
 	MovieDetailResponse toMovieDetailResponse(MovieDetailProjection projection);
 
