@@ -1,7 +1,7 @@
 import React from 'react';
 import { Layout } from '@/components/layout/Layout/Layout';
 import { ForgotPasswordForm } from '@/components/auth/ForgotPasswordForm/ForgotPasswordForm';
-import { useAuth } from '@/hooks/features/auth/useAuth';
+import { useAuth } from '@/contexts/AuthContext';
 import styles from './ForgotPasswordPage.module.css';
 
 export const ForgotPasswordPage: React.FC = () => {

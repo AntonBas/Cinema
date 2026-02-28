@@ -1,48 +1,81 @@
-import React, { createContext, useContext, useEffect } from 'react';
-import { useAuth as useAuthHook } from '@/hooks/features/auth/useAuth';
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
+import { authApi } from '@/api/authApi';
 import type { UserResponse } from '@/types/user';
+import type { LoginRequest, RegisterRequest } from '@/types/auth';
 
 interface AuthContextType {
     user: UserResponse | null;
     loading: boolean;
-    error: Error | null;
     isAuthenticated: boolean;
     isAdmin: boolean;
-    login: (email: string, password: string) => Promise<void>;
-    register: (userData: any) => Promise<any>;
+    login: (credentials: LoginRequest) => Promise<void>;
+    register: (userData: RegisterRequest) => Promise<UserResponse>;
     logout: () => void;
-    checkEmail: (email: string) => Promise<boolean>;
-    forgotPassword: (email: string) => Promise<void>;
-    resetPassword: (token: string, newPassword: string) => Promise<void>;
-    verifyEmail: (token: string) => Promise<{ message: string }>;
-    confirmEmailChange: (token: string) => Promise<UserResponse>;
+    refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const auth = useAuthHook();
+    const [user, setUser] = useState<UserResponse | null>(null);
+    const [loading, setLoading] = useState(true);
+    const fetchedRef = useRef(false);
+
+    const token = localStorage.getItem('authToken');
+    const isAuthenticated = !!token;
+    const isAdmin = user?.userRole === 'ROLE_ADMIN';
 
     useEffect(() => {
-    }, [auth.user]);
+        if (isAuthenticated && !fetchedRef.current) {
+            fetchedRef.current = true;
+            setLoading(true);
+
+            authApi.getCurrentUser()
+                .then(setUser)
+                .catch(() => {
+                    localStorage.removeItem('authToken');
+                    setUser(null);
+                })
+                .finally(() => setLoading(false));
+        } else if (!isAuthenticated) {
+            setLoading(false);
+        }
+    }, [isAuthenticated]);
+
+    const login = async (credentials: LoginRequest) => {
+        const response = await authApi.login(credentials);
+        localStorage.setItem('authToken', response.token);
+        setUser(response.user);
+    };
+
+    const register = async (userData: RegisterRequest) => {
+        return await authApi.register(userData);
+    };
+
+    const logout = () => {
+        localStorage.removeItem('authToken');
+        setUser(null);
+        fetchedRef.current = false;
+        window.location.href = '/login';
+    };
+
+    const refreshUser = async () => {
+        if (isAuthenticated) {
+            const userData = await authApi.getCurrentUser();
+            setUser(userData);
+        }
+    };
 
     return (
         <AuthContext.Provider value={{
-            user: auth.user,
-            loading: auth.loading,
-            error: auth.error,
-            isAuthenticated: auth.isAuthenticated,
-            isAdmin: auth.isAdmin,
-            login: async (email: string, password: string) => {
-                await auth.login({ email, password });
-            },
-            register: auth.register,
-            logout: auth.logout,
-            checkEmail: auth.checkEmail,
-            forgotPassword: auth.forgotPassword,
-            resetPassword: auth.resetPassword,
-            verifyEmail: auth.verifyEmail,
-            confirmEmailChange: auth.confirmEmailChange,
+            user,
+            loading,
+            isAuthenticated,
+            isAdmin,
+            login,
+            register,
+            logout,
+            refreshUser,
         }}>
             {children}
         </AuthContext.Provider>

@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
-import { authApi } from '@/api/authApi';
+import { useAuth } from '@/contexts/AuthContext';
+import { useAuthActions } from '@/hooks/features/auth/useAuthActions';
 import { Button, LoadingSpinner } from '@/components/ui';
 import { isApiErrorException } from '@/utils/apiErrorHandler';
-import { useAuth } from '@/hooks/features/auth/useAuth';
 import styles from './ConfirmEmailChangePage.module.css';
 
 export const ConfirmEmailChangePage: React.FC = () => {
@@ -15,6 +15,7 @@ export const ConfirmEmailChangePage: React.FC = () => {
     const navigate = useNavigate();
     const hasConfirmed = useRef(false);
     const { isAuthenticated } = useAuth();
+    const { confirmEmailChange } = useAuthActions();
 
     const confirmationToken = token || searchParams.get('token');
     const redirectPath = isAuthenticated ? '/' : '/login';
@@ -28,11 +29,11 @@ export const ConfirmEmailChangePage: React.FC = () => {
             return;
         }
 
-        const confirmEmailChange = async () => {
+        const confirmEmailChangeHandler = async () => {
             hasConfirmed.current = true;
 
             try {
-                await authApi.confirmEmailChange(confirmationToken);
+                await confirmEmailChange(confirmationToken);
                 setIsSuccess(true);
 
                 setTimeout(() => {
@@ -50,8 +51,8 @@ export const ConfirmEmailChangePage: React.FC = () => {
             }
         };
 
-        confirmEmailChange();
-    }, [confirmationToken, navigate, redirectPath]);
+        confirmEmailChangeHandler();
+    }, [confirmationToken, confirmEmailChange, navigate, redirectPath]);
 
     if (isLoading) {
         return (

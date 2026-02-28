@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '@/hooks/features/auth/useAuth';
+import { useAuthActions } from '@/hooks/features/auth/useAuthActions';
 import { Input, Button, Modal } from '@/components/ui';
 import styles from './ForgotPasswordForm.module.css';
 
@@ -54,7 +54,7 @@ export const ForgotPasswordForm: React.FC = () => {
   const [localError, setLocalError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { forgotPassword, loading } = useAuth();
+  const { forgotPassword, isForgotPassword } = useAuthActions();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,7 +75,7 @@ export const ForgotPasswordForm: React.FC = () => {
     setShowSuccessModal(false);
   };
 
-  const isLoading = isSubmitting || loading;
+  const isLoading = isSubmitting || isForgotPassword;
 
   return (
     <section className={styles.forgotPassword}>

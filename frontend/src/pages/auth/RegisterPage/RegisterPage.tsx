@@ -1,6 +1,6 @@
 import React from 'react';
 import { RegisterForm } from '@/components/auth/RegisterForm/RegisterForm';
-import { useAuth } from '@/hooks/features/auth/useAuth';
+import { useAuth } from '@/contexts/AuthContext';
 import { Layout } from '@/components/layout/Layout/Layout';
 import styles from './RegisterPage.module.css';
 

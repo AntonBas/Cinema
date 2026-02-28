@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/hooks/features/auth/useAuth';
+import { useAuthActions } from '@/hooks/features/auth/useAuthActions';
 import { Input, Button, Modal } from '@/components/ui';
 import type { RegisterRequest } from '@/types/auth';
 import styles from './RegisterForm.module.css';
@@ -65,7 +65,7 @@ export const RegisterForm: React.FC = () => {
   const [localError, setLocalError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { register, loading } = useAuth();
+  const { register, isRegistering } = useAuthActions();
   const navigate = useNavigate();
 
   const handleChange = (field: string, value: string) => {
@@ -135,7 +135,7 @@ export const RegisterForm: React.FC = () => {
     navigate('/login');
   };
 
-  const isLoading = isSubmitting || loading;
+  const isLoading = isSubmitting || isRegistering;
 
   return (
     <section className={styles.registration}>

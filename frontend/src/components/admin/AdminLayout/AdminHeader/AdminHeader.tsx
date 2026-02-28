@@ -1,5 +1,5 @@
 import React from 'react';
-import { useAuth } from '@/hooks/features/auth/useAuth';
+import { useAuth } from '@/contexts/AuthContext';
 import styles from './AdminHeader.module.css';
 
 interface AdminHeaderProps {

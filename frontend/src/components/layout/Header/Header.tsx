@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useAuth } from '@/hooks/features/auth/useAuth';
+import { useAuth } from '@/contexts/AuthContext';
+import { useAuthActions } from '@/hooks/features/auth/useAuthActions';
 import { Link, useLocation } from 'react-router-dom';
 import styles from './Header.module.css';
 
@@ -10,7 +11,8 @@ interface NavLink {
 }
 
 export const Header: React.FC = () => {
-  const { user, logout, isAuthenticated } = useAuth();
+  const { user, isAuthenticated } = useAuth();
+  const { logout } = useAuthActions();
   const location = useLocation();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);

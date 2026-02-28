@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/hooks/features/auth/useAuth';
+import { useAuthActions } from '@/hooks/features/auth/useAuthActions';
 import { Input, Button, Modal } from '@/components/ui';
 import styles from './ResetPasswordForm.module.css';
 
@@ -53,7 +53,7 @@ export const ResetPasswordForm: React.FC = () => {
   const [localError, setLocalError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { resetPassword, loading } = useAuth();
+  const { resetPassword, isResettingPassword } = useAuthActions();
 
   const handleChange = (field: string, value: string) => {
     setFormData(prev => ({
@@ -120,7 +120,7 @@ export const ResetPasswordForm: React.FC = () => {
     navigate('/login');
   };
 
-  const isLoading = isSubmitting || loading;
+  const isLoading = isSubmitting || isResettingPassword;
 
   return (
     <section className={styles.resetPassword}>
