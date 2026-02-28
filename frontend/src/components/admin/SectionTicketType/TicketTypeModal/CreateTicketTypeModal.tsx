@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { Modal } from '@/components/ui/Modal';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { Select } from '@/components/ui/Select';
-import { Notification } from '@/components/ui/Notification';
+import { Modal } from '@/components/ui/Modal/Modal';
+import { Button } from '@/components/ui/Button/Button';
+import { Input } from '@/components/ui/Input/Input';
+import { Select } from '@/components/ui/Select/Select';
+import { Notification } from '@/components/ui/Notification/Notification';
 import { useTicketType } from '@/hooks/features/ticketType/useTicketType';
 import type { TicketTypeCreateRequest, TicketTypeCategory } from '@/types/ticketType';
 import { TicketTypeCategoryDisplay } from '@/types/ticketType';
@@ -50,24 +50,26 @@ const CreateTicketTypeModal: React.FC<CreateTicketTypeModalProps> = ({
         setError(null);
 
         try {
-            await create(formData);
+            const response = await create(formData);
 
-            setShowNotification(true);
-            setTimeout(() => {
-                setShowNotification(false);
-                onSuccess();
-                setFormData({
-                    code: '',
-                    displayName: '',
-                    category: 'STANDARD',
-                    priceMultiplier: '1.0',
-                    minAge: undefined,
-                    maxAge: undefined,
-                    requiresDocument: false,
-                    documentType: undefined,
-                    active: true
-                });
-            }, 1500);
+            if (response?.data) {
+                setShowNotification(true);
+                setTimeout(() => {
+                    setShowNotification(false);
+                    onSuccess();
+                    setFormData({
+                        code: '',
+                        displayName: '',
+                        category: 'STANDARD',
+                        priceMultiplier: '1.0',
+                        minAge: undefined,
+                        maxAge: undefined,
+                        requiresDocument: false,
+                        documentType: undefined,
+                        active: true
+                    });
+                }, 1500);
+            }
         } catch (err: any) {
             setError(err.message || 'Failed to create ticket type');
         }

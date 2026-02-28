@@ -4,15 +4,13 @@ import { useMovies } from '@/hooks/features/movies/useMovies';
 import { useNotification } from '@/hooks/common/useNotification';
 import { MovieList } from './MovieList/MovieList';
 import { MovieForm } from './MovieForm/MovieForm';
-import {
-  DeleteConfirmModal,
-  Button,
-  SearchInput,
-  Badge,
-  Pagination,
-  LoadingSpinner
-} from '@/components/ui';
-import { Notification } from '@/components/ui/Notification';
+import { DeleteConfirmModal } from '@/components/ui/DeleteConfirmModal/DeleteConfirmModal';
+import { Button } from '@/components/ui/Button/Button';
+import { SearchInput } from '@/components/ui/SearchInput/SearchInput';
+import { Badge } from '@/components/ui/Badge/Badge';
+import { Pagination } from '@/components/ui/Pagination/Pagination';
+import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';
+import { Notification } from '@/components/ui/Notification/Notification';
 import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
 import { isApiErrorException } from '@/utils/apiErrorHandler';
 import styles from './MovieTab.module.css';
@@ -59,20 +57,20 @@ export const MovieTab: React.FC = () => {
 
   useEffect(() => {
     clearCache();
-  }, []);
+  }, [clearCache]);
 
   const loadTabCounts = useCallback(async () => {
     try {
       const [currentResponse, upcomingResponse, archivedResponse] = await Promise.all([
-        getAdminCurrent({ page: 0, size: 12 }, { cacheTime: 0 }),
-        getAdminUpcoming({ page: 0, size: 12 }, { cacheTime: 0 }),
-        getAdminArchived({ page: 0, size: 12 }, { cacheTime: 0 })
+        getAdminCurrent({ page: 0, size: 12 }),
+        getAdminUpcoming({ page: 0, size: 12 }),
+        getAdminArchived({ page: 0, size: 12 })
       ]);
 
       setTabCounts({
-        CURRENT: currentResponse?.totalElements || 0,
-        UPCOMING: upcomingResponse?.totalElements || 0,
-        ARCHIVED: archivedResponse?.totalElements || 0
+        CURRENT: currentResponse?.data?.totalElements || 0,
+        UPCOMING: upcomingResponse?.data?.totalElements || 0,
+        ARCHIVED: archivedResponse?.data?.totalElements || 0
       });
     } catch (error) {
       console.error('Failed to load tab counts:', error);
@@ -129,7 +127,7 @@ export const MovieTab: React.FC = () => {
     } else {
       loadMovies();
     }
-  }, [activeTab, currentPage, searchQuery]);
+  }, [activeTab, currentPage, searchQuery, loadTabCounts, loadMovies]);
 
   const currentPagination = useMemo(() => {
     switch (activeTab) {
@@ -174,9 +172,11 @@ export const MovieTab: React.FC = () => {
 
   const handleEdit = useCallback(async (movie: MovieCardResponse) => {
     try {
-      const fullMovie = await getById(movie.id, true);
-      setEditingMovie(fullMovie);
-      setIsModalOpen(true);
+      const response = await getById(movie.id, true);
+      if (response?.data) {
+        setEditingMovie(response.data);
+        setIsModalOpen(true);
+      }
     } catch (error) {
       showNotification(isApiErrorException(error) ? error.message : 'Failed to load movie details', 'error');
     }
@@ -317,7 +317,6 @@ export const MovieTab: React.FC = () => {
             pageSize={currentPagination.size || 12}
             onPageChange={handlePageChange}
             variant="pages"
-            loading={moviesLoading}
             showInfo={false}
           />
         </div>

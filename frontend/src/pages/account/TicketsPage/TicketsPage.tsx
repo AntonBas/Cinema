@@ -5,7 +5,8 @@ import { TicketsList } from '@/components/account/TicketsList/TicketsList';
 import { TicketQRModal } from '@/components/account/TicketQRModal/TicketQRModal';
 import { TicketRefundModal } from '@/components/account/TicketRefundModal/TicketRefundModal';
 import { Pagination } from '@/components/ui/Pagination/Pagination';
-import { Button, Notification } from '@/components/ui';
+import { Button } from '@/components/ui/Button/Button';
+import { Notification } from '@/components/ui/Notification/Notification';
 import { SearchInput } from '@/components/ui/SearchInput/SearchInput';
 import { useTickets } from '@/hooks/features/tickets/useTickets';
 import type { TicketStatus } from '@/types/ticket';
@@ -24,8 +25,7 @@ export const TicketsPage: React.FC = () => {
         userTickets: tickets,
         userPagination: pagination,
         loading,
-        getUserTickets,
-        refetchUserTickets
+        getUserTickets
     } = useTickets();
 
     const [statusFilter, setStatusFilter] = useState<TicketStatus | undefined>(undefined);
@@ -53,6 +53,10 @@ export const TicketsPage: React.FC = () => {
         await getUserTickets(params);
     };
 
+    const refreshTickets = async () => {
+        await loadTickets();
+    };
+
     const hasActiveFilters = useMemo(() => {
         return searchQuery.trim() !== '' || statusFilter !== undefined;
     }, [searchQuery, statusFilter]);
@@ -69,7 +73,7 @@ export const TicketsPage: React.FC = () => {
 
     const handleRefundSuccess = () => {
         showNotification('success', 'Refund request submitted successfully');
-        refetchUserTickets();
+        refreshTickets();
     };
 
     const showNotification = (type: 'success' | 'error', message: string) => {
@@ -119,7 +123,6 @@ export const TicketsPage: React.FC = () => {
                                 isVisible={true}
                                 onClose={() => setNotification(null)}
                                 duration={3000}
-                                position={0}
                             />
                         )}
 

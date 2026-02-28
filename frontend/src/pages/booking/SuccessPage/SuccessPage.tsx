@@ -66,7 +66,8 @@ const SuccessPage = () => {
 
     const fetchPaymentData = useCallback(async (id: string) => {
         try {
-            const data = await getById(parseInt(id));
+            const response = await getById(parseInt(id));
+            const data = response?.data || null;
             setPaymentData(data);
             setError(null);
             return data;
@@ -78,7 +79,7 @@ const SuccessPage = () => {
 
     const getResultType = () => {
         if (!paymentData) return 'info';
-        
+
         const status = paymentData.status;
         if (status === 'SUCCESS') return 'success';
         if (['FAILED', 'CANCELLED', 'EXPIRED'].includes(status)) return 'error';

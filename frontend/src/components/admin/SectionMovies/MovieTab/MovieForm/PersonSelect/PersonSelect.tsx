@@ -65,14 +65,14 @@ export const PersonSelect: React.FC<PersonSelectProps> = ({
 
                 setIsSearching(true);
                 try {
-                    const result = await getAll({
+                    const response = await getAll({
                         name: searchQuery,
                         role: role,
                         page: 0,
                         size: MAX_OPTIONS
                     });
-                    if (isActive) {
-                        setLocalOptions(result?.content || []);
+                    if (isActive && response?.data) {
+                        setLocalOptions(response.data.content || []);
                         setIsOpen(true);
                     }
                 } catch {
@@ -95,14 +95,15 @@ export const PersonSelect: React.FC<PersonSelectProps> = ({
                 clearTimeout(searchTimeoutRef.current);
             }
         };
-    }, [searchQuery, role]);
+    }, [searchQuery, role, getAll]);
 
     const handleAddNewPerson = useCallback(async () => {
         if (!searchQuery.trim()) return;
 
         try {
-            const newPerson = await quickCreate({ name: searchQuery.trim(), role });
-            if (newPerson) {
+            const response = await quickCreate({ name: searchQuery.trim(), role });
+            if (response?.data) {
+                const newPerson = response.data;
                 const newSelectedIds = [...selectedIds, newPerson.id];
                 const updatedPersons = [...selectedPersons, newPerson];
                 onChange(newSelectedIds, updatedPersons);
@@ -110,7 +111,6 @@ export const PersonSelect: React.FC<PersonSelectProps> = ({
                 setIsOpen(false);
             }
         } catch {
-            // Помилка вже обробляється в quickCreate
         }
     }, [searchQuery, role, selectedIds, selectedPersons, onChange, quickCreate]);
 

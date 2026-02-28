@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Modal } from '@/components/ui/Modal';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { Notification } from '@/components/ui/Notification';
+import { Modal } from '@/components/ui/Modal/Modal';
+import { Button } from '@/components/ui/Button/Button';
+import { Input } from '@/components/ui/Input/Input';
+import { Notification } from '@/components/ui/Notification/Notification';
 import { useBonus } from '@/hooks/features/bonus/useBonus';
 import type { BonusRulesResponse, BonusRulesRequest, BonusTransactionType } from '@/types/bonus';
 import { BonusTransactionTypeDisplay } from '@/types/bonus';

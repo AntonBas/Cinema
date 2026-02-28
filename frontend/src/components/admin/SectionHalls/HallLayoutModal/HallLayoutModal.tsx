@@ -3,7 +3,8 @@ import type { CinemaHallResponse, HallLayoutResponse } from '@/types/cinemaHall'
 import { type SeatResponse, SeatType } from '@/types/seat';
 import { useCinemaHalls } from '@/hooks/features/cinemaHalls/useCinemaHalls';
 import { useSeats } from '@/hooks/features/seats/useSeats';
-import { Modal, LoadingSpinner } from '@/components/ui';
+import { Modal } from '@/components/ui/Modal/Modal';
+import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';
 import styles from './HallLayoutModal.module.css';
 
 interface HallLayoutModalProps {

@@ -182,17 +182,18 @@ export const BookingPage: React.FC = () => {
                 ticketTypeId: seat.ticketTypeId || 1
             }));
 
-            const bookingResponse = await create({
+            const response = await create({
                 sessionId: sessionIdNum,
                 seats: seats,
                 bonusPointsToUse: bonusPointsToUse > 0 ? bonusPointsToUse : undefined
             });
 
-            showNotification('Booking created successfully!', 'success');
-            setTimeout(() => {
-                navigate(`/booking/summary/${bookingResponse.id}`);
-            }, 1000);
-
+            if (response?.data) {
+                showNotification('Booking created successfully!', 'success');
+                setTimeout(() => {
+                    navigate(`/booking/summary/${response.data.id}`);
+                }, 1000);
+            }
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Failed to create booking';
             showNotification(`Booking failed: ${errorMessage}`, 'error');
@@ -224,7 +225,7 @@ export const BookingPage: React.FC = () => {
     return (
         <Layout>
             <div className={styles.bookingPage}>
-                {notifications.map((notification, index) => (
+                {notifications.map((notification) => (
                     <Notification
                         key={notification.id}
                         id={notification.id}
@@ -232,7 +233,6 @@ export const BookingPage: React.FC = () => {
                         type={notification.type}
                         isVisible={notification.isVisible}
                         onClose={closeNotification}
-                        position={index}
                     />
                 ))}
 

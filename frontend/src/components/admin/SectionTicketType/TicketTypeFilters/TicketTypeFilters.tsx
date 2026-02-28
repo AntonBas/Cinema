@@ -1,6 +1,6 @@
 import React from 'react';
-import { SearchInput } from '@/components/ui/SearchInput';
-import { Select } from '@/components/ui/Select';
+import { SearchInput } from '@/components/ui/SearchInput/SearchInput';
+import { Select } from '@/components/ui/Select/Select';
 import type { TicketTypeCategory } from '@/types/ticketType';
 import { TicketTypeCategoryDisplay } from '@/types/ticketType';
 import styles from './TicketTypeFilters.module.css';

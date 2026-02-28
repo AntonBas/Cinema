@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useTicketType } from '@/hooks/features/ticketType/useTicketType';
 import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/Button/Button';
 import TicketTypeTable from './TicketTypeTable/TicketTypeTable';
 import TicketTypeFilters from './TicketTypeFilters/TicketTypeFilters';
 import CreateTicketTypeModal from './TicketTypeModal/CreateTicketTypeModal';

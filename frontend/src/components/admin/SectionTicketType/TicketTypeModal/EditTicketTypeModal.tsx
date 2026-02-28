@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Modal } from '@/components/ui/Modal';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { Select } from '@/components/ui/Select';
-import { Notification } from '@/components/ui/Notification';
+import { Modal } from '@/components/ui/Modal/Modal';
+import { Button } from '@/components/ui/Button/Button';
+import { Input } from '@/components/ui/Input/Input';
+import { Select } from '@/components/ui/Select/Select';
+import { Notification } from '@/components/ui/Notification/Notification';
 import { useTicketType } from '@/hooks/features/ticketType/useTicketType';
 import type { TicketTypeResponse, TicketTypeUpdateRequest, TicketTypeCategory } from '@/types/ticketType';
 import { TicketTypeCategoryDisplay } from '@/types/ticketType';
@@ -98,13 +98,15 @@ const EditTicketTypeModal: React.FC<EditTicketTypeModalProps> = ({
                 return;
             }
 
-            await update(ticketType.id, updateData);
+            const response = await update(ticketType.id, updateData);
 
-            setShowNotification(true);
-            setTimeout(() => {
-                setShowNotification(false);
-                onSuccess();
-            }, 1500);
+            if (response?.data) {
+                setShowNotification(true);
+                setTimeout(() => {
+                    setShowNotification(false);
+                    onSuccess();
+                }, 1500);
+            }
         } catch (err: any) {
             setError(err.message || 'Failed to update ticket type');
         }

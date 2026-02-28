@@ -1,7 +1,9 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import type { MovieCardResponse, MovieStatus } from '@/types/movie';
 import { getAgeRatingDisplay } from '@/types/movie';
-import { Button, Badge, LoadingSpinner } from '@/components/ui';
+import { Button } from '@/components/ui/Button/Button';
+import { Badge } from '@/components/ui/Badge/Badge';
+import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';
 import styles from './MovieCard.module.css';
 
 interface MovieCardProps {

@@ -4,7 +4,10 @@ import { SeatType } from '@/types/seat';
 import { useCinemaHalls } from '@/hooks/features/cinemaHalls/useCinemaHalls';
 import { useNotification } from '@/hooks/common/useNotification';
 import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
-import { DeleteConfirmModal, Button, Notification, LoadingSpinner } from '@/components/ui';
+import { DeleteConfirmModal } from '@/components/ui/DeleteConfirmModal/DeleteConfirmModal';
+import { Button } from '@/components/ui/Button/Button';
+import { Notification } from '@/components/ui/Notification/Notification';
+import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';
 import { CreateHallModal } from './HallModal/CreateHallModal';
 import { EditHallModal } from './HallModal/EditHallModal';
 import { HallsTable } from './HallsTable/HallsTable';
@@ -56,9 +59,9 @@ export const SectionHalls: React.FC = () => {
 
     const handleCreateHall = useCallback(async (request: CinemaHallRequest) => {
         try {
-            const result = await createHall(request);
-            if (result) {
-                showNotification(`Cinema hall "${result.name}" created successfully!`, 'success');
+            const response = await createHall(request);
+            if (response?.data) {
+                showNotification(`Cinema hall "${response.data.name}" created successfully!`, 'success');
             }
             setShowCreateModal(false);
         } catch (err) {
@@ -72,9 +75,9 @@ export const SectionHalls: React.FC = () => {
 
     const handleEditHall = useCallback(async (id: number, request: CinemaHallRequest & { coupleRows?: number[] }) => {
         try {
-            const result = await updateHall(id, request);
-            if (result) {
-                showNotification(`Cinema hall "${result.name}" updated successfully!`, 'success');
+            const response = await updateHall(id, request);
+            if (response?.data) {
+                showNotification(`Cinema hall "${response.data.name}" updated successfully!`, 'success');
             }
             setShowEditModal(false);
             setSelectedHall(null);
@@ -113,14 +116,14 @@ export const SectionHalls: React.FC = () => {
 
     const handleEdit = useCallback(async (hall: CinemaHallResponse) => {
         setSelectedHall(hall);
-        const layout = await getHallLayout(hall.id);
-        if (layout) {
-            const coupleRows = layout.rows
+        const response = await getHallLayout(hall.id);
+        if (response?.data) {
+            const coupleRows = response.data.rows
                 .filter(row => row.seats.every(seat => seat.seatType === SeatType.COUPLE))
                 .map(row => row.rowNumber);
             setCurrentLayout({
-                rows: layout.totalRows,
-                seatsPerRow: layout.maxSeatsPerRow,
+                rows: response.data.totalRows,
+                seatsPerRow: response.data.maxSeatsPerRow,
                 coupleRows
             });
         }

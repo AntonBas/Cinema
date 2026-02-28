@@ -10,7 +10,8 @@ import {
     MovieStatusDisplay
 } from '@/types/movie';
 import { useNotification } from '@/hooks/common/useNotification';
-import { Button, Notification } from '@/components/ui';
+import { Button } from '@/components/ui/Button/Button';
+import { Notification } from '@/components/ui/Notification/Notification';
 import { Layout } from '@/components/layout/Layout/Layout';
 import styles from './MovieDetailPage.module.css';
 
@@ -46,7 +47,9 @@ export const MovieDetailPage: React.FC = () => {
                 }
             );
 
-            const upcomingSessions = response.content.filter((session: SessionScheduleResponse) => {
+            const sessions = response?.data?.content || [];
+
+            const upcomingSessions = sessions.filter((session: SessionScheduleResponse) => {
                 const sessionTime = new Date(session.startTime);
                 return session.movieId === movieId &&
                     sessionTime > now &&
@@ -97,13 +100,14 @@ export const MovieDetailPage: React.FC = () => {
 
             try {
                 setLoading(true);
-                const movieData = await movieApi.public.getBySlug(slug);
+                const response = await movieApi.public.getBySlug(slug);
+                const movieData = response?.data || null;
 
                 if (isMounted.current) {
                     setMovie(movieData);
                 }
 
-                if (movieData.id && isMounted.current) {
+                if (movieData?.id && isMounted.current) {
                     await findNextSessionDate(movieData.id, movieData.title);
                 }
             } catch {
@@ -365,12 +369,15 @@ export const MovieDetailPage: React.FC = () => {
                     </div>
                 </div>
 
-                {notifications.map((notification, index) => (
+                {notifications.map((notification) => (
                     <Notification
                         key={notification.id}
-                        {...notification}
+                        id={notification.id}
+                        message={notification.message}
+                        type={notification.type}
+                        isVisible={notification.isVisible}
                         onClose={hideNotification}
-                        position={index}
+                        duration={notification.duration}
                     />
                 ))}
             </div>

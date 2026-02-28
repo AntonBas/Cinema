@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Button, SearchInput, ConfirmModal, LoadingSpinner } from '@/components/ui';
+import { Button } from '@/components/ui/Button/Button';
+import { SearchInput } from '@/components/ui/SearchInput/SearchInput';
+import { ConfirmModal } from '@/components/ui/ConfirmModal/ConfirmModal';
+import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';
 import { usePromotion } from '@/hooks/features/promotion/usePromotion';
 import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
 import type { PromotionResponse } from '@/types/promotion';

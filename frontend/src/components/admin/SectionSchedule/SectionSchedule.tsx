@@ -8,7 +8,11 @@ import { SessionFilters } from './SessionFilters/SessionFilters';
 import { SessionTable } from './SessionTable/SessionTable';
 import { CreateSessionModal } from './SessionModal/CreateSessionModal';
 import { EditSessionModal } from './SessionModal/EditSessionModal';
-import { DeleteConfirmModal, Pagination, Button, Notification, LoadingSpinner } from '@/components/ui';
+import { DeleteConfirmModal } from '@/components/ui/DeleteConfirmModal/DeleteConfirmModal';
+import { Pagination } from '@/components/ui/Pagination/Pagination';
+import { Button } from '@/components/ui/Button/Button';
+import { Notification } from '@/components/ui/Notification/Notification';
+import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';
 import type { SessionAdminResponse, SessionCreateRequest, SessionUpdateRequest, CinemaSessionStatus } from '@/types/session';
 import styles from './SectionSchedule.module.css';
 
@@ -286,7 +290,7 @@ export const SectionSchedule: React.FC = () => {
 
     return (
         <div className={styles.container}>
-            {notifications.map((notification, index) => (
+            {notifications.map((notification) => (
                 <Notification
                     key={notification.id}
                     id={notification.id}
@@ -295,7 +299,6 @@ export const SectionSchedule: React.FC = () => {
                     isVisible={notification.isVisible}
                     onClose={hideNotification}
                     duration={4000}
-                    position={index}
                 />
             ))}
 
@@ -359,6 +362,8 @@ export const SectionSchedule: React.FC = () => {
                         totalElements={pagination?.totalElements || 0}
                         pageSize={pageSize}
                         onPageChange={handlePageChange}
+                        variant="pages"
+                        showInfo={false}
                     />
                 </div>
             )}

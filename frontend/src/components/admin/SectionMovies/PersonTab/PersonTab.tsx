@@ -2,9 +2,12 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { PersonTabs } from './PersonTabs/PersonTabs';
 import { PersonList } from './PersonList/PersonList';
 import { PersonForm } from './PersonForm/PersonForm';
-import { DeleteConfirmModal, Button, Pagination, LoadingSpinner } from '@/components/ui';
-import { Notification } from '@/components/ui/Notification';
-import { SearchInput } from '@/components/ui/SearchInput';
+import { DeleteConfirmModal } from '@/components/ui/DeleteConfirmModal/DeleteConfirmModal';
+import { Button } from '@/components/ui/Button/Button';
+import { Pagination } from '@/components/ui/Pagination/Pagination';
+import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';
+import { Notification } from '@/components/ui/Notification/Notification';
+import { SearchInput } from '@/components/ui/SearchInput/SearchInput';
 import { usePerson } from '@/hooks/features/persons/usePerson';
 import { useNotification } from '@/hooks/common/useNotification';
 import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
@@ -65,10 +68,10 @@ export const PersonTab: React.FC = () => {
 
       setTabData(prev => ({
         ...prev,
-        ALL: { ...prev.ALL, total: allRes?.totalElements || 0 },
-        ACTOR: { ...prev.ACTOR, total: actorsRes?.totalElements || 0 },
-        DIRECTOR: { ...prev.DIRECTOR, total: directorsRes?.totalElements || 0 },
-        SCREENWRITER: { ...prev.SCREENWRITER, total: writersRes?.totalElements || 0 }
+        ALL: { ...prev.ALL, total: allRes?.data?.totalElements || 0 },
+        ACTOR: { ...prev.ACTOR, total: actorsRes?.data?.totalElements || 0 },
+        DIRECTOR: { ...prev.DIRECTOR, total: directorsRes?.data?.totalElements || 0 },
+        SCREENWRITER: { ...prev.SCREENWRITER, total: writersRes?.data?.totalElements || 0 }
       }));
     } catch (error) {
       console.error('Failed to load counts:', error);
@@ -94,8 +97,8 @@ export const PersonTab: React.FC = () => {
         ...prev,
         [tab]: {
           key: tab,
-          data: response?.content || [],
-          total: response?.totalElements || 0
+          data: response?.data?.content || [],
+          total: response?.data?.totalElements || 0
         }
       }));
 
@@ -118,7 +121,7 @@ export const PersonTab: React.FC = () => {
       initialLoadRef.current = true;
       loadTabData('ALL', 0, '');
     }
-  }, []);
+  }, [loadTabData]);
 
   useEffect(() => {
     if (initialLoadRef.current) {
@@ -151,10 +154,12 @@ export const PersonTab: React.FC = () => {
         ? await update(editingPerson.id, data)
         : await create(data);
 
-      showNotification(
-        `Person "${result.name}" ${editingPerson ? 'updated' : 'created'} successfully!`,
-        'success'
-      );
+      if (result?.data) {
+        showNotification(
+          `Person "${result.data.name}" ${editingPerson ? 'updated' : 'created'} successfully!`,
+          'success'
+        );
+      }
 
       setIsModalOpen(false);
       setEditingPerson(null);
@@ -293,7 +298,6 @@ export const PersonTab: React.FC = () => {
             pageSize={params.size || 12}
             onPageChange={setPage}
             variant="pages"
-            loading={loading}
             showInfo={false}
           />
         </div>

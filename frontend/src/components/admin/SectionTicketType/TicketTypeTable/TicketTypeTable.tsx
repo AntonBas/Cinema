@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Button } from '@/components/ui/Button';
-import { Badge } from '@/components/ui/Badge';
-import { Tooltip } from '@/components/ui/Tooltip';
-import { DeleteConfirmModal } from '@/components/ui/DeleteConfirmModal';
+import { Button } from '@/components/ui/Button/Button';
+import { Badge } from '@/components/ui/Badge/Badge';
+import { Tooltip } from '@/components/ui/Tooltip/Tooltip';
+import { DeleteConfirmModal } from '@/components/ui/DeleteConfirmModal/DeleteConfirmModal';
 import type { TicketTypeResponse, TicketTypeCategory } from '@/types/ticketType';
 import { TicketTypeCategoryDisplay } from '@/types/ticketType';
 import styles from './TicketTypeTable.module.css';

@@ -4,7 +4,9 @@ import { UserFilters } from './UserFilters/UserFilters';
 import { useAdminUsers } from '@/hooks/features/admin/useAdminUsers';
 import { useNotification } from '@/hooks/common/useNotification';
 import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
-import { Notification, Pagination, LoadingSpinner } from '@/components/ui';
+import { Notification } from '@/components/ui/Notification/Notification';
+import { Pagination } from '@/components/ui/Pagination/Pagination';
+import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';
 import type { UserRole, VerificationStatus } from '@/types/user';
 import { isApiErrorException } from '@/utils/apiErrorHandler';
 import styles from './SectionUsers.module.css';
@@ -185,6 +187,7 @@ export const SectionUsers: React.FC = () => {
                         pageSize={pagination.size}
                         onPageChange={handlePageChange}
                         className={styles.pagination}
+                        variant="pages"
                         showInfo={false}
                     />
                 </div>

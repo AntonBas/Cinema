@@ -1,6 +1,6 @@
 import React from 'react';
 import { Check } from 'lucide-react';
-import { Tooltip } from '@/components/ui/Tooltip';
+import { Tooltip } from '@/components/ui/Tooltip/Tooltip';
 import styles from './ProgressStepper.module.css';
 import clsx from 'clsx';
 

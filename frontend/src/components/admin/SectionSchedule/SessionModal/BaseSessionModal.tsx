@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useMovies } from '@/hooks/features/movies/useMovies';
-import { Input, Select, Button, Modal } from '@/components/ui';
+import { Input } from '@/components/ui/Input/Input';
+import { Select } from '@/components/ui/Select/Select';
+import { Button } from '@/components/ui/Button/Button';
+import { Modal } from '@/components/ui/Modal/Modal';
 import type { SessionCreateRequest, SessionUpdateRequest } from '@/types/session';
 import type { MovieSessionSearchResponse } from '@/types/movie';
 import type { CinemaHallResponse } from '@/types/cinemaHall';
@@ -134,8 +137,9 @@ export const BaseSessionModal: React.FC<BaseSessionModalProps> = ({
             const date = formData.startTime.split('T')[0];
             setIsSearching(true);
             try {
-                const results = await searchMoviesForSession(date);
-                setMovieResults(results || []);
+                const response = await searchMoviesForSession(date);
+                const results = response?.data || [];
+                setMovieResults(results);
                 setShowMovieResults(results && results.length > 0);
             } catch (error) {
                 setMovieResults([]);
@@ -153,8 +157,9 @@ export const BaseSessionModal: React.FC<BaseSessionModalProps> = ({
             setIsSearching(true);
             try {
                 const searchTerm = value.trim() || undefined;
-                const results = await searchMoviesForSession(searchTerm || date);
-                setMovieResults(results || []);
+                const response = await searchMoviesForSession(searchTerm || date);
+                const results = response?.data || [];
+                setMovieResults(results);
                 setShowMovieResults(true);
             } catch (error) {
                 setMovieResults([]);

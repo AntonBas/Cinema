@@ -76,8 +76,10 @@ export const BookingSummaryPage: React.FC = () => {
 
             try {
                 setLoading(true);
-                const bookingData = await bookingApi.getById(parseInt(bookingId));
-                setBooking(bookingData);
+                const response = await bookingApi.getById(parseInt(bookingId));
+                if (response?.data) {
+                    setBooking(response.data);
+                }
             } catch (err) {
                 const errorMessage = err instanceof Error ? err.message : 'Failed to load booking';
                 setError(errorMessage);
@@ -210,7 +212,7 @@ export const BookingSummaryPage: React.FC = () => {
             </Modal>
 
             <div className={styles.summaryPage}>
-                {notifications.map((notification, index) => (
+                {notifications.map((notification) => (
                     <Notification
                         key={notification.id}
                         id={notification.id}
@@ -218,7 +220,6 @@ export const BookingSummaryPage: React.FC = () => {
                         type={notification.type}
                         isVisible={notification.isVisible}
                         onClose={closeNotification}
-                        position={index}
                     />
                 ))}
 

@@ -12,7 +12,9 @@ import { genreApi } from '@/api/genreApi';
 import { toBackendFormat } from '@/utils/dateUtils';
 import { PersonSelect } from './PersonSelect/PersonSelect';
 import { GenreSearchList } from './GenreSearchList/GenreSearchList';
-import { Button, Modal, LoadingSpinner } from '@/components/ui';
+import { Button } from '@/components/ui/Button/Button';
+import { Modal } from '@/components/ui/Modal/Modal';
+import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';
 import { useNotification } from '@/hooks/common/useNotification';
 import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
 import styles from './MovieForm.module.css';
@@ -88,7 +90,9 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(({
             setIsLoadingGenres(true);
             try {
                 const response = await genreApi.admin.getAll({ page: 0, size: 100 });
-                setGenres(response.content);
+                if (response?.data) {
+                    setGenres(response.data.content || []);
+                }
             } catch {
                 showNotification('Failed to load genres', 'error');
             } finally {
@@ -166,7 +170,7 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(({
         setIsSubmitting(true);
 
         try {
-            let result;
+            let response;
             if (movie?.id) {
                 const updateRequest: MovieUpdateRequest = {
                     title: formData.title,
@@ -183,7 +187,7 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(({
                     removePoster: formData.removePoster,
                     posterFile: formData.posterFile
                 };
-                result = await movieApi.admin.update(movie.id, updateRequest);
+                response = await movieApi.admin.update(movie.id, updateRequest);
             } else {
                 if (!formData.posterFile) {
                     showNotification('Poster is required for new movie', 'error');
@@ -204,9 +208,11 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(({
                     actorIds: formData.selectedActors,
                     posterFile: formData.posterFile
                 };
-                result = await movieApi.admin.create(createRequest);
+                response = await movieApi.admin.create(createRequest);
             }
-            onSuccess(result);
+            if (response?.data) {
+                onSuccess(response.data);
+            }
         } catch {
             showNotification('Failed to save movie', 'error');
         } finally {

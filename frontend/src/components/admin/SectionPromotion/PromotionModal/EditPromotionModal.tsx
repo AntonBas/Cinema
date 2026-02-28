@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Button, Input } from '@/components/ui';
+import { Modal } from '@/components/ui/Modal/Modal';
+import { Button } from '@/components/ui/Button/Button';
+import { Input } from '@/components/ui/Input/Input';
 import { usePromotion } from '@/hooks/features/promotion/usePromotion';
 import { toBackendFormat } from '@/utils/dateUtils';
 import styles from './PromotionModal.module.css';
@@ -30,14 +32,17 @@ const EditPromotionModal: React.FC<EditPromotionModalProps> = ({
     useEffect(() => {
         const fetchPromotion = async () => {
             try {
-                const promotion = await getById(promotionId);
-                setFormData({
-                    title: promotion.title,
-                    description: promotion.description || '',
-                    bonusPoints: promotion.bonusPoints.toString(),
-                    startDate: promotion.startDate ? promotion.startDate.split('T')[0] : '',
-                    endDate: promotion.endDate ? promotion.endDate.split('T')[0] : ''
-                });
+                const response = await getById(promotionId);
+                if (response?.data) {
+                    const promotion = response.data;
+                    setFormData({
+                        title: promotion.title,
+                        description: promotion.description || '',
+                        bonusPoints: promotion.bonusPoints.toString(),
+                        startDate: promotion.startDate ? promotion.startDate.split('T')[0] : '',
+                        endDate: promotion.endDate ? promotion.endDate.split('T')[0] : ''
+                    });
+                }
             } catch (error) {
                 setErrorMessage('Failed to load promotion');
             }
@@ -69,8 +74,8 @@ const EditPromotionModal: React.FC<EditPromotionModalProps> = ({
                 endDate: formData.endDate ? toBackendFormat(formData.endDate) : undefined
             };
 
-            const result = await update(promotionId, submissionData);
-            if (result) {
+            const response = await update(promotionId, submissionData);
+            if (response?.data) {
                 setSuccessMessage('Promotion updated successfully!');
                 setTimeout(() => {
                     setSuccessMessage('');

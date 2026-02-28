@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { authApi } from '@/api/authApi';
-import { Button, LoadingSpinner } from '@/components/ui';
+import { Button } from '@/components/ui';
+import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';
 import { isApiErrorException } from '@/utils/apiErrorHandler';
 import styles from './EmailVerificationPage.module.css';
 

@@ -2,14 +2,14 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { sessionApi } from '@/api/sessionApi';
 import type { SessionScheduleResponse } from '@/types/session';
-import type { PageResponse, SearchParams } from '@/types/pagination';
+import type { SearchParams } from '@/types/pagination';
 import { Layout } from '@/components/layout/Layout/Layout';
 import { DateFilter } from '@/components/sessions/DateFilter/DateFilter';
 import { MovieFilter } from '@/components/sessions/MovieFilter/MovieFilter';
 import { SessionList } from '@/components/sessions/SessionList/SessionList';
-import { Button } from '@/components/ui';
+import { Button } from '@/components/ui/Button/Button';
+import { Notification } from '@/components/ui/Notification/Notification';
 import { useNotification } from '@/hooks/common/useNotification';
-import { Notification } from '@/components/ui/Notification';
 import styles from './SessionsPage.module.css';
 
 const SessionsPage: React.FC = () => {
@@ -54,7 +54,7 @@ const SessionsPage: React.FC = () => {
                 params.movieId = selectedMovieId;
             }
 
-            const response: PageResponse<SessionScheduleResponse> = await sessionApi.public.getSessions(
+            const response = await sessionApi.public.getSessions(
                 params.search || '',
                 params.dateFrom,
                 {
@@ -64,9 +64,11 @@ const SessionsPage: React.FC = () => {
                 }
             );
 
-            setSessions(response.content);
-            setTotalPages(response.totalPages);
-            setTotalElements(response.totalElements);
+            const data = response?.data || null;
+
+            setSessions(data?.content || []);
+            setTotalPages(data?.totalPages || 0);
+            setTotalElements(data?.totalElements || 0);
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Failed to load sessions';
             setError(errorMessage);
@@ -89,7 +91,7 @@ const SessionsPage: React.FC = () => {
                 params.movieId = selectedMovieId;
             }
 
-            const response: PageResponse<SessionScheduleResponse> = await sessionApi.public.getSessions(
+            const response = await sessionApi.public.getSessions(
                 params.search || '',
                 params.dateFrom,
                 {
@@ -99,7 +101,10 @@ const SessionsPage: React.FC = () => {
                 }
             );
 
-            const dates = response.content
+            const data = response?.data || null;
+            const sessionsData = data?.content || [];
+
+            const dates = sessionsData
                 .map(session => new Date(session.startTime).toISOString().split('T')[0])
                 .filter((date, index, self) => self.indexOf(date) === index)
                 .sort();
@@ -312,12 +317,15 @@ const SessionsPage: React.FC = () => {
                 )}
             </div>
 
-            {notifications.map((notification, index) => (
+            {notifications.map((notification) => (
                 <Notification
                     key={notification.id}
-                    {...notification}
+                    id={notification.id}
+                    message={notification.message}
+                    type={notification.type}
+                    isVisible={notification.isVisible}
                     onClose={hideNotification}
-                    position={index}
+                    duration={notification.duration}
                 />
             ))}
         </Layout>

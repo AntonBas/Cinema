@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/Button';
-import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button/Button';
+import { Badge } from '@/components/ui/Badge/Badge';
 import { useBonus } from '@/hooks/features/bonus/useBonus';
 import EditRuleModal from '../BonusModal/EditRuleModal';
 import ResetRuleModal from '../BonusModal/ResetRuleModal';
@@ -21,8 +21,8 @@ const BonusRules = () => {
 
     const loadRules = async () => {
         try {
-            const data = await getAllRules();
-            setRules(data);
+            const response = await getAllRules();
+            setRules(response.data);
             setErrorMessage('');
         } catch (err) {
             setErrorMessage('Failed to load bonus rules');

@@ -20,8 +20,8 @@ export const TicketQRModal: React.FC<TicketQRModalProps> = ({ ticketCode, onClos
 
     const loadQRCode = async () => {
         try {
-            const blob = await getQRCode(ticketCode);
-            const imageUrl = URL.createObjectURL(blob);
+            const response = await getQRCode(ticketCode);
+            const imageUrl = URL.createObjectURL(response.data);
             setQrImage(imageUrl);
         } catch (error) {
             console.error('Failed to load QR code:', error);

@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/Button';
-import { Badge } from '@/components/ui/Badge';
-import { Input } from '@/components/ui/Input';
-import { Select } from '@/components/ui/Select';
-import { Pagination } from '@/components/ui/Pagination';
+import { Button } from '@/components/ui/Button/Button';
+import { Badge } from '@/components/ui/Badge/Badge';
+import { Input } from '@/components/ui/Input/Input';
+import { Select } from '@/components/ui/Select/Select';
+import { Pagination } from '@/components/ui/Pagination/Pagination';
 import { useBonus } from '@/hooks/features/bonus/useBonus';
 import type { BonusTransactionType, BonusTransactionResponse } from '@/types/bonus';
 import { BonusTransactionTypeDisplay } from '@/types/bonus';

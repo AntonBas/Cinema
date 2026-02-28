@@ -1,7 +1,8 @@
 import React, { useCallback } from 'react';
 import type { MovieCardResponse } from '@/types/movie';
 import { MovieCard } from './MovieCard/MovieCard';
-import { Button, LoadingSpinner } from '@/components/ui';
+import { Button } from '@/components/ui/Button/Button';
+import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';
 import styles from './MovieList.module.css';
 
 interface MovieListProps {

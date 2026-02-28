@@ -24,7 +24,8 @@ export const MovieFilter: React.FC<MovieFilterProps> = ({ selectedMovieId, onMov
 
         setLoading(true);
         try {
-            const results = await movieApi.admin.searchMoviesForSession(query);
+            const response = await movieApi.admin.searchMoviesForSession(query);
+            const results = response?.data || [];
             setMovies(results);
         } catch (error) {
             console.error('Error searching movies:', error);
@@ -38,8 +39,9 @@ export const MovieFilter: React.FC<MovieFilterProps> = ({ selectedMovieId, onMov
         if (selectedMovieId && selectedMovie?.id !== selectedMovieId) {
             const fetchSelectedMovie = async () => {
                 try {
-                    const results = await movieApi.admin.searchMoviesForSession('');
-                    const movie = results.find(m => m.id === selectedMovieId);
+                    const response = await movieApi.admin.searchMoviesForSession('');
+                    const results = response?.data || [];
+                    const movie = results.find((m: MovieSessionSearchResponse) => m.id === selectedMovieId);
                     if (movie) {
                         setSelectedMovie(movie);
                         setSearchTerm(movie.title);
@@ -50,7 +52,7 @@ export const MovieFilter: React.FC<MovieFilterProps> = ({ selectedMovieId, onMov
             };
             fetchSelectedMovie();
         }
-    }, [selectedMovieId]);
+    }, [selectedMovieId, selectedMovie]);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;

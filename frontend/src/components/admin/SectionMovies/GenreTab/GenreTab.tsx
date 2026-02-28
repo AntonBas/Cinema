@@ -4,8 +4,12 @@ import type { SearchParams } from '@/types/pagination';
 import { useGenres } from '@/hooks/features/genres/useGenres';
 import { useNotification } from '@/hooks/common/useNotification';
 import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
-import { SearchInput, Button, Pagination, DeleteConfirmModal, LoadingSpinner } from '@/components/ui';
-import { Notification } from '@/components/ui/Notification';
+import { SearchInput } from '@/components/ui/SearchInput/SearchInput';
+import { Button } from '@/components/ui/Button/Button';
+import { Pagination } from '@/components/ui/Pagination/Pagination';
+import { DeleteConfirmModal } from '@/components/ui/DeleteConfirmModal/DeleteConfirmModal';
+import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';
+import { Notification } from '@/components/ui/Notification/Notification';
 import { GenreTable } from './GenreTable/GenreTable';
 import { GenreFormModal } from './GenreFormModal/GenreFormModal';
 import { isApiErrorException } from '@/utils/apiErrorHandler';
@@ -62,11 +66,15 @@ export const GenreTab: React.FC = () => {
 
     try {
       if (editingGenre) {
-        const result = await update(editingGenre.id, { name });
-        showNotification(`Genre "${result.name}" updated successfully!`, 'success');
+        const response = await update(editingGenre.id, { name });
+        if (response?.data) {
+          showNotification(`Genre "${response.data.name}" updated successfully!`, 'success');
+        }
       } else {
-        const result = await create({ name });
-        showNotification(`Genre "${result.name}" created successfully!`, 'success');
+        const response = await create({ name });
+        if (response?.data) {
+          showNotification(`Genre "${response.data.name}" created successfully!`, 'success');
+        }
       }
       closeFormModal();
       setCurrentParams(prev => ({ ...prev, page: 0 }));
@@ -231,7 +239,6 @@ export const GenreTab: React.FC = () => {
             pageSize={pagination.size}
             onPageChange={handlePageChange}
             variant="pages"
-            loading={loading}
             showInfo={false}
           />
         </div>

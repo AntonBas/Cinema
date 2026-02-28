@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAuthActions } from '@/hooks/features/auth/useAuthActions';
-import { Button, LoadingSpinner } from '@/components/ui';
+import { Button } from '@/components/ui/Button/Button';
+import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';
 import { isApiErrorException } from '@/utils/apiErrorHandler';
 import styles from './ConfirmEmailChangePage.module.css';
 

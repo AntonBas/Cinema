@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Modal } from '@/components/ui/Modal';
-import { Button } from '@/components/ui/Button';
-import { Notification } from '@/components/ui/Notification';
+import { Modal } from '@/components/ui/Modal/Modal';
+import { Button } from '@/components/ui/Button/Button';
+import { Notification } from '@/components/ui/Notification/Notification';
 import { useBonus } from '@/hooks/features/bonus/useBonus';
 import type { BonusTransactionType } from '@/types/bonus';
 import { BonusTransactionTypeDisplay } from '@/types/bonus';
