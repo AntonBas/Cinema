@@ -1,3 +1,4 @@
+import { api } from '@/services/api';
 import type {
     SessionAdminResponse,
     SessionScheduleResponse,
@@ -7,125 +8,49 @@ import type {
 } from '@/types/session';
 import type { SeatReservationResponse } from '@/types/seatReservation';
 import type { PageResponse, SearchParams } from '@/types/pagination';
-import { buildFilteredUrl } from '@/utils/paginationUtils';
-import { handleApiError } from '@/utils/apiErrorHandler';
 
 const ADMIN_URL = '/api/admin/sessions';
 const PUBLIC_URL = '/api/sessions';
 
-const getAuthHeaders = (): HeadersInit => {
-    const token = localStorage.getItem('authToken');
-    return {
-        'Content-Type': 'application/json',
-        ...(token && { 'Authorization': `Bearer ${token}` }),
-    };
-};
-
-const getPublicHeaders = (): HeadersInit => ({
-    'Content-Type': 'application/json',
-});
-
-const fetchApi = async <T>(
-    url: string,
-    options: RequestInit = {},
-    isPublic: boolean = false
-): Promise<T> => {
-    const headers = isPublic ? getPublicHeaders() : getAuthHeaders();
-    const response = await fetch(url, {
-        headers,
-        ...options,
-    });
-
-    if (!response.ok) throw await handleApiError(response);
-    if (response.status === 204) return undefined as T;
-
-    return response.json();
-};
-
-const buildSearchParams = (params?: SearchParams & SessionFilterRequest): URLSearchParams => {
-    const searchParams = new URLSearchParams();
-    const seenKeys = new Set<string>();
-
-    if (params) {
-        Object.entries(params).forEach(([key, value]) => {
-            if (value !== undefined && value !== null && value !== '' && !seenKeys.has(key)) {
-                searchParams.append(key, value.toString());
-                seenKeys.add(key);
-            }
-        });
-    }
-
-    return searchParams;
-};
-
 export const sessionApi = {
     admin: {
-        create: (request: SessionCreateRequest): Promise<SessionAdminResponse> =>
-            fetchApi<SessionAdminResponse>(ADMIN_URL, {
-                method: 'POST',
-                body: JSON.stringify(request),
-            }),
+        create: (request: SessionCreateRequest) =>
+            api.post<SessionAdminResponse>(ADMIN_URL, request),
 
-        getById: (id: number): Promise<SessionAdminResponse> =>
-            fetchApi<SessionAdminResponse>(`${ADMIN_URL}/${id}`),
+        getById: (id: number) =>
+            api.get<SessionAdminResponse>(`${ADMIN_URL}/${id}`),
 
-        update: (id: number, request: SessionUpdateRequest): Promise<SessionAdminResponse> =>
-            fetchApi<SessionAdminResponse>(`${ADMIN_URL}/${id}`, {
-                method: 'PUT',
-                body: JSON.stringify(request),
-            }),
+        update: (id: number, request: SessionUpdateRequest) =>
+            api.put<SessionAdminResponse>(`${ADMIN_URL}/${id}`, request),
 
-        cancel: (id: number): Promise<void> =>
-            fetchApi<void>(`${ADMIN_URL}/${id}/cancel`, {
-                method: 'PATCH',
-            }),
+        cancel: (id: number) =>
+            api.patch<void>(`${ADMIN_URL}/${id}/cancel`),
 
-        reactivate: (id: number): Promise<void> =>
-            fetchApi<void>(`${ADMIN_URL}/${id}/reactivate`, {
-                method: 'PATCH',
-            }),
+        reactivate: (id: number) =>
+            api.patch<void>(`${ADMIN_URL}/${id}/reactivate`),
 
-        delete: (id: number): Promise<void> =>
-            fetchApi<void>(`${ADMIN_URL}/${id}`, {
-                method: 'DELETE',
-            }),
+        delete: (id: number) =>
+            api.delete<void>(`${ADMIN_URL}/${id}`),
 
-        getSessions: (params?: SearchParams & SessionFilterRequest): Promise<PageResponse<SessionAdminResponse>> => {
-            const searchParams = buildSearchParams({
-                page: params?.page || 0,
-                size: params?.size || 20,
-                sort: params?.sort,
-                hallId: params?.hallId,
-                movieTitle: params?.movieTitle,
-                status: params?.status,
-                dateFrom: params?.dateFrom,
-                dateTo: params?.dateTo
-            });
-
-            const url = `${ADMIN_URL}?${searchParams.toString()}`;
-            return fetchApi<PageResponse<SessionAdminResponse>>(url);
-        },
+        getSessions: (params?: SearchParams & SessionFilterRequest) =>
+            api.get<PageResponse<SessionAdminResponse>>(ADMIN_URL, { params }),
     },
 
     public: {
-        getSessions: (
-            searchTerm?: string,
-            date?: string,
-            params?: SearchParams
-        ): Promise<PageResponse<SessionScheduleResponse>> => {
-            const filter: Record<string, any> = {};
-            if (searchTerm) filter.searchTerm = searchTerm;
-            if (date) filter.date = date;
+        getSessions: (searchTerm?: string, date?: string, params?: SearchParams) =>
+            api.get<PageResponse<SessionScheduleResponse>>(PUBLIC_URL, {
+                params: {
+                    searchTerm,
+                    date,
+                    ...params,
+                }
+            }),
 
-            const url = buildFilteredUrl(PUBLIC_URL, params, filter, 'grid');
-            return fetchApi<PageResponse<SessionScheduleResponse>>(url, {}, true);
-        },
+        getById: (id: number) =>
+            api.get<SessionScheduleResponse>(`${PUBLIC_URL}/${id}`),
 
-        getById: (id: number): Promise<SessionScheduleResponse> =>
-            fetchApi<SessionScheduleResponse>(`${PUBLIC_URL}/${id}`, {}, true),
-
-        getSeatAvailability: (sessionId: number): Promise<SeatReservationResponse> =>
-            fetchApi<SeatReservationResponse>(`${PUBLIC_URL}/${sessionId}/seats`, {}, true),
+        getSeatAvailability: (sessionId: number) =>
+            api.get<SeatReservationResponse>(`${PUBLIC_URL}/${sessionId}/seats`),
     }
 };
 

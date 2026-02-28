@@ -1,3 +1,4 @@
+import { api } from '@/services/api';
 import type {
   MovieCreateRequest,
   MovieUpdateRequest,
@@ -6,69 +7,28 @@ import type {
   MovieSessionSearchResponse
 } from '@/types/movie';
 import type { PageResponse, SearchParams } from '@/types/pagination';
-import { handleApiError } from '@/utils/apiErrorHandler';
-import { buildFilteredUrl } from '@/utils/paginationUtils';
 import type { MovieStatus } from '@/types/movie';
 
 const PUBLIC_URL = '/api/movies';
 const ADMIN_URL = '/api/admin/movies';
 
-const getAuthHeaders = (isFormData: boolean = false): HeadersInit => {
-  const token = localStorage.getItem('authToken');
-  const headers: HeadersInit = {};
-
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-
-  if (!isFormData) {
-    headers['Content-Type'] = 'application/json';
-  }
-
-  return headers;
-};
-
-const fetchApi = async <T>(
-  url: string,
-  options: RequestInit = {},
-  isPublic: boolean = false,
-  isFormData: boolean = false
-): Promise<T> => {
-  const headers = isPublic ? { 'Content-Type': 'application/json' } : getAuthHeaders(isFormData);
-
-  const response = await fetch(url, {
-    headers,
-    ...options,
-    credentials: 'include',
-  });
-
-  if (!response.ok) throw await handleApiError(response);
-  if (response.status === 204) return undefined as T;
-
-  return response.json();
-};
-
 export const movieApi = {
   public: {
-    getById: (id: number): Promise<MovieDetailResponse> =>
-      fetchApi<MovieDetailResponse>(`${PUBLIC_URL}/${id}`, {}, true),
+    getById: (id: number) =>
+      api.get<MovieDetailResponse>(`${PUBLIC_URL}/${id}`),
 
-    getBySlug: (slug: string): Promise<MovieDetailResponse> =>
-      fetchApi<MovieDetailResponse>(`${PUBLIC_URL}/slug/${slug}`, {}, true),
+    getBySlug: (slug: string) =>
+      api.get<MovieDetailResponse>(`${PUBLIC_URL}/slug/${slug}`),
 
-    getCurrentlyShowing: (params?: SearchParams): Promise<PageResponse<MovieCardResponse>> => {
-      const url = buildFilteredUrl(`${PUBLIC_URL}/currently-showing`, params);
-      return fetchApi<PageResponse<MovieCardResponse>>(url, {}, true);
-    },
+    getCurrentlyShowing: (params?: SearchParams) =>
+      api.get<PageResponse<MovieCardResponse>>(`${PUBLIC_URL}/currently-showing`, { params }),
 
-    getUpcoming: (params?: SearchParams): Promise<PageResponse<MovieCardResponse>> => {
-      const url = buildFilteredUrl(`${PUBLIC_URL}/upcoming`, params);
-      return fetchApi<PageResponse<MovieCardResponse>>(url, {}, true);
-    },
+    getUpcoming: (params?: SearchParams) =>
+      api.get<PageResponse<MovieCardResponse>>(`${PUBLIC_URL}/upcoming`, { params }),
   },
 
   admin: {
-    create: (request: MovieCreateRequest): Promise<MovieDetailResponse> => {
+    create: (request: MovieCreateRequest) => {
       const formData = new FormData();
       const { posterFile, ...requestData } = request;
 
@@ -80,13 +40,14 @@ export const movieApi = {
         formData.append('posterFile', posterFile);
       }
 
-      return fetchApi<MovieDetailResponse>(ADMIN_URL, {
-        method: 'POST',
-        body: formData,
-      }, false, true);
+      return api.post<MovieDetailResponse>(ADMIN_URL, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
     },
 
-    update: (id: number, request: MovieUpdateRequest): Promise<MovieDetailResponse> => {
+    update: (id: number, request: MovieUpdateRequest) => {
       const formData = new FormData();
       const { posterFile, ...requestData } = request;
 
@@ -98,16 +59,15 @@ export const movieApi = {
         formData.append('posterFile', posterFile);
       }
 
-      return fetchApi<MovieDetailResponse>(`${ADMIN_URL}/${id}`, {
-        method: 'PUT',
-        body: formData,
-      }, false, true);
+      return api.put<MovieDetailResponse>(`${ADMIN_URL}/${id}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
     },
 
-    delete: (id: number): Promise<void> =>
-      fetchApi<void>(`${ADMIN_URL}/${id}`, {
-        method: 'DELETE'
-      }, false),
+    delete: (id: number) =>
+      api.delete<void>(`${ADMIN_URL}/${id}`),
 
     getMovies: (params?: {
       title?: string;
@@ -115,21 +75,18 @@ export const movieApi = {
       page?: number;
       size?: number;
       sort?: string;
-    }): Promise<PageResponse<MovieCardResponse>> => {
-      const url = buildFilteredUrl(ADMIN_URL, params);
-      return fetchApi<PageResponse<MovieCardResponse>>(url, {}, false);
-    },
+    }) => api.get<PageResponse<MovieCardResponse>>(ADMIN_URL, { params }),
 
-    getMovieById: (id: number): Promise<MovieDetailResponse> =>
-      fetchApi<MovieDetailResponse>(`${ADMIN_URL}/${id}`, {}, false),
+    getMovieById: (id: number) =>
+      api.get<MovieDetailResponse>(`${ADMIN_URL}/${id}`),
 
-    getMovieBySlug: (slug: string): Promise<MovieDetailResponse> =>
-      fetchApi<MovieDetailResponse>(`${ADMIN_URL}/by-slug/${slug}`, {}, false),
+    getMovieBySlug: (slug: string) =>
+      api.get<MovieDetailResponse>(`${ADMIN_URL}/by-slug/${slug}`),
 
-    searchMoviesForSession: (search?: string): Promise<MovieSessionSearchResponse[]> => {
-      const url = `${ADMIN_URL}/search/session${search ? `?search=${encodeURIComponent(search)}` : ''}`;
-      return fetchApi<MovieSessionSearchResponse[]>(url, {}, false);
-    },
+    searchMoviesForSession: (search?: string) =>
+      api.get<MovieSessionSearchResponse[]>(`${ADMIN_URL}/search/session`, {
+        params: search ? { search } : undefined
+      }),
   },
 };
 

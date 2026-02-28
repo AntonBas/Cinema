@@ -1,3 +1,4 @@
+import { api } from '@/services/api';
 import type {
     AdminUserListResponse,
     UserRoleUpdateRequest,
@@ -7,36 +8,8 @@ import type {
     VerificationStatus
 } from '@/types/user';
 import type { PageResponse } from '@/types/pagination';
-import { buildPagedUrl } from '@/utils/paginationUtils';
-import { handleApiError } from '@/utils/apiErrorHandler';
 
 const ADMIN_API_URL = '/api/admin/users';
-
-const getAuthHeaders = (): HeadersInit => {
-    const token = localStorage.getItem('authToken');
-    return {
-        'Content-Type': 'application/json',
-        ...(token && { 'Authorization': `Bearer ${token}` }),
-    };
-};
-
-const fetchApi = async <T>(url: string, options: RequestInit = {}): Promise<T> => {
-    const response = await fetch(url, {
-        headers: getAuthHeaders(),
-        ...options,
-    });
-
-    if (!response.ok) throw await handleApiError(response);
-
-    if (response.status === 204) return undefined as T;
-
-    const contentType = response.headers.get('content-type');
-    if (contentType && contentType.includes('application/json')) {
-        return response.json();
-    }
-
-    return undefined as T;
-};
 
 export const adminApi = {
     getUsers: (params: {
@@ -46,26 +19,19 @@ export const adminApi = {
         role?: UserRole;
         verificationStatus?: VerificationStatus;
         enabled?: boolean;
-    }): Promise<PageResponse<AdminUserListResponse>> => {
-        const url = buildPagedUrl(ADMIN_API_URL, params, 'admin');
-        return fetchApi<PageResponse<AdminUserListResponse>>(url);
+    }) => {
+        return api.get<PageResponse<AdminUserListResponse>>(ADMIN_API_URL, { params });
     },
 
-    updateUserRole: (userId: number, roleData: UserRoleUpdateRequest): Promise<AdminUserListResponse> =>
-        fetchApi<AdminUserListResponse>(`${ADMIN_API_URL}/${userId}/role`, {
-            method: 'PATCH',
-            body: JSON.stringify(roleData),
-        }),
+    updateUserRole: (userId: number, roleData: UserRoleUpdateRequest) => {
+        return api.patch<AdminUserListResponse>(`${ADMIN_API_URL}/${userId}/role`, roleData);
+    },
 
-    updateUserStatus: (userId: number, statusData: UserStatusUpdateRequest): Promise<AdminUserListResponse> =>
-        fetchApi<AdminUserListResponse>(`${ADMIN_API_URL}/${userId}/status`, {
-            method: 'PATCH',
-            body: JSON.stringify(statusData),
-        }),
+    updateUserStatus: (userId: number, statusData: UserStatusUpdateRequest) => {
+        return api.patch<AdminUserListResponse>(`${ADMIN_API_URL}/${userId}/status`, statusData);
+    },
 
-    updateBirthDateVerification: (userId: number, verificationData: VerificationBirthDateRequest): Promise<AdminUserListResponse> =>
-        fetchApi<AdminUserListResponse>(`${ADMIN_API_URL}/${userId}/verification`, {
-            method: 'PATCH',
-            body: JSON.stringify(verificationData),
-        })
+    updateBirthDateVerification: (userId: number, verificationData: VerificationBirthDateRequest) => {
+        return api.patch<AdminUserListResponse>(`${ADMIN_API_URL}/${userId}/verification`, verificationData);
+    }
 };

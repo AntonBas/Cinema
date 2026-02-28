@@ -1,75 +1,34 @@
+import { api } from '@/services/api';
 import type { PersonResponse, PersonRequest, QuickCreatePersonRequest } from '@/types/person';
 import type { PageResponse, SearchParams } from '@/types/pagination';
-import { handleApiError } from '@/utils/apiErrorHandler';
-import { buildPagedUrl } from '@/utils/paginationUtils';
 
 const PUBLIC_URL = '/api/persons';
 const ADMIN_URL = '/api/admin/persons';
 
-const getAuthHeaders = (): HeadersInit => {
-  const token = localStorage.getItem('authToken');
-  return {
-    'Content-Type': 'application/json',
-    ...(token && { 'Authorization': `Bearer ${token}` }),
-  };
-};
-
-const getPublicHeaders = (): HeadersInit => {
-  return {
-    'Content-Type': 'application/json',
-  };
-};
-
-const fetchApi = async <T>(url: string, options: RequestInit = {}, isPublic: boolean = false): Promise<T> => {
-  const headers = isPublic ? getPublicHeaders() : getAuthHeaders();
-  const response = await fetch(url, {
-    headers,
-    ...options,
-  });
-
-  if (!response.ok) throw await handleApiError(response);
-  if (response.status === 204) return undefined as T;
-
-  return response.json();
-};
-
 export const personApi = {
   public: {
-    getById: (id: number): Promise<PersonResponse> =>
-      fetchApi<PersonResponse>(`${PUBLIC_URL}/${id}`, {}, true),
+    getById: (id: number) =>
+      api.get<PersonResponse>(`${PUBLIC_URL}/${id}`),
   },
 
   admin: {
-    create: (request: PersonRequest): Promise<PersonResponse> =>
-      fetchApi<PersonResponse>(ADMIN_URL, {
-        method: 'POST',
-        body: JSON.stringify(request),
-      }),
+    create: (request: PersonRequest) =>
+      api.post<PersonResponse>(ADMIN_URL, request),
 
-    quickCreate: (request: QuickCreatePersonRequest): Promise<PersonResponse> =>
-      fetchApi<PersonResponse>(`${ADMIN_URL}/quick`, {
-        method: 'POST',
-        body: JSON.stringify(request),
-      }),
+    quickCreate: (request: QuickCreatePersonRequest) =>
+      api.post<PersonResponse>(`${ADMIN_URL}/quick`, request),
 
-    getById: (id: number): Promise<PersonResponse> =>
-      fetchApi<PersonResponse>(`${ADMIN_URL}/${id}`),
+    getById: (id: number) =>
+      api.get<PersonResponse>(`${ADMIN_URL}/${id}`),
 
-    update: (id: number, request: PersonRequest): Promise<PersonResponse> =>
-      fetchApi<PersonResponse>(`${ADMIN_URL}/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify(request),
-      }),
+    update: (id: number, request: PersonRequest) =>
+      api.put<PersonResponse>(`${ADMIN_URL}/${id}`, request),
 
-    delete: (id: number): Promise<void> =>
-      fetchApi<void>(`${ADMIN_URL}/${id}`, {
-        method: 'DELETE',
-      }),
+    delete: (id: number) =>
+      api.delete<void>(`${ADMIN_URL}/${id}`),
 
-    getAll: (params?: SearchParams & { name?: string; role?: string }): Promise<PageResponse<PersonResponse>> => {
-      const url = buildPagedUrl(ADMIN_URL, params, 'table');
-      return fetchApi<PageResponse<PersonResponse>>(url);
-    },
+    getAll: (params?: SearchParams & { name?: string; role?: string }) =>
+      api.get<PageResponse<PersonResponse>>(ADMIN_URL, { params }),
   }
 };
 

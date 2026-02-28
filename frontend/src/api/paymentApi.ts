@@ -1,40 +1,19 @@
+import { api } from '@/services/api';
 import type {
     PaymentResponse,
     PaymentCreateRequest,
     PaymentLiqPayDataResponse,
 } from '@/types/payment';
-import { handleApiError } from '@/utils/apiErrorHandler';
 
 const BASE_URL = '/api/payments';
 
-const getAuthHeaders = (): HeadersInit => {
-    const token = localStorage.getItem('authToken');
-    return {
-        'Content-Type': 'application/json',
-        ...(token && { 'Authorization': `Bearer ${token}` }),
-    };
-};
-
-const fetchApi = async <T>(url: string, options: RequestInit = {}): Promise<T> => {
-    const response = await fetch(url, {
-        headers: getAuthHeaders(),
-        ...options,
-    });
-    if (!response.ok) throw await handleApiError(response);
-    if (response.status === 204) return undefined as T;
-    return response.json();
-};
-
 export const paymentApi = {
-    create: (request: PaymentCreateRequest): Promise<PaymentResponse> =>
-        fetchApi<PaymentResponse>(BASE_URL, {
-            method: 'POST',
-            body: JSON.stringify(request),
-        }),
+    create: (request: PaymentCreateRequest) =>
+        api.post<PaymentResponse>(BASE_URL, request),
 
-    getById: (paymentId: number): Promise<PaymentResponse> =>
-        fetchApi<PaymentResponse>(`${BASE_URL}/${paymentId}`),
+    getById: (paymentId: number) =>
+        api.get<PaymentResponse>(`${BASE_URL}/${paymentId}`),
 
-    getLiqPayData: (paymentId: number): Promise<PaymentLiqPayDataResponse> =>
-        fetchApi<PaymentLiqPayDataResponse>(`${BASE_URL}/${paymentId}/liqpay-data`),
+    getLiqPayData: (paymentId: number) =>
+        api.get<PaymentLiqPayDataResponse>(`${BASE_URL}/${paymentId}/liqpay-data`),
 };
