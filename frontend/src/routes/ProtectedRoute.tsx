@@ -2,7 +2,7 @@ import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
-import { LoadingSpinner } from '@/components/ui';
+import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';
 
 interface ProtectedRouteProps {
     children: React.ReactNode;
