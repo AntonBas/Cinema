@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import type { GenreResponse } from '@/types/genre';
-import type { SearchParams } from '@/types/pagination';
 import { useGenres } from '@/hooks/features/genres/useGenres';
 import { useNotification } from '@/hooks/common/useNotification';
 import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
+import { usePagination } from '@/hooks/common/usePagination';
 import { SearchInput } from '@/components/ui/SearchInput/SearchInput';
 import { Button } from '@/components/ui/Button/Button';
 import { Pagination } from '@/components/ui/Pagination/Pagination';
@@ -15,10 +15,29 @@ import { GenreFormModal } from './GenreFormModal/GenreFormModal';
 import { isApiErrorException } from '@/utils/apiErrorHandler';
 import styles from './GenreTab.module.css';
 
+interface TabData {
+  data: GenreResponse[];
+  total: number;
+}
+
 export const GenreTab: React.FC = () => {
+  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [editingGenre, setEditingGenre] = useState<GenreResponse | null>(null);
+  const [deletingGenre, setDeletingGenre] = useState<GenreResponse | null>(null);
+  const [tabData, setTabData] = useState<TabData>({
+    data: [],
+    total: 0
+  });
+
+  const { notifications, showNotification, hideNotification } = useNotification();
+  const { params, setPage, setSearch } = usePagination({ size: 20 });
+
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const initialLoadRef = useRef(false);
+  const loadingDataRef = useRef(false);
+
   const {
-    allGenres,
-    pagination,
     loading,
     getAll,
     create,
@@ -26,37 +45,67 @@ export const GenreTab: React.FC = () => {
     remove,
   } = useGenres();
 
-  const { notifications, showNotification, hideNotification } = useNotification();
   const showDelayedLoading = useDelayedLoading(loading, { delay: 150, minDisplayTime: 300 });
 
-  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [editingGenre, setEditingGenre] = useState<GenreResponse | null>(null);
-  const [deletingGenre, setDeletingGenre] = useState<GenreResponse | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [currentParams, setCurrentParams] = useState<SearchParams>({
-    page: 0,
-    size: 20
-  });
+  const loadTabData = useCallback(async (page: number, search?: string) => {
+    if (loadingDataRef.current) return;
 
-  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const initialLoadRef = useRef(false);
+    loadingDataRef.current = true;
+
+    try {
+      const params = {
+        page,
+        size: 20,
+        ...(search?.trim() && { search: search.trim() })
+      };
+
+      const response = await getAll(params);
+
+      setTabData({
+        data: response?.content || [],
+        total: response?.totalElements || 0
+      });
+    } catch (error) {
+      if (isApiErrorException(error)) {
+        showNotification(error.message, 'error');
+      } else {
+        showNotification('Failed to load genres', 'error');
+      }
+    } finally {
+      loadingDataRef.current = false;
+    }
+  }, [getAll, showNotification]);
 
   useEffect(() => {
     if (!initialLoadRef.current) {
       initialLoadRef.current = true;
-      getAll(currentParams);
+      loadTabData(params.page || 0, params.search);
     }
-  }, [getAll, currentParams]);
+  }, [loadTabData, params.page, params.search]);
 
   useEffect(() => {
     if (initialLoadRef.current) {
       const timer = setTimeout(() => {
-        getAll(currentParams);
+        loadTabData(params.page || 0, params.search);
       }, 100);
+
       return () => clearTimeout(timer);
     }
-  }, [getAll, currentParams]);
+  }, [params.page, params.search, loadTabData]);
+
+  const handleSearch = useCallback((query: string) => {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    searchTimeoutRef.current = setTimeout(() => {
+      setSearch(query);
+    }, 300);
+  }, [setSearch]);
+
+  const handlePageChange = useCallback((page: number) => {
+    setPage(page);
+  }, [setPage]);
 
   const handleSubmit = async (name: string) => {
     if (!name.trim()) {
@@ -76,8 +125,10 @@ export const GenreTab: React.FC = () => {
           showNotification(`Genre "${response.name}" created successfully!`, 'success');
         }
       }
-      closeFormModal();
-      setCurrentParams(prev => ({ ...prev, page: 0 }));
+      setIsFormModalOpen(false);
+      setEditingGenre(null);
+      await loadTabData(0, params.search);
+      setPage(0);
     } catch (err) {
       if (isApiErrorException(err)) {
         const validationError = err.getFirstValidationError();
@@ -95,11 +146,12 @@ export const GenreTab: React.FC = () => {
       await remove(deletingGenre.id);
       showNotification(`Genre "${deletingGenre.name}" deleted successfully!`, 'success');
 
-      if (allGenres.length === 1 && (currentParams.page ?? 0) > 0) {
-        setCurrentParams(prev => ({ ...prev, page: (prev.page ?? 0) - 1 }));
-      } else {
-        getAll(currentParams);
-      }
+      const newPage = tabData.data.length === 1 && params.page && params.page > 0
+        ? params.page - 1
+        : params.page || 0;
+
+      setPage(newPage);
+      await loadTabData(newPage, params.search);
     } catch (err) {
       if (isApiErrorException(err) && err.isConflict()) {
         showNotification(`Cannot delete genre "${deletingGenre.name}" because it has associated movies.`, 'error');
@@ -122,38 +174,9 @@ export const GenreTab: React.FC = () => {
     setIsDeleteModalOpen(true);
   }, []);
 
-  const handleSearch = useCallback((query: string) => {
-    setSearchQuery(query);
-
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
-    }
-
-    searchTimeoutRef.current = setTimeout(() => {
-      const newParams = {
-        ...currentParams,
-        page: 0,
-        ...(query.trim() && { search: query })
-      };
-      if (!query.trim()) {
-        delete newParams.search;
-      }
-      setCurrentParams(newParams);
-    }, 500);
-  }, [currentParams]);
-
-  const handlePageChange = useCallback((page: number) => {
-    setCurrentParams(prev => ({ ...prev, page }));
-  }, []);
-
-  const openFormModal = useCallback(() => {
+  const handleAddNew = useCallback(() => {
     setEditingGenre(null);
     setIsFormModalOpen(true);
-  }, []);
-
-  const closeFormModal = useCallback(() => {
-    setIsFormModalOpen(false);
-    setEditingGenre(null);
   }, []);
 
   useEffect(() => {
@@ -164,20 +187,24 @@ export const GenreTab: React.FC = () => {
     };
   }, []);
 
-  if (showDelayedLoading && !allGenres.length) {
+  const paginationInfo = useMemo(() => {
+    const total = tabData.total;
+    const page = params.page || 0;
+    const pageSize = params.size || 20;
+    const start = total > 0 ? page * pageSize + 1 : 0;
+    const end = Math.min(start + pageSize - 1, total);
+    const totalPages = Math.ceil(total / pageSize);
+
+    return { total, start, end, totalPages, showPagination: totalPages > 1 };
+  }, [tabData.total, params.page, params.size]);
+
+  if (showDelayedLoading && !tabData.data.length && !params.search) {
     return (
       <div className={styles.loading}>
         <LoadingSpinner text="Loading genres" />
       </div>
     );
   }
-
-  const { start, end } = pagination
-    ? {
-      start: pagination.number * pagination.size + 1,
-      end: Math.min((pagination.number + 1) * pagination.size, pagination.totalElements)
-    }
-    : { start: 0, end: 0 };
 
   return (
     <div className={styles.container}>
@@ -202,7 +229,7 @@ export const GenreTab: React.FC = () => {
         </div>
         <Button
           variant="primary"
-          onClick={openFormModal}
+          onClick={handleAddNew}
           className={styles.addButton}
         >
           Add Genre
@@ -213,30 +240,30 @@ export const GenreTab: React.FC = () => {
         <SearchInput
           onSearch={handleSearch}
           placeholder="Search genres..."
-          delay={500}
+          delay={300}
         />
       </div>
 
-      {pagination && pagination.totalElements > 0 && (
+      {paginationInfo.total > 0 && (
         <div className={styles.resultsInfo}>
-          Showing {start}-{end} of {pagination.totalElements} genres
-          {searchQuery && ` for "${searchQuery}"`}
+          Showing {paginationInfo.start}-{paginationInfo.end} of {paginationInfo.total} genres
+          {params.search && ` for "${params.search}"`}
         </div>
       )}
 
       <GenreTable
-        genres={allGenres}
+        genres={tabData.data}
         onEdit={handleEdit}
         onDelete={handleDelete}
       />
 
-      {pagination && pagination.totalPages > 1 && (
+      {paginationInfo.showPagination && (
         <div className={styles.paginationWrapper}>
           <Pagination
-            currentPage={pagination.number}
-            totalPages={pagination.totalPages}
-            totalElements={pagination.totalElements}
-            pageSize={pagination.size}
+            currentPage={params.page || 0}
+            totalPages={paginationInfo.totalPages}
+            totalElements={paginationInfo.total}
+            pageSize={params.size || 20}
             onPageChange={handlePageChange}
             variant="pages"
             showInfo={false}
@@ -246,7 +273,10 @@ export const GenreTab: React.FC = () => {
 
       <GenreFormModal
         isOpen={isFormModalOpen}
-        onClose={closeFormModal}
+        onClose={() => {
+          setIsFormModalOpen(false);
+          setEditingGenre(null);
+        }}
         onSubmit={handleSubmit}
         initialName={editingGenre?.name || ''}
         loading={loading}

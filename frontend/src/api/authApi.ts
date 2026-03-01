@@ -10,51 +10,37 @@ const API_URL = '/api/auth';
 const TOKENS_URL = '/api/tokens';
 
 export const authApi = {
-    login: async (credentials: LoginRequest): Promise<LoginResponse> => {
-        const response = await api.post<LoginResponse>(`${API_URL}/login`, credentials);
-        return response.data;
-    },
+    login: (credentials: LoginRequest) =>
+        api.post<LoginResponse>(`${API_URL}/login`, credentials),
 
-    register: async (userData: RegisterRequest): Promise<UserResponse> => {
-        const response = await api.post<UserResponse>(`${API_URL}/register`, userData);
-        return response.data;
-    },
+    register: (userData: RegisterRequest) =>
+        api.post<UserResponse>(`${API_URL}/register`, userData),
 
-    getCurrentUser: async (): Promise<UserResponse> => {
-        const response = await api.get<UserResponse>(`${API_URL}/me`);
-        return response.data;
-    },
+    getCurrentUser: () =>
+        api.get<UserResponse>(`${API_URL}/me`),
 
-    checkEmail: async (email: string): Promise<boolean> => {
-        const response = await api.get<boolean>(`${API_URL}/email/check`, {
+    checkEmail: (email: string) =>
+        api.get<boolean>(`${API_URL}/email/check`, {
             params: { email }
-        });
-        return response.data;
-    },
+        }),
 
-    forgotPassword: async (email: string): Promise<void> => {
-        await api.post(`${API_URL}/password/forgot`, null, {
+    forgotPassword: (email: string) =>
+        api.post(`${API_URL}/password/forgot`, null, {
             params: { email }
-        });
-    },
+        }),
 
-    resetPassword: async (token: string, newPassword: string): Promise<void> => {
-        await api.post(`${API_URL}/password/reset`, null, {
+    resetPassword: (token: string, newPassword: string) =>
+        api.post(`${API_URL}/password/reset`, null, {
             params: { token, newPassword }
-        });
-    },
+        }),
 
-    verifyEmail: async (token: string): Promise<{ message: string }> => {
-        const response = await api.post<{ message: string }>(`${TOKENS_URL}/email/verify`, null, {
+    verifyEmail: (token: string) =>
+        api.post<{ message: string }>(`${TOKENS_URL}/email/verify`, null, {
             params: { token }
-        });
-        return response.data;
-    },
+        }),
 
-    confirmEmailChange: async (token: string): Promise<UserResponse> => {
-        const response = await api.post<UserResponse>(`${TOKENS_URL}/email/change/confirm`, null, {
+    confirmEmailChange: (token: string) =>
+        api.post<UserResponse>(`${TOKENS_URL}/email/change/confirm`, null, {
             params: { token }
-        });
-        return response.data;
-    }
+        })
 };

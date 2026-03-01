@@ -4,6 +4,7 @@ import { UserFilters } from './UserFilters/UserFilters';
 import { useAdminUsers } from '@/hooks/features/admin/useAdminUsers';
 import { useNotification } from '@/hooks/common/useNotification';
 import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
+import { usePagination } from '@/hooks/common/usePagination';
 import { Notification } from '@/components/ui/Notification/Notification';
 import { Pagination } from '@/components/ui/Pagination/Pagination';
 import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';
@@ -16,7 +17,8 @@ export const SectionUsers: React.FC = () => {
     const [roleFilter, setRoleFilter] = useState<UserRole | ''>('');
     const [verificationStatusFilter, setVerificationStatusFilter] = useState<VerificationStatus | ''>('');
     const [enabledFilter, setEnabledFilter] = useState<string>('');
-    const [currentPage, setCurrentPage] = useState(0);
+
+    const { params, setPage } = usePagination({ size: 10 });
 
     const {
         users,
@@ -31,28 +33,35 @@ export const SectionUsers: React.FC = () => {
 
     const initialLoadRef = useRef(false);
     const filterTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const loadingDataRef = useRef(false);
 
     const loadUsers = useCallback(async (showLoading: boolean = true) => {
+        if (loadingDataRef.current) return;
+
+        loadingDataRef.current = true;
+
         try {
-            const params = {
+            const requestParams = {
                 search: searchQuery || undefined,
                 role: roleFilter || undefined,
                 verificationStatus: verificationStatusFilter || undefined,
                 enabled: enabledFilter === '' ? undefined : enabledFilter === 'true',
-                page: currentPage,
-                size: 10
+                page: params.page || 0,
+                size: params.size || 10
             };
 
             if (showLoading) {
-                await getUsers(params);
+                await getUsers(requestParams);
             } else {
-                await refreshUsers(params);
+                await refreshUsers(requestParams);
             }
         } catch (err) {
             const message = isApiErrorException(err) ? err.message : 'Failed to load users';
             showNotification(message, 'error');
+        } finally {
+            loadingDataRef.current = false;
         }
-    }, [searchQuery, roleFilter, verificationStatusFilter, enabledFilter, currentPage, getUsers, refreshUsers, showNotification]);
+    }, [searchQuery, roleFilter, verificationStatusFilter, enabledFilter, params.page, params.size, getUsers, refreshUsers, showNotification]);
 
     useEffect(() => {
         if (!initialLoadRef.current) {
@@ -77,31 +86,31 @@ export const SectionUsers: React.FC = () => {
                 clearTimeout(filterTimeoutRef.current);
             }
         };
-    }, [searchQuery, roleFilter, verificationStatusFilter, enabledFilter, currentPage, loadUsers]);
+    }, [searchQuery, roleFilter, verificationStatusFilter, enabledFilter, params.page, loadUsers]);
 
     const handleSearch = useCallback((query: string) => {
         setSearchQuery(query);
-        setCurrentPage(0);
-    }, []);
+        setPage(0);
+    }, [setPage]);
 
     const handleRoleFilterChange = useCallback((value: string) => {
         setRoleFilter(value as UserRole | '');
-        setCurrentPage(0);
-    }, []);
+        setPage(0);
+    }, [setPage]);
 
     const handleVerificationStatusChange = useCallback((value: string) => {
         setVerificationStatusFilter(value as VerificationStatus | '');
-        setCurrentPage(0);
-    }, []);
+        setPage(0);
+    }, [setPage]);
 
     const handleEnabledFilterChange = useCallback((value: string) => {
         setEnabledFilter(value);
-        setCurrentPage(0);
-    }, []);
+        setPage(0);
+    }, [setPage]);
 
     const handlePageChange = useCallback((page: number) => {
-        setCurrentPage(page);
-    }, []);
+        setPage(page);
+    }, [setPage]);
 
     const handleError = useCallback((error: string) => {
         showNotification(error, 'error');
@@ -181,10 +190,10 @@ export const SectionUsers: React.FC = () => {
                     </div>
 
                     <Pagination
-                        currentPage={pagination.number}
+                        currentPage={params.page || 0}
                         totalPages={pagination.totalPages}
                         totalElements={pagination.totalElements}
-                        pageSize={pagination.size}
+                        pageSize={params.size || 10}
                         onPageChange={handlePageChange}
                         className={styles.pagination}
                         variant="pages"

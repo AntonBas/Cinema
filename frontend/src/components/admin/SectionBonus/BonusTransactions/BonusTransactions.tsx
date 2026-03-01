@@ -14,20 +14,22 @@ const BonusTransactions = () => {
     const [userId, setUserId] = useState<string>('');
     const [currentPage, setCurrentPage] = useState(0);
     const [errorMessage, setErrorMessage] = useState<string>('');
+    const [transactionsData, setTransactionsData] = useState<{
+        transactions: BonusTransactionResponse[];
+        totalPages: number;
+        totalElements: number;
+        pageSize: number;
+    }>({
+        transactions: [],
+        totalPages: 0,
+        totalElements: 0,
+        pageSize: 20
+    });
 
     const {
-        data: bonusData,
-        pagination,
-        loading,
-        getAllTransactions,
-        getUserTransactions,
-        getTransactionsByType
+        getTransactions,
+        loading
     } = useBonus();
-
-    const transactions = bonusData?.transactions || [];
-    const totalPages = pagination?.transactions?.totalPages || 0;
-    const totalElements = pagination?.transactions?.totalElements || 0;
-    const pageSize = pagination?.transactions?.size || 20;
 
     useEffect(() => {
         loadTransactions();
@@ -36,15 +38,40 @@ const BonusTransactions = () => {
     const loadTransactions = async () => {
         try {
             setErrorMessage('');
-            console.log('Loading transactions with filters:', { userId, typeFilter, currentPage });
 
+            let response;
             if (userId && typeFilter) {
-                await getUserTransactions(parseInt(userId), { page: currentPage, size: 20 });
+                response = await getTransactions({
+                    userId: parseInt(userId),
+                    type: typeFilter as BonusTransactionType,
+                    page: currentPage,
+                    size: 20
+                });
+            } else if (userId) {
+                response = await getTransactions({
+                    userId: parseInt(userId),
+                    page: currentPage,
+                    size: 20
+                });
             } else if (typeFilter) {
-                await getTransactionsByType(typeFilter as BonusTransactionType, { page: currentPage, size: 20 });
+                response = await getTransactions({
+                    type: typeFilter as BonusTransactionType,
+                    page: currentPage,
+                    size: 20
+                });
             } else {
-                await getAllTransactions({ page: currentPage, size: 20 });
+                response = await getTransactions({
+                    page: currentPage,
+                    size: 20
+                });
             }
+
+            setTransactionsData({
+                transactions: response?.content || [],
+                totalPages: response?.totalPages || 0,
+                totalElements: response?.totalElements || 0,
+                pageSize: response?.size || 20
+            });
         } catch (err) {
             console.error('Error loading transactions:', err);
             setErrorMessage('Failed to load transactions');
@@ -81,11 +108,11 @@ const BonusTransactions = () => {
         let totalEarned = 0;
         let totalSpent = 0;
 
-        transactions.forEach((transaction: BonusTransactionResponse) => {
-            const pointsValue = typeof transaction.pointsChange === 'string' 
-                ? parseFloat(transaction.pointsChange) 
+        transactionsData.transactions.forEach((transaction: BonusTransactionResponse) => {
+            const pointsValue = typeof transaction.pointsChange === 'string'
+                ? parseFloat(transaction.pointsChange)
                 : transaction.pointsChange;
-            
+
             if (pointsValue > 0) {
                 totalEarned += pointsValue;
             } else {
@@ -110,7 +137,7 @@ const BonusTransactions = () => {
 
     const summary = getTransactionSummary();
 
-    if (loading && !transactions.length) {
+    if (loading && !transactionsData.transactions.length) {
         return <div className={styles.loading}>Loading transactions...</div>;
     }
 
@@ -118,8 +145,8 @@ const BonusTransactions = () => {
         return <div className={styles.error}>Error: {errorMessage}</div>;
     }
 
-    const startItem = currentPage * pageSize + 1;
-    const endItem = Math.min((currentPage + 1) * pageSize, totalElements);
+    const startItem = currentPage * transactionsData.pageSize + 1;
+    const endItem = Math.min((currentPage + 1) * transactionsData.pageSize, transactionsData.totalElements);
 
     return (
         <div className={styles.transactions}>
@@ -165,7 +192,7 @@ const BonusTransactions = () => {
 
             <div className={styles.stats}>
                 <div className={styles.stat}>
-                    <span className={styles.statValue}>{totalElements}</span>
+                    <span className={styles.statValue}>{transactionsData.totalElements}</span>
                     <span className={styles.statLabel}>Total Transactions</span>
                 </div>
                 <div className={styles.stat}>
@@ -200,15 +227,15 @@ const BonusTransactions = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {transactions.map((transaction: BonusTransactionResponse) => {
+                        {transactionsData.transactions.map((transaction: BonusTransactionResponse) => {
                             const pointsValue = typeof transaction.pointsChange === 'string'
                                 ? parseFloat(transaction.pointsChange)
                                 : transaction.pointsChange;
-                            
-                            const pointsDisplay = pointsValue > 0 
-                                ? pointsValue.toString() 
+
+                            const pointsDisplay = pointsValue > 0
+                                ? pointsValue.toString()
                                 : pointsValue.toString();
-                            
+
                             return (
                                 <tr key={transaction.id}>
                                     <td>
@@ -255,7 +282,7 @@ const BonusTransactions = () => {
                 </table>
             </div>
 
-            {transactions.length === 0 && !loading && (
+            {transactionsData.transactions.length === 0 && !loading && (
                 <div className={styles.empty}>
                     <p>No transactions found</p>
                     {(typeFilter || userId) && (
@@ -270,16 +297,16 @@ const BonusTransactions = () => {
                 </div>
             )}
 
-            {totalPages > 1 && (
+            {transactionsData.totalPages > 1 && (
                 <div className={styles.pagination}>
                     <div className={styles.pageInfo}>
-                        Showing {startItem}-{endItem} of {totalElements} transactions
+                        Showing {startItem}-{endItem} of {transactionsData.totalElements} transactions
                     </div>
                     <Pagination
                         currentPage={currentPage}
-                        totalPages={totalPages}
-                        totalElements={totalElements}
-                        pageSize={pageSize}
+                        totalPages={transactionsData.totalPages}
+                        totalElements={transactionsData.totalElements}
+                        pageSize={transactionsData.pageSize}
                         onPageChange={handlePageChange}
                         variant="pages"
                         showInfo={false}

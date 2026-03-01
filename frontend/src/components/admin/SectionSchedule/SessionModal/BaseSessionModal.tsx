@@ -260,13 +260,16 @@ export const BaseSessionModal: React.FC<BaseSessionModalProps> = ({
         }
     }, [validateForm, isEditing, formData, onSave, onClose]);
 
-    const hallOptions = useMemo(() => [
-        { value: '', label: 'Select a hall' },
-        ...halls.map(hall => ({
-            value: hall.id.toString(),
-            label: `${hall.name} (${hall.capacity} seats)`
-        }))
-    ], [halls]);
+    const hallOptions = useMemo(() => {
+        const hallsArray = Array.isArray(halls) ? halls : [];
+        return [
+            { value: '', label: 'Select a hall' },
+            ...hallsArray.map(hall => ({
+                value: hall.id.toString(),
+                label: `${hall.name} (${hall.capacity} seats)`
+            }))
+        ];
+    }, [halls]);
 
     const minDateTime = useMemo(() => {
         const now = new Date();

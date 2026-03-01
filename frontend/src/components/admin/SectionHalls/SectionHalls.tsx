@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import type { CinemaHallResponse, CinemaHallRequest } from '@/types/cinemaHall';
 import { SeatType } from '@/types/seat';
 import { useCinemaHalls } from '@/hooks/features/cinemaHalls/useCinemaHalls';
@@ -17,7 +17,6 @@ import styles from './SectionHalls.module.css';
 
 export const SectionHalls: React.FC = () => {
     const {
-        allHalls: halls,
         loading,
         getAllHalls,
         createHall,
@@ -39,15 +38,21 @@ export const SectionHalls: React.FC = () => {
         hall: null as CinemaHallResponse | null,
         isDeleting: false
     });
+    const [hallsData, setHallsData] = useState<CinemaHallResponse[]>([]);
 
     const hasLoadedRef = useRef(false);
 
+    const loadHalls = useCallback(async () => {
+        const response = await getAllHalls();
+        setHallsData(response || []);
+    }, [getAllHalls]);
+
     useEffect(() => {
         if (!hasLoadedRef.current) {
-            getAllHalls();
+            loadHalls();
             hasLoadedRef.current = true;
         }
-    }, [getAllHalls]);
+    }, [loadHalls]);
 
     const handleApiError = useCallback((err: unknown, defaultMessage: string) => {
         if (isApiErrorException(err)) {
@@ -62,6 +67,7 @@ export const SectionHalls: React.FC = () => {
             const response = await createHall(request);
             if (response) {
                 showNotification(`Cinema hall "${response.name}" created successfully!`, 'success');
+                await loadHalls();
             }
             setShowCreateModal(false);
         } catch (err) {
@@ -71,13 +77,14 @@ export const SectionHalls: React.FC = () => {
                 handleApiError(err, 'Failed to create hall');
             }
         }
-    }, [createHall, showNotification, handleApiError]);
+    }, [createHall, showNotification, handleApiError, loadHalls]);
 
     const handleEditHall = useCallback(async (id: number, request: CinemaHallRequest & { coupleRows?: number[] }) => {
         try {
             const response = await updateHall(id, request);
             if (response) {
                 showNotification(`Cinema hall "${response.name}" updated successfully!`, 'success');
+                await loadHalls();
             }
             setShowEditModal(false);
             setSelectedHall(null);
@@ -89,7 +96,7 @@ export const SectionHalls: React.FC = () => {
                 handleApiError(err, 'Failed to update hall');
             }
         }
-    }, [updateHall, showNotification, handleApiError]);
+    }, [updateHall, showNotification, handleApiError, loadHalls]);
 
     const handleDeleteHall = useCallback(async () => {
         if (!deleteModal.hall) return;
@@ -99,6 +106,7 @@ export const SectionHalls: React.FC = () => {
         try {
             await deleteHall(deleteModal.hall.id);
             showNotification(`Cinema hall "${deleteModal.hall.name}" deleted successfully!`, 'success');
+            await loadHalls();
             setDeleteModal({ isOpen: false, hall: null, isDeleting: false });
         } catch (err) {
             if (isApiErrorException(err) && err.isConflict()) {
@@ -108,7 +116,7 @@ export const SectionHalls: React.FC = () => {
             }
             setDeleteModal(prev => ({ ...prev, isDeleting: false }));
         }
-    }, [deleteHall, deleteModal.hall, showNotification, handleApiError]);
+    }, [deleteHall, deleteModal.hall, showNotification, handleApiError, loadHalls]);
 
     const confirmDelete = useCallback((hall: CinemaHallResponse) => {
         setDeleteModal({ isOpen: true, hall, isDeleting: false });
@@ -154,7 +162,9 @@ export const SectionHalls: React.FC = () => {
         setDeleteModal({ isOpen: false, hall: null, isDeleting: false });
     }, []);
 
-    if (showDelayedLoading && !halls.length) {
+    const safeHalls = useMemo(() => Array.isArray(hallsData) ? hallsData : [], [hallsData]);
+
+    if (showDelayedLoading && !safeHalls.length) {
         return (
             <div className={styles.loading}>
                 <LoadingSpinner text="Loading cinema halls..." />
@@ -195,7 +205,7 @@ export const SectionHalls: React.FC = () => {
 
             <div className={styles.content}>
                 <HallsTable
-                    halls={halls}
+                    halls={safeHalls}
                     onDelete={confirmDelete}
                     onShowLayout={handleShowLayout}
                     onEdit={handleEdit}

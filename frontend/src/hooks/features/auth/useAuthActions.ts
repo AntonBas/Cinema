@@ -1,46 +1,122 @@
-import { api } from '@/services/api';
-import type {
-    LoginRequest,
-    RegisterRequest,
-    LoginResponse
-} from '@/types/auth';
+import { useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useApi } from '@/hooks/common/useApi';
+import { authApi } from '@/api/authApi';
+import type { LoginRequest, LoginResponse, RegisterRequest } from '@/types/auth';
 import type { UserResponse } from '@/types/user';
+import { useAuth } from '@/contexts/AuthContext';
+import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
 
-const API_URL = '/api/auth';
-const TOKENS_URL = '/api/tokens';
+export const useAuthActions = () => {
+    const navigate = useNavigate();
+    const { refreshUser, logout: contextLogout } = useAuth();
 
-export const authApi = {
-    login: (credentials: LoginRequest) =>
-        api.post<LoginResponse>(`${API_URL}/login`, credentials),
+    const authApiInstance = useApi<LoginResponse | UserResponse | boolean | { message: string }>();
+    const mutationApi = useApi<void | { message: string } | UserResponse>();
 
-    register: (userData: RegisterRequest) =>
-        api.post<UserResponse>(`${API_URL}/register`, userData),
+    const rawLoading = authApiInstance.loading || mutationApi.loading;
+    const loading = useDelayedLoading(rawLoading, { delay: 150, minDisplayTime: 300 });
+    const error = !!(authApiInstance.error || mutationApi.error);
 
-    getCurrentUser: () =>
-        api.get<UserResponse>(`${API_URL}/me`),
+    const login = useCallback(async (credentials: LoginRequest) => {
+        const response = await authApiInstance.execute(
+            () => authApi.login(credentials),
+            { successMessage: 'Login successful' }
+        );
 
-    checkEmail: (email: string) =>
-        api.get<boolean>(`${API_URL}/email/check`, {
-            params: { email }
-        }),
+        if (response) {
+            localStorage.setItem('authToken', (response as LoginResponse).token);
+            await refreshUser();
+            navigate('/');
+        }
 
-    forgotPassword: (email: string) =>
-        api.post(`${API_URL}/password/forgot`, null, {
-            params: { email }
-        }),
+        return response;
+    }, [authApiInstance, refreshUser, navigate]);
 
-    resetPassword: (token: string, newPassword: string) =>
-        api.post(`${API_URL}/password/reset`, null, {
-            params: { token, newPassword }
-        }),
+    const register = useCallback(async (userData: RegisterRequest) => {
+        const response = await authApiInstance.execute(
+            () => authApi.register(userData),
+            { successMessage: 'Registration successful. Please check your email.' }
+        );
+        return response;
+    }, [authApiInstance]);
 
-    verifyEmail: (token: string) =>
-        api.post<{ message: string }>(`${TOKENS_URL}/email/verify`, null, {
-            params: { token }
-        }),
+    const checkEmail = useCallback(async (email: string) => {
+        const response = await authApiInstance.execute(
+            () => authApi.checkEmail(email),
+            { cacheKey: `email_check_${email}`, cacheTime: 60 * 1000 }
+        );
+        return response;
+    }, [authApiInstance]);
 
-    confirmEmailChange: (token: string) =>
-        api.post<UserResponse>(`${TOKENS_URL}/email/change/confirm`, null, {
-            params: { token }
-        })
+    const forgotPassword = useCallback(async (email: string) => {
+        await mutationApi.execute(
+            () => authApi.forgotPassword(email),
+            { successMessage: 'Password reset instructions sent to your email' }
+        );
+    }, [mutationApi]);
+
+    const resetPassword = useCallback(async (token: string, newPassword: string) => {
+        await mutationApi.execute(
+            () => authApi.resetPassword(token, newPassword),
+            { successMessage: 'Password has been reset successfully' }
+        );
+    }, [mutationApi]);
+
+    const verifyEmail = useCallback(async (token: string) => {
+        const response = await mutationApi.execute(
+            () => authApi.verifyEmail(token),
+            { successMessage: 'Email verified successfully' }
+        );
+        return response;
+    }, [mutationApi]);
+
+    const confirmEmailChange = useCallback(async (token: string) => {
+        const response = await mutationApi.execute(
+            () => authApi.confirmEmailChange(token),
+            { successMessage: 'Email changed successfully' }
+        );
+        await refreshUser();
+        return response;
+    }, [mutationApi, refreshUser]);
+
+    const logout = useCallback(() => {
+        authApiInstance.invalidateCache();
+        mutationApi.invalidateCache();
+        contextLogout();
+    }, [authApiInstance, mutationApi, contextLogout]);
+
+    const clearCache = useCallback(() => {
+        authApiInstance.invalidateCache();
+        mutationApi.invalidateCache();
+    }, [authApiInstance, mutationApi]);
+
+    const resetAll = useCallback(() => {
+        authApiInstance.reset();
+        mutationApi.reset();
+    }, [authApiInstance, mutationApi]);
+
+    return {
+        loading,
+        error,
+        isAuthenticating: authApiInstance.loading,
+        isRegistering: authApiInstance.loading,
+        isCheckingEmail: authApiInstance.loading,
+        isForgotPassword: mutationApi.loading,
+        isResettingPassword: mutationApi.loading,
+        isVerifyingEmail: mutationApi.loading,
+        isConfirmingEmailChange: mutationApi.loading,
+
+        login,
+        register,
+        checkEmail,
+        forgotPassword,
+        resetPassword,
+        verifyEmail,
+        confirmEmailChange,
+        logout,
+
+        clearCache,
+        resetAll,
+    };
 };

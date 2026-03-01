@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/Button/Button';
 import { SearchInput } from '@/components/ui/SearchInput/SearchInput';
 import { ConfirmModal } from '@/components/ui/ConfirmModal/ConfirmModal';
@@ -19,18 +19,24 @@ const SectionPromotion: React.FC = () => {
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [editingPromotion, setEditingPromotion] = useState<number | null>(null);
     const [deletingPromotion, setDeletingPromotion] = useState<{ id: number; title: string } | null>(null);
-    const [filteredPromotions, setFilteredPromotions] = useState<PromotionResponse[]>([]);
     const [isLoading, setIsLoading] = useState(false);
+    const [promotionsList, setPromotionsList] = useState<PromotionResponse[]>([]);
 
     const {
-        allPromotions: promotions,
+        allPromotions,
         getAll,
         remove
     } = usePromotion();
 
     const showDelayedLoading = useDelayedLoading(isLoading, { delay: 150, minDisplayTime: 300 });
 
-    const getPromotionStatus = (promotion: PromotionResponse): string => {
+    useEffect(() => {
+        if (allPromotions && Array.isArray(allPromotions) && allPromotions.length > 0) {
+            setPromotionsList(allPromotions);
+        }
+    }, [allPromotions]);
+
+    const getPromotionStatus = useCallback((promotion: PromotionResponse): string => {
         const now = new Date();
 
         if (!promotion.startDate && !promotion.endDate) return 'active';
@@ -46,38 +52,23 @@ const SectionPromotion: React.FC = () => {
         }
 
         return 'active';
-    };
+    }, []);
 
-    const getStatusDisplay = (status: string): string => {
+    const getStatusDisplay = useCallback((status: string): string => {
         const displayMap: Record<string, string> = {
             'active': 'Active',
             'upcoming': 'Upcoming',
             'expired': 'Expired'
         };
         return displayMap[status] || status;
-    };
+    }, []);
 
     useEffect(() => {
         loadPromotions();
     }, []);
 
-    useEffect(() => {
-        filterPromotions();
-    }, [search, statusFilter, promotions]);
-
-    const loadPromotions = async () => {
-        setIsLoading(true);
-        try {
-            await getAll();
-        } catch (error) {
-            console.error('Failed to load promotions');
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const filterPromotions = () => {
-        const filtered = promotions.filter(promotion => {
+    const filteredPromotions = useMemo(() => {
+        return promotionsList.filter(promotion => {
             const matchesSearch = search === '' ||
                 promotion.title.toLowerCase().includes(search.toLowerCase()) ||
                 promotion.description?.toLowerCase().includes(search.toLowerCase());
@@ -87,7 +78,20 @@ const SectionPromotion: React.FC = () => {
             const status = getPromotionStatus(promotion);
             return matchesSearch && status === statusFilter;
         });
-        setFilteredPromotions(filtered);
+    }, [promotionsList, search, statusFilter, getPromotionStatus]);
+
+    const loadPromotions = async () => {
+        setIsLoading(true);
+        try {
+            const response = await getAll();
+            if (response && Array.isArray(response)) {
+                setPromotionsList(response);
+            }
+        } catch (error) {
+            console.error('Failed to load promotions');
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const handleDeleteConfirm = async () => {
@@ -102,11 +106,11 @@ const SectionPromotion: React.FC = () => {
         }
     };
 
-    const handleRefresh = () => {
+    const handleRefresh = useCallback(() => {
         loadPromotions();
-    };
+    }, []);
 
-    if (showDelayedLoading && !promotions.length) {
+    if (showDelayedLoading && !promotionsList.length) {
         return (
             <div className={styles.loading}>
                 <LoadingSpinner text="Loading promotions..." />

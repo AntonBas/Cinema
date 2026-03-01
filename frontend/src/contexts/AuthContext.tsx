@@ -31,7 +31,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setLoading(true);
 
             authApi.getCurrentUser()
-                .then(setUser)
+                .then(response => setUser(response.data))
                 .catch(() => {
                     localStorage.removeItem('authToken');
                     setUser(null);
@@ -44,12 +44,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const login = async (credentials: LoginRequest) => {
         const response = await authApi.login(credentials);
-        localStorage.setItem('authToken', response.token);
-        setUser(response.user);
+        localStorage.setItem('authToken', response.data.token);
+        setUser(response.data.user);
     };
 
     const register = async (userData: RegisterRequest) => {
-        return await authApi.register(userData);
+        const response = await authApi.register(userData);
+        return response.data;
     };
 
     const logout = () => {
@@ -62,8 +63,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const refreshUser = async () => {
         const currentToken = localStorage.getItem('authToken');
         if (currentToken) {
-            const userData = await authApi.getCurrentUser();
-            setUser(userData);
+            const response = await authApi.getCurrentUser();
+            setUser(response.data);
         }
     };
 

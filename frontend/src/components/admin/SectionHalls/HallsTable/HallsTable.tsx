@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo } from 'react';
 import type { CinemaHallResponse } from '@/types/cinemaHall';
-import { Button, Badge } from '@/components/ui';
+import { Button } from '@/components/ui/Button/Button';
+import { Badge } from '@/components/ui/Badge/Badge';
 import styles from './HallsTable.module.css';
 
 interface HallsTableProps {
@@ -85,18 +86,20 @@ export const HallsTable: React.FC<HallsTableProps> = React.memo(({
         </div>
     ), [onEdit, handleDelete, handleShowLayout, handleEdit]);
 
+    const hallsArray = Array.isArray(halls) ? halls : [];
+
     const tableContent = useMemo(() => {
-        if (halls.length === 0) {
+        if (hallsArray.length === 0) {
             return renderEmptyState();
         }
 
         return (
             <div className={styles.table}>
                 {renderTableHeader()}
-                {halls.map(renderTableRow)}
+                {hallsArray.map(renderTableRow)}
             </div>
         );
-    }, [halls, renderEmptyState, renderTableHeader, renderTableRow]);
+    }, [hallsArray, renderEmptyState, renderTableHeader, renderTableRow]);
 
     return tableContent;
 });

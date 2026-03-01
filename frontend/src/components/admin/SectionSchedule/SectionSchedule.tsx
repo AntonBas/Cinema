@@ -4,6 +4,7 @@ import { useCinemaHalls } from '@/hooks/features/cinemaHalls/useCinemaHalls';
 import { useMovies } from '@/hooks/features/movies/useMovies';
 import { useNotification } from '@/hooks/common/useNotification';
 import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
+import { usePagination } from '@/hooks/common/usePagination';
 import { SessionFilters } from './SessionFilters/SessionFilters';
 import { SessionTable } from './SessionTable/SessionTable';
 import { CreateSessionModal } from './SessionModal/CreateSessionModal';
@@ -29,12 +30,19 @@ const DEBOUNCE_DELAY = 300;
 export const SectionSchedule: React.FC = () => {
     const { notifications, showNotification, hideNotification } = useNotification();
     const { allHalls, loading: hallsLoading, getAllHalls } = useCinemaHalls();
-    const { publicCurrent, publicUpcoming, loading: moviesLoading, getPublicCurrent, getPublicUpcoming } = useMovies();
+    const { publicCurrentPagination, publicUpcomingPagination, loading: moviesLoading, getPublicCurrent, getPublicUpcoming } = useMovies();
 
     const [selectedSession, setSelectedSession] = useState<SessionAdminResponse | null>(null);
     const [sessionToDelete, setSessionToDelete] = useState<SessionAdminResponse | null>(null);
     const [sessionToCancel, setSessionToCancel] = useState<SessionAdminResponse | null>(null);
     const [sessionToReactivate, setSessionToReactivate] = useState<SessionAdminResponse | null>(null);
+    const [sessionData, setSessionData] = useState<{
+        sessions: SessionAdminResponse[];
+        pagination: any;
+    }>({
+        sessions: [],
+        pagination: null
+    });
 
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
@@ -43,24 +51,23 @@ export const SectionSchedule: React.FC = () => {
     const [isReactivateModalOpen, setIsReactivateModalOpen] = useState(false);
 
     const [filters, setFilters] = useState<FiltersState>({});
-    const [currentPage, setCurrentPage] = useState(0);
-    const pageSize = 20;
+
+    const { params, setPage } = usePagination({ size: 20 });
 
     const isMounted = useRef(true);
     const initialHallsLoaded = useRef(false);
     const initialMoviesLoaded = useRef(false);
+    const loadingDataRef = useRef(false);
     const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     const {
-        sessions,
-        pagination,
-        loading,
+        getSessions,
         createSession,
         updateSession,
         deleteSession,
         cancelSession,
         reactivateSession,
-        getSessions
+        loading
     } = useSession();
 
     const showDelayedLoading = useDelayedLoading(loading, { delay: 150, minDisplayTime: 300 });
@@ -91,8 +98,11 @@ export const SectionSchedule: React.FC = () => {
     }, [getPublicCurrent, getPublicUpcoming]);
 
     const allMovies = useMemo(() => {
-        return [...(publicCurrent || []), ...(publicUpcoming || [])];
-    }, [publicCurrent, publicUpcoming]);
+        return [
+            ...(publicCurrentPagination?.content || []),
+            ...(publicUpcomingPagination?.content || [])
+        ];
+    }, [publicCurrentPagination, publicUpcomingPagination]);
 
     const activeFilterCount = useMemo(() => {
         return Object.values(filters).filter(value => value !== undefined && value !== '').length;
@@ -100,25 +110,34 @@ export const SectionSchedule: React.FC = () => {
 
     const hasActiveFilters = activeFilterCount > 0;
 
-    useEffect(() => {
-        const loadSessions = async () => {
-            if (!isMounted.current) return;
+    const loadSessions = useCallback(async () => {
+        if (loadingDataRef.current) return;
 
-            const params: Record<string, any> = {
-                page: currentPage,
-                size: pageSize,
+        loadingDataRef.current = true;
+
+        try {
+            const requestParams: Record<string, any> = {
+                page: params.page || 0,
+                size: params.size || 20,
                 ...filters
             };
 
-            try {
-                await getSessions(params);
-            } catch (error) {
-                if (isMounted.current) {
-                    showNotification('Failed to load sessions', 'error');
-                }
-            }
-        };
+            const response = await getSessions(requestParams);
 
+            setSessionData({
+                sessions: response?.content || [],
+                pagination: response
+            });
+        } catch (error) {
+            if (isMounted.current) {
+                showNotification('Failed to load sessions', 'error');
+            }
+        } finally {
+            loadingDataRef.current = false;
+        }
+    }, [params.page, params.size, filters, getSessions, showNotification]);
+
+    useEffect(() => {
         if (timeoutRef.current) {
             clearTimeout(timeoutRef.current);
         }
@@ -132,12 +151,12 @@ export const SectionSchedule: React.FC = () => {
                 clearTimeout(timeoutRef.current);
             }
         };
-    }, [currentPage, pageSize, filters, getSessions, showNotification]);
+    }, [params.page, params.size, filters, loadSessions]);
 
     const handleFilterChange = useCallback(<K extends keyof FiltersState>(key: K, value: FiltersState[K]) => {
         setFilters(prev => ({ ...prev, [key]: value }));
-        setCurrentPage(0);
-    }, []);
+        setPage(0);
+    }, [setPage]);
 
     const handleDateFromChange = useCallback((dateFrom: string | undefined) =>
         handleFilterChange('dateFrom', dateFrom), [handleFilterChange]);
@@ -156,9 +175,9 @@ export const SectionSchedule: React.FC = () => {
 
     const handleClearFilters = useCallback(() => {
         setFilters({});
-        setCurrentPage(0);
+        setPage(0);
         showNotification('Filters cleared', 'info');
-    }, [showNotification]);
+    }, [setPage, showNotification]);
 
     const handleCreateSession = useCallback(() => {
         setSelectedSession(null);
@@ -192,10 +211,11 @@ export const SectionSchedule: React.FC = () => {
             showNotification('Session deleted successfully', 'success');
             setIsDeleteModalOpen(false);
             setSessionToDelete(null);
+            await loadSessions();
         } catch {
             showNotification('Failed to delete session', 'error');
         }
-    }, [sessionToDelete, deleteSession, showNotification]);
+    }, [sessionToDelete, deleteSession, showNotification, loadSessions]);
 
     const handleConfirmCancel = useCallback(async () => {
         if (!sessionToCancel) return;
@@ -204,10 +224,11 @@ export const SectionSchedule: React.FC = () => {
             showNotification('Session cancelled successfully', 'success');
             setIsCancelModalOpen(false);
             setSessionToCancel(null);
+            await loadSessions();
         } catch {
             showNotification('Failed to cancel session', 'error');
         }
-    }, [sessionToCancel, cancelSession, showNotification]);
+    }, [sessionToCancel, cancelSession, showNotification, loadSessions]);
 
     const handleConfirmReactivate = useCallback(async () => {
         if (!sessionToReactivate) return;
@@ -216,10 +237,11 @@ export const SectionSchedule: React.FC = () => {
             showNotification('Session reactivated successfully', 'success');
             setIsReactivateModalOpen(false);
             setSessionToReactivate(null);
+            await loadSessions();
         } catch {
             showNotification('Failed to reactivate session', 'error');
         }
-    }, [sessionToReactivate, reactivateSession, showNotification]);
+    }, [sessionToReactivate, reactivateSession, showNotification, loadSessions]);
 
     const handleSaveNewSession = useCallback(async (data: SessionCreateRequest) => {
         try {
@@ -227,11 +249,12 @@ export const SectionSchedule: React.FC = () => {
             showNotification('Session created successfully', 'success');
             setIsCreateModalOpen(false);
             setSelectedSession(null);
+            await loadSessions();
         } catch {
             showNotification('Failed to create session', 'error');
             throw new Error('Failed to create session');
         }
-    }, [createSession, showNotification]);
+    }, [createSession, showNotification, loadSessions]);
 
     const handleSaveUpdatedSession = useCallback(async (id: number, data: SessionUpdateRequest) => {
         try {
@@ -239,15 +262,16 @@ export const SectionSchedule: React.FC = () => {
             showNotification('Session updated successfully', 'success');
             setIsUpdateModalOpen(false);
             setSelectedSession(null);
+            await loadSessions();
         } catch {
             showNotification('Failed to update session', 'error');
             throw new Error('Failed to update session');
         }
-    }, [updateSession, showNotification]);
+    }, [updateSession, showNotification, loadSessions]);
 
     const handlePageChange = useCallback((page: number) => {
-        setCurrentPage(page);
-    }, []);
+        setPage(page);
+    }, [setPage]);
 
     const handleCloseCreateModal = useCallback(() => {
         setIsCreateModalOpen(false);
@@ -278,9 +302,18 @@ export const SectionSchedule: React.FC = () => {
         return new Date(dateString).toLocaleString();
     }, []);
 
-    const totalPages = pagination?.totalPages || 0;
+    const paginationInfo = useMemo(() => {
+        const total = sessionData.pagination?.totalElements || 0;
+        const page = params.page || 0;
+        const pageSize = params.size || 20;
+        const start = total > 0 ? page * pageSize + 1 : 0;
+        const end = Math.min(start + pageSize - 1, total);
+        const totalPages = sessionData.pagination?.totalPages || 0;
 
-    if (showDelayedLoading && !sessions.length) {
+        return { total, start, end, totalPages, showPagination: totalPages > 1 };
+    }, [sessionData.pagination, params.page, params.size]);
+
+    if (showDelayedLoading && !sessionData.sessions.length && !Object.keys(filters).length) {
         return (
             <div className={styles.loadingContainer}>
                 <LoadingSpinner text="Loading sessions..." />
@@ -344,9 +377,15 @@ export const SectionSchedule: React.FC = () => {
                 moviesLoading={moviesLoading}
             />
 
+            {paginationInfo.total > 0 && (
+                <div className={styles.resultsInfo}>
+                    Showing {paginationInfo.start}-{paginationInfo.end} of {paginationInfo.total} sessions
+                </div>
+            )}
+
             <div className={styles.tableSection}>
                 <SessionTable
-                    sessions={sessions}
+                    sessions={sessionData.sessions}
                     onEdit={handleEditSession}
                     onDelete={handleDeleteSession}
                     onCancel={handleCancelSession}
@@ -354,13 +393,13 @@ export const SectionSchedule: React.FC = () => {
                 />
             </div>
 
-            {totalPages > 1 && (
+            {paginationInfo.showPagination && (
                 <div className={styles.paginationSection}>
                     <Pagination
-                        currentPage={currentPage}
-                        totalPages={totalPages}
-                        totalElements={pagination?.totalElements || 0}
-                        pageSize={pageSize}
+                        currentPage={params.page || 0}
+                        totalPages={paginationInfo.totalPages}
+                        totalElements={paginationInfo.total}
+                        pageSize={params.size || 20}
                         onPageChange={handlePageChange}
                         variant="pages"
                         showInfo={false}

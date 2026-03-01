@@ -1,5 +1,5 @@
 import React from 'react';
-import { Select } from '@/components/ui';
+import { Select } from '@/components/ui/Select/Select';
 import type { SelectOption } from '@/components/ui/Select/Select';
 import styles from './PromotionFilters.module.css';
 

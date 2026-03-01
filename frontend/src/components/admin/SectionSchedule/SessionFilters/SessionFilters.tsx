@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { Input, Select, Button } from '@/components/ui';
+import { Input } from '@/components/ui/Input/Input';
+import { Select } from '@/components/ui/Select/Select';
+import { Button } from '@/components/ui/Button/Button';
 import type { CinemaSessionStatus } from '@/types/session';
 import type { MovieCardResponse } from '@/types/movie';
 import type { CinemaHallResponse } from '@/types/cinemaHall';
@@ -148,13 +150,16 @@ export const SessionFilters: React.FC<SessionFiltersProps> = ({
         onMovieTitleChange(undefined);
     }, [onMovieTitleChange]);
 
-    const hallOptions: SelectOption[] = useMemo(() => [
-        { value: '', label: 'All halls' },
-        ...halls.map(hall => ({
-            value: hall.id.toString(),
-            label: hall.name
-        }))
-    ], [halls]);
+    const hallOptions: SelectOption[] = useMemo(() => {
+        const hallsArray = Array.isArray(halls) ? halls : [];
+        return [
+            { value: '', label: 'All halls' },
+            ...hallsArray.map(hall => ({
+                value: hall.id.toString(),
+                label: hall.name
+            }))
+        ];
+    }, [halls]);
 
     return (
         <div className={`${styles.filters} ${className || ''}`}>

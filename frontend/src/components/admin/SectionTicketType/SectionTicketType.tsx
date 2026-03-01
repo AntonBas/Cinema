@@ -28,40 +28,24 @@ const SectionTicketType = () => {
     const showDelayedLoading = useDelayedLoading(loading, { delay: 150, minDisplayTime: 300 });
 
     const loadTicketTypes = async () => {
-        await getAll({
-            active: statusFilter === 'all' ? undefined : statusFilter === 'active',
-            category: categoryFilter === 'all' ? undefined : categoryFilter,
-            search: searchQuery.trim() || undefined
-        });
+        try {
+            await getAll({
+                active: statusFilter === 'all' ? undefined : statusFilter === 'active',
+                category: categoryFilter === 'all' ? undefined : categoryFilter,
+                search: searchQuery.trim() || undefined
+            });
+        } catch (error) {
+            console.error('Failed to load ticket types:', error);
+        }
     };
-
-    const filteredTicketTypes = useMemo(() => {
-        let filtered = ticketTypes;
-
-        if (statusFilter === 'active') {
-            filtered = filtered.filter(t => t.active);
-        } else if (statusFilter === 'inactive') {
-            filtered = filtered.filter(t => !t.active);
-        }
-
-        if (categoryFilter !== 'all') {
-            filtered = filtered.filter(t => t.category === categoryFilter);
-        }
-
-        if (searchQuery.trim()) {
-            const query = searchQuery.toLowerCase();
-            filtered = filtered.filter(t =>
-                t.code.toLowerCase().includes(query) ||
-                t.displayName.toLowerCase().includes(query)
-            );
-        }
-
-        return filtered;
-    }, [ticketTypes, statusFilter, categoryFilter, searchQuery]);
 
     useEffect(() => {
         loadTicketTypes();
     }, [statusFilter, categoryFilter, searchQuery]);
+
+    const filteredTicketTypes = useMemo(() => {
+        return ticketTypes || [];
+    }, [ticketTypes]);
 
     const handleCreateSuccess = () => {
         setShowCreateModal(false);
@@ -98,7 +82,7 @@ const SectionTicketType = () => {
     const activeCount = filteredTicketTypes.filter(t => t.active).length;
     const inactiveCount = filteredTicketTypes.filter(t => !t.active).length;
 
-    if (showDelayedLoading && !ticketTypes.length) {
+    if (showDelayedLoading && !filteredTicketTypes.length) {
         return (
             <div className={styles.loading}>
                 <LoadingSpinner text="Loading ticket types..." />

@@ -10,21 +10,33 @@ interface TicketQRModalProps {
 }
 
 export const TicketQRModal: React.FC<TicketQRModalProps> = ({ ticketCode, onClose }) => {
-    const { getQRCode, loading } = useTickets();
+    const { getQRCode, loading, qrCode } = useTickets();
     const [qrImage, setQrImage] = useState<string>('');
     const [copied, setCopied] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         loadQRCode();
     }, [ticketCode]);
 
+    useEffect(() => {
+        if (qrCode) {
+            const imageUrl = URL.createObjectURL(qrCode);
+            setQrImage(imageUrl);
+            return () => URL.revokeObjectURL(imageUrl);
+        }
+    }, [qrCode]);
+
     const loadQRCode = async () => {
         try {
+            setError(null);
             const response = await getQRCode(ticketCode);
-            const imageUrl = URL.createObjectURL(response.data);
-            setQrImage(imageUrl);
-        } catch (error) {
-            console.error('Failed to load QR code:', error);
+            if (!response) {
+                setError('Failed to load QR code');
+            }
+        } catch (err) {
+            setError('Failed to load QR code');
+            console.error('Failed to load QR code:', err);
         }
     };
 
@@ -77,7 +89,7 @@ export const TicketQRModal: React.FC<TicketQRModalProps> = ({ ticketCode, onClos
                         <img src={qrImage} alt={`QR Code for ticket ${ticketCode}`} className={styles.qrImage} />
                     ) : (
                         <div className={styles.errorQR}>
-                            <p>Failed to load QR code</p>
+                            <p>{error || 'Failed to load QR code'}</p>
                             <Button variant="secondary" onClick={loadQRCode}>
                                 Retry
                             </Button>
