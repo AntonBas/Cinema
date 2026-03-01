@@ -7,6 +7,7 @@ import type {
     UserPasswordUpdateRequest,
     UserEmailChangeRequest
 } from '@/types/user';
+import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
 
 const CACHE_CONFIG = {
     PROFILE: {
@@ -17,9 +18,11 @@ const CACHE_CONFIG = {
 
 export const useUser = () => {
     const profileApi = useApi<UserProfileResponse>();
-    const updateProfileApi = useApi<UserProfileResponse>();
-    const updatePasswordApi = useApi<{ message: string }>();
-    const requestEmailChangeApi = useApi<{ message: string }>();
+    const mutationApi = useApi<UserProfileResponse | { message: string }>();
+
+    const rawLoading = profileApi.loading || mutationApi.loading;
+    const loading = useDelayedLoading(rawLoading, { delay: 150, minDisplayTime: 300 });
+    const error = !!(profileApi.error || mutationApi.error);
 
     const getProfile = useCallback(async (skipCache: boolean = false) => {
         if (skipCache) {
@@ -34,71 +37,78 @@ export const useUser = () => {
                 showErrorNotification: false
             }
         );
-        return response?.data || null;
+        return response || null;
     }, [profileApi]);
 
     const updateProfile = useCallback(async (data: UserUpdateRequest) => {
-        try {
-            const response = await updateProfileApi.execute(
-                () => userApi.updateProfile(data),
-                {
-                    successMessage: 'Profile updated successfully',
-                    showErrorNotification: false
-                }
-            );
-
-            profileApi.invalidateCache(CACHE_CONFIG.PROFILE.key);
-
-            if (response?.data) {
-                profileApi.setData(response.data);
+        const response = await mutationApi.execute(
+            () => userApi.updateProfile(data),
+            {
+                successMessage: 'Profile updated successfully',
+                showErrorNotification: false
             }
+        );
 
-            return response?.data || null;
-        } catch (error) {
-            throw error;
+        profileApi.invalidateCache(CACHE_CONFIG.PROFILE.key);
+
+        if (response) {
+            profileApi.setData(response);
         }
-    }, [updateProfileApi, profileApi]);
+
+        return response || null;
+    }, [mutationApi, profileApi]);
 
     const updatePassword = useCallback(async (data: UserPasswordUpdateRequest) => {
-        const response = await updatePasswordApi.execute(
+        const response = await mutationApi.execute(
             () => userApi.updatePassword(data),
             {
                 successMessage: 'Password updated successfully',
                 showErrorNotification: false
             }
         );
-        return response?.data || null;
-    }, [updatePasswordApi]);
+        return response || null;
+    }, [mutationApi]);
 
     const requestEmailChange = useCallback(async (newEmail: string, password: string) => {
         const request: UserEmailChangeRequest = {
             newEmail,
             password
         };
-        const response = await requestEmailChangeApi.execute(
+        const response = await mutationApi.execute(
             () => userApi.requestEmailChange(request),
             {
                 successMessage: 'Confirmation email sent to your new address',
                 showErrorNotification: false
             }
         );
-        return response?.data || null;
-    }, [requestEmailChangeApi]);
+        return response || null;
+    }, [mutationApi]);
+
+    const clearCache = useCallback(() => {
+        profileApi.invalidateCache();
+        mutationApi.invalidateCache();
+    }, [profileApi, mutationApi]);
+
+    const resetAll = useCallback(() => {
+        profileApi.reset();
+        mutationApi.reset();
+    }, [profileApi, mutationApi]);
 
     return {
         profile: profileApi.data,
-        isLoading: profileApi.loading || updateProfileApi.loading || updatePasswordApi.loading || requestEmailChangeApi.loading,
-        isProfileUpdating: updateProfileApi.loading,
-        isPasswordUpdating: updatePasswordApi.loading,
-        isEmailChanging: requestEmailChangeApi.loading,
-        error: profileApi.error || updateProfileApi.error || updatePasswordApi.error || requestEmailChangeApi.error,
+
+        loading,
+        error,
+        isProfileUpdating: mutationApi.loading,
+        isPasswordUpdating: mutationApi.loading,
+        isEmailChanging: mutationApi.loading,
+
         getProfile,
         updateProfile,
         updatePassword,
         requestEmailChange,
-        resetProfile: profileApi.reset,
-        resetUpdateProfile: updateProfileApi.reset,
-        resetUpdatePassword: updatePasswordApi.reset,
-        resetRequestEmailChange: requestEmailChangeApi.reset,
+
+        clearCache,
+        resetAll,
     };
 };

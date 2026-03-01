@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useNotification } from './useNotification';
 import { isApiErrorException } from '@/utils/apiErrorHandler';
+import type { AxiosResponse } from 'axios';
 
 interface CacheItem<T> {
     data: T;
@@ -79,11 +80,11 @@ export const useApi = <T = any>() => {
     }, []);
 
     const execute = useCallback(async <R>(
-        apiCall: (signal?: AbortSignal) => Promise<R>,
+        apiCall: (signal?: AbortSignal) => Promise<AxiosResponse<R>>,
         options?: UseApiOptions<R>
-    ): Promise<R> => {
+    ): Promise<R | null> => {
         if (loadingRef.current) {
-            return null as R;
+            return null;
         }
 
         const {
@@ -131,11 +132,12 @@ export const useApi = <T = any>() => {
         loadingRef.current = true;
 
         try {
-            const result = await apiCall(abortControllerRef.current.signal);
+            const response = await apiCall(abortControllerRef.current.signal);
+            const responseData = response.data;
 
             if (mountedRef.current) {
                 setState({
-                    data: result as unknown as T,
+                    data: responseData as unknown as T,
                     loading: false,
                     error: null,
                     isCached: false,
@@ -144,18 +146,21 @@ export const useApi = <T = any>() => {
             }
 
             if (cacheKey && cacheTime > 0) {
-                setCache(cacheKey, result as unknown as T, cacheTime);
+                setCache(cacheKey, responseData as unknown as T, cacheTime);
             }
 
             if (successMessage) {
                 showNotification(successMessage, 'success');
             }
 
-            if (onSuccess) onSuccess(result);
-            return result;
+            if (onSuccess) {
+                onSuccess(responseData);
+            }
+
+            return responseData;
         } catch (err) {
             if (err instanceof DOMException && err.name === 'AbortError') {
-                return null as R;
+                return null;
             }
 
             const error = err instanceof Error ? err : new Error('Operation failed');

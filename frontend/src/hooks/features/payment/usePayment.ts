@@ -6,24 +6,29 @@ import type {
     PaymentLiqPayDataResponse
 } from '@/types/payment';
 import { useApi } from '@/hooks/common/useApi';
+import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
 
 export const usePayment = () => {
-    const paymentByIdApi = useApi<PaymentResponse>();
+    const paymentApiInstance = useApi<PaymentResponse>();
     const liqPayDataApi = useApi<PaymentLiqPayDataResponse>();
-    const createPaymentApi = useApi<PaymentResponse>();
+    const mutationApi = useApi<PaymentResponse>();
+
+    const rawLoading = paymentApiInstance.loading || liqPayDataApi.loading || mutationApi.loading;
+    const loading = useDelayedLoading(rawLoading, { delay: 150, minDisplayTime: 300 });
+    const error = !!(paymentApiInstance.error || liqPayDataApi.error || mutationApi.error);
 
     const create = useCallback(async (request: PaymentCreateRequest) => {
-        const response = await createPaymentApi.execute(
+        const response = await mutationApi.execute(
             () => paymentApi.create(request),
             {
                 successMessage: 'Payment initialized successfully',
             }
         );
-        return response?.data || null;
-    }, [createPaymentApi]);
+        return response || null;
+    }, [mutationApi]);
 
     const getById = useCallback(async (paymentId: number) => {
-        const response = await paymentByIdApi.execute(
+        const response = await paymentApiInstance.execute(
             () => paymentApi.getById(paymentId),
             {
                 cacheKey: `payment_${paymentId}`,
@@ -31,8 +36,8 @@ export const usePayment = () => {
                 showErrorNotification: false,
             }
         );
-        return response?.data || null;
-    }, [paymentByIdApi]);
+        return response || null;
+    }, [paymentApiInstance]);
 
     const getLiqPayData = useCallback(async (paymentId: number) => {
         const response = await liqPayDataApi.execute(
@@ -43,23 +48,23 @@ export const usePayment = () => {
                 showErrorNotification: false,
             }
         );
-        return response?.data || null;
+        return response || null;
     }, [liqPayDataApi]);
 
     const clearCache = useCallback(() => {
-        paymentByIdApi.invalidateCache();
+        paymentApiInstance.invalidateCache();
         liqPayDataApi.invalidateCache();
-        createPaymentApi.invalidateCache();
-    }, [paymentByIdApi, liqPayDataApi, createPaymentApi]);
+        mutationApi.invalidateCache();
+    }, [paymentApiInstance, liqPayDataApi, mutationApi]);
 
-    const loading = paymentByIdApi.loading || liqPayDataApi.loading ||
-        createPaymentApi.loading;
-
-    const error = !!(paymentByIdApi.error || liqPayDataApi.error ||
-        createPaymentApi.error);
+    const resetAll = useCallback(() => {
+        paymentApiInstance.reset();
+        liqPayDataApi.reset();
+        mutationApi.reset();
+    }, [paymentApiInstance, liqPayDataApi, mutationApi]);
 
     return {
-        payment: paymentByIdApi.data,
+        payment: paymentApiInstance.data,
         liqPayData: liqPayDataApi.data,
 
         loading,
@@ -69,9 +74,6 @@ export const usePayment = () => {
         getById,
         getLiqPayData,
         clearCache,
-
-        resetPayment: paymentByIdApi.reset,
-        resetLiqPayData: liqPayDataApi.reset,
-        resetCreatePayment: createPaymentApi.reset,
+        resetAll,
     };
 };

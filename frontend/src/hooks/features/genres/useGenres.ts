@@ -1,20 +1,29 @@
 import { useCallback } from 'react';
 import { genreApi } from '@/api/genreApi';
 import type { GenreResponse, GenreRequest } from '@/types/genre';
-import type { PageResponse } from '@/types/pagination';
+import type { PageResponse, SearchParams } from '@/types/pagination';
 import { useApi } from '@/hooks/common/useApi';
+import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
+
+interface GenreSearchParams extends SearchParams {
+    query?: string;
+    limit?: number;
+}
 
 export const useGenres = () => {
-    const allGenresApi = useApi<PageResponse<GenreResponse>>();
-    const genreByIdApi = useApi<GenreResponse>();
-    const searchGenresApi = useApi<GenreResponse[]>();
-    const genreByIdsApi = useApi<GenreResponse[]>();
-    const createGenreApi = useApi<GenreResponse>();
-    const updateGenreApi = useApi<GenreResponse>();
-    const deleteGenreApi = useApi<void>();
+    const genresApi = useApi<PageResponse<GenreResponse>>();
+    const genreApiInstance = useApi<GenreResponse>();
+    const searchApi = useApi<GenreResponse[]>();
+    const mutationApi = useApi<GenreResponse | void>();
 
-    const getAll = useCallback(async (params?: any) => {
-        const response = await allGenresApi.execute(
+    const rawLoading = genresApi.loading || genreApiInstance.loading ||
+        searchApi.loading || mutationApi.loading;
+    const loading = useDelayedLoading(rawLoading, { delay: 150, minDisplayTime: 300 });
+    const error = !!(genresApi.error || genreApiInstance.error ||
+        searchApi.error || mutationApi.error);
+
+    const getAll = useCallback(async (params?: SearchParams) => {
+        const response = await genresApi.execute(
             () => genreApi.admin.getAll(params),
             {
                 cacheKey: `genres_all_${JSON.stringify(params)}`,
@@ -22,11 +31,11 @@ export const useGenres = () => {
                 showErrorNotification: false,
             }
         );
-        return response?.data || null;
-    }, [allGenresApi]);
+        return response || null;
+    }, [genresApi]);
 
     const getById = useCallback(async (id: number) => {
-        const response = await genreByIdApi.execute(
+        const response = await genreApiInstance.execute(
             () => genreApi.admin.getById(id),
             {
                 cacheKey: `genre_${id}`,
@@ -34,11 +43,12 @@ export const useGenres = () => {
                 showErrorNotification: false,
             }
         );
-        return response?.data || null;
-    }, [genreByIdApi]);
+        return response || null;
+    }, [genreApiInstance]);
 
-    const search = useCallback(async (query: string, limit: number = 10) => {
-        const response = await searchGenresApi.execute(
+    const search = useCallback(async (params?: GenreSearchParams) => {
+        const { query = '', limit = 10 } = params || {};
+        const response = await searchApi.execute(
             () => genreApi.public.search(query, limit),
             {
                 cacheKey: `genres_search_${query}_${limit}`,
@@ -46,95 +56,70 @@ export const useGenres = () => {
                 showErrorNotification: false,
             }
         );
-        return response?.data || null;
-    }, [searchGenresApi]);
-
-    const getByIds = useCallback(async (ids: number[]) => {
-        if (!ids.length) return [];
-        const response = await genreByIdsApi.execute(
-            () => genreApi.public.search('', 100),
-            {
-                cacheKey: `genres_ids_${ids.join('_')}`,
-                cacheTime: 10 * 60 * 1000,
-                showErrorNotification: false,
-            }
-        );
-        return response?.data || null;
-    }, [genreByIdsApi]);
+        return response || null;
+    }, [searchApi]);
 
     const create = useCallback(async (request: GenreRequest) => {
-        const response = await createGenreApi.execute(
+        const response = await mutationApi.execute(
             () => genreApi.admin.create(request),
             {
                 successMessage: 'Genre created successfully',
-                onSuccess: () => {
-                    allGenresApi.invalidateCache();
-                    searchGenresApi.invalidateCache();
-                },
             }
         );
-        return response?.data || null;
-    }, [createGenreApi, allGenresApi, searchGenresApi]);
+        genresApi.invalidateCache();
+        searchApi.invalidateCache();
+        return response || null;
+    }, [mutationApi, genresApi, searchApi]);
 
     const update = useCallback(async (id: number, request: GenreRequest) => {
-        const response = await updateGenreApi.execute(
+        const response = await mutationApi.execute(
             () => genreApi.admin.update(id, request),
             {
                 successMessage: 'Genre updated successfully',
-                onSuccess: () => {
-                    allGenresApi.invalidateCache();
-                    genreByIdApi.invalidateCache(`genre_${id}`);
-                    searchGenresApi.invalidateCache();
-                },
             }
         );
-        return response?.data || null;
-    }, [updateGenreApi, allGenresApi, genreByIdApi, searchGenresApi]);
+        genresApi.invalidateCache();
+        genreApiInstance.invalidateCache(`genre_${id}`);
+        searchApi.invalidateCache();
+        return response || null;
+    }, [mutationApi, genresApi, genreApiInstance, searchApi]);
 
     const remove = useCallback(async (id: number) => {
-        await deleteGenreApi.execute(
+        await mutationApi.execute(
             () => genreApi.admin.delete(id),
             {
                 successMessage: 'Genre deleted successfully',
-                onSuccess: () => {
-                    allGenresApi.invalidateCache();
-                    searchGenresApi.invalidateCache();
-                },
             }
         );
-    }, [deleteGenreApi, allGenresApi, searchGenresApi]);
+        genresApi.invalidateCache();
+        genreApiInstance.invalidateCache(`genre_${id}`);
+        searchApi.invalidateCache();
+    }, [mutationApi, genresApi, genreApiInstance, searchApi]);
 
     const clearCache = useCallback(() => {
-        allGenresApi.invalidateCache();
-        genreByIdApi.invalidateCache();
-        searchGenresApi.invalidateCache();
-        genreByIdsApi.invalidateCache();
-        createGenreApi.invalidateCache();
-        updateGenreApi.invalidateCache();
-        deleteGenreApi.invalidateCache();
-    }, [allGenresApi, genreByIdApi, searchGenresApi, genreByIdsApi,
-        createGenreApi, updateGenreApi, deleteGenreApi]);
+        genresApi.invalidateCache();
+        genreApiInstance.invalidateCache();
+        searchApi.invalidateCache();
+        mutationApi.invalidateCache();
+    }, [genresApi, genreApiInstance, searchApi, mutationApi]);
 
-    const loading = allGenresApi.loading || genreByIdApi.loading ||
-        searchGenresApi.loading || genreByIdsApi.loading ||
-        createGenreApi.loading || updateGenreApi.loading ||
-        deleteGenreApi.loading;
-
-    const error = !!(allGenresApi.error || genreByIdApi.error ||
-        searchGenresApi.error || genreByIdsApi.error ||
-        createGenreApi.error || updateGenreApi.error ||
-        deleteGenreApi.error);
+    const resetAll = useCallback(() => {
+        genresApi.reset();
+        genreApiInstance.reset();
+        searchApi.reset();
+        mutationApi.reset();
+    }, [genresApi, genreApiInstance, searchApi, mutationApi]);
 
     return {
-        allGenres: allGenresApi.data?.content || [],
-        genre: genreByIdApi.data,
-        searchResults: searchGenresApi.data || [],
+        allGenres: genresApi.data?.content || [],
+        genre: genreApiInstance.data,
+        searchResults: searchApi.data || [],
 
-        pagination: allGenresApi.data,
-        currentPage: allGenresApi.data?.number || 0,
-        totalPages: allGenresApi.data?.totalPages || 0,
-        totalElements: allGenresApi.data?.totalElements || 0,
-        pageSize: allGenresApi.data?.size || 20,
+        pagination: genresApi.data,
+        currentPage: genresApi.data?.number || 0,
+        totalPages: genresApi.data?.totalPages || 0,
+        totalElements: genresApi.data?.totalElements || 0,
+        pageSize: genresApi.data?.size || 20,
 
         loading,
         error,
@@ -142,14 +127,10 @@ export const useGenres = () => {
         getAll,
         getById,
         search,
-        getByIds,
         create,
         update,
         remove,
         clearCache,
-
-        resetAllGenres: allGenresApi.reset,
-        resetGenre: genreByIdApi.reset,
-        resetSearch: searchGenresApi.reset,
+        resetAll,
     };
 };

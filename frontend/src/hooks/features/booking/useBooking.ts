@@ -2,29 +2,36 @@ import { useCallback } from 'react';
 import { bookingApi } from '@/api/bookingApi';
 import type {
     BookingResponse,
-    BookingCreateRequest
+    BookingCreateRequest,
+    BookingStatus
 } from '@/types/booking';
-import type { PageResponse } from '@/types/pagination';
+import type { PageResponse, SearchParams } from '@/types/pagination';
 import { useApi } from '@/hooks/common/useApi';
+import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
+
+interface BookingParams extends SearchParams {
+    status?: BookingStatus;
+}
 
 export const useBooking = () => {
-    const bookingByIdApi = useApi<BookingResponse>();
     const userBookingsApi = useApi<PageResponse<BookingResponse>>();
-    const createBookingApi = useApi<BookingResponse>();
-    const cancelBookingApi = useApi<void>();
+    const bookingByIdApi = useApi<BookingResponse>();
+    const mutationApi = useApi<BookingResponse | void>();
+
+    const rawLoading = userBookingsApi.loading || bookingByIdApi.loading || mutationApi.loading;
+    const loading = useDelayedLoading(rawLoading, { delay: 150, minDisplayTime: 300 });
+    const error = !!(userBookingsApi.error || bookingByIdApi.error || mutationApi.error);
 
     const create = useCallback(async (request: BookingCreateRequest) => {
-        const response = await createBookingApi.execute(
+        const response = await mutationApi.execute(
             () => bookingApi.create(request),
             {
                 successMessage: 'Booking created successfully',
-                onSuccess: () => {
-                    userBookingsApi.invalidateCache();
-                },
             }
         );
-        return response?.data || null;
-    }, [createBookingApi, userBookingsApi]);
+        userBookingsApi.invalidateCache();
+        return response || null;
+    }, [mutationApi, userBookingsApi]);
 
     const getById = useCallback(async (bookingId: number) => {
         const response = await bookingByIdApi.execute(
@@ -35,10 +42,10 @@ export const useBooking = () => {
                 showErrorNotification: false,
             }
         );
-        return response?.data || null;
+        return response || null;
     }, [bookingByIdApi]);
 
-    const getUserBookings = useCallback(async (params?: any) => {
+    const getUserBookings = useCallback(async (params?: BookingParams) => {
         const response = await userBookingsApi.execute(
             () => bookingApi.getUserBookings(params),
             {
@@ -47,34 +54,31 @@ export const useBooking = () => {
                 showErrorNotification: false,
             }
         );
-        return response?.data || null;
+        return response || null;
     }, [userBookingsApi]);
 
     const cancel = useCallback(async (bookingId: number) => {
-        await cancelBookingApi.execute(
+        await mutationApi.execute(
             () => bookingApi.cancel(bookingId),
             {
                 successMessage: 'Booking cancelled successfully',
-                onSuccess: () => {
-                    bookingByIdApi.invalidateCache(`booking_${bookingId}`);
-                    userBookingsApi.invalidateCache();
-                },
             }
         );
-    }, [cancelBookingApi, bookingByIdApi, userBookingsApi]);
+        bookingByIdApi.invalidateCache(`booking_${bookingId}`);
+        userBookingsApi.invalidateCache();
+    }, [mutationApi, bookingByIdApi, userBookingsApi]);
 
     const clearCache = useCallback(() => {
-        bookingByIdApi.invalidateCache();
         userBookingsApi.invalidateCache();
-        createBookingApi.invalidateCache();
-        cancelBookingApi.invalidateCache();
-    }, [bookingByIdApi, userBookingsApi, createBookingApi, cancelBookingApi]);
+        bookingByIdApi.invalidateCache();
+        mutationApi.invalidateCache();
+    }, [userBookingsApi, bookingByIdApi, mutationApi]);
 
-    const loading = bookingByIdApi.loading || userBookingsApi.loading ||
-        createBookingApi.loading || cancelBookingApi.loading;
-
-    const error = !!(bookingByIdApi.error || userBookingsApi.error ||
-        createBookingApi.error || cancelBookingApi.error);
+    const resetAll = useCallback(() => {
+        userBookingsApi.reset();
+        bookingByIdApi.reset();
+        mutationApi.reset();
+    }, [userBookingsApi, bookingByIdApi, mutationApi]);
 
     return {
         booking: bookingByIdApi.data,
@@ -89,9 +93,7 @@ export const useBooking = () => {
         getUserBookings,
         cancel,
         clearCache,
-
-        resetBooking: bookingByIdApi.reset,
-        resetBookings: userBookingsApi.reset,
+        resetAll,
 
         currentPage: userBookingsApi.data?.number || 0,
         totalPages: userBookingsApi.data?.totalPages || 0,

@@ -2,38 +2,42 @@ import { useCallback } from 'react';
 import { refundApi } from '@/api/refundApi';
 import type { RefundResponse, RefundRequest } from '@/types/refund';
 import { useApi } from '@/hooks/common/useApi';
+import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
 
 export const useRefund = () => {
-    const processRefundApi = useApi<RefundResponse>();
+    const refundApiInstance = useApi<RefundResponse>();
+
+    const loading = useDelayedLoading(refundApiInstance.loading, { delay: 150, minDisplayTime: 300 });
+    const error = !!refundApiInstance.error;
 
     const processRefund = useCallback(async (request: RefundRequest) => {
-        const response = await processRefundApi.execute(
+        const response = await refundApiInstance.execute(
             () => refundApi.processRefund(request),
             {
                 successMessage: 'Refund request submitted successfully',
             }
         );
-        return response?.data || null;
-    }, [processRefundApi]);
+        return response || null;
+    }, [refundApiInstance]);
 
-    const clearRefundCache = useCallback(() => {
-        processRefundApi.invalidateCache();
-    }, [processRefundApi]);
+    const clearCache = useCallback(() => {
+        refundApiInstance.invalidateCache();
+    }, [refundApiInstance]);
 
-    const resetProcess = useCallback(() => {
-        processRefundApi.reset();
-    }, [processRefundApi]);
+    const reset = useCallback(() => {
+        refundApiInstance.reset();
+    }, [refundApiInstance]);
 
     return {
-        refundResult: processRefundApi.data,
+        refundResult: refundApiInstance.data,
 
-        loading: processRefundApi.loading,
-        error: processRefundApi.error,
-        isSubmitting: processRefundApi.loading,
-        isSuccess: !!(processRefundApi.data && !processRefundApi.loading && !processRefundApi.error),
+        loading,
+        error,
+        isSubmitting: loading,
+        isSuccess: !!(refundApiInstance.data && !loading && !error),
 
         processRefund,
-        clearRefundCache,
-        resetProcess,
+        clearCache,
+        reset,
     };
 };

@@ -1,22 +1,27 @@
 import { useState, useCallback, useMemo } from 'react';
 import { seatAvailabilityApi } from '@/api/seatReservationApi';
-import type { SeatReservationResponse, SeatInfo } from '@/types/seatReservation';
+import type { SeatReservationResponse, SeatInfo, TicketPriceInfo } from '@/types/seatReservation';
 import { useApi } from '@/hooks/common/useApi';
+import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
 
 export interface SelectedSeat {
     seat: SeatInfo;
-    ticketTypeId?: number;
+    ticketTypeId: number;
     price: number;
-    ticketTypeName?: string;
+    ticketTypeName: string;
 }
 
 export const useSeatAvailability = (sessionId: number, maxSeats?: number) => {
     const [selectedSeats, setSelectedSeats] = useState<SelectedSeat[]>([]);
 
-    const seatAvailabilityApiHook = useApi<SeatReservationResponse>();
+    const seatApi = useApi<SeatReservationResponse>();
+
+    const rawLoading = seatApi.loading;
+    const loading = useDelayedLoading(rawLoading, { delay: 150, minDisplayTime: 300 });
+    const error = !!seatApi.error;
 
     const getSeatAvailability = useCallback(async () => {
-        const response = await seatAvailabilityApiHook.execute(
+        const response = await seatApi.execute(
             () => seatAvailabilityApi.getSeatAvailability(sessionId),
             {
                 cacheKey: `seat_availability_${sessionId}`,
@@ -24,25 +29,27 @@ export const useSeatAvailability = (sessionId: number, maxSeats?: number) => {
                 showErrorNotification: false,
             }
         );
-        return response?.data || null;
-    }, [seatAvailabilityApiHook, sessionId]);
+        return response || null;
+    }, [seatApi, sessionId]);
 
     const refreshSeatAvailability = useCallback(async () => {
-        seatAvailabilityApiHook.invalidateCache(`seat_availability_${sessionId}`);
-        const response = await seatAvailabilityApiHook.execute(
-            () => seatAvailabilityApi.getSeatAvailability(sessionId),
-            {
-                cacheKey: `seat_availability_${sessionId}`,
-                cacheTime: 30 * 1000,
-                showErrorNotification: false,
-            }
-        );
-        return response?.data || null;
-    }, [seatAvailabilityApiHook, sessionId]);
+        seatApi.invalidateCache(`seat_availability_${sessionId}`);
+        return getSeatAvailability();
+    }, [seatApi, getSeatAvailability, sessionId]);
 
-    const invalidateSeatCache = useCallback(() => {
-        seatAvailabilityApiHook.invalidateCache(`seat_availability_${sessionId}`);
-    }, [seatAvailabilityApiHook, sessionId]);
+    const invalidateCache = useCallback(() => {
+        seatApi.invalidateCache(`seat_availability_${sessionId}`);
+    }, [seatApi, sessionId]);
+
+    const getTicketPrice = useCallback((seat: SeatInfo, ticketTypeId?: number): TicketPriceInfo | null => {
+        if (!seat.ticketPrices?.length) return null;
+
+        if (ticketTypeId) {
+            return seat.ticketPrices.find(tp => tp.ticketTypeId === ticketTypeId) || null;
+        }
+
+        return seat.ticketPrices[0] || null;
+    }, []);
 
     const selectSeat = useCallback((seat: SeatInfo, ticketTypeId?: number) => {
         setSelectedSeats(prev => {
@@ -50,12 +57,10 @@ export const useSeatAvailability = (sessionId: number, maxSeats?: number) => {
                 throw new Error(`Maximum ${maxSeats} seats allowed`);
             }
 
-            const ticketPrice = seat.ticketPrices?.find(tp =>
-                ticketTypeId ? tp.ticketTypeId === ticketTypeId : true
-            );
+            const ticketPrice = getTicketPrice(seat, ticketTypeId);
 
             if (!ticketPrice) {
-                throw new Error('No ticket price available');
+                throw new Error('No ticket price available for this seat');
             }
 
             const selectedSeat: SelectedSeat = {
@@ -67,17 +72,17 @@ export const useSeatAvailability = (sessionId: number, maxSeats?: number) => {
 
             return [...prev, selectedSeat];
         });
-    }, [maxSeats]);
+    }, [maxSeats, getTicketPrice]);
 
     const deselectSeat = useCallback((seatId: number) => {
         setSelectedSeats(prev => prev.filter(s => s.seat.id !== seatId));
     }, []);
 
     const updateSeatTicketType = useCallback((seatId: number, ticketTypeId: number) => {
-        const seat = seatAvailabilityApiHook.data?.seats.find(s => s.id === seatId);
-        if (!seat || !seat.ticketPrices) return;
+        const seat = seatApi.data?.seats.find(s => s.id === seatId);
+        if (!seat) return;
 
-        const ticketPrice = seat.ticketPrices.find(tp => tp.ticketTypeId === ticketTypeId);
+        const ticketPrice = getTicketPrice(seat, ticketTypeId);
         if (!ticketPrice) return;
 
         setSelectedSeats(prev =>
@@ -92,7 +97,7 @@ export const useSeatAvailability = (sessionId: number, maxSeats?: number) => {
                     : selected
             )
         );
-    }, [seatAvailabilityApiHook.data]);
+    }, [seatApi.data, getTicketPrice]);
 
     const clearSelection = useCallback(() => {
         setSelectedSeats([]);
@@ -110,11 +115,14 @@ export const useSeatAvailability = (sessionId: number, maxSeats?: number) => {
         return selectedSeats.reduce((sum, seat) => sum + seat.price, 0);
     }, [selectedSeats]);
 
+    const availableSeatsCount = seatApi.data?.availableSeats ?? 0;
+    const isSoldOut = availableSeatsCount === 0;
+
     return {
-        data: seatAvailabilityApiHook.data,
-        loading: seatAvailabilityApiHook.loading,
-        error: seatAvailabilityApiHook.error,
-        isSuccess: !!seatAvailabilityApiHook.data,
+        data: seatApi.data,
+        loading,
+        error,
+        isSuccess: !!seatApi.data,
 
         selectedSeats,
         totalPrice,
@@ -122,8 +130,8 @@ export const useSeatAvailability = (sessionId: number, maxSeats?: number) => {
 
         getSeatAvailability,
         refreshSeatAvailability,
-        invalidateSeatCache,
-        reset: seatAvailabilityApiHook.reset,
+        invalidateCache,
+        reset: seatApi.reset,
 
         selectSeat,
         deselectSeat,
@@ -132,12 +140,12 @@ export const useSeatAvailability = (sessionId: number, maxSeats?: number) => {
         isSeatSelected,
         getSelectedSeat,
 
-        availableSeatsCount: seatAvailabilityApiHook.data?.availableSeats ?? 0,
-        seats: seatAvailabilityApiHook.data?.seats || [],
-        hallName: seatAvailabilityApiHook.data?.hallName,
-        movieTitle: seatAvailabilityApiHook.data?.movieTitle,
-        basePrice: seatAvailabilityApiHook.data?.basePrice,
-        hasData: !!seatAvailabilityApiHook.data,
-        isSoldOut: (seatAvailabilityApiHook.data?.availableSeats ?? 0) === 0,
+        availableSeatsCount,
+        seats: seatApi.data?.seats || [],
+        hallName: seatApi.data?.hallName,
+        movieTitle: seatApi.data?.movieTitle,
+        basePrice: seatApi.data?.basePrice,
+        hasData: !!seatApi.data,
+        isSoldOut,
     };
 };

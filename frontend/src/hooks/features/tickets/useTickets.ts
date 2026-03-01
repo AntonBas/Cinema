@@ -1,19 +1,26 @@
 import { useCallback } from 'react';
 import { ticketApi } from '@/api/ticketApi';
-import type { TicketResponse } from '@/types/ticket';
-import type { PageResponse } from '@/types/pagination';
+import type { TicketResponse, TicketFilterRequest } from '@/types/ticket';
+import type { PageResponse, SearchParams } from '@/types/pagination';
 import { useApi } from '@/hooks/common/useApi';
+import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
+
+interface TicketParams extends SearchParams, TicketFilterRequest { }
 
 export const useTickets = () => {
-    const userTicketsApi = useApi<PageResponse<TicketResponse>>();
-    const upcomingTicketsApi = useApi<PageResponse<TicketResponse>>();
-    const ticketByIdApi = useApi<TicketResponse>();
-    const ticketByCodeApi = useApi<TicketResponse>();
-    const validateTicketApi = useApi<void>();
+    const ticketsApi = useApi<PageResponse<TicketResponse>>();
+    const ticketApiInstance = useApi<TicketResponse>();
     const qrCodeApi = useApi<Blob>();
+    const mutationApi = useApi<void>();
 
-    const getUserTickets = useCallback(async (params?: any) => {
-        const response = await userTicketsApi.execute(
+    const rawLoading = ticketsApi.loading || ticketApiInstance.loading ||
+        qrCodeApi.loading || mutationApi.loading;
+    const loading = useDelayedLoading(rawLoading, { delay: 150, minDisplayTime: 300 });
+    const error = !!(ticketsApi.error || ticketApiInstance.error ||
+        qrCodeApi.error || mutationApi.error);
+
+    const getUserTickets = useCallback(async (params?: TicketParams) => {
+        const response = await ticketsApi.execute(
             () => ticketApi.getUserTickets(params),
             {
                 cacheKey: `user_tickets_${JSON.stringify(params)}`,
@@ -21,11 +28,11 @@ export const useTickets = () => {
                 showErrorNotification: false,
             }
         );
-        return response?.data || null;
-    }, [userTicketsApi]);
+        return response || null;
+    }, [ticketsApi]);
 
-    const getUpcomingTickets = useCallback(async (params?: any) => {
-        const response = await upcomingTicketsApi.execute(
+    const getUpcomingTickets = useCallback(async (params?: SearchParams) => {
+        const response = await ticketsApi.execute(
             () => ticketApi.getUpcomingTickets(params),
             {
                 cacheKey: `upcoming_tickets_${JSON.stringify(params)}`,
@@ -33,11 +40,11 @@ export const useTickets = () => {
                 showErrorNotification: false,
             }
         );
-        return response?.data || null;
-    }, [upcomingTicketsApi]);
+        return response || null;
+    }, [ticketsApi]);
 
     const getById = useCallback(async (ticketId: number) => {
-        const response = await ticketByIdApi.execute(
+        const response = await ticketApiInstance.execute(
             () => ticketApi.getById(ticketId),
             {
                 cacheKey: `ticket_${ticketId}`,
@@ -45,11 +52,11 @@ export const useTickets = () => {
                 showErrorNotification: false,
             }
         );
-        return response?.data || null;
-    }, [ticketByIdApi]);
+        return response || null;
+    }, [ticketApiInstance]);
 
     const getByCode = useCallback(async (ticketCode: string) => {
-        const response = await ticketByCodeApi.execute(
+        const response = await ticketApiInstance.execute(
             () => ticketApi.getByCode(ticketCode),
             {
                 cacheKey: `ticket_code_${ticketCode}`,
@@ -57,17 +64,19 @@ export const useTickets = () => {
                 showErrorNotification: false,
             }
         );
-        return response?.data || null;
-    }, [ticketByCodeApi]);
+        return response || null;
+    }, [ticketApiInstance]);
 
     const validateTicket = useCallback(async (ticketCode: string) => {
-        await validateTicketApi.execute(
+        await mutationApi.execute(
             () => ticketApi.validate(ticketCode),
             {
                 successMessage: 'Ticket validated successfully',
             }
         );
-    }, [validateTicketApi]);
+        ticketsApi.invalidateCache();
+        ticketApiInstance.invalidateCache(`ticket_code_${ticketCode}`);
+    }, [mutationApi, ticketsApi, ticketApiInstance]);
 
     const getQRCode = useCallback(async (ticketCode: string) => {
         const response = await qrCodeApi.execute(
@@ -78,34 +87,31 @@ export const useTickets = () => {
                 showErrorNotification: false,
             }
         );
-        return response?.data || null;
+        return response || null;
     }, [qrCodeApi]);
 
     const clearCache = useCallback(() => {
-        userTicketsApi.invalidateCache();
-        upcomingTicketsApi.invalidateCache();
-        ticketByIdApi.invalidateCache();
-        ticketByCodeApi.invalidateCache();
-        validateTicketApi.invalidateCache();
+        ticketsApi.invalidateCache();
+        ticketApiInstance.invalidateCache();
         qrCodeApi.invalidateCache();
-    }, [userTicketsApi, upcomingTicketsApi, ticketByIdApi, ticketByCodeApi,
-        validateTicketApi, qrCodeApi]);
+        mutationApi.invalidateCache();
+    }, [ticketsApi, ticketApiInstance, qrCodeApi, mutationApi]);
 
-    const loading = userTicketsApi.loading || upcomingTicketsApi.loading ||
-        ticketByIdApi.loading || ticketByCodeApi.loading ||
-        validateTicketApi.loading || qrCodeApi.loading;
-
-    const error = !!(userTicketsApi.error || upcomingTicketsApi.error ||
-        ticketByIdApi.error || ticketByCodeApi.error ||
-        validateTicketApi.error || qrCodeApi.error);
+    const resetAll = useCallback(() => {
+        ticketsApi.reset();
+        ticketApiInstance.reset();
+        qrCodeApi.reset();
+        mutationApi.reset();
+    }, [ticketsApi, ticketApiInstance, qrCodeApi, mutationApi]);
 
     return {
-        userTickets: userTicketsApi.data?.content || [],
-        upcomingTickets: upcomingTicketsApi.data?.content || [],
-        ticket: ticketByIdApi.data || ticketByCodeApi.data,
+        userTickets: ticketsApi.data?.content || [],
+        upcomingTickets: ticketsApi.data?.content || [],
+        ticket: ticketApiInstance.data,
         qrCode: qrCodeApi.data,
-        userPagination: userTicketsApi.data,
-        upcomingPagination: upcomingTicketsApi.data,
+
+        userPagination: ticketsApi.data,
+        upcomingPagination: ticketsApi.data,
 
         loading,
         error,
@@ -117,10 +123,6 @@ export const useTickets = () => {
         validateTicket,
         getQRCode,
         clearCache,
-
-        resetUserTickets: userTicketsApi.reset,
-        resetUpcomingTickets: upcomingTicketsApi.reset,
-        resetTicket: ticketByIdApi.reset,
-        resetTicketByCode: ticketByCodeApi.reset,
+        resetAll,
     };
 };
