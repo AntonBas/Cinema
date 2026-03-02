@@ -74,6 +74,12 @@ public class MovieService {
 		Movie existing = findAdminMovieById(id);
 		validateDates(request.getReleaseDate(), request.getEndShowingDate());
 
+		if (!existing.getTitle().equals(request.getTitle())) {
+			if (movieRepository.existsByTitle(request.getTitle())) {
+				throw new DuplicateEntityException("Movie", "title '" + request.getTitle() + "'");
+			}
+		}
+
 		movieMapper.updateMovieFromRequest(request, existing);
 
 		if (!existing.getTitle().equals(request.getTitle())) {

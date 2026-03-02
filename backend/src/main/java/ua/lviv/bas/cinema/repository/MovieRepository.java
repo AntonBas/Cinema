@@ -86,4 +86,6 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
 
 	@Query("SELECT COUNT(m) FROM Movie m WHERE EXISTS (SELECT 1 FROM m.actors a WHERE a.id = :personId) OR EXISTS (SELECT 1 FROM m.directors d WHERE d.id = :personId) OR EXISTS (SELECT 1 FROM m.screenwriters s WHERE s.id = :personId)")
 	long countMovieUsageByPersonId(@Param("personId") Long personId);
+
+	boolean existsByTitle(String newTitle);
 }

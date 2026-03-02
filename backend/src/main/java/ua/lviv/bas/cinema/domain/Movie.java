@@ -58,7 +58,7 @@ public class Movie {
 
 	@NotBlank
 	@Size(max = 50)
-	@Column(nullable = false)
+	@Column(nullable = false, unique = true)
 	private String title;
 
 	@NotBlank

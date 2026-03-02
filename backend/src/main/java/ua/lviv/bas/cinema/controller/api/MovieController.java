@@ -23,6 +23,7 @@ import ua.lviv.bas.cinema.domain.enums.MovieStatus;
 import ua.lviv.bas.cinema.dto.common.PageResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieCardResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieDetailResponse;
+import ua.lviv.bas.cinema.exception.domain.cinema.MovieNotFoundException;
 import ua.lviv.bas.cinema.service.cinema.MovieService;
 
 @Slf4j
@@ -34,18 +35,6 @@ public class MovieController {
 
 	private final MovieService movieService;
 
-	@GetMapping("/{id}")
-	@Operation(summary = "Get movie by ID", description = "Retrieves detailed information about a specific movie by its ID")
-	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Movie found successfully"),
-			@ApiResponse(responseCode = "404", description = "Movie not found") })
-	public ResponseEntity<MovieDetailResponse> getMovieById(
-			@Parameter(description = "ID of the movie", required = true, example = "1") @PathVariable Long id) {
-
-		log.info("GET /api/movies/{} - Getting movie by id", id);
-		MovieDetailResponse movie = movieService.getMovieById(id);
-		return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.HOURS)).body(movie);
-	}
-
 	@GetMapping("/slug/{slug}")
 	@Operation(summary = "Get movie by slug", description = "Retrieves detailed information about a specific movie by its URL-friendly slug")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Movie found successfully"),
@@ -55,6 +44,12 @@ public class MovieController {
 
 		log.info("GET /api/movies/slug/{} - Getting movie by slug", slug);
 		MovieDetailResponse movie = movieService.getMovieBySlug(slug);
+
+		if (movie.getStatus() == MovieStatus.ARCHIVED) {
+			log.warn("Movie with slug {} is archived and not available publicly", slug);
+			throw new MovieNotFoundException(slug);
+		}
+
 		return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.HOURS)).body(movie);
 	}
 

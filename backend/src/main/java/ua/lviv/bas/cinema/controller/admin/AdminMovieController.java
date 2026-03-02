@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -62,7 +63,7 @@ public class AdminMovieController {
 			request.setPosterFile(posterFile);
 			MovieDetailResponse createdMovie = movieService.createMovie(request);
 			return ResponseEntity.status(HttpStatus.CREATED).body(createdMovie);
-		} catch (Exception e) {
+		} catch (JsonProcessingException e) {
 			log.error("Error parsing movie data", e);
 			throw new IllegalArgumentException("Invalid movie data format", e);
 		}
@@ -83,7 +84,7 @@ public class AdminMovieController {
 			request.setPosterFile(posterFile);
 			MovieDetailResponse updatedMovie = movieService.updateMovie(id, request);
 			return ResponseEntity.ok(updatedMovie);
-		} catch (Exception e) {
+		} catch (JsonProcessingException e) {
 			log.error("Error parsing movie data", e);
 			throw new IllegalArgumentException("Invalid movie data format", e);
 		}
