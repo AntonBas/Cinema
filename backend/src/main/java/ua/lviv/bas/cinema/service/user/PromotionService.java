@@ -52,7 +52,7 @@ public class PromotionService {
 				.redeemedAt(LocalDateTime.now()).pointsAwarded(promotion.getBonusPoints()).build();
 
 		userPromotion = userPromotionRepository.save(userPromotion);
-		Integer newBalance = bonusUserService.addPoints(user, promotion.getBonusPoints());
+		Integer newBalance = bonusUserService.addPoints(user, promotion.getBonusPoints(), promotion.getTitle());
 
 		log.info("Promotion claimed successfully. User received {} points", promotion.getBonusPoints());
 

@@ -25,7 +25,6 @@ public class BonusRulesInitializer implements ApplicationRunner {
 	public void run(ApplicationArguments args) {
 		initializeWelcomeBonusRule();
 		initializeBirthdayBonusRule();
-		initializePromotionBonusRule();
 		initializeBookingSpendRule();
 		initializePaymentAccrualRule();
 		initializeRefundReturnRule();
@@ -48,15 +47,6 @@ public class BonusRulesInitializer implements ApplicationRunner {
 					.active(true).build();
 			bonusRulesRepository.save(rule);
 			log.info("Created default BIRTHDAY_BONUS rule: {} points", rule.getPoints());
-		}
-	}
-
-	private void initializePromotionBonusRule() {
-		if (!bonusRulesRepository.findByBonusType(BonusTransactionType.PROMOTION_BONUS).isPresent()) {
-			BonusRules rule = BonusRules.builder().bonusType(BonusTransactionType.PROMOTION_BONUS).points(100)
-					.active(true).build();
-			bonusRulesRepository.save(rule);
-			log.info("Created default PROMOTION_BONUS rule: {} points", rule.getPoints());
 		}
 	}
 

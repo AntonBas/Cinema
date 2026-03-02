@@ -102,12 +102,13 @@ public class BonusService {
 	}
 
 	@Transactional
-	public Integer addPoints(User user, Integer points) {
+	public Integer addPoints(User user, Integer points, String promotionTitle) {
 		validatePositivePoints(points);
 		BonusCard card = getOrCreateCard(user);
 		card.setPointsBalance(card.getPointsBalance() + points);
-		createTransaction(card, points, BonusTransactionType.PROMOTION_BONUS,
-				"PROMOTION_" + System.currentTimeMillis());
+
+		createTransaction(card, points, BonusTransactionType.PROMOTION_BONUS, "PROMOTION_" + promotionTitle);
+
 		return card.getPointsBalance();
 	}
 
