@@ -44,7 +44,6 @@ public class TicketController {
 
 	@GetMapping
 	@Operation(summary = "Get user tickets with filters", description = "Get tickets with advanced filtering options")
-	@PreAuthorize("hasRole('USER')")
 	public ResponseEntity<PageResponse<TicketResponse>> getUserTickets(
 			@AuthenticationPrincipal CustomUserDetails userDetails, @RequestParam(required = false) TicketStatus status,
 			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate purchaseDateFrom,
@@ -69,7 +68,6 @@ public class TicketController {
 
 	@GetMapping("/upcoming")
 	@Operation(summary = "Get upcoming tickets", description = "Get upcoming tickets for authenticated user")
-	@PreAuthorize("hasRole('USER')")
 	public ResponseEntity<PageResponse<TicketResponse>> getUpcomingTickets(
 			@AuthenticationPrincipal CustomUserDetails userDetails,
 			@PageableDefault(size = 10, sort = "sessionTime", direction = Sort.Direction.ASC) Pageable pageable) {
@@ -86,7 +84,6 @@ public class TicketController {
 
 	@GetMapping("/{ticketId}")
 	@Operation(summary = "Get ticket details", description = "Get ticket details by ID")
-	@PreAuthorize("hasRole('USER')")
 	public ResponseEntity<TicketResponse> getTicketById(@PathVariable Long ticketId,
 			@AuthenticationPrincipal CustomUserDetails userDetails) {
 
@@ -98,7 +95,6 @@ public class TicketController {
 
 	@GetMapping("/code/{ticketCode}")
 	@Operation(summary = "Get ticket by code", description = "Get ticket details by code")
-	@PreAuthorize("hasRole('USER')")
 	public ResponseEntity<TicketResponse> getTicketByCode(@PathVariable String ticketCode,
 			@AuthenticationPrincipal CustomUserDetails userDetails) {
 
