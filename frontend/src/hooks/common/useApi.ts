@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useNotification } from './useNotification';
-import { isApiErrorException } from '@/utils/apiErrorHandler';
+import { isApiErrorException, ApiErrorException } from '@/utils/apiErrorHandler';
 import type { AxiosResponse } from 'axios';
 
 interface CacheItem<T> {
@@ -12,7 +12,7 @@ interface CacheItem<T> {
 interface UseApiState<T> {
     data: T | null;
     loading: boolean;
-    error: Error | null;
+    error: Error | ApiErrorException | null;
     isCached: boolean;
     timestamp: number | null;
 }
@@ -23,7 +23,7 @@ interface UseApiOptions<T> {
     cacheKey?: string;
     cacheTime?: number;
     onSuccess?: (data: T) => void;
-    onError?: (error: Error) => void;
+    onError?: (error: Error | ApiErrorException) => void;
     enabled?: boolean;
 }
 
@@ -77,6 +77,13 @@ export const useApi = <T = any>() => {
         } else {
             cacheRef.current.clear();
         }
+    }, []);
+
+    const getErrorMessage = useCallback((error: Error | ApiErrorException): string => {
+        if (isApiErrorException(error)) {
+            return error.message;
+        }
+        return error.message || 'Operation failed';
     }, []);
 
     const execute = useCallback(async <R>(
@@ -175,11 +182,8 @@ export const useApi = <T = any>() => {
             }
 
             if (showErrorNotification) {
-                if (isApiErrorException(error)) {
-                    showNotification(error.message, 'error');
-                } else {
-                    showNotification(error.message, 'error');
-                }
+                const errorMessage = getErrorMessage(error);
+                showNotification(errorMessage, 'error');
             }
 
             if (onError) onError(error);
@@ -188,7 +192,7 @@ export const useApi = <T = any>() => {
             loadingRef.current = false;
             abortControllerRef.current = null;
         }
-    }, [getCache, setCache, showNotification]);
+    }, [getCache, setCache, showNotification, getErrorMessage]);
 
     const reset = useCallback(() => {
         if (mountedRef.current) {
@@ -216,6 +220,8 @@ export const useApi = <T = any>() => {
         execute,
         reset,
         invalidateCache,
+        isApiError: isApiErrorException(state.error),
+        getErrorMessage: state.error ? getErrorMessage(state.error) : null,
         setData: (data: T | null) => {
             if (mountedRef.current) {
                 setState(prev => ({ ...prev, data }));

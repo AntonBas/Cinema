@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { ApiErrorException } from '@/utils/apiErrorHandler';
 
 export const api = axios.create({
     baseURL: 'http://localhost:8080',
@@ -22,11 +23,20 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
     (response) => response,
     (error) => {
-        if (error.response?.status === 401) {
-            localStorage.removeItem('authToken');
-            const currentPath = window.location.pathname;
-            if (currentPath !== '/login' && currentPath !== '/register') {
-                window.location.href = `/login?redirect=${encodeURIComponent(currentPath)}`;
+        if (error.response) {
+            const responseData = error.response.data;
+
+            if (responseData && typeof responseData === 'object' && 'statusCode' in responseData) {
+                const apiErrorException = new ApiErrorException(responseData as any);
+                return Promise.reject(apiErrorException);
+            }
+
+            if (error.response.status === 401) {
+                localStorage.removeItem('authToken');
+                const currentPath = window.location.pathname;
+                if (currentPath !== '/login' && currentPath !== '/register') {
+                    window.location.href = `/login?redirect=${encodeURIComponent(currentPath)}`;
+                }
             }
         }
 

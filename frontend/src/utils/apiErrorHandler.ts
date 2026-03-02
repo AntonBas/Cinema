@@ -9,14 +9,43 @@ export class ApiErrorException extends Error {
     public readonly subErrors?: ApiSubError[];
 
     constructor(apiError: ApiError) {
-        super(apiError.message);
+        const errorMessage = apiError.message || 'Request failed';
+        super(errorMessage);
+
         this.name = 'ApiErrorException';
-        this.timestamp = apiError.timestamp;
-        this.status = apiError.status;
-        this.statusCode = apiError.statusCode;
+        this.timestamp = apiError.timestamp || new Date().toISOString();
+        this.status = apiError.status || 'UNKNOWN_ERROR';
+
+        if (apiError.statusCode) {
+            this.statusCode = apiError.statusCode;
+        } else if (apiError.status) {
+            this.statusCode = this.getStatusCodeFromStatus(apiError.status);
+        } else {
+            this.statusCode = 500;
+        }
+
         this.debugMessage = apiError.debugMessage;
         this.path = apiError.path;
         this.subErrors = apiError.subErrors;
+    }
+
+    private getStatusCodeFromStatus(status: string): number {
+        const statusMap: Record<string, number> = {
+            'CONFLICT': 409,
+            'BAD_REQUEST': 400,
+            'NOT_FOUND': 404,
+            'UNAUTHORIZED': 401,
+            'FORBIDDEN': 403,
+            'INTERNAL_SERVER_ERROR': 500,
+            'OK': 200,
+            'CREATED': 201
+        };
+
+        if (!isNaN(Number(status))) {
+            return Number(status);
+        }
+
+        return statusMap[status] || 500;
     }
 
     isNotFound(): boolean {
