@@ -37,7 +37,7 @@ CREATE INDEX IF NOT EXISTS idx_genre_name ON genres(name);
 
 CREATE TABLE IF NOT EXISTS movies (
     id BIGSERIAL PRIMARY KEY,
-    title VARCHAR(50) NOT NULL,
+    title VARCHAR(50) NOT NULL UNIQUE,
     slug VARCHAR(255) NOT NULL UNIQUE,
     trailer_url TEXT NOT NULL,
     description TEXT NOT NULL,
