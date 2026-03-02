@@ -33,8 +33,8 @@ export const usePerson = () => {
                 showErrorNotification: false,
             }
         );
-        return response || null;
-    }, [personsApi]);
+        return response;
+    }, []);
 
     const getById = useCallback(async (id: number, isAdmin: boolean = false) => {
         const cacheKey = isAdmin ? `admin_person_${id}` : `person_${id}`;
@@ -46,8 +46,8 @@ export const usePerson = () => {
             cacheTime: 10 * 60 * 1000,
             showErrorNotification: false,
         });
-        return response || null;
-    }, [personApiInstance]);
+        return response;
+    }, []);
 
     const create = useCallback(async (request: PersonRequest) => {
         const response = await mutationApi.execute(
@@ -57,8 +57,8 @@ export const usePerson = () => {
             }
         );
         personsApi.invalidateCache();
-        return response || null;
-    }, [mutationApi, personsApi]);
+        return response;
+    }, []);
 
     const quickCreate = useCallback(async (request: QuickCreatePersonRequest) => {
         const response = await mutationApi.execute(
@@ -68,8 +68,8 @@ export const usePerson = () => {
             }
         );
         personsApi.invalidateCache();
-        return response || null;
-    }, [mutationApi, personsApi]);
+        return response;
+    }, []);
 
     const update = useCallback(async (id: number, request: PersonRequest) => {
         const response = await mutationApi.execute(
@@ -81,8 +81,8 @@ export const usePerson = () => {
         personApiInstance.invalidateCache(`person_${id}`);
         personApiInstance.invalidateCache(`admin_person_${id}`);
         personsApi.invalidateCache();
-        return response || null;
-    }, [mutationApi, personApiInstance, personsApi]);
+        return response;
+    }, []);
 
     const remove = useCallback(async (id: number) => {
         await mutationApi.execute(
@@ -94,34 +94,31 @@ export const usePerson = () => {
         personApiInstance.invalidateCache(`person_${id}`);
         personApiInstance.invalidateCache(`admin_person_${id}`);
         personsApi.invalidateCache();
-    }, [mutationApi, personApiInstance, personsApi]);
+    }, []);
 
     const clearCache = useCallback(() => {
         personsApi.invalidateCache();
         personApiInstance.invalidateCache();
         mutationApi.invalidateCache();
-    }, [personsApi, personApiInstance, mutationApi]);
+    }, []);
 
     const resetAll = useCallback(() => {
         personsApi.reset();
         personApiInstance.reset();
         mutationApi.reset();
-    }, [personsApi, personApiInstance, mutationApi]);
+    }, []);
 
     return {
         allPersons: personsApi.data?.content || [],
         person: personApiInstance.data,
-
         pagination: personsApi.data,
         currentPage: personsApi.data?.number || 0,
         totalPages: personsApi.data?.totalPages || 0,
         totalElements: personsApi.data?.totalElements || 0,
         pageSize: personsApi.data?.size || 10,
         isEmpty: personsApi.data?.empty || false,
-
         loading,
         error,
-
         getAll,
         getById,
         create,
