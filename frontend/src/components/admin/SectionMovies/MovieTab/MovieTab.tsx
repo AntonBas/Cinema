@@ -42,7 +42,7 @@ export const MovieTab: React.FC = () => {
     getAdminCurrent,
     getAdminUpcoming,
     getAdminArchived,
-    getById,
+    getAdminById,
     remove,
     loading: moviesLoading
   } = useMovies();
@@ -157,7 +157,7 @@ export const MovieTab: React.FC = () => {
 
   const handleEdit = useCallback(async (movie: MovieCardResponse) => {
     try {
-      const response = await getById(movie.id, true);
+      const response = await getAdminById(movie.id);
       if (response) {
         setEditingMovie(response);
         setIsModalOpen(true);
@@ -165,7 +165,7 @@ export const MovieTab: React.FC = () => {
     } catch (error) {
       showNotification(isApiErrorException(error) ? error.message : 'Failed to load movie details', 'error');
     }
-  }, [getById, showNotification]);
+  }, [getAdminById, showNotification]);
 
   const handleDeleteClick = useCallback((movie: MovieCardResponse) => {
     setDeletingMovie(movie);

@@ -14,11 +14,8 @@ const ADMIN_URL = '/api/admin/movies';
 
 export const movieApi = {
   public: {
-    getById: (id: number) =>
-      api.get<MovieDetailResponse>(`${PUBLIC_URL}/${id}`),
-
     getBySlug: (slug: string) =>
-      api.get<MovieDetailResponse>(`${PUBLIC_URL}/slug/${slug}`),
+      api.get<MovieDetailResponse>(`${PUBLIC_URL}/${slug}`),
 
     getCurrentlyShowing: (params?: SearchParams) =>
       api.get<PageResponse<MovieCardResponse>>(`${PUBLIC_URL}/currently-showing`, { params }),
@@ -98,8 +95,7 @@ export const movieKeys = {
       [...movieKeys.public.all, 'currentlyShowing', params] as const,
     upcoming: (params?: SearchParams) =>
       [...movieKeys.public.all, 'upcoming', params] as const,
-    detail: (id: number) => [...movieKeys.public.all, 'detail', id] as const,
-    slug: (slug: string) => [...movieKeys.public.all, 'slug', slug] as const,
+    detail: (slug: string) => [...movieKeys.public.all, 'detail', slug] as const,
   },
   admin: {
     all: ['movies', 'admin'] as const,

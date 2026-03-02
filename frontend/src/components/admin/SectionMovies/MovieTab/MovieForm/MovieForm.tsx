@@ -15,8 +15,10 @@ import { GenreSearchList } from './GenreSearchList/GenreSearchList';
 import { Button } from '@/components/ui/Button/Button';
 import { Modal } from '@/components/ui/Modal/Modal';
 import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';
+import { Notification } from '@/components/ui/Notification/Notification';
 import { useNotification } from '@/hooks/common/useNotification';
 import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
+import { isApiErrorException } from '@/utils/apiErrorHandler';
 import styles from './MovieForm.module.css';
 
 interface MovieFormProps {
@@ -57,7 +59,7 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(({
     onSuccess,
     onCancel
 }) => {
-    const { showNotification } = useNotification();
+    const { notifications, showNotification, hideNotification } = useNotification();
     const [genres, setGenres] = useState<GenreResponse[]>([]);
     const [selectedActors, setSelectedActors] = useState<PersonResponse[]>([]);
     const [selectedDirectors, setSelectedDirectors] = useState<PersonResponse[]>([]);
@@ -213,8 +215,14 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(({
             if (response?.data) {
                 onSuccess(response.data);
             }
-        } catch {
-            showNotification('Failed to save movie', 'error');
+        } catch (error) {
+            if (isApiErrorException(error)) {
+                showNotification(error.message, 'error');
+            } else if (error instanceof Error) {
+                showNotification(error.message, 'error');
+            } else {
+                showNotification('Failed to save movie', 'error');
+            }
         } finally {
             setIsSubmitting(false);
         }
@@ -270,6 +278,18 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(({
             title={movie ? 'Edit Movie' : 'Add New Movie'}
             size="large"
         >
+            {notifications.map((notification) => (
+                <Notification
+                    key={notification.id}
+                    id={notification.id}
+                    message={notification.message}
+                    type={notification.type}
+                    isVisible={notification.isVisible}
+                    onClose={hideNotification}
+                    duration={notification.duration}
+                />
+            ))}
+
             <form onSubmit={handleSubmit} className={styles.form} noValidate>
                 <div className={styles.formGroup}>
                     <label className={styles.label}>
