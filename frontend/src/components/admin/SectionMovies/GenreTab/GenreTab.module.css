@@ -54,7 +54,7 @@
   padding-top: var(--space-8);
   border-top: 1px solid var(--color-border-medium);
   display: flex;
-  justify-content: center;
+  justify-content: flex-end;
 }
 
 @keyframes fadeIn {
@@ -86,6 +86,10 @@
 
   .resultsInfo {
     text-align: left;
+  }
+
+  .paginationWrapper {
+    justify-content: center;
   }
 }
 
