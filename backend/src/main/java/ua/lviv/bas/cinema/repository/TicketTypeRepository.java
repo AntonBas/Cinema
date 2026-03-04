@@ -28,8 +28,8 @@ public interface TicketTypeRepository extends JpaRepository<TicketType, Long> {
 	List<TicketType> findByActiveFalseAndCategory(TicketTypeCategory category);
 
 	@Query("SELECT t FROM TicketType t WHERE " + "(:active IS NULL OR t.active = :active) AND "
-			+ "(:category IS NULL OR t.category = :category) AND "
-			+ "(LOWER(t.code) LIKE LOWER(CONCAT('%', :search, '%')) OR "
+			+ "(:category IS NULL OR t.category = :category) AND " + "(:search IS NULL OR :search = '' OR "
+			+ "LOWER(t.code) LIKE LOWER(CONCAT('%', :search, '%')) OR "
 			+ "LOWER(t.displayName) LIKE LOWER(CONCAT('%', :search, '%')))")
 	List<TicketType> findByFilters(@Param("active") Boolean active, @Param("category") TicketTypeCategory category,
 			@Param("search") String search);
