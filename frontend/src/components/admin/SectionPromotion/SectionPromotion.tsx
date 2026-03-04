@@ -6,7 +6,6 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';
 import { usePromotion } from '@/hooks/features/promotion/usePromotion';
 import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
 import type { PromotionResponse } from '@/types/promotion';
-import PromotionStats from './PromotionStats/PromotionStats';
 import PromotionTable from './PromotionTable/PromotionTable';
 import PromotionFilters from './PromotionFilters/PromotionFilters';
 import CreatePromotionModal from './PromotionModal/CreatePromotionModal';
@@ -133,8 +132,6 @@ const SectionPromotion: React.FC = () => {
                     Create Promotion
                 </Button>
             </div>
-
-            <PromotionStats />
 
             <div className={styles.filtersContainer}>
                 <div className={styles.searchWrapper}>
