@@ -63,7 +63,7 @@ export const BaseHallModal: React.FC<BaseHallModalProps> = ({
     );
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title={title} size="medium">
+        <Modal isOpen={isOpen} onClose={onClose} title={title} size="large">
             <form onSubmit={onSubmit}>
                 <div className={styles.formGroup}>
                     <label className={styles.label}>Hall Name *</label>

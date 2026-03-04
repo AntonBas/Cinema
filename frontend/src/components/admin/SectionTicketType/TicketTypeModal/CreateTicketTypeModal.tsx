@@ -81,7 +81,7 @@ const CreateTicketTypeModal: React.FC<CreateTicketTypeModalProps> = ({
                 isOpen={isOpen}
                 onClose={onClose}
                 title="Create New Ticket Type"
-                size="medium"
+                size="large"
             >
                 <form onSubmit={handleSubmit} className={styles.form}>
                     <div className={styles.formRow}>

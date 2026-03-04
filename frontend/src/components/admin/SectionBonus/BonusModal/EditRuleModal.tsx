@@ -107,7 +107,7 @@ const EditRuleModal: React.FC<EditRuleModalProps> = ({
                 isOpen={isOpen}
                 onClose={onClose}
                 title={`Edit Bonus Rule: ${formatRuleType(rule.bonusType)}`}
-                size="medium"
+                size="large"
             >
                 <div className={styles.ruleInfo}>
                     <div className={styles.ruleInfoRow}>

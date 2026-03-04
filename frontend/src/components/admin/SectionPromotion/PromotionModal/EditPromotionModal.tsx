@@ -96,7 +96,7 @@ const EditPromotionModal: React.FC<EditPromotionModalProps> = ({
     };
 
     return (
-        <Modal isOpen={true} onClose={handleClose} title="Edit Promotion" size="medium">
+        <Modal isOpen={true} onClose={handleClose} title="Edit Promotion" size="large">
             <form onSubmit={handleSubmit} className={styles.form}>
                 <div className={styles.formGroup}>
                     <label className={styles.label}>Title *</label>

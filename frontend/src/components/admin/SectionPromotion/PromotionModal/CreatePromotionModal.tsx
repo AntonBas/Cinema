@@ -71,7 +71,7 @@ const CreatePromotionModal: React.FC<CreatePromotionModalProps> = ({
     };
 
     return (
-        <Modal isOpen={true} onClose={handleClose} title="Create Promotion" size="medium">
+        <Modal isOpen={true} onClose={handleClose} title="Create Promotion" size="large">
             <form onSubmit={handleSubmit} className={styles.form}>
                 <div className={styles.formGroup}>
                     <label className={styles.label}>Title *</label>

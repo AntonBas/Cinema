@@ -130,7 +130,7 @@ const EditTicketTypeModal: React.FC<EditTicketTypeModalProps> = ({
                 isOpen={isOpen}
                 onClose={onClose}
                 title={`Edit Ticket Type: ${ticketType.code}`}
-                size="medium"
+                size="large"
             >
                 <form onSubmit={handleSubmit} className={styles.form}>
                     <div className={styles.formRow}>
