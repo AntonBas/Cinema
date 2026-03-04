@@ -2,13 +2,12 @@
     padding: var(--space-8);
     max-width: 1400px;
     margin: 0 auto;
-    animation: fadeIn var(--transition-normal);
-    background-color: var(--color-bg-quaternary);
+    background: var(--color-bg-quaternary);
     border-radius: var(--radius-xl);
     border: 1px solid var(--color-border-medium);
-    box-shadow: var(--shadow-lg);
+    box-shadow: var(--shadow-xl);
+    animation: fadeIn var(--transition-normal);
     min-height: 600px;
-    box-sizing: border-box;
 }
 
 .header {
@@ -28,47 +27,40 @@
     line-height: 1.2;
 }
 
-.tabs {
+.buttons {
     display: flex;
     gap: var(--space-2);
-    border-bottom: 2px solid var(--color-border-medium);
-    overflow-x: auto;
-    padding-bottom: 2px;
+    background: var(--color-bg-secondary);
+    padding: var(--space-1);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border-medium);
 }
 
-.tab {
-    padding: var(--space-3) var(--space-6);
-    background: none;
+.button {
+    padding: var(--space-2) var(--space-4);
+    background: transparent;
     border: none;
-    font-size: var(--font-size-md);
-    font-weight: 600;
+    font-size: var(--font-size-sm);
+    font-weight: 500;
     color: var(--color-text-secondary);
     cursor: pointer;
-    position: relative;
-    transition: all var(--transition-normal);
+    transition: all var(--transition-fast);
+    border-radius: var(--radius-md);
     white-space: nowrap;
-    border-radius: var(--radius-md) var(--radius-md) 0 0;
 }
 
-.tab:hover {
+.button:hover {
     color: var(--color-text-primary);
     background: rgba(var(--color-primary-rgb), 0.1);
 }
 
-.tab.active {
-    color: var(--color-primary);
-    background: rgba(var(--color-primary-rgb), 0.15);
+.button.active {
+    background: var(--color-primary);
+    color: white;
 }
 
-.tab.active::after {
-    content: '';
-    position: absolute;
-    bottom: -2px;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: var(--color-primary);
-    border-radius: 2px;
+.button.active:hover {
+    background: var(--color-primary-hover);
 }
 
 .content {
@@ -78,13 +70,13 @@
 
 .loading {
     display: flex;
-    justify-content: center;
     align-items: center;
+    justify-content: center;
     min-height: 400px;
     color: var(--color-text-secondary);
-    background: var(--color-bg-tertiary);
+    background: var(--color-bg-quaternary);
     border-radius: var(--radius-xl);
-    border: 1px solid var(--color-border);
+    border: 1px solid var(--color-border-medium);
 }
 
 .error {
@@ -117,7 +109,7 @@
 @keyframes fadeIn {
     from {
         opacity: 0;
-        transform: translateY(10px);
+        transform: translateY(20px);
     }
 
     to {
@@ -126,20 +118,33 @@
     }
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 1200px) {
     .section {
         padding: var(--space-6);
+    }
+}
+
+@media (max-width: 1024px) {
+    .section {
+        padding: var(--space-5);
+        min-height: 550px;
     }
 
     .title {
         font-size: var(--font-size-2xl);
+    }
+
+    .button {
+        padding: var(--space-2) var(--space-3);
+        font-size: var(--font-size-xs);
     }
 }
 
 @media (max-width: 768px) {
     .section {
         padding: var(--space-4);
-        min-height: calc(100vh - 2rem);
+        margin: 0 var(--space-2);
+        min-height: 500px;
     }
 
     .header {
@@ -147,37 +152,46 @@
         gap: var(--space-4);
         align-items: stretch;
         margin-bottom: var(--space-6);
+        padding-bottom: var(--space-4);
     }
 
     .title {
         text-align: center;
+        font-size: var(--font-size-xl);
     }
 
-    .tabs {
+    .buttons {
         justify-content: center;
+        width: fit-content;
+        margin: 0 auto;
     }
 
-    .tab {
-        padding: var(--space-3) var(--space-4);
-        font-size: var(--font-size-sm);
+    .content {
+        margin-bottom: var(--space-6);
     }
 
     .error {
         padding: var(--space-4);
+    }
+
+    .loading {
+        min-height: 300px;
     }
 }
 
 @media (max-width: 480px) {
     .section {
         padding: var(--space-3);
+        margin: 0 var(--space-1);
+        min-height: 450px;
     }
 
     .title {
-        font-size: var(--font-size-xl);
+        font-size: var(--font-size-lg);
     }
 
-    .tab {
-        padding: var(--space-3);
+    .button {
+        padding: var(--space-2) var(--space-2);
         font-size: var(--font-size-xs);
     }
 
@@ -187,5 +201,30 @@
 
     .retryButton {
         padding: var(--space-2) var(--space-3);
+        font-size: var(--font-size-xs);
+    }
+
+    .loading {
+        min-height: 250px;
+    }
+}
+
+@media (max-width: 360px) {
+    .section {
+        padding: var(--space-2);
+        min-height: 400px;
+    }
+
+    .title {
+        font-size: var(--font-size-md);
+    }
+
+    .button {
+        padding: var(--space-1) var(--space-2);
+        font-size: var(--font-size-2xs);
+    }
+
+    .loading {
+        min-height: 200px;
     }
 }

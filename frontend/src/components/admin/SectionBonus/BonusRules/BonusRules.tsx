@@ -55,8 +55,6 @@ const BonusRules = () => {
         return rule.active ? 'success' : 'error';
     };
 
-    const activeRulesCount = rules.filter(rule => rule.active).length;
-
     if (loading) {
         return <div className={styles.loading}>Loading rules...</div>;
     }
@@ -74,21 +72,11 @@ const BonusRules = () => {
                         Configure how bonus points are awarded and used
                     </p>
                 </div>
-                <div className={styles.stats}>
-                    <div className={styles.stat}>
-                        <span className={styles.statValue}>{rules.length}</span>
-                        <span className={styles.statLabel}>Total Rules</span>
-                    </div>
-                    <div className={styles.stat}>
-                        <span className={styles.statValue}>{activeRulesCount}</span>
-                        <span className={styles.statLabel}>Active Rules</span>
-                    </div>
-                </div>
             </div>
 
             <div className={styles.tableContainer}>
                 <table className={styles.table}>
-                    <thead>
+                    <thead className={styles.tableHead}>
                         <tr>
                             <th>Type</th>
                             <th>Points</th>
@@ -104,9 +92,6 @@ const BonusRules = () => {
                             <tr key={rule.id}>
                                 <td>
                                     <strong>{BonusTransactionTypeDisplay[rule.bonusType as BonusTransactionType]}</strong>
-                                    <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
-                                        {rule.bonusType}
-                                    </div>
                                 </td>
                                 <td>{rule.points ?? 'N/A'}</td>
                                 <td>{rule.moneyRatio ?? 'N/A'}</td>

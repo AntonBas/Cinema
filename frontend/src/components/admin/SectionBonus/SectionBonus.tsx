@@ -6,15 +6,10 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';
 import styles from './SectionBonus.module.css';
 
 const SectionBonus = () => {
-    const [activeTab, setActiveTab] = useState<'rules' | 'transactions'>('rules');
+    const [showRules, setShowRules] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [loading] = useState(false);
     const showDelayedLoading = useDelayedLoading(loading, { delay: 150, minDisplayTime: 300 });
-
-    const handleTabChange = (tab: 'rules' | 'transactions') => {
-        setActiveTab(tab);
-        setError(null);
-    };
 
     if (error) {
         return (
@@ -47,16 +42,16 @@ const SectionBonus = () => {
         <div className={styles.section}>
             <div className={styles.header}>
                 <h1 className={styles.title}>Bonus System</h1>
-                <div className={styles.tabs}>
+                <div className={styles.buttons}>
                     <button
-                        className={`${styles.tab} ${activeTab === 'rules' ? styles.active : ''}`}
-                        onClick={() => handleTabChange('rules')}
+                        className={`${styles.button} ${showRules ? styles.active : ''}`}
+                        onClick={() => setShowRules(true)}
                     >
                         Bonus Rules
                     </button>
                     <button
-                        className={`${styles.tab} ${activeTab === 'transactions' ? styles.active : ''}`}
-                        onClick={() => handleTabChange('transactions')}
+                        className={`${styles.button} ${!showRules ? styles.active : ''}`}
+                        onClick={() => setShowRules(false)}
                     >
                         Transactions History
                     </button>
@@ -64,11 +59,7 @@ const SectionBonus = () => {
             </div>
 
             <div className={styles.content}>
-                {activeTab === 'rules' ? (
-                    <BonusRules />
-                ) : (
-                    <BonusTransactions />
-                )}
+                {showRules ? <BonusRules /> : <BonusTransactions />}
             </div>
         </div>
     );

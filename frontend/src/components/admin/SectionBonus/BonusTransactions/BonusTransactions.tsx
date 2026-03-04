@@ -217,7 +217,7 @@ const BonusTransactions = () => {
 
             <div className={styles.tableContainer}>
                 <table className={styles.table}>
-                    <thead>
+                    <thead className={styles.tableHead}>
                         <tr>
                             <th>Type</th>
                             <th>Points Change</th>
@@ -298,7 +298,7 @@ const BonusTransactions = () => {
             )}
 
             {transactionsData.totalPages > 1 && (
-                <div className={styles.pagination}>
+                <div className={styles.paginationWrapper}>
                     <div className={styles.pageInfo}>
                         Showing {startItem}-{endItem} of {transactionsData.totalElements} transactions
                     </div>
