@@ -7,12 +7,13 @@ import type {
     PromotionUpdateRequest,
     UserPromotionCreateRequest
 } from '@/types/promotion';
+import type { PageResponse } from '@/types/pagination';
 import { useApi } from '@/hooks/common/useApi';
 import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
 
 export const usePromotion = () => {
-    const userPromotionsApi = useApi<PromotionResponse[] | UserPromotionResponse[]>();
-    const adminPromotionsApi = useApi<PromotionResponse[]>();
+    const userPromotionsApi = useApi<PromotionResponse[]>();
+    const adminPromotionsApi = useApi<PageResponse<PromotionResponse>>();
     const promotionApiInstance = useApi<PromotionResponse>();
     const mutationApi = useApi<PromotionResponse | UserPromotionResponse | void>();
 
@@ -34,29 +35,20 @@ export const usePromotion = () => {
         return response || null;
     }, [userPromotionsApi]);
 
-    const getMyPromotions = useCallback(async () => {
-        const response = await userPromotionsApi.execute(
-            () => promotionApi.user.getMyPromotions(),
-            {
-                cacheKey: 'my_promotions',
-                cacheTime: 60 * 1000,
-                showErrorNotification: false,
-            }
-        );
-        return response || null;
-    }, [userPromotionsApi]);
-
     const claimPromotion = useCallback(async (request: UserPromotionCreateRequest) => {
         const response = await mutationApi.execute(
-            () => promotionApi.user.claimPromotion(request),
+            () => promotionApi.user.claim(request),
             {
                 successMessage: 'Promotion claimed successfully',
             }
         );
         userPromotionsApi.invalidateCache('available_promotions');
-        userPromotionsApi.invalidateCache('my_promotions');
         return response || null;
     }, [mutationApi, userPromotionsApi]);
+
+    const checkStatus = useCallback(async (promotionId: number) => {
+        return await promotionApi.user.checkStatus(promotionId);
+    }, []);
 
     const getById = useCallback(async (promotionId: number) => {
         const response = await promotionApiInstance.execute(
@@ -70,11 +62,11 @@ export const usePromotion = () => {
         return response || null;
     }, [promotionApiInstance]);
 
-    const getAll = useCallback(async () => {
+    const getAll = useCallback(async (pageable?: { page: number; size: number; sort?: string[] }) => {
         const response = await adminPromotionsApi.execute(
-            () => promotionApi.admin.getAll(),
+            () => promotionApi.admin.getAll(pageable),
             {
-                cacheKey: 'all_promotions',
+                cacheKey: `all_promotions_${JSON.stringify(pageable)}`,
                 cacheTime: 2 * 60 * 1000,
                 showErrorNotification: false,
             }
@@ -82,11 +74,11 @@ export const usePromotion = () => {
         return response || null;
     }, [adminPromotionsApi]);
 
-    const getActive = useCallback(async () => {
+    const getActive = useCallback(async (pageable?: { page: number; size: number; sort?: string[] }) => {
         const response = await adminPromotionsApi.execute(
-            () => promotionApi.admin.getActive(),
+            () => promotionApi.admin.getActive(pageable),
             {
-                cacheKey: 'active_promotions_admin',
+                cacheKey: `active_promotions_${JSON.stringify(pageable)}`,
                 cacheTime: 2 * 60 * 1000,
                 showErrorNotification: false,
             }
@@ -101,8 +93,7 @@ export const usePromotion = () => {
                 successMessage: 'Promotion created successfully',
             }
         );
-        adminPromotionsApi.invalidateCache('all_promotions');
-        adminPromotionsApi.invalidateCache('active_promotions_admin');
+        adminPromotionsApi.invalidateCache();
         userPromotionsApi.invalidateCache('available_promotions');
         return response || null;
     }, [mutationApi, adminPromotionsApi, userPromotionsApi]);
@@ -115,10 +106,8 @@ export const usePromotion = () => {
             }
         );
         promotionApiInstance.invalidateCache(`promotion_${promotionId}`);
-        adminPromotionsApi.invalidateCache('all_promotions');
-        adminPromotionsApi.invalidateCache('active_promotions_admin');
+        adminPromotionsApi.invalidateCache();
         userPromotionsApi.invalidateCache('available_promotions');
-        userPromotionsApi.invalidateCache('my_promotions');
         return response || null;
     }, [mutationApi, promotionApiInstance, adminPromotionsApi, userPromotionsApi]);
 
@@ -130,10 +119,8 @@ export const usePromotion = () => {
             }
         );
         promotionApiInstance.invalidateCache(`promotion_${promotionId}`);
-        adminPromotionsApi.invalidateCache('all_promotions');
-        adminPromotionsApi.invalidateCache('active_promotions_admin');
+        adminPromotionsApi.invalidateCache();
         userPromotionsApi.invalidateCache('available_promotions');
-        userPromotionsApi.invalidateCache('my_promotions');
     }, [mutationApi, promotionApiInstance, adminPromotionsApi, userPromotionsApi]);
 
     const clearCache = useCallback(() => {
@@ -151,18 +138,17 @@ export const usePromotion = () => {
     }, [userPromotionsApi, adminPromotionsApi, promotionApiInstance, mutationApi]);
 
     return {
-        availablePromotions: (userPromotionsApi.data as PromotionResponse[]) || [],
-        myPromotions: (userPromotionsApi.data as UserPromotionResponse[]) || [],
+        availablePromotions: userPromotionsApi.data || [],
         promotion: promotionApiInstance.data,
-        allPromotions: adminPromotionsApi.data || [],
-        activePromotions: adminPromotionsApi.data || [],
+        promotionsPage: adminPromotionsApi.data,
+        promotions: adminPromotionsApi.data?.content || [],
 
         loading,
         error,
 
         getAvailable,
-        getMyPromotions,
         claimPromotion,
+        checkStatus,
         getById,
         getAll,
         getActive,

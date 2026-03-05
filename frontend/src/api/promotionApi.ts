@@ -6,6 +6,7 @@ import type {
     PromotionUpdateRequest,
     UserPromotionCreateRequest
 } from '@/types/promotion';
+import type { PageResponse } from '@/types/pagination';
 
 const USER_URL = '/api/promotions';
 const ADMIN_URL = '/api/admin/promotions';
@@ -15,10 +16,7 @@ export const promotionApi = {
         getAvailable: () =>
             api.get<PromotionResponse[]>(USER_URL),
 
-        getMyPromotions: () =>
-            api.get<UserPromotionResponse[]>(`${USER_URL}/my`),
-
-        claimPromotion: (request: UserPromotionCreateRequest) =>
+        claim: (request: UserPromotionCreateRequest) =>
             api.post<UserPromotionResponse>(`${USER_URL}/claim`, request),
 
         checkStatus: (promotionId: number) =>
@@ -32,11 +30,11 @@ export const promotionApi = {
         getById: (promotionId: number) =>
             api.get<PromotionResponse>(`${ADMIN_URL}/${promotionId}`),
 
-        getAll: () =>
-            api.get<PromotionResponse[]>(ADMIN_URL),
+        getAll: (pageable?: { page: number; size: number; sort?: string[] }) =>
+            api.get<PageResponse<PromotionResponse>>(ADMIN_URL, { params: pageable }),
 
-        getActive: () =>
-            api.get<PromotionResponse[]>(`${ADMIN_URL}/active`),
+        getActive: (pageable?: { page: number; size: number; sort?: string[] }) =>
+            api.get<PageResponse<PromotionResponse>>(`${ADMIN_URL}/active`, { params: pageable }),
 
         update: (promotionId: number, request: PromotionUpdateRequest) =>
             api.put<PromotionResponse>(`${ADMIN_URL}/${promotionId}`, request),

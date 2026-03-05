@@ -47,16 +47,6 @@ public class PromotionController {
 		return ResponseEntity.ok(promotions);
 	}
 
-	@GetMapping("/my")
-	@Operation(summary = "Get user's claimed promotions", description = "Get list of promotions claimed by the current user")
-	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Promotions retrieved successfully") })
-	@PreAuthorize("hasRole('USER') or hasRole('PREMIUM_USER')")
-	public ResponseEntity<List<UserPromotionResponse>> getUserPromotions(@AuthenticationPrincipal User user) {
-		log.info("Getting claimed promotions for user ID: {}", user.getId());
-		List<UserPromotionResponse> responses = promotionService.getUserPromotions(user);
-		return ResponseEntity.ok(responses);
-	}
-
 	@PostMapping("/claim")
 	@Operation(summary = "Claim a promotion", description = "Claim a promotion to receive bonus points")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Promotion claimed successfully"),
