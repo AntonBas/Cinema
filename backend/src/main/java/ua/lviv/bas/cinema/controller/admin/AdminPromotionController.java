@@ -1,7 +1,8 @@
 package ua.lviv.bas.cinema.controller.admin;
 
-import java.util.List;
-
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -26,6 +27,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import ua.lviv.bas.cinema.dto.common.PageResponse;
 import ua.lviv.bas.cinema.dto.promotion.request.PromotionCreateRequest;
 import ua.lviv.bas.cinema.dto.promotion.request.PromotionUpdateRequest;
 import ua.lviv.bas.cinema.dto.promotion.response.PromotionResponse;
@@ -71,29 +73,31 @@ public class AdminPromotionController {
 	}
 
 	@GetMapping
-	@Operation(summary = "Get all promotions", description = "Retrieves a list of all promotions in the system")
+	@Operation(summary = "Get all promotions", description = "Retrieves a paginated list of all promotions in the system")
 	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Promotions retrieved successfully", content = @Content(schema = @Schema(implementation = PromotionResponse.class))),
+			@ApiResponse(responseCode = "200", description = "Promotions retrieved successfully", content = @Content(schema = @Schema(implementation = PageResponse.class))),
 			@ApiResponse(responseCode = "401", description = "Unauthorized - authentication required", content = @Content(schema = @Schema(implementation = String.class))),
 			@ApiResponse(responseCode = "403", description = "Forbidden - admin access required", content = @Content(schema = @Schema(implementation = String.class))) })
 	@PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
-	public ResponseEntity<List<PromotionResponse>> getAllPromotions() {
+	public ResponseEntity<PageResponse<PromotionResponse>> getAllPromotions(
+			@PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
 		log.info("Admin retrieving all promotions");
-		List<PromotionResponse> responses = promotionService.getAllPromotions();
-		return ResponseEntity.ok(responses);
+		PageResponse<PromotionResponse> response = promotionService.getAllPromotions(pageable);
+		return ResponseEntity.ok(response);
 	}
 
 	@GetMapping("/active")
-	@Operation(summary = "Get active promotions", description = "Retrieves a list of currently active promotions")
+	@Operation(summary = "Get active promotions", description = "Retrieves a paginated list of currently active promotions")
 	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Active promotions retrieved successfully", content = @Content(schema = @Schema(implementation = PromotionResponse.class))),
+			@ApiResponse(responseCode = "200", description = "Active promotions retrieved successfully", content = @Content(schema = @Schema(implementation = PageResponse.class))),
 			@ApiResponse(responseCode = "401", description = "Unauthorized - authentication required", content = @Content(schema = @Schema(implementation = String.class))),
 			@ApiResponse(responseCode = "403", description = "Forbidden - admin access required", content = @Content(schema = @Schema(implementation = String.class))) })
 	@PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
-	public ResponseEntity<List<PromotionResponse>> getActivePromotions() {
+	public ResponseEntity<PageResponse<PromotionResponse>> getActivePromotions(
+			@PageableDefault(size = 20, sort = "startDate", direction = Sort.Direction.ASC) Pageable pageable) {
 		log.info("Admin retrieving active promotions");
-		List<PromotionResponse> responses = promotionService.getActivePromotions();
-		return ResponseEntity.ok(responses);
+		PageResponse<PromotionResponse> response = promotionService.getActivePromotions(pageable);
+		return ResponseEntity.ok(response);
 	}
 
 	@PutMapping("/{promotionId}")

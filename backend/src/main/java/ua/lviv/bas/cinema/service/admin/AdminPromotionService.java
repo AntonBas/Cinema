@@ -76,11 +76,8 @@ public class AdminPromotionService {
 	}
 
 	public PromotionResponse getPromotionById(Long promotionId) {
-		PromotionResponseProjection projection = promotionRepository.findPromotionById(promotionId);
-		if (projection == null) {
-			throw new PromotionNotFoundException(promotionId);
-		}
-		return promotionMapper.toPromotionResponse(projection);
+		Promotion promotion = findByIdOrThrow(promotionId);
+		return promotionMapper.toPromotionResponse(promotion);
 	}
 
 	public List<PromotionResponse> getAllPromotions() {
