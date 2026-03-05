@@ -3,6 +3,9 @@ package ua.lviv.bas.cinema.service.admin;
 import java.time.LocalDate;
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -10,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.Promotion;
 import ua.lviv.bas.cinema.domain.projection.PromotionResponseProjection;
+import ua.lviv.bas.cinema.dto.common.PageResponse;
 import ua.lviv.bas.cinema.dto.promotion.request.PromotionCreateRequest;
 import ua.lviv.bas.cinema.dto.promotion.request.PromotionUpdateRequest;
 import ua.lviv.bas.cinema.dto.promotion.response.PromotionResponse;
@@ -80,14 +84,21 @@ public class AdminPromotionService {
 		return promotionMapper.toPromotionResponse(promotion);
 	}
 
-	public List<PromotionResponse> getAllPromotions() {
-		List<PromotionResponseProjection> projections = promotionRepository.findAllPromotions(false);
-		return promotionMapper.toPromotionResponseListFromProjections(projections);
+	public PageResponse<PromotionResponse> getAllPromotions(Pageable pageable) {
+		Page<Promotion> page = promotionRepository.findAll(pageable);
+		List<PromotionResponse> responses = promotionMapper.toPromotionResponseList(page.getContent());
+		return PageResponse.from(new PageImpl<>(responses, pageable, page.getTotalElements()));
 	}
 
-	public List<PromotionResponse> getActivePromotions() {
+	public PageResponse<PromotionResponse> getActivePromotions(Pageable pageable) {
 		List<PromotionResponseProjection> projections = promotionRepository.findAllPromotions(true);
-		return promotionMapper.toPromotionResponseListFromProjections(projections);
+		List<PromotionResponse> responses = promotionMapper.toPromotionResponseListFromProjections(projections);
+
+		int start = (int) pageable.getOffset();
+		int end = Math.min((start + pageable.getPageSize()), responses.size());
+		List<PromotionResponse> pageContent = responses.subList(start, end);
+
+		return PageResponse.from(new PageImpl<>(pageContent, pageable, responses.size()));
 	}
 
 	public Promotion findByIdOrThrow(Long promotionId) {
