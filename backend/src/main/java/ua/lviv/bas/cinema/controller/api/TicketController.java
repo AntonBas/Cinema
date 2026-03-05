@@ -6,7 +6,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -14,7 +13,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -42,30 +40,6 @@ public class TicketController {
 	private final TicketRetrievalService ticketRetrievalService;
 	private final TicketService ticketService;
 
-	@GetMapping
-	@Operation(summary = "Get user tickets with filters", description = "Get tickets with advanced filtering options")
-	public ResponseEntity<PageResponse<TicketResponse>> getUserTickets(
-			@AuthenticationPrincipal CustomUserDetails userDetails, @RequestParam(required = false) TicketStatus status,
-			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate purchaseDateFrom,
-			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate purchaseDateTo,
-			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate sessionDateFrom,
-			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate sessionDateTo,
-			@RequestParam(required = false) Long movieId,
-			@PageableDefault(size = 10, sort = "purchaseTime", direction = Sort.Direction.DESC) Pageable pageable) {
-
-		User user = userDetails.getUser();
-		log.info(
-				"Getting tickets for user ID: {}, filters: status={}, purchaseDateFrom={}, purchaseDateTo={}, sessionDateFrom={}, sessionDateTo={}, movieId={}",
-				user.getId(), status, purchaseDateFrom, purchaseDateTo, sessionDateFrom, sessionDateTo, movieId);
-
-		TicketFilterRequest filter = TicketFilterRequest.builder().status(status).purchaseDateFrom(purchaseDateFrom)
-				.purchaseDateTo(purchaseDateTo).sessionDateFrom(sessionDateFrom).sessionDateTo(sessionDateTo)
-				.movieId(movieId).build();
-
-		Page<TicketResponse> tickets = ticketRetrievalService.getUserTickets(user, filter, pageable);
-		return ResponseEntity.ok(PageResponse.from(tickets));
-	}
-
 	@GetMapping("/upcoming")
 	@Operation(summary = "Get upcoming tickets", description = "Get upcoming tickets for authenticated user")
 	public ResponseEntity<PageResponse<TicketResponse>> getUpcomingTickets(
@@ -82,19 +56,24 @@ public class TicketController {
 		return ResponseEntity.ok(PageResponse.from(tickets));
 	}
 
-	@GetMapping("/{ticketId}")
-	@Operation(summary = "Get ticket details", description = "Get ticket details by ID")
-	public ResponseEntity<TicketResponse> getTicketById(@PathVariable Long ticketId,
-			@AuthenticationPrincipal CustomUserDetails userDetails) {
+	@GetMapping("/history")
+	@Operation(summary = "Get ticket history", description = "Get paginated history of past tickets")
+	public ResponseEntity<PageResponse<TicketResponse>> getTicketHistory(
+			@AuthenticationPrincipal CustomUserDetails userDetails,
+			@PageableDefault(size = 10, sort = "purchaseTime", direction = Sort.Direction.DESC) Pageable pageable) {
 
 		User user = userDetails.getUser();
-		log.info("Getting ticket ID: {} for user ID: {}", ticketId, user.getId());
-		TicketResponse ticket = ticketRetrievalService.getTicketById(ticketId, user);
-		return ResponseEntity.ok(ticket);
+		log.info("Getting ticket history for user ID: {}", user.getId());
+
+		TicketFilterRequest filter = TicketFilterRequest.builder().status(TicketStatus.USED)
+				.sessionDateTo(LocalDate.now().minusDays(1)).build();
+
+		Page<TicketResponse> tickets = ticketRetrievalService.getUserTickets(user, filter, pageable);
+		return ResponseEntity.ok(PageResponse.from(tickets));
 	}
 
 	@GetMapping("/code/{ticketCode}")
-	@Operation(summary = "Get ticket by code", description = "Get ticket details by code")
+	@Operation(summary = "Get ticket by code", description = "Get ticket details by code (for QR scanning)")
 	public ResponseEntity<TicketResponse> getTicketByCode(@PathVariable String ticketCode,
 			@AuthenticationPrincipal CustomUserDetails userDetails) {
 
@@ -104,7 +83,7 @@ public class TicketController {
 		return ResponseEntity.ok(ticket);
 	}
 
-	@GetMapping("/{ticketCode}/qr")
+	@GetMapping("/code/{ticketCode}/qr")
 	@Operation(summary = "Get ticket QR code", description = "Generate QR code for ticket validation")
 	public ResponseEntity<byte[]> getTicketQRCode(@PathVariable String ticketCode) {
 		log.info("Generating QR code for ticket: {}", ticketCode);
@@ -112,7 +91,7 @@ public class TicketController {
 		return ResponseEntity.ok().header("Content-Type", "image/png").body(qrCode);
 	}
 
-	@PostMapping("/{ticketCode}/validate")
+	@PostMapping("/code/{ticketCode}/validate")
 	@Operation(summary = "Validate ticket", description = "Validate ticket for entry (used by staff)")
 	@PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
 	public ResponseEntity<Void> validateTicket(@PathVariable String ticketCode) {
