@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,6 +15,7 @@ import ua.lviv.bas.cinema.domain.Promotion;
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.UserPromotion;
 import ua.lviv.bas.cinema.domain.projection.UserPromotionResponseProjection;
+import ua.lviv.bas.cinema.dto.common.PageResponse;
 import ua.lviv.bas.cinema.dto.promotion.request.UserPromotionCreateRequest;
 import ua.lviv.bas.cinema.dto.promotion.response.PromotionResponse;
 import ua.lviv.bas.cinema.dto.promotion.response.UserPromotionResponse;
@@ -63,7 +65,9 @@ public class PromotionService {
 
 	public List<PromotionResponse> getAvailablePromotions(User user) {
 		log.debug("Getting available promotions for user: {}", user.getEmail());
-		List<PromotionResponse> activePromotions = promotionService.getActivePromotions();
+		PageResponse<PromotionResponse> activePromotionsPage = promotionService
+				.getActivePromotions(Pageable.ofSize(100).withPage(0));
+		List<PromotionResponse> activePromotions = activePromotionsPage.getContent();
 
 		return activePromotions.stream().filter(promotion -> !hasUserClaimedPromotion(user, promotion.getId()))
 				.collect(Collectors.toList());
