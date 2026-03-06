@@ -26,7 +26,7 @@ public interface CinemaHallMapper {
 	List<CinemaHallResponse> toCinemaHallResponseList(List<CinemaHall> halls);
 
 	@Mapping(target = "capacity", source = "seatsCount")
-	CinemaHallResponse toCinemaHallResponse(CinemaHallProjection projection);
+	CinemaHallResponse toCinemaHallResponseFromProjection(CinemaHallProjection projection);
 
 	List<CinemaHallResponse> toCinemaHallResponseListFromProjection(List<CinemaHallProjection> projections);
 
