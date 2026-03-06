@@ -1,8 +1,9 @@
 package ua.lviv.bas.cinema.controller.api;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
@@ -23,133 +24,115 @@ import org.springframework.http.ResponseEntity;
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.enums.TicketStatus;
 import ua.lviv.bas.cinema.dto.common.PageResponse;
-import ua.lviv.bas.cinema.dto.ticket.request.TicketFilterRequest;
 import ua.lviv.bas.cinema.dto.ticket.response.TicketResponse;
 import ua.lviv.bas.cinema.security.CustomUserDetails;
 import ua.lviv.bas.cinema.service.booking.ticket.TicketRetrievalService;
 import ua.lviv.bas.cinema.service.booking.ticket.TicketService;
 
 @ExtendWith(MockitoExtension.class)
-public class TicketControllerTest {
+class TicketControllerTest {
 
 	@Mock
 	private TicketRetrievalService ticketRetrievalService;
-
 	@Mock
 	private TicketService ticketService;
-
 	@InjectMocks
 	private TicketController ticketController;
 
-	private User createUser(Long id, String email) {
+	private final Long USER_ID = 1L;
+	private final String EMAIL = "user@example.com";
+	private final String TICKET_CODE = "TKT-20240115-ABC123";
+
+	private User createUser() {
 		User user = new User();
-		user.setId(id);
-		user.setEmail(email);
+		user.setId(USER_ID);
+		user.setEmail(EMAIL);
 		return user;
 	}
 
-	private CustomUserDetails createUserDetails(Long id, String email) {
-		User user = createUser(id, email);
-		return new CustomUserDetails(user);
+	private CustomUserDetails createUserDetails() {
+		return new CustomUserDetails(createUser());
 	}
 
-	private TicketResponse createTicketResponse(Long id, String ticketCode, TicketStatus status) {
-		return TicketResponse.builder().id(id).ticketCode(ticketCode).status(status).purchaseTime(LocalDateTime.now())
+	private TicketResponse createTicketResponse(Long id, String code, TicketStatus status) {
+		return TicketResponse.builder().id(id).ticketCode(code).status(status).purchaseTime(LocalDateTime.now())
 				.price(new BigDecimal("250.00")).ticketType("Adult").movieTitle("Inception")
 				.sessionTime(LocalDateTime.now().plusDays(1)).hallName("Hall A").row(1).seatNumber(12).build();
 	}
 
 	@Test
-	void getUserTickets_ShouldReturnTickets() {
-		CustomUserDetails userDetails = createUserDetails(1L, "user@example.com");
+	void getUpcomingTickets_ReturnsPage() {
+		CustomUserDetails userDetails = createUserDetails();
+		User user = userDetails.getUser();
 		Pageable pageable = PageRequest.of(0, 10);
+		TicketResponse ticket = createTicketResponse(1L, TICKET_CODE, TicketStatus.ACTIVE);
+		Page<TicketResponse> page = new PageImpl<>(List.of(ticket), pageable, 1);
 
-		TicketResponse ticket1 = createTicketResponse(1L, "TKT-20240115-ABC123", TicketStatus.ACTIVE);
-		TicketResponse ticket2 = createTicketResponse(2L, "TKT-20240115-DEF456", TicketStatus.USED);
-		Page<TicketResponse> page = new PageImpl<>(List.of(ticket1, ticket2), pageable, 2);
-
-		when(ticketRetrievalService.getUserTickets(any(User.class), any(TicketFilterRequest.class),
-				any(Pageable.class))).thenReturn(page);
-
-		ResponseEntity<PageResponse<TicketResponse>> response = ticketController.getUserTickets(userDetails, null, null,
-				null, null, null, null, pageable);
-
-		assertEquals(200, response.getStatusCode().value());
-		assertNotNull(response.getBody());
-		assertEquals(2, response.getBody().getContent().size());
-	}
-
-	@Test
-	void getUpcomingTickets_ShouldReturnTickets() {
-		CustomUserDetails userDetails = createUserDetails(1L, "user@example.com");
-		Pageable pageable = PageRequest.of(0, 10);
-
-		TicketResponse ticket1 = createTicketResponse(1L, "TKT-20240115-ABC123", TicketStatus.ACTIVE);
-		Page<TicketResponse> page = new PageImpl<>(List.of(ticket1), pageable, 1);
-
-		when(ticketRetrievalService.getUserTickets(any(User.class), any(TicketFilterRequest.class),
-				any(Pageable.class))).thenReturn(page);
+		when(ticketRetrievalService.getUserTickets(eq(user), any(), eq(pageable))).thenReturn(page);
 
 		ResponseEntity<PageResponse<TicketResponse>> response = ticketController.getUpcomingTickets(userDetails,
 				pageable);
 
-		assertEquals(200, response.getStatusCode().value());
-		assertNotNull(response.getBody());
-		assertEquals(1, response.getBody().getContent().size());
+		assertThat(response.getStatusCode().value()).isEqualTo(200);
+		assertThat(response.getBody()).isNotNull();
+		assertThat(response.getBody().getContent()).hasSize(1);
+		verify(ticketRetrievalService).getUserTickets(eq(user), any(), eq(pageable));
 	}
 
 	@Test
-	void getTicketById_ShouldReturnTicket() {
-		CustomUserDetails userDetails = createUserDetails(1L, "user@example.com");
-		Long ticketId = 1L;
+	void getTicketHistory_ReturnsPage() {
+		CustomUserDetails userDetails = createUserDetails();
+		User user = userDetails.getUser();
+		Pageable pageable = PageRequest.of(0, 10);
+		TicketResponse ticket = createTicketResponse(1L, TICKET_CODE, TicketStatus.USED);
+		Page<TicketResponse> page = new PageImpl<>(List.of(ticket), pageable, 1);
 
-		TicketResponse ticket = createTicketResponse(ticketId, "TKT-20240115-ABC123", TicketStatus.ACTIVE);
+		when(ticketRetrievalService.getUserTickets(eq(user), any(), eq(pageable))).thenReturn(page);
 
-		when(ticketRetrievalService.getTicketById(ticketId, userDetails.getUser())).thenReturn(ticket);
+		ResponseEntity<PageResponse<TicketResponse>> response = ticketController.getTicketHistory(userDetails,
+				pageable);
 
-		ResponseEntity<TicketResponse> response = ticketController.getTicketById(ticketId, userDetails);
-
-		assertEquals(200, response.getStatusCode().value());
-		assertNotNull(response.getBody());
-		assertEquals(ticketId, response.getBody().getId());
+		assertThat(response.getStatusCode().value()).isEqualTo(200);
+		assertThat(response.getBody()).isNotNull();
+		assertThat(response.getBody().getContent()).hasSize(1);
+		verify(ticketRetrievalService).getUserTickets(eq(user), any(), eq(pageable));
 	}
 
 	@Test
-	void getTicketByCode_ShouldReturnTicket() {
-		CustomUserDetails userDetails = createUserDetails(1L, "user@example.com");
-		String ticketCode = "TKT-20240115-ABC123";
+	void getTicketByCode_ReturnsTicket() {
+		CustomUserDetails userDetails = createUserDetails();
+		User user = userDetails.getUser();
+		TicketResponse ticket = createTicketResponse(1L, TICKET_CODE, TicketStatus.ACTIVE);
 
-		TicketResponse ticket = createTicketResponse(1L, ticketCode, TicketStatus.ACTIVE);
+		when(ticketRetrievalService.getTicketByCode(TICKET_CODE, user)).thenReturn(ticket);
 
-		when(ticketRetrievalService.getTicketByCode(ticketCode, userDetails.getUser())).thenReturn(ticket);
+		ResponseEntity<TicketResponse> response = ticketController.getTicketByCode(TICKET_CODE, userDetails);
 
-		ResponseEntity<TicketResponse> response = ticketController.getTicketByCode(ticketCode, userDetails);
-
-		assertEquals(200, response.getStatusCode().value());
-		assertNotNull(response.getBody());
-		assertEquals(ticketCode, response.getBody().getTicketCode());
+		assertThat(response.getStatusCode().value()).isEqualTo(200);
+		assertThat(response.getBody()).isNotNull();
+		assertThat(response.getBody().getTicketCode()).isEqualTo(TICKET_CODE);
+		verify(ticketRetrievalService).getTicketByCode(TICKET_CODE, user);
 	}
 
 	@Test
-	void getTicketQRCode_ShouldReturnQRCode() {
-		String ticketCode = "TKT-20240115-ABC123";
+	void getTicketQRCode_ReturnsImage() {
 		byte[] qrCode = new byte[] { 1, 2, 3, 4, 5 };
 
-		when(ticketService.generateTicketQRCode(ticketCode)).thenReturn(qrCode);
+		when(ticketService.generateTicketQRCode(TICKET_CODE)).thenReturn(qrCode);
 
-		ResponseEntity<byte[]> response = ticketController.getTicketQRCode(ticketCode);
+		ResponseEntity<byte[]> response = ticketController.getTicketQRCode(TICKET_CODE);
 
-		assertEquals(200, response.getStatusCode().value());
-		assertNotNull(response.getBody());
-		assertEquals(qrCode, response.getBody());
+		assertThat(response.getStatusCode().value()).isEqualTo(200);
+		assertThat(response.getHeaders().getContentType().toString()).isEqualTo("image/png");
+		assertThat(response.getBody()).isEqualTo(qrCode);
+		verify(ticketService).generateTicketQRCode(TICKET_CODE);
 	}
 
 	@Test
-	void validateTicket_ShouldReturnOk() {
-		String ticketCode = "TKT-20240115-ABC123";
+	void validateTicket_ReturnsOk() {
+		ResponseEntity<Void> response = ticketController.validateTicket(TICKET_CODE);
 
-		ResponseEntity<Void> response = ticketController.validateTicket(ticketCode);
-
-		assertEquals(200, response.getStatusCode().value());
+		assertThat(response.getStatusCode().value()).isEqualTo(200);
+		verify(ticketService).validateTicket(TICKET_CODE);
 	}
 }

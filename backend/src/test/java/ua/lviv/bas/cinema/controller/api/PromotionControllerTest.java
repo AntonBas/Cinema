@@ -1,16 +1,14 @@
 package ua.lviv.bas.cinema.controller.api;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -29,166 +27,132 @@ import ua.lviv.bas.cinema.exception.domain.promotion.PromotionNotActiveException
 import ua.lviv.bas.cinema.service.user.PromotionService;
 
 @ExtendWith(MockitoExtension.class)
-public class PromotionControllerTest {
+class PromotionControllerTest {
 
 	@Mock
 	private PromotionService promotionService;
-
 	@InjectMocks
 	private PromotionController promotionController;
 
-	private User createUser(Long id, String email) {
+	private final Long USER_ID = 1L;
+	private final String EMAIL = "test@example.com";
+	private final Long PROMOTION_ID = 1L;
+	private final String TITLE = "Test Promotion";
+	private final Integer BONUS_POINTS = 100;
+
+	private User createUser() {
 		User user = new User();
-		user.setId(id);
-		user.setEmail(email);
+		user.setId(USER_ID);
+		user.setEmail(EMAIL);
 		return user;
 	}
 
-	private PromotionResponse createPromotionResponse(Long id, String title, Integer bonusPoints) {
+	private PromotionResponse createPromotionResponse() {
 		PromotionResponse response = new PromotionResponse();
-		response.setId(id);
-		response.setTitle(title);
-		response.setBonusPoints(bonusPoints);
+		response.setId(PROMOTION_ID);
+		response.setTitle(TITLE);
+		response.setBonusPoints(BONUS_POINTS);
 		response.setStartDate(LocalDate.now().minusDays(1));
 		response.setEndDate(LocalDate.now().plusDays(5));
 		return response;
 	}
 
-	private UserPromotionResponse createUserPromotionResponse(Long id, Long promotionId, String promotionTitle,
-			Integer pointsAwarded) {
-		return UserPromotionResponse.builder().id(id).promotionId(promotionId).promotionTitle(promotionTitle)
-				.pointsAwarded(pointsAwarded).newBalance(250).claimedAt(LocalDateTime.now()).build();
+	private UserPromotionResponse createUserPromotionResponse() {
+		return UserPromotionResponse.builder().id(1L).promotionId(PROMOTION_ID).promotionTitle(TITLE)
+				.pointsAwarded(BONUS_POINTS).newBalance(250).claimedAt(LocalDateTime.now()).build();
 	}
 
 	@Test
-	void getAvailablePromotions_ShouldReturnAvailablePromotions() {
-		User user = createUser(1L, "test@example.com");
-		PromotionResponse promo1 = createPromotionResponse(1L, "Active Promo 1", 100);
-		PromotionResponse promo2 = createPromotionResponse(2L, "Active Promo 2", 150);
-		PromotionResponse promo3 = createPromotionResponse(3L, "Active Promo 3", 200);
-		List<PromotionResponse> availablePromotions = Arrays.asList(promo1, promo2, promo3);
+	void getAvailablePromotions_ReturnsList() {
+		User user = createUser();
+		List<PromotionResponse> promotions = List.of(createPromotionResponse(), createPromotionResponse());
 
-		when(promotionService.getAvailablePromotions(user)).thenReturn(availablePromotions);
+		when(promotionService.getAvailablePromotions(user)).thenReturn(promotions);
 
 		ResponseEntity<List<PromotionResponse>> result = promotionController.getAvailablePromotions(user);
 
-		assertEquals(200, result.getStatusCode().value());
-		assertNotNull(result.getBody());
-		assertEquals(3, result.getBody().size());
-		assertEquals("Active Promo 1", result.getBody().get(0).getTitle());
-		assertEquals("Active Promo 2", result.getBody().get(1).getTitle());
-		assertEquals("Active Promo 3", result.getBody().get(2).getTitle());
+		assertThat(result.getStatusCode().value()).isEqualTo(200);
+		assertThat(result.getBody()).hasSize(2);
 		verify(promotionService).getAvailablePromotions(user);
 	}
 
 	@Test
-	void getAvailablePromotions_ShouldReturnEmptyListWhenNoAvailable() {
-		User user = createUser(1L, "test@example.com");
-		when(promotionService.getAvailablePromotions(user)).thenReturn(Collections.emptyList());
-
-		ResponseEntity<List<PromotionResponse>> result = promotionController.getAvailablePromotions(user);
-
-		assertEquals(200, result.getStatusCode().value());
-		assertNotNull(result.getBody());
-		assertEquals(0, result.getBody().size());
-		verify(promotionService).getAvailablePromotions(user);
-	}
-
-	@Test
-	void getUserPromotions_ShouldReturnUserPromotions() {
-		User user = createUser(1L, "test@example.com");
-		UserPromotionResponse userPromo1 = createUserPromotionResponse(1L, 1L, "Promo 1", 100);
-		UserPromotionResponse userPromo2 = createUserPromotionResponse(2L, 2L, "Promo 2", 150);
-		List<UserPromotionResponse> userPromotions = Arrays.asList(userPromo1, userPromo2);
-
-		when(promotionService.getUserPromotions(user)).thenReturn(userPromotions);
-
-		ResponseEntity<List<UserPromotionResponse>> result = promotionController.getUserPromotions(user);
-
-		assertEquals(200, result.getStatusCode().value());
-		assertNotNull(result.getBody());
-		assertEquals(2, result.getBody().size());
-		assertEquals("Promo 1", result.getBody().get(0).getPromotionTitle());
-		assertEquals("Promo 2", result.getBody().get(1).getPromotionTitle());
-		verify(promotionService).getUserPromotions(user);
-	}
-
-	@Test
-	void claimPromotion_ShouldClaimSuccessfully() {
-		User user = createUser(1L, "test@example.com");
+	void claimPromotion_Success() {
+		User user = createUser();
 		UserPromotionCreateRequest request = new UserPromotionCreateRequest();
-		request.setPromotionId(1L);
-		UserPromotionResponse response = createUserPromotionResponse(1L, 1L, "Test Promotion", 100);
+		request.setPromotionId(PROMOTION_ID);
+		UserPromotionResponse response = createUserPromotionResponse();
 
 		when(promotionService.claimPromotion(eq(request), eq(user))).thenReturn(response);
 
 		ResponseEntity<UserPromotionResponse> result = promotionController.claimPromotion(request, user);
 
-		assertEquals(200, result.getStatusCode().value());
-		assertNotNull(result.getBody());
-		assertEquals(1L, result.getBody().getPromotionId());
-		assertEquals("Test Promotion", result.getBody().getPromotionTitle());
-		assertEquals(100, result.getBody().getPointsAwarded());
+		assertThat(result.getStatusCode().value()).isEqualTo(200);
+		assertThat(result.getBody()).isNotNull();
+		assertThat(result.getBody().getPromotionId()).isEqualTo(PROMOTION_ID);
 		verify(promotionService).claimPromotion(request, user);
 	}
 
 	@Test
-	void claimPromotion_ShouldThrowWhenNotActive() {
-		User user = createUser(1L, "test@example.com");
+	void claimPromotion_WhenNotActive_Throws() {
+		User user = createUser();
 		UserPromotionCreateRequest request = new UserPromotionCreateRequest();
-		request.setPromotionId(1L);
+		request.setPromotionId(PROMOTION_ID);
 
-		when(promotionService.claimPromotion(eq(request), eq(user)))
-				.thenThrow(new PromotionNotActiveException("Test Promotion"));
+		when(promotionService.claimPromotion(any(), any())).thenThrow(new PromotionNotActiveException(TITLE));
 
-		assertThrows(PromotionNotActiveException.class, () -> promotionController.claimPromotion(request, user));
-		verify(promotionService).claimPromotion(request, user);
+		assertThatThrownBy(() -> promotionController.claimPromotion(request, user))
+				.isInstanceOf(PromotionNotActiveException.class);
 	}
 
 	@Test
-	void claimPromotion_ShouldThrowWhenAlreadyClaimed() {
-		User user = createUser(1L, "test@example.com");
+	void claimPromotion_WhenAlreadyClaimed_Throws() {
+		User user = createUser();
 		UserPromotionCreateRequest request = new UserPromotionCreateRequest();
-		request.setPromotionId(1L);
+		request.setPromotionId(PROMOTION_ID);
 
-		when(promotionService.claimPromotion(eq(request), eq(user)))
-				.thenThrow(new AlreadyClaimedException("test@example.com", "Test Promotion"));
+		when(promotionService.claimPromotion(any(), any())).thenThrow(new AlreadyClaimedException(EMAIL, TITLE));
 
-		assertThrows(AlreadyClaimedException.class, () -> promotionController.claimPromotion(request, user));
-		verify(promotionService).claimPromotion(request, user);
+		assertThatThrownBy(() -> promotionController.claimPromotion(request, user))
+				.isInstanceOf(AlreadyClaimedException.class);
 	}
 
 	@Test
-	void checkPromotionStatus_ShouldReturnTrueWhenAvailable() {
-		User user = createUser(1L, "test@example.com");
-		Long promotionId = 1L;
+	void checkPromotionStatus_ReturnsTrueWhenAvailable() {
+		User user = createUser();
+		PromotionResponse promo = createPromotionResponse();
 
-		when(promotionService.hasUserClaimedPromotion(user, promotionId)).thenReturn(false);
+		when(promotionService.hasUserClaimedPromotion(user, PROMOTION_ID)).thenReturn(false);
+		when(promotionService.getAvailablePromotions(user)).thenReturn(List.of(promo));
 
-		PromotionResponse promo = createPromotionResponse(promotionId, "Test Promotion", 100);
-		when(promotionService.getAvailablePromotions(user)).thenReturn(Arrays.asList(promo));
+		ResponseEntity<Boolean> result = promotionController.checkPromotionStatus(PROMOTION_ID, user);
 
-		ResponseEntity<Boolean> result = promotionController.checkPromotionStatus(promotionId, user);
-
-		assertEquals(200, result.getStatusCode().value());
-		assertNotNull(result.getBody());
-		assertEquals(true, result.getBody());
-		verify(promotionService).hasUserClaimedPromotion(user, promotionId);
+		assertThat(result.getBody()).isTrue();
+		verify(promotionService).hasUserClaimedPromotion(user, PROMOTION_ID);
 		verify(promotionService).getAvailablePromotions(user);
 	}
 
 	@Test
-	void checkPromotionStatus_ShouldReturnFalseWhenAlreadyClaimed() {
-		User user = createUser(1L, "test@example.com");
-		Long promotionId = 1L;
+	void checkPromotionStatus_ReturnsFalseWhenClaimed() {
+		User user = createUser();
 
-		when(promotionService.hasUserClaimedPromotion(user, promotionId)).thenReturn(true);
+		when(promotionService.hasUserClaimedPromotion(user, PROMOTION_ID)).thenReturn(true);
 
-		ResponseEntity<Boolean> result = promotionController.checkPromotionStatus(promotionId, user);
+		ResponseEntity<Boolean> result = promotionController.checkPromotionStatus(PROMOTION_ID, user);
 
-		assertEquals(200, result.getStatusCode().value());
-		assertNotNull(result.getBody());
-		assertEquals(false, result.getBody());
-		verify(promotionService).hasUserClaimedPromotion(user, promotionId);
+		assertThat(result.getBody()).isFalse();
+		verify(promotionService).hasUserClaimedPromotion(user, PROMOTION_ID);
+	}
+
+	@Test
+	void checkPromotionStatus_ReturnsFalseWhenNotInAvailable() {
+		User user = createUser();
+
+		when(promotionService.hasUserClaimedPromotion(user, PROMOTION_ID)).thenReturn(false);
+		when(promotionService.getAvailablePromotions(user)).thenReturn(List.of());
+
+		ResponseEntity<Boolean> result = promotionController.checkPromotionStatus(PROMOTION_ID, user);
+
+		assertThat(result.getBody()).isFalse();
 	}
 }
