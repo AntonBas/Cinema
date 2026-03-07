@@ -48,13 +48,11 @@ public class SeatReservationService {
 		List<Object[]> bookedSeatData = seatReservationRepository.findBookedSeatIds(session.getHall().getId(),
 				sessionId, statuses);
 
-		List<Long> pendingSeatIds = seatReservationRepository.findPendingSeatIdsBySessionId(sessionId);
-
 		Map<Long, Boolean> bookedSeatMap = bookedSeatData.stream()
 				.collect(Collectors.toMap(data -> (Long) data[0], data -> (Boolean) data[1]));
 
 		List<SeatReservationResponse.SeatInfo> seatInfos = allSeats.stream()
-				.map(seat -> buildSeatInfo(seat, bookedSeatMap, pendingSeatIds, session, activeTicketTypes))
+				.map(seat -> buildSeatInfo(seat, bookedSeatMap, sessionId, session, activeTicketTypes))
 				.collect(Collectors.toList());
 
 		int availableSeatsCount = (int) seatInfos.stream().filter(SeatReservationResponse.SeatInfo::getAvailable)
@@ -63,19 +61,21 @@ public class SeatReservationService {
 		return seatReservationMapper.toResponse(session, seatInfos, availableSeatsCount);
 	}
 
-	private SeatReservationResponse.SeatInfo buildSeatInfo(Seat seat, Map<Long, Boolean> bookedSeatMap,
-			List<Long> pendingSeatIds, Session session, List<TicketType> activeTicketTypes) {
+	private SeatReservationResponse.SeatInfo buildSeatInfo(Seat seat, Map<Long, Boolean> bookedSeatMap, Long sessionId,
+			Session session, List<TicketType> activeTicketTypes) {
 
 		boolean isBooked = bookedSeatMap.getOrDefault(seat.getId(), false);
-		boolean isTemporary = pendingSeatIds.contains(seat.getId());
-		boolean isAvailable = !isBooked && seat.isActive();
+		AvailabilityValidator.SeatAvailabilityCheck check = availabilityValidator.getSeatAvailabilityStatus(sessionId,
+				seat.getId());
+
+		boolean isAvailable = !isBooked && !check.isTemporarilyReserved() && seat.isActive();
 
 		List<SeatReservationResponse.TicketPriceInfo> ticketPrices = activeTicketTypes.stream().map(ticketType -> {
 			BigDecimal price = priceCalculator.calculateSeatPrice(session, seat, ticketType);
 			return seatReservationMapper.toTicketPriceInfo(ticketType, price);
 		}).collect(Collectors.toList());
 
-		return seatReservationMapper.toSeatInfo(seat, isAvailable, isTemporary, ticketPrices);
+		return seatReservationMapper.toSeatInfo(seat, isAvailable, check.isTemporarilyReserved(), ticketPrices);
 	}
 
 	public void validateSeatAvailability(Long sessionId, Long seatId) {

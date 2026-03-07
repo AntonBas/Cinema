@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import ua.lviv.bas.cinema.domain.enums.SeatType;
 
 @Data
 @Builder
@@ -51,7 +52,7 @@ public class SeatReservationResponse {
 		private Integer seatNumber;
 
 		@Schema(description = "Seat type", example = "VIP")
-		private String seatType;
+		private SeatType seatType;
 
 		@Schema(description = "Is available", example = "true")
 		private Boolean available;

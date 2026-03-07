@@ -20,23 +20,45 @@ public class AvailabilityValidator {
 	private final SeatRepository seatRepository;
 
 	public void validateSeat(Long sessionId, Long seatId) {
-		if (isSeatBooked(sessionId, seatId)) {
-			throw SeatNotAvailableException.forSeatAndSession(seatId, sessionId);
-		}
-
 		Seat seat = seatRepository.findById(seatId).orElseThrow(() -> new SeatNotFoundException(seatId));
 
 		if (!seat.isActive()) {
 			throw SeatNotAvailableException.seatInactive(seatId);
 		}
+
+		if (isSeatReserved(sessionId, seatId)) {
+			throw SeatNotAvailableException.forSeatAndSession(seatId, sessionId);
+		}
 	}
 
 	public boolean isSeatAvailable(Long sessionId, Long seatId) {
-		return !isSeatBooked(sessionId, seatId);
+		return !isSeatReserved(sessionId, seatId);
 	}
 
-	private boolean isSeatBooked(Long sessionId, Long seatId) {
+	public SeatAvailabilityCheck getSeatAvailabilityStatus(Long sessionId, Long seatId) {
+		boolean isReserved = seatReservationRepository.existsBySessionIdAndSeatIdAndStatusIn(sessionId, seatId,
+				List.of(ReservationStatus.PENDING, ReservationStatus.CONFIRMED));
+
+		ReservationStatus status = null;
+		if (isReserved) {
+			status = seatReservationRepository.findStatusBySessionIdAndSeatId(sessionId, seatId).orElse(null);
+		}
+
+		return new SeatAvailabilityCheck(!isReserved, status);
+	}
+
+	private boolean isSeatReserved(Long sessionId, Long seatId) {
 		return seatReservationRepository.existsBySessionIdAndSeatIdAndStatusIn(sessionId, seatId,
 				List.of(ReservationStatus.PENDING, ReservationStatus.CONFIRMED));
+	}
+
+	public record SeatAvailabilityCheck(boolean available, ReservationStatus status) {
+		public boolean isTemporarilyReserved() {
+			return status == ReservationStatus.PENDING;
+		}
+
+		public boolean isConfirmed() {
+			return status == ReservationStatus.CONFIRMED;
+		}
 	}
 }
