@@ -65,6 +65,7 @@ public class AdminBonusService {
 			rules.setMoneyRatio(defaults.getMoneyRatio());
 			rules.setMinPointsPerTransaction(defaults.getMinPoints());
 			rules.setMaxPointsPerTransaction(defaults.getMaxPoints());
+			rules.setActive(true);
 		}
 
 		return bonusMapper.toBonusRulesResponse(bonusRulesRepository.save(rules));
@@ -73,37 +74,27 @@ public class AdminBonusService {
 	@Transactional(readOnly = true)
 	public Page<BonusTransactionResponse> getUserTransactions(Long userId, Pageable pageable) {
 		Page<BonusTransactionProjection> page = bonusTransactionRepository.findProjectionsByUserId(userId, pageable);
-		return page.map(projection -> {
-			BonusTransactionResponse response = bonusMapper.toBonusTransactionResponse(projection);
-			if (projection.getMovieTitle() != null) {
-				response.setBookingDetails(bonusMapper.toBookingDetails(projection));
-			}
-			return response;
-		});
+		return page.map(this::mapProjectionToResponse);
 	}
 
 	@Transactional(readOnly = true)
 	public Page<BonusTransactionResponse> getAllTransactions(Pageable pageable) {
 		Page<BonusTransactionProjection> page = bonusTransactionRepository.findAllProjectionsBy(pageable);
-		return page.map(projection -> {
-			BonusTransactionResponse response = bonusMapper.toBonusTransactionResponse(projection);
-			if (projection.getMovieTitle() != null) {
-				response.setBookingDetails(bonusMapper.toBookingDetails(projection));
-			}
-			return response;
-		});
+		return page.map(this::mapProjectionToResponse);
 	}
 
 	@Transactional(readOnly = true)
 	public Page<BonusTransactionResponse> getTransactionsByType(BonusTransactionType type, Pageable pageable) {
 		Page<BonusTransactionProjection> page = bonusTransactionRepository.findProjectionsByType(type, pageable);
-		return page.map(projection -> {
-			BonusTransactionResponse response = bonusMapper.toBonusTransactionResponse(projection);
-			if (projection.getMovieTitle() != null) {
-				response.setBookingDetails(bonusMapper.toBookingDetails(projection));
-			}
-			return response;
-		});
+		return page.map(this::mapProjectionToResponse);
+	}
+
+	private BonusTransactionResponse mapProjectionToResponse(BonusTransactionProjection projection) {
+		BonusTransactionResponse response = bonusMapper.toBonusTransactionResponse(projection);
+		if (projection.getMovieTitle() != null) {
+			response.setBookingDetails(bonusMapper.toBookingDetails(projection));
+		}
+		return response;
 	}
 
 	private BonusRules getRuleByType(BonusTransactionType type) {
