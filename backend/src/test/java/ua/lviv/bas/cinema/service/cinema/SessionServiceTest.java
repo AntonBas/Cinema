@@ -37,7 +37,7 @@ import ua.lviv.bas.cinema.repository.MovieRepository;
 import ua.lviv.bas.cinema.repository.SessionRepository;
 
 @ExtendWith(MockitoExtension.class)
-class SessionServiceTest {
+public class SessionServiceTest {
 
 	@Mock
 	private SessionRepository sessionRepository;

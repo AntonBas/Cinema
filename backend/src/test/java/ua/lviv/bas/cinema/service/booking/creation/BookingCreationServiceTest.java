@@ -57,7 +57,7 @@ import ua.lviv.bas.cinema.service.shared.PriceCalculatorService;
 import ua.lviv.bas.cinema.service.user.BonusService;
 
 @ExtendWith(MockitoExtension.class)
-class BookingCreationServiceTest {
+public class BookingCreationServiceTest {
 
 	@Mock
 	private BookingRepository bookingRepository;

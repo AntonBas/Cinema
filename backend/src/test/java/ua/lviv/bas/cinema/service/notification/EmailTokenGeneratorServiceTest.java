@@ -22,7 +22,7 @@ import ua.lviv.bas.cinema.repository.EmailTokenRepository;
 import ua.lviv.bas.cinema.repository.UserRepository;
 
 @ExtendWith(MockitoExtension.class)
-class EmailTokenGeneratorServiceTest {
+public class EmailTokenGeneratorServiceTest {
 
 	@Mock
 	private EmailTokenRepository tokenRepository;

@@ -37,7 +37,7 @@ import ua.lviv.bas.cinema.repository.UserPromotionRepository;
 import ua.lviv.bas.cinema.service.admin.AdminPromotionService;
 
 @ExtendWith(MockitoExtension.class)
-class PromotionServiceTest {
+public class PromotionServiceTest {
 
 	@Mock
 	private UserPromotionRepository userPromotionRepository;

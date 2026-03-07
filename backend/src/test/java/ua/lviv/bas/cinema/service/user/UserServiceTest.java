@@ -27,7 +27,7 @@ import ua.lviv.bas.cinema.repository.UserRepository;
 import ua.lviv.bas.cinema.service.notification.EmailTokenGeneratorService;
 
 @ExtendWith(MockitoExtension.class)
-class UserServiceTest {
+public class UserServiceTest {
 
 	@Mock
 	private UserRepository userRepository;

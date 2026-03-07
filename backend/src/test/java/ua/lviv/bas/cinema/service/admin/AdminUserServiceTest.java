@@ -3,8 +3,7 @@ package ua.lviv.bas.cinema.service.admin;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -42,20 +41,16 @@ import ua.lviv.bas.cinema.mapper.UserMapper;
 import ua.lviv.bas.cinema.repository.UserRepository;
 
 @ExtendWith(MockitoExtension.class)
-class AdminUserServiceTest {
+public class AdminUserServiceTest {
 
 	@Mock
 	private UserRepository userRepository;
-
 	@Mock
 	private UserMapper userMapper;
-
 	@Mock
 	private Authentication authentication;
-
 	@Mock
 	private SecurityContext securityContext;
-
 	@InjectMocks
 	private AdminUserService service;
 
@@ -63,6 +58,7 @@ class AdminUserServiceTest {
 	private final Long ADMIN_ID = 2L;
 	private final String USER_EMAIL = "user@test.com";
 	private final String ADMIN_EMAIL = "admin@test.com";
+	private final String OTHER_ADMIN_EMAIL = "other.admin@test.com";
 
 	private User user;
 	private User adminUser;
@@ -70,7 +66,6 @@ class AdminUserServiceTest {
 
 	@BeforeEach
 	void setUp() {
-		when(securityContext.getAuthentication()).thenReturn(authentication);
 		SecurityContextHolder.setContext(securityContext);
 
 		user = User.builder().id(USER_ID).email(USER_EMAIL).userRole(UserRole.ROLE_USER).enabled(true)
@@ -85,6 +80,7 @@ class AdminUserServiceTest {
 
 	@Test
 	void updateUserRole_PromoteToAdmin_Success() {
+		when(securityContext.getAuthentication()).thenReturn(authentication);
 		when(authentication.getName()).thenReturn(ADMIN_EMAIL);
 		when(userRepository.findWithBonusCardById(USER_ID)).thenReturn(Optional.of(user));
 		when(userRepository.save(user)).thenReturn(user);
@@ -100,7 +96,8 @@ class AdminUserServiceTest {
 
 	@Test
 	void updateUserRole_DemoteAdmin_Success() {
-		when(authentication.getName()).thenReturn(ADMIN_EMAIL);
+		when(securityContext.getAuthentication()).thenReturn(authentication);
+		when(authentication.getName()).thenReturn(OTHER_ADMIN_EMAIL);
 		when(userRepository.findWithBonusCardById(ADMIN_ID)).thenReturn(Optional.of(adminUser));
 		when(userRepository.countByUserRoleAndEnabledTrue(UserRole.ROLE_ADMIN)).thenReturn(3L);
 		when(userRepository.save(adminUser)).thenReturn(adminUser);
@@ -119,6 +116,7 @@ class AdminUserServiceTest {
 
 	@Test
 	void updateUserRole_SelfChange_ThrowsException() {
+		when(securityContext.getAuthentication()).thenReturn(authentication);
 		when(authentication.getName()).thenReturn(USER_EMAIL);
 		when(userRepository.findWithBonusCardById(USER_ID)).thenReturn(Optional.of(user));
 
@@ -130,7 +128,8 @@ class AdminUserServiceTest {
 
 	@Test
 	void updateUserRole_LastAdmin_ThrowsException() {
-		when(authentication.getName()).thenReturn(ADMIN_EMAIL);
+		when(securityContext.getAuthentication()).thenReturn(authentication);
+		when(authentication.getName()).thenReturn(OTHER_ADMIN_EMAIL);
 		when(userRepository.findWithBonusCardById(ADMIN_ID)).thenReturn(Optional.of(adminUser));
 		when(userRepository.countByUserRoleAndEnabledTrue(UserRole.ROLE_ADMIN)).thenReturn(1L);
 
@@ -150,6 +149,7 @@ class AdminUserServiceTest {
 
 	@Test
 	void updateUserStatus_BlockUser_Success() {
+		when(securityContext.getAuthentication()).thenReturn(authentication);
 		when(authentication.getName()).thenReturn(ADMIN_EMAIL);
 		when(userRepository.findWithBonusCardById(USER_ID)).thenReturn(Optional.of(user));
 		when(userRepository.save(user)).thenReturn(user);
@@ -167,6 +167,7 @@ class AdminUserServiceTest {
 	void updateUserStatus_UnblockUser_Success() {
 		user.setEnabled(false);
 
+		when(securityContext.getAuthentication()).thenReturn(authentication);
 		when(authentication.getName()).thenReturn(ADMIN_EMAIL);
 		when(userRepository.findWithBonusCardById(USER_ID)).thenReturn(Optional.of(user));
 		when(userRepository.save(user)).thenReturn(user);
@@ -182,6 +183,7 @@ class AdminUserServiceTest {
 
 	@Test
 	void updateUserStatus_SelfBlock_ThrowsException() {
+		when(securityContext.getAuthentication()).thenReturn(authentication);
 		when(authentication.getName()).thenReturn(USER_EMAIL);
 		when(userRepository.findWithBonusCardById(USER_ID)).thenReturn(Optional.of(user));
 
@@ -258,10 +260,10 @@ class AdminUserServiceTest {
 		filter.setEnabled(true);
 
 		AdminUserProjection projection = createAdminUserProjection();
-		Page<AdminUserProjection> projectionPage = new PageImpl<>(List.of(projection));
+		Page<AdminUserProjection> projectionPage = new PageImpl<>(List.of(projection), pageable, 1);
 
-		when(userRepository.findAdminProjectionsWithFilters(anyString(), anyString(), anyString(), anyBoolean(),
-				any(Pageable.class))).thenReturn(projectionPage);
+		when(userRepository.findAdminProjectionsWithFilters(eq("test"), eq("ROLE_USER"), eq("NOT_VERIFIED"), eq(true),
+				eq(pageable))).thenReturn(projectionPage);
 		when(userMapper.toAdminUserListResponse(projection)).thenReturn(response);
 
 		Page<AdminUserListResponse> result = service.getUsersForAdmin(filter, pageable);
@@ -277,9 +279,9 @@ class AdminUserServiceTest {
 		UserFilterRequest filter = new UserFilterRequest();
 
 		AdminUserProjection projection = createAdminUserProjection();
-		Page<AdminUserProjection> projectionPage = new PageImpl<>(List.of(projection));
+		Page<AdminUserProjection> projectionPage = new PageImpl<>(List.of(projection), pageable, 1);
 
-		when(userRepository.findAdminProjectionsWithFilters(any(), any(), any(), any(), any(Pageable.class)))
+		when(userRepository.findAdminProjectionsWithFilters(eq(null), eq(null), eq(null), eq(null), eq(pageable)))
 				.thenReturn(projectionPage);
 		when(userMapper.toAdminUserListResponse(projection)).thenReturn(response);
 
@@ -294,15 +296,16 @@ class AdminUserServiceTest {
 		Pageable pageable = PageRequest.of(0, 10);
 		UserFilterRequest filter = new UserFilterRequest();
 
-		Page<AdminUserProjection> emptyPage = new PageImpl<>(List.of());
+		Page<AdminUserProjection> emptyPage = new PageImpl<>(List.of(), pageable, 0);
 
-		when(userRepository.findAdminProjectionsWithFilters(any(), any(), any(), any(), any(Pageable.class)))
+		when(userRepository.findAdminProjectionsWithFilters(eq(null), eq(null), eq(null), eq(null), eq(pageable)))
 				.thenReturn(emptyPage);
 
 		Page<AdminUserListResponse> result = service.getUsersForAdmin(filter, pageable);
 
 		assertThat(result).isNotNull();
 		assertThat(result.getContent()).isEmpty();
+		assertThat(result.getTotalElements()).isZero();
 	}
 
 	@Test
@@ -320,7 +323,7 @@ class AdminUserServiceTest {
 
 		long result = service.getAdminCount();
 
-		assertThat(result).isEqualTo(0L);
+		assertThat(result).isZero();
 	}
 
 	private AdminUserProjection createAdminUserProjection() {

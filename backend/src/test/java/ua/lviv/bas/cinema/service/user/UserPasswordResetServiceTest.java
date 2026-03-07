@@ -28,7 +28,7 @@ import ua.lviv.bas.cinema.repository.UserRepository;
 import ua.lviv.bas.cinema.service.notification.EmailTokenGeneratorService;
 
 @ExtendWith(MockitoExtension.class)
-class UserPasswordResetServiceTest {
+public class UserPasswordResetServiceTest {
 
 	@Mock
 	private EmailTokenGeneratorService tokenGeneratorService;
