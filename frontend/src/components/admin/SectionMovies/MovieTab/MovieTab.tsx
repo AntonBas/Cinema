@@ -59,7 +59,7 @@ export const MovieTab: React.FC = () => {
     [activeTab, tabData]
   );
 
-  const loadTabData = useCallback(async (tab: MovieTabType, page: number, search?: string) => {
+  const loadTabData = useCallback(async (tab: MovieTabType, page: number, search?: string, skipCache: boolean = false) => {
     if (loadingDataRef.current) return;
 
     loadingDataRef.current = true;
@@ -78,13 +78,13 @@ export const MovieTab: React.FC = () => {
       let response;
       switch (tab) {
         case 'CURRENT':
-          response = await getAdminCurrent(params);
+          response = await getAdminCurrent(params, skipCache);
           break;
         case 'UPCOMING':
-          response = await getAdminUpcoming(params);
+          response = await getAdminUpcoming(params, skipCache);
           break;
         case 'ARCHIVED':
-          response = await getAdminArchived(params);
+          response = await getAdminArchived(params, skipCache);
           break;
       }
 
@@ -110,9 +110,9 @@ export const MovieTab: React.FC = () => {
   const loadTabCounts = useCallback(async () => {
     try {
       await Promise.all([
-        loadTabData('CURRENT', 0, ''),
-        loadTabData('UPCOMING', 0, ''),
-        loadTabData('ARCHIVED', 0, '')
+        loadTabData('CURRENT', 0, '', true),
+        loadTabData('UPCOMING', 0, '', true),
+        loadTabData('ARCHIVED', 0, '', true)
       ]);
     } catch (error) {
       console.error('Failed to load tab counts:', error);
@@ -129,7 +129,7 @@ export const MovieTab: React.FC = () => {
   useEffect(() => {
     if (initialLoadRef.current) {
       const timer = setTimeout(() => {
-        loadTabData(activeTab, params.page || 0, params.search);
+        loadTabData(activeTab, params.page || 0, params.search, false);
       }, 100);
 
       return () => clearTimeout(timer);
@@ -157,7 +157,7 @@ export const MovieTab: React.FC = () => {
 
   const handleEdit = useCallback(async (movie: MovieCardResponse) => {
     try {
-      const response = await getAdminById(movie.id);
+      const response = await getAdminById(movie.id, true);
       if (response) {
         setEditingMovie(response);
         setIsModalOpen(true);
@@ -184,7 +184,7 @@ export const MovieTab: React.FC = () => {
         : params.page || 0;
 
       setPage(newPage);
-      await loadTabData(activeTab, newPage, params.search);
+      await loadTabData(activeTab, newPage, params.search, true);
     } catch (err) {
       if (isApiErrorException(err) && err.isConflict?.()) {
         showNotification(`Cannot delete movie "${deletingMovie.title}" because it has associated sessions.`, 'error');
@@ -208,7 +208,7 @@ export const MovieTab: React.FC = () => {
     if (result) {
       showNotification(`Movie "${result.title}" successfully ${editingMovie ? 'updated' : 'created'}!`, 'success');
     }
-    loadTabData(activeTab, params.page || 0, params.search);
+    loadTabData(activeTab, params.page || 0, params.search, true);
   }, [activeTab, params.page, params.search, loadTabData, editingMovie, showNotification]);
 
   const handleFormCancel = useCallback(() => {
