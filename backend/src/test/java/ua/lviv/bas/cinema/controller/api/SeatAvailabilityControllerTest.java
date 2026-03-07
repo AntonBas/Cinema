@@ -15,6 +15,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
+import ua.lviv.bas.cinema.domain.enums.SeatType;
 import ua.lviv.bas.cinema.dto.booking.response.SeatReservationResponse;
 import ua.lviv.bas.cinema.service.booking.availability.SeatReservationService;
 
@@ -28,10 +29,10 @@ public class SeatAvailabilityControllerTest {
 	private SeatAvailabilityController seatAvailabilityController;
 
 	private SeatReservationResponse createSeatAvailabilityResponse(Long sessionId) {
-		SeatReservationResponse.SeatInfo seat1 = SeatReservationResponse.SeatInfo.builder().id(1L).row(1)
-				.seatNumber(1).seatType("STANDARD").available(true).temporarilyReserved(false)
-				.ticketPrices(Arrays.asList(SeatReservationResponse.TicketPriceInfo.builder().ticketTypeId(1L)
-						.ticketTypeName("Adult").finalPrice(new BigDecimal("250.00")).build()))
+		SeatReservationResponse.SeatInfo seat1 = SeatReservationResponse.SeatInfo
+				.builder().id(1L).row(1).seatNumber(1).seatType(SeatType.STANDARD).available(true)
+				.temporarilyReserved(false).ticketPrices(Arrays.asList(SeatReservationResponse.TicketPriceInfo.builder()
+						.ticketTypeId(1L).ticketTypeName("Adult").finalPrice(new BigDecimal("250.00")).build()))
 				.build();
 
 		return SeatReservationResponse.builder().sessionId(sessionId).movieTitle("Inception")

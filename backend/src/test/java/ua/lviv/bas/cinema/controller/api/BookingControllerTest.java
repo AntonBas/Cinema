@@ -24,7 +24,7 @@ import ua.lviv.bas.cinema.security.CustomUserDetails;
 import ua.lviv.bas.cinema.service.booking.ControllerFacade;
 
 @ExtendWith(MockitoExtension.class)
-class BookingControllerTest {
+public class BookingControllerTest {
 
 	@Mock
 	private ControllerFacade controllerFacade;

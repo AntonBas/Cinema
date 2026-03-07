@@ -30,7 +30,9 @@ import ua.lviv.bas.cinema.domain.enums.UserRole;
 import ua.lviv.bas.cinema.dto.user.request.UserLoginRequest;
 import ua.lviv.bas.cinema.dto.user.request.UserRegistrationRequest;
 import ua.lviv.bas.cinema.dto.user.response.UserResponse;
+import ua.lviv.bas.cinema.mapper.UserMapper;
 import ua.lviv.bas.cinema.security.CustomUserDetails;
+import ua.lviv.bas.cinema.security.CustomUserDetailsService;
 import ua.lviv.bas.cinema.service.user.UserPasswordResetService;
 import ua.lviv.bas.cinema.service.user.UserService;
 
@@ -55,6 +57,12 @@ public class AuthControllerTest {
 
 	@MockitoBean
 	private JwtTokenProvider jwtTokenProvider;
+
+	@MockitoBean
+	private CustomUserDetailsService customUserDetailsService;
+
+	@MockitoBean
+	private UserMapper userMapper;
 
 	private UserRegistrationRequest registrationRequest;
 	private UserLoginRequest loginRequest;
@@ -103,7 +111,7 @@ public class AuthControllerTest {
 		when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
 				.thenReturn(authentication);
 		when(jwtTokenProvider.generateToken(authentication)).thenReturn("jwtToken");
-		when(userService.getUserResponseByEmail("anton@example.com")).thenReturn(userResponse);
+		when(userMapper.toUserResponse(user)).thenReturn(userResponse);
 
 		mockMvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(loginRequest))).andExpect(status().isOk())
@@ -118,6 +126,11 @@ public class AuthControllerTest {
 
 		mockMvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(loginRequest))).andExpect(status().isUnauthorized());
+	}
+
+	@Test
+	void getCurrentUser_ShouldReturnUnauthorized_WhenNotAuthenticated() throws Exception {
+		mockMvc.perform(get("/api/auth/me")).andExpect(status().isUnauthorized());
 	}
 
 	@Test
@@ -146,5 +159,25 @@ public class AuthControllerTest {
 
 		mockMvc.perform(get("/api/auth/email/check").param("email", "nonexistent@example.com"))
 				.andExpect(status().isOk()).andExpect(jsonPath("$").value(false));
+	}
+
+	@Test
+	void register_ShouldReturnBadRequest_WhenInvalidEmail() throws Exception {
+		registrationRequest.setEmail("invalid-email");
+
+		mockMvc.perform(post("/api/auth/register").contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(registrationRequest))).andExpect(status().isBadRequest());
+	}
+
+	@Test
+	void forgotPassword_ShouldReturnBadRequest_WhenInvalidEmail() throws Exception {
+		mockMvc.perform(post("/api/auth/password/forgot").param("email", "invalid-email"))
+				.andExpect(status().isBadRequest());
+	}
+
+	@Test
+	void resetPassword_ShouldReturnBadRequest_WhenTokenIsBlank() throws Exception {
+		mockMvc.perform(post("/api/auth/password/reset").param("token", "").param("newPassword", "newPass"))
+				.andExpect(status().isBadRequest());
 	}
 }

@@ -28,7 +28,7 @@ import ua.lviv.bas.cinema.exception.domain.promotion.PromotionNotFoundException;
 import ua.lviv.bas.cinema.service.admin.AdminPromotionService;
 
 @ExtendWith(MockitoExtension.class)
-class AdminPromotionControllerTest {
+public class AdminPromotionControllerTest {
 
 	@Mock
 	private AdminPromotionService promotionService;

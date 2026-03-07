@@ -27,6 +27,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockMultipartFile;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import ua.lviv.bas.cinema.domain.enums.MovieStatus;
@@ -108,7 +109,8 @@ public class AdminMovieControllerTest {
 				"content".getBytes());
 
 		when(objectMapper.readValue(invalidMovieDataJson, MovieCreateRequest.class))
-				.thenThrow(new RuntimeException("Invalid JSON"));
+				.thenThrow(new JsonProcessingException("Invalid JSON") {
+				});
 
 		assertThrows(IllegalArgumentException.class,
 				() -> movieController.createMovie(invalidMovieDataJson, posterFile));
@@ -161,7 +163,8 @@ public class AdminMovieControllerTest {
 				"content".getBytes());
 
 		when(objectMapper.readValue(invalidMovieDataJson, MovieUpdateRequest.class))
-				.thenThrow(new RuntimeException("Invalid JSON"));
+				.thenThrow(new JsonProcessingException("Invalid JSON") {
+				});
 
 		assertThrows(IllegalArgumentException.class,
 				() -> movieController.updateMovie(1L, invalidMovieDataJson, posterFile));

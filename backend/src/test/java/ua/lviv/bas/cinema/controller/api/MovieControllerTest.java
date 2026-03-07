@@ -29,7 +29,7 @@ import ua.lviv.bas.cinema.exception.domain.cinema.MovieNotFoundException;
 import ua.lviv.bas.cinema.service.cinema.MovieService;
 
 @ExtendWith(MockitoExtension.class)
-class MovieControllerTest {
+public class MovieControllerTest {
 
 	@Mock
 	private MovieService movieService;

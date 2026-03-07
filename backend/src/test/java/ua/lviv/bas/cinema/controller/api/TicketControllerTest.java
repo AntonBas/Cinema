@@ -30,7 +30,7 @@ import ua.lviv.bas.cinema.service.booking.ticket.TicketRetrievalService;
 import ua.lviv.bas.cinema.service.booking.ticket.TicketService;
 
 @ExtendWith(MockitoExtension.class)
-class TicketControllerTest {
+public class TicketControllerTest {
 
 	@Mock
 	private TicketRetrievalService ticketRetrievalService;

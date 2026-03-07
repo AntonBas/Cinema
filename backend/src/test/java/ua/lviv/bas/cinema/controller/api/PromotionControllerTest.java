@@ -27,7 +27,7 @@ import ua.lviv.bas.cinema.exception.domain.promotion.PromotionNotActiveException
 import ua.lviv.bas.cinema.service.user.PromotionService;
 
 @ExtendWith(MockitoExtension.class)
-class PromotionControllerTest {
+public class PromotionControllerTest {
 
 	@Mock
 	private PromotionService promotionService;
