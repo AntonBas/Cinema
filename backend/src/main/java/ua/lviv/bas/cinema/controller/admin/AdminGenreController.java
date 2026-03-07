@@ -1,7 +1,6 @@
 package ua.lviv.bas.cinema.controller.admin;
 
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -87,9 +86,9 @@ public class AdminGenreController {
 	}
 
 	@GetMapping
-	@Operation(summary = "Get genres list")
+	@Operation(summary = "Get genres list sorted by popularity")
 	public ResponseEntity<PageResponse<GenreResponse>> getGenres(@RequestParam(required = false) String search,
-			@Parameter(hidden = true) @PageableDefault(size = 20, sort = "name", direction = Sort.Direction.ASC) Pageable pageable) {
+			@Parameter(hidden = true) @PageableDefault(size = 20) Pageable pageable) {
 		log.info("GET /api/admin/genres - search: '{}'", search);
 		var result = genreService.searchGenres(search, pageable);
 		return ResponseEntity.ok(PageResponse.from(result));

@@ -84,10 +84,9 @@ public class GenreService {
 		log.debug("Genre deleted with ID: {}", id);
 	}
 
-	@Cacheable(key = "'search-' + #query + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
+	@Cacheable(key = "'popular-' + #query + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
 	public Page<GenreResponse> searchGenres(String query, Pageable pageable) {
-		log.info("Searching genres: query='{}', pageable={}", query, pageable);
-
+		log.info("Searching genres by popularity: query='{}', pageable={}", query, pageable);
 		Page<GenreProjection> projections = genreRepository.findProjectionsByQuery(query, pageable);
 		return projections.map(genreMapper::toGenreResponse);
 	}
