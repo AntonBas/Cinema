@@ -1,8 +1,10 @@
 package ua.lviv.bas.cinema.mapper;
 
+import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
+import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.mapstruct.ReportingPolicy;
 
 import ua.lviv.bas.cinema.domain.BonusCard;
@@ -36,5 +38,6 @@ public interface BonusMapper {
 	@Mapping(target = "sessionDateTime", source = "sessionDateTime")
 	BonusTransactionResponse.BookingDetails toBookingDetails(BonusTransactionProjection projection);
 
+	@BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 	void updateBonusRulesFromRequest(BonusRulesRequest request, @MappingTarget BonusRules rules);
 }
