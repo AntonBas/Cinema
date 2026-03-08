@@ -17,7 +17,6 @@ import org.springframework.stereotype.Repository;
 import jakarta.persistence.LockModeType;
 import ua.lviv.bas.cinema.domain.Session;
 import ua.lviv.bas.cinema.domain.projection.SessionAdminProjection;
-import ua.lviv.bas.cinema.domain.projection.SessionScheduleProjection;
 
 @Repository
 public interface SessionRepository extends JpaRepository<Session, Long>, JpaSpecificationExecutor<Session> {
@@ -71,7 +70,15 @@ public interface SessionRepository extends JpaRepository<Session, Long>, JpaSpec
 			  AND (:status IS NULL OR s.status = :status)
 			  AND (cast(:dateFrom as date) IS NULL OR s.start_time >= cast(:dateFrom as timestamp))
 			  AND (cast(:dateTo as date) IS NULL OR s.start_time <= cast(:dateTo as timestamp) + interval '1 day')
-			ORDER BY s.start_time DESC
+			ORDER BY
+			    CASE s.status
+			        WHEN 'SCHEDULED' THEN 1
+			        WHEN 'ONGOING' THEN 2
+			        WHEN 'CANCELLED' THEN 3
+			        WHEN 'COMPLETED' THEN 4
+			        ELSE 5
+			    END,
+			    s.start_time DESC
 			""", countQuery = """
 			SELECT COUNT(s.id)
 			FROM sessions s
@@ -85,45 +92,6 @@ public interface SessionRepository extends JpaRepository<Session, Long>, JpaSpec
 	Page<SessionAdminProjection> findAdminSessionsNative(@Param("hallId") Long hallId,
 			@Param("movieTitle") String movieTitle, @Param("status") String status,
 			@Param("dateFrom") LocalDate dateFrom, @Param("dateTo") LocalDate dateTo, Pageable pageable);
-
-	@Query(value = """
-			SELECT
-			    s.id as id,
-			    s.start_time as startTime,
-			    (s.start_time + (m.duration_minutes * INTERVAL '1 minute')) as endTime,
-			    s.base_price as basePrice,
-			    s.status as status,
-			    m.id as movieId,
-			    m.title as movieTitle,
-			    m.poster_file_name as moviePosterFileName,
-			    m.age_rating as movieAgeRating,
-			    m.duration_minutes as movieDuration,
-			    h.id as hallId,
-			    h.name as hallName,
-			    (SELECT COUNT(seat.id) FROM seats seat WHERE seat.hall_id = h.id) as hallCapacity,
-			    (SELECT COUNT(seat.id) FROM seats seat WHERE seat.hall_id = h.id) -
-			    COALESCE((
-			        SELECT COUNT(sr.id)
-			        FROM seat_reservations sr
-			        WHERE sr.session_id = s.id
-			        AND sr.status IN ('PENDING', 'CONFIRMED', 'CHECKED_IN')
-			    ), 0) as availableSeats
-			FROM sessions s
-			JOIN movies m ON m.id = s.movie_id
-			JOIN cinema_halls h ON h.id = s.hall_id
-			WHERE s.status = 'SCHEDULED'
-			AND s.start_time > :currentTime
-			AND (cast(:date as date) IS NULL OR DATE(s.start_time) = cast(:date as date))
-			ORDER BY s.start_time ASC
-			""", countQuery = """
-			SELECT COUNT(s.id)
-			FROM sessions s
-			WHERE s.status = 'SCHEDULED'
-			AND s.start_time > :currentTime
-			AND (cast(:date as date) IS NULL OR DATE(s.start_time) = cast(:date as date))
-			""", nativeQuery = true)
-	Page<SessionScheduleProjection> findUpcomingSessions(@Param("currentTime") LocalDateTime currentTime,
-			@Param("date") LocalDate date, Pageable pageable);
 
 	@Query("""
 			SELECT s FROM Session s

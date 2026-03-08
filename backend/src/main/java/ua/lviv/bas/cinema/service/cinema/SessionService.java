@@ -12,6 +12,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,7 +23,7 @@ import ua.lviv.bas.cinema.domain.Movie;
 import ua.lviv.bas.cinema.domain.Session;
 import ua.lviv.bas.cinema.domain.enums.CinemaSessionStatus;
 import ua.lviv.bas.cinema.domain.projection.SessionAdminProjection;
-import ua.lviv.bas.cinema.domain.projection.SessionScheduleProjection;
+import ua.lviv.bas.cinema.domain.specification.SessionSpecification;
 import ua.lviv.bas.cinema.dto.common.PageResponse;
 import ua.lviv.bas.cinema.dto.session.request.SessionCreateRequest;
 import ua.lviv.bas.cinema.dto.session.request.SessionFilterRequest;
@@ -48,17 +49,24 @@ public class SessionService {
 	private final SessionMapper sessionMapper;
 	private final MovieRepository movieRepository;
 	private final CinemaHallService cinemaHallService;
+	private final SessionSpecification sessionSpecification;
 
 	@Cacheable(key = "'public:' + #searchTerm + ':' + #date + ':' + #pageable.pageNumber + ':' + #pageable.pageSize")
 	public PageResponse<SessionScheduleResponse> getScheduleSessions(String searchTerm, LocalDate date,
 			Pageable pageable) {
-		Page<SessionScheduleProjection> page = sessionRepository.findUpcomingSessions(LocalDateTime.now(), date,
-				pageable);
 
-		List<SessionScheduleResponse> responses = page.getContent().stream().map(sessionMapper::toScheduleResponse)
-				.collect(Collectors.toList());
+		Specification<Session> spec = sessionSpecification.buildForSchedule(searchTerm, date);
 
-		Page<SessionScheduleResponse> responsePage = new PageImpl<>(responses, pageable, page.getTotalElements());
+		Page<Session> sessionsPage = sessionRepository.findAll(spec, pageable);
+
+		List<SessionScheduleResponse> responses = sessionsPage.getContent().stream().map(session -> {
+			SessionScheduleResponse response = sessionMapper.toScheduleResponse(session);
+			response.setAvailableSeats(getAvailableSeats(session.getId()));
+			return response;
+		}).collect(Collectors.toList());
+
+		Page<SessionScheduleResponse> responsePage = new PageImpl<>(responses, pageable,
+				sessionsPage.getTotalElements());
 
 		return PageResponse.from(responsePage);
 	}

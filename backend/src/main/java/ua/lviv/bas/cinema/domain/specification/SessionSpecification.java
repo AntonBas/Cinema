@@ -32,10 +32,9 @@ public class SessionSpecification {
 			}
 
 			if (date != null) {
-				LocalDateTime fromDateTime = date.atStartOfDay();
-				LocalDateTime toDateTime = date.plusDays(1).atStartOfDay();
-				predicates.add(cb.greaterThanOrEqualTo(root.get("startTime"), fromDateTime));
-				predicates.add(cb.lessThan(root.get("startTime"), toDateTime));
+				LocalDateTime startOfDay = date.atStartOfDay();
+				LocalDateTime endOfDay = date.plusDays(1).atStartOfDay();
+				predicates.add(cb.between(root.get("startTime"), startOfDay, endOfDay));
 			}
 
 			return cb.and(predicates.toArray(new Predicate[0]));
