@@ -214,13 +214,14 @@ public class CinemaHallServiceTest {
 
 	@Test
 	void deleteHallShouldDeleteHall() {
-		CinemaHall hall = CinemaHall.builder().id(HALL_ID).build();
+		CinemaHall hall = CinemaHall.builder().id(HALL_ID).name(HALL_NAME).build();
 
 		when(hallRepository.findByIdWithSeats(HALL_ID)).thenReturn(Optional.of(hall));
 
 		cinemaHallService.deleteHall(HALL_ID);
 
-		verify(hallRepository).deleteById(HALL_ID);
+		verify(hallRepository).delete(hall);
+		verify(hallRepository, never()).deleteById(any());
 	}
 
 	@Test
@@ -232,7 +233,7 @@ public class CinemaHallServiceTest {
 
 	@Test
 	void deleteHallShouldThrowExceptionWhenHallHasFutureSessions() {
-		CinemaHall hall = CinemaHall.builder().id(HALL_ID).build();
+		CinemaHall hall = CinemaHall.builder().id(HALL_ID).name(HALL_NAME).build();
 
 		Session session = Session.builder().startTime(LocalDateTime.now().plusDays(1)).build();
 		hall.setSessions(List.of(session));
@@ -241,6 +242,19 @@ public class CinemaHallServiceTest {
 
 		assertThatThrownBy(() -> cinemaHallService.deleteHall(HALL_ID))
 				.isInstanceOf(CinemaHallHasSessionsException.class);
+	}
+
+	@Test
+	void deleteHallShouldThrowExceptionWithHallName() {
+		CinemaHall hall = CinemaHall.builder().id(HALL_ID).name(HALL_NAME).build();
+
+		Session session = Session.builder().startTime(LocalDateTime.now().plusDays(1)).build();
+		hall.setSessions(List.of(session));
+
+		when(hallRepository.findByIdWithSeats(HALL_ID)).thenReturn(Optional.of(hall));
+
+		assertThatThrownBy(() -> cinemaHallService.deleteHall(HALL_ID))
+				.isInstanceOf(CinemaHallHasSessionsException.class).hasMessageContaining(HALL_NAME);
 	}
 
 	@Test
