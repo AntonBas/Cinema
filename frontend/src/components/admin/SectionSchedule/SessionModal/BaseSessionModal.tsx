@@ -426,24 +426,26 @@ export const BaseSessionModal: React.FC<BaseSessionModalProps> = ({
                 </div>
 
                 <div className={styles.formActions}>
-                    <Button
-                        type="button"
-                        variant="secondary"
-                        onClick={onClose}
-                        disabled={loading}
-                        className={styles.cancelButton}
-                    >
-                        Cancel
-                    </Button>
-                    <Button
-                        type="submit"
-                        variant="success"
-                        disabled={loading || hallsLoading || (isEditing && !hasChanges)}
-                        loading={loading}
-                        className={styles.submitButton}
-                    >
-                        {submitText}
-                    </Button>
+                    <div className={styles.actions}>
+                        <Button
+                            type="button"
+                            variant="secondary"
+                            onClick={onClose}
+                            disabled={loading}
+                            className={styles.cancelButton}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            type="submit"
+                            variant="success"
+                            disabled={loading || hallsLoading || (isEditing && !hasChanges)}
+                            loading={loading}
+                            className={styles.submitButton}
+                        >
+                            {submitText}
+                        </Button>
+                    </div>
                 </div>
             </form>
         </Modal>
