@@ -86,7 +86,7 @@ public class CinemaHallService {
 					.anyMatch(session -> session.getStartTime().isAfter(LocalDateTime.now()));
 
 			if (hasFutureSessions) {
-				throw new CinemaHallHasSessionsException(id);
+				throw new CinemaHallHasSessionsException(existing.getName(), id);
 			}
 
 			if (!existing.getName().equals(request.getName()) && hallRepository.existsByName(request.getName())) {
@@ -130,7 +130,7 @@ public class CinemaHallService {
 				.anyMatch(session -> session.getStartTime().isAfter(LocalDateTime.now()));
 
 		if (hasFutureSessions) {
-			throw new CinemaHallHasSessionsException(id);
+			throw new CinemaHallHasSessionsException(hall.getName(), id);
 		}
 
 		hallRepository.deleteById(id);

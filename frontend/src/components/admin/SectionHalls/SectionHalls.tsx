@@ -54,14 +54,6 @@ export const SectionHalls: React.FC = () => {
         }
     }, [loadHalls]);
 
-    const handleApiError = useCallback((err: unknown, defaultMessage: string) => {
-        if (isApiErrorException(err)) {
-            showNotification(err.message, 'error');
-        } else {
-            showNotification(defaultMessage, 'error');
-        }
-    }, [showNotification]);
-
     const handleCreateHall = useCallback(async (request: CinemaHallRequest) => {
         try {
             const response = await createHall(request);
@@ -71,13 +63,13 @@ export const SectionHalls: React.FC = () => {
             }
             setShowCreateModal(false);
         } catch (err) {
-            if (isApiErrorException(err) && err.isConflict()) {
-                showNotification(`Hall with name "${request.name}" already exists`, 'error');
+            if (isApiErrorException(err)) {
+                showNotification(err.message, 'error');
             } else {
-                handleApiError(err, 'Failed to create hall');
+                showNotification('Failed to create hall', 'error');
             }
         }
-    }, [createHall, showNotification, handleApiError, loadHalls]);
+    }, [createHall, showNotification, loadHalls]);
 
     const handleEditHall = useCallback(async (id: number, request: CinemaHallRequest & { coupleRows?: number[] }) => {
         try {
@@ -90,13 +82,13 @@ export const SectionHalls: React.FC = () => {
             setSelectedHall(null);
             setCurrentLayout(undefined);
         } catch (err) {
-            if (isApiErrorException(err) && err.isConflict()) {
-                showNotification(`Hall with name "${request.name}" already exists`, 'error');
+            if (isApiErrorException(err)) {
+                showNotification(err.message, 'error');
             } else {
-                handleApiError(err, 'Failed to update hall');
+                showNotification('Failed to update hall', 'error');
             }
         }
-    }, [updateHall, showNotification, handleApiError, loadHalls]);
+    }, [updateHall, showNotification, loadHalls]);
 
     const handleDeleteHall = useCallback(async () => {
         if (!deleteModal.hall) return;
@@ -109,14 +101,14 @@ export const SectionHalls: React.FC = () => {
             await loadHalls();
             setDeleteModal({ isOpen: false, hall: null, isDeleting: false });
         } catch (err) {
-            if (isApiErrorException(err) && err.isConflict()) {
-                showNotification('Cannot delete hall because it has associated sessions', 'error');
+            if (isApiErrorException(err)) {
+                showNotification(err.message, 'error');
             } else {
-                handleApiError(err, 'Failed to delete hall');
+                showNotification('Failed to delete hall', 'error');
             }
             setDeleteModal(prev => ({ ...prev, isDeleting: false }));
         }
-    }, [deleteHall, deleteModal.hall, showNotification, handleApiError, loadHalls]);
+    }, [deleteHall, deleteModal.hall, showNotification, loadHalls]);
 
     const confirmDelete = useCallback((hall: CinemaHallResponse) => {
         setDeleteModal({ isOpen: true, hall, isDeleting: false });
