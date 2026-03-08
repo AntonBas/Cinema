@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { sessionApi } from '@/api/sessionApi';
 import type { SessionScheduleResponse } from '@/types/session';
-import type { SearchParams } from '@/types/pagination';
 import { Layout } from '@/components/layout/Layout/Layout';
 import { DateFilter } from '@/components/sessions/DateFilter/DateFilter';
 import { MovieFilter } from '@/components/sessions/MovieFilter/MovieFilter';
@@ -20,7 +19,6 @@ const SessionsPage: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [page, setPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
-    const [totalElements, setTotalElements] = useState(0);
     const [availableDates, setAvailableDates] = useState<string[]>([]);
     const [initialLoad, setInitialLoad] = useState(true);
 
@@ -42,33 +40,25 @@ const SessionsPage: React.FC = () => {
         setError(null);
 
         try {
-            const params: SearchParams = {
-                page,
-                size: 50,
-                sort: 'startTime,asc',
-                dateFrom: selectedDate,
-                dateTo: selectedDate
-            };
-
-            if (selectedMovieId) {
-                params.movieId = selectedMovieId;
-            }
-
             const response = await sessionApi.public.getSessions(
-                params.search || '',
-                params.dateFrom,
+                undefined,
+                selectedDate,
                 {
-                    page: params.page,
-                    size: params.size,
-                    sort: params.sort
+                    page,
+                    size: 50,
+                    sort: 'startTime,asc'
                 }
             );
 
             const data = response?.data || null;
+            let sessionsData = data?.content || [];
 
-            setSessions(data?.content || []);
+            if (selectedMovieId) {
+                sessionsData = sessionsData.filter(s => s.movieId === selectedMovieId);
+            }
+
+            setSessions(sessionsData);
             setTotalPages(data?.totalPages || 0);
-            setTotalElements(data?.totalElements || 0);
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Failed to load sessions';
             setError(errorMessage);
@@ -81,23 +71,13 @@ const SessionsPage: React.FC = () => {
 
     const fetchAvailableDates = useCallback(async () => {
         try {
-            const params: SearchParams = {
-                page: 0,
-                size: 1000,
-                sort: 'startTime,asc'
-            };
-
-            if (selectedMovieId) {
-                params.movieId = selectedMovieId;
-            }
-
             const response = await sessionApi.public.getSessions(
-                params.search || '',
-                params.dateFrom,
+                undefined,
+                undefined,
                 {
-                    page: params.page,
-                    size: params.size,
-                    sort: params.sort
+                    page: 0,
+                    size: 1000,
+                    sort: 'startTime,asc'
                 }
             );
 
@@ -113,7 +93,7 @@ const SessionsPage: React.FC = () => {
         } catch (err) {
             console.error('Error fetching available dates:', err);
         }
-    }, [selectedMovieId]);
+    }, []);
 
     useEffect(() => {
         fetchSessions();
@@ -227,7 +207,7 @@ const SessionsPage: React.FC = () => {
                     {hasSessions ? (
                         <div className={styles.resultsInfo}>
                             <span className={styles.resultsCount}>
-                                {uniqueMoviesCount} movie{uniqueMoviesCount !== 1 ? 's' : ''} • {totalElements} session{totalElements !== 1 ? 's' : ''}
+                                {uniqueMoviesCount} movie{uniqueMoviesCount !== 1 ? 's' : ''} • {sessions.length} session{sessions.length !== 1 ? 's' : ''}
                             </span>
                             {selectedMovieId && (
                                 <Button
@@ -284,7 +264,7 @@ const SessionsPage: React.FC = () => {
                                         Page {page + 1} of {totalPages}
                                     </span>
                                     <span className={styles.totalInfo}>
-                                        {totalElements} total sessions
+                                        {sessions.length} current sessions
                                     </span>
                                 </div>
                                 <Button
