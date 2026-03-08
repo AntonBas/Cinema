@@ -130,7 +130,11 @@ export const SectionSchedule: React.FC = () => {
             });
         } catch (error) {
             if (isMounted.current) {
-                showNotification('Failed to load sessions', 'error');
+                if (error instanceof Error) {
+                    showNotification(error.message, 'error');
+                } else {
+                    showNotification('Failed to load sessions', 'error');
+                }
             }
         } finally {
             loadingDataRef.current = false;
@@ -212,8 +216,12 @@ export const SectionSchedule: React.FC = () => {
             setIsDeleteModalOpen(false);
             setSessionToDelete(null);
             await loadSessions();
-        } catch {
-            showNotification('Failed to delete session', 'error');
+        } catch (error) {
+            if (error instanceof Error) {
+                showNotification(error.message, 'error');
+            } else {
+                showNotification('Failed to delete session', 'error');
+            }
         }
     }, [sessionToDelete, deleteSession, showNotification, loadSessions]);
 
@@ -225,8 +233,12 @@ export const SectionSchedule: React.FC = () => {
             setIsCancelModalOpen(false);
             setSessionToCancel(null);
             await loadSessions();
-        } catch {
-            showNotification('Failed to cancel session', 'error');
+        } catch (error) {
+            if (error instanceof Error) {
+                showNotification(error.message, 'error');
+            } else {
+                showNotification('Failed to cancel session', 'error');
+            }
         }
     }, [sessionToCancel, cancelSession, showNotification, loadSessions]);
 
@@ -238,8 +250,12 @@ export const SectionSchedule: React.FC = () => {
             setIsReactivateModalOpen(false);
             setSessionToReactivate(null);
             await loadSessions();
-        } catch {
-            showNotification('Failed to reactivate session', 'error');
+        } catch (error) {
+            if (error instanceof Error) {
+                showNotification(error.message, 'error');
+            } else {
+                showNotification('Failed to reactivate session', 'error');
+            }
         }
     }, [sessionToReactivate, reactivateSession, showNotification, loadSessions]);
 
@@ -250,9 +266,13 @@ export const SectionSchedule: React.FC = () => {
             setIsCreateModalOpen(false);
             setSelectedSession(null);
             await loadSessions();
-        } catch {
-            showNotification('Failed to create session', 'error');
-            throw new Error('Failed to create session');
+        } catch (error) {
+            if (error instanceof Error) {
+                showNotification(error.message, 'error');
+            } else {
+                showNotification('Failed to create session', 'error');
+            }
+            throw error;
         }
     }, [createSession, showNotification, loadSessions]);
 
@@ -263,9 +283,13 @@ export const SectionSchedule: React.FC = () => {
             setIsUpdateModalOpen(false);
             setSelectedSession(null);
             await loadSessions();
-        } catch {
-            showNotification('Failed to update session', 'error');
-            throw new Error('Failed to update session');
+        } catch (error) {
+            if (error instanceof Error) {
+                showNotification(error.message, 'error');
+            } else {
+                showNotification('Failed to update session', 'error');
+            }
+            throw error;
         }
     }, [updateSession, showNotification, loadSessions]);
 
@@ -376,12 +400,6 @@ export const SectionSchedule: React.FC = () => {
                 movies={allMovies}
                 moviesLoading={moviesLoading}
             />
-
-            {paginationInfo.total > 0 && (
-                <div className={styles.resultsInfo}>
-                    Showing {paginationInfo.start}-{paginationInfo.end} of {paginationInfo.total} sessions
-                </div>
-            )}
 
             <div className={styles.tableSection}>
                 <SessionTable
