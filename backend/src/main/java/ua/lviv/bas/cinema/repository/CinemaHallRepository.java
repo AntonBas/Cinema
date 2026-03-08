@@ -27,6 +27,7 @@ public interface CinemaHallRepository extends JpaRepository<CinemaHall, Long> {
 			FROM CinemaHall ch
 			LEFT JOIN ch.seats s
 			GROUP BY ch.id, ch.name
+			ORDER BY ch.name ASC
 			""")
 	List<CinemaHallProjection> findAllProjected();
 
