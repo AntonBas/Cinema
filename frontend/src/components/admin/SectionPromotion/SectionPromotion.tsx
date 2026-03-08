@@ -22,7 +22,7 @@ const SectionPromotion: React.FC = () => {
     const [promotionsList, setPromotionsList] = useState<PromotionResponse[]>([]);
 
     const {
-        allPromotions,
+        promotions,
         getAll,
         remove
     } = usePromotion();
@@ -30,10 +30,10 @@ const SectionPromotion: React.FC = () => {
     const showDelayedLoading = useDelayedLoading(isLoading, { delay: 150, minDisplayTime: 300 });
 
     useEffect(() => {
-        if (allPromotions && Array.isArray(allPromotions) && allPromotions.length > 0) {
-            setPromotionsList(allPromotions);
+        if (promotions && Array.isArray(promotions) && promotions.length > 0) {
+            setPromotionsList(promotions);
         }
-    }, [allPromotions]);
+    }, [promotions]);
 
     const getPromotionStatus = useCallback((promotion: PromotionResponse): string => {
         const now = new Date();
@@ -83,8 +83,8 @@ const SectionPromotion: React.FC = () => {
         setIsLoading(true);
         try {
             const response = await getAll();
-            if (response && Array.isArray(response)) {
-                setPromotionsList(response);
+            if (response && Array.isArray(response.content)) {
+                setPromotionsList(response.content);
             }
         } catch (error) {
             console.error('Failed to load promotions');
