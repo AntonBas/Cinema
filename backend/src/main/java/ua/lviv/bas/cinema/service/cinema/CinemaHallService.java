@@ -133,7 +133,7 @@ public class CinemaHallService {
 			throw new CinemaHallHasSessionsException(hall.getName(), id);
 		}
 
-		hallRepository.deleteById(id);
+		hallRepository.delete(hall);
 		log.debug("Cinema hall deleted with ID: {}", id);
 	}
 
