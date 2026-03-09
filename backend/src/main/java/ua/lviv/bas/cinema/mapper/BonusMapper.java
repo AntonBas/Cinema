@@ -23,20 +23,7 @@ public interface BonusMapper {
 
 	BonusRulesResponse toBonusRulesResponse(BonusRules rules);
 
-	@Mapping(target = "id", source = "id")
-	@Mapping(target = "type", source = "type")
-	@Mapping(target = "typeDisplay", expression = "java(projection.getTypeDisplay())")
-	@Mapping(target = "pointsChange", source = "pointsChange")
-	@Mapping(target = "createdAt", source = "createdAt")
-	@Mapping(target = "newBalance", source = "newBalance")
-	@Mapping(target = "bookingDetails", ignore = true)
 	BonusTransactionResponse toBonusTransactionResponse(BonusTransactionProjection projection);
-
-	@Mapping(target = "movieTitle", source = "movieTitle")
-	@Mapping(target = "bookingReference", source = "bookingReference")
-	@Mapping(target = "cinemaHall", source = "cinemaHall")
-	@Mapping(target = "sessionDateTime", source = "sessionDateTime")
-	BonusTransactionResponse.BookingDetails toBookingDetails(BonusTransactionProjection projection);
 
 	@BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 	void updateBonusRulesFromRequest(BonusRulesRequest request, @MappingTarget BonusRules rules);
