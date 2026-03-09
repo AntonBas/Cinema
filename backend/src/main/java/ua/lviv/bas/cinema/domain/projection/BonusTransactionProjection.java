@@ -7,21 +7,11 @@ public interface BonusTransactionProjection {
 
 	String getType();
 
-	String getTypeDisplay();
-
 	Integer getPointsChangeRaw();
 
 	LocalDateTime getCreatedAt();
 
 	Integer getNewBalance();
-
-	String getMovieTitle();
-
-	String getBookingReference();
-
-	String getCinemaHall();
-
-	LocalDateTime getSessionDateTime();
 
 	default String getPointsChange() {
 		Integer raw = getPointsChangeRaw();
