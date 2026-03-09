@@ -4,7 +4,6 @@ import { AccountSidebar } from '@/components/account/AccountSidebar/AccountSideb
 import { BonusBalanceCard } from '@/components/account/BonusBalanceCard/BonusBalanceCard';
 import { BonusCardInfo } from '@/components/account/BonusCardInfo/BonusCardInfo';
 import { BonusTransactions } from '@/components/account/BonusTransactions/BonusTransactions';
-import { Button } from '@/components/ui/Button/Button';
 import { Notification } from '@/components/ui/Notification/Notification';
 import { useBonus } from '@/hooks/features/bonus/useBonus';
 import { usePagination } from '@/hooks/common/usePagination';
@@ -42,15 +41,11 @@ export const BonusPage: React.FC = () => {
     }, [params.page, activeTab]);
 
     const loadBonusData = async () => {
-        console.log('Loading bonus data...');
         try {
             const [balanceResponse, cardResponse] = await Promise.all([
                 getMyBalance(),
                 getMyCard()
             ]);
-
-            console.log('Balance data:', balanceResponse);
-            console.log('Card data:', cardResponse);
 
             setBalance(balanceResponse || null);
             setCardInfo(cardResponse || null);
@@ -64,19 +59,8 @@ export const BonusPage: React.FC = () => {
     };
 
     const loadTransactions = async (page: number) => {
-        console.log(`Loading transactions for page ${page}...`);
         try {
             const response = await getMyTransactions({ page, size: DEFAULT_PAGE_SIZE_ADMIN });
-
-            console.log('Raw transactions data:', response);
-            console.log('Content array:', response?.content);
-            console.log('Content length:', response?.content?.length);
-            console.log('Pagination info:', {
-                number: response?.number,
-                totalPages: response?.totalPages,
-                totalElements: response?.totalElements
-            });
-
             setTransactions(response?.content || []);
             setPagination({
                 currentPage: response?.number || 0,
@@ -90,19 +74,7 @@ export const BonusPage: React.FC = () => {
     };
 
     const handlePageChange = (page: number) => {
-        console.log('Page changed to:', page);
         setPage(page);
-    };
-
-    const handleRefresh = async () => {
-        console.log('Refreshing bonus data...');
-        try {
-            await loadBonusData();
-            showNotification('success', 'Bonus data refreshed successfully');
-        } catch (error: any) {
-            console.error('Error refreshing:', error);
-            showNotification('error', 'Failed to refresh bonus data');
-        }
     };
 
     const showNotification = (type: 'success' | 'error', message: string) => {
@@ -149,17 +121,6 @@ export const BonusPage: React.FC = () => {
 
                         <div className={styles.header}>
                             <h1 className={styles.title}>My Bonus</h1>
-                            <div className={styles.headerActions}>
-                                <Button
-                                    variant="primary"
-                                    onClick={handleRefresh}
-                                    loading={loading}
-                                    disabled={loading}
-                                    size="medium"
-                                >
-                                    Refresh
-                                </Button>
-                            </div>
                         </div>
 
                         {localError && (

@@ -36,8 +36,7 @@ export const BonusBalanceCard: React.FC<BonusBalanceCardProps> = ({ balance, loa
     return (
         <div className={styles.balanceCard}>
             <div className={styles.header}>
-                <h2 className={styles.title}>Bonus Balance</h2>
-                <span className={styles.cardIcon}>🎫</span>
+                <h2 className={styles.title}>Bonus Card</h2>
             </div>
 
             <div className={styles.mainBalance}>

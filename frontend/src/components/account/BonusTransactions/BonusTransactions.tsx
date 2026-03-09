@@ -58,11 +58,11 @@ export const BonusTransactions: React.FC<BonusTransactionsProps> = ({
     };
 
     const getBadgeVariant = (type: string): any => {
-        if (type.includes('BONUS')) return 'success';
-        if (type.includes('ACCRUAL')) return 'primary';
-        if (type.includes('RETURN')) return 'info';
-        if (type.includes('CANCEL')) return 'error';
-        if (type.includes('SPEND')) return 'warning';
+        if (type.includes('Welcome') || type.includes('Birthday') || type.includes('Promotion')) return 'success';
+        if (type.includes('Payment')) return 'primary';
+        if (type.includes('Refund')) return 'info';
+        if (type.includes('Cancel')) return 'error';
+        if (type.includes('Spend')) return 'warning';
         return 'secondary';
     };
 
@@ -70,11 +70,8 @@ export const BonusTransactions: React.FC<BonusTransactionsProps> = ({
         return parseFloat(pointsChange);
     };
 
-    const getReferenceInfo = (transaction: BonusTransactionResponse) => {
-        if (transaction.bookingDetails?.bookingReference) {
-            return transaction.bookingDetails.bookingReference;
-        }
-        return '-';
+    const getDisplayType = (type: string): string => {
+        return BonusTransactionTypeDisplay[type as keyof typeof BonusTransactionTypeDisplay] || type;
     };
 
     return (
@@ -90,7 +87,6 @@ export const BonusTransactions: React.FC<BonusTransactionsProps> = ({
                 <div className={styles.tableHeader}>
                     <div className={styles.headerCell}>Date & Time</div>
                     <div className={styles.headerCell}>Type</div>
-                    <div className={styles.headerCell}>Reference</div>
                     <div className={styles.headerCell}>Points Change</div>
                     <div className={styles.headerCell}>New Balance</div>
                 </div>
@@ -106,20 +102,15 @@ export const BonusTransactions: React.FC<BonusTransactionsProps> = ({
                                 </div>
                                 <div className={styles.tableCell}>
                                     <Badge
-                                        variant={getBadgeVariant(transaction.type)}
+                                        variant={getBadgeVariant(getDisplayType(transaction.type))}
                                         size="small"
                                     >
-                                        {BonusTransactionTypeDisplay[transaction.type] || transaction.type}
+                                        {getDisplayType(transaction.type)}
                                     </Badge>
                                 </div>
                                 <div className={styles.tableCell}>
-                                    <span className={styles.reference}>
-                                        {getReferenceInfo(transaction)}
-                                    </span>
-                                </div>
-                                <div className={styles.tableCell}>
                                     <span className={pointsValue > 0 ? styles.positive : styles.negative}>
-                                        {pointsValue > 0 ? '+' : ''}{transaction.pointsChange}
+                                        {transaction.pointsChange}
                                     </span>
                                 </div>
                                 <div className={styles.tableCell}>

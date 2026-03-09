@@ -5,6 +5,8 @@
     box-shadow: var(--shadow-md);
     border: 1px solid var(--color-border);
     height: 100%;
+    display: flex;
+    flex-direction: column;
 }
 
 .title {
@@ -32,8 +34,9 @@
 
 .infoGrid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(2, 1fr);
     gap: var(--space-6);
+    flex: 1;
 }
 
 .infoItem {
@@ -46,6 +49,8 @@
     text-align: center;
     border: 1px solid var(--color-border);
     transition: all var(--transition-fast);
+    justify-content: center;
+    min-height: 120px;
 }
 
 .infoItem:hover {
@@ -68,6 +73,8 @@
     font-weight: 600;
     display: flex;
     justify-content: center;
+    align-items: center;
+    min-height: 40px;
 }
 
 .loading {
@@ -77,6 +84,7 @@
     justify-content: center;
     min-height: 200px;
     gap: var(--space-4);
+    flex: 1;
 }
 
 .spinner {
@@ -100,6 +108,7 @@
     justify-content: center;
     min-height: 200px;
     gap: var(--space-4);
+    flex: 1;
 }
 
 .noDataIcon {
@@ -153,6 +162,7 @@
 
     .infoItem {
         padding: var(--space-3);
+        min-height: 100px;
     }
 
     .infoLabel {
@@ -161,6 +171,7 @@
 
     .infoValue {
         font-size: var(--font-size-md);
+        min-height: 35px;
     }
 
     .loading,
@@ -194,10 +205,12 @@
 
     .infoItem {
         padding: var(--space-2);
+        min-height: 90px;
     }
 
     .infoValue {
         font-size: var(--font-size-sm);
+        min-height: 30px;
     }
 
     .loading,

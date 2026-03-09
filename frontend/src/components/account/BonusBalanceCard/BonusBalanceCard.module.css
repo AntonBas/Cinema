@@ -1,35 +1,27 @@
 .balanceCard {
-    background: linear-gradient(145deg, #1a1f2d 0%, #2a3041 100%);
-    border-radius: 24px;
+    background: linear-gradient(135deg, var(--color-bg-tertiary) 0%, var(--color-bg-quaternary) 100%);
+    border-radius: var(--radius-xl);
     padding: var(--space-8);
     color: var(--color-text-primary);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
-    border: 1px solid rgba(253, 95, 0, 0.3);
+    box-shadow: var(--shadow-xl);
+    border: 1px solid var(--color-border-medium);
     position: relative;
     overflow: hidden;
-    backdrop-filter: blur(10px);
+    transition: box-shadow var(--transition-normal);
 }
 
-.balanceCard::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, var(--color-primary), #ff8c42, var(--color-primary));
-    background-size: 200% 100%;
-    animation: gradientMove 3s ease infinite;
+.balanceCard:hover {
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
 }
 
 .balanceCard::after {
-    content: '🎬';
     position: absolute;
-    bottom: 20px;
-    right: 20px;
-    font-size: 60px;
-    opacity: 0.1;
+    bottom: -20px;
+    right: -20px;
+    font-size: 120px;
+    opacity: 0.03;
     transform: rotate(-10deg);
+    pointer-events: none;
 }
 
 .header {
@@ -42,20 +34,24 @@
 }
 
 .title {
-    font-size: 1.75rem;
+    font-size: var(--font-size-2xl);
     font-weight: 700;
     margin: 0;
-    background: linear-gradient(135deg, #ffffff 0%, var(--color-primary-light) 100%);
-    background-clip: text;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    color: transparent;
-    letter-spacing: 1px;
+    color: var(--color-text-primary);
+    letter-spacing: 0.5px;
+    position: relative;
+    display: inline-block;
 }
 
-.cardIcon {
-    font-size: 2.5rem;
-    filter: drop-shadow(0 4px 8px rgba(253, 95, 0, 0.3));
+.title::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 0;
+    width: 40px;
+    height: 3px;
+    background: linear-gradient(90deg, var(--color-primary), var(--color-primary-light));
+    border-radius: var(--radius-full);
 }
 
 .mainBalance {
@@ -63,10 +59,10 @@
     margin-bottom: var(--space-8);
     position: relative;
     z-index: 1;
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 20px;
+    background: var(--color-bg-secondary);
+    border-radius: var(--radius-lg);
     padding: var(--space-6);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--color-border);
 }
 
 .points {
@@ -74,25 +70,21 @@
     font-weight: 800;
     line-height: 1;
     margin-bottom: var(--space-2);
-    background: linear-gradient(135deg, var(--color-primary) 0%, #ff8c42 50%, #ffb347 100%);
-    background-clip: text;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    color: transparent;
-    text-shadow: 0 4px 15px rgba(253, 95, 0, 0.3);
+    color: var(--color-primary);
+    text-shadow: 0 4px 15px rgba(var(--color-primary-rgb), 0.2);
 }
 
 .pointsLabel {
     font-size: var(--font-size-lg);
-    opacity: 0.9;
+    color: var(--color-text-secondary);
     font-weight: 500;
-    letter-spacing: 2px;
+    letter-spacing: 1px;
     text-transform: uppercase;
 }
 
 .valueInfo {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    grid-template-columns: repeat(2, 1fr);
     gap: var(--space-4);
     margin-bottom: var(--space-8);
     position: relative;
@@ -102,40 +94,37 @@
 .valueItem {
     text-align: center;
     padding: var(--space-4);
-    background: rgba(0, 0, 0, 0.3);
-    border-radius: 16px;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(5px);
-    transition: transform 0.2s ease, border-color 0.2s ease;
+    background: var(--color-bg-secondary);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border);
+    transition: border-color var(--transition-fast);
 }
 
 .valueItem:hover {
-    transform: translateY(-2px);
-    border-color: rgba(var(--color-primary-rgb), 0.3);
+    border-color: var(--color-primary);
 }
 
 .valueLabel {
     font-size: var(--font-size-xs);
-    opacity: 0.7;
+    color: var(--color-text-secondary);
     margin-bottom: var(--space-2);
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 0.5px;
 }
 
 .valueAmount {
     font-size: var(--font-size-xl);
     font-weight: 700;
-    color: var(--color-primary-light);
+    color: var(--color-text-primary);
 }
 
 .usageLimits {
-    background: rgba(0, 0, 0, 0.3);
-    border-radius: 20px;
+    background: var(--color-bg-secondary);
+    border-radius: var(--radius-lg);
     padding: var(--space-6);
     position: relative;
     z-index: 1;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(5px);
+    border: 1px solid var(--color-border);
 }
 
 .limitsTitle {
@@ -143,34 +132,31 @@
     font-weight: 600;
     margin: 0 0 var(--space-4) 0;
     text-align: center;
-    color: var(--color-primary-light);
-    letter-spacing: 1px;
-    text-transform: uppercase;
+    color: var(--color-text-primary);
 }
 
 .limitsGrid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    grid-template-columns: repeat(2, 1fr);
     gap: var(--space-3);
 }
 
 .limitItem {
     text-align: center;
     padding: var(--space-3);
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.02);
-    transition: all 0.2s ease;
+    background: var(--color-bg-tertiary);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+    transition: border-color var(--transition-fast);
 }
 
 .limitItem:hover {
-    background: rgba(var(--color-primary-rgb), 0.1);
-    border-color: rgba(var(--color-primary-rgb), 0.2);
+    border-color: var(--color-primary);
 }
 
 .limitLabel {
     font-size: var(--font-size-xs);
-    opacity: 0.6;
+    color: var(--color-text-secondary);
     margin-bottom: var(--space-1);
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -196,7 +182,7 @@
 .spinner {
     width: 50px;
     height: 50px;
-    border: 3px solid rgba(255, 255, 255, 0.1);
+    border: 3px solid var(--color-border);
     border-top-color: var(--color-primary);
     border-radius: 50%;
     animation: spin 1s linear infinite;
@@ -230,20 +216,6 @@
     font-size: var(--font-size-lg);
 }
 
-@keyframes gradientMove {
-    0% {
-        background-position: 0% 50%;
-    }
-
-    50% {
-        background-position: 100% 50%;
-    }
-
-    100% {
-        background-position: 0% 50%;
-    }
-}
-
 @keyframes spin {
     from {
         transform: rotate(0deg);
@@ -271,28 +243,21 @@
         padding: var(--space-6);
     }
 
-    .balanceCard::after {
-        font-size: 80px;
-        bottom: 10px;
-        right: 10px;
-    }
-
     .title {
-        font-size: 1.5rem;
+        font-size: var(--font-size-xl);
     }
 
     .points {
         font-size: 3rem;
     }
 
+    .pointsLabel {
+        font-size: var(--font-size-md);
+    }
+
     .valueInfo {
         grid-template-columns: 1fr;
         gap: var(--space-3);
-    }
-
-    .limitsGrid {
-        grid-template-columns: 1fr;
-        gap: var(--space-2);
     }
 
     .valueItem {
@@ -303,10 +268,17 @@
         font-size: var(--font-size-lg);
     }
 
-    .loading span {
-        font-size: var(--font-size-md);
+    .limitsGrid {
+        grid-template-columns: 1fr;
     }
 
+    .balanceCard::after {
+        font-size: 100px;
+        bottom: -10px;
+        right: -10px;
+    }
+
+    .loading span,
     .noData p {
         font-size: var(--font-size-md);
     }
@@ -318,11 +290,7 @@
     }
 
     .title {
-        font-size: 1.25rem;
-    }
-
-    .cardIcon {
-        font-size: 2rem;
+        font-size: var(--font-size-lg);
     }
 
     .points {
@@ -330,7 +298,7 @@
     }
 
     .pointsLabel {
-        font-size: var(--font-size-md);
+        font-size: var(--font-size-sm);
     }
 
     .valueItem {
@@ -338,7 +306,11 @@
     }
 
     .valueLabel {
-        font-size: var(--font-size-xs);
+        font-size: 0.7rem;
+    }
+
+    .valueAmount {
+        font-size: var(--font-size-md);
     }
 
     .limitItem {
@@ -354,6 +326,15 @@
     }
 
     .balanceCard::after {
-        font-size: 60px;
+        font-size: 80px;
+    }
+
+    .loading {
+        min-height: 250px;
+    }
+
+    .spinner {
+        width: 40px;
+        height: 40px;
     }
 }

@@ -49,15 +49,6 @@ export const BonusCardInfo: React.FC<BonusCardInfoProps> = ({ cardInfo, loading 
 
             <div className={styles.infoGrid}>
                 <div className={styles.infoItem}>
-                    <div className={styles.infoLabel}>Current Points</div>
-                    <div className={styles.infoValue}>
-                        <Badge variant="primary" size="small">
-                            {cardInfo.pointsBalance} points
-                        </Badge>
-                    </div>
-                </div>
-
-                <div className={styles.infoItem}>
                     <div className={styles.infoLabel}>Birthday Bonus</div>
                     <div className={styles.infoValue}>
                         <Badge

@@ -58,7 +58,7 @@
 
 .tableHeader {
     display: grid;
-    grid-template-columns: 1.5fr 1fr 1fr 1fr 1fr;
+    grid-template-columns: 2fr 1.5fr 1.2fr 1.2fr;
     background: var(--color-bg-secondary);
     border-bottom: 2px solid var(--color-border);
 }
@@ -79,7 +79,7 @@
 
 .tableRow {
     display: grid;
-    grid-template-columns: 1.5fr 1fr 1fr 1fr 1fr;
+    grid-template-columns: 2fr 1.5fr 1.2fr 1.2fr;
     border-bottom: 1px solid var(--color-border);
     transition: all var(--transition-fast);
 }
@@ -102,13 +102,19 @@
     font-size: var(--font-size-sm);
 }
 
-.reference {
+.tableCell:first-child {
     font-family: monospace;
-    background: var(--color-bg-primary);
-    padding: var(--space-1) var(--space-2);
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--color-border);
     font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
+}
+
+.tableCell:nth-child(2) {
+    justify-content: flex-start;
+}
+
+.tableCell:nth-child(3),
+.tableCell:nth-child(4) {
+    justify-content: flex-end;
 }
 
 .balance {
@@ -120,16 +126,22 @@
     color: var(--color-success);
     font-weight: 600;
     background: rgba(var(--color-success-rgb), 0.1);
-    padding: var(--space-1) var(--space-2);
+    padding: var(--space-1) var(--space-3);
     border-radius: var(--radius-sm);
+    display: inline-block;
+    min-width: 60px;
+    text-align: center;
 }
 
 .negative {
     color: var(--color-error);
     font-weight: 600;
     background: rgba(var(--color-error-rgb), 0.1);
-    padding: var(--space-1) var(--space-2);
+    padding: var(--space-1) var(--space-3);
     border-radius: var(--radius-sm);
+    display: inline-block;
+    min-width: 60px;
+    text-align: center;
 }
 
 .paginationWrapper {
@@ -204,17 +216,23 @@
 
 @media (max-width: 1024px) {
     .tableHeader {
-        grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+        grid-template-columns: 1.8fr 1.3fr 1.1fr 1.1fr;
     }
 
     .tableRow {
-        grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+        grid-template-columns: 1.8fr 1.3fr 1.1fr 1.1fr;
     }
 
     .headerCell,
     .tableCell {
         padding: var(--space-3) var(--space-2);
         font-size: var(--font-size-xs);
+    }
+
+    .positive,
+    .negative {
+        min-width: 50px;
+        padding: var(--space-1) var(--space-2);
     }
 }
 
@@ -245,8 +263,8 @@
 
     .tableHeader,
     .tableRow {
-        grid-template-columns: 180px 120px 120px 100px 100px;
-        min-width: 620px;
+        grid-template-columns: 180px 150px 100px 100px;
+        min-width: 530px;
     }
 
     .headerCell,
@@ -284,6 +302,12 @@
         font-size: var(--font-size-md);
     }
 
+    .tableHeader,
+    .tableRow {
+        grid-template-columns: 160px 130px 90px 90px;
+        min-width: 470px;
+    }
+
     .loadingContainer,
     .noData {
         min-height: 150px;
@@ -297,5 +321,11 @@
 
     .noDataIcon {
         font-size: 2.5rem;
+    }
+
+    .positive,
+    .negative {
+        min-width: 45px;
+        font-size: var(--font-size-xs);
     }
 }
