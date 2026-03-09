@@ -72,7 +72,7 @@ export const BookingPage: React.FC = () => {
     } = useSeatAvailability(sessionIdNum);
 
     const {
-        data: bonusData,
+        myBalance,
         getMyBalance
     } = useBonus();
 
@@ -110,17 +110,17 @@ export const BookingPage: React.FC = () => {
     }, [sessionIdNum, seatData]);
 
     useEffect(() => {
-        if (bonusData?.myBalance) {
-            setMinUsablePoints(bonusData.myBalance.minUsablePoints || 0);
+        if (myBalance) {
+            setMinUsablePoints(myBalance.minUsablePoints || 0);
 
             const maxPoints = Math.min(
-                bonusData.myBalance.pointsBalance || 0,
-                bonusData.myBalance.maxUsablePoints || 0,
+                myBalance.pointsBalance || 0,
+                myBalance.maxUsablePoints || 0,
                 Math.floor(totalPrice / 0.01)
             );
             setMaxUsablePoints(maxPoints);
         }
-    }, [bonusData, totalPrice]);
+    }, [myBalance, totalPrice]);
 
     const showNotification = useCallback((message: string, type: NotificationType = 'info') => {
         const id = Date.now().toString();
