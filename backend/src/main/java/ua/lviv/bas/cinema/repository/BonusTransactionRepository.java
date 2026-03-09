@@ -22,28 +22,8 @@ public interface BonusTransactionRepository extends JpaRepository<BonusTransacti
 	@Query("SELECT bt FROM BonusTransaction bt WHERE bt.type = :type")
 	Page<BonusTransaction> findByType(@Param("type") BonusTransactionType type, Pageable pageable);
 
-	@Query("SELECT " + "bt.id as id, " + "bt.type as type, " + "CAST(bt.type as string) as typeDisplay, "
-			+ "bt.pointsChange as pointsChangeRaw, " + "bt.createdAt as createdAt, "
-			+ "bt.bonusCard.pointsBalance as newBalance, " + "s.movie.title as movieTitle, "
-			+ "CAST(b.id as string) as bookingReference, " + "h.name as cinemaHall, "
-			+ "s.startTime as sessionDateTime " + "FROM BonusTransaction bt " + "LEFT JOIN bt.booking b "
-			+ "LEFT JOIN b.session s " + "LEFT JOIN s.hall h " + "LEFT JOIN s.movie m "
+	@Query("SELECT " + "bt.id as id, " + "bt.type as type, " + "bt.pointsChange as pointsChangeRaw, "
+			+ "bt.createdAt as createdAt, " + "bt.bonusCard.pointsBalance as newBalance " + "FROM BonusTransaction bt "
 			+ "WHERE bt.bonusCard.user.id = :userId")
 	Page<BonusTransactionProjection> findProjectionsByUserId(@Param("userId") Long userId, Pageable pageable);
-
-	@Query("SELECT " + "bt.id as id, " + "bt.type as type, " + "CAST(bt.type as string) as typeDisplay, "
-			+ "bt.pointsChange as pointsChangeRaw, " + "bt.createdAt as createdAt, "
-			+ "bt.bonusCard.pointsBalance as newBalance, " + "s.movie.title as movieTitle, "
-			+ "CAST(b.id as string) as bookingReference, " + "h.name as cinemaHall, "
-			+ "s.startTime as sessionDateTime " + "FROM BonusTransaction bt " + "LEFT JOIN bt.booking b "
-			+ "LEFT JOIN b.session s " + "LEFT JOIN s.hall h " + "LEFT JOIN s.movie m")
-	Page<BonusTransactionProjection> findAllProjectionsBy(Pageable pageable);
-
-	@Query("SELECT " + "bt.id as id, " + "bt.type as type, " + "CAST(bt.type as string) as typeDisplay, "
-			+ "bt.pointsChange as pointsChangeRaw, " + "bt.createdAt as createdAt, "
-			+ "bt.bonusCard.pointsBalance as newBalance, " + "s.movie.title as movieTitle, "
-			+ "CAST(b.id as string) as bookingReference, " + "h.name as cinemaHall, "
-			+ "s.startTime as sessionDateTime " + "FROM BonusTransaction bt " + "LEFT JOIN bt.booking b "
-			+ "LEFT JOIN b.session s " + "LEFT JOIN s.hall h " + "LEFT JOIN s.movie m " + "WHERE bt.type = :type")
-	Page<BonusTransactionProjection> findProjectionsByType(@Param("type") BonusTransactionType type, Pageable pageable);
 }
