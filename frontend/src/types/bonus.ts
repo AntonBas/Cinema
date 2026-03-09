@@ -39,7 +39,7 @@ export interface BonusCardResponse {
 
 export interface BonusRulesResponse {
     id: number;
-    bonusType: string;
+    bonusType: BonusTransactionType;
     points?: number | null;
     moneyRatio?: string | null;
     minPointsPerTransaction?: number | null;
@@ -51,16 +51,9 @@ export interface BonusRulesResponse {
 export interface BonusTransactionResponse {
     id: number;
     type: BonusTransactionType;
-    typeDisplay: string;
     pointsChange: string;
     createdAt: string;
     newBalance: number;
-    bookingDetails?: {
-        movieTitle: string;
-        bookingReference: string;
-        cinemaHall: string;
-        sessionDateTime: string;
-    } | null;
 }
 
 export const BonusTransactionTypeDisplay: Record<BonusTransactionType, string> = {
