@@ -62,7 +62,7 @@ public class BonusService {
 	@Transactional(readOnly = true)
 	public Page<BonusTransactionResponse> getTransactions(Long userId, Pageable pageable) {
 		Page<BonusTransactionProjection> page = bonusTransactionRepository.findProjectionsByUserId(userId, pageable);
-		return page.map(this::mapProjectionToResponse);
+		return page.map(bonusMapper::toBonusTransactionResponse);
 	}
 
 	@Transactional
@@ -218,14 +218,6 @@ public class BonusService {
 		return BonusBalanceResponse.builder().pointsBalance(card.getPointsBalance()).pointValue(pointValue)
 				.balanceValue(balanceValue).minUsablePoints(minPoints).maxUsablePoints(maxPoints)
 				.minRedemptionValue(minValue).maxRedemptionValue(maxValue).build();
-	}
-
-	private BonusTransactionResponse mapProjectionToResponse(BonusTransactionProjection projection) {
-		BonusTransactionResponse response = bonusMapper.toBonusTransactionResponse(projection);
-		if (projection.getMovieTitle() != null) {
-			response.setBookingDetails(bonusMapper.toBookingDetails(projection));
-		}
-		return response;
 	}
 
 	private BonusTransaction createTransaction(BonusCard card, Integer points, BonusTransactionType type,
