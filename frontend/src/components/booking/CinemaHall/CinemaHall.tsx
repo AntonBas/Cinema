@@ -28,7 +28,7 @@ export const CinemaHall: React.FC<CinemaHallProps> = ({
         const status = getSeatStatus(seat);
         const seatType = seat.seatType.toLowerCase();
 
-        return `${styles.seat} ${styles[status]} ${styles[seatType]}`;
+        return `${styles.seatButton} ${styles[seatType]} ${!seat.active ? styles.inactive : ''} ${styles[status]}`;
     };
 
     const getSeatTitle = (seat: SeatInfo) => {
@@ -60,17 +60,19 @@ export const CinemaHall: React.FC<CinemaHallProps> = ({
         <div className={styles.cinemaHall}>
             <div className={styles.screenArea}>
                 <div className={styles.screen}>SCREEN</div>
+                <div className={styles.screenReflection} />
             </div>
 
-            <div className={styles.seatsContainer}>
-                <div className={styles.scrollableArea}>
+            <div className={styles.seatsLayout}>
+                <div className={styles.rowsContainer}>
                     {rows.map(rowNumber => {
                         const rowSeats = seats.filter(seat => seat.row === rowNumber)
                             .sort((a, b) => a.seatNumber - b.seatNumber);
 
                         return (
                             <div key={`row-${rowNumber}`} className={styles.row}>
-                                <div className={styles.seats}>
+                                <div className={styles.rowLabel}>Row {rowNumber}</div>
+                                <div className={styles.seatsRow}>
                                     {rowSeats.map(seat => (
                                         <Tooltip
                                             key={`seat-${seat.id}`}
@@ -83,6 +85,11 @@ export const CinemaHall: React.FC<CinemaHallProps> = ({
                                                 disabled={isSeatDisabled(seat)}
                                             >
                                                 <span className={styles.seatNumber}>{seat.seatNumber}</span>
+                                                {!seat.active && (
+                                                    <div className={styles.inactiveOverlay}>
+                                                        <span className={styles.inactiveIcon}>✕</span>
+                                                    </div>
+                                                )}
                                             </button>
                                         </Tooltip>
                                     ))}
@@ -94,29 +101,32 @@ export const CinemaHall: React.FC<CinemaHallProps> = ({
             </div>
 
             <div className={styles.legend}>
-                <div className={styles.legendItem}>
-                    <div className={`${styles.legendColor} ${styles.available}`}></div>
-                    <span>Available</span>
-                </div>
-                <div className={styles.legendItem}>
-                    <div className={`${styles.legendColor} ${styles.selected}`}></div>
-                    <span>Selected</span>
-                </div>
-                <div className={styles.legendItem}>
-                    <div className={`${styles.legendColor} ${styles.booked}`}></div>
-                    <span>Booked</span>
-                </div>
-                <div className={styles.legendItem}>
-                    <div className={`${styles.legendColor} ${styles.vip}`}></div>
-                    <span>VIP</span>
-                </div>
-                <div className={styles.legendItem}>
-                    <div className={`${styles.legendColor} ${styles.couple}`}></div>
-                    <span>Couple</span>
-                </div>
-                <div className={styles.legendItem}>
-                    <div className={`${styles.legendColor} ${styles.unavailable}`}></div>
-                    <span>Unavailable</span>
+                <h4 className={styles.legendTitle}>Seat Types:</h4>
+                <div className={styles.legendGrid}>
+                    <div className={styles.legendItem}>
+                        <div className={`${styles.legendColor} ${styles.standard}`} />
+                        <span>Standard</span>
+                    </div>
+                    <div className={styles.legendItem}>
+                        <div className={`${styles.legendColor} ${styles.vip}`} />
+                        <span>VIP</span>
+                    </div>
+                    <div className={styles.legendItem}>
+                        <div className={`${styles.legendColor} ${styles.couple}`} />
+                        <span>Couple</span>
+                    </div>
+                    <div className={styles.legendItem}>
+                        <div className={`${styles.legendColor} ${styles.selected}`} />
+                        <span>Selected</span>
+                    </div>
+                    <div className={styles.legendItem}>
+                        <div className={`${styles.legendColor} ${styles.booked}`} />
+                        <span>Booked</span>
+                    </div>
+                    <div className={styles.legendItem}>
+                        <div className={`${styles.legendColor} ${styles.inactive}`} />
+                        <span>Inactive</span>
+                    </div>
                 </div>
             </div>
         </div>
