@@ -52,7 +52,10 @@ export const useBonus = () => {
         return response || null;
     }, [myTransactionsApi]);
 
-    const getAllRules = useCallback(async () => {
+    const getAllRules = useCallback(async (skipCache: boolean = false) => {
+        if (skipCache) {
+            rulesApi.invalidateCache('bonus_rules');
+        }
         const response = await rulesApi.execute(() => bonusApi.admin.getAllRules(), {
             cacheKey: 'bonus_rules',
             cacheTime: 5 * 60 * 1000,
@@ -74,7 +77,7 @@ export const useBonus = () => {
         const response = await ruleApi.execute(() => bonusApi.admin.updateRule(type, request), {
             successMessage: 'Bonus rule updated successfully',
         });
-        rulesApi.invalidateCache();
+        rulesApi.invalidateCache('bonus_rules');
         ruleApi.invalidateCache(`bonus_rule_${type}`);
         return response || null;
     }, [ruleApi, rulesApi]);
@@ -83,7 +86,7 @@ export const useBonus = () => {
         const response = await ruleApi.execute(() => bonusApi.admin.resetRule(type), {
             successMessage: 'Bonus rule reset successfully',
         });
-        rulesApi.invalidateCache();
+        rulesApi.invalidateCache('bonus_rules');
         ruleApi.invalidateCache(`bonus_rule_${type}`);
         return response || null;
     }, [ruleApi, rulesApi]);
@@ -109,13 +112,10 @@ export const useBonus = () => {
         myBalance: balanceApi.data,
         myTransactions: myTransactionsApi.data?.content || [],
         myTransactionsPagination: myTransactionsApi.data,
-
         allRules: rulesApi.data || [],
         rule: ruleApi.data,
-
         loading,
         error,
-
         getMyCard,
         getMyBalance,
         getMyTransactions,
@@ -123,10 +123,8 @@ export const useBonus = () => {
         getRuleByType,
         updateRule,
         resetRule,
-
         clearCache,
         resetAll,
-
         totalPoints: balanceApi.data?.pointsBalance || 0,
         hasCard: !!cardApi.data?.id,
     };
