@@ -41,7 +41,7 @@ public class BookingController {
 			@ApiResponse(responseCode = "400", description = "Invalid request data or seat not available"),
 			@ApiResponse(responseCode = "404", description = "Session or seat not found"),
 			@ApiResponse(responseCode = "409", description = "Booking conflict or session not available") })
-	@PreAuthorize("hasRole('USER')")
+	@PreAuthorize("isAuthenticated()")
 	public ResponseEntity<BookingResponse> createBooking(@Valid @RequestBody BookingCreateRequest request,
 			@AuthenticationPrincipal CustomUserDetails userDetails) {
 		User user = userDetails.getUser();
@@ -55,7 +55,7 @@ public class BookingController {
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Booking details retrieved successfully"),
 			@ApiResponse(responseCode = "404", description = "Booking not found"),
 			@ApiResponse(responseCode = "403", description = "Access denied to booking") })
-	@PreAuthorize("hasRole('USER')")
+	@PreAuthorize("isAuthenticated()")
 	public ResponseEntity<BookingResponse> getBooking(@PathVariable Long bookingId,
 			@AuthenticationPrincipal CustomUserDetails userDetails) {
 		User user = userDetails.getUser();
@@ -70,7 +70,7 @@ public class BookingController {
 			@ApiResponse(responseCode = "400", description = "Booking cannot be cancelled"),
 			@ApiResponse(responseCode = "404", description = "Booking not found"),
 			@ApiResponse(responseCode = "403", description = "Access denied to booking") })
-	@PreAuthorize("hasRole('USER')")
+	@PreAuthorize("isAuthenticated()")
 	public ResponseEntity<Void> cancelBooking(@PathVariable Long bookingId,
 			@AuthenticationPrincipal CustomUserDetails userDetails) {
 		User user = userDetails.getUser();

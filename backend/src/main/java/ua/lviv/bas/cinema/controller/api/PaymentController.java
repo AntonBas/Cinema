@@ -42,7 +42,7 @@ public class PaymentController {
 			@ApiResponse(responseCode = "400", description = "Invalid request"),
 			@ApiResponse(responseCode = "404", description = "Booking not found"),
 			@ApiResponse(responseCode = "409", description = "Payment already in progress") })
-	@PreAuthorize("hasRole('USER')")
+	@PreAuthorize("isAuthenticated()")
 	public ResponseEntity<PaymentResponse> createPayment(@Valid @RequestBody PaymentCreateRequest request,
 			@AuthenticationPrincipal CustomUserDetails userDetails) {
 		User user = userDetails.getUser();
@@ -67,7 +67,7 @@ public class PaymentController {
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Payment retrieved"),
 			@ApiResponse(responseCode = "404", description = "Payment not found"),
 			@ApiResponse(responseCode = "403", description = "Access denied") })
-	@PreAuthorize("hasRole('USER')")
+	@PreAuthorize("isAuthenticated()")
 	public ResponseEntity<PaymentResponse> getPaymentById(
 			@Parameter(description = "Payment ID", required = true) @PathVariable Long paymentId,
 			@AuthenticationPrincipal CustomUserDetails userDetails) {
