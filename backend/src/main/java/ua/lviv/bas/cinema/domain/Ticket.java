@@ -3,6 +3,8 @@ package ua.lviv.bas.cinema.domain;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+import org.hibernate.annotations.CreationTimestamp;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -107,6 +109,7 @@ public class Ticket {
 	@Builder.Default
 	private TicketStatus status = TicketStatus.ACTIVE;
 
+	@CreationTimestamp
 	@Column(name = "created_at", updatable = false)
 	private LocalDateTime createdAt;
 
