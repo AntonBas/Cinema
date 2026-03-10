@@ -69,7 +69,6 @@ public class BonusMapperTest {
 		BonusTransactionProjection projection = Mockito.mock(BonusTransactionProjection.class);
 		Mockito.when(projection.getId()).thenReturn(1L);
 		Mockito.when(projection.getType()).thenReturn("PAYMENT_ACCRUAL");
-		Mockito.when(projection.getTypeDisplay()).thenReturn("Payment accrual");
 		Mockito.when(projection.getPointsChange()).thenReturn("+50");
 		Mockito.when(projection.getNewBalance()).thenReturn(150);
 		Mockito.when(projection.getCreatedAt()).thenReturn(LocalDateTime.now());
@@ -79,34 +78,15 @@ public class BonusMapperTest {
 		assertThat(response).isNotNull();
 		assertThat(response.getId()).isEqualTo(1L);
 		assertThat(response.getType()).isEqualTo("PAYMENT_ACCRUAL");
-		assertThat(response.getTypeDisplay()).isEqualTo("Payment accrual");
 		assertThat(response.getPointsChange()).isEqualTo("+50");
 		assertThat(response.getNewBalance()).isEqualTo(150);
 		assertThat(response.getCreatedAt()).isNotNull();
-		assertThat(response.getBookingDetails()).isNull();
 	}
 
 	@Test
 	void toBonusTransactionResponseFromNullProjection() {
 		BonusTransactionResponse response = mapper.toBonusTransactionResponse((BonusTransactionProjection) null);
 		assertThat(response).isNull();
-	}
-
-	@Test
-	void toBookingDetails() {
-		BonusTransactionProjection projection = Mockito.mock(BonusTransactionProjection.class);
-		Mockito.when(projection.getMovieTitle()).thenReturn("Inception");
-		Mockito.when(projection.getBookingReference()).thenReturn("BK-12345");
-		Mockito.when(projection.getCinemaHall()).thenReturn("Hall 1");
-		Mockito.when(projection.getSessionDateTime()).thenReturn(LocalDateTime.now());
-
-		BonusTransactionResponse.BookingDetails details = mapper.toBookingDetails(projection);
-
-		assertThat(details).isNotNull();
-		assertThat(details.getMovieTitle()).isEqualTo("Inception");
-		assertThat(details.getBookingReference()).isEqualTo("BK-12345");
-		assertThat(details.getCinemaHall()).isEqualTo("Hall 1");
-		assertThat(details.getSessionDateTime()).isNotNull();
 	}
 
 	@Test

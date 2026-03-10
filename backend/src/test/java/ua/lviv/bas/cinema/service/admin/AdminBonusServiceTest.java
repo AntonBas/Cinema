@@ -9,7 +9,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -19,31 +18,22 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 
 import ua.lviv.bas.cinema.config.properties.BonusProperties;
 import ua.lviv.bas.cinema.domain.BonusRules;
 import ua.lviv.bas.cinema.domain.enums.BonusTransactionType;
-import ua.lviv.bas.cinema.domain.projection.BonusTransactionProjection;
 import ua.lviv.bas.cinema.dto.bonus.request.BonusRulesRequest;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusRulesResponse;
-import ua.lviv.bas.cinema.dto.bonus.response.BonusTransactionResponse;
 import ua.lviv.bas.cinema.exception.domain.bonus.BonusRuleNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.bonus.InvalidMinMaxPointsException;
 import ua.lviv.bas.cinema.mapper.BonusMapper;
 import ua.lviv.bas.cinema.repository.BonusRulesRepository;
-import ua.lviv.bas.cinema.repository.BonusTransactionRepository;
 
 @ExtendWith(MockitoExtension.class)
 public class AdminBonusServiceTest {
 
 	@Mock
 	private BonusRulesRepository bonusRulesRepository;
-	@Mock
-	private BonusTransactionRepository bonusTransactionRepository;
 	@Mock
 	private BonusMapper bonusMapper;
 	@Mock
@@ -53,7 +43,6 @@ public class AdminBonusServiceTest {
 
 	private final BonusTransactionType WELCOME = BonusTransactionType.WELCOME_BONUS;
 	private final BonusTransactionType SPEND = BonusTransactionType.BOOKING_SPEND;
-	private final Long USER_ID = 1L;
 
 	@Test
 	void getAllRules_ReturnsList() {
@@ -177,112 +166,5 @@ public class AdminBonusServiceTest {
 		assertThat(result).isEqualTo(response);
 		assertThat(rule.getPoints()).isEqualTo(100);
 		verify(bonusRulesRepository).save(rule);
-	}
-
-	@Test
-	void getUserTransactions_ReturnsPage() {
-		Pageable pageable = PageRequest.of(0, 10);
-		BonusTransactionProjection projection = createProjection("Inception");
-		Page<BonusTransactionProjection> page = new PageImpl<>(List.of(projection), pageable, 1);
-		BonusTransactionResponse response = new BonusTransactionResponse();
-
-		when(bonusTransactionRepository.findProjectionsByUserId(USER_ID, pageable)).thenReturn(page);
-		when(bonusMapper.toBonusTransactionResponse(projection)).thenReturn(response);
-		when(bonusMapper.toBookingDetails(projection)).thenReturn(new BonusTransactionResponse.BookingDetails());
-
-		Page<BonusTransactionResponse> result = service.getUserTransactions(USER_ID, pageable);
-
-		assertThat(result).isNotNull();
-		assertThat(result.getContent()).hasSize(1);
-		verify(bonusTransactionRepository).findProjectionsByUserId(USER_ID, pageable);
-	}
-
-	@Test
-	void getAllTransactions_ReturnsPage() {
-		Pageable pageable = PageRequest.of(0, 10);
-		BonusTransactionProjection projection = createProjection(null);
-		Page<BonusTransactionProjection> page = new PageImpl<>(List.of(projection), pageable, 1);
-		BonusTransactionResponse response = new BonusTransactionResponse();
-
-		when(bonusTransactionRepository.findAllProjectionsBy(pageable)).thenReturn(page);
-		when(bonusMapper.toBonusTransactionResponse(projection)).thenReturn(response);
-
-		Page<BonusTransactionResponse> result = service.getAllTransactions(pageable);
-
-		assertThat(result).isNotNull();
-		assertThat(result.getContent()).hasSize(1);
-		verify(bonusTransactionRepository).findAllProjectionsBy(pageable);
-	}
-
-	@Test
-	void getTransactionsByType_ReturnsPage() {
-		Pageable pageable = PageRequest.of(0, 10);
-		BonusTransactionProjection projection = createProjection("Inception");
-		Page<BonusTransactionProjection> page = new PageImpl<>(List.of(projection), pageable, 1);
-		BonusTransactionResponse response = new BonusTransactionResponse();
-
-		when(bonusTransactionRepository.findProjectionsByType(WELCOME, pageable)).thenReturn(page);
-		when(bonusMapper.toBonusTransactionResponse(projection)).thenReturn(response);
-		when(bonusMapper.toBookingDetails(projection)).thenReturn(new BonusTransactionResponse.BookingDetails());
-
-		Page<BonusTransactionResponse> result = service.getTransactionsByType(WELCOME, pageable);
-
-		assertThat(result).isNotNull();
-		assertThat(result.getContent()).hasSize(1);
-		verify(bonusTransactionRepository).findProjectionsByType(WELCOME, pageable);
-	}
-
-	private BonusTransactionProjection createProjection(String movieTitle) {
-		return new BonusTransactionProjection() {
-			@Override
-			public Long getId() {
-				return 1L;
-			}
-
-			@Override
-			public String getType() {
-				return "WELCOME_BONUS";
-			}
-
-			@Override
-			public String getTypeDisplay() {
-				return "Welcome bonus";
-			}
-
-			@Override
-			public Integer getPointsChangeRaw() {
-				return 150;
-			}
-
-			@Override
-			public LocalDateTime getCreatedAt() {
-				return LocalDateTime.now();
-			}
-
-			@Override
-			public Integer getNewBalance() {
-				return 250;
-			}
-
-			@Override
-			public String getMovieTitle() {
-				return movieTitle;
-			}
-
-			@Override
-			public String getBookingReference() {
-				return "BK-123";
-			}
-
-			@Override
-			public String getCinemaHall() {
-				return "Hall 1";
-			}
-
-			@Override
-			public LocalDateTime getSessionDateTime() {
-				return LocalDateTime.now();
-			}
-		};
 	}
 }

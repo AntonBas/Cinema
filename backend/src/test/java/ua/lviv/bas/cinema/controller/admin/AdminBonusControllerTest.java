@@ -5,7 +5,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
-import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 
@@ -14,16 +13,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 
 import ua.lviv.bas.cinema.domain.enums.BonusTransactionType;
 import ua.lviv.bas.cinema.dto.bonus.request.BonusRulesRequest;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusRulesResponse;
-import ua.lviv.bas.cinema.dto.bonus.response.BonusTransactionResponse;
-import ua.lviv.bas.cinema.dto.common.PageResponse;
 import ua.lviv.bas.cinema.service.admin.AdminBonusService;
 
 @ExtendWith(MockitoExtension.class)
@@ -111,94 +104,5 @@ public class AdminBonusControllerTest {
 		assertThat(result).isEqualTo(response);
 		assertThat(result.getBonusType()).isEqualTo("WELCOME_BONUS");
 		assertThat(result.getPoints()).isEqualTo(150);
-	}
-
-	@Test
-	void getUserTransactions_ShouldReturnPageResponse() {
-		Long userId = 1L;
-		Pageable pageable = PageRequest.of(0, 10);
-		Page<BonusTransactionResponse> page = new PageImpl<>(Collections.emptyList(), pageable, 0);
-
-		when(bonusAdminService.getUserTransactions(eq(userId), any(Pageable.class))).thenReturn(page);
-
-		PageResponse<BonusTransactionResponse> result = adminBonusController.getUserTransactions(userId, pageable);
-
-		assertThat(result).isNotNull();
-		assertThat(result.getContent()).isEmpty();
-	}
-
-	@Test
-	void getAllTransactions_ShouldReturnPageResponse() {
-		Pageable pageable = PageRequest.of(0, 10);
-		Page<BonusTransactionResponse> page = new PageImpl<>(Collections.emptyList(), pageable, 0);
-
-		when(bonusAdminService.getAllTransactions(any(Pageable.class))).thenReturn(page);
-
-		PageResponse<BonusTransactionResponse> result = adminBonusController.getAllTransactions(pageable);
-
-		assertThat(result).isNotNull();
-		assertThat(result.getContent()).isEmpty();
-	}
-
-	@Test
-	void getTransactionsByType_ShouldReturnPageResponse() {
-		BonusTransactionType type = BonusTransactionType.WELCOME_BONUS;
-		Pageable pageable = PageRequest.of(0, 10);
-		Page<BonusTransactionResponse> page = new PageImpl<>(Collections.emptyList(), pageable, 0);
-
-		when(bonusAdminService.getTransactionsByType(eq(type), any(Pageable.class))).thenReturn(page);
-
-		PageResponse<BonusTransactionResponse> result = adminBonusController.getTransactionsByType(type, pageable);
-
-		assertThat(result).isNotNull();
-		assertThat(result.getContent()).isEmpty();
-	}
-
-	@Test
-	void getUserTransactions_ShouldReturnTransactionsWithData() {
-		Long userId = 1L;
-		Pageable pageable = PageRequest.of(0, 10);
-
-		BonusTransactionResponse transaction1 = BonusTransactionResponse.builder().id(1L).type("WELCOME_BONUS")
-				.pointsChange("+100").createdAt(LocalDateTime.now()).build();
-
-		BonusTransactionResponse transaction2 = BonusTransactionResponse.builder().id(2L).type("PAYMENT_ACCRUAL")
-				.pointsChange("+50").createdAt(LocalDateTime.now()).build();
-
-		List<BonusTransactionResponse> transactions = List.of(transaction1, transaction2);
-		Page<BonusTransactionResponse> page = new PageImpl<>(transactions, pageable, 2);
-
-		when(bonusAdminService.getUserTransactions(eq(userId), any(Pageable.class))).thenReturn(page);
-
-		PageResponse<BonusTransactionResponse> result = adminBonusController.getUserTransactions(userId, pageable);
-
-		assertThat(result).isNotNull();
-		assertThat(result.getContent()).hasSize(2);
-		assertThat(result.getContent().get(0).getType()).isEqualTo("WELCOME_BONUS");
-		assertThat(result.getContent().get(1).getType()).isEqualTo("PAYMENT_ACCRUAL");
-	}
-
-	@Test
-	void getTransactionsByType_ShouldReturnTransactionsWithData() {
-		BonusTransactionType type = BonusTransactionType.WELCOME_BONUS;
-		Pageable pageable = PageRequest.of(0, 10);
-
-		BonusTransactionResponse transaction1 = BonusTransactionResponse.builder().id(1L).type("WELCOME_BONUS")
-				.pointsChange("+100").createdAt(LocalDateTime.now()).build();
-
-		BonusTransactionResponse transaction2 = BonusTransactionResponse.builder().id(2L).type("WELCOME_BONUS")
-				.pointsChange("+150").createdAt(LocalDateTime.now()).build();
-
-		List<BonusTransactionResponse> transactions = List.of(transaction1, transaction2);
-		Page<BonusTransactionResponse> page = new PageImpl<>(transactions, pageable, 2);
-
-		when(bonusAdminService.getTransactionsByType(eq(type), any(Pageable.class))).thenReturn(page);
-
-		PageResponse<BonusTransactionResponse> result = adminBonusController.getTransactionsByType(type, pageable);
-
-		assertThat(result).isNotNull();
-		assertThat(result.getContent()).hasSize(2);
-		assertThat(result.getContent().get(0).getType()).isEqualTo("WELCOME_BONUS");
-		assertThat(result.getContent().get(1).getType()).isEqualTo("WELCOME_BONUS");
 	}
 }

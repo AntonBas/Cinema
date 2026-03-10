@@ -21,14 +21,11 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
-import ua.lviv.bas.cinema.domain.enums.BonusTransactionType;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusBalanceResponse;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusCardResponse;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusTransactionResponse;
-import ua.lviv.bas.cinema.dto.bonus.response.BonusTransactionResponse.BookingDetails;
 import ua.lviv.bas.cinema.dto.common.PageResponse;
 import ua.lviv.bas.cinema.exception.domain.bonus.BonusCardNotFoundException;
-import ua.lviv.bas.cinema.exception.domain.bonus.BonusRuleNotFoundException;
 import ua.lviv.bas.cinema.service.user.BonusService;
 
 @ExtendWith(MockitoExtension.class)
@@ -93,29 +90,15 @@ public class BonusControllerTest {
 	}
 
 	@Test
-	void getMyBalance_ShouldThrowWhenRuleNotFound() {
-		Long userId = 1L;
-		when(bonusService.getBalance(userId))
-				.thenThrow(new BonusRuleNotFoundException(BonusTransactionType.WELCOME_BONUS));
-
-		assertThrows(BonusRuleNotFoundException.class, () -> bonusController.getMyBalance(userId));
-	}
-
-	@Test
 	void getMyTransactions_ShouldReturnPagedTransactions() {
 		Long userId = 1L;
 		Pageable pageable = PageRequest.of(0, 20);
 
-		BookingDetails bookingDetails = BookingDetails.builder().movieTitle("Interstellar").bookingReference("BK-12345")
-				.cinemaHall("Hall 1").sessionDateTime(LocalDateTime.now().plusDays(7)).build();
-
 		BonusTransactionResponse transaction1 = BonusTransactionResponse.builder().id(1L).type("WELCOME_BONUS")
-				.typeDisplay("Welcome Bonus").pointsChange("+150").createdAt(LocalDateTime.now()).newBalance(150)
-				.build();
+				.pointsChange("+150").createdAt(LocalDateTime.now()).newBalance(150).build();
 
 		BonusTransactionResponse transaction2 = BonusTransactionResponse.builder().id(2L).type("BOOKING_SPEND")
-				.typeDisplay("Booking Spend").pointsChange("-25").createdAt(LocalDateTime.now()).newBalance(125)
-				.bookingDetails(bookingDetails).build();
+				.pointsChange("-25").createdAt(LocalDateTime.now()).newBalance(125).build();
 
 		Page<BonusTransactionResponse> page = new PageImpl<>(List.of(transaction1, transaction2), pageable, 2);
 
@@ -128,13 +111,10 @@ public class BonusControllerTest {
 		assertEquals(2, response.getTotalElements());
 		assertEquals(1L, response.getContent().get(0).getId());
 		assertEquals("WELCOME_BONUS", response.getContent().get(0).getType());
-		assertEquals("Welcome Bonus", response.getContent().get(0).getTypeDisplay());
 		assertEquals("+150", response.getContent().get(0).getPointsChange());
 		assertEquals(2L, response.getContent().get(1).getId());
 		assertEquals("BOOKING_SPEND", response.getContent().get(1).getType());
 		assertEquals("-25", response.getContent().get(1).getPointsChange());
-		assertNotNull(response.getContent().get(1).getBookingDetails());
-		assertEquals("Interstellar", response.getContent().get(1).getBookingDetails().getMovieTitle());
 	}
 
 	@Test
