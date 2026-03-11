@@ -2,11 +2,7 @@ export type TicketStatus = 'ACTIVE' | 'USED' | 'REFUNDED';
 
 export interface TicketFilterRequest {
     status?: TicketStatus;
-    purchaseDateFrom?: string;
-    purchaseDateTo?: string;
-    sessionDateFrom?: string;
-    sessionDateTo?: string;
-    movieId?: number;
+    movieTitle?: string;
 }
 
 export interface TicketResponse {

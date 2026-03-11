@@ -22,8 +22,8 @@ export const TicketsPage: React.FC = () => {
     const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null);
 
     const {
-        userTickets: tickets,
-        userPagination: pagination,
+        tickets,
+        pagination,
         loading,
         getUserTickets
     } = useTickets();
@@ -47,7 +47,7 @@ export const TicketsPage: React.FC = () => {
         }
 
         if (searchQuery.trim()) {
-            params.search = searchQuery;
+            params.movieTitle = searchQuery;
         }
 
         await getUserTickets(params);
@@ -137,7 +137,7 @@ export const TicketsPage: React.FC = () => {
                             <div className={styles.searchBox}>
                                 <SearchInput
                                     onSearch={handleSearch}
-                                    placeholder="Search tickets by movie, hall, or code..."
+                                    placeholder="Search tickets by movie title..."
                                     delay={300}
                                     className={styles.searchInput}
                                 />
@@ -176,11 +176,11 @@ export const TicketsPage: React.FC = () => {
                         </div>
 
                         <div className={styles.tabsSection}>
-                            <div className={styles.mainTabs}>
+                            <div className={styles.filterTabs}>
                                 {tabs.map(tab => (
                                     <button
                                         key={tab.id}
-                                        className={`${styles.tab} ${statusFilter === (tab.id === 'all' ? undefined : tab.id) ? styles.active : ''}`}
+                                        className={`${styles.filterTab} ${statusFilter === (tab.id === 'all' ? undefined : tab.id) ? styles.active : ''}`}
                                         onClick={() => handleStatusChange(tab.id === 'all' ? undefined : tab.id)}
                                     >
                                         <span className={styles.tabLabel}>{tab.label}</span>

@@ -81,13 +81,13 @@
     margin-bottom: var(--space-8);
 }
 
-.mainTabs {
+.filterTabs {
     display: flex;
     gap: var(--space-2);
     flex-wrap: wrap;
 }
 
-.tab {
+.filterTab {
     display: flex;
     align-items: center;
     gap: var(--space-2);
@@ -103,12 +103,12 @@
     white-space: nowrap;
 }
 
-.tab:hover {
+.filterTab:hover {
     background: var(--color-bg-tertiary);
     color: var(--color-text-primary);
 }
 
-.tab.active {
+.filterTab.active {
     background: var(--color-primary);
     color: white;
     border-color: var(--color-primary);
@@ -138,6 +138,22 @@
     border-top-color: var(--color-primary);
     border-radius: 50%;
     animation: spin 1s linear infinite;
+}
+
+.paginationContainer {
+    margin-top: var(--space-8);
+    display: flex;
+    justify-content: center;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 @media (max-width: 1024px) {
@@ -176,33 +192,23 @@
         justify-content: space-between;
     }
 
-    .mainTabs {
+    .filterTabs {
         justify-content: center;
     }
 
-    .tab {
+    .filterTab {
         padding: var(--space-2) var(--space-4);
         font-size: var(--font-size-xs);
     }
 }
 
 @media (max-width: 480px) {
-    .mainTabs {
+    .filterTabs {
         justify-content: center;
     }
 
-    .tab {
+    .filterTab {
         padding: var(--space-2) var(--space-4);
         font-size: var(--font-size-xs);
-    }
-}
-
-@keyframes spin {
-    from {
-        transform: rotate(0deg);
-    }
-
-    to {
-        transform: rotate(360deg);
     }
 }
