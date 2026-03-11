@@ -44,7 +44,8 @@ public class TicketRetrievalService {
 	}
 
 	public Page<TicketResponse> getUserTickets(User user, TicketFilterRequest filter, Pageable pageable) {
-		Specification<Ticket> spec = ticketSpecification.buildForUser(user.getId(), filter);
+		Specification<Ticket> spec = ticketSpecification.buildForUser(user.getId(), filter.getStatus(),
+				filter.getMovieTitle());
 
 		Page<Ticket> tickets = ticketRepository.findAll(spec, pageable);
 

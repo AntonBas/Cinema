@@ -1,7 +1,5 @@
 package ua.lviv.bas.cinema.controller.api;
 
-import java.time.LocalDate;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -12,6 +10,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -39,31 +38,17 @@ public class TicketController {
 	private final TicketRetrievalService ticketRetrievalService;
 	private final TicketService ticketService;
 
-	@GetMapping("/upcoming")
-	@Operation(summary = "Get upcoming tickets", description = "Get upcoming tickets for authenticated user")
-	public ResponseEntity<PageResponse<TicketResponse>> getUpcomingTickets(
-			@AuthenticationPrincipal CustomUserDetails userDetails, @PageableDefault(size = 10) Pageable pageable) {
+	@GetMapping
+	@Operation(summary = "Get user tickets", description = "Get paginated tickets for authenticated user with optional filters")
+	public ResponseEntity<PageResponse<TicketResponse>> getUserTickets(
+			@AuthenticationPrincipal CustomUserDetails userDetails, @RequestParam(required = false) TicketStatus status,
+			@RequestParam(required = false) String movieTitle, @PageableDefault(size = 10) Pageable pageable) {
 
 		User user = userDetails.getUser();
-		log.info("Getting upcoming tickets for user ID: {}", user.getId());
+		log.info("Getting tickets for user ID: {} with status: {} and movieTitle: {}", user.getId(), status,
+				movieTitle);
 
-		TicketFilterRequest filter = TicketFilterRequest.builder().status(TicketStatus.ACTIVE)
-				.sessionDateFrom(LocalDate.now()).build();
-
-		Page<TicketResponse> tickets = ticketRetrievalService.getUserTickets(user, filter, pageable);
-		return ResponseEntity.ok(PageResponse.from(tickets));
-	}
-
-	@GetMapping("/history")
-	@Operation(summary = "Get ticket history", description = "Get paginated history of past tickets")
-	public ResponseEntity<PageResponse<TicketResponse>> getTicketHistory(
-			@AuthenticationPrincipal CustomUserDetails userDetails, @PageableDefault(size = 10) Pageable pageable) {
-
-		User user = userDetails.getUser();
-		log.info("Getting ticket history for user ID: {}", user.getId());
-
-		TicketFilterRequest filter = TicketFilterRequest.builder().status(TicketStatus.USED)
-				.sessionDateTo(LocalDate.now().minusDays(1)).build();
+		TicketFilterRequest filter = TicketFilterRequest.builder().status(status).movieTitle(movieTitle).build();
 
 		Page<TicketResponse> tickets = ticketRetrievalService.getUserTickets(user, filter, pageable);
 		return ResponseEntity.ok(PageResponse.from(tickets));
