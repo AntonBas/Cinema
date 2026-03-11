@@ -2,11 +2,9 @@ package ua.lviv.bas.cinema.service.booking.ticket;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -18,11 +16,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 
 import ua.lviv.bas.cinema.domain.Ticket;
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.enums.TicketStatus;
-import ua.lviv.bas.cinema.domain.projection.TicketInfoProjection;
+import ua.lviv.bas.cinema.domain.specification.TicketSpecification;
 import ua.lviv.bas.cinema.dto.ticket.request.TicketFilterRequest;
 import ua.lviv.bas.cinema.dto.ticket.response.TicketResponse;
 import ua.lviv.bas.cinema.exception.domain.ticket.TicketNotFoundException;
@@ -35,6 +34,9 @@ public class TicketRetrievalServiceTest {
 
 	@Mock
 	private TicketRepository ticketRepository;
+
+	@Mock
+	private TicketSpecification ticketSpecification;
 
 	@Mock
 	private TicketMapper ticketMapper;
@@ -113,17 +115,22 @@ public class TicketRetrievalServiceTest {
 	@Test
 	void getUserTickets_Success() {
 		User user = createUser(USER_ID);
-		TicketFilterRequest filter = TicketFilterRequest.builder().status(TicketStatus.ACTIVE).build();
+		TicketFilterRequest filter = TicketFilterRequest.builder().status(TicketStatus.ACTIVE).movieTitle("Inception")
+				.build();
 		Pageable pageable = Pageable.unpaged();
 
-		TicketInfoProjection projection = createTicketInfoProjection();
+		@SuppressWarnings("unchecked")
+		Specification<Ticket> specification = (Specification<Ticket>) org.mockito.Mockito.mock(Specification.class);
+
+		Ticket ticket = createTicket(USER_ID, TICKET_ID, TICKET_CODE);
 		TicketResponse ticketResponse = createTicketResponse();
 
-		Page<TicketInfoProjection> projectionPage = new PageImpl<>(List.of(projection));
+		Page<Ticket> ticketPage = new PageImpl<>(List.of(ticket));
 
-		when(ticketRepository.findUserTickets(eq(USER_ID), eq(filter.getStatus()), eq(filter.getMovieId()), any(),
-				any(), any(), any(), eq(pageable))).thenReturn(projectionPage);
-		when(ticketMapper.toTicketResponse(projection)).thenReturn(ticketResponse);
+		when(ticketSpecification.buildForUser(eq(USER_ID), eq(TicketStatus.ACTIVE), eq("Inception")))
+				.thenReturn(specification);
+		when(ticketRepository.findAll(eq(specification), eq(pageable))).thenReturn(ticketPage);
+		when(ticketMapper.toTicketResponse(ticket)).thenReturn(ticketResponse);
 
 		Page<TicketResponse> result = ticketRetrievalService.getUserTickets(user, filter, pageable);
 
@@ -132,22 +139,46 @@ public class TicketRetrievalServiceTest {
 	}
 
 	@Test
-	void getUserTickets_WithDateFilters_Success() {
+	void getUserTickets_WithNullFilters_Success() {
 		User user = createUser(USER_ID);
-		LocalDateTime now = LocalDateTime.now();
-		TicketFilterRequest filter = TicketFilterRequest.builder().status(TicketStatus.ACTIVE)
-				.purchaseDateFrom(now.toLocalDate()).purchaseDateTo(now.toLocalDate())
-				.sessionDateFrom(now.toLocalDate()).sessionDateTo(now.toLocalDate()).movieId(5L).build();
+		TicketFilterRequest filter = TicketFilterRequest.builder().build();
 		Pageable pageable = Pageable.unpaged();
 
-		TicketInfoProjection projection = createTicketInfoProjection();
+		@SuppressWarnings("unchecked")
+		Specification<Ticket> specification = (Specification<Ticket>) org.mockito.Mockito.mock(Specification.class);
+
+		Ticket ticket = createTicket(USER_ID, TICKET_ID, TICKET_CODE);
 		TicketResponse ticketResponse = createTicketResponse();
 
-		Page<TicketInfoProjection> projectionPage = new PageImpl<>(List.of(projection));
+		Page<Ticket> ticketPage = new PageImpl<>(List.of(ticket));
 
-		when(ticketRepository.findUserTickets(eq(USER_ID), eq(filter.getStatus()), eq(5L), any(), any(), any(), any(),
-				eq(pageable))).thenReturn(projectionPage);
-		when(ticketMapper.toTicketResponse(projection)).thenReturn(ticketResponse);
+		when(ticketSpecification.buildForUser(eq(USER_ID), eq(null), eq(null))).thenReturn(specification);
+		when(ticketRepository.findAll(eq(specification), eq(pageable))).thenReturn(ticketPage);
+		when(ticketMapper.toTicketResponse(ticket)).thenReturn(ticketResponse);
+
+		Page<TicketResponse> result = ticketRetrievalService.getUserTickets(user, filter, pageable);
+
+		assertThat(result.getContent()).hasSize(1);
+		assertThat(result.getContent().get(0)).isEqualTo(ticketResponse);
+	}
+
+	@Test
+	void getUserTickets_WithOnlyMovieTitle_Success() {
+		User user = createUser(USER_ID);
+		TicketFilterRequest filter = TicketFilterRequest.builder().movieTitle("Inception").build();
+		Pageable pageable = Pageable.unpaged();
+
+		@SuppressWarnings("unchecked")
+		Specification<Ticket> specification = (Specification<Ticket>) org.mockito.Mockito.mock(Specification.class);
+
+		Ticket ticket = createTicket(USER_ID, TICKET_ID, TICKET_CODE);
+		TicketResponse ticketResponse = createTicketResponse();
+
+		Page<Ticket> ticketPage = new PageImpl<>(List.of(ticket));
+
+		when(ticketSpecification.buildForUser(eq(USER_ID), eq(null), eq("Inception"))).thenReturn(specification);
+		when(ticketRepository.findAll(eq(specification), eq(pageable))).thenReturn(ticketPage);
+		when(ticketMapper.toTicketResponse(ticket)).thenReturn(ticketResponse);
 
 		Page<TicketResponse> result = ticketRetrievalService.getUserTickets(user, filter, pageable);
 
@@ -176,74 +207,5 @@ public class TicketRetrievalServiceTest {
 		response.setId(TICKET_ID);
 		response.setTicketCode(TICKET_CODE);
 		return response;
-	}
-
-	private TicketInfoProjection createTicketInfoProjection() {
-		return new TicketInfoProjection() {
-			@Override
-			public Long getId() {
-				return TICKET_ID;
-			}
-
-			@Override
-			public String getUniqueCode() {
-				return TICKET_CODE;
-			}
-
-			@Override
-			public TicketStatus getStatus() {
-				return TicketStatus.ACTIVE;
-			}
-
-			@Override
-			public LocalDateTime getPurchaseTime() {
-				return LocalDateTime.now();
-			}
-
-			@Override
-			public java.math.BigDecimal getFinalPrice() {
-				return java.math.BigDecimal.valueOf(150);
-			}
-
-			@Override
-			public String getTicketTypeName() {
-				return "Adult";
-			}
-
-			@Override
-			public String getMovieTitle() {
-				return "Test Movie";
-			}
-
-			@Override
-			public LocalDateTime getSessionStartTime() {
-				return LocalDateTime.now().plusDays(1);
-			}
-
-			@Override
-			public String getHallName() {
-				return "Hall 1";
-			}
-
-			@Override
-			public Integer getRow() {
-				return 1;
-			}
-
-			@Override
-			public Integer getSeatNumber() {
-				return 10;
-			}
-
-			@Override
-			public Long getUserId() {
-				return USER_ID;
-			}
-
-			@Override
-			public Long getMovieId() {
-				return 5L;
-			}
-		};
 	}
 }
