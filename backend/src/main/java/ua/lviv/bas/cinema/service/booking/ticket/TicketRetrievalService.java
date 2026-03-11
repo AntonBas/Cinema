@@ -1,9 +1,8 @@
 package ua.lviv.bas.cinema.service.booking.ticket;
 
-import java.time.LocalDateTime;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -11,7 +10,7 @@ import lombok.RequiredArgsConstructor;
 import ua.lviv.bas.cinema.domain.Ticket;
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.enums.TicketStatus;
-import ua.lviv.bas.cinema.domain.projection.TicketInfoProjection;
+import ua.lviv.bas.cinema.domain.specification.TicketSpecification;
 import ua.lviv.bas.cinema.dto.ticket.request.TicketFilterRequest;
 import ua.lviv.bas.cinema.dto.ticket.response.TicketResponse;
 import ua.lviv.bas.cinema.exception.domain.ticket.TicketNotFoundException;
@@ -25,6 +24,7 @@ import ua.lviv.bas.cinema.repository.TicketRepository;
 public class TicketRetrievalService {
 
 	private final TicketRepository ticketRepository;
+	private final TicketSpecification ticketSpecification;
 	private final TicketMapper ticketMapper;
 
 	public TicketResponse getTicketById(Long ticketId, User user) {
@@ -44,30 +44,16 @@ public class TicketRetrievalService {
 	}
 
 	public Page<TicketResponse> getUserTickets(User user, TicketFilterRequest filter, Pageable pageable) {
-		LocalDateTime purchaseFrom = filter.getPurchaseDateFrom() != null ? filter.getPurchaseDateFrom().atStartOfDay()
-				: null;
-		LocalDateTime purchaseTo = filter.getPurchaseDateTo() != null ? filter.getPurchaseDateTo().atTime(23, 59, 59)
-				: null;
-		LocalDateTime sessionFrom = filter.getSessionDateFrom() != null ? filter.getSessionDateFrom().atStartOfDay()
-				: null;
-		LocalDateTime sessionTo = filter.getSessionDateTo() != null ? filter.getSessionDateTo().atTime(23, 59, 59)
-				: null;
+		Specification<Ticket> spec = ticketSpecification.buildForUser(user.getId(), filter);
 
-		Page<TicketInfoProjection> projections = ticketRepository.findUserTickets(user.getId(), filter.getStatus(),
-				filter.getMovieId(), purchaseFrom, purchaseTo, sessionFrom, sessionTo, pageable);
+		Page<Ticket> tickets = ticketRepository.findAll(spec, pageable);
 
-		return projections.map(this::toTicketResponse);
+		return tickets.map(this::toTicketResponse);
 	}
 
 	private TicketResponse toTicketResponse(Ticket ticket) {
 		TicketResponse response = ticketMapper.toTicketResponse(ticket);
 		response.setQrCodeUrl(generateQrCodeUrl(ticket.getUniqueCode()));
-		return response;
-	}
-
-	private TicketResponse toTicketResponse(TicketInfoProjection projection) {
-		TicketResponse response = ticketMapper.toTicketResponse(projection);
-		response.setQrCodeUrl(generateQrCodeUrl(projection.getUniqueCode()));
 		return response;
 	}
 

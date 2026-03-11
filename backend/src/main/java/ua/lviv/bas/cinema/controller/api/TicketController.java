@@ -4,7 +4,6 @@ import java.time.LocalDate;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -43,8 +42,7 @@ public class TicketController {
 	@GetMapping("/upcoming")
 	@Operation(summary = "Get upcoming tickets", description = "Get upcoming tickets for authenticated user")
 	public ResponseEntity<PageResponse<TicketResponse>> getUpcomingTickets(
-			@AuthenticationPrincipal CustomUserDetails userDetails,
-			@PageableDefault(size = 10, sort = "sessionTime", direction = Sort.Direction.ASC) Pageable pageable) {
+			@AuthenticationPrincipal CustomUserDetails userDetails, @PageableDefault(size = 10) Pageable pageable) {
 
 		User user = userDetails.getUser();
 		log.info("Getting upcoming tickets for user ID: {}", user.getId());
@@ -59,8 +57,7 @@ public class TicketController {
 	@GetMapping("/history")
 	@Operation(summary = "Get ticket history", description = "Get paginated history of past tickets")
 	public ResponseEntity<PageResponse<TicketResponse>> getTicketHistory(
-			@AuthenticationPrincipal CustomUserDetails userDetails,
-			@PageableDefault(size = 10, sort = "purchaseTime", direction = Sort.Direction.DESC) Pageable pageable) {
+			@AuthenticationPrincipal CustomUserDetails userDetails, @PageableDefault(size = 10) Pageable pageable) {
 
 		User user = userDetails.getUser();
 		log.info("Getting ticket history for user ID: {}", user.getId());
