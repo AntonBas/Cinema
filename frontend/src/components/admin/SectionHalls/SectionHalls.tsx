@@ -41,23 +41,39 @@ export const SectionHalls: React.FC = () => {
     const [hallsData, setHallsData] = useState<CinemaHallResponse[]>([]);
 
     const hasLoadedRef = useRef(false);
+    const isMountedRef = useRef(true);
+
+    useEffect(() => {
+        isMountedRef.current = true;
+        return () => {
+            isMountedRef.current = false;
+        };
+    }, []);
 
     const loadHalls = useCallback(async () => {
-        const response = await getAllHalls();
-        setHallsData(response || []);
+        if (!isMountedRef.current) return;
+
+        try {
+            const response = await getAllHalls();
+            if (isMountedRef.current) {
+                setHallsData(response || []);
+            }
+        } catch (error) {
+            console.error('Failed to load halls:', error);
+        }
     }, [getAllHalls]);
 
     useEffect(() => {
         if (!hasLoadedRef.current) {
-            loadHalls();
             hasLoadedRef.current = true;
+            loadHalls();
         }
     }, [loadHalls]);
 
     const handleCreateHall = useCallback(async (request: CinemaHallRequest) => {
         try {
             const response = await createHall(request);
-            if (response) {
+            if (response && isMountedRef.current) {
                 showNotification(`Cinema hall "${response.name}" created successfully!`, 'success');
                 await loadHalls();
             }
@@ -74,7 +90,7 @@ export const SectionHalls: React.FC = () => {
     const handleEditHall = useCallback(async (id: number, request: CinemaHallRequest & { coupleRows?: number[] }) => {
         try {
             const response = await updateHall(id, request);
-            if (response) {
+            if (response && isMountedRef.current) {
                 showNotification(`Cinema hall "${response.name}" updated successfully!`, 'success');
                 await loadHalls();
             }
@@ -97,8 +113,10 @@ export const SectionHalls: React.FC = () => {
 
         try {
             await deleteHall(deleteModal.hall.id);
-            showNotification(`Cinema hall "${deleteModal.hall.name}" deleted successfully!`, 'success');
-            await loadHalls();
+            if (isMountedRef.current) {
+                showNotification(`Cinema hall "${deleteModal.hall.name}" deleted successfully!`, 'success');
+                await loadHalls();
+            }
             setDeleteModal({ isOpen: false, hall: null, isDeleting: false });
         } catch (err) {
             if (isApiErrorException(err)) {
