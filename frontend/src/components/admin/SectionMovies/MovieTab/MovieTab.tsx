@@ -52,7 +52,20 @@ export const MovieTab: React.FC = () => {
 
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const initialLoadRef = useRef(false);
-  const loadingDataRef = useRef(false);
+  const loadingDataRef = useRef<Record<MovieTabType, boolean>>({
+    CURRENT: false,
+    UPCOMING: false,
+    ARCHIVED: false
+  });
+  const previousParamsRef = useRef({ tab: activeTab, page: params.page, search: params.search });
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   const currentTabData = useMemo(() =>
     tabData[activeTab],
@@ -60,9 +73,9 @@ export const MovieTab: React.FC = () => {
   );
 
   const loadTabData = useCallback(async (tab: MovieTabType, page: number, search?: string, skipCache: boolean = false) => {
-    if (loadingDataRef.current) return;
+    if (loadingDataRef.current[tab] || !isMountedRef.current) return;
 
-    loadingDataRef.current = true;
+    loadingDataRef.current[tab] = true;
 
     try {
       const baseParams = {
@@ -71,53 +84,61 @@ export const MovieTab: React.FC = () => {
         sort: tab === 'UPCOMING' ? 'releaseDate,asc' : 'releaseDate,desc'
       };
 
-      const params = search
+      const requestParams = search
         ? { ...baseParams, title: search }
         : baseParams;
 
       let response;
       switch (tab) {
         case 'CURRENT':
-          response = await getAdminCurrent(params, skipCache);
+          response = await getAdminCurrent(requestParams, skipCache);
           break;
         case 'UPCOMING':
-          response = await getAdminUpcoming(params, skipCache);
+          response = await getAdminUpcoming(requestParams, skipCache);
           break;
         case 'ARCHIVED':
-          response = await getAdminArchived(params, skipCache);
+          response = await getAdminArchived(requestParams, skipCache);
           break;
       }
 
-      setTabData(prev => ({
-        ...prev,
-        [tab]: {
-          data: response?.content || [],
-          total: response?.totalElements || 0,
-          pagination: response
-        }
-      }));
+      if (isMountedRef.current) {
+        setTabData(prev => ({
+          ...prev,
+          [tab]: {
+            data: response?.content || [],
+            total: response?.totalElements || 0,
+            pagination: response
+          }
+        }));
+      }
     } catch (error) {
-      if (isApiErrorException(error)) {
-        showNotification(error.message, 'error');
-      } else {
-        showNotification(`Failed to load ${tab.toLowerCase()} movies`, 'error');
+      if (isMountedRef.current) {
+        if (isApiErrorException(error)) {
+          showNotification(error.message, 'error');
+        } else {
+          showNotification(`Failed to load ${tab.toLowerCase()} movies`, 'error');
+        }
       }
     } finally {
-      loadingDataRef.current = false;
+      if (isMountedRef.current) {
+        loadingDataRef.current[tab] = false;
+      }
     }
   }, [getAdminCurrent, getAdminUpcoming, getAdminArchived, showNotification]);
+
+  const loadTabDataStable = useRef(loadTabData).current;
 
   const loadTabCounts = useCallback(async () => {
     try {
       await Promise.all([
-        loadTabData('CURRENT', 0, '', true),
-        loadTabData('UPCOMING', 0, '', true),
-        loadTabData('ARCHIVED', 0, '', true)
+        loadTabDataStable('CURRENT', 0, '', true),
+        loadTabDataStable('UPCOMING', 0, '', true),
+        loadTabDataStable('ARCHIVED', 0, '', true)
       ]);
     } catch (error) {
       console.error('Failed to load tab counts:', error);
     }
-  }, [loadTabData]);
+  }, [loadTabDataStable]);
 
   useEffect(() => {
     if (!initialLoadRef.current) {
@@ -127,14 +148,26 @@ export const MovieTab: React.FC = () => {
   }, [loadTabCounts]);
 
   useEffect(() => {
-    if (initialLoadRef.current) {
-      const timer = setTimeout(() => {
-        loadTabData(activeTab, params.page || 0, params.search, false);
-      }, 100);
+    if (!initialLoadRef.current) return;
 
-      return () => clearTimeout(timer);
+    const currentParams = { tab: activeTab, page: params.page || 0, search: params.search };
+
+    if (
+      previousParamsRef.current.tab === currentParams.tab &&
+      previousParamsRef.current.page === currentParams.page &&
+      previousParamsRef.current.search === currentParams.search
+    ) {
+      return;
     }
-  }, [activeTab, params.page, params.search, loadTabData]);
+
+    previousParamsRef.current = currentParams;
+
+    const timer = setTimeout(() => {
+      loadTabDataStable(activeTab, params.page || 0, params.search, false);
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [activeTab, params.page, params.search, loadTabDataStable]);
 
   const handleSearch = useCallback((query: string) => {
     if (searchTimeoutRef.current) {
@@ -184,7 +217,7 @@ export const MovieTab: React.FC = () => {
         : params.page || 0;
 
       setPage(newPage);
-      await loadTabData(activeTab, newPage, params.search, true);
+      await loadTabDataStable(activeTab, newPage, params.search, true);
     } catch (err) {
       if (isApiErrorException(err) && err.isConflict?.()) {
         showNotification(`Cannot delete movie "${deletingMovie.title}" because it has associated sessions.`, 'error');
@@ -195,7 +228,7 @@ export const MovieTab: React.FC = () => {
       setIsDeleteModalOpen(false);
       setDeletingMovie(null);
     }
-  }, [deletingMovie, remove, activeTab, params.page, params.search, currentTabData.data.length, setPage, loadTabData, showNotification]);
+  }, [deletingMovie, remove, activeTab, params.page, params.search, currentTabData.data.length, setPage, loadTabDataStable, showNotification]);
 
   const handleDeleteCancel = useCallback(() => {
     setIsDeleteModalOpen(false);
@@ -208,8 +241,8 @@ export const MovieTab: React.FC = () => {
     if (result) {
       showNotification(`Movie "${result.title}" successfully ${editingMovie ? 'updated' : 'created'}!`, 'success');
     }
-    loadTabData(activeTab, params.page || 0, params.search, true);
-  }, [activeTab, params.page, params.search, loadTabData, editingMovie, showNotification]);
+    loadTabDataStable(activeTab, params.page || 0, params.search, true);
+  }, [activeTab, params.page, params.search, loadTabDataStable, editingMovie, showNotification]);
 
   const handleFormCancel = useCallback(() => {
     setIsModalOpen(false);
