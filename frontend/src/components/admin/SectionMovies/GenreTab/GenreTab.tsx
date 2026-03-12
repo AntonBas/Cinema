@@ -36,6 +36,7 @@ export const GenreTab: React.FC = () => {
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const initialLoadRef = useRef(false);
   const loadingDataRef = useRef(false);
+  const isMountedRef = useRef(true);
 
   const {
     loading,
@@ -47,29 +48,40 @@ export const GenreTab: React.FC = () => {
 
   const showDelayedLoading = useDelayedLoading(loading, { delay: 150, minDisplayTime: 300 });
 
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
   const loadTabData = useCallback(async (page: number, search?: string) => {
-    if (loadingDataRef.current) return;
+    if (loadingDataRef.current || !isMountedRef.current) return;
 
     loadingDataRef.current = true;
 
     try {
-      const params = {
+      const requestParams = {
         page,
         size: 20,
         ...(search?.trim() && { search: search.trim() })
       };
 
-      const response = await getAll(params);
+      const response = await getAll(requestParams);
 
-      setTabData({
-        data: response?.content || [],
-        total: response?.totalElements || 0
-      });
+      if (isMountedRef.current) {
+        setTabData({
+          data: response?.content || [],
+          total: response?.totalElements || 0
+        });
+      }
     } catch (error) {
-      if (isApiErrorException(error)) {
-        showNotification(error.message, 'error');
-      } else {
-        showNotification('Failed to load genres', 'error');
+      if (isMountedRef.current) {
+        if (isApiErrorException(error)) {
+          showNotification(error.message, 'error');
+        } else {
+          showNotification('Failed to load genres', 'error');
+        }
       }
     } finally {
       loadingDataRef.current = false;
@@ -81,17 +93,17 @@ export const GenreTab: React.FC = () => {
       initialLoadRef.current = true;
       loadTabData(params.page || 0, params.search);
     }
-  }, [loadTabData, params.page, params.search]);
+  }, []);
 
   useEffect(() => {
-    if (initialLoadRef.current) {
-      const timer = setTimeout(() => {
-        loadTabData(params.page || 0, params.search);
-      }, 100);
+    if (!initialLoadRef.current) return;
 
-      return () => clearTimeout(timer);
-    }
-  }, [params.page, params.search, loadTabData]);
+    const timer = setTimeout(() => {
+      loadTabData(params.page || 0, params.search);
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [params.page, params.search]);
 
   const handleSearch = useCallback((query: string) => {
     if (searchTimeoutRef.current) {
