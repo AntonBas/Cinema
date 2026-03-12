@@ -28,6 +28,8 @@ interface FiltersState {
 const DEBOUNCE_DELAY = 300;
 
 export const SectionSchedule: React.FC = () => {
+    const prevParamsRef = useRef<string>('');
+
     const { notifications, showNotification, hideNotification } = useNotification();
     const { allHalls, loading: hallsLoading, getAllHalls } = useCinemaHalls();
     const { publicCurrentPagination, publicUpcomingPagination, loading: moviesLoading, getPublicCurrent, getPublicUpcoming } = useMovies();
@@ -59,6 +61,7 @@ export const SectionSchedule: React.FC = () => {
     const initialMoviesLoaded = useRef(false);
     const loadingDataRef = useRef(false);
     const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const initialLoadDone = useRef(false);
 
     const {
         getSessions,
@@ -142,6 +145,18 @@ export const SectionSchedule: React.FC = () => {
     }, [params.page, params.size, filters, getSessions, showNotification]);
 
     useEffect(() => {
+        if (!initialLoadDone.current) {
+            initialLoadDone.current = true;
+            loadSessions();
+            return;
+        }
+
+        const paramsString = JSON.stringify({ page: params.page, size: params.size, filters });
+
+        if (prevParamsRef.current === paramsString) return;
+
+        prevParamsRef.current = paramsString;
+
         if (timeoutRef.current) {
             clearTimeout(timeoutRef.current);
         }
@@ -337,7 +352,7 @@ export const SectionSchedule: React.FC = () => {
         return { total, start, end, totalPages, showPagination: totalPages > 1 };
     }, [sessionData.pagination, params.page, params.size]);
 
-    if (showDelayedLoading && !sessionData.sessions.length && !Object.keys(filters).length) {
+    if (showDelayedLoading && !sessionData.sessions.length && !initialLoadDone.current) {
         return (
             <div className={styles.loadingContainer}>
                 <LoadingSpinner text="Loading sessions..." />
