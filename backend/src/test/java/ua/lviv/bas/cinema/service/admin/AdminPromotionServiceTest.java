@@ -25,10 +25,11 @@ import org.springframework.data.domain.Pageable;
 
 import ua.lviv.bas.cinema.domain.Promotion;
 import ua.lviv.bas.cinema.domain.UserPromotion;
-import ua.lviv.bas.cinema.domain.projection.PromotionResponseProjection;
+import ua.lviv.bas.cinema.domain.projection.PromotionAdminProjection;
 import ua.lviv.bas.cinema.dto.common.PageResponse;
 import ua.lviv.bas.cinema.dto.promotion.request.PromotionCreateRequest;
 import ua.lviv.bas.cinema.dto.promotion.request.PromotionUpdateRequest;
+import ua.lviv.bas.cinema.dto.promotion.response.PromotionAdminResponse;
 import ua.lviv.bas.cinema.dto.promotion.response.PromotionResponse;
 import ua.lviv.bas.cinema.exception.domain.promotion.PromotionAlreadyExistsException;
 import ua.lviv.bas.cinema.exception.domain.promotion.PromotionDatesInvalidException;
@@ -181,37 +182,7 @@ public class AdminPromotionServiceTest {
 	@Test
 	void getAllPromotions() {
 		Pageable pageable = PageRequest.of(0, 10);
-		Promotion promotion = Promotion.builder().id(1L).build();
-		Page<Promotion> page = new PageImpl<>(Arrays.asList(promotion));
-		PromotionResponse response = new PromotionResponse();
-
-		when(promotionRepository.findAll(pageable)).thenReturn(page);
-		when(promotionMapper.toPromotionResponseList(page.getContent())).thenReturn(Arrays.asList(response));
-
-		PageResponse<PromotionResponse> result = service.getAllPromotions(pageable);
-
-		assertThat(result).isNotNull();
-		assertThat(result.getContent()).hasSize(1);
-	}
-
-	@Test
-	void getAllPromotionsEmpty() {
-		Pageable pageable = PageRequest.of(0, 10);
-		Page<Promotion> page = new PageImpl<>(Collections.emptyList());
-
-		when(promotionRepository.findAll(pageable)).thenReturn(page);
-		when(promotionMapper.toPromotionResponseList(Collections.emptyList())).thenReturn(Collections.emptyList());
-
-		PageResponse<PromotionResponse> result = service.getAllPromotions(pageable);
-
-		assertThat(result).isNotNull();
-		assertThat(result.getContent()).isEmpty();
-	}
-
-	@Test
-	void getActivePromotions() {
-		Pageable pageable = PageRequest.of(0, 10);
-		PromotionResponseProjection projection = new PromotionResponseProjection() {
+		PromotionAdminProjection projection = new PromotionAdminProjection() {
 			@Override
 			public Long getId() {
 				return 1L;
@@ -223,11 +194,6 @@ public class AdminPromotionServiceTest {
 			}
 
 			@Override
-			public String getDescription() {
-				return null;
-			}
-
-			@Override
 			public Integer getBonusPoints() {
 				return 100;
 			}
@@ -243,145 +209,31 @@ public class AdminPromotionServiceTest {
 			}
 		};
 
-		List<PromotionResponseProjection> projections = Arrays.asList(projection);
-		PromotionResponse response = new PromotionResponse();
+		Page<PromotionAdminProjection> page = new PageImpl<>(Arrays.asList(projection));
+		PromotionAdminResponse response = new PromotionAdminResponse();
 		response.setId(1L);
 
-		when(promotionRepository.findAllPromotions(true)).thenReturn(projections);
-		when(promotionMapper.toPromotionResponseListFromProjections(projections)).thenReturn(Arrays.asList(response));
+		when(promotionRepository.findAllAdminList(pageable)).thenReturn(page);
+		when(promotionMapper.toPromotionAdminResponse(projection)).thenReturn(response);
 
-		PageResponse<PromotionResponse> result = service.getActivePromotions(pageable);
+		PageResponse<PromotionAdminResponse> result = service.getAllPromotions(pageable);
 
 		assertThat(result).isNotNull();
 		assertThat(result.getContent()).hasSize(1);
+		assertThat(result.getContent().get(0).getId()).isEqualTo(1L);
 	}
 
 	@Test
-	void getActivePromotionsEmpty() {
+	void getAllPromotionsEmpty() {
 		Pageable pageable = PageRequest.of(0, 10);
+		Page<PromotionAdminProjection> page = new PageImpl<>(Collections.emptyList());
 
-		when(promotionRepository.findAllPromotions(true)).thenReturn(Collections.emptyList());
-		when(promotionMapper.toPromotionResponseListFromProjections(Collections.emptyList()))
-				.thenReturn(Collections.emptyList());
+		when(promotionRepository.findAllAdminList(pageable)).thenReturn(page);
 
-		PageResponse<PromotionResponse> result = service.getActivePromotions(pageable);
+		PageResponse<PromotionAdminResponse> result = service.getAllPromotions(pageable);
 
 		assertThat(result).isNotNull();
 		assertThat(result.getContent()).isEmpty();
-	}
-
-	@Test
-	void getActivePromotionsWithPagination() {
-		Pageable pageable = PageRequest.of(1, 2);
-		PromotionResponseProjection projection1 = new PromotionResponseProjection() {
-			@Override
-			public Long getId() {
-				return 1L;
-			}
-
-			@Override
-			public String getTitle() {
-				return "Test1";
-			}
-
-			@Override
-			public String getDescription() {
-				return null;
-			}
-
-			@Override
-			public Integer getBonusPoints() {
-				return 100;
-			}
-
-			@Override
-			public LocalDate getStartDate() {
-				return null;
-			}
-
-			@Override
-			public LocalDate getEndDate() {
-				return null;
-			}
-		};
-		PromotionResponseProjection projection2 = new PromotionResponseProjection() {
-			@Override
-			public Long getId() {
-				return 2L;
-			}
-
-			@Override
-			public String getTitle() {
-				return "Test2";
-			}
-
-			@Override
-			public String getDescription() {
-				return null;
-			}
-
-			@Override
-			public Integer getBonusPoints() {
-				return 100;
-			}
-
-			@Override
-			public LocalDate getStartDate() {
-				return null;
-			}
-
-			@Override
-			public LocalDate getEndDate() {
-				return null;
-			}
-		};
-		PromotionResponseProjection projection3 = new PromotionResponseProjection() {
-			@Override
-			public Long getId() {
-				return 3L;
-			}
-
-			@Override
-			public String getTitle() {
-				return "Test3";
-			}
-
-			@Override
-			public String getDescription() {
-				return null;
-			}
-
-			@Override
-			public Integer getBonusPoints() {
-				return 100;
-			}
-
-			@Override
-			public LocalDate getStartDate() {
-				return null;
-			}
-
-			@Override
-			public LocalDate getEndDate() {
-				return null;
-			}
-		};
-
-		List<PromotionResponseProjection> projections = Arrays.asList(projection1, projection2, projection3);
-		List<PromotionResponse> responses = Arrays.asList(new PromotionResponse(), new PromotionResponse(),
-				new PromotionResponse());
-
-		when(promotionRepository.findAllPromotions(true)).thenReturn(projections);
-		when(promotionMapper.toPromotionResponseListFromProjections(projections)).thenReturn(responses);
-
-		PageResponse<PromotionResponse> result = service.getActivePromotions(pageable);
-
-		assertThat(result).isNotNull();
-		assertThat(result.getContent()).hasSize(1);
-		assertThat(result.getTotalElements()).isEqualTo(3);
-		assertThat(result.getTotalPages()).isEqualTo(2);
-		assertThat(result.getNumber()).isEqualTo(1);
-		assertThat(result.getSize()).isEqualTo(2);
 	}
 
 	@Test
@@ -404,65 +256,14 @@ public class AdminPromotionServiceTest {
 	}
 
 	@Test
-	void isPromotionActive() {
-		Promotion promotion = Promotion.builder().startDate(LocalDate.now().minusDays(1))
-				.endDate(LocalDate.now().plusDays(1)).build();
+	void validateDatesWithInvalidDates() {
+		PromotionCreateRequest request = new PromotionCreateRequest();
+		request.setTitle("Test");
+		request.setStartDate(LocalDate.now().plusDays(7));
+		request.setEndDate(LocalDate.now());
 
-		boolean result = service.isPromotionActive(promotion);
+		when(promotionRepository.existsByTitle("Test")).thenReturn(false);
 
-		assertThat(result).isTrue();
-	}
-
-	@Test
-	void isPromotionActiveBeforeStart() {
-		Promotion promotion = Promotion.builder().startDate(LocalDate.now().plusDays(1))
-				.endDate(LocalDate.now().plusDays(2)).build();
-
-		boolean result = service.isPromotionActive(promotion);
-
-		assertThat(result).isFalse();
-	}
-
-	@Test
-	void isPromotionActiveAfterEnd() {
-		Promotion promotion = Promotion.builder().startDate(LocalDate.now().minusDays(2))
-				.endDate(LocalDate.now().minusDays(1)).build();
-
-		boolean result = service.isPromotionActive(promotion);
-
-		assertThat(result).isFalse();
-	}
-
-	@Test
-	void isPromotionActiveWithNoDates() {
-		Promotion promotion = Promotion.builder().build();
-
-		boolean result = service.isPromotionActive(promotion);
-
-		assertThat(result).isTrue();
-	}
-
-	@Test
-	void isPromotionActiveWithNoStartDate() {
-		Promotion promotion = Promotion.builder().endDate(LocalDate.now().plusDays(1)).build();
-
-		boolean result = service.isPromotionActive(promotion);
-
-		assertThat(result).isTrue();
-	}
-
-	@Test
-	void isPromotionActiveWithNoEndDate() {
-		Promotion promotion = Promotion.builder().startDate(LocalDate.now().minusDays(1)).build();
-
-		boolean result = service.isPromotionActive(promotion);
-
-		assertThat(result).isTrue();
-	}
-
-	@Test
-	void isPromotionActiveWithNull() {
-		boolean result = service.isPromotionActive(null);
-		assertThat(result).isFalse();
+		assertThatThrownBy(() -> service.createPromotion(request)).isInstanceOf(PromotionDatesInvalidException.class);
 	}
 }

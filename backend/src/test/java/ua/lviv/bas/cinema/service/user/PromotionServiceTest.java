@@ -11,7 +11,6 @@ import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -19,20 +18,17 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Pageable;
 
-import ua.lviv.bas.cinema.domain.BonusCard;
 import ua.lviv.bas.cinema.domain.Promotion;
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.UserPromotion;
-import ua.lviv.bas.cinema.domain.projection.UserPromotionResponseProjection;
-import ua.lviv.bas.cinema.dto.common.PageResponse;
+import ua.lviv.bas.cinema.domain.projection.PromotionResponseProjection;
 import ua.lviv.bas.cinema.dto.promotion.request.UserPromotionCreateRequest;
 import ua.lviv.bas.cinema.dto.promotion.response.PromotionResponse;
-import ua.lviv.bas.cinema.dto.promotion.response.UserPromotionResponse;
 import ua.lviv.bas.cinema.exception.domain.promotion.AlreadyClaimedException;
 import ua.lviv.bas.cinema.exception.domain.promotion.PromotionNotActiveException;
 import ua.lviv.bas.cinema.mapper.PromotionMapper;
+import ua.lviv.bas.cinema.repository.PromotionRepository;
 import ua.lviv.bas.cinema.repository.UserPromotionRepository;
 import ua.lviv.bas.cinema.service.admin.AdminPromotionService;
 
@@ -40,19 +36,20 @@ import ua.lviv.bas.cinema.service.admin.AdminPromotionService;
 public class PromotionServiceTest {
 
 	@Mock
+	private PromotionRepository promotionRepository;
+	@Mock
 	private UserPromotionRepository userPromotionRepository;
 	@Mock
-	private AdminPromotionService promotionService;
+	private AdminPromotionService adminPromotionService;
 	@Mock
 	private BonusService bonusUserService;
 	@Mock
 	private PromotionMapper promotionMapper;
 	@InjectMocks
-	private PromotionService promotionServiceInstance;
+	private PromotionService promotionService;
 
 	private final Long PROMOTION_ID = 1L;
 	private final Integer BONUS_POINTS = 100;
-	private final Integer NEW_BALANCE = 250;
 	private final String PROMOTION_TITLE = "Test Promotion";
 	private final String USER_EMAIL = "test@example.com";
 
@@ -65,19 +62,17 @@ public class PromotionServiceTest {
 		Promotion promotion = Promotion.builder().id(PROMOTION_ID).title(PROMOTION_TITLE).bonusPoints(BONUS_POINTS)
 				.startDate(LocalDate.now().minusDays(1)).endDate(LocalDate.now().plusDays(1)).build();
 
-		UserPromotionResponse expectedResponse = new UserPromotionResponse();
-		expectedResponse.setNewBalance(NEW_BALANCE);
+		PromotionResponse expectedResponse = new PromotionResponse();
+		expectedResponse.setId(PROMOTION_ID);
+		expectedResponse.setTitle(PROMOTION_TITLE);
 
-		when(promotionService.findByIdOrThrow(PROMOTION_ID)).thenReturn(promotion);
-		when(promotionService.isPromotionActive(promotion)).thenReturn(true);
+		when(adminPromotionService.findByIdOrThrow(PROMOTION_ID)).thenReturn(promotion);
 		when(userPromotionRepository.existsByUserAndPromotion(user, promotion)).thenReturn(false);
-		when(userPromotionRepository.save(any(UserPromotion.class))).thenReturn(new UserPromotion());
-		when(bonusUserService.addPoints(user, BONUS_POINTS, promotion.getTitle())).thenReturn(NEW_BALANCE);
-		when(promotionMapper.toUserPromotionResponse(any(UserPromotion.class))).thenReturn(expectedResponse);
+		when(promotionMapper.toPromotionResponse(promotion)).thenReturn(expectedResponse);
 
-		UserPromotionResponse result = promotionServiceInstance.claimPromotion(request, user);
+		PromotionResponse result = promotionService.claimPromotion(request, user);
 
-		assertThat(result.getNewBalance()).isEqualTo(NEW_BALANCE);
+		assertThat(result.getId()).isEqualTo(PROMOTION_ID);
 		verify(userPromotionRepository).save(any(UserPromotion.class));
 		verify(bonusUserService).addPoints(user, BONUS_POINTS, promotion.getTitle());
 	}
@@ -88,12 +83,12 @@ public class PromotionServiceTest {
 		UserPromotionCreateRequest request = new UserPromotionCreateRequest();
 		request.setPromotionId(PROMOTION_ID);
 
-		Promotion promotion = Promotion.builder().id(PROMOTION_ID).title(PROMOTION_TITLE).build();
+		Promotion promotion = Promotion.builder().id(PROMOTION_ID).title(PROMOTION_TITLE)
+				.startDate(LocalDate.now().plusDays(1)).endDate(LocalDate.now().plusDays(2)).build();
 
-		when(promotionService.findByIdOrThrow(PROMOTION_ID)).thenReturn(promotion);
-		when(promotionService.isPromotionActive(promotion)).thenReturn(false);
+		when(adminPromotionService.findByIdOrThrow(PROMOTION_ID)).thenReturn(promotion);
 
-		assertThatThrownBy(() -> promotionServiceInstance.claimPromotion(request, user))
+		assertThatThrownBy(() -> promotionService.claimPromotion(request, user))
 				.isInstanceOf(PromotionNotActiveException.class);
 
 		verify(userPromotionRepository, never()).save(any());
@@ -106,13 +101,13 @@ public class PromotionServiceTest {
 		UserPromotionCreateRequest request = new UserPromotionCreateRequest();
 		request.setPromotionId(PROMOTION_ID);
 
-		Promotion promotion = Promotion.builder().id(PROMOTION_ID).title(PROMOTION_TITLE).build();
+		Promotion promotion = Promotion.builder().id(PROMOTION_ID).title(PROMOTION_TITLE)
+				.startDate(LocalDate.now().minusDays(1)).endDate(LocalDate.now().plusDays(1)).build();
 
-		when(promotionService.findByIdOrThrow(PROMOTION_ID)).thenReturn(promotion);
-		when(promotionService.isPromotionActive(promotion)).thenReturn(true);
+		when(adminPromotionService.findByIdOrThrow(PROMOTION_ID)).thenReturn(promotion);
 		when(userPromotionRepository.existsByUserAndPromotion(user, promotion)).thenReturn(true);
 
-		assertThatThrownBy(() -> promotionServiceInstance.claimPromotion(request, user))
+		assertThatThrownBy(() -> promotionService.claimPromotion(request, user))
 				.isInstanceOf(AlreadyClaimedException.class);
 
 		verify(userPromotionRepository, never()).save(any());
@@ -123,57 +118,37 @@ public class PromotionServiceTest {
 	void getAvailablePromotions_ReturnsOnlyUnclaimed() {
 		User user = User.builder().id(1L).email(USER_EMAIL).build();
 
-		PromotionResponse promo1 = new PromotionResponse();
-		promo1.setId(1L);
-		PromotionResponse promo2 = new PromotionResponse();
-		promo2.setId(2L);
-		List<PromotionResponse> activePromotionsList = Arrays.asList(promo1, promo2);
+		PromotionResponseProjection projection1 = createPromotionProjection(1L, "Promo 1");
+		PromotionResponseProjection projection2 = createPromotionProjection(2L, "Promo 2");
+		List<PromotionResponseProjection> activePromotions = Arrays.asList(projection1, projection2);
 
-		PageResponse<PromotionResponse> pageResponse = new PageResponse<>();
-		pageResponse.setContent(activePromotionsList);
+		PromotionResponse response1 = new PromotionResponse();
+		response1.setId(1L);
 
-		when(promotionService.getActivePromotions(any(Pageable.class))).thenReturn(pageResponse);
+		when(promotionRepository.findAllActivePromotions()).thenReturn(activePromotions);
 		when(userPromotionRepository.existsByUserAndPromotionId(user, 1L)).thenReturn(false);
 		when(userPromotionRepository.existsByUserAndPromotionId(user, 2L)).thenReturn(true);
+		when(promotionMapper.toPromotionResponse(projection1)).thenReturn(response1);
 
-		List<PromotionResponse> result = promotionServiceInstance.getAvailablePromotions(user);
+		List<PromotionResponse> result = promotionService.getAvailablePromotions(user);
 
 		assertThat(result).hasSize(1);
 		assertThat(result.get(0).getId()).isEqualTo(1L);
 	}
 
 	@Test
-	void getUserPromotions_ReturnsListWithCurrentBalance() {
-		User user = User.builder().id(1L).build();
-		BonusCard bonusCard = BonusCard.builder().pointsBalance(NEW_BALANCE).build();
-		user.setBonusCard(bonusCard);
+	void getAvailablePromotions_WhenAllClaimed_ReturnsEmpty() {
+		User user = User.builder().id(1L).email(USER_EMAIL).build();
 
-		List<UserPromotionResponseProjection> projections = Collections.emptyList();
-		List<UserPromotionResponse> responses = Collections.singletonList(new UserPromotionResponse());
+		PromotionResponseProjection projection1 = createPromotionProjection(1L, "Promo 1");
+		List<PromotionResponseProjection> activePromotions = Arrays.asList(projection1);
 
-		when(userPromotionRepository.findUserPromotionResponsesByUser(user)).thenReturn(projections);
-		when(promotionMapper.toUserPromotionResponseListFromProjections(projections)).thenReturn(responses);
+		when(promotionRepository.findAllActivePromotions()).thenReturn(activePromotions);
+		when(userPromotionRepository.existsByUserAndPromotionId(user, 1L)).thenReturn(true);
 
-		List<UserPromotionResponse> result = promotionServiceInstance.getUserPromotions(user);
+		List<PromotionResponse> result = promotionService.getAvailablePromotions(user);
 
-		assertThat(result).hasSize(1);
-		assertThat(result.get(0).getNewBalance()).isEqualTo(NEW_BALANCE);
-	}
-
-	@Test
-	void getUserPromotions_WhenNoBonusCard_ReturnsZeroBalance() {
-		User user = User.builder().id(1L).bonusCard(null).build();
-
-		List<UserPromotionResponseProjection> projections = Collections.emptyList();
-		List<UserPromotionResponse> responses = Collections.singletonList(new UserPromotionResponse());
-
-		when(userPromotionRepository.findUserPromotionResponsesByUser(user)).thenReturn(projections);
-		when(promotionMapper.toUserPromotionResponseListFromProjections(projections)).thenReturn(responses);
-
-		List<UserPromotionResponse> result = promotionServiceInstance.getUserPromotions(user);
-
-		assertThat(result).hasSize(1);
-		assertThat(result.get(0).getNewBalance()).isZero();
+		assertThat(result).isEmpty();
 	}
 
 	@Test
@@ -182,7 +157,7 @@ public class PromotionServiceTest {
 
 		when(userPromotionRepository.existsByUserAndPromotionId(user, PROMOTION_ID)).thenReturn(true);
 
-		boolean result = promotionServiceInstance.hasUserClaimedPromotion(user, PROMOTION_ID);
+		boolean result = promotionService.hasUserClaimedPromotion(user, PROMOTION_ID);
 
 		assertThat(result).isTrue();
 	}
@@ -193,8 +168,42 @@ public class PromotionServiceTest {
 
 		when(userPromotionRepository.existsByUserAndPromotionId(user, PROMOTION_ID)).thenReturn(false);
 
-		boolean result = promotionServiceInstance.hasUserClaimedPromotion(user, PROMOTION_ID);
+		boolean result = promotionService.hasUserClaimedPromotion(user, PROMOTION_ID);
 
 		assertThat(result).isFalse();
+	}
+
+	private PromotionResponseProjection createPromotionProjection(Long id, String title) {
+		return new PromotionResponseProjection() {
+			@Override
+			public Long getId() {
+				return id;
+			}
+
+			@Override
+			public String getTitle() {
+				return title;
+			}
+
+			@Override
+			public String getDescription() {
+				return null;
+			}
+
+			@Override
+			public Integer getBonusPoints() {
+				return 100;
+			}
+
+			@Override
+			public LocalDate getStartDate() {
+				return null;
+			}
+
+			@Override
+			public LocalDate getEndDate() {
+				return null;
+			}
+		};
 	}
 }

@@ -3,21 +3,18 @@ package ua.lviv.bas.cinema.mapper;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
 import org.mockito.Mockito;
 
 import ua.lviv.bas.cinema.domain.Promotion;
-import ua.lviv.bas.cinema.domain.User;
-import ua.lviv.bas.cinema.domain.UserPromotion;
+import ua.lviv.bas.cinema.domain.projection.PromotionAdminProjection;
+import ua.lviv.bas.cinema.domain.projection.PromotionResponseProjection;
 import ua.lviv.bas.cinema.dto.promotion.request.PromotionCreateRequest;
 import ua.lviv.bas.cinema.dto.promotion.request.PromotionUpdateRequest;
+import ua.lviv.bas.cinema.dto.promotion.response.PromotionAdminResponse;
 import ua.lviv.bas.cinema.dto.promotion.response.PromotionResponse;
-import ua.lviv.bas.cinema.dto.promotion.response.UserPromotionResponse;
 
 public class PromotionMapperTest {
 
@@ -25,116 +22,111 @@ public class PromotionMapperTest {
 
 	@Test
 	void toPromotionResponse() {
-		Promotion promotion = Promotion.builder().id(1L).title("Summer Sale").bonusPoints(500)
-				.startDate(LocalDate.of(2024, 6, 1)).endDate(LocalDate.of(2024, 6, 30)).build();
+		Promotion promotion = Promotion.builder().id(1L).title("Summer Sale").description("Summer special promotion")
+				.bonusPoints(500).startDate(LocalDate.of(2024, 6, 1)).endDate(LocalDate.of(2024, 6, 30)).build();
 
 		PromotionResponse response = mapper.toPromotionResponse(promotion);
 
 		assertThat(response.getId()).isEqualTo(1L);
 		assertThat(response.getTitle()).isEqualTo("Summer Sale");
+		assertThat(response.getDescription()).isEqualTo("Summer special promotion");
 		assertThat(response.getBonusPoints()).isEqualTo(500);
+		assertThat(response.getStartDate()).isEqualTo(LocalDate.of(2024, 6, 1));
+		assertThat(response.getEndDate()).isEqualTo(LocalDate.of(2024, 6, 30));
 	}
 
 	@Test
 	void toPromotionResponseFromProjection() {
-		var projection = Mockito.mock(ua.lviv.bas.cinema.domain.projection.PromotionResponseProjection.class);
+		var projection = Mockito.mock(PromotionResponseProjection.class);
 		Mockito.when(projection.getId()).thenReturn(1L);
 		Mockito.when(projection.getTitle()).thenReturn("Projection Title");
+		Mockito.when(projection.getDescription()).thenReturn("Projection Description");
 		Mockito.when(projection.getBonusPoints()).thenReturn(300);
+		Mockito.when(projection.getStartDate()).thenReturn(LocalDate.of(2024, 7, 1));
+		Mockito.when(projection.getEndDate()).thenReturn(LocalDate.of(2024, 7, 31));
 
 		PromotionResponse response = mapper.toPromotionResponse(projection);
 
 		assertThat(response.getId()).isEqualTo(1L);
 		assertThat(response.getTitle()).isEqualTo("Projection Title");
+		assertThat(response.getDescription()).isEqualTo("Projection Description");
 		assertThat(response.getBonusPoints()).isEqualTo(300);
+		assertThat(response.getStartDate()).isEqualTo(LocalDate.of(2024, 7, 1));
+		assertThat(response.getEndDate()).isEqualTo(LocalDate.of(2024, 7, 31));
 	}
 
 	@Test
 	void toPromotion() {
 		PromotionCreateRequest request = new PromotionCreateRequest();
 		request.setTitle("New Promotion");
+		request.setDescription("New promotion description");
 		request.setBonusPoints(200);
 		request.setStartDate(LocalDate.of(2024, 7, 1));
+		request.setEndDate(LocalDate.of(2024, 7, 31));
 
 		Promotion promotion = mapper.toPromotion(request);
 
 		assertThat(promotion.getTitle()).isEqualTo("New Promotion");
+		assertThat(promotion.getDescription()).isEqualTo("New promotion description");
 		assertThat(promotion.getBonusPoints()).isEqualTo(200);
 		assertThat(promotion.getStartDate()).isEqualTo(LocalDate.of(2024, 7, 1));
+		assertThat(promotion.getEndDate()).isEqualTo(LocalDate.of(2024, 7, 31));
+		assertThat(promotion.getId()).isNull();
+		assertThat(promotion.getCreatedAt()).isNull();
+		assertThat(promotion.getUserRedemptions()).isEmpty();
 	}
 
 	@Test
 	void updatePromotionFromRequest() {
-		Promotion promotion = Promotion.builder().id(1L).title("Old Title").bonusPoints(100).build();
+		Promotion promotion = Promotion.builder().id(1L).title("Old Title").description("Old description")
+				.bonusPoints(100).build();
 
 		PromotionUpdateRequest request = new PromotionUpdateRequest();
 		request.setTitle("New Title");
+		request.setDescription("New description");
 		request.setBonusPoints(200);
+		request.setStartDate(LocalDate.of(2024, 8, 1));
+		request.setEndDate(LocalDate.of(2024, 8, 31));
 
 		mapper.updatePromotionFromRequest(promotion, request);
 
 		assertThat(promotion.getTitle()).isEqualTo("New Title");
+		assertThat(promotion.getDescription()).isEqualTo("New description");
 		assertThat(promotion.getBonusPoints()).isEqualTo(200);
+		assertThat(promotion.getStartDate()).isEqualTo(LocalDate.of(2024, 8, 1));
+		assertThat(promotion.getEndDate()).isEqualTo(LocalDate.of(2024, 8, 31));
 	}
 
 	@Test
-	void toUserPromotionResponse() {
-		Promotion promotion = Promotion.builder().id(1L).title("Promo Title").build();
+	void toPromotionAdminResponse() {
+		Promotion promotion = Promotion.builder().id(1L).title("Admin View").bonusPoints(150)
+				.startDate(LocalDate.of(2024, 9, 1)).endDate(LocalDate.of(2024, 9, 30)).build();
 
-		User user = User.builder().id(1L).build();
+		PromotionAdminResponse response = mapper.toPromotionAdminResponse(promotion);
 
-		UserPromotion userPromotion = UserPromotion.builder().id(100L).user(user).promotion(promotion)
-				.pointsAwarded(500).redeemedAt(LocalDateTime.now()).build();
-
-		UserPromotionResponse response = mapper.toUserPromotionResponse(userPromotion);
-
-		assertThat(response.getId()).isEqualTo(100L);
-		assertThat(response.getPromotionId()).isEqualTo(1L);
-		assertThat(response.getPromotionTitle()).isEqualTo("Promo Title");
-		assertThat(response.getPointsAwarded()).isEqualTo(500);
+		assertThat(response.getId()).isEqualTo(1L);
+		assertThat(response.getTitle()).isEqualTo("Admin View");
+		assertThat(response.getBonusPoints()).isEqualTo(150);
+		assertThat(response.getStartDate()).isEqualTo(LocalDate.of(2024, 9, 1));
+		assertThat(response.getEndDate()).isEqualTo(LocalDate.of(2024, 9, 30));
 	}
 
 	@Test
-	void toUserPromotionResponseFromProjection() {
-		var projection = Mockito.mock(ua.lviv.bas.cinema.domain.projection.UserPromotionResponseProjection.class);
-		Mockito.when(projection.getId()).thenReturn(100L);
-		Mockito.when(projection.getPromotionId()).thenReturn(1L);
-		Mockito.when(projection.getPromotionTitle()).thenReturn("Projection Promo");
-		Mockito.when(projection.getPointsAwarded()).thenReturn(300);
-		Mockito.when(projection.getClaimedAt()).thenReturn(LocalDateTime.now());
+	void toPromotionAdminResponseFromProjection() {
+		var projection = Mockito.mock(PromotionAdminProjection.class);
+		Mockito.when(projection.getId()).thenReturn(1L);
+		Mockito.when(projection.getTitle()).thenReturn("Admin Projection");
+		Mockito.when(projection.getBonusPoints()).thenReturn(250);
+		Mockito.when(projection.getStartDate()).thenReturn(LocalDate.of(2024, 10, 1));
+		Mockito.when(projection.getEndDate()).thenReturn(LocalDate.of(2024, 10, 31));
 
-		UserPromotionResponse response = mapper.toUserPromotionResponse(projection);
+		PromotionAdminResponse response = mapper.toPromotionAdminResponse(projection);
 
-		assertThat(response.getId()).isEqualTo(100L);
-		assertThat(response.getPromotionId()).isEqualTo(1L);
-		assertThat(response.getPromotionTitle()).isEqualTo("Projection Promo");
-		assertThat(response.getPointsAwarded()).isEqualTo(300);
-	}
-
-	@Test
-	void toPromotionResponseList() {
-		List<Promotion> promotions = Arrays.asList(Promotion.builder().id(1L).title("Promo 1").build(),
-				Promotion.builder().id(2L).title("Promo 2").build());
-
-		List<PromotionResponse> responses = mapper.toPromotionResponseList(promotions);
-
-		assertThat(responses).hasSize(2);
-		assertThat(responses.get(0).getTitle()).isEqualTo("Promo 1");
-		assertThat(responses.get(1).getTitle()).isEqualTo("Promo 2");
-	}
-
-	@Test
-	void toUserPromotionResponseList() {
-		Promotion promotion = Promotion.builder().id(1L).title("Promo").build();
-
-		List<UserPromotion> userPromotions = Arrays.asList(UserPromotion.builder().id(1L).promotion(promotion).build(),
-				UserPromotion.builder().id(2L).promotion(promotion).build());
-
-		List<UserPromotionResponse> responses = mapper.toUserPromotionResponseList(userPromotions);
-
-		assertThat(responses).hasSize(2);
-		assertThat(responses.get(0).getPromotionTitle()).isEqualTo("Promo");
-		assertThat(responses.get(1).getPromotionTitle()).isEqualTo("Promo");
+		assertThat(response.getId()).isEqualTo(1L);
+		assertThat(response.getTitle()).isEqualTo("Admin Projection");
+		assertThat(response.getBonusPoints()).isEqualTo(250);
+		assertThat(response.getStartDate()).isEqualTo(LocalDate.of(2024, 10, 1));
+		assertThat(response.getEndDate()).isEqualTo(LocalDate.of(2024, 10, 31));
 	}
 
 	@Test
@@ -150,8 +142,8 @@ public class PromotionMapperTest {
 	}
 
 	@Test
-	void toUserPromotionResponseWithNull() {
-		UserPromotionResponse response = mapper.toUserPromotionResponse((UserPromotion) null);
+	void toPromotionAdminResponseWithNull() {
+		PromotionAdminResponse response = mapper.toPromotionAdminResponse((Promotion) null);
 		assertThat(response).isNull();
 	}
 }

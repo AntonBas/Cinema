@@ -8,7 +8,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -21,7 +20,6 @@ import org.springframework.http.ResponseEntity;
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.dto.promotion.request.UserPromotionCreateRequest;
 import ua.lviv.bas.cinema.dto.promotion.response.PromotionResponse;
-import ua.lviv.bas.cinema.dto.promotion.response.UserPromotionResponse;
 import ua.lviv.bas.cinema.exception.domain.promotion.AlreadyClaimedException;
 import ua.lviv.bas.cinema.exception.domain.promotion.PromotionNotActiveException;
 import ua.lviv.bas.cinema.service.user.PromotionService;
@@ -57,11 +55,6 @@ public class PromotionControllerTest {
 		return response;
 	}
 
-	private UserPromotionResponse createUserPromotionResponse() {
-		return UserPromotionResponse.builder().id(1L).promotionId(PROMOTION_ID).promotionTitle(TITLE)
-				.pointsAwarded(BONUS_POINTS).newBalance(250).claimedAt(LocalDateTime.now()).build();
-	}
-
 	@Test
 	void getAvailablePromotions_ReturnsList() {
 		User user = createUser();
@@ -81,15 +74,15 @@ public class PromotionControllerTest {
 		User user = createUser();
 		UserPromotionCreateRequest request = new UserPromotionCreateRequest();
 		request.setPromotionId(PROMOTION_ID);
-		UserPromotionResponse response = createUserPromotionResponse();
+		PromotionResponse response = createPromotionResponse();
 
 		when(promotionService.claimPromotion(eq(request), eq(user))).thenReturn(response);
 
-		ResponseEntity<UserPromotionResponse> result = promotionController.claimPromotion(request, user);
+		ResponseEntity<PromotionResponse> result = promotionController.claimPromotion(request, user);
 
 		assertThat(result.getStatusCode().value()).isEqualTo(200);
 		assertThat(result.getBody()).isNotNull();
-		assertThat(result.getBody().getPromotionId()).isEqualTo(PROMOTION_ID);
+		assertThat(result.getBody().getId()).isEqualTo(PROMOTION_ID);
 		verify(promotionService).claimPromotion(request, user);
 	}
 
@@ -115,44 +108,5 @@ public class PromotionControllerTest {
 
 		assertThatThrownBy(() -> promotionController.claimPromotion(request, user))
 				.isInstanceOf(AlreadyClaimedException.class);
-	}
-
-	@Test
-	void checkPromotionStatus_ReturnsTrueWhenAvailable() {
-		User user = createUser();
-		PromotionResponse promo = createPromotionResponse();
-
-		when(promotionService.hasUserClaimedPromotion(user, PROMOTION_ID)).thenReturn(false);
-		when(promotionService.getAvailablePromotions(user)).thenReturn(List.of(promo));
-
-		ResponseEntity<Boolean> result = promotionController.checkPromotionStatus(PROMOTION_ID, user);
-
-		assertThat(result.getBody()).isTrue();
-		verify(promotionService).hasUserClaimedPromotion(user, PROMOTION_ID);
-		verify(promotionService).getAvailablePromotions(user);
-	}
-
-	@Test
-	void checkPromotionStatus_ReturnsFalseWhenClaimed() {
-		User user = createUser();
-
-		when(promotionService.hasUserClaimedPromotion(user, PROMOTION_ID)).thenReturn(true);
-
-		ResponseEntity<Boolean> result = promotionController.checkPromotionStatus(PROMOTION_ID, user);
-
-		assertThat(result.getBody()).isFalse();
-		verify(promotionService).hasUserClaimedPromotion(user, PROMOTION_ID);
-	}
-
-	@Test
-	void checkPromotionStatus_ReturnsFalseWhenNotInAvailable() {
-		User user = createUser();
-
-		when(promotionService.hasUserClaimedPromotion(user, PROMOTION_ID)).thenReturn(false);
-		when(promotionService.getAvailablePromotions(user)).thenReturn(List.of());
-
-		ResponseEntity<Boolean> result = promotionController.checkPromotionStatus(PROMOTION_ID, user);
-
-		assertThat(result.getBody()).isFalse();
 	}
 }
