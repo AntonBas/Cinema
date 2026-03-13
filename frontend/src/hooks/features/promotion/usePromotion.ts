@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { promotionApi } from '@/api/promotionApi';
 import type {
     PromotionResponse,
-    UserPromotionResponse,
+    PromotionAdminResponse,
     PromotionCreateRequest,
     PromotionUpdateRequest,
     UserPromotionCreateRequest
@@ -13,9 +13,9 @@ import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
 
 export const usePromotion = () => {
     const userPromotionsApi = useApi<PromotionResponse[]>();
-    const adminPromotionsApi = useApi<PageResponse<PromotionResponse>>();
+    const adminPromotionsApi = useApi<PageResponse<PromotionAdminResponse>>();
     const promotionApiInstance = useApi<PromotionResponse>();
-    const mutationApi = useApi<PromotionResponse | UserPromotionResponse | void>();
+    const mutationApi = useApi<PromotionResponse | void>();
 
     const rawLoading = userPromotionsApi.loading || adminPromotionsApi.loading ||
         promotionApiInstance.loading || mutationApi.loading;
@@ -46,10 +46,6 @@ export const usePromotion = () => {
         return response || null;
     }, [mutationApi, userPromotionsApi]);
 
-    const checkStatus = useCallback(async (promotionId: number) => {
-        return await promotionApi.user.checkStatus(promotionId);
-    }, []);
-
     const getById = useCallback(async (promotionId: number) => {
         const response = await promotionApiInstance.execute(
             () => promotionApi.admin.getById(promotionId),
@@ -63,22 +59,11 @@ export const usePromotion = () => {
     }, [promotionApiInstance]);
 
     const getAll = useCallback(async (pageable?: { page: number; size: number; sort?: string[] }) => {
+        adminPromotionsApi.invalidateCache(`all_promotions_${JSON.stringify(pageable)}`);
         const response = await adminPromotionsApi.execute(
             () => promotionApi.admin.getAll(pageable),
             {
                 cacheKey: `all_promotions_${JSON.stringify(pageable)}`,
-                cacheTime: 2 * 60 * 1000,
-                showErrorNotification: false,
-            }
-        );
-        return response || null;
-    }, [adminPromotionsApi]);
-
-    const getActive = useCallback(async (pageable?: { page: number; size: number; sort?: string[] }) => {
-        const response = await adminPromotionsApi.execute(
-            () => promotionApi.admin.getActive(pageable),
-            {
-                cacheKey: `active_promotions_${JSON.stringify(pageable)}`,
                 cacheTime: 2 * 60 * 1000,
                 showErrorNotification: false,
             }
@@ -148,10 +133,8 @@ export const usePromotion = () => {
 
         getAvailable,
         claimPromotion,
-        checkStatus,
         getById,
         getAll,
-        getActive,
         create,
         update,
         remove,

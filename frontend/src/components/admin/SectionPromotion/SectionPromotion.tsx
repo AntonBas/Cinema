@@ -3,9 +3,11 @@ import { Button } from '@/components/ui/Button/Button';
 import { SearchInput } from '@/components/ui/SearchInput/SearchInput';
 import { ConfirmModal } from '@/components/ui/ConfirmModal/ConfirmModal';
 import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';
+import { Notification } from '@/components/ui/Notification/Notification';
 import { usePromotion } from '@/hooks/features/promotion/usePromotion';
+import { useNotification } from '@/hooks/common/useNotification';
 import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
-import type { PromotionResponse } from '@/types/promotion';
+import type { PromotionResponse, PromotionAdminResponse } from '@/types/promotion';
 import PromotionTable from './PromotionTable/PromotionTable';
 import PromotionFilters from './PromotionFilters/PromotionFilters';
 import CreatePromotionModal from './PromotionModal/CreatePromotionModal';
@@ -19,10 +21,12 @@ const SectionPromotion: React.FC = () => {
     const [editingPromotion, setEditingPromotion] = useState<number | null>(null);
     const [deletingPromotion, setDeletingPromotion] = useState<{ id: number; title: string } | null>(null);
     const [isLoading, setIsLoading] = useState(false);
-    const [promotionsList, setPromotionsList] = useState<PromotionResponse[]>([]);
+    const [promotionsList, setPromotionsList] = useState<PromotionAdminResponse[]>([]);
+
+    const { notifications, showNotification, hideNotification } = useNotification();
 
     const {
-        promotions,
+        promotionsPage,
         getAll,
         remove
     } = usePromotion();
@@ -30,12 +34,12 @@ const SectionPromotion: React.FC = () => {
     const showDelayedLoading = useDelayedLoading(isLoading, { delay: 150, minDisplayTime: 300 });
 
     useEffect(() => {
-        if (promotions && Array.isArray(promotions) && promotions.length > 0) {
-            setPromotionsList(promotions);
+        if (promotionsPage?.content) {
+            setPromotionsList(promotionsPage.content);
         }
-    }, [promotions]);
+    }, [promotionsPage]);
 
-    const getPromotionStatus = useCallback((promotion: PromotionResponse): string => {
+    const getPromotionStatus = useCallback((promotion: PromotionAdminResponse): string => {
         const now = new Date();
 
         if (!promotion.startDate && !promotion.endDate) return 'active';
@@ -69,8 +73,7 @@ const SectionPromotion: React.FC = () => {
     const filteredPromotions = useMemo(() => {
         return promotionsList.filter(promotion => {
             const matchesSearch = search === '' ||
-                promotion.title.toLowerCase().includes(search.toLowerCase()) ||
-                promotion.description?.toLowerCase().includes(search.toLowerCase());
+                promotion.title.toLowerCase().includes(search.toLowerCase());
 
             if (!statusFilter) return matchesSearch;
 
@@ -82,32 +85,42 @@ const SectionPromotion: React.FC = () => {
     const loadPromotions = async () => {
         setIsLoading(true);
         try {
-            const response = await getAll();
-            if (response && Array.isArray(response.content)) {
-                setPromotionsList(response.content);
-            }
+            await getAll({ page: 0, size: 100 });
         } catch (error) {
-            console.error('Failed to load promotions');
+            showNotification('Failed to load promotions', 'error');
         } finally {
             setIsLoading(false);
         }
     };
+
+    const handleCreateSuccess = useCallback((result?: PromotionResponse) => {
+        setShowCreateModal(false);
+        if (result) {
+            showNotification(`Promotion "${result.title}" created successfully!`, 'success');
+        }
+        loadPromotions();
+    }, [showNotification]);
+
+    const handleUpdateSuccess = useCallback((result?: PromotionResponse) => {
+        setEditingPromotion(null);
+        if (result) {
+            showNotification(`Promotion "${result.title}" updated successfully!`, 'success');
+        }
+        loadPromotions();
+    }, [showNotification]);
 
     const handleDeleteConfirm = async () => {
         if (!deletingPromotion) return;
 
         try {
             await remove(deletingPromotion.id);
+            showNotification(`Promotion "${deletingPromotion.title}" deleted successfully!`, 'success');
             setDeletingPromotion(null);
             await loadPromotions();
         } catch (error) {
-            console.error('Failed to delete promotion');
+            showNotification('Failed to delete promotion', 'error');
         }
     };
-
-    const handleRefresh = useCallback(() => {
-        loadPromotions();
-    }, []);
 
     if (showDelayedLoading && !promotionsList.length) {
         return (
@@ -119,6 +132,18 @@ const SectionPromotion: React.FC = () => {
 
     return (
         <div className={styles.container}>
+            {notifications.map((notification) => (
+                <Notification
+                    key={notification.id}
+                    id={notification.id}
+                    message={notification.message}
+                    type={notification.type}
+                    isVisible={notification.isVisible}
+                    onClose={hideNotification}
+                    duration={notification.duration}
+                />
+            ))}
+
             <div className={styles.header}>
                 <div>
                     <h1 className={styles.title}>Promotion Management</h1>
@@ -159,7 +184,7 @@ const SectionPromotion: React.FC = () => {
             {showCreateModal && (
                 <CreatePromotionModal
                     onClose={() => setShowCreateModal(false)}
-                    onSuccess={handleRefresh}
+                    onSuccess={handleCreateSuccess}
                 />
             )}
 
@@ -167,7 +192,7 @@ const SectionPromotion: React.FC = () => {
                 <EditPromotionModal
                     promotionId={editingPromotion}
                     onClose={() => setEditingPromotion(null)}
-                    onSuccess={handleRefresh}
+                    onSuccess={handleUpdateSuccess}
                 />
             )}
 

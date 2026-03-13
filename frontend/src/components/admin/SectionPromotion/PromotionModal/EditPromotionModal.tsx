@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Modal } from '@/components/ui/Modal/Modal';
 import { Button } from '@/components/ui/Button/Button';
 import { Input } from '@/components/ui/Input/Input';
@@ -9,8 +9,10 @@ import styles from './PromotionModal.module.css';
 interface EditPromotionModalProps {
     promotionId: number;
     onClose: () => void;
-    onSuccess: () => void;
+    onSuccess: (result: any) => void;
 }
+
+const DESCRIPTION_LIMIT = 500;
 
 const EditPromotionModal: React.FC<EditPromotionModalProps> = ({
     promotionId,
@@ -26,10 +28,12 @@ const EditPromotionModal: React.FC<EditPromotionModalProps> = ({
         endDate: ''
     });
     const [dateError, setDateError] = useState('');
-    const [errorMessage, setErrorMessage] = useState('');
-    const [successMessage, setSuccessMessage] = useState('');
+    const fetchedRef = useRef(false);
 
     useEffect(() => {
+        if (fetchedRef.current) return;
+        fetchedRef.current = true;
+
         const fetchPromotion = async () => {
             try {
                 const response = await getById(promotionId);
@@ -44,11 +48,11 @@ const EditPromotionModal: React.FC<EditPromotionModalProps> = ({
                     });
                 }
             } catch (error) {
-                setErrorMessage('Failed to load promotion');
+                onClose();
             }
         };
         fetchPromotion();
-    }, [promotionId, getById]);
+    }, [promotionId, getById, onClose]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -62,8 +66,6 @@ const EditPromotionModal: React.FC<EditPromotionModalProps> = ({
             }
         }
         setDateError('');
-        setErrorMessage('');
-        setSuccessMessage('');
 
         try {
             const submissionData = {
@@ -76,14 +78,11 @@ const EditPromotionModal: React.FC<EditPromotionModalProps> = ({
 
             const response = await update(promotionId, submissionData);
             if (response) {
-                setSuccessMessage('Promotion updated successfully!');
-                setTimeout(() => {
-                    setSuccessMessage('');
-                    onSuccess();
-                }, 1000);
+                onSuccess(response);
+                onClose();
             }
         } catch (err) {
-            setErrorMessage('Failed to update promotion');
+            throw err;
         }
     };
 
@@ -94,6 +93,9 @@ const EditPromotionModal: React.FC<EditPromotionModalProps> = ({
     const handleClose = () => {
         onClose();
     };
+
+    const descriptionLength = formData.description.length;
+    const isDescriptionValid = descriptionLength <= DESCRIPTION_LIMIT;
 
     return (
         <Modal isOpen={true} onClose={handleClose} title="Edit Promotion" size="large">
@@ -108,12 +110,18 @@ const EditPromotionModal: React.FC<EditPromotionModalProps> = ({
                 </div>
 
                 <div className={styles.formGroup}>
-                    <label className={styles.label}>Description</label>
+                    <div className={styles.labelContainer}>
+                        <label className={styles.label}>Description</label>
+                        <span className={`${styles.counter} ${!isDescriptionValid ? styles.counterError : ''}`}>
+                            {descriptionLength}/{DESCRIPTION_LIMIT}
+                        </span>
+                    </div>
                     <textarea
                         value={formData.description}
                         onChange={(e) => handleChange('description', e.target.value)}
-                        rows={3}
-                        className={styles.textarea}
+                        rows={4}
+                        className={`${styles.textarea} ${!isDescriptionValid ? styles.textareaError : ''}`}
+                        maxLength={DESCRIPTION_LIMIT}
                     />
                 </div>
 
@@ -149,8 +157,6 @@ const EditPromotionModal: React.FC<EditPromotionModalProps> = ({
                 </div>
 
                 {dateError && <div className={styles.error}>{dateError}</div>}
-                {errorMessage && <div className={styles.error}>{errorMessage}</div>}
-                {successMessage && <div className={styles.success}>{successMessage}</div>}
 
                 <div className={styles.actions}>
                     <Button type="button" variant="cancel" onClick={handleClose}>

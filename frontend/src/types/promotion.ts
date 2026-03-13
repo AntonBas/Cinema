@@ -27,13 +27,12 @@ export interface PromotionResponse {
     endDate?: string;
 }
 
-export interface UserPromotionResponse {
+export interface PromotionAdminResponse {
     id: number;
-    promotionId: number;
-    promotionTitle: string;
-    claimedAt: string;
-    pointsAwarded: number;
-    newBalance: number;
+    title: string;
+    bonusPoints: number;
+    startDate?: string;
+    endDate?: string;
 }
 
 export const PromotionStatusDisplay: Record<string, string> = {

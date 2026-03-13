@@ -1,13 +1,13 @@
 import React from 'react';
 import { Button, Badge } from '@/components/ui';
-import type { PromotionResponse } from '@/types/promotion';
+import type { PromotionAdminResponse } from '@/types/promotion';
 import styles from './PromotionTable.module.css';
 
 interface PromotionTableProps {
-    promotions: PromotionResponse[];
+    promotions: PromotionAdminResponse[];
     onEdit: (promotionId: number) => void;
     onDelete: (promotionId: number, title: string) => void;
-    getPromotionStatus: (promotion: PromotionResponse) => string;
+    getPromotionStatus: (promotion: PromotionAdminResponse) => string;
     getStatusDisplay: (status: string) => string;
 }
 
@@ -61,9 +61,6 @@ const PromotionTable: React.FC<PromotionTableProps> = ({
                                 <td className={styles.td}>
                                     <div className={styles.titleCell}>
                                         <div className={styles.title}>{promotion.title}</div>
-                                        {promotion.description && (
-                                            <div className={styles.description}>{promotion.description}</div>
-                                        )}
                                     </div>
                                 </td>
                                 <td className={styles.td}>

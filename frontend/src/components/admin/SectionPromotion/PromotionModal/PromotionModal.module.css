@@ -6,12 +6,28 @@
     margin-bottom: var(--space-6);
 }
 
+.labelContainer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-2);
+}
+
 .label {
     display: block;
     color: var(--color-text-primary);
     font-weight: 600;
-    margin-bottom: var(--space-2);
     font-size: 0.95rem;
+}
+
+.counter {
+    font-size: 12px;
+    color: var(--color-text-secondary);
+}
+
+.counterError {
+    color: var(--color-error);
+    font-weight: 500;
 }
 
 .textarea {
@@ -32,6 +48,15 @@
     border-color: var(--color-primary);
     background: #2d3444;
     box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb), 0.1);
+}
+
+.textareaError {
+    border-color: var(--color-error);
+}
+
+.textareaError:focus {
+    border-color: var(--color-error);
+    box-shadow: 0 0 0 3px rgba(var(--color-error-rgb), 0.1);
 }
 
 .dateRow {

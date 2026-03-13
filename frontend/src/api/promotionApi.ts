@@ -1,7 +1,7 @@
 import { api } from '@/services/api';
 import type {
     PromotionResponse,
-    UserPromotionResponse,
+    PromotionAdminResponse,
     PromotionCreateRequest,
     PromotionUpdateRequest,
     UserPromotionCreateRequest
@@ -17,7 +17,7 @@ export const promotionApi = {
             api.get<PromotionResponse[]>(USER_URL),
 
         claim: (request: UserPromotionCreateRequest) =>
-            api.post<UserPromotionResponse>(`${USER_URL}/claim`, request),
+            api.post<PromotionResponse>(`${USER_URL}/claim`, request),
 
         checkStatus: (promotionId: number) =>
             api.get<boolean>(`${USER_URL}/${promotionId}/status`),
@@ -31,10 +31,7 @@ export const promotionApi = {
             api.get<PromotionResponse>(`${ADMIN_URL}/${promotionId}`),
 
         getAll: (pageable?: { page: number; size: number; sort?: string[] }) =>
-            api.get<PageResponse<PromotionResponse>>(ADMIN_URL, { params: pageable }),
-
-        getActive: (pageable?: { page: number; size: number; sort?: string[] }) =>
-            api.get<PageResponse<PromotionResponse>>(`${ADMIN_URL}/active`, { params: pageable }),
+            api.get<PageResponse<PromotionAdminResponse>>(ADMIN_URL, { params: pageable }),
 
         update: (promotionId: number, request: PromotionUpdateRequest) =>
             api.put<PromotionResponse>(`${ADMIN_URL}/${promotionId}`, request),

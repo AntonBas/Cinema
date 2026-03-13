@@ -6,8 +6,10 @@ import styles from './PromotionModal.module.css';
 
 interface CreatePromotionModalProps {
     onClose: () => void;
-    onSuccess: () => void;
+    onSuccess: (result: any) => void;
 }
+
+const DESCRIPTION_LIMIT = 500;
 
 const CreatePromotionModal: React.FC<CreatePromotionModalProps> = ({
     onClose,
@@ -22,8 +24,6 @@ const CreatePromotionModal: React.FC<CreatePromotionModalProps> = ({
         endDate: ''
     });
     const [dateError, setDateError] = useState('');
-    const [errorMessage, setErrorMessage] = useState('');
-    const [successMessage, setSuccessMessage] = useState('');
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -37,8 +37,6 @@ const CreatePromotionModal: React.FC<CreatePromotionModalProps> = ({
             }
         }
         setDateError('');
-        setErrorMessage('');
-        setSuccessMessage('');
 
         try {
             const submissionData = {
@@ -51,14 +49,11 @@ const CreatePromotionModal: React.FC<CreatePromotionModalProps> = ({
 
             const result = await create(submissionData);
             if (result) {
-                setSuccessMessage('Promotion created successfully!');
-                setTimeout(() => {
-                    setSuccessMessage('');
-                    onSuccess();
-                }, 1000);
+                onSuccess(result);
+                onClose();
             }
         } catch (err) {
-            setErrorMessage('Failed to create promotion');
+            throw err;
         }
     };
 
@@ -69,6 +64,9 @@ const CreatePromotionModal: React.FC<CreatePromotionModalProps> = ({
     const handleClose = () => {
         onClose();
     };
+
+    const descriptionLength = formData.description.length;
+    const isDescriptionValid = descriptionLength <= DESCRIPTION_LIMIT;
 
     return (
         <Modal isOpen={true} onClose={handleClose} title="Create Promotion" size="large">
@@ -84,13 +82,19 @@ const CreatePromotionModal: React.FC<CreatePromotionModalProps> = ({
                 </div>
 
                 <div className={styles.formGroup}>
-                    <label className={styles.label}>Description</label>
+                    <div className={styles.labelContainer}>
+                        <label className={styles.label}>Description</label>
+                        <span className={`${styles.counter} ${!isDescriptionValid ? styles.counterError : ''}`}>
+                            {descriptionLength}/{DESCRIPTION_LIMIT}
+                        </span>
+                    </div>
                     <textarea
                         value={formData.description}
                         onChange={(e) => handleChange('description', e.target.value)}
                         placeholder="Enter description"
-                        rows={3}
-                        className={styles.textarea}
+                        rows={4}
+                        className={`${styles.textarea} ${!isDescriptionValid ? styles.textareaError : ''}`}
+                        maxLength={DESCRIPTION_LIMIT}
                     />
                 </div>
 
@@ -127,8 +131,6 @@ const CreatePromotionModal: React.FC<CreatePromotionModalProps> = ({
                 </div>
 
                 {dateError && <div className={styles.error}>{dateError}</div>}
-                {errorMessage && <div className={styles.error}>{errorMessage}</div>}
-                {successMessage && <div className={styles.success}>{successMessage}</div>}
 
                 <div className={styles.actions}>
                     <Button type="button" variant="cancel" onClick={handleClose}>
