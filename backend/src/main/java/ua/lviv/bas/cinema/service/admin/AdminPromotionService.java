@@ -1,10 +1,8 @@
 package ua.lviv.bas.cinema.service.admin;
 
 import java.time.LocalDate;
-import java.util.List;
 
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,10 +10,11 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.Promotion;
-import ua.lviv.bas.cinema.domain.projection.PromotionResponseProjection;
+import ua.lviv.bas.cinema.domain.projection.PromotionAdminProjection;
 import ua.lviv.bas.cinema.dto.common.PageResponse;
 import ua.lviv.bas.cinema.dto.promotion.request.PromotionCreateRequest;
 import ua.lviv.bas.cinema.dto.promotion.request.PromotionUpdateRequest;
+import ua.lviv.bas.cinema.dto.promotion.response.PromotionAdminResponse;
 import ua.lviv.bas.cinema.dto.promotion.response.PromotionResponse;
 import ua.lviv.bas.cinema.exception.domain.promotion.PromotionAlreadyExistsException;
 import ua.lviv.bas.cinema.exception.domain.promotion.PromotionDatesInvalidException;
@@ -41,10 +40,7 @@ public class AdminPromotionService {
 			throw PromotionAlreadyExistsException.forTitle(request.getTitle());
 		}
 
-		if (request.getStartDate() != null && request.getEndDate() != null
-				&& request.getEndDate().isBefore(request.getStartDate())) {
-			throw new PromotionDatesInvalidException(request.getStartDate(), request.getEndDate());
-		}
+		validateDates(request.getStartDate(), request.getEndDate());
 
 		Promotion promotion = promotionMapper.toPromotion(request);
 		promotion = promotionRepository.save(promotion);
@@ -84,39 +80,18 @@ public class AdminPromotionService {
 		return promotionMapper.toPromotionResponse(promotion);
 	}
 
-	public PageResponse<PromotionResponse> getAllPromotions(Pageable pageable) {
-		Page<Promotion> page = promotionRepository.findAll(pageable);
-		List<PromotionResponse> responses = promotionMapper.toPromotionResponseList(page.getContent());
-		return PageResponse.from(new PageImpl<>(responses, pageable, page.getTotalElements()));
-	}
-
-	public PageResponse<PromotionResponse> getActivePromotions(Pageable pageable) {
-		List<PromotionResponseProjection> projections = promotionRepository.findAllPromotions(true);
-		List<PromotionResponse> responses = promotionMapper.toPromotionResponseListFromProjections(projections);
-
-		int start = (int) pageable.getOffset();
-		int end = Math.min((start + pageable.getPageSize()), responses.size());
-		List<PromotionResponse> pageContent = responses.subList(start, end);
-
-		return PageResponse.from(new PageImpl<>(pageContent, pageable, responses.size()));
+	public PageResponse<PromotionAdminResponse> getAllPromotions(Pageable pageable) {
+		Page<PromotionAdminProjection> page = promotionRepository.findAllAdminList(pageable);
+		return PageResponse.from(page.map(promotionMapper::toPromotionAdminResponse));
 	}
 
 	public Promotion findByIdOrThrow(Long promotionId) {
 		return promotionRepository.findById(promotionId).orElseThrow(() -> new PromotionNotFoundException(promotionId));
 	}
 
-	public boolean isPromotionActive(Promotion promotion) {
-		if (promotion == null) {
-			return false;
+	private void validateDates(LocalDate startDate, LocalDate endDate) {
+		if (startDate != null && endDate != null && endDate.isBefore(startDate)) {
+			throw new PromotionDatesInvalidException(startDate, endDate);
 		}
-
-		LocalDate now = LocalDate.now();
-		LocalDate start = promotion.getStartDate();
-		LocalDate end = promotion.getEndDate();
-
-		boolean afterStart = (start == null) || !now.isBefore(start);
-		boolean beforeEnd = (end == null) || !now.isAfter(end);
-
-		return afterStart && beforeEnd;
 	}
 }

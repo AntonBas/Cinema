@@ -1,27 +1,25 @@
 package ua.lviv.bas.cinema.service.user;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import ua.lviv.bas.cinema.domain.BonusCard;
 import ua.lviv.bas.cinema.domain.Promotion;
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.UserPromotion;
-import ua.lviv.bas.cinema.domain.projection.UserPromotionResponseProjection;
-import ua.lviv.bas.cinema.dto.common.PageResponse;
+import ua.lviv.bas.cinema.domain.projection.PromotionResponseProjection;
 import ua.lviv.bas.cinema.dto.promotion.request.UserPromotionCreateRequest;
 import ua.lviv.bas.cinema.dto.promotion.response.PromotionResponse;
-import ua.lviv.bas.cinema.dto.promotion.response.UserPromotionResponse;
 import ua.lviv.bas.cinema.exception.domain.promotion.AlreadyClaimedException;
 import ua.lviv.bas.cinema.exception.domain.promotion.PromotionNotActiveException;
 import ua.lviv.bas.cinema.mapper.PromotionMapper;
+import ua.lviv.bas.cinema.repository.PromotionRepository;
 import ua.lviv.bas.cinema.repository.UserPromotionRepository;
 import ua.lviv.bas.cinema.service.admin.AdminPromotionService;
 
@@ -31,18 +29,19 @@ import ua.lviv.bas.cinema.service.admin.AdminPromotionService;
 @Transactional(readOnly = true)
 public class PromotionService {
 
+	private final PromotionRepository promotionRepository;
 	private final UserPromotionRepository userPromotionRepository;
-	private final AdminPromotionService promotionService;
+	private final AdminPromotionService adminPromotionService;
 	private final BonusService bonusUserService;
 	private final PromotionMapper promotionMapper;
 
 	@Transactional
-	public UserPromotionResponse claimPromotion(UserPromotionCreateRequest request, User user) {
+	public PromotionResponse claimPromotion(UserPromotionCreateRequest request, User user) {
 		log.info("User {} claiming promotion {}", user.getEmail(), request.getPromotionId());
 
-		Promotion promotion = promotionService.findByIdOrThrow(request.getPromotionId());
+		Promotion promotion = adminPromotionService.findByIdOrThrow(request.getPromotionId());
 
-		if (!promotionService.isPromotionActive(promotion)) {
+		if (!isPromotionActive(promotion)) {
 			throw new PromotionNotActiveException(promotion.getTitle());
 		}
 
@@ -53,36 +52,32 @@ public class PromotionService {
 		UserPromotion userPromotion = UserPromotion.builder().user(user).promotion(promotion)
 				.redeemedAt(LocalDateTime.now()).pointsAwarded(promotion.getBonusPoints()).build();
 
-		userPromotion = userPromotionRepository.save(userPromotion);
-		Integer newBalance = bonusUserService.addPoints(user, promotion.getBonusPoints(), promotion.getTitle());
+		userPromotionRepository.save(userPromotion);
+		bonusUserService.addPoints(user, promotion.getBonusPoints(), promotion.getTitle());
 
 		log.info("Promotion claimed successfully. User received {} points", promotion.getBonusPoints());
 
-		UserPromotionResponse response = promotionMapper.toUserPromotionResponse(userPromotion);
-		response.setNewBalance(newBalance);
-		return response;
+		return promotionMapper.toPromotionResponse(promotion);
 	}
 
 	public List<PromotionResponse> getAvailablePromotions(User user) {
 		log.debug("Getting available promotions for user: {}", user.getEmail());
-		PageResponse<PromotionResponse> activePromotionsPage = promotionService
-				.getActivePromotions(Pageable.ofSize(100).withPage(0));
-		List<PromotionResponse> activePromotions = activePromotionsPage.getContent();
 
-		return activePromotions.stream().filter(promotion -> !hasUserClaimedPromotion(user, promotion.getId()))
-				.collect(Collectors.toList());
+		List<PromotionResponseProjection> activePromotions = promotionRepository.findAllActivePromotions();
+
+		return activePromotions.stream().filter(p -> !hasUserClaimedPromotion(user, p.getId()))
+				.map(promotionMapper::toPromotionResponse).collect(Collectors.toList());
 	}
 
-	public List<UserPromotionResponse> getUserPromotions(User user) {
-		List<UserPromotionResponseProjection> projections = userPromotionRepository
-				.findUserPromotionResponsesByUser(user);
+	private boolean isPromotionActive(Promotion promotion) {
+		LocalDate now = LocalDate.now();
+		LocalDate start = promotion.getStartDate();
+		LocalDate end = promotion.getEndDate();
 
-		BonusCard bonusCard = user.getBonusCard();
-		Integer currentBalance = bonusCard != null ? bonusCard.getPointsBalance() : 0;
+		boolean afterStart = (start == null) || !now.isBefore(start);
+		boolean beforeEnd = (end == null) || !now.isAfter(end);
 
-		List<UserPromotionResponse> responses = promotionMapper.toUserPromotionResponseListFromProjections(projections);
-		responses.forEach(r -> r.setNewBalance(currentBalance));
-		return responses;
+		return afterStart && beforeEnd;
 	}
 
 	public boolean hasUserClaimedPromotion(User user, Long promotionId) {
