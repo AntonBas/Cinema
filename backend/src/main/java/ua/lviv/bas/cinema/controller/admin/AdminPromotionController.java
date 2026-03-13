@@ -17,11 +17,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -30,6 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.dto.common.PageResponse;
 import ua.lviv.bas.cinema.dto.promotion.request.PromotionCreateRequest;
 import ua.lviv.bas.cinema.dto.promotion.request.PromotionUpdateRequest;
+import ua.lviv.bas.cinema.dto.promotion.response.PromotionAdminResponse;
 import ua.lviv.bas.cinema.dto.promotion.response.PromotionResponse;
 import ua.lviv.bas.cinema.service.admin.AdminPromotionService;
 
@@ -44,90 +40,44 @@ public class AdminPromotionController {
 	private final AdminPromotionService promotionService;
 
 	@PostMapping
-	@Operation(summary = "Create a new promotion", description = "Creates a new promotion in the system with the provided details")
-	@ApiResponses(value = {
-			@ApiResponse(responseCode = "201", description = "Promotion created successfully", content = @Content(schema = @Schema(implementation = PromotionResponse.class))),
-			@ApiResponse(responseCode = "400", description = "Invalid request data", content = @Content(schema = @Schema(implementation = String.class))),
-			@ApiResponse(responseCode = "401", description = "Unauthorized - authentication required", content = @Content(schema = @Schema(implementation = String.class))),
-			@ApiResponse(responseCode = "403", description = "Forbidden - admin access required", content = @Content(schema = @Schema(implementation = String.class))) })
+	@Operation(summary = "Create a new promotion")
 	@PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
 	public ResponseEntity<PromotionResponse> createPromotion(@Valid @RequestBody PromotionCreateRequest request) {
 		log.info("Admin creating new promotion with title: {}", request.getTitle());
-		PromotionResponse response = promotionService.createPromotion(request);
-		return ResponseEntity.status(HttpStatus.CREATED).body(response);
+		return ResponseEntity.status(HttpStatus.CREATED).body(promotionService.createPromotion(request));
 	}
 
 	@GetMapping("/{promotionId}")
-	@Operation(summary = "Get promotion by ID", description = "Retrieves detailed information about a specific promotion by its ID")
-	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Promotion found successfully", content = @Content(schema = @Schema(implementation = PromotionResponse.class))),
-			@ApiResponse(responseCode = "404", description = "Promotion not found", content = @Content(schema = @Schema(implementation = String.class))),
-			@ApiResponse(responseCode = "401", description = "Unauthorized - authentication required", content = @Content(schema = @Schema(implementation = String.class))),
-			@ApiResponse(responseCode = "403", description = "Forbidden - admin access required", content = @Content(schema = @Schema(implementation = String.class))) })
+	@Operation(summary = "Get promotion by ID")
 	@PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
-	public ResponseEntity<PromotionResponse> getPromotion(
-			@Parameter(description = "ID of the promotion to retrieve", required = true, example = "1") @PathVariable Long promotionId) {
+	public ResponseEntity<PromotionResponse> getPromotion(@PathVariable Long promotionId) {
 		log.info("Admin retrieving promotion with ID: {}", promotionId);
-		PromotionResponse response = promotionService.getPromotionById(promotionId);
-		return ResponseEntity.ok(response);
+		return ResponseEntity.ok(promotionService.getPromotionById(promotionId));
 	}
 
 	@GetMapping
-	@Operation(summary = "Get all promotions", description = "Retrieves a paginated list of all promotions in the system")
-	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Promotions retrieved successfully", content = @Content(schema = @Schema(implementation = PageResponse.class))),
-			@ApiResponse(responseCode = "401", description = "Unauthorized - authentication required", content = @Content(schema = @Schema(implementation = String.class))),
-			@ApiResponse(responseCode = "403", description = "Forbidden - admin access required", content = @Content(schema = @Schema(implementation = String.class))) })
+	@Operation(summary = "Get all promotions (admin view)")
 	@PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
-	public ResponseEntity<PageResponse<PromotionResponse>> getAllPromotions(
-			@PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+	public ResponseEntity<PageResponse<PromotionAdminResponse>> getAllPromotions(
+			@PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
 		log.info("Admin retrieving all promotions");
-		PageResponse<PromotionResponse> response = promotionService.getAllPromotions(pageable);
-		return ResponseEntity.ok(response);
-	}
-
-	@GetMapping("/active")
-	@Operation(summary = "Get active promotions", description = "Retrieves a paginated list of currently active promotions")
-	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Active promotions retrieved successfully", content = @Content(schema = @Schema(implementation = PageResponse.class))),
-			@ApiResponse(responseCode = "401", description = "Unauthorized - authentication required", content = @Content(schema = @Schema(implementation = String.class))),
-			@ApiResponse(responseCode = "403", description = "Forbidden - admin access required", content = @Content(schema = @Schema(implementation = String.class))) })
-	@PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
-	public ResponseEntity<PageResponse<PromotionResponse>> getActivePromotions(
-			@PageableDefault(size = 20, sort = "startDate", direction = Sort.Direction.ASC) Pageable pageable) {
-		log.info("Admin retrieving active promotions");
-		PageResponse<PromotionResponse> response = promotionService.getActivePromotions(pageable);
-		return ResponseEntity.ok(response);
+		return ResponseEntity.ok(promotionService.getAllPromotions(pageable));
 	}
 
 	@PutMapping("/{promotionId}")
-	@Operation(summary = "Update promotion", description = "Updates an existing promotion with the provided data")
-	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Promotion updated successfully", content = @Content(schema = @Schema(implementation = PromotionResponse.class))),
-			@ApiResponse(responseCode = "400", description = "Invalid request data", content = @Content(schema = @Schema(implementation = String.class))),
-			@ApiResponse(responseCode = "404", description = "Promotion not found", content = @Content(schema = @Schema(implementation = String.class))),
-			@ApiResponse(responseCode = "401", description = "Unauthorized - authentication required", content = @Content(schema = @Schema(implementation = String.class))),
-			@ApiResponse(responseCode = "403", description = "Forbidden - admin access required", content = @Content(schema = @Schema(implementation = String.class))) })
+	@Operation(summary = "Update promotion")
 	@PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
-	public ResponseEntity<PromotionResponse> updatePromotion(
-			@Parameter(description = "ID of the promotion to update", required = true, example = "1") @PathVariable Long promotionId,
+	public ResponseEntity<PromotionResponse> updatePromotion(@PathVariable Long promotionId,
 			@Valid @RequestBody PromotionUpdateRequest request) {
 		log.info("Admin updating promotion with ID: {}", promotionId);
-		PromotionResponse response = promotionService.updatePromotion(promotionId, request);
-		return ResponseEntity.ok(response);
+		return ResponseEntity.ok(promotionService.updatePromotion(promotionId, request));
 	}
 
 	@DeleteMapping("/{promotionId}")
-	@Operation(summary = "Delete promotion", description = "Deletes a promotion from the system. This action is irreversible.")
-	@ApiResponses(value = { @ApiResponse(responseCode = "204", description = "Promotion deleted successfully"),
-			@ApiResponse(responseCode = "404", description = "Promotion not found", content = @Content(schema = @Schema(implementation = String.class))),
-			@ApiResponse(responseCode = "400", description = "Cannot delete promotion (e.g., it has active redemptions)", content = @Content(schema = @Schema(implementation = String.class))),
-			@ApiResponse(responseCode = "401", description = "Unauthorized - authentication required", content = @Content(schema = @Schema(implementation = String.class))),
-			@ApiResponse(responseCode = "403", description = "Forbidden - admin access required", content = @Content(schema = @Schema(implementation = String.class))) })
+	@Operation(summary = "Delete promotion")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	@PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
-	public ResponseEntity<Void> deletePromotion(
-			@Parameter(description = "ID of the promotion to delete", required = true, example = "1") @PathVariable Long promotionId) {
+	public ResponseEntity<Void> deletePromotion(@PathVariable Long promotionId) {
 		log.info("Admin deleting promotion with ID: {}", promotionId);
 		promotionService.deletePromotion(promotionId);
 		return ResponseEntity.noContent().build();
