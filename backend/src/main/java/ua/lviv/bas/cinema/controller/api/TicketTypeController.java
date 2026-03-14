@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,13 +22,14 @@ import ua.lviv.bas.cinema.service.booking.types.TicketTypeService;
 @RequiredArgsConstructor
 @Tag(name = "Ticket Types", description = "Public API for ticket types")
 public class TicketTypeController {
+
 	private final TicketTypeService ticketTypeService;
 
 	@GetMapping("/dropdown")
 	@Operation(summary = "Get active ticket types for user dropdown")
+	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Ticket types retrieved successfully") })
 	public ResponseEntity<List<TicketTypeUserResponse>> getDropdownTypes() {
 		log.info("Getting ticket types for user dropdown");
-		List<TicketTypeUserResponse> ticketTypes = ticketTypeService.getActiveTicketTypesForUser();
-		return ResponseEntity.ok(ticketTypes);
+		return ResponseEntity.ok(ticketTypeService.getActiveTicketTypesForUser());
 	}
 }

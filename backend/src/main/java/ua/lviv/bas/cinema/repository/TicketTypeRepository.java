@@ -21,26 +21,11 @@ public interface TicketTypeRepository extends JpaRepository<TicketType, Long> {
 
 	List<TicketType> findByActiveTrue();
 
-	List<TicketType> findByActiveFalse();
-
-	List<TicketType> findByCategory(TicketTypeCategory category);
-
-	List<TicketType> findByActiveTrueAndCategory(TicketTypeCategory category);
-
-	List<TicketType> findByActiveFalseAndCategory(TicketTypeCategory category);
-
-	@Query("SELECT t FROM TicketType t WHERE " + "(:active IS NULL OR t.active = :active) AND "
-			+ "(:category IS NULL OR t.category = :category) AND " + "(:search IS NULL OR :search = '' OR "
-			+ "LOWER(t.displayName) LIKE LOWER(CONCAT('%', :search, '%'))) "
-			+ "ORDER BY CASE t.category WHEN 'STANDARD' THEN 0 ELSE 1 END, t.displayName ASC")
-	List<TicketType> findByFilters(@Param("active") Boolean active, @Param("category") TicketTypeCategory category,
-			@Param("search") String search);
-
 	@Query("SELECT t.id as id, t.displayName as displayName, t.priceMultiplier as priceMultiplier, "
 			+ "t.minAge as minAge, t.maxAge as maxAge, t.requiresDocument as requiresDocument, "
 			+ "t.documentType as documentType, t.active as active, t.category as category " + "FROM TicketType t WHERE "
 			+ "(:active IS NULL OR t.active = :active) AND " + "(:category IS NULL OR t.category = :category) AND "
-			+ "(:search IS NULL OR :search = '' OR " + "LOWER(t.displayName) LIKE LOWER(CONCAT('%', :search, '%'))) "
+			+ "(:search IS NULL OR :search = '' OR LOWER(t.displayName) LIKE LOWER(CONCAT('%', :search, '%'))) "
 			+ "ORDER BY CASE t.category WHEN 'STANDARD' THEN 0 ELSE 1 END, t.displayName ASC")
 	Page<TicketTypeAdminProjection> findAdminProjections(@Param("active") Boolean active,
 			@Param("category") TicketTypeCategory category, @Param("search") String search, Pageable pageable);

@@ -39,29 +39,26 @@ public class TicketTypeService {
 	private final TicketTypeValidationService validationService;
 
 	@Transactional
-	public TicketTypeResponse createTicketType(TicketTypeCreateRequest createRequest) {
-		log.debug("Creating ticket type: {}", createRequest.getDisplayName());
+	public TicketTypeResponse createTicketType(TicketTypeCreateRequest request) {
+		validationService.validateAgeRange(request.getMinAge(), request.getMaxAge());
 
-		validationService.validateAgeRange(createRequest.getMinAge(), createRequest.getMaxAge());
-
-		if (ticketTypeRepository.existsByDisplayName(createRequest.getDisplayName())) {
-			throw new TicketTypeDuplicateException(createRequest.getDisplayName());
+		if (ticketTypeRepository.existsByDisplayName(request.getDisplayName())) {
+			throw new TicketTypeDuplicateException(request.getDisplayName());
 		}
 
-		TicketType ticketType = ticketTypeMapper.toTicketType(createRequest);
-		TicketType saved = ticketTypeRepository.save(ticketType);
-		return ticketTypeMapper.toTicketTypeResponse(saved);
+		TicketType ticketType = ticketTypeMapper.toTicketType(request);
+		return ticketTypeMapper.toTicketTypeResponse(ticketTypeRepository.save(ticketType));
 	}
 
 	public TicketTypeResponse getTicketTypeById(Long id) {
-		TicketType ticketType = ticketTypeRepository.findById(id)
-				.orElseThrow(() -> new TicketTypeNotFoundException(id));
-		return ticketTypeMapper.toTicketTypeResponse(ticketType);
+		return ticketTypeMapper.toTicketTypeResponse(findTicketTypeById(id));
 	}
 
-	public Page<TicketTypeAdminProjection> getTicketTypesForAdmin(Boolean active, TicketTypeCategory category,
-			String search, Pageable pageable) {
-		return ticketTypeRepository.findAdminProjections(active, category, search, pageable);
+	public Page<TicketTypeResponse> getTicketTypesForAdmin(Boolean active, TicketTypeCategory category, String search,
+			Pageable pageable) {
+		Page<TicketTypeAdminProjection> projections = ticketTypeRepository.findAdminProjections(active, category,
+				search, pageable);
+		return projections.map(ticketTypeMapper::toTicketTypeResponse);
 	}
 
 	public List<TicketTypeUserResponse> getActiveTicketTypesForUser() {
@@ -70,74 +67,59 @@ public class TicketTypeService {
 	}
 
 	@Transactional
-	public TicketTypeResponse updateTicketType(Long id, TicketTypeUpdateRequest updateRequest) {
-		log.debug("Updating ticket type: {}", id);
+	public TicketTypeResponse updateTicketType(Long id, TicketTypeUpdateRequest request) {
+		TicketType ticketType = findTicketTypeById(id);
 
-		TicketType ticketType = ticketTypeRepository.findById(id)
-				.orElseThrow(() -> new TicketTypeNotFoundException(id));
-
-		if (updateRequest.getDisplayName() != null
-				&& !updateRequest.getDisplayName().equals(ticketType.getDisplayName())
-				&& ticketTypeRepository.existsByDisplayNameAndIdNot(updateRequest.getDisplayName(), id)) {
-			throw new TicketTypeDuplicateException(updateRequest.getDisplayName());
+		if (request.getDisplayName() != null && !request.getDisplayName().equals(ticketType.getDisplayName())
+				&& ticketTypeRepository.existsByDisplayNameAndIdNot(request.getDisplayName(), id)) {
+			throw new TicketTypeDuplicateException(request.getDisplayName());
 		}
 
-		if (updateRequest.getMinAge() != null || updateRequest.getMaxAge() != null) {
-			Integer minAge = updateRequest.getMinAge() != null ? updateRequest.getMinAge() : ticketType.getMinAge();
-			Integer maxAge = updateRequest.getMaxAge() != null ? updateRequest.getMaxAge() : ticketType.getMaxAge();
+		if (request.getMinAge() != null || request.getMaxAge() != null) {
+			Integer minAge = request.getMinAge() != null ? request.getMinAge() : ticketType.getMinAge();
+			Integer maxAge = request.getMaxAge() != null ? request.getMaxAge() : ticketType.getMaxAge();
 			validationService.validateAgeRange(minAge, maxAge);
 		}
 
-		ticketTypeMapper.updateTicketTypeFromRequest(ticketType, updateRequest);
-		TicketType updated = ticketTypeRepository.save(ticketType);
-		return ticketTypeMapper.toTicketTypeResponse(updated);
+		ticketTypeMapper.updateTicketTypeFromRequest(ticketType, request);
+		return ticketTypeMapper.toTicketTypeResponse(ticketTypeRepository.save(ticketType));
 	}
 
 	@Transactional
 	public void deleteTicketType(Long id) {
-		TicketType ticketType = ticketTypeRepository.findById(id)
-				.orElseThrow(() -> new TicketTypeNotFoundException(id));
+		TicketType ticketType = findTicketTypeById(id);
 
-		if (hasFutureTicketsWithType(id)) {
-			long ticketCount = countFutureTicketsWithType(id);
+		if (hasFutureTickets(id)) {
 			throw new TicketTypeInUseException(id,
-					"Cannot delete ticket type. It is used in " + ticketCount + " future ticket(s)");
+					"Cannot delete ticket type. It is used in " + countFutureTickets(id) + " future ticket(s)");
 		}
 
 		ticketTypeRepository.delete(ticketType);
-		log.info("Deleted ticket type: {}", id);
 	}
 
 	@Transactional
 	public TicketTypeResponse toggleTicketTypeActiveStatus(Long id) {
-		TicketType ticketType = ticketTypeRepository.findById(id)
-				.orElseThrow(() -> new TicketTypeNotFoundException(id));
+		TicketType ticketType = findTicketTypeById(id);
 
-		if (ticketType.isActive() && hasFutureTicketsWithType(id)) {
-			long activeTicketCount = countFutureTicketsWithType(id);
+		if (ticketType.isActive() && hasFutureTickets(id)) {
 			throw new TicketTypeInUseException(id,
-					"Cannot deactivate ticket type. It is used in " + activeTicketCount + " future ticket(s)");
+					"Cannot deactivate ticket type. It is used in " + countFutureTickets(id) + " future ticket(s)");
 		}
 
 		ticketType.setActive(!ticketType.isActive());
-		TicketType updated = ticketTypeRepository.save(ticketType);
-		return ticketTypeMapper.toTicketTypeResponse(updated);
+		return ticketTypeMapper.toTicketTypeResponse(ticketTypeRepository.save(ticketType));
 	}
 
-	public boolean validateAgeForTicketType(Long ticketTypeId, Integer age) {
-		TicketType ticketType = ticketTypeRepository.findById(ticketTypeId)
-				.orElseThrow(() -> new TicketTypeNotFoundException(ticketTypeId));
-		return validationService.isAgeValidForTicketType(ticketType, age);
+	private TicketType findTicketTypeById(Long id) {
+		return ticketTypeRepository.findById(id).orElseThrow(() -> new TicketTypeNotFoundException(id));
 	}
 
-	private boolean hasFutureTicketsWithType(Long ticketTypeId) {
-		return countFutureTicketsWithType(ticketTypeId) > 0;
+	private boolean hasFutureTickets(Long ticketTypeId) {
+		return countFutureTickets(ticketTypeId) > 0;
 	}
 
-	private long countFutureTicketsWithType(Long ticketTypeId) {
-		LocalDateTime now = LocalDateTime.now();
-		List<TicketStatus> activeStatuses = List.of(TicketStatus.ACTIVE);
+	private long countFutureTickets(Long ticketTypeId) {
 		return ticketRepository.countByTicketTypeIdAndStatusInAndBookingSessionStartTimeAfter(ticketTypeId,
-				activeStatuses, now);
+				List.of(TicketStatus.ACTIVE), LocalDateTime.now());
 	}
 }

@@ -12,8 +12,6 @@ import lombok.RequiredArgsConstructor;
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.enums.BookingStatus;
 import ua.lviv.bas.cinema.domain.enums.TicketStatus;
-import ua.lviv.bas.cinema.domain.enums.TicketTypeCategory;
-import ua.lviv.bas.cinema.domain.projection.TicketTypeAdminProjection;
 import ua.lviv.bas.cinema.dto.booking.request.BookingCreateRequest;
 import ua.lviv.bas.cinema.dto.booking.response.BookingResponse;
 import ua.lviv.bas.cinema.dto.booking.response.SeatReservationResponse;
@@ -167,12 +165,6 @@ public class ControllerFacade {
 	}
 
 	@Transactional(readOnly = true)
-	public Page<TicketTypeAdminProjection> getTicketTypesForAdmin(Boolean active, TicketTypeCategory category,
-			String search, Pageable pageable) {
-		return ticketTypeService.getTicketTypesForAdmin(active, category, search, pageable);
-	}
-
-	@Transactional(readOnly = true)
 	public List<TicketTypeUserResponse> getActiveTicketTypesForUser() {
 		return ticketTypeService.getActiveTicketTypesForUser();
 	}
@@ -190,10 +182,5 @@ public class ControllerFacade {
 	@Transactional
 	public TicketTypeResponse toggleTicketTypeActiveStatus(Long id) {
 		return ticketTypeService.toggleTicketTypeActiveStatus(id);
-	}
-
-	@Transactional(readOnly = true)
-	public boolean validateAgeForTicketType(Long ticketTypeId, Integer age) {
-		return ticketTypeService.validateAgeForTicketType(ticketTypeId, age);
 	}
 }
