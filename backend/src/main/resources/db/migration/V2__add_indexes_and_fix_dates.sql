@@ -21,7 +21,10 @@ CREATE INDEX IF NOT EXISTS idx_seat_active ON seats(active);
 CREATE INDEX IF NOT EXISTS idx_seat_hall_active ON seats(hall_id, active);
 CREATE INDEX IF NOT EXISTS idx_seat_position ON seats(hall_id, seat_row, number);
 
-CREATE INDEX IF NOT EXISTS idx_ticket_type_code_active ON ticket_types(code, active);
+CREATE INDEX IF NOT EXISTS idx_ticket_type_active ON ticket_types(active);
+CREATE INDEX IF NOT EXISTS idx_ticket_type_category ON ticket_types(category);
+CREATE INDEX IF NOT EXISTS idx_ticket_type_category_active ON ticket_types(category, active);
+CREATE INDEX IF NOT EXISTS idx_ticket_type_display_name_trgm ON ticket_types USING gin (display_name gin_trgm_ops);
 
 CREATE INDEX IF NOT EXISTS idx_session_movie ON sessions(movie_id);
 CREATE INDEX IF NOT EXISTS idx_session_hall ON sessions(hall_id);

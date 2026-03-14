@@ -77,7 +77,6 @@ CREATE INDEX IF NOT EXISTS idx_seat_active ON seats(active);
 
 CREATE TABLE IF NOT EXISTS ticket_types (
     id BIGSERIAL PRIMARY KEY,
-    code VARCHAR(20) NOT NULL UNIQUE,
     display_name VARCHAR(50) NOT NULL,
     price_multiplier DECIMAL(3, 2) NOT NULL DEFAULT 1.00,
     min_age INTEGER,
@@ -85,14 +84,11 @@ CREATE TABLE IF NOT EXISTS ticket_types (
     requires_document BOOLEAN NOT NULL DEFAULT false,
     document_type VARCHAR(100),
     category VARCHAR(20),
-    active BOOLEAN NOT NULL DEFAULT true,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    active BOOLEAN NOT NULL DEFAULT true
 );
 
 CREATE INDEX IF NOT EXISTS idx_ticket_type_active ON ticket_types(active);
 CREATE INDEX IF NOT EXISTS idx_ticket_type_category ON ticket_types(category);
-CREATE INDEX IF NOT EXISTS idx_ticket_type_code ON ticket_types(code);
 
 CREATE TABLE IF NOT EXISTS sessions (
     id BIGSERIAL PRIMARY KEY,

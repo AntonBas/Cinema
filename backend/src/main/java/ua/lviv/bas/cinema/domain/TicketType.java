@@ -1,10 +1,6 @@
 package ua.lviv.bas.cinema.domain;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
-
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -40,8 +36,7 @@ import ua.lviv.bas.cinema.domain.enums.TicketTypeCategory;
 @ToString(onlyExplicitlyIncluded = true)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Table(name = "ticket_types", indexes = { @Index(name = "idx_ticket_type_active", columnList = "active"),
-		@Index(name = "idx_ticket_type_category", columnList = "category"),
-		@Index(name = "idx_ticket_type_code", columnList = "code") })
+		@Index(name = "idx_ticket_type_category", columnList = "category") })
 public class TicketType {
 
 	@Id
@@ -49,11 +44,6 @@ public class TicketType {
 	@EqualsAndHashCode.Include
 	@ToString.Include
 	private Long id;
-
-	@NotBlank
-	@Size(max = 20)
-	@Column(nullable = false, unique = true, length = 20)
-	private String code;
 
 	@NotBlank
 	@Size(max = 50)
@@ -92,12 +82,4 @@ public class TicketType {
 	@Enumerated(EnumType.STRING)
 	@Column(name = "category", length = 20)
 	private TicketTypeCategory category;
-
-	@CreationTimestamp
-	@Column(name = "created_at", updatable = false)
-	private LocalDateTime createdAt;
-
-	@UpdateTimestamp
-	@Column(name = "updated_at")
-	private LocalDateTime updatedAt;
 }

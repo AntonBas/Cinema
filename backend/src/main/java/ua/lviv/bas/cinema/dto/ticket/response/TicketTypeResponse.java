@@ -1,7 +1,6 @@
 package ua.lviv.bas.cinema.dto.ticket.response;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -19,9 +18,6 @@ public class TicketTypeResponse {
 
 	@Schema(description = "Unique identifier of the ticket type", example = "1")
 	private Long id;
-
-	@Schema(description = "Unique code for the ticket type", example = "ADULT")
-	private String code;
 
 	@Schema(description = "Display name for the ticket type", example = "Adult Ticket")
 	private String displayName;
@@ -46,10 +42,4 @@ public class TicketTypeResponse {
 
 	@Schema(description = "Category of the ticket type", example = "STANDARD")
 	private TicketTypeCategory category;
-
-	@Schema(description = "Timestamp when the ticket type was created", example = "2024-01-01T12:00:00")
-	private LocalDateTime createdAt;
-
-	@Schema(description = "Timestamp when the ticket type was last updated", example = "2024-01-02T15:30:00")
-	private LocalDateTime updatedAt;
 }
