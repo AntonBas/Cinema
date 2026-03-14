@@ -1,7 +1,8 @@
 package ua.lviv.bas.cinema.controller.admin;
 
-import java.util.List;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -26,6 +27,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.enums.TicketTypeCategory;
+import ua.lviv.bas.cinema.domain.projection.TicketTypeAdminProjection;
 import ua.lviv.bas.cinema.dto.ticket.request.TicketTypeCreateRequest;
 import ua.lviv.bas.cinema.dto.ticket.request.TicketTypeUpdateRequest;
 import ua.lviv.bas.cinema.dto.ticket.response.TicketTypeResponse;
@@ -44,25 +46,27 @@ public class AdminTicketTypeController {
 	@Operation(summary = "Create a new ticket type")
 	@ApiResponses(value = { @ApiResponse(responseCode = "201", description = "Ticket type created successfully"),
 			@ApiResponse(responseCode = "400", description = "Invalid input data"),
-			@ApiResponse(responseCode = "409", description = "Ticket type with this code already exists") })
+			@ApiResponse(responseCode = "409", description = "Ticket type with this display name already exists") })
 	@PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
 	public ResponseEntity<TicketTypeResponse> createTicketType(
 			@Valid @RequestBody TicketTypeCreateRequest createRequest) {
-		log.info("Creating new ticket type with code: {}", createRequest.getCode());
+		log.info("Creating new ticket type with display name: {}", createRequest.getDisplayName());
 		var ticketType = ticketTypeService.createTicketType(createRequest);
 		return ResponseEntity.status(HttpStatus.CREATED).body(ticketType);
 	}
 
 	@GetMapping
-	@Operation(summary = "Get all ticket types with optional filters")
+	@Operation(summary = "Get all ticket types with pagination and filters")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Ticket types retrieved successfully") })
 	@PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
-	public ResponseEntity<List<TicketTypeResponse>> getTicketTypes(
+	public ResponseEntity<Page<TicketTypeAdminProjection>> getTicketTypes(
 			@Parameter(description = "Filter by active status") @RequestParam(required = false) Boolean active,
 			@Parameter(description = "Filter by category") @RequestParam(required = false) TicketTypeCategory category,
-			@Parameter(description = "Search by code or display name") @RequestParam(required = false) String search) {
+			@Parameter(description = "Search by display name") @RequestParam(required = false) String search,
+			@PageableDefault(size = 10) Pageable pageable) {
 		log.info("Getting ticket types with filters - active: {}, category: {}, search: {}", active, category, search);
-		List<TicketTypeResponse> ticketTypes = ticketTypeService.getTicketTypes(active, category, search);
+		Page<TicketTypeAdminProjection> ticketTypes = ticketTypeService.getTicketTypesForAdmin(active, category, search,
+				pageable);
 		return ResponseEntity.ok(ticketTypes);
 	}
 
@@ -78,23 +82,12 @@ public class AdminTicketTypeController {
 		return ResponseEntity.ok(ticketType);
 	}
 
-	@GetMapping("/code/{code}")
-	@Operation(summary = "Get ticket type by code")
-	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Ticket type found"),
-			@ApiResponse(responseCode = "404", description = "Ticket type not found") })
-	@PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
-	public ResponseEntity<TicketTypeResponse> getTicketTypeByCode(
-			@Parameter(description = "Ticket type code") @PathVariable String code) {
-		log.info("Getting ticket type by code: {}", code);
-		var ticketType = ticketTypeService.getTicketTypeByCode(code);
-		return ResponseEntity.ok(ticketType);
-	}
-
 	@PutMapping("/{id}")
 	@Operation(summary = "Update ticket type")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Ticket type updated successfully"),
 			@ApiResponse(responseCode = "400", description = "Invalid input data"),
-			@ApiResponse(responseCode = "404", description = "Ticket type not found") })
+			@ApiResponse(responseCode = "404", description = "Ticket type not found"),
+			@ApiResponse(responseCode = "409", description = "Ticket type with this display name already exists") })
 	@PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
 	public ResponseEntity<TicketTypeResponse> updateTicketType(
 			@Parameter(description = "Ticket type ID") @PathVariable Long id,

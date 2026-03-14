@@ -8,28 +8,28 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.mapstruct.ReportingPolicy;
 
 import ua.lviv.bas.cinema.domain.TicketType;
+import ua.lviv.bas.cinema.domain.projection.TicketTypeAdminProjection;
+import ua.lviv.bas.cinema.domain.projection.TicketTypeUserProjection;
 import ua.lviv.bas.cinema.dto.ticket.request.TicketTypeCreateRequest;
 import ua.lviv.bas.cinema.dto.ticket.request.TicketTypeUpdateRequest;
 import ua.lviv.bas.cinema.dto.ticket.response.TicketTypeResponse;
-import ua.lviv.bas.cinema.dto.ticket.response.TicketTypeSimpleResponse;
+import ua.lviv.bas.cinema.dto.ticket.response.TicketTypeUserResponse;
 
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface TicketTypeMapper {
 
 	@Mapping(target = "id", ignore = true)
-	@Mapping(target = "createdAt", ignore = true)
-	@Mapping(target = "updatedAt", ignore = true)
 	TicketType toTicketType(TicketTypeCreateRequest dto);
 
 	@BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 	@Mapping(target = "id", ignore = true)
-	@Mapping(target = "code", ignore = true)
-	@Mapping(target = "createdAt", ignore = true)
-	@Mapping(target = "updatedAt", ignore = true)
-	@Mapping(target = "active", source = "active", defaultValue = "true")
 	void updateTicketTypeFromRequest(@MappingTarget TicketType entity, TicketTypeUpdateRequest dto);
 
 	TicketTypeResponse toTicketTypeResponse(TicketType entity);
 
-	TicketTypeSimpleResponse toTicketTypeSimpleResponse(TicketType entity);
+	TicketTypeResponse toTicketTypeResponse(TicketTypeAdminProjection projection);
+
+	TicketTypeUserResponse toTicketTypeUserResponse(TicketType entity);
+
+	TicketTypeUserResponse toTicketTypeUserResponse(TicketTypeUserProjection projection);
 }

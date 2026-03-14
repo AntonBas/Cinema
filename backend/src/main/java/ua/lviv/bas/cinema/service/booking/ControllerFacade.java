@@ -12,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.enums.BookingStatus;
 import ua.lviv.bas.cinema.domain.enums.TicketStatus;
+import ua.lviv.bas.cinema.domain.enums.TicketTypeCategory;
+import ua.lviv.bas.cinema.domain.projection.TicketTypeAdminProjection;
 import ua.lviv.bas.cinema.dto.booking.request.BookingCreateRequest;
 import ua.lviv.bas.cinema.dto.booking.response.BookingResponse;
 import ua.lviv.bas.cinema.dto.booking.response.SeatReservationResponse;
@@ -24,7 +26,7 @@ import ua.lviv.bas.cinema.dto.ticket.request.TicketTypeCreateRequest;
 import ua.lviv.bas.cinema.dto.ticket.request.TicketTypeUpdateRequest;
 import ua.lviv.bas.cinema.dto.ticket.response.TicketResponse;
 import ua.lviv.bas.cinema.dto.ticket.response.TicketTypeResponse;
-import ua.lviv.bas.cinema.dto.ticket.response.TicketTypeSimpleResponse;
+import ua.lviv.bas.cinema.dto.ticket.response.TicketTypeUserResponse;
 import ua.lviv.bas.cinema.service.booking.availability.SeatReservationService;
 import ua.lviv.bas.cinema.service.booking.creation.BookingCreationService;
 import ua.lviv.bas.cinema.service.booking.management.BookingManagementService;
@@ -165,13 +167,14 @@ public class ControllerFacade {
 	}
 
 	@Transactional(readOnly = true)
-	public TicketTypeResponse getTicketTypeByCode(String code) {
-		return ticketTypeService.getTicketTypeByCode(code);
+	public Page<TicketTypeAdminProjection> getTicketTypesForAdmin(Boolean active, TicketTypeCategory category,
+			String search, Pageable pageable) {
+		return ticketTypeService.getTicketTypesForAdmin(active, category, search, pageable);
 	}
 
 	@Transactional(readOnly = true)
-	public List<TicketTypeSimpleResponse> getActiveTicketTypesForDropdown() {
-		return ticketTypeService.getActiveTicketTypesForDropdown();
+	public List<TicketTypeUserResponse> getActiveTicketTypesForUser() {
+		return ticketTypeService.getActiveTicketTypesForUser();
 	}
 
 	@Transactional
@@ -192,10 +195,5 @@ public class ControllerFacade {
 	@Transactional(readOnly = true)
 	public boolean validateAgeForTicketType(Long ticketTypeId, Integer age) {
 		return ticketTypeService.validateAgeForTicketType(ticketTypeId, age);
-	}
-
-	@Transactional(readOnly = true)
-	public boolean existsByCode(String code) {
-		return ticketTypeService.existsByCode(code);
 	}
 }

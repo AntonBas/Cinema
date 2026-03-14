@@ -11,7 +11,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import ua.lviv.bas.cinema.dto.ticket.response.TicketTypeSimpleResponse;
+import ua.lviv.bas.cinema.dto.ticket.response.TicketTypeUserResponse;
 import ua.lviv.bas.cinema.service.booking.types.TicketTypeService;
 
 @Slf4j
@@ -23,10 +23,10 @@ public class TicketTypeController {
 	private final TicketTypeService ticketTypeService;
 
 	@GetMapping("/dropdown")
-	@Operation(summary = "Get active ticket types for dropdown")
-	public ResponseEntity<List<TicketTypeSimpleResponse>> getDropdownTypes() {
-		log.info("Getting ticket types for dropdown");
-		List<TicketTypeSimpleResponse> ticketTypes = ticketTypeService.getActiveTicketTypesForDropdown();
+	@Operation(summary = "Get active ticket types for user dropdown")
+	public ResponseEntity<List<TicketTypeUserResponse>> getDropdownTypes() {
+		log.info("Getting ticket types for user dropdown");
+		List<TicketTypeUserResponse> ticketTypes = ticketTypeService.getActiveTicketTypesForUser();
 		return ResponseEntity.ok(ticketTypes);
 	}
 }
