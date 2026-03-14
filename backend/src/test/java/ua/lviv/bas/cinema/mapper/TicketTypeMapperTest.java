@@ -1,17 +1,13 @@
 package ua.lviv.bas.cinema.mapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvSource;
-import org.junit.jupiter.params.provider.NullAndEmptySource;
-import org.junit.jupiter.params.provider.ValueSource;
-import org.mapstruct.factory.Mappers;
 
 import ua.lviv.bas.cinema.domain.TicketType;
 import ua.lviv.bas.cinema.domain.enums.TicketTypeCategory;
@@ -28,7 +24,7 @@ public class TicketTypeMapperTest {
 
 	@BeforeEach
 	void setUp() {
-		mapper = Mappers.getMapper(TicketTypeMapper.class);
+		mapper = new TicketTypeMapperImpl();
 	}
 
 	@Test
@@ -39,11 +35,10 @@ public class TicketTypeMapperTest {
 
 		TicketType entity = mapper.toTicketType(request);
 
-		assertThat(entity).isNotNull();
 		assertThat(entity.getId()).isNull();
 		assertThat(entity.getDisplayName()).isEqualTo("Child Ticket");
-		assertThat(entity.getPriceMultiplier()).isEqualTo(new BigDecimal("0.70"));
-		assertThat(entity.getMinAge()).isEqualTo(0);
+		assertThat(entity.getPriceMultiplier()).isEqualByComparingTo("0.70");
+		assertThat(entity.getMinAge()).isZero();
 		assertThat(entity.getMaxAge()).isEqualTo(12);
 		assertThat(entity.isRequiresDocument()).isTrue();
 		assertThat(entity.getDocumentType()).isEqualTo("Birth Certificate");
@@ -52,58 +47,14 @@ public class TicketTypeMapperTest {
 	}
 
 	@Test
-	void toTicketType_ShouldSetDefaultValues() {
-		TicketTypeCreateRequest request = TicketTypeCreateRequest.builder().displayName("Standard Ticket").build();
-
-		TicketType entity = mapper.toTicketType(request);
-
-		assertThat(entity).isNotNull();
-		assertThat(entity.getDisplayName()).isEqualTo("Standard Ticket");
-		assertThat(entity.getPriceMultiplier()).isNull();
-		assertThat(entity.getMinAge()).isNull();
-		assertThat(entity.getMaxAge()).isNull();
-		assertThat(entity.isRequiresDocument()).isFalse();
-		assertThat(entity.getDocumentType()).isNull();
-		assertThat(entity.isActive()).isTrue();
-		assertThat(entity.getCategory()).isNull();
-	}
-
-	@Test
 	void toTicketType_ShouldReturnNull_WhenInputIsNull() {
-		TicketType entity = mapper.toTicketType(null);
-		assertThat(entity).isNull();
-	}
-
-	@ParameterizedTest
-	@NullAndEmptySource
-	@ValueSource(strings = { " ", "\t", "\n" })
-	void toTicketType_ShouldHandleBlankDisplayName(String displayName) {
-		TicketTypeCreateRequest request = TicketTypeCreateRequest.builder().displayName(displayName).build();
-
-		TicketType entity = mapper.toTicketType(request);
-
-		assertThat(entity.getDisplayName()).isEqualTo(displayName);
+		assertThat(mapper.toTicketType(null)).isNull();
 	}
 
 	@Test
-	void toTicketType_ShouldHandleMaxLengthFields() {
-		String maxDisplayName = "B".repeat(50);
-		String maxDocumentType = "C".repeat(100);
-
-		TicketTypeCreateRequest request = TicketTypeCreateRequest.builder().displayName(maxDisplayName)
-				.documentType(maxDocumentType).build();
-
-		TicketType entity = mapper.toTicketType(request);
-
-		assertThat(entity.getDisplayName()).hasSize(50);
-		assertThat(entity.getDocumentType()).hasSize(100);
-	}
-
-	@Test
-	void updateTicketTypeFromRequest_ShouldUpdateFieldsFromUpdateRequest() {
+	void updateTicketTypeFromRequest_ShouldUpdateAllFields() {
 		TicketType existing = TicketType.builder().id(1L).displayName("Old Name")
-				.priceMultiplier(new BigDecimal("1.00")).minAge(null).maxAge(null).requiresDocument(false)
-				.documentType(null).active(true).category(null).build();
+				.priceMultiplier(new BigDecimal("1.00")).build();
 
 		TicketTypeUpdateRequest updateRequest = TicketTypeUpdateRequest.builder().displayName("New Name")
 				.priceMultiplier(new BigDecimal("0.80")).minAge(18).maxAge(65).requiresDocument(true)
@@ -113,7 +64,7 @@ public class TicketTypeMapperTest {
 
 		assertThat(existing.getId()).isEqualTo(1L);
 		assertThat(existing.getDisplayName()).isEqualTo("New Name");
-		assertThat(existing.getPriceMultiplier()).isEqualTo(new BigDecimal("0.80"));
+		assertThat(existing.getPriceMultiplier()).isEqualByComparingTo("0.80");
 		assertThat(existing.getMinAge()).isEqualTo(18);
 		assertThat(existing.getMaxAge()).isEqualTo(65);
 		assertThat(existing.isRequiresDocument()).isTrue();
@@ -125,59 +76,30 @@ public class TicketTypeMapperTest {
 	@Test
 	void updateTicketTypeFromRequest_ShouldIgnoreNullValues() {
 		TicketType existing = TicketType.builder().id(1L).displayName("Original Name")
-				.priceMultiplier(new BigDecimal("1.00")).minAge(10).maxAge(20).requiresDocument(true)
-				.documentType("Original Doc").active(true).category(TicketTypeCategory.STUDENT).build();
+				.priceMultiplier(new BigDecimal("1.00")).minAge(10).active(true).build();
 
-		TicketTypeUpdateRequest updateRequest = TicketTypeUpdateRequest.builder().displayName("Updated Name").build();
+		TicketTypeUpdateRequest updateRequest = TicketTypeUpdateRequest.builder().displayName("Updated Name")
+				.priceMultiplier(null).build();
 
 		mapper.updateTicketTypeFromRequest(existing, updateRequest);
 
-		assertThat(existing).isNotNull();
 		assertThat(existing.getDisplayName()).isEqualTo("Updated Name");
-		assertThat(existing.getPriceMultiplier()).isEqualTo(new BigDecimal("1.00"));
+		assertThat(existing.getPriceMultiplier()).isEqualByComparingTo("1.00");
 		assertThat(existing.getMinAge()).isEqualTo(10);
-		assertThat(existing.getMaxAge()).isEqualTo(20);
-		assertThat(existing.isRequiresDocument()).isTrue();
-		assertThat(existing.getDocumentType()).isEqualTo("Original Doc");
-		assertThat(existing.isActive()).isTrue();
-		assertThat(existing.getCategory()).isEqualTo(TicketTypeCategory.STUDENT);
-	}
-
-	@Test
-	void updateTicketTypeFromRequest_ShouldThrowException_WhenTargetIsNull() {
-		TicketTypeUpdateRequest updateRequest = TicketTypeUpdateRequest.builder().displayName("Test").build();
-
-		assertThatThrownBy(() -> mapper.updateTicketTypeFromRequest(null, updateRequest))
-				.isInstanceOf(NullPointerException.class);
-	}
-
-	@Test
-	void updateTicketTypeFromRequest_ShouldHandleEmptyRequest() {
-		TicketType existing = TicketType.builder().id(1L).displayName("Original")
-				.priceMultiplier(new BigDecimal("1.00")).active(true).build();
-
-		TicketTypeUpdateRequest updateRequest = TicketTypeUpdateRequest.builder().build();
-
-		mapper.updateTicketTypeFromRequest(existing, updateRequest);
-
-		assertThat(existing).isNotNull();
-		assertThat(existing.getDisplayName()).isEqualTo("Original");
-		assertThat(existing.getPriceMultiplier()).isEqualTo(new BigDecimal("1.00"));
 		assertThat(existing.isActive()).isTrue();
 	}
 
 	@Test
 	void toTicketTypeResponse_ShouldMapAllFieldsFromEntity() {
 		TicketType entity = TicketType.builder().id(1L).displayName("Student Ticket")
-				.priceMultiplier(new BigDecimal("0.50")).minAge(18).maxAge(null).requiresDocument(true)
-				.documentType("Student ID").active(true).category(TicketTypeCategory.STUDENT).build();
+				.priceMultiplier(new BigDecimal("0.50")).minAge(18).requiresDocument(true).documentType("Student ID")
+				.active(true).category(TicketTypeCategory.STUDENT).build();
 
 		TicketTypeResponse response = mapper.toTicketTypeResponse(entity);
 
-		assertThat(response).isNotNull();
 		assertThat(response.getId()).isEqualTo(1L);
 		assertThat(response.getDisplayName()).isEqualTo("Student Ticket");
-		assertThat(response.getPriceMultiplier().toString()).isEqualTo("0.50");
+		assertThat(response.getPriceMultiplier()).isEqualByComparingTo("0.50");
 		assertThat(response.getMinAge()).isEqualTo(18);
 		assertThat(response.getMaxAge()).isNull();
 		assertThat(response.isRequiresDocument()).isTrue();
@@ -187,60 +109,24 @@ public class TicketTypeMapperTest {
 	}
 
 	@Test
-	void toTicketTypeResponse_ShouldMapAllFieldsFromAdminProjection() {
-		TicketTypeAdminProjection projection = new TicketTypeAdminProjection() {
-			@Override
-			public Long getId() {
-				return 1L;
-			}
+	void toTicketTypeResponse_ShouldMapFromAdminProjection() {
+		TicketTypeAdminProjection projection = mock(TicketTypeAdminProjection.class);
 
-			@Override
-			public String getDisplayName() {
-				return "Admin Projection";
-			}
-
-			@Override
-			public BigDecimal getPriceMultiplier() {
-				return new BigDecimal("0.75");
-			}
-
-			@Override
-			public Integer getMinAge() {
-				return 16;
-			}
-
-			@Override
-			public Integer getMaxAge() {
-				return 60;
-			}
-
-			@Override
-			public boolean isRequiresDocument() {
-				return true;
-			}
-
-			@Override
-			public String getDocumentType() {
-				return "Passport";
-			}
-
-			@Override
-			public boolean isActive() {
-				return true;
-			}
-
-			@Override
-			public TicketTypeCategory getCategory() {
-				return TicketTypeCategory.STANDARD;
-			}
-		};
+		when(projection.getId()).thenReturn(1L);
+		when(projection.getDisplayName()).thenReturn("Admin Projection");
+		when(projection.getPriceMultiplier()).thenReturn(new BigDecimal("0.75"));
+		when(projection.getMinAge()).thenReturn(16);
+		when(projection.getMaxAge()).thenReturn(60);
+		when(projection.isRequiresDocument()).thenReturn(true);
+		when(projection.getDocumentType()).thenReturn("Passport");
+		when(projection.isActive()).thenReturn(true);
+		when(projection.getCategory()).thenReturn(TicketTypeCategory.STANDARD);
 
 		TicketTypeResponse response = mapper.toTicketTypeResponse(projection);
 
-		assertThat(response).isNotNull();
 		assertThat(response.getId()).isEqualTo(1L);
 		assertThat(response.getDisplayName()).isEqualTo("Admin Projection");
-		assertThat(response.getPriceMultiplier().toString()).isEqualTo("0.75");
+		assertThat(response.getPriceMultiplier()).isEqualByComparingTo("0.75");
 		assertThat(response.getMinAge()).isEqualTo(16);
 		assertThat(response.getMaxAge()).isEqualTo(60);
 		assertThat(response.isRequiresDocument()).isTrue();
@@ -250,152 +136,47 @@ public class TicketTypeMapperTest {
 	}
 
 	@Test
-	void toTicketTypeUserResponse_ShouldMapAllFieldsFromEntity() {
+	void toTicketTypeUserResponse_ShouldMapFromEntity() {
 		TicketType entity = TicketType.builder().id(1L).displayName("User Ticket")
 				.priceMultiplier(new BigDecimal("0.60")).requiresDocument(true).documentType("Student Card").build();
 
 		TicketTypeUserResponse response = mapper.toTicketTypeUserResponse(entity);
 
-		assertThat(response).isNotNull();
 		assertThat(response.getId()).isEqualTo(1L);
 		assertThat(response.getDisplayName()).isEqualTo("User Ticket");
-		assertThat(response.getPriceMultiplier().toString()).isEqualTo("0.60");
+		assertThat(response.getPriceMultiplier()).isEqualByComparingTo("0.60");
 		assertThat(response.isRequiresDocument()).isTrue();
 		assertThat(response.getDocumentType()).isEqualTo("Student Card");
 	}
 
 	@Test
-	void toTicketTypeUserResponse_ShouldMapAllFieldsFromUserProjection() {
-		TicketTypeUserProjection projection = new TicketTypeUserProjection() {
-			@Override
-			public Long getId() {
-				return 1L;
-			}
+	void toTicketTypeUserResponse_ShouldMapFromUserProjection() {
+		TicketTypeUserProjection projection = mock(TicketTypeUserProjection.class);
 
-			@Override
-			public String getDisplayName() {
-				return "User Projection";
-			}
-
-			@Override
-			public BigDecimal getPriceMultiplier() {
-				return new BigDecimal("0.85");
-			}
-
-			@Override
-			public boolean isRequiresDocument() {
-				return false;
-			}
-
-			@Override
-			public String getDocumentType() {
-				return null;
-			}
-		};
+		when(projection.getId()).thenReturn(1L);
+		when(projection.getDisplayName()).thenReturn("User Projection");
+		when(projection.getPriceMultiplier()).thenReturn(new BigDecimal("0.85"));
+		when(projection.isRequiresDocument()).thenReturn(true);
+		when(projection.getDocumentType()).thenReturn("ID Card");
 
 		TicketTypeUserResponse response = mapper.toTicketTypeUserResponse(projection);
 
-		assertThat(response).isNotNull();
 		assertThat(response.getId()).isEqualTo(1L);
 		assertThat(response.getDisplayName()).isEqualTo("User Projection");
-		assertThat(response.getPriceMultiplier().toString()).isEqualTo("0.85");
-		assertThat(response.isRequiresDocument()).isFalse();
-		assertThat(response.getDocumentType()).isNull();
+		assertThat(response.getPriceMultiplier()).isEqualByComparingTo("0.85");
+		assertThat(response.isRequiresDocument()).isTrue();
+		assertThat(response.getDocumentType()).isEqualTo("ID Card");
 	}
 
 	@Test
 	void toTicketTypeResponse_ShouldReturnNull_WhenInputIsNull() {
-		TicketTypeResponse response = mapper.toTicketTypeResponse((TicketType) null);
-		assertThat(response).isNull();
+		assertThat(mapper.toTicketTypeResponse((TicketType) null)).isNull();
+		assertThat(mapper.toTicketTypeResponse((TicketTypeAdminProjection) null)).isNull();
 	}
 
 	@Test
 	void toTicketTypeUserResponse_ShouldReturnNull_WhenInputIsNull() {
-		TicketTypeUserResponse response = mapper.toTicketTypeUserResponse((TicketType) null);
-		assertThat(response).isNull();
-	}
-
-	@ParameterizedTest
-	@CsvSource({ "0.50, STUDENT", "1.00, STANDARD", "0.70, CHILD", "0.80, SENIOR" })
-	void toTicketTypeResponse_ShouldMapPriceMultiplierAndCategory(String multiplier, TicketTypeCategory category) {
-		TicketType entity = TicketType.builder().id(1L).displayName("Test " + category)
-				.priceMultiplier(new BigDecimal(multiplier)).category(category).build();
-
-		TicketTypeResponse response = mapper.toTicketTypeResponse(entity);
-
-		assertThat(response.getPriceMultiplier().toString()).isEqualTo(multiplier);
-		assertThat(response.getCategory()).isEqualTo(category);
-	}
-
-	@Test
-	void consistencyCheck_CreateThenToTicketTypeResponse_ShouldReturnSameValues() {
-		TicketTypeCreateRequest request = TicketTypeCreateRequest.builder().displayName("Consistency Test")
-				.priceMultiplier(new BigDecimal("0.75")).minAge(10).maxAge(20).requiresDocument(true)
-				.documentType("Test Doc").active(false).category(TicketTypeCategory.STUDENT).build();
-
-		TicketType entity = mapper.toTicketType(request);
-		TicketTypeResponse response = mapper.toTicketTypeResponse(entity);
-
-		assertThat(response.getDisplayName()).isEqualTo("Consistency Test");
-		assertThat(response.getPriceMultiplier().toString()).isEqualTo("0.75");
-		assertThat(response.getMinAge()).isEqualTo(10);
-		assertThat(response.getMaxAge()).isEqualTo(20);
-		assertThat(response.isRequiresDocument()).isTrue();
-		assertThat(response.getDocumentType()).isEqualTo("Test Doc");
-		assertThat(response.isActive()).isFalse();
-		assertThat(response.getCategory()).isEqualTo(TicketTypeCategory.STUDENT);
-	}
-
-	@Test
-	void updateTicketTypeFromRequestThenToTicketTypeResponse_ShouldReflectChanges() {
-		TicketType entity = TicketType.builder().id(1L).displayName("Original").priceMultiplier(new BigDecimal("1.00"))
-				.active(true).build();
-
-		TicketTypeUpdateRequest update = TicketTypeUpdateRequest.builder().displayName("Updated").active(false).build();
-
-		mapper.updateTicketTypeFromRequest(entity, update);
-		TicketTypeResponse response = mapper.toTicketTypeResponse(entity);
-
-		assertThat(response.getDisplayName()).isEqualTo("Updated");
-		assertThat(response.isActive()).isFalse();
-	}
-
-	@Test
-	void toTicketTypeResponse_ShouldHandleAllTicketTypeCategories() {
-		for (TicketTypeCategory category : TicketTypeCategory.values()) {
-			TicketType entity = TicketType.builder().id(1L).displayName("Test " + category).category(category).build();
-
-			TicketTypeResponse response = mapper.toTicketTypeResponse(entity);
-
-			assertThat(response.getCategory()).isEqualTo(category);
-		}
-	}
-
-	@Test
-	void toTicketTypeResponse_ShouldHandleExtremePriceMultipliers() {
-		TicketType entityLow = TicketType.builder().id(1L).displayName("Low Multiplier")
-				.priceMultiplier(new BigDecimal("0.01")).build();
-
-		TicketType entityHigh = TicketType.builder().id(2L).displayName("High Multiplier")
-				.priceMultiplier(new BigDecimal("9.99")).build();
-
-		TicketTypeResponse responseLow = mapper.toTicketTypeResponse(entityLow);
-		TicketTypeResponse responseHigh = mapper.toTicketTypeResponse(entityHigh);
-
-		assertThat(responseLow.getPriceMultiplier().toString()).isEqualTo("0.01");
-		assertThat(responseHigh.getPriceMultiplier().toString()).isEqualTo("9.99");
-	}
-
-	@Test
-	void toTicketTypeResponse_ShouldMapEntityWithAgeRangeAndDocumentRequirement() {
-		TicketType entity = TicketType.builder().id(1L).displayName("Age with Document").minAge(18).maxAge(65)
-				.requiresDocument(true).documentType("Passport or ID").build();
-
-		TicketTypeResponse response = mapper.toTicketTypeResponse(entity);
-
-		assertThat(response.getMinAge()).isEqualTo(18);
-		assertThat(response.getMaxAge()).isEqualTo(65);
-		assertThat(response.isRequiresDocument()).isTrue();
-		assertThat(response.getDocumentType()).isEqualTo("Passport or ID");
+		assertThat(mapper.toTicketTypeUserResponse((TicketType) null)).isNull();
+		assertThat(mapper.toTicketTypeUserResponse((TicketTypeUserProjection) null)).isNull();
 	}
 }

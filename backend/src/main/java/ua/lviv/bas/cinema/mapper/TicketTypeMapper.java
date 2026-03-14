@@ -29,5 +29,7 @@ public interface TicketTypeMapper {
 
 	TicketTypeResponse toTicketTypeResponse(TicketTypeAdminProjection projection);
 
+	TicketTypeUserResponse toTicketTypeUserResponse(TicketType entity);
+
 	TicketTypeUserResponse toTicketTypeUserResponse(TicketTypeUserProjection projection);
 }

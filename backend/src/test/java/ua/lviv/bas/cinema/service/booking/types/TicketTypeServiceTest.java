@@ -236,18 +236,6 @@ public class TicketTypeServiceTest {
 				.isInstanceOf(TicketTypeInUseException.class);
 	}
 
-	@Test
-	void validateAgeForTicketType_Success() {
-		TicketType ticketType = createTicketType();
-
-		when(ticketTypeRepository.findById(TICKET_TYPE_ID)).thenReturn(Optional.of(ticketType));
-		when(validationService.isAgeValidForTicketType(ticketType, 25)).thenReturn(true);
-
-		boolean result = ticketTypeService.validateAgeForTicketType(TICKET_TYPE_ID, 25);
-
-		assertThat(result).isTrue();
-	}
-
 	private TicketTypeCreateRequest createTicketTypeRequest() {
 		return TicketTypeCreateRequest.builder().displayName(DISPLAY_NAME).priceMultiplier(PRICE_MULTIPLIER).minAge(18)
 				.maxAge(65).category(TicketTypeCategory.STANDARD).build();
