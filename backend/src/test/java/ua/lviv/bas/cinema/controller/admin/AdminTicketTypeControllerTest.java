@@ -14,8 +14,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.math.BigDecimal;
-import java.util.Arrays;
-import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -58,34 +56,32 @@ public class AdminTicketTypeControllerTest {
 		mockMvc = MockMvcBuilders.standaloneSetup(adminTicketTypeController).setControllerAdvice(new ApiErrorHandler())
 				.build();
 
-		ticketTypeResponse = TicketTypeResponse.builder().id(1L).code("CHILD").displayName("Child Ticket")
+		ticketTypeResponse = TicketTypeResponse.builder().id(1L).displayName("Child Ticket")
 				.priceMultiplier(new BigDecimal("0.70")).minAge(0).maxAge(12).requiresDocument(true)
 				.documentType("Birth Certificate").active(true).category(TicketTypeCategory.CHILD).build();
 	}
 
 	@Test
 	void createTicketType_ShouldReturnCreated() throws Exception {
-		TicketTypeCreateRequest createRequest = TicketTypeCreateRequest.builder().code("CHILD")
-				.displayName("Child Ticket").priceMultiplier(new BigDecimal("0.70")).category(TicketTypeCategory.CHILD)
-				.build();
+		TicketTypeCreateRequest createRequest = TicketTypeCreateRequest.builder().displayName("Child Ticket")
+				.priceMultiplier(new BigDecimal("0.70")).category(TicketTypeCategory.CHILD).build();
 
 		when(ticketTypeService.createTicketType(any(TicketTypeCreateRequest.class))).thenReturn(ticketTypeResponse);
 
 		mockMvc.perform(post("/api/admin/ticket-types").contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(createRequest))).andExpect(status().isCreated())
-				.andExpect(jsonPath("$.id").value(1)).andExpect(jsonPath("$.code").value("CHILD"));
+				.andExpect(jsonPath("$.id").value(1)).andExpect(jsonPath("$.displayName").value("Child Ticket"));
 
 		verify(ticketTypeService).createTicketType(any(TicketTypeCreateRequest.class));
 	}
 
 	@Test
 	void createTicketType_ShouldReturnConflictWhenDuplicate() throws Exception {
-		TicketTypeCreateRequest createRequest = TicketTypeCreateRequest.builder().code("EXISTING")
-				.displayName("Existing Ticket").priceMultiplier(new BigDecimal("1.00"))
-				.category(TicketTypeCategory.STANDARD).build();
+		TicketTypeCreateRequest createRequest = TicketTypeCreateRequest.builder().displayName("Existing Ticket")
+				.priceMultiplier(new BigDecimal("1.00")).category(TicketTypeCategory.STANDARD).build();
 
 		when(ticketTypeService.createTicketType(any(TicketTypeCreateRequest.class)))
-				.thenThrow(new TicketTypeDuplicateException("EXISTING"));
+				.thenThrow(new TicketTypeDuplicateException("Existing Ticket"));
 
 		mockMvc.perform(post("/api/admin/ticket-types").contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(createRequest))).andExpect(status().isConflict());
@@ -94,40 +90,11 @@ public class AdminTicketTypeControllerTest {
 	}
 
 	@Test
-	void getTicketTypes_ShouldReturnAll() throws Exception {
-		TicketTypeResponse adultResponse = TicketTypeResponse.builder().id(2L).code("STANDARD")
-				.displayName("Standard Ticket").priceMultiplier(new BigDecimal("1.00")).active(true)
-				.category(TicketTypeCategory.STANDARD).build();
-
-		List<TicketTypeResponse> responses = Arrays.asList(ticketTypeResponse, adultResponse);
-
-		when(ticketTypeService.getTicketTypes(null, null, null)).thenReturn(responses);
-
-		mockMvc.perform(get("/api/admin/ticket-types")).andExpect(status().isOk())
-				.andExpect(jsonPath("$.length()").value(2)).andExpect(jsonPath("$[0].code").value("CHILD"))
-				.andExpect(jsonPath("$[1].code").value("STANDARD"));
-
-		verify(ticketTypeService).getTicketTypes(null, null, null);
-	}
-
-	@Test
-	void getTicketTypes_ShouldReturnWithFilters() throws Exception {
-		List<TicketTypeResponse> activeResponses = Arrays.asList(ticketTypeResponse);
-
-		when(ticketTypeService.getTicketTypes(true, TicketTypeCategory.CHILD, "CHILD")).thenReturn(activeResponses);
-
-		mockMvc.perform(get("/api/admin/ticket-types").param("active", "true").param("category", "CHILD")
-				.param("search", "CHILD")).andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(1));
-
-		verify(ticketTypeService).getTicketTypes(true, TicketTypeCategory.CHILD, "CHILD");
-	}
-
-	@Test
 	void getTicketTypeById_ShouldReturnTicketType() throws Exception {
 		when(ticketTypeService.getTicketTypeById(1L)).thenReturn(ticketTypeResponse);
 
 		mockMvc.perform(get("/api/admin/ticket-types/1")).andExpect(status().isOk())
-				.andExpect(jsonPath("$.id").value(1)).andExpect(jsonPath("$.code").value("CHILD"));
+				.andExpect(jsonPath("$.id").value(1)).andExpect(jsonPath("$.displayName").value("Child Ticket"));
 
 		verify(ticketTypeService).getTicketTypeById(1L);
 	}
@@ -142,32 +109,12 @@ public class AdminTicketTypeControllerTest {
 	}
 
 	@Test
-	void getTicketTypeByCode_ShouldReturnTicketType() throws Exception {
-		when(ticketTypeService.getTicketTypeByCode("CHILD")).thenReturn(ticketTypeResponse);
-
-		mockMvc.perform(get("/api/admin/ticket-types/code/CHILD")).andExpect(status().isOk())
-				.andExpect(jsonPath("$.code").value("CHILD"));
-
-		verify(ticketTypeService).getTicketTypeByCode("CHILD");
-	}
-
-	@Test
-	void getTicketTypeByCode_ShouldReturnNotFound() throws Exception {
-		when(ticketTypeService.getTicketTypeByCode("INVALID")).thenThrow(new TicketTypeNotFoundException("INVALID"));
-
-		mockMvc.perform(get("/api/admin/ticket-types/code/INVALID")).andExpect(status().isNotFound());
-
-		verify(ticketTypeService).getTicketTypeByCode("INVALID");
-	}
-
-	@Test
 	void updateTicketType_ShouldReturnOk() throws Exception {
 		TicketTypeUpdateRequest updateRequest = TicketTypeUpdateRequest.builder().displayName("Updated Child Ticket")
 				.build();
 
-		TicketTypeResponse updatedResponse = TicketTypeResponse.builder().id(1L).code("CHILD")
-				.displayName("Updated Child Ticket").priceMultiplier(new BigDecimal("0.70")).active(true)
-				.category(TicketTypeCategory.CHILD).build();
+		TicketTypeResponse updatedResponse = TicketTypeResponse.builder().id(1L).displayName("Updated Child Ticket")
+				.priceMultiplier(new BigDecimal("0.70")).active(true).category(TicketTypeCategory.CHILD).build();
 
 		when(ticketTypeService.updateTicketType(eq(1L), any(TicketTypeUpdateRequest.class)))
 				.thenReturn(updatedResponse);
@@ -210,7 +157,7 @@ public class AdminTicketTypeControllerTest {
 
 	@Test
 	void deleteTicketType_ShouldReturnConflictWhenInUse() throws Exception {
-		doThrow(new TicketTypeInUseException(1L)).when(ticketTypeService).deleteTicketType(1L);
+		doThrow(new TicketTypeInUseException(1L, "In use")).when(ticketTypeService).deleteTicketType(1L);
 
 		mockMvc.perform(delete("/api/admin/ticket-types/1")).andExpect(status().isConflict());
 
@@ -219,9 +166,8 @@ public class AdminTicketTypeControllerTest {
 
 	@Test
 	void toggleTicketTypeActive_ShouldReturnOk() throws Exception {
-		TicketTypeResponse toggledResponse = TicketTypeResponse.builder().id(1L).code("CHILD")
-				.displayName("Child Ticket").priceMultiplier(new BigDecimal("0.70")).active(false)
-				.category(TicketTypeCategory.CHILD).build();
+		TicketTypeResponse toggledResponse = TicketTypeResponse.builder().id(1L).displayName("Child Ticket")
+				.priceMultiplier(new BigDecimal("0.70")).active(false).category(TicketTypeCategory.CHILD).build();
 
 		when(ticketTypeService.toggleTicketTypeActiveStatus(1L)).thenReturn(toggledResponse);
 

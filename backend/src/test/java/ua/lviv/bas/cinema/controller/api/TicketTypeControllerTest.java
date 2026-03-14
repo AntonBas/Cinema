@@ -17,7 +17,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import ua.lviv.bas.cinema.dto.ticket.response.TicketTypeSimpleResponse;
+import ua.lviv.bas.cinema.dto.ticket.response.TicketTypeUserResponse;
 import ua.lviv.bas.cinema.service.booking.types.TicketTypeService;
 
 @ExtendWith(MockitoExtension.class)
@@ -29,40 +29,56 @@ public class TicketTypeControllerTest {
 	@InjectMocks
 	private TicketTypeController ticketTypeController;
 
-	private TicketTypeSimpleResponse createTicketTypeSimpleResponse(Long id, String code, String displayName,
-			boolean active) {
-		return TicketTypeSimpleResponse.builder().id(id).code(code).displayName(displayName)
-				.priceMultiplier(new BigDecimal("0.70")).active(active).build();
+	private TicketTypeUserResponse createTicketTypeUserResponse(Long id, String displayName, BigDecimal priceMultiplier,
+			boolean requiresDocument, String documentType) {
+		return TicketTypeUserResponse.builder().id(id).displayName(displayName).priceMultiplier(priceMultiplier)
+				.requiresDocument(requiresDocument).documentType(documentType).build();
 	}
 
 	@Test
 	void getDropdownTypes_ShouldReturnActiveTicketTypes() {
-		TicketTypeSimpleResponse simple1 = createTicketTypeSimpleResponse(1L, "CHILD", "Child Ticket", true);
-		TicketTypeSimpleResponse simple2 = createTicketTypeSimpleResponse(2L, "ADULT", "Adult Ticket", true);
-		List<TicketTypeSimpleResponse> simpleResponses = Arrays.asList(simple1, simple2);
+		TicketTypeUserResponse response1 = createTicketTypeUserResponse(1L, "Child Ticket", new BigDecimal("0.70"),
+				true, "Birth Certificate");
+		TicketTypeUserResponse response2 = createTicketTypeUserResponse(2L, "Adult Ticket", new BigDecimal("1.00"),
+				false, null);
+		List<TicketTypeUserResponse> responses = Arrays.asList(response1, response2);
 
-		when(ticketTypeService.getActiveTicketTypesForDropdown()).thenReturn(simpleResponses);
+		when(ticketTypeService.getActiveTicketTypesForUser()).thenReturn(responses);
 
-		ResponseEntity<List<TicketTypeSimpleResponse>> response = ticketTypeController.getDropdownTypes();
+		ResponseEntity<List<TicketTypeUserResponse>> response = ticketTypeController.getDropdownTypes();
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
 		assertNotNull(response.getBody());
 		assertEquals(2, response.getBody().size());
-		assertEquals("CHILD", response.getBody().get(0).getCode());
-		verify(ticketTypeService).getActiveTicketTypesForDropdown();
+
+		TicketTypeUserResponse first = response.getBody().get(0);
+		assertEquals(1L, first.getId());
+		assertEquals("Child Ticket", first.getDisplayName());
+		assertEquals(new BigDecimal("0.70"), first.getPriceMultiplier());
+		assertEquals(true, first.isRequiresDocument());
+		assertEquals("Birth Certificate", first.getDocumentType());
+
+		TicketTypeUserResponse second = response.getBody().get(1);
+		assertEquals(2L, second.getId());
+		assertEquals("Adult Ticket", second.getDisplayName());
+		assertEquals(new BigDecimal("1.00"), second.getPriceMultiplier());
+		assertEquals(false, second.isRequiresDocument());
+		assertEquals(null, second.getDocumentType());
+
+		verify(ticketTypeService).getActiveTicketTypesForUser();
 	}
 
 	@Test
 	void getDropdownTypes_ShouldReturnEmptyList() {
-		List<TicketTypeSimpleResponse> emptyList = Arrays.asList();
+		List<TicketTypeUserResponse> emptyList = Arrays.asList();
 
-		when(ticketTypeService.getActiveTicketTypesForDropdown()).thenReturn(emptyList);
+		when(ticketTypeService.getActiveTicketTypesForUser()).thenReturn(emptyList);
 
-		ResponseEntity<List<TicketTypeSimpleResponse>> response = ticketTypeController.getDropdownTypes();
+		ResponseEntity<List<TicketTypeUserResponse>> response = ticketTypeController.getDropdownTypes();
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
 		assertNotNull(response.getBody());
 		assertEquals(0, response.getBody().size());
-		verify(ticketTypeService).getActiveTicketTypesForDropdown();
+		verify(ticketTypeService).getActiveTicketTypesForUser();
 	}
 }

@@ -18,13 +18,16 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import ua.lviv.bas.cinema.domain.TicketType;
 import ua.lviv.bas.cinema.domain.enums.TicketTypeCategory;
+import ua.lviv.bas.cinema.domain.projection.TicketTypeUserProjection;
 import ua.lviv.bas.cinema.dto.ticket.request.TicketTypeCreateRequest;
 import ua.lviv.bas.cinema.dto.ticket.request.TicketTypeUpdateRequest;
 import ua.lviv.bas.cinema.dto.ticket.response.TicketTypeResponse;
-import ua.lviv.bas.cinema.dto.ticket.response.TicketTypeSimpleResponse;
+import ua.lviv.bas.cinema.dto.ticket.response.TicketTypeUserResponse;
 import ua.lviv.bas.cinema.exception.domain.tickettype.TicketTypeDuplicateException;
 import ua.lviv.bas.cinema.exception.domain.tickettype.TicketTypeInUseException;
 import ua.lviv.bas.cinema.exception.domain.tickettype.TicketTypeNotFoundException;
@@ -51,7 +54,7 @@ public class TicketTypeServiceTest {
 	private TicketTypeService ticketTypeService;
 
 	private final Long TICKET_TYPE_ID = 1L;
-	private final String TICKET_TYPE_CODE = "ADULT";
+	private final String DISPLAY_NAME = "Adult Ticket";
 	private final BigDecimal PRICE_MULTIPLIER = new BigDecimal("1.0");
 
 	@Test
@@ -60,7 +63,7 @@ public class TicketTypeServiceTest {
 		TicketType ticketType = createTicketType();
 		TicketTypeResponse response = createTicketTypeResponse();
 
-		when(ticketTypeRepository.existsByCode(TICKET_TYPE_CODE)).thenReturn(false);
+		when(ticketTypeRepository.existsByDisplayName(DISPLAY_NAME)).thenReturn(false);
 		when(ticketTypeMapper.toTicketType(request)).thenReturn(ticketType);
 		when(ticketTypeRepository.save(ticketType)).thenReturn(ticketType);
 		when(ticketTypeMapper.toTicketTypeResponse(ticketType)).thenReturn(response);
@@ -73,10 +76,10 @@ public class TicketTypeServiceTest {
 	}
 
 	@Test
-	void createTicketType_DuplicateCode_ThrowsException() {
+	void createTicketType_DuplicateDisplayName_ThrowsException() {
 		TicketTypeCreateRequest request = createTicketTypeRequest();
 
-		when(ticketTypeRepository.existsByCode(TICKET_TYPE_CODE)).thenReturn(true);
+		when(ticketTypeRepository.existsByDisplayName(DISPLAY_NAME)).thenReturn(true);
 
 		assertThatThrownBy(() -> ticketTypeService.createTicketType(request))
 				.isInstanceOf(TicketTypeDuplicateException.class);
@@ -104,28 +107,26 @@ public class TicketTypeServiceTest {
 	}
 
 	@Test
-	void getTicketTypeByCode_Success() {
-		TicketType ticketType = createTicketType();
-		TicketTypeResponse response = createTicketTypeResponse();
+	void getTicketTypesForAdmin_Success() {
+		Pageable pageable = Pageable.ofSize(10);
 
-		when(ticketTypeRepository.findByCode(TICKET_TYPE_CODE)).thenReturn(Optional.of(ticketType));
-		when(ticketTypeMapper.toTicketTypeResponse(ticketType)).thenReturn(response);
+		when(ticketTypeRepository.findAdminProjections(true, TicketTypeCategory.STANDARD, "search", pageable))
+				.thenReturn(Page.empty());
 
-		TicketTypeResponse result = ticketTypeService.getTicketTypeByCode(TICKET_TYPE_CODE);
+		var result = ticketTypeService.getTicketTypesForAdmin(true, TicketTypeCategory.STANDARD, "search", pageable);
 
-		assertThat(result).isEqualTo(response);
+		assertThat(result).isNotNull();
 	}
 
 	@Test
-	void getTicketTypes_WithFilters_Success() {
-		TicketType ticketType = createTicketType();
-		TicketTypeResponse response = createTicketTypeResponse();
+	void getActiveTicketTypesForUser_Success() {
+		TicketTypeUserProjection projection = createUserProjection();
+		TicketTypeUserResponse response = createTicketTypeUserResponse();
 
-		when(ticketTypeRepository.findByFilters(true, TicketTypeCategory.STANDARD, "search"))
-				.thenReturn(List.of(ticketType));
-		when(ticketTypeMapper.toTicketTypeResponse(ticketType)).thenReturn(response);
+		when(ticketTypeRepository.findUserProjections()).thenReturn(List.of(projection));
+		when(ticketTypeMapper.toTicketTypeUserResponse(projection)).thenReturn(response);
 
-		List<TicketTypeResponse> result = ticketTypeService.getTicketTypes(true, TicketTypeCategory.STANDARD, "search");
+		List<TicketTypeUserResponse> result = ticketTypeService.getActiveTicketTypesForUser();
 
 		assertThat(result).hasSize(1);
 		assertThat(result.get(0)).isEqualTo(response);
@@ -147,6 +148,18 @@ public class TicketTypeServiceTest {
 		assertThat(result).isEqualTo(response);
 		verify(validationService).validateAgeRange(21, 70);
 		verify(ticketTypeMapper).updateTicketTypeFromRequest(ticketType, request);
+	}
+
+	@Test
+	void updateTicketType_DuplicateDisplayName_ThrowsException() {
+		TicketType ticketType = createTicketType();
+		TicketTypeUpdateRequest request = TicketTypeUpdateRequest.builder().displayName("Duplicate Name").build();
+
+		when(ticketTypeRepository.findById(TICKET_TYPE_ID)).thenReturn(Optional.of(ticketType));
+		when(ticketTypeRepository.existsByDisplayNameAndIdNot("Duplicate Name", TICKET_TYPE_ID)).thenReturn(true);
+
+		assertThatThrownBy(() -> ticketTypeService.updateTicketType(TICKET_TYPE_ID, request))
+				.isInstanceOf(TicketTypeDuplicateException.class);
 	}
 
 	@Test
@@ -224,19 +237,6 @@ public class TicketTypeServiceTest {
 	}
 
 	@Test
-	void getActiveTicketTypesForDropdown_Success() {
-		TicketType ticketType = createTicketType();
-		TicketTypeSimpleResponse simpleResponse = TicketTypeSimpleResponse.builder().build();
-
-		when(ticketTypeRepository.findByActiveTrue()).thenReturn(List.of(ticketType));
-		when(ticketTypeMapper.toTicketTypeSimpleResponse(ticketType)).thenReturn(simpleResponse);
-
-		List<TicketTypeSimpleResponse> result = ticketTypeService.getActiveTicketTypesForDropdown();
-
-		assertThat(result).hasSize(1);
-	}
-
-	@Test
 	void validateAgeForTicketType_Success() {
 		TicketType ticketType = createTicketType();
 
@@ -249,18 +249,51 @@ public class TicketTypeServiceTest {
 	}
 
 	private TicketTypeCreateRequest createTicketTypeRequest() {
-		return TicketTypeCreateRequest.builder().code(TICKET_TYPE_CODE).displayName("Adult")
-				.priceMultiplier(PRICE_MULTIPLIER).minAge(18).maxAge(65).category(TicketTypeCategory.STANDARD).build();
+		return TicketTypeCreateRequest.builder().displayName(DISPLAY_NAME).priceMultiplier(PRICE_MULTIPLIER).minAge(18)
+				.maxAge(65).category(TicketTypeCategory.STANDARD).build();
 	}
 
 	private TicketType createTicketType() {
-		return TicketType.builder().id(TICKET_TYPE_ID).code(TICKET_TYPE_CODE).displayName("Adult")
-				.priceMultiplier(PRICE_MULTIPLIER).minAge(18).maxAge(65).category(TicketTypeCategory.STANDARD)
-				.active(true).build();
+		return TicketType.builder().id(TICKET_TYPE_ID).displayName(DISPLAY_NAME).priceMultiplier(PRICE_MULTIPLIER)
+				.minAge(18).maxAge(65).category(TicketTypeCategory.STANDARD).active(true).build();
 	}
 
 	private TicketTypeResponse createTicketTypeResponse() {
-		return TicketTypeResponse.builder().id(TICKET_TYPE_ID).code(TICKET_TYPE_CODE).displayName("Adult")
+		return TicketTypeResponse.builder().id(TICKET_TYPE_ID).displayName(DISPLAY_NAME)
 				.priceMultiplier(PRICE_MULTIPLIER).active(true).build();
+	}
+
+	private TicketTypeUserResponse createTicketTypeUserResponse() {
+		return TicketTypeUserResponse.builder().id(TICKET_TYPE_ID).displayName(DISPLAY_NAME)
+				.priceMultiplier(PRICE_MULTIPLIER).requiresDocument(false).build();
+	}
+
+	private TicketTypeUserProjection createUserProjection() {
+		return new TicketTypeUserProjection() {
+			@Override
+			public Long getId() {
+				return TICKET_TYPE_ID;
+			}
+
+			@Override
+			public String getDisplayName() {
+				return DISPLAY_NAME;
+			}
+
+			@Override
+			public BigDecimal getPriceMultiplier() {
+				return PRICE_MULTIPLIER;
+			}
+
+			@Override
+			public boolean isRequiresDocument() {
+				return false;
+			}
+
+			@Override
+			public String getDocumentType() {
+				return null;
+			}
+		};
 	}
 }

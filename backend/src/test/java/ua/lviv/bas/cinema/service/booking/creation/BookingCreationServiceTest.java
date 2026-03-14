@@ -148,9 +148,9 @@ public class BookingCreationServiceTest {
 
 		testSeat2 = Seat.builder().id(SEAT_ID_2).row(1).number(2).seatType(SeatType.VIP).active(true).build();
 
-		adultTicketType = TicketType.builder().id(TICKET_TYPE_ADULT_ID).displayName("Adult").code("ADULT").build();
+		adultTicketType = TicketType.builder().id(TICKET_TYPE_ADULT_ID).displayName("Adult").build();
 
-		childTicketType = TicketType.builder().id(TICKET_TYPE_CHILD_ID).displayName("Child").code("CHILD").build();
+		childTicketType = TicketType.builder().id(TICKET_TYPE_CHILD_ID).displayName("Child").build();
 
 		SeatSelectionRequest seatSelection1 = new SeatSelectionRequest();
 		seatSelection1.setSeatId(SEAT_ID_1);
