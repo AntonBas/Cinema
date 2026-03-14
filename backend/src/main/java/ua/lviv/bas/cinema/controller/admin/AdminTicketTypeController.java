@@ -1,6 +1,5 @@
 package ua.lviv.bas.cinema.controller.admin;
 
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
@@ -27,6 +26,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.enums.TicketTypeCategory;
+import ua.lviv.bas.cinema.dto.common.PageResponse;
 import ua.lviv.bas.cinema.dto.ticket.request.TicketTypeCreateRequest;
 import ua.lviv.bas.cinema.dto.ticket.request.TicketTypeUpdateRequest;
 import ua.lviv.bas.cinema.dto.ticket.response.TicketTypeResponse;
@@ -58,7 +58,7 @@ public class AdminTicketTypeController {
 	@Operation(summary = "Get all ticket types with pagination and filters")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Ticket types retrieved successfully") })
 	@PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
-	public ResponseEntity<Page<TicketTypeResponse>> getTicketTypes(
+	public ResponseEntity<PageResponse<TicketTypeResponse>> getTicketTypes(
 			@Parameter(description = "Filter by active status") @RequestParam(required = false) Boolean active,
 			@Parameter(description = "Filter by category") @RequestParam(required = false) TicketTypeCategory category,
 			@Parameter(description = "Search by display name") @RequestParam(required = false) String search,

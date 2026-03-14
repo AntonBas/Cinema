@@ -4,6 +4,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -16,6 +20,7 @@ import ua.lviv.bas.cinema.domain.enums.TicketStatus;
 import ua.lviv.bas.cinema.domain.enums.TicketTypeCategory;
 import ua.lviv.bas.cinema.domain.projection.TicketTypeAdminProjection;
 import ua.lviv.bas.cinema.domain.projection.TicketTypeUserProjection;
+import ua.lviv.bas.cinema.dto.common.PageResponse;
 import ua.lviv.bas.cinema.dto.ticket.request.TicketTypeCreateRequest;
 import ua.lviv.bas.cinema.dto.ticket.request.TicketTypeUpdateRequest;
 import ua.lviv.bas.cinema.dto.ticket.response.TicketTypeResponse;
@@ -31,6 +36,7 @@ import ua.lviv.bas.cinema.repository.TicketTypeRepository;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
+@CacheConfig(cacheNames = "ticket-types")
 public class TicketTypeService {
 
 	private final TicketTypeRepository ticketTypeRepository;
@@ -38,8 +44,11 @@ public class TicketTypeService {
 	private final TicketTypeMapper ticketTypeMapper;
 	private final TicketTypeValidationService validationService;
 
+	@CacheEvict(allEntries = true)
 	@Transactional
 	public TicketTypeResponse createTicketType(TicketTypeCreateRequest request) {
+		log.info("Creating ticket type: {}", request.getDisplayName());
+
 		validationService.validateAgeRange(request.getMinAge(), request.getMaxAge());
 
 		if (ticketTypeRepository.existsByDisplayName(request.getDisplayName())) {
@@ -47,27 +56,43 @@ public class TicketTypeService {
 		}
 
 		TicketType ticketType = ticketTypeMapper.toTicketType(request);
-		return ticketTypeMapper.toTicketTypeResponse(ticketTypeRepository.save(ticketType));
+		TicketType saved = ticketTypeRepository.save(ticketType);
+
+		log.debug("Ticket type created with ID: {}", saved.getId());
+		return ticketTypeMapper.toTicketTypeResponse(saved);
 	}
 
+	@Cacheable(key = "#id")
 	public TicketTypeResponse getTicketTypeById(Long id) {
+		log.debug("Retrieving ticket type by id: {}", id);
 		return ticketTypeMapper.toTicketTypeResponse(findTicketTypeById(id));
 	}
 
-	public Page<TicketTypeResponse> getTicketTypesForAdmin(Boolean active, TicketTypeCategory category, String search,
-			Pageable pageable) {
+	@Cacheable(key = "'admin-' + #active + '-' + #category + '-' + #search + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
+	public PageResponse<TicketTypeResponse> getTicketTypesForAdmin(Boolean active, TicketTypeCategory category,
+			String search, Pageable pageable) {
+		log.info("Getting ticket types for admin with filters - active: {}, category: {}, search: {}", active, category,
+				search);
+
 		Page<TicketTypeAdminProjection> projections = ticketTypeRepository.findAdminProjections(active, category,
 				search, pageable);
-		return projections.map(ticketTypeMapper::toTicketTypeResponse);
+		Page<TicketTypeResponse> responsePage = projections.map(ticketTypeMapper::toTicketTypeResponse);
+		return PageResponse.from(responsePage);
 	}
 
+	@Cacheable(key = "'user-active'")
 	public List<TicketTypeUserResponse> getActiveTicketTypesForUser() {
+		log.debug("Getting active ticket types for user");
+
 		List<TicketTypeUserProjection> projections = ticketTypeRepository.findUserProjections();
 		return projections.stream().map(ticketTypeMapper::toTicketTypeUserResponse).collect(Collectors.toList());
 	}
 
+	@Caching(evict = { @CacheEvict(key = "#id"), @CacheEvict(key = "'user-active'"), @CacheEvict(allEntries = true) })
 	@Transactional
 	public TicketTypeResponse updateTicketType(Long id, TicketTypeUpdateRequest request) {
+		log.info("Updating ticket type with id: {}", id);
+
 		TicketType ticketType = findTicketTypeById(id);
 
 		if (request.getDisplayName() != null && !request.getDisplayName().equals(ticketType.getDisplayName())
@@ -82,11 +107,17 @@ public class TicketTypeService {
 		}
 
 		ticketTypeMapper.updateTicketTypeFromRequest(ticketType, request);
-		return ticketTypeMapper.toTicketTypeResponse(ticketTypeRepository.save(ticketType));
+		TicketType updated = ticketTypeRepository.save(ticketType);
+
+		log.debug("Ticket type updated with ID: {}", updated.getId());
+		return ticketTypeMapper.toTicketTypeResponse(updated);
 	}
 
+	@Caching(evict = { @CacheEvict(key = "#id"), @CacheEvict(key = "'user-active'"), @CacheEvict(allEntries = true) })
 	@Transactional
 	public void deleteTicketType(Long id) {
+		log.info("Deleting ticket type with id: {}", id);
+
 		TicketType ticketType = findTicketTypeById(id);
 
 		if (hasFutureTickets(id)) {
@@ -95,10 +126,14 @@ public class TicketTypeService {
 		}
 
 		ticketTypeRepository.delete(ticketType);
+		log.debug("Ticket type deleted with ID: {}", id);
 	}
 
+	@Caching(evict = { @CacheEvict(key = "#id"), @CacheEvict(key = "'user-active'"), @CacheEvict(allEntries = true) })
 	@Transactional
 	public TicketTypeResponse toggleTicketTypeActiveStatus(Long id) {
+		log.info("Toggling active status for ticket type with id: {}", id);
+
 		TicketType ticketType = findTicketTypeById(id);
 
 		if (ticketType.isActive() && hasFutureTickets(id)) {
@@ -107,7 +142,10 @@ public class TicketTypeService {
 		}
 
 		ticketType.setActive(!ticketType.isActive());
-		return ticketTypeMapper.toTicketTypeResponse(ticketTypeRepository.save(ticketType));
+		TicketType updated = ticketTypeRepository.save(ticketType);
+
+		log.debug("Ticket type status toggled to: {} for ID: {}", updated.isActive(), id);
+		return ticketTypeMapper.toTicketTypeResponse(updated);
 	}
 
 	private TicketType findTicketTypeById(Long id) {
