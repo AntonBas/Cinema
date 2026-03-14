@@ -1,7 +1,6 @@
 export type TicketTypeCategory = 'STANDARD' | 'CHILD' | 'STUDENT' | 'DISABLED' | 'MILITARY' | 'SENIOR' | 'SPECIAL';
 
 export interface TicketTypeCreateRequest {
-    code: string;
     displayName: string;
     priceMultiplier: string;
     minAge?: number;
@@ -25,7 +24,6 @@ export interface TicketTypeUpdateRequest {
 
 export interface TicketTypeResponse {
     id: number;
-    code: string;
     displayName: string;
     priceMultiplier: string;
     minAge?: number;
@@ -34,16 +32,14 @@ export interface TicketTypeResponse {
     documentType?: string;
     active: boolean;
     category?: TicketTypeCategory;
-    createdAt: string;
-    updatedAt: string;
 }
 
-export interface TicketTypeSimpleResponse {
+export interface TicketTypeUserResponse {
     id: number;
-    code: string;
     displayName: string;
     priceMultiplier: string;
-    active: boolean;
+    requiresDocument: boolean;
+    documentType?: string;
 }
 
 export const TicketTypeCategoryDisplay: Record<TicketTypeCategory, string> = {

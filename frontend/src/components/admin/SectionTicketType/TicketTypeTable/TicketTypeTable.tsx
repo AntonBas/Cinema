@@ -10,8 +10,8 @@ import styles from './TicketTypeTable.module.css';
 interface TicketTypeTableProps {
     ticketTypes: TicketTypeResponse[];
     onEdit: (ticketType: TicketTypeResponse) => void;
-    onDelete: (id: number) => Promise<void>;
-    onToggleActive: (id: number) => Promise<void>;
+    onDelete: (id: number, displayName: string) => Promise<void>;
+    onToggleActive: (id: number, displayName: string) => Promise<void>;
 }
 
 const TicketTypeTable: React.FC<TicketTypeTableProps> = ({
@@ -38,7 +38,7 @@ const TicketTypeTable: React.FC<TicketTypeTableProps> = ({
         setIsDeleting(true);
         setErrorMessage(null);
         try {
-            await onDelete(selectedTicketType.id);
+            await onDelete(selectedTicketType.id, selectedTicketType.displayName);
             setDeleteModalOpen(false);
             setSelectedTicketType(null);
         } catch (error) {
@@ -48,11 +48,11 @@ const TicketTypeTable: React.FC<TicketTypeTableProps> = ({
         }
     };
 
-    const handleToggleActive = async (id: number) => {
+    const handleToggleActive = async (id: number, displayName: string) => {
         setToggleLoading(id);
         setErrorMessage(null);
         try {
-            await onToggleActive(id);
+            await onToggleActive(id, displayName);
         } catch (error) {
             setErrorMessage(error instanceof Error ? error.message : 'Failed to toggle status');
         } finally {
@@ -149,7 +149,7 @@ const TicketTypeTable: React.FC<TicketTypeTableProps> = ({
                                             <button
                                                 className={`${styles.toggleButton} ${ticketType.active ? styles.activeToggle : styles.inactiveToggle
                                                     }`}
-                                                onClick={() => handleToggleActive(ticketType.id)}
+                                                onClick={() => handleToggleActive(ticketType.id, ticketType.displayName)}
                                                 disabled={toggleLoading === ticketType.id}
                                             >
                                                 {toggleLoading === ticketType.id ? 'Updating...' :

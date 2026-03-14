@@ -12,8 +12,6 @@ interface TicketTypeFiltersProps {
     onStatusChange: (filter: 'all' | 'active' | 'inactive') => void;
     categoryFilter: TicketTypeCategory | 'all';
     onCategoryChange: (category: TicketTypeCategory | 'all') => void;
-    activeCount?: number;
-    inactiveCount?: number;
 }
 
 const TicketTypeFilters: React.FC<TicketTypeFiltersProps> = ({
