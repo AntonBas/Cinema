@@ -25,7 +25,6 @@ public interface PromotionRepository extends JpaRepository<Promotion, Long> {
 			        p.startDate as startDate,
 			        p.endDate as endDate
 			    FROM Promotion p
-			    ORDER BY p.createdAt DESC
 			""")
 	Page<PromotionAdminProjection> findAllAdminList(Pageable pageable);
 
