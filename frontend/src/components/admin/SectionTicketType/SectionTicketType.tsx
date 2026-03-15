@@ -1,8 +1,10 @@
-import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTicketType } from '@/hooks/features/ticketType/useTicketType';
 import { useNotification } from '@/hooks/common/useNotification';
 import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
+import { usePagination } from '@/hooks/common/usePagination';
 import { Button } from '@/components/ui/Button/Button';
+import { Pagination } from '@/components/ui/Pagination/Pagination';
 import { Notification } from '@/components/ui/Notification/Notification';
 import TicketTypeTable from './TicketTypeTable/TicketTypeTable';
 import TicketTypeFilters from './TicketTypeFilters/TicketTypeFilters';
@@ -17,12 +19,10 @@ const SectionTicketType = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
     const [categoryFilter, setCategoryFilter] = useState<TicketTypeCategory | 'all'>('all');
-    const [page, setPage] = useState(0);
-    const [rowsPerPage] = useState(10);
+
+    const { params, setPage } = usePagination({ size: 10 });
 
     const isInitialMount = useRef(true);
-    const isLoadingRef = useRef(false);
-    const prevParamsRef = useRef({ statusFilter, categoryFilter, searchQuery, page });
 
     const {
         ticketTypes,
@@ -35,42 +35,25 @@ const SectionTicketType = () => {
     const { notifications, showNotification, hideNotification } = useNotification();
     const showDelayedLoading = useDelayedLoading(loading, { delay: 150, minDisplayTime: 300 });
 
-    const loadTicketTypes = useCallback(async (
-        params: {
-            status: 'all' | 'active' | 'inactive';
-            category: TicketTypeCategory | 'all';
-            search: string;
-            page: number;
-        },
-        skipCache = true
-    ) => {
-        if (isLoadingRef.current) {
-            return;
-        }
+    const currentPage = params.page ?? 0;
+    const pageSize = params.size ?? 10;
 
-        isLoadingRef.current = true;
+    const loadTicketTypes = useCallback(async (skipCache = true) => {
         try {
             await getAll({
-                active: params.status === 'all' ? undefined : params.status === 'active',
-                category: params.category === 'all' ? undefined : params.category,
-                search: params.search.trim() || undefined,
-                page: params.page,
-                size: rowsPerPage
+                page: currentPage,
+                size: pageSize,
+                active: statusFilter === 'all' ? undefined : statusFilter === 'active',
+                category: categoryFilter === 'all' ? undefined : categoryFilter,
+                search: searchQuery.trim() || undefined
             }, skipCache);
         } catch (error) {
             showNotification('Failed to load ticket types', 'error');
-        } finally {
-            isLoadingRef.current = false;
         }
-    }, [getAll, rowsPerPage, showNotification]);
+    }, [getAll, currentPage, pageSize, statusFilter, categoryFilter, searchQuery, showNotification]);
 
     useEffect(() => {
-        loadTicketTypes({
-            status: statusFilter,
-            category: categoryFilter,
-            search: searchQuery,
-            page
-        }, false);
+        loadTicketTypes(false);
     }, []);
 
     useEffect(() => {
@@ -79,120 +62,69 @@ const SectionTicketType = () => {
             return;
         }
 
-        const currentParams = { statusFilter, categoryFilter, searchQuery, page };
-        const prevParams = prevParamsRef.current;
-
-        const paramsChanged =
-            prevParams.statusFilter !== currentParams.statusFilter ||
-            prevParams.categoryFilter !== currentParams.categoryFilter ||
-            prevParams.searchQuery !== currentParams.searchQuery ||
-            prevParams.page !== currentParams.page;
-
-        if (!paramsChanged) {
-            return;
-        }
-
-        prevParamsRef.current = currentParams;
-
         const timer = setTimeout(() => {
-            loadTicketTypes({
-                status: statusFilter,
-                category: categoryFilter,
-                search: searchQuery,
-                page
-            }, true);
+            loadTicketTypes(true);
         }, 100);
 
         return () => clearTimeout(timer);
-    }, [statusFilter, categoryFilter, searchQuery, page, loadTicketTypes]);
+    }, [currentPage, statusFilter, categoryFilter, searchQuery]);
 
-    const ticketTypeList = useMemo(() => {
-        return ticketTypes?.content || [];
-    }, [ticketTypes]);
+    const handlePageChange = useCallback((newPage: number) => {
+        setPage(newPage);
+    }, [setPage]);
 
-    const handleCreateSuccess = useCallback(async (newTicketType?: TicketTypeResponse) => {
+    const handleCreateSuccess = useCallback((newTicketType?: TicketTypeResponse) => {
         setShowCreateModal(false);
         if (newTicketType) {
             showNotification(`Ticket type "${newTicketType.displayName}" created successfully!`, 'success');
         } else {
             showNotification('Ticket type created successfully!', 'success');
         }
-        await loadTicketTypes({
-            status: statusFilter,
-            category: categoryFilter,
-            search: searchQuery,
-            page
-        }, true);
-    }, [loadTicketTypes, showNotification, statusFilter, categoryFilter, searchQuery, page]);
+        setPage(0);
+        loadTicketTypes(true);
+    }, [loadTicketTypes, showNotification, setPage]);
 
-    const handleEditSuccess = useCallback(async (updatedTicketType?: TicketTypeResponse) => {
+    const handleEditSuccess = useCallback((updatedTicketType?: TicketTypeResponse) => {
         setEditingTicketType(null);
         if (updatedTicketType) {
             showNotification(`Ticket type "${updatedTicketType.displayName}" updated successfully!`, 'success');
         } else {
             showNotification('Ticket type updated successfully!', 'success');
         }
-        await loadTicketTypes({
-            status: statusFilter,
-            category: categoryFilter,
-            search: searchQuery,
-            page
-        }, true);
-    }, [loadTicketTypes, showNotification, statusFilter, categoryFilter, searchQuery, page]);
+        loadTicketTypes(true);
+    }, [loadTicketTypes, showNotification]);
 
     const handleDelete = useCallback(async (id: number, displayName: string) => {
         try {
             await deleteTicketType(id);
             showNotification(`Ticket type "${displayName}" deleted successfully!`, 'success');
-            await loadTicketTypes({
-                status: statusFilter,
-                category: categoryFilter,
-                search: searchQuery,
-                page
-            }, true);
+
+            if (ticketTypes?.content.length === 1 && currentPage > 0) {
+                setPage(currentPage - 1);
+            } else {
+                await loadTicketTypes(true);
+            }
         } catch (err) {
             showNotification('Failed to delete ticket type', 'error');
         }
-    }, [deleteTicketType, loadTicketTypes, showNotification, statusFilter, categoryFilter, searchQuery, page]);
+    }, [deleteTicketType, loadTicketTypes, showNotification, ticketTypes, currentPage, setPage]);
 
     const handleToggleActive = useCallback(async (id: number, displayName: string) => {
         try {
             const updated = await toggleActive(id);
             const status = updated?.active ? 'activated' : 'deactivated';
             showNotification(`Ticket type "${displayName}" ${status} successfully!`, 'success');
-            await loadTicketTypes({
-                status: statusFilter,
-                category: categoryFilter,
-                search: searchQuery,
-                page
-            }, true);
+            await loadTicketTypes(true);
         } catch (err) {
             showNotification('Failed to toggle active status', 'error');
         }
-    }, [toggleActive, loadTicketTypes, showNotification, statusFilter, categoryFilter, searchQuery, page]);
+    }, [toggleActive, loadTicketTypes, showNotification]);
 
     const handleEdit = useCallback((ticketType: TicketTypeResponse) => {
         setEditingTicketType(ticketType);
     }, []);
 
-    const handlePageChange = useCallback((newPage: number) => {
-        setPage(newPage);
-    }, []);
-
-    const handleClearFilters = useCallback(() => {
-        setSearchQuery('');
-        setStatusFilter('all');
-        setCategoryFilter('all');
-        setPage(0);
-    }, []);
-
-    const activeCount = useMemo(() => {
-        return ticketTypeList.filter(t => t.active).length;
-    }, [ticketTypeList]);
-
-    const inactiveCount = useMemo(() => {
-        return ticketTypeList.filter(t => !t.active).length;
-    }, [ticketTypeList]);
+    const ticketTypeList = ticketTypes?.content || [];
 
     if (showDelayedLoading && !ticketTypeList.length) {
         return (
@@ -218,14 +150,12 @@ const SectionTicketType = () => {
 
             <div className={styles.header}>
                 <h1 className={styles.title}>Ticket Types</h1>
-                <div className={styles.actions}>
-                    <Button
-                        variant="primary"
-                        onClick={() => setShowCreateModal(true)}
-                    >
-                        Create Ticket Type
-                    </Button>
-                </div>
+                <Button
+                    variant="primary"
+                    onClick={() => setShowCreateModal(true)}
+                >
+                    Create Ticket Type
+                </Button>
             </div>
 
             <div className={styles.content}>
@@ -241,22 +171,9 @@ const SectionTicketType = () => {
                 {ticketTypeList.length === 0 ? (
                     <div className={styles.empty}>
                         <p>No ticket types found</p>
-                        {(searchQuery || statusFilter !== 'all' || categoryFilter !== 'all') && (
-                            <Button
-                                variant="secondary"
-                                onClick={handleClearFilters}
-                            >
-                                Clear all filters
-                            </Button>
-                        )}
                     </div>
                 ) : (
                     <>
-                        <div className={styles.stats}>
-                            <span>Total: {ticketTypes?.totalElements || ticketTypeList.length}</span>
-                            <span>Active: {activeCount}</span>
-                            <span>Inactive: {inactiveCount}</span>
-                        </div>
                         <TicketTypeTable
                             ticketTypes={ticketTypeList}
                             onEdit={handleEdit}
@@ -265,21 +182,15 @@ const SectionTicketType = () => {
                         />
 
                         {ticketTypes && ticketTypes.totalPages > 1 && (
-                            <div className={styles.pagination}>
-                                <button
-                                    onClick={() => handlePageChange(page - 1)}
-                                    disabled={page === 0}
-                                >
-                                    Previous
-                                </button>
-                                <span>Page {page + 1} of {ticketTypes.totalPages}</span>
-                                <button
-                                    onClick={() => handlePageChange(page + 1)}
-                                    disabled={page === ticketTypes.totalPages - 1}
-                                >
-                                    Next
-                                </button>
-                            </div>
+                            <Pagination
+                                currentPage={ticketTypes.number}
+                                totalPages={ticketTypes.totalPages}
+                                totalElements={ticketTypes.totalElements}
+                                pageSize={ticketTypes.size}
+                                onPageChange={handlePageChange}
+                                variant="pages"
+                                showInfo={true}
+                            />
                         )}
                     </>
                 )}
