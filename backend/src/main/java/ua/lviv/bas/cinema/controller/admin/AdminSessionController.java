@@ -143,7 +143,7 @@ public class AdminSessionController {
 			@RequestParam(required = false) CinemaSessionStatus status,
 			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFrom,
 			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateTo,
-			@Parameter(hidden = true) @PageableDefault(size = 20, sort = "startTime", direction = Sort.Direction.DESC) Pageable pageable) {
+			@Parameter(hidden = true) @PageableDefault(size = 10, sort = "startTime", direction = Sort.Direction.DESC) Pageable pageable) {
 
 		log.info(
 				"GET /api/admin/sessions - Getting sessions with filters: hallId={}, movieTitle={}, status={}, dateFrom={}, dateTo={}",
