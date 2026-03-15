@@ -37,9 +37,9 @@
     overflow-x: auto;
     overflow-y: visible;
     border-radius: var(--radius-lg);
-    border: 1px solid var(--color-border-medium);
-    background: var(--color-bg-quaternary);
-    box-shadow: var(--shadow-lg);
+    border: 1px solid #334155;
+    background: linear-gradient(145deg, #1a2639 0%, #0f172a 100%);
+    box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.5);
     -webkit-overflow-scrolling: touch;
     margin-top: var(--space-6);
 }
@@ -53,18 +53,18 @@
 }
 
 .tableHead {
-    background: var(--color-bg-secondary);
+    background: #1e293b;
 }
 
 .tableHead tr th {
     font-weight: 600;
     padding: var(--space-4) var(--space-4);
     text-align: left;
-    border-bottom: 2px solid var(--color-border-medium);
+    border-bottom: 1px solid #334155;
     font-size: var(--font-size-sm);
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    color: var(--color-text-primary);
+    color: #f1f5f9;
     white-space: nowrap;
 }
 
@@ -73,11 +73,23 @@
     padding-right: var(--space-8);
 }
 
+.table tbody tr {
+    background: rgba(30, 41, 59, 0.3);
+    transition: background-color var(--transition-normal);
+}
+
+.table tbody tr:nth-child(even) {
+    background: rgba(30, 41, 59, 0.6);
+}
+
+.table tbody tr:hover {
+    background: rgba(253, 95, 0, 0.15);
+}
+
 .table tbody td {
     padding: var(--space-4);
-    border-bottom: 1px solid var(--color-border-medium);
+    border-bottom: 1px solid #334155;
     color: var(--color-text-secondary);
-    transition: background-color var(--transition-normal);
     white-space: nowrap;
 }
 
@@ -91,8 +103,7 @@
 }
 
 .table tbody tr:hover td {
-    background: rgba(var(--color-primary-rgb), 0.05);
-    color: var(--color-text-primary);
+    color: #f1f5f9;
 }
 
 .actions {

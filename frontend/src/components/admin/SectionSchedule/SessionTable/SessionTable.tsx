@@ -120,186 +120,170 @@ export const SessionTable: React.FC<SessionTableProps> = ({
         onViewDetails?.(session);
     }, [onViewDetails]);
 
-    if (!sessions.length) return <EmptyState />;
+    const renderTableHeader = useCallback(() => (
+        <div className={styles.tableHeader}>
+            <div>Movie</div>
+            <div>Hall</div>
+            <div>Time</div>
+            <div>Price</div>
+            <div>Occupancy</div>
+            <div>Revenue</div>
+            <div>Status</div>
+            <div>Actions</div>
+        </div>
+    ), []);
+
+    const renderTableRow = useCallback((session: SessionAdminResponse) => {
+        const occupancy = getOccupancyPercentage(
+            session.ticketsSold,
+            session.hallCapacity
+        );
+        const occupancyColor = getOccupancyColor(occupancy);
+        const isPast = new Date(session.endTime) < new Date();
+        const editable = canEdit(session.status);
+        const deletable = canDelete(session.status);
+        const cancellable = canCancel(session.status);
+        const reactivatable = canReactivate(session.status);
+
+        const totalRevenue = parseFloat(session.totalRevenue || '0');
+        const avgRevenue = session.ticketsSold > 0
+            ? totalRevenue / session.ticketsSold
+            : 0;
+
+        return (
+            <div
+                key={session.id}
+                className={`${styles.tableRow} ${isPast ? styles.past : ''}`}
+                onClick={() => handleRowClick(session)}
+                style={{ cursor: onViewDetails ? 'pointer' : 'default' }}
+            >
+                <div className={styles.movieInfo}>
+                    <div className={styles.movieTitle}>
+                        {truncateText(session.movieTitle, 30)}
+                    </div>
+                    <div className={styles.movieMeta}>
+                        <span className={styles.duration}>
+                            {session.movieDuration} min
+                        </span>
+                    </div>
+                </div>
+
+                <div className={styles.hallInfo}>
+                    <div className={styles.hallName}>
+                        {truncateText(session.hallName, 20)}
+                    </div>
+                    <div className={styles.capacity}>
+                        {session.hallCapacity} seats
+                    </div>
+                </div>
+
+                <div className={styles.timeInfo}>
+                    <div className={styles.date}>
+                        {formatDate(session.startTime)}
+                    </div>
+                    <div className={styles.time}>
+                        {formatTime(session.startTime)}
+                    </div>
+                    <div className={styles.endTime}>
+                        - {formatTime(session.endTime)}
+                    </div>
+                </div>
+
+                <div className={styles.price}>
+                    {formatCurrency(session.basePrice)}
+                </div>
+
+                <div className={styles.occupancyWrapper}>
+                    <div className={styles.occupancyInfo}>
+                        <div className={styles.ticketCount}>
+                            {session.ticketsSold}/{session.hallCapacity}
+                        </div>
+                        <div className={styles.occupancyPercent}>
+                            {occupancy}%
+                        </div>
+                    </div>
+                    <div className={styles.occupancyBar}>
+                        <div
+                            className={styles.occupancyFill}
+                            style={{
+                                width: `${Math.min(occupancy, 100)}%`,
+                                backgroundColor: occupancyColor
+                            }}
+                        />
+                    </div>
+                </div>
+
+                <div className={styles.revenueInfo}>
+                    <div className={styles.revenue}>
+                        {formatCurrency(totalRevenue)}
+                    </div>
+                    {session.ticketsSold > 0 && (
+                        <div className={styles.revenuePerSeat}>
+                            {avgRevenue.toFixed(2)} UAH avg
+                        </div>
+                    )}
+                </div>
+
+                <div className={styles.status}>
+                    <Badge variant={getStatusBadgeVariant(session.status)}>
+                        {getStatusText(session.status)}
+                    </Badge>
+                </div>
+
+                <div className={styles.actions}>
+                    {editable && (
+                        <Button
+                            variant="success"
+                            size="small"
+                            onClick={(e) => handleEdit(e, session)}
+                            className={styles.actionButton}
+                        >
+                            Edit
+                        </Button>
+                    )}
+                    {cancellable && (
+                        <Button
+                            variant="secondary"
+                            size="small"
+                            onClick={(e) => handleCancel(e, session)}
+                            className={styles.actionButton}
+                        >
+                            Cancel
+                        </Button>
+                    )}
+                    {reactivatable && (
+                        <Button
+                            variant="success"
+                            size="small"
+                            onClick={(e) => handleReactivate(e, session)}
+                            className={styles.actionButton}
+                        >
+                            Reactivate
+                        </Button>
+                    )}
+                    {deletable && (
+                        <Button
+                            variant="error"
+                            size="small"
+                            onClick={(e) => handleDelete(e, session)}
+                            className={styles.actionButton}
+                        >
+                            Delete
+                        </Button>
+                    )}
+                </div>
+            </div>
+        );
+    }, [handleEdit, handleDelete, handleCancel, handleReactivate, handleRowClick, onViewDetails]);
+
+    if (!sessions.length) {
+        return <EmptyState />;
+    }
 
     return (
-        <div className={styles.tableContainer}>
-            <div className={styles.tableHeader}>
-                <h3 className={styles.tableTitle}>
-                    Movie Sessions ({sortedSessions.length})
-                </h3>
-            </div>
-
-            <div className={styles.tableWrapper}>
-                <table className={styles.table}>
-                    <thead>
-                        <tr>
-                            <th className={styles.movieHeader}>Movie</th>
-                            <th className={styles.hallHeader}>Hall</th>
-                            <th className={styles.timeHeader}>Time</th>
-                            <th className={styles.priceHeader}>Price</th>
-                            <th className={styles.occupancyHeader}>Occupancy</th>
-                            <th className={styles.revenueHeader}>Revenue</th>
-                            <th className={styles.statusHeader}>Status</th>
-                            <th className={styles.actionsHeader}>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {sortedSessions.map((session) => {
-                            const occupancy = getOccupancyPercentage(
-                                session.ticketsSold,
-                                session.hallCapacity
-                            );
-                            const occupancyColor = getOccupancyColor(occupancy);
-                            const isPast = new Date(session.endTime) < new Date();
-                            const editable = canEdit(session.status);
-                            const deletable = canDelete(session.status);
-                            const cancellable = canCancel(session.status);
-                            const reactivatable = canReactivate(session.status);
-
-                            const totalRevenue = parseFloat(session.totalRevenue || '0');
-                            const avgRevenue = session.ticketsSold > 0
-                                ? totalRevenue / session.ticketsSold
-                                : 0;
-
-                            return (
-                                <tr
-                                    key={session.id}
-                                    className={`${styles.row} ${isPast ? styles.past : ''}`}
-                                    onClick={() => handleRowClick(session)}
-                                    style={{ cursor: onViewDetails ? 'pointer' : 'default' }}
-                                >
-                                    <td className={styles.movieCell}>
-                                        <div className={styles.movieInfo}>
-                                            <div className={styles.movieTitle}>
-                                                {truncateText(session.movieTitle, 30)}
-                                            </div>
-                                            <div className={styles.movieMeta}>
-                                                <span className={styles.duration}>
-                                                    {session.movieDuration} min
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </td>
-
-                                    <td className={styles.hallCell}>
-                                        <div className={styles.hallInfo}>
-                                            <div className={styles.hallName}>
-                                                {truncateText(session.hallName, 20)}
-                                            </div>
-                                            <div className={styles.capacity}>
-                                                {session.hallCapacity} seats
-                                            </div>
-                                        </div>
-                                    </td>
-
-                                    <td className={styles.timeCell}>
-                                        <div className={styles.timeInfo}>
-                                            <div className={styles.date}>
-                                                {formatDate(session.startTime)}
-                                            </div>
-                                            <div className={styles.time}>
-                                                {formatTime(session.startTime)}
-                                            </div>
-                                            <div className={styles.endTime}>
-                                                - {formatTime(session.endTime)}
-                                            </div>
-                                        </div>
-                                    </td>
-
-                                    <td className={styles.priceCell}>
-                                        {formatCurrency(session.basePrice)}
-                                    </td>
-
-                                    <td className={styles.occupancyCell}>
-                                        <div className={styles.occupancyWrapper}>
-                                            <div className={styles.occupancyInfo}>
-                                                <div className={styles.ticketCount}>
-                                                    {session.ticketsSold}/{session.hallCapacity}
-                                                </div>
-                                                <div className={styles.occupancyPercent}>
-                                                    {occupancy}%
-                                                </div>
-                                            </div>
-                                            <div className={styles.occupancyBar}>
-                                                <div
-                                                    className={styles.occupancyFill}
-                                                    style={{
-                                                        width: `${Math.min(occupancy, 100)}%`,
-                                                        backgroundColor: occupancyColor
-                                                    }}
-                                                />
-                                            </div>
-                                        </div>
-                                    </td>
-
-                                    <td className={styles.revenueCell}>
-                                        <div className={styles.revenue}>
-                                            {formatCurrency(totalRevenue)}
-                                        </div>
-                                        {session.ticketsSold > 0 && (
-                                            <div className={styles.revenuePerSeat}>
-                                                {avgRevenue.toFixed(2)} UAH avg
-                                            </div>
-                                        )}
-                                    </td>
-
-                                    <td className={styles.statusCell}>
-                                        <Badge variant={getStatusBadgeVariant(session.status)}>
-                                            {getStatusText(session.status)}
-                                        </Badge>
-                                    </td>
-
-                                    <td className={styles.actionsCell}>
-                                        <div className={styles.actions}>
-                                            {editable && (
-                                                <Button
-                                                    variant="success"
-                                                    size="small"
-                                                    onClick={(e) => handleEdit(e, session)}
-                                                    className={styles.actionButton}
-                                                >
-                                                    Edit
-                                                </Button>
-                                            )}
-                                            {cancellable && (
-                                                <Button
-                                                    variant="secondary"
-                                                    size="small"
-                                                    onClick={(e) => handleCancel(e, session)}
-                                                    className={styles.actionButton}
-                                                >
-                                                    Cancel
-                                                </Button>
-                                            )}
-                                            {reactivatable && (
-                                                <Button
-                                                    variant="success"
-                                                    size="small"
-                                                    onClick={(e) => handleReactivate(e, session)}
-                                                    className={styles.actionButton}
-                                                >
-                                                    Reactivate
-                                                </Button>
-                                            )}
-                                            {deletable && (
-                                                <Button
-                                                    variant="error"
-                                                    size="small"
-                                                    onClick={(e) => handleDelete(e, session)}
-                                                    className={styles.actionButton}
-                                                >
-                                                    Delete
-                                                </Button>
-                                            )}
-                                        </div>
-                                    </td>
-                                </tr>
-                            );
-                        })}
-                    </tbody>
-                </table>
-            </div>
+        <div className={styles.table}>
+            {renderTableHeader()}
+            {sortedSessions.map(renderTableRow)}
         </div>
     );
 };

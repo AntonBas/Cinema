@@ -1,10 +1,10 @@
 .filters {
-    background: linear-gradient(135deg, var(--color-bg-secondary) 0%, var(--color-bg-quaternary) 100%);
+    background: linear-gradient(145deg, #1a2639 0%, #0f172a 100%);
     border-radius: var(--radius-lg);
-    border: 1px solid var(--color-border-medium);
+    border: 1px solid #334155;
     margin-bottom: var(--space-8);
     overflow: visible;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.5);
     position: relative;
 }
 
@@ -25,7 +25,7 @@
 }
 
 .label {
-    color: var(--color-text-primary);
+    color: #f1f5f9;
     font-weight: 500;
     font-size: 0.9rem;
     margin-bottom: var(--space-1);
@@ -39,6 +39,9 @@
     line-height: 1.5 !important;
     box-sizing: border-box !important;
     width: 100%;
+    background: rgba(30, 41, 59, 0.6);
+    border: 1px solid #334155;
+    color: #f1f5f9;
 }
 
 .filterSelectWrapper {
@@ -63,6 +66,9 @@
     padding: 8px 12px !important;
     font-size: var(--font-size-sm) !important;
     line-height: 1.5 !important;
+    background: rgba(30, 41, 59, 0.6);
+    border: 1px solid #334155;
+    color: #f1f5f9;
 }
 
 .movieFilterRow {
@@ -92,13 +98,14 @@
     width: 100%;
     cursor: pointer;
     padding-right: 40px;
-    background: var(--color-bg-secondary);
-    border: 1px solid var(--color-border-medium);
+    background: rgba(30, 41, 59, 0.6);
+    border: 1px solid #334155;
     height: 40px !important;
     padding: 8px 12px !important;
     font-size: var(--font-size-sm) !important;
     line-height: 1.5 !important;
     box-sizing: border-box !important;
+    color: #f1f5f9;
 }
 
 .clearMovieButton {
@@ -131,10 +138,10 @@
     top: calc(100% + 4px);
     left: 0;
     right: 0;
-    background: var(--color-bg-secondary);
-    border: 1px solid var(--color-border-medium);
+    background: #1e293b;
+    border: 1px solid #334155;
     border-radius: var(--radius-md);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.5);
     z-index: 20;
     max-height: 300px;
     overflow-y: auto;
@@ -144,16 +151,16 @@
 .movieOption {
     padding: var(--space-3);
     cursor: pointer;
-    border-bottom: 1px solid var(--color-bg-quaternary);
+    border-bottom: 1px solid #334155;
     transition: background-color var(--transition-fast);
 }
 
 .movieOption:hover {
-    background: var(--color-bg-quaternary);
+    background: rgba(30, 41, 59, 0.8);
 }
 
 .movieOption.selected {
-    background: rgba(var(--color-primary-rgb), 0.1);
+    background: rgba(253, 95, 0, 0.15);
     border-left: 3px solid var(--color-primary);
 }
 
@@ -162,7 +169,7 @@
 }
 
 .movieTitle {
-    color: var(--color-text-primary);
+    color: #f1f5f9;
     font-weight: 500;
     margin-bottom: var(--space-1);
     font-size: 0.95rem;
@@ -191,8 +198,8 @@
 
 .clearFiltersContainer {
     padding: var(--space-4) var(--space-6);
-    border-top: 1px solid var(--color-border-medium);
-    background: rgba(58, 64, 81, 0.3);
+    border-top: 1px solid #334155;
+    background: rgba(30, 41, 59, 0.3);
     position: relative;
     z-index: 1;
 }
@@ -207,7 +214,7 @@
 
 .countBadge {
     background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
-    color: var(--color-text-primary);
+    color: white;
     font-weight: 600;
     font-size: var(--font-size-xs);
     padding: 0.25rem 0.5rem;
