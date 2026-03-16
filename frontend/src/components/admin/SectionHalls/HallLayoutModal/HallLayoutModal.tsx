@@ -1,60 +1,55 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import type { CinemaHallResponse, HallLayoutResponse } from '@/types/cinemaHall';
-import { type SeatResponse, SeatType } from '@/types/seat';
-import { useCinemaHalls } from '@/hooks/features/cinemaHalls/useCinemaHalls';
-import { useSeats } from '@/hooks/features/seats/useSeats';
+import type { SeatResponse } from '@/types/seat';
+import type { HallLayoutResponse } from '@/types/cinemaHall';
+import { SeatType } from '@/types/seat';
 import { Modal } from '@/components/ui/Modal/Modal';
 import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';
+import { useHallLayout } from '../HallLayoutContext';
 import styles from './HallLayoutModal.module.css';
 
-interface HallLayoutModalProps {
-    hall: CinemaHallResponse;
-    isOpen: boolean;
-    onClose: () => void;
-}
+export const HallLayoutModal: React.FC = () => {
+    const {
+        currentHall,
+        layout,
+        loading,
+        closeLayout,
+        updateSeatType,
+        toggleSeatStatus
+    } = useHallLayout();
 
-export const HallLayoutModal: React.FC<HallLayoutModalProps> = ({
-    hall,
-    isOpen,
-    onClose
-}) => {
     const [updatingSeat, setUpdatingSeat] = useState<number | null>(null);
     const [updatingSeatAction, setUpdatingSeatAction] = useState<'type' | 'status' | null>(null);
-    const [localLayout, setLocalLayout] = useState<HallLayoutResponse | null>(null);
-    const hasLoadedRef = useRef(false);
-
-    const { hallLayout, loading, getHallLayout } = useCinemaHalls();
-    const { updateSeatType, setSeatStatus, loading: updatingSeatLoading } = useSeats();
+    const [localLayout, setLocalLayout] = useState<HallLayoutResponse | null>(layout);
+    const isMountedRef = useRef<boolean>(true);
 
     useEffect(() => {
-        if (hallLayout) {
-            setLocalLayout(hallLayout);
+        isMountedRef.current = true;
+        return () => {
+            isMountedRef.current = false;
+        };
+    }, []);
+
+    useEffect(() => {
+        if (layout && isMountedRef.current) {
+            setLocalLayout(layout);
         }
-    }, [hallLayout]);
+    }, [layout]);
 
     useEffect(() => {
-        if (isOpen && hall.id && !hasLoadedRef.current) {
-            getHallLayout(hall.id);
-            hasLoadedRef.current = true;
-        }
-    }, [hall.id, getHallLayout, isOpen]);
-
-    useEffect(() => {
-        if (!isOpen) {
-            hasLoadedRef.current = false;
+        if (!currentHall) {
             setLocalLayout(null);
         }
-    }, [isOpen]);
+    }, [currentHall]);
 
     const getNextSeatType = useCallback((currentType: SeatType): SeatType => {
-        const types = [SeatType.STANDARD, SeatType.VIP, SeatType.COUPLE];
+        const types: SeatType[] = [SeatType.STANDARD, SeatType.VIP, SeatType.COUPLE];
         const currentIndex = types.indexOf(currentType);
         const nextIndex = (currentIndex + 1) % types.length;
         return types[nextIndex];
     }, []);
 
     const getSeatTypeName = useCallback((seatType: SeatType): string => {
-        const names = {
+        const names: Record<SeatType, string> = {
             [SeatType.STANDARD]: 'Standard',
             [SeatType.VIP]: 'VIP',
             [SeatType.COUPLE]: 'Couple'
@@ -63,7 +58,7 @@ export const HallLayoutModal: React.FC<HallLayoutModalProps> = ({
     }, []);
 
     const handleSeatTypeClick = useCallback(async (seat: SeatResponse, e: React.MouseEvent) => {
-        if (updatingSeat === seat.id || updatingSeatLoading) return;
+        if (updatingSeat === seat.id || !currentHall || !isMountedRef.current) return;
 
         e.stopPropagation();
         const nextSeatType = getNextSeatType(seat.seatType);
@@ -72,70 +67,68 @@ export const HallLayoutModal: React.FC<HallLayoutModalProps> = ({
             setUpdatingSeat(seat.id);
             setUpdatingSeatAction('type');
 
-            const updatedSeat = { ...seat, seatType: nextSeatType };
+            if (isMountedRef.current) {
+                setLocalLayout((prev: HallLayoutResponse | null) => {
+                    if (!prev) return prev;
+                    return {
+                        ...prev,
+                        rows: prev.rows.map((row: any) => ({
+                            ...row,
+                            seats: row.seats.map((s: SeatResponse) =>
+                                s.id === seat.id ? { ...seat, seatType: nextSeatType } : s
+                            )
+                        }))
+                    };
+                });
+            }
 
-            setLocalLayout(prev => {
-                if (!prev) return prev;
-                return {
-                    ...prev,
-                    rows: prev.rows.map(row => ({
-                        ...row,
-                        seats: row.seats.map(s =>
-                            s.id === seat.id ? updatedSeat : s
-                        )
-                    }))
-                };
-            });
-
-            await updateSeatType(hall.id, seat.id, nextSeatType);
-        } catch {
-            await getHallLayout(hall.id);
+            await updateSeatType(seat.id, nextSeatType);
         } finally {
-            setUpdatingSeat(null);
-            setUpdatingSeatAction(null);
+            if (isMountedRef.current) {
+                setUpdatingSeat(null);
+                setUpdatingSeatAction(null);
+            }
         }
-    }, [hall.id, updatingSeat, updatingSeatLoading, getNextSeatType, updateSeatType, getHallLayout]);
+    }, [currentHall, updatingSeat, getNextSeatType, updateSeatType]);
 
     const handleSeatStatusClick = useCallback(async (seat: SeatResponse, e: React.MouseEvent) => {
-        if (updatingSeat === seat.id || updatingSeatLoading) return;
+        if (updatingSeat === seat.id || !currentHall || !isMountedRef.current) return;
 
         e.stopPropagation();
         e.preventDefault();
-
-        const newActive = !seat.active;
 
         try {
             setUpdatingSeat(seat.id);
             setUpdatingSeatAction('status');
 
-            const updatedSeat = { ...seat, active: newActive };
+            if (isMountedRef.current) {
+                setLocalLayout((prev: HallLayoutResponse | null) => {
+                    if (!prev) return prev;
+                    return {
+                        ...prev,
+                        rows: prev.rows.map((row: any) => ({
+                            ...row,
+                            seats: row.seats.map((s: SeatResponse) =>
+                                s.id === seat.id ? { ...seat, active: !seat.active } : s
+                            )
+                        }))
+                    };
+                });
+            }
 
-            setLocalLayout(prev => {
-                if (!prev) return prev;
-                return {
-                    ...prev,
-                    rows: prev.rows.map(row => ({
-                        ...row,
-                        seats: row.seats.map(s =>
-                            s.id === seat.id ? updatedSeat : s
-                        )
-                    }))
-                };
-            });
-
-            await setSeatStatus(hall.id, seat.id, newActive);
-        } catch {
-            await getHallLayout(hall.id);
+            await toggleSeatStatus(seat.id);
         } finally {
-            setUpdatingSeat(null);
-            setUpdatingSeatAction(null);
+            if (isMountedRef.current) {
+                setUpdatingSeat(null);
+                setUpdatingSeatAction(null);
+            }
         }
-    }, [hall.id, updatingSeat, updatingSeatLoading, setSeatStatus, getHallLayout]);
+    }, [currentHall, updatingSeat, toggleSeatStatus]);
 
     const activeSeatsCount = useMemo(() => {
         if (!localLayout?.rows) return 0;
         return localLayout.rows.reduce(
-            (acc, row) => acc + row.seats.filter(s => s.active).length, 0
+            (acc: number, row: any) => acc + row.seats.filter((s: SeatResponse) => s.active).length, 0
         );
     }, [localLayout]);
 
@@ -168,7 +161,7 @@ export const HallLayoutModal: React.FC<HallLayoutModalProps> = ({
     const renderSeats = useCallback(() => {
         if (!localLayout?.rows?.length) return null;
 
-        const sortedRows = [...localLayout.rows].sort((a, b) => a.rowNumber - b.rowNumber);
+        const sortedRows = [...localLayout.rows].sort((a: any, b: any) => a.rowNumber - b.rowNumber);
 
         return (
             <div className={styles.cinemaHall}>
@@ -196,13 +189,13 @@ export const HallLayoutModal: React.FC<HallLayoutModalProps> = ({
 
                 <div className={styles.seatsLayout}>
                     <div className={styles.rowsContainer}>
-                        {sortedRows.map((row) => (
+                        {sortedRows.map((row: any) => (
                             <div key={`row-${row.rowNumber}`} className={styles.row}>
                                 <div className={styles.rowLabel}>Row {row.rowNumber}</div>
                                 <div className={styles.seatsRow}>
                                     {row.seats
-                                        .sort((a, b) => a.number - b.number)
-                                        .map(seat => (
+                                        .sort((a: any, b: any) => a.number - b.number)
+                                        .map((seat: SeatResponse) => (
                                             <SeatComponent
                                                 key={`seat-${seat.id}`}
                                                 seat={seat}
@@ -219,7 +212,7 @@ export const HallLayoutModal: React.FC<HallLayoutModalProps> = ({
                     <div className={styles.legend}>
                         <h4 className={styles.legendTitle}>Seat Types:</h4>
                         <div className={styles.legendGrid}>
-                            {Object.values(SeatType).map((type) => (
+                            {Object.values(SeatType).map((type: SeatType) => (
                                 <div key={type} className={styles.legendItem}>
                                     <div className={`${styles.legendColor} ${styles[type.toLowerCase()]}`} />
                                     <span>{getSeatTypeName(type)}</span>
@@ -245,13 +238,13 @@ export const HallLayoutModal: React.FC<HallLayoutModalProps> = ({
         );
     }, [localLayout, activeSeatsCount, SeatComponent, getSeatTypeName]);
 
-    if (!isOpen) return null;
+    if (!currentHall) return null;
 
     return (
         <Modal
-            isOpen={isOpen}
-            onClose={onClose}
-            title={`${hall.name} - Seat Management`}
+            isOpen={!!currentHall}
+            onClose={closeLayout}
+            title={`${currentHall.name} - Seat Management`}
             size="fullscreen"
         >
             <div className={styles.modalContent}>

@@ -12,10 +12,11 @@ import { CreateHallModal } from './HallModal/CreateHallModal';
 import { EditHallModal } from './HallModal/EditHallModal';
 import { HallsTable } from './HallsTable/HallsTable';
 import { HallLayoutModal } from './HallLayoutModal/HallLayoutModal';
+import { HallLayoutProvider, useHallLayout } from './HallLayoutContext';
 import { isApiErrorException } from '@/utils/apiErrorHandler';
 import styles from './SectionHalls.module.css';
 
-export const SectionHalls: React.FC = () => {
+const SectionHallsContent: React.FC = () => {
     const {
         loading,
         getAllHalls,
@@ -25,6 +26,8 @@ export const SectionHalls: React.FC = () => {
         getHallLayout
     } = useCinemaHalls();
 
+    const { openLayout } = useHallLayout();
+
     const { notifications, showNotification, hideNotification } = useNotification();
     const showDelayedLoading = useDelayedLoading(loading, { delay: 150, minDisplayTime: 300 });
 
@@ -32,7 +35,6 @@ export const SectionHalls: React.FC = () => {
     const [showEditModal, setShowEditModal] = useState(false);
     const [selectedHall, setSelectedHall] = useState<CinemaHallResponse | null>(null);
     const [currentLayout, setCurrentLayout] = useState<{ rows: number; seatsPerRow: number; coupleRows?: number[] } | undefined>();
-    const [showLayoutModal, setShowLayoutModal] = useState(false);
     const [deleteModal, setDeleteModal] = useState({
         isOpen: false,
         hall: null as CinemaHallResponse | null,
@@ -149,9 +151,8 @@ export const SectionHalls: React.FC = () => {
     }, [getHallLayout]);
 
     const handleShowLayout = useCallback((hall: CinemaHallResponse) => {
-        setSelectedHall(hall);
-        setShowLayoutModal(true);
-    }, []);
+        openLayout(hall);
+    }, [openLayout]);
 
     const handleCloseCreate = useCallback(() => {
         setShowCreateModal(false);
@@ -161,11 +162,6 @@ export const SectionHalls: React.FC = () => {
         setShowEditModal(false);
         setSelectedHall(null);
         setCurrentLayout(undefined);
-    }, []);
-
-    const handleCloseLayout = useCallback(() => {
-        setShowLayoutModal(false);
-        setSelectedHall(null);
     }, []);
 
     const handleCloseDelete = useCallback(() => {
@@ -240,14 +236,7 @@ export const SectionHalls: React.FC = () => {
                 />
             )}
 
-            {showLayoutModal && selectedHall && (
-                <HallLayoutModal
-                    key={selectedHall.id}
-                    hall={selectedHall}
-                    isOpen={showLayoutModal}
-                    onClose={handleCloseLayout}
-                />
-            )}
+            <HallLayoutModal />
 
             <DeleteConfirmModal
                 isOpen={deleteModal.isOpen}
@@ -258,5 +247,13 @@ export const SectionHalls: React.FC = () => {
                 isDeleting={deleteModal.isDeleting}
             />
         </div>
+    );
+};
+
+export const SectionHalls: React.FC = () => {
+    return (
+        <HallLayoutProvider>
+            <SectionHallsContent />
+        </HallLayoutProvider>
     );
 };
