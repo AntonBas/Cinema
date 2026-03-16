@@ -36,7 +36,7 @@ export const PersonTab: React.FC = () => {
   });
 
   const { notifications, showNotification, hideNotification } = useNotification();
-  const { params, setPage, setSearch } = usePagination({ size: 12 });
+  const { params, setPage, setSearch } = usePagination({ size: 10 });
 
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const initialLoadRef = useRef(false);
@@ -84,14 +84,14 @@ export const PersonTab: React.FC = () => {
     loadingDataRef.current = true;
 
     try {
-      const params = {
+      const requestParams = {
         name: search?.trim() || undefined,
         role: tab === 'ALL' ? undefined : tab,
         page,
-        size: 12
+        size: params.size
       };
 
-      const response = await getAll(params);
+      const response = await getAll(requestParams);
 
       setTabData(prev => ({
         ...prev,
@@ -114,7 +114,7 @@ export const PersonTab: React.FC = () => {
     } finally {
       loadingDataRef.current = false;
     }
-  }, [getAll, showNotification, loadCounts]);
+  }, [getAll, showNotification, loadCounts, params.size]);
 
   useEffect(() => {
     if (!initialLoadRef.current) {
@@ -163,7 +163,8 @@ export const PersonTab: React.FC = () => {
 
       setIsModalOpen(false);
       setEditingPerson(null);
-      await loadTabData(activeTab, params.page || 0, params.search);
+      await loadTabData(activeTab, 0, params.search);
+      setPage(0);
     } catch (err) {
       if (isApiErrorException(err)) {
         const validationError = err.getFirstValidationError();
@@ -172,7 +173,7 @@ export const PersonTab: React.FC = () => {
         showNotification(err instanceof Error ? err.message : 'Failed to save person', 'error');
       }
     }
-  }, [editingPerson, create, update, activeTab, params.page, params.search, showNotification, loadTabData]);
+  }, [editingPerson, create, update, activeTab, params.search, showNotification, loadTabData, setPage]);
 
   const handleDelete = useCallback(async () => {
     if (!personToDelete) return;
@@ -202,7 +203,7 @@ export const PersonTab: React.FC = () => {
   const paginationInfo = useMemo(() => {
     const total = currentTabData.total;
     const page = params.page || 0;
-    const pageSize = params.size || 12;
+    const pageSize = params.size || 10;
     const start = total > 0 ? page * pageSize + 1 : 0;
     const end = Math.min(start + pageSize - 1, total);
     const totalPages = Math.ceil(total / pageSize);
@@ -295,7 +296,7 @@ export const PersonTab: React.FC = () => {
             currentPage={params.page || 0}
             totalPages={paginationInfo.totalPages}
             totalElements={paginationInfo.total}
-            pageSize={params.size || 12}
+            pageSize={params.size || 10}
             onPageChange={setPage}
             variant="pages"
             showInfo={false}

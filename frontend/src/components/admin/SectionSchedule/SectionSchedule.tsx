@@ -54,7 +54,7 @@ export const SectionSchedule: React.FC = () => {
 
     const [filters, setFilters] = useState<FiltersState>({});
 
-    const { params, setPage } = usePagination({ size: 20 });
+    const { params, setPage } = usePagination({ size: 10 });
 
     const isMounted = useRef(true);
     const initialHallsLoaded = useRef(false);
@@ -121,7 +121,7 @@ export const SectionSchedule: React.FC = () => {
         try {
             const requestParams: Record<string, any> = {
                 page: params.page || 0,
-                size: params.size || 20,
+                size: params.size,
                 ...filters
             };
 
@@ -280,6 +280,7 @@ export const SectionSchedule: React.FC = () => {
             showNotification('Session created successfully', 'success');
             setIsCreateModalOpen(false);
             setSelectedSession(null);
+            setPage(0);
             await loadSessions();
         } catch (error) {
             if (error instanceof Error) {
@@ -289,7 +290,7 @@ export const SectionSchedule: React.FC = () => {
             }
             throw error;
         }
-    }, [createSession, showNotification, loadSessions]);
+    }, [createSession, showNotification, loadSessions, setPage]);
 
     const handleSaveUpdatedSession = useCallback(async (id: number, data: SessionUpdateRequest) => {
         try {
@@ -344,7 +345,7 @@ export const SectionSchedule: React.FC = () => {
     const paginationInfo = useMemo(() => {
         const total = sessionData.pagination?.totalElements || 0;
         const page = params.page || 0;
-        const pageSize = params.size || 20;
+        const pageSize = params.size || 10;
         const start = total > 0 ? page * pageSize + 1 : 0;
         const end = Math.min(start + pageSize - 1, total);
         const totalPages = sessionData.pagination?.totalPages || 0;
@@ -432,7 +433,7 @@ export const SectionSchedule: React.FC = () => {
                         currentPage={params.page || 0}
                         totalPages={paginationInfo.totalPages}
                         totalElements={paginationInfo.total}
-                        pageSize={params.size || 20}
+                        pageSize={params.size || 10}
                         onPageChange={handlePageChange}
                         variant="pages"
                         showInfo={false}

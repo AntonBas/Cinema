@@ -31,7 +31,7 @@ export const GenreTab: React.FC = () => {
   });
 
   const { notifications, showNotification, hideNotification } = useNotification();
-  const { params, setPage, setSearch } = usePagination({ size: 20 });
+  const { params, setPage, setSearch } = usePagination({ size: 10 });
 
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const initialLoadRef = useRef(false);
@@ -63,7 +63,7 @@ export const GenreTab: React.FC = () => {
     try {
       const requestParams = {
         page,
-        size: 20,
+        size: params.size,
         ...(search?.trim() && { search: search.trim() })
       };
 
@@ -86,7 +86,7 @@ export const GenreTab: React.FC = () => {
     } finally {
       loadingDataRef.current = false;
     }
-  }, [getAll, showNotification]);
+  }, [getAll, showNotification, params.size]);
 
   useEffect(() => {
     if (!initialLoadRef.current) {
@@ -103,7 +103,7 @@ export const GenreTab: React.FC = () => {
     }, 100);
 
     return () => clearTimeout(timer);
-  }, [params.page, params.search]);
+  }, [params.page, params.search, loadTabData]);
 
   const handleSearch = useCallback((query: string) => {
     if (searchTimeoutRef.current) {
@@ -202,7 +202,7 @@ export const GenreTab: React.FC = () => {
   const paginationInfo = useMemo(() => {
     const total = tabData.total;
     const page = params.page || 0;
-    const pageSize = params.size || 20;
+    const pageSize = params.size || 10;
     const start = total > 0 ? page * pageSize + 1 : 0;
     const end = Math.min(start + pageSize - 1, total);
     const totalPages = Math.ceil(total / pageSize);
@@ -275,7 +275,7 @@ export const GenreTab: React.FC = () => {
             currentPage={params.page || 0}
             totalPages={paginationInfo.totalPages}
             totalElements={paginationInfo.total}
-            pageSize={params.size || 20}
+            pageSize={params.size || 10}
             onPageChange={handlePageChange}
             variant="pages"
             showInfo={false}
