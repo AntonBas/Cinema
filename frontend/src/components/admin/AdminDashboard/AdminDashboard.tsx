@@ -11,8 +11,7 @@ import type { MovieCardResponse } from '@/types/movie';
 import type { CinemaHallResponse } from '@/types/cinemaHall';
 import type { SessionAdminResponse } from '@/types/session';
 import type { AdminUserListResponse } from '@/types/user';
-import type { TicketTypeResponse } from '@/types/ticketType';
-import type { PromotionResponse } from '@/types/promotion';
+import type { PromotionAdminResponse } from '@/types/promotion';
 import styles from './AdminDashboard.module.css';
 
 interface DashboardStats {
@@ -34,16 +33,6 @@ interface DashboardStats {
     sessionsCompleted: number;
     activeMovies: number;
   };
-  recentActivity: ActivityItem[];
-}
-
-interface ActivityItem {
-  id: string;
-  type: 'movie' | 'hall' | 'session' | 'user' | 'ticket' | 'promotion';
-  action: 'created' | 'updated' | 'deleted' | 'sold' | 'booked' | 'cancelled';
-  title: string;
-  timestamp: string;
-  details?: string;
 }
 
 export const AdminDashboard: React.FC = () => {
@@ -65,8 +54,7 @@ export const AdminDashboard: React.FC = () => {
       newUsers: 0,
       sessionsCompleted: 0,
       activeMovies: 0
-    },
-    recentActivity: []
+    }
   });
 
   const [isLoading, setIsLoading] = useState(true);
@@ -102,7 +90,6 @@ export const AdminDashboard: React.FC = () => {
         hallsResponse,
         sessionsResponse,
         usersResponse,
-        ticketTypesResponse,
         promotionsResponse
       ] = await Promise.all([
         getAdminCurrent({ page: 0, size: 1000 }),
@@ -111,7 +98,6 @@ export const AdminDashboard: React.FC = () => {
         getAllHalls(),
         getSessions({ page: 0, size: 1000 }),
         getUsers({ page: 0, size: 1000 }),
-        getTicketTypes(),
         getPromotions()
       ]);
 
@@ -124,8 +110,7 @@ export const AdminDashboard: React.FC = () => {
       const halls: CinemaHallResponse[] = hallsResponse || [];
       const sessions: SessionAdminResponse[] = sessionsResponse?.content || [];
       const users: AdminUserListResponse[] = usersResponse?.content || [];
-      const ticketTypes: TicketTypeResponse[] = ticketTypesResponse || [];
-      const promotions: PromotionResponse[] = promotionsResponse || [];
+      const promotions: PromotionAdminResponse[] = promotionsResponse?.content || [];
 
       const now = new Date();
 
@@ -152,16 +137,16 @@ export const AdminDashboard: React.FC = () => {
         return sessionEnd <= now;
       });
 
-      const activePromotions = promotions.filter((promo: PromotionResponse) => {
+      const activePromotions = promotions.filter((promo: PromotionAdminResponse) => {
         const endDate = promo.endDate ? new Date(promo.endDate) : null;
         const now = new Date();
         return (!endDate || endDate > now);
       }).length;
 
       const newUsersToday = users.filter((user: AdminUserListResponse) => {
-        const createdAt = new Date(user.lastActivity);
-        return createdAt >= todayStart && createdAt < todayEnd;
-      });
+        const lastActivity = new Date(user.lastActivity);
+        return lastActivity >= todayStart && lastActivity < todayEnd;
+      }).length;
 
       const activeMovies = movies.filter((movie: MovieCardResponse) =>
         movie.status === 'CURRENT' || movie.status === 'UPCOMING'
@@ -215,11 +200,10 @@ export const AdminDashboard: React.FC = () => {
         todaysStats: {
           ticketsSold: todayTicketsSold,
           revenue: todayRevenue,
-          newUsers: newUsersToday.length,
+          newUsers: newUsersToday,
           sessionsCompleted: completedSessions.length,
           activeMovies: activeMovies.length
-        },
-        recentActivity: generateRecentActivity(movies, halls, sessions, users, ticketTypes, promotions)
+        }
       });
 
       setLastUpdated(new Date().toLocaleTimeString('en-US', {
@@ -233,92 +217,6 @@ export const AdminDashboard: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const generateRecentActivity = (
-    movies: MovieCardResponse[],
-    halls: CinemaHallResponse[],
-    sessions: SessionAdminResponse[],
-    users: AdminUserListResponse[],
-    ticketTypes: TicketTypeResponse[],
-    promotions: PromotionResponse[]
-  ): ActivityItem[] => {
-    const activities: ActivityItem[] = [];
-    const now = new Date();
-
-    const addActivity = (
-      type: ActivityItem['type'],
-      action: ActivityItem['action'],
-      title: string,
-      hoursOffset: number,
-      details?: string
-    ) => {
-      const timestamp = new Date(now.getTime() - Math.random() * hoursOffset * 60 * 60 * 1000);
-      activities.push({
-        id: `${type}-${timestamp.getTime()}`,
-        type,
-        action,
-        title,
-        timestamp: timestamp.toISOString(),
-        details
-      });
-    };
-
-    movies.slice(-5).forEach((movie: MovieCardResponse) => {
-      addActivity('movie', Math.random() > 0.3 ? 'created' : 'updated', movie.title, 24);
-    });
-
-    halls.slice(-2).forEach((hall: CinemaHallResponse) => {
-      addActivity('hall', Math.random() > 0.5 ? 'created' : 'updated', hall.name, 96);
-    });
-
-    sessions.slice(-4).forEach((session: SessionAdminResponse) => {
-      const movie = movies.find(m => m.id === session.movieId);
-      const movieTitle = movie?.title || `Session #${session.id}`;
-      const action = Math.random() > 0.8 ? 'cancelled' : 'created';
-      addActivity('session', action, movieTitle, 24,
-        new Date(session.startTime).toLocaleString());
-    });
-
-    ticketTypes.slice(-3).forEach((type: TicketTypeResponse) => {
-      addActivity('ticket', 'created', type.displayName, 120);
-    });
-
-    promotions.slice(-2).forEach((promo: PromotionResponse) => {
-      addActivity('promotion', 'created', promo.title, 120);
-    });
-
-    users.slice(-3).forEach((user: AdminUserListResponse) => {
-      const name = `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email;
-      addActivity('user', Math.random() > 0.7 ? 'created' : 'updated', name, 168);
-    });
-
-    return activities.sort((a: ActivityItem, b: ActivityItem) =>
-      new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-    ).slice(0, 8);
-  };
-
-  const getActivityIcon = (type: string): string => {
-    const icons: Record<string, string> = {
-      movie: '🎬',
-      hall: '🏛️',
-      session: '⏰',
-      user: '👥',
-      ticket: '🎫',
-      promotion: '🎁'
-    };
-    return icons[type] || '📝';
-  };
-
-  const formatTimeAgo = (timestamp: string): string => {
-    const now = new Date();
-    const time = new Date(timestamp);
-    const diffInMinutes = Math.floor((now.getTime() - time.getTime()) / (1000 * 60));
-
-    if (diffInMinutes < 1) return 'Just now';
-    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
-    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
-    return `${Math.floor(diffInMinutes / 1440)}d ago`;
   };
 
   const formatCurrency = (amount: number): string => {
@@ -482,43 +380,6 @@ export const AdminDashboard: React.FC = () => {
             <p className={styles.statNumber}>{stats.averageOccupancyRate}%</p>
             <span className={styles.statLabel}>Avg Occupancy Rate</span>
           </div>
-        </div>
-      </div>
-
-      <div className={styles.activity}>
-        <div className={styles.activityHeader}>
-          <h2>Recent Activity</h2>
-          <span className={styles.activityCount}>{stats.recentActivity.length} activities</span>
-        </div>
-        <div className={styles.activityList}>
-          {stats.recentActivity.length === 0 ? (
-            <div className={styles.emptyActivity}>
-              <p>No recent activity</p>
-            </div>
-          ) : (
-            stats.recentActivity.map(activity => (
-              <div key={activity.id} className={styles.activityItem}>
-                <span className={styles.activityIcon}>{getActivityIcon(activity.type)}</span>
-                <div className={styles.activityContent}>
-                  <div className={styles.activityMain}>
-                    <span className={styles.activityType}>
-                      {activity.type.charAt(0).toUpperCase() + activity.type.slice(1)}
-                    </span>
-                    <span className={`${styles.activityAction} ${styles[activity.action]}`}>
-                      {activity.action}
-                    </span>
-                  </div>
-                  <p className={styles.activityText}>
-                    <strong>{activity.title}</strong>
-                  </p>
-                  {activity.details && (
-                    <span className={styles.activityDetails}>{activity.details}</span>
-                  )}
-                  <span className={styles.activityTime}>{formatTimeAgo(activity.timestamp)}</span>
-                </div>
-              </div>
-            ))
-          )}
         </div>
       </div>
 
