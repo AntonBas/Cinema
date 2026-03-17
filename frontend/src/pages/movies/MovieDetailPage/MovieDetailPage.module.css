@@ -331,6 +331,28 @@
     margin: 0;
 }
 
+.ageRatingGreen {
+    background: var(--color-success);
+}
+
+.ageRatingBlue {
+    background: var(--color-info);
+}
+
+.ageRatingYellow {
+    background: #eab308;
+    color: black;
+}
+
+.ageRatingOrange {
+    background: #f97316;
+    color: white;
+}
+
+.ageRatingRed {
+    background: var(--color-error);
+}
+
 @media (max-width: 480px) {
     .container {
         padding: var(--space-6) var(--space-4);

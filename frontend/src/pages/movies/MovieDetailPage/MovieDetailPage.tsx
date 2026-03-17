@@ -15,6 +15,14 @@ import { Notification } from '@/components/ui/Notification/Notification';
 import { Layout } from '@/components/layout/Layout/Layout';
 import styles from './MovieDetailPage.module.css';
 
+const AGE_RATING_COLORS: Record<string, string> = {
+    'PEGI_3': styles.ageRatingGreen,
+    'PEGI_7': styles.ageRatingBlue,
+    'PEGI_12': styles.ageRatingYellow,
+    'PEGI_16': styles.ageRatingOrange,
+    'PEGI_18': styles.ageRatingRed
+};
+
 export const MovieDetailPage: React.FC = () => {
     const { slug } = useParams<{ slug: string }>();
     const navigate = useNavigate();
@@ -184,6 +192,10 @@ export const MovieDetailPage: React.FC = () => {
         return `${formattedDate} at ${timeString}`;
     };
 
+    const getAgeRatingClass = useCallback((ageRating: string) => {
+        return AGE_RATING_COLORS[ageRating] || styles.ageRatingRed;
+    }, []);
+
     if (loading) {
         return (
             <Layout>
@@ -270,7 +282,7 @@ export const MovieDetailPage: React.FC = () => {
                                 <h1 className={styles.title}>{movie.title}</h1>
                                 <div className={styles.metaInfo}>
                                     <div
-                                        className={styles.ageRating}
+                                        className={`${styles.ageRating} ${getAgeRatingClass(movie.ageRating)}`}
                                         title={AgeRatingDescription[movie.ageRating]}
                                     >
                                         {AgeRatingDisplay[movie.ageRating]}

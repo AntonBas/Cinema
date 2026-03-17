@@ -92,12 +92,13 @@
 }
 
 .ageBadgeYellow {
-    background: var(--color-warning);
-    color: var(--color-text-primary);
+    background: #eab308;
+    color: black;
 }
 
 .ageBadgeOrange {
     background: #f97316;
+    color: white;
 }
 
 .ageBadgeRed {
