@@ -12,6 +12,14 @@ const AGE_RATING_MAP: Record<string, string> = {
     'PEGI_18': '18+'
 };
 
+const AGE_RATING_COLORS: Record<string, string> = {
+    'PEGI_3': styles.ageBadgeGreen,
+    'PEGI_7': styles.ageBadgeBlue,
+    'PEGI_12': styles.ageBadgeYellow,
+    'PEGI_16': styles.ageBadgeOrange,
+    'PEGI_18': styles.ageBadgeRed
+};
+
 const PLACEHOLDER_IMAGE = '/placeholder-poster.jpg';
 
 interface MovieCardProps {
@@ -36,6 +44,11 @@ export const MovieCard: React.FC<MovieCardProps> = React.memo(({ movie }) => {
         [movie.ageRating]
     );
 
+    const ageBadgeClass = useMemo(() =>
+        AGE_RATING_COLORS[movie.ageRating] || styles.ageBadgeRed,
+        [movie.ageRating]
+    );
+
     return (
         <div className={styles.cardWrapper}>
             <Link to={`/movies/${movie.slug}`} className={styles.card}>
@@ -51,7 +64,7 @@ export const MovieCard: React.FC<MovieCardProps> = React.memo(({ movie }) => {
                         <div className={styles.durationBadge}>
                             {movie.durationMinutes}m
                         </div>
-                        <div className={styles.ageBadge}>
+                        <div className={`${styles.ageBadge} ${ageBadgeClass}`}>
                             {ageRatingDisplay}
                         </div>
                     </div>

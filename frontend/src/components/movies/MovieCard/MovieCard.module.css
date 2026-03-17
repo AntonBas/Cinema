@@ -58,7 +58,19 @@
     align-items: flex-end;
 }
 
-.durationBadge,
+.durationBadge {
+    padding: 6px 10px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    min-width: 50px;
+    text-align: center;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: var(--color-overlay-dark);
+    color: white;
+}
+
 .ageBadge {
     padding: 6px 10px;
     border-radius: 20px;
@@ -68,16 +80,28 @@
     text-align: center;
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.durationBadge {
-    background: var(--color-overlay-dark);
     color: white;
 }
 
-.ageBadge {
+.ageBadgeGreen {
+    background: var(--color-success);
+}
+
+.ageBadgeBlue {
+    background: var(--color-info);
+}
+
+.ageBadgeYellow {
+    background: var(--color-warning);
+    color: var(--color-text-primary);
+}
+
+.ageBadgeOrange {
+    background: #f97316;
+}
+
+.ageBadgeRed {
     background: var(--color-error);
-    color: white;
 }
 
 .overlay {
