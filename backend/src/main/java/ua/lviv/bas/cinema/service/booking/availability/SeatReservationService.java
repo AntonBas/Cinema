@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.Seat;
 import ua.lviv.bas.cinema.domain.Session;
 import ua.lviv.bas.cinema.domain.TicketType;
@@ -23,6 +24,7 @@ import ua.lviv.bas.cinema.repository.SessionRepository;
 import ua.lviv.bas.cinema.repository.TicketTypeRepository;
 import ua.lviv.bas.cinema.service.shared.PriceCalculatorService;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -48,8 +50,12 @@ public class SeatReservationService {
 		List<Object[]> bookedSeatData = seatReservationRepository.findBookedSeatIds(session.getHall().getId(),
 				sessionId, statuses);
 
-		Map<Long, Boolean> bookedSeatMap = bookedSeatData.stream()
-				.collect(Collectors.toMap(data -> (Long) data[0], data -> (Boolean) data[1]));
+		Map<Long, Boolean> bookedSeatMap = bookedSeatData.stream().collect(
+				Collectors.toMap(data -> (Long) data[0], data -> (Boolean) data[1], (existing, replacement) -> {
+					log.warn("Duplicate seat ID {} found with values {} and {}, using first value", existing, existing,
+							replacement);
+					return existing;
+				}));
 
 		List<SeatReservationResponse.SeatInfo> seatInfos = allSeats.stream()
 				.map(seat -> buildSeatInfo(seat, bookedSeatMap, sessionId, session, activeTicketTypes))

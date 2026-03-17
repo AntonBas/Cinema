@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.Seat;
 import ua.lviv.bas.cinema.domain.enums.ReservationStatus;
 import ua.lviv.bas.cinema.exception.domain.booking.SeatNotAvailableException;
@@ -12,6 +13,7 @@ import ua.lviv.bas.cinema.exception.domain.cinema.SeatNotFoundException;
 import ua.lviv.bas.cinema.repository.SeatRepository;
 import ua.lviv.bas.cinema.repository.SeatReservationRepository;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AvailabilityValidator {
@@ -41,7 +43,18 @@ public class AvailabilityValidator {
 
 		ReservationStatus status = null;
 		if (isReserved) {
-			status = seatReservationRepository.findStatusBySessionIdAndSeatId(sessionId, seatId).orElse(null);
+			List<ReservationStatus> statuses = seatReservationRepository.findStatusesBySessionIdAndSeatId(sessionId,
+					seatId);
+			if (!statuses.isEmpty()) {
+				if (statuses.contains(ReservationStatus.CONFIRMED)) {
+					status = ReservationStatus.CONFIRMED;
+				} else {
+					status = ReservationStatus.PENDING;
+				}
+				if (statuses.size() > 1) {
+					log.warn("Multiple reservations for seat {} in session {}: {}", seatId, sessionId, statuses);
+				}
+			}
 		}
 
 		return new SeatAvailabilityCheck(!isReserved, status);

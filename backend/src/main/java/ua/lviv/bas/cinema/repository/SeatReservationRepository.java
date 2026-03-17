@@ -1,7 +1,6 @@
 package ua.lviv.bas.cinema.repository;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -19,7 +18,7 @@ public interface SeatReservationRepository extends JpaRepository<SeatReservation
 			@Param("statuses") List<ReservationStatus> statuses);
 
 	@Query("SELECT sr.status FROM SeatReservation sr WHERE sr.session.id = :sessionId AND sr.seat.id = :seatId")
-	Optional<ReservationStatus> findStatusBySessionIdAndSeatId(@Param("sessionId") Long sessionId,
+	List<ReservationStatus> findStatusesBySessionIdAndSeatId(@Param("sessionId") Long sessionId,
 			@Param("seatId") Long seatId);
 
 	List<SeatReservation> findBySessionId(Long sessionId);
