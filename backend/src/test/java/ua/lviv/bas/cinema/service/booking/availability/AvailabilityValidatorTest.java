@@ -39,6 +39,7 @@ public class AvailabilityValidatorTest {
 	private static final Long PENDING_SEAT_ID = 5L;
 	private static final Long INACTIVE_SEAT_ID = 4L;
 	private static final Long NON_EXISTENT_SEAT_ID = 999L;
+	private static final Long DUPLICATE_SEAT_ID = 6L;
 
 	private Seat availableSeat;
 	private Seat inactiveSeat;
@@ -124,8 +125,8 @@ public class AvailabilityValidatorTest {
 	void getSeatAvailabilityStatus_WhenSeatConfirmed_ShouldReturnAvailableFalseAndStatusConfirmed() {
 		when(seatReservationRepository.existsBySessionIdAndSeatIdAndStatusIn(SESSION_ID, BOOKED_SEAT_ID,
 				List.of(ReservationStatus.PENDING, ReservationStatus.CONFIRMED))).thenReturn(true);
-		when(seatReservationRepository.findStatusBySessionIdAndSeatId(SESSION_ID, BOOKED_SEAT_ID))
-				.thenReturn(Optional.of(ReservationStatus.CONFIRMED));
+		when(seatReservationRepository.findStatusesBySessionIdAndSeatId(SESSION_ID, BOOKED_SEAT_ID))
+				.thenReturn(List.of(ReservationStatus.CONFIRMED));
 
 		AvailabilityValidator.SeatAvailabilityCheck result = availabilityValidator.getSeatAvailabilityStatus(SESSION_ID,
 				BOOKED_SEAT_ID);
@@ -140,8 +141,8 @@ public class AvailabilityValidatorTest {
 	void getSeatAvailabilityStatus_WhenSeatPending_ShouldReturnAvailableFalseAndStatusPending() {
 		when(seatReservationRepository.existsBySessionIdAndSeatIdAndStatusIn(SESSION_ID, PENDING_SEAT_ID,
 				List.of(ReservationStatus.PENDING, ReservationStatus.CONFIRMED))).thenReturn(true);
-		when(seatReservationRepository.findStatusBySessionIdAndSeatId(SESSION_ID, PENDING_SEAT_ID))
-				.thenReturn(Optional.of(ReservationStatus.PENDING));
+		when(seatReservationRepository.findStatusesBySessionIdAndSeatId(SESSION_ID, PENDING_SEAT_ID))
+				.thenReturn(List.of(ReservationStatus.PENDING));
 
 		AvailabilityValidator.SeatAvailabilityCheck result = availabilityValidator.getSeatAvailabilityStatus(SESSION_ID,
 				PENDING_SEAT_ID);
@@ -156,8 +157,8 @@ public class AvailabilityValidatorTest {
 	void getSeatAvailabilityStatus_WhenSeatReservedButStatusNotFound_ShouldReturnAvailableFalseAndStatusNull() {
 		when(seatReservationRepository.existsBySessionIdAndSeatIdAndStatusIn(SESSION_ID, BOOKED_SEAT_ID,
 				List.of(ReservationStatus.PENDING, ReservationStatus.CONFIRMED))).thenReturn(true);
-		when(seatReservationRepository.findStatusBySessionIdAndSeatId(SESSION_ID, BOOKED_SEAT_ID))
-				.thenReturn(Optional.empty());
+		when(seatReservationRepository.findStatusesBySessionIdAndSeatId(SESSION_ID, BOOKED_SEAT_ID))
+				.thenReturn(List.of());
 
 		AvailabilityValidator.SeatAvailabilityCheck result = availabilityValidator.getSeatAvailabilityStatus(SESSION_ID,
 				BOOKED_SEAT_ID);
@@ -166,5 +167,35 @@ public class AvailabilityValidatorTest {
 		assertThat(result.status()).isNull();
 		assertThat(result.isTemporarilyReserved()).isFalse();
 		assertThat(result.isConfirmed()).isFalse();
+	}
+
+	@Test
+	void getSeatAvailabilityStatus_WhenMultipleReservationsWithConfirmed_ShouldReturnConfirmed() {
+		when(seatReservationRepository.existsBySessionIdAndSeatIdAndStatusIn(SESSION_ID, DUPLICATE_SEAT_ID,
+				List.of(ReservationStatus.PENDING, ReservationStatus.CONFIRMED))).thenReturn(true);
+		when(seatReservationRepository.findStatusesBySessionIdAndSeatId(SESSION_ID, DUPLICATE_SEAT_ID))
+				.thenReturn(List.of(ReservationStatus.PENDING, ReservationStatus.CONFIRMED));
+
+		AvailabilityValidator.SeatAvailabilityCheck result = availabilityValidator.getSeatAvailabilityStatus(SESSION_ID,
+				DUPLICATE_SEAT_ID);
+
+		assertThat(result.available()).isFalse();
+		assertThat(result.status()).isEqualTo(ReservationStatus.CONFIRMED);
+		assertThat(result.isConfirmed()).isTrue();
+	}
+
+	@Test
+	void getSeatAvailabilityStatus_WhenMultipleReservationsWithPendingOnly_ShouldReturnPending() {
+		when(seatReservationRepository.existsBySessionIdAndSeatIdAndStatusIn(SESSION_ID, DUPLICATE_SEAT_ID,
+				List.of(ReservationStatus.PENDING, ReservationStatus.CONFIRMED))).thenReturn(true);
+		when(seatReservationRepository.findStatusesBySessionIdAndSeatId(SESSION_ID, DUPLICATE_SEAT_ID))
+				.thenReturn(List.of(ReservationStatus.PENDING, ReservationStatus.PENDING));
+
+		AvailabilityValidator.SeatAvailabilityCheck result = availabilityValidator.getSeatAvailabilityStatus(SESSION_ID,
+				DUPLICATE_SEAT_ID);
+
+		assertThat(result.available()).isFalse();
+		assertThat(result.status()).isEqualTo(ReservationStatus.PENDING);
+		assertThat(result.isTemporarilyReserved()).isTrue();
 	}
 }
