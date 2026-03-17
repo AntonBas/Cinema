@@ -3,7 +3,6 @@ import { useMovies } from '@/hooks/features/movies/useMovies';
 import { useCinemaHalls } from '@/hooks/features/cinemaHalls/useCinemaHalls';
 import { useSession } from '@/hooks/features/sessions/useSession';
 import { useAdminUsers } from '@/hooks/features/admin/useAdminUsers';
-import { useTicketType } from '@/hooks/features/ticketType/useTicketType';
 import { usePromotion } from '@/hooks/features/promotion/usePromotion';
 import { useNotification } from '@/hooks/common/useNotification';
 import { Notification } from '@/components/ui/Notification/Notification';
@@ -66,7 +65,6 @@ export const AdminDashboard: React.FC = () => {
   const { getAllHalls } = useCinemaHalls();
   const { getSessions } = useSession();
   const { getUsers } = useAdminUsers();
-  const { getAll: getTicketTypes } = useTicketType();
   const { getAll: getPromotions } = usePromotion();
 
   useEffect(() => {
@@ -220,7 +218,7 @@ export const AdminDashboard: React.FC = () => {
   };
 
   const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat('uk-UA', {
+    return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'UAH',
       minimumFractionDigits: 0,
