@@ -50,7 +50,6 @@ export interface SessionScheduleResponse {
     startTime: string;
     endTime: string;
     basePrice: string;
-    status: CinemaSessionStatus;
     availableSeats: number;
     movieId: number;
     movieTitle: string;

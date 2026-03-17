@@ -14,14 +14,14 @@ import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
 
 interface SessionParams extends SearchParams, SessionFilterRequest { }
 
-interface PublicSessionParams extends SearchParams {
+interface PublicSessionParams {
     searchTerm?: string;
     date?: string;
 }
 
 export const useSession = () => {
     const adminSessionsApi = useApi<PageResponse<SessionAdminResponse>>();
-    const publicSessionsApi = useApi<PageResponse<SessionScheduleResponse>>();
+    const publicSessionsApi = useApi<SessionScheduleResponse[]>();
     const adminSessionDetailApi = useApi<SessionAdminResponse>();
     const publicSessionDetailApi = useApi<SessionScheduleResponse>();
     const sessionSeatsApi = useApi<SeatReservationResponse>();
@@ -48,12 +48,11 @@ export const useSession = () => {
     }, [adminSessionsApi]);
 
     const getPublicSessions = useCallback(async (params?: PublicSessionParams) => {
-        const { searchTerm, date, ...restParams } = params || {};
         const response = await publicSessionsApi.execute(
-            () => sessionApi.public.getSessions(searchTerm, date, restParams),
+            () => sessionApi.public.getSessions(params?.searchTerm, params?.date),
             {
-                cacheKey: searchTerm || date
-                    ? `public_sessions_${searchTerm || ''}_${date || ''}_${JSON.stringify(restParams)}`
+                cacheKey: params?.searchTerm || params?.date
+                    ? `public_sessions_${params.searchTerm || ''}_${params.date || ''}`
                     : 'public_sessions_all',
                 cacheTime: 30 * 1000,
                 showErrorNotification: false,
@@ -183,14 +182,12 @@ export const useSession = () => {
 
     return {
         sessions: adminSessionsApi.data?.content || [],
-        scheduleSessions: publicSessionsApi.data?.content || [],
+        scheduleSessions: publicSessionsApi.data || [],
         adminSession: adminSessionDetailApi.data,
         publicSession: publicSessionDetailApi.data,
         sessionSeats: sessionSeatsApi.data,
 
         pagination: adminSessionsApi.data,
-        schedulePagination: publicSessionsApi.data,
-
         loading,
         error,
 

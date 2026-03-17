@@ -1,6 +1,7 @@
 import React, { useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { SessionScheduleResponse } from '@/types/session';
+import { getAgeRatingDisplay } from '@/types/movie';
 import { Button } from '@/components/ui';
 import styles from './SessionList.module.css';
 
@@ -15,6 +16,14 @@ interface MovieGroup {
     movieDuration: number;
     sessions: SessionScheduleResponse[];
 }
+
+const AGE_RATING_COLORS: Record<string, string> = {
+    'PEGI_3': styles.ageRatingGreen,
+    'PEGI_7': styles.ageRatingBlue,
+    'PEGI_12': styles.ageRatingYellow,
+    'PEGI_16': styles.ageRatingOrange,
+    'PEGI_18': styles.ageRatingRed
+};
 
 const getPosterUrl = (movieId: number): string => {
     return `/api/movies/${movieId}/poster`;
@@ -31,7 +40,7 @@ export const SessionList: React.FC<SessionListProps> = ({ sessions }) => {
                 groupedMap[session.movieId] = {
                     movieId: session.movieId,
                     movieTitle: session.movieTitle,
-                    movieAgeRating: session.movieAgeRating || 'N/A',
+                    movieAgeRating: session.movieAgeRating,
                     movieDuration: session.movieDuration,
                     sessions: []
                 };
@@ -123,7 +132,9 @@ export const SessionList: React.FC<SessionListProps> = ({ sessions }) => {
                             </div>
 
                             <div className={styles.movieMeta}>
-                                <span className={styles.ageRating}>{movieGroup.movieAgeRating}</span>
+                                <span className={`${styles.ageRating} ${AGE_RATING_COLORS[movieGroup.movieAgeRating] || styles.ageRatingRed}`}>
+                                    {getAgeRatingDisplay(movieGroup.movieAgeRating as any)}
+                                </span>
                                 <span className={styles.duration}>{formatDuration(movieGroup.movieDuration)}</span>
                                 <span className={styles.sessionCount}>
                                     {movieGroup.sessions.length} session{movieGroup.sessions.length !== 1 ? 's' : ''}
@@ -135,7 +146,7 @@ export const SessionList: React.FC<SessionListProps> = ({ sessions }) => {
                     <div className={styles.sessionsContainer}>
                         <div className={styles.sessionsGrid}>
                             {movieGroup.sessions.map(session => {
-                                const isAvailable = session.status === 'SCHEDULED' && session.availableSeats > 0;
+                                const isAvailable = session.availableSeats > 0;
 
                                 return (
                                     <div
@@ -166,16 +177,13 @@ export const SessionList: React.FC<SessionListProps> = ({ sessions }) => {
 
                                             <div className={styles.seats}>
                                                 <span className={styles.seatsCount}>
-                                                    {session.availableSeats} seats
-                                                </span>
-                                                <span className={styles.seatsTotal}>
-                                                    / {session.hallCapacity}
+                                                    {session.hallCapacity} / {session.availableSeats}
                                                 </span>
                                             </div>
 
                                             <div className={styles.sessionStatus}>
-                                                <span className={`${styles.statusBadge} ${!isAvailable ? styles.disabled : ''}`}>
-                                                    {isAvailable ? 'Book Now' : 'Unavailable'}
+                                                <span className={styles.statusBadge}>
+                                                    {isAvailable ? 'Book Now' : 'Sold Out'}
                                                 </span>
                                             </div>
                                         </div>

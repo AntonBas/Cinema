@@ -75,11 +75,31 @@
 
 .ageRating {
     padding: 0.375rem 0.875rem;
-    background: var(--color-primary-light);
-    color: var(--color-primary-dark);
     border-radius: var(--radius-sm);
     font-size: 0.875rem;
     font-weight: 600;
+    color: white;
+}
+
+.ageRatingGreen {
+    background: var(--color-success);
+}
+
+.ageRatingBlue {
+    background: var(--color-info);
+}
+
+.ageRatingYellow {
+    background: #eab308;
+    color: black;
+}
+
+.ageRatingOrange {
+    background: #f97316;
+}
+
+.ageRatingRed {
+    background: var(--color-error);
 }
 
 .duration {

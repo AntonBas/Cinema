@@ -17,8 +17,6 @@ const SessionsPage: React.FC = () => {
     const [sessions, setSessions] = useState<SessionScheduleResponse[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [page, setPage] = useState(0);
-    const [totalPages, setTotalPages] = useState(0);
     const [availableDates, setAvailableDates] = useState<string[]>([]);
     const [initialLoad, setInitialLoad] = useState(true);
 
@@ -40,25 +38,15 @@ const SessionsPage: React.FC = () => {
         setError(null);
 
         try {
-            const response = await sessionApi.public.getSessions(
-                undefined,
-                selectedDate,
-                {
-                    page,
-                    size: 50,
-                    sort: 'startTime,asc'
-                }
-            );
+            const sessionsData = await sessionApi.public.getSessions(undefined, selectedDate);
+            const data = sessionsData?.data || [];
 
-            const data = response?.data || null;
-            let sessionsData = data?.content || [];
-
+            let filteredData = data;
             if (selectedMovieId) {
-                sessionsData = sessionsData.filter(s => s.movieId === selectedMovieId);
+                filteredData = data.filter(s => s.movieId === selectedMovieId);
             }
 
-            setSessions(sessionsData);
-            setTotalPages(data?.totalPages || 0);
+            setSessions(filteredData);
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Failed to load sessions';
             setError(errorMessage);
@@ -67,24 +55,14 @@ const SessionsPage: React.FC = () => {
         } finally {
             setLoading(false);
         }
-    }, [selectedDate, selectedMovieId, page, showNotification]);
+    }, [selectedDate, selectedMovieId, showNotification]);
 
     const fetchAvailableDates = useCallback(async () => {
         try {
-            const response = await sessionApi.public.getSessions(
-                undefined,
-                undefined,
-                {
-                    page: 0,
-                    size: 1000,
-                    sort: 'startTime,asc'
-                }
-            );
+            const response = await sessionApi.public.getSessions();
+            const data = response?.data || [];
 
-            const data = response?.data || null;
-            const sessionsData = data?.content || [];
-
-            const dates = sessionsData
+            const dates = data
                 .map(session => new Date(session.startTime).toISOString().split('T')[0])
                 .filter((date, index, self) => self.indexOf(date) === index)
                 .sort();
@@ -108,39 +86,21 @@ const SessionsPage: React.FC = () => {
             if (selectedMovieId) {
                 params.set('movieId', selectedMovieId.toString());
             }
-            if (page > 0) {
-                params.set('page', page.toString());
-            }
             setSearchParams(params, { replace: true });
         }
-    }, [selectedDate, selectedMovieId, page, setSearchParams, initialLoad]);
+    }, [selectedDate, selectedMovieId, setSearchParams, initialLoad]);
 
     const handleDateChange = (date: string) => {
         setSelectedDate(date);
-        setPage(0);
     };
 
     const handleMovieChange = (movieId: number | undefined) => {
         setSelectedMovieId(movieId);
-        setPage(0);
     };
 
     const handleClearFilters = () => {
         setSelectedDate(new Date().toISOString().split('T')[0]);
         setSelectedMovieId(undefined);
-        setPage(0);
-    };
-
-    const handlePreviousPage = () => {
-        if (page > 0) {
-            setPage(page - 1);
-        }
-    };
-
-    const handleNextPage = () => {
-        if (page < totalPages - 1) {
-            setPage(page + 1);
-        }
     };
 
     const handleRefresh = () => {
@@ -248,35 +208,6 @@ const SessionsPage: React.FC = () => {
                 ) : hasSessions ? (
                     <>
                         <SessionList sessions={sessions} />
-
-                        {totalPages > 1 && (
-                            <div className={styles.pagination}>
-                                <Button
-                                    variant="secondary"
-                                    onClick={handlePreviousPage}
-                                    disabled={page === 0}
-                                    className={styles.paginationButton}
-                                >
-                                    ← Previous
-                                </Button>
-                                <div className={styles.paginationInfo}>
-                                    <span className={styles.pageInfo}>
-                                        Page {page + 1} of {totalPages}
-                                    </span>
-                                    <span className={styles.totalInfo}>
-                                        {sessions.length} current sessions
-                                    </span>
-                                </div>
-                                <Button
-                                    variant="secondary"
-                                    onClick={handleNextPage}
-                                    disabled={page >= totalPages - 1}
-                                    className={styles.paginationButton}
-                                >
-                                    Next →
-                                </Button>
-                            </div>
-                        )}
                     </>
                 ) : (
                     <div className={styles.emptyState}>

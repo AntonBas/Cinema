@@ -37,20 +37,16 @@ export const sessionApi = {
     },
 
     public: {
-        getSessions: (searchTerm?: string, date?: string, params?: SearchParams) =>
-            api.get<PageResponse<SessionScheduleResponse>>(PUBLIC_URL, {
-                params: {
-                    searchTerm,
-                    date,
-                    ...params,
-                }
+        getSessions: (searchTerm?: string, date?: string) =>
+            api.get<SessionScheduleResponse[]>(PUBLIC_URL, {
+                params: { searchTerm, date }
             }),
 
         getById: (id: number) =>
             api.get<SessionScheduleResponse>(`${PUBLIC_URL}/${id}`),
 
         getSeatAvailability: (sessionId: number) =>
-            api.get<SeatReservationResponse>(`${PUBLIC_URL}/${sessionId}/seats`),
+            api.get<SeatReservationResponse>(`${PUBLIC_URL}/${sessionId}/seats/availability`),
     }
 };
 
@@ -67,8 +63,8 @@ export const sessionKeys = {
     public: {
         all: ['sessions', 'public'] as const,
         lists: () => [...sessionKeys.public.all, 'list'] as const,
-        list: (searchTerm?: string, date?: string, params?: SearchParams) =>
-            [...sessionKeys.public.lists(), { searchTerm, date, ...params }] as const,
+        list: (searchTerm?: string, date?: string) =>
+            [...sessionKeys.public.lists(), { searchTerm, date }] as const,
         details: () => [...sessionKeys.public.all, 'detail'] as const,
         detail: (id: number) => [...sessionKeys.public.details(), id] as const,
         seats: (id: number) => [...sessionKeys.public.detail(id), 'seats'] as const,
