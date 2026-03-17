@@ -33,7 +33,7 @@ export const useMovies = () => {
         searchApi.error || mutationApi.error);
 
     const getAdminCurrent = useCallback(async (params?: MovieFilterParams, skipCache: boolean = false) => {
-        const cacheKey = `admin_current_${JSON.stringify(params)}`;
+        const cacheKey = `admin_current_${JSON.stringify(params || {})}`;
         if (skipCache) {
             adminCurrentApi.invalidateCache(cacheKey);
         }
@@ -49,7 +49,7 @@ export const useMovies = () => {
     }, [adminCurrentApi]);
 
     const getAdminUpcoming = useCallback(async (params?: MovieFilterParams, skipCache: boolean = false) => {
-        const cacheKey = `admin_upcoming_${JSON.stringify(params)}`;
+        const cacheKey = `admin_upcoming_${JSON.stringify(params || {})}`;
         if (skipCache) {
             adminUpcomingApi.invalidateCache(cacheKey);
         }
@@ -65,7 +65,7 @@ export const useMovies = () => {
     }, [adminUpcomingApi]);
 
     const getAdminArchived = useCallback(async (params?: MovieFilterParams, skipCache: boolean = false) => {
-        const cacheKey = `admin_archived_${JSON.stringify(params)}`;
+        const cacheKey = `admin_archived_${JSON.stringify(params || {})}`;
         if (skipCache) {
             adminArchivedApi.invalidateCache(cacheKey);
         }
@@ -81,7 +81,7 @@ export const useMovies = () => {
     }, [adminArchivedApi]);
 
     const getPublicCurrent = useCallback(async (params?: SearchParams, skipCache: boolean = false) => {
-        const cacheKey = `public_current_${JSON.stringify(params)}`;
+        const cacheKey = `public_current_${JSON.stringify(params || {})}`;
         if (skipCache) {
             publicCurrentApi.invalidateCache(cacheKey);
         }
@@ -97,7 +97,7 @@ export const useMovies = () => {
     }, [publicCurrentApi]);
 
     const getPublicUpcoming = useCallback(async (params?: SearchParams, skipCache: boolean = false) => {
-        const cacheKey = `public_upcoming_${JSON.stringify(params)}`;
+        const cacheKey = `public_upcoming_${JSON.stringify(params || {})}`;
         if (skipCache) {
             publicUpcomingApi.invalidateCache(cacheKey);
         }
@@ -145,7 +145,7 @@ export const useMovies = () => {
     }, [movieDetailApi]);
 
     const searchMoviesForSession = useCallback(async (search?: string, skipCache: boolean = false) => {
-        const cacheKey = `session_search_${search}`;
+        const cacheKey = `session_search_${search || ''}`;
         if (skipCache) {
             searchApi.invalidateCache(cacheKey);
         }

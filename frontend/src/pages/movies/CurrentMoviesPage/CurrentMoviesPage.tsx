@@ -1,22 +1,14 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useMovies } from '@/hooks/features/movies/useMovies';
 import { MovieList } from '@/components/movies/MovieList/MovieList';
 import { useNotification } from '@/hooks/common/useNotification';
 import { Notification } from '@/components/ui/Notification/Notification';
-import type { MovieCardResponse } from '@/types/movie';
 import styles from './CurrentMoviesPage.module.css';
 
 export const CurrentMoviesPage: React.FC = () => {
     const { publicCurrent, loading, error, getPublicCurrent } = useMovies();
     const { notifications, showNotification, hideNotification } = useNotification();
-    const [moviesList, setMoviesList] = useState<MovieCardResponse[]>([]);
     const hasLoaded = useRef(false);
-
-    useEffect(() => {
-        if (publicCurrent && Array.isArray(publicCurrent)) {
-            setMoviesList(publicCurrent);
-        }
-    }, [publicCurrent]);
 
     useEffect(() => {
         if (!hasLoaded.current) {
@@ -37,7 +29,7 @@ export const CurrentMoviesPage: React.FC = () => {
     return (
         <div className={styles.page}>
             <MovieList
-                movies={moviesList}
+                movies={publicCurrent}
                 loading={loading}
                 error={errorObject}
                 emptyMessage="No movies currently playing"
