@@ -17,6 +17,7 @@ import org.springframework.stereotype.Repository;
 import jakarta.persistence.LockModeType;
 import ua.lviv.bas.cinema.domain.Session;
 import ua.lviv.bas.cinema.domain.projection.SessionAdminProjection;
+import ua.lviv.bas.cinema.domain.projection.SessionScheduleProjection;
 
 @Repository
 public interface SessionRepository extends JpaRepository<Session, Long>, JpaSpecificationExecutor<Session> {
@@ -104,7 +105,6 @@ public interface SessionRepository extends JpaRepository<Session, Long>, JpaSpec
 	@Query(value = """
 			SELECT s.* FROM sessions s
 			JOIN movies m ON m.id = s.movie_id
-			JOIN cinema_halls h ON h.id = s.hall_id
 			WHERE s.status = 'ONGOING'
 			AND (s.start_time + (m.duration_minutes * INTERVAL '1 minute')) <= :currentTime
 			""", nativeQuery = true)
@@ -139,6 +139,31 @@ public interface SessionRepository extends JpaRepository<Session, Long>, JpaSpec
 			""", nativeQuery = true)
 	List<Object[]> findAvailableSeatsBatch(@Param("sessionIds") List<Long> sessionIds);
 
-	@Query("SELECT s.id FROM Session s WHERE s.status = 'SCHEDULED' AND s.startTime > :currentTime")
-	Page<Long> findScheduledSessionIds(@Param("currentTime") LocalDateTime currentTime, Pageable pageable);
+	@Query(value = """
+			SELECT
+			    s.id,
+			    s.start_time as startTime,
+			    (s.start_time + (m.duration_minutes * INTERVAL '1 minute')) as endTime,
+			    s.base_price as basePrice,
+			    (SELECT COUNT(seat.id) FROM seats seat WHERE seat.hall_id = h.id) -
+			    (SELECT COUNT(sr.id) FROM seat_reservations sr WHERE sr.session_id = s.id AND sr.status IN ('PENDING', 'CONFIRMED', 'CHECKED_IN')) as availableSeats,
+			    m.id as movieId,
+			    m.title as movieTitle,
+			    m.poster_file_name as moviePosterFileName,
+			    m.age_rating as movieAgeRating,
+			    m.duration_minutes as movieDuration,
+			    h.id as hallId,
+			    h.name as hallName,
+			    (SELECT COUNT(seat.id) FROM seats seat WHERE seat.hall_id = h.id) as hallCapacity
+			FROM sessions s
+			JOIN movies m ON m.id = s.movie_id
+			JOIN cinema_halls h ON h.id = s.hall_id
+			WHERE s.status = 'SCHEDULED'
+			  AND s.start_time >= :fromDate
+			  AND s.start_time <= :toDate
+			  AND (:searchTerm IS NULL OR LOWER(m.title) LIKE LOWER(CONCAT('%', :searchTerm, '%')))
+			ORDER BY m.title, s.start_time ASC
+			""", nativeQuery = true)
+	List<SessionScheduleProjection> findScheduleSessions(@Param("fromDate") LocalDateTime fromDate,
+			@Param("toDate") LocalDateTime toDate, @Param("searchTerm") String searchTerm);
 }

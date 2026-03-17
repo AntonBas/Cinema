@@ -34,6 +34,7 @@ public interface SessionMapper {
 	@Mapping(target = "hallName", source = "hall.name")
 	SessionAdminResponse toAdminResponse(Session session);
 
+	@Mapping(target = "availableSeats", ignore = true)
 	SessionScheduleResponse toScheduleResponse(SessionScheduleProjection projection);
 
 	@Mapping(target = "endTime", expression = "java(session.getStartTime().plusMinutes(session.getMovie().getDurationMinutes()))")
@@ -44,6 +45,8 @@ public interface SessionMapper {
 	@Mapping(target = "movieDuration", source = "movie.durationMinutes")
 	@Mapping(target = "hallId", source = "hall.id")
 	@Mapping(target = "hallName", source = "hall.name")
+	@Mapping(target = "hallCapacity", expression = "java(session.getHall().getCapacity())")
+	@Mapping(target = "availableSeats", ignore = true)
 	SessionScheduleResponse toScheduleResponse(Session session);
 
 	@Mapping(target = "id", ignore = true)

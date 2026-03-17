@@ -1,10 +1,8 @@
 package ua.lviv.bas.cinema.controller.api;
 
 import java.time.LocalDate;
+import java.util.List;
 
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,13 +12,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import ua.lviv.bas.cinema.dto.common.PageResponse;
 import ua.lviv.bas.cinema.dto.session.response.SessionScheduleResponse;
 import ua.lviv.bas.cinema.service.cinema.SessionService;
 
@@ -34,26 +30,23 @@ public class SessionController {
 	private final SessionService sessionService;
 
 	@GetMapping
-	@Operation(summary = "Get schedule sessions", description = "Get paginated list of upcoming sessions.")
+	@Operation(summary = "Get schedule sessions")
 	@ApiResponse(responseCode = "200", description = "Sessions retrieved successfully")
-	public ResponseEntity<PageResponse<SessionScheduleResponse>> getScheduleSessions(
+	public ResponseEntity<List<SessionScheduleResponse>> getScheduleSessions(
 			@RequestParam(required = false) String searchTerm,
-			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
-			@Parameter(hidden = true) @PageableDefault(size = 12, sort = "startTime", direction = Sort.Direction.ASC) Pageable pageable) {
+			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
 
-		log.info("GET /api/sessions - Getting schedule sessions with searchTerm={}, date={}", searchTerm, date);
-
-		PageResponse<SessionScheduleResponse> page = sessionService.getScheduleSessions(searchTerm, date, pageable);
-		return ResponseEntity.ok(page);
+		log.info("Getting schedule sessions for date: {}, search: {}", date, searchTerm);
+		List<SessionScheduleResponse> sessions = sessionService.getScheduleSessions(searchTerm, date);
+		return ResponseEntity.ok(sessions);
 	}
 
 	@GetMapping("/{id}")
-	@Operation(summary = "Get session by ID", description = "Retrieve session details for public view.")
+	@Operation(summary = "Get session by ID")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Session found"),
-			@ApiResponse(responseCode = "404", description = "Session not found or not available") })
-	public ResponseEntity<SessionScheduleResponse> getSessionById(
-			@Parameter(description = "ID of the session", required = true, example = "1") @PathVariable Long id) {
-		log.info("GET /api/sessions/{} - Retrieving session for public", id);
+			@ApiResponse(responseCode = "404", description = "Session not found") })
+	public ResponseEntity<SessionScheduleResponse> getSessionById(@PathVariable Long id) {
+		log.info("Retrieving session {}", id);
 		SessionScheduleResponse session = sessionService.getSessionForPublic(id);
 		return ResponseEntity.ok(session);
 	}

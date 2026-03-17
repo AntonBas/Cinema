@@ -3,8 +3,6 @@ package ua.lviv.bas.cinema.domain.projection;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-import ua.lviv.bas.cinema.domain.enums.CinemaSessionStatus;
-
 public interface SessionScheduleProjection {
 	Long getId();
 
@@ -13,8 +11,6 @@ public interface SessionScheduleProjection {
 	LocalDateTime getEndTime();
 
 	BigDecimal getBasePrice();
-
-	CinemaSessionStatus getStatus();
 
 	Long getMovieId();
 

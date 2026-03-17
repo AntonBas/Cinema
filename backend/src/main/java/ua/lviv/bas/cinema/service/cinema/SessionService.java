@@ -12,7 +12,6 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,10 +22,9 @@ import ua.lviv.bas.cinema.domain.Movie;
 import ua.lviv.bas.cinema.domain.Session;
 import ua.lviv.bas.cinema.domain.enums.CinemaSessionStatus;
 import ua.lviv.bas.cinema.domain.projection.SessionAdminProjection;
-import ua.lviv.bas.cinema.domain.specification.SessionSpecification;
+import ua.lviv.bas.cinema.domain.projection.SessionScheduleProjection;
 import ua.lviv.bas.cinema.dto.common.PageResponse;
 import ua.lviv.bas.cinema.dto.session.request.SessionCreateRequest;
-import ua.lviv.bas.cinema.dto.session.request.SessionFilterRequest;
 import ua.lviv.bas.cinema.dto.session.request.SessionUpdateRequest;
 import ua.lviv.bas.cinema.dto.session.response.SessionAdminResponse;
 import ua.lviv.bas.cinema.dto.session.response.SessionScheduleResponse;
@@ -49,34 +47,33 @@ public class SessionService {
 	private final SessionMapper sessionMapper;
 	private final MovieRepository movieRepository;
 	private final CinemaHallService cinemaHallService;
-	private final SessionSpecification sessionSpecification;
 
-	@Cacheable(key = "'public:' + #searchTerm + ':' + #date + ':' + #pageable.pageNumber + ':' + #pageable.pageSize")
-	public PageResponse<SessionScheduleResponse> getScheduleSessions(String searchTerm, LocalDate date,
-			Pageable pageable) {
+	@Cacheable(key = "'public:' + #searchTerm + ':' + #date")
+	public List<SessionScheduleResponse> getScheduleSessions(String searchTerm, LocalDate date) {
+		LocalDateTime startOfDay = date.atStartOfDay();
+		LocalDateTime endOfDay = date.plusDays(1).atStartOfDay();
 
-		Specification<Session> spec = sessionSpecification.buildForSchedule(searchTerm, date);
+		List<SessionScheduleProjection> projections = sessionRepository.findScheduleSessions(startOfDay, endOfDay,
+				searchTerm);
 
-		Page<Session> sessionsPage = sessionRepository.findAll(spec, pageable);
+		Map<Long, Integer> availableSeats = getAvailableSeatsBatch(
+				projections.stream().map(SessionScheduleProjection::getId).collect(Collectors.toList()));
 
-		List<SessionScheduleResponse> responses = sessionsPage.getContent().stream().map(session -> {
-			SessionScheduleResponse response = sessionMapper.toScheduleResponse(session);
-			response.setAvailableSeats(getAvailableSeats(session.getId()));
+		return projections.stream().map(projection -> {
+			SessionScheduleResponse response = sessionMapper.toScheduleResponse(projection);
+			response.setAvailableSeats(availableSeats.getOrDefault(projection.getId(), 0));
 			return response;
 		}).collect(Collectors.toList());
-
-		Page<SessionScheduleResponse> responsePage = new PageImpl<>(responses, pageable,
-				sessionsPage.getTotalElements());
-
-		return PageResponse.from(responsePage);
 	}
 
-	@Cacheable(key = "'admin:' + #filter.hashCode() + ':' + #pageable.pageNumber + ':' + #pageable.pageSize")
-	public PageResponse<SessionAdminResponse> getSessionsForAdmin(SessionFilterRequest filter, Pageable pageable) {
-		String status = filter.getStatus() != null ? filter.getStatus().name() : null;
+	@Cacheable(key = "'admin:' + #hallId + ':' + #movieTitle + ':' + #status + ':' + #dateFrom + ':' + #dateTo + ':' + #pageable.pageNumber + ':' + #pageable.pageSize")
+	public PageResponse<SessionAdminResponse> getSessionsForAdmin(Long hallId, String movieTitle,
+			CinemaSessionStatus status, LocalDate dateFrom, LocalDate dateTo, Pageable pageable) {
 
-		Page<SessionAdminProjection> projectionPage = sessionRepository.findAdminSessionsNative(filter.getHallId(),
-				filter.getMovieTitle(), status, filter.getDateFrom(), filter.getDateTo(), pageable);
+		String statusStr = status != null ? status.name() : null;
+
+		Page<SessionAdminProjection> projectionPage = sessionRepository.findAdminSessionsNative(hallId, movieTitle,
+				statusStr, dateFrom, dateTo, pageable);
 
 		List<SessionAdminResponse> responses = projectionPage.getContent().stream().map(sessionMapper::toAdminResponse)
 				.collect(Collectors.toList());
@@ -193,9 +190,8 @@ public class SessionService {
 		Session session = sessionRepository.findByIdWithLock(sessionId)
 				.orElseThrow(() -> new SessionNotFoundException(sessionId));
 
-		if (session.getStatus() == CinemaSessionStatus.CANCELLED) {
+		if (session.getStatus() == CinemaSessionStatus.CANCELLED)
 			return;
-		}
 
 		if (!session.getStatus().isActive()) {
 			throw SessionOperationException.cannotCancelInactive();

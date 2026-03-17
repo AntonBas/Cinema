@@ -8,7 +8,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import ua.lviv.bas.cinema.domain.enums.CinemaSessionStatus;
 
 @Data
 @Builder
@@ -28,9 +27,6 @@ public class SessionScheduleResponse {
 
 	@Schema(description = "Base price", example = "150.00")
 	private BigDecimal basePrice;
-
-	@Schema(description = "Current status", example = "SCHEDULED")
-	private CinemaSessionStatus status;
 
 	@Schema(description = "Available seats", example = "105")
 	private Integer availableSeats;
