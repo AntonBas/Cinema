@@ -23,7 +23,7 @@ public class BookingCreateRequest {
 	private List<SeatSelectionRequest> seats;
 
 	@Min(value = 0, message = "Bonus points cannot be negative")
-	@Max(value = 500, message = "Maximum 500 bonus points allowed")
+	@Max(value = 100000, message = "Maximum 500 bonus points allowed")
 	@Schema(description = "Number of bonus points to use", example = "100", defaultValue = "0")
 	private Integer bonusPointsToUse = 0;
 
