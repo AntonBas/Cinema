@@ -50,8 +50,17 @@ public class SessionService {
 
 	@Cacheable(key = "'public:' + #searchTerm + ':' + #date")
 	public List<SessionScheduleResponse> getScheduleSessions(String searchTerm, LocalDate date) {
-		LocalDateTime startOfDay = date.atStartOfDay();
-		LocalDateTime endOfDay = date.plusDays(1).atStartOfDay();
+		LocalDateTime startOfDay;
+		LocalDateTime endOfDay;
+
+		if (date == null) {
+			LocalDateTime now = LocalDateTime.now();
+			startOfDay = now;
+			endOfDay = now.plusMonths(3);
+		} else {
+			startOfDay = date.atStartOfDay();
+			endOfDay = date.plusDays(1).atStartOfDay();
+		}
 
 		List<SessionScheduleProjection> projections = sessionRepository.findScheduleSessions(startOfDay, endOfDay,
 				searchTerm);
