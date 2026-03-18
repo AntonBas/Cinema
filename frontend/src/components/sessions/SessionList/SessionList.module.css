@@ -5,7 +5,7 @@
 }
 
 .movieGroup {
-    background: var(--color-bg-primary);
+    background: var(--color-bg-secondary);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
     padding: 1.5rem;
@@ -127,6 +127,7 @@
 }
 
 .sessionCard {
+    background-color: var(--color-bg-primary);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
     padding: 1rem;
