@@ -3,8 +3,6 @@ package ua.lviv.bas.cinema.controller.admin;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -208,30 +206,8 @@ public class AdminSessionControllerTest {
 	}
 
 	@Test
-	void getSessions_WithoutFilters_ShouldReturnSessions() {
-		Pageable pageable = PageRequest.of(0, 20, Sort.by(Sort.Direction.DESC, "startTime"));
-		SessionAdminResponse response = createSessionResponse(1L, "Test Movie");
-		Page<SessionAdminResponse> page = new PageImpl<>(List.of(response), pageable, 1);
-		PageResponse<SessionAdminResponse> pageResponse = PageResponse.from(page);
-
-		when(sessionService.getSessionsForAdmin(any(), eq(pageable))).thenReturn(pageResponse);
-
-		ResponseEntity<PageResponse<SessionAdminResponse>> result = adminSessionController.getSessions(null, null, null,
-				null, null, pageable);
-
-		assertEquals(HttpStatus.OK, result.getStatusCode());
-		PageResponse<SessionAdminResponse> body = result.getBody();
-		assertNotNull(body);
-		assertEquals(1, body.getContent().size());
-		assertEquals(0, body.getNumber());
-		assertEquals(20, body.getSize());
-		assertEquals(1, body.getTotalElements());
-		verify(sessionService).getSessionsForAdmin(any(), eq(pageable));
-	}
-
-	@Test
-	void getSessions_WithAllFilters_ShouldReturnFilteredSessions() {
-		Pageable pageable = PageRequest.of(0, 20);
+	void getSessions_ShouldReturnSessions() {
+		Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "startTime"));
 		Long hallId = 1L;
 		String movieTitle = "Test";
 		CinemaSessionStatus status = CinemaSessionStatus.SCHEDULED;
@@ -242,7 +218,8 @@ public class AdminSessionControllerTest {
 		Page<SessionAdminResponse> page = new PageImpl<>(List.of(response), pageable, 1);
 		PageResponse<SessionAdminResponse> pageResponse = PageResponse.from(page);
 
-		when(sessionService.getSessionsForAdmin(any(), eq(pageable))).thenReturn(pageResponse);
+		when(sessionService.getSessionsForAdmin(hallId, movieTitle, status, dateFrom, dateTo, pageable))
+				.thenReturn(pageResponse);
 
 		ResponseEntity<PageResponse<SessionAdminResponse>> result = adminSessionController.getSessions(hallId,
 				movieTitle, status, dateFrom, dateTo, pageable);
@@ -251,16 +228,39 @@ public class AdminSessionControllerTest {
 		PageResponse<SessionAdminResponse> body = result.getBody();
 		assertNotNull(body);
 		assertEquals(1, body.getContent().size());
-		verify(sessionService).getSessionsForAdmin(any(), eq(pageable));
+		assertEquals(0, body.getNumber());
+		assertEquals(10, body.getSize());
+		assertEquals(1, body.getTotalElements());
+		verify(sessionService).getSessionsForAdmin(hallId, movieTitle, status, dateFrom, dateTo, pageable);
+	}
+
+	@Test
+	void getSessions_WhenNoFilters_ShouldReturnSessions() {
+		Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "startTime"));
+
+		SessionAdminResponse response = createSessionResponse(1L, "Test Movie");
+		Page<SessionAdminResponse> page = new PageImpl<>(List.of(response), pageable, 1);
+		PageResponse<SessionAdminResponse> pageResponse = PageResponse.from(page);
+
+		when(sessionService.getSessionsForAdmin(null, null, null, null, null, pageable)).thenReturn(pageResponse);
+
+		ResponseEntity<PageResponse<SessionAdminResponse>> result = adminSessionController.getSessions(null, null, null,
+				null, null, pageable);
+
+		assertEquals(HttpStatus.OK, result.getStatusCode());
+		PageResponse<SessionAdminResponse> body = result.getBody();
+		assertNotNull(body);
+		assertEquals(1, body.getContent().size());
+		verify(sessionService).getSessionsForAdmin(null, null, null, null, null, pageable);
 	}
 
 	@Test
 	void getSessions_WhenNoResults_ShouldReturnEmptyPage() {
-		Pageable pageable = PageRequest.of(0, 20);
+		Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "startTime"));
 		Page<SessionAdminResponse> emptyPage = Page.empty(pageable);
 		PageResponse<SessionAdminResponse> emptyPageResponse = PageResponse.from(emptyPage);
 
-		when(sessionService.getSessionsForAdmin(any(), eq(pageable))).thenReturn(emptyPageResponse);
+		when(sessionService.getSessionsForAdmin(null, null, null, null, null, pageable)).thenReturn(emptyPageResponse);
 
 		ResponseEntity<PageResponse<SessionAdminResponse>> result = adminSessionController.getSessions(null, null, null,
 				null, null, pageable);
@@ -270,6 +270,6 @@ public class AdminSessionControllerTest {
 		assertNotNull(body);
 		assertEquals(0, body.getContent().size());
 		assertEquals(0, body.getTotalElements());
-		verify(sessionService).getSessionsForAdmin(any(), eq(pageable));
+		verify(sessionService).getSessionsForAdmin(null, null, null, null, null, pageable);
 	}
 }
