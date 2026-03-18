@@ -45,7 +45,6 @@ const SessionsPage: React.FC = () => {
             if (selectedMovieId) {
                 filteredData = data.filter(s => s.movieId === selectedMovieId);
             }
-
             setSessions(filteredData);
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Failed to load sessions';
@@ -62,7 +61,12 @@ const SessionsPage: React.FC = () => {
             const response = await sessionApi.public.getSessions();
             const data = response?.data || [];
 
-            const dates = data
+            let filteredData = data;
+            if (selectedMovieId) {
+                filteredData = data.filter(s => s.movieId === selectedMovieId);
+            }
+
+            const dates = filteredData
                 .map(session => new Date(session.startTime).toISOString().split('T')[0])
                 .filter((date, index, self) => self.indexOf(date) === index)
                 .sort();
@@ -71,7 +75,7 @@ const SessionsPage: React.FC = () => {
         } catch (err) {
             console.error('Error fetching available dates:', err);
         }
-    }, []);
+    }, [selectedMovieId]);
 
     useEffect(() => {
         fetchSessions();
@@ -103,11 +107,6 @@ const SessionsPage: React.FC = () => {
         setSelectedMovieId(undefined);
     };
 
-    const handleRefresh = () => {
-        fetchSessions();
-        fetchAvailableDates();
-    };
-
     const hasFilters = selectedMovieId !== undefined || selectedDate !== new Date().toISOString().split('T')[0];
     const hasSessions = sessions.length > 0;
 
@@ -136,14 +135,6 @@ const SessionsPage: React.FC = () => {
                                 Clear Filters
                             </Button>
                         )}
-                        <Button
-                            variant="secondary"
-                            onClick={handleRefresh}
-                            disabled={loading}
-                            className={styles.headerButton}
-                        >
-                            Refresh
-                        </Button>
                     </div>
                 </div>
 
