@@ -80,11 +80,9 @@ public class User {
 	@Column(name = "verified_at")
 	private LocalDateTime verifiedAt;
 
-	@NotBlank
 	@Column(nullable = false, length = 50)
 	private String city;
 
-	@NotBlank
 	@Column(nullable = false, name = "phone_number", length = 20)
 	private String phoneNumber;
 
