@@ -5,6 +5,7 @@ import java.io.IOException;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -16,7 +17,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import ua.lviv.bas.cinema.security.CustomUserDetails;
 import ua.lviv.bas.cinema.security.CustomUserDetailsService;
 
 @Slf4j
@@ -34,16 +34,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 		String jwt = getJwtFromRequest(request);
 
 		if (StringUtils.hasText(jwt) && jwtTokenProvider.validateToken(jwt)) {
-			Long userId = jwtTokenProvider.getUserIdFromToken(jwt);
+			String email = jwtTokenProvider.getEmailFromToken(jwt);
+			log.debug("JWT token valid for email: {}", email);
 
-			CustomUserDetails userDetails = (CustomUserDetails) userDetailsService.loadUserById(userId);
+			try {
+				UserDetails userDetails = userDetailsService.loadUserByUsername(email);
 
-			UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails,
-					null, userDetails.getAuthorities());
-			authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+				UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+						userDetails, null, userDetails.getAuthorities());
+				authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
-			SecurityContextHolder.getContext().setAuthentication(authentication);
-			log.debug("Authenticated user: {} with role: {}", userDetails.getEmail(), userDetails.getRole());
+				SecurityContextHolder.getContext().setAuthentication(authentication);
+				log.debug("Authenticated user: {}", email);
+			} catch (Exception e) {
+				log.error("Could not load user by email: {}", email, e);
+			}
 		}
 
 		filterChain.doFilter(request, response);

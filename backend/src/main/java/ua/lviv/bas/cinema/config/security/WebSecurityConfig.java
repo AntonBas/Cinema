@@ -70,7 +70,7 @@ public class WebSecurityConfig {
 	@Bean
 	SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 		http.cors(cors -> cors.configurationSource(corsConfigurationSource())).csrf(AbstractHttpConfigurer::disable)
-				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
 				.authorizeHttpRequests(auth -> auth.requestMatchers("/actuator/health", "/actuator/info").permitAll()
 						.requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/api-docs/**", "/v3/api-docs/**",
 								"/swagger-resources/**", "/swagger-resources", "/configuration/ui",
@@ -83,14 +83,14 @@ public class WebSecurityConfig {
 						.requestMatchers("/api/ticket-types/dropdown").permitAll()
 						.requestMatchers("/api/promotions/available").permitAll().requestMatchers("/api/seats/**")
 						.permitAll().requestMatchers("/api/liqpay/callback").permitAll().requestMatchers("/oauth2/**")
-						.permitAll().requestMatchers("/api/bonus/**").authenticated()
-						.requestMatchers("/api/bookings/**").authenticated().requestMatchers("/api/payments/**")
-						.authenticated().requestMatchers("/api/refunds/**").authenticated()
-						.requestMatchers("/api/tickets/**").authenticated().requestMatchers("/api/users/**")
-						.authenticated().requestMatchers("/api/promotions/**").authenticated()
-						.requestMatchers("/api/admin/**").hasRole("ADMIN").anyRequest().authenticated())
+						.permitAll().requestMatchers("/login/**").permitAll().requestMatchers("/api/bonus/**")
+						.authenticated().requestMatchers("/api/bookings/**").authenticated()
+						.requestMatchers("/api/payments/**").authenticated().requestMatchers("/api/refunds/**")
+						.authenticated().requestMatchers("/api/tickets/**").authenticated()
+						.requestMatchers("/api/users/**").authenticated().requestMatchers("/api/promotions/**")
+						.authenticated().requestMatchers("/api/admin/**").hasRole("ADMIN").anyRequest().authenticated())
 				.oauth2Login(oauth2 -> oauth2.authorizationEndpoint(endpoint -> endpoint.baseUri("/oauth2/authorize"))
-						.redirectionEndpoint(endpoint -> endpoint.baseUri("/oauth2/callback/*"))
+						.redirectionEndpoint(endpoint -> endpoint.baseUri("/login/oauth2/code/*"))
 						.userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
 						.successHandler(oAuth2AuthenticationSuccessHandler))
 				.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)

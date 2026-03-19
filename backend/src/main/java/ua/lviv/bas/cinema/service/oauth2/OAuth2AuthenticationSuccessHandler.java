@@ -28,8 +28,10 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 	@Value("${app.frontend.url}")
 	private String frontendUrl;
 
+	@Override
 	public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
 			Authentication authentication) throws IOException {
+
 		OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
 		String email = (String) oAuth2User.getAttributes().get("email");
 

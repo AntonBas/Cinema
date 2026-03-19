@@ -10,8 +10,10 @@ import javax.crypto.SecretKey;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Component;
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -34,37 +36,65 @@ public class JwtTokenProvider {
 	}
 
 	public String generateToken(Authentication authentication) {
-		CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+		Object principal = authentication.getPrincipal();
+		Map<String, Object> claims = new HashMap<>();
+		String subject;
+
+		if (principal instanceof CustomUserDetails) {
+			CustomUserDetails userDetails = (CustomUserDetails) principal;
+			claims.put("userId", userDetails.getUserId());
+			claims.put("role", userDetails.getRole());
+			claims.put("enabled", userDetails.isEnabled());
+			subject = userDetails.getUsername();
+		} else if (principal instanceof OAuth2User) {
+			OAuth2User oAuth2User = (OAuth2User) principal;
+			String email = (String) oAuth2User.getAttributes().get("email");
+			subject = email;
+		} else {
+			subject = principal.toString();
+		}
+
 		Instant now = Instant.now();
 		Instant expiry = now.plus(jwtExpiration, ChronoUnit.MILLIS);
 
-		Map<String, Object> claims = new HashMap<>();
-		claims.put("userId", userDetails.getUserId());
-		claims.put("role", userDetails.getRole());
-		claims.put("enabled", userDetails.isEnabled());
-
-		return Jwts.builder().claims(claims).subject(userDetails.getUsername()).issuedAt(Date.from(now))
-				.expiration(Date.from(expiry)).signWith(getSigningKey()).compact();
+		return Jwts.builder().claims(claims).subject(subject).issuedAt(Date.from(now)).expiration(Date.from(expiry))
+				.signWith(getSigningKey()).compact();
 	}
 
 	public String getEmailFromToken(String token) {
-		return Jwts.parser().verifyWith(getSigningKey()).build().parseSignedClaims(token).getPayload().getSubject();
+		Claims claims = Jwts.parser().verifyWith(getSigningKey()).build().parseSignedClaims(token).getPayload();
+		return claims.getSubject();
 	}
 
 	public Long getUserIdFromToken(String token) {
-		return Jwts.parser().verifyWith(getSigningKey()).build().parseSignedClaims(token).getPayload().get("userId",
-				Long.class);
+		try {
+			Claims claims = Jwts.parser().verifyWith(getSigningKey()).build().parseSignedClaims(token).getPayload();
+
+			return claims.get("userId", Long.class);
+		} catch (Exception e) {
+			return null;
+		}
 	}
 
 	public String getRoleFromToken(String token) {
-		return Jwts.parser().verifyWith(getSigningKey()).build().parseSignedClaims(token).getPayload().get("role",
-				String.class);
+		try {
+			Claims claims = Jwts.parser().verifyWith(getSigningKey()).build().parseSignedClaims(token).getPayload();
+			return claims.get("role", String.class);
+		} catch (Exception e) {
+			log.error("Error extracting role from token: {}", e.getMessage());
+			return null;
+		}
 	}
 
 	public boolean isEnabledFromToken(String token) {
-		Boolean enabled = Jwts.parser().verifyWith(getSigningKey()).build().parseSignedClaims(token).getPayload()
-				.get("enabled", Boolean.class);
-		return enabled != null ? enabled : false;
+		try {
+			Claims claims = Jwts.parser().verifyWith(getSigningKey()).build().parseSignedClaims(token).getPayload();
+			Boolean enabled = claims.get("enabled", Boolean.class);
+			return enabled != null ? enabled : false;
+		} catch (Exception e) {
+			log.error("Error extracting enabled from token: {}", e.getMessage());
+			return false;
+		}
 	}
 
 	public boolean validateToken(String token) {
