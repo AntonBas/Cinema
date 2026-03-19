@@ -22,6 +22,8 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import lombok.RequiredArgsConstructor;
 import ua.lviv.bas.cinema.security.CustomUserDetailsService;
+import ua.lviv.bas.cinema.service.oauth2.CustomOAuth2UserService;
+import ua.lviv.bas.cinema.service.oauth2.OAuth2AuthenticationSuccessHandler;
 
 @Configuration
 @EnableWebSecurity
@@ -31,6 +33,8 @@ public class WebSecurityConfig {
 
 	private final JwtTokenProvider jwtTokenProvider;
 	private final CustomUserDetailsService userDetailsService;
+	private final CustomOAuth2UserService customOAuth2UserService;
+	private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
 
 	@Bean
 	PasswordEncoder passwordEncoder() {
@@ -78,13 +82,17 @@ public class WebSecurityConfig {
 						.permitAll().requestMatchers("/api/sessions/**").permitAll()
 						.requestMatchers("/api/ticket-types/dropdown").permitAll()
 						.requestMatchers("/api/promotions/available").permitAll().requestMatchers("/api/seats/**")
-						.permitAll().requestMatchers("/api/liqpay/callback").permitAll()
-						.requestMatchers("/api/bonus/**").authenticated().requestMatchers("/api/bookings/**")
-						.authenticated().requestMatchers("/api/payments/**").authenticated()
-						.requestMatchers("/api/refunds/**").authenticated().requestMatchers("/api/tickets/**")
-						.authenticated().requestMatchers("/api/users/**").authenticated()
-						.requestMatchers("/api/promotions/**").authenticated().requestMatchers("/api/admin/**")
-						.hasRole("ADMIN").anyRequest().authenticated())
+						.permitAll().requestMatchers("/api/liqpay/callback").permitAll().requestMatchers("/oauth2/**")
+						.permitAll().requestMatchers("/api/bonus/**").authenticated()
+						.requestMatchers("/api/bookings/**").authenticated().requestMatchers("/api/payments/**")
+						.authenticated().requestMatchers("/api/refunds/**").authenticated()
+						.requestMatchers("/api/tickets/**").authenticated().requestMatchers("/api/users/**")
+						.authenticated().requestMatchers("/api/promotions/**").authenticated()
+						.requestMatchers("/api/admin/**").hasRole("ADMIN").anyRequest().authenticated())
+				.oauth2Login(oauth2 -> oauth2.authorizationEndpoint(endpoint -> endpoint.baseUri("/oauth2/authorize"))
+						.redirectionEndpoint(endpoint -> endpoint.baseUri("/oauth2/callback/*"))
+						.userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
+						.successHandler(oAuth2AuthenticationSuccessHandler))
 				.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
 				.formLogin(AbstractHttpConfigurer::disable).httpBasic(AbstractHttpConfigurer::disable)
 				.logout(AbstractHttpConfigurer::disable);
