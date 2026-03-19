@@ -24,6 +24,7 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.config.security.JwtTokenProvider;
+import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.dto.user.request.UserLoginRequest;
 import ua.lviv.bas.cinema.dto.user.request.UserRegistrationRequest;
 import ua.lviv.bas.cinema.dto.user.response.UserResponse;
@@ -73,6 +74,21 @@ public class AuthController {
 
 		CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
 		UserResponse userResponse = userMapper.toUserResponse(userDetails.getUser());
+
+		return ResponseEntity.ok(new LoginResponse(token, "Bearer", userResponse));
+	}
+
+	@GetMapping("/oauth2/success")
+	@Operation(summary = "OAuth2 login success", description = "Handle OAuth2 login callback and return user profile")
+	@SecurityRequirements()
+	public ResponseEntity<LoginResponse> oauth2Success(@Parameter(description = "JWT token") @RequestParam String token,
+			@Parameter(description = "User ID") @RequestParam Long userId,
+			@Parameter(description = "User email") @RequestParam String email) {
+
+		log.info("OAuth2 login success for email: {}", email);
+
+		User user = userService.getUserById(userId);
+		UserResponse userResponse = userMapper.toUserResponse(user);
 
 		return ResponseEntity.ok(new LoginResponse(token, "Bearer", userResponse));
 	}
