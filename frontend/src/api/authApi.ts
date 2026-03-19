@@ -42,5 +42,14 @@ export const authApi = {
     confirmEmailChange: (token: string) =>
         api.post<UserResponse>(`${TOKENS_URL}/email/change/confirm`, null, {
             params: { token }
-        })
+        }),
+
+    oauth2Success: (token: string, userId: number, email: string) =>
+        api.get<LoginResponse>(`${API_URL}/oauth2/success`, {
+            params: { token, userId, email }
+        }),
+
+    getGoogleAuthUrl: () => {
+        return 'http://localhost:8080/oauth2/authorize/google';
+    }
 };

@@ -80,6 +80,25 @@ export const useAuthActions = () => {
         return response;
     }, [mutationApi, refreshUser]);
 
+    const oauth2Success = useCallback(async (token: string, userId: number, email: string) => {
+        const response = await authApiInstance.execute(
+            () => authApi.oauth2Success(token, userId, email),
+            { successMessage: 'Login successful' }
+        );
+
+        if (response) {
+            localStorage.setItem('authToken', (response as LoginResponse).token);
+            await refreshUser();
+            navigate('/');
+        }
+
+        return response;
+    }, [authApiInstance, refreshUser, navigate]);
+
+    const loginWithGoogle = useCallback(() => {
+        window.location.href = authApi.getGoogleAuthUrl();
+    }, []);
+
     const logout = useCallback(() => {
         authApiInstance.invalidateCache();
         mutationApi.invalidateCache();
@@ -106,6 +125,7 @@ export const useAuthActions = () => {
         isResettingPassword: mutationApi.loading,
         isVerifyingEmail: mutationApi.loading,
         isConfirmingEmailChange: mutationApi.loading,
+        isOAuth2Processing: authApiInstance.loading,
 
         login,
         register,
@@ -114,6 +134,8 @@ export const useAuthActions = () => {
         resetPassword,
         verifyEmail,
         confirmEmailChange,
+        oauth2Success,
+        loginWithGoogle,
         logout,
 
         clearCache,

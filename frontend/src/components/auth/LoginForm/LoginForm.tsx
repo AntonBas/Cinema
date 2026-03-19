@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuthActions } from '@/hooks/features/auth/useAuthActions';
 import { Input, Button } from '@/components/ui';
+import { FcGoogle } from 'react-icons/fc';
 import styles from './LoginForm.module.css';
 
 export const LoginForm: React.FC = () => {
@@ -10,7 +11,7 @@ export const LoginForm: React.FC = () => {
   const [localError, setLocalError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { login, isAuthenticating } = useAuthActions();
+  const { login, loginWithGoogle, isAuthenticating } = useAuthActions();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,6 +25,11 @@ export const LoginForm: React.FC = () => {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleGoogleLogin = (e: React.MouseEvent) => {
+    e.preventDefault();
+    loginWithGoogle();
   };
 
   const isLoading = isSubmitting || isAuthenticating;
@@ -72,6 +78,22 @@ export const LoginForm: React.FC = () => {
             {isLoading ? 'Logging in...' : 'Login'}
           </Button>
         </form>
+
+        <div className={styles.divider}>
+          <span className={styles.dividerText}>or</span>
+        </div>
+
+        <Button
+          type="button"
+          variant="outline"
+          size="large"
+          onClick={handleGoogleLogin}
+          disabled={isLoading}
+          style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+        >
+          <FcGoogle size={20} />
+          Continue with Google
+        </Button>
 
         <div className={styles.loginBottom}>
           <Link to="/forgot-password">Forgot your password?</Link>

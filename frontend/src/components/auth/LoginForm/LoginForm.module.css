@@ -84,6 +84,28 @@
     text-decoration: underline;
 }
 
+.divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 1.5rem 0;
+    width: 100%;
+}
+
+.divider::before,
+.divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.dividerText {
+    padding: 0 1rem;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+}
+
 .notification {
     padding: var(--space-3) var(--space-4);
     border-radius: var(--radius-md);
@@ -136,6 +158,10 @@
     .loginTitle {
         font-size: var(--font-size-xl);
     }
+
+    .divider {
+        margin: 1.25rem 0;
+    }
 }
 
 @media (max-width: 480px) {
@@ -149,5 +175,13 @@
 
     .loginForm {
         gap: var(--space-4);
+    }
+
+    .divider {
+        margin: 1rem 0;
+    }
+
+    .dividerText {
+        font-size: var(--font-size-xs);
     }
 }

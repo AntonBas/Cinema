@@ -10,6 +10,7 @@ import { ForgotPasswordPage } from '@/pages/auth/ForgotPasswordPage/ForgotPasswo
 import { ResetPasswordPage } from '@/pages/auth/ResetPasswordPage/ResetPasswordPage';
 import { EmailVerificationPage } from '@/pages/auth/EmailVerificationPage/EmailVerificationPage';
 import { ConfirmEmailChangePage } from '@/pages/auth/ConfirmEmailChangePage/ConfirmEmailChangePage';
+import { OAuth2Redirect } from '@/components/auth/OAuth2Redirect/OAuth2Redirect';
 
 import { HomePage } from '@/pages/home/HomePage';
 import { ProfilePage } from '@/pages/account/ProfilePage/ProfilePage';
@@ -68,6 +69,8 @@ export const AppRoutes: React.FC = () => {
             <Route path="/verify-email/:token" element={<EmailVerificationPage />} />
 
             <Route path="/confirm-email-change/:token" element={<ConfirmEmailChangePage />} />
+
+            <Route path="/oauth2/redirect" element={<OAuth2Redirect />} />
 
             <Route path="/account" element={
                 <ProtectedRoute>
