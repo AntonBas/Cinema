@@ -37,9 +37,7 @@ public class AdminGenreControllerTest {
 	@Test
 	void createGenre_ReturnsCreatedGenre() {
 		GenreRequest request = new GenreRequest(GENRE_NAME);
-		GenreResponse response = new GenreResponse();
-		response.setId(GENRE_ID);
-		response.setName(GENRE_NAME);
+		GenreResponse response = new GenreResponse(GENRE_ID, GENRE_NAME, null);
 
 		when(genreService.createGenre(any(GenreRequest.class))).thenReturn(response);
 
@@ -62,9 +60,7 @@ public class AdminGenreControllerTest {
 
 	@Test
 	void getGenreById_ReturnsGenre() {
-		GenreResponse response = new GenreResponse();
-		response.setId(GENRE_ID);
-		response.setName(GENRE_NAME);
+		GenreResponse response = new GenreResponse(GENRE_ID, GENRE_NAME, null);
 
 		when(genreService.getGenreById(GENRE_ID)).thenReturn(response);
 
@@ -85,9 +81,7 @@ public class AdminGenreControllerTest {
 	@Test
 	void updateGenre_ReturnsUpdatedGenre() {
 		GenreRequest request = new GenreRequest("Updated");
-		GenreResponse response = new GenreResponse();
-		response.setId(GENRE_ID);
-		response.setName("Updated");
+		GenreResponse response = new GenreResponse(GENRE_ID, "Updated", null);
 
 		when(genreService.updateGenre(eq(GENRE_ID), any(GenreRequest.class))).thenReturn(response);
 

@@ -53,13 +53,13 @@ public class AdminMovieControllerTest {
 	private AdminMovieController movieController;
 
 	private MovieDetailResponse createMovieDetailDto(Long id, String title) {
-		return MovieDetailResponse.builder().id(id).title(title).slug(title.toLowerCase().replace(" ", "-"))
-				.status(MovieStatus.UPCOMING).build();
+		return new MovieDetailResponse(id, title, title.toLowerCase().replace(" ", "-"), null, null, null, null, null,
+				null, MovieStatus.UPCOMING, null, null, null, null, null, null);
 	}
 
 	private MovieCardResponse createMovieCardDto(Long id, String title) {
-		return MovieCardResponse.builder().id(id).title(title).slug(title.toLowerCase().replace(" ", "-"))
-				.status(MovieStatus.UPCOMING).build();
+		return new MovieCardResponse(id, title.toLowerCase().replace(" ", "-"), title, null, null, null,
+				MovieStatus.UPCOMING);
 	}
 
 	@Test
@@ -79,7 +79,7 @@ public class AdminMovieControllerTest {
 
 		assertEquals(HttpStatus.CREATED, response.getStatusCode());
 		assertNotNull(response.getBody());
-		assertEquals("New Movie", response.getBody().getTitle());
+		assertEquals("New Movie", response.getBody().title());
 		verify(movieService).createMovie(any(MovieCreateRequest.class));
 	}
 
@@ -98,7 +98,7 @@ public class AdminMovieControllerTest {
 
 		assertEquals(HttpStatus.CREATED, response.getStatusCode());
 		assertNotNull(response.getBody());
-		assertEquals("New Movie", response.getBody().getTitle());
+		assertEquals("New Movie", response.getBody().title());
 		verify(movieService).createMovie(any(MovieCreateRequest.class));
 	}
 
@@ -133,7 +133,7 @@ public class AdminMovieControllerTest {
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
 		assertNotNull(response.getBody());
-		assertEquals("Updated Movie", response.getBody().getTitle());
+		assertEquals("Updated Movie", response.getBody().title());
 		verify(movieService).updateMovie(eq(1L), any(MovieUpdateRequest.class));
 	}
 
@@ -152,7 +152,7 @@ public class AdminMovieControllerTest {
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
 		assertNotNull(response.getBody());
-		assertEquals("Updated Movie", response.getBody().getTitle());
+		assertEquals("Updated Movie", response.getBody().title());
 		verify(movieService).updateMovie(eq(1L), any(MovieUpdateRequest.class));
 	}
 
@@ -201,10 +201,10 @@ public class AdminMovieControllerTest {
 
 		PageResponse<MovieCardResponse> body = response.getBody();
 		assertNotNull(body);
-		assertEquals(2, body.getContent().size());
-		assertEquals(0, body.getNumber());
-		assertEquals(20, body.getSize());
-		assertEquals(2, body.getTotalElements());
+		assertEquals(2, body.content().size());
+		assertEquals(0, body.number());
+		assertEquals(20, body.size());
+		assertEquals(2, body.totalElements());
 
 		verify(movieService).getFilteredMovies(isNull(), isNull(), eq(pageable));
 	}
@@ -225,8 +225,8 @@ public class AdminMovieControllerTest {
 
 		PageResponse<MovieCardResponse> body = response.getBody();
 		assertNotNull(body);
-		assertEquals(1, body.getContent().size());
-		assertEquals("Movie 1", body.getContent().get(0).getTitle());
+		assertEquals(1, body.content().size());
+		assertEquals("Movie 1", body.content().get(0).title());
 
 		verify(movieService).getFilteredMovies(eq(titleFilter), isNull(), eq(pageable));
 	}
@@ -247,8 +247,8 @@ public class AdminMovieControllerTest {
 
 		PageResponse<MovieCardResponse> body = response.getBody();
 		assertNotNull(body);
-		assertEquals(1, body.getContent().size());
-		assertEquals(MovieStatus.UPCOMING, body.getContent().get(0).getStatus());
+		assertEquals(1, body.content().size());
+		assertEquals(MovieStatus.UPCOMING, body.content().get(0).status());
 
 		verify(movieService).getFilteredMovies(isNull(), eq(statusFilter), eq(pageable));
 	}
@@ -270,9 +270,9 @@ public class AdminMovieControllerTest {
 
 		PageResponse<MovieCardResponse> body = response.getBody();
 		assertNotNull(body);
-		assertEquals(1, body.getContent().size());
-		assertEquals("Movie 1", body.getContent().get(0).getTitle());
-		assertEquals(MovieStatus.UPCOMING, body.getContent().get(0).getStatus());
+		assertEquals(1, body.content().size());
+		assertEquals("Movie 1", body.content().get(0).title());
+		assertEquals(MovieStatus.UPCOMING, body.content().get(0).status());
 
 		verify(movieService).getFilteredMovies(eq(titleFilter), eq(statusFilter), eq(pageable));
 	}
@@ -290,8 +290,8 @@ public class AdminMovieControllerTest {
 
 		PageResponse<MovieCardResponse> body = response.getBody();
 		assertNotNull(body);
-		assertEquals(0, body.getContent().size());
-		assertEquals(0, body.getTotalElements());
+		assertEquals(0, body.content().size());
+		assertEquals(0, body.totalElements());
 
 		verify(movieService).getFilteredMovies(isNull(), isNull(), eq(pageable));
 	}
@@ -306,7 +306,7 @@ public class AdminMovieControllerTest {
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
 		assertNotNull(response.getBody());
-		assertEquals("Test Movie", response.getBody().getTitle());
+		assertEquals("Test Movie", response.getBody().title());
 		verify(movieService).getAdminMovieById(1L);
 	}
 
@@ -329,7 +329,7 @@ public class AdminMovieControllerTest {
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
 		assertNotNull(response.getBody());
-		assertEquals("Test Movie", response.getBody().getTitle());
+		assertEquals("Test Movie", response.getBody().title());
 		verify(movieService).getAdminMovieBySlug(slug);
 	}
 
@@ -346,9 +346,8 @@ public class AdminMovieControllerTest {
 	@Test
 	void searchMoviesForSession_WithSearchTerm_ShouldReturnMovies() {
 		String searchTerm = "movie";
-		List<MovieSessionSearchResponse> movies = List.of(
-				MovieSessionSearchResponse.builder().id(1L).title("Movie 1").build(),
-				MovieSessionSearchResponse.builder().id(2L).title("Movie 2").build());
+		List<MovieSessionSearchResponse> movies = List.of(new MovieSessionSearchResponse(1L, "Movie 1", null),
+				new MovieSessionSearchResponse(2L, "Movie 2", null));
 
 		when(movieService.searchMoviesForSession(searchTerm)).thenReturn(movies);
 
@@ -362,9 +361,8 @@ public class AdminMovieControllerTest {
 
 	@Test
 	void searchMoviesForSession_WithoutSearchTerm_ShouldReturnAllMovies() {
-		List<MovieSessionSearchResponse> movies = List.of(
-				MovieSessionSearchResponse.builder().id(1L).title("Movie 1").build(),
-				MovieSessionSearchResponse.builder().id(2L).title("Movie 2").build());
+		List<MovieSessionSearchResponse> movies = List.of(new MovieSessionSearchResponse(1L, "Movie 1", null),
+				new MovieSessionSearchResponse(2L, "Movie 2", null));
 
 		when(movieService.searchMoviesForSession(null)).thenReturn(movies);
 

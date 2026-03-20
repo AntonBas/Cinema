@@ -41,14 +41,12 @@ public class MovieControllerTest {
 	private final String TITLE = "Test Movie";
 
 	private MovieDetailResponse createMovieDetailResponse(MovieStatus status) {
-		return MovieDetailResponse.builder().id(MOVIE_ID).title(TITLE).slug(SLUG)
-				.posterUrl("/api/movies/" + MOVIE_ID + "/poster").durationMinutes(120).ageRating(AgeRating.PEGI_12)
-				.releaseDate(LocalDate.now().plusDays(1)).status(status).build();
+		return new MovieDetailResponse(MOVIE_ID, TITLE, SLUG, null, null, 120, LocalDate.now().plusDays(1), null,
+				AgeRating.PEGI_12, status, null, "/api/movies/" + MOVIE_ID + "/poster", null, null, null, null);
 	}
 
 	private MovieCardResponse createMovieCardResponse(Long id, String title, MovieStatus status) {
-		return MovieCardResponse.builder().id(id).title(title).slug(SLUG + id).durationMinutes(120)
-				.ageRating(AgeRating.PEGI_12).status(status).build();
+		return new MovieCardResponse(id, SLUG + id, title, null, 120, AgeRating.PEGI_12, status);
 	}
 
 	@Test
@@ -61,7 +59,7 @@ public class MovieControllerTest {
 
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 		assertThat(response.getBody()).isNotNull();
-		assertThat(response.getBody().getSlug()).isEqualTo(SLUG);
+		assertThat(response.getBody().slug()).isEqualTo(SLUG);
 		verify(movieService).getMovieBySlug(SLUG);
 	}
 
@@ -95,7 +93,7 @@ public class MovieControllerTest {
 
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 		assertThat(response.getBody()).isNotNull();
-		assertThat(response.getBody().getContent()).hasSize(2);
+		assertThat(response.getBody().content()).hasSize(2);
 		verify(movieService).getFilteredMovies(null, MovieStatus.CURRENT, pageable);
 	}
 
@@ -112,7 +110,7 @@ public class MovieControllerTest {
 
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 		assertThat(response.getBody()).isNotNull();
-		assertThat(response.getBody().getContent()).hasSize(2);
+		assertThat(response.getBody().content()).hasSize(2);
 		verify(movieService).getFilteredMovies(null, MovieStatus.UPCOMING, pageable);
 	}
 

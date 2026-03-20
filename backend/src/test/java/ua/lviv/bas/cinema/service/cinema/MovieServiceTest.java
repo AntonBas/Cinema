@@ -85,13 +85,12 @@ public class MovieServiceTest {
 		movie.setEndShowingDate(LocalDate.now().plusDays(30));
 		movie.setStatus(MovieStatus.UPCOMING);
 
-		detailResponse = new MovieDetailResponse();
-		detailResponse.setId(MOVIE_ID);
-		detailResponse.setTitle(MOVIE_TITLE);
+		detailResponse = new MovieDetailResponse(MOVIE_ID, MOVIE_TITLE, SLUG, "trailer.mp4", "Description", 120,
+				LocalDate.now(), LocalDate.now().plusDays(30), AgeRating.PEGI_12, MovieStatus.UPCOMING, "poster.jpg",
+				"/api/movies/1/poster", List.of(), List.of(), List.of(), List.of());
 
-		cardResponse = new MovieCardResponse();
-		cardResponse.setId(MOVIE_ID);
-		cardResponse.setTitle(MOVIE_TITLE);
+		cardResponse = new MovieCardResponse(MOVIE_ID, SLUG, MOVIE_TITLE, "/api/movies/1/poster", 120,
+				AgeRating.PEGI_12, MovieStatus.UPCOMING);
 
 		createRequest = MovieCreateRequest.builder().title(MOVIE_TITLE).releaseDate(LocalDate.now().plusDays(1))
 				.endShowingDate(LocalDate.now().plusDays(30)).genreIds(List.of(1L, 2L)).actorIds(List.of(3L, 4L))
@@ -130,10 +129,12 @@ public class MovieServiceTest {
 
 	@Test
 	void createMovie_InvalidDates_ThrowsException() {
-		createRequest.setReleaseDate(LocalDate.now().plusDays(10));
-		createRequest.setEndShowingDate(LocalDate.now().plusDays(5));
+		MovieCreateRequest invalidRequest = MovieCreateRequest.builder().title(MOVIE_TITLE)
+				.releaseDate(LocalDate.now().plusDays(10)).endShowingDate(LocalDate.now().plusDays(5))
+				.genreIds(List.of(1L)).actorIds(List.of(1L)).directorIds(List.of(1L)).screenwriterIds(List.of(1L))
+				.build();
 
-		assertThatThrownBy(() -> movieService.createMovie(createRequest)).isInstanceOf(MovieValidationException.class);
+		assertThatThrownBy(() -> movieService.createMovie(invalidRequest)).isInstanceOf(MovieValidationException.class);
 	}
 
 	@Test
@@ -187,6 +188,8 @@ public class MovieServiceTest {
 		Movie existingMovie = new Movie();
 		existingMovie.setId(MOVIE_ID);
 		existingMovie.setTitle("Old Title");
+		existingMovie.setReleaseDate(LocalDate.now().plusDays(1));
+		existingMovie.setEndShowingDate(LocalDate.now().plusDays(30));
 
 		when(movieRepository.findAdminMovieById(MOVIE_ID)).thenReturn(Optional.of(existingMovie));
 
@@ -220,8 +223,13 @@ public class MovieServiceTest {
 		Movie existingMovie = new Movie();
 		existingMovie.setId(MOVIE_ID);
 		existingMovie.setTitle("Same Title");
+		existingMovie.setReleaseDate(LocalDate.now().plusDays(1));
+		existingMovie.setEndShowingDate(LocalDate.now().plusDays(30));
 
-		updateRequest.setTitle("Same Title");
+		MovieUpdateRequest sameTitleRequest = MovieUpdateRequest.builder().title("Same Title")
+				.releaseDate(LocalDate.now().plusDays(2)).endShowingDate(LocalDate.now().plusDays(40))
+				.genreIds(List.of(1L)).actorIds(List.of(1L)).directorIds(List.of(1L)).screenwriterIds(List.of(1L))
+				.build();
 
 		when(movieRepository.findAdminMovieById(MOVIE_ID)).thenReturn(Optional.of(existingMovie));
 		when(movieScheduler.calculateMovieStatus(existingMovie, LocalDate.now())).thenReturn(MovieStatus.UPCOMING);
@@ -230,7 +238,7 @@ public class MovieServiceTest {
 		when(movieRepository.save(existingMovie)).thenReturn(existingMovie);
 		when(movieMapper.toMovieDetailResponse(existingMovie)).thenReturn(detailResponse);
 
-		MovieDetailResponse result = movieService.updateMovie(MOVIE_ID, updateRequest);
+		MovieDetailResponse result = movieService.updateMovie(MOVIE_ID, sameTitleRequest);
 
 		assertThat(result).isEqualTo(detailResponse);
 		verify(slugService, never()).generateUniqueSlug(anyString());
@@ -280,8 +288,8 @@ public class MovieServiceTest {
 		var result = movieService.searchMoviesForSession("test");
 
 		assertThat(result).hasSize(1);
-		assertThat(result.get(0).getId()).isEqualTo(MOVIE_ID);
-		assertThat(result.get(0).getTitle()).isEqualTo(MOVIE_TITLE);
+		assertThat(result.get(0).id()).isEqualTo(MOVIE_ID);
+		assertThat(result.get(0).title()).isEqualTo(MOVIE_TITLE);
 	}
 
 	@Test
@@ -323,7 +331,7 @@ public class MovieServiceTest {
 
 			@Override
 			public String getTrailerUrl() {
-				return null;
+				return "trailer.mp4";
 			}
 
 			@Override
@@ -353,7 +361,7 @@ public class MovieServiceTest {
 
 			@Override
 			public MovieStatus getStatus() {
-				return MovieStatus.CURRENT;
+				return MovieStatus.UPCOMING;
 			}
 
 			@Override
@@ -397,7 +405,7 @@ public class MovieServiceTest {
 
 			@Override
 			public MovieStatus getStatus() {
-				return MovieStatus.CURRENT;
+				return MovieStatus.UPCOMING;
 			}
 
 			@Override

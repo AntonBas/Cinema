@@ -24,9 +24,10 @@ public class PersonMapperTest {
 
 		PersonResponse response = mapper.toPersonResponse(person);
 
-		assertThat(response.getId()).isEqualTo(1L);
-		assertThat(response.getName()).isEqualTo("John Doe");
-		assertThat(response.getRole()).isEqualTo(PersonRole.ACTOR);
+		assertThat(response.id()).isEqualTo(1L);
+		assertThat(response.name()).isEqualTo("John Doe");
+		assertThat(response.role()).isEqualTo(PersonRole.ACTOR);
+		assertThat(response.movieCount()).isNull();
 	}
 
 	@Test
@@ -37,12 +38,12 @@ public class PersonMapperTest {
 		List<PersonResponse> responses = mapper.toPersonResponseList(persons);
 
 		assertThat(responses).hasSize(2);
-		assertThat(responses.get(0).getId()).isEqualTo(1L);
-		assertThat(responses.get(0).getName()).isEqualTo("Actor 1");
-		assertThat(responses.get(0).getRole()).isEqualTo(PersonRole.ACTOR);
-		assertThat(responses.get(1).getId()).isEqualTo(2L);
-		assertThat(responses.get(1).getName()).isEqualTo("Director 1");
-		assertThat(responses.get(1).getRole()).isEqualTo(PersonRole.DIRECTOR);
+		assertThat(responses.get(0).id()).isEqualTo(1L);
+		assertThat(responses.get(0).name()).isEqualTo("Actor 1");
+		assertThat(responses.get(0).role()).isEqualTo(PersonRole.ACTOR);
+		assertThat(responses.get(1).id()).isEqualTo(2L);
+		assertThat(responses.get(1).name()).isEqualTo("Director 1");
+		assertThat(responses.get(1).role()).isEqualTo(PersonRole.DIRECTOR);
 	}
 
 	@Test
@@ -53,7 +54,7 @@ public class PersonMapperTest {
 
 	@Test
 	void toPerson() {
-		PersonRequest request = PersonRequest.builder().name("New Person").role(PersonRole.SCREENWRITER).build();
+		PersonRequest request = new PersonRequest("New Person", PersonRole.SCREENWRITER);
 
 		Person person = mapper.toPerson(request);
 
@@ -66,7 +67,7 @@ public class PersonMapperTest {
 	void updatePersonFromRequest() {
 		Person person = Person.builder().id(1L).name("Old Name").role(PersonRole.ACTOR).build();
 
-		PersonRequest request = PersonRequest.builder().name("New Name").role(PersonRole.DIRECTOR).build();
+		PersonRequest request = new PersonRequest("New Name", PersonRole.DIRECTOR);
 
 		mapper.updatePersonFromRequest(request, person);
 
@@ -79,7 +80,7 @@ public class PersonMapperTest {
 	void updatePersonFromRequestWithNullFields() {
 		Person person = Person.builder().id(1L).name("Old Name").role(PersonRole.ACTOR).build();
 
-		PersonRequest request = PersonRequest.builder().name(null).role(null).build();
+		PersonRequest request = new PersonRequest(null, null);
 
 		mapper.updatePersonFromRequest(request, person);
 

@@ -23,10 +23,10 @@ public class MovieMapperTest {
 
 		MovieCardResponse response = mapper.toMovieCardResponse(movie);
 
-		assertThat(response.getId()).isEqualTo(1L);
-		assertThat(response.getTitle()).isEqualTo("Test Movie");
-		assertThat(response.getDurationMinutes()).isEqualTo(120);
-		assertThat(response.getPosterUrl()).isEqualTo("/api/movies/1/poster");
+		assertThat(response.id()).isEqualTo(1L);
+		assertThat(response.title()).isEqualTo("Test Movie");
+		assertThat(response.durationMinutes()).isEqualTo(120);
+		assertThat(response.posterUrl()).isEqualTo("/api/movies/1/poster");
 	}
 
 	@Test
@@ -35,10 +35,10 @@ public class MovieMapperTest {
 
 		MovieDetailResponse response = mapper.toMovieDetailResponse(movie);
 
-		assertThat(response.getId()).isEqualTo(1L);
-		assertThat(response.getTitle()).isEqualTo("Test Movie");
-		assertThat(response.getDescription()).isEqualTo("Description");
-		assertThat(response.getPosterUrl()).isEqualTo("/api/movies/1/poster");
+		assertThat(response.id()).isEqualTo(1L);
+		assertThat(response.title()).isEqualTo("Test Movie");
+		assertThat(response.description()).isEqualTo("Description");
+		assertThat(response.posterUrl()).isEqualTo("/api/movies/1/poster");
 	}
 
 	@Test

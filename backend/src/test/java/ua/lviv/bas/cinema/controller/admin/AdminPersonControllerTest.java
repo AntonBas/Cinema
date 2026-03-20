@@ -47,15 +47,15 @@ public class AdminPersonControllerTest {
 	private static final String PERSON_NAME = "Anton Bas";
 
 	private PersonResponse createPersonResponse(Long id, String name, PersonRole role) {
-		return PersonResponse.builder().id(id).name(name).role(role).build();
+		return new PersonResponse(id, name, role, null);
 	}
 
 	private PersonRequest createPersonRequest(String name, PersonRole role) {
-		return PersonRequest.builder().name(name).role(role).build();
+		return new PersonRequest(name, role);
 	}
 
 	private QuickCreatePersonRequest createQuickCreatePersonRequest(String name, PersonRole role) {
-		return QuickCreatePersonRequest.builder().name(name).role(role).build();
+		return new QuickCreatePersonRequest(name, role);
 	}
 
 	@Test
@@ -72,9 +72,9 @@ public class AdminPersonControllerTest {
 		PersonResponse responseBody = response.getBody();
 		assertNotNull(responseBody);
 
-		assertEquals(PERSON_ID, responseBody.getId());
-		assertEquals(PERSON_NAME, responseBody.getName());
-		assertEquals(PersonRole.ACTOR, responseBody.getRole());
+		assertEquals(PERSON_ID, responseBody.id());
+		assertEquals(PERSON_NAME, responseBody.name());
+		assertEquals(PersonRole.ACTOR, responseBody.role());
 		verify(personService).createPerson(request);
 	}
 
@@ -100,9 +100,9 @@ public class AdminPersonControllerTest {
 
 		PersonResponse responseBody = response.getBody();
 		assertNotNull(responseBody);
-		assertEquals(PERSON_ID, responseBody.getId());
-		assertEquals(PERSON_NAME, responseBody.getName());
-		assertEquals(PersonRole.ACTOR, responseBody.getRole());
+		assertEquals(PERSON_ID, responseBody.id());
+		assertEquals(PERSON_NAME, responseBody.name());
+		assertEquals(PersonRole.ACTOR, responseBody.role());
 		verify(personService).getPersonById(PERSON_ID);
 	}
 
@@ -129,9 +129,9 @@ public class AdminPersonControllerTest {
 		PersonResponse responseBody = response.getBody();
 		assertNotNull(responseBody);
 
-		assertEquals(PERSON_ID, responseBody.getId());
-		assertEquals("Updated Name", responseBody.getName());
-		assertEquals(PersonRole.DIRECTOR, responseBody.getRole());
+		assertEquals(PERSON_ID, responseBody.id());
+		assertEquals("Updated Name", responseBody.name());
+		assertEquals(PersonRole.DIRECTOR, responseBody.role());
 		verify(personService).updatePerson(PERSON_ID, request);
 	}
 
@@ -176,9 +176,9 @@ public class AdminPersonControllerTest {
 		PersonResponse responseBody = response.getBody();
 		assertNotNull(responseBody);
 
-		assertEquals(PERSON_ID, responseBody.getId());
-		assertEquals(PERSON_NAME, responseBody.getName());
-		assertEquals(PersonRole.ACTOR, responseBody.getRole());
+		assertEquals(PERSON_ID, responseBody.id());
+		assertEquals(PERSON_NAME, responseBody.name());
+		assertEquals(PersonRole.ACTOR, responseBody.role());
 		verify(personService).quickCreatePerson(request);
 	}
 
@@ -207,10 +207,10 @@ public class AdminPersonControllerTest {
 
 		PageResponse<PersonResponse> responseBody = response.getBody();
 		assertNotNull(responseBody);
-		assertEquals(2, responseBody.getContent().size());
-		assertEquals(0, responseBody.getNumber());
-		assertEquals(20, responseBody.getSize());
-		assertEquals(2, responseBody.getTotalElements());
+		assertEquals(2, responseBody.content().size());
+		assertEquals(0, responseBody.number());
+		assertEquals(20, responseBody.size());
+		assertEquals(2, responseBody.totalElements());
 
 		verify(personService).searchPersons(null, null, pageable);
 	}

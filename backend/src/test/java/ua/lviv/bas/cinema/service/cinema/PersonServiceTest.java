@@ -61,9 +61,9 @@ public class PersonServiceTest {
 		person.setName(PERSON_NAME);
 		person.setRole(PERSON_ROLE);
 
-		response = PersonResponse.builder().id(PERSON_ID).name(PERSON_NAME).role(PERSON_ROLE).build();
+		response = new PersonResponse(PERSON_ID, PERSON_NAME, PERSON_ROLE, null);
 
-		request = PersonRequest.builder().name(PERSON_NAME).role(PERSON_ROLE).build();
+		request = new PersonRequest(PERSON_NAME, PERSON_ROLE);
 	}
 
 	@Test
@@ -90,8 +90,7 @@ public class PersonServiceTest {
 
 	@Test
 	void quickCreatePerson_Success() {
-		QuickCreatePersonRequest quickRequest = QuickCreatePersonRequest.builder().name(PERSON_NAME).role(PERSON_ROLE)
-				.build();
+		QuickCreatePersonRequest quickRequest = new QuickCreatePersonRequest(PERSON_NAME, PERSON_ROLE);
 
 		when(personRepository.existsByNameAndRole(PERSON_NAME, PERSON_ROLE)).thenReturn(false);
 		when(personRepository.save(any(Person.class))).thenReturn(person);

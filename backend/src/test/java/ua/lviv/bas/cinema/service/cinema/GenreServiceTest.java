@@ -43,13 +43,11 @@ public class GenreServiceTest {
 
 	@Test
 	void createGenreShouldSaveNewGenre() {
-		GenreRequest request = GenreRequest.builder().name(GENRE_NAME).build();
+		GenreRequest request = new GenreRequest(GENRE_NAME);
 		Genre genre = new Genre();
 		genre.setId(GENRE_ID);
 		genre.setName(GENRE_NAME);
-		GenreResponse response = new GenreResponse();
-		response.setId(GENRE_ID);
-		response.setName(GENRE_NAME);
+		GenreResponse response = new GenreResponse(GENRE_ID, GENRE_NAME, null);
 
 		when(genreRepository.existsByNameIgnoreCase(GENRE_NAME)).thenReturn(false);
 		when(genreMapper.toGenre(request)).thenReturn(genre);
@@ -58,13 +56,13 @@ public class GenreServiceTest {
 
 		GenreResponse result = genreService.createGenre(request);
 
-		assertThat(result.getId()).isEqualTo(GENRE_ID);
-		assertThat(result.getName()).isEqualTo(GENRE_NAME);
+		assertThat(result.id()).isEqualTo(GENRE_ID);
+		assertThat(result.name()).isEqualTo(GENRE_NAME);
 	}
 
 	@Test
 	void createGenreShouldThrowExceptionWhenNameExists() {
-		GenreRequest request = GenreRequest.builder().name(GENRE_NAME).build();
+		GenreRequest request = new GenreRequest(GENRE_NAME);
 		when(genreRepository.existsByNameIgnoreCase(GENRE_NAME)).thenReturn(true);
 
 		assertThatThrownBy(() -> genreService.createGenre(request)).isInstanceOf(DuplicateEntityException.class);
@@ -75,16 +73,14 @@ public class GenreServiceTest {
 		Genre genre = new Genre();
 		genre.setId(GENRE_ID);
 		genre.setName(GENRE_NAME);
-		GenreResponse response = new GenreResponse();
-		response.setId(GENRE_ID);
-		response.setName(GENRE_NAME);
+		GenreResponse response = new GenreResponse(GENRE_ID, GENRE_NAME, null);
 
 		when(genreRepository.findById(GENRE_ID)).thenReturn(Optional.of(genre));
 		when(genreMapper.toGenreResponse(genre)).thenReturn(response);
 
 		GenreResponse result = genreService.getGenreById(GENRE_ID);
 
-		assertThat(result.getId()).isEqualTo(GENRE_ID);
+		assertThat(result.id()).isEqualTo(GENRE_ID);
 	}
 
 	@Test
@@ -99,10 +95,8 @@ public class GenreServiceTest {
 		Genre existingGenre = new Genre();
 		existingGenre.setId(GENRE_ID);
 		existingGenre.setName("Old Name");
-		GenreRequest request = GenreRequest.builder().name(GENRE_NAME).build();
-		GenreResponse response = new GenreResponse();
-		response.setId(GENRE_ID);
-		response.setName(GENRE_NAME);
+		GenreRequest request = new GenreRequest(GENRE_NAME);
+		GenreResponse response = new GenreResponse(GENRE_ID, GENRE_NAME, null);
 
 		when(genreRepository.findById(GENRE_ID)).thenReturn(Optional.of(existingGenre));
 		when(genreRepository.existsByNameIgnoreCaseAndIdNot(GENRE_NAME, GENRE_ID)).thenReturn(false);
@@ -111,7 +105,7 @@ public class GenreServiceTest {
 
 		GenreResponse result = genreService.updateGenre(GENRE_ID, request);
 
-		assertThat(result.getName()).isEqualTo(GENRE_NAME);
+		assertThat(result.name()).isEqualTo(GENRE_NAME);
 	}
 
 	@Test
@@ -131,10 +125,7 @@ public class GenreServiceTest {
 		GenreProjection projection = new GenreProjection(GENRE_ID, GENRE_NAME, 5);
 		Page<GenreProjection> projectionPage = new PageImpl<>(java.util.List.of(projection));
 
-		GenreResponse response = new GenreResponse();
-		response.setId(GENRE_ID);
-		response.setName(GENRE_NAME);
-		response.setMovieCount(5);
+		GenreResponse response = new GenreResponse(GENRE_ID, GENRE_NAME, 5);
 
 		when(genreRepository.findProjectionsByQuery(query, pageable)).thenReturn(projectionPage);
 		when(genreMapper.toGenreResponse(projection)).thenReturn(response);
@@ -142,6 +133,6 @@ public class GenreServiceTest {
 		Page<GenreResponse> result = genreService.searchGenres(query, pageable);
 
 		assertThat(result.getContent()).hasSize(1);
-		assertThat(result.getContent().get(0).getId()).isEqualTo(GENRE_ID);
+		assertThat(result.getContent().get(0).id()).isEqualTo(GENRE_ID);
 	}
 }

@@ -106,14 +106,14 @@ public class BonusControllerTest {
 		PageResponse<BonusTransactionResponse> response = bonusController.getMyTransactions(userId, pageable);
 
 		assertNotNull(response);
-		assertEquals(2, response.getContent().size());
-		assertEquals(2, response.getTotalElements());
-		assertEquals(1L, response.getContent().get(0).id());
-		assertEquals("WELCOME_BONUS", response.getContent().get(0).type());
-		assertEquals("+150", response.getContent().get(0).pointsChange());
-		assertEquals(2L, response.getContent().get(1).id());
-		assertEquals("BOOKING_SPEND", response.getContent().get(1).type());
-		assertEquals("-25", response.getContent().get(1).pointsChange());
+		assertEquals(2, response.content().size());
+		assertEquals(2, response.totalElements());
+		assertEquals(1L, response.content().get(0).id());
+		assertEquals("WELCOME_BONUS", response.content().get(0).type());
+		assertEquals("+150", response.content().get(0).pointsChange());
+		assertEquals(2L, response.content().get(1).id());
+		assertEquals("BOOKING_SPEND", response.content().get(1).type());
+		assertEquals("-25", response.content().get(1).pointsChange());
 	}
 
 	@Test
@@ -128,8 +128,8 @@ public class BonusControllerTest {
 		PageResponse<BonusTransactionResponse> response = bonusController.getMyTransactions(userId, pageable);
 
 		assertNotNull(response);
-		assertEquals(0, response.getContent().size());
-		assertEquals(0, response.getTotalElements());
-		assertEquals(true, response.isEmpty());
+		assertEquals(0, response.content().size());
+		assertEquals(0, response.totalElements());
+		assertEquals(true, response.empty());
 	}
 }
