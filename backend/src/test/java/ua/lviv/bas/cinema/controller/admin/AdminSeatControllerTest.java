@@ -29,7 +29,7 @@ public class AdminSeatControllerTest {
 	private AdminSeatController seatController;
 
 	private SeatResponse createSeatDto(Long id, int row, int number, SeatType seatType, boolean active) {
-		return SeatResponse.builder().id(id).row(row).number(number).seatType(seatType).active(active).build();
+		return new SeatResponse(id, row, number, seatType, active);
 	}
 
 	@Test
@@ -45,9 +45,9 @@ public class AdminSeatControllerTest {
 		SeatResponse responseBody = response.getBody();
 		assertNotNull(responseBody);
 
-		assertEquals(SeatType.VIP, responseBody.getSeatType());
-		assertEquals(1L, responseBody.getId());
-		assertEquals(true, responseBody.isActive());
+		assertEquals(SeatType.VIP, responseBody.seatType());
+		assertEquals(1L, responseBody.id());
+		assertEquals(true, responseBody.active());
 
 		verify(seatService).updateSeatType(1L, SeatType.VIP);
 	}
@@ -74,8 +74,8 @@ public class AdminSeatControllerTest {
 		SeatResponse responseBody = response.getBody();
 		assertNotNull(responseBody);
 
-		assertEquals(1L, responseBody.getId());
-		assertEquals(true, responseBody.isActive());
+		assertEquals(1L, responseBody.id());
+		assertEquals(true, responseBody.active());
 
 		verify(seatService).setSeatActiveStatus(1L, true);
 	}
@@ -93,8 +93,8 @@ public class AdminSeatControllerTest {
 		SeatResponse responseBody = response.getBody();
 		assertNotNull(responseBody);
 
-		assertEquals(1L, responseBody.getId());
-		assertEquals(false, responseBody.isActive());
+		assertEquals(1L, responseBody.id());
+		assertEquals(false, responseBody.active());
 
 		verify(seatService).setSeatActiveStatus(1L, false);
 	}

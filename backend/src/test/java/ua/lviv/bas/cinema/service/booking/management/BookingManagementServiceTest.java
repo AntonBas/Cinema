@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -70,9 +71,11 @@ public class BookingManagementServiceTest {
 	private Booking testBooking;
 	private SeatReservation seatReservation1;
 	private SeatReservation seatReservation2;
+	private BookingResponse bookingResponse;
 
 	private static final Long USER_ID = 1L;
 	private static final Long BOOKING_ID = 2L;
+	private static final String BOOKING_NUMBER = "BK-2024-00001";
 
 	@BeforeEach
 	void setUp() {
@@ -118,21 +121,23 @@ public class BookingManagementServiceTest {
 
 		seatReservation1.setBooking(testBooking);
 		seatReservation2.setBooking(testBooking);
+
+		bookingResponse = new BookingResponse(BOOKING_ID, BOOKING_NUMBER, BookingStatus.PENDING, 1L,
+				LocalDateTime.now(), "Test Movie", "Hall A", new BigDecimal("500.00"), 100, new BigDecimal("100.00"),
+				new BigDecimal("400.00"), null, null, null, null);
 	}
 
 	@Test
 	void getBookingById_Success() {
 		when(bookingRepository.findByIdAndUserId(BOOKING_ID, USER_ID)).thenReturn(Optional.of(testBooking));
-
-		BookingResponse bookingResponse = new BookingResponse();
-		bookingResponse.setId(BOOKING_ID);
 		when(bookingMapper.toBookingResponse(testBooking)).thenReturn(bookingResponse);
-		when(numberGenerator.generateBookingNumber(testBooking)).thenReturn("BK-2024-00001");
+		when(numberGenerator.generateBookingNumber(testBooking)).thenReturn(BOOKING_NUMBER);
 
 		BookingResponse result = bookingManagementService.getBookingById(BOOKING_ID, testUser);
 
 		assertThat(result).isNotNull();
-		assertThat(result.getId()).isEqualTo(BOOKING_ID);
+		assertThat(result.id()).isEqualTo(BOOKING_ID);
+		assertThat(result.bookingNumber()).isEqualTo(BOOKING_NUMBER);
 	}
 
 	@Test
@@ -150,16 +155,15 @@ public class BookingManagementServiceTest {
 
 		when(bookingRepository.findByUserIdAndStatusOrderByCreatedAtDesc(eq(USER_ID), eq(BookingStatus.PENDING),
 				eq(pageable))).thenReturn(bookingPage);
-
-		BookingResponse bookingResponse = new BookingResponse();
 		when(bookingMapper.toBookingResponse(any(Booking.class))).thenReturn(bookingResponse);
-		when(numberGenerator.generateBookingNumber(any(Booking.class))).thenReturn("BK-2024-00001");
+		when(numberGenerator.generateBookingNumber(any(Booking.class))).thenReturn(BOOKING_NUMBER);
 
 		Page<BookingResponse> result = bookingManagementService.getUserBookings(USER_ID, BookingStatus.PENDING,
 				pageable);
 
 		assertThat(result).isNotNull();
 		assertThat(result.getContent()).hasSize(1);
+		assertThat(result.getContent().get(0).id()).isEqualTo(BOOKING_ID);
 	}
 
 	@Test
@@ -168,15 +172,14 @@ public class BookingManagementServiceTest {
 		Page<Booking> bookingPage = new PageImpl<>(Arrays.asList(testBooking), pageable, 1);
 
 		when(bookingRepository.findByUserIdOrderByCreatedAtDesc(eq(USER_ID), eq(pageable))).thenReturn(bookingPage);
-
-		BookingResponse bookingResponse = new BookingResponse();
 		when(bookingMapper.toBookingResponse(any(Booking.class))).thenReturn(bookingResponse);
-		when(numberGenerator.generateBookingNumber(any(Booking.class))).thenReturn("BK-2024-00001");
+		when(numberGenerator.generateBookingNumber(any(Booking.class))).thenReturn(BOOKING_NUMBER);
 
 		Page<BookingResponse> result = bookingManagementService.getUserBookings(USER_ID, null, pageable);
 
 		assertThat(result).isNotNull();
 		assertThat(result.getContent()).hasSize(1);
+		assertThat(result.getContent().get(0).id()).isEqualTo(BOOKING_ID);
 	}
 
 	@Test
@@ -282,5 +285,6 @@ public class BookingManagementServiceTest {
 		bookingManagementService.cancelBooking(BOOKING_ID, testUser);
 
 		assertThat(testBooking.getStatus()).isEqualTo(BookingStatus.CANCELLED);
+		verify(bonusService, never()).refundPoints(any());
 	}
 }

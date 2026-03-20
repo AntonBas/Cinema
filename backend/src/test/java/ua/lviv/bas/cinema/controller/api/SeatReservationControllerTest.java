@@ -16,8 +16,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
 
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.enums.SeatType;
@@ -34,25 +32,18 @@ public class SeatReservationControllerTest {
 	@Mock
 	private CustomUserDetails customUserDetails;
 
-	@Mock
-	private Authentication authentication;
-
-	@Mock
-	private SecurityContext securityContext;
-
 	@InjectMocks
 	private SeatReservationController seatReservationController;
 
 	private SeatReservationResponse createSeatAvailabilityResponse(Long sessionId) {
-		SeatReservationResponse.SeatInfo seat1 = SeatReservationResponse.SeatInfo
-				.builder().id(1L).row(1).seatNumber(1).seatType(SeatType.STANDARD).available(true)
-				.temporarilyReserved(false).ticketPrices(Arrays.asList(SeatReservationResponse.TicketPriceInfo.builder()
-						.ticketTypeId(1L).ticketTypeName("Adult").finalPrice(new BigDecimal("250.00")).build()))
-				.build();
+		SeatReservationResponse.TicketPriceInfo ticketPriceInfo = new SeatReservationResponse.TicketPriceInfo(1L,
+				"Adult", new BigDecimal("250.00"));
 
-		return SeatReservationResponse.builder().sessionId(sessionId).movieTitle("Inception")
-				.basePrice(new BigDecimal("200.00")).hallName("Hall A").availableSeats(75).seats(Arrays.asList(seat1))
-				.build();
+		SeatReservationResponse.SeatInfo seat1 = new SeatReservationResponse.SeatInfo(1L, 1, 1, SeatType.STANDARD, true,
+				false, true, Arrays.asList(ticketPriceInfo));
+
+		return new SeatReservationResponse(sessionId, "Inception", new BigDecimal("200.00"), "Hall A", 75,
+				Arrays.asList(seat1));
 	}
 
 	@Test
@@ -66,9 +57,9 @@ public class SeatReservationControllerTest {
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
 		assertNotNull(response.getBody());
-		assertEquals(sessionId, response.getBody().getSessionId());
-		assertEquals("Inception", response.getBody().getMovieTitle());
-		assertEquals(75, response.getBody().getAvailableSeats());
+		assertEquals(sessionId, response.getBody().sessionId());
+		assertEquals("Inception", response.getBody().movieTitle());
+		assertEquals(75, response.getBody().availableSeats());
 	}
 
 	@Test
@@ -79,7 +70,6 @@ public class SeatReservationControllerTest {
 		User user = new User();
 		user.setId(userId);
 
-		when(customUserDetails.getUserId()).thenReturn(userId);
 		when(customUserDetails.getUser()).thenReturn(user);
 		doNothing().when(seatReservationService).temporaryHoldSeat(sessionId, seatId, user);
 

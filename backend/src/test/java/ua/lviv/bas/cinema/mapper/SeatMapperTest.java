@@ -23,11 +23,11 @@ public class SeatMapperTest {
 
 		SeatResponse response = seatMapper.toSeatResponse(seat);
 
-		assertThat(response.getId()).isEqualTo(1L);
-		assertThat(response.getRow()).isEqualTo(1);
-		assertThat(response.getNumber()).isEqualTo(5);
-		assertThat(response.getSeatType()).isEqualTo(SeatType.VIP);
-		assertThat(response.isActive()).isTrue();
+		assertThat(response.id()).isEqualTo(1L);
+		assertThat(response.row()).isEqualTo(1);
+		assertThat(response.number()).isEqualTo(5);
+		assertThat(response.seatType()).isEqualTo(SeatType.VIP);
+		assertThat(response.active()).isTrue();
 	}
 
 	@Test
@@ -36,7 +36,7 @@ public class SeatMapperTest {
 
 		SeatResponse response = seatMapper.toSeatResponse(seat);
 
-		assertThat(response.isActive()).isFalse();
+		assertThat(response.active()).isFalse();
 	}
 
 	@Test
@@ -54,10 +54,10 @@ public class SeatMapperTest {
 		List<SeatResponse> responses = seatMapper.toSeatResponseList(seats);
 
 		assertThat(responses).hasSize(2);
-		assertThat(responses.get(0).getId()).isEqualTo(1L);
-		assertThat(responses.get(0).isActive()).isTrue();
-		assertThat(responses.get(1).getId()).isEqualTo(2L);
-		assertThat(responses.get(1).isActive()).isFalse();
+		assertThat(responses.get(0).id()).isEqualTo(1L);
+		assertThat(responses.get(0).active()).isTrue();
+		assertThat(responses.get(1).id()).isEqualTo(2L);
+		assertThat(responses.get(1).active()).isFalse();
 	}
 
 	@Test

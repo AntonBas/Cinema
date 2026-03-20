@@ -56,12 +56,12 @@ public class BookingMapperTest {
 	void toBookingResponse() {
 		BookingResponse response = bookingMapper.toBookingResponse(booking);
 
-		assertThat(response.getId()).isEqualTo(123L);
-		assertThat(response.getSessionId()).isEqualTo(1L);
-		assertThat(response.getMovieTitle()).isEqualTo("Inception");
-		assertThat(response.getHallName()).isEqualTo("Hall A");
-		assertThat(response.getLiqpayOrderId()).isEqualTo("ORDER_ABC123");
-		assertThat(response.getTotalPrice()).isEqualTo(new BigDecimal("500.00"));
+		assertThat(response.id()).isEqualTo(123L);
+		assertThat(response.sessionId()).isEqualTo(1L);
+		assertThat(response.movieTitle()).isEqualTo("Inception");
+		assertThat(response.hallName()).isEqualTo("Hall A");
+		assertThat(response.liqpayOrderId()).isEqualTo("ORDER_ABC123");
+		assertThat(response.totalPrice()).isEqualTo(new BigDecimal("500.00"));
 	}
 
 	@Test
@@ -70,10 +70,10 @@ public class BookingMapperTest {
 
 		BookingResponse response = bookingMapper.toBookingResponse(booking);
 
-		assertThat(response.getId()).isEqualTo(123L);
-		assertThat(response.getSessionId()).isNull();
-		assertThat(response.getMovieTitle()).isNull();
-		assertThat(response.getHallName()).isNull();
+		assertThat(response.id()).isEqualTo(123L);
+		assertThat(response.sessionId()).isNull();
+		assertThat(response.movieTitle()).isNull();
+		assertThat(response.hallName()).isNull();
 	}
 
 	@Test
@@ -82,8 +82,8 @@ public class BookingMapperTest {
 
 		BookingResponse response = bookingMapper.toBookingResponse(booking);
 
-		assertThat(response.getId()).isEqualTo(123L);
-		assertThat(response.getLiqpayOrderId()).isNull();
+		assertThat(response.id()).isEqualTo(123L);
+		assertThat(response.liqpayOrderId()).isNull();
 	}
 
 	@Test
@@ -92,8 +92,8 @@ public class BookingMapperTest {
 
 		BookingResponse response = bookingMapper.toBookingResponse(booking);
 
-		assertThat(response.getId()).isEqualTo(123L);
-		assertThat(response.getSeatReservations()).isEmpty();
+		assertThat(response.id()).isEqualTo(123L);
+		assertThat(response.seatReservations()).isEmpty();
 	}
 
 	@Test
@@ -111,10 +111,10 @@ public class BookingMapperTest {
 
 		BookingResponse.SeatReservationInfo info = bookingMapper.toSeatReservationInfo(seatReservation);
 
-		assertThat(info.getSeatId()).isEqualTo(1L);
-		assertThat(info.getRow()).isEqualTo(5);
-		assertThat(info.getSeatNumber()).isEqualTo(12);
-		assertThat(info.getTicketTypeName()).isEqualTo("Adult");
+		assertThat(info.seatId()).isEqualTo(1L);
+		assertThat(info.row()).isEqualTo(5);
+		assertThat(info.seatNumber()).isEqualTo(12);
+		assertThat(info.ticketTypeName()).isEqualTo("Adult");
 	}
 
 	@Test
@@ -125,9 +125,9 @@ public class BookingMapperTest {
 
 		BookingResponse.SeatReservationInfo info = bookingMapper.toSeatReservationInfo(seatReservation);
 
-		assertThat(info.getSeatId()).isNull();
-		assertThat(info.getRow()).isNull();
-		assertThat(info.getSeatNumber()).isNull();
+		assertThat(info.seatId()).isNull();
+		assertThat(info.row()).isNull();
+		assertThat(info.seatNumber()).isNull();
 	}
 
 	@Test

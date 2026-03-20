@@ -141,8 +141,7 @@ public class SeatReservationServiceTest {
 		testUser.setId(USER_ID);
 		testUser.setEmail("test@example.com");
 
-		ticketPriceInfo = SeatReservationResponse.TicketPriceInfo.builder().ticketTypeId(1L).ticketTypeName("Adult")
-				.finalPrice(BigDecimal.TEN).build();
+		ticketPriceInfo = new SeatReservationResponse.TicketPriceInfo(1L, "Adult", BigDecimal.TEN);
 	}
 
 	@Test
@@ -209,16 +208,14 @@ public class SeatReservationServiceTest {
 		when(availabilityValidator.getSeatAvailabilityStatus(eq(SESSION_ID), eq(INACTIVE_SEAT_ID)))
 				.thenReturn(new ReservationValidator.SeatAvailabilityCheck(true, null));
 
-		seatInfo1 = SeatReservationResponse.SeatInfo.builder().id(SEAT_ID_1).row(1).seatNumber(1)
-				.seatType(SeatType.STANDARD).available(true).temporarilyReserved(false).active(true)
-				.ticketPrices(List.of(ticketPriceInfo)).build();
+		seatInfo1 = new SeatReservationResponse.SeatInfo(SEAT_ID_1, 1, 1, SeatType.STANDARD, true, false, true,
+				List.of(ticketPriceInfo));
 
-		seatInfo2 = SeatReservationResponse.SeatInfo.builder().id(SEAT_ID_2).row(1).seatNumber(2).seatType(SeatType.VIP)
-				.available(true).temporarilyReserved(false).active(true).ticketPrices(List.of(ticketPriceInfo)).build();
+		seatInfo2 = new SeatReservationResponse.SeatInfo(SEAT_ID_2, 1, 2, SeatType.VIP, true, false, true,
+				List.of(ticketPriceInfo));
 
-		inactiveSeatInfo = SeatReservationResponse.SeatInfo.builder().id(INACTIVE_SEAT_ID).row(2).seatNumber(1)
-				.seatType(SeatType.STANDARD).available(false).temporarilyReserved(false).active(false)
-				.ticketPrices(List.of(ticketPriceInfo)).build();
+		inactiveSeatInfo = new SeatReservationResponse.SeatInfo(INACTIVE_SEAT_ID, 2, 1, SeatType.STANDARD, false, false,
+				false, List.of(ticketPriceInfo));
 
 		when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(testSession));
 		when(seatRepository.findByHallId(HALL_ID)).thenReturn(allSeats);
@@ -233,9 +230,8 @@ public class SeatReservationServiceTest {
 		when(seatReservationMapper.toSeatInfo(inactiveSeat, false, false, List.of(ticketPriceInfo)))
 				.thenReturn(inactiveSeatInfo);
 
-		SeatReservationResponse expectedResponse = SeatReservationResponse.builder().sessionId(SESSION_ID)
-				.movieTitle("Test Movie").hallName("Hall A").basePrice(BASE_PRICE).availableSeats(2)
-				.seats(List.of(seatInfo1, seatInfo2, inactiveSeatInfo)).build();
+		SeatReservationResponse expectedResponse = new SeatReservationResponse(SESSION_ID, "Test Movie", BASE_PRICE,
+				"Hall A", 2, List.of(seatInfo1, seatInfo2, inactiveSeatInfo));
 
 		when(seatReservationMapper.toResponse(testSession, List.of(seatInfo1, seatInfo2, inactiveSeatInfo), 2))
 				.thenReturn(expectedResponse);
@@ -243,10 +239,10 @@ public class SeatReservationServiceTest {
 		SeatReservationResponse result = seatReservationService.getSeatAvailability(SESSION_ID);
 
 		assertThat(result).isNotNull();
-		assertThat(result.getSessionId()).isEqualTo(SESSION_ID);
-		assertThat(result.getMovieTitle()).isEqualTo("Test Movie");
-		assertThat(result.getAvailableSeats()).isEqualTo(2);
-		assertThat(result.getSeats()).hasSize(3);
+		assertThat(result.sessionId()).isEqualTo(SESSION_ID);
+		assertThat(result.movieTitle()).isEqualTo("Test Movie");
+		assertThat(result.availableSeats()).isEqualTo(2);
+		assertThat(result.seats()).hasSize(3);
 	}
 
 	@Test
@@ -270,17 +266,14 @@ public class SeatReservationServiceTest {
 		when(availabilityValidator.getSeatAvailabilityStatus(eq(SESSION_ID), eq(SEAT_ID_2)))
 				.thenReturn(new ReservationValidator.SeatAvailabilityCheck(true, null));
 
-		SeatReservationResponse.SeatInfo bookedSeatInfo = SeatReservationResponse.SeatInfo.builder().id(SEAT_ID_1)
-				.row(1).seatNumber(1).seatType(SeatType.STANDARD).available(false).temporarilyReserved(false)
-				.active(true).ticketPrices(List.of(ticketPriceInfo)).build();
+		SeatReservationResponse.SeatInfo bookedSeatInfo = new SeatReservationResponse.SeatInfo(SEAT_ID_1, 1, 1,
+				SeatType.STANDARD, false, false, true, List.of(ticketPriceInfo));
 
-		SeatReservationResponse.SeatInfo availableSeatInfo = SeatReservationResponse.SeatInfo.builder().id(SEAT_ID_2)
-				.row(1).seatNumber(2).seatType(SeatType.VIP).available(true).temporarilyReserved(false).active(true)
-				.ticketPrices(List.of(ticketPriceInfo)).build();
+		SeatReservationResponse.SeatInfo availableSeatInfo = new SeatReservationResponse.SeatInfo(SEAT_ID_2, 1, 2,
+				SeatType.VIP, true, false, true, List.of(ticketPriceInfo));
 
-		SeatReservationResponse expectedResponse = SeatReservationResponse.builder().sessionId(SESSION_ID)
-				.movieTitle("Test Movie").hallName("Hall A").basePrice(BASE_PRICE).availableSeats(1)
-				.seats(List.of(bookedSeatInfo, availableSeatInfo)).build();
+		SeatReservationResponse expectedResponse = new SeatReservationResponse(SESSION_ID, "Test Movie", BASE_PRICE,
+				"Hall A", 1, List.of(bookedSeatInfo, availableSeatInfo));
 
 		when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(testSession));
 		when(seatRepository.findByHallId(HALL_ID)).thenReturn(allSeats);
@@ -300,7 +293,7 @@ public class SeatReservationServiceTest {
 		SeatReservationResponse result = seatReservationService.getSeatAvailability(SESSION_ID);
 
 		assertThat(result).isNotNull();
-		assertThat(result.getAvailableSeats()).isEqualTo(1);
+		assertThat(result.availableSeats()).isEqualTo(1);
 	}
 
 	@Test
@@ -315,17 +308,14 @@ public class SeatReservationServiceTest {
 		when(availabilityValidator.getSeatAvailabilityStatus(eq(SESSION_ID), eq(SEAT_ID_2)))
 				.thenReturn(new ReservationValidator.SeatAvailabilityCheck(true, null));
 
-		SeatReservationResponse.SeatInfo pendingSeatInfo = SeatReservationResponse.SeatInfo.builder().id(SEAT_ID_1)
-				.row(1).seatNumber(1).seatType(SeatType.STANDARD).available(false).temporarilyReserved(true)
-				.active(true).ticketPrices(List.of(ticketPriceInfo)).build();
+		SeatReservationResponse.SeatInfo pendingSeatInfo = new SeatReservationResponse.SeatInfo(SEAT_ID_1, 1, 1,
+				SeatType.STANDARD, false, true, true, List.of(ticketPriceInfo));
 
-		SeatReservationResponse.SeatInfo availableSeatInfo = SeatReservationResponse.SeatInfo.builder().id(SEAT_ID_2)
-				.row(1).seatNumber(2).seatType(SeatType.VIP).available(true).temporarilyReserved(false).active(true)
-				.ticketPrices(List.of(ticketPriceInfo)).build();
+		SeatReservationResponse.SeatInfo availableSeatInfo = new SeatReservationResponse.SeatInfo(SEAT_ID_2, 1, 2,
+				SeatType.VIP, true, false, true, List.of(ticketPriceInfo));
 
-		SeatReservationResponse expectedResponse = SeatReservationResponse.builder().sessionId(SESSION_ID)
-				.movieTitle("Test Movie").hallName("Hall A").basePrice(BASE_PRICE).availableSeats(1)
-				.seats(List.of(pendingSeatInfo, availableSeatInfo)).build();
+		SeatReservationResponse expectedResponse = new SeatReservationResponse(SESSION_ID, "Test Movie", BASE_PRICE,
+				"Hall A", 1, List.of(pendingSeatInfo, availableSeatInfo));
 
 		when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(testSession));
 		when(seatRepository.findByHallId(HALL_ID)).thenReturn(allSeats);
@@ -345,7 +335,7 @@ public class SeatReservationServiceTest {
 		SeatReservationResponse result = seatReservationService.getSeatAvailability(SESSION_ID);
 
 		assertThat(result).isNotNull();
-		assertThat(result.getAvailableSeats()).isEqualTo(1);
+		assertThat(result.availableSeats()).isEqualTo(1);
 	}
 
 	@Test
@@ -409,13 +399,11 @@ public class SeatReservationServiceTest {
 		when(availabilityValidator.getSeatAvailabilityStatus(eq(SESSION_ID), eq(SEAT_ID_1)))
 				.thenReturn(new ReservationValidator.SeatAvailabilityCheck(true, null));
 
-		SeatReservationResponse.SeatInfo seatInfoWithNoPrices = SeatReservationResponse.SeatInfo.builder().id(SEAT_ID_1)
-				.row(1).seatNumber(1).seatType(SeatType.STANDARD).available(true).temporarilyReserved(false)
-				.active(true).ticketPrices(Collections.emptyList()).build();
+		SeatReservationResponse.SeatInfo seatInfoWithNoPrices = new SeatReservationResponse.SeatInfo(SEAT_ID_1, 1, 1,
+				SeatType.STANDARD, true, false, true, Collections.emptyList());
 
-		SeatReservationResponse expectedResponse = SeatReservationResponse.builder().sessionId(SESSION_ID)
-				.movieTitle("Test Movie").hallName("Hall A").basePrice(BASE_PRICE).availableSeats(1)
-				.seats(List.of(seatInfoWithNoPrices)).build();
+		SeatReservationResponse expectedResponse = new SeatReservationResponse(SESSION_ID, "Test Movie", BASE_PRICE,
+				"Hall A", 1, List.of(seatInfoWithNoPrices));
 
 		when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(testSession));
 		when(seatRepository.findByHallId(HALL_ID)).thenReturn(allSeats);
@@ -431,7 +419,7 @@ public class SeatReservationServiceTest {
 		SeatReservationResponse result = seatReservationService.getSeatAvailability(SESSION_ID);
 
 		assertThat(result).isNotNull();
-		assertThat(result.getSeats().get(0).getTicketPrices()).isEmpty();
+		assertThat(result.seats().get(0).ticketPrices()).isEmpty();
 	}
 
 	@Test

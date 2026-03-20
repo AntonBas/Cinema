@@ -40,7 +40,6 @@ import ua.lviv.bas.cinema.domain.enums.CinemaSessionStatus;
 import ua.lviv.bas.cinema.domain.enums.ReservationStatus;
 import ua.lviv.bas.cinema.domain.enums.SeatType;
 import ua.lviv.bas.cinema.dto.booking.request.BookingCreateRequest;
-import ua.lviv.bas.cinema.dto.booking.request.BookingCreateRequest.SeatSelectionRequest;
 import ua.lviv.bas.cinema.dto.booking.response.BookingResponse;
 import ua.lviv.bas.cinema.exception.domain.cinema.SeatNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.cinema.SessionNotFoundException;
@@ -152,18 +151,18 @@ public class BookingCreationServiceTest {
 
 		childTicketType = TicketType.builder().id(TICKET_TYPE_CHILD_ID).displayName("Child").build();
 
-		SeatSelectionRequest seatSelection1 = new SeatSelectionRequest();
-		seatSelection1.setSeatId(SEAT_ID_1);
-		seatSelection1.setTicketTypeId(TICKET_TYPE_ADULT_ID);
+		BookingCreateRequest.SeatSelectionRequest seatSelection1 = new BookingCreateRequest.SeatSelectionRequest(
+				SEAT_ID_1, TICKET_TYPE_ADULT_ID);
 
-		SeatSelectionRequest seatSelection2 = new SeatSelectionRequest();
-		seatSelection2.setSeatId(SEAT_ID_2);
-		seatSelection2.setTicketTypeId(TICKET_TYPE_CHILD_ID);
+		BookingCreateRequest.SeatSelectionRequest seatSelection2 = new BookingCreateRequest.SeatSelectionRequest(
+				SEAT_ID_2, TICKET_TYPE_CHILD_ID);
 
-		createRequest = new BookingCreateRequest();
-		createRequest.setSessionId(SESSION_ID);
-		createRequest.setSeats(Arrays.asList(seatSelection1, seatSelection2));
-		createRequest.setBonusPointsToUse(BONUS_POINTS_USED);
+		createRequest = new BookingCreateRequest(SESSION_ID, Arrays.asList(seatSelection1, seatSelection2),
+				BONUS_POINTS_USED);
+
+		bookingResponse = new BookingResponse(BOOKING_ID, BOOKING_NUMBER, BookingStatus.PENDING, SESSION_ID,
+				LocalDateTime.now(), "Test Movie", "Hall A", TOTAL_PRICE, BONUS_POINTS_USED, DISCOUNT_AMOUNT,
+				FINAL_PRICE, null, null, null, null);
 	}
 
 	@Test
@@ -189,17 +188,14 @@ public class BookingCreationServiceTest {
 		when(bookingRepository.save(any(Booking.class))).thenReturn(savedBooking);
 		when(seatReservationRepository.saveAll(anyList())).thenReturn(Collections.emptyList());
 
-		bookingResponse = new BookingResponse();
-		bookingResponse.setId(BOOKING_ID);
-		bookingResponse.setBookingNumber(BOOKING_NUMBER);
 		when(bookingMapper.toBookingResponse(any(Booking.class))).thenReturn(bookingResponse);
 		when(numberGenerator.generateBookingNumber(any(Booking.class))).thenReturn(BOOKING_NUMBER);
 
 		BookingResponse result = bookingCreationService.createBooking(createRequest, testUser);
 
 		assertThat(result).isNotNull();
-		assertThat(result.getId()).isEqualTo(BOOKING_ID);
-		assertThat(result.getBookingNumber()).isEqualTo(BOOKING_NUMBER);
+		assertThat(result.id()).isEqualTo(BOOKING_ID);
+		assertThat(result.bookingNumber()).isEqualTo(BOOKING_NUMBER);
 
 		verify(bookingValidator).validateSessionForBooking(testSession);
 		verify(availabilityValidator).validateSeat(SESSION_ID, SEAT_ID_1);
@@ -275,8 +271,8 @@ public class BookingCreationServiceTest {
 
 	@Test
 	void createBooking_WithoutBonusPoints() {
-		createRequest.setBonusPointsToUse(null);
-		createRequest.setSeats(Collections.singletonList(createRequest.getSeats().get(0)));
+		BookingCreateRequest requestWithoutBonus = new BookingCreateRequest(SESSION_ID,
+				Arrays.asList(new BookingCreateRequest.SeatSelectionRequest(SEAT_ID_1, TICKET_TYPE_ADULT_ID)), null);
 
 		when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(testSession));
 		when(seatRepository.findById(SEAT_ID_1)).thenReturn(Optional.of(testSeat1));
@@ -296,11 +292,10 @@ public class BookingCreationServiceTest {
 		when(bookingRepository.save(any(Booking.class))).thenReturn(savedBooking);
 		when(seatReservationRepository.saveAll(anyList())).thenReturn(Collections.emptyList());
 
-		bookingResponse = new BookingResponse();
 		when(bookingMapper.toBookingResponse(any(Booking.class))).thenReturn(bookingResponse);
 		when(numberGenerator.generateBookingNumber(any(Booking.class))).thenReturn(BOOKING_NUMBER);
 
-		BookingResponse result = bookingCreationService.createBooking(createRequest, testUser);
+		BookingResponse result = bookingCreationService.createBooking(requestWithoutBonus, testUser);
 
 		assertThat(result).isNotNull();
 
@@ -315,8 +310,8 @@ public class BookingCreationServiceTest {
 
 	@Test
 	void createBooking_WithZeroBonusPoints() {
-		createRequest.setBonusPointsToUse(0);
-		createRequest.setSeats(Collections.singletonList(createRequest.getSeats().get(0)));
+		BookingCreateRequest requestWithZeroBonus = new BookingCreateRequest(SESSION_ID,
+				Arrays.asList(new BookingCreateRequest.SeatSelectionRequest(SEAT_ID_1, TICKET_TYPE_ADULT_ID)), 0);
 
 		when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(testSession));
 		when(seatRepository.findById(SEAT_ID_1)).thenReturn(Optional.of(testSeat1));
@@ -335,11 +330,10 @@ public class BookingCreationServiceTest {
 		when(bookingRepository.save(any(Booking.class))).thenReturn(savedBooking);
 		when(seatReservationRepository.saveAll(anyList())).thenReturn(Collections.emptyList());
 
-		bookingResponse = new BookingResponse();
 		when(bookingMapper.toBookingResponse(any(Booking.class))).thenReturn(bookingResponse);
 		when(numberGenerator.generateBookingNumber(any(Booking.class))).thenReturn(BOOKING_NUMBER);
 
-		BookingResponse result = bookingCreationService.createBooking(createRequest, testUser);
+		BookingResponse result = bookingCreationService.createBooking(requestWithZeroBonus, testUser);
 
 		assertThat(result).isNotNull();
 
@@ -354,8 +348,8 @@ public class BookingCreationServiceTest {
 
 	@Test
 	void createBooking_WithSingleSeat_Success() {
-		createRequest.setSeats(Collections.singletonList(createRequest.getSeats().get(0)));
-		createRequest.setBonusPointsToUse(null);
+		BookingCreateRequest singleSeatRequest = new BookingCreateRequest(SESSION_ID,
+				Arrays.asList(new BookingCreateRequest.SeatSelectionRequest(SEAT_ID_1, TICKET_TYPE_ADULT_ID)), null);
 
 		when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(testSession));
 		when(seatRepository.findById(SEAT_ID_1)).thenReturn(Optional.of(testSeat1));
@@ -375,11 +369,10 @@ public class BookingCreationServiceTest {
 		when(bookingRepository.save(any(Booking.class))).thenReturn(savedBooking);
 		when(seatReservationRepository.saveAll(anyList())).thenReturn(Collections.emptyList());
 
-		bookingResponse = new BookingResponse();
 		when(bookingMapper.toBookingResponse(any(Booking.class))).thenReturn(bookingResponse);
 		when(numberGenerator.generateBookingNumber(any(Booking.class))).thenReturn(BOOKING_NUMBER);
 
-		BookingResponse result = bookingCreationService.createBooking(createRequest, testUser);
+		BookingResponse result = bookingCreationService.createBooking(singleSeatRequest, testUser);
 
 		assertThat(result).isNotNull();
 
@@ -412,7 +405,6 @@ public class BookingCreationServiceTest {
 		when(bookingRepository.save(any(Booking.class))).thenReturn(savedBooking);
 		when(seatReservationRepository.saveAll(anyList())).thenReturn(Collections.emptyList());
 
-		bookingResponse = new BookingResponse();
 		when(bookingMapper.toBookingResponse(any(Booking.class))).thenReturn(bookingResponse);
 		when(numberGenerator.generateBookingNumber(any(Booking.class))).thenReturn(BOOKING_NUMBER);
 

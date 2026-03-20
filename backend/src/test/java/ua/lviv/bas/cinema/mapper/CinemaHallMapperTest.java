@@ -37,9 +37,9 @@ public class CinemaHallMapperTest {
 	void toCinemaHallResponse_MapsAllFields() {
 		CinemaHallResponse response = cinemaHallMapper.toCinemaHallResponse(hallWithSeats);
 
-		assertThat(response.getId()).isEqualTo(1L);
-		assertThat(response.getName()).isEqualTo("Hall A");
-		assertThat(response.getCapacity()).isEqualTo(3);
+		assertThat(response.id()).isEqualTo(1L);
+		assertThat(response.name()).isEqualTo("Hall A");
+		assertThat(response.capacity()).isEqualTo(3);
 	}
 
 	@Test
@@ -47,7 +47,7 @@ public class CinemaHallMapperTest {
 		hallWithSeats.setSeats(null);
 		CinemaHallResponse response = cinemaHallMapper.toCinemaHallResponse(hallWithSeats);
 
-		assertThat(response.getCapacity()).isZero();
+		assertThat(response.capacity()).isZero();
 	}
 
 	@Test
@@ -56,9 +56,9 @@ public class CinemaHallMapperTest {
 		List<CinemaHallResponse> responses = cinemaHallMapper.toCinemaHallResponseList(halls);
 
 		assertThat(responses).hasSize(2);
-		assertThat(responses.get(0).getId()).isEqualTo(1L);
-		assertThat(responses.get(1).getId()).isEqualTo(2L);
-		assertThat(responses.get(1).getCapacity()).isZero();
+		assertThat(responses.get(0).id()).isEqualTo(1L);
+		assertThat(responses.get(1).id()).isEqualTo(2L);
+		assertThat(responses.get(1).capacity()).isZero();
 	}
 
 	@Test
@@ -77,9 +77,9 @@ public class CinemaHallMapperTest {
 	void toHallLayoutResponse_MapsAllFields() {
 		HallLayoutResponse response = cinemaHallMapper.toHallLayoutResponse(hallWithSeats);
 
-		assertThat(response.getHallId()).isEqualTo(1L);
-		assertThat(response.getHallName()).isEqualTo("Hall A");
-		assertThat(response.getTotalSeats()).isEqualTo(3);
+		assertThat(response.hallId()).isEqualTo(1L);
+		assertThat(response.hallName()).isEqualTo("Hall A");
+		assertThat(response.totalSeats()).isEqualTo(3);
 	}
 
 	@Test

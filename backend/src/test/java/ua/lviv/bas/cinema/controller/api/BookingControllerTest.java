@@ -48,18 +48,17 @@ public class BookingControllerTest {
 	}
 
 	private BookingResponse createBookingResponse() {
-		return BookingResponse.builder().id(BOOKING_ID).bookingNumber("BK-20240115-00123").status(BookingStatus.PENDING)
-				.sessionTime(LocalDateTime.now().plusDays(1)).movieTitle("Test Movie").hallName("Hall A")
-				.totalPrice(new BigDecimal("150.00")).finalPrice(new BigDecimal("150.00"))
-				.expiresAt(LocalDateTime.now().plusMinutes(15)).createdAt(LocalDateTime.now()).build();
+		return new BookingResponse(BOOKING_ID, "BK-20240115-00123", BookingStatus.PENDING, SESSION_ID,
+				LocalDateTime.now().plusDays(1), "Test Movie", "Hall A", new BigDecimal("150.00"), null,
+				BigDecimal.ZERO, new BigDecimal("150.00"), null, LocalDateTime.now().plusMinutes(15),
+				LocalDateTime.now(), null);
 	}
 
 	@Test
 	void createBooking_ReturnsCreated() {
 		User user = createUser();
 		CustomUserDetails userDetails = createUserDetails();
-		BookingCreateRequest request = new BookingCreateRequest();
-		request.setSessionId(SESSION_ID);
+		BookingCreateRequest request = new BookingCreateRequest(SESSION_ID, null, null);
 		BookingResponse response = createBookingResponse();
 
 		when(controllerFacade.createBooking(any(BookingCreateRequest.class), any(User.class))).thenReturn(response);
@@ -68,7 +67,7 @@ public class BookingControllerTest {
 
 		assertThat(result.getStatusCode()).isEqualTo(HttpStatus.CREATED);
 		assertThat(result.getBody()).isNotNull();
-		assertThat(result.getBody().getId()).isEqualTo(BOOKING_ID);
+		assertThat(result.getBody().id()).isEqualTo(BOOKING_ID);
 		verify(controllerFacade).createBooking(request, user);
 	}
 
@@ -84,7 +83,7 @@ public class BookingControllerTest {
 
 		assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
 		assertThat(result.getBody()).isNotNull();
-		assertThat(result.getBody().getId()).isEqualTo(BOOKING_ID);
+		assertThat(result.getBody().id()).isEqualTo(BOOKING_ID);
 		verify(controllerFacade).getBookingById(BOOKING_ID, user);
 	}
 

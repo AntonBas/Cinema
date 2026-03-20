@@ -36,12 +36,8 @@ public class AdminCinemaHallControllerTest {
 
 	@Test
 	void createHall_ReturnsCreatedHall() {
-		CinemaHallRequest request = new CinemaHallRequest();
-		request.setName(HALL_NAME);
-
-		CinemaHallResponse response = new CinemaHallResponse();
-		response.setId(HALL_ID);
-		response.setName(HALL_NAME);
+		CinemaHallRequest request = new CinemaHallRequest(HALL_NAME, null, null, null, null);
+		CinemaHallResponse response = new CinemaHallResponse(HALL_ID, HALL_NAME, 0);
 
 		when(cinemaHallService.createHall(any(CinemaHallRequest.class))).thenReturn(response);
 
@@ -54,8 +50,7 @@ public class AdminCinemaHallControllerTest {
 
 	@Test
 	void createHall_ThrowsException_WhenDuplicateName() {
-		CinemaHallRequest request = new CinemaHallRequest();
-		request.setName("Existing Hall");
+		CinemaHallRequest request = new CinemaHallRequest("Existing Hall", null, null, null, null);
 
 		when(cinemaHallService.createHall(any(CinemaHallRequest.class)))
 				.thenThrow(new DuplicateEntityException("CinemaHall", "Existing Hall"));
@@ -65,9 +60,7 @@ public class AdminCinemaHallControllerTest {
 
 	@Test
 	void getHallById_ReturnsHall() {
-		CinemaHallResponse response = new CinemaHallResponse();
-		response.setId(HALL_ID);
-		response.setName(HALL_NAME);
+		CinemaHallResponse response = new CinemaHallResponse(HALL_ID, HALL_NAME, 0);
 
 		when(cinemaHallService.getHallById(HALL_ID)).thenReturn(response);
 
@@ -87,12 +80,8 @@ public class AdminCinemaHallControllerTest {
 
 	@Test
 	void updateHall_ReturnsUpdatedHall() {
-		CinemaHallRequest request = new CinemaHallRequest();
-		request.setName("Updated Hall");
-
-		CinemaHallResponse response = new CinemaHallResponse();
-		response.setId(HALL_ID);
-		response.setName("Updated Hall");
+		CinemaHallRequest request = new CinemaHallRequest("Updated Hall", null, null, null, null);
+		CinemaHallResponse response = new CinemaHallResponse(HALL_ID, "Updated Hall", 0);
 
 		when(cinemaHallService.updateHall(eq(HALL_ID), any(CinemaHallRequest.class))).thenReturn(response);
 
@@ -105,7 +94,7 @@ public class AdminCinemaHallControllerTest {
 
 	@Test
 	void updateHall_ThrowsException_WhenNotFound() {
-		CinemaHallRequest request = new CinemaHallRequest();
+		CinemaHallRequest request = new CinemaHallRequest(null, null, null, null, null);
 
 		when(cinemaHallService.updateHall(eq(999L), any(CinemaHallRequest.class)))
 				.thenThrow(new CinemaHallNotFoundException(999L));
