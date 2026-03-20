@@ -18,20 +18,22 @@ public class CoupleRowSeatsValidator implements ConstraintValidator<CoupleRowSea
 
 	@Override
 	public boolean isValid(Integer seatsPerRow, ConstraintValidatorContext context) {
-		if (seatsPerRow == null)
+		if (seatsPerRow == null) {
 			return true;
+		}
 
 		CinemaHallRequest request = currentRequest.get();
-		if (request == null)
+		if (request == null) {
 			return true;
+		}
 
-		boolean hasCoupleRows = request.getCoupleRows() != null && !request.getCoupleRows().isEmpty();
+		boolean hasCoupleRows = request.coupleRows() != null && !request.coupleRows().isEmpty();
 
 		if (hasCoupleRows && seatsPerRow % 2 != 0) {
 			context.disableDefaultConstraintViolation();
 			context.buildConstraintViolationWithTemplate(
 					"Number of seats per row must be even because hall has COUPLE seats in rows: "
-							+ request.getCoupleRows())
+							+ request.coupleRows())
 					.addConstraintViolation();
 			return false;
 		}

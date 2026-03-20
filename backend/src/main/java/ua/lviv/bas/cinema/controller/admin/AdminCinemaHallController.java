@@ -45,7 +45,7 @@ public class AdminCinemaHallController {
 			@ApiResponse(responseCode = "400", description = "Invalid request data"),
 			@ApiResponse(responseCode = "409", description = "Hall with this name already exists") })
 	public ResponseEntity<CinemaHallResponse> createHall(@Valid @RequestBody CinemaHallRequest request) {
-		log.info("POST /api/admin/cinema-halls - Creating new cinema hall: {}", request.getName());
+		log.info("POST /api/admin/cinema-halls - Creating new cinema hall: {}", request.name());
 		CinemaHallResponse created = cinemaHallService.createHall(request);
 		return ResponseEntity.status(HttpStatus.CREATED).body(created);
 	}

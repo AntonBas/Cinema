@@ -1,34 +1,17 @@
 package ua.lviv.bas.cinema.dto.cinemaHall.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import ua.lviv.bas.cinema.domain.enums.SeatType;
 
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-@Schema(description = "Response DTO for individual seat information")
-public class SeatResponse {
+public record SeatResponse(@Schema(description = "Unique identifier of the seat", example = "1") Long id,
 
-	@Schema(description = "Unique identifier of the seat", example = "1")
-	private Long id;
+		@Schema(description = "Row number where the seat is located (starting from 1)", example = "5") Integer row,
 
-	@Schema(description = "Row number where the seat is located (starting from 1)", example = "5")
-	private Integer row;
+		@Schema(description = "Seat number within the row", example = "12") Integer number,
 
-	@Schema(description = "Seat number within the row", example = "12")
-	private Integer number;
+		@Schema(description = "Type of the seat", example = "VIP") SeatType seatType,
 
-	@Schema(description = "Type of the seat", example = "VIP")
-	private SeatType seatType;
-
-	@Schema(description = "Whether the seat is active (not broken/disabled)", example = "true")
-	private boolean active;
-
+		@Schema(description = "Whether the seat is active (not broken/disabled)", example = "true") boolean active) {
 	@Schema(description = "Number of seats in this unit (1 for STANDARD/VIP, 2 for COUPLE)", example = "2")
 	public int getSeatCount() {
 		return seatType.getSeatsCount();

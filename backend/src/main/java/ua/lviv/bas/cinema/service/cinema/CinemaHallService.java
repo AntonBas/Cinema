@@ -21,6 +21,7 @@ import ua.lviv.bas.cinema.domain.projection.CinemaHallProjection;
 import ua.lviv.bas.cinema.dto.cinemaHall.request.CinemaHallRequest;
 import ua.lviv.bas.cinema.dto.cinemaHall.response.CinemaHallResponse;
 import ua.lviv.bas.cinema.dto.cinemaHall.response.HallLayoutResponse;
+import ua.lviv.bas.cinema.dto.cinemaHall.response.SeatResponse;
 import ua.lviv.bas.cinema.dto.cinemaHall.response.SeatRowResponse;
 import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
 import ua.lviv.bas.cinema.exception.domain.cinema.CinemaHallHasSessionsException;
@@ -44,20 +45,20 @@ public class CinemaHallService {
 	@Transactional
 	@CacheEvict(value = "cinemaHalls", allEntries = true)
 	public CinemaHallResponse createHall(CinemaHallRequest request) {
-		log.info("Creating cinema hall: {}", request.getName());
+		log.info("Creating cinema hall: {}", request.name());
 
 		try {
 			CoupleRowSeatsValidator.setCurrentRequest(request);
 
-			if (hallRepository.existsByName(request.getName())) {
-				throw new DuplicateEntityException("CinemaHall", request.getName());
+			if (hallRepository.existsByName(request.name())) {
+				throw new DuplicateEntityException("CinemaHall", request.name());
 			}
 
 			validateCoupleRowsConfiguration(request);
 
-			CinemaHall hall = CinemaHall.builder().name(request.getName()).build();
+			CinemaHall hall = CinemaHall.builder().name(request.name()).build();
 
-			if (request.getRows() != null && request.getSeatsPerRow() != null) {
+			if (request.rows() != null && request.seatsPerRow() != null) {
 				List<Seat> seats = generateSeatLayout(hall, request);
 				hall.setSeats(seats);
 				log.debug("Generated {} seats during hall creation", seats.size());
@@ -89,13 +90,13 @@ public class CinemaHallService {
 				throw new CinemaHallHasSessionsException(existing.getName(), id);
 			}
 
-			if (!existing.getName().equals(request.getName()) && hallRepository.existsByName(request.getName())) {
-				throw new DuplicateEntityException("CinemaHall", request.getName());
+			if (!existing.getName().equals(request.name()) && hallRepository.existsByName(request.name())) {
+				throw new DuplicateEntityException("CinemaHall", request.name());
 			}
 
 			validateCoupleRowsConfiguration(request);
 
-			existing.setName(request.getName());
+			existing.setName(request.name());
 
 			boolean layoutChanged = !isLayoutSame(existing, request);
 
@@ -172,20 +173,20 @@ public class CinemaHallService {
 
 	private List<Seat> generateSeatLayout(CinemaHall hall, CinemaHallRequest request) {
 		List<Seat> seats = new ArrayList<>();
-		SeatType defaultType = request.getDefaultSeatType();
-		List<Integer> coupleRows = request.getCoupleRows() != null ? request.getCoupleRows() : List.of(7);
+		SeatType defaultType = request.defaultSeatType();
+		List<Integer> coupleRows = request.coupleRows() != null ? request.coupleRows() : List.of(7);
 
-		for (int row = 1; row <= request.getRows(); row++) {
+		for (int row = 1; row <= request.rows(); row++) {
 			if (coupleRows.contains(row)) {
 				int coupleSeatNumber = 1;
-				for (int pos = 1; pos <= request.getSeatsPerRow(); pos += 2) {
+				for (int pos = 1; pos <= request.seatsPerRow(); pos += 2) {
 					Seat seat = Seat.builder().row(row).number(coupleSeatNumber++).seatType(SeatType.COUPLE).hall(hall)
 							.build();
 					seats.add(seat);
 				}
 			} else {
-				for (int number = 1; number <= request.getSeatsPerRow(); number++) {
-					SeatType seatType = row > request.getRows() - 2 ? SeatType.VIP : defaultType;
+				for (int number = 1; number <= request.seatsPerRow(); number++) {
+					SeatType seatType = row > request.rows() - 2 ? SeatType.VIP : defaultType;
 					Seat seat = Seat.builder().row(row).number(number).seatType(seatType).hall(hall).build();
 					seats.add(seat);
 				}
@@ -206,29 +207,29 @@ public class CinemaHallService {
 		long standardSeatsInFirstRow = seatsByRow.getOrDefault(1, List.of()).stream()
 				.filter(seat -> seat.getSeatType() != SeatType.COUPLE).count();
 
-		return currentRows == request.getRows() && standardSeatsInFirstRow == request.getSeatsPerRow();
+		return currentRows == request.rows() && standardSeatsInFirstRow == request.seatsPerRow();
 	}
 
 	private HallLayoutResponse buildHallLayoutDto(CinemaHall hall) {
 		List<SeatRowResponse> rows = hall.getSeats().stream().collect(Collectors.groupingBy(Seat::getRow)).entrySet()
-				.stream()
-				.map(entry -> SeatRowResponse.builder().rowNumber(entry.getKey()).seatsCount(entry.getValue().size())
-						.seats(seatMapper.toSeatResponseList(entry.getValue())).build())
-				.sorted(Comparator.comparing(SeatRowResponse::getRowNumber)).collect(Collectors.toList());
+				.stream().map(entry -> {
+					List<SeatResponse> seatResponses = seatMapper.toSeatResponseList(entry.getValue());
+					return new SeatRowResponse(entry.getKey(), entry.getValue().size(), seatResponses);
+				}).sorted(Comparator.comparing(SeatRowResponse::rowNumber)).collect(Collectors.toList());
 
 		int totalRows = rows.size();
-		int maxSeatsPerRow = rows.stream().mapToInt(SeatRowResponse::getSeatsCount).max().orElse(0);
+		int maxSeatsPerRow = rows.stream().mapToInt(SeatRowResponse::seatsCount).max().orElse(0);
 
-		return HallLayoutResponse.builder().hallId(hall.getId()).hallName(hall.getName()).totalRows(totalRows)
-				.maxSeatsPerRow(maxSeatsPerRow).totalSeats(hall.getSeats().size()).rows(rows).build();
+		return new HallLayoutResponse(hall.getId(), hall.getName(), totalRows, maxSeatsPerRow, hall.getSeats().size(),
+				rows);
 	}
 
 	private void validateCoupleRowsConfiguration(CinemaHallRequest request) {
-		if (request.getCoupleRows() != null && !request.getCoupleRows().isEmpty()) {
-			for (Integer row : request.getCoupleRows()) {
-				if (row < 1 || row > request.getRows()) {
+		if (request.coupleRows() != null && !request.coupleRows().isEmpty()) {
+			for (Integer row : request.coupleRows()) {
+				if (row < 1 || row > request.rows()) {
 					throw new IllegalArgumentException(
-							"Couple row " + row + " is out of range. Hall has " + request.getRows() + " rows");
+							"Couple row " + row + " is out of range. Hall has " + request.rows() + " rows");
 				}
 			}
 		}
