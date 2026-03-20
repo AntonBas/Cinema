@@ -42,10 +42,10 @@ public class PersonService {
 	@CacheEvict(allEntries = true)
 	@Transactional
 	public PersonResponse createPerson(PersonRequest request) {
-		log.info("Creating person: {}", request.getName());
+		log.info("Creating person: {}", request.name());
 
-		String personName = request.getName().trim();
-		validatePersonUniqueness(personName, request.getRole(), null);
+		String personName = request.name().trim();
+		validatePersonUniqueness(personName, request.role(), null);
 
 		Person person = personMapper.toPerson(request);
 		person.setName(personName);
@@ -58,12 +58,12 @@ public class PersonService {
 	@CacheEvict(allEntries = true)
 	@Transactional
 	public PersonResponse quickCreatePerson(QuickCreatePersonRequest request) {
-		log.info("Quick creating person: {} with role: {}", request.getName(), request.getRole());
+		log.info("Quick creating person: {} with role: {}", request.name(), request.role());
 
-		String personName = request.getName().trim();
-		validatePersonUniqueness(personName, request.getRole(), null);
+		String personName = request.name().trim();
+		validatePersonUniqueness(personName, request.role(), null);
 
-		Person person = Person.builder().name(personName).role(request.getRole()).build();
+		Person person = Person.builder().name(personName).role(request.role()).build();
 
 		Person saved = personRepository.save(person);
 		log.debug("Person quick-created with ID: {}", saved.getId());
@@ -85,8 +85,8 @@ public class PersonService {
 
 		Person existing = findPersonById(id);
 
-		String personName = request.getName().trim();
-		validatePersonUniqueness(personName, request.getRole(), id);
+		String personName = request.name().trim();
+		validatePersonUniqueness(personName, request.role(), id);
 
 		personMapper.updatePersonFromRequest(request, existing);
 		existing.setName(personName);

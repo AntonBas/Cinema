@@ -49,7 +49,7 @@ public class AdminGenreController {
 			@ApiResponse(responseCode = "401", description = "User not authenticated"),
 			@ApiResponse(responseCode = "403", description = "User does not have required role") })
 	public ResponseEntity<GenreResponse> createGenre(@RequestBody @Valid GenreRequest request) {
-		log.info("POST /api/admin/genres - Creating new genre: {}", request.getName());
+		log.info("POST /api/admin/genres - Creating new genre: {}", request.name());
 		GenreResponse createdGenre = genreService.createGenre(request);
 		return ResponseEntity.status(HttpStatus.CREATED).body(createdGenre);
 	}

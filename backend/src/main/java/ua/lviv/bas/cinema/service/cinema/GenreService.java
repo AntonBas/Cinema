@@ -33,9 +33,9 @@ public class GenreService {
 	@CacheEvict(allEntries = true)
 	@Transactional
 	public GenreResponse createGenre(GenreRequest request) {
-		log.info("Creating genre: {}", request.getName());
+		log.info("Creating genre: {}", request.name());
 
-		String genreName = request.getName().trim();
+		String genreName = request.name().trim();
 		validateGenreUniqueness(genreName, null);
 
 		Genre genre = genreMapper.toGenre(request);
@@ -60,7 +60,7 @@ public class GenreService {
 
 		Genre existingGenre = genreRepository.findById(id).orElseThrow(() -> new GenreNotFoundException(id));
 
-		String genreName = request.getName().trim();
+		String genreName = request.name().trim();
 		validateGenreUniqueness(genreName, id);
 
 		genreMapper.updateGenreFromRequest(request, existingGenre);

@@ -45,7 +45,7 @@ public class MovieController {
 		log.info("GET /api/movies/slug/{} - Getting movie by slug", slug);
 		MovieDetailResponse movie = movieService.getMovieBySlug(slug);
 
-		if (movie.getStatus() == MovieStatus.ARCHIVED) {
+		if (movie.status() == MovieStatus.ARCHIVED) {
 			log.warn("Movie with slug {} is archived and not available publicly", slug);
 			throw new MovieNotFoundException(slug);
 		}

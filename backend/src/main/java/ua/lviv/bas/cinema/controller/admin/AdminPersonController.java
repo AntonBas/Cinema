@@ -47,7 +47,7 @@ public class AdminPersonController {
 	@Operation(summary = "Create new person")
 	@ApiResponses(value = { @ApiResponse(responseCode = "201", description = "Person created successfully") })
 	public ResponseEntity<PersonResponse> createPerson(@RequestBody @Valid PersonRequest request) {
-		log.info("POST /api/admin/persons - Creating new person: {}", request.getName());
+		log.info("POST /api/admin/persons - Creating new person: {}", request.name());
 		PersonResponse createdPerson = personService.createPerson(request);
 		return ResponseEntity.status(HttpStatus.CREATED).body(createdPerson);
 	}
@@ -56,8 +56,8 @@ public class AdminPersonController {
 	@Operation(summary = "Quick create person")
 	@ApiResponses(value = { @ApiResponse(responseCode = "201", description = "Person created successfully") })
 	public ResponseEntity<PersonResponse> quickCreatePerson(@RequestBody @Valid QuickCreatePersonRequest request) {
-		log.info("POST /api/admin/persons/quick - Quick creating person: {} with role: {}", request.getName(),
-				request.getRole());
+		log.info("POST /api/admin/persons/quick - Quick creating person: {} with role: {}", request.name(),
+				request.role());
 		PersonResponse createdPerson = personService.quickCreatePerson(request);
 		return ResponseEntity.status(HttpStatus.CREATED).body(createdPerson);
 	}
