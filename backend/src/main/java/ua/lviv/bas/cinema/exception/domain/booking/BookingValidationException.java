@@ -24,4 +24,12 @@ public class BookingValidationException extends ValidationException {
 	public static BookingValidationException cannotCancel() {
 		return new BookingValidationException("Booking cannot be cancelled");
 	}
+
+	public static BookingValidationException bookingExpired() {
+		return new BookingValidationException("Booking has expired. Please create a new booking.");
+	}
+
+	public static BookingValidationException tempHoldExpired() {
+		return new BookingValidationException("Temporary hold has expired. Please select seats again.");
+	}
 }

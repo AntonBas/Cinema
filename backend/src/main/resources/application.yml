@@ -109,6 +109,7 @@ app:
 
 booking:
     expiration-minutes: 30
+    temp-hold-minutes: 5
     session-too-close-minutes: 30
     max-bonus-points-percentage: 70
     max-seats-per-booking: 10
