@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.service.booking.availability;
+package ua.lviv.bas.cinema.service.booking.reservation;
 
 import java.util.List;
 
@@ -16,7 +16,7 @@ import ua.lviv.bas.cinema.repository.SeatReservationRepository;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class AvailabilityValidator {
+public class ReservationValidator {
 
 	private final SeatReservationRepository seatReservationRepository;
 	private final SeatRepository seatRepository;

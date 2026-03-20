@@ -30,7 +30,7 @@ import ua.lviv.bas.cinema.repository.SeatRepository;
 import ua.lviv.bas.cinema.repository.SeatReservationRepository;
 import ua.lviv.bas.cinema.repository.SessionRepository;
 import ua.lviv.bas.cinema.repository.TicketTypeRepository;
-import ua.lviv.bas.cinema.service.booking.availability.AvailabilityValidator;
+import ua.lviv.bas.cinema.service.booking.reservation.ReservationValidator;
 import ua.lviv.bas.cinema.service.shared.NumberGeneratorService;
 import ua.lviv.bas.cinema.service.shared.PriceCalculatorService;
 import ua.lviv.bas.cinema.service.user.BonusService;
@@ -46,7 +46,7 @@ public class BookingCreationService {
 	private final TicketTypeRepository ticketTypeRepository;
 	private final SeatReservationRepository seatReservationRepository;
 	private final BookingMapper bookingMapper;
-	private final AvailabilityValidator availabilityValidator;
+	private final ReservationValidator availabilityValidator;
 	private final BonusService bonusService;
 	private final PriceCalculatorService priceCalculator;
 	private final NumberGeneratorService numberGenerator;

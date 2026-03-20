@@ -1,10 +1,12 @@
-package ua.lviv.bas.cinema.service.booking.availability;
+package ua.lviv.bas.cinema.service.booking.reservation;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,10 +14,13 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.Seat;
+import ua.lviv.bas.cinema.domain.SeatReservation;
 import ua.lviv.bas.cinema.domain.Session;
 import ua.lviv.bas.cinema.domain.TicketType;
+import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.enums.ReservationStatus;
 import ua.lviv.bas.cinema.dto.booking.response.SeatReservationResponse;
+import ua.lviv.bas.cinema.exception.domain.cinema.SeatNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.cinema.SessionNotFoundException;
 import ua.lviv.bas.cinema.mapper.SeatReservationMapper;
 import ua.lviv.bas.cinema.repository.SeatRepository;
@@ -35,8 +40,11 @@ public class SeatReservationService {
 	private final SeatReservationRepository seatReservationRepository;
 	private final TicketTypeRepository ticketTypeRepository;
 	private final PriceCalculatorService priceCalculator;
-	private final AvailabilityValidator availabilityValidator;
+	private final ReservationValidator availabilityValidator;
 	private final SeatReservationMapper seatReservationMapper;
+
+	@Value("${booking.temp-hold-minutes:5}")
+	private int tempHoldMinutes;
 
 	@Cacheable(value = "seatAvailability", key = "#sessionId")
 	public SeatReservationResponse getSeatAvailability(Long sessionId) {
@@ -67,11 +75,29 @@ public class SeatReservationService {
 		return seatReservationMapper.toResponse(session, seatInfos, availableSeatsCount);
 	}
 
+	public void temporaryHoldSeat(Long sessionId, Long seatId, User user) {
+		Session session = sessionRepository.findById(sessionId)
+				.orElseThrow(() -> new SessionNotFoundException(sessionId));
+
+		Seat seat = seatRepository.findById(seatId).orElseThrow(() -> new SeatNotFoundException(seatId));
+
+		availabilityValidator.validateSeat(sessionId, seatId);
+
+		SeatReservation reservation = SeatReservation.builder().seat(seat).session(session).ticketType(null)
+				.seatPrice(null).status(ReservationStatus.PENDING).reservedAt(LocalDateTime.now())
+				.reservedUntil(LocalDateTime.now().plusMinutes(tempHoldMinutes)).reservedByUser(user).build();
+
+		seatReservationRepository.save(reservation);
+
+		log.info("Temporary hold for seat {} in session {} by user {}", seatId, sessionId, user.getId());
+
+	}
+
 	private SeatReservationResponse.SeatInfo buildSeatInfo(Seat seat, Map<Long, Boolean> bookedSeatMap, Long sessionId,
 			Session session, List<TicketType> activeTicketTypes) {
 
 		boolean isBooked = bookedSeatMap.getOrDefault(seat.getId(), false);
-		AvailabilityValidator.SeatAvailabilityCheck check = availabilityValidator.getSeatAvailabilityStatus(sessionId,
+		ReservationValidator.SeatAvailabilityCheck check = availabilityValidator.getSeatAvailabilityStatus(sessionId,
 				seat.getId());
 
 		boolean isAvailable = !isBooked && !check.isTemporarilyReserved() && seat.isActive();
