@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.service.booking.availability;
+package ua.lviv.bas.cinema.service.booking.reservation;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -22,7 +22,7 @@ import ua.lviv.bas.cinema.repository.SeatRepository;
 import ua.lviv.bas.cinema.repository.SeatReservationRepository;
 
 @ExtendWith(MockitoExtension.class)
-public class AvailabilityValidatorTest {
+public class ReservationValidatorTest {
 
 	@Mock
 	private SeatReservationRepository seatReservationRepository;
@@ -31,7 +31,7 @@ public class AvailabilityValidatorTest {
 	private SeatRepository seatRepository;
 
 	@InjectMocks
-	private AvailabilityValidator availabilityValidator;
+	private ReservationValidator availabilityValidator;
 
 	private static final Long SESSION_ID = 1L;
 	private static final Long AVAILABLE_SEAT_ID = 2L;
@@ -112,7 +112,7 @@ public class AvailabilityValidatorTest {
 		when(seatReservationRepository.existsBySessionIdAndSeatIdAndStatusIn(SESSION_ID, AVAILABLE_SEAT_ID,
 				List.of(ReservationStatus.PENDING, ReservationStatus.CONFIRMED))).thenReturn(false);
 
-		AvailabilityValidator.SeatAvailabilityCheck result = availabilityValidator.getSeatAvailabilityStatus(SESSION_ID,
+		ReservationValidator.SeatAvailabilityCheck result = availabilityValidator.getSeatAvailabilityStatus(SESSION_ID,
 				AVAILABLE_SEAT_ID);
 
 		assertThat(result.available()).isTrue();
@@ -128,7 +128,7 @@ public class AvailabilityValidatorTest {
 		when(seatReservationRepository.findStatusesBySessionIdAndSeatId(SESSION_ID, BOOKED_SEAT_ID))
 				.thenReturn(List.of(ReservationStatus.CONFIRMED));
 
-		AvailabilityValidator.SeatAvailabilityCheck result = availabilityValidator.getSeatAvailabilityStatus(SESSION_ID,
+		ReservationValidator.SeatAvailabilityCheck result = availabilityValidator.getSeatAvailabilityStatus(SESSION_ID,
 				BOOKED_SEAT_ID);
 
 		assertThat(result.available()).isFalse();
@@ -144,7 +144,7 @@ public class AvailabilityValidatorTest {
 		when(seatReservationRepository.findStatusesBySessionIdAndSeatId(SESSION_ID, PENDING_SEAT_ID))
 				.thenReturn(List.of(ReservationStatus.PENDING));
 
-		AvailabilityValidator.SeatAvailabilityCheck result = availabilityValidator.getSeatAvailabilityStatus(SESSION_ID,
+		ReservationValidator.SeatAvailabilityCheck result = availabilityValidator.getSeatAvailabilityStatus(SESSION_ID,
 				PENDING_SEAT_ID);
 
 		assertThat(result.available()).isFalse();
@@ -160,7 +160,7 @@ public class AvailabilityValidatorTest {
 		when(seatReservationRepository.findStatusesBySessionIdAndSeatId(SESSION_ID, BOOKED_SEAT_ID))
 				.thenReturn(List.of());
 
-		AvailabilityValidator.SeatAvailabilityCheck result = availabilityValidator.getSeatAvailabilityStatus(SESSION_ID,
+		ReservationValidator.SeatAvailabilityCheck result = availabilityValidator.getSeatAvailabilityStatus(SESSION_ID,
 				BOOKED_SEAT_ID);
 
 		assertThat(result.available()).isFalse();
@@ -176,7 +176,7 @@ public class AvailabilityValidatorTest {
 		when(seatReservationRepository.findStatusesBySessionIdAndSeatId(SESSION_ID, DUPLICATE_SEAT_ID))
 				.thenReturn(List.of(ReservationStatus.PENDING, ReservationStatus.CONFIRMED));
 
-		AvailabilityValidator.SeatAvailabilityCheck result = availabilityValidator.getSeatAvailabilityStatus(SESSION_ID,
+		ReservationValidator.SeatAvailabilityCheck result = availabilityValidator.getSeatAvailabilityStatus(SESSION_ID,
 				DUPLICATE_SEAT_ID);
 
 		assertThat(result.available()).isFalse();
@@ -191,7 +191,7 @@ public class AvailabilityValidatorTest {
 		when(seatReservationRepository.findStatusesBySessionIdAndSeatId(SESSION_ID, DUPLICATE_SEAT_ID))
 				.thenReturn(List.of(ReservationStatus.PENDING, ReservationStatus.PENDING));
 
-		AvailabilityValidator.SeatAvailabilityCheck result = availabilityValidator.getSeatAvailabilityStatus(SESSION_ID,
+		ReservationValidator.SeatAvailabilityCheck result = availabilityValidator.getSeatAvailabilityStatus(SESSION_ID,
 				DUPLICATE_SEAT_ID);
 
 		assertThat(result.available()).isFalse();

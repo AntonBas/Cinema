@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.service.booking.availability;
+package ua.lviv.bas.cinema.service.booking.reservation;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -17,6 +17,8 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -24,12 +26,15 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import ua.lviv.bas.cinema.domain.CinemaHall;
 import ua.lviv.bas.cinema.domain.Movie;
 import ua.lviv.bas.cinema.domain.Seat;
+import ua.lviv.bas.cinema.domain.SeatReservation;
 import ua.lviv.bas.cinema.domain.Session;
 import ua.lviv.bas.cinema.domain.TicketType;
+import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.enums.ReservationStatus;
 import ua.lviv.bas.cinema.domain.enums.SeatType;
 import ua.lviv.bas.cinema.dto.booking.response.SeatReservationResponse;
 import ua.lviv.bas.cinema.exception.domain.booking.SeatNotAvailableException;
+import ua.lviv.bas.cinema.exception.domain.cinema.SeatNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.cinema.SessionNotFoundException;
 import ua.lviv.bas.cinema.mapper.SeatReservationMapper;
 import ua.lviv.bas.cinema.repository.SeatRepository;
@@ -57,10 +62,13 @@ public class SeatReservationServiceTest {
 	private PriceCalculatorService priceCalculator;
 
 	@Mock
-	private AvailabilityValidator availabilityValidator;
+	private ReservationValidator availabilityValidator;
 
 	@Mock
 	private SeatReservationMapper seatReservationMapper;
+
+	@Captor
+	private ArgumentCaptor<SeatReservation> seatReservationCaptor;
 
 	@InjectMocks
 	private SeatReservationService seatReservationService;
@@ -75,12 +83,14 @@ public class SeatReservationServiceTest {
 	private SeatReservationResponse.SeatInfo seatInfo2;
 	private SeatReservationResponse.SeatInfo inactiveSeatInfo;
 	private SeatReservationResponse.TicketPriceInfo ticketPriceInfo;
+	private User testUser;
 
 	private static final Long SESSION_ID = 1L;
 	private static final Long HALL_ID = 2L;
 	private static final Long SEAT_ID_1 = 3L;
 	private static final Long SEAT_ID_2 = 4L;
 	private static final Long INACTIVE_SEAT_ID = 5L;
+	private static final Long USER_ID = 10L;
 	private static final BigDecimal BASE_PRICE = new BigDecimal("200.00");
 
 	@BeforeEach
@@ -127,8 +137,63 @@ public class SeatReservationServiceTest {
 		adultTicketType.setDisplayName("Adult");
 		adultTicketType.setActive(true);
 
+		testUser = new User();
+		testUser.setId(USER_ID);
+		testUser.setEmail("test@example.com");
+
 		ticketPriceInfo = SeatReservationResponse.TicketPriceInfo.builder().ticketTypeId(1L).ticketTypeName("Adult")
 				.finalPrice(BigDecimal.TEN).build();
+	}
+
+	@Test
+	void temporaryHoldSeat_Success() {
+		when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(testSession));
+		when(seatRepository.findById(SEAT_ID_1)).thenReturn(Optional.of(testSeat1));
+
+		seatReservationService.temporaryHoldSeat(SESSION_ID, SEAT_ID_1, testUser);
+
+		verify(availabilityValidator).validateSeat(SESSION_ID, SEAT_ID_1);
+		verify(seatReservationRepository).save(seatReservationCaptor.capture());
+
+		SeatReservation savedReservation = seatReservationCaptor.getValue();
+
+		assertThat(savedReservation.getSeat()).isEqualTo(testSeat1);
+		assertThat(savedReservation.getSession()).isEqualTo(testSession);
+		assertThat(savedReservation.getTicketType()).isNull();
+		assertThat(savedReservation.getSeatPrice()).isNull();
+		assertThat(savedReservation.getStatus()).isEqualTo(ReservationStatus.PENDING);
+		assertThat(savedReservation.getReservedByUser()).isEqualTo(testUser);
+		assertThat(savedReservation.getReservedAt()).isNotNull();
+		assertThat(savedReservation.getReservedUntil()).isNotNull();
+		assertThat(savedReservation.getReservedUntil()).isAfter(savedReservation.getReservedAt());
+	}
+
+	@Test
+	void temporaryHoldSeat_WhenSessionNotFound_ShouldThrowException() {
+		when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.empty());
+
+		assertThatThrownBy(() -> seatReservationService.temporaryHoldSeat(SESSION_ID, SEAT_ID_1, testUser))
+				.isInstanceOf(SessionNotFoundException.class);
+	}
+
+	@Test
+	void temporaryHoldSeat_WhenSeatNotFound_ShouldThrowException() {
+		when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(testSession));
+		when(seatRepository.findById(SEAT_ID_1)).thenReturn(Optional.empty());
+
+		assertThatThrownBy(() -> seatReservationService.temporaryHoldSeat(SESSION_ID, SEAT_ID_1, testUser))
+				.isInstanceOf(SeatNotFoundException.class);
+	}
+
+	@Test
+	void temporaryHoldSeat_WhenSeatNotAvailable_ShouldThrowException() {
+		when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(testSession));
+		when(seatRepository.findById(SEAT_ID_1)).thenReturn(Optional.of(testSeat1));
+		doThrow(SeatNotAvailableException.forSeatAndSession(SEAT_ID_1, SESSION_ID)).when(availabilityValidator)
+				.validateSeat(SESSION_ID, SEAT_ID_1);
+
+		assertThatThrownBy(() -> seatReservationService.temporaryHoldSeat(SESSION_ID, SEAT_ID_1, testUser))
+				.isInstanceOf(SeatNotAvailableException.class);
 	}
 
 	@Test
@@ -138,11 +203,11 @@ public class SeatReservationServiceTest {
 		List<Object[]> bookedSeatData = Collections.emptyList();
 
 		when(availabilityValidator.getSeatAvailabilityStatus(eq(SESSION_ID), eq(SEAT_ID_1)))
-				.thenReturn(new AvailabilityValidator.SeatAvailabilityCheck(true, null));
+				.thenReturn(new ReservationValidator.SeatAvailabilityCheck(true, null));
 		when(availabilityValidator.getSeatAvailabilityStatus(eq(SESSION_ID), eq(SEAT_ID_2)))
-				.thenReturn(new AvailabilityValidator.SeatAvailabilityCheck(true, null));
+				.thenReturn(new ReservationValidator.SeatAvailabilityCheck(true, null));
 		when(availabilityValidator.getSeatAvailabilityStatus(eq(SESSION_ID), eq(INACTIVE_SEAT_ID)))
-				.thenReturn(new AvailabilityValidator.SeatAvailabilityCheck(true, null));
+				.thenReturn(new ReservationValidator.SeatAvailabilityCheck(true, null));
 
 		seatInfo1 = SeatReservationResponse.SeatInfo.builder().id(SEAT_ID_1).row(1).seatNumber(1)
 				.seatType(SeatType.STANDARD).available(true).temporarilyReserved(false).active(true)
@@ -201,9 +266,9 @@ public class SeatReservationServiceTest {
 		List<Object[]> bookedSeatData = Collections.singletonList(bookedSeat1);
 
 		when(availabilityValidator.getSeatAvailabilityStatus(eq(SESSION_ID), eq(SEAT_ID_1)))
-				.thenReturn(new AvailabilityValidator.SeatAvailabilityCheck(false, ReservationStatus.CONFIRMED));
+				.thenReturn(new ReservationValidator.SeatAvailabilityCheck(false, ReservationStatus.CONFIRMED));
 		when(availabilityValidator.getSeatAvailabilityStatus(eq(SESSION_ID), eq(SEAT_ID_2)))
-				.thenReturn(new AvailabilityValidator.SeatAvailabilityCheck(true, null));
+				.thenReturn(new ReservationValidator.SeatAvailabilityCheck(true, null));
 
 		SeatReservationResponse.SeatInfo bookedSeatInfo = SeatReservationResponse.SeatInfo.builder().id(SEAT_ID_1)
 				.row(1).seatNumber(1).seatType(SeatType.STANDARD).available(false).temporarilyReserved(false)
@@ -246,9 +311,9 @@ public class SeatReservationServiceTest {
 		List<Object[]> bookedSeatData = Collections.emptyList();
 
 		when(availabilityValidator.getSeatAvailabilityStatus(eq(SESSION_ID), eq(SEAT_ID_1)))
-				.thenReturn(new AvailabilityValidator.SeatAvailabilityCheck(false, ReservationStatus.PENDING));
+				.thenReturn(new ReservationValidator.SeatAvailabilityCheck(false, ReservationStatus.PENDING));
 		when(availabilityValidator.getSeatAvailabilityStatus(eq(SESSION_ID), eq(SEAT_ID_2)))
-				.thenReturn(new AvailabilityValidator.SeatAvailabilityCheck(true, null));
+				.thenReturn(new ReservationValidator.SeatAvailabilityCheck(true, null));
 
 		SeatReservationResponse.SeatInfo pendingSeatInfo = SeatReservationResponse.SeatInfo.builder().id(SEAT_ID_1)
 				.row(1).seatNumber(1).seatType(SeatType.STANDARD).available(false).temporarilyReserved(true)
@@ -342,7 +407,7 @@ public class SeatReservationServiceTest {
 		List<Object[]> bookedSeatData = Collections.emptyList();
 
 		when(availabilityValidator.getSeatAvailabilityStatus(eq(SESSION_ID), eq(SEAT_ID_1)))
-				.thenReturn(new AvailabilityValidator.SeatAvailabilityCheck(true, null));
+				.thenReturn(new ReservationValidator.SeatAvailabilityCheck(true, null));
 
 		SeatReservationResponse.SeatInfo seatInfoWithNoPrices = SeatReservationResponse.SeatInfo.builder().id(SEAT_ID_1)
 				.row(1).seatNumber(1).seatType(SeatType.STANDARD).available(true).temporarilyReserved(false)

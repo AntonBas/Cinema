@@ -51,7 +51,7 @@ import ua.lviv.bas.cinema.repository.SeatRepository;
 import ua.lviv.bas.cinema.repository.SeatReservationRepository;
 import ua.lviv.bas.cinema.repository.SessionRepository;
 import ua.lviv.bas.cinema.repository.TicketTypeRepository;
-import ua.lviv.bas.cinema.service.booking.availability.AvailabilityValidator;
+import ua.lviv.bas.cinema.service.booking.reservation.ReservationValidator;
 import ua.lviv.bas.cinema.service.shared.NumberGeneratorService;
 import ua.lviv.bas.cinema.service.shared.PriceCalculatorService;
 import ua.lviv.bas.cinema.service.user.BonusService;
@@ -78,7 +78,7 @@ public class BookingCreationServiceTest {
 	private BookingMapper bookingMapper;
 
 	@Mock
-	private AvailabilityValidator availabilityValidator;
+	private ReservationValidator availabilityValidator;
 
 	@Mock
 	private BonusService bonusService;
