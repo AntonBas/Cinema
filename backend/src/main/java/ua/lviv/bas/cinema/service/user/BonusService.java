@@ -215,9 +215,8 @@ public class BonusService {
 		BigDecimal maxValue = maxPoints != null && maxPoints > 0 ? pointValue.multiply(new BigDecimal(maxPoints))
 				: null;
 
-		return BonusBalanceResponse.builder().pointsBalance(card.getPointsBalance()).pointValue(pointValue)
-				.balanceValue(balanceValue).minUsablePoints(minPoints).maxUsablePoints(maxPoints)
-				.minRedemptionValue(minValue).maxRedemptionValue(maxValue).build();
+		return new BonusBalanceResponse(card.getPointsBalance(), pointValue, balanceValue, minPoints, maxPoints,
+				minValue, maxValue);
 	}
 
 	private BonusTransaction createTransaction(BonusCard card, Integer points, BonusTransactionType type,
