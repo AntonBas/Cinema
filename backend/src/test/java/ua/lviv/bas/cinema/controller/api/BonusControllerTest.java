@@ -41,18 +41,17 @@ public class BonusControllerTest {
 	void getMyBonusCard_ShouldReturnBonusCard() {
 		Long userId = 1L;
 
-		BonusCardResponse cardResponse = BonusCardResponse.builder().id(1L).userId(userId).pointsBalance(250)
-				.welcomeBonusReceived(true).build();
+		BonusCardResponse cardResponse = new BonusCardResponse(1L, 250, null, true, userId);
 
 		when(bonusService.getCard(userId)).thenReturn(cardResponse);
 
 		BonusCardResponse response = bonusController.getMyBonusCard(userId);
 
 		assertNotNull(response);
-		assertEquals(1L, response.getId());
-		assertEquals(userId, response.getUserId());
-		assertEquals(250, response.getPointsBalance());
-		assertEquals(true, response.getWelcomeBonusReceived());
+		assertEquals(1L, response.id());
+		assertEquals(userId, response.userId());
+		assertEquals(250, response.pointsBalance());
+		assertEquals(true, response.welcomeBonusReceived());
 	}
 
 	@Test
@@ -68,17 +67,17 @@ public class BonusControllerTest {
 	void getMyBalance_ShouldReturnBalance() {
 		Long userId = 1L;
 
-		BonusBalanceResponse balanceResponse = BonusBalanceResponse.builder().pointsBalance(250)
-				.pointValue(new BigDecimal("1.00")).balanceValue(new BigDecimal("250.00")).build();
+		BonusBalanceResponse balanceResponse = new BonusBalanceResponse(250, new BigDecimal("1.00"),
+				new BigDecimal("250.00"), 100, 1000, new BigDecimal("100.00"), new BigDecimal("1000.00"));
 
 		when(bonusService.getBalance(userId)).thenReturn(balanceResponse);
 
 		BonusBalanceResponse response = bonusController.getMyBalance(userId);
 
 		assertNotNull(response);
-		assertEquals(250, response.getPointsBalance());
-		assertEquals(new BigDecimal("1.00"), response.getPointValue());
-		assertEquals(new BigDecimal("250.00"), response.getBalanceValue());
+		assertEquals(250, response.pointsBalance());
+		assertEquals(new BigDecimal("1.00"), response.pointValue());
+		assertEquals(new BigDecimal("250.00"), response.balanceValue());
 	}
 
 	@Test
@@ -94,11 +93,11 @@ public class BonusControllerTest {
 		Long userId = 1L;
 		Pageable pageable = PageRequest.of(0, 20);
 
-		BonusTransactionResponse transaction1 = BonusTransactionResponse.builder().id(1L).type("WELCOME_BONUS")
-				.pointsChange("+150").createdAt(LocalDateTime.now()).newBalance(150).build();
+		BonusTransactionResponse transaction1 = new BonusTransactionResponse(1L, "WELCOME_BONUS", "+150",
+				LocalDateTime.now(), 150);
 
-		BonusTransactionResponse transaction2 = BonusTransactionResponse.builder().id(2L).type("BOOKING_SPEND")
-				.pointsChange("-25").createdAt(LocalDateTime.now()).newBalance(125).build();
+		BonusTransactionResponse transaction2 = new BonusTransactionResponse(2L, "BOOKING_SPEND", "-25",
+				LocalDateTime.now(), 125);
 
 		Page<BonusTransactionResponse> page = new PageImpl<>(List.of(transaction1, transaction2), pageable, 2);
 
@@ -109,12 +108,12 @@ public class BonusControllerTest {
 		assertNotNull(response);
 		assertEquals(2, response.getContent().size());
 		assertEquals(2, response.getTotalElements());
-		assertEquals(1L, response.getContent().get(0).getId());
-		assertEquals("WELCOME_BONUS", response.getContent().get(0).getType());
-		assertEquals("+150", response.getContent().get(0).getPointsChange());
-		assertEquals(2L, response.getContent().get(1).getId());
-		assertEquals("BOOKING_SPEND", response.getContent().get(1).getType());
-		assertEquals("-25", response.getContent().get(1).getPointsChange());
+		assertEquals(1L, response.getContent().get(0).id());
+		assertEquals("WELCOME_BONUS", response.getContent().get(0).type());
+		assertEquals("+150", response.getContent().get(0).pointsChange());
+		assertEquals(2L, response.getContent().get(1).id());
+		assertEquals("BOOKING_SPEND", response.getContent().get(1).type());
+		assertEquals("-25", response.getContent().get(1).pointsChange());
 	}
 
 	@Test

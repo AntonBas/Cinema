@@ -94,11 +94,11 @@ public class BonusServiceTest {
 		var result = bonusService.getBalance(USER_ID);
 
 		assertThat(result).isNotNull();
-		assertThat(result.getPointsBalance()).isEqualTo(100);
-		assertThat(result.getPointValue()).isEqualTo(new BigDecimal("1.00"));
-		assertThat(result.getBalanceValue()).isEqualTo(new BigDecimal("100.00"));
-		assertThat(result.getMinUsablePoints()).isEqualTo(10);
-		assertThat(result.getMaxUsablePoints()).isEqualTo(50);
+		assertThat(result.pointsBalance()).isEqualTo(100);
+		assertThat(result.pointValue()).isEqualTo(new BigDecimal("1.00"));
+		assertThat(result.balanceValue()).isEqualTo(new BigDecimal("100.00"));
+		assertThat(result.minUsablePoints()).isEqualTo(10);
+		assertThat(result.maxUsablePoints()).isEqualTo(50);
 	}
 
 	@Test

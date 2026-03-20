@@ -30,9 +30,8 @@ public class AdminBonusControllerTest {
 
 	@Test
 	void getAllBonusRules_ShouldReturnRulesList() {
-		BonusRulesResponse rule1 = BonusRulesResponse.builder().id(1L).bonusType("WELCOME_BONUS").points(100).build();
-
-		BonusRulesResponse rule2 = BonusRulesResponse.builder().id(2L).bonusType("BIRTHDAY_BONUS").points(200).build();
+		BonusRulesResponse rule1 = new BonusRulesResponse(1L, "WELCOME_BONUS", 100, null, null, null, true, null);
+		BonusRulesResponse rule2 = new BonusRulesResponse(2L, "BIRTHDAY_BONUS", 200, null, null, null, true, null);
 
 		List<BonusRulesResponse> rules = List.of(rule1, rule2);
 
@@ -59,50 +58,45 @@ public class AdminBonusControllerTest {
 	@Test
 	void getBonusRule_ShouldReturnRule() {
 		BonusTransactionType type = BonusTransactionType.WELCOME_BONUS;
-		BonusRulesResponse response = BonusRulesResponse.builder().id(1L).bonusType("WELCOME_BONUS").points(100)
-				.build();
+		BonusRulesResponse response = new BonusRulesResponse(1L, "WELCOME_BONUS", 100, null, null, null, true, null);
 
 		when(bonusAdminService.getRule(type)).thenReturn(response);
 
 		BonusRulesResponse result = adminBonusController.getBonusRule(type);
 
 		assertThat(result).isEqualTo(response);
-		assertThat(result.getId()).isEqualTo(1L);
-		assertThat(result.getBonusType()).isEqualTo("WELCOME_BONUS");
-		assertThat(result.getPoints()).isEqualTo(100);
+		assertThat(result.id()).isEqualTo(1L);
+		assertThat(result.bonusType()).isEqualTo("WELCOME_BONUS");
+		assertThat(result.points()).isEqualTo(100);
 	}
 
 	@Test
 	void updateBonusRule_ShouldUpdateAndReturnRule() {
 		BonusTransactionType type = BonusTransactionType.WELCOME_BONUS;
-		BonusRulesRequest request = new BonusRulesRequest();
-		request.setPoints(200);
-		request.setActive(true);
+		BonusRulesRequest request = new BonusRulesRequest(200, null, null, null, true);
 
-		BonusRulesResponse response = BonusRulesResponse.builder().id(1L).bonusType("WELCOME_BONUS").points(200)
-				.active(true).build();
+		BonusRulesResponse response = new BonusRulesResponse(1L, "WELCOME_BONUS", 200, null, null, null, true, null);
 
 		when(bonusAdminService.updateRule(eq(type), any(BonusRulesRequest.class))).thenReturn(response);
 
 		BonusRulesResponse result = adminBonusController.updateBonusRule(type, request);
 
 		assertThat(result).isEqualTo(response);
-		assertThat(result.getPoints()).isEqualTo(200);
-		assertThat(result.getActive()).isTrue();
+		assertThat(result.points()).isEqualTo(200);
+		assertThat(result.active()).isTrue();
 	}
 
 	@Test
 	void resetBonusRule_ShouldResetAndReturnRule() {
 		BonusTransactionType type = BonusTransactionType.WELCOME_BONUS;
-		BonusRulesResponse response = BonusRulesResponse.builder().id(1L).bonusType("WELCOME_BONUS").points(150)
-				.build();
+		BonusRulesResponse response = new BonusRulesResponse(1L, "WELCOME_BONUS", 150, null, null, null, true, null);
 
 		when(bonusAdminService.resetRuleToDefaults(type)).thenReturn(response);
 
 		BonusRulesResponse result = adminBonusController.resetBonusRule(type);
 
 		assertThat(result).isEqualTo(response);
-		assertThat(result.getBonusType()).isEqualTo("WELCOME_BONUS");
-		assertThat(result.getPoints()).isEqualTo(150);
+		assertThat(result.bonusType()).isEqualTo("WELCOME_BONUS");
+		assertThat(result.points()).isEqualTo(150);
 	}
 }

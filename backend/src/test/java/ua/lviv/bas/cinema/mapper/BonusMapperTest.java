@@ -33,9 +33,9 @@ public class BonusMapperTest {
 		BonusCardResponse response = mapper.toBonusCardResponse(bonusCard);
 
 		assertThat(response).isNotNull();
-		assertThat(response.getId()).isEqualTo(1L);
-		assertThat(response.getUserId()).isEqualTo(42L);
-		assertThat(response.getPointsBalance()).isEqualTo(250);
+		assertThat(response.id()).isEqualTo(1L);
+		assertThat(response.userId()).isEqualTo(42L);
+		assertThat(response.pointsBalance()).isEqualTo(250);
 	}
 
 	@Test
@@ -52,10 +52,10 @@ public class BonusMapperTest {
 		BonusRulesResponse response = mapper.toBonusRulesResponse(rules);
 
 		assertThat(response).isNotNull();
-		assertThat(response.getId()).isEqualTo(1L);
-		assertThat(response.getBonusType()).isEqualTo("WELCOME_BONUS");
-		assertThat(response.getPoints()).isEqualTo(100);
-		assertThat(response.getActive()).isTrue();
+		assertThat(response.id()).isEqualTo(1L);
+		assertThat(response.bonusType()).isEqualTo("WELCOME_BONUS");
+		assertThat(response.points()).isEqualTo(100);
+		assertThat(response.active()).isTrue();
 	}
 
 	@Test
@@ -76,11 +76,11 @@ public class BonusMapperTest {
 		BonusTransactionResponse response = mapper.toBonusTransactionResponse(projection);
 
 		assertThat(response).isNotNull();
-		assertThat(response.getId()).isEqualTo(1L);
-		assertThat(response.getType()).isEqualTo("PAYMENT_ACCRUAL");
-		assertThat(response.getPointsChange()).isEqualTo("+50");
-		assertThat(response.getNewBalance()).isEqualTo(150);
-		assertThat(response.getCreatedAt()).isNotNull();
+		assertThat(response.id()).isEqualTo(1L);
+		assertThat(response.type()).isEqualTo("PAYMENT_ACCRUAL");
+		assertThat(response.pointsChange()).isEqualTo("+50");
+		assertThat(response.newBalance()).isEqualTo(150);
+		assertThat(response.createdAt()).isNotNull();
 	}
 
 	@Test
@@ -93,7 +93,7 @@ public class BonusMapperTest {
 	void updateBonusRulesFromRequest() {
 		BonusRules existing = BonusRules.builder().points(0).active(true).build();
 
-		BonusRulesRequest request = BonusRulesRequest.builder().points(150).active(false).build();
+		BonusRulesRequest request = new BonusRulesRequest(150, null, null, null, false);
 
 		mapper.updateBonusRulesFromRequest(request, existing);
 
@@ -106,7 +106,7 @@ public class BonusMapperTest {
 		BonusRules existing = BonusRules.builder().points(100).moneyRatio(new BigDecimal("0.05"))
 				.minPointsPerTransaction(10).maxPointsPerTransaction(500).active(true).build();
 
-		BonusRulesRequest request = BonusRulesRequest.builder().points(200).build();
+		BonusRulesRequest request = new BonusRulesRequest(200, null, null, null, null);
 
 		mapper.updateBonusRulesFromRequest(request, existing);
 
@@ -121,8 +121,7 @@ public class BonusMapperTest {
 	void updateBonusRulesFromRequestWithAllFields() {
 		BonusRules existing = BonusRules.builder().build();
 
-		BonusRulesRequest request = BonusRulesRequest.builder().points(200).moneyRatio(new BigDecimal("0.10"))
-				.minPointsPerTransaction(50).maxPointsPerTransaction(1000).active(false).build();
+		BonusRulesRequest request = new BonusRulesRequest(200, new BigDecimal("0.10"), 50, 1000, false);
 
 		mapper.updateBonusRulesFromRequest(request, existing);
 

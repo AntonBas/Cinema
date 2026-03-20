@@ -48,8 +48,8 @@ public class AdminBonusServiceTest {
 	void getAllRules_ReturnsList() {
 		BonusRules rule1 = new BonusRules();
 		BonusRules rule2 = new BonusRules();
-		BonusRulesResponse response1 = new BonusRulesResponse();
-		BonusRulesResponse response2 = new BonusRulesResponse();
+		BonusRulesResponse response1 = new BonusRulesResponse(1L, "WELCOME_BONUS", null, null, null, null, null, null);
+		BonusRulesResponse response2 = new BonusRulesResponse(2L, "BIRTHDAY_BONUS", null, null, null, null, null, null);
 
 		when(bonusRulesRepository.findAll()).thenReturn(List.of(rule1, rule2));
 		when(bonusMapper.toBonusRulesResponse(rule1)).thenReturn(response1);
@@ -64,7 +64,7 @@ public class AdminBonusServiceTest {
 	@Test
 	void getRule_ReturnsRule() {
 		BonusRules rule = new BonusRules();
-		BonusRulesResponse response = new BonusRulesResponse();
+		BonusRulesResponse response = new BonusRulesResponse(1L, "WELCOME_BONUS", null, null, null, null, null, null);
 
 		when(bonusRulesRepository.findByBonusType(WELCOME)).thenReturn(Optional.of(rule));
 		when(bonusMapper.toBonusRulesResponse(rule)).thenReturn(response);
@@ -86,8 +86,8 @@ public class AdminBonusServiceTest {
 	void updateRule_Success() {
 		BonusRules rule = new BonusRules();
 		rule.setBonusType(WELCOME);
-		BonusRulesRequest request = new BonusRulesRequest();
-		BonusRulesResponse response = new BonusRulesResponse();
+		BonusRulesRequest request = new BonusRulesRequest(100, null, null, null, true);
+		BonusRulesResponse response = new BonusRulesResponse(1L, "WELCOME_BONUS", 100, null, null, null, null, null);
 
 		when(bonusRulesRepository.findByBonusType(WELCOME)).thenReturn(Optional.of(rule));
 		when(bonusRulesRepository.save(rule)).thenReturn(rule);
@@ -105,16 +105,15 @@ public class AdminBonusServiceTest {
 		BonusRules rule = new BonusRules();
 		rule.setBonusType(SPEND);
 
-		BonusRulesRequest request = BonusRulesRequest.builder().minPointsPerTransaction(100).maxPointsPerTransaction(50)
-				.build();
+		BonusRulesRequest request = new BonusRulesRequest(null, null, 100, 50, null);
 
 		when(bonusRulesRepository.findByBonusType(SPEND)).thenReturn(Optional.of(rule));
 
 		doAnswer(invocation -> {
 			BonusRulesRequest req = invocation.getArgument(0);
 			BonusRules r = invocation.getArgument(1);
-			r.setMinPointsPerTransaction(req.getMinPointsPerTransaction());
-			r.setMaxPointsPerTransaction(req.getMaxPointsPerTransaction());
+			r.setMinPointsPerTransaction(req.minPointsPerTransaction());
+			r.setMaxPointsPerTransaction(req.maxPointsPerTransaction());
 			return null;
 		}).when(bonusMapper).updateBonusRulesFromRequest(any(BonusRulesRequest.class), any(BonusRules.class));
 
@@ -126,7 +125,7 @@ public class AdminBonusServiceTest {
 	@Test
 	void resetRuleToDefaults_WhenDefaultsExist_UpdatesRule() {
 		BonusRules rule = new BonusRules();
-		BonusRulesResponse response = new BonusRulesResponse();
+		BonusRulesResponse response = new BonusRulesResponse(1L, "WELCOME_BONUS", null, null, null, null, null, null);
 
 		BonusProperties.RuleDefaults defaults = new BonusProperties.RuleDefaults();
 		defaults.setPoints(200);
@@ -154,7 +153,7 @@ public class AdminBonusServiceTest {
 	void resetRuleToDefaults_WhenDefaultsNull_DoesNotUpdate() {
 		BonusRules rule = new BonusRules();
 		rule.setPoints(100);
-		BonusRulesResponse response = new BonusRulesResponse();
+		BonusRulesResponse response = new BonusRulesResponse(1L, "WELCOME_BONUS", 100, null, null, null, null, null);
 
 		when(bonusRulesRepository.findByBonusType(WELCOME)).thenReturn(Optional.of(rule));
 		when(bonusProperties.getDefaults()).thenReturn(Map.of());
