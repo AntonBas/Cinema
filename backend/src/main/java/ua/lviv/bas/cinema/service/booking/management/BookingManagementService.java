@@ -92,7 +92,10 @@ public class BookingManagementService {
 
 	private BookingResponse buildBookingResponse(Booking booking) {
 		BookingResponse response = bookingMapper.toBookingResponse(booking);
-		response.setBookingNumber(numberGenerator.generateBookingNumber(booking));
-		return response;
+		return new BookingResponse(response.id(), numberGenerator.generateBookingNumber(booking), response.status(),
+				response.sessionId(), response.sessionTime(), response.movieTitle(), response.hallName(),
+				response.totalPrice(), response.bonusPointsUsed(), response.bonusDiscountAmount(),
+				response.finalPrice(), response.liqpayOrderId(), response.expiresAt(), response.createdAt(),
+				response.seatReservations());
 	}
 }

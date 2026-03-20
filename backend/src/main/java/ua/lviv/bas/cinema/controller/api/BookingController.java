@@ -45,7 +45,7 @@ public class BookingController {
 	public ResponseEntity<BookingResponse> createBooking(@Valid @RequestBody BookingCreateRequest request,
 			@AuthenticationPrincipal CustomUserDetails userDetails) {
 		User user = userDetails.getUser();
-		log.info("Creating new booking for user ID: {}, session ID: {}", user.getId(), request.getSessionId());
+		log.info("Creating new booking for user ID: {}, session ID: {}", user.getId(), request.sessionId());
 		BookingResponse response = controllerFacade.createBooking(request, user);
 		return ResponseEntity.status(HttpStatus.CREATED).body(response);
 	}

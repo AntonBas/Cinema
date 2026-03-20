@@ -5,87 +5,47 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import ua.lviv.bas.cinema.domain.enums.BookingStatus;
 
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-@Schema(description = "Booking information")
-public class BookingResponse {
+public record BookingResponse(@Schema(description = "Booking ID", example = "123") Long id,
 
-	@Schema(description = "Booking ID", example = "123")
-	private Long id;
+		@Schema(description = "Booking number", example = "BK-20240115-00123") String bookingNumber,
 
-	@Schema(description = "Booking number", example = "BK-20240115-00123")
-	private String bookingNumber;
+		@Schema(description = "Booking status", example = "PENDING") BookingStatus status,
 
-	@Schema(description = "Booking status", example = "PENDING")
-	private BookingStatus status;
+		@Schema(description = "Session ID", example = "789") Long sessionId,
 
-	@Schema(description = "Session ID", example = "789")
-	private Long sessionId;
+		@Schema(description = "Session start time", example = "2024-01-15T18:30:00") LocalDateTime sessionTime,
 
-	@Schema(description = "Session start time", example = "2024-01-15T18:30:00")
-	private LocalDateTime sessionTime;
+		@Schema(description = "Movie title", example = "Inception") String movieTitle,
 
-	@Schema(description = "Movie title", example = "Inception")
-	private String movieTitle;
+		@Schema(description = "Hall name", example = "Hall A") String hallName,
 
-	@Schema(description = "Hall name", example = "Hall A")
-	private String hallName;
+		@Schema(description = "Total price", example = "1000.00") BigDecimal totalPrice,
 
-	@Schema(description = "Total price", example = "1000.00")
-	private BigDecimal totalPrice;
+		@Schema(description = "Bonus points used", example = "100") Integer bonusPointsUsed,
 
-	@Schema(description = "Bonus points used", example = "100")
-	private Integer bonusPointsUsed;
+		@Schema(description = "Bonus discount amount", example = "50.00") BigDecimal bonusDiscountAmount,
 
-	@Schema(description = "Bonus discount amount", example = "50.00")
-	private BigDecimal bonusDiscountAmount;
+		@Schema(description = "Final price", example = "950.00") BigDecimal finalPrice,
 
-	@Schema(description = "Final price", example = "950.00")
-	private BigDecimal finalPrice;
+		@Schema(description = "LiqPay order ID", example = "ORDER_ABC123") String liqpayOrderId,
 
-	@Schema(description = "LiqPay order ID", example = "ORDER_ABC123")
-	private String liqpayOrderId;
+		@Schema(description = "Booking expires at", example = "2024-01-15T14:50:00") LocalDateTime expiresAt,
 
-	@Schema(description = "Booking expires at", example = "2024-01-15T14:50:00")
-	private LocalDateTime expiresAt;
+		@Schema(description = "Created at", example = "2024-01-15T14:30:00") LocalDateTime createdAt,
 
-	@Schema(description = "Created at", example = "2024-01-15T14:30:00")
-	private LocalDateTime createdAt;
+		@Schema(description = "List of seat reservations") List<SeatReservationInfo> seatReservations) {
+	public record SeatReservationInfo(@Schema(description = "Seat reservation ID", example = "456") Long id,
 
-	@Schema(description = "List of seat reservations")
-	private List<SeatReservationInfo> seatReservations;
+			@Schema(description = "Seat ID", example = "45") Long seatId,
 
-	@Data
-	@Builder
-	@NoArgsConstructor
-	@AllArgsConstructor
-	@Schema(description = "Seat reservation information")
-	public static class SeatReservationInfo {
+			@Schema(description = "Row number", example = "5") Integer row,
 
-		@Schema(description = "Seat reservation ID", example = "456")
-		private Long id;
+			@Schema(description = "Seat number", example = "12") Integer seatNumber,
 
-		@Schema(description = "Seat ID", example = "45")
-		private Long seatId;
+			@Schema(description = "Ticket type name", example = "Adult") String ticketTypeName,
 
-		@Schema(description = "Row number", example = "5")
-		private Integer row;
-
-		@Schema(description = "Seat number", example = "12")
-		private Integer seatNumber;
-
-		@Schema(description = "Ticket type name", example = "Adult")
-		private String ticketTypeName;
-
-		@Schema(description = "Seat price", example = "250.00")
-		private BigDecimal seatPrice;
+			@Schema(description = "Seat price", example = "250.00") BigDecimal seatPrice) {
 	}
 }

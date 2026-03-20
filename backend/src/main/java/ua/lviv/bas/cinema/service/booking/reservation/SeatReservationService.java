@@ -69,8 +69,7 @@ public class SeatReservationService {
 				.map(seat -> buildSeatInfo(seat, bookedSeatMap, sessionId, session, activeTicketTypes))
 				.collect(Collectors.toList());
 
-		int availableSeatsCount = (int) seatInfos.stream().filter(SeatReservationResponse.SeatInfo::getAvailable)
-				.count();
+		int availableSeatsCount = (int) seatInfos.stream().filter(SeatReservationResponse.SeatInfo::available).count();
 
 		return seatReservationMapper.toResponse(session, seatInfos, availableSeatsCount);
 	}

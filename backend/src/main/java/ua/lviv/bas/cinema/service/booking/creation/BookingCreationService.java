@@ -57,19 +57,19 @@ public class BookingCreationService {
 	private int expirationMinutes;
 
 	public BookingResponse createBooking(BookingCreateRequest request, User user) {
-		Session session = sessionRepository.findById(request.getSessionId())
-				.orElseThrow(() -> new SessionNotFoundException(request.getSessionId()));
+		Session session = sessionRepository.findById(request.sessionId())
+				.orElseThrow(() -> new SessionNotFoundException(request.sessionId()));
 
 		bookingValidator.validateSessionForBooking(session);
 
-		List<SeatReservation> seatReservations = request.getSeats().stream()
+		List<SeatReservation> seatReservations = request.seats().stream()
 				.map(seatSelection -> createSeatReservation(session, user, seatSelection)).collect(Collectors.toList());
 
 		BigDecimal totalPrice = seatReservations.stream().map(SeatReservation::getSeatPrice).reduce(BigDecimal.ZERO,
 				BigDecimal::add);
 
 		BookingPriceCalculator.BookingPriceResult priceResult = bookingPriceCalculator.calculateFinalPrice(totalPrice,
-				request.getBonusPointsToUse(), user.getId());
+				request.bonusPointsToUse(), user.getId());
 
 		LocalDateTime expiresAt = LocalDateTime.now().plusMinutes(expirationMinutes);
 		Booking booking = createBookingEntity(user, session, seatReservations, priceResult, expiresAt);
@@ -90,11 +90,11 @@ public class BookingCreationService {
 
 	private SeatReservation createSeatReservation(Session session, User user,
 			BookingCreateRequest.SeatSelectionRequest seatSelection) {
-		Seat seat = seatRepository.findById(seatSelection.getSeatId())
-				.orElseThrow(() -> new SeatNotFoundException(seatSelection.getSeatId()));
+		Seat seat = seatRepository.findById(seatSelection.seatId())
+				.orElseThrow(() -> new SeatNotFoundException(seatSelection.seatId()));
 
-		TicketType ticketType = ticketTypeRepository.findById(seatSelection.getTicketTypeId())
-				.orElseThrow(() -> new TicketTypeNotFoundException(seatSelection.getTicketTypeId()));
+		TicketType ticketType = ticketTypeRepository.findById(seatSelection.ticketTypeId())
+				.orElseThrow(() -> new TicketTypeNotFoundException(seatSelection.ticketTypeId()));
 
 		availabilityValidator.validateSeat(session.getId(), seat.getId());
 
@@ -115,7 +115,10 @@ public class BookingCreationService {
 
 	private BookingResponse buildBookingResponse(Booking booking) {
 		BookingResponse response = bookingMapper.toBookingResponse(booking);
-		response.setBookingNumber(numberGenerator.generateBookingNumber(booking));
-		return response;
+		return new BookingResponse(response.id(), numberGenerator.generateBookingNumber(booking), response.status(),
+				response.sessionId(), response.sessionTime(), response.movieTitle(), response.hallName(),
+				response.totalPrice(), response.bonusPointsUsed(), response.bonusDiscountAmount(),
+				response.finalPrice(), response.liqpayOrderId(), response.expiresAt(), response.createdAt(),
+				response.seatReservations());
 	}
 }

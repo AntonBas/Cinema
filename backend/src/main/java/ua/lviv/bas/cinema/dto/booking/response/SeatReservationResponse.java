@@ -4,83 +4,40 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import ua.lviv.bas.cinema.domain.enums.SeatType;
 
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-@Schema(description = "Seat availability for session")
-public class SeatReservationResponse {
+public record SeatReservationResponse(@Schema(description = "Session ID", example = "1") Long sessionId,
 
-	@Schema(description = "Session ID", example = "1")
-	private Long sessionId;
+		@Schema(description = "Movie title", example = "Inception") String movieTitle,
 
-	@Schema(description = "Movie title", example = "Inception")
-	private String movieTitle;
+		@Schema(description = "Base price", example = "250.00") BigDecimal basePrice,
 
-	@Schema(description = "Base price", example = "250.00")
-	private BigDecimal basePrice;
+		@Schema(description = "Hall name", example = "Hall A") String hallName,
 
-	@Schema(description = "Hall name", example = "Hall A")
-	private String hallName;
+		@Schema(description = "Available seats count", example = "105") Integer availableSeats,
 
-	@Schema(description = "Available seats count", example = "105")
-	private Integer availableSeats;
+		@Schema(description = "List of seats") List<SeatInfo> seats) {
+	public record SeatInfo(@Schema(description = "Seat ID", example = "45") Long id,
 
-	@Schema(description = "List of seats")
-	private List<SeatInfo> seats;
+			@Schema(description = "Row number", example = "5") Integer row,
 
-	@Data
-	@Builder
-	@NoArgsConstructor
-	@AllArgsConstructor
-	@Schema(description = "Seat information")
-	public static class SeatInfo {
+			@Schema(description = "Seat number", example = "12") Integer seatNumber,
 
-		@Schema(description = "Seat ID", example = "45")
-		private Long id;
+			@Schema(description = "Seat type", example = "VIP") SeatType seatType,
 
-		@Schema(description = "Row number", example = "5")
-		private Integer row;
+			@Schema(description = "Is available", example = "true") Boolean available,
 
-		@Schema(description = "Seat number", example = "12")
-		private Integer seatNumber;
+			@Schema(description = "Is temporarily reserved", example = "false") Boolean temporarilyReserved,
 
-		@Schema(description = "Seat type", example = "VIP")
-		private SeatType seatType;
+			@Schema(description = "Is seat active (technically available)", example = "true") Boolean active,
 
-		@Schema(description = "Is available", example = "true")
-		private Boolean available;
-
-		@Schema(description = "Is temporarily reserved", example = "false")
-		private Boolean temporarilyReserved;
-
-		@Schema(description = "Is seat active (technically available)", example = "true")
-		private Boolean active;
-
-		@Schema(description = "Calculated prices for ticket types")
-		private List<TicketPriceInfo> ticketPrices;
+			@Schema(description = "Calculated prices for ticket types") List<TicketPriceInfo> ticketPrices) {
 	}
 
-	@Data
-	@Builder
-	@NoArgsConstructor
-	@AllArgsConstructor
-	@Schema(description = "Ticket price information")
-	public static class TicketPriceInfo {
+	public record TicketPriceInfo(@Schema(description = "Ticket type ID", example = "1") Long ticketTypeId,
 
-		@Schema(description = "Ticket type ID", example = "1")
-		private Long ticketTypeId;
+			@Schema(description = "Ticket type name", example = "Adult") String ticketTypeName,
 
-		@Schema(description = "Ticket type name", example = "Adult")
-		private String ticketTypeName;
-
-		@Schema(description = "Final price", example = "250.00")
-		private BigDecimal finalPrice;
+			@Schema(description = "Final price", example = "250.00") BigDecimal finalPrice) {
 	}
 }
