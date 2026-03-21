@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -48,6 +49,7 @@ public class SeatReservationService {
 
 	@Cacheable(value = "seatAvailability", key = "#sessionId")
 	public SeatReservationResponse getSeatAvailability(Long sessionId) {
+		log.debug("Fetching seat availability for session: {}", sessionId);
 		Session session = sessionRepository.findById(sessionId)
 				.orElseThrow(() -> new SessionNotFoundException(sessionId));
 
@@ -75,7 +77,10 @@ public class SeatReservationService {
 	}
 
 	@Transactional
+	@CacheEvict(value = "seatAvailability", key = "#sessionId")
 	public void temporaryHoldSeat(Long sessionId, Long seatId, User user) {
+		log.info("Creating temporary hold for seat {} in session {} by user {}", seatId, sessionId, user.getId());
+
 		Session session = sessionRepository.findById(sessionId)
 				.orElseThrow(() -> new SessionNotFoundException(sessionId));
 
@@ -89,7 +94,7 @@ public class SeatReservationService {
 
 		seatReservationRepository.save(reservation);
 
-		log.info("Temporary hold for seat {} in session {} by user {}", seatId, sessionId, user.getId());
+		log.info("Temporary hold created for seat {} in session {} by user {}", seatId, sessionId, user.getId());
 	}
 
 	private SeatReservationResponse.SeatInfo buildSeatInfo(Seat seat, Map<Long, Boolean> bookedSeatMap, Long sessionId,

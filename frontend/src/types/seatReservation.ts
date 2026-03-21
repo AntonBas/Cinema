@@ -1,3 +1,5 @@
+import { SeatType } from './seat';
+
 export type ReservationStatus = 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'EXPIRED' | 'CHECKED_IN';
 
 export interface SeatReservationResponse {
@@ -13,7 +15,7 @@ export interface SeatInfo {
     id: number;
     row: number;
     seatNumber: number;
-    seatType: string;
+    seatType: SeatType;
     available: boolean;
     temporarilyReserved: boolean;
     active: boolean;

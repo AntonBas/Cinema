@@ -6,32 +6,46 @@ import type { SeatInfo } from '@/types/seatReservation';
 interface CinemaHallProps {
     seats: SeatInfo[];
     selectedSeats: number[];
+    loadingSeats?: number[];
     onSeatClick: (seatId: number) => void;
 }
 
 export const CinemaHall: React.FC<CinemaHallProps> = ({
     seats,
     selectedSeats,
+    loadingSeats = [],
     onSeatClick
 }) => {
     const rows = [...new Set(seats.map(seat => seat.row))].sort((a, b) => a - b);
 
-    const getSeatStatus = (seat: SeatInfo) => {
-        if (!seat.active) return 'unavailable';
-        if (!seat.available) return 'booked';
+    const getSeatStatus = (seat: SeatInfo): string => {
+        if (!seat.active) return 'inactive';
         if (selectedSeats.includes(seat.id)) return 'selected';
         if (seat.temporarilyReserved) return 'temporary';
+        if (!seat.available) return 'booked';
         return 'available';
     };
 
-    const getSeatClass = (seat: SeatInfo) => {
+    const getSeatClass = (seat: SeatInfo): string => {
         const status = getSeatStatus(seat);
         const seatType = seat.seatType.toLowerCase();
 
-        return `${styles.seatButton} ${styles[seatType]} ${!seat.active ? styles.inactive : ''} ${styles[status]}`;
+        let className = `${styles.seatButton} ${styles[seatType]}`;
+
+        if (status === 'inactive') {
+            className += ` ${styles.inactive}`;
+        } else if (status === 'selected') {
+            className += ` ${styles.selected}`;
+        } else if (status === 'temporary') {
+            className += ` ${styles.temporary}`;
+        } else if (status === 'booked') {
+            className += ` ${styles.booked}`;
+        }
+
+        return className;
     };
 
-    const getSeatTitle = (seat: SeatInfo) => {
+    const getSeatTitle = (seat: SeatInfo): string => {
         const status = getSeatStatus(seat);
         const seatType = seat.seatType === 'VIP' ? 'VIP' : seat.seatType === 'COUPLE' ? 'Couple' : 'Standard';
 
@@ -39,10 +53,10 @@ export const CinemaHall: React.FC<CinemaHallProps> = ({
 
         if (status === 'booked') {
             title += ' - Booked';
-        } else if (status === 'unavailable') {
+        } else if (status === 'inactive') {
             title += ' - Unavailable';
         } else if (status === 'temporary') {
-            title += ' - Temporarily reserved';
+            title += ' - Temporarily reserved (5 min)';
         } else if (status === 'selected') {
             title += ' - Selected';
         } else {
@@ -52,8 +66,9 @@ export const CinemaHall: React.FC<CinemaHallProps> = ({
         return title;
     };
 
-    const isSeatDisabled = (seat: SeatInfo) => {
-        return !seat.active || !seat.available || seat.temporarilyReserved;
+    const isSeatDisabled = (seat: SeatInfo): boolean => {
+        const status = getSeatStatus(seat);
+        return status === 'inactive' || status === 'booked' || status === 'temporary' || loadingSeats.includes(seat.id);
     };
 
     return (
@@ -73,26 +88,34 @@ export const CinemaHall: React.FC<CinemaHallProps> = ({
                             <div key={`row-${rowNumber}`} className={styles.row}>
                                 <div className={styles.rowLabel}>Row {rowNumber}</div>
                                 <div className={styles.seatsRow}>
-                                    {rowSeats.map(seat => (
-                                        <Tooltip
-                                            key={`seat-${seat.id}`}
-                                            content={getSeatTitle(seat)}
-                                            position="top"
-                                        >
-                                            <button
-                                                className={getSeatClass(seat)}
-                                                onClick={() => onSeatClick(seat.id)}
-                                                disabled={isSeatDisabled(seat)}
+                                    {rowSeats.map(seat => {
+                                        const isLoading = loadingSeats.includes(seat.id);
+
+                                        return (
+                                            <Tooltip
+                                                key={`seat-${seat.id}`}
+                                                content={getSeatTitle(seat)}
+                                                position="top"
                                             >
-                                                <span className={styles.seatNumber}>{seat.seatNumber}</span>
-                                                {!seat.active && (
-                                                    <div className={styles.inactiveOverlay}>
-                                                        <span className={styles.inactiveIcon}>✕</span>
-                                                    </div>
-                                                )}
-                                            </button>
-                                        </Tooltip>
-                                    ))}
+                                                <button
+                                                    className={getSeatClass(seat)}
+                                                    onClick={() => onSeatClick(seat.id)}
+                                                    disabled={isSeatDisabled(seat)}
+                                                >
+                                                    {isLoading ? (
+                                                        <span className={styles.loadingSpinner} />
+                                                    ) : (
+                                                        <span className={styles.seatNumber}>{seat.seatNumber}</span>
+                                                    )}
+                                                    {!seat.active && (
+                                                        <div className={styles.inactiveOverlay}>
+                                                            <span className={styles.inactiveIcon}>✕</span>
+                                                        </div>
+                                                    )}
+                                                </button>
+                                            </Tooltip>
+                                        );
+                                    })}
                                 </div>
                             </div>
                         );
@@ -122,6 +145,10 @@ export const CinemaHall: React.FC<CinemaHallProps> = ({
                     <div className={styles.legendItem}>
                         <div className={`${styles.legendColor} ${styles.booked}`} />
                         <span>Booked</span>
+                    </div>
+                    <div className={styles.legendItem}>
+                        <div className={`${styles.legendColor} ${styles.temporary}`} />
+                        <span>Temporarily Reserved</span>
                     </div>
                     <div className={styles.legendItem}>
                         <div className={`${styles.legendColor} ${styles.inactive}`} />

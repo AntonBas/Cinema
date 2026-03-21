@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useSeatAvailability } from '@/hooks/features/seatReservation/useSeatReservation';
+import { useSeatReservation } from '@/hooks/features/seatReservation/useSeatReservation';
 import { useBonus } from '@/hooks/features/bonus/useBonus';
 import { useBooking } from '@/hooks/features/booking/useBooking';
 import { CinemaHall } from '@/components/booking/CinemaHall/CinemaHall';
@@ -68,8 +68,9 @@ export const BookingPage: React.FC = () => {
         isSeatSelected,
         updateSeatTicketType,
         hasData,
-        totalSelected
-    } = useSeatAvailability(sessionIdNum);
+        totalSelected,
+        loadingSeats
+    } = useSeatReservation(sessionIdNum);
 
     const {
         myBalance,
@@ -179,7 +180,7 @@ export const BookingPage: React.FC = () => {
 
             const seats = selectedSeats.map(seat => ({
                 seatId: seat.seat.id,
-                ticketTypeId: seat.ticketTypeId || 1
+                ticketTypeId: seat.ticketTypeId
             }));
 
             const response = await create({
@@ -190,6 +191,7 @@ export const BookingPage: React.FC = () => {
 
             if (response) {
                 showNotification('Booking created successfully!', 'success');
+                await getSeatAvailability();
                 setTimeout(() => {
                     navigate(`/booking/summary/${response.id}`);
                 }, 1000);
@@ -263,6 +265,7 @@ export const BookingPage: React.FC = () => {
                         <CinemaHall
                             seats={seatData.seats}
                             selectedSeats={selectedSeats.map((s: SelectedSeat) => s.seat.id)}
+                            loadingSeats={loadingSeats}
                             onSeatClick={handleSeatClick}
                         />
                     </div>
