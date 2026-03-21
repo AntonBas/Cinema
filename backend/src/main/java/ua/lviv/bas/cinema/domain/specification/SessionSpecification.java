@@ -45,21 +45,21 @@ public class SessionSpecification {
 		return (root, query, cb) -> {
 			List<Predicate> predicates = new ArrayList<>();
 
-			if (filter.getStatus() != null) {
-				predicates.add(cb.equal(root.get("status"), filter.getStatus()));
+			if (filter.status() != null) {
+				predicates.add(cb.equal(root.get("status"), filter.status()));
 			}
 
-			if (filter.getHallId() != null) {
-				predicates.add(cb.equal(root.join("hall", JoinType.INNER).get("id"), filter.getHallId()));
+			if (filter.hallId() != null) {
+				predicates.add(cb.equal(root.join("hall", JoinType.INNER).get("id"), filter.hallId()));
 			}
 
-			if (filter.getMovieTitle() != null && !filter.getMovieTitle().trim().isEmpty()) {
-				String pattern = "%" + filter.getMovieTitle().toLowerCase() + "%";
+			if (filter.movieTitle() != null && !filter.movieTitle().trim().isEmpty()) {
+				String pattern = "%" + filter.movieTitle().toLowerCase() + "%";
 				predicates.add(cb.like(cb.lower(root.join("movie", JoinType.INNER).get("title")), pattern));
 			}
 
-			if (filter.getDateFrom() != null || filter.getDateTo() != null) {
-				addDateRangePredicates(predicates, root, cb, filter.getDateFrom(), filter.getDateTo());
+			if (filter.dateFrom() != null || filter.dateTo() != null) {
+				addDateRangePredicates(predicates, root, cb, filter.dateFrom(), filter.dateTo());
 			}
 
 			return cb.and(predicates.toArray(new Predicate[0]));

@@ -70,8 +70,10 @@ public class SessionService {
 
 		return projections.stream().map(projection -> {
 			SessionScheduleResponse response = sessionMapper.toScheduleResponse(projection);
-			response.setAvailableSeats(availableSeats.getOrDefault(projection.getId(), 0));
-			return response;
+			return new SessionScheduleResponse(response.id(), response.startTime(), response.endTime(),
+					response.basePrice(), availableSeats.getOrDefault(projection.getId(), 0), response.movieId(),
+					response.movieTitle(), response.moviePosterFileName(), response.movieAgeRating(),
+					response.movieDuration(), response.hallId(), response.hallName(), response.hallCapacity());
 		}).collect(Collectors.toList());
 	}
 
@@ -97,8 +99,10 @@ public class SessionService {
 	public SessionScheduleResponse getSessionForPublic(Long id) {
 		Session session = sessionRepository.findById(id).orElseThrow(() -> new SessionNotFoundException(id));
 		SessionScheduleResponse response = sessionMapper.toScheduleResponse(session);
-		response.setAvailableSeats(getAvailableSeats(id));
-		return response;
+		return new SessionScheduleResponse(response.id(), response.startTime(), response.endTime(),
+				response.basePrice(), getAvailableSeats(id), response.movieId(), response.movieTitle(),
+				response.moviePosterFileName(), response.movieAgeRating(), response.movieDuration(), response.hallId(),
+				response.hallName(), response.hallCapacity());
 	}
 
 	@Cacheable(key = "'admin:' + #id")
@@ -123,14 +127,14 @@ public class SessionService {
 	@CacheEvict(allEntries = true)
 	@Transactional
 	public SessionAdminResponse createSession(SessionCreateRequest request) {
-		validateStartTime(request.getStartTime());
+		validateStartTime(request.startTime());
 
-		Movie movie = movieRepository.getReferenceById(request.getMovieId());
-		CinemaHall hall = cinemaHallService.getHallEntityById(request.getHallId());
+		Movie movie = movieRepository.getReferenceById(request.movieId());
+		CinemaHall hall = cinemaHallService.getHallEntityById(request.hallId());
 
-		validateMovieAvailability(movie, request.getStartTime());
-		validateNoTimeConflict(hall.getId(), request.getStartTime(),
-				request.getStartTime().plusMinutes(movie.getDurationMinutes()), null);
+		validateMovieAvailability(movie, request.startTime());
+		validateNoTimeConflict(hall.getId(), request.startTime(),
+				request.startTime().plusMinutes(movie.getDurationMinutes()), null);
 
 		Session session = sessionMapper.toEntity(request);
 		session.setMovie(movie);
@@ -149,26 +153,26 @@ public class SessionService {
 
 		boolean hasChanges = false;
 
-		if (request.getStartTime() != null && !request.getStartTime().equals(session.getStartTime())) {
-			validateStartTime(request.getStartTime());
-			session.setStartTime(request.getStartTime());
+		if (request.startTime() != null && !request.startTime().equals(session.getStartTime())) {
+			validateStartTime(request.startTime());
+			session.setStartTime(request.startTime());
 			hasChanges = true;
 		}
 
-		if (request.getBasePrice() != null && !request.getBasePrice().equals(session.getBasePrice())) {
-			session.setBasePrice(request.getBasePrice());
+		if (request.basePrice() != null && !request.basePrice().equals(session.getBasePrice())) {
+			session.setBasePrice(request.basePrice());
 			hasChanges = true;
 		}
 
-		if (request.getMovieId() != null && !request.getMovieId().equals(session.getMovie().getId())) {
-			Movie movie = movieRepository.getReferenceById(request.getMovieId());
+		if (request.movieId() != null && !request.movieId().equals(session.getMovie().getId())) {
+			Movie movie = movieRepository.getReferenceById(request.movieId());
 			validateMovieAvailability(movie, session.getStartTime());
 			session.setMovie(movie);
 			hasChanges = true;
 		}
 
-		if (request.getHallId() != null && !request.getHallId().equals(session.getHall().getId())) {
-			CinemaHall hall = cinemaHallService.getHallEntityById(request.getHallId());
+		if (request.hallId() != null && !request.hallId().equals(session.getHall().getId())) {
+			CinemaHall hall = cinemaHallService.getHallEntityById(request.hallId());
 			session.setHall(hall);
 			hasChanges = true;
 		}

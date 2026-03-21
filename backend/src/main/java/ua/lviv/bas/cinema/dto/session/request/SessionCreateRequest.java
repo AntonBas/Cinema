@@ -8,34 +8,13 @@ import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-@Schema(description = "Request DTO for creating a movie session")
-public class SessionCreateRequest {
+public record SessionCreateRequest(
+		@Schema(description = "Start time of the movie session", example = "2024-01-15T18:30:00") @FutureOrPresent @NotNull LocalDateTime startTime,
 
-	@Schema(description = "Start time of the movie session", example = "2024-01-15T18:30:00")
-	@FutureOrPresent
-	@NotNull
-	private LocalDateTime startTime;
+		@Schema(description = "Base price for a standard seat", example = "150.00") @Positive @DecimalMin("10.0") @NotNull BigDecimal basePrice,
 
-	@Schema(description = "Base price for a standard seat", example = "150.00")
-	@Positive
-	@DecimalMin("10.0")
-	@NotNull
-	private BigDecimal basePrice;
+		@Schema(description = "ID of the movie being shown", example = "1") @NotNull Long movieId,
 
-	@Schema(description = "ID of the movie being shown", example = "1")
-	@NotNull
-	private Long movieId;
-
-	@Schema(description = "ID of the cinema hall", example = "2")
-	@NotNull
-	private Long hallId;
+		@Schema(description = "ID of the cinema hall", example = "2") @NotNull Long hallId) {
 }
