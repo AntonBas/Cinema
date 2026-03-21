@@ -44,8 +44,8 @@ public class TicketRetrievalService {
 	}
 
 	public Page<TicketResponse> getUserTickets(User user, TicketFilterRequest filter, Pageable pageable) {
-		Specification<Ticket> spec = ticketSpecification.buildForUser(user.getId(), filter.getStatus(),
-				filter.getMovieTitle());
+		Specification<Ticket> spec = ticketSpecification.buildForUser(user.getId(), filter.status(),
+				filter.movieTitle());
 
 		Page<Ticket> tickets = ticketRepository.findAll(spec, pageable);
 
@@ -54,8 +54,10 @@ public class TicketRetrievalService {
 
 	private TicketResponse toTicketResponse(Ticket ticket) {
 		TicketResponse response = ticketMapper.toTicketResponse(ticket);
-		response.setQrCodeUrl(generateQrCodeUrl(ticket.getUniqueCode()));
-		return response;
+		String qrCodeUrl = generateQrCodeUrl(ticket.getUniqueCode());
+		return new TicketResponse(response.id(), response.ticketCode(), qrCodeUrl, response.status(),
+				response.purchaseTime(), response.price(), response.ticketType(), response.movieTitle(),
+				response.sessionTime(), response.hallName(), response.row(), response.seatNumber());
 	}
 
 	private String generateQrCodeUrl(String ticketCode) {

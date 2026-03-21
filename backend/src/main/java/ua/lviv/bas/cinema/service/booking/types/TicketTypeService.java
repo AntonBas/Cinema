@@ -47,12 +47,12 @@ public class TicketTypeService {
 	@CacheEvict(allEntries = true)
 	@Transactional
 	public TicketTypeResponse createTicketType(TicketTypeCreateRequest request) {
-		log.info("Creating ticket type: {}", request.getDisplayName());
+		log.info("Creating ticket type: {}", request.displayName());
 
-		validationService.validateAgeRange(request.getMinAge(), request.getMaxAge());
+		validationService.validateAgeRange(request.minAge(), request.maxAge());
 
-		if (ticketTypeRepository.existsByDisplayName(request.getDisplayName())) {
-			throw new TicketTypeDuplicateException(request.getDisplayName());
+		if (ticketTypeRepository.existsByDisplayName(request.displayName())) {
+			throw new TicketTypeDuplicateException(request.displayName());
 		}
 
 		TicketType ticketType = ticketTypeMapper.toTicketType(request);
@@ -95,14 +95,14 @@ public class TicketTypeService {
 
 		TicketType ticketType = findTicketTypeById(id);
 
-		if (request.getDisplayName() != null && !request.getDisplayName().equals(ticketType.getDisplayName())
-				&& ticketTypeRepository.existsByDisplayNameAndIdNot(request.getDisplayName(), id)) {
-			throw new TicketTypeDuplicateException(request.getDisplayName());
+		if (request.displayName() != null && !request.displayName().equals(ticketType.getDisplayName())
+				&& ticketTypeRepository.existsByDisplayNameAndIdNot(request.displayName(), id)) {
+			throw new TicketTypeDuplicateException(request.displayName());
 		}
 
-		if (request.getMinAge() != null || request.getMaxAge() != null) {
-			Integer minAge = request.getMinAge() != null ? request.getMinAge() : ticketType.getMinAge();
-			Integer maxAge = request.getMaxAge() != null ? request.getMaxAge() : ticketType.getMaxAge();
+		if (request.minAge() != null || request.maxAge() != null) {
+			Integer minAge = request.minAge() != null ? request.minAge() : ticketType.getMinAge();
+			Integer maxAge = request.maxAge() != null ? request.maxAge() : ticketType.getMaxAge();
 			validationService.validateAgeRange(minAge, maxAge);
 		}
 

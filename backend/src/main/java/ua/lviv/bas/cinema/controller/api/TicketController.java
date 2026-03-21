@@ -48,7 +48,7 @@ public class TicketController {
 		log.info("Getting tickets for user ID: {} with status: {} and movieTitle: {}", user.getId(), status,
 				movieTitle);
 
-		TicketFilterRequest filter = TicketFilterRequest.builder().status(status).movieTitle(movieTitle).build();
+		TicketFilterRequest filter = new TicketFilterRequest(status, movieTitle);
 
 		Page<TicketResponse> tickets = ticketRetrievalService.getUserTickets(user, filter, pageable);
 		return ResponseEntity.ok(PageResponse.from(tickets));

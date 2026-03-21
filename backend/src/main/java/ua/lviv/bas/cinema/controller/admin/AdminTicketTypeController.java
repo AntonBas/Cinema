@@ -50,7 +50,7 @@ public class AdminTicketTypeController {
 	@PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
 	public ResponseEntity<TicketTypeResponse> createTicketType(
 			@Parameter(description = "Ticket type creation request") @Valid @RequestBody TicketTypeCreateRequest request) {
-		log.info("Creating new ticket type with display name: {}", request.getDisplayName());
+		log.info("Creating new ticket type with display name: {}", request.displayName());
 		return ResponseEntity.status(HttpStatus.CREATED).body(ticketTypeService.createTicketType(request));
 	}
 
