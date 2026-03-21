@@ -2,6 +2,7 @@ package ua.lviv.bas.cinema.repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -27,6 +28,9 @@ public interface SeatReservationRepository extends JpaRepository<SeatReservation
 	List<SeatReservation> findBySessionIdAndStatusIn(Long sessionId, List<ReservationStatus> statuses);
 
 	List<SeatReservation> findByStatusAndReservedUntilBefore(ReservationStatus status, LocalDateTime reservedUntil);
+
+	Optional<SeatReservation> findBySessionIdAndSeatIdAndStatusAndReservedByUserId(Long sessionId, Long seatId,
+			ReservationStatus status, Long userId);
 
 	@Query("SELECT COUNT(sr) FROM SeatReservation sr WHERE sr.session.id = :sessionId AND sr.status IN :statuses")
 	long countBySessionIdAndStatusIn(@Param("sessionId") Long sessionId,
