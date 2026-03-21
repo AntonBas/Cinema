@@ -32,33 +32,54 @@ export const Pagination: React.FC<CombinedPaginationProps> = (props) => {
         currentPage,
         totalPages,
         totalElements,
-        pageSize,
         variant = 'pages',
         loading = false,
-        className = '',
-        showInfo = true
-    } = props;
+        className = '' } = props;
 
     if (totalPages <= 0 || totalElements === 0) return null;
 
-    const startItem = currentPage * pageSize + 1;
-    const endItem = Math.min((currentPage + 1) * pageSize, totalElements);
+    const getPageNumbers = (): (number | string)[] => {
+        const pages: (number | string)[] = [];
+        const maxVisible = 5;
 
-    const getPageNumbers = (): number[] => {
-        const pages: number[] = [];
-        const maxVisiblePages = 5;
-
-        if (totalPages <= 1) return pages;
-
-        let startPage = Math.max(0, currentPage - Math.floor(maxVisiblePages / 2));
-        let endPage = Math.min(totalPages - 1, startPage + maxVisiblePages - 1);
-
-        if (endPage - startPage + 1 < maxVisiblePages) {
-            startPage = Math.max(0, endPage - maxVisiblePages + 1);
+        if (totalPages <= maxVisible) {
+            for (let i = 0; i < totalPages; i++) {
+                pages.push(i);
+            }
+            return pages;
         }
 
-        for (let i = startPage; i <= endPage; i++) {
-            pages.push(i);
+        pages.push(0);
+
+        let leftBound = currentPage - 2;
+        let rightBound = currentPage + 2;
+
+        if (leftBound <= 1) {
+            leftBound = 1;
+            rightBound = Math.min(maxVisible - 1, totalPages - 1);
+        }
+
+        if (rightBound >= totalPages - 2) {
+            rightBound = totalPages - 1;
+            leftBound = Math.max(totalPages - maxVisible, 1);
+        }
+
+        if (leftBound > 1) {
+            pages.push('...');
+        }
+
+        for (let i = leftBound; i <= rightBound; i++) {
+            if (i !== 0 && i !== totalPages - 1) {
+                pages.push(i);
+            }
+        }
+
+        if (rightBound < totalPages - 2) {
+            pages.push('...');
+        }
+
+        if (totalPages - 1 !== pages[pages.length - 1]) {
+            pages.push(totalPages - 1);
         }
 
         return pages;
@@ -72,24 +93,12 @@ export const Pagination: React.FC<CombinedPaginationProps> = (props) => {
 
         return (
             <div className={`${styles.pagination} ${className}`}>
-                {showInfo && (
-                    <div className={styles.info}>
-                        Showing {endItem} of {totalElements} items
-                    </div>
-                )}
                 <button
                     className={styles.loadMoreButton}
                     onClick={onLoadMore}
                     disabled={loading}
                 >
-                    {loading ? (
-                        <>
-                            <span className={styles.spinner}></span>
-                            Loading...
-                        </>
-                    ) : (
-                        'Load More'
-                    )}
+                    {loading ? 'Loading...' : 'Load More'}
                 </button>
             </div>
         );
@@ -99,37 +108,43 @@ export const Pagination: React.FC<CombinedPaginationProps> = (props) => {
 
     return (
         <div className={`${styles.pagination} ${className}`}>
-            {showInfo && (
-                <div className={styles.info}>
-                    Showing {startItem}-{endItem} of {totalElements} items
-                </div>
-            )}
-
             <div className={styles.controls}>
                 <button
-                    className={styles.pageButton}
+                    className={styles.navButton}
                     onClick={() => onPageChange(currentPage - 1)}
                     disabled={currentPage === 0}
                 >
-                    ‹
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
                 </button>
 
-                {getPageNumbers().map(page => (
-                    <button
-                        key={page}
-                        className={`${styles.pageButton} ${page === currentPage ? styles.active : ''}`}
-                        onClick={() => onPageChange(page)}
-                    >
-                        {page + 1}
-                    </button>
-                ))}
+                <div className={styles.pages}>
+                    {getPageNumbers().map((page, index) => {
+                        if (page === '...') {
+                            return <span key={`dots-${index}`} className={styles.dots}>⋯</span>;
+                        }
+                        const pageNum = page as number;
+                        return (
+                            <button
+                                key={pageNum}
+                                className={`${styles.pageButton} ${pageNum === currentPage ? styles.active : ''}`}
+                                onClick={() => onPageChange(pageNum)}
+                            >
+                                {pageNum + 1}
+                            </button>
+                        );
+                    })}
+                </div>
 
                 <button
-                    className={styles.pageButton}
+                    className={styles.navButton}
                     onClick={() => onPageChange(currentPage + 1)}
                     disabled={currentPage === totalPages - 1}
                 >
-                    ›
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
                 </button>
             </div>
         </div>

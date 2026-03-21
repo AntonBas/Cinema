@@ -5,121 +5,121 @@
     padding: var(--space-6) 0;
 }
 
-.info {
-    color: var(--color-text-secondary);
-    font-size: var(--font-size-sm);
-    margin-right: auto;
-    font-weight: 500;
-}
-
 .controls {
     display: flex;
-    gap: var(--space-2);
+    align-items: center;
+    gap: var(--space-3);
 }
 
-.pageButton {
+.navButton {
     display: flex;
     align-items: center;
     justify-content: center;
-    min-width: 2.75rem;
-    height: 2.75rem;
-    padding: 0 var(--space-3);
-    border: 1px solid var(--color-border-light);
-    background: var(--color-bg-modal);
+    width: 36px;
+    height: 36px;
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+    border-radius: 50%;
     color: var(--color-text-secondary);
-    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.navButton:hover:not(:disabled) {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: white;
+    transform: translateY(-1px);
+}
+
+.navButton:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.pages {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+}
+
+.pageButton {
+    min-width: 36px;
+    height: 36px;
+    background: transparent;
+    border: none;
+    border-radius: 50%;
+    color: var(--color-text-secondary);
     font-size: var(--font-size-sm);
     font-weight: 500;
     cursor: pointer;
-    transition: all var(--transition-normal);
+    transition: all var(--transition-fast);
 }
 
-.pageButton:hover:not(:disabled) {
-    background: #2a3040;
-    border-color: rgba(var(--color-primary-rgb), 0.5);
-    color: var(--color-text-primary);
-}
-
-.pageButton:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
+.pageButton:hover {
+    background: rgba(var(--color-primary-rgb), 0.1);
+    color: var(--color-primary);
 }
 
 .pageButton.active {
     background: var(--color-primary);
-    color: var(--color-text-primary);
-    border-color: var(--color-primary);
+    color: white;
+    font-weight: 500;
+}
+
+.dots {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+    padding: 0 var(--space-1);
+    letter-spacing: 1px;
 }
 
 .loadMoreButton {
-    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-hover));
-    color: var(--color-text-primary);
-    border: none;
-    padding: var(--space-4) var(--space-8);
-    border-radius: var(--radius-md);
-    font-weight: 600;
+    padding: var(--space-2) var(--space-6);
+    background: transparent;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-full);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
     cursor: pointer;
-    transition: all var(--transition-normal);
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
+    transition: all var(--transition-fast);
     margin: 0 auto;
 }
 
 .loadMoreButton:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-lg);
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+    background: rgba(var(--color-primary-rgb), 0.05);
 }
 
 .loadMoreButton:disabled {
-    opacity: 0.6;
+    opacity: 0.5;
     cursor: not-allowed;
-    transform: none;
-}
-
-.spinner {
-    width: 16px;
-    height: 16px;
-    border: 2px solid transparent;
-    border-top: 2px solid currentColor;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-    0% {
-        transform: rotate(0deg);
-    }
-
-    100% {
-        transform: rotate(360deg);
-    }
 }
 
 @media (max-width: 768px) {
     .pagination {
-        flex-direction: column;
-        gap: var(--space-4);
-        padding: var(--space-4) 0;
+        justify-content: center;
     }
 
-    .info {
-        margin-right: 0;
-        text-align: center;
-    }
-
-    .controls {
-        gap: var(--space-1);
+    .navButton {
+        width: 32px;
+        height: 32px;
     }
 
     .pageButton {
-        min-width: 2.5rem;
-        height: 2.5rem;
-        font-size: 0.85rem;
+        min-width: 32px;
+        height: 32px;
+        font-size: var(--font-size-xs);
+    }
+
+    .dots {
+        font-size: var(--font-size-xs);
+        padding: 0 var(--space-0);
     }
 
     .loadMoreButton {
         width: 100%;
-        justify-content: center;
+        text-align: center;
     }
 }
