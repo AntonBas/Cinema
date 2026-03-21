@@ -46,19 +46,19 @@ public class PaymentControllerTest {
 	}
 
 	private PaymentResponse createPaymentResponse(Long id) {
-		return PaymentResponse.builder().id(id).bookingId(100L).amount(new BigDecimal("150.00"))
-				.status(PaymentStatus.PENDING).liqpayOrderId("ORDER_ABC123").createdAt(LocalDateTime.now()).build();
+		return new PaymentResponse(id, 100L, "BK-123456", "user@example.com", "Test Movie", LocalDateTime.now(),
+				"Hall A", new BigDecimal("150.00"), new BigDecimal("150.00"), PaymentStatus.PENDING, "ORDER_ABC123",
+				null, null, null, null, null, null, null, LocalDateTime.now(), LocalDateTime.now());
 	}
 
 	private PaymentLiqPayDataResponse createLiqPayDataResponse() {
-		return PaymentLiqPayDataResponse.builder().data("encoded_data").signature("signature_hash")
-				.paymentUrl("https://www.liqpay.ua/api/3/checkout").liqpayOrderId("ORDER_ABC123").build();
+		return new PaymentLiqPayDataResponse("encoded_data", "signature_hash", "https://www.liqpay.ua/api/3/checkout",
+				"ORDER_ABC123");
 	}
 
 	@Test
 	void createPayment_ShouldCreateSuccessfully() {
-		PaymentCreateRequest request = new PaymentCreateRequest();
-		request.setBookingId(100L);
+		PaymentCreateRequest request = new PaymentCreateRequest(100L);
 
 		PaymentResponse paymentResponse = createPaymentResponse(1L);
 
@@ -68,7 +68,7 @@ public class PaymentControllerTest {
 
 		assertEquals(HttpStatus.CREATED, response.getStatusCode());
 		assertNotNull(response.getBody());
-		assertEquals(1L, response.getBody().getId());
+		assertEquals(1L, response.getBody().id());
 	}
 
 	@Test
@@ -83,7 +83,7 @@ public class PaymentControllerTest {
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
 		assertNotNull(response.getBody());
-		assertEquals("encoded_data", response.getBody().getData());
+		assertEquals("encoded_data", response.getBody().data());
 	}
 
 	@Test
@@ -98,6 +98,6 @@ public class PaymentControllerTest {
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
 		assertNotNull(response.getBody());
-		assertEquals(paymentId, response.getBody().getId());
+		assertEquals(paymentId, response.getBody().id());
 	}
 }

@@ -56,15 +56,14 @@ public class AdminTicketTypeControllerTest {
 		mockMvc = MockMvcBuilders.standaloneSetup(adminTicketTypeController).setControllerAdvice(new ApiErrorHandler())
 				.build();
 
-		ticketTypeResponse = TicketTypeResponse.builder().id(1L).displayName("Child Ticket")
-				.priceMultiplier(new BigDecimal("0.70")).minAge(0).maxAge(12).requiresDocument(true)
-				.documentType("Birth Certificate").active(true).category(TicketTypeCategory.CHILD).build();
+		ticketTypeResponse = new TicketTypeResponse(1L, "Child Ticket", new BigDecimal("0.70"), 0, 12, true,
+				"Birth Certificate", true, TicketTypeCategory.CHILD);
 	}
 
 	@Test
 	void createTicketType_ShouldReturnCreated() throws Exception {
-		TicketTypeCreateRequest createRequest = TicketTypeCreateRequest.builder().displayName("Child Ticket")
-				.priceMultiplier(new BigDecimal("0.70")).category(TicketTypeCategory.CHILD).build();
+		TicketTypeCreateRequest createRequest = new TicketTypeCreateRequest("Child Ticket", new BigDecimal("0.70"), 0,
+				12, true, "Birth Certificate", true, TicketTypeCategory.CHILD);
 
 		when(ticketTypeService.createTicketType(any(TicketTypeCreateRequest.class))).thenReturn(ticketTypeResponse);
 
@@ -77,8 +76,8 @@ public class AdminTicketTypeControllerTest {
 
 	@Test
 	void createTicketType_ShouldReturnConflictWhenDuplicate() throws Exception {
-		TicketTypeCreateRequest createRequest = TicketTypeCreateRequest.builder().displayName("Existing Ticket")
-				.priceMultiplier(new BigDecimal("1.00")).category(TicketTypeCategory.STANDARD).build();
+		TicketTypeCreateRequest createRequest = new TicketTypeCreateRequest("Existing Ticket", new BigDecimal("1.00"),
+				null, null, false, null, true, TicketTypeCategory.STANDARD);
 
 		when(ticketTypeService.createTicketType(any(TicketTypeCreateRequest.class)))
 				.thenThrow(new TicketTypeDuplicateException("Existing Ticket"));
@@ -110,11 +109,11 @@ public class AdminTicketTypeControllerTest {
 
 	@Test
 	void updateTicketType_ShouldReturnOk() throws Exception {
-		TicketTypeUpdateRequest updateRequest = TicketTypeUpdateRequest.builder().displayName("Updated Child Ticket")
-				.build();
+		TicketTypeUpdateRequest updateRequest = new TicketTypeUpdateRequest("Updated Child Ticket", null, null, null,
+				null, null, null, null);
 
-		TicketTypeResponse updatedResponse = TicketTypeResponse.builder().id(1L).displayName("Updated Child Ticket")
-				.priceMultiplier(new BigDecimal("0.70")).active(true).category(TicketTypeCategory.CHILD).build();
+		TicketTypeResponse updatedResponse = new TicketTypeResponse(1L, "Updated Child Ticket", new BigDecimal("0.70"),
+				null, null, false, null, true, TicketTypeCategory.CHILD);
 
 		when(ticketTypeService.updateTicketType(eq(1L), any(TicketTypeUpdateRequest.class)))
 				.thenReturn(updatedResponse);
@@ -128,7 +127,8 @@ public class AdminTicketTypeControllerTest {
 
 	@Test
 	void updateTicketType_ShouldReturnNotFound() throws Exception {
-		TicketTypeUpdateRequest updateRequest = TicketTypeUpdateRequest.builder().displayName("Updated").build();
+		TicketTypeUpdateRequest updateRequest = new TicketTypeUpdateRequest("Updated", null, null, null, null, null,
+				null, null);
 
 		when(ticketTypeService.updateTicketType(eq(999L), any(TicketTypeUpdateRequest.class)))
 				.thenThrow(new TicketTypeNotFoundException(999L));
@@ -166,8 +166,8 @@ public class AdminTicketTypeControllerTest {
 
 	@Test
 	void toggleTicketTypeActive_ShouldReturnOk() throws Exception {
-		TicketTypeResponse toggledResponse = TicketTypeResponse.builder().id(1L).displayName("Child Ticket")
-				.priceMultiplier(new BigDecimal("0.70")).active(false).category(TicketTypeCategory.CHILD).build();
+		TicketTypeResponse toggledResponse = new TicketTypeResponse(1L, "Child Ticket", new BigDecimal("0.70"), null,
+				null, false, null, false, TicketTypeCategory.CHILD);
 
 		when(ticketTypeService.toggleTicketTypeActiveStatus(1L)).thenReturn(toggledResponse);
 

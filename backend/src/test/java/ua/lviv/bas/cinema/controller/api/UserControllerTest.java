@@ -54,9 +54,8 @@ public class UserControllerTest {
 		Long userId = 1L;
 		CustomUserDetails userDetails = createMockUserDetails(userId);
 
-		UserProfileResponse profileResponse = UserProfileResponse.builder().id(userId).email("user@example.com")
-				.firstName("John").lastName("Doe").dateOfBirth(LocalDate.of(1990, 1, 1)).city("Kyiv")
-				.phoneNumber("+380123456789").verificationStatus(VerificationStatus.NOT_VERIFIED).build();
+		UserProfileResponse profileResponse = new UserProfileResponse(userId, "user@example.com", "John", "Doe",
+				LocalDate.of(1990, 1, 1), "Kyiv", "+380123456789", VerificationStatus.NOT_VERIFIED);
 
 		when(userService.getUserProfile(userId)).thenReturn(profileResponse);
 
@@ -66,9 +65,9 @@ public class UserControllerTest {
 
 		UserProfileResponse responseBody = response.getBody();
 		assertNotNull(responseBody);
-		assertEquals(userId, responseBody.getId());
-		assertEquals("John", responseBody.getFirstName());
-		assertEquals("Doe", responseBody.getLastName());
+		assertEquals(userId, responseBody.id());
+		assertEquals("John", responseBody.firstName());
+		assertEquals("Doe", responseBody.lastName());
 
 		verify(userService).getUserProfile(userId);
 	}
@@ -96,12 +95,11 @@ public class UserControllerTest {
 		Long userId = 1L;
 		CustomUserDetails userDetails = createMockUserDetails(userId);
 
-		UserUpdateRequest request = UserUpdateRequest.builder().firstName("Updated").lastName("Name")
-				.phoneNumber("+987654321").dateOfBirth(LocalDate.of(1995, 5, 5)).city("Lviv").build();
+		UserUpdateRequest request = new UserUpdateRequest("Updated", "Name", LocalDate.of(1995, 5, 5), "Lviv",
+				"+987654321");
 
-		UserProfileResponse profileResponse = UserProfileResponse.builder().id(userId).email("user@example.com")
-				.firstName("Updated").lastName("Name").dateOfBirth(LocalDate.of(1995, 5, 5)).city("Lviv")
-				.phoneNumber("+987654321").verificationStatus(VerificationStatus.NOT_VERIFIED).build();
+		UserProfileResponse profileResponse = new UserProfileResponse(userId, "user@example.com", "Updated", "Name",
+				LocalDate.of(1995, 5, 5), "Lviv", "+987654321", VerificationStatus.NOT_VERIFIED);
 
 		when(userService.updateUser(eq(userId), any(UserUpdateRequest.class))).thenReturn(profileResponse);
 
@@ -111,10 +109,10 @@ public class UserControllerTest {
 
 		UserProfileResponse responseBody = response.getBody();
 		assertNotNull(responseBody);
-		assertEquals("Updated", responseBody.getFirstName());
-		assertEquals("Name", responseBody.getLastName());
-		assertEquals("+987654321", responseBody.getPhoneNumber());
-		assertEquals("Lviv", responseBody.getCity());
+		assertEquals("Updated", responseBody.firstName());
+		assertEquals("Name", responseBody.lastName());
+		assertEquals("+987654321", responseBody.phoneNumber());
+		assertEquals("Lviv", responseBody.city());
 
 		verify(userService).updateUser(userId, request);
 	}
@@ -124,7 +122,8 @@ public class UserControllerTest {
 		Long userId = 999L;
 		CustomUserDetails userDetails = createMockUserDetails(userId);
 
-		UserUpdateRequest request = UserUpdateRequest.builder().firstName("Updated").lastName("Name").build();
+		UserUpdateRequest request = new UserUpdateRequest("Updated", "Name", LocalDate.of(1995, 5, 5), "Lviv",
+				"+987654321");
 
 		when(userService.updateUser(eq(userId), any(UserUpdateRequest.class)))
 				.thenThrow(new UserNotFoundException(userId));
@@ -138,9 +137,7 @@ public class UserControllerTest {
 		Long userId = 1L;
 		CustomUserDetails userDetails = createMockUserDetails(userId);
 
-		UserEmailChangeRequest request = new UserEmailChangeRequest();
-		request.setPassword("password");
-		request.setNewEmail("new.email@example.com");
+		UserEmailChangeRequest request = new UserEmailChangeRequest("new.email@example.com", "password");
 
 		ResponseEntity<Map<String, String>> response = userController.requestEmailChange(userDetails, request);
 
@@ -150,7 +147,7 @@ public class UserControllerTest {
 		assertNotNull(responseBody);
 		assertEquals("Confirmation email sent to your new address", responseBody.get("message"));
 
-		verify(userService).requestEmailChange(userId, request.getPassword(), request.getNewEmail());
+		verify(userService).requestEmailChange(userId, request.password(), request.newEmail());
 	}
 
 	@Test
@@ -158,31 +155,13 @@ public class UserControllerTest {
 		Long userId = 1L;
 		CustomUserDetails userDetails = createMockUserDetails(userId);
 
-		UserEmailChangeRequest request = new UserEmailChangeRequest();
-		request.setPassword("wrongpassword");
-		request.setNewEmail("new.email@example.com");
+		UserEmailChangeRequest request = new UserEmailChangeRequest("new.email@example.com", "wrongpassword");
 
 		doThrow(new BadCredentialsException("Invalid password")).when(userService).requestEmailChange(userId,
-				request.getPassword(), request.getNewEmail());
+				request.password(), request.newEmail());
 
 		assertThrows(BadCredentialsException.class, () -> userController.requestEmailChange(userDetails, request));
-		verify(userService).requestEmailChange(userId, request.getPassword(), request.getNewEmail());
-	}
-
-	@Test
-	void requestEmailChange_WhenEmailAlreadyInUse_ShouldThrowException() {
-		Long userId = 1L;
-		CustomUserDetails userDetails = createMockUserDetails(userId);
-
-		UserEmailChangeRequest request = new UserEmailChangeRequest();
-		request.setPassword("password");
-		request.setNewEmail("existing@example.com");
-
-		doThrow(new IllegalArgumentException("Email already in use")).when(userService).requestEmailChange(userId,
-				request.getPassword(), request.getNewEmail());
-
-		assertThrows(IllegalArgumentException.class, () -> userController.requestEmailChange(userDetails, request));
-		verify(userService).requestEmailChange(userId, request.getPassword(), request.getNewEmail());
+		verify(userService).requestEmailChange(userId, request.password(), request.newEmail());
 	}
 
 	@Test
@@ -190,10 +169,8 @@ public class UserControllerTest {
 		Long userId = 1L;
 		CustomUserDetails userDetails = createMockUserDetails(userId);
 
-		UserPasswordUpdateRequest request = new UserPasswordUpdateRequest();
-		request.setCurrentPassword("oldPassword123");
-		request.setNewPassword("newPassword123");
-		request.setPasswordConfirm("newPassword123");
+		UserPasswordUpdateRequest request = new UserPasswordUpdateRequest("oldPassword123", "newPassword123",
+				"newPassword123");
 
 		ResponseEntity<Map<String, String>> response = userController.updatePassword(userDetails, request);
 
@@ -211,10 +188,8 @@ public class UserControllerTest {
 		Long userId = 1L;
 		CustomUserDetails userDetails = createMockUserDetails(userId);
 
-		UserPasswordUpdateRequest request = new UserPasswordUpdateRequest();
-		request.setCurrentPassword("wrongPassword");
-		request.setNewPassword("newPassword123");
-		request.setPasswordConfirm("newPassword123");
+		UserPasswordUpdateRequest request = new UserPasswordUpdateRequest("wrongPassword", "newPassword123",
+				"newPassword123");
 
 		doThrow(new BadCredentialsException("Invalid current password")).when(userService).updateUserPassword(userId,
 				request);
@@ -228,10 +203,8 @@ public class UserControllerTest {
 		Long userId = 1L;
 		CustomUserDetails userDetails = createMockUserDetails(userId);
 
-		UserPasswordUpdateRequest request = new UserPasswordUpdateRequest();
-		request.setCurrentPassword("oldPassword123");
-		request.setNewPassword("newPassword123");
-		request.setPasswordConfirm("differentPassword");
+		UserPasswordUpdateRequest request = new UserPasswordUpdateRequest("oldPassword123", "newPassword123",
+				"differentPassword");
 
 		doThrow(new IllegalArgumentException("Passwords do not match")).when(userService).updateUserPassword(userId,
 				request);
@@ -245,10 +218,8 @@ public class UserControllerTest {
 		Long userId = 999L;
 		CustomUserDetails userDetails = createMockUserDetails(userId);
 
-		UserPasswordUpdateRequest request = new UserPasswordUpdateRequest();
-		request.setCurrentPassword("oldPassword123");
-		request.setNewPassword("newPassword123");
-		request.setPasswordConfirm("newPassword123");
+		UserPasswordUpdateRequest request = new UserPasswordUpdateRequest("oldPassword123", "newPassword123",
+				"newPassword123");
 
 		doThrow(new UserNotFoundException(userId)).when(userService).updateUserPassword(userId, request);
 

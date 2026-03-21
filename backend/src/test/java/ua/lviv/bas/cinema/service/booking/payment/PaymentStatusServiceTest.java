@@ -61,9 +61,8 @@ public class PaymentStatusServiceTest {
 
 	@Test
 	void preparePaymentData_Success() {
-		PaymentLiqPayDataResponse expectedResponse = new PaymentLiqPayDataResponse();
-		expectedResponse.setData("test_data");
-		expectedResponse.setSignature("test_signature");
+		PaymentLiqPayDataResponse expectedResponse = new PaymentLiqPayDataResponse("test_data", "test_signature",
+				"https://payment.url", "ORD_TEST123456789");
 
 		when(paymentRepository.findById(1L)).thenReturn(Optional.of(testPayment));
 		when(paymentGatewayService.prepareLiqPayPaymentData(testPayment)).thenReturn(expectedResponse);
@@ -71,8 +70,8 @@ public class PaymentStatusServiceTest {
 		PaymentLiqPayDataResponse response = paymentStatusService.preparePaymentData(1L);
 
 		assertThat(response).isNotNull();
-		assertThat(response.getData()).isEqualTo("test_data");
-		assertThat(response.getSignature()).isEqualTo("test_signature");
+		assertThat(response.data()).isEqualTo("test_data");
+		assertThat(response.signature()).isEqualTo("test_signature");
 	}
 
 	@Test
@@ -165,9 +164,7 @@ public class PaymentStatusServiceTest {
 
 	@Test
 	void handleLiqPayCallback_WithRequestObject() {
-		LiqPayCallbackRequest callbackRequest = new LiqPayCallbackRequest();
-		callbackRequest.setData("encoded_data");
-		callbackRequest.setSignature("test_signature");
+		LiqPayCallbackRequest callbackRequest = new LiqPayCallbackRequest("encoded_data", "test_signature");
 
 		Map<String, String> decodedData = new HashMap<>();
 		decodedData.put("order_id", "ORD_TEST123456789");

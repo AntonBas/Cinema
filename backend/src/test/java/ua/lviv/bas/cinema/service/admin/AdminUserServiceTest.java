@@ -74,8 +74,8 @@ public class AdminUserServiceTest {
 		adminUser = User.builder().id(ADMIN_ID).email(ADMIN_EMAIL).userRole(UserRole.ROLE_ADMIN).enabled(true)
 				.verificationStatus(VerificationStatus.VERIFIED).build();
 
-		response = new AdminUserListResponse();
-		response.setId(USER_ID);
+		response = new AdminUserListResponse(USER_ID, USER_EMAIL, "John", "Doe", UserRole.ROLE_USER, true,
+				VerificationStatus.NOT_VERIFIED, null, 0L, null);
 	}
 
 	@Test
@@ -89,7 +89,7 @@ public class AdminUserServiceTest {
 		AdminUserListResponse result = service.updateUserRole(USER_ID, UserRole.ROLE_ADMIN);
 
 		assertThat(result).isNotNull();
-		assertThat(result.getId()).isEqualTo(USER_ID);
+		assertThat(result.id()).isEqualTo(USER_ID);
 		assertThat(user.getUserRole()).isEqualTo(UserRole.ROLE_ADMIN);
 		verify(userRepository).save(user);
 	}
@@ -102,14 +102,14 @@ public class AdminUserServiceTest {
 		when(userRepository.countByUserRoleAndEnabledTrue(UserRole.ROLE_ADMIN)).thenReturn(3L);
 		when(userRepository.save(adminUser)).thenReturn(adminUser);
 
-		AdminUserListResponse adminResponse = new AdminUserListResponse();
-		adminResponse.setId(ADMIN_ID);
+		AdminUserListResponse adminResponse = new AdminUserListResponse(ADMIN_ID, ADMIN_EMAIL, "Admin", "User",
+				UserRole.ROLE_ADMIN, true, VerificationStatus.VERIFIED, null, 0L, null);
 		when(userMapper.toAdminUserListResponse(adminUser)).thenReturn(adminResponse);
 
 		AdminUserListResponse result = service.updateUserRole(ADMIN_ID, UserRole.ROLE_USER);
 
 		assertThat(result).isNotNull();
-		assertThat(result.getId()).isEqualTo(ADMIN_ID);
+		assertThat(result.id()).isEqualTo(ADMIN_ID);
 		assertThat(adminUser.getUserRole()).isEqualTo(UserRole.ROLE_USER);
 		verify(userRepository).save(adminUser);
 	}
@@ -158,7 +158,7 @@ public class AdminUserServiceTest {
 		AdminUserListResponse result = service.updateUserStatus(USER_ID, false);
 
 		assertThat(result).isNotNull();
-		assertThat(result.getId()).isEqualTo(USER_ID);
+		assertThat(result.id()).isEqualTo(USER_ID);
 		assertThat(user.isEnabled()).isFalse();
 		verify(userRepository).save(user);
 	}
@@ -176,7 +176,7 @@ public class AdminUserServiceTest {
 		AdminUserListResponse result = service.updateUserStatus(USER_ID, true);
 
 		assertThat(result).isNotNull();
-		assertThat(result.getId()).isEqualTo(USER_ID);
+		assertThat(result.id()).isEqualTo(USER_ID);
 		assertThat(user.isEnabled()).isTrue();
 		verify(userRepository).save(user);
 	}
@@ -201,8 +201,7 @@ public class AdminUserServiceTest {
 
 	@Test
 	void updateBirthDateVerification_ToVerified_Success() {
-		VerificationBirthDateRequest request = new VerificationBirthDateRequest();
-		request.setVerificationStatus(VerificationStatus.VERIFIED);
+		VerificationBirthDateRequest request = new VerificationBirthDateRequest(VerificationStatus.VERIFIED);
 
 		when(userRepository.findWithBonusCardById(USER_ID)).thenReturn(Optional.of(user));
 		when(userRepository.save(user)).thenReturn(user);
@@ -211,7 +210,7 @@ public class AdminUserServiceTest {
 		AdminUserListResponse result = service.updateBirthDateVerification(USER_ID, request);
 
 		assertThat(result).isNotNull();
-		assertThat(result.getId()).isEqualTo(USER_ID);
+		assertThat(result.id()).isEqualTo(USER_ID);
 		assertThat(user.getVerificationStatus()).isEqualTo(VerificationStatus.VERIFIED);
 		assertThat(user.getVerifiedAt()).isNotNull();
 		verify(userRepository).save(user);
@@ -223,8 +222,7 @@ public class AdminUserServiceTest {
 		user.setVerificationStatus(VerificationStatus.VERIFIED);
 		user.setVerifiedAt(verifiedTime);
 
-		VerificationBirthDateRequest request = new VerificationBirthDateRequest();
-		request.setVerificationStatus(VerificationStatus.NOT_VERIFIED);
+		VerificationBirthDateRequest request = new VerificationBirthDateRequest(VerificationStatus.NOT_VERIFIED);
 
 		when(userRepository.findWithBonusCardById(USER_ID)).thenReturn(Optional.of(user));
 		when(userRepository.save(user)).thenReturn(user);
@@ -233,7 +231,7 @@ public class AdminUserServiceTest {
 		AdminUserListResponse result = service.updateBirthDateVerification(USER_ID, request);
 
 		assertThat(result).isNotNull();
-		assertThat(result.getId()).isEqualTo(USER_ID);
+		assertThat(result.id()).isEqualTo(USER_ID);
 		assertThat(user.getVerificationStatus()).isEqualTo(VerificationStatus.NOT_VERIFIED);
 		assertThat(user.getVerifiedAt()).isNull();
 		verify(userRepository).save(user);
@@ -241,8 +239,7 @@ public class AdminUserServiceTest {
 
 	@Test
 	void updateBirthDateVerification_UserNotFound_ThrowsException() {
-		VerificationBirthDateRequest request = new VerificationBirthDateRequest();
-		request.setVerificationStatus(VerificationStatus.VERIFIED);
+		VerificationBirthDateRequest request = new VerificationBirthDateRequest(VerificationStatus.VERIFIED);
 
 		when(userRepository.findWithBonusCardById(999L)).thenReturn(Optional.empty());
 
@@ -253,11 +250,8 @@ public class AdminUserServiceTest {
 	@Test
 	void getUsersForAdmin_ReturnsPage() {
 		Pageable pageable = PageRequest.of(0, 10);
-		UserFilterRequest filter = new UserFilterRequest();
-		filter.setSearch("test");
-		filter.setRole(UserRole.ROLE_USER);
-		filter.setVerificationStatus(VerificationStatus.NOT_VERIFIED);
-		filter.setEnabled(true);
+		UserFilterRequest filter = new UserFilterRequest("test", UserRole.ROLE_USER, VerificationStatus.NOT_VERIFIED,
+				true);
 
 		AdminUserProjection projection = createAdminUserProjection();
 		Page<AdminUserProjection> projectionPage = new PageImpl<>(List.of(projection), pageable, 1);
@@ -276,7 +270,7 @@ public class AdminUserServiceTest {
 	@Test
 	void getUsersForAdmin_WithNullFilters_ReturnsPage() {
 		Pageable pageable = PageRequest.of(0, 10);
-		UserFilterRequest filter = new UserFilterRequest();
+		UserFilterRequest filter = new UserFilterRequest(null, null, null, null);
 
 		AdminUserProjection projection = createAdminUserProjection();
 		Page<AdminUserProjection> projectionPage = new PageImpl<>(List.of(projection), pageable, 1);
@@ -294,7 +288,7 @@ public class AdminUserServiceTest {
 	@Test
 	void getUsersForAdmin_EmptyResult_ReturnsEmptyPage() {
 		Pageable pageable = PageRequest.of(0, 10);
-		UserFilterRequest filter = new UserFilterRequest();
+		UserFilterRequest filter = new UserFilterRequest(null, null, null, null);
 
 		Page<AdminUserProjection> emptyPage = new PageImpl<>(List.of(), pageable, 0);
 

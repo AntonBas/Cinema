@@ -38,20 +38,16 @@ public class RefundControllerTest {
 	}
 
 	private RefundResponse createRefundResponse(Long id) {
-		return RefundResponse.builder().id(id).refundNumber("RF-2024-0001").status("PROCESSING")
-				.totalAmount(new BigDecimal("200.00")).totalBonusPointsToDeduct(90).reason("Change of plans")
-				.processedBy("AUTO_SYSTEM").processedAt(LocalDateTime.now())
-				.createdAt(LocalDateTime.now().minusMinutes(5)).paymentId(456L).paymentMethod("CARD")
-				.message("Refund processed successfully").estimatedRefundTime("3-5 business days").build();
+		return new RefundResponse(id, "RF-2024-0001", "PROCESSING", new BigDecimal("200.00"), 90, "Change of plans",
+				"AUTO_SYSTEM", LocalDateTime.now(), LocalDateTime.now().minusMinutes(5), 456L, "CARD", null,
+				"Refund processed successfully", "3-5 business days");
 	}
 
 	@Test
 	void refundTicket_ShouldProcessSuccessfully() {
 		User user = createUser(1L, "user@example.com");
 		CustomUserDetails userDetails = new CustomUserDetails(user);
-		RefundRequest request = new RefundRequest();
-		request.setTicketId(100L);
-		request.setReason("Change of plans");
+		RefundRequest request = new RefundRequest(100L, "Change of plans");
 
 		RefundResponse refundResponse = createRefundResponse(1L);
 
@@ -61,7 +57,7 @@ public class RefundControllerTest {
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
 		assertNotNull(response.getBody());
-		assertEquals(1L, response.getBody().getId());
-		assertEquals("RF-2024-0001", response.getBody().getRefundNumber());
+		assertEquals(1L, response.getBody().id());
+		assertEquals("RF-2024-0001", response.getBody().refundNumber());
 	}
 }

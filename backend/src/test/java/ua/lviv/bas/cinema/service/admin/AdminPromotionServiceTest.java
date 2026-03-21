@@ -52,14 +52,11 @@ public class AdminPromotionServiceTest {
 
 	@Test
 	void createPromotion() {
-		PromotionCreateRequest request = new PromotionCreateRequest();
-		request.setTitle("Test Promotion");
-		request.setStartDate(LocalDate.now());
-		request.setEndDate(LocalDate.now().plusDays(7));
+		PromotionCreateRequest request = new PromotionCreateRequest("Test Promotion", null, 100, LocalDate.now(),
+				LocalDate.now().plusDays(7));
 
 		Promotion promotion = Promotion.builder().id(1L).title("Test Promotion").build();
-		PromotionResponse response = new PromotionResponse();
-		response.setId(1L);
+		PromotionResponse response = new PromotionResponse(1L, "Test Promotion", null, 100, null, null);
 
 		when(promotionRepository.existsByTitle("Test Promotion")).thenReturn(false);
 		when(promotionMapper.toPromotion(request)).thenReturn(promotion);
@@ -69,14 +66,13 @@ public class AdminPromotionServiceTest {
 		PromotionResponse result = service.createPromotion(request);
 
 		assertThat(result).isNotNull();
-		assertThat(result.getId()).isEqualTo(1L);
+		assertThat(result.id()).isEqualTo(1L);
 		verify(promotionRepository).save(promotion);
 	}
 
 	@Test
 	void createPromotionWithExistingTitle() {
-		PromotionCreateRequest request = new PromotionCreateRequest();
-		request.setTitle("Existing Promotion");
+		PromotionCreateRequest request = new PromotionCreateRequest("Existing Promotion", null, null, null, null);
 
 		when(promotionRepository.existsByTitle("Existing Promotion")).thenReturn(true);
 
@@ -86,10 +82,8 @@ public class AdminPromotionServiceTest {
 
 	@Test
 	void createPromotionWithInvalidDates() {
-		PromotionCreateRequest request = new PromotionCreateRequest();
-		request.setTitle("Test");
-		request.setStartDate(LocalDate.now().plusDays(7));
-		request.setEndDate(LocalDate.now());
+		PromotionCreateRequest request = new PromotionCreateRequest("Test", null, 100, LocalDate.now().plusDays(7),
+				LocalDate.now());
 
 		when(promotionRepository.existsByTitle("Test")).thenReturn(false);
 
@@ -100,10 +94,8 @@ public class AdminPromotionServiceTest {
 	@Test
 	void updatePromotion() {
 		Promotion promotion = Promotion.builder().id(1L).build();
-		PromotionUpdateRequest request = new PromotionUpdateRequest();
-		request.setTitle("Updated");
-		PromotionResponse response = new PromotionResponse();
-		response.setId(1L);
+		PromotionUpdateRequest request = new PromotionUpdateRequest("Updated", null, 100, null, null);
+		PromotionResponse response = new PromotionResponse(1L, "Updated", null, 100, null, null);
 
 		when(promotionRepository.findById(1L)).thenReturn(Optional.of(promotion));
 		when(promotionRepository.save(promotion)).thenReturn(promotion);
@@ -112,14 +104,14 @@ public class AdminPromotionServiceTest {
 		PromotionResponse result = service.updatePromotion(1L, request);
 
 		assertThat(result).isNotNull();
-		assertThat(result.getId()).isEqualTo(1L);
+		assertThat(result.id()).isEqualTo(1L);
 		verify(promotionMapper).updatePromotionFromRequest(promotion, request);
 		verify(promotionRepository).save(promotion);
 	}
 
 	@Test
 	void updatePromotionNotFound() {
-		PromotionUpdateRequest request = new PromotionUpdateRequest();
+		PromotionUpdateRequest request = new PromotionUpdateRequest(null, null, null, null, null);
 
 		when(promotionRepository.findById(1L)).thenReturn(Optional.empty());
 
@@ -160,8 +152,7 @@ public class AdminPromotionServiceTest {
 	@Test
 	void getPromotionById() {
 		Promotion promotion = Promotion.builder().id(1L).title("Test").build();
-		PromotionResponse response = new PromotionResponse();
-		response.setId(1L);
+		PromotionResponse response = new PromotionResponse(1L, "Test", null, 100, null, null);
 
 		when(promotionRepository.findById(1L)).thenReturn(Optional.of(promotion));
 		when(promotionMapper.toPromotionResponse(promotion)).thenReturn(response);
@@ -169,7 +160,7 @@ public class AdminPromotionServiceTest {
 		PromotionResponse result = service.getPromotionById(1L);
 
 		assertThat(result).isNotNull();
-		assertThat(result.getId()).isEqualTo(1L);
+		assertThat(result.id()).isEqualTo(1L);
 	}
 
 	@Test
@@ -210,8 +201,7 @@ public class AdminPromotionServiceTest {
 		};
 
 		Page<PromotionAdminProjection> page = new PageImpl<>(Arrays.asList(projection));
-		PromotionAdminResponse response = new PromotionAdminResponse();
-		response.setId(1L);
+		PromotionAdminResponse response = new PromotionAdminResponse(1L, "Test", 100, null, null);
 
 		when(promotionRepository.findAllAdminList(pageable)).thenReturn(page);
 		when(promotionMapper.toPromotionAdminResponse(projection)).thenReturn(response);
@@ -219,8 +209,8 @@ public class AdminPromotionServiceTest {
 		PageResponse<PromotionAdminResponse> result = service.getAllPromotions(pageable);
 
 		assertThat(result).isNotNull();
-		assertThat(result.getContent()).hasSize(1);
-		assertThat(result.getContent().get(0).getId()).isEqualTo(1L);
+		assertThat(result.content()).hasSize(1);
+		assertThat(result.content().get(0).id()).isEqualTo(1L);
 	}
 
 	@Test
@@ -233,7 +223,7 @@ public class AdminPromotionServiceTest {
 		PageResponse<PromotionAdminResponse> result = service.getAllPromotions(pageable);
 
 		assertThat(result).isNotNull();
-		assertThat(result.getContent()).isEmpty();
+		assertThat(result.content()).isEmpty();
 	}
 
 	@Test
@@ -257,10 +247,8 @@ public class AdminPromotionServiceTest {
 
 	@Test
 	void validateDatesWithInvalidDates() {
-		PromotionCreateRequest request = new PromotionCreateRequest();
-		request.setTitle("Test");
-		request.setStartDate(LocalDate.now().plusDays(7));
-		request.setEndDate(LocalDate.now());
+		PromotionCreateRequest request = new PromotionCreateRequest("Test", null, 100, LocalDate.now().plusDays(7),
+				LocalDate.now());
 
 		when(promotionRepository.existsByTitle("Test")).thenReturn(false);
 

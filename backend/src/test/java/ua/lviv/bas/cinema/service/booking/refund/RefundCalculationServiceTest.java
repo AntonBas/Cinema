@@ -198,20 +198,20 @@ public class RefundCalculationServiceTest {
 		RefundPreviewResponse response = refundCalculationService.createPreviewResponse(ticket, refundRules);
 
 		assertThat(response).isNotNull();
-		assertThat(response.getTicketId()).isEqualTo(1L);
-		assertThat(response.getTicketCode()).isEqualTo("TKT-123456");
-		assertThat(response.getMovieTitle()).isEqualTo("Test Movie");
-		assertThat(response.getHallName()).isEqualTo("Hall 1");
-		assertThat(response.getSeatInfo()).isEqualTo("Row 5, Seat 10");
-		assertThat(response.getOriginalPrice()).isEqualByComparingTo("150.00");
-		assertThat(response.getFinalPrice()).isEqualByComparingTo("100.00");
-		assertThat(response.getRefundPercentage()).isEqualByComparingTo("70.00");
-		assertThat(response.getRefundAmount()).isEqualByComparingTo("70.00");
-		assertThat(response.getIsRefundable()).isTrue();
-		assertThat(response.getBonusPointsUsed()).isEqualTo(50);
-		assertThat(response.getBonusPointsToRefund()).isEqualTo(35);
-		assertThat(response.getPolicyName()).isEqualTo("Partial Refund");
-		assertThat(response.getPolicyDescription()).isEqualTo("70% refund if cancelled 3+ hours before");
-		assertThat(response.getTicketType()).isEqualTo("Standard");
+		assertThat(response.ticketId()).isEqualTo(1L);
+		assertThat(response.ticketCode()).isEqualTo("TKT-123456");
+		assertThat(response.movieTitle()).isEqualTo("Test Movie");
+		assertThat(response.hallName()).isEqualTo("Hall 1");
+		assertThat(response.seatInfo()).isEqualTo("Row 5, Seat 10");
+		assertThat(response.originalPrice()).isEqualByComparingTo("150.00");
+		assertThat(response.finalPrice()).isEqualByComparingTo("100.00");
+		assertThat(response.refundPercentage()).isEqualByComparingTo("70.00");
+		assertThat(response.refundAmount()).isEqualByComparingTo("70.00");
+		assertThat(response.isRefundable()).isTrue();
+		assertThat(response.bonusPointsUsed()).isEqualTo(50);
+		assertThat(response.bonusPointsToRefund()).isEqualTo(35);
+		assertThat(response.policyName()).isEqualTo("Partial Refund");
+		assertThat(response.policyDescription()).isEqualTo("70% refund if cancelled 3+ hours before");
+		assertThat(response.ticketType()).isEqualTo("Standard");
 	}
 }

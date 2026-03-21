@@ -135,8 +135,8 @@ public class TicketTypeServiceTest {
 	@Test
 	void updateTicketType_Success() {
 		TicketType ticketType = createTicketType();
-		TicketTypeUpdateRequest request = TicketTypeUpdateRequest.builder().displayName("Updated Name").minAge(21)
-				.maxAge(70).build();
+		TicketTypeUpdateRequest request = new TicketTypeUpdateRequest("Updated Name", null, 21, 70, null, null, null,
+				null);
 		TicketTypeResponse response = createTicketTypeResponse();
 
 		when(ticketTypeRepository.findById(TICKET_TYPE_ID)).thenReturn(Optional.of(ticketType));
@@ -153,7 +153,8 @@ public class TicketTypeServiceTest {
 	@Test
 	void updateTicketType_DuplicateDisplayName_ThrowsException() {
 		TicketType ticketType = createTicketType();
-		TicketTypeUpdateRequest request = TicketTypeUpdateRequest.builder().displayName("Duplicate Name").build();
+		TicketTypeUpdateRequest request = new TicketTypeUpdateRequest("Duplicate Name", null, null, null, null, null,
+				null, null);
 
 		when(ticketTypeRepository.findById(TICKET_TYPE_ID)).thenReturn(Optional.of(ticketType));
 		when(ticketTypeRepository.existsByDisplayNameAndIdNot("Duplicate Name", TICKET_TYPE_ID)).thenReturn(true);
@@ -237,8 +238,8 @@ public class TicketTypeServiceTest {
 	}
 
 	private TicketTypeCreateRequest createTicketTypeRequest() {
-		return TicketTypeCreateRequest.builder().displayName(DISPLAY_NAME).priceMultiplier(PRICE_MULTIPLIER).minAge(18)
-				.maxAge(65).category(TicketTypeCategory.STANDARD).build();
+		return new TicketTypeCreateRequest(DISPLAY_NAME, PRICE_MULTIPLIER, 18, 65, false, null, true,
+				TicketTypeCategory.STANDARD);
 	}
 
 	private TicketType createTicketType() {
@@ -247,13 +248,12 @@ public class TicketTypeServiceTest {
 	}
 
 	private TicketTypeResponse createTicketTypeResponse() {
-		return TicketTypeResponse.builder().id(TICKET_TYPE_ID).displayName(DISPLAY_NAME)
-				.priceMultiplier(PRICE_MULTIPLIER).active(true).build();
+		return new TicketTypeResponse(TICKET_TYPE_ID, DISPLAY_NAME, PRICE_MULTIPLIER, 18, 65, false, null, true,
+				TicketTypeCategory.STANDARD);
 	}
 
 	private TicketTypeUserResponse createTicketTypeUserResponse() {
-		return TicketTypeUserResponse.builder().id(TICKET_TYPE_ID).displayName(DISPLAY_NAME)
-				.priceMultiplier(PRICE_MULTIPLIER).requiresDocument(false).build();
+		return new TicketTypeUserResponse(TICKET_TYPE_ID, DISPLAY_NAME, PRICE_MULTIPLIER, false, null);
 	}
 
 	private TicketTypeUserProjection createUserProjection() {

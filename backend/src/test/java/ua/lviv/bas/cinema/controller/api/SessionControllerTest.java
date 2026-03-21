@@ -33,10 +33,9 @@ public class SessionControllerTest {
 	private SessionController sessionController;
 
 	private SessionScheduleResponse createSessionScheduleDto(Long id) {
-		return SessionScheduleResponse.builder().id(id).startTime(LocalDateTime.of(2024, 1, 15, 18, 0))
-				.endTime(LocalDateTime.of(2024, 1, 15, 20, 0)).basePrice(new BigDecimal("250.00")).movieId(1L)
-				.movieTitle("Test Movie").moviePosterFileName("poster.jpg").movieAgeRating("PG-13").movieDuration(120)
-				.hallId(1L).hallName("Hall 1").availableSeats(80).hallCapacity(100).build();
+		return new SessionScheduleResponse(id, LocalDateTime.of(2024, 1, 15, 18, 0),
+				LocalDateTime.of(2024, 1, 15, 20, 0), new BigDecimal("250.00"), 80, 1L, "Test Movie", "poster.jpg",
+				"PG-13", 120, 1L, "Hall 1", 100);
 	}
 
 	@Test
@@ -55,7 +54,7 @@ public class SessionControllerTest {
 		List<SessionScheduleResponse> body = response.getBody();
 		assertNotNull(body);
 		assertEquals(1, body.size());
-		assertEquals("Test Movie", body.get(0).getMovieTitle());
+		assertEquals("Test Movie", body.get(0).movieTitle());
 
 		verify(sessionService).getScheduleSessions(searchTerm, date);
 	}
@@ -76,7 +75,7 @@ public class SessionControllerTest {
 		List<SessionScheduleResponse> body = response.getBody();
 		assertNotNull(body);
 		assertEquals(1, body.size());
-		assertEquals("Test Movie", body.get(0).getMovieTitle());
+		assertEquals("Test Movie", body.get(0).movieTitle());
 
 		verify(sessionService).getScheduleSessions(searchTerm, date);
 	}
@@ -97,7 +96,7 @@ public class SessionControllerTest {
 		List<SessionScheduleResponse> body = response.getBody();
 		assertNotNull(body);
 		assertEquals(1, body.size());
-		assertEquals(LocalDateTime.of(2024, 1, 15, 18, 0), body.get(0).getStartTime());
+		assertEquals(LocalDateTime.of(2024, 1, 15, 18, 0), body.get(0).startTime());
 
 		verify(sessionService).getScheduleSessions(searchTerm, date);
 	}
@@ -118,8 +117,8 @@ public class SessionControllerTest {
 		List<SessionScheduleResponse> body = response.getBody();
 		assertNotNull(body);
 		assertEquals(1, body.size());
-		assertEquals("Test Movie", body.get(0).getMovieTitle());
-		assertEquals(LocalDateTime.of(2024, 1, 15, 18, 0), body.get(0).getStartTime());
+		assertEquals("Test Movie", body.get(0).movieTitle());
+		assertEquals(LocalDateTime.of(2024, 1, 15, 18, 0), body.get(0).startTime());
 
 		verify(sessionService).getScheduleSessions(searchTerm, date);
 	}
@@ -156,11 +155,11 @@ public class SessionControllerTest {
 
 		SessionScheduleResponse body = response.getBody();
 		assertNotNull(body);
-		assertEquals(1L, body.getId());
-		assertEquals("Test Movie", body.getMovieTitle());
-		assertEquals("Hall 1", body.getHallName());
-		assertEquals(80, body.getAvailableSeats());
-		assertEquals(100, body.getHallCapacity());
+		assertEquals(1L, body.id());
+		assertEquals("Test Movie", body.movieTitle());
+		assertEquals("Hall 1", body.hallName());
+		assertEquals(80, body.availableSeats());
+		assertEquals(100, body.hallCapacity());
 
 		verify(sessionService).getSessionForPublic(1L);
 	}

@@ -9,6 +9,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
+import java.util.Arrays;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -42,29 +43,19 @@ public class AdminPromotionControllerTest {
 	private final Pageable pageable = PageRequest.of(0, 10);
 
 	private PromotionResponse createPromotionResponse() {
-		PromotionResponse response = new PromotionResponse();
-		response.setId(PROMOTION_ID);
-		response.setTitle(TITLE);
-		response.setBonusPoints(BONUS_POINTS);
-		response.setStartDate(LocalDate.now().plusDays(1));
-		response.setEndDate(LocalDate.now().plusDays(10));
-		return response;
+		return new PromotionResponse(PROMOTION_ID, TITLE, null, BONUS_POINTS, LocalDate.now().plusDays(1),
+				LocalDate.now().plusDays(10));
 	}
 
 	private PromotionAdminResponse createAdminResponse() {
-		PromotionAdminResponse response = new PromotionAdminResponse();
-		response.setId(PROMOTION_ID);
-		response.setTitle(TITLE);
-		response.setBonusPoints(BONUS_POINTS);
-		response.setStartDate(LocalDate.now().plusDays(1));
-		response.setEndDate(LocalDate.now().plusDays(10));
-		return response;
+		return new PromotionAdminResponse(PROMOTION_ID, TITLE, BONUS_POINTS, LocalDate.now().plusDays(1),
+				LocalDate.now().plusDays(10));
 	}
 
 	@Test
 	void createPromotion_ReturnsCreated() {
-		PromotionCreateRequest request = new PromotionCreateRequest();
-		request.setTitle(TITLE);
+		PromotionCreateRequest request = new PromotionCreateRequest(TITLE, null, BONUS_POINTS,
+				LocalDate.now().plusDays(1), LocalDate.now().plusDays(10));
 		PromotionResponse response = createPromotionResponse();
 
 		when(promotionService.createPromotion(any(PromotionCreateRequest.class))).thenReturn(response);
@@ -73,7 +64,7 @@ public class AdminPromotionControllerTest {
 
 		assertThat(result.getStatusCode()).isEqualTo(HttpStatus.CREATED);
 		assertThat(result.getBody()).isNotNull();
-		assertThat(result.getBody().getId()).isEqualTo(PROMOTION_ID);
+		assertThat(result.getBody().id()).isEqualTo(PROMOTION_ID);
 		verify(promotionService).createPromotion(request);
 	}
 
@@ -87,7 +78,7 @@ public class AdminPromotionControllerTest {
 
 		assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
 		assertThat(result.getBody()).isNotNull();
-		assertThat(result.getBody().getId()).isEqualTo(PROMOTION_ID);
+		assertThat(result.getBody().id()).isEqualTo(PROMOTION_ID);
 		verify(promotionService).getPromotionById(PROMOTION_ID);
 	}
 
@@ -101,8 +92,8 @@ public class AdminPromotionControllerTest {
 	@Test
 	void getAllPromotions_ReturnsOk() {
 		PromotionAdminResponse adminResponse = createAdminResponse();
-		PageResponse<PromotionAdminResponse> pageResponse = new PageResponse<>();
-		pageResponse.setContent(java.util.Arrays.asList(adminResponse));
+		PageResponse<PromotionAdminResponse> pageResponse = new PageResponse<>(Arrays.asList(adminResponse), 0, 10, 1,
+				1, true, true, false, false, false, 1, null);
 
 		when(promotionService.getAllPromotions(pageable)).thenReturn(pageResponse);
 
@@ -110,14 +101,15 @@ public class AdminPromotionControllerTest {
 
 		assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
 		assertThat(result.getBody()).isNotNull();
-		assertThat(result.getBody().getContent()).hasSize(1);
-		assertThat(result.getBody().getContent().get(0).getId()).isEqualTo(PROMOTION_ID);
+		assertThat(result.getBody().content()).hasSize(1);
+		assertThat(result.getBody().content().get(0).id()).isEqualTo(PROMOTION_ID);
 		verify(promotionService).getAllPromotions(pageable);
 	}
 
 	@Test
 	void updatePromotion_ReturnsOk() {
-		PromotionUpdateRequest request = new PromotionUpdateRequest();
+		PromotionUpdateRequest request = new PromotionUpdateRequest(TITLE, null, BONUS_POINTS,
+				LocalDate.now().plusDays(1), LocalDate.now().plusDays(10));
 		PromotionResponse response = createPromotionResponse();
 
 		when(promotionService.updatePromotion(eq(PROMOTION_ID), any(PromotionUpdateRequest.class)))
@@ -127,7 +119,7 @@ public class AdminPromotionControllerTest {
 
 		assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
 		assertThat(result.getBody()).isNotNull();
-		assertThat(result.getBody().getId()).isEqualTo(PROMOTION_ID);
+		assertThat(result.getBody().id()).isEqualTo(PROMOTION_ID);
 		verify(promotionService).updatePromotion(PROMOTION_ID, request);
 	}
 

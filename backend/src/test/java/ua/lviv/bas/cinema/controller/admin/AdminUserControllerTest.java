@@ -42,13 +42,13 @@ public class AdminUserControllerTest {
 
 	private AdminUserListResponse createAdminUserListResponse(Long id, String email, String firstName, String lastName,
 			UserRole role, boolean enabled) {
-		return AdminUserListResponse.builder().id(id).email(email).firstName(firstName).lastName(lastName)
-				.userRole(role).enabled(enabled).verificationStatus(VerificationStatus.NOT_VERIFIED).build();
+		return new AdminUserListResponse(id, email, firstName, lastName, role, enabled, VerificationStatus.NOT_VERIFIED,
+				null, 0L, null);
 	}
 
 	@Test
 	void getUsers_ShouldReturnPageOfUsers() {
-		UserFilterRequest filter = new UserFilterRequest();
+		UserFilterRequest filter = new UserFilterRequest(null, null, null, null);
 		Pageable pageable = PageRequest.of(0, 20);
 
 		AdminUserListResponse user1 = createAdminUserListResponse(1L, "user1@example.com", "John", "Doe",
@@ -66,23 +66,19 @@ public class AdminUserControllerTest {
 
 		PageResponse<AdminUserListResponse> body = response.getBody();
 		assertNotNull(body);
-		assertEquals(2, body.getContent().size());
-		assertEquals(0, body.getNumber());
-		assertEquals(20, body.getSize());
-		assertEquals(2, body.getTotalElements());
-		assertEquals(1, body.getTotalPages());
+		assertEquals(2, body.content().size());
+		assertEquals(0, body.number());
+		assertEquals(20, body.size());
+		assertEquals(2, body.totalElements());
+		assertEquals(1, body.totalPages());
 
 		verify(adminUserService).getUsersForAdmin(any(UserFilterRequest.class), any(Pageable.class));
 	}
 
 	@Test
 	void getUsers_WithFilter_ShouldReturnFilteredUsers() {
-		UserFilterRequest filter = new UserFilterRequest();
-		filter.setSearch("john");
-		filter.setRole(UserRole.ROLE_USER);
-		filter.setVerificationStatus(VerificationStatus.NOT_VERIFIED);
-		filter.setEnabled(true);
-
+		UserFilterRequest filter = new UserFilterRequest("john", UserRole.ROLE_USER, VerificationStatus.NOT_VERIFIED,
+				true);
 		Pageable pageable = PageRequest.of(0, 20);
 
 		AdminUserListResponse user = createAdminUserListResponse(1L, "john@example.com", "John", "Doe",
@@ -97,15 +93,15 @@ public class AdminUserControllerTest {
 
 		PageResponse<AdminUserListResponse> body = response.getBody();
 		assertNotNull(body);
-		assertEquals(1, body.getContent().size());
-		assertEquals("john@example.com", body.getContent().get(0).getEmail());
+		assertEquals(1, body.content().size());
+		assertEquals("john@example.com", body.content().get(0).email());
 
 		verify(adminUserService).getUsersForAdmin(any(UserFilterRequest.class), any(Pageable.class));
 	}
 
 	@Test
 	void getUsers_WhenNoResults_ShouldReturnEmptyPage() {
-		UserFilterRequest filter = new UserFilterRequest();
+		UserFilterRequest filter = new UserFilterRequest(null, null, null, null);
 		Pageable pageable = PageRequest.of(0, 20);
 		Page<AdminUserListResponse> emptyPage = Page.empty(pageable);
 
@@ -118,16 +114,15 @@ public class AdminUserControllerTest {
 
 		PageResponse<AdminUserListResponse> body = response.getBody();
 		assertNotNull(body);
-		assertEquals(0, body.getContent().size());
-		assertEquals(0, body.getTotalElements());
+		assertEquals(0, body.content().size());
+		assertEquals(0, body.totalElements());
 
 		verify(adminUserService).getUsersForAdmin(any(UserFilterRequest.class), any(Pageable.class));
 	}
 
 	@Test
 	void updateUserRole_ShouldUpdateRoleSuccessfully() {
-		UserRoleUpdateRequest request = new UserRoleUpdateRequest();
-		request.setUserRole(UserRole.ROLE_ADMIN);
+		UserRoleUpdateRequest request = new UserRoleUpdateRequest(UserRole.ROLE_ADMIN);
 
 		AdminUserListResponse updatedUser = createAdminUserListResponse(1L, "user@example.com", "John", "Doe",
 				UserRole.ROLE_ADMIN, true);
@@ -140,16 +135,15 @@ public class AdminUserControllerTest {
 
 		AdminUserListResponse body = response.getBody();
 		assertNotNull(body);
-		assertEquals(UserRole.ROLE_ADMIN, body.getUserRole());
-		assertEquals(1L, body.getId());
+		assertEquals(UserRole.ROLE_ADMIN, body.userRole());
+		assertEquals(1L, body.id());
 
 		verify(adminUserService).updateUserRole(1L, UserRole.ROLE_ADMIN);
 	}
 
 	@Test
 	void updateUserRole_WithContentManagerRole_ShouldUpdateSuccessfully() {
-		UserRoleUpdateRequest request = new UserRoleUpdateRequest();
-		request.setUserRole(UserRole.ROLE_CONTENT_MANAGER);
+		UserRoleUpdateRequest request = new UserRoleUpdateRequest(UserRole.ROLE_CONTENT_MANAGER);
 
 		AdminUserListResponse updatedUser = createAdminUserListResponse(1L, "user@example.com", "John", "Doe",
 				UserRole.ROLE_CONTENT_MANAGER, true);
@@ -162,15 +156,14 @@ public class AdminUserControllerTest {
 
 		AdminUserListResponse body = response.getBody();
 		assertNotNull(body);
-		assertEquals(UserRole.ROLE_CONTENT_MANAGER, body.getUserRole());
+		assertEquals(UserRole.ROLE_CONTENT_MANAGER, body.userRole());
 
 		verify(adminUserService).updateUserRole(1L, UserRole.ROLE_CONTENT_MANAGER);
 	}
 
 	@Test
 	void updateUserRole_WithUserRole_ShouldUpdateSuccessfully() {
-		UserRoleUpdateRequest request = new UserRoleUpdateRequest();
-		request.setUserRole(UserRole.ROLE_USER);
+		UserRoleUpdateRequest request = new UserRoleUpdateRequest(UserRole.ROLE_USER);
 
 		AdminUserListResponse updatedUser = createAdminUserListResponse(1L, "user@example.com", "John", "Doe",
 				UserRole.ROLE_USER, true);
@@ -183,15 +176,14 @@ public class AdminUserControllerTest {
 
 		AdminUserListResponse body = response.getBody();
 		assertNotNull(body);
-		assertEquals(UserRole.ROLE_USER, body.getUserRole());
+		assertEquals(UserRole.ROLE_USER, body.userRole());
 
 		verify(adminUserService).updateUserRole(1L, UserRole.ROLE_USER);
 	}
 
 	@Test
 	void updateUserStatus_ShouldUpdateStatusSuccessfully() {
-		UserStatusUpdateRequest request = new UserStatusUpdateRequest();
-		request.setEnabled(false);
+		UserStatusUpdateRequest request = new UserStatusUpdateRequest(false);
 
 		AdminUserListResponse updatedUser = createAdminUserListResponse(1L, "user@example.com", "John", "Doe",
 				UserRole.ROLE_USER, false);
@@ -204,16 +196,15 @@ public class AdminUserControllerTest {
 
 		AdminUserListResponse body = response.getBody();
 		assertNotNull(body);
-		assertEquals(false, body.isEnabled());
-		assertEquals(1L, body.getId());
+		assertEquals(false, body.enabled());
+		assertEquals(1L, body.id());
 
 		verify(adminUserService).updateUserStatus(1L, false);
 	}
 
 	@Test
 	void updateUserStatus_WithEnabledTrue_ShouldUpdateSuccessfully() {
-		UserStatusUpdateRequest request = new UserStatusUpdateRequest();
-		request.setEnabled(true);
+		UserStatusUpdateRequest request = new UserStatusUpdateRequest(true);
 
 		AdminUserListResponse updatedUser = createAdminUserListResponse(1L, "user@example.com", "John", "Doe",
 				UserRole.ROLE_USER, true);
@@ -226,19 +217,17 @@ public class AdminUserControllerTest {
 
 		AdminUserListResponse body = response.getBody();
 		assertNotNull(body);
-		assertEquals(true, body.isEnabled());
+		assertEquals(true, body.enabled());
 
 		verify(adminUserService).updateUserStatus(1L, true);
 	}
 
 	@Test
 	void updateBirthDateVerification_ShouldUpdateToVerifiedSuccessfully() {
-		VerificationBirthDateRequest request = new VerificationBirthDateRequest();
-		request.setVerificationStatus(VerificationStatus.VERIFIED);
+		VerificationBirthDateRequest request = new VerificationBirthDateRequest(VerificationStatus.VERIFIED);
 
-		AdminUserListResponse updatedUser = AdminUserListResponse.builder().id(1L).email("user@example.com")
-				.firstName("John").lastName("Doe").userRole(UserRole.ROLE_USER).enabled(true)
-				.verificationStatus(VerificationStatus.VERIFIED).build();
+		AdminUserListResponse updatedUser = new AdminUserListResponse(1L, "user@example.com", "John", "Doe",
+				UserRole.ROLE_USER, true, VerificationStatus.VERIFIED, null, 0L, null);
 
 		when(adminUserService.updateBirthDateVerification(eq(1L), any(VerificationBirthDateRequest.class)))
 				.thenReturn(updatedUser);
@@ -249,20 +238,18 @@ public class AdminUserControllerTest {
 
 		AdminUserListResponse body = response.getBody();
 		assertNotNull(body);
-		assertEquals(1L, body.getId());
-		assertEquals(VerificationStatus.VERIFIED, body.getVerificationStatus());
+		assertEquals(1L, body.id());
+		assertEquals(VerificationStatus.VERIFIED, body.verificationStatus());
 
 		verify(adminUserService).updateBirthDateVerification(eq(1L), any(VerificationBirthDateRequest.class));
 	}
 
 	@Test
 	void updateBirthDateVerification_ShouldUpdateToNotVerifiedSuccessfully() {
-		VerificationBirthDateRequest request = new VerificationBirthDateRequest();
-		request.setVerificationStatus(VerificationStatus.NOT_VERIFIED);
+		VerificationBirthDateRequest request = new VerificationBirthDateRequest(VerificationStatus.NOT_VERIFIED);
 
-		AdminUserListResponse updatedUser = AdminUserListResponse.builder().id(1L).email("user@example.com")
-				.firstName("John").lastName("Doe").userRole(UserRole.ROLE_USER).enabled(true)
-				.verificationStatus(VerificationStatus.NOT_VERIFIED).build();
+		AdminUserListResponse updatedUser = new AdminUserListResponse(1L, "user@example.com", "John", "Doe",
+				UserRole.ROLE_USER, true, VerificationStatus.NOT_VERIFIED, null, 0L, null);
 
 		when(adminUserService.updateBirthDateVerification(eq(1L), any(VerificationBirthDateRequest.class)))
 				.thenReturn(updatedUser);
@@ -273,7 +260,7 @@ public class AdminUserControllerTest {
 
 		AdminUserListResponse body = response.getBody();
 		assertNotNull(body);
-		assertEquals(VerificationStatus.NOT_VERIFIED, body.getVerificationStatus());
+		assertEquals(VerificationStatus.NOT_VERIFIED, body.verificationStatus());
 
 		verify(adminUserService).updateBirthDateVerification(eq(1L), any(VerificationBirthDateRequest.class));
 	}

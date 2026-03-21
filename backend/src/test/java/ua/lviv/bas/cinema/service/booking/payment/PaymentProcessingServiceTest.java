@@ -121,8 +121,7 @@ public class PaymentProcessingServiceTest {
 		testPayment.setStatus(PaymentStatus.PENDING);
 		testPayment.setLiqpayOrderId("ORD_TEST123456789");
 
-		createRequest = new PaymentCreateRequest();
-		createRequest.setBookingId(BOOKING_ID);
+		createRequest = new PaymentCreateRequest(BOOKING_ID);
 	}
 
 	@Test
@@ -164,7 +163,7 @@ public class PaymentProcessingServiceTest {
 		PaymentResponse response = paymentProcessingService.getPaymentStatus(PAYMENT_ID, testUser);
 
 		assertThat(response).isNotNull();
-		assertThat(response.getId()).isEqualTo(PAYMENT_ID);
+		assertThat(response.id()).isEqualTo(PAYMENT_ID);
 	}
 
 	@Test

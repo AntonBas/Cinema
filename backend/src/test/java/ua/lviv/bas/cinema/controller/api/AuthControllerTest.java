@@ -72,14 +72,13 @@ public class AuthControllerTest {
 
 	@BeforeEach
 	void setUp() {
-		registrationRequest = UserRegistrationRequest.builder().email("anton@example.com").firstName("Anton")
-				.lastName("Bas").dateOfBirth(LocalDate.of(2001, 8, 21)).city("Lviv").phoneNumber("+380123456789")
-				.password("password123").passwordConfirm("password123").build();
+		registrationRequest = new UserRegistrationRequest("anton@example.com", "Anton", "Bas",
+				LocalDate.of(2001, 8, 21), "Lviv", "+380123456789", "password123", "password123");
 
 		loginRequest = new UserLoginRequest("anton@example.com", "password123");
 
-		userResponse = UserResponse.builder().id(1L).email("anton@example.com").firstName("Anton").lastName("Bas")
-				.userRole(UserRole.ROLE_USER).enabled(true).build();
+		userResponse = new UserResponse(1L, "anton@example.com", "Anton", "Bas", LocalDate.of(2001, 8, 21), "Lviv",
+				"+380123456789", UserRole.ROLE_USER, true, null, null);
 
 		user = new User();
 		user.setId(1L);
@@ -163,10 +162,11 @@ public class AuthControllerTest {
 
 	@Test
 	void register_ShouldReturnBadRequest_WhenInvalidEmail() throws Exception {
-		registrationRequest.setEmail("invalid-email");
+		UserRegistrationRequest invalidRequest = new UserRegistrationRequest("invalid-email", "Anton", "Bas",
+				LocalDate.of(2001, 8, 21), "Lviv", "+380123456789", "password123", "password123");
 
 		mockMvc.perform(post("/api/auth/register").contentType(MediaType.APPLICATION_JSON)
-				.content(objectMapper.writeValueAsString(registrationRequest))).andExpect(status().isBadRequest());
+				.content(objectMapper.writeValueAsString(invalidRequest))).andExpect(status().isBadRequest());
 	}
 
 	@Test

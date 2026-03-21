@@ -129,8 +129,7 @@ public class RefundServiceTest {
 		testTicket.setPayment(testPayment);
 		testTicket.setBonusPointsUsed(50);
 
-		previewRequest = new RefundPreviewRequest();
-		previewRequest.setTicketId(TICKET_ID);
+		previewRequest = new RefundPreviewRequest(TICKET_ID);
 	}
 
 	@Test
@@ -142,9 +141,9 @@ public class RefundServiceTest {
 		RefundPreviewResponse response = refundService.getRefundPreview(previewRequest, USER_ID);
 
 		assertThat(response).isNotNull();
-		assertThat(response.getTicketId()).isEqualTo(TICKET_ID);
-		assertThat(response.getIsRefundable()).isFalse();
-		assertThat(response.getNonRefundableReason()).contains("Contact support");
+		assertThat(response.ticketId()).isEqualTo(TICKET_ID);
+		assertThat(response.isRefundable()).isFalse();
+		assertThat(response.nonRefundableReason()).contains("Contact support");
 	}
 
 	@Test
@@ -156,8 +155,8 @@ public class RefundServiceTest {
 		RefundPreviewResponse response = refundService.getRefundPreview(previewRequest, USER_ID);
 
 		assertThat(response).isNotNull();
-		assertThat(response.getIsRefundable()).isFalse();
-		assertThat(response.getNonRefundableReason()).contains("Refund is not available");
+		assertThat(response.isRefundable()).isFalse();
+		assertThat(response.nonRefundableReason()).contains("Refund is not available");
 	}
 
 	@Test
@@ -180,7 +179,9 @@ public class RefundServiceTest {
 		List<Refund> refunds = List.of(testRefund);
 		when(refundRepository.findByUserIdOrderByCreatedAtDesc(USER_ID)).thenReturn(refunds);
 
-		RefundResponse refundResponse = new RefundResponse();
+		RefundResponse refundResponse = new RefundResponse(1L, "RF-2024-00001", "PROCESSED", new BigDecimal("70.00"),
+				70, "Reason", "System", LocalDateTime.now(), LocalDateTime.now(), 1L, "CARD", null, "Message",
+				"3-5 days");
 		when(refundMapper.toRefundResponse(testRefund)).thenReturn(refundResponse);
 		when(numberGenerator.generateRefundNumber(testRefund)).thenReturn("RF-2024-00001");
 

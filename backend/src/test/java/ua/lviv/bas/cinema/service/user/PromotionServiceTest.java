@@ -56,15 +56,13 @@ public class PromotionServiceTest {
 	@Test
 	void claimPromotion_Success() {
 		User user = User.builder().id(1L).email(USER_EMAIL).build();
-		UserPromotionCreateRequest request = new UserPromotionCreateRequest();
-		request.setPromotionId(PROMOTION_ID);
+		UserPromotionCreateRequest request = new UserPromotionCreateRequest(PROMOTION_ID);
 
 		Promotion promotion = Promotion.builder().id(PROMOTION_ID).title(PROMOTION_TITLE).bonusPoints(BONUS_POINTS)
 				.startDate(LocalDate.now().minusDays(1)).endDate(LocalDate.now().plusDays(1)).build();
 
-		PromotionResponse expectedResponse = new PromotionResponse();
-		expectedResponse.setId(PROMOTION_ID);
-		expectedResponse.setTitle(PROMOTION_TITLE);
+		PromotionResponse expectedResponse = new PromotionResponse(PROMOTION_ID, PROMOTION_TITLE, null, BONUS_POINTS,
+				null, null);
 
 		when(adminPromotionService.findByIdOrThrow(PROMOTION_ID)).thenReturn(promotion);
 		when(userPromotionRepository.existsByUserAndPromotion(user, promotion)).thenReturn(false);
@@ -72,7 +70,7 @@ public class PromotionServiceTest {
 
 		PromotionResponse result = promotionService.claimPromotion(request, user);
 
-		assertThat(result.getId()).isEqualTo(PROMOTION_ID);
+		assertThat(result.id()).isEqualTo(PROMOTION_ID);
 		verify(userPromotionRepository).save(any(UserPromotion.class));
 		verify(bonusUserService).addPoints(user, BONUS_POINTS, promotion.getTitle());
 	}
@@ -80,8 +78,7 @@ public class PromotionServiceTest {
 	@Test
 	void claimPromotion_WhenNotActive_ThrowsException() {
 		User user = User.builder().id(1L).email(USER_EMAIL).build();
-		UserPromotionCreateRequest request = new UserPromotionCreateRequest();
-		request.setPromotionId(PROMOTION_ID);
+		UserPromotionCreateRequest request = new UserPromotionCreateRequest(PROMOTION_ID);
 
 		Promotion promotion = Promotion.builder().id(PROMOTION_ID).title(PROMOTION_TITLE)
 				.startDate(LocalDate.now().plusDays(1)).endDate(LocalDate.now().plusDays(2)).build();
@@ -98,8 +95,7 @@ public class PromotionServiceTest {
 	@Test
 	void claimPromotion_WhenAlreadyClaimed_ThrowsException() {
 		User user = User.builder().id(1L).email(USER_EMAIL).build();
-		UserPromotionCreateRequest request = new UserPromotionCreateRequest();
-		request.setPromotionId(PROMOTION_ID);
+		UserPromotionCreateRequest request = new UserPromotionCreateRequest(PROMOTION_ID);
 
 		Promotion promotion = Promotion.builder().id(PROMOTION_ID).title(PROMOTION_TITLE)
 				.startDate(LocalDate.now().minusDays(1)).endDate(LocalDate.now().plusDays(1)).build();
@@ -122,8 +118,7 @@ public class PromotionServiceTest {
 		PromotionResponseProjection projection2 = createPromotionProjection(2L, "Promo 2");
 		List<PromotionResponseProjection> activePromotions = Arrays.asList(projection1, projection2);
 
-		PromotionResponse response1 = new PromotionResponse();
-		response1.setId(1L);
+		PromotionResponse response1 = new PromotionResponse(1L, "Promo 1", null, 100, null, null);
 
 		when(promotionRepository.findAllActivePromotions()).thenReturn(activePromotions);
 		when(userPromotionRepository.existsByUserAndPromotionId(user, 1L)).thenReturn(false);
@@ -133,7 +128,7 @@ public class PromotionServiceTest {
 		List<PromotionResponse> result = promotionService.getAvailablePromotions(user);
 
 		assertThat(result).hasSize(1);
-		assertThat(result.get(0).getId()).isEqualTo(1L);
+		assertThat(result.get(0).id()).isEqualTo(1L);
 	}
 
 	@Test

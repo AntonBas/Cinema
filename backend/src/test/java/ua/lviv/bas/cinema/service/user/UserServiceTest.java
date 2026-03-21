@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.LocalDate;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
@@ -46,10 +47,8 @@ public class UserServiceTest {
 
 	@Test
 	void registerUser_Success() {
-		UserRegistrationRequest request = new UserRegistrationRequest();
-		request.setEmail(EMAIL);
-		request.setPassword("password");
-		request.setPasswordConfirm("password");
+		UserRegistrationRequest request = new UserRegistrationRequest(EMAIL, "John", "Doe", LocalDate.of(1990, 1, 1),
+				"Kyiv", "+380501234567", "password", "password");
 
 		User user = new User();
 		user.setEmail(EMAIL);
@@ -57,8 +56,8 @@ public class UserServiceTest {
 		User savedUser = new User();
 		savedUser.setEmail(EMAIL);
 
-		UserResponse response = new UserResponse();
-		response.setEmail(EMAIL);
+		UserResponse response = new UserResponse(1L, EMAIL, "John", "Doe", LocalDate.of(1990, 1, 1), "Kyiv",
+				"+380501234567", null, false, null, null);
 
 		when(userRepository.existsByEmail(EMAIL)).thenReturn(false);
 		when(userMapper.toUser(request)).thenReturn(user);
@@ -75,19 +74,16 @@ public class UserServiceTest {
 
 	@Test
 	void registerUser_ThrowsException_WhenPasswordsDontMatch() {
-		UserRegistrationRequest request = new UserRegistrationRequest();
-		request.setPassword("pass1");
-		request.setPasswordConfirm("pass2");
+		UserRegistrationRequest request = new UserRegistrationRequest(EMAIL, "John", "Doe", LocalDate.of(1990, 1, 1),
+				"Kyiv", "+380501234567", "pass1", "pass2");
 
 		assertThatThrownBy(() -> userService.registerUser(request)).isInstanceOf(PasswordMismatchException.class);
 	}
 
 	@Test
 	void registerUser_ThrowsException_WhenEmailExists() {
-		UserRegistrationRequest request = new UserRegistrationRequest();
-		request.setEmail(EMAIL);
-		request.setPassword("password");
-		request.setPasswordConfirm("password");
+		UserRegistrationRequest request = new UserRegistrationRequest(EMAIL, "John", "Doe", LocalDate.of(1990, 1, 1),
+				"Kyiv", "+380501234567", "password", "password");
 
 		when(userRepository.existsByEmail(EMAIL)).thenReturn(true);
 
@@ -116,11 +112,11 @@ public class UserServiceTest {
 		User user = new User();
 		user.setId(USER_ID);
 
-		UserUpdateRequest request = new UserUpdateRequest();
-		request.setFirstName("John");
+		UserUpdateRequest request = new UserUpdateRequest("John", "Doe", LocalDate.of(1990, 1, 1), "Kyiv",
+				"+380501234567");
 
-		UserProfileResponse profileResponse = new UserProfileResponse();
-		profileResponse.setId(USER_ID);
+		UserProfileResponse profileResponse = new UserProfileResponse(USER_ID, EMAIL, "John", "Doe",
+				LocalDate.of(1990, 1, 1), "Kyiv", "+380501234567", null);
 
 		when(userRepository.findWithBonusCardById(USER_ID)).thenReturn(Optional.of(user));
 		when(userRepository.save(user)).thenReturn(user);

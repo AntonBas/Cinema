@@ -46,13 +46,8 @@ public class PromotionControllerTest {
 	}
 
 	private PromotionResponse createPromotionResponse() {
-		PromotionResponse response = new PromotionResponse();
-		response.setId(PROMOTION_ID);
-		response.setTitle(TITLE);
-		response.setBonusPoints(BONUS_POINTS);
-		response.setStartDate(LocalDate.now().minusDays(1));
-		response.setEndDate(LocalDate.now().plusDays(5));
-		return response;
+		return new PromotionResponse(PROMOTION_ID, TITLE, null, BONUS_POINTS, LocalDate.now().minusDays(1),
+				LocalDate.now().plusDays(5));
 	}
 
 	@Test
@@ -72,8 +67,7 @@ public class PromotionControllerTest {
 	@Test
 	void claimPromotion_Success() {
 		User user = createUser();
-		UserPromotionCreateRequest request = new UserPromotionCreateRequest();
-		request.setPromotionId(PROMOTION_ID);
+		UserPromotionCreateRequest request = new UserPromotionCreateRequest(PROMOTION_ID);
 		PromotionResponse response = createPromotionResponse();
 
 		when(promotionService.claimPromotion(eq(request), eq(user))).thenReturn(response);
@@ -82,15 +76,14 @@ public class PromotionControllerTest {
 
 		assertThat(result.getStatusCode().value()).isEqualTo(200);
 		assertThat(result.getBody()).isNotNull();
-		assertThat(result.getBody().getId()).isEqualTo(PROMOTION_ID);
+		assertThat(result.getBody().id()).isEqualTo(PROMOTION_ID);
 		verify(promotionService).claimPromotion(request, user);
 	}
 
 	@Test
 	void claimPromotion_WhenNotActive_Throws() {
 		User user = createUser();
-		UserPromotionCreateRequest request = new UserPromotionCreateRequest();
-		request.setPromotionId(PROMOTION_ID);
+		UserPromotionCreateRequest request = new UserPromotionCreateRequest(PROMOTION_ID);
 
 		when(promotionService.claimPromotion(any(), any())).thenThrow(new PromotionNotActiveException(TITLE));
 
@@ -101,8 +94,7 @@ public class PromotionControllerTest {
 	@Test
 	void claimPromotion_WhenAlreadyClaimed_Throws() {
 		User user = createUser();
-		UserPromotionCreateRequest request = new UserPromotionCreateRequest();
-		request.setPromotionId(PROMOTION_ID);
+		UserPromotionCreateRequest request = new UserPromotionCreateRequest(PROMOTION_ID);
 
 		when(promotionService.claimPromotion(any(), any())).thenThrow(new AlreadyClaimedException(EMAIL, TITLE));
 

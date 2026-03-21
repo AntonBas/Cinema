@@ -73,8 +73,8 @@ public class SessionServiceTest {
 		session = Session.builder().id(SESSION_ID).movie(movie).hall(hall).startTime(LocalDateTime.now().plusHours(2))
 				.basePrice(BASE_PRICE).status(CinemaSessionStatus.SCHEDULED).build();
 
-		adminResponse = new SessionAdminResponse();
-		adminResponse.setId(SESSION_ID);
+		adminResponse = new SessionAdminResponse(SESSION_ID, session.getStartTime(), null, BASE_PRICE,
+				CinemaSessionStatus.SCHEDULED, MOVIE_ID, MOVIE_TITLE, 120, HALL_ID, HALL_NAME, 100, 0, BigDecimal.ZERO);
 
 		LocalDateTime startTime = session.getStartTime();
 		LocalDateTime endTime = startTime.plusMinutes(120);
@@ -87,8 +87,7 @@ public class SessionServiceTest {
 	@Test
 	void createSession_Success() {
 		LocalDateTime startTime = LocalDateTime.now().plusHours(2);
-		SessionCreateRequest request = SessionCreateRequest.builder().startTime(startTime).basePrice(BASE_PRICE)
-				.movieId(MOVIE_ID).hallId(HALL_ID).build();
+		SessionCreateRequest request = new SessionCreateRequest(startTime, BASE_PRICE, MOVIE_ID, HALL_ID);
 
 		when(movieRepository.getReferenceById(MOVIE_ID)).thenReturn(movie);
 		when(cinemaHallService.getHallEntityById(HALL_ID)).thenReturn(hall);
@@ -108,8 +107,7 @@ public class SessionServiceTest {
 	@Test
 	void createSession_WhenTimeConflict_ThrowsException() {
 		LocalDateTime startTime = LocalDateTime.now().plusHours(2);
-		SessionCreateRequest request = SessionCreateRequest.builder().startTime(startTime).basePrice(BASE_PRICE)
-				.movieId(MOVIE_ID).hallId(HALL_ID).build();
+		SessionCreateRequest request = new SessionCreateRequest(startTime, BASE_PRICE, MOVIE_ID, HALL_ID);
 
 		when(movieRepository.getReferenceById(MOVIE_ID)).thenReturn(movie);
 		when(cinemaHallService.getHallEntityById(HALL_ID)).thenReturn(hall);
@@ -143,7 +141,7 @@ public class SessionServiceTest {
 	@Test
 	void updateSession_WhenStartTimeChanged_Success() {
 		LocalDateTime newStartTime = LocalDateTime.now().plusHours(3);
-		SessionUpdateRequest request = SessionUpdateRequest.builder().startTime(newStartTime).build();
+		SessionUpdateRequest request = new SessionUpdateRequest(newStartTime, null, null, null);
 
 		when(sessionRepository.findByIdWithLock(SESSION_ID)).thenReturn(Optional.of(session));
 		when(sessionRepository.existsConflictingSession(HALL_ID, newStartTime,
@@ -161,7 +159,7 @@ public class SessionServiceTest {
 
 	@Test
 	void updateSession_WhenNoChanges_DoesNotSave() {
-		SessionUpdateRequest request = SessionUpdateRequest.builder().build();
+		SessionUpdateRequest request = new SessionUpdateRequest(null, null, null, null);
 
 		when(sessionRepository.findByIdWithLock(SESSION_ID)).thenReturn(Optional.of(session));
 		when(sessionRepository.findAdminProjectionById(SESSION_ID)).thenReturn(Optional.of(adminProjection));
@@ -177,7 +175,8 @@ public class SessionServiceTest {
 	void updateSession_WhenNotFound_ThrowsException() {
 		when(sessionRepository.findByIdWithLock(SESSION_ID)).thenReturn(Optional.empty());
 
-		assertThatThrownBy(() -> sessionService.updateSession(SESSION_ID, new SessionUpdateRequest()))
+		assertThatThrownBy(
+				() -> sessionService.updateSession(SESSION_ID, new SessionUpdateRequest(null, null, null, null)))
 				.isInstanceOf(SessionNotFoundException.class);
 	}
 

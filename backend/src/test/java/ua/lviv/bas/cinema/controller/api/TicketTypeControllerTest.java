@@ -31,8 +31,7 @@ public class TicketTypeControllerTest {
 
 	private TicketTypeUserResponse createTicketTypeUserResponse(Long id, String displayName, BigDecimal priceMultiplier,
 			boolean requiresDocument, String documentType) {
-		return TicketTypeUserResponse.builder().id(id).displayName(displayName).priceMultiplier(priceMultiplier)
-				.requiresDocument(requiresDocument).documentType(documentType).build();
+		return new TicketTypeUserResponse(id, displayName, priceMultiplier, requiresDocument, documentType);
 	}
 
 	@Test
@@ -52,18 +51,18 @@ public class TicketTypeControllerTest {
 		assertEquals(2, response.getBody().size());
 
 		TicketTypeUserResponse first = response.getBody().get(0);
-		assertEquals(1L, first.getId());
-		assertEquals("Child Ticket", first.getDisplayName());
-		assertEquals(new BigDecimal("0.70"), first.getPriceMultiplier());
-		assertEquals(true, first.isRequiresDocument());
-		assertEquals("Birth Certificate", first.getDocumentType());
+		assertEquals(1L, first.id());
+		assertEquals("Child Ticket", first.displayName());
+		assertEquals(new BigDecimal("0.70"), first.priceMultiplier());
+		assertEquals(true, first.requiresDocument());
+		assertEquals("Birth Certificate", first.documentType());
 
 		TicketTypeUserResponse second = response.getBody().get(1);
-		assertEquals(2L, second.getId());
-		assertEquals("Adult Ticket", second.getDisplayName());
-		assertEquals(new BigDecimal("1.00"), second.getPriceMultiplier());
-		assertEquals(false, second.isRequiresDocument());
-		assertEquals(null, second.getDocumentType());
+		assertEquals(2L, second.id());
+		assertEquals("Adult Ticket", second.displayName());
+		assertEquals(new BigDecimal("1.00"), second.priceMultiplier());
+		assertEquals(false, second.requiresDocument());
+		assertEquals(null, second.documentType());
 
 		verify(ticketTypeService).getActiveTicketTypesForUser();
 	}

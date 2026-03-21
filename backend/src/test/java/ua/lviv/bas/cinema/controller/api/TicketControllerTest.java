@@ -55,9 +55,8 @@ public class TicketControllerTest {
 	}
 
 	private TicketResponse createTicketResponse(Long id, String code, TicketStatus status) {
-		return TicketResponse.builder().id(id).ticketCode(code).status(status).purchaseTime(LocalDateTime.now())
-				.price(new BigDecimal("250.00")).ticketType("Adult").movieTitle("Inception")
-				.sessionTime(LocalDateTime.now().plusDays(1)).hallName("Hall A").row(1).seatNumber(12).build();
+		return new TicketResponse(id, code, null, status, LocalDateTime.now(), new BigDecimal("250.00"), "Adult",
+				"Inception", LocalDateTime.now().plusDays(1), "Hall A", 1, 12);
 	}
 
 	@Test
@@ -75,7 +74,7 @@ public class TicketControllerTest {
 
 		assertThat(response.getStatusCode().value()).isEqualTo(200);
 		assertThat(response.getBody()).isNotNull();
-		assertThat(response.getBody().getContent()).hasSize(1);
+		assertThat(response.getBody().content()).hasSize(1);
 		verify(ticketRetrievalService).getUserTickets(eq(user), any(), eq(pageable));
 	}
 
@@ -95,7 +94,7 @@ public class TicketControllerTest {
 
 		assertThat(response.getStatusCode().value()).isEqualTo(200);
 		assertThat(response.getBody()).isNotNull();
-		assertThat(response.getBody().getContent()).hasSize(1);
+		assertThat(response.getBody().content()).hasSize(1);
 		verify(ticketRetrievalService).getUserTickets(eq(user), any(), eq(pageable));
 	}
 
@@ -115,7 +114,7 @@ public class TicketControllerTest {
 
 		assertThat(response.getStatusCode().value()).isEqualTo(200);
 		assertThat(response.getBody()).isNotNull();
-		assertThat(response.getBody().getContent()).hasSize(1);
+		assertThat(response.getBody().content()).hasSize(1);
 		verify(ticketRetrievalService).getUserTickets(eq(user), any(), eq(pageable));
 	}
 
@@ -136,7 +135,7 @@ public class TicketControllerTest {
 
 		assertThat(response.getStatusCode().value()).isEqualTo(200);
 		assertThat(response.getBody()).isNotNull();
-		assertThat(response.getBody().getContent()).hasSize(1);
+		assertThat(response.getBody().content()).hasSize(1);
 		verify(ticketRetrievalService).getUserTickets(eq(user), any(), eq(pageable));
 	}
 
@@ -154,8 +153,8 @@ public class TicketControllerTest {
 
 		assertThat(response.getStatusCode().value()).isEqualTo(200);
 		assertThat(response.getBody()).isNotNull();
-		assertThat(response.getBody().getContent()).isEmpty();
-		assertThat(response.getBody().getTotalElements()).isZero();
+		assertThat(response.getBody().content()).isEmpty();
+		assertThat(response.getBody().totalElements()).isZero();
 		verify(ticketRetrievalService).getUserTickets(eq(user), any(), eq(pageable));
 	}
 
@@ -171,7 +170,7 @@ public class TicketControllerTest {
 
 		assertThat(response.getStatusCode().value()).isEqualTo(200);
 		assertThat(response.getBody()).isNotNull();
-		assertThat(response.getBody().getTicketCode()).isEqualTo(TICKET_CODE);
+		assertThat(response.getBody().ticketCode()).isEqualTo(TICKET_CODE);
 		verify(ticketRetrievalService).getTicketByCode(TICKET_CODE, user);
 	}
 
