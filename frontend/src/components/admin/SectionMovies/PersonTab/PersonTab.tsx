@@ -36,7 +36,7 @@ export const PersonTab: React.FC = () => {
   });
 
   const { notifications, showNotification, hideNotification } = useNotification();
-  const { params, setPage, setSearch } = usePagination({ size: 10 });
+  const { params, setPage, setSearch } = usePagination({ size: 12 });
 
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const initialLoadRef = useRef(false);
@@ -203,7 +203,7 @@ export const PersonTab: React.FC = () => {
   const paginationInfo = useMemo(() => {
     const total = currentTabData.total;
     const page = params.page || 0;
-    const pageSize = params.size || 10;
+    const pageSize = params.size || 12;
     const start = total > 0 ? page * pageSize + 1 : 0;
     const end = Math.min(start + pageSize - 1, total);
     const totalPages = Math.ceil(total / pageSize);

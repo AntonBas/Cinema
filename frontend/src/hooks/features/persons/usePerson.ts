@@ -115,7 +115,7 @@ export const usePerson = () => {
         currentPage: personsApi.data?.number || 0,
         totalPages: personsApi.data?.totalPages || 0,
         totalElements: personsApi.data?.totalElements || 0,
-        pageSize: personsApi.data?.size || 10,
+        pageSize: personsApi.data?.size || 12,
         isEmpty: personsApi.data?.empty || false,
         loading,
         error,

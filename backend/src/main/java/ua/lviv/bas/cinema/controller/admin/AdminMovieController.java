@@ -105,7 +105,7 @@ public class AdminMovieController {
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Movies retrieved successfully") })
 	public ResponseEntity<PageResponse<MovieCardResponse>> getMovies(@RequestParam(required = false) String title,
 			@RequestParam(required = false) MovieStatus status,
-			@PageableDefault(size = 20, sort = "title", direction = Sort.Direction.ASC) Pageable pageable) {
+			@PageableDefault(size = 12, sort = "title", direction = Sort.Direction.ASC) Pageable pageable) {
 
 		log.info("GET /api/admin/movies - title: '{}', status: {}", title, status);
 		var result = movieService.getFilteredMovies(title, status, pageable);
