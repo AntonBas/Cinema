@@ -46,7 +46,7 @@ public class PaymentController {
 	public ResponseEntity<PaymentResponse> createPayment(@Valid @RequestBody PaymentCreateRequest request,
 			@AuthenticationPrincipal CustomUserDetails userDetails) {
 		User user = userDetails.getUser();
-		log.info("Creating payment for booking ID: {} by user ID: {}", request.getBookingId(), user.getId());
+		log.info("Creating payment for booking ID: {} by user ID: {}", request.bookingId(), user.getId());
 		PaymentResponse response = controllerFacade.createPayment(request, user);
 		return ResponseEntity.status(HttpStatus.CREATED).body(response);
 	}

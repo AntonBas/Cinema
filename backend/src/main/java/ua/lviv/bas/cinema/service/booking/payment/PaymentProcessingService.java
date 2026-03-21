@@ -47,10 +47,10 @@ public class PaymentProcessingService {
 	private final BookingManagementService bookingManagementService;
 
 	public PaymentResponse createPayment(PaymentCreateRequest request, User user) {
-		log.info("Creating payment for booking {} by user {}", request.getBookingId(), user.getId());
+		log.info("Creating payment for booking {} by user {}", request.bookingId(), user.getId());
 
-		Booking booking = bookingRepository.findByIdAndUserId(request.getBookingId(), user.getId())
-				.orElseThrow(() -> new BookingNotFoundException(request.getBookingId()));
+		Booking booking = bookingRepository.findByIdAndUserId(request.bookingId(), user.getId())
+				.orElseThrow(() -> new BookingNotFoundException(request.bookingId()));
 
 		paymentValidator.validateBookingForPayment(booking);
 
@@ -202,14 +202,11 @@ public class PaymentProcessingService {
 
 	private PaymentResponse buildPaymentResponse(Payment payment) {
 		Booking booking = payment.getBooking();
-		return PaymentResponse.builder().id(payment.getId()).bookingId(booking.getId())
-				.bookingNumber(numberGenerator.generateBookingNumber(booking)).userEmail(booking.getUser().getEmail())
-				.movieTitle(booking.getSession().getMovie().getTitle()).sessionTime(booking.getSession().getStartTime())
-				.hallName(booking.getSession().getHall().getName()).amount(payment.getAmount())
-				.finalAmount(payment.getAmount()).status(payment.getStatus()).liqpayOrderId(payment.getLiqpayOrderId())
-				.liqpayPaymentId(payment.getLiqpayPaymentId()).paymentTime(payment.getPaymentTime())
-				.errorCode(payment.getLiqpayErrorCode()).errorDescription(payment.getLiqpayErrorDescription())
-				.senderCardMask(payment.getLiqpaySenderCardMask()).createdAt(payment.getCreatedAt())
-				.updatedAt(payment.getUpdatedAt()).build();
+		return new PaymentResponse(payment.getId(), booking.getId(), numberGenerator.generateBookingNumber(booking),
+				booking.getUser().getEmail(), booking.getSession().getMovie().getTitle(),
+				booking.getSession().getStartTime(), booking.getSession().getHall().getName(), payment.getAmount(),
+				payment.getAmount(), payment.getStatus(), payment.getLiqpayOrderId(), payment.getLiqpayPaymentId(),
+				payment.getPaymentTime(), payment.getLiqpayErrorCode(), payment.getLiqpayErrorDescription(),
+				payment.getLiqpaySenderCardMask(), null, null, payment.getCreatedAt(), payment.getUpdatedAt());
 	}
 }

@@ -62,6 +62,6 @@ public class PaymentStatusService {
 
 	@Transactional
 	public void handleLiqPayCallback(LiqPayCallbackRequest callbackRequest) {
-		handleLiqPayCallback(callbackRequest.getData(), callbackRequest.getSignature());
+		handleLiqPayCallback(callbackRequest.data(), callbackRequest.signature());
 	}
 }

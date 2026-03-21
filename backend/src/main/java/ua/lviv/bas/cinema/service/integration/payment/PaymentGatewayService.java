@@ -27,9 +27,7 @@ import com.google.gson.reflect.TypeToken;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.Payment;
-import ua.lviv.bas.cinema.domain.enums.PaymentStatus;
 import ua.lviv.bas.cinema.dto.payment.response.PaymentLiqPayDataResponse;
-import ua.lviv.bas.cinema.dto.payment.response.PaymentResponse;
 import ua.lviv.bas.cinema.exception.domain.payment.PaymentProcessingException;
 
 @Slf4j
@@ -69,11 +67,9 @@ public class PaymentGatewayService {
 			String jsonData = gson.toJson(params);
 			String data = Base64.getEncoder().encodeToString(jsonData.getBytes());
 			String signature = generateSignature(data);
-
 			String paymentUrl = createPayment(payment);
 
-			return PaymentLiqPayDataResponse.builder().data(data).signature(signature).paymentUrl(paymentUrl)
-					.liqpayOrderId(payment.getLiqpayOrderId()).build();
+			return new PaymentLiqPayDataResponse(data, signature, paymentUrl, payment.getLiqpayOrderId());
 		} catch (Exception e) {
 			throw new PaymentProcessingException("Failed to prepare payment data: " + e.getMessage());
 		}
@@ -113,7 +109,7 @@ public class PaymentGatewayService {
 		String calculatedSignature = generateSignature(data);
 		boolean isValid = calculatedSignature.equals(receivedSignature);
 		if (!isValid) {
-			log.error("Invalid LiqPay signature!");
+			log.error("Invalid LiqPay signature");
 		}
 		return isValid;
 	}
@@ -200,140 +196,11 @@ public class PaymentGatewayService {
 		try {
 			String decodedData = new String(Base64.getDecoder().decode(refundData));
 			Map<String, Object> params = gson.fromJson(decodedData, MAP_STRING_OBJECT_TYPE);
-
-			log.info("=== SANDBOX REFUND PROCESSED ===");
-			log.info("Order ID: {}", params.get("order_id"));
-			log.info("Amount: {}", params.get("amount"));
-			log.info("Description: {}", params.get("description"));
-			log.info("=== END SANDBOX REFUND ===");
-
+			log.info("Sandbox refund: orderId={}, amount={}", params.get("order_id"), params.get("amount"));
 		} catch (Exception e) {
-			log.error("Error in sandbox refund", e);
+			log.error("Sandbox refund error", e);
 			throw new PaymentProcessingException("Sandbox refund failed: " + e.getMessage());
 		}
-	}
-
-	public PaymentResponse getPaymentStatus(String paymentId) {
-		try {
-			if (sandboxMode) {
-				return getSandboxPaymentStatus(paymentId);
-			}
-
-			Map<String, Object> statusParams = new LinkedHashMap<>();
-			statusParams.put("public_key", liqpayPublicKey);
-			statusParams.put("version", "3");
-			statusParams.put("action", "status");
-			statusParams.put("payment_id", paymentId);
-
-			String jsonData = gson.toJson(statusParams);
-			String data = Base64.getEncoder().encodeToString(jsonData.getBytes());
-			String signature = generateSignature(data);
-
-			String requestBody = "data=" + URLEncoder.encode(data, StandardCharsets.UTF_8.toString()) + "&signature="
-					+ URLEncoder.encode(signature, StandardCharsets.UTF_8.toString());
-
-			HttpHeaders headers = new HttpHeaders();
-			headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-			headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-
-			HttpEntity<String> request = new HttpEntity<>(requestBody, headers);
-			ResponseEntity<String> response = restTemplate.postForEntity(liqpayApiUrl + "request", request,
-					String.class);
-
-			if (response.getStatusCode().is2xxSuccessful()) {
-				Map<String, Object> responseMap = gson.fromJson(response.getBody(), MAP_STRING_OBJECT_TYPE);
-				String result = (String) responseMap.get("result");
-				String status = (String) responseMap.get("status");
-				String actionType = (String) responseMap.get("action");
-
-				if ("error".equals(result)) {
-					String errorCode = (String) responseMap.get("err_code");
-					String errorDescription = (String) responseMap.get("err_description");
-
-					if ("payment_not_found".equals(errorCode) || "err_missing".equals(errorCode)) {
-						return PaymentResponse.builder().status(PaymentStatus.FAILED).errorCode(errorCode)
-								.errorDescription(errorDescription).refundableViaApi(false).build();
-					}
-					throw new PaymentProcessingException("LiqPay status check error: " + errorDescription);
-				}
-
-				boolean isRefundableViaApi = isPaymentRefundableViaApi(status);
-
-				Object paymentIdObj = responseMap.get("payment_id");
-				String liqpayPaymentId = paymentIdObj != null ? paymentIdObj.toString() : paymentId;
-
-				Object amountObj = responseMap.get("amount");
-				BigDecimal amount = BigDecimal.ZERO;
-				if (amountObj != null) {
-					if (amountObj instanceof Double) {
-						amount = BigDecimal.valueOf((Double) amountObj);
-					} else if (amountObj instanceof Integer) {
-						amount = BigDecimal.valueOf((Integer) amountObj);
-					} else if (amountObj instanceof BigDecimal) {
-						amount = (BigDecimal) amountObj;
-					} else if (amountObj instanceof String) {
-						amount = new BigDecimal((String) amountObj);
-					} else {
-						amount = new BigDecimal(amountObj.toString());
-					}
-				}
-
-				return PaymentResponse.builder().status(convertLiqPayStatus(status))
-						.liqpayOrderId((String) responseMap.get("order_id")).liqpayPaymentId(liqpayPaymentId)
-						.amount(amount).errorCode((String) responseMap.get("err_code"))
-						.errorDescription((String) responseMap.get("err_description"))
-						.senderCardMask((String) responseMap.get("sender_card_mask2")).actionType(actionType)
-						.refundableViaApi(isRefundableViaApi).build();
-			} else {
-				throw new PaymentProcessingException("Failed to get payment status");
-			}
-
-		} catch (RestClientException e) {
-			throw new PaymentProcessingException("Network error during status check");
-		} catch (Exception e) {
-			throw new PaymentProcessingException("Failed to get payment status");
-		}
-	}
-
-	private PaymentResponse getSandboxPaymentStatus(String paymentId) {
-		log.info("=== SANDBOX PAYMENT STATUS ===");
-		log.info("Payment ID: {}", paymentId);
-		log.info("Simulating successful payment status");
-		log.info("=== END SANDBOX STATUS ===");
-
-		return PaymentResponse.builder().status(PaymentStatus.SUCCESS).liqpayPaymentId(paymentId)
-				.liqpayOrderId("SANDBOX_ORDER_" + paymentId).amount(BigDecimal.ZERO).actionType("pay")
-				.refundableViaApi(true).build();
-	}
-
-	private PaymentStatus convertLiqPayStatus(String liqpayStatus) {
-		if (liqpayStatus == null) {
-			return PaymentStatus.PENDING;
-		}
-
-		switch (liqpayStatus.toLowerCase()) {
-		case "success":
-		case "sandbox":
-			return PaymentStatus.SUCCESS;
-		case "failure":
-		case "error":
-			return PaymentStatus.FAILED;
-		case "wait_secure":
-		case "processing":
-			return PaymentStatus.PENDING;
-		case "reversed":
-		case "refunded":
-			return PaymentStatus.REFUNDED;
-		default:
-			return PaymentStatus.PENDING;
-		}
-	}
-
-	private boolean isPaymentRefundableViaApi(String status) {
-		if (status == null) {
-			return false;
-		}
-		return "success".equals(status);
 	}
 
 	private Map<String, Object> buildPaymentParams(Payment payment) {
