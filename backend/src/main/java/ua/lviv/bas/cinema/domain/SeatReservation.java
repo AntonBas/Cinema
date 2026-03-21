@@ -64,14 +64,12 @@ public class SeatReservation {
 	@JoinColumn(name = "session_id", nullable = false)
 	private Session session;
 
-	@NotNull
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "ticket_type_id", nullable = false)
+	@JoinColumn(name = "ticket_type_id")
 	private TicketType ticketType;
 
-	@NotNull
 	@DecimalMin("0.00")
-	@Column(name = "seat_price", nullable = false, precision = 10, scale = 2)
+	@Column(name = "seat_price", precision = 10, scale = 2)
 	private BigDecimal seatPrice;
 
 	@NotNull
