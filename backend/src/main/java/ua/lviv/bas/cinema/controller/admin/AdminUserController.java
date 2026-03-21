@@ -64,9 +64,9 @@ public class AdminUserController {
 			@Parameter(description = "ID of the user to update", required = true, example = "1") @PathVariable Long userId,
 			@Valid @RequestBody UserRoleUpdateRequest request) {
 
-		log.info("Admin updating role for user {} to {}", userId, request.getUserRole());
-		AdminUserListResponse response = adminUserService.updateUserRole(userId, request.getUserRole());
-		log.info("User {} role updated successfully to {}", userId, request.getUserRole());
+		log.info("Admin updating role for user {} to {}", userId, request.userRole());
+		AdminUserListResponse response = adminUserService.updateUserRole(userId, request.userRole());
+		log.info("User {} role updated successfully to {}", userId, request.userRole());
 
 		return ResponseEntity.ok(response);
 	}
@@ -82,9 +82,9 @@ public class AdminUserController {
 			@Parameter(description = "ID of the user to update", required = true, example = "1") @PathVariable Long userId,
 			@Valid @RequestBody UserStatusUpdateRequest request) {
 
-		log.info("Admin updating status for user {} to enabled={}", userId, request.isEnabled());
-		AdminUserListResponse response = adminUserService.updateUserStatus(userId, request.isEnabled());
-		log.info("User {} status updated to enabled={}", userId, request.isEnabled());
+		log.info("Admin updating status for user {} to enabled={}", userId, request.enabled());
+		AdminUserListResponse response = adminUserService.updateUserStatus(userId, request.enabled());
+		log.info("User {} status updated to enabled={}", userId, request.enabled());
 
 		return ResponseEntity.ok(response);
 	}
@@ -101,10 +101,10 @@ public class AdminUserController {
 			@Parameter(description = "ID of the user to update", required = true, example = "1") @PathVariable Long userId,
 			@Valid @RequestBody VerificationBirthDateRequest request) {
 
-		log.info("Admin updating birth date verification for user {} to {}", userId, request.getVerificationStatus());
+		log.info("Admin updating birth date verification for user {} to {}", userId, request.verificationStatus());
 
 		AdminUserListResponse response = adminUserService.updateBirthDateVerification(userId, request);
-		log.info("User {} birth date verification updated to {}", userId, request.getVerificationStatus());
+		log.info("User {} birth date verification updated to {}", userId, request.verificationStatus());
 
 		return ResponseEntity.ok(response);
 	}

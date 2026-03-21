@@ -74,7 +74,7 @@ public class AdminUserService {
 	@Transactional
 	public AdminUserListResponse updateBirthDateVerification(Long userId, VerificationBirthDateRequest request) {
 		User user = findById(userId);
-		VerificationStatus newStatus = request.getVerificationStatus();
+		VerificationStatus newStatus = request.verificationStatus();
 
 		user.setVerificationStatus(newStatus);
 		user.setVerifiedAt(newStatus == VerificationStatus.VERIFIED ? LocalDateTime.now() : null);
@@ -89,10 +89,10 @@ public class AdminUserService {
 	public Page<AdminUserListResponse> getUsersForAdmin(UserFilterRequest filter, Pageable pageable) {
 		log.info("Fetching users for admin with filter: {}, pageable: {}", filter, pageable);
 
-		Page<AdminUserProjection> projections = userRepository.findAdminProjectionsWithFilters(filter.getSearch(),
-				filter.getRole() != null ? filter.getRole().name() : null,
-				filter.getVerificationStatus() != null ? filter.getVerificationStatus().name() : null,
-				filter.getEnabled(), pageable);
+		Page<AdminUserProjection> projections = userRepository.findAdminProjectionsWithFilters(filter.search(),
+				filter.role() != null ? filter.role().name() : null,
+				filter.verificationStatus() != null ? filter.verificationStatus().name() : null, filter.enabled(),
+				pageable);
 
 		return projections.map(userMapper::toAdminUserListResponse);
 	}

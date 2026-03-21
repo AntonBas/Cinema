@@ -79,7 +79,7 @@ public class UserController {
 			@Valid @RequestBody UserEmailChangeRequest request) {
 
 		log.info("POST /api/users/email/change-request - user ID: {}", userDetails.getUserId());
-		userService.requestEmailChange(userDetails.getUserId(), request.getPassword(), request.getNewEmail());
+		userService.requestEmailChange(userDetails.getUserId(), request.password(), request.newEmail());
 		return ResponseEntity.ok(Map.of("message", "Confirmation email sent to your new address"));
 	}
 

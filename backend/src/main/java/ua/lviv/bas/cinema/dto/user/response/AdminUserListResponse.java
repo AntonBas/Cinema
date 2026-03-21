@@ -3,47 +3,26 @@ package ua.lviv.bas.cinema.dto.user.response;
 import java.time.LocalDateTime;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import ua.lviv.bas.cinema.domain.enums.UserRole;
 import ua.lviv.bas.cinema.domain.enums.VerificationStatus;
 
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-@Schema(description = "Response DTO for user list in admin panel")
-public class AdminUserListResponse {
+public record AdminUserListResponse(@Schema(description = "Unique identifier of the user", example = "1") Long id,
 
-	@Schema(description = "Unique identifier of the user", example = "1")
-	private Long id;
+		@Schema(description = "User's email address", example = "john.doe@example.com") String email,
 
-	@Schema(description = "User's email address", example = "john.doe@example.com")
-	private String email;
+		@Schema(description = "User's first name", example = "John") String firstName,
 
-	@Schema(description = "User's first name", example = "John")
-	private String firstName;
+		@Schema(description = "User's last name", example = "Doe") String lastName,
 
-	@Schema(description = "User's last name", example = "Doe")
-	private String lastName;
+		@Schema(description = "User's role", example = "ROLE_USER") UserRole userRole,
 
-	@Schema(description = "User's role", example = "CUSTOMER", allowableValues = { "ADMIN", "MANAGER", "CUSTOMER" })
-	private UserRole userRole;
+		@Schema(description = "Account enabled status", example = "true") boolean enabled,
 
-	@Schema(description = "Account enabled status", example = "true")
-	private boolean enabled;
+		@Schema(description = "Birth date verification status", example = "VERIFIED") VerificationStatus verificationStatus,
 
-	@Schema(description = "Birth date verification status", example = "VERIFIED")
-	private VerificationStatus verificationStatus;
+		@Schema(description = "Date and time when birth date was verified") LocalDateTime verifiedAt,
 
-	@Schema(description = "Date and time when birth date was verified")
-	private LocalDateTime verifiedAt;
+		@Schema(description = "Number of tickets purchased by the user", example = "15") Long ticketsCount,
 
-	@Schema(description = "Number of tickets purchased by the user", example = "15")
-	private Long ticketsCount;
-
-	@Schema(description = "Date of user's last activity", example = "2024-01-15", type = "string", format = "date")
-	private LocalDateTime lastActivity;
+		@Schema(description = "Date of user's last activity", example = "2024-01-15") LocalDateTime lastActivity) {
 }

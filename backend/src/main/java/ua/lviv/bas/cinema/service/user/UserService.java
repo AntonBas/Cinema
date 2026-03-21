@@ -44,14 +44,14 @@ public class UserService {
 	@CacheEvict(allEntries = true)
 	@Transactional
 	public UserResponse registerUser(UserRegistrationRequest request) {
-		validatePasswordMatch(request.getPassword(), request.getPasswordConfirm());
-		validateEmailNotExists(request.getEmail());
+		validatePasswordMatch(request.password(), request.passwordConfirm());
+		validateEmailNotExists(request.email());
 
 		User user = userMapper.toUser(request);
-		user.setPassword(passwordEncoder.encode(request.getPassword()));
+		user.setPassword(passwordEncoder.encode(request.password()));
 
 		User saved = userRepository.save(user);
-		log.info("User registered: {}", request.getEmail());
+		log.info("User registered: {}", request.email());
 
 		emailTokenGeneratorService.generateVerificationToken(saved.getEmail());
 		return userMapper.toUserResponse(saved);
@@ -63,7 +63,7 @@ public class UserService {
 		User user = getUserWithBonusCardById(userId);
 		userMapper.updateUserFromRequest(request, user);
 
-		if (isDateOfBirthChanged(request.getDateOfBirth(), user.getDateOfBirth())) {
+		if (isDateOfBirthChanged(request.dateOfBirth(), user.getDateOfBirth())) {
 			revokeVerificationIfNeeded(user);
 		}
 
@@ -85,12 +85,12 @@ public class UserService {
 	@Transactional
 	public void updateUserPassword(Long userId, UserPasswordUpdateRequest request) {
 		User user = getUserById(userId);
-		validatePasswordMatch(request.getNewPassword(), request.getPasswordConfirm());
-		validateCurrentPassword(user, request.getCurrentPassword());
-		validateNewPasswordDifferent(user, request.getNewPassword());
-		validatePasswordLength(request.getNewPassword());
+		validatePasswordMatch(request.newPassword(), request.passwordConfirm());
+		validateCurrentPassword(user, request.currentPassword());
+		validateNewPasswordDifferent(user, request.newPassword());
+		validatePasswordLength(request.newPassword());
 
-		user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+		user.setPassword(passwordEncoder.encode(request.newPassword()));
 		userRepository.save(user);
 		log.info("Password updated for user {}", userId);
 	}

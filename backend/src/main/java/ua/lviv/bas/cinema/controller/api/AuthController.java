@@ -53,7 +53,7 @@ public class AuthController {
 			@ApiResponse(responseCode = "409", description = "Email already registered") })
 	@SecurityRequirements()
 	public ResponseEntity<UserResponse> register(@Valid @RequestBody UserRegistrationRequest request) {
-		log.info("Registration request for email: {}", request.getEmail());
+		log.info("Registration request for email: {}", request.email());
 		UserResponse response = userService.registerUser(request);
 		return ResponseEntity.status(HttpStatus.CREATED).body(response);
 	}
@@ -65,10 +65,10 @@ public class AuthController {
 			@ApiResponse(responseCode = "403", description = "Account not activated or blocked") })
 	@SecurityRequirements()
 	public ResponseEntity<LoginResponse> login(@Valid @RequestBody UserLoginRequest request) {
-		log.info("Login attempt for email: {}", request.getEmail());
+		log.info("Login attempt for email: {}", request.email());
 
 		var authentication = authenticationManager
-				.authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
+				.authenticate(new UsernamePasswordAuthenticationToken(request.email(), request.password()));
 
 		String token = jwtTokenProvider.generateToken(authentication);
 
