@@ -19,6 +19,7 @@ import ua.lviv.bas.cinema.domain.enums.PaymentStatus;
 import ua.lviv.bas.cinema.domain.enums.RefundItemStatus;
 import ua.lviv.bas.cinema.domain.enums.RefundStatus;
 import ua.lviv.bas.cinema.domain.enums.TicketStatus;
+import ua.lviv.bas.cinema.dto.payment.response.PaymentResponse;
 import ua.lviv.bas.cinema.dto.refund.request.RefundPreviewRequest;
 import ua.lviv.bas.cinema.dto.refund.request.RefundRequest;
 import ua.lviv.bas.cinema.dto.refund.response.RefundPreviewResponse;
@@ -53,7 +54,7 @@ public class RefundService {
 
 	@Transactional(readOnly = true)
 	public RefundPreviewResponse getRefundPreview(RefundPreviewRequest request, Long userId) {
-		Ticket ticket = findActiveTicket(request.getTicketId(), userId);
+		Ticket ticket = findActiveTicket(request.ticketId(), userId);
 
 		String validationError = validationService.validateRefund(ticket);
 		if (validationError != null) {
@@ -70,7 +71,7 @@ public class RefundService {
 
 	@Transactional
 	public RefundResponse processRefund(RefundRequest request, Long userId) {
-		Ticket ticket = findActiveTicket(request.getTicketId(), userId);
+		Ticket ticket = findActiveTicket(request.ticketId(), userId);
 
 		String validationError = validationService.validateRefund(ticket);
 		if (validationError != null) {
@@ -88,7 +89,7 @@ public class RefundService {
 		BigDecimal refundAmount = calculationService.calculateRefundAmount(ticket.getFinalPrice(), percentage);
 		Integer bonusPointsToRefund = calculationService.calculateBonusRefund(ticket.getBonusPointsUsed(), percentage);
 
-		Refund refund = createRefundRecord(ticket, refundAmount, percentage, bonusPointsToRefund, request.getReason());
+		Refund refund = createRefundRecord(ticket, refundAmount, percentage, bonusPointsToRefund, request.reason());
 
 		try {
 			paymentProcessingService.refundPayment(refund.getPayment(), refundAmount,
@@ -125,19 +126,20 @@ public class RefundService {
 
 	private boolean checkPaymentRefundable(Ticket ticket) {
 		try {
-			var paymentStatus = paymentGatewayService.getPaymentStatus(ticket.getPayment().getLiqpayPaymentId());
-			return paymentStatus.getRefundableViaApi() != null ? paymentStatus.getRefundableViaApi()
-					: paymentStatus.getStatus() == PaymentStatus.SUCCESS;
+			PaymentResponse paymentStatus = paymentGatewayService
+					.getPaymentStatus(ticket.getPayment().getLiqpayPaymentId());
+			Boolean refundable = paymentStatus.refundableViaApi();
+			return refundable != null ? refundable : paymentStatus.status() == PaymentStatus.SUCCESS;
 		} catch (Exception e) {
 			return false;
 		}
 	}
 
 	private RefundPreviewResponse createNonRefundablePreview(Ticket ticket, String reason) {
-		return RefundPreviewResponse.builder().ticketId(ticket.getId()).ticketCode(ticket.getUniqueCode())
-				.movieTitle(ticket.getBooking().getSession().getMovie().getTitle())
-				.sessionTime(ticket.getBooking().getSession().getStartTime()).isRefundable(false)
-				.nonRefundableReason(reason).build();
+		return new RefundPreviewResponse(ticket.getId(), ticket.getUniqueCode(),
+				ticket.getBooking().getSession().getMovie().getTitle(), ticket.getBooking().getSession().getStartTime(),
+				null, null, null, null, null, null, null, null, null, null, null, null, false, reason, null, null, null,
+				null);
 	}
 
 	private Refund createRefundRecord(Ticket ticket, BigDecimal refundAmount, BigDecimal percentage,
@@ -158,15 +160,12 @@ public class RefundService {
 
 	private RefundResponse createSuccessResponse(Refund refund) {
 		RefundResponse response = refundMapper.toRefundResponse(refund);
-		response.setRefundNumber(numberGenerator.generateRefundNumber(refund));
-		response.setPaymentMethod("CARD");
-		response.setMessage("Refund processed successfully");
-		response.setEstimatedRefundTime("3-5 business days");
-
-		if (refund.getItems() != null) {
-			response.setItems(refund.getItems().stream().map(refundItemMapper::toRefundItemResponse).toList());
-		}
-
-		return response;
+		return new RefundResponse(response.id(), numberGenerator.generateRefundNumber(refund), response.status(),
+				response.totalAmount(), response.totalBonusPointsToDeduct(), response.reason(), response.processedBy(),
+				response.processedAt(), response.createdAt(), response.paymentId(), "CARD",
+				refund.getItems() != null
+						? refund.getItems().stream().map(refundItemMapper::toRefundItemResponse).toList()
+						: null,
+				"Refund processed successfully", "3-5 business days");
 	}
 }

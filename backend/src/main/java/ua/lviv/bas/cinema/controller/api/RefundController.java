@@ -42,7 +42,7 @@ public class RefundController {
 			@AuthenticationPrincipal CustomUserDetails userDetails) {
 
 		User user = userDetails.getUser();
-		log.info("Processing refund for ticket {} by user {}", request.getTicketId(), user.getId());
+		log.info("Processing refund for ticket {} by user {}", request.ticketId(), user.getId());
 		RefundResponse response = controllerFacade.processRefund(request, user.getId());
 		return ResponseEntity.ok(response);
 	}

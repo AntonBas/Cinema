@@ -56,18 +56,14 @@ public class RefundCalculationService {
 					bookedSeat.getSeat().getNumber());
 		}
 
-		return RefundPreviewResponse.builder().ticketId(ticket.getId()).ticketCode(ticket.getUniqueCode())
-				.movieTitle(ticket.getBooking().getSession().getMovie().getTitle()).sessionTime(sessionTime)
-				.hallName(ticket.getBooking().getSession().getHall().getName()).seatInfo(seatInfo)
-				.originalPrice(ticket.getOriginalPrice()).finalPrice(ticket.getFinalPrice()).refundAmount(refundAmount)
-				.refundPercentage(percentage).feeAmount(feeAmount)
-				.feePercentage(BigDecimal.valueOf(100).subtract(percentage))
-				.bonusPointsUsed(ticket.getBonusPointsUsed())
-				.bonusPointsToRefund(calculateBonusRefund(ticket.getBonusPointsUsed(), percentage))
-				.policyName(refundRules.getPolicyName(sessionTime))
-				.policyDescription(refundRules.getPolicyDescription(sessionTime)).isRefundable(true)
-				.refundDeadline(sessionTime.minusMinutes(30)).remainingTime(formatRemainingTime(sessionTime))
-				.purchaseTime(ticket.getPurchaseTime().toString()).ticketType(ticket.getTicketType().getDisplayName())
-				.build();
+		return new RefundPreviewResponse(ticket.getId(), ticket.getUniqueCode(),
+				ticket.getBooking().getSession().getMovie().getTitle(), sessionTime,
+				ticket.getBooking().getSession().getHall().getName(), seatInfo, ticket.getOriginalPrice(),
+				ticket.getFinalPrice(), refundAmount, percentage, feeAmount,
+				BigDecimal.valueOf(100).subtract(percentage), ticket.getBonusPointsUsed(),
+				calculateBonusRefund(ticket.getBonusPointsUsed(), percentage), refundRules.getPolicyName(sessionTime),
+				refundRules.getPolicyDescription(sessionTime), true, null, sessionTime.minusMinutes(30),
+				formatRemainingTime(sessionTime), ticket.getPurchaseTime().toString(),
+				ticket.getTicketType().getDisplayName());
 	}
 }

@@ -27,7 +27,9 @@ import com.google.gson.reflect.TypeToken;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.Payment;
+import ua.lviv.bas.cinema.domain.enums.PaymentStatus;
 import ua.lviv.bas.cinema.dto.payment.response.PaymentLiqPayDataResponse;
+import ua.lviv.bas.cinema.dto.payment.response.PaymentResponse;
 import ua.lviv.bas.cinema.exception.domain.payment.PaymentProcessingException;
 
 @Slf4j
@@ -200,6 +202,114 @@ public class PaymentGatewayService {
 		} catch (Exception e) {
 			log.error("Sandbox refund error", e);
 			throw new PaymentProcessingException("Sandbox refund failed: " + e.getMessage());
+		}
+	}
+
+	public PaymentResponse getPaymentStatus(String paymentId) {
+		try {
+			if (sandboxMode) {
+				return getSandboxPaymentStatus(paymentId);
+			}
+
+			Map<String, Object> statusParams = new LinkedHashMap<>();
+			statusParams.put("public_key", liqpayPublicKey);
+			statusParams.put("version", "3");
+			statusParams.put("action", "status");
+			statusParams.put("payment_id", paymentId);
+
+			String jsonData = gson.toJson(statusParams);
+			String data = Base64.getEncoder().encodeToString(jsonData.getBytes());
+			String signature = generateSignature(data);
+
+			String requestBody = "data=" + URLEncoder.encode(data, StandardCharsets.UTF_8.toString()) + "&signature="
+					+ URLEncoder.encode(signature, StandardCharsets.UTF_8.toString());
+
+			HttpHeaders headers = new HttpHeaders();
+			headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+			headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+
+			HttpEntity<String> request = new HttpEntity<>(requestBody, headers);
+			ResponseEntity<String> response = restTemplate.postForEntity(liqpayApiUrl + "request", request,
+					String.class);
+
+			if (response.getStatusCode().is2xxSuccessful()) {
+				Map<String, Object> responseMap = gson.fromJson(response.getBody(), MAP_STRING_OBJECT_TYPE);
+				String result = (String) responseMap.get("result");
+				String status = (String) responseMap.get("status");
+
+				if ("error".equals(result)) {
+					String errorCode = (String) responseMap.get("err_code");
+					String errorDescription = (String) responseMap.get("err_description");
+
+					return new PaymentResponse(null, null, null, null, null, null, null, null, null,
+							PaymentStatus.FAILED, null, null, null, errorCode, errorDescription, null, null, null, null,
+							null);
+				}
+
+				boolean isRefundableViaApi = "success".equals(status);
+
+				Object paymentIdObj = responseMap.get("payment_id");
+				String liqpayPaymentId = paymentIdObj != null ? paymentIdObj.toString() : paymentId;
+
+				Object amountObj = responseMap.get("amount");
+				BigDecimal amount = BigDecimal.ZERO;
+				if (amountObj != null) {
+					if (amountObj instanceof Double) {
+						amount = BigDecimal.valueOf((Double) amountObj);
+					} else if (amountObj instanceof Integer) {
+						amount = BigDecimal.valueOf((Integer) amountObj);
+					} else if (amountObj instanceof BigDecimal) {
+						amount = (BigDecimal) amountObj;
+					} else if (amountObj instanceof String) {
+						amount = new BigDecimal((String) amountObj);
+					} else {
+						amount = new BigDecimal(amountObj.toString());
+					}
+				}
+
+				return new PaymentResponse(null, null, null, null, null, null, null, amount, null,
+						convertLiqPayStatus(status), (String) responseMap.get("order_id"), liqpayPaymentId, null,
+						(String) responseMap.get("err_code"), (String) responseMap.get("err_description"),
+						(String) responseMap.get("sender_card_mask2"), (String) responseMap.get("action"),
+						isRefundableViaApi, null, null);
+			} else {
+				throw new PaymentProcessingException("Failed to get payment status");
+			}
+
+		} catch (RestClientException e) {
+			throw new PaymentProcessingException("Network error during status check");
+		} catch (Exception e) {
+			throw new PaymentProcessingException("Failed to get payment status");
+		}
+	}
+
+	private PaymentResponse getSandboxPaymentStatus(String paymentId) {
+		log.info("Sandbox payment status: paymentId={}", paymentId);
+		return new PaymentResponse(null, null, null, null, null, null, null, BigDecimal.ZERO, null,
+				PaymentStatus.SUCCESS, "SANDBOX_ORDER_" + paymentId, paymentId, null, null, null, null, "pay", true,
+				null, null);
+	}
+
+	private PaymentStatus convertLiqPayStatus(String liqpayStatus) {
+		if (liqpayStatus == null) {
+			return PaymentStatus.PENDING;
+		}
+
+		switch (liqpayStatus.toLowerCase()) {
+		case "success":
+		case "sandbox":
+			return PaymentStatus.SUCCESS;
+		case "failure":
+		case "error":
+			return PaymentStatus.FAILED;
+		case "wait_secure":
+		case "processing":
+			return PaymentStatus.PENDING;
+		case "reversed":
+		case "refunded":
+			return PaymentStatus.REFUNDED;
+		default:
+			return PaymentStatus.PENDING;
 		}
 	}
 
