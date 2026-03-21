@@ -74,6 +74,7 @@ public class SeatReservationService {
 		return seatReservationMapper.toResponse(session, seatInfos, availableSeatsCount);
 	}
 
+	@Transactional
 	public void temporaryHoldSeat(Long sessionId, Long seatId, User user) {
 		Session session = sessionRepository.findById(sessionId)
 				.orElseThrow(() -> new SessionNotFoundException(sessionId));
@@ -89,7 +90,6 @@ public class SeatReservationService {
 		seatReservationRepository.save(reservation);
 
 		log.info("Temporary hold for seat {} in session {} by user {}", seatId, sessionId, user.getId());
-
 	}
 
 	private SeatReservationResponse.SeatInfo buildSeatInfo(Seat seat, Map<Long, Boolean> bookedSeatMap, Long sessionId,
