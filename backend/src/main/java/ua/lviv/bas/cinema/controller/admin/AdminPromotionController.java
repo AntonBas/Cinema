@@ -43,7 +43,7 @@ public class AdminPromotionController {
 	@Operation(summary = "Create a new promotion")
 	@PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
 	public ResponseEntity<PromotionResponse> createPromotion(@Valid @RequestBody PromotionCreateRequest request) {
-		log.info("Admin creating new promotion with title: {}", request.getTitle());
+		log.info("Admin creating new promotion with title: {}", request.title());
 		return ResponseEntity.status(HttpStatus.CREATED).body(promotionService.createPromotion(request));
 	}
 

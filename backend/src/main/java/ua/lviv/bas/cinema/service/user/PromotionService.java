@@ -37,9 +37,9 @@ public class PromotionService {
 
 	@Transactional
 	public PromotionResponse claimPromotion(UserPromotionCreateRequest request, User user) {
-		log.info("User {} claiming promotion {}", user.getEmail(), request.getPromotionId());
+		log.info("User {} claiming promotion {}", user.getEmail(), request.promotionId());
 
-		Promotion promotion = adminPromotionService.findByIdOrThrow(request.getPromotionId());
+		Promotion promotion = adminPromotionService.findByIdOrThrow(request.promotionId());
 
 		if (!isPromotionActive(promotion)) {
 			throw new PromotionNotActiveException(promotion.getTitle());

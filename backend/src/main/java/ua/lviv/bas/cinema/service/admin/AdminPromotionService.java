@@ -34,13 +34,13 @@ public class AdminPromotionService {
 
 	@Transactional
 	public PromotionResponse createPromotion(PromotionCreateRequest request) {
-		log.info("Creating new promotion: {}", request.getTitle());
+		log.info("Creating new promotion: {}", request.title());
 
-		if (promotionRepository.existsByTitle(request.getTitle())) {
-			throw PromotionAlreadyExistsException.forTitle(request.getTitle());
+		if (promotionRepository.existsByTitle(request.title())) {
+			throw PromotionAlreadyExistsException.forTitle(request.title());
 		}
 
-		validateDates(request.getStartDate(), request.getEndDate());
+		validateDates(request.startDate(), request.endDate());
 
 		Promotion promotion = promotionMapper.toPromotion(request);
 		promotion = promotionRepository.save(promotion);

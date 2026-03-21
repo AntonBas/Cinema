@@ -45,7 +45,7 @@ public class PromotionController {
 	@PreAuthorize("hasRole('USER') or hasRole('PREMIUM_USER')")
 	public ResponseEntity<PromotionResponse> claimPromotion(@Valid @RequestBody UserPromotionCreateRequest request,
 			@AuthenticationPrincipal User user) {
-		log.info("User ID: {} claiming promotion ID: {}", user.getId(), request.getPromotionId());
+		log.info("User ID: {} claiming promotion ID: {}", user.getId(), request.promotionId());
 		return ResponseEntity.ok(promotionService.claimPromotion(request, user));
 	}
 }
