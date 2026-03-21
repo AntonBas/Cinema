@@ -27,12 +27,12 @@ public class PromotionMapperTest {
 
 		PromotionResponse response = mapper.toPromotionResponse(promotion);
 
-		assertThat(response.getId()).isEqualTo(1L);
-		assertThat(response.getTitle()).isEqualTo("Summer Sale");
-		assertThat(response.getDescription()).isEqualTo("Summer special promotion");
-		assertThat(response.getBonusPoints()).isEqualTo(500);
-		assertThat(response.getStartDate()).isEqualTo(LocalDate.of(2024, 6, 1));
-		assertThat(response.getEndDate()).isEqualTo(LocalDate.of(2024, 6, 30));
+		assertThat(response.id()).isEqualTo(1L);
+		assertThat(response.title()).isEqualTo("Summer Sale");
+		assertThat(response.description()).isEqualTo("Summer special promotion");
+		assertThat(response.bonusPoints()).isEqualTo(500);
+		assertThat(response.startDate()).isEqualTo(LocalDate.of(2024, 6, 1));
+		assertThat(response.endDate()).isEqualTo(LocalDate.of(2024, 6, 30));
 	}
 
 	@Test
@@ -47,22 +47,18 @@ public class PromotionMapperTest {
 
 		PromotionResponse response = mapper.toPromotionResponse(projection);
 
-		assertThat(response.getId()).isEqualTo(1L);
-		assertThat(response.getTitle()).isEqualTo("Projection Title");
-		assertThat(response.getDescription()).isEqualTo("Projection Description");
-		assertThat(response.getBonusPoints()).isEqualTo(300);
-		assertThat(response.getStartDate()).isEqualTo(LocalDate.of(2024, 7, 1));
-		assertThat(response.getEndDate()).isEqualTo(LocalDate.of(2024, 7, 31));
+		assertThat(response.id()).isEqualTo(1L);
+		assertThat(response.title()).isEqualTo("Projection Title");
+		assertThat(response.description()).isEqualTo("Projection Description");
+		assertThat(response.bonusPoints()).isEqualTo(300);
+		assertThat(response.startDate()).isEqualTo(LocalDate.of(2024, 7, 1));
+		assertThat(response.endDate()).isEqualTo(LocalDate.of(2024, 7, 31));
 	}
 
 	@Test
 	void toPromotion() {
-		PromotionCreateRequest request = new PromotionCreateRequest();
-		request.setTitle("New Promotion");
-		request.setDescription("New promotion description");
-		request.setBonusPoints(200);
-		request.setStartDate(LocalDate.of(2024, 7, 1));
-		request.setEndDate(LocalDate.of(2024, 7, 31));
+		PromotionCreateRequest request = new PromotionCreateRequest("New Promotion", "New promotion description", 200,
+				LocalDate.of(2024, 7, 1), LocalDate.of(2024, 7, 31));
 
 		Promotion promotion = mapper.toPromotion(request);
 
@@ -81,12 +77,8 @@ public class PromotionMapperTest {
 		Promotion promotion = Promotion.builder().id(1L).title("Old Title").description("Old description")
 				.bonusPoints(100).build();
 
-		PromotionUpdateRequest request = new PromotionUpdateRequest();
-		request.setTitle("New Title");
-		request.setDescription("New description");
-		request.setBonusPoints(200);
-		request.setStartDate(LocalDate.of(2024, 8, 1));
-		request.setEndDate(LocalDate.of(2024, 8, 31));
+		PromotionUpdateRequest request = new PromotionUpdateRequest("New Title", "New description", 200,
+				LocalDate.of(2024, 8, 1), LocalDate.of(2024, 8, 31));
 
 		mapper.updatePromotionFromRequest(promotion, request);
 
@@ -104,11 +96,11 @@ public class PromotionMapperTest {
 
 		PromotionAdminResponse response = mapper.toPromotionAdminResponse(promotion);
 
-		assertThat(response.getId()).isEqualTo(1L);
-		assertThat(response.getTitle()).isEqualTo("Admin View");
-		assertThat(response.getBonusPoints()).isEqualTo(150);
-		assertThat(response.getStartDate()).isEqualTo(LocalDate.of(2024, 9, 1));
-		assertThat(response.getEndDate()).isEqualTo(LocalDate.of(2024, 9, 30));
+		assertThat(response.id()).isEqualTo(1L);
+		assertThat(response.title()).isEqualTo("Admin View");
+		assertThat(response.bonusPoints()).isEqualTo(150);
+		assertThat(response.startDate()).isEqualTo(LocalDate.of(2024, 9, 1));
+		assertThat(response.endDate()).isEqualTo(LocalDate.of(2024, 9, 30));
 	}
 
 	@Test
@@ -122,11 +114,11 @@ public class PromotionMapperTest {
 
 		PromotionAdminResponse response = mapper.toPromotionAdminResponse(projection);
 
-		assertThat(response.getId()).isEqualTo(1L);
-		assertThat(response.getTitle()).isEqualTo("Admin Projection");
-		assertThat(response.getBonusPoints()).isEqualTo(250);
-		assertThat(response.getStartDate()).isEqualTo(LocalDate.of(2024, 10, 1));
-		assertThat(response.getEndDate()).isEqualTo(LocalDate.of(2024, 10, 31));
+		assertThat(response.id()).isEqualTo(1L);
+		assertThat(response.title()).isEqualTo("Admin Projection");
+		assertThat(response.bonusPoints()).isEqualTo(250);
+		assertThat(response.startDate()).isEqualTo(LocalDate.of(2024, 10, 1));
+		assertThat(response.endDate()).isEqualTo(LocalDate.of(2024, 10, 31));
 	}
 
 	@Test

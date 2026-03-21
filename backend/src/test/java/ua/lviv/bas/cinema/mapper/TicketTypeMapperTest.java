@@ -29,9 +29,8 @@ public class TicketTypeMapperTest {
 
 	@Test
 	void toTicketType_ShouldMapAllFieldsFromCreateRequest() {
-		TicketTypeCreateRequest request = TicketTypeCreateRequest.builder().displayName("Child Ticket")
-				.priceMultiplier(new BigDecimal("0.70")).minAge(0).maxAge(12).requiresDocument(true)
-				.documentType("Birth Certificate").active(true).category(TicketTypeCategory.CHILD).build();
+		TicketTypeCreateRequest request = new TicketTypeCreateRequest("Child Ticket", new BigDecimal("0.70"), 0, 12,
+				true, "Birth Certificate", true, TicketTypeCategory.CHILD);
 
 		TicketType entity = mapper.toTicketType(request);
 
@@ -56,9 +55,8 @@ public class TicketTypeMapperTest {
 		TicketType existing = TicketType.builder().id(1L).displayName("Old Name")
 				.priceMultiplier(new BigDecimal("1.00")).build();
 
-		TicketTypeUpdateRequest updateRequest = TicketTypeUpdateRequest.builder().displayName("New Name")
-				.priceMultiplier(new BigDecimal("0.80")).minAge(18).maxAge(65).requiresDocument(true)
-				.documentType("ID Card").active(false).category(TicketTypeCategory.SENIOR).build();
+		TicketTypeUpdateRequest updateRequest = new TicketTypeUpdateRequest("New Name", new BigDecimal("0.80"), 18, 65,
+				true, "ID Card", false, TicketTypeCategory.SENIOR);
 
 		mapper.updateTicketTypeFromRequest(existing, updateRequest);
 
@@ -78,8 +76,8 @@ public class TicketTypeMapperTest {
 		TicketType existing = TicketType.builder().id(1L).displayName("Original Name")
 				.priceMultiplier(new BigDecimal("1.00")).minAge(10).active(true).build();
 
-		TicketTypeUpdateRequest updateRequest = TicketTypeUpdateRequest.builder().displayName("Updated Name")
-				.priceMultiplier(null).build();
+		TicketTypeUpdateRequest updateRequest = new TicketTypeUpdateRequest("Updated Name", null, null, null, null,
+				null, null, null);
 
 		mapper.updateTicketTypeFromRequest(existing, updateRequest);
 
@@ -97,15 +95,15 @@ public class TicketTypeMapperTest {
 
 		TicketTypeResponse response = mapper.toTicketTypeResponse(entity);
 
-		assertThat(response.getId()).isEqualTo(1L);
-		assertThat(response.getDisplayName()).isEqualTo("Student Ticket");
-		assertThat(response.getPriceMultiplier()).isEqualByComparingTo("0.50");
-		assertThat(response.getMinAge()).isEqualTo(18);
-		assertThat(response.getMaxAge()).isNull();
-		assertThat(response.isRequiresDocument()).isTrue();
-		assertThat(response.getDocumentType()).isEqualTo("Student ID");
-		assertThat(response.isActive()).isTrue();
-		assertThat(response.getCategory()).isEqualTo(TicketTypeCategory.STUDENT);
+		assertThat(response.id()).isEqualTo(1L);
+		assertThat(response.displayName()).isEqualTo("Student Ticket");
+		assertThat(response.priceMultiplier()).isEqualByComparingTo("0.50");
+		assertThat(response.minAge()).isEqualTo(18);
+		assertThat(response.maxAge()).isNull();
+		assertThat(response.requiresDocument()).isTrue();
+		assertThat(response.documentType()).isEqualTo("Student ID");
+		assertThat(response.active()).isTrue();
+		assertThat(response.category()).isEqualTo(TicketTypeCategory.STUDENT);
 	}
 
 	@Test
@@ -124,15 +122,15 @@ public class TicketTypeMapperTest {
 
 		TicketTypeResponse response = mapper.toTicketTypeResponse(projection);
 
-		assertThat(response.getId()).isEqualTo(1L);
-		assertThat(response.getDisplayName()).isEqualTo("Admin Projection");
-		assertThat(response.getPriceMultiplier()).isEqualByComparingTo("0.75");
-		assertThat(response.getMinAge()).isEqualTo(16);
-		assertThat(response.getMaxAge()).isEqualTo(60);
-		assertThat(response.isRequiresDocument()).isTrue();
-		assertThat(response.getDocumentType()).isEqualTo("Passport");
-		assertThat(response.isActive()).isTrue();
-		assertThat(response.getCategory()).isEqualTo(TicketTypeCategory.STANDARD);
+		assertThat(response.id()).isEqualTo(1L);
+		assertThat(response.displayName()).isEqualTo("Admin Projection");
+		assertThat(response.priceMultiplier()).isEqualByComparingTo("0.75");
+		assertThat(response.minAge()).isEqualTo(16);
+		assertThat(response.maxAge()).isEqualTo(60);
+		assertThat(response.requiresDocument()).isTrue();
+		assertThat(response.documentType()).isEqualTo("Passport");
+		assertThat(response.active()).isTrue();
+		assertThat(response.category()).isEqualTo(TicketTypeCategory.STANDARD);
 	}
 
 	@Test
@@ -142,11 +140,11 @@ public class TicketTypeMapperTest {
 
 		TicketTypeUserResponse response = mapper.toTicketTypeUserResponse(entity);
 
-		assertThat(response.getId()).isEqualTo(1L);
-		assertThat(response.getDisplayName()).isEqualTo("User Ticket");
-		assertThat(response.getPriceMultiplier()).isEqualByComparingTo("0.60");
-		assertThat(response.isRequiresDocument()).isTrue();
-		assertThat(response.getDocumentType()).isEqualTo("Student Card");
+		assertThat(response.id()).isEqualTo(1L);
+		assertThat(response.displayName()).isEqualTo("User Ticket");
+		assertThat(response.priceMultiplier()).isEqualByComparingTo("0.60");
+		assertThat(response.requiresDocument()).isTrue();
+		assertThat(response.documentType()).isEqualTo("Student Card");
 	}
 
 	@Test
@@ -161,11 +159,11 @@ public class TicketTypeMapperTest {
 
 		TicketTypeUserResponse response = mapper.toTicketTypeUserResponse(projection);
 
-		assertThat(response.getId()).isEqualTo(1L);
-		assertThat(response.getDisplayName()).isEqualTo("User Projection");
-		assertThat(response.getPriceMultiplier()).isEqualByComparingTo("0.85");
-		assertThat(response.isRequiresDocument()).isTrue();
-		assertThat(response.getDocumentType()).isEqualTo("ID Card");
+		assertThat(response.id()).isEqualTo(1L);
+		assertThat(response.displayName()).isEqualTo("User Projection");
+		assertThat(response.priceMultiplier()).isEqualByComparingTo("0.85");
+		assertThat(response.requiresDocument()).isTrue();
+		assertThat(response.documentType()).isEqualTo("ID Card");
 	}
 
 	@Test

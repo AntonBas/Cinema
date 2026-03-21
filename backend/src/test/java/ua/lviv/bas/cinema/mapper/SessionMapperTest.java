@@ -39,16 +39,16 @@ public class SessionMapperTest {
 
 		SessionAdminResponse response = mapper.toAdminResponse(session);
 
-		assertThat(response.getId()).isEqualTo(1L);
-		assertThat(response.getStartTime()).isEqualTo(fixedTime);
-		assertThat(response.getEndTime()).isEqualTo(fixedTime.plusMinutes(120));
-		assertThat(response.getBasePrice()).isEqualTo(new BigDecimal("250.00"));
-		assertThat(response.getMovieId()).isEqualTo(1L);
-		assertThat(response.getMovieTitle()).isEqualTo("Test Movie");
-		assertThat(response.getMovieDuration()).isEqualTo(120);
-		assertThat(response.getHallId()).isEqualTo(1L);
-		assertThat(response.getHallName()).isEqualTo("Hall 1");
-		assertThat(response.getStatus()).isEqualTo(CinemaSessionStatus.SCHEDULED);
+		assertThat(response.id()).isEqualTo(1L);
+		assertThat(response.startTime()).isEqualTo(fixedTime);
+		assertThat(response.endTime()).isEqualTo(fixedTime.plusMinutes(120));
+		assertThat(response.basePrice()).isEqualTo(new BigDecimal("250.00"));
+		assertThat(response.movieId()).isEqualTo(1L);
+		assertThat(response.movieTitle()).isEqualTo("Test Movie");
+		assertThat(response.movieDuration()).isEqualTo(120);
+		assertThat(response.hallId()).isEqualTo(1L);
+		assertThat(response.hallName()).isEqualTo("Hall 1");
+		assertThat(response.status()).isEqualTo(CinemaSessionStatus.SCHEDULED);
 	}
 
 	@Test
@@ -58,15 +58,15 @@ public class SessionMapperTest {
 
 		SessionAdminResponse response = mapper.toAdminResponse(session);
 
-		assertThat(response.getId()).isEqualTo(1L);
-		assertThat(response.getStartTime()).isEqualTo(fixedTime);
-		assertThat(response.getBasePrice()).isEqualTo(new BigDecimal("250.00"));
-		assertThat(response.getEndTime()).isNull();
-		assertThat(response.getMovieId()).isNull();
-		assertThat(response.getMovieTitle()).isNull();
-		assertThat(response.getMovieDuration()).isNull();
-		assertThat(response.getHallId()).isNull();
-		assertThat(response.getHallName()).isNull();
+		assertThat(response.id()).isEqualTo(1L);
+		assertThat(response.startTime()).isEqualTo(fixedTime);
+		assertThat(response.basePrice()).isEqualTo(new BigDecimal("250.00"));
+		assertThat(response.endTime()).isNull();
+		assertThat(response.movieId()).isNull();
+		assertThat(response.movieTitle()).isNull();
+		assertThat(response.movieDuration()).isNull();
+		assertThat(response.hallId()).isNull();
+		assertThat(response.hallName()).isNull();
 	}
 
 	@Test
@@ -86,19 +86,19 @@ public class SessionMapperTest {
 
 		SessionScheduleResponse response = mapper.toScheduleResponse(session);
 
-		assertThat(response.getId()).isEqualTo(1L);
-		assertThat(response.getStartTime()).isEqualTo(fixedTime);
-		assertThat(response.getEndTime()).isEqualTo(fixedTime.plusMinutes(90));
-		assertThat(response.getBasePrice()).isEqualTo(new BigDecimal("200.00"));
-		assertThat(response.getMovieId()).isEqualTo(1L);
-		assertThat(response.getMovieTitle()).isEqualTo("Schedule Movie");
-		assertThat(response.getMoviePosterFileName()).isEqualTo("poster.jpg");
-		assertThat(response.getMovieAgeRating()).isEqualTo(AgeRating.PEGI_12.name());
-		assertThat(response.getMovieDuration()).isEqualTo(90);
-		assertThat(response.getHallId()).isEqualTo(1L);
-		assertThat(response.getHallName()).isEqualTo("Hall 2");
-		assertThat(response.getHallCapacity()).isNull();
-		assertThat(response.getAvailableSeats()).isNull();
+		assertThat(response.id()).isEqualTo(1L);
+		assertThat(response.startTime()).isEqualTo(fixedTime);
+		assertThat(response.endTime()).isEqualTo(fixedTime.plusMinutes(90));
+		assertThat(response.basePrice()).isEqualTo(new BigDecimal("200.00"));
+		assertThat(response.movieId()).isEqualTo(1L);
+		assertThat(response.movieTitle()).isEqualTo("Schedule Movie");
+		assertThat(response.moviePosterFileName()).isEqualTo("poster.jpg");
+		assertThat(response.movieAgeRating()).isEqualTo(AgeRating.PEGI_12.name());
+		assertThat(response.movieDuration()).isEqualTo(90);
+		assertThat(response.hallId()).isEqualTo(1L);
+		assertThat(response.hallName()).isEqualTo("Hall 2");
+		assertThat(response.hallCapacity()).isNull();
+		assertThat(response.availableSeats()).isNull();
 	}
 
 	@Test
@@ -108,19 +108,19 @@ public class SessionMapperTest {
 
 		SessionScheduleResponse response = mapper.toScheduleResponse(session);
 
-		assertThat(response.getId()).isEqualTo(1L);
-		assertThat(response.getStartTime()).isEqualTo(fixedTime);
-		assertThat(response.getBasePrice()).isEqualTo(new BigDecimal("200.00"));
-		assertThat(response.getEndTime()).isNull();
-		assertThat(response.getMovieId()).isNull();
-		assertThat(response.getMovieTitle()).isNull();
-		assertThat(response.getMoviePosterFileName()).isNull();
-		assertThat(response.getMovieAgeRating()).isNull();
-		assertThat(response.getMovieDuration()).isNull();
-		assertThat(response.getHallId()).isNull();
-		assertThat(response.getHallName()).isNull();
-		assertThat(response.getHallCapacity()).isNull();
-		assertThat(response.getAvailableSeats()).isNull();
+		assertThat(response.id()).isEqualTo(1L);
+		assertThat(response.startTime()).isEqualTo(fixedTime);
+		assertThat(response.basePrice()).isEqualTo(new BigDecimal("200.00"));
+		assertThat(response.endTime()).isNull();
+		assertThat(response.movieId()).isNull();
+		assertThat(response.movieTitle()).isNull();
+		assertThat(response.moviePosterFileName()).isNull();
+		assertThat(response.movieAgeRating()).isNull();
+		assertThat(response.movieDuration()).isNull();
+		assertThat(response.hallId()).isNull();
+		assertThat(response.hallName()).isNull();
+		assertThat(response.hallCapacity()).isNull();
+		assertThat(response.availableSeats()).isNull();
 	}
 
 	@Test
@@ -133,8 +133,7 @@ public class SessionMapperTest {
 	@Test
 	void toEntityFromCreateRequest() {
 		LocalDateTime startTime = fixedTime.plusDays(1);
-		SessionCreateRequest request = SessionCreateRequest.builder().startTime(startTime)
-				.basePrice(new BigDecimal("300.00")).movieId(1L).hallId(2L).build();
+		SessionCreateRequest request = new SessionCreateRequest(startTime, new BigDecimal("300.00"), 1L, 2L);
 
 		Session session = mapper.toEntity(request);
 

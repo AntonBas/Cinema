@@ -41,13 +41,13 @@ public class TicketMapperTest {
 
 		TicketResponse response = mapper.toTicketResponse(ticket);
 
-		assertThat(response.getId()).isEqualTo(456L);
-		assertThat(response.getTicketCode()).isEqualTo("TKT-ABC123");
-		assertThat(response.getStatus()).isEqualTo(TicketStatus.ACTIVE);
-		assertThat(response.getPrice()).isEqualTo(new BigDecimal("250.00"));
-		assertThat(response.getTicketType()).isEqualTo("Adult Ticket");
-		assertThat(response.getMovieTitle()).isEqualTo("Inception");
-		assertThat(response.getHallName()).isEqualTo("Hall A");
+		assertThat(response.id()).isEqualTo(456L);
+		assertThat(response.ticketCode()).isEqualTo("TKT-ABC123");
+		assertThat(response.status()).isEqualTo(TicketStatus.ACTIVE);
+		assertThat(response.price()).isEqualTo(new BigDecimal("250.00"));
+		assertThat(response.ticketType()).isEqualTo("Adult Ticket");
+		assertThat(response.movieTitle()).isEqualTo("Inception");
+		assertThat(response.hallName()).isEqualTo("Hall A");
 	}
 
 	@Test
@@ -62,12 +62,12 @@ public class TicketMapperTest {
 
 		TicketResponse response = mapper.toTicketResponse(projection);
 
-		assertThat(response.getId()).isEqualTo(1L);
-		assertThat(response.getTicketCode()).isEqualTo("PROJ-TICKET");
-		assertThat(response.getPrice()).isEqualTo(new BigDecimal("200.00"));
-		assertThat(response.getTicketType()).isEqualTo("Child Ticket");
-		assertThat(response.getMovieTitle()).isEqualTo("Movie Title");
-		assertThat(response.getHallName()).isEqualTo("Hall Name");
+		assertThat(response.id()).isEqualTo(1L);
+		assertThat(response.ticketCode()).isEqualTo("PROJ-TICKET");
+		assertThat(response.price()).isEqualTo(new BigDecimal("200.00"));
+		assertThat(response.ticketType()).isEqualTo("Child Ticket");
+		assertThat(response.movieTitle()).isEqualTo("Movie Title");
+		assertThat(response.hallName()).isEqualTo("Hall Name");
 	}
 
 	@Test
@@ -79,12 +79,12 @@ public class TicketMapperTest {
 
 		TicketResponse response = mapper.toTicketResponse(ticket);
 
-		assertThat(response.getId()).isEqualTo(456L);
-		assertThat(response.getTicketCode()).isEqualTo("TKT-ABC123");
-		assertThat(response.getPrice()).isEqualTo(new BigDecimal("250.00"));
-		assertThat(response.getTicketType()).isEqualTo("Adult Ticket");
-		assertThat(response.getMovieTitle()).isNull();
-		assertThat(response.getHallName()).isNull();
+		assertThat(response.id()).isEqualTo(456L);
+		assertThat(response.ticketCode()).isEqualTo("TKT-ABC123");
+		assertThat(response.price()).isEqualTo(new BigDecimal("250.00"));
+		assertThat(response.ticketType()).isEqualTo("Adult Ticket");
+		assertThat(response.movieTitle()).isNull();
+		assertThat(response.hallName()).isNull();
 	}
 
 	@Test
@@ -100,11 +100,11 @@ public class TicketMapperTest {
 
 		TicketResponse response = mapper.toTicketResponse(ticket);
 
-		assertThat(response.getId()).isEqualTo(456L);
-		assertThat(response.getTicketCode()).isEqualTo("TKT-ABC123");
-		assertThat(response.getPrice()).isEqualTo(new BigDecimal("250.00"));
-		assertThat(response.getTicketType()).isNull();
-		assertThat(response.getMovieTitle()).isEqualTo("Inception");
+		assertThat(response.id()).isEqualTo(456L);
+		assertThat(response.ticketCode()).isEqualTo("TKT-ABC123");
+		assertThat(response.price()).isEqualTo(new BigDecimal("250.00"));
+		assertThat(response.ticketType()).isNull();
+		assertThat(response.movieTitle()).isEqualTo("Inception");
 	}
 
 	@Test

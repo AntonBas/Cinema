@@ -22,10 +22,10 @@ public class PaymentMapperTest {
 		PaymentLiqPayDataResponse response = mapper.toPaymentLiqPayDataResponse(payment);
 
 		assertThat(response).isNotNull();
-		assertThat(response.getLiqpayOrderId()).isEqualTo("ORDER_ABC123");
-		assertThat(response.getData()).isNull();
-		assertThat(response.getSignature()).isNull();
-		assertThat(response.getPaymentUrl()).isNull();
+		assertThat(response.liqpayOrderId()).isEqualTo("ORDER_ABC123");
+		assertThat(response.data()).isNull();
+		assertThat(response.signature()).isNull();
+		assertThat(response.paymentUrl()).isNull();
 	}
 
 	@Test

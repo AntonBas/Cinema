@@ -2,6 +2,8 @@ package ua.lviv.bas.cinema.mapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.LocalDate;
+
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
 
@@ -18,8 +20,8 @@ public class UserMapperTest {
 
 	@Test
 	void toUserShouldMapRegistrationRequest() {
-		UserRegistrationRequest request = UserRegistrationRequest.builder().email("test@example.com").firstName("John")
-				.lastName("Doe").build();
+		UserRegistrationRequest request = new UserRegistrationRequest("test@example.com", "John", "Doe",
+				LocalDate.of(1990, 1, 1), "Kyiv", "+380501234567", "password", "password");
 
 		User user = userMapper.toUser(request);
 
@@ -38,17 +40,18 @@ public class UserMapperTest {
 
 		UserResponse response = userMapper.toUserResponse(user);
 
-		assertThat(response.getId()).isEqualTo(1L);
-		assertThat(response.getEmail()).isEqualTo("test@example.com");
-		assertThat(response.getFirstName()).isEqualTo("John");
-		assertThat(response.getLastName()).isEqualTo("Doe");
+		assertThat(response.id()).isEqualTo(1L);
+		assertThat(response.email()).isEqualTo("test@example.com");
+		assertThat(response.firstName()).isEqualTo("John");
+		assertThat(response.lastName()).isEqualTo("Doe");
 	}
 
 	@Test
 	void updateUserFromRequestShouldUpdateFields() {
 		User user = User.builder().firstName("Old").lastName("User").build();
 
-		UserUpdateRequest request = UserUpdateRequest.builder().firstName("New").lastName("Name").build();
+		UserUpdateRequest request = new UserUpdateRequest("New", "Name", LocalDate.of(1990, 1, 1), "Lviv",
+				"+380502345678");
 
 		userMapper.updateUserFromRequest(request, user);
 

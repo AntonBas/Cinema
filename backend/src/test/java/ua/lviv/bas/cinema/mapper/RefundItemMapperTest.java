@@ -27,12 +27,12 @@ public class RefundItemMapperTest {
 
 		RefundItemResponse response = mapper.toRefundItemResponse(refundItem);
 
-		assertThat(response.getId()).isEqualTo(1L);
-		assertThat(response.getTicketId()).isEqualTo(123L);
-		assertThat(response.getTicketCode()).isEqualTo("TICKET-ABC123");
-		assertThat(response.getTicketPrice()).isEqualTo(new BigDecimal("300.00"));
-		assertThat(response.getRefundAmount()).isEqualTo(new BigDecimal("240.00"));
-		assertThat(response.getStatus()).isEqualTo("APPROVED"); // String замість enum
+		assertThat(response.id()).isEqualTo(1L);
+		assertThat(response.ticketId()).isEqualTo(123L);
+		assertThat(response.ticketCode()).isEqualTo("TICKET-ABC123");
+		assertThat(response.ticketPrice()).isEqualTo(new BigDecimal("300.00"));
+		assertThat(response.refundAmount()).isEqualTo(new BigDecimal("240.00"));
+		assertThat(response.status()).isEqualTo("APPROVED");
 	}
 
 	@Test
@@ -42,12 +42,12 @@ public class RefundItemMapperTest {
 
 		RefundItemResponse response = mapper.toRefundItemResponse(refundItem);
 
-		assertThat(response.getId()).isEqualTo(2L);
-		assertThat(response.getTicketId()).isNull();
-		assertThat(response.getTicketCode()).isNull();
-		assertThat(response.getTicketPrice()).isEqualTo(new BigDecimal("200.00"));
-		assertThat(response.getRefundAmount()).isEqualTo(new BigDecimal("160.00"));
-		assertThat(response.getStatus()).isEqualTo("PENDING"); // String замість enum
+		assertThat(response.id()).isEqualTo(2L);
+		assertThat(response.ticketId()).isNull();
+		assertThat(response.ticketCode()).isNull();
+		assertThat(response.ticketPrice()).isEqualTo(new BigDecimal("200.00"));
+		assertThat(response.refundAmount()).isEqualTo(new BigDecimal("160.00"));
+		assertThat(response.status()).isEqualTo("PENDING");
 	}
 
 	@Test
@@ -59,10 +59,10 @@ public class RefundItemMapperTest {
 
 		RefundItemResponse response = mapper.toRefundItemResponse(refundItem);
 
-		assertThat(response.getId()).isEqualTo(3L);
-		assertThat(response.getTicketId()).isNull();
-		assertThat(response.getTicketCode()).isNull();
-		assertThat(response.getTicketPrice()).isEqualTo(new BigDecimal("150.00"));
+		assertThat(response.id()).isEqualTo(3L);
+		assertThat(response.ticketId()).isNull();
+		assertThat(response.ticketCode()).isNull();
+		assertThat(response.ticketPrice()).isEqualTo(new BigDecimal("150.00"));
 	}
 
 	@Test
@@ -80,9 +80,9 @@ public class RefundItemMapperTest {
 
 		RefundItemResponse response = mapper.toRefundItemResponse(refundItem);
 
-		assertThat(response.getId()).isEqualTo(9L);
-		assertThat(response.getTicketId()).isEqualTo(999L);
-		assertThat(response.getTicketCode()).isEqualTo("TICKET-STATUS");
-		assertThat(response.getStatus()).isEqualTo("PROCESSED"); // String замість enum
+		assertThat(response.id()).isEqualTo(9L);
+		assertThat(response.ticketId()).isEqualTo(999L);
+		assertThat(response.ticketCode()).isEqualTo("TICKET-STATUS");
+		assertThat(response.status()).isEqualTo("PROCESSED");
 	}
 }

@@ -40,20 +40,20 @@ public class RefundMapperTest {
 		RefundResponse response = refundMapper.toRefundResponse(refund);
 
 		assertThat(response).isNotNull();
-		assertThat(response.getId()).isEqualTo(50L);
-		assertThat(response.getPaymentId()).isEqualTo(100L);
-		assertThat(response.getTotalAmount()).isEqualTo(new BigDecimal("400.00"));
-		assertThat(response.getTotalBonusPointsToDeduct()).isEqualTo(20);
-		assertThat(response.getReason()).isEqualTo("Changed my mind");
-		assertThat(response.getProcessedBy()).isEqualTo("Admin User");
-		assertThat(response.getStatus()).isEqualTo("APPROVED");
-		assertThat(response.getCreatedAt()).isEqualTo(LocalDateTime.of(2024, 1, 15, 14, 30));
-		assertThat(response.getProcessedAt()).isEqualTo(LocalDateTime.of(2024, 1, 15, 15, 0));
+		assertThat(response.id()).isEqualTo(50L);
+		assertThat(response.paymentId()).isEqualTo(100L);
+		assertThat(response.totalAmount()).isEqualTo(new BigDecimal("400.00"));
+		assertThat(response.totalBonusPointsToDeduct()).isEqualTo(20);
+		assertThat(response.reason()).isEqualTo("Changed my mind");
+		assertThat(response.processedBy()).isEqualTo("Admin User");
+		assertThat(response.status()).isEqualTo("APPROVED");
+		assertThat(response.createdAt()).isEqualTo(LocalDateTime.of(2024, 1, 15, 14, 30));
+		assertThat(response.processedAt()).isEqualTo(LocalDateTime.of(2024, 1, 15, 15, 0));
 
-		assertThat(response.getRefundNumber()).isNull();
-		assertThat(response.getPaymentMethod()).isNull();
-		assertThat(response.getMessage()).isNull();
-		assertThat(response.getEstimatedRefundTime()).isNull();
+		assertThat(response.refundNumber()).isNull();
+		assertThat(response.paymentMethod()).isNull();
+		assertThat(response.message()).isNull();
+		assertThat(response.estimatedRefundTime()).isNull();
 	}
 
 	@Test
@@ -66,11 +66,11 @@ public class RefundMapperTest {
 		RefundResponse response = refundMapper.toRefundResponse(refund);
 
 		assertThat(response).isNotNull();
-		assertThat(response.getId()).isEqualTo(51L);
-		assertThat(response.getPaymentId()).isNull();
-		assertThat(response.getTotalAmount()).isEqualTo(new BigDecimal("200.00"));
-		assertThat(response.getTotalBonusPointsToDeduct()).isZero();
-		assertThat(response.getStatus()).isEqualTo("PENDING");
+		assertThat(response.id()).isEqualTo(51L);
+		assertThat(response.paymentId()).isNull();
+		assertThat(response.totalAmount()).isEqualTo(new BigDecimal("200.00"));
+		assertThat(response.totalBonusPointsToDeduct()).isZero();
+		assertThat(response.status()).isEqualTo("PENDING");
 	}
 
 	@Test
@@ -85,10 +85,10 @@ public class RefundMapperTest {
 		RefundResponse response = refundMapper.toRefundResponse(refund);
 
 		assertThat(response).isNotNull();
-		assertThat(response.getReason()).isNull();
-		assertThat(response.getProcessedBy()).isNull();
-		assertThat(response.getTotalBonusPointsToDeduct()).isEqualTo(15);
-		assertThat(response.getStatus()).isEqualTo("PENDING");
+		assertThat(response.reason()).isNull();
+		assertThat(response.processedBy()).isNull();
+		assertThat(response.totalBonusPointsToDeduct()).isEqualTo(15);
+		assertThat(response.status()).isEqualTo("PENDING");
 	}
 
 	@Test
@@ -102,9 +102,9 @@ public class RefundMapperTest {
 
 		RefundResponse response = refundMapper.toRefundResponse(refund);
 
-		assertThat(response.getTotalAmount()).isEqualTo(BigDecimal.ZERO);
-		assertThat(response.getTotalBonusPointsToDeduct()).isZero();
-		assertThat(response.getStatus()).isEqualTo("PROCESSED");
+		assertThat(response.totalAmount()).isEqualTo(BigDecimal.ZERO);
+		assertThat(response.totalBonusPointsToDeduct()).isZero();
+		assertThat(response.status()).isEqualTo("PROCESSED");
 	}
 
 	@Test
@@ -118,10 +118,10 @@ public class RefundMapperTest {
 
 		RefundResponse response = refundMapper.toRefundResponse(refund);
 
-		assertThat(response.getCreatedAt()).isNull();
-		assertThat(response.getProcessedAt()).isNull();
-		assertThat(response.getTotalBonusPointsToDeduct()).isEqualTo(5);
-		assertThat(response.getStatus()).isEqualTo("PENDING");
+		assertThat(response.createdAt()).isNull();
+		assertThat(response.processedAt()).isNull();
+		assertThat(response.totalBonusPointsToDeduct()).isEqualTo(5);
+		assertThat(response.status()).isEqualTo("PENDING");
 	}
 
 	@Test
@@ -146,10 +146,10 @@ public class RefundMapperTest {
 				.totalAmount(new BigDecimal("100.00")).totalBonusPointsToDeduct(10).status(RefundStatus.PROCESSED)
 				.build();
 
-		assertThat(refundMapper.toRefundResponse(pendingRefund).getStatus()).isEqualTo("PENDING");
-		assertThat(refundMapper.toRefundResponse(approvedRefund).getStatus()).isEqualTo("APPROVED");
-		assertThat(refundMapper.toRefundResponse(rejectedRefund).getStatus()).isEqualTo("REJECTED");
-		assertThat(refundMapper.toRefundResponse(processedRefund).getStatus()).isEqualTo("PROCESSED");
+		assertThat(refundMapper.toRefundResponse(pendingRefund).status()).isEqualTo("PENDING");
+		assertThat(refundMapper.toRefundResponse(approvedRefund).status()).isEqualTo("APPROVED");
+		assertThat(refundMapper.toRefundResponse(rejectedRefund).status()).isEqualTo("REJECTED");
+		assertThat(refundMapper.toRefundResponse(processedRefund).status()).isEqualTo("PROCESSED");
 	}
 
 	@Test
@@ -182,14 +182,14 @@ public class RefundMapperTest {
 		RefundResponse response = refundMapper.toRefundResponse(refund);
 
 		assertThat(response).isNotNull();
-		assertThat(response.getId()).isEqualTo(61L);
-		assertThat(response.getPaymentId()).isEqualTo(107L);
-		assertThat(response.getTotalAmount()).isEqualTo(new BigDecimal("350.00"));
-		assertThat(response.getTotalBonusPointsToDeduct()).isEqualTo(25);
-		assertThat(response.getReason()).isEqualTo("Technical issues");
-		assertThat(response.getProcessedBy()).isEqualTo("System Admin");
-		assertThat(response.getStatus()).isEqualTo("APPROVED");
-		assertThat(response.getCreatedAt()).isEqualTo(LocalDateTime.of(2024, 1, 17, 9, 0));
-		assertThat(response.getProcessedAt()).isEqualTo(LocalDateTime.of(2024, 1, 17, 10, 0));
+		assertThat(response.id()).isEqualTo(61L);
+		assertThat(response.paymentId()).isEqualTo(107L);
+		assertThat(response.totalAmount()).isEqualTo(new BigDecimal("350.00"));
+		assertThat(response.totalBonusPointsToDeduct()).isEqualTo(25);
+		assertThat(response.reason()).isEqualTo("Technical issues");
+		assertThat(response.processedBy()).isEqualTo("System Admin");
+		assertThat(response.status()).isEqualTo("APPROVED");
+		assertThat(response.createdAt()).isEqualTo(LocalDateTime.of(2024, 1, 17, 9, 0));
+		assertThat(response.processedAt()).isEqualTo(LocalDateTime.of(2024, 1, 17, 10, 0));
 	}
 }
