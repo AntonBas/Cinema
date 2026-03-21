@@ -26,12 +26,16 @@ import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.enums.UserRole;
 import ua.lviv.bas.cinema.domain.enums.VerificationStatus;
 import ua.lviv.bas.cinema.repository.UserRepository;
+import ua.lviv.bas.cinema.service.user.BonusService;
 
 @ExtendWith(MockitoExtension.class)
 public class CustomOAuth2UserServiceTest {
 
 	@Mock
 	private UserRepository userRepository;
+
+	@Mock
+	private BonusService bonusService;
 
 	@Mock
 	private OAuth2UserRequest userRequest;
@@ -81,6 +85,9 @@ public class CustomOAuth2UserServiceTest {
 		assertThat(savedUser.getPassword()).isNotNull();
 		assertThat(savedUser.getPassword()).isNotBlank();
 		assertThat(result).isEqualTo(oAuth2User);
+
+		verify(bonusService).getOrCreateCard(savedUser);
+		verify(bonusService).awardWelcomeBonus(savedUser);
 	}
 
 	@Test
@@ -97,6 +104,9 @@ public class CustomOAuth2UserServiceTest {
 		assertThat(existingUser.isEnabled()).isTrue();
 		verify(userRepository).save(existingUser);
 		assertThat(result).isEqualTo(oAuth2User);
+
+		verify(bonusService, never()).getOrCreateCard(any());
+		verify(bonusService, never()).awardWelcomeBonus(any());
 	}
 
 	@Test
@@ -111,6 +121,9 @@ public class CustomOAuth2UserServiceTest {
 
 		verify(userRepository, never()).save(any());
 		assertThat(result).isEqualTo(oAuth2User);
+
+		verify(bonusService, never()).getOrCreateCard(any());
+		verify(bonusService, never()).awardWelcomeBonus(any());
 	}
 
 	@Test
@@ -129,6 +142,9 @@ public class CustomOAuth2UserServiceTest {
 
 		assertThat(savedUser.getFirstName()).isEqualTo("John");
 		assertThat(savedUser.getLastName()).isEqualTo("Michael Doe");
+
+		verify(bonusService).getOrCreateCard(savedUser);
+		verify(bonusService).awardWelcomeBonus(savedUser);
 	}
 
 	@Test
@@ -147,6 +163,9 @@ public class CustomOAuth2UserServiceTest {
 
 		assertThat(savedUser.getFirstName()).isEqualTo("John");
 		assertThat(savedUser.getLastName()).isEmpty();
+
+		verify(bonusService).getOrCreateCard(savedUser);
+		verify(bonusService).awardWelcomeBonus(savedUser);
 	}
 
 	@Test
@@ -164,5 +183,8 @@ public class CustomOAuth2UserServiceTest {
 		assertThat(savedUser.getPassword()).isNotNull();
 		assertThat(savedUser.getPassword()).isNotBlank();
 		assertThat(UUID.fromString(savedUser.getPassword())).isNotNull();
+
+		verify(bonusService).getOrCreateCard(savedUser);
+		verify(bonusService).awardWelcomeBonus(savedUser);
 	}
 }
