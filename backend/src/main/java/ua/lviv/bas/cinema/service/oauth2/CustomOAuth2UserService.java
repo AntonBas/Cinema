@@ -18,6 +18,7 @@ import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.enums.UserRole;
 import ua.lviv.bas.cinema.domain.enums.VerificationStatus;
 import ua.lviv.bas.cinema.repository.UserRepository;
+import ua.lviv.bas.cinema.service.user.BonusService;
 
 @Slf4j
 @Service
@@ -25,6 +26,7 @@ import ua.lviv.bas.cinema.repository.UserRepository;
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
 	private final UserRepository userRepository;
+	private final BonusService bonusService;
 
 	@Override
 	@Transactional
@@ -61,6 +63,10 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
 			user = userRepository.save(user);
 			log.info("Created new OAuth2 user: {}", email);
+
+			bonusService.getOrCreateCard(user);
+			bonusService.awardWelcomeBonus(user);
+			log.info("Created bonus card and awarded welcome bonus for OAuth2 user: {}", email);
 		}
 
 		return oAuth2User;
