@@ -81,6 +81,7 @@ export const useCinemaHalls = () => {
     }, [mutationApi, hallsApi, hallDetailApi, hallLayoutApi]);
 
     const getHallLayout = useCallback(async (id: number) => {
+        hallLayoutApi.invalidateCache(`hall_layout_${id}`);
         const response = await hallLayoutApi.execute(
             () => cinemaHallApi.admin.getLayout(id),
             {

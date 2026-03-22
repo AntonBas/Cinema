@@ -42,21 +42,26 @@ export const HallLayoutProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         setLayout(null);
     }, []);
 
+    const refreshLayout = useCallback(async () => {
+        if (currentHall) {
+            const response = await getHallLayout(currentHall.id);
+            setLayout(response);
+        }
+    }, [currentHall, getHallLayout]);
+
     const handleUpdateSeatType = useCallback(async (seatId: number, type: SeatType) => {
         if (!currentHall) return;
         await updateSeatType(currentHall.id, seatId, type);
-        const updated = await getHallLayout(currentHall.id);
-        setLayout(updated);
-    }, [currentHall, updateSeatType, getHallLayout]);
+        await refreshLayout();
+    }, [currentHall, updateSeatType, refreshLayout]);
 
     const handleToggleSeatStatus = useCallback(async (seatId: number) => {
         if (!currentHall || !layout) return;
         const seat = layout.rows.flatMap(r => r.seats).find(s => s.id === seatId);
         if (!seat) return;
         await setSeatStatus(currentHall.id, seatId, !seat.active);
-        const updated = await getHallLayout(currentHall.id);
-        setLayout(updated);
-    }, [currentHall, layout, setSeatStatus, getHallLayout]);
+        await refreshLayout();
+    }, [currentHall, layout, setSeatStatus, refreshLayout]);
 
     return (
         <HallLayoutContext.Provider
