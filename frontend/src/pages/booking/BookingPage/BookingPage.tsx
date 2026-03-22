@@ -21,30 +21,10 @@ interface NotificationState {
 }
 
 const BOOKING_STEPS = [
-    {
-        id: 1,
-        title: 'Select Seats',
-        description: 'Choose your seats',
-        isClickable: true
-    },
-    {
-        id: 2,
-        title: 'Booking Summary',
-        description: 'Review your booking',
-        isClickable: false
-    },
-    {
-        id: 3,
-        title: 'Payment',
-        description: 'Secure payment',
-        isClickable: false
-    },
-    {
-        id: 4,
-        title: 'Confirmation',
-        description: 'Booking confirmed',
-        isClickable: false
-    }
+    { id: 1, title: 'Select Seats', description: 'Choose your seats', isClickable: true },
+    { id: 2, title: 'Booking Summary', description: 'Review your booking', isClickable: false },
+    { id: 3, title: 'Payment', description: 'Secure payment', isClickable: false },
+    { id: 4, title: 'Confirmation', description: 'Booking confirmed', isClickable: false }
 ];
 
 export const BookingPage: React.FC = () => {
@@ -72,15 +52,8 @@ export const BookingPage: React.FC = () => {
         loadingSeats
     } = useSeatReservation(sessionIdNum);
 
-    const {
-        myBalance,
-        getMyBalance
-    } = useBonus();
-
-    const {
-        create,
-        loading: bookingLoading
-    } = useBooking();
+    const { myBalance, getMyBalance } = useBonus();
+    const { create, loading: bookingLoading } = useBooking();
 
     const loadBonusDataRef = React.useRef(getMyBalance);
 
@@ -100,7 +73,6 @@ export const BookingPage: React.FC = () => {
                 try {
                     const token = localStorage.getItem('authToken');
                     if (!token) return;
-
                     await loadBonusDataRef.current();
                 } catch (error) {
                     showNotification('Failed to load bonus data', 'error');
@@ -113,7 +85,6 @@ export const BookingPage: React.FC = () => {
     useEffect(() => {
         if (myBalance) {
             setMinUsablePoints(myBalance.minUsablePoints || 0);
-
             const maxPoints = Math.min(
                 myBalance.pointsBalance || 0,
                 myBalance.maxUsablePoints || 0,
@@ -140,14 +111,11 @@ export const BookingPage: React.FC = () => {
     const handleSeatClick = async (seatId: number) => {
         try {
             setSelectionError(null);
-
             const seat = seatData?.seats.find((s: SeatInfo) => s.id === seatId);
-            if (!seat) {
-                throw new Error('Seat not found');
-            }
+            if (!seat) throw new Error('Seat not found');
 
             if (isSeatSelected(seatId)) {
-                deselectSeat(seatId);
+                await deselectSeat(seatId);
             } else {
                 await hookSelectSeat(seat);
             }
@@ -164,14 +132,7 @@ export const BookingPage: React.FC = () => {
             return;
         }
 
-        if (!sessionIdNum) {
-            showNotification('Invalid session', 'error');
-            return;
-        }
-
         try {
-            setSelectionError(null);
-
             const token = localStorage.getItem('authToken');
             if (!token) {
                 showNotification('You need to be logged in to book tickets', 'warning');
@@ -185,16 +146,14 @@ export const BookingPage: React.FC = () => {
 
             const response = await create({
                 sessionId: sessionIdNum,
-                seats: seats,
+                seats,
                 bonusPointsToUse: bonusPointsToUse > 0 ? bonusPointsToUse : undefined
             });
 
             if (response) {
                 showNotification('Booking created successfully!', 'success');
                 await getSeatAvailability();
-                setTimeout(() => {
-                    navigate(`/booking/summary/${response.id}`);
-                }, 1000);
+                setTimeout(() => navigate(`/booking/summary/${response.id}`), 1000);
             }
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Failed to create booking';

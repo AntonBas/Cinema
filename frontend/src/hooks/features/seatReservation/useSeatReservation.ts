@@ -13,17 +13,14 @@ export interface SelectedSeat {
 }
 
 export const useSeatReservation = (sessionId: number, maxSeats?: number) => {
-    const [seatData, setSeatData] = useState<SeatReservationResponse | null>(null);
     const [selectedSeats, setSelectedSeats] = useState<SelectedSeat[]>([]);
     const [loadingSeats, setLoadingSeats] = useState<number[]>([]);
 
     const { showNotification } = useNotification();
-
     const seatApi = useApi<SeatReservationResponse>();
     const holdApi = useApi<void>();
 
-    const rawLoading = seatApi.loading || holdApi.loading;
-    const loading = useDelayedLoading(rawLoading, { delay: 150, minDisplayTime: 300 });
+    const loading = useDelayedLoading(seatApi.loading || holdApi.loading, { delay: 150, minDisplayTime: 300 });
     const error = !!seatApi.error || !!holdApi.error;
 
     const getSeatAvailability = useCallback(async () => {
@@ -35,15 +32,28 @@ export const useSeatReservation = (sessionId: number, maxSeats?: number) => {
                 showErrorNotification: false,
             }
         );
-        if (response) {
-            setSeatData(response);
-        }
         return response || null;
     }, [seatApi, sessionId]);
 
     const invalidateCache = useCallback(() => {
         seatApi.invalidateCache(`seat_availability_${sessionId}`);
     }, [seatApi, sessionId]);
+
+    const updateSeatLocally = useCallback((seatId: number, updates: Partial<SeatInfo>) => {
+        if (!seatApi.data) return;
+
+        const updatedSeats = seatApi.data.seats.map(seat =>
+            seat.id === seatId ? { ...seat, ...updates } : seat
+        );
+
+        const newAvailableSeats = updatedSeats.filter(seat => seat.available).length;
+
+        seatApi.setData({
+            ...seatApi.data,
+            seats: updatedSeats,
+            availableSeats: newAvailableSeats
+        });
+    }, [seatApi]);
 
     const temporaryHoldSeat = useCallback(async (seatId: number) => {
         setLoadingSeats(prev => [...prev, seatId]);
@@ -53,9 +63,7 @@ export const useSeatReservation = (sessionId: number, maxSeats?: number) => {
         try {
             const response = await holdApi.execute(
                 () => seatReservationApi.temporaryHoldSeat(sessionId, seatId),
-                {
-                    showErrorNotification: false,
-                }
+                { showErrorNotification: false }
             );
             success = response !== null;
         } catch (error: any) {
@@ -66,39 +74,42 @@ export const useSeatReservation = (sessionId: number, maxSeats?: number) => {
             }
         }
 
-        if (success && seatData) {
-            const updatedSeats = seatData.seats.map(seat => {
-                if (seat.id === seatId) {
-                    return {
-                        ...seat,
-                        available: false,
-                        temporarilyReserved: true
-                    };
-                }
-                return seat;
-            });
-
-            const newAvailableSeats = updatedSeats.filter(seat => seat.available).length;
-
-            setSeatData({
-                ...seatData,
-                seats: updatedSeats,
-                availableSeats: newAvailableSeats
-            });
+        if (success) {
+            updateSeatLocally(seatId, { available: false, temporarilyReserved: true });
         }
 
         setLoadingSeats(prev => prev.filter(id => id !== seatId));
-
         return success;
-    }, [holdApi, sessionId, seatData, showNotification]);
+    }, [holdApi, sessionId, updateSeatLocally, showNotification]);
+
+    const cancelTemporaryHold = useCallback(async (seatId: number) => {
+        setLoadingSeats(prev => [...prev, seatId]);
+
+        let success = false;
+
+        try {
+            const response = await holdApi.execute(
+                () => seatReservationApi.cancelTemporaryHold(sessionId, seatId),
+                { showErrorNotification: false }
+            );
+            success = response !== null;
+        } catch (error: any) {
+            console.error('Failed to cancel hold:', error);
+        }
+
+        if (success) {
+            updateSeatLocally(seatId, { available: true, temporarilyReserved: false });
+        }
+
+        setLoadingSeats(prev => prev.filter(id => id !== seatId));
+        return success;
+    }, [holdApi, sessionId, updateSeatLocally]);
 
     const getTicketPrice = useCallback((seat: SeatInfo, ticketTypeId?: number): TicketPriceInfo | null => {
         if (!seat.ticketPrices?.length) return null;
-
         if (ticketTypeId) {
             return seat.ticketPrices.find(tp => tp.ticketTypeId === ticketTypeId) || null;
         }
-
         return seat.ticketPrices[0] || null;
     }, []);
 
@@ -114,52 +125,31 @@ export const useSeatReservation = (sessionId: number, maxSeats?: number) => {
         }
 
         const ticketPrice = getTicketPrice(seat, ticketTypeId);
-
         if (!ticketPrice) {
             showNotification('No ticket price available for this seat', 'error');
             return;
         }
 
         const success = await temporaryHoldSeat(seat.id);
-
         if (success) {
-            const selectedSeat: SelectedSeat = {
+            setSelectedSeats(prev => [...prev, {
                 seat,
                 ticketTypeId: ticketPrice.ticketTypeId,
                 price: parseFloat(ticketPrice.finalPrice),
                 ticketTypeName: ticketPrice.ticketTypeName,
-            };
-
-            setSelectedSeats(prev => [...prev, selectedSeat]);
+            }]);
         }
     }, [maxSeats, selectedSeats.length, getTicketPrice, temporaryHoldSeat, showNotification]);
 
-    const deselectSeat = useCallback((seatId: number) => {
-        setSelectedSeats(prev => prev.filter(s => s.seat.id !== seatId));
-        if (seatData) {
-            const updatedSeats = seatData.seats.map(seat => {
-                if (seat.id === seatId) {
-                    return {
-                        ...seat,
-                        available: true,
-                        temporarilyReserved: false
-                    };
-                }
-                return seat;
-            });
-
-            const newAvailableSeats = updatedSeats.filter(seat => seat.available).length;
-
-            setSeatData({
-                ...seatData,
-                seats: updatedSeats,
-                availableSeats: newAvailableSeats
-            });
+    const deselectSeat = useCallback(async (seatId: number) => {
+        const success = await cancelTemporaryHold(seatId);
+        if (success) {
+            setSelectedSeats(prev => prev.filter(s => s.seat.id !== seatId));
         }
-    }, [seatData]);
+    }, [cancelTemporaryHold]);
 
     const updateSeatTicketType = useCallback((seatId: number, ticketTypeId: number) => {
-        const seat = seatData?.seats.find(s => s.id === seatId);
+        const seat = seatApi.data?.seats.find(s => s.id === seatId);
         if (!seat) return;
 
         const ticketPrice = getTicketPrice(seat, ticketTypeId);
@@ -168,40 +158,18 @@ export const useSeatReservation = (sessionId: number, maxSeats?: number) => {
         setSelectedSeats(prev =>
             prev.map(selected =>
                 selected.seat.id === seatId
-                    ? {
-                        ...selected,
-                        ticketTypeId,
-                        price: parseFloat(ticketPrice.finalPrice),
-                        ticketTypeName: ticketPrice.ticketTypeName,
-                    }
+                    ? { ...selected, ticketTypeId, price: parseFloat(ticketPrice.finalPrice), ticketTypeName: ticketPrice.ticketTypeName }
                     : selected
             )
         );
-    }, [seatData, getTicketPrice]);
+    }, [seatApi.data, getTicketPrice]);
 
     const clearSelection = useCallback(() => {
-        if (seatData) {
-            const resetSeats = seatData.seats.map(seat => {
-                if (selectedSeats.some(s => s.seat.id === seat.id)) {
-                    return {
-                        ...seat,
-                        available: true,
-                        temporarilyReserved: false
-                    };
-                }
-                return seat;
-            });
-
-            const newAvailableSeats = resetSeats.filter(seat => seat.available).length;
-
-            setSeatData({
-                ...seatData,
-                seats: resetSeats,
-                availableSeats: newAvailableSeats
-            });
-        }
+        selectedSeats.forEach(seat => {
+            cancelTemporaryHold(seat.seat.id);
+        });
         setSelectedSeats([]);
-    }, [seatData, selectedSeats]);
+    }, [selectedSeats, cancelTemporaryHold]);
 
     const isSeatSelected = useCallback((seatId: number) => {
         return selectedSeats.some(s => s.seat.id === seatId);
@@ -215,37 +183,29 @@ export const useSeatReservation = (sessionId: number, maxSeats?: number) => {
         return selectedSeats.reduce((sum, seat) => sum + seat.price, 0);
     }, [selectedSeats]);
 
-    const availableSeatsCount = seatData?.availableSeats ?? 0;
-    const isSoldOut = availableSeatsCount === 0;
-
     return {
-        data: seatData,
+        data: seatApi.data,
         loading,
         error,
-        isSuccess: !!seatData,
-
         selectedSeats,
         totalPrice,
         totalSelected: selectedSeats.length,
         loadingSeats,
-
         getSeatAvailability,
         invalidateCache,
         reset: seatApi.reset,
-
         selectSeat,
         deselectSeat,
         updateSeatTicketType,
         clearSelection,
         isSeatSelected,
         getSelectedSeat,
-
-        availableSeatsCount,
-        seats: seatData?.seats || [],
-        hallName: seatData?.hallName,
-        movieTitle: seatData?.movieTitle,
-        basePrice: seatData?.basePrice,
-        hasData: !!seatData,
-        isSoldOut,
+        availableSeatsCount: seatApi.data?.availableSeats ?? 0,
+        seats: seatApi.data?.seats || [],
+        hallName: seatApi.data?.hallName,
+        movieTitle: seatApi.data?.movieTitle,
+        basePrice: seatApi.data?.basePrice,
+        hasData: !!seatApi.data,
+        isSoldOut: (seatApi.data?.availableSeats ?? 0) === 0,
     };
 };

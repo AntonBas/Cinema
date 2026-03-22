@@ -7,4 +7,7 @@ export const seatReservationApi = {
 
     temporaryHoldSeat: (sessionId: number, seatId: number) =>
         api.post<void>(`/api/sessions/${sessionId}/seats/${seatId}/hold`),
+
+    cancelTemporaryHold: (sessionId: number, seatId: number) =>
+        api.delete<void>(`/api/sessions/${sessionId}/seats/${seatId}/hold`),
 };
