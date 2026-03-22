@@ -2,6 +2,7 @@ package ua.lviv.bas.cinema.controller.api;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -53,6 +54,20 @@ public class SeatReservationController {
 		log.info("User {} placing temporary hold on seat {} in session {}", userDetails.getUserId(), seatId, sessionId);
 
 		seatReservationService.temporaryHoldSeat(sessionId, seatId, userDetails.getUser());
+		return ResponseEntity.ok().build();
+	}
+
+	@DeleteMapping("/{sessionId}/seats/{seatId}/hold")
+	@Operation(summary = "Cancel temporary hold", description = "Cancels a temporary hold on a seat")
+	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Hold cancelled successfully"),
+			@ApiResponse(responseCode = "404", description = "Hold not found") })
+	public ResponseEntity<Void> cancelTemporaryHold(
+			@Parameter(description = "ID of the cinema session", required = true) @PathVariable Long sessionId,
+			@Parameter(description = "ID of the seat", required = true) @PathVariable Long seatId,
+			@AuthenticationPrincipal CustomUserDetails userDetails) {
+		log.info("User {} cancelling temporary hold on seat {} in session {}", userDetails.getUserId(), seatId,
+				sessionId);
+		seatReservationService.cancelTemporaryHold(sessionId, seatId, userDetails.getUser());
 		return ResponseEntity.ok().build();
 	}
 }

@@ -21,6 +21,7 @@ import ua.lviv.bas.cinema.domain.TicketType;
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.enums.ReservationStatus;
 import ua.lviv.bas.cinema.dto.booking.response.SeatReservationResponse;
+import ua.lviv.bas.cinema.exception.domain.booking.SeatNotAvailableException;
 import ua.lviv.bas.cinema.exception.domain.cinema.SeatNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.cinema.SessionNotFoundException;
 import ua.lviv.bas.cinema.mapper.SeatReservationMapper;
@@ -95,6 +96,20 @@ public class SeatReservationService {
 		seatReservationRepository.save(reservation);
 
 		log.info("Temporary hold created for seat {} in session {} by user {}", seatId, sessionId, user.getId());
+	}
+
+	@Transactional
+	@CacheEvict(value = "seatAvailability", key = "#sessionId")
+	public void cancelTemporaryHold(Long sessionId, Long seatId, User user) {
+		log.info("Cancelling temporary hold for seat {} in session {} by user {}", seatId, sessionId, user.getId());
+
+		SeatReservation reservation = seatReservationRepository
+				.findBySessionIdAndSeatIdAndStatusAndReservedByUserId(sessionId, seatId, ReservationStatus.PENDING,
+						user.getId())
+				.orElseThrow(() -> new SeatNotAvailableException("No active hold found for seat" + seatId));
+
+		seatReservationRepository.delete(reservation);
+		log.info("Temporary hold cancelled for seat {} in session {} by user {}", seatId, sessionId, user.getId());
 	}
 
 	private SeatReservationResponse.SeatInfo buildSeatInfo(Seat seat, Map<Long, Boolean> bookedSeatMap, Long sessionId,
