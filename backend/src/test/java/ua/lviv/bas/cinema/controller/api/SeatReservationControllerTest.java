@@ -79,4 +79,22 @@ public class SeatReservationControllerTest {
 		assertEquals(HttpStatus.OK, response.getStatusCode());
 		verify(seatReservationService).temporaryHoldSeat(sessionId, seatId, user);
 	}
+
+	@Test
+	void cancelTemporaryHold_ShouldReturnOk_WhenCancellationIsSuccessful() {
+		Long sessionId = 1L;
+		Long seatId = 10L;
+		Long userId = 100L;
+		User user = new User();
+		user.setId(userId);
+
+		when(customUserDetails.getUser()).thenReturn(user);
+		doNothing().when(seatReservationService).cancelTemporaryHold(sessionId, seatId, user);
+
+		ResponseEntity<Void> response = seatReservationController.cancelTemporaryHold(sessionId, seatId,
+				customUserDetails);
+
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+		verify(seatReservationService).cancelTemporaryHold(sessionId, seatId, user);
+	}
 }
