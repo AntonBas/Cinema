@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,18 +35,20 @@ public class SeatService {
 	}
 
 	@Transactional
-	public SeatResponse updateSeatType(Long id, SeatType seatType) {
-		log.info("Updating seat type for seat id: {} to {}", id, seatType);
-		Seat seat = seatRepository.findById(id).orElseThrow(() -> new SeatNotFoundException(id));
+	@CacheEvict(value = "cinemaHalls", key = "'layout:' + #hallId")
+	public SeatResponse updateSeatType(Long hallId, Long seatId, SeatType seatType) {
+		log.info("Updating seat type for seat id: {} to {}", seatId, seatType);
+		Seat seat = seatRepository.findById(seatId).orElseThrow(() -> new SeatNotFoundException(seatId));
 		seat.setSeatType(seatType);
 		Seat updated = seatRepository.save(seat);
 		return seatMapper.toSeatResponse(updated);
 	}
 
 	@Transactional
-	public SeatResponse setSeatActiveStatus(Long id, boolean active) {
-		log.info("Setting seat active status: id={}, active={}", id, active);
-		Seat seat = seatRepository.findById(id).orElseThrow(() -> new SeatNotFoundException(id));
+	@CacheEvict(value = "cinemaHalls", key = "'layout:' + #hallId")
+	public SeatResponse setSeatActiveStatus(Long hallId, Long seatId, boolean active) {
+		log.info("Setting seat active status: seatId={}, active={}", seatId, active);
+		Seat seat = seatRepository.findById(seatId).orElseThrow(() -> new SeatNotFoundException(seatId));
 		seat.setActive(active);
 		Seat updated = seatRepository.save(seat);
 		return seatMapper.toSeatResponse(updated);

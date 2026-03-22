@@ -41,7 +41,7 @@ public class AdminSeatController {
 			@Parameter(description = "Seat ID", required = true, example = "5") @PathVariable Long seatId,
 			@Parameter(description = "New seat type", required = true, example = "VIP") @RequestParam SeatType seatType) {
 		log.info("PUT /api/admin/cinema-halls/{}/seats/{}/type - Updating seat type to {}", hallId, seatId, seatType);
-		SeatResponse updated = seatService.updateSeatType(seatId, seatType);
+		SeatResponse updated = seatService.updateSeatType(hallId, seatId, seatType);
 		return ResponseEntity.ok(updated);
 	}
 
@@ -55,7 +55,7 @@ public class AdminSeatController {
 			@Parameter(description = "Active status", required = true, example = "true") @RequestParam boolean active) {
 		log.info("PUT /api/admin/cinema-halls/{}/seats/{}/status - Setting active status to {}", hallId, seatId,
 				active);
-		SeatResponse updated = seatService.setSeatActiveStatus(seatId, active);
+		SeatResponse updated = seatService.setSeatActiveStatus(hallId, seatId, active);
 		return ResponseEntity.ok(updated);
 	}
 }
