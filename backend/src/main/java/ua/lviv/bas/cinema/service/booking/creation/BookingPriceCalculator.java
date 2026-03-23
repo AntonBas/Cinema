@@ -2,7 +2,6 @@ package ua.lviv.bas.cinema.service.booking.creation;
 
 import java.math.BigDecimal;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
@@ -14,9 +13,6 @@ import ua.lviv.bas.cinema.service.user.BonusService;
 public class BookingPriceCalculator {
 	private final BonusService bonusService;
 	private final PriceCalculatorService priceCalculator;
-
-	@Value("${booking.max-bonus-points-percentage:30}")
-	private int maxBonusPointsPercentage;
 
 	public record BookingPriceResult(BigDecimal totalPrice, Integer bonusPointsUsed, BigDecimal bonusDiscount,
 			BigDecimal finalPrice) {

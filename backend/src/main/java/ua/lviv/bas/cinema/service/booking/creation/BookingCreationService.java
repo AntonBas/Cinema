@@ -12,7 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.Booking;
-import ua.lviv.bas.cinema.domain.Seat;
 import ua.lviv.bas.cinema.domain.SeatReservation;
 import ua.lviv.bas.cinema.domain.Session;
 import ua.lviv.bas.cinema.domain.TicketType;
@@ -22,12 +21,10 @@ import ua.lviv.bas.cinema.domain.enums.ReservationStatus;
 import ua.lviv.bas.cinema.dto.booking.request.BookingCreateRequest;
 import ua.lviv.bas.cinema.dto.booking.response.BookingResponse;
 import ua.lviv.bas.cinema.exception.domain.booking.SeatNotAvailableException;
-import ua.lviv.bas.cinema.exception.domain.cinema.SeatNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.cinema.SessionNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.tickettype.TicketTypeNotFoundException;
 import ua.lviv.bas.cinema.mapper.BookingMapper;
 import ua.lviv.bas.cinema.repository.BookingRepository;
-import ua.lviv.bas.cinema.repository.SeatRepository;
 import ua.lviv.bas.cinema.repository.SeatReservationRepository;
 import ua.lviv.bas.cinema.repository.SessionRepository;
 import ua.lviv.bas.cinema.repository.TicketTypeRepository;
@@ -42,7 +39,6 @@ import ua.lviv.bas.cinema.service.user.BonusService;
 public class BookingCreationService {
 	private final BookingRepository bookingRepository;
 	private final SessionRepository sessionRepository;
-	private final SeatRepository seatRepository;
 	private final TicketTypeRepository ticketTypeRepository;
 	private final SeatReservationRepository seatReservationRepository;
 	private final BookingMapper bookingMapper;
@@ -64,7 +60,7 @@ public class BookingCreationService {
 		List<SeatReservation> seatReservations = new ArrayList<>();
 
 		for (BookingCreateRequest.SeatSelectionRequest seatSelection : request.seats()) {
-			SeatReservation reservation = findOrCreateTempReservation(session, user, seatSelection);
+			SeatReservation reservation = findAndValidateTempReservation(session, user, seatSelection);
 			updateReservationWithTicketType(reservation, seatSelection);
 			seatReservations.add(reservation);
 		}
@@ -78,7 +74,12 @@ public class BookingCreationService {
 		LocalDateTime expiresAt = LocalDateTime.now().plusMinutes(expirationMinutes);
 		Booking booking = createBookingEntity(user, session, seatReservations, priceResult, expiresAt);
 
-		seatReservations.forEach(sr -> sr.setBooking(booking));
+		seatReservations.forEach(sr -> {
+			sr.setBooking(booking);
+			sr.setStatus(ReservationStatus.CONFIRMED);
+			sr.setReservedUntil(expiresAt);
+		});
+
 		Booking savedBooking = bookingRepository.save(booking);
 		seatReservationRepository.saveAll(seatReservations);
 
@@ -92,16 +93,21 @@ public class BookingCreationService {
 		return buildBookingResponse(savedBooking);
 	}
 
-	private SeatReservation findOrCreateTempReservation(Session session, User user,
+	private SeatReservation findAndValidateTempReservation(Session session, User user,
 			BookingCreateRequest.SeatSelectionRequest seatSelection) {
 
-		Seat seat = seatRepository.findById(seatSelection.seatId())
-				.orElseThrow(() -> new SeatNotFoundException(seatSelection.seatId()));
-
-		return seatReservationRepository
-				.findBySessionIdAndSeatIdAndStatusAndReservedByUserId(session.getId(), seat.getId(),
+		SeatReservation reservation = seatReservationRepository
+				.findBySessionIdAndSeatIdAndStatusAndReservedByUserId(session.getId(), seatSelection.seatId(),
 						ReservationStatus.PENDING, user.getId())
-				.orElseThrow(() -> SeatNotAvailableException.forSeatAndSession(seat.getId(), session.getId()));
+				.orElseThrow(
+						() -> SeatNotAvailableException.forSeatAndSession(seatSelection.seatId(), session.getId()));
+
+		if (reservation.getReservedUntil().isBefore(LocalDateTime.now())) {
+			seatReservationRepository.delete(reservation);
+			throw SeatNotAvailableException.forSeatAndSession(seatSelection.seatId(), session.getId());
+		}
+
+		return reservation;
 	}
 
 	private void updateReservationWithTicketType(SeatReservation reservation,
@@ -115,7 +121,6 @@ public class BookingCreationService {
 
 		reservation.setTicketType(ticketType);
 		reservation.setSeatPrice(seatPrice);
-		reservation.setReservedUntil(LocalDateTime.now().plusMinutes(expirationMinutes));
 	}
 
 	private Booking createBookingEntity(User user, Session session, List<SeatReservation> seatReservations,
