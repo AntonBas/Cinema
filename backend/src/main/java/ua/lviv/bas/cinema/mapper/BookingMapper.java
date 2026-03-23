@@ -9,11 +9,11 @@ import ua.lviv.bas.cinema.domain.SeatReservation;
 import ua.lviv.bas.cinema.dto.booking.response.BookingResponse;
 import ua.lviv.bas.cinema.service.shared.NumberGeneratorService;
 
-@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE, uses = {
+@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE, imports = {
 		NumberGeneratorService.class })
 public interface BookingMapper {
 
-	@Mapping(target = "bookingNumber", expression = "java(numberGeneratorService.generateBookingNumber(booking))")
+	@Mapping(target = "bookingNumber", expression = "java(NumberGeneratorService.generateBookingNumberStatic(booking))")
 	@Mapping(target = "sessionId", source = "session.id")
 	@Mapping(target = "sessionTime", source = "session.startTime")
 	@Mapping(target = "movieTitle", source = "session.movie.title")

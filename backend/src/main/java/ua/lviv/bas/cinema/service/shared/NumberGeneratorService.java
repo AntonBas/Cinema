@@ -11,8 +11,18 @@ import ua.lviv.bas.cinema.domain.Refund;
 @Service
 public class NumberGeneratorService {
 
-	public String generateBookingNumber(Booking booking) {
+	public static String generateBookingNumberStatic(Booking booking) {
+		if (booking.getId() == null) {
+			throw new IllegalStateException("Booking ID is required to generate booking number");
+		}
+		if (booking.getCreatedAt() == null) {
+			throw new IllegalStateException("Booking createdAt is required to generate booking number");
+		}
 		return String.format("BK-%d-%05d", booking.getCreatedAt().getYear(), booking.getId());
+	}
+
+	public String generateBookingNumber(Booking booking) {
+		return generateBookingNumberStatic(booking);
 	}
 
 	public String generateTicketCode() {
@@ -26,6 +36,9 @@ public class NumberGeneratorService {
 	}
 
 	public String generateRefundNumber(Refund refund) {
+		if (refund.getId() == null) {
+			throw new IllegalStateException("Refund ID is required to generate refund number");
+		}
 		return String.format("RF-%04d-%06d", LocalDateTime.now().getYear(), refund.getId());
 	}
 
