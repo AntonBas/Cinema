@@ -41,7 +41,7 @@ import ua.lviv.bas.cinema.domain.enums.ReservationStatus;
 import ua.lviv.bas.cinema.domain.enums.SeatType;
 import ua.lviv.bas.cinema.dto.booking.request.BookingCreateRequest;
 import ua.lviv.bas.cinema.dto.booking.response.BookingResponse;
-import ua.lviv.bas.cinema.exception.domain.cinema.SeatNotFoundException;
+import ua.lviv.bas.cinema.exception.domain.booking.SeatNotAvailableException;
 import ua.lviv.bas.cinema.exception.domain.cinema.SessionNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.tickettype.TicketTypeNotFoundException;
 import ua.lviv.bas.cinema.mapper.BookingMapper;
@@ -51,7 +51,6 @@ import ua.lviv.bas.cinema.repository.SeatReservationRepository;
 import ua.lviv.bas.cinema.repository.SessionRepository;
 import ua.lviv.bas.cinema.repository.TicketTypeRepository;
 import ua.lviv.bas.cinema.service.booking.reservation.ReservationValidator;
-import ua.lviv.bas.cinema.service.shared.NumberGeneratorService;
 import ua.lviv.bas.cinema.service.shared.PriceCalculatorService;
 import ua.lviv.bas.cinema.service.user.BonusService;
 
@@ -86,9 +85,6 @@ public class BookingCreationServiceTest {
 	private PriceCalculatorService priceCalculator;
 
 	@Mock
-	private NumberGeneratorService numberGenerator;
-
-	@Mock
 	private BookingPriceCalculator bookingPriceCalculator;
 
 	@Mock
@@ -102,6 +98,9 @@ public class BookingCreationServiceTest {
 
 	@Captor
 	private ArgumentCaptor<List<SeatReservation>> seatReservationsCaptor;
+
+	@Captor
+	private ArgumentCaptor<SeatReservation> newReservationCaptor;
 
 	private User testUser;
 	private Session testSession;
@@ -128,11 +127,13 @@ public class BookingCreationServiceTest {
 	private static final BigDecimal FINAL_PRICE = new BigDecimal("380.00");
 	private static final Integer BONUS_POINTS_USED = 100;
 	private static final int EXPIRATION_MINUTES = 20;
+	private static final int TEMP_HOLD_MINUTES = 5;
 	private static final String BOOKING_NUMBER = "BK-2024-00001";
 
 	@BeforeEach
 	void setUp() {
 		ReflectionTestUtils.setField(bookingCreationService, "expirationMinutes", EXPIRATION_MINUTES);
+		ReflectionTestUtils.setField(bookingCreationService, "tempHoldMinutes", TEMP_HOLD_MINUTES);
 
 		testUser = User.builder().id(USER_ID).email("test@example.com").build();
 
@@ -167,9 +168,19 @@ public class BookingCreationServiceTest {
 
 	@Test
 	void createBooking_Success() {
+		SeatReservation pendingReservation1 = SeatReservation.builder().id(1L).seat(testSeat1).session(testSession)
+				.status(ReservationStatus.PENDING).reservedUntil(LocalDateTime.now().plusMinutes(TEMP_HOLD_MINUTES))
+				.reservedByUser(testUser).build();
+
+		SeatReservation pendingReservation2 = SeatReservation.builder().id(2L).seat(testSeat2).session(testSession)
+				.status(ReservationStatus.PENDING).reservedUntil(LocalDateTime.now().plusMinutes(TEMP_HOLD_MINUTES))
+				.reservedByUser(testUser).build();
+
 		when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(testSession));
-		when(seatRepository.findById(SEAT_ID_1)).thenReturn(Optional.of(testSeat1));
-		when(seatRepository.findById(SEAT_ID_2)).thenReturn(Optional.of(testSeat2));
+		when(seatReservationRepository.findBySessionIdAndSeatIdAndStatusAndReservedByUserId(SESSION_ID, SEAT_ID_1,
+				ReservationStatus.PENDING, USER_ID)).thenReturn(Optional.of(pendingReservation1));
+		when(seatReservationRepository.findBySessionIdAndSeatIdAndStatusAndReservedByUserId(SESSION_ID, SEAT_ID_2,
+				ReservationStatus.PENDING, USER_ID)).thenReturn(Optional.of(pendingReservation2));
 		when(ticketTypeRepository.findById(TICKET_TYPE_ADULT_ID)).thenReturn(Optional.of(adultTicketType));
 		when(ticketTypeRepository.findById(TICKET_TYPE_CHILD_ID)).thenReturn(Optional.of(childTicketType));
 		when(priceCalculator.calculateSeatPrice(testSession, testSeat1, adultTicketType)).thenReturn(SEAT_1_PRICE);
@@ -187,9 +198,7 @@ public class BookingCreationServiceTest {
 
 		when(bookingRepository.save(any(Booking.class))).thenReturn(savedBooking);
 		when(seatReservationRepository.saveAll(anyList())).thenReturn(Collections.emptyList());
-
 		when(bookingMapper.toBookingResponse(any(Booking.class))).thenReturn(bookingResponse);
-		when(numberGenerator.generateBookingNumber(any(Booking.class))).thenReturn(BOOKING_NUMBER);
 
 		BookingResponse result = bookingCreationService.createBooking(createRequest, testUser);
 
@@ -198,8 +207,6 @@ public class BookingCreationServiceTest {
 		assertThat(result.bookingNumber()).isEqualTo(BOOKING_NUMBER);
 
 		verify(bookingValidator).validateSessionForBooking(testSession);
-		verify(availabilityValidator).validateSeat(SESSION_ID, SEAT_ID_1);
-		verify(availabilityValidator).validateSeat(SESSION_ID, SEAT_ID_2);
 		verify(bookingRepository).save(bookingCaptor.capture());
 		verify(seatReservationRepository).saveAll(seatReservationsCaptor.capture());
 		verify(bonusService).spendPoints(eq(USER_ID), eq(BONUS_POINTS_USED), any(Booking.class));
@@ -217,14 +224,106 @@ public class BookingCreationServiceTest {
 		List<SeatReservation> capturedReservations = seatReservationsCaptor.getValue();
 		assertThat(capturedReservations).hasSize(2);
 		assertThat(capturedReservations).allMatch(sr -> sr.getBooking() == capturedBooking);
+		assertThat(capturedReservations).allMatch(sr -> sr.getStatus() == ReservationStatus.CONFIRMED);
+		assertThat(capturedReservations).allMatch(sr -> sr.getReservedUntil().equals(capturedBooking.getExpiresAt()));
 
 		SeatReservation firstReservation = capturedReservations.get(0);
 		assertThat(firstReservation.getSeat()).isEqualTo(testSeat1);
-		assertThat(firstReservation.getSession()).isEqualTo(testSession);
 		assertThat(firstReservation.getTicketType()).isEqualTo(adultTicketType);
 		assertThat(firstReservation.getSeatPrice()).isEqualTo(SEAT_1_PRICE);
-		assertThat(firstReservation.getStatus()).isEqualTo(ReservationStatus.PENDING);
-		assertThat(firstReservation.getReservedByUser()).isEqualTo(testUser);
+	}
+
+	@Test
+	void createBooking_WhenNoExistingReservation_CreatesNewOne() {
+		when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(testSession));
+		when(seatReservationRepository.findBySessionIdAndSeatIdAndStatusAndReservedByUserId(SESSION_ID, SEAT_ID_1,
+				ReservationStatus.PENDING, USER_ID)).thenReturn(Optional.empty());
+		when(seatReservationRepository.findBySessionIdAndSeatIdAndStatusAndReservedByUserId(SESSION_ID, SEAT_ID_2,
+				ReservationStatus.PENDING, USER_ID)).thenReturn(Optional.empty());
+		when(seatRepository.findById(SEAT_ID_1)).thenReturn(Optional.of(testSeat1));
+		when(seatRepository.findById(SEAT_ID_2)).thenReturn(Optional.of(testSeat2));
+		when(seatReservationRepository.save(any(SeatReservation.class)))
+				.thenAnswer(invocation -> invocation.getArgument(0));
+		when(ticketTypeRepository.findById(TICKET_TYPE_ADULT_ID)).thenReturn(Optional.of(adultTicketType));
+		when(ticketTypeRepository.findById(TICKET_TYPE_CHILD_ID)).thenReturn(Optional.of(childTicketType));
+		when(priceCalculator.calculateSeatPrice(testSession, testSeat1, adultTicketType)).thenReturn(SEAT_1_PRICE);
+		when(priceCalculator.calculateSeatPrice(testSession, testSeat2, childTicketType)).thenReturn(SEAT_2_PRICE);
+
+		BookingPriceCalculator.BookingPriceResult priceResult = new BookingPriceCalculator.BookingPriceResult(
+				TOTAL_PRICE, BONUS_POINTS_USED, DISCOUNT_AMOUNT, FINAL_PRICE);
+		when(bookingPriceCalculator.calculateFinalPrice(eq(TOTAL_PRICE), eq(BONUS_POINTS_USED), eq(USER_ID)))
+				.thenReturn(priceResult);
+
+		savedBooking = Booking.builder().id(BOOKING_ID).user(testUser).session(testSession)
+				.status(BookingStatus.PENDING).totalPrice(TOTAL_PRICE).bonusPointsUsed(BONUS_POINTS_USED)
+				.bonusDiscountAmount(DISCOUNT_AMOUNT).finalPrice(FINAL_PRICE)
+				.expiresAt(LocalDateTime.now().plusMinutes(EXPIRATION_MINUTES)).build();
+
+		when(bookingRepository.save(any(Booking.class))).thenReturn(savedBooking);
+		when(seatReservationRepository.saveAll(anyList())).thenReturn(Collections.emptyList());
+		when(bookingMapper.toBookingResponse(any(Booking.class))).thenReturn(bookingResponse);
+
+		BookingResponse result = bookingCreationService.createBooking(createRequest, testUser);
+
+		assertThat(result).isNotNull();
+		verify(availabilityValidator).validateSeat(SESSION_ID, SEAT_ID_1);
+		verify(availabilityValidator).validateSeat(SESSION_ID, SEAT_ID_2);
+		verify(seatReservationRepository, never()).delete(any());
+	}
+
+	@Test
+	void createBooking_WhenExistingReservationExpired_UpdatesAndReuses() {
+		SeatReservation expiredReservation = SeatReservation.builder().id(1L).seat(testSeat1).session(testSession)
+				.status(ReservationStatus.PENDING).reservedUntil(LocalDateTime.now().minusMinutes(1))
+				.reservedByUser(testUser).build();
+
+		when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(testSession));
+		when(seatReservationRepository.findBySessionIdAndSeatIdAndStatusAndReservedByUserId(SESSION_ID, SEAT_ID_1,
+				ReservationStatus.PENDING, USER_ID)).thenReturn(Optional.of(expiredReservation));
+		when(seatReservationRepository.findBySessionIdAndSeatIdAndStatusAndReservedByUserId(SESSION_ID, SEAT_ID_2,
+				ReservationStatus.PENDING, USER_ID)).thenReturn(Optional.empty());
+		when(seatRepository.findById(SEAT_ID_2)).thenReturn(Optional.of(testSeat2));
+		when(seatReservationRepository.save(any(SeatReservation.class)))
+				.thenAnswer(invocation -> invocation.getArgument(0));
+		when(ticketTypeRepository.findById(TICKET_TYPE_ADULT_ID)).thenReturn(Optional.of(adultTicketType));
+		when(ticketTypeRepository.findById(TICKET_TYPE_CHILD_ID)).thenReturn(Optional.of(childTicketType));
+		when(priceCalculator.calculateSeatPrice(testSession, testSeat1, adultTicketType)).thenReturn(SEAT_1_PRICE);
+		when(priceCalculator.calculateSeatPrice(testSession, testSeat2, childTicketType)).thenReturn(SEAT_2_PRICE);
+
+		BookingPriceCalculator.BookingPriceResult priceResult = new BookingPriceCalculator.BookingPriceResult(
+				TOTAL_PRICE, BONUS_POINTS_USED, DISCOUNT_AMOUNT, FINAL_PRICE);
+		when(bookingPriceCalculator.calculateFinalPrice(eq(TOTAL_PRICE), eq(BONUS_POINTS_USED), eq(USER_ID)))
+				.thenReturn(priceResult);
+
+		savedBooking = Booking.builder().id(BOOKING_ID).user(testUser).session(testSession)
+				.status(BookingStatus.PENDING).totalPrice(TOTAL_PRICE).bonusPointsUsed(BONUS_POINTS_USED)
+				.bonusDiscountAmount(DISCOUNT_AMOUNT).finalPrice(FINAL_PRICE)
+				.expiresAt(LocalDateTime.now().plusMinutes(EXPIRATION_MINUTES)).build();
+
+		when(bookingRepository.save(any(Booking.class))).thenReturn(savedBooking);
+		when(seatReservationRepository.saveAll(anyList())).thenReturn(Collections.emptyList());
+		when(bookingMapper.toBookingResponse(any(Booking.class))).thenReturn(bookingResponse);
+
+		BookingResponse result = bookingCreationService.createBooking(createRequest, testUser);
+
+		assertThat(result).isNotNull();
+		verify(seatReservationRepository, never()).delete(any());
+		verify(seatReservationRepository).save(expiredReservation);
+		assertThat(expiredReservation.getReservedUntil()).isAfter(LocalDateTime.now());
+	}
+
+	@Test
+	void createBooking_WhenSeatNotFound_ShouldThrowException() {
+		when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(testSession));
+		when(seatReservationRepository.findBySessionIdAndSeatIdAndStatusAndReservedByUserId(SESSION_ID, SEAT_ID_1,
+				ReservationStatus.PENDING, USER_ID)).thenReturn(Optional.empty());
+		when(seatRepository.findById(SEAT_ID_1)).thenReturn(Optional.empty());
+
+		assertThatThrownBy(() -> bookingCreationService.createBooking(createRequest, testUser))
+				.isInstanceOf(SeatNotAvailableException.class).hasMessageContaining("Seat not found");
+
+		verify(bookingValidator).validateSessionForBooking(testSession);
+		verify(bookingRepository, never()).save(any());
 	}
 
 	@Test
@@ -240,23 +339,14 @@ public class BookingCreationServiceTest {
 	}
 
 	@Test
-	void createBooking_WhenSeatNotFound_ShouldThrowException() {
-		when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(testSession));
-		when(seatRepository.findById(SEAT_ID_1)).thenReturn(Optional.empty());
-
-		assertThatThrownBy(() -> bookingCreationService.createBooking(createRequest, testUser))
-				.isInstanceOf(SeatNotFoundException.class).hasMessageContaining(String.valueOf(SEAT_ID_1));
-
-		verify(bookingValidator).validateSessionForBooking(testSession);
-		verify(bookingRepository, never()).save(any());
-		verify(seatReservationRepository, never()).saveAll(anyList());
-		verify(bonusService, never()).spendPoints(anyLong(), any(Integer.class), any(Booking.class));
-	}
-
-	@Test
 	void createBooking_WhenTicketTypeNotFound_ShouldThrowException() {
+		SeatReservation pendingReservation = SeatReservation.builder().id(1L).seat(testSeat1).session(testSession)
+				.status(ReservationStatus.PENDING).reservedUntil(LocalDateTime.now().plusMinutes(TEMP_HOLD_MINUTES))
+				.reservedByUser(testUser).build();
+
 		when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(testSession));
-		when(seatRepository.findById(SEAT_ID_1)).thenReturn(Optional.of(testSeat1));
+		when(seatReservationRepository.findBySessionIdAndSeatIdAndStatusAndReservedByUserId(SESSION_ID, SEAT_ID_1,
+				ReservationStatus.PENDING, USER_ID)).thenReturn(Optional.of(pendingReservation));
 		when(ticketTypeRepository.findById(TICKET_TYPE_ADULT_ID)).thenReturn(Optional.empty());
 
 		assertThatThrownBy(() -> bookingCreationService.createBooking(createRequest, testUser))
@@ -265,8 +355,6 @@ public class BookingCreationServiceTest {
 
 		verify(bookingValidator).validateSessionForBooking(testSession);
 		verify(bookingRepository, never()).save(any());
-		verify(seatReservationRepository, never()).saveAll(anyList());
-		verify(bonusService, never()).spendPoints(anyLong(), any(Integer.class), any(Booking.class));
 	}
 
 	@Test
@@ -274,8 +362,13 @@ public class BookingCreationServiceTest {
 		BookingCreateRequest requestWithoutBonus = new BookingCreateRequest(SESSION_ID,
 				Arrays.asList(new BookingCreateRequest.SeatSelectionRequest(SEAT_ID_1, TICKET_TYPE_ADULT_ID)), null);
 
+		SeatReservation pendingReservation = SeatReservation.builder().id(1L).seat(testSeat1).session(testSession)
+				.status(ReservationStatus.PENDING).reservedUntil(LocalDateTime.now().plusMinutes(TEMP_HOLD_MINUTES))
+				.reservedByUser(testUser).build();
+
 		when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(testSession));
-		when(seatRepository.findById(SEAT_ID_1)).thenReturn(Optional.of(testSeat1));
+		when(seatReservationRepository.findBySessionIdAndSeatIdAndStatusAndReservedByUserId(SESSION_ID, SEAT_ID_1,
+				ReservationStatus.PENDING, USER_ID)).thenReturn(Optional.of(pendingReservation));
 		when(ticketTypeRepository.findById(TICKET_TYPE_ADULT_ID)).thenReturn(Optional.of(adultTicketType));
 		when(priceCalculator.calculateSeatPrice(testSession, testSeat1, adultTicketType)).thenReturn(SEAT_1_PRICE);
 
@@ -291,9 +384,7 @@ public class BookingCreationServiceTest {
 
 		when(bookingRepository.save(any(Booking.class))).thenReturn(savedBooking);
 		when(seatReservationRepository.saveAll(anyList())).thenReturn(Collections.emptyList());
-
 		when(bookingMapper.toBookingResponse(any(Booking.class))).thenReturn(bookingResponse);
-		when(numberGenerator.generateBookingNumber(any(Booking.class))).thenReturn(BOOKING_NUMBER);
 
 		BookingResponse result = bookingCreationService.createBooking(requestWithoutBonus, testUser);
 
@@ -309,84 +400,22 @@ public class BookingCreationServiceTest {
 	}
 
 	@Test
-	void createBooking_WithZeroBonusPoints() {
-		BookingCreateRequest requestWithZeroBonus = new BookingCreateRequest(SESSION_ID,
-				Arrays.asList(new BookingCreateRequest.SeatSelectionRequest(SEAT_ID_1, TICKET_TYPE_ADULT_ID)), 0);
-
-		when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(testSession));
-		when(seatRepository.findById(SEAT_ID_1)).thenReturn(Optional.of(testSeat1));
-		when(ticketTypeRepository.findById(TICKET_TYPE_ADULT_ID)).thenReturn(Optional.of(adultTicketType));
-		when(priceCalculator.calculateSeatPrice(testSession, testSeat1, adultTicketType)).thenReturn(SEAT_1_PRICE);
-
-		BookingPriceCalculator.BookingPriceResult priceResult = new BookingPriceCalculator.BookingPriceResult(
-				SEAT_1_PRICE, 0, BigDecimal.ZERO, SEAT_1_PRICE);
-		when(bookingPriceCalculator.calculateFinalPrice(eq(SEAT_1_PRICE), eq(0), eq(USER_ID))).thenReturn(priceResult);
-
-		savedBooking = Booking.builder().id(BOOKING_ID).user(testUser).session(testSession)
-				.status(BookingStatus.PENDING).totalPrice(SEAT_1_PRICE).bonusPointsUsed(0)
-				.bonusDiscountAmount(BigDecimal.ZERO).finalPrice(SEAT_1_PRICE)
-				.expiresAt(LocalDateTime.now().plusMinutes(EXPIRATION_MINUTES)).build();
-
-		when(bookingRepository.save(any(Booking.class))).thenReturn(savedBooking);
-		when(seatReservationRepository.saveAll(anyList())).thenReturn(Collections.emptyList());
-
-		when(bookingMapper.toBookingResponse(any(Booking.class))).thenReturn(bookingResponse);
-		when(numberGenerator.generateBookingNumber(any(Booking.class))).thenReturn(BOOKING_NUMBER);
-
-		BookingResponse result = bookingCreationService.createBooking(requestWithZeroBonus, testUser);
-
-		assertThat(result).isNotNull();
-
-		verify(bookingRepository).save(bookingCaptor.capture());
-		Booking capturedBooking = bookingCaptor.getValue();
-		assertThat(capturedBooking.getBonusPointsUsed()).isEqualTo(0);
-		assertThat(capturedBooking.getBonusDiscountAmount()).isEqualTo(BigDecimal.ZERO);
-		assertThat(capturedBooking.getFinalPrice()).isEqualTo(SEAT_1_PRICE);
-
-		verify(bonusService, never()).spendPoints(anyLong(), any(Integer.class), any(Booking.class));
-	}
-
-	@Test
-	void createBooking_WithSingleSeat_Success() {
-		BookingCreateRequest singleSeatRequest = new BookingCreateRequest(SESSION_ID,
-				Arrays.asList(new BookingCreateRequest.SeatSelectionRequest(SEAT_ID_1, TICKET_TYPE_ADULT_ID)), null);
-
-		when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(testSession));
-		when(seatRepository.findById(SEAT_ID_1)).thenReturn(Optional.of(testSeat1));
-		when(ticketTypeRepository.findById(TICKET_TYPE_ADULT_ID)).thenReturn(Optional.of(adultTicketType));
-		when(priceCalculator.calculateSeatPrice(testSession, testSeat1, adultTicketType)).thenReturn(SEAT_1_PRICE);
-
-		BookingPriceCalculator.BookingPriceResult priceResult = new BookingPriceCalculator.BookingPriceResult(
-				SEAT_1_PRICE, 0, BigDecimal.ZERO, SEAT_1_PRICE);
-		when(bookingPriceCalculator.calculateFinalPrice(eq(SEAT_1_PRICE), eq(null), eq(USER_ID)))
-				.thenReturn(priceResult);
-
-		savedBooking = Booking.builder().id(BOOKING_ID).user(testUser).session(testSession)
-				.status(BookingStatus.PENDING).totalPrice(SEAT_1_PRICE).bonusPointsUsed(0)
-				.bonusDiscountAmount(BigDecimal.ZERO).finalPrice(SEAT_1_PRICE)
-				.expiresAt(LocalDateTime.now().plusMinutes(EXPIRATION_MINUTES)).build();
-
-		when(bookingRepository.save(any(Booking.class))).thenReturn(savedBooking);
-		when(seatReservationRepository.saveAll(anyList())).thenReturn(Collections.emptyList());
-
-		when(bookingMapper.toBookingResponse(any(Booking.class))).thenReturn(bookingResponse);
-		when(numberGenerator.generateBookingNumber(any(Booking.class))).thenReturn(BOOKING_NUMBER);
-
-		BookingResponse result = bookingCreationService.createBooking(singleSeatRequest, testUser);
-
-		assertThat(result).isNotNull();
-
-		verify(availabilityValidator).validateSeat(SESSION_ID, SEAT_ID_1);
-		verify(availabilityValidator, never()).validateSeat(eq(SESSION_ID), eq(SEAT_ID_2));
-	}
-
-	@Test
 	void createBooking_ShouldSetCorrectExpirationTime() {
 		LocalDateTime now = LocalDateTime.now();
 
+		SeatReservation pendingReservation1 = SeatReservation.builder().id(1L).seat(testSeat1).session(testSession)
+				.status(ReservationStatus.PENDING).reservedUntil(LocalDateTime.now().plusMinutes(TEMP_HOLD_MINUTES))
+				.reservedByUser(testUser).build();
+
+		SeatReservation pendingReservation2 = SeatReservation.builder().id(2L).seat(testSeat2).session(testSession)
+				.status(ReservationStatus.PENDING).reservedUntil(LocalDateTime.now().plusMinutes(TEMP_HOLD_MINUTES))
+				.reservedByUser(testUser).build();
+
 		when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(testSession));
-		when(seatRepository.findById(SEAT_ID_1)).thenReturn(Optional.of(testSeat1));
-		when(seatRepository.findById(SEAT_ID_2)).thenReturn(Optional.of(testSeat2));
+		when(seatReservationRepository.findBySessionIdAndSeatIdAndStatusAndReservedByUserId(SESSION_ID, SEAT_ID_1,
+				ReservationStatus.PENDING, USER_ID)).thenReturn(Optional.of(pendingReservation1));
+		when(seatReservationRepository.findBySessionIdAndSeatIdAndStatusAndReservedByUserId(SESSION_ID, SEAT_ID_2,
+				ReservationStatus.PENDING, USER_ID)).thenReturn(Optional.of(pendingReservation2));
 		when(ticketTypeRepository.findById(TICKET_TYPE_ADULT_ID)).thenReturn(Optional.of(adultTicketType));
 		when(ticketTypeRepository.findById(TICKET_TYPE_CHILD_ID)).thenReturn(Optional.of(childTicketType));
 		when(priceCalculator.calculateSeatPrice(testSession, testSeat1, adultTicketType)).thenReturn(SEAT_1_PRICE);
@@ -404,9 +433,7 @@ public class BookingCreationServiceTest {
 
 		when(bookingRepository.save(any(Booking.class))).thenReturn(savedBooking);
 		when(seatReservationRepository.saveAll(anyList())).thenReturn(Collections.emptyList());
-
 		when(bookingMapper.toBookingResponse(any(Booking.class))).thenReturn(bookingResponse);
-		when(numberGenerator.generateBookingNumber(any(Booking.class))).thenReturn(BOOKING_NUMBER);
 
 		bookingCreationService.createBooking(createRequest, testUser);
 

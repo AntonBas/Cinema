@@ -129,7 +129,7 @@ public class PaymentValidatorTest {
 
 		SeatReservation seatReservation2 = new SeatReservation();
 		seatReservation2.setSeat(seat2);
-		seatReservation2.setStatus(ReservationStatus.CANCELLED);
+		seatReservation2.setStatus(ReservationStatus.CONFIRMED);
 
 		Booking booking = new Booking();
 		booking.setStatus(BookingStatus.PENDING);

@@ -42,8 +42,8 @@ import ua.lviv.bas.cinema.exception.domain.booking.BookingOperationException;
 import ua.lviv.bas.cinema.exception.domain.booking.BookingValidationException;
 import ua.lviv.bas.cinema.mapper.BookingMapper;
 import ua.lviv.bas.cinema.repository.BookingRepository;
+import ua.lviv.bas.cinema.repository.SeatReservationRepository;
 import ua.lviv.bas.cinema.service.booking.creation.BookingValidator;
-import ua.lviv.bas.cinema.service.shared.NumberGeneratorService;
 import ua.lviv.bas.cinema.service.user.BonusService;
 
 @ExtendWith(MockitoExtension.class)
@@ -53,6 +53,9 @@ public class BookingManagementServiceTest {
 	private BookingRepository bookingRepository;
 
 	@Mock
+	private SeatReservationRepository seatReservationRepository;
+
+	@Mock
 	private BookingMapper bookingMapper;
 
 	@Mock
@@ -60,9 +63,6 @@ public class BookingManagementServiceTest {
 
 	@Mock
 	private BonusService bonusService;
-
-	@Mock
-	private NumberGeneratorService numberGenerator;
 
 	@InjectMocks
 	private BookingManagementService bookingManagementService;
@@ -131,7 +131,6 @@ public class BookingManagementServiceTest {
 	void getBookingById_Success() {
 		when(bookingRepository.findByIdAndUserId(BOOKING_ID, USER_ID)).thenReturn(Optional.of(testBooking));
 		when(bookingMapper.toBookingResponse(testBooking)).thenReturn(bookingResponse);
-		when(numberGenerator.generateBookingNumber(testBooking)).thenReturn(BOOKING_NUMBER);
 
 		BookingResponse result = bookingManagementService.getBookingById(BOOKING_ID, testUser);
 
@@ -156,7 +155,6 @@ public class BookingManagementServiceTest {
 		when(bookingRepository.findByUserIdAndStatusOrderByCreatedAtDesc(eq(USER_ID), eq(BookingStatus.PENDING),
 				eq(pageable))).thenReturn(bookingPage);
 		when(bookingMapper.toBookingResponse(any(Booking.class))).thenReturn(bookingResponse);
-		when(numberGenerator.generateBookingNumber(any(Booking.class))).thenReturn(BOOKING_NUMBER);
 
 		Page<BookingResponse> result = bookingManagementService.getUserBookings(USER_ID, BookingStatus.PENDING,
 				pageable);
@@ -173,7 +171,6 @@ public class BookingManagementServiceTest {
 
 		when(bookingRepository.findByUserIdOrderByCreatedAtDesc(eq(USER_ID), eq(pageable))).thenReturn(bookingPage);
 		when(bookingMapper.toBookingResponse(any(Booking.class))).thenReturn(bookingResponse);
-		when(numberGenerator.generateBookingNumber(any(Booking.class))).thenReturn(BOOKING_NUMBER);
 
 		Page<BookingResponse> result = bookingManagementService.getUserBookings(USER_ID, null, pageable);
 
@@ -189,12 +186,15 @@ public class BookingManagementServiceTest {
 		when(bookingRepository.findByIdAndUserId(BOOKING_ID, USER_ID)).thenReturn(Optional.of(testBooking));
 		when(bookingValidator.canBookingBeCancelled(testBooking)).thenReturn(true);
 		when(bookingRepository.save(testBooking)).thenReturn(testBooking);
+		when(seatReservationRepository.saveAll(any())).thenReturn(Arrays.asList(seatReservation1, seatReservation2));
 
 		bookingManagementService.cancelBooking(BOOKING_ID, testUser);
 
 		assertThat(testBooking.getStatus()).isEqualTo(BookingStatus.CANCELLED);
-		assertThat(seatReservation1.getStatus()).isEqualTo(ReservationStatus.CANCELLED);
-		assertThat(seatReservation2.getStatus()).isEqualTo(ReservationStatus.CANCELLED);
+		assertThat(seatReservation1.getStatus()).isEqualTo(ReservationStatus.EXPIRED);
+		assertThat(seatReservation2.getStatus()).isEqualTo(ReservationStatus.EXPIRED);
+		assertThat(seatReservation1.getBooking()).isNull();
+		assertThat(seatReservation2.getBooking()).isNull();
 	}
 
 	@Test
@@ -266,6 +266,7 @@ public class BookingManagementServiceTest {
 		when(bookingRepository.findByIdAndUserId(BOOKING_ID, USER_ID)).thenReturn(Optional.of(testBooking));
 		when(bookingValidator.canBookingBeCancelled(testBooking)).thenReturn(true);
 		when(bookingRepository.save(testBooking)).thenReturn(testBooking);
+		when(seatReservationRepository.saveAll(any())).thenReturn(Arrays.asList(seatReservation1, seatReservation2));
 
 		bookingManagementService.cancelBooking(BOOKING_ID, testUser);
 
@@ -281,6 +282,7 @@ public class BookingManagementServiceTest {
 		when(bookingRepository.findByIdAndUserId(BOOKING_ID, USER_ID)).thenReturn(Optional.of(testBooking));
 		when(bookingValidator.canBookingBeCancelled(testBooking)).thenReturn(true);
 		when(bookingRepository.save(testBooking)).thenReturn(testBooking);
+		when(seatReservationRepository.saveAll(any())).thenReturn(Arrays.asList(seatReservation1, seatReservation2));
 
 		bookingManagementService.cancelBooking(BOOKING_ID, testUser);
 

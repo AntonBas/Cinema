@@ -49,7 +49,7 @@ public class BookingMapperTest {
 		booking = Booking.builder().id(123L).user(user).session(session).status(BookingStatus.PENDING)
 				.totalPrice(new BigDecimal("500.00")).bonusPointsUsed(50).bonusDiscountAmount(new BigDecimal("25.00"))
 				.finalPrice(new BigDecimal("475.00")).payment(payment).seatReservations(Arrays.asList(seatReservation))
-				.build();
+				.createdAt(LocalDateTime.of(2024, 1, 15, 14, 30)).build();
 	}
 
 	@Test
@@ -57,6 +57,7 @@ public class BookingMapperTest {
 		BookingResponse response = bookingMapper.toBookingResponse(booking);
 
 		assertThat(response.id()).isEqualTo(123L);
+		assertThat(response.bookingNumber()).isEqualTo("BK-2024-00123");
 		assertThat(response.sessionId()).isEqualTo(1L);
 		assertThat(response.movieTitle()).isEqualTo("Inception");
 		assertThat(response.hallName()).isEqualTo("Hall A");
@@ -71,6 +72,7 @@ public class BookingMapperTest {
 		BookingResponse response = bookingMapper.toBookingResponse(booking);
 
 		assertThat(response.id()).isEqualTo(123L);
+		assertThat(response.bookingNumber()).isEqualTo("BK-2024-00123");
 		assertThat(response.sessionId()).isNull();
 		assertThat(response.movieTitle()).isNull();
 		assertThat(response.hallName()).isNull();
@@ -83,6 +85,7 @@ public class BookingMapperTest {
 		BookingResponse response = bookingMapper.toBookingResponse(booking);
 
 		assertThat(response.id()).isEqualTo(123L);
+		assertThat(response.bookingNumber()).isEqualTo("BK-2024-00123");
 		assertThat(response.liqpayOrderId()).isNull();
 	}
 
@@ -93,6 +96,7 @@ public class BookingMapperTest {
 		BookingResponse response = bookingMapper.toBookingResponse(booking);
 
 		assertThat(response.id()).isEqualTo(123L);
+		assertThat(response.bookingNumber()).isEqualTo("BK-2024-00123");
 		assertThat(response.seatReservations()).isEmpty();
 	}
 
