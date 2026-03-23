@@ -49,18 +49,16 @@ public class SeatReservationScheduler {
 				affectedSessionIds);
 	}
 
-	@Scheduled(fixedRateString = "${scheduler.booking-expired-reservations.cleanup-interval:300000}")
+	@Scheduled(fixedRateString = "${scheduler.seat-reservation.cleanup-expired-interval:300000}")
 	@Transactional
-	public void cleanupExpiredBookingReservations() {
-		LocalDateTime cutoffTime = LocalDateTime.now().minusDays(7);
-		List<SeatReservation> expiredReservations = seatReservationRepository
-				.findByStatusAndReservedUntilBefore(ReservationStatus.EXPIRED, cutoffTime);
+	public void cleanupExpiredReservations() {
+		List<SeatReservation> expiredReservations = seatReservationRepository.findByStatus(ReservationStatus.EXPIRED);
 
 		if (expiredReservations.isEmpty()) {
 			return;
 		}
 
 		seatReservationRepository.deleteAll(expiredReservations);
-		log.info("Deleted {} expired booking reservations older than 7 days", expiredReservations.size());
+		log.info("Deleted {} expired reservations", expiredReservations.size());
 	}
 }

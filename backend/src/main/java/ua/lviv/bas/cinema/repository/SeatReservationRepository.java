@@ -28,6 +28,8 @@ public interface SeatReservationRepository extends JpaRepository<SeatReservation
 
 	List<SeatReservation> findBySessionId(Long sessionId);
 
+	List<SeatReservation> findByStatus(ReservationStatus status);
+
 	List<SeatReservation> findByStatusAndReservedUntilBefore(ReservationStatus status, LocalDateTime reservedUntil);
 
 	Optional<SeatReservation> findBySessionIdAndSeatIdAndStatusAndReservedByUserId(Long sessionId, Long seatId,
