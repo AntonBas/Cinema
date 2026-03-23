@@ -20,7 +20,7 @@ public class SeatReservationScheduler {
 
 	private final SeatReservationRepository seatReservationRepository;
 
-	@Scheduled(fixedRate = 60000)
+	@Scheduled(fixedRateString = "${scheduler.seat-reservation.expiration-interval:6000}")
 	@Transactional
 	public void expireTempSeatReservation() {
 		LocalDateTime now = LocalDateTime.now();
@@ -31,22 +31,7 @@ public class SeatReservationScheduler {
 			return;
 		}
 
-		expiredReservations.forEach(sr -> sr.setStatus(ReservationStatus.EXPIRED));
-		seatReservationRepository.saveAll(expiredReservations);
-
-		log.info("Expired {} temporary seat reservations", expiredReservations.size());
-	}
-
-	@Scheduled(cron = "0 0 3 * * *")
-	@Transactional
-	public void cleanupExpiredSeatReservations() {
-		LocalDateTime sevenDaysAgo = LocalDateTime.now().minusDays(7);
-		List<SeatReservation> oldExpired = seatReservationRepository
-				.findByStatusAndReservedUntilBefore(ReservationStatus.EXPIRED, sevenDaysAgo);
-
-		if (!oldExpired.isEmpty()) {
-			seatReservationRepository.deleteAll(oldExpired);
-			log.info("Cleaned up {} old expired seat reservations", oldExpired.size());
-		}
+		seatReservationRepository.deleteAll(expiredReservations);
+		log.info("Deleted {} expired temporary seat reservations", expiredReservations.size());
 	}
 }

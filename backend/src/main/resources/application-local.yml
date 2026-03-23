@@ -34,6 +34,8 @@ scheduler:
         cleanup-cron: "0 */5 * * * *"
         daily-stats: "0 */5 * * * *"
         upcoming-reminder: "0 */5 * * * *"
+    seat-reservation:
+        expiration-interval: 60000
 
 logging:
     level:
