@@ -1,5 +1,6 @@
 package ua.lviv.bas.cinema.service.booking.reservation;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -7,6 +8,7 @@ import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.Seat;
+import ua.lviv.bas.cinema.domain.SeatReservation;
 import ua.lviv.bas.cinema.domain.enums.ReservationStatus;
 import ua.lviv.bas.cinema.exception.domain.booking.SeatNotAvailableException;
 import ua.lviv.bas.cinema.exception.domain.cinema.SeatNotFoundException;
@@ -58,9 +60,16 @@ public class ReservationValidator {
 		return new SeatAvailabilityCheck(!isReserved, status);
 	}
 
+	public void validateReservationNotExpired(SeatReservation reservation, Long seatId, Long sessionId) {
+		if (reservation.getReservedUntil().isBefore(LocalDateTime.now())) {
+			seatReservationRepository.delete(reservation);
+			throw SeatNotAvailableException.forSeatAndSession(seatId, sessionId);
+		}
+	}
+
 	private boolean isSeatReserved(Long sessionId, Long seatId) {
 		return seatReservationRepository.existsBySessionIdAndSeatIdAndStatusIn(sessionId, seatId,
-				List.of(ReservationStatus.PENDING, ReservationStatus.CONFIRMED));
+				ReservationStatus.ACTIVE_STATUSES);
 	}
 
 	public record SeatAvailabilityCheck(boolean available, ReservationStatus status) {

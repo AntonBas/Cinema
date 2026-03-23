@@ -19,8 +19,8 @@ import ua.lviv.bas.cinema.exception.domain.booking.BookingOperationException;
 import ua.lviv.bas.cinema.exception.domain.booking.BookingValidationException;
 import ua.lviv.bas.cinema.mapper.BookingMapper;
 import ua.lviv.bas.cinema.repository.BookingRepository;
+import ua.lviv.bas.cinema.repository.SeatReservationRepository;
 import ua.lviv.bas.cinema.service.booking.creation.BookingValidator;
-import ua.lviv.bas.cinema.service.shared.NumberGeneratorService;
 import ua.lviv.bas.cinema.service.user.BonusService;
 
 @Slf4j
@@ -29,15 +29,15 @@ import ua.lviv.bas.cinema.service.user.BonusService;
 @Transactional(readOnly = true)
 public class BookingManagementService {
 	private final BookingRepository bookingRepository;
+	private final SeatReservationRepository seatReservationRepository;
 	private final BookingMapper bookingMapper;
 	private final BookingValidator bookingValidator;
 	private final BonusService bonusService;
-	private final NumberGeneratorService numberGenerator;
 
 	public BookingResponse getBookingById(Long bookingId, User user) {
 		Booking booking = bookingRepository.findByIdAndUserId(bookingId, user.getId())
 				.orElseThrow(() -> new BookingNotFoundException(bookingId));
-		return buildBookingResponse(booking);
+		return bookingMapper.toBookingResponse(booking);
 	}
 
 	public Page<BookingResponse> getUserBookings(Long userId, BookingStatus status, Pageable pageable) {
@@ -47,7 +47,7 @@ public class BookingManagementService {
 		} else {
 			bookings = bookingRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable);
 		}
-		return bookings.map(this::buildBookingResponse);
+		return bookings.map(bookingMapper::toBookingResponse);
 	}
 
 	@Transactional
@@ -60,15 +60,20 @@ public class BookingManagementService {
 		}
 
 		booking.setStatus(BookingStatus.CANCELLED);
-		booking.getSeatReservations().forEach(bs -> bs.setStatus(null));
+
+		booking.getSeatReservations().forEach(sr -> {
+			sr.setStatus(ReservationStatus.EXPIRED);
+			sr.setBooking(null);
+		});
+
+		seatReservationRepository.saveAll(booking.getSeatReservations());
 
 		if (booking.getBonusPointsUsed() != null && booking.getBonusPointsUsed() > 0) {
 			bonusService.refundPoints(booking);
 		}
 
 		bookingRepository.save(booking);
-		log.info("Cancelled booking {} for user {}. Bonus points refunded: {}", bookingId, user.getId(),
-				booking.getBonusPointsUsed());
+		log.info("Cancelled booking {} for user {}", bookingId, user.getId());
 	}
 
 	@Transactional
@@ -81,21 +86,12 @@ public class BookingManagementService {
 		}
 
 		booking.setStatus(BookingStatus.CONFIRMED);
-		booking.getSeatReservations().forEach(bs -> bs.setStatus(ReservationStatus.CONFIRMED));
+		booking.getSeatReservations().forEach(sr -> sr.setStatus(ReservationStatus.CONFIRMED));
 		bookingRepository.save(booking);
 	}
 
 	@Transactional(readOnly = true)
 	public Integer getAvailableBonusPointsForBooking(Long userId, BigDecimal bookingTotalPrice) {
 		return bonusService.getAvailablePoints(userId, bookingTotalPrice);
-	}
-
-	private BookingResponse buildBookingResponse(Booking booking) {
-		BookingResponse response = bookingMapper.toBookingResponse(booking);
-		return new BookingResponse(response.id(), numberGenerator.generateBookingNumber(booking), response.status(),
-				response.sessionId(), response.sessionTime(), response.movieTitle(), response.hallName(),
-				response.totalPrice(), response.bonusPointsUsed(), response.bonusDiscountAmount(),
-				response.finalPrice(), response.liqpayOrderId(), response.expiresAt(), response.createdAt(),
-				response.seatReservations());
 	}
 }

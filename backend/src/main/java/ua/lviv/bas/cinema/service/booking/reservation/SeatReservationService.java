@@ -57,15 +57,14 @@ public class SeatReservationService {
 		List<Seat> allSeats = seatRepository.findByHallId(session.getHall().getId());
 		List<TicketType> activeTicketTypes = ticketTypeRepository.findByActiveTrue();
 
-		List<ReservationStatus> statuses = List.of(ReservationStatus.PENDING, ReservationStatus.CONFIRMED);
 		List<Object[]> bookedSeatData = seatReservationRepository.findBookedSeatIds(session.getHall().getId(),
-				sessionId, statuses);
+				sessionId, ReservationStatus.ACTIVE_STATUSES);
 
 		Map<Long, ReservationStatus> seatStatusMap = bookedSeatData.stream().collect(Collectors.toMap(
 				data -> (Long) data[0], data -> (ReservationStatus) data[1], (existing, replacement) -> existing));
 
 		List<SeatReservationResponse.SeatInfo> seatInfos = allSeats.stream()
-				.map(seat -> buildSeatInfo(seat, seatStatusMap, sessionId, session, activeTicketTypes))
+				.map(seat -> buildSeatInfo(seat, seatStatusMap, session, activeTicketTypes))
 				.collect(Collectors.toList());
 
 		int availableSeatsCount = (int) seatInfos.stream().filter(SeatReservationResponse.SeatInfo::available).count();
@@ -109,7 +108,7 @@ public class SeatReservationService {
 	}
 
 	private SeatReservationResponse.SeatInfo buildSeatInfo(Seat seat, Map<Long, ReservationStatus> seatStatusMap,
-			Long sessionId, Session session, List<TicketType> activeTicketTypes) {
+			Session session, List<TicketType> activeTicketTypes) {
 
 		ReservationStatus status = seatStatusMap.get(seat.getId());
 		boolean isBooked = status != null;
@@ -140,7 +139,7 @@ public class SeatReservationService {
 		Long hallId = session.getHall().getId();
 		long totalSeats = seatRepository.countByHallId(hallId);
 		long bookedSeats = seatReservationRepository.countBySessionIdAndStatusIn(sessionId,
-				List.of(ReservationStatus.PENDING, ReservationStatus.CONFIRMED));
+				ReservationStatus.ACTIVE_STATUSES);
 
 		return (int) (totalSeats - bookedSeats);
 	}

@@ -28,7 +28,7 @@ import ua.lviv.bas.cinema.repository.BookingRepository;
 import ua.lviv.bas.cinema.repository.SeatReservationRepository;
 import ua.lviv.bas.cinema.repository.SessionRepository;
 import ua.lviv.bas.cinema.repository.TicketTypeRepository;
-import ua.lviv.bas.cinema.service.shared.NumberGeneratorService;
+import ua.lviv.bas.cinema.service.booking.reservation.ReservationValidator;
 import ua.lviv.bas.cinema.service.shared.PriceCalculatorService;
 import ua.lviv.bas.cinema.service.user.BonusService;
 
@@ -44,9 +44,9 @@ public class BookingCreationService {
 	private final BookingMapper bookingMapper;
 	private final BonusService bonusService;
 	private final PriceCalculatorService priceCalculator;
-	private final NumberGeneratorService numberGenerator;
 	private final BookingPriceCalculator bookingPriceCalculator;
 	private final BookingValidator bookingValidator;
+	private final ReservationValidator availabilityValidator;
 
 	@Value("${booking.expiration-minutes:20}")
 	private int expirationMinutes;
@@ -90,7 +90,7 @@ public class BookingCreationService {
 		log.info("Created booking {} for user {} with {} bonus points used", savedBooking.getId(), user.getId(),
 				priceResult.bonusPointsUsed());
 
-		return buildBookingResponse(savedBooking);
+		return bookingMapper.toBookingResponse(savedBooking);
 	}
 
 	private SeatReservation findAndValidateTempReservation(Session session, User user,
@@ -102,10 +102,7 @@ public class BookingCreationService {
 				.orElseThrow(
 						() -> SeatNotAvailableException.forSeatAndSession(seatSelection.seatId(), session.getId()));
 
-		if (reservation.getReservedUntil().isBefore(LocalDateTime.now())) {
-			seatReservationRepository.delete(reservation);
-			throw SeatNotAvailableException.forSeatAndSession(seatSelection.seatId(), session.getId());
-		}
+		availabilityValidator.validateReservationNotExpired(reservation, seatSelection.seatId(), session.getId());
 
 		return reservation;
 	}
@@ -129,14 +126,5 @@ public class BookingCreationService {
 				.totalPrice(priceResult.totalPrice()).bonusPointsUsed(priceResult.bonusPointsUsed())
 				.bonusDiscountAmount(priceResult.bonusDiscount()).finalPrice(priceResult.finalPrice())
 				.expiresAt(expiresAt).seatReservations(seatReservations).build();
-	}
-
-	private BookingResponse buildBookingResponse(Booking booking) {
-		BookingResponse response = bookingMapper.toBookingResponse(booking);
-		return new BookingResponse(response.id(), numberGenerator.generateBookingNumber(booking), response.status(),
-				response.sessionId(), response.sessionTime(), response.movieTitle(), response.hallName(),
-				response.totalPrice(), response.bonusPointsUsed(), response.bonusDiscountAmount(),
-				response.finalPrice(), response.liqpayOrderId(), response.expiresAt(), response.createdAt(),
-				response.seatReservations());
 	}
 }
