@@ -38,22 +38,20 @@ public class ReservationValidator {
 	}
 
 	public SeatAvailabilityCheck getSeatAvailabilityStatus(Long sessionId, Long seatId) {
-		boolean isReserved = seatReservationRepository.existsBySessionIdAndSeatIdAndStatusIn(sessionId, seatId,
-				List.of(ReservationStatus.PENDING, ReservationStatus.CONFIRMED));
+		List<ReservationStatus> statuses = seatReservationRepository.findStatusesBySessionIdAndSeatId(sessionId,
+				seatId);
 
+		boolean isReserved = !statuses.isEmpty();
 		ReservationStatus status = null;
+
 		if (isReserved) {
-			List<ReservationStatus> statuses = seatReservationRepository.findStatusesBySessionIdAndSeatId(sessionId,
-					seatId);
-			if (!statuses.isEmpty()) {
-				if (statuses.contains(ReservationStatus.CONFIRMED)) {
-					status = ReservationStatus.CONFIRMED;
-				} else {
-					status = ReservationStatus.PENDING;
-				}
-				if (statuses.size() > 1) {
-					log.warn("Multiple reservations for seat {} in session {}: {}", seatId, sessionId, statuses);
-				}
+			if (statuses.contains(ReservationStatus.CONFIRMED)) {
+				status = ReservationStatus.CONFIRMED;
+			} else {
+				status = ReservationStatus.PENDING;
+			}
+			if (statuses.size() > 1) {
+				log.warn("Multiple reservations for seat {} in session {}: {}", seatId, sessionId, statuses);
 			}
 		}
 

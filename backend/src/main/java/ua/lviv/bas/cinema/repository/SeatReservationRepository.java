@@ -5,10 +5,13 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import jakarta.persistence.LockModeType;
+import ua.lviv.bas.cinema.domain.Seat;
 import ua.lviv.bas.cinema.domain.SeatReservation;
 import ua.lviv.bas.cinema.domain.enums.ReservationStatus;
 
@@ -24,8 +27,6 @@ public interface SeatReservationRepository extends JpaRepository<SeatReservation
 			@Param("seatId") Long seatId);
 
 	List<SeatReservation> findBySessionId(Long sessionId);
-
-	List<SeatReservation> findBySessionIdAndStatusIn(Long sessionId, List<ReservationStatus> statuses);
 
 	List<SeatReservation> findByStatusAndReservedUntilBefore(ReservationStatus status, LocalDateTime reservedUntil);
 
@@ -45,9 +46,9 @@ public interface SeatReservationRepository extends JpaRepository<SeatReservation
 	@Query("""
 			SELECT
 			    s.id,
-			    CASE WHEN sr.id IS NOT NULL AND sr.status IN :statuses THEN true ELSE false END
+			    sr.status
 			FROM Seat s
-			LEFT JOIN SeatReservation sr ON sr.seat.id = s.id AND sr.session.id = :sessionId
+			LEFT JOIN SeatReservation sr ON sr.seat.id = s.id AND sr.session.id = :sessionId AND sr.status IN :statuses
 			WHERE s.hall.id = :hallId
 			""")
 	List<Object[]> findBookedSeatIds(@Param("hallId") Long hallId, @Param("sessionId") Long sessionId,
@@ -60,4 +61,8 @@ public interface SeatReservationRepository extends JpaRepository<SeatReservation
 			WHERE sr.session.id = :sessionId AND sr.status = 'PENDING'
 			""")
 	List<Long> findPendingSeatIdsBySessionId(@Param("sessionId") Long sessionId);
+
+	@Lock(LockModeType.PESSIMISTIC_WRITE)
+	@Query("SELECT s FROM Seat s WHERE s.id = :seatId")
+	Optional<Seat> findByIdWithLock(@Param("seatId") Long seatId);
 }

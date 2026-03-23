@@ -60,7 +60,7 @@ public class BookingManagementService {
 		}
 
 		booking.setStatus(BookingStatus.CANCELLED);
-		booking.getSeatReservations().forEach(bs -> bs.setStatus(ReservationStatus.CANCELLED));
+		booking.getSeatReservations().forEach(bs -> bs.setStatus(null));
 
 		if (booking.getBonusPointsUsed() != null && booking.getBonusPointsUsed() > 0) {
 			bonusService.refundPoints(booking);

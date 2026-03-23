@@ -61,15 +61,11 @@ public class SeatReservationService {
 		List<Object[]> bookedSeatData = seatReservationRepository.findBookedSeatIds(session.getHall().getId(),
 				sessionId, statuses);
 
-		Map<Long, Boolean> bookedSeatMap = bookedSeatData.stream().collect(
-				Collectors.toMap(data -> (Long) data[0], data -> (Boolean) data[1], (existing, replacement) -> {
-					log.warn("Duplicate seat ID {} found with values {} and {}, using first value", existing, existing,
-							replacement);
-					return existing;
-				}));
+		Map<Long, ReservationStatus> seatStatusMap = bookedSeatData.stream().collect(Collectors.toMap(
+				data -> (Long) data[0], data -> (ReservationStatus) data[1], (existing, replacement) -> existing));
 
 		List<SeatReservationResponse.SeatInfo> seatInfos = allSeats.stream()
-				.map(seat -> buildSeatInfo(seat, bookedSeatMap, sessionId, session, activeTicketTypes))
+				.map(seat -> buildSeatInfo(seat, seatStatusMap, sessionId, session, activeTicketTypes))
 				.collect(Collectors.toList());
 
 		int availableSeatsCount = (int) seatInfos.stream().filter(SeatReservationResponse.SeatInfo::available).count();
@@ -85,7 +81,7 @@ public class SeatReservationService {
 		Session session = sessionRepository.findById(sessionId)
 				.orElseThrow(() -> new SessionNotFoundException(sessionId));
 
-		Seat seat = seatRepository.findById(seatId).orElseThrow(() -> new SeatNotFoundException(seatId));
+		Seat seat = seatRepository.findByIdWithLock(seatId).orElseThrow(() -> new SeatNotFoundException(seatId));
 
 		availabilityValidator.validateSeat(sessionId, seatId);
 
@@ -106,27 +102,26 @@ public class SeatReservationService {
 		SeatReservation reservation = seatReservationRepository
 				.findBySessionIdAndSeatIdAndStatusAndReservedByUserId(sessionId, seatId, ReservationStatus.PENDING,
 						user.getId())
-				.orElseThrow(() -> new SeatNotAvailableException("No active hold found for seat" + seatId));
+				.orElseThrow(() -> new SeatNotAvailableException("No active hold found for seat " + seatId));
 
 		seatReservationRepository.delete(reservation);
 		log.info("Temporary hold cancelled for seat {} in session {} by user {}", seatId, sessionId, user.getId());
 	}
 
-	private SeatReservationResponse.SeatInfo buildSeatInfo(Seat seat, Map<Long, Boolean> bookedSeatMap, Long sessionId,
-			Session session, List<TicketType> activeTicketTypes) {
+	private SeatReservationResponse.SeatInfo buildSeatInfo(Seat seat, Map<Long, ReservationStatus> seatStatusMap,
+			Long sessionId, Session session, List<TicketType> activeTicketTypes) {
 
-		boolean isBooked = bookedSeatMap.getOrDefault(seat.getId(), false);
-		ReservationValidator.SeatAvailabilityCheck check = availabilityValidator.getSeatAvailabilityStatus(sessionId,
-				seat.getId());
-
-		boolean isAvailable = !isBooked && !check.isTemporarilyReserved() && seat.isActive();
+		ReservationStatus status = seatStatusMap.get(seat.getId());
+		boolean isBooked = status != null;
+		boolean isTemporarilyReserved = status == ReservationStatus.PENDING;
+		boolean isAvailable = !isBooked && seat.isActive();
 
 		List<SeatReservationResponse.TicketPriceInfo> ticketPrices = activeTicketTypes.stream().map(ticketType -> {
 			BigDecimal price = priceCalculator.calculateSeatPrice(session, seat, ticketType);
 			return seatReservationMapper.toTicketPriceInfo(ticketType, price);
 		}).collect(Collectors.toList());
 
-		return seatReservationMapper.toSeatInfo(seat, isAvailable, check.isTemporarilyReserved(), ticketPrices);
+		return seatReservationMapper.toSeatInfo(seat, isAvailable, isTemporarilyReserved, ticketPrices);
 	}
 
 	public void validateSeatAvailability(Long sessionId, Long seatId) {
