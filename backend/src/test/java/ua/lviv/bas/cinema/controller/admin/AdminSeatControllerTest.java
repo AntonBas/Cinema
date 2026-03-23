@@ -28,17 +28,20 @@ public class AdminSeatControllerTest {
 	@InjectMocks
 	private AdminSeatController seatController;
 
+	private final Long HALL_ID = 1L;
+
 	private SeatResponse createSeatDto(Long id, int row, int number, SeatType seatType, boolean active) {
 		return new SeatResponse(id, row, number, seatType, active);
 	}
 
 	@Test
 	void updateSeatType_ShouldReturnUpdatedSeat() {
-		SeatResponse updatedSeat = createSeatDto(1L, 1, 1, SeatType.VIP, true);
+		Long seatId = 1L;
+		SeatResponse updatedSeat = createSeatDto(seatId, 1, 1, SeatType.VIP, true);
 
-		when(seatService.updateSeatType(1L, SeatType.VIP)).thenReturn(updatedSeat);
+		when(seatService.updateSeatType(HALL_ID, seatId, SeatType.VIP)).thenReturn(updatedSeat);
 
-		ResponseEntity<SeatResponse> response = seatController.updateSeatType(1L, 1L, SeatType.VIP);
+		ResponseEntity<SeatResponse> response = seatController.updateSeatType(HALL_ID, seatId, SeatType.VIP);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
 
@@ -46,65 +49,69 @@ public class AdminSeatControllerTest {
 		assertNotNull(responseBody);
 
 		assertEquals(SeatType.VIP, responseBody.seatType());
-		assertEquals(1L, responseBody.id());
+		assertEquals(seatId, responseBody.id());
 		assertEquals(true, responseBody.active());
 
-		verify(seatService).updateSeatType(1L, SeatType.VIP);
+		verify(seatService).updateSeatType(HALL_ID, seatId, SeatType.VIP);
 	}
 
 	@Test
 	void updateSeatType_WhenNotFound_ShouldThrowException() {
-		when(seatService.updateSeatType(999L, SeatType.VIP)).thenThrow(new SeatNotFoundException(999L));
+		Long seatId = 999L;
+		when(seatService.updateSeatType(HALL_ID, seatId, SeatType.VIP)).thenThrow(new SeatNotFoundException(seatId));
 
-		assertThrows(SeatNotFoundException.class, () -> seatController.updateSeatType(1L, 999L, SeatType.VIP));
+		assertThrows(SeatNotFoundException.class, () -> seatController.updateSeatType(HALL_ID, seatId, SeatType.VIP));
 
-		verify(seatService).updateSeatType(999L, SeatType.VIP);
+		verify(seatService).updateSeatType(HALL_ID, seatId, SeatType.VIP);
 	}
 
 	@Test
 	void setSeatActiveStatus_ShouldReturnActivatedSeat() {
-		SeatResponse activatedSeat = createSeatDto(1L, 1, 1, SeatType.STANDARD, true);
+		Long seatId = 1L;
+		SeatResponse activatedSeat = createSeatDto(seatId, 1, 1, SeatType.STANDARD, true);
 
-		when(seatService.setSeatActiveStatus(1L, true)).thenReturn(activatedSeat);
+		when(seatService.setSeatActiveStatus(HALL_ID, seatId, true)).thenReturn(activatedSeat);
 
-		ResponseEntity<SeatResponse> response = seatController.setSeatActiveStatus(1L, 1L, true);
+		ResponseEntity<SeatResponse> response = seatController.setSeatActiveStatus(HALL_ID, seatId, true);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
 
 		SeatResponse responseBody = response.getBody();
 		assertNotNull(responseBody);
 
-		assertEquals(1L, responseBody.id());
+		assertEquals(seatId, responseBody.id());
 		assertEquals(true, responseBody.active());
 
-		verify(seatService).setSeatActiveStatus(1L, true);
+		verify(seatService).setSeatActiveStatus(HALL_ID, seatId, true);
 	}
 
 	@Test
 	void setSeatActiveStatus_ShouldReturnDeactivatedSeat() {
-		SeatResponse deactivatedSeat = createSeatDto(1L, 1, 1, SeatType.STANDARD, false);
+		Long seatId = 1L;
+		SeatResponse deactivatedSeat = createSeatDto(seatId, 1, 1, SeatType.STANDARD, false);
 
-		when(seatService.setSeatActiveStatus(1L, false)).thenReturn(deactivatedSeat);
+		when(seatService.setSeatActiveStatus(HALL_ID, seatId, false)).thenReturn(deactivatedSeat);
 
-		ResponseEntity<SeatResponse> response = seatController.setSeatActiveStatus(1L, 1L, false);
+		ResponseEntity<SeatResponse> response = seatController.setSeatActiveStatus(HALL_ID, seatId, false);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
 
 		SeatResponse responseBody = response.getBody();
 		assertNotNull(responseBody);
 
-		assertEquals(1L, responseBody.id());
+		assertEquals(seatId, responseBody.id());
 		assertEquals(false, responseBody.active());
 
-		verify(seatService).setSeatActiveStatus(1L, false);
+		verify(seatService).setSeatActiveStatus(HALL_ID, seatId, false);
 	}
 
 	@Test
 	void setSeatActiveStatus_WhenNotFound_ShouldThrowException() {
-		when(seatService.setSeatActiveStatus(999L, true)).thenThrow(new SeatNotFoundException(999L));
+		Long seatId = 999L;
+		when(seatService.setSeatActiveStatus(HALL_ID, seatId, true)).thenThrow(new SeatNotFoundException(seatId));
 
-		assertThrows(SeatNotFoundException.class, () -> seatController.setSeatActiveStatus(1L, 999L, true));
+		assertThrows(SeatNotFoundException.class, () -> seatController.setSeatActiveStatus(HALL_ID, seatId, true));
 
-		verify(seatService).setSeatActiveStatus(999L, true);
+		verify(seatService).setSeatActiveStatus(HALL_ID, seatId, true);
 	}
 }

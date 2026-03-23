@@ -76,7 +76,7 @@ public class SeatServiceTest {
 		when(seatRepository.save(seat)).thenReturn(seat);
 		when(seatMapper.toSeatResponse(seat)).thenReturn(response);
 
-		SeatResponse result = seatService.updateSeatType(SEAT_ID, SeatType.VIP);
+		SeatResponse result = seatService.updateSeatType(HALL_ID, SEAT_ID, SeatType.VIP);
 
 		assertThat(result).isEqualTo(response);
 		assertThat(seat.getSeatType()).isEqualTo(SeatType.VIP);
@@ -91,7 +91,7 @@ public class SeatServiceTest {
 		when(seatRepository.save(seat)).thenReturn(seat);
 		when(seatMapper.toSeatResponse(seat)).thenReturn(response);
 
-		SeatResponse result = seatService.setSeatActiveStatus(SEAT_ID, true);
+		SeatResponse result = seatService.setSeatActiveStatus(HALL_ID, SEAT_ID, true);
 
 		assertThat(result).isEqualTo(response);
 		assertThat(seat.isActive()).isTrue();
