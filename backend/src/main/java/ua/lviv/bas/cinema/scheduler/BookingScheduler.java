@@ -3,6 +3,7 @@ package ua.lviv.bas.cinema.scheduler;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.springframework.cache.CacheManager;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,6 +17,7 @@ import ua.lviv.bas.cinema.domain.enums.PaymentStatus;
 import ua.lviv.bas.cinema.domain.enums.ReservationStatus;
 import ua.lviv.bas.cinema.repository.BookingRepository;
 import ua.lviv.bas.cinema.repository.PaymentRepository;
+import ua.lviv.bas.cinema.repository.SeatReservationRepository;
 import ua.lviv.bas.cinema.service.user.BonusService;
 
 @Slf4j
@@ -24,7 +26,9 @@ import ua.lviv.bas.cinema.service.user.BonusService;
 public class BookingScheduler {
 	private final BookingRepository bookingRepository;
 	private final PaymentRepository paymentRepository;
+	private final SeatReservationRepository seatReservationRepository;
 	private final BonusService bonusService;
+	private final CacheManager cacheManager;
 
 	@Scheduled(fixedRateString = "${scheduler.booking.expiration-interval:60000}")
 	@Transactional
@@ -42,11 +46,20 @@ public class BookingScheduler {
 
 		for (Booking booking : expiredBookings) {
 			booking.setStatus(BookingStatus.EXPIRED);
-			booking.getSeatReservations().forEach(sr -> sr.setStatus(ReservationStatus.EXPIRED));
+
+			booking.getSeatReservations().forEach(sr -> {
+				sr.setStatus(ReservationStatus.EXPIRED);
+				sr.setBooking(null);
+			});
+
+			seatReservationRepository.saveAll(booking.getSeatReservations());
 
 			if (booking.getBonusPointsUsed() != null && booking.getBonusPointsUsed() > 0) {
 				bonusService.refundPoints(booking);
 			}
+
+			cacheManager.getCache("seatAvailability").evict(booking.getSession().getId());
+			cacheManager.getCache("availableSeatsCount").evict(booking.getSession().getId());
 		}
 
 		bookingRepository.saveAll(expiredBookings);
@@ -74,7 +87,13 @@ public class BookingScheduler {
 
 			if (payment.getBooking().getStatus() == BookingStatus.PENDING) {
 				payment.getBooking().setStatus(BookingStatus.EXPIRED);
-				payment.getBooking().getSeatReservations().forEach(sr -> sr.setStatus(ReservationStatus.EXPIRED));
+				payment.getBooking().getSeatReservations().forEach(sr -> {
+					sr.setStatus(ReservationStatus.EXPIRED);
+					sr.setBooking(null);
+				});
+				seatReservationRepository.saveAll(payment.getBooking().getSeatReservations());
+				cacheManager.getCache("seatAvailability").evict(payment.getBooking().getSession().getId());
+				cacheManager.getCache("availableSeatsCount").evict(payment.getBooking().getSession().getId());
 			}
 		}
 
@@ -111,36 +130,5 @@ public class BookingScheduler {
 		} else {
 			log.debug("No old payments to clean up");
 		}
-	}
-
-	@Scheduled(cron = "${scheduler.booking.reminder-cron:0 */10 * * * *}")
-	@Transactional(readOnly = true)
-	public void sendExpirationReminders() {
-		LocalDateTime now = LocalDateTime.now();
-		LocalDateTime reminderTime = now.plusMinutes(5);
-		List<Booking> soonToExpire = bookingRepository.findByExpiresAtBetweenAndStatus(now, reminderTime,
-				BookingStatus.PENDING);
-
-		if (!soonToExpire.isEmpty()) {
-			log.info("Found {} bookings expiring soon", soonToExpire.size());
-		}
-	}
-
-	@Scheduled(cron = "${scheduler.payment.daily-stats:0 0 23 * * *}")
-	@Transactional(readOnly = true)
-	public void generateDailyPaymentStatistics() {
-		LocalDateTime startOfDay = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0);
-		LocalDateTime endOfDay = LocalDateTime.now().withHour(23).withMinute(59).withSecond(59);
-
-		long totalPayments = paymentRepository.countByCreatedAtBetween(startOfDay, endOfDay);
-		long completedPayments = paymentRepository.countByStatus(PaymentStatus.SUCCESS);
-		long pendingPayments = paymentRepository.countByStatus(PaymentStatus.PENDING);
-		long failedPayments = paymentRepository.countByStatus(PaymentStatus.FAILED);
-
-		log.info("Daily payment statistics:");
-		log.info("  Total payments: {}", totalPayments);
-		log.info("  Completed: {}", completedPayments);
-		log.info("  Pending: {}", pendingPayments);
-		log.info("  Failed: {}", failedPayments);
 	}
 }

@@ -36,6 +36,7 @@ scheduler:
         upcoming-reminder: "0 */5 * * * *"
     seat-reservation:
         expiration-interval: 60000
+        cleanup-expired-interval: 300000
 
 logging:
     level:
