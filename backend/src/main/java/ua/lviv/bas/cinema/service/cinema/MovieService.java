@@ -15,7 +15,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.Movie;
 import ua.lviv.bas.cinema.domain.enums.MovieStatus;
-import ua.lviv.bas.cinema.domain.projection.MovieCardProjection;
 import ua.lviv.bas.cinema.dto.movie.request.MovieCreateRequest;
 import ua.lviv.bas.cinema.dto.movie.request.MovieUpdateRequest;
 import ua.lviv.bas.cinema.dto.movie.response.MovieCardResponse;
@@ -59,12 +58,13 @@ public class MovieService {
 		movie.setSlug(slug);
 		movie.setStatus(movieScheduler.calculateMovieStatus(movie, LocalDate.now()));
 
-		handlePosterUpload(request.getPosterFile(), movie);
-		setMovieRelations(movie, request);
+		handlePoster(movie, request.getPosterFile(), false);
+		setMovieRelations(movie, request.getGenreIds(), request.getActorIds(), request.getDirectorIds(),
+				request.getScreenwriterIds());
 
 		Movie saved = movieRepository.save(movie);
 		log.info("Movie created successfully with id: {}", saved.getId());
-		return buildDetailResponse(saved);
+		return movieMapper.toMovieDetailResponse(saved);
 	}
 
 	@Transactional
@@ -74,10 +74,8 @@ public class MovieService {
 		Movie existing = findAdminMovieById(id);
 		validateDates(request.getReleaseDate(), request.getEndShowingDate());
 
-		if (!existing.getTitle().equals(request.getTitle())) {
-			if (movieRepository.existsByTitle(request.getTitle())) {
-				throw new DuplicateEntityException("Movie", "title '" + request.getTitle() + "'");
-			}
+		if (!existing.getTitle().equals(request.getTitle()) && movieRepository.existsByTitle(request.getTitle())) {
+			throw new DuplicateEntityException("Movie", "title '" + request.getTitle() + "'");
 		}
 
 		movieMapper.updateMovieFromRequest(request, existing);
@@ -90,13 +88,14 @@ public class MovieService {
 			existing.setSlug(newSlug);
 		}
 
-		handlePosterUpdate(existing, request.getPosterFile(), request.getRemovePoster());
+		handlePoster(existing, request.getPosterFile(), Boolean.TRUE.equals(request.getRemovePoster()));
 		existing.setStatus(movieScheduler.calculateMovieStatus(existing, LocalDate.now()));
-		updateMovieRelations(existing, request);
+		updateMovieRelations(existing, request.getGenreIds(), request.getActorIds(), request.getDirectorIds(),
+				request.getScreenwriterIds());
 
 		Movie updated = movieRepository.save(existing);
 		log.info("Movie updated successfully with id: {}", updated.getId());
-		return buildDetailResponse(updated);
+		return movieMapper.toMovieDetailResponse(updated);
 	}
 
 	@Transactional
@@ -118,39 +117,40 @@ public class MovieService {
 
 	public MovieDetailResponse getAdminMovieById(Long id) {
 		Movie movie = findAdminMovieById(id);
-		return buildDetailResponse(movie);
+		return movieMapper.toMovieDetailResponse(movie);
 	}
 
 	public MovieDetailResponse getMovieBySlug(String slug) {
 		Movie movie = movieRepository.findBySlug(slug).orElseThrow(() -> new MovieNotFoundException(slug));
-		return buildDetailResponse(movie);
+		return movieMapper.toMovieDetailResponse(movie);
 	}
 
 	public MovieDetailResponse getAdminMovieBySlug(String slug) {
 		Movie movie = movieRepository.findAdminMovieBySlug(slug).orElseThrow(() -> new MovieNotFoundException(slug));
-		return buildDetailResponse(movie);
+		return movieMapper.toMovieDetailResponse(movie);
 	}
 
 	public Page<MovieCardResponse> getFilteredMovies(String title, MovieStatus status, Pageable pageable) {
-		Page<Movie> moviePage = movieRepository.findMoviesByFilters(title, status, pageable);
-		return moviePage.map(movieMapper::toMovieCardResponse);
+		return movieRepository.findMoviesByFilters(title, status, pageable).map(movieMapper::toMovieCardResponse);
 	}
 
 	public List<MovieSessionSearchResponse> searchMoviesForSession(String searchTerm) {
 		log.info("Searching movies for session with term: {}", searchTerm);
 
-		try {
+		if (searchTerm == null || searchTerm.isBlank()) {
+			return List.of();
+		}
+
+		if (isValidDate(searchTerm)) {
 			LocalDate date = LocalDate.parse(searchTerm);
-			List<MovieCardProjection> projections = movieRepository.findMoviesByDate(date);
-			return projections.stream().map(
-					proj -> new MovieSessionSearchResponse(proj.getId(), proj.getTitle(), proj.getDurationMinutes()))
-					.toList();
-		} catch (Exception e) {
-			List<MovieCardProjection> projections = movieRepository.findMoviesForSession(searchTerm);
-			return projections.stream().map(
+			return movieRepository.findMoviesByDate(date).stream().map(
 					proj -> new MovieSessionSearchResponse(proj.getId(), proj.getTitle(), proj.getDurationMinutes()))
 					.toList();
 		}
+
+		return movieRepository.findMoviesForSession(searchTerm).stream()
+				.map(proj -> new MovieSessionSearchResponse(proj.getId(), proj.getTitle(), proj.getDurationMinutes()))
+				.toList();
 	}
 
 	public ResponseEntity<byte[]> getMoviePoster(Long id) {
@@ -160,10 +160,6 @@ public class MovieService {
 
 	public boolean existsBySlug(String slug) {
 		return movieRepository.findBySlug(slug).isPresent();
-	}
-
-	private MovieDetailResponse buildDetailResponse(Movie movie) {
-		return movieMapper.toMovieDetailResponse(movie);
 	}
 
 	private Movie findAdminMovieById(Long id) {
@@ -182,34 +178,25 @@ public class MovieService {
 		}
 	}
 
-	private void setMovieRelations(Movie movie, MovieCreateRequest request) {
-		movie.setGenres(new HashSet<>(genreRepository.findAllById(request.getGenreIds())));
-		movie.setActors(new HashSet<>(personRepository.findAllById(request.getActorIds())));
-		movie.setDirectors(new HashSet<>(personRepository.findAllById(request.getDirectorIds())));
-		movie.setScreenwriters(new HashSet<>(personRepository.findAllById(request.getScreenwriterIds())));
+	private void setMovieRelations(Movie movie, List<Long> genreIds, List<Long> actorIds, List<Long> directorIds,
+			List<Long> screenwriterIds) {
+		movie.setGenres(new HashSet<>(genreRepository.findAllById(genreIds)));
+		movie.setActors(new HashSet<>(personRepository.findAllById(actorIds)));
+		movie.setDirectors(new HashSet<>(personRepository.findAllById(directorIds)));
+		movie.setScreenwriters(new HashSet<>(personRepository.findAllById(screenwriterIds)));
 	}
 
-	private void updateMovieRelations(Movie movie, MovieUpdateRequest request) {
+	private void updateMovieRelations(Movie movie, List<Long> genreIds, List<Long> actorIds, List<Long> directorIds,
+			List<Long> screenwriterIds) {
 		movie.getGenres().clear();
 		movie.getActors().clear();
 		movie.getDirectors().clear();
 		movie.getScreenwriters().clear();
 
-		movie.getGenres().addAll(new HashSet<>(genreRepository.findAllById(request.getGenreIds())));
-		movie.getActors().addAll(new HashSet<>(personRepository.findAllById(request.getActorIds())));
-		movie.getDirectors().addAll(new HashSet<>(personRepository.findAllById(request.getDirectorIds())));
-		movie.getScreenwriters().addAll(new HashSet<>(personRepository.findAllById(request.getScreenwriterIds())));
+		setMovieRelations(movie, genreIds, actorIds, directorIds, screenwriterIds);
 	}
 
-	private void handlePosterUpload(MultipartFile posterFile, Movie movie) {
-		if (posterFile != null && !posterFile.isEmpty()) {
-			String posterFileName = posterService.uploadPoster(posterFile);
-			movie.setPosterFileName(posterFileName);
-			log.debug("Poster uploaded: {}", posterFileName);
-		}
-	}
-
-	private void handlePosterUpdate(Movie movie, MultipartFile posterFile, Boolean removePoster) {
+	private void handlePoster(Movie movie, MultipartFile posterFile, boolean removePoster) {
 		if (posterFile != null && !posterFile.isEmpty()) {
 			if (movie.getPosterFileName() != null) {
 				posterService.deletePoster(movie.getPosterFileName());
@@ -217,10 +204,19 @@ public class MovieService {
 			String newPosterFileName = posterService.uploadPoster(posterFile);
 			movie.setPosterFileName(newPosterFileName);
 			log.debug("Poster updated: {}", newPosterFileName);
-		} else if (Boolean.TRUE.equals(removePoster) && movie.getPosterFileName() != null) {
+		} else if (removePoster && movie.getPosterFileName() != null) {
 			posterService.deletePoster(movie.getPosterFileName());
 			movie.setPosterFileName(null);
 			log.debug("Poster removed");
+		}
+	}
+
+	private boolean isValidDate(String searchTerm) {
+		try {
+			LocalDate.parse(searchTerm);
+			return true;
+		} catch (Exception e) {
+			return false;
 		}
 	}
 }
