@@ -60,8 +60,9 @@ public class SeatReservationService {
 		List<Object[]> bookedSeatData = seatReservationRepository.findBookedSeatIds(session.getHall().getId(),
 				sessionId, ReservationStatus.ACTIVE_STATUSES);
 
-		Map<Long, ReservationStatus> seatStatusMap = bookedSeatData.stream().collect(Collectors.toMap(
-				data -> (Long) data[0], data -> (ReservationStatus) data[1], (existing, replacement) -> existing));
+		Map<Long, ReservationStatus> seatStatusMap = bookedSeatData.stream().filter(data -> data[1] != null)
+				.collect(Collectors.toMap(data -> (Long) data[0], data -> (ReservationStatus) data[1],
+						(existing, replacement) -> existing));
 
 		List<SeatReservationResponse.SeatInfo> seatInfos = allSeats.stream()
 				.map(seat -> buildSeatInfo(seat, seatStatusMap, session, activeTicketTypes))
