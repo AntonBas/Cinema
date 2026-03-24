@@ -11,6 +11,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -112,7 +113,7 @@ public class SeatReservationServiceTest {
 	@Test
 	void temporaryHoldSeat_Success() {
 		when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(testSession));
-		when(seatRepository.findById(SEAT_ID)).thenReturn(Optional.of(testSeat));
+		when(seatRepository.findByIdWithLock(SEAT_ID)).thenReturn(Optional.of(testSeat));
 
 		seatReservationService.temporaryHoldSeat(SESSION_ID, SEAT_ID, testUser);
 
@@ -139,7 +140,7 @@ public class SeatReservationServiceTest {
 	@Test
 	void temporaryHoldSeat_WhenSeatNotFound_ThrowsException() {
 		when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(testSession));
-		when(seatRepository.findById(SEAT_ID)).thenReturn(Optional.empty());
+		when(seatRepository.findByIdWithLock(SEAT_ID)).thenReturn(Optional.empty());
 		assertThatThrownBy(() -> seatReservationService.temporaryHoldSeat(SESSION_ID, SEAT_ID, testUser))
 				.isInstanceOf(SeatNotFoundException.class);
 	}
@@ -147,7 +148,7 @@ public class SeatReservationServiceTest {
 	@Test
 	void temporaryHoldSeat_WhenSeatNotAvailable_ThrowsException() {
 		when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(testSession));
-		when(seatRepository.findById(SEAT_ID)).thenReturn(Optional.of(testSeat));
+		when(seatRepository.findByIdWithLock(SEAT_ID)).thenReturn(Optional.of(testSeat));
 		doThrow(SeatNotAvailableException.forSeatAndSession(SEAT_ID, SESSION_ID)).when(availabilityValidator)
 				.validateSeat(SESSION_ID, SEAT_ID);
 
@@ -187,8 +188,6 @@ public class SeatReservationServiceTest {
 		when(seatRepository.findByHallId(testSession.getHall().getId())).thenReturn(seats);
 		when(seatReservationRepository.findBookedSeatIds(any(), any(), any())).thenReturn(bookedSeatData);
 		when(ticketTypeRepository.findByActiveTrue()).thenReturn(ticketTypes);
-		when(availabilityValidator.getSeatAvailabilityStatus(eq(SESSION_ID), eq(SEAT_ID)))
-				.thenReturn(new ReservationValidator.SeatAvailabilityCheck(true, null));
 		when(priceCalculator.calculateSeatPrice(any(), any(), any())).thenReturn(BigDecimal.TEN);
 
 		SeatReservationResponse.TicketPriceInfo priceInfo = new SeatReservationResponse.TicketPriceInfo(1L, "Adult",
@@ -218,10 +217,43 @@ public class SeatReservationServiceTest {
 	}
 
 	@Test
+	void getSeatAvailability_WithBookedSeats_FiltersNullStatus() {
+		List<Seat> seats = Arrays.asList(testSeat);
+		List<TicketType> ticketTypes = Arrays.asList(ticketType);
+
+		List<Object[]> bookedSeatData = new ArrayList<>();
+		bookedSeatData.add(new Object[] { SEAT_ID, null });
+
+		when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(testSession));
+		when(seatRepository.findByHallId(testSession.getHall().getId())).thenReturn(seats);
+		when(seatReservationRepository.findBookedSeatIds(any(), any(), any())).thenReturn(bookedSeatData);
+		when(ticketTypeRepository.findByActiveTrue()).thenReturn(ticketTypes);
+		when(priceCalculator.calculateSeatPrice(any(), any(), any())).thenReturn(BigDecimal.TEN);
+
+		SeatReservationResponse.TicketPriceInfo priceInfo = new SeatReservationResponse.TicketPriceInfo(1L, "Adult",
+				BigDecimal.TEN);
+		SeatReservationResponse.SeatInfo seatInfo = new SeatReservationResponse.SeatInfo(SEAT_ID, 1, 1,
+				SeatType.STANDARD, true, false, true, List.of(priceInfo));
+
+		when(seatReservationMapper.toTicketPriceInfo(any(), any())).thenReturn(priceInfo);
+		when(seatReservationMapper.toSeatInfo(any(), anyBoolean(), anyBoolean(), any())).thenReturn(seatInfo);
+
+		SeatReservationResponse expected = new SeatReservationResponse(SESSION_ID, "Test Movie", BASE_PRICE, "Hall A",
+				1, List.of(seatInfo));
+		when(seatReservationMapper.toResponse(any(), any(), anyInt())).thenReturn(expected);
+
+		SeatReservationResponse result = seatReservationService.getSeatAvailability(SESSION_ID);
+
+		assertThat(result).isNotNull();
+		assertThat(result.availableSeats()).isEqualTo(1);
+	}
+
+	@Test
 	void getAvailableSeatsCount_Success() {
 		when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(testSession));
 		when(seatRepository.countByHallId(testSession.getHall().getId())).thenReturn(100L);
-		when(seatReservationRepository.countBySessionIdAndStatusIn(eq(SESSION_ID), any())).thenReturn(25L);
+		when(seatReservationRepository.countBySessionIdAndStatusIn(eq(SESSION_ID),
+				eq(ReservationStatus.ACTIVE_STATUSES))).thenReturn(25L);
 
 		int result = seatReservationService.getAvailableSeatsCount(SESSION_ID);
 		assertThat(result).isEqualTo(75);
