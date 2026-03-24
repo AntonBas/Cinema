@@ -33,7 +33,7 @@ public class PaymentValidator {
 		}
 
 		boolean allSeatsAvailable = booking.getSeatReservations().stream()
-				.allMatch(seat -> seat.getStatus() == ReservationStatus.PENDING);
+				.allMatch(seat -> seat.getStatus() == ReservationStatus.CONFIRMED);
 
 		if (!allSeatsAvailable) {
 			throw PaymentProcessingException.seatsNoLongerAvailable();
