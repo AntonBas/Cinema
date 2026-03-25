@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback } from 'react';
+import React, { useCallback } from 'react';
 import type { SessionAdminResponse } from '@/types/session';
 import type { BadgeVariant } from '@/components/ui/Badge/Badge';
 import { Button, Badge } from '@/components/ui';
@@ -90,12 +90,6 @@ export const SessionTable: React.FC<SessionTableProps> = ({
     onReactivate,
     onViewDetails
 }) => {
-    const sortedSessions = useMemo(() => {
-        return [...sessions].sort((a, b) =>
-            new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
-        );
-    }, [sessions]);
-
     const handleEdit = useCallback((e: React.MouseEvent, session: SessionAdminResponse) => {
         e.stopPropagation();
         onEdit(session);
@@ -283,7 +277,7 @@ export const SessionTable: React.FC<SessionTableProps> = ({
     return (
         <div className={styles.table}>
             {renderTableHeader()}
-            {sortedSessions.map(renderTableRow)}
+            {sessions.map(renderTableRow)}
         </div>
     );
 };
