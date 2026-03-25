@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useMovies } from '@/hooks/features/movies/useMovies';
 import { MovieList } from '@/components/movies/MovieList/MovieList';
 import { useNotification } from '@/hooks/common/useNotification';
@@ -6,34 +6,57 @@ import { Notification } from '@/components/ui/Notification/Notification';
 import styles from './CurrentMoviesPage.module.css';
 
 export const CurrentMoviesPage: React.FC = () => {
-    const { publicCurrent, loading, error, getPublicCurrent } = useMovies();
+    const [currentPage, setCurrentPage] = useState(0);
+    const [allMovies, setAllMovies] = useState<any[]>([]);
+    const [pagination, setPagination] = useState<any>(null);
+    const { loading, error, getPublicCurrent } = useMovies();
     const { notifications, showNotification, hideNotification } = useNotification();
-    const hasLoaded = useRef(false);
 
     useEffect(() => {
-        if (!hasLoaded.current) {
-            hasLoaded.current = true;
-            getPublicCurrent().catch(() => {
-                showNotification('Failed to load movies', 'error');
-            });
-        }
-    }, [getPublicCurrent, showNotification]);
+        loadMovies(0);
+    }, []);
 
-    const errorObject = error ? new Error('Failed to load movies') : null;
+    const loadMovies = async (page: number) => {
+        try {
+            const response = await getPublicCurrent({ page, size: 12 });
+            if (response) {
+                if (page === 0) {
+                    setAllMovies(response.content);
+                } else {
+                    setAllMovies(prev => [...prev, ...response.content]);
+                }
+                setPagination(response);
+                setCurrentPage(page);
+            }
+        } catch (err) {
+            showNotification('Failed to load movies', 'error');
+        }
+    };
+
+    const handleLoadMore = () => {
+        if (pagination && currentPage < pagination.totalPages - 1) {
+            loadMovies(currentPage + 1);
+        }
+    };
 
     const handleRetry = () => {
-        hasLoaded.current = false;
-        getPublicCurrent();
+        setAllMovies([]);
+        loadMovies(0);
     };
+
+    const errorObject = error ? new Error('Failed to load movies') : null;
 
     return (
         <div className={styles.page}>
             <MovieList
-                movies={publicCurrent}
+                movies={allMovies}
+                pagination={pagination}
                 loading={loading}
                 error={errorObject}
                 emptyMessage="No movies currently playing"
                 onRetry={handleRetry}
+                onLoadMore={handleLoadMore}
+                variant="load-more"
             />
 
             {notifications.map((notification) => (
