@@ -36,11 +36,6 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
 			FROM Movie m
 			WHERE (:title IS NULL OR LOWER(CAST(m.title AS string)) LIKE LOWER(CONCAT('%', CAST(:title AS string), '%')))
 			  AND (:status IS NULL OR m.status = :status)
-			ORDER BY
-			    CASE
-			        WHEN :status = 'CURRENT' THEN m.releaseDate END DESC,
-			        CASE WHEN :status = 'UPCOMING' THEN m.releaseDate END ASC,
-			        m.title ASC
 			""")
 	Page<Movie> findMoviesByFilters(@Param("title") String title, @Param("status") MovieStatus status,
 			Pageable pageable);
