@@ -3,7 +3,6 @@ package ua.lviv.bas.cinema.controller.admin;
 import java.time.LocalDate;
 
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -123,7 +122,7 @@ public class AdminSessionController {
 			@RequestParam(required = false) CinemaSessionStatus status,
 			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFrom,
 			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateTo,
-			@PageableDefault(size = 10, sort = "startTime", direction = Sort.Direction.DESC) Pageable pageable) {
+			@PageableDefault(size = 10) Pageable pageable) {
 
 		log.info("Getting sessions with filters");
 		PageResponse<SessionAdminResponse> page = sessionService.getSessionsForAdmin(hallId, movieTitle, status,
