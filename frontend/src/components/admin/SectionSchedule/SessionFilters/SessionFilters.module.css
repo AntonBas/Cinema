@@ -33,15 +33,17 @@
 }
 
 .filterInput {
-    height: 40px !important;
-    padding: 8px 12px !important;
-    font-size: var(--font-size-sm) !important;
-    line-height: 1.5 !important;
-    box-sizing: border-box !important;
+    height: 40px;
+    padding: 8px 12px;
+    font-size: var(--font-size-sm);
+    line-height: 1.5;
+    box-sizing: border-box;
     width: 100%;
     background: rgba(30, 41, 59, 0.6);
     border: 1px solid #334155;
     color: #f1f5f9;
+    border-radius: var(--radius-md);
+    font-family: var(--font-family);
 }
 
 .filterSelectWrapper {
@@ -50,11 +52,11 @@
 }
 
 .filterSelectWrapper :global(.select) {
-    height: 40px !important;
-    padding: 8px 12px !important;
-    font-size: var(--font-size-sm) !important;
-    line-height: 1.5 !important;
-    box-sizing: border-box !important;
+    height: 40px;
+    padding: 8px 12px;
+    font-size: var(--font-size-sm);
+    line-height: 1.5;
+    box-sizing: border-box;
 }
 
 .filterSelectWrapper :global(.selectWrapper) {
@@ -62,13 +64,14 @@
 }
 
 .filterSelectWrapper select {
-    height: 40px !important;
-    padding: 8px 12px !important;
-    font-size: var(--font-size-sm) !important;
-    line-height: 1.5 !important;
+    height: 40px;
+    padding: 8px 12px;
+    font-size: var(--font-size-sm);
+    line-height: 1.5;
     background: rgba(30, 41, 59, 0.6);
     border: 1px solid #334155;
     color: #f1f5f9;
+    border-radius: var(--radius-md);
 }
 
 .movieFilterRow {
@@ -100,12 +103,14 @@
     padding-right: 40px;
     background: rgba(30, 41, 59, 0.6);
     border: 1px solid #334155;
-    height: 40px !important;
-    padding: 8px 12px !important;
-    font-size: var(--font-size-sm) !important;
-    line-height: 1.5 !important;
-    box-sizing: border-box !important;
+    height: 40px;
+    padding: 8px 12px;
+    font-size: var(--font-size-sm);
+    line-height: 1.5;
+    box-sizing: border-box;
     color: #f1f5f9;
+    border-radius: var(--radius-md);
+    font-family: var(--font-family);
 }
 
 .clearMovieButton {
@@ -135,7 +140,7 @@
 
 .movieResults {
     position: absolute;
-    top: calc(100% + 4px);
+    top: 100%;
     left: 0;
     right: 0;
     background: #1e293b;
@@ -145,7 +150,6 @@
     z-index: 20;
     max-height: 300px;
     overflow-y: auto;
-    margin-top: 4px;
 }
 
 .movieOption {
@@ -187,6 +191,12 @@
 
 .movieOption.selected .movieDetails {
     color: rgba(var(--color-primary-rgb), 0.8);
+}
+
+.loadingResults {
+    padding: var(--space-4);
+    color: var(--color-text-secondary);
+    text-align: center;
 }
 
 .noResults {
@@ -246,7 +256,13 @@
     .filterSelectWrapper,
     .filterSelectWrapper :global(.select),
     .filterSelectWrapper select {
-        height: 38px !important;
+        height: 38px;
+    }
+
+    .filterInput,
+    .movieInput {
+        padding: 6px 10px;
+        font-size: var(--font-size-xs);
     }
 
     .movieFilterRow {
@@ -294,9 +310,13 @@
     .filterSelectWrapper,
     .filterSelectWrapper :global(.select),
     .filterSelectWrapper select {
-        height: 36px !important;
-        padding: 6px 10px !important;
-        font-size: var(--font-size-xs) !important;
+        height: 36px;
+    }
+
+    .filterInput,
+    .movieInput {
+        padding: 6px 10px;
+        font-size: var(--font-size-xs);
     }
 
     .movieFilterRow {

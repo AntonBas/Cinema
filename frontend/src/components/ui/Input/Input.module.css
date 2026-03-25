@@ -1,7 +1,6 @@
 .container {
   position: relative;
   width: 100%;
-  margin-bottom: var(--space-4);
 }
 
 .label {
@@ -19,10 +18,10 @@
 
 .input {
   width: 100%;
-  padding: 15px 20px;
-  border: 2px solid var(--color-bg-quaternary);
+  padding: 12px 16px;
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  background-color: var(--color-bg-quaternary);
+  background-color: var(--color-bg-tertiary);
   color: var(--color-text-primary);
   font-size: var(--font-size-md);
   transition: all var(--transition-normal);
@@ -60,12 +59,12 @@
 }
 
 .small {
-  padding: 12px 15px;
+  padding: 8px 12px;
   font-size: var(--font-size-sm);
 }
 
 .large {
-  padding: 18px 25px;
+  padding: 14px 20px;
   font-size: var(--font-size-lg);
 }
 
@@ -79,14 +78,14 @@
 
 @media (max-width: 768px) {
   .input {
-    padding: 12px 15px;
+    padding: 10px 14px;
   }
 
   .small {
-    padding: 10px 12px;
+    padding: 6px 10px;
   }
 
   .large {
-    padding: 14px 18px;
+    padding: 12px 16px;
   }
 }
