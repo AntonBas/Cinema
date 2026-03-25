@@ -125,6 +125,15 @@ const SectionPromotion: React.FC = () => {
         });
     }, [promotionsPage?.content, search, statusFilter, getPromotionStatus]);
 
+    const hasActiveFilters = search !== '' || statusFilter !== '';
+
+    const displayRange = useMemo(() => {
+        if (!promotionsPage) return { start: 0, end: 0 };
+        const start = promotionsPage.number * promotionsPage.size + 1;
+        const end = Math.min((promotionsPage.number + 1) * promotionsPage.size, promotionsPage.totalElements);
+        return { start, end };
+    }, [promotionsPage]);
+
     if (showDelayedLoading && !promotionsPage?.content?.length) {
         return (
             <div className={styles.loading}>
@@ -173,6 +182,14 @@ const SectionPromotion: React.FC = () => {
                 />
             </div>
 
+            {promotionsPage && promotionsPage.totalElements > 0 && (
+                <div className={styles.resultsInfo}>
+                    Showing {displayRange.start}-{displayRange.end} of {promotionsPage.totalElements} promotions
+                    {search && ` for "${search}"`}
+                    {hasActiveFilters && ' (filtered)'}
+                </div>
+            )}
+
             <div className={styles.tableContainer}>
                 <PromotionTable
                     promotions={filteredPromotions}
@@ -184,15 +201,17 @@ const SectionPromotion: React.FC = () => {
             </div>
 
             {promotionsPage && promotionsPage.totalPages > 1 && (
-                <Pagination
-                    currentPage={promotionsPage.number}
-                    totalPages={promotionsPage.totalPages}
-                    totalElements={promotionsPage.totalElements}
-                    pageSize={promotionsPage.size}
-                    onPageChange={setPage}
-                    variant="pages"
-                    showInfo={true}
-                />
+                <div className={styles.paginationWrapper}>
+                    <Pagination
+                        currentPage={promotionsPage.number}
+                        totalPages={promotionsPage.totalPages}
+                        totalElements={promotionsPage.totalElements}
+                        pageSize={promotionsPage.size}
+                        onPageChange={setPage}
+                        variant="pages"
+                        showInfo={false}
+                    />
+                </div>
             )}
 
             {showCreateModal && (

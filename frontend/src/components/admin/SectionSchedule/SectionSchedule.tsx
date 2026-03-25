@@ -417,6 +417,13 @@ export const SectionSchedule: React.FC = () => {
                 moviesLoading={moviesLoading}
             />
 
+            {paginationInfo.total > 0 && (
+                <div className={styles.resultsInfo}>
+                    Showing {paginationInfo.start}-{paginationInfo.end} of {paginationInfo.total} sessions
+                    {hasActiveFilters && ' (filtered)'}
+                </div>
+            )}
+
             <div className={styles.tableSection}>
                 <SessionTable
                     sessions={sessionData.sessions}

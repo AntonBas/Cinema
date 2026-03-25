@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useTicketType } from '@/hooks/features/ticketType/useTicketType';
 import { useNotification } from '@/hooks/common/useNotification';
 import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
@@ -126,6 +126,15 @@ const SectionTicketType = () => {
 
     const ticketTypeList = ticketTypes?.content || [];
 
+    const hasActiveFilters = searchQuery !== '' || statusFilter !== 'all' || categoryFilter !== 'all';
+
+    const displayRange = useMemo(() => {
+        if (!ticketTypes) return { start: 0, end: 0 };
+        const start = ticketTypes.number * ticketTypes.size + 1;
+        const end = Math.min((ticketTypes.number + 1) * ticketTypes.size, ticketTypes.totalElements);
+        return { start, end };
+    }, [ticketTypes]);
+
     if (showDelayedLoading && !ticketTypeList.length) {
         return (
             <div className={styles.loading}>
@@ -174,6 +183,14 @@ const SectionTicketType = () => {
                     </div>
                 ) : (
                     <>
+                        {ticketTypes && ticketTypes.totalElements > 0 && (
+                            <div className={styles.resultsInfo}>
+                                Showing {displayRange.start}-{displayRange.end} of {ticketTypes.totalElements} ticket types
+                                {searchQuery && ` for "${searchQuery}"`}
+                                {hasActiveFilters && ' (filtered)'}
+                            </div>
+                        )}
+
                         <TicketTypeTable
                             ticketTypes={ticketTypeList}
                             onEdit={handleEdit}
@@ -182,15 +199,17 @@ const SectionTicketType = () => {
                         />
 
                         {ticketTypes && ticketTypes.totalPages > 1 && (
-                            <Pagination
-                                currentPage={ticketTypes.number}
-                                totalPages={ticketTypes.totalPages}
-                                totalElements={ticketTypes.totalElements}
-                                pageSize={ticketTypes.size}
-                                onPageChange={handlePageChange}
-                                variant="pages"
-                                showInfo={true}
-                            />
+                            <div className={styles.paginationWrapper}>
+                                <Pagination
+                                    currentPage={ticketTypes.number}
+                                    totalPages={ticketTypes.totalPages}
+                                    totalElements={ticketTypes.totalElements}
+                                    pageSize={ticketTypes.size}
+                                    onPageChange={handlePageChange}
+                                    variant="pages"
+                                    showInfo={false}
+                                />
+                            </div>
                         )}
                     </>
                 )}

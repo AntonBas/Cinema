@@ -132,6 +132,8 @@ export const SectionUsers: React.FC = () => {
         return { start, end };
     }, [pagination]);
 
+    const hasActiveFilters = searchQuery !== '' || roleFilter !== '' || verificationStatusFilter !== '' || enabledFilter !== '';
+
     if (showDelayedLoading && !users.length) {
         return (
             <div className={styles.loadingContainer}>
@@ -171,6 +173,14 @@ export const SectionUsers: React.FC = () => {
                 />
             </div>
 
+            {pagination && pagination.totalElements > 0 && (
+                <div className={styles.resultsInfo}>
+                    Showing {displayRange.start}-{displayRange.end} of {pagination.totalElements} users
+                    {searchQuery && ` for "${searchQuery}"`}
+                    {hasActiveFilters && ' (filtered)'}
+                </div>
+            )}
+
             <div className={styles.content}>
                 <UserTable
                     users={users}
@@ -182,20 +192,12 @@ export const SectionUsers: React.FC = () => {
 
             {pagination && pagination.totalPages > 1 && (
                 <div className={styles.paginationWrapper}>
-                    <div className={styles.resultsInfo}>
-                        <span>
-                            Showing {displayRange.start}-{displayRange.end} of {pagination.totalElements} users
-                            {searchQuery && ` for "${searchQuery}"`}
-                        </span>
-                    </div>
-
                     <Pagination
                         currentPage={params.page || 0}
                         totalPages={pagination.totalPages}
                         totalElements={pagination.totalElements}
                         pageSize={params.size || 10}
                         onPageChange={handlePageChange}
-                        className={styles.pagination}
                         variant="pages"
                         showInfo={false}
                     />

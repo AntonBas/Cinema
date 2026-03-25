@@ -56,6 +56,15 @@
     animation: pulse 2s infinite;
 }
 
+.resultsInfo {
+    color: var(--color-text-secondary);
+    margin-bottom: var(--space-4);
+    font-size: 0.9rem;
+    padding: var(--space-2) 0;
+    border-bottom: 1px solid #334155;
+    text-align: left;
+}
+
 @keyframes pulse {
 
     0%,
