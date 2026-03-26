@@ -1,6 +1,8 @@
 package ua.lviv.bas.cinema.controller.admin;
 
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -44,7 +46,7 @@ public class AdminUserController {
 			@ApiResponse(responseCode = "401", description = "User not authenticated"),
 			@ApiResponse(responseCode = "403", description = "User does not have ADMIN role") })
 	public ResponseEntity<PageResponse<AdminUserListResponse>> getUsers(@Valid UserFilterRequest filter,
-			@Parameter(hidden = true) Pageable pageable) {
+			@PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
 
 		log.info("Admin fetching users with filter: {}, pageable: {}", filter, pageable);
 		var page = adminUserService.getUsersForAdmin(filter, pageable);
