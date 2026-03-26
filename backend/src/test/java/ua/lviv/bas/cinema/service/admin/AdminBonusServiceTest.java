@@ -42,22 +42,51 @@ public class AdminBonusServiceTest {
 	private AdminBonusService service;
 
 	private final BonusTransactionType WELCOME = BonusTransactionType.WELCOME_BONUS;
+	private final BonusTransactionType BIRTHDAY = BonusTransactionType.BIRTHDAY_BONUS;
 	private final BonusTransactionType SPEND = BonusTransactionType.BOOKING_SPEND;
+	private final BonusTransactionType ACCRUAL = BonusTransactionType.PAYMENT_ACCRUAL;
 
 	@Test
-	void getAllRules_ReturnsList() {
-		BonusRules rule1 = new BonusRules();
-		BonusRules rule2 = new BonusRules();
-		BonusRulesResponse response1 = new BonusRulesResponse(1L, "WELCOME_BONUS", null, null, null, null, null, null);
-		BonusRulesResponse response2 = new BonusRulesResponse(2L, "BIRTHDAY_BONUS", null, null, null, null, null, null);
+	void getAllRules_ReturnsSortedListByBonusType() {
+		BonusRules ruleWelcome = new BonusRules();
+		ruleWelcome.setBonusType(WELCOME);
+		BonusRules ruleBirthday = new BonusRules();
+		ruleBirthday.setBonusType(BIRTHDAY);
+		BonusRules ruleSpend = new BonusRules();
+		ruleSpend.setBonusType(SPEND);
+		BonusRules ruleAccrual = new BonusRules();
+		ruleAccrual.setBonusType(ACCRUAL);
 
-		when(bonusRulesRepository.findAll()).thenReturn(List.of(rule1, rule2));
-		when(bonusMapper.toBonusRulesResponse(rule1)).thenReturn(response1);
-		when(bonusMapper.toBonusRulesResponse(rule2)).thenReturn(response2);
+		BonusRulesResponse responseWelcome = new BonusRulesResponse(1L, "WELCOME_BONUS", null, null, null, null, null,
+				null);
+		BonusRulesResponse responseBirthday = new BonusRulesResponse(2L, "BIRTHDAY_BONUS", null, null, null, null, null,
+				null);
+		BonusRulesResponse responseSpend = new BonusRulesResponse(3L, "BOOKING_SPEND", null, null, null, null, null,
+				null);
+		BonusRulesResponse responseAccrual = new BonusRulesResponse(4L, "PAYMENT_ACCRUAL", null, null, null, null, null,
+				null);
+
+		when(bonusRulesRepository.findAll()).thenReturn(List.of(ruleWelcome, ruleBirthday, ruleSpend, ruleAccrual));
+		when(bonusMapper.toBonusRulesResponse(ruleWelcome)).thenReturn(responseWelcome);
+		when(bonusMapper.toBonusRulesResponse(ruleBirthday)).thenReturn(responseBirthday);
+		when(bonusMapper.toBonusRulesResponse(ruleSpend)).thenReturn(responseSpend);
+		when(bonusMapper.toBonusRulesResponse(ruleAccrual)).thenReturn(responseAccrual);
 
 		List<BonusRulesResponse> result = service.getAllRules();
 
-		assertThat(result).hasSize(2);
+		assertThat(result).hasSize(4);
+		assertThat(result).extracting(BonusRulesResponse::bonusType).isSorted();
+
+		verify(bonusRulesRepository).findAll();
+	}
+
+	@Test
+	void getAllRules_WhenEmpty_ReturnsEmptyList() {
+		when(bonusRulesRepository.findAll()).thenReturn(List.of());
+
+		List<BonusRulesResponse> result = service.getAllRules();
+
+		assertThat(result).isEmpty();
 		verify(bonusRulesRepository).findAll();
 	}
 
