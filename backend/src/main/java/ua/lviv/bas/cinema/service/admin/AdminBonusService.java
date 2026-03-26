@@ -2,6 +2,7 @@ package ua.lviv.bas.cinema.service.admin;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,20 +28,26 @@ public class AdminBonusService {
 	private final BonusMapper bonusMapper;
 	private final BonusProperties bonusProperties;
 
+	private static final Set<BonusTransactionType> RULE_TYPES = Set.of(BonusTransactionType.WELCOME_BONUS,
+			BonusTransactionType.BIRTHDAY_BONUS, BonusTransactionType.BOOKING_SPEND,
+			BonusTransactionType.PAYMENT_ACCRUAL);
+
 	@Transactional(readOnly = true)
 	public List<BonusRulesResponse> getAllRules() {
-		return bonusRulesRepository.findAll().stream().sorted(Comparator.comparing(BonusRules::getBonusType))
-				.map(bonusMapper::toBonusRulesResponse).toList();
+		return bonusRulesRepository.findAll().stream().filter(rule -> RULE_TYPES.contains(rule.getBonusType()))
+				.sorted(Comparator.comparing(BonusRules::getBonusType)).map(bonusMapper::toBonusRulesResponse).toList();
 	}
 
 	@Transactional(readOnly = true)
 	public BonusRulesResponse getRule(BonusTransactionType type) {
+		validateRuleType(type);
 		BonusRules rules = getRuleByType(type);
 		return bonusMapper.toBonusRulesResponse(rules);
 	}
 
 	@Transactional
 	public BonusRulesResponse updateRule(BonusTransactionType type, BonusRulesRequest request) {
+		validateRuleType(type);
 		BonusRules rules = getRuleByType(type);
 		bonusMapper.updateBonusRulesFromRequest(request, rules);
 
@@ -55,6 +62,7 @@ public class AdminBonusService {
 
 	@Transactional
 	public BonusRulesResponse resetRuleToDefaults(BonusTransactionType type) {
+		validateRuleType(type);
 		BonusRules rules = getRuleByType(type);
 		BonusProperties.RuleDefaults defaults = bonusProperties.getDefaults().get(type);
 
@@ -80,6 +88,12 @@ public class AdminBonusService {
 	private void validatePointsRange(Integer min, Integer max) {
 		if (min != null && max != null && min > max) {
 			throw new InvalidMinMaxPointsException(min, max);
+		}
+	}
+
+	private void validateRuleType(BonusTransactionType type) {
+		if (!RULE_TYPES.contains(type)) {
+			throw new IllegalArgumentException("No bonus rule configuration for type: " + type);
 		}
 	}
 }

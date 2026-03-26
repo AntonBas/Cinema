@@ -45,9 +45,12 @@ public class AdminBonusServiceTest {
 	private final BonusTransactionType BIRTHDAY = BonusTransactionType.BIRTHDAY_BONUS;
 	private final BonusTransactionType SPEND = BonusTransactionType.BOOKING_SPEND;
 	private final BonusTransactionType ACCRUAL = BonusTransactionType.PAYMENT_ACCRUAL;
+	private final BonusTransactionType REFUND = BonusTransactionType.REFUND_RETURN;
+	private final BonusTransactionType CANCEL = BonusTransactionType.BOOKING_CANCEL;
+	private final BonusTransactionType PROMOTION = BonusTransactionType.PROMOTION_BONUS;
 
 	@Test
-	void getAllRules_ReturnsSortedListByBonusType() {
+	void getAllRules_ReturnsOnlyRuleTypes() {
 		BonusRules ruleWelcome = new BonusRules();
 		ruleWelcome.setBonusType(WELCOME);
 		BonusRules ruleBirthday = new BonusRules();
@@ -56,28 +59,25 @@ public class AdminBonusServiceTest {
 		ruleSpend.setBonusType(SPEND);
 		BonusRules ruleAccrual = new BonusRules();
 		ruleAccrual.setBonusType(ACCRUAL);
+		BonusRules ruleRefund = new BonusRules();
+		ruleRefund.setBonusType(REFUND);
+		BonusRules ruleCancel = new BonusRules();
+		ruleCancel.setBonusType(CANCEL);
+		BonusRules rulePromotion = new BonusRules();
+		rulePromotion.setBonusType(PROMOTION);
 
-		BonusRulesResponse responseWelcome = new BonusRulesResponse(1L, "WELCOME_BONUS", null, null, null, null, null,
-				null);
-		BonusRulesResponse responseBirthday = new BonusRulesResponse(2L, "BIRTHDAY_BONUS", null, null, null, null, null,
-				null);
-		BonusRulesResponse responseSpend = new BonusRulesResponse(3L, "BOOKING_SPEND", null, null, null, null, null,
-				null);
-		BonusRulesResponse responseAccrual = new BonusRulesResponse(4L, "PAYMENT_ACCRUAL", null, null, null, null, null,
-				null);
-
-		when(bonusRulesRepository.findAll()).thenReturn(List.of(ruleWelcome, ruleBirthday, ruleSpend, ruleAccrual));
-		when(bonusMapper.toBonusRulesResponse(ruleWelcome)).thenReturn(responseWelcome);
-		when(bonusMapper.toBonusRulesResponse(ruleBirthday)).thenReturn(responseBirthday);
-		when(bonusMapper.toBonusRulesResponse(ruleSpend)).thenReturn(responseSpend);
-		when(bonusMapper.toBonusRulesResponse(ruleAccrual)).thenReturn(responseAccrual);
+		when(bonusRulesRepository.findAll()).thenReturn(
+				List.of(ruleWelcome, ruleBirthday, ruleSpend, ruleAccrual, ruleRefund, ruleCancel, rulePromotion));
+		when(bonusMapper.toBonusRulesResponse(any())).thenAnswer(inv -> {
+			BonusRules rule = inv.getArgument(0);
+			return new BonusRulesResponse(1L, rule.getBonusType().name(), null, null, null, null, null, null);
+		});
 
 		List<BonusRulesResponse> result = service.getAllRules();
 
 		assertThat(result).hasSize(4);
-		assertThat(result).extracting(BonusRulesResponse::bonusType).isSorted();
-
-		verify(bonusRulesRepository).findAll();
+		assertThat(result).extracting(BonusRulesResponse::bonusType).containsExactlyInAnyOrder("WELCOME_BONUS",
+				"BIRTHDAY_BONUS", "BOOKING_SPEND", "PAYMENT_ACCRUAL");
 	}
 
 	@Test
@@ -112,6 +112,12 @@ public class AdminBonusServiceTest {
 	}
 
 	@Test
+	void getRule_WhenTypeNotSupported_ThrowsException() {
+		assertThatThrownBy(() -> service.getRule(REFUND)).isInstanceOf(IllegalArgumentException.class)
+				.hasMessageContaining("No bonus rule configuration for type: REFUND_RETURN");
+	}
+
+	@Test
 	void updateRule_Success() {
 		BonusRules rule = new BonusRules();
 		rule.setBonusType(WELCOME);
@@ -127,6 +133,14 @@ public class AdminBonusServiceTest {
 		assertThat(result).isEqualTo(response);
 		verify(bonusMapper).updateBonusRulesFromRequest(request, rule);
 		verify(bonusRulesRepository).save(rule);
+	}
+
+	@Test
+	void updateRule_WhenTypeNotSupported_ThrowsException() {
+		BonusRulesRequest request = new BonusRulesRequest(100, null, null, null, true);
+
+		assertThatThrownBy(() -> service.updateRule(REFUND, request)).isInstanceOf(IllegalArgumentException.class)
+				.hasMessageContaining("No bonus rule configuration for type: REFUND_RETURN");
 	}
 
 	@Test
@@ -194,5 +208,11 @@ public class AdminBonusServiceTest {
 		assertThat(result).isEqualTo(response);
 		assertThat(rule.getPoints()).isEqualTo(100);
 		verify(bonusRulesRepository).save(rule);
+	}
+
+	@Test
+	void resetRuleToDefaults_WhenTypeNotSupported_ThrowsException() {
+		assertThatThrownBy(() -> service.resetRuleToDefaults(REFUND)).isInstanceOf(IllegalArgumentException.class)
+				.hasMessageContaining("No bonus rule configuration for type: REFUND_RETURN");
 	}
 }
