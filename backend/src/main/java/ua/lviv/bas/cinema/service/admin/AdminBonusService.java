@@ -1,5 +1,6 @@
 package ua.lviv.bas.cinema.service.admin;
 
+import java.util.Comparator;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -28,7 +29,8 @@ public class AdminBonusService {
 
 	@Transactional(readOnly = true)
 	public List<BonusRulesResponse> getAllRules() {
-		return bonusRulesRepository.findAll().stream().map(bonusMapper::toBonusRulesResponse).toList();
+		return bonusRulesRepository.findAll().stream().sorted(Comparator.comparing(BonusRules::getBonusType))
+				.map(bonusMapper::toBonusRulesResponse).toList();
 	}
 
 	@Transactional(readOnly = true)
