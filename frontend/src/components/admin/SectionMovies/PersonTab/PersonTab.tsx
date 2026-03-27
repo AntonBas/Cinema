@@ -57,27 +57,6 @@ export const PersonTab: React.FC = () => {
     [activeTab, tabData]
   );
 
-  const loadCounts = useCallback(async () => {
-    try {
-      const [allRes, actorsRes, directorsRes, writersRes] = await Promise.all([
-        getAll({ page: 0, size: 1, role: undefined }),
-        getAll({ page: 0, size: 1, role: 'ACTOR' }),
-        getAll({ page: 0, size: 1, role: 'DIRECTOR' }),
-        getAll({ page: 0, size: 1, role: 'SCREENWRITER' })
-      ]);
-
-      setTabData(prev => ({
-        ...prev,
-        ALL: { ...prev.ALL, total: allRes?.totalElements || 0 },
-        ACTOR: { ...prev.ACTOR, total: actorsRes?.totalElements || 0 },
-        DIRECTOR: { ...prev.DIRECTOR, total: directorsRes?.totalElements || 0 },
-        SCREENWRITER: { ...prev.SCREENWRITER, total: writersRes?.totalElements || 0 }
-      }));
-    } catch (error) {
-      console.error('Failed to load counts:', error);
-    }
-  }, [getAll]);
-
   const loadTabData = useCallback(async (tab: PersonRole | 'ALL', page: number, search?: string) => {
     if (loadingDataRef.current) return;
 
@@ -101,10 +80,6 @@ export const PersonTab: React.FC = () => {
           total: response?.totalElements || 0
         }
       }));
-
-      if (tab === 'ALL' && !search) {
-        await loadCounts();
-      }
     } catch (error) {
       if (isApiErrorException(error)) {
         showNotification(error.message, 'error');
@@ -114,7 +89,7 @@ export const PersonTab: React.FC = () => {
     } finally {
       loadingDataRef.current = false;
     }
-  }, [getAll, showNotification, loadCounts, params.size]);
+  }, [getAll, showNotification, params.size]);
 
   useEffect(() => {
     if (!initialLoadRef.current) {
@@ -227,13 +202,6 @@ export const PersonTab: React.FC = () => {
     );
   }
 
-  const totalCounts = {
-    ALL: tabData.ALL.total,
-    ACTOR: tabData.ACTOR.total,
-    DIRECTOR: tabData.DIRECTOR.total,
-    SCREENWRITER: tabData.SCREENWRITER.total
-  };
-
   return (
     <div className={styles.container}>
       {notifications.map((notification) => (
@@ -273,7 +241,6 @@ export const PersonTab: React.FC = () => {
       <PersonTabs
         activeTab={activeTab}
         onTabChange={handleTabChange}
-        stats={totalCounts}
       />
 
       <PersonList

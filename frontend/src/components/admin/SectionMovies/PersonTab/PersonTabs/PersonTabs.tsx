@@ -1,17 +1,10 @@
 import React, { useCallback } from 'react';
 import type { PersonRole } from '@/types/person';
-import { Badge } from '@/components/ui';
 import styles from './PersonTabs.module.css';
 
 interface PersonTabsProps {
     activeTab: PersonRole | 'ALL';
     onTabChange: (tab: PersonRole | 'ALL') => void;
-    stats: {
-        ALL: number;
-        ACTOR: number;
-        DIRECTOR: number;
-        SCREENWRITER: number;
-    };
 }
 
 interface TabConfig {
@@ -46,7 +39,6 @@ const TAB_CONFIGS: TabConfig[] = [
 export const PersonTabs: React.FC<PersonTabsProps> = React.memo(({
     activeTab,
     onTabChange,
-    stats,
 }) => {
     const handleTabClick = useCallback((tabId: PersonRole | 'ALL') => {
         onTabChange(tabId);
@@ -82,14 +74,6 @@ export const PersonTabs: React.FC<PersonTabsProps> = React.memo(({
                         {tab.icon}
                     </span>
                     <span className={styles.tabLabel}>{tab.label}</span>
-                    <Badge
-                        variant={activeTab === tab.id ? "primary" : "secondary"}
-                        size="small"
-                        className={styles.tabBadge}
-                        aria-label={`${stats[tab.id]} items`}
-                    >
-                        {stats[tab.id]}
-                    </Badge>
                 </button>
             ))}
         </div>
