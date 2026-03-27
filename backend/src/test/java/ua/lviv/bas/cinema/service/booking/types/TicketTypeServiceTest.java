@@ -282,6 +282,11 @@ public class TicketTypeServiceTest {
 			public String getDocumentType() {
 				return null;
 			}
+
+			@Override
+			public TicketTypeCategory getCategory() {
+				return TicketTypeCategory.STANDARD;
+			}
 		};
 	}
 }
