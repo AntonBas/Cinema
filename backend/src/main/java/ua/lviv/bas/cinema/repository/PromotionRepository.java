@@ -41,20 +41,5 @@ public interface PromotionRepository extends JpaRepository<Promotion, Long> {
 			      AND (p.endDate IS NULL OR p.endDate >= CURRENT_DATE)
 			    ORDER BY p.createdAt DESC
 			""")
-	Page<PromotionResponseProjection> findAllActivePromotions(Pageable pageable);
-
-	@Query("""
-			    SELECT
-			        p.id as id,
-			        p.title as title,
-			        p.description as description,
-			        p.bonusPoints as bonusPoints,
-			        p.startDate as startDate,
-			        p.endDate as endDate
-			    FROM Promotion p
-			    WHERE (p.startDate IS NULL OR p.startDate <= CURRENT_DATE)
-			      AND (p.endDate IS NULL OR p.endDate >= CURRENT_DATE)
-			    ORDER BY p.createdAt DESC
-			""")
 	List<PromotionResponseProjection> findAllActivePromotions();
 }
