@@ -19,6 +19,7 @@ public interface TicketTypeRepository extends JpaRepository<TicketType, Long> {
 
 	boolean existsByDisplayName(String displayName);
 
+	@Query("SELECT t FROM TicketType t WHERE t.active = true ORDER BY CASE t.category WHEN 'STANDARD' THEN 0 ELSE 1 END, t.displayName ASC")
 	List<TicketType> findByActiveTrue();
 
 	@Query("SELECT t.id as id, t.displayName as displayName, t.priceMultiplier as priceMultiplier, "
@@ -31,7 +32,7 @@ public interface TicketTypeRepository extends JpaRepository<TicketType, Long> {
 			@Param("category") TicketTypeCategory category, @Param("search") String search, Pageable pageable);
 
 	@Query("SELECT t.id as id, t.displayName as displayName, t.priceMultiplier as priceMultiplier, "
-			+ "t.requiresDocument as requiresDocument, t.documentType as documentType "
+			+ "t.requiresDocument as requiresDocument, t.documentType as documentType, " + "t.category as category "
 			+ "FROM TicketType t WHERE t.active = true "
 			+ "ORDER BY CASE t.category WHEN 'STANDARD' THEN 0 ELSE 1 END, t.displayName ASC")
 	List<TicketTypeUserProjection> findUserProjections();

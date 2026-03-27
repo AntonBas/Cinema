@@ -2,6 +2,8 @@ package ua.lviv.bas.cinema.domain.projection;
 
 import java.math.BigDecimal;
 
+import ua.lviv.bas.cinema.domain.enums.TicketTypeCategory;
+
 public interface TicketTypeUserProjection {
 	Long getId();
 
@@ -12,4 +14,6 @@ public interface TicketTypeUserProjection {
 	boolean isRequiresDocument();
 
 	String getDocumentType();
+
+	TicketTypeCategory getCategory();
 }
