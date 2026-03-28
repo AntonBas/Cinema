@@ -12,7 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.enums.VerificationStatus;
 import ua.lviv.bas.cinema.repository.UserRepository;
-import ua.lviv.bas.cinema.service.user.BonusService;
+import ua.lviv.bas.cinema.service.bonus.BonusService;
 
 @Slf4j
 @Component

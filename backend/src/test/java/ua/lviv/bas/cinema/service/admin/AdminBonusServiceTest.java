@@ -28,6 +28,7 @@ import ua.lviv.bas.cinema.exception.domain.financial.bonus.BonusRuleNotFoundExce
 import ua.lviv.bas.cinema.exception.domain.financial.bonus.InvalidMinMaxPointsException;
 import ua.lviv.bas.cinema.mapper.BonusMapper;
 import ua.lviv.bas.cinema.repository.BonusRulesRepository;
+import ua.lviv.bas.cinema.service.bonus.AdminBonusService;
 
 @ExtendWith(MockitoExtension.class)
 public class AdminBonusServiceTest {

@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.service.user;
+package ua.lviv.bas.cinema.service.promotion;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -21,7 +21,7 @@ import ua.lviv.bas.cinema.exception.domain.financial.promotion.PromotionNotActiv
 import ua.lviv.bas.cinema.mapper.PromotionMapper;
 import ua.lviv.bas.cinema.repository.PromotionRepository;
 import ua.lviv.bas.cinema.repository.UserPromotionRepository;
-import ua.lviv.bas.cinema.service.admin.AdminPromotionService;
+import ua.lviv.bas.cinema.service.bonus.BonusService;
 
 @Slf4j
 @Service

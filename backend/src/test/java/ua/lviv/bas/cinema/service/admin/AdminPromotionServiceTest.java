@@ -37,6 +37,7 @@ import ua.lviv.bas.cinema.exception.domain.financial.promotion.PromotionHasRedem
 import ua.lviv.bas.cinema.exception.domain.financial.promotion.PromotionNotFoundException;
 import ua.lviv.bas.cinema.mapper.PromotionMapper;
 import ua.lviv.bas.cinema.repository.PromotionRepository;
+import ua.lviv.bas.cinema.service.promotion.AdminPromotionService;
 
 @ExtendWith(MockitoExtension.class)
 public class AdminPromotionServiceTest {

@@ -27,7 +27,7 @@ import ua.lviv.bas.cinema.dto.promotion.request.PromotionCreateRequest;
 import ua.lviv.bas.cinema.dto.promotion.request.PromotionUpdateRequest;
 import ua.lviv.bas.cinema.dto.promotion.response.PromotionAdminResponse;
 import ua.lviv.bas.cinema.dto.promotion.response.PromotionResponse;
-import ua.lviv.bas.cinema.service.admin.AdminPromotionService;
+import ua.lviv.bas.cinema.service.promotion.AdminPromotionService;
 
 @Slf4j
 @RestController

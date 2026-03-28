@@ -18,7 +18,7 @@ import ua.lviv.bas.cinema.domain.enums.ReservationStatus;
 import ua.lviv.bas.cinema.repository.BookingRepository;
 import ua.lviv.bas.cinema.repository.PaymentRepository;
 import ua.lviv.bas.cinema.repository.SeatReservationRepository;
-import ua.lviv.bas.cinema.service.user.BonusService;
+import ua.lviv.bas.cinema.service.bonus.BonusService;
 
 @Slf4j
 @Component

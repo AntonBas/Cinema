@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.service.admin;
+package ua.lviv.bas.cinema.service.bonus;
 
 import java.math.BigDecimal;
 

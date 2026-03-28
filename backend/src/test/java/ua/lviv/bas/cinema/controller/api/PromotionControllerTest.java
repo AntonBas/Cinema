@@ -22,7 +22,7 @@ import ua.lviv.bas.cinema.dto.promotion.request.UserPromotionCreateRequest;
 import ua.lviv.bas.cinema.dto.promotion.response.PromotionResponse;
 import ua.lviv.bas.cinema.exception.domain.financial.promotion.AlreadyClaimedException;
 import ua.lviv.bas.cinema.exception.domain.financial.promotion.PromotionNotActiveException;
-import ua.lviv.bas.cinema.service.user.PromotionService;
+import ua.lviv.bas.cinema.service.promotion.PromotionService;
 
 @ExtendWith(MockitoExtension.class)
 public class PromotionControllerTest {

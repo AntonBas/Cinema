@@ -20,8 +20,8 @@ import ua.lviv.bas.cinema.exception.domain.booking.BookingValidationException;
 import ua.lviv.bas.cinema.mapper.BookingMapper;
 import ua.lviv.bas.cinema.repository.BookingRepository;
 import ua.lviv.bas.cinema.repository.SeatReservationRepository;
+import ua.lviv.bas.cinema.service.bonus.BonusService;
 import ua.lviv.bas.cinema.service.booking.creation.BookingValidator;
-import ua.lviv.bas.cinema.service.user.BonusService;
 
 @Slf4j
 @Service

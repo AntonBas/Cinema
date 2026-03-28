@@ -27,7 +27,7 @@ import ua.lviv.bas.cinema.dto.user.request.UserRoleUpdateRequest;
 import ua.lviv.bas.cinema.dto.user.request.UserStatusUpdateRequest;
 import ua.lviv.bas.cinema.dto.user.request.VerificationBirthDateRequest;
 import ua.lviv.bas.cinema.dto.user.response.AdminUserListResponse;
-import ua.lviv.bas.cinema.service.admin.AdminUserService;
+import ua.lviv.bas.cinema.service.user.AdminUserService;
 
 @Slf4j
 @RestController

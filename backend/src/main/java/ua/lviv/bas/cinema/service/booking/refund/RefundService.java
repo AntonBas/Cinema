@@ -31,10 +31,10 @@ import ua.lviv.bas.cinema.mapper.RefundItemMapper;
 import ua.lviv.bas.cinema.mapper.RefundMapper;
 import ua.lviv.bas.cinema.repository.RefundRepository;
 import ua.lviv.bas.cinema.repository.TicketRepository;
+import ua.lviv.bas.cinema.service.bonus.BonusService;
 import ua.lviv.bas.cinema.service.booking.payment.PaymentProcessingService;
 import ua.lviv.bas.cinema.service.integration.payment.PaymentGatewayService;
 import ua.lviv.bas.cinema.service.shared.NumberGeneratorService;
-import ua.lviv.bas.cinema.service.user.BonusService;
 
 @Slf4j
 @Service

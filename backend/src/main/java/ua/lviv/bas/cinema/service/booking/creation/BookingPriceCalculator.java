@@ -5,8 +5,8 @@ import java.math.BigDecimal;
 import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
+import ua.lviv.bas.cinema.service.bonus.BonusService;
 import ua.lviv.bas.cinema.service.shared.PriceCalculatorService;
-import ua.lviv.bas.cinema.service.user.BonusService;
 
 @Service
 @RequiredArgsConstructor

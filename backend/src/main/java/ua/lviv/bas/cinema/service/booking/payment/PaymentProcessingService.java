@@ -25,11 +25,11 @@ import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentNotFoundExce
 import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentProcessingException;
 import ua.lviv.bas.cinema.repository.BookingRepository;
 import ua.lviv.bas.cinema.repository.PaymentRepository;
+import ua.lviv.bas.cinema.service.bonus.BonusService;
 import ua.lviv.bas.cinema.service.booking.management.BookingManagementService;
 import ua.lviv.bas.cinema.service.booking.ticket.TicketService;
 import ua.lviv.bas.cinema.service.integration.payment.PaymentGatewayService;
 import ua.lviv.bas.cinema.service.shared.NumberGeneratorService;
-import ua.lviv.bas.cinema.service.user.BonusService;
 
 @Slf4j
 @Service

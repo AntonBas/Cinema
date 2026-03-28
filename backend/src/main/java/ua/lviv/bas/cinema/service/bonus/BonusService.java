@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.service.user;
+package ua.lviv.bas.cinema.service.bonus;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
