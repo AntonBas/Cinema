@@ -20,6 +20,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import ua.lviv.bas.cinema.config.ratelimit.RateLimit;
 import ua.lviv.bas.cinema.config.security.user.CustomUserDetails;
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.dto.booking.request.BookingCreateRequest;
@@ -37,6 +38,7 @@ public class BookingController {
 	private final BookingCreationService bookingCreationService;
 	private final BookingManagementService bookingManagementService;
 
+	@RateLimit(value = 10, duration = 1, key = "user")
 	@PostMapping
 	@Operation(summary = "Create a new booking", description = "Creates a new booking for a cinema session with selected seats and ticket types")
 	@ApiResponses(value = { @ApiResponse(responseCode = "201", description = "Booking created successfully"),

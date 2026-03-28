@@ -23,6 +23,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import ua.lviv.bas.cinema.config.ratelimit.RateLimit;
 import ua.lviv.bas.cinema.config.security.jwt.JwtTokenProvider;
 import ua.lviv.bas.cinema.config.security.user.CustomUserDetails;
 import ua.lviv.bas.cinema.domain.User;
@@ -46,6 +47,7 @@ public class AuthController {
 	private final JwtTokenProvider jwtTokenProvider;
 	private final UserMapper userMapper;
 
+	@RateLimit(value = 3, duration = 60, key = "ip")
 	@PostMapping("/register")
 	@Operation(summary = "Register new user", description = "Create a new user account.")
 	@ApiResponses(value = { @ApiResponse(responseCode = "201", description = "User registered successfully"),
@@ -58,6 +60,7 @@ public class AuthController {
 		return ResponseEntity.status(HttpStatus.CREATED).body(response);
 	}
 
+	@RateLimit(value = 5, duration = 15, key = "ip")
 	@PostMapping("/login")
 	@Operation(summary = "User login", description = "Authenticate user with email and password.")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Login successful"),
@@ -104,6 +107,7 @@ public class AuthController {
 		return ResponseEntity.ok(userMapper.toUserResponse(userDetails.getUser()));
 	}
 
+	@RateLimit(value = 3, duration = 60, key = "ip")
 	@PostMapping("/password/forgot")
 	@Operation(summary = "Request password reset", description = "Initiate password reset process.")
 	@ApiResponses(value = {
@@ -118,6 +122,7 @@ public class AuthController {
 		return ResponseEntity.ok().build();
 	}
 
+	@RateLimit(value = 5, duration = 60, key = "ip")
 	@PostMapping("/password/reset")
 	@Operation(summary = "Reset password", description = "Set new password using reset token.")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Password reset successfully"),

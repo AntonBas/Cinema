@@ -22,6 +22,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import ua.lviv.bas.cinema.config.ratelimit.RateLimit;
 import ua.lviv.bas.cinema.config.security.user.CustomUserDetails;
 import ua.lviv.bas.cinema.dto.user.request.UserEmailChangeRequest;
 import ua.lviv.bas.cinema.dto.user.request.UserPasswordUpdateRequest;
@@ -40,6 +41,10 @@ public class UserController {
 	private final UserService userService;
 
 	@GetMapping("/profile")
+	@Operation(summary = "Get user profile", description = "Retrieve the authenticated user's profile information.")
+	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Profile retrieved successfully"),
+			@ApiResponse(responseCode = "401", description = "User not authenticated"),
+			@ApiResponse(responseCode = "404", description = "User not found") })
 	public ResponseEntity<UserProfileResponse> getProfile(
 			@Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
 
@@ -54,6 +59,7 @@ public class UserController {
 		return ResponseEntity.ok(userService.getUserProfile(userDetails.getUserId()));
 	}
 
+	@RateLimit(value = 10, duration = 5, key = "user")
 	@PutMapping("/profile")
 	@Operation(summary = "Update user profile", description = "Update the authenticated user's profile information.")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Profile updated successfully"),
@@ -68,6 +74,7 @@ public class UserController {
 		return ResponseEntity.ok(userService.updateUser(userDetails.getUserId(), request));
 	}
 
+	@RateLimit(value = 3, duration = 60, key = "user")
 	@PostMapping("/email/change-request")
 	@Operation(summary = "Request email change", description = "Initiate email change process.")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Email change request sent successfully"),
@@ -83,6 +90,7 @@ public class UserController {
 		return ResponseEntity.ok(Map.of("message", "Confirmation email sent to your new address"));
 	}
 
+	@RateLimit(value = 5, duration = 15, key = "user")
 	@PatchMapping("/password")
 	@Operation(summary = "Update password", description = "Change the authenticated user's password.")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Password updated successfully"),

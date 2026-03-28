@@ -19,6 +19,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import ua.lviv.bas.cinema.config.ratelimit.RateLimit;
 import ua.lviv.bas.cinema.domain.enums.MovieStatus;
 import ua.lviv.bas.cinema.dto.PageResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieCardResponse;
@@ -35,6 +36,7 @@ public class MovieController {
 
 	private final MovieService movieService;
 
+	@RateLimit(value = 50, duration = 1, key = "ip")
 	@GetMapping("/slug/{slug}")
 	@Operation(summary = "Get movie by slug", description = "Retrieves detailed information about a specific movie by its URL-friendly slug")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Movie found successfully"),
@@ -53,6 +55,7 @@ public class MovieController {
 		return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.HOURS)).body(movie);
 	}
 
+	@RateLimit(value = 50, duration = 1, key = "ip")
 	@GetMapping("/currently-showing")
 	@Operation(summary = "Get currently showing movies", description = "Retrieves paginated list of currently showing movies")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Movies retrieved successfully") })
@@ -65,6 +68,7 @@ public class MovieController {
 				.body(PageResponse.from(result));
 	}
 
+	@RateLimit(value = 50, duration = 1, key = "ip")
 	@GetMapping("/upcoming")
 	@Operation(summary = "Get upcoming movies", description = "Retrieves paginated list of upcoming movies")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Movies retrieved successfully") })
@@ -77,6 +81,7 @@ public class MovieController {
 				.body(PageResponse.from(result));
 	}
 
+	@RateLimit(value = 100, duration = 1, key = "ip")
 	@GetMapping("/{id}/poster")
 	@Operation(summary = "Get movie poster", description = "Retrieves the poster image for a specific movie")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Poster retrieved successfully"),

@@ -20,6 +20,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import ua.lviv.bas.cinema.config.ratelimit.RateLimit;
 import ua.lviv.bas.cinema.config.security.user.CustomUserDetails;
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.dto.payment.request.PaymentCreateRequest;
@@ -38,6 +39,7 @@ public class PaymentController {
 	private final PaymentProcessingService paymentProcessingService;
 	private final PaymentStatusService paymentStatusService;
 
+	@RateLimit(value = 5, duration = 5, key = "user")
 	@PostMapping
 	@Operation(summary = "Create payment", description = "Creates a payment for a booking")
 	@ApiResponses(value = { @ApiResponse(responseCode = "201", description = "Payment created successfully"),

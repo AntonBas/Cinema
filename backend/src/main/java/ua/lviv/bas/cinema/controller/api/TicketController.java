@@ -18,6 +18,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import ua.lviv.bas.cinema.config.ratelimit.RateLimit;
 import ua.lviv.bas.cinema.config.security.user.CustomUserDetails;
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.enums.TicketStatus;
@@ -73,6 +74,7 @@ public class TicketController {
 		return ResponseEntity.ok().header("Content-Type", "image/png").body(qrCode);
 	}
 
+	@RateLimit(value = 20, duration = 1, key = "ip")
 	@PostMapping("/code/{ticketCode}/validate")
 	@Operation(summary = "Validate ticket", description = "Validate ticket for entry (used by staff)")
 	@PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
