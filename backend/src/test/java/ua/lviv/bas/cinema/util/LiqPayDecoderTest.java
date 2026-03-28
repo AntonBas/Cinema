@@ -7,6 +7,8 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
+import ua.lviv.bas.cinema.service.integration.payment.LiqPayDecoder;
+
 public class LiqPayDecoderTest {
 
 	@Test

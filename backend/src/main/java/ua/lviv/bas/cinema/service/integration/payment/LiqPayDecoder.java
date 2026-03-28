@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.util;
+package ua.lviv.bas.cinema.service.integration.payment;
 
 import java.lang.reflect.Type;
 import java.util.Base64;

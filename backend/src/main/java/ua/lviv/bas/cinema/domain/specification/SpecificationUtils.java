@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.util;
+package ua.lviv.bas.cinema.domain.specification;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
