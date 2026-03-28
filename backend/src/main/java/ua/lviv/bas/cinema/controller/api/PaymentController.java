@@ -25,7 +25,8 @@ import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.dto.payment.request.PaymentCreateRequest;
 import ua.lviv.bas.cinema.dto.payment.response.PaymentLiqPayDataResponse;
 import ua.lviv.bas.cinema.dto.payment.response.PaymentResponse;
-import ua.lviv.bas.cinema.service.booking.ControllerFacade;
+import ua.lviv.bas.cinema.service.booking.payment.PaymentProcessingService;
+import ua.lviv.bas.cinema.service.booking.payment.PaymentStatusService;
 
 @Slf4j
 @RestController
@@ -34,7 +35,8 @@ import ua.lviv.bas.cinema.service.booking.ControllerFacade;
 @Tag(name = "Payments", description = "APIs for processing and managing payments")
 @SecurityRequirement(name = "bearerAuth")
 public class PaymentController {
-	private final ControllerFacade controllerFacade;
+	private final PaymentProcessingService paymentProcessingService;
+	private final PaymentStatusService paymentStatusService;
 
 	@PostMapping
 	@Operation(summary = "Create payment", description = "Creates a payment for a booking")
@@ -47,7 +49,7 @@ public class PaymentController {
 			@AuthenticationPrincipal CustomUserDetails userDetails) {
 		User user = userDetails.getUser();
 		log.info("Creating payment for booking ID: {} by user ID: {}", request.bookingId(), user.getId());
-		PaymentResponse response = controllerFacade.createPayment(request, user);
+		PaymentResponse response = paymentProcessingService.createPayment(request, user);
 		return ResponseEntity.status(HttpStatus.CREATED).body(response);
 	}
 
@@ -58,7 +60,7 @@ public class PaymentController {
 	public ResponseEntity<PaymentLiqPayDataResponse> getLiqPayPaymentData(
 			@Parameter(description = "Payment ID", required = true) @PathVariable Long paymentId) {
 		log.info("Fetching LiqPay data for payment ID: {}", paymentId);
-		PaymentLiqPayDataResponse response = controllerFacade.preparePaymentData(paymentId);
+		PaymentLiqPayDataResponse response = paymentStatusService.preparePaymentData(paymentId);
 		return ResponseEntity.ok(response);
 	}
 
@@ -73,7 +75,7 @@ public class PaymentController {
 			@AuthenticationPrincipal CustomUserDetails userDetails) {
 		User user = userDetails.getUser();
 		log.info("Fetching payment ID: {} for user ID: {}", paymentId, user.getId());
-		PaymentResponse response = controllerFacade.getPaymentStatus(paymentId, user);
+		PaymentResponse response = paymentProcessingService.getPaymentStatus(paymentId, user);
 		return ResponseEntity.ok(response);
 	}
 }

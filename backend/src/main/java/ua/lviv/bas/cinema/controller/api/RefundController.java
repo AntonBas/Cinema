@@ -20,7 +20,7 @@ import ua.lviv.bas.cinema.config.security.user.CustomUserDetails;
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.dto.refund.request.RefundRequest;
 import ua.lviv.bas.cinema.dto.refund.response.RefundResponse;
-import ua.lviv.bas.cinema.service.booking.ControllerFacade;
+import ua.lviv.bas.cinema.service.booking.refund.RefundService;
 
 @Slf4j
 @RestController
@@ -29,7 +29,7 @@ import ua.lviv.bas.cinema.service.booking.ControllerFacade;
 @Tag(name = "Refund", description = "Ticket refund operations")
 @SecurityRequirement(name = "bearerAuth")
 public class RefundController {
-	private final ControllerFacade controllerFacade;
+	private final RefundService refundService;
 
 	@PostMapping
 	@Operation(summary = "Refund a ticket", description = "Process refund for a ticket with automatic calculation")
@@ -43,7 +43,7 @@ public class RefundController {
 
 		User user = userDetails.getUser();
 		log.info("Processing refund for ticket {} by user {}", request.ticketId(), user.getId());
-		RefundResponse response = controllerFacade.processRefund(request, user.getId());
+		RefundResponse response = refundService.processRefund(request, user.getId());
 		return ResponseEntity.ok(response);
 	}
 }

@@ -24,7 +24,8 @@ import ua.lviv.bas.cinema.config.security.user.CustomUserDetails;
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.dto.booking.request.BookingCreateRequest;
 import ua.lviv.bas.cinema.dto.booking.response.BookingResponse;
-import ua.lviv.bas.cinema.service.booking.ControllerFacade;
+import ua.lviv.bas.cinema.service.booking.creation.BookingCreationService;
+import ua.lviv.bas.cinema.service.booking.management.BookingManagementService;
 
 @Slf4j
 @RestController
@@ -33,7 +34,8 @@ import ua.lviv.bas.cinema.service.booking.ControllerFacade;
 @Tag(name = "Bookings", description = "APIs for managing cinema bookings")
 @SecurityRequirement(name = "bearerAuth")
 public class BookingController {
-	private final ControllerFacade controllerFacade;
+	private final BookingCreationService bookingCreationService;
+	private final BookingManagementService bookingManagementService;
 
 	@PostMapping
 	@Operation(summary = "Create a new booking", description = "Creates a new booking for a cinema session with selected seats and ticket types")
@@ -46,7 +48,7 @@ public class BookingController {
 			@AuthenticationPrincipal CustomUserDetails userDetails) {
 		User user = userDetails.getUser();
 		log.info("Creating new booking for user ID: {}, session ID: {}", user.getId(), request.sessionId());
-		BookingResponse response = controllerFacade.createBooking(request, user);
+		BookingResponse response = bookingCreationService.createBooking(request, user);
 		return ResponseEntity.status(HttpStatus.CREATED).body(response);
 	}
 
@@ -60,7 +62,7 @@ public class BookingController {
 			@AuthenticationPrincipal CustomUserDetails userDetails) {
 		User user = userDetails.getUser();
 		log.info("Fetching booking ID: {} for user ID: {}", bookingId, user.getId());
-		BookingResponse response = controllerFacade.getBookingById(bookingId, user);
+		BookingResponse response = bookingManagementService.getBookingById(bookingId, user);
 		return ResponseEntity.ok(response);
 	}
 
@@ -75,7 +77,7 @@ public class BookingController {
 			@AuthenticationPrincipal CustomUserDetails userDetails) {
 		User user = userDetails.getUser();
 		log.info("Cancelling booking ID: {} for user ID: {}", bookingId, user.getId());
-		controllerFacade.cancelBooking(bookingId, user);
+		bookingManagementService.cancelBooking(bookingId, user);
 		return ResponseEntity.noContent().build();
 	}
 }
