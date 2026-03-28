@@ -2,6 +2,10 @@ package ua.lviv.bas.cinema.service.promotion;
 
 import java.time.LocalDate;
 
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -27,11 +31,13 @@ import ua.lviv.bas.cinema.repository.PromotionRepository;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
+@CacheConfig(cacheNames = "promotions")
 public class AdminPromotionService {
 
 	private final PromotionRepository promotionRepository;
 	private final PromotionMapper promotionMapper;
 
+	@Caching(evict = { @CacheEvict(key = "'all-' + 0 + '-' + 20"), @CacheEvict(allEntries = true) })
 	@Transactional
 	public PromotionResponse createPromotion(PromotionCreateRequest request) {
 		log.info("Creating new promotion: {}", request.title());
@@ -49,6 +55,8 @@ public class AdminPromotionService {
 		return promotionMapper.toPromotionResponse(promotion);
 	}
 
+	@Caching(evict = { @CacheEvict(key = "#promotionId"), @CacheEvict(key = "'all-' + 0 + '-' + 20"),
+			@CacheEvict(allEntries = true) })
 	@Transactional
 	public PromotionResponse updatePromotion(Long promotionId, PromotionUpdateRequest request) {
 		log.info("Updating promotion with ID: {}", promotionId);
@@ -60,6 +68,8 @@ public class AdminPromotionService {
 		return promotionMapper.toPromotionResponse(promotion);
 	}
 
+	@Caching(evict = { @CacheEvict(key = "#promotionId"), @CacheEvict(key = "'all-' + 0 + '-' + 20"),
+			@CacheEvict(allEntries = true) })
 	@Transactional
 	public void deletePromotion(Long promotionId) {
 		log.info("Deleting promotion with ID: {}", promotionId);
@@ -75,11 +85,13 @@ public class AdminPromotionService {
 		log.info("Promotion with ID: {} has been deleted", promotionId);
 	}
 
+	@Cacheable(key = "#promotionId")
 	public PromotionResponse getPromotionById(Long promotionId) {
 		Promotion promotion = findByIdOrThrow(promotionId);
 		return promotionMapper.toPromotionResponse(promotion);
 	}
 
+	@Cacheable(key = "'all-' + #pageable.pageNumber + '-' + #pageable.pageSize")
 	public PageResponse<PromotionAdminResponse> getAllPromotions(Pageable pageable) {
 		Page<PromotionAdminProjection> page = promotionRepository.findAllAdminList(pageable);
 		return PageResponse.from(page.map(promotionMapper::toPromotionAdminResponse));

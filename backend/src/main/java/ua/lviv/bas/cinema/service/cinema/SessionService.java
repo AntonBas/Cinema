@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -124,7 +125,9 @@ public class SessionService {
 				.collect(Collectors.toMap(arr -> (Long) arr[0], arr -> ((Number) arr[1]).intValue()));
 	}
 
-	@CacheEvict(allEntries = true)
+	@Caching(evict = { @CacheEvict(cacheNames = "sessions", allEntries = true),
+			@CacheEvict(value = "seatAvailability", allEntries = true),
+			@CacheEvict(value = "availableSeatsCount", allEntries = true) })
 	@Transactional
 	public SessionAdminResponse createSession(SessionCreateRequest request) {
 		validateStartTime(request.startTime());
@@ -146,7 +149,9 @@ public class SessionService {
 		return getSessionForAdmin(saved.getId());
 	}
 
-	@CacheEvict(allEntries = true)
+	@Caching(evict = { @CacheEvict(cacheNames = "sessions", allEntries = true),
+			@CacheEvict(value = "seatAvailability", allEntries = true),
+			@CacheEvict(value = "availableSeatsCount", allEntries = true) })
 	@Transactional
 	public SessionAdminResponse updateSession(Long id, SessionUpdateRequest request) {
 		Session session = sessionRepository.findByIdWithLock(id).orElseThrow(() -> new SessionNotFoundException(id));
@@ -187,7 +192,9 @@ public class SessionService {
 		return getSessionForAdmin(session.getId());
 	}
 
-	@CacheEvict(allEntries = true)
+	@Caching(evict = { @CacheEvict(cacheNames = "sessions", allEntries = true),
+			@CacheEvict(value = "seatAvailability", allEntries = true),
+			@CacheEvict(value = "availableSeatsCount", allEntries = true) })
 	@Transactional
 	public void deleteSession(Long id) {
 		if (!sessionRepository.existsById(id)) {
@@ -197,7 +204,9 @@ public class SessionService {
 		log.info("Session deleted with ID: {}", id);
 	}
 
-	@CacheEvict(allEntries = true)
+	@Caching(evict = { @CacheEvict(cacheNames = "sessions", allEntries = true),
+			@CacheEvict(value = "seatAvailability", allEntries = true),
+			@CacheEvict(value = "availableSeatsCount", allEntries = true) })
 	@Transactional
 	public void cancelSession(Long sessionId) {
 		Session session = sessionRepository.findByIdWithLock(sessionId)
@@ -219,7 +228,9 @@ public class SessionService {
 		log.info("Session cancelled with ID: {}", sessionId);
 	}
 
-	@CacheEvict(allEntries = true)
+	@Caching(evict = { @CacheEvict(cacheNames = "sessions", allEntries = true),
+			@CacheEvict(value = "seatAvailability", allEntries = true),
+			@CacheEvict(value = "availableSeatsCount", allEntries = true) })
 	@Transactional
 	public void reactivateSession(Long sessionId) {
 		Session session = sessionRepository.findByIdWithLock(sessionId)

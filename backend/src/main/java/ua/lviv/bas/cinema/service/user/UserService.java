@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -57,7 +58,8 @@ public class UserService {
 		return userMapper.toUserResponse(saved);
 	}
 
-	@CacheEvict(key = "#userId")
+	@Caching(evict = { @CacheEvict(key = "#userId"), @CacheEvict(key = "#request.email()"),
+			@CacheEvict(allEntries = true) })
 	@Transactional
 	public UserProfileResponse updateUser(Long userId, UserUpdateRequest request) {
 		User user = getUserWithBonusCardById(userId);
@@ -71,6 +73,7 @@ public class UserService {
 		return userMapper.toUserProfileResponse(updated);
 	}
 
+	@Caching(evict = { @CacheEvict(key = "#userId"), @CacheEvict(key = "#newEmail"), @CacheEvict(allEntries = true) })
 	@Transactional
 	public void requestEmailChange(Long userId, String currentPassword, String newEmail) {
 		User user = getUserById(userId);
@@ -81,7 +84,7 @@ public class UserService {
 		log.info("Email change requested for user {} to {}", userId, newEmail);
 	}
 
-	@CacheEvict(key = "#userId")
+	@Caching(evict = { @CacheEvict(key = "#userId"), @CacheEvict(allEntries = true) })
 	@Transactional
 	public void updateUserPassword(Long userId, UserPasswordUpdateRequest request) {
 		User user = getUserById(userId);

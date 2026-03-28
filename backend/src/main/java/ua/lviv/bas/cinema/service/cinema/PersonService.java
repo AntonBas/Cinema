@@ -44,7 +44,7 @@ public class PersonService {
 	public PersonResponse createPerson(PersonRequest request) {
 		log.info("Creating person: {}", request.name());
 
-		String personName = request.name().trim();
+		String personName = request.name();
 		validatePersonUniqueness(personName, request.role(), null);
 
 		Person person = personMapper.toPerson(request);
@@ -60,7 +60,7 @@ public class PersonService {
 	public PersonResponse quickCreatePerson(QuickCreatePersonRequest request) {
 		log.info("Quick creating person: {} with role: {}", request.name(), request.role());
 
-		String personName = request.name().trim();
+		String personName = request.name();
 		validatePersonUniqueness(personName, request.role(), null);
 
 		Person person = Person.builder().name(personName).role(request.role()).build();
@@ -78,14 +78,17 @@ public class PersonService {
 		return personMapper.toPersonResponse(person);
 	}
 
-	@Caching(evict = { @CacheEvict(key = "#id"), @CacheEvict(allEntries = true) })
+	@Caching(evict = { @CacheEvict(key = "#id"),
+			@CacheEvict(key = "'search-' + #request.name() + '-' + #request.role() + '-' + 0 + '-' + 20"),
+			@CacheEvict(key = "'popular-' + #request.name() + '-' + #request.role() + '-' + 10"),
+			@CacheEvict(allEntries = true) })
 	@Transactional
 	public PersonResponse updatePerson(Long id, PersonRequest request) {
 		log.info("Updating person with id: {}", id);
 
 		Person existing = findPersonById(id);
 
-		String personName = request.name().trim();
+		String personName = request.name();
 		validatePersonUniqueness(personName, request.role(), id);
 
 		personMapper.updatePersonFromRequest(request, existing);
@@ -139,7 +142,7 @@ public class PersonService {
 	}
 
 	public boolean existsByNameAndRole(String name, PersonRole role) {
-		return personRepository.existsByNameAndRole(name.trim(), role);
+		return personRepository.existsByNameAndRole(name, role);
 	}
 
 	private Person findPersonById(Long id) {

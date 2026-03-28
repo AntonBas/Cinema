@@ -4,6 +4,10 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +26,7 @@ import ua.lviv.bas.cinema.repository.BonusRulesRepository;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@CacheConfig(cacheNames = "bonusRules")
 public class AdminBonusService {
 
 	private final BonusRulesRepository bonusRulesRepository;
@@ -32,12 +37,14 @@ public class AdminBonusService {
 			BonusTransactionType.BIRTHDAY_BONUS, BonusTransactionType.BOOKING_SPEND,
 			BonusTransactionType.PAYMENT_ACCRUAL);
 
+	@Cacheable(key = "'all'")
 	@Transactional(readOnly = true)
 	public List<BonusRulesResponse> getAllRules() {
 		return bonusRulesRepository.findAll().stream().filter(rule -> RULE_TYPES.contains(rule.getBonusType()))
 				.sorted(Comparator.comparing(BonusRules::getBonusType)).map(bonusMapper::toBonusRulesResponse).toList();
 	}
 
+	@Cacheable(key = "#type")
 	@Transactional(readOnly = true)
 	public BonusRulesResponse getRule(BonusTransactionType type) {
 		validateRuleType(type);
@@ -45,6 +52,7 @@ public class AdminBonusService {
 		return bonusMapper.toBonusRulesResponse(rules);
 	}
 
+	@Caching(evict = { @CacheEvict(key = "'all'"), @CacheEvict(key = "#type"), @CacheEvict(allEntries = true) })
 	@Transactional
 	public BonusRulesResponse updateRule(BonusTransactionType type, BonusRulesRequest request) {
 		validateRuleType(type);
@@ -60,6 +68,7 @@ public class AdminBonusService {
 		return bonusMapper.toBonusRulesResponse(updated);
 	}
 
+	@Caching(evict = { @CacheEvict(key = "'all'"), @CacheEvict(key = "#type"), @CacheEvict(allEntries = true) })
 	@Transactional
 	public BonusRulesResponse resetRuleToDefaults(BonusTransactionType type) {
 		validateRuleType(type);

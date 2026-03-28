@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -58,6 +60,9 @@ public class BookingCreationService {
 	@Value("${booking.temp-hold-minutes:5}")
 	private int tempHoldMinutes;
 
+	@Caching(evict = { @CacheEvict(value = "seatAvailability", key = "#request.sessionId()"),
+			@CacheEvict(value = "availableSeatsCount", key = "#request.sessionId()"),
+			@CacheEvict(value = "sessions", allEntries = true) })
 	public BookingResponse createBooking(BookingCreateRequest request, User user) {
 		Session session = sessionRepository.findById(request.sessionId())
 				.orElseThrow(() -> new SessionNotFoundException(request.sessionId()));

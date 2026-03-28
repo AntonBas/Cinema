@@ -6,6 +6,10 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -39,6 +43,7 @@ import ua.lviv.bas.cinema.repository.BonusTransactionRepository;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@CacheConfig(cacheNames = "bonus")
 public class BonusService {
 
 	private final BonusCardRepository bonusCardRepository;
@@ -47,24 +52,29 @@ public class BonusService {
 	private final BonusMapper bonusMapper;
 	private final BonusProperties bonusProperties;
 
+	@Cacheable(key = "'card:' + #userId")
 	@Transactional(readOnly = true)
 	public BonusCardResponse getCard(Long userId) {
 		BonusCard card = getCardByUserId(userId);
 		return bonusMapper.toBonusCardResponse(card);
 	}
 
+	@Cacheable(key = "'balance:' + #userId")
 	@Transactional(readOnly = true)
 	public BonusBalanceResponse getBalance(Long userId) {
 		BonusCard card = getCardByUserId(userId);
 		return buildBalance(card);
 	}
 
+	@Cacheable(key = "'transactions:' + #userId + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
 	@Transactional(readOnly = true)
 	public Page<BonusTransactionResponse> getTransactions(Long userId, Pageable pageable) {
 		Page<BonusTransactionProjection> page = bonusTransactionRepository.findProjectionsByUserId(userId, pageable);
 		return page.map(bonusMapper::toBonusTransactionResponse);
 	}
 
+	@Caching(evict = { @CacheEvict(key = "'card:' + #user.id"), @CacheEvict(key = "'balance:' + #user.id"),
+			@CacheEvict(key = "'transactions:' + #user.id + '-' + 0 + '-' + 20"), @CacheEvict(allEntries = true) })
 	@Transactional
 	public void awardWelcomeBonus(User user) {
 		BonusCard card = getOrCreateCard(user);
@@ -77,6 +87,8 @@ public class BonusService {
 		card.setWelcomeBonusReceived(true);
 	}
 
+	@Caching(evict = { @CacheEvict(key = "'card:' + #user.id"), @CacheEvict(key = "'balance:' + #user.id"),
+			@CacheEvict(allEntries = true) })
 	@Transactional
 	public void awardBirthdayBonus(User user) {
 		if (user.getVerificationStatus() != VerificationStatus.VERIFIED || user.getDateOfBirth() == null) {
@@ -97,6 +109,8 @@ public class BonusService {
 		bonusCardRepository.save(card);
 	}
 
+	@Caching(evict = { @CacheEvict(key = "'card:' + #user.id"), @CacheEvict(key = "'balance:' + #user.id"),
+			@CacheEvict(allEntries = true) })
 	@Transactional
 	public Integer addPoints(User user, Integer points, String promotionTitle) {
 		validatePositivePoints(points);
@@ -115,6 +129,8 @@ public class BonusService {
 		}
 	}
 
+	@Caching(evict = { @CacheEvict(key = "'card:' + #userId"), @CacheEvict(key = "'balance:' + #userId"),
+			@CacheEvict(allEntries = true) })
 	@Transactional
 	public BonusTransaction spendPoints(Long userId, Integer points, Booking booking) {
 		validateRedemption(userId, points);
@@ -124,6 +140,8 @@ public class BonusService {
 				booking, null, null);
 	}
 
+	@Caching(evict = { @CacheEvict(key = "'card:' + #userId"), @CacheEvict(key = "'balance:' + #userId"),
+			@CacheEvict(allEntries = true) })
 	@Transactional
 	public BonusTransaction accruePoints(Long userId, Integer points, Booking booking, Payment payment) {
 		if (points == null || points <= 0) {
@@ -135,6 +153,8 @@ public class BonusService {
 				booking, payment, null);
 	}
 
+	@Caching(evict = { @CacheEvict(key = "'card:' + #booking.user.id"),
+			@CacheEvict(key = "'balance:' + #booking.user.id"), @CacheEvict(allEntries = true) })
 	@Transactional
 	public BonusTransaction refundPoints(Booking booking) {
 		if (booking.getBonusPointsUsed() == null || booking.getBonusPointsUsed() <= 0) {
@@ -178,6 +198,7 @@ public class BonusService {
 		}
 	}
 
+	@Cacheable(key = "'available:' + #userId + '-' + #totalPrice")
 	@Transactional(readOnly = true)
 	public Integer getAvailablePoints(Long userId, BigDecimal totalPrice) {
 		BonusCard card = getCardByUserId(userId);

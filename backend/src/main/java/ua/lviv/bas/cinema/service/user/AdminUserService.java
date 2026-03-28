@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -37,7 +38,7 @@ public class AdminUserService {
 	private final UserRepository userRepository;
 	private final UserMapper userMapper;
 
-	@CacheEvict(allEntries = true)
+	@Caching(evict = { @CacheEvict(key = "'list-' + #userId"), @CacheEvict(allEntries = true) })
 	@Transactional
 	public AdminUserListResponse updateUserRole(Long userId, UserRole newRole) {
 		User user = findById(userId);
@@ -54,7 +55,7 @@ public class AdminUserService {
 		return userMapper.toAdminUserListResponse(savedUser);
 	}
 
-	@CacheEvict(allEntries = true)
+	@Caching(evict = { @CacheEvict(key = "'list-' + #userId"), @CacheEvict(allEntries = true) })
 	@Transactional
 	public AdminUserListResponse updateUserStatus(Long userId, boolean enabled) {
 		User user = findById(userId);
@@ -70,7 +71,7 @@ public class AdminUserService {
 		return userMapper.toAdminUserListResponse(savedUser);
 	}
 
-	@CacheEvict(allEntries = true)
+	@Caching(evict = { @CacheEvict(key = "'list-' + #userId"), @CacheEvict(allEntries = true) })
 	@Transactional
 	public AdminUserListResponse updateBirthDateVerification(Long userId, VerificationBirthDateRequest request) {
 		User user = findById(userId);

@@ -1,5 +1,7 @@
 package ua.lviv.bas.cinema.service.booking.ticket;
 
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -21,17 +23,20 @@ import ua.lviv.bas.cinema.repository.TicketRepository;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
+@CacheConfig(cacheNames = "tickets")
 public class TicketRetrievalService {
 
 	private final TicketRepository ticketRepository;
 	private final TicketSpecification ticketSpecification;
 	private final TicketMapper ticketMapper;
 
+	@Cacheable(key = "#ticketId + '-' + #user.id")
 	public TicketResponse getTicketById(Long ticketId, User user) {
 		return ticketRepository.findByIdAndUserIdAndStatus(ticketId, user.getId(), TicketStatus.ACTIVE)
 				.map(this::toTicketResponse).orElseThrow(TicketValidationException::notFound);
 	}
 
+	@Cacheable(key = "#ticketCode + '-' + #user.id")
 	public TicketResponse getTicketByCode(String ticketCode, User user) {
 		Ticket ticket = ticketRepository.findByUniqueCode(ticketCode)
 				.orElseThrow(() -> new TicketNotFoundException("Ticket not found with code: " + ticketCode));
@@ -43,6 +48,7 @@ public class TicketRetrievalService {
 		return toTicketResponse(ticket);
 	}
 
+	@Cacheable(key = "'user:' + #user.id + '-status:' + #filter.status() + '-movie:' + #filter.movieTitle() + '-page:' + #pageable.pageNumber + '-' + #pageable.pageSize")
 	public Page<TicketResponse> getUserTickets(User user, TicketFilterRequest filter, Pageable pageable) {
 		Specification<Ticket> spec = ticketSpecification.buildForUser(user.getId(), filter.status(),
 				filter.movieTitle());

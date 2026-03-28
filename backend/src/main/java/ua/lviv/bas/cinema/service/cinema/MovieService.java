@@ -4,6 +4,10 @@ import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
 
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -35,6 +39,7 @@ import ua.lviv.bas.cinema.service.integration.slug.SlugService;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
+@CacheConfig(cacheNames = "movies")
 public class MovieService {
 
 	private final MovieRepository movieRepository;
@@ -45,6 +50,10 @@ public class MovieService {
 	private final MovieScheduler movieScheduler;
 	private final PosterService posterService;
 
+	@Caching(evict = { @CacheEvict(cacheNames = "movies", allEntries = true),
+			@CacheEvict(value = "sessions", allEntries = true),
+			@CacheEvict(value = "seatAvailability", allEntries = true),
+			@CacheEvict(value = "availableSeatsCount", allEntries = true) })
 	@Transactional
 	public MovieDetailResponse createMovie(MovieCreateRequest request) {
 		log.info("Creating movie: {}", request.getTitle());
@@ -67,6 +76,10 @@ public class MovieService {
 		return movieMapper.toMovieDetailResponse(saved);
 	}
 
+	@Caching(evict = { @CacheEvict(cacheNames = "movies", allEntries = true),
+			@CacheEvict(value = "sessions", allEntries = true),
+			@CacheEvict(value = "seatAvailability", allEntries = true),
+			@CacheEvict(value = "availableSeatsCount", allEntries = true) })
 	@Transactional
 	public MovieDetailResponse updateMovie(Long id, MovieUpdateRequest request) {
 		log.info("Updating movie with id: {}", id);
@@ -98,6 +111,10 @@ public class MovieService {
 		return movieMapper.toMovieDetailResponse(updated);
 	}
 
+	@Caching(evict = { @CacheEvict(cacheNames = "movies", allEntries = true),
+			@CacheEvict(value = "sessions", allEntries = true),
+			@CacheEvict(value = "seatAvailability", allEntries = true),
+			@CacheEvict(value = "availableSeatsCount", allEntries = true) })
 	@Transactional
 	public void deleteMovie(Long id) {
 		log.info("Deleting movie with id: {}", id);
@@ -110,6 +127,7 @@ public class MovieService {
 		log.info("Movie deleted successfully with id: {}", id);
 	}
 
+	@Cacheable(key = "#id")
 	public MovieDetailResponse getMovieById(Long id) {
 		return movieRepository.findDetailProjectionById(id).map(movieMapper::toMovieDetailResponse)
 				.orElseThrow(() -> new MovieNotFoundException(id));
@@ -120,6 +138,7 @@ public class MovieService {
 		return movieMapper.toMovieDetailResponse(movie);
 	}
 
+	@Cacheable(key = "#slug")
 	public MovieDetailResponse getMovieBySlug(String slug) {
 		Movie movie = movieRepository.findBySlug(slug).orElseThrow(() -> new MovieNotFoundException(slug));
 		return movieMapper.toMovieDetailResponse(movie);
@@ -130,6 +149,7 @@ public class MovieService {
 		return movieMapper.toMovieDetailResponse(movie);
 	}
 
+	@Cacheable(key = "'filtered-' + #title + '-' + #status + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
 	public Page<MovieCardResponse> getFilteredMovies(String title, MovieStatus status, Pageable pageable) {
 		return movieRepository.findMoviesByFilters(title, status, pageable).map(movieMapper::toMovieCardResponse);
 	}

@@ -24,26 +24,47 @@ public class CacheConfig {
 		cacheManager.registerCustomCache("cinemaHalls",
 				Caffeine.newBuilder().expireAfterWrite(1, TimeUnit.HOURS).maximumSize(100).build());
 
-		cacheManager.registerCustomCache("seatAvailability",
-				Caffeine.newBuilder().expireAfterWrite(5, TimeUnit.MINUTES).maximumSize(500).build());
-
-		cacheManager.registerCustomCache("availableSeatsCount",
-				Caffeine.newBuilder().expireAfterWrite(1, TimeUnit.MINUTES).maximumSize(500).build());
-
-		cacheManager.registerCustomCache("ticket-types",
-				Caffeine.newBuilder().expireAfterWrite(1, TimeUnit.HOURS).maximumSize(100).build());
-
 		cacheManager.registerCustomCache("sessions",
 				Caffeine.newBuilder().expireAfterWrite(10, TimeUnit.MINUTES).maximumSize(500).build());
-
-		cacheManager.registerCustomCache("users",
-				Caffeine.newBuilder().expireAfterWrite(30, TimeUnit.MINUTES).maximumSize(1000).build());
 
 		cacheManager.registerCustomCache("genres",
 				Caffeine.newBuilder().expireAfterWrite(24, TimeUnit.HOURS).maximumSize(50).build());
 
 		cacheManager.registerCustomCache("persons",
 				Caffeine.newBuilder().expireAfterWrite(24, TimeUnit.HOURS).maximumSize(500).build());
+
+		cacheManager.registerCustomCache("movies",
+				Caffeine.newBuilder().expireAfterWrite(24, TimeUnit.HOURS).maximumSize(200).build());
+
+		cacheManager.registerCustomCache("seatAvailability",
+				Caffeine.newBuilder().expireAfterWrite(5, TimeUnit.MINUTES).maximumSize(500).build());
+
+		cacheManager.registerCustomCache("availableSeatsCount",
+				Caffeine.newBuilder().expireAfterWrite(1, TimeUnit.MINUTES).maximumSize(500).build());
+
+		cacheManager.registerCustomCache("bookings",
+				Caffeine.newBuilder().expireAfterWrite(30, TimeUnit.MINUTES).maximumSize(1000).build());
+
+		cacheManager.registerCustomCache("tickets",
+				Caffeine.newBuilder().expireAfterWrite(30, TimeUnit.MINUTES).maximumSize(1000).build());
+
+		cacheManager.registerCustomCache("ticket-types",
+				Caffeine.newBuilder().expireAfterWrite(1, TimeUnit.HOURS).maximumSize(100).build());
+
+		cacheManager.registerCustomCache("users",
+				Caffeine.newBuilder().expireAfterWrite(30, TimeUnit.MINUTES).maximumSize(1000).build());
+
+		cacheManager.registerCustomCache("adminUsers",
+				Caffeine.newBuilder().expireAfterWrite(30, TimeUnit.MINUTES).maximumSize(500).build());
+
+		cacheManager.registerCustomCache("bonusRules",
+				Caffeine.newBuilder().expireAfterWrite(1, TimeUnit.HOURS).maximumSize(50).build());
+
+		cacheManager.registerCustomCache("bonus",
+				Caffeine.newBuilder().expireAfterWrite(30, TimeUnit.MINUTES).maximumSize(1000).build());
+
+		cacheManager.registerCustomCache("promotions",
+				Caffeine.newBuilder().expireAfterWrite(1, TimeUnit.HOURS).maximumSize(200).build());
 
 		cacheManager.setCaffeine(defaultCaffeineConfig());
 

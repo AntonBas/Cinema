@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -74,7 +75,8 @@ public class SeatReservationService {
 	}
 
 	@Transactional
-	@CacheEvict(value = "seatAvailability", key = "#sessionId")
+	@Caching(evict = { @CacheEvict(value = "seatAvailability", key = "#sessionId"),
+			@CacheEvict(value = "availableSeatsCount", key = "#sessionId") })
 	public void temporaryHoldSeat(Long sessionId, Long seatId, User user) {
 		log.info("Creating temporary hold for seat {} in session {} by user {}", seatId, sessionId, user.getId());
 
@@ -95,7 +97,8 @@ public class SeatReservationService {
 	}
 
 	@Transactional
-	@CacheEvict(value = "seatAvailability", key = "#sessionId")
+	@Caching(evict = { @CacheEvict(value = "seatAvailability", key = "#sessionId"),
+			@CacheEvict(value = "availableSeatsCount", key = "#sessionId") })
 	public void cancelTemporaryHold(Long sessionId, Long seatId, User user) {
 		log.info("Cancelling temporary hold for seat {} in session {} by user {}", seatId, sessionId, user.getId());
 

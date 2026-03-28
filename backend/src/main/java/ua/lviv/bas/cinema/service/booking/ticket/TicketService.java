@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -53,6 +55,9 @@ public class TicketService {
 				.status(TicketStatus.ACTIVE).purchaseTime(LocalDateTime.now()).build();
 	}
 
+	@Caching(evict = { @CacheEvict(value = "tickets", key = "#ticketCode + '-' + #ticket.user.id"),
+			@CacheEvict(value = "tickets", key = "#ticket.id + '-' + #ticket.user.id"),
+			@CacheEvict(value = "tickets", allEntries = true) })
 	@Transactional
 	public void validateTicket(String ticketCode) {
 		Ticket ticket = ticketRepository.findByUniqueCode(ticketCode).orElseThrow(TicketValidationException::notFound);

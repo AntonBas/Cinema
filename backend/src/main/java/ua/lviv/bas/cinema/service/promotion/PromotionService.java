@@ -5,6 +5,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +31,7 @@ import ua.lviv.bas.cinema.service.bonus.BonusService;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
+@CacheConfig(cacheNames = "promotions")
 public class PromotionService {
 
 	private final PromotionRepository promotionRepository;
@@ -35,6 +40,8 @@ public class PromotionService {
 	private final BonusService bonusUserService;
 	private final PromotionMapper promotionMapper;
 
+	@Caching(evict = { @CacheEvict(key = "'available:' + #user.id"),
+			@CacheEvict(value = "promotions", allEntries = true) })
 	@Transactional
 	public PromotionResponse claimPromotion(UserPromotionCreateRequest request, User user) {
 		log.info("User {} claiming promotion {}", user.getEmail(), request.promotionId());
@@ -60,6 +67,7 @@ public class PromotionService {
 		return promotionMapper.toPromotionResponse(promotion);
 	}
 
+	@Cacheable(key = "'available:' + #user.id")
 	public List<PromotionResponse> getAvailablePromotions(User user) {
 		log.debug("Getting available promotions for user: {}", user.getEmail());
 

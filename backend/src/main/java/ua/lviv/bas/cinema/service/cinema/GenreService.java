@@ -35,7 +35,7 @@ public class GenreService {
 	public GenreResponse createGenre(GenreRequest request) {
 		log.info("Creating genre: {}", request.name());
 
-		String genreName = request.name().trim();
+		String genreName = request.name();
 		validateGenreUniqueness(genreName, null);
 
 		Genre genre = genreMapper.toGenre(request);
@@ -53,14 +53,15 @@ public class GenreService {
 				.orElseThrow(() -> new GenreNotFoundException(id));
 	}
 
-	@Caching(evict = { @CacheEvict(key = "#id"), @CacheEvict(allEntries = true) })
+	@Caching(evict = { @CacheEvict(key = "#id"), @CacheEvict(key = "'popular-' + #request.name() + '-' + 0 + '-' + 20"),
+			@CacheEvict(allEntries = true) })
 	@Transactional
 	public GenreResponse updateGenre(Long id, GenreRequest request) {
 		log.info("Updating genre with id: {}", id);
 
 		Genre existingGenre = genreRepository.findById(id).orElseThrow(() -> new GenreNotFoundException(id));
 
-		String genreName = request.name().trim();
+		String genreName = request.name();
 		validateGenreUniqueness(genreName, id);
 
 		genreMapper.updateGenreFromRequest(request, existingGenre);
