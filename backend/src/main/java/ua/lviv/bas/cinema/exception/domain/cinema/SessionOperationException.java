@@ -1,6 +1,5 @@
 package ua.lviv.bas.cinema.exception.domain.cinema;
 
-import ua.lviv.bas.cinema.domain.enums.CinemaSessionStatus;
 import ua.lviv.bas.cinema.exception.core.ValidationException;
 
 public class SessionOperationException extends ValidationException {
@@ -27,10 +26,5 @@ public class SessionOperationException extends ValidationException {
 
 	public static SessionOperationException cannotReactivatePast() {
 		return new SessionOperationException("Cannot reactivate past session", "CANNOT_REACTIVATE_PAST");
-	}
-
-	public static SessionOperationException invalidStatusTransition(CinemaSessionStatus from, CinemaSessionStatus to) {
-		return new SessionOperationException(String.format("Cannot transition session from %s to %s", from, to),
-				"INVALID_STATUS_TRANSITION");
 	}
 }

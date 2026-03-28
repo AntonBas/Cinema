@@ -10,9 +10,4 @@ public class PersonNotFoundException extends NotFoundException {
 		super(String.format("Person with id '%d' not found", personId), "PERSON_NOT_FOUND",
 				String.format("Person entity with id %d does not exist in database", personId));
 	}
-
-	public PersonNotFoundException(String name) {
-		super(String.format("Person with name '%s' not found", name), "PERSON_NOT_FOUND",
-				String.format("Person entity with name %s does not exist in database", name));
-	}
 }

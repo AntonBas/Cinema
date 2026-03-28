@@ -11,10 +11,6 @@ public class InvalidPaymentStatusException extends ValidationException {
 				String.format("Current: %s, Required: %s", current, required));
 	}
 
-	public static InvalidPaymentStatusException notPending(PaymentStatus current) {
-		return new InvalidPaymentStatusException(current, PaymentStatus.PENDING);
-	}
-
 	public static InvalidPaymentStatusException notFailed(PaymentStatus current) {
 		return new InvalidPaymentStatusException(current, PaymentStatus.FAILED);
 	}

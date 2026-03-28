@@ -21,8 +21,4 @@ public class TicketValidationException extends ValidationException {
 	public static TicketValidationException alreadyUsed() {
 		return new TicketValidationException("Ticket has already been used", "TICKET_ALREADY_USED");
 	}
-
-	public static TicketValidationException sessionStarted() {
-		return new TicketValidationException("Session has already started", "SESSION_STARTED");
-	}
 }

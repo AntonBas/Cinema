@@ -1,7 +1,5 @@
 package ua.lviv.bas.cinema.exception.domain.ticket;
 
-import java.math.BigDecimal;
-
 import org.springframework.lang.Nullable;
 
 import ua.lviv.bas.cinema.exception.core.ValidationException;
@@ -11,16 +9,8 @@ public class TicketTypeValidationException extends ValidationException {
 	private static final long serialVersionUID = 1L;
 	private static final String ERROR_CODE = "TICKET_TYPE_VALIDATION_FAILED";
 
-	public TicketTypeValidationException(String message) {
-		super(message, ERROR_CODE);
-	}
-
 	public TicketTypeValidationException(String message, @Nullable String debugMessage) {
 		super(message, ERROR_CODE, debugMessage);
-	}
-
-	public TicketTypeValidationException(String message, @Nullable String debugMessage, @Nullable Throwable cause) {
-		super(message, ERROR_CODE, debugMessage, cause);
 	}
 
 	public static TicketTypeValidationException invalidAgeRange(Integer minAge, Integer maxAge) {
@@ -33,17 +23,5 @@ public class TicketTypeValidationException extends ValidationException {
 		return new TicketTypeValidationException(
 				String.format("Invalid value for field '%s': %d. Age must be between 0-100 years", fieldName, age),
 				String.format("Invalid %s value: %d, must be 0-100", fieldName, age));
-	}
-
-	public static TicketTypeValidationException invalidPriceMultiplier(BigDecimal multiplier) {
-		return new TicketTypeValidationException(
-				String.format("Invalid price multiplier: %s. Multiplier must be between 0.01 and 9.99",
-						multiplier.toString()),
-				String.format("Invalid price multiplier: %s, must be 0.01-9.99", multiplier));
-	}
-
-	public static TicketTypeValidationException ageRequiredForRestrictedType() {
-		return new TicketTypeValidationException("Age is required for age-restricted ticket types",
-				"Age field is required when minAge or maxAge is set");
 	}
 }

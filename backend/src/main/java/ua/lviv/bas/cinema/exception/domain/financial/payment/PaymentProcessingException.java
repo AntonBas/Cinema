@@ -18,10 +18,6 @@ public class PaymentProcessingException extends ValidationException {
 		super(message, "PAYMENT_PROCESSING_ERROR", message, cause);
 	}
 
-	public PaymentProcessingException(String message, String errorCode, Throwable cause) {
-		super(message, errorCode, message, cause);
-	}
-
 	public static PaymentProcessingException paymentInProgress() {
 		return new PaymentProcessingException("Payment is already in progress for this booking", "PAYMENT_IN_PROGRESS");
 	}

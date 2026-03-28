@@ -14,10 +14,6 @@ public class SessionValidationException extends ValidationException {
 		super(message, errorCode);
 	}
 
-	public static SessionValidationException startTimeRequired() {
-		return new SessionValidationException("Start time is required", "SESSION_START_TIME_REQUIRED");
-	}
-
 	public static SessionValidationException tooCloseToStart(LocalDateTime startTime) {
 		return new SessionValidationException(
 				String.format("Session must start at least 30 minutes from now. Start time: %s", startTime),

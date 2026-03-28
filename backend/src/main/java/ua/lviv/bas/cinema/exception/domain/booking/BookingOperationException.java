@@ -12,8 +12,4 @@ public class BookingOperationException extends ValidationException {
 	public static BookingOperationException onlyPendingCanBeConfirmed() {
 		return new BookingOperationException("Only pending bookings can be confirmed");
 	}
-
-	public static BookingOperationException cannotExpireNonPending() {
-		return new BookingOperationException("Cannot expire a booking that is not in PENDING status");
-	}
 }
