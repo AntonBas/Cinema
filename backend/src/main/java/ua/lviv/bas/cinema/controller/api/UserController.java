@@ -22,11 +22,11 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import ua.lviv.bas.cinema.config.security.user.CustomUserDetails;
 import ua.lviv.bas.cinema.dto.user.request.UserEmailChangeRequest;
 import ua.lviv.bas.cinema.dto.user.request.UserPasswordUpdateRequest;
 import ua.lviv.bas.cinema.dto.user.request.UserUpdateRequest;
 import ua.lviv.bas.cinema.dto.user.response.UserProfileResponse;
-import ua.lviv.bas.cinema.security.CustomUserDetails;
 import ua.lviv.bas.cinema.service.user.UserService;
 
 @Slf4j

@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.service.oauth2;
+package ua.lviv.bas.cinema.config.security.oauth2;
 
 import java.io.IOException;
 
@@ -13,7 +13,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import ua.lviv.bas.cinema.config.security.JwtTokenProvider;
+import ua.lviv.bas.cinema.config.security.jwt.JwtTokenProvider;
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.repository.UserRepository;
 

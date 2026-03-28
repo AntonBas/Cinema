@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.config.security;
+package ua.lviv.bas.cinema.config.security.jwt;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -18,7 +18,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
-import ua.lviv.bas.cinema.security.CustomUserDetails;
+import ua.lviv.bas.cinema.config.security.user.CustomUserDetails;
 
 @Slf4j
 @Component

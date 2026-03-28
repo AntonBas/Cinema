@@ -24,15 +24,15 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import ua.lviv.bas.cinema.config.security.JwtTokenProvider;
+import ua.lviv.bas.cinema.config.security.jwt.JwtTokenProvider;
+import ua.lviv.bas.cinema.config.security.user.CustomUserDetails;
+import ua.lviv.bas.cinema.config.security.user.CustomUserDetailsService;
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.enums.UserRole;
 import ua.lviv.bas.cinema.dto.user.request.UserLoginRequest;
 import ua.lviv.bas.cinema.dto.user.request.UserRegistrationRequest;
 import ua.lviv.bas.cinema.dto.user.response.UserResponse;
 import ua.lviv.bas.cinema.mapper.UserMapper;
-import ua.lviv.bas.cinema.security.CustomUserDetails;
-import ua.lviv.bas.cinema.security.CustomUserDetailsService;
 import ua.lviv.bas.cinema.service.user.UserPasswordResetService;
 import ua.lviv.bas.cinema.service.user.UserService;
 

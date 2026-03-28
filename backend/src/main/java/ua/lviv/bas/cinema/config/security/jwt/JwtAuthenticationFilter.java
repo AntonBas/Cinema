@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.config.security;
+package ua.lviv.bas.cinema.config.security.jwt;
 
 import java.io.IOException;
 
@@ -17,7 +17,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import ua.lviv.bas.cinema.security.CustomUserDetailsService;
+import ua.lviv.bas.cinema.config.security.user.CustomUserDetailsService;
 
 @Slf4j
 @Component

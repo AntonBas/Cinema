@@ -18,12 +18,12 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import ua.lviv.bas.cinema.config.security.user.CustomUserDetails;
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.enums.TicketStatus;
 import ua.lviv.bas.cinema.dto.common.PageResponse;
 import ua.lviv.bas.cinema.dto.ticket.request.TicketFilterRequest;
 import ua.lviv.bas.cinema.dto.ticket.response.TicketResponse;
-import ua.lviv.bas.cinema.security.CustomUserDetails;
 import ua.lviv.bas.cinema.service.booking.ticket.TicketRetrievalService;
 import ua.lviv.bas.cinema.service.booking.ticket.TicketService;
 

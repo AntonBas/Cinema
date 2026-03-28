@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.config;
+package ua.lviv.bas.cinema.config.cache;
 
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Configuration;

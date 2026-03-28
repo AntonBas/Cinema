@@ -20,10 +20,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import ua.lviv.bas.cinema.config.security.user.CustomUserDetails;
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.dto.booking.request.BookingCreateRequest;
 import ua.lviv.bas.cinema.dto.booking.response.BookingResponse;
-import ua.lviv.bas.cinema.security.CustomUserDetails;
 import ua.lviv.bas.cinema.service.booking.ControllerFacade;
 
 @Slf4j

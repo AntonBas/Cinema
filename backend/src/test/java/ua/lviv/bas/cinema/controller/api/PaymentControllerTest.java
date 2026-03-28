@@ -16,12 +16,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
+import ua.lviv.bas.cinema.config.security.user.CustomUserDetails;
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.enums.PaymentStatus;
 import ua.lviv.bas.cinema.dto.payment.request.PaymentCreateRequest;
 import ua.lviv.bas.cinema.dto.payment.response.PaymentLiqPayDataResponse;
 import ua.lviv.bas.cinema.dto.payment.response.PaymentResponse;
-import ua.lviv.bas.cinema.security.CustomUserDetails;
 import ua.lviv.bas.cinema.service.booking.ControllerFacade;
 
 @ExtendWith(MockitoExtension.class)

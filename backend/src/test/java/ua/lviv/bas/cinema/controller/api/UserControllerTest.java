@@ -21,6 +21,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 
+import ua.lviv.bas.cinema.config.security.user.CustomUserDetails;
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.enums.UserRole;
 import ua.lviv.bas.cinema.domain.enums.VerificationStatus;
@@ -29,7 +30,6 @@ import ua.lviv.bas.cinema.dto.user.request.UserPasswordUpdateRequest;
 import ua.lviv.bas.cinema.dto.user.request.UserUpdateRequest;
 import ua.lviv.bas.cinema.dto.user.response.UserProfileResponse;
 import ua.lviv.bas.cinema.exception.domain.user.UserNotFoundException;
-import ua.lviv.bas.cinema.security.CustomUserDetails;
 import ua.lviv.bas.cinema.service.user.UserService;
 
 @ExtendWith(MockitoExtension.class)

@@ -20,11 +20,11 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import ua.lviv.bas.cinema.config.security.user.CustomUserDetails;
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.dto.payment.request.PaymentCreateRequest;
 import ua.lviv.bas.cinema.dto.payment.response.PaymentLiqPayDataResponse;
 import ua.lviv.bas.cinema.dto.payment.response.PaymentResponse;
-import ua.lviv.bas.cinema.security.CustomUserDetails;
 import ua.lviv.bas.cinema.service.booking.ControllerFacade;
 
 @Slf4j

@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.security;
+package ua.lviv.bas.cinema.config.security.user;
 
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;

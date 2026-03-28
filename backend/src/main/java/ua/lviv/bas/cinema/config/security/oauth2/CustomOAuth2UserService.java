@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.service.oauth2;
+package ua.lviv.bas.cinema.config.security.oauth2;
 
 import java.time.LocalDate;
 import java.util.Map;

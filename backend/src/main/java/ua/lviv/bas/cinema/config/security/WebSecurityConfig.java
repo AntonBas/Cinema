@@ -21,9 +21,11 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import lombok.RequiredArgsConstructor;
-import ua.lviv.bas.cinema.security.CustomUserDetailsService;
-import ua.lviv.bas.cinema.service.oauth2.CustomOAuth2UserService;
-import ua.lviv.bas.cinema.service.oauth2.OAuth2AuthenticationSuccessHandler;
+import ua.lviv.bas.cinema.config.security.jwt.JwtAuthenticationFilter;
+import ua.lviv.bas.cinema.config.security.jwt.JwtTokenProvider;
+import ua.lviv.bas.cinema.config.security.oauth2.CustomOAuth2UserService;
+import ua.lviv.bas.cinema.config.security.oauth2.OAuth2AuthenticationSuccessHandler;
+import ua.lviv.bas.cinema.config.security.user.CustomUserDetailsService;
 
 @Configuration
 @EnableWebSecurity

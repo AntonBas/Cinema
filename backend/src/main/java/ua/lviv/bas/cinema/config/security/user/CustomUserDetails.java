@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.security;
+package ua.lviv.bas.cinema.config.security.user;
 
 import java.util.Collection;
 import java.util.Collections;
