@@ -7,7 +7,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import ua.lviv.bas.cinema.exception.domain.infrastructure.QRCodeGenerationException;
+import ua.lviv.bas.cinema.exception.domain.technical.QRCodeGenerationException;
 
 public class QRCodeServiceTest {
 

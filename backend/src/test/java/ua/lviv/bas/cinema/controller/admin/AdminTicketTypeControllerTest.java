@@ -32,9 +32,9 @@ import ua.lviv.bas.cinema.dto.ticket.request.TicketTypeCreateRequest;
 import ua.lviv.bas.cinema.dto.ticket.request.TicketTypeUpdateRequest;
 import ua.lviv.bas.cinema.dto.ticket.response.TicketTypeResponse;
 import ua.lviv.bas.cinema.exception.api.ApiErrorHandler;
-import ua.lviv.bas.cinema.exception.domain.tickettype.TicketTypeDuplicateException;
-import ua.lviv.bas.cinema.exception.domain.tickettype.TicketTypeInUseException;
-import ua.lviv.bas.cinema.exception.domain.tickettype.TicketTypeNotFoundException;
+import ua.lviv.bas.cinema.exception.domain.ticket.TicketTypeDuplicateException;
+import ua.lviv.bas.cinema.exception.domain.ticket.TicketTypeInUseException;
+import ua.lviv.bas.cinema.exception.domain.ticket.TicketTypeNotFoundException;
 import ua.lviv.bas.cinema.service.booking.types.TicketTypeService;
 
 @ExtendWith(MockitoExtension.class)

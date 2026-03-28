@@ -16,10 +16,10 @@ import ua.lviv.bas.cinema.dto.promotion.request.PromotionCreateRequest;
 import ua.lviv.bas.cinema.dto.promotion.request.PromotionUpdateRequest;
 import ua.lviv.bas.cinema.dto.promotion.response.PromotionAdminResponse;
 import ua.lviv.bas.cinema.dto.promotion.response.PromotionResponse;
-import ua.lviv.bas.cinema.exception.domain.promotion.PromotionAlreadyExistsException;
-import ua.lviv.bas.cinema.exception.domain.promotion.PromotionDatesInvalidException;
-import ua.lviv.bas.cinema.exception.domain.promotion.PromotionHasRedemptionsException;
-import ua.lviv.bas.cinema.exception.domain.promotion.PromotionNotFoundException;
+import ua.lviv.bas.cinema.exception.domain.financial.promotion.PromotionAlreadyExistsException;
+import ua.lviv.bas.cinema.exception.domain.financial.promotion.PromotionDatesInvalidException;
+import ua.lviv.bas.cinema.exception.domain.financial.promotion.PromotionHasRedemptionsException;
+import ua.lviv.bas.cinema.exception.domain.financial.promotion.PromotionNotFoundException;
 import ua.lviv.bas.cinema.mapper.PromotionMapper;
 import ua.lviv.bas.cinema.repository.PromotionRepository;
 

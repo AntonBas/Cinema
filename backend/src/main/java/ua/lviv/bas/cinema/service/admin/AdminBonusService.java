@@ -14,8 +14,8 @@ import ua.lviv.bas.cinema.domain.BonusRules;
 import ua.lviv.bas.cinema.domain.enums.BonusTransactionType;
 import ua.lviv.bas.cinema.dto.bonus.request.BonusRulesRequest;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusRulesResponse;
-import ua.lviv.bas.cinema.exception.domain.bonus.BonusRuleNotFoundException;
-import ua.lviv.bas.cinema.exception.domain.bonus.InvalidMinMaxPointsException;
+import ua.lviv.bas.cinema.exception.domain.financial.bonus.BonusRuleNotFoundException;
+import ua.lviv.bas.cinema.exception.domain.financial.bonus.InvalidMinMaxPointsException;
 import ua.lviv.bas.cinema.mapper.BonusMapper;
 import ua.lviv.bas.cinema.repository.BonusRulesRepository;
 

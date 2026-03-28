@@ -24,7 +24,7 @@ import ua.lviv.bas.cinema.dto.booking.request.BookingCreateRequest;
 import ua.lviv.bas.cinema.dto.booking.response.BookingResponse;
 import ua.lviv.bas.cinema.exception.domain.booking.SeatNotAvailableException;
 import ua.lviv.bas.cinema.exception.domain.cinema.SessionNotFoundException;
-import ua.lviv.bas.cinema.exception.domain.tickettype.TicketTypeNotFoundException;
+import ua.lviv.bas.cinema.exception.domain.ticket.TicketTypeNotFoundException;
 import ua.lviv.bas.cinema.mapper.BookingMapper;
 import ua.lviv.bas.cinema.repository.BookingRepository;
 import ua.lviv.bas.cinema.repository.SeatRepository;

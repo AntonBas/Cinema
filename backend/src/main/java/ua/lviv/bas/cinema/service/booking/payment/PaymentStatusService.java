@@ -11,7 +11,7 @@ import ua.lviv.bas.cinema.domain.Payment;
 import ua.lviv.bas.cinema.domain.enums.PaymentStatus;
 import ua.lviv.bas.cinema.dto.payment.request.LiqPayCallbackRequest;
 import ua.lviv.bas.cinema.dto.payment.response.PaymentLiqPayDataResponse;
-import ua.lviv.bas.cinema.exception.domain.payment.PaymentNotFoundException;
+import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentNotFoundException;
 import ua.lviv.bas.cinema.repository.PaymentRepository;
 import ua.lviv.bas.cinema.service.integration.payment.PaymentGatewayService;
 

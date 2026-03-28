@@ -3,7 +3,7 @@ package ua.lviv.bas.cinema.service.booking.types;
 import org.springframework.stereotype.Service;
 
 import ua.lviv.bas.cinema.domain.TicketType;
-import ua.lviv.bas.cinema.exception.domain.tickettype.TicketTypeValidationException;
+import ua.lviv.bas.cinema.exception.domain.ticket.TicketTypeValidationException;
 
 @Service
 public class TicketTypeValidationService {

@@ -10,7 +10,7 @@ import ua.lviv.bas.cinema.domain.Booking;
 import ua.lviv.bas.cinema.domain.enums.BookingStatus;
 import ua.lviv.bas.cinema.domain.enums.ReservationStatus;
 import ua.lviv.bas.cinema.exception.domain.booking.SessionTooCloseException;
-import ua.lviv.bas.cinema.exception.domain.payment.PaymentProcessingException;
+import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentProcessingException;
 
 @Service
 @RequiredArgsConstructor

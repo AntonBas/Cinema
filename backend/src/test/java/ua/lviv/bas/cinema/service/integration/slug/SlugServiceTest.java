@@ -13,7 +13,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import ua.lviv.bas.cinema.domain.Movie;
-import ua.lviv.bas.cinema.exception.domain.infrastructure.SlugGenerationException;
+import ua.lviv.bas.cinema.exception.domain.technical.SlugGenerationException;
 import ua.lviv.bas.cinema.repository.MovieRepository;
 
 @ExtendWith(MockitoExtension.class)

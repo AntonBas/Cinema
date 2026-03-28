@@ -17,7 +17,7 @@ import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 
 import lombok.extern.slf4j.Slf4j;
-import ua.lviv.bas.cinema.exception.domain.infrastructure.QRCodeGenerationException;
+import ua.lviv.bas.cinema.exception.domain.technical.QRCodeGenerationException;
 
 @Slf4j
 @Service

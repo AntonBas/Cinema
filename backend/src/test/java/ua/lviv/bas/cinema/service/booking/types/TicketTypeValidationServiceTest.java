@@ -8,7 +8,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
 import ua.lviv.bas.cinema.domain.TicketType;
-import ua.lviv.bas.cinema.exception.domain.tickettype.TicketTypeValidationException;
+import ua.lviv.bas.cinema.exception.domain.ticket.TicketTypeValidationException;
 
 public class TicketTypeValidationServiceTest {
 

@@ -20,8 +20,8 @@ import org.springframework.http.ResponseEntity;
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.dto.promotion.request.UserPromotionCreateRequest;
 import ua.lviv.bas.cinema.dto.promotion.response.PromotionResponse;
-import ua.lviv.bas.cinema.exception.domain.promotion.AlreadyClaimedException;
-import ua.lviv.bas.cinema.exception.domain.promotion.PromotionNotActiveException;
+import ua.lviv.bas.cinema.exception.domain.financial.promotion.AlreadyClaimedException;
+import ua.lviv.bas.cinema.exception.domain.financial.promotion.PromotionNotActiveException;
 import ua.lviv.bas.cinema.service.user.PromotionService;
 
 @ExtendWith(MockitoExtension.class)

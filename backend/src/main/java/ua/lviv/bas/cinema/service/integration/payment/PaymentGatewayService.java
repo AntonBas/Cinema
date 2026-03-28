@@ -30,7 +30,7 @@ import ua.lviv.bas.cinema.domain.Payment;
 import ua.lviv.bas.cinema.domain.enums.PaymentStatus;
 import ua.lviv.bas.cinema.dto.payment.response.PaymentLiqPayDataResponse;
 import ua.lviv.bas.cinema.dto.payment.response.PaymentResponse;
-import ua.lviv.bas.cinema.exception.domain.payment.PaymentProcessingException;
+import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentProcessingException;
 
 @Slf4j
 @Service
