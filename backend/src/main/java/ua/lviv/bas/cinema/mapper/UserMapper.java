@@ -8,7 +8,7 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.mapstruct.ReportingPolicy;
 
 import ua.lviv.bas.cinema.domain.User;
-import ua.lviv.bas.cinema.domain.projection.AdminUserProjection;
+import ua.lviv.bas.cinema.domain.projection.user.AdminUserProjection;
 import ua.lviv.bas.cinema.dto.user.request.UserRegistrationRequest;
 import ua.lviv.bas.cinema.dto.user.request.UserUpdateRequest;
 import ua.lviv.bas.cinema.dto.user.response.AdminUserListResponse;

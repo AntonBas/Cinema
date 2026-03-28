@@ -11,8 +11,8 @@ import org.springframework.stereotype.Repository;
 
 import ua.lviv.bas.cinema.domain.TicketType;
 import ua.lviv.bas.cinema.domain.enums.TicketTypeCategory;
-import ua.lviv.bas.cinema.domain.projection.TicketTypeAdminProjection;
-import ua.lviv.bas.cinema.domain.projection.TicketTypeUserProjection;
+import ua.lviv.bas.cinema.domain.projection.ticket.TicketTypeAdminProjection;
+import ua.lviv.bas.cinema.domain.projection.ticket.TicketTypeUserProjection;
 
 @Repository
 public interface TicketTypeRepository extends JpaRepository<TicketType, Long> {

@@ -9,8 +9,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import ua.lviv.bas.cinema.domain.Promotion;
-import ua.lviv.bas.cinema.domain.projection.PromotionAdminProjection;
-import ua.lviv.bas.cinema.domain.projection.PromotionResponseProjection;
+import ua.lviv.bas.cinema.domain.projection.promotion.PromotionAdminProjection;
+import ua.lviv.bas.cinema.domain.projection.promotion.PromotionResponseProjection;
 
 @Repository
 public interface PromotionRepository extends JpaRepository<Promotion, Long> {

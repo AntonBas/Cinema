@@ -103,7 +103,7 @@ public class PersonMapperTest {
 	@Test
 	void nullHandling() {
 		assertThat(mapper.toPersonResponse((Person) null)).isNull();
-		assertThat(mapper.toPersonResponse((ua.lviv.bas.cinema.domain.projection.PersonProjection) null)).isNull();
+		assertThat(mapper.toPersonResponse((ua.lviv.bas.cinema.domain.projection.cinema.PersonProjection) null)).isNull();
 		assertThat(mapper.toPerson(null)).isNull();
 		assertThat(mapper.toPersonResponseList(null)).isNull();
 	}

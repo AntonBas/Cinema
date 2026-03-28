@@ -8,7 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import ua.lviv.bas.cinema.domain.Genre;
-import ua.lviv.bas.cinema.domain.projection.GenreProjection;
+import ua.lviv.bas.cinema.domain.projection.cinema.GenreProjection;
 
 @Repository
 public interface GenreRepository extends JpaRepository<Genre, Long> {

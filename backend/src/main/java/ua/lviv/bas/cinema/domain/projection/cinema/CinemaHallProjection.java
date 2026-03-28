@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.domain.projection;
+package ua.lviv.bas.cinema.domain.projection.cinema;
 
 public interface CinemaHallProjection {
 	Long getId();

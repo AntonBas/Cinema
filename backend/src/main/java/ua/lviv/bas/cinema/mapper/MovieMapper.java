@@ -8,9 +8,9 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.mapstruct.ReportingPolicy;
 
 import ua.lviv.bas.cinema.domain.Movie;
-import ua.lviv.bas.cinema.domain.projection.MovieCardProjection;
-import ua.lviv.bas.cinema.domain.projection.MovieDetailProjection;
-import ua.lviv.bas.cinema.domain.projection.MovieSessionSearchProjection;
+import ua.lviv.bas.cinema.domain.projection.movie.MovieCardProjection;
+import ua.lviv.bas.cinema.domain.projection.movie.MovieDetailProjection;
+import ua.lviv.bas.cinema.domain.projection.movie.MovieSessionSearchProjection;
 import ua.lviv.bas.cinema.dto.movie.request.MovieCreateRequest;
 import ua.lviv.bas.cinema.dto.movie.request.MovieUpdateRequest;
 import ua.lviv.bas.cinema.dto.movie.response.MovieCardResponse;

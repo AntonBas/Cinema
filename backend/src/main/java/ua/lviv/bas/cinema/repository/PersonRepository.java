@@ -9,7 +9,7 @@ import org.springframework.stereotype.Repository;
 
 import ua.lviv.bas.cinema.domain.Person;
 import ua.lviv.bas.cinema.domain.enums.PersonRole;
-import ua.lviv.bas.cinema.domain.projection.PersonProjection;
+import ua.lviv.bas.cinema.domain.projection.cinema.PersonProjection;
 
 @Repository
 public interface PersonRepository extends JpaRepository<Person, Long> {

@@ -52,7 +52,7 @@ public class TicketMapperTest {
 
 	@Test
 	void toTicketResponseFromProjection() {
-		var projection = Mockito.mock(ua.lviv.bas.cinema.domain.projection.TicketInfoProjection.class);
+		var projection = Mockito.mock(ua.lviv.bas.cinema.domain.projection.ticket.TicketInfoProjection.class);
 		Mockito.when(projection.getId()).thenReturn(1L);
 		Mockito.when(projection.getUniqueCode()).thenReturn("PROJ-TICKET");
 		Mockito.when(projection.getFinalPrice()).thenReturn(new BigDecimal("200.00"));

@@ -23,7 +23,7 @@ import org.springframework.data.domain.Pageable;
 
 import ua.lviv.bas.cinema.domain.Person;
 import ua.lviv.bas.cinema.domain.enums.PersonRole;
-import ua.lviv.bas.cinema.domain.projection.PersonProjection;
+import ua.lviv.bas.cinema.domain.projection.cinema.PersonProjection;
 import ua.lviv.bas.cinema.dto.movie.request.PersonRequest;
 import ua.lviv.bas.cinema.dto.movie.request.QuickCreatePersonRequest;
 import ua.lviv.bas.cinema.dto.movie.response.PersonResponse;

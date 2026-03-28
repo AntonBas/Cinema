@@ -13,8 +13,8 @@ import org.springframework.stereotype.Repository;
 
 import ua.lviv.bas.cinema.domain.Movie;
 import ua.lviv.bas.cinema.domain.enums.MovieStatus;
-import ua.lviv.bas.cinema.domain.projection.MovieCardProjection;
-import ua.lviv.bas.cinema.domain.projection.MovieDetailProjection;
+import ua.lviv.bas.cinema.domain.projection.movie.MovieCardProjection;
+import ua.lviv.bas.cinema.domain.projection.movie.MovieDetailProjection;
 
 @Repository
 public interface MovieRepository extends JpaRepository<Movie, Long> {

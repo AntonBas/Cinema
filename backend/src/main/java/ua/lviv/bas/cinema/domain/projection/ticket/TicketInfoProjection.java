@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.domain.projection;
+package ua.lviv.bas.cinema.domain.projection.ticket;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;

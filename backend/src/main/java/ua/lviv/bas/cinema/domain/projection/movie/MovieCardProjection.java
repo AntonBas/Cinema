@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.domain.projection;
+package ua.lviv.bas.cinema.domain.projection.movie;
 
 import java.time.LocalDate;
 

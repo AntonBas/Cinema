@@ -8,8 +8,8 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.mapstruct.ReportingPolicy;
 
 import ua.lviv.bas.cinema.domain.TicketType;
-import ua.lviv.bas.cinema.domain.projection.TicketTypeAdminProjection;
-import ua.lviv.bas.cinema.domain.projection.TicketTypeUserProjection;
+import ua.lviv.bas.cinema.domain.projection.ticket.TicketTypeAdminProjection;
+import ua.lviv.bas.cinema.domain.projection.ticket.TicketTypeUserProjection;
 import ua.lviv.bas.cinema.dto.ticket.request.TicketTypeCreateRequest;
 import ua.lviv.bas.cinema.dto.ticket.request.TicketTypeUpdateRequest;
 import ua.lviv.bas.cinema.dto.ticket.response.TicketTypeResponse;

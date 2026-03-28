@@ -8,8 +8,8 @@ import org.mapstruct.ReportingPolicy;
 
 import ua.lviv.bas.cinema.domain.Session;
 import ua.lviv.bas.cinema.domain.enums.CinemaSessionStatus;
-import ua.lviv.bas.cinema.domain.projection.SessionAdminProjection;
-import ua.lviv.bas.cinema.domain.projection.SessionScheduleProjection;
+import ua.lviv.bas.cinema.domain.projection.session.SessionAdminProjection;
+import ua.lviv.bas.cinema.domain.projection.session.SessionScheduleProjection;
 import ua.lviv.bas.cinema.dto.session.request.SessionCreateRequest;
 import ua.lviv.bas.cinema.dto.session.request.SessionUpdateRequest;
 import ua.lviv.bas.cinema.dto.session.response.SessionAdminResponse;

@@ -23,7 +23,7 @@ import ua.lviv.bas.cinema.domain.Refund;
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.enums.BonusTransactionType;
 import ua.lviv.bas.cinema.domain.enums.VerificationStatus;
-import ua.lviv.bas.cinema.domain.projection.BonusTransactionProjection;
+import ua.lviv.bas.cinema.domain.projection.bonus.BonusTransactionProjection;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusBalanceResponse;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusCardResponse;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusTransactionResponse;

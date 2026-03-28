@@ -8,7 +8,7 @@ import org.mapstruct.Named;
 import org.mapstruct.ReportingPolicy;
 
 import ua.lviv.bas.cinema.domain.CinemaHall;
-import ua.lviv.bas.cinema.domain.projection.CinemaHallProjection;
+import ua.lviv.bas.cinema.domain.projection.cinema.CinemaHallProjection;
 import ua.lviv.bas.cinema.dto.cinemaHall.response.CinemaHallResponse;
 import ua.lviv.bas.cinema.dto.cinemaHall.response.HallLayoutResponse;
 

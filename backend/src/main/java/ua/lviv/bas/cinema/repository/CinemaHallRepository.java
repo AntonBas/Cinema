@@ -9,7 +9,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import ua.lviv.bas.cinema.domain.CinemaHall;
-import ua.lviv.bas.cinema.domain.projection.CinemaHallProjection;
+import ua.lviv.bas.cinema.domain.projection.cinema.CinemaHallProjection;
 
 @Repository
 public interface CinemaHallRepository extends JpaRepository<CinemaHall, Long> {

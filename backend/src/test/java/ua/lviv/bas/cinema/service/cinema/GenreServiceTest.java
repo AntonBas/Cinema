@@ -18,7 +18,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import ua.lviv.bas.cinema.domain.Genre;
-import ua.lviv.bas.cinema.domain.projection.GenreProjection;
+import ua.lviv.bas.cinema.domain.projection.cinema.GenreProjection;
 import ua.lviv.bas.cinema.dto.movie.request.GenreRequest;
 import ua.lviv.bas.cinema.dto.movie.response.GenreResponse;
 import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;

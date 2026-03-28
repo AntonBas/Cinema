@@ -23,7 +23,7 @@ import org.springframework.data.domain.Pageable;
 
 import ua.lviv.bas.cinema.domain.TicketType;
 import ua.lviv.bas.cinema.domain.enums.TicketTypeCategory;
-import ua.lviv.bas.cinema.domain.projection.TicketTypeUserProjection;
+import ua.lviv.bas.cinema.domain.projection.ticket.TicketTypeUserProjection;
 import ua.lviv.bas.cinema.dto.ticket.request.TicketTypeCreateRequest;
 import ua.lviv.bas.cinema.dto.ticket.request.TicketTypeUpdateRequest;
 import ua.lviv.bas.cinema.dto.ticket.response.TicketTypeResponse;

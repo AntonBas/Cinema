@@ -29,7 +29,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.enums.UserRole;
 import ua.lviv.bas.cinema.domain.enums.VerificationStatus;
-import ua.lviv.bas.cinema.domain.projection.AdminUserProjection;
+import ua.lviv.bas.cinema.domain.projection.user.AdminUserProjection;
 import ua.lviv.bas.cinema.dto.user.request.UserFilterRequest;
 import ua.lviv.bas.cinema.dto.user.request.VerificationBirthDateRequest;
 import ua.lviv.bas.cinema.dto.user.response.AdminUserListResponse;

@@ -9,7 +9,7 @@ import org.springframework.data.repository.query.Param;
 import ua.lviv.bas.cinema.domain.BonusCard;
 import ua.lviv.bas.cinema.domain.BonusTransaction;
 import ua.lviv.bas.cinema.domain.enums.BonusTransactionType;
-import ua.lviv.bas.cinema.domain.projection.BonusTransactionProjection;
+import ua.lviv.bas.cinema.domain.projection.bonus.BonusTransactionProjection;
 
 public interface BonusTransactionRepository extends JpaRepository<BonusTransaction, Long> {
 

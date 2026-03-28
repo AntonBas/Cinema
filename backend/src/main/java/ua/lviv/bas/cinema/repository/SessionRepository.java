@@ -16,8 +16,8 @@ import org.springframework.stereotype.Repository;
 
 import jakarta.persistence.LockModeType;
 import ua.lviv.bas.cinema.domain.Session;
-import ua.lviv.bas.cinema.domain.projection.SessionAdminProjection;
-import ua.lviv.bas.cinema.domain.projection.SessionScheduleProjection;
+import ua.lviv.bas.cinema.domain.projection.session.SessionAdminProjection;
+import ua.lviv.bas.cinema.domain.projection.session.SessionScheduleProjection;
 
 @Repository
 public interface SessionRepository extends JpaRepository<Session, Long>, JpaSpecificationExecutor<Session> {

@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.domain.projection;
+package ua.lviv.bas.cinema.domain.projection.cinema;
 
 import ua.lviv.bas.cinema.domain.enums.PersonRole;
 

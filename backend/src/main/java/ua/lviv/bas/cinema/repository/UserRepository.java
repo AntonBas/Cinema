@@ -14,7 +14,7 @@ import org.springframework.stereotype.Repository;
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.enums.UserRole;
 import ua.lviv.bas.cinema.domain.enums.VerificationStatus;
-import ua.lviv.bas.cinema.domain.projection.AdminUserProjection;
+import ua.lviv.bas.cinema.domain.projection.user.AdminUserProjection;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
