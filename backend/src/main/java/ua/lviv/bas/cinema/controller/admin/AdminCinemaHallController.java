@@ -23,9 +23,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import ua.lviv.bas.cinema.dto.cinemaHall.request.CinemaHallRequest;
-import ua.lviv.bas.cinema.dto.cinemaHall.response.CinemaHallResponse;
-import ua.lviv.bas.cinema.dto.cinemaHall.response.HallLayoutResponse;
+import ua.lviv.bas.cinema.dto.hall.request.CinemaHallRequest;
+import ua.lviv.bas.cinema.dto.hall.response.CinemaHallResponse;
+import ua.lviv.bas.cinema.dto.hall.response.HallLayoutResponse;
 import ua.lviv.bas.cinema.service.cinema.CinemaHallService;
 
 @Slf4j

@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.dto.cinemaHall.response;
+package ua.lviv.bas.cinema.dto.hall.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import ua.lviv.bas.cinema.domain.enums.SeatType;

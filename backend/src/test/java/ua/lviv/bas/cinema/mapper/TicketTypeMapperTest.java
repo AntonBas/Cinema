@@ -13,10 +13,10 @@ import ua.lviv.bas.cinema.domain.TicketType;
 import ua.lviv.bas.cinema.domain.enums.TicketTypeCategory;
 import ua.lviv.bas.cinema.domain.projection.ticket.TicketTypeAdminProjection;
 import ua.lviv.bas.cinema.domain.projection.ticket.TicketTypeUserProjection;
-import ua.lviv.bas.cinema.dto.ticket.request.TicketTypeCreateRequest;
-import ua.lviv.bas.cinema.dto.ticket.request.TicketTypeUpdateRequest;
 import ua.lviv.bas.cinema.dto.ticket.response.TicketTypeResponse;
-import ua.lviv.bas.cinema.dto.ticket.response.TicketTypeUserResponse;
+import ua.lviv.bas.cinema.dto.ticketType.request.TicketTypeCreateRequest;
+import ua.lviv.bas.cinema.dto.ticketType.request.TicketTypeUpdateRequest;
+import ua.lviv.bas.cinema.dto.ticketType.response.TicketTypeUserResponse;
 
 public class TicketTypeMapperTest {
 

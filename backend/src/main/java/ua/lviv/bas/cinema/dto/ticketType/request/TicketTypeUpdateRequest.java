@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.dto.ticket.request;
+package ua.lviv.bas.cinema.dto.ticketType.request;
 
 import java.math.BigDecimal;
 

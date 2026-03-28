@@ -9,8 +9,8 @@ import org.mapstruct.ReportingPolicy;
 
 import ua.lviv.bas.cinema.domain.CinemaHall;
 import ua.lviv.bas.cinema.domain.projection.cinema.CinemaHallProjection;
-import ua.lviv.bas.cinema.dto.cinemaHall.response.CinemaHallResponse;
-import ua.lviv.bas.cinema.dto.cinemaHall.response.HallLayoutResponse;
+import ua.lviv.bas.cinema.dto.hall.response.CinemaHallResponse;
+import ua.lviv.bas.cinema.dto.hall.response.HallLayoutResponse;
 
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE, uses = SeatMapper.class)
 public interface CinemaHallMapper {

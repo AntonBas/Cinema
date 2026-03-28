@@ -6,7 +6,7 @@ import org.mapstruct.Mapper;
 import org.mapstruct.ReportingPolicy;
 
 import ua.lviv.bas.cinema.domain.Seat;
-import ua.lviv.bas.cinema.dto.cinemaHall.response.SeatResponse;
+import ua.lviv.bas.cinema.dto.hall.response.SeatResponse;
 
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface SeatMapper {

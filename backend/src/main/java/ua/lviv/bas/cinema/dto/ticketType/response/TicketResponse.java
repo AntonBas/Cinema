@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.dto.ticket.response;
+package ua.lviv.bas.cinema.dto.ticketType.response;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;

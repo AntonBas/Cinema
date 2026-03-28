@@ -24,8 +24,8 @@ import org.springframework.http.ResponseEntity;
 import ua.lviv.bas.cinema.config.security.user.CustomUserDetails;
 import ua.lviv.bas.cinema.domain.User;
 import ua.lviv.bas.cinema.domain.enums.TicketStatus;
-import ua.lviv.bas.cinema.dto.common.PageResponse;
-import ua.lviv.bas.cinema.dto.ticket.response.TicketResponse;
+import ua.lviv.bas.cinema.dto.PageResponse;
+import ua.lviv.bas.cinema.dto.ticketType.response.TicketResponse;
 import ua.lviv.bas.cinema.service.booking.ticket.TicketRetrievalService;
 import ua.lviv.bas.cinema.service.booking.ticket.TicketService;
 

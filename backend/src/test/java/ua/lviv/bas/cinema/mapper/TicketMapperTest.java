@@ -16,7 +16,7 @@ import ua.lviv.bas.cinema.domain.Session;
 import ua.lviv.bas.cinema.domain.Ticket;
 import ua.lviv.bas.cinema.domain.TicketType;
 import ua.lviv.bas.cinema.domain.enums.TicketStatus;
-import ua.lviv.bas.cinema.dto.ticket.response.TicketResponse;
+import ua.lviv.bas.cinema.dto.ticketType.response.TicketResponse;
 
 public class TicketMapperTest {
 

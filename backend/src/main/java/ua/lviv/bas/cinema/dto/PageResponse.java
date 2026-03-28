@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.dto.common;
+package ua.lviv.bas.cinema.dto;
 
 import java.util.List;
 import java.util.stream.Collectors;

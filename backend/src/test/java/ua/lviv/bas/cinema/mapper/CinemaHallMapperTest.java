@@ -11,8 +11,8 @@ import org.junit.jupiter.api.Test;
 
 import ua.lviv.bas.cinema.domain.CinemaHall;
 import ua.lviv.bas.cinema.domain.Seat;
-import ua.lviv.bas.cinema.dto.cinemaHall.response.CinemaHallResponse;
-import ua.lviv.bas.cinema.dto.cinemaHall.response.HallLayoutResponse;
+import ua.lviv.bas.cinema.dto.hall.response.CinemaHallResponse;
+import ua.lviv.bas.cinema.dto.hall.response.HallLayoutResponse;
 
 public class CinemaHallMapperTest {
 

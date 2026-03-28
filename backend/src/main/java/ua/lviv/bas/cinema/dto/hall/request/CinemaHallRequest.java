@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.dto.cinemaHall.request;
+package ua.lviv.bas.cinema.dto.hall.request;
 
 import java.util.List;
 

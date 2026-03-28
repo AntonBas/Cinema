@@ -2,7 +2,7 @@ package ua.lviv.bas.cinema.validation;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
-import ua.lviv.bas.cinema.dto.cinemaHall.request.CinemaHallRequest;
+import ua.lviv.bas.cinema.dto.hall.request.CinemaHallRequest;
 
 public class CoupleRowSeatsValidator implements ConstraintValidator<CoupleRowSeatsConstraint, Integer> {
 
