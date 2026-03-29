@@ -9,13 +9,13 @@ import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
 import org.mockito.Mockito;
 
-import ua.lviv.bas.cinema.domain.Booking;
-import ua.lviv.bas.cinema.domain.CinemaHall;
-import ua.lviv.bas.cinema.domain.Movie;
-import ua.lviv.bas.cinema.domain.Session;
-import ua.lviv.bas.cinema.domain.Ticket;
-import ua.lviv.bas.cinema.domain.TicketType;
-import ua.lviv.bas.cinema.domain.enums.TicketStatus;
+import ua.lviv.bas.cinema.domain.booking.Booking;
+import ua.lviv.bas.cinema.domain.cinema.CinemaHall;
+import ua.lviv.bas.cinema.domain.cinema.Movie;
+import ua.lviv.bas.cinema.domain.cinema.Session;
+import ua.lviv.bas.cinema.domain.ticket.Ticket;
+import ua.lviv.bas.cinema.domain.ticket.TicketStatus;
+import ua.lviv.bas.cinema.domain.ticket.TicketType;
 import ua.lviv.bas.cinema.dto.ticketType.response.TicketResponse;
 
 public class TicketMapperTest {
@@ -52,7 +52,7 @@ public class TicketMapperTest {
 
 	@Test
 	void toTicketResponseFromProjection() {
-		var projection = Mockito.mock(ua.lviv.bas.cinema.domain.projection.ticket.TicketInfoProjection.class);
+		var projection = Mockito.mock(ua.lviv.bas.cinema.repository.ticket.projection.TicketInfoProjection.class);
 		Mockito.when(projection.getId()).thenReturn(1L);
 		Mockito.when(projection.getUniqueCode()).thenReturn("PROJ-TICKET");
 		Mockito.when(projection.getFinalPrice()).thenReturn(new BigDecimal("200.00"));

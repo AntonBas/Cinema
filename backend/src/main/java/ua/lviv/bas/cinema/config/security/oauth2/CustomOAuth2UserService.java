@@ -14,10 +14,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import ua.lviv.bas.cinema.domain.User;
-import ua.lviv.bas.cinema.domain.enums.UserRole;
-import ua.lviv.bas.cinema.domain.enums.VerificationStatus;
-import ua.lviv.bas.cinema.repository.UserRepository;
+import ua.lviv.bas.cinema.domain.user.User;
+import ua.lviv.bas.cinema.domain.user.UserRole;
+import ua.lviv.bas.cinema.domain.user.VerificationStatus;
+import ua.lviv.bas.cinema.repository.user.UserRepository;
 import ua.lviv.bas.cinema.service.bonus.BonusService;
 
 @Slf4j

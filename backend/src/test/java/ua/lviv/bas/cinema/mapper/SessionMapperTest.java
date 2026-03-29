@@ -9,16 +9,16 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
 
-import ua.lviv.bas.cinema.domain.CinemaHall;
-import ua.lviv.bas.cinema.domain.Movie;
-import ua.lviv.bas.cinema.domain.Session;
-import ua.lviv.bas.cinema.domain.enums.AgeRating;
-import ua.lviv.bas.cinema.domain.enums.CinemaSessionStatus;
-import ua.lviv.bas.cinema.domain.projection.session.SessionAdminProjection;
-import ua.lviv.bas.cinema.domain.projection.session.SessionScheduleProjection;
+import ua.lviv.bas.cinema.domain.cinema.CinemaHall;
+import ua.lviv.bas.cinema.domain.cinema.Movie;
+import ua.lviv.bas.cinema.domain.cinema.Session;
+import ua.lviv.bas.cinema.domain.cinema.enums.AgeRating;
+import ua.lviv.bas.cinema.domain.cinema.status.CinemaSessionStatus;
 import ua.lviv.bas.cinema.dto.session.request.SessionCreateRequest;
 import ua.lviv.bas.cinema.dto.session.response.SessionAdminResponse;
 import ua.lviv.bas.cinema.dto.session.response.SessionScheduleResponse;
+import ua.lviv.bas.cinema.repository.cinema.projection.SessionAdminProjection;
+import ua.lviv.bas.cinema.repository.cinema.projection.SessionScheduleProjection;
 
 public class SessionMapperTest {
 

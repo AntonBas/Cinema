@@ -9,8 +9,8 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
 
-import ua.lviv.bas.cinema.domain.Person;
-import ua.lviv.bas.cinema.domain.enums.PersonRole;
+import ua.lviv.bas.cinema.domain.cinema.Person;
+import ua.lviv.bas.cinema.domain.cinema.enums.PersonRole;
 import ua.lviv.bas.cinema.dto.movie.request.PersonRequest;
 import ua.lviv.bas.cinema.dto.movie.response.PersonResponse;
 
@@ -103,7 +103,7 @@ public class PersonMapperTest {
 	@Test
 	void nullHandling() {
 		assertThat(mapper.toPersonResponse((Person) null)).isNull();
-		assertThat(mapper.toPersonResponse((ua.lviv.bas.cinema.domain.projection.cinema.PersonProjection) null)).isNull();
+		assertThat(mapper.toPersonResponse((ua.lviv.bas.cinema.repository.cinema.projection.PersonProjection) null)).isNull();
 		assertThat(mapper.toPerson(null)).isNull();
 		assertThat(mapper.toPersonResponseList(null)).isNull();
 	}

@@ -18,12 +18,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import ua.lviv.bas.cinema.domain.CinemaHall;
-import ua.lviv.bas.cinema.domain.Movie;
-import ua.lviv.bas.cinema.domain.Session;
-import ua.lviv.bas.cinema.domain.enums.CinemaSessionStatus;
-import ua.lviv.bas.cinema.domain.projection.session.SessionAdminProjection;
-import ua.lviv.bas.cinema.domain.projection.session.SessionScheduleProjection;
+import ua.lviv.bas.cinema.domain.cinema.CinemaHall;
+import ua.lviv.bas.cinema.domain.cinema.Movie;
+import ua.lviv.bas.cinema.domain.cinema.Session;
+import ua.lviv.bas.cinema.domain.cinema.status.CinemaSessionStatus;
 import ua.lviv.bas.cinema.dto.PageResponse;
 import ua.lviv.bas.cinema.dto.session.request.SessionCreateRequest;
 import ua.lviv.bas.cinema.dto.session.request.SessionUpdateRequest;
@@ -34,8 +32,10 @@ import ua.lviv.bas.cinema.exception.domain.cinema.SessionOperationException;
 import ua.lviv.bas.cinema.exception.domain.cinema.SessionTimeConflictException;
 import ua.lviv.bas.cinema.exception.domain.cinema.SessionValidationException;
 import ua.lviv.bas.cinema.mapper.SessionMapper;
-import ua.lviv.bas.cinema.repository.MovieRepository;
-import ua.lviv.bas.cinema.repository.SessionRepository;
+import ua.lviv.bas.cinema.repository.cinema.MovieRepository;
+import ua.lviv.bas.cinema.repository.cinema.SessionRepository;
+import ua.lviv.bas.cinema.repository.cinema.projection.SessionAdminProjection;
+import ua.lviv.bas.cinema.repository.cinema.projection.SessionScheduleProjection;
 
 @Slf4j
 @Service

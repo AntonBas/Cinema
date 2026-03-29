@@ -5,9 +5,9 @@ import java.math.BigDecimal;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import ua.lviv.bas.cinema.domain.Seat;
-import ua.lviv.bas.cinema.domain.Session;
-import ua.lviv.bas.cinema.domain.TicketType;
+import ua.lviv.bas.cinema.domain.cinema.Seat;
+import ua.lviv.bas.cinema.domain.cinema.Session;
+import ua.lviv.bas.cinema.domain.ticket.TicketType;
 
 @Service
 public class PriceCalculatorService {

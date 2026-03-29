@@ -4,7 +4,7 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.ReportingPolicy;
 
-import ua.lviv.bas.cinema.domain.RefundItem;
+import ua.lviv.bas.cinema.domain.booking.RefundItem;
 import ua.lviv.bas.cinema.dto.refund.response.RefundItemResponse;
 
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)

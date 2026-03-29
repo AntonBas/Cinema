@@ -1,6 +1,6 @@
 package ua.lviv.bas.cinema.exception.domain.financial.bonus;
 
-import ua.lviv.bas.cinema.domain.enums.BonusTransactionType;
+import ua.lviv.bas.cinema.domain.bonus.BonusTransactionType;
 import ua.lviv.bas.cinema.exception.core.NotFoundException;
 
 public class BonusRuleNotFoundException extends NotFoundException {

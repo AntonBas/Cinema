@@ -7,7 +7,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 import lombok.Data;
-import ua.lviv.bas.cinema.domain.enums.BonusTransactionType;
+import ua.lviv.bas.cinema.domain.bonus.BonusTransactionType;
 
 @Data
 @Component

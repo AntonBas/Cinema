@@ -9,8 +9,8 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
 
-import ua.lviv.bas.cinema.domain.Seat;
-import ua.lviv.bas.cinema.domain.enums.SeatType;
+import ua.lviv.bas.cinema.domain.cinema.Seat;
+import ua.lviv.bas.cinema.domain.cinema.enums.SeatType;
 import ua.lviv.bas.cinema.dto.hall.response.SeatResponse;
 
 public class SeatMapperTest {

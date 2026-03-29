@@ -3,7 +3,7 @@ package ua.lviv.bas.cinema.dto.user.response;
 import java.time.LocalDate;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import ua.lviv.bas.cinema.domain.enums.VerificationStatus;
+import ua.lviv.bas.cinema.domain.user.VerificationStatus;
 
 public record UserProfileResponse(@Schema(description = "Unique identifier of the user", example = "1") Long id,
 

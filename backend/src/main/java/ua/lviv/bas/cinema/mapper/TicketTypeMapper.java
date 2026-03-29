@@ -7,13 +7,13 @@ import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.mapstruct.ReportingPolicy;
 
-import ua.lviv.bas.cinema.domain.TicketType;
-import ua.lviv.bas.cinema.domain.projection.ticket.TicketTypeAdminProjection;
-import ua.lviv.bas.cinema.domain.projection.ticket.TicketTypeUserProjection;
+import ua.lviv.bas.cinema.domain.ticket.TicketType;
 import ua.lviv.bas.cinema.dto.ticket.response.TicketTypeResponse;
 import ua.lviv.bas.cinema.dto.ticketType.request.TicketTypeCreateRequest;
 import ua.lviv.bas.cinema.dto.ticketType.request.TicketTypeUpdateRequest;
 import ua.lviv.bas.cinema.dto.ticketType.response.TicketTypeUserResponse;
+import ua.lviv.bas.cinema.repository.ticket.projection.TicketTypeAdminProjection;
+import ua.lviv.bas.cinema.repository.ticket.projection.TicketTypeUserProjection;
 
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface TicketTypeMapper {

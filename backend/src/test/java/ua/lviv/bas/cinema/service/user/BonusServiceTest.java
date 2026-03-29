@@ -21,21 +21,21 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import ua.lviv.bas.cinema.config.properties.BonusProperties;
-import ua.lviv.bas.cinema.domain.BonusCard;
-import ua.lviv.bas.cinema.domain.BonusRules;
-import ua.lviv.bas.cinema.domain.BonusTransaction;
-import ua.lviv.bas.cinema.domain.Booking;
-import ua.lviv.bas.cinema.domain.Payment;
-import ua.lviv.bas.cinema.domain.User;
-import ua.lviv.bas.cinema.domain.enums.BonusTransactionType;
-import ua.lviv.bas.cinema.domain.enums.VerificationStatus;
+import ua.lviv.bas.cinema.domain.bonus.BonusCard;
+import ua.lviv.bas.cinema.domain.bonus.BonusRules;
+import ua.lviv.bas.cinema.domain.bonus.BonusTransaction;
+import ua.lviv.bas.cinema.domain.bonus.BonusTransactionType;
+import ua.lviv.bas.cinema.domain.booking.Booking;
+import ua.lviv.bas.cinema.domain.booking.Payment;
+import ua.lviv.bas.cinema.domain.user.User;
+import ua.lviv.bas.cinema.domain.user.VerificationStatus;
 import ua.lviv.bas.cinema.exception.domain.financial.bonus.BonusCardNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.financial.bonus.BonusValidationException;
 import ua.lviv.bas.cinema.exception.domain.financial.bonus.InsufficientPointsException;
 import ua.lviv.bas.cinema.mapper.BonusMapper;
-import ua.lviv.bas.cinema.repository.BonusCardRepository;
-import ua.lviv.bas.cinema.repository.BonusRulesRepository;
-import ua.lviv.bas.cinema.repository.BonusTransactionRepository;
+import ua.lviv.bas.cinema.repository.bonus.BonusCardRepository;
+import ua.lviv.bas.cinema.repository.bonus.BonusRulesRepository;
+import ua.lviv.bas.cinema.repository.bonus.BonusTransactionRepository;
 import ua.lviv.bas.cinema.service.bonus.BonusService;
 
 @ExtendWith(MockitoExtension.class)

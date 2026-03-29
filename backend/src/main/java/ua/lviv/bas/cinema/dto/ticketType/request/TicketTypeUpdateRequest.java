@@ -8,7 +8,7 @@ import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
-import ua.lviv.bas.cinema.domain.enums.TicketTypeCategory;
+import ua.lviv.bas.cinema.domain.ticket.TicketTypeCategory;
 
 public record TicketTypeUpdateRequest(
 		@Size(min = 1, max = 50, message = "Display name must be between 1 and 50 characters") @Schema(description = "Display name for the ticket type", example = "Adult Ticket") String displayName,

@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
 
-import ua.lviv.bas.cinema.domain.Payment;
+import ua.lviv.bas.cinema.domain.booking.Payment;
 import ua.lviv.bas.cinema.dto.payment.response.PaymentLiqPayDataResponse;
 
 public class PaymentMapperTest {

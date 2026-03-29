@@ -12,11 +12,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import ua.lviv.bas.cinema.config.properties.RefundRules;
-import ua.lviv.bas.cinema.domain.Booking;
-import ua.lviv.bas.cinema.domain.Refund;
-import ua.lviv.bas.cinema.domain.Session;
-import ua.lviv.bas.cinema.domain.Ticket;
-import ua.lviv.bas.cinema.domain.enums.TicketStatus;
+import ua.lviv.bas.cinema.domain.booking.Booking;
+import ua.lviv.bas.cinema.domain.booking.Refund;
+import ua.lviv.bas.cinema.domain.cinema.Session;
+import ua.lviv.bas.cinema.domain.ticket.Ticket;
+import ua.lviv.bas.cinema.domain.ticket.TicketStatus;
 
 @ExtendWith(MockitoExtension.class)
 public class RefundValidationServiceTest {

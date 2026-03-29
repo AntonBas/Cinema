@@ -9,10 +9,10 @@ import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.mapstruct.ReportingPolicy;
 
-import ua.lviv.bas.cinema.domain.Person;
-import ua.lviv.bas.cinema.domain.projection.cinema.PersonProjection;
+import ua.lviv.bas.cinema.domain.cinema.Person;
 import ua.lviv.bas.cinema.dto.movie.request.PersonRequest;
 import ua.lviv.bas.cinema.dto.movie.response.PersonResponse;
+import ua.lviv.bas.cinema.repository.cinema.projection.PersonProjection;
 
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface PersonMapper {

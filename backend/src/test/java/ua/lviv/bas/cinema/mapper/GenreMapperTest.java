@@ -7,10 +7,10 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
 
-import ua.lviv.bas.cinema.domain.Genre;
-import ua.lviv.bas.cinema.domain.projection.cinema.GenreProjection;
+import ua.lviv.bas.cinema.domain.cinema.Genre;
 import ua.lviv.bas.cinema.dto.movie.request.GenreRequest;
 import ua.lviv.bas.cinema.dto.movie.response.GenreResponse;
+import ua.lviv.bas.cinema.repository.cinema.projection.GenreProjection;
 
 public class GenreMapperTest {
 

@@ -15,10 +15,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import ua.lviv.bas.cinema.domain.CinemaHall;
-import ua.lviv.bas.cinema.domain.Seat;
-import ua.lviv.bas.cinema.domain.enums.SeatType;
-import ua.lviv.bas.cinema.domain.projection.cinema.CinemaHallProjection;
+import ua.lviv.bas.cinema.domain.cinema.CinemaHall;
+import ua.lviv.bas.cinema.domain.cinema.Seat;
+import ua.lviv.bas.cinema.domain.cinema.enums.SeatType;
 import ua.lviv.bas.cinema.dto.hall.request.CinemaHallRequest;
 import ua.lviv.bas.cinema.dto.hall.response.CinemaHallResponse;
 import ua.lviv.bas.cinema.dto.hall.response.HallLayoutResponse;
@@ -29,8 +28,9 @@ import ua.lviv.bas.cinema.exception.domain.cinema.CinemaHallHasSessionsException
 import ua.lviv.bas.cinema.exception.domain.cinema.CinemaHallNotFoundException;
 import ua.lviv.bas.cinema.mapper.CinemaHallMapper;
 import ua.lviv.bas.cinema.mapper.SeatMapper;
-import ua.lviv.bas.cinema.repository.CinemaHallRepository;
-import ua.lviv.bas.cinema.repository.SeatRepository;
+import ua.lviv.bas.cinema.repository.cinema.CinemaHallRepository;
+import ua.lviv.bas.cinema.repository.cinema.SeatRepository;
+import ua.lviv.bas.cinema.repository.cinema.projection.CinemaHallProjection;
 import ua.lviv.bas.cinema.validation.CoupleRowSeatsValidator;
 
 @Slf4j

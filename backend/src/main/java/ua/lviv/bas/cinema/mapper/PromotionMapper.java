@@ -6,13 +6,13 @@ import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.mapstruct.ReportingPolicy;
 
-import ua.lviv.bas.cinema.domain.Promotion;
-import ua.lviv.bas.cinema.domain.projection.promotion.PromotionAdminProjection;
-import ua.lviv.bas.cinema.domain.projection.promotion.PromotionResponseProjection;
+import ua.lviv.bas.cinema.domain.promotion.Promotion;
 import ua.lviv.bas.cinema.dto.promotion.request.PromotionCreateRequest;
 import ua.lviv.bas.cinema.dto.promotion.request.PromotionUpdateRequest;
 import ua.lviv.bas.cinema.dto.promotion.response.PromotionAdminResponse;
 import ua.lviv.bas.cinema.dto.promotion.response.PromotionResponse;
+import ua.lviv.bas.cinema.repository.promotion.projection.PromotionAdminProjection;
+import ua.lviv.bas.cinema.repository.promotion.projection.PromotionResponseProjection;
 
 @Mapper(componentModel = "spring", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE, unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface PromotionMapper {

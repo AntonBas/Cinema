@@ -9,8 +9,8 @@ import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
 import ua.lviv.bas.cinema.config.properties.RefundRules;
-import ua.lviv.bas.cinema.domain.SeatReservation;
-import ua.lviv.bas.cinema.domain.Ticket;
+import ua.lviv.bas.cinema.domain.booking.SeatReservation;
+import ua.lviv.bas.cinema.domain.ticket.Ticket;
 import ua.lviv.bas.cinema.dto.refund.response.RefundPreviewResponse;
 
 @Service

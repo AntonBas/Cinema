@@ -9,8 +9,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import ua.lviv.bas.cinema.domain.User;
-import ua.lviv.bas.cinema.domain.enums.UserRole;
+import ua.lviv.bas.cinema.domain.user.User;
+import ua.lviv.bas.cinema.domain.user.UserRole;
 
 @Slf4j
 @Getter

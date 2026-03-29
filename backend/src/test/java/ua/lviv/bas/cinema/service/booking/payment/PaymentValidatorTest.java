@@ -11,12 +11,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import ua.lviv.bas.cinema.domain.Booking;
-import ua.lviv.bas.cinema.domain.Seat;
-import ua.lviv.bas.cinema.domain.SeatReservation;
-import ua.lviv.bas.cinema.domain.Session;
-import ua.lviv.bas.cinema.domain.enums.BookingStatus;
-import ua.lviv.bas.cinema.domain.enums.ReservationStatus;
+import ua.lviv.bas.cinema.domain.booking.Booking;
+import ua.lviv.bas.cinema.domain.booking.BookingStatus;
+import ua.lviv.bas.cinema.domain.booking.SeatReservation;
+import ua.lviv.bas.cinema.domain.booking.status.ReservationStatus;
+import ua.lviv.bas.cinema.domain.cinema.Seat;
+import ua.lviv.bas.cinema.domain.cinema.Session;
 import ua.lviv.bas.cinema.exception.domain.booking.SessionTooCloseException;
 import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentProcessingException;
 

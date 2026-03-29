@@ -4,7 +4,7 @@ import java.time.LocalDate;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.AssertTrue;
-import ua.lviv.bas.cinema.domain.enums.CinemaSessionStatus;
+import ua.lviv.bas.cinema.domain.cinema.status.CinemaSessionStatus;
 
 public record SessionFilterRequest(
 		@Schema(description = "Filter by session status", example = "SCHEDULED") CinemaSessionStatus status,

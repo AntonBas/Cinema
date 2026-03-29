@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import ua.lviv.bas.cinema.domain.enums.CinemaSessionStatus;
+import ua.lviv.bas.cinema.domain.cinema.status.CinemaSessionStatus;
 
 public record SessionAdminResponse(@Schema(description = "Unique identifier of the session", example = "1") Long id,
 

@@ -26,7 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.config.ratelimit.RateLimit;
 import ua.lviv.bas.cinema.config.security.jwt.JwtTokenProvider;
 import ua.lviv.bas.cinema.config.security.user.CustomUserDetails;
-import ua.lviv.bas.cinema.domain.User;
+import ua.lviv.bas.cinema.domain.user.User;
 import ua.lviv.bas.cinema.dto.user.request.UserLoginRequest;
 import ua.lviv.bas.cinema.dto.user.request.UserRegistrationRequest;
 import ua.lviv.bas.cinema.dto.user.response.UserResponse;

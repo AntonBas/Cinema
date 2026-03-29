@@ -1,8 +1,8 @@
 package ua.lviv.bas.cinema.dto.user.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import ua.lviv.bas.cinema.domain.enums.UserRole;
-import ua.lviv.bas.cinema.domain.enums.VerificationStatus;
+import ua.lviv.bas.cinema.domain.user.UserRole;
+import ua.lviv.bas.cinema.domain.user.VerificationStatus;
 
 public record UserFilterRequest(
 		@Schema(description = "Search in email, first name or last name", example = "john") String search,

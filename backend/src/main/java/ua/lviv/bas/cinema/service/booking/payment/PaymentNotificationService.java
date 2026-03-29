@@ -7,9 +7,9 @@ import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import ua.lviv.bas.cinema.domain.Booking;
-import ua.lviv.bas.cinema.domain.Payment;
-import ua.lviv.bas.cinema.domain.Ticket;
+import ua.lviv.bas.cinema.domain.booking.Booking;
+import ua.lviv.bas.cinema.domain.booking.Payment;
+import ua.lviv.bas.cinema.domain.ticket.Ticket;
 import ua.lviv.bas.cinema.service.notification.EmailService;
 import ua.lviv.bas.cinema.service.shared.DateTimeFormatterService;
 import ua.lviv.bas.cinema.service.shared.NumberGeneratorService;

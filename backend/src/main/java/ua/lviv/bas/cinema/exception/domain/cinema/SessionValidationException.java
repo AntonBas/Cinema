@@ -3,7 +3,7 @@ package ua.lviv.bas.cinema.exception.domain.cinema;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-import ua.lviv.bas.cinema.domain.Movie;
+import ua.lviv.bas.cinema.domain.cinema.Movie;
 import ua.lviv.bas.cinema.exception.core.ValidationException;
 
 public class SessionValidationException extends ValidationException {

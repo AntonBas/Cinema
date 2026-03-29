@@ -4,9 +4,9 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.ReportingPolicy;
 
-import ua.lviv.bas.cinema.domain.Ticket;
-import ua.lviv.bas.cinema.domain.projection.ticket.TicketInfoProjection;
+import ua.lviv.bas.cinema.domain.ticket.Ticket;
 import ua.lviv.bas.cinema.dto.ticketType.response.TicketResponse;
+import ua.lviv.bas.cinema.repository.ticket.projection.TicketInfoProjection;
 
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface TicketMapper {

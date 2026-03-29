@@ -4,8 +4,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import ua.lviv.bas.cinema.domain.enums.UserRole;
-import ua.lviv.bas.cinema.domain.enums.VerificationStatus;
+import ua.lviv.bas.cinema.domain.user.UserRole;
+import ua.lviv.bas.cinema.domain.user.VerificationStatus;
 
 public record UserResponse(@Schema(description = "Unique identifier of the user", example = "1") Long id,
 

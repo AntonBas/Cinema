@@ -15,9 +15,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import ua.lviv.bas.cinema.domain.Person;
-import ua.lviv.bas.cinema.domain.enums.PersonRole;
-import ua.lviv.bas.cinema.domain.projection.cinema.PersonProjection;
+import ua.lviv.bas.cinema.domain.cinema.Person;
+import ua.lviv.bas.cinema.domain.cinema.enums.PersonRole;
 import ua.lviv.bas.cinema.dto.movie.request.PersonRequest;
 import ua.lviv.bas.cinema.dto.movie.request.QuickCreatePersonRequest;
 import ua.lviv.bas.cinema.dto.movie.response.PersonResponse;
@@ -25,8 +24,9 @@ import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
 import ua.lviv.bas.cinema.exception.domain.cinema.PersonHasMoviesException;
 import ua.lviv.bas.cinema.exception.domain.cinema.PersonNotFoundException;
 import ua.lviv.bas.cinema.mapper.PersonMapper;
-import ua.lviv.bas.cinema.repository.MovieRepository;
-import ua.lviv.bas.cinema.repository.PersonRepository;
+import ua.lviv.bas.cinema.repository.cinema.MovieRepository;
+import ua.lviv.bas.cinema.repository.cinema.PersonRepository;
+import ua.lviv.bas.cinema.repository.cinema.projection.PersonProjection;
 
 @Slf4j
 @Service

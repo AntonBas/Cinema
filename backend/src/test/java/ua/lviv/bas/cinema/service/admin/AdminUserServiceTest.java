@@ -26,10 +26,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-import ua.lviv.bas.cinema.domain.User;
-import ua.lviv.bas.cinema.domain.enums.UserRole;
-import ua.lviv.bas.cinema.domain.enums.VerificationStatus;
-import ua.lviv.bas.cinema.domain.projection.user.AdminUserProjection;
+import ua.lviv.bas.cinema.domain.user.User;
+import ua.lviv.bas.cinema.domain.user.UserRole;
+import ua.lviv.bas.cinema.domain.user.VerificationStatus;
 import ua.lviv.bas.cinema.dto.user.request.UserFilterRequest;
 import ua.lviv.bas.cinema.dto.user.request.VerificationBirthDateRequest;
 import ua.lviv.bas.cinema.dto.user.response.AdminUserListResponse;
@@ -38,7 +37,8 @@ import ua.lviv.bas.cinema.exception.domain.user.SelfBlockException;
 import ua.lviv.bas.cinema.exception.domain.user.SelfRoleChangeException;
 import ua.lviv.bas.cinema.exception.domain.user.UserNotFoundException;
 import ua.lviv.bas.cinema.mapper.UserMapper;
-import ua.lviv.bas.cinema.repository.UserRepository;
+import ua.lviv.bas.cinema.repository.user.UserRepository;
+import ua.lviv.bas.cinema.repository.user.projection.AdminUserProjection;
 import ua.lviv.bas.cinema.service.user.AdminUserService;
 
 @ExtendWith(MockitoExtension.class)

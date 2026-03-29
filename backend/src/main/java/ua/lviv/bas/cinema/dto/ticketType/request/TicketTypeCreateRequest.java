@@ -10,7 +10,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import ua.lviv.bas.cinema.domain.enums.TicketTypeCategory;
+import ua.lviv.bas.cinema.domain.ticket.TicketTypeCategory;
 
 public record TicketTypeCreateRequest(
 		@NotBlank(message = "Display name must not be blank") @Size(min = 1, max = 50, message = "Display name must be between 1 and 50 characters") @Schema(description = "Display name for the ticket type", example = "Adult Ticket", requiredMode = Schema.RequiredMode.REQUIRED) String displayName,

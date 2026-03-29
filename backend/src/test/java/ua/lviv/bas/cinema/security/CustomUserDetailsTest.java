@@ -10,8 +10,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.security.core.GrantedAuthority;
 
 import ua.lviv.bas.cinema.config.security.user.CustomUserDetails;
-import ua.lviv.bas.cinema.domain.User;
-import ua.lviv.bas.cinema.domain.enums.UserRole;
+import ua.lviv.bas.cinema.domain.user.User;
+import ua.lviv.bas.cinema.domain.user.UserRole;
 
 public class CustomUserDetailsTest {
 

@@ -17,7 +17,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import ua.lviv.bas.cinema.domain.enums.AgeRating;
+import ua.lviv.bas.cinema.domain.cinema.enums.AgeRating;
 
 @Data
 @Builder

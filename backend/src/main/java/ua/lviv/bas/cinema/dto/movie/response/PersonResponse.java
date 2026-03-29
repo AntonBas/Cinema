@@ -1,7 +1,7 @@
 package ua.lviv.bas.cinema.dto.movie.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import ua.lviv.bas.cinema.domain.enums.PersonRole;
+import ua.lviv.bas.cinema.domain.cinema.enums.PersonRole;
 
 public record PersonResponse(@Schema(description = "Unique identifier of the person", example = "1") Long id,
 

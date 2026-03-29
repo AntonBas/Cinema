@@ -14,12 +14,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import ua.lviv.bas.cinema.domain.Seat;
-import ua.lviv.bas.cinema.domain.enums.ReservationStatus;
+import ua.lviv.bas.cinema.domain.booking.status.ReservationStatus;
+import ua.lviv.bas.cinema.domain.cinema.Seat;
 import ua.lviv.bas.cinema.exception.domain.booking.SeatNotAvailableException;
 import ua.lviv.bas.cinema.exception.domain.cinema.SeatNotFoundException;
-import ua.lviv.bas.cinema.repository.SeatRepository;
-import ua.lviv.bas.cinema.repository.SeatReservationRepository;
+import ua.lviv.bas.cinema.repository.booking.SeatReservationRepository;
+import ua.lviv.bas.cinema.repository.cinema.SeatRepository;
 
 @ExtendWith(MockitoExtension.class)
 public class ReservationValidatorTest {

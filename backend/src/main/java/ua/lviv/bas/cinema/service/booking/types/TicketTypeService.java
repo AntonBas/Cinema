@@ -15,11 +15,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import ua.lviv.bas.cinema.domain.TicketType;
-import ua.lviv.bas.cinema.domain.enums.TicketStatus;
-import ua.lviv.bas.cinema.domain.enums.TicketTypeCategory;
-import ua.lviv.bas.cinema.domain.projection.ticket.TicketTypeAdminProjection;
-import ua.lviv.bas.cinema.domain.projection.ticket.TicketTypeUserProjection;
+import ua.lviv.bas.cinema.domain.ticket.TicketStatus;
+import ua.lviv.bas.cinema.domain.ticket.TicketType;
+import ua.lviv.bas.cinema.domain.ticket.TicketTypeCategory;
 import ua.lviv.bas.cinema.dto.PageResponse;
 import ua.lviv.bas.cinema.dto.ticket.response.TicketTypeResponse;
 import ua.lviv.bas.cinema.dto.ticketType.request.TicketTypeCreateRequest;
@@ -29,8 +27,10 @@ import ua.lviv.bas.cinema.exception.domain.ticket.TicketTypeDuplicateException;
 import ua.lviv.bas.cinema.exception.domain.ticket.TicketTypeInUseException;
 import ua.lviv.bas.cinema.exception.domain.ticket.TicketTypeNotFoundException;
 import ua.lviv.bas.cinema.mapper.TicketTypeMapper;
-import ua.lviv.bas.cinema.repository.TicketRepository;
-import ua.lviv.bas.cinema.repository.TicketTypeRepository;
+import ua.lviv.bas.cinema.repository.ticket.TicketRepository;
+import ua.lviv.bas.cinema.repository.ticket.TicketTypeRepository;
+import ua.lviv.bas.cinema.repository.ticket.projection.TicketTypeAdminProjection;
+import ua.lviv.bas.cinema.repository.ticket.projection.TicketTypeUserProjection;
 
 @Slf4j
 @Service

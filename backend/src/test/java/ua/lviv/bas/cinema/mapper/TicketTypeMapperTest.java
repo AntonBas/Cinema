@@ -9,14 +9,14 @@ import java.math.BigDecimal;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import ua.lviv.bas.cinema.domain.TicketType;
-import ua.lviv.bas.cinema.domain.enums.TicketTypeCategory;
-import ua.lviv.bas.cinema.domain.projection.ticket.TicketTypeAdminProjection;
-import ua.lviv.bas.cinema.domain.projection.ticket.TicketTypeUserProjection;
+import ua.lviv.bas.cinema.domain.ticket.TicketType;
+import ua.lviv.bas.cinema.domain.ticket.TicketTypeCategory;
 import ua.lviv.bas.cinema.dto.ticket.response.TicketTypeResponse;
 import ua.lviv.bas.cinema.dto.ticketType.request.TicketTypeCreateRequest;
 import ua.lviv.bas.cinema.dto.ticketType.request.TicketTypeUpdateRequest;
 import ua.lviv.bas.cinema.dto.ticketType.response.TicketTypeUserResponse;
+import ua.lviv.bas.cinema.repository.ticket.projection.TicketTypeAdminProjection;
+import ua.lviv.bas.cinema.repository.ticket.projection.TicketTypeUserProjection;
 
 public class TicketTypeMapperTest {
 

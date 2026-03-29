@@ -15,21 +15,21 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import ua.lviv.bas.cinema.domain.Seat;
-import ua.lviv.bas.cinema.domain.SeatReservation;
-import ua.lviv.bas.cinema.domain.Session;
-import ua.lviv.bas.cinema.domain.TicketType;
-import ua.lviv.bas.cinema.domain.User;
-import ua.lviv.bas.cinema.domain.enums.ReservationStatus;
+import ua.lviv.bas.cinema.domain.booking.SeatReservation;
+import ua.lviv.bas.cinema.domain.booking.status.ReservationStatus;
+import ua.lviv.bas.cinema.domain.cinema.Seat;
+import ua.lviv.bas.cinema.domain.cinema.Session;
+import ua.lviv.bas.cinema.domain.ticket.TicketType;
+import ua.lviv.bas.cinema.domain.user.User;
 import ua.lviv.bas.cinema.dto.booking.response.SeatReservationResponse;
 import ua.lviv.bas.cinema.exception.domain.booking.SeatNotAvailableException;
 import ua.lviv.bas.cinema.exception.domain.cinema.SeatNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.cinema.SessionNotFoundException;
 import ua.lviv.bas.cinema.mapper.SeatReservationMapper;
-import ua.lviv.bas.cinema.repository.SeatRepository;
-import ua.lviv.bas.cinema.repository.SeatReservationRepository;
-import ua.lviv.bas.cinema.repository.SessionRepository;
-import ua.lviv.bas.cinema.repository.TicketTypeRepository;
+import ua.lviv.bas.cinema.repository.booking.SeatReservationRepository;
+import ua.lviv.bas.cinema.repository.cinema.SeatRepository;
+import ua.lviv.bas.cinema.repository.cinema.SessionRepository;
+import ua.lviv.bas.cinema.repository.ticket.TicketTypeRepository;
 import ua.lviv.bas.cinema.service.shared.PriceCalculatorService;
 
 @Slf4j

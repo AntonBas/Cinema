@@ -12,9 +12,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import ua.lviv.bas.cinema.domain.Movie;
+import ua.lviv.bas.cinema.domain.cinema.Movie;
 import ua.lviv.bas.cinema.exception.domain.technical.SlugGenerationException;
-import ua.lviv.bas.cinema.repository.MovieRepository;
+import ua.lviv.bas.cinema.repository.cinema.MovieRepository;
 
 @ExtendWith(MockitoExtension.class)
 public class SlugServiceTest {

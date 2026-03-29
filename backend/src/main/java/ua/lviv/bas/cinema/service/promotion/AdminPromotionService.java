@@ -13,8 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import ua.lviv.bas.cinema.domain.Promotion;
-import ua.lviv.bas.cinema.domain.projection.promotion.PromotionAdminProjection;
+import ua.lviv.bas.cinema.domain.promotion.Promotion;
 import ua.lviv.bas.cinema.dto.PageResponse;
 import ua.lviv.bas.cinema.dto.promotion.request.PromotionCreateRequest;
 import ua.lviv.bas.cinema.dto.promotion.request.PromotionUpdateRequest;
@@ -25,7 +24,8 @@ import ua.lviv.bas.cinema.exception.domain.financial.promotion.PromotionDatesInv
 import ua.lviv.bas.cinema.exception.domain.financial.promotion.PromotionHasRedemptionsException;
 import ua.lviv.bas.cinema.exception.domain.financial.promotion.PromotionNotFoundException;
 import ua.lviv.bas.cinema.mapper.PromotionMapper;
-import ua.lviv.bas.cinema.repository.PromotionRepository;
+import ua.lviv.bas.cinema.repository.promotion.PromotionRepository;
+import ua.lviv.bas.cinema.repository.promotion.projection.PromotionAdminProjection;
 
 @Slf4j
 @Service

@@ -6,9 +6,9 @@ import java.util.Optional;
 import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
-import ua.lviv.bas.cinema.domain.Movie;
+import ua.lviv.bas.cinema.domain.cinema.Movie;
 import ua.lviv.bas.cinema.exception.domain.technical.SlugGenerationException;
-import ua.lviv.bas.cinema.repository.MovieRepository;
+import ua.lviv.bas.cinema.repository.cinema.MovieRepository;
 
 @Service
 @RequiredArgsConstructor

@@ -11,11 +11,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import ua.lviv.bas.cinema.domain.Booking;
-import ua.lviv.bas.cinema.domain.Payment;
-import ua.lviv.bas.cinema.domain.Ticket;
-import ua.lviv.bas.cinema.domain.User;
-import ua.lviv.bas.cinema.domain.enums.PaymentStatus;
+import ua.lviv.bas.cinema.domain.booking.Booking;
+import ua.lviv.bas.cinema.domain.booking.Payment;
+import ua.lviv.bas.cinema.domain.booking.status.PaymentStatus;
+import ua.lviv.bas.cinema.domain.ticket.Ticket;
+import ua.lviv.bas.cinema.domain.user.User;
 import ua.lviv.bas.cinema.dto.payment.request.PaymentCreateRequest;
 import ua.lviv.bas.cinema.dto.payment.response.PaymentResponse;
 import ua.lviv.bas.cinema.exception.domain.booking.BookingNotFoundException;
@@ -23,8 +23,8 @@ import ua.lviv.bas.cinema.exception.domain.financial.payment.InvalidPaymentStatu
 import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentAccessDeniedException;
 import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentProcessingException;
-import ua.lviv.bas.cinema.repository.BookingRepository;
-import ua.lviv.bas.cinema.repository.PaymentRepository;
+import ua.lviv.bas.cinema.repository.booking.BookingRepository;
+import ua.lviv.bas.cinema.repository.booking.PaymentRepository;
 import ua.lviv.bas.cinema.service.bonus.BonusService;
 import ua.lviv.bas.cinema.service.booking.management.BookingManagementService;
 import ua.lviv.bas.cinema.service.booking.ticket.TicketService;

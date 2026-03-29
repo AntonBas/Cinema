@@ -3,7 +3,7 @@ package ua.lviv.bas.cinema.dto.movie.request;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import ua.lviv.bas.cinema.domain.enums.PersonRole;
+import ua.lviv.bas.cinema.domain.cinema.enums.PersonRole;
 
 public record QuickCreatePersonRequest(
 		@Schema(description = "Full name of the person", example = "Leonardo DiCaprio", requiredMode = Schema.RequiredMode.REQUIRED) @NotBlank(message = "Person name is required") String name,

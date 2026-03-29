@@ -7,15 +7,15 @@ import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.mapstruct.ReportingPolicy;
 
-import ua.lviv.bas.cinema.domain.Movie;
-import ua.lviv.bas.cinema.domain.projection.movie.MovieCardProjection;
-import ua.lviv.bas.cinema.domain.projection.movie.MovieDetailProjection;
-import ua.lviv.bas.cinema.domain.projection.movie.MovieSessionSearchProjection;
+import ua.lviv.bas.cinema.domain.cinema.Movie;
 import ua.lviv.bas.cinema.dto.movie.request.MovieCreateRequest;
 import ua.lviv.bas.cinema.dto.movie.request.MovieUpdateRequest;
 import ua.lviv.bas.cinema.dto.movie.response.MovieCardResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieDetailResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieSessionSearchResponse;
+import ua.lviv.bas.cinema.repository.cinema.projection.MovieCardProjection;
+import ua.lviv.bas.cinema.repository.cinema.projection.MovieDetailProjection;
+import ua.lviv.bas.cinema.repository.cinema.projection.MovieSessionSearchProjection;
 
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface MovieMapper {

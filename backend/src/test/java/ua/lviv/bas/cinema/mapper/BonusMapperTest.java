@@ -9,15 +9,15 @@ import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
 import org.mockito.Mockito;
 
-import ua.lviv.bas.cinema.domain.BonusCard;
-import ua.lviv.bas.cinema.domain.BonusRules;
-import ua.lviv.bas.cinema.domain.User;
-import ua.lviv.bas.cinema.domain.enums.BonusTransactionType;
-import ua.lviv.bas.cinema.domain.projection.bonus.BonusTransactionProjection;
+import ua.lviv.bas.cinema.domain.bonus.BonusCard;
+import ua.lviv.bas.cinema.domain.bonus.BonusRules;
+import ua.lviv.bas.cinema.domain.bonus.BonusTransactionType;
+import ua.lviv.bas.cinema.domain.user.User;
 import ua.lviv.bas.cinema.dto.bonus.request.BonusRulesRequest;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusCardResponse;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusRulesResponse;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusTransactionResponse;
+import ua.lviv.bas.cinema.repository.bonus.projection.BonusTransactionProjection;
 
 public class BonusMapperTest {
 

@@ -4,8 +4,8 @@ import java.time.LocalDate;
 import java.util.List;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import ua.lviv.bas.cinema.domain.enums.AgeRating;
-import ua.lviv.bas.cinema.domain.enums.MovieStatus;
+import ua.lviv.bas.cinema.domain.cinema.enums.AgeRating;
+import ua.lviv.bas.cinema.domain.cinema.status.MovieStatus;
 
 public record MovieDetailResponse(@Schema(description = "Unique identifier of the movie", example = "1") Long id,
 

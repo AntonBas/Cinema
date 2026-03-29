@@ -11,10 +11,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import ua.lviv.bas.cinema.domain.Payment;
-import ua.lviv.bas.cinema.domain.Refund;
-import ua.lviv.bas.cinema.domain.User;
-import ua.lviv.bas.cinema.domain.enums.RefundStatus;
+import ua.lviv.bas.cinema.domain.booking.Payment;
+import ua.lviv.bas.cinema.domain.booking.Refund;
+import ua.lviv.bas.cinema.domain.booking.status.RefundStatus;
+import ua.lviv.bas.cinema.domain.user.User;
 import ua.lviv.bas.cinema.dto.refund.response.RefundResponse;
 
 @ExtendWith(MockitoExtension.class)

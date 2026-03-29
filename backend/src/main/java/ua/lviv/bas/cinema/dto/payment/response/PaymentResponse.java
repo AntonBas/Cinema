@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import ua.lviv.bas.cinema.domain.enums.PaymentStatus;
+import ua.lviv.bas.cinema.domain.booking.status.PaymentStatus;
 
 public record PaymentResponse(@Schema(description = "Payment ID", example = "123") Long id,
 

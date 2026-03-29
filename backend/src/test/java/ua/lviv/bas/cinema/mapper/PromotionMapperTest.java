@@ -8,13 +8,13 @@ import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
 import org.mockito.Mockito;
 
-import ua.lviv.bas.cinema.domain.Promotion;
-import ua.lviv.bas.cinema.domain.projection.promotion.PromotionAdminProjection;
-import ua.lviv.bas.cinema.domain.projection.promotion.PromotionResponseProjection;
+import ua.lviv.bas.cinema.domain.promotion.Promotion;
 import ua.lviv.bas.cinema.dto.promotion.request.PromotionCreateRequest;
 import ua.lviv.bas.cinema.dto.promotion.request.PromotionUpdateRequest;
 import ua.lviv.bas.cinema.dto.promotion.response.PromotionAdminResponse;
 import ua.lviv.bas.cinema.dto.promotion.response.PromotionResponse;
+import ua.lviv.bas.cinema.repository.promotion.projection.PromotionAdminProjection;
+import ua.lviv.bas.cinema.repository.promotion.projection.PromotionResponseProjection;
 
 public class PromotionMapperTest {
 

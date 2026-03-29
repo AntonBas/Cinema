@@ -23,8 +23,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import ua.lviv.bas.cinema.config.security.jwt.JwtTokenProvider;
 import ua.lviv.bas.cinema.config.security.oauth2.OAuth2AuthenticationSuccessHandler;
-import ua.lviv.bas.cinema.domain.User;
-import ua.lviv.bas.cinema.repository.UserRepository;
+import ua.lviv.bas.cinema.domain.user.User;
+import ua.lviv.bas.cinema.repository.user.UserRepository;
 
 @ExtendWith(MockitoExtension.class)
 public class OAuth2AuthenticationSuccessHandlerTest {

@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import ua.lviv.bas.cinema.domain.enums.BookingStatus;
+import ua.lviv.bas.cinema.domain.booking.BookingStatus;
 
 public record BookingResponse(@Schema(description = "Booking ID", example = "123") Long id,
 

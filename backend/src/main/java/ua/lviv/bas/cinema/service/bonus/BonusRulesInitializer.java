@@ -9,9 +9,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import ua.lviv.bas.cinema.domain.BonusRules;
-import ua.lviv.bas.cinema.domain.enums.BonusTransactionType;
-import ua.lviv.bas.cinema.repository.BonusRulesRepository;
+import ua.lviv.bas.cinema.domain.bonus.BonusRules;
+import ua.lviv.bas.cinema.domain.bonus.BonusTransactionType;
+import ua.lviv.bas.cinema.repository.bonus.BonusRulesRepository;
 
 @Slf4j
 @Component

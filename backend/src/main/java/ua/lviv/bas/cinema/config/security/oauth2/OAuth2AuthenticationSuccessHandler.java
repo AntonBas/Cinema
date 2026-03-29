@@ -14,8 +14,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.config.security.jwt.JwtTokenProvider;
-import ua.lviv.bas.cinema.domain.User;
-import ua.lviv.bas.cinema.repository.UserRepository;
+import ua.lviv.bas.cinema.domain.user.User;
+import ua.lviv.bas.cinema.repository.user.UserRepository;
 
 @Slf4j
 @Component

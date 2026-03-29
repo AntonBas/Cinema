@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import ua.lviv.bas.cinema.domain.enums.SeatType;
+import ua.lviv.bas.cinema.domain.cinema.enums.SeatType;
 
 public record SeatReservationResponse(@Schema(description = "Session ID", example = "1") Long sessionId,
 

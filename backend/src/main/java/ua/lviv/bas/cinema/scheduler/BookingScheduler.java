@@ -10,14 +10,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import ua.lviv.bas.cinema.domain.Booking;
-import ua.lviv.bas.cinema.domain.Payment;
-import ua.lviv.bas.cinema.domain.enums.BookingStatus;
-import ua.lviv.bas.cinema.domain.enums.PaymentStatus;
-import ua.lviv.bas.cinema.domain.enums.ReservationStatus;
-import ua.lviv.bas.cinema.repository.BookingRepository;
-import ua.lviv.bas.cinema.repository.PaymentRepository;
-import ua.lviv.bas.cinema.repository.SeatReservationRepository;
+import ua.lviv.bas.cinema.domain.booking.Booking;
+import ua.lviv.bas.cinema.domain.booking.BookingStatus;
+import ua.lviv.bas.cinema.domain.booking.Payment;
+import ua.lviv.bas.cinema.domain.booking.status.PaymentStatus;
+import ua.lviv.bas.cinema.domain.booking.status.ReservationStatus;
+import ua.lviv.bas.cinema.repository.booking.BookingRepository;
+import ua.lviv.bas.cinema.repository.booking.PaymentRepository;
+import ua.lviv.bas.cinema.repository.booking.SeatReservationRepository;
 import ua.lviv.bas.cinema.service.bonus.BonusService;
 
 @Slf4j

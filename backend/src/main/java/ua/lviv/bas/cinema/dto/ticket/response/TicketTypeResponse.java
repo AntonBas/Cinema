@@ -3,7 +3,7 @@ package ua.lviv.bas.cinema.dto.ticket.response;
 import java.math.BigDecimal;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import ua.lviv.bas.cinema.domain.enums.TicketTypeCategory;
+import ua.lviv.bas.cinema.domain.ticket.TicketTypeCategory;
 
 public record TicketTypeResponse(@Schema(description = "Unique identifier of the ticket type", example = "1") Long id,
 

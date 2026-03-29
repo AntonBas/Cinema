@@ -8,9 +8,9 @@ import java.time.LocalDateTime;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
 
-import ua.lviv.bas.cinema.domain.RefundItem;
-import ua.lviv.bas.cinema.domain.Ticket;
-import ua.lviv.bas.cinema.domain.enums.RefundItemStatus;
+import ua.lviv.bas.cinema.domain.booking.RefundItem;
+import ua.lviv.bas.cinema.domain.booking.status.RefundItemStatus;
+import ua.lviv.bas.cinema.domain.ticket.Ticket;
 import ua.lviv.bas.cinema.dto.refund.response.RefundItemResponse;
 
 public class RefundItemMapperTest {

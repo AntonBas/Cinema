@@ -23,9 +23,8 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
-import ua.lviv.bas.cinema.domain.Promotion;
-import ua.lviv.bas.cinema.domain.UserPromotion;
-import ua.lviv.bas.cinema.domain.projection.promotion.PromotionAdminProjection;
+import ua.lviv.bas.cinema.domain.promotion.Promotion;
+import ua.lviv.bas.cinema.domain.promotion.UserPromotion;
 import ua.lviv.bas.cinema.dto.PageResponse;
 import ua.lviv.bas.cinema.dto.promotion.request.PromotionCreateRequest;
 import ua.lviv.bas.cinema.dto.promotion.request.PromotionUpdateRequest;
@@ -36,7 +35,8 @@ import ua.lviv.bas.cinema.exception.domain.financial.promotion.PromotionDatesInv
 import ua.lviv.bas.cinema.exception.domain.financial.promotion.PromotionHasRedemptionsException;
 import ua.lviv.bas.cinema.exception.domain.financial.promotion.PromotionNotFoundException;
 import ua.lviv.bas.cinema.mapper.PromotionMapper;
-import ua.lviv.bas.cinema.repository.PromotionRepository;
+import ua.lviv.bas.cinema.repository.promotion.PromotionRepository;
+import ua.lviv.bas.cinema.repository.promotion.projection.PromotionAdminProjection;
 import ua.lviv.bas.cinema.service.promotion.AdminPromotionService;
 
 @ExtendWith(MockitoExtension.class)
