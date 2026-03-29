@@ -16,6 +16,7 @@ import ua.lviv.bas.cinema.domain.booking.Refund;
 import ua.lviv.bas.cinema.domain.booking.status.RefundStatus;
 import ua.lviv.bas.cinema.domain.user.User;
 import ua.lviv.bas.cinema.dto.refund.response.RefundResponse;
+import ua.lviv.bas.cinema.mapper.booking.RefundItemMapper;
 
 @ExtendWith(MockitoExtension.class)
 public class RefundMapperTest {

@@ -9,6 +9,7 @@ import org.mapstruct.factory.Mappers;
 
 import ua.lviv.bas.cinema.domain.booking.Payment;
 import ua.lviv.bas.cinema.dto.payment.response.PaymentLiqPayDataResponse;
+import ua.lviv.bas.cinema.mapper.booking.PaymentMapper;
 
 public class PaymentMapperTest {
 

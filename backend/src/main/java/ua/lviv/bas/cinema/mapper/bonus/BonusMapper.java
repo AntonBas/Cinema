@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.mapper;
+package ua.lviv.bas.cinema.mapper.bonus;
 
 import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;

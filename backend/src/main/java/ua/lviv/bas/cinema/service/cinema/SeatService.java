@@ -16,7 +16,7 @@ import ua.lviv.bas.cinema.domain.cinema.Seat;
 import ua.lviv.bas.cinema.domain.cinema.enums.SeatType;
 import ua.lviv.bas.cinema.dto.hall.response.SeatResponse;
 import ua.lviv.bas.cinema.exception.domain.cinema.SeatNotFoundException;
-import ua.lviv.bas.cinema.mapper.SeatMapper;
+import ua.lviv.bas.cinema.mapper.cinema.SeatMapper;
 import ua.lviv.bas.cinema.repository.cinema.SeatRepository;
 
 @Slf4j

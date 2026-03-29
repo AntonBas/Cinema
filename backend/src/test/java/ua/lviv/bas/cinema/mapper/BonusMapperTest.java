@@ -17,6 +17,7 @@ import ua.lviv.bas.cinema.dto.bonus.request.BonusRulesRequest;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusCardResponse;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusRulesResponse;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusTransactionResponse;
+import ua.lviv.bas.cinema.mapper.bonus.BonusMapper;
 import ua.lviv.bas.cinema.repository.bonus.projection.BonusTransactionProjection;
 
 public class BonusMapperTest {

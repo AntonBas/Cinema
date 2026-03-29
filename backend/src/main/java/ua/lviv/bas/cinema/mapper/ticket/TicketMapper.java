@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.mapper;
+package ua.lviv.bas.cinema.mapper.ticket;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

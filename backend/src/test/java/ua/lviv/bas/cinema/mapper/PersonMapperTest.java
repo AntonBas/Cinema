@@ -13,6 +13,7 @@ import ua.lviv.bas.cinema.domain.cinema.Person;
 import ua.lviv.bas.cinema.domain.cinema.enums.PersonRole;
 import ua.lviv.bas.cinema.dto.movie.request.PersonRequest;
 import ua.lviv.bas.cinema.dto.movie.response.PersonResponse;
+import ua.lviv.bas.cinema.mapper.cinema.PersonMapper;
 
 public class PersonMapperTest {
 

@@ -12,6 +12,7 @@ import ua.lviv.bas.cinema.domain.booking.RefundItem;
 import ua.lviv.bas.cinema.domain.booking.status.RefundItemStatus;
 import ua.lviv.bas.cinema.domain.ticket.Ticket;
 import ua.lviv.bas.cinema.dto.refund.response.RefundItemResponse;
+import ua.lviv.bas.cinema.mapper.booking.RefundItemMapper;
 
 public class RefundItemMapperTest {
 

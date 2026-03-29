@@ -26,7 +26,7 @@ import ua.lviv.bas.cinema.exception.domain.auth.PasswordValidationException;
 import ua.lviv.bas.cinema.exception.domain.auth.SameEmailException;
 import ua.lviv.bas.cinema.exception.domain.auth.SamePasswordException;
 import ua.lviv.bas.cinema.exception.domain.user.UserNotFoundException;
-import ua.lviv.bas.cinema.mapper.UserMapper;
+import ua.lviv.bas.cinema.mapper.user.UserMapper;
 import ua.lviv.bas.cinema.repository.user.UserRepository;
 import ua.lviv.bas.cinema.service.notification.EmailTokenGeneratorService;
 

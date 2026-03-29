@@ -12,6 +12,7 @@ import ua.lviv.bas.cinema.dto.movie.request.MovieUpdateRequest;
 import ua.lviv.bas.cinema.dto.movie.response.MovieCardResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieDetailResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieSessionSearchResponse;
+import ua.lviv.bas.cinema.mapper.cinema.MovieMapper;
 
 public class MovieMapperTest {
 

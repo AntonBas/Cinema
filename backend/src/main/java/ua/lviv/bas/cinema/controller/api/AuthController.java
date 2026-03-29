@@ -30,7 +30,7 @@ import ua.lviv.bas.cinema.domain.user.User;
 import ua.lviv.bas.cinema.dto.user.request.UserLoginRequest;
 import ua.lviv.bas.cinema.dto.user.request.UserRegistrationRequest;
 import ua.lviv.bas.cinema.dto.user.response.UserResponse;
-import ua.lviv.bas.cinema.mapper.UserMapper;
+import ua.lviv.bas.cinema.mapper.user.UserMapper;
 import ua.lviv.bas.cinema.service.user.UserPasswordResetService;
 import ua.lviv.bas.cinema.service.user.UserService;
 

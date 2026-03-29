@@ -34,7 +34,7 @@ import ua.lviv.bas.cinema.exception.domain.financial.bonus.BonusCardNotFoundExce
 import ua.lviv.bas.cinema.exception.domain.financial.bonus.BonusRuleNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.financial.bonus.BonusValidationException;
 import ua.lviv.bas.cinema.exception.domain.financial.bonus.InsufficientPointsException;
-import ua.lviv.bas.cinema.mapper.BonusMapper;
+import ua.lviv.bas.cinema.mapper.bonus.BonusMapper;
 import ua.lviv.bas.cinema.repository.bonus.BonusCardRepository;
 import ua.lviv.bas.cinema.repository.bonus.BonusRulesRepository;
 import ua.lviv.bas.cinema.repository.bonus.BonusTransactionRepository;

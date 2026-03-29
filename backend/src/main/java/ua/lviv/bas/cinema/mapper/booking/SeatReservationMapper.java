@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.mapper;
+package ua.lviv.bas.cinema.mapper.booking;
 
 import java.math.BigDecimal;
 import java.util.List;

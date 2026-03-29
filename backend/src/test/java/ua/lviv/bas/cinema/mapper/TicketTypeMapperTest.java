@@ -15,6 +15,7 @@ import ua.lviv.bas.cinema.dto.ticket.response.TicketTypeResponse;
 import ua.lviv.bas.cinema.dto.ticketType.request.TicketTypeCreateRequest;
 import ua.lviv.bas.cinema.dto.ticketType.request.TicketTypeUpdateRequest;
 import ua.lviv.bas.cinema.dto.ticketType.response.TicketTypeUserResponse;
+import ua.lviv.bas.cinema.mapper.ticket.TicketTypeMapper;
 import ua.lviv.bas.cinema.repository.ticket.projection.TicketTypeAdminProjection;
 import ua.lviv.bas.cinema.repository.ticket.projection.TicketTypeUserProjection;
 

@@ -20,6 +20,7 @@ import ua.lviv.bas.cinema.domain.cinema.Session;
 import ua.lviv.bas.cinema.domain.ticket.TicketType;
 import ua.lviv.bas.cinema.domain.user.User;
 import ua.lviv.bas.cinema.dto.booking.response.BookingResponse;
+import ua.lviv.bas.cinema.mapper.booking.BookingMapper;
 
 public class BookingMapperTest {
 

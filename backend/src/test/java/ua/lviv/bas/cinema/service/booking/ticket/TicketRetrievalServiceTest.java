@@ -25,7 +25,7 @@ import ua.lviv.bas.cinema.dto.ticket.request.TicketFilterRequest;
 import ua.lviv.bas.cinema.dto.ticketType.response.TicketResponse;
 import ua.lviv.bas.cinema.exception.domain.ticket.TicketNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.ticket.TicketValidationException;
-import ua.lviv.bas.cinema.mapper.TicketMapper;
+import ua.lviv.bas.cinema.mapper.ticket.TicketMapper;
 import ua.lviv.bas.cinema.repository.ticket.TicketRepository;
 import ua.lviv.bas.cinema.repository.ticket.specification.TicketSpecification;
 
