@@ -59,7 +59,7 @@ public class AdminPromotionController {
 	@Operation(summary = "Get all promotions (admin view)")
 	@PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
 	public ResponseEntity<PageResponse<PromotionAdminResponse>> getAllPromotions(
-			@PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+			@PageableDefault(size = 10, sort = "createdDate", direction = Sort.Direction.DESC) Pageable pageable) {
 		log.info("Admin retrieving all promotions");
 		return ResponseEntity.ok(promotionService.getAllPromotions(pageable));
 	}
