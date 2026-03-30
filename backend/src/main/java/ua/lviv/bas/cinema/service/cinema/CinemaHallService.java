@@ -3,6 +3,7 @@ package ua.lviv.bas.cinema.service.cinema;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -71,7 +72,12 @@ public class CinemaHallService {
 			CinemaHall saved = hallRepository.save(hall);
 			log.debug("Cinema hall created with ID: {}", saved.getId());
 
-			auditService.logChange("CinemaHall", saved.getId(), AuditAction.CREATED, null, saved.getName());
+			Map<String, Object> details = new HashMap<>();
+			details.put("name", saved.getName());
+			details.put("rows", request.rows());
+			details.put("seatsPerRow", request.seatsPerRow());
+
+			auditService.logChange("CinemaHall", saved.getId(), saved.getName(), AuditAction.CREATED, null, details);
 
 			return hallMapper.toCinemaHallResponse(saved);
 		} finally {
@@ -124,7 +130,13 @@ public class CinemaHallService {
 			CinemaHall updated = hallRepository.save(existing);
 			log.debug("Cinema hall updated with ID: {}", updated.getId());
 
-			auditService.logChange("CinemaHall", id, AuditAction.UPDATED, oldName, updated.getName());
+			Map<String, Object> oldDetails = new HashMap<>();
+			oldDetails.put("name", oldName);
+
+			Map<String, Object> newDetails = new HashMap<>();
+			newDetails.put("name", updated.getName());
+
+			auditService.logChange("CinemaHall", id, oldName, AuditAction.UPDATED, oldDetails, newDetails);
 
 			return hallMapper.toCinemaHallResponse(updated);
 		} finally {
@@ -151,7 +163,10 @@ public class CinemaHallService {
 		hallRepository.delete(hall);
 		log.debug("Cinema hall deleted with ID: {}", id);
 
-		auditService.logChange("CinemaHall", id, AuditAction.DELETED, hallName, null);
+		Map<String, Object> details = new HashMap<>();
+		details.put("deleted", hallName);
+
+		auditService.logChange("CinemaHall", id, hallName, AuditAction.DELETED, details, null);
 	}
 
 	@Transactional(readOnly = true)

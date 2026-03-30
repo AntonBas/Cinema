@@ -3,6 +3,8 @@ package ua.lviv.bas.cinema.service.bonus;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.cache.annotation.CacheConfig;
@@ -120,8 +122,13 @@ public class BonusService {
 		card.setPointsBalance(card.getPointsBalance() + points);
 		createTransaction(card, points, BonusTransactionType.PROMOTION_BONUS, "PROMOTION_" + promotionTitle);
 
-		auditService.logChange("Bonus", card.getId(), AuditAction.POINTS_ADDED, null,
-				String.format("User: %d, Points: %d, Promotion: %s", user.getId(), points, promotionTitle));
+		Map<String, Object> newValues = new HashMap<>();
+		newValues.put("points", points);
+		newValues.put("promotion", promotionTitle);
+		newValues.put("newBalance", card.getPointsBalance());
+
+		auditService.logChange("Bonus", card.getId(), "User " + user.getEmail(), AuditAction.POINTS_ADDED, null,
+				newValues);
 
 		return card.getPointsBalance();
 	}
@@ -143,13 +150,16 @@ public class BonusService {
 		BonusCard card = getCardByUserId(userId);
 		card.setPointsBalance(card.getPointsBalance() - points);
 
-		BonusTransaction transaction = createTransaction(card, -points, BonusTransactionType.BOOKING_SPEND,
-				"BOOKING_" + booking.getId(), booking, null, null);
+		Map<String, Object> oldValues = new HashMap<>();
+		Map<String, Object> newValues = new HashMap<>();
+		oldValues.put("points", card.getPointsBalance() + points);
+		newValues.put("points", card.getPointsBalance());
 
-		auditService.logChange("Bonus", card.getId(), AuditAction.POINTS_SPENT, null,
-				String.format("User: %d, Points: %d, Booking: %d", userId, points, booking.getId()));
+		auditService.logChange("Bonus", card.getId(), "Booking " + booking.getId(), AuditAction.POINTS_SPENT, oldValues,
+				newValues);
 
-		return transaction;
+		return createTransaction(card, -points, BonusTransactionType.BOOKING_SPEND, "BOOKING_" + booking.getId(),
+				booking, null, null);
 	}
 
 	@Caching(evict = { @CacheEvict(key = "'card:' + #userId"), @CacheEvict(key = "'balance:' + #userId"),
@@ -162,13 +172,15 @@ public class BonusService {
 		BonusCard card = getCardByUserId(userId);
 		card.setPointsBalance(card.getPointsBalance() + points);
 
-		BonusTransaction transaction = createTransaction(card, points, BonusTransactionType.PAYMENT_ACCRUAL,
-				"PAYMENT_" + payment.getId(), booking, payment, null);
+		Map<String, Object> newValues = new HashMap<>();
+		newValues.put("points", points);
+		newValues.put("newBalance", card.getPointsBalance());
 
-		auditService.logChange("Bonus", card.getId(), AuditAction.POINTS_ACCRUED, null,
-				String.format("User: %d, Points: %d, Payment: %d", userId, points, payment.getId()));
+		auditService.logChange("Bonus", card.getId(), "Payment " + payment.getId(), AuditAction.POINTS_ACCRUED, null,
+				newValues);
 
-		return transaction;
+		return createTransaction(card, points, BonusTransactionType.PAYMENT_ACCRUAL, "PAYMENT_" + payment.getId(),
+				booking, payment, null);
 	}
 
 	@Caching(evict = { @CacheEvict(key = "'card:' + #booking.user.id"),
@@ -180,15 +192,19 @@ public class BonusService {
 		}
 		BonusCard card = getCardByUserId(booking.getUser().getId());
 		Integer points = booking.getBonusPointsUsed();
+		int oldBalance = card.getPointsBalance();
 		card.setPointsBalance(card.getPointsBalance() + points);
 
-		BonusTransaction transaction = createTransaction(card, points, BonusTransactionType.REFUND_RETURN,
-				"REFUND_BOOKING_" + booking.getId(), booking, null, null);
+		Map<String, Object> oldValues = new HashMap<>();
+		Map<String, Object> newValues = new HashMap<>();
+		oldValues.put("points", oldBalance);
+		newValues.put("points", card.getPointsBalance());
 
-		auditService.logChange("Bonus", card.getId(), AuditAction.POINTS_REFUNDED, null,
-				String.format("User: %d, Points: %d, Booking: %d", booking.getUser().getId(), points, booking.getId()));
+		auditService.logChange("Bonus", card.getId(), "Booking " + booking.getId(), AuditAction.POINTS_REFUNDED,
+				oldValues, newValues);
 
-		return transaction;
+		return createTransaction(card, points, BonusTransactionType.REFUND_RETURN, "REFUND_BOOKING_" + booking.getId(),
+				booking, null, null);
 	}
 
 	@Transactional(readOnly = true)

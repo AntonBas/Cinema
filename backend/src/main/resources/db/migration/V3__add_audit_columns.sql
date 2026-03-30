@@ -111,16 +111,24 @@ CREATE TABLE IF NOT EXISTS audit_log (
     id BIGSERIAL PRIMARY KEY,
     entity_type VARCHAR(100) NOT NULL,
     entity_id BIGINT NOT NULL,
+    target_info VARCHAR(255),
     action VARCHAR(50) NOT NULL,
-    old_value TEXT,
-    new_value TEXT,
     changed_by VARCHAR(100) NOT NULL,
     changed_at TIMESTAMP NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS audit_log_details (
+    id BIGSERIAL PRIMARY KEY,
+    audit_log_id BIGINT NOT NULL REFERENCES audit_log(id) ON DELETE CASCADE,
+    field_name VARCHAR(100) NOT NULL,
+    old_value TEXT,
+    new_value TEXT
 );
 
 CREATE INDEX IF NOT EXISTS idx_audit_log_entity ON audit_log(entity_type, entity_id);
 CREATE INDEX IF NOT EXISTS idx_audit_log_changed_by ON audit_log(changed_by);
 CREATE INDEX IF NOT EXISTS idx_audit_log_changed_at ON audit_log(changed_at);
+CREATE INDEX IF NOT EXISTS idx_audit_log_details_log_id ON audit_log_details(audit_log_id);
 
 DROP INDEX IF EXISTS idx_booking_created;
 DROP INDEX IF EXISTS idx_payment_created;

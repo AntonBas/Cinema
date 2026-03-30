@@ -1,6 +1,8 @@
 package ua.lviv.bas.cinema.service.user;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
@@ -56,7 +58,15 @@ public class AdminUserService {
 		User savedUser = userRepository.save(user);
 		log.info("User role updated to {} for user {}", newRole, userId);
 
-		auditService.logChange("User", userId, AuditAction.ROLE_CHANGED, oldRole, newRole);
+		Map<String, Object> oldDetails = new HashMap<>();
+		oldDetails.put("role", oldRole);
+
+		Map<String, Object> newDetails = new HashMap<>();
+		newDetails.put("role", newRole);
+		newDetails.put("userId", userId);
+		newDetails.put("userEmail", user.getEmail());
+
+		auditService.logChange("User", userId, user.getEmail(), AuditAction.ROLE_CHANGED, oldDetails, newDetails);
 
 		return userMapper.toAdminUserListResponse(savedUser);
 	}
@@ -75,7 +85,15 @@ public class AdminUserService {
 		User savedUser = userRepository.save(user);
 		log.info("User status updated: enabled = {} for user {}", enabled, userId);
 
-		auditService.logChange("User", userId, AuditAction.STATUS_CHANGED, oldStatus, enabled);
+		Map<String, Object> oldDetails = new HashMap<>();
+		oldDetails.put("enabled", oldStatus);
+
+		Map<String, Object> newDetails = new HashMap<>();
+		newDetails.put("enabled", enabled);
+		newDetails.put("userId", userId);
+		newDetails.put("userEmail", user.getEmail());
+
+		auditService.logChange("User", userId, user.getEmail(), AuditAction.STATUS_CHANGED, oldDetails, newDetails);
 
 		return userMapper.toAdminUserListResponse(savedUser);
 	}
@@ -93,7 +111,16 @@ public class AdminUserService {
 		User savedUser = userRepository.save(user);
 		log.info("Birth date verification updated: {} for user {}", newStatus, userId);
 
-		auditService.logChange("User", userId, AuditAction.VERIFICATION_CHANGED, oldStatus, newStatus);
+		Map<String, Object> oldDetails = new HashMap<>();
+		oldDetails.put("verificationStatus", oldStatus);
+
+		Map<String, Object> newDetails = new HashMap<>();
+		newDetails.put("verificationStatus", newStatus);
+		newDetails.put("userId", userId);
+		newDetails.put("userEmail", user.getEmail());
+
+		auditService.logChange("User", userId, user.getEmail(), AuditAction.VERIFICATION_CHANGED, oldDetails,
+				newDetails);
 
 		return userMapper.toAdminUserListResponse(savedUser);
 	}

@@ -3,7 +3,9 @@ package ua.lviv.bas.cinema.service.booking.refund;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -107,8 +109,14 @@ public class RefundService {
 			ticket.setRefund(refund);
 			ticketRepository.save(ticket);
 
-			auditService.logChange("Refund", refund.getId(), AuditAction.CREATED, null,
-					String.format("Ticket: %d, Amount: %s, User: %d", ticket.getId(), refundAmount, userId));
+			Map<String, Object> details = new HashMap<>();
+			details.put("ticketId", ticket.getId());
+			details.put("refundAmount", refundAmount);
+			details.put("percentage", percentage);
+			details.put("bonusPointsToRefund", bonusPointsToRefund);
+
+			auditService.logChange("Refund", refund.getId(), "Refund #" + refund.getId(), AuditAction.CREATED, null,
+					details);
 
 			return createSuccessResponse(refund);
 
@@ -116,7 +124,11 @@ public class RefundService {
 			refund.setStatus(RefundStatus.REJECTED);
 			refundRepository.save(refund);
 
-			auditService.logChange("Refund", refund.getId(), AuditAction.REJECTED, null, e.getMessage());
+			Map<String, Object> errorDetails = new HashMap<>();
+			errorDetails.put("error", e.getMessage());
+
+			auditService.logChange("Refund", refund.getId(), "Refund #" + refund.getId(), AuditAction.REJECTED, null,
+					errorDetails);
 
 			throw new RefundProcessingException("Refund processing failed", e);
 		}

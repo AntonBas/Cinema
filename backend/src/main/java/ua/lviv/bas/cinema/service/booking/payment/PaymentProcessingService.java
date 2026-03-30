@@ -2,6 +2,7 @@ package ua.lviv.bas.cinema.service.booking.payment;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -69,8 +70,13 @@ public class PaymentProcessingService {
 		Payment savedPayment = paymentRepository.save(payment);
 		log.info("Created payment {} for booking {}", savedPayment.getId(), booking.getId());
 
-		auditService.logChange("Payment", savedPayment.getId(), AuditAction.CREATED, null,
-				String.format("Booking: %d, Amount: %s", booking.getId(), payment.getAmount()));
+		Map<String, Object> details = new HashMap<>();
+		details.put("bookingId", booking.getId());
+		details.put("amount", payment.getAmount());
+		details.put("status", PaymentStatus.PENDING);
+
+		auditService.logChange("Payment", savedPayment.getId(), "Payment #" + savedPayment.getId(), AuditAction.CREATED,
+				null, details);
 
 		return buildPaymentResponse(savedPayment);
 	}
@@ -109,7 +115,14 @@ public class PaymentProcessingService {
 
 		log.info("Payment {} completed successfully", payment.getId());
 
-		auditService.logChange("Payment", payment.getId(), AuditAction.SUCCESS, oldStatus, PaymentStatus.SUCCESS);
+		Map<String, Object> oldDetails = new HashMap<>();
+		oldDetails.put("status", oldStatus);
+
+		Map<String, Object> newDetails = new HashMap<>();
+		newDetails.put("status", PaymentStatus.SUCCESS);
+
+		auditService.logChange("Payment", payment.getId(), "Payment #" + payment.getId(), AuditAction.SUCCESS,
+				oldDetails, newDetails);
 	}
 
 	public void processFailedPayment(Payment payment, Map<String, String> callbackData) {
@@ -122,7 +135,16 @@ public class PaymentProcessingService {
 		notificationService.sendPaymentFailedEmail(payment, payment.getBooking());
 		log.warn("Payment {} failed: {}", payment.getId(), callbackData.get("err_description"));
 
-		auditService.logChange("Payment", payment.getId(), AuditAction.FAILED, oldStatus, PaymentStatus.FAILED);
+		Map<String, Object> oldDetails = new HashMap<>();
+		oldDetails.put("status", oldStatus);
+
+		Map<String, Object> newDetails = new HashMap<>();
+		newDetails.put("status", PaymentStatus.FAILED);
+		newDetails.put("errorCode", callbackData.get("err_code"));
+		newDetails.put("errorDescription", callbackData.get("err_description"));
+
+		auditService.logChange("Payment", payment.getId(), "Payment #" + payment.getId(), AuditAction.FAILED,
+				oldDetails, newDetails);
 	}
 
 	@Transactional
@@ -146,7 +168,11 @@ public class PaymentProcessingService {
 		Payment savedPayment = paymentRepository.save(payment);
 		log.info("Retried payment {} for booking {}", paymentId, payment.getBooking().getId());
 
-		auditService.logChange("Payment", paymentId, AuditAction.RETRY, null, null);
+		Map<String, Object> details = new HashMap<>();
+		details.put("paymentId", paymentId);
+		details.put("status", PaymentStatus.PENDING);
+
+		auditService.logChange("Payment", paymentId, "Payment #" + paymentId, AuditAction.RETRY, null, details);
 
 		return buildPaymentResponse(savedPayment);
 	}
@@ -191,22 +217,33 @@ public class PaymentProcessingService {
 					description);
 
 			PaymentStatus oldStatus = payment.getStatus();
+			PaymentStatus newStatus;
 
 			if (amount.compareTo(payment.getAmount()) == 0) {
-				payment.setStatus(PaymentStatus.REFUNDED);
+				newStatus = PaymentStatus.REFUNDED;
 				log.info("Payment {} fully refunded", payment.getId());
 			} else {
-				payment.setStatus(PaymentStatus.PARTIALLY_REFUNDED);
+				newStatus = PaymentStatus.PARTIALLY_REFUNDED;
 				log.info("Payment {} partially refunded ({} of {})", payment.getId(), amount, payment.getAmount());
 			}
 
+			payment.setStatus(newStatus);
 			paymentRepository.save(payment);
 
 			notificationService.sendRefundEmail(payment, amount, description);
 
 			log.info("Refund processed successfully: paymentId={}, amount={}", payment.getId(), amount);
 
-			auditService.logChange("Payment", payment.getId(), AuditAction.REFUND, oldStatus, payment.getStatus());
+			Map<String, Object> oldDetails = new HashMap<>();
+			oldDetails.put("status", oldStatus);
+
+			Map<String, Object> newDetails = new HashMap<>();
+			newDetails.put("status", newStatus);
+			newDetails.put("refundAmount", amount);
+			newDetails.put("description", description);
+
+			auditService.logChange("Payment", payment.getId(), "Payment #" + payment.getId(), AuditAction.REFUND,
+					oldDetails, newDetails);
 
 		} catch (PaymentProcessingException e) {
 			log.error("Payment processing failed for refund payment {}", payment.getId(), e);

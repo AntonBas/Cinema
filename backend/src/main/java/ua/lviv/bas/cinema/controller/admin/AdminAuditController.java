@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import lombok.RequiredArgsConstructor;
+import ua.lviv.bas.cinema.domain.audit.AuditAction;
 import ua.lviv.bas.cinema.domain.audit.AuditLog;
 import ua.lviv.bas.cinema.dto.PageResponse;
 import ua.lviv.bas.cinema.dto.audit.AuditLogResponse;
@@ -32,7 +33,7 @@ public class AdminAuditController {
 
 	@GetMapping
 	public ResponseEntity<PageResponse<AuditLogResponse>> getAuditLogs(
-			@RequestParam(required = false) String entityType, @RequestParam(required = false) String action,
+			@RequestParam(required = false) String entityType, @RequestParam(required = false) AuditAction action,
 			@RequestParam(required = false) String changedBy,
 			@PageableDefault(size = 20, sort = "changedAt", direction = Sort.Direction.DESC) Pageable pageable) {
 

@@ -1,6 +1,8 @@
 package ua.lviv.bas.cinema.service.booking.management;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -89,7 +91,14 @@ public class BookingManagementService {
 		bookingRepository.save(booking);
 		log.info("Cancelled booking {} for user {}", bookingId, user.getId());
 
-		auditService.logChange("Booking", bookingId, AuditAction.CANCELLED, oldStatus, BookingStatus.CANCELLED);
+		Map<String, Object> oldDetails = new HashMap<>();
+		oldDetails.put("status", oldStatus);
+
+		Map<String, Object> newDetails = new HashMap<>();
+		newDetails.put("status", BookingStatus.CANCELLED);
+
+		auditService.logChange("Booking", bookingId, "Booking #" + bookingId, AuditAction.CANCELLED, oldDetails,
+				newDetails);
 	}
 
 	@Caching(evict = { @CacheEvict(value = "bookings", key = "#bookingId + '-' + #booking.user.id"),
@@ -110,7 +119,14 @@ public class BookingManagementService {
 		booking.getSeatReservations().forEach(sr -> sr.setStatus(ReservationStatus.CONFIRMED));
 		bookingRepository.save(booking);
 
-		auditService.logChange("Booking", bookingId, AuditAction.CONFIRMED, oldStatus, BookingStatus.CONFIRMED);
+		Map<String, Object> oldDetails = new HashMap<>();
+		oldDetails.put("status", oldStatus);
+
+		Map<String, Object> newDetails = new HashMap<>();
+		newDetails.put("status", BookingStatus.CONFIRMED);
+
+		auditService.logChange("Booking", bookingId, "Booking #" + bookingId, AuditAction.CONFIRMED, oldDetails,
+				newDetails);
 	}
 
 	@Transactional(readOnly = true)

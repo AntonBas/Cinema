@@ -3,7 +3,9 @@ package ua.lviv.bas.cinema.service.booking.creation;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -105,9 +107,15 @@ public class BookingCreationService {
 		log.info("Created booking {} for user {} with {} bonus points used", savedBooking.getId(), user.getId(),
 				priceResult.bonusPointsUsed());
 
-		auditService.logChange("Booking", savedBooking.getId(), AuditAction.CREATED, null,
-				String.format("User: %d, Session: %d, Total price: %s, Final price: %s", user.getId(), session.getId(),
-						totalPrice, priceResult.finalPrice()));
+		Map<String, Object> details = new HashMap<>();
+		details.put("userId", user.getId());
+		details.put("sessionId", session.getId());
+		details.put("totalPrice", totalPrice);
+		details.put("finalPrice", priceResult.finalPrice());
+		details.put("bonusPointsUsed", priceResult.bonusPointsUsed());
+
+		auditService.logChange("Booking", savedBooking.getId(), "Booking #" + savedBooking.getId(), AuditAction.CREATED,
+				null, details);
 
 		return bookingMapper.toBookingResponse(savedBooking);
 	}

@@ -2,6 +2,7 @@ package ua.lviv.bas.cinema.service.cinema;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -149,8 +150,16 @@ public class SessionService {
 		Session saved = sessionRepository.save(session);
 		log.info("Session created with ID: {}", saved.getId());
 
-		auditService.logChange("Session", saved.getId(), AuditAction.CREATED, null,
-				String.format("Movie: %s, Hall: %s, Time: %s", movie.getTitle(), hall.getName(), request.startTime()));
+		Map<String, Object> details = new HashMap<>();
+		details.put("movieId", movie.getId());
+		details.put("movieTitle", movie.getTitle());
+		details.put("hallId", hall.getId());
+		details.put("hallName", hall.getName());
+		details.put("startTime", request.startTime());
+		details.put("basePrice", request.basePrice());
+
+		auditService.logChange("Session", saved.getId(), "Session #" + saved.getId(), AuditAction.CREATED, null,
+				details);
 
 		return getSessionForAdmin(saved.getId());
 	}
@@ -163,8 +172,11 @@ public class SessionService {
 		Session session = sessionRepository.findByIdWithLock(id).orElseThrow(() -> new SessionNotFoundException(id));
 
 		boolean hasChanges = false;
-		String oldStartTime = session.getStartTime().toString();
-		String oldBasePrice = session.getBasePrice().toString();
+		Map<String, Object> oldDetails = new HashMap<>();
+		oldDetails.put("startTime", session.getStartTime());
+		oldDetails.put("basePrice", session.getBasePrice());
+		oldDetails.put("movieId", session.getMovie().getId());
+		oldDetails.put("hallId", session.getHall().getId());
 
 		if (request.startTime() != null && !request.startTime().equals(session.getStartTime())) {
 			validateStartTime(request.startTime());
@@ -196,9 +208,13 @@ public class SessionService {
 			session = sessionRepository.save(session);
 			log.info("Session updated with ID: {}", session.getId());
 
-			auditService.logChange("Session", id, AuditAction.UPDATED,
-					String.format("StartTime: %s, BasePrice: %s", oldStartTime, oldBasePrice),
-					String.format("StartTime: %s, BasePrice: %s", session.getStartTime(), session.getBasePrice()));
+			Map<String, Object> newDetails = new HashMap<>();
+			newDetails.put("startTime", session.getStartTime());
+			newDetails.put("basePrice", session.getBasePrice());
+			newDetails.put("movieId", session.getMovie().getId());
+			newDetails.put("hallId", session.getHall().getId());
+
+			auditService.logChange("Session", id, "Session #" + id, AuditAction.UPDATED, oldDetails, newDetails);
 		}
 
 		return getSessionForAdmin(session.getId());
@@ -209,13 +225,18 @@ public class SessionService {
 			@CacheEvict(value = "availableSeatsCount", allEntries = true) })
 	@Transactional
 	public void deleteSession(Long id) {
-		if (!sessionRepository.existsById(id)) {
-			throw new SessionNotFoundException(id);
-		}
+		Session session = sessionRepository.findById(id).orElseThrow(() -> new SessionNotFoundException(id));
+
+		Map<String, Object> details = new HashMap<>();
+		details.put("deleted", "Session ID: " + id);
+		details.put("movieTitle", session.getMovie().getTitle());
+		details.put("hallName", session.getHall().getName());
+		details.put("startTime", session.getStartTime());
+
 		sessionRepository.deleteById(id);
 		log.info("Session deleted with ID: {}", id);
 
-		auditService.logChange("Session", id, AuditAction.DELETED, null, null);
+		auditService.logChange("Session", id, "Session #" + id, AuditAction.DELETED, details, null);
 	}
 
 	@Caching(evict = { @CacheEvict(cacheNames = "sessions", allEntries = true),
@@ -238,11 +259,22 @@ public class SessionService {
 		}
 
 		CinemaSessionStatus oldStatus = session.getStatus();
+
+		Map<String, Object> oldDetails = new HashMap<>();
+		oldDetails.put("status", oldStatus);
+		oldDetails.put("sessionId", sessionId);
+		oldDetails.put("movieTitle", session.getMovie().getTitle());
+		oldDetails.put("startTime", session.getStartTime());
+
 		session.setStatus(CinemaSessionStatus.CANCELLED);
 		sessionRepository.save(session);
 		log.info("Session cancelled with ID: {}", sessionId);
 
-		auditService.logChange("Session", sessionId, AuditAction.CANCELLED, oldStatus, CinemaSessionStatus.CANCELLED);
+		Map<String, Object> newDetails = new HashMap<>();
+		newDetails.put("status", CinemaSessionStatus.CANCELLED);
+
+		auditService.logChange("Session", sessionId, "Session #" + sessionId, AuditAction.CANCELLED, oldDetails,
+				newDetails);
 	}
 
 	@Caching(evict = { @CacheEvict(cacheNames = "sessions", allEntries = true),
@@ -265,11 +297,22 @@ public class SessionService {
 				session.getStartTime().plusMinutes(session.getMovie().getDurationMinutes()), sessionId);
 
 		CinemaSessionStatus oldStatus = session.getStatus();
+
+		Map<String, Object> oldDetails = new HashMap<>();
+		oldDetails.put("status", oldStatus);
+		oldDetails.put("sessionId", sessionId);
+		oldDetails.put("movieTitle", session.getMovie().getTitle());
+		oldDetails.put("startTime", session.getStartTime());
+
 		session.setStatus(CinemaSessionStatus.SCHEDULED);
 		sessionRepository.save(session);
 		log.info("Session reactivated with ID: {}", sessionId);
 
-		auditService.logChange("Session", sessionId, AuditAction.REACTIVATED, oldStatus, CinemaSessionStatus.SCHEDULED);
+		Map<String, Object> newDetails = new HashMap<>();
+		newDetails.put("status", CinemaSessionStatus.SCHEDULED);
+
+		auditService.logChange("Session", sessionId, "Session #" + sessionId, AuditAction.REACTIVATED, oldDetails,
+				newDetails);
 	}
 
 	private void validateStartTime(LocalDateTime startTime) {

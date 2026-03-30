@@ -1,7 +1,9 @@
 package ua.lviv.bas.cinema.service.bonus;
 
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.springframework.cache.annotation.CacheConfig;
@@ -61,9 +63,40 @@ public class AdminBonusService {
 		validateRuleType(type);
 		BonusRules rules = getRuleByType(type);
 
-		BonusRules oldRule = bonusMapper.toBonusRules(rules);
+		Map<String, Object> oldValues = new HashMap<>();
+		Map<String, Object> newValues = new HashMap<>();
 
-		bonusMapper.updateBonusRulesFromRequest(request, rules);
+		if (request.points() != null && !request.points().equals(rules.getPoints())) {
+			oldValues.put("points", rules.getPoints());
+			newValues.put("points", request.points());
+			rules.setPoints(request.points());
+		}
+
+		if (request.moneyRatio() != null && !request.moneyRatio().equals(rules.getMoneyRatio())) {
+			oldValues.put("moneyRatio", rules.getMoneyRatio());
+			newValues.put("moneyRatio", request.moneyRatio());
+			rules.setMoneyRatio(request.moneyRatio());
+		}
+
+		if (request.minPointsPerTransaction() != null
+				&& !request.minPointsPerTransaction().equals(rules.getMinPointsPerTransaction())) {
+			oldValues.put("minPoints", rules.getMinPointsPerTransaction());
+			newValues.put("minPoints", request.minPointsPerTransaction());
+			rules.setMinPointsPerTransaction(request.minPointsPerTransaction());
+		}
+
+		if (request.maxPointsPerTransaction() != null
+				&& !request.maxPointsPerTransaction().equals(rules.getMaxPointsPerTransaction())) {
+			oldValues.put("maxPoints", rules.getMaxPointsPerTransaction());
+			newValues.put("maxPoints", request.maxPointsPerTransaction());
+			rules.setMaxPointsPerTransaction(request.maxPointsPerTransaction());
+		}
+
+		if (request.active() != null && !request.active().equals(rules.getActive())) {
+			oldValues.put("active", rules.getActive());
+			newValues.put("active", request.active());
+			rules.setActive(request.active());
+		}
 
 		if (type == BonusTransactionType.BOOKING_SPEND) {
 			validatePointsRange(rules.getMinPointsPerTransaction(), rules.getMaxPointsPerTransaction());
@@ -72,7 +105,10 @@ public class AdminBonusService {
 		BonusRules updated = bonusRulesRepository.save(rules);
 		log.info("Updated bonus rule: {}", type);
 
-		auditService.logChange("BonusRules", updated.getId(), AuditAction.UPDATED, oldRule, updated);
+		if (!oldValues.isEmpty()) {
+			auditService.logChange("BonusRules", updated.getId(), "Bonus Rule " + type.name(), AuditAction.UPDATED,
+					oldValues, newValues);
+		}
 
 		return bonusMapper.toBonusRulesResponse(updated);
 	}
@@ -81,16 +117,46 @@ public class AdminBonusService {
 	@Transactional
 	public BonusRulesResponse resetRuleToDefaults(BonusTransactionType type) {
 		validateRuleType(type);
-		BonusRules oldRule = getRuleByType(type);
 		BonusRules rules = getRuleByType(type);
+
+		Map<String, Object> oldValues = new HashMap<>();
+		Map<String, Object> newValues = new HashMap<>();
+
 		BonusProperties.RuleDefaults defaults = bonusProperties.getDefaults().get(type);
 
 		if (defaults != null) {
-			rules.setPoints(defaults.getPoints());
-			rules.setMoneyRatio(defaults.getMoneyRatio());
-			rules.setMinPointsPerTransaction(defaults.getMinPoints());
-			rules.setMaxPointsPerTransaction(defaults.getMaxPoints());
-			rules.setActive(true);
+			if (defaults.getPoints() != null && !defaults.getPoints().equals(rules.getPoints())) {
+				oldValues.put("points", rules.getPoints());
+				newValues.put("points", defaults.getPoints());
+				rules.setPoints(defaults.getPoints());
+			}
+
+			if (defaults.getMoneyRatio() != null && !defaults.getMoneyRatio().equals(rules.getMoneyRatio())) {
+				oldValues.put("moneyRatio", rules.getMoneyRatio());
+				newValues.put("moneyRatio", defaults.getMoneyRatio());
+				rules.setMoneyRatio(defaults.getMoneyRatio());
+			}
+
+			if (defaults.getMinPoints() != null
+					&& !defaults.getMinPoints().equals(rules.getMinPointsPerTransaction())) {
+				oldValues.put("minPoints", rules.getMinPointsPerTransaction());
+				newValues.put("minPoints", defaults.getMinPoints());
+				rules.setMinPointsPerTransaction(defaults.getMinPoints());
+			}
+
+			if (defaults.getMaxPoints() != null
+					&& !defaults.getMaxPoints().equals(rules.getMaxPointsPerTransaction())) {
+				oldValues.put("maxPoints", rules.getMaxPointsPerTransaction());
+				newValues.put("maxPoints", defaults.getMaxPoints());
+				rules.setMaxPointsPerTransaction(defaults.getMaxPoints());
+			}
+
+			if (rules.getActive() == null || !rules.getActive()) {
+				oldValues.put("active", rules.getActive());
+				newValues.put("active", true);
+				rules.setActive(true);
+			}
+
 			log.info("Reset bonus rule {} to defaults", type);
 		} else {
 			log.warn("No defaults found for bonus rule type: {}", type);
@@ -98,7 +164,10 @@ public class AdminBonusService {
 
 		BonusRules updated = bonusRulesRepository.save(rules);
 
-		auditService.logChange("BonusRules", updated.getId(), AuditAction.RESET_TO_DEFAULTS, oldRule, updated);
+		if (!oldValues.isEmpty()) {
+			auditService.logChange("BonusRules", updated.getId(), "Bonus Rule " + type.name(),
+					AuditAction.RESET_TO_DEFAULTS, oldValues, newValues);
+		}
 
 		return bonusMapper.toBonusRulesResponse(updated);
 	}

@@ -1,7 +1,9 @@
 package ua.lviv.bas.cinema.service.booking.types;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.cache.annotation.CacheConfig;
@@ -63,7 +65,12 @@ public class TicketTypeService {
 
 		log.debug("Ticket type created with ID: {}", saved.getId());
 
-		auditService.logChange("TicketType", saved.getId(), AuditAction.CREATED, null, request.displayName());
+		Map<String, Object> details = new HashMap<>();
+		details.put("displayName", request.displayName());
+		details.put("category", request.category());
+		details.put("priceMultiplier", request.priceMultiplier());
+
+		auditService.logChange("TicketType", saved.getId(), saved.getDisplayName(), AuditAction.CREATED, null, details);
 
 		return ticketTypeMapper.toTicketTypeResponse(saved);
 	}
@@ -113,12 +120,26 @@ public class TicketTypeService {
 			validationService.validateAgeRange(minAge, maxAge);
 		}
 
+		Map<String, Object> oldDetails = new HashMap<>();
+		oldDetails.put("displayName", ticketType.getDisplayName());
+		oldDetails.put("priceMultiplier", ticketType.getPriceMultiplier());
+		oldDetails.put("minAge", ticketType.getMinAge());
+		oldDetails.put("maxAge", ticketType.getMaxAge());
+		oldDetails.put("active", ticketType.isActive());
+
 		ticketTypeMapper.updateTicketTypeFromRequest(ticketType, request);
 		TicketType updated = ticketTypeRepository.save(ticketType);
 
 		log.debug("Ticket type updated with ID: {}", updated.getId());
 
-		auditService.logChange("TicketType", id, AuditAction.UPDATED, oldName, updated.getDisplayName());
+		Map<String, Object> newDetails = new HashMap<>();
+		newDetails.put("displayName", updated.getDisplayName());
+		newDetails.put("priceMultiplier", updated.getPriceMultiplier());
+		newDetails.put("minAge", updated.getMinAge());
+		newDetails.put("maxAge", updated.getMaxAge());
+		newDetails.put("active", updated.isActive());
+
+		auditService.logChange("TicketType", id, oldName, AuditAction.UPDATED, oldDetails, newDetails);
 
 		return ticketTypeMapper.toTicketTypeResponse(updated);
 	}
@@ -139,7 +160,10 @@ public class TicketTypeService {
 		ticketTypeRepository.delete(ticketType);
 		log.debug("Ticket type deleted with ID: {}", id);
 
-		auditService.logChange("TicketType", id, AuditAction.DELETED, ticketTypeName, null);
+		Map<String, Object> details = new HashMap<>();
+		details.put("deleted", ticketTypeName);
+
+		auditService.logChange("TicketType", id, ticketTypeName, AuditAction.DELETED, details, null);
 	}
 
 	@Caching(evict = { @CacheEvict(key = "#id"), @CacheEvict(key = "'user-active'"), @CacheEvict(allEntries = true) })
@@ -160,7 +184,14 @@ public class TicketTypeService {
 
 		log.debug("Ticket type status toggled to: {} for ID: {}", updated.isActive(), id);
 
-		auditService.logChange("TicketType", id, AuditAction.TOGGLE_STATUS, oldStatus, updated.isActive());
+		Map<String, Object> oldDetails = new HashMap<>();
+		oldDetails.put("active", oldStatus);
+
+		Map<String, Object> newDetails = new HashMap<>();
+		newDetails.put("active", updated.isActive());
+
+		auditService.logChange("TicketType", id, ticketType.getDisplayName(), AuditAction.TOGGLE_STATUS, oldDetails,
+				newDetails);
 
 		return ticketTypeMapper.toTicketTypeResponse(updated);
 	}

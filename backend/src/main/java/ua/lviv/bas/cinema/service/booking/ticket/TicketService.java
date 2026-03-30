@@ -1,7 +1,9 @@
 package ua.lviv.bas.cinema.service.booking.ticket;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -50,8 +52,14 @@ public class TicketService {
 		log.info("Created {} tickets for booking {}", savedTickets.size(), booking.getId());
 
 		for (Ticket ticket : savedTickets) {
-			auditService.logChange("Ticket", ticket.getId(), AuditAction.CREATED, null,
-					String.format("Booking: %d, User: %d", booking.getId(), booking.getUser().getId()));
+			Map<String, Object> details = new HashMap<>();
+			details.put("ticketCode", ticket.getUniqueCode());
+			details.put("seatNumber", ticket.getSeatReservation().getSeat().getNumber());
+			details.put("price", ticket.getFinalPrice());
+			details.put("bookingId", booking.getId());
+
+			auditService.logChange("Ticket", ticket.getId(), "Ticket #" + ticket.getUniqueCode(), AuditAction.CREATED,
+					null, details);
 		}
 
 		return savedTickets;
@@ -72,13 +80,22 @@ public class TicketService {
 		Ticket ticket = ticketRepository.findByUniqueCode(ticketCode).orElseThrow(TicketValidationException::notFound);
 
 		TicketStatus oldStatus = ticket.getStatus();
+		String targetInfo = "Ticket #" + ticketCode;
+
 		validationService.validateTicketForEntry(ticket);
 
 		ticket.setStatus(TicketStatus.USED);
 		ticketRepository.save(ticket);
 		log.info("Ticket {} validated and marked as used", ticketCode);
 
-		auditService.logChange("Ticket", ticket.getId(), AuditAction.VALIDATED, oldStatus, TicketStatus.USED);
+		Map<String, Object> oldDetails = new HashMap<>();
+		oldDetails.put("status", oldStatus);
+
+		Map<String, Object> newDetails = new HashMap<>();
+		newDetails.put("status", TicketStatus.USED);
+		newDetails.put("validatedAt", LocalDateTime.now());
+
+		auditService.logChange("Ticket", ticket.getId(), targetInfo, AuditAction.VALIDATED, oldDetails, newDetails);
 	}
 
 	public byte[] generateTicketQRCode(String ticketCode) {

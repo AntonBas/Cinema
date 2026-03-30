@@ -1,8 +1,10 @@
 package ua.lviv.bas.cinema.service.cinema;
 
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
@@ -77,7 +79,12 @@ public class MovieService {
 		Movie saved = movieRepository.save(movie);
 		log.info("Movie created successfully with id: {}", saved.getId());
 
-		auditService.logChange("Movie", saved.getId(), AuditAction.CREATED, null, saved.getTitle());
+		Map<String, Object> details = new HashMap<>();
+		details.put("title", saved.getTitle());
+		details.put("slug", saved.getSlug());
+		details.put("durationMinutes", saved.getDurationMinutes());
+
+		auditService.logChange("Movie", saved.getId(), saved.getTitle(), AuditAction.CREATED, null, details);
 
 		return movieMapper.toMovieDetailResponse(saved);
 	}
@@ -116,7 +123,14 @@ public class MovieService {
 		Movie updated = movieRepository.save(existing);
 		log.info("Movie updated successfully with id: {}", updated.getId());
 
-		auditService.logChange("Movie", id, AuditAction.UPDATED, oldTitle, updated.getTitle());
+		Map<String, Object> oldDetails = new HashMap<>();
+		oldDetails.put("title", oldTitle);
+
+		Map<String, Object> newDetails = new HashMap<>();
+		newDetails.put("title", updated.getTitle());
+		newDetails.put("slug", updated.getSlug());
+
+		auditService.logChange("Movie", id, oldTitle, AuditAction.UPDATED, oldDetails, newDetails);
 
 		return movieMapper.toMovieDetailResponse(updated);
 	}
@@ -137,7 +151,10 @@ public class MovieService {
 		movieRepository.delete(movie);
 		log.info("Movie deleted successfully with id: {}", id);
 
-		auditService.logChange("Movie", id, AuditAction.DELETED, movieTitle, null);
+		Map<String, Object> details = new HashMap<>();
+		details.put("deleted", movieTitle);
+
+		auditService.logChange("Movie", id, movieTitle, AuditAction.DELETED, details, null);
 	}
 
 	@Cacheable(key = "#id")

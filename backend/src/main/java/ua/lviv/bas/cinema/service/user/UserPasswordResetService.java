@@ -1,6 +1,8 @@
 package ua.lviv.bas.cinema.service.user;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -45,7 +47,11 @@ public class UserPasswordResetService {
 		tokenGeneratorService.generatePasswordResetToken(email);
 		log.info("Password reset token generated for: {}", email);
 
-		auditService.logChange("User", user.getId(), AuditAction.PASSWORD_RESET_REQUESTED, null, email);
+		Map<String, Object> details = new HashMap<>();
+		details.put("email", email);
+		details.put("userId", user.getId());
+
+		auditService.logChange("User", user.getId(), email, AuditAction.PASSWORD_RESET_REQUESTED, null, details);
 	}
 
 	@Transactional
@@ -71,6 +77,7 @@ public class UserPasswordResetService {
 			throw new SamePasswordException();
 		}
 
+		String oldPasswordHash = user.getPassword();
 		user.setPassword(passwordEncoder.encode(newPassword));
 		userRepository.save(user);
 
@@ -80,6 +87,15 @@ public class UserPasswordResetService {
 
 		log.info("Password reset successfully for user: {}", user.getEmail());
 
-		auditService.logChange("User", user.getId(), AuditAction.PASSWORD_RESET_COMPLETED, null, user.getEmail());
+		Map<String, Object> oldDetails = new HashMap<>();
+		oldDetails.put("passwordHash", oldPasswordHash);
+		oldDetails.put("userId", user.getId());
+
+		Map<String, Object> newDetails = new HashMap<>();
+		newDetails.put("userId", user.getId());
+		newDetails.put("userEmail", user.getEmail());
+
+		auditService.logChange("User", user.getId(), user.getEmail(), AuditAction.PASSWORD_RESET_COMPLETED, oldDetails,
+				newDetails);
 	}
 }

@@ -2,7 +2,9 @@ package ua.lviv.bas.cinema.service.promotion;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.cache.annotation.CacheConfig;
@@ -67,8 +69,15 @@ public class PromotionService {
 
 		log.info("Promotion claimed successfully. User received {} points", promotion.getBonusPoints());
 
-		auditService.logChange("Promotion", promotion.getId(), AuditAction.CLAIMED, null,
-				String.format("User: %s, Points: %d", user.getEmail(), promotion.getBonusPoints()));
+		Map<String, Object> details = new HashMap<>();
+		details.put("userId", user.getId());
+		details.put("userEmail", user.getEmail());
+		details.put("promotionId", promotion.getId());
+		details.put("promotionTitle", promotion.getTitle());
+		details.put("pointsAwarded", promotion.getBonusPoints());
+
+		auditService.logChange("Promotion", promotion.getId(), promotion.getTitle(), AuditAction.CLAIMED, null,
+				details);
 
 		return promotionMapper.toPromotionResponse(promotion);
 	}

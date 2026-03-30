@@ -1,6 +1,8 @@
 package ua.lviv.bas.cinema.service.user;
 
 import java.time.LocalDate;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
@@ -59,7 +61,12 @@ public class UserService {
 
 		emailTokenGeneratorService.generateVerificationToken(saved.getEmail());
 
-		auditService.logChange("User", saved.getId(), AuditAction.REGISTER, null, saved.getEmail());
+		Map<String, Object> details = new HashMap<>();
+		details.put("email", saved.getEmail());
+		details.put("firstName", saved.getFirstName());
+		details.put("lastName", saved.getLastName());
+
+		auditService.logChange("User", saved.getId(), saved.getEmail(), AuditAction.REGISTER, null, details);
 
 		return userMapper.toUserResponse(saved);
 	}
@@ -67,6 +74,7 @@ public class UserService {
 	@Caching(evict = { @CacheEvict(key = "#userId"), @CacheEvict(allEntries = true) })
 	@Transactional
 	public UserProfileResponse updateUser(Long userId, UserUpdateRequest request) {
+		User oldUser = getUserWithBonusCardById(userId);
 		User user = getUserWithBonusCardById(userId);
 		userMapper.updateUserFromRequest(request, user);
 
@@ -75,6 +83,22 @@ public class UserService {
 		}
 
 		User updated = userRepository.save(user);
+
+		Map<String, Object> oldDetails = new HashMap<>();
+		oldDetails.put("firstName", oldUser.getFirstName());
+		oldDetails.put("lastName", oldUser.getLastName());
+		oldDetails.put("city", oldUser.getCity());
+		oldDetails.put("phoneNumber", oldUser.getPhoneNumber());
+		oldDetails.put("dateOfBirth", oldUser.getDateOfBirth());
+
+		Map<String, Object> newDetails = new HashMap<>();
+		newDetails.put("firstName", updated.getFirstName());
+		newDetails.put("lastName", updated.getLastName());
+		newDetails.put("city", updated.getCity());
+		newDetails.put("phoneNumber", updated.getPhoneNumber());
+		newDetails.put("dateOfBirth", updated.getDateOfBirth());
+
+		auditService.logChange("User", userId, updated.getEmail(), AuditAction.UPDATED, oldDetails, newDetails);
 
 		return userMapper.toUserProfileResponse(updated);
 	}
@@ -91,7 +115,14 @@ public class UserService {
 
 		log.info("Email change requested for user {} to {}", userId, newEmail);
 
-		auditService.logChange("User", userId, AuditAction.EMAIL_CHANGE_REQUESTED, oldEmail, newEmail);
+		Map<String, Object> oldDetails = new HashMap<>();
+		oldDetails.put("email", oldEmail);
+
+		Map<String, Object> newDetails = new HashMap<>();
+		newDetails.put("email", newEmail);
+		newDetails.put("userId", userId);
+
+		auditService.logChange("User", userId, oldEmail, AuditAction.EMAIL_CHANGE_REQUESTED, oldDetails, newDetails);
 	}
 
 	@Caching(evict = { @CacheEvict(key = "#userId"), @CacheEvict(allEntries = true) })
@@ -103,11 +134,19 @@ public class UserService {
 		validateNewPasswordDifferent(user, request.newPassword());
 		validatePasswordLength(request.newPassword());
 
+		String oldPasswordHash = user.getPassword();
 		user.setPassword(passwordEncoder.encode(request.newPassword()));
 		userRepository.save(user);
 		log.info("Password updated for user {}", userId);
 
-		auditService.logChange("User", userId, AuditAction.PASSWORD_CHANGED, null, "***");
+		Map<String, Object> oldDetails = new HashMap<>();
+		oldDetails.put("passwordHash", oldPasswordHash);
+
+		Map<String, Object> newDetails = new HashMap<>();
+		newDetails.put("userId", userId);
+		newDetails.put("userEmail", user.getEmail());
+
+		auditService.logChange("User", userId, user.getEmail(), AuditAction.PASSWORD_CHANGED, oldDetails, newDetails);
 	}
 
 	@Cacheable(key = "#id")

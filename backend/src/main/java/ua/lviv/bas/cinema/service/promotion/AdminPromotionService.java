@@ -1,6 +1,8 @@
 package ua.lviv.bas.cinema.service.promotion;
 
 import java.time.LocalDate;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
@@ -56,7 +58,12 @@ public class AdminPromotionService {
 
 		log.info("Promotion created with ID: {}", promotion.getId());
 
-		auditService.logChange("Promotion", promotion.getId(), AuditAction.CREATED, null, promotion.getTitle());
+		Map<String, Object> details = new HashMap<>();
+		details.put("title", promotion.getTitle());
+		details.put("bonusPoints", promotion.getBonusPoints());
+
+		auditService.logChange("Promotion", promotion.getId(), promotion.getTitle(), AuditAction.CREATED, null,
+				details);
 
 		return promotionMapper.toPromotionResponse(promotion);
 	}
@@ -73,8 +80,16 @@ public class AdminPromotionService {
 
 		promotion = promotionRepository.save(promotion);
 
-		auditService.logChange("Promotion", promotionId, AuditAction.UPDATED, oldPromotion.getTitle(),
-				promotion.getTitle());
+		Map<String, Object> oldDetails = new HashMap<>();
+		oldDetails.put("title", oldPromotion.getTitle());
+		oldDetails.put("bonusPoints", oldPromotion.getBonusPoints());
+
+		Map<String, Object> newDetails = new HashMap<>();
+		newDetails.put("title", promotion.getTitle());
+		newDetails.put("bonusPoints", promotion.getBonusPoints());
+
+		auditService.logChange("Promotion", promotionId, oldPromotion.getTitle(), AuditAction.UPDATED, oldDetails,
+				newDetails);
 
 		return promotionMapper.toPromotionResponse(promotion);
 	}
@@ -96,7 +111,10 @@ public class AdminPromotionService {
 		promotionRepository.delete(promotion);
 		log.info("Promotion with ID: {} has been deleted", promotionId);
 
-		auditService.logChange("Promotion", promotionId, AuditAction.DELETED, promotionTitle, null);
+		Map<String, Object> details = new HashMap<>();
+		details.put("deleted", promotionTitle);
+
+		auditService.logChange("Promotion", promotionId, promotionTitle, AuditAction.DELETED, details, null);
 	}
 
 	@Cacheable(key = "#promotionId")
