@@ -13,8 +13,6 @@ public record AuditLogResponse(
 				"User", "Booking", "Payment", "Refund", "Bonus", "Ticket", "TicketType", "Movie", "Session",
 				"CinemaHall", "Promotion", "BonusRules" }) String entityType,
 
-		@Schema(description = "ID of the entity that was changed", example = "123") Long entityId,
-
 		@Schema(description = "Action that was performed", example = "CREATED", allowableValues = { "CREATED",
 				"UPDATED", "DELETED", "SUCCESS", "FAILED", "REFUND", "CANCELLED", "CONFIRMED", "VALIDATED", "CLAIMED",
 				"TOGGLE_STATUS", "RESET_TO_DEFAULTS", "REJECTED", "RETRY", "REACTIVATED", "REGISTER",

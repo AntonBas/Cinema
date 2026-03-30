@@ -1,7 +1,6 @@
 export interface AuditLogResponse {
     id: number;
     entityType: string;
-    entityId: number;
     action: string;
     oldValue: string | null;
     newValue: string | null;

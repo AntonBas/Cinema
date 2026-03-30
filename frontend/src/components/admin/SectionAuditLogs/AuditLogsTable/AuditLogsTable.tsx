@@ -9,6 +9,60 @@ interface AuditLogsTableProps {
     loading: boolean;
 }
 
+const formatChangeValue = (value: string | null): React.ReactNode => {
+    if (!value) return null;
+
+    try {
+        const parsed = JSON.parse(value);
+
+        if (typeof parsed === 'object' && parsed !== null) {
+            return (
+                <div className={styles.changeObject}>
+                    {Object.entries(parsed).map(([key, val]) => (
+                        <div key={key} className={styles.changeField}>
+                            <span className={styles.changeKey}>{formatFieldName(key)}:</span>
+                            <span className={styles.changeValue}>{String(val)}</span>
+                        </div>
+                    ))}
+                </div>
+            );
+        }
+
+        return <span>{String(parsed)}</span>;
+    } catch {
+        return <span>{value.length > 100 ? value.substring(0, 100) + '...' : value}</span>;
+    }
+};
+
+const formatFieldName = (field: string): string => {
+    const fieldMap: Record<string, string> = {
+        'points': 'Points',
+        'moneyRatio': 'Money Ratio',
+        'minPointsPerTransaction': 'Min Points',
+        'maxPointsPerTransaction': 'Max Points',
+        'bonusType': 'Bonus Type',
+        'active': 'Active',
+        'role': 'Role',
+        'enabled': 'Enabled',
+        'status': 'Status',
+        'title': 'Title',
+        'description': 'Description',
+        'startDate': 'Start Date',
+        'endDate': 'End Date',
+        'displayName': 'Display Name',
+        'priceMultiplier': 'Price Multiplier',
+        'minAge': 'Min Age',
+        'maxAge': 'Max Age',
+        'firstName': 'First Name',
+        'lastName': 'Last Name',
+        'email': 'Email',
+        'phoneNumber': 'Phone Number',
+        'city': 'City',
+        'dateOfBirth': 'Date of Birth'
+    };
+    return fieldMap[field] || field;
+};
+
 export const AuditLogsTable: React.FC<AuditLogsTableProps> = ({ logs, loading }) => {
     if (loading) {
         return (
@@ -46,7 +100,6 @@ export const AuditLogsTable: React.FC<AuditLogsTableProps> = ({ logs, loading })
                         <th className={styles.th}>User</th>
                         <th className={styles.th}>Entity Type</th>
                         <th className={styles.th}>Action</th>
-                        <th className={styles.th}>Entity ID</th>
                         <th className={styles.th}>Changes</th>
                     </tr>
                 </thead>
@@ -63,16 +116,17 @@ export const AuditLogsTable: React.FC<AuditLogsTableProps> = ({ logs, loading })
                                     {getActionDisplay(log.action)}
                                 </Badge>
                             </td>
-                            <td className={styles.td}>{log.entityId}</td>
                             <td className={styles.td}>
                                 {log.oldValue && (
                                     <div className={styles.oldValue}>
-                                        Old: {log.oldValue.length > 100 ? log.oldValue.substring(0, 100) + '...' : log.oldValue}
+                                        <span className={styles.changeLabel}>From:</span>
+                                        {formatChangeValue(log.oldValue)}
                                     </div>
                                 )}
                                 {log.newValue && (
                                     <div className={styles.newValue}>
-                                        New: {log.newValue.length > 100 ? log.newValue.substring(0, 100) + '...' : log.newValue}
+                                        <span className={styles.changeLabel}>To:</span>
+                                        {formatChangeValue(log.newValue)}
                                     </div>
                                 )}
                                 {!log.oldValue && !log.newValue && '-'}
