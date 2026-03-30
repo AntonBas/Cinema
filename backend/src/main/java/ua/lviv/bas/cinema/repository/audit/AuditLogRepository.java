@@ -21,4 +21,9 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
 
 	@Query("SELECT a FROM AuditLog a WHERE a.changedAt BETWEEN :from AND :to")
 	List<AuditLog> findByDateRange(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
+
+	@Query("SELECT a FROM AuditLog a WHERE " + "(:entityType IS NULL OR a.entityType = :entityType) AND "
+			+ "(:action IS NULL OR a.action = :action) AND " + "(:changedBy IS NULL OR a.changedBy = :changedBy)")
+	Page<AuditLog> findByFilters(@Param("entityType") String entityType, @Param("action") String action,
+			@Param("changedBy") String changedBy, Pageable pageable);
 }
