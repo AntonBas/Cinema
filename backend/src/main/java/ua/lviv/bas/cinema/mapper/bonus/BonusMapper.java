@@ -27,4 +27,6 @@ public interface BonusMapper {
 
 	@BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 	void updateBonusRulesFromRequest(BonusRulesRequest request, @MappingTarget BonusRules rules);
+
+	BonusRules toBonusRules(BonusRules rules);
 }

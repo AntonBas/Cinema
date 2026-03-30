@@ -59,8 +59,10 @@ public class AdminBonusService {
 	@Transactional
 	public BonusRulesResponse updateRule(BonusTransactionType type, BonusRulesRequest request) {
 		validateRuleType(type);
-		BonusRules oldRule = getRuleByType(type);
 		BonusRules rules = getRuleByType(type);
+
+		BonusRules oldRule = bonusMapper.toBonusRules(rules);
+
 		bonusMapper.updateBonusRulesFromRequest(request, rules);
 
 		if (type == BonusTransactionType.BOOKING_SPEND) {
