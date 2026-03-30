@@ -16,8 +16,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import lombok.RequiredArgsConstructor;
 import ua.lviv.bas.cinema.domain.audit.AuditLog;
+import ua.lviv.bas.cinema.dto.PageResponse;
 import ua.lviv.bas.cinema.dto.audit.AuditLogResponse;
-import ua.lviv.bas.cinema.dto.shared.PageResponse;
 import ua.lviv.bas.cinema.mapper.audit.AuditLogMapper;
 import ua.lviv.bas.cinema.repository.audit.AuditLogRepository;
 
