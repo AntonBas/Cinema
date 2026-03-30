@@ -1,0 +1,86 @@
+.filtersContainer {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr auto;
+    gap: var(--space-4);
+    margin-bottom: var(--space-8);
+    background: linear-gradient(145deg, #1a2639 0%, #0f172a 100%);
+    padding: var(--space-6);
+    border-radius: var(--radius-xl);
+    border: 1px solid #334155;
+    align-items: flex-end;
+    box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.5);
+}
+
+.searchWrapper {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.searchWrapper label {
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.searchWrapper select,
+.searchWrapper input {
+    padding: var(--space-2) var(--space-3);
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border-medium);
+    border-radius: var(--radius-md);
+    color: var(--color-text-primary);
+    font-size: var(--font-size-sm);
+    width: 100%;
+    transition: all var(--transition-fast);
+}
+
+.searchWrapper select:focus,
+.searchWrapper input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb), 0.2);
+}
+
+.clearButton {
+    padding: var(--space-2) var(--space-4);
+    background: var(--color-error);
+    color: white;
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    font-weight: 500;
+    transition: all var(--transition-normal);
+    height: 38px;
+    align-self: flex-end;
+}
+
+.clearButton:hover {
+    background: var(--color-error-alt);
+    transform: translateY(-2px);
+}
+
+@media (max-width: 1024px) {
+    .filtersContainer {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .clearButton {
+        grid-column: span 2;
+        width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    .filtersContainer {
+        grid-template-columns: 1fr;
+        gap: var(--space-4);
+        padding: var(--space-4);
+    }
+
+    .clearButton {
+        grid-column: span 1;
+    }
+}

@@ -38,6 +38,7 @@ import { SectionUsers } from '@/components/admin/SectionUsers/SectionUsers';
 import SectionBonus from '@/components/admin/SectionBonus/SectionBonus';
 import SectionPromotion from '@/components/admin/SectionPromotion/SectionPromotion';
 import SectionTicketType from '@/components/admin/SectionTicketType/SectionTicketType';
+import { SectionAuditLogs } from '@/components/admin/SectionAuditLogs/SectionAuditLogs';
 
 export const AppRoutes: React.FC = () => {
     return (
@@ -113,6 +114,7 @@ export const AppRoutes: React.FC = () => {
                 <Route path="bonus" element={<SectionBonus />} />
                 <Route path="promotion" element={<SectionPromotion />} />
                 <Route path="ticket-type" element={<SectionTicketType />} />
+                <Route path="audit-logs" element={<SectionAuditLogs />} />
             </Route>
 
             <Route path="/movies" element={<MoviesLayout />}>

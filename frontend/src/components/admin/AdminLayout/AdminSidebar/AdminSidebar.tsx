@@ -25,7 +25,8 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
         { path: '/admin/users', label: 'Users', icon: '👥' },
         { path: '/admin/bonus', label: 'Bonus', icon: '🎁' },
         { path: '/admin/promotion', label: 'Promotion', icon: '📢' },
-        { path: '/admin/ticket-type', label: 'Ticket Types', icon: '🎫' }
+        { path: '/admin/ticket-type', label: 'Ticket Types', icon: '🎫' },
+        { path: '/admin/audit-logs', label: 'Audit Logs', icon: '📋' }
     ];
 
     const handleBackToWebsite = () => {
