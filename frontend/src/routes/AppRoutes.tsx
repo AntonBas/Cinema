@@ -30,7 +30,7 @@ import { PaymentPage } from '@/pages/booking/PaymentPage/PaymentPage';
 import SuccessPage from '@/pages/booking/SuccessPage/SuccessPage';
 
 import { AdminLayout } from '@/components/admin/AdminLayout/AdminLayout';
-import { AdminDashboard } from '@/components/admin/AdminDashboard/AdminDashboard';
+import { SectionDashboard } from '@/components/admin/SectionDashboard/SectionDashboard';
 import { SectionMovies } from '@/components/admin/SectionMovies/SectionMovies';
 import { SectionHalls } from '@/components/admin/SectionHalls/SectionHalls';
 import { SectionSchedule } from '@/components/admin/SectionSchedule/SectionSchedule';
@@ -105,7 +105,7 @@ export const AppRoutes: React.FC = () => {
                 }
             >
                 <Route index element={<Navigate to="dashboard" replace />} />
-                <Route path="dashboard" element={<AdminDashboard />} />
+                <Route path="dashboard" element={<SectionDashboard />} />
                 <Route path="movies" element={<SectionMovies />} />
                 <Route path="halls" element={<SectionHalls />} />
                 <Route path="schedule" element={<SectionSchedule />} />
