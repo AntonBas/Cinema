@@ -63,8 +63,6 @@ public class AdminUserService {
 
 		Map<String, Object> newDetails = new HashMap<>();
 		newDetails.put("role", newRole);
-		newDetails.put("userId", userId);
-		newDetails.put("userEmail", user.getEmail());
 
 		auditService.logChange("User", userId, user.getEmail(), AuditAction.ROLE_CHANGED, oldDetails, newDetails);
 
@@ -90,8 +88,6 @@ public class AdminUserService {
 
 		Map<String, Object> newDetails = new HashMap<>();
 		newDetails.put("enabled", enabled);
-		newDetails.put("userId", userId);
-		newDetails.put("userEmail", user.getEmail());
 
 		auditService.logChange("User", userId, user.getEmail(), AuditAction.STATUS_CHANGED, oldDetails, newDetails);
 
@@ -116,8 +112,6 @@ public class AdminUserService {
 
 		Map<String, Object> newDetails = new HashMap<>();
 		newDetails.put("verificationStatus", newStatus);
-		newDetails.put("userId", userId);
-		newDetails.put("userEmail", user.getEmail());
 
 		auditService.logChange("User", userId, user.getEmail(), AuditAction.VERIFICATION_CHANGED, oldDetails,
 				newDetails);
