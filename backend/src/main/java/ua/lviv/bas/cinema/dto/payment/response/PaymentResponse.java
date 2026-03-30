@@ -40,9 +40,5 @@ public record PaymentResponse(@Schema(description = "Payment ID", example = "123
 
 		@Schema(description = "LiqPay action type", example = "pay") String actionType,
 
-		@Schema(description = "Whether payment can be refunded via API", example = "true") Boolean refundableViaApi,
-
-		@Schema(description = "Created at", example = "2024-01-15T14:30:00") LocalDateTime createdAt,
-
-		@Schema(description = "Updated at", example = "2024-01-15T14:35:00") LocalDateTime updatedAt) {
+		@Schema(description = "Whether payment can be refunded via API", example = "true") Boolean refundableViaApi) {
 }

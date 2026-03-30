@@ -1,11 +1,8 @@
 package ua.lviv.bas.cinema.domain.promotion;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.hibernate.annotations.CreationTimestamp;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -27,6 +24,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import ua.lviv.bas.cinema.domain.audit.AuditableEntity;
 
 @Entity
 @Getter
@@ -35,11 +33,10 @@ import lombok.ToString;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
 @Table(name = "promotions", indexes = { @Index(name = "idx_promotion_active", columnList = "active"),
-		@Index(name = "idx_promotion_dates", columnList = "start_date, end_date"),
-		@Index(name = "idx_promotion_created", columnList = "created_at") })
-public class Promotion {
+		@Index(name = "idx_promotion_dates", columnList = "start_date, end_date") })
+public class Promotion extends AuditableEntity {
 
 	@Id
 	@EqualsAndHashCode.Include
@@ -65,10 +62,6 @@ public class Promotion {
 
 	@Column(name = "end_date")
 	private LocalDate endDate;
-
-	@CreationTimestamp
-	@Column(name = "created_at")
-	private LocalDateTime createdAt;
 
 	@OneToMany(mappedBy = "promotion", fetch = FetchType.LAZY)
 	@Builder.Default

@@ -1,7 +1,6 @@
 package ua.lviv.bas.cinema.dto.bonus.response;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -19,7 +18,5 @@ public record BonusRulesResponse(@Schema(description = "Rule ID", example = "1")
 
 		@Schema(description = "Maximum points that can be used in one transaction", example = "1000") Integer maxPointsPerTransaction,
 
-		@Schema(description = "Whether this bonus rule is active", example = "true") Boolean active,
-
-		@Schema(description = "Last update timestamp", example = "2024-01-15T10:30:00") LocalDateTime updatedAt) {
+		@Schema(description = "Whether this bonus rule is active", example = "true") Boolean active) {
 }

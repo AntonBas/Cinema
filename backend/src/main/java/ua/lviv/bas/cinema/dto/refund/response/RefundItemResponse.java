@@ -1,9 +1,6 @@
 package ua.lviv.bas.cinema.dto.refund.response;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
-
-import com.fasterxml.jackson.annotation.JsonFormat;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -21,7 +18,5 @@ public record RefundItemResponse(@Schema(description = "Refund item ID", example
 
 		@Schema(description = "Bonus points to deduct", example = "90") Integer bonusPointsToDeduct,
 
-		@Schema(description = "Status", example = "COMPLETED") String status,
-
-		@JsonFormat(pattern = "dd.MM.yyyy HH:mm") @Schema(description = "Creation timestamp", example = "15.12.2024 10:15:00") LocalDateTime createdAt) {
+		@Schema(description = "Status", example = "COMPLETED") String status) {
 }

@@ -6,7 +6,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import ua.lviv.bas.cinema.domain.user.VerificationStatus;
 
 public record UserProfileResponse(@Schema(description = "Unique identifier of the user", example = "1") Long id,
-
 		@Schema(description = "User's email address", example = "john.doe@example.com") String email,
 
 		@Schema(description = "User's first name", example = "John") String firstName,

@@ -1,9 +1,6 @@
 package ua.lviv.bas.cinema.domain.bonus;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
-
-import org.hibernate.annotations.UpdateTimestamp;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -22,6 +19,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import ua.lviv.bas.cinema.domain.audit.AuditableEntity;
 
 @Entity
 @Getter
@@ -30,10 +28,10 @@ import lombok.ToString;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
 @Table(name = "bonus_rules", indexes = { @Index(name = "idx_bonus_rules_active", columnList = "active"),
 		@Index(name = "idx_bonus_rules_type", columnList = "bonus_type") })
-public class BonusRules {
+public class BonusRules extends AuditableEntity {
 
 	@Id
 	@EqualsAndHashCode.Include
@@ -60,8 +58,4 @@ public class BonusRules {
 	@Column(name = "active", nullable = false)
 	@Builder.Default
 	private Boolean active = true;
-
-	@UpdateTimestamp
-	@Column(name = "updated_at")
-	private LocalDateTime updatedAt;
 }

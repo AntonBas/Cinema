@@ -33,8 +33,6 @@ public record BookingResponse(@Schema(description = "Booking ID", example = "123
 
 		@Schema(description = "Booking expires at", example = "2024-01-15T14:50:00") LocalDateTime expiresAt,
 
-		@Schema(description = "Created at", example = "2024-01-15T14:30:00") LocalDateTime createdAt,
-
 		@Schema(description = "List of seat reservations") List<SeatReservationInfo> seatReservations) {
 	public record SeatReservationInfo(@Schema(description = "Seat reservation ID", example = "456") Long id,
 

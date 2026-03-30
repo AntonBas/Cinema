@@ -27,6 +27,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import ua.lviv.bas.cinema.domain.audit.AuditableEntity;
 import ua.lviv.bas.cinema.domain.booking.Booking;
 import ua.lviv.bas.cinema.domain.booking.SeatReservation;
 import ua.lviv.bas.cinema.domain.cinema.status.CinemaSessionStatus;
@@ -38,14 +39,14 @@ import ua.lviv.bas.cinema.domain.cinema.status.CinemaSessionStatus;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString(exclude = { "movie", "hall", "bookings", "seatReservations" })
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
 @Table(name = "sessions", indexes = { @Index(name = "idx_session_movie", columnList = "movie_id"),
 		@Index(name = "idx_session_hall", columnList = "hall_id"),
 		@Index(name = "idx_session_time", columnList = "start_time"),
 		@Index(name = "idx_session_hall_time", columnList = "hall_id, start_time"),
 		@Index(name = "idx_session_status", columnList = "status"),
 		@Index(name = "idx_session_status_time", columnList = "status, start_time") })
-public class Session {
+public class Session extends AuditableEntity {
 
 	@Id
 	@EqualsAndHashCode.Include

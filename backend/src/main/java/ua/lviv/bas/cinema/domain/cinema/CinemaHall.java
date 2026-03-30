@@ -25,6 +25,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import ua.lviv.bas.cinema.domain.audit.AuditableEntity;
 
 @Entity
 @Getter
@@ -33,9 +34,9 @@ import lombok.ToString;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString(exclude = { "sessions", "seats" })
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
 @Table(name = "cinema_halls", indexes = @Index(name = "idx_hall_name", columnList = "name"), uniqueConstraints = @UniqueConstraint(columnNames = "name"))
-public class CinemaHall {
+public class CinemaHall extends AuditableEntity {
 
 	@Id
 	@EqualsAndHashCode.Include

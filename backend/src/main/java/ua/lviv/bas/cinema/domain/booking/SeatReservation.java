@@ -24,6 +24,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import ua.lviv.bas.cinema.domain.audit.AuditableEntity;
 import ua.lviv.bas.cinema.domain.booking.status.ReservationStatus;
 import ua.lviv.bas.cinema.domain.cinema.Seat;
 import ua.lviv.bas.cinema.domain.cinema.Session;
@@ -37,7 +38,7 @@ import ua.lviv.bas.cinema.domain.user.User;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString(exclude = { "booking", "seat", "session", "ticketType", "reservedByUser" })
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
 @Table(name = "seat_reservations", indexes = { @Index(name = "idx_seat_reservation_booking", columnList = "booking_id"),
 		@Index(name = "idx_seat_reservation_session", columnList = "session_id"),
 		@Index(name = "idx_seat_reservation_seat", columnList = "seat_id"),
@@ -45,9 +46,8 @@ import ua.lviv.bas.cinema.domain.user.User;
 		@Index(name = "idx_seat_reservation_reserved_until", columnList = "reserved_until"),
 		@Index(name = "idx_seat_reservation_composite", columnList = "session_id, seat_id, status"),
 		@Index(name = "idx_seat_reservation_active", columnList = "status, reserved_until"),
-		@Index(name = "idx_seat_reservation_created", columnList = "reserved_at"),
 		@Index(name = "idx_seat_reservation_user", columnList = "user_id") })
-public class SeatReservation {
+public class SeatReservation extends AuditableEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -81,10 +81,6 @@ public class SeatReservation {
 	@Column(name = "status", nullable = false, length = 20)
 	@Builder.Default
 	private ReservationStatus status = ReservationStatus.PENDING;
-
-	@Column(name = "reserved_at", nullable = false)
-	@Builder.Default
-	private LocalDateTime reservedAt = LocalDateTime.now();
 
 	@NotNull
 	@Column(name = "reserved_until", nullable = false)

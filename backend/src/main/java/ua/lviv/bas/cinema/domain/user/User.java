@@ -5,9 +5,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
-
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -31,6 +28,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import ua.lviv.bas.cinema.domain.audit.AuditableEntity;
 import ua.lviv.bas.cinema.domain.bonus.BonusCard;
 import ua.lviv.bas.cinema.domain.booking.Booking;
 import ua.lviv.bas.cinema.domain.promotion.UserPromotion;
@@ -43,14 +41,13 @@ import ua.lviv.bas.cinema.domain.ticket.Ticket;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString(exclude = { "tickets", "password", "bonusCard", "bookings" })
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
 @Table(name = "users", indexes = { @Index(name = "idx_user_email", columnList = "email"),
 		@Index(name = "idx_user_name", columnList = "first_name,last_name"),
 		@Index(name = "idx_user_status", columnList = "verification_status"),
 		@Index(name = "idx_user_role_status", columnList = "user_role, verification_status, enabled"),
-		@Index(name = "idx_user_updated_at", columnList = "updated_at DESC"),
 		@Index(name = "idx_user_date_of_birth", columnList = "date_of_birth") })
-public class User {
+public class User extends AuditableEntity {
 
 	@Id
 	@EqualsAndHashCode.Include
@@ -91,14 +88,6 @@ public class User {
 	@NotBlank
 	@Column(nullable = false, length = 72)
 	private String password;
-
-	@CreationTimestamp
-	@Column(name = "created_at", updatable = false)
-	private LocalDateTime createdAt;
-
-	@UpdateTimestamp
-	@Column(name = "updated_at")
-	private LocalDateTime updatedAt;
 
 	@OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
 	@Builder.Default

@@ -5,8 +5,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.hibernate.annotations.CreationTimestamp;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -30,6 +28,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import ua.lviv.bas.cinema.domain.audit.AuditableEntity;
 import ua.lviv.bas.cinema.domain.bonus.BonusTransaction;
 import ua.lviv.bas.cinema.domain.cinema.Session;
 import ua.lviv.bas.cinema.domain.ticket.Ticket;
@@ -42,14 +41,13 @@ import ua.lviv.bas.cinema.domain.user.User;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString(exclude = { "user", "session", "seatReservations", "tickets", "bonusTransactions" })
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
 @Table(name = "bookings", indexes = { @Index(name = "idx_booking_user", columnList = "user_id"),
 		@Index(name = "idx_booking_session", columnList = "session_id"),
 		@Index(name = "idx_booking_status", columnList = "status"),
 		@Index(name = "idx_booking_expires", columnList = "expires_at"),
-		@Index(name = "idx_booking_created", columnList = "created_at"),
 		@Index(name = "idx_booking_final_price", columnList = "final_price") })
-public class Booking {
+public class Booking extends AuditableEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -104,10 +102,6 @@ public class Booking {
 	@NotNull
 	@Column(name = "expires_at", nullable = false)
 	private LocalDateTime expiresAt;
-
-	@CreationTimestamp
-	@Column(name = "created_at", updatable = false)
-	private LocalDateTime createdAt;
 
 	@OneToOne(mappedBy = "booking", fetch = FetchType.LAZY)
 	private Payment payment;

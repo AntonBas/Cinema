@@ -36,10 +36,6 @@ public record RefundDetailsResponse(@Schema(description = "Refund ID", example =
 
 		@JsonFormat(pattern = "dd.MM.yyyy HH:mm") @Schema(description = "Processing timestamp", example = "15.12.2024 10:20:00") LocalDateTime processedAt,
 
-		@JsonFormat(pattern = "dd.MM.yyyy HH:mm") @Schema(description = "Creation timestamp", example = "15.12.2024 10:15:00") LocalDateTime createdAt,
-
-		@JsonFormat(pattern = "dd.MM.yyyy HH:mm") @Schema(description = "Last update timestamp", example = "15.12.2024 10:20:00") LocalDateTime updatedAt,
-
 		@Schema(description = "Refund items with details") List<RefundItemDetails> items,
 
 		@Schema(description = "Bonus transactions") List<BonusTransactionInfo> bonusTransactions,
@@ -72,9 +68,7 @@ public record RefundDetailsResponse(@Schema(description = "Refund ID", example =
 
 			@Schema(description = "Bonus points to refund", example = "90") Integer bonusPointsToDeduct,
 
-			@Schema(description = "Status", example = "COMPLETED") String status,
-
-			@Schema(description = "Creation timestamp", example = "15.12.2024 10:15:00") LocalDateTime createdAt) {
+			@Schema(description = "Status", example = "COMPLETED") String status) {
 	}
 
 	public record BonusTransactionInfo(@Schema(description = "Transaction ID", example = "10") Long id,

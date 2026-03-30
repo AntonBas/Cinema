@@ -3,8 +3,6 @@ package ua.lviv.bas.cinema.domain.ticket;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-import org.hibernate.annotations.CreationTimestamp;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -26,6 +24,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import ua.lviv.bas.cinema.domain.audit.AuditableEntity;
 import ua.lviv.bas.cinema.domain.booking.Booking;
 import ua.lviv.bas.cinema.domain.booking.Payment;
 import ua.lviv.bas.cinema.domain.booking.Refund;
@@ -39,7 +38,7 @@ import ua.lviv.bas.cinema.domain.user.User;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString(exclude = { "booking", "ticketType", "payment", "refund", "user", "seatReservation" })
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
 @Table(name = "tickets", indexes = { @Index(name = "idx_ticket_booking", columnList = "booking_id"),
 		@Index(name = "idx_ticket_status", columnList = "status"),
 		@Index(name = "idx_ticket_purchase_time", columnList = "purchase_time"),
@@ -47,7 +46,7 @@ import ua.lviv.bas.cinema.domain.user.User;
 		@Index(name = "idx_ticket_unique_code", columnList = "unique_code", unique = true),
 		@Index(name = "idx_ticket_user", columnList = "user_id"),
 		@Index(name = "idx_ticket_seat_reservation", columnList = "seat_reservation_id") })
-public class Ticket {
+public class Ticket extends AuditableEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -112,10 +111,6 @@ public class Ticket {
 	@Column(name = "status", nullable = false, length = 20)
 	@Builder.Default
 	private TicketStatus status = TicketStatus.ACTIVE;
-
-	@CreationTimestamp
-	@Column(name = "created_at", updatable = false)
-	private LocalDateTime createdAt;
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "refund_id")

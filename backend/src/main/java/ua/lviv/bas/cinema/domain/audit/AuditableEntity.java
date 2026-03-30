@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
+import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import jakarta.persistence.Column;
@@ -20,7 +21,7 @@ import lombok.Setter;
 public abstract class AuditableEntity {
 
 	@CreatedBy
-	@Column(name = "create_by", updatable = false)
+	@Column(name = "created_by", updatable = false)
 	private String createdBy;
 
 	@CreatedDate
@@ -31,7 +32,7 @@ public abstract class AuditableEntity {
 	@Column(name = "last_modified_by")
 	private String lastModifiedBy;
 
-	@LastModifiedBy
-	@Column(name = "last_modified_by")
+	@LastModifiedDate
+	@Column(name = "last_modified_date")
 	private LocalDateTime lastModifiedDate;
 }

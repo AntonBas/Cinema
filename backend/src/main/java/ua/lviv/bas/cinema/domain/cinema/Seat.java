@@ -26,6 +26,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import ua.lviv.bas.cinema.domain.audit.AuditableEntity;
 import ua.lviv.bas.cinema.domain.booking.SeatReservation;
 import ua.lviv.bas.cinema.domain.cinema.enums.SeatType;
 
@@ -36,14 +37,14 @@ import ua.lviv.bas.cinema.domain.cinema.enums.SeatType;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString(exclude = { "hall", "seatReservations" })
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
 @Table(name = "seats", indexes = { @Index(name = "idx_seat_hall", columnList = "hall_id"),
 		@Index(name = "idx_seat_hall_type", columnList = "hall_id, seat_type"),
 		@Index(name = "idx_seat_active", columnList = "active"),
 		@Index(name = "idx_seat_hall_active", columnList = "hall_id, active"),
 		@Index(name = "idx_seat_position", columnList = "hall_id, seat_row, number") }, uniqueConstraints = {
 				@UniqueConstraint(columnNames = { "hall_id", "seat_row", "number" }) })
-public class Seat {
+public class Seat extends AuditableEntity {
 
 	@Id
 	@EqualsAndHashCode.Include

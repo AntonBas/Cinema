@@ -1,12 +1,8 @@
 package ua.lviv.bas.cinema.domain.booking;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -32,6 +28,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import ua.lviv.bas.cinema.domain.audit.AuditableEntity;
 import ua.lviv.bas.cinema.domain.bonus.BonusTransaction;
 import ua.lviv.bas.cinema.domain.booking.status.RefundStatus;
 import ua.lviv.bas.cinema.domain.user.User;
@@ -43,13 +40,12 @@ import ua.lviv.bas.cinema.domain.user.User;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString(exclude = { "payment", "items", "bonusTransactions" })
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
 @Table(name = "refunds", indexes = { @Index(name = "idx_refund_payment", columnList = "payment_id"),
 		@Index(name = "idx_refund_status", columnList = "status"),
-		@Index(name = "idx_refund_created", columnList = "created_at"),
 		@Index(name = "idx_refund_user", columnList = "user_id"),
 		@Index(name = "idx_refund_user_status", columnList = "user_id, status") })
-public class Refund {
+public class Refund extends AuditableEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -92,19 +88,4 @@ public class Refund {
 	@Column(name = "status", nullable = false, length = 20)
 	@Builder.Default
 	private RefundStatus status = RefundStatus.PENDING;
-
-	@Size(max = 100)
-	@Column(name = "processed_by", length = 100)
-	private String processedBy;
-
-	@Column(name = "processed_at")
-	private LocalDateTime processedAt;
-
-	@CreationTimestamp
-	@Column(name = "created_at", updatable = false)
-	private LocalDateTime createdAt;
-
-	@UpdateTimestamp
-	@Column(name = "updated_at")
-	private LocalDateTime updatedAt;
 }

@@ -33,6 +33,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import ua.lviv.bas.cinema.domain.audit.AuditableEntity;
 import ua.lviv.bas.cinema.domain.cinema.enums.AgeRating;
 import ua.lviv.bas.cinema.domain.cinema.status.MovieStatus;
 
@@ -43,13 +44,13 @@ import ua.lviv.bas.cinema.domain.cinema.status.MovieStatus;
 @AllArgsConstructor
 @Builder
 @ToString(exclude = { "sessions", "actors", "directors", "screenwriters", "genres" })
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
 @Table(name = "movies", indexes = { @Index(name = "idx_movie_title", columnList = "title"),
 		@Index(name = "idx_movie_status", columnList = "status"),
 		@Index(name = "idx_movie_release_date", columnList = "release_date"),
 		@Index(name = "idx_movie_slug", columnList = "slug"),
 		@Index(name = "idx_movie_active_dates", columnList = "release_date, end_showing_date") })
-public class Movie {
+public class Movie extends AuditableEntity {
 
 	@Id
 	@EqualsAndHashCode.Include
