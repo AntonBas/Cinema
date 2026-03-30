@@ -9,71 +9,21 @@ interface AuditLogsTableProps {
     loading: boolean;
 }
 
-const extractTargetInfo = (log: AuditLogResponse): string => {
-    if (log.entityType === 'User') {
-        if (log.oldValue && log.oldValue.includes(' - ')) {
-            const match = log.oldValue.match(/^([^@]+@[^ ]+)/);
-            if (match) return match[1];
-        }
-        if (log.newValue && log.newValue.includes(' - ')) {
-            const match = log.newValue.match(/^([^@]+@[^ ]+)/);
-            if (match) return match[1];
-        }
-        return 'User';
-    }
-    if (log.entityType === 'Movie') return 'Movie';
-    if (log.entityType === 'Session') return 'Session';
-    if (log.entityType === 'CinemaHall') return 'Cinema Hall';
-    if (log.entityType === 'BonusRules') return 'Bonus Rules';
-    if (log.entityType === 'Ticket') return 'Ticket';
-    if (log.entityType === 'Payment') return 'Payment';
-    if (log.entityType === 'Refund') return 'Refund';
-    if (log.entityType === 'Promotion') return 'Promotion';
-    if (log.entityType === 'TicketType') return 'Ticket Type';
-    return '-';
-};
+const formatDetails = (log: AuditLogResponse): React.ReactNode => {
+    if (!log.details || log.details.length === 0) return null;
 
-const formatChangeValue = (value: string | null): React.ReactNode => {
-    if (!value) return null;
-
-    try {
-        const parsed = JSON.parse(value);
-
-        if (typeof parsed === 'object' && parsed !== null) {
-            const filteredEntries = Object.entries(parsed).filter(([key]) => key !== 'value');
-
-            if (filteredEntries.length === 0) {
-                const valueField = parsed.value;
-                if (valueField) return <span>{String(valueField)}</span>;
-                return null;
-            }
-
-            return (
-                <div className={styles.changeObject}>
-                    {filteredEntries.map(([key, val]) => (
-                        <div key={key} className={styles.changeField}>
-                            <span className={styles.changeKey}>{formatFieldName(key)}:</span>
-                            <span className={styles.changeValue}>{String(val)}</span>
-                        </div>
-                    ))}
+    return (
+        <div className={styles.changeObject}>
+            {log.details.map((detail, idx) => (
+                <div key={idx} className={styles.changeField}>
+                    <span className={styles.changeKey}>{formatFieldName(detail.fieldName)}:</span>
+                    <span className={styles.oldValue}>{detail.oldValue || 'null'}</span>
+                    {' → '}
+                    <span className={styles.newValue}>{detail.newValue || 'null'}</span>
                 </div>
-            );
-        }
-
-        if (typeof parsed === 'string') {
-            return <span>{parsed}</span>;
-        }
-
-        return <span>{String(parsed)}</span>;
-    } catch {
-        if (value.includes(' - ')) {
-            const parts = value.split(' - ');
-            if (parts.length > 1) {
-                return <span>{parts.slice(1).join(' - ')}</span>;
-            }
-        }
-        return <span>{value.length > 100 ? value.substring(0, 100) + '...' : value}</span>;
-    }
+            ))}
+        </div>
+    );
 };
 
 const formatFieldName = (field: string): string => {
@@ -154,26 +104,14 @@ export const AuditLogsTable: React.FC<AuditLogsTableProps> = ({ logs, loading })
                             </td>
                             <td className={styles.td}>{log.changedBy}</td>
                             <td className={styles.td}>{getEntityTypeDisplay(log.entityType)}</td>
-                            <td className={styles.td}>{extractTargetInfo(log)}</td>
+                            <td className={styles.td}>{log.targetInfo}</td>
                             <td className={styles.td}>
                                 <Badge variant={getBadgeVariant(log.action)}>
                                     {getActionDisplay(log.action)}
                                 </Badge>
                             </td>
                             <td className={styles.td}>
-                                {log.oldValue && formatChangeValue(log.oldValue) && (
-                                    <div className={styles.oldValue}>
-                                        <span className={styles.changeLabel}>From:</span>
-                                        {formatChangeValue(log.oldValue)}
-                                    </div>
-                                )}
-                                {log.newValue && formatChangeValue(log.newValue) && (
-                                    <div className={styles.newValue}>
-                                        <span className={styles.changeLabel}>To:</span>
-                                        {formatChangeValue(log.newValue)}
-                                    </div>
-                                )}
-                                {(!log.oldValue || !formatChangeValue(log.oldValue)) && (!log.newValue || !formatChangeValue(log.newValue)) && '-'}
+                                {formatDetails(log)}
                             </td>
                         </tr>
                     ))}

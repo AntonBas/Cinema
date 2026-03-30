@@ -1,11 +1,18 @@
 export interface AuditLogResponse {
     id: number;
     entityType: string;
+    entityId: number;
+    targetInfo: string;
     action: string;
-    oldValue: string | null;
-    newValue: string | null;
     changedBy: string;
     changedAt: string;
+    details: AuditLogDetail[];
+}
+
+export interface AuditLogDetail {
+    fieldName: string;
+    oldValue: string | null;
+    newValue: string | null;
 }
 
 export const EntityTypeDisplay: Record<string, string> = {

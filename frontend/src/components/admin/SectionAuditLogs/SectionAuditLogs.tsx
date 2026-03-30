@@ -1,3 +1,4 @@
+// src/components/admin/SectionAuditLogs/SectionAuditLogs.tsx
 import React, { useState, useEffect } from 'react';
 import { useAuditLogs } from '@/hooks/features/audit/useAuditLogs';
 import { AuditLogsFilters } from './AuditLogsFilters/AuditLogsFilters';
