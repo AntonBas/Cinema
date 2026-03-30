@@ -24,7 +24,7 @@ import ua.lviv.bas.cinema.domain.ticket.TicketStatus;
 import ua.lviv.bas.cinema.domain.user.User;
 import ua.lviv.bas.cinema.dto.PageResponse;
 import ua.lviv.bas.cinema.dto.ticket.request.TicketFilterRequest;
-import ua.lviv.bas.cinema.dto.ticketType.response.TicketResponse;
+import ua.lviv.bas.cinema.dto.ticket.response.TicketResponse;
 import ua.lviv.bas.cinema.service.booking.ticket.TicketRetrievalService;
 import ua.lviv.bas.cinema.service.booking.ticket.TicketService;
 
