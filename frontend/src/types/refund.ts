@@ -44,7 +44,6 @@ export interface RefundResponse {
     reason?: string;
     processedBy?: string;
     processedAt?: string;
-    createdAt: string;
     paymentId: number;
     paymentMethod: string;
     items: RefundItemResponse[];
@@ -61,7 +60,6 @@ export interface RefundItemResponse {
     refundAmount: string;
     bonusPointsToDeduct: number;
     status: string;
-    createdAt: string;
 }
 
 export interface RefundDetailsResponse {
@@ -79,10 +77,8 @@ export interface RefundDetailsResponse {
     reason?: string;
     processedBy?: string;
     processedAt?: string;
-    createdAt: string;
-    updatedAt: string;
     items: RefundItemDetails[];
-    bonusTransactions: RefundBonusTransactionResponse[];
+    bonusTransactions: BonusTransactionInfo[];
     paymentStatus: string;
     bonusStatus: string;
 }
@@ -101,10 +97,9 @@ export interface RefundItemDetails {
     bonusPointsUsed: number;
     bonusPointsToDeduct: number;
     status: string;
-    createdAt: string;
 }
 
-export interface RefundBonusTransactionResponse {
+export interface BonusTransactionInfo {
     id: number;
     points: number;
     type: string;

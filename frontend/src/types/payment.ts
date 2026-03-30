@@ -35,8 +35,6 @@ export interface PaymentResponse {
     senderCardMask?: string;
     actionType?: string;
     refundableViaApi?: boolean;
-    createdAt: string;
-    updatedAt: string;
 }
 
 export const PaymentStatusDisplay: Record<PaymentStatus, string> = {

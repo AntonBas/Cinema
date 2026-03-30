@@ -25,7 +25,6 @@ export interface BookingResponse {
     finalPrice: string;
     liqpayOrderId?: string;
     expiresAt: string;
-    createdAt: string;
     seatReservations: SeatReservationInfo[];
 }
 

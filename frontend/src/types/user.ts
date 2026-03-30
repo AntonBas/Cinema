@@ -23,7 +23,6 @@ export interface UserResponse {
     userRole: UserRole;
     enabled: boolean;
     verificationStatus: VerificationStatus;
-    createdAt: string;
 }
 
 export interface AdminUserListResponse {

@@ -45,7 +45,6 @@ export interface BonusRulesResponse {
     minPointsPerTransaction?: number | null;
     maxPointsPerTransaction?: number | null;
     active: boolean;
-    updatedAt: string;
 }
 
 export interface BonusTransactionResponse {
