@@ -81,7 +81,6 @@ public class MovieController {
 				.body(PageResponse.from(result));
 	}
 
-//	@RateLimit(value = 100, duration = 1, key = "ip")
 	@GetMapping("/{id}/poster")
 	@Operation(summary = "Get movie poster", description = "Retrieves the poster image for a specific movie")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Poster retrieved successfully"),
