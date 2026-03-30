@@ -22,6 +22,7 @@ import ua.lviv.bas.cinema.exception.domain.financial.bonus.BonusRuleNotFoundExce
 import ua.lviv.bas.cinema.exception.domain.financial.bonus.InvalidMinMaxPointsException;
 import ua.lviv.bas.cinema.mapper.bonus.BonusMapper;
 import ua.lviv.bas.cinema.repository.bonus.BonusRulesRepository;
+import ua.lviv.bas.cinema.service.shared.AuditService;
 
 @Slf4j
 @Service
@@ -32,6 +33,7 @@ public class AdminBonusService {
 	private final BonusRulesRepository bonusRulesRepository;
 	private final BonusMapper bonusMapper;
 	private final BonusProperties bonusProperties;
+	private final AuditService auditService;
 
 	private static final Set<BonusTransactionType> RULE_TYPES = Set.of(BonusTransactionType.WELCOME_BONUS,
 			BonusTransactionType.BIRTHDAY_BONUS, BonusTransactionType.BOOKING_SPEND,
@@ -56,6 +58,7 @@ public class AdminBonusService {
 	@Transactional
 	public BonusRulesResponse updateRule(BonusTransactionType type, BonusRulesRequest request) {
 		validateRuleType(type);
+		BonusRules oldRule = getRuleByType(type);
 		BonusRules rules = getRuleByType(type);
 		bonusMapper.updateBonusRulesFromRequest(request, rules);
 
@@ -65,6 +68,9 @@ public class AdminBonusService {
 
 		BonusRules updated = bonusRulesRepository.save(rules);
 		log.info("Updated bonus rule: {}", type);
+
+		auditService.logChange("BonusRules", updated.getId(), "UPDATE", oldRule, updated);
+
 		return bonusMapper.toBonusRulesResponse(updated);
 	}
 
@@ -72,6 +78,7 @@ public class AdminBonusService {
 	@Transactional
 	public BonusRulesResponse resetRuleToDefaults(BonusTransactionType type) {
 		validateRuleType(type);
+		BonusRules oldRule = getRuleByType(type);
 		BonusRules rules = getRuleByType(type);
 		BonusProperties.RuleDefaults defaults = bonusProperties.getDefaults().get(type);
 
@@ -87,6 +94,9 @@ public class AdminBonusService {
 		}
 
 		BonusRules updated = bonusRulesRepository.save(rules);
+
+		auditService.logChange("BonusRules", updated.getId(), "RESET_TO_DEFAULTS", oldRule, updated);
+
 		return bonusMapper.toBonusRulesResponse(updated);
 	}
 

@@ -18,6 +18,7 @@ import ua.lviv.bas.cinema.exception.domain.user.EmailNotVerifiedException;
 import ua.lviv.bas.cinema.repository.token.EmailTokenRepository;
 import ua.lviv.bas.cinema.repository.user.UserRepository;
 import ua.lviv.bas.cinema.service.notification.EmailTokenGeneratorService;
+import ua.lviv.bas.cinema.service.shared.AuditService;
 
 @Slf4j
 @Service
@@ -28,6 +29,7 @@ public class UserPasswordResetService {
 	private final UserRepository userRepository;
 	private final PasswordEncoder passwordEncoder;
 	private final EmailTokenRepository tokenRepository;
+	private final AuditService auditService;
 
 	public void requestPasswordReset(String email) {
 		log.info("Password reset requested for email: {}", email);
@@ -41,6 +43,8 @@ public class UserPasswordResetService {
 
 		tokenGeneratorService.generatePasswordResetToken(email);
 		log.info("Password reset token generated for: {}", email);
+
+		auditService.logChange("User", user.getId(), "PASSWORD_RESET_REQUESTED", null, email);
 	}
 
 	@Transactional
@@ -74,5 +78,7 @@ public class UserPasswordResetService {
 		tokenRepository.save(resetToken);
 
 		log.info("Password reset successfully for user: {}", user.getEmail());
+
+		auditService.logChange("User", user.getId(), "PASSWORD_RESET_COMPLETED", null, user.getEmail());
 	}
 }

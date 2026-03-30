@@ -20,6 +20,7 @@ import ua.lviv.bas.cinema.domain.ticket.TicketStatus;
 import ua.lviv.bas.cinema.exception.domain.ticket.TicketValidationException;
 import ua.lviv.bas.cinema.repository.ticket.TicketRepository;
 import ua.lviv.bas.cinema.service.integration.qr.QRCodeService;
+import ua.lviv.bas.cinema.service.shared.AuditService;
 import ua.lviv.bas.cinema.service.shared.NumberGeneratorService;
 
 @Slf4j
@@ -31,6 +32,7 @@ public class TicketService {
 	private final TicketValidationService validationService;
 	private final QRCodeService qrCodeService;
 	private final NumberGeneratorService numberGenerator;
+	private final AuditService auditService;
 
 	@Value("${app.ticket.qr.size:200}")
 	private int qrCodeSize;
@@ -45,6 +47,12 @@ public class TicketService {
 
 		List<Ticket> savedTickets = ticketRepository.saveAll(tickets);
 		log.info("Created {} tickets for booking {}", savedTickets.size(), booking.getId());
+
+		for (Ticket ticket : savedTickets) {
+			auditService.logChange("Ticket", ticket.getId(), "CREATED", null,
+					String.format("Booking: %d, User: %d", booking.getId(), booking.getUser().getId()));
+		}
+
 		return savedTickets;
 	}
 
@@ -62,11 +70,14 @@ public class TicketService {
 	public void validateTicket(String ticketCode) {
 		Ticket ticket = ticketRepository.findByUniqueCode(ticketCode).orElseThrow(TicketValidationException::notFound);
 
+		TicketStatus oldStatus = ticket.getStatus();
 		validationService.validateTicketForEntry(ticket);
 
 		ticket.setStatus(TicketStatus.USED);
 		ticketRepository.save(ticket);
 		log.info("Ticket {} validated and marked as used", ticketCode);
+
+		auditService.logChange("Ticket", ticket.getId(), "VALIDATED", oldStatus, TicketStatus.USED);
 	}
 
 	public byte[] generateTicketQRCode(String ticketCode) {

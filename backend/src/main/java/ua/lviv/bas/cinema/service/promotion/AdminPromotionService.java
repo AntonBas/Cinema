@@ -26,6 +26,7 @@ import ua.lviv.bas.cinema.exception.domain.financial.promotion.PromotionNotFound
 import ua.lviv.bas.cinema.mapper.promotion.PromotionMapper;
 import ua.lviv.bas.cinema.repository.promotion.PromotionRepository;
 import ua.lviv.bas.cinema.repository.promotion.projection.PromotionAdminProjection;
+import ua.lviv.bas.cinema.service.shared.AuditService;
 
 @Slf4j
 @Service
@@ -36,6 +37,7 @@ public class AdminPromotionService {
 
 	private final PromotionRepository promotionRepository;
 	private final PromotionMapper promotionMapper;
+	private final AuditService auditService;
 
 	@Caching(evict = { @CacheEvict(key = "'all-' + 0 + '-' + 20"), @CacheEvict(allEntries = true) })
 	@Transactional
@@ -52,6 +54,9 @@ public class AdminPromotionService {
 		promotion = promotionRepository.save(promotion);
 
 		log.info("Promotion created with ID: {}", promotion.getId());
+
+		auditService.logChange("Promotion", promotion.getId(), "CREATED", null, promotion.getTitle());
+
 		return promotionMapper.toPromotionResponse(promotion);
 	}
 
@@ -61,10 +66,14 @@ public class AdminPromotionService {
 	public PromotionResponse updatePromotion(Long promotionId, PromotionUpdateRequest request) {
 		log.info("Updating promotion with ID: {}", promotionId);
 
+		Promotion oldPromotion = findByIdOrThrow(promotionId);
 		Promotion promotion = findByIdOrThrow(promotionId);
 		promotionMapper.updatePromotionFromRequest(promotion, request);
 
 		promotion = promotionRepository.save(promotion);
+
+		auditService.logChange("Promotion", promotionId, "UPDATED", oldPromotion.getTitle(), promotion.getTitle());
+
 		return promotionMapper.toPromotionResponse(promotion);
 	}
 
@@ -81,8 +90,11 @@ public class AdminPromotionService {
 			throw new PromotionHasRedemptionsException(promotionId, redemptionCount);
 		}
 
+		String promotionTitle = promotion.getTitle();
 		promotionRepository.delete(promotion);
 		log.info("Promotion with ID: {} has been deleted", promotionId);
+
+		auditService.logChange("Promotion", promotionId, "DELETED", promotionTitle, null);
 	}
 
 	@Cacheable(key = "#promotionId")

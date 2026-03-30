@@ -25,6 +25,7 @@ import ua.lviv.bas.cinema.repository.booking.BookingRepository;
 import ua.lviv.bas.cinema.repository.booking.SeatReservationRepository;
 import ua.lviv.bas.cinema.service.bonus.BonusService;
 import ua.lviv.bas.cinema.service.booking.creation.BookingValidator;
+import ua.lviv.bas.cinema.service.shared.AuditService;
 
 @Slf4j
 @Service
@@ -36,6 +37,7 @@ public class BookingManagementService {
 	private final BookingMapper bookingMapper;
 	private final BookingValidator bookingValidator;
 	private final BonusService bonusService;
+	private final AuditService auditService;
 
 	@Cacheable(value = "bookings", key = "#bookingId + '-' + #user.id")
 	public BookingResponse getBookingById(Long bookingId, User user) {
@@ -69,6 +71,7 @@ public class BookingManagementService {
 			throw BookingValidationException.cannotCancel();
 		}
 
+		BookingStatus oldStatus = booking.getStatus();
 		booking.setStatus(BookingStatus.CANCELLED);
 
 		booking.getSeatReservations().forEach(sr -> {
@@ -84,6 +87,8 @@ public class BookingManagementService {
 
 		bookingRepository.save(booking);
 		log.info("Cancelled booking {} for user {}", bookingId, user.getId());
+
+		auditService.logChange("Booking", bookingId, "CANCELLED", oldStatus, BookingStatus.CANCELLED);
 	}
 
 	@Caching(evict = { @CacheEvict(value = "bookings", key = "#bookingId + '-' + #booking.user.id"),
@@ -99,9 +104,12 @@ public class BookingManagementService {
 			throw BookingOperationException.onlyPendingCanBeConfirmed();
 		}
 
+		BookingStatus oldStatus = booking.getStatus();
 		booking.setStatus(BookingStatus.CONFIRMED);
 		booking.getSeatReservations().forEach(sr -> sr.setStatus(ReservationStatus.CONFIRMED));
 		bookingRepository.save(booking);
+
+		auditService.logChange("Booking", bookingId, "CONFIRMED", oldStatus, BookingStatus.CONFIRMED);
 	}
 
 	@Transactional(readOnly = true)

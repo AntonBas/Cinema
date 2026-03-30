@@ -31,6 +31,7 @@ import ua.lviv.bas.cinema.repository.ticket.TicketRepository;
 import ua.lviv.bas.cinema.repository.ticket.TicketTypeRepository;
 import ua.lviv.bas.cinema.repository.ticket.projection.TicketTypeAdminProjection;
 import ua.lviv.bas.cinema.repository.ticket.projection.TicketTypeUserProjection;
+import ua.lviv.bas.cinema.service.shared.AuditService;
 
 @Slf4j
 @Service
@@ -43,6 +44,7 @@ public class TicketTypeService {
 	private final TicketRepository ticketRepository;
 	private final TicketTypeMapper ticketTypeMapper;
 	private final TicketTypeValidationService validationService;
+	private final AuditService auditService;
 
 	@CacheEvict(allEntries = true)
 	@Transactional
@@ -59,6 +61,9 @@ public class TicketTypeService {
 		TicketType saved = ticketTypeRepository.save(ticketType);
 
 		log.debug("Ticket type created with ID: {}", saved.getId());
+
+		auditService.logChange("TicketType", saved.getId(), "CREATED", null, request.displayName());
+
 		return ticketTypeMapper.toTicketTypeResponse(saved);
 	}
 
@@ -93,6 +98,7 @@ public class TicketTypeService {
 	public TicketTypeResponse updateTicketType(Long id, TicketTypeUpdateRequest request) {
 		log.info("Updating ticket type with id: {}", id);
 
+		TicketType oldTicketType = findTicketTypeById(id);
 		TicketType ticketType = findTicketTypeById(id);
 
 		if (request.displayName() != null && !request.displayName().equals(ticketType.getDisplayName())
@@ -110,6 +116,9 @@ public class TicketTypeService {
 		TicketType updated = ticketTypeRepository.save(ticketType);
 
 		log.debug("Ticket type updated with ID: {}", updated.getId());
+
+		auditService.logChange("TicketType", id, "UPDATED", oldTicketType.getDisplayName(), updated.getDisplayName());
+
 		return ticketTypeMapper.toTicketTypeResponse(updated);
 	}
 
@@ -127,6 +136,8 @@ public class TicketTypeService {
 
 		ticketTypeRepository.delete(ticketType);
 		log.debug("Ticket type deleted with ID: {}", id);
+
+		auditService.logChange("TicketType", id, "DELETED", ticketType.getDisplayName(), null);
 	}
 
 	@Caching(evict = { @CacheEvict(key = "#id"), @CacheEvict(key = "'user-active'"), @CacheEvict(allEntries = true) })
@@ -135,6 +146,7 @@ public class TicketTypeService {
 		log.info("Toggling active status for ticket type with id: {}", id);
 
 		TicketType ticketType = findTicketTypeById(id);
+		boolean oldStatus = ticketType.isActive();
 
 		if (ticketType.isActive() && hasFutureTickets(id)) {
 			throw new TicketTypeInUseException(id,
@@ -145,6 +157,9 @@ public class TicketTypeService {
 		TicketType updated = ticketTypeRepository.save(ticketType);
 
 		log.debug("Ticket type status toggled to: {} for ID: {}", updated.isActive(), id);
+
+		auditService.logChange("TicketType", id, "TOGGLE_STATUS", oldStatus, updated.isActive());
+
 		return ticketTypeMapper.toTicketTypeResponse(updated);
 	}
 

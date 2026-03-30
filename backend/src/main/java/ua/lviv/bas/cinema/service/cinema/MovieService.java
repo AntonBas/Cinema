@@ -34,6 +34,7 @@ import ua.lviv.bas.cinema.repository.cinema.PersonRepository;
 import ua.lviv.bas.cinema.scheduler.MovieScheduler;
 import ua.lviv.bas.cinema.service.integration.file.PosterService;
 import ua.lviv.bas.cinema.service.integration.slug.SlugService;
+import ua.lviv.bas.cinema.service.shared.AuditService;
 
 @Slf4j
 @Service
@@ -49,6 +50,7 @@ public class MovieService {
 	private final SlugService slugService;
 	private final MovieScheduler movieScheduler;
 	private final PosterService posterService;
+	private final AuditService auditService;
 
 	@Caching(evict = { @CacheEvict(cacheNames = "movies", allEntries = true),
 			@CacheEvict(value = "sessions", allEntries = true),
@@ -73,6 +75,9 @@ public class MovieService {
 
 		Movie saved = movieRepository.save(movie);
 		log.info("Movie created successfully with id: {}", saved.getId());
+
+		auditService.logChange("Movie", saved.getId(), "CREATED", null, saved.getTitle());
+
 		return movieMapper.toMovieDetailResponse(saved);
 	}
 
@@ -85,6 +90,7 @@ public class MovieService {
 		log.info("Updating movie with id: {}", id);
 
 		Movie existing = findAdminMovieById(id);
+		String oldTitle = existing.getTitle();
 		validateDates(request.getReleaseDate(), request.getEndShowingDate());
 
 		if (!existing.getTitle().equals(request.getTitle()) && movieRepository.existsByTitle(request.getTitle())) {
@@ -108,6 +114,9 @@ public class MovieService {
 
 		Movie updated = movieRepository.save(existing);
 		log.info("Movie updated successfully with id: {}", updated.getId());
+
+		auditService.logChange("Movie", id, "UPDATED", oldTitle, updated.getTitle());
+
 		return movieMapper.toMovieDetailResponse(updated);
 	}
 
@@ -120,11 +129,14 @@ public class MovieService {
 		log.info("Deleting movie with id: {}", id);
 
 		Movie movie = findAdminMovieById(id);
+		String movieTitle = movie.getTitle();
 		if (movie.getPosterFileName() != null) {
 			posterService.deletePoster(movie.getPosterFileName());
 		}
 		movieRepository.delete(movie);
 		log.info("Movie deleted successfully with id: {}", id);
+
+		auditService.logChange("Movie", id, "DELETED", movieTitle, null);
 	}
 
 	@Cacheable(key = "#id")

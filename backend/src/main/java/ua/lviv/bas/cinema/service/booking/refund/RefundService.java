@@ -34,6 +34,7 @@ import ua.lviv.bas.cinema.repository.ticket.TicketRepository;
 import ua.lviv.bas.cinema.service.bonus.BonusService;
 import ua.lviv.bas.cinema.service.booking.payment.PaymentProcessingService;
 import ua.lviv.bas.cinema.service.integration.payment.PaymentGatewayService;
+import ua.lviv.bas.cinema.service.shared.AuditService;
 import ua.lviv.bas.cinema.service.shared.NumberGeneratorService;
 
 @Slf4j
@@ -51,6 +52,7 @@ public class RefundService {
 	private final RefundCalculationService calculationService;
 	private final RefundValidationService validationService;
 	private final NumberGeneratorService numberGenerator;
+	private final AuditService auditService;
 
 	@Transactional(readOnly = true)
 	public RefundPreviewResponse getRefundPreview(RefundPreviewRequest request, Long userId) {
@@ -104,11 +106,17 @@ public class RefundService {
 			ticket.setRefund(refund);
 			ticketRepository.save(ticket);
 
+			auditService.logChange("Refund", refund.getId(), "CREATED", null,
+					String.format("Ticket: %d, Amount: %s, User: %d", ticket.getId(), refundAmount, userId));
+
 			return createSuccessResponse(refund);
 
 		} catch (Exception e) {
 			refund.setStatus(RefundStatus.REJECTED);
 			refundRepository.save(refund);
+
+			auditService.logChange("Refund", refund.getId(), "REJECTED", null, e.getMessage());
+
 			throw new RefundProcessingException("Refund processing failed", e);
 		}
 	}

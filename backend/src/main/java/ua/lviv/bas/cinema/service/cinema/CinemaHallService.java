@@ -31,6 +31,7 @@ import ua.lviv.bas.cinema.mapper.cinema.SeatMapper;
 import ua.lviv.bas.cinema.repository.cinema.CinemaHallRepository;
 import ua.lviv.bas.cinema.repository.cinema.SeatRepository;
 import ua.lviv.bas.cinema.repository.cinema.projection.CinemaHallProjection;
+import ua.lviv.bas.cinema.service.shared.AuditService;
 import ua.lviv.bas.cinema.validation.CoupleRowSeatsValidator;
 
 @Slf4j
@@ -42,6 +43,7 @@ public class CinemaHallService {
 	private final SeatRepository seatRepository;
 	private final CinemaHallMapper hallMapper;
 	private final SeatMapper seatMapper;
+	private final AuditService auditService;
 
 	@Transactional
 	@CacheEvict(value = "cinemaHalls", allEntries = true)
@@ -67,6 +69,9 @@ public class CinemaHallService {
 
 			CinemaHall saved = hallRepository.save(hall);
 			log.debug("Cinema hall created with ID: {}", saved.getId());
+
+			auditService.logChange("CinemaHall", saved.getId(), "CREATED", null, saved.getName());
+
 			return hallMapper.toCinemaHallResponse(saved);
 		} finally {
 			CoupleRowSeatsValidator.clear();
@@ -84,6 +89,7 @@ public class CinemaHallService {
 
 			CinemaHall existing = hallRepository.findByIdWithSeats(id)
 					.orElseThrow(() -> new CinemaHallNotFoundException(id));
+			String oldName = existing.getName();
 
 			boolean hasFutureSessions = existing.getSessions().stream()
 					.anyMatch(session -> session.getStartTime().isAfter(LocalDateTime.now()));
@@ -116,6 +122,9 @@ public class CinemaHallService {
 
 			CinemaHall updated = hallRepository.save(existing);
 			log.debug("Cinema hall updated with ID: {}", updated.getId());
+
+			auditService.logChange("CinemaHall", id, "UPDATED", oldName, updated.getName());
+
 			return hallMapper.toCinemaHallResponse(updated);
 		} finally {
 			CoupleRowSeatsValidator.clear();
@@ -129,6 +138,7 @@ public class CinemaHallService {
 		log.info("Deleting cinema hall with id: {}", id);
 
 		CinemaHall hall = hallRepository.findByIdWithSeats(id).orElseThrow(() -> new CinemaHallNotFoundException(id));
+		String hallName = hall.getName();
 
 		boolean hasFutureSessions = hall.getSessions().stream()
 				.anyMatch(session -> session.getStartTime().isAfter(LocalDateTime.now()));
@@ -139,6 +149,8 @@ public class CinemaHallService {
 
 		hallRepository.delete(hall);
 		log.debug("Cinema hall deleted with ID: {}", id);
+
+		auditService.logChange("CinemaHall", id, "DELETED", hallName, null);
 	}
 
 	@Transactional(readOnly = true)

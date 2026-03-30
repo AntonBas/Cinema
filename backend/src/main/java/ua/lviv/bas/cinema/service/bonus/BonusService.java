@@ -38,6 +38,7 @@ import ua.lviv.bas.cinema.repository.bonus.BonusCardRepository;
 import ua.lviv.bas.cinema.repository.bonus.BonusRulesRepository;
 import ua.lviv.bas.cinema.repository.bonus.BonusTransactionRepository;
 import ua.lviv.bas.cinema.repository.bonus.projection.BonusTransactionProjection;
+import ua.lviv.bas.cinema.service.shared.AuditService;
 
 @Slf4j
 @Service
@@ -50,6 +51,7 @@ public class BonusService {
 	private final BonusTransactionRepository bonusTransactionRepository;
 	private final BonusMapper bonusMapper;
 	private final BonusProperties bonusProperties;
+	private final AuditService auditService;
 
 	@Cacheable(key = "'card:' + #userId")
 	@Transactional(readOnly = true)
@@ -116,6 +118,10 @@ public class BonusService {
 		BonusCard card = getOrCreateCard(user);
 		card.setPointsBalance(card.getPointsBalance() + points);
 		createTransaction(card, points, BonusTransactionType.PROMOTION_BONUS, "PROMOTION_" + promotionTitle);
+
+		auditService.logChange("Bonus", card.getId(), "POINTS_ADDED", null,
+				String.format("User: %d, Points: %d, Promotion: %s", user.getId(), points, promotionTitle));
+
 		return card.getPointsBalance();
 	}
 
@@ -135,8 +141,14 @@ public class BonusService {
 		validateRedemption(userId, points);
 		BonusCard card = getCardByUserId(userId);
 		card.setPointsBalance(card.getPointsBalance() - points);
-		return createTransaction(card, -points, BonusTransactionType.BOOKING_SPEND, "BOOKING_" + booking.getId(),
-				booking, null, null);
+
+		BonusTransaction transaction = createTransaction(card, -points, BonusTransactionType.BOOKING_SPEND,
+				"BOOKING_" + booking.getId(), booking, null, null);
+
+		auditService.logChange("Bonus", card.getId(), "POINTS_SPENT", null,
+				String.format("User: %d, Points: %d, Booking: %d", userId, points, booking.getId()));
+
+		return transaction;
 	}
 
 	@Caching(evict = { @CacheEvict(key = "'card:' + #userId"), @CacheEvict(key = "'balance:' + #userId"),
@@ -148,8 +160,14 @@ public class BonusService {
 		}
 		BonusCard card = getCardByUserId(userId);
 		card.setPointsBalance(card.getPointsBalance() + points);
-		return createTransaction(card, points, BonusTransactionType.PAYMENT_ACCRUAL, "PAYMENT_" + payment.getId(),
-				booking, payment, null);
+
+		BonusTransaction transaction = createTransaction(card, points, BonusTransactionType.PAYMENT_ACCRUAL,
+				"PAYMENT_" + payment.getId(), booking, payment, null);
+
+		auditService.logChange("Bonus", card.getId(), "POINTS_ACCRUED", null,
+				String.format("User: %d, Points: %d, Payment: %d", userId, points, payment.getId()));
+
+		return transaction;
 	}
 
 	@Caching(evict = { @CacheEvict(key = "'card:' + #booking.user.id"),
@@ -162,8 +180,14 @@ public class BonusService {
 		BonusCard card = getCardByUserId(booking.getUser().getId());
 		Integer points = booking.getBonusPointsUsed();
 		card.setPointsBalance(card.getPointsBalance() + points);
-		return createTransaction(card, points, BonusTransactionType.REFUND_RETURN, "REFUND_BOOKING_" + booking.getId(),
-				booking, null, null);
+
+		BonusTransaction transaction = createTransaction(card, points, BonusTransactionType.REFUND_RETURN,
+				"REFUND_BOOKING_" + booking.getId(), booking, null, null);
+
+		auditService.logChange("Bonus", card.getId(), "POINTS_REFUNDED", null,
+				String.format("User: %d, Points: %d, Booking: %d", booking.getUser().getId(), points, booking.getId()));
+
+		return transaction;
 	}
 
 	@Transactional(readOnly = true)

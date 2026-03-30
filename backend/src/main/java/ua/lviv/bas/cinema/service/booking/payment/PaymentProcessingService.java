@@ -29,6 +29,7 @@ import ua.lviv.bas.cinema.service.bonus.BonusService;
 import ua.lviv.bas.cinema.service.booking.management.BookingManagementService;
 import ua.lviv.bas.cinema.service.booking.ticket.TicketService;
 import ua.lviv.bas.cinema.service.integration.payment.PaymentGatewayService;
+import ua.lviv.bas.cinema.service.shared.AuditService;
 import ua.lviv.bas.cinema.service.shared.NumberGeneratorService;
 
 @Slf4j
@@ -45,6 +46,7 @@ public class PaymentProcessingService {
 	private final BonusService bonusService;
 	private final NumberGeneratorService numberGenerator;
 	private final BookingManagementService bookingManagementService;
+	private final AuditService auditService;
 
 	public PaymentResponse createPayment(PaymentCreateRequest request, User user) {
 		log.info("Creating payment for booking {} by user {}", request.bookingId(), user.getId());
@@ -66,6 +68,9 @@ public class PaymentProcessingService {
 		Payment savedPayment = paymentRepository.save(payment);
 		log.info("Created payment {} for booking {}", savedPayment.getId(), booking.getId());
 
+		auditService.logChange("Payment", savedPayment.getId(), "CREATED", null,
+				String.format("Booking: %d, Amount: %s", booking.getId(), payment.getAmount()));
+
 		return buildPaymentResponse(savedPayment);
 	}
 
@@ -82,6 +87,8 @@ public class PaymentProcessingService {
 	}
 
 	public void processSuccessfulPayment(Payment payment, Map<String, String> callbackData) {
+		PaymentStatus oldStatus = payment.getStatus();
+
 		payment.setStatus(PaymentStatus.SUCCESS);
 		payment.setPaymentTime(LocalDateTime.now());
 		payment.setLiqpayPaymentId(callbackData.get("payment_id"));
@@ -100,15 +107,21 @@ public class PaymentProcessingService {
 		notificationService.sendPaymentSuccessEmail(payment, payment.getBooking(), tickets);
 
 		log.info("Payment {} completed successfully", payment.getId());
+
+		auditService.logChange("Payment", payment.getId(), "SUCCESS", oldStatus, PaymentStatus.SUCCESS);
 	}
 
 	public void processFailedPayment(Payment payment, Map<String, String> callbackData) {
+		PaymentStatus oldStatus = payment.getStatus();
+
 		payment.setStatus(PaymentStatus.FAILED);
 		payment.setLiqpayErrorCode(callbackData.get("err_code"));
 		payment.setLiqpayErrorDescription(callbackData.get("err_description"));
 
 		notificationService.sendPaymentFailedEmail(payment, payment.getBooking());
 		log.warn("Payment {} failed: {}", payment.getId(), callbackData.get("err_description"));
+
+		auditService.logChange("Payment", payment.getId(), "FAILED", oldStatus, PaymentStatus.FAILED);
 	}
 
 	@Transactional
@@ -131,6 +144,8 @@ public class PaymentProcessingService {
 
 		Payment savedPayment = paymentRepository.save(payment);
 		log.info("Retried payment {} for booking {}", paymentId, payment.getBooking().getId());
+
+		auditService.logChange("Payment", paymentId, "RETRY", null, null);
 
 		return buildPaymentResponse(savedPayment);
 	}
@@ -174,6 +189,8 @@ public class PaymentProcessingService {
 			log.info("Refund initiated for payment {}: amount={}, description={}", payment.getId(), amount,
 					description);
 
+			PaymentStatus oldStatus = payment.getStatus();
+
 			if (amount.compareTo(payment.getAmount()) == 0) {
 				payment.setStatus(PaymentStatus.REFUNDED);
 				log.info("Payment {} fully refunded", payment.getId());
@@ -187,6 +204,8 @@ public class PaymentProcessingService {
 			notificationService.sendRefundEmail(payment, amount, description);
 
 			log.info("Refund processed successfully: paymentId={}, amount={}", payment.getId(), amount);
+
+			auditService.logChange("Payment", payment.getId(), "REFUND", oldStatus, payment.getStatus());
 
 		} catch (PaymentProcessingException e) {
 			log.error("Payment processing failed for refund payment {}", payment.getId(), e);

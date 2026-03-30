@@ -26,6 +26,7 @@ import ua.lviv.bas.cinema.repository.promotion.PromotionRepository;
 import ua.lviv.bas.cinema.repository.promotion.UserPromotionRepository;
 import ua.lviv.bas.cinema.repository.promotion.projection.PromotionResponseProjection;
 import ua.lviv.bas.cinema.service.bonus.BonusService;
+import ua.lviv.bas.cinema.service.shared.AuditService;
 
 @Slf4j
 @Service
@@ -39,6 +40,7 @@ public class PromotionService {
 	private final AdminPromotionService adminPromotionService;
 	private final BonusService bonusUserService;
 	private final PromotionMapper promotionMapper;
+	private final AuditService auditService;
 
 	@Caching(evict = { @CacheEvict(key = "'available:' + #user.id"),
 			@CacheEvict(value = "promotions", allEntries = true) })
@@ -63,6 +65,9 @@ public class PromotionService {
 		bonusUserService.addPoints(user, promotion.getBonusPoints(), promotion.getTitle());
 
 		log.info("Promotion claimed successfully. User received {} points", promotion.getBonusPoints());
+
+		auditService.logChange("Promotion", promotion.getId(), "CLAIMED", null,
+				String.format("User: %s, Points: %d", user.getEmail(), promotion.getBonusPoints()));
 
 		return promotionMapper.toPromotionResponse(promotion);
 	}

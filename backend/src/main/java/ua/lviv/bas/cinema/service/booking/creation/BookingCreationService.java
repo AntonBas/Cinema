@@ -35,6 +35,7 @@ import ua.lviv.bas.cinema.repository.cinema.SessionRepository;
 import ua.lviv.bas.cinema.repository.ticket.TicketTypeRepository;
 import ua.lviv.bas.cinema.service.bonus.BonusService;
 import ua.lviv.bas.cinema.service.booking.reservation.ReservationValidator;
+import ua.lviv.bas.cinema.service.shared.AuditService;
 import ua.lviv.bas.cinema.service.shared.PriceCalculatorService;
 
 @Slf4j
@@ -53,6 +54,7 @@ public class BookingCreationService {
 	private final BookingPriceCalculator bookingPriceCalculator;
 	private final BookingValidator bookingValidator;
 	private final ReservationValidator availabilityValidator;
+	private final AuditService auditService;
 
 	@Value("${booking.expiration-minutes:20}")
 	private int expirationMinutes;
@@ -101,6 +103,10 @@ public class BookingCreationService {
 
 		log.info("Created booking {} for user {} with {} bonus points used", savedBooking.getId(), user.getId(),
 				priceResult.bonusPointsUsed());
+
+		auditService.logChange("Booking", savedBooking.getId(), "CREATED", null,
+				String.format("User: %d, Session: %d, Total price: %s, Final price: %s", user.getId(), session.getId(),
+						totalPrice, priceResult.finalPrice()));
 
 		return bookingMapper.toBookingResponse(savedBooking);
 	}

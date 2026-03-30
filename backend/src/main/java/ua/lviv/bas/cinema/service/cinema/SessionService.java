@@ -36,6 +36,7 @@ import ua.lviv.bas.cinema.repository.cinema.MovieRepository;
 import ua.lviv.bas.cinema.repository.cinema.SessionRepository;
 import ua.lviv.bas.cinema.repository.cinema.projection.SessionAdminProjection;
 import ua.lviv.bas.cinema.repository.cinema.projection.SessionScheduleProjection;
+import ua.lviv.bas.cinema.service.shared.AuditService;
 
 @Slf4j
 @Service
@@ -48,6 +49,7 @@ public class SessionService {
 	private final SessionMapper sessionMapper;
 	private final MovieRepository movieRepository;
 	private final CinemaHallService cinemaHallService;
+	private final AuditService auditService;
 
 	@Cacheable(key = "'public:' + #searchTerm + ':' + #date")
 	public List<SessionScheduleResponse> getScheduleSessions(String searchTerm, LocalDate date) {
@@ -146,6 +148,9 @@ public class SessionService {
 		Session saved = sessionRepository.save(session);
 		log.info("Session created with ID: {}", saved.getId());
 
+		auditService.logChange("Session", saved.getId(), "CREATED", null,
+				String.format("Movie: %s, Hall: %s, Time: %s", movie.getTitle(), hall.getName(), request.startTime()));
+
 		return getSessionForAdmin(saved.getId());
 	}
 
@@ -157,6 +162,8 @@ public class SessionService {
 		Session session = sessionRepository.findByIdWithLock(id).orElseThrow(() -> new SessionNotFoundException(id));
 
 		boolean hasChanges = false;
+		String oldStartTime = session.getStartTime().toString();
+		String oldBasePrice = session.getBasePrice().toString();
 
 		if (request.startTime() != null && !request.startTime().equals(session.getStartTime())) {
 			validateStartTime(request.startTime());
@@ -187,6 +194,10 @@ public class SessionService {
 					session.getStartTime().plusMinutes(session.getMovie().getDurationMinutes()), id);
 			session = sessionRepository.save(session);
 			log.info("Session updated with ID: {}", session.getId());
+
+			auditService.logChange("Session", id, "UPDATED",
+					String.format("StartTime: %s, BasePrice: %s", oldStartTime, oldBasePrice),
+					String.format("StartTime: %s, BasePrice: %s", session.getStartTime(), session.getBasePrice()));
 		}
 
 		return getSessionForAdmin(session.getId());
@@ -202,6 +213,8 @@ public class SessionService {
 		}
 		sessionRepository.deleteById(id);
 		log.info("Session deleted with ID: {}", id);
+
+		auditService.logChange("Session", id, "DELETED", null, null);
 	}
 
 	@Caching(evict = { @CacheEvict(cacheNames = "sessions", allEntries = true),
@@ -223,9 +236,12 @@ public class SessionService {
 			throw SessionOperationException.cannotCancelTooLate();
 		}
 
+		CinemaSessionStatus oldStatus = session.getStatus();
 		session.setStatus(CinemaSessionStatus.CANCELLED);
 		sessionRepository.save(session);
 		log.info("Session cancelled with ID: {}", sessionId);
+
+		auditService.logChange("Session", sessionId, "CANCELLED", oldStatus, CinemaSessionStatus.CANCELLED);
 	}
 
 	@Caching(evict = { @CacheEvict(cacheNames = "sessions", allEntries = true),
@@ -247,9 +263,12 @@ public class SessionService {
 		validateNoTimeConflict(session.getHall().getId(), session.getStartTime(),
 				session.getStartTime().plusMinutes(session.getMovie().getDurationMinutes()), sessionId);
 
+		CinemaSessionStatus oldStatus = session.getStatus();
 		session.setStatus(CinemaSessionStatus.SCHEDULED);
 		sessionRepository.save(session);
 		log.info("Session reactivated with ID: {}", sessionId);
+
+		auditService.logChange("Session", sessionId, "REACTIVATED", oldStatus, CinemaSessionStatus.SCHEDULED);
 	}
 
 	private void validateStartTime(LocalDateTime startTime) {

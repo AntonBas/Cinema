@@ -29,6 +29,7 @@ import ua.lviv.bas.cinema.exception.domain.user.UserNotFoundException;
 import ua.lviv.bas.cinema.mapper.user.UserMapper;
 import ua.lviv.bas.cinema.repository.user.UserRepository;
 import ua.lviv.bas.cinema.service.notification.EmailTokenGeneratorService;
+import ua.lviv.bas.cinema.service.shared.AuditService;
 
 @Slf4j
 @Service
@@ -41,6 +42,7 @@ public class UserService {
 	private final PasswordEncoder passwordEncoder;
 	private final UserMapper userMapper;
 	private final EmailTokenGeneratorService emailTokenGeneratorService;
+	private final AuditService auditService;
 
 	@CacheEvict(allEntries = true)
 	@Transactional
@@ -55,11 +57,13 @@ public class UserService {
 		log.info("User registered: {}", request.email());
 
 		emailTokenGeneratorService.generateVerificationToken(saved.getEmail());
+
+		auditService.logChange("User", saved.getId(), "REGISTER", null, saved.getEmail());
+
 		return userMapper.toUserResponse(saved);
 	}
 
-	@Caching(evict = { @CacheEvict(key = "#userId"), @CacheEvict(key = "#request.email()"),
-			@CacheEvict(allEntries = true) })
+	@Caching(evict = { @CacheEvict(key = "#userId"), @CacheEvict(allEntries = true) })
 	@Transactional
 	public UserProfileResponse updateUser(Long userId, UserUpdateRequest request) {
 		User user = getUserWithBonusCardById(userId);
@@ -70,6 +74,7 @@ public class UserService {
 		}
 
 		User updated = userRepository.save(user);
+
 		return userMapper.toUserProfileResponse(updated);
 	}
 
@@ -77,11 +82,15 @@ public class UserService {
 	@Transactional
 	public void requestEmailChange(Long userId, String currentPassword, String newEmail) {
 		User user = getUserById(userId);
+		String oldEmail = user.getEmail();
 		validateCurrentPassword(user, currentPassword);
 		validateNewEmail(user.getEmail(), newEmail);
 		validateEmailNotExists(newEmail);
 		emailTokenGeneratorService.generateEmailChangeToken(user.getEmail(), newEmail);
+
 		log.info("Email change requested for user {} to {}", userId, newEmail);
+
+		auditService.logChange("User", userId, "EMAIL_CHANGE_REQUESTED", oldEmail, newEmail);
 	}
 
 	@Caching(evict = { @CacheEvict(key = "#userId"), @CacheEvict(allEntries = true) })
@@ -96,6 +105,8 @@ public class UserService {
 		user.setPassword(passwordEncoder.encode(request.newPassword()));
 		userRepository.save(user);
 		log.info("Password updated for user {}", userId);
+
+		auditService.logChange("User", userId, "PASSWORD_CHANGED", null, "***");
 	}
 
 	@Cacheable(key = "#id")

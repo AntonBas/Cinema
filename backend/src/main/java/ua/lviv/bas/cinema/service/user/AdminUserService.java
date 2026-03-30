@@ -27,6 +27,7 @@ import ua.lviv.bas.cinema.exception.domain.user.UserNotFoundException;
 import ua.lviv.bas.cinema.mapper.user.UserMapper;
 import ua.lviv.bas.cinema.repository.user.UserRepository;
 import ua.lviv.bas.cinema.repository.user.projection.AdminUserProjection;
+import ua.lviv.bas.cinema.service.shared.AuditService;
 
 @Slf4j
 @Service
@@ -37,11 +38,13 @@ public class AdminUserService {
 
 	private final UserRepository userRepository;
 	private final UserMapper userMapper;
+	private final AuditService auditService;
 
 	@Caching(evict = { @CacheEvict(key = "'list-' + #userId"), @CacheEvict(allEntries = true) })
 	@Transactional
 	public AdminUserListResponse updateUserRole(Long userId, UserRole newRole) {
 		User user = findById(userId);
+		UserRole oldRole = user.getUserRole();
 		validateSelfOperation(user);
 
 		if (user.getUserRole() == UserRole.ROLE_ADMIN && newRole != UserRole.ROLE_ADMIN) {
@@ -52,6 +55,8 @@ public class AdminUserService {
 		User savedUser = userRepository.save(user);
 		log.info("User role updated to {} for user {}", newRole, userId);
 
+		auditService.logChange("User", userId, "ROLE_CHANGED", oldRole, newRole);
+
 		return userMapper.toAdminUserListResponse(savedUser);
 	}
 
@@ -59,6 +64,7 @@ public class AdminUserService {
 	@Transactional
 	public AdminUserListResponse updateUserStatus(Long userId, boolean enabled) {
 		User user = findById(userId);
+		boolean oldStatus = user.isEnabled();
 
 		if (isCurrentUser(user) && !enabled) {
 			throw new SelfBlockException();
@@ -68,6 +74,8 @@ public class AdminUserService {
 		User savedUser = userRepository.save(user);
 		log.info("User status updated: enabled = {} for user {}", enabled, userId);
 
+		auditService.logChange("User", userId, "STATUS_CHANGED", oldStatus, enabled);
+
 		return userMapper.toAdminUserListResponse(savedUser);
 	}
 
@@ -75,6 +83,7 @@ public class AdminUserService {
 	@Transactional
 	public AdminUserListResponse updateBirthDateVerification(Long userId, VerificationBirthDateRequest request) {
 		User user = findById(userId);
+		VerificationStatus oldStatus = user.getVerificationStatus();
 		VerificationStatus newStatus = request.verificationStatus();
 
 		user.setVerificationStatus(newStatus);
@@ -82,6 +91,8 @@ public class AdminUserService {
 
 		User savedUser = userRepository.save(user);
 		log.info("Birth date verification updated: {} for user {}", newStatus, userId);
+
+		auditService.logChange("User", userId, "VERIFICATION_CHANGED", oldStatus, newStatus);
 
 		return userMapper.toAdminUserListResponse(savedUser);
 	}
