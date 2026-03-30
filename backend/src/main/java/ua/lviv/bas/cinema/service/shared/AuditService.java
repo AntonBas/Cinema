@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import ua.lviv.bas.cinema.domain.audit.AuditAction;
 import ua.lviv.bas.cinema.domain.audit.AuditLog;
 import ua.lviv.bas.cinema.repository.audit.AuditLogRepository;
 
@@ -20,7 +21,7 @@ public class AuditService {
 	private final AuditLogRepository auditLogRepository;
 	private final ObjectMapper objectMapper;
 
-	public void logChange(String entityType, Long entityId, String action, Object oldValue, Object newValue) {
+	public void logChange(String entityType, Long entityId, AuditAction action, Object oldValue, Object newValue) {
 		try {
 			AuditLog auditLog = AuditLog.builder().entityType(entityType).entityId(entityId).action(action)
 					.oldValue(oldValue != null ? objectMapper.writeValueAsString(oldValue) : null)
@@ -28,7 +29,7 @@ public class AuditService {
 					.changedBy(getCurrentUser()).changedAt(LocalDateTime.now()).build();
 
 			auditLogRepository.save(auditLog);
-			log.debug("Autdit log saved: {} {} {}", entityType, entityId, action);
+			log.debug("Audit log saved: {} {} {}", entityType, entityId, action);
 		} catch (Exception e) {
 			log.error("Failed to save audit log", e);
 		}

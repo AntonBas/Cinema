@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.config.properties.BonusProperties;
+import ua.lviv.bas.cinema.domain.audit.AuditAction;
 import ua.lviv.bas.cinema.domain.bonus.BonusCard;
 import ua.lviv.bas.cinema.domain.bonus.BonusRules;
 import ua.lviv.bas.cinema.domain.bonus.BonusTransaction;
@@ -119,7 +120,7 @@ public class BonusService {
 		card.setPointsBalance(card.getPointsBalance() + points);
 		createTransaction(card, points, BonusTransactionType.PROMOTION_BONUS, "PROMOTION_" + promotionTitle);
 
-		auditService.logChange("Bonus", card.getId(), "POINTS_ADDED", null,
+		auditService.logChange("Bonus", card.getId(), AuditAction.POINTS_ADDED, null,
 				String.format("User: %d, Points: %d, Promotion: %s", user.getId(), points, promotionTitle));
 
 		return card.getPointsBalance();
@@ -145,7 +146,7 @@ public class BonusService {
 		BonusTransaction transaction = createTransaction(card, -points, BonusTransactionType.BOOKING_SPEND,
 				"BOOKING_" + booking.getId(), booking, null, null);
 
-		auditService.logChange("Bonus", card.getId(), "POINTS_SPENT", null,
+		auditService.logChange("Bonus", card.getId(), AuditAction.POINTS_SPENT, null,
 				String.format("User: %d, Points: %d, Booking: %d", userId, points, booking.getId()));
 
 		return transaction;
@@ -164,7 +165,7 @@ public class BonusService {
 		BonusTransaction transaction = createTransaction(card, points, BonusTransactionType.PAYMENT_ACCRUAL,
 				"PAYMENT_" + payment.getId(), booking, payment, null);
 
-		auditService.logChange("Bonus", card.getId(), "POINTS_ACCRUED", null,
+		auditService.logChange("Bonus", card.getId(), AuditAction.POINTS_ACCRUED, null,
 				String.format("User: %d, Points: %d, Payment: %d", userId, points, payment.getId()));
 
 		return transaction;
@@ -184,7 +185,7 @@ public class BonusService {
 		BonusTransaction transaction = createTransaction(card, points, BonusTransactionType.REFUND_RETURN,
 				"REFUND_BOOKING_" + booking.getId(), booking, null, null);
 
-		auditService.logChange("Bonus", card.getId(), "POINTS_REFUNDED", null,
+		auditService.logChange("Bonus", card.getId(), AuditAction.POINTS_REFUNDED, null,
 				String.format("User: %d, Points: %d, Booking: %d", booking.getUser().getId(), points, booking.getId()));
 
 		return transaction;

@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import ua.lviv.bas.cinema.domain.audit.AuditAction;
 import ua.lviv.bas.cinema.domain.cinema.CinemaHall;
 import ua.lviv.bas.cinema.domain.cinema.Movie;
 import ua.lviv.bas.cinema.domain.cinema.Session;
@@ -148,7 +149,7 @@ public class SessionService {
 		Session saved = sessionRepository.save(session);
 		log.info("Session created with ID: {}", saved.getId());
 
-		auditService.logChange("Session", saved.getId(), "CREATED", null,
+		auditService.logChange("Session", saved.getId(), AuditAction.CREATED, null,
 				String.format("Movie: %s, Hall: %s, Time: %s", movie.getTitle(), hall.getName(), request.startTime()));
 
 		return getSessionForAdmin(saved.getId());
@@ -195,7 +196,7 @@ public class SessionService {
 			session = sessionRepository.save(session);
 			log.info("Session updated with ID: {}", session.getId());
 
-			auditService.logChange("Session", id, "UPDATED",
+			auditService.logChange("Session", id, AuditAction.UPDATED,
 					String.format("StartTime: %s, BasePrice: %s", oldStartTime, oldBasePrice),
 					String.format("StartTime: %s, BasePrice: %s", session.getStartTime(), session.getBasePrice()));
 		}
@@ -214,7 +215,7 @@ public class SessionService {
 		sessionRepository.deleteById(id);
 		log.info("Session deleted with ID: {}", id);
 
-		auditService.logChange("Session", id, "DELETED", null, null);
+		auditService.logChange("Session", id, AuditAction.DELETED, null, null);
 	}
 
 	@Caching(evict = { @CacheEvict(cacheNames = "sessions", allEntries = true),
@@ -241,7 +242,7 @@ public class SessionService {
 		sessionRepository.save(session);
 		log.info("Session cancelled with ID: {}", sessionId);
 
-		auditService.logChange("Session", sessionId, "CANCELLED", oldStatus, CinemaSessionStatus.CANCELLED);
+		auditService.logChange("Session", sessionId, AuditAction.CANCELLED, oldStatus, CinemaSessionStatus.CANCELLED);
 	}
 
 	@Caching(evict = { @CacheEvict(cacheNames = "sessions", allEntries = true),
@@ -268,7 +269,7 @@ public class SessionService {
 		sessionRepository.save(session);
 		log.info("Session reactivated with ID: {}", sessionId);
 
-		auditService.logChange("Session", sessionId, "REACTIVATED", oldStatus, CinemaSessionStatus.SCHEDULED);
+		auditService.logChange("Session", sessionId, AuditAction.REACTIVATED, oldStatus, CinemaSessionStatus.SCHEDULED);
 	}
 
 	private void validateStartTime(LocalDateTime startTime) {

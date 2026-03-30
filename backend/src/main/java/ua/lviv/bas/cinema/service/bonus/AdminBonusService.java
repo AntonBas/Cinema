@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.config.properties.BonusProperties;
+import ua.lviv.bas.cinema.domain.audit.AuditAction;
 import ua.lviv.bas.cinema.domain.bonus.BonusRules;
 import ua.lviv.bas.cinema.domain.bonus.BonusTransactionType;
 import ua.lviv.bas.cinema.dto.bonus.request.BonusRulesRequest;
@@ -69,7 +70,7 @@ public class AdminBonusService {
 		BonusRules updated = bonusRulesRepository.save(rules);
 		log.info("Updated bonus rule: {}", type);
 
-		auditService.logChange("BonusRules", updated.getId(), "UPDATE", oldRule, updated);
+		auditService.logChange("BonusRules", updated.getId(), AuditAction.UPDATED, oldRule, updated);
 
 		return bonusMapper.toBonusRulesResponse(updated);
 	}
@@ -95,7 +96,7 @@ public class AdminBonusService {
 
 		BonusRules updated = bonusRulesRepository.save(rules);
 
-		auditService.logChange("BonusRules", updated.getId(), "RESET_TO_DEFAULTS", oldRule, updated);
+		auditService.logChange("BonusRules", updated.getId(), AuditAction.RESET_TO_DEFAULTS, oldRule, updated);
 
 		return bonusMapper.toBonusRulesResponse(updated);
 	}

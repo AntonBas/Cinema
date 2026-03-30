@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import ua.lviv.bas.cinema.domain.audit.AuditAction;
 import ua.lviv.bas.cinema.domain.ticket.TicketStatus;
 import ua.lviv.bas.cinema.domain.ticket.TicketType;
 import ua.lviv.bas.cinema.domain.ticket.TicketTypeCategory;
@@ -62,7 +63,7 @@ public class TicketTypeService {
 
 		log.debug("Ticket type created with ID: {}", saved.getId());
 
-		auditService.logChange("TicketType", saved.getId(), "CREATED", null, request.displayName());
+		auditService.logChange("TicketType", saved.getId(), AuditAction.CREATED, null, request.displayName());
 
 		return ticketTypeMapper.toTicketTypeResponse(saved);
 	}
@@ -98,8 +99,8 @@ public class TicketTypeService {
 	public TicketTypeResponse updateTicketType(Long id, TicketTypeUpdateRequest request) {
 		log.info("Updating ticket type with id: {}", id);
 
-		TicketType oldTicketType = findTicketTypeById(id);
 		TicketType ticketType = findTicketTypeById(id);
+		String oldName = ticketType.getDisplayName();
 
 		if (request.displayName() != null && !request.displayName().equals(ticketType.getDisplayName())
 				&& ticketTypeRepository.existsByDisplayNameAndIdNot(request.displayName(), id)) {
@@ -117,7 +118,7 @@ public class TicketTypeService {
 
 		log.debug("Ticket type updated with ID: {}", updated.getId());
 
-		auditService.logChange("TicketType", id, "UPDATED", oldTicketType.getDisplayName(), updated.getDisplayName());
+		auditService.logChange("TicketType", id, AuditAction.UPDATED, oldName, updated.getDisplayName());
 
 		return ticketTypeMapper.toTicketTypeResponse(updated);
 	}
@@ -128,6 +129,7 @@ public class TicketTypeService {
 		log.info("Deleting ticket type with id: {}", id);
 
 		TicketType ticketType = findTicketTypeById(id);
+		String ticketTypeName = ticketType.getDisplayName();
 
 		if (hasFutureTickets(id)) {
 			throw new TicketTypeInUseException(id,
@@ -137,7 +139,7 @@ public class TicketTypeService {
 		ticketTypeRepository.delete(ticketType);
 		log.debug("Ticket type deleted with ID: {}", id);
 
-		auditService.logChange("TicketType", id, "DELETED", ticketType.getDisplayName(), null);
+		auditService.logChange("TicketType", id, AuditAction.DELETED, ticketTypeName, null);
 	}
 
 	@Caching(evict = { @CacheEvict(key = "#id"), @CacheEvict(key = "'user-active'"), @CacheEvict(allEntries = true) })
@@ -158,7 +160,7 @@ public class TicketTypeService {
 
 		log.debug("Ticket type status toggled to: {} for ID: {}", updated.isActive(), id);
 
-		auditService.logChange("TicketType", id, "TOGGLE_STATUS", oldStatus, updated.isActive());
+		auditService.logChange("TicketType", id, AuditAction.TOGGLE_STATUS, oldStatus, updated.isActive());
 
 		return ticketTypeMapper.toTicketTypeResponse(updated);
 	}

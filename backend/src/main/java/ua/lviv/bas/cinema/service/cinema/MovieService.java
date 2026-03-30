@@ -17,6 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import ua.lviv.bas.cinema.domain.audit.AuditAction;
 import ua.lviv.bas.cinema.domain.cinema.Movie;
 import ua.lviv.bas.cinema.domain.cinema.status.MovieStatus;
 import ua.lviv.bas.cinema.dto.movie.request.MovieCreateRequest;
@@ -76,7 +77,7 @@ public class MovieService {
 		Movie saved = movieRepository.save(movie);
 		log.info("Movie created successfully with id: {}", saved.getId());
 
-		auditService.logChange("Movie", saved.getId(), "CREATED", null, saved.getTitle());
+		auditService.logChange("Movie", saved.getId(), AuditAction.CREATED, null, saved.getTitle());
 
 		return movieMapper.toMovieDetailResponse(saved);
 	}
@@ -115,7 +116,7 @@ public class MovieService {
 		Movie updated = movieRepository.save(existing);
 		log.info("Movie updated successfully with id: {}", updated.getId());
 
-		auditService.logChange("Movie", id, "UPDATED", oldTitle, updated.getTitle());
+		auditService.logChange("Movie", id, AuditAction.UPDATED, oldTitle, updated.getTitle());
 
 		return movieMapper.toMovieDetailResponse(updated);
 	}
@@ -136,7 +137,7 @@ public class MovieService {
 		movieRepository.delete(movie);
 		log.info("Movie deleted successfully with id: {}", id);
 
-		auditService.logChange("Movie", id, "DELETED", movieTitle, null);
+		auditService.logChange("Movie", id, AuditAction.DELETED, movieTitle, null);
 	}
 
 	@Cacheable(key = "#id")

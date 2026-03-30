@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import ua.lviv.bas.cinema.domain.audit.AuditAction;
 import ua.lviv.bas.cinema.domain.booking.Booking;
 import ua.lviv.bas.cinema.domain.booking.BookingStatus;
 import ua.lviv.bas.cinema.domain.booking.SeatReservation;
@@ -104,7 +105,7 @@ public class BookingCreationService {
 		log.info("Created booking {} for user {} with {} bonus points used", savedBooking.getId(), user.getId(),
 				priceResult.bonusPointsUsed());
 
-		auditService.logChange("Booking", savedBooking.getId(), "CREATED", null,
+		auditService.logChange("Booking", savedBooking.getId(), AuditAction.CREATED, null,
 				String.format("User: %d, Session: %d, Total price: %s, Final price: %s", user.getId(), session.getId(),
 						totalPrice, priceResult.finalPrice()));
 

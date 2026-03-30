@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import ua.lviv.bas.cinema.domain.audit.AuditAction;
 import ua.lviv.bas.cinema.domain.booking.Booking;
 import ua.lviv.bas.cinema.domain.booking.Payment;
 import ua.lviv.bas.cinema.domain.booking.status.PaymentStatus;
@@ -68,7 +69,7 @@ public class PaymentProcessingService {
 		Payment savedPayment = paymentRepository.save(payment);
 		log.info("Created payment {} for booking {}", savedPayment.getId(), booking.getId());
 
-		auditService.logChange("Payment", savedPayment.getId(), "CREATED", null,
+		auditService.logChange("Payment", savedPayment.getId(), AuditAction.CREATED, null,
 				String.format("Booking: %d, Amount: %s", booking.getId(), payment.getAmount()));
 
 		return buildPaymentResponse(savedPayment);
@@ -108,7 +109,7 @@ public class PaymentProcessingService {
 
 		log.info("Payment {} completed successfully", payment.getId());
 
-		auditService.logChange("Payment", payment.getId(), "SUCCESS", oldStatus, PaymentStatus.SUCCESS);
+		auditService.logChange("Payment", payment.getId(), AuditAction.SUCCESS, oldStatus, PaymentStatus.SUCCESS);
 	}
 
 	public void processFailedPayment(Payment payment, Map<String, String> callbackData) {
@@ -121,7 +122,7 @@ public class PaymentProcessingService {
 		notificationService.sendPaymentFailedEmail(payment, payment.getBooking());
 		log.warn("Payment {} failed: {}", payment.getId(), callbackData.get("err_description"));
 
-		auditService.logChange("Payment", payment.getId(), "FAILED", oldStatus, PaymentStatus.FAILED);
+		auditService.logChange("Payment", payment.getId(), AuditAction.FAILED, oldStatus, PaymentStatus.FAILED);
 	}
 
 	@Transactional
@@ -145,7 +146,7 @@ public class PaymentProcessingService {
 		Payment savedPayment = paymentRepository.save(payment);
 		log.info("Retried payment {} for booking {}", paymentId, payment.getBooking().getId());
 
-		auditService.logChange("Payment", paymentId, "RETRY", null, null);
+		auditService.logChange("Payment", paymentId, AuditAction.RETRY, null, null);
 
 		return buildPaymentResponse(savedPayment);
 	}
@@ -205,7 +206,7 @@ public class PaymentProcessingService {
 
 			log.info("Refund processed successfully: paymentId={}, amount={}", payment.getId(), amount);
 
-			auditService.logChange("Payment", payment.getId(), "REFUND", oldStatus, payment.getStatus());
+			auditService.logChange("Payment", payment.getId(), AuditAction.REFUND, oldStatus, payment.getStatus());
 
 		} catch (PaymentProcessingException e) {
 			log.error("Payment processing failed for refund payment {}", payment.getId(), e);

@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import ua.lviv.bas.cinema.domain.audit.AuditAction;
 import ua.lviv.bas.cinema.domain.promotion.Promotion;
 import ua.lviv.bas.cinema.dto.PageResponse;
 import ua.lviv.bas.cinema.dto.promotion.request.PromotionCreateRequest;
@@ -55,7 +56,7 @@ public class AdminPromotionService {
 
 		log.info("Promotion created with ID: {}", promotion.getId());
 
-		auditService.logChange("Promotion", promotion.getId(), "CREATED", null, promotion.getTitle());
+		auditService.logChange("Promotion", promotion.getId(), AuditAction.CREATED, null, promotion.getTitle());
 
 		return promotionMapper.toPromotionResponse(promotion);
 	}
@@ -72,7 +73,8 @@ public class AdminPromotionService {
 
 		promotion = promotionRepository.save(promotion);
 
-		auditService.logChange("Promotion", promotionId, "UPDATED", oldPromotion.getTitle(), promotion.getTitle());
+		auditService.logChange("Promotion", promotionId, AuditAction.UPDATED, oldPromotion.getTitle(),
+				promotion.getTitle());
 
 		return promotionMapper.toPromotionResponse(promotion);
 	}
@@ -94,7 +96,7 @@ public class AdminPromotionService {
 		promotionRepository.delete(promotion);
 		log.info("Promotion with ID: {} has been deleted", promotionId);
 
-		auditService.logChange("Promotion", promotionId, "DELETED", promotionTitle, null);
+		auditService.logChange("Promotion", promotionId, AuditAction.DELETED, promotionTitle, null);
 	}
 
 	@Cacheable(key = "#promotionId")

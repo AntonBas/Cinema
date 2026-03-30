@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.config.properties.RefundRules;
+import ua.lviv.bas.cinema.domain.audit.AuditAction;
 import ua.lviv.bas.cinema.domain.bonus.BonusTransactionType;
 import ua.lviv.bas.cinema.domain.booking.Refund;
 import ua.lviv.bas.cinema.domain.booking.RefundItem;
@@ -106,7 +107,7 @@ public class RefundService {
 			ticket.setRefund(refund);
 			ticketRepository.save(ticket);
 
-			auditService.logChange("Refund", refund.getId(), "CREATED", null,
+			auditService.logChange("Refund", refund.getId(), AuditAction.CREATED, null,
 					String.format("Ticket: %d, Amount: %s, User: %d", ticket.getId(), refundAmount, userId));
 
 			return createSuccessResponse(refund);
@@ -115,7 +116,7 @@ public class RefundService {
 			refund.setStatus(RefundStatus.REJECTED);
 			refundRepository.save(refund);
 
-			auditService.logChange("Refund", refund.getId(), "REJECTED", null, e.getMessage());
+			auditService.logChange("Refund", refund.getId(), AuditAction.REJECTED, null, e.getMessage());
 
 			throw new RefundProcessingException("Refund processing failed", e);
 		}

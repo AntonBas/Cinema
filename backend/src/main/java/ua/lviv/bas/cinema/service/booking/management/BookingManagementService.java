@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import ua.lviv.bas.cinema.domain.audit.AuditAction;
 import ua.lviv.bas.cinema.domain.booking.Booking;
 import ua.lviv.bas.cinema.domain.booking.BookingStatus;
 import ua.lviv.bas.cinema.domain.booking.status.ReservationStatus;
@@ -88,7 +89,7 @@ public class BookingManagementService {
 		bookingRepository.save(booking);
 		log.info("Cancelled booking {} for user {}", bookingId, user.getId());
 
-		auditService.logChange("Booking", bookingId, "CANCELLED", oldStatus, BookingStatus.CANCELLED);
+		auditService.logChange("Booking", bookingId, AuditAction.CANCELLED, oldStatus, BookingStatus.CANCELLED);
 	}
 
 	@Caching(evict = { @CacheEvict(value = "bookings", key = "#bookingId + '-' + #booking.user.id"),
@@ -109,7 +110,7 @@ public class BookingManagementService {
 		booking.getSeatReservations().forEach(sr -> sr.setStatus(ReservationStatus.CONFIRMED));
 		bookingRepository.save(booking);
 
-		auditService.logChange("Booking", bookingId, "CONFIRMED", oldStatus, BookingStatus.CONFIRMED);
+		auditService.logChange("Booking", bookingId, AuditAction.CONFIRMED, oldStatus, BookingStatus.CONFIRMED);
 	}
 
 	@Transactional(readOnly = true)

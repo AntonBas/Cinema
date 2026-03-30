@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import ua.lviv.bas.cinema.domain.audit.AuditAction;
 import ua.lviv.bas.cinema.domain.token.EmailToken;
 import ua.lviv.bas.cinema.domain.token.TokenType;
 import ua.lviv.bas.cinema.domain.user.User;
@@ -44,7 +45,7 @@ public class UserPasswordResetService {
 		tokenGeneratorService.generatePasswordResetToken(email);
 		log.info("Password reset token generated for: {}", email);
 
-		auditService.logChange("User", user.getId(), "PASSWORD_RESET_REQUESTED", null, email);
+		auditService.logChange("User", user.getId(), AuditAction.PASSWORD_RESET_REQUESTED, null, email);
 	}
 
 	@Transactional
@@ -79,6 +80,6 @@ public class UserPasswordResetService {
 
 		log.info("Password reset successfully for user: {}", user.getEmail());
 
-		auditService.logChange("User", user.getId(), "PASSWORD_RESET_COMPLETED", null, user.getEmail());
+		auditService.logChange("User", user.getId(), AuditAction.PASSWORD_RESET_COMPLETED, null, user.getEmail());
 	}
 }

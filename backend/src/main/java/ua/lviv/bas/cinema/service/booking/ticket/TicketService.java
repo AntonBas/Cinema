@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import ua.lviv.bas.cinema.domain.audit.AuditAction;
 import ua.lviv.bas.cinema.domain.booking.Booking;
 import ua.lviv.bas.cinema.domain.booking.Payment;
 import ua.lviv.bas.cinema.domain.booking.SeatReservation;
@@ -49,7 +50,7 @@ public class TicketService {
 		log.info("Created {} tickets for booking {}", savedTickets.size(), booking.getId());
 
 		for (Ticket ticket : savedTickets) {
-			auditService.logChange("Ticket", ticket.getId(), "CREATED", null,
+			auditService.logChange("Ticket", ticket.getId(), AuditAction.CREATED, null,
 					String.format("Booking: %d, User: %d", booking.getId(), booking.getUser().getId()));
 		}
 
@@ -77,7 +78,7 @@ public class TicketService {
 		ticketRepository.save(ticket);
 		log.info("Ticket {} validated and marked as used", ticketCode);
 
-		auditService.logChange("Ticket", ticket.getId(), "VALIDATED", oldStatus, TicketStatus.USED);
+		auditService.logChange("Ticket", ticket.getId(), AuditAction.VALIDATED, oldStatus, TicketStatus.USED);
 	}
 
 	public byte[] generateTicketQRCode(String ticketCode) {

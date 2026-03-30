@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import ua.lviv.bas.cinema.domain.audit.AuditAction;
 import ua.lviv.bas.cinema.domain.user.User;
 import ua.lviv.bas.cinema.domain.user.VerificationStatus;
 import ua.lviv.bas.cinema.dto.user.request.UserPasswordUpdateRequest;
@@ -58,7 +59,7 @@ public class UserService {
 
 		emailTokenGeneratorService.generateVerificationToken(saved.getEmail());
 
-		auditService.logChange("User", saved.getId(), "REGISTER", null, saved.getEmail());
+		auditService.logChange("User", saved.getId(), AuditAction.REGISTER, null, saved.getEmail());
 
 		return userMapper.toUserResponse(saved);
 	}
@@ -90,7 +91,7 @@ public class UserService {
 
 		log.info("Email change requested for user {} to {}", userId, newEmail);
 
-		auditService.logChange("User", userId, "EMAIL_CHANGE_REQUESTED", oldEmail, newEmail);
+		auditService.logChange("User", userId, AuditAction.EMAIL_CHANGE_REQUESTED, oldEmail, newEmail);
 	}
 
 	@Caching(evict = { @CacheEvict(key = "#userId"), @CacheEvict(allEntries = true) })
@@ -106,7 +107,7 @@ public class UserService {
 		userRepository.save(user);
 		log.info("Password updated for user {}", userId);
 
-		auditService.logChange("User", userId, "PASSWORD_CHANGED", null, "***");
+		auditService.logChange("User", userId, AuditAction.PASSWORD_CHANGED, null, "***");
 	}
 
 	@Cacheable(key = "#id")

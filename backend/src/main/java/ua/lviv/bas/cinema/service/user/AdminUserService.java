@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import ua.lviv.bas.cinema.domain.audit.AuditAction;
 import ua.lviv.bas.cinema.domain.user.User;
 import ua.lviv.bas.cinema.domain.user.UserRole;
 import ua.lviv.bas.cinema.domain.user.VerificationStatus;
@@ -55,7 +56,7 @@ public class AdminUserService {
 		User savedUser = userRepository.save(user);
 		log.info("User role updated to {} for user {}", newRole, userId);
 
-		auditService.logChange("User", userId, "ROLE_CHANGED", oldRole, newRole);
+		auditService.logChange("User", userId, AuditAction.ROLE_CHANGED, oldRole, newRole);
 
 		return userMapper.toAdminUserListResponse(savedUser);
 	}
@@ -74,7 +75,7 @@ public class AdminUserService {
 		User savedUser = userRepository.save(user);
 		log.info("User status updated: enabled = {} for user {}", enabled, userId);
 
-		auditService.logChange("User", userId, "STATUS_CHANGED", oldStatus, enabled);
+		auditService.logChange("User", userId, AuditAction.STATUS_CHANGED, oldStatus, enabled);
 
 		return userMapper.toAdminUserListResponse(savedUser);
 	}
@@ -92,7 +93,7 @@ public class AdminUserService {
 		User savedUser = userRepository.save(user);
 		log.info("Birth date verification updated: {} for user {}", newStatus, userId);
 
-		auditService.logChange("User", userId, "VERIFICATION_CHANGED", oldStatus, newStatus);
+		auditService.logChange("User", userId, AuditAction.VERIFICATION_CHANGED, oldStatus, newStatus);
 
 		return userMapper.toAdminUserListResponse(savedUser);
 	}

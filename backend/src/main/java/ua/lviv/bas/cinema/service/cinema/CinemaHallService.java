@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import ua.lviv.bas.cinema.domain.audit.AuditAction;
 import ua.lviv.bas.cinema.domain.cinema.CinemaHall;
 import ua.lviv.bas.cinema.domain.cinema.Seat;
 import ua.lviv.bas.cinema.domain.cinema.enums.SeatType;
@@ -70,7 +71,7 @@ public class CinemaHallService {
 			CinemaHall saved = hallRepository.save(hall);
 			log.debug("Cinema hall created with ID: {}", saved.getId());
 
-			auditService.logChange("CinemaHall", saved.getId(), "CREATED", null, saved.getName());
+			auditService.logChange("CinemaHall", saved.getId(), AuditAction.CREATED, null, saved.getName());
 
 			return hallMapper.toCinemaHallResponse(saved);
 		} finally {
@@ -123,7 +124,7 @@ public class CinemaHallService {
 			CinemaHall updated = hallRepository.save(existing);
 			log.debug("Cinema hall updated with ID: {}", updated.getId());
 
-			auditService.logChange("CinemaHall", id, "UPDATED", oldName, updated.getName());
+			auditService.logChange("CinemaHall", id, AuditAction.UPDATED, oldName, updated.getName());
 
 			return hallMapper.toCinemaHallResponse(updated);
 		} finally {
@@ -150,7 +151,7 @@ public class CinemaHallService {
 		hallRepository.delete(hall);
 		log.debug("Cinema hall deleted with ID: {}", id);
 
-		auditService.logChange("CinemaHall", id, "DELETED", hallName, null);
+		auditService.logChange("CinemaHall", id, AuditAction.DELETED, hallName, null);
 	}
 
 	@Transactional(readOnly = true)

@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import ua.lviv.bas.cinema.domain.audit.AuditAction;
 import ua.lviv.bas.cinema.domain.promotion.Promotion;
 import ua.lviv.bas.cinema.domain.promotion.UserPromotion;
 import ua.lviv.bas.cinema.domain.user.User;
@@ -66,7 +67,7 @@ public class PromotionService {
 
 		log.info("Promotion claimed successfully. User received {} points", promotion.getBonusPoints());
 
-		auditService.logChange("Promotion", promotion.getId(), "CLAIMED", null,
+		auditService.logChange("Promotion", promotion.getId(), AuditAction.CLAIMED, null,
 				String.format("User: %s, Points: %d", user.getEmail(), promotion.getBonusPoints()));
 
 		return promotionMapper.toPromotionResponse(promotion);
