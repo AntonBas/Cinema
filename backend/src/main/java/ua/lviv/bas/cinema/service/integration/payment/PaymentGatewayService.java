@@ -242,14 +242,8 @@ public class PaymentGatewayService {
 					String errorDescription = (String) responseMap.get("err_description");
 
 					return new PaymentResponse(null, null, null, null, null, null, null, null, null,
-							PaymentStatus.FAILED, null, null, null, errorCode, errorDescription, null, null, null, null,
-							null);
+							PaymentStatus.FAILED, null, null, null, errorCode, errorDescription, null, null, null);
 				}
-
-				boolean isRefundableViaApi = "success".equals(status);
-
-				Object paymentIdObj = responseMap.get("payment_id");
-				String liqpayPaymentId = paymentIdObj != null ? paymentIdObj.toString() : paymentId;
 
 				Object amountObj = responseMap.get("amount");
 				BigDecimal amount = BigDecimal.ZERO;
@@ -267,11 +261,16 @@ public class PaymentGatewayService {
 					}
 				}
 
+				String liqpayPaymentIdObj = responseMap.get("payment_id") != null
+						? responseMap.get("payment_id").toString()
+						: paymentId;
+
+				boolean isRefundableViaApi = "success".equals(status);
+
 				return new PaymentResponse(null, null, null, null, null, null, null, amount, null,
-						convertLiqPayStatus(status), (String) responseMap.get("order_id"), liqpayPaymentId, null,
+						convertLiqPayStatus(status), (String) responseMap.get("order_id"), liqpayPaymentIdObj, null,
 						(String) responseMap.get("err_code"), (String) responseMap.get("err_description"),
-						(String) responseMap.get("sender_card_mask2"), (String) responseMap.get("action"),
-						isRefundableViaApi, null, null);
+						(String) responseMap.get("sender_card_mask2"), null, isRefundableViaApi);
 			} else {
 				throw new PaymentProcessingException("Failed to get payment status");
 			}
@@ -286,8 +285,7 @@ public class PaymentGatewayService {
 	private PaymentResponse getSandboxPaymentStatus(String paymentId) {
 		log.info("Sandbox payment status: paymentId={}", paymentId);
 		return new PaymentResponse(null, null, null, null, null, null, null, BigDecimal.ZERO, null,
-				PaymentStatus.SUCCESS, "SANDBOX_ORDER_" + paymentId, paymentId, null, null, null, null, "pay", true,
-				null, null);
+				PaymentStatus.SUCCESS, "SANDBOX_ORDER_" + paymentId, paymentId, null, null, null, null, null, true);
 	}
 
 	private PaymentStatus convertLiqPayStatus(String liqpayStatus) {

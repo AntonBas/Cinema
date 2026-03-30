@@ -23,8 +23,8 @@ public interface BonusTransactionRepository extends JpaRepository<BonusTransacti
 	Page<BonusTransaction> findByType(@Param("type") BonusTransactionType type, Pageable pageable);
 
 	@Query("SELECT " + "bt.id as id, " + "bt.type as type, " + "bt.pointsChange as pointsChangeRaw, "
-			+ "bt.createdAt as createdAt, "
+			+ "bt.createdDate as createdAt, "
 			+ "(SELECT SUM(t.pointsChange) FROM BonusTransaction t WHERE t.bonusCard = bt.bonusCard AND t.id <= bt.id) as newBalance "
-			+ "FROM BonusTransaction bt " + "WHERE bt.bonusCard.user.id = :userId " + "ORDER BY bt.createdAt DESC")
+			+ "FROM BonusTransaction bt " + "WHERE bt.bonusCard.user.id = :userId " + "ORDER BY bt.createdDate DESC")
 	Page<BonusTransactionProjection> findProjectionsByUserId(@Param("userId") Long userId, Pageable pageable);
 }

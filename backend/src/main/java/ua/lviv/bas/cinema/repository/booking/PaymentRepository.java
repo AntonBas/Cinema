@@ -14,6 +14,7 @@ import ua.lviv.bas.cinema.domain.booking.status.PaymentStatus;
 
 @Repository
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
+
 	Optional<Payment> findByBookingId(Long bookingId);
 
 	@Query("SELECT p FROM Payment p WHERE p.booking.id = :bookingId AND p.booking.user.id = :userId")
@@ -24,13 +25,13 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
 	@Query("SELECT p FROM Payment p JOIN FETCH p.booking b JOIN FETCH b.user JOIN FETCH b.session s JOIN FETCH s.movie WHERE p.id = :paymentId")
 	Optional<Payment> findByIdWithDetails(@Param("paymentId") Long paymentId);
 
-	List<Payment> findByStatusAndCreatedAtBefore(PaymentStatus status, LocalDateTime createdAt);
+	List<Payment> findByStatusAndCreatedDateBefore(PaymentStatus status, LocalDateTime createdDate);
 
-	List<Payment> findByStatusInAndCreatedAtBefore(List<PaymentStatus> statuses, LocalDateTime createdAt);
+	List<Payment> findByStatusInAndCreatedDateBefore(List<PaymentStatus> statuses, LocalDateTime createdDate);
 
 	long countByStatus(PaymentStatus status);
 
-	long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
+	long countByCreatedDateBetween(LocalDateTime start, LocalDateTime end);
 
 	@Query("SELECT p FROM Payment p WHERE p.booking.user.id = :userId")
 	List<Payment> findByUserId(@Param("userId") Long userId);

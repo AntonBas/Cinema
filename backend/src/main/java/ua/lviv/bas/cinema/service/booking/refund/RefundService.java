@@ -115,7 +115,7 @@ public class RefundService {
 
 	@Transactional(readOnly = true)
 	public List<RefundResponse> getUserRefunds(Long userId) {
-		List<Refund> refunds = refundRepository.findByUserIdOrderByCreatedAtDesc(userId);
+		List<Refund> refunds = refundRepository.findByUserIdOrderByCreatedDateDesc(userId);
 		return refunds.stream().map(this::createSuccessResponse).toList();
 	}
 
@@ -145,8 +145,7 @@ public class RefundService {
 	private Refund createRefundRecord(Ticket ticket, BigDecimal refundAmount, BigDecimal percentage,
 			Integer bonusPointsToRefund, String reason) {
 		Refund refund = Refund.builder().payment(ticket.getPayment()).user(ticket.getUser()).totalAmount(refundAmount)
-				.totalBonusPointsToDeduct(bonusPointsToRefund).reason(reason).status(RefundStatus.PENDING)
-				.processedAt(LocalDateTime.now()).processedBy("AUTO_SYSTEM").build();
+				.totalBonusPointsToDeduct(bonusPointsToRefund).reason(reason).status(RefundStatus.PENDING).build();
 
 		BigDecimal safePercentage = percentage.setScale(2, RoundingMode.HALF_UP);
 

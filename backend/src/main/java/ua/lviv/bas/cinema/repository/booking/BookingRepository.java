@@ -17,9 +17,10 @@ import ua.lviv.bas.cinema.domain.booking.BookingStatus;
 
 @Repository
 public interface BookingRepository extends JpaRepository<Booking, Long> {
-	Page<Booking> findByUserIdOrderByCreatedAtDesc(Long userId, Pageable pageable);
 
-	Page<Booking> findByUserIdAndStatusOrderByCreatedAtDesc(Long userId, BookingStatus status, Pageable pageable);
+	Page<Booking> findByUserIdOrderByCreatedDateDesc(Long userId, Pageable pageable);
+
+	Page<Booking> findByUserIdAndStatusOrderByCreatedDateDesc(Long userId, BookingStatus status, Pageable pageable);
 
 	Optional<Booking> findByIdAndUserId(Long id, Long userId);
 
@@ -32,8 +33,8 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 			@Param("status") BookingStatus status);
 
 	@Modifying
-	@Query("DELETE FROM Booking b WHERE b.status IN :statuses AND b.createdAt < :cutoffDate")
-	int deleteByStatusInAndCreatedAtBefore(@Param("statuses") List<BookingStatus> statuses,
+	@Query("DELETE FROM Booking b WHERE b.status IN :statuses AND b.createdDate < :cutoffDate")
+	int deleteByStatusInAndCreatedDateBefore(@Param("statuses") List<BookingStatus> statuses,
 			@Param("cutoffDate") LocalDateTime cutoffDate);
 
 	@Query("SELECT COUNT(b) FROM Booking b WHERE b.user.id = :userId AND b.status = :status")

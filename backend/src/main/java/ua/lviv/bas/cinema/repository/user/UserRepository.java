@@ -55,7 +55,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 			    u.verification_status as verificationStatus,
 			    u.verified_at as verifiedAt,
 			    COALESCE(t.ticketCount, 0) as ticketsCount,
-			    u.updated_at as lastActivity
+			    u.last_modified_date as lastActivity
 			FROM users u
 			LEFT JOIN (
 			    SELECT t.user_id, COUNT(t.id) as ticketCount

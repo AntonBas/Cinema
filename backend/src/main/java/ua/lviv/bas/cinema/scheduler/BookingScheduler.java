@@ -71,7 +71,7 @@ public class BookingScheduler {
 	public void processExpiredPayments() {
 		log.debug("Starting expired payments processing");
 		LocalDateTime cutoffTime = LocalDateTime.now().minusMinutes(30);
-		List<Payment> expiredPayments = paymentRepository.findByStatusAndCreatedAtBefore(PaymentStatus.PENDING,
+		List<Payment> expiredPayments = paymentRepository.findByStatusAndCreatedDateBefore(PaymentStatus.PENDING,
 				cutoffTime);
 
 		if (expiredPayments.isEmpty()) {
@@ -83,7 +83,6 @@ public class BookingScheduler {
 
 		for (Payment payment : expiredPayments) {
 			payment.setStatus(PaymentStatus.EXPIRED);
-			payment.setUpdatedAt(LocalDateTime.now());
 
 			if (payment.getBooking().getStatus() == BookingStatus.PENDING) {
 				payment.getBooking().setStatus(BookingStatus.EXPIRED);
@@ -106,7 +105,7 @@ public class BookingScheduler {
 	public void cleanupOldBookings() {
 		log.debug("Starting old bookings cleanup");
 		LocalDateTime thirtyDaysAgo = LocalDateTime.now().minusDays(30);
-		int deletedCount = bookingRepository.deleteByStatusInAndCreatedAtBefore(
+		int deletedCount = bookingRepository.deleteByStatusInAndCreatedDateBefore(
 				List.of(BookingStatus.EXPIRED, BookingStatus.CANCELLED), thirtyDaysAgo);
 
 		if (deletedCount > 0) {
@@ -121,8 +120,8 @@ public class BookingScheduler {
 	public void cleanupOldPayments() {
 		log.debug("Starting old payments cleanup");
 		LocalDateTime ninetyDaysAgo = LocalDateTime.now().minusDays(90);
-		List<Payment> oldPayments = paymentRepository
-				.findByStatusInAndCreatedAtBefore(List.of(PaymentStatus.FAILED, PaymentStatus.EXPIRED), ninetyDaysAgo);
+		List<Payment> oldPayments = paymentRepository.findByStatusInAndCreatedDateBefore(
+				List.of(PaymentStatus.FAILED, PaymentStatus.EXPIRED), ninetyDaysAgo);
 
 		if (!oldPayments.isEmpty()) {
 			paymentRepository.deleteAll(oldPayments);

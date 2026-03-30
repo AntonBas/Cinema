@@ -18,7 +18,6 @@ import ua.lviv.bas.cinema.repository.promotion.projection.PromotionResponseProje
 public interface PromotionMapper {
 
 	@Mapping(target = "id", ignore = true)
-	@Mapping(target = "createdAt", ignore = true)
 	@Mapping(target = "userRedemptions", ignore = true)
 	Promotion toPromotion(PromotionCreateRequest request);
 

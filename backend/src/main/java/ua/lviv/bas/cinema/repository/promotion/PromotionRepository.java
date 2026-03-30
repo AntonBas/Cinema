@@ -39,7 +39,7 @@ public interface PromotionRepository extends JpaRepository<Promotion, Long> {
 			    FROM Promotion p
 			    WHERE (p.startDate IS NULL OR p.startDate <= CURRENT_DATE)
 			      AND (p.endDate IS NULL OR p.endDate >= CURRENT_DATE)
-			    ORDER BY p.createdAt DESC
+			    ORDER BY p.createdDate DESC
 			""")
 	List<PromotionResponseProjection> findAllActivePromotions();
 }

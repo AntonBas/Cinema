@@ -48,9 +48,9 @@ public class BookingManagementService {
 	public Page<BookingResponse> getUserBookings(Long userId, BookingStatus status, Pageable pageable) {
 		Page<Booking> bookings;
 		if (status != null) {
-			bookings = bookingRepository.findByUserIdAndStatusOrderByCreatedAtDesc(userId, status, pageable);
+			bookings = bookingRepository.findByUserIdAndStatusOrderByCreatedDateDesc(userId, status, pageable);
 		} else {
-			bookings = bookingRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable);
+			bookings = bookingRepository.findByUserIdOrderByCreatedDateDesc(userId, pageable);
 		}
 		return bookings.map(bookingMapper::toBookingResponse);
 	}

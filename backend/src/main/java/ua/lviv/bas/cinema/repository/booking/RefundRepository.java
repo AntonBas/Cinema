@@ -10,7 +10,8 @@ import ua.lviv.bas.cinema.domain.booking.Refund;
 
 @Repository
 public interface RefundRepository extends JpaRepository<Refund, Long> {
-	List<Refund> findByUserIdOrderByCreatedAtDesc(Long userId);
+
+	List<Refund> findByUserIdOrderByCreatedDateDesc(Long userId);
 
 	Optional<Refund> findByIdAndUserId(Long id, Long userId);
 }

@@ -28,8 +28,6 @@ public interface UserMapper {
 	@Mapping(target = "verificationStatus", constant = "NOT_VERIFIED")
 	@Mapping(target = "verifiedAt", ignore = true)
 	@Mapping(target = "password", ignore = true)
-	@Mapping(target = "createdAt", ignore = true)
-	@Mapping(target = "updatedAt", ignore = true)
 	User toUser(UserRegistrationRequest dto);
 
 	UserResponse toUserResponse(User user);
@@ -47,8 +45,6 @@ public interface UserMapper {
 	@Mapping(target = "verificationStatus", ignore = true)
 	@Mapping(target = "verifiedAt", ignore = true)
 	@Mapping(target = "password", ignore = true)
-	@Mapping(target = "createdAt", ignore = true)
-	@Mapping(target = "updatedAt", ignore = true)
 	@Mapping(target = "email", ignore = true)
 	void updateUserFromRequest(UserUpdateRequest dto, @MappingTarget User user);
 
@@ -73,6 +69,5 @@ public interface UserMapper {
 	@Mapping(target = "verificationStatus", source = "verificationStatus")
 	@Mapping(target = "verifiedAt", source = "verifiedAt")
 	@Mapping(target = "ticketsCount", expression = "java(user.getTickets() != null ? (long) user.getTickets().size() : 0L)")
-	@Mapping(target = "lastActivity", source = "updatedAt")
 	AdminUserListResponse toAdminUserListResponse(User user);
 }

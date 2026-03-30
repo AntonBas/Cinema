@@ -61,8 +61,7 @@ public class PaymentProcessingService {
 		}
 
 		Payment payment = Payment.builder().booking(booking).amount(booking.getFinalPrice())
-				.status(PaymentStatus.PENDING).liqpayOrderId(numberGenerator.generateLiqpayOrderId())
-				.createdAt(LocalDateTime.now()).updatedAt(LocalDateTime.now()).build();
+				.status(PaymentStatus.PENDING).liqpayOrderId(numberGenerator.generateLiqpayOrderId()).build();
 
 		Payment savedPayment = paymentRepository.save(payment);
 		log.info("Created payment {} for booking {}", savedPayment.getId(), booking.getId());
@@ -129,7 +128,6 @@ public class PaymentProcessingService {
 
 		payment.setStatus(PaymentStatus.PENDING);
 		payment.setLiqpayOrderId(numberGenerator.generateLiqpayOrderId());
-		payment.setUpdatedAt(LocalDateTime.now());
 
 		Payment savedPayment = paymentRepository.save(payment);
 		log.info("Retried payment {} for booking {}", paymentId, payment.getBooking().getId());
@@ -184,7 +182,6 @@ public class PaymentProcessingService {
 				log.info("Payment {} partially refunded ({} of {})", payment.getId(), amount, payment.getAmount());
 			}
 
-			payment.setUpdatedAt(LocalDateTime.now());
 			paymentRepository.save(payment);
 
 			notificationService.sendRefundEmail(payment, amount, description);
@@ -207,6 +204,6 @@ public class PaymentProcessingService {
 				booking.getSession().getStartTime(), booking.getSession().getHall().getName(), payment.getAmount(),
 				payment.getAmount(), payment.getStatus(), payment.getLiqpayOrderId(), payment.getLiqpayPaymentId(),
 				payment.getPaymentTime(), payment.getLiqpayErrorCode(), payment.getLiqpayErrorDescription(),
-				payment.getLiqpaySenderCardMask(), null, null, payment.getCreatedAt(), payment.getUpdatedAt());
+				payment.getLiqpaySenderCardMask(), null, null);
 	}
 }

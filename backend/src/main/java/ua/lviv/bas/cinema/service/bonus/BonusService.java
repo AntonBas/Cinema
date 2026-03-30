@@ -3,7 +3,6 @@ package ua.lviv.bas.cinema.service.bonus;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.Optional;
 
 import org.springframework.cache.annotation.CacheConfig;
@@ -251,7 +250,7 @@ public class BonusService {
 			throw new IllegalArgumentException("Points cannot be null");
 		}
 		BonusTransaction transaction = BonusTransaction.builder().bonusCard(card).booking(booking).type(type)
-				.pointsChange(points).referenceId(referenceId).refund(refund).createdAt(LocalDateTime.now()).build();
+				.pointsChange(points).referenceId(referenceId).refund(refund).build();
 		bonusCardRepository.save(card);
 		return bonusTransactionRepository.save(transaction);
 	}

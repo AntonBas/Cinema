@@ -119,7 +119,6 @@ public class BookingCreationService {
 
 			if (reservation.getReservedUntil().isBefore(LocalDateTime.now())) {
 				reservation.setReservedUntil(LocalDateTime.now().plusMinutes(tempHoldMinutes));
-				reservation.setReservedAt(LocalDateTime.now());
 				return seatReservationRepository.save(reservation);
 			}
 
@@ -132,7 +131,7 @@ public class BookingCreationService {
 		availabilityValidator.validateSeat(session.getId(), seatId);
 
 		SeatReservation newReservation = SeatReservation.builder().seat(seat).session(session).ticketType(null)
-				.seatPrice(null).status(ReservationStatus.PENDING).reservedAt(LocalDateTime.now())
+				.seatPrice(null).status(ReservationStatus.PENDING)
 				.reservedUntil(LocalDateTime.now().plusMinutes(tempHoldMinutes)).reservedByUser(user).build();
 
 		return seatReservationRepository.save(newReservation);

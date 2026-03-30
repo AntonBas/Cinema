@@ -88,7 +88,7 @@ public class SeatReservationService {
 		availabilityValidator.validateSeat(sessionId, seatId);
 
 		SeatReservation reservation = SeatReservation.builder().seat(seat).session(session).ticketType(null)
-				.seatPrice(null).status(ReservationStatus.PENDING).reservedAt(LocalDateTime.now())
+				.seatPrice(null).status(ReservationStatus.PENDING)
 				.reservedUntil(LocalDateTime.now().plusMinutes(tempHoldMinutes)).reservedByUser(user).build();
 
 		seatReservationRepository.save(reservation);
