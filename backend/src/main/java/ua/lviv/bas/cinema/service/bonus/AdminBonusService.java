@@ -106,8 +106,8 @@ public class AdminBonusService {
 		log.info("Updated bonus rule: {}", type);
 
 		if (!oldValues.isEmpty()) {
-			auditService.logChange("BonusRules", updated.getId(), "Bonus Rule " + type.name(), AuditAction.UPDATED,
-					oldValues, newValues);
+			auditService.logChange("BonusRules", updated.getId(), type.name(), AuditAction.UPDATED, oldValues,
+					newValues);
 		}
 
 		return bonusMapper.toBonusRulesResponse(updated);
@@ -165,8 +165,8 @@ public class AdminBonusService {
 		BonusRules updated = bonusRulesRepository.save(rules);
 
 		if (!oldValues.isEmpty()) {
-			auditService.logChange("BonusRules", updated.getId(), "Bonus Rule " + type.name(),
-					AuditAction.RESET_TO_DEFAULTS, oldValues, newValues);
+			auditService.logChange("BonusRules", updated.getId(), type.name(), AuditAction.RESET_TO_DEFAULTS, oldValues,
+					newValues);
 		}
 
 		return bonusMapper.toBonusRulesResponse(updated);
