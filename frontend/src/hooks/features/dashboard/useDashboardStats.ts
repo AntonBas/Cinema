@@ -21,7 +21,7 @@ export interface DashboardStats {
     todaysStats: {
         ticketsSold: number;
         revenue: number;
-        newUsers: number;
+        activeUsers: number;
         sessionsCompleted: number;
         activeMovies: number;
     };
@@ -109,7 +109,7 @@ export const useDashboardStats = () => {
                 return (!endDate || endDate > now);
             }).length;
 
-            const newUsersToday = users.filter(user => {
+            const activeUsersToday = users.filter(user => {
                 const lastActivity = new Date(user.lastActivity);
                 return lastActivity >= todayStart && lastActivity < todayEnd;
             }).length;
@@ -167,7 +167,7 @@ export const useDashboardStats = () => {
                     todaysStats: {
                         ticketsSold: todayTicketsSold,
                         revenue: todayRevenue,
-                        newUsers: newUsersToday,
+                        activeUsers: activeUsersToday,
                         sessionsCompleted: completedSessions.length,
                         activeMovies: activeMovies.length
                     }

@@ -1,26 +1,26 @@
 .statCard {
     background: linear-gradient(145deg, #1a2639 0%, #0f172a 100%);
     border: 1px solid #334155;
-    border-radius: 16px;
-    padding: 20px;
+    border-radius: var(--radius-lg);
+    padding: var(--space-6);
     display: flex;
     align-items: flex-start;
-    gap: 24px;
-    transition: all 0.3s ease;
+    gap: var(--space-6);
+    transition: all var(--transition-normal);
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
 }
 
 .statCard:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.5);
-    border-color: #667eea;
+    transform: translateY(-2px);
+    box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.5);
+    border-color: var(--color-primary);
 }
 
 .statHeader {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: 8px;
+    gap: var(--space-2);
 }
 
 .statIcon {
@@ -29,12 +29,12 @@
 }
 
 .statTrend {
-    font-size: 12px;
+    font-size: var(--font-size-xs);
     font-weight: 600;
     color: #48bb78;
-    padding: 4px 8px;
+    padding: var(--space-1) var(--space-2);
     background: rgba(72, 187, 120, 0.1);
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     border: 1px solid rgba(72, 187, 120, 0.3);
 }
 
@@ -45,36 +45,36 @@
 }
 
 .statNumber {
-    color: #f1f5f9;
-    font-size: 28px;
+    color: var(--color-text-primary);
+    font-size: var(--font-size-2xl);
     font-weight: 700;
-    margin: 0 0 4px 0;
+    margin: 0 0 var(--space-1) 0;
     line-height: 1;
 }
 
 .statLabel {
-    color: #94a3b8;
-    font-size: 14px;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    margin-bottom: 4px;
+    margin-bottom: var(--space-1);
 }
 
 .statSubtext {
     color: #64748b;
-    font-size: 12px;
+    font-size: var(--font-size-xs);
     font-weight: 500;
 }
 
 @media (max-width: 768px) {
     .statCard {
-        padding: 16px;
-        gap: 16px;
+        padding: var(--space-4);
+        gap: var(--space-4);
     }
 
     .statNumber {
-        font-size: 24px;
+        font-size: var(--font-size-xl);
     }
 
     .statIcon {
@@ -86,8 +86,8 @@
     .statCard {
         flex-direction: column;
         text-align: center;
-        gap: 12px;
-        padding: 16px;
+        gap: var(--space-3);
+        padding: var(--space-4);
     }
 
     .statHeader {

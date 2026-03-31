@@ -1,87 +1,87 @@
 .overviewCard {
     background: linear-gradient(145deg, #1a2639 0%, #0f172a 100%);
-    border-radius: 16px;
-    padding: 24px;
-    margin-bottom: 32px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-xl);
+    padding: var(--space-6);
+    margin-bottom: var(--space-8);
+    border: 1px solid #334155;
+    box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.5);
 }
 
 .overviewHeader {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 24px;
+    margin-bottom: var(--space-6);
 }
 
 .overviewTitle {
-    font-size: 18px;
+    font-size: var(--font-size-lg);
     font-weight: 600;
-    color: white;
+    color: var(--color-text-primary);
     letter-spacing: 0.5px;
 }
 
 .overviewDate {
-    font-size: 14px;
-    opacity: 0.9;
-    background: rgba(255, 255, 255, 0.2);
-    padding: 4px 12px;
-    border-radius: 9999px;
-    color: white;
+    font-size: var(--font-size-sm);
+    background: rgba(255, 255, 255, 0.1);
+    padding: var(--space-1) var(--space-3);
+    border-radius: var(--radius-full);
+    color: var(--color-text-secondary);
 }
 
 .overviewStats {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 24px;
+    gap: var(--space-6);
 }
 
 .overviewStat {
     text-align: center;
-    padding: 8px;
+    padding: var(--space-2);
 }
 
 .overviewLabel {
     display: block;
-    font-size: 12px;
+    font-size: var(--font-size-xs);
     opacity: 0.8;
-    margin-bottom: 8px;
+    margin-bottom: var(--space-2);
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    color: #cbd5e1;
+    color: var(--color-text-secondary);
 }
 
 .overviewValue {
     display: block;
-    font-size: 28px;
+    font-size: var(--font-size-2xl);
     font-weight: 700;
     line-height: 1.2;
-    color: white;
+    color: var(--color-text-primary);
 }
 
 @media (max-width: 768px) {
     .overviewStats {
         grid-template-columns: repeat(2, 1fr);
-        gap: 16px;
+        gap: var(--space-4);
     }
 
     .overviewHeader {
         flex-direction: column;
         align-items: flex-start;
-        gap: 8px;
+        gap: var(--space-2);
     }
 
     .overviewCard {
-        padding: 16px;
+        padding: var(--space-4);
     }
 
     .overviewValue {
-        font-size: 24px;
+        font-size: var(--font-size-xl);
     }
 }
 
 @media (max-width: 480px) {
     .overviewStats {
         grid-template-columns: 1fr;
-        gap: 12px;
+        gap: var(--space-3);
     }
 }

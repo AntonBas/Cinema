@@ -35,8 +35,8 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({ stats, for
                     <span className={styles.overviewValue}>{formatCurrency(stats.todaysStats.revenue)}</span>
                 </div>
                 <div className={styles.overviewStat}>
-                    <span className={styles.overviewLabel}>New Users</span>
-                    <span className={styles.overviewValue}>{stats.todaysStats.newUsers}</span>
+                    <span className={styles.overviewLabel}>Active Users</span>
+                    <span className={styles.overviewValue}>{stats.todaysStats.activeUsers}</span>
                 </div>
             </div>
         </div>
