@@ -23,9 +23,15 @@ public class PaymentStatusService {
 	private final PaymentProcessingService paymentProcessingService;
 	private final PaymentGatewayService paymentGatewayService;
 
+	@Transactional(readOnly = true)
 	public PaymentLiqPayDataResponse preparePaymentData(Long paymentId) {
 		Payment payment = paymentRepository.findById(paymentId)
 				.orElseThrow(() -> new PaymentNotFoundException(paymentId));
+
+		payment.getBooking().getUser().getEmail();
+		payment.getBooking().getSession().getMovie().getTitle();
+		payment.getBooking().getSession().getHall().getName();
+		payment.getBooking().getSession().getStartTime();
 
 		return paymentGatewayService.prepareLiqPayPaymentData(payment);
 	}

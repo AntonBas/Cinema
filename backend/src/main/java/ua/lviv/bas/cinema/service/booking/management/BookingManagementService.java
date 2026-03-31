@@ -4,9 +4,6 @@ import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -42,14 +39,12 @@ public class BookingManagementService {
 	private final BonusService bonusService;
 	private final AuditService auditService;
 
-	@Cacheable(value = "bookings", key = "#bookingId + '-' + #user.id")
 	public BookingResponse getBookingById(Long bookingId, User user) {
 		Booking booking = bookingRepository.findByIdAndUserId(bookingId, user.getId())
 				.orElseThrow(() -> new BookingNotFoundException(bookingId));
 		return bookingMapper.toBookingResponse(booking);
 	}
 
-	@Cacheable(value = "bookings", key = "'user:' + #userId + '-status:' + #status + '-page:' + #pageable.pageNumber + '-' + #pageable.pageSize")
 	public Page<BookingResponse> getUserBookings(Long userId, BookingStatus status, Pageable pageable) {
 		Page<Booking> bookings;
 		if (status != null) {
@@ -60,11 +55,6 @@ public class BookingManagementService {
 		return bookings.map(bookingMapper::toBookingResponse);
 	}
 
-	@Caching(evict = { @CacheEvict(value = "bookings", key = "#bookingId + '-' + #user.id"),
-			@CacheEvict(value = "bookings", key = "'user:' + #user.id + '-status:' + null + '-page:*'"),
-			@CacheEvict(value = "bookings", key = "'user:' + #user.id + '-status:' + #booking.status + '-page:*'"),
-			@CacheEvict(value = "seatAvailability", allEntries = true),
-			@CacheEvict(value = "availableSeatsCount", allEntries = true) })
 	@Transactional
 	public void cancelBooking(Long bookingId, User user) {
 		Booking booking = bookingRepository.findByIdAndUserId(bookingId, user.getId())
@@ -101,10 +91,6 @@ public class BookingManagementService {
 				newDetails);
 	}
 
-	@Caching(evict = { @CacheEvict(value = "bookings", key = "#bookingId + '-' + #booking.user.id"),
-			@CacheEvict(value = "bookings", key = "'user:' + #booking.user.id + '-status:*'"),
-			@CacheEvict(value = "seatAvailability", allEntries = true),
-			@CacheEvict(value = "availableSeatsCount", allEntries = true) })
 	@Transactional
 	public void confirmBooking(Long bookingId) {
 		Booking booking = bookingRepository.findById(bookingId)

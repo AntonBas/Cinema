@@ -15,7 +15,7 @@ public class NumberGeneratorService {
 		if (booking.getId() == null) {
 			throw new IllegalStateException("Booking ID is required to generate booking number");
 		}
-		return String.format("BK-%d-%05d", booking.getId());
+		return String.format("BK-%d-%05d", booking.getId(), booking.getId());
 	}
 
 	public String generateBookingNumber(Booking booking) {
