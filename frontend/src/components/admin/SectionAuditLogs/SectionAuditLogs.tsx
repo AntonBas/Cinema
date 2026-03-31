@@ -1,21 +1,22 @@
-// src/components/admin/SectionAuditLogs/SectionAuditLogs.tsx
 import React, { useState, useEffect } from 'react';
 import { useAuditLogs } from '@/hooks/features/audit/useAuditLogs';
 import { AuditLogsFilters } from './AuditLogsFilters/AuditLogsFilters';
 import { AuditLogsTable } from './AuditLogsTable/AuditLogsTable';
-import { Pagination } from '@/components/ui/Pagination/Pagination';
+import { Pagination } from '@/components/ui';
+import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';
 import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
+import { EntityTypeDisplay, ActionDisplay } from '@/types/audit';
 import styles from './SectionAuditLogs.module.css';
 
-const ENTITY_TYPES = ['User', 'Booking', 'Payment', 'Refund', 'Bonus', 'Ticket', 'TicketType', 'Movie', 'Session', 'CinemaHall', 'Promotion', 'BonusRules'];
-const ACTIONS = ['CREATED', 'UPDATED', 'DELETED', 'SUCCESS', 'FAILED', 'REFUND', 'CANCELLED', 'CONFIRMED', 'VALIDATED', 'CLAIMED', 'TOGGLE_STATUS', 'RESET_TO_DEFAULTS', 'REJECTED', 'RETRY', 'REACTIVATED', 'REGISTER', 'PASSWORD_CHANGED', 'PASSWORD_RESET_REQUESTED', 'PASSWORD_RESET_COMPLETED', 'EMAIL_CHANGE_REQUESTED', 'ROLE_CHANGED', 'STATUS_CHANGED', 'VERIFICATION_CHANGED', 'POINTS_ADDED', 'POINTS_SPENT', 'POINTS_ACCRUED', 'POINTS_REFUNDED'];
+const ENTITY_TYPES = Object.keys(EntityTypeDisplay);
+const ACTIONS = Object.keys(ActionDisplay);
 
 export const SectionAuditLogs: React.FC = () => {
     const [entityType, setEntityType] = useState('');
     const [action, setAction] = useState('');
     const [changedBy, setChangedBy] = useState('');
 
-    const { auditLogs, pagination, loading, setPage, applyFilters, clearFilters, refresh } = useAuditLogs();
+    const { auditLogs, pagination, loading, setPage, applyFilters, clearFilters } = useAuditLogs();
 
     const showDelayedLoading = useDelayedLoading(loading, { delay: 150, minDisplayTime: 300 });
 
@@ -40,8 +41,7 @@ export const SectionAuditLogs: React.FC = () => {
     if (showDelayedLoading && !auditLogs.length) {
         return (
             <div className={styles.loading}>
-                <div className={styles.loadingSpinner} />
-                <p>Loading audit logs...</p>
+                <LoadingSpinner text="Loading audit logs..." />
             </div>
         );
     }
@@ -53,9 +53,6 @@ export const SectionAuditLogs: React.FC = () => {
                     <h1 className={styles.title}>Audit Logs</h1>
                     <p className={styles.subtitle}>Track all changes and user activities in the system</p>
                 </div>
-                <button onClick={refresh} className={styles.refreshButton}>
-                    Refresh
-                </button>
             </div>
 
             <AuditLogsFilters
@@ -78,7 +75,7 @@ export const SectionAuditLogs: React.FC = () => {
             )}
 
             <div className={styles.tableContainer}>
-                <AuditLogsTable logs={auditLogs} loading={loading} />
+                <AuditLogsTable logs={auditLogs} />
             </div>
 
             {pagination && pagination.totalPages > 1 && (

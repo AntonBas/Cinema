@@ -1,13 +1,28 @@
 import React from 'react';
-import { Badge } from '@/components/ui';
+import { Badge, Tooltip } from '@/components/ui';
 import type { AuditLogResponse } from '@/types/audit';
-import { getEntityTypeDisplay, getActionDisplay } from '@/types/audit';
+import { getActionDisplay } from '@/types/audit';
 import styles from './AuditLogsTable.module.css';
 
 interface AuditLogsTableProps {
     logs: AuditLogResponse[];
-    loading: boolean;
 }
+
+const truncateText = (text: string, maxLength: number = 40): string => {
+    if (!text) return '';
+    return text.length > maxLength ? `${text.substring(0, maxLength)}...` : text;
+};
+
+const formatDateTime = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const formattedDate = date.toLocaleDateString('uk-UA');
+    const formattedTime = date.toLocaleTimeString('uk-UA', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+    });
+    return { date: formattedDate, time: formattedTime };
+};
 
 const formatDetails = (log: AuditLogResponse): React.ReactNode => {
     if (!log.details || log.details.length === 0) return null;
@@ -17,9 +32,20 @@ const formatDetails = (log: AuditLogResponse): React.ReactNode => {
             {log.details.map((detail, idx) => (
                 <div key={idx} className={styles.changeField}>
                     <span className={styles.changeKey}>{formatFieldName(detail.fieldName)}:</span>
-                    <span className={styles.oldValue}>{detail.oldValue || 'null'}</span>
+
+                    <Tooltip content={detail.oldValue || 'null'}>
+                        <span className={styles.oldValue}>
+                            {truncateText(detail.oldValue || 'null', 30)}
+                        </span>
+                    </Tooltip>
+
                     {' → '}
-                    <span className={styles.newValue}>{detail.newValue || 'null'}</span>
+
+                    <Tooltip content={detail.newValue || 'null'}>
+                        <span className={styles.newValue}>
+                            {truncateText(detail.newValue || 'null', 30)}
+                        </span>
+                    </Tooltip>
                 </div>
             ))}
         </div>
@@ -55,16 +81,22 @@ const formatFieldName = (field: string): string => {
     return fieldMap[field] || field;
 };
 
-export const AuditLogsTable: React.FC<AuditLogsTableProps> = ({ logs, loading }) => {
-    if (loading) {
+const splitActionText = (action: string): React.ReactNode => {
+    const text = getActionDisplay(action);
+    const words = text.split(' ');
+
+    if (words.length === 2) {
         return (
-            <div className={styles.loadingContainer}>
-                <div className={styles.loadingSpinner} />
-                <p>Loading audit logs...</p>
-            </div>
+            <>
+                {words[0]}<br />{words[1]}
+            </>
         );
     }
 
+    return text;
+};
+
+export const AuditLogsTable: React.FC<AuditLogsTableProps> = ({ logs }) => {
     if (logs.length === 0) {
         return (
             <div className={styles.emptyContainer}>
@@ -90,31 +122,39 @@ export const AuditLogsTable: React.FC<AuditLogsTableProps> = ({ logs, loading })
                     <tr>
                         <th className={styles.th}>Time</th>
                         <th className={styles.th}>Changed By</th>
-                        <th className={styles.th}>Entity Type</th>
                         <th className={styles.th}>Target</th>
                         <th className={styles.th}>Action</th>
                         <th className={styles.th}>Changes</th>
                     </tr>
                 </thead>
                 <tbody className={styles.tableBody}>
-                    {logs.map(log => (
-                        <tr key={log.id} className={styles.tr}>
-                            <td className={styles.td}>
-                                {new Date(log.changedAt).toLocaleString()}
-                            </td>
-                            <td className={styles.td}>{log.changedBy}</td>
-                            <td className={styles.td}>{getEntityTypeDisplay(log.entityType)}</td>
-                            <td className={styles.td}>{log.targetInfo}</td>
-                            <td className={styles.td}>
-                                <Badge variant={getBadgeVariant(log.action)}>
-                                    {getActionDisplay(log.action)}
-                                </Badge>
-                            </td>
-                            <td className={styles.td}>
-                                {formatDetails(log)}
-                            </td>
-                        </tr>
-                    ))}
+                    {logs.map(log => {
+                        const { date, time } = formatDateTime(log.changedAt);
+                        return (
+                            <tr key={log.id} className={styles.tr}>
+                                <td className={styles.td}>
+                                    <span className={styles.timeDate}>{date}</span>
+                                    <span className={styles.timeTime}>{time}</span>
+                                </td>
+                                <td className={styles.td}>{log.changedBy}</td>
+                                <td className={styles.td}>
+                                    <Tooltip content={log.targetInfo}>
+                                        <span className={styles.targetInfo}>
+                                            {truncateText(log.targetInfo, 35)}
+                                        </span>
+                                    </Tooltip>
+                                </td>
+                                <td className={styles.td}>
+                                    <Badge variant={getBadgeVariant(log.action)} className={styles.actionBadge}>
+                                        {splitActionText(log.action)}
+                                    </Badge>
+                                </td>
+                                <td className={styles.td}>
+                                    {formatDetails(log)}
+                                </td>
+                            </tr>
+                        );
+                    })}
                 </tbody>
             </table>
         </div>

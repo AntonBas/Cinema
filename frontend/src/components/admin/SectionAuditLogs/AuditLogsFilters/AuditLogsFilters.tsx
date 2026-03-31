@@ -1,4 +1,7 @@
 import React from 'react';
+import { Select, Input, Button } from '@/components/ui';
+import type { SelectOption } from '@/components/ui/Select/Select';
+import { ActionDisplay } from '@/types/audit';
 import styles from './AuditLogsFilters.module.css';
 
 interface AuditLogsFiltersProps {
@@ -24,41 +27,61 @@ export const AuditLogsFilters: React.FC<AuditLogsFiltersProps> = ({
     entityTypes,
     actions
 }) => {
+    const hasActiveFilters = entityType !== '' || action !== '' || changedBy !== '';
+
+    const entityTypeOptions: SelectOption[] = [
+        { value: '', label: 'All Types' },
+        ...entityTypes.map(type => ({ value: type, label: type }))
+    ];
+
+    const actionOptions: SelectOption[] = [
+        { value: '', label: 'All Actions' },
+        ...actions.map(act => ({
+            value: act,
+            label: ActionDisplay[act] || act
+        }))
+    ];
+
     return (
         <div className={styles.filtersContainer}>
             <div className={styles.searchWrapper}>
-                <label>Entity Type</label>
-                <select value={entityType} onChange={(e) => onEntityTypeChange(e.target.value)}>
-                    <option value="">All Entity Types</option>
-                    {entityTypes.map(type => (
-                        <option key={type} value={type}>{type}</option>
-                    ))}
-                </select>
-            </div>
-
-            <div className={styles.searchWrapper}>
-                <label>Action</label>
-                <select value={action} onChange={(e) => onActionChange(e.target.value)}>
-                    <option value="">All Actions</option>
-                    {actions.map(act => (
-                        <option key={act} value={act}>{act}</option>
-                    ))}
-                </select>
-            </div>
-
-            <div className={styles.searchWrapper}>
-                <label>Changed By</label>
-                <input
-                    type="text"
-                    placeholder="User email"
-                    value={changedBy}
-                    onChange={(e) => onChangedByChange(e.target.value)}
+                <Select
+                    options={entityTypeOptions}
+                    value={entityType}
+                    onChange={(value) => onEntityTypeChange(value.toString())}
+                    placeholder="Select type"
+                    label="Type"
                 />
             </div>
 
-            <button className={styles.clearButton} onClick={onClear}>
-                Clear
-            </button>
+            <div className={styles.searchWrapper}>
+                <Select
+                    options={actionOptions}
+                    value={action}
+                    onChange={(value) => onActionChange(value.toString())}
+                    placeholder="Select action"
+                    label="Action"
+                />
+            </div>
+
+            <div className={styles.searchWrapper}>
+                <Input
+                    value={changedBy}
+                    onChange={onChangedByChange}
+                    placeholder="User email"
+                    label="Changed By"
+                />
+            </div>
+
+            {hasActiveFilters && (
+                <Button
+                    variant="error"
+                    onClick={onClear}
+                    className={styles.clearButton}
+                >
+                    Clear
+                </Button>
+            )}
         </div>
     );
 };
