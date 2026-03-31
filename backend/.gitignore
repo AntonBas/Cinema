@@ -2,36 +2,30 @@ target/
 .mvn/wrapper/maven-wrapper.jar
 .mvn/timing.properties
 
-*.jar
-*.war
-*.ear
-*.zip
-*.tar.gz
-*.rar
-
-logs/
-*.log
-
 .idea/
 *.iml
 .classpath
 .project
 .settings/
-
 bin/
 tmp/
-*.class
+
+logs/
+*.log
+*.gz
+
+uploads/
+test-uploads/
 
 jacoco.exec
 *.jacoco
 coverage/
 
-hs_err_pid*
 *.tmp
 *.bak
 *.swp
 *~
-
+hs_err_pid*
 local.properties
 .loadpath
 .recommenders
