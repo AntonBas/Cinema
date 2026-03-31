@@ -9,7 +9,12 @@ export class ApiErrorException extends Error {
     public readonly subErrors?: ApiSubError[];
 
     constructor(apiError: ApiError) {
-        const errorMessage = apiError.message || 'Request failed';
+        let errorMessage = apiError.message || 'Request failed';
+
+        if (apiError.statusCode === 429 && (!apiError.message || apiError.message === 'Request failed')) {
+            errorMessage = 'Too many requests. Please wait a moment before trying again.';
+        }
+
         super(errorMessage);
 
         this.name = 'ApiErrorException';
@@ -68,6 +73,10 @@ export class ApiErrorException extends Error {
         return this.statusCode === 403;
     }
 
+    isTooManyRequests(): boolean {
+        return this.statusCode === 429;
+    }
+
     isServerError(): boolean {
         return this.statusCode >= 500;
     }
@@ -105,7 +114,21 @@ export class ApiErrorException extends Error {
 }
 
 export const handleApiError = async (response: Response): Promise<never> => {
-    const errorData: ApiError = await response.json();
+    let errorData: ApiError;
+
+    try {
+        errorData = await response.json();
+    } catch {
+        errorData = {
+            message: response.status === 429
+                ? 'Too many requests. Please wait a moment before trying again.'
+                : 'Request failed',
+            status: response.statusText,
+            statusCode: response.status,
+            timestamp: new Date().toISOString()
+        };
+    }
+
     throw new ApiErrorException(errorData);
 };
 

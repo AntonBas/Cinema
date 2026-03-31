@@ -24,6 +24,16 @@ api.interceptors.response.use(
     (response) => response,
     (error) => {
         if (error.response) {
+            if (error.response.status === 429) {
+                const apiErrorException = new ApiErrorException({
+                    message: 'Too many requests. Please wait a moment before trying again.',
+                    status: 'TOO_MANY_REQUESTS',
+                    statusCode: 429,
+                    timestamp: new Date().toISOString()
+                } as any);
+                return Promise.reject(apiErrorException);
+            }
+
             const responseData = error.response.data;
 
             if (responseData && typeof responseData === 'object' && 'statusCode' in responseData) {
