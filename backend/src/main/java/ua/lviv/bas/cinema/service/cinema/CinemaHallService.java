@@ -34,7 +34,6 @@ import ua.lviv.bas.cinema.repository.cinema.CinemaHallRepository;
 import ua.lviv.bas.cinema.repository.cinema.SeatRepository;
 import ua.lviv.bas.cinema.repository.cinema.projection.CinemaHallProjection;
 import ua.lviv.bas.cinema.service.shared.AuditService;
-import ua.lviv.bas.cinema.validation.CoupleRowSeatsValidator;
 
 @Slf4j
 @Service
@@ -52,37 +51,32 @@ public class CinemaHallService {
 	public CinemaHallResponse createHall(CinemaHallRequest request) {
 		log.info("Creating cinema hall: {}", request.name());
 
-		try {
-			CoupleRowSeatsValidator.setCurrentRequest(request);
-
-			if (hallRepository.existsByName(request.name())) {
-				throw new DuplicateEntityException("CinemaHall", request.name());
-			}
-
-			validateCoupleRowsConfiguration(request);
-
-			CinemaHall hall = CinemaHall.builder().name(request.name()).build();
-
-			if (request.rows() != null && request.seatsPerRow() != null) {
-				List<Seat> seats = generateSeatLayout(hall, request);
-				hall.setSeats(seats);
-				log.debug("Generated {} seats during hall creation", seats.size());
-			}
-
-			CinemaHall saved = hallRepository.save(hall);
-			log.debug("Cinema hall created with ID: {}", saved.getId());
-
-			Map<String, Object> details = new HashMap<>();
-			details.put("name", saved.getName());
-			details.put("rows", request.rows());
-			details.put("seatsPerRow", request.seatsPerRow());
-
-			auditService.logChange("CinemaHall", saved.getId(), saved.getName(), AuditAction.CREATED, null, details);
-
-			return hallMapper.toCinemaHallResponse(saved);
-		} finally {
-			CoupleRowSeatsValidator.clear();
+		if (hallRepository.existsByName(request.name())) {
+			throw new DuplicateEntityException("CinemaHall", request.name());
 		}
+
+		validateCoupleRowsConfiguration(request);
+		validateSeatsPerRowForCoupleRows(request);
+
+		CinemaHall hall = CinemaHall.builder().name(request.name()).build();
+
+		if (request.rows() != null && request.seatsPerRow() != null) {
+			List<Seat> seats = generateSeatLayout(hall, request);
+			hall.setSeats(seats);
+			log.debug("Generated {} seats during hall creation", seats.size());
+		}
+
+		CinemaHall saved = hallRepository.save(hall);
+		log.debug("Cinema hall created with ID: {}", saved.getId());
+
+		Map<String, Object> details = new HashMap<>();
+		details.put("name", saved.getName());
+		details.put("rows", request.rows());
+		details.put("seatsPerRow", request.seatsPerRow());
+
+		auditService.logChange("CinemaHall", saved.getId(), saved.getName(), AuditAction.CREATED, null, details);
+
+		return hallMapper.toCinemaHallResponse(saved);
 	}
 
 	@Transactional
@@ -91,57 +85,52 @@ public class CinemaHallService {
 	public CinemaHallResponse updateHall(Long id, CinemaHallRequest request) {
 		log.info("Updating cinema hall with id: {}", id);
 
-		try {
-			CoupleRowSeatsValidator.setCurrentRequest(request);
+		CinemaHall existing = hallRepository.findByIdWithSeats(id)
+				.orElseThrow(() -> new CinemaHallNotFoundException(id));
+		String oldName = existing.getName();
 
-			CinemaHall existing = hallRepository.findByIdWithSeats(id)
-					.orElseThrow(() -> new CinemaHallNotFoundException(id));
-			String oldName = existing.getName();
+		boolean hasFutureSessions = existing.getSessions().stream()
+				.anyMatch(session -> session.getStartTime().isAfter(LocalDateTime.now()));
 
-			boolean hasFutureSessions = existing.getSessions().stream()
-					.anyMatch(session -> session.getStartTime().isAfter(LocalDateTime.now()));
-
-			if (hasFutureSessions) {
-				throw new CinemaHallHasSessionsException(existing.getName(), id);
-			}
-
-			if (!existing.getName().equals(request.name()) && hallRepository.existsByName(request.name())) {
-				throw new DuplicateEntityException("CinemaHall", request.name());
-			}
-
-			validateCoupleRowsConfiguration(request);
-
-			existing.setName(request.name());
-
-			boolean layoutChanged = !isLayoutSame(existing, request);
-
-			if (layoutChanged) {
-				boolean hasTickets = seatRepository.hasTicketsForHall(id);
-
-				if (hasTickets) {
-					throw new IllegalStateException("Cannot update hall layout because seats have booked tickets");
-				}
-
-				seatRepository.deleteByHallId(id);
-				List<Seat> newSeats = generateSeatLayout(existing, request);
-				seatRepository.saveAll(newSeats);
-			}
-
-			CinemaHall updated = hallRepository.save(existing);
-			log.debug("Cinema hall updated with ID: {}", updated.getId());
-
-			Map<String, Object> oldDetails = new HashMap<>();
-			oldDetails.put("name", oldName);
-
-			Map<String, Object> newDetails = new HashMap<>();
-			newDetails.put("name", updated.getName());
-
-			auditService.logChange("CinemaHall", id, oldName, AuditAction.UPDATED, oldDetails, newDetails);
-
-			return hallMapper.toCinemaHallResponse(updated);
-		} finally {
-			CoupleRowSeatsValidator.clear();
+		if (hasFutureSessions) {
+			throw new CinemaHallHasSessionsException(existing.getName(), id);
 		}
+
+		if (!existing.getName().equals(request.name()) && hallRepository.existsByName(request.name())) {
+			throw new DuplicateEntityException("CinemaHall", request.name());
+		}
+
+		validateCoupleRowsConfiguration(request);
+		validateSeatsPerRowForCoupleRows(request);
+
+		existing.setName(request.name());
+
+		boolean layoutChanged = !isLayoutSame(existing, request);
+
+		if (layoutChanged) {
+			boolean hasTickets = seatRepository.hasTicketsForHall(id);
+
+			if (hasTickets) {
+				throw new IllegalStateException("Cannot update hall layout because seats have booked tickets");
+			}
+
+			seatRepository.deleteByHallId(id);
+			List<Seat> newSeats = generateSeatLayout(existing, request);
+			seatRepository.saveAll(newSeats);
+		}
+
+		CinemaHall updated = hallRepository.save(existing);
+		log.debug("Cinema hall updated with ID: {}", updated.getId());
+
+		Map<String, Object> oldDetails = new HashMap<>();
+		oldDetails.put("name", oldName);
+
+		Map<String, Object> newDetails = new HashMap<>();
+		newDetails.put("name", updated.getName());
+
+		auditService.logChange("CinemaHall", id, oldName, AuditAction.UPDATED, oldDetails, newDetails);
+
+		return hallMapper.toCinemaHallResponse(updated);
 	}
 
 	@Transactional
@@ -205,7 +194,7 @@ public class CinemaHallService {
 	private List<Seat> generateSeatLayout(CinemaHall hall, CinemaHallRequest request) {
 		List<Seat> seats = new ArrayList<>();
 		SeatType defaultType = request.defaultSeatType();
-		List<Integer> coupleRows = request.coupleRows() != null ? request.coupleRows() : List.of(7);
+		List<Integer> coupleRows = request.coupleRows() != null ? request.coupleRows() : List.of();
 
 		for (int row = 1; row <= request.rows(); row++) {
 			if (coupleRows.contains(row)) {
@@ -263,6 +252,16 @@ public class CinemaHallService {
 							"Couple row " + row + " is out of range. Hall has " + request.rows() + " rows");
 				}
 			}
+		}
+	}
+
+	private void validateSeatsPerRowForCoupleRows(CinemaHallRequest request) {
+		boolean hasCoupleRows = request.coupleRows() != null && !request.coupleRows().isEmpty();
+
+		if (hasCoupleRows && request.seatsPerRow() % 2 != 0) {
+			throw new IllegalArgumentException(
+					String.format("Number of seats per row must be even because hall has COUPLE seats in rows: %s",
+							request.coupleRows()));
 		}
 	}
 }
