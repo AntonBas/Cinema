@@ -15,7 +15,7 @@ import ua.lviv.bas.cinema.dto.user.response.UserProfileResponse;
 import ua.lviv.bas.cinema.dto.user.response.UserResponse;
 import ua.lviv.bas.cinema.repository.user.projection.AdminUserProjection;
 
-@Mapper(componentModel = "spring", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE, unmappedTargetPolicy = ReportingPolicy.IGNORE)
+@Mapper(componentModel = "spring", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE, unmappedTargetPolicy = ReportingPolicy.WARN)
 public interface UserMapper {
 
 	@Mapping(target = "id", ignore = true)
@@ -46,6 +46,10 @@ public interface UserMapper {
 	@Mapping(target = "verifiedAt", ignore = true)
 	@Mapping(target = "password", ignore = true)
 	@Mapping(target = "email", ignore = true)
+	@Mapping(target = "createdBy", ignore = true)
+	@Mapping(target = "createdDate", ignore = true)
+	@Mapping(target = "lastModifiedBy", ignore = true)
+	@Mapping(target = "lastModifiedDate", ignore = true)
 	void updateUserFromRequest(UserUpdateRequest dto, @MappingTarget User user);
 
 	@Mapping(target = "id", source = "id")
@@ -69,5 +73,6 @@ public interface UserMapper {
 	@Mapping(target = "verificationStatus", source = "verificationStatus")
 	@Mapping(target = "verifiedAt", source = "verifiedAt")
 	@Mapping(target = "ticketsCount", expression = "java(user.getTickets() != null ? (long) user.getTickets().size() : 0L)")
+	@Mapping(target = "lastActivity", ignore = true)
 	AdminUserListResponse toAdminUserListResponse(User user);
 }

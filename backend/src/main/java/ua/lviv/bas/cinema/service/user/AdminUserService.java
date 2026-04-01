@@ -20,8 +20,6 @@ import ua.lviv.bas.cinema.domain.audit.AuditAction;
 import ua.lviv.bas.cinema.domain.user.User;
 import ua.lviv.bas.cinema.domain.user.UserRole;
 import ua.lviv.bas.cinema.domain.user.VerificationStatus;
-import ua.lviv.bas.cinema.dto.user.request.UserFilterRequest;
-import ua.lviv.bas.cinema.dto.user.request.VerificationBirthDateRequest;
 import ua.lviv.bas.cinema.dto.user.response.AdminUserListResponse;
 import ua.lviv.bas.cinema.exception.domain.user.LastAdminException;
 import ua.lviv.bas.cinema.exception.domain.user.SelfBlockException;
@@ -96,22 +94,21 @@ public class AdminUserService {
 
 	@Caching(evict = { @CacheEvict(key = "'list-' + #userId"), @CacheEvict(allEntries = true) })
 	@Transactional
-	public AdminUserListResponse updateBirthDateVerification(Long userId, VerificationBirthDateRequest request) {
+	public AdminUserListResponse updateBirthDateVerification(Long userId, VerificationStatus verificationStatus) {
 		User user = findById(userId);
 		VerificationStatus oldStatus = user.getVerificationStatus();
-		VerificationStatus newStatus = request.verificationStatus();
 
-		user.setVerificationStatus(newStatus);
-		user.setVerifiedAt(newStatus == VerificationStatus.VERIFIED ? LocalDateTime.now() : null);
+		user.setVerificationStatus(verificationStatus);
+		user.setVerifiedAt(verificationStatus == VerificationStatus.VERIFIED ? LocalDateTime.now() : null);
 
 		User savedUser = userRepository.save(user);
-		log.info("Birth date verification updated: {} for user {}", newStatus, userId);
+		log.info("Birth date verification updated: {} for user {}", verificationStatus, userId);
 
 		Map<String, Object> oldDetails = new HashMap<>();
 		oldDetails.put("verificationStatus", oldStatus);
 
 		Map<String, Object> newDetails = new HashMap<>();
-		newDetails.put("verificationStatus", newStatus);
+		newDetails.put("verificationStatus", verificationStatus);
 
 		auditService.logChange("User", userId, user.getEmail(), AuditAction.VERIFICATION_CHANGED, oldDetails,
 				newDetails);
@@ -119,14 +116,18 @@ public class AdminUserService {
 		return userMapper.toAdminUserListResponse(savedUser);
 	}
 
-	@Cacheable(key = "'list-' + #filter.hashCode() + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
-	public Page<AdminUserListResponse> getUsersForAdmin(UserFilterRequest filter, Pageable pageable) {
-		log.info("Fetching users for admin with filter: {}, pageable: {}", filter, pageable);
+	@Cacheable(key = "'list-' + #search + '-' + #role + '-' + #verificationStatus + '-' + #enabled + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
+	public Page<AdminUserListResponse> getUsersForAdmin(String search, UserRole role,
+			VerificationStatus verificationStatus, Boolean enabled, Pageable pageable) {
+		log.info(
+				"Fetching users for admin with search: {}, role: {}, verificationStatus: {}, enabled: {}, pageable: {}",
+				search, role, verificationStatus, enabled, pageable);
 
-		Page<AdminUserProjection> projections = userRepository.findAdminProjectionsWithFilters(filter.search(),
-				filter.role() != null ? filter.role().name() : null,
-				filter.verificationStatus() != null ? filter.verificationStatus().name() : null, filter.enabled(),
-				pageable);
+		String roleStr = role != null ? role.name() : null;
+		String verificationStatusStr = verificationStatus != null ? verificationStatus.name() : null;
+
+		Page<AdminUserProjection> projections = userRepository.findAdminProjectionsWithFilters(search, roleStr,
+				verificationStatusStr, enabled, pageable);
 
 		return projections.map(userMapper::toAdminUserListResponse);
 	}

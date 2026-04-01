@@ -74,8 +74,15 @@ public class UserService {
 	@Caching(evict = { @CacheEvict(key = "#userId"), @CacheEvict(allEntries = true) })
 	@Transactional
 	public UserProfileResponse updateUser(Long userId, UserUpdateRequest request) {
-		User oldUser = getUserWithBonusCardById(userId);
 		User user = getUserWithBonusCardById(userId);
+
+		Map<String, Object> oldDetails = new HashMap<>();
+		oldDetails.put("firstName", user.getFirstName());
+		oldDetails.put("lastName", user.getLastName());
+		oldDetails.put("city", user.getCity());
+		oldDetails.put("phoneNumber", user.getPhoneNumber());
+		oldDetails.put("dateOfBirth", user.getDateOfBirth());
+
 		userMapper.updateUserFromRequest(request, user);
 
 		if (isDateOfBirthChanged(request.dateOfBirth(), user.getDateOfBirth())) {
@@ -83,13 +90,6 @@ public class UserService {
 		}
 
 		User updated = userRepository.save(user);
-
-		Map<String, Object> oldDetails = new HashMap<>();
-		oldDetails.put("firstName", oldUser.getFirstName());
-		oldDetails.put("lastName", oldUser.getLastName());
-		oldDetails.put("city", oldUser.getCity());
-		oldDetails.put("phoneNumber", oldUser.getPhoneNumber());
-		oldDetails.put("dateOfBirth", oldUser.getDateOfBirth());
 
 		Map<String, Object> newDetails = new HashMap<>();
 		newDetails.put("firstName", updated.getFirstName());
@@ -168,11 +168,15 @@ public class UserService {
 	}
 
 	public UserProfileResponse getUserProfile(Long id) {
-		return userMapper.toUserProfileResponse(getUserWithBonusCardById(id));
+		return userMapper.toUserProfileResponse(getUserById(id));
 	}
 
 	public UserResponse getUserResponseById(Long id) {
 		return userMapper.toUserResponse(getUserById(id));
+	}
+
+	public UserResponse getUserResponseByEmail(String email) {
+		return userMapper.toUserResponse(getUserByEmail(email));
 	}
 
 	public boolean emailExists(String email) {
@@ -217,11 +221,6 @@ public class UserService {
 
 	private boolean isDateOfBirthChanged(LocalDate newDate, LocalDate oldDate) {
 		return newDate != null && !newDate.equals(oldDate);
-	}
-
-	public UserResponse getUserResponseByEmail(String email) {
-		User user = getUserByEmail(email);
-		return userMapper.toUserResponse(user);
 	}
 
 	private void revokeVerificationIfNeeded(User user) {

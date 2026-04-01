@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -21,8 +22,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import ua.lviv.bas.cinema.domain.user.UserRole;
+import ua.lviv.bas.cinema.domain.user.VerificationStatus;
 import ua.lviv.bas.cinema.dto.PageResponse;
-import ua.lviv.bas.cinema.dto.user.request.UserFilterRequest;
 import ua.lviv.bas.cinema.dto.user.request.UserRoleUpdateRequest;
 import ua.lviv.bas.cinema.dto.user.request.UserStatusUpdateRequest;
 import ua.lviv.bas.cinema.dto.user.request.VerificationBirthDateRequest;
@@ -45,11 +47,17 @@ public class AdminUserController {
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Users retrieved successfully"),
 			@ApiResponse(responseCode = "401", description = "User not authenticated"),
 			@ApiResponse(responseCode = "403", description = "User does not have ADMIN role") })
-	public ResponseEntity<PageResponse<AdminUserListResponse>> getUsers(@Valid UserFilterRequest filter,
+	public ResponseEntity<PageResponse<AdminUserListResponse>> getUsers(
+			@Parameter(description = "Search by email, first name or last name") @RequestParam(required = false) String search,
+			@Parameter(description = "Filter by user role") @RequestParam(required = false) UserRole role,
+			@Parameter(description = "Filter by verification status") @RequestParam(required = false) VerificationStatus verificationStatus,
+			@Parameter(description = "Filter by enabled status") @RequestParam(required = false) Boolean enabled,
 			@PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
 
-		log.info("Admin fetching users with filter: {}, pageable: {}", filter, pageable);
-		var page = adminUserService.getUsersForAdmin(filter, pageable);
+		log.info("Admin fetching users with search: {}, role: {}, verificationStatus: {}, enabled: {}, pageable: {}",
+				search, role, verificationStatus, enabled, pageable);
+
+		var page = adminUserService.getUsersForAdmin(search, role, verificationStatus, enabled, pageable);
 		log.info("Retrieved {} users for admin", page.getTotalElements());
 
 		return ResponseEntity.ok(PageResponse.from(page));
@@ -105,7 +113,8 @@ public class AdminUserController {
 
 		log.info("Admin updating birth date verification for user {} to {}", userId, request.verificationStatus());
 
-		AdminUserListResponse response = adminUserService.updateBirthDateVerification(userId, request);
+		AdminUserListResponse response = adminUserService.updateBirthDateVerification(userId,
+				request.verificationStatus());
 		log.info("User {} birth date verification updated to {}", userId, request.verificationStatus());
 
 		return ResponseEntity.ok(response);
