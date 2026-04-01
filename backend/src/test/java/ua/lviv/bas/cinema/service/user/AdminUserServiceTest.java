@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.service.admin;
+package ua.lviv.bas.cinema.service.user;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -29,8 +29,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import ua.lviv.bas.cinema.domain.user.User;
 import ua.lviv.bas.cinema.domain.user.UserRole;
 import ua.lviv.bas.cinema.domain.user.VerificationStatus;
-import ua.lviv.bas.cinema.dto.user.request.UserFilterRequest;
-import ua.lviv.bas.cinema.dto.user.request.VerificationBirthDateRequest;
 import ua.lviv.bas.cinema.dto.user.response.AdminUserListResponse;
 import ua.lviv.bas.cinema.exception.domain.user.LastAdminException;
 import ua.lviv.bas.cinema.exception.domain.user.SelfBlockException;
@@ -39,7 +37,7 @@ import ua.lviv.bas.cinema.exception.domain.user.UserNotFoundException;
 import ua.lviv.bas.cinema.mapper.user.UserMapper;
 import ua.lviv.bas.cinema.repository.user.UserRepository;
 import ua.lviv.bas.cinema.repository.user.projection.AdminUserProjection;
-import ua.lviv.bas.cinema.service.user.AdminUserService;
+import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 
 @ExtendWith(MockitoExtension.class)
 public class AdminUserServiceTest {
@@ -52,6 +50,8 @@ public class AdminUserServiceTest {
 	private Authentication authentication;
 	@Mock
 	private SecurityContext securityContext;
+	@Mock
+	private AuditService auditService;
 	@InjectMocks
 	private AdminUserService service;
 
@@ -202,13 +202,11 @@ public class AdminUserServiceTest {
 
 	@Test
 	void updateBirthDateVerification_ToVerified_Success() {
-		VerificationBirthDateRequest request = new VerificationBirthDateRequest(VerificationStatus.VERIFIED);
-
 		when(userRepository.findWithBonusCardById(USER_ID)).thenReturn(Optional.of(user));
 		when(userRepository.save(user)).thenReturn(user);
 		when(userMapper.toAdminUserListResponse(user)).thenReturn(response);
 
-		AdminUserListResponse result = service.updateBirthDateVerification(USER_ID, request);
+		AdminUserListResponse result = service.updateBirthDateVerification(USER_ID, VerificationStatus.VERIFIED);
 
 		assertThat(result).isNotNull();
 		assertThat(result.id()).isEqualTo(USER_ID);
@@ -223,13 +221,11 @@ public class AdminUserServiceTest {
 		user.setVerificationStatus(VerificationStatus.VERIFIED);
 		user.setVerifiedAt(verifiedTime);
 
-		VerificationBirthDateRequest request = new VerificationBirthDateRequest(VerificationStatus.NOT_VERIFIED);
-
 		when(userRepository.findWithBonusCardById(USER_ID)).thenReturn(Optional.of(user));
 		when(userRepository.save(user)).thenReturn(user);
 		when(userMapper.toAdminUserListResponse(user)).thenReturn(response);
 
-		AdminUserListResponse result = service.updateBirthDateVerification(USER_ID, request);
+		AdminUserListResponse result = service.updateBirthDateVerification(USER_ID, VerificationStatus.NOT_VERIFIED);
 
 		assertThat(result).isNotNull();
 		assertThat(result.id()).isEqualTo(USER_ID);
@@ -240,28 +236,29 @@ public class AdminUserServiceTest {
 
 	@Test
 	void updateBirthDateVerification_UserNotFound_ThrowsException() {
-		VerificationBirthDateRequest request = new VerificationBirthDateRequest(VerificationStatus.VERIFIED);
-
 		when(userRepository.findWithBonusCardById(999L)).thenReturn(Optional.empty());
 
-		assertThatThrownBy(() -> service.updateBirthDateVerification(999L, request))
+		assertThatThrownBy(() -> service.updateBirthDateVerification(999L, VerificationStatus.VERIFIED))
 				.isInstanceOf(UserNotFoundException.class);
 	}
 
 	@Test
 	void getUsersForAdmin_ReturnsPage() {
 		Pageable pageable = PageRequest.of(0, 10);
-		UserFilterRequest filter = new UserFilterRequest("test", UserRole.ROLE_USER, VerificationStatus.NOT_VERIFIED,
-				true);
+		String search = "test";
+		UserRole role = UserRole.ROLE_USER;
+		VerificationStatus verificationStatus = VerificationStatus.NOT_VERIFIED;
+		Boolean enabled = true;
 
 		AdminUserProjection projection = createAdminUserProjection();
 		Page<AdminUserProjection> projectionPage = new PageImpl<>(List.of(projection), pageable, 1);
 
-		when(userRepository.findAdminProjectionsWithFilters(eq("test"), eq("ROLE_USER"), eq("NOT_VERIFIED"), eq(true),
+		when(userRepository.findAdminProjectionsWithFilters(eq(search), eq("ROLE_USER"), eq("NOT_VERIFIED"), eq(true),
 				eq(pageable))).thenReturn(projectionPage);
 		when(userMapper.toAdminUserListResponse(projection)).thenReturn(response);
 
-		Page<AdminUserListResponse> result = service.getUsersForAdmin(filter, pageable);
+		Page<AdminUserListResponse> result = service.getUsersForAdmin(search, role, verificationStatus, enabled,
+				pageable);
 
 		assertThat(result).isNotNull();
 		assertThat(result.getContent()).hasSize(1);
@@ -271,7 +268,6 @@ public class AdminUserServiceTest {
 	@Test
 	void getUsersForAdmin_WithNullFilters_ReturnsPage() {
 		Pageable pageable = PageRequest.of(0, 10);
-		UserFilterRequest filter = new UserFilterRequest(null, null, null, null);
 
 		AdminUserProjection projection = createAdminUserProjection();
 		Page<AdminUserProjection> projectionPage = new PageImpl<>(List.of(projection), pageable, 1);
@@ -280,7 +276,7 @@ public class AdminUserServiceTest {
 				.thenReturn(projectionPage);
 		when(userMapper.toAdminUserListResponse(projection)).thenReturn(response);
 
-		Page<AdminUserListResponse> result = service.getUsersForAdmin(filter, pageable);
+		Page<AdminUserListResponse> result = service.getUsersForAdmin(null, null, null, null, pageable);
 
 		assertThat(result).isNotNull();
 		assertThat(result.getContent()).hasSize(1);
@@ -289,14 +285,13 @@ public class AdminUserServiceTest {
 	@Test
 	void getUsersForAdmin_EmptyResult_ReturnsEmptyPage() {
 		Pageable pageable = PageRequest.of(0, 10);
-		UserFilterRequest filter = new UserFilterRequest(null, null, null, null);
 
 		Page<AdminUserProjection> emptyPage = new PageImpl<>(List.of(), pageable, 0);
 
 		when(userRepository.findAdminProjectionsWithFilters(eq(null), eq(null), eq(null), eq(null), eq(pageable)))
 				.thenReturn(emptyPage);
 
-		Page<AdminUserListResponse> result = service.getUsersForAdmin(filter, pageable);
+		Page<AdminUserListResponse> result = service.getUsersForAdmin(null, null, null, null, pageable);
 
 		assertThat(result).isNotNull();
 		assertThat(result.getContent()).isEmpty();

@@ -1,9 +1,6 @@
 package ua.lviv.bas.cinema.controller.admin;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -24,7 +21,6 @@ import org.springframework.http.ResponseEntity;
 import ua.lviv.bas.cinema.domain.user.UserRole;
 import ua.lviv.bas.cinema.domain.user.VerificationStatus;
 import ua.lviv.bas.cinema.dto.PageResponse;
-import ua.lviv.bas.cinema.dto.user.request.UserFilterRequest;
 import ua.lviv.bas.cinema.dto.user.request.UserRoleUpdateRequest;
 import ua.lviv.bas.cinema.dto.user.request.UserStatusUpdateRequest;
 import ua.lviv.bas.cinema.dto.user.request.VerificationBirthDateRequest;
@@ -48,7 +44,10 @@ public class AdminUserControllerTest {
 
 	@Test
 	void getUsers_ShouldReturnPageOfUsers() {
-		UserFilterRequest filter = new UserFilterRequest(null, null, null, null);
+		String search = null;
+		UserRole role = null;
+		VerificationStatus verificationStatus = null;
+		Boolean enabled = null;
 		Pageable pageable = PageRequest.of(0, 20);
 
 		AdminUserListResponse user1 = createAdminUserListResponse(1L, "user1@example.com", "John", "Doe",
@@ -58,66 +57,74 @@ public class AdminUserControllerTest {
 
 		Page<AdminUserListResponse> page = new PageImpl<>(List.of(user1, user2), pageable, 2);
 
-		when(adminUserService.getUsersForAdmin(any(UserFilterRequest.class), any(Pageable.class))).thenReturn(page);
+		when(adminUserService.getUsersForAdmin(search, role, verificationStatus, enabled, pageable)).thenReturn(page);
 
-		ResponseEntity<PageResponse<AdminUserListResponse>> response = userController.getUsers(filter, pageable);
+		ResponseEntity<PageResponse<AdminUserListResponse>> response = userController.getUsers(search, role,
+				verificationStatus, enabled, pageable);
 
-		assertEquals(HttpStatus.OK, response.getStatusCode());
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
 		PageResponse<AdminUserListResponse> body = response.getBody();
-		assertNotNull(body);
-		assertEquals(2, body.content().size());
-		assertEquals(0, body.number());
-		assertEquals(20, body.size());
-		assertEquals(2, body.totalElements());
-		assertEquals(1, body.totalPages());
+		assertThat(body).isNotNull();
+		assertThat(body.content()).hasSize(2);
+		assertThat(body.number()).isZero();
+		assertThat(body.size()).isEqualTo(20);
+		assertThat(body.totalElements()).isEqualTo(2);
+		assertThat(body.totalPages()).isEqualTo(1);
 
-		verify(adminUserService).getUsersForAdmin(any(UserFilterRequest.class), any(Pageable.class));
+		verify(adminUserService).getUsersForAdmin(search, role, verificationStatus, enabled, pageable);
 	}
 
 	@Test
 	void getUsers_WithFilter_ShouldReturnFilteredUsers() {
-		UserFilterRequest filter = new UserFilterRequest("john", UserRole.ROLE_USER, VerificationStatus.NOT_VERIFIED,
-				true);
+		String search = "john";
+		UserRole role = UserRole.ROLE_USER;
+		VerificationStatus verificationStatus = VerificationStatus.NOT_VERIFIED;
+		Boolean enabled = true;
 		Pageable pageable = PageRequest.of(0, 20);
 
 		AdminUserListResponse user = createAdminUserListResponse(1L, "john@example.com", "John", "Doe",
 				UserRole.ROLE_USER, true);
 		Page<AdminUserListResponse> page = new PageImpl<>(List.of(user), pageable, 1);
 
-		when(adminUserService.getUsersForAdmin(any(UserFilterRequest.class), any(Pageable.class))).thenReturn(page);
+		when(adminUserService.getUsersForAdmin(search, role, verificationStatus, enabled, pageable)).thenReturn(page);
 
-		ResponseEntity<PageResponse<AdminUserListResponse>> response = userController.getUsers(filter, pageable);
+		ResponseEntity<PageResponse<AdminUserListResponse>> response = userController.getUsers(search, role,
+				verificationStatus, enabled, pageable);
 
-		assertEquals(HttpStatus.OK, response.getStatusCode());
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
 		PageResponse<AdminUserListResponse> body = response.getBody();
-		assertNotNull(body);
-		assertEquals(1, body.content().size());
-		assertEquals("john@example.com", body.content().get(0).email());
+		assertThat(body).isNotNull();
+		assertThat(body.content()).hasSize(1);
+		assertThat(body.content().get(0).email()).isEqualTo("john@example.com");
 
-		verify(adminUserService).getUsersForAdmin(any(UserFilterRequest.class), any(Pageable.class));
+		verify(adminUserService).getUsersForAdmin(search, role, verificationStatus, enabled, pageable);
 	}
 
 	@Test
 	void getUsers_WhenNoResults_ShouldReturnEmptyPage() {
-		UserFilterRequest filter = new UserFilterRequest(null, null, null, null);
+		String search = null;
+		UserRole role = null;
+		VerificationStatus verificationStatus = null;
+		Boolean enabled = null;
 		Pageable pageable = PageRequest.of(0, 20);
 		Page<AdminUserListResponse> emptyPage = Page.empty(pageable);
 
-		when(adminUserService.getUsersForAdmin(any(UserFilterRequest.class), any(Pageable.class)))
+		when(adminUserService.getUsersForAdmin(search, role, verificationStatus, enabled, pageable))
 				.thenReturn(emptyPage);
 
-		ResponseEntity<PageResponse<AdminUserListResponse>> response = userController.getUsers(filter, pageable);
+		ResponseEntity<PageResponse<AdminUserListResponse>> response = userController.getUsers(search, role,
+				verificationStatus, enabled, pageable);
 
-		assertEquals(HttpStatus.OK, response.getStatusCode());
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
 		PageResponse<AdminUserListResponse> body = response.getBody();
-		assertNotNull(body);
-		assertEquals(0, body.content().size());
-		assertEquals(0, body.totalElements());
+		assertThat(body).isNotNull();
+		assertThat(body.content()).isEmpty();
+		assertThat(body.totalElements()).isZero();
 
-		verify(adminUserService).getUsersForAdmin(any(UserFilterRequest.class), any(Pageable.class));
+		verify(adminUserService).getUsersForAdmin(search, role, verificationStatus, enabled, pageable);
 	}
 
 	@Test
@@ -131,12 +138,12 @@ public class AdminUserControllerTest {
 
 		ResponseEntity<AdminUserListResponse> response = userController.updateUserRole(1L, request);
 
-		assertEquals(HttpStatus.OK, response.getStatusCode());
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
 		AdminUserListResponse body = response.getBody();
-		assertNotNull(body);
-		assertEquals(UserRole.ROLE_ADMIN, body.userRole());
-		assertEquals(1L, body.id());
+		assertThat(body).isNotNull();
+		assertThat(body.userRole()).isEqualTo(UserRole.ROLE_ADMIN);
+		assertThat(body.id()).isEqualTo(1L);
 
 		verify(adminUserService).updateUserRole(1L, UserRole.ROLE_ADMIN);
 	}
@@ -152,11 +159,11 @@ public class AdminUserControllerTest {
 
 		ResponseEntity<AdminUserListResponse> response = userController.updateUserRole(1L, request);
 
-		assertEquals(HttpStatus.OK, response.getStatusCode());
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
 		AdminUserListResponse body = response.getBody();
-		assertNotNull(body);
-		assertEquals(UserRole.ROLE_CONTENT_MANAGER, body.userRole());
+		assertThat(body).isNotNull();
+		assertThat(body.userRole()).isEqualTo(UserRole.ROLE_CONTENT_MANAGER);
 
 		verify(adminUserService).updateUserRole(1L, UserRole.ROLE_CONTENT_MANAGER);
 	}
@@ -172,11 +179,11 @@ public class AdminUserControllerTest {
 
 		ResponseEntity<AdminUserListResponse> response = userController.updateUserRole(1L, request);
 
-		assertEquals(HttpStatus.OK, response.getStatusCode());
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
 		AdminUserListResponse body = response.getBody();
-		assertNotNull(body);
-		assertEquals(UserRole.ROLE_USER, body.userRole());
+		assertThat(body).isNotNull();
+		assertThat(body.userRole()).isEqualTo(UserRole.ROLE_USER);
 
 		verify(adminUserService).updateUserRole(1L, UserRole.ROLE_USER);
 	}
@@ -192,12 +199,12 @@ public class AdminUserControllerTest {
 
 		ResponseEntity<AdminUserListResponse> response = userController.updateUserStatus(1L, request);
 
-		assertEquals(HttpStatus.OK, response.getStatusCode());
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
 		AdminUserListResponse body = response.getBody();
-		assertNotNull(body);
-		assertEquals(false, body.enabled());
-		assertEquals(1L, body.id());
+		assertThat(body).isNotNull();
+		assertThat(body.enabled()).isFalse();
+		assertThat(body.id()).isEqualTo(1L);
 
 		verify(adminUserService).updateUserStatus(1L, false);
 	}
@@ -213,11 +220,11 @@ public class AdminUserControllerTest {
 
 		ResponseEntity<AdminUserListResponse> response = userController.updateUserStatus(1L, request);
 
-		assertEquals(HttpStatus.OK, response.getStatusCode());
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
 		AdminUserListResponse body = response.getBody();
-		assertNotNull(body);
-		assertEquals(true, body.enabled());
+		assertThat(body).isNotNull();
+		assertThat(body.enabled()).isTrue();
 
 		verify(adminUserService).updateUserStatus(1L, true);
 	}
@@ -229,19 +236,18 @@ public class AdminUserControllerTest {
 		AdminUserListResponse updatedUser = new AdminUserListResponse(1L, "user@example.com", "John", "Doe",
 				UserRole.ROLE_USER, true, VerificationStatus.VERIFIED, null, 0L, null);
 
-		when(adminUserService.updateBirthDateVerification(eq(1L), any(VerificationBirthDateRequest.class)))
-				.thenReturn(updatedUser);
+		when(adminUserService.updateBirthDateVerification(1L, VerificationStatus.VERIFIED)).thenReturn(updatedUser);
 
 		ResponseEntity<AdminUserListResponse> response = userController.updateBirthDateVerification(1L, request);
 
-		assertEquals(HttpStatus.OK, response.getStatusCode());
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
 		AdminUserListResponse body = response.getBody();
-		assertNotNull(body);
-		assertEquals(1L, body.id());
-		assertEquals(VerificationStatus.VERIFIED, body.verificationStatus());
+		assertThat(body).isNotNull();
+		assertThat(body.id()).isEqualTo(1L);
+		assertThat(body.verificationStatus()).isEqualTo(VerificationStatus.VERIFIED);
 
-		verify(adminUserService).updateBirthDateVerification(eq(1L), any(VerificationBirthDateRequest.class));
+		verify(adminUserService).updateBirthDateVerification(1L, VerificationStatus.VERIFIED);
 	}
 
 	@Test
@@ -251,17 +257,16 @@ public class AdminUserControllerTest {
 		AdminUserListResponse updatedUser = new AdminUserListResponse(1L, "user@example.com", "John", "Doe",
 				UserRole.ROLE_USER, true, VerificationStatus.NOT_VERIFIED, null, 0L, null);
 
-		when(adminUserService.updateBirthDateVerification(eq(1L), any(VerificationBirthDateRequest.class)))
-				.thenReturn(updatedUser);
+		when(adminUserService.updateBirthDateVerification(1L, VerificationStatus.NOT_VERIFIED)).thenReturn(updatedUser);
 
 		ResponseEntity<AdminUserListResponse> response = userController.updateBirthDateVerification(1L, request);
 
-		assertEquals(HttpStatus.OK, response.getStatusCode());
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
 		AdminUserListResponse body = response.getBody();
-		assertNotNull(body);
-		assertEquals(VerificationStatus.NOT_VERIFIED, body.verificationStatus());
+		assertThat(body).isNotNull();
+		assertThat(body.verificationStatus()).isEqualTo(VerificationStatus.NOT_VERIFIED);
 
-		verify(adminUserService).updateBirthDateVerification(eq(1L), any(VerificationBirthDateRequest.class));
+		verify(adminUserService).updateBirthDateVerification(1L, VerificationStatus.NOT_VERIFIED);
 	}
 }
