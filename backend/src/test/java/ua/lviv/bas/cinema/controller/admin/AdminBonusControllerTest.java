@@ -30,8 +30,8 @@ public class AdminBonusControllerTest {
 
 	@Test
 	void getAllBonusRules_ShouldReturnRulesList() {
-		BonusRulesResponse rule1 = new BonusRulesResponse(1L, "WELCOME_BONUS", 100, null, null, null, true, null);
-		BonusRulesResponse rule2 = new BonusRulesResponse(2L, "BIRTHDAY_BONUS", 200, null, null, null, true, null);
+		BonusRulesResponse rule1 = new BonusRulesResponse(1L, "WELCOME_BONUS", 100, null, null, null, true);
+		BonusRulesResponse rule2 = new BonusRulesResponse(2L, "BIRTHDAY_BONUS", 200, null, null, null, true);
 
 		List<BonusRulesResponse> rules = List.of(rule1, rule2);
 
@@ -58,7 +58,7 @@ public class AdminBonusControllerTest {
 	@Test
 	void getBonusRule_ShouldReturnRule() {
 		BonusTransactionType type = BonusTransactionType.WELCOME_BONUS;
-		BonusRulesResponse response = new BonusRulesResponse(1L, "WELCOME_BONUS", 100, null, null, null, true, null);
+		BonusRulesResponse response = new BonusRulesResponse(1L, "WELCOME_BONUS", 100, null, null, null, true);
 
 		when(bonusAdminService.getRule(type)).thenReturn(response);
 
@@ -75,7 +75,7 @@ public class AdminBonusControllerTest {
 		BonusTransactionType type = BonusTransactionType.WELCOME_BONUS;
 		BonusRulesRequest request = new BonusRulesRequest(200, null, null, null, true);
 
-		BonusRulesResponse response = new BonusRulesResponse(1L, "WELCOME_BONUS", 200, null, null, null, true, null);
+		BonusRulesResponse response = new BonusRulesResponse(1L, "WELCOME_BONUS", 200, null, null, null, true);
 
 		when(bonusAdminService.updateRule(eq(type), any(BonusRulesRequest.class))).thenReturn(response);
 
@@ -89,7 +89,7 @@ public class AdminBonusControllerTest {
 	@Test
 	void resetBonusRule_ShouldResetAndReturnRule() {
 		BonusTransactionType type = BonusTransactionType.WELCOME_BONUS;
-		BonusRulesResponse response = new BonusRulesResponse(1L, "WELCOME_BONUS", 150, null, null, null, true, null);
+		BonusRulesResponse response = new BonusRulesResponse(1L, "WELCOME_BONUS", 150, null, null, null, true);
 
 		when(bonusAdminService.resetRuleToDefaults(type)).thenReturn(response);
 

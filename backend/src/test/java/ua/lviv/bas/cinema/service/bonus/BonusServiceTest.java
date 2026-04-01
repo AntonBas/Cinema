@@ -1,10 +1,9 @@
-package ua.lviv.bas.cinema.service.user;
+package ua.lviv.bas.cinema.service.bonus;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -36,7 +35,7 @@ import ua.lviv.bas.cinema.mapper.bonus.BonusMapper;
 import ua.lviv.bas.cinema.repository.bonus.BonusCardRepository;
 import ua.lviv.bas.cinema.repository.bonus.BonusRulesRepository;
 import ua.lviv.bas.cinema.repository.bonus.BonusTransactionRepository;
-import ua.lviv.bas.cinema.service.bonus.BonusService;
+import ua.lviv.bas.cinema.service.shared.AuditService;
 
 @ExtendWith(MockitoExtension.class)
 public class BonusServiceTest {
@@ -51,6 +50,8 @@ public class BonusServiceTest {
 	private BonusMapper bonusMapper;
 	@Mock
 	private BonusProperties bonusProperties;
+	@Mock
+	private AuditService auditService;
 	@InjectMocks
 	private BonusService bonusService;
 	@Captor
@@ -63,7 +64,7 @@ public class BonusServiceTest {
 	private final Long PAYMENT_ID = 1L;
 	private final BonusTransactionType WELCOME = BonusTransactionType.WELCOME_BONUS;
 	private final BonusTransactionType BIRTHDAY = BonusTransactionType.BIRTHDAY_BONUS;
-	private final BonusTransactionType PAYMENT = BonusTransactionType.PAYMENT_ACCRUAL;
+	private final BonusTransactionType PAYMENT_TYPE = BonusTransactionType.PAYMENT_ACCRUAL;
 	private final BonusTransactionType SPEND = BonusTransactionType.BOOKING_SPEND;
 
 	@Test
@@ -154,7 +155,7 @@ public class BonusServiceTest {
 
 		assertThat(card.getPointsBalance()).isEqualTo(100);
 		assertThat(card.getLastBirthdayBonusDate()).isEqualTo(LocalDate.now());
-		verify(bonusCardRepository, times(2)).save(any(BonusCard.class));
+		verify(bonusCardRepository).save(any(BonusCard.class));
 		verify(bonusTransactionRepository).save(any(BonusTransaction.class));
 	}
 
@@ -182,14 +183,14 @@ public class BonusServiceTest {
 		BonusCard card = BonusCard.builder().pointsBalance(100).build();
 
 		when(bonusCardRepository.findByUserId(USER_ID)).thenReturn(Optional.of(card));
-		when(bonusCardRepository.save(any(BonusCard.class))).thenAnswer(i -> i.getArgument(0));
 		when(bonusTransactionRepository.save(any(BonusTransaction.class))).thenAnswer(i -> i.getArgument(0));
 
 		Integer result = bonusService.addPoints(user, 50, "PROMO");
 
 		assertThat(result).isEqualTo(150);
 		assertThat(card.getPointsBalance()).isEqualTo(150);
-		verify(bonusCardRepository).save(any(BonusCard.class));
+		verify(bonusCardRepository).findByUserId(USER_ID);
+		verify(bonusCardRepository, never()).save(any());
 		verify(bonusTransactionRepository).save(any(BonusTransaction.class));
 	}
 
@@ -301,7 +302,7 @@ public class BonusServiceTest {
 		BonusRules rule = BonusRules.builder().moneyRatio(new BigDecimal("1.5")).minPointsPerTransaction(10)
 				.maxPointsPerTransaction(500).build();
 
-		when(bonusRulesRepository.findByBonusTypeAndActiveTrue(PAYMENT)).thenReturn(Optional.of(rule));
+		when(bonusRulesRepository.findByBonusTypeAndActiveTrue(PAYMENT_TYPE)).thenReturn(Optional.of(rule));
 
 		Integer result = bonusService.calculatePoints(new BigDecimal("100"));
 
@@ -312,7 +313,7 @@ public class BonusServiceTest {
 	void calculatePoints_AppliesMinLimit() {
 		BonusRules rule = BonusRules.builder().moneyRatio(new BigDecimal("0.1")).minPointsPerTransaction(50).build();
 
-		when(bonusRulesRepository.findByBonusTypeAndActiveTrue(PAYMENT)).thenReturn(Optional.of(rule));
+		when(bonusRulesRepository.findByBonusTypeAndActiveTrue(PAYMENT_TYPE)).thenReturn(Optional.of(rule));
 
 		Integer result = bonusService.calculatePoints(new BigDecimal("100"));
 
@@ -321,7 +322,7 @@ public class BonusServiceTest {
 
 	@Test
 	void calculatePoints_WhenNoRule_ReturnsZero() {
-		when(bonusRulesRepository.findByBonusTypeAndActiveTrue(PAYMENT)).thenReturn(Optional.empty());
+		when(bonusRulesRepository.findByBonusTypeAndActiveTrue(PAYMENT_TYPE)).thenReturn(Optional.empty());
 
 		Integer result = bonusService.calculatePoints(new BigDecimal("100"));
 
@@ -406,7 +407,7 @@ public class BonusServiceTest {
 	void createTransaction_WithNullPoints_ThrowsException() {
 		BonusCard card = new BonusCard();
 
-		assertThatThrownBy(() -> bonusService.createTransaction(card, null, WELCOME, "REF", null, null, null))
+		assertThatThrownBy(() -> bonusService.createTransaction(card, null, WELCOME, "REF"))
 				.isInstanceOf(IllegalArgumentException.class).hasMessage("Points cannot be null");
 	}
 }

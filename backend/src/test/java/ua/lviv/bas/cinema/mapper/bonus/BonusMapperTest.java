@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.mapper;
+package ua.lviv.bas.cinema.mapper.bonus;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -17,7 +17,6 @@ import ua.lviv.bas.cinema.dto.bonus.request.BonusRulesRequest;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusCardResponse;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusRulesResponse;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusTransactionResponse;
-import ua.lviv.bas.cinema.mapper.bonus.BonusMapper;
 import ua.lviv.bas.cinema.repository.bonus.projection.BonusTransactionProjection;
 
 public class BonusMapperTest {
@@ -70,6 +69,7 @@ public class BonusMapperTest {
 		BonusTransactionProjection projection = Mockito.mock(BonusTransactionProjection.class);
 		Mockito.when(projection.getId()).thenReturn(1L);
 		Mockito.when(projection.getType()).thenReturn("PAYMENT_ACCRUAL");
+		Mockito.when(projection.getPointsChangeRaw()).thenReturn(50);
 		Mockito.when(projection.getPointsChange()).thenReturn("+50");
 		Mockito.when(projection.getNewBalance()).thenReturn(150);
 		Mockito.when(projection.getCreatedAt()).thenReturn(LocalDateTime.now());
@@ -88,6 +88,25 @@ public class BonusMapperTest {
 	void toBonusTransactionResponseFromNullProjection() {
 		BonusTransactionResponse response = mapper.toBonusTransactionResponse((BonusTransactionProjection) null);
 		assertThat(response).isNull();
+	}
+
+	@Test
+	void toEntity() {
+		BonusRulesRequest request = new BonusRulesRequest(150, null, null, null, false);
+
+		BonusRules entity = mapper.toEntity(request);
+
+		assertThat(entity).isNotNull();
+		assertThat(entity.getId()).isNull();
+		assertThat(entity.getBonusType()).isNull();
+		assertThat(entity.getPoints()).isEqualTo(150);
+		assertThat(entity.getActive()).isFalse();
+	}
+
+	@Test
+	void toEntityFromNull() {
+		BonusRules entity = mapper.toEntity(null);
+		assertThat(entity).isNull();
 	}
 
 	@Test

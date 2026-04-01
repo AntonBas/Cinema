@@ -40,7 +40,7 @@ public class TicketService {
 	@Value("${app.ticket.qr.size:200}")
 	private int qrCodeSize;
 
-	@Value("${app.ticket.base-url}")
+	@Value("${app.base-url}")
 	private String ticketBaseUrl;
 
 	@Transactional
