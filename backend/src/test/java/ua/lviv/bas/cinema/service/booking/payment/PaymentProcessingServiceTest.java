@@ -22,8 +22,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import ua.lviv.bas.cinema.domain.booking.Booking;
-import ua.lviv.bas.cinema.domain.booking.BookingStatus;
 import ua.lviv.bas.cinema.domain.booking.Payment;
+import ua.lviv.bas.cinema.domain.booking.status.BookingStatus;
 import ua.lviv.bas.cinema.domain.booking.status.PaymentStatus;
 import ua.lviv.bas.cinema.domain.cinema.CinemaHall;
 import ua.lviv.bas.cinema.domain.cinema.Movie;

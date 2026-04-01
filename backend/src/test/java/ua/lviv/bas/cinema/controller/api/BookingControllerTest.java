@@ -17,7 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import ua.lviv.bas.cinema.config.security.user.CustomUserDetails;
-import ua.lviv.bas.cinema.domain.booking.BookingStatus;
+import ua.lviv.bas.cinema.domain.booking.status.BookingStatus;
 import ua.lviv.bas.cinema.domain.user.User;
 import ua.lviv.bas.cinema.dto.booking.request.BookingCreateRequest;
 import ua.lviv.bas.cinema.dto.booking.response.BookingResponse;

@@ -12,7 +12,7 @@ import ua.lviv.bas.cinema.domain.cinema.Session;
 import ua.lviv.bas.cinema.domain.ticket.TicketType;
 import ua.lviv.bas.cinema.dto.booking.response.SeatReservationResponse;
 
-@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
+@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.WARN)
 public interface SeatReservationMapper {
 
 	@Mapping(target = "sessionId", source = "session.id")

@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import ua.lviv.bas.cinema.domain.booking.Booking;
-import ua.lviv.bas.cinema.domain.booking.BookingStatus;
+import ua.lviv.bas.cinema.domain.booking.status.BookingStatus;
 import ua.lviv.bas.cinema.domain.cinema.Session;
 import ua.lviv.bas.cinema.domain.cinema.status.CinemaSessionStatus;
 import ua.lviv.bas.cinema.exception.domain.booking.BookingValidationException;

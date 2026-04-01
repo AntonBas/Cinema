@@ -13,7 +13,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import ua.lviv.bas.cinema.domain.booking.Booking;
-import ua.lviv.bas.cinema.domain.booking.BookingStatus;
+import ua.lviv.bas.cinema.domain.booking.status.BookingStatus;
 
 @Repository
 public interface BookingRepository extends JpaRepository<Booking, Long> {

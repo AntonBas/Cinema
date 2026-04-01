@@ -25,8 +25,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import ua.lviv.bas.cinema.domain.booking.Booking;
-import ua.lviv.bas.cinema.domain.booking.BookingStatus;
 import ua.lviv.bas.cinema.domain.booking.SeatReservation;
+import ua.lviv.bas.cinema.domain.booking.status.BookingStatus;
 import ua.lviv.bas.cinema.domain.booking.status.ReservationStatus;
 import ua.lviv.bas.cinema.domain.cinema.CinemaHall;
 import ua.lviv.bas.cinema.domain.cinema.Movie;

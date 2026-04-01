@@ -9,7 +9,7 @@ import ua.lviv.bas.cinema.domain.booking.SeatReservation;
 import ua.lviv.bas.cinema.dto.booking.response.BookingResponse;
 import ua.lviv.bas.cinema.service.shared.NumberGeneratorService;
 
-@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE, imports = {
+@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.WARN, imports = {
 		NumberGeneratorService.class })
 public interface BookingMapper {
 
