@@ -35,12 +35,14 @@ import ua.lviv.bas.cinema.repository.cinema.PersonRepository;
 import ua.lviv.bas.cinema.repository.cinema.projection.PersonProjection;
 
 @ExtendWith(MockitoExtension.class)
-public class PersonServiceTest {
+class PersonServiceTest {
 
 	@Mock
 	private PersonRepository personRepository;
+
 	@Mock
 	private MovieRepository movieRepository;
+
 	@Mock
 	private PersonMapper personMapper;
 
@@ -61,7 +63,7 @@ public class PersonServiceTest {
 		person.setName(PERSON_NAME);
 		person.setRole(PERSON_ROLE);
 
-		response = new PersonResponse(PERSON_ID, PERSON_NAME, PERSON_ROLE, null);
+		response = new PersonResponse(PERSON_ID, PERSON_NAME, PERSON_ROLE, 0);
 
 		request = new PersonRequest(PERSON_NAME, PERSON_ROLE);
 	}
@@ -181,10 +183,25 @@ public class PersonServiceTest {
 	}
 
 	@Test
+	void getPopularPersons_ReturnsList() {
+		PersonProjection projection = createProjection();
+		Page<PersonProjection> projectionPage = new PageImpl<>(List.of(projection));
+
+		when(personRepository.findProjectionsByFilters(PERSON_NAME, PERSON_ROLE, PageRequest.of(0, 5)))
+				.thenReturn(projectionPage);
+		when(personMapper.toPersonResponse(projection)).thenReturn(response);
+
+		List<PersonResponse> result = personService.getPopularPersons(PERSON_NAME, PERSON_ROLE, 5);
+
+		assertThat(result).hasSize(1);
+		assertThat(result.get(0)).isEqualTo(response);
+	}
+
+	@Test
 	void getPersonsByIds_ReturnsList() {
-		List<Long> ids = List.of(1L, 2L);
+		List<Long> ids = List.of(PERSON_ID);
 		when(personRepository.findAllById(ids)).thenReturn(List.of(person));
-		when(personMapper.toPersonResponseList(List.of(person))).thenReturn(List.of(response));
+		when(personMapper.toPersonResponse(person)).thenReturn(response);
 
 		List<PersonResponse> result = personService.getPersonsByIds(ids);
 
@@ -199,12 +216,27 @@ public class PersonServiceTest {
 	}
 
 	@Test
+	void getPersonsByIds_NullList_ReturnsEmptyList() {
+		List<PersonResponse> result = personService.getPersonsByIds(null);
+		assertThat(result).isEmpty();
+	}
+
+	@Test
 	void existsByNameAndRole_ReturnsTrue() {
 		when(personRepository.existsByNameAndRole(PERSON_NAME, PERSON_ROLE)).thenReturn(true);
 
 		boolean result = personService.existsByNameAndRole(PERSON_NAME, PERSON_ROLE);
 
 		assertThat(result).isTrue();
+	}
+
+	@Test
+	void existsByNameAndRole_ReturnsFalse() {
+		when(personRepository.existsByNameAndRole(PERSON_NAME, PERSON_ROLE)).thenReturn(false);
+
+		boolean result = personService.existsByNameAndRole(PERSON_NAME, PERSON_ROLE);
+
+		assertThat(result).isFalse();
 	}
 
 	private PersonProjection createProjection() {
