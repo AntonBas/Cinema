@@ -1,7 +1,6 @@
 package ua.lviv.bas.cinema.controller.admin;
 
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -95,7 +94,7 @@ public class AdminPersonController {
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Persons retrieved successfully") })
 	public ResponseEntity<PageResponse<PersonResponse>> getAllPersons(@RequestParam(required = false) String name,
 			@RequestParam(required = false) PersonRole role,
-			@Parameter(hidden = true) @PageableDefault(size = 12, sort = "name", direction = Sort.Direction.ASC) Pageable pageable) {
+			@Parameter(hidden = true) @PageableDefault(size = 12) Pageable pageable) {
 		log.info("GET /api/admin/persons - name: '{}', role: {}", name, role);
 		var result = personService.searchPersons(name, role, pageable);
 		return ResponseEntity.ok(PageResponse.from(result));

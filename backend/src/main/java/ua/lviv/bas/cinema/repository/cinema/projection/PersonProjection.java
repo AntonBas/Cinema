@@ -10,8 +10,4 @@ public interface PersonProjection {
 	PersonRole getRole();
 
 	Integer getMovieCount();
-
-	default boolean isPopular() {
-		return getMovieCount() != null && getMovieCount() > 5;
-	}
 }
