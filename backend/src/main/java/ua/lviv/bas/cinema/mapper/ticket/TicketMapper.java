@@ -8,7 +8,7 @@ import ua.lviv.bas.cinema.domain.ticket.Ticket;
 import ua.lviv.bas.cinema.dto.ticket.response.TicketResponse;
 import ua.lviv.bas.cinema.repository.ticket.projection.TicketInfoProjection;
 
-@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
+@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.WARN)
 public interface TicketMapper {
 
 	@Mapping(target = "ticketCode", source = "uniqueCode")
