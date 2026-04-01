@@ -26,8 +26,8 @@ import ua.lviv.bas.cinema.domain.user.User;
 import ua.lviv.bas.cinema.dto.payment.request.PaymentCreateRequest;
 import ua.lviv.bas.cinema.dto.payment.response.PaymentLiqPayDataResponse;
 import ua.lviv.bas.cinema.dto.payment.response.PaymentResponse;
-import ua.lviv.bas.cinema.service.booking.payment.PaymentProcessingService;
-import ua.lviv.bas.cinema.service.booking.payment.PaymentStatusService;
+import ua.lviv.bas.cinema.service.booking.PaymentService;
+import ua.lviv.bas.cinema.service.booking.PaymentStatusService;
 
 @Slf4j
 @RestController
@@ -36,7 +36,7 @@ import ua.lviv.bas.cinema.service.booking.payment.PaymentStatusService;
 @Tag(name = "Payments", description = "APIs for processing and managing payments")
 @SecurityRequirement(name = "bearerAuth")
 public class PaymentController {
-	private final PaymentProcessingService paymentProcessingService;
+	private final PaymentService paymentService;
 	private final PaymentStatusService paymentStatusService;
 
 	@RateLimit(value = 5, duration = 5, key = "user")
@@ -51,7 +51,7 @@ public class PaymentController {
 			@AuthenticationPrincipal CustomUserDetails userDetails) {
 		User user = userDetails.getUser();
 		log.info("Creating payment for booking ID: {} by user ID: {}", request.bookingId(), user.getId());
-		PaymentResponse response = paymentProcessingService.createPayment(request, user);
+		PaymentResponse response = paymentService.createPayment(request, user);
 		return ResponseEntity.status(HttpStatus.CREATED).body(response);
 	}
 
@@ -77,7 +77,7 @@ public class PaymentController {
 			@AuthenticationPrincipal CustomUserDetails userDetails) {
 		User user = userDetails.getUser();
 		log.info("Fetching payment ID: {} for user ID: {}", paymentId, user.getId());
-		PaymentResponse response = paymentProcessingService.getPaymentStatus(paymentId, user);
+		PaymentResponse response = paymentService.getPaymentStatus(paymentId, user);
 		return ResponseEntity.ok(response);
 	}
 }

@@ -41,9 +41,9 @@ import ua.lviv.bas.cinema.repository.booking.BookingRepository;
 import ua.lviv.bas.cinema.repository.booking.PaymentRepository;
 import ua.lviv.bas.cinema.service.bonus.BonusService;
 import ua.lviv.bas.cinema.service.booking.management.BookingManagementService;
-import ua.lviv.bas.cinema.service.booking.ticket.TicketService;
 import ua.lviv.bas.cinema.service.integration.payment.PaymentGatewayService;
 import ua.lviv.bas.cinema.service.shared.NumberGeneratorService;
+import ua.lviv.bas.cinema.service.ticket.TicketService;
 
 @ExtendWith(MockitoExtension.class)
 public class PaymentProcessingServiceTest {

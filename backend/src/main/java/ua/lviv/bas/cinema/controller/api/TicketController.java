@@ -25,8 +25,7 @@ import ua.lviv.bas.cinema.domain.user.User;
 import ua.lviv.bas.cinema.dto.PageResponse;
 import ua.lviv.bas.cinema.dto.ticket.request.TicketFilterRequest;
 import ua.lviv.bas.cinema.dto.ticket.response.TicketResponse;
-import ua.lviv.bas.cinema.service.booking.ticket.TicketRetrievalService;
-import ua.lviv.bas.cinema.service.booking.ticket.TicketService;
+import ua.lviv.bas.cinema.service.ticket.TicketService;
 
 @Slf4j
 @RestController
@@ -36,7 +35,6 @@ import ua.lviv.bas.cinema.service.booking.ticket.TicketService;
 @SecurityRequirement(name = "bearerAuth")
 public class TicketController {
 
-	private final TicketRetrievalService ticketRetrievalService;
 	private final TicketService ticketService;
 
 	@GetMapping
@@ -51,7 +49,7 @@ public class TicketController {
 
 		TicketFilterRequest filter = new TicketFilterRequest(status, movieTitle);
 
-		Page<TicketResponse> tickets = ticketRetrievalService.getUserTickets(user, filter, pageable);
+		Page<TicketResponse> tickets = ticketService.getUserTickets(user, filter, pageable);
 		return ResponseEntity.ok(PageResponse.from(tickets));
 	}
 
@@ -62,7 +60,7 @@ public class TicketController {
 
 		User user = userDetails.getUser();
 		log.info("Getting ticket by code: {} for user ID: {}", ticketCode, user.getId());
-		TicketResponse ticket = ticketRetrievalService.getTicketByCode(ticketCode, user);
+		TicketResponse ticket = ticketService.getTicketByCode(ticketCode, user);
 		return ResponseEntity.ok(ticket);
 	}
 

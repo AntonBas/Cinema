@@ -40,6 +40,7 @@ import ua.lviv.bas.cinema.mapper.booking.RefundItemMapper;
 import ua.lviv.bas.cinema.mapper.booking.RefundMapper;
 import ua.lviv.bas.cinema.repository.booking.RefundRepository;
 import ua.lviv.bas.cinema.repository.ticket.TicketRepository;
+import ua.lviv.bas.cinema.service.booking.RefundService;
 import ua.lviv.bas.cinema.service.shared.NumberGeneratorService;
 
 @ExtendWith(MockitoExtension.class)

@@ -25,8 +25,7 @@ import ua.lviv.bas.cinema.config.security.user.CustomUserDetails;
 import ua.lviv.bas.cinema.domain.user.User;
 import ua.lviv.bas.cinema.dto.booking.request.BookingCreateRequest;
 import ua.lviv.bas.cinema.dto.booking.response.BookingResponse;
-import ua.lviv.bas.cinema.service.booking.creation.BookingCreationService;
-import ua.lviv.bas.cinema.service.booking.management.BookingManagementService;
+import ua.lviv.bas.cinema.service.booking.BookingService;
 
 @Slf4j
 @RestController
@@ -35,8 +34,7 @@ import ua.lviv.bas.cinema.service.booking.management.BookingManagementService;
 @Tag(name = "Bookings", description = "APIs for managing cinema bookings")
 @SecurityRequirement(name = "bearerAuth")
 public class BookingController {
-	private final BookingCreationService bookingCreationService;
-	private final BookingManagementService bookingManagementService;
+	private final BookingService bookingService;
 
 	@RateLimit(value = 10, duration = 1, key = "user")
 	@PostMapping
@@ -50,7 +48,7 @@ public class BookingController {
 			@AuthenticationPrincipal CustomUserDetails userDetails) {
 		User user = userDetails.getUser();
 		log.info("Creating new booking for user ID: {}, session ID: {}", user.getId(), request.sessionId());
-		BookingResponse response = bookingCreationService.createBooking(request, user);
+		BookingResponse response = bookingService.createBooking(request, user);
 		return ResponseEntity.status(HttpStatus.CREATED).body(response);
 	}
 
@@ -64,7 +62,7 @@ public class BookingController {
 			@AuthenticationPrincipal CustomUserDetails userDetails) {
 		User user = userDetails.getUser();
 		log.info("Fetching booking ID: {} for user ID: {}", bookingId, user.getId());
-		BookingResponse response = bookingManagementService.getBookingById(bookingId, user);
+		BookingResponse response = bookingService.getBookingById(bookingId, user);
 		return ResponseEntity.ok(response);
 	}
 
@@ -79,7 +77,7 @@ public class BookingController {
 			@AuthenticationPrincipal CustomUserDetails userDetails) {
 		User user = userDetails.getUser();
 		log.info("Cancelling booking ID: {} for user ID: {}", bookingId, user.getId());
-		bookingManagementService.cancelBooking(bookingId, user);
+		bookingService.cancelBooking(bookingId, user);
 		return ResponseEntity.noContent().build();
 	}
 }

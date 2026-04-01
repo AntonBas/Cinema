@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.service.booking.reservation;
+package ua.lviv.bas.cinema.service.booking;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -43,7 +43,6 @@ public class SeatReservationService {
 	private final SeatReservationRepository seatReservationRepository;
 	private final TicketTypeRepository ticketTypeRepository;
 	private final PriceCalculatorService priceCalculator;
-	private final ReservationValidator availabilityValidator;
 	private final SeatReservationMapper seatReservationMapper;
 
 	@Value("${booking.temp-hold-minutes:5}")
@@ -85,7 +84,7 @@ public class SeatReservationService {
 
 		Seat seat = seatRepository.findByIdWithLock(seatId).orElseThrow(() -> new SeatNotFoundException(seatId));
 
-		availabilityValidator.validateSeat(sessionId, seatId);
+		validateSeat(sessionId, seatId);
 
 		SeatReservation reservation = SeatReservation.builder().seat(seat).session(session).ticketType(null)
 				.seatPrice(null).status(ReservationStatus.PENDING)
@@ -111,6 +110,72 @@ public class SeatReservationService {
 		log.info("Temporary hold cancelled for seat {} in session {} by user {}", seatId, sessionId, user.getId());
 	}
 
+	public void validateSeatAvailability(Long sessionId, Long seatId) {
+		validateSeat(sessionId, seatId);
+	}
+
+	public boolean isSeatAvailableForSession(Long sessionId, Long seatId) {
+		return !isSeatReserved(sessionId, seatId);
+	}
+
+	@Cacheable(value = "availableSeatsCount", key = "#sessionId")
+	public int getAvailableSeatsCount(Long sessionId) {
+		Session session = sessionRepository.findById(sessionId)
+				.orElseThrow(() -> new SessionNotFoundException(sessionId));
+
+		Long hallId = session.getHall().getId();
+		long totalSeats = seatRepository.countByHallId(hallId);
+		long bookedSeats = seatReservationRepository.countBySessionIdAndStatusIn(sessionId,
+				ReservationStatus.ACTIVE_STATUSES);
+
+		return (int) (totalSeats - bookedSeats);
+	}
+
+	public SeatAvailabilityCheck getSeatAvailabilityStatus(Long sessionId, Long seatId) {
+		List<ReservationStatus> statuses = seatReservationRepository.findStatusesBySessionIdAndSeatId(sessionId,
+				seatId);
+
+		boolean isReserved = !statuses.isEmpty();
+		ReservationStatus status = null;
+
+		if (isReserved) {
+			if (statuses.contains(ReservationStatus.CONFIRMED)) {
+				status = ReservationStatus.CONFIRMED;
+			} else {
+				status = ReservationStatus.PENDING;
+			}
+			if (statuses.size() > 1) {
+				log.warn("Multiple reservations for seat {} in session {}: {}", seatId, sessionId, statuses);
+			}
+		}
+
+		return new SeatAvailabilityCheck(!isReserved, status);
+	}
+
+	public void validateReservationNotExpired(SeatReservation reservation, Long seatId, Long sessionId) {
+		if (reservation.getReservedUntil().isBefore(LocalDateTime.now())) {
+			seatReservationRepository.delete(reservation);
+			throw SeatNotAvailableException.forSeatAndSession(seatId, sessionId);
+		}
+	}
+
+	private void validateSeat(Long sessionId, Long seatId) {
+		Seat seat = seatRepository.findById(seatId).orElseThrow(() -> new SeatNotFoundException(seatId));
+
+		if (!seat.isActive()) {
+			throw SeatNotAvailableException.seatInactive(seatId);
+		}
+
+		if (isSeatReserved(sessionId, seatId)) {
+			throw SeatNotAvailableException.forSeatAndSession(seatId, sessionId);
+		}
+	}
+
+	private boolean isSeatReserved(Long sessionId, Long seatId) {
+		return seatReservationRepository.existsBySessionIdAndSeatIdAndStatusIn(sessionId, seatId,
+				ReservationStatus.ACTIVE_STATUSES);
+	}
+
 	private SeatReservationResponse.SeatInfo buildSeatInfo(Seat seat, Map<Long, ReservationStatus> seatStatusMap,
 			Session session, List<TicketType> activeTicketTypes) {
 
@@ -127,24 +192,13 @@ public class SeatReservationService {
 		return seatReservationMapper.toSeatInfo(seat, isAvailable, isTemporarilyReserved, ticketPrices);
 	}
 
-	public void validateSeatAvailability(Long sessionId, Long seatId) {
-		availabilityValidator.validateSeat(sessionId, seatId);
-	}
+	public record SeatAvailabilityCheck(boolean available, ReservationStatus status) {
+		public boolean isTemporarilyReserved() {
+			return status == ReservationStatus.PENDING;
+		}
 
-	public boolean isSeatAvailableForSession(Long sessionId, Long seatId) {
-		return availabilityValidator.isSeatAvailable(sessionId, seatId);
-	}
-
-	@Cacheable(value = "availableSeatsCount", key = "#sessionId")
-	public int getAvailableSeatsCount(Long sessionId) {
-		Session session = sessionRepository.findById(sessionId)
-				.orElseThrow(() -> new SessionNotFoundException(sessionId));
-
-		Long hallId = session.getHall().getId();
-		long totalSeats = seatRepository.countByHallId(hallId);
-		long bookedSeats = seatReservationRepository.countBySessionIdAndStatusIn(sessionId,
-				ReservationStatus.ACTIVE_STATUSES);
-
-		return (int) (totalSeats - bookedSeats);
+		public boolean isConfirmed() {
+			return status == ReservationStatus.CONFIRMED;
+		}
 	}
 }

@@ -35,6 +35,8 @@ import ua.lviv.bas.cinema.repository.ticket.TicketRepository;
 import ua.lviv.bas.cinema.repository.ticket.TicketTypeRepository;
 import ua.lviv.bas.cinema.repository.ticket.projection.TicketTypeUserProjection;
 import ua.lviv.bas.cinema.service.integration.audit.AuditService;
+import ua.lviv.bas.cinema.service.ticket.TicketTypeService;
+import ua.lviv.bas.cinema.service.ticket.TicketTypeValidationService;
 
 @ExtendWith(MockitoExtension.class)
 public class TicketTypeServiceTest {

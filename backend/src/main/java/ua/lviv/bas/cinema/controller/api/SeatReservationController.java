@@ -18,7 +18,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.config.security.user.CustomUserDetails;
 import ua.lviv.bas.cinema.dto.booking.response.SeatReservationResponse;
-import ua.lviv.bas.cinema.service.booking.reservation.SeatReservationService;
+import ua.lviv.bas.cinema.service.booking.SeatReservationService;
 
 @Slf4j
 @RestController

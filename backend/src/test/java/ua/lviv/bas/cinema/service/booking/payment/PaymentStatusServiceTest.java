@@ -24,6 +24,7 @@ import ua.lviv.bas.cinema.dto.payment.request.LiqPayCallbackRequest;
 import ua.lviv.bas.cinema.dto.payment.response.PaymentLiqPayDataResponse;
 import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentNotFoundException;
 import ua.lviv.bas.cinema.repository.booking.PaymentRepository;
+import ua.lviv.bas.cinema.service.booking.PaymentStatusService;
 import ua.lviv.bas.cinema.service.integration.payment.PaymentGatewayService;
 
 @ExtendWith(MockitoExtension.class)

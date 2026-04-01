@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.service.booking.creation;
+package ua.lviv.bas.cinema.service.booking;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -23,10 +23,14 @@ import ua.lviv.bas.cinema.domain.booking.status.BookingStatus;
 import ua.lviv.bas.cinema.domain.booking.status.ReservationStatus;
 import ua.lviv.bas.cinema.domain.cinema.Seat;
 import ua.lviv.bas.cinema.domain.cinema.Session;
+import ua.lviv.bas.cinema.domain.cinema.status.CinemaSessionStatus;
 import ua.lviv.bas.cinema.domain.ticket.TicketType;
 import ua.lviv.bas.cinema.domain.user.User;
 import ua.lviv.bas.cinema.dto.booking.request.BookingCreateRequest;
 import ua.lviv.bas.cinema.dto.booking.response.BookingResponse;
+import ua.lviv.bas.cinema.exception.domain.booking.BookingNotFoundException;
+import ua.lviv.bas.cinema.exception.domain.booking.BookingOperationException;
+import ua.lviv.bas.cinema.exception.domain.booking.BookingValidationException;
 import ua.lviv.bas.cinema.exception.domain.booking.SeatNotAvailableException;
 import ua.lviv.bas.cinema.exception.domain.cinema.SessionNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.ticket.TicketTypeNotFoundException;
@@ -37,7 +41,6 @@ import ua.lviv.bas.cinema.repository.cinema.SeatRepository;
 import ua.lviv.bas.cinema.repository.cinema.SessionRepository;
 import ua.lviv.bas.cinema.repository.ticket.TicketTypeRepository;
 import ua.lviv.bas.cinema.service.bonus.BonusService;
-import ua.lviv.bas.cinema.service.booking.reservation.ReservationValidator;
 import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 import ua.lviv.bas.cinema.service.shared.PriceCalculatorService;
 
@@ -45,7 +48,8 @@ import ua.lviv.bas.cinema.service.shared.PriceCalculatorService;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class BookingCreationService {
+public class BookingService {
+
 	private final BookingRepository bookingRepository;
 	private final SessionRepository sessionRepository;
 	private final SeatRepository seatRepository;
@@ -54,9 +58,7 @@ public class BookingCreationService {
 	private final BookingMapper bookingMapper;
 	private final BonusService bonusService;
 	private final PriceCalculatorService priceCalculator;
-	private final BookingPriceCalculator bookingPriceCalculator;
-	private final BookingValidator bookingValidator;
-	private final ReservationValidator availabilityValidator;
+	private final SeatReservationService seatReservationService;
 	private final AuditService auditService;
 
 	@Value("${booking.expiration-minutes:20}")
@@ -65,6 +67,9 @@ public class BookingCreationService {
 	@Value("${booking.temp-hold-minutes:5}")
 	private int tempHoldMinutes;
 
+	@Value("${booking.session-too-close-minutes:30}")
+	private int sessionTooCloseMinutes;
+
 	@Caching(evict = { @CacheEvict(value = "seatAvailability", key = "#request.sessionId()"),
 			@CacheEvict(value = "availableSeatsCount", key = "#request.sessionId()"),
 			@CacheEvict(value = "sessions", allEntries = true) })
@@ -72,7 +77,7 @@ public class BookingCreationService {
 		Session session = sessionRepository.findById(request.sessionId())
 				.orElseThrow(() -> new SessionNotFoundException(request.sessionId()));
 
-		bookingValidator.validateSessionForBooking(session);
+		validateSessionForBooking(session);
 
 		List<SeatReservation> seatReservations = new ArrayList<>();
 
@@ -85,8 +90,7 @@ public class BookingCreationService {
 		BigDecimal totalPrice = seatReservations.stream().map(SeatReservation::getSeatPrice).reduce(BigDecimal.ZERO,
 				BigDecimal::add);
 
-		BookingPriceCalculator.BookingPriceResult priceResult = bookingPriceCalculator.calculateFinalPrice(totalPrice,
-				request.bonusPointsToUse(), user.getId());
+		BookingPriceResult priceResult = calculateFinalPrice(totalPrice, request.bonusPointsToUse(), user.getId());
 
 		LocalDateTime expiresAt = LocalDateTime.now().plusMinutes(expirationMinutes);
 		Booking booking = createBookingEntity(user, session, seatReservations, priceResult, expiresAt);
@@ -120,6 +124,110 @@ public class BookingCreationService {
 		return bookingMapper.toBookingResponse(savedBooking);
 	}
 
+	@Transactional(readOnly = true)
+	public BookingResponse getBookingById(Long bookingId, User user) {
+		Booking booking = bookingRepository.findByIdAndUserId(bookingId, user.getId())
+				.orElseThrow(() -> new BookingNotFoundException(bookingId));
+		return bookingMapper.toBookingResponse(booking);
+	}
+
+	@Transactional
+	public void cancelBooking(Long bookingId, User user) {
+		Booking booking = bookingRepository.findByIdAndUserId(bookingId, user.getId())
+				.orElseThrow(() -> new BookingNotFoundException(bookingId));
+
+		if (!canBookingBeCancelled(booking)) {
+			throw BookingValidationException.cannotCancel();
+		}
+
+		BookingStatus oldStatus = booking.getStatus();
+		booking.setStatus(BookingStatus.CANCELLED);
+
+		booking.getSeatReservations().forEach(sr -> {
+			sr.setStatus(ReservationStatus.EXPIRED);
+			sr.setBooking(null);
+		});
+
+		seatReservationRepository.saveAll(booking.getSeatReservations());
+
+		if (booking.getBonusPointsUsed() != null && booking.getBonusPointsUsed() > 0) {
+			bonusService.refundPoints(booking);
+		}
+
+		bookingRepository.save(booking);
+		log.info("Cancelled booking {} for user {}", bookingId, user.getId());
+
+		Map<String, Object> oldDetails = new HashMap<>();
+		oldDetails.put("status", oldStatus);
+
+		Map<String, Object> newDetails = new HashMap<>();
+		newDetails.put("status", BookingStatus.CANCELLED);
+
+		auditService.logChange("Booking", bookingId, "Booking #" + bookingId, AuditAction.CANCELLED, oldDetails,
+				newDetails);
+	}
+
+	@Transactional
+	public void confirmBooking(Long bookingId) {
+		Booking booking = bookingRepository.findById(bookingId)
+				.orElseThrow(() -> new BookingNotFoundException(bookingId));
+
+		if (booking.getStatus() != BookingStatus.PENDING) {
+			throw BookingOperationException.onlyPendingCanBeConfirmed();
+		}
+
+		BookingStatus oldStatus = booking.getStatus();
+		booking.setStatus(BookingStatus.CONFIRMED);
+		booking.getSeatReservations().forEach(sr -> sr.setStatus(ReservationStatus.CONFIRMED));
+		bookingRepository.save(booking);
+
+		Map<String, Object> oldDetails = new HashMap<>();
+		oldDetails.put("status", oldStatus);
+
+		Map<String, Object> newDetails = new HashMap<>();
+		newDetails.put("status", BookingStatus.CONFIRMED);
+
+		auditService.logChange("Booking", bookingId, "Booking #" + bookingId, AuditAction.CONFIRMED, oldDetails,
+				newDetails);
+	}
+
+	private BookingPriceResult calculateFinalPrice(BigDecimal totalPrice, Integer bonusPointsToUse, Long userId) {
+		BigDecimal bonusDiscount = BigDecimal.ZERO;
+		Integer bonusPointsUsed = 0;
+
+		if (bonusPointsToUse != null && bonusPointsToUse > 0) {
+			bonusService.validatePointsForBooking(userId, bonusPointsToUse, totalPrice);
+			bonusDiscount = priceCalculator.calculateBonusDiscount(bonusPointsToUse);
+			bonusPointsUsed = bonusPointsToUse;
+		}
+
+		BigDecimal finalPrice = totalPrice.subtract(bonusDiscount).max(BigDecimal.ZERO);
+
+		return new BookingPriceResult(totalPrice, bonusPointsUsed, bonusDiscount, finalPrice);
+	}
+
+	private record BookingPriceResult(BigDecimal totalPrice, Integer bonusPointsUsed, BigDecimal bonusDiscount,
+			BigDecimal finalPrice) {
+	}
+
+	private void validateSessionForBooking(Session session) {
+		if (session.getStatus() != CinemaSessionStatus.SCHEDULED) {
+			throw BookingValidationException.sessionNotAvailable();
+		}
+
+		if (session.getStartTime().isBefore(LocalDateTime.now())) {
+			throw BookingValidationException.sessionAlreadyStarted();
+		}
+
+		if (session.getStartTime().isBefore(LocalDateTime.now().plusMinutes(sessionTooCloseMinutes))) {
+			throw BookingValidationException.sessionTooClose();
+		}
+	}
+
+	private boolean canBookingBeCancelled(Booking booking) {
+		return booking.getStatus() == BookingStatus.PENDING || booking.getStatus() == BookingStatus.CONFIRMED;
+	}
+
 	private SeatReservation findOrCreateValidReservation(Session session, User user,
 			BookingCreateRequest.SeatSelectionRequest seatSelection) {
 
@@ -143,7 +251,7 @@ public class BookingCreationService {
 		Seat seat = seatRepository.findById(seatId)
 				.orElseThrow(() -> new SeatNotAvailableException("Seat not found: " + seatId));
 
-		availabilityValidator.validateSeat(session.getId(), seatId);
+		seatReservationService.validateSeatAvailability(session.getId(), seatId);
 
 		SeatReservation newReservation = SeatReservation.builder().seat(seat).session(session).ticketType(null)
 				.seatPrice(null).status(ReservationStatus.PENDING)
@@ -166,7 +274,7 @@ public class BookingCreationService {
 	}
 
 	private Booking createBookingEntity(User user, Session session, List<SeatReservation> seatReservations,
-			BookingPriceCalculator.BookingPriceResult priceResult, LocalDateTime expiresAt) {
+			BookingPriceResult priceResult, LocalDateTime expiresAt) {
 		return Booking.builder().user(user).session(session).status(BookingStatus.PENDING)
 				.totalPrice(priceResult.totalPrice()).bonusPointsUsed(priceResult.bonusPointsUsed())
 				.bonusDiscountAmount(priceResult.bonusDiscount()).finalPrice(priceResult.finalPrice())

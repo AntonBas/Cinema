@@ -12,7 +12,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import ua.lviv.bas.cinema.service.booking.payment.PaymentStatusService;
+import ua.lviv.bas.cinema.service.booking.PaymentStatusService;
 
 @Slf4j
 @RestController

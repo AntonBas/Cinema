@@ -30,7 +30,7 @@ import ua.lviv.bas.cinema.dto.PageResponse;
 import ua.lviv.bas.cinema.dto.ticketType.request.TicketTypeCreateRequest;
 import ua.lviv.bas.cinema.dto.ticketType.request.TicketTypeUpdateRequest;
 import ua.lviv.bas.cinema.dto.ticketType.response.TicketTypeResponse;
-import ua.lviv.bas.cinema.service.booking.types.TicketTypeService;
+import ua.lviv.bas.cinema.service.ticket.TicketTypeService;
 
 @Slf4j
 @RestController

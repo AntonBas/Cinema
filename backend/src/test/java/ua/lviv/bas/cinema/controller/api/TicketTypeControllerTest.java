@@ -18,7 +18,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import ua.lviv.bas.cinema.dto.ticketType.response.TicketTypeUserResponse;
-import ua.lviv.bas.cinema.service.booking.types.TicketTypeService;
+import ua.lviv.bas.cinema.service.ticket.TicketTypeService;
 
 @ExtendWith(MockitoExtension.class)
 public class TicketTypeControllerTest {

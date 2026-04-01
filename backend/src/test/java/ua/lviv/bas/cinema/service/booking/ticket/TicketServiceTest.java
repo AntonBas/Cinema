@@ -28,6 +28,7 @@ import ua.lviv.bas.cinema.exception.domain.ticket.TicketValidationException;
 import ua.lviv.bas.cinema.repository.ticket.TicketRepository;
 import ua.lviv.bas.cinema.service.integration.qr.QRCodeService;
 import ua.lviv.bas.cinema.service.shared.NumberGeneratorService;
+import ua.lviv.bas.cinema.service.ticket.TicketService;
 
 @ExtendWith(MockitoExtension.class)
 public class TicketServiceTest {

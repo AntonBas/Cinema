@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.service.booking.types;
+package ua.lviv.bas.cinema.service.ticket;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -29,6 +29,7 @@ import ua.lviv.bas.cinema.dto.ticketType.response.TicketTypeUserResponse;
 import ua.lviv.bas.cinema.exception.domain.ticket.TicketTypeDuplicateException;
 import ua.lviv.bas.cinema.exception.domain.ticket.TicketTypeInUseException;
 import ua.lviv.bas.cinema.exception.domain.ticket.TicketTypeNotFoundException;
+import ua.lviv.bas.cinema.exception.domain.ticket.TicketTypeValidationException;
 import ua.lviv.bas.cinema.mapper.ticket.TicketTypeMapper;
 import ua.lviv.bas.cinema.repository.ticket.TicketRepository;
 import ua.lviv.bas.cinema.repository.ticket.TicketTypeRepository;
@@ -46,7 +47,6 @@ public class TicketTypeService {
 	private final TicketTypeRepository ticketTypeRepository;
 	private final TicketRepository ticketRepository;
 	private final TicketTypeMapper ticketTypeMapper;
-	private final TicketTypeValidationService validationService;
 	private final AuditService auditService;
 
 	@CacheEvict(allEntries = true)
@@ -54,7 +54,7 @@ public class TicketTypeService {
 	public TicketTypeResponse createTicketType(TicketTypeCreateRequest request) {
 		log.info("Creating ticket type: {}", request.displayName());
 
-		validationService.validateAgeRange(request.minAge(), request.maxAge());
+		validateAgeRange(request.minAge(), request.maxAge());
 
 		if (ticketTypeRepository.existsByDisplayName(request.displayName())) {
 			throw new TicketTypeDuplicateException(request.displayName());
@@ -117,7 +117,7 @@ public class TicketTypeService {
 		if (request.minAge() != null || request.maxAge() != null) {
 			Integer minAge = request.minAge() != null ? request.minAge() : ticketType.getMinAge();
 			Integer maxAge = request.maxAge() != null ? request.maxAge() : ticketType.getMaxAge();
-			validationService.validateAgeRange(minAge, maxAge);
+			validateAgeRange(minAge, maxAge);
 		}
 
 		Map<String, Object> oldDetails = new HashMap<>();
@@ -194,6 +194,40 @@ public class TicketTypeService {
 				newDetails);
 
 		return ticketTypeMapper.toTicketTypeResponse(updated);
+	}
+
+	private void validateAgeRange(Integer minAge, Integer maxAge) {
+		if (minAge != null && maxAge != null && minAge > maxAge) {
+			throw TicketTypeValidationException.invalidAgeRange(minAge, maxAge);
+		}
+		if (minAge != null && (minAge < 0 || minAge > 100)) {
+			throw TicketTypeValidationException.invalidAgeValue("minAge", minAge);
+		}
+		if (maxAge != null && (maxAge < 0 || maxAge > 100)) {
+			throw TicketTypeValidationException.invalidAgeValue("maxAge", maxAge);
+		}
+	}
+
+	public boolean isAgeValidForTicketType(TicketType ticketType, Integer age) {
+		if (age == null) {
+			return ticketType.getMinAge() == null && ticketType.getMaxAge() == null;
+		}
+		boolean validMin = ticketType.getMinAge() == null || age >= ticketType.getMinAge();
+		boolean validMax = ticketType.getMaxAge() == null || age <= ticketType.getMaxAge();
+		return validMin && validMax;
+	}
+
+	public String formatAgeRange(Integer minAge, Integer maxAge) {
+		if (minAge == null && maxAge == null) {
+			return "No age restrictions";
+		}
+		if (minAge != null && maxAge != null) {
+			return minAge + "-" + maxAge + " years";
+		}
+		if (minAge != null) {
+			return "From " + minAge + " years";
+		}
+		return "Up to " + maxAge + " years";
 	}
 
 	private TicketType findTicketTypeById(Long id) {

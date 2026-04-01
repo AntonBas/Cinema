@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.service.booking.payment;
+package ua.lviv.bas.cinema.service.booking;
 
 import java.util.Map;
 
@@ -20,7 +20,7 @@ import ua.lviv.bas.cinema.service.integration.payment.PaymentGatewayService;
 @RequiredArgsConstructor
 public class PaymentStatusService {
 	private final PaymentRepository paymentRepository;
-	private final PaymentProcessingService paymentProcessingService;
+	private final PaymentService paymentService;
 	private final PaymentGatewayService paymentGatewayService;
 
 	@Transactional(readOnly = true)
@@ -49,11 +49,11 @@ public class PaymentStatusService {
 		switch (status.toLowerCase()) {
 		case "success":
 		case "sandbox":
-			paymentProcessingService.processSuccessfulPayment(payment, decodedData);
+			paymentService.processSuccessfulPayment(payment, decodedData);
 			break;
 		case "failure":
 		case "error":
-			paymentProcessingService.processFailedPayment(payment, decodedData);
+			paymentService.processFailedPayment(payment, decodedData);
 			break;
 		case "wait_secure":
 			payment.setStatus(PaymentStatus.PROCESSING);

@@ -35,7 +35,7 @@ import ua.lviv.bas.cinema.exception.api.ApiErrorHandler;
 import ua.lviv.bas.cinema.exception.domain.ticket.TicketTypeDuplicateException;
 import ua.lviv.bas.cinema.exception.domain.ticket.TicketTypeInUseException;
 import ua.lviv.bas.cinema.exception.domain.ticket.TicketTypeNotFoundException;
-import ua.lviv.bas.cinema.service.booking.types.TicketTypeService;
+import ua.lviv.bas.cinema.service.ticket.TicketTypeService;
 
 @ExtendWith(MockitoExtension.class)
 public class AdminTicketTypeControllerTest {

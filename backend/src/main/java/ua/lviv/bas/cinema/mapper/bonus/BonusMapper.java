@@ -26,10 +26,6 @@ public interface BonusMapper {
 	@Mapping(target = "pointsChange", expression = "java(projection.getPointsChange())")
 	BonusTransactionResponse toBonusTransactionResponse(BonusTransactionProjection projection);
 
-	@Mapping(target = "id", ignore = true)
-	@Mapping(target = "bonusType", ignore = true)
-	BonusRules toEntity(BonusRulesRequest request);
-
 	@BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 	@Mapping(target = "id", ignore = true)
 	@Mapping(target = "bonusType", ignore = true)
