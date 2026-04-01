@@ -1,9 +1,6 @@
 package ua.lviv.bas.cinema.domain.booking;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
-
-import org.hibernate.annotations.CreationTimestamp;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -26,6 +23,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import ua.lviv.bas.cinema.domain.audit.AuditableEntity;
 import ua.lviv.bas.cinema.domain.booking.status.RefundItemStatus;
 import ua.lviv.bas.cinema.domain.ticket.Ticket;
 
@@ -38,7 +36,7 @@ import ua.lviv.bas.cinema.domain.ticket.Ticket;
 @Table(name = "refund_items", indexes = { @Index(name = "idx_refund_item_refund", columnList = "refund_id"),
 		@Index(name = "idx_refund_item_ticket", columnList = "ticket_id"),
 		@Index(name = "idx_refund_item_status", columnList = "status") })
-public class RefundItem {
+public class RefundItem extends AuditableEntity {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
@@ -75,8 +73,4 @@ public class RefundItem {
 	@Column(name = "status", nullable = false, length = 20)
 	@Builder.Default
 	private RefundItemStatus status = RefundItemStatus.PENDING;
-
-	@CreationTimestamp
-	@Column(name = "created_at", nullable = false, updatable = false)
-	private LocalDateTime createdAt;
 }
