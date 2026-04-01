@@ -1,7 +1,9 @@
-package ua.lviv.bas.cinema.service.booking.payment;
+package ua.lviv.bas.cinema.service.booking;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -19,12 +21,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import ua.lviv.bas.cinema.domain.booking.Booking;
 import ua.lviv.bas.cinema.domain.booking.Payment;
 import ua.lviv.bas.cinema.domain.booking.status.PaymentStatus;
+import ua.lviv.bas.cinema.domain.cinema.CinemaHall;
+import ua.lviv.bas.cinema.domain.cinema.Movie;
+import ua.lviv.bas.cinema.domain.cinema.Session;
 import ua.lviv.bas.cinema.domain.user.User;
 import ua.lviv.bas.cinema.dto.payment.request.LiqPayCallbackRequest;
 import ua.lviv.bas.cinema.dto.payment.response.PaymentLiqPayDataResponse;
 import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentNotFoundException;
 import ua.lviv.bas.cinema.repository.booking.PaymentRepository;
-import ua.lviv.bas.cinema.service.booking.PaymentStatusService;
 import ua.lviv.bas.cinema.service.integration.payment.PaymentGatewayService;
 
 @ExtendWith(MockitoExtension.class)
@@ -34,7 +38,7 @@ public class PaymentStatusServiceTest {
 	private PaymentRepository paymentRepository;
 
 	@Mock
-	private PaymentProcessingService paymentProcessingService;
+	private PaymentService paymentService;
 
 	@Mock
 	private PaymentGatewayService paymentGatewayService;
@@ -43,43 +47,50 @@ public class PaymentStatusServiceTest {
 	private PaymentStatusService paymentStatusService;
 
 	private Payment testPayment;
+	private Booking testBooking;
 	private User testUser;
+
+	private static final Long PAYMENT_ID = 1L;
+	private static final String ORDER_ID = "ORD_TEST123456789";
 
 	@BeforeEach
 	void setUp() {
-		testUser = new User();
-		testUser.setId(1L);
+		testUser = User.builder().id(1L).email("test@example.com").build();
 
-		Booking booking = new Booking();
-		booking.setUser(testUser);
+		Movie movie = Movie.builder().id(1L).title("Test Movie").build();
 
-		testPayment = new Payment();
-		testPayment.setId(1L);
-		testPayment.setBooking(booking);
-		testPayment.setLiqpayOrderId("ORD_TEST123456789");
-		testPayment.setStatus(PaymentStatus.PENDING);
+		CinemaHall hall = CinemaHall.builder().id(1L).name("Hall A").build();
+
+		Session session = Session.builder().id(1L).movie(movie).hall(hall).build();
+
+		testBooking = Booking.builder().id(1L).user(testUser).session(session).build();
+
+		testPayment = Payment.builder().id(PAYMENT_ID).booking(testBooking).liqpayOrderId(ORDER_ID)
+				.status(PaymentStatus.PENDING).build();
 	}
 
 	@Test
 	void preparePaymentData_Success() {
 		PaymentLiqPayDataResponse expectedResponse = new PaymentLiqPayDataResponse("test_data", "test_signature",
-				"https://payment.url", "ORD_TEST123456789");
+				"https://payment.url", ORDER_ID);
 
-		when(paymentRepository.findById(1L)).thenReturn(Optional.of(testPayment));
+		when(paymentRepository.findById(PAYMENT_ID)).thenReturn(Optional.of(testPayment));
 		when(paymentGatewayService.prepareLiqPayPaymentData(testPayment)).thenReturn(expectedResponse);
 
-		PaymentLiqPayDataResponse response = paymentStatusService.preparePaymentData(1L);
+		PaymentLiqPayDataResponse response = paymentStatusService.preparePaymentData(PAYMENT_ID);
 
 		assertThat(response).isNotNull();
 		assertThat(response.data()).isEqualTo("test_data");
 		assertThat(response.signature()).isEqualTo("test_signature");
+		assertThat(response.paymentUrl()).isEqualTo("https://payment.url");
+		assertThat(response.liqpayOrderId()).isEqualTo(ORDER_ID);
 	}
 
 	@Test
 	void preparePaymentData_WhenPaymentNotFound_ShouldThrowException() {
-		when(paymentRepository.findById(1L)).thenReturn(Optional.empty());
+		when(paymentRepository.findById(PAYMENT_ID)).thenReturn(Optional.empty());
 
-		assertThatThrownBy(() -> paymentStatusService.preparePaymentData(1L))
+		assertThatThrownBy(() -> paymentStatusService.preparePaymentData(PAYMENT_ID))
 				.isInstanceOf(PaymentNotFoundException.class);
 	}
 
@@ -88,15 +99,31 @@ public class PaymentStatusServiceTest {
 		String data = "encoded_data";
 		String signature = "test_signature";
 		Map<String, String> decodedData = new HashMap<>();
-		decodedData.put("order_id", "ORD_TEST123456789");
+		decodedData.put("order_id", ORDER_ID);
 		decodedData.put("status", "success");
 
 		when(paymentGatewayService.processCallback(data, signature)).thenReturn(decodedData);
-		when(paymentRepository.findByLiqpayOrderId("ORD_TEST123456789")).thenReturn(Optional.of(testPayment));
+		when(paymentRepository.findByLiqpayOrderId(ORDER_ID)).thenReturn(Optional.of(testPayment));
 
 		paymentStatusService.handleLiqPayCallback(data, signature);
 
-		verify(paymentProcessingService).processSuccessfulPayment(testPayment, decodedData);
+		verify(paymentService).processSuccessfulPayment(testPayment, decodedData);
+	}
+
+	@Test
+	void handleLiqPayCallback_WithSandboxStatus() {
+		String data = "encoded_data";
+		String signature = "test_signature";
+		Map<String, String> decodedData = new HashMap<>();
+		decodedData.put("order_id", ORDER_ID);
+		decodedData.put("status", "sandbox");
+
+		when(paymentGatewayService.processCallback(data, signature)).thenReturn(decodedData);
+		when(paymentRepository.findByLiqpayOrderId(ORDER_ID)).thenReturn(Optional.of(testPayment));
+
+		paymentStatusService.handleLiqPayCallback(data, signature);
+
+		verify(paymentService).processSuccessfulPayment(testPayment, decodedData);
 	}
 
 	@Test
@@ -104,15 +131,31 @@ public class PaymentStatusServiceTest {
 		String data = "encoded_data";
 		String signature = "test_signature";
 		Map<String, String> decodedData = new HashMap<>();
-		decodedData.put("order_id", "ORD_TEST123456789");
+		decodedData.put("order_id", ORDER_ID);
 		decodedData.put("status", "failure");
 
 		when(paymentGatewayService.processCallback(data, signature)).thenReturn(decodedData);
-		when(paymentRepository.findByLiqpayOrderId("ORD_TEST123456789")).thenReturn(Optional.of(testPayment));
+		when(paymentRepository.findByLiqpayOrderId(ORDER_ID)).thenReturn(Optional.of(testPayment));
 
 		paymentStatusService.handleLiqPayCallback(data, signature);
 
-		verify(paymentProcessingService).processFailedPayment(testPayment, decodedData);
+		verify(paymentService).processFailedPayment(testPayment, decodedData);
+	}
+
+	@Test
+	void handleLiqPayCallback_WithErrorStatus() {
+		String data = "encoded_data";
+		String signature = "test_signature";
+		Map<String, String> decodedData = new HashMap<>();
+		decodedData.put("order_id", ORDER_ID);
+		decodedData.put("status", "error");
+
+		when(paymentGatewayService.processCallback(data, signature)).thenReturn(decodedData);
+		when(paymentRepository.findByLiqpayOrderId(ORDER_ID)).thenReturn(Optional.of(testPayment));
+
+		paymentStatusService.handleLiqPayCallback(data, signature);
+
+		verify(paymentService).processFailedPayment(testPayment, decodedData);
 	}
 
 	@Test
@@ -120,16 +163,18 @@ public class PaymentStatusServiceTest {
 		String data = "encoded_data";
 		String signature = "test_signature";
 		Map<String, String> decodedData = new HashMap<>();
-		decodedData.put("order_id", "ORD_TEST123456789");
+		decodedData.put("order_id", ORDER_ID);
 		decodedData.put("status", "wait_secure");
 
 		when(paymentGatewayService.processCallback(data, signature)).thenReturn(decodedData);
-		when(paymentRepository.findByLiqpayOrderId("ORD_TEST123456789")).thenReturn(Optional.of(testPayment));
+		when(paymentRepository.findByLiqpayOrderId(ORDER_ID)).thenReturn(Optional.of(testPayment));
 
 		paymentStatusService.handleLiqPayCallback(data, signature);
 
-		verify(paymentRepository).save(testPayment);
 		assertThat(testPayment.getStatus()).isEqualTo(PaymentStatus.PROCESSING);
+		verify(paymentRepository).save(testPayment);
+		verify(paymentService, never()).processSuccessfulPayment(any(), any());
+		verify(paymentService, never()).processFailedPayment(any(), any());
 	}
 
 	@Test
@@ -137,16 +182,18 @@ public class PaymentStatusServiceTest {
 		String data = "encoded_data";
 		String signature = "test_signature";
 		Map<String, String> decodedData = new HashMap<>();
-		decodedData.put("order_id", "ORD_TEST123456789");
+		decodedData.put("order_id", ORDER_ID);
 		decodedData.put("status", "unknown");
 
 		when(paymentGatewayService.processCallback(data, signature)).thenReturn(decodedData);
-		when(paymentRepository.findByLiqpayOrderId("ORD_TEST123456789")).thenReturn(Optional.of(testPayment));
+		when(paymentRepository.findByLiqpayOrderId(ORDER_ID)).thenReturn(Optional.of(testPayment));
 
 		paymentStatusService.handleLiqPayCallback(data, signature);
 
-		verify(paymentRepository).save(testPayment);
 		assertThat(testPayment.getStatus()).isEqualTo(PaymentStatus.FAILED);
+		verify(paymentRepository).save(testPayment);
+		verify(paymentService, never()).processSuccessfulPayment(any(), any());
+		verify(paymentService, never()).processFailedPayment(any(), any());
 	}
 
 	@Test
@@ -168,14 +215,14 @@ public class PaymentStatusServiceTest {
 		LiqPayCallbackRequest callbackRequest = new LiqPayCallbackRequest("encoded_data", "test_signature");
 
 		Map<String, String> decodedData = new HashMap<>();
-		decodedData.put("order_id", "ORD_TEST123456789");
+		decodedData.put("order_id", ORDER_ID);
 		decodedData.put("status", "success");
 
 		when(paymentGatewayService.processCallback("encoded_data", "test_signature")).thenReturn(decodedData);
-		when(paymentRepository.findByLiqpayOrderId("ORD_TEST123456789")).thenReturn(Optional.of(testPayment));
+		when(paymentRepository.findByLiqpayOrderId(ORDER_ID)).thenReturn(Optional.of(testPayment));
 
 		paymentStatusService.handleLiqPayCallback(callbackRequest);
 
-		verify(paymentProcessingService).processSuccessfulPayment(testPayment, decodedData);
+		verify(paymentService).processSuccessfulPayment(testPayment, decodedData);
 	}
 }

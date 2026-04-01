@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.service.booking.types;
+package ua.lviv.bas.cinema.service.ticket;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -30,13 +30,12 @@ import ua.lviv.bas.cinema.dto.ticketType.response.TicketTypeUserResponse;
 import ua.lviv.bas.cinema.exception.domain.ticket.TicketTypeDuplicateException;
 import ua.lviv.bas.cinema.exception.domain.ticket.TicketTypeInUseException;
 import ua.lviv.bas.cinema.exception.domain.ticket.TicketTypeNotFoundException;
+import ua.lviv.bas.cinema.exception.domain.ticket.TicketTypeValidationException;
 import ua.lviv.bas.cinema.mapper.ticket.TicketTypeMapper;
 import ua.lviv.bas.cinema.repository.ticket.TicketRepository;
 import ua.lviv.bas.cinema.repository.ticket.TicketTypeRepository;
 import ua.lviv.bas.cinema.repository.ticket.projection.TicketTypeUserProjection;
 import ua.lviv.bas.cinema.service.integration.audit.AuditService;
-import ua.lviv.bas.cinema.service.ticket.TicketTypeService;
-import ua.lviv.bas.cinema.service.ticket.TicketTypeValidationService;
 
 @ExtendWith(MockitoExtension.class)
 public class TicketTypeServiceTest {
@@ -49,9 +48,6 @@ public class TicketTypeServiceTest {
 
 	@Mock
 	private TicketTypeMapper ticketTypeMapper;
-
-	@Mock
-	private TicketTypeValidationService validationService;
 
 	@Mock
 	private AuditService auditService;
@@ -77,9 +73,17 @@ public class TicketTypeServiceTest {
 		TicketTypeResponse result = ticketTypeService.createTicketType(request);
 
 		assertThat(result).isEqualTo(response);
-		verify(validationService).validateAgeRange(18, 65);
 		verify(ticketTypeRepository).save(ticketType);
 		verify(auditService).logChange(eq("TicketType"), any(), any(), any(), any(), any());
+	}
+
+	@Test
+	void createTicketType_WithInvalidAgeRange_ThrowsValidationException() {
+		TicketTypeCreateRequest request = new TicketTypeCreateRequest(DISPLAY_NAME, PRICE_MULTIPLIER, 65, 18, false,
+				null, true, TicketTypeCategory.STANDARD);
+
+		assertThatThrownBy(() -> ticketTypeService.createTicketType(request))
+				.isInstanceOf(TicketTypeValidationException.class).hasMessageContaining("Invalid age range");
 	}
 
 	@Test
@@ -153,9 +157,19 @@ public class TicketTypeServiceTest {
 		TicketTypeResponse result = ticketTypeService.updateTicketType(TICKET_TYPE_ID, request);
 
 		assertThat(result).isEqualTo(response);
-		verify(validationService).validateAgeRange(21, 70);
 		verify(ticketTypeMapper).updateTicketTypeFromRequest(ticketType, request);
 		verify(auditService).logChange(eq("TicketType"), any(), any(), any(), any(), any());
+	}
+
+	@Test
+	void updateTicketType_WithInvalidAgeRange_ThrowsValidationException() {
+		TicketType ticketType = createTicketType();
+		TicketTypeUpdateRequest request = new TicketTypeUpdateRequest(null, null, 65, 21, null, null, null, null);
+
+		when(ticketTypeRepository.findById(TICKET_TYPE_ID)).thenReturn(Optional.of(ticketType));
+
+		assertThatThrownBy(() -> ticketTypeService.updateTicketType(TICKET_TYPE_ID, request))
+				.isInstanceOf(TicketTypeValidationException.class).hasMessageContaining("Invalid age range");
 	}
 
 	@Test
@@ -246,6 +260,38 @@ public class TicketTypeServiceTest {
 
 		assertThatThrownBy(() -> ticketTypeService.toggleTicketTypeActiveStatus(TICKET_TYPE_ID))
 				.isInstanceOf(TicketTypeInUseException.class);
+	}
+
+	@Test
+	void isAgeValidForTicketType_ReturnsTrue() {
+		TicketType ticketType = TicketType.builder().minAge(18).maxAge(65).build();
+
+		boolean result = ticketTypeService.isAgeValidForTicketType(ticketType, 25);
+
+		assertThat(result).isTrue();
+	}
+
+	@Test
+	void isAgeValidForTicketType_ReturnsFalse() {
+		TicketType ticketType = TicketType.builder().minAge(18).maxAge(65).build();
+
+		boolean result = ticketTypeService.isAgeValidForTicketType(ticketType, 15);
+
+		assertThat(result).isFalse();
+	}
+
+	@Test
+	void formatAgeRange_ReturnsFormattedString() {
+		String result = ticketTypeService.formatAgeRange(18, 65);
+
+		assertThat(result).isEqualTo("18-65 years");
+	}
+
+	@Test
+	void formatAgeRange_WithNull_ReturnsNoRestrictions() {
+		String result = ticketTypeService.formatAgeRange(null, null);
+
+		assertThat(result).isEqualTo("No age restrictions");
 	}
 
 	private TicketTypeCreateRequest createTicketTypeRequest() {

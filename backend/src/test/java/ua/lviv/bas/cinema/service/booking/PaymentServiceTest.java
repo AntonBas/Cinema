@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.service.booking.payment;
+package ua.lviv.bas.cinema.service.booking;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -20,13 +20,17 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import ua.lviv.bas.cinema.domain.booking.Booking;
 import ua.lviv.bas.cinema.domain.booking.Payment;
+import ua.lviv.bas.cinema.domain.booking.SeatReservation;
 import ua.lviv.bas.cinema.domain.booking.status.BookingStatus;
 import ua.lviv.bas.cinema.domain.booking.status.PaymentStatus;
+import ua.lviv.bas.cinema.domain.booking.status.ReservationStatus;
 import ua.lviv.bas.cinema.domain.cinema.CinemaHall;
 import ua.lviv.bas.cinema.domain.cinema.Movie;
+import ua.lviv.bas.cinema.domain.cinema.Seat;
 import ua.lviv.bas.cinema.domain.cinema.Session;
 import ua.lviv.bas.cinema.domain.ticket.Ticket;
 import ua.lviv.bas.cinema.domain.user.User;
@@ -40,46 +44,41 @@ import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentProcessingEx
 import ua.lviv.bas.cinema.repository.booking.BookingRepository;
 import ua.lviv.bas.cinema.repository.booking.PaymentRepository;
 import ua.lviv.bas.cinema.service.bonus.BonusService;
-import ua.lviv.bas.cinema.service.booking.management.BookingManagementService;
+import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 import ua.lviv.bas.cinema.service.integration.payment.PaymentGatewayService;
+import ua.lviv.bas.cinema.service.notification.EmailService;
+import ua.lviv.bas.cinema.service.shared.DateTimeFormatterService;
 import ua.lviv.bas.cinema.service.shared.NumberGeneratorService;
 import ua.lviv.bas.cinema.service.ticket.TicketService;
 
 @ExtendWith(MockitoExtension.class)
-public class PaymentProcessingServiceTest {
+public class PaymentServiceTest {
 
 	@Mock
 	private PaymentRepository paymentRepository;
-
 	@Mock
 	private BookingRepository bookingRepository;
-
-	@Mock
-	private PaymentValidator paymentValidator;
-
-	@Mock
-	private PaymentNotificationService notificationService;
-
 	@Mock
 	private PaymentGatewayService paymentGatewayService;
-
 	@Mock
 	private TicketService ticketService;
-
 	@Mock
 	private BonusService bonusService;
-
 	@Mock
 	private NumberGeneratorService numberGenerator;
-
 	@Mock
-	private BookingManagementService bookingManagementService;
+	private BookingService bookingService;
+	@Mock
+	private AuditService auditService;
+	@Mock
+	private EmailService emailService;
+	@Mock
+	private DateTimeFormatterService dateTimeFormatter;
 
 	@InjectMocks
-	private PaymentProcessingService paymentProcessingService;
+	private PaymentService paymentService;
 
 	private User testUser;
-	private Session testSession;
 	private Booking testBooking;
 	private Payment testPayment;
 	private PaymentCreateRequest createRequest;
@@ -88,38 +87,28 @@ public class PaymentProcessingServiceTest {
 	private static final Long BOOKING_ID = 2L;
 	private static final Long PAYMENT_ID = 3L;
 	private static final BigDecimal AMOUNT = new BigDecimal("200.00");
+	private static final int SESSION_TOO_CLOSE_MINUTES = 30;
 
 	@BeforeEach
 	void setUp() {
-		testUser = new User();
-		testUser.setId(USER_ID);
-		testUser.setEmail("test@example.com");
+		ReflectionTestUtils.setField(paymentService, "sessionTooCloseMinutes", SESSION_TOO_CLOSE_MINUTES);
 
-		Movie movie = new Movie();
-		movie.setTitle("Test Movie");
+		testUser = User.builder().id(USER_ID).email("test@example.com").build();
 
-		CinemaHall hall = new CinemaHall();
-		hall.setName("Hall A");
+		Movie movie = Movie.builder().title("Test Movie").build();
+		CinemaHall hall = CinemaHall.builder().name("Hall A").build();
 
-		testSession = new Session();
-		testSession.setMovie(movie);
-		testSession.setHall(hall);
-		testSession.setStartTime(LocalDateTime.now().plusHours(2));
+		Session session = Session.builder().movie(movie).hall(hall).startTime(LocalDateTime.now().plusHours(2)).build();
 
-		testBooking = new Booking();
-		testBooking.setId(BOOKING_ID);
-		testBooking.setUser(testUser);
-		testBooking.setSession(testSession);
-		testBooking.setStatus(BookingStatus.PENDING);
-		testBooking.setFinalPrice(AMOUNT);
-		testBooking.setExpiresAt(LocalDateTime.now().plusHours(1));
+		SeatReservation seatReservation = SeatReservation.builder().seat(Seat.builder().row(1).number(1).build())
+				.status(ReservationStatus.CONFIRMED).build();
 
-		testPayment = new Payment();
-		testPayment.setId(PAYMENT_ID);
-		testPayment.setBooking(testBooking);
-		testPayment.setAmount(AMOUNT);
-		testPayment.setStatus(PaymentStatus.PENDING);
-		testPayment.setLiqpayOrderId("ORD_TEST123456789");
+		testBooking = Booking.builder().id(BOOKING_ID).user(testUser).session(session).status(BookingStatus.PENDING)
+				.finalPrice(AMOUNT).expiresAt(LocalDateTime.now().plusHours(1))
+				.seatReservations(Arrays.asList(seatReservation)).build();
+
+		testPayment = Payment.builder().id(PAYMENT_ID).booking(testBooking).amount(AMOUNT).status(PaymentStatus.PENDING)
+				.liqpayOrderId("ORD_TEST123456789").build();
 
 		createRequest = new PaymentCreateRequest(BOOKING_ID);
 	}
@@ -132,17 +121,17 @@ public class PaymentProcessingServiceTest {
 		when(paymentRepository.save(any(Payment.class))).thenReturn(testPayment);
 		when(numberGenerator.generateBookingNumber(testBooking)).thenReturn("BK-2024-00001");
 
-		PaymentResponse response = paymentProcessingService.createPayment(createRequest, testUser);
+		PaymentResponse response = paymentService.createPayment(createRequest, testUser);
 
 		assertThat(response).isNotNull();
-		verify(paymentValidator).validateBookingForPayment(testBooking);
+		verify(paymentRepository).save(any(Payment.class));
 	}
 
 	@Test
 	void createPayment_WhenBookingNotFound_ShouldThrowException() {
 		when(bookingRepository.findByIdAndUserId(BOOKING_ID, USER_ID)).thenReturn(Optional.empty());
 
-		assertThatThrownBy(() -> paymentProcessingService.createPayment(createRequest, testUser))
+		assertThatThrownBy(() -> paymentService.createPayment(createRequest, testUser))
 				.isInstanceOf(BookingNotFoundException.class);
 	}
 
@@ -151,7 +140,7 @@ public class PaymentProcessingServiceTest {
 		when(bookingRepository.findByIdAndUserId(BOOKING_ID, USER_ID)).thenReturn(Optional.of(testBooking));
 		when(paymentRepository.findByBookingId(BOOKING_ID)).thenReturn(Optional.of(testPayment));
 
-		assertThatThrownBy(() -> paymentProcessingService.createPayment(createRequest, testUser))
+		assertThatThrownBy(() -> paymentService.createPayment(createRequest, testUser))
 				.isInstanceOf(PaymentProcessingException.class);
 	}
 
@@ -160,7 +149,7 @@ public class PaymentProcessingServiceTest {
 		when(paymentRepository.findByIdWithDetails(PAYMENT_ID)).thenReturn(Optional.of(testPayment));
 		when(numberGenerator.generateBookingNumber(testBooking)).thenReturn("BK-2024-00001");
 
-		PaymentResponse response = paymentProcessingService.getPaymentStatus(PAYMENT_ID, testUser);
+		PaymentResponse response = paymentService.getPaymentStatus(PAYMENT_ID, testUser);
 
 		assertThat(response).isNotNull();
 		assertThat(response.id()).isEqualTo(PAYMENT_ID);
@@ -170,48 +159,18 @@ public class PaymentProcessingServiceTest {
 	void getPaymentStatus_WhenPaymentNotFound_ShouldThrowException() {
 		when(paymentRepository.findByIdWithDetails(PAYMENT_ID)).thenReturn(Optional.empty());
 
-		assertThatThrownBy(() -> paymentProcessingService.getPaymentStatus(PAYMENT_ID, testUser))
+		assertThatThrownBy(() -> paymentService.getPaymentStatus(PAYMENT_ID, testUser))
 				.isInstanceOf(PaymentNotFoundException.class);
 	}
 
 	@Test
 	void getPaymentStatus_WhenUserNotAuthorized_ShouldThrowException() {
-		User otherUser = new User();
-		otherUser.setId(999L);
+		User otherUser = User.builder().id(999L).build();
 
 		when(paymentRepository.findByIdWithDetails(PAYMENT_ID)).thenReturn(Optional.of(testPayment));
 
-		assertThatThrownBy(() -> paymentProcessingService.getPaymentStatus(PAYMENT_ID, otherUser))
+		assertThatThrownBy(() -> paymentService.getPaymentStatus(PAYMENT_ID, otherUser))
 				.isInstanceOf(PaymentAccessDeniedException.class);
-	}
-
-	@Test
-	void processSuccessfulPayment_Success() {
-		Map<String, String> callbackData = new HashMap<>();
-		callbackData.put("payment_id", "PAY123");
-
-		List<Ticket> tickets = Arrays.asList(new Ticket());
-
-		when(ticketService.createTicketsForBooking(testBooking, testPayment)).thenReturn(tickets);
-		when(bonusService.calculatePoints(AMOUNT)).thenReturn(20);
-
-		paymentProcessingService.processSuccessfulPayment(testPayment, callbackData);
-
-		assertThat(testPayment.getStatus()).isEqualTo(PaymentStatus.SUCCESS);
-		verify(bookingManagementService).confirmBooking(BOOKING_ID);
-		verify(ticketService).createTicketsForBooking(testBooking, testPayment);
-		verify(bonusService).accruePoints(USER_ID, 20, testBooking, testPayment);
-	}
-
-	@Test
-	void processFailedPayment_Success() {
-		Map<String, String> callbackData = new HashMap<>();
-		callbackData.put("err_description", "Insufficient funds");
-
-		paymentProcessingService.processFailedPayment(testPayment, callbackData);
-
-		assertThat(testPayment.getStatus()).isEqualTo(PaymentStatus.FAILED);
-		verify(notificationService).sendPaymentFailedEmail(testPayment, testBooking);
 	}
 
 	@Test
@@ -223,18 +182,17 @@ public class PaymentProcessingServiceTest {
 		when(paymentRepository.save(testPayment)).thenReturn(testPayment);
 		when(numberGenerator.generateBookingNumber(testBooking)).thenReturn("BK-2024-00001");
 
-		PaymentResponse response = paymentProcessingService.retryPayment(PAYMENT_ID, testUser);
+		PaymentResponse response = paymentService.retryPayment(PAYMENT_ID, testUser);
 
 		assertThat(response).isNotNull();
 		assertThat(testPayment.getStatus()).isEqualTo(PaymentStatus.PENDING);
-		verify(paymentValidator).validateBookingForPayment(testBooking);
 	}
 
 	@Test
 	void retryPayment_WhenPaymentNotFound_ShouldThrowException() {
 		when(paymentRepository.findById(PAYMENT_ID)).thenReturn(Optional.empty());
 
-		assertThatThrownBy(() -> paymentProcessingService.retryPayment(PAYMENT_ID, testUser))
+		assertThatThrownBy(() -> paymentService.retryPayment(PAYMENT_ID, testUser))
 				.isInstanceOf(PaymentNotFoundException.class);
 	}
 
@@ -242,8 +200,38 @@ public class PaymentProcessingServiceTest {
 	void retryPayment_WhenPaymentNotFailed_ShouldThrowException() {
 		when(paymentRepository.findById(PAYMENT_ID)).thenReturn(Optional.of(testPayment));
 
-		assertThatThrownBy(() -> paymentProcessingService.retryPayment(PAYMENT_ID, testUser))
+		assertThatThrownBy(() -> paymentService.retryPayment(PAYMENT_ID, testUser))
 				.isInstanceOf(InvalidPaymentStatusException.class);
+	}
+
+	@Test
+	void processSuccessfulPayment_Success() {
+		Map<String, String> callbackData = new HashMap<>();
+		callbackData.put("payment_id", "PAY123");
+
+		List<Ticket> tickets = Arrays.asList(Ticket.builder().build());
+
+		when(ticketService.createTicketsForBooking(testBooking, testPayment)).thenReturn(tickets);
+		when(bonusService.calculatePoints(AMOUNT)).thenReturn(20);
+		when(dateTimeFormatter.formatStandard(any(LocalDateTime.class))).thenReturn("2024-01-01 14:00");
+		when(numberGenerator.generateBookingNumber(testBooking)).thenReturn("BK-2024-00001");
+
+		paymentService.processSuccessfulPayment(testPayment, callbackData);
+
+		assertThat(testPayment.getStatus()).isEqualTo(PaymentStatus.SUCCESS);
+		verify(bookingService).confirmBooking(BOOKING_ID);
+		verify(ticketService).createTicketsForBooking(testBooking, testPayment);
+		verify(bonusService).accruePoints(USER_ID, 20, testBooking, testPayment);
+	}
+
+	@Test
+	void processFailedPayment_Success() {
+		Map<String, String> callbackData = new HashMap<>();
+		callbackData.put("err_description", "Insufficient funds");
+
+		paymentService.processFailedPayment(testPayment, callbackData);
+
+		assertThat(testPayment.getStatus()).isEqualTo(PaymentStatus.FAILED);
 	}
 
 	@Test
@@ -257,7 +245,7 @@ public class PaymentProcessingServiceTest {
 				description)).thenReturn("refund_data");
 		when(paymentRepository.save(testPayment)).thenReturn(testPayment);
 
-		paymentProcessingService.refundPayment(testPayment, refundAmount, description);
+		paymentService.refundPayment(testPayment, refundAmount, description);
 
 		assertThat(testPayment.getStatus()).isEqualTo(PaymentStatus.PARTIALLY_REFUNDED);
 		verify(paymentGatewayService).processRefund("refund_data");
@@ -267,9 +255,8 @@ public class PaymentProcessingServiceTest {
 	void refundPayment_WhenPaymentNotSuccess_ShouldThrowException() {
 		testPayment.setStatus(PaymentStatus.PENDING);
 		BigDecimal refundAmount = new BigDecimal("100.00");
-		String description = "Test refund";
 
-		assertThatThrownBy(() -> paymentProcessingService.refundPayment(testPayment, refundAmount, description))
+		assertThatThrownBy(() -> paymentService.refundPayment(testPayment, refundAmount, "Test"))
 				.isInstanceOf(PaymentProcessingException.class);
 	}
 
@@ -284,7 +271,7 @@ public class PaymentProcessingServiceTest {
 				description)).thenReturn("refund_data");
 		when(paymentRepository.save(testPayment)).thenReturn(testPayment);
 
-		paymentProcessingService.refundPayment(testPayment, refundAmount, description);
+		paymentService.refundPayment(testPayment, refundAmount, description);
 
 		assertThat(testPayment.getStatus()).isEqualTo(PaymentStatus.REFUNDED);
 	}
