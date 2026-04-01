@@ -33,7 +33,7 @@ import ua.lviv.bas.cinema.mapper.cinema.SeatMapper;
 import ua.lviv.bas.cinema.repository.cinema.CinemaHallRepository;
 import ua.lviv.bas.cinema.repository.cinema.SeatRepository;
 import ua.lviv.bas.cinema.repository.cinema.projection.CinemaHallProjection;
-import ua.lviv.bas.cinema.service.shared.AuditService;
+import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 
 @Slf4j
 @Service

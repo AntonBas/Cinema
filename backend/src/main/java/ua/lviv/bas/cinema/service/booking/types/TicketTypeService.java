@@ -34,7 +34,7 @@ import ua.lviv.bas.cinema.repository.ticket.TicketRepository;
 import ua.lviv.bas.cinema.repository.ticket.TicketTypeRepository;
 import ua.lviv.bas.cinema.repository.ticket.projection.TicketTypeAdminProjection;
 import ua.lviv.bas.cinema.repository.ticket.projection.TicketTypeUserProjection;
-import ua.lviv.bas.cinema.service.shared.AuditService;
+import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 
 @Slf4j
 @Service

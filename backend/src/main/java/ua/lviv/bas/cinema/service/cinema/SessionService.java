@@ -38,7 +38,7 @@ import ua.lviv.bas.cinema.repository.cinema.MovieRepository;
 import ua.lviv.bas.cinema.repository.cinema.SessionRepository;
 import ua.lviv.bas.cinema.repository.cinema.projection.SessionAdminProjection;
 import ua.lviv.bas.cinema.repository.cinema.projection.SessionScheduleProjection;
-import ua.lviv.bas.cinema.service.shared.AuditService;
+import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 
 @Slf4j
 @Service

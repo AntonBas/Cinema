@@ -29,7 +29,7 @@ import ua.lviv.bas.cinema.repository.promotion.PromotionRepository;
 import ua.lviv.bas.cinema.repository.promotion.UserPromotionRepository;
 import ua.lviv.bas.cinema.repository.promotion.projection.PromotionResponseProjection;
 import ua.lviv.bas.cinema.service.bonus.BonusService;
-import ua.lviv.bas.cinema.service.shared.AuditService;
+import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 
 @Slf4j
 @Service

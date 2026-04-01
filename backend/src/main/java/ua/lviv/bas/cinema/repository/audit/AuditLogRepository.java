@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -20,11 +21,10 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
 
 	Page<AuditLog> findByChangedByOrderByChangedAtDesc(String changedBy, Pageable pageable);
 
-	@Query("SELECT a FROM AuditLog a WHERE a.changedAt BETWEEN :from AND :to")
-	List<AuditLog> findByDateRange(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
+	List<AuditLog> findByChangedAtBetween(LocalDateTime from, LocalDateTime to);
 
-	@Query("SELECT DISTINCT a FROM AuditLog a LEFT JOIN FETCH a.details WHERE "
-			+ "(:entityType IS NULL OR a.entityType = :entityType) AND "
+	@EntityGraph(attributePaths = "details")
+	@Query("SELECT a FROM AuditLog a WHERE " + "(:entityType IS NULL OR a.entityType = :entityType) AND "
 			+ "(:action IS NULL OR a.action = :action) AND " + "(:changedBy IS NULL OR a.changedBy = :changedBy)")
 	Page<AuditLog> findByFilters(@Param("entityType") String entityType, @Param("action") AuditAction action,
 			@Param("changedBy") String changedBy, Pageable pageable);

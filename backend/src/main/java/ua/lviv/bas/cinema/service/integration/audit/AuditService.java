@@ -1,7 +1,8 @@
-package ua.lviv.bas.cinema.service.shared;
+package ua.lviv.bas.cinema.service.integration.audit;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -14,7 +15,6 @@ import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.audit.AuditAction;
 import ua.lviv.bas.cinema.domain.audit.AuditLog;
 import ua.lviv.bas.cinema.domain.audit.AuditLogDetail;
-import ua.lviv.bas.cinema.repository.audit.AuditLogDetailRepository;
 import ua.lviv.bas.cinema.repository.audit.AuditLogRepository;
 
 @Slf4j
@@ -23,7 +23,6 @@ import ua.lviv.bas.cinema.repository.audit.AuditLogRepository;
 public class AuditService {
 
 	private final AuditLogRepository auditLogRepository;
-	private final AuditLogDetailRepository auditLogDetailRepository;
 
 	@Transactional
 	public void logChange(String entityType, Long entityId, String targetInfo, AuditAction action,
@@ -31,8 +30,6 @@ public class AuditService {
 		try {
 			AuditLog auditLog = AuditLog.builder().entityType(entityType).entityId(entityId).targetInfo(targetInfo)
 					.action(action).changedBy(getCurrentUser()).changedAt(LocalDateTime.now()).build();
-
-			auditLog = auditLogRepository.save(auditLog);
 
 			List<AuditLogDetail> details = new ArrayList<>();
 
@@ -50,9 +47,8 @@ public class AuditService {
 				}
 			}
 
-			if (!details.isEmpty()) {
-				auditLogDetailRepository.saveAll(details);
-			}
+			auditLog.setDetails(details);
+			auditLogRepository.save(auditLog);
 
 			log.debug("Audit log saved: {} {} {}", entityType, entityId, action);
 
@@ -64,8 +60,16 @@ public class AuditService {
 	@Transactional
 	public void logSimpleChange(String entityType, Long entityId, String targetInfo, AuditAction action,
 			Object oldValue, Object newValue) {
-		Map<String, Object> oldMap = oldValue != null ? Map.of("value", oldValue) : null;
-		Map<String, Object> newMap = newValue != null ? Map.of("value", newValue) : null;
+		Map<String, Object> oldMap = null;
+		Map<String, Object> newMap = null;
+
+		if (oldValue != null || newValue != null) {
+			oldMap = new HashMap<>();
+			newMap = new HashMap<>();
+			oldMap.put("value", oldValue);
+			newMap.put("value", newValue);
+		}
+
 		logChange(entityType, entityId, targetInfo, action, oldMap, newMap);
 	}
 

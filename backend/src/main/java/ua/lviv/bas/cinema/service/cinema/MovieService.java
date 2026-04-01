@@ -35,9 +35,9 @@ import ua.lviv.bas.cinema.repository.cinema.GenreRepository;
 import ua.lviv.bas.cinema.repository.cinema.MovieRepository;
 import ua.lviv.bas.cinema.repository.cinema.PersonRepository;
 import ua.lviv.bas.cinema.scheduler.MovieScheduler;
+import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 import ua.lviv.bas.cinema.service.integration.file.PosterService;
 import ua.lviv.bas.cinema.service.integration.slug.SlugService;
-import ua.lviv.bas.cinema.service.shared.AuditService;
 
 @Slf4j
 @Service

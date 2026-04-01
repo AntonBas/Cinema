@@ -39,7 +39,7 @@ import ua.lviv.bas.cinema.repository.bonus.BonusCardRepository;
 import ua.lviv.bas.cinema.repository.bonus.BonusRulesRepository;
 import ua.lviv.bas.cinema.repository.bonus.BonusTransactionRepository;
 import ua.lviv.bas.cinema.repository.bonus.projection.BonusTransactionProjection;
-import ua.lviv.bas.cinema.service.shared.AuditService;
+import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 
 @Slf4j
 @Service

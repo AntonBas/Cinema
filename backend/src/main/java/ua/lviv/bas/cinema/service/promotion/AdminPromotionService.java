@@ -29,7 +29,7 @@ import ua.lviv.bas.cinema.exception.domain.financial.promotion.PromotionNotFound
 import ua.lviv.bas.cinema.mapper.promotion.PromotionMapper;
 import ua.lviv.bas.cinema.repository.promotion.PromotionRepository;
 import ua.lviv.bas.cinema.repository.promotion.projection.PromotionAdminProjection;
-import ua.lviv.bas.cinema.service.shared.AuditService;
+import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 
 @Slf4j
 @Service

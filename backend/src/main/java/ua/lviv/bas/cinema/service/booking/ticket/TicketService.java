@@ -22,8 +22,8 @@ import ua.lviv.bas.cinema.domain.ticket.Ticket;
 import ua.lviv.bas.cinema.domain.ticket.TicketStatus;
 import ua.lviv.bas.cinema.exception.domain.ticket.TicketValidationException;
 import ua.lviv.bas.cinema.repository.ticket.TicketRepository;
+import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 import ua.lviv.bas.cinema.service.integration.qr.QRCodeService;
-import ua.lviv.bas.cinema.service.shared.AuditService;
 import ua.lviv.bas.cinema.service.shared.NumberGeneratorService;
 
 @Slf4j
