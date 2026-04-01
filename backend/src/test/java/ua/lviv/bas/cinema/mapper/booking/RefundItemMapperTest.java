@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.mapper;
+package ua.lviv.bas.cinema.mapper.booking;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -12,7 +12,6 @@ import ua.lviv.bas.cinema.domain.booking.RefundItem;
 import ua.lviv.bas.cinema.domain.booking.status.RefundItemStatus;
 import ua.lviv.bas.cinema.domain.ticket.Ticket;
 import ua.lviv.bas.cinema.dto.refund.response.RefundItemResponse;
-import ua.lviv.bas.cinema.mapper.booking.RefundItemMapper;
 
 public class RefundItemMapperTest {
 
@@ -23,8 +22,10 @@ public class RefundItemMapperTest {
 		Ticket ticket = Ticket.builder().id(123L).uniqueCode("TICKET-ABC123").build();
 
 		RefundItem refundItem = RefundItem.builder().id(1L).ticket(ticket).ticketPrice(new BigDecimal("300.00"))
-				.refundAmount(new BigDecimal("240.00")).status(RefundItemStatus.APPROVED).createdAt(LocalDateTime.now())
-				.build();
+				.refundAmount(new BigDecimal("240.00")).status(RefundItemStatus.APPROVED).build();
+
+		refundItem.setCreatedDate(LocalDateTime.now());
+		refundItem.setLastModifiedDate(LocalDateTime.now());
 
 		RefundItemResponse response = mapper.toRefundItemResponse(refundItem);
 

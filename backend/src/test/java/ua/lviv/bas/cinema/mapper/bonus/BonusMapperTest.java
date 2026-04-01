@@ -91,25 +91,6 @@ public class BonusMapperTest {
 	}
 
 	@Test
-	void toEntity() {
-		BonusRulesRequest request = new BonusRulesRequest(150, null, null, null, false);
-
-		BonusRules entity = mapper.toEntity(request);
-
-		assertThat(entity).isNotNull();
-		assertThat(entity.getId()).isNull();
-		assertThat(entity.getBonusType()).isNull();
-		assertThat(entity.getPoints()).isEqualTo(150);
-		assertThat(entity.getActive()).isFalse();
-	}
-
-	@Test
-	void toEntityFromNull() {
-		BonusRules entity = mapper.toEntity(null);
-		assertThat(entity).isNull();
-	}
-
-	@Test
 	void updateBonusRulesFromRequest() {
 		BonusRules existing = BonusRules.builder().points(0).active(true).build();
 

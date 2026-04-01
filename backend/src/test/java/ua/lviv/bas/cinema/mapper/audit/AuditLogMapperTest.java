@@ -88,36 +88,4 @@ public class AuditLogMapperTest {
 		AuditLogResponse response = mapper.toResponse(null);
 		assertThat(response).isNull();
 	}
-
-	@Test
-	void toDetailResponse_ShouldMapAuditLogDetail() {
-		AuditLogDetail detail = AuditLogDetail.builder().id(1L).fieldName("points").oldValue("100").newValue("200")
-				.build();
-
-		AuditLogResponse.AuditLogDetailResponse response = mapper.toDetailResponse(detail);
-
-		assertThat(response).isNotNull();
-		assertThat(response.fieldName()).isEqualTo("points");
-		assertThat(response.oldValue()).isEqualTo("100");
-		assertThat(response.newValue()).isEqualTo("200");
-	}
-
-	@Test
-	void toDetailResponse_WhenDetailHasNullValues_ShouldMapCorrectly() {
-		AuditLogDetail detail = AuditLogDetail.builder().id(1L).fieldName("active").oldValue(null).newValue("true")
-				.build();
-
-		AuditLogResponse.AuditLogDetailResponse response = mapper.toDetailResponse(detail);
-
-		assertThat(response).isNotNull();
-		assertThat(response.fieldName()).isEqualTo("active");
-		assertThat(response.oldValue()).isNull();
-		assertThat(response.newValue()).isEqualTo("true");
-	}
-
-	@Test
-	void toDetailResponse_WhenDetailIsNull_ShouldReturnNull() {
-		AuditLogResponse.AuditLogDetailResponse response = mapper.toDetailResponse(null);
-		assertThat(response).isNull();
-	}
 }

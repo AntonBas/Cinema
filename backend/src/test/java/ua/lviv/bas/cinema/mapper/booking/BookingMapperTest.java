@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.mapper;
+package ua.lviv.bas.cinema.mapper.booking;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -20,7 +20,6 @@ import ua.lviv.bas.cinema.domain.cinema.Session;
 import ua.lviv.bas.cinema.domain.ticket.TicketType;
 import ua.lviv.bas.cinema.domain.user.User;
 import ua.lviv.bas.cinema.dto.booking.response.BookingResponse;
-import ua.lviv.bas.cinema.mapper.booking.BookingMapper;
 
 public class BookingMapperTest {
 
@@ -50,7 +49,9 @@ public class BookingMapperTest {
 		booking = Booking.builder().id(123L).user(user).session(session).status(BookingStatus.PENDING)
 				.totalPrice(new BigDecimal("500.00")).bonusPointsUsed(50).bonusDiscountAmount(new BigDecimal("25.00"))
 				.finalPrice(new BigDecimal("475.00")).payment(payment).seatReservations(Arrays.asList(seatReservation))
-				.createdAt(LocalDateTime.of(2024, 1, 15, 14, 30)).build();
+				.build();
+
+		booking.setCreatedDate(LocalDateTime.of(2024, 1, 15, 14, 30));
 	}
 
 	@Test
@@ -64,6 +65,10 @@ public class BookingMapperTest {
 		assertThat(response.hallName()).isEqualTo("Hall A");
 		assertThat(response.liqpayOrderId()).isEqualTo("ORDER_ABC123");
 		assertThat(response.totalPrice()).isEqualTo(new BigDecimal("500.00"));
+		assertThat(response.bonusPointsUsed()).isEqualTo(50);
+		assertThat(response.bonusDiscountAmount()).isEqualTo(new BigDecimal("25.00"));
+		assertThat(response.finalPrice()).isEqualTo(new BigDecimal("475.00"));
+		assertThat(response.status()).isEqualTo(BookingStatus.PENDING);
 	}
 
 	@Test
@@ -77,6 +82,7 @@ public class BookingMapperTest {
 		assertThat(response.sessionId()).isNull();
 		assertThat(response.movieTitle()).isNull();
 		assertThat(response.hallName()).isNull();
+		assertThat(response.sessionTime()).isNull();
 	}
 
 	@Test
@@ -120,6 +126,7 @@ public class BookingMapperTest {
 		assertThat(info.row()).isEqualTo(5);
 		assertThat(info.seatNumber()).isEqualTo(12);
 		assertThat(info.ticketTypeName()).isEqualTo("Adult");
+		assertThat(info.seatPrice()).isEqualTo(new BigDecimal("250.00"));
 	}
 
 	@Test
@@ -133,6 +140,7 @@ public class BookingMapperTest {
 		assertThat(info.seatId()).isNull();
 		assertThat(info.row()).isNull();
 		assertThat(info.seatNumber()).isNull();
+		assertThat(info.ticketTypeName()).isEqualTo("Adult");
 	}
 
 	@Test

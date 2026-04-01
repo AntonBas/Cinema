@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.mapper;
+package ua.lviv.bas.cinema.mapper.booking;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -9,7 +9,6 @@ import org.mapstruct.factory.Mappers;
 
 import ua.lviv.bas.cinema.domain.booking.Payment;
 import ua.lviv.bas.cinema.dto.payment.response.PaymentLiqPayDataResponse;
-import ua.lviv.bas.cinema.mapper.booking.PaymentMapper;
 
 public class PaymentMapperTest {
 
@@ -17,8 +16,10 @@ public class PaymentMapperTest {
 
 	@Test
 	void toPaymentLiqPayDataResponse_ShouldMapLiqpayOrderId() {
-		Payment payment = Payment.builder().id(1L).liqpayOrderId("ORDER_ABC123").createdAt(LocalDateTime.now())
-				.updatedAt(LocalDateTime.now()).build();
+		Payment payment = Payment.builder().id(1L).liqpayOrderId("ORDER_ABC123").build();
+
+		payment.setCreatedDate(LocalDateTime.now());
+		payment.setLastModifiedDate(LocalDateTime.now());
 
 		PaymentLiqPayDataResponse response = mapper.toPaymentLiqPayDataResponse(payment);
 
