@@ -9,10 +9,9 @@ import org.mapstruct.ReportingPolicy;
 
 import ua.lviv.bas.cinema.domain.cinema.CinemaHall;
 import ua.lviv.bas.cinema.dto.hall.response.CinemaHallResponse;
-import ua.lviv.bas.cinema.dto.hall.response.HallLayoutResponse;
 import ua.lviv.bas.cinema.repository.cinema.projection.CinemaHallProjection;
 
-@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE, uses = SeatMapper.class)
+@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.WARN, uses = SeatMapper.class)
 public interface CinemaHallMapper {
 
 	@Named("calculateCapacity")
@@ -29,9 +28,4 @@ public interface CinemaHallMapper {
 	CinemaHallResponse toCinemaHallResponseFromProjection(CinemaHallProjection projection);
 
 	List<CinemaHallResponse> toCinemaHallResponseListFromProjection(List<CinemaHallProjection> projections);
-
-	@Mapping(target = "hallId", source = "id")
-	@Mapping(target = "hallName", source = "name")
-	@Mapping(target = "totalSeats", source = "hall", qualifiedByName = "calculateCapacity")
-	HallLayoutResponse toHallLayoutResponse(CinemaHall hall);
 }

@@ -235,7 +235,7 @@ public class CinemaHallService {
 				.stream().map(entry -> {
 					List<SeatResponse> seatResponses = seatMapper.toSeatResponseList(entry.getValue());
 					return new SeatRowResponse(entry.getKey(), entry.getValue().size(), seatResponses);
-				}).sorted(Comparator.comparing(SeatRowResponse::rowNumber)).collect(Collectors.toList());
+				}).sorted(Comparator.comparing(SeatRowResponse::rowNumber)).toList();
 
 		int totalRows = rows.size();
 		int maxSeatsPerRow = rows.stream().mapToInt(SeatRowResponse::seatsCount).max().orElse(0);
