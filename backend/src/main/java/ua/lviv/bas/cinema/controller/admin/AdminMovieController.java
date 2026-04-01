@@ -57,16 +57,10 @@ public class AdminMovieController {
 			@RequestPart(value = "posterFile", required = false) MultipartFile posterFile) {
 
 		log.info("POST /api/admin/movies - Creating new movie");
-
-		try {
-			MovieCreateRequest request = objectMapper.readValue(movieDataJson, MovieCreateRequest.class);
-			request.setPosterFile(posterFile);
-			MovieDetailResponse createdMovie = movieService.createMovie(request);
-			return ResponseEntity.status(HttpStatus.CREATED).body(createdMovie);
-		} catch (JsonProcessingException e) {
-			log.error("Error parsing movie data", e);
-			throw new IllegalArgumentException("Invalid movie data format", e);
-		}
+		MovieCreateRequest request = parseRequest(movieDataJson, MovieCreateRequest.class);
+		request.setPosterFile(posterFile);
+		MovieDetailResponse createdMovie = movieService.createMovie(request);
+		return ResponseEntity.status(HttpStatus.CREATED).body(createdMovie);
 	}
 
 	@PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -78,16 +72,10 @@ public class AdminMovieController {
 			@RequestPart(value = "posterFile", required = false) MultipartFile posterFile) {
 
 		log.info("PUT /api/admin/movies/{} - Updating movie", id);
-
-		try {
-			MovieUpdateRequest request = objectMapper.readValue(movieDataJson, MovieUpdateRequest.class);
-			request.setPosterFile(posterFile);
-			MovieDetailResponse updatedMovie = movieService.updateMovie(id, request);
-			return ResponseEntity.ok(updatedMovie);
-		} catch (JsonProcessingException e) {
-			log.error("Error parsing movie data", e);
-			throw new IllegalArgumentException("Invalid movie data format", e);
-		}
+		MovieUpdateRequest request = parseRequest(movieDataJson, MovieUpdateRequest.class);
+		request.setPosterFile(posterFile);
+		MovieDetailResponse updatedMovie = movieService.updateMovie(id, request);
+		return ResponseEntity.ok(updatedMovie);
 	}
 
 	@DeleteMapping("/{id}")
@@ -141,5 +129,14 @@ public class AdminMovieController {
 		log.info("GET /api/admin/movies/search/session - search: '{}'", search);
 		var movies = movieService.searchMoviesForSession(search);
 		return ResponseEntity.ok(movies);
+	}
+
+	private <T> T parseRequest(String json, Class<T> clazz) {
+		try {
+			return objectMapper.readValue(json, clazz);
+		} catch (JsonProcessingException e) {
+			log.error("Error parsing request data", e);
+			throw new IllegalArgumentException("Invalid request data format", e);
+		}
 	}
 }

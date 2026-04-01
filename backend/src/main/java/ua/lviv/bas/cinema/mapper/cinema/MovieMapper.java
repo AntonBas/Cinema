@@ -17,19 +17,28 @@ import ua.lviv.bas.cinema.repository.cinema.projection.MovieCardProjection;
 import ua.lviv.bas.cinema.repository.cinema.projection.MovieDetailProjection;
 import ua.lviv.bas.cinema.repository.cinema.projection.MovieSessionSearchProjection;
 
-@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
+@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE, uses = { PersonMapper.class,
+		GenreMapper.class })
 public interface MovieMapper {
 
-	@Mapping(target = "posterUrl", expression = "java(\"/api/movies/\" + movie.getId() + \"/poster\")")
+	@Mapping(target = "posterUrl", expression = "java(getPosterUrl(movie.getId()))")
 	MovieCardResponse toMovieCardResponse(Movie movie);
 
-	@Mapping(target = "posterUrl", expression = "java(\"/api/movies/\" + projection.getId() + \"/poster\")")
+	@Mapping(target = "posterUrl", expression = "java(getPosterUrl(projection.getId()))")
 	MovieCardResponse toMovieCardResponse(MovieCardProjection projection);
 
-	@Mapping(target = "posterUrl", expression = "java(\"/api/movies/\" + movie.getId() + \"/poster\")")
+	@Mapping(target = "posterUrl", expression = "java(getPosterUrl(movie.getId()))")
+	@Mapping(target = "genres", source = "genres")
+	@Mapping(target = "actors", source = "actors")
+	@Mapping(target = "directors", source = "directors")
+	@Mapping(target = "screenwriters", source = "screenwriters")
 	MovieDetailResponse toMovieDetailResponse(Movie movie);
 
-	@Mapping(target = "posterUrl", expression = "java(\"/api/movies/\" + projection.getId() + \"/poster\")")
+	@Mapping(target = "posterUrl", expression = "java(getPosterUrl(projection.getId()))")
+	@Mapping(target = "genres", ignore = true)
+	@Mapping(target = "actors", ignore = true)
+	@Mapping(target = "directors", ignore = true)
+	@Mapping(target = "screenwriters", ignore = true)
 	MovieDetailResponse toMovieDetailResponse(MovieDetailProjection projection);
 
 	MovieSessionSearchResponse toMovieSessionSearchResponse(MovieSessionSearchProjection projection);
@@ -56,4 +65,8 @@ public interface MovieMapper {
 	@Mapping(target = "genres", ignore = true)
 	@Mapping(target = "posterFileName", ignore = true)
 	void updateMovieFromRequest(MovieUpdateRequest request, @MappingTarget Movie movie);
+
+	default String getPosterUrl(Long id) {
+		return id != null ? "/api/movies/" + id + "/poster" : null;
+	}
 }

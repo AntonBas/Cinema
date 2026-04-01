@@ -1,6 +1,7 @@
 package ua.lviv.bas.cinema.service.cinema;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -34,6 +35,7 @@ import ua.lviv.bas.cinema.mapper.cinema.MovieMapper;
 import ua.lviv.bas.cinema.repository.cinema.GenreRepository;
 import ua.lviv.bas.cinema.repository.cinema.MovieRepository;
 import ua.lviv.bas.cinema.repository.cinema.PersonRepository;
+import ua.lviv.bas.cinema.repository.cinema.projection.MovieCardProjection;
 import ua.lviv.bas.cinema.scheduler.MovieScheduler;
 import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 import ua.lviv.bas.cinema.service.integration.file.PosterService;
@@ -191,16 +193,16 @@ public class MovieService {
 			return List.of();
 		}
 
+		List<MovieCardProjection> projections;
+
 		if (isValidDate(searchTerm)) {
 			LocalDate date = LocalDate.parse(searchTerm);
-			return movieRepository.findMoviesByDate(date).stream().map(
-					proj -> new MovieSessionSearchResponse(proj.getId(), proj.getTitle(), proj.getDurationMinutes()))
-					.toList();
+			projections = movieRepository.findMoviesByDate(date);
+		} else {
+			projections = movieRepository.findMoviesForSession(searchTerm);
 		}
 
-		return movieRepository.findMoviesForSession(searchTerm).stream()
-				.map(proj -> new MovieSessionSearchResponse(proj.getId(), proj.getTitle(), proj.getDurationMinutes()))
-				.toList();
+		return projections.stream().map(this::toMovieSessionSearchResponse).toList();
 	}
 
 	public ResponseEntity<byte[]> getMoviePoster(Long id) {
@@ -242,7 +244,6 @@ public class MovieService {
 		movie.getActors().clear();
 		movie.getDirectors().clear();
 		movie.getScreenwriters().clear();
-
 		setMovieRelations(movie, genreIds, actorIds, directorIds, screenwriterIds);
 	}
 
@@ -265,8 +266,13 @@ public class MovieService {
 		try {
 			LocalDate.parse(searchTerm);
 			return true;
-		} catch (Exception e) {
+		} catch (DateTimeParseException e) {
 			return false;
 		}
+	}
+
+	private MovieSessionSearchResponse toMovieSessionSearchResponse(MovieCardProjection projection) {
+		return new MovieSessionSearchResponse(projection.getId(), projection.getTitle(),
+				projection.getDurationMinutes());
 	}
 }
