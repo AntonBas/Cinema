@@ -27,7 +27,7 @@ import ua.lviv.bas.cinema.dto.promotion.request.PromotionCreateRequest;
 import ua.lviv.bas.cinema.dto.promotion.request.PromotionUpdateRequest;
 import ua.lviv.bas.cinema.dto.promotion.response.PromotionAdminResponse;
 import ua.lviv.bas.cinema.dto.promotion.response.PromotionResponse;
-import ua.lviv.bas.cinema.service.promotion.AdminPromotionService;
+import ua.lviv.bas.cinema.service.promotion.PromotionService;
 
 @Slf4j
 @RestController
@@ -37,7 +37,7 @@ import ua.lviv.bas.cinema.service.promotion.AdminPromotionService;
 @SecurityRequirement(name = "bearerAuth")
 public class AdminPromotionController {
 
-	private final AdminPromotionService promotionService;
+	private final PromotionService promotionService;
 
 	@PostMapping
 	@Operation(summary = "Create a new promotion")

@@ -1,5 +1,6 @@
 package ua.lviv.bas.cinema.mapper.promotion;
 
+import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
@@ -14,20 +15,25 @@ import ua.lviv.bas.cinema.dto.promotion.response.PromotionResponse;
 import ua.lviv.bas.cinema.repository.promotion.projection.PromotionAdminProjection;
 import ua.lviv.bas.cinema.repository.promotion.projection.PromotionResponseProjection;
 
-@Mapper(componentModel = "spring", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE, unmappedTargetPolicy = ReportingPolicy.IGNORE)
+@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.WARN)
 public interface PromotionMapper {
 
 	@Mapping(target = "id", ignore = true)
 	@Mapping(target = "userRedemptions", ignore = true)
 	Promotion toPromotion(PromotionCreateRequest request);
 
+	@BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+	@Mapping(target = "id", ignore = true)
+	@Mapping(target = "userRedemptions", ignore = true)
+	@Mapping(target = "createdBy", ignore = true)
+	@Mapping(target = "createdDate", ignore = true)
+	@Mapping(target = "lastModifiedBy", ignore = true)
+	@Mapping(target = "lastModifiedDate", ignore = true)
 	void updatePromotionFromRequest(@MappingTarget Promotion promotion, PromotionUpdateRequest request);
 
 	PromotionResponse toPromotionResponse(Promotion promotion);
 
 	PromotionResponse toPromotionResponse(PromotionResponseProjection projection);
-
-	PromotionAdminResponse toPromotionAdminResponse(Promotion promotion);
 
 	PromotionAdminResponse toPromotionAdminResponse(PromotionAdminProjection projection);
 }
