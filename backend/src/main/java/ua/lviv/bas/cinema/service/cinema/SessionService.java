@@ -73,13 +73,9 @@ public class SessionService {
 		Map<Long, Integer> availableSeats = getAvailableSeatsBatch(
 				projections.stream().map(SessionScheduleProjection::getId).collect(Collectors.toList()));
 
-		return projections.stream().map(projection -> {
-			SessionScheduleResponse response = sessionMapper.toScheduleResponse(projection);
-			return new SessionScheduleResponse(response.id(), response.startTime(), response.endTime(),
-					response.basePrice(), availableSeats.getOrDefault(projection.getId(), 0), response.movieId(),
-					response.movieTitle(), response.moviePosterFileName(), response.movieAgeRating(),
-					response.movieDuration(), response.hallId(), response.hallName(), response.hallCapacity());
-		}).collect(Collectors.toList());
+		return projections.stream().map(
+				projection -> buildScheduleResponse(projection, availableSeats.getOrDefault(projection.getId(), 0)))
+				.collect(Collectors.toList());
 	}
 
 	@Cacheable(key = "'admin:' + #hallId + ':' + #movieTitle + ':' + #status + ':' + #dateFrom + ':' + #dateTo + ':' + #pageable.pageNumber + ':' + #pageable.pageSize")
@@ -103,11 +99,7 @@ public class SessionService {
 	@Cacheable(key = "'public:' + #id")
 	public SessionScheduleResponse getSessionForPublic(Long id) {
 		Session session = sessionRepository.findById(id).orElseThrow(() -> new SessionNotFoundException(id));
-		SessionScheduleResponse response = sessionMapper.toScheduleResponse(session);
-		return new SessionScheduleResponse(response.id(), response.startTime(), response.endTime(),
-				response.basePrice(), getAvailableSeats(id), response.movieId(), response.movieTitle(),
-				response.moviePosterFileName(), response.movieAgeRating(), response.movieDuration(), response.hallId(),
-				response.hallName(), response.hallCapacity());
+		return buildScheduleResponse(session, getAvailableSeats(id));
 	}
 
 	@Cacheable(key = "'admin:' + #id")
@@ -127,6 +119,22 @@ public class SessionService {
 			return Map.of();
 		return sessionRepository.findAvailableSeatsBatch(sessionIds).stream()
 				.collect(Collectors.toMap(arr -> (Long) arr[0], arr -> ((Number) arr[1]).intValue()));
+	}
+
+	private SessionScheduleResponse buildScheduleResponse(SessionScheduleProjection projection, int availableSeats) {
+		SessionScheduleResponse response = sessionMapper.toScheduleResponse(projection);
+		return new SessionScheduleResponse(response.id(), response.startTime(), response.endTime(),
+				response.basePrice(), availableSeats, response.movieId(), response.movieTitle(),
+				response.moviePosterFileName(), response.movieAgeRating(), response.movieDuration(), response.hallId(),
+				response.hallName(), response.hallCapacity());
+	}
+
+	private SessionScheduleResponse buildScheduleResponse(Session session, int availableSeats) {
+		SessionScheduleResponse response = sessionMapper.toScheduleResponse(session);
+		return new SessionScheduleResponse(response.id(), response.startTime(), response.endTime(),
+				response.basePrice(), availableSeats, response.movieId(), response.movieTitle(),
+				response.moviePosterFileName(), response.movieAgeRating(), response.movieDuration(), response.hallId(),
+				response.hallName(), response.hallCapacity());
 	}
 
 	@Caching(evict = { @CacheEvict(cacheNames = "sessions", allEntries = true),

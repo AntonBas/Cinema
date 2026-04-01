@@ -1,9 +1,11 @@
 package ua.lviv.bas.cinema.mapper.cinema;
 
+import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.Named;
+import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.mapstruct.ReportingPolicy;
 
 import ua.lviv.bas.cinema.domain.cinema.Session;
@@ -15,7 +17,7 @@ import ua.lviv.bas.cinema.dto.session.response.SessionScheduleResponse;
 import ua.lviv.bas.cinema.repository.cinema.projection.SessionAdminProjection;
 import ua.lviv.bas.cinema.repository.cinema.projection.SessionScheduleProjection;
 
-@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
+@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.WARN)
 public interface SessionMapper {
 
 	@Named("stringToStatus")
@@ -24,16 +26,12 @@ public interface SessionMapper {
 	}
 
 	@Mapping(target = "status", source = "status", qualifiedByName = "stringToStatus")
+	@Mapping(target = "hallCapacity", source = "hallCapacity")
+	@Mapping(target = "ticketsSold", source = "ticketsSold")
+	@Mapping(target = "totalRevenue", source = "totalRevenue")
 	SessionAdminResponse toAdminResponse(SessionAdminProjection projection);
 
-	@Mapping(target = "endTime", expression = "java(session.getMovie() != null ? session.getStartTime().plusMinutes(session.getMovie().getDurationMinutes()) : null)")
-	@Mapping(target = "movieId", source = "movie.id")
-	@Mapping(target = "movieTitle", source = "movie.title")
-	@Mapping(target = "movieDuration", source = "movie.durationMinutes")
-	@Mapping(target = "hallId", source = "hall.id")
-	@Mapping(target = "hallName", source = "hall.name")
-	SessionAdminResponse toAdminResponse(Session session);
-
+	@Mapping(target = "endTime", expression = "java(projection.getStartTime().plusMinutes(projection.getMovieDuration()))")
 	SessionScheduleResponse toScheduleResponse(SessionScheduleProjection projection);
 
 	@Mapping(target = "endTime", expression = "java(session.getMovie() != null ? session.getStartTime().plusMinutes(session.getMovie().getDurationMinutes()) : null)")
@@ -56,11 +54,16 @@ public interface SessionMapper {
 	@Mapping(target = "seatReservations", ignore = true)
 	Session toEntity(SessionCreateRequest request);
 
+	@BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 	@Mapping(target = "id", ignore = true)
 	@Mapping(target = "movie", ignore = true)
 	@Mapping(target = "hall", ignore = true)
 	@Mapping(target = "status", ignore = true)
 	@Mapping(target = "bookings", ignore = true)
 	@Mapping(target = "seatReservations", ignore = true)
+	@Mapping(target = "createdBy", ignore = true)
+	@Mapping(target = "createdDate", ignore = true)
+	@Mapping(target = "lastModifiedBy", ignore = true)
+	@Mapping(target = "lastModifiedDate", ignore = true)
 	void updateEntity(@MappingTarget Session session, SessionUpdateRequest request);
 }
