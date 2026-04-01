@@ -7,7 +7,7 @@ import org.mapstruct.ReportingPolicy;
 import ua.lviv.bas.cinema.domain.booking.Refund;
 import ua.lviv.bas.cinema.dto.refund.response.RefundResponse;
 
-@Mapper(componentModel = "spring", uses = RefundItemMapper.class, unmappedTargetPolicy = ReportingPolicy.IGNORE)
+@Mapper(componentModel = "spring", uses = RefundItemMapper.class, unmappedTargetPolicy = ReportingPolicy.WARN)
 public interface RefundMapper {
 
 	@Mapping(target = "refundNumber", ignore = true)
@@ -15,5 +15,8 @@ public interface RefundMapper {
 	@Mapping(target = "message", ignore = true)
 	@Mapping(target = "estimatedRefundTime", ignore = true)
 	@Mapping(target = "paymentId", source = "payment.id")
+	@Mapping(target = "processedBy", ignore = true)
+	@Mapping(target = "processedAt", ignore = true)
+	@Mapping(target = "createdAt", source = "createdDate")
 	RefundResponse toRefundResponse(Refund refund);
 }
