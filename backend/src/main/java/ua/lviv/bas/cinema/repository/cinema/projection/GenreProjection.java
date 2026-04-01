@@ -1,12 +1,9 @@
 package ua.lviv.bas.cinema.repository.cinema.projection;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
+public interface GenreProjection {
+	Long getId();
 
-@Data
-@AllArgsConstructor
-public class GenreProjection {
-	private Long id;
-	private String name;
-	private Integer movieCount;
+	String getName();
+
+	Integer getMovieCount();
 }
