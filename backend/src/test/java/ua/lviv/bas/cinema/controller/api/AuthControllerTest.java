@@ -29,6 +29,7 @@ import ua.lviv.bas.cinema.config.security.user.CustomUserDetails;
 import ua.lviv.bas.cinema.config.security.user.CustomUserDetailsService;
 import ua.lviv.bas.cinema.domain.user.User;
 import ua.lviv.bas.cinema.domain.user.UserRole;
+import ua.lviv.bas.cinema.domain.user.VerificationStatus;
 import ua.lviv.bas.cinema.dto.user.request.UserLoginRequest;
 import ua.lviv.bas.cinema.dto.user.request.UserRegistrationRequest;
 import ua.lviv.bas.cinema.dto.user.response.UserResponse;
@@ -78,7 +79,7 @@ public class AuthControllerTest {
 		loginRequest = new UserLoginRequest("anton@example.com", "password123");
 
 		userResponse = new UserResponse(1L, "anton@example.com", "Anton", "Bas", LocalDate.of(2001, 8, 21), "Lviv",
-				"+380123456789", UserRole.ROLE_USER, true, null, null);
+				"+380123456789", UserRole.ROLE_USER, true, VerificationStatus.NOT_VERIFIED);
 
 		user = new User();
 		user.setId(1L);
@@ -88,6 +89,7 @@ public class AuthControllerTest {
 		user.setPassword("encodedPassword");
 		user.setUserRole(UserRole.ROLE_USER);
 		user.setEnabled(true);
+		user.setVerificationStatus(VerificationStatus.NOT_VERIFIED);
 
 		userDetails = new CustomUserDetails(user);
 	}
@@ -100,6 +102,15 @@ public class AuthControllerTest {
 				.content(objectMapper.writeValueAsString(registrationRequest))).andExpect(status().isCreated())
 				.andExpect(jsonPath("$.id").value(1L)).andExpect(jsonPath("$.email").value("anton@example.com"))
 				.andExpect(jsonPath("$.firstName").value("Anton")).andExpect(jsonPath("$.lastName").value("Bas"));
+	}
+
+	@Test
+	void register_ShouldReturnBadRequest_WhenInvalidEmail() throws Exception {
+		UserRegistrationRequest invalidRequest = new UserRegistrationRequest("invalid-email", "Anton", "Bas",
+				LocalDate.of(2001, 8, 21), "Lviv", "+380123456789", "password123", "password123");
+
+		mockMvc.perform(post("/api/auth/register").contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(invalidRequest))).andExpect(status().isBadRequest());
 	}
 
 	@Test
@@ -139,9 +150,27 @@ public class AuthControllerTest {
 	}
 
 	@Test
+	void forgotPassword_ShouldReturnBadRequest_WhenInvalidEmail() throws Exception {
+		mockMvc.perform(post("/api/auth/password/forgot").param("email", "invalid-email"))
+				.andExpect(status().isBadRequest());
+	}
+
+	@Test
 	void resetPassword_ShouldReturnOk() throws Exception {
 		mockMvc.perform(post("/api/auth/password/reset").param("token", "token123").param("newPassword", "newPass"))
 				.andExpect(status().isOk());
+	}
+
+	@Test
+	void resetPassword_ShouldReturnBadRequest_WhenTokenIsBlank() throws Exception {
+		mockMvc.perform(post("/api/auth/password/reset").param("token", "").param("newPassword", "newPass"))
+				.andExpect(status().isBadRequest());
+	}
+
+	@Test
+	void resetPassword_ShouldReturnBadRequest_WhenNewPasswordIsBlank() throws Exception {
+		mockMvc.perform(post("/api/auth/password/reset").param("token", "token123").param("newPassword", ""))
+				.andExpect(status().isBadRequest());
 	}
 
 	@Test
@@ -161,23 +190,32 @@ public class AuthControllerTest {
 	}
 
 	@Test
-	void register_ShouldReturnBadRequest_WhenInvalidEmail() throws Exception {
-		UserRegistrationRequest invalidRequest = new UserRegistrationRequest("invalid-email", "Anton", "Bas",
-				LocalDate.of(2001, 8, 21), "Lviv", "+380123456789", "password123", "password123");
-
-		mockMvc.perform(post("/api/auth/register").contentType(MediaType.APPLICATION_JSON)
-				.content(objectMapper.writeValueAsString(invalidRequest))).andExpect(status().isBadRequest());
-	}
-
-	@Test
-	void forgotPassword_ShouldReturnBadRequest_WhenInvalidEmail() throws Exception {
-		mockMvc.perform(post("/api/auth/password/forgot").param("email", "invalid-email"))
+	void checkEmailExists_ShouldReturnBadRequest_WhenInvalidEmail() throws Exception {
+		mockMvc.perform(get("/api/auth/email/check").param("email", "invalid-email"))
 				.andExpect(status().isBadRequest());
 	}
 
 	@Test
-	void resetPassword_ShouldReturnBadRequest_WhenTokenIsBlank() throws Exception {
-		mockMvc.perform(post("/api/auth/password/reset").param("token", "").param("newPassword", "newPass"))
+	void oauth2Success_ShouldReturnOk() throws Exception {
+		when(userService.getUserById(1L)).thenReturn(user);
+		when(userMapper.toUserResponse(user)).thenReturn(userResponse);
+
+		mockMvc.perform(get("/api/auth/oauth2/success").param("token", "oauth2Token").param("userId", "1")
+				.param("email", "anton@example.com")).andExpect(status().isOk())
+				.andExpect(jsonPath("$.token").value("oauth2Token")).andExpect(jsonPath("$.tokenType").value("Bearer"))
+				.andExpect(jsonPath("$.user.email").value("anton@example.com"));
+	}
+
+	@Test
+	void oauth2Success_ShouldReturnBadRequest_WhenUserIdMissing() throws Exception {
+		mockMvc.perform(
+				get("/api/auth/oauth2/success").param("token", "oauth2Token").param("email", "anton@example.com"))
+				.andExpect(status().isBadRequest());
+	}
+
+	@Test
+	void oauth2Success_ShouldReturnBadRequest_WhenEmailMissing() throws Exception {
+		mockMvc.perform(get("/api/auth/oauth2/success").param("token", "oauth2Token").param("userId", "1"))
 				.andExpect(status().isBadRequest());
 	}
 }

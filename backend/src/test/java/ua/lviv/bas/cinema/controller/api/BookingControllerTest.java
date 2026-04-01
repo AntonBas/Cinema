@@ -7,6 +7,7 @@ import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Collections;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,13 +22,14 @@ import ua.lviv.bas.cinema.domain.booking.status.BookingStatus;
 import ua.lviv.bas.cinema.domain.user.User;
 import ua.lviv.bas.cinema.dto.booking.request.BookingCreateRequest;
 import ua.lviv.bas.cinema.dto.booking.response.BookingResponse;
-import ua.lviv.bas.cinema.service.booking.ControllerFacade;
+import ua.lviv.bas.cinema.service.booking.BookingService;
 
 @ExtendWith(MockitoExtension.class)
 public class BookingControllerTest {
 
 	@Mock
-	private ControllerFacade controllerFacade;
+	private BookingService bookingService;
+
 	@InjectMocks
 	private BookingController bookingController;
 
@@ -48,27 +50,26 @@ public class BookingControllerTest {
 	}
 
 	private BookingResponse createBookingResponse() {
-		return new BookingResponse(BOOKING_ID, "BK-20240115-00123", BookingStatus.PENDING, SESSION_ID,
-				LocalDateTime.now().plusDays(1), "Test Movie", "Hall A", new BigDecimal("150.00"), null,
-				BigDecimal.ZERO, new BigDecimal("150.00"), null, LocalDateTime.now().plusMinutes(15),
-				LocalDateTime.now(), null);
+		return new BookingResponse(BOOKING_ID, "BK-2024-00123", BookingStatus.PENDING, SESSION_ID,
+				LocalDateTime.now().plusDays(1), "Test Movie", "Hall A", new BigDecimal("150.00"), 0, BigDecimal.ZERO,
+				new BigDecimal("150.00"), null, LocalDateTime.now().plusMinutes(15), Collections.emptyList());
 	}
 
 	@Test
 	void createBooking_ReturnsCreated() {
 		User user = createUser();
 		CustomUserDetails userDetails = createUserDetails();
-		BookingCreateRequest request = new BookingCreateRequest(SESSION_ID, null, null);
+		BookingCreateRequest request = new BookingCreateRequest(SESSION_ID, Collections.emptyList(), null);
 		BookingResponse response = createBookingResponse();
 
-		when(controllerFacade.createBooking(any(BookingCreateRequest.class), any(User.class))).thenReturn(response);
+		when(bookingService.createBooking(any(BookingCreateRequest.class), any(User.class))).thenReturn(response);
 
 		ResponseEntity<BookingResponse> result = bookingController.createBooking(request, userDetails);
 
 		assertThat(result.getStatusCode()).isEqualTo(HttpStatus.CREATED);
 		assertThat(result.getBody()).isNotNull();
 		assertThat(result.getBody().id()).isEqualTo(BOOKING_ID);
-		verify(controllerFacade).createBooking(request, user);
+		verify(bookingService).createBooking(request, user);
 	}
 
 	@Test
@@ -77,14 +78,14 @@ public class BookingControllerTest {
 		CustomUserDetails userDetails = createUserDetails();
 		BookingResponse response = createBookingResponse();
 
-		when(controllerFacade.getBookingById(BOOKING_ID, user)).thenReturn(response);
+		when(bookingService.getBookingById(BOOKING_ID, user)).thenReturn(response);
 
 		ResponseEntity<BookingResponse> result = bookingController.getBooking(BOOKING_ID, userDetails);
 
 		assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
 		assertThat(result.getBody()).isNotNull();
 		assertThat(result.getBody().id()).isEqualTo(BOOKING_ID);
-		verify(controllerFacade).getBookingById(BOOKING_ID, user);
+		verify(bookingService).getBookingById(BOOKING_ID, user);
 	}
 
 	@Test
@@ -95,6 +96,6 @@ public class BookingControllerTest {
 		ResponseEntity<Void> result = bookingController.cancelBooking(BOOKING_ID, userDetails);
 
 		assertThat(result.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
-		verify(controllerFacade).cancelBooking(BOOKING_ID, user);
+		verify(bookingService).cancelBooking(BOOKING_ID, user);
 	}
 }

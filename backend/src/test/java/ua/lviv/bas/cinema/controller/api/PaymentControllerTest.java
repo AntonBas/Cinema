@@ -1,7 +1,8 @@
 package ua.lviv.bas.cinema.controller.api;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
@@ -22,13 +23,17 @@ import ua.lviv.bas.cinema.domain.user.User;
 import ua.lviv.bas.cinema.dto.payment.request.PaymentCreateRequest;
 import ua.lviv.bas.cinema.dto.payment.response.PaymentLiqPayDataResponse;
 import ua.lviv.bas.cinema.dto.payment.response.PaymentResponse;
-import ua.lviv.bas.cinema.service.booking.ControllerFacade;
+import ua.lviv.bas.cinema.service.booking.PaymentService;
+import ua.lviv.bas.cinema.service.booking.PaymentStatusService;
 
 @ExtendWith(MockitoExtension.class)
 public class PaymentControllerTest {
 
 	@Mock
-	private ControllerFacade controllerFacade;
+	private PaymentService paymentService;
+
+	@Mock
+	private PaymentStatusService paymentStatusService;
 
 	@InjectMocks
 	private PaymentController paymentController;
@@ -48,7 +53,7 @@ public class PaymentControllerTest {
 	private PaymentResponse createPaymentResponse(Long id) {
 		return new PaymentResponse(id, 100L, "BK-123456", "user@example.com", "Test Movie", LocalDateTime.now(),
 				"Hall A", new BigDecimal("150.00"), new BigDecimal("150.00"), PaymentStatus.PENDING, "ORDER_ABC123",
-				null, null, null, null, null, null, null, LocalDateTime.now(), LocalDateTime.now());
+				null, null, null, null, null, null, null);
 	}
 
 	private PaymentLiqPayDataResponse createLiqPayDataResponse() {
@@ -62,13 +67,13 @@ public class PaymentControllerTest {
 
 		PaymentResponse paymentResponse = createPaymentResponse(1L);
 
-		when(controllerFacade.createPayment(request, testUser)).thenReturn(paymentResponse);
+		when(paymentService.createPayment(any(PaymentCreateRequest.class), eq(testUser))).thenReturn(paymentResponse);
 
 		ResponseEntity<PaymentResponse> response = paymentController.createPayment(request, userDetails);
 
-		assertEquals(HttpStatus.CREATED, response.getStatusCode());
-		assertNotNull(response.getBody());
-		assertEquals(1L, response.getBody().id());
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+		assertThat(response.getBody()).isNotNull();
+		assertThat(response.getBody().id()).isEqualTo(1L);
 	}
 
 	@Test
@@ -77,13 +82,14 @@ public class PaymentControllerTest {
 
 		PaymentLiqPayDataResponse liqPayData = createLiqPayDataResponse();
 
-		when(controllerFacade.preparePaymentData(paymentId)).thenReturn(liqPayData);
+		when(paymentStatusService.preparePaymentData(paymentId)).thenReturn(liqPayData);
 
 		ResponseEntity<PaymentLiqPayDataResponse> response = paymentController.getLiqPayPaymentData(paymentId);
 
-		assertEquals(HttpStatus.OK, response.getStatusCode());
-		assertNotNull(response.getBody());
-		assertEquals("encoded_data", response.getBody().data());
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+		assertThat(response.getBody()).isNotNull();
+		assertThat(response.getBody().data()).isEqualTo("encoded_data");
+		assertThat(response.getBody().liqpayOrderId()).isEqualTo("ORDER_ABC123");
 	}
 
 	@Test
@@ -92,12 +98,12 @@ public class PaymentControllerTest {
 
 		PaymentResponse paymentResponse = createPaymentResponse(paymentId);
 
-		when(controllerFacade.getPaymentStatus(paymentId, testUser)).thenReturn(paymentResponse);
+		when(paymentService.getPaymentStatus(eq(paymentId), eq(testUser))).thenReturn(paymentResponse);
 
 		ResponseEntity<PaymentResponse> response = paymentController.getPaymentById(paymentId, userDetails);
 
-		assertEquals(HttpStatus.OK, response.getStatusCode());
-		assertNotNull(response.getBody());
-		assertEquals(paymentId, response.getBody().id());
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+		assertThat(response.getBody()).isNotNull();
+		assertThat(response.getBody().id()).isEqualTo(paymentId);
 	}
 }

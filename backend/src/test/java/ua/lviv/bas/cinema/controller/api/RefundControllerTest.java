@@ -1,7 +1,8 @@
 package ua.lviv.bas.cinema.controller.api;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
@@ -19,13 +20,13 @@ import ua.lviv.bas.cinema.config.security.user.CustomUserDetails;
 import ua.lviv.bas.cinema.domain.user.User;
 import ua.lviv.bas.cinema.dto.refund.request.RefundRequest;
 import ua.lviv.bas.cinema.dto.refund.response.RefundResponse;
-import ua.lviv.bas.cinema.service.booking.ControllerFacade;
+import ua.lviv.bas.cinema.service.booking.RefundService;
 
 @ExtendWith(MockitoExtension.class)
 public class RefundControllerTest {
 
 	@Mock
-	private ControllerFacade controllerFacade;
+	private RefundService refundService;
 
 	@InjectMocks
 	private RefundController refundController;
@@ -51,13 +52,13 @@ public class RefundControllerTest {
 
 		RefundResponse refundResponse = createRefundResponse(1L);
 
-		when(controllerFacade.processRefund(request, user.getId())).thenReturn(refundResponse);
+		when(refundService.processRefund(any(RefundRequest.class), eq(user.getId()))).thenReturn(refundResponse);
 
 		ResponseEntity<RefundResponse> response = refundController.refundTicket(request, userDetails);
 
-		assertEquals(HttpStatus.OK, response.getStatusCode());
-		assertNotNull(response.getBody());
-		assertEquals(1L, response.getBody().id());
-		assertEquals("RF-2024-0001", response.getBody().refundNumber());
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+		assertThat(response.getBody()).isNotNull();
+		assertThat(response.getBody().id()).isEqualTo(1L);
+		assertThat(response.getBody().refundNumber()).isEqualTo("RF-2024-0001");
 	}
 }

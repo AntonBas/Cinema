@@ -25,17 +25,16 @@ import ua.lviv.bas.cinema.config.security.user.CustomUserDetails;
 import ua.lviv.bas.cinema.domain.ticket.TicketStatus;
 import ua.lviv.bas.cinema.domain.user.User;
 import ua.lviv.bas.cinema.dto.PageResponse;
+import ua.lviv.bas.cinema.dto.ticket.request.TicketFilterRequest;
 import ua.lviv.bas.cinema.dto.ticket.response.TicketResponse;
-import ua.lviv.bas.cinema.service.booking.ticket.TicketRetrievalService;
 import ua.lviv.bas.cinema.service.ticket.TicketService;
 
 @ExtendWith(MockitoExtension.class)
 public class TicketControllerTest {
 
 	@Mock
-	private TicketRetrievalService ticketRetrievalService;
-	@Mock
 	private TicketService ticketService;
+
 	@InjectMocks
 	private TicketController ticketController;
 
@@ -67,7 +66,7 @@ public class TicketControllerTest {
 		TicketResponse ticket = createTicketResponse(1L, TICKET_CODE, TicketStatus.ACTIVE);
 		Page<TicketResponse> page = new PageImpl<>(List.of(ticket), pageable, 1);
 
-		when(ticketRetrievalService.getUserTickets(eq(user), any(), eq(pageable))).thenReturn(page);
+		when(ticketService.getUserTickets(eq(user), any(TicketFilterRequest.class), eq(pageable))).thenReturn(page);
 
 		ResponseEntity<PageResponse<TicketResponse>> response = ticketController.getUserTickets(userDetails, null, null,
 				pageable);
@@ -75,7 +74,7 @@ public class TicketControllerTest {
 		assertThat(response.getStatusCode().value()).isEqualTo(200);
 		assertThat(response.getBody()).isNotNull();
 		assertThat(response.getBody().content()).hasSize(1);
-		verify(ticketRetrievalService).getUserTickets(eq(user), any(), eq(pageable));
+		verify(ticketService).getUserTickets(eq(user), any(TicketFilterRequest.class), eq(pageable));
 	}
 
 	@Test
@@ -87,7 +86,7 @@ public class TicketControllerTest {
 		Page<TicketResponse> page = new PageImpl<>(List.of(ticket), pageable, 1);
 		TicketStatus status = TicketStatus.ACTIVE;
 
-		when(ticketRetrievalService.getUserTickets(eq(user), any(), eq(pageable))).thenReturn(page);
+		when(ticketService.getUserTickets(eq(user), any(TicketFilterRequest.class), eq(pageable))).thenReturn(page);
 
 		ResponseEntity<PageResponse<TicketResponse>> response = ticketController.getUserTickets(userDetails, status,
 				null, pageable);
@@ -95,7 +94,7 @@ public class TicketControllerTest {
 		assertThat(response.getStatusCode().value()).isEqualTo(200);
 		assertThat(response.getBody()).isNotNull();
 		assertThat(response.getBody().content()).hasSize(1);
-		verify(ticketRetrievalService).getUserTickets(eq(user), any(), eq(pageable));
+		verify(ticketService).getUserTickets(eq(user), any(TicketFilterRequest.class), eq(pageable));
 	}
 
 	@Test
@@ -107,7 +106,7 @@ public class TicketControllerTest {
 		Page<TicketResponse> page = new PageImpl<>(List.of(ticket), pageable, 1);
 		String movieTitle = "Inception";
 
-		when(ticketRetrievalService.getUserTickets(eq(user), any(), eq(pageable))).thenReturn(page);
+		when(ticketService.getUserTickets(eq(user), any(TicketFilterRequest.class), eq(pageable))).thenReturn(page);
 
 		ResponseEntity<PageResponse<TicketResponse>> response = ticketController.getUserTickets(userDetails, null,
 				movieTitle, pageable);
@@ -115,7 +114,7 @@ public class TicketControllerTest {
 		assertThat(response.getStatusCode().value()).isEqualTo(200);
 		assertThat(response.getBody()).isNotNull();
 		assertThat(response.getBody().content()).hasSize(1);
-		verify(ticketRetrievalService).getUserTickets(eq(user), any(), eq(pageable));
+		verify(ticketService).getUserTickets(eq(user), any(TicketFilterRequest.class), eq(pageable));
 	}
 
 	@Test
@@ -128,7 +127,7 @@ public class TicketControllerTest {
 		TicketStatus status = TicketStatus.ACTIVE;
 		String movieTitle = "Inception";
 
-		when(ticketRetrievalService.getUserTickets(eq(user), any(), eq(pageable))).thenReturn(page);
+		when(ticketService.getUserTickets(eq(user), any(TicketFilterRequest.class), eq(pageable))).thenReturn(page);
 
 		ResponseEntity<PageResponse<TicketResponse>> response = ticketController.getUserTickets(userDetails, status,
 				movieTitle, pageable);
@@ -136,7 +135,7 @@ public class TicketControllerTest {
 		assertThat(response.getStatusCode().value()).isEqualTo(200);
 		assertThat(response.getBody()).isNotNull();
 		assertThat(response.getBody().content()).hasSize(1);
-		verify(ticketRetrievalService).getUserTickets(eq(user), any(), eq(pageable));
+		verify(ticketService).getUserTickets(eq(user), any(TicketFilterRequest.class), eq(pageable));
 	}
 
 	@Test
@@ -146,7 +145,8 @@ public class TicketControllerTest {
 		Pageable pageable = PageRequest.of(0, 10);
 		Page<TicketResponse> emptyPage = new PageImpl<>(List.of(), pageable, 0);
 
-		when(ticketRetrievalService.getUserTickets(eq(user), any(), eq(pageable))).thenReturn(emptyPage);
+		when(ticketService.getUserTickets(eq(user), any(TicketFilterRequest.class), eq(pageable)))
+				.thenReturn(emptyPage);
 
 		ResponseEntity<PageResponse<TicketResponse>> response = ticketController.getUserTickets(userDetails, null, null,
 				pageable);
@@ -155,7 +155,7 @@ public class TicketControllerTest {
 		assertThat(response.getBody()).isNotNull();
 		assertThat(response.getBody().content()).isEmpty();
 		assertThat(response.getBody().totalElements()).isZero();
-		verify(ticketRetrievalService).getUserTickets(eq(user), any(), eq(pageable));
+		verify(ticketService).getUserTickets(eq(user), any(TicketFilterRequest.class), eq(pageable));
 	}
 
 	@Test
@@ -164,14 +164,14 @@ public class TicketControllerTest {
 		User user = userDetails.getUser();
 		TicketResponse ticket = createTicketResponse(1L, TICKET_CODE, TicketStatus.ACTIVE);
 
-		when(ticketRetrievalService.getTicketByCode(TICKET_CODE, user)).thenReturn(ticket);
+		when(ticketService.getTicketByCode(TICKET_CODE, user)).thenReturn(ticket);
 
 		ResponseEntity<TicketResponse> response = ticketController.getTicketByCode(TICKET_CODE, userDetails);
 
 		assertThat(response.getStatusCode().value()).isEqualTo(200);
 		assertThat(response.getBody()).isNotNull();
 		assertThat(response.getBody().ticketCode()).isEqualTo(TICKET_CODE);
-		verify(ticketRetrievalService).getTicketByCode(TICKET_CODE, user);
+		verify(ticketService).getTicketByCode(TICKET_CODE, user);
 	}
 
 	@Test
