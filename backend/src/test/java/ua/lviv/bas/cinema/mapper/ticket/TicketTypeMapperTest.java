@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.mapper;
+package ua.lviv.bas.cinema.mapper.ticket;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -15,7 +15,6 @@ import ua.lviv.bas.cinema.dto.ticketType.request.TicketTypeCreateRequest;
 import ua.lviv.bas.cinema.dto.ticketType.request.TicketTypeUpdateRequest;
 import ua.lviv.bas.cinema.dto.ticketType.response.TicketTypeResponse;
 import ua.lviv.bas.cinema.dto.ticketType.response.TicketTypeUserResponse;
-import ua.lviv.bas.cinema.mapper.ticket.TicketTypeMapper;
 import ua.lviv.bas.cinema.repository.ticket.projection.TicketTypeAdminProjection;
 import ua.lviv.bas.cinema.repository.ticket.projection.TicketTypeUserProjection;
 
@@ -91,8 +90,8 @@ public class TicketTypeMapperTest {
 	@Test
 	void toTicketTypeResponse_ShouldMapAllFieldsFromEntity() {
 		TicketType entity = TicketType.builder().id(1L).displayName("Student Ticket")
-				.priceMultiplier(new BigDecimal("0.50")).minAge(18).requiresDocument(true).documentType("Student ID")
-				.active(true).category(TicketTypeCategory.STUDENT).build();
+				.priceMultiplier(new BigDecimal("0.50")).minAge(18).maxAge(25).requiresDocument(true)
+				.documentType("Student ID").active(true).category(TicketTypeCategory.STUDENT).build();
 
 		TicketTypeResponse response = mapper.toTicketTypeResponse(entity);
 
@@ -100,7 +99,7 @@ public class TicketTypeMapperTest {
 		assertThat(response.displayName()).isEqualTo("Student Ticket");
 		assertThat(response.priceMultiplier()).isEqualByComparingTo("0.50");
 		assertThat(response.minAge()).isEqualTo(18);
-		assertThat(response.maxAge()).isNull();
+		assertThat(response.maxAge()).isEqualTo(25);
 		assertThat(response.requiresDocument()).isTrue();
 		assertThat(response.documentType()).isEqualTo("Student ID");
 		assertThat(response.active()).isTrue();
@@ -135,20 +134,6 @@ public class TicketTypeMapperTest {
 	}
 
 	@Test
-	void toTicketTypeUserResponse_ShouldMapFromEntity() {
-		TicketType entity = TicketType.builder().id(1L).displayName("User Ticket")
-				.priceMultiplier(new BigDecimal("0.60")).requiresDocument(true).documentType("Student Card").build();
-
-		TicketTypeUserResponse response = mapper.toTicketTypeUserResponse(entity);
-
-		assertThat(response.id()).isEqualTo(1L);
-		assertThat(response.displayName()).isEqualTo("User Ticket");
-		assertThat(response.priceMultiplier()).isEqualByComparingTo("0.60");
-		assertThat(response.requiresDocument()).isTrue();
-		assertThat(response.documentType()).isEqualTo("Student Card");
-	}
-
-	@Test
 	void toTicketTypeUserResponse_ShouldMapFromUserProjection() {
 		TicketTypeUserProjection projection = mock(TicketTypeUserProjection.class);
 
@@ -157,6 +142,7 @@ public class TicketTypeMapperTest {
 		when(projection.getPriceMultiplier()).thenReturn(new BigDecimal("0.85"));
 		when(projection.isRequiresDocument()).thenReturn(true);
 		when(projection.getDocumentType()).thenReturn("ID Card");
+		when(projection.getCategory()).thenReturn(TicketTypeCategory.STANDARD);
 
 		TicketTypeUserResponse response = mapper.toTicketTypeUserResponse(projection);
 
@@ -168,14 +154,28 @@ public class TicketTypeMapperTest {
 	}
 
 	@Test
-	void toTicketTypeResponse_ShouldReturnNull_WhenInputIsNull() {
+	void toTicketTypeResponse_ShouldReturnNull_WhenEntityIsNull() {
 		assertThat(mapper.toTicketTypeResponse((TicketType) null)).isNull();
+	}
+
+	@Test
+	void toTicketTypeResponse_ShouldReturnNull_WhenProjectionIsNull() {
 		assertThat(mapper.toTicketTypeResponse((TicketTypeAdminProjection) null)).isNull();
 	}
 
 	@Test
-	void toTicketTypeUserResponse_ShouldReturnNull_WhenInputIsNull() {
-		assertThat(mapper.toTicketTypeUserResponse((TicketType) null)).isNull();
+	void toTicketTypeUserResponse_ShouldReturnNull_WhenProjectionIsNull() {
 		assertThat(mapper.toTicketTypeUserResponse((TicketTypeUserProjection) null)).isNull();
+	}
+
+	@Test
+	void updateTicketTypeFromRequest_WithNullRequest_ShouldNotChange() {
+		TicketType existing = TicketType.builder().id(1L).displayName("Original Name")
+				.priceMultiplier(new BigDecimal("1.00")).build();
+
+		mapper.updateTicketTypeFromRequest(existing, null);
+
+		assertThat(existing.getDisplayName()).isEqualTo("Original Name");
+		assertThat(existing.getPriceMultiplier()).isEqualByComparingTo("1.00");
 	}
 }

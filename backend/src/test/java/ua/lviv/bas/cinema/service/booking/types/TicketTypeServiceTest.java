@@ -34,6 +34,7 @@ import ua.lviv.bas.cinema.mapper.ticket.TicketTypeMapper;
 import ua.lviv.bas.cinema.repository.ticket.TicketRepository;
 import ua.lviv.bas.cinema.repository.ticket.TicketTypeRepository;
 import ua.lviv.bas.cinema.repository.ticket.projection.TicketTypeUserProjection;
+import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 
 @ExtendWith(MockitoExtension.class)
 public class TicketTypeServiceTest {
@@ -49,6 +50,9 @@ public class TicketTypeServiceTest {
 
 	@Mock
 	private TicketTypeValidationService validationService;
+
+	@Mock
+	private AuditService auditService;
 
 	@InjectMocks
 	private TicketTypeService ticketTypeService;
@@ -73,6 +77,7 @@ public class TicketTypeServiceTest {
 		assertThat(result).isEqualTo(response);
 		verify(validationService).validateAgeRange(18, 65);
 		verify(ticketTypeRepository).save(ticketType);
+		verify(auditService).logChange(eq("TicketType"), any(), any(), any(), any(), any());
 	}
 
 	@Test
@@ -148,6 +153,7 @@ public class TicketTypeServiceTest {
 		assertThat(result).isEqualTo(response);
 		verify(validationService).validateAgeRange(21, 70);
 		verify(ticketTypeMapper).updateTicketTypeFromRequest(ticketType, request);
+		verify(auditService).logChange(eq("TicketType"), any(), any(), any(), any(), any());
 	}
 
 	@Test
@@ -174,6 +180,7 @@ public class TicketTypeServiceTest {
 		ticketTypeService.deleteTicketType(TICKET_TYPE_ID);
 
 		verify(ticketTypeRepository).delete(ticketType);
+		verify(auditService).logChange(eq("TicketType"), any(), any(), any(), any(), any());
 	}
 
 	@Test
@@ -204,6 +211,7 @@ public class TicketTypeServiceTest {
 		assertThat(ticketType.isActive()).isTrue();
 		verify(ticketRepository, never()).countByTicketTypeIdAndStatusInAndBookingSessionStartTimeAfter(any(), any(),
 				any());
+		verify(auditService).logChange(eq("TicketType"), any(), any(), any(), any(), any());
 	}
 
 	@Test
@@ -222,6 +230,7 @@ public class TicketTypeServiceTest {
 
 		assertThat(result).isEqualTo(response);
 		assertThat(ticketType.isActive()).isFalse();
+		verify(auditService).logChange(eq("TicketType"), any(), any(), any(), any(), any());
 	}
 
 	@Test
