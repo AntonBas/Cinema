@@ -1,6 +1,7 @@
 package ua.lviv.bas.cinema.service.shared;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDateTime;
@@ -26,7 +27,7 @@ public class NumberGeneratorServiceTest {
 
 	@Test
 	void generateBookingNumber_ShouldReturnCorrectFormat() {
-		when(booking.getCreatedAt()).thenReturn(LocalDateTime.of(2024, 1, 15, 14, 30));
+		when(booking.getCreatedDate()).thenReturn(LocalDateTime.of(2024, 1, 15, 14, 30));
 		when(booking.getId()).thenReturn(12345L);
 
 		String result = numberGeneratorService.generateBookingNumber(booking);
@@ -35,9 +36,27 @@ public class NumberGeneratorServiceTest {
 	}
 
 	@Test
+	void generateBookingNumber_WhenIdIsNull_ShouldThrowException() {
+		when(booking.getId()).thenReturn(null);
+
+		assertThatThrownBy(() -> numberGeneratorService.generateBookingNumber(booking))
+				.isInstanceOf(IllegalStateException.class).hasMessageContaining("Booking ID is required");
+	}
+
+	@Test
+	void generateBookingNumber_WhenCreatedDateIsNull_ShouldThrowException() {
+		when(booking.getId()).thenReturn(12345L);
+		when(booking.getCreatedDate()).thenReturn(null);
+
+		assertThatThrownBy(() -> numberGeneratorService.generateBookingNumber(booking))
+				.isInstanceOf(IllegalStateException.class).hasMessageContaining("Booking createdDate is required");
+	}
+
+	@Test
 	void generateTicketCode_ShouldStartWithTKT() {
 		String result = numberGeneratorService.generateTicketCode();
 		assertThat(result).startsWith("TKT-");
+		assertThat(result).hasSize(4 + 12);
 	}
 
 	@Test
@@ -51,6 +70,15 @@ public class NumberGeneratorServiceTest {
 		when(refund.getId()).thenReturn(98765L);
 		String result = numberGeneratorService.generateRefundNumber(refund);
 		assertThat(result).startsWith("RF-");
+		assertThat(result).contains(String.valueOf(LocalDateTime.now().getYear()));
+	}
+
+	@Test
+	void generateRefundNumber_WhenIdIsNull_ShouldThrowException() {
+		when(refund.getId()).thenReturn(null);
+
+		assertThatThrownBy(() -> numberGeneratorService.generateRefundNumber(refund))
+				.isInstanceOf(IllegalStateException.class).hasMessageContaining("Refund ID is required");
 	}
 
 	@Test
