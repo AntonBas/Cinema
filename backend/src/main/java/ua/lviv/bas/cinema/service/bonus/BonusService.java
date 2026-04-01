@@ -3,7 +3,6 @@ package ua.lviv.bas.cinema.service.bonus;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -26,7 +25,6 @@ import ua.lviv.bas.cinema.domain.bonus.BonusTransaction;
 import ua.lviv.bas.cinema.domain.bonus.BonusTransactionType;
 import ua.lviv.bas.cinema.domain.booking.Booking;
 import ua.lviv.bas.cinema.domain.booking.Payment;
-import ua.lviv.bas.cinema.domain.booking.Refund;
 import ua.lviv.bas.cinema.domain.user.User;
 import ua.lviv.bas.cinema.domain.user.VerificationStatus;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusBalanceResponse;
@@ -70,7 +68,7 @@ public class BonusService {
 		return buildBalance(card);
 	}
 
-	@Cacheable(key = "'transactions:' + #userId + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
+	@Cacheable(key = "'transactions:' + #userId + '-' + #pageable")
 	@Transactional(readOnly = true)
 	public Page<BonusTransactionResponse> getTransactions(Long userId, Pageable pageable) {
 		Page<BonusTransactionProjection> page = bonusTransactionRepository.findProjectionsByUserId(userId, pageable);
@@ -78,7 +76,7 @@ public class BonusService {
 	}
 
 	@Caching(evict = { @CacheEvict(key = "'card:' + #user.id"), @CacheEvict(key = "'balance:' + #user.id"),
-			@CacheEvict(key = "'transactions:' + #user.id + '-' + 0 + '-' + 20"), @CacheEvict(allEntries = true) })
+			@CacheEvict(allEntries = true) })
 	@Transactional
 	public void awardWelcomeBonus(User user) {
 		BonusCard card = getOrCreateCard(user);
@@ -89,6 +87,7 @@ public class BonusService {
 		card.setPointsBalance(card.getPointsBalance() + rule.getPoints());
 		createTransaction(card, rule.getPoints(), BonusTransactionType.WELCOME_BONUS, "USER_" + user.getId());
 		card.setWelcomeBonusReceived(true);
+		bonusCardRepository.save(card);
 	}
 
 	@Caching(evict = { @CacheEvict(key = "'card:' + #user.id"), @CacheEvict(key = "'balance:' + #user.id"),
@@ -122,13 +121,8 @@ public class BonusService {
 		card.setPointsBalance(card.getPointsBalance() + points);
 		createTransaction(card, points, BonusTransactionType.PROMOTION_BONUS, "PROMOTION_" + promotionTitle);
 
-		Map<String, Object> newValues = new HashMap<>();
-		newValues.put("points", points);
-		newValues.put("promotion", promotionTitle);
-		newValues.put("newBalance", card.getPointsBalance());
-
-		auditService.logChange("Bonus", card.getId(), "User " + user.getEmail(), AuditAction.POINTS_ADDED, null,
-				newValues);
+		auditBonusChange(card.getId(), user.getEmail(), AuditAction.POINTS_ADDED, null,
+				Map.of("points", points, "promotion", promotionTitle, "newBalance", card.getPointsBalance()));
 
 		return card.getPointsBalance();
 	}
@@ -148,18 +142,15 @@ public class BonusService {
 	public BonusTransaction spendPoints(Long userId, Integer points, Booking booking) {
 		validateRedemption(userId, points);
 		BonusCard card = getCardByUserId(userId);
-		card.setPointsBalance(card.getPointsBalance() - points);
+		int oldBalance = card.getPointsBalance();
+		card.setPointsBalance(oldBalance - points);
+		bonusCardRepository.save(card);
 
-		Map<String, Object> oldValues = new HashMap<>();
-		Map<String, Object> newValues = new HashMap<>();
-		oldValues.put("points", card.getPointsBalance() + points);
-		newValues.put("points", card.getPointsBalance());
-
-		auditService.logChange("Bonus", card.getId(), "Booking " + booking.getId(), AuditAction.POINTS_SPENT, oldValues,
-				newValues);
+		auditBonusChange(card.getId(), "Booking " + booking.getId(), AuditAction.POINTS_SPENT,
+				Map.of("points", oldBalance), Map.of("points", card.getPointsBalance()));
 
 		return createTransaction(card, -points, BonusTransactionType.BOOKING_SPEND, "BOOKING_" + booking.getId(),
-				booking, null, null);
+				booking);
 	}
 
 	@Caching(evict = { @CacheEvict(key = "'card:' + #userId"), @CacheEvict(key = "'balance:' + #userId"),
@@ -170,17 +161,15 @@ public class BonusService {
 			return null;
 		}
 		BonusCard card = getCardByUserId(userId);
-		card.setPointsBalance(card.getPointsBalance() + points);
+		int oldBalance = card.getPointsBalance();
+		card.setPointsBalance(oldBalance + points);
+		bonusCardRepository.save(card);
 
-		Map<String, Object> newValues = new HashMap<>();
-		newValues.put("points", points);
-		newValues.put("newBalance", card.getPointsBalance());
-
-		auditService.logChange("Bonus", card.getId(), "Payment " + payment.getId(), AuditAction.POINTS_ACCRUED, null,
-				newValues);
+		auditBonusChange(card.getId(), "Payment " + payment.getId(), AuditAction.POINTS_ACCRUED, null,
+				Map.of("points", points, "newBalance", card.getPointsBalance()));
 
 		return createTransaction(card, points, BonusTransactionType.PAYMENT_ACCRUAL, "PAYMENT_" + payment.getId(),
-				booking, payment, null);
+				booking);
 	}
 
 	@Caching(evict = { @CacheEvict(key = "'card:' + #booking.user.id"),
@@ -193,18 +182,14 @@ public class BonusService {
 		BonusCard card = getCardByUserId(booking.getUser().getId());
 		Integer points = booking.getBonusPointsUsed();
 		int oldBalance = card.getPointsBalance();
-		card.setPointsBalance(card.getPointsBalance() + points);
+		card.setPointsBalance(oldBalance + points);
+		bonusCardRepository.save(card);
 
-		Map<String, Object> oldValues = new HashMap<>();
-		Map<String, Object> newValues = new HashMap<>();
-		oldValues.put("points", oldBalance);
-		newValues.put("points", card.getPointsBalance());
-
-		auditService.logChange("Bonus", card.getId(), "Booking " + booking.getId(), AuditAction.POINTS_REFUNDED,
-				oldValues, newValues);
+		auditBonusChange(card.getId(), "Booking " + booking.getId(), AuditAction.POINTS_REFUNDED,
+				Map.of("points", oldBalance), Map.of("points", card.getPointsBalance()));
 
 		return createTransaction(card, points, BonusTransactionType.REFUND_RETURN, "REFUND_BOOKING_" + booking.getId(),
-				booking, null, null);
+				booking);
 	}
 
 	@Transactional(readOnly = true)
@@ -271,28 +256,27 @@ public class BonusService {
 		Integer minPoints = spendRuleOpt.map(BonusRules::getMinPointsPerTransaction).orElse(null);
 		Integer maxPoints = spendRuleOpt.map(BonusRules::getMaxPointsPerTransaction).orElse(null);
 
-		BigDecimal minValue = minPoints != null && minPoints > 0 ? pointValue.multiply(new BigDecimal(minPoints))
+		BigDecimal minValue = minPoints != null && minPoints > 0 ? pointValue.multiply(BigDecimal.valueOf(minPoints))
 				: null;
-		BigDecimal maxValue = maxPoints != null && maxPoints > 0 ? pointValue.multiply(new BigDecimal(maxPoints))
+		BigDecimal maxValue = maxPoints != null && maxPoints > 0 ? pointValue.multiply(BigDecimal.valueOf(maxPoints))
 				: null;
 
 		return new BonusBalanceResponse(card.getPointsBalance(), pointValue, balanceValue, minPoints, maxPoints,
 				minValue, maxValue);
 	}
 
-	private BonusTransaction createTransaction(BonusCard card, Integer points, BonusTransactionType type,
+	public BonusTransaction createTransaction(BonusCard card, Integer points, BonusTransactionType type,
 			String referenceId) {
-		return createTransaction(card, points, type, referenceId, null, null, null);
+		return createTransaction(card, points, type, referenceId, null);
 	}
 
-	public BonusTransaction createTransaction(BonusCard card, Integer points, BonusTransactionType type,
-			String referenceId, Booking booking, Payment payment, Refund refund) {
+	private BonusTransaction createTransaction(BonusCard card, Integer points, BonusTransactionType type,
+			String referenceId, Booking booking) {
 		if (points == null) {
 			throw new IllegalArgumentException("Points cannot be null");
 		}
 		BonusTransaction transaction = BonusTransaction.builder().bonusCard(card).booking(booking).type(type)
-				.pointsChange(points).referenceId(referenceId).refund(refund).build();
-		bonusCardRepository.save(card);
+				.pointsChange(points).referenceId(referenceId).build();
 		return bonusTransactionRepository.save(transaction);
 	}
 
@@ -300,6 +284,11 @@ public class BonusService {
 		if (points == null || points <= 0) {
 			throw BonusValidationException.invalidPoints(points);
 		}
+	}
+
+	private void auditBonusChange(Long cardId, String target, AuditAction action, Map<String, Object> oldValues,
+			Map<String, Object> newValues) {
+		auditService.logChange("Bonus", cardId, target, action, oldValues, newValues);
 	}
 
 	private boolean isBirthdayToday(LocalDate birthDate, LocalDate today) {

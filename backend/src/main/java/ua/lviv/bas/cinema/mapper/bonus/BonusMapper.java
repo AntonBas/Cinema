@@ -15,7 +15,7 @@ import ua.lviv.bas.cinema.dto.bonus.response.BonusRulesResponse;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusTransactionResponse;
 import ua.lviv.bas.cinema.repository.bonus.projection.BonusTransactionProjection;
 
-@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
+@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.WARN)
 public interface BonusMapper {
 
 	@Mapping(target = "userId", source = "user.id")
@@ -23,10 +23,19 @@ public interface BonusMapper {
 
 	BonusRulesResponse toBonusRulesResponse(BonusRules rules);
 
+	@Mapping(target = "pointsChange", expression = "java(projection.getPointsChange())")
 	BonusTransactionResponse toBonusTransactionResponse(BonusTransactionProjection projection);
 
-	@BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-	void updateBonusRulesFromRequest(BonusRulesRequest request, @MappingTarget BonusRules rules);
+	@Mapping(target = "id", ignore = true)
+	@Mapping(target = "bonusType", ignore = true)
+	BonusRules toEntity(BonusRulesRequest request);
 
-	BonusRules toBonusRules(BonusRules rules);
+	@BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+	@Mapping(target = "id", ignore = true)
+	@Mapping(target = "bonusType", ignore = true)
+	@Mapping(target = "createdBy", ignore = true)
+	@Mapping(target = "createdDate", ignore = true)
+	@Mapping(target = "lastModifiedBy", ignore = true)
+	@Mapping(target = "lastModifiedDate", ignore = true)
+	void updateBonusRulesFromRequest(BonusRulesRequest request, @MappingTarget BonusRules rules);
 }

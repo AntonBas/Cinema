@@ -91,21 +91,17 @@ app:
     jwt:
         secret: ${JWT_SECRET:local_fallback_secret_key_for_dev_only}
         expiration: 86400000
-    ticket:
-        qr:
-            size: 200
-        base-url: ${APP_BASE_URL:http://localhost:8080}
+    qr:
+        size: 200
+        margin: 1
+        format: PNG
+    base-url: ${APP_BASE_URL:http://localhost:8080}
     company:
         name: "Bas Cinema"
     frontend:
         url: ${FRONTEND_URL:http://localhost:5173}
     email:
         from: ${EMAIL_FROM:noreply@bascinema.com}
-    qr:
-        code:
-            size: 200
-            margin: 1
-            format: PNG
     upload:
         dir: ${UPLOAD_DIR:uploads}
 
@@ -115,11 +111,9 @@ booking:
     session-too-close-minutes: 30
     max-bonus-points-percentage: 70
     max-seats-per-booking: 10
-    min-minutes-for-payment: 5
 
 payment:
     expiration-minutes: 15
-    max-payment-time: 15
     liqpay:
         public_key: ${LIQPAY_PUBLIC_KEY}
         private_key: ${LIQPAY_PRIVATE_KEY}
@@ -146,8 +140,6 @@ bonus:
         "[PAYMENT_ACCRUAL]":
             money-ratio: 0.05
             min-points: 10
-        "[REFUND_RETURN]": {}
-        "[BOOKING_CANCEL]": {}
 
 ticket:
     validation:

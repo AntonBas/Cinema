@@ -100,9 +100,9 @@ public class RefundService {
 			paymentProcessingService.refundPayment(refund.getPayment(), refundAmount,
 					"Refund for ticket #" + ticket.getUniqueCode());
 
-			if (bonusPointsToRefund > 0) {
+			if (bonusPointsToRefund != null && bonusPointsToRefund > 0) {
 				bonusService.createTransaction(bonusService.getOrCreateCard(refund.getUser()), bonusPointsToRefund,
-						BonusTransactionType.REFUND_RETURN, "REFUND_TICKET_" + ticket.getId(), null, null, refund);
+						BonusTransactionType.REFUND_RETURN, "REFUND_TICKET_" + ticket.getId());
 			}
 
 			ticket.setStatus(TicketStatus.REFUNDED);

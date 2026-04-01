@@ -13,14 +13,11 @@ import ua.lviv.bas.cinema.repository.bonus.projection.BonusTransactionProjection
 
 public interface BonusTransactionRepository extends JpaRepository<BonusTransaction, Long> {
 
-	@Query("SELECT bt FROM BonusTransaction bt WHERE bt.bonusCard = :bonusCard")
-	Page<BonusTransaction> findByBonusCard(@Param("bonusCard") BonusCard bonusCard, Pageable pageable);
+	Page<BonusTransaction> findByBonusCard(BonusCard bonusCard, Pageable pageable);
 
-	@Query("SELECT bt FROM BonusTransaction bt WHERE bt.bonusCard.user.id = :userId")
-	Page<BonusTransaction> findByUserId(@Param("userId") Long userId, Pageable pageable);
+	Page<BonusTransaction> findByBonusCardUserId(Long userId, Pageable pageable);
 
-	@Query("SELECT bt FROM BonusTransaction bt WHERE bt.type = :type")
-	Page<BonusTransaction> findByType(@Param("type") BonusTransactionType type, Pageable pageable);
+	Page<BonusTransaction> findByType(BonusTransactionType type, Pageable pageable);
 
 	@Query("SELECT " + "bt.id as id, " + "bt.type as type, " + "bt.pointsChange as pointsChangeRaw, "
 			+ "bt.createdDate as createdAt, "
