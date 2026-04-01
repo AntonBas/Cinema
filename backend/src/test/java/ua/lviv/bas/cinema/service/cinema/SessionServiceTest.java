@@ -35,6 +35,7 @@ import ua.lviv.bas.cinema.mapper.cinema.SessionMapper;
 import ua.lviv.bas.cinema.repository.cinema.MovieRepository;
 import ua.lviv.bas.cinema.repository.cinema.SessionRepository;
 import ua.lviv.bas.cinema.repository.cinema.projection.SessionAdminProjection;
+import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 
 @ExtendWith(MockitoExtension.class)
 public class SessionServiceTest {
@@ -47,6 +48,8 @@ public class SessionServiceTest {
 	private MovieRepository movieRepository;
 	@Mock
 	private CinemaHallService cinemaHallService;
+	@Mock
+	private AuditService auditService;
 	@InjectMocks
 	private SessionService sessionService;
 
@@ -182,7 +185,7 @@ public class SessionServiceTest {
 
 	@Test
 	void deleteSession_Success() {
-		when(sessionRepository.existsById(SESSION_ID)).thenReturn(true);
+		when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(session));
 
 		sessionService.deleteSession(SESSION_ID);
 
@@ -191,7 +194,7 @@ public class SessionServiceTest {
 
 	@Test
 	void deleteSession_WhenNotFound_ThrowsException() {
-		when(sessionRepository.existsById(SESSION_ID)).thenReturn(false);
+		when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.empty());
 
 		assertThatThrownBy(() -> sessionService.deleteSession(SESSION_ID)).isInstanceOf(SessionNotFoundException.class);
 

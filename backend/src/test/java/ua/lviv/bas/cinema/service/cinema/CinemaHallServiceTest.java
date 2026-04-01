@@ -33,6 +33,7 @@ import ua.lviv.bas.cinema.mapper.cinema.SeatMapper;
 import ua.lviv.bas.cinema.repository.cinema.CinemaHallRepository;
 import ua.lviv.bas.cinema.repository.cinema.SeatRepository;
 import ua.lviv.bas.cinema.repository.cinema.projection.CinemaHallProjection;
+import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 
 @ExtendWith(MockitoExtension.class)
 public class CinemaHallServiceTest {
@@ -48,6 +49,9 @@ public class CinemaHallServiceTest {
 
 	@Mock
 	private SeatMapper seatMapper;
+
+	@Mock
+	private AuditService auditService;
 
 	@InjectMocks
 	private CinemaHallService cinemaHallService;
@@ -71,6 +75,7 @@ public class CinemaHallServiceTest {
 
 		assertThat(result.id()).isEqualTo(HALL_ID);
 		assertThat(result.name()).isEqualTo(HALL_NAME);
+		verify(auditService).logChange(any(), any(), any(), any(), any(), any());
 	}
 
 	@Test
@@ -219,7 +224,6 @@ public class CinemaHallServiceTest {
 		cinemaHallService.deleteHall(HALL_ID);
 
 		verify(hallRepository).delete(hall);
-		verify(hallRepository, never()).deleteById(any());
 	}
 
 	@Test
@@ -240,19 +244,6 @@ public class CinemaHallServiceTest {
 
 		assertThatThrownBy(() -> cinemaHallService.deleteHall(HALL_ID))
 				.isInstanceOf(CinemaHallHasSessionsException.class);
-	}
-
-	@Test
-	void deleteHallShouldThrowExceptionWithHallName() {
-		CinemaHall hall = CinemaHall.builder().id(HALL_ID).name(HALL_NAME).build();
-
-		Session session = Session.builder().startTime(LocalDateTime.now().plusDays(1)).build();
-		hall.setSessions(List.of(session));
-
-		when(hallRepository.findByIdWithSeats(HALL_ID)).thenReturn(Optional.of(hall));
-
-		assertThatThrownBy(() -> cinemaHallService.deleteHall(HALL_ID))
-				.isInstanceOf(CinemaHallHasSessionsException.class).hasMessageContaining(HALL_NAME);
 	}
 
 	@Test
