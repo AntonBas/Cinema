@@ -2,6 +2,7 @@ package ua.lviv.bas.cinema.service.cinema;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
@@ -22,6 +23,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
 
 import ua.lviv.bas.cinema.domain.cinema.Genre;
 import ua.lviv.bas.cinema.domain.cinema.Movie;
@@ -32,6 +34,7 @@ import ua.lviv.bas.cinema.dto.movie.request.MovieCreateRequest;
 import ua.lviv.bas.cinema.dto.movie.request.MovieUpdateRequest;
 import ua.lviv.bas.cinema.dto.movie.response.MovieCardResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieDetailResponse;
+import ua.lviv.bas.cinema.dto.movie.response.MovieSessionSearchResponse;
 import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
 import ua.lviv.bas.cinema.exception.domain.cinema.MovieNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.cinema.MovieValidationException;
@@ -42,6 +45,7 @@ import ua.lviv.bas.cinema.repository.cinema.PersonRepository;
 import ua.lviv.bas.cinema.repository.cinema.projection.MovieCardProjection;
 import ua.lviv.bas.cinema.repository.cinema.projection.MovieDetailProjection;
 import ua.lviv.bas.cinema.scheduler.MovieScheduler;
+import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 import ua.lviv.bas.cinema.service.integration.file.PosterService;
 import ua.lviv.bas.cinema.service.integration.slug.SlugService;
 
@@ -62,6 +66,8 @@ public class MovieServiceTest {
 	private MovieScheduler movieScheduler;
 	@Mock
 	private PosterService posterService;
+	@Mock
+	private AuditService auditService;
 
 	@InjectMocks
 	private MovieService movieService;
@@ -86,8 +92,8 @@ public class MovieServiceTest {
 		movie.setStatus(MovieStatus.UPCOMING);
 
 		detailResponse = new MovieDetailResponse(MOVIE_ID, MOVIE_TITLE, SLUG, "trailer.mp4", "Description", 120,
-				LocalDate.now(), LocalDate.now().plusDays(30), AgeRating.PEGI_12, MovieStatus.UPCOMING, "poster.jpg",
-				"/api/movies/1/poster", List.of(), List.of(), List.of(), List.of());
+				LocalDate.now().plusDays(1), LocalDate.now().plusDays(30), AgeRating.PEGI_12, MovieStatus.UPCOMING,
+				"poster.jpg", "/api/movies/1/poster", List.of(), List.of(), List.of(), List.of());
 
 		cardResponse = new MovieCardResponse(MOVIE_ID, SLUG, MOVIE_TITLE, "/api/movies/1/poster", 120,
 				AgeRating.PEGI_12, MovieStatus.UPCOMING);
@@ -106,7 +112,8 @@ public class MovieServiceTest {
 		when(slugService.generateUniqueSlug(MOVIE_TITLE)).thenReturn(SLUG);
 		when(movieRepository.findBySlug(SLUG)).thenReturn(Optional.empty());
 		when(movieMapper.toMovie(createRequest)).thenReturn(movie);
-		when(movieScheduler.calculateMovieStatus(movie, LocalDate.now())).thenReturn(MovieStatus.UPCOMING);
+		when(movieScheduler.calculateMovieStatus(any(Movie.class), any(LocalDate.class)))
+				.thenReturn(MovieStatus.UPCOMING);
 
 		List<Genre> genres = List.of(new Genre(), new Genre());
 		List<Person> actors = List.of(new Person(), new Person());
@@ -195,8 +202,8 @@ public class MovieServiceTest {
 
 		when(slugService.generateUniqueSlug("Updated Title")).thenReturn("updated-title");
 		when(slugService.isSlugAvailableForMovie("updated-title", MOVIE_ID)).thenReturn(true);
-
-		when(movieScheduler.calculateMovieStatus(existingMovie, LocalDate.now())).thenReturn(MovieStatus.UPCOMING);
+		when(movieScheduler.calculateMovieStatus(any(Movie.class), any(LocalDate.class)))
+				.thenReturn(MovieStatus.UPCOMING);
 
 		List<Genre> genres = List.of(new Genre());
 		List<Person> actors = List.of(new Person());
@@ -232,7 +239,8 @@ public class MovieServiceTest {
 				.build();
 
 		when(movieRepository.findAdminMovieById(MOVIE_ID)).thenReturn(Optional.of(existingMovie));
-		when(movieScheduler.calculateMovieStatus(existingMovie, LocalDate.now())).thenReturn(MovieStatus.UPCOMING);
+		when(movieScheduler.calculateMovieStatus(any(Movie.class), any(LocalDate.class)))
+				.thenReturn(MovieStatus.UPCOMING);
 		when(genreRepository.findAllById(anyList())).thenReturn(List.of());
 		when(personRepository.findAllById(anyList())).thenReturn(List.of());
 		when(movieRepository.save(existingMovie)).thenReturn(existingMovie);
@@ -285,11 +293,12 @@ public class MovieServiceTest {
 		MovieCardProjection projection = createMovieCardProjection();
 		when(movieRepository.findMoviesForSession("test")).thenReturn(List.of(projection));
 
-		var result = movieService.searchMoviesForSession("test");
+		List<MovieSessionSearchResponse> result = movieService.searchMoviesForSession("test");
 
 		assertThat(result).hasSize(1);
 		assertThat(result.get(0).id()).isEqualTo(MOVIE_ID);
 		assertThat(result.get(0).title()).isEqualTo(MOVIE_TITLE);
+		assertThat(result.get(0).durationMinutes()).isEqualTo(120);
 	}
 
 	@Test
@@ -298,9 +307,41 @@ public class MovieServiceTest {
 		MovieCardProjection projection = createMovieCardProjection();
 		when(movieRepository.findMoviesByDate(date)).thenReturn(List.of(projection));
 
-		var result = movieService.searchMoviesForSession(date.toString());
+		List<MovieSessionSearchResponse> result = movieService.searchMoviesForSession(date.toString());
 
 		assertThat(result).hasSize(1);
+		assertThat(result.get(0).id()).isEqualTo(MOVIE_ID);
+	}
+
+	@Test
+	void searchMoviesForSession_WithNullSearch_ReturnsEmptyList() {
+		List<MovieSessionSearchResponse> result = movieService.searchMoviesForSession(null);
+		assertThat(result).isEmpty();
+	}
+
+	@Test
+	void searchMoviesForSession_WithBlankSearch_ReturnsEmptyList() {
+		List<MovieSessionSearchResponse> result = movieService.searchMoviesForSession("   ");
+		assertThat(result).isEmpty();
+	}
+
+	@Test
+	void getMoviePoster_ReturnsResponse() {
+		when(movieRepository.findPosterFileNameById(MOVIE_ID)).thenReturn(Optional.of("poster.jpg"));
+		when(posterService.getPosterResponse("poster.jpg")).thenReturn(ResponseEntity.ok().body(new byte[0]));
+
+		ResponseEntity<byte[]> result = movieService.getMoviePoster(MOVIE_ID);
+
+		assertThat(result.getStatusCode().is2xxSuccessful()).isTrue();
+	}
+
+	@Test
+	void getMoviePoster_NotFound_ReturnsNotFound() {
+		when(movieRepository.findPosterFileNameById(MOVIE_ID)).thenReturn(Optional.empty());
+
+		ResponseEntity<byte[]> result = movieService.getMoviePoster(MOVIE_ID);
+
+		assertThat(result.getStatusCode().is4xxClientError()).isTrue();
 	}
 
 	@Test
@@ -310,6 +351,15 @@ public class MovieServiceTest {
 		boolean result = movieService.existsBySlug(SLUG);
 
 		assertThat(result).isTrue();
+	}
+
+	@Test
+	void existsBySlug_ReturnsFalse() {
+		when(movieRepository.findBySlug(SLUG)).thenReturn(Optional.empty());
+
+		boolean result = movieService.existsBySlug(SLUG);
+
+		assertThat(result).isFalse();
 	}
 
 	private MovieDetailProjection createMovieDetailProjection() {
@@ -346,7 +396,7 @@ public class MovieServiceTest {
 
 			@Override
 			public LocalDate getReleaseDate() {
-				return LocalDate.now();
+				return LocalDate.now().plusDays(1);
 			}
 
 			@Override
@@ -410,7 +460,7 @@ public class MovieServiceTest {
 
 			@Override
 			public LocalDate getReleaseDate() {
-				return LocalDate.now();
+				return LocalDate.now().plusDays(1);
 			}
 
 			@Override

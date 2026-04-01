@@ -12,7 +12,7 @@ import ua.lviv.bas.cinema.dto.movie.request.QuickCreatePersonRequest;
 import ua.lviv.bas.cinema.dto.movie.response.PersonResponse;
 import ua.lviv.bas.cinema.repository.cinema.projection.PersonProjection;
 
-class PersonMapperTest {
+public class PersonMapperTest {
 
 	private final PersonMapper mapper = Mappers.getMapper(PersonMapper.class);
 

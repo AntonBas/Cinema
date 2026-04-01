@@ -13,7 +13,7 @@ import ua.lviv.bas.cinema.dto.movie.request.GenreRequest;
 import ua.lviv.bas.cinema.dto.movie.response.GenreResponse;
 import ua.lviv.bas.cinema.repository.cinema.projection.GenreProjection;
 
-class GenreMapperTest {
+public class GenreMapperTest {
 
 	private final GenreMapper mapper = Mappers.getMapper(GenreMapper.class);
 

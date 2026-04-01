@@ -35,7 +35,7 @@ import ua.lviv.bas.cinema.repository.cinema.PersonRepository;
 import ua.lviv.bas.cinema.repository.cinema.projection.PersonProjection;
 
 @ExtendWith(MockitoExtension.class)
-class PersonServiceTest {
+public class PersonServiceTest {
 
 	@Mock
 	private PersonRepository personRepository;

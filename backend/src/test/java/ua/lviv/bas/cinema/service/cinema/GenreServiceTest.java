@@ -30,7 +30,7 @@ import ua.lviv.bas.cinema.repository.cinema.GenreRepository;
 import ua.lviv.bas.cinema.repository.cinema.projection.GenreProjection;
 
 @ExtendWith(MockitoExtension.class)
-class GenreServiceTest {
+public class GenreServiceTest {
 
 	@Mock
 	private GenreRepository genreRepository;
