@@ -19,6 +19,7 @@ import ua.lviv.bas.cinema.service.integration.payment.PaymentGatewayService;
 @Service
 @RequiredArgsConstructor
 public class PaymentStatusService {
+
 	private final PaymentRepository paymentRepository;
 	private final PaymentService paymentService;
 	private final PaymentGatewayService paymentGatewayService;
@@ -27,12 +28,6 @@ public class PaymentStatusService {
 	public PaymentLiqPayDataResponse preparePaymentData(Long paymentId) {
 		Payment payment = paymentRepository.findById(paymentId)
 				.orElseThrow(() -> new PaymentNotFoundException(paymentId));
-
-		payment.getBooking().getUser().getEmail();
-		payment.getBooking().getSession().getMovie().getTitle();
-		payment.getBooking().getSession().getHall().getName();
-		payment.getBooking().getSession().getStartTime();
-
 		return paymentGatewayService.prepareLiqPayPaymentData(payment);
 	}
 
