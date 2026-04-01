@@ -25,6 +25,7 @@ import ua.lviv.bas.cinema.exception.domain.auth.TokenExpiredException;
 import ua.lviv.bas.cinema.exception.domain.user.EmailNotVerifiedException;
 import ua.lviv.bas.cinema.repository.token.EmailTokenRepository;
 import ua.lviv.bas.cinema.repository.user.UserRepository;
+import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 import ua.lviv.bas.cinema.service.notification.EmailTokenGeneratorService;
 
 @ExtendWith(MockitoExtension.class)
@@ -42,6 +43,9 @@ public class UserPasswordResetServiceTest {
 	@Mock
 	private EmailTokenRepository tokenRepository;
 
+	@Mock
+	private AuditService auditService;
+
 	@InjectMocks
 	private UserPasswordResetService passwordResetService;
 
@@ -51,6 +55,7 @@ public class UserPasswordResetServiceTest {
 		User user = new User();
 		user.setEmail(email);
 		user.setEnabled(true);
+		user.setId(1L);
 
 		when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
 
@@ -58,6 +63,7 @@ public class UserPasswordResetServiceTest {
 
 		verify(userRepository).findByEmail(email);
 		verify(tokenGeneratorService).generatePasswordResetToken(email);
+		verify(auditService).logChange(any(), any(), any(), any(), any(), any());
 	}
 
 	@Test
@@ -70,6 +76,7 @@ public class UserPasswordResetServiceTest {
 				.isInstanceOf(EmailNotVerifiedException.class);
 
 		verify(tokenGeneratorService, never()).generatePasswordResetToken(any());
+		verify(auditService, never()).logChange(any(), any(), any(), any(), any(), any());
 	}
 
 	@Test
@@ -85,6 +92,7 @@ public class UserPasswordResetServiceTest {
 				.isInstanceOf(EmailNotVerifiedException.class);
 
 		verify(tokenGeneratorService, never()).generatePasswordResetToken(any());
+		verify(auditService, never()).logChange(any(), any(), any(), any(), any(), any());
 	}
 
 	@Test
@@ -115,6 +123,7 @@ public class UserPasswordResetServiceTest {
 		verify(passwordEncoder).encode(newPassword);
 		verify(userRepository).save(any());
 		verify(tokenRepository).save(any());
+		verify(auditService).logChange(any(), any(), any(), any(), any(), any());
 	}
 
 	@Test
