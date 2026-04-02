@@ -17,6 +17,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import ua.lviv.bas.cinema.config.ratelimit.RateLimit;
 import ua.lviv.bas.cinema.domain.user.User;
 import ua.lviv.bas.cinema.dto.promotion.request.UserPromotionCreateRequest;
 import ua.lviv.bas.cinema.dto.promotion.response.PromotionResponse;
@@ -32,6 +33,7 @@ public class PromotionController {
 
 	private final PromotionService promotionService;
 
+	@RateLimit(value = 10, duration = 1, key = "user")
 	@GetMapping
 	@Operation(summary = "Get available promotions")
 	@PreAuthorize("hasRole('USER') or hasRole('PREMIUM_USER')")
@@ -40,6 +42,7 @@ public class PromotionController {
 		return ResponseEntity.ok(promotionService.getAvailablePromotions(user));
 	}
 
+	@RateLimit(value = 3, duration = 1, key = "user")
 	@PostMapping("/claim")
 	@Operation(summary = "Claim a promotion")
 	@PreAuthorize("hasRole('USER') or hasRole('PREMIUM_USER')")

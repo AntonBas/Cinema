@@ -36,7 +36,7 @@ import ua.lviv.bas.cinema.service.booking.BookingService;
 public class BookingController {
 	private final BookingService bookingService;
 
-	@RateLimit(value = 10, duration = 1, key = "user")
+	@RateLimit(value = 5, duration = 1, key = "user")
 	@PostMapping
 	@Operation(summary = "Create a new booking", description = "Creates a new booking for a cinema session with selected seats and ticket types")
 	@ApiResponses(value = { @ApiResponse(responseCode = "201", description = "Booking created successfully"),
@@ -52,6 +52,7 @@ public class BookingController {
 		return ResponseEntity.status(HttpStatus.CREATED).body(response);
 	}
 
+	@RateLimit(value = 20, duration = 1, key = "user")
 	@GetMapping("/{bookingId}")
 	@Operation(summary = "Get booking details", description = "Retrieves detailed information about a specific booking")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Booking details retrieved successfully"),
@@ -66,6 +67,7 @@ public class BookingController {
 		return ResponseEntity.ok(response);
 	}
 
+	@RateLimit(value = 3, duration = 1, key = "user")
 	@DeleteMapping("/{bookingId}")
 	@Operation(summary = "Cancel a booking", description = "Cancels a pending or confirmed booking if allowed by business rules")
 	@ApiResponses(value = { @ApiResponse(responseCode = "204", description = "Booking cancelled successfully"),

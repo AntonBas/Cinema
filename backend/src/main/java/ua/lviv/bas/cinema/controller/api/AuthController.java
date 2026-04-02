@@ -60,7 +60,7 @@ public class AuthController {
 		return ResponseEntity.status(HttpStatus.CREATED).body(response);
 	}
 
-	@RateLimit(value = 5, duration = 15, key = "ip")
+	@RateLimit(value = 5, duration = 1, key = "ip")
 	@PostMapping("/login")
 	@Operation(summary = "User login", description = "Authenticate user with email and password.")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Login successful"),
@@ -136,6 +136,7 @@ public class AuthController {
 		return ResponseEntity.ok().build();
 	}
 
+	@RateLimit(value = 10, duration = 1, key = "ip")
 	@GetMapping("/email/check")
 	@Operation(summary = "Check email availability", description = "Check if email address is already registered.")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Email availability status"),

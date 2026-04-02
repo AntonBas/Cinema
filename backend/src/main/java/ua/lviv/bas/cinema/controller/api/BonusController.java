@@ -17,6 +17,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import ua.lviv.bas.cinema.config.ratelimit.RateLimit;
 import ua.lviv.bas.cinema.dto.PageResponse;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusBalanceResponse;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusCardResponse;
@@ -32,6 +33,7 @@ public class BonusController {
 
 	private final BonusService bonusService;
 
+	@RateLimit(value = 20, duration = 1, key = "user")
 	@Operation(summary = "Get user bonus card", description = "Returns the current user's bonus card information")
 	@ApiResponse(responseCode = "200", description = "Bonus card retrieved successfully")
 	@ApiResponse(responseCode = "404", description = "Bonus card not found")
@@ -43,6 +45,7 @@ public class BonusController {
 		return bonusService.getCard(userId);
 	}
 
+	@RateLimit(value = 20, duration = 1, key = "user")
 	@Operation(summary = "Get bonus balance", description = "Returns the current user's bonus balance with conversion details")
 	@ApiResponse(responseCode = "200", description = "Balance retrieved successfully")
 	@ApiResponse(responseCode = "404", description = "Bonus card not found")
@@ -54,6 +57,7 @@ public class BonusController {
 		return bonusService.getBalance(userId);
 	}
 
+	@RateLimit(value = 30, duration = 1, key = "user")
 	@Operation(summary = "Get user bonus transactions", description = "Returns the current user's bonus transaction history")
 	@ApiResponse(responseCode = "200", description = "Transactions retrieved successfully")
 	@GetMapping("/my-transactions")

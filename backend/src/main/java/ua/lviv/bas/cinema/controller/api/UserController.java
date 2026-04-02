@@ -40,6 +40,7 @@ public class UserController {
 
 	private final UserService userService;
 
+	@RateLimit(value = 30, duration = 1, key = "user")
 	@GetMapping("/profile")
 	@Operation(summary = "Get user profile", description = "Retrieve the authenticated user's profile information.")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Profile retrieved successfully"),
@@ -59,7 +60,7 @@ public class UserController {
 		return ResponseEntity.ok(userService.getUserProfile(userDetails.getUserId()));
 	}
 
-	@RateLimit(value = 10, duration = 5, key = "user")
+	@RateLimit(value = 5, duration = 5, key = "user")
 	@PutMapping("/profile")
 	@Operation(summary = "Update user profile", description = "Update the authenticated user's profile information.")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Profile updated successfully"),

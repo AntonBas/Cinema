@@ -17,6 +17,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import ua.lviv.bas.cinema.config.ratelimit.RateLimit;
 import ua.lviv.bas.cinema.domain.user.User;
 import ua.lviv.bas.cinema.dto.user.response.UserResponse;
 import ua.lviv.bas.cinema.mapper.user.UserMapper;
@@ -32,6 +33,7 @@ public class TokenController {
 	private final EmailTokenService emailTokenService;
 	private final UserMapper userMapper;
 
+	@RateLimit(value = 5, duration = 15, key = "ip")
 	@PostMapping("/email/verify")
 	@Operation(summary = "Verify email address", description = "Confirm user's email address using verification token.")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Email verified successfully"),
@@ -45,6 +47,7 @@ public class TokenController {
 		return ResponseEntity.ok(Map.of("message", message));
 	}
 
+	@RateLimit(value = 5, duration = 15, key = "ip")
 	@PostMapping("/email/change/confirm")
 	@Operation(summary = "Confirm email change", description = "Confirm email change using token.")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Email changed successfully"),

@@ -17,6 +17,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import ua.lviv.bas.cinema.config.ratelimit.RateLimit;
 import ua.lviv.bas.cinema.dto.session.response.SessionScheduleResponse;
 import ua.lviv.bas.cinema.service.cinema.SessionService;
 
@@ -29,6 +30,7 @@ public class SessionController {
 
 	private final SessionService sessionService;
 
+	@RateLimit(value = 20, duration = 1, key = "ip")
 	@GetMapping
 	@Operation(summary = "Get schedule sessions")
 	@ApiResponse(responseCode = "200", description = "Sessions retrieved successfully")
@@ -41,6 +43,7 @@ public class SessionController {
 		return ResponseEntity.ok(sessions);
 	}
 
+	@RateLimit(value = 30, duration = 1, key = "ip")
 	@GetMapping("/{id}")
 	@Operation(summary = "Get session by ID")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Session found"),

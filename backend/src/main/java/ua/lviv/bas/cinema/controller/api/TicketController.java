@@ -37,6 +37,7 @@ public class TicketController {
 
 	private final TicketService ticketService;
 
+	@RateLimit(value = 20, duration = 1, key = "user")
 	@GetMapping
 	@Operation(summary = "Get user tickets", description = "Get paginated tickets for authenticated user with optional filters")
 	public ResponseEntity<PageResponse<TicketResponse>> getUserTickets(
@@ -53,6 +54,7 @@ public class TicketController {
 		return ResponseEntity.ok(PageResponse.from(tickets));
 	}
 
+	@RateLimit(value = 30, duration = 1, key = "user")
 	@GetMapping("/code/{ticketCode}")
 	@Operation(summary = "Get ticket by code", description = "Get ticket details by code (for QR scanning)")
 	public ResponseEntity<TicketResponse> getTicketByCode(@PathVariable String ticketCode,
@@ -64,6 +66,7 @@ public class TicketController {
 		return ResponseEntity.ok(ticket);
 	}
 
+	@RateLimit(value = 20, duration = 1, key = "user")
 	@GetMapping("/code/{ticketCode}/qr")
 	@Operation(summary = "Get ticket QR code", description = "Generate QR code for ticket validation")
 	public ResponseEntity<byte[]> getTicketQRCode(@PathVariable String ticketCode) {

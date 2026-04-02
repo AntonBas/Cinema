@@ -55,6 +55,7 @@ public class PaymentController {
 		return ResponseEntity.status(HttpStatus.CREATED).body(response);
 	}
 
+	@RateLimit(value = 10, duration = 1, key = "user")
 	@GetMapping("/{paymentId}/liqpay-data")
 	@Operation(summary = "Get LiqPay data", description = "Returns prepared data for LiqPay payment gateway")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Payment data retrieved"),
@@ -66,6 +67,7 @@ public class PaymentController {
 		return ResponseEntity.ok(response);
 	}
 
+	@RateLimit(value = 20, duration = 1, key = "user")
 	@GetMapping("/{paymentId}")
 	@Operation(summary = "Get payment by ID", description = "Retrieves payment information by ID")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Payment retrieved"),
