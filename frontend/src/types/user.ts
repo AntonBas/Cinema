@@ -85,13 +85,6 @@ export interface VerificationBirthDateRequest {
     verificationStatus: VerificationStatus;
 }
 
-export interface UserFilterRequest {
-    search?: string;
-    role?: UserRole;
-    verificationStatus?: VerificationStatus;
-    enabled?: boolean;
-}
-
 export interface AdminUsersResponse {
     content: AdminUserListResponse[];
     totalElements: number;
