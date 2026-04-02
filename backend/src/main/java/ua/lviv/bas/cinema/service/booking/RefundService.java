@@ -25,7 +25,6 @@ import ua.lviv.bas.cinema.domain.booking.status.RefundItemStatus;
 import ua.lviv.bas.cinema.domain.booking.status.RefundStatus;
 import ua.lviv.bas.cinema.domain.ticket.Ticket;
 import ua.lviv.bas.cinema.domain.ticket.TicketStatus;
-import ua.lviv.bas.cinema.dto.payment.response.PaymentResponse;
 import ua.lviv.bas.cinema.dto.refund.request.RefundPreviewRequest;
 import ua.lviv.bas.cinema.dto.refund.request.RefundRequest;
 import ua.lviv.bas.cinema.dto.refund.response.RefundPreviewResponse;
@@ -39,7 +38,6 @@ import ua.lviv.bas.cinema.repository.booking.RefundRepository;
 import ua.lviv.bas.cinema.repository.ticket.TicketRepository;
 import ua.lviv.bas.cinema.service.bonus.BonusService;
 import ua.lviv.bas.cinema.service.integration.audit.AuditService;
-import ua.lviv.bas.cinema.service.integration.payment.PaymentGatewayService;
 import ua.lviv.bas.cinema.service.shared.NumberGeneratorService;
 
 @Slf4j
@@ -50,7 +48,6 @@ public class RefundService {
 	private final TicketRepository ticketRepository;
 	private final RefundRepository refundRepository;
 	private final PaymentService paymentService;
-	private final PaymentGatewayService paymentGatewayService;
 	private final BonusService bonusService;
 	private final RefundRules refundRules;
 	private final RefundMapper refundMapper;
@@ -218,14 +215,7 @@ public class RefundService {
 	}
 
 	private boolean checkPaymentRefundable(Ticket ticket) {
-		try {
-			PaymentResponse paymentStatus = paymentGatewayService
-					.getPaymentStatus(ticket.getPayment().getLiqpayPaymentId());
-			Boolean refundable = paymentStatus.refundableViaApi();
-			return refundable != null ? refundable : paymentStatus.status() == PaymentStatus.SUCCESS;
-		} catch (Exception e) {
-			return false;
-		}
+		return ticket.getPayment().getStatus() == PaymentStatus.SUCCESS;
 	}
 
 	private RefundPreviewResponse createNonRefundablePreview(Ticket ticket, String reason) {

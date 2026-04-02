@@ -318,12 +318,10 @@ public class PaymentService {
 
 	private PaymentResponse buildPaymentResponse(Payment payment) {
 		Booking booking = payment.getBooking();
-		return new PaymentResponse(payment.getId(), booking.getId(), numberGenerator.generateBookingNumber(booking),
-				booking.getUser().getEmail(), booking.getSession().getMovie().getTitle(),
-				booking.getSession().getStartTime(), booking.getSession().getHall().getName(), payment.getAmount(),
-				payment.getAmount(), payment.getStatus(), payment.getLiqpayOrderId(), payment.getLiqpayPaymentId(),
-				payment.getPaymentTime(), payment.getLiqpayErrorCode(), payment.getLiqpayErrorDescription(),
-				payment.getLiqpaySenderCardMask(), null, null);
+		return new PaymentResponse(numberGenerator.generateBookingNumber(booking),
+				booking.getSession().getMovie().getTitle(), booking.getSession().getStartTime(),
+				booking.getSession().getHall().getName(), payment.getAmount(), payment.getStatus(),
+				payment.getPaymentTime(), payment.getLiqpaySenderCardMask(), payment.getLiqpayErrorDescription());
 	}
 
 	private String formatSessionTime(Booking booking) {

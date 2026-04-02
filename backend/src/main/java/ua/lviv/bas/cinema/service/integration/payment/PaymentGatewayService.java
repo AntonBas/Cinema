@@ -205,10 +205,12 @@ public class PaymentGatewayService {
 		}
 	}
 
-	public PaymentResponse getPaymentStatus(String paymentId) {
+	public PaymentResponse getPaymentStatus(String paymentId, String bookingNumber, String movieTitle,
+			String sessionTime, String hallName, BigDecimal finalAmount, String paymentTime, String senderCardMask) {
 		try {
 			if (sandboxMode) {
-				return getSandboxPaymentStatus(paymentId);
+				return getSandboxPaymentStatus(bookingNumber, movieTitle, sessionTime, hallName, finalAmount,
+						paymentTime, senderCardMask);
 			}
 
 			Map<String, Object> statusParams = new LinkedHashMap<>();
@@ -238,41 +240,22 @@ public class PaymentGatewayService {
 				String status = (String) responseMap.get("status");
 
 				if ("error".equals(result)) {
-					String errorCode = (String) responseMap.get("err_code");
 					String errorDescription = (String) responseMap.get("err_description");
-
-					return new PaymentResponse(null, null, null, null, null, null, null, null, null,
-							PaymentStatus.FAILED, null, null, null, errorCode, errorDescription, null, null, null);
+					return new PaymentResponse(bookingNumber, movieTitle, null, hallName, finalAmount,
+							PaymentStatus.FAILED, null, senderCardMask, errorDescription);
 				}
 
-				Object amountObj = responseMap.get("amount");
-				BigDecimal amount = BigDecimal.ZERO;
-				if (amountObj != null) {
-					if (amountObj instanceof Double) {
-						amount = BigDecimal.valueOf((Double) amountObj);
-					} else if (amountObj instanceof Integer) {
-						amount = BigDecimal.valueOf((Integer) amountObj);
-					} else if (amountObj instanceof BigDecimal) {
-						amount = (BigDecimal) amountObj;
-					} else if (amountObj instanceof String) {
-						amount = new BigDecimal((String) amountObj);
-					} else {
-						amount = new BigDecimal(amountObj.toString());
-					}
-				}
+				PaymentStatus paymentStatus = convertLiqPayStatus(status);
+				String maskedCard = (String) responseMap.get("sender_card_mask2");
+				String paymentTimeStr = (String) responseMap.get("payment_time");
 
-				String liqpayPaymentIdObj = responseMap.get("payment_id") != null
-						? responseMap.get("payment_id").toString()
-						: paymentId;
-
-				boolean isRefundableViaApi = "success".equals(status);
-
-				return new PaymentResponse(null, null, null, null, null, null, null, amount, null,
-						convertLiqPayStatus(status), (String) responseMap.get("order_id"), liqpayPaymentIdObj, null,
-						(String) responseMap.get("err_code"), (String) responseMap.get("err_description"),
-						(String) responseMap.get("sender_card_mask2"), null, isRefundableViaApi);
+				return new PaymentResponse(bookingNumber, movieTitle,
+						sessionTime != null ? java.time.LocalDateTime.parse(sessionTime) : null, hallName, finalAmount,
+						paymentStatus, paymentTimeStr != null ? java.time.LocalDateTime.parse(paymentTimeStr) : null,
+						maskedCard != null ? maskedCard : senderCardMask, null);
 			} else {
-				throw new PaymentProcessingException("Failed to get payment status");
+				return new PaymentResponse(bookingNumber, movieTitle, null, hallName, finalAmount, PaymentStatus.FAILED,
+						null, senderCardMask, "Failed to get payment status");
 			}
 
 		} catch (RestClientException e) {
@@ -282,10 +265,14 @@ public class PaymentGatewayService {
 		}
 	}
 
-	private PaymentResponse getSandboxPaymentStatus(String paymentId) {
-		log.info("Sandbox payment status: paymentId={}", paymentId);
-		return new PaymentResponse(null, null, null, null, null, null, null, BigDecimal.ZERO, null,
-				PaymentStatus.SUCCESS, "SANDBOX_ORDER_" + paymentId, paymentId, null, null, null, null, null, true);
+	private PaymentResponse getSandboxPaymentStatus(String bookingNumber, String movieTitle, String sessionTime,
+			String hallName, BigDecimal finalAmount, String paymentTime, String senderCardMask) {
+		log.info("Sandbox payment status");
+		return new PaymentResponse(bookingNumber, movieTitle,
+				sessionTime != null ? java.time.LocalDateTime.parse(sessionTime) : null, hallName, finalAmount,
+				PaymentStatus.SUCCESS,
+				paymentTime != null ? java.time.LocalDateTime.parse(paymentTime) : java.time.LocalDateTime.now(),
+				senderCardMask != null ? senderCardMask : "****0000", null);
 	}
 
 	private PaymentStatus convertLiqPayStatus(String liqpayStatus) {
