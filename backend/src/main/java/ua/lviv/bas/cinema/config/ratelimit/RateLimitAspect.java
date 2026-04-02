@@ -23,7 +23,9 @@ public class RateLimitAspect {
 	public Object checkRateLimit(ProceedingJoinPoint joinPoint, RateLimit rateLimit) throws Throwable {
 		String key = resolveKey(rateLimit.key());
 
-		if (!rateLimitService.tryConsume(key, 1)) {
+		boolean consumed = rateLimitService.tryConsume(key, 1, rateLimit.value(), rateLimit.duration());
+
+		if (!consumed) {
 			HttpServletResponse response = getResponse();
 			response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
 			response.setHeader("X-Rate-Limit-Limit", String.valueOf(rateLimit.value()));

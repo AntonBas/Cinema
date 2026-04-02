@@ -28,15 +28,15 @@ public class RateLimitConfig {
 			this.buckets = buckets;
 		}
 
-		public boolean tryConsume(String key, int tokens) {
-			Bucket bucket = buckets.computeIfAbsent(key, k -> createBucket());
+		public boolean tryConsume(String key, int tokens, int capacity, int durationInMinutes) {
+			String bucketKey = key + ":" + capacity + ":" + durationInMinutes;
+
+			Bucket bucket = buckets.computeIfAbsent(bucketKey, k -> Bucket.builder().addLimit(
+					limit -> limit.capacity(capacity).refillIntervally(capacity, Duration.ofMinutes(durationInMinutes)))
+					.build());
+
 			ConsumptionProbe probe = bucket.tryConsumeAndReturnRemaining(tokens);
 			return probe.isConsumed();
-		}
-
-		private Bucket createBucket() {
-			return Bucket.builder().addLimit(limit -> limit.capacity(5).refillIntervally(5, Duration.ofMinutes(15)))
-					.build();
 		}
 	}
 }
