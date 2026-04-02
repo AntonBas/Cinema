@@ -53,40 +53,9 @@ export interface SessionScheduleResponse {
     availableSeats: number;
     movieId: number;
     movieTitle: string;
-    moviePosterFileName: string | null;
     movieAgeRating: string;
     movieDuration: number;
     hallId: number;
     hallName: string;
     hallCapacity: number;
-}
-
-export interface SessionDetailResponse {
-    id: number;
-    startTime: string;
-    endTime: string;
-    basePrice: string;
-    status: CinemaSessionStatus;
-    movieId: number;
-    movieTitle: string;
-    movieDescription: string;
-    movieDuration: number;
-    movieAgeRating: string;
-    movieTrailerUrl: string | null;
-    hallId: number;
-    hallName: string;
-    hallCapacity: number;
-    availableSeats: number;
-}
-
-export interface ScheduleDay {
-    date: string;
-    sessions: SessionScheduleResponse[];
-}
-
-export interface ScheduleMovie {
-    movieId: number;
-    movieTitle: string;
-    moviePosterFileName: string | null;
-    sessions: SessionScheduleResponse[];
 }

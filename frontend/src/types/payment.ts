@@ -17,24 +17,15 @@ export interface PaymentLiqPayDataResponse {
 }
 
 export interface PaymentResponse {
-    id: number;
-    bookingId: number;
     bookingNumber: string;
-    userEmail: string;
     movieTitle: string;
     sessionTime: string;
     hallName: string;
-    amount: string;
     finalAmount: string;
     status: PaymentStatus;
-    liqpayOrderId?: string;
-    liqpayPaymentId?: string;
-    paymentTime?: string;
-    errorCode?: string;
+    paymentTime: string;
+    senderCardMask: string;
     errorDescription?: string;
-    senderCardMask?: string;
-    actionType?: string;
-    refundableViaApi?: boolean;
 }
 
 export const PaymentStatusDisplay: Record<PaymentStatus, string> = {

@@ -5,9 +5,9 @@ export interface TicketTypeCreateRequest {
     priceMultiplier: string;
     minAge?: number;
     maxAge?: number;
-    requiresDocument?: boolean;
+    requiresDocument: boolean;
     documentType?: string;
-    active?: boolean;
+    active: boolean;
     category: TicketTypeCategory;
 }
 
@@ -31,15 +31,12 @@ export interface TicketTypeResponse {
     requiresDocument: boolean;
     documentType?: string;
     active: boolean;
-    category?: TicketTypeCategory;
+    category: TicketTypeCategory;
 }
 
 export interface TicketTypeUserResponse {
     id: number;
     displayName: string;
-    priceMultiplier: string;
-    requiresDocument: boolean;
-    documentType?: string;
 }
 
 export const TicketTypeCategoryDisplay: Record<TicketTypeCategory, string> = {

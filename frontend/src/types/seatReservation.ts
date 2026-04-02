@@ -1,6 +1,6 @@
 import { SeatType } from './seat';
 
-export type ReservationStatus = 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'EXPIRED' | 'CHECKED_IN';
+export type ReservationStatus = 'PENDING' | 'CONFIRMED' | 'EXPIRED';
 
 export interface SeatReservationResponse {
     sessionId: number;
@@ -19,7 +19,7 @@ export interface SeatInfo {
     available: boolean;
     temporarilyReserved: boolean;
     active: boolean;
-    ticketPrices?: TicketPriceInfo[];
+    ticketPrices: TicketPriceInfo[];
 }
 
 export interface TicketPriceInfo {
@@ -31,7 +31,5 @@ export interface TicketPriceInfo {
 export const ReservationStatusDisplay: Record<ReservationStatus, string> = {
     PENDING: 'Pending',
     CONFIRMED: 'Confirmed',
-    CANCELLED: 'Cancelled',
-    EXPIRED: 'Expired',
-    CHECKED_IN: 'Checked In'
+    EXPIRED: 'Expired'
 };

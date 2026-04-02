@@ -16,22 +16,20 @@ export const SeatTypePriceMultiplier: Record<SeatType, number> = {
     [SeatType.COUPLE]: 1.8
 };
 
-export const isPremiumSeat = (seatType: SeatType): boolean => {
-    return seatType === SeatType.VIP || seatType === SeatType.COUPLE;
+export const getSeatCount = (seatType: SeatType): number => {
+    switch (seatType) {
+        case SeatType.COUPLE:
+            return 2;
+        default:
+            return 1;
+    }
 };
 
-export const requiresSpecialHandling = (seatType: SeatType): boolean => {
-    return seatType === SeatType.COUPLE;
+export const getSeatDisplayName = (seatType: SeatType): string => {
+    const seatsCount = getSeatCount(seatType);
+    const baseName = SeatTypeDisplay[seatType];
+    return seatsCount > 1 ? `${baseName} (${seatsCount} seats)` : baseName;
 };
-
-export interface Seat {
-    id: number;
-    row: number;
-    number: number;
-    seatType: SeatType;
-    active: boolean;
-    hall?: any;
-}
 
 export interface SeatResponse {
     id: number;
@@ -45,9 +43,4 @@ export interface SeatRowResponse {
     rowNumber: number;
     seatsCount: number;
     seats: SeatResponse[];
-}
-
-export interface SeatUpdateRequest {
-    seatType?: SeatType;
-    active?: boolean;
 }

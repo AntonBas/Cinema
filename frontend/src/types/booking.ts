@@ -37,6 +37,12 @@ export interface SeatReservationInfo {
     seatPrice: string;
 }
 
+export interface BookingTempHoldResponse {
+    bookingId: number;
+    expiresAt: string;
+    remainingSeconds: number;
+}
+
 export const BookingStatusDisplay: Record<BookingStatus, string> = {
     PENDING: 'Pending',
     CONFIRMED: 'Confirmed',

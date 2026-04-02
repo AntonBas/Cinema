@@ -34,9 +34,3 @@ export interface PromotionAdminResponse {
     startDate?: string;
     endDate?: string;
 }
-
-export const PromotionStatusDisplay: Record<string, string> = {
-    'active': 'Active',
-    'upcoming': 'Upcoming',
-    'expired': 'Expired'
-};
