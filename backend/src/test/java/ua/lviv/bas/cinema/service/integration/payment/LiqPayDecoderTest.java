@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.util;
+package ua.lviv.bas.cinema.service.integration.payment;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -6,8 +6,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
-
-import ua.lviv.bas.cinema.service.integration.payment.LiqPayDecoder;
 
 public class LiqPayDecoderTest {
 

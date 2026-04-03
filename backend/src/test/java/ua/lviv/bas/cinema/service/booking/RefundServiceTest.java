@@ -31,7 +31,6 @@ import ua.lviv.bas.cinema.domain.ticket.Ticket;
 import ua.lviv.bas.cinema.domain.ticket.TicketStatus;
 import ua.lviv.bas.cinema.domain.ticket.TicketType;
 import ua.lviv.bas.cinema.domain.user.User;
-import ua.lviv.bas.cinema.dto.payment.response.PaymentResponse;
 import ua.lviv.bas.cinema.dto.refund.request.RefundPreviewRequest;
 import ua.lviv.bas.cinema.dto.refund.response.RefundPreviewResponse;
 import ua.lviv.bas.cinema.dto.refund.response.RefundResponse;
@@ -42,7 +41,6 @@ import ua.lviv.bas.cinema.repository.booking.RefundRepository;
 import ua.lviv.bas.cinema.repository.ticket.TicketRepository;
 import ua.lviv.bas.cinema.service.bonus.BonusService;
 import ua.lviv.bas.cinema.service.integration.audit.AuditService;
-import ua.lviv.bas.cinema.service.integration.payment.PaymentGatewayService;
 import ua.lviv.bas.cinema.service.shared.NumberGeneratorService;
 
 @ExtendWith(MockitoExtension.class)
@@ -54,8 +52,6 @@ public class RefundServiceTest {
 	private RefundRepository refundRepository;
 	@Mock
 	private PaymentService paymentService;
-	@Mock
-	private PaymentGatewayService paymentGatewayService;
 	@Mock
 	private BonusService bonusService;
 	@Mock
@@ -155,11 +151,6 @@ public class RefundServiceTest {
 		when(refundRules.getPolicyName(testSession.getStartTime())).thenReturn("Standard Refund");
 		when(refundRules.getPolicyDescription(testSession.getStartTime())).thenReturn("70% refund before 3 hours");
 
-		PaymentResponse paymentResponse = new PaymentResponse(1L, 1L, "BK-2024-00123", "test@example.com", "Test Movie",
-				testSession.getStartTime(), "Hall 1", TICKET_PRICE, TICKET_PRICE, PaymentStatus.SUCCESS, "ORD123",
-				"PAY123", null, null, null, null, null, true);
-		when(paymentGatewayService.getPaymentStatus(testPayment.getLiqpayPaymentId())).thenReturn(paymentResponse);
-
 		RefundPreviewResponse response = refundService.getRefundPreview(previewRequest, USER_ID);
 
 		assertThat(response).isNotNull();
@@ -168,6 +159,21 @@ public class RefundServiceTest {
 		assertThat(response.refundPercentage()).isEqualTo(PERCENTAGE);
 		assertThat(response.refundAmount()).isEqualTo(REFUND_AMOUNT);
 		assertThat(response.bonusPointsToRefund()).isEqualTo(BONUS_POINTS_TO_REFUND);
+	}
+
+	@Test
+	void getRefundPreview_WhenPaymentNotSuccess_ShouldReturnNonRefundable() {
+		testPayment.setStatus(PaymentStatus.PENDING);
+
+		when(ticketRepository.findByIdAndUserIdAndStatus(TICKET_ID, USER_ID, TicketStatus.ACTIVE))
+				.thenReturn(Optional.of(testTicket));
+		when(refundRules.isRefundable(testSession.getStartTime())).thenReturn(true);
+
+		RefundPreviewResponse response = refundService.getRefundPreview(previewRequest, USER_ID);
+
+		assertThat(response).isNotNull();
+		assertThat(response.isRefundable()).isFalse();
+		assertThat(response.nonRefundableReason()).contains("Payment cannot be refunded via API");
 	}
 
 	@Test
@@ -210,7 +216,7 @@ public class RefundServiceTest {
 	void getUserRefunds_Success() {
 		RefundResponse refundResponse = new RefundResponse(1L, "RF-2024-00001", "PROCESSED", REFUND_AMOUNT,
 				BONUS_POINTS_TO_REFUND, "Reason", "System", LocalDateTime.now(), LocalDateTime.now(), 1L, "CARD",
-				Collections.emptyList(), "Message", "3-5 days");
+				Collections.emptyList(), "Refund processed successfully", "3-5 business days");
 
 		when(refundRepository.findByUserIdOrderByCreatedDateDesc(USER_ID)).thenReturn(List.of(testRefund));
 		when(refundMapper.toRefundResponse(testRefund)).thenReturn(refundResponse);

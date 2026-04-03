@@ -118,12 +118,18 @@ public class PaymentServiceTest {
 		when(bookingRepository.findByIdAndUserId(BOOKING_ID, USER_ID)).thenReturn(Optional.of(testBooking));
 		when(paymentRepository.findByBookingId(BOOKING_ID)).thenReturn(Optional.empty());
 		when(numberGenerator.generateLiqpayOrderId()).thenReturn("ORD_NEW123456789");
-		when(paymentRepository.save(any(Payment.class))).thenReturn(testPayment);
 		when(numberGenerator.generateBookingNumber(testBooking)).thenReturn("BK-2024-00001");
+		when(paymentRepository.save(any(Payment.class))).thenReturn(testPayment);
 
 		PaymentResponse response = paymentService.createPayment(createRequest, testUser);
 
 		assertThat(response).isNotNull();
+		assertThat(response.bookingNumber()).isEqualTo("BK-2024-00001");
+		assertThat(response.movieTitle()).isEqualTo("Test Movie");
+		assertThat(response.hallName()).isEqualTo("Hall A");
+		assertThat(response.finalAmount()).isEqualTo(AMOUNT);
+		assertThat(response.status()).isEqualTo(PaymentStatus.PENDING);
+
 		verify(paymentRepository).save(any(Payment.class));
 	}
 
@@ -152,7 +158,11 @@ public class PaymentServiceTest {
 		PaymentResponse response = paymentService.getPaymentStatus(PAYMENT_ID, testUser);
 
 		assertThat(response).isNotNull();
-		assertThat(response.id()).isEqualTo(PAYMENT_ID);
+		assertThat(response.bookingNumber()).isEqualTo("BK-2024-00001");
+		assertThat(response.movieTitle()).isEqualTo("Test Movie");
+		assertThat(response.hallName()).isEqualTo("Hall A");
+		assertThat(response.finalAmount()).isEqualTo(AMOUNT);
+		assertThat(response.status()).isEqualTo(PaymentStatus.PENDING);
 	}
 
 	@Test
@@ -179,13 +189,13 @@ public class PaymentServiceTest {
 
 		when(paymentRepository.findById(PAYMENT_ID)).thenReturn(Optional.of(testPayment));
 		when(numberGenerator.generateLiqpayOrderId()).thenReturn("ORD_NEW789");
-		when(paymentRepository.save(testPayment)).thenReturn(testPayment);
 		when(numberGenerator.generateBookingNumber(testBooking)).thenReturn("BK-2024-00001");
+		when(paymentRepository.save(testPayment)).thenReturn(testPayment);
 
 		PaymentResponse response = paymentService.retryPayment(PAYMENT_ID, testUser);
 
 		assertThat(response).isNotNull();
-		assertThat(testPayment.getStatus()).isEqualTo(PaymentStatus.PENDING);
+		assertThat(response.status()).isEqualTo(PaymentStatus.PENDING);
 	}
 
 	@Test
@@ -208,6 +218,8 @@ public class PaymentServiceTest {
 	void processSuccessfulPayment_Success() {
 		Map<String, String> callbackData = new HashMap<>();
 		callbackData.put("payment_id", "PAY123");
+		callbackData.put("transaction_id", "TXN123");
+		callbackData.put("sender_card_mask", "****1234");
 
 		List<Ticket> tickets = Arrays.asList(Ticket.builder().build());
 
@@ -219,6 +231,10 @@ public class PaymentServiceTest {
 		paymentService.processSuccessfulPayment(testPayment, callbackData);
 
 		assertThat(testPayment.getStatus()).isEqualTo(PaymentStatus.SUCCESS);
+		assertThat(testPayment.getLiqpayPaymentId()).isEqualTo("PAY123");
+		assertThat(testPayment.getLiqpaySenderCardMask()).isEqualTo("****1234");
+		assertThat(testPayment.getPaymentTime()).isNotNull();
+
 		verify(bookingService).confirmBooking(BOOKING_ID);
 		verify(ticketService).createTicketsForBooking(testBooking, testPayment);
 		verify(bonusService).accruePoints(USER_ID, 20, testBooking, testPayment);
@@ -227,22 +243,26 @@ public class PaymentServiceTest {
 	@Test
 	void processFailedPayment_Success() {
 		Map<String, String> callbackData = new HashMap<>();
+		callbackData.put("err_code", "ERR_001");
 		callbackData.put("err_description", "Insufficient funds");
 
 		paymentService.processFailedPayment(testPayment, callbackData);
 
 		assertThat(testPayment.getStatus()).isEqualTo(PaymentStatus.FAILED);
+		assertThat(testPayment.getLiqpayErrorCode()).isEqualTo("ERR_001");
+		assertThat(testPayment.getLiqpayErrorDescription()).isEqualTo("Insufficient funds");
 	}
 
 	@Test
 	void refundPayment_Success() {
 		testPayment.setStatus(PaymentStatus.SUCCESS);
 		testPayment.setLiqpayPaymentId("PAY123");
+		testPayment.setLiqpayOrderId("ORD_123");
 		BigDecimal refundAmount = new BigDecimal("100.00");
 		String description = "Test refund";
 
-		when(paymentGatewayService.prepareRefundData("PAY123", testPayment.getLiqpayOrderId(), refundAmount,
-				description)).thenReturn("refund_data");
+		when(paymentGatewayService.prepareRefundData("PAY123", "ORD_123", refundAmount, description))
+				.thenReturn("refund_data");
 		when(paymentRepository.save(testPayment)).thenReturn(testPayment);
 
 		paymentService.refundPayment(testPayment, refundAmount, description);
@@ -264,11 +284,12 @@ public class PaymentServiceTest {
 	void refundPayment_WhenFullRefund_ShouldMarkAsFullyRefunded() {
 		testPayment.setStatus(PaymentStatus.SUCCESS);
 		testPayment.setLiqpayPaymentId("PAY123");
+		testPayment.setLiqpayOrderId("ORD_123");
 		BigDecimal refundAmount = AMOUNT;
 		String description = "Full refund";
 
-		when(paymentGatewayService.prepareRefundData("PAY123", testPayment.getLiqpayOrderId(), refundAmount,
-				description)).thenReturn("refund_data");
+		when(paymentGatewayService.prepareRefundData("PAY123", "ORD_123", refundAmount, description))
+				.thenReturn("refund_data");
 		when(paymentRepository.save(testPayment)).thenReturn(testPayment);
 
 		paymentService.refundPayment(testPayment, refundAmount, description);

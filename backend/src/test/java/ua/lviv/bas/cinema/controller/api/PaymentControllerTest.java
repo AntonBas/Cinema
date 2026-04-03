@@ -50,10 +50,14 @@ public class PaymentControllerTest {
 		userDetails = new CustomUserDetails(testUser);
 	}
 
-	private PaymentResponse createPaymentResponse(Long id) {
-		return new PaymentResponse(id, 100L, "BK-123456", "user@example.com", "Test Movie", LocalDateTime.now(),
-				"Hall A", new BigDecimal("150.00"), new BigDecimal("150.00"), PaymentStatus.PENDING, "ORDER_ABC123",
-				null, null, null, null, null, null, null);
+	private PaymentResponse createPaymentResponse() {
+		return new PaymentResponse("BK-123456", "Test Movie", LocalDateTime.now(), "Hall A", new BigDecimal("150.00"),
+				PaymentStatus.PENDING, null, null, null);
+	}
+
+	private PaymentResponse createPaymentResponseWithSuccess() {
+		return new PaymentResponse("BK-123456", "Test Movie", LocalDateTime.now(), "Hall A", new BigDecimal("150.00"),
+				PaymentStatus.SUCCESS, LocalDateTime.now(), "****1234", null);
 	}
 
 	private PaymentLiqPayDataResponse createLiqPayDataResponse() {
@@ -65,7 +69,7 @@ public class PaymentControllerTest {
 	void createPayment_ShouldCreateSuccessfully() {
 		PaymentCreateRequest request = new PaymentCreateRequest(100L);
 
-		PaymentResponse paymentResponse = createPaymentResponse(1L);
+		PaymentResponse paymentResponse = createPaymentResponse();
 
 		when(paymentService.createPayment(any(PaymentCreateRequest.class), eq(testUser))).thenReturn(paymentResponse);
 
@@ -73,7 +77,10 @@ public class PaymentControllerTest {
 
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
 		assertThat(response.getBody()).isNotNull();
-		assertThat(response.getBody().id()).isEqualTo(1L);
+		assertThat(response.getBody().bookingNumber()).isEqualTo("BK-123456");
+		assertThat(response.getBody().movieTitle()).isEqualTo("Test Movie");
+		assertThat(response.getBody().hallName()).isEqualTo("Hall A");
+		assertThat(response.getBody().status()).isEqualTo(PaymentStatus.PENDING);
 	}
 
 	@Test
@@ -96,7 +103,7 @@ public class PaymentControllerTest {
 	void getPaymentById_ShouldReturnPayment() {
 		Long paymentId = 1L;
 
-		PaymentResponse paymentResponse = createPaymentResponse(paymentId);
+		PaymentResponse paymentResponse = createPaymentResponseWithSuccess();
 
 		when(paymentService.getPaymentStatus(eq(paymentId), eq(testUser))).thenReturn(paymentResponse);
 
@@ -104,6 +111,10 @@ public class PaymentControllerTest {
 
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 		assertThat(response.getBody()).isNotNull();
-		assertThat(response.getBody().id()).isEqualTo(paymentId);
+		assertThat(response.getBody().bookingNumber()).isEqualTo("BK-123456");
+		assertThat(response.getBody().movieTitle()).isEqualTo("Test Movie");
+		assertThat(response.getBody().hallName()).isEqualTo("Hall A");
+		assertThat(response.getBody().status()).isEqualTo(PaymentStatus.SUCCESS);
+		assertThat(response.getBody().senderCardMask()).isEqualTo("****1234");
 	}
 }
