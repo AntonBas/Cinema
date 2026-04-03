@@ -5,52 +5,40 @@ import { useApi } from '@/hooks/common/useApi';
 import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
 
 export const useSeats = () => {
-    const mutationApi = useApi<SeatResponse>();
+    const updateSeatTypeApi = useApi<SeatResponse>();
+    const setSeatStatusApi = useApi<SeatResponse>();
 
-    const rawLoading = mutationApi.loading;
+    const rawLoading = updateSeatTypeApi.loading || setSeatStatusApi.loading;
     const loading = useDelayedLoading(rawLoading, { delay: 150, minDisplayTime: 300 });
-    const error = !!mutationApi.error;
+    const error = !!updateSeatTypeApi.error || !!setSeatStatusApi.error;
 
     const updateSeatType = useCallback(async (hallId: number, seatId: number, seatType: SeatType) => {
-        const response = await mutationApi.execute(
+        const response = await updateSeatTypeApi.execute(
             () => seatApi.admin.updateSeatType(hallId, seatId, seatType),
-            {
-                successMessage: 'Seat type updated successfully',
-                showErrorNotification: true,
-            }
+            { successMessage: 'Seat type updated successfully' }
         );
         return response || null;
-    }, [mutationApi]);
+    }, [updateSeatTypeApi]);
 
     const setSeatStatus = useCallback(async (hallId: number, seatId: number, active: boolean) => {
-        const response = await mutationApi.execute(
+        const response = await setSeatStatusApi.execute(
             () => seatApi.admin.setSeatStatus(hallId, seatId, active),
-            {
-                successMessage: active ? 'Seat activated successfully' : 'Seat deactivated successfully',
-                showErrorNotification: true,
-            }
+            { successMessage: active ? 'Seat activated successfully' : 'Seat deactivated successfully' }
         );
         return response || null;
-    }, [mutationApi]);
-
-    const clearCache = useCallback(() => {
-        mutationApi.invalidateCache();
-    }, [mutationApi]);
+    }, [setSeatStatusApi]);
 
     const reset = useCallback(() => {
-        mutationApi.reset();
-    }, [mutationApi]);
+        updateSeatTypeApi.reset();
+        setSeatStatusApi.reset();
+    }, [updateSeatTypeApi, setSeatStatusApi]);
 
     return {
         loading,
         error,
-
         updateSeatType,
         setSeatStatus,
-
-        clearCache,
         reset,
-
-        lastResult: mutationApi.data,
+        lastResult: updateSeatTypeApi.data || setSeatStatusApi.data,
     };
 };

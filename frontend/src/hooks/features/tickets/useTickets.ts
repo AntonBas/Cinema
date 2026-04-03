@@ -6,91 +6,66 @@ import { useApi } from '@/hooks/common/useApi';
 import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
 
 export const useTickets = () => {
-    const ticketsApi = useApi<PageResponse<TicketResponse>>();
-    const ticketApiInstance = useApi<TicketResponse>();
-    const qrCodeApi = useApi<Blob>();
-    const mutationApi = useApi<void>();
+    const getUserTicketsApi = useApi<PageResponse<TicketResponse>>();
+    const getTicketByCodeApi = useApi<TicketResponse>();
+    const getQRCodeApi = useApi<Blob>();
+    const validateTicketApi = useApi<void>();
 
-    const rawLoading = ticketsApi.loading || ticketApiInstance.loading ||
-        qrCodeApi.loading || mutationApi.loading;
+    const rawLoading = getUserTicketsApi.loading || getTicketByCodeApi.loading ||
+        getQRCodeApi.loading || validateTicketApi.loading;
     const loading = useDelayedLoading(rawLoading, { delay: 150, minDisplayTime: 300 });
-    const error = !!(ticketsApi.error || ticketApiInstance.error ||
-        qrCodeApi.error || mutationApi.error);
+    const error = !!(getUserTicketsApi.error || getTicketByCodeApi.error ||
+        getQRCodeApi.error || validateTicketApi.error);
 
     const getUserTickets = useCallback(async (params?: SearchParams & TicketFilterRequest) => {
-        const response = await ticketsApi.execute(
+        const response = await getUserTicketsApi.execute(
             () => ticketApi.getUserTickets(params),
-            {
-                cacheKey: `user_tickets_${JSON.stringify(params)}`,
-                cacheTime: 30 * 1000,
-                showErrorNotification: false,
-            }
+            { showErrorNotification: false }
         );
         return response || null;
-    }, [ticketsApi]);
+    }, [getUserTicketsApi]);
 
     const getByCode = useCallback(async (ticketCode: string) => {
-        const response = await ticketApiInstance.execute(
+        const response = await getTicketByCodeApi.execute(
             () => ticketApi.getByCode(ticketCode),
-            {
-                cacheKey: `ticket_${ticketCode}`,
-                cacheTime: 5 * 60 * 1000,
-                showErrorNotification: false,
-            }
+            { showErrorNotification: false }
         );
         return response || null;
-    }, [ticketApiInstance]);
+    }, [getTicketByCodeApi]);
 
     const getQRCode = useCallback(async (ticketCode: string) => {
-        const response = await qrCodeApi.execute(
+        const response = await getQRCodeApi.execute(
             () => ticketApi.getQRCode(ticketCode),
-            {
-                cacheKey: `qr_${ticketCode}`,
-                cacheTime: 24 * 60 * 60 * 1000,
-                showErrorNotification: false,
-            }
+            { showErrorNotification: false }
         );
         return response || null;
-    }, [qrCodeApi]);
+    }, [getQRCodeApi]);
 
     const validate = useCallback(async (ticketCode: string) => {
-        await mutationApi.execute(
+        await validateTicketApi.execute(
             () => ticketApi.validate(ticketCode),
-            {
-                successMessage: 'Ticket validated successfully',
-            }
+            { successMessage: 'Ticket validated successfully' }
         );
-        ticketApiInstance.invalidateCache(`ticket_${ticketCode}`);
-    }, [mutationApi, ticketApiInstance]);
-
-    const clearCache = useCallback(() => {
-        ticketsApi.invalidateCache();
-        ticketApiInstance.invalidateCache();
-        qrCodeApi.invalidateCache();
-        mutationApi.invalidateCache();
-    }, [ticketsApi, ticketApiInstance, qrCodeApi, mutationApi]);
+    }, [validateTicketApi]);
 
     const resetAll = useCallback(() => {
-        ticketsApi.reset();
-        ticketApiInstance.reset();
-        qrCodeApi.reset();
-        mutationApi.reset();
-    }, [ticketsApi, ticketApiInstance, qrCodeApi, mutationApi]);
+        getUserTicketsApi.reset();
+        getTicketByCodeApi.reset();
+        getQRCodeApi.reset();
+        validateTicketApi.reset();
+    }, [getUserTicketsApi, getTicketByCodeApi, getQRCodeApi, validateTicketApi]);
 
     return {
-        tickets: ticketsApi.data?.content || [],
-        pagination: ticketsApi.data,
-        ticket: ticketApiInstance.data,
-        qrCode: qrCodeApi.data,
-
+        tickets: getUserTicketsApi.data?.content || [],
+        pagination: getUserTicketsApi.data,
+        ticket: getTicketByCodeApi.data,
+        qrCode: getQRCodeApi.data,
         loading,
         error,
-
         getUserTickets,
         getByCode,
         getQRCode,
         validate,
-        clearCache,
         resetAll,
     };
 };

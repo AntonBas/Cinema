@@ -27,47 +27,46 @@ export const useAdminUsers = () => {
     const error = !!(usersApi.error || mutationApi.error);
 
     const getUsers = useCallback(async (params?: AdminUsersParams) => {
-        const cacheKey = `admin_users_${JSON.stringify(params || {})}`;
-
         const response = await usersApi.execute(
             () => adminApi.getUsers(params || {}),
             {
-                cacheKey,
-                cacheTime: 30 * 1000,
                 showErrorNotification: false,
             }
         );
-
         return response || null;
     }, [usersApi]);
 
     const updateUserRole = useCallback(async (userId: number, userRole: UserRole) => {
         const roleData: UserRoleUpdateRequest = { userRole };
 
+        const user = usersApi.data?.content?.find(u => u.id === userId);
+        const userName = user ? `${user.firstName} ${user.lastName}` : 'User';
+
         const response = await mutationApi.execute(
             () => adminApi.updateUserRole(userId, roleData),
             {
-                successMessage: 'User role updated successfully',
+                successMessage: `${userName} role updated successfully`,
             }
         );
-
-        usersApi.invalidateCache();
         return response || null;
-    }, [mutationApi, usersApi]);
+    }, [mutationApi, usersApi.data]);
 
     const updateUserStatus = useCallback(async (userId: number, enabled: boolean) => {
         const statusData: UserStatusUpdateRequest = { enabled };
 
+        const user = usersApi.data?.content?.find(u => u.id === userId);
+        const userName = user ? `${user.firstName} ${user.lastName}` : 'User';
+
         const response = await mutationApi.execute(
             () => adminApi.updateUserStatus(userId, statusData),
             {
-                successMessage: enabled ? 'User activated successfully' : 'User deactivated successfully',
+                successMessage: enabled
+                    ? `${userName} activated successfully`
+                    : `${userName} deactivated successfully`,
             }
         );
-
-        usersApi.invalidateCache();
         return response || null;
-    }, [mutationApi, usersApi]);
+    }, [mutationApi, usersApi.data]);
 
     const updateBirthDateVerification = useCallback(async (
         userId: number,
@@ -75,26 +74,22 @@ export const useAdminUsers = () => {
     ) => {
         const verificationData: VerificationBirthDateRequest = { verificationStatus };
 
+        const user = usersApi.data?.content?.find(u => u.id === userId);
+        const userName = user ? `${user.firstName} ${user.lastName}` : 'User';
+        const statusText = verificationStatus === 'VERIFIED' ? 'verified' : 'unverified';
+
         const response = await mutationApi.execute(
             () => adminApi.updateBirthDateVerification(userId, verificationData),
             {
-                successMessage: 'Verification status updated successfully',
+                successMessage: `${userName} birth date ${statusText}`,
             }
         );
-
-        usersApi.invalidateCache();
         return response || null;
-    }, [mutationApi, usersApi]);
+    }, [mutationApi, usersApi.data]);
 
     const refreshUsers = useCallback(async (params?: AdminUsersParams) => {
-        usersApi.invalidateCache();
         return getUsers(params);
-    }, [usersApi, getUsers]);
-
-    const clearCache = useCallback(() => {
-        usersApi.invalidateCache();
-        mutationApi.invalidateCache();
-    }, [usersApi, mutationApi]);
+    }, [getUsers]);
 
     return {
         users: usersApi.data?.content || [],
@@ -102,22 +97,11 @@ export const useAdminUsers = () => {
         loading,
         error,
         isSuccess: !!usersApi.data,
-        isCached: usersApi.isCached,
-
         getUsers,
         refreshUsers,
         updateUserRole,
         updateUserStatus,
         updateBirthDateVerification,
-        clearCache,
         resetUsers: usersApi.reset,
-
-        currentPage: usersApi.data?.number || 0,
-        totalPages: usersApi.data?.totalPages || 0,
-        totalElements: usersApi.data?.totalElements || 0,
-        pageSize: usersApi.data?.size || 10,
-        isEmpty: usersApi.data?.empty || false,
-        isFirstPage: usersApi.data?.first || true,
-        isLastPage: usersApi.data?.last || true,
     };
 };

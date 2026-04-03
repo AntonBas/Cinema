@@ -29,8 +29,6 @@ export const useBooking = () => {
         const response = await bookingByIdApi.execute(
             () => bookingApi.getById(bookingId),
             {
-                cacheKey: `booking_${bookingId}`,
-                cacheTime: 2 * 60 * 1000,
                 showErrorNotification: false,
             }
         );
@@ -44,13 +42,7 @@ export const useBooking = () => {
                 successMessage: 'Booking cancelled successfully',
             }
         );
-        bookingByIdApi.invalidateCache(`booking_${bookingId}`);
-    }, [mutationApi, bookingByIdApi]);
-
-    const clearCache = useCallback(() => {
-        bookingByIdApi.invalidateCache();
-        mutationApi.invalidateCache();
-    }, [bookingByIdApi, mutationApi]);
+    }, [mutationApi]);
 
     const resetAll = useCallback(() => {
         bookingByIdApi.reset();
@@ -59,14 +51,11 @@ export const useBooking = () => {
 
     return {
         booking: bookingByIdApi.data,
-
         loading,
         error,
-
         create,
         getById,
         cancel,
-        clearCache,
         resetAll,
     };
 };

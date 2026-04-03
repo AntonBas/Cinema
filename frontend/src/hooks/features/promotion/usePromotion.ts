@@ -12,125 +12,94 @@ import { useApi } from '@/hooks/common/useApi';
 import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
 
 export const usePromotion = () => {
-    const userPromotionsApi = useApi<PromotionResponse[]>();
-    const adminPromotionsApi = useApi<PageResponse<PromotionAdminResponse>>();
-    const promotionApiInstance = useApi<PromotionResponse>();
-    const mutationApi = useApi<PromotionResponse | void>();
+    const getAvailablePromotionsApi = useApi<PromotionResponse[]>();
+    const getAllPromotionsApi = useApi<PageResponse<PromotionAdminResponse>>();
+    const getPromotionByIdApi = useApi<PromotionResponse>();
+    const claimPromotionApi = useApi<PromotionResponse>();
+    const createPromotionApi = useApi<PromotionResponse>();
+    const updatePromotionApi = useApi<PromotionResponse>();
+    const deletePromotionApi = useApi<void>();
 
-    const rawLoading = userPromotionsApi.loading || adminPromotionsApi.loading ||
-        promotionApiInstance.loading || mutationApi.loading;
+    const rawLoading = getAvailablePromotionsApi.loading || getAllPromotionsApi.loading ||
+        getPromotionByIdApi.loading || claimPromotionApi.loading || createPromotionApi.loading ||
+        updatePromotionApi.loading || deletePromotionApi.loading;
     const loading = useDelayedLoading(rawLoading, { delay: 150, minDisplayTime: 300 });
-    const error = !!(userPromotionsApi.error || adminPromotionsApi.error ||
-        promotionApiInstance.error || mutationApi.error);
+    const error = !!(getAvailablePromotionsApi.error || getAllPromotionsApi.error ||
+        getPromotionByIdApi.error || claimPromotionApi.error || createPromotionApi.error ||
+        updatePromotionApi.error || deletePromotionApi.error);
 
     const getAvailable = useCallback(async () => {
-        const response = await userPromotionsApi.execute(
+        const response = await getAvailablePromotionsApi.execute(
             () => promotionApi.user.getAvailable(),
-            {
-                cacheKey: 'available_promotions',
-                cacheTime: 2 * 60 * 1000,
-                showErrorNotification: false,
-            }
+            { showErrorNotification: false }
         );
         return response || null;
-    }, [userPromotionsApi]);
+    }, [getAvailablePromotionsApi]);
 
-    const claimPromotion = useCallback(async (request: UserPromotionCreateRequest) => {
-        const response = await mutationApi.execute(
+    const claimPromotion = useCallback(async (request: UserPromotionCreateRequest, promotionName?: string) => {
+        const response = await claimPromotionApi.execute(
             () => promotionApi.user.claim(request),
-            {
-                successMessage: 'Promotion claimed successfully',
-            }
+            { successMessage: `Promotion "${promotionName || request.promotionId}" claimed successfully` }
         );
-        userPromotionsApi.invalidateCache('available_promotions');
         return response || null;
-    }, [mutationApi, userPromotionsApi]);
+    }, [claimPromotionApi]);
 
     const getById = useCallback(async (promotionId: number) => {
-        const response = await promotionApiInstance.execute(
+        const response = await getPromotionByIdApi.execute(
             () => promotionApi.admin.getById(promotionId),
-            {
-                cacheKey: `promotion_${promotionId}`,
-                cacheTime: 2 * 60 * 1000,
-                showErrorNotification: false,
-            }
+            { showErrorNotification: false }
         );
         return response || null;
-    }, [promotionApiInstance]);
+    }, [getPromotionByIdApi]);
 
     const getAll = useCallback(async (pageable?: { page: number; size: number; sort?: string[] }) => {
-        adminPromotionsApi.invalidateCache(`all_promotions_${JSON.stringify(pageable)}`);
-        const response = await adminPromotionsApi.execute(
+        const response = await getAllPromotionsApi.execute(
             () => promotionApi.admin.getAll(pageable),
-            {
-                cacheKey: `all_promotions_${JSON.stringify(pageable)}`,
-                cacheTime: 2 * 60 * 1000,
-                showErrorNotification: false,
-            }
+            { showErrorNotification: false }
         );
         return response || null;
-    }, [adminPromotionsApi]);
+    }, [getAllPromotionsApi]);
 
     const create = useCallback(async (request: PromotionCreateRequest) => {
-        const response = await mutationApi.execute(
+        const response = await createPromotionApi.execute(
             () => promotionApi.admin.create(request),
-            {
-                successMessage: 'Promotion created successfully',
-            }
+            { successMessage: `Promotion "${request.title}" created successfully` }
         );
-        adminPromotionsApi.invalidateCache();
-        userPromotionsApi.invalidateCache('available_promotions');
         return response || null;
-    }, [mutationApi, adminPromotionsApi, userPromotionsApi]);
+    }, [createPromotionApi]);
 
-    const update = useCallback(async (promotionId: number, request: PromotionUpdateRequest) => {
-        const response = await mutationApi.execute(
+    const update = useCallback(async (promotionId: number, request: PromotionUpdateRequest, oldTitle?: string) => {
+        const response = await updatePromotionApi.execute(
             () => promotionApi.admin.update(promotionId, request),
-            {
-                successMessage: 'Promotion updated successfully',
-            }
+            { successMessage: `Promotion "${oldTitle || request.title}" updated successfully` }
         );
-        promotionApiInstance.invalidateCache(`promotion_${promotionId}`);
-        adminPromotionsApi.invalidateCache();
-        userPromotionsApi.invalidateCache('available_promotions');
         return response || null;
-    }, [mutationApi, promotionApiInstance, adminPromotionsApi, userPromotionsApi]);
+    }, [updatePromotionApi]);
 
-    const remove = useCallback(async (promotionId: number) => {
-        await mutationApi.execute(
+    const remove = useCallback(async (promotionId: number, promotionTitle?: string) => {
+        await deletePromotionApi.execute(
             () => promotionApi.admin.delete(promotionId),
-            {
-                successMessage: 'Promotion deleted successfully',
-            }
+            { successMessage: `Promotion "${promotionTitle || promotionId}" deleted successfully` }
         );
-        promotionApiInstance.invalidateCache(`promotion_${promotionId}`);
-        adminPromotionsApi.invalidateCache();
-        userPromotionsApi.invalidateCache('available_promotions');
-    }, [mutationApi, promotionApiInstance, adminPromotionsApi, userPromotionsApi]);
-
-    const clearCache = useCallback(() => {
-        userPromotionsApi.invalidateCache();
-        adminPromotionsApi.invalidateCache();
-        promotionApiInstance.invalidateCache();
-        mutationApi.invalidateCache();
-    }, [userPromotionsApi, adminPromotionsApi, promotionApiInstance, mutationApi]);
+    }, [deletePromotionApi]);
 
     const resetAll = useCallback(() => {
-        userPromotionsApi.reset();
-        adminPromotionsApi.reset();
-        promotionApiInstance.reset();
-        mutationApi.reset();
-    }, [userPromotionsApi, adminPromotionsApi, promotionApiInstance, mutationApi]);
+        getAvailablePromotionsApi.reset();
+        getAllPromotionsApi.reset();
+        getPromotionByIdApi.reset();
+        claimPromotionApi.reset();
+        createPromotionApi.reset();
+        updatePromotionApi.reset();
+        deletePromotionApi.reset();
+    }, [getAvailablePromotionsApi, getAllPromotionsApi, getPromotionByIdApi, claimPromotionApi, createPromotionApi, updatePromotionApi, deletePromotionApi]);
 
     return {
-        availablePromotions: userPromotionsApi.data || [],
-        promotion: promotionApiInstance.data,
-        promotionsPage: adminPromotionsApi.data,
-        promotions: adminPromotionsApi.data?.content || [],
-
+        availablePromotions: getAvailablePromotionsApi.data || [],
+        promotion: getPromotionByIdApi.data,
+        promotionsPage: getAllPromotionsApi.data,
+        promotions: getAllPromotionsApi.data?.content || [],
         loading,
         error,
-
         getAvailable,
         claimPromotion,
         getById,
@@ -138,7 +107,6 @@ export const usePromotion = () => {
         create,
         update,
         remove,
-        clearCache,
         resetAll,
     };
 };

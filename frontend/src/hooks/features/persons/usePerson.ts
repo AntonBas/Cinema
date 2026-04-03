@@ -16,107 +16,83 @@ interface PersonSearchParams extends SearchParams {
 }
 
 export const usePerson = () => {
-    const personsApi = useApi<PageResponse<PersonResponse>>();
-    const personApiInstance = useApi<PersonResponse>();
-    const mutationApi = useApi<PersonResponse | void>();
+    const getAllPersonsApi = useApi<PageResponse<PersonResponse>>();
+    const getPersonByIdApi = useApi<PersonResponse>();
+    const createPersonApi = useApi<PersonResponse>();
+    const quickCreatePersonApi = useApi<PersonResponse>();
+    const updatePersonApi = useApi<PersonResponse>();
+    const deletePersonApi = useApi<void>();
 
-    const rawLoading = personsApi.loading || personApiInstance.loading || mutationApi.loading;
+    const rawLoading = getAllPersonsApi.loading || getPersonByIdApi.loading ||
+        createPersonApi.loading || quickCreatePersonApi.loading ||
+        updatePersonApi.loading || deletePersonApi.loading;
     const loading = useDelayedLoading(rawLoading, { delay: 150, minDisplayTime: 300 });
-    const error = !!(personsApi.error || personApiInstance.error || mutationApi.error);
+    const error = !!(getAllPersonsApi.error || getPersonByIdApi.error ||
+        createPersonApi.error || quickCreatePersonApi.error ||
+        updatePersonApi.error || deletePersonApi.error);
 
     const getAll = useCallback(async (params?: PersonSearchParams) => {
-        const response = await personsApi.execute(
+        const response = await getAllPersonsApi.execute(
             () => personApi.admin.getAll(params),
-            {
-                cacheKey: `persons_all_${JSON.stringify(params)}`,
-                cacheTime: 5 * 60 * 1000,
-                showErrorNotification: false,
-            }
+            { showErrorNotification: false }
         );
         return response;
-    }, []);
+    }, [getAllPersonsApi]);
 
     const getById = useCallback(async (id: number, isAdmin: boolean = false) => {
-        const cacheKey = isAdmin ? `admin_person_${id}` : `person_${id}`;
         const apiCall = isAdmin
             ? () => personApi.admin.getById(id)
             : () => personApi.public.getById(id);
-        const response = await personApiInstance.execute(apiCall, {
-            cacheKey,
-            cacheTime: 10 * 60 * 1000,
+        const response = await getPersonByIdApi.execute(apiCall, {
             showErrorNotification: false,
         });
         return response;
-    }, []);
+    }, [getPersonByIdApi]);
 
     const create = useCallback(async (request: PersonRequest) => {
-        const response = await mutationApi.execute(
+        const response = await createPersonApi.execute(
             () => personApi.admin.create(request),
-            {
-                successMessage: 'Person created successfully',
-            }
+            { successMessage: `Person "${request.name}" created successfully` }
         );
-        personsApi.invalidateCache();
         return response;
-    }, []);
+    }, [createPersonApi]);
 
     const quickCreate = useCallback(async (request: QuickCreatePersonRequest) => {
-        const response = await mutationApi.execute(
+        const response = await quickCreatePersonApi.execute(
             () => personApi.admin.quickCreate(request),
-            {
-                successMessage: 'Person created successfully',
-            }
+            { successMessage: `Person "${request.name}" created successfully` }
         );
-        personsApi.invalidateCache();
         return response;
-    }, []);
+    }, [quickCreatePersonApi]);
 
-    const update = useCallback(async (id: number, request: PersonRequest) => {
-        const response = await mutationApi.execute(
+    const update = useCallback(async (id: number, request: PersonRequest, oldName?: string) => {
+        const response = await updatePersonApi.execute(
             () => personApi.admin.update(id, request),
-            {
-                successMessage: 'Person updated successfully',
-            }
+            { successMessage: `Person "${oldName || request.name}" updated successfully` }
         );
-        personApiInstance.invalidateCache(`person_${id}`);
-        personApiInstance.invalidateCache(`admin_person_${id}`);
-        personsApi.invalidateCache();
         return response;
-    }, []);
+    }, [updatePersonApi]);
 
-    const remove = useCallback(async (id: number) => {
-        await mutationApi.execute(
+    const remove = useCallback(async (id: number, personName?: string) => {
+        await deletePersonApi.execute(
             () => personApi.admin.delete(id),
-            {
-                successMessage: 'Person deleted successfully',
-            }
+            { successMessage: `Person "${personName || id}" deleted successfully` }
         );
-        personApiInstance.invalidateCache(`person_${id}`);
-        personApiInstance.invalidateCache(`admin_person_${id}`);
-        personsApi.invalidateCache();
-    }, []);
-
-    const clearCache = useCallback(() => {
-        personsApi.invalidateCache();
-        personApiInstance.invalidateCache();
-        mutationApi.invalidateCache();
-    }, []);
+    }, [deletePersonApi]);
 
     const resetAll = useCallback(() => {
-        personsApi.reset();
-        personApiInstance.reset();
-        mutationApi.reset();
-    }, []);
+        getAllPersonsApi.reset();
+        getPersonByIdApi.reset();
+        createPersonApi.reset();
+        quickCreatePersonApi.reset();
+        updatePersonApi.reset();
+        deletePersonApi.reset();
+    }, [getAllPersonsApi, getPersonByIdApi, createPersonApi, quickCreatePersonApi, updatePersonApi, deletePersonApi]);
 
     return {
-        allPersons: personsApi.data?.content || [],
-        person: personApiInstance.data,
-        pagination: personsApi.data,
-        currentPage: personsApi.data?.number || 0,
-        totalPages: personsApi.data?.totalPages || 0,
-        totalElements: personsApi.data?.totalElements || 0,
-        pageSize: personsApi.data?.size || 12,
-        isEmpty: personsApi.data?.empty || false,
+        allPersons: getAllPersonsApi.data?.content || [],
+        person: getPersonByIdApi.data,
+        pagination: getAllPersonsApi.data,
         loading,
         error,
         getAll,
@@ -125,7 +101,6 @@ export const usePerson = () => {
         quickCreate,
         update,
         remove,
-        clearCache,
         resetAll,
     };
 };

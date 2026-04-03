@@ -3,28 +3,18 @@ import { useNotification } from './useNotification';
 import { isApiErrorException, ApiErrorException } from '@/utils/apiErrorHandler';
 import type { AxiosResponse } from 'axios';
 
-interface CacheItem<T> {
-    data: T;
-    timestamp: number;
-    expiresAt: number;
-}
-
 interface UseApiState<T> {
     data: T | null;
     loading: boolean;
     error: Error | ApiErrorException | null;
-    isCached: boolean;
     timestamp: number | null;
 }
 
 interface UseApiOptions<T> {
     showErrorNotification?: boolean;
     successMessage?: string;
-    cacheKey?: string;
-    cacheTime?: number;
     onSuccess?: (data: T) => void;
     onError?: (error: Error | ApiErrorException) => void;
-    enabled?: boolean;
 }
 
 export const useApi = <T = any>() => {
@@ -32,13 +22,11 @@ export const useApi = <T = any>() => {
         data: null,
         loading: false,
         error: null,
-        isCached: false,
         timestamp: null
     });
 
     const { showNotification } = useNotification();
     const abortControllerRef = useRef<AbortController | null>(null);
-    const cacheRef = useRef<Map<string, CacheItem<T>>>(new Map());
     const mountedRef = useRef(true);
     const loadingRef = useRef(false);
 
@@ -50,33 +38,6 @@ export const useApi = <T = any>() => {
                 abortControllerRef.current.abort();
             }
         };
-    }, []);
-
-    const getCache = useCallback((key: string): T | null => {
-        const item = cacheRef.current.get(key);
-        if (!item) return null;
-        if (Date.now() > item.expiresAt) {
-            cacheRef.current.delete(key);
-            return null;
-        }
-        return item.data;
-    }, []);
-
-    const setCache = useCallback((key: string, data: T, cacheTime: number) => {
-        const now = Date.now();
-        cacheRef.current.set(key, {
-            data,
-            timestamp: now,
-            expiresAt: now + cacheTime
-        });
-    }, []);
-
-    const invalidateCache = useCallback((key?: string) => {
-        if (key) {
-            cacheRef.current.delete(key);
-        } else {
-            cacheRef.current.clear();
-        }
     }, []);
 
     const getErrorMessage = useCallback((error: Error | ApiErrorException): string => {
@@ -97,8 +58,6 @@ export const useApi = <T = any>() => {
         const {
             showErrorNotification = true,
             successMessage,
-            cacheKey,
-            cacheTime = 5 * 60 * 1000,
             onSuccess,
             onError
         } = options || {};
@@ -109,29 +68,11 @@ export const useApi = <T = any>() => {
 
         abortControllerRef.current = new AbortController();
 
-        if (cacheKey) {
-            const cachedData = getCache(cacheKey) as R | null;
-            if (cachedData !== null) {
-                if (mountedRef.current) {
-                    setState({
-                        data: cachedData as unknown as T,
-                        loading: false,
-                        error: null,
-                        isCached: true,
-                        timestamp: Date.now()
-                    });
-                }
-                if (onSuccess) onSuccess(cachedData);
-                return cachedData;
-            }
-        }
-
         if (mountedRef.current) {
             setState(prev => ({
                 ...prev,
                 loading: true,
                 error: null,
-                isCached: false,
                 timestamp: Date.now()
             }));
         }
@@ -147,13 +88,8 @@ export const useApi = <T = any>() => {
                     data: responseData as unknown as T,
                     loading: false,
                     error: null,
-                    isCached: false,
                     timestamp: Date.now()
                 });
-            }
-
-            if (cacheKey && cacheTime > 0) {
-                setCache(cacheKey, responseData as unknown as T, cacheTime);
             }
 
             if (successMessage) {
@@ -177,7 +113,6 @@ export const useApi = <T = any>() => {
                     ...prev,
                     loading: false,
                     error,
-                    isCached: false
                 }));
             }
 
@@ -192,7 +127,7 @@ export const useApi = <T = any>() => {
             loadingRef.current = false;
             abortControllerRef.current = null;
         }
-    }, [getCache, setCache, showNotification, getErrorMessage]);
+    }, [showNotification, getErrorMessage]);
 
     const reset = useCallback(() => {
         if (mountedRef.current) {
@@ -200,7 +135,6 @@ export const useApi = <T = any>() => {
                 data: null,
                 loading: false,
                 error: null,
-                isCached: false,
                 timestamp: null
             });
         }
@@ -215,11 +149,9 @@ export const useApi = <T = any>() => {
         data: state.data,
         loading: state.loading,
         error: state.error,
-        isCached: state.isCached,
         timestamp: state.timestamp,
         execute,
         reset,
-        invalidateCache,
         isApiError: isApiErrorException(state.error),
         getErrorMessage: state.error ? getErrorMessage(state.error) : null,
         setData: (data: T | null) => {

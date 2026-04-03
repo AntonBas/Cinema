@@ -20,148 +20,94 @@ interface TicketTypeParams {
 }
 
 export const useTicketType = () => {
-    const ticketTypesApi = useApi<PageResponse<TicketTypeResponse>>();
-    const ticketTypeApiInstance = useApi<TicketTypeResponse>();
-    const dropdownApi = useApi<TicketTypeUserResponse[]>();
-    const mutationApi = useApi<TicketTypeResponse | void>();
+    const getAllTicketTypesApi = useApi<PageResponse<TicketTypeResponse>>();
+    const getTicketTypeByIdApi = useApi<TicketTypeResponse>();
+    const getDropdownTypesApi = useApi<TicketTypeUserResponse[]>();
+    const createTicketTypeApi = useApi<TicketTypeResponse>();
+    const updateTicketTypeApi = useApi<TicketTypeResponse>();
+    const deleteTicketTypeApi = useApi<void>();
+    const toggleTicketTypeApi = useApi<TicketTypeResponse>();
 
-    const rawLoading = ticketTypesApi.loading || ticketTypeApiInstance.loading ||
-        dropdownApi.loading || mutationApi.loading;
+    const rawLoading = getAllTicketTypesApi.loading || getTicketTypeByIdApi.loading ||
+        getDropdownTypesApi.loading || createTicketTypeApi.loading || updateTicketTypeApi.loading ||
+        deleteTicketTypeApi.loading || toggleTicketTypeApi.loading;
     const loading = useDelayedLoading(rawLoading, { delay: 150, minDisplayTime: 300 });
-    const error = !!(ticketTypesApi.error || ticketTypeApiInstance.error ||
-        dropdownApi.error || mutationApi.error);
+    const error = !!(getAllTicketTypesApi.error || getTicketTypeByIdApi.error ||
+        getDropdownTypesApi.error || createTicketTypeApi.error || updateTicketTypeApi.error ||
+        deleteTicketTypeApi.error || toggleTicketTypeApi.error);
 
-    const getAll = useCallback(async (params?: TicketTypeParams, skipCache: boolean = false) => {
-        const cacheKey = `ticket_types_${JSON.stringify(params)}`;
-        if (skipCache) {
-            ticketTypesApi.invalidateCache(cacheKey);
-        }
-        const response = await ticketTypesApi.execute(
+    const getAll = useCallback(async (params?: TicketTypeParams) => {
+        const response = await getAllTicketTypesApi.execute(
             () => ticketTypeApi.admin.getAll(params),
-            {
-                cacheKey,
-                cacheTime: 5 * 60 * 1000,
-                showErrorNotification: true,
-            }
+            { showErrorNotification: true }
         );
         return response || null;
-    }, [ticketTypesApi]);
+    }, [getAllTicketTypesApi]);
 
-    const getById = useCallback(async (id: number, skipCache: boolean = false) => {
-        const cacheKey = `ticket_type_${id}`;
-        if (skipCache) {
-            ticketTypeApiInstance.invalidateCache(cacheKey);
-        }
-        const response = await ticketTypeApiInstance.execute(
+    const getById = useCallback(async (id: number) => {
+        const response = await getTicketTypeByIdApi.execute(
             () => ticketTypeApi.admin.getById(id),
-            {
-                cacheKey,
-                cacheTime: 5 * 60 * 1000,
-                showErrorNotification: true,
-            }
+            { showErrorNotification: true }
         );
         return response || null;
-    }, [ticketTypeApiInstance]);
+    }, [getTicketTypeByIdApi]);
 
     const create = useCallback(async (request: TicketTypeCreateRequest) => {
-        const response = await mutationApi.execute(
+        const response = await createTicketTypeApi.execute(
             () => ticketTypeApi.admin.create(request),
-            {
-                successMessage: 'Ticket type created successfully',
-                showErrorNotification: true,
-            }
+            { successMessage: `Ticket type "${request.displayName}" created successfully` }
         );
-        ticketTypesApi.invalidateCache();
-        dropdownApi.invalidateCache('ticket_type_dropdown');
         return response || null;
-    }, [mutationApi, ticketTypesApi, dropdownApi]);
+    }, [createTicketTypeApi]);
 
-    const update = useCallback(async (id: number, request: TicketTypeUpdateRequest) => {
-        const response = await mutationApi.execute(
+    const update = useCallback(async (id: number, request: TicketTypeUpdateRequest, oldName?: string) => {
+        const response = await updateTicketTypeApi.execute(
             () => ticketTypeApi.admin.update(id, request),
-            {
-                successMessage: 'Ticket type updated successfully',
-                showErrorNotification: true,
-            }
+            { successMessage: `Ticket type "${oldName || request.displayName}" updated successfully` }
         );
-        ticketTypesApi.invalidateCache();
-        ticketTypeApiInstance.invalidateCache(`ticket_type_${id}`);
-        dropdownApi.invalidateCache('ticket_type_dropdown');
         return response || null;
-    }, [mutationApi, ticketTypesApi, ticketTypeApiInstance, dropdownApi]);
+    }, [updateTicketTypeApi]);
 
-    const remove = useCallback(async (id: number) => {
-        await mutationApi.execute(
+    const remove = useCallback(async (id: number, ticketTypeName?: string) => {
+        await deleteTicketTypeApi.execute(
             () => ticketTypeApi.admin.delete(id),
-            {
-                successMessage: 'Ticket type deleted successfully',
-                showErrorNotification: true,
-            }
+            { successMessage: `Ticket type "${ticketTypeName || id}" deleted successfully` }
         );
-        ticketTypesApi.invalidateCache();
-        ticketTypeApiInstance.invalidateCache(`ticket_type_${id}`);
-        dropdownApi.invalidateCache('ticket_type_dropdown');
-    }, [mutationApi, ticketTypesApi, ticketTypeApiInstance, dropdownApi]);
+    }, [deleteTicketTypeApi]);
 
-    const toggleActive = useCallback(async (id: number) => {
-        const response = await mutationApi.execute(
+    const toggleActive = useCallback(async (id: number, ticketTypeName?: string) => {
+        const response = await toggleTicketTypeApi.execute(
             () => ticketTypeApi.admin.toggleActive(id),
-            {
-                successMessage: 'Ticket type status updated successfully',
-                showErrorNotification: true,
-            }
+            { successMessage: `Ticket type "${ticketTypeName || id}" status updated successfully` }
         );
-        ticketTypesApi.invalidateCache();
-        ticketTypeApiInstance.invalidateCache(`ticket_type_${id}`);
-        dropdownApi.invalidateCache('ticket_type_dropdown');
         return response || null;
-    }, [mutationApi, ticketTypesApi, ticketTypeApiInstance, dropdownApi]);
+    }, [toggleTicketTypeApi]);
 
-    const getDropdownTypes = useCallback(async (skipCache: boolean = false) => {
-        const cacheKey = 'ticket_type_dropdown';
-        if (skipCache) {
-            dropdownApi.invalidateCache(cacheKey);
-        }
-        const response = await dropdownApi.execute(
+    const getDropdownTypes = useCallback(async () => {
+        const response = await getDropdownTypesApi.execute(
             () => ticketTypeApi.public.getDropdownTypes(),
-            {
-                cacheKey,
-                cacheTime: 5 * 60 * 1000,
-                showErrorNotification: false,
-            }
+            { showErrorNotification: false }
         );
         return response || null;
-    }, [dropdownApi]);
-
-    const clearCache = useCallback(() => {
-        ticketTypesApi.invalidateCache();
-        ticketTypeApiInstance.invalidateCache();
-        dropdownApi.invalidateCache();
-        mutationApi.invalidateCache();
-    }, [ticketTypesApi, ticketTypeApiInstance, dropdownApi, mutationApi]);
+    }, [getDropdownTypesApi]);
 
     const resetAll = useCallback(() => {
-        ticketTypesApi.reset();
-        ticketTypeApiInstance.reset();
-        dropdownApi.reset();
-        mutationApi.reset();
-    }, [ticketTypesApi, ticketTypeApiInstance, dropdownApi, mutationApi]);
+        getAllTicketTypesApi.reset();
+        getTicketTypeByIdApi.reset();
+        getDropdownTypesApi.reset();
+        createTicketTypeApi.reset();
+        updateTicketTypeApi.reset();
+        deleteTicketTypeApi.reset();
+        toggleTicketTypeApi.reset();
+    }, [getAllTicketTypesApi, getTicketTypeByIdApi, getDropdownTypesApi, createTicketTypeApi, updateTicketTypeApi, deleteTicketTypeApi, toggleTicketTypeApi]);
 
     return {
-        ticketTypes: ticketTypesApi.data,
-        dropdownTypes: dropdownApi.data || [],
-        ticketType: ticketTypeApiInstance.data,
-
-        pagination: ticketTypesApi.data,
-        currentPage: ticketTypesApi.data?.number || 0,
-        totalPages: ticketTypesApi.data?.totalPages || 0,
-        totalElements: ticketTypesApi.data?.totalElements || 0,
-        pageSize: ticketTypesApi.data?.size || 10,
-        isEmpty: ticketTypesApi.data?.empty || false,
-
+        ticketTypes: getAllTicketTypesApi.data,
+        dropdownTypes: getDropdownTypesApi.data || [],
+        ticketType: getTicketTypeByIdApi.data,
+        pagination: getAllTicketTypesApi.data,
         loading,
         error,
-
         getAll,
         getById,
         create,
@@ -169,8 +115,6 @@ export const useTicketType = () => {
         remove,
         toggleActive,
         getDropdownTypes,
-
-        clearCache,
         resetAll,
     };
 };

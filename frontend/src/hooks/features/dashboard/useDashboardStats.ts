@@ -62,12 +62,12 @@ export const useDashboardStats = () => {
                 usersResponse,
                 promotionsResponse
             ] = await Promise.all([
-                getAdminCurrent({ page: 0, size: 1000 }),
-                getAdminUpcoming({ page: 0, size: 1000 }),
-                getAdminArchived({ page: 0, size: 1000 }),
+                getAdminCurrent({ page: 0, size: 100 }),
+                getAdminUpcoming({ page: 0, size: 100 }),
+                getAdminArchived({ page: 0, size: 100 }),
                 getAllHalls(),
-                getSessions({ page: 0, size: 1000 }),
-                getUsers({ page: 0, size: 1000 }),
+                getSessions({ page: 0, size: 100 }),
+                getUsers({ page: 0, size: 100 }),
                 getPromotions()
             ]);
 
@@ -116,7 +116,7 @@ export const useDashboardStats = () => {
 
             const activeMovies = movies.filter(movie =>
                 movie.status === 'CURRENT' || movie.status === 'UPCOMING'
-            );
+            ).length;
 
             const totalRevenue = sessions.reduce((sum, session) => {
                 const revenue = typeof session.totalRevenue === 'number' ? session.totalRevenue : 0;
@@ -169,7 +169,7 @@ export const useDashboardStats = () => {
                         revenue: todayRevenue,
                         activeUsers: activeUsersToday,
                         sessionsCompleted: completedSessions.length,
-                        activeMovies: activeMovies.length
+                        activeMovies
                     }
                 });
 
@@ -205,7 +205,7 @@ export const useDashboardStats = () => {
             isMountedRef.current = false;
             clearInterval(interval);
         };
-    }, []);
+    }, [loadDashboardData]);
 
     return { stats, isLoading, lastUpdated, refresh: loadDashboardData };
 };

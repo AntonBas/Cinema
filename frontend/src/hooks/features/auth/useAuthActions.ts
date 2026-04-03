@@ -44,7 +44,7 @@ export const useAuthActions = () => {
     const checkEmail = useCallback(async (email: string) => {
         const response = await authApiInstance.execute(
             () => authApi.checkEmail(email),
-            { cacheKey: `email_check_${email}`, cacheTime: 60 * 1000 }
+            {}
         );
         return response;
     }, [authApiInstance]);
@@ -100,20 +100,8 @@ export const useAuthActions = () => {
     }, []);
 
     const logout = useCallback(() => {
-        authApiInstance.invalidateCache();
-        mutationApi.invalidateCache();
         contextLogout();
-    }, [authApiInstance, mutationApi, contextLogout]);
-
-    const clearCache = useCallback(() => {
-        authApiInstance.invalidateCache();
-        mutationApi.invalidateCache();
-    }, [authApiInstance, mutationApi]);
-
-    const resetAll = useCallback(() => {
-        authApiInstance.reset();
-        mutationApi.reset();
-    }, [authApiInstance, mutationApi]);
+    }, [contextLogout]);
 
     return {
         loading,
@@ -137,8 +125,5 @@ export const useAuthActions = () => {
         oauth2Success,
         loginWithGoogle,
         logout,
-
-        clearCache,
-        resetAll,
     };
 };

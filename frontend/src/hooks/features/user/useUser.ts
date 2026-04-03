@@ -9,106 +9,74 @@ import type {
 } from '@/types/user';
 import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
 
-const CACHE_CONFIG = {
-    PROFILE: {
-        key: 'user_profile',
-        time: 5 * 60 * 1000,
-    }
-} as const;
-
 export const useUser = () => {
-    const profileApi = useApi<UserProfileResponse>();
-    const mutationApi = useApi<UserProfileResponse | { message: string }>();
+    const getProfileApi = useApi<UserProfileResponse>();
+    const updateProfileApi = useApi<UserProfileResponse>();
+    const updatePasswordApi = useApi<{ message: string }>();
+    const requestEmailChangeApi = useApi<{ message: string }>();
 
-    const rawLoading = profileApi.loading || mutationApi.loading;
+    const rawLoading = getProfileApi.loading || updateProfileApi.loading ||
+        updatePasswordApi.loading || requestEmailChangeApi.loading;
     const loading = useDelayedLoading(rawLoading, { delay: 150, minDisplayTime: 300 });
-    const error = !!(profileApi.error || mutationApi.error);
+    const error = !!(getProfileApi.error || updateProfileApi.error ||
+        updatePasswordApi.error || requestEmailChangeApi.error);
 
-    const getProfile = useCallback(async (skipCache: boolean = false) => {
-        if (skipCache) {
-            profileApi.invalidateCache(CACHE_CONFIG.PROFILE.key);
-        }
-
-        const response = await profileApi.execute(
+    const getProfile = useCallback(async () => {
+        const response = await getProfileApi.execute(
             () => userApi.getProfile(),
-            {
-                cacheKey: CACHE_CONFIG.PROFILE.key,
-                cacheTime: CACHE_CONFIG.PROFILE.time,
-                showErrorNotification: false
-            }
+            { showErrorNotification: false }
         );
         return response || null;
-    }, [profileApi]);
+    }, [getProfileApi]);
 
     const updateProfile = useCallback(async (data: UserUpdateRequest) => {
-        const response = await mutationApi.execute(
+        const response = await updateProfileApi.execute(
             () => userApi.updateProfile(data),
-            {
-                successMessage: 'Profile updated successfully',
-                showErrorNotification: false
-            }
+            { successMessage: 'Profile updated successfully' }
         );
 
-        profileApi.invalidateCache(CACHE_CONFIG.PROFILE.key);
-
         if (response) {
-            profileApi.setData(response);
+            getProfileApi.setData(response);
         }
 
         return response || null;
-    }, [mutationApi, profileApi]);
+    }, [updateProfileApi, getProfileApi]);
 
     const updatePassword = useCallback(async (data: UserPasswordUpdateRequest) => {
-        const response = await mutationApi.execute(
+        const response = await updatePasswordApi.execute(
             () => userApi.updatePassword(data),
-            {
-                successMessage: 'Password updated successfully',
-                showErrorNotification: false
-            }
+            { successMessage: 'Password updated successfully' }
         );
         return response || null;
-    }, [mutationApi]);
+    }, [updatePasswordApi]);
 
     const requestEmailChange = useCallback(async (newEmail: string, password: string) => {
-        const request: UserEmailChangeRequest = {
-            newEmail,
-            password
-        };
-        const response = await mutationApi.execute(
+        const request: UserEmailChangeRequest = { newEmail, password };
+        const response = await requestEmailChangeApi.execute(
             () => userApi.requestEmailChange(request),
-            {
-                successMessage: 'Confirmation email sent to your new address',
-                showErrorNotification: false
-            }
+            { successMessage: 'Confirmation email sent to your new address' }
         );
         return response || null;
-    }, [mutationApi]);
-
-    const clearCache = useCallback(() => {
-        profileApi.invalidateCache();
-        mutationApi.invalidateCache();
-    }, [profileApi, mutationApi]);
+    }, [requestEmailChangeApi]);
 
     const resetAll = useCallback(() => {
-        profileApi.reset();
-        mutationApi.reset();
-    }, [profileApi, mutationApi]);
+        getProfileApi.reset();
+        updateProfileApi.reset();
+        updatePasswordApi.reset();
+        requestEmailChangeApi.reset();
+    }, [getProfileApi, updateProfileApi, updatePasswordApi, requestEmailChangeApi]);
 
     return {
-        profile: profileApi.data,
-
+        profile: getProfileApi.data,
         loading,
         error,
-        isProfileUpdating: mutationApi.loading,
-        isPasswordUpdating: mutationApi.loading,
-        isEmailChanging: mutationApi.loading,
-
+        isProfileUpdating: updateProfileApi.loading,
+        isPasswordUpdating: updatePasswordApi.loading,
+        isEmailChanging: requestEmailChangeApi.loading,
         getProfile,
         updateProfile,
         updatePassword,
         requestEmailChange,
-
-        clearCache,
         resetAll,
     };
 };

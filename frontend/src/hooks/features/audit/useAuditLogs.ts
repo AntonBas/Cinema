@@ -20,21 +20,17 @@ export const useAuditLogs = () => {
     const fetchAuditLogs = useCallback(async () => {
         const response = await execute(
             () => auditApi.getAll({
-                page: params.page,
-                size: params.size,
-                sort: params.sort,
+                ...params,
                 entityType,
                 action,
                 changedBy
             }),
             {
                 showErrorNotification: true,
-                cacheKey: `audit-logs-${JSON.stringify({ params, entityType, action, changedBy })}`,
-                cacheTime: 0
             }
         );
         return response;
-    }, [execute, params.page, params.size, params.sort, entityType, action, changedBy]);
+    }, [execute, params, entityType, action, changedBy]);
 
     useEffect(() => {
         fetchAuditLogs();
@@ -64,17 +60,7 @@ export const useAuditLogs = () => {
 
     return {
         auditLogs: data?.content || [],
-        pagination: data ? {
-            currentPage: data.number,
-            totalPages: data.totalPages,
-            pageSize: data.size,
-            totalElements: data.totalElements,
-            hasNext: data.hasNext,
-            hasPrevious: data.hasPrevious,
-            isFirst: data.first,
-            isLast: data.last,
-            isEmpty: data.empty
-        } : null,
+        pagination: data,
         loading: isLoading,
         filters: { entityType, action, changedBy },
         setPage,

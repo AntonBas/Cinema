@@ -1,3 +1,4 @@
+// src/hooks/features/seatReservation/useSeatReservation.ts
 import { useState, useCallback, useMemo } from 'react';
 import { seatReservationApi } from '@/api/seatReservationApi';
 import type { SeatReservationResponse, SeatInfo, TicketPriceInfo } from '@/types/seatReservation';
@@ -26,17 +27,9 @@ export const useSeatReservation = (sessionId: number, maxSeats?: number) => {
     const getSeatAvailability = useCallback(async () => {
         const response = await seatApi.execute(
             () => seatReservationApi.getSeatAvailability(sessionId),
-            {
-                cacheKey: `seat_availability_${sessionId}`,
-                cacheTime: 30 * 1000,
-                showErrorNotification: false,
-            }
+            { showErrorNotification: false }
         );
         return response || null;
-    }, [seatApi, sessionId]);
-
-    const invalidateCache = useCallback(() => {
-        seatApi.invalidateCache(`seat_availability_${sessionId}`);
     }, [seatApi, sessionId]);
 
     const updateSeatLocally = useCallback((seatId: number, updates: Partial<SeatInfo>) => {
@@ -192,7 +185,6 @@ export const useSeatReservation = (sessionId: number, maxSeats?: number) => {
         totalSelected: selectedSeats.length,
         loadingSeats,
         getSeatAvailability,
-        invalidateCache,
         reset: seatApi.reset,
         selectSeat,
         deselectSeat,
