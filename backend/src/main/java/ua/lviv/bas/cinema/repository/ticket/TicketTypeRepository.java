@@ -12,7 +12,6 @@ import org.springframework.stereotype.Repository;
 import ua.lviv.bas.cinema.domain.ticket.TicketType;
 import ua.lviv.bas.cinema.domain.ticket.TicketTypeCategory;
 import ua.lviv.bas.cinema.repository.ticket.projection.TicketTypeAdminProjection;
-import ua.lviv.bas.cinema.repository.ticket.projection.TicketTypeUserProjection;
 
 @Repository
 public interface TicketTypeRepository extends JpaRepository<TicketType, Long> {
@@ -30,12 +29,6 @@ public interface TicketTypeRepository extends JpaRepository<TicketType, Long> {
 			+ "ORDER BY CASE t.category WHEN 'STANDARD' THEN 0 ELSE 1 END, t.displayName ASC")
 	Page<TicketTypeAdminProjection> findAdminProjections(@Param("active") Boolean active,
 			@Param("category") TicketTypeCategory category, @Param("search") String search, Pageable pageable);
-
-	@Query("SELECT t.id as id, t.displayName as displayName, t.priceMultiplier as priceMultiplier, "
-			+ "t.requiresDocument as requiresDocument, t.documentType as documentType, " + "t.category as category "
-			+ "FROM TicketType t WHERE t.active = true "
-			+ "ORDER BY CASE t.category WHEN 'STANDARD' THEN 0 ELSE 1 END, t.displayName ASC")
-	List<TicketTypeUserProjection> findUserProjections();
 
 	@Query("SELECT COUNT(t) > 0 FROM TicketType t WHERE LOWER(t.displayName) = LOWER(:displayName) AND t.id != :id")
 	boolean existsByDisplayNameAndIdNot(@Param("displayName") String displayName, @Param("id") Long id);

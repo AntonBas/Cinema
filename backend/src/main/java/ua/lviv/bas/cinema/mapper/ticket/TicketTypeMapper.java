@@ -11,9 +11,7 @@ import ua.lviv.bas.cinema.domain.ticket.TicketType;
 import ua.lviv.bas.cinema.dto.ticketType.request.TicketTypeCreateRequest;
 import ua.lviv.bas.cinema.dto.ticketType.request.TicketTypeUpdateRequest;
 import ua.lviv.bas.cinema.dto.ticketType.response.TicketTypeAdminResponse;
-import ua.lviv.bas.cinema.dto.ticketType.response.TicketTypeUserResponse;
 import ua.lviv.bas.cinema.repository.ticket.projection.TicketTypeAdminProjection;
-import ua.lviv.bas.cinema.repository.ticket.projection.TicketTypeUserProjection;
 
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.WARN)
 public interface TicketTypeMapper {
@@ -33,5 +31,4 @@ public interface TicketTypeMapper {
 
 	TicketTypeAdminResponse toTicketTypeResponse(TicketTypeAdminProjection projection);
 
-	TicketTypeUserResponse toTicketTypeUserResponse(TicketTypeUserProjection projection);
 }

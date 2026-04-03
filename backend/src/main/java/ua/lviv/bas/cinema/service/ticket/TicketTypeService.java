@@ -4,7 +4,6 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
@@ -25,7 +24,6 @@ import ua.lviv.bas.cinema.dto.PageResponse;
 import ua.lviv.bas.cinema.dto.ticketType.request.TicketTypeCreateRequest;
 import ua.lviv.bas.cinema.dto.ticketType.request.TicketTypeUpdateRequest;
 import ua.lviv.bas.cinema.dto.ticketType.response.TicketTypeAdminResponse;
-import ua.lviv.bas.cinema.dto.ticketType.response.TicketTypeUserResponse;
 import ua.lviv.bas.cinema.exception.domain.ticket.TicketTypeDuplicateException;
 import ua.lviv.bas.cinema.exception.domain.ticket.TicketTypeInUseException;
 import ua.lviv.bas.cinema.exception.domain.ticket.TicketTypeNotFoundException;
@@ -34,7 +32,6 @@ import ua.lviv.bas.cinema.mapper.ticket.TicketTypeMapper;
 import ua.lviv.bas.cinema.repository.ticket.TicketRepository;
 import ua.lviv.bas.cinema.repository.ticket.TicketTypeRepository;
 import ua.lviv.bas.cinema.repository.ticket.projection.TicketTypeAdminProjection;
-import ua.lviv.bas.cinema.repository.ticket.projection.TicketTypeUserProjection;
 import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 
 @Slf4j
@@ -91,14 +88,6 @@ public class TicketTypeService {
 				search, pageable);
 		Page<TicketTypeAdminResponse> responsePage = projections.map(ticketTypeMapper::toTicketTypeResponse);
 		return PageResponse.from(responsePage);
-	}
-
-	@Cacheable(key = "'user-active'")
-	public List<TicketTypeUserResponse> getActiveTicketTypesForUser() {
-		log.debug("Getting active ticket types for user");
-
-		List<TicketTypeUserProjection> projections = ticketTypeRepository.findUserProjections();
-		return projections.stream().map(ticketTypeMapper::toTicketTypeUserResponse).collect(Collectors.toList());
 	}
 
 	@Caching(evict = { @CacheEvict(key = "#id"), @CacheEvict(key = "'user-active'"), @CacheEvict(allEntries = true) })
