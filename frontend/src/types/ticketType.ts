@@ -22,7 +22,7 @@ export interface TicketTypeUpdateRequest {
     category?: TicketTypeCategory;
 }
 
-export interface TicketTypeResponse {
+export interface TicketTypeAdminResponse {
     id: number;
     displayName: string;
     priceMultiplier: string;

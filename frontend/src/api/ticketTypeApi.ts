@@ -1,6 +1,6 @@
 import { api } from '@/services/api';
 import type {
-    TicketTypeResponse,
+    TicketTypeAdminResponse,
     TicketTypeUserResponse,
     TicketTypeCreateRequest,
     TicketTypeUpdateRequest
@@ -18,21 +18,21 @@ export const ticketTypeApi = {
 
     admin: {
         create: (request: TicketTypeCreateRequest) =>
-            api.post<TicketTypeResponse>(ADMIN_BASE_URL, request),
+            api.post<TicketTypeAdminResponse>(ADMIN_BASE_URL, request),
 
         getAll: (params?: { active?: boolean; category?: string; search?: string; page?: number; size?: number }) =>
-            api.get<PageResponse<TicketTypeResponse>>(ADMIN_BASE_URL, { params }),
+            api.get<PageResponse<TicketTypeAdminResponse>>(ADMIN_BASE_URL, { params }),
 
         getById: (id: number) =>
-            api.get<TicketTypeResponse>(`${ADMIN_BASE_URL}/${id}`),
+            api.get<TicketTypeAdminResponse>(`${ADMIN_BASE_URL}/${id}`),
 
         update: (id: number, request: TicketTypeUpdateRequest) =>
-            api.put<TicketTypeResponse>(`${ADMIN_BASE_URL}/${id}`, request),
+            api.put<TicketTypeAdminResponse>(`${ADMIN_BASE_URL}/${id}`, request),
 
         delete: (id: number) =>
             api.delete<void>(`${ADMIN_BASE_URL}/${id}`),
 
         toggleActive: (id: number) =>
-            api.patch<TicketTypeResponse>(`${ADMIN_BASE_URL}/${id}/toggle-active`),
+            api.patch<TicketTypeAdminResponse>(`${ADMIN_BASE_URL}/${id}/toggle-active`),
     }
 };
