@@ -6,14 +6,12 @@ import java.util.List;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,16 +39,5 @@ public class SessionController {
 		log.info("Getting schedule sessions for date: {}, search: {}", date, searchTerm);
 		List<SessionScheduleResponse> sessions = sessionService.getScheduleSessions(searchTerm, date);
 		return ResponseEntity.ok(sessions);
-	}
-
-	@RateLimit(value = 30, duration = 1, key = "ip")
-	@GetMapping("/{id}")
-	@Operation(summary = "Get session by ID")
-	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Session found"),
-			@ApiResponse(responseCode = "404", description = "Session not found") })
-	public ResponseEntity<SessionScheduleResponse> getSessionById(@PathVariable Long id) {
-		log.info("Retrieving session {}", id);
-		SessionScheduleResponse session = sessionService.getSessionForPublic(id);
-		return ResponseEntity.ok(session);
 	}
 }
