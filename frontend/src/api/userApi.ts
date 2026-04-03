@@ -6,18 +6,18 @@ import type {
     UserEmailChangeRequest
 } from '@/types/user';
 
-const API_URL = '/api/users';
+const BASE_URL = '/api/users';
 
 export const userApi = {
     getProfile: () =>
-        api.get<UserProfileResponse>(`${API_URL}/profile`),
+        api.get<UserProfileResponse>(`${BASE_URL}/profile`),
 
     updateProfile: (data: UserUpdateRequest) =>
-        api.put<UserProfileResponse>(`${API_URL}/profile`, data),
+        api.put<UserProfileResponse>(`${BASE_URL}/profile`, data),
 
     updatePassword: (data: UserPasswordUpdateRequest) =>
-        api.patch<{ message: string }>(`${API_URL}/password`, data),
+        api.patch<{ message: string }>(`${BASE_URL}/password`, data),
 
     requestEmailChange: (data: UserEmailChangeRequest) =>
-        api.post<{ message: string }>(`${API_URL}/email/change-request`, data),
+        api.post<{ message: string }>(`${BASE_URL}/email/change-request`, data),
 };

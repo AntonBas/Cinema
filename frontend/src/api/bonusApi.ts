@@ -9,31 +9,25 @@ import type {
 } from '@/types/bonus';
 import type { PageResponse } from '@/types/pagination';
 
-const USER_URL = '/api/bonus';
-const ADMIN_URL = '/api/admin/bonus';
+const BASE_URL = '/api/bonus';
+const ADMIN_BASE_URL = '/api/admin/bonus';
 
 export const bonusApi = {
-    user: {
-        getMyCard: () => api.get<BonusCardResponse>(`${USER_URL}/my-card`),
+    getMyCard: () => api.get<BonusCardResponse>(`${BASE_URL}/my-card`),
 
-        getMyBalance: () => api.get<BonusBalanceResponse>(`${USER_URL}/my-balance`),
+    getMyBalance: () => api.get<BonusBalanceResponse>(`${BASE_URL}/my-balance`),
 
-        getMyTransactions: (params?: { page?: number; size?: number }) =>
-            api.get<PageResponse<BonusTransactionResponse>>(`${USER_URL}/my-transactions`, {
-                params: { ...params, size: params?.size || 20 }
-            })
-    },
+    getMyTransactions: (params?: { page?: number; size?: number }) =>
+        api.get<PageResponse<BonusTransactionResponse>>(`${BASE_URL}/my-transactions`, { params }),
 
-    admin: {
-        getAllRules: () => api.get<BonusRulesResponse[]>(`${ADMIN_URL}/rules`),
+    getAllRules: () => api.get<BonusRulesResponse[]>(`${ADMIN_BASE_URL}/rules`),
 
-        getRuleByType: (type: BonusTransactionType) =>
-            api.get<BonusRulesResponse>(`${ADMIN_URL}/rules/${type}`),
+    getRuleByType: (type: BonusTransactionType) =>
+        api.get<BonusRulesResponse>(`${ADMIN_BASE_URL}/rules/${type}`),
 
-        updateRule: (type: BonusTransactionType, request: BonusRulesRequest) =>
-            api.put<BonusRulesResponse>(`${ADMIN_URL}/rules/${type}`, request),
+    updateRule: (type: BonusTransactionType, request: BonusRulesRequest) =>
+        api.put<BonusRulesResponse>(`${ADMIN_BASE_URL}/rules/${type}`, request),
 
-        resetRule: (type: BonusTransactionType) =>
-            api.put<BonusRulesResponse>(`${ADMIN_URL}/rules/${type}/reset`)
-    }
+    resetRule: (type: BonusTransactionType) =>
+        api.put<BonusRulesResponse>(`${ADMIN_BASE_URL}/rules/${type}/reset`)
 };

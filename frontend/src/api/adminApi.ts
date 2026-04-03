@@ -7,15 +7,12 @@ import type {
     UserRole,
     VerificationStatus
 } from '@/types/user';
-import type { PageResponse } from '@/types/pagination';
+import type { PageResponse, SearchParams } from '@/types/pagination';
 
 const ADMIN_API_URL = '/api/admin/users';
 
 export const adminApi = {
-    getUsers: (params: {
-        page?: number;
-        size?: number;
-        search?: string;
+    getUsers: (params: SearchParams & {
         role?: UserRole;
         verificationStatus?: VerificationStatus;
         enabled?: boolean;
