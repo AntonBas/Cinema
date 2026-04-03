@@ -63,8 +63,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const refreshUser = async () => {
         const currentToken = localStorage.getItem('authToken');
         if (currentToken) {
-            const response = await authApi.getCurrentUser();
-            setUser(response.data);
+            try {
+                const response = await authApi.getCurrentUser();
+                setUser(response.data);
+            } catch (error) {
+                console.error('Failed to refresh user:', error);
+                localStorage.removeItem('authToken');
+                setUser(null);
+            }
         }
     };
 

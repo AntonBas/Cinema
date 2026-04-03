@@ -12,7 +12,7 @@ interface NotificationItem {
 
 export const useNotification = () => {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
-  const timeoutsRef = useRef<Map<string, NodeJS.Timeout>>(new Map());
+  const timeoutsRef = useRef<Map<string, number>>(new Map());
 
   const removeNotification = useCallback((id: string) => {
     const timeout = timeoutsRef.current.get(id);

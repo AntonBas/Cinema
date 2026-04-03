@@ -12,8 +12,8 @@ export const useDelayedLoading = (
     const { delay = 150, minDisplayTime = 300 } = options;
     const [showLoading, setShowLoading] = useState(false);
 
-    const showTimerRef = useRef<NodeJS.Timeout | null>(null);
-    const hideTimerRef = useRef<NodeJS.Timeout | null>(null);
+    const showTimerRef = useRef<number | null>(null);
+    const hideTimerRef = useRef<number | null>(null);
     const startTimeRef = useRef<number | null>(null);
 
     useEffect(() => {

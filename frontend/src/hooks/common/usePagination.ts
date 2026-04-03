@@ -102,8 +102,7 @@ export const usePagination = (
         params.page,
         params.size,
         params.sort,
-        params.search,
-        JSON.stringify(params)
+        params.search
     ]);
 
     return {
