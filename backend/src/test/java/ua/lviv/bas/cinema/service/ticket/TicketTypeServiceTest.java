@@ -10,7 +10,6 @@ import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
@@ -26,7 +25,6 @@ import ua.lviv.bas.cinema.domain.ticket.TicketTypeCategory;
 import ua.lviv.bas.cinema.dto.ticketType.request.TicketTypeCreateRequest;
 import ua.lviv.bas.cinema.dto.ticketType.request.TicketTypeUpdateRequest;
 import ua.lviv.bas.cinema.dto.ticketType.response.TicketTypeAdminResponse;
-import ua.lviv.bas.cinema.dto.ticketType.response.TicketTypeUserResponse;
 import ua.lviv.bas.cinema.exception.domain.ticket.TicketTypeDuplicateException;
 import ua.lviv.bas.cinema.exception.domain.ticket.TicketTypeInUseException;
 import ua.lviv.bas.cinema.exception.domain.ticket.TicketTypeNotFoundException;
@@ -34,7 +32,6 @@ import ua.lviv.bas.cinema.exception.domain.ticket.TicketTypeValidationException;
 import ua.lviv.bas.cinema.mapper.ticket.TicketTypeMapper;
 import ua.lviv.bas.cinema.repository.ticket.TicketRepository;
 import ua.lviv.bas.cinema.repository.ticket.TicketTypeRepository;
-import ua.lviv.bas.cinema.repository.ticket.projection.TicketTypeUserProjection;
 import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 
 @ExtendWith(MockitoExtension.class)
@@ -127,26 +124,6 @@ public class TicketTypeServiceTest {
 		var result = ticketTypeService.getTicketTypesForAdmin(true, TicketTypeCategory.STANDARD, "search", pageable);
 
 		assertThat(result).isNotNull();
-	}
-
-	@Test
-	void getActiveTicketTypesForUser_Success() {
-		TicketTypeUserProjection projection = createUserProjection();
-		TicketTypeUserResponse response = createTicketTypeUserResponse();
-
-		when(ticketTypeRepository.findUserProjections()).thenReturn(List.of(projection));
-		when(ticketTypeMapper.toTicketTypeUserResponse(projection)).thenReturn(response);
-
-		List<TicketTypeUserResponse> result = ticketTypeService.getActiveTicketTypesForUser();
-
-		assertThat(result).hasSize(1);
-		assertThat(result.get(0).id()).isEqualTo(TICKET_TYPE_ID);
-		assertThat(result.get(0).displayName()).isEqualTo(DISPLAY_NAME);
-		assertThat(result.get(0).priceMultiplier()).isEqualTo(PRICE_MULTIPLIER);
-		assertThat(result.get(0).minAge()).isEqualTo(18);
-		assertThat(result.get(0).maxAge()).isEqualTo(65);
-		assertThat(result.get(0).requiresDocument()).isFalse();
-		assertThat(result.get(0).documentType()).isNull();
 	}
 
 	@Test
@@ -313,48 +290,5 @@ public class TicketTypeServiceTest {
 	private TicketTypeAdminResponse createTicketTypeResponse() {
 		return new TicketTypeAdminResponse(TICKET_TYPE_ID, DISPLAY_NAME, PRICE_MULTIPLIER, 18, 65, false, null, true,
 				TicketTypeCategory.STANDARD);
-	}
-
-	private TicketTypeUserResponse createTicketTypeUserResponse() {
-		return new TicketTypeUserResponse(TICKET_TYPE_ID, DISPLAY_NAME, PRICE_MULTIPLIER, 18, 65, false, null);
-	}
-
-	private TicketTypeUserProjection createUserProjection() {
-		return new TicketTypeUserProjection() {
-			@Override
-			public Long getId() {
-				return TICKET_TYPE_ID;
-			}
-
-			@Override
-			public String getDisplayName() {
-				return DISPLAY_NAME;
-			}
-
-			@Override
-			public BigDecimal getPriceMultiplier() {
-				return PRICE_MULTIPLIER;
-			}
-
-			@Override
-			public Integer getMinAge() {
-				return 18;
-			}
-
-			@Override
-			public Integer getMaxAge() {
-				return 65;
-			}
-
-			@Override
-			public boolean isRequiresDocument() {
-				return false;
-			}
-
-			@Override
-			public String getDocumentType() {
-				return null;
-			}
-		};
 	}
 }

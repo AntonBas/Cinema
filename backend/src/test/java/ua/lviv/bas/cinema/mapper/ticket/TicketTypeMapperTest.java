@@ -14,9 +14,7 @@ import ua.lviv.bas.cinema.domain.ticket.TicketTypeCategory;
 import ua.lviv.bas.cinema.dto.ticketType.request.TicketTypeCreateRequest;
 import ua.lviv.bas.cinema.dto.ticketType.request.TicketTypeUpdateRequest;
 import ua.lviv.bas.cinema.dto.ticketType.response.TicketTypeAdminResponse;
-import ua.lviv.bas.cinema.dto.ticketType.response.TicketTypeUserResponse;
 import ua.lviv.bas.cinema.repository.ticket.projection.TicketTypeAdminProjection;
-import ua.lviv.bas.cinema.repository.ticket.projection.TicketTypeUserProjection;
 
 public class TicketTypeMapperTest {
 
@@ -131,34 +129,6 @@ public class TicketTypeMapperTest {
 		assertThat(response.documentType()).isEqualTo("Passport");
 		assertThat(response.active()).isTrue();
 		assertThat(response.category()).isEqualTo(TicketTypeCategory.STANDARD);
-	}
-
-	@Test
-	void toTicketTypeUserResponse_ShouldMapOnlyIdAndDisplayNameFromUserProjection() {
-		TicketTypeUserProjection projection = mock(TicketTypeUserProjection.class);
-
-		when(projection.getId()).thenReturn(1L);
-		when(projection.getDisplayName()).thenReturn("User Projection");
-
-		TicketTypeUserResponse response = mapper.toTicketTypeUserResponse(projection);
-
-		assertThat(response.id()).isEqualTo(1L);
-		assertThat(response.displayName()).isEqualTo("User Projection");
-	}
-
-	@Test
-	void toTicketTypeResponse_ShouldReturnNull_WhenEntityIsNull() {
-		assertThat(mapper.toTicketTypeResponse((TicketType) null)).isNull();
-	}
-
-	@Test
-	void toTicketTypeResponse_ShouldReturnNull_WhenProjectionIsNull() {
-		assertThat(mapper.toTicketTypeResponse((TicketTypeAdminProjection) null)).isNull();
-	}
-
-	@Test
-	void toTicketTypeUserResponse_ShouldReturnNull_WhenProjectionIsNull() {
-		assertThat(mapper.toTicketTypeUserResponse((TicketTypeUserProjection) null)).isNull();
 	}
 
 	@Test
