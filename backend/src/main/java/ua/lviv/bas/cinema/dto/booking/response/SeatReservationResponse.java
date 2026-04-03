@@ -38,6 +38,14 @@ public record SeatReservationResponse(@Schema(description = "Session ID", exampl
 
 			@Schema(description = "Ticket type name", example = "Adult") String ticketTypeName,
 
-			@Schema(description = "Final price", example = "250.00") BigDecimal finalPrice) {
+			@Schema(description = "Final price", example = "250.00") BigDecimal finalPrice,
+
+			@Schema(description = "Minimum age", example = "12") Integer minAge,
+
+			@Schema(description = "Maximum age", example = "25") Integer maxAge,
+
+			@Schema(description = "Whether document is required", example = "true") boolean requiresDocument,
+
+			@Schema(description = "Type of document required", example = "Student ID") String documentType) {
 	}
 }

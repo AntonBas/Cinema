@@ -38,5 +38,9 @@ public interface SeatReservationMapper {
 	@Mapping(target = "ticketTypeId", source = "ticketType.id")
 	@Mapping(target = "ticketTypeName", source = "ticketType.displayName")
 	@Mapping(target = "finalPrice", source = "price")
+	@Mapping(target = "minAge", source = "ticketType.minAge")
+	@Mapping(target = "maxAge", source = "ticketType.maxAge")
+	@Mapping(target = "requiresDocument", source = "ticketType.requiresDocument")
+	@Mapping(target = "documentType", source = "ticketType.documentType")
 	SeatReservationResponse.TicketPriceInfo toTicketPriceInfo(TicketType ticketType, BigDecimal price);
 }
