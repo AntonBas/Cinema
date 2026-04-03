@@ -22,7 +22,7 @@ export const SectionAuditLogs: React.FC = () => {
 
     useEffect(() => {
         applyFilters({ entityType: entityType || undefined, action: action || undefined, changedBy: changedBy || undefined });
-    }, [entityType, action, changedBy]);
+    }, [entityType, action, changedBy, applyFilters]);
 
     const handleClearFilters = () => {
         setEntityType('');
@@ -32,8 +32,8 @@ export const SectionAuditLogs: React.FC = () => {
     };
 
     const displayRange = pagination ? {
-        start: pagination.currentPage * pagination.pageSize + 1,
-        end: Math.min((pagination.currentPage + 1) * pagination.pageSize, pagination.totalElements)
+        start: pagination.number * pagination.size + 1,
+        end: Math.min((pagination.number + 1) * pagination.size, pagination.totalElements)
     } : { start: 0, end: 0 };
 
     const hasActiveFilters = entityType !== '' || action !== '' || changedBy !== '';
@@ -81,10 +81,10 @@ export const SectionAuditLogs: React.FC = () => {
             {pagination && pagination.totalPages > 1 && (
                 <div className={styles.paginationWrapper}>
                     <Pagination
-                        currentPage={pagination.currentPage}
+                        currentPage={pagination.number}
                         totalPages={pagination.totalPages}
                         totalElements={pagination.totalElements}
-                        pageSize={pagination.pageSize}
+                        pageSize={pagination.size}
                         onPageChange={setPage}
                         variant="pages"
                         showInfo={false}

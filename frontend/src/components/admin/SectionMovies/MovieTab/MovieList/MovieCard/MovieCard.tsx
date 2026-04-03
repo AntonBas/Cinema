@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import type { MovieCardResponse, MovieStatus } from '@/types/movie';
-import { getAgeRatingDisplay } from '@/types/movie';
+import type { MovieCardResponse, MovieStatus, AgeRating } from '@/types/movie';
+import { AgeRatingDisplay } from '@/types/movie';
 import { Button } from '@/components/ui/Button/Button';
 import { Badge } from '@/components/ui/Badge/Badge';
 import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';
@@ -24,6 +24,10 @@ const STATUS_DISPLAY: Record<MovieStatus, string> = {
   UPCOMING: 'Coming Soon',
   ARCHIVED: 'Archived',
   UNKNOWN: 'Unknown'
+};
+
+const getAgeRatingDisplayValue = (ageRating: AgeRating): string => {
+  return AgeRatingDisplay[ageRating] || ageRating;
 };
 
 export const MovieCard: React.FC<MovieCardProps> = React.memo(({
@@ -61,7 +65,7 @@ export const MovieCard: React.FC<MovieCardProps> = React.memo(({
   );
 
   const ageRatingDisplay = useMemo(() =>
-    getAgeRatingDisplay(movie.ageRating),
+    getAgeRatingDisplayValue(movie.ageRating),
     [movie.ageRating]
   );
 

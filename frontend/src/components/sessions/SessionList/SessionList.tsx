@@ -1,7 +1,7 @@
 import React, { useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { SessionScheduleResponse } from '@/types/session';
-import { getAgeRatingDisplay } from '@/types/movie';
+import { AgeRatingDisplay } from '@/types/movie';
 import { Button } from '@/components/ui';
 import styles from './SessionList.module.css';
 
@@ -18,15 +18,11 @@ interface MovieGroup {
 }
 
 const AGE_RATING_COLORS: Record<string, string> = {
-    'PEGI_3': styles.ageRatingGreen,
-    'PEGI_7': styles.ageRatingBlue,
-    'PEGI_12': styles.ageRatingYellow,
-    'PEGI_16': styles.ageRatingOrange,
-    'PEGI_18': styles.ageRatingRed
-};
-
-const getPosterUrl = (movieId: number): string => {
-    return `/api/movies/${movieId}/poster`;
+    'G': styles.ageRatingGreen,
+    'PG': styles.ageRatingBlue,
+    'PG_13': styles.ageRatingYellow,
+    'R': styles.ageRatingOrange,
+    'NC_17': styles.ageRatingRed
 };
 
 export const SessionList: React.FC<SessionListProps> = ({ sessions }) => {
@@ -108,7 +104,7 @@ export const SessionList: React.FC<SessionListProps> = ({ sessions }) => {
                     <div className={styles.movieHeader}>
                         <div className={styles.posterContainer}>
                             <img
-                                src={getPosterUrl(movieGroup.movieId)}
+                                src={`/api/movies/${movieGroup.movieId}/poster`}
                                 alt={movieGroup.movieTitle}
                                 className={styles.poster}
                                 loading="lazy"
@@ -133,7 +129,7 @@ export const SessionList: React.FC<SessionListProps> = ({ sessions }) => {
 
                             <div className={styles.movieMeta}>
                                 <span className={`${styles.ageRating} ${AGE_RATING_COLORS[movieGroup.movieAgeRating] || styles.ageRatingRed}`}>
-                                    {getAgeRatingDisplay(movieGroup.movieAgeRating as any)}
+                                    {AgeRatingDisplay[movieGroup.movieAgeRating as keyof typeof AgeRatingDisplay] || movieGroup.movieAgeRating}
                                 </span>
                                 <span className={styles.duration}>{formatDuration(movieGroup.movieDuration)}</span>
                                 <span className={styles.sessionCount}>
@@ -177,7 +173,7 @@ export const SessionList: React.FC<SessionListProps> = ({ sessions }) => {
 
                                             <div className={styles.seats}>
                                                 <span className={styles.seatsCount}>
-                                                    {session.hallCapacity} / {session.availableSeats}
+                                                    Available: {session.availableSeats}
                                                 </span>
                                             </div>
 

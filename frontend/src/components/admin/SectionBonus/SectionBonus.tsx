@@ -19,10 +19,10 @@ const SectionBonus = () => {
         loadRules();
     }, []);
 
-    const loadRules = async (skipCache: boolean = false) => {
+    const loadRules = async () => {
         try {
             setError(null);
-            await getAllRules(skipCache);
+            await getAllRules();
         } catch (err) {
             setError('Failed to load bonus rules');
         }
@@ -38,12 +38,12 @@ const SectionBonus = () => {
 
     const handleEditSuccess = async () => {
         setEditingRule(null);
-        await loadRules(true);
+        await loadRules();
     };
 
     const handleResetSuccess = async () => {
         setResettingRuleType(null);
-        await loadRules(true);
+        await loadRules();
     };
 
     const getRuleStatus = (rule: BonusRulesResponse) => {
@@ -72,7 +72,7 @@ const SectionBonus = () => {
                     <p>{error}</p>
                     <button
                         className={styles.retryButton}
-                        onClick={() => loadRules(true)}
+                        onClick={() => loadRules()}
                     >
                         Try Again
                     </button>

@@ -6,7 +6,6 @@ import type { MovieDetailResponse } from '@/types/movie';
 import type { SessionScheduleResponse } from '@/types/session';
 import {
     AgeRatingDisplay,
-    AgeRatingDescription,
     MovieStatusDisplay
 } from '@/types/movie';
 import { useNotification } from '@/hooks/common/useNotification';
@@ -16,11 +15,19 @@ import { Layout } from '@/components/layout/Layout/Layout';
 import styles from './MovieDetailPage.module.css';
 
 const AGE_RATING_COLORS: Record<string, string> = {
-    'PEGI_3': styles.ageRatingGreen,
-    'PEGI_7': styles.ageRatingBlue,
-    'PEGI_12': styles.ageRatingYellow,
-    'PEGI_16': styles.ageRatingOrange,
-    'PEGI_18': styles.ageRatingRed
+    'G': styles.ageRatingGreen,
+    'PG': styles.ageRatingBlue,
+    'PG_13': styles.ageRatingYellow,
+    'R': styles.ageRatingOrange,
+    'NC_17': styles.ageRatingRed
+};
+
+const AGE_RATING_DESCRIPTIONS: Record<string, string> = {
+    'G': 'General Audiences',
+    'PG': 'Parental Guidance Suggested',
+    'PG_13': 'Parents Strongly Cautioned',
+    'R': 'Restricted',
+    'NC_17': 'Adults Only'
 };
 
 export const MovieDetailPage: React.FC = () => {
@@ -41,27 +48,16 @@ export const MovieDetailPage: React.FC = () => {
         showNotificationRef.current = showNotification;
     }, [showNotification]);
 
-    const findNextSessionDate = useCallback(async (movieId: number, movieTitle: string) => {
+    const findNextSessionDate = useCallback(async (movieTitle: string) => {
         try {
             const now = new Date();
 
-            const response = await sessionApi.public.getSessions(
-                movieTitle,
-                undefined,
-                {
-                    page: 0,
-                    size: 100,
-                    sort: 'startTime,asc'
-                }
-            );
-
-            const sessions = response?.data?.content || [];
+            const response = await sessionApi.public.getSessions(movieTitle, undefined);
+            const sessions = response?.data || [];
 
             const upcomingSessions = sessions.filter((session: SessionScheduleResponse) => {
                 const sessionTime = new Date(session.startTime);
-                return session.movieId === movieId &&
-                    sessionTime > now &&
-                    session.status === 'SCHEDULED';
+                return sessionTime > now;
             });
 
             if (upcomingSessions.length > 0) {
@@ -115,8 +111,8 @@ export const MovieDetailPage: React.FC = () => {
                     setMovie(movieData);
                 }
 
-                if (movieData?.id && isMounted.current) {
-                    await findNextSessionDate(movieData.id, movieData.title);
+                if (movieData?.title && isMounted.current) {
+                    await findNextSessionDate(movieData.title);
                 }
             } catch {
                 if (isMounted.current) {
@@ -135,10 +131,6 @@ export const MovieDetailPage: React.FC = () => {
             isMounted.current = false;
         };
     }, [slug, findNextSessionDate]);
-
-    const getPosterUrl = useCallback((movieId: number): string => {
-        return `/api/movies/${movieId}/poster`;
-    }, []);
 
     const handleFindSession = async () => {
         if (!movie) return;
@@ -239,7 +231,7 @@ export const MovieDetailPage: React.FC = () => {
                     <div className={styles.leftColumn}>
                         <div className={styles.posterContainer}>
                             <img
-                                src={getPosterUrl(movie.id)}
+                                src={movie.posterUrl}
                                 alt={movie.title}
                                 className={styles.poster}
                                 onError={(e) => {
@@ -283,7 +275,7 @@ export const MovieDetailPage: React.FC = () => {
                                 <div className={styles.metaInfo}>
                                     <div
                                         className={`${styles.ageRating} ${getAgeRatingClass(movie.ageRating)}`}
-                                        title={AgeRatingDescription[movie.ageRating]}
+                                        title={AGE_RATING_DESCRIPTIONS[movie.ageRating]}
                                     >
                                         {AgeRatingDisplay[movie.ageRating]}
                                     </div>
@@ -318,7 +310,7 @@ export const MovieDetailPage: React.FC = () => {
                                     <span className={styles.infoLabel}>Genres:</span>
                                     <div className={styles.infoValue}>
                                         <div className={styles.genreList}>
-                                            {movie.genres.map((genre: any) => (
+                                            {movie.genres.map((genre) => (
                                                 <span key={genre.id} className={styles.genreItem}>
                                                     {genre.name}
                                                 </span>
@@ -333,7 +325,7 @@ export const MovieDetailPage: React.FC = () => {
                                     <span className={styles.infoLabel}>Director{movie.directors.length > 1 ? 's' : ''}:</span>
                                     <div className={styles.infoValue}>
                                         <div className={styles.peopleList}>
-                                            {movie.directors.map((person: any) => (
+                                            {movie.directors.map((person) => (
                                                 <span key={person.id} className={styles.personItem}>
                                                     {person.name}
                                                 </span>
@@ -348,7 +340,7 @@ export const MovieDetailPage: React.FC = () => {
                                     <span className={styles.infoLabel}>Screenwriter{movie.screenwriters.length > 1 ? 's' : ''}:</span>
                                     <div className={styles.infoValue}>
                                         <div className={styles.peopleList}>
-                                            {movie.screenwriters.map((person: any) => (
+                                            {movie.screenwriters.map((person) => (
                                                 <span key={person.id} className={styles.personItem}>
                                                     {person.name}
                                                 </span>
@@ -363,7 +355,7 @@ export const MovieDetailPage: React.FC = () => {
                                     <span className={styles.infoLabel}>Cast:</span>
                                     <div className={styles.infoValue}>
                                         <div className={styles.peopleList}>
-                                            {movie.actors.map((person: any) => (
+                                            {movie.actors.map((person) => (
                                                 <span key={person.id} className={styles.personItem}>
                                                     {person.name}
                                                 </span>
