@@ -1,8 +1,7 @@
 import { useCallback } from 'react';
 import { ticketTypeApi } from '@/api/ticketTypeApi';
 import type {
-    TicketTypeResponse,
-    TicketTypeUserResponse,
+    TicketTypeAdminResponse,
     TicketTypeCreateRequest,
     TicketTypeUpdateRequest,
     TicketTypeCategory
@@ -20,20 +19,19 @@ interface TicketTypeParams {
 }
 
 export const useTicketType = () => {
-    const getAllTicketTypesApi = useApi<PageResponse<TicketTypeResponse>>();
-    const getTicketTypeByIdApi = useApi<TicketTypeResponse>();
-    const getDropdownTypesApi = useApi<TicketTypeUserResponse[]>();
-    const createTicketTypeApi = useApi<TicketTypeResponse>();
-    const updateTicketTypeApi = useApi<TicketTypeResponse>();
+    const getAllTicketTypesApi = useApi<PageResponse<TicketTypeAdminResponse>>();
+    const getTicketTypeByIdApi = useApi<TicketTypeAdminResponse>();
+    const createTicketTypeApi = useApi<TicketTypeAdminResponse>();
+    const updateTicketTypeApi = useApi<TicketTypeAdminResponse>();
     const deleteTicketTypeApi = useApi<void>();
-    const toggleTicketTypeApi = useApi<TicketTypeResponse>();
+    const toggleTicketTypeApi = useApi<TicketTypeAdminResponse>();
 
     const rawLoading = getAllTicketTypesApi.loading || getTicketTypeByIdApi.loading ||
-        getDropdownTypesApi.loading || createTicketTypeApi.loading || updateTicketTypeApi.loading ||
+        createTicketTypeApi.loading || updateTicketTypeApi.loading ||
         deleteTicketTypeApi.loading || toggleTicketTypeApi.loading;
     const loading = useDelayedLoading(rawLoading, { delay: 150, minDisplayTime: 300 });
     const error = !!(getAllTicketTypesApi.error || getTicketTypeByIdApi.error ||
-        getDropdownTypesApi.error || createTicketTypeApi.error || updateTicketTypeApi.error ||
+        createTicketTypeApi.error || updateTicketTypeApi.error ||
         deleteTicketTypeApi.error || toggleTicketTypeApi.error);
 
     const getAll = useCallback(async (params?: TicketTypeParams) => {
@@ -83,27 +81,17 @@ export const useTicketType = () => {
         return response || null;
     }, [toggleTicketTypeApi]);
 
-    const getDropdownTypes = useCallback(async () => {
-        const response = await getDropdownTypesApi.execute(
-            () => ticketTypeApi.public.getDropdownTypes(),
-            { showErrorNotification: false }
-        );
-        return response || null;
-    }, [getDropdownTypesApi]);
-
     const resetAll = useCallback(() => {
         getAllTicketTypesApi.reset();
         getTicketTypeByIdApi.reset();
-        getDropdownTypesApi.reset();
         createTicketTypeApi.reset();
         updateTicketTypeApi.reset();
         deleteTicketTypeApi.reset();
         toggleTicketTypeApi.reset();
-    }, [getAllTicketTypesApi, getTicketTypeByIdApi, getDropdownTypesApi, createTicketTypeApi, updateTicketTypeApi, deleteTicketTypeApi, toggleTicketTypeApi]);
+    }, [getAllTicketTypesApi, getTicketTypeByIdApi, createTicketTypeApi, updateTicketTypeApi, deleteTicketTypeApi, toggleTicketTypeApi]);
 
     return {
         ticketTypes: getAllTicketTypesApi.data,
-        dropdownTypes: getDropdownTypesApi.data || [],
         ticketType: getTicketTypeByIdApi.data,
         pagination: getAllTicketTypesApi.data,
         loading,
@@ -114,7 +102,6 @@ export const useTicketType = () => {
         update,
         remove,
         toggleActive,
-        getDropdownTypes,
         resetAll,
     };
 };
