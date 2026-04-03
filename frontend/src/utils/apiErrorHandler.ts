@@ -113,25 +113,6 @@ export class ApiErrorException extends Error {
     }
 }
 
-export const handleApiError = async (response: Response): Promise<never> => {
-    let errorData: ApiError;
-
-    try {
-        errorData = await response.json();
-    } catch {
-        errorData = {
-            message: response.status === 429
-                ? 'Too many requests. Please wait a moment before trying again.'
-                : 'Request failed',
-            status: response.statusText,
-            statusCode: response.status,
-            timestamp: new Date().toISOString()
-        };
-    }
-
-    throw new ApiErrorException(errorData);
-};
-
 export const isApiErrorException = (error: unknown): error is ApiErrorException => {
     return error instanceof ApiErrorException;
 };
