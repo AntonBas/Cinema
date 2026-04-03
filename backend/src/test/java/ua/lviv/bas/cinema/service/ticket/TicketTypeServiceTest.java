@@ -25,7 +25,7 @@ import ua.lviv.bas.cinema.domain.ticket.TicketType;
 import ua.lviv.bas.cinema.domain.ticket.TicketTypeCategory;
 import ua.lviv.bas.cinema.dto.ticketType.request.TicketTypeCreateRequest;
 import ua.lviv.bas.cinema.dto.ticketType.request.TicketTypeUpdateRequest;
-import ua.lviv.bas.cinema.dto.ticketType.response.TicketTypeResponse;
+import ua.lviv.bas.cinema.dto.ticketType.response.TicketTypeAdminResponse;
 import ua.lviv.bas.cinema.dto.ticketType.response.TicketTypeUserResponse;
 import ua.lviv.bas.cinema.exception.domain.ticket.TicketTypeDuplicateException;
 import ua.lviv.bas.cinema.exception.domain.ticket.TicketTypeInUseException;
@@ -63,14 +63,14 @@ public class TicketTypeServiceTest {
 	void createTicketType_Success() {
 		TicketTypeCreateRequest request = createTicketTypeRequest();
 		TicketType ticketType = createTicketType();
-		TicketTypeResponse response = createTicketTypeResponse();
+		TicketTypeAdminResponse response = createTicketTypeResponse();
 
 		when(ticketTypeRepository.existsByDisplayName(DISPLAY_NAME)).thenReturn(false);
 		when(ticketTypeMapper.toTicketType(request)).thenReturn(ticketType);
 		when(ticketTypeRepository.save(ticketType)).thenReturn(ticketType);
 		when(ticketTypeMapper.toTicketTypeResponse(ticketType)).thenReturn(response);
 
-		TicketTypeResponse result = ticketTypeService.createTicketType(request);
+		TicketTypeAdminResponse result = ticketTypeService.createTicketType(request);
 
 		assertThat(result).isEqualTo(response);
 		verify(ticketTypeRepository).save(ticketType);
@@ -99,12 +99,12 @@ public class TicketTypeServiceTest {
 	@Test
 	void getTicketTypeById_Success() {
 		TicketType ticketType = createTicketType();
-		TicketTypeResponse response = createTicketTypeResponse();
+		TicketTypeAdminResponse response = createTicketTypeResponse();
 
 		when(ticketTypeRepository.findById(TICKET_TYPE_ID)).thenReturn(Optional.of(ticketType));
 		when(ticketTypeMapper.toTicketTypeResponse(ticketType)).thenReturn(response);
 
-		TicketTypeResponse result = ticketTypeService.getTicketTypeById(TICKET_TYPE_ID);
+		TicketTypeAdminResponse result = ticketTypeService.getTicketTypeById(TICKET_TYPE_ID);
 
 		assertThat(result).isEqualTo(response);
 	}
@@ -140,7 +140,13 @@ public class TicketTypeServiceTest {
 		List<TicketTypeUserResponse> result = ticketTypeService.getActiveTicketTypesForUser();
 
 		assertThat(result).hasSize(1);
-		assertThat(result.get(0)).isEqualTo(response);
+		assertThat(result.get(0).id()).isEqualTo(TICKET_TYPE_ID);
+		assertThat(result.get(0).displayName()).isEqualTo(DISPLAY_NAME);
+		assertThat(result.get(0).priceMultiplier()).isEqualTo(PRICE_MULTIPLIER);
+		assertThat(result.get(0).minAge()).isEqualTo(18);
+		assertThat(result.get(0).maxAge()).isEqualTo(65);
+		assertThat(result.get(0).requiresDocument()).isFalse();
+		assertThat(result.get(0).documentType()).isNull();
 	}
 
 	@Test
@@ -148,13 +154,13 @@ public class TicketTypeServiceTest {
 		TicketType ticketType = createTicketType();
 		TicketTypeUpdateRequest request = new TicketTypeUpdateRequest("Updated Name", null, 21, 70, null, null, null,
 				null);
-		TicketTypeResponse response = createTicketTypeResponse();
+		TicketTypeAdminResponse response = createTicketTypeResponse();
 
 		when(ticketTypeRepository.findById(TICKET_TYPE_ID)).thenReturn(Optional.of(ticketType));
 		when(ticketTypeRepository.save(ticketType)).thenReturn(ticketType);
 		when(ticketTypeMapper.toTicketTypeResponse(ticketType)).thenReturn(response);
 
-		TicketTypeResponse result = ticketTypeService.updateTicketType(TICKET_TYPE_ID, request);
+		TicketTypeAdminResponse result = ticketTypeService.updateTicketType(TICKET_TYPE_ID, request);
 
 		assertThat(result).isEqualTo(response);
 		verify(ticketTypeMapper).updateTicketTypeFromRequest(ticketType, request);
@@ -215,13 +221,13 @@ public class TicketTypeServiceTest {
 	void toggleTicketTypeActiveStatus_ActivateSuccess() {
 		TicketType ticketType = createTicketType();
 		ticketType.setActive(false);
-		TicketTypeResponse response = createTicketTypeResponse();
+		TicketTypeAdminResponse response = createTicketTypeResponse();
 
 		when(ticketTypeRepository.findById(TICKET_TYPE_ID)).thenReturn(Optional.of(ticketType));
 		when(ticketTypeRepository.save(ticketType)).thenReturn(ticketType);
 		when(ticketTypeMapper.toTicketTypeResponse(ticketType)).thenReturn(response);
 
-		TicketTypeResponse result = ticketTypeService.toggleTicketTypeActiveStatus(TICKET_TYPE_ID);
+		TicketTypeAdminResponse result = ticketTypeService.toggleTicketTypeActiveStatus(TICKET_TYPE_ID);
 
 		assertThat(result).isEqualTo(response);
 		assertThat(ticketType.isActive()).isTrue();
@@ -234,7 +240,7 @@ public class TicketTypeServiceTest {
 	void toggleTicketTypeActiveStatus_DeactivateSuccess() {
 		TicketType ticketType = createTicketType();
 		ticketType.setActive(true);
-		TicketTypeResponse response = createTicketTypeResponse();
+		TicketTypeAdminResponse response = createTicketTypeResponse();
 
 		when(ticketTypeRepository.findById(TICKET_TYPE_ID)).thenReturn(Optional.of(ticketType));
 		when(ticketRepository.countByTicketTypeIdAndStatusInAndBookingSessionStartTimeAfter(eq(TICKET_TYPE_ID), any(),
@@ -242,7 +248,7 @@ public class TicketTypeServiceTest {
 		when(ticketTypeRepository.save(ticketType)).thenReturn(ticketType);
 		when(ticketTypeMapper.toTicketTypeResponse(ticketType)).thenReturn(response);
 
-		TicketTypeResponse result = ticketTypeService.toggleTicketTypeActiveStatus(TICKET_TYPE_ID);
+		TicketTypeAdminResponse result = ticketTypeService.toggleTicketTypeActiveStatus(TICKET_TYPE_ID);
 
 		assertThat(result).isEqualTo(response);
 		assertThat(ticketType.isActive()).isFalse();
@@ -304,13 +310,13 @@ public class TicketTypeServiceTest {
 				.minAge(18).maxAge(65).category(TicketTypeCategory.STANDARD).active(true).build();
 	}
 
-	private TicketTypeResponse createTicketTypeResponse() {
-		return new TicketTypeResponse(TICKET_TYPE_ID, DISPLAY_NAME, PRICE_MULTIPLIER, 18, 65, false, null, true,
+	private TicketTypeAdminResponse createTicketTypeResponse() {
+		return new TicketTypeAdminResponse(TICKET_TYPE_ID, DISPLAY_NAME, PRICE_MULTIPLIER, 18, 65, false, null, true,
 				TicketTypeCategory.STANDARD);
 	}
 
 	private TicketTypeUserResponse createTicketTypeUserResponse() {
-		return new TicketTypeUserResponse(TICKET_TYPE_ID, DISPLAY_NAME, PRICE_MULTIPLIER, false, null);
+		return new TicketTypeUserResponse(TICKET_TYPE_ID, DISPLAY_NAME, PRICE_MULTIPLIER, 18, 65, false, null);
 	}
 
 	private TicketTypeUserProjection createUserProjection() {
@@ -331,6 +337,16 @@ public class TicketTypeServiceTest {
 			}
 
 			@Override
+			public Integer getMinAge() {
+				return 18;
+			}
+
+			@Override
+			public Integer getMaxAge() {
+				return 65;
+			}
+
+			@Override
 			public boolean isRequiresDocument() {
 				return false;
 			}
@@ -338,11 +354,6 @@ public class TicketTypeServiceTest {
 			@Override
 			public String getDocumentType() {
 				return null;
-			}
-
-			@Override
-			public TicketTypeCategory getCategory() {
-				return TicketTypeCategory.STANDARD;
 			}
 		};
 	}

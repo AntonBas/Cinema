@@ -30,7 +30,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import ua.lviv.bas.cinema.domain.ticket.TicketTypeCategory;
 import ua.lviv.bas.cinema.dto.ticketType.request.TicketTypeCreateRequest;
 import ua.lviv.bas.cinema.dto.ticketType.request.TicketTypeUpdateRequest;
-import ua.lviv.bas.cinema.dto.ticketType.response.TicketTypeResponse;
+import ua.lviv.bas.cinema.dto.ticketType.response.TicketTypeAdminResponse;
 import ua.lviv.bas.cinema.exception.api.ApiErrorHandler;
 import ua.lviv.bas.cinema.exception.domain.ticket.TicketTypeDuplicateException;
 import ua.lviv.bas.cinema.exception.domain.ticket.TicketTypeInUseException;
@@ -49,14 +49,14 @@ public class AdminTicketTypeControllerTest {
 	@InjectMocks
 	private AdminTicketTypeController adminTicketTypeController;
 
-	private TicketTypeResponse ticketTypeResponse;
+	private TicketTypeAdminResponse ticketTypeResponse;
 
 	@BeforeEach
 	void setUp() {
 		mockMvc = MockMvcBuilders.standaloneSetup(adminTicketTypeController).setControllerAdvice(new ApiErrorHandler())
 				.build();
 
-		ticketTypeResponse = new TicketTypeResponse(1L, "Child Ticket", new BigDecimal("0.70"), 0, 12, true,
+		ticketTypeResponse = new TicketTypeAdminResponse(1L, "Child Ticket", new BigDecimal("0.70"), 0, 12, true,
 				"Birth Certificate", true, TicketTypeCategory.CHILD);
 	}
 
@@ -112,7 +112,7 @@ public class AdminTicketTypeControllerTest {
 		TicketTypeUpdateRequest updateRequest = new TicketTypeUpdateRequest("Updated Child Ticket", null, null, null,
 				null, null, null, null);
 
-		TicketTypeResponse updatedResponse = new TicketTypeResponse(1L, "Updated Child Ticket", new BigDecimal("0.70"),
+		TicketTypeAdminResponse updatedResponse = new TicketTypeAdminResponse(1L, "Updated Child Ticket", new BigDecimal("0.70"),
 				null, null, false, null, true, TicketTypeCategory.CHILD);
 
 		when(ticketTypeService.updateTicketType(eq(1L), any(TicketTypeUpdateRequest.class)))
@@ -166,7 +166,7 @@ public class AdminTicketTypeControllerTest {
 
 	@Test
 	void toggleTicketTypeActive_ShouldReturnOk() throws Exception {
-		TicketTypeResponse toggledResponse = new TicketTypeResponse(1L, "Child Ticket", new BigDecimal("0.70"), null,
+		TicketTypeAdminResponse toggledResponse = new TicketTypeAdminResponse(1L, "Child Ticket", new BigDecimal("0.70"), null,
 				null, false, null, false, TicketTypeCategory.CHILD);
 
 		when(ticketTypeService.toggleTicketTypeActiveStatus(1L)).thenReturn(toggledResponse);

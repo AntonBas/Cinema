@@ -13,7 +13,7 @@ import ua.lviv.bas.cinema.domain.ticket.TicketType;
 import ua.lviv.bas.cinema.domain.ticket.TicketTypeCategory;
 import ua.lviv.bas.cinema.dto.ticketType.request.TicketTypeCreateRequest;
 import ua.lviv.bas.cinema.dto.ticketType.request.TicketTypeUpdateRequest;
-import ua.lviv.bas.cinema.dto.ticketType.response.TicketTypeResponse;
+import ua.lviv.bas.cinema.dto.ticketType.response.TicketTypeAdminResponse;
 import ua.lviv.bas.cinema.dto.ticketType.response.TicketTypeUserResponse;
 import ua.lviv.bas.cinema.repository.ticket.projection.TicketTypeAdminProjection;
 import ua.lviv.bas.cinema.repository.ticket.projection.TicketTypeUserProjection;
@@ -93,7 +93,7 @@ public class TicketTypeMapperTest {
 				.priceMultiplier(new BigDecimal("0.50")).minAge(18).maxAge(25).requiresDocument(true)
 				.documentType("Student ID").active(true).category(TicketTypeCategory.STUDENT).build();
 
-		TicketTypeResponse response = mapper.toTicketTypeResponse(entity);
+		TicketTypeAdminResponse response = mapper.toTicketTypeResponse(entity);
 
 		assertThat(response.id()).isEqualTo(1L);
 		assertThat(response.displayName()).isEqualTo("Student Ticket");
@@ -120,7 +120,7 @@ public class TicketTypeMapperTest {
 		when(projection.isActive()).thenReturn(true);
 		when(projection.getCategory()).thenReturn(TicketTypeCategory.STANDARD);
 
-		TicketTypeResponse response = mapper.toTicketTypeResponse(projection);
+		TicketTypeAdminResponse response = mapper.toTicketTypeResponse(projection);
 
 		assertThat(response.id()).isEqualTo(1L);
 		assertThat(response.displayName()).isEqualTo("Admin Projection");
@@ -134,23 +134,16 @@ public class TicketTypeMapperTest {
 	}
 
 	@Test
-	void toTicketTypeUserResponse_ShouldMapFromUserProjection() {
+	void toTicketTypeUserResponse_ShouldMapOnlyIdAndDisplayNameFromUserProjection() {
 		TicketTypeUserProjection projection = mock(TicketTypeUserProjection.class);
 
 		when(projection.getId()).thenReturn(1L);
 		when(projection.getDisplayName()).thenReturn("User Projection");
-		when(projection.getPriceMultiplier()).thenReturn(new BigDecimal("0.85"));
-		when(projection.isRequiresDocument()).thenReturn(true);
-		when(projection.getDocumentType()).thenReturn("ID Card");
-		when(projection.getCategory()).thenReturn(TicketTypeCategory.STANDARD);
 
 		TicketTypeUserResponse response = mapper.toTicketTypeUserResponse(projection);
 
 		assertThat(response.id()).isEqualTo(1L);
 		assertThat(response.displayName()).isEqualTo("User Projection");
-		assertThat(response.priceMultiplier()).isEqualByComparingTo("0.85");
-		assertThat(response.requiresDocument()).isTrue();
-		assertThat(response.documentType()).isEqualTo("ID Card");
 	}
 
 	@Test
