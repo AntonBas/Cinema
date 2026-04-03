@@ -110,16 +110,6 @@ public class AdminMovieController {
 		return ResponseEntity.ok(movie);
 	}
 
-	@GetMapping("/by-slug/{slug}")
-	@Operation(summary = "Get admin movie by slug")
-	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Movie found"),
-			@ApiResponse(responseCode = "404", description = "Movie not found") })
-	public ResponseEntity<MovieDetailResponse> getAdminMovieBySlug(@PathVariable String slug) {
-		log.info("GET /api/admin/movies/by-slug/{} - Getting admin movie by slug", slug);
-		MovieDetailResponse movie = movieService.getAdminMovieBySlug(slug);
-		return ResponseEntity.ok(movie);
-	}
-
 	@GetMapping("/search/session")
 	@Operation(summary = "Search movies for session")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Movies retrieved successfully") })
