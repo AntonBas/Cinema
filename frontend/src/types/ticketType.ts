@@ -37,6 +37,11 @@ export interface TicketTypeResponse {
 export interface TicketTypeUserResponse {
     id: number;
     displayName: string;
+    priceMultiplier: string;
+    minAge?: number;
+    maxAge?: number;
+    requiresDocument: boolean;
+    documentType?: string;
 }
 
 export const TicketTypeCategoryDisplay: Record<TicketTypeCategory, string> = {
