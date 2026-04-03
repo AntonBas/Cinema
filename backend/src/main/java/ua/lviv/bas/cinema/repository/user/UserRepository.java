@@ -29,7 +29,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 	Optional<User> findById(Long id);
 
 	@Query("SELECT u FROM User u WHERE u.verificationStatus = :status AND u.enabled = true "
-			+ "AND FUNCTION('DAY', u.dateOfBirth) = :day AND FUNCTION('MONTH', u.dateOfBirth) = :month")
+			+ "AND EXTRACT(DAY FROM u.dateOfBirth) = :day AND EXTRACT(MONTH FROM u.dateOfBirth) = :month")
 	List<User> findVerifiedUsersWithBirthday(@Param("status") VerificationStatus status, @Param("day") int day,
 			@Param("month") int month);
 
