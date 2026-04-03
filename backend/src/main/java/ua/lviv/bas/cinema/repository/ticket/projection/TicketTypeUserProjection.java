@@ -2,8 +2,6 @@ package ua.lviv.bas.cinema.repository.ticket.projection;
 
 import java.math.BigDecimal;
 
-import ua.lviv.bas.cinema.domain.ticket.TicketTypeCategory;
-
 public interface TicketTypeUserProjection {
 	Long getId();
 
@@ -11,9 +9,11 @@ public interface TicketTypeUserProjection {
 
 	BigDecimal getPriceMultiplier();
 
+	Integer getMinAge();
+
+	Integer getMaxAge();
+
 	boolean isRequiresDocument();
 
 	String getDocumentType();
-
-	TicketTypeCategory getCategory();
 }

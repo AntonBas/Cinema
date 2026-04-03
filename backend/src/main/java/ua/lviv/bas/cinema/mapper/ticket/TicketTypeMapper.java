@@ -10,7 +10,7 @@ import org.mapstruct.ReportingPolicy;
 import ua.lviv.bas.cinema.domain.ticket.TicketType;
 import ua.lviv.bas.cinema.dto.ticketType.request.TicketTypeCreateRequest;
 import ua.lviv.bas.cinema.dto.ticketType.request.TicketTypeUpdateRequest;
-import ua.lviv.bas.cinema.dto.ticketType.response.TicketTypeResponse;
+import ua.lviv.bas.cinema.dto.ticketType.response.TicketTypeAdminResponse;
 import ua.lviv.bas.cinema.dto.ticketType.response.TicketTypeUserResponse;
 import ua.lviv.bas.cinema.repository.ticket.projection.TicketTypeAdminProjection;
 import ua.lviv.bas.cinema.repository.ticket.projection.TicketTypeUserProjection;
@@ -29,9 +29,9 @@ public interface TicketTypeMapper {
 	@Mapping(target = "lastModifiedDate", ignore = true)
 	void updateTicketTypeFromRequest(@MappingTarget TicketType entity, TicketTypeUpdateRequest dto);
 
-	TicketTypeResponse toTicketTypeResponse(TicketType entity);
+	TicketTypeAdminResponse toTicketTypeResponse(TicketType entity);
 
-	TicketTypeResponse toTicketTypeResponse(TicketTypeAdminProjection projection);
+	TicketTypeAdminResponse toTicketTypeResponse(TicketTypeAdminProjection projection);
 
 	TicketTypeUserResponse toTicketTypeUserResponse(TicketTypeUserProjection projection);
 }

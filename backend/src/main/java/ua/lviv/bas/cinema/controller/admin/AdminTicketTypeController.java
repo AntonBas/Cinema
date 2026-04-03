@@ -29,7 +29,7 @@ import ua.lviv.bas.cinema.domain.ticket.TicketTypeCategory;
 import ua.lviv.bas.cinema.dto.PageResponse;
 import ua.lviv.bas.cinema.dto.ticketType.request.TicketTypeCreateRequest;
 import ua.lviv.bas.cinema.dto.ticketType.request.TicketTypeUpdateRequest;
-import ua.lviv.bas.cinema.dto.ticketType.response.TicketTypeResponse;
+import ua.lviv.bas.cinema.dto.ticketType.response.TicketTypeAdminResponse;
 import ua.lviv.bas.cinema.service.ticket.TicketTypeService;
 
 @Slf4j
@@ -48,7 +48,7 @@ public class AdminTicketTypeController {
 			@ApiResponse(responseCode = "400", description = "Invalid input data"),
 			@ApiResponse(responseCode = "409", description = "Ticket type with this display name already exists") })
 	@PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
-	public ResponseEntity<TicketTypeResponse> createTicketType(
+	public ResponseEntity<TicketTypeAdminResponse> createTicketType(
 			@Parameter(description = "Ticket type creation request") @Valid @RequestBody TicketTypeCreateRequest request) {
 		log.info("Creating new ticket type with display name: {}", request.displayName());
 		return ResponseEntity.status(HttpStatus.CREATED).body(ticketTypeService.createTicketType(request));
@@ -58,7 +58,7 @@ public class AdminTicketTypeController {
 	@Operation(summary = "Get all ticket types with pagination and filters")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Ticket types retrieved successfully") })
 	@PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
-	public ResponseEntity<PageResponse<TicketTypeResponse>> getTicketTypes(
+	public ResponseEntity<PageResponse<TicketTypeAdminResponse>> getTicketTypes(
 			@Parameter(description = "Filter by active status") @RequestParam(required = false) Boolean active,
 			@Parameter(description = "Filter by category") @RequestParam(required = false) TicketTypeCategory category,
 			@Parameter(description = "Search by display name") @RequestParam(required = false) String search,
@@ -72,7 +72,7 @@ public class AdminTicketTypeController {
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Ticket type found"),
 			@ApiResponse(responseCode = "404", description = "Ticket type not found") })
 	@PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
-	public ResponseEntity<TicketTypeResponse> getTicketTypeById(
+	public ResponseEntity<TicketTypeAdminResponse> getTicketTypeById(
 			@Parameter(description = "Ticket type ID") @PathVariable Long id) {
 		log.info("Getting ticket type by ID: {}", id);
 		return ResponseEntity.ok(ticketTypeService.getTicketTypeById(id));
@@ -85,7 +85,7 @@ public class AdminTicketTypeController {
 			@ApiResponse(responseCode = "404", description = "Ticket type not found"),
 			@ApiResponse(responseCode = "409", description = "Ticket type with this display name already exists") })
 	@PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
-	public ResponseEntity<TicketTypeResponse> updateTicketType(
+	public ResponseEntity<TicketTypeAdminResponse> updateTicketType(
 			@Parameter(description = "Ticket type ID") @PathVariable Long id,
 			@Parameter(description = "Ticket type update request") @Valid @RequestBody TicketTypeUpdateRequest request) {
 		log.info("Updating ticket type ID: {}", id);
@@ -110,7 +110,7 @@ public class AdminTicketTypeController {
 			@ApiResponse(responseCode = "404", description = "Ticket type not found"),
 			@ApiResponse(responseCode = "409", description = "Cannot deactivate ticket type in use") })
 	@PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
-	public ResponseEntity<TicketTypeResponse> toggleTicketTypeActive(
+	public ResponseEntity<TicketTypeAdminResponse> toggleTicketTypeActive(
 			@Parameter(description = "Ticket type ID") @PathVariable Long id) {
 		log.info("Toggling active status for ticket type ID: {}", id);
 		return ResponseEntity.ok(ticketTypeService.toggleTicketTypeActiveStatus(id));

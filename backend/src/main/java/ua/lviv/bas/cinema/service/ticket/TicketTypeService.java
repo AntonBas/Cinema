@@ -24,7 +24,7 @@ import ua.lviv.bas.cinema.domain.ticket.TicketTypeCategory;
 import ua.lviv.bas.cinema.dto.PageResponse;
 import ua.lviv.bas.cinema.dto.ticketType.request.TicketTypeCreateRequest;
 import ua.lviv.bas.cinema.dto.ticketType.request.TicketTypeUpdateRequest;
-import ua.lviv.bas.cinema.dto.ticketType.response.TicketTypeResponse;
+import ua.lviv.bas.cinema.dto.ticketType.response.TicketTypeAdminResponse;
 import ua.lviv.bas.cinema.dto.ticketType.response.TicketTypeUserResponse;
 import ua.lviv.bas.cinema.exception.domain.ticket.TicketTypeDuplicateException;
 import ua.lviv.bas.cinema.exception.domain.ticket.TicketTypeInUseException;
@@ -51,7 +51,7 @@ public class TicketTypeService {
 
 	@CacheEvict(allEntries = true)
 	@Transactional
-	public TicketTypeResponse createTicketType(TicketTypeCreateRequest request) {
+	public TicketTypeAdminResponse createTicketType(TicketTypeCreateRequest request) {
 		log.info("Creating ticket type: {}", request.displayName());
 
 		validateAgeRange(request.minAge(), request.maxAge());
@@ -76,20 +76,20 @@ public class TicketTypeService {
 	}
 
 	@Cacheable(key = "#id")
-	public TicketTypeResponse getTicketTypeById(Long id) {
+	public TicketTypeAdminResponse getTicketTypeById(Long id) {
 		log.debug("Retrieving ticket type by id: {}", id);
 		return ticketTypeMapper.toTicketTypeResponse(findTicketTypeById(id));
 	}
 
 	@Cacheable(key = "'admin-' + #active + '-' + #category + '-' + #search + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
-	public PageResponse<TicketTypeResponse> getTicketTypesForAdmin(Boolean active, TicketTypeCategory category,
+	public PageResponse<TicketTypeAdminResponse> getTicketTypesForAdmin(Boolean active, TicketTypeCategory category,
 			String search, Pageable pageable) {
 		log.info("Getting ticket types for admin with filters - active: {}, category: {}, search: {}", active, category,
 				search);
 
 		Page<TicketTypeAdminProjection> projections = ticketTypeRepository.findAdminProjections(active, category,
 				search, pageable);
-		Page<TicketTypeResponse> responsePage = projections.map(ticketTypeMapper::toTicketTypeResponse);
+		Page<TicketTypeAdminResponse> responsePage = projections.map(ticketTypeMapper::toTicketTypeResponse);
 		return PageResponse.from(responsePage);
 	}
 
@@ -103,7 +103,7 @@ public class TicketTypeService {
 
 	@Caching(evict = { @CacheEvict(key = "#id"), @CacheEvict(key = "'user-active'"), @CacheEvict(allEntries = true) })
 	@Transactional
-	public TicketTypeResponse updateTicketType(Long id, TicketTypeUpdateRequest request) {
+	public TicketTypeAdminResponse updateTicketType(Long id, TicketTypeUpdateRequest request) {
 		log.info("Updating ticket type with id: {}", id);
 
 		TicketType ticketType = findTicketTypeById(id);
@@ -168,7 +168,7 @@ public class TicketTypeService {
 
 	@Caching(evict = { @CacheEvict(key = "#id"), @CacheEvict(key = "'user-active'"), @CacheEvict(allEntries = true) })
 	@Transactional
-	public TicketTypeResponse toggleTicketTypeActiveStatus(Long id) {
+	public TicketTypeAdminResponse toggleTicketTypeActiveStatus(Long id) {
 		log.info("Toggling active status for ticket type with id: {}", id);
 
 		TicketType ticketType = findTicketTypeById(id);

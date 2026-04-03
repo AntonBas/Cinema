@@ -1,8 +1,20 @@
 package ua.lviv.bas.cinema.dto.ticketType.response;
 
+import java.math.BigDecimal;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 
 public record TicketTypeUserResponse(@Schema(description = "Ticket type ID", example = "1") Long id,
 
-		@Schema(description = "Display name", example = "Student Ticket") String displayName) {
+		@Schema(description = "Display name", example = "Student Ticket") String displayName,
+
+		@Schema(description = "Price multiplier", example = "0.70") BigDecimal priceMultiplier,
+
+		@Schema(description = "Minimum age", example = "12") Integer minAge,
+
+		@Schema(description = "Maximum age", example = "25") Integer maxAge,
+
+		@Schema(description = "Whether document is required", example = "true") boolean requiresDocument,
+
+		@Schema(description = "Type of document required", example = "Student ID") String documentType) {
 }
