@@ -17,6 +17,7 @@ export interface PaymentLiqPayDataResponse {
 }
 
 export interface PaymentResponse {
+    id: number;
     bookingNumber: string;
     movieTitle: string;
     sessionTime: string;
