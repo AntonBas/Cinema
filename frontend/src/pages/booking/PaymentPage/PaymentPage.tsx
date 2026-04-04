@@ -26,6 +26,10 @@ interface BookingData {
     }>;
 }
 
+interface ExtendedPaymentResponse extends PaymentResponse {
+    id: number;
+}
+
 const PaymentStatusDisplay: Record<PaymentStatus, string> = {
     PENDING: 'Pending',
     PROCESSING: 'Processing',
@@ -75,19 +79,19 @@ export const PaymentPage: React.FC = () => {
         create,
         getById,
         getLiqPayData,
-        clearCache,
-        resetPayment
+        resetAll
     } = usePayment();
 
     const [step, setStep] = useState<'init' | 'processing' | 'ready' | 'paying' | 'success' | 'failed'>('init');
     const [selectedMethod, setSelectedMethod] = useState<'liqpay' | null>('liqpay');
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
-    const [currentPayment, setCurrentPayment] = useState<PaymentResponse | null>(null);
+    const [currentPaymentId, setCurrentPaymentId] = useState<number | null>(null);
+    const [currentPayment, setCurrentPayment] = useState<ExtendedPaymentResponse | null>(null);
     const [paymentTimeLeft, setPaymentTimeLeft] = useState<string>('30 minutes');
 
     const isMountedRef = useRef(true);
     const isCreatingRef = useRef(false);
-    const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+    const pollingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
     const stopPolling = useCallback(() => {
         if (pollingIntervalRef.current) {
@@ -101,27 +105,28 @@ export const PaymentPage: React.FC = () => {
 
         const interval = setInterval(async () => {
             try {
-                const response = await getById(paymentId);
-                const payment = response || null;
-                setCurrentPayment(payment);
+                const payment = await getById(paymentId) as ExtendedPaymentResponse | null;
+                if (payment) {
+                    setCurrentPayment(payment);
 
-                if (payment && (payment.status === 'SUCCESS' || payment.status === 'FAILED' || payment.status === 'CANCELLED' || payment.status === 'EXPIRED')) {
-                    stopPolling();
-                }
+                    if (payment.status === 'SUCCESS' || payment.status === 'FAILED' || payment.status === 'CANCELLED' || payment.status === 'EXPIRED') {
+                        stopPolling();
+                    }
 
-                if (payment?.createdAt) {
-                    const now = new Date();
-                    const createdAt = new Date(payment.createdAt);
-                    const expiresAt = new Date(createdAt.getTime() + 30 * 60000);
-                    const diffMs = expiresAt.getTime() - now.getTime();
-                    const diffMinutes = Math.floor(diffMs / (1000 * 60));
+                    if (payment.paymentTime) {
+                        const now = new Date();
+                        const createdAt = new Date(payment.paymentTime);
+                        const expiresAt = new Date(createdAt.getTime() + 30 * 60000);
+                        const diffMs = expiresAt.getTime() - now.getTime();
+                        const diffMinutes = Math.floor(diffMs / (1000 * 60));
 
-                    if (diffMs <= 0) {
-                        setPaymentTimeLeft('Expired');
-                    } else if (diffMinutes > 60) {
-                        setPaymentTimeLeft(`${Math.floor(diffMinutes / 60)}h ${diffMinutes % 60}m`);
-                    } else {
-                        setPaymentTimeLeft(`${diffMinutes}m`);
+                        if (diffMs <= 0) {
+                            setPaymentTimeLeft('Expired');
+                        } else if (diffMinutes > 60) {
+                            setPaymentTimeLeft(`${Math.floor(diffMinutes / 60)}h ${diffMinutes % 60}m`);
+                        } else {
+                            setPaymentTimeLeft(`${diffMinutes}m`);
+                        }
                     }
                 }
             } catch (error) {
@@ -155,14 +160,15 @@ export const PaymentPage: React.FC = () => {
         localStorage.setItem(paymentKey, now.toString());
 
         try {
-            const response = await create({ bookingId: parseInt(bookingId) });
-            const payment = response || null;
+            const payment = await create({ bookingId: parseInt(bookingId) }) as ExtendedPaymentResponse | null;
 
-            if (payment) {
+            if (payment && payment.id) {
+                setCurrentPaymentId(payment.id);
                 setCurrentPayment(payment);
-                const liqPayResponse = await getLiqPayData(payment.id);
-                const liqPayData = liqPayResponse || null;
-                if (liqPayData) {
+                startPolling(payment.id);
+
+                const liqPayData = await getLiqPayData(payment.id);
+                if (liqPayData?.paymentUrl) {
                     setStep('ready');
                 } else {
                     setStep('failed');
@@ -181,7 +187,7 @@ export const PaymentPage: React.FC = () => {
                 localStorage.removeItem(paymentKey);
             }, 10000);
         }
-    }, [bookingId, create, getLiqPayData]);
+    }, [bookingId, create, getLiqPayData, startPolling]);
 
     useEffect(() => {
         isMountedRef.current = true;
@@ -203,7 +209,7 @@ export const PaymentPage: React.FC = () => {
                 stopPolling();
             } else if (['FAILED', 'CANCELLED', 'EXPIRED'].includes(currentPayment.status)) {
                 setStep('failed');
-                setErrorMessage(currentPayment.errorDescription || currentPayment.errorCode || 'Payment failed');
+                setErrorMessage(currentPayment.errorDescription || 'Payment failed');
                 stopPolling();
             } else if (currentPayment.status === 'PROCESSING' && step !== 'paying') {
                 setStep('paying');
@@ -212,14 +218,12 @@ export const PaymentPage: React.FC = () => {
     }, [currentPayment, step, stopPolling]);
 
     const handlePayWithLiqPay = async () => {
-        if (!currentPayment?.id) return;
+        if (!currentPaymentId) return;
 
         setStep('paying');
 
-        const response = await getLiqPayData(currentPayment.id);
-        const liqPayData = response || null;
+        const liqPayData = await getLiqPayData(currentPaymentId);
         if (liqPayData?.paymentUrl) {
-            startPolling(currentPayment.id);
             window.location.href = liqPayData.paymentUrl;
         } else {
             setStep('failed');
@@ -229,8 +233,8 @@ export const PaymentPage: React.FC = () => {
 
     const handleRetry = () => {
         stopPolling();
-        clearCache();
-        resetPayment();
+        resetAll();
+        setCurrentPaymentId(null);
         setCurrentPayment(null);
         setErrorMessage(null);
         setStep('init');
@@ -347,9 +351,9 @@ export const PaymentPage: React.FC = () => {
                         <h3 className={styles.statusTitle}>Payment Successful!</h3>
                         <p className={styles.statusMessage}>Your tickets have been successfully paid and booked</p>
 
-                        {currentPayment?.liqpayPaymentId && (
+                        {currentPayment?.senderCardMask && (
                             <div className={styles.paymentNumber}>
-                                Payment ID: {currentPayment.liqpayPaymentId}
+                                Card: {currentPayment.senderCardMask}
                             </div>
                         )}
 
@@ -458,10 +462,12 @@ export const PaymentPage: React.FC = () => {
 
                     <div className={styles.divider}></div>
 
-                    <div className={styles.detailRow}>
-                        <span className={styles.detailLabel}>Total price:</span>
-                        <span className={styles.detailValue}>{bookingData.totalPrice} UAH</span>
-                    </div>
+                    {bookingData.bonusPointsUsed > 0 && (
+                        <div className={styles.detailRow}>
+                            <span className={styles.detailLabel}>Total price:</span>
+                            <span className={styles.detailValue}>{bookingData.totalPrice} UAH</span>
+                        </div>
+                    )}
                     {bookingData.bonusPointsUsed > 0 && (
                         <div className={styles.detailRow}>
                             <span className={styles.detailLabel}>Bonus points used:</span>
