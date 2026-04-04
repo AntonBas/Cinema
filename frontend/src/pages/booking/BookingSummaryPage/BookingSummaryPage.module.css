@@ -183,9 +183,6 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-top: 1.5rem;
-    padding-top: 1.5rem;
-    border-top: 2px solid var(--color-border);
     font-size: 1.3rem;
     font-weight: 600;
     color: var(--color-text-primary);

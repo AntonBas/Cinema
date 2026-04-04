@@ -278,21 +278,21 @@ export const BookingSummaryPage: React.FC = () => {
                     <div className={styles.pricingInfo}>
                         <h3>Payment Details</h3>
                         <div className={styles.priceBreakdown}>
-                            <div className={styles.priceRow}>
-                                <span>Total Price:</span>
-                                <span>{parseFloat(booking.totalPrice).toFixed(2)}₴</span>
-                            </div>
                             {booking.bonusPointsUsed > 0 && (
-                                <div className={styles.priceRow}>
-                                    <span>Bonus points used:</span>
-                                    <span>{booking.bonusPointsUsed} points</span>
-                                </div>
-                            )}
-                            {parseFloat(booking.bonusDiscountAmount) > 0 && (
-                                <div className={styles.priceRow}>
-                                    <span>Bonus discount:</span>
-                                    <span className={styles.discount}>-{parseFloat(booking.bonusDiscountAmount).toFixed(2)}₴</span>
-                                </div>
+                                <>
+                                    <div className={styles.priceRow}>
+                                        <span>Total Price:</span>
+                                        <span>{parseFloat(booking.totalPrice).toFixed(2)}₴</span>
+                                    </div>
+                                    <div className={styles.priceRow}>
+                                        <span>Bonus points used:</span>
+                                        <span>{booking.bonusPointsUsed} points</span>
+                                    </div>
+                                    <div className={styles.priceRow}>
+                                        <span>Bonus discount:</span>
+                                        <span className={styles.discount}>-{parseFloat(booking.bonusDiscountAmount).toFixed(2)}₴</span>
+                                    </div>
+                                </>
                             )}
                             <div className={styles.finalPriceRow}>
                                 <span>Amount to pay:</span>
