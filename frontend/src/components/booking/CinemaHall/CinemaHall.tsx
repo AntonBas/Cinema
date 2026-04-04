@@ -86,7 +86,9 @@ export const CinemaHall: React.FC<CinemaHallProps> = ({
 
                         return (
                             <div key={`row-${rowNumber}`} className={styles.row}>
-                                <div className={styles.rowLabel}>Row {rowNumber}</div>
+                                <div className={styles.rowLabel}>
+                                    <span className={styles.rowNumber}>{rowNumber}</span>
+                                </div>
                                 <div className={styles.seatsRow}>
                                     {rowSeats.map(seat => {
                                         const isLoading = loadingSeats.includes(seat.id);
@@ -124,7 +126,7 @@ export const CinemaHall: React.FC<CinemaHallProps> = ({
             </div>
 
             <div className={styles.legend}>
-                <h4 className={styles.legendTitle}>Seat Types:</h4>
+                <h4 className={styles.legendTitle}>Seat types:</h4>
                 <div className={styles.legendGrid}>
                     <div className={styles.legendItem}>
                         <div className={`${styles.legendColor} ${styles.standard}`} />
@@ -137,22 +139,6 @@ export const CinemaHall: React.FC<CinemaHallProps> = ({
                     <div className={styles.legendItem}>
                         <div className={`${styles.legendColor} ${styles.couple}`} />
                         <span>Couple</span>
-                    </div>
-                    <div className={styles.legendItem}>
-                        <div className={`${styles.legendColor} ${styles.selected}`} />
-                        <span>Selected</span>
-                    </div>
-                    <div className={styles.legendItem}>
-                        <div className={`${styles.legendColor} ${styles.booked}`} />
-                        <span>Booked</span>
-                    </div>
-                    <div className={styles.legendItem}>
-                        <div className={`${styles.legendColor} ${styles.temporary}`} />
-                        <span>Temporarily Reserved</span>
-                    </div>
-                    <div className={styles.legendItem}>
-                        <div className={`${styles.legendColor} ${styles.inactive}`} />
-                        <span>Inactive</span>
                     </div>
                 </div>
             </div>

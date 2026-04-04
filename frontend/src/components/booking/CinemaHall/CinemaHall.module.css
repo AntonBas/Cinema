@@ -44,7 +44,7 @@
     border: 1px solid var(--color-border-light);
     box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.3), 0 10px 30px rgba(0, 0, 0, 0.3);
     position: relative;
-    overflow: hidden;
+    overflow: visible;
     margin-bottom: 2rem;
 }
 
@@ -55,7 +55,7 @@
     align-items: center;
     max-width: 900px;
     margin: 0 auto;
-    overflow-x: auto;
+    overflow: visible;
     padding: var(--space-2);
 }
 
@@ -65,16 +65,33 @@
     gap: var(--space-4);
     width: 100%;
     justify-content: center;
+    position: relative;
+    overflow: visible;
 }
 
 .rowLabel {
-    min-width: 60px;
-    color: #a0a4b8;
-    font-size: 12px;
-    font-weight: 600;
-    text-align: right;
-    padding-right: 10px;
+    min-width: 40px;
     flex-shrink: 0;
+}
+
+.rowNumber {
+    font-size: 14px;
+    font-weight: 700;
+    background: rgba(255, 255, 255, 0.1);
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    color: var(--color-text-secondary);
+    transition: all var(--transition-fast);
+}
+
+.row:hover .rowNumber {
+    background: rgba(var(--color-primary-rgb), 0.2);
+    color: var(--color-primary);
+    transform: scale(1.05);
 }
 
 .seatsRow {
@@ -84,6 +101,8 @@
     flex-wrap: nowrap;
     width: fit-content;
     min-width: 0;
+    position: relative;
+    overflow: visible;
 }
 
 .seatButton {
@@ -133,39 +152,30 @@
     transform: scale(1.1);
     z-index: 2;
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3);
-    background-color: #2ecc71 !important;
-    border-color: #2ecc71 !important;
-}
-
-.seatButton.selected.standard,
-.seatButton.selected.vip,
-.seatButton.selected.couple {
-    background-color: #2ecc71 !important;
-    border-color: #2ecc71 !important;
+    background-color: #2ecc71;
+    border-color: #2ecc71;
 }
 
 .seatButton.booked {
-    background-color: #e74c3c !important;
-    border-color: #e74c3c !important;
+    background-color: #e74c3c;
+    border-color: #e74c3c;
     opacity: 0.8;
     cursor: not-allowed;
-    filter: none;
 }
 
 .seatButton.temporary {
-    background-color: #7f8c8d !important;
-    border-color: #95a5a6 !important;
+    background-color: #7f8c8d;
+    border-color: #95a5a6;
     opacity: 0.7;
     cursor: not-allowed;
     animation: pulse 2s infinite;
 }
 
 .seatButton.inactive {
-    background-color: #95a5a6 !important;
-    border-color: #7f8c8d !important;
+    background-color: #95a5a6;
+    border-color: #7f8c8d;
     opacity: 0.5;
     cursor: not-allowed;
-    filter: grayscale(0.3);
 }
 
 .seatButton:hover:not(:disabled):not(.inactive):not(.booked):not(.temporary) {
@@ -229,23 +239,24 @@
     padding: var(--space-6) var(--space-8);
     border: 1px solid var(--color-border-light);
     width: 100%;
-    max-width: 600px;
+    max-width: 400px;
     margin: 0 auto;
+    position: relative;
+    z-index: 1;
 }
 
 .legendTitle {
     color: var(--color-text-primary);
-    font-size: 1.1rem;
+    font-size: 1rem;
     font-weight: 600;
     margin-bottom: var(--space-4);
     text-align: center;
 }
 
 .legendGrid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
-    margin-top: 10px;
+    display: flex;
+    justify-content: center;
+    gap: 24px;
 }
 
 .legendItem {
@@ -253,11 +264,8 @@
     align-items: center;
     gap: var(--space-2);
     color: var(--color-text-secondary);
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     font-weight: 500;
-    padding: var(--space-1) var(--space-2);
-    border-radius: var(--radius-md);
-    background: rgba(255, 255, 255, 0.05);
 }
 
 .legendColor {
@@ -279,22 +287,6 @@
 
 .legendColor.couple {
     background-color: #e84393;
-}
-
-.legendColor.selected {
-    background-color: #2ecc71;
-}
-
-.legendColor.booked {
-    background-color: #e74c3c;
-}
-
-.legendColor.temporary {
-    background-color: #7f8c8d;
-}
-
-.legendColor.inactive {
-    background-color: #95a5a6;
 }
 
 @keyframes pulse {
@@ -321,8 +313,16 @@
         letter-spacing: 2px;
     }
 
+    .legend {
+        padding: var(--space-4) var(--space-6);
+    }
+
     .legendGrid {
-        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+    }
+
+    .legendItem {
+        font-size: 0.75rem;
     }
 
     .seatsLayout {
@@ -334,8 +334,13 @@
     }
 
     .rowLabel {
-        min-width: 50px;
-        font-size: 11px;
+        min-width: 36px;
+    }
+
+    .rowNumber {
+        width: 28px;
+        height: 28px;
+        font-size: 12px;
     }
 
     .seatButton.standard,
@@ -357,6 +362,26 @@
         letter-spacing: 1px;
     }
 
+    .legend {
+        padding: var(--space-3) var(--space-4);
+    }
+
+    .legendGrid {
+        gap: 12px;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .rowLabel {
+        min-width: 32px;
+    }
+
+    .rowNumber {
+        width: 24px;
+        height: 24px;
+        font-size: 10px;
+    }
+
     .seatButton.standard,
     .seatButton.vip {
         width: 26px;
@@ -366,14 +391,5 @@
     .seatButton.couple {
         width: 56px;
         height: 26px;
-    }
-
-    .rowLabel {
-        min-width: 45px;
-        font-size: 10px;
-    }
-
-    .legendGrid {
-        grid-template-columns: 1fr;
     }
 }
