@@ -29,14 +29,6 @@ export interface BonusBalanceResponse {
     maxRedemptionValue: string;
 }
 
-export interface BonusCardResponse {
-    id: number;
-    pointsBalance: number;
-    lastBirthdayBonusDate: string | null;
-    welcomeBonusReceived: boolean;
-    userId: number;
-}
-
 export interface BonusRulesResponse {
     id: number;
     bonusType: BonusTransactionType;

@@ -1,7 +1,6 @@
 import { api } from '@/services/api';
 import type {
     BonusBalanceResponse,
-    BonusCardResponse,
     BonusRulesResponse,
     BonusTransactionResponse,
     BonusRulesRequest,
@@ -13,8 +12,6 @@ const BASE_URL = '/api/bonus';
 const ADMIN_BASE_URL = '/api/admin/bonus';
 
 export const bonusApi = {
-    getMyCard: () => api.get<BonusCardResponse>(`${BASE_URL}/my-card`),
-
     getMyBalance: () => api.get<BonusBalanceResponse>(`${BASE_URL}/my-balance`),
 
     getMyTransactions: (params?: { page?: number; size?: number }) =>

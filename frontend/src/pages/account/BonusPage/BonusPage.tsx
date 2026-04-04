@@ -2,19 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { Layout } from '@/components/layout/Layout/Layout';
 import { AccountSidebar } from '@/components/account/AccountSidebar/AccountSidebar';
 import { BonusBalanceCard } from '@/components/account/BonusBalanceCard/BonusBalanceCard';
-import { BonusCardInfo } from '@/components/account/BonusCardInfo/BonusCardInfo';
 import { BonusTransactions } from '@/components/account/BonusTransactions/BonusTransactions';
 import { Notification } from '@/components/ui/Notification/Notification';
 import { useBonus } from '@/hooks/features/bonus/useBonus';
 import { usePagination } from '@/hooks/common/usePagination';
 import { DEFAULT_PAGE_SIZE_ADMIN } from '@/utils/paginationUtils';
-import type { BonusBalanceResponse, BonusCardResponse, BonusTransactionResponse } from '@/types/bonus';
+import type { BonusBalanceResponse, BonusTransactionResponse } from '@/types/bonus';
 import styles from './BonusPage.module.css';
 
 export const BonusPage: React.FC = () => {
-    const { getMyBalance, getMyCard, getMyTransactions, loading } = useBonus();
+    const { getMyBalance, getMyTransactions, loading } = useBonus();
     const [balance, setBalance] = useState<BonusBalanceResponse | null>(null);
-    const [cardInfo, setCardInfo] = useState<BonusCardResponse | null>(null);
     const [transactions, setTransactions] = useState<BonusTransactionResponse[]>([]);
     const [pagination, setPagination] = useState({
         currentPage: 0,
@@ -42,13 +40,8 @@ export const BonusPage: React.FC = () => {
 
     const loadBonusData = async () => {
         try {
-            const [balanceResponse, cardResponse] = await Promise.all([
-                getMyBalance(),
-                getMyCard()
-            ]);
-
+            const balanceResponse = await getMyBalance();
             setBalance(balanceResponse || null);
-            setCardInfo(cardResponse || null);
             setLocalError(null);
 
             await loadTransactions(0);
@@ -149,10 +142,6 @@ export const BonusPage: React.FC = () => {
                                 <div className={styles.balanceContent}>
                                     <BonusBalanceCard
                                         balance={balance}
-                                        loading={loading}
-                                    />
-                                    <BonusCardInfo
-                                        cardInfo={cardInfo}
                                         loading={loading}
                                     />
 
