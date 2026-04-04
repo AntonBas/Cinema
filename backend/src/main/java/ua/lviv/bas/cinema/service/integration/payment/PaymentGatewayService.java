@@ -6,6 +6,7 @@ import java.math.RoundingMode;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Base64;
 import java.util.Collections;
@@ -205,11 +206,11 @@ public class PaymentGatewayService {
 		}
 	}
 
-	public PaymentResponse getPaymentStatus(String paymentId, String bookingNumber, String movieTitle,
-			String sessionTime, String hallName, BigDecimal finalAmount, String paymentTime, String senderCardMask) {
+	public PaymentResponse getPaymentStatus(Long paymentId, String bookingNumber, String movieTitle, String sessionTime,
+			String hallName, BigDecimal finalAmount, String paymentTime, String senderCardMask) {
 		try {
 			if (sandboxMode) {
-				return getSandboxPaymentStatus(bookingNumber, movieTitle, sessionTime, hallName, finalAmount,
+				return getSandboxPaymentStatus(paymentId, bookingNumber, movieTitle, sessionTime, hallName, finalAmount,
 						paymentTime, senderCardMask);
 			}
 
@@ -241,7 +242,7 @@ public class PaymentGatewayService {
 
 				if ("error".equals(result)) {
 					String errorDescription = (String) responseMap.get("err_description");
-					return new PaymentResponse(bookingNumber, movieTitle, null, hallName, finalAmount,
+					return new PaymentResponse(paymentId, bookingNumber, movieTitle, null, hallName, finalAmount,
 							PaymentStatus.FAILED, null, senderCardMask, errorDescription);
 				}
 
@@ -249,13 +250,13 @@ public class PaymentGatewayService {
 				String maskedCard = (String) responseMap.get("sender_card_mask2");
 				String paymentTimeStr = (String) responseMap.get("payment_time");
 
-				return new PaymentResponse(bookingNumber, movieTitle,
-						sessionTime != null ? java.time.LocalDateTime.parse(sessionTime) : null, hallName, finalAmount,
-						paymentStatus, paymentTimeStr != null ? java.time.LocalDateTime.parse(paymentTimeStr) : null,
+				return new PaymentResponse(paymentId, bookingNumber, movieTitle,
+						sessionTime != null ? LocalDateTime.parse(sessionTime) : null, hallName, finalAmount,
+						paymentStatus, paymentTimeStr != null ? LocalDateTime.parse(paymentTimeStr) : null,
 						maskedCard != null ? maskedCard : senderCardMask, null);
 			} else {
-				return new PaymentResponse(bookingNumber, movieTitle, null, hallName, finalAmount, PaymentStatus.FAILED,
-						null, senderCardMask, "Failed to get payment status");
+				return new PaymentResponse(paymentId, bookingNumber, movieTitle, null, hallName, finalAmount,
+						PaymentStatus.FAILED, null, senderCardMask, "Failed to get payment status");
 			}
 
 		} catch (RestClientException e) {
@@ -265,13 +266,12 @@ public class PaymentGatewayService {
 		}
 	}
 
-	private PaymentResponse getSandboxPaymentStatus(String bookingNumber, String movieTitle, String sessionTime,
-			String hallName, BigDecimal finalAmount, String paymentTime, String senderCardMask) {
+	private PaymentResponse getSandboxPaymentStatus(Long paymentId, String bookingNumber, String movieTitle,
+			String sessionTime, String hallName, BigDecimal finalAmount, String paymentTime, String senderCardMask) {
 		log.info("Sandbox payment status");
-		return new PaymentResponse(bookingNumber, movieTitle,
-				sessionTime != null ? java.time.LocalDateTime.parse(sessionTime) : null, hallName, finalAmount,
-				PaymentStatus.SUCCESS,
-				paymentTime != null ? java.time.LocalDateTime.parse(paymentTime) : java.time.LocalDateTime.now(),
+		return new PaymentResponse(paymentId, bookingNumber, movieTitle,
+				sessionTime != null ? LocalDateTime.parse(sessionTime) : null, hallName, finalAmount,
+				PaymentStatus.SUCCESS, paymentTime != null ? LocalDateTime.parse(paymentTime) : LocalDateTime.now(),
 				senderCardMask != null ? senderCardMask : "****0000", null);
 	}
 

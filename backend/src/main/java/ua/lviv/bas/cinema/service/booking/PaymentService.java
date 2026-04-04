@@ -318,7 +318,7 @@ public class PaymentService {
 
 	private PaymentResponse buildPaymentResponse(Payment payment) {
 		Booking booking = payment.getBooking();
-		return new PaymentResponse(numberGenerator.generateBookingNumber(booking),
+		return new PaymentResponse(payment.getId(), numberGenerator.generateBookingNumber(booking),
 				booking.getSession().getMovie().getTitle(), booking.getSession().getStartTime(),
 				booking.getSession().getHall().getName(), payment.getAmount(), payment.getStatus(),
 				payment.getPaymentTime(), payment.getLiqpaySenderCardMask(), payment.getLiqpayErrorDescription());
