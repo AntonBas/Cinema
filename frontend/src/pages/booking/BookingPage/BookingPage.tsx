@@ -33,8 +33,6 @@ export const BookingPage: React.FC = () => {
     const sessionIdNum = parseInt(sessionId || '0');
     const [selectionError, setSelectionError] = useState<string | null>(null);
     const [notifications, setNotifications] = useState<NotificationState[]>([]);
-    const [maxUsablePoints, setMaxUsablePoints] = useState<number>(0);
-    const [minUsablePoints, setMinUsablePoints] = useState<number>(0);
 
     const {
         data: seatData,
@@ -81,18 +79,6 @@ export const BookingPage: React.FC = () => {
             loadBonusData();
         }
     }, [sessionIdNum, seatData]);
-
-    useEffect(() => {
-        if (myBalance) {
-            setMinUsablePoints(myBalance.minUsablePoints || 0);
-            const maxPoints = Math.min(
-                myBalance.pointsBalance || 0,
-                myBalance.maxUsablePoints || 0,
-                Math.floor(totalPrice / 0.01)
-            );
-            setMaxUsablePoints(maxPoints);
-        }
-    }, [myBalance, totalPrice]);
 
     const showNotification = useCallback((message: string, type: NotificationType = 'info') => {
         const id = Date.now().toString();
@@ -237,8 +223,8 @@ export const BookingPage: React.FC = () => {
                             onTicketTypeChange={updateSeatTicketType}
                             onBooking={handleBooking}
                             isBooking={bookingLoading}
-                            maxUsablePoints={maxUsablePoints}
-                            minUsablePoints={minUsablePoints}
+                            maxUsablePoints={myBalance?.maxUsablePoints || 0}
+                            minUsablePoints={myBalance?.minUsablePoints || 0}
                         />
                     </div>
                 </div>
