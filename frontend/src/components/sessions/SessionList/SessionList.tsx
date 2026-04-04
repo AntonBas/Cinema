@@ -1,8 +1,9 @@
 import React, { useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { SessionScheduleResponse } from '@/types/session';
-import { AgeRatingDisplay } from '@/types/movie';
+import { AgeRatingDisplay, AgeRatingDescription } from '@/types/movie';
 import { Button } from '@/components/ui';
+import { Tooltip } from '@/components/ui/Tooltip/Tooltip';
 import styles from './SessionList.module.css';
 
 interface SessionListProps {
@@ -18,11 +19,11 @@ interface MovieGroup {
 }
 
 const AGE_RATING_COLORS: Record<string, string> = {
-    'G': styles.ageRatingGreen,
-    'PG': styles.ageRatingBlue,
-    'PG_13': styles.ageRatingYellow,
-    'R': styles.ageRatingOrange,
-    'NC_17': styles.ageRatingRed
+    'PEGI_3': styles.ageRatingGreen,
+    'PEGI_7': styles.ageRatingBlue,
+    'PEGI_12': styles.ageRatingYellow,
+    'PEGI_16': styles.ageRatingOrange,
+    'PEGI_18': styles.ageRatingRed
 };
 
 export const SessionList: React.FC<SessionListProps> = ({ sessions }) => {
@@ -128,9 +129,14 @@ export const SessionList: React.FC<SessionListProps> = ({ sessions }) => {
                             </div>
 
                             <div className={styles.movieMeta}>
-                                <span className={`${styles.ageRating} ${AGE_RATING_COLORS[movieGroup.movieAgeRating] || styles.ageRatingRed}`}>
-                                    {AgeRatingDisplay[movieGroup.movieAgeRating as keyof typeof AgeRatingDisplay] || movieGroup.movieAgeRating}
-                                </span>
+                                <Tooltip
+                                    content={AgeRatingDescription[movieGroup.movieAgeRating as keyof typeof AgeRatingDescription] || 'Age rating'}
+                                    position="top"
+                                >
+                                    <span className={`${styles.ageRating} ${AGE_RATING_COLORS[movieGroup.movieAgeRating] || styles.ageRatingRed}`}>
+                                        {AgeRatingDisplay[movieGroup.movieAgeRating as keyof typeof AgeRatingDisplay] || movieGroup.movieAgeRating}
+                                    </span>
+                                </Tooltip>
                                 <span className={styles.duration}>{formatDuration(movieGroup.movieDuration)}</span>
                                 <span className={styles.sessionCount}>
                                     {movieGroup.sessions.length} session{movieGroup.sessions.length !== 1 ? 's' : ''}

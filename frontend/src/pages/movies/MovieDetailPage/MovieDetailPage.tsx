@@ -6,28 +6,22 @@ import type { MovieDetailResponse } from '@/types/movie';
 import type { SessionScheduleResponse } from '@/types/session';
 import {
     AgeRatingDisplay,
+    AgeRatingDescription,
     MovieStatusDisplay
 } from '@/types/movie';
 import { useNotification } from '@/hooks/common/useNotification';
 import { Button } from '@/components/ui/Button/Button';
 import { Notification } from '@/components/ui/Notification/Notification';
+import { Tooltip } from '@/components/ui/Tooltip/Tooltip';
 import { Layout } from '@/components/layout/Layout/Layout';
 import styles from './MovieDetailPage.module.css';
 
 const AGE_RATING_COLORS: Record<string, string> = {
-    'G': styles.ageRatingGreen,
-    'PG': styles.ageRatingBlue,
-    'PG_13': styles.ageRatingYellow,
-    'R': styles.ageRatingOrange,
-    'NC_17': styles.ageRatingRed
-};
-
-const AGE_RATING_DESCRIPTIONS: Record<string, string> = {
-    'G': 'General Audiences',
-    'PG': 'Parental Guidance Suggested',
-    'PG_13': 'Parents Strongly Cautioned',
-    'R': 'Restricted',
-    'NC_17': 'Adults Only'
+    'PEGI_3': styles.ageRatingGreen,
+    'PEGI_7': styles.ageRatingBlue,
+    'PEGI_12': styles.ageRatingYellow,
+    'PEGI_16': styles.ageRatingOrange,
+    'PEGI_18': styles.ageRatingRed
 };
 
 export const MovieDetailPage: React.FC = () => {
@@ -273,12 +267,14 @@ export const MovieDetailPage: React.FC = () => {
                             <div className={styles.titleContent}>
                                 <h1 className={styles.title}>{movie.title}</h1>
                                 <div className={styles.metaInfo}>
-                                    <div
-                                        className={`${styles.ageRating} ${getAgeRatingClass(movie.ageRating)}`}
-                                        title={AGE_RATING_DESCRIPTIONS[movie.ageRating]}
+                                    <Tooltip
+                                        content={AgeRatingDescription[movie.ageRating] || 'Age rating'}
+                                        position="top"
                                     >
-                                        {AgeRatingDisplay[movie.ageRating]}
-                                    </div>
+                                        <div className={`${styles.ageRating} ${getAgeRatingClass(movie.ageRating)}`}>
+                                            {AgeRatingDisplay[movie.ageRating]}
+                                        </div>
+                                    </Tooltip>
                                     <span className={styles.duration}>
                                         {movie.durationMinutes} min
                                     </span>
