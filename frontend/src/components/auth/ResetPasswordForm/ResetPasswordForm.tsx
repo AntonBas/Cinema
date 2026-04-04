@@ -17,7 +17,7 @@ const PasswordResetSuccessModal: React.FC<SuccessModalProps> = ({
     <Modal isOpen={isOpen} onClose={onClose} size="small">
       <div className={styles.successContent}>
         <div className={styles.successAnimation}>
-          <div className={styles.successIcon}>✅</div>
+          <div className={styles.successIcon}></div>
         </div>
 
         <div className={styles.successText}>
@@ -126,7 +126,7 @@ export const ResetPasswordForm: React.FC = () => {
     <section className={styles.resetPassword}>
       <div className={styles.resetPasswordContainer}>
         <h1 className={styles.resetPasswordTitle}>
-          Set New Password
+          Create New Password
         </h1>
 
         {localError && (
@@ -137,7 +137,6 @@ export const ResetPasswordForm: React.FC = () => {
 
         <form onSubmit={handleSubmit} className={styles.resetPasswordForm}>
           <div className={styles.formSection}>
-            <h2 className={styles.sectionTitle}>Create New Password</h2>
 
             <Input
               type="password"

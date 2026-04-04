@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { useAuthActions } from '@/hooks/features/auth/useAuthActions';
 import { Input, Button, Modal } from '@/components/ui';
 import styles from './ForgotPasswordForm.module.css';
@@ -19,7 +18,7 @@ const PasswordResetModal: React.FC<SuccessModalProps> = ({
     <Modal isOpen={isOpen} onClose={onClose} size="small">
       <div className={styles.successContent}>
         <div className={styles.successAnimation}>
-          <div className={styles.successIcon}>📧</div>
+          <div className={styles.successIcon}></div>
         </div>
 
         <div className={styles.successText}>
@@ -100,21 +99,17 @@ export const ForgotPasswordForm: React.FC = () => {
             error={localError ? '' : undefined}
           />
 
-          <Button
-            type="submit"
-            variant="primary"
-            size="large"
-            loading={isLoading}
-            disabled={isLoading}
-            style={{ width: '100%', marginBottom: '1.5rem' }}
-          >
-            {isLoading ? 'Sending...' : 'Send Instructions'}
-          </Button>
-
-          <div className={styles.forgotPasswordLinks}>
-            <Link to="/login" className={styles.backLink}>
-              Back to Login
-            </Link>
+          <div className={styles.submitButton}>
+            <Button
+              type="submit"
+              variant="primary"
+              size="large"
+              loading={isLoading}
+              disabled={isLoading}
+              style={{ width: '100%' }}
+            >
+              {isLoading ? 'Sending...' : 'Send Instructions'}
+            </Button>
           </div>
         </form>
       </div>
