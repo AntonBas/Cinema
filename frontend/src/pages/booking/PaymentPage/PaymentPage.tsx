@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { usePayment } from '@/hooks/features/payment/usePayment';
 import { ProgressStepper } from '@/components/booking/ProgressStepper/ProgressStepper';
+import { BOOKING_STEPS } from '@/components/booking/ProgressStepper/bookingSteps';
 import { Badge } from '@/components/ui/Badge/Badge';
 import { Button } from '@/components/ui/Button/Button';
 import { Layout } from '@/components/layout/Layout/Layout';
@@ -40,33 +41,6 @@ const PaymentStatusDisplay: Record<PaymentStatus, string> = {
     REFUNDED: 'Refunded',
     PARTIALLY_REFUNDED: 'Partially Refunded'
 };
-
-const BOOKING_STEPS = [
-    {
-        id: 1,
-        title: 'Select Seats',
-        description: 'Choose your seats',
-        isClickable: true
-    },
-    {
-        id: 2,
-        title: 'Booking Summary',
-        description: 'Review your booking',
-        isClickable: true
-    },
-    {
-        id: 3,
-        title: 'Payment',
-        description: 'Secure payment',
-        isClickable: true
-    },
-    {
-        id: 4,
-        title: 'Confirmation',
-        description: 'Booking confirmed',
-        isClickable: false
-    }
-];
 
 export const PaymentPage: React.FC = () => {
     const { bookingId } = useParams<{ bookingId: string }>();

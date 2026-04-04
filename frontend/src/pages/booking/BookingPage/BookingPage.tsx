@@ -6,6 +6,7 @@ import { useBooking } from '@/hooks/features/booking/useBooking';
 import { CinemaHall } from '@/components/booking/CinemaHall/CinemaHall';
 import { BookingSidebar } from '@/components/booking/BookingSidebar/BookingSidebar';
 import { ProgressStepper } from '@/components/booking/ProgressStepper/ProgressStepper';
+import { BOOKING_STEPS } from '@/components/booking/ProgressStepper/bookingSteps';
 import { Layout } from '@/components/layout/Layout/Layout';
 import { Notification } from '@/components/ui/Notification/Notification';
 import type { SelectedSeat } from '@/hooks/features/seatReservation/useSeatReservation';
@@ -19,13 +20,6 @@ interface NotificationState {
     type: NotificationType;
     isVisible: boolean;
 }
-
-const BOOKING_STEPS = [
-    { id: 1, title: 'Select Seats', description: 'Choose your seats', isClickable: true },
-    { id: 2, title: 'Booking Summary', description: 'Review your booking', isClickable: false },
-    { id: 3, title: 'Payment', description: 'Secure payment', isClickable: false },
-    { id: 4, title: 'Confirmation', description: 'Booking confirmed', isClickable: false }
-];
 
 export const BookingPage: React.FC = () => {
     const { sessionId } = useParams<{ sessionId: string }>();

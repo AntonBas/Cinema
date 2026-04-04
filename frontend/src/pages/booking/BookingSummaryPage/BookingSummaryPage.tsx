@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ProgressStepper } from '@/components/booking/ProgressStepper/ProgressStepper';
+import { BOOKING_STEPS } from '@/components/booking/ProgressStepper/bookingSteps';
 import { Layout } from '@/components/layout/Layout/Layout';
 import { Notification } from '@/components/ui/Notification/Notification';
 import { Modal } from '@/components/ui/Modal/Modal';
@@ -32,33 +33,6 @@ interface BookingStateData {
         seatPrice: string;
     }>;
 }
-
-const BOOKING_STEPS = [
-    {
-        id: 1,
-        title: 'Select Seats',
-        description: 'Choose your seats',
-        isClickable: true
-    },
-    {
-        id: 2,
-        title: 'Booking Summary',
-        description: 'Review your booking',
-        isClickable: true
-    },
-    {
-        id: 3,
-        title: 'Payment',
-        description: 'Secure payment',
-        isClickable: false
-    },
-    {
-        id: 4,
-        title: 'Confirmation',
-        description: 'Booking confirmed',
-        isClickable: false
-    }
-];
 
 export const BookingSummaryPage: React.FC = () => {
     const { bookingId } = useParams<{ bookingId: string }>();
@@ -137,6 +111,25 @@ export const BookingSummaryPage: React.FC = () => {
         }
         if (step.id === 2) {
             return;
+        }
+        if (step.id === 3 && booking?.id) {
+            const bookingState: BookingStateData = {
+                id: booking.id,
+                bookingNumber: booking.bookingNumber,
+                movieTitle: booking.movieTitle,
+                hallName: booking.hallName,
+                sessionTime: booking.sessionTime,
+                totalPrice: booking.totalPrice,
+                finalPrice: booking.finalPrice,
+                bonusPointsUsed: booking.bonusPointsUsed,
+                bookedSeats: booking.seatReservations.map(seat => ({
+                    seatNumber: seat.seatNumber.toString(),
+                    seatRow: seat.row,
+                    ticketType: seat.ticketTypeName,
+                    seatPrice: seat.seatPrice
+                }))
+            };
+            navigate(`/booking/payment/${booking.id}`, { state: { booking: bookingState } });
         }
     };
 
