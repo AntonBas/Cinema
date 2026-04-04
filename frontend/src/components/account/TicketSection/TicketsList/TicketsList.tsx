@@ -1,5 +1,5 @@
 import React from 'react';
-import { TicketCard } from '@/components/account/TicketCard/TicketCard';
+import { TicketCard } from '@/components/account/TicketSection/TicketCard/TicketCard';
 import type { TicketResponse } from '@/types/ticket';
 import styles from './TicketsList.module.css';
 

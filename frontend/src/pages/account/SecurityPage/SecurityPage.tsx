@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Layout } from '@/components/layout/Layout/Layout';
 import { AccountSidebar } from '@/components/account/AccountSidebar/AccountSidebar';
-import { PasswordChangeForm } from '@/components/account/PasswordChangeForm/PasswordChangeForm';
-import { EmailChangeForm } from '@/components/account/EmailChangeForm/EmailChangeForm';
+import { PasswordChangeForm } from '@/components/account/SecuritySection/PasswordChangeForm/PasswordChangeForm';
+import { EmailChangeForm } from '@/components/account/SecuritySection/EmailChangeForm/EmailChangeForm';
 import styles from './SecurityPage.module.css';
 
 type SecuritySection = 'password' | 'email';

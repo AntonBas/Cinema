@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Layout } from '@/components/layout/Layout/Layout';
 import { AccountSidebar } from '@/components/account/AccountSidebar/AccountSidebar';
-import { UserProfileCard } from '@/components/account/UserProfileCard/UserProfileCard';
-import { ProfileEditForm } from '@/components/account/ProfileEditForm/ProfileEditForm';
+import { UserProfileCard } from '@/components/account/OverviewSection/UserProfileCard/UserProfileCard';
+import { ProfileEditForm } from '@/components/account/OverviewSection/ProfileEditForm/ProfileEditForm';
 import { useUser } from '@/hooks/features/user/useUser';
 import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
 import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';

@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Layout } from '@/components/layout/Layout/Layout';
 import { AccountSidebar } from '@/components/account/AccountSidebar/AccountSidebar';
-import { TicketsList } from '@/components/account/TicketsList/TicketsList';
-import { TicketQRModal } from '@/components/account/TicketQRModal/TicketQRModal';
-import { TicketRefundModal } from '@/components/account/TicketRefundModal/TicketRefundModal';
+import { TicketsList } from '@/components/account/TicketSection/TicketsList/TicketsList';
+import { TicketQRModal } from '@/components/account/TicketSection/TicketQRModal/TicketQRModal';
+import { TicketRefundModal } from '@/components/account/TicketSection/TicketRefundModal/TicketRefundModal';
 import { Pagination } from '@/components/ui/Pagination/Pagination';
 import { Button } from '@/components/ui/Button/Button';
 import { Notification } from '@/components/ui/Notification/Notification';

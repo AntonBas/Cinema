@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Layout } from '@/components/layout/Layout/Layout';
 import { AccountSidebar } from '@/components/account/AccountSidebar/AccountSidebar';
-import { BonusBalanceCard } from '@/components/account/BonusBalanceCard/BonusBalanceCard';
-import { BonusTransactions } from '@/components/account/BonusTransactions/BonusTransactions';
+import { BonusBalanceCard } from '@/components/account/BonusSection/BonusBalanceCard/BonusBalanceCard';
+import { BonusTransactions } from '@/components/account/BonusSection/BonusTransactions/BonusTransactions';
 import { Notification } from '@/components/ui/Notification/Notification';
 import { useBonus } from '@/hooks/features/bonus/useBonus';
 import { usePagination } from '@/hooks/common/usePagination';
