@@ -14,7 +14,7 @@
 }
 
 .contentWrapper {
-    max-width: 800px;
+    max-width: 500px;
     width: 100%;
     margin: 0 auto;
 }
@@ -38,37 +38,10 @@
     padding: 2rem;
 }
 
-.errorAlert {
-    background: var(--color-error-alt);
-    border: 1px solid var(--color-error);
-    border-radius: var(--radius-md);
-    padding: 1rem;
-    margin-bottom: 2rem;
-}
-
-.errorAlertContent {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.75rem;
-}
-
-.errorIcon {
-    width: 1.25rem;
-    height: 1.25rem;
-    color: var(--color-error);
-    flex-shrink: 0;
-    margin-top: 0.125rem;
-}
-
-.errorText {
-    color: var(--color-text-primary);
-    font-size: 0.95rem;
-    margin: 0;
-}
-
-.resultHeader {
+.successContainer,
+.errorContainer,
+.warningContainer {
     text-align: center;
-    margin-bottom: 2.5rem;
 }
 
 .iconWrapper {
@@ -82,23 +55,15 @@
 }
 
 .successIcon {
-    background: rgba(var(--color-success-rgb), 0.1);
     color: var(--color-success);
 }
 
-.errorIcon {
+.errorIconWrapper {
     background: rgba(var(--color-error-rgb), 0.1);
-    color: var(--color-error);
 }
 
-.warningIcon {
+.warningIconWrapper {
     background: rgba(var(--color-warning-rgb), 0.1);
-    color: var(--color-warning);
-}
-
-.infoIcon {
-    background: rgba(var(--color-info-rgb), 0.1);
-    color: var(--color-info);
 }
 
 .resultIcon {
@@ -113,100 +78,67 @@
     color: var(--color-text-primary);
 }
 
-.resultMessage {
-    font-size: 1.125rem;
-    margin: 0;
+.message {
+    font-size: 1rem;
+    color: var(--color-text-secondary);
+    margin-bottom: 2rem;
     line-height: 1.6;
 }
 
-.successMessage {
-    color: var(--color-success);
-}
-
 .errorMessage {
+    font-size: 1rem;
     color: var(--color-error);
+    margin-bottom: 2rem;
+    line-height: 1.6;
 }
 
 .warningMessage {
-    color: var(--color-warning);
-}
-
-.infoMessage {
-    color: var(--color-info);
-}
-
-.detailsCard {
-    background: var(--color-bg-secondary);
-    border-radius: var(--radius-md);
-    padding: 1.5rem;
-    margin-bottom: 2rem;
-    border: 1px solid var(--color-border);
-}
-
-.detailsTitle {
-    font-size: 1.25rem;
-    font-weight: 600;
-    margin: 0 0 1.5rem 0;
-    color: var(--color-text-primary);
-    text-align: center;
-}
-
-.detailsGrid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1.25rem;
-}
-
-.detailItem {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-.detailLabel {
-    font-size: 0.875rem;
-    color: var(--color-text-secondary);
-    font-weight: 500;
-}
-
-.detailValue {
     font-size: 1rem;
-    color: var(--color-text-primary);
-    font-weight: 600;
-    padding: 0.5rem 0.75rem;
-    background: var(--color-bg-tertiary);
-    border-radius: var(--radius-md);
-    border: 1px solid var(--color-border);
-    margin: 0;
-}
-
-.detailPrice {
-    font-size: 1.25rem;
-    color: var(--color-success);
-    font-weight: 700;
-    padding: 0.5rem 0.75rem;
-    background: var(--color-bg-tertiary);
-    border-radius: var(--radius-md);
-    border: 1px solid var(--color-success);
-    margin: 0;
+    color: var(--color-warning);
+    margin-bottom: 2rem;
+    line-height: 1.6;
 }
 
 .actions {
     display: flex;
     flex-direction: column;
     gap: 1rem;
+    margin-bottom: 0;
 }
 
 .actionButton {
     width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
 }
 
-.successNote {
+.errorAlert {
+    background: rgba(var(--color-error-rgb), 0.1);
+    border: 1px solid var(--color-error);
+    border-radius: var(--radius-md);
+    padding: 1rem;
+    margin-bottom: 2rem;
+}
+
+.errorText {
+    color: var(--color-error);
     font-size: 0.875rem;
-    color: var(--color-text-secondary);
-    text-align: center;
-    margin: 0.5rem 0 0 0;
-    line-height: 1.5;
+    margin: 0;
+}
+
+.pollingInfo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+    padding: 1rem;
+    background: rgba(var(--color-warning-rgb), 0.1);
+    border-radius: var(--radius-md);
+    color: var(--color-warning);
+    font-size: 0.875rem;
 }
 
 .footer {
@@ -219,19 +151,11 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem;
-}
-
-.successCheckIcon {
-    width: 1.25rem;
-    height: 1.25rem;
-    color: var(--color-success);
 }
 
 .footerText {
     font-size: 0.875rem;
-    color: var(--color-success);
-    font-weight: 500;
+    color: var(--color-text-secondary);
 }
 
 .statusCheck {
@@ -276,14 +200,6 @@
         font-size: 1.75rem;
     }
 
-    .resultMessage {
-        font-size: 1rem;
-    }
-
-    .detailsGrid {
-        grid-template-columns: 1fr;
-    }
-
     .iconWrapper {
         width: 4rem;
         height: 4rem;
@@ -301,17 +217,5 @@
 
     .title {
         font-size: 1.5rem;
-    }
-
-    .detailsTitle {
-        font-size: 1.125rem;
-    }
-
-    .detailValue {
-        font-size: 0.95rem;
-    }
-
-    .detailPrice {
-        font-size: 1.125rem;
     }
 }

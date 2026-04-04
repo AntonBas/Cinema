@@ -1,49 +1,11 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { usePayment } from '@/hooks/features/payment/usePayment';
-import { ProgressStepper } from '@/components/booking/ProgressStepper/ProgressStepper';
 import { Button } from '@/components/ui/Button/Button';
 import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';
+import { CheckCircle2, Home, Ticket } from 'lucide-react';
 import type { PaymentStatus, PaymentResponse } from '@/types/payment';
 import styles from './SuccessPage.module.css';
-
-const PaymentStatusDisplay: Record<PaymentStatus, string> = {
-    PENDING: 'Pending',
-    PROCESSING: 'Processing',
-    SUCCESS: 'Success',
-    FAILED: 'Failed',
-    CANCELLED: 'Cancelled',
-    EXPIRED: 'Expired',
-    REFUNDED: 'Refunded',
-    PARTIALLY_REFUNDED: 'Partially Refunded'
-};
-
-const BOOKING_STEPS = [
-    {
-        id: 1,
-        title: 'Select Seats',
-        description: 'Choose your seats',
-        isClickable: true
-    },
-    {
-        id: 2,
-        title: 'Booking Summary',
-        description: 'Review your booking',
-        isClickable: true
-    },
-    {
-        id: 3,
-        title: 'Payment',
-        description: 'Secure payment',
-        isClickable: true
-    },
-    {
-        id: 4,
-        title: 'Confirmation',
-        description: 'Booking confirmed',
-        isClickable: false
-    }
-];
 
 const SuccessPage = () => {
     const navigate = useNavigate();
@@ -58,7 +20,7 @@ const SuccessPage = () => {
     const [isVisible, setIsVisible] = useState(false);
     const [paymentData, setPaymentData] = useState<PaymentResponse | null>(null);
     const [error, setError] = useState<string | null>(null);
-    const pollingRef = useRef<NodeJS.Timeout | null>(null);
+    const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const isInitialMount = useRef(true);
 
     const bookingId = searchParams.get('bookingId');
@@ -79,7 +41,6 @@ const SuccessPage = () => {
 
     const getResultType = () => {
         if (!paymentData) return 'info';
-
         const status = paymentData.status;
         if (status === 'SUCCESS') return 'success';
         if (['FAILED', 'CANCELLED', 'EXPIRED'].includes(status)) return 'error';
@@ -89,34 +50,19 @@ const SuccessPage = () => {
 
     const getResultMessage = () => {
         if (!paymentData) return 'Loading payment information...';
-
         const status = paymentData.status as PaymentStatus;
-        const messages: Record<PaymentStatus, string> = {
-            PENDING: 'Your payment is being processed. Please wait...',
-            PROCESSING: 'Payment is currently being processed.',
-            SUCCESS: 'Payment was successful! Your tickets have been booked.',
-            FAILED: 'Payment failed. Please try again or contact support.',
-            CANCELLED: 'Payment was cancelled.',
-            EXPIRED: 'Payment session has expired.',
-            REFUNDED: 'Payment has been refunded.',
-            PARTIALLY_REFUNDED: 'Payment has been partially refunded.'
-        };
 
-        return messages[status] || 'Payment status unknown.';
-    };
+        if (status === 'PENDING' || status === 'PROCESSING') {
+            return 'Your payment is being processed. Please wait...';
+        }
+        if (status === 'SUCCESS') {
+            return 'Your tickets have been booked.';
+        }
+        if (status === 'FAILED' || status === 'CANCELLED' || status === 'EXPIRED') {
+            return 'Payment failed. Please try again or contact support.';
+        }
 
-    const getPaymentDetails = () => {
-        if (!paymentData) return null;
-
-        return {
-            bookingId: paymentData.bookingId,
-            paymentId: paymentData.id,
-            amount: paymentData.amount,
-            status: paymentData.status,
-            statusDisplay: PaymentStatusDisplay[paymentData.status as PaymentStatus],
-            liqpayOrderId: paymentData.liqpayOrderId,
-            error: paymentData.errorDescription || paymentData.errorCode
-        };
+        return 'Payment status unknown.';
     };
 
     const startPolling = useCallback(() => {
@@ -137,14 +83,6 @@ const SuccessPage = () => {
             });
             fetchPaymentData(paymentId);
         }, 5000);
-
-        return () => {
-            if (pollingRef.current) {
-                clearInterval(pollingRef.current);
-                pollingRef.current = null;
-            }
-            setIsPolling(false);
-        };
     }, [paymentId, isPolling, fetchPaymentData]);
 
     const stopPolling = useCallback(() => {
@@ -157,7 +95,6 @@ const SuccessPage = () => {
 
     useEffect(() => {
         setIsVisible(true);
-
         const paramsValid = bookingId || paymentId;
         if (!paramsValid) {
             navigate('/booking');
@@ -196,8 +133,8 @@ const SuccessPage = () => {
     };
 
     const handleTryAgain = () => {
-        if (paymentData?.bookingId) {
-            navigate(`/booking/payment/${paymentData.bookingId}`);
+        if (bookingId) {
+            navigate(`/booking/payment/${bookingId}`);
         }
     };
 
@@ -207,21 +144,6 @@ const SuccessPage = () => {
 
     const handleContactSupport = () => {
         navigate('/support');
-    };
-
-    const handleStepClick = (step: any) => {
-        if (step.id === 1 && paymentData?.bookingId) {
-            navigate(`/booking/${paymentData.bookingId}`);
-        }
-        if (step.id === 2 && paymentData?.bookingId) {
-            navigate(`/booking/summary/${paymentData.bookingId}`);
-        }
-        if (step.id === 3 && paymentData?.bookingId) {
-            navigate(`/booking/payment/${paymentData.bookingId}`);
-        }
-        if (step.id === 4) {
-            return;
-        }
     };
 
     if ((loading && !paymentData) || !isVisible) {
@@ -234,187 +156,157 @@ const SuccessPage = () => {
 
     const resultType = getResultType();
     const resultMessage = getResultMessage();
-    const paymentDetails = getPaymentDetails();
 
-    const getResultStyles = () => {
-        switch (resultType) {
-            case 'success':
-                return {
-                    title: 'Payment Successful!',
-                    iconClass: styles.successIcon,
-                    messageClass: styles.successMessage
-                };
-            case 'error':
-                return {
-                    title: 'Payment Failed',
-                    iconClass: styles.errorIcon,
-                    messageClass: styles.errorMessage
-                };
-            case 'warning':
-                return {
-                    title: 'Payment Processing',
-                    iconClass: styles.warningIcon,
-                    messageClass: styles.warningMessage
-                };
-            default:
-                return {
-                    title: 'Payment Status',
-                    iconClass: styles.infoIcon,
-                    messageClass: styles.infoMessage
-                };
-        }
-    };
-
-    const getResultIcon = () => {
-        switch (resultType) {
-            case 'success': return '✓';
-            case 'error': return '✗';
-            case 'warning': return '⏳';
-            default: return 'ℹ️';
-        }
-    };
-
-    const resultStyles = getResultStyles();
-    const resultIcon = getResultIcon();
-
-    return (
-        <div className={`${styles.container} ${isVisible ? styles.visible : ''}`}>
-            <div className={styles.contentWrapper}>
-                <ProgressStepper
-                    steps={BOOKING_STEPS}
-                    currentStep={4}
-                    className={styles.stepper}
-                    onStepClick={handleStepClick}
-                />
-
-                <div className={styles.card}>
-                    {error && (
-                        <div className={styles.errorAlert}>
-                            <div className={styles.errorAlertContent}>
-                                <svg className={styles.errorIcon} fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 101.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                                </svg>
-                                <p className={styles.errorText}>{error}</p>
+    if (resultType === 'success') {
+        return (
+            <div className={`${styles.container} ${isVisible ? styles.visible : ''}`}>
+                <div className={styles.contentWrapper}>
+                    <div className={styles.card}>
+                        <div className={styles.successContainer}>
+                            <div className={styles.iconWrapper}>
+                                <CheckCircle2 className={styles.successIcon} size={64} />
                             </div>
-                        </div>
-                    )}
 
-                    <div className={styles.resultHeader}>
-                        <div className={`${styles.iconWrapper} ${resultStyles.iconClass}`}>
-                            <span className={styles.resultIcon}>{resultIcon}</span>
-                        </div>
+                            <h1 className={styles.title}>Payment Successful!</h1>
 
-                        <h1 className={styles.title}>{resultStyles.title}</h1>
+                            <p className={styles.message}>{resultMessage}</p>
 
-                        <p className={`${styles.resultMessage} ${resultStyles.messageClass}`}>
-                            {resultMessage}
-                            {isPolling && ` (Checking... ${pollingCount})`}
-                        </p>
-                    </div>
-
-                    {paymentDetails && (
-                        <div className={styles.detailsCard}>
-                            <h3 className={styles.detailsTitle}>Booking Details</h3>
-                            <div className={styles.detailsGrid}>
-                                <div className={styles.detailItem}>
-                                    <p className={styles.detailLabel}>Booking Number</p>
-                                    <p className={styles.detailValue}>{paymentDetails.bookingId}</p>
-                                </div>
-                                {paymentDetails.paymentId && (
-                                    <div className={styles.detailItem}>
-                                        <p className={styles.detailLabel}>Payment ID</p>
-                                        <p className={styles.detailValue}>{paymentDetails.paymentId}</p>
-                                    </div>
-                                )}
-                                <div className={styles.detailItem}>
-                                    <p className={styles.detailLabel}>Amount</p>
-                                    <p className={styles.detailPrice}>{paymentDetails.amount} UAH</p>
-                                </div>
-                                <div className={styles.detailItem}>
-                                    <p className={styles.detailLabel}>Status</p>
-                                    <p className={styles.detailValue}>{paymentDetails.statusDisplay}</p>
-                                </div>
-                                {paymentDetails.liqpayOrderId && (
-                                    <div className={styles.detailItem}>
-                                        <p className={styles.detailLabel}>LiqPay Order ID</p>
-                                        <p className={styles.detailValue}>{paymentDetails.liqpayOrderId}</p>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    )}
-
-                    <div className={styles.actions}>
-                        {resultType === 'success' && (
-                            <>
+                            <div className={styles.actions}>
                                 <Button
                                     variant="primary"
                                     onClick={handleViewTickets}
                                     className={styles.actionButton}
                                 >
+                                    <Ticket size={18} />
                                     View My Tickets
                                 </Button>
-                                <p className={styles.successNote}>
-                                    Your tickets have been sent to your email address.
-                                    You can also view them in your tickets section.
-                                </p>
-                            </>
-                        )}
+                                <Button
+                                    variant="secondary"
+                                    onClick={handleGoHome}
+                                    className={styles.actionButton}
+                                >
+                                    <Home size={18} />
+                                    Back to Home
+                                </Button>
+                            </div>
+                        </div>
 
-                        {resultType === 'error' && paymentData?.bookingId && (
-                            <Button
-                                variant="primary"
-                                onClick={handleTryAgain}
-                                className={styles.actionButton}
-                            >
-                                Try Again
-                            </Button>
-                        )}
-
-                        {resultType === 'error' && (
-                            <Button
-                                variant="secondary"
-                                onClick={handleContactSupport}
-                                className={styles.actionButton}
-                            >
-                                Contact Support
-                            </Button>
-                        )}
-
-                        <Button
-                            variant="cancel"
-                            onClick={handleGoHome}
-                            className={styles.actionButton}
-                        >
-                            Back to Home
-                        </Button>
-                    </div>
-
-                    {resultType === 'success' && (
                         <div className={styles.footer}>
                             <div className={styles.footerContent}>
-                                <svg className={styles.successCheckIcon} fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                </svg>
                                 <span className={styles.footerText}>
                                     Thank you for your purchase! Enjoy the movie!
                                 </span>
                             </div>
                         </div>
+                    </div>
+
+                    {isPolling && (
+                        <div className={styles.statusCheck}>
+                            <div className={styles.statusCheckContent}>
+                                <LoadingSpinner text="" />
+                                <span className={styles.statusCheckText}>
+                                    Checking payment status automatically... {pollingCount}/30
+                                </span>
+                            </div>
+                        </div>
                     )}
                 </div>
+            </div>
+        );
+    }
 
-                {isPolling && (
-                    <div className={styles.statusCheck}>
-                        <div className={styles.statusCheckContent}>
-                            <LoadingSpinner text="" />
-                            <span className={styles.statusCheckText}>
-                                Checking payment status automatically... {pollingCount}/30
-                            </span>
+    if (resultType === 'error') {
+        return (
+            <div className={`${styles.container} ${isVisible ? styles.visible : ''}`}>
+                <div className={styles.contentWrapper}>
+                    <div className={styles.card}>
+                        <div className={styles.errorContainer}>
+                            <div className={`${styles.iconWrapper} ${styles.errorIconWrapper}`}>
+                                <span className={styles.resultIcon}>✗</span>
+                            </div>
+
+                            <h1 className={styles.title}>Payment Failed</h1>
+
+                            <p className={styles.errorMessage}>{resultMessage}</p>
+
+                            {error && (
+                                <div className={styles.errorAlert}>
+                                    <p className={styles.errorText}>{error}</p>
+                                </div>
+                            )}
+
+                            <div className={styles.actions}>
+                                {bookingId && (
+                                    <Button
+                                        variant="primary"
+                                        onClick={handleTryAgain}
+                                        className={styles.actionButton}
+                                    >
+                                        Try Again
+                                    </Button>
+                                )}
+                                <Button
+                                    variant="secondary"
+                                    onClick={handleContactSupport}
+                                    className={styles.actionButton}
+                                >
+                                    Contact Support
+                                </Button>
+                                <Button
+                                    variant="cancel"
+                                    onClick={handleGoHome}
+                                    className={styles.actionButton}
+                                >
+                                    Back to Home
+                                </Button>
+                            </div>
                         </div>
                     </div>
-                )}
+                </div>
             </div>
+        );
+    }
+
+    if (resultType === 'warning') {
+        return (
+            <div className={`${styles.container} ${isVisible ? styles.visible : ''}`}>
+                <div className={styles.contentWrapper}>
+                    <div className={styles.card}>
+                        <div className={styles.warningContainer}>
+                            <div className={`${styles.iconWrapper} ${styles.warningIconWrapper}`}>
+                                <span className={styles.resultIcon}>⏳</span>
+                            </div>
+
+                            <h1 className={styles.title}>Payment Processing</h1>
+
+                            <p className={styles.warningMessage}>{resultMessage}</p>
+
+                            {isPolling && (
+                                <div className={styles.pollingInfo}>
+                                    <LoadingSpinner text="" />
+                                    <span>Checking payment status... {pollingCount}/30</span>
+                                </div>
+                            )}
+
+                            <div className={styles.actions}>
+                                <Button
+                                    variant="secondary"
+                                    onClick={handleGoHome}
+                                    className={styles.actionButton}
+                                >
+                                    Back to Home
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className={styles.loadingContainer}>
+            <LoadingSpinner text="Loading payment information..." />
         </div>
     );
 };
