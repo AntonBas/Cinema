@@ -1,4 +1,3 @@
-// src/hooks/features/seatReservation/useSeatReservation.ts
 import { useState, useCallback, useMemo } from 'react';
 import { seatReservationApi } from '@/api/seatReservationApi';
 import type { SeatReservationResponse, SeatInfo, TicketPriceInfo } from '@/types/seatReservation';

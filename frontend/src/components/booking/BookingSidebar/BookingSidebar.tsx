@@ -13,6 +13,10 @@ interface SelectedSeatItem {
             ticketTypeId: number;
             finalPrice: string;
             ticketTypeName?: string;
+            minAge?: number;
+            maxAge?: number;
+            requiresDocument: boolean;
+            documentType?: string;
         }>;
     };
     ticketTypeId?: number;
@@ -171,7 +175,11 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
                                     ticketPrices={(selectedSeat.seat.ticketPrices || []).map(tp => ({
                                         ticketTypeId: tp.ticketTypeId,
                                         ticketTypeName: tp.ticketTypeName || `Type ${tp.ticketTypeId}`,
-                                        finalPrice: tp.finalPrice
+                                        finalPrice: tp.finalPrice,
+                                        minAge: tp.minAge,
+                                        maxAge: tp.maxAge,
+                                        requiresDocument: tp.requiresDocument,
+                                        documentType: tp.documentType
                                     }))}
                                     selectedTicketTypeId={selectedSeat.ticketTypeId}
                                     onSelect={onTicketTypeChange}

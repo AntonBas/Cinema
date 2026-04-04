@@ -28,6 +28,31 @@ export const TicketTypeSelect: React.FC<TicketTypeSelectProps> = ({
 
     const defaultValue = selectedTicketTypeId || ticketPrices[0].ticketTypeId;
 
+    const formatLabel = (ticket: TicketPriceInfo) => {
+        let label = ticket.ticketTypeName;
+
+        const hasMinAge = ticket.minAge != null;
+        const hasMaxAge = ticket.maxAge != null;
+
+        if (hasMinAge && hasMaxAge) {
+            label += ` ${ticket.minAge}-${ticket.maxAge}`;
+        } else if (hasMinAge) {
+            label += ` ${ticket.minAge}+`;
+        } else if (hasMaxAge) {
+            label += ` 0-${ticket.maxAge}`;
+        }
+
+        if (ticket.requiresDocument && ticket.documentType) {
+            label += ` (${ticket.documentType})`;
+        } else if (ticket.requiresDocument) {
+            label += ` (ID required)`;
+        }
+
+        label += ` - ${parseFloat(ticket.finalPrice).toFixed(2)}₴`;
+
+        return label;
+    };
+
     return (
         <select
             className={styles.select}
@@ -41,7 +66,7 @@ export const TicketTypeSelect: React.FC<TicketTypeSelectProps> = ({
                     value={ticket.ticketTypeId}
                     className={styles.option}
                 >
-                    {ticket.ticketTypeName} - {parseFloat(ticket.finalPrice).toFixed(2)}₴
+                    {formatLabel(ticket)}
                 </option>
             ))}
         </select>
