@@ -289,7 +289,7 @@ public class SeatReservationServiceTest {
 		when(priceCalculator.calculateSeatPrice(testSession, testSeat, ticketType)).thenReturn(BigDecimal.TEN);
 
 		SeatReservationResponse.TicketPriceInfo priceInfo = new SeatReservationResponse.TicketPriceInfo(1L, "Adult",
-				BigDecimal.TEN);
+				BigDecimal.TEN, null, null, false, null);
 		SeatReservationResponse.SeatInfo seatInfo = new SeatReservationResponse.SeatInfo(SEAT_ID, 1, 1,
 				SeatType.STANDARD, true, false, true, List.of(priceInfo));
 

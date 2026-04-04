@@ -37,7 +37,7 @@ public class SeatReservationControllerTest {
 
 	private SeatReservationResponse createSeatAvailabilityResponse(Long sessionId) {
 		SeatReservationResponse.TicketPriceInfo ticketPriceInfo = new SeatReservationResponse.TicketPriceInfo(1L,
-				"Adult", new BigDecimal("250.00"));
+				"Adult", new BigDecimal("250.00"), null, null, false, null);
 
 		SeatReservationResponse.SeatInfo seat1 = new SeatReservationResponse.SeatInfo(1L, 1, 1, SeatType.STANDARD, true,
 				false, true, Arrays.asList(ticketPriceInfo));
@@ -71,6 +71,7 @@ public class SeatReservationControllerTest {
 		user.setId(userId);
 
 		when(customUserDetails.getUser()).thenReturn(user);
+		when(customUserDetails.getUserId()).thenReturn(userId);
 		doNothing().when(seatReservationService).temporaryHoldSeat(sessionId, seatId, user);
 
 		ResponseEntity<Void> response = seatReservationController.temporaryHoldSeat(sessionId, seatId,
@@ -89,6 +90,7 @@ public class SeatReservationControllerTest {
 		user.setId(userId);
 
 		when(customUserDetails.getUser()).thenReturn(user);
+		when(customUserDetails.getUserId()).thenReturn(userId);
 		doNothing().when(seatReservationService).cancelTemporaryHold(sessionId, seatId, user);
 
 		ResponseEntity<Void> response = seatReservationController.cancelTemporaryHold(sessionId, seatId,

@@ -51,13 +51,13 @@ public class PaymentControllerTest {
 	}
 
 	private PaymentResponse createPaymentResponse() {
-		return new PaymentResponse("BK-123456", "Test Movie", LocalDateTime.now(), "Hall A", new BigDecimal("150.00"),
-				PaymentStatus.PENDING, null, null, null);
+		return new PaymentResponse(1L, "BK-123456", "Test Movie", LocalDateTime.now(), "Hall A",
+				new BigDecimal("150.00"), PaymentStatus.PENDING, null, null, null);
 	}
 
 	private PaymentResponse createPaymentResponseWithSuccess() {
-		return new PaymentResponse("BK-123456", "Test Movie", LocalDateTime.now(), "Hall A", new BigDecimal("150.00"),
-				PaymentStatus.SUCCESS, LocalDateTime.now(), "****1234", null);
+		return new PaymentResponse(1L, "BK-123456", "Test Movie", LocalDateTime.now(), "Hall A",
+				new BigDecimal("150.00"), PaymentStatus.SUCCESS, LocalDateTime.now(), "****1234", null);
 	}
 
 	private PaymentLiqPayDataResponse createLiqPayDataResponse() {
@@ -77,6 +77,7 @@ public class PaymentControllerTest {
 
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
 		assertThat(response.getBody()).isNotNull();
+		assertThat(response.getBody().id()).isEqualTo(1L);
 		assertThat(response.getBody().bookingNumber()).isEqualTo("BK-123456");
 		assertThat(response.getBody().movieTitle()).isEqualTo("Test Movie");
 		assertThat(response.getBody().hallName()).isEqualTo("Hall A");
@@ -111,6 +112,7 @@ public class PaymentControllerTest {
 
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 		assertThat(response.getBody()).isNotNull();
+		assertThat(response.getBody().id()).isEqualTo(1L);
 		assertThat(response.getBody().bookingNumber()).isEqualTo("BK-123456");
 		assertThat(response.getBody().movieTitle()).isEqualTo("Test Movie");
 		assertThat(response.getBody().hallName()).isEqualTo("Hall A");

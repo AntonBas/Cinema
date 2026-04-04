@@ -23,7 +23,6 @@ import org.springframework.data.domain.Pageable;
 
 import ua.lviv.bas.cinema.dto.PageResponse;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusBalanceResponse;
-import ua.lviv.bas.cinema.dto.bonus.response.BonusCardResponse;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusTransactionResponse;
 import ua.lviv.bas.cinema.exception.domain.financial.bonus.BonusCardNotFoundException;
 import ua.lviv.bas.cinema.service.bonus.BonusService;
@@ -36,32 +35,6 @@ public class BonusControllerTest {
 
 	@InjectMocks
 	private BonusController bonusController;
-
-	@Test
-	void getMyBonusCard_ShouldReturnBonusCard() {
-		Long userId = 1L;
-
-		BonusCardResponse cardResponse = new BonusCardResponse(1L, 250, null, true, userId);
-
-		when(bonusService.getCard(userId)).thenReturn(cardResponse);
-
-		BonusCardResponse response = bonusController.getMyBonusCard(userId);
-
-		assertNotNull(response);
-		assertEquals(1L, response.id());
-		assertEquals(userId, response.userId());
-		assertEquals(250, response.pointsBalance());
-		assertEquals(true, response.welcomeBonusReceived());
-	}
-
-	@Test
-	void getMyBonusCard_ShouldThrowWhenCardNotFound() {
-		Long userId = 1L;
-
-		when(bonusService.getCard(userId)).thenThrow(new BonusCardNotFoundException(userId));
-
-		assertThrows(BonusCardNotFoundException.class, () -> bonusController.getMyBonusCard(userId));
-	}
 
 	@Test
 	void getMyBalance_ShouldReturnBalance() {

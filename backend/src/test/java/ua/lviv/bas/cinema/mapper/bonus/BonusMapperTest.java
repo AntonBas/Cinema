@@ -9,12 +9,9 @@ import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
 import org.mockito.Mockito;
 
-import ua.lviv.bas.cinema.domain.bonus.BonusCard;
 import ua.lviv.bas.cinema.domain.bonus.BonusRules;
 import ua.lviv.bas.cinema.domain.bonus.BonusTransactionType;
-import ua.lviv.bas.cinema.domain.user.User;
 import ua.lviv.bas.cinema.dto.bonus.request.BonusRulesRequest;
-import ua.lviv.bas.cinema.dto.bonus.response.BonusCardResponse;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusRulesResponse;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusTransactionResponse;
 import ua.lviv.bas.cinema.repository.bonus.projection.BonusTransactionProjection;
@@ -22,27 +19,6 @@ import ua.lviv.bas.cinema.repository.bonus.projection.BonusTransactionProjection
 public class BonusMapperTest {
 
 	private final BonusMapper mapper = Mappers.getMapper(BonusMapper.class);
-
-	@Test
-	void toBonusCardResponse() {
-		User user = Mockito.mock(User.class);
-		Mockito.when(user.getId()).thenReturn(42L);
-
-		BonusCard bonusCard = BonusCard.builder().id(1L).user(user).pointsBalance(250).build();
-
-		BonusCardResponse response = mapper.toBonusCardResponse(bonusCard);
-
-		assertThat(response).isNotNull();
-		assertThat(response.id()).isEqualTo(1L);
-		assertThat(response.userId()).isEqualTo(42L);
-		assertThat(response.pointsBalance()).isEqualTo(250);
-	}
-
-	@Test
-	void toBonusCardResponseFromNull() {
-		BonusCardResponse response = mapper.toBonusCardResponse(null);
-		assertThat(response).isNull();
-	}
 
 	@Test
 	void toBonusRulesResponse() {

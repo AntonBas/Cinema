@@ -4,7 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.math.BigDecimal;
+import java.security.MessageDigest;
 import java.time.LocalDateTime;
+import java.util.Base64;
 import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -115,7 +117,7 @@ public class PaymentGatewayServiceTest {
 
 	@Test
 	void getPaymentStatus_SandboxMode_Success() {
-		PaymentResponse response = paymentGatewayService.getPaymentStatus("payment_123", "BK-12345", "Test Movie",
+		PaymentResponse response = paymentGatewayService.getPaymentStatus(1L, "BK-12345", "Test Movie",
 				LocalDateTime.now().toString(), "Hall A", new BigDecimal("100.00"), LocalDateTime.now().toString(),
 				"****1234");
 
@@ -132,13 +134,37 @@ public class PaymentGatewayServiceTest {
 		assertThat(status).isEqualTo(PaymentStatus.SUCCESS);
 	}
 
+	@Test
+	void convertLiqPayStatus_ReturnsFailedForError() {
+		PaymentStatus status = getPaymentStatusFromLiqPay("error");
+		assertThat(status).isEqualTo(PaymentStatus.FAILED);
+	}
+
+	@Test
+	void convertLiqPayStatus_ReturnsPendingForProcessing() {
+		PaymentStatus status = getPaymentStatusFromLiqPay("processing");
+		assertThat(status).isEqualTo(PaymentStatus.PENDING);
+	}
+
+	@Test
+	void convertLiqPayStatus_ReturnsRefundedForRefunded() {
+		PaymentStatus status = getPaymentStatusFromLiqPay("refunded");
+		assertThat(status).isEqualTo(PaymentStatus.REFUNDED);
+	}
+
+	@Test
+	void convertLiqPayStatus_ReturnsPendingForNull() {
+		PaymentStatus status = getPaymentStatusFromLiqPay(null);
+		assertThat(status).isEqualTo(PaymentStatus.PENDING);
+	}
+
 	private String generateSignature(String data) {
 		try {
 			ReflectionTestUtils.setField(paymentGatewayService, "liqpayPrivateKey", "test_private_key");
-			java.security.MessageDigest sha1 = java.security.MessageDigest.getInstance("SHA-1");
+			MessageDigest sha1 = MessageDigest.getInstance("SHA-1");
 			String str = "test_private_key" + data + "test_private_key";
 			byte[] digest = sha1.digest(str.getBytes());
-			return java.util.Base64.getEncoder().encodeToString(digest);
+			return Base64.getEncoder().encodeToString(digest);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}

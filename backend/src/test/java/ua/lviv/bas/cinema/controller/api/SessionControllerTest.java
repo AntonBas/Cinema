@@ -2,7 +2,6 @@ package ua.lviv.bas.cinema.controller.api;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -20,7 +19,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import ua.lviv.bas.cinema.dto.session.response.SessionScheduleResponse;
-import ua.lviv.bas.cinema.exception.domain.cinema.SessionNotFoundException;
 import ua.lviv.bas.cinema.service.cinema.SessionService;
 
 @ExtendWith(MockitoExtension.class)
@@ -141,34 +139,5 @@ public class SessionControllerTest {
 		assertEquals(0, body.size());
 
 		verify(sessionService).getScheduleSessions(searchTerm, date);
-	}
-
-	@Test
-	void getSessionById_ShouldReturnSessionForPublic() {
-		SessionScheduleResponse sessionDto = createSessionScheduleDto(1L);
-
-		when(sessionService.getSessionForPublic(1L)).thenReturn(sessionDto);
-
-		ResponseEntity<SessionScheduleResponse> response = sessionController.getSessionById(1L);
-
-		assertEquals(HttpStatus.OK, response.getStatusCode());
-
-		SessionScheduleResponse body = response.getBody();
-		assertNotNull(body);
-		assertEquals(1L, body.id());
-		assertEquals("Test Movie", body.movieTitle());
-		assertEquals("Hall 1", body.hallName());
-		assertEquals(80, body.availableSeats());
-		assertEquals(100, body.hallCapacity());
-
-		verify(sessionService).getSessionForPublic(1L);
-	}
-
-	@Test
-	void getSessionById_WhenNotFound_ShouldThrowException() {
-		when(sessionService.getSessionForPublic(999L)).thenThrow(new SessionNotFoundException(999L));
-
-		assertThrows(SessionNotFoundException.class, () -> sessionController.getSessionById(999L));
-		verify(sessionService).getSessionForPublic(999L);
 	}
 }

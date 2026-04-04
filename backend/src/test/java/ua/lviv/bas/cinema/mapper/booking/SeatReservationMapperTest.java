@@ -48,12 +48,16 @@ public class SeatReservationMapperTest {
 		childTicketType = TicketType.builder().id(2L).displayName("Child").build();
 
 		ticketPrices1 = Arrays.asList(
-				new SeatReservationResponse.TicketPriceInfo(1L, "Adult", new BigDecimal("250.00")),
-				new SeatReservationResponse.TicketPriceInfo(2L, "Child", new BigDecimal("200.00")));
+				new SeatReservationResponse.TicketPriceInfo(1L, "Adult", new BigDecimal("250.00"), null, null, false,
+						null),
+				new SeatReservationResponse.TicketPriceInfo(2L, "Child", new BigDecimal("200.00"), null, null, false,
+						null));
 
 		ticketPrices2 = Arrays.asList(
-				new SeatReservationResponse.TicketPriceInfo(1L, "Adult", new BigDecimal("350.00")),
-				new SeatReservationResponse.TicketPriceInfo(2L, "Child", new BigDecimal("280.00")));
+				new SeatReservationResponse.TicketPriceInfo(1L, "Adult", new BigDecimal("350.00"), null, null, false,
+						null),
+				new SeatReservationResponse.TicketPriceInfo(2L, "Child", new BigDecimal("280.00"), null, null, false,
+						null));
 
 		SeatReservationResponse.SeatInfo seatInfo1 = new SeatReservationResponse.SeatInfo(1L, 5, 12, SeatType.STANDARD,
 				true, false, true, ticketPrices1);
@@ -168,6 +172,10 @@ public class SeatReservationMapperTest {
 		assertThat(ticketPriceInfo.ticketTypeId()).isEqualTo(1L);
 		assertThat(ticketPriceInfo.ticketTypeName()).isEqualTo("Adult");
 		assertThat(ticketPriceInfo.finalPrice()).isEqualTo(new BigDecimal("250.00"));
+		assertThat(ticketPriceInfo.minAge()).isNull();
+		assertThat(ticketPriceInfo.maxAge()).isNull();
+		assertThat(ticketPriceInfo.requiresDocument()).isFalse();
+		assertThat(ticketPriceInfo.documentType()).isNull();
 	}
 
 	@Test
@@ -180,6 +188,10 @@ public class SeatReservationMapperTest {
 		assertThat(ticketPriceInfo.ticketTypeId()).isNull();
 		assertThat(ticketPriceInfo.ticketTypeName()).isNull();
 		assertThat(ticketPriceInfo.finalPrice()).isEqualTo(new BigDecimal("250.00"));
+		assertThat(ticketPriceInfo.minAge()).isNull();
+		assertThat(ticketPriceInfo.maxAge()).isNull();
+		assertThat(ticketPriceInfo.requiresDocument()).isFalse();
+		assertThat(ticketPriceInfo.documentType()).isNull();
 	}
 
 	@Test

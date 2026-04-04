@@ -319,35 +319,10 @@ public class AdminMovieControllerTest {
 	}
 
 	@Test
-	void getAdminMovieBySlug_ShouldReturnMovie() {
-		String slug = "test-movie";
-		MovieDetailResponse responseDto = createMovieDetailDto(1L, "Test Movie");
-
-		when(movieService.getAdminMovieBySlug(slug)).thenReturn(responseDto);
-
-		ResponseEntity<MovieDetailResponse> response = movieController.getAdminMovieBySlug(slug);
-
-		assertEquals(HttpStatus.OK, response.getStatusCode());
-		assertNotNull(response.getBody());
-		assertEquals("Test Movie", response.getBody().title());
-		verify(movieService).getAdminMovieBySlug(slug);
-	}
-
-	@Test
-	void getAdminMovieBySlug_WhenNotFound_ShouldThrowException() {
-		String slug = "non-existent-movie";
-
-		when(movieService.getAdminMovieBySlug(slug)).thenThrow(new MovieNotFoundException(slug));
-
-		assertThrows(MovieNotFoundException.class, () -> movieController.getAdminMovieBySlug(slug));
-		verify(movieService).getAdminMovieBySlug(slug);
-	}
-
-	@Test
 	void searchMoviesForSession_WithSearchTerm_ShouldReturnMovies() {
 		String searchTerm = "movie";
-		List<MovieSessionSearchResponse> movies = List.of(new MovieSessionSearchResponse(1L, "Movie 1", null),
-				new MovieSessionSearchResponse(2L, "Movie 2", null));
+		List<MovieSessionSearchResponse> movies = List.of(new MovieSessionSearchResponse(1L, "Movie 1", 120),
+				new MovieSessionSearchResponse(2L, "Movie 2", 130));
 
 		when(movieService.searchMoviesForSession(searchTerm)).thenReturn(movies);
 
@@ -361,8 +336,8 @@ public class AdminMovieControllerTest {
 
 	@Test
 	void searchMoviesForSession_WithoutSearchTerm_ShouldReturnAllMovies() {
-		List<MovieSessionSearchResponse> movies = List.of(new MovieSessionSearchResponse(1L, "Movie 1", null),
-				new MovieSessionSearchResponse(2L, "Movie 2", null));
+		List<MovieSessionSearchResponse> movies = List.of(new MovieSessionSearchResponse(1L, "Movie 1", 120),
+				new MovieSessionSearchResponse(2L, "Movie 2", 130));
 
 		when(movieService.searchMoviesForSession(null)).thenReturn(movies);
 

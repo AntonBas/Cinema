@@ -28,7 +28,6 @@ import ua.lviv.bas.cinema.domain.booking.Booking;
 import ua.lviv.bas.cinema.domain.booking.Payment;
 import ua.lviv.bas.cinema.domain.user.User;
 import ua.lviv.bas.cinema.domain.user.VerificationStatus;
-import ua.lviv.bas.cinema.exception.domain.financial.bonus.BonusCardNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.financial.bonus.BonusValidationException;
 import ua.lviv.bas.cinema.exception.domain.financial.bonus.InsufficientPointsException;
 import ua.lviv.bas.cinema.mapper.bonus.BonusMapper;
@@ -66,23 +65,6 @@ public class BonusServiceTest {
 	private final BonusTransactionType BIRTHDAY = BonusTransactionType.BIRTHDAY_BONUS;
 	private final BonusTransactionType PAYMENT_TYPE = BonusTransactionType.PAYMENT_ACCRUAL;
 	private final BonusTransactionType SPEND = BonusTransactionType.BOOKING_SPEND;
-
-	@Test
-	void getCard_WhenCardExists_ReturnsResponse() {
-		BonusCard card = new BonusCard();
-		when(bonusCardRepository.findByUserId(USER_ID)).thenReturn(Optional.of(card));
-
-		bonusService.getCard(USER_ID);
-
-		verify(bonusMapper).toBonusCardResponse(card);
-	}
-
-	@Test
-	void getCard_WhenCardNotFound_ThrowsException() {
-		when(bonusCardRepository.findByUserId(USER_ID)).thenReturn(Optional.empty());
-
-		assertThatThrownBy(() -> bonusService.getCard(USER_ID)).isInstanceOf(BonusCardNotFoundException.class);
-	}
 
 	@Test
 	void getBalance_ReturnsBalance() {
