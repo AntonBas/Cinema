@@ -28,7 +28,6 @@ import ua.lviv.bas.cinema.domain.booking.Payment;
 import ua.lviv.bas.cinema.domain.user.User;
 import ua.lviv.bas.cinema.domain.user.VerificationStatus;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusBalanceResponse;
-import ua.lviv.bas.cinema.dto.bonus.response.BonusCardResponse;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusTransactionResponse;
 import ua.lviv.bas.cinema.exception.domain.financial.bonus.BonusCardNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.financial.bonus.BonusRuleNotFoundException;
@@ -53,13 +52,6 @@ public class BonusService {
 	private final BonusMapper bonusMapper;
 	private final BonusProperties bonusProperties;
 	private final AuditService auditService;
-
-	@Cacheable(key = "'card:' + #userId")
-	@Transactional(readOnly = true)
-	public BonusCardResponse getCard(Long userId) {
-		BonusCard card = getCardByUserId(userId);
-		return bonusMapper.toBonusCardResponse(card);
-	}
 
 	@Cacheable(key = "'balance:' + #userId")
 	@Transactional(readOnly = true)

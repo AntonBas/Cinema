@@ -20,7 +20,6 @@ import lombok.RequiredArgsConstructor;
 import ua.lviv.bas.cinema.config.ratelimit.RateLimit;
 import ua.lviv.bas.cinema.dto.PageResponse;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusBalanceResponse;
-import ua.lviv.bas.cinema.dto.bonus.response.BonusCardResponse;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusTransactionResponse;
 import ua.lviv.bas.cinema.service.bonus.BonusService;
 
@@ -32,18 +31,6 @@ import ua.lviv.bas.cinema.service.bonus.BonusService;
 public class BonusController {
 
 	private final BonusService bonusService;
-
-	@RateLimit(value = 20, duration = 1, key = "user")
-	@Operation(summary = "Get user bonus card", description = "Returns the current user's bonus card information")
-	@ApiResponse(responseCode = "200", description = "Bonus card retrieved successfully")
-	@ApiResponse(responseCode = "404", description = "Bonus card not found")
-	@GetMapping("/my-card")
-	@ResponseStatus(HttpStatus.OK)
-	@PreAuthorize("isAuthenticated()")
-	public BonusCardResponse getMyBonusCard(
-			@Parameter(hidden = true) @AuthenticationPrincipal(expression = "userId") Long userId) {
-		return bonusService.getCard(userId);
-	}
 
 	@RateLimit(value = 20, duration = 1, key = "user")
 	@Operation(summary = "Get bonus balance", description = "Returns the current user's bonus balance with conversion details")
