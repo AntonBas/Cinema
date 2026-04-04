@@ -7,7 +7,8 @@ import { Badge } from '@/components/ui/Badge/Badge';
 import { Button } from '@/components/ui/Button/Button';
 import { Layout } from '@/components/layout/Layout/Layout';
 import { Loader2, CreditCard, AlertCircle, CheckCircle2, ArrowLeft, Ticket, Home, RefreshCw } from 'lucide-react';
-import type { PaymentStatus, PaymentResponse } from '@/types/payment';
+import type { PaymentResponse } from '@/types/payment';
+import { PaymentStatusDisplay } from '@/types/payment';
 import styles from './PaymentPage.module.css';
 
 interface BookingData {
@@ -31,23 +32,13 @@ interface ExtendedPaymentResponse extends PaymentResponse {
     id: number;
 }
 
-const PaymentStatusDisplay: Record<PaymentStatus, string> = {
-    PENDING: 'Pending',
-    PROCESSING: 'Processing',
-    SUCCESS: 'Success',
-    FAILED: 'Failed',
-    CANCELLED: 'Cancelled',
-    EXPIRED: 'Expired',
-    REFUNDED: 'Refunded',
-    PARTIALLY_REFUNDED: 'Partially Refunded'
-};
-
 export const PaymentPage: React.FC = () => {
     const { bookingId } = useParams<{ bookingId: string }>();
     const navigate = useNavigate();
     const location = useLocation();
 
     const bookingData = location.state?.booking as BookingData;
+    const existingPaymentId = location.state?.existingPaymentId as number | null;
 
     const {
         create,
@@ -120,20 +111,40 @@ export const PaymentPage: React.FC = () => {
         setStep('processing');
         setErrorMessage(null);
 
-        const paymentKey = `payment_attempt_${bookingId}`;
-        const attemptTime = localStorage.getItem(paymentKey);
-        const now = Date.now();
-
-        if (attemptTime && (now - parseInt(attemptTime)) < 10000) {
-            setErrorMessage('Payment is already being processed. Please wait.');
-            setStep('failed');
-            isCreatingRef.current = false;
-            return;
-        }
-
-        localStorage.setItem(paymentKey, now.toString());
-
         try {
+            if (existingPaymentId) {
+                const payment = await getById(existingPaymentId) as ExtendedPaymentResponse | null;
+
+                if (payment && payment.status === 'PENDING') {
+                    setCurrentPaymentId(payment.id);
+                    setCurrentPayment(payment);
+                    startPolling(payment.id);
+
+                    const liqPayData = await getLiqPayData(payment.id);
+                    if (liqPayData?.paymentUrl) {
+                        setStep('ready');
+                    } else {
+                        setStep('failed');
+                        setErrorMessage('Failed to initialize payment gateway');
+                    }
+                    isCreatingRef.current = false;
+                    return;
+                }
+            }
+
+            const paymentKey = `payment_attempt_${bookingId}`;
+            const attemptTime = localStorage.getItem(paymentKey);
+            const now = Date.now();
+
+            if (attemptTime && (now - parseInt(attemptTime)) < 10000) {
+                setErrorMessage('Payment is already being processed. Please wait.');
+                setStep('failed');
+                isCreatingRef.current = false;
+                return;
+            }
+
+            localStorage.setItem(paymentKey, now.toString());
+
             const payment = await create({ bookingId: parseInt(bookingId) }) as ExtendedPaymentResponse | null;
 
             if (payment && payment.id) {
@@ -158,10 +169,10 @@ export const PaymentPage: React.FC = () => {
         } finally {
             isCreatingRef.current = false;
             setTimeout(() => {
-                localStorage.removeItem(paymentKey);
+                localStorage.removeItem(`payment_attempt_${bookingId}`);
             }, 10000);
         }
-    }, [bookingId, create, getLiqPayData, startPolling]);
+    }, [bookingId, create, getLiqPayData, startPolling, existingPaymentId, getById]);
 
     useEffect(() => {
         isMountedRef.current = true;
@@ -215,7 +226,7 @@ export const PaymentPage: React.FC = () => {
     };
 
     const handleBack = () => {
-        navigate(`/booking/summary/${bookingId}`, { state: { booking: bookingData } });
+        navigate(`/booking/summary/${bookingId}`, { state: { booking: bookingData, existingPaymentId: currentPaymentId } });
     };
 
     const handleViewTickets = () => {
@@ -224,18 +235,6 @@ export const PaymentPage: React.FC = () => {
 
     const handleGoHome = () => {
         navigate('/');
-    };
-
-    const handleStepClick = (step: any) => {
-        if (step.id === 1 && bookingData?.id) {
-            navigate(`/booking/${bookingData.id}`);
-        }
-        if (step.id === 2 && bookingData?.id) {
-            navigate(`/booking/summary/${bookingData.id}`);
-        }
-        if (step.id === 3) {
-            return;
-        }
     };
 
     const formatTime = (dateString: string) => {
@@ -464,7 +463,6 @@ export const PaymentPage: React.FC = () => {
                     steps={BOOKING_STEPS}
                     currentStep={3}
                     className={styles.stepper}
-                    onStepClick={handleStepClick}
                 />
 
                 <div className={styles.header}>

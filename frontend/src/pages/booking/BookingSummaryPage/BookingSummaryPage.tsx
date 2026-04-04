@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ProgressStepper } from '@/components/booking/ProgressStepper/ProgressStepper';
 import { BOOKING_STEPS } from '@/components/booking/ProgressStepper/bookingSteps';
 import { Layout } from '@/components/layout/Layout/Layout';
@@ -37,6 +37,9 @@ interface BookingStateData {
 export const BookingSummaryPage: React.FC = () => {
     const { bookingId } = useParams<{ bookingId: string }>();
     const navigate = useNavigate();
+    const location = useLocation();
+    const existingPaymentId = location.state?.existingPaymentId as number | null;
+
     const [booking, setBooking] = useState<BookingResponse | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -105,32 +108,29 @@ export const BookingSummaryPage: React.FC = () => {
         }, 300);
     };
 
-    const handleStepClick = (step: any) => {
-        if (step.id === 1 && booking?.sessionId) {
-            navigate(`/booking/${booking.sessionId}`);
-        }
-        if (step.id === 2) {
-            return;
-        }
-        if (step.id === 3 && booking?.id) {
-            const bookingState: BookingStateData = {
-                id: booking.id,
-                bookingNumber: booking.bookingNumber,
-                movieTitle: booking.movieTitle,
-                hallName: booking.hallName,
-                sessionTime: booking.sessionTime,
-                totalPrice: booking.totalPrice,
-                finalPrice: booking.finalPrice,
-                bonusPointsUsed: booking.bonusPointsUsed,
-                bookedSeats: booking.seatReservations.map(seat => ({
-                    seatNumber: seat.seatNumber.toString(),
-                    seatRow: seat.row,
-                    ticketType: seat.ticketTypeName,
-                    seatPrice: seat.seatPrice
-                }))
-            };
-            navigate(`/booking/payment/${booking.id}`, { state: { booking: bookingState } });
-        }
+    const handleProceedToPayment = () => {
+        if (!booking) return;
+
+        const bookingState: BookingStateData = {
+            id: booking.id,
+            bookingNumber: booking.bookingNumber,
+            movieTitle: booking.movieTitle,
+            hallName: booking.hallName,
+            sessionTime: booking.sessionTime,
+            totalPrice: booking.totalPrice,
+            finalPrice: booking.finalPrice,
+            bonusPointsUsed: booking.bonusPointsUsed,
+            bookedSeats: booking.seatReservations.map(seat => ({
+                seatNumber: seat.seatNumber.toString(),
+                seatRow: seat.row,
+                ticketType: seat.ticketTypeName,
+                seatPrice: seat.seatPrice
+            }))
+        };
+
+        navigate(`/booking/payment/${booking.id}`, {
+            state: { booking: bookingState, existingPaymentId: existingPaymentId || null }
+        });
     };
 
     if (loading) {
@@ -220,7 +220,6 @@ export const BookingSummaryPage: React.FC = () => {
                     steps={BOOKING_STEPS}
                     currentStep={2}
                     className={styles.stepper}
-                    onStepClick={handleStepClick}
                 />
 
                 <div className={styles.header}>
@@ -326,27 +325,7 @@ export const BookingSummaryPage: React.FC = () => {
                             </button>
                             <button
                                 className={styles.payButton}
-                                onClick={() => {
-                                    const bookingState: BookingStateData = {
-                                        id: booking.id,
-                                        bookingNumber: booking.bookingNumber,
-                                        movieTitle: booking.movieTitle,
-                                        hallName: booking.hallName,
-                                        sessionTime: booking.sessionTime,
-                                        totalPrice: booking.totalPrice,
-                                        finalPrice: booking.finalPrice,
-                                        bonusPointsUsed: booking.bonusPointsUsed,
-                                        bookedSeats: booking.seatReservations.map(seat => ({
-                                            seatNumber: seat.seatNumber.toString(),
-                                            seatRow: seat.row,
-                                            ticketType: seat.ticketTypeName,
-                                            seatPrice: seat.seatPrice
-                                        }))
-                                    };
-                                    navigate(`/booking/payment/${booking.id}`, {
-                                        state: { booking: bookingState }
-                                    });
-                                }}
+                                onClick={handleProceedToPayment}
                                 disabled={booking.status !== 'PENDING'}
                             >
                                 💳 Proceed to Payment

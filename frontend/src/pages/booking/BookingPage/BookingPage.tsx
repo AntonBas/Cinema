@@ -141,12 +141,6 @@ export const BookingPage: React.FC = () => {
         }
     };
 
-    const handleStepClick = (step: any) => {
-        if (step.id === 1) {
-            return;
-        }
-    };
-
     if (loading) {
         return (
             <Layout>
@@ -181,7 +175,6 @@ export const BookingPage: React.FC = () => {
                     steps={BOOKING_STEPS}
                     currentStep={1}
                     className={styles.stepper}
-                    onStepClick={handleStepClick}
                 />
 
                 <div className={styles.header}>
