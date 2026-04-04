@@ -193,9 +193,9 @@ export const BookingPage: React.FC = () => {
                 <div className={styles.header}>
                     <h1>{seatData.movieTitle}</h1>
                     <div className={styles.sessionInfo}>
-                        <span>Hall: {seatData.hallName}</span>
+                        <span>{seatData.hallName}</span>
                         <span>Available seats: {availableSeatsCount || seatData.availableSeats}</span>
-                        <span>Price from: {parseFloat(seatData.basePrice).toFixed(2)}₴</span>
+                        <span>Base Price: {parseFloat(seatData.basePrice).toFixed(2)}₴</span>
                     </div>
                 </div>
 
