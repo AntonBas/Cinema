@@ -1,30 +1,18 @@
 export const BOOKING_STEPS = [
     {
         id: 1,
-        title: 'Select Seats',
-        description: 'Choose your seats',
-        path: '/booking/:sessionId',
-        isClickable: true
+        title: 'Select Seats'
     },
     {
         id: 2,
-        title: 'Booking Summary',
-        description: 'Review your booking',
-        path: '/booking/summary/:bookingId',
-        isClickable: true
+        title: 'Booking Summary'
     },
     {
         id: 3,
-        title: 'Payment',
-        description: 'Secure payment',
-        path: '/booking/payment/:bookingId',
-        isClickable: false
+        title: 'Payment'
     },
     {
         id: 4,
-        title: 'Confirmation',
-        description: 'Booking confirmed',
-        path: '/booking/success',
-        isClickable: false
+        title: 'Confirmation'
     }
 ];
