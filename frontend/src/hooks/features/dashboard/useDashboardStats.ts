@@ -33,6 +33,7 @@ export const useDashboardStats = () => {
     const [lastUpdated, setLastUpdated] = useState<string>('');
     const isMountedRef = useRef(true);
     const isLoadingRef = useRef(false);
+    const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
     const { getAdminCurrent, getAdminUpcoming, getAdminArchived } = useMovies();
     const { getAllHalls } = useCinemaHalls();
@@ -197,15 +198,18 @@ export const useDashboardStats = () => {
 
         loadDashboardData();
 
-        const interval = setInterval(() => {
+        intervalRef.current = setInterval(() => {
             loadDashboardData();
         }, 300000);
 
         return () => {
             isMountedRef.current = false;
-            clearInterval(interval);
+            if (intervalRef.current) {
+                clearInterval(intervalRef.current);
+                intervalRef.current = null;
+            }
         };
-    }, [loadDashboardData]);
+    }, []);
 
     return { stats, isLoading, lastUpdated, refresh: loadDashboardData };
 };
