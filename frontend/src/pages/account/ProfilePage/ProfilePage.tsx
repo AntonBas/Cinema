@@ -12,7 +12,7 @@ import styles from './ProfilePage.module.css';
 export const ProfilePage: React.FC = () => {
     const {
         profile,
-        isLoading,
+        loading,
         error,
         getProfile,
         updateProfile
@@ -22,7 +22,7 @@ export const ProfilePage: React.FC = () => {
     const [localError, setLocalError] = useState<string | null>(null);
     const [initialLoadDone, setInitialLoadDone] = useState(false);
 
-    const showLoading = useDelayedLoading(isLoading);
+    const showLoading = useDelayedLoading(loading);
 
     useEffect(() => {
         if (!initialLoadDone && !profile) {

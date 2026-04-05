@@ -8,16 +8,20 @@ interface MovieFilterProps {
     onMovieChange: (movieId: number | undefined) => void;
 }
 
+const SEARCH_DELAY = 300;
+const MIN_SEARCH_LENGTH = 2;
+
 export const MovieFilter: React.FC<MovieFilterProps> = ({ selectedMovieId, onMovieChange }) => {
     const [movies, setMovies] = useState<MovieSessionSearchResponse[]>([]);
     const [loading, setLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [showDropdown, setShowDropdown] = useState(false);
     const [selectedMovie, setSelectedMovie] = useState<MovieSessionSearchResponse | null>(null);
-    const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const dropdownRef = useRef<HTMLDivElement>(null);
 
     const searchMovies = useCallback(async (query: string) => {
-        if (!query.trim()) {
+        if (!query.trim() || query.trim().length < MIN_SEARCH_LENGTH) {
             setMovies([]);
             return;
         }
@@ -27,12 +31,23 @@ export const MovieFilter: React.FC<MovieFilterProps> = ({ selectedMovieId, onMov
             const response = await movieApi.admin.searchMoviesForSession(query);
             const results = response?.data || [];
             setMovies(results);
+            setShowDropdown(results.length > 0);
         } catch (error) {
             console.error('Error searching movies:', error);
             setMovies([]);
         } finally {
             setLoading(false);
         }
+    }, []);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setShowDropdown(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
     useEffect(() => {
@@ -54,7 +69,7 @@ export const MovieFilter: React.FC<MovieFilterProps> = ({ selectedMovieId, onMov
         }
     }, [selectedMovieId, selectedMovie]);
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
         setSearchTerm(value);
         setShowDropdown(true);
@@ -69,37 +84,51 @@ export const MovieFilter: React.FC<MovieFilterProps> = ({ selectedMovieId, onMov
                 setSelectedMovie(null);
                 onMovieChange(undefined);
             }
-        } else {
+            setShowDropdown(false);
+        } else if (value.trim().length >= MIN_SEARCH_LENGTH) {
             searchTimeoutRef.current = setTimeout(() => {
                 searchMovies(value);
-            }, 300);
+            }, SEARCH_DELAY);
+        } else {
+            setMovies([]);
         }
-    };
+    }, [selectedMovie, onMovieChange, searchMovies]);
 
-    const handleMovieSelect = (movie: MovieSessionSearchResponse) => {
+    const handleMovieSelect = useCallback((movie: MovieSessionSearchResponse) => {
         setSelectedMovie(movie);
         setSearchTerm(movie.title);
         onMovieChange(movie.id);
         setShowDropdown(false);
         setMovies([]);
-    };
+    }, [onMovieChange]);
 
-    const handleClearSelection = () => {
+    const handleClearSelection = useCallback(() => {
         setSelectedMovie(null);
         setSearchTerm('');
         onMovieChange(undefined);
         setShowDropdown(false);
         setMovies([]);
-    };
+    }, [onMovieChange]);
 
-    const handleInputBlur = () => {
-        setTimeout(() => {
-            setShowDropdown(false);
-        }, 200);
-    };
+    const handleInputFocus = useCallback(() => {
+        if (searchTerm.trim().length >= MIN_SEARCH_LENGTH) {
+            searchMovies(searchTerm);
+        }
+    }, [searchTerm, searchMovies]);
+
+    useEffect(() => {
+        return () => {
+            if (searchTimeoutRef.current) {
+                clearTimeout(searchTimeoutRef.current);
+            }
+        };
+    }, []);
+
+    const showResults = showDropdown && searchTerm.trim().length >= MIN_SEARCH_LENGTH && !loading && movies.length > 0;
+    const showNoResults = showDropdown && searchTerm.trim().length >= MIN_SEARCH_LENGTH && !loading && movies.length === 0;
 
     return (
-        <div className={styles.container}>
+        <div className={styles.container} ref={dropdownRef}>
             <div className={styles.filterHeader}>
                 <h3 className={styles.title}>Movie</h3>
                 {selectedMovie && (
@@ -107,6 +136,7 @@ export const MovieFilter: React.FC<MovieFilterProps> = ({ selectedMovieId, onMov
                         type="button"
                         onClick={handleClearSelection}
                         className={styles.clearButton}
+                        aria-label="Clear selected movie"
                     >
                         Clear
                     </button>
@@ -115,32 +145,34 @@ export const MovieFilter: React.FC<MovieFilterProps> = ({ selectedMovieId, onMov
 
             <div className={styles.searchContainer}>
                 <div className={styles.searchWrapper}>
-                    <span className={styles.searchIcon}>🎬</span>
+                    <span className={styles.searchIcon} aria-hidden="true">🎬</span>
                     <input
                         type="text"
                         value={searchTerm}
                         onChange={handleInputChange}
-                        onFocus={() => setShowDropdown(true)}
-                        onBlur={handleInputBlur}
+                        onFocus={handleInputFocus}
                         placeholder="Search for a movie..."
                         className={styles.searchInput}
+                        aria-label="Search movies"
                     />
                     {loading && (
-                        <div className={styles.loadingIndicator}>
+                        <div className={styles.loadingIndicator} aria-label="Loading">
                             <div className={styles.spinner}></div>
                         </div>
                     )}
                 </div>
             </div>
 
-            {showDropdown && searchTerm && movies.length > 0 && (
-                <div className={styles.dropdown}>
+            {showResults && (
+                <div className={styles.dropdown} role="listbox">
                     {movies.map(movie => (
                         <button
                             key={movie.id}
                             type="button"
                             onClick={() => handleMovieSelect(movie)}
                             className={`${styles.movieOption} ${selectedMovie?.id === movie.id ? styles.selected : ''}`}
+                            role="option"
+                            aria-selected={selectedMovie?.id === movie.id}
                         >
                             <div className={styles.movieContent}>
                                 <span className={styles.movieTitle}>{movie.title}</span>
@@ -149,16 +181,16 @@ export const MovieFilter: React.FC<MovieFilterProps> = ({ selectedMovieId, onMov
                                 </div>
                             </div>
                             {selectedMovie?.id === movie.id && (
-                                <span className={styles.checkmark}>✓</span>
+                                <span className={styles.checkmark} aria-hidden="true">✓</span>
                             )}
                         </button>
                     ))}
                 </div>
             )}
 
-            {showDropdown && searchTerm && !loading && movies.length === 0 && (
-                <div className={styles.noResults}>
-                    No movies found
+            {showNoResults && (
+                <div className={styles.noResults} role="status">
+                    No movies found for "{searchTerm}"
                 </div>
             )}
         </div>
