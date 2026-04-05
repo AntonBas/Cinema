@@ -38,7 +38,7 @@ export const PersonTab: React.FC = () => {
   const { notifications, showNotification, hideNotification } = useNotification();
   const { params, setPage, setSearch } = usePagination({ size: 12 });
 
-  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const initialLoadRef = useRef(false);
   const loadingDataRef = useRef(false);
 

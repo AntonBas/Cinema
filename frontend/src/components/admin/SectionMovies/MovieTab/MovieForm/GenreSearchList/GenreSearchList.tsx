@@ -22,7 +22,7 @@ export const GenreSearchList: React.FC<GenreSearchListProps> = React.memo(({
 }) => {
     const [localSearchQuery, setLocalSearchQuery] = useState('');
     const [isTyping, setIsTyping] = useState(false);
-    const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     useEffect(() => {
         return () => {

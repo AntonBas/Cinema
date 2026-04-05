@@ -32,7 +32,7 @@ export const SectionUsers: React.FC = () => {
     const showDelayedLoading = useDelayedLoading(loading, { delay: 150, minDisplayTime: 300 });
 
     const initialLoadRef = useRef(false);
-    const filterTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const filterTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const loadingDataRef = useRef(false);
 
     const loadUsers = useCallback(async (showLoading: boolean = true) => {

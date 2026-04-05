@@ -33,7 +33,7 @@ export const GenreTab: React.FC = () => {
   const { notifications, showNotification, hideNotification } = useNotification();
   const { params, setPage, setSearch } = usePagination({ size: 10 });
 
-  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const initialLoadRef = useRef(false);
   const loadingDataRef = useRef(false);
   const isMountedRef = useRef(true);

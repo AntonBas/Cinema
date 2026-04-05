@@ -11,11 +11,11 @@ import TicketTypeFilters from './TicketTypeFilters/TicketTypeFilters';
 import TicketTypeFormModal from './TicketTypeModal/TicketTypeFormModal';
 import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';
 import styles from './SectionTicketType.module.css';
-import type { TicketTypeResponse, TicketTypeCategory } from '@/types/ticketType';
+import type { TicketTypeAdminResponse, TicketTypeCategory } from '@/types/ticketType';
 
 const SectionTicketType = () => {
     const [showCreateModal, setShowCreateModal] = useState(false);
-    const [editingTicketType, setEditingTicketType] = useState<TicketTypeResponse | null>(null);
+    const [editingTicketType, setEditingTicketType] = useState<TicketTypeAdminResponse | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
     const [categoryFilter, setCategoryFilter] = useState<TicketTypeCategory | 'all'>('all');
@@ -38,7 +38,7 @@ const SectionTicketType = () => {
     const currentPage = params.page ?? 0;
     const pageSize = params.size ?? 10;
 
-    const loadTicketTypes = useCallback(async (skipCache = true) => {
+    const loadTicketTypes = useCallback(async () => {
         try {
             await getAll({
                 page: currentPage,
@@ -46,14 +46,14 @@ const SectionTicketType = () => {
                 active: statusFilter === 'all' ? undefined : statusFilter === 'active',
                 category: categoryFilter === 'all' ? undefined : categoryFilter,
                 search: searchQuery.trim() || undefined
-            }, skipCache);
+            });
         } catch (error) {
             showNotification('Failed to load ticket types', 'error');
         }
     }, [getAll, currentPage, pageSize, statusFilter, categoryFilter, searchQuery, showNotification]);
 
     useEffect(() => {
-        loadTicketTypes(false);
+        loadTicketTypes();
     }, []);
 
     useEffect(() => {
@@ -63,7 +63,7 @@ const SectionTicketType = () => {
         }
 
         const timer = setTimeout(() => {
-            loadTicketTypes(true);
+            loadTicketTypes();
         }, 100);
 
         return () => clearTimeout(timer);
@@ -73,7 +73,7 @@ const SectionTicketType = () => {
         setPage(newPage);
     }, [setPage]);
 
-    const handleCreateSuccess = useCallback((newTicketType?: TicketTypeResponse) => {
+    const handleCreateSuccess = useCallback((newTicketType?: TicketTypeAdminResponse) => {
         setShowCreateModal(false);
         if (newTicketType) {
             showNotification(`Ticket type "${newTicketType.displayName}" created successfully!`, 'success');
@@ -81,17 +81,17 @@ const SectionTicketType = () => {
             showNotification('Ticket type created successfully!', 'success');
         }
         setPage(0);
-        loadTicketTypes(true);
+        loadTicketTypes();
     }, [loadTicketTypes, showNotification, setPage]);
 
-    const handleEditSuccess = useCallback((updatedTicketType?: TicketTypeResponse) => {
+    const handleEditSuccess = useCallback((updatedTicketType?: TicketTypeAdminResponse) => {
         setEditingTicketType(null);
         if (updatedTicketType) {
             showNotification(`Ticket type "${updatedTicketType.displayName}" updated successfully!`, 'success');
         } else {
             showNotification('Ticket type updated successfully!', 'success');
         }
-        loadTicketTypes(true);
+        loadTicketTypes();
     }, [loadTicketTypes, showNotification]);
 
     const handleDelete = useCallback(async (id: number, displayName: string) => {
@@ -102,7 +102,7 @@ const SectionTicketType = () => {
             if (ticketTypes?.content.length === 1 && currentPage > 0) {
                 setPage(currentPage - 1);
             } else {
-                await loadTicketTypes(true);
+                await loadTicketTypes();
             }
         } catch (err) {
             showNotification('Failed to delete ticket type', 'error');
@@ -114,13 +114,13 @@ const SectionTicketType = () => {
             const updated = await toggleActive(id);
             const status = updated?.active ? 'activated' : 'deactivated';
             showNotification(`Ticket type "${displayName}" ${status} successfully!`, 'success');
-            await loadTicketTypes(true);
+            await loadTicketTypes();
         } catch (err) {
             showNotification('Failed to toggle active status', 'error');
         }
     }, [toggleActive, loadTicketTypes, showNotification]);
 
-    const handleEdit = useCallback((ticketType: TicketTypeResponse) => {
+    const handleEdit = useCallback((ticketType: TicketTypeAdminResponse) => {
         setEditingTicketType(ticketType);
     }, []);
 

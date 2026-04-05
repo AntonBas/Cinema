@@ -60,7 +60,7 @@ export const SectionSchedule: React.FC = () => {
     const initialHallsLoaded = useRef(false);
     const initialMoviesLoaded = useRef(false);
     const loadingDataRef = useRef(false);
-    const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const initialLoadDone = useRef(false);
 
     const {

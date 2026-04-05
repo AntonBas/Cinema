@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import type { PersonResponse, PersonRole } from '@/types/person';
-import { usePerson } from '@/hooks/features/persons/usePerson';
+import { personApi } from '@/api/personApi';
 import styles from './PersonSelect.module.css';
 
 interface PersonSelectProps {
@@ -26,14 +26,9 @@ export const PersonSelect: React.FC<PersonSelectProps> = ({
     const [isOpen, setIsOpen] = useState(false);
     const [localOptions, setLocalOptions] = useState<PersonResponse[]>([]);
     const [isSearching, setIsSearching] = useState(false);
+    const [isCreating, setIsCreating] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
-    const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-    const {
-        getAll,
-        quickCreate,
-        loading
-    } = usePerson();
+    const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const displayPersons = useMemo(() =>
         selectedPersons.filter(person => selectedIds.includes(person.id)),
@@ -51,78 +46,93 @@ export const PersonSelect: React.FC<PersonSelectProps> = ({
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    useEffect(() => {
-        let isActive = true;
+    const searchPersons = useCallback(async (query: string) => {
+        if (!query.trim() || query.length < MIN_SEARCH_LENGTH) {
+            setLocalOptions([]);
+            return;
+        }
 
-        const searchTimeout = searchTimeoutRef.current;
-        if (searchTimeout) {
-            clearTimeout(searchTimeout);
+        setIsSearching(true);
+        try {
+            const response = await personApi.admin.getAll({
+                name: query,
+                role: role,
+                page: 0,
+                size: MAX_OPTIONS
+            });
+            if (response?.data) {
+                setLocalOptions(response.data.content || []);
+                setIsOpen(true);
+            } else {
+                setLocalOptions([]);
+            }
+        } catch (error) {
+            console.error('Error searching persons:', error);
+            setLocalOptions([]);
+        } finally {
+            setIsSearching(false);
+        }
+    }, [role]);
+
+    useEffect(() => {
+        if (searchTimeoutRef.current) {
+            clearTimeout(searchTimeoutRef.current);
         }
 
         if (searchQuery.length >= MIN_SEARCH_LENGTH) {
-            searchTimeoutRef.current = setTimeout(async () => {
-                if (!searchQuery.trim() || !isActive) return;
-
-                setIsSearching(true);
-                try {
-                    const response = await getAll({
-                        name: searchQuery,
-                        role: role,
-                        page: 0,
-                        size: MAX_OPTIONS
-                    });
-                    if (isActive && response) {
-                        setLocalOptions(response.content || []);
-                        setIsOpen(true);
-                    }
-                } catch {
-                    if (isActive) {
-                        setLocalOptions([]);
-                    }
-                } finally {
-                    if (isActive) {
-                        setIsSearching(false);
-                    }
-                }
+            searchTimeoutRef.current = setTimeout(() => {
+                searchPersons(searchQuery);
             }, SEARCH_DELAY);
         } else {
             setLocalOptions([]);
+            setIsOpen(false);
         }
 
         return () => {
-            isActive = false;
             if (searchTimeoutRef.current) {
                 clearTimeout(searchTimeoutRef.current);
             }
         };
-    }, [searchQuery, role, getAll]);
+    }, [searchQuery, searchPersons]);
 
     const handleAddNewPerson = useCallback(async () => {
-        if (!searchQuery.trim()) return;
+        if (!searchQuery.trim() || isCreating) return;
 
+        setIsCreating(true);
         try {
-            const response = await quickCreate({ name: searchQuery.trim(), role });
-            if (response) {
-                const newPerson = response;
+            const response = await personApi.admin.quickCreate({ name: searchQuery.trim(), role });
+            if (response?.data) {
+                const newPerson = response.data;
                 const newSelectedIds = [...selectedIds, newPerson.id];
                 const updatedPersons = [...selectedPersons, newPerson];
                 onChange(newSelectedIds, updatedPersons);
                 setSearchQuery('');
                 setIsOpen(false);
             }
-        } catch {
+        } catch (error) {
+            console.error('Error creating person:', error);
+        } finally {
+            setIsCreating(false);
         }
-    }, [searchQuery, role, selectedIds, selectedPersons, onChange, quickCreate]);
+    }, [searchQuery, role, selectedIds, selectedPersons, onChange, isCreating]);
 
     const handleSelectPerson = useCallback((personId: number) => {
-        const newSelectedIds = selectedIds.includes(personId)
-            ? selectedIds.filter(id => id !== personId)
-            : [...selectedIds, personId];
+        const isSelected = selectedIds.includes(personId);
+        let newSelectedIds: number[];
+        let updatedPersons: PersonResponse[];
 
-        const selectedPerson = localOptions.find(p => p.id === personId);
-        const updatedPersons = selectedPerson
-            ? [...selectedPersons, selectedPerson]
-            : selectedPersons.filter(p => p.id !== personId);
+        if (isSelected) {
+            newSelectedIds = selectedIds.filter(id => id !== personId);
+            updatedPersons = selectedPersons.filter(p => p.id !== personId);
+        } else {
+            newSelectedIds = [...selectedIds, personId];
+            const selectedPerson = localOptions.find(p => p.id === personId);
+            if (selectedPerson && !selectedPersons.some(p => p.id === personId)) {
+                updatedPersons = [...selectedPersons, selectedPerson];
+            } else {
+                updatedPersons = [...selectedPersons];
+            }
+        }
 
         onChange(newSelectedIds, updatedPersons);
     }, [selectedIds, selectedPersons, localOptions, onChange]);
@@ -175,7 +185,7 @@ export const PersonSelect: React.FC<PersonSelectProps> = ({
                     className={styles.searchInput}
                     aria-label={`Search ${roleLabel}s`}
                 />
-                {(loading || isSearching) && <div className={styles.spinner} aria-label="Loading">⏳</div>}
+                {(isSearching || isCreating) && <div className={styles.spinner} aria-label="Loading">⏳</div>}
             </div>
 
             {displayPersons.length > 0 && (
@@ -204,11 +214,11 @@ export const PersonSelect: React.FC<PersonSelectProps> = ({
                             type="button"
                             onClick={handleAddNewPerson}
                             className={styles.addOption}
-                            disabled={loading || isSearching}
+                            disabled={isSearching || isCreating}
                             role="option"
                             aria-label={`Add and select "${searchQuery}" as new ${roleLabel}`}
                         >
-                            {loading || isSearching ? '⏳ Adding...' : `➕ Add & select "${searchQuery}" as new ${roleLabel}`}
+                            {isCreating ? '⏳ Adding...' : `➕ Add & select "${searchQuery}" as new ${roleLabel}`}
                         </button>
                     )}
 

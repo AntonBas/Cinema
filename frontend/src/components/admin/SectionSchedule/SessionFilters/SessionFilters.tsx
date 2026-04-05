@@ -61,7 +61,7 @@ export const SessionFilters: React.FC<SessionFiltersProps> = ({
     const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
     const [showMovieResults, setShowMovieResults] = useState(false);
     const movieSearchRef = useRef<HTMLDivElement>(null);
-    const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+    const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     useEffect(() => {
         setMovieSearchTerm(filters.movieTitle || '');

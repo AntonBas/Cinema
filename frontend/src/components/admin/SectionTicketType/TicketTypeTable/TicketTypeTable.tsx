@@ -3,13 +3,13 @@ import { Button } from '@/components/ui/Button/Button';
 import { Badge } from '@/components/ui/Badge/Badge';
 import { Tooltip } from '@/components/ui/Tooltip/Tooltip';
 import { DeleteConfirmModal } from '@/components/ui/DeleteConfirmModal/DeleteConfirmModal';
-import type { TicketTypeResponse, TicketTypeCategory } from '@/types/ticketType';
+import type { TicketTypeAdminResponse, TicketTypeCategory } from '@/types/ticketType';
 import { TicketTypeCategoryDisplay } from '@/types/ticketType';
 import styles from './TicketTypeTable.module.css';
 
 interface TicketTypeTableProps {
-    ticketTypes: TicketTypeResponse[];
-    onEdit: (ticketType: TicketTypeResponse) => void;
+    ticketTypes: TicketTypeAdminResponse[];
+    onEdit: (ticketType: TicketTypeAdminResponse) => void;
     onDelete: (id: number, displayName: string) => Promise<void>;
     onToggleActive: (id: number, displayName: string) => Promise<void>;
 }
@@ -21,12 +21,12 @@ const TicketTypeTable: React.FC<TicketTypeTableProps> = ({
     onToggleActive
 }) => {
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-    const [selectedTicketType, setSelectedTicketType] = useState<TicketTypeResponse | null>(null);
+    const [selectedTicketType, setSelectedTicketType] = useState<TicketTypeAdminResponse | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
     const [toggleLoading, setToggleLoading] = useState<number | null>(null);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-    const handleDeleteClick = (ticketType: TicketTypeResponse) => {
+    const handleDeleteClick = (ticketType: TicketTypeAdminResponse) => {
         setSelectedTicketType(ticketType);
         setDeleteModalOpen(true);
         setErrorMessage(null);
@@ -60,7 +60,7 @@ const TicketTypeTable: React.FC<TicketTypeTableProps> = ({
         }
     };
 
-    const formatAgeRange = (ticketType: TicketTypeResponse) => {
+    const formatAgeRange = (ticketType: TicketTypeAdminResponse) => {
         const { minAge, maxAge } = ticketType;
         if (minAge === undefined && maxAge === undefined) return 'Any age';
         if (minAge !== undefined && maxAge !== undefined) return `${minAge}-${maxAge} years`;

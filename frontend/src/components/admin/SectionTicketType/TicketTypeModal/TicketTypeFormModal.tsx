@@ -5,15 +5,15 @@ import { Input } from '@/components/ui/Input/Input';
 import { Select } from '@/components/ui/Select/Select';
 import { useTicketType } from '@/hooks/features/ticketType/useTicketType';
 import { useNotification } from '@/hooks/common/useNotification';
-import type { TicketTypeResponse, TicketTypeCreateRequest, TicketTypeUpdateRequest, TicketTypeCategory } from '@/types/ticketType';
+import type { TicketTypeAdminResponse, TicketTypeCreateRequest, TicketTypeUpdateRequest, TicketTypeCategory } from '@/types/ticketType';
 import { TicketTypeCategoryDisplay } from '@/types/ticketType';
 import styles from './TicketTypeModal.module.css';
 
 interface TicketTypeFormModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSuccess: (ticketType?: TicketTypeResponse) => void;
-    ticketType?: TicketTypeResponse | null;
+    onSuccess: (ticketType?: TicketTypeAdminResponse) => void;
+    ticketType?: TicketTypeAdminResponse | null;
 }
 
 const TicketTypeFormModal: React.FC<TicketTypeFormModalProps> = ({
@@ -116,7 +116,7 @@ const TicketTypeFormModal: React.FC<TicketTypeFormModalProps> = ({
                     return;
                 }
 
-                result = await update(ticketType.id, updateData);
+                result = await update(ticketType.id, updateData, ticketType.displayName);
                 onSuccess(result || undefined);
                 onClose();
             } else {

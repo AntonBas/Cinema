@@ -50,7 +50,7 @@ export const MovieTab: React.FC = () => {
   const { notifications, showNotification, hideNotification } = useNotification();
   const showLoading = useDelayedLoading(moviesLoading, { delay: 150, minDisplayTime: 300 });
 
-  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const initialLoadRef = useRef(false);
   const loadingDataRef = useRef<Record<MovieTabType, boolean>>({
     CURRENT: false,
@@ -72,32 +72,25 @@ export const MovieTab: React.FC = () => {
     [activeTab, tabData]
   );
 
-  const loadTabData = useCallback(async (tab: MovieTabType, page: number, search?: string, skipCache: boolean = false) => {
+  const loadTabData = useCallback(async (tab: MovieTabType, page: number, search?: string) => {
     if (loadingDataRef.current[tab] || !isMountedRef.current) return;
 
     loadingDataRef.current[tab] = true;
 
     try {
-      const baseParams = {
-        page,
-        size: 12,
-        sort: tab === 'UPCOMING' ? 'releaseDate,asc' : 'releaseDate,desc'
-      };
-
-      const requestParams = search
-        ? { ...baseParams, title: search }
-        : baseParams;
+      const baseParams = { page, size: 12 };
+      const requestParams = search ? { ...baseParams, title: search } : baseParams;
 
       let response;
       switch (tab) {
         case 'CURRENT':
-          response = await getAdminCurrent(requestParams, skipCache);
+          response = await getAdminCurrent(requestParams);
           break;
         case 'UPCOMING':
-          response = await getAdminUpcoming(requestParams, skipCache);
+          response = await getAdminUpcoming(requestParams);
           break;
         case 'ARCHIVED':
-          response = await getAdminArchived(requestParams, skipCache);
+          response = await getAdminArchived(requestParams);
           break;
       }
 
@@ -131,9 +124,9 @@ export const MovieTab: React.FC = () => {
   const loadTabCounts = useCallback(async () => {
     try {
       await Promise.all([
-        loadTabDataStable('CURRENT', 0, '', true),
-        loadTabDataStable('UPCOMING', 0, '', true),
-        loadTabDataStable('ARCHIVED', 0, '', true)
+        loadTabDataStable('CURRENT', 0, ''),
+        loadTabDataStable('UPCOMING', 0, ''),
+        loadTabDataStable('ARCHIVED', 0, '')
       ]);
     } catch (error) {
       console.error('Failed to load tab counts:', error);
@@ -163,7 +156,7 @@ export const MovieTab: React.FC = () => {
     previousParamsRef.current = currentParams;
 
     const timer = setTimeout(() => {
-      loadTabDataStable(activeTab, params.page || 0, params.search, false);
+      loadTabDataStable(activeTab, params.page || 0, params.search);
     }, 100);
 
     return () => clearTimeout(timer);
@@ -190,7 +183,7 @@ export const MovieTab: React.FC = () => {
 
   const handleEdit = useCallback(async (movie: MovieCardResponse) => {
     try {
-      const response = await getAdminById(movie.id, true);
+      const response = await getAdminById(movie.id);
       if (response) {
         setEditingMovie(response);
         setIsModalOpen(true);
@@ -217,7 +210,7 @@ export const MovieTab: React.FC = () => {
         : params.page || 0;
 
       setPage(newPage);
-      await loadTabDataStable(activeTab, newPage, params.search, true);
+      await loadTabDataStable(activeTab, newPage, params.search);
     } catch (err) {
       if (isApiErrorException(err) && err.isConflict?.()) {
         showNotification(`Cannot delete movie "${deletingMovie.title}" because it has associated sessions.`, 'error');
@@ -241,7 +234,7 @@ export const MovieTab: React.FC = () => {
     if (result) {
       showNotification(`Movie "${result.title}" successfully ${editingMovie ? 'updated' : 'created'}!`, 'success');
     }
-    loadTabDataStable(activeTab, params.page || 0, params.search, true);
+    loadTabDataStable(activeTab, params.page || 0, params.search);
   }, [activeTab, params.page, params.search, loadTabDataStable, editingMovie, showNotification]);
 
   const handleFormCancel = useCallback(() => {
