@@ -139,7 +139,7 @@ const TicketTypeFormModal: React.FC<TicketTypeFormModalProps> = ({
             size="large"
         >
             <form onSubmit={handleSubmit} className={styles.form}>
-                <div className={styles.formRow}>
+                <div className={`${styles.formRow} ${styles.formRowFull}`}>
                     <div className={styles.formGroup}>
                         <label className={`${styles.label} ${styles.required}`}>
                             Display Name
@@ -211,18 +211,16 @@ const TicketTypeFormModal: React.FC<TicketTypeFormModalProps> = ({
                     </div>
                 </div>
 
-                <div className={styles.formGroup}>
-                    <div className={styles.checkboxGroup}>
-                        <input
-                            type="checkbox"
-                            id="requiresDocument"
-                            checked={formData.requiresDocument || false}
-                            onChange={(e) => handleInputChange('requiresDocument', e.target.checked)}
-                        />
-                        <label htmlFor="requiresDocument" className={styles.checkboxLabel}>
-                            Requires Document Verification
-                        </label>
-                    </div>
+                <div className={styles.checkboxGroup}>
+                    <input
+                        type="checkbox"
+                        id="requiresDocument"
+                        checked={formData.requiresDocument || false}
+                        onChange={(e) => handleInputChange('requiresDocument', e.target.checked)}
+                    />
+                    <label htmlFor="requiresDocument" className={styles.checkboxLabel}>
+                        Requires Document Verification
+                    </label>
                 </div>
 
                 {formData.requiresDocument && (
@@ -239,18 +237,16 @@ const TicketTypeFormModal: React.FC<TicketTypeFormModalProps> = ({
                     </div>
                 )}
 
-                <div className={styles.formGroup}>
-                    <div className={styles.checkboxGroup}>
-                        <input
-                            type="checkbox"
-                            id="active"
-                            checked={formData.active || false}
-                            onChange={(e) => handleInputChange('active', e.target.checked)}
-                        />
-                        <label htmlFor="active" className={styles.checkboxLabel}>
-                            Active (available for purchase)
-                        </label>
-                    </div>
+                <div className={styles.checkboxGroup}>
+                    <input
+                        type="checkbox"
+                        id="active"
+                        checked={formData.active || false}
+                        onChange={(e) => handleInputChange('active', e.target.checked)}
+                    />
+                    <label htmlFor="active" className={styles.checkboxLabel}>
+                        Active (available for purchase)
+                    </label>
                 </div>
 
                 {error && (
