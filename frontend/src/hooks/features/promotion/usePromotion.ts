@@ -13,6 +13,7 @@ import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
 
 export const usePromotion = () => {
     const getAvailablePromotionsApi = useApi<PromotionResponse[]>();
+    const getClaimedPromotionsApi = useApi<PromotionResponse[]>();
     const getAllPromotionsApi = useApi<PageResponse<PromotionAdminResponse>>();
     const getPromotionByIdApi = useApi<PromotionResponse>();
     const claimPromotionApi = useApi<PromotionResponse>();
@@ -20,13 +21,13 @@ export const usePromotion = () => {
     const updatePromotionApi = useApi<PromotionResponse>();
     const deletePromotionApi = useApi<void>();
 
-    const rawLoading = getAvailablePromotionsApi.loading || getAllPromotionsApi.loading ||
-        getPromotionByIdApi.loading || claimPromotionApi.loading || createPromotionApi.loading ||
-        updatePromotionApi.loading || deletePromotionApi.loading;
+    const rawLoading = getAvailablePromotionsApi.loading || getClaimedPromotionsApi.loading ||
+        getAllPromotionsApi.loading || getPromotionByIdApi.loading || claimPromotionApi.loading ||
+        createPromotionApi.loading || updatePromotionApi.loading || deletePromotionApi.loading;
     const loading = useDelayedLoading(rawLoading, { delay: 150, minDisplayTime: 300 });
-    const error = !!(getAvailablePromotionsApi.error || getAllPromotionsApi.error ||
-        getPromotionByIdApi.error || claimPromotionApi.error || createPromotionApi.error ||
-        updatePromotionApi.error || deletePromotionApi.error);
+    const error = !!(getAvailablePromotionsApi.error || getClaimedPromotionsApi.error ||
+        getAllPromotionsApi.error || getPromotionByIdApi.error || claimPromotionApi.error ||
+        createPromotionApi.error || updatePromotionApi.error || deletePromotionApi.error);
 
     const getAvailable = useCallback(async () => {
         const response = await getAvailablePromotionsApi.execute(
@@ -35,6 +36,14 @@ export const usePromotion = () => {
         );
         return response || null;
     }, [getAvailablePromotionsApi]);
+
+    const getClaimed = useCallback(async () => {
+        const response = await getClaimedPromotionsApi.execute(
+            () => promotionApi.user.getClaimed(),
+            { showErrorNotification: false }
+        );
+        return response || null;
+    }, [getClaimedPromotionsApi]);
 
     const claimPromotion = useCallback(async (request: UserPromotionCreateRequest, promotionName?: string) => {
         const response = await claimPromotionApi.execute(
@@ -85,22 +94,25 @@ export const usePromotion = () => {
 
     const resetAll = useCallback(() => {
         getAvailablePromotionsApi.reset();
+        getClaimedPromotionsApi.reset();
         getAllPromotionsApi.reset();
         getPromotionByIdApi.reset();
         claimPromotionApi.reset();
         createPromotionApi.reset();
         updatePromotionApi.reset();
         deletePromotionApi.reset();
-    }, [getAvailablePromotionsApi, getAllPromotionsApi, getPromotionByIdApi, claimPromotionApi, createPromotionApi, updatePromotionApi, deletePromotionApi]);
+    }, [getAvailablePromotionsApi, getClaimedPromotionsApi, getAllPromotionsApi, getPromotionByIdApi, claimPromotionApi, createPromotionApi, updatePromotionApi, deletePromotionApi]);
 
     return {
         availablePromotions: getAvailablePromotionsApi.data || [],
+        claimedPromotions: getClaimedPromotionsApi.data || [],
         promotion: getPromotionByIdApi.data,
         promotionsPage: getAllPromotionsApi.data,
         promotions: getAllPromotionsApi.data?.content || [],
         loading,
         error,
         getAvailable,
+        getClaimed,
         claimPromotion,
         getById,
         getAll,

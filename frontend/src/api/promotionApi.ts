@@ -16,6 +16,9 @@ export const promotionApi = {
         getAvailable: () =>
             api.get<PromotionResponse[]>(BASE_URL),
 
+        getClaimed: () =>
+            api.get<PromotionResponse[]>(`${BASE_URL}/claimed`),
+
         claim: (request: UserPromotionCreateRequest) =>
             api.post<PromotionResponse>(`${BASE_URL}/claim`, request),
     },
