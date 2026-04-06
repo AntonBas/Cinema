@@ -81,6 +81,12 @@ public class PromotionService {
 		return promotionMapper.toPromotionResponse(promotion);
 	}
 
+	@Cacheable(key = "#promotionId")
+	public PromotionResponse getPromotionById(Long promotionId) {
+		Promotion promotion = findByIdOrThrow(promotionId);
+		return promotionMapper.toPromotionResponse(promotion);
+	}
+
 	@Caching(evict = { @CacheEvict(key = "#promotionId"), @CacheEvict(allEntries = true) })
 	@Transactional
 	public PromotionResponse updatePromotion(Long promotionId, PromotionUpdateRequest request) {
@@ -128,12 +134,6 @@ public class PromotionService {
 		auditService.logChange("Promotion", promotionId, promotionTitle, AuditAction.DELETED, details, null);
 	}
 
-	@Cacheable(key = "#promotionId")
-	public PromotionResponse getPromotionById(Long promotionId) {
-		Promotion promotion = findByIdOrThrow(promotionId);
-		return promotionMapper.toPromotionResponse(promotion);
-	}
-
 	@Cacheable(key = "'all-' + #pageable.pageNumber + '-' + #pageable.pageSize")
 	public PageResponse<PromotionAdminResponse> getAllPromotions(Pageable pageable) {
 		Page<PromotionAdminProjection> page = promotionRepository.findAllAdminList(pageable);
@@ -176,17 +176,18 @@ public class PromotionService {
 		return promotionMapper.toPromotionResponse(promotion);
 	}
 
+	public List<PromotionResponse> getClaimedPromotions(User user) {
+		log.debug("Getting claimed promotions for user: {}", user.getEmail());
+		return promotionRepository.findClaimedPromotionsByUser(user).stream().map(promotionMapper::toPromotionResponse)
+				.collect(Collectors.toList());
+	}
+
 	public List<PromotionResponse> getAvailablePromotions(User user) {
 		log.debug("Getting available promotions for user: {}", user != null ? user.getEmail() : "anonymous");
 
 		List<PromotionResponseProjection> activePromotions = promotionRepository.findAllActivePromotions();
 
-		if (user == null) {
-			return activePromotions.stream().map(promotionMapper::toPromotionResponse).collect(Collectors.toList());
-		}
-
-		return activePromotions.stream().filter(p -> !hasUserClaimedPromotion(user, p.getId()))
-				.map(promotionMapper::toPromotionResponse).collect(Collectors.toList());
+		return activePromotions.stream().map(promotionMapper::toPromotionResponse).collect(Collectors.toList());
 	}
 
 	public boolean hasUserClaimedPromotion(User user, Long promotionId) {

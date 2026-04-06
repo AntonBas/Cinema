@@ -54,4 +54,14 @@ public class PromotionController {
 		log.info("User ID: {} claiming promotion ID: {}", user.getId(), request.promotionId());
 		return ResponseEntity.ok(promotionService.claimPromotion(request, user));
 	}
+
+	@GetMapping("/claimed")
+	@Operation(summary = "Get promotions claimed by current user")
+	@PreAuthorize("isAuthenticated()")
+	public ResponseEntity<List<PromotionResponse>> getClaimedPromotions(
+			@AuthenticationPrincipal CustomUserDetails currentUser) {
+		User user = currentUser.getUser();
+		log.info("Getting claimed promotions for user ID: {}", user.getId());
+		return ResponseEntity.ok(promotionService.getClaimedPromotions(user));
+	}
 }
