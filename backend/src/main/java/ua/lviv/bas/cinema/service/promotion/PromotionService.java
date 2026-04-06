@@ -55,7 +55,7 @@ public class PromotionService {
 	private final BonusService bonusService;
 	private final AuditService auditService;
 
-	@Caching(evict = { @CacheEvict(key = "#promotionId"), @CacheEvict(allEntries = true) })
+	@CacheEvict(allEntries = true)
 	@Transactional
 	public PromotionResponse createPromotion(PromotionCreateRequest request) {
 		log.info("Creating new promotion: {}", request.title());
@@ -176,11 +176,14 @@ public class PromotionService {
 		return promotionMapper.toPromotionResponse(promotion);
 	}
 
-	@Cacheable(key = "'available:' + #user.id")
 	public List<PromotionResponse> getAvailablePromotions(User user) {
-		log.debug("Getting available promotions for user: {}", user.getEmail());
+		log.debug("Getting available promotions for user: {}", user != null ? user.getEmail() : "anonymous");
 
 		List<PromotionResponseProjection> activePromotions = promotionRepository.findAllActivePromotions();
+
+		if (user == null) {
+			return activePromotions.stream().map(promotionMapper::toPromotionResponse).collect(Collectors.toList());
+		}
 
 		return activePromotions.stream().filter(p -> !hasUserClaimedPromotion(user, p.getId()))
 				.map(promotionMapper::toPromotionResponse).collect(Collectors.toList());

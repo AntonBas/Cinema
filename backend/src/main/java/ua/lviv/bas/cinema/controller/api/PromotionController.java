@@ -18,6 +18,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.config.ratelimit.RateLimit;
+import ua.lviv.bas.cinema.config.security.user.CustomUserDetails;
 import ua.lviv.bas.cinema.domain.user.User;
 import ua.lviv.bas.cinema.dto.promotion.request.UserPromotionCreateRequest;
 import ua.lviv.bas.cinema.dto.promotion.response.PromotionResponse;
@@ -33,21 +34,23 @@ public class PromotionController {
 
 	private final PromotionService promotionService;
 
-	@RateLimit(value = 10, duration = 1, key = "user")
 	@GetMapping
 	@Operation(summary = "Get available promotions")
-	@PreAuthorize("hasRole('USER') or hasRole('PREMIUM_USER')")
-	public ResponseEntity<List<PromotionResponse>> getAvailablePromotions(@AuthenticationPrincipal User user) {
-		log.info("Getting available promotions for user ID: {}", user.getId());
+	@PreAuthorize("permitAll()")
+	public ResponseEntity<List<PromotionResponse>> getAvailablePromotions(
+			@AuthenticationPrincipal CustomUserDetails currentUser) {
+		User user = currentUser != null ? currentUser.getUser() : null;
+		log.info("Getting available promotions for user: {}", user != null ? user.getId() : "anonymous");
 		return ResponseEntity.ok(promotionService.getAvailablePromotions(user));
 	}
 
 	@RateLimit(value = 3, duration = 1, key = "user")
 	@PostMapping("/claim")
 	@Operation(summary = "Claim a promotion")
-	@PreAuthorize("hasRole('USER') or hasRole('PREMIUM_USER')")
+	@PreAuthorize("isAuthenticated()")
 	public ResponseEntity<PromotionResponse> claimPromotion(@Valid @RequestBody UserPromotionCreateRequest request,
-			@AuthenticationPrincipal User user) {
+			@AuthenticationPrincipal CustomUserDetails currentUser) {
+		User user = currentUser.getUser();
 		log.info("User ID: {} claiming promotion ID: {}", user.getId(), request.promotionId());
 		return ResponseEntity.ok(promotionService.claimPromotion(request, user));
 	}
