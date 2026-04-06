@@ -12,7 +12,9 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -57,10 +59,7 @@ public class MovieService {
 	private final PosterService posterService;
 	private final AuditService auditService;
 
-	@Caching(evict = { @CacheEvict(cacheNames = "movies", allEntries = true),
-			@CacheEvict(value = "sessions", allEntries = true),
-			@CacheEvict(value = "seatAvailability", allEntries = true),
-			@CacheEvict(value = "availableSeatsCount", allEntries = true) })
+	@CacheEvict(allEntries = true)
 	@Transactional
 	public MovieDetailResponse createMovie(MovieCreateRequest request) {
 		log.info("Creating movie: {}", request.getTitle());
@@ -76,7 +75,7 @@ public class MovieService {
 
 		handlePoster(movie, request.getPosterFile(), false);
 		setMovieRelations(movie, request.getGenreIds(), request.getActorIds(), request.getDirectorIds(),
-				request.getScreenwriterIds());
+				request.getScreenwriterIds(), false);
 
 		Movie saved = movieRepository.save(movie);
 		log.info("Movie created successfully with id: {}", saved.getId());
@@ -91,10 +90,7 @@ public class MovieService {
 		return movieMapper.toMovieDetailResponse(saved);
 	}
 
-	@Caching(evict = { @CacheEvict(cacheNames = "movies", allEntries = true),
-			@CacheEvict(value = "sessions", allEntries = true),
-			@CacheEvict(value = "seatAvailability", allEntries = true),
-			@CacheEvict(value = "availableSeatsCount", allEntries = true) })
+	@Caching(evict = { @CacheEvict(key = "#id"), @CacheEvict(allEntries = true) })
 	@Transactional
 	public MovieDetailResponse updateMovie(Long id, MovieUpdateRequest request) {
 		log.info("Updating movie with id: {}", id);
@@ -137,10 +133,7 @@ public class MovieService {
 		return movieMapper.toMovieDetailResponse(updated);
 	}
 
-	@Caching(evict = { @CacheEvict(cacheNames = "movies", allEntries = true),
-			@CacheEvict(value = "sessions", allEntries = true),
-			@CacheEvict(value = "seatAvailability", allEntries = true),
-			@CacheEvict(value = "availableSeatsCount", allEntries = true) })
+	@Caching(evict = { @CacheEvict(key = "#id"), @CacheEvict(allEntries = true) })
 	@Transactional
 	public void deleteMovie(Long id) {
 		log.info("Deleting movie with id: {}", id);
@@ -186,6 +179,22 @@ public class MovieService {
 		return movieRepository.findMoviesByFilters(title, status, pageable).map(movieMapper::toMovieCardResponse);
 	}
 
+	@Cacheable(key = "'now-showing-home'")
+	public List<MovieCardResponse> getNowShowingMoviesForHome() {
+		log.info("Fetching now showing movies for home page");
+		Pageable pageable = PageRequest.of(0, 6, Sort.by(Sort.Direction.DESC, "releaseDate"));
+		Page<MovieCardProjection> page = movieRepository.findNowShowingMovies(pageable);
+		return page.getContent().stream().map(movieMapper::toMovieCardResponse).toList();
+	}
+
+	@Cacheable(key = "'coming-soon-home'")
+	public List<MovieCardResponse> getComingSoonMoviesForHome() {
+		log.info("Fetching coming soon movies for home page");
+		Pageable pageable = PageRequest.of(0, 6, Sort.by(Sort.Direction.ASC, "releaseDate"));
+		Page<MovieCardProjection> page = movieRepository.findComingSoonMovies(pageable);
+		return page.getContent().stream().map(movieMapper::toMovieCardResponse).toList();
+	}
+
 	public List<MovieSessionSearchResponse> searchMoviesForSession(String searchTerm) {
 		log.info("Searching movies for session with term: {}", searchTerm);
 
@@ -202,7 +211,7 @@ public class MovieService {
 			projections = movieRepository.findMoviesForSession(searchTerm);
 		}
 
-		return projections.stream().map(this::toMovieSessionSearchResponse).toList();
+		return projections.stream().map(movieMapper::toMovieSessionSearchResponse).toList();
 	}
 
 	public ResponseEntity<byte[]> getMoviePoster(Long id) {
@@ -222,6 +231,9 @@ public class MovieService {
 		if (endShowingDate.isBefore(releaseDate)) {
 			throw MovieValidationException.invalidDates(releaseDate, endShowingDate);
 		}
+		if (endShowingDate.isBefore(LocalDate.now())) {
+			throw MovieValidationException.endDateInPast(endShowingDate);
+		}
 	}
 
 	private void validateSlugUniqueness(String slug) {
@@ -231,7 +243,13 @@ public class MovieService {
 	}
 
 	private void setMovieRelations(Movie movie, List<Long> genreIds, List<Long> actorIds, List<Long> directorIds,
-			List<Long> screenwriterIds) {
+			List<Long> screenwriterIds, boolean clearFirst) {
+		if (clearFirst) {
+			movie.getGenres().clear();
+			movie.getActors().clear();
+			movie.getDirectors().clear();
+			movie.getScreenwriters().clear();
+		}
 		movie.setGenres(new HashSet<>(genreRepository.findAllById(genreIds)));
 		movie.setActors(new HashSet<>(personRepository.findAllById(actorIds)));
 		movie.setDirectors(new HashSet<>(personRepository.findAllById(directorIds)));
@@ -240,11 +258,7 @@ public class MovieService {
 
 	private void updateMovieRelations(Movie movie, List<Long> genreIds, List<Long> actorIds, List<Long> directorIds,
 			List<Long> screenwriterIds) {
-		movie.getGenres().clear();
-		movie.getActors().clear();
-		movie.getDirectors().clear();
-		movie.getScreenwriters().clear();
-		setMovieRelations(movie, genreIds, actorIds, directorIds, screenwriterIds);
+		setMovieRelations(movie, genreIds, actorIds, directorIds, screenwriterIds, true);
 	}
 
 	private void handlePoster(Movie movie, MultipartFile posterFile, boolean removePoster) {
@@ -269,10 +283,5 @@ public class MovieService {
 		} catch (DateTimeParseException e) {
 			return false;
 		}
-	}
-
-	private MovieSessionSearchResponse toMovieSessionSearchResponse(MovieCardProjection projection) {
-		return new MovieSessionSearchResponse(projection.getId(), projection.getTitle(),
-				projection.getDurationMinutes());
 	}
 }

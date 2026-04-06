@@ -76,6 +76,41 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
 			""")
 	List<MovieCardProjection> findMoviesByDate(@Param("date") java.time.LocalDate date);
 
+	@Query("""
+			SELECT m.id as id,
+			       m.slug as slug,
+			       m.title as title,
+			       m.posterFileName as posterFileName,
+			       m.durationMinutes as durationMinutes,
+			       m.ageRating as ageRating,
+			       m.status as status,
+			       m.releaseDate as releaseDate,
+			       m.endShowingDate as endShowingDate
+			FROM Movie m
+			WHERE m.status = 'CURRENT'
+			  AND m.releaseDate <= CURRENT_DATE
+			  AND m.endShowingDate >= CURRENT_DATE
+			ORDER BY m.releaseDate DESC
+			""")
+	Page<MovieCardProjection> findNowShowingMovies(Pageable pageable);
+
+	@Query("""
+			SELECT m.id as id,
+			       m.slug as slug,
+			       m.title as title,
+			       m.posterFileName as posterFileName,
+			       m.durationMinutes as durationMinutes,
+			       m.ageRating as ageRating,
+			       m.status as status,
+			       m.releaseDate as releaseDate,
+			       m.endShowingDate as endShowingDate
+			FROM Movie m
+			WHERE m.status = 'UPCOMING'
+			  AND m.releaseDate > CURRENT_DATE
+			ORDER BY m.releaseDate ASC
+			""")
+	Page<MovieCardProjection> findComingSoonMovies(Pageable pageable);
+
 	@Query("SELECT m.posterFileName FROM Movie m WHERE m.id = :id")
 	Optional<String> findPosterFileNameById(@Param("id") Long id);
 

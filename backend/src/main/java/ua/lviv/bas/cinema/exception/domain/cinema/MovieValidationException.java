@@ -17,4 +17,9 @@ public class MovieValidationException extends ValidationException {
 				String.format("End showing date (%s) cannot be before release date (%s)", endShowingDate, releaseDate),
 				"INVALID_MOVIE_DATES");
 	}
+
+	public static MovieValidationException endDateInPast(LocalDate endShowingDate) {
+		return new MovieValidationException(
+				String.format("End showing date (%s) cannot be in the past", endShowingDate), "END_DATE_IN_PAST");
+	}
 }

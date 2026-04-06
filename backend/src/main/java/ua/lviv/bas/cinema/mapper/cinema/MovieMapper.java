@@ -41,7 +41,15 @@ public interface MovieMapper {
 	@Mapping(target = "screenwriters", ignore = true)
 	MovieDetailResponse toMovieDetailResponse(MovieDetailProjection projection);
 
+	@Mapping(target = "id", source = "id")
+	@Mapping(target = "title", source = "title")
+	@Mapping(target = "durationMinutes", source = "durationMinutes")
 	MovieSessionSearchResponse toMovieSessionSearchResponse(MovieSessionSearchProjection projection);
+
+	@Mapping(target = "id", source = "id")
+	@Mapping(target = "title", source = "title")
+	@Mapping(target = "durationMinutes", source = "durationMinutes")
+	MovieSessionSearchResponse toMovieSessionSearchResponse(MovieCardProjection projection);
 
 	@Mapping(target = "id", ignore = true)
 	@Mapping(target = "slug", ignore = true)

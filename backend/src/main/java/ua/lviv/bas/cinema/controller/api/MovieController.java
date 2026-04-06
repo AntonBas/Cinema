@@ -1,10 +1,8 @@
 package ua.lviv.bas.cinema.controller.api;
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.CacheControl;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,7 +19,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.config.ratelimit.RateLimit;
 import ua.lviv.bas.cinema.domain.cinema.status.MovieStatus;
-import ua.lviv.bas.cinema.dto.PageResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieCardResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieDetailResponse;
 import ua.lviv.bas.cinema.exception.domain.cinema.MovieNotFoundException;
@@ -56,29 +53,23 @@ public class MovieController {
 	}
 
 	@RateLimit(value = 20, duration = 1, key = "ip")
-	@GetMapping("/currently-showing")
-	@Operation(summary = "Get currently showing movies", description = "Retrieves paginated list of currently showing movies")
+	@GetMapping("/now-showing/home")
+	@Operation(summary = "Get now showing movies for home page carousel", description = "Returns 6 newest movies for home page carousel")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Movies retrieved successfully") })
-	public ResponseEntity<PageResponse<MovieCardResponse>> getCurrentlyShowingMovies(
-			@Parameter(description = "Pagination parameters") @PageableDefault(size = 12, sort = "releaseDate", direction = Sort.Direction.DESC) Pageable pageable) {
-
-		log.info("GET /api/movies/currently-showing - Getting currently showing movies");
-		var result = movieService.getFilteredMovies(null, MovieStatus.CURRENT, pageable);
-		return ResponseEntity.ok().cacheControl(CacheControl.maxAge(5, TimeUnit.MINUTES))
-				.body(PageResponse.from(result));
+	public ResponseEntity<List<MovieCardResponse>> getNowShowingMoviesForHome() {
+		log.info("GET /api/movies/now-showing/home - Getting now showing movies for home page");
+		List<MovieCardResponse> movies = movieService.getNowShowingMoviesForHome();
+		return ResponseEntity.ok().cacheControl(CacheControl.maxAge(5, TimeUnit.MINUTES)).body(movies);
 	}
 
 	@RateLimit(value = 20, duration = 1, key = "ip")
-	@GetMapping("/upcoming")
-	@Operation(summary = "Get upcoming movies", description = "Retrieves paginated list of upcoming movies")
+	@GetMapping("/coming-soon/home")
+	@Operation(summary = "Get coming soon movies for home page carousel", description = "Returns 6 upcoming movies for home page carousel")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Movies retrieved successfully") })
-	public ResponseEntity<PageResponse<MovieCardResponse>> getUpcomingMovies(
-			@Parameter(description = "Pagination parameters") @PageableDefault(size = 12, sort = "releaseDate", direction = Sort.Direction.ASC) Pageable pageable) {
-
-		log.info("GET /api/movies/upcoming - Getting upcoming movies");
-		var result = movieService.getFilteredMovies(null, MovieStatus.UPCOMING, pageable);
-		return ResponseEntity.ok().cacheControl(CacheControl.maxAge(5, TimeUnit.MINUTES))
-				.body(PageResponse.from(result));
+	public ResponseEntity<List<MovieCardResponse>> getComingSoonMoviesForHome() {
+		log.info("GET /api/movies/coming-soon/home - Getting coming soon movies for home page");
+		List<MovieCardResponse> movies = movieService.getComingSoonMoviesForHome();
+		return ResponseEntity.ok().cacheControl(CacheControl.maxAge(5, TimeUnit.MINUTES)).body(movies);
 	}
 
 	@RateLimit(value = 50, duration = 1, key = "ip")
