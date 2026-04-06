@@ -4,7 +4,7 @@ import { useApi } from '@/hooks/common/useApi';
 import { authApi } from '@/api/authApi';
 import type { LoginRequest, LoginResponse, RegisterRequest } from '@/types/auth';
 import type { UserResponse } from '@/types/user';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/context/AuthContext';
 import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
 
 export const useAuthActions = () => {

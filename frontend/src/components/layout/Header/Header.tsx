@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/context/AuthContext';
 import { useAuthActions } from '@/hooks/features/auth/useAuthActions';
 import { Link, useLocation } from 'react-router-dom';
 import styles from './Header.module.css';

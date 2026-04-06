@@ -1,6 +1,6 @@
 import React from 'react';
 import { ResetPasswordForm } from '@/components/auth/ResetPasswordForm/ResetPasswordForm';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/context/AuthContext';
 import { Layout } from '@/components/layout/Layout/Layout';
 import styles from './ResetPasswordPage.module.css';
 
