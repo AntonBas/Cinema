@@ -42,7 +42,7 @@
 }
 
 .hallSection {
-    background: var(--color-bg-primary);
+    background: rgba(42, 48, 65, 0.6);
     border-radius: 12px;
     padding: 24px;
     box-shadow: var(--shadow-md);
