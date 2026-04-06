@@ -1,4 +1,3 @@
-// src/api/movieApi.ts
 import { api } from '@/services/api';
 import type {
   MovieCreateRequest,
@@ -17,6 +16,12 @@ export const movieApi = {
   public: {
     getBySlug: (slug: string) =>
       api.get<MovieDetailResponse>(`${BASE_URL}/slug/${slug}`),
+
+    getNowShowingForHome: () =>
+      api.get<MovieCardResponse[]>(`${BASE_URL}/now-showing/home`),
+
+    getComingSoonForHome: () =>
+      api.get<MovieCardResponse[]>(`${BASE_URL}/coming-soon/home`),
 
     getCurrentlyShowing: (params?: SearchParams) =>
       api.get<PageResponse<MovieCardResponse>>(`${BASE_URL}/currently-showing`, { params }),

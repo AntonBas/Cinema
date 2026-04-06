@@ -17,6 +17,8 @@ export const useMovies = () => {
     const getAdminArchivedApi = useApi<PageResponse<MovieCardResponse>>();
     const getPublicCurrentApi = useApi<PageResponse<MovieCardResponse>>();
     const getPublicUpcomingApi = useApi<PageResponse<MovieCardResponse>>();
+    const getNowShowingHomeApi = useApi<MovieCardResponse[]>();
+    const getComingSoonHomeApi = useApi<MovieCardResponse[]>();
     const getMovieDetailApi = useApi<MovieDetailResponse>();
     const searchMoviesApi = useApi<MovieSessionSearchResponse[]>();
     const createMovieApi = useApi<MovieDetailResponse>();
@@ -25,13 +27,15 @@ export const useMovies = () => {
 
     const rawLoading = getAdminCurrentApi.loading || getAdminUpcomingApi.loading ||
         getAdminArchivedApi.loading || getPublicCurrentApi.loading || getPublicUpcomingApi.loading ||
+        getNowShowingHomeApi.loading || getComingSoonHomeApi.loading ||
         getMovieDetailApi.loading || searchMoviesApi.loading || createMovieApi.loading ||
         updateMovieApi.loading || deleteMovieApi.loading;
 
     const loading = useDelayedLoading(rawLoading, { delay: 150, minDisplayTime: 300 });
 
     const error = !!(getAdminCurrentApi.error || getAdminUpcomingApi.error || getAdminArchivedApi.error ||
-        getPublicCurrentApi.error || getPublicUpcomingApi.error || getMovieDetailApi.error ||
+        getPublicCurrentApi.error || getPublicUpcomingApi.error || getNowShowingHomeApi.error ||
+        getComingSoonHomeApi.error || getMovieDetailApi.error ||
         searchMoviesApi.error || createMovieApi.error || updateMovieApi.error || deleteMovieApi.error);
 
     const getAdminCurrent = useCallback(async (params?: SearchParams & { title?: string }) => {
@@ -73,6 +77,22 @@ export const useMovies = () => {
         );
         return response || null;
     }, [getPublicUpcomingApi]);
+
+    const getNowShowingForHome = useCallback(async () => {
+        const response = await getNowShowingHomeApi.execute(
+            () => movieApi.public.getNowShowingForHome(),
+            { showErrorNotification: false }
+        );
+        return response || null;
+    }, [getNowShowingHomeApi]);
+
+    const getComingSoonForHome = useCallback(async () => {
+        const response = await getComingSoonHomeApi.execute(
+            () => movieApi.public.getComingSoonForHome(),
+            { showErrorNotification: false }
+        );
+        return response || null;
+    }, [getComingSoonHomeApi]);
 
     const getBySlug = useCallback(async (slug: string) => {
         const response = await getMovieDetailApi.execute(
@@ -127,12 +147,14 @@ export const useMovies = () => {
         getAdminArchivedApi.reset();
         getPublicCurrentApi.reset();
         getPublicUpcomingApi.reset();
+        getNowShowingHomeApi.reset();
+        getComingSoonHomeApi.reset();
         getMovieDetailApi.reset();
         searchMoviesApi.reset();
         createMovieApi.reset();
         updateMovieApi.reset();
         deleteMovieApi.reset();
-    }, [getAdminCurrentApi, getAdminUpcomingApi, getAdminArchivedApi, getPublicCurrentApi, getPublicUpcomingApi, getMovieDetailApi, searchMoviesApi, createMovieApi, updateMovieApi, deleteMovieApi]);
+    }, [getAdminCurrentApi, getAdminUpcomingApi, getAdminArchivedApi, getPublicCurrentApi, getPublicUpcomingApi, getNowShowingHomeApi, getComingSoonHomeApi, getMovieDetailApi, searchMoviesApi, createMovieApi, updateMovieApi, deleteMovieApi]);
 
     return {
         adminCurrent: getAdminCurrentApi.data?.content || [],
@@ -147,6 +169,9 @@ export const useMovies = () => {
         publicCurrentPagination: getPublicCurrentApi.data,
         publicUpcomingPagination: getPublicUpcomingApi.data,
 
+        nowShowingHome: getNowShowingHomeApi.data || [],
+        comingSoonHome: getComingSoonHomeApi.data || [],
+
         movie: getMovieDetailApi.data,
         searchResults: searchMoviesApi.data || [],
 
@@ -158,6 +183,8 @@ export const useMovies = () => {
         getAdminArchived,
         getPublicCurrent,
         getPublicUpcoming,
+        getNowShowingForHome,
+        getComingSoonForHome,
         getBySlug,
         getAdminById,
         searchMoviesForSession,
