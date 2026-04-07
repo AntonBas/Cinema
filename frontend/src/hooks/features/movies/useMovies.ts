@@ -19,6 +19,7 @@ export const useMovies = () => {
     const getPublicUpcomingApi = useApi<PageResponse<MovieCardResponse>>();
     const getNowShowingHomeApi = useApi<MovieCardResponse[]>();
     const getComingSoonHomeApi = useApi<MovieCardResponse[]>();
+    const getLeavingSoonHomeApi = useApi<MovieCardResponse[]>();
     const getMovieDetailApi = useApi<MovieDetailResponse>();
     const searchMoviesApi = useApi<MovieSessionSearchResponse[]>();
     const createMovieApi = useApi<MovieDetailResponse>();
@@ -27,7 +28,7 @@ export const useMovies = () => {
 
     const rawLoading = getAdminCurrentApi.loading || getAdminUpcomingApi.loading ||
         getAdminArchivedApi.loading || getPublicCurrentApi.loading || getPublicUpcomingApi.loading ||
-        getNowShowingHomeApi.loading || getComingSoonHomeApi.loading ||
+        getNowShowingHomeApi.loading || getComingSoonHomeApi.loading || getLeavingSoonHomeApi.loading ||
         getMovieDetailApi.loading || searchMoviesApi.loading || createMovieApi.loading ||
         updateMovieApi.loading || deleteMovieApi.loading;
 
@@ -35,7 +36,7 @@ export const useMovies = () => {
 
     const error = !!(getAdminCurrentApi.error || getAdminUpcomingApi.error || getAdminArchivedApi.error ||
         getPublicCurrentApi.error || getPublicUpcomingApi.error || getNowShowingHomeApi.error ||
-        getComingSoonHomeApi.error || getMovieDetailApi.error ||
+        getComingSoonHomeApi.error || getLeavingSoonHomeApi.error || getMovieDetailApi.error ||
         searchMoviesApi.error || createMovieApi.error || updateMovieApi.error || deleteMovieApi.error);
 
     const getAdminCurrent = useCallback(async (params?: SearchParams & { title?: string }) => {
@@ -94,6 +95,14 @@ export const useMovies = () => {
         return response || null;
     }, [getComingSoonHomeApi]);
 
+    const getLeavingSoonForHome = useCallback(async () => {
+        const response = await getLeavingSoonHomeApi.execute(
+            () => movieApi.public.getLeavingSoonForHome(),
+            { showErrorNotification: false }
+        );
+        return response || null;
+    }, [getLeavingSoonHomeApi]);
+
     const getBySlug = useCallback(async (slug: string) => {
         const response = await getMovieDetailApi.execute(
             () => movieApi.public.getBySlug(slug),
@@ -149,12 +158,13 @@ export const useMovies = () => {
         getPublicUpcomingApi.reset();
         getNowShowingHomeApi.reset();
         getComingSoonHomeApi.reset();
+        getLeavingSoonHomeApi.reset();
         getMovieDetailApi.reset();
         searchMoviesApi.reset();
         createMovieApi.reset();
         updateMovieApi.reset();
         deleteMovieApi.reset();
-    }, [getAdminCurrentApi, getAdminUpcomingApi, getAdminArchivedApi, getPublicCurrentApi, getPublicUpcomingApi, getNowShowingHomeApi, getComingSoonHomeApi, getMovieDetailApi, searchMoviesApi, createMovieApi, updateMovieApi, deleteMovieApi]);
+    }, [getAdminCurrentApi, getAdminUpcomingApi, getAdminArchivedApi, getPublicCurrentApi, getPublicUpcomingApi, getNowShowingHomeApi, getComingSoonHomeApi, getLeavingSoonHomeApi, getMovieDetailApi, searchMoviesApi, createMovieApi, updateMovieApi, deleteMovieApi]);
 
     return {
         adminCurrent: getAdminCurrentApi.data?.content || [],
@@ -171,6 +181,7 @@ export const useMovies = () => {
 
         nowShowingHome: getNowShowingHomeApi.data || [],
         comingSoonHome: getComingSoonHomeApi.data || [],
+        leavingSoonHome: getLeavingSoonHomeApi.data || [],
 
         movie: getMovieDetailApi.data,
         searchResults: searchMoviesApi.data || [],
@@ -185,6 +196,7 @@ export const useMovies = () => {
         getPublicUpcoming,
         getNowShowingForHome,
         getComingSoonForHome,
+        getLeavingSoonForHome,
         getBySlug,
         getAdminById,
         searchMoviesForSession,

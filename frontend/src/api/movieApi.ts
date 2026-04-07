@@ -23,6 +23,9 @@ export const movieApi = {
     getComingSoonForHome: () =>
       api.get<MovieCardResponse[]>(`${BASE_URL}/coming-soon/home`),
 
+    getLeavingSoonForHome: () =>
+      api.get<MovieCardResponse[]>(`${BASE_URL}/leaving-soon/home`),
+
     getCurrentlyShowing: (params?: SearchParams) =>
       api.get<PageResponse<MovieCardResponse>>(`${BASE_URL}/currently-showing`, { params }),
 
