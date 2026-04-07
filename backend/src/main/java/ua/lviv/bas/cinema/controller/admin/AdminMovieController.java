@@ -33,8 +33,8 @@ import ua.lviv.bas.cinema.domain.cinema.status.MovieStatus;
 import ua.lviv.bas.cinema.dto.PageResponse;
 import ua.lviv.bas.cinema.dto.movie.request.MovieCreateRequest;
 import ua.lviv.bas.cinema.dto.movie.request.MovieUpdateRequest;
+import ua.lviv.bas.cinema.dto.movie.response.MovieAdminResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieCardResponse;
-import ua.lviv.bas.cinema.dto.movie.response.MovieDetailResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieSessionSearchResponse;
 import ua.lviv.bas.cinema.service.cinema.MovieService;
 
@@ -53,28 +53,38 @@ public class AdminMovieController {
 	@Operation(summary = "Create new movie")
 	@ApiResponses(value = { @ApiResponse(responseCode = "201", description = "Movie created successfully"),
 			@ApiResponse(responseCode = "400", description = "Invalid request data") })
-	public ResponseEntity<MovieDetailResponse> createMovie(@RequestPart("movieData") String movieDataJson,
+	public ResponseEntity<MovieAdminResponse> createMovie(@RequestPart("movieData") String movieDataJson,
 			@RequestPart(value = "posterFile", required = false) MultipartFile posterFile) {
 
 		log.info("POST /api/admin/movies - Creating new movie");
 		MovieCreateRequest request = parseRequest(movieDataJson, MovieCreateRequest.class);
 		request.setPosterFile(posterFile);
-		MovieDetailResponse createdMovie = movieService.createMovie(request);
+		MovieAdminResponse createdMovie = movieService.createMovie(request);
 		return ResponseEntity.status(HttpStatus.CREATED).body(createdMovie);
+	}
+
+	@GetMapping("/{id}")
+	@Operation(summary = "Get admin movie by ID")
+	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Movie found"),
+			@ApiResponse(responseCode = "404", description = "Movie not found") })
+	public ResponseEntity<MovieAdminResponse> getAdminMovieById(@PathVariable Long id) {
+		log.info("GET /api/admin/movies/{} - Getting admin movie by id", id);
+		MovieAdminResponse movie = movieService.getAdminMovieById(id);
+		return ResponseEntity.ok(movie);
 	}
 
 	@PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@Operation(summary = "Update movie")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Movie updated successfully"),
 			@ApiResponse(responseCode = "404", description = "Movie not found") })
-	public ResponseEntity<MovieDetailResponse> updateMovie(@PathVariable Long id,
+	public ResponseEntity<MovieAdminResponse> updateMovie(@PathVariable Long id,
 			@RequestPart("movieData") String movieDataJson,
 			@RequestPart(value = "posterFile", required = false) MultipartFile posterFile) {
 
 		log.info("PUT /api/admin/movies/{} - Updating movie", id);
 		MovieUpdateRequest request = parseRequest(movieDataJson, MovieUpdateRequest.class);
 		request.setPosterFile(posterFile);
-		MovieDetailResponse updatedMovie = movieService.updateMovie(id, request);
+		MovieAdminResponse updatedMovie = movieService.updateMovie(id, request);
 		return ResponseEntity.ok(updatedMovie);
 	}
 
@@ -98,16 +108,6 @@ public class AdminMovieController {
 		log.info("GET /api/admin/movies - title: '{}', status: {}", title, status);
 		var result = movieService.getFilteredMovies(title, status, pageable);
 		return ResponseEntity.ok(PageResponse.from(result));
-	}
-
-	@GetMapping("/{id}")
-	@Operation(summary = "Get admin movie by ID")
-	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Movie found"),
-			@ApiResponse(responseCode = "404", description = "Movie not found") })
-	public ResponseEntity<MovieDetailResponse> getAdminMovieById(@PathVariable Long id) {
-		log.info("GET /api/admin/movies/{} - Getting admin movie by id", id);
-		MovieDetailResponse movie = movieService.getAdminMovieById(id);
-		return ResponseEntity.ok(movie);
 	}
 
 	@GetMapping("/search/session")
