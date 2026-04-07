@@ -25,6 +25,7 @@ import ua.lviv.bas.cinema.domain.cinema.Movie;
 import ua.lviv.bas.cinema.domain.cinema.status.MovieStatus;
 import ua.lviv.bas.cinema.dto.movie.request.MovieCreateRequest;
 import ua.lviv.bas.cinema.dto.movie.request.MovieUpdateRequest;
+import ua.lviv.bas.cinema.dto.movie.response.MovieAdminResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieCardResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieDetailResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieSessionSearchResponse;
@@ -59,7 +60,7 @@ public class MovieService {
 
 	@CacheEvict(allEntries = true)
 	@Transactional
-	public MovieDetailResponse createMovie(MovieCreateRequest request) {
+	public MovieAdminResponse createMovie(MovieCreateRequest request) {
 		log.info("Creating movie: {}", request.getTitle());
 
 		validateDates(request.getReleaseDate(), request.getEndShowingDate());
@@ -85,15 +86,30 @@ public class MovieService {
 
 		auditService.logChange("Movie", saved.getId(), saved.getTitle(), AuditAction.CREATED, null, details);
 
-		return movieMapper.toMovieDetailResponse(saved);
+		return movieMapper.toMovieAdminResponse(saved);
+	}
+
+	@Cacheable(key = "#id")
+	public MovieAdminResponse getAdminMovieById(Long id) {
+		Movie movie = movieRepository.findMovieById(id).orElseThrow(() -> new MovieNotFoundException(id));
+		return movieMapper.toMovieAdminResponse(movie);
+	}
+
+	@Cacheable(key = "#slug")
+	public MovieDetailResponse getMovieBySlug(String slug) {
+		Movie movie = movieRepository.findBySlug(slug).orElseThrow(() -> new MovieNotFoundException(slug));
+		if (movie.getStatus() == MovieStatus.ARCHIVED) {
+			throw new MovieNotFoundException(slug);
+		}
+		return movieMapper.toMovieDetailResponse(movie);
 	}
 
 	@Caching(evict = { @CacheEvict(key = "#id"), @CacheEvict(allEntries = true) })
 	@Transactional
-	public MovieDetailResponse updateMovie(Long id, MovieUpdateRequest request) {
+	public MovieAdminResponse updateMovie(Long id, MovieUpdateRequest request) {
 		log.info("Updating movie with id: {}", id);
 
-		Movie existing = findAdminMovieById(id);
+		Movie existing = movieRepository.findMovieById(id).orElseThrow(() -> new MovieNotFoundException(id));
 		String oldTitle = existing.getTitle();
 		validateDates(request.getReleaseDate(), request.getEndShowingDate());
 
@@ -128,7 +144,7 @@ public class MovieService {
 
 		auditService.logChange("Movie", id, oldTitle, AuditAction.UPDATED, oldDetails, newDetails);
 
-		return movieMapper.toMovieDetailResponse(updated);
+		return movieMapper.toMovieAdminResponse(updated);
 	}
 
 	@Caching(evict = { @CacheEvict(key = "#id"), @CacheEvict(allEntries = true) })
@@ -136,7 +152,7 @@ public class MovieService {
 	public void deleteMovie(Long id) {
 		log.info("Deleting movie with id: {}", id);
 
-		Movie movie = findAdminMovieById(id);
+		Movie movie = movieRepository.findMovieById(id).orElseThrow(() -> new MovieNotFoundException(id));
 		String movieTitle = movie.getTitle();
 		if (movie.getPosterFileName() != null) {
 			posterService.deletePoster(movie.getPosterFileName());
@@ -148,28 +164,6 @@ public class MovieService {
 		details.put("deleted", movieTitle);
 
 		auditService.logChange("Movie", id, movieTitle, AuditAction.DELETED, details, null);
-	}
-
-	@Cacheable(key = "#id")
-	public MovieDetailResponse getMovieById(Long id) {
-		return movieRepository.findDetailProjectionById(id).map(movieMapper::toMovieDetailResponse)
-				.orElseThrow(() -> new MovieNotFoundException(id));
-	}
-
-	public MovieDetailResponse getAdminMovieById(Long id) {
-		Movie movie = findAdminMovieById(id);
-		return movieMapper.toMovieDetailResponse(movie);
-	}
-
-	@Cacheable(key = "#slug")
-	public MovieDetailResponse getMovieBySlug(String slug) {
-		Movie movie = movieRepository.findBySlug(slug).orElseThrow(() -> new MovieNotFoundException(slug));
-		return movieMapper.toMovieDetailResponse(movie);
-	}
-
-	public MovieDetailResponse getAdminMovieBySlug(String slug) {
-		Movie movie = movieRepository.findAdminMovieBySlug(slug).orElseThrow(() -> new MovieNotFoundException(slug));
-		return movieMapper.toMovieDetailResponse(movie);
 	}
 
 	@Cacheable(key = "'filtered-' + #title + '-' + #status + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
@@ -224,10 +218,6 @@ public class MovieService {
 
 	public boolean existsBySlug(String slug) {
 		return movieRepository.findBySlug(slug).isPresent();
-	}
-
-	private Movie findAdminMovieById(Long id) {
-		return movieRepository.findAdminMovieById(id).orElseThrow(() -> new MovieNotFoundException(id));
 	}
 
 	private void validateDates(LocalDate releaseDate, LocalDate endShowingDate) {

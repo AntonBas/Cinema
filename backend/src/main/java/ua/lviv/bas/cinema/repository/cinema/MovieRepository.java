@@ -14,22 +14,15 @@ import org.springframework.stereotype.Repository;
 import ua.lviv.bas.cinema.domain.cinema.Movie;
 import ua.lviv.bas.cinema.domain.cinema.status.MovieStatus;
 import ua.lviv.bas.cinema.repository.cinema.projection.MovieCardProjection;
-import ua.lviv.bas.cinema.repository.cinema.projection.MovieDetailProjection;
 
 @Repository
 public interface MovieRepository extends JpaRepository<Movie, Long> {
 
+	@EntityGraph(attributePaths = { "genres", "actors", "directors", "screenwriters", "sessions", "sessions.hall" })
 	Optional<Movie> findBySlug(String slug);
 
-	Optional<MovieDetailProjection> findDetailProjectionById(Long id);
-
 	@EntityGraph(attributePaths = { "genres", "actors", "directors", "screenwriters" })
-	@Query("SELECT m FROM Movie m WHERE m.id = :id")
-	Optional<Movie> findAdminMovieById(@Param("id") Long id);
-
-	@EntityGraph(attributePaths = { "genres", "actors", "directors", "screenwriters" })
-	@Query("SELECT m FROM Movie m WHERE m.slug = :slug")
-	Optional<Movie> findAdminMovieBySlug(@Param("slug") String slug);
+	Optional<Movie> findMovieById(Long id);
 
 	@Query("""
 			SELECT m
