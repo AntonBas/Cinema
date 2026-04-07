@@ -12,6 +12,7 @@ import ua.lviv.bas.cinema.domain.cinema.Session;
 import ua.lviv.bas.cinema.domain.cinema.status.CinemaSessionStatus;
 import ua.lviv.bas.cinema.dto.session.request.SessionCreateRequest;
 import ua.lviv.bas.cinema.dto.session.request.SessionUpdateRequest;
+import ua.lviv.bas.cinema.dto.session.response.MovieSessionInfoResponse;
 import ua.lviv.bas.cinema.dto.session.response.SessionAdminResponse;
 import ua.lviv.bas.cinema.dto.session.response.SessionScheduleResponse;
 import ua.lviv.bas.cinema.repository.cinema.projection.SessionAdminProjection;
@@ -45,6 +46,10 @@ public interface SessionMapper {
 	@Mapping(target = "hallCapacity", ignore = true)
 	@Mapping(target = "availableSeats", ignore = true)
 	SessionScheduleResponse toScheduleResponse(Session session);
+
+	@Mapping(target = "hallName", source = "hall.name")
+	@Mapping(target = "availableSeats", ignore = true)
+	MovieSessionInfoResponse toMovieSessionInfoResponse(Session session);
 
 	@Mapping(target = "id", ignore = true)
 	@Mapping(target = "movie", ignore = true)

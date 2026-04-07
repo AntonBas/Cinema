@@ -10,6 +10,7 @@ import org.mapstruct.ReportingPolicy;
 import ua.lviv.bas.cinema.domain.cinema.Person;
 import ua.lviv.bas.cinema.dto.movie.request.PersonRequest;
 import ua.lviv.bas.cinema.dto.movie.request.QuickCreatePersonRequest;
+import ua.lviv.bas.cinema.dto.movie.response.PersonInfoResponse;
 import ua.lviv.bas.cinema.dto.movie.response.PersonResponse;
 import ua.lviv.bas.cinema.repository.cinema.projection.PersonProjection;
 
@@ -21,6 +22,8 @@ public interface PersonMapper {
 
 	@Mapping(target = "movieCount", source = "movieCount")
 	PersonResponse toPersonResponse(PersonProjection projection);
+
+	PersonInfoResponse toPersonInfoResponse(Person person);
 
 	@Mapping(target = "id", ignore = true)
 	Person toPerson(PersonRequest personRequest);

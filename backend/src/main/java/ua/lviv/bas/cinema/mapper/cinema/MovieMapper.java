@@ -10,15 +10,15 @@ import org.mapstruct.ReportingPolicy;
 import ua.lviv.bas.cinema.domain.cinema.Movie;
 import ua.lviv.bas.cinema.dto.movie.request.MovieCreateRequest;
 import ua.lviv.bas.cinema.dto.movie.request.MovieUpdateRequest;
+import ua.lviv.bas.cinema.dto.movie.response.MovieAdminResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieCardResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieDetailResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieSessionSearchResponse;
 import ua.lviv.bas.cinema.repository.cinema.projection.MovieCardProjection;
-import ua.lviv.bas.cinema.repository.cinema.projection.MovieDetailProjection;
 import ua.lviv.bas.cinema.repository.cinema.projection.MovieSessionSearchProjection;
 
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE, uses = { PersonMapper.class,
-		GenreMapper.class })
+		GenreMapper.class, SessionMapper.class })
 public interface MovieMapper {
 
 	@Mapping(target = "posterUrl", expression = "java(getPosterUrl(movie.getId()))")
@@ -32,14 +32,15 @@ public interface MovieMapper {
 	@Mapping(target = "actors", source = "actors")
 	@Mapping(target = "directors", source = "directors")
 	@Mapping(target = "screenwriters", source = "screenwriters")
+	@Mapping(target = "sessions", source = "sessions")
 	MovieDetailResponse toMovieDetailResponse(Movie movie);
 
-	@Mapping(target = "posterUrl", expression = "java(getPosterUrl(projection.getId()))")
-	@Mapping(target = "genres", ignore = true)
-	@Mapping(target = "actors", ignore = true)
-	@Mapping(target = "directors", ignore = true)
-	@Mapping(target = "screenwriters", ignore = true)
-	MovieDetailResponse toMovieDetailResponse(MovieDetailProjection projection);
+	@Mapping(target = "posterUrl", expression = "java(getPosterUrl(movie.getId()))")
+	@Mapping(target = "genres", source = "genres")
+	@Mapping(target = "actors", source = "actors")
+	@Mapping(target = "directors", source = "directors")
+	@Mapping(target = "screenwriters", source = "screenwriters")
+	MovieAdminResponse toMovieAdminResponse(Movie movie);
 
 	@Mapping(target = "id", source = "id")
 	@Mapping(target = "title", source = "title")

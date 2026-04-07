@@ -9,6 +9,7 @@ import org.mapstruct.ReportingPolicy;
 
 import ua.lviv.bas.cinema.domain.cinema.Genre;
 import ua.lviv.bas.cinema.dto.movie.request.GenreRequest;
+import ua.lviv.bas.cinema.dto.movie.response.GenreInfoResponse;
 import ua.lviv.bas.cinema.dto.movie.response.GenreResponse;
 import ua.lviv.bas.cinema.repository.cinema.projection.GenreProjection;
 
@@ -20,6 +21,8 @@ public interface GenreMapper {
 
 	@Mapping(target = "movieCount", source = "movieCount")
 	GenreResponse toGenreResponse(GenreProjection projection);
+
+	GenreInfoResponse toGenreInfoResponse(Genre genre);
 
 	@Mapping(target = "id", ignore = true)
 	@Mapping(target = "movies", ignore = true)
