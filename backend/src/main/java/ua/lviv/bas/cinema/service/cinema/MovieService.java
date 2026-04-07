@@ -12,9 +12,7 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -179,19 +177,24 @@ public class MovieService {
 		return movieRepository.findMoviesByFilters(title, status, pageable).map(movieMapper::toMovieCardResponse);
 	}
 
-	@Cacheable(key = "'now-showing-home'")
-	public List<MovieCardResponse> getNowShowingMoviesForHome() {
+	@Cacheable(key = "'now-showing-home-' + #pageable.pageNumber + '-' + #pageable.pageSize")
+	public List<MovieCardResponse> getNowShowingMoviesForHome(Pageable pageable) {
 		log.info("Fetching now showing movies for home page");
-		Pageable pageable = PageRequest.of(0, 6, Sort.by(Sort.Direction.DESC, "releaseDate"));
 		Page<MovieCardProjection> page = movieRepository.findNowShowingMovies(pageable);
 		return page.getContent().stream().map(movieMapper::toMovieCardResponse).toList();
 	}
 
-	@Cacheable(key = "'coming-soon-home'")
-	public List<MovieCardResponse> getComingSoonMoviesForHome() {
+	@Cacheable(key = "'coming-soon-home-' + #pageable.pageNumber + '-' + #pageable.pageSize")
+	public List<MovieCardResponse> getComingSoonMoviesForHome(Pageable pageable) {
 		log.info("Fetching coming soon movies for home page");
-		Pageable pageable = PageRequest.of(0, 6, Sort.by(Sort.Direction.ASC, "releaseDate"));
 		Page<MovieCardProjection> page = movieRepository.findComingSoonMovies(pageable);
+		return page.getContent().stream().map(movieMapper::toMovieCardResponse).toList();
+	}
+
+	@Cacheable(key = "'leaving-soon-home-' + #pageable.pageNumber + '-' + #pageable.pageSize")
+	public List<MovieCardResponse> getLeavingSoonMoviesForHome(Pageable pageable) {
+		log.info("Fetching leaving soon movies for home page");
+		Page<MovieCardProjection> page = movieRepository.findLeavingSoonMovies(pageable);
 		return page.getContent().stream().map(movieMapper::toMovieCardResponse).toList();
 	}
 

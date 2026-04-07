@@ -3,6 +3,7 @@ package ua.lviv.bas.cinema.controller.api;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -88,7 +89,8 @@ public class MovieController {
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Movies retrieved successfully") })
 	public ResponseEntity<List<MovieCardResponse>> getNowShowingMoviesForHome() {
 		log.info("GET /api/movies/now-showing/home - Getting now showing movies for home page");
-		List<MovieCardResponse> movies = movieService.getNowShowingMoviesForHome();
+		Pageable pageable = PageRequest.of(0, 6, Sort.by(Sort.Direction.DESC, "releaseDate"));
+		List<MovieCardResponse> movies = movieService.getNowShowingMoviesForHome(pageable);
 		return ResponseEntity.ok().cacheControl(CacheControl.maxAge(5, TimeUnit.MINUTES)).body(movies);
 	}
 
@@ -98,7 +100,19 @@ public class MovieController {
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Movies retrieved successfully") })
 	public ResponseEntity<List<MovieCardResponse>> getComingSoonMoviesForHome() {
 		log.info("GET /api/movies/coming-soon/home - Getting coming soon movies for home page");
-		List<MovieCardResponse> movies = movieService.getComingSoonMoviesForHome();
+		Pageable pageable = PageRequest.of(0, 6, Sort.by(Sort.Direction.ASC, "releaseDate"));
+		List<MovieCardResponse> movies = movieService.getComingSoonMoviesForHome(pageable);
+		return ResponseEntity.ok().cacheControl(CacheControl.maxAge(5, TimeUnit.MINUTES)).body(movies);
+	}
+
+	@RateLimit(value = 20, duration = 1, key = "ip")
+	@GetMapping("/leaving-soon/home")
+	@Operation(summary = "Get leaving soon movies for home page carousel", description = "Returns 6 movies that will stop showing soon")
+	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Movies retrieved successfully") })
+	public ResponseEntity<List<MovieCardResponse>> getLeavingSoonMoviesForHome() {
+		log.info("GET /api/movies/leaving-soon/home - Getting leaving soon movies for home page");
+		Pageable pageable = PageRequest.of(0, 6, Sort.by(Sort.Direction.ASC, "endShowingDate"));
+		List<MovieCardResponse> movies = movieService.getLeavingSoonMoviesForHome(pageable);
 		return ResponseEntity.ok().cacheControl(CacheControl.maxAge(5, TimeUnit.MINUTES)).body(movies);
 	}
 
