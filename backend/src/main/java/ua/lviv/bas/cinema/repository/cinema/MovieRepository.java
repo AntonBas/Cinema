@@ -18,7 +18,6 @@ import ua.lviv.bas.cinema.repository.cinema.projection.MovieCardProjection;
 @Repository
 public interface MovieRepository extends JpaRepository<Movie, Long> {
 
-	@EntityGraph(attributePaths = { "genres", "actors", "directors", "screenwriters", "sessions", "sessions.hall" })
 	Optional<Movie> findBySlug(String slug);
 
 	@EntityGraph(attributePaths = { "genres", "actors", "directors", "screenwriters" })
@@ -125,4 +124,14 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
 	long countMovieUsageByPersonId(@Param("personId") Long personId);
 
 	boolean existsByTitle(String newTitle);
+
+	@EntityGraph(attributePaths = { "genres", "actors", "directors", "screenwriters", "sessions", "sessions.hall" })
+	@Query("""
+			SELECT DISTINCT m FROM Movie m
+			LEFT JOIN FETCH m.sessions s
+			WHERE m.slug = :slug
+			AND m.status != 'ARCHIVED'
+			AND (s IS NULL OR s.startTime > CURRENT_TIMESTAMP)
+			""")
+	Optional<Movie> findBySlugWithFutureSessions(@Param("slug") String slug);
 }

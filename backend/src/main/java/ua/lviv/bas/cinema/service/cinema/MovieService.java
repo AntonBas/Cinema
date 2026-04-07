@@ -95,9 +95,9 @@ public class MovieService {
 		return movieMapper.toMovieAdminResponse(movie);
 	}
 
-	@Cacheable(key = "#slug")
 	public MovieDetailResponse getMovieBySlug(String slug) {
-		Movie movie = movieRepository.findBySlug(slug).orElseThrow(() -> new MovieNotFoundException(slug));
+		Movie movie = movieRepository.findBySlugWithFutureSessions(slug)
+				.orElseThrow(() -> new MovieNotFoundException(slug));
 		if (movie.getStatus() == MovieStatus.ARCHIVED) {
 			throw new MovieNotFoundException(slug);
 		}
