@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { movieApi } from '@/api/movieApi';
-import { sessionApi } from '@/api/sessionApi';
 import type { MovieDetailResponse } from '@/types/movie';
-import type { SessionScheduleResponse } from '@/types/session';
+import type { MovieSessionInfoResponse } from '@/types/session';
 import {
     AgeRatingDisplay,
     AgeRatingDescription,
@@ -14,6 +13,7 @@ import { Button } from '@/components/ui/Button/Button';
 import { Notification } from '@/components/ui/Notification/Notification';
 import { Tooltip } from '@/components/ui/Tooltip/Tooltip';
 import { Layout } from '@/components/layout/Layout/Layout';
+import { SessionSection } from '@/components/movies/SessionSection/SessionSection';
 import styles from './MovieDetailPage.module.css';
 
 const AGE_RATING_COLORS: Record<string, string> = {
@@ -29,10 +29,11 @@ export const MovieDetailPage: React.FC = () => {
     const navigate = useNavigate();
     const [movie, setMovie] = useState<MovieDetailResponse | null>(null);
     const [loading, setLoading] = useState(true);
-    const [findingSession, setFindingSession] = useState(false);
-    const [nextSessionDate, setNextSessionDate] = useState<string | null>(null);
-    const [nextSessionTime, setNextSessionTime] = useState<string | null>(null);
-    const [hasSessions, setHasSessions] = useState<boolean>(true);
+    const [selectedDate, setSelectedDate] = useState<string | null>(null);
+    const [dateList, setDateList] = useState<string[]>([]);
+    const [sessionsByDate, setSessionsByDate] = useState<Record<string, MovieSessionInfoResponse[]>>({});
+    const [dateScrollIndex, setDateScrollIndex] = useState(0);
+    const datesPerView = 5;
     const isMounted = useRef(true);
 
     const { notifications, showNotification, hideNotification } = useNotification();
@@ -41,54 +42,6 @@ export const MovieDetailPage: React.FC = () => {
     useEffect(() => {
         showNotificationRef.current = showNotification;
     }, [showNotification]);
-
-    const findNextSessionDate = useCallback(async (movieTitle: string) => {
-        try {
-            const now = new Date();
-
-            const response = await sessionApi.public.getSessions(movieTitle, undefined);
-            const sessions = response?.data || [];
-
-            const upcomingSessions = sessions.filter((session: SessionScheduleResponse) => {
-                const sessionTime = new Date(session.startTime);
-                return sessionTime > now;
-            });
-
-            if (upcomingSessions.length > 0) {
-                const nearestSession = upcomingSessions.reduce((nearest: SessionScheduleResponse, current: SessionScheduleResponse) => {
-                    const nearestTime = new Date(nearest.startTime).getTime();
-                    const currentTime = new Date(current.startTime).getTime();
-                    return currentTime < nearestTime ? current : nearest;
-                });
-
-                const sessionDateTime = new Date(nearestSession.startTime);
-                const sessionDate = sessionDateTime.toISOString().split('T')[0];
-                const sessionTimeStr = sessionDateTime.toLocaleTimeString('en-US', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    hour12: false
-                });
-
-                if (isMounted.current) {
-                    setNextSessionDate(sessionDate);
-                    setNextSessionTime(sessionTimeStr);
-                    setHasSessions(true);
-                }
-            } else {
-                if (isMounted.current) {
-                    setNextSessionDate(null);
-                    setNextSessionTime(null);
-                    setHasSessions(false);
-                }
-            }
-        } catch {
-            if (isMounted.current) {
-                setNextSessionDate(null);
-                setNextSessionTime(null);
-                setHasSessions(false);
-            }
-        }
-    }, []);
 
     useEffect(() => {
         isMounted.current = true;
@@ -101,12 +54,24 @@ export const MovieDetailPage: React.FC = () => {
                 const response = await movieApi.public.getBySlug(slug);
                 const movieData = response?.data || null;
 
-                if (isMounted.current) {
+                if (isMounted.current && movieData) {
                     setMovie(movieData);
-                }
 
-                if (movieData?.title && isMounted.current) {
-                    await findNextSessionDate(movieData.title);
+                    if (movieData.sessions && movieData.sessions.length > 0) {
+                        const grouped: Record<string, MovieSessionInfoResponse[]> = {};
+                        movieData.sessions.forEach(session => {
+                            const date = session.startTime.split('T')[0];
+                            if (!grouped[date]) {
+                                grouped[date] = [];
+                            }
+                            grouped[date].push(session);
+                        });
+
+                        const sortedDates = Object.keys(grouped).sort();
+                        setDateList(sortedDates);
+                        setSessionsByDate(grouped);
+                        setSelectedDate(sortedDates[0]);
+                    }
                 }
             } catch {
                 if (isMounted.current) {
@@ -124,25 +89,7 @@ export const MovieDetailPage: React.FC = () => {
         return () => {
             isMounted.current = false;
         };
-    }, [slug, findNextSessionDate]);
-
-    const handleFindSession = async () => {
-        if (!movie) return;
-
-        setFindingSession(true);
-        try {
-            if (nextSessionDate) {
-                navigate(`/schedule?movieId=${movie.id}&date=${nextSessionDate}`);
-            } else {
-                const today = new Date().toISOString().split('T')[0];
-                navigate(`/schedule?movieId=${movie.id}&date=${today}`);
-            }
-        } catch {
-            showNotificationRef.current('Error finding sessions', 'error');
-        } finally {
-            setFindingSession(false);
-        }
-    };
+    }, [slug]);
 
     const formatDate = (dateString: string): string => {
         return new Date(dateString).toLocaleDateString('en-US', {
@@ -152,30 +99,13 @@ export const MovieDetailPage: React.FC = () => {
         });
     };
 
-    const formatButtonDate = (dateString: string, timeString: string | null): string => {
-        const date = new Date(dateString);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-
-        const diffDays = Math.ceil((dateOnly.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-
-        if (diffDays === 0) {
-            return `Today at ${timeString}`;
+    const scrollDates = (direction: 'left' | 'right') => {
+        const maxIndex = Math.max(0, dateList.length - datesPerView);
+        if (direction === 'left') {
+            setDateScrollIndex(Math.max(0, dateScrollIndex - 1));
+        } else {
+            setDateScrollIndex(Math.min(maxIndex, dateScrollIndex + 1));
         }
-        if (diffDays === 1) {
-            return `Tomorrow at ${timeString}`;
-        }
-        if (diffDays < 7) {
-            const weekday = date.toLocaleDateString('en-US', { weekday: 'long' });
-            return `${weekday} at ${timeString}`;
-        }
-
-        const formattedDate = date.toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric'
-        });
-        return `${formattedDate} at ${timeString}`;
     };
 
     const getAgeRatingClass = useCallback((ageRating: string) => {
@@ -199,24 +129,13 @@ export const MovieDetailPage: React.FC = () => {
                 <div className={styles.errorContainer}>
                     <h2>Movie not found</h2>
                     <p>The movie you're looking for doesn't exist or has been removed.</p>
-                    <Button variant="primary" onClick={() => navigate('/movies/current')}>
+                    <Button variant="primary" onClick={() => navigate('/movies/currently-showing')}>
                         Browse Current Movies
                     </Button>
                 </div>
             </Layout>
         );
     }
-
-    const getFindSessionButtonText = () => {
-        if (findingSession) return 'Finding...';
-        if (nextSessionDate && nextSessionTime) {
-            return `Book Session: ${formatButtonDate(nextSessionDate, nextSessionTime)}`;
-        }
-        if (!hasSessions) {
-            return 'No sessions available';
-        }
-        return 'Find Available Sessions';
-    };
 
     return (
         <Layout>
@@ -239,18 +158,8 @@ export const MovieDetailPage: React.FC = () => {
                             </div>
                         </div>
 
-                        <div className={styles.actionButtons}>
-                            <Button
-                                variant="primary"
-                                onClick={handleFindSession}
-                                className={styles.actionButton}
-                                loading={findingSession}
-                                disabled={!hasSessions && !nextSessionDate}
-                            >
-                                {getFindSessionButtonText()}
-                            </Button>
-
-                            {movie.trailerUrl && (
+                        {movie.trailerUrl && (
+                            <div className={styles.actionButtons}>
                                 <Button
                                     variant="secondary"
                                     onClick={() => window.open(movie.trailerUrl, '_blank')}
@@ -258,8 +167,8 @@ export const MovieDetailPage: React.FC = () => {
                                 >
                                     Watch Trailer
                                 </Button>
-                            )}
-                        </div>
+                            </div>
+                        )}
                     </div>
 
                     <div className={styles.rightColumn}>
@@ -286,18 +195,14 @@ export const MovieDetailPage: React.FC = () => {
                             <div className={styles.infoRow}>
                                 <span className={styles.infoLabel}>Release Date:</span>
                                 <div className={styles.infoValue}>
-                                    <div className={styles.dateItem}>
-                                        <div className={styles.dateValue}>{formatDate(movie.releaseDate)}</div>
-                                    </div>
+                                    <div className={styles.dateValue}>{formatDate(movie.releaseDate)}</div>
                                 </div>
                             </div>
 
                             <div className={styles.infoRow}>
                                 <span className={styles.infoLabel}>End Showing:</span>
                                 <div className={styles.infoValue}>
-                                    <div className={styles.dateItem}>
-                                        <div className={styles.dateValue}>{formatDate(movie.endShowingDate)}</div>
-                                    </div>
+                                    <div className={styles.dateValue}>{formatDate(movie.endShowingDate)}</div>
                                 </div>
                             </div>
 
@@ -366,6 +271,16 @@ export const MovieDetailPage: React.FC = () => {
                             <h2 className={styles.sectionTitle}>Overview</h2>
                             <p className={styles.description}>{movie.description}</p>
                         </div>
+
+                        <SessionSection
+                            dateList={dateList}
+                            sessionsByDate={sessionsByDate}
+                            selectedDate={selectedDate}
+                            onDateSelect={setSelectedDate}
+                            dateScrollIndex={dateScrollIndex}
+                            datesPerView={datesPerView}
+                            onScrollDates={scrollDates}
+                        />
                     </div>
                 </div>
 
