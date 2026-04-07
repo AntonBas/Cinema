@@ -6,6 +6,7 @@ import java.util.List;
 import io.swagger.v3.oas.annotations.media.Schema;
 import ua.lviv.bas.cinema.domain.cinema.enums.AgeRating;
 import ua.lviv.bas.cinema.domain.cinema.status.MovieStatus;
+import ua.lviv.bas.cinema.dto.session.response.MovieSessionInfoResponse;
 
 public record MovieDetailResponse(@Schema(description = "Unique identifier of the movie", example = "1") Long id,
 
@@ -31,11 +32,13 @@ public record MovieDetailResponse(@Schema(description = "Unique identifier of th
 
 		@Schema(description = "URL to the movie poster image", example = "/api/movies/1/poster") String posterUrl,
 
-		@Schema(description = "List of genres associated with the movie") List<GenreResponse> genres,
+		@Schema(description = "List of genres associated with the movie") List<GenreInfoResponse> genres,
 
-		@Schema(description = "List of actors in the movie") List<PersonResponse> actors,
+		@Schema(description = "List of actors in the movie") List<PersonInfoResponse> actors,
 
-		@Schema(description = "List of directors of the movie") List<PersonResponse> directors,
+		@Schema(description = "List of directors of the movie") List<PersonInfoResponse> directors,
 
-		@Schema(description = "List of screenwriters of the movie") List<PersonResponse> screenwriters) {
+		@Schema(description = "List of screenwriters of the movie") List<PersonInfoResponse> screenwriters,
+
+		@Schema(description = "List of sessions for this movie") List<MovieSessionInfoResponse> sessions) {
 }
