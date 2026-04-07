@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import type { MovieDetailResponse, MovieCardResponse } from '@/types/movie';
+import type { MovieAdminResponse, MovieCardResponse } from '@/types/movie';
 import { useMovies } from '@/hooks/features/movies/useMovies';
 import { useNotification } from '@/hooks/common/useNotification';
 import { usePagination } from '@/hooks/common/usePagination';
@@ -27,7 +27,7 @@ interface TabData {
 export const MovieTab: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [editingMovie, setEditingMovie] = useState<MovieDetailResponse | null>(null);
+  const [editingMovie, setEditingMovie] = useState<MovieAdminResponse | null>(null);
   const [deletingMovie, setDeletingMovie] = useState<MovieCardResponse | null>(null);
   const [activeTab, setActiveTab] = useState<MovieTabType>('CURRENT');
   const [tabData, setTabData] = useState<Record<MovieTabType, TabData>>({
@@ -228,7 +228,7 @@ export const MovieTab: React.FC = () => {
     setDeletingMovie(null);
   }, []);
 
-  const handleFormSuccess = useCallback((result?: MovieDetailResponse) => {
+  const handleFormSuccess = useCallback((result?: MovieAdminResponse) => {
     setIsModalOpen(false);
     setEditingMovie(null);
     if (result) {

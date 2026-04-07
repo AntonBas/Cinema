@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import type {
     MovieDetailResponse,
+    MovieAdminResponse,
     MovieCreateRequest,
     MovieUpdateRequest,
     AgeRating
@@ -22,8 +23,8 @@ import { isApiErrorException } from '@/utils/apiErrorHandler';
 import styles from './MovieForm.module.css';
 
 interface MovieFormProps {
-    movie?: MovieDetailResponse | null;
-    onSuccess: (result?: MovieDetailResponse) => void;
+    movie?: MovieAdminResponse | null;
+    onSuccess: (result?: MovieAdminResponse) => void;
     onCancel: () => void;
 }
 
@@ -112,7 +113,7 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(({
 
             setFormData({
                 title: movie.title,
-                trailerUrl: movie.trailerUrl || '',
+                trailerUrl: '',
                 description: movie.description,
                 durationMinutes: movie.durationMinutes,
                 releaseDate: movie.releaseDate ? new Date(movie.releaseDate) : null,

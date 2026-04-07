@@ -3,6 +3,7 @@ import { movieApi } from '@/api/movieApi';
 import type {
     MovieCardResponse,
     MovieDetailResponse,
+    MovieAdminResponse,
     MovieSessionSearchResponse,
     MovieCreateRequest,
     MovieUpdateRequest
@@ -21,15 +22,17 @@ export const useMovies = () => {
     const getComingSoonHomeApi = useApi<MovieCardResponse[]>();
     const getLeavingSoonHomeApi = useApi<MovieCardResponse[]>();
     const getMovieDetailApi = useApi<MovieDetailResponse>();
+    const getAdminMovieApi = useApi<MovieAdminResponse>();
     const searchMoviesApi = useApi<MovieSessionSearchResponse[]>();
-    const createMovieApi = useApi<MovieDetailResponse>();
-    const updateMovieApi = useApi<MovieDetailResponse>();
+    const createMovieApi = useApi<MovieAdminResponse>();
+    const updateMovieApi = useApi<MovieAdminResponse>();
     const deleteMovieApi = useApi<void>();
 
     const rawLoading = getAdminCurrentApi.loading || getAdminUpcomingApi.loading ||
         getAdminArchivedApi.loading || getPublicCurrentApi.loading || getPublicUpcomingApi.loading ||
         getNowShowingHomeApi.loading || getComingSoonHomeApi.loading || getLeavingSoonHomeApi.loading ||
-        getMovieDetailApi.loading || searchMoviesApi.loading || createMovieApi.loading ||
+        getMovieDetailApi.loading || getAdminMovieApi.loading ||
+        searchMoviesApi.loading || createMovieApi.loading ||
         updateMovieApi.loading || deleteMovieApi.loading;
 
     const loading = useDelayedLoading(rawLoading, { delay: 150, minDisplayTime: 300 });
@@ -37,7 +40,8 @@ export const useMovies = () => {
     const error = !!(getAdminCurrentApi.error || getAdminUpcomingApi.error || getAdminArchivedApi.error ||
         getPublicCurrentApi.error || getPublicUpcomingApi.error || getNowShowingHomeApi.error ||
         getComingSoonHomeApi.error || getLeavingSoonHomeApi.error || getMovieDetailApi.error ||
-        searchMoviesApi.error || createMovieApi.error || updateMovieApi.error || deleteMovieApi.error);
+        getAdminMovieApi.error || searchMoviesApi.error || createMovieApi.error ||
+        updateMovieApi.error || deleteMovieApi.error);
 
     const getAdminCurrent = useCallback(async (params?: SearchParams & { title?: string }) => {
         const response = await getAdminCurrentApi.execute(
@@ -112,12 +116,12 @@ export const useMovies = () => {
     }, [getMovieDetailApi]);
 
     const getAdminById = useCallback(async (id: number) => {
-        const response = await getMovieDetailApi.execute(
+        const response = await getAdminMovieApi.execute(
             () => movieApi.admin.getMovieById(id),
             { showErrorNotification: false }
         );
         return response || null;
-    }, [getMovieDetailApi]);
+    }, [getAdminMovieApi]);
 
     const searchMoviesForSession = useCallback(async (search?: string) => {
         const response = await searchMoviesApi.execute(
@@ -160,11 +164,12 @@ export const useMovies = () => {
         getComingSoonHomeApi.reset();
         getLeavingSoonHomeApi.reset();
         getMovieDetailApi.reset();
+        getAdminMovieApi.reset();
         searchMoviesApi.reset();
         createMovieApi.reset();
         updateMovieApi.reset();
         deleteMovieApi.reset();
-    }, [getAdminCurrentApi, getAdminUpcomingApi, getAdminArchivedApi, getPublicCurrentApi, getPublicUpcomingApi, getNowShowingHomeApi, getComingSoonHomeApi, getLeavingSoonHomeApi, getMovieDetailApi, searchMoviesApi, createMovieApi, updateMovieApi, deleteMovieApi]);
+    }, [getAdminCurrentApi, getAdminUpcomingApi, getAdminArchivedApi, getPublicCurrentApi, getPublicUpcomingApi, getNowShowingHomeApi, getComingSoonHomeApi, getLeavingSoonHomeApi, getMovieDetailApi, getAdminMovieApi, searchMoviesApi, createMovieApi, updateMovieApi, deleteMovieApi]);
 
     return {
         adminCurrent: getAdminCurrentApi.data?.content || [],
@@ -184,6 +189,7 @@ export const useMovies = () => {
         leavingSoonHome: getLeavingSoonHomeApi.data || [],
 
         movie: getMovieDetailApi.data,
+        adminMovie: getAdminMovieApi.data,
         searchResults: searchMoviesApi.data || [],
 
         loading,

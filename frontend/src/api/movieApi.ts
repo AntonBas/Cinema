@@ -4,6 +4,7 @@ import type {
   MovieUpdateRequest,
   MovieCardResponse,
   MovieDetailResponse,
+  MovieAdminResponse,
   MovieSessionSearchResponse
 } from '@/types/movie';
 import type { PageResponse, SearchParams } from '@/types/pagination';
@@ -46,7 +47,7 @@ export const movieApi = {
         formData.append('posterFile', posterFile);
       }
 
-      return api.post<MovieDetailResponse>(ADMIN_BASE_URL, formData, {
+      return api.post<MovieAdminResponse>(ADMIN_BASE_URL, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -65,7 +66,7 @@ export const movieApi = {
         formData.append('posterFile', posterFile);
       }
 
-      return api.put<MovieDetailResponse>(`${ADMIN_BASE_URL}/${id}`, formData, {
+      return api.put<MovieAdminResponse>(`${ADMIN_BASE_URL}/${id}`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -81,7 +82,7 @@ export const movieApi = {
     }) => api.get<PageResponse<MovieCardResponse>>(ADMIN_BASE_URL, { params }),
 
     getMovieById: (id: number) =>
-      api.get<MovieDetailResponse>(`${ADMIN_BASE_URL}/${id}`),
+      api.get<MovieAdminResponse>(`${ADMIN_BASE_URL}/${id}`),
 
     searchMoviesForSession: (search?: string) =>
       api.get<MovieSessionSearchResponse[]>(`${ADMIN_BASE_URL}/search/session`, {
