@@ -1,5 +1,6 @@
-import type { GenreResponse } from './genre';
-import type { PersonResponse } from './person';
+import type { GenreInfoResponse } from './genre';
+import type { PersonInfoResponse } from './person';
+import type { MovieSessionInfoResponse } from './session';
 
 export type MovieStatus = 'UPCOMING' | 'CURRENT' | 'ARCHIVED' | 'UNKNOWN';
 
@@ -82,10 +83,28 @@ export interface MovieDetailResponse {
   status: MovieStatus;
   posterFileName: string;
   posterUrl: string;
-  genres: GenreResponse[];
-  actors: PersonResponse[];
-  directors: PersonResponse[];
-  screenwriters: PersonResponse[];
+  genres: GenreInfoResponse[];
+  actors: PersonInfoResponse[];
+  directors: PersonInfoResponse[];
+  screenwriters: PersonInfoResponse[];
+  sessions: MovieSessionInfoResponse[];
+}
+
+export interface MovieAdminResponse {
+  id: number;
+  title: string;
+  description: string;
+  durationMinutes: number;
+  releaseDate: string;
+  endShowingDate: string;
+  ageRating: AgeRating;
+  status: MovieStatus;
+  posterFileName: string;
+  posterUrl: string;
+  genres: GenreInfoResponse[];
+  actors: PersonInfoResponse[];
+  directors: PersonInfoResponse[];
+  screenwriters: PersonInfoResponse[];
 }
 
 export interface MovieSessionSearchResponse {

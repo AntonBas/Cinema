@@ -7,3 +7,8 @@ export interface GenreResponse {
     name: string;
     movieCount: number;
 }
+
+export interface GenreInfoResponse {
+    id: number;
+    name: string;
+}

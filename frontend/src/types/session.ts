@@ -59,3 +59,12 @@ export interface SessionScheduleResponse {
     hallName: string;
     hallCapacity: number;
 }
+
+export interface MovieSessionInfoResponse {
+    id: number;
+    startTime: string;
+    endTime: string;
+    basePrice: number;
+    availableSeats: number;
+    hallName: string;
+}

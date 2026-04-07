@@ -17,6 +17,12 @@ export interface PersonResponse {
     movieCount?: number;
 }
 
+export interface PersonInfoResponse {
+    id: number;
+    name: string;
+    role: PersonRole;
+}
+
 export const PersonRoleDisplay: Record<PersonRole, string> = {
     ACTOR: 'Actor',
     DIRECTOR: 'Director',
