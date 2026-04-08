@@ -28,6 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.dto.PageResponse;
 import ua.lviv.bas.cinema.dto.movie.request.GenreRequest;
 import ua.lviv.bas.cinema.dto.movie.response.GenreListResponse;
+import ua.lviv.bas.cinema.dto.movie.response.GenreResponse;
 import ua.lviv.bas.cinema.service.cinema.GenreService;
 
 @Slf4j
@@ -48,9 +49,9 @@ public class AdminGenreController {
 			@ApiResponse(responseCode = "400", description = "Invalid request data or genre name already exists"),
 			@ApiResponse(responseCode = "401", description = "User not authenticated"),
 			@ApiResponse(responseCode = "403", description = "User does not have required role") })
-	public ResponseEntity<GenreListResponse> createGenre(@RequestBody @Valid GenreRequest request) {
+	public ResponseEntity<GenreResponse> createGenre(@RequestBody @Valid GenreRequest request) {
 		log.info("POST /api/admin/genres - Creating new genre: {}", request.name());
-		GenreListResponse createdGenre = genreService.createGenre(request);
+		GenreResponse createdGenre = genreService.createGenre(request);
 		return ResponseEntity.status(HttpStatus.CREATED).body(createdGenre);
 	}
 
@@ -58,9 +59,9 @@ public class AdminGenreController {
 	@Operation(summary = "Get genre by ID")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Genre found"),
 			@ApiResponse(responseCode = "404", description = "Genre not found") })
-	public ResponseEntity<GenreListResponse> getGenreById(@PathVariable Long id) {
+	public ResponseEntity<GenreResponse> getGenreById(@PathVariable Long id) {
 		log.info("GET /api/admin/genres/{} - Getting genre by id", id);
-		GenreListResponse genre = genreService.getGenreById(id);
+		GenreResponse genre = genreService.getGenreById(id);
 		return ResponseEntity.ok(genre);
 	}
 
@@ -69,9 +70,9 @@ public class AdminGenreController {
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Genre updated successfully"),
 			@ApiResponse(responseCode = "400", description = "Invalid request data or genre name already exists"),
 			@ApiResponse(responseCode = "404", description = "Genre not found") })
-	public ResponseEntity<GenreListResponse> updateGenre(@PathVariable Long id, @RequestBody @Valid GenreRequest request) {
+	public ResponseEntity<GenreResponse> updateGenre(@PathVariable Long id, @RequestBody @Valid GenreRequest request) {
 		log.info("PUT /api/admin/genres/{} - Updating genre", id);
-		GenreListResponse updatedGenre = genreService.updateGenre(id, request);
+		GenreResponse updatedGenre = genreService.updateGenre(id, request);
 		return ResponseEntity.ok(updatedGenre);
 	}
 
@@ -90,7 +91,7 @@ public class AdminGenreController {
 	public ResponseEntity<PageResponse<GenreListResponse>> getGenres(@RequestParam(required = false) String search,
 			@Parameter(hidden = true) @PageableDefault(size = 10) Pageable pageable) {
 		log.info("GET /api/admin/genres - search: '{}'", search);
-		var result = genreService.searchGenres(search, pageable);
+		var result = genreService.getGenres(search, pageable);
 		return ResponseEntity.ok(PageResponse.from(result));
 	}
 }

@@ -8,7 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import ua.lviv.bas.cinema.domain.cinema.Genre;
-import ua.lviv.bas.cinema.repository.cinema.projection.GenreProjection;
+import ua.lviv.bas.cinema.repository.cinema.projection.GenreListProjection;
 
 @Repository
 public interface GenreRepository extends JpaRepository<Genre, Long> {
@@ -26,5 +26,5 @@ public interface GenreRepository extends JpaRepository<Genre, Long> {
 			WHERE (:query IS NULL OR LOWER(g.name) LIKE LOWER(CONCAT('%', CAST(:query AS string), '%')))
 			ORDER BY SIZE(g.movies) DESC, g.name ASC
 			""")
-	Page<GenreProjection> findProjectionsByQuery(@Param("query") String query, Pageable pageable);
+	Page<GenreListProjection> findGenresByQuery(@Param("query") String query, Pageable pageable);
 }

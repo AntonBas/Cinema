@@ -14,11 +14,11 @@ import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.cinema.Genre;
 import ua.lviv.bas.cinema.dto.movie.request.GenreRequest;
 import ua.lviv.bas.cinema.dto.movie.response.GenreListResponse;
+import ua.lviv.bas.cinema.dto.movie.response.GenreResponse;
 import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
 import ua.lviv.bas.cinema.exception.domain.cinema.GenreNotFoundException;
 import ua.lviv.bas.cinema.mapper.cinema.GenreMapper;
 import ua.lviv.bas.cinema.repository.cinema.GenreRepository;
-import ua.lviv.bas.cinema.repository.cinema.projection.GenreProjection;
 
 @Slf4j
 @Service
@@ -32,14 +32,13 @@ public class GenreService {
 
 	@CacheEvict(allEntries = true)
 	@Transactional
-	public GenreListResponse createGenre(GenreRequest request) {
-		log.info("Creating genre: {}", request.name());
-
+	public GenreResponse createGenre(GenreRequest request) {
 		String genreName = request.name();
+		log.info("Creating genre: {}", genreName);
+
 		validateGenreUniqueness(genreName, null);
 
 		Genre genre = genreMapper.toGenre(request);
-		genre.setName(genreName);
 		Genre savedGenre = genreRepository.save(genre);
 
 		log.debug("Genre created with ID: {}", savedGenre.getId());
@@ -47,25 +46,28 @@ public class GenreService {
 	}
 
 	@Cacheable(key = "#id")
-	public GenreListResponse getGenreById(Long id) {
-		log.debug("Retrieving genre by id: {}", id);
+	public GenreResponse getGenreById(Long id) {
 		return genreRepository.findById(id).map(genreMapper::toGenreResponse)
 				.orElseThrow(() -> new GenreNotFoundException(id));
 	}
 
-	@Caching(evict = { @CacheEvict(key = "#id"), @CacheEvict(key = "'popular-' + #request.name() + '-' + 0 + '-' + 20"),
-			@CacheEvict(allEntries = true) })
+	@Cacheable(key = "'genres-' + #query + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
+	public Page<GenreListResponse> getGenres(String query, Pageable pageable) {
+		log.info("Getting genres: query='{}', page={}, size={}", query, pageable.getPageNumber(),
+				pageable.getPageSize());
+		return genreRepository.findGenresByQuery(query, pageable).map(genreMapper::toGenreListResponse);
+	}
+
+	@Caching(evict = { @CacheEvict(key = "#id"), @CacheEvict(allEntries = true) })
 	@Transactional
-	public GenreListResponse updateGenre(Long id, GenreRequest request) {
-		log.info("Updating genre with id: {}", id);
+	public GenreResponse updateGenre(Long id, GenreRequest request) {
+		String genreName = request.name();
+		log.info("Updating genre with id: {}, new name: {}", id, genreName);
 
 		Genre existingGenre = genreRepository.findById(id).orElseThrow(() -> new GenreNotFoundException(id));
 
-		String genreName = request.name();
 		validateGenreUniqueness(genreName, id);
-
 		genreMapper.updateGenreFromRequest(request, existingGenre);
-		existingGenre.setName(genreName);
 
 		Genre updatedGenre = genreRepository.save(existingGenre);
 		log.debug("Genre updated with ID: {}", updatedGenre.getId());
@@ -83,13 +85,6 @@ public class GenreService {
 
 		genreRepository.deleteById(id);
 		log.debug("Genre deleted with ID: {}", id);
-	}
-
-	@Cacheable(key = "'popular-' + #query + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
-	public Page<GenreListResponse> searchGenres(String query, Pageable pageable) {
-		log.info("Searching genres by popularity: query='{}', pageable={}", query, pageable);
-		Page<GenreProjection> projections = genreRepository.findProjectionsByQuery(query, pageable);
-		return projections.map(genreMapper::toGenreResponse);
 	}
 
 	private void validateGenreUniqueness(String name, Long excludeId) {

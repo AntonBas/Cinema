@@ -1,6 +1,6 @@
 package ua.lviv.bas.cinema.repository.cinema.projection;
 
-public interface GenreProjection {
+public interface GenreListProjection {
 	Long getId();
 
 	String getName();
