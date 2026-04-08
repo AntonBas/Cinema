@@ -5,10 +5,10 @@ import type {
   MovieCardResponse,
   MovieDetailResponse,
   MovieAdminResponse,
-  MovieSessionSearchResponse
+  MovieSessionSearchResponse,
+  MovieStatus
 } from '@/types/movie';
 import type { PageResponse, SearchParams } from '@/types/pagination';
-import type { MovieStatus } from '@/types/movie';
 
 const BASE_URL = '/api/movies';
 const ADMIN_BASE_URL = '/api/admin/movies';
@@ -32,6 +32,9 @@ export const movieApi = {
 
     getUpcoming: (params?: SearchParams) =>
       api.get<PageResponse<MovieCardResponse>>(`${BASE_URL}/upcoming`, { params }),
+
+    getPoster: (id: number) =>
+      api.get<ArrayBuffer>(`${BASE_URL}/${id}/poster`, { responseType: 'arraybuffer' }),
   },
 
   admin: {
@@ -48,9 +51,7 @@ export const movieApi = {
       }
 
       return api.post<MovieAdminResponse>(ADMIN_BASE_URL, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
     },
 
@@ -67,9 +68,7 @@ export const movieApi = {
       }
 
       return api.put<MovieAdminResponse>(`${ADMIN_BASE_URL}/${id}`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
     },
 
@@ -81,10 +80,10 @@ export const movieApi = {
       status?: MovieStatus;
     }) => api.get<PageResponse<MovieCardResponse>>(ADMIN_BASE_URL, { params }),
 
-    getMovieById: (id: number) =>
+    getById: (id: number) =>
       api.get<MovieAdminResponse>(`${ADMIN_BASE_URL}/${id}`),
 
-    searchMoviesForSession: (search?: string) =>
+    searchForSession: (search?: string) =>
       api.get<MovieSessionSearchResponse[]>(`${ADMIN_BASE_URL}/search/session`, {
         params: search ? { search } : undefined
       }),

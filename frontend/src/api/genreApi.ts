@@ -1,12 +1,12 @@
 import { api } from '@/services/api';
-import type { GenreResponse, GenreRequest } from '@/types/genre';
+import type { GenreRequest, GenreResponse, GenreListResponse } from '@/types/genre';
 import type { PageResponse, SearchParams } from '@/types/pagination';
 
 const BASE_URL = '/api/admin/genres';
 
 export const genreApi = {
   getAll: (params?: SearchParams & { search?: string }) =>
-    api.get<PageResponse<GenreResponse>>(BASE_URL, { params }),
+    api.get<PageResponse<GenreListResponse>>(BASE_URL, { params }),
 
   getById: (id: number) =>
     api.get<GenreResponse>(`${BASE_URL}/${id}`),

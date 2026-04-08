@@ -1,16 +1,10 @@
 import { api } from '@/services/api';
-import type { PersonResponse, PersonRequest, QuickCreatePersonRequest } from '@/types/person';
+import type { PersonResponse, PersonRequest, QuickCreatePersonRequest, PersonListResponse, PersonRole } from '@/types/person';
 import type { PageResponse, SearchParams } from '@/types/pagination';
 
-const BASE_URL = '/api/persons';
 const ADMIN_BASE_URL = '/api/admin/persons';
 
 export const personApi = {
-  public: {
-    getById: (id: number) =>
-      api.get<PersonResponse>(`${BASE_URL}/${id}`),
-  },
-
   admin: {
     create: (request: PersonRequest) =>
       api.post<PersonResponse>(ADMIN_BASE_URL, request),
@@ -27,7 +21,7 @@ export const personApi = {
     delete: (id: number) =>
       api.delete<void>(`${ADMIN_BASE_URL}/${id}`),
 
-    getAll: (params?: SearchParams & { name?: string; role?: string }) =>
-      api.get<PageResponse<PersonResponse>>(ADMIN_BASE_URL, { params }),
+    getAll: (params?: SearchParams & { name?: string; role?: PersonRole }) =>
+      api.get<PageResponse<PersonListResponse>>(ADMIN_BASE_URL, { params }),
   }
 };

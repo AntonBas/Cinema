@@ -14,13 +14,13 @@ export interface PersonResponse {
     id: number;
     name: string;
     role: PersonRole;
-    movieCount?: number;
 }
 
-export interface PersonInfoResponse {
+export interface PersonListResponse {
     id: number;
     name: string;
     role: PersonRole;
+    movieCount: number;
 }
 
 export const PersonRoleDisplay: Record<PersonRole, string> = {

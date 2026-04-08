@@ -6,16 +6,15 @@ import type {
     MovieAdminResponse,
     MovieSessionSearchResponse,
     MovieCreateRequest,
-    MovieUpdateRequest
+    MovieUpdateRequest,
+    MovieStatus
 } from '@/types/movie';
 import type { PageResponse, SearchParams } from '@/types/pagination';
 import { useApi } from '@/hooks/common/useApi';
 import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
 
 export const useMovies = () => {
-    const getAdminCurrentApi = useApi<PageResponse<MovieCardResponse>>();
-    const getAdminUpcomingApi = useApi<PageResponse<MovieCardResponse>>();
-    const getAdminArchivedApi = useApi<PageResponse<MovieCardResponse>>();
+    const getAdminMoviesApi = useApi<PageResponse<MovieCardResponse>>();
     const getPublicCurrentApi = useApi<PageResponse<MovieCardResponse>>();
     const getPublicUpcomingApi = useApi<PageResponse<MovieCardResponse>>();
     const getNowShowingHomeApi = useApi<MovieCardResponse[]>();
@@ -28,44 +27,25 @@ export const useMovies = () => {
     const updateMovieApi = useApi<MovieAdminResponse>();
     const deleteMovieApi = useApi<void>();
 
-    const rawLoading = getAdminCurrentApi.loading || getAdminUpcomingApi.loading ||
-        getAdminArchivedApi.loading || getPublicCurrentApi.loading || getPublicUpcomingApi.loading ||
+    const rawLoading = getAdminMoviesApi.loading || getPublicCurrentApi.loading || getPublicUpcomingApi.loading ||
         getNowShowingHomeApi.loading || getComingSoonHomeApi.loading || getLeavingSoonHomeApi.loading ||
-        getMovieDetailApi.loading || getAdminMovieApi.loading ||
-        searchMoviesApi.loading || createMovieApi.loading ||
-        updateMovieApi.loading || deleteMovieApi.loading;
+        getMovieDetailApi.loading || getAdminMovieApi.loading || searchMoviesApi.loading ||
+        createMovieApi.loading || updateMovieApi.loading || deleteMovieApi.loading;
 
     const loading = useDelayedLoading(rawLoading, { delay: 150, minDisplayTime: 300 });
 
-    const error = !!(getAdminCurrentApi.error || getAdminUpcomingApi.error || getAdminArchivedApi.error ||
-        getPublicCurrentApi.error || getPublicUpcomingApi.error || getNowShowingHomeApi.error ||
-        getComingSoonHomeApi.error || getLeavingSoonHomeApi.error || getMovieDetailApi.error ||
-        getAdminMovieApi.error || searchMoviesApi.error || createMovieApi.error ||
-        updateMovieApi.error || deleteMovieApi.error);
+    const error = !!(getAdminMoviesApi.error || getPublicCurrentApi.error || getPublicUpcomingApi.error ||
+        getNowShowingHomeApi.error || getComingSoonHomeApi.error || getLeavingSoonHomeApi.error ||
+        getMovieDetailApi.error || getAdminMovieApi.error || searchMoviesApi.error ||
+        createMovieApi.error || updateMovieApi.error || deleteMovieApi.error);
 
-    const getAdminCurrent = useCallback(async (params?: SearchParams & { title?: string }) => {
-        const response = await getAdminCurrentApi.execute(
-            () => movieApi.admin.getMovies({ ...params, status: 'CURRENT' }),
+    const getAdminMovies = useCallback(async (params?: SearchParams & { title?: string; status?: MovieStatus }) => {
+        const response = await getAdminMoviesApi.execute(
+            () => movieApi.admin.getMovies(params),
             { showErrorNotification: false }
         );
         return response || null;
-    }, [getAdminCurrentApi]);
-
-    const getAdminUpcoming = useCallback(async (params?: SearchParams & { title?: string }) => {
-        const response = await getAdminUpcomingApi.execute(
-            () => movieApi.admin.getMovies({ ...params, status: 'UPCOMING' }),
-            { showErrorNotification: false }
-        );
-        return response || null;
-    }, [getAdminUpcomingApi]);
-
-    const getAdminArchived = useCallback(async (params?: SearchParams & { title?: string }) => {
-        const response = await getAdminArchivedApi.execute(
-            () => movieApi.admin.getMovies({ ...params, status: 'ARCHIVED' }),
-            { showErrorNotification: false }
-        );
-        return response || null;
-    }, [getAdminArchivedApi]);
+    }, [getAdminMoviesApi]);
 
     const getPublicCurrent = useCallback(async (params?: SearchParams) => {
         const response = await getPublicCurrentApi.execute(
@@ -117,15 +97,15 @@ export const useMovies = () => {
 
     const getAdminById = useCallback(async (id: number) => {
         const response = await getAdminMovieApi.execute(
-            () => movieApi.admin.getMovieById(id),
+            () => movieApi.admin.getById(id),
             { showErrorNotification: false }
         );
         return response || null;
     }, [getAdminMovieApi]);
 
-    const searchMoviesForSession = useCallback(async (search?: string) => {
+    const searchForSession = useCallback(async (search?: string) => {
         const response = await searchMoviesApi.execute(
-            () => movieApi.admin.searchMoviesForSession(search),
+            () => movieApi.admin.searchForSession(search),
             { showErrorNotification: false }
         );
         return response || null;
@@ -155,9 +135,7 @@ export const useMovies = () => {
     }, [deleteMovieApi]);
 
     const resetAll = useCallback(() => {
-        getAdminCurrentApi.reset();
-        getAdminUpcomingApi.reset();
-        getAdminArchivedApi.reset();
+        getAdminMoviesApi.reset();
         getPublicCurrentApi.reset();
         getPublicUpcomingApi.reset();
         getNowShowingHomeApi.reset();
@@ -169,35 +147,24 @@ export const useMovies = () => {
         createMovieApi.reset();
         updateMovieApi.reset();
         deleteMovieApi.reset();
-    }, [getAdminCurrentApi, getAdminUpcomingApi, getAdminArchivedApi, getPublicCurrentApi, getPublicUpcomingApi, getNowShowingHomeApi, getComingSoonHomeApi, getLeavingSoonHomeApi, getMovieDetailApi, getAdminMovieApi, searchMoviesApi, createMovieApi, updateMovieApi, deleteMovieApi]);
+    }, [getAdminMoviesApi, getPublicCurrentApi, getPublicUpcomingApi, getNowShowingHomeApi, getComingSoonHomeApi, getLeavingSoonHomeApi, getMovieDetailApi, getAdminMovieApi, searchMoviesApi, createMovieApi, updateMovieApi, deleteMovieApi]);
 
     return {
-        adminCurrent: getAdminCurrentApi.data?.content || [],
-        adminUpcoming: getAdminUpcomingApi.data?.content || [],
-        adminArchived: getAdminArchivedApi.data?.content || [],
-        adminCurrentPagination: getAdminCurrentApi.data,
-        adminUpcomingPagination: getAdminUpcomingApi.data,
-        adminArchivedPagination: getAdminArchivedApi.data,
-
+        adminMovies: getAdminMoviesApi.data?.content || [],
+        adminPagination: getAdminMoviesApi.data,
         publicCurrent: getPublicCurrentApi.data?.content || [],
         publicUpcoming: getPublicUpcomingApi.data?.content || [],
         publicCurrentPagination: getPublicCurrentApi.data,
         publicUpcomingPagination: getPublicUpcomingApi.data,
-
         nowShowingHome: getNowShowingHomeApi.data || [],
         comingSoonHome: getComingSoonHomeApi.data || [],
         leavingSoonHome: getLeavingSoonHomeApi.data || [],
-
         movie: getMovieDetailApi.data,
         adminMovie: getAdminMovieApi.data,
         searchResults: searchMoviesApi.data || [],
-
         loading,
         error,
-
-        getAdminCurrent,
-        getAdminUpcoming,
-        getAdminArchived,
+        getAdminMovies,
         getPublicCurrent,
         getPublicUpcoming,
         getNowShowingForHome,
@@ -205,11 +172,10 @@ export const useMovies = () => {
         getLeavingSoonForHome,
         getBySlug,
         getAdminById,
-        searchMoviesForSession,
+        searchForSession,
         create,
         update,
         remove,
-
         resetAll,
     };
 };

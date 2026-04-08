@@ -5,10 +5,10 @@ export interface GenreRequest {
 export interface GenreResponse {
     id: number;
     name: string;
-    movieCount: number;
 }
 
-export interface GenreInfoResponse {
+export interface GenreListResponse {
     id: number;
     name: string;
+    movieCount: number;
 }

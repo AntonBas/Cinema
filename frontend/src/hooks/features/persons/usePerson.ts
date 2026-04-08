@@ -1,22 +1,12 @@
 import { useCallback } from 'react';
 import { personApi } from '@/api/personApi';
-import type {
-    PersonResponse,
-    PersonRequest,
-    QuickCreatePersonRequest,
-    PersonRole
-} from '@/types/person';
-import type { PageResponse, SearchParams } from '@/types/pagination';
+import type { PersonResponse, PersonRequest, QuickCreatePersonRequest, PersonRole, PersonListResponse } from '@/types/person';
+import type { PageResponse } from '@/types/pagination';
 import { useApi } from '@/hooks/common/useApi';
 import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
 
-interface PersonSearchParams extends SearchParams {
-    name?: string;
-    role?: PersonRole;
-}
-
 export const usePerson = () => {
-    const getAllPersonsApi = useApi<PageResponse<PersonResponse>>();
+    const getAllPersonsApi = useApi<PageResponse<PersonListResponse>>();
     const getPersonByIdApi = useApi<PersonResponse>();
     const createPersonApi = useApi<PersonResponse>();
     const quickCreatePersonApi = useApi<PersonResponse>();
@@ -31,7 +21,7 @@ export const usePerson = () => {
         createPersonApi.error || quickCreatePersonApi.error ||
         updatePersonApi.error || deletePersonApi.error);
 
-    const getAll = useCallback(async (params?: PersonSearchParams) => {
+    const getAll = useCallback(async (params?: { name?: string; role?: PersonRole }) => {
         const response = await getAllPersonsApi.execute(
             () => personApi.admin.getAll(params),
             { showErrorNotification: false }
@@ -39,13 +29,11 @@ export const usePerson = () => {
         return response;
     }, [getAllPersonsApi]);
 
-    const getById = useCallback(async (id: number, isAdmin: boolean = false) => {
-        const apiCall = isAdmin
-            ? () => personApi.admin.getById(id)
-            : () => personApi.public.getById(id);
-        const response = await getPersonByIdApi.execute(apiCall, {
-            showErrorNotification: false,
-        });
+    const getById = useCallback(async (id: number) => {
+        const response = await getPersonByIdApi.execute(
+            () => personApi.admin.getById(id),
+            { showErrorNotification: false }
+        );
         return response;
     }, [getPersonByIdApi]);
 
@@ -90,7 +78,7 @@ export const usePerson = () => {
     }, [getAllPersonsApi, getPersonByIdApi, createPersonApi, quickCreatePersonApi, updatePersonApi, deletePersonApi]);
 
     return {
-        allPersons: getAllPersonsApi.data?.content || [],
+        persons: getAllPersonsApi.data?.content || [],
         person: getPersonByIdApi.data,
         pagination: getAllPersonsApi.data,
         loading,

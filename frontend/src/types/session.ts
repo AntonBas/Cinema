@@ -9,14 +9,14 @@ export const SessionStatusDisplay: Record<CinemaSessionStatus, string> = {
 
 export interface SessionCreateRequest {
     startTime: string;
-    basePrice: string;
+    basePrice: number;
     movieId: number;
     hallId: number;
 }
 
 export interface SessionUpdateRequest {
     startTime?: string;
-    basePrice?: string;
+    basePrice?: number;
     movieId?: number;
     hallId?: number;
 }
@@ -29,11 +29,24 @@ export interface SessionFilterRequest {
     movieTitle?: string;
 }
 
+export interface SessionResponse {
+    id: number;
+    startTime: string;
+    endTime: string;
+    basePrice: number;
+    status: CinemaSessionStatus;
+    movieId: number;
+    movieTitle: string;
+    movieDuration: number;
+    hallId: number;
+    hallName: string;
+}
+
 export interface SessionAdminResponse {
     id: number;
     startTime: string;
     endTime: string;
-    basePrice: string;
+    basePrice: number;
     status: CinemaSessionStatus;
     movieId: number;
     movieTitle: string;
@@ -42,17 +55,18 @@ export interface SessionAdminResponse {
     hallName: string;
     hallCapacity: number;
     ticketsSold: number;
-    totalRevenue: string;
+    totalRevenue: number;
 }
 
 export interface SessionScheduleResponse {
     id: number;
     startTime: string;
     endTime: string;
-    basePrice: string;
+    basePrice: number;
     availableSeats: number;
     movieId: number;
     movieTitle: string;
+    moviePosterFileName: string;
     movieAgeRating: string;
     movieDuration: number;
     hallId: number;
@@ -60,7 +74,7 @@ export interface SessionScheduleResponse {
     hallCapacity: number;
 }
 
-export interface MovieSessionInfoResponse {
+export interface SessionMovieInfoResponse {
     id: number;
     startTime: string;
     endTime: string;

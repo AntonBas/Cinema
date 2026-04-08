@@ -1,12 +1,12 @@
 import { api } from '@/services/api';
 import type {
+    SessionResponse,
     SessionAdminResponse,
     SessionScheduleResponse,
     SessionCreateRequest,
     SessionUpdateRequest,
-    SessionFilterRequest
+    CinemaSessionStatus
 } from '@/types/session';
-import type { SeatReservationResponse } from '@/types/seatReservation';
 import type { PageResponse, SearchParams } from '@/types/pagination';
 
 const ADMIN_BASE_URL = '/api/admin/sessions';
@@ -15,13 +15,13 @@ const BASE_URL = '/api/sessions';
 export const sessionApi = {
     admin: {
         create: (request: SessionCreateRequest) =>
-            api.post<SessionAdminResponse>(ADMIN_BASE_URL, request),
+            api.post<SessionResponse>(ADMIN_BASE_URL, request),
 
         getById: (id: number) =>
-            api.get<SessionAdminResponse>(`${ADMIN_BASE_URL}/${id}`),
+            api.get<SessionResponse>(`${ADMIN_BASE_URL}/${id}`),
 
         update: (id: number, request: SessionUpdateRequest) =>
-            api.put<SessionAdminResponse>(`${ADMIN_BASE_URL}/${id}`, request),
+            api.put<SessionResponse>(`${ADMIN_BASE_URL}/${id}`, request),
 
         cancel: (id: number) =>
             api.patch<void>(`${ADMIN_BASE_URL}/${id}/cancel`),
@@ -32,17 +32,19 @@ export const sessionApi = {
         delete: (id: number) =>
             api.delete<void>(`${ADMIN_BASE_URL}/${id}`),
 
-        getSessions: (params?: SearchParams & SessionFilterRequest) =>
-            api.get<PageResponse<SessionAdminResponse>>(ADMIN_BASE_URL, { params }),
+        getSessions: (params?: SearchParams & {
+            hallId?: number;
+            movieTitle?: string;
+            status?: CinemaSessionStatus;
+            dateFrom?: string;
+            dateTo?: string;
+        }) => api.get<PageResponse<SessionAdminResponse>>(ADMIN_BASE_URL, { params }),
     },
 
     public: {
-        getSessions: (searchTerm?: string, date?: string) =>
-            api.get<SessionScheduleResponse[]>(BASE_URL, {
-                params: { searchTerm, date }
-            }),
-
-        getSeatAvailability: (sessionId: number) =>
-            api.get<SeatReservationResponse>(`${BASE_URL}/${sessionId}/seats/availability`),
+        getSchedule: (params?: {
+            searchTerm?: string;
+            date?: string;
+        }) => api.get<SessionScheduleResponse[]>(BASE_URL, { params }),
     }
 };

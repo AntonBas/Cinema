@@ -1,12 +1,12 @@
 import { useCallback } from 'react';
 import { genreApi } from '@/api/genreApi';
-import type { GenreResponse, GenreRequest } from '@/types/genre';
-import type { PageResponse, SearchParams } from '@/types/pagination';
+import type { GenreResponse, GenreRequest, GenreListResponse } from '@/types/genre';
+import type { PageResponse } from '@/types/pagination';
 import { useApi } from '@/hooks/common/useApi';
 import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
 
 export const useGenres = () => {
-    const getAllGenresApi = useApi<PageResponse<GenreResponse>>();
+    const getAllGenresApi = useApi<PageResponse<GenreListResponse>>();
     const getGenreByIdApi = useApi<GenreResponse>();
     const createGenreApi = useApi<GenreResponse>();
     const updateGenreApi = useApi<GenreResponse>();
@@ -18,7 +18,7 @@ export const useGenres = () => {
     const error = !!(getAllGenresApi.error || getGenreByIdApi.error ||
         createGenreApi.error || updateGenreApi.error || deleteGenreApi.error);
 
-    const getAll = useCallback(async (params?: SearchParams) => {
+    const getAll = useCallback(async (params?: { search?: string }) => {
         const response = await getAllGenresApi.execute(
             () => genreApi.getAll(params),
             { showErrorNotification: false }
@@ -66,7 +66,7 @@ export const useGenres = () => {
     }, [getAllGenresApi, getGenreByIdApi, createGenreApi, updateGenreApi, deleteGenreApi]);
 
     return {
-        allGenres: getAllGenresApi.data?.content || [],
+        genres: getAllGenresApi.data?.content || [],
         genre: getGenreByIdApi.data,
         pagination: getAllGenresApi.data,
         loading,
