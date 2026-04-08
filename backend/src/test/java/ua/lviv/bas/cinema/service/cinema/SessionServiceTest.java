@@ -3,12 +3,12 @@ package ua.lviv.bas.cinema.service.cinema;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
-import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -27,14 +27,13 @@ import ua.lviv.bas.cinema.domain.cinema.Session;
 import ua.lviv.bas.cinema.domain.cinema.status.CinemaSessionStatus;
 import ua.lviv.bas.cinema.dto.session.request.SessionCreateRequest;
 import ua.lviv.bas.cinema.dto.session.request.SessionUpdateRequest;
-import ua.lviv.bas.cinema.dto.session.response.SessionAdminResponse;
+import ua.lviv.bas.cinema.dto.session.response.SessionResponse;
 import ua.lviv.bas.cinema.exception.domain.cinema.SessionNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.cinema.SessionOperationException;
 import ua.lviv.bas.cinema.exception.domain.cinema.SessionTimeConflictException;
 import ua.lviv.bas.cinema.mapper.cinema.SessionMapper;
 import ua.lviv.bas.cinema.repository.cinema.MovieRepository;
 import ua.lviv.bas.cinema.repository.cinema.SessionRepository;
-import ua.lviv.bas.cinema.repository.cinema.projection.SessionAdminProjection;
 import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 
 @ExtendWith(MockitoExtension.class)
@@ -50,14 +49,14 @@ public class SessionServiceTest {
 	private CinemaHallService cinemaHallService;
 	@Mock
 	private AuditService auditService;
+
 	@InjectMocks
 	private SessionService sessionService;
 
 	private Session session;
 	private Movie movie;
 	private CinemaHall hall;
-	private SessionAdminResponse adminResponse;
-	private SessionAdminProjection adminProjection;
+	private SessionResponse sessionResponse;
 
 	private static final Long SESSION_ID = 1L;
 	private static final Long MOVIE_ID = 2L;
@@ -76,15 +75,11 @@ public class SessionServiceTest {
 		session = Session.builder().id(SESSION_ID).movie(movie).hall(hall).startTime(LocalDateTime.now().plusHours(2))
 				.basePrice(BASE_PRICE).status(CinemaSessionStatus.SCHEDULED).build();
 
-		adminResponse = new SessionAdminResponse(SESSION_ID, session.getStartTime(), null, BASE_PRICE,
-				CinemaSessionStatus.SCHEDULED, MOVIE_ID, MOVIE_TITLE, 120, HALL_ID, HALL_NAME, 100, 0, BigDecimal.ZERO);
+		sessionResponse = new SessionResponse(SESSION_ID, session.getStartTime(),
+				session.getStartTime().plusMinutes(120), BASE_PRICE, CinemaSessionStatus.SCHEDULED, MOVIE_ID,
+				MOVIE_TITLE, 120, HALL_ID, HALL_NAME);
 
-		LocalDateTime startTime = session.getStartTime();
-		LocalDateTime endTime = startTime.plusMinutes(120);
-
-		adminProjection = new SessionAdminProjection(SESSION_ID, Timestamp.valueOf(startTime),
-				Timestamp.valueOf(endTime), BASE_PRICE, CinemaSessionStatus.SCHEDULED.name(), MOVIE_ID, MOVIE_TITLE,
-				120, HALL_ID, HALL_NAME, 100L, 0L, BigDecimal.ZERO);
+		doNothing().when(auditService).logChange(any(), any(), any(), any(), any(), any());
 	}
 
 	@Test
@@ -96,14 +91,13 @@ public class SessionServiceTest {
 		when(cinemaHallService.getHallEntityById(HALL_ID)).thenReturn(hall);
 		when(sessionRepository.existsConflictingSession(HALL_ID, startTime, startTime.plusMinutes(120), null))
 				.thenReturn(false);
-		when(sessionMapper.toEntity(request)).thenReturn(session);
+		when(sessionMapper.toSession(request)).thenReturn(session);
 		when(sessionRepository.save(session)).thenReturn(session);
-		when(sessionRepository.findAdminProjectionById(SESSION_ID)).thenReturn(Optional.of(adminProjection));
-		when(sessionMapper.toAdminResponse(adminProjection)).thenReturn(adminResponse);
+		when(sessionMapper.toSessionResponse(session)).thenReturn(sessionResponse);
 
-		SessionAdminResponse result = sessionService.createSession(request);
+		SessionResponse result = sessionService.createSession(request);
 
-		assertThat(result).isEqualTo(adminResponse);
+		assertThat(result).isEqualTo(sessionResponse);
 		verify(sessionRepository).save(session);
 	}
 
@@ -124,20 +118,20 @@ public class SessionServiceTest {
 	}
 
 	@Test
-	void getSessionForAdmin_Success() {
-		when(sessionRepository.findAdminProjectionById(SESSION_ID)).thenReturn(Optional.of(adminProjection));
-		when(sessionMapper.toAdminResponse(adminProjection)).thenReturn(adminResponse);
+	void getSessionById_Success() {
+		when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(session));
+		when(sessionMapper.toSessionResponse(session)).thenReturn(sessionResponse);
 
-		SessionAdminResponse result = sessionService.getSessionForAdmin(SESSION_ID);
+		SessionResponse result = sessionService.getSessionById(SESSION_ID);
 
-		assertThat(result).isEqualTo(adminResponse);
+		assertThat(result).isEqualTo(sessionResponse);
 	}
 
 	@Test
-	void getSessionForAdmin_WhenNotFound_ThrowsException() {
-		when(sessionRepository.findAdminProjectionById(SESSION_ID)).thenReturn(Optional.empty());
+	void getSessionById_WhenNotFound_ThrowsException() {
+		when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.empty());
 
-		assertThatThrownBy(() -> sessionService.getSessionForAdmin(SESSION_ID))
+		assertThatThrownBy(() -> sessionService.getSessionById(SESSION_ID))
 				.isInstanceOf(SessionNotFoundException.class);
 	}
 
@@ -150,12 +144,11 @@ public class SessionServiceTest {
 		when(sessionRepository.existsConflictingSession(HALL_ID, newStartTime,
 				newStartTime.plusMinutes(movie.getDurationMinutes()), SESSION_ID)).thenReturn(false);
 		when(sessionRepository.save(session)).thenReturn(session);
-		when(sessionRepository.findAdminProjectionById(SESSION_ID)).thenReturn(Optional.of(adminProjection));
-		when(sessionMapper.toAdminResponse(adminProjection)).thenReturn(adminResponse);
+		when(sessionMapper.toSessionResponse(session)).thenReturn(sessionResponse);
 
-		SessionAdminResponse result = sessionService.updateSession(SESSION_ID, request);
+		SessionResponse result = sessionService.updateSession(SESSION_ID, request);
 
-		assertThat(result).isEqualTo(adminResponse);
+		assertThat(result).isEqualTo(sessionResponse);
 		assertThat(session.getStartTime()).isEqualTo(newStartTime);
 		verify(sessionRepository).save(session);
 	}
@@ -165,12 +158,11 @@ public class SessionServiceTest {
 		SessionUpdateRequest request = new SessionUpdateRequest(null, null, null, null);
 
 		when(sessionRepository.findByIdWithLock(SESSION_ID)).thenReturn(Optional.of(session));
-		when(sessionRepository.findAdminProjectionById(SESSION_ID)).thenReturn(Optional.of(adminProjection));
-		when(sessionMapper.toAdminResponse(adminProjection)).thenReturn(adminResponse);
+		when(sessionMapper.toSessionResponse(session)).thenReturn(sessionResponse);
 
-		SessionAdminResponse result = sessionService.updateSession(SESSION_ID, request);
+		SessionResponse result = sessionService.updateSession(SESSION_ID, request);
 
-		assertThat(result).isEqualTo(adminResponse);
+		assertThat(result).isEqualTo(sessionResponse);
 		verify(sessionRepository, never()).save(any());
 	}
 

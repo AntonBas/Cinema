@@ -29,6 +29,7 @@ import ua.lviv.bas.cinema.domain.cinema.enums.PersonRole;
 import ua.lviv.bas.cinema.dto.PageResponse;
 import ua.lviv.bas.cinema.dto.movie.request.PersonRequest;
 import ua.lviv.bas.cinema.dto.movie.request.QuickCreatePersonRequest;
+import ua.lviv.bas.cinema.dto.movie.response.PersonListResponse;
 import ua.lviv.bas.cinema.dto.movie.response.PersonResponse;
 import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
 import ua.lviv.bas.cinema.exception.domain.cinema.PersonNotFoundException;
@@ -47,7 +48,11 @@ public class AdminPersonControllerTest {
 	private static final String PERSON_NAME = "Anton Bas";
 
 	private PersonResponse createPersonResponse(Long id, String name, PersonRole role) {
-		return new PersonResponse(id, name, role, null);
+		return new PersonResponse(id, name, role);
+	}
+
+	private PersonListResponse createPersonListResponse(Long id, String name, PersonRole role) {
+		return new PersonListResponse(id, name, role, 0);
 	}
 
 	private PersonRequest createPersonRequest(String name, PersonRole role) {
@@ -86,6 +91,36 @@ public class AdminPersonControllerTest {
 				.thenThrow(new DuplicateEntityException("Person", "Existing Person"));
 
 		assertThrows(DuplicateEntityException.class, () -> personController.createPerson(request));
+	}
+
+	@Test
+	void quickCreatePerson_ShouldReturnCreatedPerson() {
+		QuickCreatePersonRequest request = createQuickCreatePersonRequest(PERSON_NAME, PersonRole.ACTOR);
+		PersonResponse responseDto = createPersonResponse(PERSON_ID, PERSON_NAME, PersonRole.ACTOR);
+
+		when(personService.quickCreatePerson(any(QuickCreatePersonRequest.class))).thenReturn(responseDto);
+
+		ResponseEntity<PersonResponse> response = personController.quickCreatePerson(request);
+
+		assertEquals(HttpStatus.CREATED, response.getStatusCode());
+
+		PersonResponse responseBody = response.getBody();
+		assertNotNull(responseBody);
+
+		assertEquals(PERSON_ID, responseBody.id());
+		assertEquals(PERSON_NAME, responseBody.name());
+		assertEquals(PersonRole.ACTOR, responseBody.role());
+		verify(personService).quickCreatePerson(request);
+	}
+
+	@Test
+	void quickCreatePerson_WhenDuplicateName_ShouldThrowException() {
+		QuickCreatePersonRequest request = createQuickCreatePersonRequest("Existing Person", PersonRole.DIRECTOR);
+
+		when(personService.quickCreatePerson(any(QuickCreatePersonRequest.class)))
+				.thenThrow(new DuplicateEntityException("Person", "Existing Person"));
+
+		assertThrows(DuplicateEntityException.class, () -> personController.quickCreatePerson(request));
 	}
 
 	@Test
@@ -163,55 +198,26 @@ public class AdminPersonControllerTest {
 	}
 
 	@Test
-	void quickCreatePerson_ShouldReturnCreatedPerson() {
-		QuickCreatePersonRequest request = createQuickCreatePersonRequest(PERSON_NAME, PersonRole.ACTOR);
-		PersonResponse responseDto = createPersonResponse(PERSON_ID, PERSON_NAME, PersonRole.ACTOR);
-
-		when(personService.quickCreatePerson(any(QuickCreatePersonRequest.class))).thenReturn(responseDto);
-
-		ResponseEntity<PersonResponse> response = personController.quickCreatePerson(request);
-
-		assertEquals(HttpStatus.CREATED, response.getStatusCode());
-
-		PersonResponse responseBody = response.getBody();
-		assertNotNull(responseBody);
-
-		assertEquals(PERSON_ID, responseBody.id());
-		assertEquals(PERSON_NAME, responseBody.name());
-		assertEquals(PersonRole.ACTOR, responseBody.role());
-		verify(personService).quickCreatePerson(request);
-	}
-
-	@Test
-	void quickCreatePerson_WhenDuplicateName_ShouldThrowException() {
-		QuickCreatePersonRequest request = createQuickCreatePersonRequest("Existing Person", PersonRole.DIRECTOR);
-
-		when(personService.quickCreatePerson(any(QuickCreatePersonRequest.class)))
-				.thenThrow(new DuplicateEntityException("Person", "Existing Person"));
-
-		assertThrows(DuplicateEntityException.class, () -> personController.quickCreatePerson(request));
-	}
-
-	@Test
 	void getAllPersons_ShouldReturnPageOfPersons() {
 		Pageable pageable = PageRequest.of(0, 20, Sort.by(Sort.Direction.ASC, "name"));
-		List<PersonResponse> persons = List.of(createPersonResponse(1L, "John Doe", PersonRole.ACTOR),
-				createPersonResponse(2L, "Jane Smith", PersonRole.DIRECTOR));
-		Page<PersonResponse> personPage = new PageImpl<>(persons, pageable, 2);
+		List<PersonListResponse> persons = List.of(createPersonListResponse(1L, "John Doe", PersonRole.ACTOR),
+				createPersonListResponse(2L, "Jane Smith", PersonRole.DIRECTOR));
+		Page<PersonListResponse> personPage = new PageImpl<>(persons, pageable, 2);
 
-		when(personService.searchPersons(isNull(), isNull(), eq(pageable))).thenReturn(personPage);
+		when(personService.getPersons(isNull(), isNull(), eq(pageable))).thenReturn(personPage);
 
-		ResponseEntity<PageResponse<PersonResponse>> response = personController.getAllPersons(null, null, pageable);
+		ResponseEntity<PageResponse<PersonListResponse>> response = personController.getAllPersons(null, null,
+				pageable);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
 
-		PageResponse<PersonResponse> responseBody = response.getBody();
+		PageResponse<PersonListResponse> responseBody = response.getBody();
 		assertNotNull(responseBody);
 		assertEquals(2, responseBody.content().size());
 		assertEquals(0, responseBody.number());
 		assertEquals(20, responseBody.size());
 		assertEquals(2, responseBody.totalElements());
 
-		verify(personService).searchPersons(null, null, pageable);
+		verify(personService).getPersons(null, null, pageable);
 	}
 }

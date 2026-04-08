@@ -30,6 +30,7 @@ import ua.lviv.bas.cinema.dto.PageResponse;
 import ua.lviv.bas.cinema.dto.session.request.SessionCreateRequest;
 import ua.lviv.bas.cinema.dto.session.request.SessionUpdateRequest;
 import ua.lviv.bas.cinema.dto.session.response.SessionAdminResponse;
+import ua.lviv.bas.cinema.dto.session.response.SessionResponse;
 import ua.lviv.bas.cinema.exception.domain.cinema.SessionNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.cinema.SessionTimeConflictException;
 import ua.lviv.bas.cinema.service.cinema.SessionService;
@@ -43,9 +44,14 @@ public class AdminSessionControllerTest {
 	@InjectMocks
 	private AdminSessionController adminSessionController;
 
-	private SessionAdminResponse createSessionResponse(Long id, String title, BigDecimal basePrice) {
-		return new SessionAdminResponse(id, LocalDateTime.now().plusHours(2), null, basePrice,
-				CinemaSessionStatus.SCHEDULED, 1L, title, 120, 1L, "Hall 1", 100, 0, BigDecimal.ZERO);
+	private SessionResponse createSessionResponse(Long id, String title, BigDecimal basePrice) {
+		return new SessionResponse(id, LocalDateTime.now().plusHours(2), LocalDateTime.now().plusHours(4), basePrice,
+				CinemaSessionStatus.SCHEDULED, 1L, title, 120, 1L, "Hall 1");
+	}
+
+	private SessionAdminResponse createSessionAdminResponse(Long id, String title, BigDecimal basePrice) {
+		return new SessionAdminResponse(id, LocalDateTime.now().plusHours(2), LocalDateTime.now().plusHours(4),
+				basePrice, CinemaSessionStatus.SCHEDULED, 1L, title, 120, 1L, "Hall 1", 100, 0, BigDecimal.ZERO);
 	}
 
 	@Test
@@ -54,14 +60,14 @@ public class AdminSessionControllerTest {
 		BigDecimal price = BigDecimal.valueOf(250);
 		SessionCreateRequest request = new SessionCreateRequest(startTime, price, 1L, 1L);
 
-		SessionAdminResponse response = createSessionResponse(1L, "Test Movie", price);
+		SessionResponse response = createSessionResponse(1L, "Test Movie", price);
 
 		when(sessionService.createSession(request)).thenReturn(response);
 
-		ResponseEntity<SessionAdminResponse> result = adminSessionController.createSession(request);
+		ResponseEntity<SessionResponse> result = adminSessionController.createSession(request);
 
 		assertEquals(HttpStatus.CREATED, result.getStatusCode());
-		SessionAdminResponse body = result.getBody();
+		SessionResponse body = result.getBody();
 		assertNotNull(body);
 		assertEquals(1L, body.id());
 		assertEquals(price, body.basePrice());
@@ -83,26 +89,26 @@ public class AdminSessionControllerTest {
 	@Test
 	void getSessionById_ShouldReturnSession() {
 		BigDecimal price = BigDecimal.valueOf(250);
-		SessionAdminResponse response = createSessionResponse(1L, "Test Movie", price);
+		SessionResponse response = createSessionResponse(1L, "Test Movie", price);
 
-		when(sessionService.getSessionForAdmin(1L)).thenReturn(response);
+		when(sessionService.getSessionById(1L)).thenReturn(response);
 
-		ResponseEntity<SessionAdminResponse> result = adminSessionController.getSessionById(1L);
+		ResponseEntity<SessionResponse> result = adminSessionController.getSessionById(1L);
 
 		assertEquals(HttpStatus.OK, result.getStatusCode());
-		SessionAdminResponse body = result.getBody();
+		SessionResponse body = result.getBody();
 		assertNotNull(body);
 		assertEquals(1L, body.id());
 		assertEquals(price, body.basePrice());
-		verify(sessionService).getSessionForAdmin(1L);
+		verify(sessionService).getSessionById(1L);
 	}
 
 	@Test
 	void getSessionById_WhenNotFound_ShouldThrowException() {
-		when(sessionService.getSessionForAdmin(999L)).thenThrow(new SessionNotFoundException(999L));
+		when(sessionService.getSessionById(999L)).thenThrow(new SessionNotFoundException(999L));
 
 		assertThrows(SessionNotFoundException.class, () -> adminSessionController.getSessionById(999L));
-		verify(sessionService).getSessionForAdmin(999L);
+		verify(sessionService).getSessionById(999L);
 	}
 
 	@Test
@@ -110,14 +116,14 @@ public class AdminSessionControllerTest {
 		BigDecimal newPrice = BigDecimal.valueOf(300);
 		SessionUpdateRequest request = new SessionUpdateRequest(null, newPrice, null, null);
 
-		SessionAdminResponse response = createSessionResponse(1L, "Test Movie", newPrice);
+		SessionResponse response = createSessionResponse(1L, "Test Movie", newPrice);
 
 		when(sessionService.updateSession(1L, request)).thenReturn(response);
 
-		ResponseEntity<SessionAdminResponse> result = adminSessionController.updateSession(1L, request);
+		ResponseEntity<SessionResponse> result = adminSessionController.updateSession(1L, request);
 
 		assertEquals(HttpStatus.OK, result.getStatusCode());
-		SessionAdminResponse body = result.getBody();
+		SessionResponse body = result.getBody();
 		assertNotNull(body);
 		assertEquals(newPrice, body.basePrice());
 		verify(sessionService).updateSession(1L, request);
@@ -195,7 +201,7 @@ public class AdminSessionControllerTest {
 		LocalDate dateTo = LocalDate.now().plusDays(7);
 		BigDecimal price = BigDecimal.valueOf(250);
 
-		SessionAdminResponse response = createSessionResponse(1L, "Test Movie", price);
+		SessionAdminResponse response = createSessionAdminResponse(1L, "Test Movie", price);
 		Page<SessionAdminResponse> page = new PageImpl<>(List.of(response), pageable, 1);
 		PageResponse<SessionAdminResponse> pageResponse = PageResponse.from(page);
 

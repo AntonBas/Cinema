@@ -17,7 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import ua.lviv.bas.cinema.dto.movie.request.GenreRequest;
-import ua.lviv.bas.cinema.dto.movie.response.GenreListResponse;
+import ua.lviv.bas.cinema.dto.movie.response.GenreResponse;
 import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
 import ua.lviv.bas.cinema.exception.domain.cinema.GenreNotFoundException;
 import ua.lviv.bas.cinema.service.cinema.GenreService;
@@ -37,11 +37,11 @@ public class AdminGenreControllerTest {
 	@Test
 	void createGenre_ReturnsCreatedGenre() {
 		GenreRequest request = new GenreRequest(GENRE_NAME);
-		GenreListResponse response = new GenreListResponse(GENRE_ID, GENRE_NAME, null);
+		GenreResponse response = new GenreResponse(GENRE_ID, GENRE_NAME);
 
 		when(genreService.createGenre(any(GenreRequest.class))).thenReturn(response);
 
-		ResponseEntity<GenreListResponse> result = controller.createGenre(request);
+		ResponseEntity<GenreResponse> result = controller.createGenre(request);
 
 		assertThat(result.getStatusCode()).isEqualTo(HttpStatus.CREATED);
 		assertThat(result.getBody()).isEqualTo(response);
@@ -60,11 +60,11 @@ public class AdminGenreControllerTest {
 
 	@Test
 	void getGenreById_ReturnsGenre() {
-		GenreListResponse response = new GenreListResponse(GENRE_ID, GENRE_NAME, null);
+		GenreResponse response = new GenreResponse(GENRE_ID, GENRE_NAME);
 
 		when(genreService.getGenreById(GENRE_ID)).thenReturn(response);
 
-		ResponseEntity<GenreListResponse> result = controller.getGenreById(GENRE_ID);
+		ResponseEntity<GenreResponse> result = controller.getGenreById(GENRE_ID);
 
 		assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
 		assertThat(result.getBody()).isEqualTo(response);
@@ -81,11 +81,11 @@ public class AdminGenreControllerTest {
 	@Test
 	void updateGenre_ReturnsUpdatedGenre() {
 		GenreRequest request = new GenreRequest("Updated");
-		GenreListResponse response = new GenreListResponse(GENRE_ID, "Updated", null);
+		GenreResponse response = new GenreResponse(GENRE_ID, "Updated");
 
 		when(genreService.updateGenre(eq(GENRE_ID), any(GenreRequest.class))).thenReturn(response);
 
-		ResponseEntity<GenreListResponse> result = controller.updateGenre(GENRE_ID, request);
+		ResponseEntity<GenreResponse> result = controller.updateGenre(GENRE_ID, request);
 
 		assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
 		assertThat(result.getBody()).isEqualTo(response);

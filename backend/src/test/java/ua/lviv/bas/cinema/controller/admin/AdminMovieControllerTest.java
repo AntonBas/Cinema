@@ -11,6 +11,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -30,12 +31,13 @@ import org.springframework.mock.web.MockMultipartFile;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import ua.lviv.bas.cinema.domain.cinema.enums.AgeRating;
 import ua.lviv.bas.cinema.domain.cinema.status.MovieStatus;
 import ua.lviv.bas.cinema.dto.PageResponse;
 import ua.lviv.bas.cinema.dto.movie.request.MovieCreateRequest;
 import ua.lviv.bas.cinema.dto.movie.request.MovieUpdateRequest;
+import ua.lviv.bas.cinema.dto.movie.response.MovieAdminResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieCardResponse;
-import ua.lviv.bas.cinema.dto.movie.response.MovieDetailResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieSessionSearchResponse;
 import ua.lviv.bas.cinema.exception.domain.cinema.MovieNotFoundException;
 import ua.lviv.bas.cinema.service.cinema.MovieService;
@@ -52,9 +54,10 @@ public class AdminMovieControllerTest {
 	@InjectMocks
 	private AdminMovieController movieController;
 
-	private MovieDetailResponse createMovieDetailDto(Long id, String title) {
-		return new MovieDetailResponse(id, title, title.toLowerCase().replace(" ", "-"), null, null, null, null, null,
-				null, MovieStatus.UPCOMING, null, null, null, null, null, null);
+	private MovieAdminResponse createMovieAdminResponse(Long id, String title) {
+		return new MovieAdminResponse(id, title, "trailer.mp4", "Description", 120, LocalDate.now().plusDays(1),
+				LocalDate.now().plusDays(30), AgeRating.PEGI_12, MovieStatus.UPCOMING, "poster.jpg",
+				"/api/movies/" + id + "/poster", List.of(), List.of(), List.of(), List.of());
 	}
 
 	private MovieCardResponse createMovieCardDto(Long id, String title) {
@@ -67,7 +70,7 @@ public class AdminMovieControllerTest {
 		String movieDataJson = "{\"title\":\"New Movie\",\"description\":\"Description\",\"durationMinutes\":120}";
 		MockMultipartFile posterFile = new MockMultipartFile("posterFile", "poster.jpg", "image/jpeg",
 				"content".getBytes());
-		MovieDetailResponse responseDto = createMovieDetailDto(1L, "New Movie");
+		MovieAdminResponse responseDto = createMovieAdminResponse(1L, "New Movie");
 
 		MovieCreateRequest request = MovieCreateRequest.builder().title("New Movie").description("Description")
 				.durationMinutes(120).build();
@@ -75,7 +78,7 @@ public class AdminMovieControllerTest {
 		when(objectMapper.readValue(movieDataJson, MovieCreateRequest.class)).thenReturn(request);
 		when(movieService.createMovie(any(MovieCreateRequest.class))).thenReturn(responseDto);
 
-		ResponseEntity<MovieDetailResponse> response = movieController.createMovie(movieDataJson, posterFile);
+		ResponseEntity<MovieAdminResponse> response = movieController.createMovie(movieDataJson, posterFile);
 
 		assertEquals(HttpStatus.CREATED, response.getStatusCode());
 		assertNotNull(response.getBody());
@@ -84,9 +87,9 @@ public class AdminMovieControllerTest {
 	}
 
 	@Test
-	void createMovie_WithoutPoster_ShouldReturnCreatedMovie() throws Exception {
+	void createMovie_WithoutPoster_ShouldCallServiceWithNullPoster() throws Exception {
 		String movieDataJson = "{\"title\":\"New Movie\",\"description\":\"Description\",\"durationMinutes\":120}";
-		MovieDetailResponse responseDto = createMovieDetailDto(1L, "New Movie");
+		MovieAdminResponse responseDto = createMovieAdminResponse(1L, "New Movie");
 
 		MovieCreateRequest request = MovieCreateRequest.builder().title("New Movie").description("Description")
 				.durationMinutes(120).build();
@@ -94,7 +97,7 @@ public class AdminMovieControllerTest {
 		when(objectMapper.readValue(movieDataJson, MovieCreateRequest.class)).thenReturn(request);
 		when(movieService.createMovie(any(MovieCreateRequest.class))).thenReturn(responseDto);
 
-		ResponseEntity<MovieDetailResponse> response = movieController.createMovie(movieDataJson, null);
+		ResponseEntity<MovieAdminResponse> response = movieController.createMovie(movieDataJson, null);
 
 		assertEquals(HttpStatus.CREATED, response.getStatusCode());
 		assertNotNull(response.getBody());
@@ -121,7 +124,7 @@ public class AdminMovieControllerTest {
 		String movieDataJson = "{\"title\":\"Updated Movie\",\"description\":\"Updated Description\",\"durationMinutes\":130,\"removePoster\":false}";
 		MockMultipartFile posterFile = new MockMultipartFile("posterFile", "poster.jpg", "image/jpeg",
 				"content".getBytes());
-		MovieDetailResponse responseDto = createMovieDetailDto(1L, "Updated Movie");
+		MovieAdminResponse responseDto = createMovieAdminResponse(1L, "Updated Movie");
 
 		MovieUpdateRequest request = MovieUpdateRequest.builder().title("Updated Movie")
 				.description("Updated Description").durationMinutes(130).removePoster(false).build();
@@ -129,7 +132,7 @@ public class AdminMovieControllerTest {
 		when(objectMapper.readValue(movieDataJson, MovieUpdateRequest.class)).thenReturn(request);
 		when(movieService.updateMovie(eq(1L), any(MovieUpdateRequest.class))).thenReturn(responseDto);
 
-		ResponseEntity<MovieDetailResponse> response = movieController.updateMovie(1L, movieDataJson, posterFile);
+		ResponseEntity<MovieAdminResponse> response = movieController.updateMovie(1L, movieDataJson, posterFile);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
 		assertNotNull(response.getBody());
@@ -140,7 +143,7 @@ public class AdminMovieControllerTest {
 	@Test
 	void updateMovie_WithoutPoster_ShouldReturnUpdatedMovie() throws Exception {
 		String movieDataJson = "{\"title\":\"Updated Movie\",\"description\":\"Updated Description\",\"durationMinutes\":130,\"removePoster\":true}";
-		MovieDetailResponse responseDto = createMovieDetailDto(1L, "Updated Movie");
+		MovieAdminResponse responseDto = createMovieAdminResponse(1L, "Updated Movie");
 
 		MovieUpdateRequest request = MovieUpdateRequest.builder().title("Updated Movie")
 				.description("Updated Description").durationMinutes(130).removePoster(true).build();
@@ -148,7 +151,7 @@ public class AdminMovieControllerTest {
 		when(objectMapper.readValue(movieDataJson, MovieUpdateRequest.class)).thenReturn(request);
 		when(movieService.updateMovie(eq(1L), any(MovieUpdateRequest.class))).thenReturn(responseDto);
 
-		ResponseEntity<MovieDetailResponse> response = movieController.updateMovie(1L, movieDataJson, null);
+		ResponseEntity<MovieAdminResponse> response = movieController.updateMovie(1L, movieDataJson, null);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
 		assertNotNull(response.getBody());
@@ -298,11 +301,11 @@ public class AdminMovieControllerTest {
 
 	@Test
 	void getAdminMovieById_ShouldReturnMovie() {
-		MovieDetailResponse responseDto = createMovieDetailDto(1L, "Test Movie");
+		MovieAdminResponse responseDto = createMovieAdminResponse(1L, "Test Movie");
 
 		when(movieService.getAdminMovieById(1L)).thenReturn(responseDto);
 
-		ResponseEntity<MovieDetailResponse> response = movieController.getAdminMovieById(1L);
+		ResponseEntity<MovieAdminResponse> response = movieController.getAdminMovieById(1L);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode());
 		assertNotNull(response.getBody());

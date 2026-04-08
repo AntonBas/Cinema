@@ -41,12 +41,14 @@ public class MovieControllerTest {
 	private final String TITLE = "Test Movie";
 
 	private MovieDetailResponse createMovieDetailResponse(MovieStatus status) {
-		return new MovieDetailResponse(MOVIE_ID, TITLE, SLUG, null, null, 120, LocalDate.now().plusDays(1), null,
-				AgeRating.PEGI_12, status, null, "/api/movies/" + MOVIE_ID + "/poster", null, null, null, null);
+		return new MovieDetailResponse(MOVIE_ID, TITLE, SLUG, "https://trailer.url", "Description", 120,
+				LocalDate.now().plusDays(1), LocalDate.now().plusDays(30), AgeRating.PEGI_12, status, "poster.jpg",
+				"/api/movies/" + MOVIE_ID + "/poster", List.of(), List.of(), List.of(), List.of(), List.of());
 	}
 
 	private MovieCardResponse createMovieCardResponse(Long id, String title, MovieStatus status) {
-		return new MovieCardResponse(id, SLUG + id, title, null, 120, AgeRating.PEGI_12, status);
+		return new MovieCardResponse(id, SLUG + id, title, "/api/movies/" + id + "/poster", 120, AgeRating.PEGI_12,
+				status);
 	}
 
 	@Test

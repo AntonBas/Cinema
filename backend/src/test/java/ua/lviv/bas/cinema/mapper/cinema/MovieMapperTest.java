@@ -32,8 +32,8 @@ import ua.lviv.bas.cinema.dto.movie.response.MovieAdminResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieCardResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieDetailResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieSessionSearchResponse;
-import ua.lviv.bas.cinema.dto.movie.response.PersonInfoResponse;
-import ua.lviv.bas.cinema.dto.session.response.MovieSessionInfoResponse;
+import ua.lviv.bas.cinema.dto.movie.response.PersonResponse;
+import ua.lviv.bas.cinema.dto.session.response.SessionMovieInfoResponse;
 import ua.lviv.bas.cinema.repository.cinema.projection.MovieCardProjection;
 import ua.lviv.bas.cinema.repository.cinema.projection.MovieSessionSearchProjection;
 
@@ -60,22 +60,24 @@ public class MovieMapperTest {
 		Person actor = Person.builder().id(1L).name("Actor").build();
 		Person director = Person.builder().id(2L).name("Director").build();
 		Person screenwriter = Person.builder().id(3L).name("Screenwriter").build();
-		Session session = Session.builder().id(1L).startTime(LocalDateTime.now()).basePrice(BigDecimal.valueOf(150))
-				.movie(movie).hall(CinemaHall.builder().id(1L).name("Hall A").build()).build();
 
 		movie = Movie.builder().id(1L).title("Test Movie").slug("test-movie")
 				.trailerUrl("https://youtube.com/watch?v=123").description("Description").durationMinutes(120)
 				.releaseDate(LocalDate.of(2024, 1, 15)).endShowingDate(LocalDate.of(2024, 3, 15))
 				.ageRating(AgeRating.PEGI_12).status(MovieStatus.CURRENT).posterFileName("poster.jpg")
 				.genres(Set.of(genre)).actors(Set.of(actor)).directors(Set.of(director))
-				.screenwriters(Set.of(screenwriter)).sessions(Set.of(session)).build();
+				.screenwriters(Set.of(screenwriter)).sessions(new HashSet<>()).build();
+
+		Session session = Session.builder().id(1L).startTime(LocalDateTime.now()).basePrice(BigDecimal.valueOf(150))
+				.movie(movie).hall(CinemaHall.builder().id(1L).name("Hall A").build()).build();
+		movie.getSessions().add(session);
 
 		cardProjection = createCardProjection();
 		searchProjection = createSearchProjection();
 
-		when(genreMapper.toGenreInfoResponse(any())).thenReturn(new GenreResponse(1L, "Action"));
-		when(personMapper.toPersonInfoResponse(any())).thenReturn(new PersonInfoResponse(1L, "Name", null));
-		when(sessionMapper.toMovieSessionInfoResponse(any())).thenReturn(new MovieSessionInfoResponse(1L,
+		when(genreMapper.toGenreResponse(any())).thenReturn(new GenreResponse(1L, "Action"));
+		when(personMapper.toPersonResponse(any())).thenReturn(new PersonResponse(1L, "Name", null));
+		when(sessionMapper.toSessionMovieInfoResponse(any())).thenReturn(new SessionMovieInfoResponse(1L,
 				LocalDateTime.now(), LocalDateTime.now(), BigDecimal.valueOf(150), 105, "Hall A"));
 	}
 

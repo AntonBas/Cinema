@@ -17,6 +17,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.ResponseEntity;
 
+import ua.lviv.bas.cinema.config.security.user.CustomUserDetails;
 import ua.lviv.bas.cinema.domain.user.User;
 import ua.lviv.bas.cinema.dto.promotion.request.UserPromotionCreateRequest;
 import ua.lviv.bas.cinema.dto.promotion.response.PromotionResponse;
@@ -29,6 +30,10 @@ public class PromotionControllerTest {
 
 	@Mock
 	private PromotionService promotionService;
+
+	@Mock
+	private CustomUserDetails customUserDetails;
+
 	@InjectMocks
 	private PromotionController promotionController;
 
@@ -51,17 +56,31 @@ public class PromotionControllerTest {
 	}
 
 	@Test
-	void getAvailablePromotions_ReturnsList() {
+	void getAvailablePromotions_WithAuthenticatedUser_ReturnsList() {
 		User user = createUser();
 		List<PromotionResponse> promotions = List.of(createPromotionResponse(), createPromotionResponse());
 
+		when(customUserDetails.getUser()).thenReturn(user);
 		when(promotionService.getAvailablePromotions(user)).thenReturn(promotions);
 
-		ResponseEntity<List<PromotionResponse>> result = promotionController.getAvailablePromotions(user);
+		ResponseEntity<List<PromotionResponse>> result = promotionController.getAvailablePromotions(customUserDetails);
 
 		assertThat(result.getStatusCode().value()).isEqualTo(200);
 		assertThat(result.getBody()).hasSize(2);
 		verify(promotionService).getAvailablePromotions(user);
+	}
+
+	@Test
+	void getAvailablePromotions_WithAnonymousUser_ReturnsList() {
+		List<PromotionResponse> promotions = List.of(createPromotionResponse());
+
+		when(promotionService.getAvailablePromotions(null)).thenReturn(promotions);
+
+		ResponseEntity<List<PromotionResponse>> result = promotionController.getAvailablePromotions(null);
+
+		assertThat(result.getStatusCode().value()).isEqualTo(200);
+		assertThat(result.getBody()).hasSize(1);
+		verify(promotionService).getAvailablePromotions(null);
 	}
 
 	@Test
@@ -70,9 +89,10 @@ public class PromotionControllerTest {
 		UserPromotionCreateRequest request = new UserPromotionCreateRequest(PROMOTION_ID);
 		PromotionResponse response = createPromotionResponse();
 
+		when(customUserDetails.getUser()).thenReturn(user);
 		when(promotionService.claimPromotion(eq(request), eq(user))).thenReturn(response);
 
-		ResponseEntity<PromotionResponse> result = promotionController.claimPromotion(request, user);
+		ResponseEntity<PromotionResponse> result = promotionController.claimPromotion(request, customUserDetails);
 
 		assertThat(result.getStatusCode().value()).isEqualTo(200);
 		assertThat(result.getBody()).isNotNull();
@@ -85,9 +105,10 @@ public class PromotionControllerTest {
 		User user = createUser();
 		UserPromotionCreateRequest request = new UserPromotionCreateRequest(PROMOTION_ID);
 
+		when(customUserDetails.getUser()).thenReturn(user);
 		when(promotionService.claimPromotion(any(), any())).thenThrow(new PromotionNotActiveException(TITLE));
 
-		assertThatThrownBy(() -> promotionController.claimPromotion(request, user))
+		assertThatThrownBy(() -> promotionController.claimPromotion(request, customUserDetails))
 				.isInstanceOf(PromotionNotActiveException.class);
 	}
 
@@ -96,9 +117,25 @@ public class PromotionControllerTest {
 		User user = createUser();
 		UserPromotionCreateRequest request = new UserPromotionCreateRequest(PROMOTION_ID);
 
+		when(customUserDetails.getUser()).thenReturn(user);
 		when(promotionService.claimPromotion(any(), any())).thenThrow(new AlreadyClaimedException(EMAIL, TITLE));
 
-		assertThatThrownBy(() -> promotionController.claimPromotion(request, user))
+		assertThatThrownBy(() -> promotionController.claimPromotion(request, customUserDetails))
 				.isInstanceOf(AlreadyClaimedException.class);
+	}
+
+	@Test
+	void getClaimedPromotions_ReturnsList() {
+		User user = createUser();
+		List<PromotionResponse> promotions = List.of(createPromotionResponse());
+
+		when(customUserDetails.getUser()).thenReturn(user);
+		when(promotionService.getClaimedPromotions(user)).thenReturn(promotions);
+
+		ResponseEntity<List<PromotionResponse>> result = promotionController.getClaimedPromotions(customUserDetails);
+
+		assertThat(result.getStatusCode().value()).isEqualTo(200);
+		assertThat(result.getBody()).hasSize(1);
+		verify(promotionService).getClaimedPromotions(user);
 	}
 }

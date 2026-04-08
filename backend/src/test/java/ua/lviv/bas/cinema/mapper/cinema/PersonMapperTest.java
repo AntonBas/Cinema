@@ -9,18 +9,19 @@ import ua.lviv.bas.cinema.domain.cinema.Person;
 import ua.lviv.bas.cinema.domain.cinema.enums.PersonRole;
 import ua.lviv.bas.cinema.dto.movie.request.PersonRequest;
 import ua.lviv.bas.cinema.dto.movie.request.QuickCreatePersonRequest;
+import ua.lviv.bas.cinema.dto.movie.response.PersonListResponse;
 import ua.lviv.bas.cinema.dto.movie.response.PersonResponse;
-import ua.lviv.bas.cinema.repository.cinema.projection.PersonProjection;
+import ua.lviv.bas.cinema.repository.cinema.projection.PersonListProjection;
 
 public class PersonMapperTest {
 
 	private final PersonMapper mapper = Mappers.getMapper(PersonMapper.class);
 
 	@Test
-	void toPersonResponseFromEntity_ShouldMapAllFields() {
+	void toPersonListResponseFromEntity_ShouldMapAllFields() {
 		Person person = Person.builder().id(1L).name("John Doe").role(PersonRole.ACTOR).build();
 
-		PersonResponse response = mapper.toPersonResponse(person);
+		PersonListResponse response = mapper.toPersonListResponse(person);
 
 		assertThat(response).isNotNull();
 		assertThat(response.id()).isEqualTo(1L);
@@ -30,8 +31,8 @@ public class PersonMapperTest {
 	}
 
 	@Test
-	void toPersonResponseFromProjection_ShouldMapAllFields() {
-		PersonProjection projection = new PersonProjection() {
+	void toPersonListResponseFromProjection_ShouldMapAllFields() {
+		PersonListProjection projection = new PersonListProjection() {
 			@Override
 			public Long getId() {
 				return 1L;
@@ -53,7 +54,7 @@ public class PersonMapperTest {
 			}
 		};
 
-		PersonResponse response = mapper.toPersonResponse(projection);
+		PersonListResponse response = mapper.toPersonListResponse(projection);
 
 		assertThat(response).isNotNull();
 		assertThat(response.id()).isEqualTo(1L);
@@ -63,8 +64,8 @@ public class PersonMapperTest {
 	}
 
 	@Test
-	void toPersonResponseFromProjection_WithNullMovieCount_ShouldMapNull() {
-		PersonProjection projection = new PersonProjection() {
+	void toPersonListResponseFromProjection_WithNullMovieCount_ShouldMapNull() {
+		PersonListProjection projection = new PersonListProjection() {
 			@Override
 			public Long getId() {
 				return 1L;
@@ -86,13 +87,25 @@ public class PersonMapperTest {
 			}
 		};
 
-		PersonResponse response = mapper.toPersonResponse(projection);
+		PersonListResponse response = mapper.toPersonListResponse(projection);
 
 		assertThat(response).isNotNull();
 		assertThat(response.id()).isEqualTo(1L);
 		assertThat(response.name()).isEqualTo("John Doe");
 		assertThat(response.role()).isEqualTo(PersonRole.ACTOR);
 		assertThat(response.movieCount()).isNull();
+	}
+
+	@Test
+	void toPersonResponse_ShouldMapEntityToResponse() {
+		Person person = Person.builder().id(1L).name("John Doe").role(PersonRole.ACTOR).build();
+
+		PersonResponse response = mapper.toPersonResponse(person);
+
+		assertThat(response).isNotNull();
+		assertThat(response.id()).isEqualTo(1L);
+		assertThat(response.name()).isEqualTo("John Doe");
+		assertThat(response.role()).isEqualTo(PersonRole.ACTOR);
 	}
 
 	@Test
@@ -153,14 +166,20 @@ public class PersonMapperTest {
 	}
 
 	@Test
-	void toPersonResponse_WithNullEntity_ShouldReturnNull() {
-		PersonResponse response = mapper.toPersonResponse((Person) null);
+	void toPersonListResponse_WithNullEntity_ShouldReturnNull() {
+		PersonListResponse response = mapper.toPersonListResponse((Person) null);
 		assertThat(response).isNull();
 	}
 
 	@Test
-	void toPersonResponse_WithNullProjection_ShouldReturnNull() {
-		PersonResponse response = mapper.toPersonResponse((PersonProjection) null);
+	void toPersonListResponse_WithNullProjection_ShouldReturnNull() {
+		PersonListResponse response = mapper.toPersonListResponse((PersonListProjection) null);
+		assertThat(response).isNull();
+	}
+
+	@Test
+	void toPersonResponse_WithNullEntity_ShouldReturnNull() {
+		PersonResponse response = mapper.toPersonResponse(null);
 		assertThat(response).isNull();
 	}
 
