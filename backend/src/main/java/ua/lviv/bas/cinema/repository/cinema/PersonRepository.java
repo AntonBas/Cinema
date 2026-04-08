@@ -9,7 +9,7 @@ import org.springframework.stereotype.Repository;
 
 import ua.lviv.bas.cinema.domain.cinema.Person;
 import ua.lviv.bas.cinema.domain.cinema.enums.PersonRole;
-import ua.lviv.bas.cinema.repository.cinema.projection.PersonProjection;
+import ua.lviv.bas.cinema.repository.cinema.projection.PersonListProjection;
 
 @Repository
 public interface PersonRepository extends JpaRepository<Person, Long> {
@@ -33,6 +33,6 @@ public interface PersonRepository extends JpaRepository<Person, Long> {
 			    AND (:role IS NULL OR p.role = :role)
 			ORDER BY movieCount DESC, p.name ASC
 			""")
-	Page<PersonProjection> findProjectionsByFilters(@Param("name") String name, @Param("role") PersonRole role,
+	Page<PersonListProjection> findProjectionsByFilters(@Param("name") String name, @Param("role") PersonRole role,
 			Pageable pageable);
 }

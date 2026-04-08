@@ -36,11 +36,11 @@ public record MovieDetailResponse(
 
 		@Schema(description = "List of genres associated with the movie") List<GenreResponse> genres,
 
-		@Schema(description = "List of actors in the movie") List<PersonInfoResponse> actors,
+		@Schema(description = "List of actors in the movie") List<PersonResponse> actors,
 
-		@Schema(description = "List of directors of the movie") List<PersonInfoResponse> directors,
+		@Schema(description = "List of directors of the movie") List<PersonResponse> directors,
 
-		@Schema(description = "List of screenwriters of the movie") List<PersonInfoResponse> screenwriters,
+		@Schema(description = "List of screenwriters of the movie") List<PersonResponse> screenwriters,
 
 		@Schema(description = "List of sessions for this movie") List<MovieSessionInfoResponse> sessions) {
 }

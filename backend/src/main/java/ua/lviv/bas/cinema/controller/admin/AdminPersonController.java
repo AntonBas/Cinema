@@ -28,6 +28,7 @@ import ua.lviv.bas.cinema.domain.cinema.enums.PersonRole;
 import ua.lviv.bas.cinema.dto.PageResponse;
 import ua.lviv.bas.cinema.dto.movie.request.PersonRequest;
 import ua.lviv.bas.cinema.dto.movie.request.QuickCreatePersonRequest;
+import ua.lviv.bas.cinema.dto.movie.response.PersonListResponse;
 import ua.lviv.bas.cinema.dto.movie.response.PersonResponse;
 import ua.lviv.bas.cinema.service.cinema.PersonService;
 
@@ -92,11 +93,11 @@ public class AdminPersonController {
 	@GetMapping
 	@Operation(summary = "Get all persons with filters")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Persons retrieved successfully") })
-	public ResponseEntity<PageResponse<PersonResponse>> getAllPersons(@RequestParam(required = false) String name,
+	public ResponseEntity<PageResponse<PersonListResponse>> getAllPersons(@RequestParam(required = false) String name,
 			@RequestParam(required = false) PersonRole role,
 			@Parameter(hidden = true) @PageableDefault(size = 12) Pageable pageable) {
 		log.info("GET /api/admin/persons - name: '{}', role: {}", name, role);
-		var result = personService.searchPersons(name, role, pageable);
+		var result = personService.getPersons(name, role, pageable);
 		return ResponseEntity.ok(PageResponse.from(result));
 	}
 }

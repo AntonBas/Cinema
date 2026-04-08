@@ -10,20 +10,20 @@ import org.mapstruct.ReportingPolicy;
 import ua.lviv.bas.cinema.domain.cinema.Person;
 import ua.lviv.bas.cinema.dto.movie.request.PersonRequest;
 import ua.lviv.bas.cinema.dto.movie.request.QuickCreatePersonRequest;
-import ua.lviv.bas.cinema.dto.movie.response.PersonInfoResponse;
+import ua.lviv.bas.cinema.dto.movie.response.PersonListResponse;
 import ua.lviv.bas.cinema.dto.movie.response.PersonResponse;
-import ua.lviv.bas.cinema.repository.cinema.projection.PersonProjection;
+import ua.lviv.bas.cinema.repository.cinema.projection.PersonListProjection;
 
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.WARN)
 public interface PersonMapper {
 
 	@Mapping(target = "movieCount", constant = "0")
-	PersonResponse toPersonResponse(Person person);
+	PersonListResponse toPersonListResponse(Person person);
 
 	@Mapping(target = "movieCount", source = "movieCount")
-	PersonResponse toPersonResponse(PersonProjection projection);
+	PersonListResponse toPersonListResponse(PersonListProjection projection);
 
-	PersonInfoResponse toPersonInfoResponse(Person person);
+	PersonResponse toPersonResponse(Person person);
 
 	@Mapping(target = "id", ignore = true)
 	Person toPerson(PersonRequest personRequest);

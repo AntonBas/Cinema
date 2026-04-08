@@ -18,6 +18,7 @@ import ua.lviv.bas.cinema.domain.cinema.Person;
 import ua.lviv.bas.cinema.domain.cinema.enums.PersonRole;
 import ua.lviv.bas.cinema.dto.movie.request.PersonRequest;
 import ua.lviv.bas.cinema.dto.movie.request.QuickCreatePersonRequest;
+import ua.lviv.bas.cinema.dto.movie.response.PersonListResponse;
 import ua.lviv.bas.cinema.dto.movie.response.PersonResponse;
 import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
 import ua.lviv.bas.cinema.exception.domain.cinema.PersonHasMoviesException;
@@ -25,7 +26,7 @@ import ua.lviv.bas.cinema.exception.domain.cinema.PersonNotFoundException;
 import ua.lviv.bas.cinema.mapper.cinema.PersonMapper;
 import ua.lviv.bas.cinema.repository.cinema.MovieRepository;
 import ua.lviv.bas.cinema.repository.cinema.PersonRepository;
-import ua.lviv.bas.cinema.repository.cinema.projection.PersonProjection;
+import ua.lviv.bas.cinema.repository.cinema.projection.PersonListProjection;
 
 @Slf4j
 @Service
@@ -53,18 +54,42 @@ public class PersonService {
 		return createPersonInternal(request.name(), request.role(), person);
 	}
 
-	private PersonResponse createPersonInternal(String name, PersonRole role, Person person) {
-		validatePersonUniqueness(name, role, null);
-		Person saved = personRepository.save(person);
-		log.debug("Person created with ID: {}", saved.getId());
-		return personMapper.toPersonResponse(saved);
-	}
-
 	@Cacheable(key = "#id")
 	public PersonResponse getPersonById(Long id) {
 		log.debug("Retrieving person by id: {}", id);
-		Person person = findPersonById(id);
-		return personMapper.toPersonResponse(person);
+		return personRepository.findById(id).map(personMapper::toPersonResponse)
+				.orElseThrow(() -> new PersonNotFoundException(id));
+	}
+
+	@Cacheable(key = "'search-' + #name + '-' + #role + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
+	public Page<PersonListResponse> getPersons(String name, PersonRole role, Pageable pageable) {
+		log.info("Getting persons: name='{}', role={}", name, role);
+		Page<PersonListProjection> projections = personRepository.findProjectionsByFilters(name, role, pageable);
+		return projections.map(personMapper::toPersonListResponse);
+	}
+
+	@Cacheable(key = "'popular-' + #name + '-' + #role + '-' + #limit")
+	public List<PersonListResponse> getPopularPersons(String name, PersonRole role, int limit) {
+		log.info("Getting popular persons: name='{}', role={}, limit={}", name, role, limit);
+		Page<PersonListProjection> page = personRepository.findProjectionsByFilters(name, role,
+				PageRequest.of(0, limit));
+		return page.getContent().stream().map(personMapper::toPersonListResponse).toList();
+	}
+
+	@Cacheable(key = "'by-ids-' + #ids.hashCode()")
+	public List<PersonListResponse> getPersonsByIds(List<Long> ids) {
+		log.debug("Retrieving persons by ids: {}", ids);
+
+		if (ids == null || ids.isEmpty()) {
+			return List.of();
+		}
+
+		List<Person> persons = personRepository.findAllById(ids);
+		return persons.stream().map(personMapper::toPersonListResponse).toList();
+	}
+
+	public boolean existsByNameAndRole(String name, PersonRole role) {
+		return personRepository.existsByNameAndRole(name, role);
 	}
 
 	@Caching(evict = { @CacheEvict(key = "#id"), @CacheEvict(allEntries = true) })
@@ -76,7 +101,6 @@ public class PersonService {
 		validatePersonUniqueness(request.name(), request.role(), id);
 
 		personMapper.updatePersonFromRequest(request, existing);
-		existing.setName(request.name());
 
 		Person updated = personRepository.save(existing);
 		log.debug("Person updated with ID: {}", updated.getId());
@@ -95,34 +119,11 @@ public class PersonService {
 		log.debug("Person deleted with ID: {}", id);
 	}
 
-	@Cacheable(key = "'search-' + #name + '-' + #role + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
-	public Page<PersonResponse> searchPersons(String name, PersonRole role, Pageable pageable) {
-		log.info("Searching persons: name='{}', role={}", name, role);
-		Page<PersonProjection> projections = personRepository.findProjectionsByFilters(name, role, pageable);
-		return projections.map(personMapper::toPersonResponse);
-	}
-
-	@Cacheable(key = "'popular-' + #name + '-' + #role + '-' + #limit")
-	public List<PersonResponse> getPopularPersons(String name, PersonRole role, int limit) {
-		log.info("Getting popular persons: name='{}', role={}, limit={}", name, role, limit);
-		Page<PersonProjection> page = personRepository.findProjectionsByFilters(name, role, PageRequest.of(0, limit));
-		return page.getContent().stream().map(personMapper::toPersonResponse).toList();
-	}
-
-	@Cacheable(key = "'by-ids-' + #ids.hashCode()")
-	public List<PersonResponse> getPersonsByIds(List<Long> ids) {
-		log.debug("Retrieving persons by ids: {}", ids);
-
-		if (ids == null || ids.isEmpty()) {
-			return List.of();
-		}
-
-		List<Person> persons = personRepository.findAllById(ids);
-		return persons.stream().map(personMapper::toPersonResponse).toList();
-	}
-
-	public boolean existsByNameAndRole(String name, PersonRole role) {
-		return personRepository.existsByNameAndRole(name, role);
+	private PersonResponse createPersonInternal(String name, PersonRole role, Person person) {
+		validatePersonUniqueness(name, role, null);
+		Person saved = personRepository.save(person);
+		log.debug("Person created with ID: {}", saved.getId());
+		return personMapper.toPersonResponse(saved);
 	}
 
 	private Person findPersonById(Long id) {
