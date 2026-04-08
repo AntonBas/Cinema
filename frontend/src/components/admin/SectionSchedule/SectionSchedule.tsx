@@ -64,12 +64,12 @@ export const SectionSchedule: React.FC = () => {
     const initialLoadDone = useRef(false);
 
     const {
-        getSessions,
-        createSession,
-        updateSession,
-        deleteSession,
-        cancelSession,
-        reactivateSession,
+        getAdminSessions,
+        create,
+        update,
+        remove,
+        cancel,
+        reactivate,
         loading
     } = useSession();
 
@@ -125,7 +125,7 @@ export const SectionSchedule: React.FC = () => {
                 ...filters
             };
 
-            const response = await getSessions(requestParams);
+            const response = await getAdminSessions(requestParams);
 
             setSessionData({
                 sessions: response?.content || [],
@@ -142,7 +142,7 @@ export const SectionSchedule: React.FC = () => {
         } finally {
             loadingDataRef.current = false;
         }
-    }, [params.page, params.size, filters, getSessions, showNotification]);
+    }, [params.page, params.size, filters, getAdminSessions, showNotification]);
 
     useEffect(() => {
         if (!initialLoadDone.current) {
@@ -226,7 +226,7 @@ export const SectionSchedule: React.FC = () => {
     const handleConfirmDelete = useCallback(async () => {
         if (!sessionToDelete) return;
         try {
-            await deleteSession(sessionToDelete.id);
+            await remove(sessionToDelete.id);
             showNotification('Session deleted successfully', 'success');
             setIsDeleteModalOpen(false);
             setSessionToDelete(null);
@@ -238,12 +238,12 @@ export const SectionSchedule: React.FC = () => {
                 showNotification('Failed to delete session', 'error');
             }
         }
-    }, [sessionToDelete, deleteSession, showNotification, loadSessions]);
+    }, [sessionToDelete, remove, showNotification, loadSessions]);
 
     const handleConfirmCancel = useCallback(async () => {
         if (!sessionToCancel) return;
         try {
-            await cancelSession(sessionToCancel.id);
+            await cancel(sessionToCancel.id);
             showNotification('Session cancelled successfully', 'success');
             setIsCancelModalOpen(false);
             setSessionToCancel(null);
@@ -255,12 +255,12 @@ export const SectionSchedule: React.FC = () => {
                 showNotification('Failed to cancel session', 'error');
             }
         }
-    }, [sessionToCancel, cancelSession, showNotification, loadSessions]);
+    }, [sessionToCancel, cancel, showNotification, loadSessions]);
 
     const handleConfirmReactivate = useCallback(async () => {
         if (!sessionToReactivate) return;
         try {
-            await reactivateSession(sessionToReactivate.id);
+            await reactivate(sessionToReactivate.id);
             showNotification('Session reactivated successfully', 'success');
             setIsReactivateModalOpen(false);
             setSessionToReactivate(null);
@@ -272,11 +272,11 @@ export const SectionSchedule: React.FC = () => {
                 showNotification('Failed to reactivate session', 'error');
             }
         }
-    }, [sessionToReactivate, reactivateSession, showNotification, loadSessions]);
+    }, [sessionToReactivate, reactivate, showNotification, loadSessions]);
 
     const handleSaveNewSession = useCallback(async (data: SessionCreateRequest) => {
         try {
-            await createSession(data);
+            await create(data);
             showNotification('Session created successfully', 'success');
             setIsCreateModalOpen(false);
             setSelectedSession(null);
@@ -290,11 +290,11 @@ export const SectionSchedule: React.FC = () => {
             }
             throw error;
         }
-    }, [createSession, showNotification, loadSessions, setPage]);
+    }, [create, showNotification, loadSessions, setPage]);
 
     const handleSaveUpdatedSession = useCallback(async (id: number, data: SessionUpdateRequest) => {
         try {
-            await updateSession(id, data);
+            await update(id, data);
             showNotification('Session updated successfully', 'success');
             setIsUpdateModalOpen(false);
             setSelectedSession(null);
@@ -307,7 +307,7 @@ export const SectionSchedule: React.FC = () => {
             }
             throw error;
         }
-    }, [updateSession, showNotification, loadSessions]);
+    }, [update, showNotification, loadSessions]);
 
     const handlePageChange = useCallback((page: number) => {
         setPage(page);

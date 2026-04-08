@@ -89,9 +89,8 @@ export const SessionList: React.FC<SessionListProps> = ({ sessions }) => {
         navigate(`/booking/${sessionId}`);
     }, [navigate]);
 
-    const formatPrice = useCallback((price: string): string => {
-        const numericPrice = parseFloat(price);
-        return isNaN(numericPrice) ? '0' : numericPrice.toFixed(0);
+    const formatPrice = useCallback((price: number): string => {
+        return price.toFixed(0);
     }, []);
 
     if (sessions.length === 0) {

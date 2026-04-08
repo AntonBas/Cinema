@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import type { GenreResponse } from '@/types/genre';
+import type { GenreListResponse } from '@/types/genre';
 import { useGenres } from '@/hooks/features/genres/useGenres';
 import { useNotification } from '@/hooks/common/useNotification';
 import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
@@ -16,15 +16,15 @@ import { isApiErrorException } from '@/utils/apiErrorHandler';
 import styles from './GenreTab.module.css';
 
 interface TabData {
-  data: GenreResponse[];
+  data: GenreListResponse[];
   total: number;
 }
 
 export const GenreTab: React.FC = () => {
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [editingGenre, setEditingGenre] = useState<GenreResponse | null>(null);
-  const [deletingGenre, setDeletingGenre] = useState<GenreResponse | null>(null);
+  const [editingGenre, setEditingGenre] = useState<GenreListResponse | null>(null);
+  const [deletingGenre, setDeletingGenre] = useState<GenreListResponse | null>(null);
   const [tabData, setTabData] = useState<TabData>({
     data: [],
     total: 0
@@ -176,12 +176,12 @@ export const GenreTab: React.FC = () => {
     }
   };
 
-  const handleEdit = useCallback((genre: GenreResponse) => {
+  const handleEdit = useCallback((genre: GenreListResponse) => {
     setEditingGenre(genre);
     setIsFormModalOpen(true);
   }, []);
 
-  const handleDelete = useCallback((genre: GenreResponse) => {
+  const handleDelete = useCallback((genre: GenreListResponse) => {
     setDeletingGenre(genre);
     setIsDeleteModalOpen(true);
   }, []);

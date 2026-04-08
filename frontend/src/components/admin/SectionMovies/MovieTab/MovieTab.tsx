@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import type { MovieAdminResponse, MovieCardResponse } from '@/types/movie';
+import type { MovieAdminResponse, MovieCardResponse, MovieStatus } from '@/types/movie';
 import { useMovies } from '@/hooks/features/movies/useMovies';
 import { useNotification } from '@/hooks/common/useNotification';
 import { usePagination } from '@/hooks/common/usePagination';
@@ -39,9 +39,7 @@ export const MovieTab: React.FC = () => {
   const { params, setPage, setSearch } = usePagination({ size: 12 });
 
   const {
-    getAdminCurrent,
-    getAdminUpcoming,
-    getAdminArchived,
+    getAdminMovies,
     getAdminById,
     remove,
     loading: moviesLoading
@@ -78,21 +76,15 @@ export const MovieTab: React.FC = () => {
     loadingDataRef.current[tab] = true;
 
     try {
-      const baseParams = { page, size: 12 };
-      const requestParams = search ? { ...baseParams, title: search } : baseParams;
+      const status = tab as MovieStatus;
+      const requestParams = {
+        page,
+        size: 12,
+        ...(search ? { title: search } : {}),
+        status
+      };
 
-      let response;
-      switch (tab) {
-        case 'CURRENT':
-          response = await getAdminCurrent(requestParams);
-          break;
-        case 'UPCOMING':
-          response = await getAdminUpcoming(requestParams);
-          break;
-        case 'ARCHIVED':
-          response = await getAdminArchived(requestParams);
-          break;
-      }
+      const response = await getAdminMovies(requestParams);
 
       if (isMountedRef.current) {
         setTabData(prev => ({
@@ -117,7 +109,7 @@ export const MovieTab: React.FC = () => {
         loadingDataRef.current[tab] = false;
       }
     }
-  }, [getAdminCurrent, getAdminUpcoming, getAdminArchived, showNotification]);
+  }, [getAdminMovies, showNotification]);
 
   const loadTabDataStable = useRef(loadTabData).current;
 

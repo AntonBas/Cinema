@@ -13,20 +13,20 @@ import { useNotification } from '@/hooks/common/useNotification';
 import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
 import { usePagination } from '@/hooks/common/usePagination';
 import { isApiErrorException } from '@/utils/apiErrorHandler';
-import type { PersonResponse, PersonRequest, PersonRole } from '@/types/person';
+import type { PersonRequest, PersonRole, PersonListResponse } from '@/types/person';
 import styles from './PersonTab.module.css';
 
 interface TabData {
   key: PersonRole | 'ALL';
-  data: PersonResponse[];
+  data: PersonListResponse[];
   total: number;
 }
 
 export const PersonTab: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [editingPerson, setEditingPerson] = useState<PersonResponse | null>(null);
-  const [personToDelete, setPersonToDelete] = useState<PersonResponse | null>(null);
+  const [editingPerson, setEditingPerson] = useState<PersonListResponse | null>(null);
+  const [personToDelete, setPersonToDelete] = useState<PersonListResponse | null>(null);
   const [activeTab, setActiveTab] = useState<PersonRole | 'ALL'>('ALL');
   const [tabData, setTabData] = useState<Record<PersonRole | 'ALL', TabData>>({
     ALL: { key: 'ALL', data: [], total: 0 },

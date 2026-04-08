@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { movieApi } from '@/api/movieApi';
 import type { MovieDetailResponse } from '@/types/movie';
-import type { MovieSessionInfoResponse } from '@/types/session';
+import type { SessionMovieInfoResponse } from '@/types/session';
 import {
     AgeRatingDisplay,
     AgeRatingDescription,
@@ -31,7 +31,7 @@ export const MovieDetailPage: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [selectedDate, setSelectedDate] = useState<string | null>(null);
     const [dateList, setDateList] = useState<string[]>([]);
-    const [sessionsByDate, setSessionsByDate] = useState<Record<string, MovieSessionInfoResponse[]>>({});
+    const [sessionsByDate, setSessionsByDate] = useState<Record<string, SessionMovieInfoResponse[]>>({});
     const [dateScrollIndex, setDateScrollIndex] = useState(0);
     const datesPerView = 5;
     const isMounted = useRef(true);
@@ -58,7 +58,7 @@ export const MovieDetailPage: React.FC = () => {
                     setMovie(movieData);
 
                     if (movieData.sessions && movieData.sessions.length > 0) {
-                        const grouped: Record<string, MovieSessionInfoResponse[]> = {};
+                        const grouped: Record<string, SessionMovieInfoResponse[]> = {};
                         movieData.sessions.forEach(session => {
                             const date = session.startTime.split('T')[0];
                             if (!grouped[date]) {

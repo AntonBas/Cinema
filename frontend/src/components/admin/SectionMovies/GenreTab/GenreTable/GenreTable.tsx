@@ -1,12 +1,12 @@
 import React, { useCallback } from 'react';
-import type { GenreResponse } from '@/types/genre';
+import type { GenreListResponse } from '@/types/genre';
 import { Button, Badge } from '@/components/ui';
 import styles from './GenreTable.module.css';
 
 interface GenreTableProps {
-    genres: GenreResponse[];
-    onEdit: (genre: GenreResponse) => void;
-    onDelete: (genre: GenreResponse) => void;
+    genres: GenreListResponse[];
+    onEdit: (genre: GenreListResponse) => void;
+    onDelete: (genre: GenreListResponse) => void;
 }
 
 export const GenreTable: React.FC<GenreTableProps> = React.memo(({

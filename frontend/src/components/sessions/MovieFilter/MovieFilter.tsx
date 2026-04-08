@@ -28,7 +28,7 @@ export const MovieFilter: React.FC<MovieFilterProps> = ({ selectedMovieId, onMov
 
         setLoading(true);
         try {
-            const response = await movieApi.admin.searchMoviesForSession(query);
+            const response = await movieApi.admin.searchForSession(query);
             const results = response?.data || [];
             setMovies(results);
             setShowDropdown(results.length > 0);
@@ -54,7 +54,7 @@ export const MovieFilter: React.FC<MovieFilterProps> = ({ selectedMovieId, onMov
         if (selectedMovieId && selectedMovie?.id !== selectedMovieId) {
             const fetchSelectedMovie = async () => {
                 try {
-                    const response = await movieApi.admin.searchMoviesForSession('');
+                    const response = await movieApi.admin.searchForSession('');
                     const results = response?.data || [];
                     const movie = results.find((m: MovieSessionSearchResponse) => m.id === selectedMovieId);
                     if (movie) {

@@ -16,9 +16,9 @@ interface BaseSessionModalProps {
     loading: boolean;
     initialData?: {
         startTime?: string;
-        basePrice?: string;
-        movieId?: string;
-        hallId?: string;
+        basePrice?: number;
+        movieId?: number;
+        hallId?: number;
         movieTitle?: string;
         movieDuration?: number;
     };
@@ -43,18 +43,18 @@ export const BaseSessionModal: React.FC<BaseSessionModalProps> = ({
     halls,
     hallsLoading
 }) => {
-    const { searchMoviesForSession } = useMovies();
+    const { searchForSession } = useMovies();
 
     const [formData, setFormData] = useState({
         startTime: initialData?.startTime || '',
-        basePrice: initialData?.basePrice || '',
-        movieId: initialData?.movieId || '',
-        hallId: initialData?.hallId || ''
+        basePrice: initialData?.basePrice?.toString() || '',
+        movieId: initialData?.movieId?.toString() || '',
+        hallId: initialData?.hallId?.toString() || ''
     });
 
     const [selectedMovie, setSelectedMovie] = useState<MovieSessionSearchResponse | null>(
         initialData?.movieId ? {
-            id: Number(initialData.movieId),
+            id: initialData.movieId,
             title: initialData.movieTitle || '',
             durationMinutes: initialData.movieDuration || 0
         } : null
@@ -78,16 +78,16 @@ export const BaseSessionModal: React.FC<BaseSessionModalProps> = ({
         if (isOpen && isFirstRender.current) {
             setFormData({
                 startTime: initialData?.startTime || '',
-                basePrice: initialData?.basePrice || '',
-                movieId: initialData?.movieId || '',
-                hallId: initialData?.hallId || ''
+                basePrice: initialData?.basePrice?.toString() || '',
+                movieId: initialData?.movieId?.toString() || '',
+                hallId: initialData?.hallId?.toString() || ''
             });
 
             setMovieSearchTerm(initialData?.movieTitle || '');
 
             if (initialData?.movieId) {
                 setSelectedMovie({
-                    id: Number(initialData.movieId),
+                    id: initialData.movieId,
                     title: initialData.movieTitle || '',
                     durationMinutes: initialData.movieDuration || 0
                 });
@@ -137,7 +137,7 @@ export const BaseSessionModal: React.FC<BaseSessionModalProps> = ({
             const date = formData.startTime.split('T')[0];
             setIsSearching(true);
             try {
-                const response = await searchMoviesForSession(date);
+                const response = await searchForSession(date);
                 const results = response || [];
                 setMovieResults(results);
                 setShowMovieResults(results && results.length > 0);
@@ -148,7 +148,7 @@ export const BaseSessionModal: React.FC<BaseSessionModalProps> = ({
                 setIsSearching(false);
             }
         }
-    }, [formData.startTime, searchMoviesForSession]);
+    }, [formData.startTime, searchForSession]);
 
     const handleMovieInputChange = useCallback(async (value: string) => {
         setMovieSearchTerm(value);
@@ -157,7 +157,7 @@ export const BaseSessionModal: React.FC<BaseSessionModalProps> = ({
             setIsSearching(true);
             try {
                 const searchTerm = value.trim() || undefined;
-                const response = await searchMoviesForSession(searchTerm || date);
+                const response = await searchForSession(searchTerm || date);
                 const results = response || [];
                 setMovieResults(results);
                 setShowMovieResults(true);
@@ -168,7 +168,7 @@ export const BaseSessionModal: React.FC<BaseSessionModalProps> = ({
                 setIsSearching(false);
             }
         }
-    }, [formData.startTime, searchMoviesForSession]);
+    }, [formData.startTime, searchForSession]);
 
     const handleMovieSelect = useCallback((movie: MovieSessionSearchResponse) => {
         setSelectedMovie(movie);
@@ -230,14 +230,23 @@ export const BaseSessionModal: React.FC<BaseSessionModalProps> = ({
                 if (formData.startTime && formData.startTime !== initialFormDataRef.current?.startTime) {
                     updateData.startTime = formData.startTime;
                 }
-                if (formData.basePrice && formData.basePrice !== initialFormDataRef.current?.basePrice) {
-                    updateData.basePrice = formData.basePrice;
+                if (formData.basePrice) {
+                    const newPrice = Number(formData.basePrice);
+                    if (newPrice !== initialFormDataRef.current?.basePrice) {
+                        updateData.basePrice = newPrice;
+                    }
                 }
-                if (formData.movieId && formData.movieId !== initialFormDataRef.current?.movieId) {
-                    updateData.movieId = Number(formData.movieId);
+                if (formData.movieId) {
+                    const newMovieId = Number(formData.movieId);
+                    if (newMovieId !== initialFormDataRef.current?.movieId) {
+                        updateData.movieId = newMovieId;
+                    }
                 }
-                if (formData.hallId && formData.hallId !== initialFormDataRef.current?.hallId) {
-                    updateData.hallId = Number(formData.hallId);
+                if (formData.hallId) {
+                    const newHallId = Number(formData.hallId);
+                    if (newHallId !== initialFormDataRef.current?.hallId) {
+                        updateData.hallId = newHallId;
+                    }
                 }
 
                 if (Object.keys(updateData).length === 0) {
@@ -248,7 +257,7 @@ export const BaseSessionModal: React.FC<BaseSessionModalProps> = ({
             } else {
                 const createData: SessionCreateRequest = {
                     startTime: formData.startTime,
-                    basePrice: formData.basePrice,
+                    basePrice: Number(formData.basePrice),
                     movieId: Number(formData.movieId),
                     hallId: Number(formData.hallId)
                 };
@@ -279,9 +288,10 @@ export const BaseSessionModal: React.FC<BaseSessionModalProps> = ({
 
     const hasChanges = useMemo(() => {
         if (!isEditing || !initialFormDataRef.current) return false;
-        return Object.keys(formData).some(key =>
-            formData[key as keyof typeof formData] !== initialFormDataRef.current![key as keyof typeof formData]
-        );
+        return formData.startTime !== (initialFormDataRef.current.startTime || '') ||
+            Number(formData.basePrice) !== (initialFormDataRef.current.basePrice || 0) ||
+            Number(formData.movieId) !== (initialFormDataRef.current.movieId || 0) ||
+            Number(formData.hallId) !== (initialFormDataRef.current.hallId || 0);
     }, [isEditing, formData]);
 
     return (

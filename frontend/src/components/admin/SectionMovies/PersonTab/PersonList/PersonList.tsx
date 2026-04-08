@@ -1,14 +1,14 @@
 import React, { useCallback, useMemo } from 'react';
-import type { PersonResponse, PersonRole } from '@/types/person';
+import type { PersonListResponse, PersonRole } from '@/types/person';
 import { PersonCard } from '../PersonCard/PersonCard';
 import { Button } from '@/components/ui';
 import styles from './PersonList.module.css';
 
 interface PersonListProps {
-    persons: PersonResponse[];
+    persons: PersonListResponse[];
     activeTab: PersonRole | 'ALL';
-    onEdit: (person: PersonResponse) => void;
-    onDelete: (person: PersonResponse) => void;
+    onEdit: (person: PersonListResponse) => void;
+    onDelete: (person: PersonListResponse) => void;
     onAddPerson: () => void;
 }
 

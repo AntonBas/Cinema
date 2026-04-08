@@ -22,37 +22,16 @@ export const EditSessionModal: React.FC<EditSessionModalProps> = ({
     halls,
     hallsLoading
 }) => {
-    console.log('🎬 EditSessionModal render', {
-        isOpen,
-        sessionId: session?.id,
-        sessionPrice: session?.basePrice,
-        sessionStartTime: session?.startTime
-    });
-
     const [modalSession, setModalSession] = useState(session);
 
     useEffect(() => {
-        console.log('🎬 EditSessionModal useEffect - isOpen changed', {
-            isOpen,
-            sessionId: session?.id,
-            sessionPrice: session?.basePrice
-        });
-
         if (isOpen && session) {
-            console.log('🎬 EditSessionModal - setting modalSession', session);
             setModalSession(session);
         }
     }, [isOpen, session]);
 
     const handleSave = async (data: SessionCreateRequest | SessionUpdateRequest) => {
-        console.log('🎬 EditSessionModal handleSave', {
-            sessionId: session.id,
-            data,
-            modalSessionPrice: modalSession.basePrice
-        });
-
         await onSave(session.id, data as SessionUpdateRequest);
-        console.log('🎬 EditSessionModal handleSave - after onSave, calling onClose');
         onClose();
     };
 
@@ -64,9 +43,9 @@ export const EditSessionModal: React.FC<EditSessionModalProps> = ({
             loading={loading}
             initialData={{
                 startTime: modalSession.startTime,
-                basePrice: modalSession.basePrice.toString(),
-                movieId: modalSession.movieId.toString(),
-                hallId: modalSession.hallId.toString(),
+                basePrice: modalSession.basePrice,
+                movieId: modalSession.movieId,
+                hallId: modalSession.hallId,
                 movieTitle: modalSession.movieTitle,
                 movieDuration: modalSession.movieDuration
             }}

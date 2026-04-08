@@ -38,8 +38,8 @@ const SessionsPage: React.FC = () => {
         setError(null);
 
         try {
-            const sessionsData = await sessionApi.public.getSessions(undefined, selectedDate);
-            const data = sessionsData?.data || [];
+            const response = await sessionApi.public.getSchedule({ date: selectedDate });
+            const data = response?.data || [];
 
             let filteredData = data;
             if (selectedMovieId) {
@@ -58,7 +58,7 @@ const SessionsPage: React.FC = () => {
 
     const fetchAvailableDates = useCallback(async () => {
         try {
-            const response = await sessionApi.public.getSessions();
+            const response = await sessionApi.public.getSchedule({});
             const data = response?.data || [];
 
             let filteredData = data;

@@ -1,13 +1,13 @@
 import React, { useMemo } from 'react';
-import type { PersonResponse, PersonRole } from '@/types/person';
+import type { PersonListResponse, PersonRole } from '@/types/person';
 import { PersonRoleDisplay } from '@/types/person';
 import { Button, Badge } from '@/components/ui';
 import styles from './PersonCard.module.css';
 
 interface PersonCardProps {
-    person: PersonResponse;
-    onEdit: (person: PersonResponse) => void;
-    onDelete: (person: PersonResponse) => void;
+    person: PersonListResponse;
+    onEdit: (person: PersonListResponse) => void;
+    onDelete: (person: PersonListResponse) => void;
 }
 
 interface RoleConfig {

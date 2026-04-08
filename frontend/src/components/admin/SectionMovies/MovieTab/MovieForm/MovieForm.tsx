@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import type {
-    MovieDetailResponse,
     MovieAdminResponse,
     MovieCreateRequest,
     MovieUpdateRequest,

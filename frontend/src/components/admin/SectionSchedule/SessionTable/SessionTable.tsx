@@ -48,11 +48,9 @@ const getOccupancyColor = (percentage: number): string => {
     return '#6b7280';
 };
 
-const formatCurrency = (price: string | number | null | undefined): string => {
-    if (price === null || price === undefined) return '0.00 UAH';
-    const numericPrice = typeof price === 'string' ? parseFloat(price) : price;
-    if (isNaN(numericPrice)) return '0.00 UAH';
-    return `${numericPrice.toFixed(2)} UAH`;
+const formatCurrency = (price: number | string | null | undefined): string => {
+    const num = typeof price === 'string' ? parseFloat(price) : (price ?? 0);
+    return `${num.toFixed(2)} UAH`;
 };
 
 const formatTime = (dateString: string): string => {
@@ -139,7 +137,7 @@ export const SessionTable: React.FC<SessionTableProps> = ({
         const cancellable = canCancel(session.status);
         const reactivatable = canReactivate(session.status);
 
-        const totalRevenue = parseFloat(session.totalRevenue || '0');
+        const totalRevenue = session.totalRevenue ?? 0;
         const avgRevenue = session.ticketsSold > 0
             ? totalRevenue / session.ticketsSold
             : 0;

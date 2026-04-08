@@ -1,11 +1,11 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import type { MovieSessionInfoResponse } from '@/types/session';
+import type { SessionMovieInfoResponse } from '@/types/session';
 import styles from './SessionSection.module.css';
 
 interface SessionSectionProps {
     dateList: string[];
-    sessionsByDate: Record<string, MovieSessionInfoResponse[]>;
+    sessionsByDate: Record<string, SessionMovieInfoResponse[]>;
     selectedDate: string | null;
     onDateSelect: (date: string) => void;
     dateScrollIndex: number;
