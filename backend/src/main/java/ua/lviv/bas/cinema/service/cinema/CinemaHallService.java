@@ -2,7 +2,6 @@ package ua.lviv.bas.cinema.service.cinema;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,18 +20,16 @@ import ua.lviv.bas.cinema.domain.cinema.CinemaHall;
 import ua.lviv.bas.cinema.domain.cinema.Seat;
 import ua.lviv.bas.cinema.domain.cinema.enums.SeatType;
 import ua.lviv.bas.cinema.dto.hall.request.CinemaHallRequest;
+import ua.lviv.bas.cinema.dto.hall.response.CinemaHallListResponse;
 import ua.lviv.bas.cinema.dto.hall.response.CinemaHallResponse;
 import ua.lviv.bas.cinema.dto.hall.response.HallLayoutResponse;
-import ua.lviv.bas.cinema.dto.hall.response.SeatResponse;
-import ua.lviv.bas.cinema.dto.hall.response.SeatRowResponse;
 import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
 import ua.lviv.bas.cinema.exception.domain.cinema.CinemaHallHasSessionsException;
 import ua.lviv.bas.cinema.exception.domain.cinema.CinemaHallNotFoundException;
 import ua.lviv.bas.cinema.mapper.cinema.CinemaHallMapper;
-import ua.lviv.bas.cinema.mapper.cinema.SeatMapper;
 import ua.lviv.bas.cinema.repository.cinema.CinemaHallRepository;
 import ua.lviv.bas.cinema.repository.cinema.SeatRepository;
-import ua.lviv.bas.cinema.repository.cinema.projection.CinemaHallProjection;
+import ua.lviv.bas.cinema.repository.cinema.projection.CinemaHallListProjection;
 import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 
 @Slf4j
@@ -43,7 +40,6 @@ public class CinemaHallService {
 	private final CinemaHallRepository hallRepository;
 	private final SeatRepository seatRepository;
 	private final CinemaHallMapper hallMapper;
-	private final SeatMapper seatMapper;
 	private final AuditService auditService;
 
 	@Transactional
@@ -77,6 +73,39 @@ public class CinemaHallService {
 		auditService.logChange("CinemaHall", saved.getId(), saved.getName(), AuditAction.CREATED, null, details);
 
 		return hallMapper.toCinemaHallResponse(saved);
+	}
+
+	@Transactional(readOnly = true)
+	@Cacheable(value = "cinemaHalls", key = "#id")
+	public CinemaHallResponse getHallById(long id) {
+		log.debug("Retrieving cinema hall by id: {}", id);
+		return hallRepository.findByIdWithSeats(id).map(hallMapper::toCinemaHallResponse)
+				.orElseThrow(() -> new CinemaHallNotFoundException(id));
+	}
+
+	@Transactional(readOnly = true)
+	@Cacheable(value = "cinemaHalls", key = "'all'")
+	public List<CinemaHallListResponse> getAllHalls() {
+		log.debug("Retrieving all cinema halls");
+		List<CinemaHallListProjection> projections = hallRepository.findAllProjected();
+		return projections.stream().map(hallMapper::toCinemaHallListResponse).toList();
+	}
+
+	@Transactional(readOnly = true)
+	@Cacheable(value = "cinemaHalls", key = "'layout:' + #hallId")
+	public HallLayoutResponse getHallLayout(Long hallId) {
+		log.debug("Retrieving hall layout for id: {}", hallId);
+
+		CinemaHall hall = hallRepository.findByIdWithSeats(hallId)
+				.orElseThrow(() -> new CinemaHallNotFoundException(hallId));
+
+		return hallMapper.toHallLayoutResponse(hall);
+	}
+
+	@Transactional(readOnly = true)
+	public CinemaHall getHallEntityById(Long id) {
+		log.debug("Retrieving cinema hall entity by id: {}", id);
+		return hallRepository.findById(id).orElseThrow(() -> new CinemaHallNotFoundException(id));
 	}
 
 	@Transactional
@@ -116,7 +145,7 @@ public class CinemaHallService {
 
 			seatRepository.deleteByHallId(id);
 			List<Seat> newSeats = generateSeatLayout(existing, request);
-			seatRepository.saveAll(newSeats);
+			existing.setSeats(newSeats);
 		}
 
 		CinemaHall updated = hallRepository.save(existing);
@@ -158,39 +187,6 @@ public class CinemaHallService {
 		auditService.logChange("CinemaHall", id, hallName, AuditAction.DELETED, details, null);
 	}
 
-	@Transactional(readOnly = true)
-	@Cacheable(value = "cinemaHalls", key = "#id")
-	public CinemaHallResponse getHallById(long id) {
-		log.debug("Retrieving cinema hall by id: {}", id);
-		return hallRepository.findByIdWithSeats(id).map(hallMapper::toCinemaHallResponse)
-				.orElseThrow(() -> new CinemaHallNotFoundException(id));
-	}
-
-	@Transactional(readOnly = true)
-	@Cacheable(value = "cinemaHalls", key = "'all'")
-	public List<CinemaHallResponse> getAllHalls() {
-		log.debug("Retrieving all cinema halls");
-		List<CinemaHallProjection> projections = hallRepository.findAllProjected();
-		return hallMapper.toCinemaHallResponseListFromProjection(projections);
-	}
-
-	@Transactional(readOnly = true)
-	@Cacheable(value = "cinemaHalls", key = "'layout:' + #hallId")
-	public HallLayoutResponse getHallLayout(Long hallId) {
-		log.debug("Retrieving hall layout for id: {}", hallId);
-
-		CinemaHall hall = hallRepository.findByIdWithSeats(hallId)
-				.orElseThrow(() -> new CinemaHallNotFoundException(hallId));
-
-		return buildHallLayoutDto(hall);
-	}
-
-	@Transactional(readOnly = true)
-	public CinemaHall getHallEntityById(Long id) {
-		log.debug("Retrieving cinema hall entity by id: {}", id);
-		return hallRepository.findById(id).orElseThrow(() -> new CinemaHallNotFoundException(id));
-	}
-
 	private List<Seat> generateSeatLayout(CinemaHall hall, CinemaHallRequest request) {
 		List<Seat> seats = new ArrayList<>();
 		SeatType defaultType = request.defaultSeatType();
@@ -228,20 +224,6 @@ public class CinemaHallService {
 				.filter(seat -> seat.getSeatType() != SeatType.COUPLE).count();
 
 		return currentRows == request.rows() && standardSeatsInFirstRow == request.seatsPerRow();
-	}
-
-	private HallLayoutResponse buildHallLayoutDto(CinemaHall hall) {
-		List<SeatRowResponse> rows = hall.getSeats().stream().collect(Collectors.groupingBy(Seat::getRow)).entrySet()
-				.stream().map(entry -> {
-					List<SeatResponse> seatResponses = seatMapper.toSeatResponseList(entry.getValue());
-					return new SeatRowResponse(entry.getKey(), entry.getValue().size(), seatResponses);
-				}).sorted(Comparator.comparing(SeatRowResponse::rowNumber)).toList();
-
-		int totalRows = rows.size();
-		int maxSeatsPerRow = rows.stream().mapToInt(SeatRowResponse::seatsCount).max().orElse(0);
-
-		return new HallLayoutResponse(hall.getId(), hall.getName(), totalRows, maxSeatsPerRow, hall.getSeats().size(),
-				rows);
 	}
 
 	private void validateCoupleRowsConfiguration(CinemaHallRequest request) {

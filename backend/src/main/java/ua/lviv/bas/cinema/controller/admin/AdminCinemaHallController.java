@@ -24,6 +24,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.dto.hall.request.CinemaHallRequest;
+import ua.lviv.bas.cinema.dto.hall.response.CinemaHallListResponse;
 import ua.lviv.bas.cinema.dto.hall.response.CinemaHallResponse;
 import ua.lviv.bas.cinema.dto.hall.response.HallLayoutResponse;
 import ua.lviv.bas.cinema.service.cinema.CinemaHallService;
@@ -53,9 +54,9 @@ public class AdminCinemaHallController {
 	@GetMapping
 	@Operation(summary = "Get all cinema halls")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Halls retrieved successfully") })
-	public ResponseEntity<List<CinemaHallResponse>> getAllHalls() {
+	public ResponseEntity<List<CinemaHallListResponse>> getAllHalls() {
 		log.info("GET /api/admin/cinema-halls - Getting all cinema halls");
-		List<CinemaHallResponse> halls = cinemaHallService.getAllHalls();
+		List<CinemaHallListResponse> halls = cinemaHallService.getAllHalls();
 		return ResponseEntity.ok(halls);
 	}
 

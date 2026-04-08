@@ -1,6 +1,6 @@
 package ua.lviv.bas.cinema.repository.cinema.projection;
 
-public interface CinemaHallProjection {
+public interface CinemaHallListProjection {
 	Long getId();
 
 	String getName();

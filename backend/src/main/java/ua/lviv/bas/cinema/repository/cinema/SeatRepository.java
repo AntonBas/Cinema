@@ -12,29 +12,16 @@ import org.springframework.stereotype.Repository;
 
 import jakarta.persistence.LockModeType;
 import ua.lviv.bas.cinema.domain.cinema.Seat;
-import ua.lviv.bas.cinema.domain.cinema.enums.SeatType;
 
 @Repository
 public interface SeatRepository extends JpaRepository<Seat, Long> {
 
 	List<Seat> findByHallId(Long hallId);
 
-	Optional<Seat> findByHallIdAndRowAndNumber(Long hallId, int row, int number);
-
 	long countByHallId(Long hallId);
-
-	List<Seat> findByHallIdAndSeatType(Long hallId, SeatType seatType);
-
-	List<Seat> findByHallIdAndActiveTrue(Long hallId);
-
-	@Query("SELECT DISTINCT s.row FROM Seat s WHERE s.hall.id = :hallId ORDER BY s.row")
-	List<Integer> findDistinctRowsByHallId(@Param("hallId") Long hallId);
 
 	@Query("SELECT COUNT(t) > 0 FROM Ticket t WHERE t.seatReservation.seat.hall.id = :hallId")
 	boolean hasTicketsForHall(@Param("hallId") Long hallId);
-
-	@Query("SELECT s.hall.id, COUNT(s) FROM Seat s WHERE s.hall.id IN :hallIds GROUP BY s.hall.id")
-	List<Object[]> countSeatsByHallIds(@Param("hallIds") List<Long> hallIds);
 
 	@Modifying
 	@Query("DELETE FROM Seat s WHERE s.hall.id = :hallId")

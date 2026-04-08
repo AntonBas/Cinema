@@ -9,15 +9,12 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import ua.lviv.bas.cinema.domain.cinema.CinemaHall;
-import ua.lviv.bas.cinema.repository.cinema.projection.CinemaHallProjection;
+import ua.lviv.bas.cinema.repository.cinema.projection.CinemaHallListProjection;
 
 @Repository
 public interface CinemaHallRepository extends JpaRepository<CinemaHall, Long> {
 
 	boolean existsByName(String name);
-
-	@Query("SELECT ch FROM CinemaHall ch LEFT JOIN FETCH ch.seats")
-	List<CinemaHall> findAllWithSeats();
 
 	@Query("""
 			SELECT
@@ -29,7 +26,7 @@ public interface CinemaHallRepository extends JpaRepository<CinemaHall, Long> {
 			GROUP BY ch.id, ch.name
 			ORDER BY ch.name ASC
 			""")
-	List<CinemaHallProjection> findAllProjected();
+	List<CinemaHallListProjection> findAllProjected();
 
 	@Query("SELECT ch FROM CinemaHall ch LEFT JOIN FETCH ch.seats WHERE ch.id = :id")
 	Optional<CinemaHall> findByIdWithSeats(@Param("id") Long id);
