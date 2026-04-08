@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -33,6 +32,7 @@ import ua.lviv.bas.cinema.dto.PageResponse;
 import ua.lviv.bas.cinema.dto.session.request.SessionCreateRequest;
 import ua.lviv.bas.cinema.dto.session.request.SessionUpdateRequest;
 import ua.lviv.bas.cinema.dto.session.response.SessionAdminResponse;
+import ua.lviv.bas.cinema.dto.session.response.SessionResponse;
 import ua.lviv.bas.cinema.service.cinema.SessionService;
 
 @Slf4j
@@ -51,9 +51,9 @@ public class AdminSessionController {
 	@ApiResponses(value = { @ApiResponse(responseCode = "201", description = "Session created successfully"),
 			@ApiResponse(responseCode = "400", description = "Invalid request data or time conflict"),
 			@ApiResponse(responseCode = "404", description = "Movie or hall not found") })
-	public ResponseEntity<SessionAdminResponse> createSession(@RequestBody @Valid SessionCreateRequest request) {
+	public ResponseEntity<SessionResponse> createSession(@RequestBody @Valid SessionCreateRequest request) {
 		log.info("Creating new session");
-		SessionAdminResponse created = sessionService.createSession(request);
+		SessionResponse created = sessionService.createSession(request);
 		return ResponseEntity.status(HttpStatus.CREATED).body(created);
 	}
 
@@ -61,57 +61,10 @@ public class AdminSessionController {
 	@Operation(summary = "Get session by ID")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Session found"),
 			@ApiResponse(responseCode = "404", description = "Session not found") })
-	public ResponseEntity<SessionAdminResponse> getSessionById(@PathVariable Long id) {
+	public ResponseEntity<SessionResponse> getSessionById(@PathVariable Long id) {
 		log.info("Retrieving session {}", id);
-		SessionAdminResponse session = sessionService.getSessionForAdmin(id);
+		SessionResponse session = sessionService.getSessionById(id);
 		return ResponseEntity.ok(session);
-	}
-
-	@PutMapping("/{id}")
-	@Operation(summary = "Update session")
-	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Session updated successfully"),
-			@ApiResponse(responseCode = "400", description = "Invalid request data or time conflict"),
-			@ApiResponse(responseCode = "404", description = "Session not found") })
-	public ResponseEntity<SessionAdminResponse> updateSession(@PathVariable Long id,
-			@RequestBody @Valid SessionUpdateRequest request) {
-		log.info("Updating session {}", id);
-		SessionAdminResponse updated = sessionService.updateSession(id, request);
-		return ResponseEntity.ok(updated);
-	}
-
-	@PatchMapping("/{id}/cancel")
-	@Operation(summary = "Cancel session")
-	@ApiResponses(value = { @ApiResponse(responseCode = "204", description = "Session cancelled successfully"),
-			@ApiResponse(responseCode = "400", description = "Cannot cancel session"),
-			@ApiResponse(responseCode = "404", description = "Session not found") })
-	@ResponseStatus(HttpStatus.NO_CONTENT)
-	public ResponseEntity<Void> cancelSession(@PathVariable Long id) {
-		log.info("Cancelling session {}", id);
-		sessionService.cancelSession(id);
-		return ResponseEntity.noContent().build();
-	}
-
-	@PatchMapping("/{id}/reactivate")
-	@Operation(summary = "Reactivate session")
-	@ApiResponses(value = { @ApiResponse(responseCode = "204", description = "Session reactivated successfully"),
-			@ApiResponse(responseCode = "400", description = "Cannot reactivate session"),
-			@ApiResponse(responseCode = "404", description = "Session not found") })
-	@ResponseStatus(HttpStatus.NO_CONTENT)
-	public ResponseEntity<Void> reactivateSession(@PathVariable Long id) {
-		log.info("Reactivating session {}", id);
-		sessionService.reactivateSession(id);
-		return ResponseEntity.noContent().build();
-	}
-
-	@DeleteMapping("/{id}")
-	@Operation(summary = "Delete session")
-	@ApiResponses(value = { @ApiResponse(responseCode = "204", description = "Session deleted successfully"),
-			@ApiResponse(responseCode = "404", description = "Session not found") })
-	@ResponseStatus(HttpStatus.NO_CONTENT)
-	public ResponseEntity<Void> deleteSession(@PathVariable Long id) {
-		log.info("Deleting session {}", id);
-		sessionService.deleteSession(id);
-		return ResponseEntity.noContent().build();
 	}
 
 	@GetMapping
@@ -128,5 +81,49 @@ public class AdminSessionController {
 		PageResponse<SessionAdminResponse> page = sessionService.getSessionsForAdmin(hallId, movieTitle, status,
 				dateFrom, dateTo, pageable);
 		return ResponseEntity.ok(page);
+	}
+
+	@PutMapping("/{id}")
+	@Operation(summary = "Update session")
+	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Session updated successfully"),
+			@ApiResponse(responseCode = "400", description = "Invalid request data or time conflict"),
+			@ApiResponse(responseCode = "404", description = "Session not found") })
+	public ResponseEntity<SessionResponse> updateSession(@PathVariable Long id,
+			@RequestBody @Valid SessionUpdateRequest request) {
+		log.info("Updating session {}", id);
+		SessionResponse updated = sessionService.updateSession(id, request);
+		return ResponseEntity.ok(updated);
+	}
+
+	@PatchMapping("/{id}/cancel")
+	@Operation(summary = "Cancel session")
+	@ApiResponses(value = { @ApiResponse(responseCode = "204", description = "Session cancelled successfully"),
+			@ApiResponse(responseCode = "400", description = "Cannot cancel session"),
+			@ApiResponse(responseCode = "404", description = "Session not found") })
+	public ResponseEntity<Void> cancelSession(@PathVariable Long id) {
+		log.info("Cancelling session {}", id);
+		sessionService.cancelSession(id);
+		return ResponseEntity.noContent().build();
+	}
+
+	@PatchMapping("/{id}/reactivate")
+	@Operation(summary = "Reactivate session")
+	@ApiResponses(value = { @ApiResponse(responseCode = "204", description = "Session reactivated successfully"),
+			@ApiResponse(responseCode = "400", description = "Cannot reactivate session"),
+			@ApiResponse(responseCode = "404", description = "Session not found") })
+	public ResponseEntity<Void> reactivateSession(@PathVariable Long id) {
+		log.info("Reactivating session {}", id);
+		sessionService.reactivateSession(id);
+		return ResponseEntity.noContent().build();
+	}
+
+	@DeleteMapping("/{id}")
+	@Operation(summary = "Delete session")
+	@ApiResponses(value = { @ApiResponse(responseCode = "204", description = "Session deleted successfully"),
+			@ApiResponse(responseCode = "404", description = "Session not found") })
+	public ResponseEntity<Void> deleteSession(@PathVariable Long id) {
+		log.info("Deleting session {}", id);
+		sessionService.deleteSession(id);
+		return ResponseEntity.noContent().build();
 	}
 }

@@ -1,25 +1,30 @@
 package ua.lviv.bas.cinema.repository.cinema.projection;
 
 import java.math.BigDecimal;
-import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
+public interface SessionAdminProjection {
+	Long getId();
 
-@Data
-@AllArgsConstructor
-public class SessionAdminProjection {
-	private Long id;
-	private Timestamp startTime;
-	private Timestamp endTime;
-	private BigDecimal basePrice;
-	private String status;
-	private Long movieId;
-	private String movieTitle;
-	private Integer movieDuration;
-	private Long hallId;
-	private String hallName;
-	private Long hallCapacity;
-	private Long ticketsSold;
-	private BigDecimal totalRevenue;
+	LocalDateTime getStartTime();
+
+	BigDecimal getBasePrice();
+
+	String getStatus();
+
+	Long getMovieId();
+
+	String getMovieTitle();
+
+	Integer getMovieDuration();
+
+	Long getHallId();
+
+	String getHallName();
+
+	Long getHallCapacity();
+
+	Long getTicketsSold();
+
+	BigDecimal getTotalRevenue();
 }

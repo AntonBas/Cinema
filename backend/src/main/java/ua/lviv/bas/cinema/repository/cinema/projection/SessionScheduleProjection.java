@@ -8,8 +8,6 @@ public interface SessionScheduleProjection {
 
 	LocalDateTime getStartTime();
 
-	LocalDateTime getEndTime();
-
 	BigDecimal getBasePrice();
 
 	Long getMovieId();

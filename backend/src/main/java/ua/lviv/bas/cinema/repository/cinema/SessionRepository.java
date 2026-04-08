@@ -1,12 +1,9 @@
 package ua.lviv.bas.cinema.repository.cinema;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Lock;
@@ -25,74 +22,6 @@ public interface SessionRepository extends JpaRepository<Session, Long>, JpaSpec
 	@Lock(LockModeType.PESSIMISTIC_WRITE)
 	@Query("SELECT s FROM Session s LEFT JOIN FETCH s.movie LEFT JOIN FETCH s.hall WHERE s.id = :id")
 	Optional<Session> findByIdWithLock(@Param("id") Long id);
-
-	@Query(value = """
-			SELECT
-			    s.id,
-			    s.start_time as startTime,
-			    (s.start_time + (m.duration_minutes * INTERVAL '1 minute')) as endTime,
-			    s.base_price as basePrice,
-			    s.status,
-			    m.id as movieId,
-			    m.title as movieTitle,
-			    m.duration_minutes as movieDuration,
-			    h.id as hallId,
-			    h.name as hallName,
-			    (SELECT COUNT(seat.id) FROM seats seat WHERE seat.hall_id = h.id) as hallCapacity,
-			    (SELECT COUNT(b.id) FROM bookings b WHERE b.session_id = s.id AND b.status = 'CONFIRMED') as ticketsSold,
-			    COALESCE((SELECT SUM(b.total_price) FROM bookings b WHERE b.session_id = s.id AND b.status = 'CONFIRMED'), 0) as totalRevenue
-			FROM sessions s
-			JOIN movies m ON m.id = s.movie_id
-			JOIN cinema_halls h ON h.id = s.hall_id
-			WHERE s.id = :id
-			""", nativeQuery = true)
-	Optional<SessionAdminProjection> findAdminProjectionById(@Param("id") Long id);
-
-	@Query(value = """
-			SELECT
-			    s.id,
-			    s.start_time as startTime,
-			    (s.start_time + (m.duration_minutes * INTERVAL '1 minute')) as endTime,
-			    s.base_price as basePrice,
-			    s.status,
-			    m.id as movieId,
-			    m.title as movieTitle,
-			    m.duration_minutes as movieDuration,
-			    h.id as hallId,
-			    h.name as hallName,
-			    (SELECT COUNT(seat.id) FROM seats seat WHERE seat.hall_id = h.id) as hallCapacity,
-			    (SELECT COUNT(b.id) FROM bookings b WHERE b.session_id = s.id AND b.status = 'CONFIRMED') as ticketsSold,
-			    COALESCE((SELECT SUM(b.total_price) FROM bookings b WHERE b.session_id = s.id AND b.status = 'CONFIRMED'), 0) as totalRevenue
-			FROM sessions s
-			JOIN movies m ON m.id = s.movie_id
-			JOIN cinema_halls h ON h.id = s.hall_id
-			WHERE (:hallId IS NULL OR s.hall_id = :hallId)
-			  AND (:movieTitle IS NULL OR LOWER(m.title) LIKE LOWER(CONCAT('%', :movieTitle, '%')))
-			  AND (:status IS NULL OR s.status = :status)
-			  AND (cast(:dateFrom as date) IS NULL OR s.start_time >= cast(:dateFrom as timestamp))
-			  AND (cast(:dateTo as date) IS NULL OR s.start_time <= cast(:dateTo as timestamp) + interval '1 day')
-			ORDER BY
-			    CASE s.status
-			        WHEN 'SCHEDULED' THEN 1
-			        WHEN 'ONGOING' THEN 2
-			        WHEN 'CANCELLED' THEN 3
-			        WHEN 'COMPLETED' THEN 4
-			        ELSE 5
-			    END,
-			    s.start_time DESC
-			""", countQuery = """
-			SELECT COUNT(s.id)
-			FROM sessions s
-			JOIN movies m ON m.id = s.movie_id
-			WHERE (:hallId IS NULL OR s.hall_id = :hallId)
-			  AND (:movieTitle IS NULL OR LOWER(m.title) LIKE LOWER(CONCAT('%', :movieTitle, '%')))
-			  AND (:status IS NULL OR s.status = :status)
-			  AND (cast(:dateFrom as date) IS NULL OR s.start_time >= cast(:dateFrom as timestamp))
-			  AND (cast(:dateTo as date) IS NULL OR s.start_time <= cast(:dateTo as timestamp) + interval '1 day')
-			""", nativeQuery = true)
-	Page<SessionAdminProjection> findAdminSessionsNative(@Param("hallId") Long hallId,
-			@Param("movieTitle") String movieTitle, @Param("status") String status,
-			@Param("dateFrom") LocalDate dateFrom, @Param("dateTo") LocalDate dateTo, Pageable pageable);
 
 	@Query("""
 			SELECT s FROM Session s
@@ -143,10 +72,7 @@ public interface SessionRepository extends JpaRepository<Session, Long>, JpaSpec
 			SELECT
 			    s.id,
 			    s.start_time as startTime,
-			    (s.start_time + (m.duration_minutes * INTERVAL '1 minute')) as endTime,
 			    s.base_price as basePrice,
-			    (SELECT COUNT(seat.id) FROM seats seat WHERE seat.hall_id = h.id) -
-			    (SELECT COUNT(sr.id) FROM seat_reservations sr WHERE sr.session_id = s.id AND sr.status IN ('PENDING', 'CONFIRMED', 'CHECKED_IN')) as availableSeats,
 			    m.id as movieId,
 			    m.title as movieTitle,
 			    m.poster_file_name as moviePosterFileName,
@@ -158,12 +84,34 @@ public interface SessionRepository extends JpaRepository<Session, Long>, JpaSpec
 			FROM sessions s
 			JOIN movies m ON m.id = s.movie_id
 			JOIN cinema_halls h ON h.id = s.hall_id
-			WHERE s.status = 'SCHEDULED'
-			  AND s.start_time >= :fromDate
-			  AND s.start_time <= :toDate
-			  AND (:searchTerm IS NULL OR LOWER(m.title) LIKE LOWER(CONCAT('%', :searchTerm, '%')))
-			ORDER BY m.title, s.start_time ASC
+			WHERE s.id = :id
 			""", nativeQuery = true)
-	List<SessionScheduleProjection> findScheduleSessions(@Param("fromDate") LocalDateTime fromDate,
-			@Param("toDate") LocalDateTime toDate, @Param("searchTerm") String searchTerm);
+	Optional<SessionScheduleProjection> findScheduleProjectionById(@Param("id") Long id);
+
+	@Query(value = """
+			SELECT
+			    s.id,
+			    s.start_time as startTime,
+			    s.base_price as basePrice,
+			    s.status,
+			    m.id as movieId,
+			    m.title as movieTitle,
+			    m.duration_minutes as movieDuration,
+			    h.id as hallId,
+			    h.name as hallName,
+			    (SELECT COUNT(seat.id) FROM seats seat WHERE seat.hall_id = h.id) as hallCapacity,
+			    COALESCE((
+			        SELECT COUNT(b.id) FROM bookings b
+			        WHERE b.session_id = s.id AND b.status = 'CONFIRMED'
+			    ), 0) as ticketsSold,
+			    COALESCE((
+			        SELECT SUM(b.total_price) FROM bookings b
+			        WHERE b.session_id = s.id AND b.status = 'CONFIRMED'
+			    ), 0) as totalRevenue
+			FROM sessions s
+			JOIN movies m ON m.id = s.movie_id
+			JOIN cinema_halls h ON h.id = s.hall_id
+			WHERE s.id IN (:ids)
+			""", nativeQuery = true)
+	List<SessionAdminProjection> findAdminProjectionsByIds(@Param("ids") List<Long> ids);
 }

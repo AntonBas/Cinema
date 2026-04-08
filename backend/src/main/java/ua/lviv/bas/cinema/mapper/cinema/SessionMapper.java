@@ -12,8 +12,9 @@ import ua.lviv.bas.cinema.domain.cinema.Session;
 import ua.lviv.bas.cinema.domain.cinema.status.CinemaSessionStatus;
 import ua.lviv.bas.cinema.dto.session.request.SessionCreateRequest;
 import ua.lviv.bas.cinema.dto.session.request.SessionUpdateRequest;
-import ua.lviv.bas.cinema.dto.session.response.MovieSessionInfoResponse;
 import ua.lviv.bas.cinema.dto.session.response.SessionAdminResponse;
+import ua.lviv.bas.cinema.dto.session.response.SessionMovieInfoResponse;
+import ua.lviv.bas.cinema.dto.session.response.SessionResponse;
 import ua.lviv.bas.cinema.dto.session.response.SessionScheduleResponse;
 import ua.lviv.bas.cinema.repository.cinema.projection.SessionAdminProjection;
 import ua.lviv.bas.cinema.repository.cinema.projection.SessionScheduleProjection;
@@ -26,30 +27,28 @@ public interface SessionMapper {
 		return status != null ? CinemaSessionStatus.valueOf(status) : null;
 	}
 
+	@Mapping(target = "endTime", expression = "java(session.getMovie() != null ? session.getStartTime().plusMinutes(session.getMovie().getDurationMinutes()) : null)")
+	@Mapping(target = "movieId", source = "movie.id")
+	@Mapping(target = "movieTitle", source = "movie.title")
+	@Mapping(target = "movieDuration", source = "movie.durationMinutes")
+	@Mapping(target = "hallId", source = "hall.id")
+	@Mapping(target = "hallName", source = "hall.name")
+	SessionResponse toSessionResponse(Session session);
+
+	@Mapping(target = "endTime", expression = "java(projection.getStartTime().plusMinutes(projection.getMovieDuration()))")
 	@Mapping(target = "status", source = "status", qualifiedByName = "stringToStatus")
 	@Mapping(target = "hallCapacity", source = "hallCapacity")
 	@Mapping(target = "ticketsSold", source = "ticketsSold")
 	@Mapping(target = "totalRevenue", source = "totalRevenue")
-	SessionAdminResponse toAdminResponse(SessionAdminProjection projection);
+	SessionAdminResponse toSessionAdminResponse(SessionAdminProjection projection);
 
 	@Mapping(target = "endTime", expression = "java(projection.getStartTime().plusMinutes(projection.getMovieDuration()))")
-	SessionScheduleResponse toScheduleResponse(SessionScheduleProjection projection);
-
-	@Mapping(target = "endTime", expression = "java(session.getMovie() != null ? session.getStartTime().plusMinutes(session.getMovie().getDurationMinutes()) : null)")
-	@Mapping(target = "movieId", source = "movie.id")
-	@Mapping(target = "movieTitle", source = "movie.title")
-	@Mapping(target = "moviePosterFileName", source = "movie.posterFileName")
-	@Mapping(target = "movieAgeRating", source = "movie.ageRating")
-	@Mapping(target = "movieDuration", source = "movie.durationMinutes")
-	@Mapping(target = "hallId", source = "hall.id")
-	@Mapping(target = "hallName", source = "hall.name")
-	@Mapping(target = "hallCapacity", ignore = true)
-	@Mapping(target = "availableSeats", ignore = true)
-	SessionScheduleResponse toScheduleResponse(Session session);
+	@Mapping(target = "withAvailableSeats", ignore = true)
+	SessionScheduleResponse toSessionScheduleResponse(SessionScheduleProjection projection);
 
 	@Mapping(target = "hallName", source = "hall.name")
 	@Mapping(target = "availableSeats", ignore = true)
-	MovieSessionInfoResponse toMovieSessionInfoResponse(Session session);
+	SessionMovieInfoResponse toSessionMovieInfoResponse(Session session);
 
 	@Mapping(target = "id", ignore = true)
 	@Mapping(target = "movie", ignore = true)
@@ -57,7 +56,7 @@ public interface SessionMapper {
 	@Mapping(target = "status", constant = "SCHEDULED")
 	@Mapping(target = "bookings", ignore = true)
 	@Mapping(target = "seatReservations", ignore = true)
-	Session toEntity(SessionCreateRequest request);
+	Session toSession(SessionCreateRequest request);
 
 	@BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 	@Mapping(target = "id", ignore = true)
@@ -70,5 +69,5 @@ public interface SessionMapper {
 	@Mapping(target = "createdDate", ignore = true)
 	@Mapping(target = "lastModifiedBy", ignore = true)
 	@Mapping(target = "lastModifiedDate", ignore = true)
-	void updateEntity(@MappingTarget Session session, SessionUpdateRequest request);
+	void updateSessionFromRequest(SessionUpdateRequest request, @MappingTarget Session session);
 }

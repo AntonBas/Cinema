@@ -30,4 +30,10 @@ public record SessionScheduleResponse(@Schema(description = "Unique identifier o
 		@Schema(description = "Name of the cinema hall", example = "Hall A") String hallName,
 
 		@Schema(description = "Hall capacity", example = "150") Integer hallCapacity) {
+
+	public SessionScheduleResponse withAvailableSeats(Integer availableSeats) {
+		return new SessionScheduleResponse(id, startTime, endTime, basePrice, availableSeats, movieId, movieTitle,
+				moviePosterFileName, movieAgeRating, movieDuration, hallId, hallName, hallCapacity);
+	}
+
 }

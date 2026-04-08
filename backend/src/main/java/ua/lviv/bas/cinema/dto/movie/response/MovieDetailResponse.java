@@ -6,7 +6,7 @@ import java.util.List;
 import io.swagger.v3.oas.annotations.media.Schema;
 import ua.lviv.bas.cinema.domain.cinema.enums.AgeRating;
 import ua.lviv.bas.cinema.domain.cinema.status.MovieStatus;
-import ua.lviv.bas.cinema.dto.session.response.MovieSessionInfoResponse;
+import ua.lviv.bas.cinema.dto.session.response.SessionMovieInfoResponse;
 
 public record MovieDetailResponse(
 
@@ -42,5 +42,5 @@ public record MovieDetailResponse(
 
 		@Schema(description = "List of screenwriters of the movie") List<PersonResponse> screenwriters,
 
-		@Schema(description = "List of sessions for this movie") List<MovieSessionInfoResponse> sessions) {
+		@Schema(description = "List of sessions for this movie") List<SessionMovieInfoResponse> sessions) {
 }
