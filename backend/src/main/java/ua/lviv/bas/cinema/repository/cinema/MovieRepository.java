@@ -29,7 +29,7 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
 			WHERE (:title IS NULL OR LOWER(CAST(m.title AS string)) LIKE LOWER(CONCAT('%', CAST(:title AS string), '%')))
 			  AND (:status IS NULL OR m.status = :status)
 			""")
-	Page<Movie> findMoviesByFilters(@Param("title") String title, @Param("status") MovieStatus status,
+	Page<Movie> findMoviesByTitleAndStatus(@Param("title") String title, @Param("status") MovieStatus status,
 			Pageable pageable);
 
 	@Query("""
@@ -48,7 +48,7 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
 			  AND (:search IS NULL OR LOWER(CAST(m.title AS string)) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')))
 			ORDER BY m.title
 			""")
-	List<MovieCardProjection> findMoviesForSession(@Param("search") String search);
+	List<MovieCardProjection> findMoviesForSessionSearch(@Param("search") String search);
 
 	@Query("""
 			SELECT m.id as id,
@@ -123,7 +123,7 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
 	@Query("SELECT COUNT(m) FROM Movie m WHERE EXISTS (SELECT 1 FROM m.actors a WHERE a.id = :personId) OR EXISTS (SELECT 1 FROM m.directors d WHERE d.id = :personId) OR EXISTS (SELECT 1 FROM m.screenwriters s WHERE s.id = :personId)")
 	long countMovieUsageByPersonId(@Param("personId") Long personId);
 
-	boolean existsByTitle(String newTitle);
+	boolean existsByTitle(String title);
 
 	@EntityGraph(attributePaths = { "genres", "actors", "directors", "screenwriters", "sessions", "sessions.hall" })
 	@Query("""

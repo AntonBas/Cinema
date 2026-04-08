@@ -96,6 +96,46 @@ public class MovieService {
 				.orElseThrow(() -> new MovieNotFoundException(slug));
 	}
 
+	@Cacheable(key = "'filtered-' + #title + '-' + #status + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
+	public Page<MovieCardResponse> getFilteredMovies(String title, MovieStatus status, Pageable pageable) {
+		return movieRepository.findMoviesByTitleAndStatus(title, status, pageable)
+				.map(movieMapper::toMovieCardResponse);
+	}
+
+	@Cacheable(key = "'now-showing-home-' + #pageable.pageNumber + '-' + #pageable.pageSize")
+	public List<MovieCardResponse> getNowShowingMoviesForHome(Pageable pageable) {
+		return movieRepository.findNowShowingMovies(pageable).map(movieMapper::toMovieCardResponse).getContent();
+	}
+
+	@Cacheable(key = "'coming-soon-home-' + #pageable.pageNumber + '-' + #pageable.pageSize")
+	public List<MovieCardResponse> getComingSoonMoviesForHome(Pageable pageable) {
+		return movieRepository.findComingSoonMovies(pageable).map(movieMapper::toMovieCardResponse).getContent();
+	}
+
+	@Cacheable(key = "'leaving-soon-home-' + #pageable.pageNumber + '-' + #pageable.pageSize")
+	public List<MovieCardResponse> getLeavingSoonMoviesForHome(Pageable pageable) {
+		return movieRepository.findLeavingSoonMovies(pageable).map(movieMapper::toMovieCardResponse).getContent();
+	}
+
+	public List<MovieSessionSearchResponse> searchMoviesForSession(String searchTerm) {
+		log.info("Searching movies for session with term: {}", searchTerm);
+
+		if (searchTerm == null || searchTerm.isBlank()) {
+			return List.of();
+		}
+
+		List<MovieCardProjection> projections = isValidDate(searchTerm)
+				? movieRepository.findMoviesByDate(LocalDate.parse(searchTerm))
+				: movieRepository.findMoviesForSessionSearch(searchTerm);
+
+		return projections.stream().map(movieMapper::toMovieSessionSearchResponse).toList();
+	}
+
+	public ResponseEntity<byte[]> getMoviePoster(Long id) {
+		return movieRepository.findPosterFileNameById(id).map(posterService::getPosterResponse)
+				.orElse(ResponseEntity.notFound().build());
+	}
+
 	@Caching(evict = { @CacheEvict(key = "#id"), @CacheEvict(allEntries = true) })
 	@Transactional
 	public MovieAdminResponse updateMovie(Long id, MovieUpdateRequest request) {
@@ -140,45 +180,6 @@ public class MovieService {
 		movieRepository.delete(movie);
 		log.info("Movie deleted successfully with id: {}", id);
 		auditDelete(id, movie.getTitle());
-	}
-
-	@Cacheable(key = "'filtered-' + #title + '-' + #status + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
-	public Page<MovieCardResponse> getFilteredMovies(String title, MovieStatus status, Pageable pageable) {
-		return movieRepository.findMoviesByFilters(title, status, pageable).map(movieMapper::toMovieCardResponse);
-	}
-
-	@Cacheable(key = "'now-showing-home-' + #pageable.pageNumber + '-' + #pageable.pageSize")
-	public List<MovieCardResponse> getNowShowingMoviesForHome(Pageable pageable) {
-		return movieRepository.findNowShowingMovies(pageable).map(movieMapper::toMovieCardResponse).getContent();
-	}
-
-	@Cacheable(key = "'coming-soon-home-' + #pageable.pageNumber + '-' + #pageable.pageSize")
-	public List<MovieCardResponse> getComingSoonMoviesForHome(Pageable pageable) {
-		return movieRepository.findComingSoonMovies(pageable).map(movieMapper::toMovieCardResponse).getContent();
-	}
-
-	@Cacheable(key = "'leaving-soon-home-' + #pageable.pageNumber + '-' + #pageable.pageSize")
-	public List<MovieCardResponse> getLeavingSoonMoviesForHome(Pageable pageable) {
-		return movieRepository.findLeavingSoonMovies(pageable).map(movieMapper::toMovieCardResponse).getContent();
-	}
-
-	public List<MovieSessionSearchResponse> searchMoviesForSession(String searchTerm) {
-		log.info("Searching movies for session with term: {}", searchTerm);
-
-		if (searchTerm == null || searchTerm.isBlank()) {
-			return List.of();
-		}
-
-		List<MovieCardProjection> projections = isValidDate(searchTerm)
-				? movieRepository.findMoviesByDate(LocalDate.parse(searchTerm))
-				: movieRepository.findMoviesForSession(searchTerm);
-
-		return projections.stream().map(movieMapper::toMovieSessionSearchResponse).toList();
-	}
-
-	public ResponseEntity<byte[]> getMoviePoster(Long id) {
-		return movieRepository.findPosterFileNameById(id).map(posterService::getPosterResponse)
-				.orElse(ResponseEntity.notFound().build());
 	}
 
 	private String generateUniqueSlug(String title, Long excludeId) {
