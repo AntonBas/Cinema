@@ -2,7 +2,6 @@ package ua.lviv.bas.cinema.service.cinema;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -31,7 +30,6 @@ import ua.lviv.bas.cinema.dto.movie.response.MovieDetailResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieSessionSearchResponse;
 import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
 import ua.lviv.bas.cinema.exception.domain.cinema.MovieNotFoundException;
-import ua.lviv.bas.cinema.exception.domain.cinema.MovieValidationException;
 import ua.lviv.bas.cinema.mapper.cinema.MovieMapper;
 import ua.lviv.bas.cinema.repository.cinema.GenreRepository;
 import ua.lviv.bas.cinema.repository.cinema.MovieRepository;
@@ -63,45 +61,39 @@ public class MovieService {
 	public MovieAdminResponse createMovie(MovieCreateRequest request) {
 		log.info("Creating movie: {}", request.getTitle());
 
-		validateDates(request.getReleaseDate(), request.getEndShowingDate());
-
-		String slug = slugService.generateUniqueSlug(request.getTitle());
-		validateSlugUniqueness(slug);
-
 		Movie movie = movieMapper.toMovie(request);
-		movie.setSlug(slug);
+		movie.setSlug(generateUniqueSlug(request.getTitle(), null));
 		movie.setStatus(movieScheduler.calculateMovieStatus(movie, LocalDate.now()));
 
-		handlePoster(movie, request.getPosterFile(), false);
-		setMovieRelations(movie, request.getGenreIds(), request.getActorIds(), request.getDirectorIds(),
-				request.getScreenwriterIds(), false);
+		String posterFileName = null;
+		try {
+			posterFileName = handlePosterUpload(request.getPosterFile());
+			movie.setPosterFileName(posterFileName);
+			setMovieRelations(movie, request.getGenreIds(), request.getActorIds(), request.getDirectorIds(),
+					request.getScreenwriterIds());
 
-		Movie saved = movieRepository.save(movie);
-		log.info("Movie created successfully with id: {}", saved.getId());
-
-		Map<String, Object> details = new HashMap<>();
-		details.put("title", saved.getTitle());
-		details.put("slug", saved.getSlug());
-		details.put("durationMinutes", saved.getDurationMinutes());
-
-		auditService.logChange("Movie", saved.getId(), saved.getTitle(), AuditAction.CREATED, null, details);
-
-		return movieMapper.toMovieAdminResponse(saved);
+			Movie saved = movieRepository.save(movie);
+			log.info("Movie created successfully with id: {}", saved.getId());
+			auditCreate(saved);
+			return movieMapper.toMovieAdminResponse(saved);
+		} catch (Exception e) {
+			if (posterFileName != null) {
+				posterService.deletePoster(posterFileName);
+			}
+			throw e;
+		}
 	}
 
 	@Cacheable(key = "#id")
 	public MovieAdminResponse getAdminMovieById(Long id) {
-		Movie movie = movieRepository.findMovieById(id).orElseThrow(() -> new MovieNotFoundException(id));
-		return movieMapper.toMovieAdminResponse(movie);
+		return movieRepository.findById(id).map(movieMapper::toMovieAdminResponse)
+				.orElseThrow(() -> new MovieNotFoundException(id));
 	}
 
 	public MovieDetailResponse getMovieBySlug(String slug) {
-		Movie movie = movieRepository.findBySlugWithFutureSessions(slug)
+		return movieRepository.findBySlugWithFutureSessions(slug)
+				.filter(movie -> movie.getStatus() != MovieStatus.ARCHIVED).map(movieMapper::toMovieDetailResponse)
 				.orElseThrow(() -> new MovieNotFoundException(slug));
-		if (movie.getStatus() == MovieStatus.ARCHIVED) {
-			throw new MovieNotFoundException(slug);
-		}
-		return movieMapper.toMovieDetailResponse(movie);
 	}
 
 	@Caching(evict = { @CacheEvict(key = "#id"), @CacheEvict(allEntries = true) })
@@ -109,40 +101,27 @@ public class MovieService {
 	public MovieAdminResponse updateMovie(Long id, MovieUpdateRequest request) {
 		log.info("Updating movie with id: {}", id);
 
-		Movie existing = movieRepository.findMovieById(id).orElseThrow(() -> new MovieNotFoundException(id));
-		String oldTitle = existing.getTitle();
-		validateDates(request.getReleaseDate(), request.getEndShowingDate());
+		Movie movie = movieRepository.findMovieById(id).orElseThrow(() -> new MovieNotFoundException(id));
+		String oldTitle = movie.getTitle();
 
-		if (!existing.getTitle().equals(request.getTitle()) && movieRepository.existsByTitle(request.getTitle())) {
+		if (!request.getTitle().equals(oldTitle) && movieRepository.existsByTitle(request.getTitle())) {
 			throw new DuplicateEntityException("Movie", "title '" + request.getTitle() + "'");
 		}
 
-		movieMapper.updateMovieFromRequest(request, existing);
+		movieMapper.updateMovieFromRequest(request, movie);
 
-		if (!existing.getTitle().equals(request.getTitle())) {
-			String newSlug = slugService.generateUniqueSlug(request.getTitle());
-			if (!slugService.isSlugAvailableForMovie(newSlug, id)) {
-				throw new DuplicateEntityException("Movie", "slug " + newSlug);
-			}
-			existing.setSlug(newSlug);
+		if (!movie.getTitle().equals(oldTitle)) {
+			movie.setSlug(generateUniqueSlug(movie.getTitle(), id));
 		}
 
-		handlePoster(existing, request.getPosterFile(), Boolean.TRUE.equals(request.getRemovePoster()));
-		existing.setStatus(movieScheduler.calculateMovieStatus(existing, LocalDate.now()));
-		updateMovieRelations(existing, request.getGenreIds(), request.getActorIds(), request.getDirectorIds(),
+		handlePoster(movie, request.getPosterFile(), Boolean.TRUE.equals(request.getRemovePoster()));
+		movie.setStatus(movieScheduler.calculateMovieStatus(movie, LocalDate.now()));
+		setMovieRelations(movie, request.getGenreIds(), request.getActorIds(), request.getDirectorIds(),
 				request.getScreenwriterIds());
 
-		Movie updated = movieRepository.save(existing);
+		Movie updated = movieRepository.save(movie);
 		log.info("Movie updated successfully with id: {}", updated.getId());
-
-		Map<String, Object> oldDetails = new HashMap<>();
-		oldDetails.put("title", oldTitle);
-
-		Map<String, Object> newDetails = new HashMap<>();
-		newDetails.put("title", updated.getTitle());
-		newDetails.put("slug", updated.getSlug());
-
-		auditService.logChange("Movie", id, oldTitle, AuditAction.UPDATED, oldDetails, newDetails);
+		auditUpdate(id, oldTitle, updated);
 
 		return movieMapper.toMovieAdminResponse(updated);
 	}
@@ -153,17 +132,14 @@ public class MovieService {
 		log.info("Deleting movie with id: {}", id);
 
 		Movie movie = movieRepository.findMovieById(id).orElseThrow(() -> new MovieNotFoundException(id));
-		String movieTitle = movie.getTitle();
+
 		if (movie.getPosterFileName() != null) {
 			posterService.deletePoster(movie.getPosterFileName());
 		}
+
 		movieRepository.delete(movie);
 		log.info("Movie deleted successfully with id: {}", id);
-
-		Map<String, Object> details = new HashMap<>();
-		details.put("deleted", movieTitle);
-
-		auditService.logChange("Movie", id, movieTitle, AuditAction.DELETED, details, null);
+		auditDelete(id, movie.getTitle());
 	}
 
 	@Cacheable(key = "'filtered-' + #title + '-' + #status + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
@@ -173,23 +149,17 @@ public class MovieService {
 
 	@Cacheable(key = "'now-showing-home-' + #pageable.pageNumber + '-' + #pageable.pageSize")
 	public List<MovieCardResponse> getNowShowingMoviesForHome(Pageable pageable) {
-		log.info("Fetching now showing movies for home page");
-		Page<MovieCardProjection> page = movieRepository.findNowShowingMovies(pageable);
-		return page.getContent().stream().map(movieMapper::toMovieCardResponse).toList();
+		return movieRepository.findNowShowingMovies(pageable).map(movieMapper::toMovieCardResponse).getContent();
 	}
 
 	@Cacheable(key = "'coming-soon-home-' + #pageable.pageNumber + '-' + #pageable.pageSize")
 	public List<MovieCardResponse> getComingSoonMoviesForHome(Pageable pageable) {
-		log.info("Fetching coming soon movies for home page");
-		Page<MovieCardProjection> page = movieRepository.findComingSoonMovies(pageable);
-		return page.getContent().stream().map(movieMapper::toMovieCardResponse).toList();
+		return movieRepository.findComingSoonMovies(pageable).map(movieMapper::toMovieCardResponse).getContent();
 	}
 
 	@Cacheable(key = "'leaving-soon-home-' + #pageable.pageNumber + '-' + #pageable.pageSize")
 	public List<MovieCardResponse> getLeavingSoonMoviesForHome(Pageable pageable) {
-		log.info("Fetching leaving soon movies for home page");
-		Page<MovieCardProjection> page = movieRepository.findLeavingSoonMovies(pageable);
-		return page.getContent().stream().map(movieMapper::toMovieCardResponse).toList();
+		return movieRepository.findLeavingSoonMovies(pageable).map(movieMapper::toMovieCardResponse).getContent();
 	}
 
 	public List<MovieSessionSearchResponse> searchMoviesForSession(String searchTerm) {
@@ -199,14 +169,9 @@ public class MovieService {
 			return List.of();
 		}
 
-		List<MovieCardProjection> projections;
-
-		if (isValidDate(searchTerm)) {
-			LocalDate date = LocalDate.parse(searchTerm);
-			projections = movieRepository.findMoviesByDate(date);
-		} else {
-			projections = movieRepository.findMoviesForSession(searchTerm);
-		}
+		List<MovieCardProjection> projections = isValidDate(searchTerm)
+				? movieRepository.findMoviesByDate(LocalDate.parse(searchTerm))
+				: movieRepository.findMoviesForSession(searchTerm);
 
 		return projections.stream().map(movieMapper::toMovieSessionSearchResponse).toList();
 	}
@@ -216,42 +181,30 @@ public class MovieService {
 				.orElse(ResponseEntity.notFound().build());
 	}
 
-	public boolean existsBySlug(String slug) {
-		return movieRepository.findBySlug(slug).isPresent();
-	}
+	private String generateUniqueSlug(String title, Long excludeId) {
+		String slug = slugService.generateUniqueSlug(title);
+		boolean exists = excludeId != null ? !slugService.isSlugAvailableForMovie(slug, excludeId)
+				: movieRepository.findBySlug(slug).isPresent();
 
-	private void validateDates(LocalDate releaseDate, LocalDate endShowingDate) {
-		if (endShowingDate.isBefore(releaseDate)) {
-			throw MovieValidationException.invalidDates(releaseDate, endShowingDate);
-		}
-		if (endShowingDate.isBefore(LocalDate.now())) {
-			throw MovieValidationException.endDateInPast(endShowingDate);
-		}
-	}
-
-	private void validateSlugUniqueness(String slug) {
-		if (movieRepository.findBySlug(slug).isPresent()) {
+		if (exists) {
 			throw new DuplicateEntityException("Movie", "slug " + slug);
 		}
+		return slug;
 	}
 
 	private void setMovieRelations(Movie movie, List<Long> genreIds, List<Long> actorIds, List<Long> directorIds,
-			List<Long> screenwriterIds, boolean clearFirst) {
-		if (clearFirst) {
-			movie.getGenres().clear();
-			movie.getActors().clear();
-			movie.getDirectors().clear();
-			movie.getScreenwriters().clear();
-		}
+			List<Long> screenwriterIds) {
 		movie.setGenres(new HashSet<>(genreRepository.findAllById(genreIds)));
 		movie.setActors(new HashSet<>(personRepository.findAllById(actorIds)));
 		movie.setDirectors(new HashSet<>(personRepository.findAllById(directorIds)));
 		movie.setScreenwriters(new HashSet<>(personRepository.findAllById(screenwriterIds)));
 	}
 
-	private void updateMovieRelations(Movie movie, List<Long> genreIds, List<Long> actorIds, List<Long> directorIds,
-			List<Long> screenwriterIds) {
-		setMovieRelations(movie, genreIds, actorIds, directorIds, screenwriterIds, true);
+	private String handlePosterUpload(MultipartFile posterFile) {
+		if (posterFile != null && !posterFile.isEmpty()) {
+			return posterService.uploadPoster(posterFile);
+		}
+		return null;
 	}
 
 	private void handlePoster(Movie movie, MultipartFile posterFile, boolean removePoster) {
@@ -259,13 +212,12 @@ public class MovieService {
 			if (movie.getPosterFileName() != null) {
 				posterService.deletePoster(movie.getPosterFileName());
 			}
-			String newPosterFileName = posterService.uploadPoster(posterFile);
-			movie.setPosterFileName(newPosterFileName);
-			log.debug("Poster updated: {}", newPosterFileName);
+			movie.setPosterFileName(posterService.uploadPoster(posterFile));
+			log.debug("Poster updated for movie: {}", movie.getId());
 		} else if (removePoster && movie.getPosterFileName() != null) {
 			posterService.deletePoster(movie.getPosterFileName());
 			movie.setPosterFileName(null);
-			log.debug("Poster removed");
+			log.debug("Poster removed for movie: {}", movie.getId());
 		}
 	}
 
@@ -276,5 +228,19 @@ public class MovieService {
 		} catch (DateTimeParseException e) {
 			return false;
 		}
+	}
+
+	private void auditCreate(Movie movie) {
+		auditService.logChange("Movie", movie.getId(), movie.getTitle(), AuditAction.CREATED, null, Map.of("title",
+				movie.getTitle(), "slug", movie.getSlug(), "durationMinutes", movie.getDurationMinutes()));
+	}
+
+	private void auditUpdate(Long id, String oldTitle, Movie updated) {
+		auditService.logChange("Movie", id, oldTitle, AuditAction.UPDATED, Map.of("title", oldTitle),
+				Map.of("title", updated.getTitle(), "slug", updated.getSlug()));
+	}
+
+	private void auditDelete(Long id, String title) {
+		auditService.logChange("Movie", id, title, AuditAction.DELETED, Map.of("deleted", title), null);
 	}
 }

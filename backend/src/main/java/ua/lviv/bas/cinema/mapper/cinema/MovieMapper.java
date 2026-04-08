@@ -28,28 +28,13 @@ public interface MovieMapper {
 	MovieCardResponse toMovieCardResponse(MovieCardProjection projection);
 
 	@Mapping(target = "posterUrl", expression = "java(getPosterUrl(movie.getId()))")
-	@Mapping(target = "genres", source = "genres")
-	@Mapping(target = "actors", source = "actors")
-	@Mapping(target = "directors", source = "directors")
-	@Mapping(target = "screenwriters", source = "screenwriters")
-	@Mapping(target = "sessions", source = "sessions")
 	MovieDetailResponse toMovieDetailResponse(Movie movie);
 
 	@Mapping(target = "posterUrl", expression = "java(getPosterUrl(movie.getId()))")
-	@Mapping(target = "genres", source = "genres")
-	@Mapping(target = "actors", source = "actors")
-	@Mapping(target = "directors", source = "directors")
-	@Mapping(target = "screenwriters", source = "screenwriters")
 	MovieAdminResponse toMovieAdminResponse(Movie movie);
 
-	@Mapping(target = "id", source = "id")
-	@Mapping(target = "title", source = "title")
-	@Mapping(target = "durationMinutes", source = "durationMinutes")
 	MovieSessionSearchResponse toMovieSessionSearchResponse(MovieSessionSearchProjection projection);
 
-	@Mapping(target = "id", source = "id")
-	@Mapping(target = "title", source = "title")
-	@Mapping(target = "durationMinutes", source = "durationMinutes")
 	MovieSessionSearchResponse toMovieSessionSearchResponse(MovieCardProjection projection);
 
 	@Mapping(target = "id", ignore = true)

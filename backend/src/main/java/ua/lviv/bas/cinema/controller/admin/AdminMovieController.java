@@ -54,7 +54,7 @@ public class AdminMovieController {
 	@ApiResponses(value = { @ApiResponse(responseCode = "201", description = "Movie created successfully"),
 			@ApiResponse(responseCode = "400", description = "Invalid request data") })
 	public ResponseEntity<MovieAdminResponse> createMovie(@RequestPart("movieData") String movieDataJson,
-			@RequestPart(value = "posterFile", required = false) MultipartFile posterFile) {
+			@RequestPart(value = "posterFile") MultipartFile posterFile) {
 
 		log.info("POST /api/admin/movies - Creating new movie");
 		MovieCreateRequest request = parseRequest(movieDataJson, MovieCreateRequest.class);
