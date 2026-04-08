@@ -4,7 +4,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import ua.lviv.bas.cinema.domain.cinema.enums.AgeRating;
 import ua.lviv.bas.cinema.domain.cinema.status.MovieStatus;
 
-public record MovieCardResponse(@Schema(description = "Unique identifier of the movie", example = "1") Long id,
+public record MovieCardResponse(
+
+		@Schema(description = "Unique identifier of the movie", example = "1") Long id,
 
 		@Schema(description = "URL-friendly slug for the movie", example = "inception") String slug,
 
@@ -14,7 +16,7 @@ public record MovieCardResponse(@Schema(description = "Unique identifier of the 
 
 		@Schema(description = "Duration of the movie in minutes", example = "148") Integer durationMinutes,
 
-		@Schema(description = "Age rating of the movie", example = "PG_13") AgeRating ageRating,
+		@Schema(description = "Age rating of the movie", example = "PEGI_12") AgeRating ageRating,
 
-		@Schema(description = "Current status of the movie", example = "ACTIVE") MovieStatus status) {
+		@Schema(description = "Current status of the movie", example = "CURRENT") MovieStatus status) {
 }

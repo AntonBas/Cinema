@@ -8,7 +8,9 @@ import ua.lviv.bas.cinema.domain.cinema.enums.AgeRating;
 import ua.lviv.bas.cinema.domain.cinema.status.MovieStatus;
 import ua.lviv.bas.cinema.dto.session.response.MovieSessionInfoResponse;
 
-public record MovieDetailResponse(@Schema(description = "Unique identifier of the movie", example = "1") Long id,
+public record MovieDetailResponse(
+
+		@Schema(description = "Unique identifier of the movie", example = "1") Long id,
 
 		@Schema(description = "Title of the movie", example = "Inception") String title,
 
@@ -24,9 +26,9 @@ public record MovieDetailResponse(@Schema(description = "Unique identifier of th
 
 		@Schema(description = "Date when the movie stops showing in cinemas", example = "2024-03-15") LocalDate endShowingDate,
 
-		@Schema(description = "Age rating of the movie", example = "PG_13") AgeRating ageRating,
+		@Schema(description = "Age rating of the movie", example = "PEGI_12") AgeRating ageRating,
 
-		@Schema(description = "Current status of the movie", example = "ACTIVE") MovieStatus status,
+		@Schema(description = "Current status of the movie", example = "CURRENT") MovieStatus status,
 
 		@Schema(description = "File name of the movie poster", example = "inception-poster.jpg") String posterFileName,
 

@@ -56,8 +56,8 @@ public class MovieCreateRequest {
 	@Future(message = "End showing date must be in the future")
 	private LocalDate endShowingDate;
 
-	@Schema(description = "Age rating of the movie", example = "PG_13", requiredMode = Schema.RequiredMode.REQUIRED, allowableValues = {
-			"G", "PG", "PG_13", "R", "NC_17" })
+	@Schema(description = "Age rating of the movie", example = "PEGI_12", requiredMode = Schema.RequiredMode.REQUIRED, allowableValues = {
+			"PEGI_3", "PEGI_7", "PEGI_12", "PEGI_16", "PEGI_18" })
 	@NotNull(message = "Age rating is required")
 	private AgeRating ageRating;
 
@@ -81,7 +81,7 @@ public class MovieCreateRequest {
 	@Size(min = 1, message = "At least one screenwriter is required")
 	private List<Long> screenwriterIds;
 
-	@Schema(description = "Movie poster image file (JPG, PNG)", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+	@Schema(description = "Movie poster image file (JPG, PNG)", requiredMode = Schema.RequiredMode.REQUIRED)
+	@NotNull(message = "Poster is required")
 	private MultipartFile posterFile;
-
 }

@@ -14,6 +14,8 @@ public record MovieAdminResponse(
 
 		@Schema(description = "Title of the movie", example = "Inception") String title,
 
+		@Schema(description = "URL to the movie trailer", example = "https://www.youtube.com/watch?v=YoHD9XEInc0") String trailerUrl,
+
 		@Schema(description = "Movie description/synopsis", example = "A thief who steals corporate secrets through dream-sharing technology") String description,
 
 		@Schema(description = "Duration of the movie in minutes", example = "148") Integer durationMinutes,
@@ -22,7 +24,7 @@ public record MovieAdminResponse(
 
 		@Schema(description = "Date when the movie stops showing in cinemas", example = "2024-03-15") LocalDate endShowingDate,
 
-		@Schema(description = "Age rating of the movie", example = "PG_13") AgeRating ageRating,
+		@Schema(description = "Age rating of the movie", example = "PEGI_12") AgeRating ageRating,
 
 		@Schema(description = "Current status of the movie", example = "CURRENT") MovieStatus status,
 
