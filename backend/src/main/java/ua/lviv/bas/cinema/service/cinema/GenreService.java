@@ -13,7 +13,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.cinema.Genre;
 import ua.lviv.bas.cinema.dto.movie.request.GenreRequest;
-import ua.lviv.bas.cinema.dto.movie.response.GenreResponse;
+import ua.lviv.bas.cinema.dto.movie.response.GenreListResponse;
 import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
 import ua.lviv.bas.cinema.exception.domain.cinema.GenreNotFoundException;
 import ua.lviv.bas.cinema.mapper.cinema.GenreMapper;
@@ -32,7 +32,7 @@ public class GenreService {
 
 	@CacheEvict(allEntries = true)
 	@Transactional
-	public GenreResponse createGenre(GenreRequest request) {
+	public GenreListResponse createGenre(GenreRequest request) {
 		log.info("Creating genre: {}", request.name());
 
 		String genreName = request.name();
@@ -47,7 +47,7 @@ public class GenreService {
 	}
 
 	@Cacheable(key = "#id")
-	public GenreResponse getGenreById(Long id) {
+	public GenreListResponse getGenreById(Long id) {
 		log.debug("Retrieving genre by id: {}", id);
 		return genreRepository.findById(id).map(genreMapper::toGenreResponse)
 				.orElseThrow(() -> new GenreNotFoundException(id));
@@ -56,7 +56,7 @@ public class GenreService {
 	@Caching(evict = { @CacheEvict(key = "#id"), @CacheEvict(key = "'popular-' + #request.name() + '-' + 0 + '-' + 20"),
 			@CacheEvict(allEntries = true) })
 	@Transactional
-	public GenreResponse updateGenre(Long id, GenreRequest request) {
+	public GenreListResponse updateGenre(Long id, GenreRequest request) {
 		log.info("Updating genre with id: {}", id);
 
 		Genre existingGenre = genreRepository.findById(id).orElseThrow(() -> new GenreNotFoundException(id));
@@ -86,7 +86,7 @@ public class GenreService {
 	}
 
 	@Cacheable(key = "'popular-' + #query + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
-	public Page<GenreResponse> searchGenres(String query, Pageable pageable) {
+	public Page<GenreListResponse> searchGenres(String query, Pageable pageable) {
 		log.info("Searching genres by popularity: query='{}', pageable={}", query, pageable);
 		Page<GenreProjection> projections = genreRepository.findProjectionsByQuery(query, pageable);
 		return projections.map(genreMapper::toGenreResponse);

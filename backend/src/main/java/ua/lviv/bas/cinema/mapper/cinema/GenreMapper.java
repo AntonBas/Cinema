@@ -9,20 +9,20 @@ import org.mapstruct.ReportingPolicy;
 
 import ua.lviv.bas.cinema.domain.cinema.Genre;
 import ua.lviv.bas.cinema.dto.movie.request.GenreRequest;
-import ua.lviv.bas.cinema.dto.movie.response.GenreInfoResponse;
 import ua.lviv.bas.cinema.dto.movie.response.GenreResponse;
+import ua.lviv.bas.cinema.dto.movie.response.GenreListResponse;
 import ua.lviv.bas.cinema.repository.cinema.projection.GenreProjection;
 
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.WARN)
 public interface GenreMapper {
 
 	@Mapping(target = "movieCount", expression = "java(genre.getMovies() != null ? genre.getMovies().size() : 0)")
-	GenreResponse toGenreResponse(Genre genre);
+	GenreListResponse toGenreResponse(Genre genre);
 
 	@Mapping(target = "movieCount", source = "movieCount")
-	GenreResponse toGenreResponse(GenreProjection projection);
+	GenreListResponse toGenreResponse(GenreProjection projection);
 
-	GenreInfoResponse toGenreInfoResponse(Genre genre);
+	GenreResponse toGenreInfoResponse(Genre genre);
 
 	@Mapping(target = "id", ignore = true)
 	@Mapping(target = "movies", ignore = true)

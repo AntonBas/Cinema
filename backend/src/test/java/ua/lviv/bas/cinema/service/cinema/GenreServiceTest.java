@@ -22,7 +22,7 @@ import org.springframework.data.domain.Pageable;
 
 import ua.lviv.bas.cinema.domain.cinema.Genre;
 import ua.lviv.bas.cinema.dto.movie.request.GenreRequest;
-import ua.lviv.bas.cinema.dto.movie.response.GenreResponse;
+import ua.lviv.bas.cinema.dto.movie.response.GenreListResponse;
 import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
 import ua.lviv.bas.cinema.exception.domain.cinema.GenreNotFoundException;
 import ua.lviv.bas.cinema.mapper.cinema.GenreMapper;
@@ -50,14 +50,14 @@ public class GenreServiceTest {
 		Genre genre = new Genre();
 		genre.setId(GENRE_ID);
 		genre.setName(GENRE_NAME);
-		GenreResponse response = new GenreResponse(GENRE_ID, GENRE_NAME, 0);
+		GenreListResponse response = new GenreListResponse(GENRE_ID, GENRE_NAME, 0);
 
 		when(genreRepository.existsByNameIgnoreCase(GENRE_NAME)).thenReturn(false);
 		when(genreMapper.toGenre(request)).thenReturn(genre);
 		when(genreRepository.save(genre)).thenReturn(genre);
 		when(genreMapper.toGenreResponse(genre)).thenReturn(response);
 
-		GenreResponse result = genreService.createGenre(request);
+		GenreListResponse result = genreService.createGenre(request);
 
 		assertThat(result).isNotNull();
 		assertThat(result.id()).isEqualTo(GENRE_ID);
@@ -82,12 +82,12 @@ public class GenreServiceTest {
 		Genre genre = new Genre();
 		genre.setId(GENRE_ID);
 		genre.setName(GENRE_NAME);
-		GenreResponse response = new GenreResponse(GENRE_ID, GENRE_NAME, 0);
+		GenreListResponse response = new GenreListResponse(GENRE_ID, GENRE_NAME, 0);
 
 		when(genreRepository.findById(GENRE_ID)).thenReturn(Optional.of(genre));
 		when(genreMapper.toGenreResponse(genre)).thenReturn(response);
 
-		GenreResponse result = genreService.getGenreById(GENRE_ID);
+		GenreListResponse result = genreService.getGenreById(GENRE_ID);
 
 		assertThat(result).isNotNull();
 		assertThat(result.id()).isEqualTo(GENRE_ID);
@@ -107,14 +107,14 @@ public class GenreServiceTest {
 		existingGenre.setId(GENRE_ID);
 		existingGenre.setName("Old Name");
 		GenreRequest request = new GenreRequest(GENRE_NAME);
-		GenreResponse response = new GenreResponse(GENRE_ID, GENRE_NAME, 0);
+		GenreListResponse response = new GenreListResponse(GENRE_ID, GENRE_NAME, 0);
 
 		when(genreRepository.findById(GENRE_ID)).thenReturn(Optional.of(existingGenre));
 		when(genreRepository.existsByNameIgnoreCaseAndIdNot(GENRE_NAME, GENRE_ID)).thenReturn(false);
 		when(genreRepository.save(existingGenre)).thenReturn(existingGenre);
 		when(genreMapper.toGenreResponse(existingGenre)).thenReturn(response);
 
-		GenreResponse result = genreService.updateGenre(GENRE_ID, request);
+		GenreListResponse result = genreService.updateGenre(GENRE_ID, request);
 
 		assertThat(result).isNotNull();
 		assertThat(result.name()).isEqualTo(GENRE_NAME);
@@ -172,12 +172,12 @@ public class GenreServiceTest {
 
 		GenreProjection projection = new TestGenreProjection(GENRE_ID, GENRE_NAME, 5);
 		Page<GenreProjection> projectionPage = new PageImpl<>(List.of(projection), pageable, 1);
-		GenreResponse response = new GenreResponse(GENRE_ID, GENRE_NAME, 5);
+		GenreListResponse response = new GenreListResponse(GENRE_ID, GENRE_NAME, 5);
 
 		when(genreRepository.findProjectionsByQuery(query, pageable)).thenReturn(projectionPage);
 		when(genreMapper.toGenreResponse(projection)).thenReturn(response);
 
-		Page<GenreResponse> result = genreService.searchGenres(query, pageable);
+		Page<GenreListResponse> result = genreService.searchGenres(query, pageable);
 
 		assertThat(result).isNotNull();
 		assertThat(result.getContent()).hasSize(1);
@@ -193,12 +193,12 @@ public class GenreServiceTest {
 
 		GenreProjection projection = new TestGenreProjection(GENRE_ID, GENRE_NAME, 5);
 		Page<GenreProjection> projectionPage = new PageImpl<>(List.of(projection), pageable, 1);
-		GenreResponse response = new GenreResponse(GENRE_ID, GENRE_NAME, 5);
+		GenreListResponse response = new GenreListResponse(GENRE_ID, GENRE_NAME, 5);
 
 		when(genreRepository.findProjectionsByQuery(query, pageable)).thenReturn(projectionPage);
 		when(genreMapper.toGenreResponse(projection)).thenReturn(response);
 
-		Page<GenreResponse> result = genreService.searchGenres(query, pageable);
+		Page<GenreListResponse> result = genreService.searchGenres(query, pageable);
 
 		assertThat(result).isNotNull();
 		assertThat(result.getContent()).hasSize(1);

@@ -1,390 +1,287 @@
 package ua.lviv.bas.cinema.mapper.cinema;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
+import ua.lviv.bas.cinema.domain.cinema.CinemaHall;
 import ua.lviv.bas.cinema.domain.cinema.Genre;
 import ua.lviv.bas.cinema.domain.cinema.Movie;
 import ua.lviv.bas.cinema.domain.cinema.Person;
+import ua.lviv.bas.cinema.domain.cinema.Session;
 import ua.lviv.bas.cinema.domain.cinema.enums.AgeRating;
 import ua.lviv.bas.cinema.domain.cinema.status.MovieStatus;
 import ua.lviv.bas.cinema.dto.movie.request.MovieCreateRequest;
 import ua.lviv.bas.cinema.dto.movie.request.MovieUpdateRequest;
 import ua.lviv.bas.cinema.dto.movie.response.GenreResponse;
+import ua.lviv.bas.cinema.dto.movie.response.MovieAdminResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieCardResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieDetailResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieSessionSearchResponse;
-import ua.lviv.bas.cinema.dto.movie.response.PersonResponse;
+import ua.lviv.bas.cinema.dto.movie.response.PersonInfoResponse;
+import ua.lviv.bas.cinema.dto.session.response.MovieSessionInfoResponse;
 import ua.lviv.bas.cinema.repository.cinema.projection.MovieCardProjection;
-import ua.lviv.bas.cinema.repository.cinema.projection.MovieDetailProjection;
 import ua.lviv.bas.cinema.repository.cinema.projection.MovieSessionSearchProjection;
 
-@SpringBootTest(classes = { MovieMapperImpl.class, PersonMapper.class, GenreMapper.class })
+@SpringBootTest(classes = { MovieMapperImpl.class, PersonMapperImpl.class, GenreMapperImpl.class,
+		SessionMapperImpl.class })
 public class MovieMapperTest {
 
 	@Autowired
 	private MovieMapper mapper;
-
 	@MockitoBean
 	private PersonMapper personMapper;
-
 	@MockitoBean
 	private GenreMapper genreMapper;
+	@MockitoBean
+	private SessionMapper sessionMapper;
 
-	@Test
-	public void toMovieCardResponseFromMovie_ShouldMapAllFields() {
-		Movie movie = Movie.builder().id(1L).title("Test Movie").slug("test-movie").durationMinutes(120)
-				.ageRating(AgeRating.PEGI_12).status(MovieStatus.CURRENT).build();
+	private Movie movie;
+	private MovieCardProjection cardProjection;
+	private MovieSessionSearchProjection searchProjection;
 
-		MovieCardResponse response = mapper.toMovieCardResponse(movie);
-
-		assertThat(response).isNotNull();
-		assertThat(response.id()).isEqualTo(1L);
-		assertThat(response.slug()).isEqualTo("test-movie");
-		assertThat(response.title()).isEqualTo("Test Movie");
-		assertThat(response.durationMinutes()).isEqualTo(120);
-		assertThat(response.ageRating()).isEqualTo(AgeRating.PEGI_12);
-		assertThat(response.status()).isEqualTo(MovieStatus.CURRENT);
-		assertThat(response.posterUrl()).isEqualTo("/api/movies/1/poster");
-	}
-
-	@Test
-	public void toMovieCardResponseFromProjection_ShouldMapAllFields() {
-		MovieCardProjection projection = new MovieCardProjection() {
-			@Override
-			public Long getId() {
-				return 1L;
-			}
-
-			@Override
-			public String getSlug() {
-				return "test-movie";
-			}
-
-			@Override
-			public String getTitle() {
-				return "Test Movie";
-			}
-
-			@Override
-			public String getPosterFileName() {
-				return "poster.jpg";
-			}
-
-			@Override
-			public Integer getDurationMinutes() {
-				return 120;
-			}
-
-			@Override
-			public AgeRating getAgeRating() {
-				return AgeRating.PEGI_12;
-			}
-
-			@Override
-			public MovieStatus getStatus() {
-				return MovieStatus.CURRENT;
-			}
-
-			@Override
-			public LocalDate getReleaseDate() {
-				return LocalDate.of(2024, 1, 15);
-			}
-
-			@Override
-			public LocalDate getEndShowingDate() {
-				return LocalDate.of(2024, 3, 15);
-			}
-		};
-
-		MovieCardResponse response = mapper.toMovieCardResponse(projection);
-
-		assertThat(response).isNotNull();
-		assertThat(response.id()).isEqualTo(1L);
-		assertThat(response.slug()).isEqualTo("test-movie");
-		assertThat(response.title()).isEqualTo("Test Movie");
-		assertThat(response.durationMinutes()).isEqualTo(120);
-		assertThat(response.ageRating()).isEqualTo(AgeRating.PEGI_12);
-		assertThat(response.status()).isEqualTo(MovieStatus.CURRENT);
-		assertThat(response.posterUrl()).isEqualTo("/api/movies/1/poster");
-	}
-
-	@Test
-	public void toMovieDetailResponseFromMovie_ShouldMapAllFields() {
+	@BeforeEach
+	void setUp() {
 		Genre genre = Genre.builder().id(1L).name("Action").build();
-		Person actor = Person.builder().id(1L).name("Actor Name").build();
-		Person director = Person.builder().id(2L).name("Director Name").build();
-		Person screenwriter = Person.builder().id(3L).name("Screenwriter Name").build();
+		Person actor = Person.builder().id(1L).name("Actor").build();
+		Person director = Person.builder().id(2L).name("Director").build();
+		Person screenwriter = Person.builder().id(3L).name("Screenwriter").build();
+		Session session = Session.builder().id(1L).startTime(LocalDateTime.now()).basePrice(BigDecimal.valueOf(150))
+				.movie(movie).hall(CinemaHall.builder().id(1L).name("Hall A").build()).build();
 
-		Set<Genre> genres = new HashSet<>();
-		genres.add(genre);
-
-		Set<Person> actors = new HashSet<>();
-		actors.add(actor);
-
-		Set<Person> directors = new HashSet<>();
-		directors.add(director);
-
-		Set<Person> screenwriters = new HashSet<>();
-		screenwriters.add(screenwriter);
-
-		GenreResponse genreResponse = new GenreResponse(1L, "Action", 0);
-		PersonResponse actorResponse = new PersonResponse(1L, "Actor Name", null, 0);
-		PersonResponse directorResponse = new PersonResponse(2L, "Director Name", null, 0);
-		PersonResponse screenwriterResponse = new PersonResponse(3L, "Screenwriter Name", null, 0);
-
-		when(genreMapper.toGenreResponse(genre)).thenReturn(genreResponse);
-		when(personMapper.toPersonResponse(actor)).thenReturn(actorResponse);
-		when(personMapper.toPersonResponse(director)).thenReturn(directorResponse);
-		when(personMapper.toPersonResponse(screenwriter)).thenReturn(screenwriterResponse);
-
-		Movie movie = Movie.builder().id(1L).title("Test Movie").slug("test-movie")
-				.trailerUrl("https://youtube.com/watch?v=123").description("Test Description").durationMinutes(120)
-				.releaseDate(LocalDate.of(2024, 1, 15)).endShowingDate(LocalDate.of(2024, 3, 15))
-				.ageRating(AgeRating.PEGI_12).status(MovieStatus.CURRENT).posterFileName("poster.jpg").genres(genres)
-				.actors(actors).directors(directors).screenwriters(screenwriters).build();
-
-		MovieDetailResponse response = mapper.toMovieDetailResponse(movie);
-
-		assertThat(response).isNotNull();
-		assertThat(response.id()).isEqualTo(1L);
-		assertThat(response.title()).isEqualTo("Test Movie");
-		assertThat(response.slug()).isEqualTo("test-movie");
-		assertThat(response.trailerUrl()).isEqualTo("https://youtube.com/watch?v=123");
-		assertThat(response.description()).isEqualTo("Test Description");
-		assertThat(response.durationMinutes()).isEqualTo(120);
-		assertThat(response.releaseDate()).isEqualTo(LocalDate.of(2024, 1, 15));
-		assertThat(response.endShowingDate()).isEqualTo(LocalDate.of(2024, 3, 15));
-		assertThat(response.ageRating()).isEqualTo(AgeRating.PEGI_12);
-		assertThat(response.status()).isEqualTo(MovieStatus.CURRENT);
-		assertThat(response.posterFileName()).isEqualTo("poster.jpg");
-		assertThat(response.posterUrl()).isEqualTo("/api/movies/1/poster");
-		assertThat(response.genres()).hasSize(1);
-		assertThat(response.actors()).hasSize(1);
-		assertThat(response.directors()).hasSize(1);
-		assertThat(response.screenwriters()).hasSize(1);
-	}
-
-	@Test
-	public void toMovieDetailResponseFromProjection_ShouldMapBasicFields() {
-		MovieDetailProjection projection = new MovieDetailProjection() {
-			@Override
-			public Long getId() {
-				return 1L;
-			}
-
-			@Override
-			public String getTitle() {
-				return "Test Movie";
-			}
-
-			@Override
-			public String getSlug() {
-				return "test-movie";
-			}
-
-			@Override
-			public String getTrailerUrl() {
-				return "https://youtube.com/watch?v=123";
-			}
-
-			@Override
-			public String getDescription() {
-				return "Test Description";
-			}
-
-			@Override
-			public Integer getDurationMinutes() {
-				return 120;
-			}
-
-			@Override
-			public LocalDate getReleaseDate() {
-				return LocalDate.of(2024, 1, 15);
-			}
-
-			@Override
-			public LocalDate getEndShowingDate() {
-				return LocalDate.of(2024, 3, 15);
-			}
-
-			@Override
-			public AgeRating getAgeRating() {
-				return AgeRating.PEGI_12;
-			}
-
-			@Override
-			public MovieStatus getStatus() {
-				return MovieStatus.CURRENT;
-			}
-
-			@Override
-			public String getPosterFileName() {
-				return "poster.jpg";
-			}
-		};
-
-		MovieDetailResponse response = mapper.toMovieDetailResponse(projection);
-
-		assertThat(response).isNotNull();
-		assertThat(response.id()).isEqualTo(1L);
-		assertThat(response.title()).isEqualTo("Test Movie");
-		assertThat(response.slug()).isEqualTo("test-movie");
-		assertThat(response.trailerUrl()).isEqualTo("https://youtube.com/watch?v=123");
-		assertThat(response.description()).isEqualTo("Test Description");
-		assertThat(response.durationMinutes()).isEqualTo(120);
-		assertThat(response.releaseDate()).isEqualTo(LocalDate.of(2024, 1, 15));
-		assertThat(response.endShowingDate()).isEqualTo(LocalDate.of(2024, 3, 15));
-		assertThat(response.ageRating()).isEqualTo(AgeRating.PEGI_12);
-		assertThat(response.status()).isEqualTo(MovieStatus.CURRENT);
-		assertThat(response.posterFileName()).isEqualTo("poster.jpg");
-		assertThat(response.posterUrl()).isEqualTo("/api/movies/1/poster");
-		assertThat(response.genres()).isNull();
-		assertThat(response.actors()).isNull();
-		assertThat(response.directors()).isNull();
-		assertThat(response.screenwriters()).isNull();
-	}
-
-	@Test
-	public void toMovieSessionSearchResponse_ShouldMapFields() {
-		MovieSessionSearchProjection projection = new MovieSessionSearchProjection() {
-			@Override
-			public Long getId() {
-				return 1L;
-			}
-
-			@Override
-			public String getTitle() {
-				return "Test Movie";
-			}
-
-			@Override
-			public Integer getDurationMinutes() {
-				return 120;
-			}
-		};
-
-		MovieSessionSearchResponse response = mapper.toMovieSessionSearchResponse(projection);
-
-		assertThat(response).isNotNull();
-		assertThat(response.id()).isEqualTo(1L);
-		assertThat(response.title()).isEqualTo("Test Movie");
-		assertThat(response.durationMinutes()).isEqualTo(120);
-	}
-
-	@Test
-	public void toMovie_ShouldMapCreateRequestToEntity() {
-		MovieCreateRequest request = MovieCreateRequest.builder().title("New Movie")
+		movie = Movie.builder().id(1L).title("Test Movie").slug("test-movie")
 				.trailerUrl("https://youtube.com/watch?v=123").description("Description").durationMinutes(120)
 				.releaseDate(LocalDate.of(2024, 1, 15)).endShowingDate(LocalDate.of(2024, 3, 15))
-				.ageRating(AgeRating.PEGI_12).genreIds(List.of(1L, 2L)).actorIds(List.of(1L, 2L))
-				.directorIds(List.of(3L)).screenwriterIds(List.of(4L)).build();
+				.ageRating(AgeRating.PEGI_12).status(MovieStatus.CURRENT).posterFileName("poster.jpg")
+				.genres(Set.of(genre)).actors(Set.of(actor)).directors(Set.of(director))
+				.screenwriters(Set.of(screenwriter)).sessions(Set.of(session)).build();
 
-		Movie movie = mapper.toMovie(request);
+		cardProjection = createCardProjection();
+		searchProjection = createSearchProjection();
 
-		assertThat(movie).isNotNull();
-		assertThat(movie.getId()).isNull();
-		assertThat(movie.getSlug()).isNull();
-		assertThat(movie.getStatus()).isNull();
-		assertThat(movie.getTitle()).isEqualTo("New Movie");
-		assertThat(movie.getTrailerUrl()).isEqualTo("https://youtube.com/watch?v=123");
-		assertThat(movie.getDescription()).isEqualTo("Description");
-		assertThat(movie.getDurationMinutes()).isEqualTo(120);
-		assertThat(movie.getReleaseDate()).isEqualTo(LocalDate.of(2024, 1, 15));
-		assertThat(movie.getEndShowingDate()).isEqualTo(LocalDate.of(2024, 3, 15));
-		assertThat(movie.getAgeRating()).isEqualTo(AgeRating.PEGI_12);
-		assertThat(movie.getPosterFileName()).isNull();
-		assertThat(movie.getGenres()).isNotNull().isEmpty();
-		assertThat(movie.getActors()).isNotNull().isEmpty();
-		assertThat(movie.getDirectors()).isNotNull().isEmpty();
-		assertThat(movie.getScreenwriters()).isNotNull().isEmpty();
+		when(genreMapper.toGenreInfoResponse(any())).thenReturn(new GenreResponse(1L, "Action"));
+		when(personMapper.toPersonInfoResponse(any())).thenReturn(new PersonInfoResponse(1L, "Name", null));
+		when(sessionMapper.toMovieSessionInfoResponse(any())).thenReturn(new MovieSessionInfoResponse(1L,
+				LocalDateTime.now(), LocalDateTime.now(), BigDecimal.valueOf(150), 105, "Hall A"));
+	}
+
+	private MovieCardProjection createCardProjection() {
+		return new MovieCardProjection() {
+			public Long getId() {
+				return 1L;
+			}
+
+			public String getSlug() {
+				return "test-movie";
+			}
+
+			public String getTitle() {
+				return "Test Movie";
+			}
+
+			public String getPosterFileName() {
+				return "poster.jpg";
+			}
+
+			public Integer getDurationMinutes() {
+				return 120;
+			}
+
+			public AgeRating getAgeRating() {
+				return AgeRating.PEGI_12;
+			}
+
+			public MovieStatus getStatus() {
+				return MovieStatus.CURRENT;
+			}
+
+			public LocalDate getReleaseDate() {
+				return LocalDate.of(2024, 1, 15);
+			}
+
+			public LocalDate getEndShowingDate() {
+				return LocalDate.of(2024, 3, 15);
+			}
+		};
+	}
+
+	private MovieSessionSearchProjection createSearchProjection() {
+		return new MovieSessionSearchProjection() {
+			public Long getId() {
+				return 1L;
+			}
+
+			public String getTitle() {
+				return "Test Movie";
+			}
+
+			public Integer getDurationMinutes() {
+				return 120;
+			}
+		};
+	}
+
+	@Nested
+	class ToMovieCardResponseTests {
+		@Test
+		void fromMovie_ShouldMapAllFields() {
+			var response = mapper.toMovieCardResponse(movie);
+			assertThat(response).returns(1L, MovieCardResponse::id).returns("test-movie", MovieCardResponse::slug)
+					.returns("/api/movies/1/poster", MovieCardResponse::posterUrl);
+		}
+
+		@Test
+		void fromProjection_ShouldMapAllFields() {
+			var response = mapper.toMovieCardResponse(cardProjection);
+			assertThat(response).returns(1L, MovieCardResponse::id).returns("test-movie", MovieCardResponse::slug);
+		}
+
+		@Test
+		void withNull_ShouldReturnNull() {
+			assertThat(mapper.toMovieCardResponse((Movie) null)).isNull();
+			assertThat(mapper.toMovieCardResponse((MovieCardProjection) null)).isNull();
+		}
+	}
+
+	@Nested
+	class ToMovieDetailResponseTests {
+		@Test
+		void fromMovie_ShouldMapAllFieldsIncludingCollections() {
+			var response = mapper.toMovieDetailResponse(movie);
+			assertThat(response).returns(1L, MovieDetailResponse::id).returns("/api/movies/1/poster",
+					MovieDetailResponse::posterUrl);
+			assertThat(response.genres()).hasSize(1);
+			assertThat(response.actors()).hasSize(1);
+			assertThat(response.sessions()).hasSize(1);
+		}
+
+		@Test
+		void withEmptyCollections_ShouldMapEmptyLists() {
+			var emptyMovie = Movie.builder().id(1L).title("Empty").slug("empty").trailerUrl("url").description("desc")
+					.durationMinutes(120).releaseDate(LocalDate.now()).endShowingDate(LocalDate.now())
+					.ageRating(AgeRating.PEGI_3).status(MovieStatus.CURRENT).posterFileName("poster.jpg")
+					.genres(new HashSet<>()).actors(new HashSet<>()).directors(new HashSet<>())
+					.screenwriters(new HashSet<>()).sessions(new HashSet<>()).build();
+			var response = mapper.toMovieDetailResponse(emptyMovie);
+			assertThat(response.genres()).isEmpty();
+			assertThat(response.sessions()).isEmpty();
+		}
+
+		@Test
+		void withNull_ShouldReturnNull() {
+			assertThat(mapper.toMovieDetailResponse((Movie) null)).isNull();
+		}
+	}
+
+	@Nested
+	class ToMovieAdminResponseTests {
+		@Test
+		void shouldMapAllFields() {
+			var response = mapper.toMovieAdminResponse(movie);
+			assertThat(response).returns(1L, MovieAdminResponse::id).returns("/api/movies/1/poster",
+					MovieAdminResponse::posterUrl);
+			assertThat(response.genres()).hasSize(1);
+		}
+
+		@Test
+		void withNull_ShouldReturnNull() {
+			assertThat(mapper.toMovieAdminResponse(null)).isNull();
+		}
+	}
+
+	@Nested
+	class ToMovieSessionSearchResponseTests {
+		@Test
+		void fromSearchProjection_ShouldMapFields() {
+			var response = mapper.toMovieSessionSearchResponse(searchProjection);
+			assertThat(response).returns(1L, MovieSessionSearchResponse::id).returns(120,
+					MovieSessionSearchResponse::durationMinutes);
+		}
+
+		@Test
+		void fromCardProjection_ShouldMapFields() {
+			var response = mapper.toMovieSessionSearchResponse(cardProjection);
+			assertThat(response).returns(1L, MovieSessionSearchResponse::id);
+		}
+
+		@Test
+		void withNull_ShouldReturnNull() {
+			assertThat(mapper.toMovieSessionSearchResponse((MovieSessionSearchProjection) null)).isNull();
+			assertThat(mapper.toMovieSessionSearchResponse((MovieCardProjection) null)).isNull();
+		}
+	}
+
+	@Nested
+	class ToMovieTests {
+		@Test
+		void shouldMapCreateRequestIgnoringRelations() {
+			var request = MovieCreateRequest.builder().title("New").trailerUrl("url").description("desc")
+					.durationMinutes(120).releaseDate(LocalDate.now()).endShowingDate(LocalDate.now().plusDays(1))
+					.ageRating(AgeRating.PEGI_12).genreIds(List.of(1L)).actorIds(List.of(1L)).build();
+			var result = mapper.toMovie(request);
+			assertThat(result).returns(null, Movie::getId).returns(null, Movie::getSlug).returns("New",
+					Movie::getTitle);
+			assertThat(result.getGenres()).isEmpty();
+		}
+
+		@Test
+		void withNull_ShouldReturnNull() {
+			assertThat(mapper.toMovie((MovieCreateRequest) null)).isNull();
+		}
+	}
+
+	@Nested
+	class UpdateMovieFromRequestTests {
+		@Test
+		void shouldUpdateNonNullFields() {
+			var movie = Movie.builder().id(1L).title("Old").description("Old").durationMinutes(100).build();
+			var request = MovieUpdateRequest.builder().title("New").description("New").durationMinutes(120).build();
+			mapper.updateMovieFromRequest(request, movie);
+			assertThat(movie).returns("New", Movie::getTitle).returns(120, Movie::getDurationMinutes);
+		}
+
+		@Test
+		void shouldIgnoreNullFields() {
+			var movie = Movie.builder().id(1L).title("Old").description("Old").durationMinutes(100).build();
+			var request = MovieUpdateRequest.builder().title(null).description("New").durationMinutes(null).build();
+			mapper.updateMovieFromRequest(request, movie);
+			assertThat(movie).returns("Old", Movie::getTitle).returns(100, Movie::getDurationMinutes);
+		}
+
+		@Test
+		void shouldNotChangeIdSlugStatusPosterFileName() {
+			var movie = Movie.builder().id(1L).slug("slug").status(MovieStatus.CURRENT).posterFileName("poster.jpg")
+					.title("Old").build();
+			mapper.updateMovieFromRequest(MovieUpdateRequest.builder().title("New").build(), movie);
+			assertThat(movie).returns(1L, Movie::getId).returns("slug", Movie::getSlug)
+					.returns(MovieStatus.CURRENT, Movie::getStatus).returns("poster.jpg", Movie::getPosterFileName);
+		}
+
+		@Test
+		void withNullRequest_ShouldNotChange() {
+			var movie = Movie.builder().title("Old").build();
+			mapper.updateMovieFromRequest(null, movie);
+			assertThat(movie.getTitle()).isEqualTo("Old");
+		}
 	}
 
 	@Test
-	public void updateMovieFromRequest_ShouldUpdateFields() {
-		Movie movie = Movie.builder().id(1L).title("Old Title").description("Old Description").durationMinutes(100)
-				.build();
-
-		MovieUpdateRequest request = MovieUpdateRequest.builder().title("New Title").description("New Description")
-				.durationMinutes(120).build();
-
-		mapper.updateMovieFromRequest(request, movie);
-
-		assertThat(movie.getId()).isEqualTo(1L);
-		assertThat(movie.getTitle()).isEqualTo("New Title");
-		assertThat(movie.getDescription()).isEqualTo("New Description");
-		assertThat(movie.getDurationMinutes()).isEqualTo(120);
-	}
-
-	@Test
-	public void updateMovieFromRequest_WithNullFields_ShouldIgnoreNull() {
-		Movie movie = Movie.builder().id(1L).title("Old Title").description("Old Description").durationMinutes(100)
-				.build();
-
-		MovieUpdateRequest request = MovieUpdateRequest.builder().title(null).description(null).durationMinutes(null)
-				.build();
-
-		mapper.updateMovieFromRequest(request, movie);
-
-		assertThat(movie.getId()).isEqualTo(1L);
-		assertThat(movie.getTitle()).isEqualTo("Old Title");
-		assertThat(movie.getDescription()).isEqualTo("Old Description");
-		assertThat(movie.getDurationMinutes()).isEqualTo(100);
-	}
-
-	@Test
-	public void updateMovieFromRequest_WithNullRequest_ShouldNotChange() {
-		Movie movie = Movie.builder().id(1L).title("Old Title").description("Old Description").build();
-
-		mapper.updateMovieFromRequest(null, movie);
-
-		assertThat(movie.getTitle()).isEqualTo("Old Title");
-		assertThat(movie.getDescription()).isEqualTo("Old Description");
-	}
-
-	@Test
-	public void toMovieCardResponse_WithNullMovie_ShouldReturnNull() {
-		MovieCardResponse response = mapper.toMovieCardResponse((Movie) null);
-		assertThat(response).isNull();
-	}
-
-	@Test
-	public void toMovieCardResponse_WithNullProjection_ShouldReturnNull() {
-		MovieCardResponse response = mapper.toMovieCardResponse((MovieCardProjection) null);
-		assertThat(response).isNull();
-	}
-
-	@Test
-	public void toMovieDetailResponse_WithNullMovie_ShouldReturnNull() {
-		MovieDetailResponse response = mapper.toMovieDetailResponse((Movie) null);
-		assertThat(response).isNull();
-	}
-
-	@Test
-	public void toMovieDetailResponse_WithNullProjection_ShouldReturnNull() {
-		MovieDetailResponse response = mapper.toMovieDetailResponse((MovieDetailProjection) null);
-		assertThat(response).isNull();
-	}
-
-	@Test
-	public void toMovieSessionSearchResponse_WithNullProjection_ShouldReturnNull() {
-		MovieSessionSearchResponse response = mapper.toMovieSessionSearchResponse(null);
-		assertThat(response).isNull();
-	}
-
-	@Test
-	public void toMovie_WithNullRequest_ShouldReturnNull() {
-		Movie movie = mapper.toMovie((MovieCreateRequest) null);
-		assertThat(movie).isNull();
+	void getPosterUrl_ShouldReturnCorrectUrlOrNull() {
+		assertThat(mapper.getPosterUrl(1L)).isEqualTo("/api/movies/1/poster");
+		assertThat(mapper.getPosterUrl(null)).isNull();
 	}
 }

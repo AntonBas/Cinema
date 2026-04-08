@@ -10,7 +10,7 @@ import org.mapstruct.factory.Mappers;
 import ua.lviv.bas.cinema.domain.cinema.Genre;
 import ua.lviv.bas.cinema.domain.cinema.Movie;
 import ua.lviv.bas.cinema.dto.movie.request.GenreRequest;
-import ua.lviv.bas.cinema.dto.movie.response.GenreResponse;
+import ua.lviv.bas.cinema.dto.movie.response.GenreListResponse;
 import ua.lviv.bas.cinema.repository.cinema.projection.GenreProjection;
 
 public class GenreMapperTest {
@@ -21,7 +21,7 @@ public class GenreMapperTest {
 	void toGenreResponseFromEntity_ShouldMapAllFields() {
 		Genre genre = Genre.builder().id(1L).name("Action").movies(new HashSet<>()).build();
 
-		GenreResponse response = mapper.toGenreResponse(genre);
+		GenreListResponse response = mapper.toGenreResponse(genre);
 
 		assertThat(response).isNotNull();
 		assertThat(response.id()).isEqualTo(1L);
@@ -36,7 +36,7 @@ public class GenreMapperTest {
 		genre.getMovies().add(Movie.builder().id(1L).build());
 		genre.getMovies().add(Movie.builder().id(2L).build());
 
-		GenreResponse response = mapper.toGenreResponse(genre);
+		GenreListResponse response = mapper.toGenreResponse(genre);
 
 		assertThat(response).isNotNull();
 		assertThat(response.id()).isEqualTo(1L);
@@ -63,7 +63,7 @@ public class GenreMapperTest {
 			}
 		};
 
-		GenreResponse response = mapper.toGenreResponse(projection);
+		GenreListResponse response = mapper.toGenreResponse(projection);
 
 		assertThat(response).isNotNull();
 		assertThat(response.id()).isEqualTo(1L);
@@ -90,7 +90,7 @@ public class GenreMapperTest {
 			}
 		};
 
-		GenreResponse response = mapper.toGenreResponse(projection);
+		GenreListResponse response = mapper.toGenreResponse(projection);
 
 		assertThat(response).isNotNull();
 		assertThat(response.id()).isEqualTo(1L);
@@ -134,13 +134,13 @@ public class GenreMapperTest {
 
 	@Test
 	void toGenreResponse_WithNullEntity_ShouldReturnNull() {
-		GenreResponse response = mapper.toGenreResponse((Genre) null);
+		GenreListResponse response = mapper.toGenreResponse((Genre) null);
 		assertThat(response).isNull();
 	}
 
 	@Test
 	void toGenreResponse_WithNullProjection_ShouldReturnNull() {
-		GenreResponse response = mapper.toGenreResponse((GenreProjection) null);
+		GenreListResponse response = mapper.toGenreResponse((GenreProjection) null);
 		assertThat(response).isNull();
 	}
 

@@ -32,7 +32,7 @@ public record MovieDetailResponse(@Schema(description = "Unique identifier of th
 
 		@Schema(description = "URL to the movie poster image", example = "/api/movies/1/poster") String posterUrl,
 
-		@Schema(description = "List of genres associated with the movie") List<GenreInfoResponse> genres,
+		@Schema(description = "List of genres associated with the movie") List<GenreResponse> genres,
 
 		@Schema(description = "List of actors in the movie") List<PersonInfoResponse> actors,
 
