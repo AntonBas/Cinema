@@ -45,12 +45,6 @@ public class GenreService {
 		return genreMapper.toGenreResponse(savedGenre);
 	}
 
-	@Cacheable(key = "#id")
-	public GenreResponse getGenreById(Long id) {
-		return genreRepository.findById(id).map(genreMapper::toGenreResponse)
-				.orElseThrow(() -> new GenreNotFoundException(id));
-	}
-
 	@Cacheable(key = "'genres-' + #query + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
 	public Page<GenreListResponse> getGenres(String query, Pageable pageable) {
 		log.info("Getting genres: query='{}', page={}, size={}", query, pageable.getPageNumber(),

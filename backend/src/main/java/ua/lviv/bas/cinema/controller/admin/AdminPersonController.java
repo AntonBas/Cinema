@@ -62,13 +62,15 @@ public class AdminPersonController {
 		return ResponseEntity.status(HttpStatus.CREATED).body(createdPerson);
 	}
 
-	@GetMapping("/{id}")
-	@Operation(summary = "Get person by ID")
-	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Person found") })
-	public ResponseEntity<PersonResponse> getPersonById(@PathVariable Long id) {
-		log.info("GET /api/admin/persons/{} - Getting person by id", id);
-		PersonResponse person = personService.getPersonById(id);
-		return ResponseEntity.ok(person);
+	@GetMapping
+	@Operation(summary = "Get all persons with filters")
+	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Persons retrieved successfully") })
+	public ResponseEntity<PageResponse<PersonListResponse>> getAllPersons(@RequestParam(required = false) String name,
+			@RequestParam(required = false) PersonRole role,
+			@Parameter(hidden = true) @PageableDefault(size = 12) Pageable pageable) {
+		log.info("GET /api/admin/persons - name: '{}', role: {}", name, role);
+		var result = personService.getPersons(name, role, pageable);
+		return ResponseEntity.ok(PageResponse.from(result));
 	}
 
 	@PutMapping("/{id}")
@@ -88,16 +90,5 @@ public class AdminPersonController {
 		log.info("DELETE /api/admin/persons/{} - Deleting person", id);
 		personService.deletePerson(id);
 		return ResponseEntity.noContent().build();
-	}
-
-	@GetMapping
-	@Operation(summary = "Get all persons with filters")
-	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Persons retrieved successfully") })
-	public ResponseEntity<PageResponse<PersonListResponse>> getAllPersons(@RequestParam(required = false) String name,
-			@RequestParam(required = false) PersonRole role,
-			@Parameter(hidden = true) @PageableDefault(size = 12) Pageable pageable) {
-		log.info("GET /api/admin/persons - name: '{}', role: {}", name, role);
-		var result = personService.getPersons(name, role, pageable);
-		return ResponseEntity.ok(PageResponse.from(result));
 	}
 }

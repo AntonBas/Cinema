@@ -1,13 +1,10 @@
 package ua.lviv.bas.cinema.service.cinema;
 
-import java.util.List;
-
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,7 +23,6 @@ import ua.lviv.bas.cinema.exception.domain.cinema.PersonNotFoundException;
 import ua.lviv.bas.cinema.mapper.cinema.PersonMapper;
 import ua.lviv.bas.cinema.repository.cinema.MovieRepository;
 import ua.lviv.bas.cinema.repository.cinema.PersonRepository;
-import ua.lviv.bas.cinema.repository.cinema.projection.PersonListProjection;
 
 @Slf4j
 @Service
@@ -54,42 +50,10 @@ public class PersonService {
 		return createPersonInternal(request.name(), request.role(), person);
 	}
 
-	@Cacheable(key = "#id")
-	public PersonResponse getPersonById(Long id) {
-		log.debug("Retrieving person by id: {}", id);
-		return personRepository.findById(id).map(personMapper::toPersonResponse)
-				.orElseThrow(() -> new PersonNotFoundException(id));
-	}
-
 	@Cacheable(key = "'search-' + #name + '-' + #role + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
 	public Page<PersonListResponse> getPersons(String name, PersonRole role, Pageable pageable) {
 		log.info("Getting persons: name='{}', role={}", name, role);
-		Page<PersonListProjection> projections = personRepository.findProjectionsByFilters(name, role, pageable);
-		return projections.map(personMapper::toPersonListResponse);
-	}
-
-	@Cacheable(key = "'popular-' + #name + '-' + #role + '-' + #limit")
-	public List<PersonListResponse> getPopularPersons(String name, PersonRole role, int limit) {
-		log.info("Getting popular persons: name='{}', role={}, limit={}", name, role, limit);
-		Page<PersonListProjection> page = personRepository.findProjectionsByFilters(name, role,
-				PageRequest.of(0, limit));
-		return page.getContent().stream().map(personMapper::toPersonListResponse).toList();
-	}
-
-	@Cacheable(key = "'by-ids-' + #ids.hashCode()")
-	public List<PersonListResponse> getPersonsByIds(List<Long> ids) {
-		log.debug("Retrieving persons by ids: {}", ids);
-
-		if (ids == null || ids.isEmpty()) {
-			return List.of();
-		}
-
-		List<Person> persons = personRepository.findAllById(ids);
-		return persons.stream().map(personMapper::toPersonListResponse).toList();
-	}
-
-	public boolean existsByNameAndRole(String name, PersonRole role) {
-		return personRepository.existsByNameAndRole(name, role);
+		return personRepository.findProjectionsByFilters(name, role, pageable).map(personMapper::toPersonListResponse);
 	}
 
 	@Caching(evict = { @CacheEvict(key = "#id"), @CacheEvict(allEntries = true) })
