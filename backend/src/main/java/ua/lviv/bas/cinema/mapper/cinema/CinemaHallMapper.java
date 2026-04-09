@@ -29,6 +29,23 @@ public abstract class CinemaHallMapper {
 		return hall.getSeats() != null ? hall.getSeats().size() : 0;
 	}
 
+	@Named("calculateTotalRows")
+	protected int calculateTotalRows(CinemaHall hall) {
+		if (hall.getSeats() == null || hall.getSeats().isEmpty()) {
+			return 0;
+		}
+		return hall.getSeats().stream().mapToInt(Seat::getRow).max().orElse(0);
+	}
+
+	@Named("calculateMaxSeatsPerRow")
+	protected int calculateMaxSeatsPerRow(CinemaHall hall) {
+		if (hall.getSeats() == null || hall.getSeats().isEmpty()) {
+			return 0;
+		}
+		return hall.getSeats().stream().collect(Collectors.groupingBy(Seat::getRow, Collectors.counting())).values()
+				.stream().mapToInt(Long::intValue).max().orElse(0);
+	}
+
 	@Mapping(target = "capacity", source = "hall", qualifiedByName = "calculateCapacity")
 	public abstract CinemaHallListResponse toCinemaHallListResponse(CinemaHall hall);
 
@@ -51,13 +68,16 @@ public abstract class CinemaHallMapper {
 
 	@Mapping(target = "hallId", source = "id")
 	@Mapping(target = "hallName", source = "name")
-	@Mapping(target = "totalRows", expression = "java(hall.getSeats().stream().mapToInt(Seat::getRow).max().orElse(0))")
-	@Mapping(target = "maxSeatsPerRow", expression = "java(hall.getSeats().stream().collect(Collectors.groupingBy(Seat::getRow, Collectors.counting())).values().stream().mapToInt(Long::intValue).max().orElse(0))")
+	@Mapping(target = "totalRows", source = "hall", qualifiedByName = "calculateTotalRows")
+	@Mapping(target = "maxSeatsPerRow", source = "hall", qualifiedByName = "calculateMaxSeatsPerRow")
 	@Mapping(target = "totalSeats", source = "hall", qualifiedByName = "calculateCapacity")
 	@Mapping(target = "rows", source = "seats")
 	public abstract HallLayoutResponse toHallLayoutResponse(CinemaHall hall);
 
 	protected List<SeatRowResponse> mapSeatsToRows(List<Seat> seats) {
+		if (seats == null) {
+			return List.of();
+		}
 		return seats.stream().collect(Collectors.groupingBy(Seat::getRow)).entrySet().stream()
 				.map(entry -> new SeatRowResponse(entry.getKey(), entry.getValue().size(),
 						seatMapper.toSeatResponseList(entry.getValue())))
