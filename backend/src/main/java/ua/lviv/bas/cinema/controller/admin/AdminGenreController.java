@@ -55,6 +55,15 @@ public class AdminGenreController {
 		return ResponseEntity.status(HttpStatus.CREATED).body(createdGenre);
 	}
 
+	@GetMapping
+	@Operation(summary = "Get genres list sorted by popularity")
+	public ResponseEntity<PageResponse<GenreListResponse>> getGenres(@RequestParam(required = false) String query,
+			@Parameter(hidden = true) @PageableDefault(size = 10) Pageable pageable) {
+		log.info("GET /api/admin/genres - query: '{}'", query);
+		var result = genreService.getGenres(query, pageable);
+		return ResponseEntity.ok(PageResponse.from(result));
+	}
+
 	@PutMapping("/{id}")
 	@Operation(summary = "Update genre")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Genre updated successfully"),
@@ -74,14 +83,5 @@ public class AdminGenreController {
 		log.info("DELETE /api/admin/genres/{} - Deleting genre", id);
 		genreService.deleteGenre(id);
 		return ResponseEntity.noContent().build();
-	}
-
-	@GetMapping
-	@Operation(summary = "Get genres list sorted by popularity")
-	public ResponseEntity<PageResponse<GenreListResponse>> getGenres(@RequestParam(required = false) String search,
-			@Parameter(hidden = true) @PageableDefault(size = 10) Pageable pageable) {
-		log.info("GET /api/admin/genres - search: '{}'", search);
-		var result = genreService.getGenres(search, pageable);
-		return ResponseEntity.ok(PageResponse.from(result));
 	}
 }
