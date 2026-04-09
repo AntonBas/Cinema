@@ -69,7 +69,7 @@ public class PersonService {
 	public PersonResponse updatePerson(Long id, PersonRequest request) {
 		log.info("Updating person with id: {}", id);
 
-		var person = findPersonById(id);
+		var person = personRepository.findById(id).orElseThrow(() -> new PersonNotFoundException(id));
 		validatePersonUniqueness(request.name(), request.role(), id);
 
 		personMapper.updatePersonFromRequest(request, person);
@@ -84,15 +84,11 @@ public class PersonService {
 	public void deletePerson(Long id) {
 		log.info("Deleting person with id: {}", id);
 
-		var person = findPersonById(id);
+		var person = personRepository.findById(id).orElseThrow(() -> new PersonNotFoundException(id));
 		checkPersonUsageInMovies(person);
 		personRepository.delete(person);
 
 		log.debug("Person deleted with ID: {}", id);
-	}
-
-	private Person findPersonById(Long id) {
-		return personRepository.findById(id).orElseThrow(() -> new PersonNotFoundException(id));
 	}
 
 	private void validatePersonUniqueness(String name, PersonRole role, Long excludeId) {
