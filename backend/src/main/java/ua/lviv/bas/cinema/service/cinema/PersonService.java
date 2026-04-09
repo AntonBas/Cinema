@@ -60,7 +60,8 @@ public class PersonService {
 
 	@Cacheable(value = "persons", key = "'list-' + #query + '-' + #role + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
 	public Page<PersonListResponse> getPersons(String query, PersonRole role, Pageable pageable) {
-		log.info("Getting persons: query='{}', role={}", query, role);
+		log.info("Getting persons: query='{}', role={}, page={}, size={}", query, role, pageable.getPageNumber(),
+				pageable.getPageSize());
 		return personRepository.findPersonsByFilters(query, role, pageable).map(personMapper::toPersonListResponse);
 	}
 
