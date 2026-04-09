@@ -1,5 +1,6 @@
 package ua.lviv.bas.cinema.controller.admin;
 
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
@@ -16,7 +17,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -64,13 +64,12 @@ public class AdminPersonController {
 
 	@GetMapping
 	@Operation(summary = "Get all persons with filters")
-	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Persons retrieved successfully") })
-	public ResponseEntity<PageResponse<PersonListResponse>> getAllPersons(@RequestParam(required = false) String name,
-			@RequestParam(required = false) PersonRole role,
-			@Parameter(hidden = true) @PageableDefault(size = 12) Pageable pageable) {
-		log.info("GET /api/admin/persons - name: '{}', role: {}", name, role);
-		var result = personService.getPersons(name, role, pageable);
-		return ResponseEntity.ok(PageResponse.from(result));
+	public ResponseEntity<PageResponse<PersonListResponse>> getPersons(@RequestParam(required = false) String query,
+			@RequestParam(required = false) PersonRole role, @PageableDefault(size = 12) Pageable pageable) {
+
+		log.info("GET /api/admin/persons - query: '{}', role: {}", query, role);
+		Page<PersonListResponse> page = personService.getPersons(query, role, pageable);
+		return ResponseEntity.ok(PageResponse.from(page));
 	}
 
 	@PutMapping("/{id}")

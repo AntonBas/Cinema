@@ -29,10 +29,10 @@ public interface PersonRepository extends JpaRepository<Person, Long> {
 			        OR EXISTS (SELECT 1 FROM m.directors d WHERE d.id = p.id)
 			        OR EXISTS (SELECT 1 FROM m.screenwriters s WHERE s.id = p.id)) as movieCount
 			FROM Person p
-			WHERE (:name IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', CAST(:name AS string), '%')))
+			WHERE (:query IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', CAST(:query AS string), '%')))
 			    AND (:role IS NULL OR p.role = :role)
 			ORDER BY movieCount DESC, p.name ASC
 			""")
-	Page<PersonListProjection> findProjectionsByFilters(@Param("name") String name, @Param("role") PersonRole role,
+	Page<PersonListProjection> findPersonsByFilters(@Param("query") String query, @Param("role") PersonRole role,
 			Pageable pageable);
 }

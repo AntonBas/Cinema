@@ -1,9 +1,7 @@
 package ua.lviv.bas.cinema.service.cinema;
 
-import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -28,66 +26,69 @@ import ua.lviv.bas.cinema.repository.cinema.PersonRepository;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-@CacheConfig(cacheNames = "persons")
 public class PersonService {
 
 	private final PersonRepository personRepository;
 	private final MovieRepository movieRepository;
 	private final PersonMapper personMapper;
 
-	@CacheEvict(allEntries = true)
+	@CacheEvict(value = "persons", allEntries = true)
 	@Transactional
 	public PersonResponse createPerson(PersonRequest request) {
 		log.info("Creating person: {}", request.name());
-		return createPersonInternal(request.name(), request.role(), personMapper.toPerson(request));
+		validatePersonUniqueness(request.name(), request.role(), null);
+
+		var person = personMapper.toPerson(request);
+		var saved = personRepository.save(person);
+
+		log.debug("Person created with ID: {}", saved.getId());
+		return personMapper.toPersonResponse(saved);
 	}
 
-	@CacheEvict(allEntries = true)
+	@CacheEvict(value = "persons", allEntries = true)
 	@Transactional
 	public PersonResponse quickCreatePerson(QuickCreatePersonRequest request) {
 		log.info("Quick creating person: {} with role: {}", request.name(), request.role());
-		Person person = Person.builder().name(request.name()).role(request.role()).build();
-		return createPersonInternal(request.name(), request.role(), person);
+		validatePersonUniqueness(request.name(), request.role(), null);
+
+		var person = Person.builder().name(request.name()).role(request.role()).build();
+		var saved = personRepository.save(person);
+
+		log.debug("Person created with ID: {}", saved.getId());
+		return personMapper.toPersonResponse(saved);
 	}
 
-	@Cacheable(key = "'search-' + #name + '-' + #role + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
-	public Page<PersonListResponse> getPersons(String name, PersonRole role, Pageable pageable) {
-		log.info("Getting persons: name='{}', role={}", name, role);
-		return personRepository.findProjectionsByFilters(name, role, pageable).map(personMapper::toPersonListResponse);
+	@Cacheable(value = "persons", key = "'list-' + #query + '-' + #role + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
+	public Page<PersonListResponse> getPersons(String query, PersonRole role, Pageable pageable) {
+		log.info("Getting persons: query='{}', role={}", query, role);
+		return personRepository.findPersonsByFilters(query, role, pageable).map(personMapper::toPersonListResponse);
 	}
 
-	@Caching(evict = { @CacheEvict(key = "#id"), @CacheEvict(allEntries = true) })
+	@CacheEvict(value = "persons", allEntries = true)
 	@Transactional
 	public PersonResponse updatePerson(Long id, PersonRequest request) {
 		log.info("Updating person with id: {}", id);
 
-		Person existing = findPersonById(id);
+		var person = findPersonById(id);
 		validatePersonUniqueness(request.name(), request.role(), id);
 
-		personMapper.updatePersonFromRequest(request, existing);
+		personMapper.updatePersonFromRequest(request, person);
+		var updated = personRepository.save(person);
 
-		Person updated = personRepository.save(existing);
 		log.debug("Person updated with ID: {}", updated.getId());
 		return personMapper.toPersonResponse(updated);
 	}
 
-	@Caching(evict = { @CacheEvict(key = "#id"), @CacheEvict(allEntries = true) })
+	@CacheEvict(value = "persons", allEntries = true)
 	@Transactional
 	public void deletePerson(Long id) {
 		log.info("Deleting person with id: {}", id);
 
-		Person person = findPersonById(id);
+		var person = findPersonById(id);
 		checkPersonUsageInMovies(person);
 		personRepository.delete(person);
 
 		log.debug("Person deleted with ID: {}", id);
-	}
-
-	private PersonResponse createPersonInternal(String name, PersonRole role, Person person) {
-		validatePersonUniqueness(name, role, null);
-		Person saved = personRepository.save(person);
-		log.debug("Person created with ID: {}", saved.getId());
-		return personMapper.toPersonResponse(saved);
 	}
 
 	private Person findPersonById(Long id) {
@@ -105,7 +106,6 @@ public class PersonService {
 
 	private void checkPersonUsageInMovies(Person person) {
 		long usageCount = movieRepository.countMovieUsageByPersonId(person.getId());
-
 		if (usageCount > 0) {
 			throw new PersonHasMoviesException(person.getId(), person.getName(), usageCount);
 		}
