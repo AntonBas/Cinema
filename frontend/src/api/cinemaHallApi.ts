@@ -1,5 +1,6 @@
 import { api } from '@/services/api';
 import type {
+    CinemaHallListResponse,
     CinemaHallResponse,
     CinemaHallRequest,
     HallLayoutResponse
@@ -8,7 +9,7 @@ import type {
 const BASE_URL = '/api/admin/cinema-halls';
 
 export const cinemaHallApi = {
-    getAll: () => api.get<CinemaHallResponse[]>(BASE_URL),
+    getAll: () => api.get<CinemaHallListResponse[]>(BASE_URL),
 
     getById: (id: number) => api.get<CinemaHallResponse>(`${BASE_URL}/${id}`),
 

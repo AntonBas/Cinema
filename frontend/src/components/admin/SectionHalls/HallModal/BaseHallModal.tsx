@@ -168,7 +168,7 @@ export const BaseHallModal: React.FC<BaseHallModalProps> = ({
                         type="submit"
                         variant="primary"
                         disabled={
-                            !formData.name.trim() ||
+                            !formData.name ||
                             isSubmitDisabled ||
                             loading ||
                             (coupleRows.length > 0 && (formData.seatsPerRow || 0) % 2 !== 0)

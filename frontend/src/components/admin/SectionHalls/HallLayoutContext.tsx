@@ -29,7 +29,7 @@ export const HallLayoutProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     const [layout, setLayout] = useState<HallLayoutResponse | null>(null);
 
     const { loading, getHallLayout } = useCinemaHalls();
-    const { updateSeatType, setSeatStatus } = useSeats();
+    const { setSeatActiveStatus, updateSeatType } = useSeats();
 
     const openLayout = useCallback(async (hall: CinemaHallResponse) => {
         setCurrentHall(hall);
@@ -59,9 +59,9 @@ export const HallLayoutProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         if (!currentHall || !layout) return;
         const seat = layout.rows.flatMap(r => r.seats).find(s => s.id === seatId);
         if (!seat) return;
-        await setSeatStatus(currentHall.id, seatId, !seat.active);
+        await setSeatActiveStatus(currentHall.id, seatId, !seat.active);
         await refreshLayout();
-    }, [currentHall, layout, setSeatStatus, refreshLayout]);
+    }, [currentHall, layout, setSeatActiveStatus, refreshLayout]);
 
     return (
         <HallLayoutContext.Provider

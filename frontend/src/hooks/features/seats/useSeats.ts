@@ -6,39 +6,39 @@ import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
 
 export const useSeats = () => {
     const updateSeatTypeApi = useApi<SeatResponse>();
-    const setSeatStatusApi = useApi<SeatResponse>();
+    const setSeatActiveStatusApi = useApi<SeatResponse>();
 
-    const rawLoading = updateSeatTypeApi.loading || setSeatStatusApi.loading;
+    const rawLoading = updateSeatTypeApi.loading || setSeatActiveStatusApi.loading;
     const loading = useDelayedLoading(rawLoading, { delay: 150, minDisplayTime: 300 });
-    const error = !!updateSeatTypeApi.error || !!setSeatStatusApi.error;
+    const error = !!updateSeatTypeApi.error || !!setSeatActiveStatusApi.error;
 
     const updateSeatType = useCallback(async (hallId: number, seatId: number, seatType: SeatType) => {
         const response = await updateSeatTypeApi.execute(
-            () => seatApi.admin.updateSeatType(hallId, seatId, seatType),
+            () => seatApi.updateSeatType(hallId, seatId, seatType),
             { successMessage: 'Seat type updated successfully' }
         );
         return response || null;
     }, [updateSeatTypeApi]);
 
-    const setSeatStatus = useCallback(async (hallId: number, seatId: number, active: boolean) => {
-        const response = await setSeatStatusApi.execute(
-            () => seatApi.admin.setSeatStatus(hallId, seatId, active),
+    const setSeatActiveStatus = useCallback(async (hallId: number, seatId: number, active: boolean) => {
+        const response = await setSeatActiveStatusApi.execute(
+            () => seatApi.setSeatActiveStatus(hallId, seatId, active),
             { successMessage: active ? 'Seat activated successfully' : 'Seat deactivated successfully' }
         );
         return response || null;
-    }, [setSeatStatusApi]);
+    }, [setSeatActiveStatusApi]);
 
     const reset = useCallback(() => {
         updateSeatTypeApi.reset();
-        setSeatStatusApi.reset();
-    }, [updateSeatTypeApi, setSeatStatusApi]);
+        setSeatActiveStatusApi.reset();
+    }, [updateSeatTypeApi, setSeatActiveStatusApi]);
 
     return {
         loading,
         error,
         updateSeatType,
-        setSeatStatus,
+        setSeatActiveStatus,
         reset,
-        lastResult: updateSeatTypeApi.data || setSeatStatusApi.data,
+        lastResult: updateSeatTypeApi.data || setSeatActiveStatusApi.data,
     };
 };

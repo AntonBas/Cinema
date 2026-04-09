@@ -17,12 +17,7 @@ export const SeatTypePriceMultiplier: Record<SeatType, number> = {
 };
 
 export const getSeatCount = (seatType: SeatType): number => {
-    switch (seatType) {
-        case SeatType.COUPLE:
-            return 2;
-        default:
-            return 1;
-    }
+    return seatType === SeatType.COUPLE ? 2 : 1;
 };
 
 export const getSeatDisplayName = (seatType: SeatType): string => {

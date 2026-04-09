@@ -1,14 +1,14 @@
 import React, { useCallback, useMemo } from 'react';
-import type { CinemaHallResponse } from '@/types/cinemaHall';
+import type { CinemaHallListResponse } from '@/types/cinemaHall';
 import { Button } from '@/components/ui/Button/Button';
 import { Badge } from '@/components/ui/Badge/Badge';
 import styles from './HallsTable.module.css';
 
 interface HallsTableProps {
-    halls: CinemaHallResponse[];
-    onDelete: (hall: CinemaHallResponse) => void;
-    onShowLayout: (hall: CinemaHallResponse) => void;
-    onEdit?: (hall: CinemaHallResponse) => void;
+    halls: CinemaHallListResponse[];
+    onDelete: (hall: CinemaHallListResponse) => void;
+    onShowLayout: (hall: CinemaHallListResponse) => void;
+    onEdit?: (hall: CinemaHallListResponse) => void;
 }
 
 export const HallsTable: React.FC<HallsTableProps> = React.memo(({
@@ -17,15 +17,15 @@ export const HallsTable: React.FC<HallsTableProps> = React.memo(({
     onShowLayout,
     onEdit
 }) => {
-    const handleDelete = useCallback((hall: CinemaHallResponse) => {
+    const handleDelete = useCallback((hall: CinemaHallListResponse) => {
         onDelete(hall);
     }, [onDelete]);
 
-    const handleShowLayout = useCallback((hall: CinemaHallResponse) => {
+    const handleShowLayout = useCallback((hall: CinemaHallListResponse) => {
         onShowLayout(hall);
     }, [onShowLayout]);
 
-    const handleEdit = useCallback((hall: CinemaHallResponse) => {
+    const handleEdit = useCallback((hall: CinemaHallListResponse) => {
         onEdit?.(hall);
     }, [onEdit]);
 
@@ -45,7 +45,7 @@ export const HallsTable: React.FC<HallsTableProps> = React.memo(({
         </div>
     ), []);
 
-    const renderTableRow = useCallback((hall: CinemaHallResponse) => (
+    const renderTableRow = useCallback((hall: CinemaHallListResponse) => (
         <div key={hall.id} className={styles.tableRow}>
             <div className={styles.name}>
                 <span>{hall.name}</span>
@@ -84,7 +84,7 @@ export const HallsTable: React.FC<HallsTableProps> = React.memo(({
                 </Button>
             </div>
         </div>
-    ), [onEdit, handleDelete, handleShowLayout, handleEdit]);
+    ), [handleDelete, handleShowLayout, handleEdit, onEdit]);
 
     const hallsArray = Array.isArray(halls) ? halls : [];
 

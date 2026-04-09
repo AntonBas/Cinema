@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import type { CinemaHallResponse, CinemaHallRequest } from '@/types/cinemaHall';
-import { SeatType } from '@/types/seat';
+import type { CinemaHallListResponse, CinemaHallResponse, CinemaHallRequest } from '@/types/cinemaHall';
 import { useCinemaHalls } from '@/hooks/features/cinemaHalls/useCinemaHalls';
 import { useNotification } from '@/hooks/common/useNotification';
 import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
@@ -20,11 +19,10 @@ const SectionHallsContent: React.FC = () => {
     const {
         loading,
         getAllHalls,
+        getHallById,
         createHall,
         updateHall,
-        deleteHall,
-        getHallLayout
-    } = useCinemaHalls();
+        deleteHall } = useCinemaHalls();
 
     const { openLayout } = useHallLayout();
 
@@ -34,13 +32,12 @@ const SectionHallsContent: React.FC = () => {
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
     const [selectedHall, setSelectedHall] = useState<CinemaHallResponse | null>(null);
-    const [currentLayout, setCurrentLayout] = useState<{ rows: number; seatsPerRow: number; coupleRows?: number[] } | undefined>();
     const [deleteModal, setDeleteModal] = useState({
         isOpen: false,
-        hall: null as CinemaHallResponse | null,
+        hall: null as CinemaHallListResponse | null,
         isDeleting: false
     });
-    const [hallsData, setHallsData] = useState<CinemaHallResponse[]>([]);
+    const [hallsData, setHallsData] = useState<CinemaHallListResponse[]>([]);
 
     const hasLoadedRef = useRef(false);
     const isMountedRef = useRef(true);
@@ -89,7 +86,7 @@ const SectionHallsContent: React.FC = () => {
         }
     }, [createHall, showNotification, loadHalls]);
 
-    const handleEditHall = useCallback(async (id: number, request: CinemaHallRequest & { coupleRows?: number[] }) => {
+    const handleEditHall = useCallback(async (id: number, request: CinemaHallRequest) => {
         try {
             const response = await updateHall(id, request);
             if (response && isMountedRef.current) {
@@ -98,7 +95,6 @@ const SectionHallsContent: React.FC = () => {
             }
             setShowEditModal(false);
             setSelectedHall(null);
-            setCurrentLayout(undefined);
         } catch (err) {
             if (isApiErrorException(err)) {
                 showNotification(err.message, 'error');
@@ -114,7 +110,7 @@ const SectionHallsContent: React.FC = () => {
         setDeleteModal(prev => ({ ...prev, isDeleting: true }));
 
         try {
-            await deleteHall(deleteModal.hall.id);
+            await deleteHall(deleteModal.hall.id, deleteModal.hall.name);
             if (isMountedRef.current) {
                 showNotification(`Cinema hall "${deleteModal.hall.name}" deleted successfully!`, 'success');
                 await loadHalls();
@@ -130,29 +126,25 @@ const SectionHallsContent: React.FC = () => {
         }
     }, [deleteHall, deleteModal.hall, showNotification, loadHalls]);
 
-    const confirmDelete = useCallback((hall: CinemaHallResponse) => {
+    const confirmDelete = useCallback((hall: CinemaHallListResponse) => {
         setDeleteModal({ isOpen: true, hall, isDeleting: false });
     }, []);
 
-    const handleEdit = useCallback(async (hall: CinemaHallResponse) => {
-        setSelectedHall(hall);
-        const response = await getHallLayout(hall.id);
+    const handleEdit = useCallback(async (hall: CinemaHallListResponse) => {
+        const response = await getHallById(hall.id);
         if (response) {
-            const coupleRows = response.rows
-                .filter(row => row.seats.every(seat => seat.seatType === SeatType.COUPLE))
-                .map(row => row.rowNumber);
-            setCurrentLayout({
-                rows: response.totalRows,
-                seatsPerRow: response.maxSeatsPerRow,
-                coupleRows
-            });
+            setSelectedHall(response);
+            setShowEditModal(true);
         }
-        setShowEditModal(true);
-    }, [getHallLayout]);
+    }, [getHallById]);
 
-    const handleShowLayout = useCallback((hall: CinemaHallResponse) => {
-        openLayout(hall);
-    }, [openLayout]);
+    const handleShowLayout = useCallback((hall: CinemaHallListResponse) => {
+        getHallById(hall.id).then(response => {
+            if (response) {
+                openLayout(response);
+            }
+        });
+    }, [getHallById, openLayout]);
 
     const handleCloseCreate = useCallback(() => {
         setShowCreateModal(false);
@@ -161,7 +153,6 @@ const SectionHallsContent: React.FC = () => {
     const handleCloseEdit = useCallback(() => {
         setShowEditModal(false);
         setSelectedHall(null);
-        setCurrentLayout(undefined);
     }, []);
 
     const handleCloseDelete = useCallback(() => {
@@ -229,7 +220,6 @@ const SectionHallsContent: React.FC = () => {
             {showEditModal && selectedHall && (
                 <EditHallModal
                     hall={selectedHall}
-                    currentLayout={currentLayout}
                     onClose={handleCloseEdit}
                     onUpdate={handleEditHall}
                     loading={loading}

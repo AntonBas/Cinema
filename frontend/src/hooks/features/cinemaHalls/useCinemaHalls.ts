@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { cinemaHallApi } from '@/api/cinemaHallApi';
 import type {
     CinemaHallRequest,
+    CinemaHallListResponse,
     CinemaHallResponse,
     HallLayoutResponse
 } from '@/types/cinemaHall';
@@ -9,7 +10,7 @@ import { useApi } from '@/hooks/common/useApi';
 import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
 
 export const useCinemaHalls = () => {
-    const getAllHallsApi = useApi<CinemaHallResponse[]>();
+    const getAllHallsApi = useApi<CinemaHallListResponse[]>();
     const getHallByIdApi = useApi<CinemaHallResponse>();
     const getHallLayoutApi = useApi<HallLayoutResponse>();
     const createHallApi = useApi<CinemaHallResponse>();

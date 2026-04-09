@@ -1,46 +1,43 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import type { CinemaHallResponse, CinemaHallRequest } from '@/types/cinemaHall';
-import { SeatType } from '@/types/seat';
 import { BaseHallModal } from './BaseHallModal';
 
 interface EditHallModalProps {
     hall: CinemaHallResponse;
-    currentLayout?: { rows: number; seatsPerRow: number; coupleRows?: number[] };
     onClose: () => void;
-    onUpdate: (id: number, request: CinemaHallRequest & { coupleRows?: number[] }) => Promise<void>;
+    onUpdate: (id: number, request: CinemaHallRequest) => Promise<void>;
     loading?: boolean;
 }
 
 export const EditHallModal: React.FC<EditHallModalProps> = ({
     hall,
-    currentLayout,
     onClose,
     onUpdate,
     loading = false
 }) => {
     const [formData, setFormData] = useState<CinemaHallRequest>({
         name: hall.name,
-        rows: currentLayout?.rows || 10,
-        seatsPerRow: currentLayout?.seatsPerRow || 15,
-        defaultSeatType: SeatType.STANDARD
+        rows: hall.rows,
+        seatsPerRow: hall.seatsPerRow,
+        defaultSeatType: hall.defaultSeatType,
+        coupleRows: hall.coupleRows || []
     });
-    const [coupleRows, setCoupleRows] = useState<number[]>(currentLayout?.coupleRows || []);
 
     useEffect(() => {
         setFormData({
             name: hall.name,
-            rows: currentLayout?.rows || 10,
-            seatsPerRow: currentLayout?.seatsPerRow || 15,
-            defaultSeatType: SeatType.STANDARD
+            rows: hall.rows,
+            seatsPerRow: hall.seatsPerRow,
+            defaultSeatType: hall.defaultSeatType,
+            coupleRows: hall.coupleRows || []
         });
-        setCoupleRows(currentLayout?.coupleRows || []);
-    }, [hall, currentLayout]);
+    }, [hall]);
 
     const handleSubmit = useCallback(async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!formData.name.trim() || loading) return;
-        await onUpdate(hall.id, { ...formData, coupleRows });
-    }, [formData, coupleRows, hall.id, loading, onUpdate]);
+        if (!formData.name || loading) return;
+        await onUpdate(hall.id, formData);
+    }, [formData, hall.id, loading, onUpdate]);
 
     const updateField = useCallback(<K extends keyof CinemaHallRequest>(
         field: K,
@@ -48,16 +45,24 @@ export const EditHallModal: React.FC<EditHallModalProps> = ({
     ) => {
         setFormData(prev => ({ ...prev, [field]: value }));
         if (field === 'rows') {
-            setCoupleRows(prev => prev.filter(row => row <= (value as number)));
+            setFormData(prev => ({
+                ...prev,
+                coupleRows: (prev.coupleRows || []).filter(row => row <= (value as number))
+            }));
         }
+    }, []);
+
+    const handleCoupleRowsChange = useCallback((rows: number[]) => {
+        setFormData(prev => ({ ...prev, coupleRows: rows }));
     }, []);
 
     const hasChanges = useMemo(() =>
         formData.name !== hall.name ||
-        formData.rows !== currentLayout?.rows ||
-        formData.seatsPerRow !== currentLayout?.seatsPerRow ||
-        JSON.stringify(coupleRows) !== JSON.stringify(currentLayout?.coupleRows || []),
-        [formData, hall.name, currentLayout, coupleRows]
+        formData.rows !== hall.rows ||
+        formData.seatsPerRow !== hall.seatsPerRow ||
+        formData.defaultSeatType !== hall.defaultSeatType ||
+        JSON.stringify(formData.coupleRows) !== JSON.stringify(hall.coupleRows || []),
+        [formData, hall]
     );
 
     return (
@@ -71,9 +76,9 @@ export const EditHallModal: React.FC<EditHallModalProps> = ({
             submitButtonText="Update Hall"
             isSubmitDisabled={!hasChanges}
             loading={loading}
-            showDefaultSeatType={false}
-            coupleRows={coupleRows}
-            onCoupleRowsChange={setCoupleRows}
+            showDefaultSeatType={true}
+            coupleRows={formData.coupleRows || []}
+            onCoupleRowsChange={handleCoupleRowsChange}
         />
     );
 };
