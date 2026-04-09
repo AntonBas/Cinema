@@ -8,6 +8,8 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -16,7 +18,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
+import ua.lviv.bas.cinema.domain.cinema.enums.SeatType;
 import ua.lviv.bas.cinema.dto.hall.request.CinemaHallRequest;
+import ua.lviv.bas.cinema.dto.hall.response.CinemaHallListResponse;
 import ua.lviv.bas.cinema.dto.hall.response.CinemaHallResponse;
 import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
 import ua.lviv.bas.cinema.exception.domain.cinema.CinemaHallNotFoundException;
@@ -36,8 +40,8 @@ public class AdminCinemaHallControllerTest {
 
 	@Test
 	void createHall_ReturnsCreatedHall() {
-		CinemaHallRequest request = new CinemaHallRequest(HALL_NAME, null, null, null, null);
-		CinemaHallResponse response = new CinemaHallResponse(HALL_ID, HALL_NAME, 0);
+		CinemaHallRequest request = new CinemaHallRequest(HALL_NAME, 5, 10, SeatType.STANDARD, null);
+		CinemaHallResponse response = new CinemaHallResponse(HALL_ID, HALL_NAME, 5, 10, SeatType.STANDARD, null, 50);
 
 		when(cinemaHallService.createHall(any(CinemaHallRequest.class))).thenReturn(response);
 
@@ -59,8 +63,22 @@ public class AdminCinemaHallControllerTest {
 	}
 
 	@Test
+	void getAllHalls_ReturnsList() {
+		List<CinemaHallListResponse> response = List.of(new CinemaHallListResponse(1L, "Hall A", 50),
+				new CinemaHallListResponse(2L, "Hall B", 30));
+
+		when(cinemaHallService.getAllHalls()).thenReturn(response);
+
+		ResponseEntity<List<CinemaHallListResponse>> result = controller.getAllHalls();
+
+		assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
+		assertThat(result.getBody()).hasSize(2);
+		verify(cinemaHallService).getAllHalls();
+	}
+
+	@Test
 	void getHallById_ReturnsHall() {
-		CinemaHallResponse response = new CinemaHallResponse(HALL_ID, HALL_NAME, 0);
+		CinemaHallResponse response = new CinemaHallResponse(HALL_ID, HALL_NAME, 5, 10, SeatType.STANDARD, null, 50);
 
 		when(cinemaHallService.getHallById(HALL_ID)).thenReturn(response);
 
@@ -80,8 +98,9 @@ public class AdminCinemaHallControllerTest {
 
 	@Test
 	void updateHall_ReturnsUpdatedHall() {
-		CinemaHallRequest request = new CinemaHallRequest("Updated Hall", null, null, null, null);
-		CinemaHallResponse response = new CinemaHallResponse(HALL_ID, "Updated Hall", 0);
+		CinemaHallRequest request = new CinemaHallRequest("Updated Hall", 6, 12, SeatType.VIP, List.of(3, 4));
+		CinemaHallResponse response = new CinemaHallResponse(HALL_ID, "Updated Hall", 6, 12, SeatType.VIP,
+				List.of(3, 4), 72);
 
 		when(cinemaHallService.updateHall(eq(HALL_ID), any(CinemaHallRequest.class))).thenReturn(response);
 

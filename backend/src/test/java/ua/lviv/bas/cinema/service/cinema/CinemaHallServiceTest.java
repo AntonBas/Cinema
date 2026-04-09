@@ -23,16 +23,16 @@ import ua.lviv.bas.cinema.domain.cinema.Seat;
 import ua.lviv.bas.cinema.domain.cinema.Session;
 import ua.lviv.bas.cinema.domain.cinema.enums.SeatType;
 import ua.lviv.bas.cinema.dto.hall.request.CinemaHallRequest;
+import ua.lviv.bas.cinema.dto.hall.response.CinemaHallListResponse;
 import ua.lviv.bas.cinema.dto.hall.response.CinemaHallResponse;
 import ua.lviv.bas.cinema.dto.hall.response.HallLayoutResponse;
 import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
 import ua.lviv.bas.cinema.exception.domain.cinema.CinemaHallHasSessionsException;
 import ua.lviv.bas.cinema.exception.domain.cinema.CinemaHallNotFoundException;
 import ua.lviv.bas.cinema.mapper.cinema.CinemaHallMapper;
-import ua.lviv.bas.cinema.mapper.cinema.SeatMapper;
 import ua.lviv.bas.cinema.repository.cinema.CinemaHallRepository;
 import ua.lviv.bas.cinema.repository.cinema.SeatRepository;
-import ua.lviv.bas.cinema.repository.cinema.projection.CinemaHallProjection;
+import ua.lviv.bas.cinema.repository.cinema.projection.CinemaHallListProjection;
 import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 
 @ExtendWith(MockitoExtension.class)
@@ -40,16 +40,10 @@ public class CinemaHallServiceTest {
 
 	@Mock
 	private CinemaHallRepository hallRepository;
-
 	@Mock
 	private SeatRepository seatRepository;
-
 	@Mock
 	private CinemaHallMapper hallMapper;
-
-	@Mock
-	private SeatMapper seatMapper;
-
 	@Mock
 	private AuditService auditService;
 
@@ -62,10 +56,8 @@ public class CinemaHallServiceTest {
 	@Test
 	void createHallShouldSaveNewHall() {
 		CinemaHallRequest request = new CinemaHallRequest(HALL_NAME, 5, 10, SeatType.STANDARD, null);
-
 		CinemaHall hall = CinemaHall.builder().id(HALL_ID).name(HALL_NAME).build();
-
-		CinemaHallResponse response = new CinemaHallResponse(HALL_ID, HALL_NAME, 0);
+		CinemaHallResponse response = new CinemaHallResponse(HALL_ID, HALL_NAME, 5, 10, SeatType.STANDARD, null, 50);
 
 		when(hallRepository.existsByName(HALL_NAME)).thenReturn(false);
 		when(hallRepository.save(any(CinemaHall.class))).thenReturn(hall);
@@ -90,8 +82,7 @@ public class CinemaHallServiceTest {
 	@Test
 	void getHallByIdShouldReturnHall() {
 		CinemaHall hall = CinemaHall.builder().id(HALL_ID).name(HALL_NAME).build();
-
-		CinemaHallResponse response = new CinemaHallResponse(HALL_ID, HALL_NAME, 0);
+		CinemaHallResponse response = new CinemaHallResponse(HALL_ID, HALL_NAME, 5, 10, SeatType.STANDARD, null, 50);
 
 		when(hallRepository.findByIdWithSeats(HALL_ID)).thenReturn(Optional.of(hall));
 		when(hallMapper.toCinemaHallResponse(hall)).thenReturn(response);
@@ -111,7 +102,7 @@ public class CinemaHallServiceTest {
 
 	@Test
 	void getAllHallsShouldReturnList() {
-		CinemaHallProjection projection = new CinemaHallProjection() {
+		CinemaHallListProjection projection = new CinemaHallListProjection() {
 			@Override
 			public Long getId() {
 				return HALL_ID;
@@ -128,12 +119,12 @@ public class CinemaHallServiceTest {
 			}
 		};
 
-		CinemaHallResponse response = new CinemaHallResponse(HALL_ID, HALL_NAME, 50);
+		CinemaHallListResponse response = new CinemaHallListResponse(HALL_ID, HALL_NAME, 50);
 
 		when(hallRepository.findAllProjected()).thenReturn(List.of(projection));
-		when(hallMapper.toCinemaHallResponseListFromProjection(List.of(projection))).thenReturn(List.of(response));
+		when(hallMapper.toCinemaHallListResponse(projection)).thenReturn(response);
 
-		List<CinemaHallResponse> result = cinemaHallService.getAllHalls();
+		List<CinemaHallListResponse> result = cinemaHallService.getAllHalls();
 
 		assertThat(result).hasSize(1);
 		assertThat(result.get(0).id()).isEqualTo(HALL_ID);
@@ -142,7 +133,6 @@ public class CinemaHallServiceTest {
 	@Test
 	void updateHallShouldUpdateNameOnly() {
 		CinemaHall hall = CinemaHall.builder().id(HALL_ID).name("Old Name").build();
-
 		List<Seat> seats = new ArrayList<>();
 		for (int row = 1; row <= 5; row++) {
 			for (int num = 1; num <= 10; num++) {
@@ -152,8 +142,7 @@ public class CinemaHallServiceTest {
 		hall.setSeats(seats);
 
 		CinemaHallRequest request = new CinemaHallRequest("New Name", 5, 10, SeatType.STANDARD, null);
-
-		CinemaHallResponse response = new CinemaHallResponse(HALL_ID, "New Name", 0);
+		CinemaHallResponse response = new CinemaHallResponse(HALL_ID, "New Name", 5, 10, SeatType.STANDARD, null, 50);
 
 		when(hallRepository.findByIdWithSeats(HALL_ID)).thenReturn(Optional.of(hall));
 		when(hallRepository.existsByName("New Name")).thenReturn(false);
@@ -164,7 +153,6 @@ public class CinemaHallServiceTest {
 
 		assertThat(result.name()).isEqualTo("New Name");
 		verify(seatRepository, never()).deleteByHallId(any());
-		verify(seatRepository, never()).saveAll(any());
 	}
 
 	@Test
@@ -173,8 +161,7 @@ public class CinemaHallServiceTest {
 		hall.setSeats(List.of());
 
 		CinemaHallRequest request = new CinemaHallRequest(HALL_NAME, 5, 10, SeatType.STANDARD, null);
-
-		CinemaHallResponse response = new CinemaHallResponse(HALL_ID, HALL_NAME, 0);
+		CinemaHallResponse response = new CinemaHallResponse(HALL_ID, HALL_NAME, 5, 10, SeatType.STANDARD, null, 50);
 
 		when(hallRepository.findByIdWithSeats(HALL_ID)).thenReturn(Optional.of(hall));
 		when(hallRepository.save(hall)).thenReturn(hall);
@@ -185,13 +172,11 @@ public class CinemaHallServiceTest {
 
 		assertThat(result.name()).isEqualTo(HALL_NAME);
 		verify(seatRepository).deleteByHallId(HALL_ID);
-		verify(seatRepository).saveAll(any());
 	}
 
 	@Test
 	void updateHallShouldThrowExceptionWhenNameExists() {
 		CinemaHall hall = CinemaHall.builder().id(HALL_ID).name("Old Name").build();
-
 		CinemaHallRequest request = new CinemaHallRequest("Existing Name", null, null, null, null);
 
 		when(hallRepository.findByIdWithSeats(HALL_ID)).thenReturn(Optional.of(hall));
@@ -204,7 +189,6 @@ public class CinemaHallServiceTest {
 	@Test
 	void updateHallShouldThrowExceptionWhenHallHasFutureSessions() {
 		CinemaHall hall = CinemaHall.builder().id(HALL_ID).build();
-
 		Session session = Session.builder().startTime(LocalDateTime.now().plusDays(1)).build();
 		hall.setSessions(List.of(session));
 
@@ -236,7 +220,6 @@ public class CinemaHallServiceTest {
 	@Test
 	void deleteHallShouldThrowExceptionWhenHallHasFutureSessions() {
 		CinemaHall hall = CinemaHall.builder().id(HALL_ID).name(HALL_NAME).build();
-
 		Session session = Session.builder().startTime(LocalDateTime.now().plusDays(1)).build();
 		hall.setSessions(List.of(session));
 
@@ -249,7 +232,6 @@ public class CinemaHallServiceTest {
 	@Test
 	void getHallLayoutShouldReturnLayout() {
 		CinemaHall hall = CinemaHall.builder().id(HALL_ID).name(HALL_NAME).build();
-
 		List<Seat> seats = new ArrayList<>();
 		for (int row = 1; row <= 5; row++) {
 			for (int num = 1; num <= 10; num++) {
@@ -257,8 +239,10 @@ public class CinemaHallServiceTest {
 			}
 		}
 		hall.setSeats(seats);
+		HallLayoutResponse response = new HallLayoutResponse(HALL_ID, HALL_NAME, 5, 10, 50, List.of());
 
 		when(hallRepository.findByIdWithSeats(HALL_ID)).thenReturn(Optional.of(hall));
+		when(hallMapper.toHallLayoutResponse(hall)).thenReturn(response);
 
 		HallLayoutResponse result = cinemaHallService.getHallLayout(HALL_ID);
 

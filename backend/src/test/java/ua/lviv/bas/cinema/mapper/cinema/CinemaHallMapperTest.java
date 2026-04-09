@@ -11,8 +11,8 @@ import org.junit.jupiter.api.Test;
 
 import ua.lviv.bas.cinema.domain.cinema.CinemaHall;
 import ua.lviv.bas.cinema.domain.cinema.Seat;
-import ua.lviv.bas.cinema.dto.hall.response.CinemaHallResponse;
-import ua.lviv.bas.cinema.repository.cinema.projection.CinemaHallProjection;
+import ua.lviv.bas.cinema.dto.hall.response.CinemaHallListResponse;
+import ua.lviv.bas.cinema.repository.cinema.projection.CinemaHallListProjection;
 
 public class CinemaHallMapperTest {
 
@@ -34,8 +34,8 @@ public class CinemaHallMapperTest {
 	}
 
 	@Test
-	void toCinemaHallResponse_MapsAllFields() {
-		CinemaHallResponse response = cinemaHallMapper.toCinemaHallResponse(hallWithSeats);
+	void toCinemaHallListResponse_MapsAllFields() {
+		CinemaHallListResponse response = cinemaHallMapper.toCinemaHallListResponse(hallWithSeats);
 
 		assertThat(response.id()).isEqualTo(1L);
 		assertThat(response.name()).isEqualTo("Hall A");
@@ -43,17 +43,17 @@ public class CinemaHallMapperTest {
 	}
 
 	@Test
-	void toCinemaHallResponse_WhenSeatsNull_ReturnsZeroCapacity() {
+	void toCinemaHallListResponse_WhenSeatsNull_ReturnsZeroCapacity() {
 		hallWithSeats.setSeats(null);
-		CinemaHallResponse response = cinemaHallMapper.toCinemaHallResponse(hallWithSeats);
+		CinemaHallListResponse response = cinemaHallMapper.toCinemaHallListResponse(hallWithSeats);
 
 		assertThat(response.capacity()).isZero();
 	}
 
 	@Test
-	void toCinemaHallResponseList_MapsList() {
+	void toCinemaHallListResponseList_MapsList() {
 		List<CinemaHall> halls = Arrays.asList(hallWithSeats, hallWithoutSeats);
-		List<CinemaHallResponse> responses = cinemaHallMapper.toCinemaHallResponseList(halls);
+		List<CinemaHallListResponse> responses = cinemaHallMapper.toCinemaHallListResponseList(halls);
 
 		assertThat(responses).hasSize(2);
 		assertThat(responses.get(0).id()).isEqualTo(1L);
@@ -62,20 +62,20 @@ public class CinemaHallMapperTest {
 	}
 
 	@Test
-	void toCinemaHallResponseList_WhenInputEmpty_ReturnsEmpty() {
-		List<CinemaHallResponse> responses = cinemaHallMapper.toCinemaHallResponseList(Collections.emptyList());
+	void toCinemaHallListResponseList_WhenInputEmpty_ReturnsEmpty() {
+		List<CinemaHallListResponse> responses = cinemaHallMapper.toCinemaHallListResponseList(Collections.emptyList());
 		assertThat(responses).isEmpty();
 	}
 
 	@Test
-	void toCinemaHallResponseList_WhenInputNull_ReturnsNull() {
-		List<CinemaHallResponse> responses = cinemaHallMapper.toCinemaHallResponseList(null);
+	void toCinemaHallListResponseList_WhenInputNull_ReturnsNull() {
+		List<CinemaHallListResponse> responses = cinemaHallMapper.toCinemaHallListResponseList(null);
 		assertThat(responses).isNull();
 	}
 
 	@Test
-	void toCinemaHallResponseFromProjection_ShouldMapAllFields() {
-		CinemaHallProjection projection = new CinemaHallProjection() {
+	void toCinemaHallListResponseFromProjection_ShouldMapAllFields() {
+		CinemaHallListProjection projection = new CinemaHallListProjection() {
 			@Override
 			public Long getId() {
 				return 1L;
@@ -92,7 +92,7 @@ public class CinemaHallMapperTest {
 			}
 		};
 
-		CinemaHallResponse response = cinemaHallMapper.toCinemaHallResponseFromProjection(projection);
+		CinemaHallListResponse response = cinemaHallMapper.toCinemaHallListResponse(projection);
 
 		assertThat(response.id()).isEqualTo(1L);
 		assertThat(response.name()).isEqualTo("Hall A");
@@ -100,8 +100,8 @@ public class CinemaHallMapperTest {
 	}
 
 	@Test
-	void toCinemaHallResponseFromProjection_WithNullSeatsCount_ShouldMapZero() {
-		CinemaHallProjection projection = new CinemaHallProjection() {
+	void toCinemaHallListResponseFromProjection_WithNullSeatsCount_ShouldMapZero() {
+		CinemaHallListProjection projection = new CinemaHallListProjection() {
 			@Override
 			public Long getId() {
 				return 1L;
@@ -118,7 +118,7 @@ public class CinemaHallMapperTest {
 			}
 		};
 
-		CinemaHallResponse response = cinemaHallMapper.toCinemaHallResponseFromProjection(projection);
+		CinemaHallListResponse response = cinemaHallMapper.toCinemaHallListResponse(projection);
 
 		assertThat(response.id()).isEqualTo(1L);
 		assertThat(response.name()).isEqualTo("Hall A");
@@ -126,75 +126,14 @@ public class CinemaHallMapperTest {
 	}
 
 	@Test
-	void toCinemaHallResponseListFromProjection_ShouldMapList() {
-		CinemaHallProjection projection1 = new CinemaHallProjection() {
-			@Override
-			public Long getId() {
-				return 1L;
-			}
-
-			@Override
-			public String getName() {
-				return "Hall A";
-			}
-
-			@Override
-			public Long getSeatsCount() {
-				return 5L;
-			}
-		};
-
-		CinemaHallProjection projection2 = new CinemaHallProjection() {
-			@Override
-			public Long getId() {
-				return 2L;
-			}
-
-			@Override
-			public String getName() {
-				return "Hall B";
-			}
-
-			@Override
-			public Long getSeatsCount() {
-				return 3L;
-			}
-		};
-
-		List<CinemaHallResponse> responses = cinemaHallMapper
-				.toCinemaHallResponseListFromProjection(Arrays.asList(projection1, projection2));
-
-		assertThat(responses).hasSize(2);
-		assertThat(responses.get(0).id()).isEqualTo(1L);
-		assertThat(responses.get(0).name()).isEqualTo("Hall A");
-		assertThat(responses.get(0).capacity()).isEqualTo(5);
-		assertThat(responses.get(1).id()).isEqualTo(2L);
-		assertThat(responses.get(1).name()).isEqualTo("Hall B");
-		assertThat(responses.get(1).capacity()).isEqualTo(3);
-	}
-
-	@Test
-	void toCinemaHallResponseListFromProjection_WhenInputEmpty_ReturnsEmpty() {
-		List<CinemaHallResponse> responses = cinemaHallMapper
-				.toCinemaHallResponseListFromProjection(Collections.emptyList());
-		assertThat(responses).isEmpty();
-	}
-
-	@Test
-	void toCinemaHallResponseListFromProjection_WhenInputNull_ReturnsNull() {
-		List<CinemaHallResponse> responses = cinemaHallMapper.toCinemaHallResponseListFromProjection(null);
-		assertThat(responses).isNull();
-	}
-
-	@Test
-	void toCinemaHallResponse_WithNullEntity_ReturnsNull() {
-		CinemaHallResponse response = cinemaHallMapper.toCinemaHallResponse((CinemaHall) null);
+	void toCinemaHallListResponse_WithNullEntity_ReturnsNull() {
+		CinemaHallListResponse response = cinemaHallMapper.toCinemaHallListResponse((CinemaHall) null);
 		assertThat(response).isNull();
 	}
 
 	@Test
-	void toCinemaHallResponseFromProjection_WithNullProjection_ReturnsNull() {
-		CinemaHallResponse response = cinemaHallMapper.toCinemaHallResponseFromProjection(null);
+	void toCinemaHallListResponse_WithNullProjection_ReturnsNull() {
+		CinemaHallListResponse response = cinemaHallMapper.toCinemaHallListResponse((CinemaHallListProjection) null);
 		assertThat(response).isNull();
 	}
 }
