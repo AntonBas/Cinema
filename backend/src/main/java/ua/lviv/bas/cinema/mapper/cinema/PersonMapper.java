@@ -9,7 +9,6 @@ import org.mapstruct.ReportingPolicy;
 
 import ua.lviv.bas.cinema.domain.cinema.Person;
 import ua.lviv.bas.cinema.dto.movie.request.PersonRequest;
-import ua.lviv.bas.cinema.dto.movie.request.QuickCreatePersonRequest;
 import ua.lviv.bas.cinema.dto.movie.response.PersonListResponse;
 import ua.lviv.bas.cinema.dto.movie.response.PersonResponse;
 import ua.lviv.bas.cinema.repository.cinema.projection.PersonListProjection;
@@ -26,12 +25,9 @@ public interface PersonMapper {
 	PersonResponse toPersonResponse(Person person);
 
 	@Mapping(target = "id", ignore = true)
-	Person toPerson(PersonRequest personRequest);
-
-	@Mapping(target = "id", ignore = true)
-	Person toPerson(QuickCreatePersonRequest request);
+	Person toPerson(PersonRequest request);
 
 	@BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 	@Mapping(target = "id", ignore = true)
-	void updatePersonFromRequest(PersonRequest personRequest, @MappingTarget Person person);
+	void updatePersonFromRequest(PersonRequest request, @MappingTarget Person person);
 }

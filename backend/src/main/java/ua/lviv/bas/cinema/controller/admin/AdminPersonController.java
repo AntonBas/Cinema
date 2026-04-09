@@ -1,6 +1,5 @@
 package ua.lviv.bas.cinema.controller.admin;
 
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
@@ -27,7 +26,6 @@ import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.cinema.enums.PersonRole;
 import ua.lviv.bas.cinema.dto.PageResponse;
 import ua.lviv.bas.cinema.dto.movie.request.PersonRequest;
-import ua.lviv.bas.cinema.dto.movie.request.QuickCreatePersonRequest;
 import ua.lviv.bas.cinema.dto.movie.response.PersonListResponse;
 import ua.lviv.bas.cinema.dto.movie.response.PersonResponse;
 import ua.lviv.bas.cinema.service.cinema.PersonService;
@@ -52,23 +50,12 @@ public class AdminPersonController {
 		return ResponseEntity.status(HttpStatus.CREATED).body(createdPerson);
 	}
 
-	@PostMapping("/quick")
-	@Operation(summary = "Quick create person")
-	@ApiResponses(value = { @ApiResponse(responseCode = "201", description = "Person created successfully") })
-	public ResponseEntity<PersonResponse> quickCreatePerson(@RequestBody @Valid QuickCreatePersonRequest request) {
-		log.info("POST /api/admin/persons/quick - Quick creating person: {} with role: {}", request.name(),
-				request.role());
-		PersonResponse createdPerson = personService.quickCreatePerson(request);
-		return ResponseEntity.status(HttpStatus.CREATED).body(createdPerson);
-	}
-
 	@GetMapping
 	@Operation(summary = "Get all persons with filters")
 	public ResponseEntity<PageResponse<PersonListResponse>> getPersons(@RequestParam(required = false) String query,
 			@RequestParam(required = false) PersonRole role, @PageableDefault(size = 12) Pageable pageable) {
-
 		log.info("GET /api/admin/persons - query: '{}', role: {}", query, role);
-		Page<PersonListResponse> page = personService.getPersons(query, role, pageable);
+		var page = personService.getPersons(query, role, pageable);
 		return ResponseEntity.ok(PageResponse.from(page));
 	}
 

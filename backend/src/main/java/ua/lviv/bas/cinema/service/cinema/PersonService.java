@@ -12,7 +12,6 @@ import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.cinema.Person;
 import ua.lviv.bas.cinema.domain.cinema.enums.PersonRole;
 import ua.lviv.bas.cinema.dto.movie.request.PersonRequest;
-import ua.lviv.bas.cinema.dto.movie.request.QuickCreatePersonRequest;
 import ua.lviv.bas.cinema.dto.movie.response.PersonListResponse;
 import ua.lviv.bas.cinema.dto.movie.response.PersonResponse;
 import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
@@ -39,19 +38,6 @@ public class PersonService {
 		validatePersonUniqueness(request.name(), request.role(), null);
 
 		var person = personMapper.toPerson(request);
-		var saved = personRepository.save(person);
-
-		log.debug("Person created with ID: {}", saved.getId());
-		return personMapper.toPersonResponse(saved);
-	}
-
-	@CacheEvict(value = "persons", allEntries = true)
-	@Transactional
-	public PersonResponse quickCreatePerson(QuickCreatePersonRequest request) {
-		log.info("Quick creating person: {} with role: {}", request.name(), request.role());
-		validatePersonUniqueness(request.name(), request.role(), null);
-
-		var person = Person.builder().name(request.name()).role(request.role()).build();
 		var saved = personRepository.save(person);
 
 		log.debug("Person created with ID: {}", saved.getId());
