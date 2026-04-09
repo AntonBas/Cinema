@@ -55,16 +55,6 @@ public class AdminGenreController {
 		return ResponseEntity.status(HttpStatus.CREATED).body(createdGenre);
 	}
 
-//	@GetMapping("/{id}")
-//	@Operation(summary = "Get genre by ID")
-//	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Genre found"),
-//			@ApiResponse(responseCode = "404", description = "Genre not found") })
-//	public ResponseEntity<GenreResponse> getGenreById(@PathVariable Long id) {
-//		log.info("GET /api/admin/genres/{} - Getting genre by id", id);
-//		GenreResponse genre = genreService.getGenreById(id);
-//		return ResponseEntity.ok(genre);
-//	}
-
 	@PutMapping("/{id}")
 	@Operation(summary = "Update genre")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Genre updated successfully"),

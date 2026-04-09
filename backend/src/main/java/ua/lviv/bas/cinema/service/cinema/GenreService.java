@@ -1,9 +1,7 @@
 package ua.lviv.bas.cinema.service.cinema;
 
-import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -16,68 +14,66 @@ import ua.lviv.bas.cinema.dto.movie.request.GenreRequest;
 import ua.lviv.bas.cinema.dto.movie.response.GenreListResponse;
 import ua.lviv.bas.cinema.dto.movie.response.GenreResponse;
 import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
+import ua.lviv.bas.cinema.exception.domain.cinema.GenreHasMoviesException;
 import ua.lviv.bas.cinema.exception.domain.cinema.GenreNotFoundException;
 import ua.lviv.bas.cinema.mapper.cinema.GenreMapper;
 import ua.lviv.bas.cinema.repository.cinema.GenreRepository;
+import ua.lviv.bas.cinema.repository.cinema.MovieRepository;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-@CacheConfig(cacheNames = "genres")
 public class GenreService {
 
 	private final GenreRepository genreRepository;
 	private final GenreMapper genreMapper;
+	private final MovieRepository movieRepository;
 
-	@CacheEvict(allEntries = true)
+	@CacheEvict(value = "genres", allEntries = true)
 	@Transactional
 	public GenreResponse createGenre(GenreRequest request) {
-		String genreName = request.name();
-		log.info("Creating genre: {}", genreName);
+		log.info("Creating genre: {}", request.name());
+		validateGenreUniqueness(request.name(), null);
 
-		validateGenreUniqueness(genreName, null);
+		var genre = genreMapper.toGenre(request);
+		var saved = genreRepository.save(genre);
 
-		Genre genre = genreMapper.toGenre(request);
-		Genre savedGenre = genreRepository.save(genre);
-
-		log.debug("Genre created with ID: {}", savedGenre.getId());
-		return genreMapper.toGenreResponse(savedGenre);
+		log.debug("Genre created with ID: {}", saved.getId());
+		return genreMapper.toGenreResponse(saved);
 	}
 
-	@Cacheable(key = "'genres-' + #query + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
+	@Cacheable(value = "genres", key = "'list-' + #query + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
 	public Page<GenreListResponse> getGenres(String query, Pageable pageable) {
 		log.info("Getting genres: query='{}', page={}, size={}", query, pageable.getPageNumber(),
 				pageable.getPageSize());
-		return genreRepository.findGenresByQuery(query, pageable).map(genreMapper::toGenreListResponse);
+		return genreRepository.findGenresByFilters(query, pageable).map(genreMapper::toGenreListResponse);
 	}
 
-	@Caching(evict = { @CacheEvict(key = "#id"), @CacheEvict(allEntries = true) })
+	@CacheEvict(value = "genres", allEntries = true)
 	@Transactional
 	public GenreResponse updateGenre(Long id, GenreRequest request) {
-		String genreName = request.name();
-		log.info("Updating genre with id: {}, new name: {}", id, genreName);
+		log.info("Updating genre with id: {}, new name: {}", id, request.name());
 
-		Genre existingGenre = genreRepository.findById(id).orElseThrow(() -> new GenreNotFoundException(id));
+		var genre = genreRepository.findById(id).orElseThrow(() -> new GenreNotFoundException(id));
+		validateGenreUniqueness(request.name(), id);
 
-		validateGenreUniqueness(genreName, id);
-		genreMapper.updateGenreFromRequest(request, existingGenre);
+		genreMapper.updateGenreFromRequest(request, genre);
+		var updated = genreRepository.save(genre);
 
-		Genre updatedGenre = genreRepository.save(existingGenre);
-		log.debug("Genre updated with ID: {}", updatedGenre.getId());
-		return genreMapper.toGenreResponse(updatedGenre);
+		log.debug("Genre updated with ID: {}", updated.getId());
+		return genreMapper.toGenreResponse(updated);
 	}
 
-	@Caching(evict = { @CacheEvict(key = "#id"), @CacheEvict(allEntries = true) })
+	@CacheEvict(value = "genres", allEntries = true)
 	@Transactional
 	public void deleteGenre(Long id) {
 		log.info("Deleting genre with id: {}", id);
 
-		if (!genreRepository.existsById(id)) {
-			throw new GenreNotFoundException(id);
-		}
-
+		var genre = genreRepository.findById(id).orElseThrow(() -> new GenreNotFoundException(id));
+		checkGenreUsageInMovies(genre);
 		genreRepository.deleteById(id);
+
 		log.debug("Genre deleted with ID: {}", id);
 	}
 
@@ -87,6 +83,13 @@ public class GenreService {
 
 		if (exists) {
 			throw new DuplicateEntityException("Genre", name);
+		}
+	}
+
+	private void checkGenreUsageInMovies(Genre genre) {
+		long usageCount = movieRepository.countMovieUsageByGenreId(genre.getId());
+		if (usageCount > 0) {
+			throw new GenreHasMoviesException(genre.getId(), genre.getName(), usageCount);
 		}
 	}
 }

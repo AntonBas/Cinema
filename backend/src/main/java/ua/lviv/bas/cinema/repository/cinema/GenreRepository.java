@@ -26,5 +26,5 @@ public interface GenreRepository extends JpaRepository<Genre, Long> {
 			WHERE (:query IS NULL OR LOWER(g.name) LIKE LOWER(CONCAT('%', CAST(:query AS string), '%')))
 			ORDER BY SIZE(g.movies) DESC, g.name ASC
 			""")
-	Page<GenreListProjection> findGenresByQuery(@Param("query") String query, Pageable pageable);
+	Page<GenreListProjection> findGenresByFilters(@Param("query") String query, Pageable pageable);
 }
