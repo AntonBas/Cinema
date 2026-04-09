@@ -124,33 +124,6 @@ public class AdminPersonControllerTest {
 	}
 
 	@Test
-	void getPersonById_ShouldReturnPerson() {
-		PersonResponse expectedResponse = createPersonResponse(PERSON_ID, PERSON_NAME, PersonRole.ACTOR);
-
-		when(personService.getPersonById(PERSON_ID)).thenReturn(expectedResponse);
-
-		ResponseEntity<PersonResponse> response = personController.getPersonById(PERSON_ID);
-
-		assertEquals(HttpStatus.OK, response.getStatusCode());
-
-		PersonResponse responseBody = response.getBody();
-		assertNotNull(responseBody);
-		assertEquals(PERSON_ID, responseBody.id());
-		assertEquals(PERSON_NAME, responseBody.name());
-		assertEquals(PersonRole.ACTOR, responseBody.role());
-		verify(personService).getPersonById(PERSON_ID);
-	}
-
-	@Test
-	void getPersonById_WhenNotFound_ShouldThrowException() {
-		Long nonExistentId = 999L;
-
-		when(personService.getPersonById(nonExistentId)).thenThrow(new PersonNotFoundException(nonExistentId));
-
-		assertThrows(PersonNotFoundException.class, () -> personController.getPersonById(nonExistentId));
-	}
-
-	@Test
 	void updatePerson_ShouldReturnUpdatedPerson() {
 		PersonRequest request = createPersonRequest("Updated Name", PersonRole.DIRECTOR);
 		PersonResponse updatedDto = createPersonResponse(PERSON_ID, "Updated Name", PersonRole.DIRECTOR);

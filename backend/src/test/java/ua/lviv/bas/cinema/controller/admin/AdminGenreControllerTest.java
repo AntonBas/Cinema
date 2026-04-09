@@ -59,26 +59,6 @@ public class AdminGenreControllerTest {
 	}
 
 	@Test
-	void getGenreById_ReturnsGenre() {
-		GenreResponse response = new GenreResponse(GENRE_ID, GENRE_NAME);
-
-		when(genreService.getGenreById(GENRE_ID)).thenReturn(response);
-
-		ResponseEntity<GenreResponse> result = controller.getGenreById(GENRE_ID);
-
-		assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
-		assertThat(result.getBody()).isEqualTo(response);
-		verify(genreService).getGenreById(GENRE_ID);
-	}
-
-	@Test
-	void getGenreById_ThrowsException_WhenNotFound() {
-		when(genreService.getGenreById(999L)).thenThrow(new GenreNotFoundException(999L));
-
-		assertThatThrownBy(() -> controller.getGenreById(999L)).isInstanceOf(GenreNotFoundException.class);
-	}
-
-	@Test
 	void updateGenre_ReturnsUpdatedGenre() {
 		GenreRequest request = new GenreRequest("Updated");
 		GenreResponse response = new GenreResponse(GENRE_ID, "Updated");

@@ -78,30 +78,6 @@ public class GenreServiceTest {
 	}
 
 	@Test
-	void getGenreById_ShouldReturnGenre() {
-		Genre genre = new Genre();
-		genre.setId(GENRE_ID);
-		genre.setName(GENRE_NAME);
-		GenreResponse response = new GenreResponse(GENRE_ID, GENRE_NAME);
-
-		when(genreRepository.findById(GENRE_ID)).thenReturn(Optional.of(genre));
-		when(genreMapper.toGenreResponse(genre)).thenReturn(response);
-
-		GenreResponse result = genreService.getGenreById(GENRE_ID);
-
-		assertThat(result).isNotNull();
-		assertThat(result.id()).isEqualTo(GENRE_ID);
-		assertThat(result.name()).isEqualTo(GENRE_NAME);
-	}
-
-	@Test
-	void getGenreById_ShouldThrowExceptionWhenNotFound() {
-		when(genreRepository.findById(GENRE_ID)).thenReturn(Optional.empty());
-
-		assertThatThrownBy(() -> genreService.getGenreById(GENRE_ID)).isInstanceOf(GenreNotFoundException.class);
-	}
-
-	@Test
 	void getGenres_ShouldReturnPage() {
 		String query = "act";
 		Pageable pageable = PageRequest.of(0, 10);

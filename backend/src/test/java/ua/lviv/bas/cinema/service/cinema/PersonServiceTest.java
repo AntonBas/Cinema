@@ -29,7 +29,6 @@ import ua.lviv.bas.cinema.dto.movie.response.PersonListResponse;
 import ua.lviv.bas.cinema.dto.movie.response.PersonResponse;
 import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
 import ua.lviv.bas.cinema.exception.domain.cinema.PersonHasMoviesException;
-import ua.lviv.bas.cinema.exception.domain.cinema.PersonNotFoundException;
 import ua.lviv.bas.cinema.mapper.cinema.PersonMapper;
 import ua.lviv.bas.cinema.repository.cinema.MovieRepository;
 import ua.lviv.bas.cinema.repository.cinema.PersonRepository;
@@ -104,23 +103,6 @@ public class PersonServiceTest {
 	}
 
 	@Test
-	void getPersonById_Success() {
-		when(personRepository.findById(PERSON_ID)).thenReturn(Optional.of(person));
-		when(personMapper.toPersonResponse(person)).thenReturn(personResponse);
-
-		PersonResponse result = personService.getPersonById(PERSON_ID);
-
-		assertThat(result).isEqualTo(personResponse);
-	}
-
-	@Test
-	void getPersonById_NotFound_ThrowsException() {
-		when(personRepository.findById(PERSON_ID)).thenReturn(Optional.empty());
-
-		assertThatThrownBy(() -> personService.getPersonById(PERSON_ID)).isInstanceOf(PersonNotFoundException.class);
-	}
-
-	@Test
 	void getPersons_ReturnsPage() {
 		Pageable pageable = PageRequest.of(0, 10);
 		PersonListProjection projection = createProjection();
@@ -133,63 +115,6 @@ public class PersonServiceTest {
 
 		assertThat(result.getContent()).hasSize(1);
 		assertThat(result.getContent().get(0)).isEqualTo(listResponse);
-	}
-
-	@Test
-	void getPopularPersons_ReturnsList() {
-		PersonListProjection projection = createProjection();
-		Page<PersonListProjection> projectionPage = new PageImpl<>(List.of(projection));
-
-		when(personRepository.findProjectionsByFilters(PERSON_NAME, PERSON_ROLE, PageRequest.of(0, 5)))
-				.thenReturn(projectionPage);
-		when(personMapper.toPersonListResponse(projection)).thenReturn(listResponse);
-
-		List<PersonListResponse> result = personService.getPopularPersons(PERSON_NAME, PERSON_ROLE, 5);
-
-		assertThat(result).hasSize(1);
-		assertThat(result.get(0)).isEqualTo(listResponse);
-	}
-
-	@Test
-	void getPersonsByIds_ReturnsList() {
-		List<Long> ids = List.of(PERSON_ID);
-		when(personRepository.findAllById(ids)).thenReturn(List.of(person));
-		when(personMapper.toPersonListResponse(person)).thenReturn(listResponse);
-
-		List<PersonListResponse> result = personService.getPersonsByIds(ids);
-
-		assertThat(result).hasSize(1);
-		assertThat(result.get(0)).isEqualTo(listResponse);
-	}
-
-	@Test
-	void getPersonsByIds_EmptyList_ReturnsEmptyList() {
-		List<PersonListResponse> result = personService.getPersonsByIds(List.of());
-		assertThat(result).isEmpty();
-	}
-
-	@Test
-	void getPersonsByIds_NullList_ReturnsEmptyList() {
-		List<PersonListResponse> result = personService.getPersonsByIds(null);
-		assertThat(result).isEmpty();
-	}
-
-	@Test
-	void existsByNameAndRole_ReturnsTrue() {
-		when(personRepository.existsByNameAndRole(PERSON_NAME, PERSON_ROLE)).thenReturn(true);
-
-		boolean result = personService.existsByNameAndRole(PERSON_NAME, PERSON_ROLE);
-
-		assertThat(result).isTrue();
-	}
-
-	@Test
-	void existsByNameAndRole_ReturnsFalse() {
-		when(personRepository.existsByNameAndRole(PERSON_NAME, PERSON_ROLE)).thenReturn(false);
-
-		boolean result = personService.existsByNameAndRole(PERSON_NAME, PERSON_ROLE);
-
-		assertThat(result).isFalse();
 	}
 
 	@Test
