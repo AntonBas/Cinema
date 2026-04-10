@@ -44,7 +44,7 @@ public class AdminBonusService {
 	@Transactional(readOnly = true)
 	public List<BonusRulesResponse> getRules() {
 		return bonusRulesRepository.findAll().stream().filter(rule -> RULE_TYPES.contains(rule.getBonusType()))
-				.sorted(Comparator.comparing(BonusRules::getBonusType)).map(bonusMapper::toBonusRulesResponse).toList();
+				.sorted(Comparator.comparing(BonusRules::getBonusType)).map(bonusMapper::toResponse).toList();
 	}
 
 	@CacheEvict(value = "bonusRules", allEntries = true)
@@ -54,7 +54,7 @@ public class AdminBonusService {
 		var rules = getRuleByType(type);
 		var oldValues = captureCurrentValues(rules);
 
-		bonusMapper.updateBonusRulesFromRequest(request, rules);
+		bonusMapper.updateFromRequest(request, rules);
 
 		if (type == BonusTransactionType.BOOKING_SPEND) {
 			validatePointsRange(rules.getMinPointsPerTransaction(), rules.getMaxPointsPerTransaction());
@@ -69,7 +69,7 @@ public class AdminBonusService {
 					newValues);
 		}
 
-		return bonusMapper.toBonusRulesResponse(updated);
+		return bonusMapper.toResponse(updated);
 	}
 
 	@CacheEvict(value = "bonusRules", allEntries = true)
@@ -83,7 +83,7 @@ public class AdminBonusService {
 		if (defaults != null) {
 			var resetRequest = new BonusRulesRequest(defaults.getPoints(), defaults.getMoneyRatio(),
 					defaults.getMinPoints(), defaults.getMaxPoints(), true);
-			bonusMapper.updateBonusRulesFromRequest(resetRequest, rules);
+			bonusMapper.updateFromRequest(resetRequest, rules);
 			log.info("Reset bonus rule {} to defaults", type);
 		} else {
 			log.warn("No defaults found for bonus rule type: {}", type);
@@ -97,7 +97,7 @@ public class AdminBonusService {
 					newValues);
 		}
 
-		return bonusMapper.toBonusRulesResponse(updated);
+		return bonusMapper.toResponse(updated);
 	}
 
 	private BonusRules getRuleByType(BonusTransactionType type) {

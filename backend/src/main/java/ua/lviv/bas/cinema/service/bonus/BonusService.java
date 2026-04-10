@@ -59,7 +59,7 @@ public class BonusService {
 	@Transactional(readOnly = true)
 	public Page<BonusTransactionResponse> getTransactions(Long userId, Pageable pageable) {
 		var page = bonusTransactionRepository.findProjectionsByUserId(userId, pageable);
-		return page.map(bonusMapper::toBonusTransactionResponse);
+		return page.map(bonusMapper::toResponse);
 	}
 
 	@Cacheable(value = "bonus", key = "'available:' + #userId + '-' + #totalPrice")
@@ -250,12 +250,10 @@ public class BonusService {
 	}
 
 	private int applyMinMaxLimits(int points, Integer min, Integer max) {
-		if (min != null && points < min) {
+		if (min != null && points < min)
 			return min;
-		}
-		if (max != null && points > max) {
+		if (max != null && points > max)
 			return max;
-		}
 		return points;
 	}
 

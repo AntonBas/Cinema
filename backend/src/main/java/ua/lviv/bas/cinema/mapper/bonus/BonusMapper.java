@@ -16,10 +16,10 @@ import ua.lviv.bas.cinema.repository.bonus.projection.BonusTransactionProjection
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.WARN)
 public interface BonusMapper {
 
-	BonusRulesResponse toBonusRulesResponse(BonusRules rules);
+	BonusRulesResponse toResponse(BonusRules rules);
 
-	@Mapping(target = "pointsChange", expression = "java(projection.getAmount() > 0 ? \"+\" + projection.getAmount() : String.valueOf(projection.getAmount()))")
-	BonusTransactionResponse toBonusTransactionResponse(BonusTransactionProjection projection);
+	@Mapping(target = "pointsChange", expression = "java(projection.getPointsChange())")
+	BonusTransactionResponse toResponse(BonusTransactionProjection projection);
 
 	@BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 	@Mapping(target = "id", ignore = true)
@@ -28,5 +28,5 @@ public interface BonusMapper {
 	@Mapping(target = "createdDate", ignore = true)
 	@Mapping(target = "lastModifiedBy", ignore = true)
 	@Mapping(target = "lastModifiedDate", ignore = true)
-	void updateBonusRulesFromRequest(BonusRulesRequest request, @MappingTarget BonusRules rules);
+	void updateFromRequest(BonusRulesRequest request, @MappingTarget BonusRules rules);
 }
