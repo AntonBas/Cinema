@@ -225,7 +225,9 @@ public class BonusService {
 
 	private BonusTransaction createTransaction(BonusCard card, Integer points, BonusTransactionType type,
 			String referenceId, Booking booking) {
-		validatePositivePoints(points);
+		if (points > 0) {
+			validatePositivePoints(points);
+		}
 		var transaction = BonusTransaction.builder().bonusCard(card).booking(booking).type(type).pointsChange(points)
 				.referenceId(referenceId).build();
 		return bonusTransactionRepository.save(transaction);
