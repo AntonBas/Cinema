@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -60,7 +59,7 @@ public class MovieController {
 	@Operation(summary = "Get currently showing movies")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Movies retrieved successfully") })
 	public ResponseEntity<PageResponse<MovieCardResponse>> getCurrentlyShowingMovies(
-			@Parameter(description = "Pagination parameters") @PageableDefault(size = 12, sort = "releaseDate", direction = Sort.Direction.DESC) Pageable pageable) {
+			@PageableDefault(size = 12, sort = "releaseDate", direction = Sort.Direction.DESC) Pageable pageable) {
 		log.info("GET /api/movies/currently-showing - Getting currently showing movies");
 		var result = movieService.getMovies(null, MovieStatus.CURRENT, pageable);
 		return ResponseEntity.ok().cacheControl(CacheControl.maxAge(5, TimeUnit.MINUTES))
@@ -72,7 +71,7 @@ public class MovieController {
 	@Operation(summary = "Get upcoming movies")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Movies retrieved successfully") })
 	public ResponseEntity<PageResponse<MovieCardResponse>> getUpcomingMovies(
-			@Parameter(description = "Pagination parameters") @PageableDefault(size = 12, sort = "releaseDate", direction = Sort.Direction.ASC) Pageable pageable) {
+			@PageableDefault(size = 12, sort = "releaseDate", direction = Sort.Direction.ASC) Pageable pageable) {
 		log.info("GET /api/movies/upcoming - Getting upcoming movies");
 		var result = movieService.getMovies(null, MovieStatus.UPCOMING, pageable);
 		return ResponseEntity.ok().cacheControl(CacheControl.maxAge(5, TimeUnit.MINUTES))
