@@ -27,25 +27,20 @@ public class EmailTokenService {
 	private final EmailTokenRepository tokenRepository;
 	private final EmailService emailService;
 	private final UserRepository userRepository;
-	private final BonusService bonusUserService;
+	private final BonusService bonusService;
 
 	@Transactional
 	public String confirmEmail(String token) {
 		log.info("Attempting to confirm email with token: {}", token);
 
-		EmailToken emailToken = validateToken(token);
+		var emailToken = validateToken(token, TokenType.VERIFICATION);
+		var user = emailToken.getUser();
 
-		if (emailToken.getType() != TokenType.VERIFICATION) {
-			throw new InvalidTokenException("email-verification");
-		}
-
-		User user = emailToken.getUser();
 		user.setEnabled(true);
-		User updatedUser = userRepository.save(user);
+		var updatedUser = userRepository.save(user);
 
-		bonusUserService.getOrCreateCard(updatedUser);
-
-		bonusUserService.awardWelcomeBonus(updatedUser);
+		bonusService.getOrCreateCard(updatedUser);
+		bonusService.awardWelcomeBonus(updatedUser);
 
 		emailToken.setConfirmed(true);
 		emailToken.setConfirmedAt(LocalDateTime.now());
@@ -59,19 +54,15 @@ public class EmailTokenService {
 	public User confirmEmailChange(String token) {
 		log.info("Attempting to confirm email change with token: {}", token);
 
-		EmailToken emailToken = validateToken(token);
-
-		if (emailToken.getType() != TokenType.EMAIL_CHANGE) {
-			throw new InvalidTokenException("email-change");
-		}
+		var emailToken = validateToken(token, TokenType.EMAIL_CHANGE);
 
 		if (emailToken.getNewEmail() == null) {
 			throw new InvalidTokenException("email-change");
 		}
 
-		User user = emailToken.getUser();
-		String oldEmail = user.getEmail();
-		String newEmail = emailToken.getNewEmail();
+		var user = emailToken.getUser();
+		var oldEmail = user.getEmail();
+		var newEmail = emailToken.getNewEmail();
 
 		if (oldEmail.equalsIgnoreCase(newEmail)) {
 			throw EmailValidationException.sameEmail();
@@ -82,7 +73,7 @@ public class EmailTokenService {
 		}
 
 		user.setEmail(newEmail);
-		User updatedUser = userRepository.save(user);
+		var updatedUser = userRepository.save(user);
 
 		emailService.sendEmailChangeNotification(oldEmail, newEmail);
 
@@ -95,16 +86,20 @@ public class EmailTokenService {
 		return updatedUser;
 	}
 
-	private EmailToken validateToken(String token) {
-		EmailToken emailToken = tokenRepository.findByToken(token)
-				.orElseThrow(() -> new InvalidTokenException("email-verification"));
+	private EmailToken validateToken(String token, TokenType expectedType) {
+		var emailToken = tokenRepository.findByToken(token)
+				.orElseThrow(() -> new InvalidTokenException(expectedType.name().toLowerCase()));
+
+		if (emailToken.getType() != expectedType) {
+			throw new InvalidTokenException(expectedType.name().toLowerCase());
+		}
 
 		if (emailToken.isConfirmed()) {
-			throw new TokenAlreadyConfirmedException("email-verification");
+			throw new TokenAlreadyConfirmedException(expectedType.name().toLowerCase());
 		}
 
 		if (emailToken.getExpiresAt().isBefore(LocalDateTime.now())) {
-			throw new TokenExpiredException("email-verification");
+			throw new TokenExpiredException(expectedType.name().toLowerCase());
 		}
 
 		return emailToken;
