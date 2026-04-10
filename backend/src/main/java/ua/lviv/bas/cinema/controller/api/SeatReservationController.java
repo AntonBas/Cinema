@@ -1,16 +1,16 @@
 package ua.lviv.bas.cinema.controller.api;
 
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -26,48 +26,39 @@ import ua.lviv.bas.cinema.service.booking.SeatReservationService;
 @RequiredArgsConstructor
 @Tag(name = "Seat Reservation", description = "APIs for seat reservation and availability")
 public class SeatReservationController {
+
 	private final SeatReservationService seatReservationService;
 
-	@GetMapping("/{sessionId}/seats/availability")
-	@Operation(summary = "Get seat availability for a session", description = "Returns detailed information about seat availability, prices, and booking status")
+	@GetMapping("/{sessionId}/seats")
+	@Operation(summary = "Get seat availability")
 	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Seat availability information retrieved successfully"),
+			@ApiResponse(responseCode = "200", description = "Seat availability retrieved successfully"),
 			@ApiResponse(responseCode = "404", description = "Session not found") })
-	public ResponseEntity<SeatReservationResponse> getSeatAvailability(
-			@Parameter(description = "ID of the cinema session", required = true) @PathVariable Long sessionId) {
-
-		log.info("Fetching seat availability for session ID: {}", sessionId);
-		SeatReservationResponse response = seatReservationService.getSeatAvailability(sessionId);
-		return ResponseEntity.ok(response);
+	public SeatReservationResponse getAvailability(@PathVariable Long sessionId) {
+		log.info("GET /api/sessions/{}/seats", sessionId);
+		return seatReservationService.getAvailability(sessionId);
 	}
 
 	@PostMapping("/{sessionId}/seats/{seatId}/hold")
-	@Operation(summary = "Temporarily hold a seat", description = "Places a temporary hold on a seat for 5 minutes while user selects tickets")
+	@ResponseStatus(HttpStatus.OK)
+	@Operation(summary = "Hold a seat")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Seat held successfully"),
 			@ApiResponse(responseCode = "404", description = "Session or seat not found"),
 			@ApiResponse(responseCode = "409", description = "Seat is already reserved") })
-	public ResponseEntity<Void> temporaryHoldSeat(
-			@Parameter(description = "ID of the cinema session", required = true) @PathVariable Long sessionId,
-			@Parameter(description = "ID of the seat", required = true) @PathVariable Long seatId,
+	public void hold(@PathVariable Long sessionId, @PathVariable Long seatId,
 			@AuthenticationPrincipal CustomUserDetails userDetails) {
-
-		log.info("User {} placing temporary hold on seat {} in session {}", userDetails.getUserId(), seatId, sessionId);
-
-		seatReservationService.temporaryHoldSeat(sessionId, seatId, userDetails.getUser());
-		return ResponseEntity.ok().build();
+		log.info("POST /api/sessions/{}/seats/{}/hold - user: {}", sessionId, seatId, userDetails.getUserId());
+		seatReservationService.hold(sessionId, seatId, userDetails.getUser());
 	}
 
 	@DeleteMapping("/{sessionId}/seats/{seatId}/hold")
-	@Operation(summary = "Cancel temporary hold", description = "Cancels a temporary hold on a seat")
+	@ResponseStatus(HttpStatus.OK)
+	@Operation(summary = "Cancel hold")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Hold cancelled successfully"),
 			@ApiResponse(responseCode = "404", description = "Hold not found") })
-	public ResponseEntity<Void> cancelTemporaryHold(
-			@Parameter(description = "ID of the cinema session", required = true) @PathVariable Long sessionId,
-			@Parameter(description = "ID of the seat", required = true) @PathVariable Long seatId,
+	public void cancel(@PathVariable Long sessionId, @PathVariable Long seatId,
 			@AuthenticationPrincipal CustomUserDetails userDetails) {
-		log.info("User {} cancelling temporary hold on seat {} in session {}", userDetails.getUserId(), seatId,
-				sessionId);
-		seatReservationService.cancelTemporaryHold(sessionId, seatId, userDetails.getUser());
-		return ResponseEntity.ok().build();
+		log.info("DELETE /api/sessions/{}/seats/{}/hold - user: {}", sessionId, seatId, userDetails.getUserId());
+		seatReservationService.cancel(sessionId, seatId, userDetails.getUser());
 	}
 }

@@ -46,9 +46,7 @@ public interface SeatReservationRepository extends JpaRepository<SeatReservation
 	List<SeatReservation> findByUserId(@Param("userId") Long userId);
 
 	@Query("""
-			SELECT
-			    s.id,
-			    sr.status
+			SELECT s.id, sr.status
 			FROM Seat s
 			LEFT JOIN SeatReservation sr ON sr.seat.id = s.id AND sr.session.id = :sessionId AND sr.status IN :statuses
 			WHERE s.hall.id = :hallId
@@ -56,12 +54,7 @@ public interface SeatReservationRepository extends JpaRepository<SeatReservation
 	List<Object[]> findBookedSeatIds(@Param("hallId") Long hallId, @Param("sessionId") Long sessionId,
 			@Param("statuses") List<ReservationStatus> statuses);
 
-	@Query("""
-			SELECT s.id
-			FROM SeatReservation sr
-			JOIN sr.seat s
-			WHERE sr.session.id = :sessionId AND sr.status = 'PENDING'
-			""")
+	@Query("SELECT s.id FROM SeatReservation sr JOIN sr.seat s WHERE sr.session.id = :sessionId AND sr.status = 'PENDING'")
 	List<Long> findPendingSeatIdsBySessionId(@Param("sessionId") Long sessionId);
 
 	@Lock(LockModeType.PESSIMISTIC_WRITE)

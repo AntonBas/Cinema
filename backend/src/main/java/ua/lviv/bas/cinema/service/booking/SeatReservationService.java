@@ -1,6 +1,5 @@
 package ua.lviv.bas.cinema.service.booking;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -9,7 +8,6 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,8 +21,8 @@ import ua.lviv.bas.cinema.domain.ticket.TicketType;
 import ua.lviv.bas.cinema.domain.user.User;
 import ua.lviv.bas.cinema.dto.booking.response.SeatReservationResponse;
 import ua.lviv.bas.cinema.exception.domain.booking.SeatNotAvailableException;
-import ua.lviv.bas.cinema.exception.domain.cinema.SeatNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.cinema.SessionNotFoundException;
+import ua.lviv.bas.cinema.exception.domain.hall.SeatNotFoundException;
 import ua.lviv.bas.cinema.mapper.booking.SeatReservationMapper;
 import ua.lviv.bas.cinema.repository.booking.SeatReservationRepository;
 import ua.lviv.bas.cinema.repository.cinema.SeatRepository;
@@ -49,59 +47,54 @@ public class SeatReservationService {
 	private int tempHoldMinutes;
 
 	@Cacheable(value = "seatAvailability", key = "#sessionId")
-	public SeatReservationResponse getSeatAvailability(Long sessionId) {
+	public SeatReservationResponse getAvailability(Long sessionId) {
 		log.debug("Fetching seat availability for session: {}", sessionId);
-		Session session = sessionRepository.findById(sessionId)
-				.orElseThrow(() -> new SessionNotFoundException(sessionId));
 
-		List<Seat> allSeats = seatRepository.findByHallId(session.getHall().getId());
-		List<TicketType> activeTicketTypes = ticketTypeRepository.findByActiveTrue();
+		var session = sessionRepository.findById(sessionId).orElseThrow(() -> new SessionNotFoundException(sessionId));
 
-		List<Object[]> bookedSeatData = seatReservationRepository.findBookedSeatIds(session.getHall().getId(),
-				sessionId, ReservationStatus.ACTIVE_STATUSES);
+		var allSeats = seatRepository.findByHallId(session.getHall().getId());
+		var activeTicketTypes = ticketTypeRepository.findByActiveTrue();
+
+		var bookedSeatData = seatReservationRepository.findBookedSeatIds(session.getHall().getId(), sessionId,
+				ReservationStatus.ACTIVE_STATUSES);
 
 		Map<Long, ReservationStatus> seatStatusMap = bookedSeatData.stream().filter(data -> data[1] != null)
 				.collect(Collectors.toMap(data -> (Long) data[0], data -> (ReservationStatus) data[1],
 						(existing, replacement) -> existing));
 
-		List<SeatReservationResponse.SeatInfo> seatInfos = allSeats.stream()
-				.map(seat -> buildSeatInfo(seat, seatStatusMap, session, activeTicketTypes))
-				.collect(Collectors.toList());
+		var seatInfos = allSeats.stream().map(seat -> buildSeatInfo(seat, seatStatusMap, session, activeTicketTypes))
+				.toList();
 
 		int availableSeatsCount = (int) seatInfos.stream().filter(SeatReservationResponse.SeatInfo::available).count();
 
 		return seatReservationMapper.toResponse(session, seatInfos, availableSeatsCount);
 	}
 
+	@CacheEvict(value = { "seatAvailability", "availableSeatsCount" }, key = "#sessionId")
 	@Transactional
-	@Caching(evict = { @CacheEvict(value = "seatAvailability", key = "#sessionId"),
-			@CacheEvict(value = "availableSeatsCount", key = "#sessionId") })
-	public void temporaryHoldSeat(Long sessionId, Long seatId, User user) {
+	public void hold(Long sessionId, Long seatId, User user) {
 		log.info("Creating temporary hold for seat {} in session {} by user {}", seatId, sessionId, user.getId());
 
-		Session session = sessionRepository.findById(sessionId)
-				.orElseThrow(() -> new SessionNotFoundException(sessionId));
+		var session = sessionRepository.findById(sessionId).orElseThrow(() -> new SessionNotFoundException(sessionId));
 
-		Seat seat = seatRepository.findByIdWithLock(seatId).orElseThrow(() -> new SeatNotFoundException(seatId));
+		var seat = seatRepository.findByIdWithLock(seatId).orElseThrow(() -> new SeatNotFoundException(seatId));
 
 		validateSeat(sessionId, seatId);
 
-		SeatReservation reservation = SeatReservation.builder().seat(seat).session(session).ticketType(null)
-				.seatPrice(null).status(ReservationStatus.PENDING)
-				.reservedUntil(LocalDateTime.now().plusMinutes(tempHoldMinutes)).reservedByUser(user).build();
+		var reservation = SeatReservation.builder().seat(seat).session(session).ticketType(null).seatPrice(null)
+				.status(ReservationStatus.PENDING).reservedUntil(LocalDateTime.now().plusMinutes(tempHoldMinutes))
+				.reservedByUser(user).build();
 
 		seatReservationRepository.save(reservation);
-
 		log.info("Temporary hold created for seat {} in session {} by user {}", seatId, sessionId, user.getId());
 	}
 
+	@CacheEvict(value = { "seatAvailability", "availableSeatsCount" }, key = "#sessionId")
 	@Transactional
-	@Caching(evict = { @CacheEvict(value = "seatAvailability", key = "#sessionId"),
-			@CacheEvict(value = "availableSeatsCount", key = "#sessionId") })
-	public void cancelTemporaryHold(Long sessionId, Long seatId, User user) {
+	public void cancel(Long sessionId, Long seatId, User user) {
 		log.info("Cancelling temporary hold for seat {} in session {} by user {}", seatId, sessionId, user.getId());
 
-		SeatReservation reservation = seatReservationRepository
+		var reservation = seatReservationRepository
 				.findBySessionIdAndSeatIdAndStatusAndReservedByUserId(sessionId, seatId, ReservationStatus.PENDING,
 						user.getId())
 				.orElseThrow(() -> new SeatNotAvailableException("No active hold found for seat " + seatId));
@@ -110,30 +103,27 @@ public class SeatReservationService {
 		log.info("Temporary hold cancelled for seat {} in session {} by user {}", seatId, sessionId, user.getId());
 	}
 
-	public void validateSeatAvailability(Long sessionId, Long seatId) {
+	public void validateAvailability(Long sessionId, Long seatId) {
 		validateSeat(sessionId, seatId);
 	}
 
-	public boolean isSeatAvailableForSession(Long sessionId, Long seatId) {
-		return !isSeatReserved(sessionId, seatId);
+	public boolean isAvailable(Long sessionId, Long seatId) {
+		return !isReserved(sessionId, seatId);
 	}
 
 	@Cacheable(value = "availableSeatsCount", key = "#sessionId")
-	public int getAvailableSeatsCount(Long sessionId) {
-		Session session = sessionRepository.findById(sessionId)
-				.orElseThrow(() -> new SessionNotFoundException(sessionId));
+	public int getAvailableCount(Long sessionId) {
+		var session = sessionRepository.findById(sessionId).orElseThrow(() -> new SessionNotFoundException(sessionId));
 
-		Long hallId = session.getHall().getId();
-		long totalSeats = seatRepository.countByHallId(hallId);
+		long totalSeats = seatRepository.countByHallId(session.getHall().getId());
 		long bookedSeats = seatReservationRepository.countBySessionIdAndStatusIn(sessionId,
 				ReservationStatus.ACTIVE_STATUSES);
 
 		return (int) (totalSeats - bookedSeats);
 	}
 
-	public SeatAvailabilityCheck getSeatAvailabilityStatus(Long sessionId, Long seatId) {
-		List<ReservationStatus> statuses = seatReservationRepository.findStatusesBySessionIdAndSeatId(sessionId,
-				seatId);
+	public SeatAvailabilityStatus getStatus(Long sessionId, Long seatId) {
+		var statuses = seatReservationRepository.findStatusesBySessionIdAndSeatId(sessionId, seatId);
 
 		boolean isReserved = !statuses.isEmpty();
 		ReservationStatus status = null;
@@ -149,10 +139,10 @@ public class SeatReservationService {
 			}
 		}
 
-		return new SeatAvailabilityCheck(!isReserved, status);
+		return new SeatAvailabilityStatus(!isReserved, status);
 	}
 
-	public void validateReservationNotExpired(SeatReservation reservation, Long seatId, Long sessionId) {
+	public void validateNotExpired(SeatReservation reservation, Long seatId, Long sessionId) {
 		if (reservation.getReservedUntil().isBefore(LocalDateTime.now())) {
 			seatReservationRepository.delete(reservation);
 			throw SeatNotAvailableException.forSeatAndSession(seatId, sessionId);
@@ -160,18 +150,18 @@ public class SeatReservationService {
 	}
 
 	private void validateSeat(Long sessionId, Long seatId) {
-		Seat seat = seatRepository.findById(seatId).orElseThrow(() -> new SeatNotFoundException(seatId));
+		var seat = seatRepository.findById(seatId).orElseThrow(() -> new SeatNotFoundException(seatId));
 
 		if (!seat.isActive()) {
 			throw SeatNotAvailableException.seatInactive(seatId);
 		}
 
-		if (isSeatReserved(sessionId, seatId)) {
+		if (isReserved(sessionId, seatId)) {
 			throw SeatNotAvailableException.forSeatAndSession(seatId, sessionId);
 		}
 	}
 
-	private boolean isSeatReserved(Long sessionId, Long seatId) {
+	private boolean isReserved(Long sessionId, Long seatId) {
 		return seatReservationRepository.existsBySessionIdAndSeatIdAndStatusIn(sessionId, seatId,
 				ReservationStatus.ACTIVE_STATUSES);
 	}
@@ -179,20 +169,20 @@ public class SeatReservationService {
 	private SeatReservationResponse.SeatInfo buildSeatInfo(Seat seat, Map<Long, ReservationStatus> seatStatusMap,
 			Session session, List<TicketType> activeTicketTypes) {
 
-		ReservationStatus status = seatStatusMap.get(seat.getId());
+		var status = seatStatusMap.get(seat.getId());
 		boolean isBooked = status != null;
-		boolean isTemporarilyReserved = status == ReservationStatus.PENDING;
-		boolean isAvailable = !isBooked && seat.isActive();
+		boolean temporarilyReserved = status == ReservationStatus.PENDING;
+		boolean available = !isBooked && seat.isActive();
 
-		List<SeatReservationResponse.TicketPriceInfo> ticketPrices = activeTicketTypes.stream().map(ticketType -> {
-			BigDecimal price = priceCalculator.calculateSeatPrice(session, seat, ticketType);
+		var ticketPrices = activeTicketTypes.stream().map(ticketType -> {
+			var price = priceCalculator.calculateSeatPrice(session, seat, ticketType);
 			return seatReservationMapper.toTicketPriceInfo(ticketType, price);
-		}).collect(Collectors.toList());
+		}).toList();
 
-		return seatReservationMapper.toSeatInfo(seat, isAvailable, isTemporarilyReserved, ticketPrices);
+		return seatReservationMapper.toSeatInfo(seat, available, temporarilyReserved, ticketPrices);
 	}
 
-	public record SeatAvailabilityCheck(boolean available, ReservationStatus status) {
+	public record SeatAvailabilityStatus(boolean available, ReservationStatus status) {
 		public boolean isTemporarilyReserved() {
 			return status == ReservationStatus.PENDING;
 		}

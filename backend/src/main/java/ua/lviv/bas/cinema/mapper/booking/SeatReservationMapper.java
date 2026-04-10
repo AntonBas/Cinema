@@ -32,7 +32,7 @@ public interface SeatReservationMapper {
 	@Mapping(target = "temporarilyReserved", source = "temporarilyReserved")
 	@Mapping(target = "active", source = "seat.active")
 	@Mapping(target = "ticketPrices", source = "ticketPrices")
-	SeatReservationResponse.SeatInfo toSeatInfo(Seat seat, Boolean available, Boolean temporarilyReserved,
+	SeatReservationResponse.SeatInfo toSeatInfo(Seat seat, boolean available, boolean temporarilyReserved,
 			List<SeatReservationResponse.TicketPriceInfo> ticketPrices);
 
 	@Mapping(target = "ticketTypeId", source = "ticketType.id")
