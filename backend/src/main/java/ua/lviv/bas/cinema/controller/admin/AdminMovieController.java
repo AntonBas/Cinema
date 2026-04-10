@@ -7,7 +7,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,6 +16,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -50,70 +50,65 @@ public class AdminMovieController {
 	private final ObjectMapper objectMapper;
 
 	@PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	@ResponseStatus(HttpStatus.CREATED)
 	@Operation(summary = "Create new movie")
 	@ApiResponses(value = { @ApiResponse(responseCode = "201", description = "Movie created successfully"),
 			@ApiResponse(responseCode = "400", description = "Invalid request data") })
-	public ResponseEntity<MovieAdminResponse> createMovie(@RequestPart("movieData") String movieDataJson,
+	public MovieAdminResponse createMovie(@RequestPart("movieData") String movieDataJson,
 			@RequestPart(value = "posterFile") MultipartFile posterFile) {
 		log.info("POST /api/admin/movies - Creating new movie");
 		var request = parseRequest(movieDataJson, MovieCreateRequest.class);
 		request.setPosterFile(posterFile);
-		var createdMovie = movieService.createMovie(request);
-		return ResponseEntity.status(HttpStatus.CREATED).body(createdMovie);
+		return movieService.createMovie(request);
 	}
 
 	@GetMapping("/{id}")
 	@Operation(summary = "Get movie by ID")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Movie found"),
 			@ApiResponse(responseCode = "404", description = "Movie not found") })
-	public ResponseEntity<MovieAdminResponse> getMovie(@PathVariable Long id) {
+	public MovieAdminResponse getMovie(@PathVariable Long id) {
 		log.info("GET /api/admin/movies/{} - Getting movie", id);
-		var movie = movieService.getMovie(id);
-		return ResponseEntity.ok(movie);
+		return movieService.getMovie(id);
 	}
 
 	@GetMapping
 	@Operation(summary = "Get movies")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Movies retrieved successfully") })
-	public ResponseEntity<PageResponse<MovieCardResponse>> getMovies(@RequestParam(required = false) String query,
+	public PageResponse<MovieCardResponse> getMovies(@RequestParam(required = false) String query,
 			@RequestParam(required = false) MovieStatus status,
 			@PageableDefault(size = 12, sort = "title", direction = Sort.Direction.ASC) Pageable pageable) {
 		log.info("GET /api/admin/movies - query: '{}', status: {}", query, status);
-		var result = movieService.getMovies(query, status, pageable);
-		return ResponseEntity.ok(PageResponse.from(result));
+		return PageResponse.from(movieService.getMovies(query, status, pageable));
 	}
 
 	@GetMapping("/search")
 	@Operation(summary = "Search movies")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Movies retrieved successfully") })
-	public ResponseEntity<List<MovieSessionSearchResponse>> searchMovies(@RequestParam(required = false) String query) {
+	public List<MovieSessionSearchResponse> searchMovies(@RequestParam(required = false) String query) {
 		log.info("GET /api/admin/movies/search - query: '{}'", query);
-		var movies = movieService.searchMovies(query);
-		return ResponseEntity.ok(movies);
+		return movieService.searchMovies(query);
 	}
 
 	@PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@Operation(summary = "Update movie")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Movie updated successfully"),
 			@ApiResponse(responseCode = "404", description = "Movie not found") })
-	public ResponseEntity<MovieAdminResponse> updateMovie(@PathVariable Long id,
-			@RequestPart("movieData") String movieDataJson,
+	public MovieAdminResponse updateMovie(@PathVariable Long id, @RequestPart("movieData") String movieDataJson,
 			@RequestPart(value = "posterFile", required = false) MultipartFile posterFile) {
 		log.info("PUT /api/admin/movies/{} - Updating movie", id);
 		var request = parseRequest(movieDataJson, MovieUpdateRequest.class);
 		request.setPosterFile(posterFile);
-		var updatedMovie = movieService.updateMovie(id, request);
-		return ResponseEntity.ok(updatedMovie);
+		return movieService.updateMovie(id, request);
 	}
 
 	@DeleteMapping("/{id}")
+	@ResponseStatus(HttpStatus.NO_CONTENT)
 	@Operation(summary = "Delete movie")
 	@ApiResponses(value = { @ApiResponse(responseCode = "204", description = "Movie deleted successfully"),
 			@ApiResponse(responseCode = "404", description = "Movie not found") })
-	public ResponseEntity<Void> deleteMovie(@PathVariable Long id) {
+	public void deleteMovie(@PathVariable Long id) {
 		log.info("DELETE /api/admin/movies/{} - Deleting movie", id);
 		movieService.deleteMovie(id);
-		return ResponseEntity.noContent().build();
 	}
 
 	private <T> T parseRequest(String json, Class<T> clazz) {
