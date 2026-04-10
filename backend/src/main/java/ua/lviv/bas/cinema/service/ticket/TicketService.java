@@ -4,13 +4,10 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -42,7 +39,6 @@ import ua.lviv.bas.cinema.service.shared.NumberGeneratorService;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-@CacheConfig(cacheNames = "tickets")
 public class TicketService {
 
 	private final TicketRepository ticketRepository;
@@ -60,21 +56,14 @@ public class TicketService {
 
 	@Transactional
 	public List<Ticket> createTicketsForBooking(Booking booking, Payment payment) {
-		List<Ticket> tickets = booking.getSeatReservations().stream()
-				.map(seatReservation -> buildTicket(booking, payment, seatReservation)).collect(Collectors.toList());
+		var tickets = booking.getSeatReservations().stream()
+				.map(seatReservation -> buildTicket(booking, payment, seatReservation)).toList();
 
-		List<Ticket> savedTickets = ticketRepository.saveAll(tickets);
+		var savedTickets = ticketRepository.saveAll(tickets);
 		log.info("Created {} tickets for booking {}", savedTickets.size(), booking.getId());
 
-		for (Ticket ticket : savedTickets) {
-			Map<String, Object> details = new HashMap<>();
-			details.put("ticketCode", ticket.getUniqueCode());
-			details.put("seatNumber", ticket.getSeatReservation().getSeat().getNumber());
-			details.put("price", ticket.getFinalPrice());
-			details.put("bookingId", booking.getId());
-
-			auditService.logChange("Ticket", ticket.getId(), "Ticket #" + ticket.getUniqueCode(), AuditAction.CREATED,
-					null, details);
+		for (var ticket : savedTickets) {
+			auditCreate(ticket, booking.getId());
 		}
 
 		return savedTickets;
@@ -87,15 +76,16 @@ public class TicketService {
 				.status(TicketStatus.ACTIVE).purchaseTime(LocalDateTime.now()).build();
 	}
 
-	@Cacheable(key = "#ticketId + '-' + #user.id")
-	public TicketResponse getTicketById(Long ticketId, User user) {
-		return ticketRepository.findByIdAndUserIdAndStatus(ticketId, user.getId(), TicketStatus.ACTIVE)
-				.map(this::toTicketResponse).orElseThrow(TicketValidationException::notFound);
+	@Cacheable(value = "tickets", key = "#ticketId + '-' + #user.id")
+	public TicketResponse getTicket(Long ticketId, User user) {
+		var ticket = ticketRepository.findByIdAndUserIdAndStatus(ticketId, user.getId(), TicketStatus.ACTIVE)
+				.orElseThrow(TicketValidationException::notFound);
+		return toTicketResponse(ticket);
 	}
 
-	@Cacheable(key = "#ticketCode + '-' + #user.id")
-	public TicketResponse getTicketByCode(String ticketCode, User user) {
-		Ticket ticket = ticketRepository.findByUniqueCode(ticketCode)
+	@Cacheable(value = "tickets", key = "#ticketCode + '-' + #user.id")
+	public TicketResponse getTicket(String ticketCode, User user) {
+		var ticket = ticketRepository.findByUniqueCode(ticketCode)
 				.orElseThrow(() -> new TicketNotFoundException("Ticket not found with code: " + ticketCode));
 
 		if (!ticket.getUser().getId().equals(user.getId())) {
@@ -105,107 +95,102 @@ public class TicketService {
 		return toTicketResponse(ticket);
 	}
 
-	@Cacheable(key = "'user:' + #user.id + '-status:' + #filter.status() + '-movie:' + #filter.movieTitle() + '-page:' + #pageable.pageNumber + '-' + #pageable.pageSize")
-	public Page<TicketResponse> getUserTickets(User user, TicketFilterRequest filter, Pageable pageable) {
+	@Cacheable(value = "tickets", key = "'user:' + #user.id + '-' + #filter.status() + '-' + #filter.movieTitle() + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
+	public Page<TicketResponse> getTickets(User user, TicketFilterRequest filter, Pageable pageable) {
 		Specification<Ticket> spec = ticketSpecification.buildForUser(user.getId(), filter.status(),
 				filter.movieTitle());
-
-		Page<Ticket> tickets = ticketRepository.findAll(spec, pageable);
-
-		return tickets.map(this::toTicketResponse);
+		var page = ticketRepository.findAll(spec, pageable);
+		return page.map(this::toTicketResponse);
 	}
 
-	@Caching(evict = { @CacheEvict(value = "tickets", key = "#ticketCode + '-' + #ticket.user.id"),
-			@CacheEvict(value = "tickets", key = "#ticket.id + '-' + #ticket.user.id"),
-			@CacheEvict(value = "tickets", allEntries = true) })
+	@CacheEvict(value = "tickets", allEntries = true)
 	@Transactional
-	public void validateTicket(String ticketCode) {
-		Ticket ticket = ticketRepository.findByUniqueCode(ticketCode).orElseThrow(TicketValidationException::notFound);
+	public void validate(String ticketCode) {
+		var ticket = ticketRepository.findByUniqueCode(ticketCode).orElseThrow(TicketValidationException::notFound);
 
-		TicketStatus oldStatus = ticket.getStatus();
-		String targetInfo = "Ticket #" + ticketCode;
-
-		validateTicketForEntry(ticket);
+		var oldStatus = ticket.getStatus();
+		validateForEntry(ticket);
 
 		ticket.setStatus(TicketStatus.USED);
 		ticketRepository.save(ticket);
 		log.info("Ticket {} validated and marked as used", ticketCode);
-
-		Map<String, Object> oldDetails = new HashMap<>();
-		oldDetails.put("status", oldStatus);
-
-		Map<String, Object> newDetails = new HashMap<>();
-		newDetails.put("status", TicketStatus.USED);
-		newDetails.put("validatedAt", LocalDateTime.now());
-
-		auditService.logChange("Ticket", ticket.getId(), targetInfo, AuditAction.VALIDATED, oldDetails, newDetails);
+		auditValidate(ticket, oldStatus);
 	}
 
 	@Transactional(readOnly = true)
-	public boolean isTicketValid(String ticketCode) {
-		return ticketRepository.findByUniqueCode(ticketCode).map(this::isTicketValidForEntry).orElse(false);
+	public boolean isValid(String ticketCode) {
+		return ticketRepository.findByUniqueCode(ticketCode).map(this::isValidForEntry).orElse(false);
 	}
 
 	@Transactional(readOnly = true)
-	public TicketStatus checkTicketStatus(String ticketCode) {
+	public TicketStatus getStatus(String ticketCode) {
 		return ticketRepository.findByUniqueCode(ticketCode).map(Ticket::getStatus).orElse(null);
 	}
 
-	public byte[] generateTicketQRCode(String ticketCode) {
-		String qrContent = ticketBaseUrl + "/api/tickets/validate/" + ticketCode;
+	public byte[] generateQR(String ticketCode) {
+		var qrContent = ticketBaseUrl + "/api/tickets/validate/" + ticketCode;
 		return qrCodeService.generateQRCode(qrContent, qrCodeSize);
 	}
 
 	private TicketResponse toTicketResponse(Ticket ticket) {
-		TicketResponse response = ticketMapper.toTicketResponse(ticket);
-		String qrCodeUrl = "/api/tickets/" + ticket.getUniqueCode() + "/qr";
+		var response = ticketMapper.toTicketResponse(ticket);
+		var qrCodeUrl = "/api/tickets/" + ticket.getUniqueCode() + "/qr";
 		return new TicketResponse(response.id(), response.ticketCode(), qrCodeUrl, response.status(),
 				response.purchaseTime(), response.price(), response.ticketType(), response.movieTitle(),
 				response.sessionTime(), response.hallName(), response.row(), response.seatNumber());
 	}
 
-	private void validateTicketForEntry(Ticket ticket) {
-		validateTicketStatus(ticket);
-		validateSession(ticket);
-	}
-
-	private void validateTicketStatus(Ticket ticket) {
+	private void validateForEntry(Ticket ticket) {
 		if (ticket.getStatus() == TicketStatus.USED) {
 			throw TicketValidationException.alreadyUsed();
 		}
-
 		if (ticket.getStatus() == TicketStatus.REFUNDED) {
 			throw new TicketValidationException("Ticket has been refunded");
 		}
-
 		if (ticket.getStatus() != TicketStatus.ACTIVE) {
 			throw new TicketValidationException("Ticket is not active");
 		}
-	}
 
-	private void validateSession(Ticket ticket) {
 		var session = ticket.getBooking().getSession();
-		LocalDateTime now = LocalDateTime.now();
+		var now = LocalDateTime.now();
 
 		if (session.getStartTime().isAfter(now)) {
 			throw new TicketValidationException("Session has not started yet");
 		}
-
 		if (session.getStartTime().isBefore(now.minusHours(2))) {
 			throw new TicketValidationException("Session ended more than 2 hours ago");
 		}
-
 		if (session.getStatus() == CinemaSessionStatus.CANCELLED) {
 			throw new TicketValidationException("Session has been cancelled");
 		}
 	}
 
-	private boolean isTicketValidForEntry(Ticket ticket) {
+	private boolean isValidForEntry(Ticket ticket) {
 		try {
-			validateTicketForEntry(ticket);
+			validateForEntry(ticket);
 			return true;
 		} catch (TicketValidationException e) {
 			return false;
 		}
+	}
+
+	private void auditCreate(Ticket ticket, Long bookingId) {
+		Map<String, Object> details = new HashMap<>();
+		details.put("ticketCode", ticket.getUniqueCode());
+		details.put("seatNumber", ticket.getSeatReservation().getSeat().getNumber());
+		details.put("price", ticket.getFinalPrice());
+		details.put("bookingId", bookingId);
+		auditService.logChange("Ticket", ticket.getId(), "Ticket #" + ticket.getUniqueCode(), AuditAction.CREATED, null,
+				details);
+	}
+
+	private void auditValidate(Ticket ticket, TicketStatus oldStatus) {
+		Map<String, Object> oldDetails = new HashMap<>();
+		oldDetails.put("status", oldStatus);
+		Map<String, Object> newDetails = new HashMap<>();
+		newDetails.put("status", TicketStatus.USED);
+		newDetails.put("validatedAt", LocalDateTime.now());
+		auditService.logChange("Ticket", ticket.getId(), "Ticket #" + ticket.getUniqueCode(), AuditAction.VALIDATED,
+				oldDetails, newDetails);
 	}
 }
