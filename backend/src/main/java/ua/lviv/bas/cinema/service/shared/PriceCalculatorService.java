@@ -16,9 +16,9 @@ public class PriceCalculatorService {
 	private int maxBonusPointsPercentage;
 
 	public BigDecimal calculateSeatPrice(Session session, Seat seat, TicketType ticketType) {
-		BigDecimal basePrice = session.getBasePrice();
-		BigDecimal seatMultiplier = seat.getSeatType().getPriceMultiplier();
-		BigDecimal ticketMultiplier = ticketType != null ? ticketType.getPriceMultiplier() : BigDecimal.ONE;
+		var basePrice = session.getBasePrice();
+		var seatMultiplier = seat.getSeatType().getPriceMultiplier();
+		var ticketMultiplier = ticketType != null ? ticketType.getPriceMultiplier() : BigDecimal.ONE;
 		return basePrice.multiply(seatMultiplier).multiply(ticketMultiplier);
 	}
 
@@ -30,7 +30,7 @@ public class PriceCalculatorService {
 	}
 
 	public BigDecimal calculateMaximumBonusDiscount(BigDecimal totalPrice) {
-		BigDecimal maxDiscountPercentage = new BigDecimal(maxBonusPointsPercentage).divide(new BigDecimal("100"));
+		var maxDiscountPercentage = new BigDecimal(maxBonusPointsPercentage).divide(new BigDecimal("100"));
 		return totalPrice.multiply(maxDiscountPercentage);
 	}
 }

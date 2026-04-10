@@ -21,12 +21,12 @@ public class LiqPayDecoder {
 
 	public static Map<String, String> decodeCallback(String data) {
 		try {
-			byte[] decodedBytes = Base64.getDecoder().decode(data);
-			String decodedString = new String(decodedBytes);
+			var decodedBytes = Base64.getDecoder().decode(data);
+			var decodedString = new String(decodedBytes);
 			Map<String, Object> rawMap = GSON.fromJson(decodedString, MAP_TYPE);
 
 			Map<String, String> result = new HashMap<>();
-			for (Map.Entry<String, Object> entry : rawMap.entrySet()) {
+			for (var entry : rawMap.entrySet()) {
 				if (entry.getValue() != null) {
 					result.put(entry.getKey(), entry.getValue().toString());
 				}
@@ -41,10 +41,10 @@ public class LiqPayDecoder {
 
 	public static boolean verifySignature(String data, String signature, String privateKey) {
 		try {
-			String str = privateKey + data + privateKey;
-			java.security.MessageDigest sha1 = java.security.MessageDigest.getInstance("SHA-1");
-			byte[] digest = sha1.digest(str.getBytes());
-			String expectedSignature = Base64.getEncoder().encodeToString(digest);
+			var str = privateKey + data + privateKey;
+			var sha1 = java.security.MessageDigest.getInstance("SHA-1");
+			var digest = sha1.digest(str.getBytes());
+			var expectedSignature = Base64.getEncoder().encodeToString(digest);
 			return expectedSignature.equals(signature);
 		} catch (Exception e) {
 			log.error("Failed to verify LiqPay signature", e);

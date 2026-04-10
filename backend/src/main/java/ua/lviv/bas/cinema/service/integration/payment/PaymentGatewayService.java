@@ -61,16 +61,17 @@ public class PaymentGatewayService {
 	}.getType();
 	private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() {
 	}.getType();
+
 	private final Gson gson = new Gson();
 	private final RestTemplate restTemplate = new RestTemplate();
 
 	public PaymentLiqPayDataResponse prepareLiqPayPaymentData(Payment payment) {
 		try {
-			Map<String, Object> params = buildPaymentParams(payment);
-			String jsonData = gson.toJson(params);
-			String data = Base64.getEncoder().encodeToString(jsonData.getBytes());
-			String signature = generateSignature(data);
-			String paymentUrl = createPayment(payment);
+			var params = buildPaymentParams(payment);
+			var jsonData = gson.toJson(params);
+			var data = Base64.getEncoder().encodeToString(jsonData.getBytes());
+			var signature = generateSignature(data);
+			var paymentUrl = createPayment(payment);
 
 			return new PaymentLiqPayDataResponse(data, signature, paymentUrl, payment.getLiqpayOrderId());
 		} catch (Exception e) {
@@ -97,20 +98,20 @@ public class PaymentGatewayService {
 				paymentParams.put("sandbox", "1");
 			}
 
-			String jsonData = gson.toJson(paymentParams);
-			String data = Base64.getEncoder().encodeToString(jsonData.getBytes());
-			String signature = generateSignature(data);
+			var jsonData = gson.toJson(paymentParams);
+			var data = Base64.getEncoder().encodeToString(jsonData.getBytes());
+			var signature = generateSignature(data);
 
-			return liqpayApiUrl + "3/checkout?data=" + URLEncoder.encode(data, StandardCharsets.UTF_8.toString())
-					+ "&signature=" + URLEncoder.encode(signature, StandardCharsets.UTF_8.toString());
+			return liqpayApiUrl + "3/checkout?data=" + URLEncoder.encode(data, StandardCharsets.UTF_8) + "&signature="
+					+ URLEncoder.encode(signature, StandardCharsets.UTF_8);
 		} catch (Exception e) {
 			throw new PaymentProcessingException("Failed to create payment URL");
 		}
 	}
 
 	public boolean verifyCallbackSignature(String data, String receivedSignature) {
-		String calculatedSignature = generateSignature(data);
-		boolean isValid = calculatedSignature.equals(receivedSignature);
+		var calculatedSignature = generateSignature(data);
+		var isValid = calculatedSignature.equals(receivedSignature);
 		if (!isValid) {
 			log.error("Invalid LiqPay signature");
 		}
@@ -121,7 +122,7 @@ public class PaymentGatewayService {
 		if (!verifyCallbackSignature(data, signature)) {
 			throw new PaymentProcessingException("Invalid LiqPay signature");
 		}
-		String decodedData = new String(Base64.getDecoder().decode(data));
+		var decodedData = new String(Base64.getDecoder().decode(data));
 		return gson.fromJson(decodedData, MAP_STRING_STRING_TYPE);
 	}
 
@@ -145,7 +146,7 @@ public class PaymentGatewayService {
 				refundParams.put("sandbox", "1");
 			}
 
-			String jsonData = gson.toJson(refundParams);
+			var jsonData = gson.toJson(refundParams);
 			return Base64.getEncoder().encodeToString(jsonData.getBytes());
 		} catch (Exception e) {
 			throw new PaymentProcessingException("Failed to prepare refund data");
@@ -159,11 +160,11 @@ public class PaymentGatewayService {
 				return;
 			}
 
-			String signature = generateSignature(refundData);
-			String requestBody = "data=" + URLEncoder.encode(refundData, StandardCharsets.UTF_8.toString())
-					+ "&signature=" + URLEncoder.encode(signature, StandardCharsets.UTF_8.toString());
+			var signature = generateSignature(refundData);
+			var requestBody = "data=" + URLEncoder.encode(refundData, StandardCharsets.UTF_8) + "&signature="
+					+ URLEncoder.encode(signature, StandardCharsets.UTF_8);
 
-			HttpHeaders headers = new HttpHeaders();
+			var headers = new HttpHeaders();
 			headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 			headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
 
@@ -173,14 +174,14 @@ public class PaymentGatewayService {
 
 			if (response.getStatusCode().is2xxSuccessful()) {
 				Map<String, Object> responseMap = gson.fromJson(response.getBody(), MAP_STRING_OBJECT_TYPE);
-				String result = (String) responseMap.get("result");
-				String status = (String) responseMap.get("status");
+				var result = (String) responseMap.get("result");
+				var status = (String) responseMap.get("status");
 
-				boolean isSuccess = "ok".equals(result) || "success".equals(status);
+				var isSuccess = "ok".equals(result) || "success".equals(status);
 
 				if (!isSuccess) {
-					String errorCode = (String) responseMap.get("err_code");
-					String errorDescription = (String) responseMap.get("err_description");
+					var errorCode = (String) responseMap.get("err_code");
+					var errorDescription = (String) responseMap.get("err_description");
 					throw new PaymentProcessingException(
 							String.format("LiqPay refund failed: %s - %s - %s", result, errorCode, errorDescription));
 				}
@@ -197,7 +198,7 @@ public class PaymentGatewayService {
 
 	private void processSandboxRefund(String refundData) {
 		try {
-			String decodedData = new String(Base64.getDecoder().decode(refundData));
+			var decodedData = new String(Base64.getDecoder().decode(refundData));
 			Map<String, Object> params = gson.fromJson(decodedData, MAP_STRING_OBJECT_TYPE);
 			log.info("Sandbox refund: orderId={}, amount={}", params.get("order_id"), params.get("amount"));
 		} catch (Exception e) {
@@ -220,14 +221,14 @@ public class PaymentGatewayService {
 			statusParams.put("action", "status");
 			statusParams.put("payment_id", paymentId);
 
-			String jsonData = gson.toJson(statusParams);
-			String data = Base64.getEncoder().encodeToString(jsonData.getBytes());
-			String signature = generateSignature(data);
+			var jsonData = gson.toJson(statusParams);
+			var data = Base64.getEncoder().encodeToString(jsonData.getBytes());
+			var signature = generateSignature(data);
 
-			String requestBody = "data=" + URLEncoder.encode(data, StandardCharsets.UTF_8.toString()) + "&signature="
-					+ URLEncoder.encode(signature, StandardCharsets.UTF_8.toString());
+			var requestBody = "data=" + URLEncoder.encode(data, StandardCharsets.UTF_8) + "&signature="
+					+ URLEncoder.encode(signature, StandardCharsets.UTF_8);
 
-			HttpHeaders headers = new HttpHeaders();
+			var headers = new HttpHeaders();
 			headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 			headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
 
@@ -237,18 +238,18 @@ public class PaymentGatewayService {
 
 			if (response.getStatusCode().is2xxSuccessful()) {
 				Map<String, Object> responseMap = gson.fromJson(response.getBody(), MAP_STRING_OBJECT_TYPE);
-				String result = (String) responseMap.get("result");
-				String status = (String) responseMap.get("status");
+				var result = (String) responseMap.get("result");
+				var status = (String) responseMap.get("status");
 
 				if ("error".equals(result)) {
-					String errorDescription = (String) responseMap.get("err_description");
+					var errorDescription = (String) responseMap.get("err_description");
 					return new PaymentResponse(paymentId, bookingNumber, movieTitle, null, hallName, finalAmount,
 							PaymentStatus.FAILED, null, senderCardMask, errorDescription);
 				}
 
-				PaymentStatus paymentStatus = convertLiqPayStatus(status);
-				String maskedCard = (String) responseMap.get("sender_card_mask2");
-				String paymentTimeStr = (String) responseMap.get("payment_time");
+				var paymentStatus = convertLiqPayStatus(status);
+				var maskedCard = (String) responseMap.get("sender_card_mask2");
+				var paymentTimeStr = (String) responseMap.get("payment_time");
 
 				return new PaymentResponse(paymentId, bookingNumber, movieTitle,
 						sessionTime != null ? LocalDateTime.parse(sessionTime) : null, hallName, finalAmount,
@@ -332,9 +333,9 @@ public class PaymentGatewayService {
 
 	private String generateSignature(String data) {
 		try {
-			String str = liqpayPrivateKey + data + liqpayPrivateKey;
-			MessageDigest sha1 = MessageDigest.getInstance("SHA-1");
-			byte[] digest = sha1.digest(str.getBytes());
+			var str = liqpayPrivateKey + data + liqpayPrivateKey;
+			var sha1 = MessageDigest.getInstance("SHA-1");
+			var digest = sha1.digest(str.getBytes());
 			return Base64.getEncoder().encodeToString(digest);
 		} catch (Exception e) {
 			throw new PaymentProcessingException("Failed to generate payment signature");

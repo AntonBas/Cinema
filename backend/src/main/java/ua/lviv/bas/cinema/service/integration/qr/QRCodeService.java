@@ -1,7 +1,7 @@
 package ua.lviv.bas.cinema.service.integration.qr;
 
-import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.EncodeHintType;
 import com.google.zxing.client.j2se.MatrixToImageWriter;
-import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +32,10 @@ public class QRCodeService {
 	private String qrCodeFormat;
 
 	public byte[] generateQRCode(String content) {
+		return generateQRCode(content, qrCodeSize);
+	}
+
+	public byte[] generateQRCode(String content, int size) {
 		log.debug("Generating QR code for content: {}", content);
 
 		try {
@@ -40,12 +43,11 @@ public class QRCodeService {
 			hints.put(EncodeHintType.CHARACTER_SET, "UTF-8");
 			hints.put(EncodeHintType.MARGIN, qrCodeMargin);
 
-			QRCodeWriter qrCodeWriter = new QRCodeWriter();
-			BitMatrix bitMatrix = qrCodeWriter.encode(content, BarcodeFormat.QR_CODE, qrCodeSize, qrCodeSize, hints);
+			var qrCodeWriter = new QRCodeWriter();
+			var bitMatrix = qrCodeWriter.encode(content, BarcodeFormat.QR_CODE, size, size, hints);
+			var bufferedImage = MatrixToImageWriter.toBufferedImage(bitMatrix);
 
-			BufferedImage bufferedImage = MatrixToImageWriter.toBufferedImage(bitMatrix);
-
-			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			var baos = new ByteArrayOutputStream();
 			ImageIO.write(bufferedImage, qrCodeFormat, baos);
 
 			return baos.toByteArray();
@@ -56,32 +58,8 @@ public class QRCodeService {
 		}
 	}
 
-	public byte[] generateQRCode(String content, int size) {
-		log.debug("Generating QR code for content with custom size: {}", content);
-
-		try {
-			Map<EncodeHintType, Object> hints = new HashMap<>();
-			hints.put(EncodeHintType.CHARACTER_SET, "UTF-8");
-			hints.put(EncodeHintType.MARGIN, qrCodeMargin);
-
-			QRCodeWriter qrCodeWriter = new QRCodeWriter();
-			BitMatrix bitMatrix = qrCodeWriter.encode(content, BarcodeFormat.QR_CODE, size, size, hints);
-
-			BufferedImage bufferedImage = MatrixToImageWriter.toBufferedImage(bitMatrix);
-
-			ByteArrayOutputStream baos = new ByteArrayOutputStream();
-			ImageIO.write(bufferedImage, qrCodeFormat, baos);
-
-			return baos.toByteArray();
-
-		} catch (Exception e) {
-			log.error("Failed to generate QR code with custom size: {}", e.getMessage());
-			throw new QRCodeGenerationException("Failed to generate QR code", e);
-		}
-	}
-
 	public String generateQRCodeBase64(String content) {
-		byte[] qrCodeBytes = generateQRCode(content);
-		return java.util.Base64.getEncoder().encodeToString(qrCodeBytes);
+		var qrCodeBytes = generateQRCode(content);
+		return Base64.getEncoder().encodeToString(qrCodeBytes);
 	}
 }

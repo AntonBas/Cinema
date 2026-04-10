@@ -21,15 +21,13 @@ public class SlugService {
 			throw SlugGenerationException.titleRequired();
 		}
 
-		String slug = Normalizer.normalize(title, Normalizer.Form.NFD).replaceAll("[^\\p{ASCII}]", "")
+		return Normalizer.normalize(title, Normalizer.Form.NFD).replaceAll("[^\\p{ASCII}]", "")
 				.replaceAll("[^a-zA-Z0-9\\s]", "").trim().replaceAll("\\s+", "-").toLowerCase();
-
-		return slug;
 	}
 
 	public String generateUniqueSlug(String title) {
-		String baseSlug = generateSlug(title);
-		String uniqueSlug = baseSlug;
+		var baseSlug = generateSlug(title);
+		var uniqueSlug = baseSlug;
 		int counter = 1;
 
 		while (movieRepository.findBySlug(uniqueSlug).isPresent()) {

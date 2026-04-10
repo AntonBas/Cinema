@@ -32,13 +32,12 @@ public class PosterService {
 			return ResponseEntity.notFound().build();
 		}
 
-		byte[] data = fileStorageService.loadFile(posterFileName, POSTER_SUB_DIRECTORY);
+		var data = fileStorageService.loadFile(posterFileName, POSTER_SUB_DIRECTORY);
 		if (data == null) {
 			return ResponseEntity.notFound().build();
 		}
 
-		String contentType = fileStorageService.determineContentType(posterFileName);
-
+		var contentType = fileStorageService.determineContentType(posterFileName);
 		MediaType mediaType;
 		try {
 			mediaType = MediaType.parseMediaType(contentType);

@@ -28,13 +28,13 @@ public class AuditService {
 	public void logChange(String entityType, Long entityId, String targetInfo, AuditAction action,
 			Map<String, Object> oldValues, Map<String, Object> newValues) {
 		try {
-			AuditLog auditLog = AuditLog.builder().entityType(entityType).entityId(entityId).targetInfo(targetInfo)
+			var auditLog = AuditLog.builder().entityType(entityType).entityId(entityId).targetInfo(targetInfo)
 					.action(action).changedBy(getCurrentUser()).changedAt(LocalDateTime.now()).build();
 
 			List<AuditLogDetail> details = new ArrayList<>();
 
 			if (oldValues != null && newValues != null) {
-				for (Map.Entry<String, Object> entry : newValues.entrySet()) {
+				for (var entry : newValues.entrySet()) {
 					String field = entry.getKey();
 					Object newVal = entry.getValue();
 					Object oldVal = oldValues.get(field);
@@ -74,10 +74,12 @@ public class AuditService {
 	}
 
 	private boolean areEqual(Object a, Object b) {
-		if (a == null && b == null)
+		if (a == null && b == null) {
 			return true;
-		if (a == null || b == null)
+		}
+		if (a == null || b == null) {
 			return false;
+		}
 		return a.equals(b);
 	}
 

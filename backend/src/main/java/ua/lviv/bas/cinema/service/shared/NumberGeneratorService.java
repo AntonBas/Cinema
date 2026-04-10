@@ -13,12 +13,12 @@ public class NumberGeneratorService {
 
 	public static String generateBookingNumberStatic(Booking booking) {
 		if (booking.getId() == null) {
-			throw new IllegalStateException("Booking ID is required to generate booking number");
+			throw new IllegalStateException("Booking ID is required");
 		}
 		if (booking.getCreatedDate() == null) {
-			throw new IllegalStateException("Booking createdDate is required to generate booking number");
+			throw new IllegalStateException("Booking createdDate is required");
 		}
-		int year = booking.getCreatedDate().getYear();
+		var year = booking.getCreatedDate().getYear();
 		return String.format("BK-%d-%05d", year, booking.getId());
 	}
 
@@ -27,7 +27,7 @@ public class NumberGeneratorService {
 	}
 
 	public String generateTicketCode() {
-		String uuid = UUID.randomUUID().toString().replace("-", "").substring(0, 12).toUpperCase();
+		var uuid = UUID.randomUUID().toString().replace("-", "").substring(0, 12).toUpperCase();
 		return "TKT-" + uuid;
 	}
 
@@ -38,7 +38,7 @@ public class NumberGeneratorService {
 
 	public String generateRefundNumber(Refund refund) {
 		if (refund.getId() == null) {
-			throw new IllegalStateException("Refund ID is required to generate refund number");
+			throw new IllegalStateException("Refund ID is required");
 		}
 		return String.format("RF-%04d-%06d", LocalDateTime.now().getYear(), refund.getId());
 	}
