@@ -6,10 +6,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +19,7 @@ import ua.lviv.bas.cinema.domain.bonus.BonusRules;
 import ua.lviv.bas.cinema.domain.bonus.BonusTransactionType;
 import ua.lviv.bas.cinema.dto.bonus.request.BonusRulesRequest;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusRulesResponse;
+import ua.lviv.bas.cinema.exception.domain.financial.bonus.BonusRuleNotConfigurableException;
 import ua.lviv.bas.cinema.exception.domain.financial.bonus.BonusRuleNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.financial.bonus.InvalidMinMaxPointsException;
 import ua.lviv.bas.cinema.mapper.bonus.BonusMapper;
@@ -30,40 +29,30 @@ import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@CacheConfig(cacheNames = "bonusRules")
 public class AdminBonusService {
+
+	private static final Set<BonusTransactionType> RULE_TYPES = Set.of(BonusTransactionType.WELCOME_BONUS,
+			BonusTransactionType.BIRTHDAY_BONUS, BonusTransactionType.BOOKING_SPEND,
+			BonusTransactionType.PAYMENT_ACCRUAL);
 
 	private final BonusRulesRepository bonusRulesRepository;
 	private final BonusMapper bonusMapper;
 	private final BonusProperties bonusProperties;
 	private final AuditService auditService;
 
-	private static final Set<BonusTransactionType> RULE_TYPES = Set.of(BonusTransactionType.WELCOME_BONUS,
-			BonusTransactionType.BIRTHDAY_BONUS, BonusTransactionType.BOOKING_SPEND,
-			BonusTransactionType.PAYMENT_ACCRUAL);
-
-	@Cacheable(key = "'all'")
+	@Cacheable(value = "bonusRules", key = "'list'")
 	@Transactional(readOnly = true)
-	public List<BonusRulesResponse> getAllRules() {
+	public List<BonusRulesResponse> getRules() {
 		return bonusRulesRepository.findAll().stream().filter(rule -> RULE_TYPES.contains(rule.getBonusType()))
 				.sorted(Comparator.comparing(BonusRules::getBonusType)).map(bonusMapper::toBonusRulesResponse).toList();
 	}
 
-	@Cacheable(key = "#type")
-	@Transactional(readOnly = true)
-	public BonusRulesResponse getRule(BonusTransactionType type) {
-		validateRuleType(type);
-		BonusRules rules = getRuleByType(type);
-		return bonusMapper.toBonusRulesResponse(rules);
-	}
-
-	@Caching(evict = { @CacheEvict(key = "'all'"), @CacheEvict(key = "#type"), @CacheEvict(allEntries = true) })
+	@CacheEvict(value = "bonusRules", allEntries = true)
 	@Transactional
 	public BonusRulesResponse updateRule(BonusTransactionType type, BonusRulesRequest request) {
 		validateRuleType(type);
-		BonusRules rules = getRuleByType(type);
-
-		Map<String, Object> oldValues = captureCurrentValues(rules);
+		var rules = getRuleByType(type);
+		var oldValues = captureCurrentValues(rules);
 
 		bonusMapper.updateBonusRulesFromRequest(request, rules);
 
@@ -71,11 +60,10 @@ public class AdminBonusService {
 			validatePointsRange(rules.getMinPointsPerTransaction(), rules.getMaxPointsPerTransaction());
 		}
 
-		Map<String, Object> newValues = captureCurrentValues(rules);
-
-		BonusRules updated = bonusRulesRepository.save(rules);
+		var updated = bonusRulesRepository.save(rules);
 		log.info("Updated bonus rule: {}", type);
 
+		var newValues = captureCurrentValues(rules);
 		if (!oldValues.equals(newValues)) {
 			auditService.logChange("BonusRules", updated.getId(), type.name(), AuditAction.UPDATED, oldValues,
 					newValues);
@@ -84,18 +72,16 @@ public class AdminBonusService {
 		return bonusMapper.toBonusRulesResponse(updated);
 	}
 
-	@Caching(evict = { @CacheEvict(key = "'all'"), @CacheEvict(key = "#type"), @CacheEvict(allEntries = true) })
+	@CacheEvict(value = "bonusRules", allEntries = true)
 	@Transactional
 	public BonusRulesResponse resetRuleToDefaults(BonusTransactionType type) {
 		validateRuleType(type);
-		BonusRules rules = getRuleByType(type);
+		var rules = getRuleByType(type);
+		var oldValues = captureCurrentValues(rules);
 
-		Map<String, Object> oldValues = captureCurrentValues(rules);
-
-		BonusProperties.RuleDefaults defaults = bonusProperties.getDefaults().get(type);
-
+		var defaults = bonusProperties.getDefaults().get(type);
 		if (defaults != null) {
-			BonusRulesRequest resetRequest = new BonusRulesRequest(defaults.getPoints(), defaults.getMoneyRatio(),
+			var resetRequest = new BonusRulesRequest(defaults.getPoints(), defaults.getMoneyRatio(),
 					defaults.getMinPoints(), defaults.getMaxPoints(), true);
 			bonusMapper.updateBonusRulesFromRequest(resetRequest, rules);
 			log.info("Reset bonus rule {} to defaults", type);
@@ -103,9 +89,8 @@ public class AdminBonusService {
 			log.warn("No defaults found for bonus rule type: {}", type);
 		}
 
-		Map<String, Object> newValues = captureCurrentValues(rules);
-
-		BonusRules updated = bonusRulesRepository.save(rules);
+		var updated = bonusRulesRepository.save(rules);
+		var newValues = captureCurrentValues(rules);
 
 		if (!oldValues.equals(newValues)) {
 			auditService.logChange("BonusRules", updated.getId(), type.name(), AuditAction.RESET_TO_DEFAULTS, oldValues,
@@ -127,7 +112,7 @@ public class AdminBonusService {
 
 	private void validateRuleType(BonusTransactionType type) {
 		if (!RULE_TYPES.contains(type)) {
-			throw new IllegalArgumentException("No bonus rule configuration for type: " + type);
+			throw new BonusRuleNotConfigurableException(type);
 		}
 	}
 

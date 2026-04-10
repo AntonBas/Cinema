@@ -2,14 +2,12 @@ package ua.lviv.bas.cinema.controller.admin;
 
 import java.util.List;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -33,39 +31,27 @@ public class AdminBonusController {
 
 	private final AdminBonusService bonusAdminService;
 
-	@Operation(summary = "Get all bonus rules", description = "Returns a list of all bonus rules")
-	@ApiResponse(responseCode = "200", description = "List of bonus rules retrieved successfully")
 	@GetMapping("/rules")
-	@ResponseStatus(HttpStatus.OK)
-	public List<BonusRulesResponse> getAllBonusRules() {
-		return bonusAdminService.getAllRules();
+	@Operation(summary = "Get all bonus rules")
+	@ApiResponse(responseCode = "200", description = "List of bonus rules retrieved successfully")
+	public List<BonusRulesResponse> getRules() {
+		return bonusAdminService.getRules();
 	}
 
-	@Operation(summary = "Get bonus rule by type", description = "Returns details of a bonus rule by the specified type")
-	@ApiResponse(responseCode = "200", description = "Bonus rule found")
-	@ApiResponse(responseCode = "404", description = "Bonus rule not found")
-	@GetMapping("/rules/{type}")
-	@ResponseStatus(HttpStatus.OK)
-	public BonusRulesResponse getBonusRule(@PathVariable BonusTransactionType type) {
-		return bonusAdminService.getRule(type);
-	}
-
-	@Operation(summary = "Update bonus rule", description = "Updates a bonus rule by the specified type")
+	@PutMapping("/rules/{type}")
+	@Operation(summary = "Update bonus rule")
 	@ApiResponse(responseCode = "200", description = "Bonus rule updated successfully")
 	@ApiResponse(responseCode = "404", description = "Bonus rule not found")
-	@PutMapping("/rules/{type}")
-	@ResponseStatus(HttpStatus.OK)
-	public BonusRulesResponse updateBonusRule(@PathVariable BonusTransactionType type,
+	public BonusRulesResponse updateRule(@PathVariable BonusTransactionType type,
 			@Valid @RequestBody BonusRulesRequest request) {
 		return bonusAdminService.updateRule(type, request);
 	}
 
-	@Operation(summary = "Reset bonus rule to defaults", description = "Resets a bonus rule to its default values")
+	@PutMapping("/rules/{type}/reset")
+	@Operation(summary = "Reset bonus rule to defaults")
 	@ApiResponse(responseCode = "200", description = "Bonus rule reset successfully")
 	@ApiResponse(responseCode = "404", description = "Bonus rule not found")
-	@PutMapping("/rules/{type}/reset")
-	@ResponseStatus(HttpStatus.OK)
-	public BonusRulesResponse resetBonusRule(@PathVariable BonusTransactionType type) {
+	public BonusRulesResponse resetRule(@PathVariable BonusTransactionType type) {
 		return bonusAdminService.resetRuleToDefaults(type);
 	}
 }

@@ -18,7 +18,7 @@ public interface BonusMapper {
 
 	BonusRulesResponse toBonusRulesResponse(BonusRules rules);
 
-	@Mapping(target = "pointsChange", expression = "java(projection.getPointsChange())")
+	@Mapping(target = "pointsChange", expression = "java(projection.getAmount() > 0 ? \"+\" + projection.getAmount() : String.valueOf(projection.getAmount()))")
 	BonusTransactionResponse toBonusTransactionResponse(BonusTransactionProjection projection);
 
 	@BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
