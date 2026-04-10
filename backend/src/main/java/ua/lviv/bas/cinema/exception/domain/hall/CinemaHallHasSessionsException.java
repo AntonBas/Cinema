@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.exception.domain.cinema;
+package ua.lviv.bas.cinema.exception.domain.hall;
 
 import org.springframework.http.HttpStatus;
 
