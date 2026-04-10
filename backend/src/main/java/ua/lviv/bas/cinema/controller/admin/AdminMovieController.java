@@ -55,22 +55,41 @@ public class AdminMovieController {
 			@ApiResponse(responseCode = "400", description = "Invalid request data") })
 	public ResponseEntity<MovieAdminResponse> createMovie(@RequestPart("movieData") String movieDataJson,
 			@RequestPart(value = "posterFile") MultipartFile posterFile) {
-
 		log.info("POST /api/admin/movies - Creating new movie");
-		MovieCreateRequest request = parseRequest(movieDataJson, MovieCreateRequest.class);
+		var request = parseRequest(movieDataJson, MovieCreateRequest.class);
 		request.setPosterFile(posterFile);
-		MovieAdminResponse createdMovie = movieService.createMovie(request);
+		var createdMovie = movieService.createMovie(request);
 		return ResponseEntity.status(HttpStatus.CREATED).body(createdMovie);
 	}
 
 	@GetMapping("/{id}")
-	@Operation(summary = "Get admin movie by ID")
+	@Operation(summary = "Get movie by ID")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Movie found"),
 			@ApiResponse(responseCode = "404", description = "Movie not found") })
-	public ResponseEntity<MovieAdminResponse> getAdminMovieById(@PathVariable Long id) {
-		log.info("GET /api/admin/movies/{} - Getting admin movie by id", id);
-		MovieAdminResponse movie = movieService.getAdminMovieById(id);
+	public ResponseEntity<MovieAdminResponse> getMovie(@PathVariable Long id) {
+		log.info("GET /api/admin/movies/{} - Getting movie", id);
+		var movie = movieService.getMovie(id);
 		return ResponseEntity.ok(movie);
+	}
+
+	@GetMapping
+	@Operation(summary = "Get movies")
+	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Movies retrieved successfully") })
+	public ResponseEntity<PageResponse<MovieCardResponse>> getMovies(@RequestParam(required = false) String query,
+			@RequestParam(required = false) MovieStatus status,
+			@PageableDefault(size = 12, sort = "title", direction = Sort.Direction.ASC) Pageable pageable) {
+		log.info("GET /api/admin/movies - query: '{}', status: {}", query, status);
+		var result = movieService.getMovies(query, status, pageable);
+		return ResponseEntity.ok(PageResponse.from(result));
+	}
+
+	@GetMapping("/search")
+	@Operation(summary = "Search movies")
+	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Movies retrieved successfully") })
+	public ResponseEntity<List<MovieSessionSearchResponse>> searchMovies(@RequestParam(required = false) String query) {
+		log.info("GET /api/admin/movies/search - query: '{}'", query);
+		var movies = movieService.searchMovies(query);
+		return ResponseEntity.ok(movies);
 	}
 
 	@PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -80,11 +99,10 @@ public class AdminMovieController {
 	public ResponseEntity<MovieAdminResponse> updateMovie(@PathVariable Long id,
 			@RequestPart("movieData") String movieDataJson,
 			@RequestPart(value = "posterFile", required = false) MultipartFile posterFile) {
-
 		log.info("PUT /api/admin/movies/{} - Updating movie", id);
-		MovieUpdateRequest request = parseRequest(movieDataJson, MovieUpdateRequest.class);
+		var request = parseRequest(movieDataJson, MovieUpdateRequest.class);
 		request.setPosterFile(posterFile);
-		MovieAdminResponse updatedMovie = movieService.updateMovie(id, request);
+		var updatedMovie = movieService.updateMovie(id, request);
 		return ResponseEntity.ok(updatedMovie);
 	}
 
@@ -96,29 +114,6 @@ public class AdminMovieController {
 		log.info("DELETE /api/admin/movies/{} - Deleting movie", id);
 		movieService.deleteMovie(id);
 		return ResponseEntity.noContent().build();
-	}
-
-	@GetMapping
-	@Operation(summary = "Get movies")
-	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Movies retrieved successfully") })
-	public ResponseEntity<PageResponse<MovieCardResponse>> getMovies(@RequestParam(required = false) String title,
-			@RequestParam(required = false) MovieStatus status,
-			@PageableDefault(size = 12, sort = "title", direction = Sort.Direction.ASC) Pageable pageable) {
-
-		log.info("GET /api/admin/movies - title: '{}', status: {}", title, status);
-		var result = movieService.getFilteredMovies(title, status, pageable);
-		return ResponseEntity.ok(PageResponse.from(result));
-	}
-
-	@GetMapping("/search/session")
-	@Operation(summary = "Search movies for session")
-	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Movies retrieved successfully") })
-	public ResponseEntity<List<MovieSessionSearchResponse>> searchMoviesForSession(
-			@RequestParam(required = false) String search) {
-
-		log.info("GET /api/admin/movies/search/session - search: '{}'", search);
-		var movies = movieService.searchMoviesForSession(search);
-		return ResponseEntity.ok(movies);
 	}
 
 	private <T> T parseRequest(String json, Class<T> clazz) {

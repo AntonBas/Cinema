@@ -26,10 +26,10 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
 	@Query("""
 			SELECT m
 			FROM Movie m
-			WHERE (:title IS NULL OR LOWER(CAST(m.title AS string)) LIKE LOWER(CONCAT('%', CAST(:title AS string), '%')))
+			WHERE (:query IS NULL OR LOWER(CAST(m.title AS string)) LIKE LOWER(CONCAT('%', CAST(:query AS string), '%')))
 			  AND (:status IS NULL OR m.status = :status)
 			""")
-	Page<Movie> findMoviesByTitleAndStatus(@Param("title") String title, @Param("status") MovieStatus status,
+	Page<Movie> findMoviesByQueryAndStatus(@Param("query") String query, @Param("status") MovieStatus status,
 			Pageable pageable);
 
 	@Query("""
@@ -45,10 +45,10 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
 			FROM Movie m
 			WHERE m.status IN ('CURRENT', 'UPCOMING')
 			  AND m.endShowingDate >= CURRENT_DATE
-			  AND (:search IS NULL OR LOWER(CAST(m.title AS string)) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')))
+			  AND (:query IS NULL OR LOWER(CAST(m.title AS string)) LIKE LOWER(CONCAT('%', CAST(:query AS string), '%')))
 			ORDER BY m.title
 			""")
-	List<MovieCardProjection> findMoviesForSessionSearch(@Param("search") String search);
+	List<MovieCardProjection> findMoviesForSessionSearch(@Param("query") String query);
 
 	@Query("""
 			SELECT m.id as id,
@@ -83,7 +83,7 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
 			  AND m.releaseDate <= CURRENT_DATE
 			  AND m.endShowingDate >= CURRENT_DATE
 			""")
-	Page<MovieCardProjection> findNowShowingMovies(Pageable pageable);
+	Page<MovieCardProjection> findCurrentMovies(Pageable pageable);
 
 	@Query("""
 			SELECT m.id as id,
@@ -99,7 +99,7 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
 			WHERE m.status = 'UPCOMING'
 			  AND m.releaseDate > CURRENT_DATE
 			""")
-	Page<MovieCardProjection> findComingSoonMovies(Pageable pageable);
+	Page<MovieCardProjection> findUpcomingMovies(Pageable pageable);
 
 	@Query("""
 			SELECT m.id as id,
@@ -122,6 +122,9 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
 
 	@Query("SELECT COUNT(m) FROM Movie m WHERE EXISTS (SELECT 1 FROM m.actors a WHERE a.id = :personId) OR EXISTS (SELECT 1 FROM m.directors d WHERE d.id = :personId) OR EXISTS (SELECT 1 FROM m.screenwriters s WHERE s.id = :personId)")
 	long countMovieUsageByPersonId(@Param("personId") Long personId);
+
+	@Query("SELECT COUNT(m) FROM Movie m WHERE EXISTS (SELECT 1 FROM m.genres g WHERE g.id = :genreId)")
+	long countMovieUsageByGenreId(@Param("genreId") Long genreId);
 
 	boolean existsByTitle(String title);
 

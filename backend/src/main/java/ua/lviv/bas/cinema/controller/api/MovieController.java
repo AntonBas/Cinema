@@ -40,14 +40,12 @@ public class MovieController {
 
 	@RateLimit(value = 20, duration = 1, key = "ip")
 	@GetMapping("/slug/{slug}")
-	@Operation(summary = "Get movie by slug", description = "Retrieves detailed information about a specific movie by its URL-friendly slug")
+	@Operation(summary = "Get movie by slug")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Movie found successfully"),
 			@ApiResponse(responseCode = "404", description = "Movie not found") })
-	public ResponseEntity<MovieDetailResponse> getMovieBySlug(
-			@Parameter(description = "URL-friendly slug of the movie", required = true, example = "inception") @PathVariable String slug) {
-
+	public ResponseEntity<MovieDetailResponse> getMovieBySlug(@PathVariable String slug) {
 		log.info("GET /api/movies/slug/{} - Getting movie by slug", slug);
-		MovieDetailResponse movie = movieService.getMovieBySlug(slug);
+		var movie = movieService.getMovieBySlug(slug);
 
 		if (movie.status() == MovieStatus.ARCHIVED) {
 			log.warn("Movie with slug {} is archived and not available publicly", slug);
@@ -59,72 +57,68 @@ public class MovieController {
 
 	@RateLimit(value = 20, duration = 1, key = "ip")
 	@GetMapping("/currently-showing")
-	@Operation(summary = "Get currently showing movies", description = "Retrieves paginated list of currently showing movies")
+	@Operation(summary = "Get currently showing movies")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Movies retrieved successfully") })
 	public ResponseEntity<PageResponse<MovieCardResponse>> getCurrentlyShowingMovies(
 			@Parameter(description = "Pagination parameters") @PageableDefault(size = 12, sort = "releaseDate", direction = Sort.Direction.DESC) Pageable pageable) {
-
 		log.info("GET /api/movies/currently-showing - Getting currently showing movies");
-		var result = movieService.getFilteredMovies(null, MovieStatus.CURRENT, pageable);
+		var result = movieService.getMovies(null, MovieStatus.CURRENT, pageable);
 		return ResponseEntity.ok().cacheControl(CacheControl.maxAge(5, TimeUnit.MINUTES))
 				.body(PageResponse.from(result));
 	}
 
 	@RateLimit(value = 20, duration = 1, key = "ip")
 	@GetMapping("/upcoming")
-	@Operation(summary = "Get upcoming movies", description = "Retrieves paginated list of upcoming movies")
+	@Operation(summary = "Get upcoming movies")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Movies retrieved successfully") })
 	public ResponseEntity<PageResponse<MovieCardResponse>> getUpcomingMovies(
 			@Parameter(description = "Pagination parameters") @PageableDefault(size = 12, sort = "releaseDate", direction = Sort.Direction.ASC) Pageable pageable) {
-
 		log.info("GET /api/movies/upcoming - Getting upcoming movies");
-		var result = movieService.getFilteredMovies(null, MovieStatus.UPCOMING, pageable);
+		var result = movieService.getMovies(null, MovieStatus.UPCOMING, pageable);
 		return ResponseEntity.ok().cacheControl(CacheControl.maxAge(5, TimeUnit.MINUTES))
 				.body(PageResponse.from(result));
 	}
 
 	@RateLimit(value = 20, duration = 1, key = "ip")
-	@GetMapping("/now-showing/home")
-	@Operation(summary = "Get now showing movies for home page carousel", description = "Returns 6 newest movies for home page carousel")
+	@GetMapping("/current/home")
+	@Operation(summary = "Get current movies for home page")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Movies retrieved successfully") })
-	public ResponseEntity<List<MovieCardResponse>> getNowShowingMoviesForHome() {
-		log.info("GET /api/movies/now-showing/home - Getting now showing movies for home page");
-		Pageable pageable = PageRequest.of(0, 6, Sort.by(Sort.Direction.DESC, "releaseDate"));
-		List<MovieCardResponse> movies = movieService.getNowShowingMoviesForHome(pageable);
+	public ResponseEntity<List<MovieCardResponse>> getCurrentMoviesForHome() {
+		log.info("GET /api/movies/current/home - Getting current movies for home page");
+		var pageable = PageRequest.of(0, 6, Sort.by(Sort.Direction.DESC, "releaseDate"));
+		var movies = movieService.getCurrentMovies(pageable);
 		return ResponseEntity.ok().cacheControl(CacheControl.maxAge(5, TimeUnit.MINUTES)).body(movies);
 	}
 
 	@RateLimit(value = 20, duration = 1, key = "ip")
-	@GetMapping("/coming-soon/home")
-	@Operation(summary = "Get coming soon movies for home page carousel", description = "Returns 6 upcoming movies for home page carousel")
+	@GetMapping("/upcoming/home")
+	@Operation(summary = "Get upcoming movies for home page")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Movies retrieved successfully") })
-	public ResponseEntity<List<MovieCardResponse>> getComingSoonMoviesForHome() {
-		log.info("GET /api/movies/coming-soon/home - Getting coming soon movies for home page");
-		Pageable pageable = PageRequest.of(0, 6, Sort.by(Sort.Direction.ASC, "releaseDate"));
-		List<MovieCardResponse> movies = movieService.getComingSoonMoviesForHome(pageable);
+	public ResponseEntity<List<MovieCardResponse>> getUpcomingMoviesForHome() {
+		log.info("GET /api/movies/upcoming/home - Getting upcoming movies for home page");
+		var pageable = PageRequest.of(0, 6, Sort.by(Sort.Direction.ASC, "releaseDate"));
+		var movies = movieService.getUpcomingMovies(pageable);
 		return ResponseEntity.ok().cacheControl(CacheControl.maxAge(5, TimeUnit.MINUTES)).body(movies);
 	}
 
 	@RateLimit(value = 20, duration = 1, key = "ip")
 	@GetMapping("/leaving-soon/home")
-	@Operation(summary = "Get leaving soon movies for home page carousel", description = "Returns 6 movies that will stop showing soon")
+	@Operation(summary = "Get leaving soon movies for home page")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Movies retrieved successfully") })
 	public ResponseEntity<List<MovieCardResponse>> getLeavingSoonMoviesForHome() {
 		log.info("GET /api/movies/leaving-soon/home - Getting leaving soon movies for home page");
-		Pageable pageable = PageRequest.of(0, 6, Sort.by(Sort.Direction.ASC, "endShowingDate"));
-		List<MovieCardResponse> movies = movieService.getLeavingSoonMoviesForHome(pageable);
+		var pageable = PageRequest.of(0, 6, Sort.by(Sort.Direction.ASC, "endShowingDate"));
+		var movies = movieService.getLeavingSoonMovies(pageable);
 		return ResponseEntity.ok().cacheControl(CacheControl.maxAge(5, TimeUnit.MINUTES)).body(movies);
 	}
 
 	@RateLimit(value = 50, duration = 1, key = "ip")
 	@GetMapping("/{id}/poster")
-	@Operation(summary = "Get movie poster", description = "Retrieves the poster image for a specific movie")
+	@Operation(summary = "Get movie poster")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Poster retrieved successfully"),
 			@ApiResponse(responseCode = "404", description = "Movie or poster not found") })
-	public ResponseEntity<byte[]> getMoviePoster(
-			@Parameter(description = "ID of the movie", required = true, example = "1") @PathVariable Long id) {
-
+	public ResponseEntity<byte[]> getPoster(@PathVariable Long id) {
 		log.info("GET /api/movies/{}/poster - Getting movie poster", id);
-		return movieService.getMoviePoster(id);
+		return movieService.getPoster(id);
 	}
 }

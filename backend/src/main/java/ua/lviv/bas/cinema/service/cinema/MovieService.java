@@ -6,10 +6,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -34,7 +32,6 @@ import ua.lviv.bas.cinema.mapper.cinema.MovieMapper;
 import ua.lviv.bas.cinema.repository.cinema.GenreRepository;
 import ua.lviv.bas.cinema.repository.cinema.MovieRepository;
 import ua.lviv.bas.cinema.repository.cinema.PersonRepository;
-import ua.lviv.bas.cinema.repository.cinema.projection.MovieCardProjection;
 import ua.lviv.bas.cinema.scheduler.MovieScheduler;
 import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 import ua.lviv.bas.cinema.service.integration.file.PosterService;
@@ -44,7 +41,6 @@ import ua.lviv.bas.cinema.service.integration.slug.SlugService;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-@CacheConfig(cacheNames = "movies")
 public class MovieService {
 
 	private final MovieRepository movieRepository;
@@ -56,12 +52,12 @@ public class MovieService {
 	private final PosterService posterService;
 	private final AuditService auditService;
 
-	@CacheEvict(allEntries = true)
+	@CacheEvict(value = "movies", allEntries = true)
 	@Transactional
 	public MovieAdminResponse createMovie(MovieCreateRequest request) {
 		log.info("Creating movie: {}", request.getTitle());
 
-		Movie movie = movieMapper.toMovie(request);
+		var movie = movieMapper.toMovie(request);
 		movie.setSlug(generateUniqueSlug(request.getTitle(), null));
 		movie.setStatus(movieScheduler.calculateMovieStatus(movie, LocalDate.now()));
 
@@ -72,7 +68,7 @@ public class MovieService {
 			setMovieRelations(movie, request.getGenreIds(), request.getActorIds(), request.getDirectorIds(),
 					request.getScreenwriterIds());
 
-			Movie saved = movieRepository.save(movie);
+			var saved = movieRepository.save(movie);
 			log.info("Movie created successfully with id: {}", saved.getId());
 			auditCreate(saved);
 			return movieMapper.toMovieAdminResponse(saved);
@@ -84,8 +80,8 @@ public class MovieService {
 		}
 	}
 
-	@Cacheable(key = "#id")
-	public MovieAdminResponse getAdminMovieById(Long id) {
+	@Cacheable(value = "movies", key = "#id")
+	public MovieAdminResponse getMovie(Long id) {
 		return movieRepository.findById(id).map(movieMapper::toMovieAdminResponse)
 				.orElseThrow(() -> new MovieNotFoundException(id));
 	}
@@ -96,52 +92,53 @@ public class MovieService {
 				.orElseThrow(() -> new MovieNotFoundException(slug));
 	}
 
-	@Cacheable(key = "'filtered-' + #title + '-' + #status + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
-	public Page<MovieCardResponse> getFilteredMovies(String title, MovieStatus status, Pageable pageable) {
-		return movieRepository.findMoviesByTitleAndStatus(title, status, pageable)
+	@Cacheable(value = "movies", key = "'list-' + #query + '-' + #status + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
+	public Page<MovieCardResponse> getMovies(String query, MovieStatus status, Pageable pageable) {
+		log.info("Getting movies: query='{}', status={}, page={}, size={}", query, status, pageable.getPageNumber(),
+				pageable.getPageSize());
+		return movieRepository.findMoviesByQueryAndStatus(query, status, pageable)
 				.map(movieMapper::toMovieCardResponse);
 	}
 
-	@Cacheable(key = "'now-showing-home-' + #pageable.pageNumber + '-' + #pageable.pageSize")
-	public List<MovieCardResponse> getNowShowingMoviesForHome(Pageable pageable) {
-		return movieRepository.findNowShowingMovies(pageable).map(movieMapper::toMovieCardResponse).getContent();
+	@Cacheable(value = "movies", key = "'current-' + #pageable.pageNumber + '-' + #pageable.pageSize")
+	public List<MovieCardResponse> getCurrentMovies(Pageable pageable) {
+		return movieRepository.findCurrentMovies(pageable).map(movieMapper::toMovieCardResponse).getContent();
 	}
 
-	@Cacheable(key = "'coming-soon-home-' + #pageable.pageNumber + '-' + #pageable.pageSize")
-	public List<MovieCardResponse> getComingSoonMoviesForHome(Pageable pageable) {
-		return movieRepository.findComingSoonMovies(pageable).map(movieMapper::toMovieCardResponse).getContent();
+	@Cacheable(value = "movies", key = "'upcoming-' + #pageable.pageNumber + '-' + #pageable.pageSize")
+	public List<MovieCardResponse> getUpcomingMovies(Pageable pageable) {
+		return movieRepository.findUpcomingMovies(pageable).map(movieMapper::toMovieCardResponse).getContent();
 	}
 
-	@Cacheable(key = "'leaving-soon-home-' + #pageable.pageNumber + '-' + #pageable.pageSize")
-	public List<MovieCardResponse> getLeavingSoonMoviesForHome(Pageable pageable) {
+	@Cacheable(value = "movies", key = "'leaving-soon-' + #pageable.pageNumber + '-' + #pageable.pageSize")
+	public List<MovieCardResponse> getLeavingSoonMovies(Pageable pageable) {
 		return movieRepository.findLeavingSoonMovies(pageable).map(movieMapper::toMovieCardResponse).getContent();
 	}
 
-	public List<MovieSessionSearchResponse> searchMoviesForSession(String searchTerm) {
-		log.info("Searching movies for session with term: {}", searchTerm);
+	public List<MovieSessionSearchResponse> searchMovies(String query) {
+		log.info("Searching movies with query: {}", query);
 
-		if (searchTerm == null || searchTerm.isBlank()) {
+		if (query == null || query.isBlank()) {
 			return List.of();
 		}
 
-		List<MovieCardProjection> projections = isValidDate(searchTerm)
-				? movieRepository.findMoviesByDate(LocalDate.parse(searchTerm))
-				: movieRepository.findMoviesForSessionSearch(searchTerm);
+		var projections = isValidDate(query) ? movieRepository.findMoviesByDate(LocalDate.parse(query))
+				: movieRepository.findMoviesForSessionSearch(query);
 
 		return projections.stream().map(movieMapper::toMovieSessionSearchResponse).toList();
 	}
 
-	public ResponseEntity<byte[]> getMoviePoster(Long id) {
+	public ResponseEntity<byte[]> getPoster(Long id) {
 		return movieRepository.findPosterFileNameById(id).map(posterService::getPosterResponse)
-				.orElse(ResponseEntity.notFound().build());
+				.orElseGet(() -> ResponseEntity.notFound().build());
 	}
 
-	@Caching(evict = { @CacheEvict(key = "#id"), @CacheEvict(allEntries = true) })
+	@CacheEvict(value = "movies", allEntries = true)
 	@Transactional
 	public MovieAdminResponse updateMovie(Long id, MovieUpdateRequest request) {
 		log.info("Updating movie with id: {}", id);
 
-		Movie movie = movieRepository.findMovieById(id).orElseThrow(() -> new MovieNotFoundException(id));
+		var movie = movieRepository.findMovieById(id).orElseThrow(() -> new MovieNotFoundException(id));
 		String oldTitle = movie.getTitle();
 
 		if (!request.getTitle().equals(oldTitle) && movieRepository.existsByTitle(request.getTitle())) {
@@ -159,19 +156,19 @@ public class MovieService {
 		setMovieRelations(movie, request.getGenreIds(), request.getActorIds(), request.getDirectorIds(),
 				request.getScreenwriterIds());
 
-		Movie updated = movieRepository.save(movie);
+		var updated = movieRepository.save(movie);
 		log.info("Movie updated successfully with id: {}", updated.getId());
 		auditUpdate(id, oldTitle, updated);
 
 		return movieMapper.toMovieAdminResponse(updated);
 	}
 
-	@Caching(evict = { @CacheEvict(key = "#id"), @CacheEvict(allEntries = true) })
+	@CacheEvict(value = "movies", allEntries = true)
 	@Transactional
 	public void deleteMovie(Long id) {
 		log.info("Deleting movie with id: {}", id);
 
-		Movie movie = movieRepository.findMovieById(id).orElseThrow(() -> new MovieNotFoundException(id));
+		var movie = movieRepository.findMovieById(id).orElseThrow(() -> new MovieNotFoundException(id));
 
 		if (movie.getPosterFileName() != null) {
 			posterService.deletePoster(movie.getPosterFileName());
@@ -222,9 +219,9 @@ public class MovieService {
 		}
 	}
 
-	private boolean isValidDate(String searchTerm) {
+	private boolean isValidDate(String query) {
 		try {
-			LocalDate.parse(searchTerm);
+			LocalDate.parse(query);
 			return true;
 		} catch (DateTimeParseException e) {
 			return false;
