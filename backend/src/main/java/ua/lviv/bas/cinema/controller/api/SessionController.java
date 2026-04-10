@@ -2,8 +2,10 @@ package ua.lviv.bas.cinema.controller.api;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.CacheControl;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -32,12 +34,10 @@ public class SessionController {
 	@GetMapping
 	@Operation(summary = "Get schedule sessions")
 	@ApiResponse(responseCode = "200", description = "Sessions retrieved successfully")
-	public ResponseEntity<List<SessionScheduleResponse>> getScheduleSessions(
-			@RequestParam(required = false) String searchTerm,
+	public ResponseEntity<List<SessionScheduleResponse>> getSchedule(@RequestParam(required = false) String searchTerm,
 			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-
 		log.info("Getting schedule sessions for date: {}, search: {}", date, searchTerm);
-		List<SessionScheduleResponse> sessions = sessionService.getScheduleSessions(searchTerm, date);
-		return ResponseEntity.ok(sessions);
+		var sessions = sessionService.getSchedule(searchTerm, date);
+		return ResponseEntity.ok().cacheControl(CacheControl.maxAge(5, TimeUnit.MINUTES)).body(sessions);
 	}
 }

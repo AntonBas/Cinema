@@ -7,10 +7,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -21,11 +19,9 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.audit.AuditAction;
-import ua.lviv.bas.cinema.domain.cinema.CinemaHall;
 import ua.lviv.bas.cinema.domain.cinema.Movie;
 import ua.lviv.bas.cinema.domain.cinema.Session;
 import ua.lviv.bas.cinema.domain.cinema.status.CinemaSessionStatus;
-import ua.lviv.bas.cinema.dto.PageResponse;
 import ua.lviv.bas.cinema.dto.session.request.SessionCreateRequest;
 import ua.lviv.bas.cinema.dto.session.request.SessionUpdateRequest;
 import ua.lviv.bas.cinema.dto.session.response.SessionAdminResponse;
@@ -39,7 +35,6 @@ import ua.lviv.bas.cinema.mapper.cinema.SessionMapper;
 import ua.lviv.bas.cinema.repository.cinema.MovieRepository;
 import ua.lviv.bas.cinema.repository.cinema.SessionRepository;
 import ua.lviv.bas.cinema.repository.cinema.projection.SessionAdminProjection;
-import ua.lviv.bas.cinema.repository.cinema.projection.SessionScheduleProjection;
 import ua.lviv.bas.cinema.repository.cinema.specification.SessionSpecification;
 import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 
@@ -47,7 +42,6 @@ import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-@CacheConfig(cacheNames = "sessions")
 public class SessionService {
 
 	private final SessionRepository sessionRepository;
@@ -57,86 +51,77 @@ public class SessionService {
 	private final CinemaHallService cinemaHallService;
 	private final AuditService auditService;
 
-	@Caching(evict = { @CacheEvict(cacheNames = "sessions", allEntries = true),
-			@CacheEvict(value = "seatAvailability", allEntries = true) })
+	@CacheEvict(value = { "sessions", "seatAvailability" }, allEntries = true)
 	@Transactional
 	public SessionResponse createSession(SessionCreateRequest request) {
 		validateStartTime(request.startTime());
 
-		Movie movie = movieRepository.getReferenceById(request.movieId());
-		CinemaHall hall = cinemaHallService.getHallEntityById(request.hallId());
+		var movie = movieRepository.getReferenceById(request.movieId());
+		var hall = cinemaHallService.getHallEntity(request.hallId());
 
 		validateMovieAvailability(movie, request.startTime());
 		validateNoTimeConflict(hall.getId(), request.startTime(),
 				request.startTime().plusMinutes(movie.getDurationMinutes()), null);
 
-		Session session = sessionMapper.toSession(request);
+		var session = sessionMapper.toSession(request);
 		session.setMovie(movie);
 		session.setHall(hall);
 
-		Session saved = sessionRepository.save(session);
+		var saved = sessionRepository.save(session);
 		log.info("Session created with ID: {}", saved.getId());
-
-		Map<String, Object> details = new HashMap<>();
-		details.put("movieId", saved.getMovie().getId());
-		details.put("movieTitle", saved.getMovie().getTitle());
-		details.put("hallId", saved.getHall().getId());
-		details.put("hallName", saved.getHall().getName());
-		details.put("startTime", saved.getStartTime());
-		details.put("basePrice", saved.getBasePrice());
-		auditService.logChange("Session", saved.getId(), "Session #" + saved.getId(), AuditAction.CREATED, null,
-				details);
+		auditCreate(saved);
 
 		return sessionMapper.toSessionResponse(saved);
 	}
 
-	@Cacheable(key = "'public:schedule:' + #searchTerm + ':' + #date")
-	public List<SessionScheduleResponse> getScheduleSessions(String searchTerm, LocalDate date) {
+	@Cacheable(value = "sessions", key = "'schedule:' + #searchTerm + ':' + #date")
+	public List<SessionScheduleResponse> getSchedule(String searchTerm, LocalDate date) {
 		Specification<Session> spec = sessionSpecification.forSchedule(searchTerm, date);
-		List<Session> sessions = sessionRepository.findAll(spec);
+		var sessions = sessionRepository.findAll(spec);
 
-		List<Long> sessionIds = sessions.stream().map(Session::getId).toList();
-		Map<Long, Integer> availableSeats = getAvailableSeatsBatch(sessionIds);
+		var sessionIds = sessions.stream().map(Session::getId).toList();
+		var availableSeats = getAvailableSeatsBatch(sessionIds);
 
 		return sessions.stream().map(session -> {
-			SessionScheduleProjection proj = sessionRepository.findScheduleProjectionById(session.getId())
-					.orElseThrow();
+			var proj = sessionRepository.findScheduleProjectionById(session.getId()).orElseThrow();
 			return sessionMapper.toSessionScheduleResponse(proj)
 					.withAvailableSeats(availableSeats.getOrDefault(session.getId(), 0));
 		}).toList();
 	}
 
-	@Cacheable(key = "'admin:list:' + #hallId + ':' + #movieTitle + ':' + #status + ':' + #dateFrom + ':' + #dateTo + ':' + #pageable.pageNumber + ':' + #pageable.pageSize")
-	public PageResponse<SessionAdminResponse> getSessionsForAdmin(Long hallId, String movieTitle,
-			CinemaSessionStatus status, LocalDate dateFrom, LocalDate dateTo, Pageable pageable) {
+	@Cacheable(value = "sessions", key = "'admin:' + #hallId + ':' + #movieTitle + ':' + #status + ':' + #dateFrom + ':' + #dateTo + ':' + #pageable.pageNumber + ':' + #pageable.pageSize")
+	public Page<SessionAdminResponse> getSessions(Long hallId, String movieTitle, CinemaSessionStatus status,
+			LocalDate dateFrom, LocalDate dateTo, Pageable pageable) {
 
 		Specification<Session> spec = sessionSpecification.forAdmin(hallId, movieTitle, status, dateFrom, dateTo);
-		Page<Session> page = sessionRepository.findAll(spec, pageable);
+		var page = sessionRepository.findAll(spec, pageable);
 
-		List<Long> sessionIds = page.getContent().stream().map(Session::getId).toList();
-		Map<Long, SessionAdminProjection> projections = sessionRepository.findAdminProjectionsByIds(sessionIds).stream()
+		var sessionIds = page.getContent().stream().map(Session::getId).toList();
+		var projections = sessionRepository.findAdminProjectionsByIds(sessionIds).stream()
 				.collect(Collectors.toMap(SessionAdminProjection::getId, p -> p));
 
-		List<SessionAdminResponse> responses = page.getContent().stream()
+		var responses = page.getContent().stream()
 				.map(session -> sessionMapper.toSessionAdminResponse(projections.get(session.getId()))).toList();
 
-		return PageResponse.from(new PageImpl<>(responses, pageable, page.getTotalElements()));
+		return new PageImpl<>(responses, pageable, page.getTotalElements());
 	}
 
-	@Cacheable(key = "'admin:' + #id")
-	public SessionResponse getSessionById(Long id) {
+	@Cacheable(value = "sessions", key = "#id")
+	public SessionResponse getSession(Long id) {
 		return sessionRepository.findById(id).map(sessionMapper::toSessionResponse)
 				.orElseThrow(() -> new SessionNotFoundException(id));
 	}
 
-	@Caching(evict = { @CacheEvict(cacheNames = "sessions", allEntries = true),
-			@CacheEvict(value = "seatAvailability", allEntries = true) })
+	@CacheEvict(value = { "sessions", "seatAvailability" }, allEntries = true)
 	@Transactional
 	public SessionResponse updateSession(Long id, SessionUpdateRequest request) {
-		Session session = sessionRepository.findByIdWithLock(id).orElseThrow(() -> new SessionNotFoundException(id));
+		var session = sessionRepository.findByIdWithLock(id).orElseThrow(() -> new SessionNotFoundException(id));
 
-		Map<String, Object> oldDetails = Map.of("startTime", session.getStartTime(), "basePrice",
-				session.getBasePrice(), "movieId", session.getMovie().getId(), "hallId", session.getHall().getId());
+		Map<String, Object> oldDetails = new HashMap<>();
+		oldDetails.put("startTime", session.getStartTime());
+		oldDetails.put("basePrice", session.getBasePrice());
+		oldDetails.put("movieId", session.getMovie().getId());
+		oldDetails.put("hallId", session.getHall().getId());
 
 		if (request.startTime() != null && !request.startTime().equals(session.getStartTime())) {
 			validateStartTime(request.startTime());
@@ -154,36 +139,31 @@ public class SessionService {
 		session = sessionRepository.save(session);
 		log.info("Session updated with ID: {}", session.getId());
 
-		Map<String, Object> newDetails = Map.of("startTime", session.getStartTime(), "basePrice",
-				session.getBasePrice(), "movieId", session.getMovie().getId(), "hallId", session.getHall().getId());
+		Map<String, Object> newDetails = new HashMap<>();
+		newDetails.put("startTime", session.getStartTime());
+		newDetails.put("basePrice", session.getBasePrice());
+		newDetails.put("movieId", session.getMovie().getId());
+		newDetails.put("hallId", session.getHall().getId());
 
 		auditService.logChange("Session", id, "Session #" + id, AuditAction.UPDATED, oldDetails, newDetails);
 
 		return sessionMapper.toSessionResponse(session);
 	}
 
-	@Caching(evict = { @CacheEvict(cacheNames = "sessions", allEntries = true),
-			@CacheEvict(value = "seatAvailability", allEntries = true) })
+	@CacheEvict(value = { "sessions", "seatAvailability" }, allEntries = true)
 	@Transactional
 	public void deleteSession(Long id) {
-		Session session = sessionRepository.findById(id).orElseThrow(() -> new SessionNotFoundException(id));
+		var session = sessionRepository.findById(id).orElseThrow(() -> new SessionNotFoundException(id));
 
 		sessionRepository.deleteById(id);
 		log.info("Session deleted with ID: {}", id);
-
-		Map<String, Object> details = new HashMap<>();
-		details.put("movieTitle", session.getMovie().getTitle());
-		details.put("hallName", session.getHall().getName());
-		details.put("startTime", session.getStartTime());
-		auditService.logChange("Session", session.getId(), "Session #" + session.getId(), AuditAction.DELETED, details,
-				null);
+		auditDelete(session);
 	}
 
-	@Caching(evict = { @CacheEvict(cacheNames = "sessions", allEntries = true),
-			@CacheEvict(value = "seatAvailability", allEntries = true) })
+	@CacheEvict(value = { "sessions", "seatAvailability" }, allEntries = true)
 	@Transactional
 	public void cancelSession(Long sessionId) {
-		Session session = sessionRepository.findByIdWithLock(sessionId)
+		var session = sessionRepository.findByIdWithLock(sessionId)
 				.orElseThrow(() -> new SessionNotFoundException(sessionId));
 
 		if (session.getStatus() == CinemaSessionStatus.CANCELLED) {
@@ -198,20 +178,24 @@ public class SessionService {
 			throw SessionOperationException.cannotCancelTooLate();
 		}
 
-		CinemaSessionStatus oldStatus = session.getStatus();
+		var oldStatus = session.getStatus();
 		session.setStatus(CinemaSessionStatus.CANCELLED);
 		sessionRepository.save(session);
 		log.info("Session cancelled with ID: {}", sessionId);
 
-		auditService.logChange("Session", sessionId, "Session #" + sessionId, AuditAction.CANCELLED,
-				Map.of("status", oldStatus), Map.of("status", CinemaSessionStatus.CANCELLED));
+		Map<String, Object> oldDetails = new HashMap<>();
+		oldDetails.put("status", oldStatus);
+		Map<String, Object> newDetails = new HashMap<>();
+		newDetails.put("status", CinemaSessionStatus.CANCELLED);
+
+		auditService.logChange("Session", sessionId, "Session #" + sessionId, AuditAction.CANCELLED, oldDetails,
+				newDetails);
 	}
 
-	@Caching(evict = { @CacheEvict(cacheNames = "sessions", allEntries = true),
-			@CacheEvict(value = "seatAvailability", allEntries = true) })
+	@CacheEvict(value = { "sessions", "seatAvailability" }, allEntries = true)
 	@Transactional
 	public void reactivateSession(Long sessionId) {
-		Session session = sessionRepository.findByIdWithLock(sessionId)
+		var session = sessionRepository.findByIdWithLock(sessionId)
 				.orElseThrow(() -> new SessionNotFoundException(sessionId));
 
 		if (session.getStatus() != CinemaSessionStatus.CANCELLED) {
@@ -225,13 +209,18 @@ public class SessionService {
 		validateNoTimeConflict(session.getHall().getId(), session.getStartTime(),
 				session.getStartTime().plusMinutes(session.getMovie().getDurationMinutes()), sessionId);
 
-		CinemaSessionStatus oldStatus = session.getStatus();
+		var oldStatus = session.getStatus();
 		session.setStatus(CinemaSessionStatus.SCHEDULED);
 		sessionRepository.save(session);
 		log.info("Session reactivated with ID: {}", sessionId);
 
-		auditService.logChange("Session", sessionId, "Session #" + sessionId, AuditAction.REACTIVATED,
-				Map.of("status", oldStatus), Map.of("status", CinemaSessionStatus.SCHEDULED));
+		Map<String, Object> oldDetails = new HashMap<>();
+		oldDetails.put("status", oldStatus);
+		Map<String, Object> newDetails = new HashMap<>();
+		newDetails.put("status", CinemaSessionStatus.SCHEDULED);
+
+		auditService.logChange("Session", sessionId, "Session #" + sessionId, AuditAction.REACTIVATED, oldDetails,
+				newDetails);
 	}
 
 	private Map<Long, Integer> getAvailableSeatsBatch(List<Long> sessionIds) {
@@ -249,7 +238,7 @@ public class SessionService {
 	}
 
 	private void validateMovieAvailability(Movie movie, LocalDateTime sessionStartTime) {
-		LocalDate sessionDate = sessionStartTime.toLocalDate();
+		var sessionDate = sessionStartTime.toLocalDate();
 
 		if (sessionDate.isBefore(movie.getReleaseDate())) {
 			throw SessionValidationException.movieNotReleased(movie, sessionDate);
@@ -265,5 +254,26 @@ public class SessionService {
 		if (sessionRepository.existsConflictingSession(hallId, startTime, endTime, excludeSessionId)) {
 			throw new SessionTimeConflictException(hallId, startTime);
 		}
+	}
+
+	private void auditCreate(Session session) {
+		var details = new HashMap<String, Object>();
+		details.put("movieId", session.getMovie().getId());
+		details.put("movieTitle", session.getMovie().getTitle());
+		details.put("hallId", session.getHall().getId());
+		details.put("hallName", session.getHall().getName());
+		details.put("startTime", session.getStartTime());
+		details.put("basePrice", session.getBasePrice());
+		auditService.logChange("Session", session.getId(), "Session #" + session.getId(), AuditAction.CREATED, null,
+				details);
+	}
+
+	private void auditDelete(Session session) {
+		var details = new HashMap<String, Object>();
+		details.put("movieTitle", session.getMovie().getTitle());
+		details.put("hallName", session.getHall().getName());
+		details.put("startTime", session.getStartTime());
+		auditService.logChange("Session", session.getId(), "Session #" + session.getId(), AuditAction.DELETED, details,
+				null);
 	}
 }
