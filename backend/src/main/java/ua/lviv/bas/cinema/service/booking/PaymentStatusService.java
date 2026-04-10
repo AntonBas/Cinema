@@ -1,15 +1,11 @@
 package ua.lviv.bas.cinema.service.booking;
 
-import java.util.Map;
-
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import ua.lviv.bas.cinema.domain.booking.Payment;
 import ua.lviv.bas.cinema.domain.booking.status.PaymentStatus;
-import ua.lviv.bas.cinema.dto.payment.request.LiqPayCallbackRequest;
 import ua.lviv.bas.cinema.dto.payment.response.PaymentLiqPayDataResponse;
 import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentNotFoundException;
 import ua.lviv.bas.cinema.repository.booking.PaymentRepository;
@@ -26,29 +22,28 @@ public class PaymentStatusService {
 
 	@Transactional(readOnly = true)
 	public PaymentLiqPayDataResponse preparePaymentData(Long paymentId) {
-		Payment payment = paymentRepository.findById(paymentId)
-				.orElseThrow(() -> new PaymentNotFoundException(paymentId));
+		var payment = paymentRepository.findById(paymentId).orElseThrow(() -> new PaymentNotFoundException(paymentId));
 		return paymentGatewayService.prepareLiqPayPaymentData(payment);
 	}
 
 	@Transactional
-	public void handleLiqPayCallback(String data, String signature) {
-		Map<String, String> decodedData = paymentGatewayService.processCallback(data, signature);
+	public void handleCallback(String data, String signature) {
+		var decodedData = paymentGatewayService.processCallback(data, signature);
 
-		String orderId = decodedData.get("order_id");
-		String status = decodedData.get("status");
+		var orderId = decodedData.get("order_id");
+		var status = decodedData.get("status");
 
-		Payment payment = paymentRepository.findByLiqpayOrderId(orderId)
+		var payment = paymentRepository.findByLiqpayOrderId(orderId)
 				.orElseThrow(() -> new PaymentNotFoundException(orderId));
 
 		switch (status.toLowerCase()) {
 		case "success":
 		case "sandbox":
-			paymentService.processSuccessfulPayment(payment, decodedData);
+			paymentService.processSuccess(payment, decodedData);
 			break;
 		case "failure":
 		case "error":
-			paymentService.processFailedPayment(payment, decodedData);
+			paymentService.processFailure(payment, decodedData);
 			break;
 		case "wait_secure":
 			payment.setStatus(PaymentStatus.PROCESSING);
@@ -59,10 +54,5 @@ public class PaymentStatusService {
 			payment.setStatus(PaymentStatus.FAILED);
 			paymentRepository.save(payment);
 		}
-	}
-
-	@Transactional
-	public void handleLiqPayCallback(LiqPayCallbackRequest callbackRequest) {
-		handleLiqPayCallback(callbackRequest.data(), callbackRequest.signature());
 	}
 }
