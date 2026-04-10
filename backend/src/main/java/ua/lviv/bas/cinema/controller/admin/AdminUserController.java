@@ -3,7 +3,6 @@ package ua.lviv.bas.cinema.controller.admin;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -14,7 +13,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -43,80 +41,48 @@ public class AdminUserController {
 	private final AdminUserService adminUserService;
 
 	@GetMapping
-	@Operation(summary = "Get users with filters", description = "Retrieve paginated list of users with filtering options. Admin only.")
-	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Users retrieved successfully"),
-			@ApiResponse(responseCode = "401", description = "User not authenticated"),
-			@ApiResponse(responseCode = "403", description = "User does not have ADMIN role") })
-	public ResponseEntity<PageResponse<AdminUserListResponse>> getUsers(
-			@Parameter(description = "Search by email, first name or last name") @RequestParam(required = false) String search,
-			@Parameter(description = "Filter by user role") @RequestParam(required = false) UserRole role,
-			@Parameter(description = "Filter by verification status") @RequestParam(required = false) VerificationStatus verificationStatus,
-			@Parameter(description = "Filter by enabled status") @RequestParam(required = false) Boolean enabled,
+	@Operation(summary = "Get users with filters")
+	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Users retrieved successfully") })
+	public PageResponse<AdminUserListResponse> getUsers(@RequestParam(required = false) String search,
+			@RequestParam(required = false) UserRole role,
+			@RequestParam(required = false) VerificationStatus verificationStatus,
+			@RequestParam(required = false) Boolean enabled,
 			@PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
 
-		log.info("Admin fetching users with search: {}, role: {}, verificationStatus: {}, enabled: {}, pageable: {}",
-				search, role, verificationStatus, enabled, pageable);
-
-		var page = adminUserService.getUsersForAdmin(search, role, verificationStatus, enabled, pageable);
-		log.info("Retrieved {} users for admin", page.getTotalElements());
-
-		return ResponseEntity.ok(PageResponse.from(page));
+		log.info("GET /api/admin/users - search: {}, role: {}, verificationStatus: {}, enabled: {}", search, role,
+				verificationStatus, enabled);
+		return PageResponse.from(adminUserService.getUsers(search, role, verificationStatus, enabled, pageable));
 	}
 
 	@PatchMapping("/{userId}/role")
-	@Operation(summary = "Update user role", description = "Change role of a specific user. Admin only.")
+	@Operation(summary = "Update user role")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "User role updated successfully"),
-			@ApiResponse(responseCode = "400", description = "Invalid request data"),
-			@ApiResponse(responseCode = "404", description = "User not found"),
-			@ApiResponse(responseCode = "401", description = "User not authenticated"),
-			@ApiResponse(responseCode = "403", description = "User does not have ADMIN role or cannot modify own role") })
-	public ResponseEntity<AdminUserListResponse> updateUserRole(
-			@Parameter(description = "ID of the user to update", required = true, example = "1") @PathVariable Long userId,
+			@ApiResponse(responseCode = "404", description = "User not found") })
+	public AdminUserListResponse updateRole(@PathVariable Long userId,
 			@Valid @RequestBody UserRoleUpdateRequest request) {
-
-		log.info("Admin updating role for user {} to {}", userId, request.userRole());
-		AdminUserListResponse response = adminUserService.updateUserRole(userId, request.userRole());
-		log.info("User {} role updated successfully to {}", userId, request.userRole());
-
-		return ResponseEntity.ok(response);
+		log.info("PATCH /api/admin/users/{}/role - Updating role to {}", userId, request.userRole());
+		return adminUserService.updateRole(userId, request.userRole());
 	}
 
 	@PatchMapping("/{userId}/status")
-	@Operation(summary = "Update user account status", description = "Enable or disable user account. Admin only.")
+	@Operation(summary = "Update user status")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "User status updated successfully"),
-			@ApiResponse(responseCode = "400", description = "Invalid request data"),
-			@ApiResponse(responseCode = "404", description = "User not found"),
-			@ApiResponse(responseCode = "401", description = "User not authenticated"),
-			@ApiResponse(responseCode = "403", description = "User does not have ADMIN role or cannot block themselves") })
-	public ResponseEntity<AdminUserListResponse> updateUserStatus(
-			@Parameter(description = "ID of the user to update", required = true, example = "1") @PathVariable Long userId,
+			@ApiResponse(responseCode = "404", description = "User not found") })
+	public AdminUserListResponse updateStatus(@PathVariable Long userId,
 			@Valid @RequestBody UserStatusUpdateRequest request) {
-
-		log.info("Admin updating status for user {} to enabled={}", userId, request.enabled());
-		AdminUserListResponse response = adminUserService.updateUserStatus(userId, request.enabled());
-		log.info("User {} status updated to enabled={}", userId, request.enabled());
-
-		return ResponseEntity.ok(response);
+		log.info("PATCH /api/admin/users/{}/status - Updating status to {}", userId, request.enabled());
+		return adminUserService.updateStatus(userId, request.enabled());
 	}
 
 	@PatchMapping("/{userId}/verification")
-	@Operation(summary = "Update birth date verification", description = "Update user's birth date verification status. Admin only.")
+	@Operation(summary = "Update verification status")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Verification status updated successfully"),
-			@ApiResponse(responseCode = "400", description = "Invalid request data"),
-			@ApiResponse(responseCode = "404", description = "User not found"),
-			@ApiResponse(responseCode = "401", description = "User not authenticated"),
-			@ApiResponse(responseCode = "403", description = "User does not have ADMIN role") })
-	public ResponseEntity<AdminUserListResponse> updateBirthDateVerification(
-			@Parameter(description = "ID of the user to update", required = true, example = "1") @PathVariable Long userId,
+			@ApiResponse(responseCode = "404", description = "User not found") })
+	public AdminUserListResponse updateVerification(@PathVariable Long userId,
 			@Valid @RequestBody VerificationBirthDateRequest request) {
-
-		log.info("Admin updating birth date verification for user {} to {}", userId, request.verificationStatus());
-
-		AdminUserListResponse response = adminUserService.updateBirthDateVerification(userId,
+		log.info("PATCH /api/admin/users/{}/verification - Updating verification to {}", userId,
 				request.verificationStatus());
-		log.info("User {} birth date verification updated to {}", userId, request.verificationStatus());
-
-		return ResponseEntity.ok(response);
+		return adminUserService.updateVerification(userId, request.verificationStatus());
 	}
 }

@@ -4,10 +4,8 @@ import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.Caching;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,7 +23,6 @@ import ua.lviv.bas.cinema.dto.user.response.UserResponse;
 import ua.lviv.bas.cinema.exception.domain.auth.EmailAlreadyExistsException;
 import ua.lviv.bas.cinema.exception.domain.auth.InvalidCurrentPasswordException;
 import ua.lviv.bas.cinema.exception.domain.auth.PasswordMismatchException;
-import ua.lviv.bas.cinema.exception.domain.auth.PasswordValidationException;
 import ua.lviv.bas.cinema.exception.domain.auth.SameEmailException;
 import ua.lviv.bas.cinema.exception.domain.auth.SamePasswordException;
 import ua.lviv.bas.cinema.exception.domain.user.UserNotFoundException;
@@ -38,7 +35,6 @@ import ua.lviv.bas.cinema.service.notification.EmailTokenGeneratorService;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-@CacheConfig(cacheNames = "users")
 public class UserService {
 
 	private final UserRepository userRepository;
@@ -47,41 +43,28 @@ public class UserService {
 	private final EmailTokenGeneratorService emailTokenGeneratorService;
 	private final AuditService auditService;
 
-	@CacheEvict(allEntries = true)
+	@CacheEvict(value = "users", allEntries = true)
 	@Transactional
-	public UserResponse registerUser(UserRegistrationRequest request) {
+	public UserResponse register(UserRegistrationRequest request) {
 		validatePasswordMatch(request.password(), request.passwordConfirm());
 		validateEmailNotExists(request.email());
 
-		User user = userMapper.toUser(request);
+		var user = userMapper.toUser(request);
 		user.setPassword(passwordEncoder.encode(request.password()));
 
-		User saved = userRepository.save(user);
+		var saved = userRepository.save(user);
 		log.info("User registered: {}", request.email());
-
 		emailTokenGeneratorService.generateVerificationToken(saved.getEmail());
-
-		Map<String, Object> details = new HashMap<>();
-		details.put("email", saved.getEmail());
-		details.put("firstName", saved.getFirstName());
-		details.put("lastName", saved.getLastName());
-
-		auditService.logChange("User", saved.getId(), saved.getEmail(), AuditAction.REGISTER, null, details);
+		auditRegister(saved);
 
 		return userMapper.toUserResponse(saved);
 	}
 
-	@Caching(evict = { @CacheEvict(key = "#userId"), @CacheEvict(allEntries = true) })
+	@CacheEvict(value = "users", allEntries = true)
 	@Transactional
-	public UserProfileResponse updateUser(Long userId, UserUpdateRequest request) {
-		User user = getUserWithBonusCardById(userId);
-
-		Map<String, Object> oldDetails = new HashMap<>();
-		oldDetails.put("firstName", user.getFirstName());
-		oldDetails.put("lastName", user.getLastName());
-		oldDetails.put("city", user.getCity());
-		oldDetails.put("phoneNumber", user.getPhoneNumber());
-		oldDetails.put("dateOfBirth", user.getDateOfBirth());
+	public UserProfileResponse update(Long userId, UserUpdateRequest request) {
+		var user = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException(userId));
+		var oldDetails = captureDetails(user);
 
 		userMapper.updateUserFromRequest(request, user);
 
@@ -89,98 +72,59 @@ public class UserService {
 			revokeVerificationIfNeeded(user);
 		}
 
-		User updated = userRepository.save(user);
-
-		Map<String, Object> newDetails = new HashMap<>();
-		newDetails.put("firstName", updated.getFirstName());
-		newDetails.put("lastName", updated.getLastName());
-		newDetails.put("city", updated.getCity());
-		newDetails.put("phoneNumber", updated.getPhoneNumber());
-		newDetails.put("dateOfBirth", updated.getDateOfBirth());
-
-		auditService.logChange("User", userId, updated.getEmail(), AuditAction.UPDATED, oldDetails, newDetails);
+		var updated = userRepository.save(user);
+		log.info("User updated: {}", userId);
+		auditUpdate(userId, updated.getEmail(), oldDetails, updated);
 
 		return userMapper.toUserProfileResponse(updated);
 	}
 
-	@Caching(evict = { @CacheEvict(key = "#userId"), @CacheEvict(key = "#newEmail"), @CacheEvict(allEntries = true) })
+	@CacheEvict(value = "users", allEntries = true)
 	@Transactional
 	public void requestEmailChange(Long userId, String currentPassword, String newEmail) {
-		User user = getUserById(userId);
-		String oldEmail = user.getEmail();
+		var user = getUser(userId);
+		var oldEmail = user.getEmail();
+
 		validateCurrentPassword(user, currentPassword);
 		validateNewEmail(user.getEmail(), newEmail);
 		validateEmailNotExists(newEmail);
+
 		emailTokenGeneratorService.generateEmailChangeToken(user.getEmail(), newEmail);
-
 		log.info("Email change requested for user {} to {}", userId, newEmail);
-
-		Map<String, Object> oldDetails = new HashMap<>();
-		oldDetails.put("email", oldEmail);
-
-		Map<String, Object> newDetails = new HashMap<>();
-		newDetails.put("email", newEmail);
-		newDetails.put("userId", userId);
-
-		auditService.logChange("User", userId, oldEmail, AuditAction.EMAIL_CHANGE_REQUESTED, oldDetails, newDetails);
+		auditEmailChangeRequested(userId, oldEmail, newEmail);
 	}
 
-	@Caching(evict = { @CacheEvict(key = "#userId"), @CacheEvict(allEntries = true) })
+	@CacheEvict(value = "users", allEntries = true)
 	@Transactional
-	public void updateUserPassword(Long userId, UserPasswordUpdateRequest request) {
-		User user = getUserById(userId);
+	public void updatePassword(Long userId, UserPasswordUpdateRequest request) {
+		var user = getUser(userId);
+
 		validatePasswordMatch(request.newPassword(), request.passwordConfirm());
 		validateCurrentPassword(user, request.currentPassword());
 		validateNewPasswordDifferent(user, request.newPassword());
-		validatePasswordLength(request.newPassword());
 
-		String oldPasswordHash = user.getPassword();
 		user.setPassword(passwordEncoder.encode(request.newPassword()));
 		userRepository.save(user);
 		log.info("Password updated for user {}", userId);
-
-		Map<String, Object> oldDetails = new HashMap<>();
-		oldDetails.put("passwordHash", oldPasswordHash);
-
-		Map<String, Object> newDetails = new HashMap<>();
-		newDetails.put("userId", userId);
-		newDetails.put("userEmail", user.getEmail());
-
-		auditService.logChange("User", userId, user.getEmail(), AuditAction.PASSWORD_CHANGED, oldDetails, newDetails);
+		auditPasswordChanged(userId, user.getEmail());
 	}
 
-	@Cacheable(key = "#id")
-	public User getUserById(Long id) {
+	@Cacheable(value = "users", key = "#id")
+	public User getUser(Long id) {
 		return userRepository.findById(id).orElseThrow(() -> new UserNotFoundException(id));
 	}
 
-	@Cacheable(key = "#email")
-	public User getUserByEmail(String email) {
+	@Cacheable(value = "users", key = "#email")
+	public User getUser(String email) {
 		return userRepository.findByEmail(email).orElseThrow(() -> new UserNotFoundException(email));
-	}
-
-	public User getUserWithBonusCardById(Long id) {
-		return userRepository.findWithBonusCardById(id).orElseThrow(() -> new UserNotFoundException(id));
-	}
-
-	public User getUserWithTicketsById(Long id) {
-		return userRepository.findWithTicketsById(id).orElseThrow(() -> new UserNotFoundException(id));
-	}
-
-	public UserProfileResponse getUserProfile(Long id) {
-		return userMapper.toUserProfileResponse(getUserById(id));
-	}
-
-	public UserResponse getUserResponseById(Long id) {
-		return userMapper.toUserResponse(getUserById(id));
-	}
-
-	public UserResponse getUserResponseByEmail(String email) {
-		return userMapper.toUserResponse(getUserByEmail(email));
 	}
 
 	public boolean emailExists(String email) {
 		return userRepository.existsByEmail(email);
+	}
+
+	public UserProfileResponse getProfile(Long id) {
+		return userMapper.toUserProfileResponse(getUser(id));
 	}
 
 	private void validatePasswordMatch(String password, String confirm) {
@@ -207,12 +151,6 @@ public class UserService {
 		}
 	}
 
-	private void validatePasswordLength(String password) {
-		if (password.length() < 8) {
-			throw PasswordValidationException.tooShort(8);
-		}
-	}
-
 	private void validateNewEmail(String currentEmail, String newEmail) {
 		if (currentEmail.equalsIgnoreCase(newEmail)) {
 			throw new SameEmailException();
@@ -229,5 +167,42 @@ public class UserService {
 			user.setVerifiedAt(null);
 			log.info("Birth date verification revoked for user {}", user.getId());
 		}
+	}
+
+	private Map<String, Object> captureDetails(User user) {
+		Map<String, Object> details = new HashMap<>();
+		details.put("firstName", user.getFirstName());
+		details.put("lastName", user.getLastName());
+		details.put("city", user.getCity());
+		details.put("phoneNumber", user.getPhoneNumber());
+		details.put("dateOfBirth", user.getDateOfBirth());
+		return details;
+	}
+
+	private void auditRegister(User user) {
+		Map<String, Object> details = new HashMap<>();
+		details.put("email", user.getEmail());
+		details.put("firstName", user.getFirstName());
+		details.put("lastName", user.getLastName());
+		auditService.logChange("User", user.getId(), user.getEmail(), AuditAction.REGISTER, null, details);
+	}
+
+	private void auditUpdate(Long userId, String email, Map<String, Object> oldDetails, User updated) {
+		Map<String, Object> newDetails = captureDetails(updated);
+		auditService.logChange("User", userId, email, AuditAction.UPDATED, oldDetails, newDetails);
+	}
+
+	private void auditEmailChangeRequested(Long userId, String oldEmail, String newEmail) {
+		Map<String, Object> oldDetails = new HashMap<>();
+		oldDetails.put("email", oldEmail);
+		Map<String, Object> newDetails = new HashMap<>();
+		newDetails.put("email", newEmail);
+		auditService.logChange("User", userId, oldEmail, AuditAction.EMAIL_CHANGE_REQUESTED, oldDetails, newDetails);
+	}
+
+	private void auditPasswordChanged(Long userId, String email) {
+		Map<String, Object> oldDetails = new HashMap<>();
+		oldDetails.put("passwordChanged", true);
+		auditService.logChange("User", userId, email, AuditAction.PASSWORD_CHANGED, oldDetails, null);
 	}
 }

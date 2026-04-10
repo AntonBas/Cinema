@@ -4,10 +4,8 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -34,18 +32,17 @@ import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-@CacheConfig(cacheNames = "adminUsers")
 public class AdminUserService {
 
 	private final UserRepository userRepository;
 	private final UserMapper userMapper;
 	private final AuditService auditService;
 
-	@Caching(evict = { @CacheEvict(key = "'list-' + #userId"), @CacheEvict(allEntries = true) })
+	@CacheEvict(value = "users", allEntries = true)
 	@Transactional
-	public AdminUserListResponse updateUserRole(Long userId, UserRole newRole) {
-		User user = findById(userId);
-		UserRole oldRole = user.getUserRole();
+	public AdminUserListResponse updateRole(Long userId, UserRole newRole) {
+		var user = findById(userId);
+		var oldRole = user.getUserRole();
 		validateSelfOperation(user);
 
 		if (user.getUserRole() == UserRole.ROLE_ADMIN && newRole != UserRole.ROLE_ADMIN) {
@@ -53,83 +50,60 @@ public class AdminUserService {
 		}
 
 		user.setUserRole(newRole);
-		User savedUser = userRepository.save(user);
+		var updated = userRepository.save(user);
 		log.info("User role updated to {} for user {}", newRole, userId);
+		auditRoleChange(userId, user.getEmail(), oldRole, newRole);
 
-		Map<String, Object> oldDetails = new HashMap<>();
-		oldDetails.put("role", oldRole);
-
-		Map<String, Object> newDetails = new HashMap<>();
-		newDetails.put("role", newRole);
-
-		auditService.logChange("User", userId, user.getEmail(), AuditAction.ROLE_CHANGED, oldDetails, newDetails);
-
-		return userMapper.toAdminUserListResponse(savedUser);
+		return userMapper.toAdminUserListResponse(updated);
 	}
 
-	@Caching(evict = { @CacheEvict(key = "'list-' + #userId"), @CacheEvict(allEntries = true) })
+	@CacheEvict(value = "users", allEntries = true)
 	@Transactional
-	public AdminUserListResponse updateUserStatus(Long userId, boolean enabled) {
-		User user = findById(userId);
-		boolean oldStatus = user.isEnabled();
+	public AdminUserListResponse updateStatus(Long userId, boolean enabled) {
+		var user = findById(userId);
+		var oldStatus = user.isEnabled();
 
 		if (isCurrentUser(user) && !enabled) {
 			throw new SelfBlockException();
 		}
 
 		user.setEnabled(enabled);
-		User savedUser = userRepository.save(user);
+		var updated = userRepository.save(user);
 		log.info("User status updated: enabled = {} for user {}", enabled, userId);
+		auditStatusChange(userId, user.getEmail(), oldStatus, enabled);
 
-		Map<String, Object> oldDetails = new HashMap<>();
-		oldDetails.put("enabled", oldStatus);
-
-		Map<String, Object> newDetails = new HashMap<>();
-		newDetails.put("enabled", enabled);
-
-		auditService.logChange("User", userId, user.getEmail(), AuditAction.STATUS_CHANGED, oldDetails, newDetails);
-
-		return userMapper.toAdminUserListResponse(savedUser);
+		return userMapper.toAdminUserListResponse(updated);
 	}
 
-	@Caching(evict = { @CacheEvict(key = "'list-' + #userId"), @CacheEvict(allEntries = true) })
+	@CacheEvict(value = "users", allEntries = true)
 	@Transactional
-	public AdminUserListResponse updateBirthDateVerification(Long userId, VerificationStatus verificationStatus) {
-		User user = findById(userId);
-		VerificationStatus oldStatus = user.getVerificationStatus();
+	public AdminUserListResponse updateVerification(Long userId, VerificationStatus status) {
+		var user = findById(userId);
+		var oldStatus = user.getVerificationStatus();
 
-		user.setVerificationStatus(verificationStatus);
-		user.setVerifiedAt(verificationStatus == VerificationStatus.VERIFIED ? LocalDateTime.now() : null);
+		user.setVerificationStatus(status);
+		user.setVerifiedAt(status == VerificationStatus.VERIFIED ? LocalDateTime.now() : null);
 
-		User savedUser = userRepository.save(user);
-		log.info("Birth date verification updated: {} for user {}", verificationStatus, userId);
+		var updated = userRepository.save(user);
+		log.info("Verification status updated: {} for user {}", status, userId);
+		auditVerificationChange(userId, user.getEmail(), oldStatus, status);
 
-		Map<String, Object> oldDetails = new HashMap<>();
-		oldDetails.put("verificationStatus", oldStatus);
-
-		Map<String, Object> newDetails = new HashMap<>();
-		newDetails.put("verificationStatus", verificationStatus);
-
-		auditService.logChange("User", userId, user.getEmail(), AuditAction.VERIFICATION_CHANGED, oldDetails,
-				newDetails);
-
-		return userMapper.toAdminUserListResponse(savedUser);
+		return userMapper.toAdminUserListResponse(updated);
 	}
 
-	@Cacheable(key = "'list-' + #search + '-' + #role + '-' + #verificationStatus + '-' + #enabled + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
-	public Page<AdminUserListResponse> getUsersForAdmin(String search, UserRole role,
-			VerificationStatus verificationStatus, Boolean enabled, Pageable pageable) {
-		log.info(
-				"Fetching users for admin with search: {}, role: {}, verificationStatus: {}, enabled: {}, pageable: {}",
-				search, role, verificationStatus, enabled, pageable);
+	@Cacheable(value = "users", key = "'list-' + #search + '-' + #role + '-' + #verificationStatus + '-' + #enabled + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
+	public Page<AdminUserListResponse> getUsers(String search, UserRole role, VerificationStatus verificationStatus,
+			Boolean enabled, Pageable pageable) {
+		log.info("Getting users: search={}, role={}, verificationStatus={}, enabled={}, page={}, size={}", search, role,
+				verificationStatus, enabled, pageable.getPageNumber(), pageable.getPageSize());
 
 		String roleStr = role != null ? role.name() : null;
 		String verificationStatusStr = verificationStatus != null ? verificationStatus.name() : null;
 
-		Page<AdminUserProjection> projections = userRepository.findAdminProjectionsWithFilters(search, roleStr,
-				verificationStatusStr, enabled, pageable);
+		Page<AdminUserProjection> page = userRepository.findProjectionsByFilters(search, roleStr, verificationStatusStr,
+				enabled, pageable);
 
-		return projections.map(userMapper::toAdminUserListResponse);
+		return page.map(userMapper::toAdminUserListResponse);
 	}
 
 	public long getAdminCount() {
@@ -137,7 +111,7 @@ public class AdminUserService {
 	}
 
 	private User findById(Long id) {
-		return userRepository.findWithBonusCardById(id).orElseThrow(() -> new UserNotFoundException(id));
+		return userRepository.findById(id).orElseThrow(() -> new UserNotFoundException(id));
 	}
 
 	private boolean isCurrentUser(User user) {
@@ -155,5 +129,30 @@ public class AdminUserService {
 		if (getAdminCount() <= 1) {
 			throw new LastAdminException();
 		}
+	}
+
+	private void auditRoleChange(Long userId, String email, UserRole oldRole, UserRole newRole) {
+		Map<String, Object> oldDetails = new HashMap<>();
+		oldDetails.put("role", oldRole);
+		Map<String, Object> newDetails = new HashMap<>();
+		newDetails.put("role", newRole);
+		auditService.logChange("User", userId, email, AuditAction.ROLE_CHANGED, oldDetails, newDetails);
+	}
+
+	private void auditStatusChange(Long userId, String email, boolean oldStatus, boolean newStatus) {
+		Map<String, Object> oldDetails = new HashMap<>();
+		oldDetails.put("enabled", oldStatus);
+		Map<String, Object> newDetails = new HashMap<>();
+		newDetails.put("enabled", newStatus);
+		auditService.logChange("User", userId, email, AuditAction.STATUS_CHANGED, oldDetails, newDetails);
+	}
+
+	private void auditVerificationChange(Long userId, String email, VerificationStatus oldStatus,
+			VerificationStatus newStatus) {
+		Map<String, Object> oldDetails = new HashMap<>();
+		oldDetails.put("verificationStatus", oldStatus);
+		Map<String, Object> newDetails = new HashMap<>();
+		newDetails.put("verificationStatus", newStatus);
+		auditService.logChange("User", userId, email, AuditAction.VERIFICATION_CHANGED, oldDetails, newDetails);
 	}
 }

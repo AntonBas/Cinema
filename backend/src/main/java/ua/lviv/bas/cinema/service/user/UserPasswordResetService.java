@@ -34,10 +34,10 @@ public class UserPasswordResetService {
 	private final EmailTokenRepository tokenRepository;
 	private final AuditService auditService;
 
-	public void requestPasswordReset(String email) {
+	public void requestReset(String email) {
 		log.info("Password reset requested for email: {}", email);
 
-		User user = userRepository.findByEmail(email)
+		var user = userRepository.findByEmail(email)
 				.orElseThrow(() -> new EmailNotVerifiedException("reset password", email));
 
 		if (!user.isEnabled()) {
@@ -46,38 +46,22 @@ public class UserPasswordResetService {
 
 		tokenGeneratorService.generatePasswordResetToken(email);
 		log.info("Password reset token generated for: {}", email);
-
-		Map<String, Object> details = new HashMap<>();
-		details.put("email", email);
-		details.put("userId", user.getId());
-
-		auditService.logChange("User", user.getId(), email, AuditAction.PASSWORD_RESET_REQUESTED, null, details);
+		auditRequestReset(user);
 	}
 
 	@Transactional
-	public void resetPassword(String token, String newPassword) {
-		EmailToken resetToken = tokenRepository.findByToken(token)
+	public void reset(String token, String newPassword) {
+		var resetToken = tokenRepository.findByToken(token)
 				.orElseThrow(() -> new InvalidTokenException("password-reset"));
 
-		if (resetToken.getType() != TokenType.PASSWORD_RESET) {
-			throw new InvalidTokenException("password-reset");
-		}
+		validateToken(resetToken);
 
-		if (LocalDateTime.now().isAfter(resetToken.getExpiresAt())) {
-			throw new TokenExpiredException("password-reset");
-		}
-
-		if (resetToken.isConfirmed()) {
-			throw new InvalidTokenException("password-reset");
-		}
-
-		User user = resetToken.getUser();
+		var user = resetToken.getUser();
 
 		if (passwordEncoder.matches(newPassword, user.getPassword())) {
 			throw new SamePasswordException();
 		}
 
-		String oldPasswordHash = user.getPassword();
 		user.setPassword(passwordEncoder.encode(newPassword));
 		userRepository.save(user);
 
@@ -86,15 +70,35 @@ public class UserPasswordResetService {
 		tokenRepository.save(resetToken);
 
 		log.info("Password reset successfully for user: {}", user.getEmail());
+		auditReset(user);
+	}
 
+	private void validateToken(EmailToken token) {
+		if (token.getType() != TokenType.PASSWORD_RESET) {
+			throw new InvalidTokenException("password-reset");
+		}
+		if (LocalDateTime.now().isAfter(token.getExpiresAt())) {
+			throw new TokenExpiredException("password-reset");
+		}
+		if (token.isConfirmed()) {
+			throw new InvalidTokenException("password-reset");
+		}
+	}
+
+	private void auditRequestReset(User user) {
+		Map<String, Object> details = new HashMap<>();
+		details.put("email", user.getEmail());
+		details.put("userId", user.getId());
+		auditService.logChange("User", user.getId(), user.getEmail(), AuditAction.PASSWORD_RESET_REQUESTED, null,
+				details);
+	}
+
+	private void auditReset(User user) {
 		Map<String, Object> oldDetails = new HashMap<>();
-		oldDetails.put("passwordHash", oldPasswordHash);
 		oldDetails.put("userId", user.getId());
-
 		Map<String, Object> newDetails = new HashMap<>();
 		newDetails.put("userId", user.getId());
 		newDetails.put("userEmail", user.getEmail());
-
 		auditService.logChange("User", user.getId(), user.getEmail(), AuditAction.PASSWORD_RESET_COMPLETED, oldDetails,
 				newDetails);
 	}

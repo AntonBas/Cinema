@@ -15,7 +15,7 @@ import ua.lviv.bas.cinema.dto.user.response.UserProfileResponse;
 import ua.lviv.bas.cinema.dto.user.response.UserResponse;
 import ua.lviv.bas.cinema.repository.user.projection.AdminUserProjection;
 
-@Mapper(componentModel = "spring", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE, unmappedTargetPolicy = ReportingPolicy.WARN)
+@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.WARN)
 public interface UserMapper {
 
 	@Mapping(target = "id", ignore = true)
@@ -28,7 +28,7 @@ public interface UserMapper {
 	@Mapping(target = "verificationStatus", constant = "NOT_VERIFIED")
 	@Mapping(target = "verifiedAt", ignore = true)
 	@Mapping(target = "password", ignore = true)
-	User toUser(UserRegistrationRequest dto);
+	User toUser(UserRegistrationRequest request);
 
 	UserResponse toUserResponse(User user);
 
@@ -36,6 +36,8 @@ public interface UserMapper {
 
 	@BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 	@Mapping(target = "id", ignore = true)
+	@Mapping(target = "email", ignore = true)
+	@Mapping(target = "password", ignore = true)
 	@Mapping(target = "tickets", ignore = true)
 	@Mapping(target = "bonusCard", ignore = true)
 	@Mapping(target = "bookings", ignore = true)
@@ -44,34 +46,14 @@ public interface UserMapper {
 	@Mapping(target = "userRole", ignore = true)
 	@Mapping(target = "verificationStatus", ignore = true)
 	@Mapping(target = "verifiedAt", ignore = true)
-	@Mapping(target = "password", ignore = true)
-	@Mapping(target = "email", ignore = true)
 	@Mapping(target = "createdBy", ignore = true)
 	@Mapping(target = "createdDate", ignore = true)
 	@Mapping(target = "lastModifiedBy", ignore = true)
 	@Mapping(target = "lastModifiedDate", ignore = true)
-	void updateUserFromRequest(UserUpdateRequest dto, @MappingTarget User user);
+	void updateUserFromRequest(UserUpdateRequest request, @MappingTarget User user);
 
-	@Mapping(target = "id", source = "id")
-	@Mapping(target = "email", source = "email")
-	@Mapping(target = "firstName", source = "firstName")
-	@Mapping(target = "lastName", source = "lastName")
-	@Mapping(target = "userRole", source = "userRole")
-	@Mapping(target = "enabled", source = "enabled")
-	@Mapping(target = "verificationStatus", source = "verificationStatus")
-	@Mapping(target = "verifiedAt", source = "verifiedAt")
-	@Mapping(target = "ticketsCount", source = "ticketsCount")
-	@Mapping(target = "lastActivity", source = "lastActivity")
 	AdminUserListResponse toAdminUserListResponse(AdminUserProjection projection);
 
-	@Mapping(target = "id", source = "id")
-	@Mapping(target = "email", source = "email")
-	@Mapping(target = "firstName", source = "firstName")
-	@Mapping(target = "lastName", source = "lastName")
-	@Mapping(target = "userRole", source = "userRole")
-	@Mapping(target = "enabled", source = "enabled")
-	@Mapping(target = "verificationStatus", source = "verificationStatus")
-	@Mapping(target = "verifiedAt", source = "verifiedAt")
 	@Mapping(target = "ticketsCount", expression = "java(user.getTickets() != null ? (long) user.getTickets().size() : 0L)")
 	@Mapping(target = "lastActivity", ignore = true)
 	AdminUserListResponse toAdminUserListResponse(User user);

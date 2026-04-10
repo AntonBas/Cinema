@@ -28,8 +28,13 @@ public interface UserRepository extends JpaRepository<User, Long> {
 	@Override
 	Optional<User> findById(Long id);
 
-	@Query("SELECT u FROM User u WHERE u.verificationStatus = :status AND u.enabled = true "
-			+ "AND EXTRACT(DAY FROM u.dateOfBirth) = :day AND EXTRACT(MONTH FROM u.dateOfBirth) = :month")
+	@Query("""
+			SELECT u FROM User u
+			WHERE u.verificationStatus = :status
+			  AND u.enabled = true
+			  AND EXTRACT(DAY FROM u.dateOfBirth) = :day
+			  AND EXTRACT(MONTH FROM u.dateOfBirth) = :month
+			""")
 	List<User> findVerifiedUsersWithBirthday(@Param("status") VerificationStatus status, @Param("day") int day,
 			@Param("month") int month);
 
@@ -77,7 +82,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 			  AND (:verificationStatus IS NULL OR u.verification_status = CAST(:verificationStatus AS text))
 			  AND (:enabled IS NULL OR u.enabled = :enabled)
 			""", nativeQuery = true)
-	Page<AdminUserProjection> findAdminProjectionsWithFilters(@Param("search") String search,
-			@Param("role") String role, @Param("verificationStatus") String verificationStatus,
-			@Param("enabled") Boolean enabled, Pageable pageable);
+	Page<AdminUserProjection> findProjectionsByFilters(@Param("search") String search, @Param("role") String role,
+			@Param("verificationStatus") String verificationStatus, @Param("enabled") Boolean enabled,
+			Pageable pageable);
 }
