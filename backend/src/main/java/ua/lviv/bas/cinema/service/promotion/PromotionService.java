@@ -139,7 +139,7 @@ public class PromotionService {
 				.pointsAwarded(promotion.getBonusPoints()).build();
 
 		userPromotionRepository.save(userPromotion);
-		bonusService.addPoints(user, promotion.getBonusPoints(), promotion.getTitle());
+		bonusService.addPromotionPoints(user, promotion.getBonusPoints(), promotion.getTitle());
 
 		log.info("Promotion claimed successfully. User received {} points", promotion.getBonusPoints());
 		auditClaim(promotion, user);
