@@ -5,7 +5,7 @@ import java.math.BigDecimal;
 import io.swagger.v3.oas.annotations.media.Schema;
 import ua.lviv.bas.cinema.domain.ticket.TicketTypeCategory;
 
-public record TicketTypeAdminResponse(@Schema(description = "Unique identifier of the ticket type", example = "1") Long id,
+public record TicketTypeResponse(@Schema(description = "Unique identifier of the ticket type", example = "1") Long id,
 
 		@Schema(description = "Display name for the ticket type", example = "Adult Ticket") String displayName,
 

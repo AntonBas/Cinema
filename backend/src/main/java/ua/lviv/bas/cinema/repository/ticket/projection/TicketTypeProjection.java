@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 
 import ua.lviv.bas.cinema.domain.ticket.TicketTypeCategory;
 
-public interface TicketTypeAdminProjection {
+public interface TicketTypeProjection {
 	Long getId();
 
 	String getDisplayName();

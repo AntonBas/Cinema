@@ -12,8 +12,8 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import ua.lviv.bas.cinema.domain.ticket.TicketTypeCategory;
 
-public record TicketTypeCreateRequest(
-		@NotBlank(message = "Display name must not be blank") @Size(min = 1, max = 50, message = "Display name must be between 1 and 50 characters") @Schema(description = "Display name for the ticket type", example = "Adult Ticket", requiredMode = Schema.RequiredMode.REQUIRED) String displayName,
+public record TicketTypeRequest(
+		@NotBlank(message = "Display name must not be blank") @Size(min = 1, max = 50, message = "Display name must be between 1 and 50 characters") @Schema(description = "Display name for the ticket type", example = "Adult Ticket") String displayName,
 
 		@NotNull(message = "Price multiplier must not be null") @DecimalMin(value = "0.01", inclusive = false, message = "Price multiplier must be greater than 0") @DecimalMax(value = "9.99", inclusive = true, message = "Price multiplier must be less than or equal to 9.99") BigDecimal priceMultiplier,
 
@@ -27,5 +27,5 @@ public record TicketTypeCreateRequest(
 
 		@Schema(description = "Indicates if the ticket type is active", example = "true") boolean active,
 
-		@Schema(description = "Category of the ticket type", example = "STANDARD", requiredMode = Schema.RequiredMode.REQUIRED) TicketTypeCategory category) {
+		@NotNull(message = "Category must not be null") @Schema(description = "Category of the ticket type", example = "STANDARD", requiredMode = Schema.RequiredMode.REQUIRED) TicketTypeCategory category) {
 }
