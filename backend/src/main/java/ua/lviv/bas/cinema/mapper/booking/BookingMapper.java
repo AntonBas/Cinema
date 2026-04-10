@@ -20,7 +20,7 @@ public interface BookingMapper {
 	@Mapping(target = "hallName", source = "session.hall.name")
 	@Mapping(target = "liqpayOrderId", source = "payment.liqpayOrderId")
 	@Mapping(target = "seatReservations", source = "seatReservations")
-	BookingResponse toBookingResponse(Booking booking);
+	BookingResponse toResponse(Booking booking);
 
 	@Mapping(target = "seatId", source = "seat.id")
 	@Mapping(target = "row", source = "seat.row")

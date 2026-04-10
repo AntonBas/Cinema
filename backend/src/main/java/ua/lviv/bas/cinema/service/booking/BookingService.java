@@ -10,7 +10,6 @@ import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,10 +20,8 @@ import ua.lviv.bas.cinema.domain.booking.Booking;
 import ua.lviv.bas.cinema.domain.booking.SeatReservation;
 import ua.lviv.bas.cinema.domain.booking.status.BookingStatus;
 import ua.lviv.bas.cinema.domain.booking.status.ReservationStatus;
-import ua.lviv.bas.cinema.domain.cinema.Seat;
 import ua.lviv.bas.cinema.domain.cinema.Session;
 import ua.lviv.bas.cinema.domain.cinema.status.CinemaSessionStatus;
-import ua.lviv.bas.cinema.domain.ticket.TicketType;
 import ua.lviv.bas.cinema.domain.user.User;
 import ua.lviv.bas.cinema.dto.booking.request.BookingCreateRequest;
 import ua.lviv.bas.cinema.dto.booking.response.BookingResponse;
@@ -70,30 +67,27 @@ public class BookingService {
 	@Value("${booking.session-too-close-minutes:30}")
 	private int sessionTooCloseMinutes;
 
-	@Caching(evict = { @CacheEvict(value = "seatAvailability", key = "#request.sessionId()"),
-			@CacheEvict(value = "availableSeatsCount", key = "#request.sessionId()"),
-			@CacheEvict(value = "sessions", allEntries = true) })
+	@CacheEvict(value = { "seatAvailability", "availableSeatsCount", "sessions" }, allEntries = true)
 	public BookingResponse createBooking(BookingCreateRequest request, User user) {
-		Session session = sessionRepository.findById(request.sessionId())
+		var session = sessionRepository.findById(request.sessionId())
 				.orElseThrow(() -> new SessionNotFoundException(request.sessionId()));
 
-		validateSessionForBooking(session);
+		validateSession(session);
 
 		List<SeatReservation> seatReservations = new ArrayList<>();
 
-		for (BookingCreateRequest.SeatSelectionRequest seatSelection : request.seats()) {
-			SeatReservation reservation = findOrCreateValidReservation(session, user, seatSelection);
+		for (var seatSelection : request.seats()) {
+			var reservation = findOrCreateReservation(session, user, seatSelection);
 			updateReservationWithTicketType(reservation, seatSelection);
 			seatReservations.add(reservation);
 		}
 
-		BigDecimal totalPrice = seatReservations.stream().map(SeatReservation::getSeatPrice).reduce(BigDecimal.ZERO,
+		var totalPrice = seatReservations.stream().map(SeatReservation::getSeatPrice).reduce(BigDecimal.ZERO,
 				BigDecimal::add);
 
-		BookingPriceResult priceResult = calculateFinalPrice(totalPrice, request.bonusPointsToUse(), user.getId());
-
-		LocalDateTime expiresAt = LocalDateTime.now().plusMinutes(expirationMinutes);
-		Booking booking = createBookingEntity(user, session, seatReservations, priceResult, expiresAt);
+		var priceResult = calculateFinalPrice(totalPrice, request.bonusPointsToUse(), user.getId());
+		var expiresAt = LocalDateTime.now().plusMinutes(expirationMinutes);
+		var booking = createBookingEntity(user, session, seatReservations, priceResult, expiresAt);
 
 		seatReservations.forEach(sr -> {
 			sr.setBooking(booking);
@@ -101,46 +95,36 @@ public class BookingService {
 			sr.setReservedUntil(expiresAt);
 		});
 
-		Booking savedBooking = bookingRepository.save(booking);
+		var saved = bookingRepository.save(booking);
 		seatReservationRepository.saveAll(seatReservations);
 
 		if (priceResult.bonusPointsUsed() > 0) {
-			bonusService.spendPoints(user.getId(), priceResult.bonusPointsUsed(), savedBooking);
+			bonusService.spendPoints(user.getId(), priceResult.bonusPointsUsed(), saved);
 		}
 
-		log.info("Created booking {} for user {} with {} bonus points used", savedBooking.getId(), user.getId(),
+		log.info("Created booking {} for user {} with {} bonus points used", saved.getId(), user.getId(),
 				priceResult.bonusPointsUsed());
+		auditCreate(saved, user, session, totalPrice, priceResult);
 
-		Map<String, Object> details = new HashMap<>();
-		details.put("userId", user.getId());
-		details.put("sessionId", session.getId());
-		details.put("totalPrice", totalPrice);
-		details.put("finalPrice", priceResult.finalPrice());
-		details.put("bonusPointsUsed", priceResult.bonusPointsUsed());
-
-		auditService.logChange("Booking", savedBooking.getId(), "Booking #" + savedBooking.getId(), AuditAction.CREATED,
-				null, details);
-
-		return bookingMapper.toBookingResponse(savedBooking);
+		return bookingMapper.toResponse(saved);
 	}
 
 	@Transactional(readOnly = true)
-	public BookingResponse getBookingById(Long bookingId, User user) {
-		Booking booking = bookingRepository.findByIdAndUserId(bookingId, user.getId())
+	public BookingResponse getBooking(Long bookingId, User user) {
+		var booking = bookingRepository.findByIdAndUserId(bookingId, user.getId())
 				.orElseThrow(() -> new BookingNotFoundException(bookingId));
-		return bookingMapper.toBookingResponse(booking);
+		return bookingMapper.toResponse(booking);
 	}
 
-	@Transactional
 	public void cancelBooking(Long bookingId, User user) {
-		Booking booking = bookingRepository.findByIdAndUserId(bookingId, user.getId())
+		var booking = bookingRepository.findByIdAndUserId(bookingId, user.getId())
 				.orElseThrow(() -> new BookingNotFoundException(bookingId));
 
-		if (!canBookingBeCancelled(booking)) {
+		if (!canCancel(booking)) {
 			throw BookingValidationException.cannotCancel();
 		}
 
-		BookingStatus oldStatus = booking.getStatus();
+		var oldStatus = booking.getStatus();
 		booking.setStatus(BookingStatus.CANCELLED);
 
 		booking.getSeatReservations().forEach(sr -> {
@@ -156,39 +140,21 @@ public class BookingService {
 
 		bookingRepository.save(booking);
 		log.info("Cancelled booking {} for user {}", bookingId, user.getId());
-
-		Map<String, Object> oldDetails = new HashMap<>();
-		oldDetails.put("status", oldStatus);
-
-		Map<String, Object> newDetails = new HashMap<>();
-		newDetails.put("status", BookingStatus.CANCELLED);
-
-		auditService.logChange("Booking", bookingId, "Booking #" + bookingId, AuditAction.CANCELLED, oldDetails,
-				newDetails);
+		auditCancel(bookingId, oldStatus);
 	}
 
-	@Transactional
 	public void confirmBooking(Long bookingId) {
-		Booking booking = bookingRepository.findById(bookingId)
-				.orElseThrow(() -> new BookingNotFoundException(bookingId));
+		var booking = bookingRepository.findById(bookingId).orElseThrow(() -> new BookingNotFoundException(bookingId));
 
 		if (booking.getStatus() != BookingStatus.PENDING) {
 			throw BookingOperationException.onlyPendingCanBeConfirmed();
 		}
 
-		BookingStatus oldStatus = booking.getStatus();
+		var oldStatus = booking.getStatus();
 		booking.setStatus(BookingStatus.CONFIRMED);
 		booking.getSeatReservations().forEach(sr -> sr.setStatus(ReservationStatus.CONFIRMED));
 		bookingRepository.save(booking);
-
-		Map<String, Object> oldDetails = new HashMap<>();
-		oldDetails.put("status", oldStatus);
-
-		Map<String, Object> newDetails = new HashMap<>();
-		newDetails.put("status", BookingStatus.CONFIRMED);
-
-		auditService.logChange("Booking", bookingId, "Booking #" + bookingId, AuditAction.CONFIRMED, oldDetails,
-				newDetails);
+		auditConfirm(bookingId, oldStatus);
 	}
 
 	private BookingPriceResult calculateFinalPrice(BigDecimal totalPrice, Integer bonusPointsToUse, Long userId) {
@@ -201,8 +167,7 @@ public class BookingService {
 			bonusPointsUsed = bonusPointsToUse;
 		}
 
-		BigDecimal finalPrice = totalPrice.subtract(bonusDiscount).max(BigDecimal.ZERO);
-
+		var finalPrice = totalPrice.subtract(bonusDiscount).max(BigDecimal.ZERO);
 		return new BookingPriceResult(totalPrice, bonusPointsUsed, bonusDiscount, finalPrice);
 	}
 
@@ -210,64 +175,57 @@ public class BookingService {
 			BigDecimal finalPrice) {
 	}
 
-	private void validateSessionForBooking(Session session) {
+	private void validateSession(Session session) {
 		if (session.getStatus() != CinemaSessionStatus.SCHEDULED) {
 			throw BookingValidationException.sessionNotAvailable();
 		}
-
 		if (session.getStartTime().isBefore(LocalDateTime.now())) {
 			throw BookingValidationException.sessionAlreadyStarted();
 		}
-
 		if (session.getStartTime().isBefore(LocalDateTime.now().plusMinutes(sessionTooCloseMinutes))) {
 			throw BookingValidationException.sessionTooClose();
 		}
 	}
 
-	private boolean canBookingBeCancelled(Booking booking) {
+	private boolean canCancel(Booking booking) {
 		return booking.getStatus() == BookingStatus.PENDING || booking.getStatus() == BookingStatus.CONFIRMED;
 	}
 
-	private SeatReservation findOrCreateValidReservation(Session session, User user,
+	private SeatReservation findOrCreateReservation(Session session, User user,
 			BookingCreateRequest.SeatSelectionRequest seatSelection) {
-
-		Long seatId = seatSelection.seatId();
+		var seatId = seatSelection.seatId();
 
 		Optional<SeatReservation> existingReservation = seatReservationRepository
 				.findBySessionIdAndSeatIdAndStatusAndReservedByUserId(session.getId(), seatId,
 						ReservationStatus.PENDING, user.getId());
 
 		if (existingReservation.isPresent()) {
-			SeatReservation reservation = existingReservation.get();
-
+			var reservation = existingReservation.get();
 			if (reservation.getReservedUntil().isBefore(LocalDateTime.now())) {
 				reservation.setReservedUntil(LocalDateTime.now().plusMinutes(tempHoldMinutes));
 				return seatReservationRepository.save(reservation);
 			}
-
 			return reservation;
 		}
 
-		Seat seat = seatRepository.findById(seatId)
+		var seat = seatRepository.findById(seatId)
 				.orElseThrow(() -> new SeatNotAvailableException("Seat not found: " + seatId));
 
-		seatReservationService.validateSeatAvailability(session.getId(), seatId);
+		seatReservationService.validateAvailability(session.getId(), seatId);
 
-		SeatReservation newReservation = SeatReservation.builder().seat(seat).session(session).ticketType(null)
-				.seatPrice(null).status(ReservationStatus.PENDING)
-				.reservedUntil(LocalDateTime.now().plusMinutes(tempHoldMinutes)).reservedByUser(user).build();
+		var newReservation = SeatReservation.builder().seat(seat).session(session).ticketType(null).seatPrice(null)
+				.status(ReservationStatus.PENDING).reservedUntil(LocalDateTime.now().plusMinutes(tempHoldMinutes))
+				.reservedByUser(user).build();
 
 		return seatReservationRepository.save(newReservation);
 	}
 
 	private void updateReservationWithTicketType(SeatReservation reservation,
 			BookingCreateRequest.SeatSelectionRequest seatSelection) {
-
-		TicketType ticketType = ticketTypeRepository.findById(seatSelection.ticketTypeId())
+		var ticketType = ticketTypeRepository.findById(seatSelection.ticketTypeId())
 				.orElseThrow(() -> new TicketTypeNotFoundException(seatSelection.ticketTypeId()));
 
-		BigDecimal seatPrice = priceCalculator.calculateSeatPrice(reservation.getSession(), reservation.getSeat(),
-				ticketType);
+		var seatPrice = priceCalculator.calculateSeatPrice(reservation.getSession(), reservation.getSeat(), ticketType);
 
 		reservation.setTicketType(ticketType);
 		reservation.setSeatPrice(seatPrice);
@@ -279,5 +237,35 @@ public class BookingService {
 				.totalPrice(priceResult.totalPrice()).bonusPointsUsed(priceResult.bonusPointsUsed())
 				.bonusDiscountAmount(priceResult.bonusDiscount()).finalPrice(priceResult.finalPrice())
 				.expiresAt(expiresAt).seatReservations(seatReservations).build();
+	}
+
+	private void auditCreate(Booking booking, User user, Session session, BigDecimal totalPrice,
+			BookingPriceResult priceResult) {
+		Map<String, Object> details = new HashMap<>();
+		details.put("userId", user.getId());
+		details.put("sessionId", session.getId());
+		details.put("totalPrice", totalPrice);
+		details.put("finalPrice", priceResult.finalPrice());
+		details.put("bonusPointsUsed", priceResult.bonusPointsUsed());
+		auditService.logChange("Booking", booking.getId(), "Booking #" + booking.getId(), AuditAction.CREATED, null,
+				details);
+	}
+
+	private void auditCancel(Long bookingId, BookingStatus oldStatus) {
+		Map<String, Object> oldDetails = new HashMap<>();
+		oldDetails.put("status", oldStatus);
+		Map<String, Object> newDetails = new HashMap<>();
+		newDetails.put("status", BookingStatus.CANCELLED);
+		auditService.logChange("Booking", bookingId, "Booking #" + bookingId, AuditAction.CANCELLED, oldDetails,
+				newDetails);
+	}
+
+	private void auditConfirm(Long bookingId, BookingStatus oldStatus) {
+		Map<String, Object> oldDetails = new HashMap<>();
+		oldDetails.put("status", oldStatus);
+		Map<String, Object> newDetails = new HashMap<>();
+		newDetails.put("status", BookingStatus.CONFIRMED);
+		auditService.logChange("Booking", bookingId, "Booking #" + bookingId, AuditAction.CONFIRMED, oldDetails,
+				newDetails);
 	}
 }
