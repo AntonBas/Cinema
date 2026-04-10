@@ -16,6 +16,8 @@ public interface CinemaHallRepository extends JpaRepository<CinemaHall, Long> {
 
 	boolean existsByName(String name);
 
+	boolean existsByNameAndIdNot(String name, Long id);
+
 	@Query("""
 			SELECT
 			    ch.id as id,

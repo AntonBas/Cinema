@@ -1,6 +1,5 @@
 package ua.lviv.bas.cinema.controller.admin;
 
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -36,26 +35,24 @@ public class AdminSeatController {
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Seat type updated successfully"),
 			@ApiResponse(responseCode = "400", description = "Invalid seat type"),
 			@ApiResponse(responseCode = "404", description = "Seat not found") })
-	public ResponseEntity<SeatResponse> updateSeatType(
+	public SeatResponse updateSeatType(
 			@Parameter(description = "Hall ID", required = true, example = "1") @PathVariable Long hallId,
 			@Parameter(description = "Seat ID", required = true, example = "5") @PathVariable Long seatId,
 			@Parameter(description = "New seat type", required = true, example = "VIP") @RequestParam SeatType seatType) {
 		log.info("PUT /api/admin/cinema-halls/{}/seats/{}/type - Updating seat type to {}", hallId, seatId, seatType);
-		SeatResponse updated = seatService.updateSeatType(hallId, seatId, seatType);
-		return ResponseEntity.ok(updated);
+		return seatService.updateSeatType(hallId, seatId, seatType);
 	}
 
 	@PutMapping("/{seatId}/status")
 	@Operation(summary = "Set seat active status")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Seat status updated successfully"),
 			@ApiResponse(responseCode = "404", description = "Seat not found") })
-	public ResponseEntity<SeatResponse> setSeatActiveStatus(
+	public SeatResponse setSeatActiveStatus(
 			@Parameter(description = "Hall ID", required = true, example = "1") @PathVariable Long hallId,
 			@Parameter(description = "Seat ID", required = true, example = "5") @PathVariable Long seatId,
 			@Parameter(description = "Active status", required = true, example = "true") @RequestParam boolean active) {
 		log.info("PUT /api/admin/cinema-halls/{}/seats/{}/status - Setting active status to {}", hallId, seatId,
 				active);
-		SeatResponse updated = seatService.setSeatActiveStatus(hallId, seatId, active);
-		return ResponseEntity.ok(updated);
+		return seatService.setSeatActiveStatus(hallId, seatId, active);
 	}
 }
