@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 
 import ua.lviv.bas.cinema.domain.ticket.TicketStatus;
 
-public interface TicketInfoProjection {
+public interface TicketProjection {
 	Long getId();
 
 	String getUniqueCode();

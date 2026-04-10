@@ -1,9 +1,9 @@
 package ua.lviv.bas.cinema.controller.api;
 
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -21,7 +22,6 @@ import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.config.ratelimit.RateLimit;
 import ua.lviv.bas.cinema.config.security.user.CustomUserDetails;
 import ua.lviv.bas.cinema.domain.ticket.TicketStatus;
-import ua.lviv.bas.cinema.domain.user.User;
 import ua.lviv.bas.cinema.dto.PageResponse;
 import ua.lviv.bas.cinema.dto.ticket.request.TicketFilterRequest;
 import ua.lviv.bas.cinema.dto.ticket.response.TicketResponse;
@@ -39,49 +39,45 @@ public class TicketController {
 
 	@RateLimit(value = 20, duration = 1, key = "user")
 	@GetMapping
-	@Operation(summary = "Get user tickets", description = "Get paginated tickets for authenticated user with optional filters")
-	public ResponseEntity<PageResponse<TicketResponse>> getUserTickets(
-			@AuthenticationPrincipal CustomUserDetails userDetails, @RequestParam(required = false) TicketStatus status,
-			@RequestParam(required = false) String movieTitle, @PageableDefault(size = 10) Pageable pageable) {
+	@Operation(summary = "Get user tickets")
+	public PageResponse<TicketResponse> getTickets(@AuthenticationPrincipal CustomUserDetails userDetails,
+			@RequestParam(required = false) TicketStatus status, @RequestParam(required = false) String movieTitle,
+			@PageableDefault(size = 10) Pageable pageable) {
 
-		User user = userDetails.getUser();
-		log.info("Getting tickets for user ID: {} with status: {} and movieTitle: {}", user.getId(), status,
-				movieTitle);
+		var user = userDetails.getUser();
+		log.info("GET /api/tickets - user: {}, status: {}, movieTitle: {}", user.getId(), status, movieTitle);
 
-		TicketFilterRequest filter = new TicketFilterRequest(status, movieTitle);
-
-		Page<TicketResponse> tickets = ticketService.getUserTickets(user, filter, pageable);
-		return ResponseEntity.ok(PageResponse.from(tickets));
+		var filter = new TicketFilterRequest(status, movieTitle);
+		var page = ticketService.getTickets(user, filter, pageable);
+		return PageResponse.from(page);
 	}
 
 	@RateLimit(value = 30, duration = 1, key = "user")
 	@GetMapping("/code/{ticketCode}")
-	@Operation(summary = "Get ticket by code", description = "Get ticket details by code (for QR scanning)")
-	public ResponseEntity<TicketResponse> getTicketByCode(@PathVariable String ticketCode,
+	@Operation(summary = "Get ticket by code")
+	public TicketResponse getTicket(@PathVariable String ticketCode,
 			@AuthenticationPrincipal CustomUserDetails userDetails) {
 
-		User user = userDetails.getUser();
-		log.info("Getting ticket by code: {} for user ID: {}", ticketCode, user.getId());
-		TicketResponse ticket = ticketService.getTicketByCode(ticketCode, user);
-		return ResponseEntity.ok(ticket);
+		var user = userDetails.getUser();
+		log.info("GET /api/tickets/code/{} - user: {}", ticketCode, user.getId());
+		return ticketService.getTicket(ticketCode, user);
 	}
 
 	@RateLimit(value = 20, duration = 1, key = "user")
-	@GetMapping("/code/{ticketCode}/qr")
-	@Operation(summary = "Get ticket QR code", description = "Generate QR code for ticket validation")
-	public ResponseEntity<byte[]> getTicketQRCode(@PathVariable String ticketCode) {
-		log.info("Generating QR code for ticket: {}", ticketCode);
-		byte[] qrCode = ticketService.generateTicketQRCode(ticketCode);
-		return ResponseEntity.ok().header("Content-Type", "image/png").body(qrCode);
+	@GetMapping(value = "/code/{ticketCode}/qr", produces = MediaType.IMAGE_PNG_VALUE)
+	@Operation(summary = "Get ticket QR code")
+	public byte[] getQR(@PathVariable String ticketCode) {
+		log.info("GET /api/tickets/code/{}/qr", ticketCode);
+		return ticketService.generateQR(ticketCode);
 	}
 
 	@RateLimit(value = 20, duration = 1, key = "ip")
 	@PostMapping("/code/{ticketCode}/validate")
-	@Operation(summary = "Validate ticket", description = "Validate ticket for entry (used by staff)")
+	@ResponseStatus(HttpStatus.OK)
+	@Operation(summary = "Validate ticket")
 	@PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
-	public ResponseEntity<Void> validateTicket(@PathVariable String ticketCode) {
-		log.info("Validating ticket: {}", ticketCode);
-		ticketService.validateTicket(ticketCode);
-		return ResponseEntity.ok().build();
+	public void validate(@PathVariable String ticketCode) {
+		log.info("POST /api/tickets/code/{}/validate", ticketCode);
+		ticketService.validate(ticketCode);
 	}
 }

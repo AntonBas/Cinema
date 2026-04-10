@@ -4,7 +4,6 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
-import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import ua.lviv.bas.cinema.domain.ticket.Ticket;
 import ua.lviv.bas.cinema.domain.ticket.TicketStatus;
@@ -26,13 +25,12 @@ public class TicketSpecification {
 
 	private Specification<Ticket> filterByMovieTitle(String movieTitle) {
 		return (root, query, cb) -> {
-			if (!StringUtils.hasText(movieTitle))
+			if (!StringUtils.hasText(movieTitle)) {
 				return null;
-
-			Join<Object, Object> booking = root.join("booking", JoinType.INNER);
-			Join<Object, Object> session = booking.join("session", JoinType.INNER);
-			Join<Object, Object> movie = session.join("movie", JoinType.INNER);
-
+			}
+			var booking = root.join("booking", JoinType.INNER);
+			var session = booking.join("session", JoinType.INNER);
+			var movie = session.join("movie", JoinType.INNER);
 			return cb.like(cb.lower(movie.get("title")), "%" + movieTitle.toLowerCase() + "%");
 		};
 	}
