@@ -2,7 +2,6 @@ package ua.lviv.bas.cinema.controller.api;
 
 import java.util.List;
 
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,7 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.config.ratelimit.RateLimit;
 import ua.lviv.bas.cinema.config.security.user.CustomUserDetails;
 import ua.lviv.bas.cinema.domain.user.User;
-import ua.lviv.bas.cinema.dto.promotion.request.UserPromotionCreateRequest;
+import ua.lviv.bas.cinema.dto.promotion.request.ClaimPromotionRequest;
 import ua.lviv.bas.cinema.dto.promotion.response.PromotionResponse;
 import ua.lviv.bas.cinema.service.promotion.PromotionService;
 
@@ -37,31 +36,29 @@ public class PromotionController {
 	@GetMapping
 	@Operation(summary = "Get available promotions")
 	@PreAuthorize("permitAll()")
-	public ResponseEntity<List<PromotionResponse>> getAvailablePromotions(
-			@AuthenticationPrincipal CustomUserDetails currentUser) {
+	public List<PromotionResponse> getAvailablePromotions(@AuthenticationPrincipal CustomUserDetails currentUser) {
 		User user = currentUser != null ? currentUser.getUser() : null;
-		log.info("Getting available promotions for user: {}", user != null ? user.getId() : "anonymous");
-		return ResponseEntity.ok(promotionService.getAvailablePromotions(user));
+		log.info("GET /api/promotions - user: {}", user != null ? user.getId() : "anonymous");
+		return promotionService.getAvailablePromotions(user);
 	}
 
 	@RateLimit(value = 3, duration = 1, key = "user")
 	@PostMapping("/claim")
 	@Operation(summary = "Claim a promotion")
 	@PreAuthorize("isAuthenticated()")
-	public ResponseEntity<PromotionResponse> claimPromotion(@Valid @RequestBody UserPromotionCreateRequest request,
+	public PromotionResponse claimPromotion(@Valid @RequestBody ClaimPromotionRequest request,
 			@AuthenticationPrincipal CustomUserDetails currentUser) {
 		User user = currentUser.getUser();
-		log.info("User ID: {} claiming promotion ID: {}", user.getId(), request.promotionId());
-		return ResponseEntity.ok(promotionService.claimPromotion(request, user));
+		log.info("POST /api/promotions/claim - user: {}, promotionId: {}", user.getId(), request.promotionId());
+		return promotionService.claimPromotion(request, user);
 	}
 
 	@GetMapping("/claimed")
-	@Operation(summary = "Get promotions claimed by current user")
+	@Operation(summary = "Get claimed promotions")
 	@PreAuthorize("isAuthenticated()")
-	public ResponseEntity<List<PromotionResponse>> getClaimedPromotions(
-			@AuthenticationPrincipal CustomUserDetails currentUser) {
+	public List<PromotionResponse> getClaimedPromotions(@AuthenticationPrincipal CustomUserDetails currentUser) {
 		User user = currentUser.getUser();
-		log.info("Getting claimed promotions for user ID: {}", user.getId());
-		return ResponseEntity.ok(promotionService.getClaimedPromotions(user));
+		log.info("GET /api/promotions/claimed - user: {}", user.getId());
+		return promotionService.getClaimedPromotions(user);
 	}
 }

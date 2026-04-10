@@ -4,7 +4,7 @@ import java.time.LocalDate;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
-public record PromotionAdminResponse(@Schema(description = "Promotion ID", example = "1") Long id,
+public record PromotionListResponse(@Schema(description = "Promotion ID", example = "1") Long id,
 
 		@Schema(description = "Title of the promotion", example = "Summer Special") String title,
 

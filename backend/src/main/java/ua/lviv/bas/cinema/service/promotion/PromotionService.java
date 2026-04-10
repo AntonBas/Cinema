@@ -5,12 +5,9 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
-import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -22,11 +19,9 @@ import ua.lviv.bas.cinema.domain.audit.AuditAction;
 import ua.lviv.bas.cinema.domain.promotion.Promotion;
 import ua.lviv.bas.cinema.domain.promotion.UserPromotion;
 import ua.lviv.bas.cinema.domain.user.User;
-import ua.lviv.bas.cinema.dto.PageResponse;
-import ua.lviv.bas.cinema.dto.promotion.request.PromotionCreateRequest;
-import ua.lviv.bas.cinema.dto.promotion.request.PromotionUpdateRequest;
-import ua.lviv.bas.cinema.dto.promotion.request.UserPromotionCreateRequest;
-import ua.lviv.bas.cinema.dto.promotion.response.PromotionAdminResponse;
+import ua.lviv.bas.cinema.dto.promotion.request.ClaimPromotionRequest;
+import ua.lviv.bas.cinema.dto.promotion.request.PromotionRequest;
+import ua.lviv.bas.cinema.dto.promotion.response.PromotionListResponse;
 import ua.lviv.bas.cinema.dto.promotion.response.PromotionResponse;
 import ua.lviv.bas.cinema.exception.domain.financial.promotion.AlreadyClaimedException;
 import ua.lviv.bas.cinema.exception.domain.financial.promotion.PromotionAlreadyExistsException;
@@ -37,8 +32,6 @@ import ua.lviv.bas.cinema.exception.domain.financial.promotion.PromotionNotFound
 import ua.lviv.bas.cinema.mapper.promotion.PromotionMapper;
 import ua.lviv.bas.cinema.repository.promotion.PromotionRepository;
 import ua.lviv.bas.cinema.repository.promotion.UserPromotionRepository;
-import ua.lviv.bas.cinema.repository.promotion.projection.PromotionAdminProjection;
-import ua.lviv.bas.cinema.repository.promotion.projection.PromotionResponseProjection;
 import ua.lviv.bas.cinema.service.bonus.BonusService;
 import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 
@@ -46,7 +39,6 @@ import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-@CacheConfig(cacheNames = "promotions")
 public class PromotionService {
 
 	private final PromotionRepository promotionRepository;
@@ -55,9 +47,9 @@ public class PromotionService {
 	private final BonusService bonusService;
 	private final AuditService auditService;
 
-	@CacheEvict(allEntries = true)
+	@CacheEvict(value = "promotions", allEntries = true)
 	@Transactional
-	public PromotionResponse createPromotion(PromotionCreateRequest request) {
+	public PromotionResponse createPromotion(PromotionRequest request) {
 		log.info("Creating new promotion: {}", request.title());
 
 		if (promotionRepository.existsByTitle(request.title())) {
@@ -66,86 +58,74 @@ public class PromotionService {
 
 		validateDates(request.startDate(), request.endDate());
 
-		Promotion promotion = promotionMapper.toPromotion(request);
-		promotion = promotionRepository.save(promotion);
+		var promotion = promotionMapper.toPromotion(request);
+		var saved = promotionRepository.save(promotion);
 
-		log.info("Promotion created with ID: {}", promotion.getId());
+		log.info("Promotion created with ID: {}", saved.getId());
+		auditCreate(saved);
 
-		Map<String, Object> details = new HashMap<>();
-		details.put("title", promotion.getTitle());
-		details.put("bonusPoints", promotion.getBonusPoints());
-
-		auditService.logChange("Promotion", promotion.getId(), promotion.getTitle(), AuditAction.CREATED, null,
-				details);
-
-		return promotionMapper.toPromotionResponse(promotion);
+		return promotionMapper.toPromotionResponse(saved);
 	}
 
-	@Cacheable(key = "#promotionId")
-	public PromotionResponse getPromotionById(Long promotionId) {
-		Promotion promotion = findByIdOrThrow(promotionId);
-		return promotionMapper.toPromotionResponse(promotion);
+	@Cacheable(value = "promotions", key = "'list-' + #pageable.pageNumber + '-' + #pageable.pageSize")
+	public Page<PromotionListResponse> getPromotions(Pageable pageable) {
+		log.info("Getting promotions: page={}, size={}", pageable.getPageNumber(), pageable.getPageSize());
+		return promotionRepository.findAllAdminProjections(pageable).map(promotionMapper::toPromotionListResponse);
 	}
 
-	@Caching(evict = { @CacheEvict(key = "#promotionId"), @CacheEvict(allEntries = true) })
+	public List<PromotionResponse> getAvailablePromotions(User user) {
+		log.debug("Getting available promotions for user: {}", user != null ? user.getEmail() : "anonymous");
+		return promotionRepository.findAllActivePromotions().stream().map(promotionMapper::toPromotionResponse)
+				.toList();
+	}
+
+	public List<PromotionResponse> getClaimedPromotions(User user) {
+		log.debug("Getting claimed promotions for user: {}", user.getEmail());
+		return promotionRepository.findClaimedPromotionsByUser(user).stream().map(promotionMapper::toPromotionResponse)
+				.toList();
+	}
+
+	@CacheEvict(value = "promotions", allEntries = true)
 	@Transactional
-	public PromotionResponse updatePromotion(Long promotionId, PromotionUpdateRequest request) {
-		log.info("Updating promotion with ID: {}", promotionId);
+	public PromotionResponse updatePromotion(Long id, PromotionRequest request) {
+		log.info("Updating promotion with ID: {}", id);
 
-		Promotion oldPromotion = findByIdOrThrow(promotionId);
-		Promotion promotion = findByIdOrThrow(promotionId);
-		promotionMapper.updatePromotionFromRequest(promotion, request);
+		var promotion = findByIdOrThrow(id);
+		String oldTitle = promotion.getTitle();
 
-		promotion = promotionRepository.save(promotion);
+		promotionMapper.updatePromotionFromRequest(request, promotion);
+		var updated = promotionRepository.save(promotion);
 
-		Map<String, Object> oldDetails = new HashMap<>();
-		oldDetails.put("title", oldPromotion.getTitle());
-		oldDetails.put("bonusPoints", oldPromotion.getBonusPoints());
+		log.info("Promotion updated with ID: {}", updated.getId());
+		auditUpdate(id, oldTitle, updated);
 
-		Map<String, Object> newDetails = new HashMap<>();
-		newDetails.put("title", promotion.getTitle());
-		newDetails.put("bonusPoints", promotion.getBonusPoints());
-
-		auditService.logChange("Promotion", promotionId, oldPromotion.getTitle(), AuditAction.UPDATED, oldDetails,
-				newDetails);
-
-		return promotionMapper.toPromotionResponse(promotion);
+		return promotionMapper.toPromotionResponse(updated);
 	}
 
-	@Caching(evict = { @CacheEvict(key = "#promotionId"), @CacheEvict(allEntries = true) })
+	@CacheEvict(value = "promotions", allEntries = true)
 	@Transactional
-	public void deletePromotion(Long promotionId) {
-		log.info("Deleting promotion with ID: {}", promotionId);
+	public void deletePromotion(Long id) {
+		log.info("Deleting promotion with ID: {}", id);
 
-		Promotion promotion = findByIdOrThrow(promotionId);
+		var promotion = findByIdOrThrow(id);
 
 		if (!promotion.getUserRedemptions().isEmpty()) {
 			int redemptionCount = promotion.getUserRedemptions().size();
-			throw new PromotionHasRedemptionsException(promotionId, redemptionCount);
+			throw new PromotionHasRedemptionsException(id, redemptionCount);
 		}
 
 		String promotionTitle = promotion.getTitle();
 		promotionRepository.delete(promotion);
-		log.info("Promotion with ID: {} has been deleted", promotionId);
-
-		Map<String, Object> details = new HashMap<>();
-		details.put("deleted", promotionTitle);
-
-		auditService.logChange("Promotion", promotionId, promotionTitle, AuditAction.DELETED, details, null);
+		log.info("Promotion with ID: {} has been deleted", id);
+		auditDelete(id, promotionTitle);
 	}
 
-	@Cacheable(key = "'all-' + #pageable.pageNumber + '-' + #pageable.pageSize")
-	public PageResponse<PromotionAdminResponse> getAllPromotions(Pageable pageable) {
-		Page<PromotionAdminProjection> page = promotionRepository.findAllAdminList(pageable);
-		return PageResponse.from(page.map(promotionMapper::toPromotionAdminResponse));
-	}
-
-	@Caching(evict = { @CacheEvict(key = "'available:' + #user.id"), @CacheEvict(allEntries = true) })
+	@CacheEvict(value = "promotions", allEntries = true)
 	@Transactional
-	public PromotionResponse claimPromotion(UserPromotionCreateRequest request, User user) {
+	public PromotionResponse claimPromotion(ClaimPromotionRequest request, User user) {
 		log.info("User {} claiming promotion {}", user.getEmail(), request.promotionId());
 
-		Promotion promotion = findByIdOrThrow(request.promotionId());
+		var promotion = findByIdOrThrow(request.promotionId());
 
 		if (!isPromotionActive(promotion)) {
 			throw new PromotionNotActiveException(promotion.getTitle());
@@ -155,47 +135,24 @@ public class PromotionService {
 			throw new AlreadyClaimedException(user.getEmail(), promotion.getTitle());
 		}
 
-		UserPromotion userPromotion = UserPromotion.builder().user(user).promotion(promotion)
-				.redeemedAt(LocalDateTime.now()).pointsAwarded(promotion.getBonusPoints()).build();
+		var userPromotion = UserPromotion.builder().user(user).promotion(promotion).redeemedAt(LocalDateTime.now())
+				.pointsAwarded(promotion.getBonusPoints()).build();
 
 		userPromotionRepository.save(userPromotion);
 		bonusService.addPoints(user, promotion.getBonusPoints(), promotion.getTitle());
 
 		log.info("Promotion claimed successfully. User received {} points", promotion.getBonusPoints());
-
-		Map<String, Object> details = new HashMap<>();
-		details.put("userId", user.getId());
-		details.put("userEmail", user.getEmail());
-		details.put("promotionId", promotion.getId());
-		details.put("promotionTitle", promotion.getTitle());
-		details.put("pointsAwarded", promotion.getBonusPoints());
-
-		auditService.logChange("Promotion", promotion.getId(), promotion.getTitle(), AuditAction.CLAIMED, null,
-				details);
+		auditClaim(promotion, user);
 
 		return promotionMapper.toPromotionResponse(promotion);
-	}
-
-	public List<PromotionResponse> getClaimedPromotions(User user) {
-		log.debug("Getting claimed promotions for user: {}", user.getEmail());
-		return promotionRepository.findClaimedPromotionsByUser(user).stream().map(promotionMapper::toPromotionResponse)
-				.collect(Collectors.toList());
-	}
-
-	public List<PromotionResponse> getAvailablePromotions(User user) {
-		log.debug("Getting available promotions for user: {}", user != null ? user.getEmail() : "anonymous");
-
-		List<PromotionResponseProjection> activePromotions = promotionRepository.findAllActivePromotions();
-
-		return activePromotions.stream().map(promotionMapper::toPromotionResponse).collect(Collectors.toList());
 	}
 
 	public boolean hasUserClaimedPromotion(User user, Long promotionId) {
 		return userPromotionRepository.existsByUserAndPromotionId(user, promotionId);
 	}
 
-	public Promotion findByIdOrThrow(Long promotionId) {
-		return promotionRepository.findById(promotionId).orElseThrow(() -> new PromotionNotFoundException(promotionId));
+	private Promotion findByIdOrThrow(Long id) {
+		return promotionRepository.findById(id).orElseThrow(() -> new PromotionNotFoundException(id));
 	}
 
 	private boolean isPromotionActive(Promotion promotion) {
@@ -213,5 +170,42 @@ public class PromotionService {
 		if (startDate != null && endDate != null && endDate.isBefore(startDate)) {
 			throw new PromotionDatesInvalidException(startDate, endDate);
 		}
+	}
+
+	private void auditCreate(Promotion promotion) {
+		Map<String, Object> details = new HashMap<>();
+		details.put("title", promotion.getTitle());
+		details.put("bonusPoints", promotion.getBonusPoints());
+		auditService.logChange("Promotion", promotion.getId(), promotion.getTitle(), AuditAction.CREATED, null,
+				details);
+	}
+
+	private void auditUpdate(Long id, String oldTitle, Promotion updated) {
+		Map<String, Object> oldDetails = new HashMap<>();
+		oldDetails.put("title", oldTitle);
+		oldDetails.put("bonusPoints", updated.getBonusPoints());
+
+		Map<String, Object> newDetails = new HashMap<>();
+		newDetails.put("title", updated.getTitle());
+		newDetails.put("bonusPoints", updated.getBonusPoints());
+
+		auditService.logChange("Promotion", id, oldTitle, AuditAction.UPDATED, oldDetails, newDetails);
+	}
+
+	private void auditDelete(Long id, String title) {
+		Map<String, Object> details = new HashMap<>();
+		details.put("deleted", title);
+		auditService.logChange("Promotion", id, title, AuditAction.DELETED, details, null);
+	}
+
+	private void auditClaim(Promotion promotion, User user) {
+		Map<String, Object> details = new HashMap<>();
+		details.put("userId", user.getId());
+		details.put("userEmail", user.getEmail());
+		details.put("promotionId", promotion.getId());
+		details.put("promotionTitle", promotion.getTitle());
+		details.put("pointsAwarded", promotion.getBonusPoints());
+		auditService.logChange("Promotion", promotion.getId(), promotion.getTitle(), AuditAction.CLAIMED, null,
+				details);
 	}
 }
