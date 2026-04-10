@@ -2,6 +2,9 @@ package ua.lviv.bas.cinema.controller.api;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -47,12 +50,12 @@ public class MovieControllerTest {
 	}
 
 	private MovieCardResponse createMovieCardResponse(Long id, String title, MovieStatus status) {
-		return new MovieCardResponse(id, SLUG + id, title, "/api/movies/" + id + "/poster", 120, AgeRating.PEGI_12,
+		return new MovieCardResponse(id, "slug-" + id, title, "/api/movies/" + id + "/poster", 120, AgeRating.PEGI_12,
 				status);
 	}
 
 	@Test
-	void getMovieBySlug_WhenMovieNotArchived_ReturnsOk() {
+	void getMovieBySlugWhenMovieNotArchivedShouldReturnOk() {
 		MovieDetailResponse movie = createMovieDetailResponse(MovieStatus.UPCOMING);
 
 		when(movieService.getMovieBySlug(SLUG)).thenReturn(movie);
@@ -66,7 +69,7 @@ public class MovieControllerTest {
 	}
 
 	@Test
-	void getMovieBySlug_WhenArchived_ThrowsException() {
+	void getMovieBySlugWhenArchivedShouldThrowException() {
 		MovieDetailResponse movie = createMovieDetailResponse(MovieStatus.ARCHIVED);
 
 		when(movieService.getMovieBySlug(SLUG)).thenReturn(movie);
@@ -76,64 +79,112 @@ public class MovieControllerTest {
 	}
 
 	@Test
-	void getMovieBySlug_WhenNotFound_ThrowsException() {
+	void getMovieBySlugWhenNotFoundShouldThrowException() {
 		when(movieService.getMovieBySlug(SLUG)).thenThrow(new MovieNotFoundException(SLUG));
 
 		assertThatThrownBy(() -> movieController.getMovieBySlug(SLUG)).isInstanceOf(MovieNotFoundException.class);
 	}
 
 	@Test
-	void getCurrentlyShowingMovies_ReturnsOk() {
+	void getCurrentlyShowingMoviesShouldReturnOk() {
 		Pageable pageable = PageRequest.of(0, 12);
 		MovieCardResponse movie1 = createMovieCardResponse(1L, "Movie 1", MovieStatus.CURRENT);
 		MovieCardResponse movie2 = createMovieCardResponse(2L, "Movie 2", MovieStatus.CURRENT);
 		Page<MovieCardResponse> page = new PageImpl<>(List.of(movie1, movie2), pageable, 2);
 
-		when(movieService.getFilteredMovies(null, MovieStatus.CURRENT, pageable)).thenReturn(page);
+		when(movieService.getMovies(isNull(), eq(MovieStatus.CURRENT), eq(pageable))).thenReturn(page);
 
 		ResponseEntity<PageResponse<MovieCardResponse>> response = movieController.getCurrentlyShowingMovies(pageable);
 
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 		assertThat(response.getBody()).isNotNull();
 		assertThat(response.getBody().content()).hasSize(2);
-		verify(movieService).getFilteredMovies(null, MovieStatus.CURRENT, pageable);
+		verify(movieService).getMovies(isNull(), eq(MovieStatus.CURRENT), eq(pageable));
 	}
 
 	@Test
-	void getUpcomingMovies_ReturnsOk() {
+	void getUpcomingMoviesShouldReturnOk() {
 		Pageable pageable = PageRequest.of(0, 12);
 		MovieCardResponse movie1 = createMovieCardResponse(1L, "Movie 1", MovieStatus.UPCOMING);
 		MovieCardResponse movie2 = createMovieCardResponse(2L, "Movie 2", MovieStatus.UPCOMING);
 		Page<MovieCardResponse> page = new PageImpl<>(List.of(movie1, movie2), pageable, 2);
 
-		when(movieService.getFilteredMovies(null, MovieStatus.UPCOMING, pageable)).thenReturn(page);
+		when(movieService.getMovies(isNull(), eq(MovieStatus.UPCOMING), eq(pageable))).thenReturn(page);
 
 		ResponseEntity<PageResponse<MovieCardResponse>> response = movieController.getUpcomingMovies(pageable);
 
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 		assertThat(response.getBody()).isNotNull();
 		assertThat(response.getBody().content()).hasSize(2);
-		verify(movieService).getFilteredMovies(null, MovieStatus.UPCOMING, pageable);
+		verify(movieService).getMovies(isNull(), eq(MovieStatus.UPCOMING), eq(pageable));
 	}
 
 	@Test
-	void getMoviePoster_ReturnsPoster() {
+	void getCurrentMoviesForHomeShouldReturnOk() {
+		MovieCardResponse movie1 = createMovieCardResponse(1L, "Movie 1", MovieStatus.CURRENT);
+		MovieCardResponse movie2 = createMovieCardResponse(2L, "Movie 2", MovieStatus.CURRENT);
+		List<MovieCardResponse> movies = List.of(movie1, movie2);
+
+		when(movieService.getCurrentMovies(any())).thenReturn(movies);
+
+		ResponseEntity<List<MovieCardResponse>> response = movieController.getCurrentMoviesForHome();
+
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+		assertThat(response.getBody()).isNotNull();
+		assertThat(response.getBody()).hasSize(2);
+		verify(movieService).getCurrentMovies(any());
+	}
+
+	@Test
+	void getUpcomingMoviesForHomeShouldReturnOk() {
+		MovieCardResponse movie1 = createMovieCardResponse(1L, "Movie 1", MovieStatus.UPCOMING);
+		MovieCardResponse movie2 = createMovieCardResponse(2L, "Movie 2", MovieStatus.UPCOMING);
+		List<MovieCardResponse> movies = List.of(movie1, movie2);
+
+		when(movieService.getUpcomingMovies(any())).thenReturn(movies);
+
+		ResponseEntity<List<MovieCardResponse>> response = movieController.getUpcomingMoviesForHome();
+
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+		assertThat(response.getBody()).isNotNull();
+		assertThat(response.getBody()).hasSize(2);
+		verify(movieService).getUpcomingMovies(any());
+	}
+
+	@Test
+	void getLeavingSoonMoviesForHomeShouldReturnOk() {
+		MovieCardResponse movie1 = createMovieCardResponse(1L, "Movie 1", MovieStatus.CURRENT);
+		MovieCardResponse movie2 = createMovieCardResponse(2L, "Movie 2", MovieStatus.CURRENT);
+		List<MovieCardResponse> movies = List.of(movie1, movie2);
+
+		when(movieService.getLeavingSoonMovies(any())).thenReturn(movies);
+
+		ResponseEntity<List<MovieCardResponse>> response = movieController.getLeavingSoonMoviesForHome();
+
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+		assertThat(response.getBody()).isNotNull();
+		assertThat(response.getBody()).hasSize(2);
+		verify(movieService).getLeavingSoonMovies(any());
+	}
+
+	@Test
+	void getPosterShouldReturnPoster() {
 		byte[] posterData = new byte[] { 1, 2, 3, 4, 5 };
 		ResponseEntity<byte[]> expectedResponse = ResponseEntity.ok(posterData);
 
-		when(movieService.getMoviePoster(MOVIE_ID)).thenReturn(expectedResponse);
+		when(movieService.getPoster(MOVIE_ID)).thenReturn(expectedResponse);
 
-		ResponseEntity<byte[]> response = movieController.getMoviePoster(MOVIE_ID);
+		ResponseEntity<byte[]> response = movieController.getPoster(MOVIE_ID);
 
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 		assertThat(response.getBody()).isEqualTo(posterData);
-		verify(movieService).getMoviePoster(MOVIE_ID);
+		verify(movieService).getPoster(MOVIE_ID);
 	}
 
 	@Test
-	void getMoviePoster_WhenNotFound_ThrowsException() {
-		when(movieService.getMoviePoster(MOVIE_ID)).thenThrow(new MovieNotFoundException(MOVIE_ID));
+	void getPosterWhenNotFoundShouldThrowException() {
+		when(movieService.getPoster(MOVIE_ID)).thenThrow(new MovieNotFoundException(MOVIE_ID));
 
-		assertThatThrownBy(() -> movieController.getMoviePoster(MOVIE_ID)).isInstanceOf(MovieNotFoundException.class);
+		assertThatThrownBy(() -> movieController.getPoster(MOVIE_ID)).isInstanceOf(MovieNotFoundException.class);
 	}
 }

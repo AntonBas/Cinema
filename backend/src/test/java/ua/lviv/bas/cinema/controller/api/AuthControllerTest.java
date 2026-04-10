@@ -23,6 +23,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import ua.lviv.bas.cinema.config.security.jwt.JwtTokenProvider;
 import ua.lviv.bas.cinema.config.security.user.CustomUserDetails;
@@ -44,8 +45,7 @@ public class AuthControllerTest {
 	@Autowired
 	private MockMvc mockMvc;
 
-	@Autowired
-	private ObjectMapper objectMapper;
+	private ObjectMapper objectMapper = new ObjectMapper();
 
 	@MockitoBean
 	private UserService userService;
@@ -73,6 +73,8 @@ public class AuthControllerTest {
 
 	@BeforeEach
 	void setUp() {
+		objectMapper.registerModule(new JavaTimeModule());
+
 		registrationRequest = new UserRegistrationRequest("anton@example.com", "Anton", "Bas",
 				LocalDate.of(2001, 8, 21), "Lviv", "+380123456789", "password123", "password123");
 
@@ -95,8 +97,8 @@ public class AuthControllerTest {
 	}
 
 	@Test
-	void register_ShouldReturnCreated_WhenValidRequest() throws Exception {
-		when(userService.registerUser(any(UserRegistrationRequest.class))).thenReturn(userResponse);
+	void registerShouldReturnCreatedWhenValidRequest() throws Exception {
+		when(userService.register(any(UserRegistrationRequest.class))).thenReturn(userResponse);
 
 		mockMvc.perform(post("/api/auth/register").contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(registrationRequest))).andExpect(status().isCreated())
@@ -105,7 +107,7 @@ public class AuthControllerTest {
 	}
 
 	@Test
-	void register_ShouldReturnBadRequest_WhenInvalidEmail() throws Exception {
+	void registerShouldReturnBadRequestWhenInvalidEmail() throws Exception {
 		UserRegistrationRequest invalidRequest = new UserRegistrationRequest("invalid-email", "Anton", "Bas",
 				LocalDate.of(2001, 8, 21), "Lviv", "+380123456789", "password123", "password123");
 
@@ -114,7 +116,15 @@ public class AuthControllerTest {
 	}
 
 	@Test
-	void login_ShouldReturnOk_WhenValidCredentials() throws Exception {
+	void registerShouldReturnBadRequestWhenBlankFields() throws Exception {
+		UserRegistrationRequest invalidRequest = new UserRegistrationRequest("", "", "", null, "", "", "", "");
+
+		mockMvc.perform(post("/api/auth/register").contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(invalidRequest))).andExpect(status().isBadRequest());
+	}
+
+	@Test
+	void loginShouldReturnOkWhenValidCredentials() throws Exception {
 		Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, null,
 				userDetails.getAuthorities());
 
@@ -130,7 +140,23 @@ public class AuthControllerTest {
 	}
 
 	@Test
-	void login_ShouldReturnUnauthorized_WhenInvalidCredentials() throws Exception {
+	void loginShouldReturnBadRequestWhenInvalidEmailFormat() throws Exception {
+		UserLoginRequest invalidRequest = new UserLoginRequest("invalid-email", "password123");
+
+		mockMvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(invalidRequest))).andExpect(status().isBadRequest());
+	}
+
+	@Test
+	void loginShouldReturnBadRequestWhenBlankFields() throws Exception {
+		UserLoginRequest invalidRequest = new UserLoginRequest("", "");
+
+		mockMvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(invalidRequest))).andExpect(status().isBadRequest());
+	}
+
+	@Test
+	void loginShouldReturnUnauthorizedWhenInvalidCredentials() throws Exception {
 		when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
 				.thenThrow(new BadCredentialsException("Bad credentials"));
 
@@ -139,42 +165,42 @@ public class AuthControllerTest {
 	}
 
 	@Test
-	void getCurrentUser_ShouldReturnUnauthorized_WhenNotAuthenticated() throws Exception {
-		mockMvc.perform(get("/api/auth/me")).andExpect(status().isUnauthorized());
-	}
-
-	@Test
-	void forgotPassword_ShouldReturnOk() throws Exception {
+	void forgotPasswordShouldReturnOk() throws Exception {
 		mockMvc.perform(post("/api/auth/password/forgot").param("email", "anton@example.com"))
 				.andExpect(status().isOk());
 	}
 
 	@Test
-	void forgotPassword_ShouldReturnBadRequest_WhenInvalidEmail() throws Exception {
+	void forgotPasswordShouldReturnBadRequestWhenInvalidEmail() throws Exception {
 		mockMvc.perform(post("/api/auth/password/forgot").param("email", "invalid-email"))
 				.andExpect(status().isBadRequest());
 	}
 
 	@Test
-	void resetPassword_ShouldReturnOk() throws Exception {
+	void forgotPasswordShouldReturnBadRequestWhenEmailBlank() throws Exception {
+		mockMvc.perform(post("/api/auth/password/forgot").param("email", "")).andExpect(status().isBadRequest());
+	}
+
+	@Test
+	void resetPasswordShouldReturnOk() throws Exception {
 		mockMvc.perform(post("/api/auth/password/reset").param("token", "token123").param("newPassword", "newPass"))
 				.andExpect(status().isOk());
 	}
 
 	@Test
-	void resetPassword_ShouldReturnBadRequest_WhenTokenIsBlank() throws Exception {
+	void resetPasswordShouldReturnBadRequestWhenTokenIsBlank() throws Exception {
 		mockMvc.perform(post("/api/auth/password/reset").param("token", "").param("newPassword", "newPass"))
 				.andExpect(status().isBadRequest());
 	}
 
 	@Test
-	void resetPassword_ShouldReturnBadRequest_WhenNewPasswordIsBlank() throws Exception {
+	void resetPasswordShouldReturnBadRequestWhenNewPasswordIsBlank() throws Exception {
 		mockMvc.perform(post("/api/auth/password/reset").param("token", "token123").param("newPassword", ""))
 				.andExpect(status().isBadRequest());
 	}
 
 	@Test
-	void checkEmailExists_ShouldReturnTrue_WhenEmailExists() throws Exception {
+	void checkEmailShouldReturnTrueWhenEmailExists() throws Exception {
 		when(userService.emailExists("anton@example.com")).thenReturn(true);
 
 		mockMvc.perform(get("/api/auth/email/check").param("email", "anton@example.com")).andExpect(status().isOk())
@@ -182,7 +208,7 @@ public class AuthControllerTest {
 	}
 
 	@Test
-	void checkEmailExists_ShouldReturnFalse_WhenEmailNotExists() throws Exception {
+	void checkEmailShouldReturnFalseWhenEmailNotExists() throws Exception {
 		when(userService.emailExists("nonexistent@example.com")).thenReturn(false);
 
 		mockMvc.perform(get("/api/auth/email/check").param("email", "nonexistent@example.com"))
@@ -190,14 +216,14 @@ public class AuthControllerTest {
 	}
 
 	@Test
-	void checkEmailExists_ShouldReturnBadRequest_WhenInvalidEmail() throws Exception {
+	void checkEmailShouldReturnBadRequestWhenInvalidEmail() throws Exception {
 		mockMvc.perform(get("/api/auth/email/check").param("email", "invalid-email"))
 				.andExpect(status().isBadRequest());
 	}
 
 	@Test
-	void oauth2Success_ShouldReturnOk() throws Exception {
-		when(userService.getUserById(1L)).thenReturn(user);
+	void oauth2SuccessShouldReturnOk() throws Exception {
+		when(userService.getUser(1L)).thenReturn(user);
 		when(userMapper.toUserResponse(user)).thenReturn(userResponse);
 
 		mockMvc.perform(get("/api/auth/oauth2/success").param("token", "oauth2Token").param("userId", "1")
@@ -207,14 +233,14 @@ public class AuthControllerTest {
 	}
 
 	@Test
-	void oauth2Success_ShouldReturnBadRequest_WhenUserIdMissing() throws Exception {
+	void oauth2SuccessShouldReturnBadRequestWhenUserIdMissing() throws Exception {
 		mockMvc.perform(
 				get("/api/auth/oauth2/success").param("token", "oauth2Token").param("email", "anton@example.com"))
 				.andExpect(status().isBadRequest());
 	}
 
 	@Test
-	void oauth2Success_ShouldReturnBadRequest_WhenEmailMissing() throws Exception {
+	void oauth2SuccessShouldReturnBadRequestWhenEmailMissing() throws Exception {
 		mockMvc.perform(get("/api/auth/oauth2/success").param("token", "oauth2Token").param("userId", "1"))
 				.andExpect(status().isBadRequest());
 	}

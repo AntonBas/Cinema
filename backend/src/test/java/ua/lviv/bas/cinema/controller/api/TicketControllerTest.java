@@ -19,7 +19,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.ResponseEntity;
 
 import ua.lviv.bas.cinema.config.security.user.CustomUserDetails;
 import ua.lviv.bas.cinema.domain.ticket.TicketStatus;
@@ -54,31 +53,29 @@ public class TicketControllerTest {
 	}
 
 	private TicketResponse createTicketResponse(Long id, String code, TicketStatus status) {
-		return new TicketResponse(id, code, null, status, LocalDateTime.now(), new BigDecimal("250.00"), "Adult",
-				"Inception", LocalDateTime.now().plusDays(1), "Hall A", 1, 12);
+		return new TicketResponse(id, code, "/api/tickets/code/" + code + "/qr", status, LocalDateTime.now(),
+				new BigDecimal("250.00"), "Adult", "Inception", LocalDateTime.now().plusDays(1), "Hall A", 1, 12);
 	}
 
 	@Test
-	void getUserTickets_WithoutFilters_ReturnsPage() {
+	void getTicketsWithoutFiltersShouldReturnPage() {
 		CustomUserDetails userDetails = createUserDetails();
 		User user = userDetails.getUser();
 		Pageable pageable = PageRequest.of(0, 10);
 		TicketResponse ticket = createTicketResponse(1L, TICKET_CODE, TicketStatus.ACTIVE);
 		Page<TicketResponse> page = new PageImpl<>(List.of(ticket), pageable, 1);
 
-		when(ticketService.getUserTickets(eq(user), any(TicketFilterRequest.class), eq(pageable))).thenReturn(page);
+		when(ticketService.getTickets(eq(user), any(TicketFilterRequest.class), eq(pageable))).thenReturn(page);
 
-		ResponseEntity<PageResponse<TicketResponse>> response = ticketController.getUserTickets(userDetails, null, null,
-				pageable);
+		PageResponse<TicketResponse> response = ticketController.getTickets(userDetails, null, null, pageable);
 
-		assertThat(response.getStatusCode().value()).isEqualTo(200);
-		assertThat(response.getBody()).isNotNull();
-		assertThat(response.getBody().content()).hasSize(1);
-		verify(ticketService).getUserTickets(eq(user), any(TicketFilterRequest.class), eq(pageable));
+		assertThat(response).isNotNull();
+		assertThat(response.content()).hasSize(1);
+		verify(ticketService).getTickets(eq(user), any(TicketFilterRequest.class), eq(pageable));
 	}
 
 	@Test
-	void getUserTickets_WithStatusFilter_ReturnsPage() {
+	void getTicketsWithStatusFilterShouldReturnPage() {
 		CustomUserDetails userDetails = createUserDetails();
 		User user = userDetails.getUser();
 		Pageable pageable = PageRequest.of(0, 10);
@@ -86,19 +83,17 @@ public class TicketControllerTest {
 		Page<TicketResponse> page = new PageImpl<>(List.of(ticket), pageable, 1);
 		TicketStatus status = TicketStatus.ACTIVE;
 
-		when(ticketService.getUserTickets(eq(user), any(TicketFilterRequest.class), eq(pageable))).thenReturn(page);
+		when(ticketService.getTickets(eq(user), any(TicketFilterRequest.class), eq(pageable))).thenReturn(page);
 
-		ResponseEntity<PageResponse<TicketResponse>> response = ticketController.getUserTickets(userDetails, status,
-				null, pageable);
+		PageResponse<TicketResponse> response = ticketController.getTickets(userDetails, status, null, pageable);
 
-		assertThat(response.getStatusCode().value()).isEqualTo(200);
-		assertThat(response.getBody()).isNotNull();
-		assertThat(response.getBody().content()).hasSize(1);
-		verify(ticketService).getUserTickets(eq(user), any(TicketFilterRequest.class), eq(pageable));
+		assertThat(response).isNotNull();
+		assertThat(response.content()).hasSize(1);
+		verify(ticketService).getTickets(eq(user), any(TicketFilterRequest.class), eq(pageable));
 	}
 
 	@Test
-	void getUserTickets_WithMovieTitleFilter_ReturnsPage() {
+	void getTicketsWithMovieTitleFilterShouldReturnPage() {
 		CustomUserDetails userDetails = createUserDetails();
 		User user = userDetails.getUser();
 		Pageable pageable = PageRequest.of(0, 10);
@@ -106,93 +101,63 @@ public class TicketControllerTest {
 		Page<TicketResponse> page = new PageImpl<>(List.of(ticket), pageable, 1);
 		String movieTitle = "Inception";
 
-		when(ticketService.getUserTickets(eq(user), any(TicketFilterRequest.class), eq(pageable))).thenReturn(page);
+		when(ticketService.getTickets(eq(user), any(TicketFilterRequest.class), eq(pageable))).thenReturn(page);
 
-		ResponseEntity<PageResponse<TicketResponse>> response = ticketController.getUserTickets(userDetails, null,
-				movieTitle, pageable);
+		PageResponse<TicketResponse> response = ticketController.getTickets(userDetails, null, movieTitle, pageable);
 
-		assertThat(response.getStatusCode().value()).isEqualTo(200);
-		assertThat(response.getBody()).isNotNull();
-		assertThat(response.getBody().content()).hasSize(1);
-		verify(ticketService).getUserTickets(eq(user), any(TicketFilterRequest.class), eq(pageable));
+		assertThat(response).isNotNull();
+		assertThat(response.content()).hasSize(1);
+		verify(ticketService).getTickets(eq(user), any(TicketFilterRequest.class), eq(pageable));
 	}
 
 	@Test
-	void getUserTickets_WithAllFilters_ReturnsPage() {
-		CustomUserDetails userDetails = createUserDetails();
-		User user = userDetails.getUser();
-		Pageable pageable = PageRequest.of(0, 10);
-		TicketResponse ticket = createTicketResponse(1L, TICKET_CODE, TicketStatus.ACTIVE);
-		Page<TicketResponse> page = new PageImpl<>(List.of(ticket), pageable, 1);
-		TicketStatus status = TicketStatus.ACTIVE;
-		String movieTitle = "Inception";
-
-		when(ticketService.getUserTickets(eq(user), any(TicketFilterRequest.class), eq(pageable))).thenReturn(page);
-
-		ResponseEntity<PageResponse<TicketResponse>> response = ticketController.getUserTickets(userDetails, status,
-				movieTitle, pageable);
-
-		assertThat(response.getStatusCode().value()).isEqualTo(200);
-		assertThat(response.getBody()).isNotNull();
-		assertThat(response.getBody().content()).hasSize(1);
-		verify(ticketService).getUserTickets(eq(user), any(TicketFilterRequest.class), eq(pageable));
-	}
-
-	@Test
-	void getUserTickets_WithEmptyPage_ReturnsEmptyPage() {
+	void getTicketsWithEmptyPageShouldReturnEmptyPage() {
 		CustomUserDetails userDetails = createUserDetails();
 		User user = userDetails.getUser();
 		Pageable pageable = PageRequest.of(0, 10);
 		Page<TicketResponse> emptyPage = new PageImpl<>(List.of(), pageable, 0);
 
-		when(ticketService.getUserTickets(eq(user), any(TicketFilterRequest.class), eq(pageable)))
-				.thenReturn(emptyPage);
+		when(ticketService.getTickets(eq(user), any(TicketFilterRequest.class), eq(pageable))).thenReturn(emptyPage);
 
-		ResponseEntity<PageResponse<TicketResponse>> response = ticketController.getUserTickets(userDetails, null, null,
-				pageable);
+		PageResponse<TicketResponse> response = ticketController.getTickets(userDetails, null, null, pageable);
 
-		assertThat(response.getStatusCode().value()).isEqualTo(200);
-		assertThat(response.getBody()).isNotNull();
-		assertThat(response.getBody().content()).isEmpty();
-		assertThat(response.getBody().totalElements()).isZero();
-		verify(ticketService).getUserTickets(eq(user), any(TicketFilterRequest.class), eq(pageable));
+		assertThat(response).isNotNull();
+		assertThat(response.content()).isEmpty();
+		assertThat(response.totalElements()).isZero();
+		verify(ticketService).getTickets(eq(user), any(TicketFilterRequest.class), eq(pageable));
 	}
 
 	@Test
-	void getTicketByCode_ReturnsTicket() {
+	void getTicketByCodeShouldReturnTicket() {
 		CustomUserDetails userDetails = createUserDetails();
 		User user = userDetails.getUser();
 		TicketResponse ticket = createTicketResponse(1L, TICKET_CODE, TicketStatus.ACTIVE);
 
-		when(ticketService.getTicketByCode(TICKET_CODE, user)).thenReturn(ticket);
+		when(ticketService.getTicket(TICKET_CODE, user)).thenReturn(ticket);
 
-		ResponseEntity<TicketResponse> response = ticketController.getTicketByCode(TICKET_CODE, userDetails);
+		TicketResponse response = ticketController.getTicket(TICKET_CODE, userDetails);
 
-		assertThat(response.getStatusCode().value()).isEqualTo(200);
-		assertThat(response.getBody()).isNotNull();
-		assertThat(response.getBody().ticketCode()).isEqualTo(TICKET_CODE);
-		verify(ticketService).getTicketByCode(TICKET_CODE, user);
+		assertThat(response).isNotNull();
+		assertThat(response.ticketCode()).isEqualTo(TICKET_CODE);
+		verify(ticketService).getTicket(TICKET_CODE, user);
 	}
 
 	@Test
-	void getTicketQRCode_ReturnsImage() {
+	void getQRShouldReturnImage() {
 		byte[] qrCode = new byte[] { 1, 2, 3, 4, 5 };
 
-		when(ticketService.generateTicketQRCode(TICKET_CODE)).thenReturn(qrCode);
+		when(ticketService.generateQR(TICKET_CODE)).thenReturn(qrCode);
 
-		ResponseEntity<byte[]> response = ticketController.getTicketQRCode(TICKET_CODE);
+		byte[] response = ticketController.getQR(TICKET_CODE);
 
-		assertThat(response.getStatusCode().value()).isEqualTo(200);
-		assertThat(response.getHeaders().getContentType().toString()).isEqualTo("image/png");
-		assertThat(response.getBody()).isEqualTo(qrCode);
-		verify(ticketService).generateTicketQRCode(TICKET_CODE);
+		assertThat(response).isEqualTo(qrCode);
+		verify(ticketService).generateQR(TICKET_CODE);
 	}
 
 	@Test
-	void validateTicket_ReturnsOk() {
-		ResponseEntity<Void> response = ticketController.validateTicket(TICKET_CODE);
+	void validateShouldCallService() {
+		ticketController.validate(TICKET_CODE);
 
-		assertThat(response.getStatusCode().value()).isEqualTo(200);
-		verify(ticketService).validateTicket(TICKET_CODE);
+		verify(ticketService).validate(TICKET_CODE);
 	}
 }

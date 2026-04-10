@@ -11,10 +11,9 @@ import org.junit.jupiter.api.Test;
 
 import ua.lviv.bas.cinema.domain.ticket.TicketType;
 import ua.lviv.bas.cinema.domain.ticket.TicketTypeCategory;
-import ua.lviv.bas.cinema.dto.ticketType.request.TicketTypeCreateRequest;
-import ua.lviv.bas.cinema.dto.ticketType.request.TicketTypeUpdateRequest;
-import ua.lviv.bas.cinema.dto.ticketType.response.TicketTypeAdminResponse;
-import ua.lviv.bas.cinema.repository.ticket.projection.TicketTypeAdminProjection;
+import ua.lviv.bas.cinema.dto.ticketType.request.TicketTypeRequest;
+import ua.lviv.bas.cinema.dto.ticketType.response.TicketTypeResponse;
+import ua.lviv.bas.cinema.repository.ticket.projection.TicketTypeProjection;
 
 public class TicketTypeMapperTest {
 
@@ -26,9 +25,9 @@ public class TicketTypeMapperTest {
 	}
 
 	@Test
-	void toTicketType_ShouldMapAllFieldsFromCreateRequest() {
-		TicketTypeCreateRequest request = new TicketTypeCreateRequest("Child Ticket", new BigDecimal("0.70"), 0, 12,
-				true, "Birth Certificate", true, TicketTypeCategory.CHILD);
+	void toTicketTypeShouldMapAllFieldsFromRequest() {
+		TicketTypeRequest request = new TicketTypeRequest("Child Ticket", new BigDecimal("0.70"), 0, 12, true,
+				"Birth Certificate", true, TicketTypeCategory.CHILD);
 
 		TicketType entity = mapper.toTicketType(request);
 
@@ -44,19 +43,19 @@ public class TicketTypeMapperTest {
 	}
 
 	@Test
-	void toTicketType_ShouldReturnNull_WhenInputIsNull() {
+	void toTicketTypeShouldReturnNullWhenInputIsNull() {
 		assertThat(mapper.toTicketType(null)).isNull();
 	}
 
 	@Test
-	void updateTicketTypeFromRequest_ShouldUpdateAllFields() {
+	void updateTicketTypeFromRequestShouldUpdateAllFields() {
 		TicketType existing = TicketType.builder().id(1L).displayName("Old Name")
 				.priceMultiplier(new BigDecimal("1.00")).build();
 
-		TicketTypeUpdateRequest updateRequest = new TicketTypeUpdateRequest("New Name", new BigDecimal("0.80"), 18, 65,
-				true, "ID Card", false, TicketTypeCategory.SENIOR);
+		TicketTypeRequest updateRequest = new TicketTypeRequest("New Name", new BigDecimal("0.80"), 18, 65, true,
+				"ID Card", false, TicketTypeCategory.SENIOR);
 
-		mapper.updateTicketTypeFromRequest(existing, updateRequest);
+		mapper.updateTicketTypeFromRequest(updateRequest, existing);
 
 		assertThat(existing.getId()).isEqualTo(1L);
 		assertThat(existing.getDisplayName()).isEqualTo("New Name");
@@ -70,14 +69,14 @@ public class TicketTypeMapperTest {
 	}
 
 	@Test
-	void updateTicketTypeFromRequest_ShouldIgnoreNullValues() {
+	void updateTicketTypeFromRequestShouldIgnoreNullValues() {
 		TicketType existing = TicketType.builder().id(1L).displayName("Original Name")
 				.priceMultiplier(new BigDecimal("1.00")).minAge(10).active(true).build();
 
-		TicketTypeUpdateRequest updateRequest = new TicketTypeUpdateRequest("Updated Name", null, null, null, null,
-				null, null, null);
+		TicketTypeRequest updateRequest = new TicketTypeRequest("Updated Name", null, null, null, false, null, true,
+				null);
 
-		mapper.updateTicketTypeFromRequest(existing, updateRequest);
+		mapper.updateTicketTypeFromRequest(updateRequest, existing);
 
 		assertThat(existing.getDisplayName()).isEqualTo("Updated Name");
 		assertThat(existing.getPriceMultiplier()).isEqualByComparingTo("1.00");
@@ -86,12 +85,12 @@ public class TicketTypeMapperTest {
 	}
 
 	@Test
-	void toTicketTypeResponse_ShouldMapAllFieldsFromEntity() {
+	void toTicketTypeResponseShouldMapAllFieldsFromEntity() {
 		TicketType entity = TicketType.builder().id(1L).displayName("Student Ticket")
 				.priceMultiplier(new BigDecimal("0.50")).minAge(18).maxAge(25).requiresDocument(true)
 				.documentType("Student ID").active(true).category(TicketTypeCategory.STUDENT).build();
 
-		TicketTypeAdminResponse response = mapper.toTicketTypeResponse(entity);
+		TicketTypeResponse response = mapper.toTicketTypeResponse(entity);
 
 		assertThat(response.id()).isEqualTo(1L);
 		assertThat(response.displayName()).isEqualTo("Student Ticket");
@@ -105,8 +104,8 @@ public class TicketTypeMapperTest {
 	}
 
 	@Test
-	void toTicketTypeResponse_ShouldMapFromAdminProjection() {
-		TicketTypeAdminProjection projection = mock(TicketTypeAdminProjection.class);
+	void toTicketTypeResponseShouldMapFromProjection() {
+		TicketTypeProjection projection = mock(TicketTypeProjection.class);
 
 		when(projection.getId()).thenReturn(1L);
 		when(projection.getDisplayName()).thenReturn("Admin Projection");
@@ -118,7 +117,7 @@ public class TicketTypeMapperTest {
 		when(projection.isActive()).thenReturn(true);
 		when(projection.getCategory()).thenReturn(TicketTypeCategory.STANDARD);
 
-		TicketTypeAdminResponse response = mapper.toTicketTypeResponse(projection);
+		TicketTypeResponse response = mapper.toTicketTypeResponse(projection);
 
 		assertThat(response.id()).isEqualTo(1L);
 		assertThat(response.displayName()).isEqualTo("Admin Projection");
@@ -132,11 +131,11 @@ public class TicketTypeMapperTest {
 	}
 
 	@Test
-	void updateTicketTypeFromRequest_WithNullRequest_ShouldNotChange() {
+	void updateTicketTypeFromRequestWithNullRequestShouldNotChange() {
 		TicketType existing = TicketType.builder().id(1L).displayName("Original Name")
 				.priceMultiplier(new BigDecimal("1.00")).build();
 
-		mapper.updateTicketTypeFromRequest(existing, null);
+		mapper.updateTicketTypeFromRequest(null, existing);
 
 		assertThat(existing.getDisplayName()).isEqualTo("Original Name");
 		assertThat(existing.getPriceMultiplier()).isEqualByComparingTo("1.00");

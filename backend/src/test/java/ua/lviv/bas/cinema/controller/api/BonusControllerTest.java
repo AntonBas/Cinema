@@ -1,7 +1,6 @@
 package ua.lviv.bas.cinema.controller.api;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -21,6 +20,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
+import ua.lviv.bas.cinema.domain.bonus.BonusTransactionType;
 import ua.lviv.bas.cinema.dto.PageResponse;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusBalanceResponse;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusTransactionResponse;
@@ -37,7 +37,7 @@ public class BonusControllerTest {
 	private BonusController bonusController;
 
 	@Test
-	void getMyBalance_ShouldReturnBalance() {
+	void getBalanceShouldReturnBalance() {
 		Long userId = 1L;
 
 		BonusBalanceResponse balanceResponse = new BonusBalanceResponse(250, new BigDecimal("1.00"),
@@ -45,52 +45,54 @@ public class BonusControllerTest {
 
 		when(bonusService.getBalance(userId)).thenReturn(balanceResponse);
 
-		BonusBalanceResponse response = bonusController.getMyBalance(userId);
+		BonusBalanceResponse response = bonusController.getBalance(userId);
 
-		assertNotNull(response);
-		assertEquals(250, response.pointsBalance());
-		assertEquals(new BigDecimal("1.00"), response.pointValue());
-		assertEquals(new BigDecimal("250.00"), response.balanceValue());
+		assertThat(response).isNotNull();
+		assertThat(response.pointsBalance()).isEqualTo(250);
+		assertThat(response.pointValue()).isEqualTo(new BigDecimal("1.00"));
+		assertThat(response.balanceValue()).isEqualTo(new BigDecimal("250.00"));
 	}
 
 	@Test
-	void getMyBalance_ShouldThrowWhenCardNotFound() {
+	void getBalanceShouldThrowWhenCardNotFound() {
 		Long userId = 1L;
 		when(bonusService.getBalance(userId)).thenThrow(new BonusCardNotFoundException(userId));
 
-		assertThrows(BonusCardNotFoundException.class, () -> bonusController.getMyBalance(userId));
+		assertThrows(BonusCardNotFoundException.class, () -> bonusController.getBalance(userId));
 	}
 
 	@Test
-	void getMyTransactions_ShouldReturnPagedTransactions() {
+	void getTransactionsShouldReturnPagedTransactions() {
 		Long userId = 1L;
 		Pageable pageable = PageRequest.of(0, 20);
 
-		BonusTransactionResponse transaction1 = new BonusTransactionResponse(1L, "WELCOME_BONUS", "+150",
-				LocalDateTime.now(), 150);
+		BonusTransactionResponse transaction1 = new BonusTransactionResponse(1L, BonusTransactionType.WELCOME_BONUS,
+				"+150", LocalDateTime.now(), 150);
 
-		BonusTransactionResponse transaction2 = new BonusTransactionResponse(2L, "BOOKING_SPEND", "-25",
-				LocalDateTime.now(), 125);
+		BonusTransactionResponse transaction2 = new BonusTransactionResponse(2L, BonusTransactionType.BOOKING_SPEND,
+				"-25", LocalDateTime.now(), 125);
 
 		Page<BonusTransactionResponse> page = new PageImpl<>(List.of(transaction1, transaction2), pageable, 2);
 
 		when(bonusService.getTransactions(eq(userId), any(Pageable.class))).thenReturn(page);
 
-		PageResponse<BonusTransactionResponse> response = bonusController.getMyTransactions(userId, pageable);
+		PageResponse<BonusTransactionResponse> response = bonusController.getTransactions(userId, pageable);
 
-		assertNotNull(response);
-		assertEquals(2, response.content().size());
-		assertEquals(2, response.totalElements());
-		assertEquals(1L, response.content().get(0).id());
-		assertEquals("WELCOME_BONUS", response.content().get(0).type());
-		assertEquals("+150", response.content().get(0).pointsChange());
-		assertEquals(2L, response.content().get(1).id());
-		assertEquals("BOOKING_SPEND", response.content().get(1).type());
-		assertEquals("-25", response.content().get(1).pointsChange());
+		assertThat(response).isNotNull();
+		assertThat(response.content()).hasSize(2);
+		assertThat(response.totalElements()).isEqualTo(2);
+		assertThat(response.content().get(0).id()).isEqualTo(1L);
+		assertThat(response.content().get(0).type()).isEqualTo(BonusTransactionType.WELCOME_BONUS);
+		assertThat(response.content().get(0).pointsChange()).isEqualTo("+150");
+		assertThat(response.content().get(0).newBalance()).isEqualTo(150);
+		assertThat(response.content().get(1).id()).isEqualTo(2L);
+		assertThat(response.content().get(1).type()).isEqualTo(BonusTransactionType.BOOKING_SPEND);
+		assertThat(response.content().get(1).pointsChange()).isEqualTo("-25");
+		assertThat(response.content().get(1).newBalance()).isEqualTo(125);
 	}
 
 	@Test
-	void getMyTransactions_ShouldReturnEmptyPage() {
+	void getTransactionsShouldReturnEmptyPage() {
 		Long userId = 1L;
 		Pageable pageable = PageRequest.of(0, 20);
 
@@ -98,11 +100,35 @@ public class BonusControllerTest {
 
 		when(bonusService.getTransactions(eq(userId), any(Pageable.class))).thenReturn(emptyPage);
 
-		PageResponse<BonusTransactionResponse> response = bonusController.getMyTransactions(userId, pageable);
+		PageResponse<BonusTransactionResponse> response = bonusController.getTransactions(userId, pageable);
 
-		assertNotNull(response);
-		assertEquals(0, response.content().size());
-		assertEquals(0, response.totalElements());
-		assertEquals(true, response.empty());
+		assertThat(response).isNotNull();
+		assertThat(response.content()).isEmpty();
+		assertThat(response.totalElements()).isZero();
+		assertThat(response.empty()).isTrue();
+	}
+
+	@Test
+	void getTransactionsWithCustomPageableShouldReturnPagedTransactions() {
+		Long userId = 1L;
+		Pageable pageable = PageRequest.of(1, 5);
+
+		BonusTransactionResponse transaction = new BonusTransactionResponse(1L, BonusTransactionType.PAYMENT_ACCRUAL,
+				"+50", LocalDateTime.now(), 200);
+
+		Page<BonusTransactionResponse> page = new PageImpl<>(List.of(transaction), pageable, 10);
+
+		when(bonusService.getTransactions(eq(userId), eq(pageable))).thenReturn(page);
+
+		PageResponse<BonusTransactionResponse> response = bonusController.getTransactions(userId, pageable);
+
+		assertThat(response).isNotNull();
+		assertThat(response.content()).hasSize(1);
+		assertThat(response.number()).isEqualTo(1);
+		assertThat(response.size()).isEqualTo(5);
+		assertThat(response.totalElements()).isEqualTo(10);
+		assertThat(response.totalPages()).isEqualTo(2);
+		assertThat(response.content().get(0).type()).isEqualTo(BonusTransactionType.PAYMENT_ACCRUAL);
+		assertThat(response.content().get(0).pointsChange()).isEqualTo("+50");
 	}
 }

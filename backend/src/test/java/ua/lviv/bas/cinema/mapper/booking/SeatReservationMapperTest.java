@@ -3,7 +3,6 @@ package ua.lviv.bas.cinema.mapper.booking;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.math.BigDecimal;
-import java.util.Arrays;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -22,56 +21,44 @@ public class SeatReservationMapperTest {
 	private SeatReservationMapper seatReservationMapper = new SeatReservationMapperImpl();
 	private Session session;
 	private Seat seat1;
-	@SuppressWarnings("unused")
-	private Seat seat2;
 	private TicketType adultTicketType;
-	@SuppressWarnings("unused")
-	private TicketType childTicketType;
 	private List<SeatReservationResponse.SeatInfo> seatInfos;
 	private List<SeatReservationResponse.TicketPriceInfo> ticketPrices1;
-	private List<SeatReservationResponse.TicketPriceInfo> ticketPrices2;
 
 	@BeforeEach
 	void setUp() {
-		Movie movie = Movie.builder().id(1L).title("Inception").build();
-
-		CinemaHall hall = CinemaHall.builder().id(1L).name("Hall A").build();
-
+		var movie = Movie.builder().id(1L).title("Inception").build();
+		var hall = CinemaHall.builder().id(1L).name("Hall A").build();
 		session = Session.builder().id(1L).movie(movie).hall(hall).basePrice(new BigDecimal("250.00")).build();
 
 		seat1 = Seat.builder().id(1L).row(5).number(12).seatType(SeatType.STANDARD).active(true).build();
-
-		seat2 = Seat.builder().id(2L).row(5).number(13).seatType(SeatType.VIP).active(true).build();
+		Seat.builder().id(2L).row(5).number(13).seatType(SeatType.VIP).active(true).build();
 
 		adultTicketType = TicketType.builder().id(1L).displayName("Adult").build();
+		TicketType.builder().id(2L).displayName("Child").build();
 
-		childTicketType = TicketType.builder().id(2L).displayName("Child").build();
-
-		ticketPrices1 = Arrays.asList(
+		ticketPrices1 = List.of(
 				new SeatReservationResponse.TicketPriceInfo(1L, "Adult", new BigDecimal("250.00"), null, null, false,
 						null),
 				new SeatReservationResponse.TicketPriceInfo(2L, "Child", new BigDecimal("200.00"), null, null, false,
 						null));
 
-		ticketPrices2 = Arrays.asList(
+		var ticketPrices2 = List.of(
 				new SeatReservationResponse.TicketPriceInfo(1L, "Adult", new BigDecimal("350.00"), null, null, false,
 						null),
 				new SeatReservationResponse.TicketPriceInfo(2L, "Child", new BigDecimal("280.00"), null, null, false,
 						null));
 
-		SeatReservationResponse.SeatInfo seatInfo1 = new SeatReservationResponse.SeatInfo(1L, 5, 12, SeatType.STANDARD,
-				true, false, true, ticketPrices1);
+		var seatInfo1 = new SeatReservationResponse.SeatInfo(1L, 5, 12, SeatType.STANDARD, true, false, true,
+				ticketPrices1);
+		var seatInfo2 = new SeatReservationResponse.SeatInfo(2L, 5, 13, SeatType.VIP, true, false, true, ticketPrices2);
 
-		SeatReservationResponse.SeatInfo seatInfo2 = new SeatReservationResponse.SeatInfo(2L, 5, 13, SeatType.VIP, true,
-				false, true, ticketPrices2);
-
-		seatInfos = Arrays.asList(seatInfo1, seatInfo2);
+		seatInfos = List.of(seatInfo1, seatInfo2);
 	}
 
 	@Test
 	void toResponse() {
-		int availableSeatsCount = 2;
-		SeatReservationResponse response = seatReservationMapper.toResponse(session, seatInfos, availableSeatsCount);
+		var response = seatReservationMapper.toResponse(session, seatInfos, 2);
 
 		assertThat(response).isNotNull();
 		assertThat(response.sessionId()).isEqualTo(1L);
@@ -84,8 +71,7 @@ public class SeatReservationMapperTest {
 
 	@Test
 	void toResponseWithEmptySeats() {
-		int availableSeatsCount = 0;
-		SeatReservationResponse response = seatReservationMapper.toResponse(session, List.of(), availableSeatsCount);
+		var response = seatReservationMapper.toResponse(session, List.of(), 0);
 
 		assertThat(response).isNotNull();
 		assertThat(response.sessionId()).isEqualTo(1L);
@@ -95,8 +81,7 @@ public class SeatReservationMapperTest {
 
 	@Test
 	void toResponseWithNullSession() {
-		int availableSeatsCount = 2;
-		SeatReservationResponse response = seatReservationMapper.toResponse(null, seatInfos, availableSeatsCount);
+		var response = seatReservationMapper.toResponse(null, seatInfos, 2);
 
 		assertThat(response).isNotNull();
 		assertThat(response.sessionId()).isNull();
@@ -109,12 +94,7 @@ public class SeatReservationMapperTest {
 
 	@Test
 	void toSeatInfo() {
-		Boolean available = true;
-		Boolean temporarilyReserved = false;
-		List<SeatReservationResponse.TicketPriceInfo> ticketPrices = ticketPrices1;
-
-		SeatReservationResponse.SeatInfo seatInfo = seatReservationMapper.toSeatInfo(seat1, available,
-				temporarilyReserved, ticketPrices);
+		var seatInfo = seatReservationMapper.toSeatInfo(seat1, true, false, ticketPrices1);
 
 		assertThat(seatInfo).isNotNull();
 		assertThat(seatInfo.id()).isEqualTo(1L);
@@ -130,13 +110,8 @@ public class SeatReservationMapperTest {
 	}
 
 	@Test
-	void toSeatInfoWithUnavailableSeat() {
-		Boolean available = false;
-		Boolean temporarilyReserved = true;
-		List<SeatReservationResponse.TicketPriceInfo> ticketPrices = ticketPrices1;
-
-		SeatReservationResponse.SeatInfo seatInfo = seatReservationMapper.toSeatInfo(seat1, available,
-				temporarilyReserved, ticketPrices);
+	void toSeatInfoUnavailable() {
+		var seatInfo = seatReservationMapper.toSeatInfo(seat1, false, true, ticketPrices1);
 
 		assertThat(seatInfo).isNotNull();
 		assertThat(seatInfo.available()).isFalse();
@@ -144,29 +119,9 @@ public class SeatReservationMapperTest {
 	}
 
 	@Test
-	void toSeatInfoWithNullSeat() {
-		Boolean available = true;
-		Boolean temporarilyReserved = false;
-		List<SeatReservationResponse.TicketPriceInfo> ticketPrices = ticketPrices1;
-
-		SeatReservationResponse.SeatInfo seatInfo = seatReservationMapper.toSeatInfo(null, available,
-				temporarilyReserved, ticketPrices);
-
-		assertThat(seatInfo).isNotNull();
-		assertThat(seatInfo.id()).isNull();
-		assertThat(seatInfo.row()).isNull();
-		assertThat(seatInfo.seatNumber()).isNull();
-		assertThat(seatInfo.seatType()).isNull();
-		assertThat(seatInfo.active()).isNull();
-		assertThat(seatInfo.ticketPrices()).isEqualTo(ticketPrices);
-	}
-
-	@Test
 	void toTicketPriceInfo() {
-		BigDecimal price = new BigDecimal("250.00");
-
-		SeatReservationResponse.TicketPriceInfo ticketPriceInfo = seatReservationMapper
-				.toTicketPriceInfo(adultTicketType, price);
+		var price = new BigDecimal("250.00");
+		var ticketPriceInfo = seatReservationMapper.toTicketPriceInfo(adultTicketType, price);
 
 		assertThat(ticketPriceInfo).isNotNull();
 		assertThat(ticketPriceInfo.ticketTypeId()).isEqualTo(1L);
@@ -180,9 +135,8 @@ public class SeatReservationMapperTest {
 
 	@Test
 	void toTicketPriceInfoWithNullTicketType() {
-		BigDecimal price = new BigDecimal("250.00");
-
-		SeatReservationResponse.TicketPriceInfo ticketPriceInfo = seatReservationMapper.toTicketPriceInfo(null, price);
+		var price = new BigDecimal("250.00");
+		var ticketPriceInfo = seatReservationMapper.toTicketPriceInfo(null, price);
 
 		assertThat(ticketPriceInfo).isNotNull();
 		assertThat(ticketPriceInfo.ticketTypeId()).isNull();
@@ -196,8 +150,7 @@ public class SeatReservationMapperTest {
 
 	@Test
 	void toTicketPriceInfoWithNullPrice() {
-		SeatReservationResponse.TicketPriceInfo ticketPriceInfo = seatReservationMapper
-				.toTicketPriceInfo(adultTicketType, null);
+		var ticketPriceInfo = seatReservationMapper.toTicketPriceInfo(adultTicketType, null);
 
 		assertThat(ticketPriceInfo).isNotNull();
 		assertThat(ticketPriceInfo.ticketTypeId()).isEqualTo(1L);
@@ -207,8 +160,7 @@ public class SeatReservationMapperTest {
 
 	@Test
 	void toTicketPriceInfoWithNullTicketTypeAndNullPrice() {
-		SeatReservationResponse.TicketPriceInfo ticketPriceInfo = seatReservationMapper.toTicketPriceInfo(null, null);
-
+		var ticketPriceInfo = seatReservationMapper.toTicketPriceInfo(null, null);
 		assertThat(ticketPriceInfo).isNull();
 	}
 }

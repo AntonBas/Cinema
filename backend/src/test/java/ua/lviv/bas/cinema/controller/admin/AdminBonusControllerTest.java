@@ -29,15 +29,17 @@ public class AdminBonusControllerTest {
 	private AdminBonusController adminBonusController;
 
 	@Test
-	void getAllBonusRules_ShouldReturnRulesList() {
-		BonusRulesResponse rule1 = new BonusRulesResponse(1L, "WELCOME_BONUS", 100, null, null, null, true);
-		BonusRulesResponse rule2 = new BonusRulesResponse(2L, "BIRTHDAY_BONUS", 200, null, null, null, true);
+	void getRulesShouldReturnRulesList() {
+		BonusRulesResponse rule1 = new BonusRulesResponse(1L, BonusTransactionType.WELCOME_BONUS, 100, null, null, null,
+				true);
+		BonusRulesResponse rule2 = new BonusRulesResponse(2L, BonusTransactionType.BIRTHDAY_BONUS, 200, null, null,
+				null, true);
 
 		List<BonusRulesResponse> rules = List.of(rule1, rule2);
 
-		when(bonusAdminService.getAllRules()).thenReturn(rules);
+		when(bonusAdminService.getRules()).thenReturn(rules);
 
-		List<BonusRulesResponse> result = adminBonusController.getAllBonusRules();
+		List<BonusRulesResponse> result = adminBonusController.getRules();
 
 		assertThat(result).isNotNull();
 		assertThat(result).hasSize(2);
@@ -45,41 +47,27 @@ public class AdminBonusControllerTest {
 	}
 
 	@Test
-	void getAllBonusRules_WhenNoRulesExist_ShouldReturnEmptyList() {
+	void getRulesWhenNoRulesExistShouldReturnEmptyList() {
 		List<BonusRulesResponse> emptyList = Collections.emptyList();
-		when(bonusAdminService.getAllRules()).thenReturn(emptyList);
+		when(bonusAdminService.getRules()).thenReturn(emptyList);
 
-		List<BonusRulesResponse> result = adminBonusController.getAllBonusRules();
+		List<BonusRulesResponse> result = adminBonusController.getRules();
 
 		assertThat(result).isNotNull();
 		assertThat(result).isEmpty();
 	}
 
 	@Test
-	void getBonusRule_ShouldReturnRule() {
-		BonusTransactionType type = BonusTransactionType.WELCOME_BONUS;
-		BonusRulesResponse response = new BonusRulesResponse(1L, "WELCOME_BONUS", 100, null, null, null, true);
-
-		when(bonusAdminService.getRule(type)).thenReturn(response);
-
-		BonusRulesResponse result = adminBonusController.getBonusRule(type);
-
-		assertThat(result).isEqualTo(response);
-		assertThat(result.id()).isEqualTo(1L);
-		assertThat(result.bonusType()).isEqualTo("WELCOME_BONUS");
-		assertThat(result.points()).isEqualTo(100);
-	}
-
-	@Test
-	void updateBonusRule_ShouldUpdateAndReturnRule() {
+	void updateRuleShouldUpdateAndReturnRule() {
 		BonusTransactionType type = BonusTransactionType.WELCOME_BONUS;
 		BonusRulesRequest request = new BonusRulesRequest(200, null, null, null, true);
 
-		BonusRulesResponse response = new BonusRulesResponse(1L, "WELCOME_BONUS", 200, null, null, null, true);
+		BonusRulesResponse response = new BonusRulesResponse(1L, BonusTransactionType.WELCOME_BONUS, 200, null, null,
+				null, true);
 
 		when(bonusAdminService.updateRule(eq(type), any(BonusRulesRequest.class))).thenReturn(response);
 
-		BonusRulesResponse result = adminBonusController.updateBonusRule(type, request);
+		BonusRulesResponse result = adminBonusController.updateRule(type, request);
 
 		assertThat(result).isEqualTo(response);
 		assertThat(result.points()).isEqualTo(200);
@@ -87,16 +75,17 @@ public class AdminBonusControllerTest {
 	}
 
 	@Test
-	void resetBonusRule_ShouldResetAndReturnRule() {
+	void resetRuleShouldResetAndReturnRule() {
 		BonusTransactionType type = BonusTransactionType.WELCOME_BONUS;
-		BonusRulesResponse response = new BonusRulesResponse(1L, "WELCOME_BONUS", 150, null, null, null, true);
+		BonusRulesResponse response = new BonusRulesResponse(1L, BonusTransactionType.WELCOME_BONUS, 150, null, null,
+				null, true);
 
 		when(bonusAdminService.resetRuleToDefaults(type)).thenReturn(response);
 
-		BonusRulesResponse result = adminBonusController.resetBonusRule(type);
+		BonusRulesResponse result = adminBonusController.resetRule(type);
 
 		assertThat(result).isEqualTo(response);
-		assertThat(result.bonusType()).isEqualTo("WELCOME_BONUS");
+		assertThat(result.bonusType()).isEqualTo(BonusTransactionType.WELCOME_BONUS);
 		assertThat(result.points()).isEqualTo(150);
 	}
 }

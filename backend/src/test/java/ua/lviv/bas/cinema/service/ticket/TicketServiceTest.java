@@ -149,7 +149,7 @@ public class TicketServiceTest {
 	}
 
 	@Test
-	void createTicketsForBooking_Success() {
+	void createTicketsForBookingShouldSucceed() {
 		testBooking.setSeatReservations(List.of(seatReservation));
 
 		when(numberGenerator.generateTicketCode()).thenReturn(GENERATED_CODE);
@@ -170,12 +170,12 @@ public class TicketServiceTest {
 	}
 
 	@Test
-	void getTicketById_Success() {
+	void getTicketByIdShouldSucceed() {
 		when(ticketRepository.findByIdAndUserIdAndStatus(TICKET_ID, USER_ID, TicketStatus.ACTIVE))
 				.thenReturn(Optional.of(testTicket));
 		when(ticketMapper.toTicketResponse(testTicket)).thenReturn(testTicketResponse);
 
-		TicketResponse result = ticketService.getTicketById(TICKET_ID, testUser);
+		TicketResponse result = ticketService.getTicket(TICKET_ID, testUser);
 
 		assertThat(result).isNotNull();
 		assertThat(result.id()).isEqualTo(TICKET_ID);
@@ -184,20 +184,20 @@ public class TicketServiceTest {
 	}
 
 	@Test
-	void getTicketById_NotFound_ThrowsException() {
+	void getTicketByIdWhenNotFoundShouldThrowException() {
 		when(ticketRepository.findByIdAndUserIdAndStatus(TICKET_ID, USER_ID, TicketStatus.ACTIVE))
 				.thenReturn(Optional.empty());
 
-		assertThatThrownBy(() -> ticketService.getTicketById(TICKET_ID, testUser))
+		assertThatThrownBy(() -> ticketService.getTicket(TICKET_ID, testUser))
 				.isInstanceOf(TicketValidationException.class);
 	}
 
 	@Test
-	void getTicketByCode_Success() {
+	void getTicketByCodeShouldSucceed() {
 		when(ticketRepository.findByUniqueCode(TICKET_CODE)).thenReturn(Optional.of(testTicket));
 		when(ticketMapper.toTicketResponse(testTicket)).thenReturn(testTicketResponse);
 
-		TicketResponse result = ticketService.getTicketByCode(TICKET_CODE, testUser);
+		TicketResponse result = ticketService.getTicket(TICKET_CODE, testUser);
 
 		assertThat(result).isNotNull();
 		assertThat(result.id()).isEqualTo(TICKET_ID);
@@ -205,26 +205,26 @@ public class TicketServiceTest {
 	}
 
 	@Test
-	void getTicketByCode_NotFound_ThrowsException() {
+	void getTicketByCodeWhenNotFoundShouldThrowException() {
 		when(ticketRepository.findByUniqueCode(TICKET_CODE)).thenReturn(Optional.empty());
 
-		assertThatThrownBy(() -> ticketService.getTicketByCode(TICKET_CODE, testUser))
+		assertThatThrownBy(() -> ticketService.getTicket(TICKET_CODE, testUser))
 				.isInstanceOf(TicketNotFoundException.class);
 	}
 
 	@Test
-	void getTicketByCode_WrongUser_ThrowsException() {
+	void getTicketByCodeWithWrongUserShouldThrowException() {
 		User otherUser = new User();
 		otherUser.setId(OTHER_USER_ID);
 
 		when(ticketRepository.findByUniqueCode(TICKET_CODE)).thenReturn(Optional.of(testTicket));
 
-		assertThatThrownBy(() -> ticketService.getTicketByCode(TICKET_CODE, otherUser))
+		assertThatThrownBy(() -> ticketService.getTicket(TICKET_CODE, otherUser))
 				.isInstanceOf(TicketValidationException.class);
 	}
 
 	@Test
-	void getUserTickets_Success() {
+	void getTicketsShouldSucceed() {
 		TicketFilterRequest filter = new TicketFilterRequest(TicketStatus.ACTIVE, "Test Movie");
 		Pageable pageable = Pageable.unpaged();
 
@@ -237,137 +237,136 @@ public class TicketServiceTest {
 		when(ticketRepository.findAll(eq(specification), eq(pageable))).thenReturn(ticketPage);
 		when(ticketMapper.toTicketResponse(testTicket)).thenReturn(testTicketResponse);
 
-		Page<TicketResponse> result = ticketService.getUserTickets(testUser, filter, pageable);
+		Page<TicketResponse> result = ticketService.getTickets(testUser, filter, pageable);
 
 		assertThat(result.getContent()).hasSize(1);
 		assertThat(result.getContent().get(0).id()).isEqualTo(TICKET_ID);
 	}
 
 	@Test
-	void validateTicket_Success() {
+	void validateShouldSucceed() {
 		when(ticketRepository.findByUniqueCode(TICKET_CODE)).thenReturn(Optional.of(testTicket));
 		when(ticketRepository.save(testTicket)).thenReturn(testTicket);
 
-		ticketService.validateTicket(TICKET_CODE);
+		ticketService.validate(TICKET_CODE);
 
 		assertThat(testTicket.getStatus()).isEqualTo(TicketStatus.USED);
 		verify(ticketRepository).save(testTicket);
 	}
 
 	@Test
-	void validateTicket_NotFound_ThrowsException() {
+	void validateWhenNotFoundShouldThrowException() {
 		when(ticketRepository.findByUniqueCode(TICKET_CODE)).thenReturn(Optional.empty());
 
-		assertThatThrownBy(() -> ticketService.validateTicket(TICKET_CODE))
-				.isInstanceOf(TicketValidationException.class);
+		assertThatThrownBy(() -> ticketService.validate(TICKET_CODE)).isInstanceOf(TicketValidationException.class);
 	}
 
 	@Test
-	void validateTicket_WhenSessionNotStarted_ThrowsException() {
+	void validateWhenSessionNotStartedShouldThrowException() {
 		testSession.setStartTime(LocalDateTime.now().plusHours(2));
 		testTicket.setStatus(TicketStatus.ACTIVE);
 
 		when(ticketRepository.findByUniqueCode(TICKET_CODE)).thenReturn(Optional.of(testTicket));
 
-		assertThatThrownBy(() -> ticketService.validateTicket(TICKET_CODE))
-				.isInstanceOf(TicketValidationException.class).hasMessageContaining("Session has not started yet");
+		assertThatThrownBy(() -> ticketService.validate(TICKET_CODE)).isInstanceOf(TicketValidationException.class)
+				.hasMessageContaining("Session has not started yet");
 
 		verify(ticketRepository, never()).save(any());
 	}
 
 	@Test
-	void validateTicket_WhenSessionCancelled_ThrowsException() {
+	void validateWhenSessionCancelledShouldThrowException() {
 		testSession.setStatus(CinemaSessionStatus.CANCELLED);
 		testTicket.setStatus(TicketStatus.ACTIVE);
 
 		when(ticketRepository.findByUniqueCode(TICKET_CODE)).thenReturn(Optional.of(testTicket));
 
-		assertThatThrownBy(() -> ticketService.validateTicket(TICKET_CODE))
-				.isInstanceOf(TicketValidationException.class).hasMessageContaining("Session has been cancelled");
+		assertThatThrownBy(() -> ticketService.validate(TICKET_CODE)).isInstanceOf(TicketValidationException.class)
+				.hasMessageContaining("Session has been cancelled");
 
 		verify(ticketRepository, never()).save(any());
 	}
 
 	@Test
-	void validateTicket_WhenTicketAlreadyUsed_ThrowsException() {
+	void validateWhenTicketAlreadyUsedShouldThrowException() {
 		testTicket.setStatus(TicketStatus.USED);
 
 		when(ticketRepository.findByUniqueCode(TICKET_CODE)).thenReturn(Optional.of(testTicket));
 
-		assertThatThrownBy(() -> ticketService.validateTicket(TICKET_CODE))
-				.isInstanceOf(TicketValidationException.class).hasMessageContaining("already been used");
+		assertThatThrownBy(() -> ticketService.validate(TICKET_CODE)).isInstanceOf(TicketValidationException.class)
+				.hasMessageContaining("already been used");
 
 		verify(ticketRepository, never()).save(any());
 	}
 
 	@Test
-	void validateTicket_WhenTicketRefunded_ThrowsException() {
+	void validateWhenTicketRefundedShouldThrowException() {
 		testTicket.setStatus(TicketStatus.REFUNDED);
 
 		when(ticketRepository.findByUniqueCode(TICKET_CODE)).thenReturn(Optional.of(testTicket));
 
-		assertThatThrownBy(() -> ticketService.validateTicket(TICKET_CODE))
-				.isInstanceOf(TicketValidationException.class).hasMessageContaining("refunded");
+		assertThatThrownBy(() -> ticketService.validate(TICKET_CODE)).isInstanceOf(TicketValidationException.class)
+				.hasMessageContaining("refunded");
 
 		verify(ticketRepository, never()).save(any());
 	}
 
 	@Test
-	void generateTicketQRCode_Success() {
+	void generateQRShouldSucceed() {
 		String expectedQrContent = BASE_URL + "/api/tickets/validate/" + TICKET_CODE;
 		byte[] expectedQrCode = new byte[] { 1, 2, 3 };
 
 		when(qrCodeService.generateQRCode(expectedQrContent, QR_CODE_SIZE)).thenReturn(expectedQrCode);
 
-		byte[] result = ticketService.generateTicketQRCode(TICKET_CODE);
+		byte[] result = ticketService.generateQR(TICKET_CODE);
 
 		assertThat(result).isEqualTo(expectedQrCode);
 		verify(qrCodeService).generateQRCode(expectedQrContent, QR_CODE_SIZE);
 	}
 
 	@Test
-	void isTicketValid_ValidTicket_ReturnsTrue() {
+	void isValidWithValidTicketShouldReturnTrue() {
 		when(ticketRepository.findByUniqueCode(TICKET_CODE)).thenReturn(Optional.of(testTicket));
 
-		boolean result = ticketService.isTicketValid(TICKET_CODE);
+		boolean result = ticketService.isValid(TICKET_CODE);
 
 		assertThat(result).isTrue();
 	}
 
 	@Test
-	void isTicketValid_InvalidTicket_ReturnsFalse() {
+	void isValidWithInvalidTicketShouldReturnFalse() {
 		testTicket.setStatus(TicketStatus.USED);
 
 		when(ticketRepository.findByUniqueCode(TICKET_CODE)).thenReturn(Optional.of(testTicket));
 
-		boolean result = ticketService.isTicketValid(TICKET_CODE);
+		boolean result = ticketService.isValid(TICKET_CODE);
 
 		assertThat(result).isFalse();
 	}
 
 	@Test
-	void isTicketValid_TicketNotFound_ReturnsFalse() {
+	void isValidWhenTicketNotFoundShouldReturnFalse() {
 		when(ticketRepository.findByUniqueCode(TICKET_CODE)).thenReturn(Optional.empty());
 
-		boolean result = ticketService.isTicketValid(TICKET_CODE);
+		boolean result = ticketService.isValid(TICKET_CODE);
 
 		assertThat(result).isFalse();
 	}
 
 	@Test
-	void checkTicketStatus_Success() {
+	void getStatusShouldSucceed() {
 		when(ticketRepository.findByUniqueCode(TICKET_CODE)).thenReturn(Optional.of(testTicket));
 
-		TicketStatus result = ticketService.checkTicketStatus(TICKET_CODE);
+		TicketStatus result = ticketService.getStatus(TICKET_CODE);
 
 		assertThat(result).isEqualTo(TicketStatus.ACTIVE);
 	}
 
 	@Test
-	void checkTicketStatus_TicketNotFound_ReturnsNull() {
+	void getStatusWhenTicketNotFoundShouldReturnNull() {
 		when(ticketRepository.findByUniqueCode(TICKET_CODE)).thenReturn(Optional.empty());
 
-		TicketStatus result = ticketService.checkTicketStatus(TICKET_CODE);
+		TicketStatus result = ticketService.getStatus(TICKET_CODE);
 
 		assertThat(result).isNull();
 	}

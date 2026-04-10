@@ -14,8 +14,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 
 import ua.lviv.bas.cinema.config.security.user.CustomUserDetails;
 import ua.lviv.bas.cinema.domain.booking.status.PaymentStatus;
@@ -66,57 +64,54 @@ public class PaymentControllerTest {
 	}
 
 	@Test
-	void createPayment_ShouldCreateSuccessfully() {
+	void createPaymentShouldCreateSuccessfully() {
 		PaymentCreateRequest request = new PaymentCreateRequest(100L);
 
 		PaymentResponse paymentResponse = createPaymentResponse();
 
 		when(paymentService.createPayment(any(PaymentCreateRequest.class), eq(testUser))).thenReturn(paymentResponse);
 
-		ResponseEntity<PaymentResponse> response = paymentController.createPayment(request, userDetails);
+		PaymentResponse response = paymentController.createPayment(request, userDetails);
 
-		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-		assertThat(response.getBody()).isNotNull();
-		assertThat(response.getBody().id()).isEqualTo(1L);
-		assertThat(response.getBody().bookingNumber()).isEqualTo("BK-123456");
-		assertThat(response.getBody().movieTitle()).isEqualTo("Test Movie");
-		assertThat(response.getBody().hallName()).isEqualTo("Hall A");
-		assertThat(response.getBody().status()).isEqualTo(PaymentStatus.PENDING);
+		assertThat(response).isNotNull();
+		assertThat(response.id()).isEqualTo(1L);
+		assertThat(response.bookingNumber()).isEqualTo("BK-123456");
+		assertThat(response.movieTitle()).isEqualTo("Test Movie");
+		assertThat(response.hallName()).isEqualTo("Hall A");
+		assertThat(response.status()).isEqualTo(PaymentStatus.PENDING);
 	}
 
 	@Test
-	void getLiqPayPaymentData_ShouldReturnData() {
+	void getLiqPayDataShouldReturnData() {
 		Long paymentId = 1L;
 
 		PaymentLiqPayDataResponse liqPayData = createLiqPayDataResponse();
 
 		when(paymentStatusService.preparePaymentData(paymentId)).thenReturn(liqPayData);
 
-		ResponseEntity<PaymentLiqPayDataResponse> response = paymentController.getLiqPayPaymentData(paymentId);
+		PaymentLiqPayDataResponse response = paymentController.getLiqPayData(paymentId);
 
-		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-		assertThat(response.getBody()).isNotNull();
-		assertThat(response.getBody().data()).isEqualTo("encoded_data");
-		assertThat(response.getBody().liqpayOrderId()).isEqualTo("ORDER_ABC123");
+		assertThat(response).isNotNull();
+		assertThat(response.data()).isEqualTo("encoded_data");
+		assertThat(response.liqpayOrderId()).isEqualTo("ORDER_ABC123");
 	}
 
 	@Test
-	void getPaymentById_ShouldReturnPayment() {
+	void getPaymentShouldReturnPayment() {
 		Long paymentId = 1L;
 
 		PaymentResponse paymentResponse = createPaymentResponseWithSuccess();
 
-		when(paymentService.getPaymentStatus(eq(paymentId), eq(testUser))).thenReturn(paymentResponse);
+		when(paymentService.getPayment(eq(paymentId), eq(testUser))).thenReturn(paymentResponse);
 
-		ResponseEntity<PaymentResponse> response = paymentController.getPaymentById(paymentId, userDetails);
+		PaymentResponse response = paymentController.getPayment(paymentId, userDetails);
 
-		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-		assertThat(response.getBody()).isNotNull();
-		assertThat(response.getBody().id()).isEqualTo(1L);
-		assertThat(response.getBody().bookingNumber()).isEqualTo("BK-123456");
-		assertThat(response.getBody().movieTitle()).isEqualTo("Test Movie");
-		assertThat(response.getBody().hallName()).isEqualTo("Hall A");
-		assertThat(response.getBody().status()).isEqualTo(PaymentStatus.SUCCESS);
-		assertThat(response.getBody().senderCardMask()).isEqualTo("****1234");
+		assertThat(response).isNotNull();
+		assertThat(response.id()).isEqualTo(1L);
+		assertThat(response.bookingNumber()).isEqualTo("BK-123456");
+		assertThat(response.movieTitle()).isEqualTo("Test Movie");
+		assertThat(response.hallName()).isEqualTo("Hall A");
+		assertThat(response.status()).isEqualTo(PaymentStatus.SUCCESS);
+		assertThat(response.senderCardMask()).isEqualTo("****1234");
 	}
 }

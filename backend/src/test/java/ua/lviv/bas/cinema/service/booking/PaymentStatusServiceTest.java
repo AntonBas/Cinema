@@ -25,7 +25,6 @@ import ua.lviv.bas.cinema.domain.cinema.CinemaHall;
 import ua.lviv.bas.cinema.domain.cinema.Movie;
 import ua.lviv.bas.cinema.domain.cinema.Session;
 import ua.lviv.bas.cinema.domain.user.User;
-import ua.lviv.bas.cinema.dto.payment.request.LiqPayCallbackRequest;
 import ua.lviv.bas.cinema.dto.payment.response.PaymentLiqPayDataResponse;
 import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentNotFoundException;
 import ua.lviv.bas.cinema.repository.booking.PaymentRepository;
@@ -70,7 +69,7 @@ public class PaymentStatusServiceTest {
 	}
 
 	@Test
-	void preparePaymentData_Success() {
+	void preparePaymentDataShouldSucceed() {
 		PaymentLiqPayDataResponse expectedResponse = new PaymentLiqPayDataResponse("test_data", "test_signature",
 				"https://payment.url", ORDER_ID);
 
@@ -87,7 +86,7 @@ public class PaymentStatusServiceTest {
 	}
 
 	@Test
-	void preparePaymentData_WhenPaymentNotFound_ShouldThrowException() {
+	void preparePaymentDataWhenPaymentNotFoundShouldThrowException() {
 		when(paymentRepository.findById(PAYMENT_ID)).thenReturn(Optional.empty());
 
 		assertThatThrownBy(() -> paymentStatusService.preparePaymentData(PAYMENT_ID))
@@ -95,7 +94,7 @@ public class PaymentStatusServiceTest {
 	}
 
 	@Test
-	void handleLiqPayCallback_Success() {
+	void handleCallbackWithSuccessStatusShouldSucceed() {
 		String data = "encoded_data";
 		String signature = "test_signature";
 		Map<String, String> decodedData = new HashMap<>();
@@ -105,13 +104,13 @@ public class PaymentStatusServiceTest {
 		when(paymentGatewayService.processCallback(data, signature)).thenReturn(decodedData);
 		when(paymentRepository.findByLiqpayOrderId(ORDER_ID)).thenReturn(Optional.of(testPayment));
 
-		paymentStatusService.handleLiqPayCallback(data, signature);
+		paymentStatusService.handleCallback(data, signature);
 
-		verify(paymentService).processSuccessfulPayment(testPayment, decodedData);
+		verify(paymentService).processSuccess(testPayment, decodedData);
 	}
 
 	@Test
-	void handleLiqPayCallback_WithSandboxStatus() {
+	void handleCallbackWithSandboxStatusShouldSucceed() {
 		String data = "encoded_data";
 		String signature = "test_signature";
 		Map<String, String> decodedData = new HashMap<>();
@@ -121,13 +120,13 @@ public class PaymentStatusServiceTest {
 		when(paymentGatewayService.processCallback(data, signature)).thenReturn(decodedData);
 		when(paymentRepository.findByLiqpayOrderId(ORDER_ID)).thenReturn(Optional.of(testPayment));
 
-		paymentStatusService.handleLiqPayCallback(data, signature);
+		paymentStatusService.handleCallback(data, signature);
 
-		verify(paymentService).processSuccessfulPayment(testPayment, decodedData);
+		verify(paymentService).processSuccess(testPayment, decodedData);
 	}
 
 	@Test
-	void handleLiqPayCallback_WithFailedStatus() {
+	void handleCallbackWithFailureStatusShouldSucceed() {
 		String data = "encoded_data";
 		String signature = "test_signature";
 		Map<String, String> decodedData = new HashMap<>();
@@ -137,13 +136,13 @@ public class PaymentStatusServiceTest {
 		when(paymentGatewayService.processCallback(data, signature)).thenReturn(decodedData);
 		when(paymentRepository.findByLiqpayOrderId(ORDER_ID)).thenReturn(Optional.of(testPayment));
 
-		paymentStatusService.handleLiqPayCallback(data, signature);
+		paymentStatusService.handleCallback(data, signature);
 
-		verify(paymentService).processFailedPayment(testPayment, decodedData);
+		verify(paymentService).processFailure(testPayment, decodedData);
 	}
 
 	@Test
-	void handleLiqPayCallback_WithErrorStatus() {
+	void handleCallbackWithErrorStatusShouldSucceed() {
 		String data = "encoded_data";
 		String signature = "test_signature";
 		Map<String, String> decodedData = new HashMap<>();
@@ -153,13 +152,13 @@ public class PaymentStatusServiceTest {
 		when(paymentGatewayService.processCallback(data, signature)).thenReturn(decodedData);
 		when(paymentRepository.findByLiqpayOrderId(ORDER_ID)).thenReturn(Optional.of(testPayment));
 
-		paymentStatusService.handleLiqPayCallback(data, signature);
+		paymentStatusService.handleCallback(data, signature);
 
-		verify(paymentService).processFailedPayment(testPayment, decodedData);
+		verify(paymentService).processFailure(testPayment, decodedData);
 	}
 
 	@Test
-	void handleLiqPayCallback_WithProcessingStatus() {
+	void handleCallbackWithProcessingStatusShouldUpdateStatus() {
 		String data = "encoded_data";
 		String signature = "test_signature";
 		Map<String, String> decodedData = new HashMap<>();
@@ -169,16 +168,16 @@ public class PaymentStatusServiceTest {
 		when(paymentGatewayService.processCallback(data, signature)).thenReturn(decodedData);
 		when(paymentRepository.findByLiqpayOrderId(ORDER_ID)).thenReturn(Optional.of(testPayment));
 
-		paymentStatusService.handleLiqPayCallback(data, signature);
+		paymentStatusService.handleCallback(data, signature);
 
 		assertThat(testPayment.getStatus()).isEqualTo(PaymentStatus.PROCESSING);
 		verify(paymentRepository).save(testPayment);
-		verify(paymentService, never()).processSuccessfulPayment(any(), any());
-		verify(paymentService, never()).processFailedPayment(any(), any());
+		verify(paymentService, never()).processSuccess(any(), any());
+		verify(paymentService, never()).processFailure(any(), any());
 	}
 
 	@Test
-	void handleLiqPayCallback_WithUnknownStatus() {
+	void handleCallbackWithUnknownStatusShouldMarkAsFailed() {
 		String data = "encoded_data";
 		String signature = "test_signature";
 		Map<String, String> decodedData = new HashMap<>();
@@ -188,16 +187,16 @@ public class PaymentStatusServiceTest {
 		when(paymentGatewayService.processCallback(data, signature)).thenReturn(decodedData);
 		when(paymentRepository.findByLiqpayOrderId(ORDER_ID)).thenReturn(Optional.of(testPayment));
 
-		paymentStatusService.handleLiqPayCallback(data, signature);
+		paymentStatusService.handleCallback(data, signature);
 
 		assertThat(testPayment.getStatus()).isEqualTo(PaymentStatus.FAILED);
 		verify(paymentRepository).save(testPayment);
-		verify(paymentService, never()).processSuccessfulPayment(any(), any());
-		verify(paymentService, never()).processFailedPayment(any(), any());
+		verify(paymentService, never()).processSuccess(any(), any());
+		verify(paymentService, never()).processFailure(any(), any());
 	}
 
 	@Test
-	void handleLiqPayCallback_WhenPaymentNotFound_ShouldThrowException() {
+	void handleCallbackWhenPaymentNotFoundShouldThrowException() {
 		String data = "encoded_data";
 		String signature = "test_signature";
 		Map<String, String> decodedData = new HashMap<>();
@@ -206,23 +205,7 @@ public class PaymentStatusServiceTest {
 		when(paymentGatewayService.processCallback(data, signature)).thenReturn(decodedData);
 		when(paymentRepository.findByLiqpayOrderId("ORD_NONEXISTENT")).thenReturn(Optional.empty());
 
-		assertThatThrownBy(() -> paymentStatusService.handleLiqPayCallback(data, signature))
+		assertThatThrownBy(() -> paymentStatusService.handleCallback(data, signature))
 				.isInstanceOf(PaymentNotFoundException.class);
-	}
-
-	@Test
-	void handleLiqPayCallback_WithRequestObject() {
-		LiqPayCallbackRequest callbackRequest = new LiqPayCallbackRequest("encoded_data", "test_signature");
-
-		Map<String, String> decodedData = new HashMap<>();
-		decodedData.put("order_id", ORDER_ID);
-		decodedData.put("status", "success");
-
-		when(paymentGatewayService.processCallback("encoded_data", "test_signature")).thenReturn(decodedData);
-		when(paymentRepository.findByLiqpayOrderId(ORDER_ID)).thenReturn(Optional.of(testPayment));
-
-		paymentStatusService.handleLiqPayCallback(callbackRequest);
-
-		verify(paymentService).processSuccessfulPayment(testPayment, decodedData);
 	}
 }

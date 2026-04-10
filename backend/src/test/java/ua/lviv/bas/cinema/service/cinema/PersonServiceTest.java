@@ -24,11 +24,11 @@ import org.springframework.data.domain.Pageable;
 import ua.lviv.bas.cinema.domain.cinema.Person;
 import ua.lviv.bas.cinema.domain.cinema.enums.PersonRole;
 import ua.lviv.bas.cinema.dto.movie.request.PersonRequest;
-import ua.lviv.bas.cinema.dto.movie.request.QuickCreatePersonRequest;
 import ua.lviv.bas.cinema.dto.movie.response.PersonListResponse;
 import ua.lviv.bas.cinema.dto.movie.response.PersonResponse;
 import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
 import ua.lviv.bas.cinema.exception.domain.cinema.PersonHasMoviesException;
+import ua.lviv.bas.cinema.exception.domain.cinema.PersonNotFoundException;
 import ua.lviv.bas.cinema.mapper.cinema.PersonMapper;
 import ua.lviv.bas.cinema.repository.cinema.MovieRepository;
 import ua.lviv.bas.cinema.repository.cinema.PersonRepository;
@@ -68,7 +68,7 @@ public class PersonServiceTest {
 	}
 
 	@Test
-	void createPerson_Success() {
+	void createPersonShouldSucceed() {
 		when(personRepository.existsByNameAndRole(PERSON_NAME, PERSON_ROLE)).thenReturn(false);
 		when(personMapper.toPerson(request)).thenReturn(person);
 		when(personRepository.save(person)).thenReturn(person);
@@ -81,7 +81,7 @@ public class PersonServiceTest {
 	}
 
 	@Test
-	void createPerson_Duplicate_ThrowsException() {
+	void createPersonWithDuplicateShouldThrowException() {
 		when(personRepository.existsByNameAndRole(PERSON_NAME, PERSON_ROLE)).thenReturn(true);
 
 		assertThatThrownBy(() -> personService.createPerson(request)).isInstanceOf(DuplicateEntityException.class);
@@ -90,25 +90,12 @@ public class PersonServiceTest {
 	}
 
 	@Test
-	void quickCreatePerson_Success() {
-		QuickCreatePersonRequest quickRequest = new QuickCreatePersonRequest(PERSON_NAME, PERSON_ROLE);
-
-		when(personRepository.existsByNameAndRole(PERSON_NAME, PERSON_ROLE)).thenReturn(false);
-		when(personRepository.save(any(Person.class))).thenReturn(person);
-		when(personMapper.toPersonResponse(person)).thenReturn(personResponse);
-
-		PersonResponse result = personService.quickCreatePerson(quickRequest);
-
-		assertThat(result).isEqualTo(personResponse);
-	}
-
-	@Test
-	void getPersons_ReturnsPage() {
+	void getPersonsShouldReturnPage() {
 		Pageable pageable = PageRequest.of(0, 10);
 		PersonListProjection projection = createProjection();
 		Page<PersonListProjection> projectionPage = new PageImpl<>(List.of(projection));
 
-		when(personRepository.findProjectionsByFilters(PERSON_NAME, PERSON_ROLE, pageable)).thenReturn(projectionPage);
+		when(personRepository.findPersonsByFilters(PERSON_NAME, PERSON_ROLE, pageable)).thenReturn(projectionPage);
 		when(personMapper.toPersonListResponse(projection)).thenReturn(listResponse);
 
 		Page<PersonListResponse> result = personService.getPersons(PERSON_NAME, PERSON_ROLE, pageable);
@@ -118,7 +105,21 @@ public class PersonServiceTest {
 	}
 
 	@Test
-	void updatePerson_Success() {
+	void getPersonsWithNullQueryShouldReturnPage() {
+		Pageable pageable = PageRequest.of(0, 10);
+		PersonListProjection projection = createProjection();
+		Page<PersonListProjection> projectionPage = new PageImpl<>(List.of(projection));
+
+		when(personRepository.findPersonsByFilters(null, PERSON_ROLE, pageable)).thenReturn(projectionPage);
+		when(personMapper.toPersonListResponse(projection)).thenReturn(listResponse);
+
+		Page<PersonListResponse> result = personService.getPersons(null, PERSON_ROLE, pageable);
+
+		assertThat(result.getContent()).hasSize(1);
+	}
+
+	@Test
+	void updatePersonShouldSucceed() {
 		Person existing = new Person();
 		existing.setId(PERSON_ID);
 		existing.setName("Old Name");
@@ -136,7 +137,15 @@ public class PersonServiceTest {
 	}
 
 	@Test
-	void updatePerson_Duplicate_ThrowsException() {
+	void updatePersonWhenNotFoundShouldThrowException() {
+		when(personRepository.findById(PERSON_ID)).thenReturn(Optional.empty());
+
+		assertThatThrownBy(() -> personService.updatePerson(PERSON_ID, request))
+				.isInstanceOf(PersonNotFoundException.class);
+	}
+
+	@Test
+	void updatePersonWithDuplicateShouldThrowException() {
 		when(personRepository.findById(PERSON_ID)).thenReturn(Optional.of(person));
 		when(personRepository.existsByNameAndRoleAndIdNot(PERSON_NAME, PERSON_ROLE, PERSON_ID)).thenReturn(true);
 
@@ -145,7 +154,7 @@ public class PersonServiceTest {
 	}
 
 	@Test
-	void deletePerson_Success() {
+	void deletePersonShouldSucceed() {
 		when(personRepository.findById(PERSON_ID)).thenReturn(Optional.of(person));
 		when(movieRepository.countMovieUsageByPersonId(PERSON_ID)).thenReturn(0L);
 
@@ -155,7 +164,14 @@ public class PersonServiceTest {
 	}
 
 	@Test
-	void deletePerson_HasMovies_ThrowsException() {
+	void deletePersonWhenNotFoundShouldThrowException() {
+		when(personRepository.findById(PERSON_ID)).thenReturn(Optional.empty());
+
+		assertThatThrownBy(() -> personService.deletePerson(PERSON_ID)).isInstanceOf(PersonNotFoundException.class);
+	}
+
+	@Test
+	void deletePersonWhenHasMoviesShouldThrowException() {
 		when(personRepository.findById(PERSON_ID)).thenReturn(Optional.of(person));
 		when(movieRepository.countMovieUsageByPersonId(PERSON_ID)).thenReturn(3L);
 

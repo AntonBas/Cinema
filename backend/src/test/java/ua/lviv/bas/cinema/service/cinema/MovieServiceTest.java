@@ -124,7 +124,7 @@ public class MovieServiceTest {
 	}
 
 	@Test
-	void createMovie_Success() {
+	void createMovieShouldSucceed() {
 		when(slugService.generateUniqueSlug(MOVIE_TITLE)).thenReturn(SLUG);
 		when(movieRepository.findBySlug(SLUG)).thenReturn(Optional.empty());
 		when(movieMapper.toMovie(createRequest)).thenReturn(movie);
@@ -153,7 +153,7 @@ public class MovieServiceTest {
 	}
 
 	@Test
-	void createMovie_DuplicateSlug_ThrowsException() {
+	void createMovieWithDuplicateSlugShouldThrowException() {
 		when(slugService.generateUniqueSlug(MOVIE_TITLE)).thenReturn(SLUG);
 		when(movieRepository.findBySlug(SLUG)).thenReturn(Optional.of(new Movie()));
 
@@ -161,24 +161,24 @@ public class MovieServiceTest {
 	}
 
 	@Test
-	void getAdminMovieById_Success() {
+	void getMovieShouldSucceed() {
 		when(movieRepository.findById(MOVIE_ID)).thenReturn(Optional.of(movie));
 		when(movieMapper.toMovieAdminResponse(movie)).thenReturn(adminResponse);
 
-		MovieAdminResponse result = movieService.getAdminMovieById(MOVIE_ID);
+		MovieAdminResponse result = movieService.getMovie(MOVIE_ID);
 
 		assertThat(result).isEqualTo(adminResponse);
 	}
 
 	@Test
-	void getAdminMovieById_NotFound_ThrowsException() {
+	void getMovieWhenNotFoundShouldThrowException() {
 		when(movieRepository.findById(MOVIE_ID)).thenReturn(Optional.empty());
 
-		assertThatThrownBy(() -> movieService.getAdminMovieById(MOVIE_ID)).isInstanceOf(MovieNotFoundException.class);
+		assertThatThrownBy(() -> movieService.getMovie(MOVIE_ID)).isInstanceOf(MovieNotFoundException.class);
 	}
 
 	@Test
-	void getMovieBySlug_Success() {
+	void getMovieBySlugShouldSucceed() {
 		when(movieRepository.findBySlugWithFutureSessions(SLUG)).thenReturn(Optional.of(movie));
 		when(movieMapper.toMovieDetailResponse(movie)).thenReturn(detailResponse);
 
@@ -188,7 +188,7 @@ public class MovieServiceTest {
 	}
 
 	@Test
-	void getMovieBySlug_Archived_ThrowsException() {
+	void getMovieBySlugWhenArchivedShouldThrowException() {
 		movie.setStatus(MovieStatus.ARCHIVED);
 		when(movieRepository.findBySlugWithFutureSessions(SLUG)).thenReturn(Optional.of(movie));
 
@@ -196,22 +196,22 @@ public class MovieServiceTest {
 	}
 
 	@Test
-	void getFilteredMovies_ReturnsPage() {
+	void getMoviesShouldReturnPage() {
 		Pageable pageable = PageRequest.of(0, 10);
 		Page<Movie> moviePage = new PageImpl<>(List.of(movie));
 
-		when(movieRepository.findMoviesByTitleAndStatus(MOVIE_TITLE, MovieStatus.UPCOMING, pageable))
+		when(movieRepository.findMoviesByQueryAndStatus(MOVIE_TITLE, MovieStatus.UPCOMING, pageable))
 				.thenReturn(moviePage);
 		when(movieMapper.toMovieCardResponse(movie)).thenReturn(cardResponse);
 
-		Page<MovieCardResponse> result = movieService.getFilteredMovies(MOVIE_TITLE, MovieStatus.UPCOMING, pageable);
+		Page<MovieCardResponse> result = movieService.getMovies(MOVIE_TITLE, MovieStatus.UPCOMING, pageable);
 
 		assertThat(result.getContent()).hasSize(1);
 		assertThat(result.getContent().get(0)).isEqualTo(cardResponse);
 	}
 
 	@Test
-	void updateMovie_Success() {
+	void updateMovieShouldSucceed() {
 		Movie existingMovie = new Movie();
 		existingMovie.setId(MOVIE_ID);
 		existingMovie.setTitle("Old Title");
@@ -220,6 +220,7 @@ public class MovieServiceTest {
 		existingMovie.setEndShowingDate(LocalDate.now().plusDays(30));
 
 		when(movieRepository.findMovieById(MOVIE_ID)).thenReturn(Optional.of(existingMovie));
+		when(movieRepository.existsByTitle("Updated Title")).thenReturn(false);
 		when(movieScheduler.calculateMovieStatus(any(Movie.class), any(LocalDate.class)))
 				.thenReturn(MovieStatus.UPCOMING);
 		doNothing().when(auditService).logChange(anyString(), any(), anyString(), any(), any(), any());
@@ -245,7 +246,7 @@ public class MovieServiceTest {
 	}
 
 	@Test
-	void updateMovie_DuplicateTitle_ThrowsException() {
+	void updateMovieWithDuplicateTitleShouldThrowException() {
 		Movie existingMovie = new Movie();
 		existingMovie.setId(MOVIE_ID);
 		existingMovie.setTitle("Old Title");
@@ -258,7 +259,7 @@ public class MovieServiceTest {
 	}
 
 	@Test
-	void updateMovie_SameTitle_DoesNotChangeSlug() {
+	void updateMovieWithSameTitleShouldNotChangeSlug() {
 		Movie existingMovie = new Movie();
 		existingMovie.setId(MOVIE_ID);
 		existingMovie.setTitle("Same Title");
@@ -286,7 +287,7 @@ public class MovieServiceTest {
 	}
 
 	@Test
-	void deleteMovie_WithPoster_DeletesPoster() {
+	void deleteMovieWithPosterShouldDeletePoster() {
 		movie.setPosterFileName("poster.jpg");
 
 		when(movieRepository.findMovieById(MOVIE_ID)).thenReturn(Optional.of(movie));
@@ -299,7 +300,7 @@ public class MovieServiceTest {
 	}
 
 	@Test
-	void deleteMovie_WithoutPoster_DoesNotDeletePoster() {
+	void deleteMovieWithoutPosterShouldNotDeletePoster() {
 		movie.setPosterFileName(null);
 
 		when(movieRepository.findMovieById(MOVIE_ID)).thenReturn(Optional.of(movie));
@@ -312,20 +313,20 @@ public class MovieServiceTest {
 	}
 
 	@Test
-	void deleteMovie_NotFound_ThrowsException() {
+	void deleteMovieWhenNotFoundShouldThrowException() {
 		when(movieRepository.findMovieById(MOVIE_ID)).thenReturn(Optional.empty());
 
 		assertThatThrownBy(() -> movieService.deleteMovie(MOVIE_ID)).isInstanceOf(MovieNotFoundException.class);
 	}
 
 	@Test
-	void searchMoviesForSession_ByTitle_ReturnsList() {
+	void searchMoviesByTitleShouldReturnList() {
 		MovieCardProjection projection = createMovieCardProjection();
 		when(movieRepository.findMoviesForSessionSearch("test")).thenReturn(List.of(projection));
 		when(movieMapper.toMovieSessionSearchResponse(projection))
 				.thenReturn(new MovieSessionSearchResponse(MOVIE_ID, MOVIE_TITLE, 120));
 
-		List<MovieSessionSearchResponse> result = movieService.searchMoviesForSession("test");
+		List<MovieSessionSearchResponse> result = movieService.searchMovies("test");
 
 		assertThat(result).hasSize(1);
 		assertThat(result.get(0).id()).isEqualTo(MOVIE_ID);
@@ -334,46 +335,46 @@ public class MovieServiceTest {
 	}
 
 	@Test
-	void searchMoviesForSession_ByDate_ReturnsList() {
+	void searchMoviesByDateShouldReturnList() {
 		LocalDate date = LocalDate.now();
 		MovieCardProjection projection = createMovieCardProjection();
 		when(movieRepository.findMoviesByDate(date)).thenReturn(List.of(projection));
 		when(movieMapper.toMovieSessionSearchResponse(projection))
 				.thenReturn(new MovieSessionSearchResponse(MOVIE_ID, MOVIE_TITLE, 120));
 
-		List<MovieSessionSearchResponse> result = movieService.searchMoviesForSession(date.toString());
+		List<MovieSessionSearchResponse> result = movieService.searchMovies(date.toString());
 
 		assertThat(result).hasSize(1);
 		assertThat(result.get(0).id()).isEqualTo(MOVIE_ID);
 	}
 
 	@Test
-	void searchMoviesForSession_WithNullSearch_ReturnsEmptyList() {
-		List<MovieSessionSearchResponse> result = movieService.searchMoviesForSession(null);
+	void searchMoviesWithNullQueryShouldReturnEmptyList() {
+		List<MovieSessionSearchResponse> result = movieService.searchMovies(null);
 		assertThat(result).isEmpty();
 	}
 
 	@Test
-	void searchMoviesForSession_WithBlankSearch_ReturnsEmptyList() {
-		List<MovieSessionSearchResponse> result = movieService.searchMoviesForSession("   ");
+	void searchMoviesWithBlankQueryShouldReturnEmptyList() {
+		List<MovieSessionSearchResponse> result = movieService.searchMovies("   ");
 		assertThat(result).isEmpty();
 	}
 
 	@Test
-	void getMoviePoster_ReturnsResponse() {
+	void getPosterShouldReturnResponse() {
 		when(movieRepository.findPosterFileNameById(MOVIE_ID)).thenReturn(Optional.of("poster.jpg"));
 		when(posterService.getPosterResponse("poster.jpg")).thenReturn(ResponseEntity.ok().body(new byte[0]));
 
-		ResponseEntity<byte[]> result = movieService.getMoviePoster(MOVIE_ID);
+		ResponseEntity<byte[]> result = movieService.getPoster(MOVIE_ID);
 
 		assertThat(result.getStatusCode().is2xxSuccessful()).isTrue();
 	}
 
 	@Test
-	void getMoviePoster_NotFound_ReturnsNotFound() {
+	void getPosterWhenNotFoundShouldReturnNotFound() {
 		when(movieRepository.findPosterFileNameById(MOVIE_ID)).thenReturn(Optional.empty());
 
-		ResponseEntity<byte[]> result = movieService.getMoviePoster(MOVIE_ID);
+		ResponseEntity<byte[]> result = movieService.getPoster(MOVIE_ID);
 
 		assertThat(result.getStatusCode().is4xxClientError()).isTrue();
 	}

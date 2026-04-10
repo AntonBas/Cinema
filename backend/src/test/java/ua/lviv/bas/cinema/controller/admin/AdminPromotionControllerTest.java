@@ -9,22 +9,21 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
-import java.util.Arrays;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 
 import ua.lviv.bas.cinema.dto.PageResponse;
-import ua.lviv.bas.cinema.dto.promotion.request.PromotionCreateRequest;
-import ua.lviv.bas.cinema.dto.promotion.request.PromotionUpdateRequest;
-import ua.lviv.bas.cinema.dto.promotion.response.PromotionAdminResponse;
+import ua.lviv.bas.cinema.dto.promotion.request.PromotionRequest;
+import ua.lviv.bas.cinema.dto.promotion.response.PromotionListResponse;
 import ua.lviv.bas.cinema.dto.promotion.response.PromotionResponse;
 import ua.lviv.bas.cinema.exception.domain.financial.promotion.PromotionNotFoundException;
 import ua.lviv.bas.cinema.service.promotion.PromotionService;
@@ -43,99 +42,102 @@ public class AdminPromotionControllerTest {
 	private final Pageable pageable = PageRequest.of(0, 10);
 
 	private PromotionResponse createPromotionResponse() {
-		return new PromotionResponse(PROMOTION_ID, TITLE, null, BONUS_POINTS, LocalDate.now().plusDays(1),
+		return new PromotionResponse(PROMOTION_ID, TITLE, "Description", BONUS_POINTS, LocalDate.now().plusDays(1),
 				LocalDate.now().plusDays(10));
 	}
 
-	private PromotionAdminResponse createAdminResponse() {
-		return new PromotionAdminResponse(PROMOTION_ID, TITLE, BONUS_POINTS, LocalDate.now().plusDays(1),
+	private PromotionListResponse createPromotionListResponse() {
+		return new PromotionListResponse(PROMOTION_ID, TITLE, BONUS_POINTS, LocalDate.now().plusDays(1),
 				LocalDate.now().plusDays(10));
 	}
 
 	@Test
-	void createPromotion_ReturnsCreated() {
-		PromotionCreateRequest request = new PromotionCreateRequest(TITLE, null, BONUS_POINTS,
-				LocalDate.now().plusDays(1), LocalDate.now().plusDays(10));
+	void createPromotionShouldReturnCreated() {
+		PromotionRequest request = new PromotionRequest(TITLE, "Description", BONUS_POINTS, LocalDate.now().plusDays(1),
+				LocalDate.now().plusDays(10));
 		PromotionResponse response = createPromotionResponse();
 
-		when(promotionService.createPromotion(any(PromotionCreateRequest.class))).thenReturn(response);
+		when(promotionService.createPromotion(any(PromotionRequest.class))).thenReturn(response);
 
-		ResponseEntity<PromotionResponse> result = controller.createPromotion(request);
+		PromotionResponse result = controller.createPromotion(request);
 
-		assertThat(result.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-		assertThat(result.getBody()).isNotNull();
-		assertThat(result.getBody().id()).isEqualTo(PROMOTION_ID);
+		assertThat(result).isNotNull();
+		assertThat(result.id()).isEqualTo(PROMOTION_ID);
+		assertThat(result.title()).isEqualTo(TITLE);
 		verify(promotionService).createPromotion(request);
 	}
 
 	@Test
-	void getPromotion_ReturnsOk() {
-		PromotionResponse response = createPromotionResponse();
+	void getPromotionsShouldReturnPage() {
+		PromotionListResponse listResponse = createPromotionListResponse();
+		Page<PromotionListResponse> page = new PageImpl<>(List.of(listResponse), pageable, 1);
 
-		when(promotionService.getPromotionById(PROMOTION_ID)).thenReturn(response);
+		when(promotionService.getPromotions(pageable)).thenReturn(page);
 
-		ResponseEntity<PromotionResponse> result = controller.getPromotion(PROMOTION_ID);
+		PageResponse<PromotionListResponse> result = controller.getPromotions(pageable);
 
-		assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
-		assertThat(result.getBody()).isNotNull();
-		assertThat(result.getBody().id()).isEqualTo(PROMOTION_ID);
-		verify(promotionService).getPromotionById(PROMOTION_ID);
+		assertThat(result).isNotNull();
+		assertThat(result.content()).hasSize(1);
+		assertThat(result.content().get(0).id()).isEqualTo(PROMOTION_ID);
+		assertThat(result.content().get(0).title()).isEqualTo(TITLE);
+		verify(promotionService).getPromotions(pageable);
 	}
 
 	@Test
-	void getPromotion_ThrowsWhenNotFound() {
-		when(promotionService.getPromotionById(PROMOTION_ID)).thenThrow(new PromotionNotFoundException(PROMOTION_ID));
+	void getPromotionsShouldReturnEmptyPage() {
+		Page<PromotionListResponse> emptyPage = new PageImpl<>(List.of(), pageable, 0);
 
-		assertThatThrownBy(() -> controller.getPromotion(PROMOTION_ID)).isInstanceOf(PromotionNotFoundException.class);
+		when(promotionService.getPromotions(pageable)).thenReturn(emptyPage);
+
+		PageResponse<PromotionListResponse> result = controller.getPromotions(pageable);
+
+		assertThat(result).isNotNull();
+		assertThat(result.content()).isEmpty();
+		assertThat(result.totalElements()).isZero();
+		verify(promotionService).getPromotions(pageable);
 	}
 
 	@Test
-	void getAllPromotions_ReturnsOk() {
-		PromotionAdminResponse adminResponse = createAdminResponse();
-		PageResponse<PromotionAdminResponse> pageResponse = new PageResponse<>(Arrays.asList(adminResponse), 0, 10, 1,
-				1, true, true, false, false, false, 1, null);
-
-		when(promotionService.getAllPromotions(pageable)).thenReturn(pageResponse);
-
-		ResponseEntity<PageResponse<PromotionAdminResponse>> result = controller.getAllPromotions(pageable);
-
-		assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
-		assertThat(result.getBody()).isNotNull();
-		assertThat(result.getBody().content()).hasSize(1);
-		assertThat(result.getBody().content().get(0).id()).isEqualTo(PROMOTION_ID);
-		verify(promotionService).getAllPromotions(pageable);
-	}
-
-	@Test
-	void updatePromotion_ReturnsOk() {
-		PromotionUpdateRequest request = new PromotionUpdateRequest(TITLE, null, BONUS_POINTS,
+	void updatePromotionShouldReturnUpdated() {
+		PromotionRequest request = new PromotionRequest("Updated Title", "Updated Description", 200,
 				LocalDate.now().plusDays(1), LocalDate.now().plusDays(10));
-		PromotionResponse response = createPromotionResponse();
+		PromotionResponse response = new PromotionResponse(PROMOTION_ID, "Updated Title", "Updated Description", 200,
+				LocalDate.now().plusDays(1), LocalDate.now().plusDays(10));
 
-		when(promotionService.updatePromotion(eq(PROMOTION_ID), any(PromotionUpdateRequest.class)))
-				.thenReturn(response);
+		when(promotionService.updatePromotion(eq(PROMOTION_ID), any(PromotionRequest.class))).thenReturn(response);
 
-		ResponseEntity<PromotionResponse> result = controller.updatePromotion(PROMOTION_ID, request);
+		PromotionResponse result = controller.updatePromotion(PROMOTION_ID, request);
 
-		assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
-		assertThat(result.getBody()).isNotNull();
-		assertThat(result.getBody().id()).isEqualTo(PROMOTION_ID);
+		assertThat(result).isNotNull();
+		assertThat(result.id()).isEqualTo(PROMOTION_ID);
+		assertThat(result.title()).isEqualTo("Updated Title");
+		assertThat(result.bonusPoints()).isEqualTo(200);
 		verify(promotionService).updatePromotion(PROMOTION_ID, request);
 	}
 
 	@Test
-	void deletePromotion_ReturnsNoContent() {
-		ResponseEntity<Void> result = controller.deletePromotion(PROMOTION_ID);
+	void updatePromotionShouldThrowWhenNotFound() {
+		PromotionRequest request = new PromotionRequest("Updated Title", "Updated Description", 200,
+				LocalDate.now().plusDays(1), LocalDate.now().plusDays(10));
 
-		assertThat(result.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+		when(promotionService.updatePromotion(eq(999L), any(PromotionRequest.class)))
+				.thenThrow(new PromotionNotFoundException(999L));
+
+		assertThatThrownBy(() -> controller.updatePromotion(999L, request))
+				.isInstanceOf(PromotionNotFoundException.class);
+	}
+
+	@Test
+	void deletePromotionShouldCallService() {
+		controller.deletePromotion(PROMOTION_ID);
+
 		verify(promotionService).deletePromotion(PROMOTION_ID);
 	}
 
 	@Test
-	void deletePromotion_ThrowsWhenNotFound() {
-		doThrow(new PromotionNotFoundException(PROMOTION_ID)).when(promotionService).deletePromotion(PROMOTION_ID);
+	void deletePromotionShouldThrowWhenNotFound() {
+		doThrow(new PromotionNotFoundException(999L)).when(promotionService).deletePromotion(999L);
 
-		assertThatThrownBy(() -> controller.deletePromotion(PROMOTION_ID))
-				.isInstanceOf(PromotionNotFoundException.class);
+		assertThatThrownBy(() -> controller.deletePromotion(999L)).isInstanceOf(PromotionNotFoundException.class);
 	}
 }

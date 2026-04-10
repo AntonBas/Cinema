@@ -11,23 +11,21 @@ import org.mapstruct.factory.Mappers;
 import ua.lviv.bas.cinema.domain.booking.RefundItem;
 import ua.lviv.bas.cinema.domain.booking.status.RefundItemStatus;
 import ua.lviv.bas.cinema.domain.ticket.Ticket;
-import ua.lviv.bas.cinema.dto.refund.response.RefundItemResponse;
 
 public class RefundItemMapperTest {
 
-	private RefundItemMapper mapper = Mappers.getMapper(RefundItemMapper.class);
+	private final RefundItemMapper mapper = Mappers.getMapper(RefundItemMapper.class);
 
 	@Test
-	void toRefundItemResponse() {
-		Ticket ticket = Ticket.builder().id(123L).uniqueCode("TICKET-ABC123").build();
-
-		RefundItem refundItem = RefundItem.builder().id(1L).ticket(ticket).ticketPrice(new BigDecimal("300.00"))
+	void toResponse() {
+		var ticket = Ticket.builder().id(123L).uniqueCode("TICKET-ABC123").build();
+		var refundItem = RefundItem.builder().id(1L).ticket(ticket).ticketPrice(new BigDecimal("300.00"))
 				.refundAmount(new BigDecimal("240.00")).status(RefundItemStatus.APPROVED).build();
 
 		refundItem.setCreatedDate(LocalDateTime.now());
 		refundItem.setLastModifiedDate(LocalDateTime.now());
 
-		RefundItemResponse response = mapper.toRefundItemResponse(refundItem);
+		var response = mapper.toResponse(refundItem);
 
 		assertThat(response.id()).isEqualTo(1L);
 		assertThat(response.ticketId()).isEqualTo(123L);
@@ -38,11 +36,11 @@ public class RefundItemMapperTest {
 	}
 
 	@Test
-	void toRefundItemResponseWithNullTicket() {
-		RefundItem refundItem = RefundItem.builder().id(2L).ticket(null).ticketPrice(new BigDecimal("200.00"))
+	void toResponseWithNullTicket() {
+		var refundItem = RefundItem.builder().id(2L).ticket(null).ticketPrice(new BigDecimal("200.00"))
 				.refundAmount(new BigDecimal("160.00")).status(RefundItemStatus.PENDING).build();
 
-		RefundItemResponse response = mapper.toRefundItemResponse(refundItem);
+		var response = mapper.toResponse(refundItem);
 
 		assertThat(response.id()).isEqualTo(2L);
 		assertThat(response.ticketId()).isNull();
@@ -53,13 +51,11 @@ public class RefundItemMapperTest {
 	}
 
 	@Test
-	void toRefundItemResponseWithNullTicketProperties() {
-		Ticket ticket = Ticket.builder().id(null).uniqueCode(null).build();
+	void toResponseWithNullTicketProperties() {
+		var ticket = Ticket.builder().id(null).uniqueCode(null).build();
+		var refundItem = RefundItem.builder().id(3L).ticket(ticket).ticketPrice(new BigDecimal("150.00")).build();
 
-		RefundItem refundItem = RefundItem.builder().id(3L).ticket(ticket).ticketPrice(new BigDecimal("150.00"))
-				.build();
-
-		RefundItemResponse response = mapper.toRefundItemResponse(refundItem);
+		var response = mapper.toResponse(refundItem);
 
 		assertThat(response.id()).isEqualTo(3L);
 		assertThat(response.ticketId()).isNull();
@@ -68,19 +64,18 @@ public class RefundItemMapperTest {
 	}
 
 	@Test
-	void toRefundItemResponseWithNull() {
-		RefundItemResponse response = mapper.toRefundItemResponse(null);
+	void toResponseWithNull() {
+		var response = mapper.toResponse(null);
 		assertThat(response).isNull();
 	}
 
 	@Test
-	void toRefundItemResponseWithDifferentStatus() {
-		Ticket ticket = Ticket.builder().id(999L).uniqueCode("TICKET-STATUS").build();
-
-		RefundItem refundItem = RefundItem.builder().id(9L).ticket(ticket).ticketPrice(new BigDecimal("300.00"))
+	void toResponseWithDifferentStatus() {
+		var ticket = Ticket.builder().id(999L).uniqueCode("TICKET-STATUS").build();
+		var refundItem = RefundItem.builder().id(9L).ticket(ticket).ticketPrice(new BigDecimal("300.00"))
 				.status(RefundItemStatus.PROCESSED).build();
 
-		RefundItemResponse response = mapper.toRefundItemResponse(refundItem);
+		var response = mapper.toResponse(refundItem);
 
 		assertThat(response.id()).isEqualTo(9L);
 		assertThat(response.ticketId()).isEqualTo(999L);

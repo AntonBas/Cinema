@@ -17,6 +17,7 @@ import ua.lviv.bas.cinema.domain.ticket.Ticket;
 import ua.lviv.bas.cinema.domain.ticket.TicketStatus;
 import ua.lviv.bas.cinema.domain.ticket.TicketType;
 import ua.lviv.bas.cinema.dto.ticket.response.TicketResponse;
+import ua.lviv.bas.cinema.repository.ticket.projection.TicketProjection;
 
 public class TicketMapperTest {
 
@@ -52,7 +53,8 @@ public class TicketMapperTest {
 
 	@Test
 	void toTicketResponseFromProjection() {
-		var projection = Mockito.mock(ua.lviv.bas.cinema.repository.ticket.projection.TicketInfoProjection.class);
+		TicketProjection projection = Mockito.mock(TicketProjection.class);
+
 		Mockito.when(projection.getId()).thenReturn(1L);
 		Mockito.when(projection.getUniqueCode()).thenReturn("PROJ-TICKET");
 		Mockito.when(projection.getFinalPrice()).thenReturn(new BigDecimal("200.00"));

@@ -1,7 +1,6 @@
 package ua.lviv.bas.cinema.controller.api;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -14,8 +13,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 
 import ua.lviv.bas.cinema.config.security.user.CustomUserDetails;
 import ua.lviv.bas.cinema.domain.cinema.enums.SeatType;
@@ -47,23 +44,22 @@ public class SeatReservationControllerTest {
 	}
 
 	@Test
-	void getSeatAvailability_ShouldReturnAvailabilitySuccessfully() {
+	void getAvailabilityShouldReturnAvailabilitySuccessfully() {
 		Long sessionId = 1L;
 		SeatReservationResponse availabilityResponse = createSeatAvailabilityResponse(sessionId);
 
-		when(seatReservationService.getSeatAvailability(sessionId)).thenReturn(availabilityResponse);
+		when(seatReservationService.getAvailability(sessionId)).thenReturn(availabilityResponse);
 
-		ResponseEntity<SeatReservationResponse> response = seatReservationController.getSeatAvailability(sessionId);
+		SeatReservationResponse response = seatReservationController.getAvailability(sessionId);
 
-		assertEquals(HttpStatus.OK, response.getStatusCode());
-		assertNotNull(response.getBody());
-		assertEquals(sessionId, response.getBody().sessionId());
-		assertEquals("Inception", response.getBody().movieTitle());
-		assertEquals(75, response.getBody().availableSeats());
+		assertThat(response).isNotNull();
+		assertThat(response.sessionId()).isEqualTo(sessionId);
+		assertThat(response.movieTitle()).isEqualTo("Inception");
+		assertThat(response.availableSeats()).isEqualTo(75);
 	}
 
 	@Test
-	void temporaryHoldSeat_ShouldReturnOk_WhenHoldIsSuccessful() {
+	void holdShouldCallServiceSuccessfully() {
 		Long sessionId = 1L;
 		Long seatId = 10L;
 		Long userId = 100L;
@@ -72,17 +68,15 @@ public class SeatReservationControllerTest {
 
 		when(customUserDetails.getUser()).thenReturn(user);
 		when(customUserDetails.getUserId()).thenReturn(userId);
-		doNothing().when(seatReservationService).temporaryHoldSeat(sessionId, seatId, user);
+		doNothing().when(seatReservationService).hold(sessionId, seatId, user);
 
-		ResponseEntity<Void> response = seatReservationController.temporaryHoldSeat(sessionId, seatId,
-				customUserDetails);
+		seatReservationController.hold(sessionId, seatId, customUserDetails);
 
-		assertEquals(HttpStatus.OK, response.getStatusCode());
-		verify(seatReservationService).temporaryHoldSeat(sessionId, seatId, user);
+		verify(seatReservationService).hold(sessionId, seatId, user);
 	}
 
 	@Test
-	void cancelTemporaryHold_ShouldReturnOk_WhenCancellationIsSuccessful() {
+	void cancelShouldCallServiceSuccessfully() {
 		Long sessionId = 1L;
 		Long seatId = 10L;
 		Long userId = 100L;
@@ -91,12 +85,10 @@ public class SeatReservationControllerTest {
 
 		when(customUserDetails.getUser()).thenReturn(user);
 		when(customUserDetails.getUserId()).thenReturn(userId);
-		doNothing().when(seatReservationService).cancelTemporaryHold(sessionId, seatId, user);
+		doNothing().when(seatReservationService).cancel(sessionId, seatId, user);
 
-		ResponseEntity<Void> response = seatReservationController.cancelTemporaryHold(sessionId, seatId,
-				customUserDetails);
+		seatReservationController.cancel(sessionId, seatId, customUserDetails);
 
-		assertEquals(HttpStatus.OK, response.getStatusCode());
-		verify(seatReservationService).cancelTemporaryHold(sessionId, seatId, user);
+		verify(seatReservationService).cancel(sessionId, seatId, user);
 	}
 }

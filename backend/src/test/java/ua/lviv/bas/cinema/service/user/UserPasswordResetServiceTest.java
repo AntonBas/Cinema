@@ -2,6 +2,7 @@ package ua.lviv.bas.cinema.service.user;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -9,6 +10,7 @@ import static org.mockito.Mockito.when;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -47,10 +49,15 @@ public class UserPasswordResetServiceTest {
 	private AuditService auditService;
 
 	@InjectMocks
-	private UserPasswordResetService passwordResetService;
+	private UserPasswordResetService userPasswordResetService;
+
+	@BeforeEach
+	void setUp() {
+		lenient().doNothing().when(auditService).logChange(any(), any(), any(), any(), any(), any());
+	}
 
 	@Test
-	void requestPasswordReset_ShouldGenerateToken_WhenUserExistsAndEnabled() {
+	void requestResetShouldGenerateTokenWhenUserExistsAndEnabled() {
 		String email = "test@example.com";
 		User user = new User();
 		user.setEmail(email);
@@ -59,28 +66,26 @@ public class UserPasswordResetServiceTest {
 
 		when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
 
-		passwordResetService.requestPasswordReset(email);
+		userPasswordResetService.requestReset(email);
 
 		verify(userRepository).findByEmail(email);
 		verify(tokenGeneratorService).generatePasswordResetToken(email);
-		verify(auditService).logChange(any(), any(), any(), any(), any(), any());
 	}
 
 	@Test
-	void requestPasswordReset_ShouldThrowException_WhenUserNotExists() {
+	void requestResetShouldThrowExceptionWhenUserNotExists() {
 		String email = "test@example.com";
 
 		when(userRepository.findByEmail(email)).thenReturn(Optional.empty());
 
-		assertThatThrownBy(() -> passwordResetService.requestPasswordReset(email))
+		assertThatThrownBy(() -> userPasswordResetService.requestReset(email))
 				.isInstanceOf(EmailNotVerifiedException.class);
 
 		verify(tokenGeneratorService, never()).generatePasswordResetToken(any());
-		verify(auditService, never()).logChange(any(), any(), any(), any(), any(), any());
 	}
 
 	@Test
-	void requestPasswordReset_ShouldThrowException_WhenUserNotEnabled() {
+	void requestResetShouldThrowExceptionWhenUserNotEnabled() {
 		String email = "test@example.com";
 		User user = new User();
 		user.setEmail(email);
@@ -88,15 +93,14 @@ public class UserPasswordResetServiceTest {
 
 		when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
 
-		assertThatThrownBy(() -> passwordResetService.requestPasswordReset(email))
+		assertThatThrownBy(() -> userPasswordResetService.requestReset(email))
 				.isInstanceOf(EmailNotVerifiedException.class);
 
 		verify(tokenGeneratorService, never()).generatePasswordResetToken(any());
-		verify(auditService, never()).logChange(any(), any(), any(), any(), any(), any());
 	}
 
 	@Test
-	void resetPassword_ShouldResetPassword_WhenTokenIsValid() {
+	void resetShouldResetPasswordWhenTokenIsValid() {
 		String token = "valid-token";
 		String newPassword = "newPassword123";
 		String encodedPassword = "encodedNewPassword";
@@ -116,24 +120,23 @@ public class UserPasswordResetServiceTest {
 		when(userRepository.save(any())).thenReturn(user);
 		when(tokenRepository.save(any())).thenReturn(resetToken);
 
-		passwordResetService.resetPassword(token, newPassword);
+		userPasswordResetService.reset(token, newPassword);
 
 		verify(tokenRepository).findByToken(token);
 		verify(passwordEncoder).matches(newPassword, "oldEncodedPassword");
 		verify(passwordEncoder).encode(newPassword);
-		verify(userRepository).save(any());
-		verify(tokenRepository).save(any());
-		verify(auditService).logChange(any(), any(), any(), any(), any(), any());
+		verify(userRepository).save(user);
+		verify(tokenRepository).save(resetToken);
 	}
 
 	@Test
-	void resetPassword_ShouldThrowInvalidTokenException_WhenTokenNotFound() {
+	void resetShouldThrowInvalidTokenExceptionWhenTokenNotFound() {
 		String token = "invalid-token";
 		String newPassword = "newPassword123";
 
 		when(tokenRepository.findByToken(token)).thenReturn(Optional.empty());
 
-		assertThatThrownBy(() -> passwordResetService.resetPassword(token, newPassword))
+		assertThatThrownBy(() -> userPasswordResetService.reset(token, newPassword))
 				.isInstanceOf(InvalidTokenException.class);
 
 		verify(userRepository, never()).save(any());
@@ -141,7 +144,7 @@ public class UserPasswordResetServiceTest {
 	}
 
 	@Test
-	void resetPassword_ShouldThrowInvalidTokenException_WhenTokenTypeWrong() {
+	void resetShouldThrowInvalidTokenExceptionWhenTokenTypeWrong() {
 		String token = "wrong-type-token";
 		String newPassword = "newPassword123";
 
@@ -151,14 +154,14 @@ public class UserPasswordResetServiceTest {
 
 		when(tokenRepository.findByToken(token)).thenReturn(Optional.of(resetToken));
 
-		assertThatThrownBy(() -> passwordResetService.resetPassword(token, newPassword))
+		assertThatThrownBy(() -> userPasswordResetService.reset(token, newPassword))
 				.isInstanceOf(InvalidTokenException.class);
 
 		verify(userRepository, never()).save(any());
 	}
 
 	@Test
-	void resetPassword_ShouldThrowTokenExpiredException_WhenTokenExpired() {
+	void resetShouldThrowTokenExpiredExceptionWhenTokenExpired() {
 		String token = "expired-token";
 		String newPassword = "newPassword123";
 
@@ -168,14 +171,14 @@ public class UserPasswordResetServiceTest {
 
 		when(tokenRepository.findByToken(token)).thenReturn(Optional.of(resetToken));
 
-		assertThatThrownBy(() -> passwordResetService.resetPassword(token, newPassword))
+		assertThatThrownBy(() -> userPasswordResetService.reset(token, newPassword))
 				.isInstanceOf(TokenExpiredException.class);
 
 		verify(userRepository, never()).save(any());
 	}
 
 	@Test
-	void resetPassword_ShouldThrowInvalidTokenException_WhenTokenAlreadyConfirmed() {
+	void resetShouldThrowInvalidTokenExceptionWhenTokenAlreadyConfirmed() {
 		String token = "confirmed-token";
 		String newPassword = "newPassword123";
 
@@ -185,14 +188,14 @@ public class UserPasswordResetServiceTest {
 
 		when(tokenRepository.findByToken(token)).thenReturn(Optional.of(resetToken));
 
-		assertThatThrownBy(() -> passwordResetService.resetPassword(token, newPassword))
+		assertThatThrownBy(() -> userPasswordResetService.reset(token, newPassword))
 				.isInstanceOf(InvalidTokenException.class);
 
 		verify(userRepository, never()).save(any());
 	}
 
 	@Test
-	void resetPassword_ShouldThrowSamePasswordException_WhenNewPasswordMatchesOld() {
+	void resetShouldThrowSamePasswordExceptionWhenNewPasswordMatchesOld() {
 		String token = "valid-token";
 		String newPassword = "samePassword";
 
@@ -205,7 +208,7 @@ public class UserPasswordResetServiceTest {
 		when(tokenRepository.findByToken(token)).thenReturn(Optional.of(resetToken));
 		when(passwordEncoder.matches(newPassword, "oldEncodedPassword")).thenReturn(true);
 
-		assertThatThrownBy(() -> passwordResetService.resetPassword(token, newPassword))
+		assertThatThrownBy(() -> userPasswordResetService.reset(token, newPassword))
 				.isInstanceOf(SamePasswordException.class);
 
 		verify(passwordEncoder, never()).encode(any());

@@ -104,6 +104,7 @@ public class BookingServiceTest {
 	private static final Long TICKET_TYPE_ADULT_ID = 5L;
 	private static final Long TICKET_TYPE_CHILD_ID = 6L;
 	private static final Long BOOKING_ID = 10L;
+	private static final String BOOKING_NUMBER = "BK-20240115-00123";
 	private static final BigDecimal BASE_PRICE = new BigDecimal("200.00");
 	private static final BigDecimal SEAT_1_PRICE = new BigDecimal("200.00");
 	private static final BigDecimal SEAT_2_PRICE = new BigDecimal("280.00");
@@ -114,7 +115,6 @@ public class BookingServiceTest {
 	private static final int EXPIRATION_MINUTES = 20;
 	private static final int TEMP_HOLD_MINUTES = 5;
 	private static final int SESSION_TOO_CLOSE_MINUTES = 30;
-	private static final String BOOKING_NUMBER = "BK-2024-00123";
 
 	@BeforeEach
 	void setUp() {
@@ -128,8 +128,10 @@ public class BookingServiceTest {
 
 		CinemaHall hall = CinemaHall.builder().id(200L).name("Hall A").build();
 
+		LocalDateTime sessionTime = LocalDateTime.now().plusHours(2);
+
 		testSession = Session.builder().id(SESSION_ID).movie(movie).hall(hall).basePrice(BASE_PRICE)
-				.status(CinemaSessionStatus.SCHEDULED).startTime(LocalDateTime.now().plusHours(2)).build();
+				.status(CinemaSessionStatus.SCHEDULED).startTime(sessionTime).build();
 
 		testSeat1 = Seat.builder().id(SEAT_ID_1).row(1).number(1).seatType(SeatType.STANDARD).active(true).build();
 
@@ -152,12 +154,12 @@ public class BookingServiceTest {
 				.expiresAt(LocalDateTime.now().plusMinutes(EXPIRATION_MINUTES)).build();
 
 		bookingResponse = new BookingResponse(BOOKING_ID, BOOKING_NUMBER, BookingStatus.PENDING, SESSION_ID,
-				testSession.getStartTime(), "Test Movie", "Hall A", TOTAL_PRICE, BONUS_POINTS_USED, DISCOUNT_AMOUNT,
-				FINAL_PRICE, null, testSession.getStartTime().plusMinutes(EXPIRATION_MINUTES), Collections.emptyList());
+				sessionTime, "Test Movie", "Hall A", TOTAL_PRICE, BONUS_POINTS_USED, DISCOUNT_AMOUNT, FINAL_PRICE, null,
+				sessionTime.plusMinutes(EXPIRATION_MINUTES), Collections.emptyList());
 	}
 
 	@Test
-	void createBooking_Success() {
+	void createBookingShouldSucceed() {
 		SeatReservation pendingReservation1 = SeatReservation.builder().id(1L).seat(testSeat1).session(testSession)
 				.status(ReservationStatus.PENDING).reservedUntil(LocalDateTime.now().plusMinutes(TEMP_HOLD_MINUTES))
 				.reservedByUser(testUser).build();
@@ -180,7 +182,7 @@ public class BookingServiceTest {
 
 		when(bookingRepository.save(any(Booking.class))).thenReturn(savedBooking);
 		when(seatReservationRepository.saveAll(anyList())).thenReturn(Collections.emptyList());
-		when(bookingMapper.toBookingResponse(any(Booking.class))).thenReturn(bookingResponse);
+		when(bookingMapper.toResponse(any(Booking.class))).thenReturn(bookingResponse);
 
 		BookingResponse result = bookingService.createBooking(createRequest, testUser);
 
@@ -198,7 +200,7 @@ public class BookingServiceTest {
 	}
 
 	@Test
-	void createBooking_WhenNoExistingReservation_CreatesNewOne() {
+	void createBookingWhenNoExistingReservationShouldCreateNewOne() {
 		when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(testSession));
 		when(seatReservationRepository.findBySessionIdAndSeatIdAndStatusAndReservedByUserId(SESSION_ID, SEAT_ID_1,
 				ReservationStatus.PENDING, USER_ID)).thenReturn(Optional.empty());
@@ -217,17 +219,17 @@ public class BookingServiceTest {
 
 		when(bookingRepository.save(any(Booking.class))).thenReturn(savedBooking);
 		when(seatReservationRepository.saveAll(anyList())).thenReturn(Collections.emptyList());
-		when(bookingMapper.toBookingResponse(any(Booking.class))).thenReturn(bookingResponse);
+		when(bookingMapper.toResponse(any(Booking.class))).thenReturn(bookingResponse);
 
 		BookingResponse result = bookingService.createBooking(createRequest, testUser);
 
 		assertThat(result).isNotNull();
-		verify(seatReservationService).validateSeatAvailability(SESSION_ID, SEAT_ID_1);
-		verify(seatReservationService).validateSeatAvailability(SESSION_ID, SEAT_ID_2);
+		verify(seatReservationService).validateAvailability(SESSION_ID, SEAT_ID_1);
+		verify(seatReservationService).validateAvailability(SESSION_ID, SEAT_ID_2);
 	}
 
 	@Test
-	void createBooking_WhenSessionNotFound_ShouldThrowException() {
+	void createBookingWhenSessionNotFoundShouldThrowException() {
 		when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.empty());
 
 		assertThatThrownBy(() -> bookingService.createBooking(createRequest, testUser))
@@ -235,7 +237,7 @@ public class BookingServiceTest {
 	}
 
 	@Test
-	void createBooking_WhenTicketTypeNotFound_ShouldThrowException() {
+	void createBookingWhenTicketTypeNotFoundShouldThrowException() {
 		SeatReservation pendingReservation = SeatReservation.builder().id(1L).seat(testSeat1).session(testSession)
 				.status(ReservationStatus.PENDING).reservedUntil(LocalDateTime.now().plusMinutes(TEMP_HOLD_MINUTES))
 				.reservedByUser(testUser).build();
@@ -250,26 +252,26 @@ public class BookingServiceTest {
 	}
 
 	@Test
-	void getBookingById_Success() {
+	void getBookingShouldSucceed() {
 		when(bookingRepository.findByIdAndUserId(BOOKING_ID, USER_ID)).thenReturn(Optional.of(savedBooking));
-		when(bookingMapper.toBookingResponse(savedBooking)).thenReturn(bookingResponse);
+		when(bookingMapper.toResponse(savedBooking)).thenReturn(bookingResponse);
 
-		BookingResponse result = bookingService.getBookingById(BOOKING_ID, testUser);
+		BookingResponse result = bookingService.getBooking(BOOKING_ID, testUser);
 
 		assertThat(result).isNotNull();
 		assertThat(result.id()).isEqualTo(BOOKING_ID);
 	}
 
 	@Test
-	void getBookingById_WhenNotFound_ShouldThrowException() {
+	void getBookingWhenNotFoundShouldThrowException() {
 		when(bookingRepository.findByIdAndUserId(BOOKING_ID, USER_ID)).thenReturn(Optional.empty());
 
-		assertThatThrownBy(() -> bookingService.getBookingById(BOOKING_ID, testUser))
+		assertThatThrownBy(() -> bookingService.getBooking(BOOKING_ID, testUser))
 				.isInstanceOf(BookingNotFoundException.class);
 	}
 
 	@Test
-	void cancelBooking_Success() {
+	void cancelBookingShouldSucceed() {
 		Booking booking = Booking.builder().id(BOOKING_ID).user(testUser).status(BookingStatus.PENDING)
 				.bonusPointsUsed(BONUS_POINTS_USED)
 				.seatReservations(Arrays.asList(SeatReservation.builder().build(), SeatReservation.builder().build()))
@@ -287,7 +289,7 @@ public class BookingServiceTest {
 	}
 
 	@Test
-	void cancelBooking_WhenBookingNotFound_ShouldThrowException() {
+	void cancelBookingWhenBookingNotFoundShouldThrowException() {
 		when(bookingRepository.findByIdAndUserId(BOOKING_ID, USER_ID)).thenReturn(Optional.empty());
 
 		assertThatThrownBy(() -> bookingService.cancelBooking(BOOKING_ID, testUser))
@@ -295,7 +297,7 @@ public class BookingServiceTest {
 	}
 
 	@Test
-	void cancelBooking_WhenCannotBeCancelled_ShouldThrowException() {
+	void cancelBookingWhenCannotBeCancelledShouldThrowException() {
 		Booking booking = Booking.builder().id(BOOKING_ID).user(testUser).status(BookingStatus.EXPIRED).build();
 
 		when(bookingRepository.findByIdAndUserId(BOOKING_ID, USER_ID)).thenReturn(Optional.of(booking));
@@ -305,7 +307,7 @@ public class BookingServiceTest {
 	}
 
 	@Test
-	void confirmBooking_Success() {
+	void confirmBookingShouldSucceed() {
 		Booking booking = Booking.builder().id(BOOKING_ID).status(BookingStatus.PENDING)
 				.seatReservations(Arrays.asList(SeatReservation.builder().build(), SeatReservation.builder().build()))
 				.build();
@@ -321,7 +323,7 @@ public class BookingServiceTest {
 	}
 
 	@Test
-	void confirmBooking_WhenBookingNotFound_ShouldThrowException() {
+	void confirmBookingWhenBookingNotFoundShouldThrowException() {
 		when(bookingRepository.findById(BOOKING_ID)).thenReturn(Optional.empty());
 
 		assertThatThrownBy(() -> bookingService.confirmBooking(BOOKING_ID))
@@ -329,7 +331,7 @@ public class BookingServiceTest {
 	}
 
 	@Test
-	void confirmBooking_WhenNotPending_ShouldThrowException() {
+	void confirmBookingWhenNotPendingShouldThrowException() {
 		Booking booking = Booking.builder().id(BOOKING_ID).status(BookingStatus.CONFIRMED).build();
 
 		when(bookingRepository.findById(BOOKING_ID)).thenReturn(Optional.of(booking));

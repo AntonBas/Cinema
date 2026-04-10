@@ -8,15 +8,21 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
+import ua.lviv.bas.cinema.dto.PageResponse;
 import ua.lviv.bas.cinema.dto.movie.request.GenreRequest;
+import ua.lviv.bas.cinema.dto.movie.response.GenreListResponse;
 import ua.lviv.bas.cinema.dto.movie.response.GenreResponse;
 import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
 import ua.lviv.bas.cinema.exception.domain.cinema.GenreNotFoundException;
@@ -35,21 +41,20 @@ public class AdminGenreControllerTest {
 	private final String GENRE_NAME = "Action";
 
 	@Test
-	void createGenre_ReturnsCreatedGenre() {
+	void createGenreShouldReturnCreatedGenre() {
 		GenreRequest request = new GenreRequest(GENRE_NAME);
 		GenreResponse response = new GenreResponse(GENRE_ID, GENRE_NAME);
 
 		when(genreService.createGenre(any(GenreRequest.class))).thenReturn(response);
 
-		ResponseEntity<GenreResponse> result = controller.createGenre(request);
+		GenreResponse result = controller.createGenre(request);
 
-		assertThat(result.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-		assertThat(result.getBody()).isEqualTo(response);
+		assertThat(result).isEqualTo(response);
 		verify(genreService).createGenre(request);
 	}
 
 	@Test
-	void createGenre_ThrowsException_WhenDuplicateName() {
+	void createGenreShouldThrowExceptionWhenDuplicateName() {
 		GenreRequest request = new GenreRequest("Existing");
 
 		when(genreService.createGenre(any(GenreRequest.class)))
@@ -59,21 +64,55 @@ public class AdminGenreControllerTest {
 	}
 
 	@Test
-	void updateGenre_ReturnsUpdatedGenre() {
+	void getGenresShouldReturnPage() {
+		String query = "act";
+		Pageable pageable = PageRequest.of(0, 10);
+
+		GenreListResponse response = new GenreListResponse(GENRE_ID, GENRE_NAME, 5);
+		Page<GenreListResponse> page = new PageImpl<>(List.of(response), pageable, 1);
+
+		when(genreService.getGenres(query, pageable)).thenReturn(page);
+
+		PageResponse<GenreListResponse> result = controller.getGenres(query, pageable);
+
+		assertThat(result).isNotNull();
+		assertThat(result.content()).hasSize(1);
+		assertThat(result.content().get(0).id()).isEqualTo(GENRE_ID);
+		assertThat(result.content().get(0).name()).isEqualTo(GENRE_NAME);
+		verify(genreService).getGenres(query, pageable);
+	}
+
+	@Test
+	void getGenresWithNullQueryShouldReturnPage() {
+		Pageable pageable = PageRequest.of(0, 10);
+
+		GenreListResponse response = new GenreListResponse(GENRE_ID, GENRE_NAME, 5);
+		Page<GenreListResponse> page = new PageImpl<>(List.of(response), pageable, 1);
+
+		when(genreService.getGenres(null, pageable)).thenReturn(page);
+
+		PageResponse<GenreListResponse> result = controller.getGenres(null, pageable);
+
+		assertThat(result).isNotNull();
+		assertThat(result.content()).hasSize(1);
+		verify(genreService).getGenres(null, pageable);
+	}
+
+	@Test
+	void updateGenreShouldReturnUpdatedGenre() {
 		GenreRequest request = new GenreRequest("Updated");
 		GenreResponse response = new GenreResponse(GENRE_ID, "Updated");
 
 		when(genreService.updateGenre(eq(GENRE_ID), any(GenreRequest.class))).thenReturn(response);
 
-		ResponseEntity<GenreResponse> result = controller.updateGenre(GENRE_ID, request);
+		GenreResponse result = controller.updateGenre(GENRE_ID, request);
 
-		assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
-		assertThat(result.getBody()).isEqualTo(response);
+		assertThat(result).isEqualTo(response);
 		verify(genreService).updateGenre(GENRE_ID, request);
 	}
 
 	@Test
-	void updateGenre_ThrowsException_WhenNotFound() {
+	void updateGenreShouldThrowExceptionWhenNotFound() {
 		GenreRequest request = new GenreRequest("Updated");
 
 		when(genreService.updateGenre(eq(999L), any(GenreRequest.class))).thenThrow(new GenreNotFoundException(999L));
@@ -82,15 +121,14 @@ public class AdminGenreControllerTest {
 	}
 
 	@Test
-	void deleteGenre_ReturnsNoContent() {
-		ResponseEntity<Void> result = controller.deleteGenre(GENRE_ID);
+	void deleteGenreShouldCallService() {
+		controller.deleteGenre(GENRE_ID);
 
-		assertThat(result.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
 		verify(genreService).deleteGenre(GENRE_ID);
 	}
 
 	@Test
-	void deleteGenre_ThrowsException_WhenNotFound() {
+	void deleteGenreShouldThrowExceptionWhenNotFound() {
 		doThrow(new GenreNotFoundException(999L)).when(genreService).deleteGenre(999L);
 
 		assertThatThrownBy(() -> controller.deleteGenre(999L)).isInstanceOf(GenreNotFoundException.class);

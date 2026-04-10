@@ -15,7 +15,6 @@ import ua.lviv.bas.cinema.domain.booking.Payment;
 import ua.lviv.bas.cinema.domain.booking.Refund;
 import ua.lviv.bas.cinema.domain.booking.status.RefundStatus;
 import ua.lviv.bas.cinema.domain.user.User;
-import ua.lviv.bas.cinema.dto.refund.response.RefundResponse;
 
 @ExtendWith(MockitoExtension.class)
 public class RefundMapperTest {
@@ -27,18 +26,16 @@ public class RefundMapperTest {
 	private RefundMapperImpl refundMapper;
 
 	@Test
-	void toRefundResponse_ShouldMapAllFieldsCorrectly() {
-		User user = User.builder().id(1L).email("user@example.com").firstName("John").lastName("Doe").build();
-
-		Payment payment = Payment.builder().id(100L).amount(new BigDecimal("500.00")).build();
-
-		Refund refund = Refund.builder().id(50L).user(user).payment(payment).totalAmount(new BigDecimal("400.00"))
+	void toResponse() {
+		var user = User.builder().id(1L).email("user@example.com").firstName("John").lastName("Doe").build();
+		var payment = Payment.builder().id(100L).amount(new BigDecimal("500.00")).build();
+		var refund = Refund.builder().id(50L).user(user).payment(payment).totalAmount(new BigDecimal("400.00"))
 				.totalBonusPointsToDeduct(20).reason("Changed my mind").status(RefundStatus.APPROVED).build();
 
 		refund.setCreatedDate(LocalDateTime.of(2024, 1, 15, 14, 30));
 		refund.setLastModifiedDate(LocalDateTime.of(2024, 1, 15, 15, 0));
 
-		RefundResponse response = refundMapper.toRefundResponse(refund);
+		var response = refundMapper.toResponse(refund);
 
 		assertThat(response).isNotNull();
 		assertThat(response.id()).isEqualTo(50L);
@@ -49,7 +46,6 @@ public class RefundMapperTest {
 		assertThat(response.status()).isEqualTo("APPROVED");
 		assertThat(response.createdAt()).isEqualTo(LocalDateTime.of(2024, 1, 15, 14, 30));
 		assertThat(response.processedAt()).isNull();
-
 		assertThat(response.refundNumber()).isNull();
 		assertThat(response.paymentMethod()).isNull();
 		assertThat(response.message()).isNull();
@@ -57,13 +53,12 @@ public class RefundMapperTest {
 	}
 
 	@Test
-	void toRefundResponse_ShouldHandleNullPayment() {
-		User user = User.builder().id(1L).email("user@example.com").build();
-
-		Refund refund = Refund.builder().id(51L).user(user).payment(null).totalAmount(new BigDecimal("200.00"))
+	void toResponseWithNullPayment() {
+		var user = User.builder().id(1L).email("user@example.com").build();
+		var refund = Refund.builder().id(51L).user(user).payment(null).totalAmount(new BigDecimal("200.00"))
 				.totalBonusPointsToDeduct(0).status(RefundStatus.PENDING).build();
 
-		RefundResponse response = refundMapper.toRefundResponse(refund);
+		var response = refundMapper.toResponse(refund);
 
 		assertThat(response).isNotNull();
 		assertThat(response.id()).isEqualTo(51L);
@@ -74,15 +69,13 @@ public class RefundMapperTest {
 	}
 
 	@Test
-	void toRefundResponse_ShouldHandleNullReason() {
-		User user = User.builder().id(1L).email("user@example.com").build();
-
-		Payment payment = Payment.builder().id(103L).build();
-
-		Refund refund = Refund.builder().id(54L).user(user).payment(payment).totalAmount(new BigDecimal("300.00"))
+	void toResponseWithNullReason() {
+		var user = User.builder().id(1L).email("user@example.com").build();
+		var payment = Payment.builder().id(103L).build();
+		var refund = Refund.builder().id(54L).user(user).payment(payment).totalAmount(new BigDecimal("300.00"))
 				.totalBonusPointsToDeduct(15).reason(null).status(RefundStatus.PENDING).build();
 
-		RefundResponse response = refundMapper.toRefundResponse(refund);
+		var response = refundMapper.toResponse(refund);
 
 		assertThat(response).isNotNull();
 		assertThat(response.reason()).isNull();
@@ -91,15 +84,13 @@ public class RefundMapperTest {
 	}
 
 	@Test
-	void toRefundResponse_ShouldHandleZeroTotalAmount() {
-		User user = User.builder().id(1L).email("user@example.com").build();
-
-		Payment payment = Payment.builder().id(104L).build();
-
-		Refund refund = Refund.builder().id(55L).user(user).payment(payment).totalAmount(BigDecimal.ZERO)
+	void toResponseWithZeroTotalAmount() {
+		var user = User.builder().id(1L).email("user@example.com").build();
+		var payment = Payment.builder().id(104L).build();
+		var refund = Refund.builder().id(55L).user(user).payment(payment).totalAmount(BigDecimal.ZERO)
 				.totalBonusPointsToDeduct(0).status(RefundStatus.PROCESSED).build();
 
-		RefundResponse response = refundMapper.toRefundResponse(refund);
+		var response = refundMapper.toResponse(refund);
 
 		assertThat(response.totalAmount()).isEqualTo(BigDecimal.ZERO);
 		assertThat(response.totalBonusPointsToDeduct()).isZero();
@@ -107,18 +98,16 @@ public class RefundMapperTest {
 	}
 
 	@Test
-	void toRefundResponse_ShouldHandleNullDates() {
-		User user = User.builder().id(1L).email("user@example.com").build();
-
-		Payment payment = Payment.builder().id(105L).build();
-
-		Refund refund = Refund.builder().id(56L).user(user).payment(payment).totalAmount(new BigDecimal("250.00"))
+	void toResponseWithNullDates() {
+		var user = User.builder().id(1L).email("user@example.com").build();
+		var payment = Payment.builder().id(105L).build();
+		var refund = Refund.builder().id(56L).user(user).payment(payment).totalAmount(new BigDecimal("250.00"))
 				.totalBonusPointsToDeduct(5).status(RefundStatus.PENDING).build();
 
 		refund.setCreatedDate(null);
 		refund.setLastModifiedDate(null);
 
-		RefundResponse response = refundMapper.toRefundResponse(refund);
+		var response = refundMapper.toResponse(refund);
 
 		assertThat(response.createdAt()).isNull();
 		assertThat(response.processedAt()).isNull();
@@ -127,49 +116,41 @@ public class RefundMapperTest {
 	}
 
 	@Test
-	void toRefundResponse_ShouldMapAllRefundStatuses() {
-		User user = User.builder().id(1L).email("user@example.com").build();
+	void toResponseWithAllStatuses() {
+		var user = User.builder().id(1L).email("user@example.com").build();
+		var payment = Payment.builder().id(106L).build();
 
-		Payment payment = Payment.builder().id(106L).build();
+		var pendingRefund = Refund.builder().id(57L).user(user).payment(payment).totalAmount(new BigDecimal("100.00"))
+				.totalBonusPointsToDeduct(10).status(RefundStatus.PENDING).build();
+		var approvedRefund = Refund.builder().id(58L).user(user).payment(payment).totalAmount(new BigDecimal("100.00"))
+				.totalBonusPointsToDeduct(10).status(RefundStatus.APPROVED).build();
+		var rejectedRefund = Refund.builder().id(59L).user(user).payment(payment).totalAmount(new BigDecimal("100.00"))
+				.totalBonusPointsToDeduct(10).status(RefundStatus.REJECTED).build();
+		var processedRefund = Refund.builder().id(60L).user(user).payment(payment).totalAmount(new BigDecimal("100.00"))
+				.totalBonusPointsToDeduct(10).status(RefundStatus.PROCESSED).build();
 
-		Refund pendingRefund = Refund.builder().id(57L).user(user).payment(payment)
-				.totalAmount(new BigDecimal("100.00")).totalBonusPointsToDeduct(10).status(RefundStatus.PENDING)
-				.build();
-
-		Refund approvedRefund = Refund.builder().id(58L).user(user).payment(payment)
-				.totalAmount(new BigDecimal("100.00")).totalBonusPointsToDeduct(10).status(RefundStatus.APPROVED)
-				.build();
-
-		Refund rejectedRefund = Refund.builder().id(59L).user(user).payment(payment)
-				.totalAmount(new BigDecimal("100.00")).totalBonusPointsToDeduct(10).status(RefundStatus.REJECTED)
-				.build();
-
-		Refund processedRefund = Refund.builder().id(60L).user(user).payment(payment)
-				.totalAmount(new BigDecimal("100.00")).totalBonusPointsToDeduct(10).status(RefundStatus.PROCESSED)
-				.build();
-
-		assertThat(refundMapper.toRefundResponse(pendingRefund).status()).isEqualTo("PENDING");
-		assertThat(refundMapper.toRefundResponse(approvedRefund).status()).isEqualTo("APPROVED");
-		assertThat(refundMapper.toRefundResponse(rejectedRefund).status()).isEqualTo("REJECTED");
-		assertThat(refundMapper.toRefundResponse(processedRefund).status()).isEqualTo("PROCESSED");
+		assertThat(refundMapper.toResponse(pendingRefund).status()).isEqualTo("PENDING");
+		assertThat(refundMapper.toResponse(approvedRefund).status()).isEqualTo("APPROVED");
+		assertThat(refundMapper.toResponse(rejectedRefund).status()).isEqualTo("REJECTED");
+		assertThat(refundMapper.toResponse(processedRefund).status()).isEqualTo("PROCESSED");
 	}
 
 	@Test
-	void toRefundResponse_ShouldHandleNullInput() {
-		RefundResponse response = refundMapper.toRefundResponse(null);
+	void toResponseWithNull() {
+		var response = refundMapper.toResponse(null);
 		assertThat(response).isNull();
 	}
 
 	@Test
-	void toRefundResponse_ShouldMapRefundWithoutBuilder() {
-		User user = new User();
+	void toResponseWithoutBuilder() {
+		var user = new User();
 		user.setId(1L);
 		user.setEmail("user@example.com");
 
-		Payment payment = new Payment();
+		var payment = new Payment();
 		payment.setId(107L);
 
-		Refund refund = new Refund();
+		var refund = new Refund();
 		refund.setId(61L);
 		refund.setUser(user);
 		refund.setPayment(payment);
@@ -180,7 +161,7 @@ public class RefundMapperTest {
 		refund.setCreatedDate(LocalDateTime.of(2024, 1, 17, 9, 0));
 		refund.setLastModifiedDate(LocalDateTime.of(2024, 1, 17, 10, 0));
 
-		RefundResponse response = refundMapper.toRefundResponse(refund);
+		var response = refundMapper.toResponse(refund);
 
 		assertThat(response).isNotNull();
 		assertThat(response.id()).isEqualTo(61L);

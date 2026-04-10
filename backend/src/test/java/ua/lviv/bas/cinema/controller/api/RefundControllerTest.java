@@ -13,8 +13,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 
 import ua.lviv.bas.cinema.config.security.user.CustomUserDetails;
 import ua.lviv.bas.cinema.domain.user.User;
@@ -45,20 +43,37 @@ public class RefundControllerTest {
 	}
 
 	@Test
-	void refundTicket_ShouldProcessSuccessfully() {
+	void refundShouldProcessSuccessfully() {
 		User user = createUser(1L, "user@example.com");
 		CustomUserDetails userDetails = new CustomUserDetails(user);
 		RefundRequest request = new RefundRequest(100L, "Change of plans");
 
 		RefundResponse refundResponse = createRefundResponse(1L);
 
-		when(refundService.processRefund(any(RefundRequest.class), eq(user.getId()))).thenReturn(refundResponse);
+		when(refundService.refund(any(RefundRequest.class), eq(user.getId()))).thenReturn(refundResponse);
 
-		ResponseEntity<RefundResponse> response = refundController.refundTicket(request, userDetails);
+		RefundResponse response = refundController.refund(request, userDetails);
 
-		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-		assertThat(response.getBody()).isNotNull();
-		assertThat(response.getBody().id()).isEqualTo(1L);
-		assertThat(response.getBody().refundNumber()).isEqualTo("RF-2024-0001");
+		assertThat(response).isNotNull();
+		assertThat(response.id()).isEqualTo(1L);
+		assertThat(response.refundNumber()).isEqualTo("RF-2024-0001");
+		assertThat(response.totalAmount()).isEqualTo(new BigDecimal("200.00"));
+		assertThat(response.reason()).isEqualTo("Change of plans");
+	}
+
+	@Test
+	void refundShouldCallServiceWithCorrectParameters() {
+		User user = createUser(2L, "another@example.com");
+		CustomUserDetails userDetails = new CustomUserDetails(user);
+		RefundRequest request = new RefundRequest(200L, "Wrong ticket");
+
+		RefundResponse refundResponse = createRefundResponse(2L);
+
+		when(refundService.refund(eq(request), eq(2L))).thenReturn(refundResponse);
+
+		RefundResponse response = refundController.refund(request, userDetails);
+
+		assertThat(response).isNotNull();
+		assertThat(response.id()).isEqualTo(2L);
 	}
 }

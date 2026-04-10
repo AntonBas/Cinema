@@ -1,7 +1,6 @@
 package ua.lviv.bas.cinema.controller.api;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -30,114 +29,109 @@ public class SessionControllerTest {
 	@InjectMocks
 	private SessionController sessionController;
 
-	private SessionScheduleResponse createSessionScheduleDto(Long id) {
+	private SessionScheduleResponse createSessionScheduleResponse(Long id) {
 		return new SessionScheduleResponse(id, LocalDateTime.of(2024, 1, 15, 18, 0),
 				LocalDateTime.of(2024, 1, 15, 20, 0), new BigDecimal("250.00"), 80, 1L, "Test Movie", "poster.jpg",
 				"PG-13", 120, 1L, "Hall 1", 100);
 	}
 
 	@Test
-	void getScheduleSessions_WithoutFilters_ShouldReturnSessions() {
+	void getScheduleWithoutFiltersShouldReturnSessions() {
 		String searchTerm = null;
 		LocalDate date = null;
-		List<SessionScheduleResponse> sessionList = List.of(createSessionScheduleDto(1L));
+		List<SessionScheduleResponse> sessionList = List.of(createSessionScheduleResponse(1L));
 
-		when(sessionService.getScheduleSessions(searchTerm, date)).thenReturn(sessionList);
+		when(sessionService.getSchedule(searchTerm, date)).thenReturn(sessionList);
 
-		ResponseEntity<List<SessionScheduleResponse>> response = sessionController.getScheduleSessions(searchTerm,
-				date);
+		ResponseEntity<List<SessionScheduleResponse>> response = sessionController.getSchedule(searchTerm, date);
 
-		assertEquals(HttpStatus.OK, response.getStatusCode());
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
 		List<SessionScheduleResponse> body = response.getBody();
-		assertNotNull(body);
-		assertEquals(1, body.size());
-		assertEquals("Test Movie", body.get(0).movieTitle());
+		assertThat(body).isNotNull();
+		assertThat(body).hasSize(1);
+		assertThat(body.get(0).movieTitle()).isEqualTo("Test Movie");
 
-		verify(sessionService).getScheduleSessions(searchTerm, date);
+		verify(sessionService).getSchedule(searchTerm, date);
 	}
 
 	@Test
-	void getScheduleSessions_WithSearchTerm_ShouldReturnFilteredSessions() {
+	void getScheduleWithSearchTermShouldReturnFilteredSessions() {
 		String searchTerm = "Test";
 		LocalDate date = null;
-		List<SessionScheduleResponse> sessionList = List.of(createSessionScheduleDto(1L));
+		List<SessionScheduleResponse> sessionList = List.of(createSessionScheduleResponse(1L));
 
-		when(sessionService.getScheduleSessions(searchTerm, date)).thenReturn(sessionList);
+		when(sessionService.getSchedule(searchTerm, date)).thenReturn(sessionList);
 
-		ResponseEntity<List<SessionScheduleResponse>> response = sessionController.getScheduleSessions(searchTerm,
-				date);
+		ResponseEntity<List<SessionScheduleResponse>> response = sessionController.getSchedule(searchTerm, date);
 
-		assertEquals(HttpStatus.OK, response.getStatusCode());
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
 		List<SessionScheduleResponse> body = response.getBody();
-		assertNotNull(body);
-		assertEquals(1, body.size());
-		assertEquals("Test Movie", body.get(0).movieTitle());
+		assertThat(body).isNotNull();
+		assertThat(body).hasSize(1);
+		assertThat(body.get(0).movieTitle()).isEqualTo("Test Movie");
 
-		verify(sessionService).getScheduleSessions(searchTerm, date);
+		verify(sessionService).getSchedule(searchTerm, date);
 	}
 
 	@Test
-	void getScheduleSessions_WithDate_ShouldReturnFilteredSessions() {
+	void getScheduleWithDateShouldReturnFilteredSessions() {
 		String searchTerm = null;
 		LocalDate date = LocalDate.of(2024, 1, 15);
-		List<SessionScheduleResponse> sessionList = List.of(createSessionScheduleDto(1L));
+		List<SessionScheduleResponse> sessionList = List.of(createSessionScheduleResponse(1L));
 
-		when(sessionService.getScheduleSessions(searchTerm, date)).thenReturn(sessionList);
+		when(sessionService.getSchedule(searchTerm, date)).thenReturn(sessionList);
 
-		ResponseEntity<List<SessionScheduleResponse>> response = sessionController.getScheduleSessions(searchTerm,
-				date);
+		ResponseEntity<List<SessionScheduleResponse>> response = sessionController.getSchedule(searchTerm, date);
 
-		assertEquals(HttpStatus.OK, response.getStatusCode());
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
 		List<SessionScheduleResponse> body = response.getBody();
-		assertNotNull(body);
-		assertEquals(1, body.size());
-		assertEquals(LocalDateTime.of(2024, 1, 15, 18, 0), body.get(0).startTime());
+		assertThat(body).isNotNull();
+		assertThat(body).hasSize(1);
+		assertThat(body.get(0).startTime()).isEqualTo(LocalDateTime.of(2024, 1, 15, 18, 0));
 
-		verify(sessionService).getScheduleSessions(searchTerm, date);
+		verify(sessionService).getSchedule(searchTerm, date);
 	}
 
 	@Test
-	void getScheduleSessions_WithAllFilters_ShouldReturnFilteredSessions() {
+	void getScheduleWithAllFiltersShouldReturnFilteredSessions() {
 		String searchTerm = "Test";
 		LocalDate date = LocalDate.of(2024, 1, 15);
-		List<SessionScheduleResponse> sessionList = List.of(createSessionScheduleDto(1L));
+		List<SessionScheduleResponse> sessionList = List.of(createSessionScheduleResponse(1L));
 
-		when(sessionService.getScheduleSessions(searchTerm, date)).thenReturn(sessionList);
+		when(sessionService.getSchedule(searchTerm, date)).thenReturn(sessionList);
 
-		ResponseEntity<List<SessionScheduleResponse>> response = sessionController.getScheduleSessions(searchTerm,
-				date);
+		ResponseEntity<List<SessionScheduleResponse>> response = sessionController.getSchedule(searchTerm, date);
 
-		assertEquals(HttpStatus.OK, response.getStatusCode());
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
 		List<SessionScheduleResponse> body = response.getBody();
-		assertNotNull(body);
-		assertEquals(1, body.size());
-		assertEquals("Test Movie", body.get(0).movieTitle());
-		assertEquals(LocalDateTime.of(2024, 1, 15, 18, 0), body.get(0).startTime());
+		assertThat(body).isNotNull();
+		assertThat(body).hasSize(1);
+		assertThat(body.get(0).movieTitle()).isEqualTo("Test Movie");
+		assertThat(body.get(0).startTime()).isEqualTo(LocalDateTime.of(2024, 1, 15, 18, 0));
 
-		verify(sessionService).getScheduleSessions(searchTerm, date);
+		verify(sessionService).getSchedule(searchTerm, date);
 	}
 
 	@Test
-	void getScheduleSessions_WhenNoResults_ShouldReturnEmptyList() {
+	void getScheduleWhenNoResultsShouldReturnEmptyList() {
 		String searchTerm = null;
 		LocalDate date = null;
 		List<SessionScheduleResponse> emptyList = List.of();
 
-		when(sessionService.getScheduleSessions(searchTerm, date)).thenReturn(emptyList);
+		when(sessionService.getSchedule(searchTerm, date)).thenReturn(emptyList);
 
-		ResponseEntity<List<SessionScheduleResponse>> response = sessionController.getScheduleSessions(searchTerm,
-				date);
+		ResponseEntity<List<SessionScheduleResponse>> response = sessionController.getSchedule(searchTerm, date);
 
-		assertEquals(HttpStatus.OK, response.getStatusCode());
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
 		List<SessionScheduleResponse> body = response.getBody();
-		assertNotNull(body);
-		assertEquals(0, body.size());
+		assertThat(body).isNotNull();
+		assertThat(body).isEmpty();
 
-		verify(sessionService).getScheduleSessions(searchTerm, date);
+		verify(sessionService).getSchedule(searchTerm, date);
 	}
 }

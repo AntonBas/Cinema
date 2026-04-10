@@ -114,7 +114,7 @@ public class PaymentServiceTest {
 	}
 
 	@Test
-	void createPayment_Success() {
+	void createPaymentShouldSucceed() {
 		when(bookingRepository.findByIdAndUserId(BOOKING_ID, USER_ID)).thenReturn(Optional.of(testBooking));
 		when(paymentRepository.findByBookingId(BOOKING_ID)).thenReturn(Optional.empty());
 		when(numberGenerator.generateLiqpayOrderId()).thenReturn("ORD_NEW123456789");
@@ -134,7 +134,7 @@ public class PaymentServiceTest {
 	}
 
 	@Test
-	void createPayment_WhenBookingNotFound_ShouldThrowException() {
+	void createPaymentWhenBookingNotFoundShouldThrowException() {
 		when(bookingRepository.findByIdAndUserId(BOOKING_ID, USER_ID)).thenReturn(Optional.empty());
 
 		assertThatThrownBy(() -> paymentService.createPayment(createRequest, testUser))
@@ -142,7 +142,7 @@ public class PaymentServiceTest {
 	}
 
 	@Test
-	void createPayment_WhenPaymentInProgress_ShouldThrowException() {
+	void createPaymentWhenPaymentInProgressShouldThrowException() {
 		when(bookingRepository.findByIdAndUserId(BOOKING_ID, USER_ID)).thenReturn(Optional.of(testBooking));
 		when(paymentRepository.findByBookingId(BOOKING_ID)).thenReturn(Optional.of(testPayment));
 
@@ -151,11 +151,11 @@ public class PaymentServiceTest {
 	}
 
 	@Test
-	void getPaymentStatus_Success() {
+	void getPaymentShouldSucceed() {
 		when(paymentRepository.findByIdWithDetails(PAYMENT_ID)).thenReturn(Optional.of(testPayment));
 		when(numberGenerator.generateBookingNumber(testBooking)).thenReturn("BK-2024-00001");
 
-		PaymentResponse response = paymentService.getPaymentStatus(PAYMENT_ID, testUser);
+		PaymentResponse response = paymentService.getPayment(PAYMENT_ID, testUser);
 
 		assertThat(response).isNotNull();
 		assertThat(response.bookingNumber()).isEqualTo("BK-2024-00001");
@@ -166,25 +166,25 @@ public class PaymentServiceTest {
 	}
 
 	@Test
-	void getPaymentStatus_WhenPaymentNotFound_ShouldThrowException() {
+	void getPaymentWhenPaymentNotFoundShouldThrowException() {
 		when(paymentRepository.findByIdWithDetails(PAYMENT_ID)).thenReturn(Optional.empty());
 
-		assertThatThrownBy(() -> paymentService.getPaymentStatus(PAYMENT_ID, testUser))
+		assertThatThrownBy(() -> paymentService.getPayment(PAYMENT_ID, testUser))
 				.isInstanceOf(PaymentNotFoundException.class);
 	}
 
 	@Test
-	void getPaymentStatus_WhenUserNotAuthorized_ShouldThrowException() {
+	void getPaymentWhenUserNotAuthorizedShouldThrowException() {
 		User otherUser = User.builder().id(999L).build();
 
 		when(paymentRepository.findByIdWithDetails(PAYMENT_ID)).thenReturn(Optional.of(testPayment));
 
-		assertThatThrownBy(() -> paymentService.getPaymentStatus(PAYMENT_ID, otherUser))
+		assertThatThrownBy(() -> paymentService.getPayment(PAYMENT_ID, otherUser))
 				.isInstanceOf(PaymentAccessDeniedException.class);
 	}
 
 	@Test
-	void retryPayment_Success() {
+	void retryPaymentShouldSucceed() {
 		testPayment.setStatus(PaymentStatus.FAILED);
 
 		when(paymentRepository.findById(PAYMENT_ID)).thenReturn(Optional.of(testPayment));
@@ -199,7 +199,7 @@ public class PaymentServiceTest {
 	}
 
 	@Test
-	void retryPayment_WhenPaymentNotFound_ShouldThrowException() {
+	void retryPaymentWhenPaymentNotFoundShouldThrowException() {
 		when(paymentRepository.findById(PAYMENT_ID)).thenReturn(Optional.empty());
 
 		assertThatThrownBy(() -> paymentService.retryPayment(PAYMENT_ID, testUser))
@@ -207,7 +207,7 @@ public class PaymentServiceTest {
 	}
 
 	@Test
-	void retryPayment_WhenPaymentNotFailed_ShouldThrowException() {
+	void retryPaymentWhenPaymentNotFailedShouldThrowException() {
 		when(paymentRepository.findById(PAYMENT_ID)).thenReturn(Optional.of(testPayment));
 
 		assertThatThrownBy(() -> paymentService.retryPayment(PAYMENT_ID, testUser))
@@ -215,7 +215,7 @@ public class PaymentServiceTest {
 	}
 
 	@Test
-	void processSuccessfulPayment_Success() {
+	void processSuccessShouldSucceed() {
 		Map<String, String> callbackData = new HashMap<>();
 		callbackData.put("payment_id", "PAY123");
 		callbackData.put("transaction_id", "TXN123");
@@ -224,11 +224,11 @@ public class PaymentServiceTest {
 		List<Ticket> tickets = Arrays.asList(Ticket.builder().build());
 
 		when(ticketService.createTicketsForBooking(testBooking, testPayment)).thenReturn(tickets);
-		when(bonusService.calculatePoints(AMOUNT)).thenReturn(20);
+		when(bonusService.calculateAccrualPoints(AMOUNT)).thenReturn(20);
 		when(dateTimeFormatter.formatStandard(any(LocalDateTime.class))).thenReturn("2024-01-01 14:00");
 		when(numberGenerator.generateBookingNumber(testBooking)).thenReturn("BK-2024-00001");
 
-		paymentService.processSuccessfulPayment(testPayment, callbackData);
+		paymentService.processSuccess(testPayment, callbackData);
 
 		assertThat(testPayment.getStatus()).isEqualTo(PaymentStatus.SUCCESS);
 		assertThat(testPayment.getLiqpayPaymentId()).isEqualTo("PAY123");
@@ -237,16 +237,19 @@ public class PaymentServiceTest {
 
 		verify(bookingService).confirmBooking(BOOKING_ID);
 		verify(ticketService).createTicketsForBooking(testBooking, testPayment);
-		verify(bonusService).accruePoints(USER_ID, 20, testBooking, testPayment);
+		verify(bonusService).accruePointsForPayment(USER_ID, 20, testBooking, testPayment);
 	}
 
 	@Test
-	void processFailedPayment_Success() {
+	void processFailureShouldSucceed() {
 		Map<String, String> callbackData = new HashMap<>();
 		callbackData.put("err_code", "ERR_001");
 		callbackData.put("err_description", "Insufficient funds");
 
-		paymentService.processFailedPayment(testPayment, callbackData);
+		when(dateTimeFormatter.formatStandard(any(LocalDateTime.class))).thenReturn("2024-01-01 14:00");
+		when(numberGenerator.generateBookingNumber(testBooking)).thenReturn("BK-2024-00001");
+
+		paymentService.processFailure(testPayment, callbackData);
 
 		assertThat(testPayment.getStatus()).isEqualTo(PaymentStatus.FAILED);
 		assertThat(testPayment.getLiqpayErrorCode()).isEqualTo("ERR_001");
@@ -254,7 +257,7 @@ public class PaymentServiceTest {
 	}
 
 	@Test
-	void refundPayment_Success() {
+	void refundShouldSucceed() {
 		testPayment.setStatus(PaymentStatus.SUCCESS);
 		testPayment.setLiqpayPaymentId("PAY123");
 		testPayment.setLiqpayOrderId("ORD_123");
@@ -264,24 +267,26 @@ public class PaymentServiceTest {
 		when(paymentGatewayService.prepareRefundData("PAY123", "ORD_123", refundAmount, description))
 				.thenReturn("refund_data");
 		when(paymentRepository.save(testPayment)).thenReturn(testPayment);
+		when(dateTimeFormatter.formatStandard(any(LocalDateTime.class))).thenReturn("2024-01-01 14:00");
+		when(numberGenerator.generateBookingNumber(testBooking)).thenReturn("BK-2024-00001");
 
-		paymentService.refundPayment(testPayment, refundAmount, description);
+		paymentService.refund(testPayment, refundAmount, description);
 
 		assertThat(testPayment.getStatus()).isEqualTo(PaymentStatus.PARTIALLY_REFUNDED);
 		verify(paymentGatewayService).processRefund("refund_data");
 	}
 
 	@Test
-	void refundPayment_WhenPaymentNotSuccess_ShouldThrowException() {
+	void refundWhenPaymentNotSuccessShouldThrowException() {
 		testPayment.setStatus(PaymentStatus.PENDING);
 		BigDecimal refundAmount = new BigDecimal("100.00");
 
-		assertThatThrownBy(() -> paymentService.refundPayment(testPayment, refundAmount, "Test"))
+		assertThatThrownBy(() -> paymentService.refund(testPayment, refundAmount, "Test"))
 				.isInstanceOf(PaymentProcessingException.class);
 	}
 
 	@Test
-	void refundPayment_WhenFullRefund_ShouldMarkAsFullyRefunded() {
+	void refundWhenFullRefundShouldMarkAsFullyRefunded() {
 		testPayment.setStatus(PaymentStatus.SUCCESS);
 		testPayment.setLiqpayPaymentId("PAY123");
 		testPayment.setLiqpayOrderId("ORD_123");
@@ -291,8 +296,10 @@ public class PaymentServiceTest {
 		when(paymentGatewayService.prepareRefundData("PAY123", "ORD_123", refundAmount, description))
 				.thenReturn("refund_data");
 		when(paymentRepository.save(testPayment)).thenReturn(testPayment);
+		when(dateTimeFormatter.formatStandard(any(LocalDateTime.class))).thenReturn("2024-01-01 14:00");
+		when(numberGenerator.generateBookingNumber(testBooking)).thenReturn("BK-2024-00001");
 
-		paymentService.refundPayment(testPayment, refundAmount, description);
+		paymentService.refund(testPayment, refundAmount, description);
 
 		assertThat(testPayment.getStatus()).isEqualTo(PaymentStatus.REFUNDED);
 	}

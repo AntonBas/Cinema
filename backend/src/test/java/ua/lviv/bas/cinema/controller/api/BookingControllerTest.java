@@ -14,8 +14,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 
 import ua.lviv.bas.cinema.config.security.user.CustomUserDetails;
 import ua.lviv.bas.cinema.domain.booking.status.BookingStatus;
@@ -56,7 +54,7 @@ public class BookingControllerTest {
 	}
 
 	@Test
-	void createBooking_ReturnsCreated() {
+	void createBookingShouldReturnCreated() {
 		User user = createUser();
 		CustomUserDetails userDetails = createUserDetails();
 		BookingCreateRequest request = new BookingCreateRequest(SESSION_ID, Collections.emptyList(), null);
@@ -64,38 +62,35 @@ public class BookingControllerTest {
 
 		when(bookingService.createBooking(any(BookingCreateRequest.class), any(User.class))).thenReturn(response);
 
-		ResponseEntity<BookingResponse> result = bookingController.createBooking(request, userDetails);
+		BookingResponse result = bookingController.createBooking(request, userDetails);
 
-		assertThat(result.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-		assertThat(result.getBody()).isNotNull();
-		assertThat(result.getBody().id()).isEqualTo(BOOKING_ID);
+		assertThat(result).isNotNull();
+		assertThat(result.id()).isEqualTo(BOOKING_ID);
 		verify(bookingService).createBooking(request, user);
 	}
 
 	@Test
-	void getBooking_ReturnsOk() {
+	void getBookingShouldReturnOk() {
 		User user = createUser();
 		CustomUserDetails userDetails = createUserDetails();
 		BookingResponse response = createBookingResponse();
 
-		when(bookingService.getBookingById(BOOKING_ID, user)).thenReturn(response);
+		when(bookingService.getBooking(BOOKING_ID, user)).thenReturn(response);
 
-		ResponseEntity<BookingResponse> result = bookingController.getBooking(BOOKING_ID, userDetails);
+		BookingResponse result = bookingController.getBooking(BOOKING_ID, userDetails);
 
-		assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
-		assertThat(result.getBody()).isNotNull();
-		assertThat(result.getBody().id()).isEqualTo(BOOKING_ID);
-		verify(bookingService).getBookingById(BOOKING_ID, user);
+		assertThat(result).isNotNull();
+		assertThat(result.id()).isEqualTo(BOOKING_ID);
+		verify(bookingService).getBooking(BOOKING_ID, user);
 	}
 
 	@Test
-	void cancelBooking_ReturnsNoContent() {
+	void cancelBookingShouldCallService() {
 		User user = createUser();
 		CustomUserDetails userDetails = createUserDetails();
 
-		ResponseEntity<Void> result = bookingController.cancelBooking(BOOKING_ID, userDetails);
+		bookingController.cancelBooking(BOOKING_ID, userDetails);
 
-		assertThat(result.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
 		verify(bookingService).cancelBooking(BOOKING_ID, user);
 	}
 }

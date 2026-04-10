@@ -25,9 +25,11 @@ import ua.lviv.bas.cinema.dto.movie.request.GenreRequest;
 import ua.lviv.bas.cinema.dto.movie.response.GenreListResponse;
 import ua.lviv.bas.cinema.dto.movie.response.GenreResponse;
 import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
+import ua.lviv.bas.cinema.exception.domain.cinema.GenreHasMoviesException;
 import ua.lviv.bas.cinema.exception.domain.cinema.GenreNotFoundException;
 import ua.lviv.bas.cinema.mapper.cinema.GenreMapper;
 import ua.lviv.bas.cinema.repository.cinema.GenreRepository;
+import ua.lviv.bas.cinema.repository.cinema.MovieRepository;
 import ua.lviv.bas.cinema.repository.cinema.projection.GenreListProjection;
 
 @ExtendWith(MockitoExtension.class)
@@ -35,6 +37,9 @@ public class GenreServiceTest {
 
 	@Mock
 	private GenreRepository genreRepository;
+
+	@Mock
+	private MovieRepository movieRepository;
 
 	@Mock
 	private GenreMapper genreMapper;
@@ -46,7 +51,7 @@ public class GenreServiceTest {
 	private final String GENRE_NAME = "Action";
 
 	@Test
-	void createGenre_ShouldSaveNewGenre() {
+	void createGenreShouldSaveNewGenre() {
 		GenreRequest request = new GenreRequest(GENRE_NAME);
 		Genre genre = new Genre();
 		genre.setId(GENRE_ID);
@@ -67,7 +72,7 @@ public class GenreServiceTest {
 	}
 
 	@Test
-	void createGenre_ShouldThrowExceptionWhenNameExists() {
+	void createGenreShouldThrowExceptionWhenNameExists() {
 		GenreRequest request = new GenreRequest(GENRE_NAME);
 		when(genreRepository.existsByNameIgnoreCase(GENRE_NAME)).thenReturn(true);
 
@@ -78,7 +83,7 @@ public class GenreServiceTest {
 	}
 
 	@Test
-	void getGenres_ShouldReturnPage() {
+	void getGenresShouldReturnPage() {
 		String query = "act";
 		Pageable pageable = PageRequest.of(0, 10);
 
@@ -86,7 +91,7 @@ public class GenreServiceTest {
 		Page<GenreListProjection> projectionPage = new PageImpl<>(List.of(projection), pageable, 1);
 		GenreListResponse response = new GenreListResponse(GENRE_ID, GENRE_NAME, 5);
 
-		when(genreRepository.findGenresByQuery(query, pageable)).thenReturn(projectionPage);
+		when(genreRepository.findGenresByFilters(query, pageable)).thenReturn(projectionPage);
 		when(genreMapper.toGenreListResponse(projection)).thenReturn(response);
 
 		Page<GenreListResponse> result = genreService.getGenres(query, pageable);
@@ -99,7 +104,7 @@ public class GenreServiceTest {
 	}
 
 	@Test
-	void getGenres_WithNullQuery_ShouldReturnAll() {
+	void getGenresWithNullQueryShouldReturnAll() {
 		String query = null;
 		Pageable pageable = PageRequest.of(0, 10);
 
@@ -107,7 +112,7 @@ public class GenreServiceTest {
 		Page<GenreListProjection> projectionPage = new PageImpl<>(List.of(projection), pageable, 1);
 		GenreListResponse response = new GenreListResponse(GENRE_ID, GENRE_NAME, 5);
 
-		when(genreRepository.findGenresByQuery(query, pageable)).thenReturn(projectionPage);
+		when(genreRepository.findGenresByFilters(query, pageable)).thenReturn(projectionPage);
 		when(genreMapper.toGenreListResponse(projection)).thenReturn(response);
 
 		Page<GenreListResponse> result = genreService.getGenres(query, pageable);
@@ -117,7 +122,7 @@ public class GenreServiceTest {
 	}
 
 	@Test
-	void updateGenre_ShouldUpdateName() {
+	void updateGenreShouldUpdateName() {
 		Genre existingGenre = new Genre();
 		existingGenre.setId(GENRE_ID);
 		existingGenre.setName("Old Name");
@@ -138,7 +143,7 @@ public class GenreServiceTest {
 	}
 
 	@Test
-	void updateGenre_ShouldThrowExceptionWhenGenreNotFound() {
+	void updateGenreShouldThrowExceptionWhenGenreNotFound() {
 		GenreRequest request = new GenreRequest(GENRE_NAME);
 		when(genreRepository.findById(GENRE_ID)).thenReturn(Optional.empty());
 
@@ -147,7 +152,7 @@ public class GenreServiceTest {
 	}
 
 	@Test
-	void updateGenre_ShouldThrowExceptionWhenNameExists() {
+	void updateGenreShouldThrowExceptionWhenNameExists() {
 		Genre existingGenre = new Genre();
 		existingGenre.setId(GENRE_ID);
 		existingGenre.setName("Old Name");
@@ -163,8 +168,13 @@ public class GenreServiceTest {
 	}
 
 	@Test
-	void deleteGenre_ShouldDeleteGenre() {
-		when(genreRepository.existsById(GENRE_ID)).thenReturn(true);
+	void deleteGenreShouldDeleteGenre() {
+		Genre genre = new Genre();
+		genre.setId(GENRE_ID);
+		genre.setName(GENRE_NAME);
+
+		when(genreRepository.findById(GENRE_ID)).thenReturn(Optional.of(genre));
+		when(movieRepository.countMovieUsageByGenreId(GENRE_ID)).thenReturn(0L);
 
 		genreService.deleteGenre(GENRE_ID);
 
@@ -172,10 +182,24 @@ public class GenreServiceTest {
 	}
 
 	@Test
-	void deleteGenre_ShouldThrowExceptionWhenGenreNotFound() {
-		when(genreRepository.existsById(GENRE_ID)).thenReturn(false);
+	void deleteGenreShouldThrowExceptionWhenGenreNotFound() {
+		when(genreRepository.findById(GENRE_ID)).thenReturn(Optional.empty());
 
 		assertThatThrownBy(() -> genreService.deleteGenre(GENRE_ID)).isInstanceOf(GenreNotFoundException.class);
+
+		verify(genreRepository, never()).deleteById(any());
+	}
+
+	@Test
+	void deleteGenreShouldThrowExceptionWhenGenreHasMovies() {
+		Genre genre = new Genre();
+		genre.setId(GENRE_ID);
+		genre.setName(GENRE_NAME);
+
+		when(genreRepository.findById(GENRE_ID)).thenReturn(Optional.of(genre));
+		when(movieRepository.countMovieUsageByGenreId(GENRE_ID)).thenReturn(5L);
+
+		assertThatThrownBy(() -> genreService.deleteGenre(GENRE_ID)).isInstanceOf(GenreHasMoviesException.class);
 
 		verify(genreRepository, never()).deleteById(any());
 	}

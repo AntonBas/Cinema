@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -53,7 +54,7 @@ public class AdminUserServiceTest {
 	@Mock
 	private AuditService auditService;
 	@InjectMocks
-	private AdminUserService service;
+	private AdminUserService adminUserService;
 
 	private final Long USER_ID = 1L;
 	private final Long ADMIN_ID = 2L;
@@ -77,17 +78,19 @@ public class AdminUserServiceTest {
 
 		response = new AdminUserListResponse(USER_ID, USER_EMAIL, "John", "Doe", UserRole.ROLE_USER, true,
 				VerificationStatus.NOT_VERIFIED, null, 0L, null);
+
+		lenient().doNothing().when(auditService).logChange(any(), any(), any(), any(), any(), any());
 	}
 
 	@Test
-	void updateUserRole_PromoteToAdmin_Success() {
+	void updateRolePromoteToAdminShouldSucceed() {
 		when(securityContext.getAuthentication()).thenReturn(authentication);
 		when(authentication.getName()).thenReturn(ADMIN_EMAIL);
-		when(userRepository.findWithBonusCardById(USER_ID)).thenReturn(Optional.of(user));
+		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
 		when(userRepository.save(user)).thenReturn(user);
 		when(userMapper.toAdminUserListResponse(user)).thenReturn(response);
 
-		AdminUserListResponse result = service.updateUserRole(USER_ID, UserRole.ROLE_ADMIN);
+		AdminUserListResponse result = adminUserService.updateRole(USER_ID, UserRole.ROLE_ADMIN);
 
 		assertThat(result).isNotNull();
 		assertThat(result.id()).isEqualTo(USER_ID);
@@ -96,10 +99,10 @@ public class AdminUserServiceTest {
 	}
 
 	@Test
-	void updateUserRole_DemoteAdmin_Success() {
+	void updateRoleDemoteAdminShouldSucceed() {
 		when(securityContext.getAuthentication()).thenReturn(authentication);
 		when(authentication.getName()).thenReturn(OTHER_ADMIN_EMAIL);
-		when(userRepository.findWithBonusCardById(ADMIN_ID)).thenReturn(Optional.of(adminUser));
+		when(userRepository.findById(ADMIN_ID)).thenReturn(Optional.of(adminUser));
 		when(userRepository.countByUserRoleAndEnabledTrue(UserRole.ROLE_ADMIN)).thenReturn(3L);
 		when(userRepository.save(adminUser)).thenReturn(adminUser);
 
@@ -107,7 +110,7 @@ public class AdminUserServiceTest {
 				UserRole.ROLE_ADMIN, true, VerificationStatus.VERIFIED, null, 0L, null);
 		when(userMapper.toAdminUserListResponse(adminUser)).thenReturn(adminResponse);
 
-		AdminUserListResponse result = service.updateUserRole(ADMIN_ID, UserRole.ROLE_USER);
+		AdminUserListResponse result = adminUserService.updateRole(ADMIN_ID, UserRole.ROLE_USER);
 
 		assertThat(result).isNotNull();
 		assertThat(result.id()).isEqualTo(ADMIN_ID);
@@ -116,47 +119,47 @@ public class AdminUserServiceTest {
 	}
 
 	@Test
-	void updateUserRole_SelfChange_ThrowsException() {
+	void updateRoleSelfChangeShouldThrowException() {
 		when(securityContext.getAuthentication()).thenReturn(authentication);
 		when(authentication.getName()).thenReturn(USER_EMAIL);
-		when(userRepository.findWithBonusCardById(USER_ID)).thenReturn(Optional.of(user));
+		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
 
-		assertThatThrownBy(() -> service.updateUserRole(USER_ID, UserRole.ROLE_ADMIN))
+		assertThatThrownBy(() -> adminUserService.updateRole(USER_ID, UserRole.ROLE_ADMIN))
 				.isInstanceOf(SelfRoleChangeException.class);
 
 		verify(userRepository, never()).save(any());
 	}
 
 	@Test
-	void updateUserRole_LastAdmin_ThrowsException() {
+	void updateRoleLastAdminShouldThrowException() {
 		when(securityContext.getAuthentication()).thenReturn(authentication);
 		when(authentication.getName()).thenReturn(OTHER_ADMIN_EMAIL);
-		when(userRepository.findWithBonusCardById(ADMIN_ID)).thenReturn(Optional.of(adminUser));
+		when(userRepository.findById(ADMIN_ID)).thenReturn(Optional.of(adminUser));
 		when(userRepository.countByUserRoleAndEnabledTrue(UserRole.ROLE_ADMIN)).thenReturn(1L);
 
-		assertThatThrownBy(() -> service.updateUserRole(ADMIN_ID, UserRole.ROLE_USER))
+		assertThatThrownBy(() -> adminUserService.updateRole(ADMIN_ID, UserRole.ROLE_USER))
 				.isInstanceOf(LastAdminException.class);
 
 		verify(userRepository, never()).save(any());
 	}
 
 	@Test
-	void updateUserRole_UserNotFound_ThrowsException() {
-		when(userRepository.findWithBonusCardById(999L)).thenReturn(Optional.empty());
+	void updateRoleUserNotFoundShouldThrowException() {
+		when(userRepository.findById(999L)).thenReturn(Optional.empty());
 
-		assertThatThrownBy(() -> service.updateUserRole(999L, UserRole.ROLE_ADMIN))
+		assertThatThrownBy(() -> adminUserService.updateRole(999L, UserRole.ROLE_ADMIN))
 				.isInstanceOf(UserNotFoundException.class);
 	}
 
 	@Test
-	void updateUserStatus_BlockUser_Success() {
+	void updateStatusBlockUserShouldSucceed() {
 		when(securityContext.getAuthentication()).thenReturn(authentication);
 		when(authentication.getName()).thenReturn(ADMIN_EMAIL);
-		when(userRepository.findWithBonusCardById(USER_ID)).thenReturn(Optional.of(user));
+		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
 		when(userRepository.save(user)).thenReturn(user);
 		when(userMapper.toAdminUserListResponse(user)).thenReturn(response);
 
-		AdminUserListResponse result = service.updateUserStatus(USER_ID, false);
+		AdminUserListResponse result = adminUserService.updateStatus(USER_ID, false);
 
 		assertThat(result).isNotNull();
 		assertThat(result.id()).isEqualTo(USER_ID);
@@ -165,16 +168,16 @@ public class AdminUserServiceTest {
 	}
 
 	@Test
-	void updateUserStatus_UnblockUser_Success() {
+	void updateStatusUnblockUserShouldSucceed() {
 		user.setEnabled(false);
 
 		when(securityContext.getAuthentication()).thenReturn(authentication);
 		when(authentication.getName()).thenReturn(ADMIN_EMAIL);
-		when(userRepository.findWithBonusCardById(USER_ID)).thenReturn(Optional.of(user));
+		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
 		when(userRepository.save(user)).thenReturn(user);
 		when(userMapper.toAdminUserListResponse(user)).thenReturn(response);
 
-		AdminUserListResponse result = service.updateUserStatus(USER_ID, true);
+		AdminUserListResponse result = adminUserService.updateStatus(USER_ID, true);
 
 		assertThat(result).isNotNull();
 		assertThat(result.id()).isEqualTo(USER_ID);
@@ -183,30 +186,30 @@ public class AdminUserServiceTest {
 	}
 
 	@Test
-	void updateUserStatus_SelfBlock_ThrowsException() {
+	void updateStatusSelfBlockShouldThrowException() {
 		when(securityContext.getAuthentication()).thenReturn(authentication);
 		when(authentication.getName()).thenReturn(USER_EMAIL);
-		when(userRepository.findWithBonusCardById(USER_ID)).thenReturn(Optional.of(user));
+		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
 
-		assertThatThrownBy(() -> service.updateUserStatus(USER_ID, false)).isInstanceOf(SelfBlockException.class);
+		assertThatThrownBy(() -> adminUserService.updateStatus(USER_ID, false)).isInstanceOf(SelfBlockException.class);
 
 		verify(userRepository, never()).save(any());
 	}
 
 	@Test
-	void updateUserStatus_UserNotFound_ThrowsException() {
-		when(userRepository.findWithBonusCardById(999L)).thenReturn(Optional.empty());
+	void updateStatusUserNotFoundShouldThrowException() {
+		when(userRepository.findById(999L)).thenReturn(Optional.empty());
 
-		assertThatThrownBy(() -> service.updateUserStatus(999L, true)).isInstanceOf(UserNotFoundException.class);
+		assertThatThrownBy(() -> adminUserService.updateStatus(999L, true)).isInstanceOf(UserNotFoundException.class);
 	}
 
 	@Test
-	void updateBirthDateVerification_ToVerified_Success() {
-		when(userRepository.findWithBonusCardById(USER_ID)).thenReturn(Optional.of(user));
+	void updateVerificationToVerifiedShouldSucceed() {
+		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
 		when(userRepository.save(user)).thenReturn(user);
 		when(userMapper.toAdminUserListResponse(user)).thenReturn(response);
 
-		AdminUserListResponse result = service.updateBirthDateVerification(USER_ID, VerificationStatus.VERIFIED);
+		AdminUserListResponse result = adminUserService.updateVerification(USER_ID, VerificationStatus.VERIFIED);
 
 		assertThat(result).isNotNull();
 		assertThat(result.id()).isEqualTo(USER_ID);
@@ -216,16 +219,16 @@ public class AdminUserServiceTest {
 	}
 
 	@Test
-	void updateBirthDateVerification_ToNotVerified_Success() {
+	void updateVerificationToNotVerifiedShouldSucceed() {
 		LocalDateTime verifiedTime = LocalDateTime.now().minusDays(1);
 		user.setVerificationStatus(VerificationStatus.VERIFIED);
 		user.setVerifiedAt(verifiedTime);
 
-		when(userRepository.findWithBonusCardById(USER_ID)).thenReturn(Optional.of(user));
+		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
 		when(userRepository.save(user)).thenReturn(user);
 		when(userMapper.toAdminUserListResponse(user)).thenReturn(response);
 
-		AdminUserListResponse result = service.updateBirthDateVerification(USER_ID, VerificationStatus.NOT_VERIFIED);
+		AdminUserListResponse result = adminUserService.updateVerification(USER_ID, VerificationStatus.NOT_VERIFIED);
 
 		assertThat(result).isNotNull();
 		assertThat(result.id()).isEqualTo(USER_ID);
@@ -235,15 +238,15 @@ public class AdminUserServiceTest {
 	}
 
 	@Test
-	void updateBirthDateVerification_UserNotFound_ThrowsException() {
-		when(userRepository.findWithBonusCardById(999L)).thenReturn(Optional.empty());
+	void updateVerificationUserNotFoundShouldThrowException() {
+		when(userRepository.findById(999L)).thenReturn(Optional.empty());
 
-		assertThatThrownBy(() -> service.updateBirthDateVerification(999L, VerificationStatus.VERIFIED))
+		assertThatThrownBy(() -> adminUserService.updateVerification(999L, VerificationStatus.VERIFIED))
 				.isInstanceOf(UserNotFoundException.class);
 	}
 
 	@Test
-	void getUsersForAdmin_ReturnsPage() {
+	void getUsersShouldReturnPage() {
 		Pageable pageable = PageRequest.of(0, 10);
 		String search = "test";
 		UserRole role = UserRole.ROLE_USER;
@@ -253,11 +256,11 @@ public class AdminUserServiceTest {
 		AdminUserProjection projection = createAdminUserProjection();
 		Page<AdminUserProjection> projectionPage = new PageImpl<>(List.of(projection), pageable, 1);
 
-		when(userRepository.findAdminProjectionsWithFilters(eq(search), eq("ROLE_USER"), eq("NOT_VERIFIED"), eq(true),
+		when(userRepository.findProjectionsByFilters(eq(search), eq("ROLE_USER"), eq("NOT_VERIFIED"), eq(true),
 				eq(pageable))).thenReturn(projectionPage);
 		when(userMapper.toAdminUserListResponse(projection)).thenReturn(response);
 
-		Page<AdminUserListResponse> result = service.getUsersForAdmin(search, role, verificationStatus, enabled,
+		Page<AdminUserListResponse> result = adminUserService.getUsers(search, role, verificationStatus, enabled,
 				pageable);
 
 		assertThat(result).isNotNull();
@@ -266,32 +269,32 @@ public class AdminUserServiceTest {
 	}
 
 	@Test
-	void getUsersForAdmin_WithNullFilters_ReturnsPage() {
+	void getUsersWithNullFiltersShouldReturnPage() {
 		Pageable pageable = PageRequest.of(0, 10);
 
 		AdminUserProjection projection = createAdminUserProjection();
 		Page<AdminUserProjection> projectionPage = new PageImpl<>(List.of(projection), pageable, 1);
 
-		when(userRepository.findAdminProjectionsWithFilters(eq(null), eq(null), eq(null), eq(null), eq(pageable)))
+		when(userRepository.findProjectionsByFilters(eq(null), eq(null), eq(null), eq(null), eq(pageable)))
 				.thenReturn(projectionPage);
 		when(userMapper.toAdminUserListResponse(projection)).thenReturn(response);
 
-		Page<AdminUserListResponse> result = service.getUsersForAdmin(null, null, null, null, pageable);
+		Page<AdminUserListResponse> result = adminUserService.getUsers(null, null, null, null, pageable);
 
 		assertThat(result).isNotNull();
 		assertThat(result.getContent()).hasSize(1);
 	}
 
 	@Test
-	void getUsersForAdmin_EmptyResult_ReturnsEmptyPage() {
+	void getUsersEmptyResultShouldReturnEmptyPage() {
 		Pageable pageable = PageRequest.of(0, 10);
 
 		Page<AdminUserProjection> emptyPage = new PageImpl<>(List.of(), pageable, 0);
 
-		when(userRepository.findAdminProjectionsWithFilters(eq(null), eq(null), eq(null), eq(null), eq(pageable)))
+		when(userRepository.findProjectionsByFilters(eq(null), eq(null), eq(null), eq(null), eq(pageable)))
 				.thenReturn(emptyPage);
 
-		Page<AdminUserListResponse> result = service.getUsersForAdmin(null, null, null, null, pageable);
+		Page<AdminUserListResponse> result = adminUserService.getUsers(null, null, null, null, pageable);
 
 		assertThat(result).isNotNull();
 		assertThat(result.getContent()).isEmpty();
@@ -299,19 +302,19 @@ public class AdminUserServiceTest {
 	}
 
 	@Test
-	void getAdminCount_ReturnsCount() {
+	void getAdminCountShouldReturnCount() {
 		when(userRepository.countByUserRoleAndEnabledTrue(UserRole.ROLE_ADMIN)).thenReturn(3L);
 
-		long result = service.getAdminCount();
+		long result = adminUserService.getAdminCount();
 
 		assertThat(result).isEqualTo(3L);
 	}
 
 	@Test
-	void getAdminCount_WhenNoAdmins_ReturnsZero() {
+	void getAdminCountWhenNoAdminsShouldReturnZero() {
 		when(userRepository.countByUserRoleAndEnabledTrue(UserRole.ROLE_ADMIN)).thenReturn(0L);
 
-		long result = service.getAdminCount();
+		long result = adminUserService.getAdminCount();
 
 		assertThat(result).isZero();
 	}
