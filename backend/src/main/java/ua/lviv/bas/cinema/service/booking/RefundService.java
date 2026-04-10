@@ -7,7 +7,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,7 +18,6 @@ import ua.lviv.bas.cinema.domain.audit.AuditAction;
 import ua.lviv.bas.cinema.domain.bonus.BonusTransactionType;
 import ua.lviv.bas.cinema.domain.booking.Refund;
 import ua.lviv.bas.cinema.domain.booking.RefundItem;
-import ua.lviv.bas.cinema.domain.booking.SeatReservation;
 import ua.lviv.bas.cinema.domain.booking.status.PaymentStatus;
 import ua.lviv.bas.cinema.domain.booking.status.RefundItemStatus;
 import ua.lviv.bas.cinema.domain.booking.status.RefundStatus;
@@ -56,47 +54,39 @@ public class RefundService {
 	private final AuditService auditService;
 
 	@Transactional(readOnly = true)
-	public RefundPreviewResponse getRefundPreview(RefundPreviewRequest request, Long userId) {
-		Ticket ticket = findActiveTicket(request.ticketId(), userId);
+	public RefundPreviewResponse getPreview(RefundPreviewRequest request, Long userId) {
+		var ticket = findActiveTicket(request.ticketId(), userId);
+		var validationError = validate(ticket);
 
-		String validationError = validateRefund(ticket);
 		if (validationError != null) {
 			return createNonRefundablePreview(ticket, validationError);
 		}
-
-		boolean isPaymentRefundable = checkPaymentRefundable(ticket);
-		if (!isPaymentRefundable) {
+		if (!isPaymentRefundable(ticket)) {
 			return createNonRefundablePreview(ticket, "Payment cannot be refunded via API. Contact support.");
 		}
-
-		return createPreviewResponse(ticket);
+		return createPreview(ticket);
 	}
 
 	@Transactional
-	public RefundResponse processRefund(RefundRequest request, Long userId) {
-		Ticket ticket = findActiveTicket(request.ticketId(), userId);
+	public RefundResponse refund(RefundRequest request, Long userId) {
+		var ticket = findActiveTicket(request.ticketId(), userId);
+		var validationError = validate(ticket);
 
-		String validationError = validateRefund(ticket);
 		if (validationError != null) {
 			throw new TicketNotRefundableException(validationError);
 		}
-
-		boolean isPaymentRefundable = checkPaymentRefundable(ticket);
-		if (!isPaymentRefundable) {
+		if (!isPaymentRefundable(ticket)) {
 			throw new TicketNotRefundableException("Payment cannot be refunded via API. Contact support.");
 		}
 
-		LocalDateTime sessionTime = ticket.getBooking().getSession().getStartTime();
-		BigDecimal percentage = refundRules.getRefundPercentage(sessionTime);
-
-		BigDecimal refundAmount = calculateRefundAmount(ticket.getFinalPrice(), percentage);
-		Integer bonusPointsToRefund = calculateBonusRefund(ticket.getBonusPointsUsed(), percentage);
-
-		Refund refund = createRefundRecord(ticket, refundAmount, percentage, bonusPointsToRefund, request.reason());
+		var sessionTime = ticket.getBooking().getSession().getStartTime();
+		var percentage = refundRules.getRefundPercentage(sessionTime);
+		var refundAmount = calculateRefundAmount(ticket.getFinalPrice(), percentage);
+		var bonusPointsToRefund = calculateBonusRefund(ticket.getBonusPointsUsed(), percentage);
+		var refund = createRefund(ticket, refundAmount, percentage, bonusPointsToRefund, request.reason());
 
 		try {
-			paymentService.refundPayment(refund.getPayment(), refundAmount,
-					"Refund for ticket #" + ticket.getUniqueCode());
+			paymentService.refund(refund.getPayment(), refundAmount, "Refund for ticket #" + ticket.getUniqueCode());
 
 			if (bonusPointsToRefund != null && bonusPointsToRefund > 0) {
 				bonusService.createTransaction(bonusService.getOrCreateCard(refund.getUser()), bonusPointsToRefund,
@@ -107,55 +97,37 @@ public class RefundService {
 			ticket.setRefund(refund);
 			ticketRepository.save(ticket);
 
-			Map<String, Object> details = new HashMap<>();
-			details.put("ticketId", ticket.getId());
-			details.put("refundAmount", refundAmount);
-			details.put("percentage", percentage);
-			details.put("bonusPointsToRefund", bonusPointsToRefund);
-
-			auditService.logChange("Refund", refund.getId(), "Refund #" + refund.getId(), AuditAction.CREATED, null,
-					details);
-
-			return buildRefundResponse(refund);
+			auditRefund(refund, ticket, refundAmount, percentage, bonusPointsToRefund);
+			return buildResponse(refund);
 
 		} catch (Exception e) {
 			refund.setStatus(RefundStatus.REJECTED);
 			refundRepository.save(refund);
-
-			Map<String, Object> errorDetails = new HashMap<>();
-			errorDetails.put("error", e.getMessage());
-
-			auditService.logChange("Refund", refund.getId(), "Refund #" + refund.getId(), AuditAction.REJECTED, null,
-					errorDetails);
-
+			auditRejected(refund, e);
 			throw new RefundProcessingException("Refund processing failed", e);
 		}
 	}
 
 	@Transactional(readOnly = true)
-	public List<RefundResponse> getUserRefunds(Long userId) {
-		List<Refund> refunds = refundRepository.findByUserIdOrderByCreatedDateDesc(userId);
-		return refunds.stream().map(this::buildRefundResponse).collect(Collectors.toList());
+	public List<RefundResponse> getRefunds(Long userId) {
+		var refunds = refundRepository.findByUserIdOrderByCreatedDateDesc(userId);
+		return refunds.stream().map(this::buildResponse).toList();
 	}
 
-	private String validateRefund(Ticket ticket) {
+	private String validate(Ticket ticket) {
 		if (ticket.getStatus() != TicketStatus.ACTIVE) {
 			return "Ticket is not active. Current status: " + ticket.getStatus();
 		}
-
-		LocalDateTime sessionTime = ticket.getBooking().getSession().getStartTime();
+		var sessionTime = ticket.getBooking().getSession().getStartTime();
 		if (!refundRules.isRefundable(sessionTime)) {
 			return "Refund is not available for this session";
 		}
-
 		if (ticket.getRefund() != null) {
 			return "Ticket has already been refunded";
 		}
-
 		if (sessionTime.isBefore(LocalDateTime.now())) {
 			return "Session has already started or finished";
 		}
-
 		return null;
 	}
 
@@ -171,29 +143,28 @@ public class RefundService {
 	}
 
 	private String formatRemainingTime(LocalDateTime sessionTime) {
-		long hours = ChronoUnit.HOURS.between(LocalDateTime.now(), sessionTime);
-		long minutes = ChronoUnit.MINUTES.between(LocalDateTime.now(), sessionTime) % 60;
+		var hours = ChronoUnit.HOURS.between(LocalDateTime.now(), sessionTime);
+		var minutes = ChronoUnit.MINUTES.between(LocalDateTime.now(), sessionTime) % 60;
 
-		if (hours > 0 && minutes > 0) {
+		if (hours > 0 && minutes > 0)
 			return String.format("%d hours %d minutes", hours, minutes);
-		} else if (hours > 0) {
+		if (hours > 0)
 			return String.format("%d hours", hours);
-		} else if (minutes > 0) {
+		if (minutes > 0)
 			return String.format("%d minutes", minutes);
-		} else {
-			return "Less than a minute";
-		}
+		return "Less than a minute";
 	}
 
-	private RefundPreviewResponse createPreviewResponse(Ticket ticket) {
-		LocalDateTime sessionTime = ticket.getBooking().getSession().getStartTime();
-		BigDecimal percentage = refundRules.getRefundPercentage(sessionTime);
-		BigDecimal refundAmount = calculateRefundAmount(ticket.getFinalPrice(), percentage);
-		BigDecimal feeAmount = ticket.getFinalPrice().subtract(refundAmount);
+	private RefundPreviewResponse createPreview(Ticket ticket) {
+		var sessionTime = ticket.getBooking().getSession().getStartTime();
+		var percentage = refundRules.getRefundPercentage(sessionTime);
+		var refundAmount = calculateRefundAmount(ticket.getFinalPrice(), percentage);
+		var feeAmount = ticket.getFinalPrice().subtract(refundAmount);
 
 		String seatInfo = "N/A";
-		if (ticket.getBooking().getSeatReservations() != null && !ticket.getBooking().getSeatReservations().isEmpty()) {
-			SeatReservation bookedSeat = ticket.getBooking().getSeatReservations().get(0);
+		var seatReservations = ticket.getBooking().getSeatReservations();
+		if (seatReservations != null && !seatReservations.isEmpty()) {
+			var bookedSeat = seatReservations.get(0);
 			seatInfo = String.format("Row %d, Seat %d", bookedSeat.getSeat().getRow(),
 					bookedSeat.getSeat().getNumber());
 		}
@@ -214,7 +185,7 @@ public class RefundService {
 				() -> new TicketNotFoundException("Ticket not found or not active. Ticket ID: " + ticketId));
 	}
 
-	private boolean checkPaymentRefundable(Ticket ticket) {
+	private boolean isPaymentRefundable(Ticket ticket) {
 		return ticket.getPayment().getStatus() == PaymentStatus.SUCCESS;
 	}
 
@@ -225,12 +196,12 @@ public class RefundService {
 				null);
 	}
 
-	private Refund createRefundRecord(Ticket ticket, BigDecimal refundAmount, BigDecimal percentage,
+	private Refund createRefund(Ticket ticket, BigDecimal refundAmount, BigDecimal percentage,
 			Integer bonusPointsToRefund, String reason) {
-		Refund refund = Refund.builder().payment(ticket.getPayment()).user(ticket.getUser()).totalAmount(refundAmount)
+		var refund = Refund.builder().payment(ticket.getPayment()).user(ticket.getUser()).totalAmount(refundAmount)
 				.totalBonusPointsToDeduct(bonusPointsToRefund).reason(reason).status(RefundStatus.PENDING).build();
 
-		RefundItem refundItem = RefundItem.builder().refund(refund).ticket(ticket).ticketPrice(ticket.getFinalPrice())
+		var refundItem = RefundItem.builder().refund(refund).ticket(ticket).ticketPrice(ticket.getFinalPrice())
 				.refundPercentage(percentage.setScale(2, RoundingMode.HALF_UP)).refundAmount(refundAmount)
 				.bonusPointsToDeduct(bonusPointsToRefund).status(RefundItemStatus.PENDING).build();
 
@@ -238,13 +209,31 @@ public class RefundService {
 		return refundRepository.save(refund);
 	}
 
-	private RefundResponse buildRefundResponse(Refund refund) {
-		RefundResponse response = refundMapper.toRefundResponse(refund);
-		return new RefundResponse(
-				response.id(), numberGenerator.generateRefundNumber(refund), response.status(), response.totalAmount(),
-				response.totalBonusPointsToDeduct(), response.reason(), response.processedBy(), response.processedAt(),
-				response.createdAt(), response.paymentId(), "CARD", refund.getItems() != null ? refund.getItems()
-						.stream().map(refundItemMapper::toRefundItemResponse).collect(Collectors.toList()) : null,
+	private RefundResponse buildResponse(Refund refund) {
+		var response = refundMapper.toResponse(refund);
+		return new RefundResponse(response.id(), numberGenerator.generateRefundNumber(refund), response.status(),
+				response.totalAmount(), response.totalBonusPointsToDeduct(), response.reason(), response.processedBy(),
+				response.processedAt(), response.createdAt(), response.paymentId(), "CARD",
+				refund.getItems() != null ? refund.getItems().stream().map(refundItemMapper::toResponse).toList()
+						: null,
 				"Refund processed successfully", "3-5 business days");
+	}
+
+	private void auditRefund(Refund refund, Ticket ticket, BigDecimal refundAmount, BigDecimal percentage,
+			Integer bonusPointsToRefund) {
+		Map<String, Object> details = new HashMap<>();
+		details.put("ticketId", ticket.getId());
+		details.put("refundAmount", refundAmount);
+		details.put("percentage", percentage);
+		details.put("bonusPointsToRefund", bonusPointsToRefund);
+		auditService.logChange("Refund", refund.getId(), "Refund #" + refund.getId(), AuditAction.CREATED, null,
+				details);
+	}
+
+	private void auditRejected(Refund refund, Exception e) {
+		Map<String, Object> errorDetails = new HashMap<>();
+		errorDetails.put("error", e.getMessage());
+		auditService.logChange("Refund", refund.getId(), "Refund #" + refund.getId(), AuditAction.REJECTED, null,
+				errorDetails);
 	}
 }

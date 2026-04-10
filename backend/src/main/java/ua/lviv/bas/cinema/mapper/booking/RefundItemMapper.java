@@ -12,5 +12,5 @@ public interface RefundItemMapper {
 
 	@Mapping(target = "ticketCode", source = "ticket.uniqueCode")
 	@Mapping(target = "ticketId", source = "ticket.id")
-	RefundItemResponse toRefundItemResponse(RefundItem refundItem);
+	RefundItemResponse toResponse(RefundItem refundItem);
 }

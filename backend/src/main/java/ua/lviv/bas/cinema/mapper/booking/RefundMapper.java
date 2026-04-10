@@ -18,5 +18,5 @@ public interface RefundMapper {
 	@Mapping(target = "processedBy", ignore = true)
 	@Mapping(target = "processedAt", ignore = true)
 	@Mapping(target = "createdAt", source = "createdDate")
-	RefundResponse toRefundResponse(Refund refund);
+	RefundResponse toResponse(Refund refund);
 }
