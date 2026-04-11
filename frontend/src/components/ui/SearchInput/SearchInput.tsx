@@ -17,7 +17,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
     disabled = false
 }) => {
     const [query, setQuery] = useState('');
-    const timerRef = useRef<NodeJS.Timeout | null>(null);
+    const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         const newQuery = e.target.value;

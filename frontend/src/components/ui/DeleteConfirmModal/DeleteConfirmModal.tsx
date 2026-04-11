@@ -1,4 +1,6 @@
 import React from 'react';
+import { Modal } from '../Modal/Modal';
+import { Button } from '../Button/Button';
 import styles from './DeleteConfirmModal.module.css';
 
 export interface DeleteConfirmModalProps {
@@ -26,44 +28,26 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
     confirmText,
     cancelText = 'Cancel'
 }) => {
-    if (!isOpen) return null;
-
     const modalTitle = title || `Delete ${itemType}`;
     const modalMessage = message || `Are you sure you want to delete this ${itemType}?`;
     const modalConfirmText = confirmText || `Delete ${itemType}`;
 
     return (
-        <div className={styles.modalOverlay} role="dialog" aria-labelledby="delete-modal-title" aria-modal="true">
-            <div className={styles.modal}>
+        <Modal isOpen={isOpen} onClose={onCancel} title={modalTitle} size="small">
+            <div className={styles.content}>
                 <div className={styles.icon} aria-hidden="true">🗑️</div>
-                <h3 className={styles.title} id="delete-modal-title">{modalTitle}</h3>
                 <p className={styles.message}>{modalMessage}</p>
-                {itemName && (
-                    <p className={styles.itemName}>"{itemName}"</p>
-                )}
-                <p className={styles.warning}>
-                    This action cannot be undone.
-                </p>
+                {itemName && <p className={styles.itemName}>"{itemName}"</p>}
+                <p className={styles.warning}>This action cannot be undone.</p>
                 <div className={styles.actions}>
-                    <button
-                        className={styles.cancelButton}
-                        onClick={onCancel}
-                        disabled={isDeleting}
-                        type="button"
-                    >
+                    <Button variant="cancel" onClick={onCancel} disabled={isDeleting}>
                         {cancelText}
-                    </button>
-                    <button
-                        className={styles.confirmButton}
-                        onClick={onConfirm}
-                        disabled={isDeleting}
-                        type="button"
-                        aria-label={modalConfirmText}
-                    >
-                        {isDeleting ? 'Deleting...' : modalConfirmText}
-                    </button>
+                    </Button>
+                    <Button variant="error" onClick={onConfirm} loading={isDeleting} disabled={isDeleting}>
+                        {modalConfirmText}
+                    </Button>
                 </div>
             </div>
-        </div>
+        </Modal>
     );
 };
