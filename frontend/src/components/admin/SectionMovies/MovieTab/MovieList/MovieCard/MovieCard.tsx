@@ -1,6 +1,6 @@
-import React, { useState, useCallback, useMemo } from 'react';
-import type { MovieCardResponse, MovieStatus, AgeRating } from '@/types/movie';
-import { AgeRatingDisplay } from '@/types/movie';
+import React, { useState, useCallback } from 'react';
+import type { MovieCardResponse, MovieStatus } from '@/types/movie';
+import { AgeRatingDisplay, MovieStatusDisplay } from '@/types/movie';
 import { Button } from '@/components/ui/Button/Button';
 import { Badge } from '@/components/ui/Badge/Badge';
 import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';
@@ -16,155 +16,76 @@ const STATUS_VARIANTS: Record<MovieStatus, 'success' | 'warning' | 'secondary'> 
   CURRENT: 'success',
   UPCOMING: 'warning',
   ARCHIVED: 'secondary',
-  UNKNOWN: 'secondary'
+  UNKNOWN: 'secondary',
 };
 
-const STATUS_DISPLAY: Record<MovieStatus, string> = {
-  CURRENT: 'Now Showing',
-  UPCOMING: 'Coming Soon',
-  ARCHIVED: 'Archived',
-  UNKNOWN: 'Unknown'
-};
-
-const getAgeRatingDisplayValue = (ageRating: AgeRating): string => {
-  return AgeRatingDisplay[ageRating] || ageRating;
-};
-
-export const MovieCard: React.FC<MovieCardProps> = React.memo(({
-  movie,
-  onEdit,
-  onDelete
-}) => {
+export const MovieCard: React.FC<MovieCardProps> = React.memo(({ movie, onEdit, onDelete }) => {
   const [imageStatus, setImageStatus] = useState<'loading' | 'loaded' | 'error'>('loading');
-  const posterUrl = movie.posterUrl;
 
-  const handleImageLoad = useCallback(() => {
-    setImageStatus('loaded');
-  }, []);
+  const handleEdit = useCallback(() => onEdit(movie), [onEdit, movie]);
+  const handleDelete = useCallback(() => onDelete(movie), [onDelete, movie]);
 
-  const handleImageError = useCallback(() => {
-    setImageStatus('error');
-  }, []);
+  const statusVariant = STATUS_VARIANTS[movie.status] || 'secondary';
+  const statusDisplay = MovieStatusDisplay[movie.status] || movie.status;
+  const ageRatingDisplay = AgeRatingDisplay[movie.ageRating] || movie.ageRating;
 
-  const handleEdit = useCallback(() => {
-    onEdit(movie);
-  }, [onEdit, movie]);
+  const renderPoster = () => {
+    if (!movie.posterUrl) {
+      return (
+        <div className={styles.posterError}>
+          <span>No Image</span>
+        </div>
+      );
+    }
 
-  const handleDelete = useCallback(() => {
-    onDelete(movie);
-  }, [onDelete, movie]);
-
-  const statusVariant = useMemo(() =>
-    STATUS_VARIANTS[movie.status] || 'secondary',
-    [movie.status]
-  );
-
-  const statusDisplay = useMemo(() =>
-    STATUS_DISPLAY[movie.status] || movie.status,
-    [movie.status]
-  );
-
-  const ageRatingDisplay = useMemo(() =>
-    getAgeRatingDisplayValue(movie.ageRating),
-    [movie.ageRating]
-  );
-
-  if (!posterUrl) {
     return (
-      <div className={styles.card}>
-        <div className={styles.posterContainer}>
-          <div className={styles.posterError} role="alert">
-            <span>No Image</span>
-          </div>
-        </div>
-        <div className={styles.info}>
-          <h3 className={styles.title} title={movie.title}>
-            {movie.title}
-          </h3>
-          <div className={styles.meta}>
-            <div className={styles.metaRow}>
-              <Badge variant="success">{movie.durationMinutes} min</Badge>
-              <Badge variant="warning">{ageRatingDisplay}</Badge>
-            </div>
-            <div className={styles.metaRow}>
-              <Badge variant={statusVariant}>{statusDisplay}</Badge>
-            </div>
-          </div>
-        </div>
-        <div className={styles.actions}>
-          <Button variant="success" size="small" onClick={handleEdit}>Edit</Button>
-          <Button variant="error" size="small" onClick={handleDelete}>Delete</Button>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className={styles.card}>
-      <div className={styles.posterContainer}>
+      <>
         {imageStatus === 'loading' && (
           <div className={styles.posterPlaceholder}>
             <LoadingSpinner text="" />
           </div>
         )}
         <img
-          src={posterUrl}
+          src={movie.posterUrl}
           alt={`Poster for ${movie.title}`}
           className={`${styles.poster} ${imageStatus !== 'loaded' ? styles.hidden : ''}`}
-          onLoad={handleImageLoad}
-          onError={handleImageError}
+          onLoad={() => setImageStatus('loaded')}
+          onError={() => setImageStatus('error')}
           loading="lazy"
         />
         {imageStatus === 'error' && (
-          <div className={styles.posterError} role="alert">
+          <div className={styles.posterError}>
             <span>No Image</span>
           </div>
         )}
-      </div>
+      </>
+    );
+  };
+
+  return (
+    <div className={styles.card}>
+      <div className={styles.posterContainer}>{renderPoster()}</div>
 
       <div className={styles.info}>
         <h3 className={styles.title} title={movie.title}>
           {movie.title}
         </h3>
-
         <div className={styles.meta}>
           <div className={styles.metaRow}>
-            <Badge variant="success" aria-label={`Duration: ${movie.durationMinutes} minutes`}>
-              {movie.durationMinutes} min
-            </Badge>
-            <Badge variant="warning" aria-label={`Age rating: ${ageRatingDisplay}`}>
-              {ageRatingDisplay}
-            </Badge>
+            <Badge variant="success">{movie.durationMinutes} min</Badge>
+            <Badge variant="warning">{ageRatingDisplay}</Badge>
           </div>
-
           <div className={styles.metaRow}>
-            <Badge
-              variant={statusVariant}
-              aria-label={`Status: ${statusDisplay}`}
-            >
-              {statusDisplay}
-            </Badge>
+            <Badge variant={statusVariant}>{statusDisplay}</Badge>
           </div>
         </div>
       </div>
 
       <div className={styles.actions}>
-        <Button
-          variant="success"
-          size="small"
-          onClick={handleEdit}
-          className={styles.editButton}
-          aria-label={`Edit ${movie.title}`}
-        >
+        <Button variant="success" size="small" onClick={handleEdit}>
           Edit
         </Button>
-        <Button
-          variant="error"
-          size="small"
-          onClick={handleDelete}
-          className={styles.deleteButton}
-          aria-label={`Delete ${movie.title}`}
-        >
+        <Button variant="error" size="small" onClick={handleDelete}>
           Delete
         </Button>
       </div>

@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { SearchInput, Select } from '@/components/ui';
 import { UserRoleDisplay, VerificationStatusDisplay } from '@/types/user';
 import styles from './UserFilters.module.css';
@@ -30,41 +30,19 @@ export const UserFilters: React.FC<UserFiltersProps> = ({
 }) => {
     const roleOptions = useMemo(() => [
         { value: '', label: 'All Roles' },
-        ...Object.entries(UserRoleDisplay).map(([value, label]) => ({
-            value,
-            label,
-        }))
+        ...Object.entries(UserRoleDisplay).map(([value, label]) => ({ value, label }))
     ], []);
 
     const verificationStatusOptions = useMemo(() => [
         { value: '', label: 'All Verification' },
-        ...Object.entries(VerificationStatusDisplay).map(([value, label]) => ({
-            value,
-            label,
-        }))
+        ...Object.entries(VerificationStatusDisplay).map(([value, label]) => ({ value, label }))
     ], []);
-
-    const handleSearch = useCallback((query: string) => {
-        onSearchChange(query);
-    }, [onSearchChange]);
-
-    const handleRoleChange = useCallback((value: string | number) => {
-        onRoleFilterChange(String(value));
-    }, [onRoleFilterChange]);
-
-    const handleVerificationStatusChange = useCallback((value: string | number) => {
-        onVerificationStatusChange(String(value));
-    }, [onVerificationStatusChange]);
-
-    const handleEnabledChange = useCallback((value: string | number) => {
-        onEnabledFilterChange(String(value));
-    }, [onEnabledFilterChange]);
 
     return (
         <div className={styles.filters}>
             <div className={styles.search}>
                 <SearchInput
-                    onSearch={handleSearch}
+                    onSearch={onSearchChange}
                     placeholder="Search by email or name..."
                     delay={500}
                 />
@@ -73,7 +51,7 @@ export const UserFilters: React.FC<UserFiltersProps> = ({
             <div className={styles.selectors}>
                 <Select
                     value={roleFilter}
-                    onChange={handleRoleChange}
+                    onChange={(value) => onRoleFilterChange(String(value))}
                     options={roleOptions}
                     placeholder="All Roles"
                     className={styles.select}
@@ -81,7 +59,7 @@ export const UserFilters: React.FC<UserFiltersProps> = ({
 
                 <Select
                     value={verificationStatusFilter}
-                    onChange={handleVerificationStatusChange}
+                    onChange={(value) => onVerificationStatusChange(String(value))}
                     options={verificationStatusOptions}
                     placeholder="Verification Status"
                     className={styles.select}
@@ -89,7 +67,7 @@ export const UserFilters: React.FC<UserFiltersProps> = ({
 
                 <Select
                     value={enabledFilter}
-                    onChange={handleEnabledChange}
+                    onChange={(value) => onEnabledFilterChange(String(value))}
                     options={ENABLED_OPTIONS}
                     placeholder="Account Status"
                     className={styles.select}

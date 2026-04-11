@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React from 'react';
 import type { GenreListResponse } from '@/types/genre';
 import { Button, Badge } from '@/components/ui';
 import styles from './GenreTable.module.css';
@@ -9,20 +9,18 @@ interface GenreTableProps {
     onDelete: (genre: GenreListResponse) => void;
 }
 
+const getMovieCountText = (count: number): string =>
+    `${count} ${count === 1 ? 'movie' : 'movies'}`;
+
 export const GenreTable: React.FC<GenreTableProps> = React.memo(({
     genres,
     onEdit,
     onDelete
 }) => {
-    const getMovieCountText = useCallback((count: number): string =>
-        `${count} ${count === 1 ? 'movie' : 'movies'}`,
-        []
-    );
-
     if (genres.length === 0) {
         return (
-            <div className={styles.empty} role="status" aria-label="No genres found">
-                <div className={styles.emptyIcon} aria-hidden="true">📚</div>
+            <div className={styles.empty}>
+                <div className={styles.emptyIcon}>📚</div>
                 <h3>No genres found</h3>
                 <p>Create your first genre to get started!</p>
             </div>
@@ -30,38 +28,31 @@ export const GenreTable: React.FC<GenreTableProps> = React.memo(({
     }
 
     return (
-        <div className={styles.table} role="table" aria-label="Genres list">
-            <div className={styles.tableHeader} role="rowgroup">
-                <div className={styles.headerCell} role="columnheader">Name</div>
-                <div className={styles.headerCell} role="columnheader">Movies</div>
-                <div className={styles.headerCell} role="columnheader">Actions</div>
-            </div>
-            <div className={styles.tableBody} role="rowgroup">
+        <table className={styles.table}>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Movies</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
                 {genres.map((genre) => (
-                    <div
-                        key={genre.id}
-                        className={styles.tableRow}
-                        role="row"
-                    >
-                        <div className={styles.nameCell} role="cell">
+                    <tr key={genre.id}>
+                        <td>
                             <span className={styles.name}>{genre.name}</span>
-                        </div>
-                        <div className={styles.countCell} role="cell">
-                            <Badge
-                                variant="primary"
-                                aria-label={getMovieCountText(genre.movieCount)}
-                            >
+                        </td>
+                        <td>
+                            <Badge variant="primary">
                                 {getMovieCountText(genre.movieCount)}
                             </Badge>
-                        </div>
-                        <div className={styles.actionsCell} role="cell">
+                        </td>
+                        <td>
                             <div className={styles.actions}>
                                 <Button
                                     variant="success"
                                     size="small"
                                     onClick={() => onEdit(genre)}
-                                    className={styles.editButton}
-                                    aria-label={`Edit ${genre.name}`}
                                 >
                                     Edit
                                 </Button>
@@ -69,17 +60,15 @@ export const GenreTable: React.FC<GenreTableProps> = React.memo(({
                                     variant="error"
                                     size="small"
                                     onClick={() => onDelete(genre)}
-                                    className={styles.deleteButton}
-                                    aria-label={`Delete ${genre.name}`}
                                 >
                                     Delete
                                 </Button>
                             </div>
-                        </div>
-                    </div>
+                        </td>
+                    </tr>
                 ))}
-            </div>
-        </div>
+            </tbody>
+        </table>
     );
 });
 

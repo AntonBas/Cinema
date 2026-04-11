@@ -3,64 +3,48 @@ import { Button } from '@/components/ui/Button/Button';
 import { Badge } from '@/components/ui/Badge/Badge';
 import { Tooltip } from '@/components/ui/Tooltip/Tooltip';
 import { DeleteConfirmModal } from '@/components/ui/DeleteConfirmModal/DeleteConfirmModal';
-import type { TicketTypeAdminResponse, TicketTypeCategory } from '@/types/ticketType';
+import type { TicketTypeResponse, TicketTypeCategory } from '@/types/ticketType';
 import { TicketTypeCategoryDisplay } from '@/types/ticketType';
 import styles from './TicketTypeTable.module.css';
 
 interface TicketTypeTableProps {
-    ticketTypes: TicketTypeAdminResponse[];
-    onEdit: (ticketType: TicketTypeAdminResponse) => void;
-    onDelete: (id: number, displayName: string) => Promise<void>;
-    onToggleActive: (id: number, displayName: string) => Promise<void>;
+    ticketTypes: TicketTypeResponse[];
+    onEdit: (ticketType: TicketTypeResponse) => void;
+    onDelete: (id: number) => Promise<void>;
+    onToggleActive: (id: number) => Promise<void>;
+    loading?: boolean;
 }
 
 const TicketTypeTable: React.FC<TicketTypeTableProps> = ({
     ticketTypes,
     onEdit,
     onDelete,
-    onToggleActive
+    onToggleActive,
+    loading = false
 }) => {
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-    const [selectedTicketType, setSelectedTicketType] = useState<TicketTypeAdminResponse | null>(null);
-    const [isDeleting, setIsDeleting] = useState(false);
-    const [toggleLoading, setToggleLoading] = useState<number | null>(null);
-    const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [selectedTicketType, setSelectedTicketType] = useState<TicketTypeResponse | null>(null);
+    const [togglingId, setTogglingId] = useState<number | null>(null);
 
-    const handleDeleteClick = (ticketType: TicketTypeAdminResponse) => {
+    const handleDeleteClick = (ticketType: TicketTypeResponse) => {
         setSelectedTicketType(ticketType);
         setDeleteModalOpen(true);
-        setErrorMessage(null);
     };
 
     const handleConfirmDelete = async () => {
         if (!selectedTicketType) return;
-
-        setIsDeleting(true);
-        setErrorMessage(null);
-        try {
-            await onDelete(selectedTicketType.id, selectedTicketType.displayName);
-            setDeleteModalOpen(false);
-            setSelectedTicketType(null);
-        } catch (error) {
-            setErrorMessage(error instanceof Error ? error.message : 'Failed to delete ticket type');
-        } finally {
-            setIsDeleting(false);
-        }
+        await onDelete(selectedTicketType.id);
+        setDeleteModalOpen(false);
+        setSelectedTicketType(null);
     };
 
-    const handleToggleActive = async (id: number, displayName: string) => {
-        setToggleLoading(id);
-        setErrorMessage(null);
-        try {
-            await onToggleActive(id, displayName);
-        } catch (error) {
-            setErrorMessage(error instanceof Error ? error.message : 'Failed to toggle status');
-        } finally {
-            setToggleLoading(null);
-        }
+    const handleToggleActive = async (id: number) => {
+        setTogglingId(id);
+        await onToggleActive(id);
+        setTogglingId(null);
     };
 
-    const formatAgeRange = (ticketType: TicketTypeAdminResponse) => {
+    const formatAgeRange = (ticketType: TicketTypeResponse) => {
         const { minAge, maxAge } = ticketType;
         if (minAge === undefined && maxAge === undefined) return 'Any age';
         if (minAge !== undefined && maxAge !== undefined) return `${minAge}-${maxAge} years`;
@@ -69,7 +53,7 @@ const TicketTypeTable: React.FC<TicketTypeTableProps> = ({
         return 'Any age';
     };
 
-    const getCategoryVariant = (category: TicketTypeCategory | undefined): 'primary' | 'secondary' | 'info' | 'warning' | 'error' | 'success' | 'outline' => {
+    const getCategoryVariant = (category: TicketTypeCategory | undefined) => {
         switch (category) {
             case 'STANDARD': return 'primary';
             case 'CHILD': return 'secondary';
@@ -93,12 +77,6 @@ const TicketTypeTable: React.FC<TicketTypeTableProps> = ({
 
     return (
         <>
-            {errorMessage && (
-                <div className={styles.errorMessage}>
-                    {errorMessage}
-                </div>
-            )}
-
             <div className={styles.tableWrapper}>
                 <div className={styles.tableContainer}>
                     <table className={styles.table}>
@@ -124,7 +102,7 @@ const TicketTypeTable: React.FC<TicketTypeTableProps> = ({
                                             <span className={styles.displayName}>{ticketType.displayName}</span>
                                         </td>
                                         <td className={styles.categoryCell}>
-                                            <Badge variant={getCategoryVariant(category)}>
+                                            <Badge variant={getCategoryVariant(category) as any}>
                                                 {categoryDisplay}
                                             </Badge>
                                         </td>
@@ -132,9 +110,7 @@ const TicketTypeTable: React.FC<TicketTypeTableProps> = ({
                                             <span className={styles.price}>× {ticketType.priceMultiplier}</span>
                                         </td>
                                         <td className={styles.ageCell}>
-                                            <span className={styles.ageRange}>
-                                                {formatAgeRange(ticketType)}
-                                            </span>
+                                            <span className={styles.ageRange}>{formatAgeRange(ticketType)}</span>
                                         </td>
                                         <td className={styles.documentCell}>
                                             {ticketType.requiresDocument ? (
@@ -146,15 +122,15 @@ const TicketTypeTable: React.FC<TicketTypeTableProps> = ({
                                             )}
                                         </td>
                                         <td className={styles.statusCell}>
-                                            <button
-                                                className={`${styles.toggleButton} ${ticketType.active ? styles.activeToggle : styles.inactiveToggle
-                                                    }`}
-                                                onClick={() => handleToggleActive(ticketType.id, ticketType.displayName)}
-                                                disabled={toggleLoading === ticketType.id}
+                                            <Button
+                                                variant={ticketType.active ? 'success' : 'secondary'}
+                                                size="small"
+                                                onClick={() => handleToggleActive(ticketType.id)}
+                                                loading={togglingId === ticketType.id}
+                                                disabled={loading}
                                             >
-                                                {toggleLoading === ticketType.id ? 'Updating...' :
-                                                    ticketType.active ? 'Active' : 'Inactive'}
-                                            </button>
+                                                {ticketType.active ? 'Active' : 'Inactive'}
+                                            </Button>
                                         </td>
                                         <td className={styles.actionsCell}>
                                             <div className={styles.actions}>
@@ -190,11 +166,10 @@ const TicketTypeTable: React.FC<TicketTypeTableProps> = ({
                 onCancel={() => {
                     setDeleteModalOpen(false);
                     setSelectedTicketType(null);
-                    setErrorMessage(null);
                 }}
                 itemName={selectedTicketType?.displayName || ''}
                 itemType="ticket type"
-                isDeleting={isDeleting}
+                isDeleting={loading}
                 title="Delete Ticket Type"
                 message="Are you sure you want to delete this ticket type?"
                 confirmText="Delete Ticket Type"

@@ -1,20 +1,18 @@
 import React, { useState } from 'react';
 import { Modal, Button, Input } from '@/components/ui';
 import { usePromotion } from '@/hooks/features/promotion/usePromotion';
+import type { PromotionRequest } from '@/types/promotion';
 import { toBackendFormat } from '@/utils/dateUtils';
 import styles from './PromotionModal.module.css';
 
 interface CreatePromotionModalProps {
     onClose: () => void;
-    onSuccess: (result: any) => void;
+    onSuccess: () => void;
 }
 
 const DESCRIPTION_LIMIT = 500;
 
-const CreatePromotionModal: React.FC<CreatePromotionModalProps> = ({
-    onClose,
-    onSuccess
-}) => {
+const CreatePromotionModal: React.FC<CreatePromotionModalProps> = ({ onClose, onSuccess }) => {
     const { create, loading } = usePromotion();
     const [formData, setFormData] = useState({
         title: '',
@@ -38,44 +36,32 @@ const CreatePromotionModal: React.FC<CreatePromotionModalProps> = ({
         }
         setDateError('');
 
-        try {
-            const submissionData = {
-                title: formData.title,
-                description: formData.description || undefined,
-                bonusPoints: parseInt(formData.bonusPoints) || 100,
-                startDate: formData.startDate ? toBackendFormat(formData.startDate) : undefined,
-                endDate: formData.endDate ? toBackendFormat(formData.endDate) : undefined
-            };
+        const request: PromotionRequest = {
+            title: formData.title,
+            description: formData.description || undefined,
+            bonusPoints: parseInt(formData.bonusPoints) || 100,
+            startDate: formData.startDate ? toBackendFormat(formData.startDate) : undefined,
+            endDate: formData.endDate ? toBackendFormat(formData.endDate) : undefined
+        };
 
-            const result = await create(submissionData);
-            if (result) {
-                onSuccess(result);
-                onClose();
-            }
-        } catch (err) {
-            throw err;
+        const result = await create(request);
+        if (result) {
+            onSuccess();
+            onClose();
         }
-    };
-
-    const handleChange = (field: string, value: string) => {
-        setFormData(prev => ({ ...prev, [field]: value }));
-    };
-
-    const handleClose = () => {
-        onClose();
     };
 
     const descriptionLength = formData.description.length;
     const isDescriptionValid = descriptionLength <= DESCRIPTION_LIMIT;
 
     return (
-        <Modal isOpen={true} onClose={handleClose} title="Create Promotion" size="large">
+        <Modal isOpen={true} onClose={onClose} title="Create Promotion" size="large">
             <form onSubmit={handleSubmit} className={styles.form}>
                 <div className={styles.formGroup}>
                     <label className={styles.label}>Title *</label>
                     <Input
                         value={formData.title}
-                        onChange={(value) => handleChange('title', value)}
+                        onChange={(value) => setFormData(prev => ({ ...prev, title: value }))}
                         placeholder="Enter title"
                         required
                     />
@@ -90,7 +76,7 @@ const CreatePromotionModal: React.FC<CreatePromotionModalProps> = ({
                     </div>
                     <textarea
                         value={formData.description}
-                        onChange={(e) => handleChange('description', e.target.value)}
+                        onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                         placeholder="Enter description"
                         rows={4}
                         className={`${styles.textarea} ${!isDescriptionValid ? styles.textareaError : ''}`}
@@ -103,7 +89,7 @@ const CreatePromotionModal: React.FC<CreatePromotionModalProps> = ({
                     <Input
                         type="number"
                         value={formData.bonusPoints}
-                        onChange={(value) => handleChange('bonusPoints', value)}
+                        onChange={(value) => setFormData(prev => ({ ...prev, bonusPoints: value }))}
                         placeholder="Enter bonus points"
                         min="1"
                         required
@@ -116,7 +102,7 @@ const CreatePromotionModal: React.FC<CreatePromotionModalProps> = ({
                         <Input
                             type="date"
                             value={formData.startDate}
-                            onChange={(value) => handleChange('startDate', value)}
+                            onChange={(value) => setFormData(prev => ({ ...prev, startDate: value }))}
                         />
                     </div>
 
@@ -125,7 +111,7 @@ const CreatePromotionModal: React.FC<CreatePromotionModalProps> = ({
                         <Input
                             type="date"
                             value={formData.endDate}
-                            onChange={(value) => handleChange('endDate', value)}
+                            onChange={(value) => setFormData(prev => ({ ...prev, endDate: value }))}
                         />
                     </div>
                 </div>
@@ -133,7 +119,7 @@ const CreatePromotionModal: React.FC<CreatePromotionModalProps> = ({
                 {dateError && <div className={styles.error}>{dateError}</div>}
 
                 <div className={styles.actions}>
-                    <Button type="button" variant="cancel" onClick={handleClose}>
+                    <Button type="button" variant="cancel" onClick={onClose}>
                         Cancel
                     </Button>
                     <Button type="submit" variant="primary" loading={loading}>

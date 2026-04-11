@@ -1,42 +1,50 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useAuditLogs } from '@/hooks/features/audit/useAuditLogs';
 import { AuditLogsFilters } from './AuditLogsFilters/AuditLogsFilters';
 import { AuditLogsTable } from './AuditLogsTable/AuditLogsTable';
 import { Pagination } from '@/components/ui';
 import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';
 import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
-import { EntityTypeDisplay, ActionDisplay } from '@/types/audit';
 import styles from './SectionAuditLogs.module.css';
 
-const ENTITY_TYPES = Object.keys(EntityTypeDisplay);
-const ACTIONS = Object.keys(ActionDisplay);
-
 export const SectionAuditLogs: React.FC = () => {
-    const [entityType, setEntityType] = useState('');
-    const [action, setAction] = useState('');
-    const [changedBy, setChangedBy] = useState('');
-
-    const { auditLogs, pagination, loading, setPage, applyFilters, clearFilters } = useAuditLogs();
+    const {
+        auditLogs,
+        pagination,
+        loading,
+        setPage,
+        filters,
+        applyFilters,
+        clearFilters,
+        refresh
+    } = useAuditLogs();
 
     const showDelayedLoading = useDelayedLoading(loading, { delay: 150, minDisplayTime: 300 });
 
-    useEffect(() => {
-        applyFilters({ entityType: entityType || undefined, action: action || undefined, changedBy: changedBy || undefined });
-    }, [entityType, action, changedBy, applyFilters]);
+    const handleEntityTypeChange = (value: string) => {
+        applyFilters({ entityType: value || undefined });
+    };
+
+    const handleActionChange = (value: string) => {
+        applyFilters({ action: value || undefined });
+    };
+
+    const handleChangedByChange = (value: string) => {
+        applyFilters({ changedBy: value || undefined });
+    };
 
     const handleClearFilters = () => {
-        setEntityType('');
-        setAction('');
-        setChangedBy('');
         clearFilters();
     };
 
-    const displayRange = pagination ? {
-        start: pagination.number * pagination.size + 1,
-        end: Math.min((pagination.number + 1) * pagination.size, pagination.totalElements)
-    } : { start: 0, end: 0 };
+    const entityTypes = ['User', 'BonusRules', 'Promotion', 'TicketType', 'Movie', 'Session'];
+    const actions = ['CREATED', 'UPDATED', 'DELETED', 'TOGGLE', 'CLAIMED', 'REFUNDED'];
 
-    const hasActiveFilters = entityType !== '' || action !== '' || changedBy !== '';
+    const hasActiveFilters = !!(filters.entityType || filters.action || filters.changedBy);
+
+    useEffect(() => {
+        refresh();
+    }, [refresh]);
 
     if (showDelayedLoading && !auditLogs.length) {
         return (
@@ -56,20 +64,22 @@ export const SectionAuditLogs: React.FC = () => {
             </div>
 
             <AuditLogsFilters
-                entityType={entityType}
-                action={action}
-                changedBy={changedBy}
-                onEntityTypeChange={setEntityType}
-                onActionChange={setAction}
-                onChangedByChange={setChangedBy}
+                entityType={filters.entityType || ''}
+                action={filters.action || ''}
+                changedBy={filters.changedBy || ''}
+                onEntityTypeChange={handleEntityTypeChange}
+                onActionChange={handleActionChange}
+                onChangedByChange={handleChangedByChange}
                 onClear={handleClearFilters}
-                entityTypes={ENTITY_TYPES}
-                actions={ACTIONS}
+                entityTypes={entityTypes}
+                actions={actions}
             />
 
             {pagination && pagination.totalElements > 0 && (
                 <div className={styles.resultsInfo}>
-                    Showing {displayRange.start}-{displayRange.end} of {pagination.totalElements} audit logs
+                    Showing {pagination.number * pagination.size + 1}-
+                    {Math.min((pagination.number + 1) * pagination.size, pagination.totalElements)} of{' '}
+                    {pagination.totalElements} audit logs
                     {hasActiveFilters && ' (filtered)'}
                 </div>
             )}

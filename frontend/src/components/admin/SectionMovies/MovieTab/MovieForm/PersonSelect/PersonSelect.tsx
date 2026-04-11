@@ -11,9 +11,7 @@ interface PersonSelectProps {
     placeholder?: string;
 }
 
-const SEARCH_DELAY = 300;
 const MIN_SEARCH_LENGTH = 2;
-const MAX_OPTIONS = 10;
 
 export const PersonSelect: React.FC<PersonSelectProps> = ({
     selectedIds,
@@ -28,7 +26,7 @@ export const PersonSelect: React.FC<PersonSelectProps> = ({
     const [isSearching, setIsSearching] = useState(false);
     const [isCreating, setIsCreating] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
-    const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const timeoutRef = useRef<number | null>(null);
 
     const displayPersons = useMemo(() =>
         selectedPersons.filter(person => selectedIds.includes(person.id)),
@@ -55,19 +53,12 @@ export const PersonSelect: React.FC<PersonSelectProps> = ({
         setIsSearching(true);
         try {
             const response = await personApi.admin.getAll({
-                name: query,
-                role: role,
-                page: 0,
-                size: MAX_OPTIONS
+                query,
+                role,
             });
-            if (response?.data) {
-                setLocalOptions(response.data.content || []);
-                setIsOpen(true);
-            } else {
-                setLocalOptions([]);
-            }
-        } catch (error) {
-            console.error('Error searching persons:', error);
+            setLocalOptions(response?.data?.content || []);
+            setIsOpen(true);
+        } catch {
             setLocalOptions([]);
         } finally {
             setIsSearching(false);
@@ -75,22 +66,22 @@ export const PersonSelect: React.FC<PersonSelectProps> = ({
     }, [role]);
 
     useEffect(() => {
-        if (searchTimeoutRef.current) {
-            clearTimeout(searchTimeoutRef.current);
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
         }
 
         if (searchQuery.length >= MIN_SEARCH_LENGTH) {
-            searchTimeoutRef.current = setTimeout(() => {
+            timeoutRef.current = window.setTimeout(() => {
                 searchPersons(searchQuery);
-            }, SEARCH_DELAY);
+            }, 300);
         } else {
             setLocalOptions([]);
             setIsOpen(false);
         }
 
         return () => {
-            if (searchTimeoutRef.current) {
-                clearTimeout(searchTimeoutRef.current);
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
             }
         };
     }, [searchQuery, searchPersons]);
@@ -100,17 +91,14 @@ export const PersonSelect: React.FC<PersonSelectProps> = ({
 
         setIsCreating(true);
         try {
-            const response = await personApi.admin.quickCreate({ name: searchQuery.trim(), role });
-            if (response?.data) {
-                const newPerson = response.data;
-                const newSelectedIds = [...selectedIds, newPerson.id];
-                const updatedPersons = [...selectedPersons, newPerson];
-                onChange(newSelectedIds, updatedPersons);
+            const response = await personApi.admin.create({ name: searchQuery.trim(), role });
+            const newPerson = response?.data;
+            if (newPerson) {
+                onChange([...selectedIds, newPerson.id], [...selectedPersons, newPerson]);
                 setSearchQuery('');
                 setIsOpen(false);
             }
-        } catch (error) {
-            console.error('Error creating person:', error);
+        } catch {
         } finally {
             setIsCreating(false);
         }
@@ -118,29 +106,26 @@ export const PersonSelect: React.FC<PersonSelectProps> = ({
 
     const handleSelectPerson = useCallback((personId: number) => {
         const isSelected = selectedIds.includes(personId);
-        let newSelectedIds: number[];
-        let updatedPersons: PersonResponse[];
 
         if (isSelected) {
-            newSelectedIds = selectedIds.filter(id => id !== personId);
-            updatedPersons = selectedPersons.filter(p => p.id !== personId);
+            onChange(
+                selectedIds.filter(id => id !== personId),
+                selectedPersons.filter(p => p.id !== personId)
+            );
         } else {
-            newSelectedIds = [...selectedIds, personId];
             const selectedPerson = localOptions.find(p => p.id === personId);
-            if (selectedPerson && !selectedPersons.some(p => p.id === personId)) {
-                updatedPersons = [...selectedPersons, selectedPerson];
-            } else {
-                updatedPersons = [...selectedPersons];
-            }
+            const updatedPersons = selectedPerson && !selectedPersons.some(p => p.id === personId)
+                ? [...selectedPersons, selectedPerson]
+                : [...selectedPersons];
+            onChange([...selectedIds, personId], updatedPersons);
         }
-
-        onChange(newSelectedIds, updatedPersons);
     }, [selectedIds, selectedPersons, localOptions, onChange]);
 
     const handleRemovePerson = useCallback((personId: number) => {
-        const newSelectedIds = selectedIds.filter(id => id !== personId);
-        const updatedPersons = selectedPersons.filter(p => p.id !== personId);
-        onChange(newSelectedIds, updatedPersons);
+        onChange(
+            selectedIds.filter(id => id !== personId),
+            selectedPersons.filter(p => p.id !== personId)
+        );
     }, [selectedIds, selectedPersons, onChange]);
 
     const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -183,9 +168,8 @@ export const PersonSelect: React.FC<PersonSelectProps> = ({
                     onFocus={handleFocus}
                     placeholder={placeholder}
                     className={styles.searchInput}
-                    aria-label={`Search ${roleLabel}s`}
                 />
-                {(isSearching || isCreating) && <div className={styles.spinner} aria-label="Loading">⏳</div>}
+                {(isSearching || isCreating) && <div className={styles.spinner}>⏳</div>}
             </div>
 
             {displayPersons.length > 0 && (
@@ -197,8 +181,6 @@ export const PersonSelect: React.FC<PersonSelectProps> = ({
                                 type="button"
                                 onClick={() => handleRemovePerson(person.id)}
                                 className={styles.removeTag}
-                                title={`Remove ${person.name}`}
-                                aria-label={`Remove ${person.name}`}
                             >
                                 ×
                             </button>
@@ -208,34 +190,28 @@ export const PersonSelect: React.FC<PersonSelectProps> = ({
             )}
 
             {isOpen && (
-                <div className={styles.dropdown} role="listbox">
+                <div className={styles.dropdown}>
                     {showAddOption && (
                         <button
                             type="button"
                             onClick={handleAddNewPerson}
                             className={styles.addOption}
                             disabled={isSearching || isCreating}
-                            role="option"
-                            aria-label={`Add and select "${searchQuery}" as new ${roleLabel}`}
                         >
-                            {isCreating ? '⏳ Adding...' : `➕ Add & select "${searchQuery}" as new ${roleLabel}`}
+                            {isCreating ? 'Adding...' : `+ Add & select "${searchQuery}" as new ${roleLabel}`}
                         </button>
                     )}
 
                     {localOptions.map(person => (
-                        <label key={person.id} className={styles.option} role="option">
+                        <label key={person.id} className={styles.option}>
                             <input
                                 type="checkbox"
                                 checked={selectedIds.includes(person.id)}
                                 onChange={() => handleSelectPerson(person.id)}
                                 className={styles.checkbox}
-                                aria-label={`Select ${person.name}`}
                             />
                             <span className={styles.checkmark} />
-                            <span className={styles.optionLabel}>
-                                {person.name}
-                                {selectedIds.includes(person.id) && <span className={styles.alreadySelected}> (selected)</span>}
-                            </span>
+                            <span className={styles.optionLabel}>{person.name}</span>
                         </label>
                     ))}
 

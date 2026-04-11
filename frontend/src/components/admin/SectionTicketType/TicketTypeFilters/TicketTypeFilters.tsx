@@ -6,7 +6,6 @@ import { TicketTypeCategoryDisplay } from '@/types/ticketType';
 import styles from './TicketTypeFilters.module.css';
 
 interface TicketTypeFiltersProps {
-    searchQuery: string;
     onSearchChange: (query: string) => void;
     statusFilter: 'all' | 'active' | 'inactive';
     onStatusChange: (filter: 'all' | 'active' | 'inactive') => void;
@@ -30,18 +29,10 @@ const TicketTypeFilters: React.FC<TicketTypeFiltersProps> = ({
     const categoryOptions = [
         { value: 'all', label: 'All Categories' },
         ...Object.entries(TicketTypeCategoryDisplay).map(([value, label]) => ({
-            value: value as string,
+            value,
             label
         }))
     ];
-
-    const handleStatusChange = (value: string | number) => {
-        onStatusChange(value as 'all' | 'active' | 'inactive');
-    };
-
-    const handleCategoryChange = (value: string | number) => {
-        onCategoryChange(value === 'all' ? 'all' : (value as TicketTypeCategory));
-    };
 
     return (
         <div className={styles.filters}>
@@ -59,9 +50,8 @@ const TicketTypeFilters: React.FC<TicketTypeFiltersProps> = ({
                     <Select
                         options={statusOptions}
                         value={statusFilter}
-                        onChange={handleStatusChange}
+                        onChange={(value) => onStatusChange(value as 'all' | 'active' | 'inactive')}
                         placeholder="Status"
-                        disabled={false}
                         className={styles.select}
                     />
                 </div>
@@ -70,9 +60,8 @@ const TicketTypeFilters: React.FC<TicketTypeFiltersProps> = ({
                     <Select
                         options={categoryOptions}
                         value={categoryFilter}
-                        onChange={handleCategoryChange}
+                        onChange={(value) => onCategoryChange(value === 'all' ? 'all' : value as TicketTypeCategory)}
                         placeholder="Category"
-                        disabled={false}
                         className={styles.select}
                     />
                 </div>

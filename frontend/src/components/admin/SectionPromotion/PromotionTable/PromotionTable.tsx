@@ -1,37 +1,45 @@
 import React from 'react';
 import { Button, Badge } from '@/components/ui';
-import type { PromotionAdminResponse } from '@/types/promotion';
+import type { PromotionListResponse } from '@/types/promotion';
+import { safeFormatDate } from '@/utils/dateUtils';
 import styles from './PromotionTable.module.css';
 
 interface PromotionTableProps {
-    promotions: PromotionAdminResponse[];
+    promotions: PromotionListResponse[];
     onEdit: (promotionId: number) => void;
     onDelete: (promotionId: number, title: string) => void;
-    getPromotionStatus: (promotion: PromotionAdminResponse) => string;
-    getStatusDisplay: (status: string) => string;
 }
 
-const PromotionTable: React.FC<PromotionTableProps> = ({
-    promotions,
-    onEdit,
-    onDelete,
-    getPromotionStatus,
-    getStatusDisplay
-}) => {
-    const formatDate = (dateString?: string): string => {
-        if (!dateString) return 'No date';
-        return new Date(dateString).toLocaleDateString('uk-UA');
-    };
+const getPromotionStatus = (promotion: PromotionListResponse): string => {
+    const now = new Date();
+    const startDate = promotion.startDate ? new Date(promotion.startDate) : null;
+    const endDate = promotion.endDate ? new Date(promotion.endDate) : null;
 
-    const getStatusVariant = (status: string) => {
-        switch (status) {
-            case 'active': return 'success';
-            case 'upcoming': return 'warning';
-            case 'expired': return 'error';
-            default: return 'info';
-        }
-    };
+    if (!startDate && !endDate) return 'active';
+    if (startDate && now < startDate) return 'upcoming';
+    if (endDate && now > endDate) return 'expired';
+    return 'active';
+};
 
+const getStatusDisplay = (status: string): string => {
+    switch (status) {
+        case 'active': return 'Active';
+        case 'upcoming': return 'Upcoming';
+        case 'expired': return 'Expired';
+        default: return status;
+    }
+};
+
+const getStatusVariant = (status: string) => {
+    switch (status) {
+        case 'active': return 'success';
+        case 'upcoming': return 'warning';
+        case 'expired': return 'error';
+        default: return 'info';
+    }
+};
+
+const PromotionTable: React.FC<PromotionTableProps> = ({ promotions, onEdit, onDelete }) => {
     if (promotions.length === 0) {
         return (
             <div className={styles.emptyContainer}>
@@ -64,15 +72,13 @@ const PromotionTable: React.FC<PromotionTableProps> = ({
                                     </div>
                                 </td>
                                 <td className={styles.td}>
-                                    <span className={styles.points}>
-                                        {promotion.bonusPoints} pts
-                                    </span>
+                                    <span className={styles.points}>{promotion.bonusPoints} pts</span>
                                 </td>
                                 <td className={styles.td}>
                                     <div className={styles.dates}>
-                                        <div>{formatDate(promotion.startDate)}</div>
+                                        <div>{safeFormatDate(promotion.startDate)}</div>
                                         <div className={styles.dateSeparator}>to</div>
-                                        <div>{formatDate(promotion.endDate)}</div>
+                                        <div>{safeFormatDate(promotion.endDate)}</div>
                                     </div>
                                 </td>
                                 <td className={styles.td}>

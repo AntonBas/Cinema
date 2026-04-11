@@ -4,16 +4,15 @@ import { Button } from '@/components/ui/Button/Button';
 import { Input } from '@/components/ui/Input/Input';
 import { Select } from '@/components/ui/Select/Select';
 import { useTicketType } from '@/hooks/features/ticketType/useTicketType';
-import { useNotification } from '@/hooks/common/useNotification';
-import type { TicketTypeAdminResponse, TicketTypeCreateRequest, TicketTypeUpdateRequest, TicketTypeCategory } from '@/types/ticketType';
+import type { TicketTypeResponse, TicketTypeRequest, TicketTypeCategory } from '@/types/ticketType';
 import { TicketTypeCategoryDisplay } from '@/types/ticketType';
 import styles from './TicketTypeModal.module.css';
 
 interface TicketTypeFormModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSuccess: (ticketType?: TicketTypeAdminResponse) => void;
-    ticketType?: TicketTypeAdminResponse | null;
+    onSuccess: () => void;
+    ticketType?: TicketTypeResponse | null;
 }
 
 const TicketTypeFormModal: React.FC<TicketTypeFormModalProps> = ({
@@ -23,10 +22,9 @@ const TicketTypeFormModal: React.FC<TicketTypeFormModalProps> = ({
     ticketType
 }) => {
     const { create, update, loading } = useTicketType();
-    const { showNotification } = useNotification();
     const isEditing = !!ticketType;
 
-    const [formData, setFormData] = useState<TicketTypeCreateRequest | TicketTypeUpdateRequest>({
+    const [formData, setFormData] = useState<TicketTypeRequest>({
         displayName: '',
         category: 'STANDARD',
         priceMultiplier: '1.0',
@@ -36,7 +34,6 @@ const TicketTypeFormModal: React.FC<TicketTypeFormModalProps> = ({
         documentType: undefined,
         active: true
     });
-    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         if (ticketType) {
@@ -62,7 +59,6 @@ const TicketTypeFormModal: React.FC<TicketTypeFormModalProps> = ({
                 active: true
             });
         }
-        setError(null);
     }, [ticketType, isOpen]);
 
     const categoryOptions = Object.entries(TicketTypeCategoryDisplay).map(([value, label]) => ({
@@ -70,64 +66,16 @@ const TicketTypeFormModal: React.FC<TicketTypeFormModalProps> = ({
         label
     }));
 
-    const handleInputChange = (field: keyof (TicketTypeCreateRequest | TicketTypeUpdateRequest), value: any) => {
-        setFormData(prev => ({ ...prev, [field]: value }));
-        if (error) setError(null);
-    };
-
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setError(null);
 
-        try {
-            let result;
+        const result = isEditing && ticketType
+            ? await update(ticketType.id, formData)
+            : await create(formData);
 
-            if (isEditing && ticketType) {
-                const updateData: TicketTypeUpdateRequest = {};
-
-                if (formData.displayName !== ticketType.displayName) {
-                    updateData.displayName = formData.displayName;
-                }
-                if (formData.category !== ticketType.category) {
-                    updateData.category = formData.category as TicketTypeCategory;
-                }
-                if (formData.priceMultiplier !== ticketType.priceMultiplier) {
-                    updateData.priceMultiplier = formData.priceMultiplier;
-                }
-                if (formData.minAge !== ticketType.minAge) {
-                    updateData.minAge = formData.minAge;
-                }
-                if (formData.maxAge !== ticketType.maxAge) {
-                    updateData.maxAge = formData.maxAge;
-                }
-                if (formData.requiresDocument !== ticketType.requiresDocument) {
-                    updateData.requiresDocument = formData.requiresDocument;
-                }
-                if (formData.documentType !== ticketType.documentType) {
-                    updateData.documentType = formData.documentType;
-                }
-                if (formData.active !== ticketType.active) {
-                    updateData.active = formData.active;
-                }
-
-                if (Object.keys(updateData).length === 0) {
-                    showNotification('No changes to save', 'info');
-                    onClose();
-                    return;
-                }
-
-                result = await update(ticketType.id, updateData, ticketType.displayName);
-                onSuccess(result || undefined);
-                onClose();
-            } else {
-                result = await create(formData as TicketTypeCreateRequest);
-                onSuccess(result || undefined);
-                onClose();
-            }
-        } catch (err: any) {
-            const errorMessage = err.message || `Failed to ${isEditing ? 'update' : 'create'} ticket type`;
-            showNotification(errorMessage, 'error');
-            setError(errorMessage);
+        if (result) {
+            onSuccess();
+            onClose();
         }
     };
 
@@ -141,13 +89,11 @@ const TicketTypeFormModal: React.FC<TicketTypeFormModalProps> = ({
             <form onSubmit={handleSubmit} className={styles.form}>
                 <div className={`${styles.formRow} ${styles.formRowFull}`}>
                     <div className={styles.formGroup}>
-                        <label className={`${styles.label} ${styles.required}`}>
-                            Display Name
-                        </label>
+                        <label className={`${styles.label} ${styles.required}`}>Display Name</label>
                         <Input
                             type="text"
-                            value={formData.displayName || ''}
-                            onChange={(value) => handleInputChange('displayName', value)}
+                            value={formData.displayName}
+                            onChange={(value) => setFormData(prev => ({ ...prev, displayName: value }))}
                             placeholder="e.g., Adult, Child"
                             required
                         />
@@ -156,25 +102,21 @@ const TicketTypeFormModal: React.FC<TicketTypeFormModalProps> = ({
 
                 <div className={styles.formRow}>
                     <div className={styles.formGroup}>
-                        <label className={`${styles.label} ${styles.required}`}>
-                            Category
-                        </label>
+                        <label className={`${styles.label} ${styles.required}`}>Category</label>
                         <Select
                             options={categoryOptions}
-                            value={formData.category || 'STANDARD'}
-                            onChange={(value) => handleInputChange('category', value as TicketTypeCategory)}
+                            value={formData.category}
+                            onChange={(value) => setFormData(prev => ({ ...prev, category: value as TicketTypeCategory }))}
                             placeholder="Select category"
                         />
                     </div>
 
                     <div className={styles.formGroup}>
-                        <label className={`${styles.label} ${styles.required}`}>
-                            Price Multiplier
-                        </label>
+                        <label className={`${styles.label} ${styles.required}`}>Price Multiplier</label>
                         <Input
                             type="number"
-                            value={formData.priceMultiplier || '1.0'}
-                            onChange={(value) => handleInputChange('priceMultiplier', value)}
+                            value={formData.priceMultiplier}
+                            onChange={(value) => setFormData(prev => ({ ...prev, priceMultiplier: value }))}
                             placeholder="e.g., 1.0"
                             step="0.01"
                             min="0"
@@ -185,26 +127,22 @@ const TicketTypeFormModal: React.FC<TicketTypeFormModalProps> = ({
 
                 <div className={styles.formRow}>
                     <div className={styles.formGroup}>
-                        <label className={styles.label}>
-                            Min Age
-                        </label>
+                        <label className={styles.label}>Min Age</label>
                         <Input
                             type="number"
                             value={formData.minAge?.toString() || ''}
-                            onChange={(value) => handleInputChange('minAge', value ? parseInt(value) : undefined)}
+                            onChange={(value) => setFormData(prev => ({ ...prev, minAge: value ? parseInt(value) : undefined }))}
                             placeholder="Optional"
                             min="0"
                         />
                     </div>
 
                     <div className={styles.formGroup}>
-                        <label className={styles.label}>
-                            Max Age
-                        </label>
+                        <label className={styles.label}>Max Age</label>
                         <Input
                             type="number"
                             value={formData.maxAge?.toString() || ''}
-                            onChange={(value) => handleInputChange('maxAge', value ? parseInt(value) : undefined)}
+                            onChange={(value) => setFormData(prev => ({ ...prev, maxAge: value ? parseInt(value) : undefined }))}
                             placeholder="Optional"
                             min="0"
                         />
@@ -215,8 +153,8 @@ const TicketTypeFormModal: React.FC<TicketTypeFormModalProps> = ({
                     <input
                         type="checkbox"
                         id="requiresDocument"
-                        checked={formData.requiresDocument || false}
-                        onChange={(e) => handleInputChange('requiresDocument', e.target.checked)}
+                        checked={formData.requiresDocument}
+                        onChange={(e) => setFormData(prev => ({ ...prev, requiresDocument: e.target.checked }))}
                     />
                     <label htmlFor="requiresDocument" className={styles.checkboxLabel}>
                         Requires Document Verification
@@ -225,13 +163,11 @@ const TicketTypeFormModal: React.FC<TicketTypeFormModalProps> = ({
 
                 {formData.requiresDocument && (
                     <div className={styles.formGroup}>
-                        <label className={styles.label}>
-                            Document Type
-                        </label>
+                        <label className={styles.label}>Document Type</label>
                         <Input
                             type="text"
                             value={formData.documentType || ''}
-                            onChange={(value) => handleInputChange('documentType', value || undefined)}
+                            onChange={(value) => setFormData(prev => ({ ...prev, documentType: value || undefined }))}
                             placeholder="e.g., Student ID, Military ID"
                         />
                     </div>
@@ -241,34 +177,19 @@ const TicketTypeFormModal: React.FC<TicketTypeFormModalProps> = ({
                     <input
                         type="checkbox"
                         id="active"
-                        checked={formData.active || false}
-                        onChange={(e) => handleInputChange('active', e.target.checked)}
+                        checked={formData.active}
+                        onChange={(e) => setFormData(prev => ({ ...prev, active: e.target.checked }))}
                     />
                     <label htmlFor="active" className={styles.checkboxLabel}>
                         Active (available for purchase)
                     </label>
                 </div>
 
-                {error && (
-                    <div className={styles.error}>
-                        {error}
-                    </div>
-                )}
-
                 <div className={styles.actions}>
-                    <Button
-                        variant="cancel"
-                        onClick={onClose}
-                        disabled={loading}
-                    >
+                    <Button variant="cancel" onClick={onClose} disabled={loading}>
                         Cancel
                     </Button>
-                    <Button
-                        type="submit"
-                        variant="primary"
-                        loading={loading}
-                        disabled={loading}
-                    >
+                    <Button type="submit" variant="primary" loading={loading} disabled={loading}>
                         {isEditing ? 'Save Changes' : 'Create Ticket Type'}
                     </Button>
                 </div>

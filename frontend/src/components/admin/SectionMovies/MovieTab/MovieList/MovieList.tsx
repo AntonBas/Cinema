@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React from 'react';
 import type { MovieCardResponse } from '@/types/movie';
 import { MovieCard } from './MovieCard/MovieCard';
 import { Button } from '@/components/ui/Button/Button';
@@ -22,18 +22,6 @@ export const MovieList: React.FC<MovieListProps> = React.memo(({
     loading = false,
     emptyMessage = "No movies found"
 }) => {
-    const handleEdit = useCallback((movie: MovieCardResponse) => {
-        onEdit(movie);
-    }, [onEdit]);
-
-    const handleDelete = useCallback((movie: MovieCardResponse) => {
-        onDelete(movie);
-    }, [onDelete]);
-
-    const handleCreateNew = useCallback(() => {
-        onCreateNew?.();
-    }, [onCreateNew]);
-
     if (loading) {
         return (
             <div className={styles.loading}>
@@ -42,19 +30,14 @@ export const MovieList: React.FC<MovieListProps> = React.memo(({
         );
     }
 
-    if (!movies || movies.length === 0) {
+    if (!movies.length) {
         return (
-            <div className={styles.empty} role="status" aria-label="No movies found">
-                <div className={styles.emptyIcon} aria-hidden="true">🎬</div>
+            <div className={styles.empty}>
+                <div className={styles.emptyIcon}>🎬</div>
                 <h3>{emptyMessage}</h3>
                 <p>Get started by creating your first movie</p>
                 {onCreateNew && (
-                    <Button
-                        variant="primary"
-                        onClick={handleCreateNew}
-                        className={styles.createButton}
-                        aria-label="Create first movie"
-                    >
+                    <Button variant="primary" onClick={onCreateNew}>
                         Create First Movie
                     </Button>
                 )}
@@ -63,19 +46,14 @@ export const MovieList: React.FC<MovieListProps> = React.memo(({
     }
 
     return (
-        <div className={styles.grid} role="grid" aria-label="Movies list">
-            {movies.map((movie) => (
-                <div
+        <div className={styles.grid}>
+            {movies.map(movie => (
+                <MovieCard
                     key={movie.id}
-                    role="gridcell"
-                    className={styles.gridCell}
-                >
-                    <MovieCard
-                        movie={movie}
-                        onEdit={handleEdit}
-                        onDelete={handleDelete}
-                    />
-                </div>
+                    movie={movie}
+                    onEdit={onEdit}
+                    onDelete={onDelete}
+                />
             ))}
         </div>
     );

@@ -28,13 +28,13 @@ export const HallLayoutProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     const [currentHall, setCurrentHall] = useState<CinemaHallResponse | null>(null);
     const [layout, setLayout] = useState<HallLayoutResponse | null>(null);
 
-    const { loading, getHallLayout } = useCinemaHalls();
+    const { getHallLayout } = useCinemaHalls();
     const { setSeatActiveStatus, updateSeatType } = useSeats();
 
     const openLayout = useCallback(async (hall: CinemaHallResponse) => {
         setCurrentHall(hall);
-        const response = await getHallLayout(hall.id);
-        setLayout(response);
+        const layoutData = await getHallLayout(hall.id);
+        setLayout(layoutData);
     }, [getHallLayout]);
 
     const closeLayout = useCallback(() => {
@@ -42,26 +42,23 @@ export const HallLayoutProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         setLayout(null);
     }, []);
 
-    const refreshLayout = useCallback(async () => {
-        if (currentHall) {
-            const response = await getHallLayout(currentHall.id);
-            setLayout(response);
-        }
-    }, [currentHall, getHallLayout]);
-
     const handleUpdateSeatType = useCallback(async (seatId: number, type: SeatType) => {
         if (!currentHall) return;
         await updateSeatType(currentHall.id, seatId, type);
-        await refreshLayout();
-    }, [currentHall, updateSeatType, refreshLayout]);
+        const updatedLayout = await getHallLayout(currentHall.id);
+        setLayout(updatedLayout);
+    }, [currentHall, updateSeatType, getHallLayout]);
 
     const handleToggleSeatStatus = useCallback(async (seatId: number) => {
         if (!currentHall || !layout) return;
         const seat = layout.rows.flatMap(r => r.seats).find(s => s.id === seatId);
         if (!seat) return;
         await setSeatActiveStatus(currentHall.id, seatId, !seat.active);
-        await refreshLayout();
-    }, [currentHall, layout, setSeatActiveStatus, refreshLayout]);
+        const updatedLayout = await getHallLayout(currentHall.id);
+        setLayout(updatedLayout);
+    }, [currentHall, layout, setSeatActiveStatus, getHallLayout]);
+
+    const loading = !!(currentHall && !layout);
 
     return (
         <HallLayoutContext.Provider

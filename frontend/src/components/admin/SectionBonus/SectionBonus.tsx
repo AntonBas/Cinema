@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/Button/Button';
 import { Badge } from '@/components/ui/Badge/Badge';
 import { useBonus } from '@/hooks/features/bonus/useBonus';
@@ -10,40 +10,22 @@ import { BonusTransactionTypeDisplay } from '@/types/bonus';
 import styles from './SectionBonus.module.css';
 
 const SectionBonus = () => {
-    const { getAllRules, allRules, loading } = useBonus();
-    const [error, setError] = useState<string | null>(null);
+    const { getAllRules, rules, loading, rulesError } = useBonus();
     const [editingRule, setEditingRule] = useState<BonusRulesResponse | null>(null);
     const [resettingRuleType, setResettingRuleType] = useState<BonusTransactionType | null>(null);
 
     useEffect(() => {
-        loadRules();
-    }, []);
-
-    const loadRules = async () => {
-        try {
-            setError(null);
-            await getAllRules();
-        } catch (err) {
-            setError('Failed to load bonus rules');
-        }
-    };
-
-    const handleEditRule = (rule: BonusRulesResponse) => {
-        setEditingRule(rule);
-    };
-
-    const handleResetRule = (type: BonusTransactionType) => {
-        setResettingRuleType(type);
-    };
+        getAllRules();
+    }, [getAllRules]);
 
     const handleEditSuccess = async () => {
         setEditingRule(null);
-        await loadRules();
+        await getAllRules();
     };
 
     const handleResetSuccess = async () => {
         setResettingRuleType(null);
-        await loadRules();
+        await getAllRules();
     };
 
     const getRuleStatus = (rule: BonusRulesResponse) => {
@@ -54,7 +36,7 @@ const SectionBonus = () => {
         return rule.active ? 'success' : 'error';
     };
 
-    if (loading && !allRules.length) {
+    if (loading && !rules.length) {
         return (
             <div className={styles.section}>
                 <div className={styles.loading}>
@@ -64,18 +46,13 @@ const SectionBonus = () => {
         );
     }
 
-    if (error) {
+    if (rulesError) {
         return (
             <div className={styles.section}>
                 <div className={styles.error}>
                     <h3>Error loading bonus system</h3>
-                    <p>{error}</p>
-                    <button
-                        className={styles.retryButton}
-                        onClick={() => loadRules()}
-                    >
-                        Try Again
-                    </button>
+                    <p>{rulesError.message}</p>
+                    <Button onClick={() => getAllRules()}>Try Again</Button>
                 </div>
             </div>
         );
@@ -104,15 +81,15 @@ const SectionBonus = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {allRules.map((rule) => (
+                        {rules.map((rule) => (
                             <tr key={rule.id}>
                                 <td>
                                     <strong>{BonusTransactionTypeDisplay[rule.bonusType as BonusTransactionType]}</strong>
                                 </td>
                                 <td>{rule.points ?? 'N/A'}</td>
                                 <td>{rule.moneyRatio ?? 'N/A'}</td>
-                                <td>{rule.minPointsPerTransaction}</td>
-                                <td>{rule.maxPointsPerTransaction}</td>
+                                <td>{rule.minPointsPerTransaction ?? 'N/A'}</td>
+                                <td>{rule.maxPointsPerTransaction ?? 'N/A'}</td>
                                 <td>
                                     <Badge variant={getRuleStatusVariant(rule)}>
                                         {getRuleStatus(rule)}
@@ -123,14 +100,14 @@ const SectionBonus = () => {
                                         <Button
                                             variant="secondary"
                                             size="small"
-                                            onClick={() => handleEditRule(rule)}
+                                            onClick={() => setEditingRule(rule)}
                                         >
                                             Edit
                                         </Button>
                                         <Button
                                             variant="error"
                                             size="small"
-                                            onClick={() => handleResetRule(rule.bonusType as BonusTransactionType)}
+                                            onClick={() => setResettingRuleType(rule.bonusType as BonusTransactionType)}
                                         >
                                             Reset
                                         </Button>
@@ -142,7 +119,7 @@ const SectionBonus = () => {
                 </table>
             </div>
 
-            {!allRules.length && !loading && (
+            {!rules.length && !loading && (
                 <div className={styles.empty}>
                     <p>No bonus rules found</p>
                 </div>

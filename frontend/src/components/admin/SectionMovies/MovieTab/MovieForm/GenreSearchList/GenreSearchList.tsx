@@ -12,8 +12,6 @@ interface GenreSearchListProps {
     isLoading?: boolean;
 }
 
-const SEARCH_DELAY = 300;
-
 export const GenreSearchList: React.FC<GenreSearchListProps> = React.memo(({
     genres = [],
     selectedIds,
@@ -21,28 +19,24 @@ export const GenreSearchList: React.FC<GenreSearchListProps> = React.memo(({
     isLoading = false
 }) => {
     const [localSearchQuery, setLocalSearchQuery] = useState('');
-    const [isTyping, setIsTyping] = useState(false);
-    const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const timeoutRef = useRef<number | null>(null);
 
     useEffect(() => {
         return () => {
-            if (searchTimeoutRef.current) {
-                clearTimeout(searchTimeoutRef.current);
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
             }
         };
     }, []);
 
     const handleSearchChange = useCallback((value: string) => {
-        setLocalSearchQuery(value);
-        setIsTyping(true);
-
-        if (searchTimeoutRef.current) {
-            clearTimeout(searchTimeoutRef.current);
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
         }
 
-        searchTimeoutRef.current = setTimeout(() => {
-            setIsTyping(false);
-        }, SEARCH_DELAY);
+        timeoutRef.current = window.setTimeout(() => {
+            setLocalSearchQuery(value);
+        }, 300);
     }, []);
 
     const filteredGenres = useMemo(() => {
@@ -57,15 +51,9 @@ export const GenreSearchList: React.FC<GenreSearchListProps> = React.memo(({
         return genres.filter(genre => selectedIds.includes(genre.id));
     }, [genres, selectedIds]);
 
-    const handleGenreChange = useCallback((genreId: number) => {
-        onChange(genreId);
-    }, [onChange]);
-
-    const hasSelected = selectedGenres.length > 0;
-
     if (isLoading) {
         return (
-            <div className={styles.loading} role="status" aria-label="Loading genres">
+            <div className={styles.loading}>
                 <LoadingSpinner text="Loading genres..." />
             </div>
         );
@@ -80,28 +68,25 @@ export const GenreSearchList: React.FC<GenreSearchListProps> = React.memo(({
                     onChange={handleSearchChange}
                     placeholder="Type to filter genres..."
                     className={styles.searchInput}
-                    aria-label="Search genres"
                 />
-                {isTyping && <span className={styles.typingIndicator} aria-hidden="true">...</span>}
             </div>
 
-            {hasSelected && (
-                <div className={styles.selectedItems} role="list" aria-label="Selected genres">
+            {selectedGenres.length > 0 && (
+                <div className={styles.selectedItems}>
                     {selectedGenres.map(genre => (
                         <Badge
                             key={genre.id}
                             variant="primary"
-                            onClick={() => handleGenreChange(genre.id)}
+                            onClick={() => onChange(genre.id)}
                             className={styles.selectedTag}
-                            title={`Remove ${genre.name}`}
                         >
-                            {genre.name} <span aria-hidden="true">×</span>
+                            {genre.name} <span>×</span>
                         </Badge>
                     ))}
                 </div>
             )}
 
-            <div className={styles.genreList} role="listbox" aria-label="Available genres" aria-multiselectable="true">
+            <div className={styles.genreList}>
                 {filteredGenres.length > 0 ? (
                     filteredGenres.map(genre => {
                         const isSelected = selectedIds.includes(genre.id);
@@ -109,23 +94,20 @@ export const GenreSearchList: React.FC<GenreSearchListProps> = React.memo(({
                             <label
                                 key={genre.id}
                                 className={`${styles.option} ${isSelected ? styles.selected : ''}`}
-                                role="option"
-                                aria-selected={isSelected}
                             >
                                 <input
                                     type="checkbox"
                                     checked={isSelected}
-                                    onChange={() => handleGenreChange(genre.id)}
+                                    onChange={() => onChange(genre.id)}
                                     className={styles.checkbox}
-                                    aria-label={`Select ${genre.name}`}
                                 />
-                                <span className={styles.checkmark} aria-hidden="true"></span>
+                                <span className={styles.checkmark}></span>
                                 <span className={styles.genreName}>{genre.name}</span>
                             </label>
                         );
                     })
                 ) : (
-                    <div className={styles.noResults} role="status">
+                    <div className={styles.noResults}>
                         {localSearchQuery
                             ? `No genres found for "${localSearchQuery}"`
                             : 'No genres available'

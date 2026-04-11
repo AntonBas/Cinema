@@ -1,7 +1,6 @@
 import React from 'react';
 import { Select, Input, Button } from '@/components/ui';
 import type { SelectOption } from '@/components/ui/Select/Select';
-import { ActionDisplay } from '@/types/audit';
 import styles from './AuditLogsFilters.module.css';
 
 interface AuditLogsFiltersProps {
@@ -36,49 +35,42 @@ export const AuditLogsFilters: React.FC<AuditLogsFiltersProps> = ({
 
     const actionOptions: SelectOption[] = [
         { value: '', label: 'All Actions' },
-        ...actions.map(act => ({
-            value: act,
-            label: ActionDisplay[act] || act
-        }))
+        ...actions.map(act => ({ value: act, label: act }))
     ];
 
     return (
         <div className={styles.filtersContainer}>
-            <div className={styles.searchWrapper}>
+            <div className={styles.filterItem}>
+                <label className={styles.label}>Type</label>
                 <Select
                     options={entityTypeOptions}
                     value={entityType}
                     onChange={(value) => onEntityTypeChange(value.toString())}
                     placeholder="Select type"
-                    label="Type"
                 />
             </div>
 
-            <div className={styles.searchWrapper}>
+            <div className={styles.filterItem}>
+                <label className={styles.label}>Action</label>
                 <Select
                     options={actionOptions}
                     value={action}
                     onChange={(value) => onActionChange(value.toString())}
                     placeholder="Select action"
-                    label="Action"
                 />
             </div>
 
-            <div className={styles.searchWrapper}>
+            <div className={styles.filterItem}>
+                <label className={styles.label}>Changed By</label>
                 <Input
                     value={changedBy}
                     onChange={onChangedByChange}
                     placeholder="User email"
-                    label="Changed By"
                 />
             </div>
 
             {hasActiveFilters && (
-                <Button
-                    variant="error"
-                    onClick={onClear}
-                    className={styles.clearButton}
-                >
+                <Button variant="secondary" onClick={onClear} className={styles.clearButton}>
                     Clear
                 </Button>
             )}

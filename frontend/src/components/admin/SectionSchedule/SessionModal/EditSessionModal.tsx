@@ -1,16 +1,15 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { BaseSessionModal } from './BaseSessionModal';
-import type { SessionAdminResponse, SessionCreateRequest, SessionUpdateRequest } from '@/types/session';
-import type { CinemaHallResponse } from '@/types/cinemaHall';
+import type { SessionAdminResponse, SessionRequest } from '@/types/session';
+import type { CinemaHallListResponse } from '@/types/cinemaHall';
 
 interface EditSessionModalProps {
     isOpen: boolean;
     session: SessionAdminResponse;
-    onSave: (id: number, data: SessionUpdateRequest) => Promise<void>;
+    onSave: (id: number, data: SessionRequest) => Promise<void>;
     onClose: () => void;
     loading: boolean;
-    halls: CinemaHallResponse[];
-    hallsLoading: boolean;
+    halls: CinemaHallListResponse[];
 }
 
 export const EditSessionModal: React.FC<EditSessionModalProps> = ({
@@ -20,19 +19,9 @@ export const EditSessionModal: React.FC<EditSessionModalProps> = ({
     onClose,
     loading,
     halls,
-    hallsLoading
 }) => {
-    const [modalSession, setModalSession] = useState(session);
-
-    useEffect(() => {
-        if (isOpen && session) {
-            setModalSession(session);
-        }
-    }, [isOpen, session]);
-
-    const handleSave = async (data: SessionCreateRequest | SessionUpdateRequest) => {
-        await onSave(session.id, data as SessionUpdateRequest);
-        onClose();
+    const handleSave = async (data: SessionRequest) => {
+        await onSave(session.id, data);
     };
 
     return (
@@ -42,19 +31,15 @@ export const EditSessionModal: React.FC<EditSessionModalProps> = ({
             onSave={handleSave}
             loading={loading}
             initialData={{
-                startTime: modalSession.startTime,
-                basePrice: modalSession.basePrice,
-                movieId: modalSession.movieId,
-                hallId: modalSession.hallId,
-                movieTitle: modalSession.movieTitle,
-                movieDuration: modalSession.movieDuration
+                startTime: session.startTime,
+                basePrice: session.basePrice,
+                movieId: session.movieId,
+                hallId: session.hallId,
+                movieTitle: session.movieTitle,
             }}
             title="Edit Session"
             submitText="Update Session"
-            isEditing={true}
-            session={modalSession}
             halls={halls}
-            hallsLoading={hallsLoading}
         />
     );
 };

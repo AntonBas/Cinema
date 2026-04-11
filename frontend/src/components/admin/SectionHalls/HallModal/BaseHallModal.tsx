@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback } from 'react';
+import React, { useCallback } from 'react';
 import { Modal, Input, Button, Select } from '@/components/ui';
 import { SeatType } from '@/types/seat';
 import type { CinemaHallRequest } from '@/types/cinemaHall';
@@ -39,15 +39,8 @@ export const BaseHallModal: React.FC<BaseHallModalProps> = ({
     coupleRows = [],
     onCoupleRowsChange
 }) => {
-    const totalSeats = useMemo(() =>
-        (formData.rows || 0) * (formData.seatsPerRow || 0),
-        [formData.rows, formData.seatsPerRow]
-    );
-
-    const isEvenSeatsPerRow = useMemo(() =>
-        (formData.seatsPerRow || 0) % 2 === 0,
-        [formData.seatsPerRow]
-    );
+    const totalSeats = (formData.rows || 0) * (formData.seatsPerRow || 0);
+    const isEvenSeatsPerRow = (formData.seatsPerRow || 0) % 2 === 0;
 
     const handleCoupleRowToggle = useCallback((row: number) => {
         if (!onCoupleRowsChange) return;
@@ -57,10 +50,7 @@ export const BaseHallModal: React.FC<BaseHallModalProps> = ({
         onCoupleRowsChange(newRows);
     }, [coupleRows, onCoupleRowsChange]);
 
-    const rowsArray = useMemo(() =>
-        Array.from({ length: formData.rows || 0 }, (_, i) => i + 1),
-        [formData.rows]
-    );
+    const rowsArray = Array.from({ length: formData.rows || 0 }, (_, i) => i + 1);
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title={title} size="large">

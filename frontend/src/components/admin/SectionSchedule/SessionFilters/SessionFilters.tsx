@@ -3,8 +3,7 @@ import { Input } from '@/components/ui/Input/Input';
 import { Select } from '@/components/ui/Select/Select';
 import { Button } from '@/components/ui/Button/Button';
 import type { CinemaSessionStatus } from '@/types/session';
-import type { MovieCardResponse } from '@/types/movie';
-import type { CinemaHallResponse } from '@/types/cinemaHall';
+import type { CinemaHallListResponse } from '@/types/cinemaHall';
 import type { SelectOption } from '@/components/ui/Select/Select';
 import styles from './SessionFilters.module.css';
 
@@ -22,13 +21,7 @@ interface SessionFiltersProps {
     onMovieTitleChange: (movieTitle: string | undefined) => void;
     onStatusChange: (status: CinemaSessionStatus | undefined) => void;
     onClearFilters: () => void;
-    hasActiveFilters: boolean;
-    activeFilterCount: number;
-    halls?: CinemaHallResponse[];
-    hallsLoading?: boolean;
-    movies?: MovieCardResponse[];
-    moviesLoading?: boolean;
-    className?: string;
+    halls?: CinemaHallListResponse[];
 }
 
 const STATUS_OPTIONS: SelectOption[] = [
@@ -49,120 +42,55 @@ export const SessionFilters: React.FC<SessionFiltersProps> = ({
     onMovieTitleChange,
     onStatusChange,
     onClearFilters,
-    hasActiveFilters,
-    activeFilterCount,
     halls = [],
-    hallsLoading = false,
-    movies = [],
-    moviesLoading = false,
-    className
 }) => {
-    const [movieSearchTerm, setMovieSearchTerm] = useState('');
-    const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
-    const [showMovieResults, setShowMovieResults] = useState(false);
-    const movieSearchRef = useRef<HTMLDivElement>(null);
+    const [movieInput, setMovieInput] = useState(filters.movieTitle || '');
     const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     useEffect(() => {
-        setMovieSearchTerm(filters.movieTitle || '');
-        setDebouncedSearchTerm(filters.movieTitle || '');
+        setMovieInput(filters.movieTitle || '');
     }, [filters.movieTitle]);
 
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (movieSearchRef.current && !movieSearchRef.current.contains(event.target as Node)) {
-                setShowMovieResults(false);
-            }
-        };
+    const handleMovieChange = useCallback((value: string) => {
+        setMovieInput(value);
 
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
-
-    useEffect(() => {
         if (debounceTimerRef.current) {
             clearTimeout(debounceTimerRef.current);
         }
 
         debounceTimerRef.current = setTimeout(() => {
-            setDebouncedSearchTerm(movieSearchTerm);
+            onMovieTitleChange(value || undefined);
         }, DEBOUNCE_DELAY);
-
-        return () => {
-            if (debounceTimerRef.current) {
-                clearTimeout(debounceTimerRef.current);
-            }
-        };
-    }, [movieSearchTerm]);
-
-    const filteredMovies = useMemo(() => {
-        if (!movies.length) return [];
-
-        if (!debouncedSearchTerm.trim()) {
-            return movies.slice(0, 20);
-        }
-
-        const searchLower = debouncedSearchTerm.toLowerCase();
-        return movies
-            .filter(movie => movie.title.toLowerCase().includes(searchLower))
-            .slice(0, 20);
-    }, [movies, debouncedSearchTerm]);
-
-    const handleDateFromChange = useCallback((value: string) => {
-        onDateFromChange(value || undefined);
-    }, [onDateFromChange]);
-
-    const handleDateToChange = useCallback((value: string) => {
-        onDateToChange(value || undefined);
-    }, [onDateToChange]);
-
-    const handleHallChange = useCallback((value: string | number) => {
-        onHallChange(value ? Number(value) : undefined);
-    }, [onHallChange]);
-
-    const handleMovieInputClick = useCallback(() => {
-        setShowMovieResults(true);
-    }, []);
-
-    const handleMovieInputChange = useCallback((value: string) => {
-        setMovieSearchTerm(value);
-        if (value === '') {
-            onMovieTitleChange(undefined);
-        }
-        setShowMovieResults(true);
     }, [onMovieTitleChange]);
 
-    const handleMovieSelect = useCallback((movieTitle: string) => {
-        onMovieTitleChange(movieTitle);
-        setMovieSearchTerm(movieTitle);
-        setDebouncedSearchTerm(movieTitle);
-        setShowMovieResults(false);
-    }, [onMovieTitleChange]);
-
-    const handleStatusChange = useCallback((value: string | number) => {
-        onStatusChange(value as CinemaSessionStatus || undefined);
-    }, [onStatusChange]);
-
-    const handleClearMovieSearch = useCallback(() => {
-        setMovieSearchTerm('');
-        setDebouncedSearchTerm('');
-        setShowMovieResults(false);
+    const handleClearMovie = useCallback(() => {
+        setMovieInput('');
         onMovieTitleChange(undefined);
     }, [onMovieTitleChange]);
 
-    const hallOptions: SelectOption[] = useMemo(() => {
-        const hallsArray = Array.isArray(halls) ? halls : [];
-        return [
-            { value: '', label: 'All halls' },
-            ...hallsArray.map(hall => ({
-                value: hall.id.toString(),
-                label: hall.name
-            }))
-        ];
-    }, [halls]);
+    const hallOptions: SelectOption[] = useMemo(() => [
+        { value: '', label: 'All halls' },
+        ...halls.map(hall => ({ value: hall.id.toString(), label: hall.name }))
+    ], [halls]);
+
+    const hasActiveFilters = !!(
+        filters.dateFrom ||
+        filters.dateTo ||
+        filters.hallId ||
+        filters.movieTitle ||
+        filters.status
+    );
+
+    const activeFilterCount = [
+        filters.dateFrom,
+        filters.dateTo,
+        filters.hallId,
+        filters.movieTitle,
+        filters.status
+    ].filter(Boolean).length;
 
     return (
-        <div className={`${styles.filters} ${className || ''}`}>
+        <div className={styles.filters}>
             <div className={styles.filterGrid}>
                 <div className={styles.filterGroup}>
                     <label htmlFor="dateFrom" className={styles.label}>Date From</label>
@@ -170,7 +98,7 @@ export const SessionFilters: React.FC<SessionFiltersProps> = ({
                         id="dateFrom"
                         type="date"
                         value={filters.dateFrom || ''}
-                        onChange={handleDateFromChange}
+                        onChange={(value) => onDateFromChange(value || undefined)}
                         className={styles.filterInput}
                     />
                 </div>
@@ -181,7 +109,7 @@ export const SessionFilters: React.FC<SessionFiltersProps> = ({
                         id="dateTo"
                         type="date"
                         value={filters.dateTo || ''}
-                        onChange={handleDateToChange}
+                        onChange={(value) => onDateToChange(value || undefined)}
                         className={styles.filterInput}
                         min={filters.dateFrom}
                     />
@@ -189,101 +117,53 @@ export const SessionFilters: React.FC<SessionFiltersProps> = ({
 
                 <div className={styles.filterGroup}>
                     <label htmlFor="hall" className={styles.label}>Hall</label>
-                    <div className={styles.filterSelectWrapper}>
-                        <Select
-                            value={filters.hallId?.toString() || ''}
-                            onChange={handleHallChange}
-                            options={hallOptions}
-                            disabled={hallsLoading}
-                        />
-                    </div>
+                    <Select
+                        value={filters.hallId?.toString() || ''}
+                        onChange={(value) => onHallChange(value ? Number(value) : undefined)}
+                        options={hallOptions}
+                    />
                 </div>
 
                 <div className={styles.filterGroup}>
                     <label htmlFor="status" className={styles.label}>Status</label>
-                    <div className={styles.filterSelectWrapper}>
-                        <Select
-                            value={filters.status || ''}
-                            onChange={handleStatusChange}
-                            options={STATUS_OPTIONS}
-                        />
-                    </div>
+                    <Select
+                        value={filters.status || ''}
+                        onChange={(value) => onStatusChange(value as CinemaSessionStatus || undefined)}
+                        options={STATUS_OPTIONS}
+                    />
                 </div>
             </div>
 
-            <div className={styles.movieFilterRow}>
-                <div className={styles.movieFilterGroup}>
-                    <label htmlFor="movieSearch" className={styles.label}>Movie Title</label>
-                    <div className={styles.movieSearch} ref={movieSearchRef}>
-                        <div className={styles.movieInputWrapper}>
-                            <Input
-                                id="movieSearch"
-                                type="text"
-                                value={movieSearchTerm}
-                                onChange={handleMovieInputChange}
-                                onClick={handleMovieInputClick}
-                                placeholder="Search by movie title..."
-                                className={styles.movieInput}
-                                disabled={moviesLoading}
-                            />
-                            {filters.movieTitle && (
-                                <Button
-                                    variant="error"
-                                    size="small"
-                                    onClick={handleClearMovieSearch}
-                                    className={styles.clearMovieButton}
-                                >
-                                    ×
-                                </Button>
-                            )}
-                        </div>
-
-                        {showMovieResults && (
-                            <div className={styles.movieResults}>
-                                {moviesLoading ? (
-                                    <div className={styles.loadingResults}>
-                                        Loading movies...
-                                    </div>
-                                ) : filteredMovies.length > 0 ? (
-                                    filteredMovies.map(movie => (
-                                        <div
-                                            key={movie.id}
-                                            className={`${styles.movieOption} ${filters.movieTitle === movie.title ? styles.selected : ''}`}
-                                            onClick={() => handleMovieSelect(movie.title)}
-                                        >
-                                            <div className={styles.movieTitle}>{movie.title}</div>
-                                            <div className={styles.movieDetails}>
-                                                {movie.durationMinutes} min
-                                            </div>
-                                        </div>
-                                    ))
-                                ) : (
-                                    <div className={styles.noResults}>
-                                        {debouncedSearchTerm.trim()
-                                            ? `No movies found for "${debouncedSearchTerm}"`
-                                            : 'No movies available'}
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                    </div>
+            <div className={styles.filterGroup}>
+                <label htmlFor="movieTitle" className={styles.label}>Movie Title</label>
+                <div className={styles.movieInputWrapper}>
+                    <Input
+                        id="movieTitle"
+                        type="text"
+                        value={movieInput}
+                        onChange={handleMovieChange}
+                        placeholder="Search by movie title..."
+                    />
+                    {movieInput && (
+                        <Button
+                            variant="error"
+                            size="small"
+                            onClick={handleClearMovie}
+                            className={styles.clearButton}
+                        >
+                            ×
+                        </Button>
+                    )}
                 </div>
             </div>
 
             {hasActiveFilters && (
                 <div className={styles.clearFiltersContainer}>
-                    <div className={styles.filterInfo}>
-                        <span className={styles.countBadge}>{activeFilterCount}</span>
-                        active filter{activeFilterCount !== 1 ? 's' : ''}
-                        <Button
-                            variant="error"
-                            size="small"
-                            onClick={onClearFilters}
-                            className={styles.clearButton}
-                        >
-                            Clear All
-                        </Button>
-                    </div>
+                    <span className={styles.countBadge}>{activeFilterCount}</span>
+                    active filter{activeFilterCount !== 1 ? 's' : ''}
+                    <Button variant="error" size="small" onClick={onClearFilters}>
+                        Clear All
+                    </Button>
                 </div>
             )}
         </div>

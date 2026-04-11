@@ -1,140 +1,67 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/Button/Button';
 import { SearchInput } from '@/components/ui/SearchInput/SearchInput';
 import { Pagination } from '@/components/ui/Pagination/Pagination';
 import { ConfirmModal } from '@/components/ui/ConfirmModal/ConfirmModal';
 import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';
-import { Notification } from '@/components/ui/Notification/Notification';
 import { usePromotion } from '@/hooks/features/promotion/usePromotion';
-import { useNotification } from '@/hooks/common/useNotification';
 import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
 import { usePagination } from '@/hooks/common/usePagination';
-import type { PromotionResponse, PromotionAdminResponse } from '@/types/promotion';
+import type { PromotionResponse, PromotionListResponse } from '@/types/promotion';
 import PromotionTable from './PromotionTable/PromotionTable';
-import PromotionFilters from './PromotionFilters/PromotionFilters';
+import { PromotionFilters } from './PromotionFilters/PromotionFilters';
 import CreatePromotionModal from './PromotionModal/CreatePromotionModal';
 import EditPromotionModal from './PromotionModal/EditPromotionModal';
 import styles from './SectionPromotion.module.css';
 
 const SectionPromotion: React.FC = () => {
-    const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState<string>('');
     const [showCreateModal, setShowCreateModal] = useState(false);
-    const [editingPromotion, setEditingPromotion] = useState<number | null>(null);
+    const [editingPromotion, setEditingPromotion] = useState<PromotionResponse | null>(null);
     const [deletingPromotion, setDeletingPromotion] = useState<{ id: number; title: string } | null>(null);
 
     const { params, setPage } = usePagination({ size: 10 });
+    const { adminPromotions, pagination, getAll, remove, loading } = usePromotion();
+    const showDelayedLoading = useDelayedLoading(loading, { delay: 150, minDisplayTime: 300 });
 
-    const { notifications, showNotification, hideNotification } = useNotification();
-
-    const {
-        promotionsPage,
-        getAll,
-        remove
-    } = usePromotion();
-
-    const showDelayedLoading = useDelayedLoading(promotionsPage === null, { delay: 150, minDisplayTime: 300 });
+    const currentPage = params.page ?? 0;
+    const pageSize = params.size ?? 10;
 
     useEffect(() => {
-        loadPromotions();
-    }, [params.page]);
+        getAll({ page: currentPage, size: pageSize });
+    }, [currentPage, pageSize, getAll]);
 
-    const loadPromotions = async () => {
-        try {
-            await getAll({
-                page: params.page ?? 0,
-                size: params.size ?? 10
-            });
-        } catch (error) {
-            showNotification('Failed to load promotions', 'error');
-        }
-    };
-
-    const handleCreateSuccess = useCallback((result?: PromotionResponse) => {
+    const handleCreateSuccess = useCallback(() => {
         setShowCreateModal(false);
-        if (result) {
-            showNotification(`Promotion "${result.title}" created successfully!`, 'success');
-        }
-        setPage(0);
-        loadPromotions();
-    }, [showNotification, setPage]);
+        getAll({ page: currentPage, size: pageSize });
+    }, [getAll, currentPage, pageSize]);
 
-    const handleUpdateSuccess = useCallback((result?: PromotionResponse) => {
+    const handleUpdateSuccess = useCallback(() => {
         setEditingPromotion(null);
-        if (result) {
-            showNotification(`Promotion "${result.title}" updated successfully!`, 'success');
-        }
-        loadPromotions();
-    }, [showNotification]);
+        getAll({ page: currentPage, size: pageSize });
+    }, [getAll, currentPage, pageSize]);
 
     const handleDeleteConfirm = async () => {
         if (!deletingPromotion) return;
 
-        try {
-            await remove(deletingPromotion.id);
-            showNotification(`Promotion "${deletingPromotion.title}" deleted successfully!`, 'success');
-            setDeletingPromotion(null);
+        await remove(deletingPromotion.id);
+        setDeletingPromotion(null);
 
-            if (promotionsPage?.content.length === 1 && (params.page ?? 0) > 0) {
-                setPage((params.page ?? 0) - 1);
-            } else {
-                await loadPromotions();
-            }
-        } catch (error) {
-            showNotification('Failed to delete promotion', 'error');
+        if (adminPromotions.length === 1 && currentPage > 0) {
+            setPage(currentPage - 1);
+        } else {
+            getAll({ page: currentPage, size: pageSize });
         }
     };
 
-    const getPromotionStatus = useCallback((promotion: PromotionAdminResponse): string => {
-        const now = new Date();
-
-        if (!promotion.startDate && !promotion.endDate) return 'active';
-
-        if (promotion.startDate) {
-            const startDate = new Date(promotion.startDate);
-            if (now < startDate) return 'upcoming';
+    const handleEdit = (id: number) => {
+        const promotion = adminPromotions.find(p => p.id === id);
+        if (promotion) {
+            setEditingPromotion(promotion as PromotionResponse);
         }
+    };
 
-        if (promotion.endDate) {
-            const endDate = new Date(promotion.endDate);
-            if (now > endDate) return 'expired';
-        }
-
-        return 'active';
-    }, []);
-
-    const getStatusDisplay = useCallback((status: string): string => {
-        const displayMap: Record<string, string> = {
-            'active': 'Active',
-            'upcoming': 'Upcoming',
-            'expired': 'Expired'
-        };
-        return displayMap[status] || status;
-    }, []);
-
-    const filteredPromotions = useMemo(() => {
-        const promotions = promotionsPage?.content || [];
-        return promotions.filter(promotion => {
-            const matchesSearch = search === '' ||
-                promotion.title.toLowerCase().includes(search.toLowerCase());
-
-            if (!statusFilter) return matchesSearch;
-
-            const status = getPromotionStatus(promotion);
-            return matchesSearch && status === statusFilter;
-        });
-    }, [promotionsPage?.content, search, statusFilter, getPromotionStatus]);
-
-    const hasActiveFilters = search !== '' || statusFilter !== '';
-
-    const displayRange = useMemo(() => {
-        if (!promotionsPage) return { start: 0, end: 0 };
-        const start = promotionsPage.number * promotionsPage.size + 1;
-        const end = Math.min((promotionsPage.number + 1) * promotionsPage.size, promotionsPage.totalElements);
-        return { start, end };
-    }, [promotionsPage]);
-
-    if (showDelayedLoading && !promotionsPage?.content?.length) {
+    if (showDelayedLoading && !adminPromotions.length) {
         return (
             <div className={styles.loading}>
                 <LoadingSpinner text="Loading promotions..." />
@@ -144,69 +71,46 @@ const SectionPromotion: React.FC = () => {
 
     return (
         <div className={styles.container}>
-            {notifications.map((notification) => (
-                <Notification
-                    key={notification.id}
-                    id={notification.id}
-                    message={notification.message}
-                    type={notification.type}
-                    isVisible={notification.isVisible}
-                    onClose={hideNotification}
-                    duration={notification.duration}
-                />
-            ))}
-
             <div className={styles.header}>
                 <div>
                     <h1 className={styles.title}>Promotion Management</h1>
                     <p className={styles.subtitle}>Create and manage promotions</p>
                 </div>
-                <Button
-                    onClick={() => setShowCreateModal(true)}
-                    variant="primary"
-                >
+                <Button onClick={() => setShowCreateModal(true)} variant="primary">
                     Create Promotion
                 </Button>
             </div>
 
             <div className={styles.filtersContainer}>
                 <div className={styles.searchWrapper}>
-                    <SearchInput
-                        onSearch={setSearch}
-                        placeholder="Search promotions..."
-                    />
+                    <SearchInput onSearch={() => { }} placeholder="Search promotions..." />
                 </div>
-                <PromotionFilters
-                    selectedStatus={statusFilter}
-                    onStatusChange={setStatusFilter}
-                />
+                <PromotionFilters selectedStatus={statusFilter} onStatusChange={setStatusFilter} />
             </div>
 
-            {promotionsPage && promotionsPage.totalElements > 0 && (
+            {pagination && pagination.totalElements > 0 && (
                 <div className={styles.resultsInfo}>
-                    Showing {displayRange.start}-{displayRange.end} of {promotionsPage.totalElements} promotions
-                    {search && ` for "${search}"`}
-                    {hasActiveFilters && ' (filtered)'}
+                    Showing {pagination.number * pagination.size + 1}-
+                    {Math.min((pagination.number + 1) * pagination.size, pagination.totalElements)} of{' '}
+                    {pagination.totalElements} promotions
                 </div>
             )}
 
             <div className={styles.tableContainer}>
                 <PromotionTable
-                    promotions={filteredPromotions}
-                    onEdit={setEditingPromotion}
+                    promotions={adminPromotions as PromotionListResponse[]}
+                    onEdit={handleEdit}
                     onDelete={(id, title) => setDeletingPromotion({ id, title })}
-                    getPromotionStatus={getPromotionStatus}
-                    getStatusDisplay={getStatusDisplay}
                 />
             </div>
 
-            {promotionsPage && promotionsPage.totalPages > 1 && (
+            {pagination && pagination.totalPages > 1 && (
                 <div className={styles.paginationWrapper}>
                     <Pagination
-                        currentPage={promotionsPage.number}
-                        totalPages={promotionsPage.totalPages}
-                        totalElements={promotionsPage.totalElements}
-                        pageSize={promotionsPage.size}
+                        currentPage={pagination.number}
+                        totalPages={pagination.totalPages}
+                        totalElements={pagination.totalElements}
+                        pageSize={pagination.size}
                         onPageChange={setPage}
                         variant="pages"
                         showInfo={false}
@@ -223,7 +127,7 @@ const SectionPromotion: React.FC = () => {
 
             {editingPromotion && (
                 <EditPromotionModal
-                    promotionId={editingPromotion}
+                    promotion={editingPromotion}
                     onClose={() => setEditingPromotion(null)}
                     onSuccess={handleUpdateSuccess}
                 />

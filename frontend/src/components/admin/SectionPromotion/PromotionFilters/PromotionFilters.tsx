@@ -8,7 +8,7 @@ interface PromotionFiltersProps {
     onStatusChange: (status: string) => void;
 }
 
-const PromotionFilters: React.FC<PromotionFiltersProps> = ({
+export const PromotionFilters: React.FC<PromotionFiltersProps> = ({
     selectedStatus,
     onStatusChange
 }) => {
@@ -19,20 +19,14 @@ const PromotionFilters: React.FC<PromotionFiltersProps> = ({
         { value: 'expired', label: 'Expired' }
     ];
 
-    const handleChange = (value: string | number) => {
-        onStatusChange(value.toString());
-    };
-
     return (
         <div className={styles.container}>
             <Select
                 options={statusOptions}
                 value={selectedStatus || ''}
-                onChange={handleChange}
+                onChange={(value) => onStatusChange(value.toString())}
                 placeholder="Filter by status"
             />
         </div>
     );
 };
-
-export default PromotionFilters;

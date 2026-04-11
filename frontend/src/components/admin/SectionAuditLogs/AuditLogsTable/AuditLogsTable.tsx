@@ -1,7 +1,6 @@
 import React from 'react';
 import { Badge, Tooltip } from '@/components/ui';
 import type { AuditLogResponse } from '@/types/audit';
-import { getActionDisplay } from '@/types/audit';
 import styles from './AuditLogsTable.module.css';
 
 interface AuditLogsTableProps {
@@ -22,34 +21,6 @@ const formatDateTime = (dateStr: string) => {
         second: '2-digit'
     });
     return { date: formattedDate, time: formattedTime };
-};
-
-const formatDetails = (log: AuditLogResponse): React.ReactNode => {
-    if (!log.details || log.details.length === 0) return null;
-
-    return (
-        <div className={styles.changeObject}>
-            {log.details.map((detail, idx) => (
-                <div key={idx} className={styles.changeField}>
-                    <span className={styles.changeKey}>{formatFieldName(detail.fieldName)}:</span>
-
-                    <Tooltip content={detail.oldValue || 'null'}>
-                        <span className={styles.oldValue}>
-                            {truncateText(detail.oldValue || 'null', 30)}
-                        </span>
-                    </Tooltip>
-
-                    {' → '}
-
-                    <Tooltip content={detail.newValue || 'null'}>
-                        <span className={styles.newValue}>
-                            {truncateText(detail.newValue || 'null', 30)}
-                        </span>
-                    </Tooltip>
-                </div>
-            ))}
-        </div>
-    );
 };
 
 const formatFieldName = (field: string): string => {
@@ -81,19 +52,48 @@ const formatFieldName = (field: string): string => {
     return fieldMap[field] || field;
 };
 
+const formatDetails = (log: AuditLogResponse): React.ReactNode => {
+    if (!log.details || log.details.length === 0) return '—';
+
+    return (
+        <div className={styles.changeObject}>
+            {log.details.map((detail, idx) => (
+                <div key={idx} className={styles.changeField}>
+                    <span className={styles.changeKey}>{formatFieldName(detail.fieldName)}:</span>
+                    <Tooltip content={detail.oldValue || 'null'}>
+                        <span className={styles.oldValue}>{truncateText(detail.oldValue || 'null', 30)}</span>
+                    </Tooltip>
+                    {' → '}
+                    <Tooltip content={detail.newValue || 'null'}>
+                        <span className={styles.newValue}>{truncateText(detail.newValue || 'null', 30)}</span>
+                    </Tooltip>
+                </div>
+            ))}
+        </div>
+    );
+};
+
+const getActionDisplay = (action: string): string => {
+    return action.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+};
+
 const splitActionText = (action: string): React.ReactNode => {
     const text = getActionDisplay(action);
     const words = text.split(' ');
-
     if (words.length === 2) {
-        return (
-            <>
-                {words[0]}<br />{words[1]}
-            </>
-        );
+        return <>{words[0]}<br />{words[1]}</>;
     }
-
     return text;
+};
+
+const getBadgeVariant = (action: string): 'success' | 'error' | 'warning' | 'secondary' => {
+    if (action.includes('CREATED') || action.includes('REGISTER')) return 'success';
+    if (action.includes('DELETED') || action.includes('REJECTED')) return 'error';
+    if (action.includes('SUCCESS') || action.includes('CONFIRMED')) return 'success';
+    if (action.includes('FAILED') || action.includes('CANCELLED')) return 'error';
+    if (action.includes('UPDATED') || action.includes('TOGGLE')) return 'warning';
+    if (action.includes('REFUND') || action.includes('POINTS')) return 'warning';
+    return 'secondary';
 };
 
 export const AuditLogsTable: React.FC<AuditLogsTableProps> = ({ logs }) => {
@@ -104,16 +104,6 @@ export const AuditLogsTable: React.FC<AuditLogsTableProps> = ({ logs }) => {
             </div>
         );
     }
-
-    const getBadgeVariant = (action: string): 'success' | 'error' | 'warning' | 'info' => {
-        if (action.includes('CREATED') || action.includes('REGISTER')) return 'success';
-        if (action.includes('DELETED') || action.includes('REJECTED')) return 'error';
-        if (action.includes('SUCCESS') || action.includes('CONFIRMED')) return 'success';
-        if (action.includes('FAILED') || action.includes('CANCELLED')) return 'error';
-        if (action.includes('UPDATED') || action.includes('TOGGLE')) return 'warning';
-        if (action.includes('REFUND') || action.includes('POINTS')) return 'warning';
-        return 'info';
-    };
 
     return (
         <div className={styles.tableWrapper}>
@@ -149,9 +139,7 @@ export const AuditLogsTable: React.FC<AuditLogsTableProps> = ({ logs }) => {
                                         {splitActionText(log.action)}
                                     </Badge>
                                 </td>
-                                <td className={styles.td}>
-                                    {formatDetails(log)}
-                                </td>
+                                <td className={styles.td}>{formatDetails(log)}</td>
                             </tr>
                         );
                     })}

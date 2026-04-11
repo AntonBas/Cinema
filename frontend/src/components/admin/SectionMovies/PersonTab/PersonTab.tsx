@@ -1,26 +1,15 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { PersonTabs } from './PersonTabs/PersonTabs';
 import { PersonList } from './PersonList/PersonList';
 import { PersonForm } from './PersonForm/PersonForm';
 import { DeleteConfirmModal } from '@/components/ui/DeleteConfirmModal/DeleteConfirmModal';
 import { Button } from '@/components/ui/Button/Button';
-import { Pagination } from '@/components/ui/Pagination/Pagination';
 import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';
-import { Notification } from '@/components/ui/Notification/Notification';
 import { SearchInput } from '@/components/ui/SearchInput/SearchInput';
 import { usePerson } from '@/hooks/features/persons/usePerson';
-import { useNotification } from '@/hooks/common/useNotification';
 import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
-import { usePagination } from '@/hooks/common/usePagination';
-import { isApiErrorException } from '@/utils/apiErrorHandler';
 import type { PersonRequest, PersonRole, PersonListResponse } from '@/types/person';
 import styles from './PersonTab.module.css';
-
-interface TabData {
-  key: PersonRole | 'ALL';
-  data: PersonListResponse[];
-  total: number;
-}
 
 export const PersonTab: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -28,173 +17,61 @@ export const PersonTab: React.FC = () => {
   const [editingPerson, setEditingPerson] = useState<PersonListResponse | null>(null);
   const [personToDelete, setPersonToDelete] = useState<PersonListResponse | null>(null);
   const [activeTab, setActiveTab] = useState<PersonRole | 'ALL'>('ALL');
-  const [tabData, setTabData] = useState<Record<PersonRole | 'ALL', TabData>>({
-    ALL: { key: 'ALL', data: [], total: 0 },
-    ACTOR: { key: 'ACTOR', data: [], total: 0 },
-    DIRECTOR: { key: 'DIRECTOR', data: [], total: 0 },
-    SCREENWRITER: { key: 'SCREENWRITER', data: [], total: 0 }
-  });
-
-  const { notifications, showNotification, hideNotification } = useNotification();
-  const { params, setPage, setSearch } = usePagination({ size: 12 });
-
-  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const initialLoadRef = useRef(false);
-  const loadingDataRef = useRef(false);
+  const [search, setSearch] = useState('');
 
   const {
+    persons,
     loading,
     getAll,
     create,
     update,
-    remove
+    remove,
   } = usePerson();
 
   const showDelayedLoading = useDelayedLoading(loading, { delay: 150, minDisplayTime: 300 });
 
-  const currentTabData = useMemo(() =>
-    tabData[activeTab] || tabData.ALL,
-    [activeTab, tabData]
-  );
-
-  const loadTabData = useCallback(async (tab: PersonRole | 'ALL', page: number, search?: string) => {
-    if (loadingDataRef.current) return;
-
-    loadingDataRef.current = true;
-
-    try {
-      const requestParams = {
-        name: search?.trim() || undefined,
-        role: tab === 'ALL' ? undefined : tab,
-        page,
-        size: params.size
-      };
-
-      const response = await getAll(requestParams);
-
-      setTabData(prev => ({
-        ...prev,
-        [tab]: {
-          key: tab,
-          data: response?.content || [],
-          total: response?.totalElements || 0
-        }
-      }));
-    } catch (error) {
-      if (isApiErrorException(error)) {
-        showNotification(error.message, 'error');
-      } else {
-        showNotification('Failed to load data', 'error');
-      }
-    } finally {
-      loadingDataRef.current = false;
-    }
-  }, [getAll, showNotification, params.size]);
-
   useEffect(() => {
-    if (!initialLoadRef.current) {
-      initialLoadRef.current = true;
-      loadTabData('ALL', 0, '');
-    }
-  }, [loadTabData]);
-
-  useEffect(() => {
-    if (initialLoadRef.current) {
-      const timer = setTimeout(() => {
-        loadTabData(activeTab, params.page || 0, params.search);
-      }, 100);
-
-      return () => clearTimeout(timer);
-    }
-  }, [activeTab, params.page, params.search, loadTabData]);
+    getAll({
+      query: search || undefined,
+      role: activeTab === 'ALL' ? undefined : activeTab,
+    });
+  }, [search, activeTab, getAll]);
 
   const handleSearch = useCallback((query: string) => {
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
-    }
-
-    searchTimeoutRef.current = setTimeout(() => {
-      setSearch(query);
-    }, 300);
-  }, [setSearch]);
+    setSearch(query);
+  }, []);
 
   const handleTabChange = useCallback((tab: PersonRole | 'ALL') => {
     setActiveTab(tab);
-    setPage(0);
-  }, [setPage]);
+  }, []);
 
   const handleSubmit = useCallback(async (data: PersonRequest) => {
-    try {
-      const result = editingPerson
-        ? await update(editingPerson.id, data)
-        : await create(data);
-
-      if (result) {
-        showNotification(
-          `Person "${result.name}" ${editingPerson ? 'updated' : 'created'} successfully!`,
-          'success'
-        );
-      }
-
-      setIsModalOpen(false);
-      setEditingPerson(null);
-      await loadTabData(activeTab, 0, params.search);
-      setPage(0);
-    } catch (err) {
-      if (isApiErrorException(err)) {
-        const validationError = err.getFirstValidationError();
-        showNotification(validationError || err.message, 'error');
-      } else {
-        showNotification(err instanceof Error ? err.message : 'Failed to save person', 'error');
-      }
+    if (editingPerson) {
+      await update(editingPerson.id, data);
+    } else {
+      await create(data);
     }
-  }, [editingPerson, create, update, activeTab, params.search, showNotification, loadTabData, setPage]);
+    setIsModalOpen(false);
+    setEditingPerson(null);
+    getAll({
+      query: search || undefined,
+      role: activeTab === 'ALL' ? undefined : activeTab,
+    });
+  }, [editingPerson, create, update, getAll, search, activeTab]);
 
   const handleDelete = useCallback(async () => {
     if (!personToDelete) return;
 
-    try {
-      await remove(personToDelete.id);
-      showNotification(`Person "${personToDelete.name}" deleted successfully!`, 'success');
+    await remove(personToDelete.id);
+    setIsDeleteModalOpen(false);
+    setPersonToDelete(null);
+    getAll({
+      query: search || undefined,
+      role: activeTab === 'ALL' ? undefined : activeTab,
+    });
+  }, [personToDelete, remove, getAll, search, activeTab]);
 
-      const newPage = currentTabData.data.length === 1 && params.page && params.page > 0
-        ? params.page - 1
-        : params.page || 0;
-
-      setPage(newPage);
-      await loadTabData(activeTab, newPage, params.search);
-    } catch (err) {
-      if (isApiErrorException(err) && err.isConflict()) {
-        showNotification(`Cannot delete "${personToDelete.name}" - associated with movies`, 'error');
-      } else {
-        showNotification(err instanceof Error ? err.message : 'Failed to delete person', 'error');
-      }
-    } finally {
-      setIsDeleteModalOpen(false);
-      setPersonToDelete(null);
-    }
-  }, [personToDelete, remove, activeTab, params.page, params.search, currentTabData.data.length, setPage, showNotification, loadTabData]);
-
-  const paginationInfo = useMemo(() => {
-    const total = currentTabData.total;
-    const page = params.page || 0;
-    const pageSize = params.size || 12;
-    const start = total > 0 ? page * pageSize + 1 : 0;
-    const end = Math.min(start + pageSize - 1, total);
-    const totalPages = Math.ceil(total / pageSize);
-
-    return { total, start, end, totalPages, showPagination: totalPages > 1 };
-  }, [currentTabData.total, params.page, params.size]);
-
-  useEffect(() => {
-    return () => {
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current);
-      }
-    };
-  }, []);
-
-  if (showDelayedLoading && !currentTabData.data.length && !params.search) {
+  if (showDelayedLoading && !persons.length && !search) {
     return (
       <div className={styles.loading}>
         <LoadingSpinner text="Loading persons" />
@@ -204,18 +81,6 @@ export const PersonTab: React.FC = () => {
 
   return (
     <div className={styles.container}>
-      {notifications.map((notification) => (
-        <Notification
-          key={notification.id}
-          id={notification.id}
-          message={notification.message}
-          type={notification.type}
-          isVisible={notification.isVisible}
-          onClose={hideNotification}
-          duration={notification.duration}
-        />
-      ))}
-
       <div className={styles.header}>
         <h2>People Management</h2>
         <Button variant="primary" onClick={() => setIsModalOpen(true)}>
@@ -224,27 +89,13 @@ export const PersonTab: React.FC = () => {
       </div>
 
       <div className={styles.searchSection}>
-        <SearchInput
-          onSearch={handleSearch}
-          placeholder="Search people by name..."
-          delay={300}
-        />
+        <SearchInput onSearch={handleSearch} placeholder="Search people by name..." delay={300} />
       </div>
 
-      {paginationInfo.total > 0 && (
-        <div className={styles.resultsInfo}>
-          Showing {paginationInfo.start}-{paginationInfo.end} of {paginationInfo.total} people
-          {params.search && ` for "${params.search}"`}
-        </div>
-      )}
-
-      <PersonTabs
-        activeTab={activeTab}
-        onTabChange={handleTabChange}
-      />
+      <PersonTabs activeTab={activeTab} onTabChange={handleTabChange} />
 
       <PersonList
-        persons={currentTabData.data}
+        persons={persons}
         activeTab={activeTab}
         onEdit={(person) => {
           setEditingPerson(person);
@@ -256,20 +107,6 @@ export const PersonTab: React.FC = () => {
         }}
         onAddPerson={() => setIsModalOpen(true)}
       />
-
-      {paginationInfo.showPagination && (
-        <div className={styles.paginationContainer}>
-          <Pagination
-            currentPage={params.page || 0}
-            totalPages={paginationInfo.totalPages}
-            totalElements={paginationInfo.total}
-            pageSize={params.size || 10}
-            onPageChange={setPage}
-            variant="pages"
-            showInfo={false}
-          />
-        </div>
-      )}
 
       {isModalOpen && (
         <PersonForm
