@@ -35,7 +35,7 @@ export const MovieTab: React.FC = () => {
       query: params.search,
       status: activeTab as MovieStatus,
     });
-  }, [params.page, params.size, params.search, activeTab, getAdminMovies]);
+  }, [params.page, params.size, params.search, activeTab]);
 
   const handleSearch = useCallback((query: string) => {
     setSearch(query);
@@ -80,7 +80,7 @@ export const MovieTab: React.FC = () => {
     setPage(newPage);
     setIsDeleteModalOpen(false);
     setDeletingMovie(null);
-  }, [deletingMovie, remove, adminMovies.length, params.page, setPage]);
+  }, [deletingMovie, adminMovies.length, params.page, setPage]);
 
   const handleFormSuccess = useCallback(() => {
     setIsModalOpen(false);
@@ -91,7 +91,7 @@ export const MovieTab: React.FC = () => {
       query: params.search,
       status: activeTab as MovieStatus,
     });
-  }, [getAdminMovies, params.page, params.size, params.search, activeTab]);
+  }, [params.page, params.size, params.search, activeTab]);
 
   const handleAddNew = useCallback(() => {
     setEditingMovie(null);

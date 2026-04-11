@@ -14,13 +14,19 @@ interface SuccessModalProps {
 const RegistrationSuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, email }) => (
   <Modal isOpen={isOpen} onClose={onClose} size="small">
     <div className={styles.successContent}>
-      <div className={styles.successIcon}>🎉</div>
-      <h3>Registration Successful!</h3>
-      <p>We've sent a confirmation email to</p>
-      <p className={styles.emailHighlight}>{email}</p>
-      <Button variant="primary" onClick={onClose}>
-        Continue to Login
-      </Button>
+      <div className={styles.successAnimation}>
+        <div className={styles.successIcon}>🎉</div>
+      </div>
+      <div className={styles.successText}>
+        <h3 className={styles.successTitle}>Registration Successful!</h3>
+        <p className={styles.successMessage}>We've sent a confirmation email to</p>
+        <p className={styles.emailHighlight}>{email}</p>
+      </div>
+      <div className={styles.modalActions}>
+        <Button variant="primary" onClick={onClose}>
+          Continue to Login
+        </Button>
+      </div>
       <p className={styles.helpText}>Check your spam folder if you don't see the email</p>
     </div>
   </Modal>
@@ -65,7 +71,7 @@ export const RegisterForm: React.FC = () => {
     return Object.keys(errors).length === 0;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SyntheticEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
 
@@ -84,78 +90,85 @@ export const RegisterForm: React.FC = () => {
     <section className={styles.registration}>
       <div className={styles.registrationContainer}>
         <h1 className={styles.registrationTitle}>Registration</h1>
-
         <form className={styles.registrationForm} onSubmit={handleSubmit}>
           {error && (
-            <div className={styles.error}>{error.message}</div>
+            <div className={styles.notification} data-type="error">
+              {error.message}
+            </div>
           )}
 
-          <h2>Personal Information</h2>
-          <div className={styles.registrationGroup}>
-            <Input
-              placeholder="First Name"
-              value={formData.firstName}
-              onChange={v => handleChange('firstName', v)}
-              disabled={loading}
-              error={formErrors.firstName}
-            />
-            <Input
-              placeholder="Last Name"
-              value={formData.lastName}
-              onChange={v => handleChange('lastName', v)}
-              disabled={loading}
-              error={formErrors.lastName}
-            />
+          <div className={styles.registrationTop}>
+            <h2 className={styles.registrationText}>Personal Information</h2>
+            <div className={styles.registrationGroup}>
+              <Input
+                placeholder="First Name"
+                value={formData.firstName}
+                onChange={v => handleChange('firstName', v)}
+                disabled={loading}
+                error={formErrors.firstName}
+              />
+              <Input
+                placeholder="Last Name"
+                value={formData.lastName}
+                onChange={v => handleChange('lastName', v)}
+                disabled={loading}
+                error={formErrors.lastName}
+              />
+            </div>
+            <div className={styles.registrationGroup}>
+              <Input
+                type="date"
+                placeholder="Date of Birth"
+                value={formData.dateOfBirth}
+                onChange={v => handleChange('dateOfBirth', v)}
+                disabled={loading}
+              />
+              <Input
+                placeholder="Your City"
+                value={formData.city}
+                onChange={v => handleChange('city', v)}
+                disabled={loading}
+              />
+            </div>
           </div>
-          <div className={styles.registrationGroup}>
+
+          <div className={styles.registrationMiddle}>
+            <h2 className={styles.registrationText}>Contact Information</h2>
             <Input
-              type="date"
-              placeholder="Date of Birth"
-              value={formData.dateOfBirth}
-              onChange={v => handleChange('dateOfBirth', v)}
+              type="email"
+              placeholder="E-mail"
+              value={formData.email}
+              onChange={v => handleChange('email', v)}
               disabled={loading}
+              error={formErrors.email}
             />
             <Input
-              placeholder="Your City"
-              value={formData.city}
-              onChange={v => handleChange('city', v)}
+              placeholder="Phone number"
+              value={formData.phoneNumber}
+              onChange={v => handleChange('phoneNumber', v)}
               disabled={loading}
             />
           </div>
 
-          <h2>Contact Information</h2>
-          <Input
-            type="email"
-            placeholder="E-mail"
-            value={formData.email}
-            onChange={v => handleChange('email', v)}
-            disabled={loading}
-            error={formErrors.email}
-          />
-          <Input
-            placeholder="Phone number"
-            value={formData.phoneNumber}
-            onChange={v => handleChange('phoneNumber', v)}
-            disabled={loading}
-          />
-
-          <h2>Create a Password</h2>
-          <Input
-            type="password"
-            placeholder="Enter Password"
-            value={formData.password}
-            onChange={v => handleChange('password', v)}
-            disabled={loading}
-            error={formErrors.password}
-          />
-          <Input
-            type="password"
-            placeholder="Confirm Password"
-            value={formData.passwordConfirm}
-            onChange={v => handleChange('passwordConfirm', v)}
-            disabled={loading}
-            error={formErrors.passwordConfirm}
-          />
+          <div className={styles.registrationBottom}>
+            <h2 className={styles.registrationText}>Create a Password</h2>
+            <Input
+              type="password"
+              placeholder="Enter Password"
+              value={formData.password}
+              onChange={v => handleChange('password', v)}
+              disabled={loading}
+              error={formErrors.password}
+            />
+            <Input
+              type="password"
+              placeholder="Confirm Password"
+              value={formData.passwordConfirm}
+              onChange={v => handleChange('passwordConfirm', v)}
+              disabled={loading}
+              error={formErrors.passwordConfirm}
+            />
+          </div>
 
           <Button type="submit" variant="primary" loading={loading} disabled={loading}>
             Sign Up

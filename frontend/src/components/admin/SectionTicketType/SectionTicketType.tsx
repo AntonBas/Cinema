@@ -31,21 +31,21 @@ const SectionTicketType = () => {
             active: statusFilter === 'all' ? undefined : statusFilter === 'active',
             category: categoryFilter === 'all' ? undefined : categoryFilter
         });
-    }, [getAll, currentPage, pageSize, statusFilter, categoryFilter]);
+    }, [currentPage, pageSize, statusFilter, categoryFilter]);
 
     useEffect(() => {
         loadTicketTypes();
-    }, [loadTicketTypes]);
+    }, []);
 
     const handleCreateSuccess = useCallback(() => {
         setShowCreateModal(false);
         loadTicketTypes();
-    }, [loadTicketTypes]);
+    }, []);
 
     const handleEditSuccess = useCallback(() => {
         setEditingTicketType(null);
         loadTicketTypes();
-    }, [loadTicketTypes]);
+    }, []);
 
     const handleDelete = useCallback(async (id: number) => {
         await remove(id);
@@ -54,12 +54,12 @@ const SectionTicketType = () => {
         } else {
             loadTicketTypes();
         }
-    }, [remove, loadTicketTypes, ticketTypesData.length, currentPage, setPage]);
+    }, [ticketTypesData.length, currentPage]);
 
     const handleToggleActive = useCallback(async (id: number) => {
         await toggleActive(id);
         loadTicketTypes();
-    }, [toggleActive, loadTicketTypes]);
+    }, []);
 
     if (showDelayedLoading && !ticketTypesData.length) {
         return (

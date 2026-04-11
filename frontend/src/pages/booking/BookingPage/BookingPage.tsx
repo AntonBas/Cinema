@@ -40,7 +40,7 @@ export const BookingPage: React.FC = () => {
             getSeatAvailability();
             getMyBalance();
         }
-    }, [sessionIdNum, getSeatAvailability, getMyBalance]);
+    }, [sessionIdNum]);
 
     const handleSeatClick = async (seatId: number) => {
         const seat = seatData?.seats.find((s: SeatInfo) => s.id === seatId);

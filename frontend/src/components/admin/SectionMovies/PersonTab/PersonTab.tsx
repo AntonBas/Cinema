@@ -35,7 +35,7 @@ export const PersonTab: React.FC = () => {
       query: search || undefined,
       role: activeTab === 'ALL' ? undefined : activeTab,
     });
-  }, [search, activeTab, getAll]);
+  }, [search, activeTab]);
 
   const handleSearch = useCallback((query: string) => {
     setSearch(query);
@@ -57,7 +57,7 @@ export const PersonTab: React.FC = () => {
       query: search || undefined,
       role: activeTab === 'ALL' ? undefined : activeTab,
     });
-  }, [editingPerson, create, update, getAll, search, activeTab]);
+  }, [editingPerson, search, activeTab]);
 
   const handleDelete = useCallback(async () => {
     if (!personToDelete) return;
@@ -69,7 +69,7 @@ export const PersonTab: React.FC = () => {
       query: search || undefined,
       role: activeTab === 'ALL' ? undefined : activeTab,
     });
-  }, [personToDelete, remove, getAll, search, activeTab]);
+  }, [personToDelete, search, activeTab]);
 
   if (showDelayedLoading && !persons.length && !search) {
     return (

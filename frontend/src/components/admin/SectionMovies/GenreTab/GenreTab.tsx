@@ -32,12 +32,12 @@ export const GenreTab: React.FC = () => {
 
   useEffect(() => {
     getAll({});
-  }, [getAll]);
+  }, []);
 
   const handleSearch = useCallback((query: string) => {
     setSearch(query);
     getAll({ search: query });
-  }, [setSearch, getAll]);
+  }, [setSearch]);
 
   const handleSubmit = useCallback(async (name: string) => {
     if (editingGenre) {
@@ -48,7 +48,7 @@ export const GenreTab: React.FC = () => {
     setIsFormModalOpen(false);
     setEditingGenre(null);
     getAll({});
-  }, [editingGenre, create, update, getAll]);
+  }, [editingGenre]);
 
   const handleDeleteConfirm = useCallback(async () => {
     if (!deletingGenre) return;
@@ -57,7 +57,7 @@ export const GenreTab: React.FC = () => {
     setIsDeleteModalOpen(false);
     setDeletingGenre(null);
     getAll({});
-  }, [deletingGenre, remove, getAll]);
+  }, [deletingGenre]);
 
   const handleEdit = useCallback((genre: GenreListResponse) => {
     setEditingGenre(genre);

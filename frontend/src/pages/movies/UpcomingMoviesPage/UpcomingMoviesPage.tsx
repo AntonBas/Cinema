@@ -27,11 +27,11 @@ export const UpcomingMoviesPage: React.FC = () => {
         } catch (err) {
             setError(err as Error);
         }
-    }, [getUpcoming]);
+    }, []);
 
     useEffect(() => {
         loadMovies(0);
-    }, [loadMovies]);
+    }, []);
 
     const handleLoadMore = () => {
         if (pagination && pagination.number < pagination.totalPages - 1) {

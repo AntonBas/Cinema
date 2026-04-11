@@ -16,7 +16,7 @@ const SectionBonus = () => {
 
     useEffect(() => {
         getAllRules();
-    }, [getAllRules]);
+    }, []);
 
     const handleEditSuccess = async () => {
         setEditingRule(null);

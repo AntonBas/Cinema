@@ -35,11 +35,11 @@ export const HomePage: React.FC = () => {
     getUpcomingMoviesForHome();
     getLeavingSoonForHome();
     getAvailable();
-  }, [getCurrentMoviesForHome, getUpcomingMoviesForHome, getLeavingSoonForHome, getAvailable]);
+  }, []);
 
   const handleClaimPromotion = async (promotionId: number) => {
     await claim({ promotionId });
-    getAvailable();
+    await getAvailable();
   };
 
   if (loading) {

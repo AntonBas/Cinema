@@ -17,7 +17,7 @@ export const ProfilePage: React.FC = () => {
 
     useEffect(() => {
         getProfile();
-    }, [getProfile]);
+    }, []);
 
     const handleProfileUpdated = async (formData: UserUpdateRequest) => {
         await updateProfile(formData);

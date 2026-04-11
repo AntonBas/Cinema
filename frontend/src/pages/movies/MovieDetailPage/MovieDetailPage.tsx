@@ -32,7 +32,7 @@ export const MovieDetailPage: React.FC = () => {
         if (slug) {
             getBySlug(slug);
         }
-    }, [slug, getBySlug]);
+    }, [slug]);
 
     useEffect(() => {
         if (movieDetail?.sessions?.length) {

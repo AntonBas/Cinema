@@ -37,7 +37,7 @@ export const TicketsPage: React.FC = () => {
             status: statusFilter,
             movieTitle: searchQuery || undefined,
         });
-    }, [currentPage, statusFilter, searchQuery, getUserTickets]);
+    }, [currentPage, statusFilter, searchQuery]);
 
     const hasActiveFilters = searchQuery.trim() !== '' || statusFilter !== undefined;
 

@@ -31,11 +31,11 @@ export const SectionUsers: React.FC = () => {
             page: currentPage,
             size: pageSize
         });
-    }, [searchQuery, roleFilter, verificationStatusFilter, enabledFilter, currentPage, pageSize, getUsers]);
+    }, [searchQuery, roleFilter, verificationStatusFilter, enabledFilter, currentPage, pageSize]);
 
     useEffect(() => {
         loadUsers();
-    }, [loadUsers]);
+    }, []);
 
     const handleSearch = useCallback((query: string) => {
         setSearchQuery(query);

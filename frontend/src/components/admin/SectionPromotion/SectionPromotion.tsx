@@ -29,17 +29,17 @@ const SectionPromotion: React.FC = () => {
 
     useEffect(() => {
         getAll({ page: currentPage, size: pageSize });
-    }, [currentPage, pageSize, getAll]);
+    }, [currentPage, pageSize]);
 
     const handleCreateSuccess = useCallback(() => {
         setShowCreateModal(false);
         getAll({ page: currentPage, size: pageSize });
-    }, [getAll, currentPage, pageSize]);
+    }, [currentPage, pageSize]);
 
     const handleUpdateSuccess = useCallback(() => {
         setEditingPromotion(null);
         getAll({ page: currentPage, size: pageSize });
-    }, [getAll, currentPage, pageSize]);
+    }, [currentPage, pageSize]);
 
     const handleDeleteConfirm = async () => {
         if (!deletingPromotion) return;
