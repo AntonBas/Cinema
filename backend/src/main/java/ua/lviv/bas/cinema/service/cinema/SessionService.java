@@ -22,8 +22,7 @@ import ua.lviv.bas.cinema.domain.audit.AuditAction;
 import ua.lviv.bas.cinema.domain.cinema.Movie;
 import ua.lviv.bas.cinema.domain.cinema.Session;
 import ua.lviv.bas.cinema.domain.cinema.status.CinemaSessionStatus;
-import ua.lviv.bas.cinema.dto.session.request.SessionCreateRequest;
-import ua.lviv.bas.cinema.dto.session.request.SessionUpdateRequest;
+import ua.lviv.bas.cinema.dto.session.request.SessionRequest;
 import ua.lviv.bas.cinema.dto.session.response.SessionAdminResponse;
 import ua.lviv.bas.cinema.dto.session.response.SessionResponse;
 import ua.lviv.bas.cinema.dto.session.response.SessionScheduleResponse;
@@ -53,7 +52,7 @@ public class SessionService {
 
 	@CacheEvict(value = { "sessions", "seatAvailability" }, allEntries = true)
 	@Transactional
-	public SessionResponse createSession(SessionCreateRequest request) {
+	public SessionResponse createSession(SessionRequest request) {
 		validateStartTime(request.startTime());
 
 		var movie = movieRepository.getReferenceById(request.movieId());
@@ -63,7 +62,7 @@ public class SessionService {
 		validateNoTimeConflict(hall.getId(), request.startTime(),
 				request.startTime().plusMinutes(movie.getDurationMinutes()), null);
 
-		var session = sessionMapper.toSession(request);
+		var session = sessionMapper.toEntity(request);
 		session.setMovie(movie);
 		session.setHall(hall);
 
@@ -114,7 +113,7 @@ public class SessionService {
 
 	@CacheEvict(value = { "sessions", "seatAvailability" }, allEntries = true)
 	@Transactional
-	public SessionResponse updateSession(Long id, SessionUpdateRequest request) {
+	public SessionResponse updateSession(Long id, SessionRequest request) {
 		var session = sessionRepository.findByIdWithLock(id).orElseThrow(() -> new SessionNotFoundException(id));
 
 		Map<String, Object> oldDetails = new HashMap<>();
@@ -127,7 +126,7 @@ public class SessionService {
 			validateStartTime(request.startTime());
 		}
 
-		sessionMapper.updateSessionFromRequest(request, session);
+		sessionMapper.updateEntity(request, session);
 
 		if (request.movieId() != null) {
 			validateMovieAvailability(session.getMovie(), session.getStartTime());

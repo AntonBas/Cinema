@@ -9,7 +9,7 @@ import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
-public record SessionCreateRequest(
+public record SessionRequest(
 		@Schema(description = "Start time of the movie session", example = "2024-01-15T18:30:00") @FutureOrPresent @NotNull LocalDateTime startTime,
 
 		@Schema(description = "Base price for a standard seat", example = "150.00") @Positive @DecimalMin("10.0") @NotNull BigDecimal basePrice,

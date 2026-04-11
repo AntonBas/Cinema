@@ -10,8 +10,7 @@ import org.mapstruct.ReportingPolicy;
 
 import ua.lviv.bas.cinema.domain.cinema.Session;
 import ua.lviv.bas.cinema.domain.cinema.status.CinemaSessionStatus;
-import ua.lviv.bas.cinema.dto.session.request.SessionCreateRequest;
-import ua.lviv.bas.cinema.dto.session.request.SessionUpdateRequest;
+import ua.lviv.bas.cinema.dto.session.request.SessionRequest;
 import ua.lviv.bas.cinema.dto.session.response.SessionAdminResponse;
 import ua.lviv.bas.cinema.dto.session.response.SessionMovieInfoResponse;
 import ua.lviv.bas.cinema.dto.session.response.SessionResponse;
@@ -56,7 +55,7 @@ public interface SessionMapper {
 	@Mapping(target = "status", constant = "SCHEDULED")
 	@Mapping(target = "bookings", ignore = true)
 	@Mapping(target = "seatReservations", ignore = true)
-	Session toSession(SessionCreateRequest request);
+	Session toEntity(SessionRequest request);
 
 	@BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 	@Mapping(target = "id", ignore = true)
@@ -69,5 +68,5 @@ public interface SessionMapper {
 	@Mapping(target = "createdDate", ignore = true)
 	@Mapping(target = "lastModifiedBy", ignore = true)
 	@Mapping(target = "lastModifiedDate", ignore = true)
-	void updateSessionFromRequest(SessionUpdateRequest request, @MappingTarget Session session);
+	void updateEntity(SessionRequest request, @MappingTarget Session session);
 }

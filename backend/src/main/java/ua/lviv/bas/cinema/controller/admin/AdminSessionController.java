@@ -29,8 +29,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.cinema.status.CinemaSessionStatus;
 import ua.lviv.bas.cinema.dto.PageResponse;
-import ua.lviv.bas.cinema.dto.session.request.SessionCreateRequest;
-import ua.lviv.bas.cinema.dto.session.request.SessionUpdateRequest;
+import ua.lviv.bas.cinema.dto.session.request.SessionRequest;
 import ua.lviv.bas.cinema.dto.session.response.SessionAdminResponse;
 import ua.lviv.bas.cinema.dto.session.response.SessionResponse;
 import ua.lviv.bas.cinema.service.cinema.SessionService;
@@ -52,7 +51,7 @@ public class AdminSessionController {
 	@ApiResponses(value = { @ApiResponse(responseCode = "201", description = "Session created successfully"),
 			@ApiResponse(responseCode = "400", description = "Invalid request data or time conflict"),
 			@ApiResponse(responseCode = "404", description = "Movie or hall not found") })
-	public SessionResponse createSession(@RequestBody @Valid SessionCreateRequest request) {
+	public SessionResponse createSession(@RequestBody @Valid SessionRequest request) {
 		log.info("Creating new session");
 		return sessionService.createSession(request);
 	}
@@ -85,7 +84,7 @@ public class AdminSessionController {
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Session updated successfully"),
 			@ApiResponse(responseCode = "400", description = "Invalid request data or time conflict"),
 			@ApiResponse(responseCode = "404", description = "Session not found") })
-	public SessionResponse updateSession(@PathVariable Long id, @RequestBody @Valid SessionUpdateRequest request) {
+	public SessionResponse updateSession(@PathVariable Long id, @RequestBody @Valid SessionRequest request) {
 		log.info("Updating session {}", id);
 		return sessionService.updateSession(id, request);
 	}
