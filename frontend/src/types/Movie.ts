@@ -41,7 +41,7 @@ export interface MovieCreateRequest {
   actorIds: number[];
   directorIds: number[];
   screenwriterIds: number[];
-  posterFile?: File;
+  posterFile: File;
 }
 
 export interface MovieUpdateRequest {

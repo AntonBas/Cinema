@@ -7,18 +7,11 @@ export const SessionStatusDisplay: Record<CinemaSessionStatus, string> = {
     CANCELLED: 'Cancelled'
 } as const;
 
-export interface SessionCreateRequest {
+export interface SessionRequest {
     startTime: string;
     basePrice: number;
     movieId: number;
     hallId: number;
-}
-
-export interface SessionUpdateRequest {
-    startTime?: string;
-    basePrice?: number;
-    movieId?: number;
-    hallId?: number;
 }
 
 export interface SessionFilterRequest {

@@ -85,14 +85,6 @@ export interface VerificationBirthDateRequest {
     verificationStatus: VerificationStatus;
 }
 
-export interface AdminUsersResponse {
-    content: AdminUserListResponse[];
-    totalElements: number;
-    totalPages: number;
-    size: number;
-    number: number;
-}
-
 export const UserRoleDisplay: Record<UserRole, string> = {
     ROLE_ADMIN: 'Administrator',
     ROLE_USER: 'User',

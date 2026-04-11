@@ -1,4 +1,4 @@
-export interface PromotionCreateRequest {
+export interface PromotionRequest {
     title: string;
     description?: string;
     bonusPoints: number;
@@ -6,15 +6,7 @@ export interface PromotionCreateRequest {
     endDate?: string;
 }
 
-export interface PromotionUpdateRequest {
-    title: string;
-    description?: string;
-    bonusPoints: number;
-    startDate?: string;
-    endDate?: string;
-}
-
-export interface UserPromotionCreateRequest {
+export interface ClaimPromotionRequest {
     promotionId: number;
 }
 
@@ -27,7 +19,7 @@ export interface PromotionResponse {
     endDate?: string;
 }
 
-export interface PromotionAdminResponse {
+export interface PromotionListResponse {
     id: number;
     title: string;
     bonusPoints: number;

@@ -40,7 +40,7 @@ export interface RefundResponse {
     refundNumber: string;
     status: string;
     totalAmount: string;
-    totalBonusPointsToDeduct: number;
+    totalBonusPointsToRefund: number;
     reason?: string;
     processedBy?: string;
     processedAt?: string;
@@ -60,51 +60,6 @@ export interface RefundItemResponse {
     refundAmount: string;
     bonusPointsToDeduct: number;
     status: string;
-}
-
-export interface RefundDetailsResponse {
-    id: number;
-    refundNumber: string;
-    status: string;
-    userId: number;
-    userEmail: string;
-    userName: string;
-    paymentId: number;
-    paymentReference: string;
-    paymentAmount: string;
-    totalAmount: string;
-    totalBonusPointsToDeduct: number;
-    reason?: string;
-    processedBy?: string;
-    processedAt?: string;
-    items: RefundItemDetails[];
-    bonusTransactions: BonusTransactionInfo[];
-    paymentStatus: string;
-    bonusStatus: string;
-}
-
-export interface RefundItemDetails {
-    id: number;
-    ticketId: number;
-    ticketCode: string;
-    movieTitle: string;
-    sessionTime: string;
-    seatInfo: string;
-    ticketPrice: string;
-    refundPercentage: string;
-    refundAmount: string;
-    feeAmount: string;
-    bonusPointsUsed: number;
-    bonusPointsToDeduct: number;
-    status: string;
-}
-
-export interface BonusTransactionInfo {
-    id: number;
-    points: number;
-    type: string;
-    description: string;
-    createdAt: string;
 }
 
 export const RefundStatusDisplay: Record<string, string> = {

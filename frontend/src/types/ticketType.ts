@@ -1,6 +1,6 @@
 export type TicketTypeCategory = 'STANDARD' | 'CHILD' | 'STUDENT' | 'DISABLED' | 'MILITARY' | 'SENIOR' | 'SPECIAL';
 
-export interface TicketTypeCreateRequest {
+export interface TicketTypeRequest {
     displayName: string;
     priceMultiplier: string;
     minAge?: number;
@@ -11,18 +11,7 @@ export interface TicketTypeCreateRequest {
     category: TicketTypeCategory;
 }
 
-export interface TicketTypeUpdateRequest {
-    displayName?: string;
-    priceMultiplier?: string;
-    minAge?: number;
-    maxAge?: number;
-    requiresDocument?: boolean;
-    documentType?: string;
-    active?: boolean;
-    category?: TicketTypeCategory;
-}
-
-export interface TicketTypeAdminResponse {
+export interface TicketTypeResponse {
     id: number;
     displayName: string;
     priceMultiplier: string;

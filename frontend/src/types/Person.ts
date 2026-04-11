@@ -5,11 +5,6 @@ export interface PersonRequest {
     role: PersonRole;
 }
 
-export interface QuickCreatePersonRequest {
-    name: string;
-    role: PersonRole;
-}
-
 export interface PersonResponse {
     id: number;
     name: string;
