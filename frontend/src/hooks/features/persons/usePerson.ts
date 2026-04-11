@@ -1,94 +1,58 @@
 import { useCallback } from 'react';
 import { personApi } from '@/api/personApi';
-import type { PersonResponse, PersonRequest, QuickCreatePersonRequest, PersonRole, PersonListResponse } from '@/types/person';
+import type { PersonResponse, PersonRequest, PersonListResponse, PersonRole } from '@/types/person';
 import type { PageResponse } from '@/types/pagination';
 import { useApi } from '@/hooks/common/useApi';
 import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
 
 export const usePerson = () => {
-    const getAllPersonsApi = useApi<PageResponse<PersonListResponse>>();
-    const getPersonByIdApi = useApi<PersonResponse>();
-    const createPersonApi = useApi<PersonResponse>();
-    const quickCreatePersonApi = useApi<PersonResponse>();
-    const updatePersonApi = useApi<PersonResponse>();
-    const deletePersonApi = useApi<void>();
+    const personsApi = useApi<PageResponse<PersonListResponse>>();
+    const mutationApi = useApi<PersonResponse | void>();
 
-    const rawLoading = getAllPersonsApi.loading || getPersonByIdApi.loading ||
-        createPersonApi.loading || quickCreatePersonApi.loading ||
-        updatePersonApi.loading || deletePersonApi.loading;
-    const loading = useDelayedLoading(rawLoading, { delay: 150, minDisplayTime: 300 });
-    const error = !!(getAllPersonsApi.error || getPersonByIdApi.error ||
-        createPersonApi.error || quickCreatePersonApi.error ||
-        updatePersonApi.error || deletePersonApi.error);
+    const loading = useDelayedLoading(
+        personsApi.loading || mutationApi.loading,
+        { delay: 150, minDisplayTime: 300 }
+    );
 
-    const getAll = useCallback(async (params?: { name?: string; role?: PersonRole }) => {
-        const response = await getAllPersonsApi.execute(
-            () => personApi.admin.getAll(params),
-            { showErrorNotification: false }
-        );
-        return response;
-    }, [getAllPersonsApi]);
+    const getPersonName = useCallback((id: number): string => {
+        const person = personsApi.data?.content?.find(p => p.id === id);
+        return person?.name || String(id);
+    }, [personsApi.data]);
 
-    const getById = useCallback(async (id: number) => {
-        const response = await getPersonByIdApi.execute(
-            () => personApi.admin.getById(id),
-            { showErrorNotification: false }
-        );
-        return response;
-    }, [getPersonByIdApi]);
+    const getAll = useCallback(async (params?: { query?: string; role?: PersonRole }) => {
+        return personsApi.execute(() => personApi.admin.getAll(params));
+    }, [personsApi]);
 
     const create = useCallback(async (request: PersonRequest) => {
-        const response = await createPersonApi.execute(
+        return mutationApi.execute(
             () => personApi.admin.create(request),
             { successMessage: `Person "${request.name}" created successfully` }
         );
-        return response;
-    }, [createPersonApi]);
+    }, [mutationApi]);
 
-    const quickCreate = useCallback(async (request: QuickCreatePersonRequest) => {
-        const response = await quickCreatePersonApi.execute(
-            () => personApi.admin.quickCreate(request),
-            { successMessage: `Person "${request.name}" created successfully` }
-        );
-        return response;
-    }, [quickCreatePersonApi]);
-
-    const update = useCallback(async (id: number, request: PersonRequest, oldName?: string) => {
-        const response = await updatePersonApi.execute(
+    const update = useCallback(async (id: number, request: PersonRequest) => {
+        return mutationApi.execute(
             () => personApi.admin.update(id, request),
-            { successMessage: `Person "${oldName || request.name}" updated successfully` }
+            { successMessage: `Person "${getPersonName(id)}" updated successfully` }
         );
-        return response;
-    }, [updatePersonApi]);
+    }, [mutationApi, getPersonName]);
 
-    const remove = useCallback(async (id: number, personName?: string) => {
-        await deletePersonApi.execute(
+    const remove = useCallback(async (id: number) => {
+        return mutationApi.execute(
             () => personApi.admin.delete(id),
-            { successMessage: `Person "${personName || id}" deleted successfully` }
+            { successMessage: `Person "${getPersonName(id)}" deleted successfully` }
         );
-    }, [deletePersonApi]);
-
-    const resetAll = useCallback(() => {
-        getAllPersonsApi.reset();
-        getPersonByIdApi.reset();
-        createPersonApi.reset();
-        quickCreatePersonApi.reset();
-        updatePersonApi.reset();
-        deletePersonApi.reset();
-    }, [getAllPersonsApi, getPersonByIdApi, createPersonApi, quickCreatePersonApi, updatePersonApi, deletePersonApi]);
+    }, [mutationApi, getPersonName]);
 
     return {
-        persons: getAllPersonsApi.data?.content || [],
-        person: getPersonByIdApi.data,
-        pagination: getAllPersonsApi.data,
+        persons: personsApi.data?.content || [],
+        pagination: personsApi.data,
         loading,
-        error,
+        personsError: personsApi.error,
+        mutationError: mutationApi.error,
         getAll,
-        getById,
         create,
-        quickCreate,
         update,
         remove,
-        resetAll,
     };
 };

@@ -1,9 +1,8 @@
 import { useCallback } from 'react';
 import { ticketTypeApi } from '@/api/ticketTypeApi';
 import type {
-    TicketTypeAdminResponse,
-    TicketTypeCreateRequest,
-    TicketTypeUpdateRequest,
+    TicketTypeResponse,
+    TicketTypeRequest,
     TicketTypeCategory
 } from '@/types/ticketType';
 import type { PageResponse } from '@/types/pagination';
@@ -19,89 +18,61 @@ interface TicketTypeParams {
 }
 
 export const useTicketType = () => {
-    const getAllTicketTypesApi = useApi<PageResponse<TicketTypeAdminResponse>>();
-    const getTicketTypeByIdApi = useApi<TicketTypeAdminResponse>();
-    const createTicketTypeApi = useApi<TicketTypeAdminResponse>();
-    const updateTicketTypeApi = useApi<TicketTypeAdminResponse>();
-    const deleteTicketTypeApi = useApi<void>();
-    const toggleTicketTypeApi = useApi<TicketTypeAdminResponse>();
+    const ticketTypesApi = useApi<PageResponse<TicketTypeResponse>>();
+    const mutationApi = useApi<TicketTypeResponse | void>();
 
-    const rawLoading = getAllTicketTypesApi.loading || getTicketTypeByIdApi.loading ||
-        createTicketTypeApi.loading || updateTicketTypeApi.loading ||
-        deleteTicketTypeApi.loading || toggleTicketTypeApi.loading;
-    const loading = useDelayedLoading(rawLoading, { delay: 150, minDisplayTime: 300 });
-    const error = !!(getAllTicketTypesApi.error || getTicketTypeByIdApi.error ||
-        createTicketTypeApi.error || updateTicketTypeApi.error ||
-        deleteTicketTypeApi.error || toggleTicketTypeApi.error);
+    const loading = useDelayedLoading(
+        ticketTypesApi.loading || mutationApi.loading,
+        { delay: 150, minDisplayTime: 300 }
+    );
+
+    const getTicketTypeName = useCallback((id: number): string => {
+        const ticketType = ticketTypesApi.data?.content?.find(t => t.id === id);
+        return ticketType?.displayName || String(id);
+    }, [ticketTypesApi.data]);
 
     const getAll = useCallback(async (params?: TicketTypeParams) => {
-        const response = await getAllTicketTypesApi.execute(
-            () => ticketTypeApi.admin.getAll(params),
-            { showErrorNotification: true }
-        );
-        return response || null;
-    }, [getAllTicketTypesApi]);
+        return ticketTypesApi.execute(() => ticketTypeApi.admin.getAll(params));
+    }, [ticketTypesApi]);
 
-    const getById = useCallback(async (id: number) => {
-        const response = await getTicketTypeByIdApi.execute(
-            () => ticketTypeApi.admin.getById(id),
-            { showErrorNotification: true }
-        );
-        return response || null;
-    }, [getTicketTypeByIdApi]);
-
-    const create = useCallback(async (request: TicketTypeCreateRequest) => {
-        const response = await createTicketTypeApi.execute(
+    const create = useCallback(async (request: TicketTypeRequest) => {
+        return mutationApi.execute(
             () => ticketTypeApi.admin.create(request),
             { successMessage: `Ticket type "${request.displayName}" created successfully` }
         );
-        return response || null;
-    }, [createTicketTypeApi]);
+    }, [mutationApi]);
 
-    const update = useCallback(async (id: number, request: TicketTypeUpdateRequest, oldName?: string) => {
-        const response = await updateTicketTypeApi.execute(
+    const update = useCallback(async (id: number, request: TicketTypeRequest) => {
+        return mutationApi.execute(
             () => ticketTypeApi.admin.update(id, request),
-            { successMessage: `Ticket type "${oldName || request.displayName}" updated successfully` }
+            { successMessage: `Ticket type "${getTicketTypeName(id)}" updated successfully` }
         );
-        return response || null;
-    }, [updateTicketTypeApi]);
+    }, [mutationApi, getTicketTypeName]);
 
-    const remove = useCallback(async (id: number, ticketTypeName?: string) => {
-        await deleteTicketTypeApi.execute(
+    const remove = useCallback(async (id: number) => {
+        return mutationApi.execute(
             () => ticketTypeApi.admin.delete(id),
-            { successMessage: `Ticket type "${ticketTypeName || id}" deleted successfully` }
+            { successMessage: `Ticket type "${getTicketTypeName(id)}" deleted successfully` }
         );
-    }, [deleteTicketTypeApi]);
+    }, [mutationApi, getTicketTypeName]);
 
-    const toggleActive = useCallback(async (id: number, ticketTypeName?: string) => {
-        const response = await toggleTicketTypeApi.execute(
+    const toggleActive = useCallback(async (id: number) => {
+        return mutationApi.execute(
             () => ticketTypeApi.admin.toggleActive(id),
-            { successMessage: `Ticket type "${ticketTypeName || id}" status updated successfully` }
+            { successMessage: `Ticket type "${getTicketTypeName(id)}" status updated successfully` }
         );
-        return response || null;
-    }, [toggleTicketTypeApi]);
-
-    const resetAll = useCallback(() => {
-        getAllTicketTypesApi.reset();
-        getTicketTypeByIdApi.reset();
-        createTicketTypeApi.reset();
-        updateTicketTypeApi.reset();
-        deleteTicketTypeApi.reset();
-        toggleTicketTypeApi.reset();
-    }, [getAllTicketTypesApi, getTicketTypeByIdApi, createTicketTypeApi, updateTicketTypeApi, deleteTicketTypeApi, toggleTicketTypeApi]);
+    }, [mutationApi, getTicketTypeName]);
 
     return {
-        ticketTypes: getAllTicketTypesApi.data,
-        ticketType: getTicketTypeByIdApi.data,
-        pagination: getAllTicketTypesApi.data,
+        ticketTypes: ticketTypesApi.data?.content || [],
+        pagination: ticketTypesApi.data,
         loading,
-        error,
+        typesError: ticketTypesApi.error,
+        mutationError: mutationApi.error,
         getAll,
-        getById,
         create,
         update,
         remove,
         toggleActive,
-        resetAll,
     };
 };

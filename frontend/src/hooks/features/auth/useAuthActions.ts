@@ -2,8 +2,7 @@ import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApi } from '@/hooks/common/useApi';
 import { authApi } from '@/api/authApi';
-import type { LoginRequest, LoginResponse, RegisterRequest } from '@/types/auth';
-import type { UserResponse } from '@/types/user';
+import type { LoginRequest, RegisterRequest } from '@/types/auth';
 import { useAuth } from '@/context/AuthContext';
 import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
 
@@ -11,119 +10,77 @@ export const useAuthActions = () => {
     const navigate = useNavigate();
     const { refreshUser, logout: contextLogout } = useAuth();
 
-    const authApiInstance = useApi<LoginResponse | UserResponse | boolean | { message: string }>();
-    const mutationApi = useApi<void | { message: string } | UserResponse>();
+    const authApiHook = useApi();
 
-    const rawLoading = authApiInstance.loading || mutationApi.loading;
-    const loading = useDelayedLoading(rawLoading, { delay: 150, minDisplayTime: 300 });
-    const error = !!(authApiInstance.error || mutationApi.error);
+    const loading = useDelayedLoading(authApiHook.loading, { delay: 150, minDisplayTime: 300 });
+
+    const handleAuthSuccess = useCallback(async (token: string) => {
+        localStorage.setItem('authToken', token);
+        await refreshUser();
+        navigate('/');
+    }, [refreshUser, navigate]);
 
     const login = useCallback(async (credentials: LoginRequest) => {
-        const response = await authApiInstance.execute(
+        const response = await authApiHook.execute(
             () => authApi.login(credentials),
             { successMessage: 'Login successful' }
         );
-
         if (response) {
-            localStorage.setItem('authToken', (response as LoginResponse).token);
-            await refreshUser();
-            navigate('/');
+            await handleAuthSuccess(response.token);
         }
-
         return response;
-    }, [authApiInstance, refreshUser, navigate]);
+    }, [authApiHook, handleAuthSuccess]);
 
     const register = useCallback(async (userData: RegisterRequest) => {
-        const response = await authApiInstance.execute(
+        return authApiHook.execute(
             () => authApi.register(userData),
-            { successMessage: 'Registration successful. Please check your email.' }
+            { successMessage: 'Registration successful' }
         );
-        return response;
-    }, [authApiInstance]);
+    }, [authApiHook]);
 
     const checkEmail = useCallback(async (email: string) => {
-        const response = await authApiInstance.execute(
-            () => authApi.checkEmail(email),
-            {}
-        );
-        return response;
-    }, [authApiInstance]);
+        return authApiHook.execute(() => authApi.checkEmail(email));
+    }, [authApiHook]);
 
     const forgotPassword = useCallback(async (email: string) => {
-        await mutationApi.execute(
+        return authApiHook.execute(
             () => authApi.forgotPassword(email),
             { successMessage: 'Password reset instructions sent to your email' }
         );
-    }, [mutationApi]);
+    }, [authApiHook]);
 
     const resetPassword = useCallback(async (token: string, newPassword: string) => {
-        await mutationApi.execute(
+        return authApiHook.execute(
             () => authApi.resetPassword(token, newPassword),
             { successMessage: 'Password has been reset successfully' }
         );
-    }, [mutationApi]);
-
-    const verifyEmail = useCallback(async (token: string) => {
-        const response = await mutationApi.execute(
-            () => authApi.verifyEmail(token),
-            { successMessage: 'Email verified successfully' }
-        );
-        return response;
-    }, [mutationApi]);
-
-    const confirmEmailChange = useCallback(async (token: string) => {
-        const response = await mutationApi.execute(
-            () => authApi.confirmEmailChange(token),
-            { successMessage: 'Email changed successfully' }
-        );
-        await refreshUser();
-        return response;
-    }, [mutationApi, refreshUser]);
+    }, [authApiHook]);
 
     const oauth2Success = useCallback(async (token: string, userId: number, email: string) => {
-        const response = await authApiInstance.execute(
+        const response = await authApiHook.execute(
             () => authApi.oauth2Success(token, userId, email),
             { successMessage: 'Login successful' }
         );
-
         if (response) {
-            localStorage.setItem('authToken', (response as LoginResponse).token);
-            await refreshUser();
-            navigate('/');
+            await handleAuthSuccess(response.token);
         }
-
         return response;
-    }, [authApiInstance, refreshUser, navigate]);
+    }, [authApiHook, handleAuthSuccess]);
 
     const loginWithGoogle = useCallback(() => {
         window.location.href = authApi.getGoogleAuthUrl();
     }, []);
 
-    const logout = useCallback(() => {
-        contextLogout();
-    }, [contextLogout]);
-
     return {
         loading,
-        error,
-        isAuthenticating: authApiInstance.loading,
-        isRegistering: authApiInstance.loading,
-        isCheckingEmail: authApiInstance.loading,
-        isForgotPassword: mutationApi.loading,
-        isResettingPassword: mutationApi.loading,
-        isVerifyingEmail: mutationApi.loading,
-        isConfirmingEmailChange: mutationApi.loading,
-        isOAuth2Processing: authApiInstance.loading,
-
+        error: authApiHook.error,
         login,
         register,
         checkEmail,
         forgotPassword,
         resetPassword,
-        verifyEmail,
-        confirmEmailChange,
         oauth2Success,
         loginWithGoogle,
-        logout,
+        logout: contextLogout,
     };
 };

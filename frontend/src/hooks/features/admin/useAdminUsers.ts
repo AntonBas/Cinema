@@ -22,86 +22,61 @@ export const useAdminUsers = () => {
     const usersApi = useApi<PageResponse<AdminUserListResponse>>();
     const mutationApi = useApi<AdminUserListResponse>();
 
-    const rawLoading = usersApi.loading || mutationApi.loading;
-    const loading = useDelayedLoading(rawLoading, { delay: 150, minDisplayTime: 300 });
-    const error = !!(usersApi.error || mutationApi.error);
+    const loading = useDelayedLoading(
+        usersApi.loading || mutationApi.loading,
+        { delay: 150, minDisplayTime: 300 }
+    );
+
+    const getUserName = useCallback((userId: number): string => {
+        const user = usersApi.data?.content?.find(u => u.id === userId);
+        return user ? `${user.firstName} ${user.lastName}` : 'User';
+    }, [usersApi.data]);
 
     const getUsers = useCallback(async (params?: AdminUsersParams) => {
-        const response = await usersApi.execute(
-            () => adminApi.getUsers(params || {}),
-            {
-                showErrorNotification: false,
-            }
-        );
-        return response || null;
+        return usersApi.execute(() => adminApi.getUsers(params || {}));
     }, [usersApi]);
 
     const updateUserRole = useCallback(async (userId: number, userRole: UserRole) => {
         const roleData: UserRoleUpdateRequest = { userRole };
-
-        const user = usersApi.data?.content?.find(u => u.id === userId);
-        const userName = user ? `${user.firstName} ${user.lastName}` : 'User';
-
-        const response = await mutationApi.execute(
+        return mutationApi.execute(
             () => adminApi.updateUserRole(userId, roleData),
-            {
-                successMessage: `${userName} role updated successfully`,
-            }
+            { successMessage: `${getUserName(userId)} role updated successfully` }
         );
-        return response || null;
-    }, [mutationApi, usersApi.data]);
+    }, [mutationApi, getUserName]);
 
     const updateUserStatus = useCallback(async (userId: number, enabled: boolean) => {
         const statusData: UserStatusUpdateRequest = { enabled };
-
-        const user = usersApi.data?.content?.find(u => u.id === userId);
-        const userName = user ? `${user.firstName} ${user.lastName}` : 'User';
-
-        const response = await mutationApi.execute(
+        return mutationApi.execute(
             () => adminApi.updateUserStatus(userId, statusData),
             {
                 successMessage: enabled
-                    ? `${userName} activated successfully`
-                    : `${userName} deactivated successfully`,
+                    ? `${getUserName(userId)} activated successfully`
+                    : `${getUserName(userId)} deactivated successfully`,
             }
         );
-        return response || null;
-    }, [mutationApi, usersApi.data]);
+    }, [mutationApi, getUserName]);
 
     const updateBirthDateVerification = useCallback(async (
         userId: number,
         verificationStatus: VerificationStatus
     ) => {
         const verificationData: VerificationBirthDateRequest = { verificationStatus };
-
-        const user = usersApi.data?.content?.find(u => u.id === userId);
-        const userName = user ? `${user.firstName} ${user.lastName}` : 'User';
         const statusText = verificationStatus === 'VERIFIED' ? 'verified' : 'unverified';
-
-        const response = await mutationApi.execute(
+        return mutationApi.execute(
             () => adminApi.updateBirthDateVerification(userId, verificationData),
-            {
-                successMessage: `${userName} birth date ${statusText}`,
-            }
+            { successMessage: `${getUserName(userId)} birth date ${statusText}` }
         );
-        return response || null;
-    }, [mutationApi, usersApi.data]);
-
-    const refreshUsers = useCallback(async (params?: AdminUsersParams) => {
-        return getUsers(params);
-    }, [getUsers]);
+    }, [mutationApi, getUserName]);
 
     return {
         users: usersApi.data?.content || [],
         pagination: usersApi.data,
         loading,
-        error,
-        isSuccess: !!usersApi.data,
+        error: usersApi.error || mutationApi.error,
         getUsers,
-        refreshUsers,
         updateUserRole,
         updateUserStatus,
         updateBirthDateVerification,
-        resetUsers: usersApi.reset,
+        reset: usersApi.reset,
     };
 };

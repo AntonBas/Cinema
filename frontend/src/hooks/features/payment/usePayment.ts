@@ -9,52 +9,39 @@ import { useApi } from '@/hooks/common/useApi';
 import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
 
 export const usePayment = () => {
-    const getPaymentByIdApi = useApi<PaymentResponse>();
-    const getLiqPayDataApi = useApi<PaymentLiqPayDataResponse>();
-    const createPaymentApi = useApi<PaymentResponse>();
+    const paymentApiHook = useApi<PaymentResponse>();
+    const liqPayDataApi = useApi<PaymentLiqPayDataResponse>();
+    const mutationApi = useApi<PaymentResponse>();
 
-    const rawLoading = getPaymentByIdApi.loading || getLiqPayDataApi.loading || createPaymentApi.loading;
-    const loading = useDelayedLoading(rawLoading, { delay: 150, minDisplayTime: 300 });
-    const error = !!(getPaymentByIdApi.error || getLiqPayDataApi.error || createPaymentApi.error);
+    const loading = useDelayedLoading(
+        paymentApiHook.loading || liqPayDataApi.loading || mutationApi.loading,
+        { delay: 150, minDisplayTime: 300 }
+    );
 
     const create = useCallback(async (request: PaymentCreateRequest) => {
-        const response = await createPaymentApi.execute(
+        return mutationApi.execute(
             () => paymentApi.create(request),
             { successMessage: 'Payment initialized successfully' }
         );
-        return response || null;
-    }, [createPaymentApi]);
+    }, [mutationApi]);
 
     const getById = useCallback(async (paymentId: number) => {
-        const response = await getPaymentByIdApi.execute(
-            () => paymentApi.getById(paymentId),
-            { showErrorNotification: false }
-        );
-        return response || null;
-    }, [getPaymentByIdApi]);
+        return paymentApiHook.execute(() => paymentApi.getById(paymentId));
+    }, [paymentApiHook]);
 
     const getLiqPayData = useCallback(async (paymentId: number) => {
-        const response = await getLiqPayDataApi.execute(
-            () => paymentApi.getLiqPayData(paymentId),
-            { showErrorNotification: false }
-        );
-        return response || null;
-    }, [getLiqPayDataApi]);
-
-    const resetAll = useCallback(() => {
-        getPaymentByIdApi.reset();
-        getLiqPayDataApi.reset();
-        createPaymentApi.reset();
-    }, [getPaymentByIdApi, getLiqPayDataApi, createPaymentApi]);
+        return liqPayDataApi.execute(() => paymentApi.getLiqPayData(paymentId));
+    }, [liqPayDataApi]);
 
     return {
-        payment: getPaymentByIdApi.data,
-        liqPayData: getLiqPayDataApi.data,
+        payment: paymentApiHook.data,
+        liqPayData: liqPayDataApi.data,
         loading,
-        error,
+        paymentError: paymentApiHook.error,
+        liqPayError: liqPayDataApi.error,
+        mutationError: mutationApi.error,
         create,
         getById,
         getLiqPayData,
-        resetAll,
     };
 };

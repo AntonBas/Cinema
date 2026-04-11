@@ -6,66 +6,48 @@ import { useApi } from '@/hooks/common/useApi';
 import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
 
 export const useTickets = () => {
-    const getUserTicketsApi = useApi<PageResponse<TicketResponse>>();
-    const getTicketByCodeApi = useApi<TicketResponse>();
-    const getQRCodeApi = useApi<Blob>();
-    const validateTicketApi = useApi<void>();
+    const ticketsApi = useApi<PageResponse<TicketResponse>>();
+    const ticketApiHook = useApi<TicketResponse>();
+    const qrCodeApi = useApi<Blob>();
+    const validateApi = useApi<void>();
 
-    const rawLoading = getUserTicketsApi.loading || getTicketByCodeApi.loading ||
-        getQRCodeApi.loading || validateTicketApi.loading;
-    const loading = useDelayedLoading(rawLoading, { delay: 150, minDisplayTime: 300 });
-    const error = !!(getUserTicketsApi.error || getTicketByCodeApi.error ||
-        getQRCodeApi.error || validateTicketApi.error);
+    const loading = useDelayedLoading(
+        ticketsApi.loading || ticketApiHook.loading || qrCodeApi.loading || validateApi.loading,
+        { delay: 150, minDisplayTime: 300 }
+    );
 
     const getUserTickets = useCallback(async (params?: SearchParams & TicketFilterRequest) => {
-        const response = await getUserTicketsApi.execute(
-            () => ticketApi.getUserTickets(params),
-            { showErrorNotification: false }
-        );
-        return response || null;
-    }, [getUserTicketsApi]);
+        return ticketsApi.execute(() => ticketApi.getUserTickets(params));
+    }, [ticketsApi]);
 
     const getByCode = useCallback(async (ticketCode: string) => {
-        const response = await getTicketByCodeApi.execute(
-            () => ticketApi.getByCode(ticketCode),
-            { showErrorNotification: false }
-        );
-        return response || null;
-    }, [getTicketByCodeApi]);
+        return ticketApiHook.execute(() => ticketApi.getByCode(ticketCode));
+    }, [ticketApiHook]);
 
     const getQRCode = useCallback(async (ticketCode: string) => {
-        const response = await getQRCodeApi.execute(
-            () => ticketApi.getQRCode(ticketCode),
-            { showErrorNotification: false }
-        );
-        return response || null;
-    }, [getQRCodeApi]);
+        return qrCodeApi.execute(() => ticketApi.getQRCode(ticketCode));
+    }, [qrCodeApi]);
 
     const validate = useCallback(async (ticketCode: string) => {
-        await validateTicketApi.execute(
+        return validateApi.execute(
             () => ticketApi.validate(ticketCode),
             { successMessage: 'Ticket validated successfully' }
         );
-    }, [validateTicketApi]);
-
-    const resetAll = useCallback(() => {
-        getUserTicketsApi.reset();
-        getTicketByCodeApi.reset();
-        getQRCodeApi.reset();
-        validateTicketApi.reset();
-    }, [getUserTicketsApi, getTicketByCodeApi, getQRCodeApi, validateTicketApi]);
+    }, [validateApi]);
 
     return {
-        tickets: getUserTicketsApi.data?.content || [],
-        pagination: getUserTicketsApi.data,
-        ticket: getTicketByCodeApi.data,
-        qrCode: getQRCodeApi.data,
+        tickets: ticketsApi.data?.content || [],
+        pagination: ticketsApi.data,
+        ticket: ticketApiHook.data,
+        qrCode: qrCodeApi.data,
         loading,
-        error,
+        ticketsError: ticketsApi.error,
+        ticketError: ticketApiHook.error,
+        qrCodeError: qrCodeApi.error,
+        validateError: validateApi.error,
         getUserTickets,
         getByCode,
         getQRCode,
         validate,
-        resetAll,
     };
 };

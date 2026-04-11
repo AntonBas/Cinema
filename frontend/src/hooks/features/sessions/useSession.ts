@@ -4,8 +4,7 @@ import type {
     SessionResponse,
     SessionAdminResponse,
     SessionScheduleResponse,
-    SessionCreateRequest,
-    SessionUpdateRequest,
+    SessionRequest,
     CinemaSessionStatus
 } from '@/types/session';
 import type { PageResponse, SearchParams } from '@/types/pagination';
@@ -26,102 +25,73 @@ interface PublicSessionParams {
 }
 
 export const useSession = () => {
-    const getAdminSessionsApi = useApi<PageResponse<SessionAdminResponse>>();
-    const getPublicSessionsApi = useApi<SessionScheduleResponse[]>();
-    const getSessionByIdApi = useApi<SessionResponse>();
-    const createSessionApi = useApi<SessionResponse>();
-    const updateSessionApi = useApi<SessionResponse>();
-    const cancelSessionApi = useApi<void>();
-    const reactivateSessionApi = useApi<void>();
-    const deleteSessionApi = useApi<void>();
+    const adminSessionsApi = useApi<PageResponse<SessionAdminResponse>>();
+    const publicSessionsApi = useApi<SessionScheduleResponse[]>();
+    const sessionApiHook = useApi<SessionResponse>();
+    const mutationApi = useApi<SessionResponse | void>();
 
-    const rawLoading = getAdminSessionsApi.loading || getPublicSessionsApi.loading ||
-        getSessionByIdApi.loading || createSessionApi.loading || updateSessionApi.loading ||
-        cancelSessionApi.loading || reactivateSessionApi.loading || deleteSessionApi.loading;
-    const loading = useDelayedLoading(rawLoading, { delay: 150, minDisplayTime: 300 });
-    const error = !!(getAdminSessionsApi.error || getPublicSessionsApi.error ||
-        getSessionByIdApi.error || createSessionApi.error || updateSessionApi.error ||
-        cancelSessionApi.error || reactivateSessionApi.error || deleteSessionApi.error);
+    const loading = useDelayedLoading(
+        adminSessionsApi.loading || publicSessionsApi.loading || sessionApiHook.loading || mutationApi.loading,
+        { delay: 150, minDisplayTime: 300 }
+    );
 
     const getAdminSessions = useCallback(async (params?: AdminSessionParams) => {
-        const response = await getAdminSessionsApi.execute(
-            () => sessionApi.admin.getSessions(params),
-            { showErrorNotification: false }
-        );
-        return response || null;
-    }, [getAdminSessionsApi]);
+        return adminSessionsApi.execute(() => sessionApi.admin.getSessions(params));
+    }, [adminSessionsApi]);
 
     const getSchedule = useCallback(async (params?: PublicSessionParams) => {
-        const response = await getPublicSessionsApi.execute(
-            () => sessionApi.public.getSchedule(params),
-            { showErrorNotification: false }
-        );
-        return response || null;
-    }, [getPublicSessionsApi]);
+        return publicSessionsApi.execute(() => sessionApi.public.getSchedule(params));
+    }, [publicSessionsApi]);
 
     const getById = useCallback(async (id: number) => {
-        const response = await getSessionByIdApi.execute(
-            () => sessionApi.admin.getById(id),
-            { showErrorNotification: true }
-        );
-        return response || null;
-    }, [getSessionByIdApi]);
+        return sessionApiHook.execute(() => sessionApi.admin.getById(id));
+    }, [sessionApiHook]);
 
-    const create = useCallback(async (request: SessionCreateRequest) => {
-        const response = await createSessionApi.execute(
+    const create = useCallback(async (request: SessionRequest) => {
+        return mutationApi.execute(
             () => sessionApi.admin.create(request),
             { successMessage: 'Session created successfully' }
         );
-        return response || null;
-    }, [createSessionApi]);
+    }, [mutationApi]);
 
-    const update = useCallback(async (id: number, request: SessionUpdateRequest) => {
-        const response = await updateSessionApi.execute(
+    const update = useCallback(async (id: number, request: SessionRequest) => {
+        return mutationApi.execute(
             () => sessionApi.admin.update(id, request),
             { successMessage: 'Session updated successfully' }
         );
-        return response || null;
-    }, [updateSessionApi]);
+    }, [mutationApi]);
 
     const cancel = useCallback(async (id: number) => {
-        await cancelSessionApi.execute(
+        return mutationApi.execute(
             () => sessionApi.admin.cancel(id),
             { successMessage: 'Session cancelled successfully' }
         );
-    }, [cancelSessionApi]);
+    }, [mutationApi]);
 
     const reactivate = useCallback(async (id: number) => {
-        await reactivateSessionApi.execute(
+        return mutationApi.execute(
             () => sessionApi.admin.reactivate(id),
             { successMessage: 'Session reactivated successfully' }
         );
-    }, [reactivateSessionApi]);
+    }, [mutationApi]);
 
     const remove = useCallback(async (id: number) => {
-        await deleteSessionApi.execute(
+        return mutationApi.execute(
             () => sessionApi.admin.delete(id),
             { successMessage: 'Session deleted successfully' }
         );
-    }, [deleteSessionApi]);
-
-    const resetAll = useCallback(() => {
-        getAdminSessionsApi.reset();
-        getPublicSessionsApi.reset();
-        getSessionByIdApi.reset();
-        createSessionApi.reset();
-        updateSessionApi.reset();
-        cancelSessionApi.reset();
-        reactivateSessionApi.reset();
-        deleteSessionApi.reset();
-    }, [getAdminSessionsApi, getPublicSessionsApi, getSessionByIdApi, createSessionApi, updateSessionApi, cancelSessionApi, reactivateSessionApi, deleteSessionApi]);
+    }, [mutationApi]);
 
     return {
-        adminSessions: getAdminSessionsApi.data?.content || [],
-        schedule: getPublicSessionsApi.data || [],
-        session: getSessionByIdApi.data,
-        pagination: getAdminSessionsApi.data,
+        adminSessions: adminSessionsApi.data?.content || [],
+        schedule: publicSessionsApi.data || [],
+        session: sessionApiHook.data,
+        pagination: adminSessionsApi.data,
         loading,
-        error,
+        adminError: adminSessionsApi.error,
+        scheduleError: publicSessionsApi.error,
+        sessionError: sessionApiHook.error,
+        mutationError: mutationApi.error,
         getAdminSessions,
         getSchedule,
         getById,
@@ -130,6 +100,5 @@ export const useSession = () => {
         cancel,
         reactivate,
         remove,
-        resetAll,
     };
 };

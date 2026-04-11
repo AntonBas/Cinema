@@ -8,54 +8,42 @@ import { useApi } from '@/hooks/common/useApi';
 import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
 
 export const useBooking = () => {
-    const bookingByIdApi = useApi<BookingResponse>();
+    const bookingApiHook = useApi<BookingResponse>();
     const mutationApi = useApi<BookingResponse | void>();
 
-    const rawLoading = bookingByIdApi.loading || mutationApi.loading;
-    const loading = useDelayedLoading(rawLoading, { delay: 150, minDisplayTime: 300 });
-    const error = !!(bookingByIdApi.error || mutationApi.error);
+    const loading = useDelayedLoading(
+        bookingApiHook.loading || mutationApi.loading,
+        { delay: 150, minDisplayTime: 300 }
+    );
 
     const create = useCallback(async (request: BookingCreateRequest) => {
-        const response = await mutationApi.execute(
+        return mutationApi.execute(
             () => bookingApi.create(request),
-            {
-                successMessage: 'Booking created successfully',
-            }
+            { successMessage: 'Booking created successfully' }
         );
-        return response || null;
     }, [mutationApi]);
 
     const getById = useCallback(async (bookingId: number) => {
-        const response = await bookingByIdApi.execute(
-            () => bookingApi.getById(bookingId),
-            {
-                showErrorNotification: false,
-            }
-        );
-        return response || null;
-    }, [bookingByIdApi]);
+        return bookingApiHook.execute(() => bookingApi.getById(bookingId));
+    }, [bookingApiHook]);
 
     const cancel = useCallback(async (bookingId: number) => {
-        await mutationApi.execute(
+        return mutationApi.execute(
             () => bookingApi.cancel(bookingId),
-            {
-                successMessage: 'Booking cancelled successfully',
-            }
+            { successMessage: 'Booking cancelled successfully' }
         );
     }, [mutationApi]);
 
-    const resetAll = useCallback(() => {
-        bookingByIdApi.reset();
-        mutationApi.reset();
-    }, [bookingByIdApi, mutationApi]);
-
     return {
-        booking: bookingByIdApi.data,
+        booking: bookingApiHook.data,
         loading,
-        error,
+        error: bookingApiHook.error || mutationApi.error,
         create,
         getById,
         cancel,
-        resetAll,
+        reset: () => {
+            bookingApiHook.reset();
+            mutationApi.reset();
+        },
     };
 };

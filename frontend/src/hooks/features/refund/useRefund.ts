@@ -5,30 +5,22 @@ import { useApi } from '@/hooks/common/useApi';
 import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
 
 export const useRefund = () => {
-    const processRefundApi = useApi<RefundResponse>();
+    const refundApiHook = useApi<RefundResponse>();
 
-    const loading = useDelayedLoading(processRefundApi.loading, { delay: 150, minDisplayTime: 300 });
-    const error = !!processRefundApi.error;
+    const loading = useDelayedLoading(refundApiHook.loading, { delay: 150, minDisplayTime: 300 });
 
     const processRefund = useCallback(async (request: RefundRequest) => {
-        const response = await processRefundApi.execute(
+        return refundApiHook.execute(
             () => refundApi.processRefund(request),
             { successMessage: 'Refund request submitted successfully' }
         );
-        return response || null;
-    }, [processRefundApi]);
-
-    const reset = useCallback(() => {
-        processRefundApi.reset();
-    }, [processRefundApi]);
+    }, [refundApiHook]);
 
     return {
-        refundResult: processRefundApi.data,
+        refundResult: refundApiHook.data,
         loading,
-        error,
-        isSubmitting: loading,
-        isSuccess: !!(processRefundApi.data && !loading && !error),
+        error: refundApiHook.error,
         processRefund,
-        reset,
+        reset: refundApiHook.reset,
     };
 };
