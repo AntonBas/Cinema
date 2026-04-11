@@ -7,30 +7,19 @@ import styles from './SecurityPage.module.css';
 
 type SecuritySection = 'password' | 'email';
 
+const SECTIONS = [
+    { id: 'password' as SecuritySection, label: 'Change Password', icon: '🔑' },
+    { id: 'email' as SecuritySection, label: 'Change Email', icon: '📧' },
+];
+
 export const SecurityPage: React.FC = () => {
     const [activeSection, setActiveSection] = useState<SecuritySection>('password');
-
-    const securitySections = [
-        { id: 'password' as SecuritySection, label: 'Change Password', icon: '🔑' },
-        { id: 'email' as SecuritySection, label: 'Change Email', icon: '📧' },
-    ];
-
-    const renderSectionContent = () => {
-        switch (activeSection) {
-            case 'password':
-                return <PasswordChangeForm />;
-            case 'email':
-                return <EmailChangeForm />;
-            default:
-                return <PasswordChangeForm />;
-        }
-    };
 
     return (
         <Layout>
             <div className={styles.securityPage}>
                 <div className={styles.container}>
-                    <AccountSidebar activePage="security" />
+                    <AccountSidebar />
 
                     <div className={styles.content}>
                         <div className={styles.header}>
@@ -41,11 +30,10 @@ export const SecurityPage: React.FC = () => {
                         <div className={styles.securityLayout}>
                             <div className={styles.sidebar}>
                                 <nav className={styles.securityNav}>
-                                    {securitySections.map((section) => (
+                                    {SECTIONS.map(section => (
                                         <button
                                             key={section.id}
-                                            className={`${styles.navButton} ${activeSection === section.id ? styles.active : ''
-                                                }`}
+                                            className={`${styles.navButton} ${activeSection === section.id ? styles.active : ''}`}
                                             onClick={() => setActiveSection(section.id)}
                                         >
                                             <span className={styles.navIcon}>{section.icon}</span>
@@ -56,7 +44,7 @@ export const SecurityPage: React.FC = () => {
                             </div>
 
                             <div className={styles.mainContent}>
-                                {renderSectionContent()}
+                                {activeSection === 'password' ? <PasswordChangeForm /> : <EmailChangeForm />}
                             </div>
                         </div>
                     </div>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MovieCard } from '@/components/movies/MovieCard/MovieCard';
 import { Button } from '@/components/ui/Button/Button';
@@ -11,46 +11,34 @@ interface NowShowingProps {
     loading?: boolean;
 }
 
+const ITEMS_TO_SHOW = 3;
+const AUTO_PLAY_INTERVAL = 5000;
+
 export const NowShowing: React.FC<NowShowingProps> = ({ movies, loading }) => {
     const navigate = useNavigate();
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isHovered, setIsHovered] = useState(false);
-    const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-    const itemsToShow = 3;
+    const timerRef = useRef<number | null>(null);
 
-    const maxIndex = Math.max(0, movies.length - itemsToShow);
+    const maxIndex = Math.max(0, movies.length - ITEMS_TO_SHOW);
 
-    const nextSlide = useCallback(() => {
-        setCurrentIndex((prev) => (prev >= maxIndex ? 0 : prev + 1));
-    }, [maxIndex]);
+    const nextSlide = () => {
+        setCurrentIndex(prev => (prev >= maxIndex ? 0 : prev + 1));
+    };
 
-    const prevSlide = useCallback(() => {
-        setCurrentIndex((prev) => (prev <= 0 ? maxIndex : prev - 1));
-    }, [maxIndex]);
-
-    const goToSlide = useCallback((index: number) => {
-        setCurrentIndex(Math.min(Math.max(0, index), maxIndex));
-    }, [maxIndex]);
+    const prevSlide = () => {
+        setCurrentIndex(prev => (prev <= 0 ? maxIndex : prev - 1));
+    };
 
     useEffect(() => {
-        if (isHovered || loading || movies.length <= itemsToShow) return;
+        if (isHovered || loading || movies.length <= ITEMS_TO_SHOW) return;
 
-        if (timerRef.current) {
-            clearInterval(timerRef.current);
-            timerRef.current = null;
-        }
-
-        timerRef.current = setInterval(() => {
-            nextSlide();
-        }, 5000);
+        timerRef.current = window.setInterval(nextSlide, AUTO_PLAY_INTERVAL);
 
         return () => {
-            if (timerRef.current) {
-                clearInterval(timerRef.current);
-                timerRef.current = null;
-            }
+            if (timerRef.current) clearInterval(timerRef.current);
         };
-    }, [isHovered, loading, movies.length, nextSlide]);
+    }, [isHovered, loading, movies.length, maxIndex]);
 
     if (loading) {
         return (
@@ -65,11 +53,9 @@ export const NowShowing: React.FC<NowShowingProps> = ({ movies, loading }) => {
         );
     }
 
-    if (movies.length === 0) {
-        return null;
-    }
+    if (!movies.length) return null;
 
-    const visibleMovies = movies.slice(currentIndex, currentIndex + itemsToShow);
+    const visibleMovies = movies.slice(currentIndex, currentIndex + ITEMS_TO_SHOW);
 
     return (
         <section
@@ -86,21 +72,15 @@ export const NowShowing: React.FC<NowShowingProps> = ({ movies, loading }) => {
                 </div>
 
                 <div className={styles.carouselContainer}>
-                    {movies.length > itemsToShow && (
-                        <Button
-                            variant="outline"
-                            size="small"
-                            className={styles.navButton}
-                            onClick={prevSlide}
-                            aria-label="Previous movies"
-                        >
+                    {movies.length > ITEMS_TO_SHOW && (
+                        <Button variant="outline" size="small" className={styles.navButton} onClick={prevSlide}>
                             &#10094;
                         </Button>
                     )}
 
                     <div className={styles.carouselWrapper}>
                         <div className={styles.moviesGrid}>
-                            {visibleMovies.map((movie) => (
+                            {visibleMovies.map(movie => (
                                 <div key={movie.id} className={styles.slideItem}>
                                     <MovieCard movie={movie} />
                                 </div>
@@ -108,27 +88,20 @@ export const NowShowing: React.FC<NowShowingProps> = ({ movies, loading }) => {
                         </div>
                     </div>
 
-                    {movies.length > itemsToShow && (
-                        <Button
-                            variant="outline"
-                            size="small"
-                            className={styles.navButton}
-                            onClick={nextSlide}
-                            aria-label="Next movies"
-                        >
+                    {movies.length > ITEMS_TO_SHOW && (
+                        <Button variant="outline" size="small" className={styles.navButton} onClick={nextSlide}>
                             &#10095;
                         </Button>
                     )}
                 </div>
 
-                {movies.length > itemsToShow && (
+                {movies.length > ITEMS_TO_SHOW && (
                     <div className={styles.dots}>
                         {Array.from({ length: maxIndex + 1 }).map((_, idx) => (
                             <button
                                 key={idx}
                                 className={`${styles.dot} ${currentIndex === idx ? styles.dotActive : ''}`}
-                                onClick={() => goToSlide(idx)}
-                                aria-label={`Go to slide ${idx + 1}`}
+                                onClick={() => setCurrentIndex(idx)}
                             />
                         ))}
                     </div>

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Button } from '@/components/ui';
 import { useTickets } from '@/hooks/features/tickets/useTickets';
-import { Download, Copy, Check } from 'lucide-react';
 import styles from './TicketQRModal.module.css';
 
 interface TicketQRModalProps {
@@ -10,35 +9,33 @@ interface TicketQRModalProps {
 }
 
 export const TicketQRModal: React.FC<TicketQRModalProps> = ({ ticketCode, onClose }) => {
-    const { getQRCode, loading, qrCode } = useTickets();
+    const { getQRCode, loading } = useTickets();
     const [qrImage, setQrImage] = useState<string>('');
     const [copied, setCopied] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        loadQRCode();
-    }, [ticketCode]);
-
-    useEffect(() => {
-        if (qrCode) {
-            const imageUrl = URL.createObjectURL(qrCode);
-            setQrImage(imageUrl);
-            return () => URL.revokeObjectURL(imageUrl);
-        }
-    }, [qrCode]);
-
-    const loadQRCode = async () => {
-        try {
-            setError(null);
-            const response = await getQRCode(ticketCode);
-            if (!response) {
+        const loadQRCode = async () => {
+            try {
+                setError(null);
+                const blob = await getQRCode(ticketCode);
+                if (blob) {
+                    const imageUrl = URL.createObjectURL(blob);
+                    setQrImage(imageUrl);
+                } else {
+                    setError('Failed to load QR code');
+                }
+            } catch {
                 setError('Failed to load QR code');
             }
-        } catch (err) {
-            setError('Failed to load QR code');
-            console.error('Failed to load QR code:', err);
-        }
-    };
+        };
+
+        loadQRCode();
+
+        return () => {
+            if (qrImage) URL.revokeObjectURL(qrImage);
+        };
+    }, [ticketCode, getQRCode]);
 
     const handleDownload = () => {
         if (!qrImage) return;
@@ -46,35 +43,24 @@ export const TicketQRModal: React.FC<TicketQRModalProps> = ({ ticketCode, onClos
         const link = document.createElement('a');
         link.href = qrImage;
         link.download = `ticket-${ticketCode}-qr.png`;
-        document.body.appendChild(link);
         link.click();
-        document.body.removeChild(link);
     };
 
-    const handleCopyCode = () => {
-        navigator.clipboard.writeText(ticketCode);
+    const handleCopyCode = async () => {
+        await navigator.clipboard.writeText(ticketCode);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
     };
 
     return (
-        <Modal
-            isOpen={true}
-            onClose={onClose}
-            title="Ticket QR Code"
-            size="medium"
-        >
+        <Modal isOpen={true} onClose={onClose} title="Ticket QR Code" size="medium">
             <div className={styles.modalBody}>
                 <div className={styles.ticketCodeSection}>
                     <div className={styles.ticketCodeLabel}>Ticket Code:</div>
                     <div className={styles.ticketCodeValue}>
                         {ticketCode}
-                        <Button
-                            variant="outline"
-                            size="small"
-                            onClick={handleCopyCode}
-                        >
-                            {copied ? <Check size={16} /> : <Copy size={16} />} {copied ? 'Copied!' : 'Copy'}
+                        <Button variant="secondary" size="small" onClick={handleCopyCode}>
+                            {copied ? '✓ Copied!' : '📋 Copy'}
                         </Button>
                     </div>
                 </div>
@@ -86,11 +72,11 @@ export const TicketQRModal: React.FC<TicketQRModalProps> = ({ ticketCode, onClos
                             <p>Generating QR code...</p>
                         </div>
                     ) : qrImage ? (
-                        <img src={qrImage} alt={`QR Code for ticket ${ticketCode}`} className={styles.qrImage} />
+                        <img src={qrImage} alt="Ticket QR Code" className={styles.qrImage} />
                     ) : (
                         <div className={styles.errorQR}>
                             <p>{error || 'Failed to load QR code'}</p>
-                            <Button variant="secondary" onClick={loadQRCode}>
+                            <Button variant="secondary" onClick={() => window.location.reload()}>
                                 Retry
                             </Button>
                         </div>
@@ -102,18 +88,13 @@ export const TicketQRModal: React.FC<TicketQRModalProps> = ({ ticketCode, onClos
                     <ul>
                         <li>Show this QR code at the cinema entrance</li>
                         <li>The code will be scanned for validation</li>
-                        <li>Keep this code secure until the movie starts</li>
                         <li>QR code is valid only for ACTIVE tickets</li>
                     </ul>
                 </div>
 
                 <div className={styles.modalFooter}>
-                    <Button
-                        variant="primary"
-                        onClick={handleDownload}
-                        disabled={!qrImage || loading}
-                    >
-                        <Download size={18} /> Download QR Code
+                    <Button variant="primary" onClick={handleDownload} disabled={!qrImage || loading}>
+                        ⬇️ Download QR Code
                     </Button>
                     <Button variant="secondary" onClick={onClose}>
                         Close

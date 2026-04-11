@@ -32,34 +32,26 @@ export const MovieList: React.FC<MovieListProps> = React.memo(({
 }) => {
     if (error) {
         return (
-            <div className={styles.error} role="alert">
+            <div className={styles.error}>
                 <div className={styles.errorIcon}>⚠️</div>
                 <h3>Error loading movies</h3>
                 <p>{error.message}</p>
-                {onRetry && (
-                    <Button
-                        variant="primary"
-                        onClick={onRetry}
-                        aria-label="Try again"
-                    >
-                        Try Again
-                    </Button>
-                )}
+                {onRetry && <Button variant="primary" onClick={onRetry}>Try Again</Button>}
             </div>
         );
     }
 
     if (loading && movies.length === 0) {
         return (
-            <div className={styles.loading} aria-live="polite" aria-busy="true">
+            <div className={styles.loading}>
                 <LoadingSpinner text="Loading movies..." />
             </div>
         );
     }
 
-    if (!movies || movies.length === 0) {
+    if (!movies.length) {
         return (
-            <div className={styles.empty} role="status">
+            <div className={styles.empty}>
                 <div className={styles.emptyIcon}>🎬</div>
                 <h3>{emptyMessage}</h3>
                 <p>Try checking back later for new releases.</p>
@@ -67,17 +59,11 @@ export const MovieList: React.FC<MovieListProps> = React.memo(({
         );
     }
 
-    const currentPage = pagination?.number ?? 0;
-    const totalPages = pagination?.totalPages ?? 0;
-    const hasMore = pagination && currentPage < totalPages - 1;
-
     return (
         <div className={styles.container}>
-            <div className={styles.grid} role="list" aria-label="Movies list">
+            <div className={styles.grid}>
                 {movies.map(movie => (
-                    <div key={movie.id} role="listitem">
-                        <MovieCard movie={movie} />
-                    </div>
+                    <MovieCard key={movie.id} movie={movie} />
                 ))}
             </div>
 
@@ -87,28 +73,27 @@ export const MovieList: React.FC<MovieListProps> = React.memo(({
                 </div>
             )}
 
-            {pagination && totalPages > 1 && (
+            {pagination && pagination.totalPages > 1 && (
                 <div className={styles.paginationContainer}>
-                    {variant === 'load-more' && onLoadMore && hasMore && !loading && (
-                        <Pagination
-                            variant="load-more"
-                            currentPage={currentPage}
-                            totalPages={totalPages}
-                            totalElements={pagination.totalElements}
-                            pageSize={pagination.size}
-                            onLoadMore={onLoadMore}
-                            loading={loading}
-                        />
-                    )}
-
                     {variant === 'pages' && onPageChange && (
                         <Pagination
                             variant="pages"
-                            currentPage={currentPage}
-                            totalPages={totalPages}
+                            currentPage={pagination.number}
+                            totalPages={pagination.totalPages}
                             totalElements={pagination.totalElements}
                             pageSize={pagination.size}
                             onPageChange={onPageChange}
+                            loading={loading}
+                        />
+                    )}
+                    {variant === 'load-more' && onLoadMore && (
+                        <Pagination
+                            variant="load-more"
+                            currentPage={pagination.number}
+                            totalPages={pagination.totalPages}
+                            totalElements={pagination.totalElements}
+                            pageSize={pagination.size}
+                            onLoadMore={onLoadMore}
                             loading={loading}
                         />
                     )}

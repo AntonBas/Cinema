@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { movieApi } from '@/api/movieApi';
 import type { MovieSessionSearchResponse } from '@/types/movie';
 import styles from './MovieFilter.module.css';
@@ -8,7 +8,6 @@ interface MovieFilterProps {
     onMovieChange: (movieId: number | undefined) => void;
 }
 
-const SEARCH_DELAY = 300;
 const MIN_SEARCH_LENGTH = 2;
 
 export const MovieFilter: React.FC<MovieFilterProps> = ({ selectedMovieId, onMovieChange }) => {
@@ -16,29 +15,8 @@ export const MovieFilter: React.FC<MovieFilterProps> = ({ selectedMovieId, onMov
     const [loading, setLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [showDropdown, setShowDropdown] = useState(false);
-    const [selectedMovie, setSelectedMovie] = useState<MovieSessionSearchResponse | null>(null);
-    const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const timeoutRef = useRef<number | null>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
-
-    const searchMovies = useCallback(async (query: string) => {
-        if (!query.trim() || query.trim().length < MIN_SEARCH_LENGTH) {
-            setMovies([]);
-            return;
-        }
-
-        setLoading(true);
-        try {
-            const response = await movieApi.admin.searchForSession(query);
-            const results = response?.data || [];
-            setMovies(results);
-            setShowDropdown(results.length > 0);
-        } catch (error) {
-            console.error('Error searching movies:', error);
-            setMovies([]);
-        } finally {
-            setLoading(false);
-        }
-    }, []);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -51,93 +29,70 @@ export const MovieFilter: React.FC<MovieFilterProps> = ({ selectedMovieId, onMov
     }, []);
 
     useEffect(() => {
-        if (selectedMovieId && selectedMovie?.id !== selectedMovieId) {
-            const fetchSelectedMovie = async () => {
-                try {
-                    const response = await movieApi.admin.searchForSession('');
-                    const results = response?.data || [];
-                    const movie = results.find((m: MovieSessionSearchResponse) => m.id === selectedMovieId);
-                    if (movie) {
-                        setSelectedMovie(movie);
-                        setSearchTerm(movie.title);
-                    }
-                } catch (error) {
-                    console.error('Error fetching selected movie:', error);
-                }
-            };
-            fetchSelectedMovie();
-        }
-    }, [selectedMovieId, selectedMovie]);
+        return () => {
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
+        };
+    }, []);
 
-    const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const searchMovies = async (query: string) => {
+        if (!query.trim() || query.trim().length < MIN_SEARCH_LENGTH) {
+            setMovies([]);
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const response = await movieApi.admin.search(query);
+            setMovies(response?.data || []);
+            setShowDropdown(true);
+        } catch {
+            setMovies([]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
         setSearchTerm(value);
         setShowDropdown(true);
 
-        if (searchTimeoutRef.current) {
-            clearTimeout(searchTimeoutRef.current);
-        }
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
 
         if (!value.trim()) {
             setMovies([]);
-            if (selectedMovie) {
-                setSelectedMovie(null);
-                onMovieChange(undefined);
-            }
+            onMovieChange(undefined);
             setShowDropdown(false);
         } else if (value.trim().length >= MIN_SEARCH_LENGTH) {
-            searchTimeoutRef.current = setTimeout(() => {
-                searchMovies(value);
-            }, SEARCH_DELAY);
+            timeoutRef.current = window.setTimeout(() => searchMovies(value), 300);
         } else {
             setMovies([]);
         }
-    }, [selectedMovie, onMovieChange, searchMovies]);
+    };
 
-    const handleMovieSelect = useCallback((movie: MovieSessionSearchResponse) => {
-        setSelectedMovie(movie);
+    const handleMovieSelect = (movie: MovieSessionSearchResponse) => {
         setSearchTerm(movie.title);
         onMovieChange(movie.id);
         setShowDropdown(false);
         setMovies([]);
-    }, [onMovieChange]);
+    };
 
-    const handleClearSelection = useCallback(() => {
-        setSelectedMovie(null);
+    const handleClearSelection = () => {
         setSearchTerm('');
         onMovieChange(undefined);
         setShowDropdown(false);
         setMovies([]);
-    }, [onMovieChange]);
+    };
 
-    const handleInputFocus = useCallback(() => {
-        if (searchTerm.trim().length >= MIN_SEARCH_LENGTH) {
-            searchMovies(searchTerm);
-        }
-    }, [searchTerm, searchMovies]);
-
-    useEffect(() => {
-        return () => {
-            if (searchTimeoutRef.current) {
-                clearTimeout(searchTimeoutRef.current);
-            }
-        };
-    }, []);
-
-    const showResults = showDropdown && searchTerm.trim().length >= MIN_SEARCH_LENGTH && !loading && movies.length > 0;
-    const showNoResults = showDropdown && searchTerm.trim().length >= MIN_SEARCH_LENGTH && !loading && movies.length === 0;
+    const showResults = showDropdown && searchTerm.length >= MIN_SEARCH_LENGTH && !loading && movies.length > 0;
+    const showNoResults = showDropdown && searchTerm.length >= MIN_SEARCH_LENGTH && !loading && movies.length === 0;
 
     return (
         <div className={styles.container} ref={dropdownRef}>
             <div className={styles.filterHeader}>
                 <h3 className={styles.title}>Movie</h3>
-                {selectedMovie && (
-                    <button
-                        type="button"
-                        onClick={handleClearSelection}
-                        className={styles.clearButton}
-                        aria-label="Clear selected movie"
-                    >
+                {selectedMovieId && (
+                    <button type="button" onClick={handleClearSelection} className={styles.clearButton}>
                         Clear
                     </button>
                 )}
@@ -145,53 +100,39 @@ export const MovieFilter: React.FC<MovieFilterProps> = ({ selectedMovieId, onMov
 
             <div className={styles.searchContainer}>
                 <div className={styles.searchWrapper}>
-                    <span className={styles.searchIcon} aria-hidden="true">🎬</span>
+                    <span className={styles.searchIcon}>🎬</span>
                     <input
                         type="text"
                         value={searchTerm}
                         onChange={handleInputChange}
-                        onFocus={handleInputFocus}
                         placeholder="Search for a movie..."
                         className={styles.searchInput}
-                        aria-label="Search movies"
                     />
-                    {loading && (
-                        <div className={styles.loadingIndicator} aria-label="Loading">
-                            <div className={styles.spinner}></div>
-                        </div>
-                    )}
+                    {loading && <div className={styles.loadingIndicator}><div className={styles.spinner} /></div>}
                 </div>
             </div>
 
             {showResults && (
-                <div className={styles.dropdown} role="listbox">
+                <div className={styles.dropdown}>
                     {movies.map(movie => (
                         <button
                             key={movie.id}
                             type="button"
                             onClick={() => handleMovieSelect(movie)}
-                            className={`${styles.movieOption} ${selectedMovie?.id === movie.id ? styles.selected : ''}`}
-                            role="option"
-                            aria-selected={selectedMovie?.id === movie.id}
+                            className={`${styles.movieOption} ${selectedMovieId === movie.id ? styles.selected : ''}`}
                         >
                             <div className={styles.movieContent}>
                                 <span className={styles.movieTitle}>{movie.title}</span>
-                                <div className={styles.movieMeta}>
-                                    <span className={styles.movieDuration}>{movie.durationMinutes} min</span>
-                                </div>
+                                <span className={styles.movieDuration}>{movie.durationMinutes} min</span>
                             </div>
-                            {selectedMovie?.id === movie.id && (
-                                <span className={styles.checkmark} aria-hidden="true">✓</span>
-                            )}
+                            {selectedMovieId === movie.id && <span className={styles.checkmark}>✓</span>}
                         </button>
                     ))}
                 </div>
             )}
 
             {showNoResults && (
-                <div className={styles.noResults} role="status">
-                    No movies found for "{searchTerm}"
-                </div>
+                <div className={styles.noResults}>No movies found for "{searchTerm}"</div>
             )}
         </div>
     );

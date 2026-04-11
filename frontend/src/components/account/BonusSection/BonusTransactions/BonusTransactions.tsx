@@ -2,7 +2,7 @@ import React from 'react';
 import { Badge } from '@/components/ui/Badge/Badge';
 import { Pagination } from '@/components/ui/Pagination/Pagination';
 import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
-import type { BonusTransactionResponse } from '@/types/bonus';
+import type { BonusTransactionResponse, BonusTransactionType } from '@/types/bonus';
 import { BonusTransactionTypeDisplay } from '@/types/bonus';
 import styles from './BonusTransactions.module.css';
 
@@ -15,13 +15,41 @@ interface BonusTransactionsProps {
     totalElements?: number;
 }
 
+const getBadgeVariant = (type: BonusTransactionType): 'success' | 'primary' | 'error' | 'warning' | 'secondary' => {
+    switch (type) {
+        case 'WELCOME_BONUS':
+        case 'BIRTHDAY_BONUS':
+        case 'PROMOTION_BONUS':
+            return 'success';
+        case 'PAYMENT_ACCRUAL':
+        case 'BOOKING_SPEND':
+            return 'primary';
+        case 'REFUND_RETURN':
+            return 'warning';
+        case 'BOOKING_CANCEL':
+            return 'error';
+        default:
+            return 'secondary';
+    }
+};
+
+const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+    });
+};
+
 export const BonusTransactions: React.FC<BonusTransactionsProps> = ({
     transactions,
     loading,
     onPageChange,
     currentPage = 0,
     totalPages = 1,
-    totalElements = 0
+    totalElements = 0,
 }) => {
     const showLoading = useDelayedLoading(loading, { delay: 200, minDisplayTime: 300 });
 
@@ -36,7 +64,7 @@ export const BonusTransactions: React.FC<BonusTransactionsProps> = ({
         );
     }
 
-    if (!transactions || transactions.length === 0) {
+    if (!transactions.length) {
         return (
             <div className={styles.transactions}>
                 <div className={styles.noData}>
@@ -46,33 +74,6 @@ export const BonusTransactions: React.FC<BonusTransactionsProps> = ({
             </div>
         );
     }
-
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    };
-
-    const getBadgeVariant = (type: string): any => {
-        if (type.includes('Welcome') || type.includes('Birthday') || type.includes('Promotion')) return 'success';
-        if (type.includes('Payment')) return 'primary';
-        if (type.includes('Refund')) return 'info';
-        if (type.includes('Cancel')) return 'error';
-        if (type.includes('Spend')) return 'warning';
-        return 'secondary';
-    };
-
-    const getPointsValue = (pointsChange: string): number => {
-        return parseFloat(pointsChange);
-    };
-
-    const getDisplayType = (type: string): string => {
-        return BonusTransactionTypeDisplay[type as keyof typeof BonusTransactionTypeDisplay] || type;
-    };
 
     return (
         <div className={styles.transactions}>
@@ -92,20 +93,16 @@ export const BonusTransactions: React.FC<BonusTransactionsProps> = ({
                 </div>
 
                 <div className={styles.tableBody}>
-                    {transactions.map((transaction) => {
-                        const pointsValue = getPointsValue(transaction.pointsChange);
+                    {transactions.map(transaction => {
+                        const pointsValue = parseFloat(transaction.pointsChange);
+                        const displayType = BonusTransactionTypeDisplay[transaction.type] || transaction.type;
 
                         return (
                             <div key={transaction.id} className={styles.tableRow}>
-                                <div className={styles.tableCell} title={formatDate(transaction.createdAt)}>
-                                    {formatDate(transaction.createdAt)}
-                                </div>
+                                <div className={styles.tableCell}>{formatDate(transaction.createdAt)}</div>
                                 <div className={styles.tableCell}>
-                                    <Badge
-                                        variant={getBadgeVariant(getDisplayType(transaction.type))}
-                                        size="small"
-                                    >
-                                        {getDisplayType(transaction.type)}
+                                    <Badge variant={getBadgeVariant(transaction.type)} size="small">
+                                        {displayType}
                                     </Badge>
                                 </div>
                                 <div className={styles.tableCell}>

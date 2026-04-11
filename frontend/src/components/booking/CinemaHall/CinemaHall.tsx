@@ -18,57 +18,19 @@ export const CinemaHall: React.FC<CinemaHallProps> = ({
 }) => {
     const rows = [...new Set(seats.map(seat => seat.row))].sort((a, b) => a - b);
 
-    const getSeatStatus = (seat: SeatInfo): string => {
-        if (!seat.active) return 'inactive';
-        if (selectedSeats.includes(seat.id)) return 'selected';
-        if (seat.temporarilyReserved) return 'temporary';
-        if (!seat.available) return 'booked';
-        return 'available';
-    };
+    const getSeatInfo = (seat: SeatInfo) => {
+        const status = !seat.active ? 'inactive' :
+            selectedSeats.includes(seat.id) ? 'selected' :
+                seat.temporarilyReserved ? 'temporary' :
+                    !seat.available ? 'booked' : 'available';
 
-    const getSeatClass = (seat: SeatInfo): string => {
-        const status = getSeatStatus(seat);
-        const seatType = seat.seatType.toLowerCase();
+        const typeName = seat.seatType === 'VIP' ? 'VIP' : seat.seatType === 'COUPLE' ? 'Couple' : 'Standard';
+        const statusText = status === 'booked' ? 'Booked' :
+            status === 'inactive' ? 'Unavailable' :
+                status === 'temporary' ? 'Temporarily reserved' :
+                    status === 'selected' ? 'Selected' : 'Available';
 
-        let className = `${styles.seatButton} ${styles[seatType]}`;
-
-        if (status === 'inactive') {
-            className += ` ${styles.inactive}`;
-        } else if (status === 'selected') {
-            className += ` ${styles.selected}`;
-        } else if (status === 'temporary') {
-            className += ` ${styles.temporary}`;
-        } else if (status === 'booked') {
-            className += ` ${styles.booked}`;
-        }
-
-        return className;
-    };
-
-    const getSeatTitle = (seat: SeatInfo): string => {
-        const status = getSeatStatus(seat);
-        const seatType = seat.seatType === 'VIP' ? 'VIP' : seat.seatType === 'COUPLE' ? 'Couple' : 'Standard';
-
-        let title = `Row ${seat.row}, Seat ${seat.seatNumber} (${seatType})`;
-
-        if (status === 'booked') {
-            title += ' - Booked';
-        } else if (status === 'inactive') {
-            title += ' - Unavailable';
-        } else if (status === 'temporary') {
-            title += ' - Temporarily reserved (5 min)';
-        } else if (status === 'selected') {
-            title += ' - Selected';
-        } else {
-            title += ' - Available';
-        }
-
-        return title;
-    };
-
-    const isSeatDisabled = (seat: SeatInfo): boolean => {
-        const status = getSeatStatus(seat);
-        return status === 'inactive' || status === 'booked' || status === 'temporary' || loadingSeats.includes(seat.id);
+        return { status, typeName, statusText };
     };
 
     return (
@@ -81,7 +43,8 @@ export const CinemaHall: React.FC<CinemaHallProps> = ({
             <div className={styles.seatsLayout}>
                 <div className={styles.rowsContainer}>
                     {rows.map(rowNumber => {
-                        const rowSeats = seats.filter(seat => seat.row === rowNumber)
+                        const rowSeats = seats
+                            .filter(seat => seat.row === rowNumber)
                             .sort((a, b) => a.seatNumber - b.seatNumber);
 
                         return (
@@ -91,18 +54,25 @@ export const CinemaHall: React.FC<CinemaHallProps> = ({
                                 </div>
                                 <div className={styles.seatsRow}>
                                     {rowSeats.map(seat => {
+                                        const { status, typeName, statusText } = getSeatInfo(seat);
                                         const isLoading = loadingSeats.includes(seat.id);
+                                        const disabled = status === 'inactive' || status === 'booked' ||
+                                            status === 'temporary' || isLoading;
+
+                                        const seatClass = `${styles.seatButton} ${styles[seat.seatType.toLowerCase()]} ${status === 'inactive' ? styles.inactive :
+                                                status === 'selected' ? styles.selected :
+                                                    status === 'temporary' ? styles.temporary :
+                                                        status === 'booked' ? styles.booked : ''
+                                            }`;
+
+                                        const title = `Row ${seat.row}, Seat ${seat.seatNumber} (${typeName}) - ${statusText}`;
 
                                         return (
-                                            <Tooltip
-                                                key={`seat-${seat.id}`}
-                                                content={getSeatTitle(seat)}
-                                                position="top"
-                                            >
+                                            <Tooltip key={`seat-${seat.id}`} content={title} position="top">
                                                 <button
-                                                    className={getSeatClass(seat)}
+                                                    className={seatClass}
                                                     onClick={() => onSeatClick(seat.id)}
-                                                    disabled={isSeatDisabled(seat)}
+                                                    disabled={disabled}
                                                 >
                                                     {isLoading ? (
                                                         <span className={styles.loadingSpinner} />

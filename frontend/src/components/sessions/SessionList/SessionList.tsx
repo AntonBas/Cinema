@@ -1,8 +1,8 @@
-import React, { useMemo, useCallback } from 'react';
+import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { SessionScheduleResponse } from '@/types/session';
 import { AgeRatingDisplay, AgeRatingDescription } from '@/types/movie';
-import { Button } from '@/components/ui';
+import { Button } from '@/components/ui/Button/Button';
 import { Tooltip } from '@/components/ui/Tooltip/Tooltip';
 import styles from './SessionList.module.css';
 
@@ -19,11 +19,34 @@ interface MovieGroup {
 }
 
 const AGE_RATING_COLORS: Record<string, string> = {
-    'PEGI_3': styles.ageRatingGreen,
-    'PEGI_7': styles.ageRatingBlue,
-    'PEGI_12': styles.ageRatingYellow,
-    'PEGI_16': styles.ageRatingOrange,
-    'PEGI_18': styles.ageRatingRed
+    PEGI_3: styles.ageRatingGreen,
+    PEGI_7: styles.ageRatingBlue,
+    PEGI_12: styles.ageRatingYellow,
+    PEGI_16: styles.ageRatingOrange,
+    PEGI_18: styles.ageRatingRed,
+};
+
+const formatTime = (dateString: string): string => {
+    return new Date(dateString).toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+    });
+};
+
+const formatDuration = (minutes: number): string => {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return `${hours}h ${mins}m`;
+};
+
+const getMovieSlug = (title: string): string => {
+    return title
+        .toLowerCase()
+        .replace(/[^\w\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/--+/g, '-')
+        .trim();
 };
 
 export const SessionList: React.FC<SessionListProps> = ({ sessions }) => {
@@ -39,63 +62,21 @@ export const SessionList: React.FC<SessionListProps> = ({ sessions }) => {
                     movieTitle: session.movieTitle,
                     movieAgeRating: session.movieAgeRating,
                     movieDuration: session.movieDuration,
-                    sessions: []
+                    sessions: [],
                 };
             }
             groupedMap[session.movieId].sessions.push(session);
         });
 
-        const groupedArray = Object.values(groupedMap);
-
-        groupedArray.forEach(group => {
-            group.sessions.sort((a, b) =>
+        return Object.values(groupedMap).map(group => ({
+            ...group,
+            sessions: group.sessions.sort((a, b) =>
                 new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
-            );
-        });
-
-        return groupedArray;
+            ),
+        }));
     }, [sessions]);
 
-    const formatTime = useCallback((dateString: string): string => {
-        const date = new Date(dateString);
-        return date.toLocaleTimeString('en-US', {
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: false
-        });
-    }, []);
-
-    const formatDuration = useCallback((minutes: number): string => {
-        const hours = Math.floor(minutes / 60);
-        const mins = minutes % 60;
-        return `${hours}h ${mins}m`;
-    }, []);
-
-    const getMovieSlug = useCallback((title: string): string => {
-        return title
-            .toLowerCase()
-            .replace(/[^\w\s-]/g, '')
-            .replace(/\s+/g, '-')
-            .replace(/--+/g, '-')
-            .trim();
-    }, []);
-
-    const handleMovieClick = useCallback((movieTitle: string) => {
-        const slug = getMovieSlug(movieTitle);
-        navigate(`/movies/${slug}`);
-    }, [navigate, getMovieSlug]);
-
-    const handleSessionClick = useCallback((sessionId: number) => {
-        navigate(`/booking/${sessionId}`);
-    }, [navigate]);
-
-    const formatPrice = useCallback((price: number): string => {
-        return price.toFixed(0);
-    }, []);
-
-    if (sessions.length === 0) {
-        return null;
-    }
+    if (!sessions.length) return null;
 
     return (
         <div className={styles.container}>
@@ -108,9 +89,7 @@ export const SessionList: React.FC<SessionListProps> = ({ sessions }) => {
                                 alt={movieGroup.movieTitle}
                                 className={styles.poster}
                                 loading="lazy"
-                                onError={(e) => {
-                                    (e.target as HTMLImageElement).src = '/placeholder-poster.jpg';
-                                }}
+                                onError={(e) => (e.target as HTMLImageElement).src = '/placeholder-poster.jpg'}
                             />
                         </div>
 
@@ -120,8 +99,7 @@ export const SessionList: React.FC<SessionListProps> = ({ sessions }) => {
                                 <Button
                                     variant="secondary"
                                     size="small"
-                                    onClick={() => handleMovieClick(movieGroup.movieTitle)}
-                                    className={styles.movieButton}
+                                    onClick={() => navigate(`/movies/${getMovieSlug(movieGroup.movieTitle)}`)}
                                 >
                                     Details
                                 </Button>
@@ -133,7 +111,7 @@ export const SessionList: React.FC<SessionListProps> = ({ sessions }) => {
                                     position="top"
                                 >
                                     <span className={`${styles.ageRating} ${AGE_RATING_COLORS[movieGroup.movieAgeRating] || styles.ageRatingRed}`}>
-                                        {AgeRatingDisplay[movieGroup.movieAgeRating as keyof typeof AgeRatingDisplay] || movieGroup.movieAgeRating}
+                                        {AgeRatingDisplay[movieGroup.movieAgeRating as keyof typeof AgeRatingDisplay]}
                                     </span>
                                 </Tooltip>
                                 <span className={styles.duration}>{formatDuration(movieGroup.movieDuration)}</span>
@@ -153,14 +131,7 @@ export const SessionList: React.FC<SessionListProps> = ({ sessions }) => {
                                     <div
                                         key={session.id}
                                         className={`${styles.sessionCard} ${isAvailable ? styles.available : styles.unavailable}`}
-                                        onClick={() => {
-                                            if (isAvailable) {
-                                                handleSessionClick(session.id);
-                                            }
-                                        }}
-                                        role="button"
-                                        tabIndex={isAvailable ? 0 : -1}
-                                        aria-label={`Session at ${formatTime(session.startTime)} in ${session.hallName}`}
+                                        onClick={() => isAvailable && navigate(`/booking/${session.id}`)}
                                     >
                                         <div className={styles.sessionTime}>
                                             <div className={styles.timeRange}>
@@ -172,16 +143,8 @@ export const SessionList: React.FC<SessionListProps> = ({ sessions }) => {
                                         </div>
 
                                         <div className={styles.sessionInfo}>
-                                            <div className={styles.price}>
-                                                ₴{formatPrice(session.basePrice)}
-                                            </div>
-
-                                            <div className={styles.seats}>
-                                                <span className={styles.seatsCount}>
-                                                    Available: {session.availableSeats}
-                                                </span>
-                                            </div>
-
+                                            <div className={styles.price}>₴{session.basePrice.toFixed(0)}</div>
+                                            <div className={styles.seats}>Available: {session.availableSeats}</div>
                                             <div className={styles.sessionStatus}>
                                                 <span className={styles.statusBadge}>
                                                     {isAvailable ? 'Book Now' : 'Sold Out'}

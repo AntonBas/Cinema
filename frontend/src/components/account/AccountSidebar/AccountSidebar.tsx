@@ -9,44 +9,15 @@ interface SidebarItem {
     icon: string;
 }
 
-interface AccountSidebarProps {
-    activePage: string;
-}
+const SIDEBAR_ITEMS: SidebarItem[] = [
+    { id: 'overview', label: 'Overview', path: '/account', icon: '🏠' },
+    { id: 'tickets', label: 'My Tickets', path: '/account/tickets', icon: '🎫' },
+    { id: 'bonuses', label: 'Bonuses', path: '/account/bonuses', icon: '🎁' },
+    { id: 'security', label: 'Security', path: '/account/security', icon: '🔒' },
+];
 
-export const AccountSidebar: React.FC<AccountSidebarProps> = ({ }) => {
+export const AccountSidebar: React.FC = () => {
     const location = useLocation();
-
-    const sidebarItems: SidebarItem[] = [
-        {
-            id: 'overview',
-            label: 'Overview',
-            path: '/account',
-            icon: '🏠'
-        },
-
-        {
-            id: 'tickets',
-            label: 'My Tickets',
-            path: '/account/tickets',
-            icon: '🎫'
-        },
-        {
-            id: 'bonuses',
-            label: 'Bonuses',
-            path: '/account/bonuses',
-            icon: '🎁'
-        },
-        {
-            id: 'security',
-            label: 'Security',
-            path: '/account/security',
-            icon: '🔒'
-        }
-    ];
-
-    const isActive = (path: string) => {
-        return location.pathname === path;
-    };
 
     return (
         <aside className={styles.sidebar}>
@@ -56,12 +27,11 @@ export const AccountSidebar: React.FC<AccountSidebarProps> = ({ }) => {
 
             <nav className={styles.sidebarNav}>
                 <ul className={styles.sidebarList}>
-                    {sidebarItems.map((item) => (
+                    {SIDEBAR_ITEMS.map(item => (
                         <li key={item.id} className={styles.sidebarItem}>
                             <Link
                                 to={item.path}
-                                className={`${styles.sidebarLink} ${isActive(item.path) ? styles.active : ''
-                                    }`}
+                                className={`${styles.sidebarLink} ${location.pathname === item.path ? styles.active : ''}`}
                             >
                                 <span className={styles.sidebarIcon}>{item.icon}</span>
                                 <span className={styles.sidebarLabel}>{item.label}</span>

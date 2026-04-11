@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Layout } from '@/components/layout/Layout/Layout';
 import { AccountSidebar } from '@/components/account/AccountSidebar/AccountSidebar';
 import { UserProfileCard } from '@/components/account/OverviewSection/UserProfileCard/UserProfileCard';
@@ -10,48 +10,19 @@ import type { UserUpdateRequest } from '@/types/user';
 import styles from './ProfilePage.module.css';
 
 export const ProfilePage: React.FC = () => {
-    const {
-        profile,
-        loading,
-        error,
-        getProfile,
-        updateProfile
-    } = useUser();
-
+    const { profile, loading, profileError, getProfile, updateProfile } = useUser();
     const [isEditing, setIsEditing] = useState(false);
-    const [localError, setLocalError] = useState<string | null>(null);
-    const [initialLoadDone, setInitialLoadDone] = useState(false);
 
     const showLoading = useDelayedLoading(loading);
 
     useEffect(() => {
-        if (!initialLoadDone && !profile) {
-            setInitialLoadDone(true);
-            getProfile().catch((err) => {
-                setLocalError(err instanceof Error ? err.message : 'Failed to load profile');
-            });
-        }
-    }, [getProfile, initialLoadDone, profile]);
+        getProfile();
+    }, [getProfile]);
 
-    const handleEditStart = useCallback(() => {
-        setIsEditing(true);
-        setLocalError(null);
-    }, []);
-
-    const handleEditCancel = useCallback(() => {
+    const handleProfileUpdated = async (formData: UserUpdateRequest) => {
+        await updateProfile(formData);
         setIsEditing(false);
-        setLocalError(null);
-    }, []);
-
-    const handleProfileUpdated = useCallback(async (formData: UserUpdateRequest) => {
-        try {
-            await updateProfile(formData);
-            setIsEditing(false);
-            setLocalError(null);
-        } catch (err) {
-            setLocalError(err instanceof Error ? err.message : 'Failed to update profile');
-        }
-    }, [updateProfile]);
+    };
 
     if (showLoading && !profile) {
         return (
@@ -65,29 +36,15 @@ export const ProfilePage: React.FC = () => {
         );
     }
 
-    if (error && !profile) {
+    if (profileError || !profile) {
         return (
             <Layout>
                 <div className={styles.profilePage}>
                     <div className={styles.container}>
-                        <AccountSidebar activePage="profile" />
+                        <AccountSidebar />
                         <div className={styles.content}>
-                            <div className={styles.notification} data-type="error">
-                                Failed to load user data. Please try again later.
-                            </div>
+                            <div className={styles.error}>Failed to load profile. Please try again.</div>
                         </div>
-                    </div>
-                </div>
-            </Layout>
-        );
-    }
-
-    if (!profile) {
-        return (
-            <Layout>
-                <div className={styles.profilePage}>
-                    <div className={styles.loading}>
-                        <LoadingSpinner text="Loading your account..." />
                     </div>
                 </div>
             </Layout>
@@ -98,37 +55,17 @@ export const ProfilePage: React.FC = () => {
         <Layout>
             <div className={styles.profilePage}>
                 <div className={styles.container}>
-                    <AccountSidebar activePage="profile" />
+                    <AccountSidebar />
 
                     <div className={styles.content}>
-                        {localError && (
-                            <div className={styles.notification} data-type="error">
-                                {localError}
-                            </div>
-                        )}
-
                         <div className={styles.header}>
-                            <h1 className={styles.title}>
-                                {isEditing ? 'Edit Profile' : 'My Profile'}
-                            </h1>
-                            <p className={styles.subtitle}>
-                                {isEditing
-                                    ? 'Update your personal information'
-                                    : 'Manage your account information and preferences'}
-                            </p>
+                            <h1 className={styles.title}>{isEditing ? 'Edit Profile' : 'My Profile'}</h1>
                         </div>
 
-                        {!isEditing && profile.verificationStatus === 'NOT_VERIFIED' && (
+                        {profile.verificationStatus === 'NOT_VERIFIED' && (
                             <div className={styles.verificationBanner}>
-                                <div className={styles.bannerContent}>
-                                    <span className={styles.bannerIcon}>📅</span>
-                                    <div>
-                                        <p className={styles.bannerTitle}>Verify Your Date of Birth</p>
-                                        <p className={styles.bannerText}>
-                                            To verify your age, please visit the cinema cash desk.
-                                        </p>
-                                    </div>
-                                </div>
+                                <span>📅</span>
+                                <p>Verify your date of birth at the cinema cash desk to access birthday bonuses.</p>
                             </div>
                         )}
 
@@ -136,14 +73,12 @@ export const ProfilePage: React.FC = () => {
                             {isEditing ? (
                                 <ProfileEditForm
                                     user={profile}
-                                    onCancel={handleEditCancel}
+                                    onCancel={() => setIsEditing(false)}
                                     onSuccess={handleProfileUpdated}
+                                    loading={loading}
                                 />
                             ) : (
-                                <UserProfileCard
-                                    user={profile}
-                                    onEdit={handleEditStart}
-                                />
+                                <UserProfileCard user={profile} onEdit={() => setIsEditing(true)} />
                             )}
                         </div>
                     </div>

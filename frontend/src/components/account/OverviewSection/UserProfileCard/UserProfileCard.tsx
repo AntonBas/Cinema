@@ -1,6 +1,7 @@
 import React from 'react';
 import type { UserProfileResponse } from '@/types/user';
-import { Button, Tooltip } from '@/components/ui';
+import { Button } from '@/components/ui/Button/Button';
+import { Tooltip } from '@/components/ui/Tooltip/Tooltip';
 import styles from './UserProfileCard.module.css';
 
 interface UserProfileCardProps {
@@ -8,24 +9,20 @@ interface UserProfileCardProps {
     onEdit: () => void;
 }
 
-export const UserProfileCard: React.FC<UserProfileCardProps> = ({ user, onEdit }) => {
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        });
-    };
+const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+    });
+};
 
+export const UserProfileCard: React.FC<UserProfileCardProps> = ({ user, onEdit }) => {
     return (
         <div className={styles.profileCard}>
             <div className={styles.cardHeader}>
                 <h2 className={styles.cardTitle}>Profile Information</h2>
-                <Button
-                    variant="primary"
-                    onClick={onEdit}
-                    style={{ minWidth: '120px' }}
-                >
+                <Button variant="primary" onClick={onEdit} className={styles.editButton}>
                     Edit Profile
                 </Button>
             </div>
@@ -33,9 +30,7 @@ export const UserProfileCard: React.FC<UserProfileCardProps> = ({ user, onEdit }
             <div className={styles.cardContent}>
                 <div className={styles.profileSection}>
                     <div className={styles.userInfo}>
-                        <h3 className={styles.userName}>
-                            {user.firstName} {user.lastName}
-                        </h3>
+                        <h3 className={styles.userName}>{user.firstName} {user.lastName}</h3>
                         <p className={styles.userEmail}>{user.email}</p>
                     </div>
                 </div>
@@ -59,32 +54,22 @@ export const UserProfileCard: React.FC<UserProfileCardProps> = ({ user, onEdit }
                     <div className={styles.detailItem}>
                         <span className={styles.detailLabel}>
                             Phone Number
-                            <Tooltip
-                                content="We'll call you if there are changes or cancellations to your movie sessions"
-                                position="top"
-                            >
+                            <Tooltip content="We'll call you if there are changes or cancellations to your movie sessions" position="top">
                                 <span className={styles.tooltipIcon}>ℹ️</span>
                             </Tooltip>
                         </span>
-                        <span className={styles.detailValue}>
-                            {user.phoneNumber || 'Not provided'}
-                        </span>
+                        <span className={styles.detailValue}>{user.phoneNumber || 'Not provided'}</span>
                     </div>
 
                     <div className={styles.detailItem}>
                         <span className={styles.detailLabel}>City</span>
-                        <span className={styles.detailValue}>
-                            {user.city || 'Not provided'}
-                        </span>
+                        <span className={styles.detailValue}>{user.city || 'Not provided'}</span>
                     </div>
 
                     <div className={styles.detailItem}>
                         <span className={styles.detailLabel}>
                             Date of Birth
-                            <Tooltip
-                                content="Add your birthday to get special discounts! You'll need to verify your ID at the cinema to claim your birthday offer"
-                                position="top"
-                            >
+                            <Tooltip content="Add your birthday to get special discounts! You'll need to verify your ID at the cinema to claim your birthday offer" position="top">
                                 <span className={styles.tooltipIcon}>ℹ️</span>
                             </Tooltip>
                         </span>

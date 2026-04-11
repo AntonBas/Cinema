@@ -1,5 +1,4 @@
 import React from 'react';
-import { Check } from 'lucide-react';
 import styles from './ProgressStepper.module.css';
 import clsx from 'clsx';
 
@@ -32,33 +31,29 @@ export const ProgressStepper: React.FC<ProgressStepperProps> = ({
                     const isUpcoming = step.id > currentStep;
 
                     return (
-                        <React.Fragment key={step.id}>
-                            <div className={styles.stepWrapper}>
-                                <div className={styles.stepContainer}>
-                                    <div className={clsx(
-                                        styles.stepCircle,
-                                        isCompleted && styles.completed,
-                                        isActive && styles.active,
-                                        isUpcoming && styles.upcoming
-                                    )}>
-                                        {isCompleted ? (
-                                            <Check size={16} className={styles.checkIcon} />
-                                        ) : (
-                                            showStepNumbers && (
-                                                <span className={styles.stepNumber}>{step.id}</span>
-                                            )
-                                        )}
-                                    </div>
+                        <div key={step.id} className={styles.stepWrapper}>
+                            <div className={styles.stepContainer}>
+                                <div className={clsx(
+                                    styles.stepCircle,
+                                    isCompleted && styles.completed,
+                                    isActive && styles.active,
+                                    isUpcoming && styles.upcoming
+                                )}>
+                                    {isCompleted ? (
+                                        <span className={styles.checkIcon}>✓</span>
+                                    ) : (
+                                        showStepNumbers && <span className={styles.stepNumber}>{step.id}</span>
+                                    )}
+                                </div>
 
-                                    <div className={styles.stepContent}>
-                                        <div className={clsx(
-                                            styles.stepTitle,
-                                            isCompleted && styles.completed,
-                                            isActive && styles.active,
-                                            isUpcoming && styles.upcoming
-                                        )}>
-                                            {step.title}
-                                        </div>
+                                <div className={styles.stepContent}>
+                                    <div className={clsx(
+                                        styles.stepTitle,
+                                        isCompleted && styles.completedTitle,
+                                        isActive && styles.activeTitle,
+                                        isUpcoming && styles.upcomingTitle
+                                    )}>
+                                        {step.title}
                                     </div>
                                 </div>
                             </div>
@@ -66,12 +61,10 @@ export const ProgressStepper: React.FC<ProgressStepperProps> = ({
                             {showConnectors && index < steps.length - 1 && (
                                 <div className={clsx(
                                     styles.connector,
-                                    isCompleted && styles.completed,
-                                    isActive && styles.active,
-                                    isUpcoming && styles.upcoming
+                                    isCompleted && styles.completedConnector
                                 )} />
                             )}
-                        </React.Fragment>
+                        </div>
                     );
                 })}
             </div>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSeatReservation } from '@/hooks/features/seatReservation/useSeatReservation';
 import { useBonus } from '@/hooks/features/bonus/useBonus';
@@ -8,136 +8,76 @@ import { BookingSidebar } from '@/components/booking/BookingSidebar/BookingSideb
 import { ProgressStepper } from '@/components/booking/ProgressStepper/ProgressStepper';
 import { BOOKING_STEPS } from '@/components/booking/ProgressStepper/bookingSteps';
 import { Layout } from '@/components/layout/Layout/Layout';
+import { useNotification } from '@/hooks/common/useNotification';
 import { Notification } from '@/components/ui/Notification/Notification';
-import type { SelectedSeat } from '@/hooks/features/seatReservation/useSeatReservation';
 import type { SeatInfo } from '@/types/seatReservation';
-import type { NotificationType } from '@/components/ui/Notification/Notification';
 import styles from './BookingPage.module.css';
-
-interface NotificationState {
-    id: string;
-    message: string;
-    type: NotificationType;
-    isVisible: boolean;
-}
 
 export const BookingPage: React.FC = () => {
     const { sessionId } = useParams<{ sessionId: string }>();
     const navigate = useNavigate();
     const sessionIdNum = parseInt(sessionId || '0');
-    const [selectionError, setSelectionError] = useState<string | null>(null);
-    const [notifications, setNotifications] = useState<NotificationState[]>([]);
+
+    const { notifications, showNotification, hideNotification } = useNotification();
 
     const {
         data: seatData,
-        availableSeatsCount,
+        loading,
         selectedSeats,
         totalPrice,
-        loading,
         getSeatAvailability,
-        selectSeat: hookSelectSeat,
+        selectSeat,
         deselectSeat,
         isSeatSelected,
         updateSeatTicketType,
-        hasData,
-        totalSelected,
-        loadingSeats
     } = useSeatReservation(sessionIdNum);
 
-    const { myBalance, getMyBalance } = useBonus();
+    const { getMyBalance } = useBonus();
     const { create, loading: bookingLoading } = useBooking();
 
-    const loadBonusDataRef = React.useRef(getMyBalance);
-
     useEffect(() => {
-        loadBonusDataRef.current = getMyBalance;
-    }, [getMyBalance]);
-
-    useEffect(() => {
-        if (sessionIdNum && !hasData && !loading) {
+        if (sessionIdNum) {
             getSeatAvailability();
+            getMyBalance();
         }
-    }, [sessionIdNum, hasData, loading, getSeatAvailability]);
-
-    useEffect(() => {
-        if (sessionIdNum && seatData) {
-            const loadBonusData = async () => {
-                try {
-                    const token = localStorage.getItem('authToken');
-                    if (!token) return;
-                    await loadBonusDataRef.current();
-                } catch (error) {
-                    showNotification('Failed to load bonus data', 'error');
-                }
-            };
-            loadBonusData();
-        }
-    }, [sessionIdNum, seatData]);
-
-    const showNotification = useCallback((message: string, type: NotificationType = 'info') => {
-        const id = Date.now().toString();
-        setNotifications(prev => [...prev, { id, message, type, isVisible: true }]);
-    }, []);
-
-    const closeNotification = useCallback((id: string) => {
-        setNotifications(prev => prev.map(notification =>
-            notification.id === id ? { ...notification, isVisible: false } : notification
-        ));
-        setTimeout(() => {
-            setNotifications(prev => prev.filter(notification => notification.id !== id));
-        }, 300);
-    }, []);
+    }, [sessionIdNum, getSeatAvailability, getMyBalance]);
 
     const handleSeatClick = async (seatId: number) => {
-        try {
-            setSelectionError(null);
-            const seat = seatData?.seats.find((s: SeatInfo) => s.id === seatId);
-            if (!seat) throw new Error('Seat not found');
+        const seat = seatData?.seats.find((s: SeatInfo) => s.id === seatId);
+        if (!seat) return;
 
-            if (isSeatSelected(seatId)) {
-                await deselectSeat(seatId);
-            } else {
-                await hookSelectSeat(seat);
-            }
-        } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'Failed to select seat';
-            setSelectionError(errorMessage);
-            showNotification(errorMessage, 'error');
+        if (isSeatSelected(seatId)) {
+            await deselectSeat(seatId);
+        } else {
+            await selectSeat(seat);
         }
     };
 
     const handleBooking = async (bonusPointsToUse: number) => {
-        if (totalSelected === 0) {
+        if (!selectedSeats.length) {
             showNotification('Please select at least one seat', 'warning');
             return;
         }
 
-        try {
-            const token = localStorage.getItem('authToken');
-            if (!token) {
-                showNotification('You need to be logged in to book tickets', 'warning');
-                return;
-            }
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            showNotification('You need to be logged in to book tickets', 'warning');
+            return;
+        }
 
-            const seats = selectedSeats.map(seat => ({
-                seatId: seat.seat.id,
-                ticketTypeId: seat.ticketTypeId
-            }));
+        const seats = selectedSeats.map(seat => ({
+            seatId: seat.seat.id,
+            ticketTypeId: seat.ticketTypeId,
+        }));
 
-            const response = await create({
-                sessionId: sessionIdNum,
-                seats,
-                bonusPointsToUse: bonusPointsToUse > 0 ? bonusPointsToUse : undefined
-            });
+        const response = await create({
+            sessionId: sessionIdNum,
+            seats,
+            bonusPointsToUse: bonusPointsToUse > 0 ? bonusPointsToUse : undefined,
+        });
 
-            if (response) {
-                showNotification('Booking created successfully!', 'success');
-                await getSeatAvailability();
-                setTimeout(() => navigate(`/booking/summary/${response.id}`), 1000);
-            }
-        } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'Failed to create booking';
-            showNotification(`Booking failed: ${errorMessage}`, 'error');
+        if (response) {
+            navigate(`/booking/summary/${response.id}`);
         }
     };
 
@@ -160,44 +100,33 @@ export const BookingPage: React.FC = () => {
     return (
         <Layout>
             <div className={styles.bookingPage}>
-                {notifications.map((notification) => (
+                {notifications.map(notification => (
                     <Notification
                         key={notification.id}
                         id={notification.id}
                         message={notification.message}
                         type={notification.type}
                         isVisible={notification.isVisible}
-                        onClose={closeNotification}
+                        onClose={hideNotification}
                     />
                 ))}
 
-                <ProgressStepper
-                    steps={BOOKING_STEPS}
-                    currentStep={1}
-                    className={styles.stepper}
-                />
+                <ProgressStepper steps={BOOKING_STEPS} currentStep={1} className={styles.stepper} />
 
                 <div className={styles.header}>
                     <h1>{seatData.movieTitle}</h1>
                     <div className={styles.sessionInfo}>
                         <span>{seatData.hallName}</span>
-                        <span>Available seats: {availableSeatsCount || seatData.availableSeats}</span>
+                        <span>Available seats: {seatData.availableSeats}</span>
                         <span>Base Price: {parseFloat(seatData.basePrice).toFixed(2)}₴</span>
                     </div>
                 </div>
-
-                {selectionError && (
-                    <div className={styles.selectionError}>
-                        Error: {selectionError}
-                    </div>
-                )}
 
                 <div className={styles.content}>
                     <div className={styles.hallSection}>
                         <CinemaHall
                             seats={seatData.seats}
-                            selectedSeats={selectedSeats.map((s: SelectedSeat) => s.seat.id)}
-                            loadingSeats={loadingSeats}
+                            selectedSeats={selectedSeats.map(s => s.seat.id)}
                             onSeatClick={handleSeatClick}
                         />
                     </div>
@@ -206,12 +135,9 @@ export const BookingPage: React.FC = () => {
                         <BookingSidebar
                             selectedSeats={selectedSeats}
                             totalPrice={totalPrice}
-                            sessionId={sessionIdNum}
                             onTicketTypeChange={updateSeatTicketType}
                             onBooking={handleBooking}
                             isBooking={bookingLoading}
-                            maxUsablePoints={myBalance?.maxUsablePoints || 0}
-                            minUsablePoints={myBalance?.minUsablePoints || 0}
                         />
                     </div>
                 </div>

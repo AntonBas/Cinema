@@ -9,64 +9,36 @@ interface SuccessModalProps {
   onClose: () => void;
 }
 
-const PasswordResetSuccessModal: React.FC<SuccessModalProps> = ({
-  isOpen,
-  onClose
-}) => {
-  return (
-    <Modal isOpen={isOpen} onClose={onClose} size="small">
-      <div className={styles.successContent}>
-        <div className={styles.successAnimation}>
-          <div className={styles.successIcon}></div>
-        </div>
-
-        <div className={styles.successText}>
-          <h3 className={styles.successTitle}>Password Reset!</h3>
-          <p className={styles.successMessage}>
-            Your password has been successfully changed
-          </p>
-        </div>
-
-        <div className={styles.modalActions}>
-          <Button
-            variant="primary"
-            onClick={onClose}
-            style={{ minWidth: '120px' }}
-          >
-            Continue to Login
-          </Button>
-        </div>
-      </div>
-    </Modal>
-  );
-};
+const PasswordResetSuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose }) => (
+  <Modal isOpen={isOpen} onClose={onClose} size="small">
+    <div className={styles.successContent}>
+      <div className={styles.successIcon}>✅</div>
+      <h3>Password Reset!</h3>
+      <p>Your password has been successfully changed</p>
+      <Button variant="primary" onClick={onClose}>
+        Continue to Login
+      </Button>
+    </div>
+  </Modal>
+);
 
 export const ResetPasswordForm: React.FC = () => {
   const { token } = useParams<{ token: string }>();
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({
-    newPassword: '',
-    confirmPassword: ''
-  });
+  const { loading, error, resetPassword } = useAuthActions();
+
+  const [formData, setFormData] = useState({ newPassword: '', confirmPassword: '' });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [localError, setLocalError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const { resetPassword, isResettingPassword } = useAuthActions();
 
   const handleChange = (field: string, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    setFormData(prev => ({ ...prev, [field]: value }));
     if (formErrors[field]) {
       setFormErrors(prev => ({ ...prev, [field]: '' }));
     }
-    if (localError) setLocalError(null);
   };
 
-  const validateForm = () => {
+  const validateForm = (): boolean => {
     const errors: Record<string, string> = {};
 
     if (!formData.newPassword) {
@@ -87,92 +59,54 @@ export const ResetPasswordForm: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLocalError(null);
+    if (!validateForm() || !token) return;
 
-    if (!validateForm()) {
-      return;
-    }
-
-    if (!token) {
-      setLocalError('Reset token is missing');
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      await resetPassword(token, formData.newPassword);
+    const result = await resetPassword(token, formData.newPassword);
+    if (result) {
       setShowSuccessModal(true);
-    } catch (err: any) {
-      const errorMessage = err.message || 'Failed to reset password';
-      if (errorMessage.includes('cannot be the same')) {
-        setLocalError('New password cannot be the same as your current password');
-      } else {
-        setLocalError(errorMessage);
-      }
-    } finally {
-      setIsSubmitting(false);
     }
   };
-
-  const handleModalClose = () => {
-    setShowSuccessModal(false);
-    navigate('/login');
-  };
-
-  const isLoading = isSubmitting || isResettingPassword;
 
   return (
     <section className={styles.resetPassword}>
       <div className={styles.resetPasswordContainer}>
-        <h1 className={styles.resetPasswordTitle}>
-          Create New Password
-        </h1>
+        <h1 className={styles.resetPasswordTitle}>Create New Password</h1>
 
-        {localError && (
-          <div className={styles.notification} data-type="error">
-            {localError}
-          </div>
+        {error && (
+          <div className={styles.error}>{error.message}</div>
         )}
 
         <form onSubmit={handleSubmit} className={styles.resetPasswordForm}>
-          <div className={styles.formSection}>
+          <Input
+            type="password"
+            placeholder="Enter new password"
+            value={formData.newPassword}
+            onChange={v => handleChange('newPassword', v)}
+            disabled={loading}
+            error={formErrors.newPassword}
+          />
 
-            <Input
-              type="password"
-              placeholder="Enter new password"
-              value={formData.newPassword}
-              onChange={(value) => handleChange('newPassword', value)}
-              disabled={isLoading}
-              error={formErrors.newPassword}
-            />
+          <Input
+            type="password"
+            placeholder="Confirm new password"
+            value={formData.confirmPassword}
+            onChange={v => handleChange('confirmPassword', v)}
+            disabled={loading}
+            error={formErrors.confirmPassword}
+          />
 
-            <Input
-              type="password"
-              placeholder="Confirm new password"
-              value={formData.confirmPassword}
-              onChange={(value) => handleChange('confirmPassword', value)}
-              disabled={isLoading}
-              error={formErrors.confirmPassword}
-            />
-          </div>
-
-          <Button
-            type="submit"
-            variant="primary"
-            size="large"
-            loading={isLoading}
-            disabled={isLoading}
-            style={{ width: '100%' }}
-          >
-            {isLoading ? 'Resetting...' : 'Reset Password'}
+          <Button type="submit" variant="primary" loading={loading} disabled={loading}>
+            Reset Password
           </Button>
         </form>
       </div>
 
       <PasswordResetSuccessModal
         isOpen={showSuccessModal}
-        onClose={handleModalClose}
+        onClose={() => {
+          setShowSuccessModal(false);
+          navigate('/login');
+        }}
       />
     </section>
   );

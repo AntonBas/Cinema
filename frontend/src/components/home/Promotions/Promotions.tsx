@@ -10,6 +10,19 @@ interface PromotionsProps {
     claimedPromotionIds?: number[];
 }
 
+const ITEMS_TO_SHOW = 3;
+const AUTO_PLAY_INTERVAL = 5000;
+
+const formatDate = (dateString?: string): string => {
+    if (!dateString) return '';
+    return new Date(dateString).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+};
+
+const isExpired = (endDate?: string): boolean => {
+    if (!endDate) return false;
+    return new Date(endDate) < new Date();
+};
+
 export const Promotions: React.FC<PromotionsProps> = ({
     promotions,
     loading,
@@ -18,56 +31,28 @@ export const Promotions: React.FC<PromotionsProps> = ({
 }) => {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isHovered, setIsHovered] = useState(false);
-    const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const [claimingId, setClaimingId] = useState<number | null>(null);
-    const itemsToShow = 3;
+    const timerRef = useRef<number | null>(null);
 
-    const maxIndex = Math.max(0, promotions.length - itemsToShow);
+    const maxIndex = Math.max(0, promotions.length - ITEMS_TO_SHOW);
 
     const nextSlide = () => {
-        setCurrentIndex((prev) => (prev >= maxIndex ? 0 : prev + 1));
+        setCurrentIndex(prev => (prev >= maxIndex ? 0 : prev + 1));
     };
 
     const prevSlide = () => {
-        setCurrentIndex((prev) => (prev <= 0 ? maxIndex : prev - 1));
-    };
-
-    const goToSlide = (index: number) => {
-        setCurrentIndex(Math.min(Math.max(0, index), maxIndex));
+        setCurrentIndex(prev => (prev <= 0 ? maxIndex : prev - 1));
     };
 
     useEffect(() => {
-        if (isHovered || loading || promotions.length <= itemsToShow) return;
+        if (isHovered || loading || promotions.length <= ITEMS_TO_SHOW) return;
 
-        if (timerRef.current) {
-            clearInterval(timerRef.current);
-        }
-
-        timerRef.current = setInterval(() => {
-            nextSlide();
-        }, 5000);
+        timerRef.current = window.setInterval(nextSlide, AUTO_PLAY_INTERVAL);
 
         return () => {
-            if (timerRef.current) {
-                clearInterval(timerRef.current);
-            }
+            if (timerRef.current) clearInterval(timerRef.current);
         };
-    }, [isHovered, loading, promotions.length]);
-
-    const formatDate = (dateString?: string): string => {
-        if (!dateString) return '';
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    };
-
-    const isExpired = (endDate?: string): boolean => {
-        if (!endDate) return false;
-        return new Date(endDate) < new Date();
-    };
-
-    const isClaimed = (promotionId: number): boolean => {
-        return claimedPromotionIds.includes(promotionId);
-    };
+    }, [isHovered, loading, promotions.length, maxIndex]);
 
     const handleClaim = async (promotionId: number, title: string) => {
         if (claimingId) return;
@@ -92,11 +77,10 @@ export const Promotions: React.FC<PromotionsProps> = ({
         );
     }
 
-    if (!promotions || promotions.length === 0) {
-        return null;
-    }
+    if (!promotions.length) return null;
 
-    const visiblePromotions = promotions.slice(currentIndex, currentIndex + itemsToShow);
+    const visiblePromotions = promotions.slice(currentIndex, currentIndex + ITEMS_TO_SHOW);
+    const isClaimed = (id: number) => claimedPromotionIds.includes(id);
 
     return (
         <section
@@ -110,14 +94,8 @@ export const Promotions: React.FC<PromotionsProps> = ({
                 </div>
 
                 <div className={styles.carouselContainer}>
-                    {promotions.length > itemsToShow && (
-                        <Button
-                            variant="outline"
-                            size="small"
-                            className={styles.navButton}
-                            onClick={prevSlide}
-                            aria-label="Previous offers"
-                        >
+                    {promotions.length > ITEMS_TO_SHOW && (
+                        <Button variant="outline" size="small" className={styles.navButton} onClick={prevSlide}>
                             &#10094;
                         </Button>
                     )}
@@ -130,12 +108,13 @@ export const Promotions: React.FC<PromotionsProps> = ({
                                 const isClaiming = claimingId === promo.id;
 
                                 return (
-                                    <div key={promo.id} className={`${styles.promoCard} ${expired ? styles.expired : ''} ${claimed ? styles.claimed : ''}`}>
+                                    <div
+                                        key={promo.id}
+                                        className={`${styles.promoCard} ${expired ? styles.expired : ''} ${claimed ? styles.claimed : ''}`}
+                                    >
                                         <div className={styles.promoContent}>
                                             <h3 className={styles.promoTitle}>{promo.title}</h3>
-                                            {promo.description && (
-                                                <p className={styles.promoDescription}>{promo.description}</p>
-                                            )}
+                                            {promo.description && <p className={styles.promoDescription}>{promo.description}</p>}
                                             <div className={styles.promoDetails}>
                                                 <span className={styles.bonusPoints}>+{promo.bonusPoints} points</span>
                                                 {promo.startDate && promo.endDate && (
@@ -153,9 +132,8 @@ export const Promotions: React.FC<PromotionsProps> = ({
                                                     onClick={() => handleClaim(promo.id, promo.title)}
                                                     disabled={expired || claimed || isClaiming}
                                                     loading={isClaiming}
-                                                    className={styles.claimButton}
                                                 >
-                                                    {claimed ? '✓ Already Claimed' : expired ? 'Expired' : 'Claim Offer'}
+                                                    {claimed ? '✓ Claimed' : expired ? 'Expired' : 'Claim'}
                                                 </Button>
                                             )}
                                         </div>
@@ -165,27 +143,20 @@ export const Promotions: React.FC<PromotionsProps> = ({
                         </div>
                     </div>
 
-                    {promotions.length > itemsToShow && (
-                        <Button
-                            variant="outline"
-                            size="small"
-                            className={styles.navButton}
-                            onClick={nextSlide}
-                            aria-label="Next offers"
-                        >
+                    {promotions.length > ITEMS_TO_SHOW && (
+                        <Button variant="outline" size="small" className={styles.navButton} onClick={nextSlide}>
                             &#10095;
                         </Button>
                     )}
                 </div>
 
-                {promotions.length > itemsToShow && (
+                {promotions.length > ITEMS_TO_SHOW && (
                     <div className={styles.dots}>
                         {Array.from({ length: maxIndex + 1 }).map((_, idx) => (
                             <button
                                 key={idx}
                                 className={`${styles.dot} ${currentIndex === idx ? styles.dotActive : ''}`}
-                                onClick={() => goToSlide(idx)}
-                                aria-label={`Go to slide ${idx + 1}`}
+                                onClick={() => setCurrentIndex(idx)}
                             />
                         ))}
                     </div>

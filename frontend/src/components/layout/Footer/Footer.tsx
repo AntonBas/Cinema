@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import styles from './Footer.module.css';
 
 export const Footer: React.FC = () => {
@@ -10,20 +11,14 @@ export const Footer: React.FC = () => {
         <div className={styles.footerSection}>
           <h3>Cinema</h3>
           <p>Your ultimate movie experience</p>
-          <div className={styles.socialLinks}>
-            <a href="#" className={styles.socialLink} aria-label="Movies">🎬</a>
-            <a href="#" className={styles.socialLink} aria-label="TV Shows">📺</a>
-            <a href="#" className={styles.socialLink} aria-label="Theater">🎭</a>
-          </div>
         </div>
 
         <div className={styles.footerSection}>
           <h4>Quick Links</h4>
           <ul>
-            <li><a href="/">Home</a></li>
-            <li><a href="/movies">Movies</a></li>
-            <li><a href="/schedule">Schedule</a></li>
-            <li><a href="/about">About Us</a></li>
+            <li><Link to="/">Home</Link></li>
+            <li><Link to="/movies/current">Movies</Link></li>
+            <li><Link to="/schedule">Schedule</Link></li>
           </ul>
         </div>
 
@@ -39,17 +34,24 @@ export const Footer: React.FC = () => {
         <div className={styles.footerSection}>
           <h4>Follow Us</h4>
           {/* <div className={styles.socialIcons}>
-            <a href="#" className={styles.socialIcon} aria-label="Facebook">📘</a>
-            <a href="#" className={styles.socialIcon} aria-label="Instagram">📸</a>
-            <a href="#" className={styles.socialIcon} aria-label="Twitter">🐦</a>
-          </div> */}
+                        <a href="#" className={styles.socialIcon} aria-label="Facebook">📘</a>
+                        <a href="#" className={styles.socialIcon} aria-label="Instagram">📸</a>
+                        <a href="#" className={styles.socialIcon} aria-label="Twitter">🐦</a>
+                    </div> */}
         </div>
       </div>
 
       <div className={styles.footerBottom}>
         <div className={styles.footerDeveloper}>
           <span>Developed by </span>
-          <a href="https://www.linkedin.com/in/anton-bas-244465169/" target="_blank" rel="noopener noreferrer" className={styles.developerName}>Anton Bas </a>
+          <a
+            href="https://www.linkedin.com/in/anton-bas-244465169/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={styles.developerName}
+          >
+            Anton Bas
+          </a>
         </div>
         <div className={styles.footerCopyright}>
           © {currentYear} Cinema. All rights reserved.

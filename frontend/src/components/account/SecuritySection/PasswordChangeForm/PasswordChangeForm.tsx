@@ -1,39 +1,26 @@
 import React, { useState } from 'react';
 import { useUser } from '@/hooks/features/user/useUser';
-import { Input, Button, Notification } from '@/components/ui';
+import { Input, Button } from '@/components/ui';
 import type { UserPasswordUpdateRequest } from '@/types/user';
-import { isApiErrorException } from '@/utils/apiErrorHandler';
 import styles from './PasswordChangeForm.module.css';
 
 export const PasswordChangeForm: React.FC = () => {
-    const { updatePassword, isPasswordUpdating } = useUser();
+    const { updatePassword, loading } = useUser();
     const [formData, setFormData] = useState({
         currentPassword: '',
         newPassword: '',
         confirmPassword: ''
     });
-    const [showSuccess, setShowSuccess] = useState(false);
-    const [showError, setShowError] = useState(false);
-    const [errorMessage, setErrorMessage] = useState('');
     const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
     const handleChange = (field: string, value: string) => {
-        setFormData(prev => ({
-            ...prev,
-            [field]: value
-        }));
-
+        setFormData(prev => ({ ...prev, [field]: value }));
         if (formErrors[field]) {
             setFormErrors(prev => ({ ...prev, [field]: '' }));
         }
-        if (errorMessage) {
-            setErrorMessage('');
-        }
-        if (showSuccess) setShowSuccess(false);
-        if (showError) setShowError(false);
     };
 
-    const validateForm = () => {
+    const validateForm = (): boolean => {
         const errors: Record<string, string> = {};
 
         if (!formData.currentPassword) {
@@ -58,77 +45,22 @@ export const PasswordChangeForm: React.FC = () => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!validateForm()) return;
 
-        if (!validateForm()) {
-            return;
-        }
+        const passwordData: UserPasswordUpdateRequest = {
+            currentPassword: formData.currentPassword,
+            newPassword: formData.newPassword,
+            passwordConfirm: formData.confirmPassword
+        };
 
-        try {
-            const passwordData: UserPasswordUpdateRequest = {
-                currentPassword: formData.currentPassword,
-                newPassword: formData.newPassword,
-                passwordConfirm: formData.confirmPassword
-            };
-
-            await updatePassword(passwordData);
-            setShowSuccess(true);
-            setFormData({
-                currentPassword: '',
-                newPassword: '',
-                confirmPassword: ''
-            });
-            setFormErrors({});
-            setErrorMessage('');
-
-            setTimeout(() => {
-                setShowSuccess(false);
-            }, 5000);
-        } catch (err) {
-            if (isApiErrorException(err)) {
-                setErrorMessage(err.message);
-            } else if (err instanceof Error) {
-                setErrorMessage(err.message);
-            } else {
-                setErrorMessage('Failed to update password. Please try again.');
-            }
-            setShowError(true);
-
-            setTimeout(() => {
-                setShowError(false);
-            }, 5000);
-        }
+        await updatePassword(passwordData);
+        setFormData({ currentPassword: '', newPassword: '', confirmPassword: '' });
     };
 
     return (
         <div className={styles.passwordForm}>
-            {showSuccess && (
-                <Notification
-                    id="success"
-                    message="Password updated successfully!"
-                    type="success"
-                    isVisible={showSuccess}
-                    onClose={() => setShowSuccess(false)}
-                    duration={5000}
-                    isStatic={true}
-                />
-            )}
-
-            {showError && (
-                <Notification
-                    id="error"
-                    message={errorMessage}
-                    type="error"
-                    isVisible={showError}
-                    onClose={() => setShowError(false)}
-                    duration={5000}
-                    isStatic={true}
-                />
-            )}
-
             <h1 className={styles.title}>Change Password</h1>
-            <p className={styles.description}>
-                Update your password to keep your account secure.
-            </p>
+            <p className={styles.description}>Update your password to keep your account secure.</p>
 
             <form onSubmit={handleSubmit} className={styles.form}>
                 <div className={styles.formSection}>
@@ -138,8 +70,8 @@ export const PasswordChangeForm: React.FC = () => {
                         type="password"
                         placeholder="Enter your current password"
                         value={formData.currentPassword}
-                        onChange={(value) => handleChange('currentPassword', value)}
-                        disabled={isPasswordUpdating}
+                        onChange={value => handleChange('currentPassword', value)}
+                        disabled={loading}
                         error={formErrors.currentPassword}
                     />
 
@@ -147,8 +79,8 @@ export const PasswordChangeForm: React.FC = () => {
                         type="password"
                         placeholder="Enter new password (min 8 characters)"
                         value={formData.newPassword}
-                        onChange={(value) => handleChange('newPassword', value)}
-                        disabled={isPasswordUpdating}
+                        onChange={value => handleChange('newPassword', value)}
+                        disabled={loading}
                         error={formErrors.newPassword}
                     />
 
@@ -156,21 +88,14 @@ export const PasswordChangeForm: React.FC = () => {
                         type="password"
                         placeholder="Confirm your new password"
                         value={formData.confirmPassword}
-                        onChange={(value) => handleChange('confirmPassword', value)}
-                        disabled={isPasswordUpdating}
+                        onChange={value => handleChange('confirmPassword', value)}
+                        disabled={loading}
                         error={formErrors.confirmPassword}
                     />
                 </div>
 
-                <Button
-                    type="submit"
-                    variant="primary"
-                    size="large"
-                    loading={isPasswordUpdating}
-                    disabled={isPasswordUpdating}
-                    style={{ width: '100%' }}
-                >
-                    {isPasswordUpdating ? 'Updating Password...' : 'Update Password'}
+                <Button type="submit" variant="primary" loading={loading} disabled={loading} className={styles.submitButton}>
+                    Update Password
                 </Button>
             </form>
         </div>

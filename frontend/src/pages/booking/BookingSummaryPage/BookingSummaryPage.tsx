@@ -1,150 +1,45 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { ProgressStepper } from '@/components/booking/ProgressStepper/ProgressStepper';
 import { BOOKING_STEPS } from '@/components/booking/ProgressStepper/bookingSteps';
 import { Layout } from '@/components/layout/Layout/Layout';
+import { ConfirmModal } from '@/components/ui/ConfirmModal/ConfirmModal';
+import { useBooking } from '@/hooks/features/booking/useBooking';
+import { useNotification } from '@/hooks/common/useNotification';
 import { Notification } from '@/components/ui/Notification/Notification';
-import { Modal } from '@/components/ui/Modal/Modal';
-import { bookingApi } from '@/api/bookingApi';
-import type { BookingResponse } from '@/types/booking';
-import type { NotificationType } from '@/components/ui/Notification/Notification';
 import styles from './BookingSummaryPage.module.css';
-
-interface NotificationState {
-    id: string;
-    message: string;
-    type: NotificationType;
-    isVisible: boolean;
-}
-
-interface BookingStateData {
-    id: number;
-    bookingNumber: string;
-    movieTitle: string;
-    hallName: string;
-    sessionTime: string;
-    totalPrice: string;
-    finalPrice: string;
-    bonusPointsUsed: number;
-    bookedSeats: Array<{
-        seatNumber: string;
-        seatRow: number;
-        ticketType: string;
-        seatPrice: string;
-    }>;
-}
 
 export const BookingSummaryPage: React.FC = () => {
     const { bookingId } = useParams<{ bookingId: string }>();
     const navigate = useNavigate();
-    const location = useLocation();
-    const existingPaymentId = location.state?.existingPaymentId as number | null;
-
-    const [booking, setBooking] = useState<BookingResponse | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const [notifications, setNotifications] = useState<NotificationState[]>([]);
     const [showCancelModal, setShowCancelModal] = useState(false);
-    const [isCancelling, setIsCancelling] = useState(false);
+
+    const { notifications, hideNotification } = useNotification();
+    const { booking, loading, getById, cancel } = useBooking();
 
     useEffect(() => {
-        const fetchBooking = async () => {
-            if (!bookingId) return;
-
-            try {
-                setLoading(true);
-                const response = await bookingApi.getById(parseInt(bookingId));
-                if (response?.data) {
-                    setBooking(response.data);
-                }
-            } catch (err) {
-                const errorMessage = err instanceof Error ? err.message : 'Failed to load booking';
-                setError(errorMessage);
-                showNotification(errorMessage, 'error');
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchBooking();
-    }, [bookingId]);
+        if (bookingId) {
+            getById(parseInt(bookingId));
+        }
+    }, [bookingId, getById]);
 
     const handleCancelBooking = async () => {
         if (!bookingId) return;
 
-        setIsCancelling(true);
-        try {
-            await bookingApi.cancel(parseInt(bookingId));
-            showNotification('Booking cancelled successfully', 'success');
-            setShowCancelModal(false);
-            setTimeout(() => navigate('/'), 2000);
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : 'Failed to cancel booking';
-            showNotification(errorMessage, 'error');
-        } finally {
-            setIsCancelling(false);
-        }
-    };
-
-    const openCancelModal = () => {
-        setShowCancelModal(true);
-    };
-
-    const closeCancelModal = () => {
+        await cancel(parseInt(bookingId));
         setShowCancelModal(false);
-    };
-
-    const showNotification = (message: string, type: NotificationType = 'info') => {
-        const id = Date.now().toString();
-        setNotifications(prev => [...prev, { id, message, type, isVisible: true }]);
-    };
-
-    const closeNotification = (id: string) => {
-        setNotifications(prev => prev.map(notification =>
-            notification.id === id ? { ...notification, isVisible: false } : notification
-        ));
-        setTimeout(() => {
-            setNotifications(prev => prev.filter(notification => notification.id !== id));
-        }, 300);
+        setTimeout(() => navigate('/'), 2000);
     };
 
     const handleProceedToPayment = () => {
         if (!booking) return;
-
-        const bookingState: BookingStateData = {
-            id: booking.id,
-            bookingNumber: booking.bookingNumber,
-            movieTitle: booking.movieTitle,
-            hallName: booking.hallName,
-            sessionTime: booking.sessionTime,
-            totalPrice: booking.totalPrice,
-            finalPrice: booking.finalPrice,
-            bonusPointsUsed: booking.bonusPointsUsed,
-            bookedSeats: booking.seatReservations.map(seat => ({
-                seatNumber: seat.seatNumber.toString(),
-                seatRow: seat.row,
-                ticketType: seat.ticketTypeName,
-                seatPrice: seat.seatPrice
-            }))
-        };
-
-        navigate(`/booking/payment/${booking.id}`, {
-            state: { booking: bookingState, existingPaymentId: existingPaymentId || null }
-        });
+        navigate(`/booking/payment/${booking.id}`);
     };
 
     if (loading) {
         return (
             <Layout>
                 <div className={styles.loading}>Loading booking summary...</div>
-            </Layout>
-        );
-    }
-
-    if (error) {
-        return (
-            <Layout>
-                <div className={styles.error}>Error: {error}</div>
             </Layout>
         );
     }
@@ -163,64 +58,32 @@ export const BookingSummaryPage: React.FC = () => {
     const hoursLeft = Math.floor(timeLeft / 60);
     const minutesLeft = timeLeft % 60;
 
-    const formatDateEnglish = (date: Date): string => {
-        const options: Intl.DateTimeFormatOptions = {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        };
-        return date.toLocaleDateString('en-US', options);
-    };
-
     return (
         <Layout>
-            <Modal
-                isOpen={showCancelModal}
-                onClose={closeCancelModal}
-                title="Cancel Booking"
-                size="small"
-            >
-                <div className={styles.modalContent}>
-                    <p>Are you sure you want to cancel this booking?</p>
-                    <p className={styles.modalWarning}>This action cannot be undone.</p>
+            {notifications.map(notification => (
+                <Notification
+                    key={notification.id}
+                    id={notification.id}
+                    message={notification.message}
+                    type={notification.type}
+                    isVisible={notification.isVisible}
+                    onClose={hideNotification}
+                />
+            ))}
 
-                    <div className={styles.modalActions}>
-                        <button
-                            className={styles.modalCancelButton}
-                            onClick={closeCancelModal}
-                            disabled={isCancelling}
-                        >
-                            No, Keep Booking
-                        </button>
-                        <button
-                            className={styles.modalConfirmButton}
-                            onClick={handleCancelBooking}
-                            disabled={isCancelling}
-                        >
-                            {isCancelling ? 'Cancelling...' : 'Yes, Cancel Booking'}
-                        </button>
-                    </div>
-                </div>
-            </Modal>
+            <ConfirmModal
+                isOpen={showCancelModal}
+                onConfirm={handleCancelBooking}
+                onCancel={() => setShowCancelModal(false)}
+                title="Cancel Booking"
+                message="Are you sure you want to cancel this booking? This action cannot be undone."
+                confirmText="Yes, Cancel Booking"
+                cancelText="No, Keep Booking"
+                variant="error"
+            />
 
             <div className={styles.summaryPage}>
-                {notifications.map((notification) => (
-                    <Notification
-                        key={notification.id}
-                        id={notification.id}
-                        message={notification.message}
-                        type={notification.type}
-                        isVisible={notification.isVisible}
-                        onClose={closeNotification}
-                    />
-                ))}
-
-                <ProgressStepper
-                    steps={BOOKING_STEPS}
-                    currentStep={2}
-                    className={styles.stepper}
-                />
+                <ProgressStepper steps={BOOKING_STEPS} currentStep={2} className={styles.stepper} />
 
                 <div className={styles.header}>
                     <h1>Booking Summary</h1>
@@ -232,20 +95,16 @@ export const BookingSummaryPage: React.FC = () => {
                         <h2>{booking.movieTitle}</h2>
                         <div className={styles.sessionDetails}>
                             <div className={styles.detailItem}>
-                                <span className={styles.detailLabel}>Hall:</span>
-                                <span className={styles.detailValue}>{booking.hallName}</span>
+                                <span>Hall:</span>
+                                <span>{booking.hallName}</span>
                             </div>
                             <div className={styles.detailItem}>
-                                <span className={styles.detailLabel}>Date:</span>
-                                <span className={styles.detailValue}>
-                                    {formatDateEnglish(sessionDate)}
-                                </span>
+                                <span>Date:</span>
+                                <span>{sessionDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
                             </div>
                             <div className={styles.detailItem}>
-                                <span className={styles.detailLabel}>Time:</span>
-                                <span className={styles.detailValue}>
-                                    {sessionDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
-                                </span>
+                                <span>Time:</span>
+                                <span>{sessionDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
                             </div>
                         </div>
                     </div>
@@ -253,15 +112,13 @@ export const BookingSummaryPage: React.FC = () => {
                     <div className={styles.seatsInfo}>
                         <h3>Selected Seats</h3>
                         <div className={styles.seatsList}>
-                            {booking.seatReservations.map((seat) => (
+                            {booking.seatReservations.map(seat => (
                                 <div key={seat.id} className={styles.seatItem}>
                                     <div className={styles.seatInfo}>
-                                        <span className={styles.seatLocation}>
-                                            Row {seat.row}, Seat {seat.seatNumber}
-                                        </span>
+                                        <span>Row {seat.row}, Seat {seat.seatNumber}</span>
                                         <span className={styles.ticketType}>{seat.ticketTypeName}</span>
                                     </div>
-                                    <span className={styles.seatPrice}>₴{parseFloat(seat.seatPrice).toFixed(2)}</span>
+                                    <span>₴{parseFloat(seat.seatPrice).toFixed(2)}</span>
                                 </div>
                             ))}
                         </div>
@@ -275,10 +132,6 @@ export const BookingSummaryPage: React.FC = () => {
                                     <div className={styles.priceRow}>
                                         <span>Total Price:</span>
                                         <span>{parseFloat(booking.totalPrice).toFixed(2)}₴</span>
-                                    </div>
-                                    <div className={styles.priceRow}>
-                                        <span>Bonus points used:</span>
-                                        <span>{booking.bonusPointsUsed} points</span>
                                     </div>
                                     <div className={styles.priceRow}>
                                         <span>Bonus discount:</span>
@@ -295,19 +148,13 @@ export const BookingSummaryPage: React.FC = () => {
 
                     <div className={styles.bookingInfo}>
                         <div className={styles.infoItem}>
-                            <span className={styles.infoLabel}>Booking status:</span>
+                            <span>Booking status:</span>
                             <span className={`${styles.status} ${styles[booking.status.toLowerCase()]}`}>
                                 {booking.status}
                             </span>
                         </div>
                         <div className={styles.infoItem}>
-                            <span className={styles.infoLabel}>Expires at:</span>
-                            <span className={styles.expiryTime}>
-                                {expiresAt.toLocaleString('en-US')}
-                            </span>
-                        </div>
-                        <div className={styles.infoItem}>
-                            <span className={styles.infoLabel}>Time left:</span>
+                            <span>Time left:</span>
                             <span className={`${styles.timeLeft} ${timeLeft < 10 ? styles.warning : ''}`}>
                                 {hoursLeft > 0 ? `${hoursLeft}h ` : ''}{minutesLeft}m
                             </span>
@@ -315,22 +162,20 @@ export const BookingSummaryPage: React.FC = () => {
                     </div>
 
                     <div className={styles.actions}>
-                        <div className={styles.actionButtons}>
-                            <button
-                                className={styles.cancelButton}
-                                onClick={openCancelModal}
-                                disabled={booking.status !== 'PENDING'}
-                            >
-                                Cancel Booking
-                            </button>
-                            <button
-                                className={styles.payButton}
-                                onClick={handleProceedToPayment}
-                                disabled={booking.status !== 'PENDING'}
-                            >
-                                💳 Proceed to Payment
-                            </button>
-                        </div>
+                        <button
+                            className={styles.cancelButton}
+                            onClick={() => setShowCancelModal(true)}
+                            disabled={booking.status !== 'PENDING'}
+                        >
+                            Cancel Booking
+                        </button>
+                        <button
+                            className={styles.payButton}
+                            onClick={handleProceedToPayment}
+                            disabled={booking.status !== 'PENDING'}
+                        >
+                            💳 Proceed to Payment
+                        </button>
                     </div>
                 </div>
             </div>

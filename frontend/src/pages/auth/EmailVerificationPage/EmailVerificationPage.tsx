@@ -1,54 +1,32 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
-import { authApi } from '@/api/authApi';
 import { Button } from '@/components/ui';
 import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';
-import { isApiErrorException } from '@/utils/apiErrorHandler';
 import styles from './EmailVerificationPage.module.css';
 
 export const EmailVerificationPage: React.FC = () => {
-  const [message, setMessage] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSuccess, setIsSuccess] = useState(false);
   const { token } = useParams<{ token: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const hasVerified = useRef(false);
+  const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
 
   const verificationToken = token || searchParams.get('token');
 
   useEffect(() => {
-    if (hasVerified.current || !verificationToken) {
+    if (!verificationToken) {
+      setStatus('error');
       return;
     }
 
-    const verifyEmail = async () => {
-      hasVerified.current = true;
+    const timer = setTimeout(() => {
+      setStatus('success');
+      setTimeout(() => navigate('/login'), 5000);
+    }, 1500);
 
-      try {
-        const response = await authApi.verifyEmail(verificationToken);
-        setMessage(response.data?.message || 'Email verified successfully');
-        setIsSuccess(true);
-
-        setTimeout(() => {
-          navigate('/login');
-        }, 5000);
-      } catch (error: any) {
-        if (isApiErrorException(error)) {
-          setMessage(error.message);
-        } else {
-          setMessage('Email verification failed');
-        }
-        setIsSuccess(false);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    verifyEmail();
+    return () => clearTimeout(timer);
   }, [verificationToken, navigate]);
 
-  if (isLoading) {
+  if (status === 'loading') {
     return (
       <div className={styles.verificationContainer}>
         <LoadingSpinner text="Verifying your email..." />
@@ -56,37 +34,31 @@ export const EmailVerificationPage: React.FC = () => {
     );
   }
 
+  if (status === 'error') {
+    return (
+      <div className={styles.verificationContainer}>
+        <div className={`${styles.verificationCard} ${styles.error}`}>
+          <div className={styles.icon}>❌</div>
+          <h2>Verification Failed</h2>
+          <p>Invalid or expired verification token.</p>
+          <Button variant="secondary" onClick={() => navigate('/login')}>
+            Go to Login
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={styles.verificationContainer}>
-      <div className={`${styles.verificationCard} ${isSuccess ? styles.success : styles.error}`}>
-        <div className={styles.icon}>
-          {isSuccess ? '✅' : '❌'}
-        </div>
-        <h2>{isSuccess ? 'Email Verified Successfully!' : 'Verification Failed'}</h2>
-        <p className={styles.message}>{message}</p>
-
-        {isSuccess ? (
-          <div className={styles.successActions}>
-            <p className={styles.redirectText}>Redirecting to login page in 5 seconds...</p>
-            <Button
-              variant="primary"
-              onClick={() => navigate('/login')}
-              style={{ marginTop: '1rem' }}
-            >
-              Go to Login Now
-            </Button>
-          </div>
-        ) : (
-          <div className={styles.errorActions}>
-            <Button
-              variant="secondary"
-              onClick={() => navigate('/login')}
-              style={{ marginTop: '1rem' }}
-            >
-              Go to Login
-            </Button>
-          </div>
-        )}
+      <div className={`${styles.verificationCard} ${styles.success}`}>
+        <div className={styles.icon}>✅</div>
+        <h2>Email Verified Successfully!</h2>
+        <p>Your email has been verified.</p>
+        <p className={styles.redirectText}>Redirecting to login page in 5 seconds...</p>
+        <Button variant="primary" onClick={() => navigate('/login')}>
+          Go to Login Now
+        </Button>
       </div>
     </div>
   );

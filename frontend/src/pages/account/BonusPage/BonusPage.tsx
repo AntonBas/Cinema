@@ -1,126 +1,55 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Layout } from '@/components/layout/Layout/Layout';
 import { AccountSidebar } from '@/components/account/AccountSidebar/AccountSidebar';
 import { BonusBalanceCard } from '@/components/account/BonusSection/BonusBalanceCard/BonusBalanceCard';
 import { BonusTransactions } from '@/components/account/BonusSection/BonusTransactions/BonusTransactions';
-import { Notification } from '@/components/ui/Notification/Notification';
 import { useBonus } from '@/hooks/features/bonus/useBonus';
 import { usePagination } from '@/hooks/common/usePagination';
-import { DEFAULT_PAGE_SIZE_ADMIN } from '@/utils/paginationUtils';
-import type { BonusBalanceResponse, BonusTransactionResponse } from '@/types/bonus';
 import styles from './BonusPage.module.css';
 
 export const BonusPage: React.FC = () => {
-    const { getMyBalance, getMyTransactions, loading } = useBonus();
-    const [balance, setBalance] = useState<BonusBalanceResponse | null>(null);
-    const [transactions, setTransactions] = useState<BonusTransactionResponse[]>([]);
-    const [pagination, setPagination] = useState({
-        currentPage: 0,
-        totalPages: 1,
-        totalElements: 0
-    });
     const [activeTab, setActiveTab] = useState<'balance' | 'transactions'>('balance');
-    const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null);
-    const [localError, setLocalError] = useState<string | null>(null);
 
-    const { params, setPage } = usePagination(
-        { page: 0, size: DEFAULT_PAGE_SIZE_ADMIN },
-        DEFAULT_PAGE_SIZE_ADMIN
-    );
+    const { params, setPage } = usePagination({ size: 20 });
+
+    const {
+        balance,
+        transactions,
+        transactionsPagination,
+        getMyBalance,
+        getMyTransactions,
+    } = useBonus();
 
     useEffect(() => {
-        loadBonusData();
-    }, []);
+        getMyBalance();
+    }, [getMyBalance]);
 
     useEffect(() => {
         if (activeTab === 'transactions') {
-            loadTransactions(params.page || 0);
+            getMyTransactions({ page: params.page, size: params.size });
         }
-    }, [params.page, activeTab]);
+    }, [activeTab, params.page, params.size, getMyTransactions]);
 
-    const loadBonusData = async () => {
-        try {
-            const balanceResponse = await getMyBalance();
-            setBalance(balanceResponse || null);
-            setLocalError(null);
+    const totalEarned = transactions
+        .filter(t => parseFloat(t.pointsChange) > 0)
+        .reduce((sum, t) => sum + parseFloat(t.pointsChange), 0);
 
-            await loadTransactions(0);
-        } catch (error: any) {
-            console.error('Error loading bonus data:', error);
-            setLocalError(error.message || 'Failed to load bonus data');
-        }
-    };
+    const totalSpent = transactions
+        .filter(t => parseFloat(t.pointsChange) < 0)
+        .reduce((sum, t) => sum + Math.abs(parseFloat(t.pointsChange)), 0);
 
-    const loadTransactions = async (page: number) => {
-        try {
-            const response = await getMyTransactions({ page, size: DEFAULT_PAGE_SIZE_ADMIN });
-            setTransactions(response?.content || []);
-            setPagination({
-                currentPage: response?.number || 0,
-                totalPages: response?.totalPages || 1,
-                totalElements: response?.totalElements || 0
-            });
-        } catch (error: any) {
-            console.error('Error loading transactions:', error);
-            showNotification('error', 'Failed to load transactions');
-        }
-    };
-
-    const handlePageChange = (page: number) => {
-        setPage(page);
-    };
-
-    const showNotification = (type: 'success' | 'error', message: string) => {
-        setNotification({ type, message });
-        setTimeout(() => setNotification(null), 3000);
-    };
-
-    const getTransactionSummary = () => {
-        if (!transactions.length) return null;
-
-        const totalEarned = transactions
-            .filter(t => parseFloat(t.pointsChange) > 0)
-            .reduce((sum, t) => sum + parseFloat(t.pointsChange), 0);
-
-        const totalSpent = transactions
-            .filter(t => parseFloat(t.pointsChange) < 0)
-            .reduce((sum, t) => sum + Math.abs(parseFloat(t.pointsChange)), 0);
-
-        const netChange = totalEarned - totalSpent;
-
-        return { totalEarned, totalSpent, netChange };
-    };
-
-    const summary = getTransactionSummary();
+    const netChange = totalEarned - totalSpent;
 
     return (
         <Layout>
             <div className={styles.bonusPage}>
                 <div className={styles.container}>
-                    <AccountSidebar activePage="bonuses" />
+                    <AccountSidebar />
 
                     <div className={styles.content}>
-                        {notification && (
-                            <Notification
-                                id="bonus-notification"
-                                message={notification.message}
-                                type={notification.type}
-                                isVisible={true}
-                                onClose={() => setNotification(null)}
-                                duration={3000}
-                                isStatic={true}
-                            />
-                        )}
-
                         <div className={styles.header}>
                             <h1 className={styles.title}>My Bonus</h1>
                         </div>
-
-                        {localError && (
-                            <div className={styles.error}>
-                                {localError}
-                            </div>
-                        )}
 
                         <div className={styles.tabs}>
                             <button
@@ -140,31 +69,24 @@ export const BonusPage: React.FC = () => {
                         <div className={styles.tabContent}>
                             {activeTab === 'balance' ? (
                                 <div className={styles.balanceContent}>
-                                    <BonusBalanceCard
-                                        balance={balance}
-                                        loading={loading}
-                                    />
+                                    <BonusBalanceCard balance={balance} loading={!balance} />
 
-                                    {summary && (
+                                    {transactions.length > 0 && (
                                         <div className={styles.summary}>
                                             <h3>Transaction Summary</h3>
                                             <div className={styles.summaryGrid}>
                                                 <div className={styles.summaryItem}>
                                                     <div className={styles.summaryLabel}>Total Earned</div>
-                                                    <div className={styles.summaryValue}>
-                                                        +{summary.totalEarned} points
-                                                    </div>
+                                                    <div className={styles.summaryValue}>+{totalEarned} points</div>
                                                 </div>
                                                 <div className={styles.summaryItem}>
                                                     <div className={styles.summaryLabel}>Total Spent</div>
-                                                    <div className={styles.summaryValue}>
-                                                        -{summary.totalSpent} points
-                                                    </div>
+                                                    <div className={styles.summaryValue}>-{totalSpent} points</div>
                                                 </div>
                                                 <div className={styles.summaryItem}>
                                                     <div className={styles.summaryLabel}>Net Change</div>
-                                                    <div className={`${styles.summaryValue} ${summary.netChange >= 0 ? styles.positive : styles.negative}`}>
-                                                        {summary.netChange >= 0 ? '+' : ''}{summary.netChange} points
+                                                    <div className={`${styles.summaryValue} ${netChange >= 0 ? styles.positive : styles.negative}`}>
+                                                        {netChange >= 0 ? '+' : ''}{netChange} points
                                                     </div>
                                                 </div>
                                             </div>
@@ -175,11 +97,11 @@ export const BonusPage: React.FC = () => {
                                 <div className={styles.transactionsContent}>
                                     <BonusTransactions
                                         transactions={transactions}
-                                        loading={loading}
-                                        onPageChange={handlePageChange}
-                                        currentPage={pagination.currentPage}
-                                        totalPages={pagination.totalPages}
-                                        totalElements={pagination.totalElements}
+                                        loading={!transactions.length}
+                                        onPageChange={setPage}
+                                        currentPage={transactionsPagination?.number || 0}
+                                        totalPages={transactionsPagination?.totalPages || 1}
+                                        totalElements={transactionsPagination?.totalElements || 0}
                                     />
                                 </div>
                             )}

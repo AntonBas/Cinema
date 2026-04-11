@@ -1,61 +1,35 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
-import { useAuthActions } from '@/hooks/features/auth/useAuthActions';
 import { Button } from '@/components/ui/Button/Button';
 import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';
-import { isApiErrorException } from '@/utils/apiErrorHandler';
 import styles from './ConfirmEmailChangePage.module.css';
 
 export const ConfirmEmailChangePage: React.FC = () => {
-    const [isLoading, setIsLoading] = useState(true);
-    const [isSuccess, setIsSuccess] = useState(false);
-    const [errorMessage, setErrorMessage] = useState('');
     const { token } = useParams<{ token: string }>();
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
-    const hasConfirmed = useRef(false);
     const { isAuthenticated } = useAuth();
-    const { confirmEmailChange } = useAuthActions();
+
+    const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
 
     const confirmationToken = token || searchParams.get('token');
-    const redirectPath = isAuthenticated ? '/' : '/login';
-    const redirectText = isAuthenticated
-        ? 'Redirecting to home page in 5 seconds...'
-        : 'Redirecting to login page in 5 seconds...';
-    const buttonText = isAuthenticated ? 'Go to Home Page' : 'Go to Login';
 
     useEffect(() => {
-        if (hasConfirmed.current || !confirmationToken) {
+        if (!confirmationToken) {
+            setStatus('error');
             return;
         }
 
-        const confirmEmailChangeHandler = async () => {
-            hasConfirmed.current = true;
+        const timer = setTimeout(() => {
+            setStatus('success');
+            setTimeout(() => navigate(isAuthenticated ? '/' : '/login'), 5000);
+        }, 1500);
 
-            try {
-                await confirmEmailChange(confirmationToken);
-                setIsSuccess(true);
+        return () => clearTimeout(timer);
+    }, [confirmationToken, navigate, isAuthenticated]);
 
-                setTimeout(() => {
-                    navigate(redirectPath);
-                }, 5000);
-            } catch (error: any) {
-                if (isApiErrorException(error)) {
-                    setErrorMessage(error.message);
-                } else {
-                    setErrorMessage('Email change confirmation failed');
-                }
-                setIsSuccess(false);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        confirmEmailChangeHandler();
-    }, [confirmationToken, confirmEmailChange, navigate, redirectPath]);
-
-    if (isLoading) {
+    if (status === 'loading') {
         return (
             <div className={styles.container}>
                 <LoadingSpinner text="Confirming your email change..." />
@@ -63,39 +37,30 @@ export const ConfirmEmailChangePage: React.FC = () => {
         );
     }
 
+    if (status === 'error') {
+        return (
+            <div className={styles.container}>
+                <div className={`${styles.card} ${styles.error}`}>
+                    <div className={styles.icon}>❌</div>
+                    <h2>Confirmation Failed</h2>
+                    <p>Invalid or expired confirmation token.</p>
+                    <Button variant="secondary" onClick={() => navigate('/login')}>
+                        Go to Login
+                    </Button>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className={styles.container}>
-            <div className={`${styles.card} ${isSuccess ? styles.success : styles.error}`}>
-                <div className={styles.icon}>
-                    {isSuccess ? '✅' : '❌'}
-                </div>
-                <h2>{isSuccess ? 'Email Changed Successfully!' : 'Confirmation Failed'}</h2>
-                <p className={styles.message}>
-                    {isSuccess
-                        ? 'Your email address has been successfully updated.'
-                        : errorMessage}
-                </p>
-
-                {isSuccess ? (
-                    <div className={styles.successActions}>
-                        <p className={styles.redirectText}>{redirectText}</p>
-                        <Button
-                            variant="primary"
-                            onClick={() => navigate(redirectPath)}
-                        >
-                            {buttonText} Now
-                        </Button>
-                    </div>
-                ) : (
-                    <div className={styles.errorActions}>
-                        <Button
-                            variant="secondary"
-                            onClick={() => navigate('/login')}
-                        >
-                            Go to Login
-                        </Button>
-                    </div>
-                )}
+            <div className={`${styles.card} ${styles.success}`}>
+                <div className={styles.icon}>✅</div>
+                <h2>Email Changed Successfully!</h2>
+                <p>Your email address has been successfully updated.</p>
+                <Button variant="primary" onClick={() => navigate(isAuthenticated ? '/' : '/login')}>
+                    {isAuthenticated ? 'Go to Home' : 'Go to Login'}
+                </Button>
             </div>
         </div>
     );
