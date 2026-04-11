@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import { movieApi } from '@/api/movieApi';
 import type {
     MovieCardResponse,
@@ -21,6 +21,20 @@ export const useMovies = () => {
     const searchMoviesApi = useApi<MovieSessionSearchResponse[]>();
     const mutationApi = useApi<MovieAdminResponse | void>();
 
+    const adminMoviesApiRef = useRef(adminMoviesApi);
+    const homeMoviesApiRef = useRef(homeMoviesApi);
+    const movieDetailApiRef = useRef(movieDetailApi);
+    const adminMovieApiRef = useRef(adminMovieApi);
+    const searchMoviesApiRef = useRef(searchMoviesApi);
+    const mutationApiRef = useRef(mutationApi);
+
+    adminMoviesApiRef.current = adminMoviesApi;
+    homeMoviesApiRef.current = homeMoviesApi;
+    movieDetailApiRef.current = movieDetailApi;
+    adminMovieApiRef.current = adminMovieApi;
+    searchMoviesApiRef.current = searchMoviesApi;
+    mutationApiRef.current = mutationApi;
+
     const loading = useDelayedLoading(
         adminMoviesApi.loading || homeMoviesApi.loading || movieDetailApi.loading ||
         adminMovieApi.loading || searchMoviesApi.loading || mutationApi.loading,
@@ -28,64 +42,64 @@ export const useMovies = () => {
     );
 
     const getAdminMovies = useCallback(async (params?: SearchParams & { query?: string; status?: MovieStatus }) => {
-        return adminMoviesApi.execute(() => movieApi.admin.getMovies(params));
-    }, [adminMoviesApi]);
+        return adminMoviesApiRef.current.execute(() => movieApi.admin.getMovies(params));
+    }, []);
 
     const getCurrentMoviesForHome = useCallback(async () => {
-        return homeMoviesApi.execute(() => movieApi.public.getCurrentMoviesForHome());
-    }, [homeMoviesApi]);
+        return homeMoviesApiRef.current.execute(() => movieApi.public.getCurrentMoviesForHome());
+    }, []);
 
     const getUpcomingMoviesForHome = useCallback(async () => {
-        return homeMoviesApi.execute(() => movieApi.public.getUpcomingMoviesForHome());
-    }, [homeMoviesApi]);
+        return homeMoviesApiRef.current.execute(() => movieApi.public.getUpcomingMoviesForHome());
+    }, []);
 
     const getLeavingSoonForHome = useCallback(async () => {
-        return homeMoviesApi.execute(() => movieApi.public.getLeavingSoonForHome());
-    }, [homeMoviesApi]);
+        return homeMoviesApiRef.current.execute(() => movieApi.public.getLeavingSoonForHome());
+    }, []);
 
     const getCurrentlyShowing = useCallback(async (params?: SearchParams) => {
-        return adminMoviesApi.execute(() => movieApi.public.getCurrentlyShowing(params));
-    }, [adminMoviesApi]);
+        return adminMoviesApiRef.current.execute(() => movieApi.public.getCurrentlyShowing(params));
+    }, []);
 
     const getUpcoming = useCallback(async (params?: SearchParams) => {
-        return adminMoviesApi.execute(() => movieApi.public.getUpcoming(params));
-    }, [adminMoviesApi]);
+        return adminMoviesApiRef.current.execute(() => movieApi.public.getUpcoming(params));
+    }, []);
 
     const getBySlug = useCallback(async (slug: string) => {
-        return movieDetailApi.execute(() => movieApi.public.getBySlug(slug));
-    }, [movieDetailApi]);
+        return movieDetailApiRef.current.execute(() => movieApi.public.getBySlug(slug));
+    }, []);
 
     const getAdminById = useCallback(async (id: number) => {
-        return adminMovieApi.execute(() => movieApi.admin.getById(id));
-    }, [adminMovieApi]);
+        return adminMovieApiRef.current.execute(() => movieApi.admin.getById(id));
+    }, []);
 
     const search = useCallback(async (query?: string) => {
-        return searchMoviesApi.execute(() => movieApi.admin.search(query));
-    }, [searchMoviesApi]);
+        return searchMoviesApiRef.current.execute(() => movieApi.admin.search(query));
+    }, []);
 
     const create = useCallback(async (request: MovieCreateRequest) => {
-        return mutationApi.execute(
+        return mutationApiRef.current.execute(
             () => movieApi.admin.create(request),
             { successMessage: `Movie "${request.title}" created successfully` }
         );
-    }, [mutationApi]);
+    }, []);
 
     const update = useCallback(async (id: number, request: MovieUpdateRequest) => {
         const movie = adminMoviesApi.data?.content?.find(m => m.id === id);
         const title = movie?.title || request.title;
-        return mutationApi.execute(
+        return mutationApiRef.current.execute(
             () => movieApi.admin.update(id, request),
             { successMessage: `Movie "${title}" updated successfully` }
         );
-    }, [mutationApi, adminMoviesApi.data]);
+    }, [adminMoviesApi.data]);
 
     const remove = useCallback(async (id: number) => {
         const movie = adminMoviesApi.data?.content?.find(m => m.id === id);
-        return mutationApi.execute(
+        return mutationApiRef.current.execute(
             () => movieApi.admin.delete(id),
             { successMessage: `Movie "${movie?.title || id}" deleted successfully` }
         );
-    }, [mutationApi, adminMoviesApi.data]);
+    }, [adminMoviesApi.data]);
 
     return {
         adminMovies: adminMoviesApi.data?.content || [],

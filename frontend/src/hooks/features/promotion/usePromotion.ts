@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import { promotionApi } from '@/api/promotionApi';
 import type {
     PromotionResponse,
@@ -16,6 +16,16 @@ export const usePromotion = () => {
     const adminApi = useApi<PageResponse<PromotionListResponse>>();
     const mutationApi = useApi<PromotionResponse | void>();
 
+    const availableApiRef = useRef(availableApi);
+    const claimedApiRef = useRef(claimedApi);
+    const adminApiRef = useRef(adminApi);
+    const mutationApiRef = useRef(mutationApi);
+
+    availableApiRef.current = availableApi;
+    claimedApiRef.current = claimedApi;
+    adminApiRef.current = adminApi;
+    mutationApiRef.current = mutationApi;
+
     const loading = useDelayedLoading(
         availableApi.loading || claimedApi.loading || adminApi.loading || mutationApi.loading,
         { delay: 150, minDisplayTime: 300 }
@@ -29,44 +39,44 @@ export const usePromotion = () => {
     }, [adminApi.data, availableApi.data, claimedApi.data]);
 
     const getAvailable = useCallback(async () => {
-        return availableApi.execute(() => promotionApi.user.getAvailable());
-    }, [availableApi]);
+        return availableApiRef.current.execute(() => promotionApi.user.getAvailable());
+    }, []);
 
     const getClaimed = useCallback(async () => {
-        return claimedApi.execute(() => promotionApi.user.getClaimed());
-    }, [claimedApi]);
+        return claimedApiRef.current.execute(() => promotionApi.user.getClaimed());
+    }, []);
 
     const claim = useCallback(async (request: ClaimPromotionRequest) => {
-        return mutationApi.execute(
+        return mutationApiRef.current.execute(
             () => promotionApi.user.claim(request),
             { successMessage: `Promotion "${getPromotionTitle(request.promotionId)}" claimed successfully` }
         );
-    }, [mutationApi, getPromotionTitle]);
+    }, [getPromotionTitle]);
 
     const getAll = useCallback(async (params?: { page?: number; size?: number; sort?: string[] }) => {
-        return adminApi.execute(() => promotionApi.admin.getAll(params));
-    }, [adminApi]);
+        return adminApiRef.current.execute(() => promotionApi.admin.getAll(params));
+    }, []);
 
     const create = useCallback(async (request: PromotionRequest) => {
-        return mutationApi.execute(
+        return mutationApiRef.current.execute(
             () => promotionApi.admin.create(request),
             { successMessage: `Promotion "${request.title}" created successfully` }
         );
-    }, [mutationApi]);
+    }, []);
 
     const update = useCallback(async (id: number, request: PromotionRequest) => {
-        return mutationApi.execute(
+        return mutationApiRef.current.execute(
             () => promotionApi.admin.update(id, request),
             { successMessage: `Promotion "${getPromotionTitle(id)}" updated successfully` }
         );
-    }, [mutationApi, getPromotionTitle]);
+    }, [getPromotionTitle]);
 
     const remove = useCallback(async (id: number) => {
-        return mutationApi.execute(
+        return mutationApiRef.current.execute(
             () => promotionApi.admin.delete(id),
             { successMessage: `Promotion "${getPromotionTitle(id)}" deleted successfully` }
         );
-    }, [mutationApi, getPromotionTitle]);
+    }, [getPromotionTitle]);
 
     return {
         availablePromotions: availableApi.data || [],

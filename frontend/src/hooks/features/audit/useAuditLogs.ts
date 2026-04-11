@@ -4,7 +4,7 @@ import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
 import { auditApi } from '@/api/auditApi';
 import type { AuditLogResponse } from '@/types/audit';
 import type { PageResponse } from '@/types/pagination';
-import { useCallback, useState, useEffect, useRef } from 'react';
+import { useCallback, useState, useRef } from 'react';
 
 export const useAuditLogs = () => {
     const [entityType, setEntityType] = useState<string>();
@@ -14,26 +14,19 @@ export const useAuditLogs = () => {
     const { params, setPage, setSize, setSort } = usePagination({}, 20);
     const { execute, loading: apiLoading, data, reset } = useApi<PageResponse<AuditLogResponse>>();
 
+    const executeRef = useRef(execute);
+    executeRef.current = execute;
+
     const loading = useDelayedLoading(apiLoading, { delay: 200, minDisplayTime: 300 });
-    const initialFetchDone = useRef(false);
 
     const fetchAuditLogs = useCallback(async () => {
-        return execute(() => auditApi.getAll({
+        return executeRef.current(() => auditApi.getAll({
             ...params,
             entityType,
             action,
             changedBy
         }));
-    }, [execute, params, entityType, action, changedBy]);
-
-    useEffect(() => {
-        if (initialFetchDone.current) {
-            fetchAuditLogs();
-        } else {
-            initialFetchDone.current = true;
-            fetchAuditLogs();
-        }
-    }, [params.page, params.size, params.sort, entityType, action, changedBy]);
+    }, [params, entityType, action, changedBy]);
 
     const refresh = useCallback(() => {
         return fetchAuditLogs();

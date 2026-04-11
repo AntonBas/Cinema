@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import { bonusApi } from '@/api/bonusApi';
 import type {
     BonusBalanceResponse,
@@ -18,38 +18,50 @@ export const useBonus = () => {
     const updateRuleApi = useApi<BonusRulesResponse>();
     const resetRuleApi = useApi<BonusRulesResponse>();
 
+    const balanceApiRef = useRef(balanceApi);
+    const transactionsApiRef = useRef(transactionsApi);
+    const rulesApiRef = useRef(rulesApi);
+    const updateRuleApiRef = useRef(updateRuleApi);
+    const resetRuleApiRef = useRef(resetRuleApi);
+
+    balanceApiRef.current = balanceApi;
+    transactionsApiRef.current = transactionsApi;
+    rulesApiRef.current = rulesApi;
+    updateRuleApiRef.current = updateRuleApi;
+    resetRuleApiRef.current = resetRuleApi;
+
     const loading = useDelayedLoading(
         balanceApi.loading || transactionsApi.loading || rulesApi.loading || updateRuleApi.loading || resetRuleApi.loading,
         { delay: 150, minDisplayTime: 300 }
     );
 
     const getMyBalance = useCallback(async () => {
-        return balanceApi.execute(() => bonusApi.getBalance());
-    }, [balanceApi]);
+        return balanceApiRef.current.execute(() => bonusApi.getBalance());
+    }, []);
 
     const getMyTransactions = useCallback(async (params?: SearchParams) => {
-        return transactionsApi.execute(() => bonusApi.getTransactions(params));
-    }, [transactionsApi]);
+        return transactionsApiRef.current.execute(() => bonusApi.getTransactions(params));
+    }, []);
 
     const getAllRules = useCallback(async () => {
-        return rulesApi.execute(() => bonusApi.getAllRules());
-    }, [rulesApi]);
+        return rulesApiRef.current.execute(() => bonusApi.getAllRules());
+    }, []);
 
     const updateRule = useCallback(async (type: BonusTransactionType, request: BonusRulesRequest) => {
         const ruleName = type.replace(/_/g, ' ').toLowerCase();
-        return updateRuleApi.execute(
+        return updateRuleApiRef.current.execute(
             () => bonusApi.updateRule(type, request),
             { successMessage: `${ruleName} rule updated successfully` }
         );
-    }, [updateRuleApi]);
+    }, []);
 
     const resetRule = useCallback(async (type: BonusTransactionType) => {
         const ruleName = type.replace(/_/g, ' ').toLowerCase();
-        return resetRuleApi.execute(
+        return resetRuleApiRef.current.execute(
             () => bonusApi.resetRule(type),
             { successMessage: `${ruleName} rule reset to defaults` }
         );
-    }, [resetRuleApi]);
+    }, []);
 
     return {
         balance: balanceApi.data,

@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApi } from '@/hooks/common/useApi';
 import { authApi } from '@/api/authApi';
@@ -11,6 +11,8 @@ export const useAuthActions = () => {
     const { refreshUser, logout: contextLogout } = useAuth();
 
     const authApiHook = useApi();
+    const authApiRef = useRef(authApiHook);
+    authApiRef.current = authApiHook;
 
     const loading = useDelayedLoading(authApiHook.loading, { delay: 150, minDisplayTime: 300 });
 
@@ -21,7 +23,7 @@ export const useAuthActions = () => {
     }, [refreshUser, navigate]);
 
     const login = useCallback(async (credentials: LoginRequest) => {
-        const response = await authApiHook.execute(
+        const response = await authApiRef.current.execute(
             () => authApi.login(credentials),
             { successMessage: 'Login successful' }
         );
@@ -29,35 +31,35 @@ export const useAuthActions = () => {
             await handleAuthSuccess(response.token);
         }
         return response;
-    }, [authApiHook, handleAuthSuccess]);
+    }, [handleAuthSuccess]);
 
     const register = useCallback(async (userData: RegisterRequest) => {
-        return authApiHook.execute(
+        return authApiRef.current.execute(
             () => authApi.register(userData),
             { successMessage: 'Registration successful' }
         );
-    }, [authApiHook]);
+    }, []);
 
     const checkEmail = useCallback(async (email: string) => {
-        return authApiHook.execute(() => authApi.checkEmail(email));
-    }, [authApiHook]);
+        return authApiRef.current.execute(() => authApi.checkEmail(email));
+    }, []);
 
     const forgotPassword = useCallback(async (email: string) => {
-        return authApiHook.execute(
+        return authApiRef.current.execute(
             () => authApi.forgotPassword(email),
             { successMessage: 'Password reset instructions sent to your email' }
         );
-    }, [authApiHook]);
+    }, []);
 
     const resetPassword = useCallback(async (token: string, newPassword: string) => {
-        return authApiHook.execute(
+        return authApiRef.current.execute(
             () => authApi.resetPassword(token, newPassword),
             { successMessage: 'Password has been reset successfully' }
         );
-    }, [authApiHook]);
+    }, []);
 
     const oauth2Success = useCallback(async (token: string, userId: number, email: string) => {
-        const response = await authApiHook.execute(
+        const response = await authApiRef.current.execute(
             () => authApi.oauth2Success(token, userId, email),
             { successMessage: 'Login successful' }
         );
@@ -65,7 +67,7 @@ export const useAuthActions = () => {
             await handleAuthSuccess(response.token);
         }
         return response;
-    }, [authApiHook, handleAuthSuccess]);
+    }, [handleAuthSuccess]);
 
     const loginWithGoogle = useCallback(() => {
         window.location.href = authApi.getGoogleAuthUrl();

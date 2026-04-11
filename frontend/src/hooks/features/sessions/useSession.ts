@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import { sessionApi } from '@/api/sessionApi';
 import type {
     SessionResponse,
@@ -30,57 +30,67 @@ export const useSession = () => {
     const sessionApiHook = useApi<SessionResponse>();
     const mutationApi = useApi<SessionResponse | void>();
 
+    const adminSessionsApiRef = useRef(adminSessionsApi);
+    const publicSessionsApiRef = useRef(publicSessionsApi);
+    const sessionApiRef = useRef(sessionApiHook);
+    const mutationApiRef = useRef(mutationApi);
+
+    adminSessionsApiRef.current = adminSessionsApi;
+    publicSessionsApiRef.current = publicSessionsApi;
+    sessionApiRef.current = sessionApiHook;
+    mutationApiRef.current = mutationApi;
+
     const loading = useDelayedLoading(
         adminSessionsApi.loading || publicSessionsApi.loading || sessionApiHook.loading || mutationApi.loading,
         { delay: 150, minDisplayTime: 300 }
     );
 
     const getAdminSessions = useCallback(async (params?: AdminSessionParams) => {
-        return adminSessionsApi.execute(() => sessionApi.admin.getSessions(params));
-    }, [adminSessionsApi]);
+        return adminSessionsApiRef.current.execute(() => sessionApi.admin.getSessions(params));
+    }, []);
 
     const getSchedule = useCallback(async (params?: PublicSessionParams) => {
-        return publicSessionsApi.execute(() => sessionApi.public.getSchedule(params));
-    }, [publicSessionsApi]);
+        return publicSessionsApiRef.current.execute(() => sessionApi.public.getSchedule(params));
+    }, []);
 
     const getById = useCallback(async (id: number) => {
-        return sessionApiHook.execute(() => sessionApi.admin.getById(id));
-    }, [sessionApiHook]);
+        return sessionApiRef.current.execute(() => sessionApi.admin.getById(id));
+    }, []);
 
     const create = useCallback(async (request: SessionRequest) => {
-        return mutationApi.execute(
+        return mutationApiRef.current.execute(
             () => sessionApi.admin.create(request),
             { successMessage: 'Session created successfully' }
         );
-    }, [mutationApi]);
+    }, []);
 
     const update = useCallback(async (id: number, request: SessionRequest) => {
-        return mutationApi.execute(
+        return mutationApiRef.current.execute(
             () => sessionApi.admin.update(id, request),
             { successMessage: 'Session updated successfully' }
         );
-    }, [mutationApi]);
+    }, []);
 
     const cancel = useCallback(async (id: number) => {
-        return mutationApi.execute(
+        return mutationApiRef.current.execute(
             () => sessionApi.admin.cancel(id),
             { successMessage: 'Session cancelled successfully' }
         );
-    }, [mutationApi]);
+    }, []);
 
     const reactivate = useCallback(async (id: number) => {
-        return mutationApi.execute(
+        return mutationApiRef.current.execute(
             () => sessionApi.admin.reactivate(id),
             { successMessage: 'Session reactivated successfully' }
         );
-    }, [mutationApi]);
+    }, []);
 
     const remove = useCallback(async (id: number) => {
-        return mutationApi.execute(
+        return mutationApiRef.current.execute(
             () => sessionApi.admin.delete(id),
             { successMessage: 'Session deleted successfully' }
         );
-    }, [mutationApi]);
+    }, []);
 
     return {
         adminSessions: adminSessionsApi.data?.content || [],

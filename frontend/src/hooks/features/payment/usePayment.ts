@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import { paymentApi } from '@/api/paymentApi';
 import type {
     PaymentResponse,
@@ -13,25 +13,33 @@ export const usePayment = () => {
     const liqPayDataApi = useApi<PaymentLiqPayDataResponse>();
     const mutationApi = useApi<PaymentResponse>();
 
+    const paymentApiRef = useRef(paymentApiHook);
+    const liqPayDataApiRef = useRef(liqPayDataApi);
+    const mutationApiRef = useRef(mutationApi);
+
+    paymentApiRef.current = paymentApiHook;
+    liqPayDataApiRef.current = liqPayDataApi;
+    mutationApiRef.current = mutationApi;
+
     const loading = useDelayedLoading(
         paymentApiHook.loading || liqPayDataApi.loading || mutationApi.loading,
         { delay: 150, minDisplayTime: 300 }
     );
 
     const create = useCallback(async (request: PaymentCreateRequest) => {
-        return mutationApi.execute(
+        return mutationApiRef.current.execute(
             () => paymentApi.create(request),
             { successMessage: 'Payment initialized successfully' }
         );
-    }, [mutationApi]);
+    }, []);
 
     const getById = useCallback(async (paymentId: number) => {
-        return paymentApiHook.execute(() => paymentApi.getById(paymentId));
-    }, [paymentApiHook]);
+        return paymentApiRef.current.execute(() => paymentApi.getById(paymentId));
+    }, []);
 
     const getLiqPayData = useCallback(async (paymentId: number) => {
-        return liqPayDataApi.execute(() => paymentApi.getLiqPayData(paymentId));
-    }, [liqPayDataApi]);
+        return liqPayDataApiRef.current.execute(() => paymentApi.getLiqPayData(paymentId));
+    }, []);
 
     return {
         payment: paymentApiHook.data,

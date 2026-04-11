@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import type {
     AdminUserListResponse,
     UserRole,
@@ -22,6 +22,12 @@ export const useAdminUsers = () => {
     const usersApi = useApi<PageResponse<AdminUserListResponse>>();
     const mutationApi = useApi<AdminUserListResponse>();
 
+    const usersApiRef = useRef(usersApi);
+    const mutationApiRef = useRef(mutationApi);
+
+    usersApiRef.current = usersApi;
+    mutationApiRef.current = mutationApi;
+
     const loading = useDelayedLoading(
         usersApi.loading || mutationApi.loading,
         { delay: 150, minDisplayTime: 300 }
@@ -33,20 +39,20 @@ export const useAdminUsers = () => {
     }, [usersApi.data]);
 
     const getUsers = useCallback(async (params?: AdminUsersParams) => {
-        return usersApi.execute(() => adminApi.getUsers(params || {}));
-    }, [usersApi]);
+        return usersApiRef.current.execute(() => adminApi.getUsers(params || {}));
+    }, []);
 
     const updateUserRole = useCallback(async (userId: number, userRole: UserRole) => {
         const roleData: UserRoleUpdateRequest = { userRole };
-        return mutationApi.execute(
+        return mutationApiRef.current.execute(
             () => adminApi.updateUserRole(userId, roleData),
             { successMessage: `${getUserName(userId)} role updated successfully` }
         );
-    }, [mutationApi, getUserName]);
+    }, [getUserName]);
 
     const updateUserStatus = useCallback(async (userId: number, enabled: boolean) => {
         const statusData: UserStatusUpdateRequest = { enabled };
-        return mutationApi.execute(
+        return mutationApiRef.current.execute(
             () => adminApi.updateUserStatus(userId, statusData),
             {
                 successMessage: enabled
@@ -54,7 +60,7 @@ export const useAdminUsers = () => {
                     : `${getUserName(userId)} deactivated successfully`,
             }
         );
-    }, [mutationApi, getUserName]);
+    }, [getUserName]);
 
     const updateBirthDateVerification = useCallback(async (
         userId: number,
@@ -62,11 +68,11 @@ export const useAdminUsers = () => {
     ) => {
         const verificationData: VerificationBirthDateRequest = { verificationStatus };
         const statusText = verificationStatus === 'VERIFIED' ? 'verified' : 'unverified';
-        return mutationApi.execute(
+        return mutationApiRef.current.execute(
             () => adminApi.updateBirthDateVerification(userId, verificationData),
             { successMessage: `${getUserName(userId)} birth date ${statusText}` }
         );
-    }, [mutationApi, getUserName]);
+    }, [getUserName]);
 
     return {
         users: usersApi.data?.content || [],

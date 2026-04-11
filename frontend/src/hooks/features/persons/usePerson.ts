@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import { personApi } from '@/api/personApi';
 import type { PersonResponse, PersonRequest, PersonListResponse, PersonRole } from '@/types/person';
 import type { PageResponse } from '@/types/pagination';
@@ -8,6 +8,12 @@ import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
 export const usePerson = () => {
     const personsApi = useApi<PageResponse<PersonListResponse>>();
     const mutationApi = useApi<PersonResponse | void>();
+
+    const personsApiRef = useRef(personsApi);
+    const mutationApiRef = useRef(mutationApi);
+
+    personsApiRef.current = personsApi;
+    mutationApiRef.current = mutationApi;
 
     const loading = useDelayedLoading(
         personsApi.loading || mutationApi.loading,
@@ -20,29 +26,29 @@ export const usePerson = () => {
     }, [personsApi.data]);
 
     const getAll = useCallback(async (params?: { query?: string; role?: PersonRole }) => {
-        return personsApi.execute(() => personApi.admin.getAll(params));
-    }, [personsApi]);
+        return personsApiRef.current.execute(() => personApi.admin.getAll(params));
+    }, []);
 
     const create = useCallback(async (request: PersonRequest) => {
-        return mutationApi.execute(
+        return mutationApiRef.current.execute(
             () => personApi.admin.create(request),
             { successMessage: `Person "${request.name}" created successfully` }
         );
-    }, [mutationApi]);
+    }, []);
 
     const update = useCallback(async (id: number, request: PersonRequest) => {
-        return mutationApi.execute(
+        return mutationApiRef.current.execute(
             () => personApi.admin.update(id, request),
             { successMessage: `Person "${getPersonName(id)}" updated successfully` }
         );
-    }, [mutationApi, getPersonName]);
+    }, [getPersonName]);
 
     const remove = useCallback(async (id: number) => {
-        return mutationApi.execute(
+        return mutationApiRef.current.execute(
             () => personApi.admin.delete(id),
             { successMessage: `Person "${getPersonName(id)}" deleted successfully` }
         );
-    }, [mutationApi, getPersonName]);
+    }, [getPersonName]);
 
     return {
         persons: personsApi.data?.content || [],

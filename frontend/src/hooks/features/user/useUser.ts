@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import { useApi } from '@/hooks/common/useApi';
 import { userApi } from '@/api/userApi';
 import type {
@@ -15,40 +15,50 @@ export const useUser = () => {
     const passwordApi = useApi<{ message: string }>();
     const emailApi = useApi<{ message: string }>();
 
+    const profileApiRef = useRef(profileApi);
+    const updateProfileApiRef = useRef(updateProfileApi);
+    const passwordApiRef = useRef(passwordApi);
+    const emailApiRef = useRef(emailApi);
+
+    profileApiRef.current = profileApi;
+    updateProfileApiRef.current = updateProfileApi;
+    passwordApiRef.current = passwordApi;
+    emailApiRef.current = emailApi;
+
     const loading = useDelayedLoading(
         profileApi.loading || updateProfileApi.loading || passwordApi.loading || emailApi.loading,
         { delay: 150, minDisplayTime: 300 }
     );
 
     const getProfile = useCallback(async () => {
-        return profileApi.execute(() => userApi.getProfile());
-    }, [profileApi]);
+        return profileApiRef.current.execute(() => userApi.getProfile());
+    }, []);
 
     const updateProfile = useCallback(async (data: UserUpdateRequest) => {
-        const response = await updateProfileApi.execute(
+        const response = await updateProfileApiRef.current.execute(
             () => userApi.updateProfile(data),
             { successMessage: 'Profile updated successfully' }
         );
         if (response) {
-            profileApi.setData(response);
+            profileApiRef.current.setData(response);
         }
         return response;
-    }, [updateProfileApi, profileApi]);
+    }, []);
 
     const updatePassword = useCallback(async (data: UserPasswordUpdateRequest) => {
-        return passwordApi.execute(
+        return passwordApiRef.current.execute(
             () => userApi.updatePassword(data),
             { successMessage: 'Password updated successfully' }
         );
-    }, [passwordApi]);
+    }, []);
 
     const requestEmailChange = useCallback(async (newEmail: string, password: string) => {
         const request: UserEmailChangeRequest = { newEmail, password };
-        return emailApi.execute(
+        return emailApiRef.current.execute(
             () => userApi.requestEmailChange(request),
             { successMessage: 'Confirmation email sent to your new address' }
         );
-    }, [emailApi]);
+    }, []);
 
     return {
         profile: profileApi.data,

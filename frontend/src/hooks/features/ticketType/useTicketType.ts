@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import { ticketTypeApi } from '@/api/ticketTypeApi';
 import type {
     TicketTypeResponse,
@@ -21,6 +21,12 @@ export const useTicketType = () => {
     const ticketTypesApi = useApi<PageResponse<TicketTypeResponse>>();
     const mutationApi = useApi<TicketTypeResponse | void>();
 
+    const ticketTypesApiRef = useRef(ticketTypesApi);
+    const mutationApiRef = useRef(mutationApi);
+
+    ticketTypesApiRef.current = ticketTypesApi;
+    mutationApiRef.current = mutationApi;
+
     const loading = useDelayedLoading(
         ticketTypesApi.loading || mutationApi.loading,
         { delay: 150, minDisplayTime: 300 }
@@ -32,36 +38,36 @@ export const useTicketType = () => {
     }, [ticketTypesApi.data]);
 
     const getAll = useCallback(async (params?: TicketTypeParams) => {
-        return ticketTypesApi.execute(() => ticketTypeApi.admin.getAll(params));
-    }, [ticketTypesApi]);
+        return ticketTypesApiRef.current.execute(() => ticketTypeApi.admin.getAll(params));
+    }, []);
 
     const create = useCallback(async (request: TicketTypeRequest) => {
-        return mutationApi.execute(
+        return mutationApiRef.current.execute(
             () => ticketTypeApi.admin.create(request),
             { successMessage: `Ticket type "${request.displayName}" created successfully` }
         );
-    }, [mutationApi]);
+    }, []);
 
     const update = useCallback(async (id: number, request: TicketTypeRequest) => {
-        return mutationApi.execute(
+        return mutationApiRef.current.execute(
             () => ticketTypeApi.admin.update(id, request),
             { successMessage: `Ticket type "${getTicketTypeName(id)}" updated successfully` }
         );
-    }, [mutationApi, getTicketTypeName]);
+    }, [getTicketTypeName]);
 
     const remove = useCallback(async (id: number) => {
-        return mutationApi.execute(
+        return mutationApiRef.current.execute(
             () => ticketTypeApi.admin.delete(id),
             { successMessage: `Ticket type "${getTicketTypeName(id)}" deleted successfully` }
         );
-    }, [mutationApi, getTicketTypeName]);
+    }, [getTicketTypeName]);
 
     const toggleActive = useCallback(async (id: number) => {
-        return mutationApi.execute(
+        return mutationApiRef.current.execute(
             () => ticketTypeApi.admin.toggleActive(id),
             { successMessage: `Ticket type "${getTicketTypeName(id)}" status updated successfully` }
         );
-    }, [mutationApi, getTicketTypeName]);
+    }, [getTicketTypeName]);
 
     return {
         ticketTypes: ticketTypesApi.data?.content || [],

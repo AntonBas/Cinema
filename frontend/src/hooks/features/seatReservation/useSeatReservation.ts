@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useRef } from 'react';
 import { seatReservationApi } from '@/api/seatReservationApi';
 import type { SeatReservationResponse, SeatInfo, TicketPriceInfo } from '@/types/seatReservation';
 import { useApi } from '@/hooks/common/useApi';
@@ -19,11 +19,17 @@ export const useSeatReservation = (sessionId: number, maxSeats?: number) => {
     const seatApi = useApi<SeatReservationResponse>();
     const holdApi = useApi<void>();
 
+    const seatApiRef = useRef(seatApi);
+    const holdApiRef = useRef(holdApi);
+
+    seatApiRef.current = seatApi;
+    holdApiRef.current = holdApi;
+
     const loading = useDelayedLoading(seatApi.loading || holdApi.loading, { delay: 150, minDisplayTime: 300 });
 
     const getSeatAvailability = useCallback(async () => {
-        return seatApi.execute(() => seatReservationApi.getSeatAvailability(sessionId));
-    }, [seatApi, sessionId]);
+        return seatApiRef.current.execute(() => seatReservationApi.getSeatAvailability(sessionId));
+    }, [sessionId]);
 
     const updateSeatLocally = useCallback((seatId: number, updates: Partial<SeatInfo>) => {
         if (!seatApi.data) return;
@@ -41,23 +47,23 @@ export const useSeatReservation = (sessionId: number, maxSeats?: number) => {
 
     const temporaryHoldSeat = useCallback(async (seatId: number) => {
         try {
-            await holdApi.execute(() => seatReservationApi.temporaryHoldSeat(sessionId, seatId));
+            await holdApiRef.current.execute(() => seatReservationApi.temporaryHoldSeat(sessionId, seatId));
             updateSeatLocally(seatId, { available: false, temporarilyReserved: true });
             return true;
         } catch {
             return false;
         }
-    }, [holdApi, sessionId, updateSeatLocally]);
+    }, [sessionId, updateSeatLocally]);
 
     const cancelTemporaryHold = useCallback(async (seatId: number) => {
         try {
-            await holdApi.execute(() => seatReservationApi.cancelTemporaryHold(sessionId, seatId));
+            await holdApiRef.current.execute(() => seatReservationApi.cancelTemporaryHold(sessionId, seatId));
             updateSeatLocally(seatId, { available: true, temporarilyReserved: false });
             return true;
         } catch {
             return false;
         }
-    }, [holdApi, sessionId, updateSeatLocally]);
+    }, [sessionId, updateSeatLocally]);
 
     const getTicketPrice = useCallback((seat: SeatInfo, ticketTypeId?: number): TicketPriceInfo | null => {
         if (!seat.ticketPrices?.length) return null;

@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import { cinemaHallApi } from '@/api/cinemaHallApi';
 import type {
     CinemaHallRequest,
@@ -15,6 +15,16 @@ export const useCinemaHalls = () => {
     const layoutApi = useApi<HallLayoutResponse>();
     const mutationApi = useApi<CinemaHallResponse | void>();
 
+    const hallsApiRef = useRef(hallsApi);
+    const hallApiRef = useRef(hallApi);
+    const layoutApiRef = useRef(layoutApi);
+    const mutationApiRef = useRef(mutationApi);
+
+    hallsApiRef.current = hallsApi;
+    hallApiRef.current = hallApi;
+    layoutApiRef.current = layoutApi;
+    mutationApiRef.current = mutationApi;
+
     const loading = useDelayedLoading(
         hallsApi.loading || hallApi.loading || layoutApi.loading || mutationApi.loading,
         { delay: 150, minDisplayTime: 300 }
@@ -26,37 +36,37 @@ export const useCinemaHalls = () => {
     }, [hallsApi.data]);
 
     const getAllHalls = useCallback(async () => {
-        return hallsApi.execute(() => cinemaHallApi.getAll());
-    }, [hallsApi]);
+        return hallsApiRef.current.execute(() => cinemaHallApi.getAll());
+    }, []);
 
     const getHallById = useCallback(async (id: number) => {
-        return hallApi.execute(() => cinemaHallApi.getById(id));
-    }, [hallApi]);
+        return hallApiRef.current.execute(() => cinemaHallApi.getById(id));
+    }, []);
 
     const getHallLayout = useCallback(async (id: number) => {
-        return layoutApi.execute(() => cinemaHallApi.getLayout(id));
-    }, [layoutApi]);
+        return layoutApiRef.current.execute(() => cinemaHallApi.getLayout(id));
+    }, []);
 
     const createHall = useCallback(async (request: CinemaHallRequest) => {
-        return mutationApi.execute(
+        return mutationApiRef.current.execute(
             () => cinemaHallApi.create(request),
             { successMessage: `Cinema hall "${request.name}" created successfully` }
         );
-    }, [mutationApi]);
+    }, []);
 
     const updateHall = useCallback(async (id: number, request: CinemaHallRequest) => {
-        return mutationApi.execute(
+        return mutationApiRef.current.execute(
             () => cinemaHallApi.update(id, request),
             { successMessage: `Cinema hall "${getHallName(id)}" updated successfully` }
         );
-    }, [mutationApi, getHallName]);
+    }, [getHallName]);
 
     const deleteHall = useCallback(async (id: number) => {
-        return mutationApi.execute(
+        return mutationApiRef.current.execute(
             () => cinemaHallApi.delete(id),
             { successMessage: `Cinema hall "${getHallName(id)}" deleted successfully` }
         );
-    }, [mutationApi, getHallName]);
+    }, [getHallName]);
 
     return {
         halls: hallsApi.data || [],

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useMovies } from '@/hooks/features/movies/useMovies';
 import { useCinemaHalls } from '@/hooks/features/cinemaHalls/useCinemaHalls';
 import { useSession } from '@/hooks/features/sessions/useSession';
@@ -32,14 +32,26 @@ export const useDashboardStats = () => {
     const { getUsers } = useAdminUsers();
     const { getAll: getPromotions } = usePromotion();
 
+    const getAdminMoviesRef = useRef(getAdminMovies);
+    const getAllHallsRef = useRef(getAllHalls);
+    const getAdminSessionsRef = useRef(getAdminSessions);
+    const getUsersRef = useRef(getUsers);
+    const getPromotionsRef = useRef(getPromotions);
+
+    getAdminMoviesRef.current = getAdminMovies;
+    getAllHallsRef.current = getAllHalls;
+    getAdminSessionsRef.current = getAdminSessions;
+    getUsersRef.current = getUsers;
+    getPromotionsRef.current = getPromotions;
+
     const loadDashboardData = useCallback(async () => {
         try {
             const [moviesRes, hallsRes, sessionsRes, usersRes, promotionsRes] = await Promise.all([
-                getAdminMovies({ size: 1 }),
-                getAllHalls(),
-                getAdminSessions({ size: 1 }),
-                getUsers({ size: 1 }),
-                getPromotions({ size: 100 }),
+                getAdminMoviesRef.current({ size: 1 }),
+                getAllHallsRef.current(),
+                getAdminSessionsRef.current({ size: 1 }),
+                getUsersRef.current({ size: 1 }),
+                getPromotionsRef.current({ size: 100 }),
             ]);
 
             setStats({
@@ -55,7 +67,7 @@ export const useDashboardStats = () => {
             showNotification('Failed to load dashboard data', 'error');
             setStats(prev => ({ ...prev, isLoading: false }));
         }
-    }, [getAdminMovies, getAllHalls, getAdminSessions, getUsers, getPromotions, showNotification]);
+    }, [showNotification]);
 
     useEffect(() => {
         loadDashboardData();

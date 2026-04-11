@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import { bookingApi } from '@/api/bookingApi';
 import type {
     BookingResponse,
@@ -11,28 +11,34 @@ export const useBooking = () => {
     const bookingApiHook = useApi<BookingResponse>();
     const mutationApi = useApi<BookingResponse | void>();
 
+    const bookingApiRef = useRef(bookingApiHook);
+    const mutationApiRef = useRef(mutationApi);
+
+    bookingApiRef.current = bookingApiHook;
+    mutationApiRef.current = mutationApi;
+
     const loading = useDelayedLoading(
         bookingApiHook.loading || mutationApi.loading,
         { delay: 150, minDisplayTime: 300 }
     );
 
     const create = useCallback(async (request: BookingCreateRequest) => {
-        return mutationApi.execute(
+        return mutationApiRef.current.execute(
             () => bookingApi.create(request),
             { successMessage: 'Booking created successfully' }
         );
-    }, [mutationApi]);
+    }, []);
 
     const getById = useCallback(async (bookingId: number) => {
-        return bookingApiHook.execute(() => bookingApi.getById(bookingId));
-    }, [bookingApiHook]);
+        return bookingApiRef.current.execute(() => bookingApi.getById(bookingId));
+    }, []);
 
     const cancel = useCallback(async (bookingId: number) => {
-        return mutationApi.execute(
+        return mutationApiRef.current.execute(
             () => bookingApi.cancel(bookingId),
             { successMessage: 'Booking cancelled successfully' }
         );
-    }, [mutationApi]);
+    }, []);
 
     return {
         booking: bookingApiHook.data,
