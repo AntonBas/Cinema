@@ -24,8 +24,7 @@ import org.springframework.data.domain.Sort;
 
 import ua.lviv.bas.cinema.domain.cinema.status.CinemaSessionStatus;
 import ua.lviv.bas.cinema.dto.PageResponse;
-import ua.lviv.bas.cinema.dto.session.request.SessionCreateRequest;
-import ua.lviv.bas.cinema.dto.session.request.SessionUpdateRequest;
+import ua.lviv.bas.cinema.dto.session.request.SessionRequest;
 import ua.lviv.bas.cinema.dto.session.response.SessionAdminResponse;
 import ua.lviv.bas.cinema.dto.session.response.SessionResponse;
 import ua.lviv.bas.cinema.exception.domain.cinema.SessionNotFoundException;
@@ -55,7 +54,7 @@ public class AdminSessionControllerTest {
 	void createSessionShouldCreateSuccessfully() {
 		LocalDateTime startTime = LocalDateTime.now().plusHours(2);
 		BigDecimal price = BigDecimal.valueOf(250);
-		SessionCreateRequest request = new SessionCreateRequest(startTime, price, 1L, 1L);
+		SessionRequest request = new SessionRequest(startTime, price, 1L, 1L);
 
 		SessionResponse response = createSessionResponse(1L, "Test Movie", price);
 
@@ -72,7 +71,7 @@ public class AdminSessionControllerTest {
 	@Test
 	void createSessionWhenTimeConflictShouldThrowException() {
 		LocalDateTime startTime = LocalDateTime.now().plusHours(2);
-		SessionCreateRequest request = new SessionCreateRequest(startTime, BigDecimal.valueOf(250), 1L, 1L);
+		SessionRequest request = new SessionRequest(startTime, BigDecimal.valueOf(250), 1L, 1L);
 
 		when(sessionService.createSession(request))
 				.thenThrow(new SessionTimeConflictException(1L, request.startTime()));
@@ -149,7 +148,7 @@ public class AdminSessionControllerTest {
 	@Test
 	void updateSessionShouldUpdateSuccessfully() {
 		BigDecimal newPrice = BigDecimal.valueOf(300);
-		SessionUpdateRequest request = new SessionUpdateRequest(null, newPrice, null, null);
+		SessionRequest request = new SessionRequest(null, newPrice, null, null);
 
 		SessionResponse response = createSessionResponse(1L, "Test Movie", newPrice);
 
@@ -164,7 +163,7 @@ public class AdminSessionControllerTest {
 
 	@Test
 	void updateSessionWhenNotFoundShouldThrowException() {
-		SessionUpdateRequest request = new SessionUpdateRequest(null, BigDecimal.valueOf(300), null, null);
+		SessionRequest request = new SessionRequest(null, BigDecimal.valueOf(300), null, null);
 
 		when(sessionService.updateSession(999L, request)).thenThrow(new SessionNotFoundException(999L));
 
@@ -175,7 +174,7 @@ public class AdminSessionControllerTest {
 	@Test
 	void updateSessionWhenTimeConflictShouldThrowException() {
 		LocalDateTime newStartTime = LocalDateTime.now().plusHours(3);
-		SessionUpdateRequest request = new SessionUpdateRequest(newStartTime, null, null, null);
+		SessionRequest request = new SessionRequest(newStartTime, null, null, null);
 
 		when(sessionService.updateSession(1L, request))
 				.thenThrow(new SessionTimeConflictException(1L, request.startTime()));

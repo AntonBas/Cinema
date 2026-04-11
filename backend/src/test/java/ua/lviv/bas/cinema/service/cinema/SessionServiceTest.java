@@ -29,8 +29,7 @@ import ua.lviv.bas.cinema.domain.cinema.CinemaHall;
 import ua.lviv.bas.cinema.domain.cinema.Movie;
 import ua.lviv.bas.cinema.domain.cinema.Session;
 import ua.lviv.bas.cinema.domain.cinema.status.CinemaSessionStatus;
-import ua.lviv.bas.cinema.dto.session.request.SessionCreateRequest;
-import ua.lviv.bas.cinema.dto.session.request.SessionUpdateRequest;
+import ua.lviv.bas.cinema.dto.session.request.SessionRequest;
 import ua.lviv.bas.cinema.dto.session.response.SessionResponse;
 import ua.lviv.bas.cinema.exception.domain.cinema.SessionNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.cinema.SessionOperationException;
@@ -89,12 +88,12 @@ public class SessionServiceTest {
 	@Test
 	void createSessionShouldSucceed() {
 		LocalDateTime startTime = LocalDateTime.now().plusHours(2);
-		SessionCreateRequest request = new SessionCreateRequest(startTime, BASE_PRICE, MOVIE_ID, HALL_ID);
+		SessionRequest request = new SessionRequest(startTime, BASE_PRICE, MOVIE_ID, HALL_ID);
 
 		when(movieRepository.getReferenceById(MOVIE_ID)).thenReturn(movie);
 		when(cinemaHallService.getHallEntity(HALL_ID)).thenReturn(hall);
 		when(sessionRepository.existsConflictingSession(eq(HALL_ID), any(), any(), isNull())).thenReturn(false);
-		when(sessionMapper.toSession(request)).thenReturn(session);
+		when(sessionMapper.toEntity(request)).thenReturn(session);
 		when(sessionRepository.save(session)).thenReturn(session);
 		when(sessionMapper.toSessionResponse(session)).thenReturn(sessionResponse);
 
@@ -107,7 +106,7 @@ public class SessionServiceTest {
 	@Test
 	void createSessionWhenTimeConflictShouldThrowException() {
 		LocalDateTime startTime = LocalDateTime.now().plusHours(2);
-		SessionCreateRequest request = new SessionCreateRequest(startTime, BASE_PRICE, MOVIE_ID, HALL_ID);
+		SessionRequest request = new SessionRequest(startTime, BASE_PRICE, MOVIE_ID, HALL_ID);
 
 		when(movieRepository.getReferenceById(MOVIE_ID)).thenReturn(movie);
 		when(cinemaHallService.getHallEntity(HALL_ID)).thenReturn(hall);
@@ -139,7 +138,7 @@ public class SessionServiceTest {
 	@Test
 	void updateSessionWhenStartTimeChangedShouldSucceed() {
 		LocalDateTime newStartTime = LocalDateTime.now().plusHours(3);
-		SessionUpdateRequest request = new SessionUpdateRequest(newStartTime, null, null, null);
+		SessionRequest request = new SessionRequest(newStartTime, null, null, null);
 
 		when(sessionRepository.findByIdWithLock(SESSION_ID)).thenReturn(Optional.of(session));
 		when(sessionRepository.existsConflictingSession(eq(HALL_ID), any(), any(), eq(SESSION_ID))).thenReturn(false);
@@ -149,7 +148,7 @@ public class SessionServiceTest {
 		SessionResponse result = sessionService.updateSession(SESSION_ID, request);
 
 		assertThat(result).isEqualTo(sessionResponse);
-		verify(sessionMapper).updateSessionFromRequest(request, session);
+		verify(sessionMapper).updateEntity(request, session);
 		verify(sessionRepository).save(session);
 	}
 
@@ -157,8 +156,7 @@ public class SessionServiceTest {
 	void updateSessionWhenNotFoundShouldThrowException() {
 		when(sessionRepository.findByIdWithLock(SESSION_ID)).thenReturn(Optional.empty());
 
-		assertThatThrownBy(
-				() -> sessionService.updateSession(SESSION_ID, new SessionUpdateRequest(null, null, null, null)))
+		assertThatThrownBy(() -> sessionService.updateSession(SESSION_ID, new SessionRequest(null, null, null, null)))
 				.isInstanceOf(SessionNotFoundException.class);
 	}
 

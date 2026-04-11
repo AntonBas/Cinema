@@ -15,8 +15,7 @@ import ua.lviv.bas.cinema.domain.cinema.Movie;
 import ua.lviv.bas.cinema.domain.cinema.Session;
 import ua.lviv.bas.cinema.domain.cinema.enums.AgeRating;
 import ua.lviv.bas.cinema.domain.cinema.status.CinemaSessionStatus;
-import ua.lviv.bas.cinema.dto.session.request.SessionCreateRequest;
-import ua.lviv.bas.cinema.dto.session.request.SessionUpdateRequest;
+import ua.lviv.bas.cinema.dto.session.request.SessionRequest;
 import ua.lviv.bas.cinema.dto.session.response.SessionAdminResponse;
 import ua.lviv.bas.cinema.dto.session.response.SessionResponse;
 import ua.lviv.bas.cinema.dto.session.response.SessionScheduleResponse;
@@ -250,11 +249,11 @@ public class SessionMapperTest {
 	}
 
 	@Test
-	void toSession_FromCreateRequest_ShouldMapFields() {
+	void toEntity_ShouldMapFields() {
 		LocalDateTime startTime = fixedTime.plusDays(1);
-		SessionCreateRequest request = new SessionCreateRequest(startTime, new BigDecimal("300.00"), 1L, 2L);
+		SessionRequest request = new SessionRequest(startTime, new BigDecimal("300.00"), 1L, 2L);
 
-		Session session = mapper.toSession(request);
+		Session session = mapper.toEntity(request);
 
 		assertThat(session.getStartTime()).isEqualTo(startTime);
 		assertThat(session.getBasePrice()).isEqualTo(new BigDecimal("300.00"));
@@ -267,20 +266,20 @@ public class SessionMapperTest {
 	}
 
 	@Test
-	void toSession_WithNullRequest_ShouldReturnNull() {
-		Session session = mapper.toSession((SessionCreateRequest) null);
+	void toEntity_WithNullRequest_ShouldReturnNull() {
+		Session session = mapper.toEntity((SessionRequest) null);
 		assertThat(session).isNull();
 	}
 
 	@Test
-	void updateSessionFromRequest_ShouldUpdateFields() {
+	void updateEntity_ShouldUpdateFields() {
 		Session session = Session.builder().id(1L).startTime(fixedTime).basePrice(new BigDecimal("250.00"))
 				.status(CinemaSessionStatus.SCHEDULED).build();
 
 		LocalDateTime newStartTime = fixedTime.plusHours(1);
-		SessionUpdateRequest request = new SessionUpdateRequest(newStartTime, new BigDecimal("300.00"), 2L, 3L);
+		SessionRequest request = new SessionRequest(newStartTime, new BigDecimal("300.00"), 2L, 3L);
 
-		mapper.updateSessionFromRequest(request, session);
+		mapper.updateEntity(request, session);
 
 		assertThat(session.getStartTime()).isEqualTo(newStartTime);
 		assertThat(session.getBasePrice()).isEqualTo(new BigDecimal("300.00"));
@@ -289,13 +288,13 @@ public class SessionMapperTest {
 	}
 
 	@Test
-	void updateSessionFromRequest_WithPartialUpdate_ShouldUpdateOnlyNonNullFields() {
+	void updateEntity_WithPartialUpdate_ShouldUpdateOnlyNonNullFields() {
 		Session session = Session.builder().id(1L).startTime(fixedTime).basePrice(new BigDecimal("250.00"))
 				.status(CinemaSessionStatus.SCHEDULED).build();
 
-		SessionUpdateRequest request = new SessionUpdateRequest(null, new BigDecimal("300.00"), null, null);
+		SessionRequest request = new SessionRequest(null, new BigDecimal("300.00"), null, null);
 
-		mapper.updateSessionFromRequest(request, session);
+		mapper.updateEntity(request, session);
 
 		assertThat(session.getStartTime()).isEqualTo(fixedTime);
 		assertThat(session.getBasePrice()).isEqualTo(new BigDecimal("300.00"));
@@ -304,11 +303,11 @@ public class SessionMapperTest {
 	}
 
 	@Test
-	void updateSessionFromRequest_WithNullRequest_ShouldNotChange() {
+	void updateEntity_WithNullRequest_ShouldNotChange() {
 		Session session = Session.builder().id(1L).startTime(fixedTime).basePrice(new BigDecimal("250.00"))
 				.status(CinemaSessionStatus.SCHEDULED).build();
 
-		mapper.updateSessionFromRequest(null, session);
+		mapper.updateEntity(null, session);
 
 		assertThat(session.getStartTime()).isEqualTo(fixedTime);
 		assertThat(session.getBasePrice()).isEqualTo(new BigDecimal("250.00"));
@@ -317,9 +316,8 @@ public class SessionMapperTest {
 	}
 
 	@Test
-	void updateSessionFromRequest_WithNullTarget_ShouldThrowException() {
-		SessionUpdateRequest request = new SessionUpdateRequest(fixedTime, new BigDecimal("300.00"), 1L, 2L);
-		assertThatThrownBy(() -> mapper.updateSessionFromRequest(request, null))
-				.isInstanceOf(NullPointerException.class);
+	void updateEntity_WithNullTarget_ShouldThrowException() {
+		SessionRequest request = new SessionRequest(fixedTime, new BigDecimal("300.00"), 1L, 2L);
+		assertThatThrownBy(() -> mapper.updateEntity(request, null)).isInstanceOf(NullPointerException.class);
 	}
 }
