@@ -1,10 +1,9 @@
 import { api } from '@/services/api';
 import type {
     PromotionResponse,
-    PromotionAdminResponse,
-    PromotionCreateRequest,
-    PromotionUpdateRequest,
-    UserPromotionCreateRequest
+    PromotionListResponse,
+    PromotionRequest,
+    ClaimPromotionRequest
 } from '@/types/promotion';
 import type { PageResponse } from '@/types/pagination';
 
@@ -19,24 +18,21 @@ export const promotionApi = {
         getClaimed: () =>
             api.get<PromotionResponse[]>(`${BASE_URL}/claimed`),
 
-        claim: (request: UserPromotionCreateRequest) =>
+        claim: (request: ClaimPromotionRequest) =>
             api.post<PromotionResponse>(`${BASE_URL}/claim`, request),
     },
 
     admin: {
-        create: (request: PromotionCreateRequest) =>
+        create: (request: PromotionRequest) =>
             api.post<PromotionResponse>(ADMIN_BASE_URL, request),
 
-        getById: (promotionId: number) =>
-            api.get<PromotionResponse>(`${ADMIN_BASE_URL}/${promotionId}`),
+        getAll: (params?: { page?: number; size?: number; sort?: string[] }) =>
+            api.get<PageResponse<PromotionListResponse>>(ADMIN_BASE_URL, { params }),
 
-        getAll: (pageable?: { page: number; size: number; sort?: string[] }) =>
-            api.get<PageResponse<PromotionAdminResponse>>(ADMIN_BASE_URL, { params: pageable }),
+        update: (id: number, request: PromotionRequest) =>
+            api.put<PromotionResponse>(`${ADMIN_BASE_URL}/${id}`, request),
 
-        update: (promotionId: number, request: PromotionUpdateRequest) =>
-            api.put<PromotionResponse>(`${ADMIN_BASE_URL}/${promotionId}`, request),
-
-        delete: (promotionId: number) =>
-            api.delete<void>(`${ADMIN_BASE_URL}/${promotionId}`),
+        delete: (id: number) =>
+            api.delete<void>(`${ADMIN_BASE_URL}/${id}`),
     }
 };

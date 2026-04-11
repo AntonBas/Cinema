@@ -7,7 +7,6 @@ import type {
 import type { UserResponse } from '@/types/user';
 
 const API_URL = '/api/auth';
-const TOKENS_URL = '/api/tokens';
 
 export const authApi = {
     login: (credentials: LoginRequest) =>
@@ -25,23 +24,13 @@ export const authApi = {
         }),
 
     forgotPassword: (email: string) =>
-        api.post(`${API_URL}/password/forgot`, null, {
+        api.post<void>(`${API_URL}/password/forgot`, null, {
             params: { email }
         }),
 
     resetPassword: (token: string, newPassword: string) =>
-        api.post(`${API_URL}/password/reset`, null, {
+        api.post<void>(`${API_URL}/password/reset`, null, {
             params: { token, newPassword }
-        }),
-
-    verifyEmail: (token: string) =>
-        api.post<{ message: string }>(`${TOKENS_URL}/email/verify`, null, {
-            params: { token }
-        }),
-
-    confirmEmailChange: (token: string) =>
-        api.post<UserResponse>(`${TOKENS_URL}/email/change/confirm`, null, {
-            params: { token }
         }),
 
     oauth2Success: (token: string, userId: number, email: string) =>

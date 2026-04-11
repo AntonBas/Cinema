@@ -3,8 +3,7 @@ import type {
     SessionResponse,
     SessionAdminResponse,
     SessionScheduleResponse,
-    SessionCreateRequest,
-    SessionUpdateRequest,
+    SessionRequest,
     CinemaSessionStatus
 } from '@/types/session';
 import type { PageResponse, SearchParams } from '@/types/pagination';
@@ -14,13 +13,13 @@ const BASE_URL = '/api/sessions';
 
 export const sessionApi = {
     admin: {
-        create: (request: SessionCreateRequest) =>
+        create: (request: SessionRequest) =>
             api.post<SessionResponse>(ADMIN_BASE_URL, request),
 
         getById: (id: number) =>
             api.get<SessionResponse>(`${ADMIN_BASE_URL}/${id}`),
 
-        update: (id: number, request: SessionUpdateRequest) =>
+        update: (id: number, request: SessionRequest) =>
             api.put<SessionResponse>(`${ADMIN_BASE_URL}/${id}`, request),
 
         cancel: (id: number) =>

@@ -18,11 +18,11 @@ export const movieApi = {
     getBySlug: (slug: string) =>
       api.get<MovieDetailResponse>(`${BASE_URL}/slug/${slug}`),
 
-    getNowShowingForHome: () =>
-      api.get<MovieCardResponse[]>(`${BASE_URL}/now-showing/home`),
+    getCurrentMoviesForHome: () =>
+      api.get<MovieCardResponse[]>(`${BASE_URL}/current/home`),
 
-    getComingSoonForHome: () =>
-      api.get<MovieCardResponse[]>(`${BASE_URL}/coming-soon/home`),
+    getUpcomingMoviesForHome: () =>
+      api.get<MovieCardResponse[]>(`${BASE_URL}/upcoming/home`),
 
     getLeavingSoonForHome: () =>
       api.get<MovieCardResponse[]>(`${BASE_URL}/leaving-soon/home`),
@@ -76,16 +76,16 @@ export const movieApi = {
       api.delete<void>(`${ADMIN_BASE_URL}/${id}`),
 
     getMovies: (params?: SearchParams & {
-      title?: string;
+      query?: string;
       status?: MovieStatus;
     }) => api.get<PageResponse<MovieCardResponse>>(ADMIN_BASE_URL, { params }),
 
     getById: (id: number) =>
       api.get<MovieAdminResponse>(`${ADMIN_BASE_URL}/${id}`),
 
-    searchForSession: (search?: string) =>
-      api.get<MovieSessionSearchResponse[]>(`${ADMIN_BASE_URL}/search/session`, {
-        params: search ? { search } : undefined
+    search: (query?: string) =>
+      api.get<MovieSessionSearchResponse[]>(`${ADMIN_BASE_URL}/search`, {
+        params: query ? { query } : undefined
       }),
   },
 };

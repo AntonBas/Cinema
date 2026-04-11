@@ -5,7 +5,7 @@ const BASE_URL = '/api/sessions';
 
 export const seatReservationApi = {
     getSeatAvailability: (sessionId: number) =>
-        api.get<SeatReservationResponse>(`${BASE_URL}/${sessionId}/seats/availability`),
+        api.get<SeatReservationResponse>(`${BASE_URL}/${sessionId}/seats`),
 
     temporaryHoldSeat: (sessionId: number, seatId: number) =>
         api.post<void>(`${BASE_URL}/${sessionId}/seats/${seatId}/hold`),

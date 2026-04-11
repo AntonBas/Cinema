@@ -8,9 +8,6 @@ export const genreApi = {
   getAll: (params?: SearchParams & { search?: string }) =>
     api.get<PageResponse<GenreListResponse>>(BASE_URL, { params }),
 
-  getById: (id: number) =>
-    api.get<GenreResponse>(`${BASE_URL}/${id}`),
-
   create: (request: GenreRequest) =>
     api.post<GenreResponse>(BASE_URL, request),
 
