@@ -38,22 +38,6 @@ export interface AdminUserListResponse {
     lastActivity: string;
 }
 
-export interface UserRegistrationRequest {
-    email: string;
-    firstName: string;
-    lastName: string;
-    dateOfBirth: string;
-    city: string;
-    phoneNumber: string;
-    password: string;
-    passwordConfirm: string;
-}
-
-export interface UserLoginRequest {
-    email: string;
-    password: string;
-}
-
 export interface UserUpdateRequest {
     firstName: string;
     lastName: string;
